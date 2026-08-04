@@ -5,5 +5,6 @@ pub mod error;
 pub mod model;
 pub mod policy;
 pub mod registry;
+pub mod rustgen;
 pub mod schema;
 pub mod veneer;

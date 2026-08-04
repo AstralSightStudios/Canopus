@@ -1,0 +1,10 @@
+[package]
+name = "canopus-runtime"
+description = "Canopus portable module runtime in Rust — lifecycle, resource tracker, status writer, event log (mirror of sdk/c + runtime/*.c)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version = "1.77"
+
+[dependencies]
+canopus-abi = { workspace = true }

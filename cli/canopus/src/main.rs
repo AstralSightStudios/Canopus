@@ -81,6 +81,16 @@ enum TargetCmd {
         #[arg(long)]
         output: Option<PathBuf>,
     },
+    /// Generate the Rust no_std bindings crate module for a target pack.
+    GenerateRustBindings {
+        /// Target id, e.g. xiaomi-band-10-pro-3.101.030.
+        target: String,
+        #[arg(long, default_value = "targets")]
+        targets_dir: PathBuf,
+        /// Write output to this path (default: <pack>/generated/canopus_bindings.rs).
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
 }
 
 #[derive(Subcommand)]

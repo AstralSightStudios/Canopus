@@ -10,7 +10,7 @@
 //! FORBIDDEN / WITHDRAWN symbols never produce a veneer; they are emitted
 //! only as comments so a reviewer can see they were deliberately excluded.
 
-use crate::model::{Symbol, TargetPack, TypeRecord};
+use crate::model::{Symbol, TargetPack, TypeField, TypeRecord};
 use std::collections::BTreeSet;
 
 pub const FORBIDDEN_STATUS: &[&str] = &["FORBIDDEN", "WITHDRAWN"];
@@ -26,7 +26,7 @@ pub struct VeneerGen<'a> {
 /// Maps an ARM AAPCS C type name from a recovered prototype to a C type.
 /// Returns None for types we cannot faithfully express; callers must not
 /// emit a veneer then.
-fn map_type(t: &str) -> Option<String> {
+pub(crate) fn map_type(t: &str) -> Option<String> {
     let t = t.trim();
     if t.is_empty() {
         return Some("void".into());
@@ -54,7 +54,7 @@ fn map_type(t: &str) -> Option<String> {
 }
 
 /// Parses `RET(ARG, ARG, ...)` into (ret, args).
-fn parse_proto(p: &str) -> Option<(String, Vec<String>)> {
+pub(crate) fn parse_proto(p: &str) -> Option<(String, Vec<String>)> {
     let open = p.find('(')?;
     let close = p.rfind(')')?;
     if close <= open {
@@ -69,23 +69,29 @@ fn parse_proto(p: &str) -> Option<(String, Vec<String>)> {
     Some((ret, args))
 }
 
-fn width_type(width: u64, signedness: &str) -> &'static str {
-    match signedness {
-        "signed" => match width {
+fn width_type(f: &TypeField) -> String {
+    match f.signedness.as_str() {
+        "signed" => match f.width {
             1 => "int8_t",
             2 => "int16_t",
             4 => "int32_t",
             8 => "int64_t",
             _ => "int32_t",
-        },
-        "pointer" => "void *",
-        _ => match width {
+        }
+        .to_string(),
+        "pointer" => "void *".to_string(),
+        "array" => {
+            let n = f.array_length.unwrap_or(f.width);
+            format!("uint8_t [{n}]")
+        }
+        _ => match f.width {
             1 => "uint8_t",
             2 => "uint16_t",
             4 => "uint32_t",
             8 => "uint64_t",
             _ => "uint32_t",
-        },
+        }
+        .to_string(),
     }
 }
 
@@ -131,19 +137,50 @@ impl<'a> VeneerGen<'a> {
             return;
         }
         out.push_str("/* ---- recovered type layouts ---- */\n");
+        out.push_str("/* Explicit padding reproduces the exact recovered byte layout\n");
+        out.push_str(" * even when fields are sparse (e.g. launcher_order_record). */\n");
         for t in self.types {
             if t.kind != "struct" && t.kind != "union" {
                 continue;
             }
             let kw = if t.kind == "union" { "union" } else { "struct" };
+            let total = t.size;
             out.push_str(&format!("typedef {kw} {{\n"));
-            for f in t.fields.clone().unwrap_or_default() {
-                out.push_str(&format!(
-                    "    {} {}; /* +0x{:x} */\n",
-                    width_type(f.width, &f.signedness),
-                    f.name,
-                    f.offset
-                ));
+            let mut cursor = 0u64;
+            let mut fields = t.fields.clone().unwrap_or_default();
+            fields.sort_by_key(|f| f.offset);
+            for f in &fields {
+                if f.offset > cursor {
+                    let gap = f.offset - cursor;
+                    out.push_str(&format!("    uint8_t _pad_{:x}[{}];\n", cursor, gap));
+                    cursor += gap;
+                }
+                if f.offset < cursor {
+                    out.push_str(&format!(
+                        "    /* skipped {}: overlaps at +0x{:x} */\n",
+                        f.name, f.offset
+                    ));
+                    continue;
+                }
+                if f.signedness == "array" {
+                    // C array syntax: the bracket suffix follows the name.
+                    let n = f.array_length.unwrap_or(f.width);
+                    out.push_str(&format!(
+                        "    uint8_t {}[{}]; /* +0x{:x} */\n",
+                        f.name, n, f.offset
+                    ));
+                } else {
+                    out.push_str(&format!(
+                        "    {} {}; /* +0x{:x} */\n",
+                        width_type(f),
+                        f.name,
+                        f.offset
+                    ));
+                }
+                cursor += f.width;
+            }
+            if total > cursor {
+                out.push_str(&format!("    uint8_t _tail[{}];\n", total - cursor));
             }
             let name = t.name.clone().unwrap_or_else(|| t.type_id.clone());
             out.push_str(&format!("}} {};\n", name));

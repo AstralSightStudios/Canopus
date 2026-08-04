@@ -11,27 +11,52 @@
 #include <stdint.h>
 
 /* ---- recovered type layouts ---- */
+/* Explicit padding reproduces the exact recovered byte layout
+ * even when fields are sparse (e.g. launcher_order_record). */
 typedef struct {
     void * open; /* +0x0 */
     void * close; /* +0x4 */
     void * read; /* +0x8 */
     void * write; /* +0xc */
+    uint8_t _pad_10[4];
     void * ioctl; /* +0x14 */
 } file_operations;
+typedef struct {
+    uint8_t app_name[128]; /* +0x0 */
+    uint8_t _pad_80[4];
+    uint32_t flags; /* +0x84 */
+    uint8_t _tail[4];
+} launcher_order_record;
 typedef struct {
     int32_t tv_sec; /* +0x0 */
     int32_t tv_nsec; /* +0x4 */
 } stock_timespec_t;
 typedef struct {
     uint8_t enabled_state; /* +0x0 */
+    uint8_t _pad_1[3];
     void * name; /* +0x4 */
     uint8_t service_id; /* +0x8 */
     uint8_t profile_group; /* +0x9 */
+    uint8_t _pad_a[26];
     void * startup_cb; /* +0x24 */
+    uint8_t _pad_28[8];
     void * startup_eligibility_cb; /* +0x30 */
     void * get_profile_cb; /* +0x34 */
     void * cleanup_cb; /* +0x38 */
+    uint8_t _tail[4];
 } service_object;
+typedef struct {
+    void * app_name; /* +0x0 */
+    uint8_t _pad_4[4];
+    uint8_t enabled; /* +0x8 */
+    uint8_t hidden; /* +0x9 */
+    uint8_t _tail[6];
+} ordered_app_entry;
+typedef struct {
+    uint8_t name[128]; /* +0x0 */
+    uint8_t flags; /* +0x80 */
+    uint8_t _tail[3];
+} launcher_app_struct;
 
 /* ---- runtime identity guard ---- */
 static inline int canopus_str_neq(const char *a, const char *b)
@@ -68,6 +93,8 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
 }
 
 /* ---- excluded symbols ----
+ * app_launcher_add: restricted - not exported until context/ownership approved
+ * app_launcher_data_init: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_socket_server_receive: FORBIDDEN - no veneer may ever be generated
@@ -85,7 +112,9 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
  * heap_zalloc: restricted - not exported until context/ownership approved
  * hfp_ag_connect: FORBIDDEN - no veneer may ever be generated
  * hfp_ag_disconnect: FORBIDDEN - no veneer may ever be generated
+ * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
+ * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
  * register_blockdriver: restricted - not exported until context/ownership approved

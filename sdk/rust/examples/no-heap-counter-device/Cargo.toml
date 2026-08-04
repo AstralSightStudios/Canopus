@@ -1,0 +1,24 @@
+[package]
+name = "no-heap-counter-device"
+description = "Device staticlib build of the no-heap-counter module (panic handler + generated bindings)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version = "1.77"
+
+[lib]
+name = "no_heap_counter_device"
+crate-type = ["staticlib"]
+# Only built when the `device` feature is on (build.sh); host builds and
+# `cargo test --workspace` skip this target entirely, so a no_std staticlib
+# never has to compile for the host.
+required-features = ["device"]
+
+[features]
+default = []
+device = ["dep:canopus-target-generated"]
+
+[dependencies]
+canopus-abi = { workspace = true }
+canopus-runtime = { workspace = true }
+canopus-target-generated = { path = "../../canopus-target-generated", optional = true }

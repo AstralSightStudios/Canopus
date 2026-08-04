@@ -1,0 +1,9 @@
+[package]
+name = "canopus-abi"
+description = "Canopus public module ABI v1 — Rust layout-parity with sdk/c/canopus_abi.h"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version = "1.77"
+
+[dependencies]

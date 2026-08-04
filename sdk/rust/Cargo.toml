@@ -1,0 +1,27 @@
+[workspace]
+resolver = "2"
+members = [
+    "canopus-abi",
+    "canopus-runtime",
+    "canopus-host-fake",
+    "canopus-target-generated",
+    "examples/no-heap-counter",
+    "examples/no-heap-counter-device",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0"
+
+[workspace.dependencies]
+canopus-abi = { path = "canopus-abi" }
+canopus-runtime = { path = "canopus-runtime" }
+
+# Device modules are linked for the target with panic=abort (no unwind,
+# architecture §12.1). Host tests keep the dev profile default.
+[profile.release]
+panic = "abort"
+opt-level = "z"
+lto = "thin"
+codegen-units = 1
