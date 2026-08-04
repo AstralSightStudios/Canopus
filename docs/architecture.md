@@ -1519,9 +1519,9 @@ schema/format
 |---|---:|---:|---:|---|
 | 参考证据 | 4 | 0 | 0 | 来自当前固件研究原型 |
 | 架构与治理 | 2 | 0 | 6 | 本文完成首版架构；仓库/许可证已确定（AGPL-3.0，ADR-CAN-001） |
-| Host/Schema/CLI | 0 | 0 | 12 | 未实现 |
+| Host/Schema/CLI | 9 | 1 | 2 | SCH-001..006/CLI-001..003 DONE；CLI-004 进行中；CLI-005/006 未开始 |
 | C SDK/Runtime | 0 | 0 | 10 | 未实现 |
-| Target/Build/Package | 0 | 0 | 14 | 未实现 |
+| Target/Build/Package | 2 | 2 | 10 | TGT-003/BLD-003 DONE；TGT-001/002 进行中；BLD-001/002/004 与 PKG-* 未开始 |
 | Device Manager | 0 | 0 | 13 | 未实现 |
 | Native App/Launcher/UI | 0 | 0 | 15 | 仅有 JS/Lua bootstrap，原生注册 ABI 尚未证明 |
 | Rust SDK | 0 | 0 | 9 | 未实现 |
@@ -1556,16 +1556,16 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-SCH-001` | `READY` | target schema | ARCH-003 | JSON Schema + valid/invalid fixtures |
-| `CAN-SCH-002` | `BACKLOG` | symbol schema | SCH-001 | 地址、原型、上下文、所有权、policy、proof 完整 |
-| `CAN-SCH-003` | `BACKLOG` | type/layout schema | SCH-001 | size/alignment/field/bitfield/layout diff |
-| `CAN-SCH-004` | `BACKLOG` | evidence schema | ARCH-008 | provenance、verdict、review、artifact hash |
-| `CAN-SCH-005` | `BACKLOG` | module manifest schema | ARCH-003 | lifecycle/capabilities/targets/control ABI |
-| `CAN-SCH-006` | `BACKLOG` | package manifest schema | SCH-005,ARCH-006 | multi-artifact hash/signature/revocation |
-| `CAN-CLI-001` | `BACKLOG` | CLI skeleton | ARCH-002 | version/help/config/error model |
-| `CAN-CLI-002` | `BACKLOG` | `canopus target validate` | SCH-001,CLI-001 | fixture tests |
-| `CAN-CLI-003` | `BACKLOG` | `canopus symbol validate` | SCH-002,003,004 | policy/provenance checks |
-| `CAN-CLI-004` | `BACKLOG` | Registry revision model | SCH-001..004 | signed immutable revision |
+| `CAN-SCH-001` | `DONE` | target schema | ARCH-003 | JSON Schema + valid/invalid fixtures |
+| `CAN-SCH-002` | `DONE` | symbol schema | SCH-001 | 地址、原型、上下文、所有权、policy、proof 完整；含 WITHDRAWN 条件约束 |
+| `CAN-SCH-003` | `DONE` | type/layout schema | SCH-001 | size/alignment/field/bitfield/layout diff |
+| `CAN-SCH-004` | `DONE` | evidence schema | ARCH-008 | provenance、verdict、review、artifact hash |
+| `CAN-SCH-005` | `DONE` | module manifest schema | ARCH-003 | lifecycle/capabilities/targets/control ABI |
+| `CAN-SCH-006` | `DONE` | package manifest schema | SCH-005,ARCH-006 | multi-artifact hash/signature/revocation |
+| `CAN-CLI-001` | `DONE` | CLI skeleton | ARCH-002 | Rust clap 多子命令；version/error model 就绪 |
+| `CAN-CLI-002` | `DONE` | `canopus target validate` | SCH-001,CLI-001 | fixture tests 通过 |
+| `CAN-CLI-003` | `DONE` | `canopus symbol validate` | SCH-002,003,004 | schema + policy/provenance checks |
+| `CAN-CLI-004` | `IN_PROGRESS` | Registry revision model | SCH-001..004 | targets/ 目录 registry 已实现；revision 签名未完成 |
 | `CAN-CLI-005` | `BACKLOG` | Target diff command | CLI-002,003 | firmware/symbol/layout/capability diff |
 | `CAN-CLI-006` | `BACKLOG` | Evidence query/report | CLI-003 | symbol→证据→测试双向查询 |
 
@@ -1588,15 +1588,15 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-TGT-001` | `BACKLOG` | 创建 xiaomi-band-10-pro-3.101.030 target pack | SCH-001..004 | exact identity 和 provenance 完整 |
-| `CAN-TGT-002` | `BACKLOG` | 导入已证明 symbols/types | TGT-001,BASE-* | 状态不被自动提升，withdrawn 保留 |
-| `CAN-TGT-003` | `BACKLOG` | Loader profile | TGT-001 | ELF/relo/constructor/size 规则 |
+| `CAN-TGT-001` | `IN_PROGRESS` | 创建 xiaomi-band-10-pro-3.101.030 target pack | SCH-001..004 | identity/loader profile/38 symbols 已导入；types/evidence 待补 |
+| `CAN-TGT-002` | `IN_PROGRESS` | 导入已证明 symbols/types | TGT-001,BASE-* | symbols 已从 CSV 保守导入；types 待导入 |
+| `CAN-TGT-003` | `DONE` | Loader profile | TGT-001 | best1503-v1 relocation envelope 已编码进 target.toml |
 | `CAN-TGT-004` | `BACKLOG` | Runtime identity generator | TGT-001 | wrong target 在任何固件调用前拒绝 |
 | `CAN-TGT-005` | `BACKLOG` | C typed veneer generator | TGT-002,C-002 | Thumb/prototype/policy 正确 |
 | `CAN-TGT-006` | `BACKLOG` | Rust binding generator | TGT-002,RUST-002 | unsafe/safe 分层 |
 | `CAN-BLD-001` | `BACKLOG` | Declarative build planner | SCH-005,TGT-003 | source×target×feature graph |
 | `CAN-BLD-002` | `BACKLOG` | C cross-build backend | BLD-001,C-010 | reproducible ET_REL |
-| `CAN-BLD-003` | `BACKLOG` | Generic ELF verifier | TGT-003 | invalid fixture 全部拒绝 |
+| `CAN-BLD-003` | `DONE` | Generic ELF verifier | TGT-003 | canopus-elf；真机 probe sha256=0f47e2e1 PASS；undefined/relo/ctor 检查 |
 | `CAN-BLD-004` | `BACKLOG` | Absolute-address policy scan | TGT-002,BLD-003 | 未登记/forbidden 地址拒绝 |
 | `CAN-PKG-001` | `BACKLOG` | Canonical package format | SCH-006 | deterministic archive |
 | `CAN-PKG-002` | `BACKLOG` | Ed25519 sign/verify | PKG-001,ARCH-006 | tamper/wrong-key/revoked tests |
@@ -1724,6 +1724,8 @@ schema/format
 | 2026-08-05 | 建立独立 Canopus 仓库并确定许可证 | `CAN-ARCH-002` | 仓库 `/Volumes/EXT0/Canopus`；AGPL-3.0；host 工具链选用 Rust；初始提交 `2711f51` |
 | 2026-08-05 | Target ID 重命名为 `xiaomi-band-10-pro` | `ADR-CAN-001` | 人类可读命名；完整 firmware SHA-256 仍为精确身份约束 |
 | 2026-08-05 | Target ID 携带固件版本：`xiaomi-band-10-pro-3.101.030` | `ADR-CAN-002` | 设备存在多固件版本；一个 target_id 精确对应一个固件；ADR-CAN-001 相应部分被取代 |
+| 2026-08-05 | Phase 1：六个 schema + Rust CLI + target registry | `CAN-SCH-001..006`,`CAN-CLI-001..003` | 14 个 fixtures；6 项 schema 集成测试通过；`canopus target/symbol/... validate` 可用 |
+| 2026-08-05 | 首个 target pack + ELF verifier | `CAN-TGT-001..003`,`CAN-BLD-003` | target.toml + 38 symbols 导入；verifier 对真机 probe（sha256 0f47e2e1）PASS；提交 `ad1e14e` |
 
 ---
 
