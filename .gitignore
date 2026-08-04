@@ -1,0 +1,71 @@
+# ---- Canopus repository .gitignore ----
+
+# Firmware images and analysis databases — NEVER commit these.
+*.bin
+*.img
+*.i64
+*.idb
+*.id0
+*.id1
+*.id2
+*.nam
+*.til
+*.so
+*.dylib
+*.a
+firmware_latest/
+
+# Rust build output
+target/
+**/target/
+Cargo.lock.bak
+
+# C build output
+build/
+dist/
+*.ko
+*.o
+*.obj
+*.elf
+*.axf
+*.out
+*.hex
+*.map
+*.lst
+
+# Packaging output
+*.canopus
+*.canopus.sig
+packages/
+*.tar.gz
+*.zip
+
+# Python caches (host tooling helpers)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# macOS noise
+.DS_Store
+.AppleDouble
+._*
+
+# Editor / tooling
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local secrets / signing keys
+*.pem
+*.key
+*.ed25519
+keys/
+secrets/
+
+# Recovered artifacts that are too large or binary and belong outside VCS
+captures/
+dumps/
+probes/bin/
