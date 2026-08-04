@@ -1524,7 +1524,7 @@ schema/format
 | Target/Build/Package | 10 | 1 | 3 | TGT-001..005、BLD-001..004、PKG-001..003 DONE；PKG-004 进行中；TGT-006/RUST-* 未开始 |
 | Device Manager | 2 | 1 | 10 | DEV-002/003 DONE；DEV-001 进行中；DEV-004..009 与 UI-* 待真机 |
 | Native App/Launcher/UI | 0 | 1 | 14 | CAN-APP-001 逆向中（枚举源已证明）；原生注册 ABI 尚未证明 |
-| Rust SDK | 0 | 0 | 9 | 未实现 |
+| Rust SDK | 8 | 1 | 0 | RUST-001..006/008/009 DONE；RUST-007 host+verifier PASS，真机 G0 待测 |
 | RE/LLM/MCP | 0 | 0 | 9 | 未实现 |
 | 迁移/多目标/发布 | 0 | 0 | 13 | 未实现 |
 
@@ -1593,7 +1593,7 @@ schema/format
 | `CAN-TGT-003` | `DONE` | Loader profile | TGT-001 | best1503-v1 relocation envelope 已编码进 target.toml |
 | `CAN-TGT-004` | `DONE` | Runtime identity generator | TGT-001 | 生成 canopus_identity_guard（版本+build 字符串） |
 | `CAN-TGT-005` | `DONE` | C typed veneer generator | TGT-002,C-002 | generate-veneer；managed 符号生成 Thumb veneer，FORBIDDEN/restricted 只留审计注释 |
-| `CAN-TGT-006` | `BACKLOG` | Rust binding generator | TGT-002,RUST-002 | unsafe/safe 分层 |
+| `CAN-TGT-006` | `DONE` | Rust binding generator | TGT-002,RUST-002 | `generate-rust-bindings`；managed 生成 unsafe binding，FORBIDDEN/restricted 只留审计注释 |
 | `CAN-BLD-001` | `DONE` | Declarative build planner | SCH-005,TGT-003 | build-plan 展开 module×target 并校验 capabilities |
 | `CAN-BLD-002` | `DONE` | C cross-build backend | BLD-001,C-010 | clang+ld.lld -r 产出 ET_REL，verifier PASS（sha256 a0f73378） |
 | `CAN-BLD-003` | `DONE` | Generic ELF verifier | TGT-003 | canopus-elf；真机 probe sha256=0f47e2e1 PASS；undefined/relo/ctor 检查 |
@@ -1645,15 +1645,15 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-RUST-001` | `BACKLOG` | `canopus-abi` no_std crate | C-001..003 | C/Rust layout parity |
-| `CAN-RUST-002` | `BACKLOG` | Generated target crate | TGT-006,RUST-001 | callable/policy/prototype tests |
-| `CAN-RUST-003` | `BACKLOG` | Panic-abort runtime | RUST-001 | 无 unwind/personality import |
-| `CAN-RUST-004` | `BACKLOG` | C constructor/destructor shim | RUST-001,C-001 | stock loader entry works |
-| `CAN-RUST-005` | `BACKLOG` | Relocatable link backend | RUST-003,004,BLD-003 | approved relocation only |
-| `CAN-RUST-006` | `BACKLOG` | Rust host fake target | C-009,RUST-001 | unit/property tests |
-| `CAN-RUST-007` | `BACKLOG` | no-heap removable example | RUST-001..006 | load/status/stop/unload 真机通过 |
-| `CAN-RUST-008` | `BACKLOG` | Optional allocator API | RUST-007 + allocator proof | allocator domain tests |
-| `CAN-RUST-009` | `BACKLOG` | Rust callback/resident policy | RUST-007,C-007 | stale callback 与 panic policy |
+| `CAN-RUST-001` | `DONE` | `canopus-abi` no_std crate | C-001..003 | repr(C) 布局与 C header 逐字段对齐（64/32-bit 断言） |
+| `CAN-RUST-002` | `DONE` | Generated target crate | TGT-006,RUST-001 | `generate-rust-bindings` + callable/policy/prototype/布局回归测试 |
+| `CAN-RUST-003` | `DONE` | Panic-abort runtime | RUST-001 | 设备构建 `panic=abort`；最终 ELF 0 undefined（无 unwind/personality） |
+| `CAN-RUST-004` | `DONE` | C constructor/destructor shim | RUST-001,C-001 | canopus_ctor.c；最终 ELF 1 ctor + 1 dtor |
+| `CAN-RUST-005` | `DONE` | Relocatable link backend | RUST-003,004,BLD-003 | `ld.lld -r` 产出 ELF32 ET_REL，verifier PASS（sha256 50641841，0 undefined）→ **BLK-003 已解除** |
+| `CAN-RUST-006` | `DONE` | Rust host fake target | C-009,RUST-001 | allocator/timer wheel/driver/harness 测试通过 |
+| `CAN-RUST-007` | `IN_PROGRESS` | no-heap removable example | RUST-001..006 | host 全生命周期测试 + 交叉构建 verifier PASS；真机 load/status/stop/unload 待 G0 gate |
+| `CAN-RUST-008` | `DONE` | Optional allocator API | RUST-007 + allocator proof | `BumpArena` LIFO arena + 5 项 allocator 域测试 |
+| `CAN-RUST-009` | `DONE` | Rust callback/resident policy | RUST-007,C-007 | stale-callback 端到端测试 + resident 无 unload path + 设备 panic handler |
 
 ## 23.12 RE、LLM 和 MCP
 
@@ -1693,7 +1693,7 @@ schema/format
 |---|---|---|---|
 | `BLK-001` | ARCH-002 及全部实现 | 尚未建立独立 Canopus 仓库和 license | **已解除 2026-08-05**：仓库 `/Volumes/EXT0/Canopus` 建立，license AGPL-3.0，ADR-CAN-001 |
 | `BLK-002` | DEV native service 后端 | 目标 daemon/thread/service ABI 尚未通用证明 | MVP 使用已证明 control/loader；另立 probe |
-| `BLK-003` | RUST-005 | Rust 最终 ET_REL relocation envelope 未验证 | 编译最小 no_std fixture 并运行 generic verifier |
+| `BLK-003` | RUST-005 | Rust 最终 ET_REL relocation envelope 未验证 | **已解除 2026-08-05**：no-heap-counter 交叉构建 ELF32 ET_REL，verifier PASS（sha256 50641841，0 undefined，1 ctor/1 dtor） |
 | `BLK-004` | MULTI-* | 尚未选定第二 exact target | 获得第二固件、hash、合法分析资料 |
 | `BLK-005` | MIG-005 | 当前 RTP 五秒内容在 Pixel HCI 时间轴占 6.528 秒 | 单独设计并验证 pacing 策略 |
 | `BLK-006` | APP-002..015 | exact-target native app registry、launcher descriptor、UI dispatcher 和注销同步语义尚未证明 | **部分解除 2026-08-05**：launcher 应用枚举源已证明（EVID-APP-001/002）；descriptor/register ABI 仍在逆向 |
@@ -1730,6 +1730,7 @@ schema/format
 | 2026-08-05 | Phase 3/4：veneer+identity 生成、目标构建、打包签名 | `CAN-TGT-004/005`,`CAN-BLD-001..004`,`CAN-PKG-001..003` | hello ET_REL verifier PASS（a0f73378）；Ed25519 签名/tamper 检测通过；提交 `cf59743` |
 | 2026-08-05 | Phase 5：supervisor protocol + package store | `CAN-DEV-002/003` | 7 项 host 测试；提交 `d9b11ec` |
 | 2026-08-05 | Phase 6：launcher 应用枚举链逆向 | `CAN-APP-001`（EVID-APP-001/002） | launcher.db+orderlist_v001/layout_v001+protobuf ordered list+msg 26/27 hide/show（u16 appid）；提交 `e41f66a` |
+| 2026-08-05 | Phase 8：Rust SDK 全链路 | `CAN-RUST-001..009`,`CAN-TGT-006`,`BLK-003` | no_std abi/runtime/host-fake/generated-crate/no-heap 模块；55 项 Rust 测试；交叉构建 verifier PASS（0 undefined）；提交 `62c337d` |
 
 ---
 
