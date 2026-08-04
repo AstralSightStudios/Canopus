@@ -1,0 +1,17 @@
+[package]
+name = "canopus-package"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+canopus-core = { path = "../canopus-core" }
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+getrandom = "0.2"
+hex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tar.workspace = true
+
+[dev-dependencies]

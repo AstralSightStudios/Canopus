@@ -111,6 +111,42 @@ enum ModuleCmd {
 enum PackageCmd {
     /// Validate a package manifest.
     Validate { path: PathBuf },
+    /// Build a .canopus package from a manifest + artifact files.
+    Build {
+        /// Package manifest JSON.
+        manifest: PathBuf,
+        /// Artifact source, target_id=path (repeatable).
+        #[arg(long = "artifact", action = clap::ArgAction::Append)]
+        artifact: Vec<String>,
+        /// Output .canopus file.
+        #[arg(long)]
+        output: PathBuf,
+        /// Sign with this secret key (32 bytes hex).
+        #[arg(long)]
+        key: Option<String>,
+    },
+    /// Append an Ed25519 signature entry to a package.
+    Sign {
+        pkg: PathBuf,
+        /// Secret key hex (32 bytes).
+        #[arg(long)]
+        key: String,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Verify a package's Ed25519 signature over its payload.
+    Verify {
+        pkg: PathBuf,
+        /// Public key hex (32 bytes).
+        #[arg(long)]
+        pubkey: String,
+    },
+    /// Generate a fresh Ed25519 key pair.
+    Keygen {
+        /// Optional output file (writes secret\\npublic). Otherwise prints.
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
 }
 
 fn main() {

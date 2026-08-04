@@ -150,6 +150,70 @@ pub fn package(cmd: PackageCmd) -> anyhow::Result<()> {
             );
             Ok(())
         }
+        PackageCmd::Build {
+            manifest,
+            artifact,
+            output,
+            key,
+        } => {
+            let value = load_json(&manifest)?;
+            validate(SchemaKind::Package, &value)?;
+            let pkg: PackageManifest = serde_json::from_value(value)?;
+
+            // parse target_id=path pairs
+            let mut files = std::collections::HashMap::new();
+            for a in &artifact {
+                let (tid, path) = a
+                    .split_once('=')
+                    .ok_or_else(|| anyhow::anyhow!("--artifact must be target_id=path: {a}"))?;
+                files.insert(tid.to_string(), PathBuf::from(path));
+            }
+
+            let pkg = canopus_package::manifest_with_real_hashes(&pkg, &files)?;
+            let archive = canopus_package::build_archive(&pkg, &files)?;
+            let signed = match key {
+                Some(k) => canopus_package::sign_archive(&archive, &k)?,
+                None => archive,
+            };
+            let len = signed.len();
+            std::fs::write(&output, &signed)?;
+            println!(
+                "wrote {} ({} bytes, {} artifact(s))",
+                output.display(),
+                len,
+                pkg.artifacts.len()
+            );
+            Ok(())
+        }
+        PackageCmd::Sign { pkg, key, output } => {
+            let archive = std::fs::read(&pkg)?;
+            let signed = canopus_package::sign_archive(&archive, &key)?;
+            let out = output.unwrap_or(pkg);
+            std::fs::write(&out, signed)?;
+            println!("signed {} ({}-byte signature appended)", out.display(), 64);
+            Ok(())
+        }
+        PackageCmd::Verify { pkg, pubkey } => {
+            let archive = std::fs::read(&pkg)?;
+            match canopus_package::verify_archive(&archive, &pubkey) {
+                Ok(()) => {
+                    println!("signature OK");
+                    Ok(())
+                }
+                Err(e) => Err(anyhow::anyhow!("{e}")),
+            }
+        }
+        PackageCmd::Keygen { output } => {
+            let (secret, public) = canopus_package::keygen()?;
+            if let Some(out) = output {
+                std::fs::write(&out, format!("{secret}\n{public}\n"))?;
+                println!("wrote key pair to {}", out.display());
+            } else {
+                println!("secret: {secret}");
+                println!("public: {public}");
+            }
+            Ok(())
+        }
     }
 }
 

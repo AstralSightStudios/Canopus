@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "package_id": "org.example.hello",
+  "module_id": "org.example.hello",
+  "version": "0.1.0",
+  "build_generation": 1,
+  "canopus_abi": "1",
+  "lifecycle": "removable",
+  "artifacts": [
+    {
+      "target_id": "xiaomi-band-10-pro-3.101.030",
+      "target_pack_revision": 1,
+      "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+      "path": "artifacts/xiaomi-band-10-pro-3.101.030/module.elf",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "capabilities": {
+    "required": ["clock.gettime"]
+  },
+  "target_pack_revision": 1,
+  "signature": {
+    "key_id": "dev-key-001",
+    "algorithm": "ed25519"
+  },
+  "min_manager_version": "0.1.0",
+  "reboot_required": false
+}

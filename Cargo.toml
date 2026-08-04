@@ -4,6 +4,7 @@ members = [
     "cli/canopus",
     "tools/canopus-core",
     "tools/elf-verifier",
+    "tools/package-builder",
 ]
 
 [workspace.package]
@@ -20,5 +21,6 @@ object = "0.36"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
+tar = "0.4"
 thiserror = "2"
 toml = "0.8"
