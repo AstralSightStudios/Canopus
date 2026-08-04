@@ -9,7 +9,7 @@ CFLAGS ?= -std=c11 -Wall -Wextra -Werror -g -O0
 
 INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../runtime/diagnostics -I../../runtime/control -I../../runtime/module \
-      -I../../modules/examples/hello
+      -I../../modules/examples/hello -I../../manager/protocol -I../../manager/storage
 CFLAGS += -DCANOPUS_HOST=1
 
 RUNTIME_SRCS = \
@@ -18,6 +18,8 @@ RUNTIME_SRCS = \
 	../../runtime/resources/canopus_resource.c \
 	../../runtime/diagnostics/canopus_diagnostics.c \
 	../../runtime/module/canopus_module.c \
+	../../manager/protocol/canopus_protocol.c \
+	../../manager/storage/canopus_store.c \
 	fake_target.c \
 	../../modules/examples/hello/hello.c
 
@@ -28,7 +30,8 @@ TEST_SRCS = \
 	test_lifecycle.c \
 	test_resources.c \
 	test_diagnostics.c \
-	test_hello_module.c
+	test_hello_module.c \
+	test_supervisor.c
 
 BIN = canopus_host_tests
 
