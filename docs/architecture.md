@@ -1525,7 +1525,7 @@ schema/format
 | Device Manager | 2 | 1 | 10 | DEV-002/003 DONE；DEV-001 进行中；DEV-004..009 与 UI-* 待真机 |
 | Native App/Launcher/UI | 0 | 1 | 14 | CAN-APP-001 逆向中（枚举源已证明）；原生注册 ABI 尚未证明 |
 | Rust SDK | 8 | 1 | 0 | RUST-001..006/008/009 DONE；RUST-007 host+verifier PASS，真机 G0 待测 |
-| RE/LLM/MCP | 0 | 0 | 9 | 未实现 |
+| RE/LLM/MCP | 9 | 0 | 0 | RE-001..009 DONE（canopus-re crate + `canopus re` CLI） |
 | 迁移/多目标/发布 | 0 | 0 | 13 | 未实现 |
 
 > 注：参考原型的完成度不能计作 Canopus framework 已实现。
@@ -1659,15 +1659,15 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-RE-001` | `BACKLOG` | RE task/evidence store | SCH-004,CLI-006 | immutable transitions |
-| `CAN-RE-002` | `BACKLOG` | Read-only IDA MCP adapter | RE-001 | tool allowlist/audit log |
-| `CAN-RE-003` | `BACKLOG` | Function evidence workflow | RE-002 | decompile+xref+callgraph bundle |
-| `CAN-RE-004` | `BACKLOG` | Type/layout workflow | RE-002,SCH-003 | caller/callee/layout evidence |
-| `CAN-RE-005` | `BACKLOG` | Signature candidate workflow | RE-003 | 只产候选，不 runtime 执行 |
-| `CAN-RE-006` | `BACKLOG` | Independent verifier stage | RE-003,004 | 支持 refute/withdraw |
-| `CAN-RE-007` | `BACKLOG` | Human promotion gate | RE-006,ARCH-005 | 审批后才生成 target diff |
-| `CAN-RE-008` | `BACKLOG` | Minimal probe generator | RE-007,C-010 | 风险/恢复/范围明确 |
-| `CAN-RE-009` | `BACKLOG` | Target pack revision signer | RE-007,PKG-002 | signed immutable revision |
+| `CAN-RE-001` | `DONE` | RE task/evidence store | SCH-004,CLI-006 | `canopus re` store；forward-only 状态机 + append-only audit + JSON 持久化 |
+| `CAN-RE-002` | `DONE` | Read-only IDA MCP adapter | RE-001 | 只读 tool allowlist + fail-closed + per-call audit（§9.3 强制） |
+| `CAN-RE-003` | `DONE` | Function evidence workflow | RE-002 | decompile+xref+callgraph bundle 装配与渲染 |
+| `CAN-RE-004` | `DONE` | Type/layout workflow | RE-002,SCH-003 | TypeEvidence bundle（size/alignment/fields/used_by） |
+| `CAN-RE-005` | `DONE` | Signature candidate workflow | RE-003 | decompile→候选原型；只产候选（confidence=10 不自动提升） |
+| `CAN-RE-006` | `DONE` | Independent verifier stage | RE-003,004 | Review 记录 + refute/withdraw 支持 |
+| `CAN-RE-007` | `DONE` | Human promotion gate | RE-006,ARCH-005 | `evaluate_gate`/`apply_gate`；需人工审批，单个 refute 阻塞 |
+| `CAN-RE-008` | `DONE` | Minimal probe generator | RE-007,C-010 | `canopus re probe`；dry probe（只 identity+status），FORBIDDEN 拒绝 |
+| `CAN-RE-009` | `DONE` | Target pack revision signer | RE-007,PKG-002 | `canopus re revision-sign/verify`；Ed25519 签名，篡改/wrong-key 拒绝 |
 
 ## 23.13 迁移、多目标与发布
 
@@ -1731,6 +1731,7 @@ schema/format
 | 2026-08-05 | Phase 5：supervisor protocol + package store | `CAN-DEV-002/003` | 7 项 host 测试；提交 `d9b11ec` |
 | 2026-08-05 | Phase 6：launcher 应用枚举链逆向 | `CAN-APP-001`（EVID-APP-001/002） | launcher.db+orderlist_v001/layout_v001+protobuf ordered list+msg 26/27 hide/show（u16 appid）；提交 `e41f66a` |
 | 2026-08-05 | Phase 8：Rust SDK 全链路 | `CAN-RUST-001..009`,`CAN-TGT-006`,`BLK-003` | no_std abi/runtime/host-fake/generated-crate/no-heap 模块；55 项 Rust 测试；交叉构建 verifier PASS（0 undefined）；提交 `62c337d` |
+| 2026-08-05 | Phase 9：RE orchestrator | `CAN-RE-001..009` | canopus-re（store/IDA allowlist/workflow/verify/revision）+ `canopus re` CLI；25 项测试；提交 `0329dd8` |
 
 ---
 
