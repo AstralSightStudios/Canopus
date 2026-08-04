@@ -26,7 +26,7 @@ Canopus 允许开发者：
 
 | 字段 | 值 |
 |---|---|
-| target_id | `xiaomi-band-10-pro` |
+| target_id | `xiaomi-band-10-pro-3.101.030` |
 | 设备 | 小米手环 10 Pro |
 | 固件版本 | `3.101.030` |
 | 固件 build | `CONBINE_LTALM078_T3.101.030_06011854` |
@@ -43,7 +43,7 @@ sdk/            C / Rust / ABI 定义
 runtime/        portable C runtime（module/lifecycle/resources/diagnostics/control）
 manager/        device-side supervisor / protocol / storage
 app-sdk/        native app SDK（C/Rust/UI/launcher/resources）
-targets/        target packs（xiaomi-band-10-pro/...）
+targets/        target packs（xiaomi-band-10-pro-3.101.030/...）
 modules/        示例与参考模块
 tools/          RE orchestrator / symbol-generator / elf-verifier / package-builder
 tests/          host / integration / fixtures / hardware

@@ -1,0 +1,21 @@
+### ADR-CAN-002：Target ID 携带固件版本
+
+- 状态：Accepted
+- 日期：2026-08-05
+- 决策者：Canopus maintainer
+- 背景：`xiaomi-band-10-pro`（小米手环 10 Pro）存在多个固件版本。架构「精确固件绑定」原则要求一个 target 精确对应一个固件。若 target_id 只表达设备、不表达固件版本，则同一 target_id 下存在多个固件，target_id 无法唯一指代一个 target。
+- 决策：
+  - `target_id` 必须同时携带设备标识与固件版本：`<device>-<firmware_version>`，例如 `xiaomi-band-10-pro-3.101.030`。
+  - 一个 `target_id` 精确对应一个固件（一个 target pack 修订链）。不同固件版本使用不同 target_id。
+  - 设备型号本身由 `device_model` / `device_family` 字段表达，不参与 target_id 的唯一性。
+  - `firmware_sha256` 仍是权威安全身份；target_id 是稳定、人类可读的定位标识。
+  - `symbol_id` / `type_id` 等派生标识直接以 target_id 为前缀，因此也携带固件版本。
+- 替代方案：
+  - target_id 只含设备名（`xiaomi-band-10-pro`），固件由 `firmware_sha256` + revision 区分（拒绝：多固件下 target_id 不唯一，违反「一个 target 对应一个固件」，也与用户要求冲突）。
+  - 用哈希截断 `xiaomi-band-f701a84`（拒绝：不友好，ADR-CAN-001 已否决）。
+  - 用 `xiaomi-band-10-pro-fw-3.101.030`（拒绝：冗余，无附加信息）。
+- 安全影响：无。身份验证仍以完整 SHA-256 和 runtime guard 为准。
+- 生命周期影响：新固件版本发布时创建新的 target_id 与新的 target pack 修订链；模块 manifest 的 `targets.include` 按目标固件版本引用。
+- 兼容性影响：本 ADR 生效前创建的 target_id `xiaomi-band-10-pro` 全部迁移为 `xiaomi-band-10-pro-3.101.030`。
+- 验证证据：全仓 `grep -r 'xiaomi-band-10-pro[^.-]'` 无未版本化的 target_id 残留；target schema 的 target_id pattern 已允许 `.`。
+- 后续任务：首个 target pack（CAN-TGT-001）使用 `xiaomi-band-10-pro-3.101.030`。

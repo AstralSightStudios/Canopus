@@ -118,5 +118,23 @@
       }
     },
     "notes": { "type": "string" }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "WITHDRAWN" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "provenance": {
+            "properties": { "withdrawal_reason": { "type": "string", "minLength": 1 } },
+            "required": ["withdrawal_reason"]
+          }
+        },
+        "required": ["provenance"]
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "function" } }, "required": ["kind"] },
+      "then": { "required": ["callable_address"] }
+    }
+  ]
 }

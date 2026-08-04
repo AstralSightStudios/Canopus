@@ -4,7 +4,7 @@
 > 框架状态：架构设计阶段  
 > 初始参考目标：小米手环 10 Pro（Xiaomi Band 10 Pro），固件 `3.101.030`  
 > 初始参考固件 SHA-256：`f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b`  
-> 目标 ID：`xiaomi-band-10-pro`（见 ADR-CAN-001，target id 采用人类可读命名，firmware SHA-256 仍为精确身份约束）
+> 目标 ID：`xiaomi-band-10-pro-3.101.030`（见 ADR-CAN-001/002：target id 人类可读且携带固件版本，一个 target_id 精确对应一个固件；firmware SHA-256 仍为权威安全身份）
 
 ---
 
@@ -243,7 +243,7 @@ canopus/
 │   ├── launcher/
 │   └── resources/
 ├── targets/
-│   └── xiaomi-band-10-pro/
+│   └── xiaomi-band-10-pro-3.101.030/
 │       ├── target.toml
 │       ├── symbols/
 │       ├── types/
@@ -280,7 +280,7 @@ canopus/
 
 ```toml
 schema = 1
-target_id = "xiaomi-band-10-pro"
+target_id = "xiaomi-band-10-pro-3.101.030"
 device_family = "xiaomi-smart-band"
 device_model = "target-model"
 board_revision = "unknown"
@@ -334,7 +334,7 @@ Loader profile 描述：
 
 ```yaml
 schema: 1
-symbol_id: xiaomi-band-10-pro.bt.timer.cancel
+symbol_id: xiaomi-band-10-pro-3.101.030.bt.timer.cancel
 name: bt_timer_cancel
 kind: function
 entry_address: 0x0C7D2CCC
@@ -466,7 +466,7 @@ WITHDRAWN          历史结论已撤销，永久保留记录
 
 ```yaml
 question: "timer cancel 是否释放 callback argument"
-target_id: xiaomi-band-10-pro
+target_id: xiaomi-band-10-pro-3.101.030
 candidate_symbols: [...]
 prototype_hypothesis: ...
 callsite_evidence: ...
@@ -731,7 +731,7 @@ canopus_abi = "1"
 
 [targets]
 include = [
-  "xiaomi-band-10-pro",
+  "xiaomi-band-10-pro-3.101.030",
   "xiaomi-band-future-version"
 ]
 
@@ -814,7 +814,7 @@ module.canopus
 ├── manifest.cbor
 ├── manifest.json              # 可选的人类可读镜像
 ├── artifacts/
-│   ├── xiaomi-band-10-pro/module.elf
+│   ├── xiaomi-band-10-pro-3.101.030/module.elf
 │   └── other-target/module.elf
 ├── apps/
 │   ├── launcher-entry.cbor
@@ -1588,7 +1588,7 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-TGT-001` | `BACKLOG` | 创建 xiaomi-band-10-pro target pack | SCH-001..004 | exact identity 和 provenance 完整 |
+| `CAN-TGT-001` | `BACKLOG` | 创建 xiaomi-band-10-pro-3.101.030 target pack | SCH-001..004 | exact identity 和 provenance 完整 |
 | `CAN-TGT-002` | `BACKLOG` | 导入已证明 symbols/types | TGT-001,BASE-* | 状态不被自动提升，withdrawn 保留 |
 | `CAN-TGT-003` | `BACKLOG` | Loader profile | TGT-001 | ELF/relo/constructor/size 规则 |
 | `CAN-TGT-004` | `BACKLOG` | Runtime identity generator | TGT-001 | wrong target 在任何固件调用前拒绝 |
@@ -1723,6 +1723,7 @@ schema/format
 | 2026-08-05 | 创建 Canopus 架构文档 v1 | `CAN-ARCH-001` | 基于现有 module loader、control ABI、resident lifecycle 和 Phase 6 媒体实验证据 |
 | 2026-08-05 | 建立独立 Canopus 仓库并确定许可证 | `CAN-ARCH-002` | 仓库 `/Volumes/EXT0/Canopus`；AGPL-3.0；host 工具链选用 Rust；初始提交 `2711f51` |
 | 2026-08-05 | Target ID 重命名为 `xiaomi-band-10-pro` | `ADR-CAN-001` | 人类可读命名；完整 firmware SHA-256 仍为精确身份约束 |
+| 2026-08-05 | Target ID 携带固件版本：`xiaomi-band-10-pro-3.101.030` | `ADR-CAN-002` | 设备存在多固件版本；一个 target_id 精确对应一个固件；ADR-CAN-001 相应部分被取代 |
 
 ---
 

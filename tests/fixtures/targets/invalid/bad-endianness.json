@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "device_family": "xiaomi-smart-band",
+  "device_model": "Xiaomi Band 10 Pro",
+  "os_family": "nuttx-derived",
+  "architecture": "armv8-m.main",
+  "cpu": "cortex-m33",
+  "instruction_set": "thumb2",
+  "endianness": "middle",
+  "float_abi": "soft",
+  "loader": "nuttx-modlib-elf32-rel",
+  "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+  "firmware_version": "3.101.030",
+  "firmware_build": "CONBINE_LTALM078_T3.101.030_06011854",
+  "module_abi": 1,
+  "relocation_profile": "best1503-v1",
+  "revision": 1
+}

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.030.type.stock_timespec.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "kind": "struct",
+  "name": "stock_timespec_t",
+  "size": 8,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "tv_sec",
+      "offset": 0,
+      "width": 4,
+      "signedness": "signed"
+    },
+    {
+      "name": "tv_nsec",
+      "offset": 4,
+      "width": 4,
+      "signedness": "signed"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "evidence_ids": ["EVID-CLOCK-001"],
+    "source": "2026-07-22 device probe clock_gettime(1, ...) tv_nsec=79600000 valid range"
+  }
+}

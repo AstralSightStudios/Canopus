@@ -1,6 +1,7 @@
 ### ADR-CAN-001：Target ID 采用人类可读命名
 
-- 状态：Accepted
+- 状态：Superseded（命名决策由 [[ADR-CAN-002]] 取代：target id 还必须携带固件版本）
+- 日期：2026-08-05
 - 日期：2026-08-05
 - 决策者：Canopus maintainer
 - 背景：架构文档早期草案将首个 target 的 `target_id` 命名为 `xiaomi-band-f701a84`，`f701a84` 截取自固件 SHA-256。该命名被截断且对人不友好，无法快速识别设备。

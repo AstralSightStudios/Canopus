@@ -11,7 +11,7 @@
 | 0 项目边界与 schema | READY | 待独立仓库确认（BLK-001） |
 | 1 Host CLI 与 target registry | BACKLOG | |
 | 2 C ABI 与 portable runtime | BACKLOG | |
-| 3 首个 target adapter | BACKLOG | xiaomi-band-10-pro |
+| 3 首个 target adapter | BACKLOG | xiaomi-band-10-pro-3.101.030 |
 | 4 C module build/package | BACKLOG | |
 | 5 Device supervisor MVP | BACKLOG | |
 | 6 Native App 与 Launcher adapter | BACKLOG | 受 BLK-006 阻塞，依赖 IDA MCP 逆向 |

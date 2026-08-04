@@ -28,8 +28,8 @@
     "schema": { "const": 1 },
     "target_id": {
       "type": "string",
-      "pattern": "^[a-z0-9][a-z0-9-]*$",
-      "description": "Human-readable stable identifier, e.g. xiaomi-band-10-pro. Not part of security identity."
+      "pattern": "^[a-z0-9][a-z0-9.-]*$",
+      "description": "Human-readable identifier carrying device AND firmware version, e.g. xiaomi-band-10-pro-3.101.030. One target_id maps to exactly one firmware; firmware_sha256 remains the authoritative security identity."
     },
     "device_family": { "type": "string" },
     "device_model": { "type": "string" },
