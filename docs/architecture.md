@@ -1520,7 +1520,7 @@ schema/format
 | 参考证据 | 4 | 0 | 0 | 来自当前固件研究原型 |
 | 架构与治理 | 2 | 0 | 6 | 本文完成首版架构；仓库/许可证已确定（AGPL-3.0，ADR-CAN-001） |
 | Host/Schema/CLI | 9 | 1 | 2 | SCH-001..006/CLI-001..003 DONE；CLI-004 进行中；CLI-005/006 未开始 |
-| C SDK/Runtime | 0 | 0 | 10 | 未实现 |
+| C SDK/Runtime | 9 | 1 | 0 | C-001..009 DONE；C-010 host 部分完成，真机 G0 待测 |
 | Target/Build/Package | 2 | 2 | 10 | TGT-003/BLD-003 DONE；TGT-001/002 进行中；BLD-001/002/004 与 PKG-* 未开始 |
 | Device Manager | 0 | 0 | 13 | 未实现 |
 | Native App/Launcher/UI | 0 | 0 | 15 | 仅有 JS/Lua bootstrap，原生注册 ABI 尚未证明 |
@@ -1573,16 +1573,16 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-C-001` | `BACKLOG` | 固定宽度 module descriptor | ARCH-003,SCH-005 | C static asserts + ABI fixture |
-| `CAN-C-002` | `BACKLOG` | Context/capability ABI | C-001 | versioned tables，无 target private type |
-| `CAN-C-003` | `BACKLOG` | Command/status ABI | C-001 | request ID、async states、unknown version tests |
-| `CAN-C-004` | `BACKLOG` | Sequence snapshot library | C-003 | race/partial snapshot host tests |
-| `CAN-C-005` | `BACKLOG` | Lifecycle state machine | C-001 | illegal transition/property tests |
-| `CAN-C-006` | `BACKLOG` | General resource tracker | C-005 | reverse rollback、detached、retained states |
-| `CAN-C-007` | `BACKLOG` | Callback generation guards | C-005 | stale callback/timer tests |
-| `CAN-C-008` | `BACKLOG` | Diagnostics/event writer | C-003,004 | bounded append + dropped counter |
-| `CAN-C-009` | `BACKLOG` | Host fake target | C-002 | allocator/timer/callback/driver fakes |
-| `CAN-C-010` | `BACKLOG` | C example removable module | C-001..009 | host tests + first target load/unload |
+| `CAN-C-001` | `DONE` | 固定宽度 module descriptor | ARCH-003,SCH-005 | C static asserts + ABI fixture |
+| `CAN-C-002` | `DONE` | Context/capability ABI | C-001 | versioned tables，无 target private type |
+| `CAN-C-003` | `DONE` | Command/status ABI | C-001 | request ID、async states、unknown version tests |
+| `CAN-C-004` | `DONE` | Sequence snapshot library | C-003 | race/partial snapshot host tests |
+| `CAN-C-005` | `DONE` | Lifecycle state machine | C-001 | illegal transition/property tests |
+| `CAN-C-006` | `DONE` | General resource tracker | C-005 | reverse rollback、detached、retained states |
+| `CAN-C-007` | `DONE` | Callback generation guards | C-005 | stale callback/timer tests |
+| `CAN-C-008` | `DONE` | Diagnostics/event writer | C-003,004 | bounded append + dropped counter |
+| `CAN-C-009` | `DONE` | Host fake target | C-002 | allocator/timer/callback/driver fakes |
+| `CAN-C-010` | `IN_PROGRESS` | C example removable module | C-001..009 | host tests 通过；真机 load/unload 待 G0 gate |
 
 ## 23.8 首个 Target、Build 与 Package
 
@@ -1726,6 +1726,7 @@ schema/format
 | 2026-08-05 | Target ID 携带固件版本：`xiaomi-band-10-pro-3.101.030` | `ADR-CAN-002` | 设备存在多固件版本；一个 target_id 精确对应一个固件；ADR-CAN-001 相应部分被取代 |
 | 2026-08-05 | Phase 1：六个 schema + Rust CLI + target registry | `CAN-SCH-001..006`,`CAN-CLI-001..003` | 14 个 fixtures；6 项 schema 集成测试通过；`canopus target/symbol/... validate` 可用 |
 | 2026-08-05 | 首个 target pack + ELF verifier | `CAN-TGT-001..003`,`CAN-BLD-003` | target.toml + 38 symbols 导入；verifier 对真机 probe（sha256 0f47e2e1）PASS；提交 `ad1e14e` |
+| 2026-08-05 | Phase 2：portable C runtime + host tests | `CAN-C-001..010` | 155 项 host checks；runtime 对 Cortex-M33 Thumb 交叉编译通过；提交 `270389b` |
 
 ---
 
