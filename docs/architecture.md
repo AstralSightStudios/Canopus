@@ -1522,7 +1522,7 @@ schema/format
 | Host/Schema/CLI | 9 | 1 | 2 | SCH-001..006/CLI-001..003 DONE；CLI-004 进行中；CLI-005/006 未开始 |
 | C SDK/Runtime | 9 | 1 | 0 | C-001..009 DONE；C-010 host 部分完成，真机 G0 待测 |
 | Target/Build/Package | 10 | 1 | 3 | TGT-001..005、BLD-001..004、PKG-001..003 DONE；PKG-004 进行中；TGT-006/RUST-* 未开始 |
-| Device Manager | 0 | 0 | 13 | 未实现 |
+| Device Manager | 2 | 1 | 10 | DEV-002/003 DONE；DEV-001 进行中；DEV-004..009 与 UI-* 待真机 |
 | Native App/Launcher/UI | 0 | 0 | 15 | 仅有 JS/Lua bootstrap，原生注册 ABI 尚未证明 |
 | Rust SDK | 0 | 0 | 9 | 未实现 |
 | RE/LLM/MCP | 0 | 0 | 9 | 未实现 |
@@ -1607,9 +1607,9 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-DEV-001` | `BACKLOG` | Device identity reader | TGT-004 | UI/manager 与 module guard 一致 |
-| `CAN-DEV-002` | `BACKLOG` | Versioned supervisor protocol | C-003 | malformed/old/new ABI tests |
-| `CAN-DEV-003` | `BACKLOG` | Package store transaction | PKG-001,002 | power-loss fixture、atomic slots |
+| `CAN-DEV-001` | `IN_PROGRESS` | Device identity reader | TGT-004 | veneer identity guard 已生成；supervisor 读取逻辑待接线 |
+| `CAN-DEV-002` | `DONE` | Versioned supervisor protocol | C-003 | canopus_protocol；malformed/old-ABI/async-state 测试通过 |
+| `CAN-DEV-003` | `DONE` | Package store transaction | PKG-001,002 | canopus_store；temp+fsync+rename、previous/staged/quarantine 测试通过 |
 | `CAN-DEV-004` | `BACKLOG` | Target loader adapter | TGT-003,DEV-001 | exact payload load/status |
 | `CAN-DEV-005` | `BACKLOG` | Module state persistence | DEV-002,003 | enabled/active/pending 不混淆 |
 | `CAN-DEV-006` | `BACKLOG` | Removable disable/unload | C-005,006,DEV-004 | drain 后 rmmod，busy 语义正确 |
@@ -1728,6 +1728,7 @@ schema/format
 | 2026-08-05 | 首个 target pack + ELF verifier | `CAN-TGT-001..003`,`CAN-BLD-003` | target.toml + 38 symbols 导入；verifier 对真机 probe（sha256 0f47e2e1）PASS；提交 `ad1e14e` |
 | 2026-08-05 | Phase 2：portable C runtime + host tests | `CAN-C-001..010` | 155 项 host checks；runtime 对 Cortex-M33 Thumb 交叉编译通过；提交 `270389b` |
 | 2026-08-05 | Phase 3/4：veneer+identity 生成、目标构建、打包签名 | `CAN-TGT-004/005`,`CAN-BLD-001..004`,`CAN-PKG-001..003` | hello ET_REL verifier PASS（a0f73378）；Ed25519 签名/tamper 检测通过；提交 `cf59743` |
+| 2026-08-05 | Phase 5：supervisor protocol + package store | `CAN-DEV-002/003` | 7 项 host 测试；提交 `d9b11ec` |
 
 ---
 
