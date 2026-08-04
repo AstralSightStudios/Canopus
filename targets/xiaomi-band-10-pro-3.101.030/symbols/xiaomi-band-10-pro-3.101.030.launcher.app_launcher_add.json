@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.launcher.app_launcher_add",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "app_launcher_add",
+  "kind": "function",
+  "entry_address": "0x0C4F2BDC",
+  "callable_address": "0x0C4F2BDD",
+  "instruction_set": "thumb",
+  "prototype": "int(app_record_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": ["launcher_owner"],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "callee_reads",
+    "return_value": "int"
+  },
+  "side_effects": [
+    "adds_app_to_runtime_list",
+    "writes_launcher_db",
+    "adds_icon"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": ["EVID-APP-001"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "evidence_ids": ["EVID-APP-001"],
+    "source": "ida sub_C4F2BDC (log tag app_launcher_add)"
+  },
+  "notes": "launcher app register path: resolves app record (name at +8), inserts into runtime lists 0x200D090C/0x200D0924, calls sub_C4F7004, logs 'add icon: %s'. The app_record_t layout is not yet fully proven."
+}
