@@ -1523,7 +1523,7 @@ schema/format
 | C SDK/Runtime | 9 | 1 | 0 | C-001..009 DONE；C-010 host 部分完成，真机 G0 待测 |
 | Target/Build/Package | 10 | 1 | 3 | TGT-001..005、BLD-001..004、PKG-001..003 DONE；PKG-004 进行中；TGT-006/RUST-* 未开始 |
 | Device Manager | 2 | 1 | 10 | DEV-002/003 DONE；DEV-001 进行中；DEV-004..009 与 UI-* 待真机 |
-| Native App/Launcher/UI | 0 | 0 | 15 | 仅有 JS/Lua bootstrap，原生注册 ABI 尚未证明 |
+| Native App/Launcher/UI | 0 | 1 | 14 | CAN-APP-001 逆向中（枚举源已证明）；原生注册 ABI 尚未证明 |
 | Rust SDK | 0 | 0 | 9 | 未实现 |
 | RE/LLM/MCP | 0 | 0 | 9 | 未实现 |
 | 迁移/多目标/发布 | 0 | 0 | 13 | 未实现 |
@@ -1625,7 +1625,7 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-APP-001` | `READY` | 调查 exact-target launcher 应用枚举链 | RE-002 | 枚举源、descriptor xref、线程上下文有证据 |
+| `CAN-APP-001` | `IN_PROGRESS` | 调查 exact-target launcher 应用枚举链 | RE-002 | 枚举源已证明：launcher.db(orderlist_v001/layout_v001)+protobuf ordered list+System 消息 26/27；descriptor/线程上下文待补 |
 | `CAN-APP-002` | `BACKLOG` | 恢复 native app descriptor/layout | APP-001,SCH-003 | size/offset/ownership/lifetime 交叉验证 |
 | `CAN-APP-003` | `BACKLOG` | 恢复 app register/unregister ABI | APP-001,002 | 返回值、冲突、同步/异步和释放语义明确 |
 | `CAN-APP-004` | `BACKLOG` | 恢复 launcher icon/name/resource 格式 | APP-001 | host parser/serializer fixtures |
@@ -1696,7 +1696,7 @@ schema/format
 | `BLK-003` | RUST-005 | Rust 最终 ET_REL relocation envelope 未验证 | 编译最小 no_std fixture 并运行 generic verifier |
 | `BLK-004` | MULTI-* | 尚未选定第二 exact target | 获得第二固件、hash、合法分析资料 |
 | `BLK-005` | MIG-005 | 当前 RTP 五秒内容在 Pixel HCI 时间轴占 6.528 秒 | 单独设计并验证 pacing 策略 |
-| `BLK-006` | APP-002..015 | exact-target native app registry、launcher descriptor、UI dispatcher 和注销同步语义尚未证明 | 完成 APP-001 至 APP-010 的只读逆向、host fixture 和最小真机 probe |
+| `BLK-006` | APP-002..015 | exact-target native app registry、launcher descriptor、UI dispatcher 和注销同步语义尚未证明 | **部分解除 2026-08-05**：launcher 应用枚举源已证明（EVID-APP-001/002）；descriptor/register ABI 仍在逆向 |
 
 ## 23.15 决策记录模板
 
@@ -1729,6 +1729,7 @@ schema/format
 | 2026-08-05 | Phase 2：portable C runtime + host tests | `CAN-C-001..010` | 155 项 host checks；runtime 对 Cortex-M33 Thumb 交叉编译通过；提交 `270389b` |
 | 2026-08-05 | Phase 3/4：veneer+identity 生成、目标构建、打包签名 | `CAN-TGT-004/005`,`CAN-BLD-001..004`,`CAN-PKG-001..003` | hello ET_REL verifier PASS（a0f73378）；Ed25519 签名/tamper 检测通过；提交 `cf59743` |
 | 2026-08-05 | Phase 5：supervisor protocol + package store | `CAN-DEV-002/003` | 7 项 host 测试；提交 `d9b11ec` |
+| 2026-08-05 | Phase 6：launcher 应用枚举链逆向 | `CAN-APP-001`（EVID-APP-001/002） | launcher.db+orderlist_v001/layout_v001+protobuf ordered list+msg 26/27 hide/show（u16 appid）；提交 `e41f66a` |
 
 ---
 
