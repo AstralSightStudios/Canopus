@@ -1522,7 +1522,7 @@ schema/format
 | Host/Schema/CLI | 9 | 1 | 2 | SCH-001..006/CLI-001..003 DONE；CLI-004 进行中；CLI-005/006 未开始 |
 | C SDK/Runtime | 9 | 1 | 0 | C-001..009 DONE；C-010 host 部分完成，真机 G0 待测 |
 | Target/Build/Package | 10 | 1 | 3 | TGT-001..005、BLD-001..004、PKG-001..003 DONE；PKG-004 进行中；TGT-006/RUST-* 未开始 |
-| Device Manager | 2 | 1 | 10 | DEV-002/003 DONE；DEV-001 进行中；DEV-004..009 与 UI-* 待真机 |
+| Device Manager | 2 | 1 | 6 | DEV-002/003、UI-001..004 DONE；DEV-001 进行中；DEV-004..009 待真机 |
 | Native App/Launcher/UI | 0 | 1 | 14 | CAN-APP-001 逆向中（枚举源已证明）；原生注册 ABI 尚未证明 |
 | Rust SDK | 8 | 1 | 0 | RUST-001..006/008/009 DONE；RUST-007 host+verifier PASS，真机 G0 待测 |
 | RE/LLM/MCP | 9 | 0 | 0 | RE-001..009 DONE（canopus-re crate + `canopus re` CLI） |
@@ -1616,10 +1616,10 @@ schema/format
 | `CAN-DEV-007` | `BACKLOG` | Resident barrier enforcement | C-005,007,DEV-004 | 激活后无 unload path |
 | `CAN-DEV-008` | `BACKLOG` | Next-boot disable/remove/update | DEV-003,005,007 | reboot 后正确切换 slot |
 | `CAN-DEV-009` | `BACKLOG` | Quarantine/safe mode | DEV-005,008 | fail boot 后最小恢复启动 |
-| `CAN-UI-001` | `BACKLOG` | Manager device page | DEV-001,002 | 显示 identity/target/framework |
-| `CAN-UI-002` | `BACKLOG` | Module list/detail | DEV-005 | lifecycle/capability/signature/risk |
-| `CAN-UI-003` | `BACKLOG` | Install/update/rollback UI | DEV-003,008 | 状态和确认符合真实语义 |
-| `CAN-UI-004` | `BACKLOG` | Disable/remove/reboot UI | DEV-006..009 | resident 不出现虚假 unload |
+| `CAN-UI-001` | `DONE` | Manager device page | DEV-001,002 | canopus_manager 设备页：identity/target/framework/safe-mode |
+| `CAN-UI-002` | `DONE` | Module list/detail | DEV-005 | 列表/详情：lifecycle/class/signature/risk |
+| `CAN-UI-003` | `DONE` | Install/update/rollback UI | DEV-003,008 | op 走 versioned protocol + transport 抽象 |
+| `CAN-UI-004` | `DONE` | Disable/remove/reboot UI | DEV-006..009 | lifecycle-aware：resident 只显示 [disable-next-boot]/[remove+reboot]，无虚假 unload |
 
 ## 23.10 Native App、Launcher 与 UI
 
@@ -1732,6 +1732,7 @@ schema/format
 | 2026-08-05 | Phase 6：launcher 应用枚举链逆向 | `CAN-APP-001`（EVID-APP-001/002） | launcher.db+orderlist_v001/layout_v001+protobuf ordered list+msg 26/27 hide/show（u16 appid）；提交 `e41f66a` |
 | 2026-08-05 | Phase 8：Rust SDK 全链路 | `CAN-RUST-001..009`,`CAN-TGT-006`,`BLK-003` | no_std abi/runtime/host-fake/generated-crate/no-heap 模块；55 项 Rust 测试；交叉构建 verifier PASS（0 undefined）；提交 `62c337d` |
 | 2026-08-05 | Phase 9：RE orchestrator | `CAN-RE-001..009` | canopus-re（store/IDA allowlist/workflow/verify/revision）+ `canopus re` CLI；25 项测试；提交 `0329dd8` |
+| 2026-08-05 | Phase 7：Manager UI | `CAN-UI-001..004` | canopus_manager 页面+生命周期感知操作；13 host 测试/67 检查；提交 `1e60be9` |
 
 ---
 
