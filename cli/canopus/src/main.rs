@@ -71,6 +71,16 @@ enum TargetCmd {
         #[arg(long, default_value = "targets")]
         targets_dir: PathBuf,
     },
+    /// Generate the C veneer + identity guard header for a target pack.
+    GenerateVeneer {
+        /// Target id, e.g. xiaomi-band-10-pro-3.101.030.
+        target: String,
+        #[arg(long, default_value = "targets")]
+        targets_dir: PathBuf,
+        /// Write output to this path (default: <pack>/generated/canopus_veneer.h).
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
 }
 
 #[derive(Subcommand)]

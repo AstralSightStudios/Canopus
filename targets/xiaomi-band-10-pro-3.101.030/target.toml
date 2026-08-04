@@ -78,6 +78,16 @@ name = "R_ARM_THM_MOVT_ABS"
 arm_type = 48
 notes = "verified Thumb movt"
 
+[[loader_profile.relocations]]
+name = "R_ARM_THM_CALL"
+arm_type = 10
+notes = "intra-module Thumb BL; standard modlib up_relocate case; probe never emitted one (single-function), G0 must confirm"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_JUMP24"
+arm_type = 30
+notes = "intra-module Thumb conditional branch; standard modlib case; G0 must confirm"
+
 [provenance]
 source_repo = "firmware_latest"
 source_findings = [

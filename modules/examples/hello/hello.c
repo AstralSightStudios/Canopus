@@ -4,7 +4,7 @@
  * Demonstrates the portable runtime on a real module shape: descriptor,
  * lifecycle, resource tracker, status writer, stale-callback guard. No
  * firmware addresses are hard-coded; platform hooks come from
- * hello_platform.h. Host-testable end to end.
+ * hello_platform.h (host = fake target, device = generated veneers).
  */
 #include "canopus_abi.h"
 #include "canopus_runtime.h"
@@ -21,12 +21,14 @@ struct hello_state {
     uint32_t gen_captured;
     int timer_id;
     uint32_t timer_fires;
+    int32_t started_tv_sec;
     struct canopus_status_writer_v1 writer;
     uint8_t status_buf[32];
 };
 
 static struct hello_state s_state;
 
+#if HELLO_HAS_TIMER
 static void on_timer(void *cookie)
 {
     struct hello_state *st = (struct hello_state *)cookie;
@@ -37,6 +39,7 @@ static void on_timer(void *cookie)
     }
     st->timer_fires += 1u;
 }
+#endif
 
 static int hello_prepare(const struct canopus_context_v1 *ctx)
 {
@@ -50,6 +53,7 @@ static int hello_prepare(const struct canopus_context_v1 *ctx)
     st->gen_captured = 0;
     st->timer_id = -1;
     st->timer_fires = 0;
+    st->started_tv_sec = 0;
     if (canopus_status_writer_init(&st->writer, st->status_buf,
                                    sizeof(st->status_buf)) != 0) {
         return -1;
@@ -60,30 +64,41 @@ static int hello_prepare(const struct canopus_context_v1 *ctx)
 static int hello_activate(const struct canopus_context_v1 *ctx)
 {
     struct hello_state *st = &s_state;
-    struct canopus_resource_v1 timer_res;
     (void)ctx;
 
-    /* capture generation so the timer callback is valid only for this
+    /* capture generation so retained callbacks are valid only for this
      * activation */
     canopus_generation_bump(&st->gen);
     st->gen_captured = canopus_generation_get(&st->gen);
 
-    st->timer_id = hello_timer_register(on_timer, st, 10u);
-    if (st->timer_id < 0) {
-        return -1;
+    /* warm the clock capability and record a start timestamp */
+    {
+        hello_timespec_t ts;
+        if (hello_clock_gettime(1, &ts) != 0) {
+            return -1;
+        }
+        st->started_tv_sec = (int32_t)ts.tv_sec;
     }
 
-    timer_res.kind = CANOPUS_RESOURCE_TIMER;
-    timer_res.state = CANOPUS_RES_ACTIVE;
-    timer_res.generation = 0;
-    timer_res.handle = (void *)(uintptr_t)(st->timer_id + 1);
-    timer_res.on_release = 0;
-    if (canopus_tracker_add(&st->tracker, &timer_res) != 0) {
-        hello_timer_cancel(st->timer_id);
-        st->timer_id = -1;
-        return -1;
+#if HELLO_HAS_TIMER
+    {
+        struct canopus_resource_v1 timer_res;
+        st->timer_id = hello_timer_register(on_timer, st, 10u);
+        if (st->timer_id < 0) {
+            return -1;
+        }
+        timer_res.kind = CANOPUS_RESOURCE_TIMER;
+        timer_res.state = CANOPUS_RES_ACTIVE;
+        timer_res.generation = 0;
+        timer_res.handle = (void *)(uintptr_t)(st->timer_id + 1);
+        timer_res.on_release = 0;
+        if (canopus_tracker_add(&st->tracker, &timer_res) != 0) {
+            hello_timer_cancel(st->timer_id);
+            st->timer_id = -1;
+            return -1;
+        }
     }
-
+#endif
     return 0;
 }
 
@@ -91,11 +106,13 @@ static int hello_deactivate(const struct canopus_context_v1 *ctx)
 {
     struct hello_state *st = &s_state;
     (void)ctx;
+#if HELLO_HAS_TIMER
     if (st->timer_id >= 0) {
         hello_timer_cancel(st->timer_id);
         st->timer_id = -1;
     }
-    /* invalidate any in-flight timer callback */
+#endif
+    /* invalidate any in-flight callback */
     canopus_generation_bump(&st->gen);
     return 0;
 }
@@ -117,6 +134,7 @@ static int hello_query(struct canopus_status_writer_v1 *writer)
         canopus_status_put_u32(&tmp, HELLO_STATUS_VERSION);
         canopus_status_put_u32(&tmp, st->lc.state);
         canopus_status_put_u32(&tmp, st->timer_fires);
+        canopus_status_put_u32(&tmp, (uint32_t)st->started_tv_sec);
         canopus_status_writer_publish(&tmp);
         *writer = tmp;
     }
@@ -143,3 +161,24 @@ const struct canopus_module_descriptor_v1 *hello_descriptor(void)
 {
     return &g_descriptor;
 }
+
+#if defined(CANOPUS_TARGET)
+/*
+ * Constructor/destructor glue for the stock modlib loader, which runs
+ * .init_array then retains .fini_array for rmmod. The identity guard runs
+ * before any firmware call and must fail closed.
+ */
+__attribute__((constructor)) static void hello_ctor(void)
+{
+    if (canopus_identity_guard() != 0) {
+        /* wrong firmware: refuse to go any further */
+        return;
+    }
+    (void)hello_prepare(0);
+}
+
+__attribute__((destructor)) static void hello_dtor(void)
+{
+    (void)hello_stop(0);
+}
+#endif

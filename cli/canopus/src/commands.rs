@@ -32,6 +32,41 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
             }
             Ok(())
         }
+        TargetCmd::GenerateVeneer {
+            target,
+            targets_dir,
+            output,
+        } => {
+            let pack = find_target(&targets_dir, &target)?;
+            let root = targets_dir.join(&target);
+            let (symbols, types) = canopus_core::veneer::load_records(&root)?;
+            let gen = canopus_core::veneer::VeneerGen {
+                pack: &pack,
+                symbols: &symbols,
+                types: &types,
+            };
+            let text = gen.generate();
+            let out = output.unwrap_or_else(|| root.join("generated").join("canopus_veneer.h"));
+            if let Some(parent) = out.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(&out, text)?;
+            println!(
+                "wrote veneer header {} ({} callable, {} types, {} symbols)",
+                out.display(),
+                symbols
+                    .iter()
+                    .filter(|s| s.kind == "function"
+                        && s.callable_address.is_some()
+                        && s.status != "FORBIDDEN"
+                        && s.status != "WITHDRAWN"
+                        && s.policy != "restricted")
+                    .count(),
+                types.len(),
+                symbols.len()
+            );
+            Ok(())
+        }
     }
 }
 

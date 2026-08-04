@@ -6,3 +6,4 @@ pub mod model;
 pub mod policy;
 pub mod registry;
 pub mod schema;
+pub mod veneer;
