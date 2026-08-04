@@ -1521,7 +1521,7 @@ schema/format
 | 架构与治理 | 2 | 0 | 6 | 本文完成首版架构；仓库/许可证已确定（AGPL-3.0，ADR-CAN-001） |
 | Host/Schema/CLI | 9 | 1 | 2 | SCH-001..006/CLI-001..003 DONE；CLI-004 进行中；CLI-005/006 未开始 |
 | C SDK/Runtime | 9 | 1 | 0 | C-001..009 DONE；C-010 host 部分完成，真机 G0 待测 |
-| Target/Build/Package | 2 | 2 | 10 | TGT-003/BLD-003 DONE；TGT-001/002 进行中；BLD-001/002/004 与 PKG-* 未开始 |
+| Target/Build/Package | 10 | 1 | 3 | TGT-001..005、BLD-001..004、PKG-001..003 DONE；PKG-004 进行中；TGT-006/RUST-* 未开始 |
 | Device Manager | 0 | 0 | 13 | 未实现 |
 | Native App/Launcher/UI | 0 | 0 | 15 | 仅有 JS/Lua bootstrap，原生注册 ABI 尚未证明 |
 | Rust SDK | 0 | 0 | 9 | 未实现 |
@@ -1588,20 +1588,20 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-TGT-001` | `IN_PROGRESS` | 创建 xiaomi-band-10-pro-3.101.030 target pack | SCH-001..004 | identity/loader profile/38 symbols 已导入；types/evidence 待补 |
-| `CAN-TGT-002` | `IN_PROGRESS` | 导入已证明 symbols/types | TGT-001,BASE-* | symbols 已从 CSV 保守导入；types 待导入 |
+| `CAN-TGT-001` | `DONE` | 创建 xiaomi-band-10-pro-3.101.030 target pack | SCH-001..004 | identity/loader/38 symbols/types/evidence 完整 |
+| `CAN-TGT-002` | `DONE` | 导入已证明 symbols/types | TGT-001,BASE-* | 38 symbols + 3 types + 4 evidence bundles，状态不自动提升 |
 | `CAN-TGT-003` | `DONE` | Loader profile | TGT-001 | best1503-v1 relocation envelope 已编码进 target.toml |
-| `CAN-TGT-004` | `BACKLOG` | Runtime identity generator | TGT-001 | wrong target 在任何固件调用前拒绝 |
-| `CAN-TGT-005` | `BACKLOG` | C typed veneer generator | TGT-002,C-002 | Thumb/prototype/policy 正确 |
+| `CAN-TGT-004` | `DONE` | Runtime identity generator | TGT-001 | 生成 canopus_identity_guard（版本+build 字符串） |
+| `CAN-TGT-005` | `DONE` | C typed veneer generator | TGT-002,C-002 | generate-veneer；managed 符号生成 Thumb veneer，FORBIDDEN/restricted 只留审计注释 |
 | `CAN-TGT-006` | `BACKLOG` | Rust binding generator | TGT-002,RUST-002 | unsafe/safe 分层 |
-| `CAN-BLD-001` | `BACKLOG` | Declarative build planner | SCH-005,TGT-003 | source×target×feature graph |
-| `CAN-BLD-002` | `BACKLOG` | C cross-build backend | BLD-001,C-010 | reproducible ET_REL |
+| `CAN-BLD-001` | `DONE` | Declarative build planner | SCH-005,TGT-003 | build-plan 展开 module×target 并校验 capabilities |
+| `CAN-BLD-002` | `DONE` | C cross-build backend | BLD-001,C-010 | clang+ld.lld -r 产出 ET_REL，verifier PASS（sha256 a0f73378） |
 | `CAN-BLD-003` | `DONE` | Generic ELF verifier | TGT-003 | canopus-elf；真机 probe sha256=0f47e2e1 PASS；undefined/relo/ctor 检查 |
-| `CAN-BLD-004` | `BACKLOG` | Absolute-address policy scan | TGT-002,BLD-003 | 未登记/forbidden 地址拒绝 |
-| `CAN-PKG-001` | `BACKLOG` | Canonical package format | SCH-006 | deterministic archive |
-| `CAN-PKG-002` | `BACKLOG` | Ed25519 sign/verify | PKG-001,ARCH-006 | tamper/wrong-key/revoked tests |
-| `CAN-PKG-003` | `BACKLOG` | Multi-target artifact bundle | BLD-002,PKG-001 | exact artifact selection |
-| `CAN-PKG-004` | `BACKLOG` | SBOM/reproducibility report | BLD-002,PKG-001 | clean rebuild byte identity |
+| `CAN-BLD-004` | `DONE` | Absolute-address policy scan | TGT-002,BLD-003 | verifier 拒绝 SHN_ABS 目标不在 allowlist 的 relo |
+| `CAN-PKG-001` | `DONE` | Canonical package format | SCH-006 | deterministic tar（sorted+mtime=0），重建 byte-identical |
+| `CAN-PKG-002` | `DONE` | Ed25519 sign/verify | PKG-001,ARCH-006 | tamper/wrong-key 拒绝；签名覆盖 manifest+payload 规范摘要 |
+| `CAN-PKG-003` | `DONE` | Multi-target artifact bundle | BLD-002,PKG-001 | manifest 多 artifact 逐项 hash 校验后嵌入 |
+| `CAN-PKG-004` | `IN_PROGRESS` | SBOM/reproducibility report | BLD-002,PKG-001 | determinism 已证明；正式 SBOM/报告未生成 |
 
 ## 23.9 Device Supervisor 与 Manager
 
@@ -1727,6 +1727,7 @@ schema/format
 | 2026-08-05 | Phase 1：六个 schema + Rust CLI + target registry | `CAN-SCH-001..006`,`CAN-CLI-001..003` | 14 个 fixtures；6 项 schema 集成测试通过；`canopus target/symbol/... validate` 可用 |
 | 2026-08-05 | 首个 target pack + ELF verifier | `CAN-TGT-001..003`,`CAN-BLD-003` | target.toml + 38 symbols 导入；verifier 对真机 probe（sha256 0f47e2e1）PASS；提交 `ad1e14e` |
 | 2026-08-05 | Phase 2：portable C runtime + host tests | `CAN-C-001..010` | 155 项 host checks；runtime 对 Cortex-M33 Thumb 交叉编译通过；提交 `270389b` |
+| 2026-08-05 | Phase 3/4：veneer+identity 生成、目标构建、打包签名 | `CAN-TGT-004/005`,`CAN-BLD-001..004`,`CAN-PKG-001..003` | hello ET_REL verifier PASS（a0f73378）；Ed25519 签名/tamper 检测通过；提交 `cf59743` |
 
 ---
 
