@@ -10,7 +10,7 @@ CFLAGS ?= -std=c11 -Wall -Wextra -Werror -g -O0
 INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../runtime/diagnostics -I../../runtime/control -I../../runtime/module \
       -I../../modules/examples/hello -I../../manager/protocol -I../../manager/storage \
-      -I../../manager/ui -I../../tests/host
+      -I../../manager/ui -I../../tests/host -I../../app-sdk/c -I../../app-sdk/launcher
 CFLAGS += -DCANOPUS_HOST=1
 
 # Bare-metal portable sources (freestanding, no libc) — the cross-thumb
@@ -21,7 +21,9 @@ PORTABLE_SRCS = \
 	../../runtime/resources/canopus_resource.c \
 	../../runtime/diagnostics/canopus_diagnostics.c \
 	../../runtime/module/canopus_module.c \
-	../../manager/protocol/canopus_protocol.c
+	../../manager/protocol/canopus_protocol.c \
+	../../app-sdk/c/canopus_app.c \
+	../../app-sdk/launcher/canopus_ordered_list.c
 
 # Host test build additionally links the libc-dependent layers
 # (storage, manager UI, fake target, hello module).
@@ -41,7 +43,8 @@ TEST_SRCS = \
 	test_diagnostics.c \
 	test_hello_module.c \
 	test_supervisor.c \
-	test_manager_ui.c
+	test_manager_ui.c \
+	test_app_sdk.c
 
 BIN = canopus_host_tests
 
