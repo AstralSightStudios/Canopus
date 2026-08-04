@@ -173,7 +173,9 @@ dependencies = [
  "canopus-core",
  "canopus-elf",
  "canopus-package",
+ "canopus-re",
  "clap",
+ "hex",
  "serde",
  "serde_json",
  "sha2",
@@ -219,6 +221,22 @@ dependencies = [
  "serde_json",
  "sha2",
  "tar",
+]
+
+[[package]]
+name = "canopus-re"
+version = "0.1.0"
+dependencies = [
+ "canopus-core",
+ "canopus-package",
+ "ed25519-dalek",
+ "getrandom 0.2.17",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror",
 ]
 
 [[package]]
@@ -425,6 +443,12 @@ dependencies = [
  "regex-automata",
  "regex-syntax",
 ]
+
+[[package]]
+name = "fastrand"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223"
 
 [[package]]
 name = "fiat-crypto"
@@ -1389,6 +1413,19 @@ dependencies = [
  "filetime",
  "libc",
  "xattr",
+]
+
+[[package]]
+name = "tempfile"
+version = "3.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
+dependencies = [
+ "fastrand",
+ "getrandom 0.3.4",
+ "once_cell",
+ "rustix",
+ "windows-sys",
 ]
 
 [[package]]

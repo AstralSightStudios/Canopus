@@ -36,6 +36,9 @@ enum Command {
     /// Package manifest commands.
     #[command(subcommand)]
     Package(PackageCmd),
+    /// RE orchestrator commands (Phase 9).
+    #[command(subcommand)]
+    Re(ReCmd),
     /// Expand a module across its target matrix.
     BuildPlan {
         /// Path to Canopus.toml (module manifest).
@@ -59,6 +62,73 @@ enum Command {
         targets_dir: PathBuf,
         #[arg(long)]
         json: bool,
+    },
+}
+
+#[derive(Subcommand)]
+enum ReCmd {
+    /// Create a new RE task.
+    NewTask {
+        /// Task id, e.g. T-007.
+        id: String,
+        /// Target id the task operates on.
+        target: String,
+        /// Short description.
+        desc: String,
+    },
+    /// Transition a task (forward only; reject/withdraw keep history).
+    TransitionTask {
+        id: String,
+        /// One of analyzing, evidence-gathered, verifying, promoted, rejected, withdrawn.
+        state: String,
+    },
+    /// Add an evidence record to a task.
+    AddEvidence {
+        task: String,
+        id: String,
+        /// function | type | signature | layout
+        kind: String,
+        summary: String,
+    },
+    /// Transition an evidence record.
+    TransitionEvidence {
+        id: String,
+        /// One of candidate, verified, promoted, refuted, withdrawn.
+        state: String,
+    },
+    /// Evaluate the human promotion gate for evidence.
+    Gate {
+        id: String,
+        #[arg(long, default_value_t = 1)]
+        needed: usize,
+    },
+    /// Sign a target-pack revision manifest (CAN-RE-009).
+    RevisionSign {
+        target: String,
+        revision: u32,
+        /// Secret key hex (32 bytes).
+        #[arg(long)]
+        key: String,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long, default_value = "targets")]
+        targets_dir: PathBuf,
+    },
+    /// Verify a signed revision manifest.
+    RevisionVerify {
+        manifest: PathBuf,
+        /// Public key hex (32 bytes).
+        #[arg(long)]
+        pubkey: String,
+    },
+    /// Emit a minimal, safe C probe module for a callable symbol (RE-008).
+    Probe {
+        target: String,
+        symbol: String,
+        #[arg(long, default_value = "targets")]
+        targets_dir: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
 }
 
@@ -175,6 +245,7 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         Command::Evidence(cmd) => commands::evidence(cmd),
         Command::Module(cmd) => commands::module(cmd),
         Command::Package(cmd) => commands::package(cmd),
+        Command::Re(cmd) => commands::re(cmd),
         Command::BuildPlan {
             manifest,
             targets_dir,

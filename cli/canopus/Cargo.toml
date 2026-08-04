@@ -13,7 +13,9 @@ anyhow.workspace = true
 canopus-core = { path = "../../tools/canopus-core" }
 canopus-elf = { path = "../../tools/elf-verifier" }
 canopus-package = { path = "../../tools/package-builder" }
+canopus-re = { path = "../../tools/re-orchestrator" }
 clap.workspace = true
+hex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true

@@ -5,6 +5,7 @@ members = [
     "tools/canopus-core",
     "tools/elf-verifier",
     "tools/package-builder",
+    "tools/re-orchestrator",
 ]
 
 [workspace.package]

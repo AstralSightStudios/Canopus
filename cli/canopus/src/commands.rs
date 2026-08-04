@@ -383,3 +383,257 @@ fn find_target(targets_dir: &PathBuf, target_id: &str) -> anyhow::Result<TargetP
         anyhow::anyhow!("target {}: {msg}", target_id)
     })
 }
+
+// ---------------------------------------------------------------- re
+
+/// Default on-disk RE store path (append-only task/evidence audit).
+const RE_STORE_PATH: &str = ".canopus-re-store.json";
+
+use crate::ReCmd;
+
+fn load_re_store() -> anyhow::Result<canopus_re::ReStore> {
+    let p = std::path::Path::new(RE_STORE_PATH);
+    if p.exists() {
+        Ok(canopus_re::ReStore::load(p)?)
+    } else {
+        Ok(canopus_re::ReStore::new())
+    }
+}
+
+fn save_re_store(s: &canopus_re::ReStore) -> anyhow::Result<()> {
+    s.save(std::path::Path::new(RE_STORE_PATH))?;
+    Ok(())
+}
+
+fn parse_task_state(s: &str) -> anyhow::Result<canopus_re::ReTaskState> {
+    Ok(match s {
+        "analyzing" => canopus_re::ReTaskState::Analyzing,
+        "evidence-gathered" => canopus_re::ReTaskState::EvidenceGathered,
+        "verifying" => canopus_re::ReTaskState::Verifying,
+        "promoted" => canopus_re::ReTaskState::Promoted,
+        "rejected" => canopus_re::ReTaskState::Rejected,
+        "withdrawn" => canopus_re::ReTaskState::Withdrawn,
+        other => anyhow::bail!("unknown task state '{other}'"),
+    })
+}
+
+fn parse_evidence_state(s: &str) -> anyhow::Result<canopus_re::EvidenceState> {
+    Ok(match s {
+        "candidate" => canopus_re::EvidenceState::Candidate,
+        "verified" => canopus_re::EvidenceState::Verified,
+        "promoted" => canopus_re::EvidenceState::Promoted,
+        "refuted" => canopus_re::EvidenceState::Refuted,
+        "withdrawn" => canopus_re::EvidenceState::Withdrawn,
+        other => anyhow::bail!("unknown evidence state '{other}'"),
+    })
+}
+
+pub fn re(cmd: ReCmd) -> anyhow::Result<()> {
+    match cmd {
+        ReCmd::NewTask { id, target, desc } => {
+            let mut store = load_re_store()?;
+            store.add_task(&id, &desc, &target, "-", "cli");
+            save_re_store(&store)?;
+            println!("task {id} created on target {target}");
+            Ok(())
+        }
+        ReCmd::TransitionTask { id, state } => {
+            let mut store = load_re_store()?;
+            let to = parse_task_state(&state)?;
+            store.transition_task(&id, to, "cli")?;
+            save_re_store(&store)?;
+            println!("task {id} -> {state}");
+            Ok(())
+        }
+        ReCmd::AddEvidence { task, id, kind, summary } => {
+            let mut store = load_re_store()?;
+            let rec = canopus_re::EvidenceRecord {
+                evidence_id: id.clone(),
+                task_id: task.clone(),
+                state: canopus_re::EvidenceState::Draft,
+                kind,
+                summary,
+                artifact_uris: Vec::new(),
+                reviews: Vec::new(),
+            };
+            store.add_evidence(rec, "cli")?;
+            save_re_store(&store)?;
+            println!("evidence {id} added to task {task}");
+            Ok(())
+        }
+        ReCmd::TransitionEvidence { id, state } => {
+            let mut store = load_re_store()?;
+            let to = parse_evidence_state(&state)?;
+            store.transition_evidence(&id, to, "cli")?;
+            save_re_store(&store)?;
+            println!("evidence {id} -> {state}");
+            Ok(())
+        }
+        ReCmd::Gate { id, needed } => {
+            let store = load_re_store()?;
+            let rec = store
+                .evidence
+                .get(&id)
+                .ok_or_else(|| anyhow::anyhow!("unknown evidence {id}"))?;
+            let d = canopus_re::verify::evaluate_gate(&rec.reviews, needed, 1);
+            println!("gate for {id}: {d:?}");
+            Ok(())
+        }
+        ReCmd::RevisionSign {
+            target,
+            revision,
+            key,
+            output,
+            targets_dir,
+        } => re_revision_sign(&target, revision, &key, &output, &targets_dir),
+        ReCmd::RevisionVerify { manifest, pubkey } => {
+            let data = std::fs::read(&manifest)?;
+            let signed: serde_json::Value = serde_json::from_slice(&data)?;
+            let m: canopus_re::revision::RevisionManifest =
+                serde_json::from_value(signed["manifest"].clone())?;
+            let sig = signed["signature"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("no signature in manifest"))?;
+            m.verify(&pubkey, sig)
+                .map_err(|e| anyhow::anyhow!("verify failed: {e}"))?;
+            println!(
+                "revision {} of {}: signature VALID",
+                m.revision, m.target_id
+            );
+            Ok(())
+        }
+        ReCmd::Probe {
+            target,
+            symbol,
+            targets_dir,
+            output,
+        } => re_probe(&target, &symbol, &targets_dir, &output),
+    }
+}
+
+/// Signs a target-pack revision manifest (CAN-RE-009).
+fn re_revision_sign(
+    target: &str,
+    revision: u32,
+    key: &str,
+    output: &Option<PathBuf>,
+    targets_dir: &PathBuf,
+) -> anyhow::Result<()> {
+    let pack = find_target(targets_dir, target)?;
+    let root = targets_dir.join(target);
+    let (symbols, types) = canopus_core::veneer::load_records(&root)?;
+    let evidence_dir = root.join("evidence");
+
+    // content digest over symbols + types (sorted, stable).
+    let mut entries: Vec<Vec<u8>> = Vec::new();
+    for sub in ["symbols", "types"] {
+        let d = root.join(sub);
+        if !d.is_dir() {
+            continue;
+        }
+        let mut files: Vec<_> = std::fs::read_dir(&d)?
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .filter(|p| p.extension().and_then(|e| e.to_str()) == Some("json"))
+            .collect();
+        files.sort();
+        for f in files {
+            entries.push(std::fs::read(&f)?);
+        }
+    }
+    let content_sha256 = {
+        use sha2::{Digest, Sha256};
+        let mut h = Sha256::new();
+        for e in &entries {
+            h.update(e);
+        }
+        hex::encode(h.finalize())
+    };
+    let evidence_count = if evidence_dir.is_dir() {
+        std::fs::read_dir(&evidence_dir)?.count() as u32
+    } else {
+        0
+    };
+
+    let m = canopus_re::revision::RevisionManifest {
+        target_id: pack.target_id.clone(),
+        revision,
+        firmware_sha256: pack.firmware_sha256.clone(),
+        content_sha256,
+        symbol_count: symbols.len() as u32,
+        type_count: types.len() as u32,
+        evidence_count,
+        schema_version: 1,
+    };
+    let signature = m
+        .sign(key)
+        .map_err(|e| anyhow::anyhow!("sign failed: {e}"))?;
+    let doc = serde_json::json!({ "manifest": m, "signature": signature });
+    let out = output.clone().unwrap_or_else(|| {
+        root.join("generated").join(format!("revision-v{revision}.json"))
+    });
+    if let Some(p) = out.parent() {
+        std::fs::create_dir_all(p)?;
+    }
+    std::fs::write(&out, serde_json::to_vec_pretty(&doc)?)?;
+    println!(
+        "signed revision {revision} of {target} (digest {}) -> {}",
+        m.canonical_digest(),
+        out.display()
+    );
+    Ok(())
+}
+
+/// Emits a minimal, safe C probe module for a callable symbol (RE-008).
+fn re_probe(
+    target: &str,
+    symbol: &str,
+    targets_dir: &PathBuf,
+    output: &Option<PathBuf>,
+) -> anyhow::Result<()> {
+    let root = targets_dir.join(target);
+    let (symbols, _types) = canopus_core::veneer::load_records(&root)?;
+    let sym = symbols
+        .iter()
+        .find(|s| s.name == symbol)
+        .ok_or_else(|| anyhow::anyhow!("symbol '{symbol}' not in target {target}"))?;
+    if sym.status == "FORBIDDEN" || sym.status == "WITHDRAWN" {
+        anyhow::bail!("symbol '{symbol}' is {}. no probe may call it.", sym.status);
+    }
+    if sym.kind != "function" {
+        anyhow::bail!("symbol '{symbol}' is not a function");
+    }
+    let proto = sym.prototype.clone().unwrap_or_else(|| "unknown".into());
+
+    // A dry probe: identity guard + status only. The recovered call is left
+    // commented out until a device gate approves executing it.
+    let text = format!(
+        r#"/* probe_{name}.c — minimal probe for {name} (CAN-RE-008). GENERATED. */
+/* Risk: read-only. Verifies identity + module status only; the recovered
+ * call site is left commented until a device gate approves execution.
+ * Recovery: rmmod probe_{name}. Recovery scope: none beyond the probe. */
+#include "canopus_veneer.h"
+#include "canopus_abi.h"
+
+int probe_{name}_run(void)
+{{
+    if (canopus_identity_guard() != 0) {{
+        return -1; /* wrong firmware: refuse */
+    }}
+    /* recovered prototype: {proto} */
+    /* int rc = canopus_fw_{name}(/* args *\/); */
+    return 0;
+}}
+"#,
+        name = symbol
+    );
+    let out = output.clone().unwrap_or_else(|| {
+        root.join("generated").join(format!("probe_{symbol}.c"))
+    });
+    if let Some(p) = out.parent() {
+        std::fs::create_dir_all(p)?;
+    }
+    std::fs::write(&out, text)?;
+    println!("wrote probe {}", out.display());
+    Ok(())
+}

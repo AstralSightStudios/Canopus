@@ -1,0 +1,20 @@
+[package]
+name = "canopus-re"
+description = "RE orchestrator — task/evidence store, read-only IDA MCP adapter, evidence workflows, signed target revisions (Phase 9)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+canopus-core = { path = "../canopus-core" }
+canopus-package = { path = "../package-builder" }
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+getrandom = "0.2"
+hex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
