@@ -32,6 +32,8 @@ dist/
 *.hex
 *.map
 *.lst
+*.dSYM/
+tests/host/canopus_host_tests
 
 # Packaging output
 *.canopus
