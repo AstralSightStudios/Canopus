@@ -9,17 +9,26 @@ CFLAGS ?= -std=c11 -Wall -Wextra -Werror -g -O0
 
 INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../runtime/diagnostics -I../../runtime/control -I../../runtime/module \
-      -I../../modules/examples/hello -I../../manager/protocol -I../../manager/storage
+      -I../../modules/examples/hello -I../../manager/protocol -I../../manager/storage \
+      -I../../manager/ui -I../../tests/host
 CFLAGS += -DCANOPUS_HOST=1
 
-RUNTIME_SRCS = \
+# Bare-metal portable sources (freestanding, no libc) — the cross-thumb
+# sanity build checks exactly these.
+PORTABLE_SRCS = \
 	../../runtime/control/canopus_control.c \
 	../../runtime/lifecycle/canopus_lifecycle.c \
 	../../runtime/resources/canopus_resource.c \
 	../../runtime/diagnostics/canopus_diagnostics.c \
 	../../runtime/module/canopus_module.c \
-	../../manager/protocol/canopus_protocol.c \
+	../../manager/protocol/canopus_protocol.c
+
+# Host test build additionally links the libc-dependent layers
+# (storage, manager UI, fake target, hello module).
+RUNTIME_SRCS = \
+	$(PORTABLE_SRCS) \
 	../../manager/storage/canopus_store.c \
+	../../manager/ui/canopus_manager.c \
 	fake_target.c \
 	../../modules/examples/hello/hello.c
 
@@ -31,7 +40,8 @@ TEST_SRCS = \
 	test_resources.c \
 	test_diagnostics.c \
 	test_hello_module.c \
-	test_supervisor.c
+	test_supervisor.c \
+	test_manager_ui.c
 
 BIN = canopus_host_tests
 
@@ -45,13 +55,14 @@ $(BIN): $(RUNTIME_SRCS) $(TEST_SRCS) ../../sdk/c/canopus_abi.h ../../sdk/c/canop
 run: $(BIN)
 	./$(BIN)
 
-# Sanity: the runtime must also compile for the actual target profile
-# (Cortex-M33 Thumb soft-float). Only compile+assemble, no link needed.
+# Sanity: the bare-metal portable runtime must compile for the actual target
+# profile (Cortex-M33 Thumb soft-float). Only compile+assemble, no link.
+# Storage / manager UI / fake target need libc and are NOT part of this check.
 cross-thumb:
 	$(CC) --target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
 		-ffreestanding -fno-common -fno-builtin -fno-stack-protector \
 		-fno-unwind-tables -fno-asynchronous-unwind-tables -Os -Wall -Wextra -Werror \
-		$(INC) -c $(RUNTIME_SRCS)
+		-DCANOPUS_HOST=1 $(INC) -c $(PORTABLE_SRCS)
 
 clean:
 	rm -f $(BIN) *.o

@@ -1,0 +1,271 @@
+/* Host tests: Manager UI model, pages and lifecycle-aware operations
+ * (CAN-UI-001..004). Uses a fake transport that echoes ACCEPTED. */
+#include "canopus_test.h"
+#include "canopus_manager.h"
+#include "canopus_runtime.h"
+#include "canopus_memory.h"
+#include <string.h>
+
+/* ---- fake transport ------------------------------------------------ */
+
+static uint32_t g_last_command;
+static uint32_t g_last_request_id;
+static uint32_t g_next_result = CANOPUS_RESULT_ACCEPTED;
+static int g_transport_calls;
+
+static int fake_transport(const struct canopus_proto_request_v1 *req,
+                          const void *payload, struct canopus_proto_response_v1 *resp,
+                          void *cookie)
+{
+    (void)payload;
+    (void)cookie;
+    g_last_command = req->command;
+    g_last_request_id = req->request_id;
+    g_transport_calls++;
+    canopus_proto_response_init(resp, req->request_id, g_next_result, 0);
+    return 0;
+}
+
+static void reset_transport(void)
+{
+    g_last_command = 0;
+    g_last_request_id = 0;
+    g_next_result = CANOPUS_RESULT_ACCEPTED;
+    g_transport_calls = 0;
+}
+
+static void add_removable(struct canopus_manager_model_v1 *m, const char *id)
+{
+    struct canopus_manager_module_v1 mod;
+    canopus_memset(&mod, 0, sizeof(mod));
+    canopus_buf_copy(mod.module_id, sizeof(mod.module_id), id);
+    mod.lifecycle_class = CANOPUS_LIFECYCLE_REMOVABLE;
+    mod.state = CANOPUS_STATE_ACTIVE;
+    mod.version = 1;
+    mod.signature_ok = 1;
+    mod.has_previous = 1;
+    mod.risk = CANOPUS_MANAGER_RISK_MODERATE;
+    CHECK(canopus_manager_upsert_module(m, &mod) >= 0);
+}
+
+static void add_resident(struct canopus_manager_model_v1 *m, const char *id)
+{
+    struct canopus_manager_module_v1 mod;
+    canopus_memset(&mod, 0, sizeof(mod));
+    canopus_buf_copy(mod.module_id, sizeof(mod.module_id), id);
+    mod.lifecycle_class = CANOPUS_LIFECYCLE_ALWAYS_RESIDENT;
+    mod.state = CANOPUS_STATE_BOOT_RESIDENT;
+    mod.version = 3;
+    mod.signature_ok = 1;
+    mod.has_previous = 0;
+    mod.risk = CANOPUS_MANAGER_RISK_RESIDENT_CRITICAL;
+    CHECK(canopus_manager_upsert_module(m, &mod) >= 0);
+}
+
+/* ---- device page (CAN-UI-001) -------------------------------------- */
+
+TEST(device_page_shows_identity)
+{
+    struct canopus_manager_model_v1 m;
+    char buf[256];
+    reset_transport();
+    canopus_manager_init(&m, fake_transport, 0);
+    canopus_manager_set_identity(&m, "xiaomi-band-10-pro-3.101.030",
+                                 "3.101.030", "CONBINE_LTALM078", 5);
+    CHECK(canopus_manager_render_device(&m, buf, sizeof(buf)) == 0);
+    CHECK(strstr(buf, "target   : xiaomi-band-10-pro-3.101.030") != 0);
+    CHECK(strstr(buf, "firmware : 3.101.030") != 0);
+    CHECK(strstr(buf, "framework: v5") != 0);
+    CHECK(strstr(buf, "SAFE MODE") == 0);
+}
+
+TEST(device_page_shows_safe_mode)
+{
+    struct canopus_manager_model_v1 m;
+    char buf[256];
+    canopus_manager_init(&m, fake_transport, 0);
+    canopus_manager_set_identity(&m, "tgt", "v", "b", 1);
+    m.safe_mode = 1;
+    CHECK(canopus_manager_render_device(&m, buf, sizeof(buf)) == 0);
+    CHECK(strstr(buf, "SAFE MODE") != 0);
+}
+
+/* ---- module list (CAN-UI-002) -------------------------------------- */
+
+TEST(module_list_lists_state)
+{
+    struct canopus_manager_model_v1 m;
+    char buf[512];
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "mod.hello");
+    add_resident(&m, "mod.bt");
+    CHECK(canopus_manager_render_module_list(&m, buf, sizeof(buf)) == 0);
+    CHECK(strstr(buf, "mod.hello") != 0);
+    CHECK(strstr(buf, "mod.bt") != 0);
+    CHECK(strstr(buf, "active") != 0);
+    CHECK(strstr(buf, "boot-resident") != 0);
+}
+
+/* ---- module detail: ops are class-aware (CAN-UI-004) ---------------- */
+
+TEST(removable_detail_offers_disable_and_remove)
+{
+    struct canopus_manager_model_v1 m;
+    char buf[512];
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "mod.hello");
+    CHECK(canopus_manager_goto(&m, CANOPUS_MANAGER_VIEW_MODULE_DETAIL, 0) == 0);
+    CHECK(canopus_manager_render_module_detail(&m, buf, sizeof(buf)) == 0);
+    CHECK(strstr(buf, "class    : removable") != 0);
+    CHECK(strstr(buf, "[disable]") != 0);
+    CHECK(strstr(buf, "[remove]") != 0);
+    /* a removable module may have a real unload */
+    CHECK(strstr(buf, "[remove+reboot]") == 0);
+    CHECK(strstr(buf, "[disable-next-boot]") == 0);
+}
+
+TEST(resident_detail_has_no_fake_unload)
+{
+    struct canopus_manager_model_v1 m;
+    char buf[512];
+    canopus_manager_init(&m, fake_transport, 0);
+    add_resident(&m, "mod.bt");
+    CHECK(canopus_manager_goto(&m, CANOPUS_MANAGER_VIEW_MODULE_DETAIL, 0) == 0);
+    CHECK(canopus_manager_render_module_detail(&m, buf, sizeof(buf)) == 0);
+    CHECK(strstr(buf, "class    : always-resident") != 0);
+    /* never a plain disable/remove for resident */
+    CHECK(strstr(buf, "[disable]") == 0);
+    CHECK(strstr(buf, "[remove]") == 0);
+    /* only next-boot/reboot semantics */
+    CHECK(strstr(buf, "[disable-next-boot]") != 0);
+    CHECK(strstr(buf, "[remove+reboot]") != 0);
+    /* resident with no previous slot has no rollback */
+    CHECK(strstr(buf, "[rollback]") == 0);
+}
+
+/* ---- operations are lifecycle-aware --------------------------------- */
+
+TEST(disable_sends_command_for_both_classes)
+{
+    struct canopus_manager_model_v1 m;
+    reset_transport();
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "mod.hello");
+    add_resident(&m, "mod.bt");
+
+    /* removable: DISABLE means drain+unload now. */
+    CHECK(canopus_manager_op_disable(&m, 0) == CANOPUS_RESULT_ACCEPTED);
+    CHECK(g_last_command == CANOPUS_CMD_DISABLE);
+    CHECK(g_last_request_id == 3);
+
+    /* resident: DISABLE is allowed but means next-boot only; the supervisor
+     * interprets it by lifecycle class (CAN-DEV-006/007). The UI renders it
+     * as [disable-next-boot] — never a fake unload (CAN-UI-004). */
+    CHECK(canopus_manager_can_disable(&m, 1) != 0);
+    CHECK(canopus_manager_op_disable(&m, 1) == CANOPUS_RESULT_ACCEPTED);
+    CHECK(g_transport_calls == 2);
+}
+
+TEST(remove_resident_returns_disallowed_until_reboot_semantics)
+{
+    struct canopus_manager_model_v1 m;
+    reset_transport();
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "mod.hello");
+    add_resident(&m, "mod.bt");
+
+    /* removable remove is allowed */
+    CHECK(canopus_manager_op_remove(&m, 0) == CANOPUS_RESULT_ACCEPTED);
+    CHECK(g_last_command == CANOPUS_CMD_REMOVE);
+
+    /* the UI still lets a resident be "removed + reboot" (REMOVE_PENDING) */
+    CHECK(canopus_manager_can_remove(&m, 1) != 0);
+    CHECK(canopus_manager_op_remove(&m, 1) == CANOPUS_RESULT_ACCEPTED);
+}
+
+TEST(rollback_needs_previous_slot)
+{
+    struct canopus_manager_model_v1 m;
+    reset_transport();
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "mod.hello");   /* has_previous = 1 */
+    add_resident(&m, "mod.bt");       /* has_previous = 0 */
+
+    CHECK(canopus_manager_can_rollback(&m, 0) != 0);
+    CHECK(canopus_manager_op_rollback(&m, 0) == CANOPUS_RESULT_ACCEPTED);
+    CHECK(g_last_command == CANOPUS_CMD_ROLLBACK);
+
+    CHECK(canopus_manager_can_rollback(&m, 1) == 0);
+    CHECK(canopus_manager_op_rollback(&m, 1) == CANOPUS_RESULT_DISALLOWED);
+}
+
+TEST(update_available_for_active)
+{
+    struct canopus_manager_model_v1 m;
+    reset_transport();
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "mod.hello");
+    CHECK(canopus_manager_op_update(&m, 0) == CANOPUS_RESULT_ACCEPTED);
+    CHECK(g_last_command == CANOPUS_CMD_UPDATE);
+}
+
+TEST(safe_mode_sets_flag_on_accepted)
+{
+    struct canopus_manager_model_v1 m;
+    reset_transport();
+    canopus_manager_init(&m, fake_transport, 0);
+    CHECK(canopus_manager_op_safe_mode(&m) == CANOPUS_RESULT_ACCEPTED);
+    CHECK(g_last_command == CANOPUS_CMD_ENTER_SAFE_MODE);
+    CHECK(m.safe_mode == 1);
+}
+
+TEST(transport_failure_returns_rejected)
+{
+    struct canopus_manager_model_v1 m;
+    reset_transport();
+    canopus_manager_init(&m, 0, 0); /* no transport */
+    add_removable(&m, "mod.hello");
+    CHECK(canopus_manager_op_enable(&m, 0) == CANOPUS_RESULT_REJECTED);
+}
+
+TEST(goto_rejects_bad_view_and_index)
+{
+    struct canopus_manager_model_v1 m;
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "mod.hello");
+    CHECK(canopus_manager_goto(&m, 999, 0) == -1);
+    CHECK(canopus_manager_goto(&m, CANOPUS_MANAGER_VIEW_MODULE_DETAIL, 5) == -1);
+    CHECK(canopus_manager_goto(&m, CANOPUS_MANAGER_VIEW_MODULE_DETAIL, 0) == 0);
+}
+
+TEST(render_bounded_no_overflow)
+{
+    struct canopus_manager_model_v1 m;
+    char small[8];
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "mod.hello");
+    CHECK(canopus_manager_render_module_list(&m, small, sizeof(small)) == 0);
+    CHECK(small[sizeof(small) - 1] == '\0'); /* always NUL-terminated */
+}
+
+static const struct test_registry manager_tests[] = {
+    { "device_page_shows_identity", device_page_shows_identity_wrapper },
+    { "device_page_shows_safe_mode", device_page_shows_safe_mode_wrapper },
+    { "module_list_lists_state", module_list_lists_state_wrapper },
+    { "removable_detail_offers_disable_and_remove", removable_detail_offers_disable_and_remove_wrapper },
+    { "resident_detail_has_no_fake_unload", resident_detail_has_no_fake_unload_wrapper },
+    { "disable_sends_command_for_both_classes", disable_sends_command_for_both_classes_wrapper },
+    { "remove_resident_returns_disallowed_until_reboot_semantics", remove_resident_returns_disallowed_until_reboot_semantics_wrapper },
+    { "rollback_needs_previous_slot", rollback_needs_previous_slot_wrapper },
+    { "update_available_for_active", update_available_for_active_wrapper },
+    { "safe_mode_sets_flag_on_accepted", safe_mode_sets_flag_on_accepted_wrapper },
+    { "transport_failure_returns_rejected", transport_failure_returns_rejected_wrapper },
+    { "goto_rejects_bad_view_and_index", goto_rejects_bad_view_and_index_wrapper },
+    { "render_bounded_no_overflow", render_bounded_no_overflow_wrapper },
+};
+#define MANAGER_TESTS_LEN (sizeof(manager_tests) / sizeof(manager_tests[0]))
+
+int run_manager_tests(void)
+{
+    RUN_TESTS(manager_tests, MANAGER_TESTS_LEN);
+}

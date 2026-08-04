@@ -8,6 +8,7 @@ int run_resource_tests(void);
 int run_diag_tests(void);
 int run_hello_tests(void);
 int run_supervisor_tests(void);
+int run_manager_tests(void);
 
 int main(void)
 {
@@ -19,6 +20,7 @@ int main(void)
     total += run_diag_tests();
     total += run_hello_tests();
     total += run_supervisor_tests();
+    total += run_manager_tests();
     if (total == 0) {
         printf("all host tests passed\n");
     } else {
