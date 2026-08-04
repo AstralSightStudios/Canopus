@@ -1,0 +1,91 @@
+# xiaomi-band-10-pro-3.101.030 — Xiaomi Band 10 Pro firmware 3.101.030
+# Imported from firmware_latest evidence (ADR-CAN-001/002). Revision 1.
+schema = 1
+target_id = "xiaomi-band-10-pro-3.101.030"
+device_family = "xiaomi-smart-band"
+device_model = "Xiaomi Band 10 Pro"
+board_revision = "unknown"
+os_family = "nuttx-derived"
+architecture = "armv8-m.main"
+cpu = "cortex-m33"
+instruction_set = "thumb2"
+endianness = "little"
+float_abi = "soft"
+loader = "nuttx-modlib-elf32-rel"
+firmware_sha256 = "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b"
+firmware_version = "3.101.030"
+firmware_build = "CONBINE_LTALM078_T3.101.030_06011854"
+module_abi = 1
+relocation_profile = "best1503-v1"
+revision = 1
+
+# Capabilities proven or probed on this exact firmware. Bluetooth/service
+# managers remain FORBIDDEN until individually proven.
+capabilities = [
+  "identity-guard",
+  "clock.gettime",
+  "char-device.register",
+  "char-device.unregister",
+  "control-abi",
+]
+
+[loader_profile]
+elf_class = 32
+elf_machine = "ARM"
+elf_type = "ET_REL"
+endianness = "little"
+constructor_discovery = "init_array"
+symbol_imports = "none"
+max_size = 65536
+alignment = 4
+module_name_rules = "must match ^[a-zA-Z0-9_]+$; passed as argv[2] to insmod"
+load_command = "insmod <path> <name>"
+unload_command = "rmmod <name>"
+persistent_autoload = false
+
+[[loader_profile.relocations]]
+name = "R_ARM_NONE"
+arm_type = 0
+notes = "no-op; accepted"
+
+[[loader_profile.relocations]]
+name = "R_ARM_ABS32"
+arm_type = 2
+notes = "verified"
+
+[[loader_profile.relocations]]
+name = "R_ARM_REL32"
+arm_type = 23
+notes = "verified"
+
+[[loader_profile.relocations]]
+name = "R_ARM_TARGET1"
+arm_type = 38
+notes = "handled with ABS32 semantics"
+
+[[loader_profile.relocations]]
+name = "R_ARM_PREL31"
+arm_type = 42
+notes = "verified"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVW_ABS_NC"
+arm_type = 47
+notes = "verified Thumb movw"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVT_ABS"
+arm_type = 48
+notes = "verified Thumb movt"
+
+[provenance]
+source_repo = "firmware_latest"
+source_findings = [
+  "analysis/MODLIB_PHASE1_FINDINGS.md",
+  "analysis/PHASE2_STOCK_ABI_FINDINGS.md",
+  "analysis/PHASE4_NATIVE_ABI_FINDINGS.md",
+  "analysis/PHASE5_A2DP_SOURCE_FINDINGS.md",
+]
+import_date = "2026-08-05"
+maintainer = "canopus-maintainer"
+reviewers = ["canopus-maintainer"]

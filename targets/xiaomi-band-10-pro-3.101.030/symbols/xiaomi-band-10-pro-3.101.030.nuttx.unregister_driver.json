@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.nuttx.unregister_driver",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "unregister_driver",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(const char *)",
+  "proof": {
+    "static": "confirmed",
+    "device": "probed"
+  },
+  "policy": "managed",
+  "status": "DEVICE_PROBED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=nuttx name=unregister_driver"
+  },
+  "entry_address": "0x0C1A0E1C",
+  "callable_address": "0x0C1A0E1D",
+  "notes": "No-open removal passed 2026-07-22; static branch order proves -16 is returned after unlink and must not be retried"
+}

@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.identity.firmware_build_string",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "firmware_build_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "prototype": "const char[]",
+  "proof": {
+    "static": "confirmed",
+    "device": "probed"
+  },
+  "policy": "managed",
+  "status": "DEVICE_PROBED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=identity name=firmware_build_string"
+  },
+  "entry_address": "0x0C0C0850",
+  "notes": "2026-07-22 identity guard matched expected CONBINE_LTALM078_T3.101.030_06011854"
+}

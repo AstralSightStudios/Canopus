@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.nuttx.driver_open_dispatch",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "driver_open_dispatch",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(file *) via fops+0x00",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=nuttx name=driver_open_dispatch"
+  },
+  "entry_address": "0x0C1C1238",
+  "callable_address": "0x0C1C1239",
+  "notes": "file+0x10 is inode; callback runs outside namespace lock; final Phase 4 validates inode+0x18 private"
+}

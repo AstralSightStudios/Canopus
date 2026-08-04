@@ -133,7 +133,15 @@
       }
     },
     {
-      "if": { "properties": { "kind": { "const": "function" } }, "required": ["kind"] },
+      "if": {
+        "properties": {
+          "kind": { "const": "function" },
+          "policy": {
+            "enum": ["managed", "native-full-trust", "resident-only", "restricted"]
+          }
+        },
+        "required": ["kind", "policy"]
+      },
       "then": { "required": ["callable_address"] }
     }
   ]

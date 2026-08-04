@@ -1,0 +1,21 @@
+[package]
+name = "canopus-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "canopus"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+canopus-core = { path = "../../tools/canopus-core" }
+canopus-elf = { path = "../../tools/elf-verifier" }
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+toml.workspace = true
+
+[dev-dependencies]

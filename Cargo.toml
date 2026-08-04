@@ -16,6 +16,7 @@ anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 hex = "0.4"
 jsonschema = "0.26"
+object = "0.36"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"

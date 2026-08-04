@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.bt-client.hfp_ag_disconnect",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "hfp_ag_disconnect",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *, const void *)",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=bt-client name=hfp_ag_disconnect"
+  },
+  "entry_address": "0x0C39A624",
+  "callable_address": "0x0C39A625",
+  "notes": "Sends IPC message 156"
+}
