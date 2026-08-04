@@ -1518,7 +1518,7 @@ schema/format
 | 范围 | DONE | 进行中 | 未开始/阻塞 | 说明 |
 |---|---:|---:|---:|---|
 | 参考证据 | 4 | 0 | 0 | 来自当前固件研究原型 |
-| 架构与治理 | 1 | 0 | 7 | 本文完成首版架构 |
+| 架构与治理 | 2 | 0 | 6 | 本文完成首版架构；仓库/许可证已确定（AGPL-3.0，ADR-CAN-001） |
 | Host/Schema/CLI | 0 | 0 | 12 | 未实现 |
 | C SDK/Runtime | 0 | 0 | 10 | 未实现 |
 | Target/Build/Package | 0 | 0 | 14 | 未实现 |
@@ -1544,7 +1544,7 @@ schema/format
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
 | `CAN-ARCH-001` | `DONE` | Canopus 完整架构文档 v1 | 无 | 本文存在并含进度区 |
-| `CAN-ARCH-002` | `READY` | 决定独立仓库和许可证 | ARCH-001 | 仓库、license、贡献策略确定 |
+| `CAN-ARCH-002` | `DONE` | 决定独立仓库和许可证 | ARCH-001 | 仓库、license、贡献策略确定 |
 | `CAN-ARCH-003` | `BACKLOG` | 术语和 ABI version policy | ARCH-002 | glossary 与兼容规则审核通过 |
 | `CAN-ARCH-004` | `BACKLOG` | Security threat model | ARCH-001 | native trust boundary、key、rollback、resident 风险审核 |
 | `CAN-ARCH-005` | `BACKLOG` | Target maintainer policy | ARCH-002 | target pack owner/reviewer/promotion 权限明确 |
@@ -1588,7 +1588,7 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-TGT-001` | `BACKLOG` | 创建 f701a84 target pack | SCH-001..004 | exact identity 和 provenance 完整 |
+| `CAN-TGT-001` | `BACKLOG` | 创建 xiaomi-band-10-pro target pack | SCH-001..004 | exact identity 和 provenance 完整 |
 | `CAN-TGT-002` | `BACKLOG` | 导入已证明 symbols/types | TGT-001,BASE-* | 状态不被自动提升，withdrawn 保留 |
 | `CAN-TGT-003` | `BACKLOG` | Loader profile | TGT-001 | ELF/relo/constructor/size 规则 |
 | `CAN-TGT-004` | `BACKLOG` | Runtime identity generator | TGT-001 | wrong target 在任何固件调用前拒绝 |
@@ -1691,7 +1691,7 @@ schema/format
 
 | Blocker ID | 影响任务 | 内容 | 解除条件 |
 |---|---|---|---|
-| `BLK-001` | ARCH-002 及全部实现 | 尚未建立独立 Canopus 仓库和 license | 用户/维护者确认仓库边界与许可证 |
+| `BLK-001` | ARCH-002 及全部实现 | 尚未建立独立 Canopus 仓库和 license | **已解除 2026-08-05**：仓库 `/Volumes/EXT0/Canopus` 建立，license AGPL-3.0，ADR-CAN-001 |
 | `BLK-002` | DEV native service 后端 | 目标 daemon/thread/service ABI 尚未通用证明 | MVP 使用已证明 control/loader；另立 probe |
 | `BLK-003` | RUST-005 | Rust 最终 ET_REL relocation envelope 未验证 | 编译最小 no_std fixture 并运行 generic verifier |
 | `BLK-004` | MULTI-* | 尚未选定第二 exact target | 获得第二固件、hash、合法分析资料 |
@@ -1721,6 +1721,8 @@ schema/format
 | 日期 | 变更 | 任务 | 证据/备注 |
 |---|---|---|---|
 | 2026-08-05 | 创建 Canopus 架构文档 v1 | `CAN-ARCH-001` | 基于现有 module loader、control ABI、resident lifecycle 和 Phase 6 媒体实验证据 |
+| 2026-08-05 | 建立独立 Canopus 仓库并确定许可证 | `CAN-ARCH-002` | 仓库 `/Volumes/EXT0/Canopus`；AGPL-3.0；host 工具链选用 Rust；初始提交 `2711f51` |
+| 2026-08-05 | Target ID 重命名为 `xiaomi-band-10-pro` | `ADR-CAN-001` | 人类可读命名；完整 firmware SHA-256 仍为精确身份约束 |
 
 ---
 
