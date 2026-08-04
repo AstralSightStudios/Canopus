@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://canopus.dev/schemas/symbol.schema.json",
+  "title": "Canopus symbol record",
+  "description": "A recovered firmware symbol (function or global) with exact address, prototype, calling context, ownership, side effects, evidence status and policy. A symbol may be highly trusted but FORBIDDEN to call when ownership or side effects are unresolved.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "symbol_id",
+    "target_id",
+    "name",
+    "kind",
+    "instruction_set",
+    "proof",
+    "policy",
+    "status",
+    "provenance"
+  ],
+  "properties": {
+    "schema": { "const": 1 },
+    "symbol_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+\\.[a-z0-9_.-]+$",
+      "description": "Unique ID, e.g. xiaomi-band-10-pro.bt.timer.cancel"
+    },
+    "target_id": { "type": "string" },
+    "name": { "type": "string", "description": "Recovered or assigned name." },
+    "kind": { "type": "string", "enum": ["function", "global", "string", "data"] },
+    "entry_address": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]+$",
+      "description": "Byte address (even, no Thumb bit)."
+    },
+    "callable_address": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]+$",
+      "description": "Address with Thumb bit set for ARM/Thumb targets; required for functions."
+    },
+    "instruction_set": { "type": "string", "enum": ["thumb", "arm", "a64", "rv32", "n/a"] },
+    "prototype_id": { "type": "string", "description": "Reference to a prototype record in types/, e.g. proto.bt_timer_cancel.v1" },
+    "prototype": {
+      "type": "string",
+      "description": "Inline C prototype when no prototype_id is used, e.g. int(uint32_t, stock_timespec_t *)"
+    },
+    "calling_convention": { "type": "string", "enum": ["arm-aapcs", "arm-aapcs64", "sysv", "n/a"] },
+    "type": { "type": "string", "description": "For globals/data, e.g. const char[], uint32_t, void *" },
+    "contexts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowed": { "type": "array", "items": { "type": "string" } },
+        "blocking": { "type": "boolean", "description": "True if the call may block; must be false in ISR/BT contexts." }
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Who owns passed and returned memory, and when it is freed.",
+      "properties": {
+        "argument": { "type": "string", "description": "e.g. borrowed_handle_pointer, callee_consumes" },
+        "callback_argument": { "type": "string", "description": "e.g. freed_only_if_pending_timer_removed" },
+        "return_value": { "type": "string", "description": "e.g. borrowed, caller_frees, static" }
+      }
+    },
+    "side_effects": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "e.g. removes_timer, may_free_timer_argument, changes_transport_state"
+    },
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["static"],
+      "properties": {
+        "static": {
+          "type": "string",
+          "enum": ["candidate", "recovered", "confirmed"],
+          "description": "Static evidence level only; independent from callability."
+        },
+        "device": {
+          "type": "string",
+          "enum": ["not_probed", "probed", "proven"]
+        },
+        "host_tested": { "type": "boolean" },
+        "evidence_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "policy": {
+      "type": "string",
+      "enum": ["managed", "native-full-trust", "resident-only", "restricted", "forbidden", "withdrawn"],
+      "description": "Callability/veneer policy. forbidden/withdrawn must never generate a callable veneer."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "CANDIDATE",
+        "STATIC_RECOVERED",
+        "STATIC_CONFIRMED",
+        "HOST_TESTED",
+        "DEVICE_PROBED",
+        "DEVICE_PROVEN",
+        "RESTRICTED",
+        "FORBIDDEN",
+        "WITHDRAWN"
+      ],
+      "description": "Evidence level per architecture §8.4. WITHDRAWN is permanent."
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["firmware_sha256"],
+      "properties": {
+        "firmware_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "evidence_ids": { "type": "array", "items": { "type": "string" } },
+        "source": { "type": "string", "description": "e.g. ida://..., analysis/<findings.md>, probe result" },
+        "withdrawal_reason": { "type": "string", "description": "Required when status is WITHDRAWN; permanent record." }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}

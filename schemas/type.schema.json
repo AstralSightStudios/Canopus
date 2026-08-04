@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://canopus.dev/schemas/type.schema.json",
+  "title": "Canopus type/layout record",
+  "description": "A recovered firmware struct/union/enum/typedef with size, alignment, field offsets, widths, signedness, pointer targets and ownership. Names alone are not evidence; layout must be proven.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "type_id",
+    "target_id",
+    "kind",
+    "size",
+    "alignment",
+    "provenance"
+  ],
+  "properties": {
+    "schema": { "const": 1 },
+    "type_id": { "type": "string", "description": "e.g. xiaomi-band-10-pro.type.stock_timespec.v1" },
+    "target_id": { "type": "string" },
+    "kind": { "type": "string", "enum": ["struct", "union", "enum", "typedef", "primitive", "opaque"] },
+    "name": { "type": "string" },
+    "size": { "type": "integer", "minimum": 0 },
+    "alignment": { "type": "integer", "minimum": 1 },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "offset", "width", "signedness"],
+        "properties": {
+          "name": { "type": "string" },
+          "offset": { "type": "integer", "minimum": 0 },
+          "width": { "type": "integer", "minimum": 1, "description": "Byte width of the field." },
+          "signedness": { "type": "string", "enum": ["signed", "unsigned", "float", "pointer", "bitfield", "array"] },
+          "pointer_target": { "type": "string", "description": "Type_id of the pointee, when field is a pointer." },
+          "array_length": { "type": "integer", "description": "Fixed array element count, when field is an array." },
+          "bitfield": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "lsb": { "type": "integer" },
+              "width": { "type": "integer", "minimum": 1 }
+            },
+            "description": "Bit-level encoding for bitfield members."
+          },
+          "ownership": { "type": "string", "description": "e.g. borrowed, callee_frees, module_owns" },
+          "provenance": { "type": "string", "description": "Where the field layout was derived from." }
+        }
+      }
+    },
+    "layout_diffs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "firmware_sha256": { "type": "string" },
+          "diff": { "type": "string" }
+        }
+      },
+      "description": "Known layout differences across firmware versions."
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["firmware_sha256"],
+      "properties": {
+        "firmware_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "evidence_ids": { "type": "array", "items": { "type": "string" } },
+        "source": { "type": "string" }
+      }
+    }
+  }
+}

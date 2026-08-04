@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://canopus.dev/schemas/module.schema.json",
+  "title": "Canopus module manifest (Canopus.toml)",
+  "description": "A module project declaration: identity, language, lifecycle, target list, required capabilities and optional native app. Build planner expands source x targets x features into artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "module", "targets"],
+  "properties": {
+    "schema": { "const": 1 },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "language", "lifecycle", "canopus_abi"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$",
+          "description": "Reverse-DNS style, e.g. org.example.a2dp-source"
+        },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "language": { "type": "string", "enum": ["c", "rust"] },
+        "lifecycle": {
+          "type": "string",
+          "enum": ["removable", "resident-after-activation", "always-resident", "patch-reboot-required"]
+        },
+        "canopus_abi": { "type": "string" },
+        "description": { "type": "string" },
+        "author": { "type": "string" }
+      }
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "include": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "exclude": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["include"]
+    },
+    "features": { "type": "array", "items": { "type": "string" } },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "array", "items": { "type": "string" } },
+        "optional": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["required"]
+    },
+    "native_app": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "app_id", "name"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "app_id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "entry": { "type": "string", "description": "e.g. a2dp_app_create" },
+        "role": { "type": "string", "enum": ["module-manager", "standalone", "integrated"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://canopus.dev/schemas/evidence.schema.json",
+  "title": "Canopus evidence bundle",
+  "description": "A structured record of a reverse-engineering question, the tool inputs/outputs that produced it, the hypothesis, independent verification, and the verdict. LLM output alone is a hypothesis; promotion to a symbol status is done by validators, probes and reviewers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "evidence_id",
+    "target_id",
+    "question",
+    "verdict",
+    "created"
+  ],
+  "properties": {
+    "schema": { "const": 1 },
+    "evidence_id": { "type": "string", "description": "e.g. EVID-TIMER-001" },
+    "target_id": { "type": "string" },
+    "question": { "type": "string" },
+    "candidate_symbols": { "type": "array", "items": { "type": "string" } },
+    "prototype_hypothesis": { "type": "string" },
+    "callsite_evidence": { "type": "array", "items": { "type": "string" } },
+    "control_flow_evidence": { "type": "array", "items": { "type": "string" } },
+    "ownership_analysis": { "type": "string" },
+    "unsafe_assumptions": { "type": "array", "items": { "type": "string" } },
+    "recommended_probe": { "type": "string" },
+    "reviewers": { "type": "array", "items": { "type": "string" } },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "CANDIDATE",
+        "STATIC_RECOVERED",
+        "STATIC_CONFIRMED",
+        "HOST_TESTED",
+        "DEVICE_PROBED",
+        "DEVICE_PROVEN",
+        "REJECTED",
+        "WITHDRAWN"
+      ]
+    },
+    "created": { "type": "string", "format": "date-time" },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "uri": { "type": "string", "description": "e.g. ida://..., capture://..., file://..." },
+          "sha256": { "type": "string" },
+          "role": { "type": "string" }
+        }
+      }
+    }
+  }
+}
