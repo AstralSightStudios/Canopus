@@ -7,15 +7,19 @@
 CC ?= clang
 CFLAGS ?= -std=c11 -Wall -Wextra -Werror -g -O0
 
-INC = -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
-      -I../../runtime/diagnostics -I../../runtime/control -I../../runtime/module
+INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
+      -I../../runtime/diagnostics -I../../runtime/control -I../../runtime/module \
+      -I../../modules/examples/hello
+CFLAGS += -DCANOPUS_HOST=1
 
 RUNTIME_SRCS = \
 	../../runtime/control/canopus_control.c \
 	../../runtime/lifecycle/canopus_lifecycle.c \
 	../../runtime/resources/canopus_resource.c \
 	../../runtime/diagnostics/canopus_diagnostics.c \
-	../../runtime/module/canopus_module.c
+	../../runtime/module/canopus_module.c \
+	fake_target.c \
+	../../modules/examples/hello/hello.c
 
 TEST_SRCS = \
 	main.c \
@@ -23,7 +27,8 @@ TEST_SRCS = \
 	test_control.c \
 	test_lifecycle.c \
 	test_resources.c \
-	test_diagnostics.c
+	test_diagnostics.c \
+	test_hello_module.c
 
 BIN = canopus_host_tests
 
