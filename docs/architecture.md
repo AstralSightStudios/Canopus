@@ -1523,7 +1523,7 @@ schema/format
 | C SDK/Runtime | 9 | 1 | 0 | C-001..009 DONE；C-010 host 部分完成，真机 G0 待测 |
 | Target/Build/Package | 10 | 1 | 3 | TGT-001..005、BLD-001..004、PKG-001..003 DONE；PKG-004 进行中；TGT-006/RUST-* 未开始 |
 | Device Manager | 2 | 1 | 6 | DEV-002/003、UI-001..004 DONE；DEV-001 进行中；DEV-004..009 待真机 |
-| Native App/Launcher/UI | 0 | 1 | 14 | CAN-APP-001 逆向中（枚举源已证明）；原生注册 ABI 尚未证明 |
+| Native App/Launcher/UI | 0 | 4 | 11 | APP-001/002/003 逆向中（枚举源+descriptor+register/unregister 静态恢复）；APP-008/011 host 侧 DONE |
 | Rust SDK | 8 | 1 | 0 | RUST-001..006/008/009 DONE；RUST-007 host+verifier PASS，真机 G0 待测 |
 | RE/LLM/MCP | 9 | 0 | 0 | RE-001..009 DONE（canopus-re crate + `canopus re` CLI） |
 | 迁移/多目标/发布 | 0 | 0 | 13 | 未实现 |
@@ -1625,9 +1625,9 @@ schema/format
 
 | ID | 状态 | 任务 | 依赖 | 验收标准 |
 |---|---|---|---|---|
-| `CAN-APP-001` | `IN_PROGRESS` | 调查 exact-target launcher 应用枚举链 | RE-002 | 枚举源已证明：launcher.db(orderlist_v001/layout_v001)+protobuf ordered list+System 消息 26/27；descriptor/线程上下文待补 |
-| `CAN-APP-002` | `BACKLOG` | 恢复 native app descriptor/layout | APP-001,SCH-003 | size/offset/ownership/lifetime 交叉验证 |
-| `CAN-APP-003` | `BACKLOG` | 恢复 app register/unregister ABI | APP-001,002 | 返回值、冲突、同步/异步和释放语义明确 |
+| `CAN-APP-001` | `IN_PROGRESS` | 调查 exact-target launcher 应用枚举链 | RE-002 | 枚举源已证明；descriptor/register/unregister 已恢复（EVID-APP-004）；线程上下文待补 |
+| `CAN-APP-002` | `IN_PROGRESS` | 恢复 native app descriptor/layout | APP-001,SCH-003 | STATIC_RECOVERED：launcher_app_descriptor（name@8/icon@12/app_id u16@16/flags@18/resolver@28/hidden@60）+ launcher_app_record（u16 id@0/icon@4/name@8/icon_name@12/flags@20）；icon 格式待补 |
+| `CAN-APP-003` | `IN_PROGRESS` | 恢复 app register/unregister ABI | APP-001,002 | STATIC_RECOVERED：register=app_launcher_add(desc)、unregister=app_launcher_del(u16 appid)（也是 msg26 hide 路径）；返回值/冲突/释放语义交叉验证待补 |
 | `CAN-APP-004` | `BACKLOG` | 恢复 launcher icon/name/resource 格式 | APP-001 | host parser/serializer fixtures |
 | `CAN-APP-005` | `BACKLOG` | 恢复 UI toolkit 与 dispatcher ABI | APP-001,RE-004 | UI thread 投递与对象所有权明确 |
 | `CAN-APP-006` | `BACKLOG` | 恢复 create/resume/pause/destroy 生命周期 | APP-002,005 | stock app callsites 和状态机证据 |
@@ -1696,7 +1696,7 @@ schema/format
 | `BLK-003` | RUST-005 | Rust 最终 ET_REL relocation envelope 未验证 | **已解除 2026-08-05**：no-heap-counter 交叉构建 ELF32 ET_REL，verifier PASS（sha256 50641841，0 undefined，1 ctor/1 dtor） |
 | `BLK-004` | MULTI-* | 尚未选定第二 exact target | 获得第二固件、hash、合法分析资料 |
 | `BLK-005` | MIG-005 | 当前 RTP 五秒内容在 Pixel HCI 时间轴占 6.528 秒 | 单独设计并验证 pacing 策略 |
-| `BLK-006` | APP-002..015 | exact-target native app registry、launcher descriptor、UI dispatcher 和注销同步语义尚未证明 | **部分解除 2026-08-05**：launcher 应用枚举源已证明（EVID-APP-001/002）；descriptor/register ABI 仍在逆向 |
+| `BLK-006` | APP-002..015 | exact-target native app registry、launcher descriptor、UI dispatcher 和注销同步语义尚未证明 | **部分解除 2026-08-05**：枚举源（EVID-APP-001/002）+ descriptor/register/unregister（EVID-APP-004）已静态恢复；UI dispatcher 与注销同步语义待真机 |
 
 ## 23.15 决策记录模板
 
@@ -1733,6 +1733,7 @@ schema/format
 | 2026-08-05 | Phase 8：Rust SDK 全链路 | `CAN-RUST-001..009`,`CAN-TGT-006`,`BLK-003` | no_std abi/runtime/host-fake/generated-crate/no-heap 模块；55 项 Rust 测试；交叉构建 verifier PASS（0 undefined）；提交 `62c337d` |
 | 2026-08-05 | Phase 9：RE orchestrator | `CAN-RE-001..009` | canopus-re（store/IDA allowlist/workflow/verify/revision）+ `canopus re` CLI；25 项测试；提交 `0329dd8` |
 | 2026-08-05 | Phase 7：Manager UI | `CAN-UI-001..004` | canopus_manager 页面+生命周期感知操作；13 host 测试/67 检查；提交 `1e60be9` |
+| 2026-08-05 | Phase 6：App SDK host 侧 + launcher descriptor/register RE | `CAN-APP-002/003/004/008/011` | canopus_app.h + ordered-list parser/serializer + EVID-APP-004（descriptor 布局 + app_launcher_add/del ABI）；提交 `3ccfe42`、`7372e22` |
 
 ---
 
