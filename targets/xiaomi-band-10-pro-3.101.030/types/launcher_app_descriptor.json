@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.030.type.launcher_app_descriptor.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "kind": "struct",
+  "name": "launcher_app_descriptor",
+  "size": 64,
+  "alignment": 4,
+  "fields": [
+    { "name": "reserved0", "offset": 0, "width": 8, "signedness": "unsigned",
+      "ownership": "opaque", "provenance": "not read by load_app_info" },
+    { "name": "name", "offset": 8, "width": 4, "signedness": "pointer",
+      "ownership": "borrowed", "provenance": "read as *(a1+8); logged as app name; stored to record.name" },
+    { "name": "icon", "offset": 12, "width": 4, "signedness": "pointer",
+      "ownership": "borrowed", "provenance": "required non-zero ('The app has no icon to launch itself'); stored to record.icon_name" },
+    { "name": "app_id", "offset": 16, "width": 2, "signedness": "unsigned",
+      "provenance": "u16; copied to record.app_id (the u16 appid used by System msg 26/27)" },
+    { "name": "flags", "offset": 18, "width": 1, "signedness": "unsigned",
+      "provenance": "bit2 = can't be uninstalled ('The app can't be uninstalled'); applied to record.flags bit1" },
+    { "name": "icon_resolver", "offset": 28, "width": 4, "signedness": "pointer",
+      "ownership": "callable", "provenance": "fn ptr; called as (a1+28)(a1) to resolve display icon into record.icon_handle" },
+    { "name": "hidden_flags", "offset": 60, "width": 1, "signedness": "unsigned",
+      "provenance": "bit0 = hidden; load_app_info REJECTS the app ('The app need hidden')" }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "evidence_ids": ["EVID-APP-004"],
+    "source": "sub_C4F2898 load_app_info: reads +8 name, +12 icon, +16 u16 id, +18 flags, +28 resolver, +60 hidden"
+  }
+}

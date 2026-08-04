@@ -57,6 +57,28 @@ typedef struct {
     uint8_t flags; /* +0x80 */
     uint8_t _tail[3];
 } launcher_app_struct;
+typedef struct {
+    uint16_t app_id; /* +0x0 */
+    uint8_t _pad_2[2];
+    void * icon_handle; /* +0x4 */
+    void * name; /* +0x8 */
+    void * icon_name; /* +0xc */
+    uint8_t _pad_10[4];
+    uint8_t flags; /* +0x14 */
+    uint8_t _tail[3];
+} launcher_app_record;
+typedef struct {
+    uint64_t reserved0; /* +0x0 */
+    void * name; /* +0x8 */
+    void * icon; /* +0xc */
+    uint16_t app_id; /* +0x10 */
+    uint8_t flags; /* +0x12 */
+    uint8_t _pad_13[9];
+    void * icon_resolver; /* +0x1c */
+    uint8_t _pad_20[28];
+    uint8_t hidden_flags; /* +0x3c */
+    uint8_t _tail[3];
+} launcher_app_descriptor;
 
 /* ---- runtime identity guard ---- */
 static inline int canopus_str_neq(const char *a, const char *b)
@@ -95,6 +117,7 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
 /* ---- excluded symbols ----
  * app_launcher_add: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
+ * app_launcher_del: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_socket_server_receive: FORBIDDEN - no veneer may ever be generated

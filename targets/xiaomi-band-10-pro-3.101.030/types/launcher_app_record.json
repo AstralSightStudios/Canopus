@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.030.type.launcher_app_record.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "kind": "struct",
+  "name": "launcher_app_record",
+  "size": 24,
+  "alignment": 4,
+  "fields": [
+    { "name": "app_id", "offset": 0, "width": 2, "signedness": "unsigned",
+      "provenance": "u16; matched by app_launcher_del (*v3 == appid); copied from descriptor.app_id" },
+    { "name": "icon_handle", "offset": 4, "width": 4, "signedness": "pointer",
+      "ownership": "launcher_owns", "provenance": "resolved via descriptor.icon_resolver(a1)" },
+    { "name": "name", "offset": 8, "width": 4, "signedness": "pointer",
+      "ownership": "borrowed", "provenance": "copied from descriptor.name; used to find the page-list entry" },
+    { "name": "icon_name", "offset": 12, "width": 4, "signedness": "pointer",
+      "ownership": "borrowed", "provenance": "copied from descriptor.icon" },
+    { "name": "flags", "offset": 20, "width": 1, "signedness": "unsigned",
+      "provenance": "bit1 = can't be uninstalled (set from descriptor.flags bit2)" }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "evidence_ids": ["EVID-APP-004"],
+    "source": "sub_C4F2898 (record init v7[0..5]) + sub_C4F2CC4 app_launcher_del (matches *v3 == u16 appid)"
+  }
+}

@@ -7,10 +7,12 @@
   "entry_address": "0x0C4F2BDC",
   "callable_address": "0x0C4F2BDD",
   "instruction_set": "thumb",
-  "prototype": "int(app_record_t *)",
+  "prototype": "int(launcher_app_descriptor_t *)",
   "calling_convention": "arm-aapcs",
   "contexts": {
-    "allowed": ["launcher_owner"],
+    "allowed": [
+      "launcher_owner"
+    ],
     "blocking": false
   },
   "ownership": {
@@ -24,14 +26,18 @@
   ],
   "proof": {
     "static": "recovered",
-    "evidence_ids": ["EVID-APP-001"]
+    "evidence_ids": [
+      "EVID-APP-004"
+    ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
-    "evidence_ids": ["EVID-APP-001"],
+    "evidence_ids": [
+      "EVID-APP-004"
+    ],
     "source": "ida sub_C4F2BDC (log tag app_launcher_add)"
   },
-  "notes": "launcher app register path: resolves app record (name at +8), inserts into runtime lists 0x200D090C/0x200D0924, calls sub_C4F7004, logs 'add icon: %s'. The app_record_t layout is not yet fully proven."
+  "notes": "registers a native app: load_app_info (sub_C4F2898) builds a launcher_app_record from the descriptor (name@+8, icon@+12, app_id u16@+16, flags@+18, icon_resolver@+28), then links it into the runtime app list 0x200D090C and apps table 0x200D0924. Descriptor hidden flag (+60 bit0) or missing icon rejects registration."
 }

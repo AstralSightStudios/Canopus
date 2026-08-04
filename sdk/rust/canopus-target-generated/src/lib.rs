@@ -55,6 +55,18 @@ mod layout_tests {
         assert_eq!(offset_of!(service_object, startup_cb), 0x24);
         assert_eq!(size_of::<file_operations>(), 0x18);
         assert_eq!(offset_of!(file_operations, ioctl), 0x14);
+        // launcher app record (EVID-APP-004): u16 id@0, icons/name@4..12,
+        // flags@20, total 24.
+        assert_eq!(size_of::<launcher_app_record>(), 24);
+        assert_eq!(offset_of!(launcher_app_record, app_id), 0);
+        assert_eq!(offset_of!(launcher_app_record, name), 8);
+        assert_eq!(offset_of!(launcher_app_record, flags), 0x14);
+        // descriptor: name@8, icon@12, u16 app_id@16, resolver@28, hidden@60.
+        assert_eq!(size_of::<launcher_app_descriptor>(), 64);
+        assert_eq!(offset_of!(launcher_app_descriptor, name), 8);
+        assert_eq!(offset_of!(launcher_app_descriptor, app_id), 16);
+        assert_eq!(offset_of!(launcher_app_descriptor, icon_resolver), 28);
+        assert_eq!(offset_of!(launcher_app_descriptor, hidden_flags), 60);
     }
 
     #[cfg(target_pointer_width = "64")]
@@ -92,7 +104,30 @@ mod layout_tests {
             _pad_10: [0; 4],
             ioctl: core::ptr::null_mut(),
         };
-        let _ = (_e, _s, _f);
+        // launcher app record/descriptor (EVID-APP-004) also compile on host.
+        let _r = launcher_app_record {
+            app_id: 0,
+            _pad_2: [0; 2],
+            icon_handle: core::ptr::null_mut(),
+            name: core::ptr::null_mut(),
+            icon_name: core::ptr::null_mut(),
+            _pad_10: [0; 4],
+            flags: 0,
+            _tail: [0; 3],
+        };
+        let _d = launcher_app_descriptor {
+            reserved0: 0,
+            name: core::ptr::null_mut(),
+            icon: core::ptr::null_mut(),
+            app_id: 0,
+            flags: 0,
+            _pad_13: [0; 9],
+            icon_resolver: core::ptr::null_mut(),
+            _pad_20: [0; 28],
+            hidden_flags: 0,
+            _tail: [0; 3],
+        };
+        let _ = (_e, _s, _f, _r, _d);
     }
 
     #[test]

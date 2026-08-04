@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-APP-004",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "question": "What is the native app descriptor layout and the register/unregister ABI? (CAN-APP-002/003)",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.launcher.app_launcher_add",
+    "xiaomi-band-10-pro-3.101.030.launcher.app_launcher_del"
+  ],
+  "prototype_hypothesis": "app_launcher_add(const launcher_app_descriptor *d) -> int; app_launcher_del(u16 appid) -> int. Descriptor: name@+8, icon@+12 (required), app_id u16@+16, flags@+18 (bit2 uninstallable), icon_resolver fn@+28, hidden@+60 bit0.",
+  "callsite_evidence": [
+    "app_launcher_add = sub_C4F2BDC: load_app_info(sub_C4F2898) -> record; searches runtime list 0x200D090C by name (record.name @ record+8); inserts into apps table 0x200D0924; links via sub_C4F7004; logs 'add icon: %s'",
+    "load_app_info = sub_C4F2898: rejects null, missing icon (+12==0), hidden (+60&1); warns on not-uninstallable (+18&4); builds record {u16 app_id@0, icon_handle@4, name@8, icon_name@12, flags@20 bit1}",
+    "app_launcher_del = sub_C4F2CC4: log 'app_launcher_del app'; finds record in 0x200D0924 by u16 id; sub_C4F6DF8 cleanup; removes from apps table + page list; frees both (sub_C587B10)",
+    "hide (System msg 26, EVID-APP-002) calls app_launcher_del(appid); show (msg 27) rebuilds the UI"
+  ],
+  "control_flow_evidence": [
+    "logs 'The app has no icon to launch itself %s', 'The app need hidden %s', 'The app can't be uninstalled %s', 'App is (%s, %s)'",
+    "icon_resolver called twice: once as (a1+28)(a1, default_icon) returning display string, once as (a1+28)(a1) returning the icon handle"
+  ],
+  "ownership_analysis": "descriptor borrowed from the module; the launcher copies name/icon pointers into its own record and owns icon_handle (freed on del)",
+  "unsafe_assumptions": [
+    "the field at descriptor+0 (reserved0, 8 bytes) is not read by load_app_info but may be a magic/size checked elsewhere",
+    "the exact call convention for the register entry (whether modules call app_launcher_add directly or through a wrapper) not yet proven",
+    "icon resource format (bitmap/png/theme ref) not yet recovered"
+  ],
+  "recommended_probe": "host parse of the descriptor layout; a minimal register probe with a synthetic descriptor + dummy icon resolver",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-05T00:00:00Z",
+  "artifacts": [
+    { "uri": "ida://vela_ap.bin.i64 sub_C4F2BDC (app_launcher_add)", "role": "decompile" },
+    { "uri": "ida://vela_ap.bin.i64 sub_C4F2898 (load_app_info)", "role": "decompile" },
+    { "uri": "ida://vela_ap.bin.i64 sub_C4F2CC4 (app_launcher_del)", "role": "decompile" }
+  ]
+}

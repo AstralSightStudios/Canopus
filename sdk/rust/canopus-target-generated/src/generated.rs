@@ -73,6 +73,34 @@ pub struct launcher_app_struct {
     pub _tail: [u8; 0x3], // 3
 }
 
+#[repr(packed)]
+#[derive(Copy, Clone, Debug)]
+pub struct launcher_app_record {
+    pub app_id: u16, // +0x0
+    pub _pad_2: [u8; 0x2], // 2
+    pub icon_handle: *mut core::ffi::c_void, // +0x4
+    pub name: *mut core::ffi::c_void, // +0x8
+    pub icon_name: *mut core::ffi::c_void, // +0xc
+    pub _pad_10: [u8; 0x4], // 4
+    pub flags: u8, // +0x14
+    pub _tail: [u8; 0x3], // 3
+}
+
+#[repr(packed)]
+#[derive(Copy, Clone, Debug)]
+pub struct launcher_app_descriptor {
+    pub reserved0: u64, // +0x0
+    pub name: *mut core::ffi::c_void, // +0x8
+    pub icon: *mut core::ffi::c_void, // +0xc
+    pub app_id: u16, // +0x10
+    pub flags: u8, // +0x12
+    pub _pad_13: [u8; 0x9], // 9
+    pub icon_resolver: *mut core::ffi::c_void, // +0x1c
+    pub _pad_20: [u8; 0x1c], // 28
+    pub hidden_flags: u8, // +0x3c
+    pub _tail: [u8; 0x3], // 3
+}
+
 // ---- runtime identity guard ----
 /// Returns 0 when the running firmware matches this pack's
 /// version + build identity, -1 otherwise. Call once before use.
@@ -127,6 +155,7 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 // ---- excluded symbols ----
 // app_launcher_add: restricted - not exported until context/ownership approved
 // app_launcher_data_init: restricted - not exported until context/ownership approved
+// app_launcher_del: restricted - not exported until context/ownership approved
 // bt_adapter_register_a2dp_callbacks: FORBIDDEN - no binding may ever be generated
 // bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no binding may ever be generated
 // bt_socket_server_receive: FORBIDDEN - no binding may ever be generated
