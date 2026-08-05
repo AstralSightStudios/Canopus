@@ -65,16 +65,24 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
     uint32_t rc = CANOPUS_RESULT_REJECTED;
     int slot;
 
+    if (sup == 0) {
+        return CANOPUS_RESULT_REJECTED;
+    }
     if (canopus_supervisor_validate_command(command) != 0) {
+        canopus_snapshot_begin(&sup->snap);
         sup->pending_op = 0;
         sup->pending_state = CANOPUS_RESULT_REJECTED;
         sup->error_code = CANOPUS_SUP_ERR_BAD_COMMAND;
+        canopus_snapshot_commit(&sup->snap);
         return sup->pending_state;
     }
     op = cmd_word(command, 0);
     arg0 = cmd_word(command, 1);
     arg1 = cmd_word(command, 2);
 
+    /* CAN-P1-003: all state mutation runs under the snapshot protocol so a
+     * reader never observes a torn record (sequence odd or begin != end). */
+    canopus_snapshot_begin(&sup->snap);
     sup->pending_op = op;
     sup->selected = (int32_t)arg0;
     /* CAN-P1-008: clear this command's error at the start; failure paths
@@ -182,14 +190,22 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
     }
 
     sup->pending_state = rc;
+    canopus_snapshot_commit(&sup->snap);
     (void)arg1;
     return rc;
+}
+
+static uint32_t status_word(const uint8_t *b, unsigned int o)
+{
+    return (uint32_t)b[o] | ((uint32_t)b[o + 1] << 8) |
+           ((uint32_t)b[o + 2] << 16) | ((uint32_t)b[o + 3] << 24);
 }
 
 int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
                                      uint8_t out[CANOPUS_SUP_STATUS_SIZE])
 {
     uint32_t i;
+    uint32_t seq_begin;
     if (out == 0) {
         return -1;
     }
@@ -211,6 +227,10 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
     PUT32(24, sup->pending_state);
     PUT32(28, sup->flags);
     PUT32(32, sup->error_code);
+    /* CAN-P1-003: snapshot begin read once; the end is re-read after the
+     * payload so a concurrent mutation leaves begin != end (or odd). */
+    seq_begin = sup->snap.sequence;
+    PUT32(CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF, seq_begin);
     for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         uint32_t o = 128u + i * CANOPUS_SUP_MODULE_SLOT_STRIDE;
         const struct canopus_sup_module_v1 *m = &sup->modules[i];
@@ -219,6 +239,7 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
         PUT32(o + 8, m->version);
         PUT32(o + 12, m->flags);
     }
+    PUT32(CANOPUS_SUP_STATUS_SEQ_END_OFF, sup->snap.sequence);
 #undef PUT32
     return 0;
 }
@@ -226,13 +247,26 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
 int32_t canopus_supervisor_device_read(struct canopus_supervisor_v1 *sup,
                                        void *buffer, uint32_t count)
 {
+    uint8_t staging[CANOPUS_SUP_STATUS_SIZE];
+    uint32_t attempt, begin, end;
     if (sup == 0 || buffer == 0 || count < CANOPUS_SUP_STATUS_SIZE) {
         return -1;
     }
-    if (canopus_supervisor_render_status(sup, (uint8_t *)buffer) != 0) {
-        return -1;
+    /* CAN-P1-003: interrupt-safe copy via a staging buffer. Accept the
+     * record only when begin == end and even; retry a bounded number of
+     * times and otherwise report an error — never publish a torn record. */
+    for (attempt = 0; attempt < CANOPUS_SUP_STATUS_RETRIES; attempt++) {
+        if (canopus_supervisor_render_status(sup, staging) != 0) {
+            return -1;
+        }
+        begin = status_word(staging, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF);
+        end = status_word(staging, CANOPUS_SUP_STATUS_SEQ_END_OFF);
+        if ((begin & 1u) == 0u && begin == end) {
+            canopus_memcpy(buffer, staging, CANOPUS_SUP_STATUS_SIZE);
+            return (int32_t)CANOPUS_SUP_STATUS_SIZE;
+        }
     }
-    return (int32_t)CANOPUS_SUP_STATUS_SIZE;
+    return -1; /* still torn: report retry/error, never a partial record */
 }
 
 int32_t canopus_supervisor_device_write(struct canopus_supervisor_v1 *sup,

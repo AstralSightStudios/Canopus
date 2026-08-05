@@ -31,6 +31,13 @@ extern "C" {
 #define CANOPUS_SUP_MODULE_SLOTS 16u
 #define CANOPUS_SUP_MODULE_SLOT_STRIDE 16u
 
+/* CAN-P1-003: sequence snapshot embedded in the reserved status header
+ * (offsets 36-43). begin/end are the same even value when the snapshot is
+ * consistent; a reader accepts only begin == end with an even value. */
+#define CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF 36u
+#define CANOPUS_SUP_STATUS_SEQ_END_OFF   40u
+#define CANOPUS_SUP_STATUS_RETRIES       4u
+
 /* Installer commands (arg0 = module index for enable/disable/remove/...). */
 enum canopus_sup_command {
     CANOPUS_SUP_CMD_QUERY = 0x43510001u,
@@ -78,6 +85,11 @@ struct canopus_supervisor_v1 {
     uint32_t error_code;
     struct canopus_sup_module_v1 modules[CANOPUS_SUP_MODULE_SLOTS];
     int32_t  selected;         /* arg0 from the last command */
+    /* CAN-P1-003: sequence snapshot guarding the status record. Every state
+     * mutation runs under canopus_snapshot_begin/commit; the sequence value
+     * is embedded in the status at SEQ_BEGIN/SEQ_END and advances by 2 per
+     * command. A reader accepts the record only when begin == end (even). */
+    struct canopus_snapshot_v1 snap;
     /* platform hooks (see canopus_supervisor_platform.h) */
     const struct canopus_sup_platform_v1 *platform;
     void *platform_cookie;

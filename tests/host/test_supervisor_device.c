@@ -235,6 +235,76 @@ TEST(supervisor_safe_mode_sets_flag)
     CHECK(r32(status, 12) == 1);
 }
 
+/* ---- CAN-P1-003: sequence snapshot ---------------------------------- */
+
+TEST(supervisor_status_sequence_embedded_and_even)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t status[CANOPUS_SUP_STATUS_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_render_status(&sup, status) == 0);
+    /* begin == end, both even (init leaves the snapshot ready) */
+    CHECK_EQ(r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF),
+             r32(status, CANOPUS_SUP_STATUS_SEQ_END_OFF));
+    CHECK((r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF) & 1u) == 0u);
+    CHECK_EQ(r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF), 0u);
+}
+
+TEST(supervisor_command_advances_sequence)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    uint8_t status[CANOPUS_SUP_STATUS_SIZE];
+    uint32_t seq;
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_QUERY, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    canopus_supervisor_render_status(&sup, status);
+    seq = r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF);
+    CHECK_EQ(seq, r32(status, CANOPUS_SUP_STATUS_SEQ_END_OFF));
+    CHECK_EQ(seq, 2u); /* init(0) -> begin(1) -> commit(2) */
+    /* a second command advances it further */
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    canopus_supervisor_render_status(&sup, status);
+    CHECK_EQ(r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF), 4u);
+}
+
+TEST(supervisor_read_rejects_torn_snapshot)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t status[CANOPUS_SUP_STATUS_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    /* simulate a mid-write (odd sequence): the reader must not publish it */
+    sup.snap.sequence = sup.snap.sequence | 1u;
+    CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status)) == -1);
+    /* after the mutation commits, the same read succeeds and is consistent */
+    canopus_snapshot_commit(&sup.snap);
+    CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status)) ==
+          CANOPUS_SUP_STATUS_SIZE);
+    CHECK_EQ(r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF),
+             r32(status, CANOPUS_SUP_STATUS_SEQ_END_OFF));
+    CHECK((r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF) & 1u) == 0u);
+}
+
+TEST(supervisor_read_staging_never_torn)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t status[CANOPUS_SUP_STATUS_SIZE];
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1) == 0);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    /* the read returns a fully consistent record: slot state present, no
+     * torn mix of module states */
+    CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status)) ==
+          CANOPUS_SUP_STATUS_SIZE);
+    CHECK_EQ(r32(status, 128 + 0 * CANOPUS_SUP_MODULE_SLOT_STRIDE + 0),
+             CANOPUS_STATE_ACTIVE);
+    CHECK_EQ(r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF),
+             r32(status, CANOPUS_SUP_STATUS_SEQ_END_OFF));
+}
+
 /* ---- CAN-P1-008: error code persistence semantics ------------------ */
 
 TEST(supervisor_error_persists_until_next_command)
@@ -334,6 +404,10 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_unknown_slot_disallowed", supervisor_unknown_slot_disallowed_wrapper },
     { "supervisor_safe_mode_sets_flag", supervisor_safe_mode_sets_flag_wrapper },
     { "supervisor_add_module_rejects_full_table", supervisor_add_module_rejects_full_table_wrapper },
+    { "supervisor_status_sequence_embedded_and_even", supervisor_status_sequence_embedded_and_even_wrapper },
+    { "supervisor_command_advances_sequence", supervisor_command_advances_sequence_wrapper },
+    { "supervisor_read_rejects_torn_snapshot", supervisor_read_rejects_torn_snapshot_wrapper },
+    { "supervisor_read_staging_never_torn", supervisor_read_staging_never_torn_wrapper },
     { "supervisor_error_persists_until_next_command", supervisor_error_persists_until_next_command_wrapper },
     { "supervisor_bad_slot_sets_error", supervisor_bad_slot_sets_error_wrapper },
     { "supervisor_load_failure_sets_error", supervisor_load_failure_sets_error_wrapper },
