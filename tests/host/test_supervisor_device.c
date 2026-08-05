@@ -609,6 +609,55 @@ TEST(supervisor_unknown_op_sets_error)
     CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_UNKNOWN_OP);
 }
 
+/* ---- CAN-P1-007: slot reclaim + authoritative identity -------------- */
+
+TEST(supervisor_repeated_add_remove_never_exhausts_slots)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    uint32_t i;
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    g_unload_result = 0;
+    for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS + 4u; i++) {
+        char id[32];
+        int idx = canopus_supervisor_add_module(
+            &sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello");
+        CHECK(idx >= 0);
+        CHECK(sup.module_count == 1); /* one live module at a time */
+        sup.modules[idx].state = CANOPUS_STATE_ACTIVE;
+        make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, (uint32_t)idx, 0);
+        CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+        CHECK(sup.modules[idx].state == 0); /* slot reclaimed */
+        CHECK(sup.module_count == 0);
+        (void)id;
+    }
+    /* more than CANOPUS_SUP_MODULE_SLOTS add/remove cycles are fine because
+     * REMOVE reclaims the slot instead of leaving it UNLOADED */
+    CHECK(sup.module_count == 0);
+}
+
+TEST(supervisor_status_count_matches_after_remove)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    uint8_t status[CANOPUS_SUP_STATUS_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    g_unload_result = 0;
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.two") == 1);
+    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
+    sup.modules[1].state = CANOPUS_STATE_ACTIVE;
+    CHECK(sup.module_count == 2);
+    /* remove slot 0: the enumerated count and slot are consistent */
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    CHECK(sup.module_count == 1);
+    canopus_supervisor_render_status(&sup, status);
+    CHECK_EQ(r32(status, 16), 1u); /* module_count */
+    CHECK_EQ(r32(status, 128 + 0 * CANOPUS_SUP_MODULE_SLOT_STRIDE + 0), 0u); /* freed */
+    CHECK(r32(status, 128 + 1 * CANOPUS_SUP_MODULE_SLOT_STRIDE + 0) != 0u); /* slot 1 live */
+}
+
 TEST(supervisor_add_module_rejects_full_table)
 {
     struct canopus_supervisor_v1 sup;
@@ -642,6 +691,8 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_unknown_slot_disallowed", supervisor_unknown_slot_disallowed_wrapper },
     { "supervisor_safe_mode_sets_flag", supervisor_safe_mode_sets_flag_wrapper },
     { "supervisor_add_module_rejects_full_table", supervisor_add_module_rejects_full_table_wrapper },
+    { "supervisor_repeated_add_remove_never_exhausts_slots", supervisor_repeated_add_remove_never_exhausts_slots_wrapper },
+    { "supervisor_status_count_matches_after_remove", supervisor_status_count_matches_after_remove_wrapper },
     { "supervisor_status_sequence_embedded_and_even", supervisor_status_sequence_embedded_and_even_wrapper },
     { "supervisor_command_advances_sequence", supervisor_command_advances_sequence_wrapper },
     { "supervisor_read_rejects_torn_snapshot", supervisor_read_rejects_torn_snapshot_wrapper },
