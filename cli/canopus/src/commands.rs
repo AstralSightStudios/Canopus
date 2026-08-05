@@ -7,7 +7,7 @@ use canopus_core::registry::{discover_target_dir, list_target_packs, load_target
 use canopus_core::schema::{validate, SchemaKind};
 use canopus_elf::Verifier;
 use serde_json::Value;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::{EvidenceCmd, ModuleCmd, PackageCmd, SymbolCmd, TargetCmd, TypeCmd};
 
@@ -302,7 +302,7 @@ pub fn package(cmd: PackageCmd) -> anyhow::Result<()> {
 
 // ---------------------------------------------------------------- build-plan
 
-pub fn build_plan(manifest_path: &PathBuf, targets_dir: &PathBuf, json: bool) -> anyhow::Result<()> {
+pub fn build_plan(manifest_path: &Path, targets_dir: &Path, json: bool) -> anyhow::Result<()> {
     let value = load_json(manifest_path)?;
     validate(SchemaKind::Module, &value)?;
     let module: ModuleManifest = serde_json::from_value(value)?;
@@ -339,7 +339,7 @@ pub fn build_plan(manifest_path: &PathBuf, targets_dir: &PathBuf, json: bool) ->
 
 // ---------------------------------------------------------------- verify
 
-pub fn verify(elf_path: &PathBuf, target_id: &str, targets_dir: &PathBuf, json: bool) -> anyhow::Result<()> {
+pub fn verify(elf_path: &Path, target_id: &str, targets_dir: &Path, json: bool) -> anyhow::Result<()> {
     let pack = find_target(targets_dir, target_id)?;
     let data = std::fs::read(elf_path)
         .map_err(|e| anyhow::anyhow!("cannot read {}: {e}", elf_path.display()))?;
@@ -381,7 +381,7 @@ pub fn verify(elf_path: &PathBuf, target_id: &str, targets_dir: &PathBuf, json: 
 
 // ---------------------------------------------------------------- helpers
 
-fn load_json(path: &PathBuf) -> anyhow::Result<Value> {
+fn load_json(path: &Path) -> anyhow::Result<Value> {
     let text = std::fs::read_to_string(path)
         .map_err(|e| anyhow::anyhow!("cannot read {}: {e}", path.display()))?;
     match path.extension().and_then(|e| e.to_str()) {
@@ -397,7 +397,7 @@ fn load_json(path: &PathBuf) -> anyhow::Result<Value> {
     }
 }
 
-fn find_target(targets_dir: &PathBuf, target_id: &str) -> anyhow::Result<TargetPack> {
+fn find_target(targets_dir: &Path, target_id: &str) -> anyhow::Result<TargetPack> {
     let dir = targets_dir.join(target_id);
     let td = discover_target_dir(&dir)?;
     load_target_pack(&td.manifest).map_err(|e| {
@@ -542,7 +542,7 @@ fn re_revision_sign(
     revision: u32,
     key: &str,
     output: &Option<PathBuf>,
-    targets_dir: &PathBuf,
+    targets_dir: &Path,
 ) -> anyhow::Result<()> {
     let pack = find_target(targets_dir, target)?;
     let root = targets_dir.join(target);
@@ -613,7 +613,7 @@ fn re_revision_sign(
 fn re_probe(
     target: &str,
     symbol: &str,
-    targets_dir: &PathBuf,
+    targets_dir: &Path,
     output: &Option<PathBuf>,
 ) -> anyhow::Result<()> {
     let root = targets_dir.join(target);

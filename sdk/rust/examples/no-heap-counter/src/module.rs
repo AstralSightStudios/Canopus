@@ -77,6 +77,10 @@ pub extern "C" fn canopus_mod_stop(_ctx: *const ContextV1) -> i32 {
     0
 }
 
+// The stock loader calls query as a plain extern "C" fn pointer, so it cannot
+// be `unsafe fn`; the raw-pointer dereference is the module's only contract
+// with the loader-supplied writer.
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[no_mangle]
 pub extern "C" fn canopus_mod_query(w: *mut StatusWriterV1) -> i32 {
     if w.is_null() {

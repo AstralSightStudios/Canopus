@@ -1,6 +1,9 @@
 //! Smoke tests for the generic ELF verifier against minimal hand-built
 //! ELF32 ARM ET_REL objects.
 
+// Test-only builders take one argument per ELF field on purpose.
+#![allow(clippy::too_many_arguments)]
+
 use canopus_core::model::TargetPack;
 use canopus_elf::Verifier;
 use std::sync::OnceLock;
@@ -93,11 +96,11 @@ fn elf_with_undefined_symbol() -> Vec<u8> {
     out.extend_from_slice(&text_data);
     // symtab: [0]=null, [1]=foo undefined global
     out.extend_from_slice(&[0u8; 16]);
-    let mut foo = [0u8; 16];
-    foo[0..4].copy_from_slice(&1u32.to_le_bytes()); // name -> "\0foo\0" offset 1
-    foo[4] = (STB_GLOBAL << 4) | STT_NOTYPE;
-    foo[14..16].copy_from_slice(&SHN_UNDEF.to_le_bytes());
-    out.extend_from_slice(&foo);
+    let mut data = [0u8; 16];
+    data[0..4].copy_from_slice(&1u32.to_le_bytes()); // name -> "\0foo\0" offset 1
+    data[4] = (STB_GLOBAL << 4) | STT_NOTYPE;
+    data[14..16].copy_from_slice(&SHN_UNDEF.to_le_bytes());
+    out.extend_from_slice(&data);
     // strtab
     out.extend_from_slice(b"\0foo\0");
     out.extend_from_slice(&shstrtab);

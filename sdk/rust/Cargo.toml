@@ -19,9 +19,16 @@ canopus-abi = { path = "canopus-abi" }
 canopus-runtime = { path = "canopus-runtime" }
 
 # Device modules are linked for the target with panic=abort (no unwind,
-# architecture §12.1). Host tests keep the dev profile default.
+# architecture §12.1).
 [profile.release]
 panic = "abort"
 opt-level = "z"
 lto = "thin"
 codegen-units = 1
+
+# The no_std device staticlib is a workspace member, so a plain host
+# `cargo build` compiles it too. panic=abort makes that host build valid
+# (no_std cannot unwind). Host tests use assertions only (no #[should_panic]),
+# so the test harness works unchanged.
+[profile.dev]
+panic = "abort"

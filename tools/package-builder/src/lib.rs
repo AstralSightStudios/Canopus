@@ -142,7 +142,7 @@ fn canonical_digest(entries: &[(String, Vec<u8>)]) -> Vec<u8> {
     let mut h = Sha256::new();
     for (name, bytes) in sorted {
         h.update(name.as_bytes());
-        h.update(&[0u8]);
+        h.update([0u8]);
         h.update(bytes);
     }
     h.finalize().to_vec()

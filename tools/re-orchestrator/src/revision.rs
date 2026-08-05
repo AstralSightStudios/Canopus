@@ -75,8 +75,8 @@ fn decode_public(hex_str: &str) -> Result<ed25519_dalek::VerifyingKey, String> {
     let arr: [u8; 32] = bytes
         .try_into()
         .map_err(|_| "public key must be 32 bytes".to_string())?;
-    Ok(ed25519_dalek::VerifyingKey::from_bytes(&arr)
-        .map_err(|e| format!("bad public key: {e}"))?)
+    ed25519_dalek::VerifyingKey::from_bytes(&arr)
+        .map_err(|e| format!("bad public key: {e}"))
 }
 
 fn decode_signature(hex_str: &str) -> Result<ed25519_dalek::Signature, String> {

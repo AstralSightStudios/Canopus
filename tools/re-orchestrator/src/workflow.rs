@@ -80,7 +80,9 @@ pub fn render_function_evidence(e: &FunctionEvidence) -> String {
     out
 }
 
-/// Assembles a function bundle from raw IDA-returned pieces.
+/// Assembles a function bundle from raw IDA-returned pieces. One argument per
+/// evidence piece is intentional — each maps 1:1 to a `FunctionEvidence` field.
+#[allow(clippy::too_many_arguments)]
 pub fn assemble_function_bundle(
     address: &str,
     symbol_name: Option<String>,

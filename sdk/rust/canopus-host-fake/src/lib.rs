@@ -30,7 +30,9 @@ pub fn fake_alloc(n: usize) -> *mut u8 {
 }
 
 /// Frees an allocation from [`fake_alloc`] using the original size's layout.
-/// No-op on null or an untracked pointer.
+/// No-op on null or an untracked pointer. Deliberately a safe fn: it mirrors
+/// the C fake_target API that modules call directly.
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn fake_free(p: *mut u8) {
     if p.is_null() {
         return;
@@ -205,6 +207,10 @@ pub fn timer_active_count() -> usize {
 pub const FAKE_DRIVER_MAX: usize = 4;
 pub const FAKE_DRIVER_EBUSY: i32 = -16;
 
+/// `ops`/`private_data` mirror the C fake's driver_register signature (the
+/// values are stored for test introspection) but are never read back by the
+/// fake itself.
+#[allow(dead_code)]
 struct Driver {
     ops: usize,
     private_data: usize,

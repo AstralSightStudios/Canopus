@@ -9,9 +9,9 @@
 // where the ABI and ownership have been proven (architecture §12.1).
 
 // ---- recovered type layouts ----
-// `#[repr(packed)]` + explicit padding reproduces the exact
+// `#[repr(C, packed)]` + explicit padding reproduces the exact
 // recovered byte layout even when fields are sparse.
-#[repr(packed)]
+#[repr(C, packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct file_operations {
     pub open: *mut core::ffi::c_void, // +0x0
@@ -22,7 +22,7 @@ pub struct file_operations {
     pub ioctl: *mut core::ffi::c_void, // +0x14
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct launcher_order_record {
     pub app_name: [u8; 128], // +0x0
@@ -31,14 +31,14 @@ pub struct launcher_order_record {
     pub _tail: [u8; 0x4], // 4
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct stock_timespec_t {
     pub tv_sec: i32, // +0x0
     pub tv_nsec: i32, // +0x4
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct service_object {
     pub enabled_state: u8, // +0x0
@@ -55,7 +55,7 @@ pub struct service_object {
     pub _tail: [u8; 0x4], // 4
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct ordered_app_entry {
     pub app_name: *mut core::ffi::c_void, // +0x0
@@ -65,7 +65,7 @@ pub struct ordered_app_entry {
     pub _tail: [u8; 0x6], // 6
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct launcher_app_struct {
     pub name: [u8; 128], // +0x0
@@ -73,7 +73,7 @@ pub struct launcher_app_struct {
     pub _tail: [u8; 0x3], // 3
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct launcher_app_record {
     pub app_id: u16, // +0x0
@@ -86,7 +86,7 @@ pub struct launcher_app_record {
     pub _tail: [u8; 0x3], // 3
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct launcher_app_descriptor {
     pub reserved0: u64, // +0x0

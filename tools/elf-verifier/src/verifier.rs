@@ -152,7 +152,7 @@ impl<'a> Verifier<'a> {
             for (_offset, reloc) in sec.relocations() {
                 report.summary.relocation_count += 1;
                 let rt: u32 = match reloc.flags() {
-                    RelocationFlags::Elf { r_type } => r_type as u32,
+                    RelocationFlags::Elf { r_type } => r_type,
                     _ => 0,
                 };
                 // Only enforce if the loader profile lists relocations.

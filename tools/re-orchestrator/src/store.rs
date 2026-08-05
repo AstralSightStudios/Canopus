@@ -276,12 +276,12 @@ impl ReStore {
 
     pub fn load(path: &Path) -> Result<Self, StoreError> {
         let data = std::fs::read(path).map_err(StoreError::Io)?;
-        Ok(serde_json::from_slice(&data).map_err(|e| StoreError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, e)))?)
+        serde_json::from_slice(&data).map_err(|e| StoreError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, e)))
     }
 
     pub fn save(&self, path: &Path) -> Result<(), StoreError> {
         let data = serde_json::to_vec_pretty(self).map_err(|e| {
-            StoreError::Io(std::io::Error::new(std::io::ErrorKind::Other, e))
+            StoreError::Io(std::io::Error::other(e))
         })?;
         std::fs::write(path, data).map_err(StoreError::Io)
     }

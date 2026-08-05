@@ -223,17 +223,26 @@ pub unsafe fn status_put_u8(w: &mut StatusWriterV1, v: u8) -> bool {
     unsafe { put_bytes(w, &[v]) }
 }
 
-/// See [`status_put_u8`]. Little-endian on device (ARM) and host.
+/// Appends a little-endian `u16`. See [`status_put_u8`] for overflow.
+///
+/// # Safety
+/// Must only be called on a writer with a live buffer (see `status_writer_init`).
 pub unsafe fn status_put_u16(w: &mut StatusWriterV1, v: u16) -> bool {
     unsafe { put_bytes(w, &v.to_le_bytes()) }
 }
 
-/// See [`status_put_u8`]. Little-endian on device (ARM) and host.
+/// Appends a little-endian `u32`. See [`status_put_u8`] for overflow.
+///
+/// # Safety
+/// Must only be called on a writer with a live buffer (see `status_writer_init`).
 pub unsafe fn status_put_u32(w: &mut StatusWriterV1, v: u32) -> bool {
     unsafe { put_bytes(w, &v.to_le_bytes()) }
 }
 
-/// Appends `len` bytes from `src`. See [`status_put_u8`].
+/// Appends `len` bytes from `src`. See [`status_put_u8`] for overflow.
+///
+/// # Safety
+/// Must only be called on a writer with a live buffer (see `status_writer_init`).
 pub unsafe fn status_put_bytes(w: &mut StatusWriterV1, src: &[u8]) -> bool {
     unsafe { put_bytes(w, src) }
 }
@@ -319,7 +328,7 @@ impl ResourceTrackerV1 {
     fn find(&self, handle: *const core::ffi::c_void) -> Option<usize> {
         self.slots[..self.count as usize]
             .iter()
-            .position(|r| r.handle == handle as *mut core::ffi::c_void)
+            .position(|r| core::ptr::eq(r.handle, handle))
     }
 
     /// Mirrors `canopus_tracker_add`. Returns `false` on full table or a

@@ -65,7 +65,7 @@ pub fn validate(kind: SchemaKind, instance: &Value) -> Result<()> {
     let v = validator(kind)?;
     let mut lines: Vec<String> = Vec::new();
     for err in v.iter_errors(instance) {
-        lines.push(format!("  {}: {}", err.instance_path, err.to_string()));
+        lines.push(format!("  {}: {}", err.instance_path, err));
     }
     if lines.is_empty() {
         Ok(())

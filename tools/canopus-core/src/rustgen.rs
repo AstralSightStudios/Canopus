@@ -103,7 +103,7 @@ impl<'a> RustGen<'a> {
         out.push_str("//\n");
         out.push_str("// All firmware calls are `unsafe`; safe wrappers exist only\n");
         out.push_str("// where the ABI and ownership have been proven (architecture §12.1).\n");
-        out.push_str("\n");
+        out.push('\n');
 
         self.emit_types(&mut out);
         self.emit_identity(&mut out);
@@ -118,7 +118,7 @@ impl<'a> RustGen<'a> {
             return;
         }
         out.push_str("// ---- recovered type layouts ----\n");
-        out.push_str("// `#[repr(packed)]` + explicit padding reproduces the exact\n");
+        out.push_str("// `#[repr(C, packed)]` + explicit padding reproduces the exact\n");
         out.push_str("// recovered byte layout even when fields are sparse.\n");
         for t in self.types {
             if t.kind != "struct" && t.kind != "union" {
@@ -128,7 +128,7 @@ impl<'a> RustGen<'a> {
             let kw = if t.kind == "union" { "union" } else { "struct" };
             let total = t.size;
             out.push_str(&format!(
-                "#[repr(packed)]\n#[derive(Copy, Clone, Debug)]\npub {kw} {name} {{\n"
+                "#[repr(C, packed)]\n#[derive(Copy, Clone, Debug)]\npub {kw} {name} {{\n"
             ));
             let mut cursor = 0u64;
             let mut fields = t.fields.clone().unwrap_or_default();
