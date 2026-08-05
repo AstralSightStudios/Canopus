@@ -244,6 +244,7 @@ pub fn package(cmd: PackageCmd) -> anyhow::Result<()> {
         PackageCmd::Build {
             manifest,
             artifact,
+            resource,
             output,
             key,
         } => {
@@ -259,9 +260,18 @@ pub fn package(cmd: PackageCmd) -> anyhow::Result<()> {
                     .ok_or_else(|| anyhow::anyhow!("--artifact must be target_id=path: {a}"))?;
                 files.insert(tid.to_string(), PathBuf::from(path));
             }
+            // CAN-P1-013: declared_path=file pairs for native-app resources
+            let mut resource_files = std::collections::HashMap::new();
+            for a in resource {
+                let (path, file) = a
+                    .split_once('=')
+                    .ok_or_else(|| anyhow::anyhow!("--resource must be path=file: {a}"))?;
+                resource_files.insert(path.to_string(), PathBuf::from(file));
+            }
 
-            let pkg = canopus_package::manifest_with_real_hashes(&pkg, &files)?;
-            let archive = canopus_package::build_archive(&pkg, &files)?;
+            let pkg =
+                canopus_package::manifest_with_real_hashes(&pkg, &files, &resource_files)?;
+            let archive = canopus_package::build_archive(&pkg, &files, &resource_files)?;
             let signed = match key {
                 Some(k) => canopus_package::sign_archive(&archive, &k)?,
                 None => archive,

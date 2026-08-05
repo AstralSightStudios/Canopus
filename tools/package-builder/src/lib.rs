@@ -66,10 +66,14 @@ pub fn validate_entry(name: &str, entry_type: &EntryType) -> Result<()> {
 
 /// Assembles a deterministic tar archive from a manifest and the on-disk
 /// artifacts it references. Verifies each artifact SHA-256 against the
-/// manifest before embedding.
+/// manifest before embedding. `resource_files` maps each declared
+/// native-app resource path to its on-disk source (CAN-P1-013); every
+/// declared resource must be supplied, and a supplied-but-undeclared file
+/// is rejected so the signed payload can never diverge from the manifest.
 pub fn build_archive(
     manifest: &PackageManifest,
-    files: &HashMap<String, PathBuf>, // target_id -> source file
+    files: &HashMap<String, PathBuf>,         // target_id -> source file
+    resource_files: &HashMap<String, PathBuf>, // resource path -> source file
 ) -> Result<Vec<u8>> {
     let mut entries: Vec<(String, Vec<u8>)> = Vec::new();
 
@@ -99,6 +103,44 @@ pub fn build_archive(
         entries.push((art.path.clone(), bytes));
     }
 
+    // CAN-P1-013: declared native-app resources (hash-verified, canonical
+    // path). A supplied file that is not declared is rejected so nothing
+    // unverified can ride along in the package.
+    if let Some(resources) = manifest.native_app.as_ref().and_then(|a| a.resources.as_ref()) {
+        for r in resources {
+            validate_entry(&r.path, &EntryType::Regular)?;
+            let src = resource_files.get(&r.path).ok_or_else(|| {
+                Error::other(format!(
+                    "package build: no resource file supplied for declared '{}'",
+                    r.path
+                ))
+            })?;
+            let bytes = std::fs::read(src)
+                .map_err(|e| Error::other(format!("cannot read {}: {e}", src.display())))?;
+            let actual = hex_sha256(&bytes);
+            if !actual.eq_ignore_ascii_case(&r.sha256) {
+                return Err(Error::other(format!(
+                    "package build: resource {} sha256 mismatch (expected {}, got {})",
+                    r.path, r.sha256, actual
+                )));
+            }
+            entries.push((r.path.clone(), bytes));
+        }
+    }
+    // a supplied resource that the manifest does not declare is a reject
+    for path in resource_files.keys() {
+        let declared = manifest
+            .native_app
+            .as_ref()
+            .and_then(|a| a.resources.as_ref())
+            .is_some_and(|rs| rs.iter().any(|r| &r.path == path));
+        if !declared {
+            return Err(Error::other(format!(
+                "package build: resource file '{path}' not declared in the manifest"
+            )));
+        }
+    }
+
     write_tar(&entries)
 }
 
@@ -125,16 +167,26 @@ pub fn sign_archive(archive: &[u8], secret_key_hex: &str) -> Result<Vec<u8>> {
 
 /// Replaces the placeholder artifact hashes in a manifest with real ones
 /// computed from the supplied artifact files, so callers do not need to
-/// pre-compute SHA-256 by hand.
+/// pre-compute SHA-256 by hand. Declared native-app resources are filled
+/// the same way from `resource_files` (CAN-P1-013).
 pub fn manifest_with_real_hashes(
     manifest: &PackageManifest,
     files: &HashMap<String, PathBuf>,
+    resource_files: &HashMap<String, PathBuf>,
 ) -> Result<PackageManifest> {
     let mut m = manifest.clone();
     for art in &mut m.artifacts {
         if let Some(src) = files.get(&art.target_id) {
             let bytes = std::fs::read(src)?;
             art.sha256 = hex_sha256(&bytes);
+        }
+    }
+    if let Some(resources) = m.native_app.as_mut().and_then(|a| a.resources.as_mut()) {
+        for r in resources {
+            if let Some(src) = resource_files.get(&r.path) {
+                let bytes = std::fs::read(src)?;
+                r.sha256 = hex_sha256(&bytes);
+            }
         }
     }
     Ok(m)

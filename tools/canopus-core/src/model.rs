@@ -330,6 +330,18 @@ pub struct PackageNativeApp {
     pub role: Option<String>,
     pub pages: Option<Vec<String>>,
     pub resource_hashes: Option<std::collections::HashMap<String, String>>,
+    /* CAN-P1-013: structured native-app resources. Each is hash-verified and
+     * embedded by the builder, becomes part of the signed digest, and must
+     * be present in the archive when the manifest declares it. */
+    pub resources: Option<Vec<PackageResource>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PackageResource {
+    pub path: String,
+    pub sha256: String,
+    pub media_type: String,
+    pub target_backend: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -251,6 +251,9 @@ enum PackageCmd {
         /// Artifact source, target_id=path (repeatable).
         #[arg(long = "artifact", action = clap::ArgAction::Append)]
         artifact: Vec<String>,
+        /// Native-app resource source, declared_path=file (repeatable).
+        #[arg(long = "resource", action = clap::ArgAction::Append)]
+        resource: Vec<String>,
         /// Output .canopus file.
         #[arg(long)]
         output: PathBuf,

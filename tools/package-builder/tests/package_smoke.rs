@@ -47,15 +47,20 @@ fn real_manifest(tag: &str) -> (PackageManifest, HashMap<String, PathBuf>) {
         "xiaomi-band-10-pro-3.101.030".to_string(),
         artifact_file(tag),
     );
-    let manifest = canopus_package::manifest_with_real_hashes(&manifest, &files).unwrap();
+    let manifest =
+        canopus_package::manifest_with_real_hashes(&manifest, &files, &HashMap::new()).unwrap();
     (manifest, files)
+}
+
+fn no_resources() -> HashMap<String, PathBuf> {
+    HashMap::new()
 }
 
 #[test]
 fn sign_then_verify_roundtrip() {
     let (manifest, files) = real_manifest("roundtrip");
     let (secret, public) = keygen().unwrap();
-    let archive = build_archive(&manifest, &files).unwrap();
+    let archive = build_archive(&manifest, &files, &no_resources()).unwrap();
     let signed = sign_archive(&archive, &secret).unwrap();
     assert!(signed.len() > archive.len());
 
@@ -71,7 +76,7 @@ fn sign_then_verify_roundtrip() {
 fn unsigned_package_fails_verify() {
     let (secret, public) = keygen().unwrap();
     let (manifest, files) = real_manifest("unsigned");
-    let archive = build_archive(&manifest, &files).unwrap();
+    let archive = build_archive(&manifest, &files, &no_resources()).unwrap();
     let _ = secret;
     assert!(verify_archive(&archive, &public).is_err());
 }
@@ -80,7 +85,7 @@ fn unsigned_package_fails_verify() {
 fn tampered_archive_fails_verify() {
     let (secret, public) = keygen().unwrap();
     let (manifest, files) = real_manifest("tamper");
-    let archive = build_archive(&manifest, &files).unwrap();
+    let archive = build_archive(&manifest, &files, &no_resources()).unwrap();
     let mut signed = sign_archive(&archive, &secret).unwrap();
 
     // flip a byte in the artifact payload region
@@ -93,8 +98,8 @@ fn tampered_archive_fails_verify() {
 #[test]
 fn build_is_deterministic() {
     let (manifest, files) = real_manifest("determinism");
-    let a = build_archive(&manifest, &files).unwrap();
-    let b = build_archive(&manifest, &files).unwrap();
+    let a = build_archive(&manifest, &files, &no_resources()).unwrap();
+    let b = build_archive(&manifest, &files, &no_resources()).unwrap();
     assert_eq!(a, b, "same inputs must produce byte-identical archives");
 }
 
@@ -193,6 +198,137 @@ fn build_rejects_traversal_artifact_path() {
         "xiaomi-band-10-pro-3.101.030".to_string(),
         artifact_file("traversal"),
     );
-    let manifest = canopus_package::manifest_with_real_hashes(&manifest, &files).unwrap();
-    assert!(build_archive(&manifest, &files).is_err());
+    let manifest =
+        canopus_package::manifest_with_real_hashes(&manifest, &files, &HashMap::new()).unwrap();
+    assert!(build_archive(&manifest, &files, &no_resources()).is_err());
+}
+
+// ---- CAN-P1-013: native-app resources ---------------------------------
+
+fn manifest_with_resource(path: &str) -> PackageManifest {
+    serde_json::from_str(&format!(
+        r#"{{
+            "schema": 1,
+            "package_id": "org.example.hello",
+            "module_id": "org.example.hello",
+            "version": "0.1.0",
+            "build_generation": 1,
+            "canopus_abi": "1",
+            "lifecycle": "removable",
+            "artifacts": [{{
+                "target_id": "xiaomi-band-10-pro-3.101.030",
+                "target_pack_revision": 1,
+                "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+                "path": "artifacts/xiaomi-band-10-pro-3.101.030/module.elf",
+                "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+            }}],
+            "target_pack_revision": 1,
+            "signature": {{ "key_id": "test", "algorithm": "ed25519" }},
+            "min_manager_version": "0.1.0",
+            "native_app": {{
+                "app_id": "com.canopus.manager",
+                "name": "Manager",
+                "icon": "resources/icon.png",
+                "resources": [{{
+                    "path": "{path}",
+                    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "media_type": "image/png",
+                    "target_backend": "lvgl"
+                }}]
+            }}
+        }}"#
+    ))
+    .unwrap()
+}
+
+#[test]
+fn build_embeds_declared_resource() {
+    let mut manifest = manifest_with_resource("resources/icon.png");
+    let mut files = HashMap::new();
+    files.insert(
+        "xiaomi-band-10-pro-3.101.030".to_string(),
+        artifact_file("res-artifact"),
+    );
+    let mut resource_files = HashMap::new();
+    resource_files.insert("resources/icon.png".to_string(), artifact_file("icon"));
+    let manifest =
+        canopus_package::manifest_with_real_hashes(&manifest, &files, &resource_files).unwrap();
+    let archive = build_archive(&manifest, &files, &resource_files).unwrap();
+    // the resource is embedded alongside the artifact
+    assert!(archive
+        .windows(b"resources/icon.png".len())
+        .any(|w| w == b"resources/icon.png"));
+}
+
+#[test]
+fn build_rejects_missing_declared_resource() {
+    let manifest = manifest_with_resource("resources/icon.png");
+    let mut files = HashMap::new();
+    files.insert(
+        "xiaomi-band-10-pro-3.101.030".to_string(),
+        artifact_file("missing-res"),
+    );
+    // declared but not supplied -> error
+    assert!(build_archive(&manifest, &files, &no_resources()).is_err());
+}
+
+#[test]
+fn build_rejects_undeclared_resource_file() {
+    let mut manifest = manifest_with_resource("resources/icon.png");
+    let mut files = HashMap::new();
+    files.insert(
+        "xiaomi-band-10-pro-3.101.030".to_string(),
+        artifact_file("undeclared-res"),
+    );
+    let mut resource_files = HashMap::new();
+    resource_files.insert("resources/icon.png".to_string(), artifact_file("icon"));
+    resource_files.insert("resources/secret.bin".to_string(), artifact_file("secret"));
+    let manifest =
+        canopus_package::manifest_with_real_hashes(&manifest, &files, &resource_files).unwrap();
+    // a supplied file that the manifest does not declare is rejected
+    assert!(build_archive(&manifest, &files, &resource_files).is_err());
+}
+
+#[test]
+fn resource_hash_mismatch_fails_build() {
+    let mut manifest = manifest_with_resource("resources/icon.png");
+    let mut files = HashMap::new();
+    files.insert(
+        "xiaomi-band-10-pro-3.101.030".to_string(),
+        artifact_file("res-hash"),
+    );
+    let mut resource_files = HashMap::new();
+    resource_files.insert("resources/icon.png".to_string(), artifact_file("icon"));
+    let mut manifest =
+        canopus_package::manifest_with_real_hashes(&manifest, &files, &resource_files).unwrap();
+    // corrupt the declared resource hash after filling it
+    if let Some(rs) = manifest.native_app.as_mut().and_then(|a| a.resources.as_mut()) {
+        rs[0].sha256 = "0000000000000000000000000000000000000000000000000000000000000000".to_string();
+    }
+    assert!(build_archive(&manifest, &files, &resource_files).is_err());
+}
+
+#[test]
+fn tampered_resource_fails_verify() {
+    let mut manifest = manifest_with_resource("resources/icon.png");
+    let mut files = HashMap::new();
+    files.insert(
+        "xiaomi-band-10-pro-3.101.030".to_string(),
+        artifact_file("res-tamper-artifact"),
+    );
+    let mut resource_files = HashMap::new();
+    resource_files.insert("resources/icon.png".to_string(), artifact_file("res-tamper"));
+    let manifest =
+        canopus_package::manifest_with_real_hashes(&manifest, &files, &resource_files).unwrap();
+    let (secret, public) = keygen().unwrap();
+    let archive = build_archive(&manifest, &files, &resource_files).unwrap();
+    let mut signed = sign_archive(&archive, &secret).unwrap();
+    // tamper the resource content bytes (the resource's payload string)
+    let marker = b"res-tamper";
+    let idx = signed
+        .windows(marker.len())
+        .position(|w| w == marker)
+        .expect("resource payload present");
+    signed[idx] ^= 0xFF;
+    assert!(verify_archive(&signed, &public).is_err());
 }

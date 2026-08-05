@@ -18,15 +18,34 @@
     "min_manager_version"
   ],
   "properties": {
-    "schema": { "const": 1 },
-    "package_id": { "type": "string" },
-    "module_id": { "type": "string" },
-    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
-    "build_generation": { "type": "integer", "minimum": 1 },
-    "canopus_abi": { "type": "string" },
+    "schema": {
+      "const": 1
+    },
+    "package_id": {
+      "type": "string"
+    },
+    "module_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "build_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "canopus_abi": {
+      "type": "string"
+    },
     "lifecycle": {
       "type": "string",
-      "enum": ["removable", "resident-after-activation", "always-resident", "patch-reboot-required"]
+      "enum": [
+        "removable",
+        "resident-after-activation",
+        "always-resident",
+        "patch-reboot-required"
+      ]
     },
     "artifacts": {
       "type": "array",
@@ -34,14 +53,39 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["target_id", "target_pack_revision", "firmware_sha256", "path", "sha256"],
+        "required": [
+          "target_id",
+          "target_pack_revision",
+          "firmware_sha256",
+          "path",
+          "sha256"
+        ],
         "properties": {
-          "target_id": { "type": "string" },
-          "target_pack_revision": { "type": "integer", "minimum": 1 },
-          "firmware_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-          "path": { "type": "string", "description": "Path within the package, e.g. artifacts/xiaomi-band-10-pro/module.elf" },
-          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-          "symbols_used": { "type": "array", "items": { "type": "string" } }
+          "target_id": {
+            "type": "string"
+          },
+          "target_pack_revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "firmware_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "path": {
+            "type": "string",
+            "description": "Path within the package, e.g. artifacts/xiaomi-band-10-pro/module.elf"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "symbols_used": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     },
@@ -49,49 +93,134 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "required": { "type": "array", "items": { "type": "string" } },
-        "optional": { "type": "array", "items": { "type": "string" } }
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "optional": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "native_app": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "app_id": { "type": "string" },
-        "name": { "type": "string" },
-        "icon": { "type": "string" },
-        "entry": { "type": "string" },
-        "role": { "type": "string" },
-        "pages": { "type": "array", "items": { "type": "string" } },
+        "app_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "entry": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "resource_hashes": {
           "type": "object",
-          "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "sha256",
+              "media_type"
+            ],
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "media_type": {
+                "type": "string"
+              },
+              "target_backend": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "CAN-P1-013: native-app resources. Each is canonical-path validated, hash-verified and embedded by the builder; all are part of the signed digest."
         }
       },
       "description": "Present when the package carries a native app; if present, target verifier must check app/launcher capabilities and lifecycle class."
     },
-    "update_semantics": { "type": "string", "description": "e.g. active never replaced in place; staged + next-boot switch" },
-    "remove_semantics": { "type": "string" },
-    "reboot_required": { "type": "boolean" },
-    "target_pack_revision": { "type": "integer", "minimum": 1 },
+    "update_semantics": {
+      "type": "string",
+      "description": "e.g. active never replaced in place; staged + next-boot switch"
+    },
+    "remove_semantics": {
+      "type": "string"
+    },
+    "reboot_required": {
+      "type": "boolean"
+    },
+    "target_pack_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
     "signature": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key_id", "algorithm"],
+      "required": [
+        "key_id",
+        "algorithm"
+      ],
       "properties": {
-        "key_id": { "type": "string" },
-        "algorithm": { "type": "string", "const": "ed25519" }
+        "key_id": {
+          "type": "string"
+        },
+        "algorithm": {
+          "type": "string",
+          "const": "ed25519"
+        }
       }
     },
-    "min_manager_version": { "type": "string" },
-    "sbom": { "type": "string", "description": "Path to SBOM report inside the package." },
+    "min_manager_version": {
+      "type": "string"
+    },
+    "sbom": {
+      "type": "string",
+      "description": "Path to SBOM report inside the package."
+    },
     "reproducibility": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "build_environment": { "type": "string" },
-        "toolchain": { "type": "string" },
-        "clean_rebuild_identical": { "type": "boolean" }
+        "build_environment": {
+          "type": "string"
+        },
+        "toolchain": {
+          "type": "string"
+        },
+        "clean_rebuild_identical": {
+          "type": "boolean"
+        }
       }
     }
   }
