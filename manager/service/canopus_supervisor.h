@@ -90,6 +90,10 @@ enum canopus_boot_state {
 /* Consecutive crash threshold that forces the next boot into safe mode. */
 #define CANOPUS_SUP_CRASH_THRESHOLD 3u
 
+/* CAN-P0-003: maximum length of a staged-object token. INSTALL never
+ * accepts an arbitrary path; only a bounded basename token is allowed. */
+#define CANOPUS_SUP_STAGE_TOKEN_MAX 128u
+
 #define CANOPUS_SUP_MODULE_ID_MAX 32u
 
 /* Slot flag bits. bit0 is the legacy signature_ok bit (also rendered in the

@@ -422,6 +422,28 @@ static int sup_slot_from_module_id(const struct canopus_supervisor_v1 *sup,
     return -1;
 }
 
+/* CAN-P0-003: an INSTALL stage token is a bounded basename, never an
+ * arbitrary path. Only [a-z0-9._-] and NUL-terminated within the bound. */
+static int sup_stage_token_ok(const void *payload, uint32_t len)
+{
+    const uint8_t *p = (const uint8_t *)payload;
+    uint32_t i;
+    if (payload == 0 || len == 0 || len > CANOPUS_SUP_STAGE_TOKEN_MAX) {
+        return 0;
+    }
+    for (i = 0; i < len; i++) {
+        uint8_t c = p[i];
+        if (c == 0) {
+            return 1; /* NUL terminates inside the bound */
+        }
+        if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+              c == '.' || c == '-' || c == '_')) {
+            return 0;
+        }
+    }
+    return 0; /* no NUL within the bound */
+}
+
 int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
                                          const struct canopus_proto_request_v1 *req,
                                          const void *payload,
@@ -438,6 +460,12 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
     op = v2_to_sup_cmd(req->command);
     if (op == 0) {
         canopus_proto_response_init(resp, req->request_id, CANOPUS_RESULT_REJECTED, 0);
+        return 0;
+    }
+    /* CAN-P0-003: INSTALL must carry a bounded stage token, never a path */
+    if (req->command == CANOPUS_CMD_INSTALL &&
+        !sup_stage_token_ok(payload, req->payload_size)) {
+        canopus_proto_response_init(resp, req->request_id, CANOPUS_RESULT_DISALLOWED, 0);
         return 0;
     }
     if (v2_op_needs_slot(req->command)) {

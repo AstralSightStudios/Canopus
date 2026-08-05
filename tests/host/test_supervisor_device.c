@@ -555,12 +555,18 @@ TEST(v2_device_write_echoes_request_id)
 TEST(v2_request_tracked_in_pending)
 {
     struct canopus_supervisor_v1 sup;
-    uint8_t wbuf[CANOPUS_TRANSPORT_V2_HEADER_SIZE];
+    uint8_t wbuf[96];
     uint8_t rbuf[128];
+    uint8_t payload[24];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_INSTALL, 0x77, 0, 0);
-    CHECK(canopus_supervisor_device_write(&sup, wbuf, sizeof(wbuf)) ==
-          (int32_t)sizeof(wbuf));
+    /* INSTALL requires a bounded stage token (CAN-P0-003) */
+    canopus_memset(payload, 0, sizeof(payload));
+    canopus_memcpy(payload, "org.example.pkg", 15);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_INSTALL, 0x77,
+                    payload, 16);
+    CHECK(canopus_supervisor_device_write(
+              &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + 16) ==
+          (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 16));
     const struct canopus_pending_request_v1 *p =
         canopus_pending_find(&sup.pending, 0x77);
     CHECK(p != 0);
@@ -601,6 +607,48 @@ TEST(v2_enable_by_module_id)
     CHECK(canopus_supervisor_device_write(
               &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(payload)) ==
           (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(payload)));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_DISALLOWED);
+}
+
+/* ---- CAN-P0-003: INSTALL stage token boundary ------------------------ */
+
+TEST(v2_install_accepts_only_bounded_token)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t wbuf[128];
+    uint8_t rbuf[128];
+    uint8_t payload[64];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    g_stage_result = 0;
+
+    /* a valid package token is accepted and staged */
+    canopus_memset(payload, 0, sizeof(payload));
+    canopus_memcpy(payload, "org.example.pkg-1.0", 19);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_INSTALL, 0x10,
+                    payload, 20);
+    CHECK(canopus_supervisor_device_write(
+              &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + 20) ==
+          (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 20));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_COMPLETED);
+
+    /* a path / traversal is rejected, never passed to the platform */
+    canopus_memcpy(payload, "/etc/passwd", 11);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_INSTALL, 0x11,
+                    payload, 12);
+    CHECK(canopus_supervisor_device_write(
+              &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + 12) ==
+          (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 12));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_DISALLOWED);
+
+    canopus_memcpy(payload, "../evil.bin", 11);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_INSTALL, 0x12,
+                    payload, 12);
+    CHECK(canopus_supervisor_device_write(
+              &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + 12) ==
+          (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 12));
     CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
     CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_DISALLOWED);
 }
@@ -790,6 +838,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "v2_request_tracked_in_pending", v2_request_tracked_in_pending_wrapper },
     { "v2_enable_by_module_id", v2_enable_by_module_id_wrapper },
     { "v2_unknown_magic_rejected", v2_unknown_magic_rejected_wrapper },
+    { "v2_install_accepts_only_bounded_token", v2_install_accepts_only_bounded_token_wrapper },
 };
 #define SUPERVISOR_DEVICE_TESTS_LEN \
     (sizeof(supervisor_device_tests) / sizeof(supervisor_device_tests[0]))

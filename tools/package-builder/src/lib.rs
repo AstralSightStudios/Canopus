@@ -16,11 +16,53 @@ use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tar::{Builder, Header};
+use tar::{Builder, EntryType, Header};
 
 pub mod keyroles;
 
 pub const SIGNATURE_ENTRY: &str = "signature.ed25519";
+
+/// CAN-P0-003: canonical, security-bounded archive entry path. Rejects
+/// absolute paths, `..` / `.` / empty components, backslash confusion, NUL
+/// and any non-regular file type (symlink, hardlink, device node, FIFO,
+/// directory). Every entry path is validated at build, at extract and at
+/// verify so the signed payload and the unpacked tree can never diverge.
+pub fn validate_entry(name: &str, entry_type: &EntryType) -> Result<()> {
+    if name.is_empty() {
+        return Err(Error::other("package archive: empty entry path"));
+    }
+    if name.contains('\0') {
+        return Err(Error::other("package archive: NUL in entry path"));
+    }
+    if name.starts_with('/') {
+        return Err(Error::other(format!(
+            "package archive: absolute path '{name}'"
+        )));
+    }
+    if name.contains('\\') {
+        return Err(Error::other(format!(
+            "package archive: backslash in path '{name}'"
+        )));
+    }
+    for comp in name.split('/') {
+        if comp.is_empty() {
+            return Err(Error::other(format!(
+                "package archive: empty path component in '{name}'"
+            )));
+        }
+        if comp == "." || comp == ".." {
+            return Err(Error::other(format!(
+                "package archive: traversal component in '{name}'"
+            )));
+        }
+    }
+    if *entry_type != EntryType::Regular {
+        return Err(Error::other(format!(
+            "package archive: non-regular entry type for '{name}'"
+        )));
+    }
+    Ok(())
+}
 
 /// Assembles a deterministic tar archive from a manifest and the on-disk
 /// artifacts it references. Verifies each artifact SHA-256 against the
@@ -43,6 +85,8 @@ pub fn build_archive(
                 art.target_id
             ))
         })?;
+        // CAN-P0-003: every embedded path is canonical before it is written
+        validate_entry(&art.path, &EntryType::Regular)?;
         let bytes = std::fs::read(src)
             .map_err(|e| Error::other(format!("cannot read {}: {e}", src.display())))?;
         let actual = hex_sha256(&bytes);
@@ -148,14 +192,23 @@ fn canonical_digest(entries: &[(String, Vec<u8>)]) -> Vec<u8> {
     h.finalize().to_vec()
 }
 
-/// Parses a tar into sorted (path, bytes) entries. Order does not matter for
-/// parsing; write_tar re-sorts for determinism.
+/// Parses a tar into sorted (path, bytes) entries. Every entry is validated
+/// against the canonical path rules and duplicates are rejected (so a
+/// signature over the archive can never be fooled by "one path verified,
+/// another unpacked").
 fn read_tar(archive: &[u8]) -> Result<Vec<(String, Vec<u8>)>> {
     let mut out = Vec::new();
+    let mut seen = std::collections::HashSet::new();
     let mut ar = tar::Archive::new(archive);
     for entry in ar.entries()? {
         let mut entry = entry?;
         let name = entry.path()?.to_string_lossy().into_owned();
+        validate_entry(&name, &entry.header().entry_type())?;
+        if !seen.insert(name.clone()) {
+            return Err(Error::other(format!(
+                "package archive: duplicate entry '{name}'"
+            )));
+        }
         let mut bytes = Vec::new();
         std::io::Read::read_to_end(&mut entry, &mut bytes)?;
         out.push((name, bytes));
@@ -171,6 +224,7 @@ fn write_tar(entries: &[(String, Vec<u8>)]) -> Result<Vec<u8>> {
     {
         let mut b = Builder::new(&mut data);
         for (path, bytes) in sorted {
+            validate_entry(path, &EntryType::Regular)?;
             let mut h = Header::new_gnu();
             h.set_size(bytes.len() as u64);
             h.set_mode(0o644);

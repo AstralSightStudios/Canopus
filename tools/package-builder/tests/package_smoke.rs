@@ -1,9 +1,10 @@
 //! End-to-end package build / sign / verify tests.
 
 use canopus_core::model::PackageManifest;
-use canopus_package::{build_archive, keygen, sign_archive, verify_archive};
+use canopus_package::{build_archive, keygen, sign_archive, validate_entry, verify_archive};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use tar::{Builder, EntryType, Header};
 
 fn test_manifest() -> PackageManifest {
     serde_json::from_str(
@@ -95,4 +96,103 @@ fn build_is_deterministic() {
     let a = build_archive(&manifest, &files).unwrap();
     let b = build_archive(&manifest, &files).unwrap();
     assert_eq!(a, b, "same inputs must produce byte-identical archives");
+}
+
+// ---- CAN-P0-003: canonical archive entry boundary ----------------------
+
+fn make_tar(entries: &[(String, Vec<u8>)]) -> Vec<u8> {
+    let mut data = Vec::new();
+    {
+        let mut b = Builder::new(&mut data);
+        for (path, bytes) in entries {
+            let mut h = Header::new_gnu();
+            h.set_size(bytes.len() as u64);
+            h.set_mode(0o644);
+            h.set_uid(0);
+            h.set_gid(0);
+            h.set_mtime(0);
+            h.set_cksum();
+            b.append_data(&mut h, path, bytes.as_slice()).unwrap();
+        }
+        b.finish().unwrap();
+    }
+    data
+}
+
+fn make_tar_symlink(path: &str, target: &str) -> Vec<u8> {
+    let mut data = Vec::new();
+    {
+        let mut b = Builder::new(&mut data);
+        let mut h = Header::new_gnu();
+        h.set_entry_type(EntryType::Symlink);
+        h.set_size(target.len() as u64);
+        h.set_uid(0);
+        h.set_gid(0);
+        h.set_mtime(0);
+        h.set_cksum();
+        b.append_data(&mut h, path, target.as_bytes()).unwrap();
+        b.finish().unwrap();
+    }
+    data
+}
+
+#[test]
+fn validate_entry_rejects_traversal_and_absolute() {
+    let r = EntryType::Regular;
+    assert!(validate_entry("../x", &r).is_err());
+    assert!(validate_entry("a/../../x", &r).is_err());
+    assert!(validate_entry("/abs", &r).is_err());
+    assert!(validate_entry("a/./b", &r).is_err());
+    assert!(validate_entry("a//b", &r).is_err());
+    assert!(validate_entry("a\\b", &r).is_err());
+    assert!(validate_entry("ok/name.bin", &r).is_ok());
+}
+
+fn make_tar_dir(path: &str) -> Vec<u8> {
+    let mut data = Vec::new();
+    {
+        let mut b = Builder::new(&mut data);
+        let mut h = Header::new_gnu();
+        h.set_entry_type(EntryType::Directory);
+        h.set_uid(0);
+        h.set_gid(0);
+        h.set_mtime(0);
+        h.set_cksum();
+        b.append_data(&mut h, path, std::io::empty()).unwrap();
+        b.finish().unwrap();
+    }
+    data
+}
+
+#[test]
+fn malicious_archives_fail_verify() {
+    let (_, public) = keygen().unwrap();
+    // The tar crate refuses to even WRITE `..`/absolute paths (defense in
+    // depth), so those cases are exercised via validate_entry above. Here we
+    // cover what a real attacker can produce with the format:
+    // symlink escape is rejected
+    let sym = make_tar_symlink("link", "/etc/passwd");
+    assert!(verify_archive(&sym, &public).is_err());
+    // duplicate entries are rejected (one path verified, another unpacked)
+    let dup = make_tar(&[
+        ("manifest.json".to_string(), b"a".to_vec()),
+        ("manifest.json".to_string(), b"b".to_vec()),
+    ]);
+    assert!(verify_archive(&dup, &public).is_err());
+    // a directory entry is rejected (packages contain regular files only)
+    let dir = make_tar_dir("subdir");
+    assert!(verify_archive(&dir, &public).is_err());
+}
+
+#[test]
+fn build_rejects_traversal_artifact_path() {
+    let mut manifest = test_manifest();
+    manifest.artifacts[0].path = "../evil.bin".to_string();
+    let mut files = HashMap::new();
+    files.insert(
+        "xiaomi-band-10-pro-3.101.030".to_string(),
+        artifact_file("traversal"),
+    );
+    let manifest = canopus_package::manifest_with_real_hashes(&manifest, &files).unwrap();
+    assert!(build_archive(&manifest, &files).is_err());
 }
