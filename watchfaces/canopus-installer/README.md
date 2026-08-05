@@ -11,30 +11,36 @@ explicit button press.
 
 ## ⚠️ Gate status — read before real-device use
 
-This is a **staged test artifact**, not a proven installer.
+This is an **installable destructive device probe**, not yet a lifecycle-proven
+production installer.
 
 | Part | Status |
 | --- | --- |
 | Watchface UI (`main.lua`) | Structurally complete; mirrors the btpatch pattern (verify ELF, `insmod`, LVGL buttons, fixed ABI). |
 | Supervisor core (`manager/service/canopus_supervisor.c`) | Host-tested (12 tests): command/status ABI, lifecycle-aware enable/disable/remove, safe mode. |
-| `canopus_supervisor.bin` | **Verifier PASS** (sha256 `87c9ebf1`, 0 undefined, 1 ctor/1 dtor) — a valid zero-import ELF32 ET_REL. |
+| `canopus_supervisor.bin` | **Verifier PASS** (sha256 `29eb6494`, 0 undefined, 2 ctors/1 dtor) — a valid zero-import ELF32 ET_REL containing the supervisor and resident exact-target Manager implementation. |
 | Device registration (`/dev/canopus`) | **Implemented.** `canopus_supervisor_platform.c` registers the device via the stock `register_driver` (0x0C1A0D51) exactly like btpatch registers `/dev/btpatch` — the same managed symbol the veneer exposes as `canopus_fw_register_driver`. The read side renders the status ABI, the write side dispatches commands. |
-| Loading Canopus modules via stock modlib | **Pending (G0 for target modules).** The supervisor's `load_module` hook is fail-closed until the stock modlib path for arbitrary ET_REL modules is proven. |
-| Package staging + signature verify | **Pending.** `stage_package` is fail-closed. |
+| Native Manager registration path | **DEVICE PASS.** The exact-target Manager code is linked into the resident supervisor. INSTALL writes the legacy bootstrap command to `/dev/canopus`, so `app_install`, `app_launcher_add`, and notification insertion execute synchronously in the calling miwear process rather than the `system -c insmod` process. Manager registration, Launcher opening, stock LVX row rendering, and opening/closing transitions are device-proven with collision-checked system-range app ID `0x00CA`. |
+| Manager installed notification | **DEVICE PASS.** After registry lookup succeeds, inserts title `Canopus`, body `Canpous Loaded! Just ENJOY~`, and uses `/data/canopus/manager_loaded.png` for both notification image paths. The watchface packages the original GIF's cleaned first frame as PNG bytes in `manager_loaded.bin`, then restores the `.png` suffix while staging them before sending INSTALL. |
+| Loading external Canopus modules via stock modlib | **Pending (G0 for arbitrary target modules).** The native Manager probe itself uses the already-proven zero-import stock `insmod` path. |
+| Package staging + signature verify | **Pending for arbitrary third-party packages.** Manager bootstrap no longer depends on the old staged INSTALL command. |
 
-**What you can test on device now:** LOAD the supervisor, then REFRESH — the
-page should read a live status ABI from `/dev/canopus` (framework version,
-module count, last result). QUERY/SAFE MODE work. INSTALL/ENABLE/DISABLE send
-commands that the supervisor dispatches; module load/unload actions report the
-fail-closed result until the target-module loader (G0) is wired.
+**What you can test on device now:** LOAD brings up the stable supervisor;
+INSTALL stages the first-frame PNG and sends the Manager bootstrap over
+`/dev/canopus`. The device write callback remains in the miwear process and
+registers the app/page, adds the Launcher record, and queues the installation
+notification. Open it from Launcher to exercise the stock page root and system
+`lvx_list_item` prefab. QUERY/SAFE MODE continue to exercise `/dev/canopus`;
+external-package load/update/remove remains fail-closed.
 
 ## Structure
 
 ```text
 watchfaces/canopus-installer/
-├── main.lua                Lua LVGL installer page
-├── canopus_supervisor.bin  built supervisor module (verifier PASS)
-└── build/                  build output (gitignored)
+├── main.lua                          Lua LVGL bootstrap/recovery page
+├── canopus_supervisor.bin            built supervisor + native Manager code
+├── manager_loaded.bin                first-frame PNG with packager-safe suffix
+└── build/                            build output (gitignored)
 ```
 
 Supervisor source:
@@ -50,7 +56,9 @@ manager/service/
 ## Build
 
 ```sh
-bash scripts/build_canopus_supervisor.sh   # cross-compile + verify + stage .bin
+bash scripts/build_canopus_supervisor.sh
+# Optional: verify the exact-target Manager object in isolation.
+bash targets/xiaomi-band-10-pro-3.101.030/probe/native-manager/build.sh
 ```
 
 Requires `clang` (ARM target) and `ld.lld`, and `canopus target
@@ -84,18 +92,31 @@ generate-veneer xiaomi-band-10-pro-3.101.030` to have run.
 ## Fresh-boot procedure (staged)
 
 1. Reboot the Band.
-2. Press **LOAD** once. The page verifies the bundled ELF and `insmod`s
-   `canopus_supervisor.bin`. Never load twice, never `rmmod`.
-3. Press **REFRESH**. Expected while the platform is stubbed:
-   `Cannot open /dev/canopus` — this is the current honest boundary.
-4. Once the device platform lands, press **INSTALL** to stage a package, then
-   enable/disable/remove per module index, then **QUERY** to re-read state.
-5. After any fail-stop or after any native action, reboot for complete
-   recovery; preserve the Band log.
+2. Press **LOAD** once to load the supervisor. Never load it twice or use
+   `rmmod`.
+3. Press **INSTALL** once. The watchface validates and copies the PNG bytes from
+   bundled `manager_loaded.bin` to `/data/canopus/manager_loaded.png`, then writes
+   the bootstrap INSTALL command to `/dev/canopus`. This keeps the recovered UI
+   registration chain in the miwear process and its valid libuv descriptor table.
+4. Expected device effects are: app registry entry `0x00CA`, Launcher item
+   **Canopus Manager**, a native page containing one stock LVX system row, and a
+   system notification titled **Canopus** with body
+   **Canpous Loaded! Just ENJOY~** and the supplied static PNG.
+5. Open Manager from Launcher, then close/reopen it to exercise
+   create/resume/pause/destroy. Preserve the Band log after any crash.
+6. Reboot before retrying INSTALL. Do not unload the probe during this first
+   lifecycle test; reboot is the reliable cleanup path.
+7. REFRESH/QUERY/SAFE MODE continue to exercise `/dev/canopus`; arbitrary
+   third-party package install/update/remove remains behind its separate
+   package/modlib gate.
 
 ## Safety
 
-- Boot-resident supervisor: never `rmmod`, never insert a second copy.
-- Stubbed operations fail closed (never guess a device API).
-- All native addresses restricted to AP SHA-256
-  `f701a84f...d225b` (the packed identity guard).
+- Boot-resident supervisor/Manager artifact: never `rmmod`, never insert a
+  second copy; reboot between destructive tests.
+- Crash probe 1 proved that `app_install` cannot run from the `system -c insmod`
+  process: its eventbus path reaches libuv `async.c:213`, where the miwear loop's
+  process-local fd is invalid. INSTALL therefore enters through `/dev/canopus`
+  from the watchface and executes in miwear context.
+- Arbitrary package operations remain fail-closed until their independent
+  modlib/signature path is implemented.

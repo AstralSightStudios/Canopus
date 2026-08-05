@@ -81,6 +81,14 @@ static uint32_t v2_u32(const uint8_t *b)
            ((uint32_t)b[2] << 16) | ((uint32_t)b[3] << 24);
 }
 
+static void v2_put_u32(uint8_t *out, uint32_t offset, uint32_t value)
+{
+    out[offset] = (uint8_t)(value & 0xffu);
+    out[offset + 1u] = (uint8_t)((value >> 8) & 0xffu);
+    out[offset + 2u] = (uint8_t)((value >> 16) & 0xffu);
+    out[offset + 3u] = (uint8_t)((value >> 24) & 0xffu);
+}
+
 int canopus_transport_v2_decode_request(const uint8_t *buf, uint32_t len,
                                         struct canopus_proto_request_v1 *req,
                                         uint32_t *payload_offset)
@@ -142,6 +150,90 @@ int canopus_transport_v2_decode_request(const uint8_t *buf, uint32_t len,
     req->request_id = request_id;
     req->flags = v2_u32(buf + 24);
     req->payload_size = payload_size;
+    *payload_offset = (uint32_t)header_size;
+    return 0;
+}
+
+int canopus_transport_v2_encode_request(const struct canopus_proto_request_v1 *req,
+                                        const void *payload,
+                                        uint8_t *out, uint32_t cap)
+{
+    uint32_t total;
+    if (req == 0 || out == 0 || req->magic != CANOPUS_PROTO_MAGIC ||
+        req->struct_size != CANOPUS_PROTO_REQUEST_SIZE ||
+        req->abi_major != CANOPUS_ABI_MAJOR ||
+        req->abi_minor > CANOPUS_ABI_MINOR || req->request_id == 0u ||
+        req->payload_size > CANOPUS_PROTO_MAX_PAYLOAD ||
+        (req->flags & ~CANOPUS_TRANSPORT_V2_FLAGS_KNOWN) != 0u ||
+        (req->payload_size != 0u && payload == 0)) {
+        return -1;
+    }
+    total = CANOPUS_TRANSPORT_V2_HEADER_SIZE + req->payload_size;
+    if (cap < total) {
+        return -1;
+    }
+    canopus_memset(out, 0, total);
+    v2_put_u32(out, 0, CANOPUS_TRANSPORT_V2_MAGIC);
+    out[4] = (uint8_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE & 0xffu);
+    out[5] = (uint8_t)((CANOPUS_TRANSPORT_V2_HEADER_SIZE >> 8) & 0xffu);
+    out[6] = (uint8_t)CANOPUS_TRANSPORT_V2_REQUEST;
+    out[8] = (uint8_t)(req->abi_major & 0xffu);
+    out[9] = (uint8_t)((req->abi_major >> 8) & 0xffu);
+    out[10] = (uint8_t)(req->abi_minor & 0xffu);
+    out[11] = (uint8_t)((req->abi_minor >> 8) & 0xffu);
+    v2_put_u32(out, 12, total);
+    v2_put_u32(out, 16, req->command);
+    v2_put_u32(out, 20, req->request_id);
+    v2_put_u32(out, 24, req->flags);
+    v2_put_u32(out, 28, 0);
+    v2_put_u32(out, 32, req->payload_size);
+    if (req->payload_size != 0u) {
+        canopus_memcpy(out + CANOPUS_TRANSPORT_V2_HEADER_SIZE, payload,
+                       req->payload_size);
+    }
+    return (int)total;
+}
+
+int canopus_transport_v2_decode_response(const uint8_t *buf, uint32_t len,
+                                         struct canopus_proto_response_v1 *resp,
+                                         uint32_t *opcode,
+                                         uint32_t *payload_offset)
+{
+    uint32_t total_size, payload_size, request_id;
+    uint16_t header_size, kind, major, minor;
+    if (buf == 0 || resp == 0 || opcode == 0 || payload_offset == 0 ||
+        len < CANOPUS_TRANSPORT_V2_HEADER_SIZE) {
+        return -1;
+    }
+    header_size = v2_u16(buf + 4);
+    kind = v2_u16(buf + 6);
+    major = v2_u16(buf + 8);
+    minor = v2_u16(buf + 10);
+    total_size = v2_u32(buf + 12);
+    request_id = v2_u32(buf + 20);
+    payload_size = v2_u32(buf + 32);
+    if (v2_u32(buf) != CANOPUS_TRANSPORT_V2_MAGIC ||
+        header_size < CANOPUS_TRANSPORT_V2_HEADER_SIZE ||
+        kind != CANOPUS_TRANSPORT_V2_RESPONSE ||
+        major != CANOPUS_ABI_MAJOR || minor > CANOPUS_ABI_MINOR ||
+        request_id == 0u || payload_size > CANOPUS_PROTO_MAX_PAYLOAD ||
+        (v2_u32(buf + 24) & ~CANOPUS_TRANSPORT_V2_FLAGS_KNOWN) != 0u ||
+        v2_u32(buf + 16) == 0u ||
+        v2_u32(buf + 28) < CANOPUS_RESULT_REJECTED ||
+        v2_u32(buf + 28) > CANOPUS_RESULT_REBOOT_REQUIRED ||
+        total_size != (uint32_t)header_size + payload_size ||
+        len != total_size) {
+        return -1;
+    }
+    resp->magic = CANOPUS_PROTO_MAGIC;
+    resp->struct_size = CANOPUS_PROTO_RESPONSE_SIZE;
+    resp->abi_major = major;
+    resp->abi_minor = minor;
+    resp->request_id = request_id;
+    resp->result_state = v2_u32(buf + 28);
+    resp->payload_size = payload_size;
+    resp->flags = v2_u32(buf + 24);
+    *opcode = v2_u32(buf + 16);
     *payload_offset = (uint32_t)header_size;
     return 0;
 }

@@ -10,6 +10,9 @@ step() { echo; echo "==> $1"; }
 
 step "1/6 root workspace tests (schemas, CLI, core, verifier, package, re)"
 cargo test --workspace
+# `cargo test` builds test harnesses under target/debug/deps, but the module
+# verifier scripts invoke the standalone CLI at target/debug/canopus.
+cargo build --package canopus-cli
 
 step "2/6 Rust SDK workspace tests"
 (cd sdk/rust && cargo test --workspace)

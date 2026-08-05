@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-APP-008",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "question": "Why does the dynamically registered Manager exit with a transition but open without the stock system-app transition?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "native system-app launch routing requires an app_id in the firmware's 8-bit system range; app IDs above 0x00FF are deliberately routed through a reduced external-app transition path",
+  "callsite_evidence": [
+    "the first successful device probe used app_id 0xCA01 and showed no opening animation while the same page had an exit animation",
+    "launcher click handler sub_C4F62D8 constructs the same 44-byte navigation request and 56-byte icon-origin animation descriptor for every launcher record",
+    "page transition coordinator sub_CA52CF8 calls off_200EB058[13](page.app_id) before selecting the opening transition path",
+    "off_200EB058[13] resolves to sub_CA51150, which returns true exactly when app_id > 0x00FF",
+    "for IDs above 0x00FF sub_CA52CF8 always uses sub_CA2D950; system-range IDs may use sub_C4A368C with both previous and target pages when the global transition mode is 2"
+  ],
+  "control_flow_evidence": [
+    "the launcher supplies the clicked icon center through the animation descriptor, so missing origin metadata is not specific to the Canopus launcher record",
+    "the high-ID branch is selected before target-page creation and is independent of the Manager on_create implementation",
+    "changing the Manager ID from 0xCA01 to unused system-range candidate 0x00CA removes the high-ID branch condition",
+    "installation now checks any existing 0x00CA descriptor's package_name and fails with a collision error instead of accepting or replacing an unrelated app"
+  ],
+  "ownership_analysis": "The app and page descriptors remain resident and mutable for their registration lifetime. The app ID is both identity and routing metadata; selecting a low ID must therefore be collision-checked before installation.",
+  "unsafe_assumptions": [
+    "0x00CA had no immediate use in the analyzed image, and the runtime collision guard remains authoritative",
+    "the system-range routing behavior is exact-target and must not be generalized to other firmware versions"
+  ],
+  "recommended_probe": "Device probe passed: after fresh boot, Manager registered as 0x00CA and showed the stock opening and closing transitions. Preserve the collision guard and <=0x00FF compile-time assertion in production Manager builds.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "DEVICE_PROVEN",
+  "created": "2026-08-06T00:00:00Z",
+  "artifacts": [
+    { "uri": "ida://vela_ap.bin.i64 sub_C4F62D8", "role": "launcher click navigation and icon-origin descriptor" },
+    { "uri": "ida://vela_ap.bin.i64 sub_CA52CF8", "role": "page opening transition branch" },
+    { "uri": "ida://vela_ap.bin.i64 sub_CA51150", "role": "app_id greater-than-0xFF classifier" },
+    { "uri": "targets/xiaomi-band-10-pro-3.101.030/probe/native-manager/canopus_manager_native_probe.c", "role": "collision-checked 0x00CA implementation" }
+  ]
+}

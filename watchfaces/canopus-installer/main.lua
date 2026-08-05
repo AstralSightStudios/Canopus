@@ -13,6 +13,8 @@ local lvgl = require("lvgl")
 
 local MODULE_PATH = SCRIPT_PATH .. "canopus_supervisor.bin"
 local MODULE_NAME = "canopus_supervisor"
+local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_loaded.bin"
+local MANAGER_ICON_PATH = "/data/canopus/manager_loaded.png"
 local DEVICE_PATH = "/dev/canopus"
 -- The supervisor is a small module (~3-4 KB with -Os); the 4096 floor copied
 -- from btpatch was sized for that project's 33 KB A2DP amalgamation. 512 still
@@ -80,21 +82,27 @@ local function read_all(path, mode)
     return content
 end
 
-local function find_module()
+local function find_named_module(name)
     local content = read_all("/proc/modules", "r")
     if type(content) ~= "string" then return nil end
     for line in content:gmatch("[^\r\n]+") do
-        if line:match("^" .. MODULE_NAME .. ",") then return line end
+        if line:match("^" .. name .. ",") then return line end
     end
     return nil
 end
 
-local function verify_module_file()
+local function find_module()
+    return find_named_module(MODULE_NAME)
+end
+
+local function verify_module_file(path, missing_name)
+    path = path or MODULE_PATH
+    missing_name = missing_name or "canopus_supervisor.bin"
     if type(io) ~= "table" or type(io.open) ~= "function" then
         return false, "io.open unavailable"
     end
-    local file = io.open(MODULE_PATH, "rb")
-    if not file then return false, "Missing canopus_supervisor.bin" end
+    local file = io.open(path, "rb")
+    if not file then return false, "Missing " .. missing_name end
     local header = file:read(20)
     local size = file:seek("end")
     file:close()
@@ -115,6 +123,36 @@ local function verify_module_file()
         or size > MODULE_MAX_SIZE then
         return false, "Unexpected ELF size range"
     end
+    return true
+end
+
+local function stage_manager_icon()
+    local content = read_all(MANAGER_ICON_RESOURCE, "rb")
+    if type(content) ~= "string" or #content < 8
+        or content:sub(1, 8) ~= "\137PNG\r\n\26\n" then
+        return false, "Missing or invalid manager_loaded.bin PNG resource"
+    end
+    -- The target mkdir command returns failure when the directory already
+    -- exists, even with -p. Try the actual file first; create its parent only
+    -- when that open proves the directory is absent.
+    local output = io.open(MANAGER_ICON_PATH, "wb")
+    if not output then
+        if not run("mkdir /data/canopus") then
+            return false, "Cannot create /data/canopus"
+        end
+        output = io.open(MANAGER_ICON_PATH, "wb")
+    end
+    if not output then return false, "Cannot stage Manager PNG" end
+    local call_ok, write_result, write_error = pcall(output.write, output, content)
+    local close_ok, close_result, close_error = pcall(output.close, output)
+    if not call_ok or write_result == nil then
+        return false, tostring(write_error or write_result or "PNG write failed")
+    end
+    if not close_ok or close_result == nil then
+        return false, tostring(close_error or close_result or "PNG close failed")
+    end
+    local staged = read_all(MANAGER_ICON_PATH, "rb")
+    if staged ~= content then return false, "Staged Manager PNG mismatch" end
     return true
 end
 
@@ -352,13 +390,31 @@ end)
 
 -- Row 2: install
 local install_button = make_button("INSTALL", -96, 118, 0x1E6B2E, 134, function()
-    if not find_module() then status:set { text = "Load supervisor first." }
-        return end
+    if not find_module() then
+        status:set { text = "Load supervisor first." }
+        return
+    end
+    local icon_ok, icon_error = stage_manager_icon()
+    if not icon_ok then
+        status:set { text = "Manager icon staging failed: " .. tostring(icon_error) }
+        return
+    end
+    status:set { text = "Registering Manager from miwear context..." }
     local ok, message = write_command(CMD_INSTALL, 0, 0)
     if not ok then
-        status:set { text = "Install rejected: " .. tostring(message) }
+        status:set { text = "Manager install request failed: " .. tostring(message) }
+        return
+    end
+    local st, status_error = read_status()
+    if not st then
+        status:set { text = "Manager install status unavailable: "
+            .. tostring(status_error) }
+    elseif st.pending_op ~= CMD_INSTALL or st.pending_state ~= 5 then
+        status:set { text = "Manager registration did not complete.\n"
+            .. format_status(st) .. "\nReboot before retrying." }
     else
-        refresh_status("Install staged")
+        status:set { text = "Manager registered in Launcher; notification queued\n"
+            .. format_status(st) }
     end
 end)
 

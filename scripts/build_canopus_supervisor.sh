@@ -33,7 +33,8 @@ TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
 
 INC="-I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \
-  -I$ROOT/manager/service -I$ROOT/manager/protocol -I$PACK_DIR/generated"
+  -I$ROOT/manager/service -I$ROOT/manager/protocol -I$PACK_DIR/generated \
+  -I$PACK_DIR/probe/native-manager"
 
 # The v2 transport (CAN-P0-008) pulls the protocol codec and the snapshot
 # helpers into the module; both are freestanding (no libc).
@@ -42,6 +43,7 @@ for s in \
     manager/service/canopus_supervisor_module.c \
     manager/service/canopus_supervisor_platform.c \
     manager/protocol/canopus_protocol.c \
+    targets/$TARGET_ID/probe/native-manager/canopus_manager_native_probe.c \
     runtime/control/canopus_control.c \
     runtime/resources/canopus_resource.c; do
     base=$(basename "$s")
@@ -54,6 +56,7 @@ ld.lld -r -o "$OUT/canopus_supervisor.elf" \
     "$OUT/canopus_supervisor_module.o" \
     "$OUT/canopus_supervisor_platform.o" \
     "$OUT/canopus_protocol.o" \
+    "$OUT/canopus_manager_native_probe.o" \
     "$OUT/canopus_control.o" \
     "$OUT/canopus_resource.o"
 

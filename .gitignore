@@ -2,6 +2,8 @@
 
 # Firmware images and analysis databases — NEVER commit these.
 *.bin
+# Watchface packager accepts only .lua/.bin; this is a PNG payload, not firmware.
+!watchfaces/canopus-installer/manager_loaded.bin
 *.img
 *.i64
 *.idb
