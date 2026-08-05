@@ -154,7 +154,7 @@ int canopus_generation_valid(const struct canopus_generation_v1 *g,
 #define CANOPUS_EVENT_LOG_ENTRIES 16u
 
 struct canopus_event_v1 {
-    uint32_t sequence;     /* monotonic */
+    uint32_t sequence;     /* monotonic, wraps at UINT32_MAX */
     uint32_t boot_id;      /* from identity guard */
     uint32_t module_gen;   /* module generation */
     uint32_t state_before;
@@ -165,21 +165,31 @@ struct canopus_event_v1 {
 
 struct canopus_event_log_v1 {
     uint32_t head;                 /* next write index */
-    uint32_t next_sequence;
-    uint32_t dropped;
+    uint32_t stored_count;         /* entries currently stored (<= ENTRIES) */
+    uint32_t next_sequence;        /* sequence to assign next (monotonic) */
+    uint32_t dropped;              /* saturating count of overwritten entries */
     struct canopus_event_v1 entries[CANOPUS_EVENT_LOG_ENTRIES];
 };
 
 void canopus_event_log_init(struct canopus_event_log_v1 *log, uint32_t boot_id);
-/* Appends an event. Returns the sequence number (or 0 if the log has
- * never advanced). Never blocks. */
+/* Appends an event, returning the assigned sequence number. When the ring
+ * is full the oldest entry is overwritten and `dropped` saturating-
+ * increments; the writer never blocks. */
 uint32_t canopus_event_log_append(struct canopus_event_log_v1 *log,
                                   uint32_t module_gen,
                                   uint32_t state_before,
                                   uint32_t state_after,
                                   uint32_t result);
+/* Number of entries currently stored (bounded by CANOPUS_EVENT_LOG_ENTRIES). */
 uint32_t canopus_event_log_count(const struct canopus_event_log_v1 *log);
+/* Next sequence number to be assigned (monotonic; total appended so far). */
+uint32_t canopus_event_log_next_sequence(const struct canopus_event_log_v1 *log);
+/* Saturated count of entries evicted by overwrite (0 before the ring fills). */
 uint32_t canopus_event_log_dropped(const struct canopus_event_log_v1 *log);
+/* Non-zero when `candidate` is not the immediate successor of `after` in
+ * the monotonic sequence (modular, so a wrap at UINT32_MAX is not a gap).
+ * Readers use this to detect eviction/drop between two reads. */
+int canopus_event_log_is_gap(uint32_t after, uint32_t candidate);
 
 /* ================================================================== */
 /* Bounded string/buffer helper                                        */

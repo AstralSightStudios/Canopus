@@ -28,14 +28,51 @@ TEST(event_log_wraps_and_keeps_sequence)
     }
     /* sequence is monotonic and never resets */
     CHECK_EQ(last, CANOPUS_EVENT_LOG_ENTRIES + 4u);
-    CHECK_EQ(canopus_event_log_count(&log), CANOPUS_EVENT_LOG_ENTRIES + 5u);
-    /* head wraps; dropped stays zero (ring always has room) */
-    CHECK_EQ(canopus_event_log_dropped(&log), 0u);
+    /* stored count is bounded by the ring capacity */
+    CHECK_EQ(canopus_event_log_count(&log), CANOPUS_EVENT_LOG_ENTRIES);
+    /* next_sequence is the total appended, independent of stored count */
+    CHECK_EQ(canopus_event_log_next_sequence(&log), CANOPUS_EVENT_LOG_ENTRIES + 5u);
+    /* the 5 entries that did not fit were counted as dropped */
+    CHECK_EQ(canopus_event_log_dropped(&log), 5u);
     /* the most recent write landed at head-1 (wraps to 4), seq 20 */
     CHECK_EQ(log.entries[(log.head + CANOPUS_EVENT_LOG_ENTRIES - 1u) %
                          CANOPUS_EVENT_LOG_ENTRIES]
                  .sequence,
              20u);
+}
+
+TEST(event_log_stored_count_bounded)
+{
+    struct canopus_event_log_v1 log;
+    uint32_t i;
+    canopus_event_log_init(&log, 3);
+    /* fill the ring exactly */
+    for (i = 0; i < CANOPUS_EVENT_LOG_ENTRIES; i++) {
+        canopus_event_log_append(&log, 0, 0, 0, 0);
+    }
+    CHECK_EQ(canopus_event_log_count(&log), CANOPUS_EVENT_LOG_ENTRIES);
+    CHECK_EQ(canopus_event_log_dropped(&log), 0u);
+    /* keep appending past the capacity: stored stays bounded, dropped grows */
+    canopus_event_log_append(&log, 0, 0, 0, 0);
+    CHECK_EQ(canopus_event_log_count(&log), CANOPUS_EVENT_LOG_ENTRIES);
+    CHECK_EQ(canopus_event_log_dropped(&log), 1u);
+    canopus_event_log_append(&log, 0, 0, 0, 0);
+    CHECK_EQ(canopus_event_log_count(&log), CANOPUS_EVENT_LOG_ENTRIES);
+    CHECK_EQ(canopus_event_log_dropped(&log), 2u);
+}
+
+TEST(event_log_is_gap)
+{
+    /* exact successor is not a gap */
+    CHECK(canopus_event_log_is_gap(5, 6) == 0);
+    /* a skipped sequence is a gap (eviction/drop between two reads) */
+    CHECK(canopus_event_log_is_gap(5, 7) != 0);
+    /* same or earlier sequence is a gap */
+    CHECK(canopus_event_log_is_gap(5, 5) != 0);
+    CHECK(canopus_event_log_is_gap(5, 4) != 0);
+    /* wrap at UINT32_MAX is not a gap */
+    CHECK(canopus_event_log_is_gap(UINT32_MAX, 0) == 0);
+    CHECK(canopus_event_log_is_gap(UINT32_MAX, 2) != 0);
 }
 
 TEST(buf_copy_exact_and_truncate)
@@ -124,6 +161,8 @@ TEST(text_writer_init_and_append_validation)
 static struct test_registry diag_tests[] = {
     { "event_log_append_monotonic", event_log_append_monotonic_wrapper },
     { "event_log_wraps_and_keeps_sequence", event_log_wraps_and_keeps_sequence_wrapper },
+    { "event_log_stored_count_bounded", event_log_stored_count_bounded_wrapper },
+    { "event_log_is_gap", event_log_is_gap_wrapper },
     { "buf_copy_exact_and_truncate", buf_copy_exact_and_truncate_wrapper },
     { "text_writer_exact_and_append", text_writer_exact_and_append_wrapper },
     { "text_writer_truncation_reports_error_and_keeps_nul", text_writer_truncation_reports_error_and_keeps_nul_wrapper },
