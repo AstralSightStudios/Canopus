@@ -25,6 +25,48 @@ int canopus_buf_copy(char *dst, uint32_t capacity, const char *src)
     return (int)n;
 }
 
+/* ---- bounded text writer (CAN-P0-002) ------------------------------ */
+
+int canopus_text_writer_init(struct canopus_text_writer_v1 *w,
+                             char *buf, uint32_t cap)
+{
+    if (w == 0 || buf == 0 || cap == 0) {
+        return -1;
+    }
+    w->buf = buf;
+    w->cap = cap;
+    w->used = 0;
+    w->truncated = 0;
+    w->buf[0] = '\0';
+    return 0;
+}
+
+int canopus_text_writer_append(struct canopus_text_writer_v1 *w,
+                               const char *s)
+{
+    uint32_t n, room;
+    if (w == 0 || w->buf == 0 || w->cap == 0 || s == 0) {
+        return -1;
+    }
+    if (w->truncated || w->used >= w->cap) {
+        return CANOPUS_TEXT_TRUNCATED;
+    }
+    n = (uint32_t)canopus_strlen(s);
+    room = w->cap - 1u - w->used; /* chars that fit before the NUL */
+    if (n <= room) {
+        canopus_memcpy(w->buf + w->used, s, n);
+        w->used += n;
+        w->buf[w->used] = '\0';
+        return 0;
+    }
+    /* truncated: fill up to cap-1 and keep the record NUL-terminated */
+    canopus_memcpy(w->buf + w->used, s, room);
+    w->used = w->cap - 1u;
+    w->buf[w->used] = '\0';
+    w->truncated = 1;
+    return CANOPUS_TEXT_TRUNCATED;
+}
+
 /* Validates the module descriptor header and identity fields. Returns 0
  * when the descriptor is well-formed for the current ABI. */
 int canopus_module_descriptor_check(const struct canopus_module_descriptor_v1 *d)

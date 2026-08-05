@@ -7,9 +7,45 @@
 #include "canopus_manager.h"
 #include "canopus_runtime.h"
 #include "canopus_memory.h"
-#include <stdio.h> /* snprintf: host tests + the Manager native app have libc */
+#include <stdarg.h>
+#include <stdio.h> /* vsnprintf: host tests + the Manager native app have libc */
 
 #define CLASS_REMOVABLE_ONLY(c) ((c) == CANOPUS_LIFECYCLE_REMOVABLE)
+
+/* Format append on top of the bounded writer (CAN-P0-002). Uses
+ * vsnprintf which writes at most `cap - used` bytes and always NUL-
+ * terminates; truncation is reported and never folded into the offset. */
+static int writer_append_format(struct canopus_text_writer_v1 *w,
+                                const char *fmt, ...)
+{
+    va_list ap;
+    int need;
+    uint32_t room;
+    if (w == 0 || w->buf == 0 || w->cap == 0 || fmt == 0) {
+        return -1;
+    }
+    if (w->truncated || w->used >= w->cap) {
+        return CANOPUS_TEXT_TRUNCATED;
+    }
+    room = w->cap - w->used; /* bytes available for vsnprintf incl NUL */
+    va_start(ap, fmt);
+    need = vsnprintf(w->buf + w->used, (size_t)room, fmt, ap);
+    va_end(ap);
+    if (need < 0) {
+        /* encoding error: fail closed, keep the record valid + truncated */
+        w->buf[w->used] = '\0';
+        w->truncated = 1;
+        return CANOPUS_TEXT_TRUNCATED;
+    }
+    if ((uint32_t)need < room) {
+        w->used += (uint32_t)need;
+        return 0;
+    }
+    /* truncated: vsnprintf already NUL-terminated at cap-1 */
+    w->used = w->cap - 1u;
+    w->truncated = 1;
+    return CANOPUS_TEXT_TRUNCATED;
+}
 
 static int mod_id_eq(const char *a, const char *b)
 {
@@ -89,89 +125,87 @@ int canopus_manager_goto(struct canopus_manager_model_v1 *m, uint32_t view,
 int canopus_manager_render_device(const struct canopus_manager_model_v1 *m,
                                   char *out, uint32_t cap)
 {
-    int n = 0;
-    if (cap == 0 || out == 0) {
+    struct canopus_text_writer_v1 w;
+    if (canopus_text_writer_init(&w, out, cap) != 0) {
         return -1;
     }
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, "== Canopus Manager ==\n");
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, "target   : ");
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, m->target_id);
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, "\nfirmware : ");
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, m->firmware_version);
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, " (");
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, m->firmware_build);
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, ")\nframework: v");
-    n += snprintf(out + n, (size_t)(cap - (uint32_t)n), "%u\n", m->framework_revision);
+    canopus_text_writer_append(&w, "== Canopus Manager ==\n");
+    canopus_text_writer_append(&w, "target   : ");
+    canopus_text_writer_append(&w, m->target_id);
+    canopus_text_writer_append(&w, "\nfirmware : ");
+    canopus_text_writer_append(&w, m->firmware_version);
+    canopus_text_writer_append(&w, " (");
+    canopus_text_writer_append(&w, m->firmware_build);
+    canopus_text_writer_append(&w, ")\nframework: v");
+    writer_append_format(&w, "%u\n", m->framework_revision);
     if (m->safe_mode) {
-        n += canopus_buf_copy(out + n, cap - (uint32_t)n, "** SAFE MODE **\n");
+        canopus_text_writer_append(&w, "** SAFE MODE **\n");
     }
-    return 0;
+    return w.truncated ? CANOPUS_TEXT_TRUNCATED : 0;
 }
 
 int canopus_manager_render_module_list(const struct canopus_manager_model_v1 *m,
                                        char *out, uint32_t cap)
 {
     uint32_t i;
-    int n = 0;
-    if (cap == 0 || out == 0) {
+    struct canopus_text_writer_v1 w;
+    if (canopus_text_writer_init(&w, out, cap) != 0) {
         return -1;
     }
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, "== modules ==\n");
+    canopus_text_writer_append(&w, "== modules ==\n");
     for (i = 0; i < m->module_count; i++) {
         const struct canopus_manager_module_v1 *mod = &m->modules[i];
-        n += snprintf(out + n, (size_t)(cap - (uint32_t)n), " %c %s  %s v%u\n",
-                      i == m->selected ? '*' : ' ',
-                      mod->module_id[0] ? mod->module_id : "(unnamed)",
-                      canopus_state_name(mod->state), mod->version);
+        writer_append_format(&w, " %c %s  %s v%u\n",
+                             i == m->selected ? '*' : ' ',
+                             mod->module_id[0] ? mod->module_id : "(unnamed)",
+                             canopus_state_name(mod->state), mod->version);
     }
-    return 0;
+    return w.truncated ? CANOPUS_TEXT_TRUNCATED : 0;
 }
 
 int canopus_manager_render_module_detail(const struct canopus_manager_model_v1 *m,
                                          char *out, uint32_t cap)
 {
     const struct canopus_manager_module_v1 *mod;
-    int n = 0;
-    if (cap == 0 || out == 0 || m->selected >= m->module_count) {
+    struct canopus_text_writer_v1 w;
+    if (canopus_text_writer_init(&w, out, cap) != 0 ||
+        m->selected >= m->module_count) {
         return -1;
     }
     mod = &m->modules[m->selected];
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, "== module ==\n");
-    n += snprintf(out + n, (size_t)(cap - (uint32_t)n), "%s\n",
-                  mod->module_id[0] ? mod->module_id : "(unnamed)");
-    n += snprintf(out + n, (size_t)(cap - (uint32_t)n),
-                  "state    : %s\n", canopus_state_name(mod->state));
-    n += snprintf(out + n, (size_t)(cap - (uint32_t)n),
-                  "class    : %s\n",
-                  mod->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ? "removable" :
-                  mod->lifecycle_class == CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION ? "resident-after-activation" :
-                  mod->lifecycle_class == CANOPUS_LIFECYCLE_ALWAYS_RESIDENT ? "always-resident" :
-                  "patch-reboot-required");
-    n += snprintf(out + n, (size_t)(cap - (uint32_t)n),
-                  "signature: %s\n", mod->signature_ok ? "verified" : "unsigned/dev");
-    n += snprintf(out + n, (size_t)(cap - (uint32_t)n),
-                  "risk     : %u\n", mod->risk);
+    canopus_text_writer_append(&w, "== module ==\n");
+    writer_append_format(&w, "%s\n",
+                         mod->module_id[0] ? mod->module_id : "(unnamed)");
+    writer_append_format(&w, "state    : %s\n", canopus_state_name(mod->state));
+    writer_append_format(&w, "class    : %s\n",
+                         mod->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ? "removable" :
+                         mod->lifecycle_class == CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION ? "resident-after-activation" :
+                         mod->lifecycle_class == CANOPUS_LIFECYCLE_ALWAYS_RESIDENT ? "always-resident" :
+                         "patch-reboot-required");
+    writer_append_format(&w, "signature: %s\n",
+                         mod->signature_ok ? "verified" : "unsigned/dev");
+    writer_append_format(&w, "risk     : %u\n", mod->risk);
 
     /* available operations for THIS class — never a fake unload. */
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, "ops: ");
+    canopus_text_writer_append(&w, "ops: ");
     if (canopus_manager_can_update(m, m->selected)) {
-        n += canopus_buf_copy(out + n, cap - (uint32_t)n, "[update] ");
+        canopus_text_writer_append(&w, "[update] ");
     }
     if (canopus_manager_can_rollback(m, m->selected)) {
-        n += canopus_buf_copy(out + n, cap - (uint32_t)n, "[rollback] ");
+        canopus_text_writer_append(&w, "[rollback] ");
     }
     if (canopus_manager_can_disable(m, m->selected)) {
-        n += canopus_buf_copy(out + n, cap - (uint32_t)n,
-                              CLASS_REMOVABLE_ONLY(mod->lifecycle_class) ?
-                              "[disable] " : "[disable-next-boot] ");
+        canopus_text_writer_append(&w,
+                                   CLASS_REMOVABLE_ONLY(mod->lifecycle_class) ?
+                                   "[disable] " : "[disable-next-boot] ");
     }
     if (canopus_manager_can_remove(m, m->selected)) {
-        n += canopus_buf_copy(out + n, cap - (uint32_t)n,
-                              CLASS_REMOVABLE_ONLY(mod->lifecycle_class) ?
-                              "[remove] " : "[remove+reboot] ");
+        canopus_text_writer_append(&w,
+                                   CLASS_REMOVABLE_ONLY(mod->lifecycle_class) ?
+                                   "[remove] " : "[remove+reboot] ");
     }
-    n += canopus_buf_copy(out + n, cap - (uint32_t)n, "\n");
-    return 0;
+    canopus_text_writer_append(&w, "\n");
+    return w.truncated ? CANOPUS_TEXT_TRUNCATED : 0;
 }
 
 /* ---- availability helpers ------------------------------------------ */

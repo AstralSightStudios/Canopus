@@ -191,6 +191,39 @@ uint32_t canopus_event_log_dropped(const struct canopus_event_log_v1 *log);
 int canopus_buf_copy(char *dst, uint32_t capacity, const char *src);
 
 /* ================================================================== */
+/* Bounded text writer (CAN-P0-002)                                    */
+/*                                                                     */
+/* NUL-terminated, truncation-aware append-only writer. Every append    */
+/* uses at most `cap - used` bytes and the buffer is always left NUL-   */
+/* terminated. A truncated append returns CANOPUS_TEXT_TRUNCATED, pins  */
+/* `used` at cap-1 and puts the writer in a failed state; it never      */
+/* reports success for a partial record and never lets the offset go    */
+/* negative or past the end. Renderers must surface truncation to the   */
+/* caller instead of treating the buffer as a complete record.          */
+/* ================================================================== */
+
+#define CANOPUS_TEXT_TRUNCATED (-2)
+
+struct canopus_text_writer_v1 {
+    char *buf;
+    uint32_t cap;        /* capacity in bytes, including the NUL */
+    uint32_t used;       /* bytes used, excluding the NUL */
+    uint32_t truncated;  /* 1 once any append ran out of room */
+};
+
+/* Initializes the writer. Requires w/buf non-NULL and cap > 0; writes
+ * buf[0] = '\0' immediately. Returns 0 on success, -1 on invalid input. */
+int canopus_text_writer_init(struct canopus_text_writer_v1 *w,
+                             char *buf, uint32_t cap);
+/* Appends a NUL-terminated string. Returns 0 when fully appended,
+ * CANOPUS_TEXT_TRUNCATED when the source does not fit (buffer is left
+ * NUL-terminated at cap-1 and the writer enters the truncated state), or
+ * -1 on invalid arguments. Once truncated, further appends are no-ops
+ * returning CANOPUS_TEXT_TRUNCATED. */
+int canopus_text_writer_append(struct canopus_text_writer_v1 *w,
+                               const char *s);
+
+/* ================================================================== */
 /* Module descriptor validation                                        */
 /* ================================================================== */
 

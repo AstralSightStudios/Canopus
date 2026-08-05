@@ -238,14 +238,42 @@ TEST(goto_rejects_bad_view_and_index)
     CHECK(canopus_manager_goto(&m, CANOPUS_MANAGER_VIEW_MODULE_DETAIL, 0) == 0);
 }
 
-TEST(render_bounded_no_overflow)
+TEST(render_truncation_reports_error)
 {
     struct canopus_manager_model_v1 m;
     char small[8];
     canopus_manager_init(&m, fake_transport, 0);
     add_removable(&m, "mod.hello");
-    CHECK(canopus_manager_render_module_list(&m, small, sizeof(small)) == 0);
-    CHECK(small[sizeof(small) - 1] == '\0'); /* always NUL-terminated */
+    /* A 8-byte buffer cannot hold the module list: the API must report the
+     * truncation (CANOPUS_TEXT_TRUNCATED) instead of claiming success. */
+    CHECK(canopus_manager_render_module_list(&m, small, sizeof(small)) ==
+          CANOPUS_TEXT_TRUNCATED);
+    CHECK(small[sizeof(small) - 1] == '\0'); /* still NUL-terminated */
+}
+
+TEST(render_never_writes_outside_buffer)
+{
+    struct canopus_manager_model_v1 m;
+    uint8_t storage[64];
+    int i;
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "a-module-id-that-is-very-long-indeed-for-this-renderer");
+    for (i = 0; i < 64; i++) {
+        storage[i] = 0x5A;
+    }
+    /* render into a tiny 8-byte region in the middle of a guarded buffer */
+    CHECK(canopus_manager_render_module_list(&m, (char *)(storage + 8), 8) ==
+          CANOPUS_TEXT_TRUNCATED);
+    /* bytes before and after the region must be untouched — a truncation
+     * underflow used to write at out-1 (before the buffer). */
+    for (i = 0; i < 8; i++) {
+        CHECK(storage[i] == 0x5A);
+    }
+    for (i = 16; i < 64; i++) {
+        CHECK(storage[i] == 0x5A);
+    }
+    /* the render region itself stays NUL-terminated */
+    CHECK(storage[15] == '\0');
 }
 
 static const struct test_registry manager_tests[] = {
@@ -261,7 +289,8 @@ static const struct test_registry manager_tests[] = {
     { "safe_mode_sets_flag_on_accepted", safe_mode_sets_flag_on_accepted_wrapper },
     { "transport_failure_returns_rejected", transport_failure_returns_rejected_wrapper },
     { "goto_rejects_bad_view_and_index", goto_rejects_bad_view_and_index_wrapper },
-    { "render_bounded_no_overflow", render_bounded_no_overflow_wrapper },
+    { "render_truncation_reports_error", render_truncation_reports_error_wrapper },
+    { "render_never_writes_outside_buffer", render_never_writes_outside_buffer_wrapper },
 };
 #define MANAGER_TESTS_LEN (sizeof(manager_tests) / sizeof(manager_tests[0]))
 
