@@ -10,7 +10,8 @@ CFLAGS ?= -std=c11 -Wall -Wextra -Werror -g -O0
 INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../runtime/diagnostics -I../../runtime/control -I../../runtime/module \
       -I../../modules/examples/hello -I../../manager/protocol -I../../manager/storage \
-      -I../../manager/ui -I../../tests/host -I../../app-sdk/c -I../../app-sdk/launcher
+      -I../../manager/ui -I../../manager/service -I../../tests/host \
+      -I../../app-sdk/c -I../../app-sdk/launcher
 CFLAGS += -DCANOPUS_HOST=1
 
 # Bare-metal portable sources (freestanding, no libc) — the cross-thumb
@@ -22,6 +23,7 @@ PORTABLE_SRCS = \
 	../../runtime/diagnostics/canopus_diagnostics.c \
 	../../runtime/module/canopus_module.c \
 	../../manager/protocol/canopus_protocol.c \
+	../../manager/service/canopus_supervisor.c \
 	../../app-sdk/c/canopus_app.c \
 	../../app-sdk/launcher/canopus_ordered_list.c
 
@@ -44,7 +46,8 @@ TEST_SRCS = \
 	test_hello_module.c \
 	test_supervisor.c \
 	test_manager_ui.c \
-	test_app_sdk.c
+	test_app_sdk.c \
+	test_supervisor_device.c
 
 BIN = canopus_host_tests
 

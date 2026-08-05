@@ -15,8 +15,16 @@ fn harness() -> ModuleHarness {
     ModuleHarness::new(d, LIFECYCLE_REMOVABLE)
 }
 
+/// The module's global state (COUNT/STARTED) is shared, so tests that drive it
+/// must be serialized (cargo runs #[test] fns on parallel threads).
+static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+fn lock() -> std::sync::MutexGuard<'static, ()> {
+    TEST_LOCK.lock().unwrap()
+}
+
 #[test]
 fn full_removable_cycle_succeeds() {
+    let _g = lock();
     let mut h = harness();
     h.run_removable_cycle(); // discovered -> ... -> unloaded, all legal
     assert_eq!(h.prepare(), 0);
@@ -28,6 +36,7 @@ fn full_removable_cycle_succeeds() {
 
 #[test]
 fn query_reports_counter_after_increment() {
+    let _g = lock();
     let mut h = harness();
     assert_eq!(h.prepare(), 0);
     assert_eq!(h.activate(), 0);
@@ -47,6 +56,7 @@ fn query_reports_counter_after_increment() {
 
 #[test]
 fn prepare_resets_counter() {
+    let _g = lock();
     let mut h = harness();
     assert_eq!(h.prepare(), 0);
     assert_eq!(h.activate(), 0);
@@ -60,12 +70,14 @@ fn prepare_resets_counter() {
 
 #[test]
 fn null_query_writer_rejected() {
+    let _g = lock();
     // Direct callback contract check: null writer -> -1.
     assert_eq!(module::canopus_mod_query(core::ptr::null_mut()), -1);
 }
 
 #[test]
 fn descriptor_abi_fields_valid() {
+    let _g = lock();
     let d = unsafe { *module::canopus_module_descriptor_ptr() };
     assert_eq!(d.struct_size, core::mem::size_of::<ModuleDescriptorV1>() as u32);
     assert_eq!(d.abi_major, ABI_MAJOR);

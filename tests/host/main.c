@@ -10,6 +10,7 @@ int run_hello_tests(void);
 int run_supervisor_tests(void);
 int run_manager_tests(void);
 int run_app_sdk_tests(void);
+int run_supervisor_device_tests(void);
 
 int main(void)
 {
@@ -23,6 +24,7 @@ int main(void)
     total += run_supervisor_tests();
     total += run_manager_tests();
     total += run_app_sdk_tests();
+    total += run_supervisor_device_tests();
     if (total == 0) {
         printf("all host tests passed\n");
     } else {
