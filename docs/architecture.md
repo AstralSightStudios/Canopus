@@ -1736,6 +1736,7 @@ schema/format
 | 2026-08-05 | Phase 6：App SDK host 侧 + launcher descriptor/register RE | `CAN-APP-002/003/004/008/011` | canopus_app.h + ordered-list parser/serializer + EVID-APP-004（descriptor 布局 + app_launcher_add/del ABI）；提交 `3ccfe42`、`7372e22` |
 | 2026-08-05 | Phase 12：key roles、CI、模板 | `CAN-REL-001/002/004` | `canopus key` + revocation list；scripts/ci.sh 6 gates + GitHub Actions；`canopus module new`；提交 `d10d722`、`1de0c97` |
 | 2026-08-05 | Phase 10/11 脚手架：planner、SDK 审计、G-gate harness | `CAN-MULTI-003/004`,`CAN-REL-003` | planner::expand + sdk_hygiene 审计 + tests/hardware/gates.md + device-gates.sh |
+| 2026-08-05 | 安装器表盘 + 设备 supervisor 模块 | `CAN-DEV-002/004`（部分） | watchfaces/canopus-installer（btpatch_phase5 结构）+ manager/service/canopus_supervisor（384B status/16B command ABI，12 host 测试）；.bin verifier PASS（ec28819e）但 /dev/canopus 注册与加载器待 G0/G4 设备 RE |
 
 ---
 
