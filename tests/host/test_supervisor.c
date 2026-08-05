@@ -155,10 +155,12 @@ TEST(pending_table_full_rejects)
 /* ---- store -------------------------------------------------------- */
 
 static char g_store_root[200];
+static unsigned g_root_seq;
 static const char *test_root(void)
 {
+    /* unique per call so a test never sees another test's leftover slots */
     snprintf(g_store_root, sizeof(g_store_root),
-             "/tmp/canopus_store_test_%d", getpid());
+             "/tmp/canopus_store_test_%d_%u", getpid(), g_root_seq++);
     return g_store_root;
 }
 
@@ -299,6 +301,143 @@ TEST(store_write_atomic_exclusive_temp)
     }
 }
 
+/* ---- CAN-P1-006: transaction journal + recovery --------------------- */
+
+static void set_txn_state(const char *root, const char *id, uint32_t state)
+{
+    char p[200];
+    uint8_t buf[4];
+    int fd;
+    snprintf(p, sizeof(p), "%s/packages/%s/txn.state", root, id);
+    buf[0] = (uint8_t)(state & 0xff);
+    buf[1] = (uint8_t)((state >> 8) & 0xff);
+    buf[2] = (uint8_t)((state >> 16) & 0xff);
+    buf[3] = (uint8_t)((state >> 24) & 0xff);
+    fd = open(p, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+    CHECK(fd >= 0);
+    CHECK(write(fd, buf, 4) == 4);
+    close(fd);
+}
+
+static void write_file(const char *path, const char *content)
+{
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+    CHECK(fd >= 0);
+    CHECK(write(fd, content, strlen(content)) == (ssize_t)strlen(content));
+    close(fd);
+}
+
+TEST(store_install_clears_journal)
+{
+    const char *root = test_root();
+    struct canopus_store_v1 store;
+    char staged[200];
+    canopus_store_init(&store, root);
+    canopus_store_ensure_package_dir(&store, "org.example.hello");
+    canopus_store_slot_path(&store, "org.example.hello",
+                            CANOPUS_STORE_SLOT_STAGED, staged, sizeof(staged));
+    mkdir(staged, 0750);
+    CHECK(canopus_store_install_staged(&store, "org.example.hello") == 0);
+    /* after a clean install the journal is cleared */
+    CHECK_EQ(canopus_store_txn_state(&store, "org.example.hello"),
+             CANOPUS_STORE_TXN_NONE);
+}
+
+TEST(store_recover_after_prepared_drops_staged)
+{
+    const char *root = test_root();
+    struct canopus_store_v1 store;
+    char staged[200], active[200], p[200];
+    canopus_store_init(&store, root);
+    canopus_store_ensure_package_dir(&store, "org.example.hello");
+    canopus_store_slot_path(&store, "org.example.hello",
+                            CANOPUS_STORE_SLOT_STAGED, staged, sizeof(staged));
+    canopus_store_slot_path(&store, "org.example.hello",
+                            CANOPUS_STORE_SLOT_ACTIVE, active, sizeof(active));
+    mkdir(staged, 0750);
+    mkdir(active, 0750);
+    snprintf(p, sizeof(p), "%s/payload", active);
+    write_file(p, "v2");
+    set_txn_state(root, "org.example.hello", CANOPUS_STORE_TXN_PREPARED);
+    /* a crash right after PREPARED: recovery keeps active and drops staged */
+    CHECK(canopus_store_recover(&store, "org.example.hello") == 0);
+    CHECK(test_dir_exists(active) == 1);
+    CHECK(test_dir_exists(staged) == 0);
+    CHECK_EQ(canopus_store_txn_state(&store, "org.example.hello"),
+             CANOPUS_STORE_TXN_NONE);
+}
+
+TEST(store_recover_after_active_to_previous_restores)
+{
+    const char *root = test_root();
+    struct canopus_store_v1 store;
+    char staged[200], active[200], previous[200];
+    canopus_store_init(&store, root);
+    canopus_store_ensure_package_dir(&store, "org.example.hello");
+    canopus_store_slot_path(&store, "org.example.hello",
+                            CANOPUS_STORE_SLOT_STAGED, staged, sizeof(staged));
+    canopus_store_slot_path(&store, "org.example.hello",
+                            CANOPUS_STORE_SLOT_ACTIVE, active, sizeof(active));
+    canopus_store_slot_path(&store, "org.example.hello",
+                            CANOPUS_STORE_SLOT_PREVIOUS, previous, sizeof(previous));
+    mkdir(staged, 0750);
+    mkdir(previous, 0750); /* active was moved aside, then we crashed */
+    set_txn_state(root, "org.example.hello", CANOPUS_STORE_TXN_ACTIVE_TO_PREVIOUS);
+    /* recovery restores previous -> active and drops the staged payload */
+    CHECK(canopus_store_recover(&store, "org.example.hello") == 0);
+    CHECK(test_dir_exists(active) == 1);
+    CHECK(test_dir_exists(previous) == 0);
+    CHECK(test_dir_exists(staged) == 0);
+    CHECK_EQ(canopus_store_txn_state(&store, "org.example.hello"),
+             CANOPUS_STORE_TXN_NONE);
+}
+
+TEST(store_recover_after_staged_to_active_commits)
+{
+    const char *root = test_root();
+    struct canopus_store_v1 store;
+    char active[200], previous[200];
+    canopus_store_init(&store, root);
+    canopus_store_ensure_package_dir(&store, "org.example.hello");
+    canopus_store_slot_path(&store, "org.example.hello",
+                            CANOPUS_STORE_SLOT_ACTIVE, active, sizeof(active));
+    canopus_store_slot_path(&store, "org.example.hello",
+                            CANOPUS_STORE_SLOT_PREVIOUS, previous, sizeof(previous));
+    mkdir(active, 0750);
+    mkdir(previous, 0750);
+    set_txn_state(root, "org.example.hello", CANOPUS_STORE_TXN_STAGED_TO_ACTIVE);
+    /* the promotion already landed: recovery commits it and keeps previous
+     * for rollback */
+    CHECK(canopus_store_recover(&store, "org.example.hello") == 0);
+    CHECK(test_dir_exists(active) == 1);
+    CHECK(test_dir_exists(previous) == 1);
+    CHECK_EQ(canopus_store_txn_state(&store, "org.example.hello"),
+             CANOPUS_STORE_TXN_NONE);
+}
+
+TEST(store_remove_slot_recursive)
+{
+    const char *root = test_root();
+    struct canopus_store_v1 store;
+    char active[200], nested[200];
+    canopus_store_init(&store, root);
+    canopus_store_ensure_package_dir(&store, "org.example.hello");
+    canopus_store_slot_path(&store, "org.example.hello",
+                            CANOPUS_STORE_SLOT_ACTIVE, active, sizeof(active));
+    mkdir(active, 0750);
+    snprintf(nested, sizeof(nested), "%s/subdir", active);
+    mkdir(nested, 0750);
+    snprintf(nested, sizeof(nested), "%s/subdir/file.bin", active);
+    write_file(nested, "data");
+    /* a non-empty slot is removed recursively, not rmdir'd */
+    CHECK(canopus_store_remove_slot(&store, "org.example.hello",
+                                    CANOPUS_STORE_SLOT_ACTIVE) == 0);
+    CHECK(test_dir_exists(active) == 0);
+    /* idempotent */
+    CHECK(canopus_store_remove_slot(&store, "org.example.hello",
+                                    CANOPUS_STORE_SLOT_ACTIVE) == 0);
+}
+
 static struct test_registry supervisor_tests[] = {
     { "proto_request_validate", proto_request_validate_wrapper },
     { "proto_response_roundtrip", proto_response_roundtrip_wrapper },
@@ -315,6 +454,11 @@ static struct test_registry supervisor_tests[] = {
     { "store_init_rejects_bad_root", store_init_rejects_bad_root_wrapper },
     { "store_write_atomic_rejects_huge_len", store_write_atomic_rejects_huge_len_wrapper },
     { "store_write_atomic_exclusive_temp", store_write_atomic_exclusive_temp_wrapper },
+    { "store_install_clears_journal", store_install_clears_journal_wrapper },
+    { "store_recover_after_prepared_drops_staged", store_recover_after_prepared_drops_staged_wrapper },
+    { "store_recover_after_active_to_previous_restores", store_recover_after_active_to_previous_restores_wrapper },
+    { "store_recover_after_staged_to_active_commits", store_recover_after_staged_to_active_commits_wrapper },
+    { "store_remove_slot_recursive", store_remove_slot_recursive_wrapper },
 };
 #define SUPERVISOR_TESTS_LEN (sizeof(supervisor_tests) / sizeof(supervisor_tests[0]))
 

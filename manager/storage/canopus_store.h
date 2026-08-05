@@ -23,6 +23,20 @@ extern "C" {
 
 #define CANOPUS_STORE_PATH_MAX 200u
 
+/* CAN-P1-006: transaction journal states. Every slot mutation records the
+ * step it is about to perform (PREPARED before moving anything, then per-
+ * rename states) and clears it once durable. Boot-time recovery reads the
+ * journal and completes/undoes idempotently so exactly one valid active
+ * slot remains. */
+enum canopus_store_txn_state {
+    CANOPUS_STORE_TXN_NONE = 0,
+    CANOPUS_STORE_TXN_PREPARED,
+    CANOPUS_STORE_TXN_ACTIVE_TO_PREVIOUS,
+    CANOPUS_STORE_TXN_STAGED_TO_ACTIVE,
+    CANOPUS_STORE_TXN_COMMITTED,
+    CANOPUS_STORE_TXN_CLEANUP,
+};
+
 struct canopus_store_v1 {
     char root[160];
     /* 0 when the last operation succeeded; else a static message. */
@@ -60,13 +74,25 @@ int canopus_store_rollback(const struct canopus_store_v1 *store,
 int canopus_store_quarantine(const struct canopus_store_v1 *store,
                              const char *package_id);
 
-/* Removes a slot directory (idempotent). */
+/* Removes a slot directory recursively (idempotent; a non-empty slot is
+ * fully deleted, not just rmdir'd). */
 int canopus_store_remove_slot(const struct canopus_store_v1 *store,
                               const char *package_id, int slot);
 
 /* Test convenience: creates packages/<id>/ with the staged slot. */
 int canopus_store_ensure_package_dir(const struct canopus_store_v1 *store,
                                      const char *package_id);
+
+/* Boot-time recovery: reads the package's transaction journal and completes
+ * or undoes an interrupted install/rollback idempotently, leaving exactly
+ * one valid active slot. Returns 0 on success (including nothing to do). */
+int canopus_store_recover(struct canopus_store_v1 *store,
+                          const char *package_id);
+
+/* Test/diagnostics accessor: returns the current journal state for a
+ * package (CANOPUS_STORE_TXN_NONE when absent or unreadable). */
+uint32_t canopus_store_txn_state(const struct canopus_store_v1 *store,
+                                 const char *package_id);
 
 #ifdef __cplusplus
 }
