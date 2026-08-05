@@ -149,7 +149,7 @@ TEST(supervisor_enable_removable_loads_module)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     g_loads = 0;
     g_load_result = CANOPUS_STATE_ACTIVE;
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1) == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     CHECK(sup.modules[0].state == CANOPUS_STATE_INSTALLED);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
@@ -162,7 +162,7 @@ TEST(supervisor_disable_removable_stops)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1) == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_ACTIVE;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
@@ -175,7 +175,7 @@ TEST(supervisor_remove_removable_unloads)
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     g_unloads = 0;
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1) == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_ACTIVE;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
@@ -189,7 +189,7 @@ TEST(supervisor_resident_disable_is_reboot_required)
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     g_unloads = 0;
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1) == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1, "mod.bt") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
@@ -203,7 +203,7 @@ TEST(supervisor_resident_remove_is_remove_pending)
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     g_unloads = 0;
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1) == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1, "mod.bt") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
@@ -292,7 +292,7 @@ TEST(supervisor_read_staging_never_torn)
     uint8_t status[CANOPUS_SUP_STATUS_SIZE];
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1) == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
     /* the read returns a fully consistent record: slot state present, no
@@ -303,6 +303,179 @@ TEST(supervisor_read_staging_never_torn)
              CANOPUS_STATE_ACTIVE);
     CHECK_EQ(r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF),
              r32(status, CANOPUS_SUP_STATUS_SEQ_END_OFF));
+}
+
+/* ---- CAN-P0-008: v2 transport -------------------------------------- */
+
+static void make_v2_request(uint8_t *buf, uint32_t cap, uint32_t opcode,
+                            uint32_t request_id, const void *payload,
+                            uint32_t payload_len)
+{
+    uint32_t total;
+    canopus_memset(buf, 0, cap);
+    total = CANOPUS_TRANSPORT_V2_HEADER_SIZE + payload_len;
+    buf[0] = 0x32; buf[1] = 0x43; buf[2] = 0x50; buf[3] = 0x43; /* "CPC2" */
+    buf[4] = (uint8_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE & 0xff);
+    buf[5] = (uint8_t)((CANOPUS_TRANSPORT_V2_HEADER_SIZE >> 8) & 0xff);
+    buf[6] = (uint8_t)CANOPUS_TRANSPORT_V2_REQUEST;
+    buf[8] = (uint8_t)(CANOPUS_ABI_MAJOR & 0xff);
+    buf[9] = (uint8_t)((CANOPUS_ABI_MAJOR >> 8) & 0xff);
+    buf[10] = (uint8_t)(CANOPUS_ABI_MINOR & 0xff);
+    buf[11] = (uint8_t)((CANOPUS_ABI_MINOR >> 8) & 0xff);
+#define PV2(o, v) \
+    do { uint32_t _v = (uint32_t)(v); \
+         buf[(o)] = (uint8_t)(_v & 0xff); buf[(o) + 1] = (uint8_t)((_v >> 8) & 0xff); \
+         buf[(o) + 2] = (uint8_t)((_v >> 16) & 0xff); buf[(o) + 3] = (uint8_t)((_v >> 24) & 0xff); } while (0)
+    PV2(12, total);
+    PV2(16, opcode);
+    PV2(20, request_id);
+    PV2(24, 0); /* flags */
+    PV2(28, 0); /* result */
+    PV2(32, payload_len);
+#undef PV2
+    if (payload_len > 0 && payload != 0) {
+        canopus_memcpy(buf + CANOPUS_TRANSPORT_V2_HEADER_SIZE, payload, payload_len);
+    }
+}
+
+static uint32_t v2_word(const uint8_t *b, uint32_t o)
+{
+    return (uint32_t)b[o] | ((uint32_t)b[o + 1] << 8) |
+           ((uint32_t)b[o + 2] << 16) | ((uint32_t)b[o + 3] << 24);
+}
+
+TEST(v2_golden_query_device_request)
+{
+    const uint8_t golden[36] = {
+        0x32,0x43,0x50,0x43, 0x24,0x00, 0x01,0x00, 0x01,0x00, 0x00,0x00,
+        0x24,0x00,0x00,0x00, 0x09,0x00,0x00,0x00, 0x34,0x12,0x00,0x00,
+        0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    };
+    struct canopus_proto_request_v1 req;
+    uint32_t poff = 0;
+    CHECK(canopus_transport_v2_decode_request(golden, sizeof(golden), &req, &poff) == 0);
+    CHECK_EQ(req.magic, CANOPUS_TRANSPORT_V2_MAGIC);
+    CHECK_EQ(req.command, CANOPUS_CMD_QUERY_DEVICE);
+    CHECK_EQ(req.request_id, 0x1234u);
+    CHECK_EQ(req.payload_size, 0u);
+    CHECK_EQ(poff, 36u);
+}
+
+TEST(v2_decode_rejects_malformed)
+{
+    uint8_t buf[CANOPUS_TRANSPORT_V2_HEADER_SIZE + 8];
+    struct canopus_proto_request_v1 req;
+    uint32_t poff = 0;
+    make_v2_request(buf, sizeof(buf), CANOPUS_CMD_QUERY_DEVICE, 1, 0, 0);
+    CHECK(canopus_transport_v2_decode_request(buf, sizeof(buf), &req, &poff) == 0);
+
+    buf[0] = 0xFF; /* bad magic */
+    CHECK(canopus_transport_v2_decode_request(buf, sizeof(buf), &req, &poff) == -1);
+    make_v2_request(buf, sizeof(buf), CANOPUS_CMD_QUERY_DEVICE, 1, 0, 0);
+
+    buf[6] = CANOPUS_TRANSPORT_V2_RESPONSE; /* wrong kind */
+    CHECK(canopus_transport_v2_decode_request(buf, sizeof(buf), &req, &poff) == -1);
+    make_v2_request(buf, sizeof(buf), CANOPUS_CMD_QUERY_DEVICE, 1, 0, 0);
+
+    buf[8] = 99; /* wrong ABI major */
+    CHECK(canopus_transport_v2_decode_request(buf, sizeof(buf), &req, &poff) == -1);
+    make_v2_request(buf, sizeof(buf), CANOPUS_CMD_QUERY_DEVICE, 1, 0, 0);
+
+    buf[10] = 5; /* newer minor fails closed */
+    CHECK(canopus_transport_v2_decode_request(buf, sizeof(buf), &req, &poff) == -1);
+    make_v2_request(buf, sizeof(buf), CANOPUS_CMD_QUERY_DEVICE, 1, 0, 0);
+
+    /* request id 0 is reserved */
+    make_v2_request(buf, sizeof(buf), CANOPUS_CMD_QUERY_DEVICE, 0, 0, 0);
+    CHECK(canopus_transport_v2_decode_request(buf, sizeof(buf), &req, &poff) == -1);
+
+    /* buffer shorter than the declared record */
+    make_v2_request(buf, sizeof(buf), CANOPUS_CMD_QUERY_DEVICE, 1, 0, 0);
+    CHECK(canopus_transport_v2_decode_request(buf, 20, &req, &poff) == -1);
+}
+
+TEST(v2_device_write_echoes_request_id)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t wbuf[CANOPUS_TRANSPORT_V2_HEADER_SIZE];
+    uint8_t rbuf[128];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_QUERY_DEVICE, 0x1234, 0, 0);
+    CHECK(canopus_supervisor_device_write(&sup, wbuf, sizeof(wbuf)) ==
+          (int32_t)sizeof(wbuf));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) ==
+          CANOPUS_TRANSPORT_V2_HEADER_SIZE);
+    CHECK(v2_word(rbuf, 0) == CANOPUS_TRANSPORT_V2_MAGIC);
+    CHECK((v2_word(rbuf, 6) & 0xffffu) == CANOPUS_TRANSPORT_V2_RESPONSE);
+    CHECK(v2_word(rbuf, 16) == CANOPUS_CMD_QUERY_DEVICE); /* opcode echoed */
+    CHECK(v2_word(rbuf, 20) == 0x1234); /* request id echoed */
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_COMPLETED);
+}
+
+TEST(v2_request_tracked_in_pending)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t wbuf[CANOPUS_TRANSPORT_V2_HEADER_SIZE];
+    uint8_t rbuf[128];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_INSTALL, 0x77, 0, 0);
+    CHECK(canopus_supervisor_device_write(&sup, wbuf, sizeof(wbuf)) ==
+          (int32_t)sizeof(wbuf));
+    const struct canopus_pending_request_v1 *p =
+        canopus_pending_find(&sup.pending, 0x77);
+    CHECK(p != 0);
+    CHECK(p->command == CANOPUS_CMD_INSTALL);
+    CHECK(p->state == CANOPUS_RESULT_COMPLETED); /* retained terminal */
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) ==
+          CANOPUS_TRANSPORT_V2_HEADER_SIZE);
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_COMPLETED);
+}
+
+TEST(v2_enable_by_module_id)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t wbuf[128];
+    uint8_t rbuf[128];
+    uint8_t payload[CANOPUS_SUP_MODULE_ID_MAX];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1,
+                                        "mod.hello") == 0);
+    sup.modules[0].state = CANOPUS_STATE_INSTALLED;
+    g_load_result = CANOPUS_STATE_ACTIVE;
+
+    canopus_memset(payload, 0, sizeof(payload));
+    canopus_memcpy(payload, "mod.hello", 9);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_ENABLE, 0x99,
+                    payload, sizeof(payload));
+    CHECK(canopus_supervisor_device_write(
+              &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(payload)) ==
+          (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(payload)));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_COMPLETED);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_ACTIVE);
+
+    /* an unknown module id resolves to DISALLOWED, not a fake success */
+    canopus_memcpy(payload, "mod.nope", 8);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_ENABLE, 0x9A,
+                    payload, sizeof(payload));
+    CHECK(canopus_supervisor_device_write(
+              &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(payload)) ==
+          (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(payload)));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_DISALLOWED);
+}
+
+TEST(v2_unknown_magic_rejected)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t bad[64];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    canopus_memset(bad, 0xEE, sizeof(bad));
+    CHECK(canopus_supervisor_device_write(&sup, bad, CANOPUS_SUP_COMMAND_SIZE) == -1);
+    CHECK(canopus_supervisor_device_write(&sup, bad, sizeof(bad)) == -1);
+    /* a truncated v2 frame (magic ok, record too short) is rejected */
+    make_v2_request(bad, sizeof(bad), CANOPUS_CMD_QUERY_DEVICE, 1, 0, 0);
+    CHECK(canopus_supervisor_device_write(&sup, bad, 20) == -1);
 }
 
 /* ---- CAN-P1-008: error code persistence semantics ------------------ */
@@ -342,7 +515,7 @@ TEST(supervisor_load_failure_sets_error)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1) == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_INSTALLED;
     g_load_result = -1;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
@@ -355,7 +528,7 @@ TEST(supervisor_unload_failure_sets_error)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1) == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_ACTIVE;
     g_unload_result = -1;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
@@ -381,13 +554,13 @@ TEST(supervisor_add_module_rejects_full_table)
     int added = 0;
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS + 2; i++) {
-        if (canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1) >= 0) {
+        if (canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") >= 0) {
             added++;
         }
     }
     CHECK(added == CANOPUS_SUP_MODULE_SLOTS);
     CHECK(sup.module_count == CANOPUS_SUP_MODULE_SLOTS);
-    CHECK(canopus_supervisor_add_module(&sup, 99, 1, 1) == -1); /* bad class */
+    CHECK(canopus_supervisor_add_module(&sup, 99, 1, 1, "mod.bad") == -1); /* bad class */
 }
 
 static const struct test_registry supervisor_device_tests[] = {
@@ -413,6 +586,12 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_load_failure_sets_error", supervisor_load_failure_sets_error_wrapper },
     { "supervisor_unload_failure_sets_error", supervisor_unload_failure_sets_error_wrapper },
     { "supervisor_unknown_op_sets_error", supervisor_unknown_op_sets_error_wrapper },
+    { "v2_golden_query_device_request", v2_golden_query_device_request_wrapper },
+    { "v2_decode_rejects_malformed", v2_decode_rejects_malformed_wrapper },
+    { "v2_device_write_echoes_request_id", v2_device_write_echoes_request_id_wrapper },
+    { "v2_request_tracked_in_pending", v2_request_tracked_in_pending_wrapper },
+    { "v2_enable_by_module_id", v2_enable_by_module_id_wrapper },
+    { "v2_unknown_magic_rejected", v2_unknown_magic_rejected_wrapper },
 };
 #define SUPERVISOR_DEVICE_TESTS_LEN \
     (sizeof(supervisor_device_tests) / sizeof(supervisor_device_tests[0]))

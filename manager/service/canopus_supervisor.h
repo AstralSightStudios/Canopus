@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include "canopus_abi.h"
+#include "canopus_protocol.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,12 +66,18 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_UNKNOWN_OP = -8,   /* unrecognized opcode */
 };
 
+#define CANOPUS_SUP_MODULE_ID_MAX 32u
+
 /* A tracked module slot. */
 struct canopus_sup_module_v1 {
     uint32_t state;            /* CANOPUS_STATE_* */
     uint32_t lifecycle_class;  /* CANOPUS_LIFECYCLE_* */
     uint32_t version;
     uint32_t flags;            /* bit0 = signature_ok */
+    /* CAN-P0-008/CAN-P1-007: stable module identity, used to resolve v2
+     * per-module commands by id instead of a UI index. Not part of the
+     * 384-byte CPS1 slot render (which keeps the 16-byte stride). */
+    uint8_t module_id[CANOPUS_SUP_MODULE_ID_MAX];
 };
 
 /* Supervisor model. */
@@ -90,6 +97,15 @@ struct canopus_supervisor_v1 {
      * is embedded in the status at SEQ_BEGIN/SEQ_END and advances by 2 per
      * command. A reader accepts the record only when begin == end (even). */
     struct canopus_snapshot_v1 snap;
+    /* CAN-P0-008: v2 transport state. `last_kind` is 0 for a legacy CPC1
+     * command, 1 for a v2 CPC2 request; a read returns the stored v2
+     * response when the last write was v2, else the legacy CPS1 status. */
+    uint8_t  last_kind;
+    uint8_t  v2_response_buf[CANOPUS_TRANSPORT_V2_HEADER_SIZE +
+                             CANOPUS_PROTO_MAX_PAYLOAD];
+    uint32_t v2_response_len;
+    /* v2 pending-request tracking (CAN-P1-002) */
+    struct canopus_pending_table_v1 pending;
     /* platform hooks (see canopus_supervisor_platform.h) */
     const struct canopus_sup_platform_v1 *platform;
     void *platform_cookie;
@@ -117,16 +133,30 @@ int32_t canopus_supervisor_device_write(struct canopus_supervisor_v1 *sup,
 /* ABI helpers for the char-device front end (host test uses them too). */
 int canopus_supervisor_validate_command(const uint8_t command[CANOPUS_SUP_COMMAND_SIZE]);
 
+/* CAN-P0-008: handle one v2 request envelope against the same core
+ * dispatch as the legacy path. Tracks the request in the supervisor's
+ * pending table and fills `resp` (result_state + request id echo). `opcode`
+ * is set to the request's command so a v2 response can echo it. Returns 0
+ * on success (a response is always produced, including REJECTED). */
+int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
+                                         const struct canopus_proto_request_v1 *req,
+                                         const void *payload,
+                                         struct canopus_proto_response_v1 *resp,
+                                         uint32_t *opcode);
+
 /* The module glue owns the singleton; the platform's read/write handlers use
  * it to render status / dispatch commands. */
 struct canopus_supervisor_v1 *canopus_supervisor_get(void);
 
 /* Host convenience: record a newly installed module into a free slot.
- * Returns the slot index or -1 when the table is full / class invalid. */
+ * `module_id` is copied (bounded) and becomes the stable identity used by
+ * v2 per-module commands. Returns the slot index or -1 when the table is
+ * full / class invalid / id too long. */
 int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
                                   uint32_t lifecycle_class,
                                   uint32_t version,
-                                  uint32_t signature_ok);
+                                  uint32_t signature_ok,
+                                  const char *module_id);
 
 #ifdef __cplusplus
 }

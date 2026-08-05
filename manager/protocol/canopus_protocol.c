@@ -67,6 +67,130 @@ void canopus_proto_response_init(struct canopus_proto_response_v1 *resp,
 }
 
 /* ------------------------------------------------------------------ */
+/* v2 transport envelope (CAN-P0-008)                                  */
+/* ------------------------------------------------------------------ */
+
+static uint16_t v2_u16(const uint8_t *b)
+{
+    return (uint16_t)b[0] | ((uint16_t)b[1] << 8);
+}
+
+static uint32_t v2_u32(const uint8_t *b)
+{
+    return (uint32_t)b[0] | ((uint32_t)b[1] << 8) |
+           ((uint32_t)b[2] << 16) | ((uint32_t)b[3] << 24);
+}
+
+int canopus_transport_v2_decode_request(const uint8_t *buf, uint32_t len,
+                                        struct canopus_proto_request_v1 *req,
+                                        uint32_t *payload_offset)
+{
+    uint32_t magic, total_size, payload_size, request_id;
+    uint16_t header_size, kind, major, minor;
+    if (buf == 0 || req == 0 || payload_offset == 0) {
+        return -1;
+    }
+    if (len < CANOPUS_TRANSPORT_V2_HEADER_SIZE) {
+        return -1;
+    }
+    magic = v2_u32(buf + 0);
+    header_size = v2_u16(buf + 4);
+    kind = v2_u16(buf + 6);
+    major = v2_u16(buf + 8);
+    minor = v2_u16(buf + 10);
+    total_size = v2_u32(buf + 12);
+    payload_size = v2_u32(buf + 32);
+    request_id = v2_u32(buf + 20);
+    if (magic != CANOPUS_TRANSPORT_V2_MAGIC) {
+        return -1;
+    }
+    if (header_size < CANOPUS_TRANSPORT_V2_HEADER_SIZE) {
+        return -1; /* header must at least span the known fields */
+    }
+    if (kind != CANOPUS_TRANSPORT_V2_REQUEST) {
+        return -1;
+    }
+    if (major != CANOPUS_ABI_MAJOR) {
+        return -1;
+    }
+    if (minor > CANOPUS_ABI_MINOR) {
+        return -1; /* append-only minor: unknown newer minor fails closed */
+    }
+    if (payload_size > CANOPUS_PROTO_MAX_PAYLOAD) {
+        return -1;
+    }
+    /* total_size must equal header + payload and fit the caller buffer */
+    if (total_size != (uint32_t)header_size + payload_size) {
+        return -1;
+    }
+    if (len < total_size) {
+        return -1;
+    }
+    if (request_id == 0) {
+        return -1; /* 0 is reserved for unsolicited events */
+    }
+    req->magic = CANOPUS_TRANSPORT_V2_MAGIC;
+    req->struct_size = CANOPUS_PROTO_REQUEST_SIZE;
+    req->abi_major = major;
+    req->abi_minor = minor;
+    req->command = v2_u32(buf + 16);
+    req->request_id = request_id;
+    req->flags = v2_u32(buf + 24);
+    req->payload_size = payload_size;
+    *payload_offset = (uint32_t)header_size;
+    return 0;
+}
+
+int canopus_transport_v2_encode_response(const struct canopus_proto_response_v1 *resp,
+                                         uint32_t opcode,
+                                         const void *payload,
+                                         uint32_t payload_len,
+                                         uint8_t *out, uint32_t cap)
+{
+    uint32_t total;
+    if (resp == 0 || out == 0 || payload_len > CANOPUS_PROTO_MAX_PAYLOAD ||
+        (payload_len > 0 && payload == 0)) {
+        return -1;
+    }
+    total = CANOPUS_TRANSPORT_V2_HEADER_SIZE + payload_len;
+    if (cap < total) {
+        return -1;
+    }
+    canopus_memset(out, 0, total);
+    out[0] = (uint8_t)(CANOPUS_TRANSPORT_V2_MAGIC & 0xff);
+    out[1] = (uint8_t)((CANOPUS_TRANSPORT_V2_MAGIC >> 8) & 0xff);
+    out[2] = (uint8_t)((CANOPUS_TRANSPORT_V2_MAGIC >> 16) & 0xff);
+    out[3] = (uint8_t)((CANOPUS_TRANSPORT_V2_MAGIC >> 24) & 0xff);
+    out[4] = (uint8_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE & 0xff);
+    out[5] = (uint8_t)((CANOPUS_TRANSPORT_V2_HEADER_SIZE >> 8) & 0xff);
+    out[6] = (uint8_t)CANOPUS_TRANSPORT_V2_RESPONSE;
+    out[7] = 0;
+    out[8] = (uint8_t)(resp->abi_major & 0xff);
+    out[9] = (uint8_t)((resp->abi_major >> 8) & 0xff);
+    out[10] = (uint8_t)(resp->abi_minor & 0xff);
+    out[11] = (uint8_t)((resp->abi_minor >> 8) & 0xff);
+#define V2_PUT32(o, v) \
+    do { \
+        uint32_t _v = (uint32_t)(v); \
+        out[(o)] = (uint8_t)(_v & 0xff); \
+        out[(o) + 1] = (uint8_t)((_v >> 8) & 0xff); \
+        out[(o) + 2] = (uint8_t)((_v >> 16) & 0xff); \
+        out[(o) + 3] = (uint8_t)((_v >> 24) & 0xff); \
+    } while (0)
+    V2_PUT32(12, total);
+    V2_PUT32(16, opcode);
+    V2_PUT32(20, resp->request_id);
+    V2_PUT32(24, resp->flags);
+    V2_PUT32(28, resp->result_state);
+    V2_PUT32(32, payload_len);
+#undef V2_PUT32
+    if (payload_len > 0) {
+        canopus_memcpy(out + CANOPUS_TRANSPORT_V2_HEADER_SIZE, payload, payload_len);
+    }
+    return (int)total;
+}
+
+/* ------------------------------------------------------------------ */
 /* Pending-request table (CAN-P1-002)                                  */
 /* ------------------------------------------------------------------ */
 

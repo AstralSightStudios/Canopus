@@ -72,6 +72,40 @@ void canopus_proto_response_init(struct canopus_proto_response_v1 *resp,
                                  uint32_t request_id, uint32_t result_state,
                                  uint32_t payload_size);
 
+/* ------------------------------------------------------------------ */
+/* v2 transport envelope (CAN-P0-008)                                  */
+/*                                                                     */
+/* The single versioned wire format for /dev/canopus. Legacy CPC1/CPS1  */
+/* remain only as the compatibility path; new operations are v2. The    */
+/* codec is byte-level and bounded: a wire buffer is never dereferenced */
+/* as a packed C struct.                                                */
+/* ------------------------------------------------------------------ */
+
+#define CANOPUS_TRANSPORT_V2_MAGIC      0x43504332u /* "CPC2" */
+#define CANOPUS_TRANSPORT_V2_HEADER_SIZE 36u
+
+enum canopus_transport_v2_kind {
+    CANOPUS_TRANSPORT_V2_REQUEST = 1,
+    CANOPUS_TRANSPORT_V2_RESPONSE,
+    CANOPUS_TRANSPORT_V2_EVENT,
+};
+
+/* Decodes a v2 REQUEST record from a wire buffer into a request envelope.
+ * Validates magic, header/total sizes, message kind, ABI major/minor,
+ * payload bound and non-zero request id. Sets *payload_offset to where the
+ * payload begins. Returns 0 on success, -1 on any malformed input. */
+int canopus_transport_v2_decode_request(const uint8_t *buf, uint32_t len,
+                                        struct canopus_proto_request_v1 *req,
+                                        uint32_t *payload_offset);
+/* Encodes a v2 RESPONSE record (header + payload) into `out`. `opcode`
+ * echoes the request's opcode. Returns the number of bytes written, or -1
+ * when the buffer is too small or the input is invalid. */
+int canopus_transport_v2_encode_response(const struct canopus_proto_response_v1 *resp,
+                                         uint32_t opcode,
+                                         const void *payload,
+                                         uint32_t payload_len,
+                                         uint8_t *out, uint32_t cap);
+
 /* ---- pending-request state machine (CAN-P1-002) -------------------- */
 /* A request_id is tracked so the manager can report real async state.
  * Legal edges (see canopus_pending.c): ACCEPTED -> QUEUED/RUNNING/terminal,

@@ -33,7 +33,7 @@ TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
 
 INC="-I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \
-  -I$ROOT/manager/service -I$PACK_DIR/generated"
+  -I$ROOT/manager/service -I$ROOT/manager/protocol -I$PACK_DIR/generated"
 
 for s in canopus_supervisor.c canopus_supervisor_module.c canopus_supervisor_platform.c; do
     $CC $TARGET_FLAGS $INC -c "$ROOT/manager/service/$s" -o "$OUT/${s%.c}.o"

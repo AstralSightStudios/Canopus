@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://canopus.dev/schemas/transport-v2.json",
+  "title": "Canopus /dev/canopus transport v2 envelope (CAN-P0-008)",
+  "description": "Decision record for the single versioned wire format on /dev/canopus. Legacy CPC1 (16-byte command) and CPS1 (384-byte status) remain only as the compatibility path; new operations are v2. The layout is fixed little-endian; a wire buffer is never dereferenced as a packed C struct.",
+  "type": "object",
+  "required": ["magic", "header_size", "message_kind", "abi_major", "abi_minor", "total_size", "opcode", "request_id", "flags", "result", "payload_size"],
+  "properties": {
+    "magic":        { "const": "0x43504332", "description": "\"CPC2\"" },
+    "header_size":  { "const": 36, "description": "bytes; must be >= 36 (append-only) and <= total_size" },
+    "message_kind": { "enum": [1, 2, 3], "description": "1=REQUEST, 2=RESPONSE, 3=EVENT" },
+    "abi_major":    { "const": 1, "description": "must equal CANOPUS_ABI_MAJOR" },
+    "abi_minor":    { "type": "integer", "minimum": 0, "description": "must be <= CANOPUS_ABI_MINOR (append-only)" },
+    "total_size":   { "type": "integer", "description": "must equal header_size + payload_size and fit the caller buffer" },
+    "opcode":       { "type": "integer", "description": "CANOPUS_CMD_*; a response echoes the request's opcode" },
+    "request_id":   { "type": "integer", "description": "client-monotonic; 0 is reserved for unsolicited events" },
+    "flags":        { "type": "integer" },
+    "result":       { "type": "integer", "description": "RESPONSE only: CANOPUS_RESULT_* (REQUEST carries 0)" },
+    "payload_size": { "type": "integer", "maximum": 512, "description": "<= CANOPUS_PROTO_MAX_PAYLOAD" }
+  }
+}
