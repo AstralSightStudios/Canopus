@@ -129,6 +129,11 @@ int canopus_transport_v2_decode_request(const uint8_t *buf, uint32_t len,
     if (request_id == 0) {
         return -1; /* 0 is reserved for unsolicited events */
     }
+    /* CAN-P2-003: unknown flag bits fail closed rather than carry
+     * uninterpreted semantics. */
+    if ((v2_u32(buf + 24) & ~CANOPUS_TRANSPORT_V2_FLAGS_KNOWN) != 0u) {
+        return -1;
+    }
     req->magic = CANOPUS_TRANSPORT_V2_MAGIC;
     req->struct_size = CANOPUS_PROTO_REQUEST_SIZE;
     req->abi_major = major;

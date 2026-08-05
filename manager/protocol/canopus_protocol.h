@@ -83,6 +83,9 @@ void canopus_proto_response_init(struct canopus_proto_response_v1 *resp,
 
 #define CANOPUS_TRANSPORT_V2_MAGIC      0x43504332u /* "CPC2" */
 #define CANOPUS_TRANSPORT_V2_HEADER_SIZE 36u
+/* CAN-P2-003: only these request flag bits are known; any other bit makes a
+ * v2 record fail closed instead of silently carrying unknown semantics. */
+#define CANOPUS_TRANSPORT_V2_FLAGS_KNOWN 0u
 
 enum canopus_transport_v2_kind {
     CANOPUS_TRANSPORT_V2_REQUEST = 1,

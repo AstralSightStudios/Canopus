@@ -551,6 +551,11 @@ TEST(v2_decode_rejects_malformed)
     /* buffer shorter than the declared record */
     make_v2_request(buf, sizeof(buf), CANOPUS_CMD_QUERY_DEVICE, 1, 0, 0);
     CHECK(canopus_transport_v2_decode_request(buf, 20, &req, &poff) == -1);
+
+    /* CAN-P2-003: an unknown flag bit fails closed */
+    make_v2_request(buf, sizeof(buf), CANOPUS_CMD_QUERY_DEVICE, 1, 0, 0);
+    buf[24] = 0x08; /* flags @24: set an unknown bit */
+    CHECK(canopus_transport_v2_decode_request(buf, sizeof(buf), &req, &poff) == -1);
 }
 
 TEST(v2_device_write_echoes_request_id)
