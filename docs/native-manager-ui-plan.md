@@ -911,7 +911,7 @@ Gate：所有 security/device gates 通过后，才能将 native app/UI SDK 标�
 | CAN-P1-015 | P1 | OPEN | 进度/安全治理文档与实际代码能力不一致，容易让执行 LLM 越过 device gate | `docs/progress.md:7-18`、`docs/security-model.md:1-9` |
 | CAN-P2-001 | P2 | CLOSED | supervisor/public helpers 对 NULL、损坏模型和初始化失败的防御不一致 | `manager/service/canopus_supervisor.c:25-36,61-72,177-223,237-259` |
 | CAN-P2-002 | P2 | CLOSED | device fops 使用裸 `uint32_t[12]`，缺 typed layout/static assertion/slot ownership | `manager/service/canopus_supervisor_platform.c:17-57` |
-| CAN-P2-003 | P2 | OPEN | protocol minor、flags、reserved 字段和未知 command 的兼容策略没有统一 schema | `manager/protocol/canopus_protocol.c:7-67` |
+| CAN-P2-003 | P2 | CLOSED | protocol minor、flags、reserved 字段和未知 command 的兼容策略没有统一 schema | `manager/protocol/canopus_protocol.c:7-67` |
 | CAN-P2-004 | P2 | OPEN | 多处对外部/固定数组使用无界 `canopus_strlen`，字符串 contract 分散 | `sdk/c/canopus_memory.h:32-39` 及调用点 |
 | CAN-P2-005 | P2 | OPEN | Manager model 固定 32 项、全量复制，缺分页、增量同步和 stable module generation | `manager/ui/canopus_manager.h:26-100` |
 | CAN-P2-006 | P2 | CLOSED | Manager operation availability 只看局部 state，未纳入 policy/capability/pending/safe mode | `manager/ui/canopus_manager.c:177-224` |
