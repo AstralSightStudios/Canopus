@@ -888,10 +888,10 @@ Gate：所有 security/device gates 通过后，才能将 native app/UI SDK 标�
 |---|---|---|---|---|
 | CAN-P0-001 | P0 | CLOSED-GATED | `/dev/canopus` write 返回 0 导致 Lua/stdio 无进展重试和 watchdog reboot | `manager/service/canopus_supervisor_platform.c:41-45` |
 | CAN-P0-002 | P0 | HOST-FIXED/DEVICE-PENDING | Manager bounded text renderer 在截断后发生整数/指针下溢，可写到 buffer 前方 | `manager/ui/canopus_manager.c:89-174` |
-| CAN-P0-003 | P0 | OPEN | device INSTALL 未接验签、target/hash/verifier，包路径与归档 entry 未形成安全边界 | `manager/service/canopus_supervisor.c:86-97`、`tools/package-builder/src/lib.rs:28-186` |
+| CAN-P0-003 | P0 | HOST-FIXED/DEVICE-PENDING | device INSTALL 未接验签、target/hash/verifier，包路径与归档 entry 未形成安全边界 | `manager/service/canopus_supervisor.c:86-97`、`tools/package-builder/src/lib.rs:28-186` |
 | CAN-P0-004 | P0 | OPEN | device stage/load/unload 全为 stub，无法真实管理模块 | `manager/service/canopus_supervisor_platform.c:66-82` |
-| CAN-P0-005 | P0 | OPEN | removable disable 没有 stop/drain/unload，可能在 callback 活跃时谎报 disabled | `manager/service/canopus_supervisor.c:99-159` |
-| CAN-P0-006 | P0 | OPEN | safe mode 只置位，不阻止 install/enable/load，启动恢复也未持久化 | `manager/service/canopus_supervisor.c:86-164` |
+| CAN-P0-005 | P0 | HOST-FIXED/DEVICE-PENDING | removable disable 没有 stop/drain/unload，可能在 callback 活跃时谎报 disabled | `manager/service/canopus_supervisor.c:99-159` |
+| CAN-P0-006 | P0 | HOST-FIXED/DEVICE-PENDING | safe mode 只置位，不阻止 install/enable/load，启动恢复也未持久化 | `manager/service/canopus_supervisor.c:86-164` |
 | CAN-P0-007 | P0 | BLOCKED-EVIDENCE | native app 注册、页面工厂、UI dispatcher、callback 和注销 lifetime 未实机证明 | `targets/xiaomi-band-10-pro-3.101.030/evidence/EVID-APP-004.json` |
 | CAN-P0-008 | P0 | HOST-FIXED/DEVICE-PENDING | CPRT Manager protocol 与 CPC1/CPS1 设备 protocol 未连接，Manager 无正式 transport | `manager/protocol/canopus_protocol.h:19-61`、`manager/service/canopus_supervisor.h:25-32` |
 | CAN-P1-001 | P1 | OPEN | `/dev/canopus` mode 为 `0666`，mutating control surface 无调用者边界 | `manager/service/canopus_supervisor_platform.c:17-19` |
@@ -899,15 +899,15 @@ Gate：所有 security/device gates 通过后，才能将 native app/UI SDK 标�
 | CAN-P1-003 | P1 | HOST-FIXED/DEVICE-PENDING | supervisor status 无 sequence snapshot，可能读到 torn state | `manager/service/canopus_supervisor.c:177-223` |
 | CAN-P1-004 | P1 | HOST-FIXED/DEVICE-PENDING | status writer 加法溢出、NULL source 和 publish protocol 不完整 | `runtime/control/canopus_control.c:23-89` |
 | CAN-P1-005 | P1 | HOST-FIXED/DEVICE-PENDING | event ring 覆盖旧记录时 `dropped` 从不增加，count 语义错误 | `runtime/diagnostics/canopus_diagnostics.c:19-48` |
-| CAN-P1-006 | P1 | OPEN | package slot rename 事务不可恢复、previous/.old 堵塞、目录持久化不足 | `manager/storage/canopus_store.c:64-260` |
-| CAN-P1-007 | P1 | OPEN | remove 后 supervisor slot 不回收，`module_count` 最终与实际不一致 | `manager/service/canopus_supervisor.c:127-137,236-259` |
+| CAN-P1-006 | P1 | HOST-FIXED/DEVICE-PENDING | package slot rename 事务不可恢复、previous/.old 堵塞、目录持久化不足 | `manager/storage/canopus_store.c:64-260` |
+| CAN-P1-007 | P1 | HOST-FIXED/DEVICE-PENDING | remove 后 supervisor slot 不回收，`module_count` 最终与实际不一致 | `manager/service/canopus_supervisor.c:127-137,236-259` |
 | CAN-P1-008 | P1 | HOST-FIXED/DEVICE-PENDING | command 末尾无条件清零 `error_code`，失败原因丢失 | `manager/service/canopus_supervisor.c:171-173` |
 | CAN-P1-009 | P1 | HOST-FIXED/DEVICE-PENDING | ordered-list parser/serializer 缺少 out/apps NULL 与 bounded-name 完整检查 | `app-sdk/launcher/canopus_ordered_list.c:25-107` |
 | CAN-P1-010 | P1 | HOST-FIXED/DEVICE-PENDING | module descriptor validation 只检查 size/major，未检查 flags、identity、callbacks | `runtime/module/canopus_module.c:28-42` |
-| CAN-P1-011 | P1 | OPEN | ELF verifier 只检查 relocation 指向的 SHN_ABS，未覆盖代码/数据中的直接绝对地址 | `tools/elf-verifier/src/verifier.rs:155-195` |
-| CAN-P1-012 | P1 | OPEN | target veneer 的 evidence/promotion 状态没有成为 codegen 强制 gate | `targets/xiaomi-band-10-pro-3.101.030/generated/canopus_veneer.h:107-153` |
-| CAN-P1-013 | P1 | OPEN | native app resources 没有完整进入 build/embed/hash/verify/capability 流程 | `schemas/package.schema.json:30-95`、`tools/package-builder/src/lib.rs:28-58` |
-| CAN-P1-014 | P1 | OPEN | package store/root/helper 的截断、partial write、EINTR、fsync-directory 和清理规则不足 | `manager/storage/canopus_store.c:19-103,135-150` |
+| CAN-P1-011 | P1 | HOST-FIXED/DEVICE-PENDING | ELF verifier 只检查 relocation 指向的 SHN_ABS，未覆盖代码/数据中的直接绝对地址 | `tools/elf-verifier/src/verifier.rs:155-195` |
+| CAN-P1-012 | P1 | HOST-FIXED/DEVICE-PENDING | target veneer 的 evidence/promotion 状态没有成为 codegen 强制 gate | `targets/xiaomi-band-10-pro-3.101.030/generated/canopus_veneer.h:107-153` |
+| CAN-P1-013 | P1 | HOST-FIXED/DEVICE-PENDING | native app resources 没有完整进入 build/embed/hash/verify/capability 流程 | `schemas/package.schema.json:30-95`、`tools/package-builder/src/lib.rs:28-58` |
+| CAN-P1-014 | P1 | HOST-FIXED/DEVICE-PENDING | package store/root/helper 的截断、partial write、EINTR、fsync-directory 和清理规则不足 | `manager/storage/canopus_store.c:19-103,135-150` |
 | CAN-P1-015 | P1 | OPEN | 进度/安全治理文档与实际代码能力不一致，容易让执行 LLM 越过 device gate | `docs/progress.md:7-18`、`docs/security-model.md:1-9` |
 | CAN-P2-001 | P2 | OPEN | supervisor/public helpers 对 NULL、损坏模型和初始化失败的防御不一致 | `manager/service/canopus_supervisor.c:25-36,61-72,177-223,237-259` |
 | CAN-P2-002 | P2 | OPEN | device fops 使用裸 `uint32_t[12]`，缺 typed layout/static assertion/slot ownership | `manager/service/canopus_supervisor_platform.c:17-57` |
