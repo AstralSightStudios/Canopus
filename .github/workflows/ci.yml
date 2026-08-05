@@ -1,0 +1,36 @@
+name: ci
+
+# Canopus host gate pipeline (CAN-REL-002). Runs every host-verifiable gate on
+# every push/PR; device gates (G0-G7) are hardware-in-loop and intentionally
+# not part of CI (see docs/architecture.md §20.3).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv8m.main-none-eabi
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            target
+            sdk/rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install lld (for ARM relocatable linking)
+        run: brew install lld
+
+      - name: Run all host gates
+        run: ./scripts/ci.sh
