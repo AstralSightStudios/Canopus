@@ -116,25 +116,41 @@ void canopus_snapshot_commit(struct canopus_snapshot_v1 *snap);
 /* Max payload bytes per status record; reader must accept <= this. */
 #define CANOPUS_STATUS_RECORD_MAX 128u
 
+/* Saturation bound for the writer's dropped counter (no wrap). */
+#define CANOPUS_STATUS_WRITER_DROPPED_MAX 0xFFFFFFFFu
+
+/* Writer lifecycle. init enters WRITING for the first record; begin starts
+ * a new record after publish; publish makes the current record valid. */
+enum canopus_status_writer_state {
+    CANOPUS_STATUS_WRITER_IDLE = 0,
+    CANOPUS_STATUS_WRITER_WRITING = 1,
+    CANOPUS_STATUS_WRITER_PUBLISHED = 2,
+};
+
 struct canopus_status_writer_v1 {
     uint8_t *buf;
     uint32_t capacity;
     uint32_t used;         /* bytes written so far */
-    uint32_t dropped;      /* increments if writer ran out of space */
+    uint32_t dropped;      /* saturating; increments if writer ran out of space */
+    uint32_t state;        /* canopus_status_writer_state */
     struct canopus_snapshot_v1 snap;
 };
 
 int canopus_status_writer_init(struct canopus_status_writer_v1 *w,
                                uint8_t *buf, uint32_t capacity);
+/* Starts a NEW record after a publish (resets used). Fails while a record
+ * is already being written. */
+int canopus_status_writer_begin(struct canopus_status_writer_v1 *w);
 /* Appends a fixed-width field. Returns 0 on success, -1 on overflow
- * (and increments dropped). */
+ * (and saturating-increments dropped) or when not in the WRITING state. */
 int canopus_status_put_u8(struct canopus_status_writer_v1 *w, uint8_t v);
 int canopus_status_put_u16(struct canopus_status_writer_v1 *w, uint16_t v);
 int canopus_status_put_u32(struct canopus_status_writer_v1 *w, uint32_t v);
 int canopus_status_put_bytes(struct canopus_status_writer_v1 *w,
                              const void *src, uint32_t len);
-/* Marks the record valid (publishes even sequence). */
-void canopus_status_writer_publish(struct canopus_status_writer_v1 *w);
+/* Marks the record valid (publishes even sequence). Requires WRITING
+ * state; a double publish fails. Returns 0 on success. */
+int canopus_status_writer_publish(struct canopus_status_writer_v1 *w);
 
 /* ------------------------------------------------------------------ */
 /* Capability query                                                     */
