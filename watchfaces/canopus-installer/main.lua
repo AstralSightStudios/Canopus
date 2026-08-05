@@ -241,7 +241,18 @@ local busy = false
 local function refresh_status(text)
     local st, message = read_status()
     if not st then
-        status:set { text = tostring(message) }
+        -- Distinguish "module not loaded" from "module loaded but device
+        -- missing" (the current stub-platform boundary, G0/G4).
+        local module = find_module()
+        local dev = io.open(DEVICE_PATH, "rb")
+        if dev then dev:close() end
+        if module and not dev then
+            status:set { text = "Supervisor loaded (insmod OK).\n"
+                .. "/dev/canopus missing — device platform pending (G0/G4).\n"
+                .. "Reboot before retrying." }
+        else
+            status:set { text = tostring(message) }
+        end
         return nil, message
     end
     status:set { text = text and (text .. "\n" .. format_status(st))
