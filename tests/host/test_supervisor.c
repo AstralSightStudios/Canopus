@@ -4,6 +4,7 @@
 #include "canopus_store.h"
 #include "canopus_memory.h"
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -242,6 +243,62 @@ TEST(store_write_atomic_roundtrip)
     }
 }
 
+/* ---- CAN-P1-014: store helper syscall correctness ------------------- */
+
+TEST(store_init_rejects_bad_root)
+{
+    struct canopus_store_v1 store;
+    char long_root[300];
+    CHECK(canopus_store_init(&store, 0) == -1);
+    CHECK(canopus_store_init(&store, "") == -1);
+    CHECK(canopus_store_init(&store, "relative/root") == -1);
+    /* an over-long absolute root is rejected, never silently truncated */
+    canopus_memset(long_root, 'a', sizeof(long_root));
+    long_root[0] = '/';
+    long_root[sizeof(long_root) - 1] = '\0';
+    CHECK(canopus_store_init(&store, long_root) == -1);
+    /* a valid absolute root is accepted verbatim */
+    CHECK(canopus_store_init(&store, "/tmp/ok") == 0);
+    CHECK(strcmp(store.root, "/tmp/ok") == 0);
+}
+
+TEST(store_write_atomic_rejects_huge_len)
+{
+    const char *root = test_root();
+    struct canopus_store_v1 store;
+    char p[200];
+    canopus_store_init(&store, root);
+    canopus_store_ensure_package_dir(&store, "org.example.hello");
+    snprintf(p, sizeof(p), "%s/packages/org.example.hello/state.json", root);
+    /* a single record larger than SSIZE_MAX is rejected before any syscall */
+    CHECK(canopus_store_write_atomic(p, "x", (size_t)SSIZE_MAX + 1u) == -1);
+    CHECK(canopus_store_write_atomic(p, 0, 5) == -1); /* NULL data + len */
+}
+
+TEST(store_write_atomic_exclusive_temp)
+{
+    const char *root = test_root();
+    struct canopus_store_v1 store;
+    char p[200];
+    char out[16];
+    canopus_store_init(&store, root);
+    canopus_store_ensure_package_dir(&store, "org.example.hello");
+    snprintf(p, sizeof(p), "%s/packages/org.example.hello/state.json", root);
+    /* back-to-back writes to the same path never truncate each other's
+     * temp; the final content is the second write */
+    CHECK(canopus_store_write_atomic(p, "first", 5) == 0);
+    CHECK(canopus_store_write_atomic(p, "second!", 7) == 0);
+    {
+        int fd = open(p, O_RDONLY);
+        CHECK(fd >= 0);
+        ssize_t n = read(fd, out, sizeof(out) - 1);
+        close(fd);
+        CHECK_EQ(n, 7);
+        out[n] = '\0';
+        CHECK(strcmp(out, "second!") == 0);
+    }
+}
+
 static struct test_registry supervisor_tests[] = {
     { "proto_request_validate", proto_request_validate_wrapper },
     { "proto_response_roundtrip", proto_response_roundtrip_wrapper },
@@ -255,6 +312,9 @@ static struct test_registry supervisor_tests[] = {
     { "store_install_without_staged_fails", store_install_without_staged_fails_wrapper },
     { "store_quarantine", store_quarantine_wrapper },
     { "store_write_atomic_roundtrip", store_write_atomic_roundtrip_wrapper },
+    { "store_init_rejects_bad_root", store_init_rejects_bad_root_wrapper },
+    { "store_write_atomic_rejects_huge_len", store_write_atomic_rejects_huge_len_wrapper },
+    { "store_write_atomic_exclusive_temp", store_write_atomic_exclusive_temp_wrapper },
 };
 #define SUPERVISOR_TESTS_LEN (sizeof(supervisor_tests) / sizeof(supervisor_tests[0]))
 

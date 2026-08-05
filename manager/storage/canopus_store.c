@@ -7,8 +7,11 @@
 #include "canopus_store.h"
 #include "canopus_memory.h"
 
+#include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -16,11 +19,20 @@ static const char *SLOT_NAMES[CANOPUS_STORE_SLOTS] = {
     "active", "previous", "staged", "quarantined",
 };
 
-void canopus_store_init(struct canopus_store_v1 *store, const char *root)
+int canopus_store_init(struct canopus_store_v1 *store, const char *root)
 {
+    int n;
+    if (store == 0 || root == 0 || root[0] == '\0' || root[0] != '/') {
+        return -1; /* root must be canonical absolute and target-configured */
+    }
     canopus_memset(store, 0, sizeof(*store));
-    snprintf(store->root, sizeof(store->root), "%s", root);
+    n = snprintf(store->root, sizeof(store->root), "%s", root);
+    if (n < 0 || (size_t)n >= sizeof(store->root)) {
+        store->root[0] = '\0';
+        return -1; /* never a silent truncation of the configured root */
+    }
     store->last_error = 0;
+    return 0;
 }
 
 static int valid_package_id(const char *id)
@@ -61,25 +73,50 @@ int canopus_store_slot_path(const struct canopus_store_v1 *store,
     return 0;
 }
 
+/* CAN-P1-014: writes loop over partial writes and EINTR, use an exclusive
+ * temp name so concurrent writers never truncate each other, and fsync the
+ * parent directory so the rename is durable. */
 int canopus_store_write_atomic(const char *path, const void *data, size_t len)
 {
-    char tmp[200];
+    char tmp[CANOPUS_STORE_PATH_MAX + 32];
+    char dir[CANOPUS_STORE_PATH_MAX];
     int fd = -1;
     int ok = -1;
-    size_t plen = canopus_strlen(path);
+    size_t plen, written;
+    const char *slash;
+    static uint32_t s_tmp_seq;
 
-    if (plen + 5 >= sizeof(tmp)) {
+    if (path == 0 || (data == 0 && len > 0)) {
         return -1;
     }
-    canopus_memcpy(tmp, path, plen);
-    canopus_memcpy(tmp + plen, ".tmp", 5);
-
-    fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+    if (len > (size_t)SSIZE_MAX) {
+        return -1; /* a single record can never exceed SSIZE_MAX */
+    }
+    plen = canopus_strlen(path);
+    if (plen == 0 || plen + 32 >= sizeof(tmp)) {
+        return -1;
+    }
+    s_tmp_seq++;
+    if (snprintf(tmp, sizeof(tmp), "%s.tmp.%08x", path, (unsigned)s_tmp_seq) < 0) {
+        return -1;
+    }
+    fd = open(tmp, O_WRONLY | O_CREAT | O_EXCL, 0640);
     if (fd < 0) {
         return -1;
     }
-    if (write(fd, data, len) != (ssize_t)len) {
-        goto out;
+    written = 0;
+    while (written < len) {
+        ssize_t w = write(fd, (const char *)data + written, len - written);
+        if (w < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            goto out;
+        }
+        if (w == 0) {
+            goto out; /* no progress: fail rather than spin */
+        }
+        written += (size_t)w;
     }
     if (fsync(fd) != 0) {
         goto out;
@@ -92,13 +129,29 @@ int canopus_store_write_atomic(const char *path, const void *data, size_t len)
     if (rename(tmp, path) != 0) {
         goto out;
     }
+    /* fsync the parent directory so the rename is durable across a crash */
+    slash = strrchr(path, '/');
+    if (slash != 0) {
+        size_t dlen = (size_t)(slash - path);
+        if (dlen > 0 && dlen < sizeof(dir)) {
+            canopus_memcpy(dir, path, dlen);
+            dir[dlen] = '\0';
+            {
+                int dfd = open(dir, O_RDONLY);
+                if (dfd >= 0) {
+                    (void)fsync(dfd);
+                    (void)close(dfd);
+                }
+            }
+        }
+    }
     ok = 0;
 out:
     if (fd >= 0) {
-        close(fd);
+        (void)close(fd);
     }
     if (ok != 0) {
-        unlink(tmp);
+        (void)unlink(tmp);
     }
     return ok;
 }
@@ -106,13 +159,13 @@ out:
 static int dir_exists(const char *path)
 {
     struct stat st;
-    return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+    return path != 0 && stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 }
 
 int canopus_store_has_staged(const struct canopus_store_v1 *store,
                              const char *package_id)
 {
-    char p[200];
+    char p[CANOPUS_STORE_PATH_MAX];
     if (canopus_store_slot_path(store, package_id, CANOPUS_STORE_SLOT_STAGED,
                                 p, sizeof(p)) != 0) {
         return 0;
@@ -134,26 +187,38 @@ static int move_dir(const char *from, const char *to)
 
 static int mkdirs(const char *path)
 {
-    char tmp[200];
+    char tmp[CANOPUS_STORE_PATH_MAX];
     size_t i, n = canopus_strlen(path);
-    if (n + 1 >= sizeof(tmp)) {
+    struct stat st;
+    if (path == 0 || n == 0 || n + 1 >= sizeof(tmp)) {
         return -1;
     }
     canopus_memcpy(tmp, path, n + 1);
     for (i = 1; i < n; i++) {
         if (tmp[i] == '/') {
             tmp[i] = '\0';
-            mkdir(tmp, 0750);
+            if (mkdir(tmp, 0750) != 0) {
+                if (errno != EEXIST || stat(tmp, &st) != 0 ||
+                    !S_ISDIR(st.st_mode)) {
+                    return -1; /* only EEXIST + a directory is success */
+                }
+            }
             tmp[i] = '/';
         }
     }
-    return mkdir(path, 0750) == 0 ? 0 : -1;
+    if (mkdir(path, 0750) != 0 && errno != EEXIST) {
+        if (stat(path, &st) != 0 || !S_ISDIR(st.st_mode)) {
+            return -1;
+        }
+    }
+    return 0;
 }
 
 int canopus_store_install_staged(const struct canopus_store_v1 *store,
                                  const char *package_id)
 {
-    char staged[200], active[200], previous[200];
+    char staged[CANOPUS_STORE_PATH_MAX], active[CANOPUS_STORE_PATH_MAX];
+    char previous[CANOPUS_STORE_PATH_MAX];
     struct canopus_store_v1 *self = (struct canopus_store_v1 *)store;
 
     if (canopus_store_slot_path(store, package_id, CANOPUS_STORE_SLOT_STAGED,
@@ -185,7 +250,8 @@ int canopus_store_install_staged(const struct canopus_store_v1 *store,
 int canopus_store_rollback(const struct canopus_store_v1 *store,
                            const char *package_id)
 {
-    char active[200], previous[200], junk[200];
+    char active[CANOPUS_STORE_PATH_MAX], previous[CANOPUS_STORE_PATH_MAX];
+    char junk[CANOPUS_STORE_PATH_MAX + 8];
     struct canopus_store_v1 *self = (struct canopus_store_v1 *)store;
 
     if (canopus_store_slot_path(store, package_id, CANOPUS_STORE_SLOT_ACTIVE,
@@ -200,7 +266,11 @@ int canopus_store_rollback(const struct canopus_store_v1 *store,
     }
     /* discard the failed active, then promote previous */
     if (dir_exists(active)) {
-        snprintf(junk, sizeof(junk), "%s.old", active);
+        int n = snprintf(junk, sizeof(junk), "%s.old", active);
+        if (n < 0 || (size_t)n >= sizeof(junk)) {
+            self->last_error = "rollback path too long";
+            return -1; /* CAN-P1-014: check .old truncation */
+        }
         if (move_dir(active, junk) != 0) {
             self->last_error = "active busy";
             return -1;
@@ -216,7 +286,7 @@ int canopus_store_rollback(const struct canopus_store_v1 *store,
 int canopus_store_quarantine(const struct canopus_store_v1 *store,
                              const char *package_id)
 {
-    char active[200], quar[200];
+    char active[CANOPUS_STORE_PATH_MAX], quar[CANOPUS_STORE_PATH_MAX];
     struct canopus_store_v1 *self = (struct canopus_store_v1 *)store;
 
     if (canopus_store_slot_path(store, package_id, CANOPUS_STORE_SLOT_ACTIVE,
@@ -235,7 +305,7 @@ int canopus_store_quarantine(const struct canopus_store_v1 *store,
 int canopus_store_remove_slot(const struct canopus_store_v1 *store,
                               const char *package_id, int slot)
 {
-    char p[200];
+    char p[CANOPUS_STORE_PATH_MAX];
     if (canopus_store_slot_path(store, package_id, slot, p, sizeof(p)) != 0) {
         return -1;
     }
@@ -249,12 +319,18 @@ int canopus_store_remove_slot(const struct canopus_store_v1 *store,
 int canopus_store_ensure_package_dir(const struct canopus_store_v1 *store,
                                      const char *package_id)
 {
-    char p[200];
+    char p[CANOPUS_STORE_PATH_MAX];
+    size_t n;
     if (canopus_store_slot_path(store, package_id, CANOPUS_STORE_SLOT_STAGED,
                                 p, sizeof(p)) != 0) {
         return -1;
     }
-    /* p ends with /staged; parent is the package dir */
-    p[canopus_strlen(p) - 7] = '\0';
+    /* p ends with "/staged"; the parent is the package dir. Guard the slice
+     * so a short path can never underflow. */
+    n = canopus_strlen(p);
+    if (n < 7u) {
+        return -1;
+    }
+    p[n - 7u] = '\0';
     return mkdirs(p);
 }

@@ -21,14 +21,18 @@ extern "C" {
 #define CANOPUS_STORE_SLOT_QUARANTINED 3
 #define CANOPUS_STORE_SLOTS           4
 
+#define CANOPUS_STORE_PATH_MAX 200u
+
 struct canopus_store_v1 {
     char root[160];
     /* 0 when the last operation succeeded; else a static message. */
     const char *last_error;
 };
 
-/* Initializes the store root (does not touch the filesystem yet). */
-void canopus_store_init(struct canopus_store_v1 *store, const char *root);
+/* Initializes the store root (does not touch the filesystem yet). Returns
+ * 0 on success, -1 when the root is NULL/empty/relative or does not fit
+ * (never a silent truncation). */
+int canopus_store_init(struct canopus_store_v1 *store, const char *root);
 
 /* Builds the path for a package slot into out (nul-terminated). Returns -1
  * if the package id is not a valid token. */
