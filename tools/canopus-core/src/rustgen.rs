@@ -11,7 +11,7 @@
 //! proven. The identity guard is the one safe entry point.
 
 use crate::model::{Symbol, TargetPack, TypeRecord};
-use crate::veneer::{CALLABLE_POLICY, FORBIDDEN_STATUS, parse_proto};
+use crate::veneer::{FORBIDDEN_STATUS, parse_proto};
 use std::collections::BTreeSet;
 
 pub struct RustGen<'a> {
@@ -230,8 +230,10 @@ impl<'a> RustGen<'a> {
             if s.policy == "restricted" {
                 continue; // audit comment in emit_notes
             }
-            if !CALLABLE_POLICY.contains(&s.policy.as_str()) {
-                continue;
+            /* CAN-P1-012: a callable requires an explicit APPROVED promotion
+             * with at least one evidence id. PENDING/REJECTED never binds. */
+            if !s.approved_for_codegen() {
+                continue; // audit comment in emit_notes
             }
             let callable = match &s.callable_address {
                 Some(c) => c.clone(),
@@ -326,6 +328,11 @@ impl<'a> RustGen<'a> {
             } else if s.policy == "restricted" {
                 skipped.insert(format!(
                     "// {name}: restricted - not exported until context/ownership approved",
+                    name = s.name
+                ));
+            } else if !s.approved_for_codegen() {
+                skipped.insert(format!(
+                    "// {name}: not APPROVED - no binding until approval_state=APPROVED with evidence",
                     name = s.name
                 ));
             }

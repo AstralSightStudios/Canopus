@@ -18,15 +18,30 @@
     "provenance"
   ],
   "properties": {
-    "schema": { "const": 1 },
+    "schema": {
+      "const": 1
+    },
     "symbol_id": {
       "type": "string",
       "pattern": "^[a-z0-9-]+\\.[a-z0-9_.-]+$",
       "description": "Unique ID, e.g. xiaomi-band-10-pro.bt.timer.cancel"
     },
-    "target_id": { "type": "string" },
-    "name": { "type": "string", "description": "Recovered or assigned name." },
-    "kind": { "type": "string", "enum": ["function", "global", "string", "data"] },
+    "target_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Recovered or assigned name."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "function",
+        "global",
+        "string",
+        "data"
+      ]
+    },
     "entry_address": {
       "type": "string",
       "pattern": "^0x[0-9a-fA-F]+$",
@@ -37,20 +52,51 @@
       "pattern": "^0x[0-9a-fA-F]+$",
       "description": "Address with Thumb bit set for ARM/Thumb targets; required for functions."
     },
-    "instruction_set": { "type": "string", "enum": ["thumb", "arm", "a64", "rv32", "n/a"] },
-    "prototype_id": { "type": "string", "description": "Reference to a prototype record in types/, e.g. proto.bt_timer_cancel.v1" },
+    "instruction_set": {
+      "type": "string",
+      "enum": [
+        "thumb",
+        "arm",
+        "a64",
+        "rv32",
+        "n/a"
+      ]
+    },
+    "prototype_id": {
+      "type": "string",
+      "description": "Reference to a prototype record in types/, e.g. proto.bt_timer_cancel.v1"
+    },
     "prototype": {
       "type": "string",
       "description": "Inline C prototype when no prototype_id is used, e.g. int(uint32_t, stock_timespec_t *)"
     },
-    "calling_convention": { "type": "string", "enum": ["arm-aapcs", "arm-aapcs64", "sysv", "n/a"] },
-    "type": { "type": "string", "description": "For globals/data, e.g. const char[], uint32_t, void *" },
+    "calling_convention": {
+      "type": "string",
+      "enum": [
+        "arm-aapcs",
+        "arm-aapcs64",
+        "sysv",
+        "n/a"
+      ]
+    },
+    "type": {
+      "type": "string",
+      "description": "For globals/data, e.g. const char[], uint32_t, void *"
+    },
     "contexts": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "allowed": { "type": "array", "items": { "type": "string" } },
-        "blocking": { "type": "boolean", "description": "True if the call may block; must be false in ISR/BT contexts." }
+        "allowed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "blocking": {
+          "type": "boolean",
+          "description": "True if the call may block; must be false in ISR/BT contexts."
+        }
       }
     },
     "ownership": {
@@ -58,37 +104,72 @@
       "additionalProperties": false,
       "description": "Who owns passed and returned memory, and when it is freed.",
       "properties": {
-        "argument": { "type": "string", "description": "e.g. borrowed_handle_pointer, callee_consumes" },
-        "callback_argument": { "type": "string", "description": "e.g. freed_only_if_pending_timer_removed" },
-        "return_value": { "type": "string", "description": "e.g. borrowed, caller_frees, static" }
+        "argument": {
+          "type": "string",
+          "description": "e.g. borrowed_handle_pointer, callee_consumes"
+        },
+        "callback_argument": {
+          "type": "string",
+          "description": "e.g. freed_only_if_pending_timer_removed"
+        },
+        "return_value": {
+          "type": "string",
+          "description": "e.g. borrowed, caller_frees, static"
+        }
       }
     },
     "side_effects": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "e.g. removes_timer, may_free_timer_argument, changes_transport_state"
     },
     "proof": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["static"],
+      "required": [
+        "static"
+      ],
       "properties": {
         "static": {
           "type": "string",
-          "enum": ["candidate", "recovered", "confirmed"],
+          "enum": [
+            "candidate",
+            "recovered",
+            "confirmed"
+          ],
           "description": "Static evidence level only; independent from callability."
         },
         "device": {
           "type": "string",
-          "enum": ["not_probed", "probed", "proven"]
+          "enum": [
+            "not_probed",
+            "probed",
+            "proven"
+          ]
         },
-        "host_tested": { "type": "boolean" },
-        "evidence_ids": { "type": "array", "items": { "type": "string" } }
+        "host_tested": {
+          "type": "boolean"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "policy": {
       "type": "string",
-      "enum": ["managed", "native-full-trust", "resident-only", "restricted", "forbidden", "withdrawn"],
+      "enum": [
+        "managed",
+        "native-full-trust",
+        "resident-only",
+        "restricted",
+        "forbidden",
+        "withdrawn"
+      ],
       "description": "Callability/veneer policy. forbidden/withdrawn must never generate a callable veneer."
     },
     "status": {
@@ -104,45 +185,141 @@
         "FORBIDDEN",
         "WITHDRAWN"
       ],
-      "description": "Evidence level per architecture §8.4. WITHDRAWN is permanent."
+      "description": "Evidence level per architecture \u00a78.4. WITHDRAWN is permanent."
     },
     "provenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["firmware_sha256"],
+      "required": [
+        "firmware_sha256"
+      ],
       "properties": {
-        "firmware_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "evidence_ids": { "type": "array", "items": { "type": "string" } },
-        "source": { "type": "string", "description": "e.g. ida://..., analysis/<findings.md>, probe result" },
-        "withdrawal_reason": { "type": "string", "description": "Required when status is WITHDRAWN; permanent record." }
+        "firmware_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "type": "string",
+          "description": "e.g. ida://..., analysis/<findings.md>, probe result"
+        },
+        "withdrawal_reason": {
+          "type": "string",
+          "description": "Required when status is WITHDRAWN; permanent record."
+        }
       }
     },
-    "notes": { "type": "string" }
+    "notes": {
+      "type": "string"
+    },
+    "approval_state": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED"
+      ],
+      "description": "CAN-P1-012: codegen only emits a callable when APPROVED and proof.evidence_ids is non-empty."
+    },
+    "promotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewer",
+        "date",
+        "firmware_sha256",
+        "prototype",
+        "ownership",
+        "thread"
+      ],
+      "properties": {
+        "reviewer": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "firmware_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "prototype": {
+          "type": "string"
+        },
+        "ownership": {
+          "type": "string"
+        },
+        "thread": {
+          "type": "string"
+        },
+        "device_probe": {
+          "type": "string"
+        }
+      },
+      "description": "CAN-P1-012: promotion record required for APPROVED callables."
+    }
   },
   "allOf": [
     {
-      "if": { "properties": { "status": { "const": "WITHDRAWN" } }, "required": ["status"] },
+      "if": {
+        "properties": {
+          "status": {
+            "const": "WITHDRAWN"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
       "then": {
         "properties": {
           "provenance": {
-            "properties": { "withdrawal_reason": { "type": "string", "minLength": 1 } },
-            "required": ["withdrawal_reason"]
+            "properties": {
+              "withdrawal_reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "withdrawal_reason"
+            ]
           }
         },
-        "required": ["provenance"]
+        "required": [
+          "provenance"
+        ]
       }
     },
     {
       "if": {
         "properties": {
-          "kind": { "const": "function" },
+          "kind": {
+            "const": "function"
+          },
           "policy": {
-            "enum": ["managed", "native-full-trust", "resident-only", "restricted"]
+            "enum": [
+              "managed",
+              "native-full-trust",
+              "resident-only",
+              "restricted"
+            ]
           }
         },
-        "required": ["kind", "policy"]
+        "required": [
+          "kind",
+          "policy"
+        ]
       },
-      "then": { "required": ["callable_address"] }
+      "then": {
+        "required": [
+          "callable_address"
+        ]
+      }
     }
   ]
 }

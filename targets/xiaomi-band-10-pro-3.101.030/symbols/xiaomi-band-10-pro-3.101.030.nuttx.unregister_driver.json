@@ -8,7 +8,10 @@
   "prototype": "int(const char *)",
   "proof": {
     "static": "confirmed",
-    "device": "probed"
+    "device": "probed",
+    "evidence_ids": [
+      "EVID-DRIVER-001"
+    ]
   },
   "policy": "managed",
   "status": "DEVICE_PROBED",
@@ -18,5 +21,15 @@
   },
   "entry_address": "0x0C1A0E1C",
   "callable_address": "0x0C1A0E1D",
-  "notes": "No-open removal passed 2026-07-22; static branch order proves -16 is returned after unlink and must not be retried"
+  "notes": "No-open removal passed 2026-07-22; static branch order proves -16 is returned after unlink and must not be retried",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-07-22",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "int(const char *)",
+    "ownership": "path string borrowed for the call",
+    "thread": "char-device driver context",
+    "device_probe": "2026-07-22 unregister of /dev/btpatch_p4b after registration probe"
+  }
 }

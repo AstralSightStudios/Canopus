@@ -247,6 +247,21 @@ impl<'a> VeneerGen<'a> {
             if s.policy == "restricted" {
                 continue; // handled in notes
             }
+            /* CAN-P1-012: a callable requires an explicit APPROVED promotion
+             * with at least one evidence id. PENDING/REJECTED never emits. */
+            if !s.approved_for_codegen() {
+                out.push_str(&format!(
+                    "/* {}: not APPROVED (approval_state={}, evidence={}) - no veneer */\n",
+                    s.name,
+                    s.approval_state.as_deref().unwrap_or("PENDING"),
+                    s.proof
+                        .evidence_ids
+                        .as_ref()
+                        .map(|e| e.len())
+                        .unwrap_or(0)
+                ));
+                continue;
+            }
             let callable = match &s.callable_address {
                 Some(c) => c.clone(),
                 None => continue,
@@ -341,6 +356,11 @@ impl<'a> VeneerGen<'a> {
             } else if s.policy == "restricted" {
                 skipped.insert(format!(
                     "{}: restricted - not exported until context/ownership approved",
+                    s.name
+                ));
+            } else if !s.approved_for_codegen() {
+                skipped.insert(format!(
+                    "{}: not APPROVED - no veneer until approval_state=APPROVED with evidence",
                     s.name
                 ));
             }

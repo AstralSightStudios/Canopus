@@ -8,7 +8,10 @@
   "prototype": "const char[]",
   "proof": {
     "static": "confirmed",
-    "device": "probed"
+    "device": "probed",
+    "evidence_ids": [
+      "EVID-ID-001"
+    ]
   },
   "policy": "managed",
   "status": "DEVICE_PROBED",
@@ -17,5 +20,15 @@
     "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=identity name=firmware_version_string"
   },
   "entry_address": "0x0C0C0810",
-  "notes": "2026-07-22 identity guard matched expected 3.101.030"
+  "notes": "2026-07-22 identity guard matched expected 3.101.030",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-07-22",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "const char *",
+    "ownership": "read-only firmware string",
+    "thread": "identity guard",
+    "device_probe": "identity string address read back on device matches \"3.101.030\""
+  }
 }

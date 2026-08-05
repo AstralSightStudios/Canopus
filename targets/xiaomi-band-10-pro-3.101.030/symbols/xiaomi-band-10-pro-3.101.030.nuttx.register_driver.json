@@ -8,7 +8,10 @@
   "prototype": "int(const char *, const void *, uint32_t, void *)",
   "proof": {
     "static": "confirmed",
-    "device": "probed"
+    "device": "probed",
+    "evidence_ids": [
+      "EVID-DRIVER-001"
+    ]
   },
   "policy": "managed",
   "status": "DEVICE_PROBED",
@@ -18,5 +21,15 @@
   },
   "entry_address": "0x0C1A0D50",
   "callable_address": "0x0C1A0D51",
-  "notes": "2026-07-22 Phase 4B-1 registered /dev/btpatch_p4b with static 0x30-byte null fops/private state"
+  "notes": "2026-07-22 Phase 4B-1 registered /dev/btpatch_p4b with static 0x30-byte null fops/private state",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-07-22",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "int(const char *, const void *, uint32_t, void *)",
+    "ownership": "caller-owned strings/table, no retention",
+    "thread": "char-device driver context",
+    "device_probe": "2026-07-22 Phase 4B-1: register_driver(\"/dev/btpatch_p4b\", 0x30-byte fops, 0666) returns 0"
+  }
 }

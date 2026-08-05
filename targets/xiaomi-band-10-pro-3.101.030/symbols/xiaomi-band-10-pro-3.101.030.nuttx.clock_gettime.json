@@ -8,7 +8,10 @@
   "prototype": "int(uint32_t, stock_timespec_t *)",
   "proof": {
     "static": "confirmed",
-    "device": "probed"
+    "device": "probed",
+    "evidence_ids": [
+      "EVID-CLOCK-001"
+    ]
   },
   "policy": "managed",
   "status": "DEVICE_PROBED",
@@ -18,5 +21,15 @@
   },
   "entry_address": "0x0C1EC8B4",
   "callable_address": "0x0C1EC8B5",
-  "notes": "2026-07-22 clock id 1 returned 0 with tv_nsec 79600000"
+  "notes": "2026-07-22 clock id 1 returned 0 with tv_nsec 79600000",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-07-22",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "int(uint32_t, stock_timespec_t *)",
+    "ownership": "caller-allocated output struct",
+    "thread": "calling thread",
+    "device_probe": "2026-07-22 clock_gettime(1,...) tv_nsec=79600000 valid range"
+  }
 }

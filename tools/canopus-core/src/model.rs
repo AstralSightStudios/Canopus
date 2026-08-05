@@ -100,8 +100,37 @@ pub struct Symbol {
     pub proof: SymbolProof,
     pub policy: String,
     pub status: String,
+    /* CAN-P1-012: explicit codegen approval. A callable is only generated
+     * when approval_state == "APPROVED" AND proof.evidence_ids is non-empty;
+     * absent/PENDING never promotes a symbol to callable. */
+    pub approval_state: Option<String>,
+    pub promotion: Option<SymbolPromotion>,
     pub provenance: SymbolProvenance,
     pub notes: Option<String>,
+}
+
+impl Symbol {
+    /// CAN-P1-012: whether this symbol may be emitted as a callable binding.
+    /// Restricted/forbidden policy and status are already excluded upstream;
+    /// this is the promotion gate: explicit APPROVED plus at least one
+    /// evidence id (a promotion record with no evidence never goes live).
+    pub fn approved_for_codegen(&self) -> bool {
+        self.approval_state.as_deref() == Some("APPROVED")
+            && self.proof.evidence_ids.as_ref().is_some_and(|e| !e.is_empty())
+    }
+}
+
+/// Promotion record attached to an APPROVED symbol (CAN-P1-012). Required for
+/// every callable emitted by codegen; documents who/why/when it was approved.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SymbolPromotion {
+    pub reviewer: String,
+    pub date: String,
+    pub firmware_sha256: String,
+    pub prototype: String,
+    pub ownership: String,
+    pub thread: String,
+    pub device_probe: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
