@@ -1521,9 +1521,9 @@ schema/format
 | 架构与治理 | 2 | 0 | 6 | 本文完成首版架构；仓库/许可证已确定（AGPL-3.0，ADR-CAN-001） |
 | Host/Schema/CLI | 9 | 1 | 2 | SCH-001..006/CLI-001..003 DONE；CLI-004 进行中；CLI-005/006 未开始 |
 | C SDK/Runtime | 9 | 1 | 0 | C-001..009 DONE；C-010 host 部分完成，真机 G0 待测 |
-| Target/Build/Package | 10 | 1 | 3 | TGT-001..005、BLD-001..004、PKG-001..003 DONE；PKG-004 进行中；TGT-006/RUST-* 未开始 |
+| Target/Build/Package | 11 | 1 | 2 | TGT-001..006、BLD-001..004、PKG-001..003 DONE；PKG-004 进行中 |
 | Device Manager | 2 | 1 | 6 | DEV-002/003、UI-001..004 DONE；DEV-001 进行中；DEV-004..009 待真机 |
-| Native App/Launcher/UI | 0 | 4 | 11 | APP-001/002/003 逆向中（枚举源+descriptor+register/unregister 静态恢复）；APP-008/011 host 侧 DONE |
+| Native App/Launcher/UI | 2 | 4 | 9 | APP-008/011 DONE；APP-001/002/003/004 逆向中（枚举源+descriptor+register/unregister 静态恢复）；其余待真机 |
 | Rust SDK | 8 | 1 | 0 | RUST-001..006/008/009 DONE；RUST-007 host+verifier PASS，真机 G0 待测 |
 | RE/LLM/MCP | 9 | 0 | 0 | RE-001..009 DONE（canopus-re crate + `canopus re` CLI） |
 | 迁移/多目标/发布 | 5 | 1 | 7 | REL-001/002/004、MULTI-003/004 DONE；REL-003 进行中 |
