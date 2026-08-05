@@ -67,17 +67,81 @@ int canopus_text_writer_append(struct canopus_text_writer_v1 *w,
     return CANOPUS_TEXT_TRUNCATED;
 }
 
-/* Validates the module descriptor header and identity fields. Returns 0
- * when the descriptor is well-formed for the current ABI. */
+/* Validates the module descriptor header and identity fields (CAN-P1-010).
+ * Returns 0 when the descriptor is well-formed for the current ABI. */
 int canopus_module_descriptor_check(const struct canopus_module_descriptor_v1 *d)
 {
+    uint32_t i;
+    uint32_t min_size;
     if (d == 0) {
         return -1;
     }
-    if (d->struct_size < offsetof(struct canopus_module_descriptor_v1, query) + 4u) {
+    /* append-only minor: struct_size must span the v1 callbacks and stay
+     * within the bounded descriptor size; unknown trailing fields are
+     * ignored, but an absurd size is a different layout and fails closed. */
+    min_size = (uint32_t)offsetof(struct canopus_module_descriptor_v1, query) + 4u;
+    if (d->struct_size < min_size ||
+        d->struct_size > CANOPUS_MODULE_DESCRIPTOR_MAX_SIZE) {
         return -1;
     }
     if (d->abi_major != CANOPUS_ABI_MAJOR) {
+        return -1;
+    }
+    /* a module compiled against a newer minor uses fields we do not know */
+    if (d->abi_minor > CANOPUS_ABI_MINOR) {
+        return -1;
+    }
+    /* flags: only known bits, no silent future semantics */
+    if ((d->flags & ~CANOPUS_MODULE_FLAGS_KNOWN) != 0u) {
+        return -1;
+    }
+    /* identity strings must be NUL-terminated inside their fixed arrays */
+    for (i = 0; i < sizeof(d->module_id); i++) {
+        if (d->module_id[i] == 0) {
+            break;
+        }
+    }
+    if (i == sizeof(d->module_id)) {
+        return -1; /* no NUL in module_id */
+    }
+    for (i = 0; i < sizeof(d->module_version); i++) {
+        if (d->module_version[i] == 0) {
+            break;
+        }
+    }
+    if (i == sizeof(d->module_version)) {
+        return -1;
+    }
+    for (i = 0; i < sizeof(d->build_id); i++) {
+        if (d->build_id[i] == 0) {
+            break;
+        }
+    }
+    if (i == sizeof(d->build_id)) {
+        return -1;
+    }
+    for (i = 0; i < sizeof(d->target_id); i++) {
+        if (d->target_id[i] == 0) {
+            break;
+        }
+    }
+    if (i == sizeof(d->target_id)) {
+        return -1;
+    }
+    /* module_id is the key identity: non-empty and printable ASCII */
+    if (d->module_id[0] == '\0') {
+        return -1;
+    }
+    for (i = 0; i < sizeof(d->module_id) && d->module_id[i] != '\0'; i++) {
+        if (d->module_id[i] < 0x20 || d->module_id[i] > 0x7E) {
+            return -1;
+        }
+    }
+    /* v1 requires all five callbacks in the fixed prefix. Whether each
+     * pointer actually lands in the loaded artifact's executable section
+     * is a loader-time check, not statable here. */
+    if (d->prepare == 0 || d->activate == 0 || d->deactivate == 0 ||
+        d->stop == 0 || d->query == 0) {
         return -1;
     }
     return 0;

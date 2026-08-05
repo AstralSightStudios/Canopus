@@ -40,6 +40,15 @@ extern "C" {
 #define CANOPUS_LIFECYCLE_ALWAYS_RESIDENT      2
 #define CANOPUS_LIFECYCLE_PATCH_REBOOT_REQUIRED 3
 
+/* Upper bound for the module descriptor's append-only struct_size. A
+ * descriptor advertising more than this is treated as a different/unknown
+ * layout and fails closed. */
+#define CANOPUS_MODULE_DESCRIPTOR_MAX_SIZE 256u
+
+/* Every flag bit the current ABI knows; any bit outside this mask is
+ * rejected by canopus_module_descriptor_check. */
+#define CANOPUS_MODULE_FLAGS_KNOWN 0x3Fu /* CANOPUS_FLAG_* bits 0..5 */
+
 /* ------------------------------------------------------------------ */
 /* Module descriptor                                                   */
 /* ------------------------------------------------------------------ */
