@@ -7,7 +7,7 @@
   "entry_address": "0x0C4F2BDC",
   "callable_address": "0x0C4F2BDD",
   "instruction_set": "thumb",
-  "prototype": "int(launcher_app_descriptor_t *)",
+  "prototype": "int(uint16_t app_id)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
@@ -16,10 +16,11 @@
     "blocking": false
   },
   "ownership": {
-    "argument": "callee_reads",
-    "return_value": "int"
+    "argument": "value",
+    "return_value": "implementation_defined"
   },
   "side_effects": [
+    "looks_up_installed_descriptor_by_app_id",
     "adds_app_to_runtime_list",
     "writes_launcher_db",
     "adds_icon"
@@ -37,7 +38,7 @@
     "evidence_ids": [
       "EVID-APP-004"
     ],
-    "source": "ida sub_C4F2BDC (log tag app_launcher_add)"
+    "source": "IDA sub_C4F2BDC entry forwards R0 to off_200EB058[1] registry lookup; sub_C527E38 callsite supplies u16 app ID"
   },
-  "notes": "registers a native app: load_app_info (sub_C4F2898) builds a launcher_app_record from the descriptor (name@+8, icon@+12, app_id u16@+16, flags@+18, icon_resolver@+28), then links it into the runtime app list 0x200D090C and apps table 0x200D0924. Descriptor hidden flag (+60 bit0) or missing icon rejects registration."
+  "notes": "This is not the descriptor registration function. The descriptor and pages must first be registered through app_install (sub_CA519AC/off_200EB060). The returned descriptor is passed to load_app_info, which creates the launcher record. Do not use the former descriptor-pointer prototype. Return semantics are not proven boolean."
 }

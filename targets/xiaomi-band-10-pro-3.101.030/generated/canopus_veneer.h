@@ -4,7 +4,7 @@
  * firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
  * sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
  * revision : 1
- * input_digest: 23bce12547874bcd
+ * input_digest: d6a157316c480b9e
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
@@ -70,14 +70,18 @@ typedef struct {
     uint8_t _tail[3];
 } launcher_app_record;
 typedef struct {
-    uint64_t reserved0; /* +0x0 */
-    void * name; /* +0x8 */
-    void * icon; /* +0xc */
+    uint64_t registry_links; /* +0x0 */
+    void * package_name; /* +0x8 */
+    void * launcher_icon_resource; /* +0xc */
     uint16_t app_id; /* +0x10 */
     uint8_t flags; /* +0x12 */
-    uint8_t _pad_13[9];
-    void * icon_resolver; /* +0x1c */
-    uint8_t _pad_20[28];
+    uint8_t _pad_13[1];
+    void * owned_string_20; /* +0x14 */
+    void * owned_string_24; /* +0x18 */
+    void * launcher_metadata_callback; /* +0x1c */
+    uint8_t _pad_20[16];
+    void * page_registry; /* +0x30 */
+    uint8_t _pad_34[8];
     uint8_t hidden_flags; /* +0x3c */
     uint8_t _tail[3];
 } launcher_app_descriptor;
@@ -117,6 +121,7 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
 }
 
 /* ---- excluded symbols ----
+ * app_install: restricted - not exported until context/ownership approved
  * app_launcher_add: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved

@@ -4,7 +4,7 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 1
-// input_digest: 23bce12547874bcd
+// input_digest: d6a157316c480b9e
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -91,14 +91,18 @@ pub struct launcher_app_record {
 #[repr(C, packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct launcher_app_descriptor {
-    pub reserved0: u64, // +0x0
-    pub name: *mut core::ffi::c_void, // +0x8
-    pub icon: *mut core::ffi::c_void, // +0xc
+    pub registry_links: u64, // +0x0
+    pub package_name: *mut core::ffi::c_void, // +0x8
+    pub launcher_icon_resource: *mut core::ffi::c_void, // +0xc
     pub app_id: u16, // +0x10
     pub flags: u8, // +0x12
-    pub _pad_13: [u8; 0x9], // 9
-    pub icon_resolver: *mut core::ffi::c_void, // +0x1c
-    pub _pad_20: [u8; 0x1c], // 28
+    pub _pad_13: [u8; 0x1], // 1
+    pub owned_string_20: *mut core::ffi::c_void, // +0x14
+    pub owned_string_24: *mut core::ffi::c_void, // +0x18
+    pub launcher_metadata_callback: *mut core::ffi::c_void, // +0x1c
+    pub _pad_20: [u8; 0x10], // 16
+    pub page_registry: *mut core::ffi::c_void, // +0x30
+    pub _pad_34: [u8; 0x8], // 8
     pub hidden_flags: u8, // +0x3c
     pub _tail: [u8; 0x3], // 3
 }
@@ -155,6 +159,7 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 }
 
 // ---- excluded symbols ----
+// app_install: restricted - not exported until context/ownership approved
 // app_launcher_add: restricted - not exported until context/ownership approved
 // app_launcher_data_init: restricted - not exported until context/ownership approved
 // app_launcher_del: restricted - not exported until context/ownership approved

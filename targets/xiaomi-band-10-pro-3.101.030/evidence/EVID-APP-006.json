@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-APP-006",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "question": "What page-descriptor fields are required by the native activity manager, and which lifecycle fields remain unresolved?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "firmware_page_descriptor begins with a mutable activity-manager header of at least 76 bytes; built-in app-specific descriptor extensions contain lifecycle callbacks beyond that header",
+  "callsite_evidence": [
+    "app_install sub_CA519AC indexes each supplied page using the pointer at page+16 before storing the page pointer for the app lifetime",
+    "activitymanager_page_register sub_CA523B0 requires page+16 name and nonzero page+20 numeric ID, rejects duplicate +20 IDs, and mutates the descriptor in place",
+    "Flashlight page at 0x200D03D8 has name 'main' at +16 and numeric ID 26 at +20; Settings supplies 67 writable page descriptors",
+    "Flashlight lifecycle extension contains on_create at +92, on_resume at +96, on_pause at +108, and on_destroy at +116 based on callback decompilation"
+  ],
+  "control_flow_evidence": [
+    "registration defaults bytes +40/+41 to 4 and +42 to 2",
+    "registration writes scheduling fields +28=INT_MAX, +32=INT_MAX, +36=0 and clears page flags +24 bit6",
+    "registration defaults pointers +0, +44, +56, +72 and links the page through intrusive pointers +64/+68",
+    "registration walks the +0 parent/default chain until it finds a non-null callback at +52 and invokes it",
+    "app_install stores page pointers without copying page descriptor bytes"
+  ],
+  "ownership_analysis": "Page descriptors must reside in writable storage owned for the full registration lifetime. app_install borrows their pointers; activitymanager_page_register mutates their header and links them globally. The app module therefore cannot unload until an unregister function has removed every page and all callbacks are drained.",
+  "unsafe_assumptions": [
+    "the full descriptor size and every extension field are not recovered",
+    "the callback at +52 is observed as an on_signal-style function but registration also invokes the first callback found in the parent chain; exact invocation semantics require a probe",
+    "numeric +20 is globally unique page ID, despite firmware log text calling it app_id",
+    "page open/navigation ABI, root object argument, owner thread, and unregister pairing remain unresolved"
+  ],
+  "recommended_probe": "Do not register the Manager page yet. First recover one minimal built-in descriptor byte-for-byte, identify navigation/open and unregister callsites, then run a resident-only synthetic page probe with permanent writable descriptor storage and no module unload path.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-06T00:00:00Z",
+  "artifacts": [
+    { "uri": "ida://vela_ap.bin.i64 sub_CA523B0", "role": "page registration decompile" },
+    { "uri": "ida://vela_ap.bin.i64 0x200D03D8", "role": "Flashlight page bytes" },
+    { "uri": "ida://vela_ap.bin.i64 sub_C4E8008", "role": "Flashlight on_create" },
+    { "uri": "ida://vela_ap.bin.i64 sub_C4E744C/sub_C4E742C/sub_C4E7710", "role": "Flashlight resume/pause/destroy" }
+  ]
+}

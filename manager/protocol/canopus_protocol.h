@@ -100,6 +100,17 @@ enum canopus_transport_v2_kind {
 int canopus_transport_v2_decode_request(const uint8_t *buf, uint32_t len,
                                         struct canopus_proto_request_v1 *req,
                                         uint32_t *payload_offset);
+/* Encodes a v2 REQUEST record. The input request uses the portable CPRT
+ * envelope; the wire header is always CPC2. Returns bytes written or -1. */
+int canopus_transport_v2_encode_request(const struct canopus_proto_request_v1 *req,
+                                        const void *payload,
+                                        uint8_t *out, uint32_t cap);
+/* Decodes a complete v2 RESPONSE record. Returns its echoed opcode and payload
+ * offset without exposing packed wire structs. */
+int canopus_transport_v2_decode_response(const uint8_t *buf, uint32_t len,
+                                         struct canopus_proto_response_v1 *resp,
+                                         uint32_t *opcode,
+                                         uint32_t *payload_offset);
 /* Encodes a v2 RESPONSE record (header + payload) into `out`. `opcode`
  * echoes the request's opcode. Returns the number of bytes written, or -1
  * when the buffer is too small or the input is invalid. */
