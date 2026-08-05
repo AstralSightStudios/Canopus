@@ -72,6 +72,7 @@ void canopus_manager_init(struct canopus_manager_model_v1 *m,
     m->transport = transport;
     m->transport_cookie = cookie;
     m->view = CANOPUS_MANAGER_VIEW_DEVICE;
+    m->next_request_id = 1u; /* 0 is reserved (CAN-P1-002) */
 }
 
 void canopus_manager_set_identity(struct canopus_manager_model_v1 *m,
@@ -261,14 +262,22 @@ int canopus_manager_can_rollback(const struct canopus_manager_model_v1 *m,
 
 static uint32_t send_command(struct canopus_manager_model_v1 *m,
                              uint32_t command,
-                             uint32_t request_id,
                              const void *payload,
                              uint32_t payload_size)
 {
     struct canopus_proto_request_v1 req;
     struct canopus_proto_response_v1 resp;
+    uint32_t request_id;
     if (m->transport == 0) {
         return CANOPUS_RESULT_REJECTED;
+    }
+    /* CAN-P1-002: request ids are client-monotonic, never a fixed value per
+     * opcode, and never 0. Wrap around skips 0 so the reserved id is not
+     * reused. */
+    request_id = m->next_request_id;
+    m->next_request_id += 1u;
+    if (m->next_request_id == 0u) {
+        m->next_request_id = 1u;
     }
     canopus_memset(&req, 0, sizeof(req));
     req.magic = CANOPUS_PROTO_MAGIC;
@@ -293,7 +302,7 @@ static uint32_t send_command(struct canopus_manager_model_v1 *m,
 uint32_t canopus_manager_op_install(struct canopus_manager_model_v1 *m,
                                     const char *package_ref)
 {
-    return send_command(m, CANOPUS_CMD_INSTALL, 1, package_ref,
+    return send_command(m, CANOPUS_CMD_INSTALL, package_ref,
                         (uint32_t)(package_ref ? canopus_strlen(package_ref) + 1 : 0));
 }
 
@@ -303,7 +312,7 @@ uint32_t canopus_manager_op_enable(struct canopus_manager_model_v1 *m,
     if (index >= m->module_count) {
         return CANOPUS_RESULT_DISALLOWED;
     }
-    return send_command(m, CANOPUS_CMD_ENABLE, 2, m->modules[index].module_id,
+    return send_command(m, CANOPUS_CMD_ENABLE, m->modules[index].module_id,
                         CANOPUS_MANAGER_MODULE_ID_MAX);
 }
 
@@ -315,7 +324,7 @@ uint32_t canopus_manager_op_disable(struct canopus_manager_model_v1 *m,
     }
     /* removable: unload now. resident: next-boot only. The protocol command
      * is the same; the supervisor interprets it by lifecycle class. */
-    return send_command(m, CANOPUS_CMD_DISABLE, 3, m->modules[index].module_id,
+    return send_command(m, CANOPUS_CMD_DISABLE, m->modules[index].module_id,
                         CANOPUS_MANAGER_MODULE_ID_MAX);
 }
 
@@ -325,7 +334,7 @@ uint32_t canopus_manager_op_remove(struct canopus_manager_model_v1 *m,
     if (!canopus_manager_can_remove(m, index)) {
         return CANOPUS_RESULT_DISALLOWED;
     }
-    return send_command(m, CANOPUS_CMD_REMOVE, 4, m->modules[index].module_id,
+    return send_command(m, CANOPUS_CMD_REMOVE, m->modules[index].module_id,
                         CANOPUS_MANAGER_MODULE_ID_MAX);
 }
 
@@ -335,7 +344,7 @@ uint32_t canopus_manager_op_update(struct canopus_manager_model_v1 *m,
     if (!canopus_manager_can_update(m, index)) {
         return CANOPUS_RESULT_DISALLOWED;
     }
-    return send_command(m, CANOPUS_CMD_UPDATE, 5, m->modules[index].module_id,
+    return send_command(m, CANOPUS_CMD_UPDATE, m->modules[index].module_id,
                         CANOPUS_MANAGER_MODULE_ID_MAX);
 }
 
@@ -345,13 +354,13 @@ uint32_t canopus_manager_op_rollback(struct canopus_manager_model_v1 *m,
     if (!canopus_manager_can_rollback(m, index)) {
         return CANOPUS_RESULT_DISALLOWED;
     }
-    return send_command(m, CANOPUS_CMD_ROLLBACK, 6, m->modules[index].module_id,
+    return send_command(m, CANOPUS_CMD_ROLLBACK, m->modules[index].module_id,
                         CANOPUS_MANAGER_MODULE_ID_MAX);
 }
 
 uint32_t canopus_manager_op_safe_mode(struct canopus_manager_model_v1 *m)
 {
-    uint32_t rc = send_command(m, CANOPUS_CMD_ENTER_SAFE_MODE, 7, 0, 0);
+    uint32_t rc = send_command(m, CANOPUS_CMD_ENTER_SAFE_MODE, 0, 0);
     if (rc == CANOPUS_RESULT_ACCEPTED || rc == CANOPUS_RESULT_COMPLETED) {
         m->safe_mode = 1;
     }

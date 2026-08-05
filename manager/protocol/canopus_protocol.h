@@ -72,34 +72,56 @@ void canopus_proto_response_init(struct canopus_proto_response_v1 *resp,
                                  uint32_t request_id, uint32_t result_state,
                                  uint32_t payload_size);
 
-/* ---- pending-request state machine -------------------------------- */
-/* A request_id is tracked so the manager can report real async state. */
+/* ---- pending-request state machine (CAN-P1-002) -------------------- */
+/* A request_id is tracked so the manager can report real async state.
+ * Legal edges (see canopus_pending.c): ACCEPTED -> QUEUED/RUNNING/terminal,
+ * QUEUED -> RUNNING/terminal, RUNNING -> terminal. Backwards, terminal ->
+ * anything, REJECTED and unknown states are rejected. A terminal record is
+ * retained (active stays 1) until the client ACKs it, so a late query still
+ * observes the outcome. Slots carry the boot_id that accepted them; after a
+ * boot_id change the old slots are stale and reject further operations. */
 #define CANOPUS_PENDING_MAX 8u
 
 struct canopus_pending_request_v1 {
     uint32_t request_id;
     uint32_t command;
     uint32_t state;   /* one of CANOPUS_RESULT_ACCEPTED/QUEUED/RUNNING/... */
-    uint32_t active;
+    uint32_t active;  /* 1 until the terminal record is acked */
+    uint32_t boot_id; /* boot that accepted this request */
+    uint32_t error;   /* stable error when state == FAILED */
 };
 
 struct canopus_pending_table_v1 {
+    uint32_t boot_id; /* current boot; slots from an older boot are stale */
     struct canopus_pending_request_v1 slots[CANOPUS_PENDING_MAX];
 };
 
 void canopus_pending_init(struct canopus_pending_table_v1 *t);
-/* Accepts a new request id. Fails (-1) if the id is already pending. */
+/* Records the current boot id. Requests accepted under an older boot are
+ * rejected by set_state/finish/ack. */
+void canopus_pending_set_boot(struct canopus_pending_table_v1 *t,
+                              uint32_t boot_id);
+/* Accepts a new request id (must be non-zero and not already pending). */
 int canopus_pending_accept(struct canopus_pending_table_v1 *t,
                            uint32_t request_id, uint32_t command);
-/* Advances an accepted request to a later state. Returns 0/-1. */
+/* Advances an accepted request through a legal transition. Returns 0/-1. */
 int canopus_pending_set_state(struct canopus_pending_table_v1 *t,
                               uint32_t request_id, uint32_t state);
-/* Finds a pending request by id, or 0. */
+/* Sets the per-request stable error (e.g. on FAILED). */
+int canopus_pending_set_error(struct canopus_pending_table_v1 *t,
+                              uint32_t request_id, uint32_t error);
+/* Marks the request with an explicit terminal result. The terminal record
+ * is RETAINED until canopus_pending_ack, so a query after completion still
+ * finds it. Fails on a non-terminal result, a stale boot, or a terminal
+ * result that contradicts an already-terminal state. */
+int canopus_pending_finish(struct canopus_pending_table_v1 *t,
+                           uint32_t request_id, uint32_t result);
+/* Clears the terminal record after the client acknowledged it. */
+int canopus_pending_ack(struct canopus_pending_table_v1 *t,
+                        uint32_t request_id);
+/* Finds a pending request by id, or 0 (read-only). */
 const struct canopus_pending_request_v1 *canopus_pending_find(
     const struct canopus_pending_table_v1 *t, uint32_t request_id);
-/* Marks terminal (COMPLETED/FAILED/DISALLOWED/REBOOT_REQUIRED). */
-int canopus_pending_finish(struct canopus_pending_table_v1 *t,
-                           uint32_t request_id);
 
 #ifdef __cplusplus
 }

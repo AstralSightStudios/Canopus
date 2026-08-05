@@ -69,12 +69,86 @@ TEST(pending_async_states)
 
     CHECK(canopus_pending_set_state(&t, 100, CANOPUS_RESULT_QUEUED) == 0);
     CHECK(canopus_pending_set_state(&t, 100, CANOPUS_RESULT_RUNNING) == 0);
-    /* a running request cannot be reported completed twice via set_state */
     CHECK(canopus_pending_set_state(&t, 100, CANOPUS_RESULT_COMPLETED) == 0);
+    /* terminal -> anything is rejected */
     CHECK(canopus_pending_set_state(&t, 100, CANOPUS_RESULT_RUNNING) == -1);
-    /* finish clears it */
-    CHECK(canopus_pending_finish(&t, 100) == 0);
+    /* finish with the same terminal result is idempotent */
+    CHECK(canopus_pending_finish(&t, 100, CANOPUS_RESULT_COMPLETED) == 0);
+    /* the terminal record is RETAINED until ack, so a late query still sees
+     * the outcome */
+    p = canopus_pending_find(&t, 100);
+    CHECK(p != 0);
+    CHECK(p->state == CANOPUS_RESULT_COMPLETED);
+    CHECK(canopus_pending_ack(&t, 100) == 0);
     CHECK(canopus_pending_find(&t, 100) == 0);
+}
+
+/* ---- CAN-P1-002: pending state machine ------------------------------ */
+
+TEST(pending_finish_requires_terminal_result)
+{
+    struct canopus_pending_table_v1 t;
+    canopus_pending_init(&t);
+    CHECK(canopus_pending_accept(&t, 300, CANOPUS_CMD_ECHO) == 0);
+    /* finish with a non-terminal result is rejected and never silently
+       converted to COMPLETED */
+    CHECK(canopus_pending_finish(&t, 300, CANOPUS_RESULT_RUNNING) == -1);
+    const struct canopus_pending_request_v1 *p = canopus_pending_find(&t, 300);
+    CHECK(p != 0);
+    CHECK(p->state == CANOPUS_RESULT_ACCEPTED);
+}
+
+TEST(pending_rejects_backwards_unknown_and_rejected)
+{
+    struct canopus_pending_table_v1 t;
+    canopus_pending_init(&t);
+    CHECK(canopus_pending_accept(&t, 500, CANOPUS_CMD_ECHO) == 0);
+    /* backwards transition */
+    CHECK(canopus_pending_set_state(&t, 500, CANOPUS_RESULT_QUEUED) == 0);
+    CHECK(canopus_pending_set_state(&t, 500, CANOPUS_RESULT_ACCEPTED) == -1);
+    /* unknown state */
+    CHECK(canopus_pending_set_state(&t, 500, 0xFFFFu) == -1);
+    /* REJECTED is never a tracked state */
+    CHECK(canopus_pending_set_state(&t, 500, CANOPUS_RESULT_REJECTED) == -1);
+    /* a contradicting terminal after completion is rejected */
+    CHECK(canopus_pending_set_state(&t, 500, CANOPUS_RESULT_COMPLETED) == 0);
+    CHECK(canopus_pending_finish(&t, 500, CANOPUS_RESULT_FAILED) == -1);
+}
+
+TEST(pending_stale_boot_rejected)
+{
+    struct canopus_pending_table_v1 t;
+    canopus_pending_init(&t);
+    canopus_pending_set_boot(&t, 1);
+    CHECK(canopus_pending_accept(&t, 400, CANOPUS_CMD_INSTALL) == 0);
+    canopus_pending_set_boot(&t, 2); /* reboot */
+    CHECK(canopus_pending_set_state(&t, 400, CANOPUS_RESULT_QUEUED) == -1);
+    CHECK(canopus_pending_finish(&t, 400, CANOPUS_RESULT_COMPLETED) == -1);
+    CHECK(canopus_pending_ack(&t, 400) == -1);
+}
+
+TEST(pending_zero_id_and_per_request_error)
+{
+    struct canopus_pending_table_v1 t;
+    canopus_pending_init(&t);
+    /* request id 0 is reserved */
+    CHECK(canopus_pending_accept(&t, 0, CANOPUS_CMD_INSTALL) == -1);
+    CHECK(canopus_pending_accept(&t, 600, CANOPUS_CMD_INSTALL) == 0);
+    CHECK(canopus_pending_set_error(&t, 600, 0xBEEFu) == 0);
+    const struct canopus_pending_request_v1 *p = canopus_pending_find(&t, 600);
+    CHECK(p != 0);
+    CHECK(p->error == 0xBEEFu);
+}
+
+TEST(pending_table_full_rejects)
+{
+    struct canopus_pending_table_v1 t;
+    uint32_t i;
+    canopus_pending_init(&t);
+    for (i = 0; i < CANOPUS_PENDING_MAX; i++) {
+        CHECK(canopus_pending_accept(&t, 1000 + i, CANOPUS_CMD_ECHO) == 0);
+    }
+    CHECK(canopus_pending_accept(&t, 9999, CANOPUS_CMD_ECHO) == -1); /* full */
 }
 
 /* ---- store -------------------------------------------------------- */
@@ -172,6 +246,11 @@ static struct test_registry supervisor_tests[] = {
     { "proto_request_validate", proto_request_validate_wrapper },
     { "proto_response_roundtrip", proto_response_roundtrip_wrapper },
     { "pending_async_states", pending_async_states_wrapper },
+    { "pending_finish_requires_terminal_result", pending_finish_requires_terminal_result_wrapper },
+    { "pending_rejects_backwards_unknown_and_rejected", pending_rejects_backwards_unknown_and_rejected_wrapper },
+    { "pending_stale_boot_rejected", pending_stale_boot_rejected_wrapper },
+    { "pending_zero_id_and_per_request_error", pending_zero_id_and_per_request_error_wrapper },
+    { "pending_table_full_rejects", pending_table_full_rejects_wrapper },
     { "store_install_preserves_previous", store_install_preserves_previous_wrapper },
     { "store_install_without_staged_fails", store_install_without_staged_fails_wrapper },
     { "store_quarantine", store_quarantine_wrapper },

@@ -153,17 +153,37 @@ TEST(disable_sends_command_for_both_classes)
     add_removable(&m, "mod.hello");
     add_resident(&m, "mod.bt");
 
-    /* removable: DISABLE means drain+unload now. */
+    /* removable: DISABLE means drain+unload now. Request ids are
+     * client-monotonic, not a fixed value per opcode (CAN-P1-002). */
     CHECK(canopus_manager_op_disable(&m, 0) == CANOPUS_RESULT_ACCEPTED);
     CHECK(g_last_command == CANOPUS_CMD_DISABLE);
-    CHECK(g_last_request_id == 3);
+    CHECK(g_last_request_id == 1);
 
     /* resident: DISABLE is allowed but means next-boot only; the supervisor
      * interprets it by lifecycle class (CAN-DEV-006/007). The UI renders it
      * as [disable-next-boot] — never a fake unload (CAN-UI-004). */
     CHECK(canopus_manager_can_disable(&m, 1) != 0);
     CHECK(canopus_manager_op_disable(&m, 1) == CANOPUS_RESULT_ACCEPTED);
+    CHECK(g_last_request_id == 2); /* monotonic increment, not opcode-fixed */
     CHECK(g_transport_calls == 2);
+}
+
+TEST(request_ids_are_monotonic_and_never_zero)
+{
+    struct canopus_manager_model_v1 m;
+    uint32_t seen = 0;
+    uint32_t i;
+    reset_transport();
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "mod.hello");
+    /* each command gets a fresh, strictly increasing id starting at 1 */
+    for (i = 0; i < 5; i++) {
+        CHECK(canopus_manager_op_enable(&m, 0) == CANOPUS_RESULT_ACCEPTED);
+        CHECK(g_last_request_id == seen + 1u);
+        seen = g_last_request_id;
+    }
+    /* the model counter tracked them */
+    CHECK_EQ(m.next_request_id, 6u);
 }
 
 TEST(remove_resident_returns_disallowed_until_reboot_semantics)
@@ -283,6 +303,7 @@ static const struct test_registry manager_tests[] = {
     { "removable_detail_offers_disable_and_remove", removable_detail_offers_disable_and_remove_wrapper },
     { "resident_detail_has_no_fake_unload", resident_detail_has_no_fake_unload_wrapper },
     { "disable_sends_command_for_both_classes", disable_sends_command_for_both_classes_wrapper },
+    { "request_ids_are_monotonic_and_never_zero", request_ids_are_monotonic_and_never_zero_wrapper },
     { "remove_resident_returns_disallowed_until_reboot_semantics", remove_resident_returns_disallowed_until_reboot_semantics_wrapper },
     { "rollback_needs_previous_slot", rollback_needs_previous_slot_wrapper },
     { "update_available_for_active", update_available_for_active_wrapper },

@@ -67,6 +67,9 @@ struct canopus_manager_model_v1 {
 
     uint32_t pending_op;      /* last canopus_command issued, 0 = none */
     uint32_t pending_state;   /* CANOPUS_RESULT_* of pending_op */
+    /* CAN-P1-002: the client's monotonic request-id source. Starts at 1,
+     * increments on every command, never 0, wraps without reusing 0. */
+    uint32_t next_request_id;
 
     /* transport: send a request envelope plus an opaque payload (may be
      * NULL when payload_size == 0) and await a response. Return 0 on
