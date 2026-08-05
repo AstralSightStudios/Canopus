@@ -19,12 +19,17 @@ module_abi = 1
 relocation_profile = "best1503-v1"
 revision = 1
 
-# Firmware absolute-address space (CAN-P1-011). Recovered entry/callable
-# addresses live in 0x0C00_0000..0x0CFF_FFFF (identity strings, register_driver,
-# clock_gettime, ...). The ELF verifier flags module words in this range that
-# are not in the approved address allowlist.
+# Firmware absolute-address space (CAN-P1-011). This is the RECOVERED
+# firmware extent, not the full 16 MB addressable window: every recovered
+# entry/callable address (identity strings 0x0C0C0810 .. launcher app symbols
+# 0x0C4F3389) lives below 0x0C50_0000. Data constants a module may embed
+# (float bit patterns, masks) can fall anywhere in the window, so scanning the
+# whole window would flag non-addresses; this range is the extent we have
+# actually recovered and must be widened as recovery grows (bumping the pack
+# revision). The ELF verifier flags module words in this range that are not in
+# the approved address allowlist.
 firmware_address_ranges = [
-  { base = 0x0C000000, size = 0x01000000 },
+  { base = 0x0C000000, size = 0x00500000 },
 ]
 
 # Capabilities proven or probed on this exact firmware. Bluetooth/service

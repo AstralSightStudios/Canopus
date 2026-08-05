@@ -348,7 +348,7 @@ fn movw_movt_unknown_address_fails() {
         report
             .errors
             .iter()
-            .any(|e| e.contains("embedded absolute address 0xc1a0d51")),
+            .any(|e| e.contains("0xc1a0d51")),
         "errors were: {:?}",
         report.errors
     );
