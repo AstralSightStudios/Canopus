@@ -14,7 +14,10 @@ local lvgl = require("lvgl")
 local MODULE_PATH = SCRIPT_PATH .. "canopus_supervisor.bin"
 local MODULE_NAME = "canopus_supervisor"
 local DEVICE_PATH = "/dev/canopus"
-local MODULE_MIN_SIZE = 4096
+-- The supervisor is a small module (~3-4 KB with -Os); the 4096 floor copied
+-- from btpatch was sized for that project's 33 KB A2DP amalgamation. 512 still
+-- rejects truncated/empty resources while allowing a minimal valid module.
+local MODULE_MIN_SIZE = 512
 local MODULE_MAX_SIZE = 131072
 local EXPECTED_MAGIC = 0x43505331 -- "CPS1" supervisor status magic
 local EXPECTED_CMD_MAGIC = 0x43504331 -- "CPC1" command magic
