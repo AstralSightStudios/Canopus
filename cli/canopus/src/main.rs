@@ -196,7 +196,8 @@ enum TargetCmd {
         target: String,
         #[arg(long, default_value = "targets")]
         targets_dir: PathBuf,
-        /// Write output to this path (default: <pack>/generated/canopus_bindings.rs).
+        /// Write output to this path (default: the sdk/rust crate's generated.rs,
+        /// the single committed copy; CAN-P2-011).
         #[arg(long)]
         output: Option<PathBuf>,
     },

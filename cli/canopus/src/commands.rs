@@ -87,7 +87,12 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
                 types: &types,
             };
             let text = r#gen.generate();
-            let out = output.unwrap_or_else(|| root.join("generated").join("canopus_bindings.rs"));
+            /* CAN-P2-011: the sdk/rust crate's generated.rs is the single
+             * committed copy; the per-target generated/ directory holds the
+             * C veneer only. */
+            let out = output.unwrap_or_else(|| {
+                root.join("../../sdk/rust/canopus-target-generated/src/generated.rs")
+            });
             if let Some(parent) = out.parent() {
                 std::fs::create_dir_all(parent)?;
             }
