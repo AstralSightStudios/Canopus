@@ -83,6 +83,10 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
 /* ABI helpers for the char-device front end (host test uses them too). */
 int canopus_supervisor_validate_command(const uint8_t command[CANOPUS_SUP_COMMAND_SIZE]);
 
+/* The module glue owns the singleton; the platform's read/write handlers use
+ * it to render status / dispatch commands. */
+struct canopus_supervisor_v1 *canopus_supervisor_get(void);
+
 /* Host convenience: record a newly installed module into a free slot.
  * Returns the slot index or -1 when the table is full / class invalid. */
 int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,

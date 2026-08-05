@@ -2,33 +2,40 @@
 # Builds the Canopus supervisor native module for xiaomi-band-10-pro-3.101.030
 # and stages it into watchfaces/canopus-installer/canopus_supervisor.bin.
 #
-# The supervisor is a boot-resident char-device module (btpatch_phase5
-# pattern). This build links the stub platform, so the module cross-compiles
-# to a zero-import ELF32 ET_REL and PASSES the Canopus verifier — the G0 test
-# artifact. Device registration (/dev/canopus) and module load/unload are
-# device-gated (G0/G4): replace canopus_supervisor_platform_stub.c once the
-# exact char-device API is recovered.
+# Uses the real device platform (register /dev/canopus via the stock
+# register_driver, exactly like btpatch registers /dev/btpatch) so the
+# installer watchface's status/command surface works on device. The module is
+# a zero-import ELF32 ET_REL and must PASS the Canopus verifier.
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 TARGET_ID="xiaomi-band-10-pro-3.101.030"
+PACK_DIR="$ROOT/targets/$TARGET_ID"
+GENERATED="$PACK_DIR/generated/canopus_veneer.h"
 OUT="$ROOT/watchfaces/canopus-installer/build"
 CC=${CC:-clang}
+
+[ -f "$GENERATED" ] || {
+    echo "error: run 'canopus target generate-veneer $TARGET_ID' first"
+    exit 1
+}
 
 mkdir -p "$OUT"
 cd "$ROOT"
 
 echo "[1/3] compile supervisor (Cortex-M33 Thumb soft-float)"
+# Flags mirror native/scripts/build_btpatch_phase5.sh; -fno-function-sections
+# is btpatch's proven configuration for a boot-resident constructor module.
 TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
-  -ffreestanding -fno-common -fno-builtin -fno-stack-protector \
-  -fno-unwind-tables -fno-asynchronous-unwind-tables -fdata-sections \
-  -ffunction-sections -Os -Wall -Wextra -Werror"
+  -ffreestanding -fno-common -fno-builtin -fno-jump-tables \
+  -fno-stack-protector -fno-unwind-tables -fno-asynchronous-unwind-tables \
+  -fdata-sections -fno-function-sections -Os -Wall -Wextra -Werror"
 
 INC="-I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \
-  -I$ROOT/manager/service"
+  -I$ROOT/manager/service -I$PACK_DIR/generated"
 
-for s in canopus_supervisor.c canopus_supervisor_module.c canopus_supervisor_platform_stub.c; do
+for s in canopus_supervisor.c canopus_supervisor_module.c canopus_supervisor_platform.c; do
     $CC $TARGET_FLAGS $INC -c "$ROOT/manager/service/$s" -o "$OUT/${s%.c}.o"
 done
 
@@ -36,7 +43,7 @@ echo "[2/3] relocatable link (ld.lld -r)"
 ld.lld -r -o "$OUT/canopus_supervisor.elf" \
     "$OUT/canopus_supervisor.o" \
     "$OUT/canopus_supervisor_module.o" \
-    "$OUT/canopus_supervisor_platform_stub.o"
+    "$OUT/canopus_supervisor_platform.o"
 
 echo "[3/3] Canopus ELF verifier"
 "$ROOT/target/debug/canopus" verify "$OUT/canopus_supervisor.elf" \

@@ -35,9 +35,13 @@ pub struct Summary {
 }
 
 /// Sections that are never allowed in a Canopus module.
+///
+/// `.ARM.exidx` / `.ARM.extab` are NOT here: the stock loader demonstrably
+/// handles them — btpatch_phase5.bin carries a combined `.ARM.exidx` and runs
+/// on device. `.got` / `.tdata` / `.eh_frame` remain forbidden (position-
+/// independent GOT, TLS and C++ exception unwinding are loader-unsupported).
 const FORBIDDEN_SECTIONS: &[&str] = &[
     ".got", ".got.plt", ".tdata", ".tbss", ".eh_frame", ".eh_frame_hdr",
-    ".ARM.exidx", ".ARM.extab",
 ];
 
 pub struct Verifier<'a> {

@@ -17,15 +17,16 @@ This is a **staged test artifact**, not a proven installer.
 | --- | --- |
 | Watchface UI (`main.lua`) | Structurally complete; mirrors the btpatch pattern (verify ELF, `insmod`, LVGL buttons, fixed ABI). |
 | Supervisor core (`manager/service/canopus_supervisor.c`) | Host-tested (12 tests): command/status ABI, lifecycle-aware enable/disable/remove, safe mode. |
-| `canopus_supervisor.bin` | **Verifier PASS** (sha256 `ec28819e`, 0 undefined, 1 ctor/1 dtor) — a valid zero-import ELF32 ET_REL the stock loader can be tested with (**G0**). |
-| Device registration (`/dev/canopus`) | **Device RE pending (G0/G4).** The stub platform fails closed; the module builds and loads but does not yet create the device. Replace `canopus_supervisor_platform_stub.c` once the exact char-device API is recovered (btpatch's `register_driver` pattern is the reference). |
-| Loading Canopus modules via stock modlib | **Device RE pending (G0).** The supervisor's `load_module` hook is stubbed. |
+| `canopus_supervisor.bin` | **Verifier PASS** (sha256 `87c9ebf1`, 0 undefined, 1 ctor/1 dtor) — a valid zero-import ELF32 ET_REL. |
+| Device registration (`/dev/canopus`) | **Implemented.** `canopus_supervisor_platform.c` registers the device via the stock `register_driver` (0x0C1A0D51) exactly like btpatch registers `/dev/btpatch` — the same managed symbol the veneer exposes as `canopus_fw_register_driver`. The read side renders the status ABI, the write side dispatches commands. |
+| Loading Canopus modules via stock modlib | **Pending (G0 for target modules).** The supervisor's `load_module` hook is fail-closed until the stock modlib path for arbitrary ET_REL modules is proven. |
+| Package staging + signature verify | **Pending.** `stage_package` is fail-closed. |
 
-**What you can test on device today:** G0 — does the stock loader accept a
-Canopus-built supervisor module at all (`insmod`, then `/proc/modules` shows
-`canopus_supervisor`)? If it loads, the LOAD button reports it. The INSTALL /
-ENABLE / DISABLE buttons will report the stub result (no device) until the
-platform is implemented.
+**What you can test on device now:** LOAD the supervisor, then REFRESH — the
+page should read a live status ABI from `/dev/canopus` (framework version,
+module count, last result). QUERY/SAFE MODE work. INSTALL/ENABLE/DISABLE send
+commands that the supervisor dispatches; module load/unload actions report the
+fail-closed result until the target-module loader (G0) is wired.
 
 ## Structure
 
