@@ -12,6 +12,7 @@
  */
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
+#include "canopus_manager_native_probe.h"
 #include "canopus_veneer.h" /* canopus_fw_register_driver / canopus_fw_unregister_driver */
 
 #define CANOPUS_SUP_DEVICE_PATH "/dev/canopus"
@@ -88,8 +89,17 @@ static int sup_unload_module(void *cookie, uint32_t index)
 
 static int sup_stage_package(void *cookie, const char *path)
 {
-    (void)cookie; (void)path;
-    return -1; /* package staging + signature verify: pending */
+    (void)cookie;
+    /* The legacy INSTALL request has no payload and is reserved for the native
+     * Manager bootstrap. Crucially, this hook runs synchronously in the process
+     * that writes /dev/canopus. The watchface therefore invokes app_install in
+     * miwear's process, where the libuv event-loop file descriptors are valid,
+     * rather than in the `system -c insmod` process. CPC2 package tokens remain
+     * fail-closed until signature-backed third-party staging is implemented. */
+    if (path == 0) {
+        return canopus_manager_native_install();
+    }
+    return -1;
 }
 
 const struct canopus_sup_platform_v1 canopus_sup_platform = {

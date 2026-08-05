@@ -4,7 +4,7 @@
  * firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
  * sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
  * revision : 1
- * input_digest: d6a157316c480b9e
+ * input_digest: f25b56f7fd61fad5
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
@@ -33,6 +33,65 @@ typedef struct {
     int32_t tv_sec; /* +0x0 */
     int32_t tv_nsec; /* +0x4 */
 } stock_timespec_t;
+typedef struct {
+    void * parent_descriptor; /* +0x0 */
+    uint8_t _pad_4[12];
+    void * page_name; /* +0x10 */
+    uint16_t page_id; /* +0x14 */
+    uint16_t app_id; /* +0x16 */
+    uint16_t flags; /* +0x18 */
+    uint8_t _pad_1a[2];
+    int32_t scheduler_deadline; /* +0x1c */
+    int32_t scheduler_priority; /* +0x20 */
+    uint32_t async_destroy_state; /* +0x24 */
+    uint8_t lifecycle_state; /* +0x28 */
+    uint8_t layer; /* +0x29 */
+    uint8_t page_kind; /* +0x2a */
+    uint8_t _pad_2b[1];
+    void * activity_context; /* +0x2c */
+    void * root_object; /* +0x30 */
+    void * on_signal; /* +0x34 */
+    void * runtime_default_56; /* +0x38 */
+    uint8_t _pad_3c[4];
+    void * registry_prev; /* +0x40 */
+    void * registry_next; /* +0x44 */
+    void * runtime_parent; /* +0x48 */
+    void * on_create; /* +0x4c */
+    void * on_resume; /* +0x50 */
+    void * on_foreground_data; /* +0x54 */
+    void * on_pause; /* +0x58 */
+    void * on_destroy; /* +0x5c */
+    void * on_ui_destroy; /* +0x60 */
+    void * extension_callback_100; /* +0x64 */
+    void * extension_callback_104; /* +0x68 */
+    void * extension_callback_108; /* +0x6c */
+    uint8_t _tail[4];
+} firmware_page_descriptor;
+typedef struct {
+    uint64_t message_id; /* +0x0 */
+    uint32_t repeat_count; /* +0x8 */
+    void * title; /* +0xc */
+    void * source; /* +0x10 */
+    void * body; /* +0x14 */
+    void * auxiliary_text; /* +0x18 */
+    void * small_icon_path; /* +0x1c */
+    void * large_icon_path; /* +0x20 */
+    void * extension_text_36; /* +0x24 */
+    void * extension_text_40; /* +0x28 */
+    uint32_t timestamp; /* +0x2c */
+    uint8_t _pad_30[8];
+    void * action_callback; /* +0x38 */
+    uint32_t action_context; /* +0x3c */
+    uint32_t extension_64; /* +0x40 */
+    uint32_t extension_68; /* +0x44 */
+    void * open_callback; /* +0x48 */
+    void * destroy_callback; /* +0x4c */
+    uint8_t start_reminder; /* +0x50 */
+    uint8_t flags_81; /* +0x51 */
+    uint8_t flags_82; /* +0x52 */
+    uint8_t _pad_53[1];
+    void * callback_data; /* +0x54 */
+} firmware_notification_message;
 typedef struct {
     uint8_t enabled_state; /* +0x0 */
     uint8_t _pad_1[3];
@@ -143,6 +202,7 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
  * hfp_ag_connect: FORBIDDEN - no veneer may ever be generated
  * hfp_ag_disconnect: FORBIDDEN - no veneer may ever be generated
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
+ * lvx_notification_insert_message: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated

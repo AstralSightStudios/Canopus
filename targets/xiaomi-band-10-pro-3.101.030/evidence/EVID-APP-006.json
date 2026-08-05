@@ -8,24 +8,27 @@
   "callsite_evidence": [
     "app_install sub_CA519AC indexes each supplied page using the pointer at page+16 before storing the page pointer for the app lifetime",
     "activitymanager_page_register sub_CA523B0 requires page+16 name and nonzero page+20 numeric ID, rejects duplicate +20 IDs, and mutates the descriptor in place",
-    "Flashlight page at 0x200D03D8 has name 'main' at +16 and numeric ID 26 at +20; Settings supplies 67 writable page descriptors",
-    "Flashlight lifecycle extension contains on_create at +92, on_resume at +96, on_pause at +108, and on_destroy at +116 based on callback decompilation"
+    "Flashlight page at 0x200D03D8 has name 'main' at +16, composite page key {u16 page_id=0 at +20, u16 app_id=26 at +22}, and occupies 116 bytes before alignment",
+    "Flashlight lifecycle extension contains on_create at +76, on_resume at +80, on_pause at +88, on_destroy at +92, and optional on_ui_destroy at +96 based on wrapper dispatch and callback decompilation",
+    "quickapp allocates exactly 116 bytes for a page descriptor and initializes callbacks through +108"
   ],
   "control_flow_evidence": [
+    "registration rejects a zero 32-bit composite key at +20 and detects duplicates using the same {page_id, app_id} word",
     "registration defaults bytes +40/+41 to 4 and +42 to 2",
     "registration writes scheduling fields +28=INT_MAX, +32=INT_MAX, +36=0 and clears page flags +24 bit6",
     "registration defaults pointers +0, +44, +56, +72 and links the page through intrusive pointers +64/+68",
     "registration walks the +0 parent/default chain until it finds a non-null callback at +52 and invokes it",
+    "on_create wrapper allocates the root object into page+48 and invokes callback +76 as (page, root, start_data); resume/pause/destroy wrappers invoke +80/+88/+92 with the page pointer",
+    "page unregister at sub_CA52E5C unlinks +64/+68, drives pause/destroy as needed, and invokes the +52 signal callback with event 2",
     "app_install stores page pointers without copying page descriptor bytes"
   ],
   "ownership_analysis": "Page descriptors must reside in writable storage owned for the full registration lifetime. app_install borrows their pointers; activitymanager_page_register mutates their header and links them globally. The app module therefore cannot unload until an unregister function has removed every page and all callbacks are drained.",
   "unsafe_assumptions": [
-    "the full descriptor size and every extension field are not recovered",
-    "the callback at +52 is observed as an on_signal-style function but registration also invokes the first callback found in the parent chain; exact invocation semantics require a probe",
-    "numeric +20 is globally unique page ID, despite firmware log text calling it app_id",
-    "page open/navigation ABI, root object argument, owner thread, and unregister pairing remain unresolved"
+    "the meanings of callbacks at +84 and +100/+104/+108 remain only partially recovered",
+    "the +52 signal callback event vocabulary is only partially recovered despite observed register/resume/pause/destroy dispatch",
+    "page navigation accepts the composite u32 key at +20, but animation argument structures and UI-owner dispatch requirements still need a device probe"
   ],
-  "recommended_probe": "Do not register the Manager page yet. First recover one minimal built-in descriptor byte-for-byte, identify navigation/open and unregister callsites, then run a resident-only synthetic page probe with permanent writable descriptor storage and no module unload path.",
+  "recommended_probe": "Build a resident-only synthetic page with a permanent 116-byte writable descriptor, register it through app_install, add its u16 app_id to Launcher, and render one system LVX list row from on_create. Never unload the probe module; exercise open/resume/pause/destroy on device before enabling production registration.",
   "reviewers": ["canopus-maintainer"],
   "verdict": "STATIC_RECOVERED",
   "created": "2026-08-06T00:00:00Z",

@@ -4,7 +4,7 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 1
-// input_digest: d6a157316c480b9e
+// input_digest: f25b56f7fd61fad5
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -38,6 +38,71 @@ pub struct launcher_order_record {
 pub struct stock_timespec_t {
     pub tv_sec: i32, // +0x0
     pub tv_nsec: i32, // +0x4
+}
+
+#[repr(C, packed)]
+#[derive(Copy, Clone, Debug)]
+pub struct firmware_page_descriptor {
+    pub parent_descriptor: *mut core::ffi::c_void, // +0x0
+    pub _pad_4: [u8; 0xc], // 12
+    pub page_name: *mut core::ffi::c_void, // +0x10
+    pub page_id: u16, // +0x14
+    pub app_id: u16, // +0x16
+    pub flags: u16, // +0x18
+    pub _pad_1a: [u8; 0x2], // 2
+    pub scheduler_deadline: i32, // +0x1c
+    pub scheduler_priority: i32, // +0x20
+    pub async_destroy_state: u32, // +0x24
+    pub lifecycle_state: u8, // +0x28
+    pub layer: u8, // +0x29
+    pub page_kind: u8, // +0x2a
+    pub _pad_2b: [u8; 0x1], // 1
+    pub activity_context: *mut core::ffi::c_void, // +0x2c
+    pub root_object: *mut core::ffi::c_void, // +0x30
+    pub on_signal: *mut core::ffi::c_void, // +0x34
+    pub runtime_default_56: *mut core::ffi::c_void, // +0x38
+    pub _pad_3c: [u8; 0x4], // 4
+    pub registry_prev: *mut core::ffi::c_void, // +0x40
+    pub registry_next: *mut core::ffi::c_void, // +0x44
+    pub runtime_parent: *mut core::ffi::c_void, // +0x48
+    pub on_create: *mut core::ffi::c_void, // +0x4c
+    pub on_resume: *mut core::ffi::c_void, // +0x50
+    pub on_foreground_data: *mut core::ffi::c_void, // +0x54
+    pub on_pause: *mut core::ffi::c_void, // +0x58
+    pub on_destroy: *mut core::ffi::c_void, // +0x5c
+    pub on_ui_destroy: *mut core::ffi::c_void, // +0x60
+    pub extension_callback_100: *mut core::ffi::c_void, // +0x64
+    pub extension_callback_104: *mut core::ffi::c_void, // +0x68
+    pub extension_callback_108: *mut core::ffi::c_void, // +0x6c
+    pub _tail: [u8; 0x4], // 4
+}
+
+#[repr(C, packed)]
+#[derive(Copy, Clone, Debug)]
+pub struct firmware_notification_message {
+    pub message_id: u64, // +0x0
+    pub repeat_count: u32, // +0x8
+    pub title: *mut core::ffi::c_void, // +0xc
+    pub source: *mut core::ffi::c_void, // +0x10
+    pub body: *mut core::ffi::c_void, // +0x14
+    pub auxiliary_text: *mut core::ffi::c_void, // +0x18
+    pub small_icon_path: *mut core::ffi::c_void, // +0x1c
+    pub large_icon_path: *mut core::ffi::c_void, // +0x20
+    pub extension_text_36: *mut core::ffi::c_void, // +0x24
+    pub extension_text_40: *mut core::ffi::c_void, // +0x28
+    pub timestamp: u32, // +0x2c
+    pub _pad_30: [u8; 0x8], // 8
+    pub action_callback: *mut core::ffi::c_void, // +0x38
+    pub action_context: u32, // +0x3c
+    pub extension_64: u32, // +0x40
+    pub extension_68: u32, // +0x44
+    pub open_callback: *mut core::ffi::c_void, // +0x48
+    pub destroy_callback: *mut core::ffi::c_void, // +0x4c
+    pub start_reminder: u8, // +0x50
+    pub flags_81: u8, // +0x51
+    pub flags_82: u8, // +0x52
+    pub _pad_53: [u8; 0x1], // 1
+    pub callback_data: *mut core::ffi::c_void, // +0x54
 }
 
 #[repr(C, packed)]
@@ -181,6 +246,7 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 // hfp_ag_connect: FORBIDDEN - no binding may ever be generated
 // hfp_ag_disconnect: FORBIDDEN - no binding may ever be generated
 // hidden_and_show_app_cb: restricted - not exported until context/ownership approved
+// lvx_notification_insert_message: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
 // pthread_create_internal: FORBIDDEN - no binding may ever be generated
