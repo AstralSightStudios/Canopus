@@ -19,6 +19,14 @@ module_abi = 1
 relocation_profile = "best1503-v1"
 revision = 1
 
+# Firmware absolute-address space (CAN-P1-011). Recovered entry/callable
+# addresses live in 0x0C00_0000..0x0CFF_FFFF (identity strings, register_driver,
+# clock_gettime, ...). The ELF verifier flags module words in this range that
+# are not in the approved address allowlist.
+firmware_address_ranges = [
+  { base = 0x0C000000, size = 0x01000000 },
+]
+
 # Capabilities proven or probed on this exact firmware. Bluetooth/service
 # managers remain FORBIDDEN until individually proven.
 capabilities = [

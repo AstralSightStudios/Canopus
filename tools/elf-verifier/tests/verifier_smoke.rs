@@ -202,3 +202,183 @@ fn garbage_fails() {
     let report = v.verify(b"not an elf at all");
     assert!(!report.ok);
 }
+
+// ---- CAN-P1-011: direct absolute-address scan ------------------------
+
+const SHF_ALLOC: u32 = 0x2;
+
+struct TestSection {
+    name: &'static str,
+    flags: u32,
+    data: Vec<u8>,
+}
+
+/// Builds an ET_REL with the given PROGBITS sections (plus shstrtab).
+fn build_elf(sections: Vec<TestSection>) -> Vec<u8> {
+    let mut shstrtab = vec![0u8];
+    let mut name_offsets = Vec::new();
+    for s in &sections {
+        name_offsets.push(shstrtab.len() as u32);
+        shstrtab.extend_from_slice(s.name.as_bytes());
+        shstrtab.push(0);
+    }
+    let shstrtab_name_off = shstrtab.len() as u32;
+    shstrtab.extend_from_slice(b".shstrtab\0");
+
+    let mut off = 52u32;
+    let mut sec_offsets = Vec::new();
+    for s in &sections {
+        sec_offsets.push(off);
+        off += s.data.len() as u32;
+    }
+    let shstrtab_off = off;
+    off += shstrtab.len() as u32;
+    let shoff = off;
+    let shnum = (sections.len() + 2) as u16;
+    let shstrndx = shnum - 1;
+
+    let mut out = elf_header(shoff, shnum, shstrndx).to_vec();
+    for (s, so) in sections.iter().zip(&sec_offsets) {
+        let _ = so;
+        out.extend_from_slice(&s.data);
+    }
+    out.extend_from_slice(&shstrtab);
+    out.extend_from_slice(&sh(0, 0, 0, 0, 0, 0, 0, 0));
+    for (i, (s, so)) in sections.iter().zip(&sec_offsets).enumerate() {
+        out.extend_from_slice(&sh(
+            name_offsets[i],
+            SHT_PROGBITS,
+            s.flags,
+            *so,
+            s.data.len() as u32,
+            0,
+            4,
+            0,
+        ));
+    }
+    out.extend_from_slice(&sh(
+        shstrtab_name_off,
+        SHT_STRTAB,
+        0,
+        shstrtab_off,
+        shstrtab.len() as u32,
+        0,
+        1,
+        0,
+    ));
+    out
+}
+
+/// Encodes a Thumb-2 MOVW (imm16 -> r3) as 4 bytes.
+fn movw_enc(imm16: u16) -> [u8; 4] {
+    let imm4 = (imm16 >> 12) & 0xF;
+    let i = (imm16 >> 11) & 1;
+    let imm3 = (imm16 >> 8) & 0x7;
+    let imm8 = imm16 & 0xFF;
+    let rd = 3u16;
+    let first = 0xF240u16 | (i << 10) | imm4;
+    let second = (imm3 << 12) | (rd << 8) | imm8;
+    [
+        (first & 0xFF) as u8,
+        ((first >> 8) & 0xFF) as u8,
+        (second & 0xFF) as u8,
+        ((second >> 8) & 0xFF) as u8,
+    ]
+}
+
+/// Encodes a Thumb-2 MOVT (imm16 -> r3) as 4 bytes.
+fn movt_enc(imm16: u16) -> [u8; 4] {
+    let imm4 = (imm16 >> 12) & 0xF;
+    let i = (imm16 >> 11) & 1;
+    let imm3 = (imm16 >> 8) & 0x7;
+    let imm8 = imm16 & 0xFF;
+    let rd = 3u16;
+    let first = 0xF2C0u16 | (i << 10) | imm4;
+    let second = (imm3 << 12) | (rd << 8) | imm8;
+    [
+        (first & 0xFF) as u8,
+        ((first >> 8) & 0xFF) as u8,
+        (second & 0xFF) as u8,
+        ((second >> 8) & 0xFF) as u8,
+    ]
+}
+
+fn elf_with_movw_movt(addr: u64) -> Vec<u8> {
+    let mut text = movw_enc((addr & 0xFFFF) as u16).to_vec();
+    text.extend_from_slice(&movt_enc(((addr >> 16) & 0xFFFF) as u16));
+    build_elf(vec![TestSection {
+        name: ".text",
+        flags: SHF_ALLOC_EXEC,
+        data: text,
+    }])
+}
+
+fn elf_with_data_word(addr: u64) -> Vec<u8> {
+    build_elf(vec![TestSection {
+        name: ".rodata",
+        flags: SHF_ALLOC,
+        data: (addr as u32).to_le_bytes().to_vec(),
+    }])
+}
+
+#[test]
+fn movw_movt_allowed_address_passes() {
+    let addr: u64 = 0x0C1A0D51;
+    let elf = elf_with_movw_movt(addr);
+    let v = Verifier {
+        target: pack(),
+        allowed_addresses: &[addr],
+    };
+    let report = v.verify(&elf);
+    assert!(report.ok, "expected pass: {:?}", report.errors);
+    assert_eq!(report.summary.absolute_address_hits, 0);
+}
+
+#[test]
+fn movw_movt_unknown_address_fails() {
+    let addr: u64 = 0x0C1A0D51;
+    let elf = elf_with_movw_movt(addr);
+    let v = Verifier {
+        target: pack(),
+        allowed_addresses: &[],
+    };
+    let report = v.verify(&elf);
+    assert!(!report.ok, "expected failure");
+    assert!(
+        report
+            .errors
+            .iter()
+            .any(|e| e.contains("embedded absolute address 0xc1a0d51")),
+        "errors were: {:?}",
+        report.errors
+    );
+    assert!(report.summary.absolute_address_hits >= 1);
+}
+
+#[test]
+fn data_word_absolute_address_checked() {
+    let addr: u64 = 0x0C1A0D51;
+    let elf = elf_with_data_word(addr);
+    let ok = Verifier {
+        target: pack(),
+        allowed_addresses: &[addr],
+    };
+    assert!(ok.verify(&elf).ok, "allowed word must pass");
+    let bad = Verifier {
+        target: pack(),
+        allowed_addresses: &[],
+    };
+    assert!(!bad.verify(&elf).ok, "unknown firmware-range word must fail");
+}
+
+#[test]
+fn out_of_range_constant_not_flagged() {
+    // a constant well outside the firmware space is a normal value, not an
+    // absolute address
+    let elf = elf_with_data_word(0x0000_4000);
+    let v = Verifier {
+        target: pack(),
+        allowed_addresses: &[],
+    };
+    assert!(v.verify(&elf).ok, "non-firmware constant must not be flagged");
+}

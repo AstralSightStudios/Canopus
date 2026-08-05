@@ -30,5 +30,11 @@
     ],
     "import_date": "2026-08-05",
     "maintainer": "canopus-maintainer"
-  }
+  },
+  "firmware_address_ranges": [
+    {
+      "base": 201326592,
+      "size": 16777216
+    }
+  ]
 }

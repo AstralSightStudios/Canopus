@@ -25,93 +25,251 @@
     "revision"
   ],
   "properties": {
-    "schema": { "const": 1 },
+    "schema": {
+      "const": 1
+    },
     "target_id": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9.-]*$",
       "description": "Human-readable identifier carrying device AND firmware version, e.g. xiaomi-band-10-pro-3.101.030. One target_id maps to exactly one firmware; firmware_sha256 remains the authoritative security identity."
     },
-    "device_family": { "type": "string" },
-    "device_model": { "type": "string" },
-    "board_revision": { "type": "string", "default": "unknown" },
-    "os_family": { "type": "string", "description": "e.g. nuttx-derived / vela" },
-    "architecture": { "type": "string", "description": "e.g. armv8-m.main" },
-    "cpu": { "type": "string", "description": "e.g. cortex-m33" },
-    "instruction_set": { "type": "string", "enum": ["thumb", "thumb2", "arm", "a64", "rv32imc", "rv32imafc"] },
-    "endianness": { "type": "string", "enum": ["little", "big"] },
-    "float_abi": { "type": "string", "enum": ["soft", "softfp", "hard"] },
-    "loader": { "type": "string", "description": "e.g. nuttx-modlib-elf32-rel (zero-import)" },
+    "device_family": {
+      "type": "string"
+    },
+    "device_model": {
+      "type": "string"
+    },
+    "board_revision": {
+      "type": "string",
+      "default": "unknown"
+    },
+    "os_family": {
+      "type": "string",
+      "description": "e.g. nuttx-derived / vela"
+    },
+    "architecture": {
+      "type": "string",
+      "description": "e.g. armv8-m.main"
+    },
+    "cpu": {
+      "type": "string",
+      "description": "e.g. cortex-m33"
+    },
+    "instruction_set": {
+      "type": "string",
+      "enum": [
+        "thumb",
+        "thumb2",
+        "arm",
+        "a64",
+        "rv32imc",
+        "rv32imafc"
+      ]
+    },
+    "endianness": {
+      "type": "string",
+      "enum": [
+        "little",
+        "big"
+      ]
+    },
+    "float_abi": {
+      "type": "string",
+      "enum": [
+        "soft",
+        "softfp",
+        "hard"
+      ]
+    },
+    "loader": {
+      "type": "string",
+      "description": "e.g. nuttx-modlib-elf32-rel (zero-import)"
+    },
     "firmware_sha256": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$",
       "description": "Full SHA-256 of the firmware image. Authoritative exact identity."
     },
-    "firmware_version": { "type": "string" },
-    "firmware_build": { "type": "string" },
-    "module_abi": { "type": "integer", "minimum": 1 },
-    "relocation_profile": { "type": "string", "description": "Verified relocation envelope name, e.g. best1503-v1" },
+    "firmware_version": {
+      "type": "string"
+    },
+    "firmware_build": {
+      "type": "string"
+    },
+    "module_abi": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "relocation_profile": {
+      "type": "string",
+      "description": "Verified relocation envelope name, e.g. best1503-v1"
+    },
     "revision": {
       "type": "integer",
       "minimum": 1,
       "description": "Target pack revision. Increments are immutable and additive; symbols may be withdrawn but never removed."
     },
-    "loader_profile": { "$ref": "#/definitions/loader_profile" },
+    "loader_profile": {
+      "$ref": "#/definitions/loader_profile"
+    },
     "capabilities": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "Target capabilities available in this pack (e.g. classic.adapter, bt.timer, char-device)."
     },
     "provenance": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "source_repo": { "type": "string" },
-        "source_findings": { "type": "array", "items": { "type": "string" } },
-        "import_date": { "type": "string", "format": "date" },
-        "maintainer": { "type": "string" },
-        "reviewers": { "type": "array", "items": { "type": "string" } }
+        "source_repo": {
+          "type": "string"
+        },
+        "source_findings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "import_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "maintainer": {
+          "type": "string"
+        },
+        "reviewers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
+    },
+    "firmware_address_ranges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "base",
+          "size"
+        ],
+        "properties": {
+          "base": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "description": "Firmware absolute-address spaces. The ELF verifier flags any module instruction/data word inside these ranges that is not in the approved address allowlist."
     }
   },
   "definitions": {
     "loader_profile": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["elf_class", "elf_machine", "elf_type", "constructor_discovery", "symbol_imports", "max_size", "alignment"],
+      "required": [
+        "elf_class",
+        "elf_machine",
+        "elf_type",
+        "constructor_discovery",
+        "symbol_imports",
+        "max_size",
+        "alignment"
+      ],
       "properties": {
-        "elf_class": { "type": "integer", "const": 32, "description": "ELFCLASS32" },
-        "elf_machine": { "type": "string", "description": "e.g. ARM" },
-        "elf_type": { "type": "string", "enum": ["ET_REL", "ET_DYN"] },
-        "endianness": { "type": "string", "enum": ["little", "big"] },
+        "elf_class": {
+          "type": "integer",
+          "const": 32,
+          "description": "ELFCLASS32"
+        },
+        "elf_machine": {
+          "type": "string",
+          "description": "e.g. ARM"
+        },
+        "elf_type": {
+          "type": "string",
+          "enum": [
+            "ET_REL",
+            "ET_DYN"
+          ]
+        },
+        "endianness": {
+          "type": "string",
+          "enum": [
+            "little",
+            "big"
+          ]
+        },
         "constructor_discovery": {
           "type": "string",
-          "enum": ["init_array", "preinit_array", "module_initialize"]
+          "enum": [
+            "init_array",
+            "preinit_array",
+            "module_initialize"
+          ]
         },
         "symbol_imports": {
           "type": "string",
-          "enum": ["none", "modlib_symtab"],
+          "enum": [
+            "none",
+            "modlib_symtab"
+          ],
           "description": "none = zero undefined-symbol policy for this firmware."
         },
-        "max_size": { "type": "integer", "description": "Maximum module size in bytes." },
-        "alignment": { "type": "integer", "description": "Required module alignment in bytes." },
+        "max_size": {
+          "type": "integer",
+          "description": "Maximum module size in bytes."
+        },
+        "alignment": {
+          "type": "integer",
+          "description": "Required module alignment in bytes."
+        },
         "relocations": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["name", "arm_type"],
+            "required": [
+              "name",
+              "arm_type"
+            ],
             "properties": {
-              "name": { "type": "string", "description": "e.g. R_ARM_TARGET1" },
-              "arm_type": { "type": "integer", "description": "Numeric ARM relocation type." },
-              "notes": { "type": "string" }
+              "name": {
+                "type": "string",
+                "description": "e.g. R_ARM_TARGET1"
+              },
+              "arm_type": {
+                "type": "integer",
+                "description": "Numeric ARM relocation type."
+              },
+              "notes": {
+                "type": "string"
+              }
             }
           },
           "description": "Verified relocation allowlist from stock loader."
         },
-        "module_name_rules": { "type": "string" },
-        "load_command": { "type": "string", "description": "e.g. NSH insmod <path> <name>" },
-        "unload_command": { "type": "string" },
-        "persistent_autoload": { "type": "boolean", "description": "Whether the loader supports persistent auto-load of modules." }
+        "module_name_rules": {
+          "type": "string"
+        },
+        "load_command": {
+          "type": "string",
+          "description": "e.g. NSH insmod <path> <name>"
+        },
+        "unload_command": {
+          "type": "string"
+        },
+        "persistent_autoload": {
+          "type": "boolean",
+          "description": "Whether the loader supports persistent auto-load of modules."
+        }
       }
     }
   }

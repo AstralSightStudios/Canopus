@@ -4,7 +4,7 @@
 //! Canopus static constraints from architecture §13.4. Failures are errors;
 //! warnings do not fail verification.
 
-use canopus_core::model::TargetPack;
+use canopus_core::model::{AddressRange, TargetPack};
 use object::{
     Architecture, BinaryFormat, Object, ObjectKind, ObjectSection, ObjectSymbol, RelocationFlags,
     RelocationTarget, SectionFlags, SectionKind, SymbolSection,
@@ -32,6 +32,7 @@ pub struct Summary {
     pub relocation_count: usize,
     pub constructor_count: usize,
     pub destructor_count: usize,
+    pub absolute_address_hits: usize,
 }
 
 /// Sections that are never allowed in a Canopus module.
@@ -194,6 +195,37 @@ impl<'a> Verifier<'a> {
             }
         }
 
+        // --- CAN-P1-011: direct absolute-address scan -----------------
+        // A compiler may bake a firmware address into the module as a
+        // MOVW/MOVT pair (code) or as a literal/data word (data) without
+        // producing any SHN_ABS relocation. Scan both and require every
+        // value inside the target's firmware address space to be in the
+        // allowlist. When the target declares no firmware ranges the scan
+        // is skipped (nothing to classify). Scanning .text as raw words is
+        // intentionally NOT done: two consecutive 16-bit Thumb instructions
+        // can alias a firmware-range word, so only the precise MOVW/MOVT
+        // decode and non-executable data sections are classified.
+        if let Some(ranges) = self.target.firmware_address_ranges.as_deref() {
+            let mut hits: Vec<String> = Vec::new();
+            for sec in file.sections() {
+                let (is_exec, is_alloc) = match sec.flags() {
+                    SectionFlags::Elf { sh_flags } => (sh_flags & 0x4 != 0, sh_flags & 0x2 != 0),
+                    _ => (false, false),
+                };
+                if matches!(sec.kind(), SectionKind::Text) || is_exec {
+                    scan_executable_section(&sec, ranges, self.allowed_addresses, &mut hits);
+                } else if is_alloc {
+                    scan_data_section(&sec, ranges, self.allowed_addresses, &mut hits);
+                }
+            }
+            report.summary.absolute_address_hits = hits.len();
+            for h in hits {
+                report.errors.push(format!(
+                    "embedded absolute address {h} not in target pack allowlist"
+                ));
+            }
+        }
+
         // --- constructors / destructors ------------------------------
         for sec in file.sections() {
             match sec.name().ok() {
@@ -216,4 +248,135 @@ pub fn hex_sha256(data: &[u8]) -> String {
     let mut h = Sha256::new();
     h.update(data);
     format!("{:x}", h.finalize())
+}
+
+// ---- CAN-P1-011: Thumb-2 MOVW/MOVT + data-word absolute-address scan --
+
+fn in_firmware_space(addr: u64, ranges: &[AddressRange]) -> bool {
+    ranges
+        .iter()
+        .any(|r| addr >= r.base && addr < r.base.saturating_add(r.size))
+}
+
+/// True when a halfword starts a 32-bit Thumb-2 instruction (top five bits
+/// are 11101, 11110 or 11111).
+fn is_32bit_thumb(hw: u16) -> bool {
+    matches!((hw >> 11) & 0x1F, 0x1D..=0x1F)
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum MovKind {
+    W,
+    T,
+}
+
+/// Decodes a Thumb-2 MOVW/MOVT into (register, kind, imm16). Returns None
+/// for anything else.
+fn decode_mov(first: u16, second: u16) -> Option<(u8, MovKind, u16)> {
+    let op = first & 0xFBF0;
+    let kind = if op == 0xF240 {
+        MovKind::W
+    } else if op == 0xF2C0 {
+        MovKind::T
+    } else {
+        return None;
+    };
+    if second & 0x8000 != 0 {
+        return None; // second halfword must begin with 0
+    }
+    let i = (first >> 10) & 1;
+    let imm4 = first & 0xF;
+    let rd = (second >> 8) & 0xF;
+    let imm3 = (second >> 12) & 0x7;
+    let imm8 = second & 0xFF;
+    let imm16 = (imm4 << 12) | (i << 11) | (imm3 << 8) | imm8;
+    Some((rd as u8, kind, imm16))
+}
+
+fn check_absolute_addr(
+    addr: u64,
+    ranges: &[AddressRange],
+    allowed: &[u64],
+    hits: &mut Vec<String>,
+) {
+    if !in_firmware_space(addr, ranges) {
+        return;
+    }
+    if !allowed.contains(&addr) {
+        hits.push(format!("0x{addr:x}"));
+    }
+}
+
+/// Walks an executable section as Thumb instructions and reports MOVW/MOVT
+/// absolute addresses (the compiler's canonical way to bake in a 32-bit
+/// constant such as a veneer address).
+fn scan_executable_section<'data, S: ObjectSection<'data>>(
+    sec: &S,
+    ranges: &[AddressRange],
+    allowed: &[u64],
+    hits: &mut Vec<String>,
+) {
+    let Ok(bytes) = sec.data() else { return };
+    let mut last_movw: [Option<u16>; 16] = [None; 16];
+    let mut off = 0usize;
+    while off + 2 <= bytes.len() {
+        let hw = u16::from_le_bytes([bytes[off], bytes[off + 1]]);
+        if is_32bit_thumb(hw) {
+            if off + 4 > bytes.len() {
+                break;
+            }
+            let second = u16::from_le_bytes([bytes[off + 2], bytes[off + 3]]);
+            if let Some((rd, kind, imm)) = decode_mov(hw, second) {
+                match kind {
+                    MovKind::W => last_movw[rd as usize] = Some(imm),
+                    MovKind::T => {
+                        if let Some(wimm) = last_movw[rd as usize].take() {
+                            let addr = ((imm as u64) << 16) | wimm as u64;
+                            check_absolute_addr(addr, ranges, allowed, hits);
+                        }
+                    }
+                }
+            } else {
+                // any other 32-bit instruction may write any register; clear
+                // all pending MOVW so a distant MOVT is never mis-paired
+                last_movw = [None; 16];
+            }
+            off += 4;
+        } else {
+            // 16-bit Thumb: clear a pending MOVW for the register it may write
+            if let Some(reg) = thumb16_writes_rd(hw) {
+                last_movw[reg as usize] = None;
+            }
+            off += 2;
+        }
+    }
+}
+
+/// Approximate destination register of a 16-bit Thumb instruction (used to
+/// invalidate a pending MOVW so a distant MOVT is never mis-paired).
+fn thumb16_writes_rd(hw: u16) -> Option<u8> {
+    // ADD/SUB/MOV/AND/ORR/... three-register and immediate forms encode Rd in
+    // bits[10:8]; LDR/STR with register offset use Rt there too. Conservative:
+    // clearing on any 16-bit instruction only ever skips a pairing.
+    Some(((hw >> 8) & 0x7) as u8)
+}
+
+/// Reports 32-bit LE words inside the target firmware address space from an
+/// allocatable, non-executable data section. Section-relative offsets (the
+/// module's own layout, fixed by relocations) live well below the firmware
+/// space, so they are naturally excluded.
+fn scan_data_section<'data, S: ObjectSection<'data>>(
+    sec: &S,
+    ranges: &[AddressRange],
+    allowed: &[u64],
+    hits: &mut Vec<String>,
+) {
+    let Ok(bytes) = sec.data() else { return };
+    for chunk in bytes.chunks_exact(4) {
+        let word = u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]) as u64;
+        if word == 0 {
+            continue;
+        }
+        check_absolute_addr(word, ranges, allowed, hits);
+    }
 }

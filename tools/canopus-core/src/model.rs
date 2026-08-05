@@ -33,6 +33,16 @@ pub struct TargetPack {
     pub loader_profile: Option<LoaderProfile>,
     pub capabilities: Option<Vec<String>>,
     pub provenance: Option<TargetProvenance>,
+    /* CAN-P1-011: the firmware's absolute-address space(s). The verifier
+     * scans module instructions and data for 32-bit values inside these
+     * ranges; every hit must be in the allowed-address allowlist. */
+    pub firmware_address_ranges: Option<Vec<AddressRange>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddressRange {
+    pub base: u64,
+    pub size: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

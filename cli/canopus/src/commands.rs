@@ -360,11 +360,13 @@ pub fn verify(
     let data = std::fs::read(elf_path)
         .map_err(|e| anyhow::anyhow!("cannot read {}: {e}", elf_path.display()))?;
 
-    // allowed_addresses will be wired to the target symbol table in Phase 3;
-    // for now the verifier runs format/policy checks with an empty allowlist.
+    // CAN-P1-011: the absolute-address allowlist is the target's own symbol
+    // table (entry + callable addresses). Embedded firmware-range addresses
+    // in the module must all appear here.
+    let allowed = build_allowed_addresses(targets_dir, target_id);
     let verifier = Verifier {
         target: &pack,
-        allowed_addresses: &[],
+        allowed_addresses: &allowed,
     };
     let report = verifier.verify(&data);
 
@@ -396,6 +398,41 @@ pub fn verify(
 }
 
 // ---------------------------------------------------------------- helpers
+
+/// CAN-P1-011: build the absolute-address allowlist from the target's own
+/// symbol records (entry + callable addresses). Every firmware-range address
+/// a module may legitimately reference must come from this table.
+fn build_allowed_addresses(targets_dir: &Path, target_id: &str) -> Vec<u64> {
+    let sym_dir = targets_dir.join(target_id).join("symbols");
+    let mut addrs = Vec::new();
+    let Ok(entries) = std::fs::read_dir(&sym_dir) else {
+        return addrs;
+    };
+    for entry in entries.flatten() {
+        let p = entry.path();
+        if p.extension().and_then(|e| e.to_str()) != Some("json") {
+            continue;
+        }
+        let Ok(text) = std::fs::read_to_string(&p) else { continue };
+        let Ok(sym) = serde_json::from_str::<canopus_core::model::Symbol>(&text) else {
+            continue;
+        };
+        if let Some(a) = sym.entry_address.as_deref().and_then(parse_hex_addr) {
+            addrs.push(a);
+        }
+        if let Some(a) = sym.callable_address.as_deref().and_then(parse_hex_addr) {
+            addrs.push(a);
+        }
+    }
+    addrs.sort_unstable();
+    addrs.dedup();
+    addrs
+}
+
+fn parse_hex_addr(s: &str) -> Option<u64> {
+    let t = s.trim().trim_start_matches("0x").trim_start_matches("0X");
+    u64::from_str_radix(t, 16).ok()
+}
 
 fn load_json(path: &Path) -> anyhow::Result<Value> {
     let text = std::fs::read_to_string(path)
