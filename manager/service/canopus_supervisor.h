@@ -221,6 +221,8 @@ int canopus_supervisor_attach_tracker(struct canopus_supervisor_v1 *sup,
 void canopus_supervisor_boot_begin(struct canopus_supervisor_v1 *sup,
                                    uint32_t boot_id);
 void canopus_supervisor_boot_ok(struct canopus_supervisor_v1 *sup);
+/* CAN-P2-016: saturating increment of the crash counter. */
+void canopus_supervisor_record_crash(struct canopus_supervisor_v1 *sup);
 /* Returns non-zero when the supervisor should start this boot in safe mode
  * (the previous boot was not marked OK, a crash counter threshold was hit,
  * or store recovery demands it). */

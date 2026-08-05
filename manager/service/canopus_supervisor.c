@@ -317,6 +317,18 @@ int canopus_supervisor_boot_should_safe_mode(
     return 0;
 }
 
+/* CAN-P2-016: saturating crash counter — a long crash loop reports the
+ * threshold, never a wrapped counter that silently looks healthy. */
+void canopus_supervisor_record_crash(struct canopus_supervisor_v1 *sup)
+{
+    if (sup == 0) {
+        return;
+    }
+    if (sup->crash_counter < 0xFFFFFFFFu) {
+        sup->crash_counter++;
+    }
+}
+
 uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
                                            const uint8_t command[CANOPUS_SUP_COMMAND_SIZE])
 {
@@ -512,7 +524,7 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
 {
     uint32_t i;
     uint32_t seq_begin;
-    if (out == 0) {
+    if (sup == 0 || out == 0) {
         return -1;
     }
     canopus_memset(out, 0, CANOPUS_SUP_STATUS_SIZE);

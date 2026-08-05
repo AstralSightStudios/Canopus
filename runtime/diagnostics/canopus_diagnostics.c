@@ -23,6 +23,9 @@ void canopus_event_log_init(struct canopus_event_log_v1 *log, uint32_t boot_id)
 }
 
 uint32_t canopus_event_log_append(struct canopus_event_log_v1 *log,
+                                  uint32_t timestamp,
+                                  uint32_t module_id,
+                                  uint32_t request_id,
                                   uint32_t module_gen,
                                   uint32_t state_before,
                                   uint32_t state_after,
@@ -42,6 +45,9 @@ uint32_t canopus_event_log_append(struct canopus_event_log_v1 *log,
     }
     e = &log->entries[log->head];
     e->sequence = log->next_sequence;
+    e->timestamp = timestamp;
+    e->module_id = module_id;
+    e->request_id = request_id;
     e->module_gen = module_gen;
     e->state_before = state_before;
     e->state_after = state_after;

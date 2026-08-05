@@ -7,14 +7,20 @@ TEST(event_log_append_monotonic)
 {
     struct canopus_event_log_v1 log;
     canopus_event_log_init(&log, 7);
-    uint32_t s1 = canopus_event_log_append(&log, 1, CANOPUS_STATE_READY,
+    uint32_t s1 = canopus_event_log_append(&log, 100, 3, 0x42, 1,
+                                           CANOPUS_STATE_READY,
                                            CANOPUS_STATE_ACTIVE, 0);
-    uint32_t s2 = canopus_event_log_append(&log, 1, CANOPUS_STATE_ACTIVE,
+    uint32_t s2 = canopus_event_log_append(&log, 101, 3, 0x42, 1,
+                                           CANOPUS_STATE_ACTIVE,
                                            CANOPUS_STATE_BOOT_RESIDENT, 0);
     CHECK_EQ(s1, 0u);
     CHECK_EQ(s2, 1u);
     CHECK_EQ(canopus_event_log_count(&log), 2u);
     CHECK_EQ(log.entries[0].boot_id, 7u);
+    /* CAN-P2-010: correlation fields are recorded */
+    CHECK_EQ(log.entries[0].timestamp, 100u);
+    CHECK_EQ(log.entries[0].module_id, 3u);
+    CHECK_EQ(log.entries[0].request_id, 0x42u);
 }
 
 TEST(event_log_wraps_and_keeps_sequence)
@@ -24,7 +30,7 @@ TEST(event_log_wraps_and_keeps_sequence)
     uint32_t last = 0;
     uint32_t i;
     for (i = 0; i < CANOPUS_EVENT_LOG_ENTRIES + 5u; i++) {
-        last = canopus_event_log_append(&log, 0, 0, 0, 0);
+        last = canopus_event_log_append(&log, 0, 0, 0, 0, 0, 0, 0);
     }
     /* sequence is monotonic and never resets */
     CHECK_EQ(last, CANOPUS_EVENT_LOG_ENTRIES + 4u);
@@ -48,15 +54,15 @@ TEST(event_log_stored_count_bounded)
     canopus_event_log_init(&log, 3);
     /* fill the ring exactly */
     for (i = 0; i < CANOPUS_EVENT_LOG_ENTRIES; i++) {
-        canopus_event_log_append(&log, 0, 0, 0, 0);
+        canopus_event_log_append(&log, 0, 0, 0, 0, 0, 0, 0);
     }
     CHECK_EQ(canopus_event_log_count(&log), CANOPUS_EVENT_LOG_ENTRIES);
     CHECK_EQ(canopus_event_log_dropped(&log), 0u);
     /* keep appending past the capacity: stored stays bounded, dropped grows */
-    canopus_event_log_append(&log, 0, 0, 0, 0);
+    canopus_event_log_append(&log, 0, 0, 0, 0, 0, 0, 0);
     CHECK_EQ(canopus_event_log_count(&log), CANOPUS_EVENT_LOG_ENTRIES);
     CHECK_EQ(canopus_event_log_dropped(&log), 1u);
-    canopus_event_log_append(&log, 0, 0, 0, 0);
+    canopus_event_log_append(&log, 0, 0, 0, 0, 0, 0, 0);
     CHECK_EQ(canopus_event_log_count(&log), CANOPUS_EVENT_LOG_ENTRIES);
     CHECK_EQ(canopus_event_log_dropped(&log), 2u);
 }

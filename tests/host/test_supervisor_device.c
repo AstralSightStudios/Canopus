@@ -359,6 +359,25 @@ TEST(supervisor_safe_mode_allows_resident_next_boot)
     CHECK(sup.modules[0].state == CANOPUS_STATE_DISABLED_NEXT_BOOT);
 }
 
+TEST(supervisor_crash_counter_saturates)
+{
+    struct canopus_supervisor_v1 sup;
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    sup.crash_counter = UINT32_MAX;
+    canopus_supervisor_record_crash(&sup);
+    CHECK_EQ(sup.crash_counter, UINT32_MAX); /* no wrap */
+}
+
+TEST(supervisor_render_status_rejects_null)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t status[CANOPUS_SUP_STATUS_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_render_status(0, status) == -1);
+    CHECK(canopus_supervisor_render_status(&sup, 0) == -1);
+    CHECK(canopus_supervisor_render_status(&sup, status) == 0);
+}
+
 TEST(supervisor_boot_markers_drive_safe_mode)
 {
     struct canopus_supervisor_v1 sup;
@@ -820,6 +839,8 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_safe_mode_rejects_removable_unload", supervisor_safe_mode_rejects_removable_unload_wrapper },
     { "supervisor_safe_mode_allows_resident_next_boot", supervisor_safe_mode_allows_resident_next_boot_wrapper },
     { "supervisor_boot_markers_drive_safe_mode", supervisor_boot_markers_drive_safe_mode_wrapper },
+    { "supervisor_crash_counter_saturates", supervisor_crash_counter_saturates_wrapper },
+    { "supervisor_render_status_rejects_null", supervisor_render_status_rejects_null_wrapper },
     { "supervisor_add_module_rejects_full_table", supervisor_add_module_rejects_full_table_wrapper },
     { "supervisor_repeated_add_remove_never_exhausts_slots", supervisor_repeated_add_remove_never_exhausts_slots_wrapper },
     { "supervisor_status_count_matches_after_remove", supervisor_status_count_matches_after_remove_wrapper },

@@ -219,6 +219,12 @@ int canopus_manager_can_disable(const struct canopus_manager_model_v1 *m,
         return 0;
     }
     mod = &m->modules[index];
+    /* CAN-P2-006: in safe mode an immediate removable unload is not offered;
+     * only the next-boot (resident) semantics remain. */
+    if (m->safe_mode &&
+        mod->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE) {
+        return 0;
+    }
     /* removable: DISABLED may be unloaded. resident: only next-boot. */
     return mod->state != CANOPUS_STATE_DISABLED &&
            mod->state != CANOPUS_STATE_UNLOADED;
@@ -232,6 +238,12 @@ int canopus_manager_can_remove(const struct canopus_manager_model_v1 *m,
         return 0;
     }
     mod = &m->modules[index];
+    /* CAN-P2-006: in safe mode an immediate removable remove is not offered;
+     * resident remove+reboot stays available. */
+    if (m->safe_mode &&
+        mod->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE) {
+        return 0;
+    }
     return mod->state != CANOPUS_STATE_UNLOADED &&
            mod->state != CANOPUS_STATE_REMOVE_PENDING;
 }
@@ -244,6 +256,10 @@ int canopus_manager_can_update(const struct canopus_manager_model_v1 *m,
         return 0;
     }
     mod = &m->modules[index];
+    /* CAN-P2-006: activation is never offered in safe mode. */
+    if (m->safe_mode) {
+        return 0;
+    }
     return mod->state != CANOPUS_STATE_UNLOADED;
 }
 
@@ -302,6 +318,10 @@ static uint32_t send_command(struct canopus_manager_model_v1 *m,
 uint32_t canopus_manager_op_install(struct canopus_manager_model_v1 *m,
                                     const char *package_ref)
 {
+    /* CAN-P2-006: install is an activation and is not offered in safe mode. */
+    if (m->safe_mode) {
+        return CANOPUS_RESULT_DISALLOWED;
+    }
     return send_command(m, CANOPUS_CMD_INSTALL, package_ref,
                         (uint32_t)(package_ref ? canopus_strlen(package_ref) + 1 : 0));
 }

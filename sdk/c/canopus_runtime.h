@@ -156,6 +156,11 @@ int canopus_generation_valid(const struct canopus_generation_v1 *g,
 struct canopus_event_v1 {
     uint32_t sequence;     /* monotonic, wraps at UINT32_MAX */
     uint32_t boot_id;      /* from identity guard */
+    /* CAN-P2-010: correlation fields — a reader can tie an event to a
+     * boot, a module and a control request. */
+    uint32_t timestamp;    /* monotonic tick/counter at append time */
+    uint32_t module_id;    /* module id (index/hash; 0 = supervisor) */
+    uint32_t request_id;   /* control request id that caused the event */
     uint32_t module_gen;   /* module generation */
     uint32_t state_before;
     uint32_t state_after;
@@ -176,6 +181,9 @@ void canopus_event_log_init(struct canopus_event_log_v1 *log, uint32_t boot_id);
  * is full the oldest entry is overwritten and `dropped` saturating-
  * increments; the writer never blocks. */
 uint32_t canopus_event_log_append(struct canopus_event_log_v1 *log,
+                                  uint32_t timestamp,
+                                  uint32_t module_id,
+                                  uint32_t request_id,
                                   uint32_t module_gen,
                                   uint32_t state_before,
                                   uint32_t state_after,

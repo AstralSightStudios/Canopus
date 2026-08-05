@@ -168,6 +168,26 @@ TEST(disable_sends_command_for_both_classes)
     CHECK(g_transport_calls == 2);
 }
 
+TEST(safe_mode_blocks_activation_ops)
+{
+    struct canopus_manager_model_v1 m;
+    reset_transport();
+    canopus_manager_init(&m, fake_transport, 0);
+    add_removable(&m, "mod.hello");
+    add_resident(&m, "mod.bt");
+    m.safe_mode = 1;
+    /* activation is never offered in safe mode */
+    CHECK(canopus_manager_op_install(&m, "org.example.pkg") == CANOPUS_RESULT_DISALLOWED);
+    CHECK(canopus_manager_can_update(&m, 0) == 0);
+    CHECK(canopus_manager_can_update(&m, 1) == 0);
+    /* an immediate removable unload is not offered */
+    CHECK(canopus_manager_can_disable(&m, 0) == 0);
+    CHECK(canopus_manager_can_remove(&m, 0) == 0);
+    /* resident next-boot semantics stay available (read-only) */
+    CHECK(canopus_manager_can_disable(&m, 1) != 0);
+    CHECK(canopus_manager_can_remove(&m, 1) != 0);
+}
+
 TEST(request_ids_are_monotonic_and_never_zero)
 {
     struct canopus_manager_model_v1 m;
@@ -304,6 +324,7 @@ static const struct test_registry manager_tests[] = {
     { "resident_detail_has_no_fake_unload", resident_detail_has_no_fake_unload_wrapper },
     { "disable_sends_command_for_both_classes", disable_sends_command_for_both_classes_wrapper },
     { "request_ids_are_monotonic_and_never_zero", request_ids_are_monotonic_and_never_zero_wrapper },
+    { "safe_mode_blocks_activation_ops", safe_mode_blocks_activation_ops_wrapper },
     { "remove_resident_returns_disallowed_until_reboot_semantics", remove_resident_returns_disallowed_until_reboot_semantics_wrapper },
     { "rollback_needs_previous_slot", rollback_needs_previous_slot_wrapper },
     { "update_available_for_active", update_available_for_active_wrapper },
