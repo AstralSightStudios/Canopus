@@ -69,7 +69,26 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_UNLOAD = -7,       /* module unload failed */
     CANOPUS_SUP_ERR_UNKNOWN_OP = -8,   /* unrecognized opcode */
     CANOPUS_SUP_ERR_BUSY = -9,         /* open refs / retained resources block unload */
+    CANOPUS_SUP_ERR_SAFE_MODE = -10,   /* command disallowed by safe-mode policy */
 };
+
+/* CAN-P0-006: safe-mode reason and boot-state markers. */
+enum canopus_safe_mode_reason {
+    CANOPUS_SAFE_MODE_NONE = 0,
+    CANOPUS_SAFE_MODE_USER_REQUESTED,
+    CANOPUS_SAFE_MODE_CRASH,
+    CANOPUS_SAFE_MODE_UNFINISHED_BOOT,
+    CANOPUS_SAFE_MODE_STORE_CORRUPT,
+    CANOPUS_SAFE_MODE_PROTOCOL_MISMATCH,
+};
+
+enum canopus_boot_state {
+    CANOPUS_BOOT_BOOTING = 1,
+    CANOPUS_BOOT_OK = 2,
+};
+
+/* Consecutive crash threshold that forces the next boot into safe mode. */
+#define CANOPUS_SUP_CRASH_THRESHOLD 3u
 
 #define CANOPUS_SUP_MODULE_ID_MAX 32u
 
@@ -115,6 +134,14 @@ struct canopus_supervisor_v1 {
      * is embedded in the status at SEQ_BEGIN/SEQ_END and advances by 2 per
      * command. A reader accepts the record only when begin == end (even). */
     struct canopus_snapshot_v1 snap;
+    /* CAN-P0-006: safe-mode reason, trigger boot id, failing module and a
+     * saturating crash counter, plus the boot-state marker. The command
+     * policy matrix consults these; boot persistence is device-gated. */
+    uint32_t safe_mode_reason;
+    uint32_t safe_mode_boot_id;
+    uint32_t failing_module_id;
+    uint32_t crash_counter;
+    uint32_t boot_state;
     /* CAN-P0-008: v2 transport state. `last_kind` is 0 for a legacy CPC1
      * command, 1 for a v2 CPC2 request; a read returns the stored v2
      * response when the last write was v2, else the legacy CPS1 status. */
@@ -183,6 +210,17 @@ int canopus_supervisor_attach_tracker(struct canopus_supervisor_v1 *sup,
                                       uint32_t index,
                                       struct canopus_resource_tracker_v1 *tracker,
                                       uint32_t open_refs);
+
+/* CAN-P0-006: boot markers. boot_begin records BOOTING (before loading any
+ * third-party module); boot_ok commits BOOT_OK once READY. A boot that never
+ * commits BOOT_OK is the signal for the next boot to auto-enter safe mode. */
+void canopus_supervisor_boot_begin(struct canopus_supervisor_v1 *sup,
+                                   uint32_t boot_id);
+void canopus_supervisor_boot_ok(struct canopus_supervisor_v1 *sup);
+/* Returns non-zero when the supervisor should start this boot in safe mode
+ * (the previous boot was not marked OK, a crash counter threshold was hit,
+ * or store recovery demands it). */
+int canopus_supervisor_boot_should_safe_mode(const struct canopus_supervisor_v1 *sup);
 
 #ifdef __cplusplus
 }

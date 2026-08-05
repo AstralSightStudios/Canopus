@@ -136,6 +136,35 @@ static uint32_t cmd_word(const uint8_t command[CANOPUS_SUP_COMMAND_SIZE],
 /* Core opcode dispatch shared by the legacy CPC1 path and the v2 path
  * (CAN-P0-008). `stage_arg` is the optional package path for INSTALL (v2
  * passes the request payload; the legacy path passes 0). */
+/* CAN-P0-006: safe-mode command policy. Only read/diagnostic and next-boot
+ * operations are allowed: QUERY, ROLLBACK, ENTER_SAFE_MODE, and for resident
+ * classes DISABLE/REMOVE (which are next-boot only anyway). INSTALL, ENABLE,
+ * UPDATE, and any immediate removable unload are rejected. */
+static int sup_safe_mode_allows(const struct canopus_supervisor_v1 *sup,
+                                uint32_t op, int slot)
+{
+    switch (op) {
+    case CANOPUS_SUP_CMD_QUERY:
+    case CANOPUS_SUP_CMD_ROLLBACK:
+    case CANOPUS_SUP_CMD_ENTER_SAFE_MODE:
+        return 1;
+    case CANOPUS_SUP_CMD_INSTALL:
+    case CANOPUS_SUP_CMD_ENABLE:
+    case CANOPUS_SUP_CMD_UPDATE:
+        return 0; /* activation is never allowed in safe mode */
+    case CANOPUS_SUP_CMD_DISABLE:
+    case CANOPUS_SUP_CMD_REMOVE:
+        /* only the next-boot (resident) semantics are read-only enough */
+        if (slot < 0 || (uint32_t)slot >= CANOPUS_SUP_MODULE_SLOTS ||
+            sup->modules[slot].state == 0) {
+            return 0;
+        }
+        return sup->modules[slot].lifecycle_class != CANOPUS_LIFECYCLE_REMOVABLE;
+    default:
+        return 0;
+    }
+}
+
 static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
                              uint32_t arg0, uint32_t arg1,
                              const char *stage_arg)
@@ -144,6 +173,11 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
     int slot;
 
     (void)arg1;
+
+    if (sup->safe_mode && !sup_safe_mode_allows(sup, op, (int)arg0)) {
+        sup->error_code = CANOPUS_SUP_ERR_SAFE_MODE;
+        return CANOPUS_RESULT_DISALLOWED;
+    }
     switch (op) {
     case CANOPUS_SUP_CMD_QUERY:
         rc = CANOPUS_RESULT_COMPLETED;
@@ -236,6 +270,7 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
 
     case CANOPUS_SUP_CMD_ENTER_SAFE_MODE:
         sup->safe_mode = 1u;
+        sup->safe_mode_reason = CANOPUS_SAFE_MODE_USER_REQUESTED;
         rc = CANOPUS_RESULT_COMPLETED;
         break;
 
@@ -245,6 +280,41 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
         break;
     }
     return rc;
+}
+
+/* ---- CAN-P0-006: boot markers -------------------------------------- */
+
+void canopus_supervisor_boot_begin(struct canopus_supervisor_v1 *sup,
+                                   uint32_t boot_id)
+{
+    if (sup == 0) {
+        return;
+    }
+    sup->boot_state = CANOPUS_BOOT_BOOTING;
+    sup->safe_mode_boot_id = boot_id;
+}
+
+void canopus_supervisor_boot_ok(struct canopus_supervisor_v1 *sup)
+{
+    if (sup == 0) {
+        return;
+    }
+    sup->boot_state = CANOPUS_BOOT_OK;
+}
+
+int canopus_supervisor_boot_should_safe_mode(
+    const struct canopus_supervisor_v1 *sup)
+{
+    if (sup == 0) {
+        return 1; /* a missing supervisor is never a healthy boot */
+    }
+    if (sup->boot_state == CANOPUS_BOOT_BOOTING) {
+        return 1; /* previous boot never committed BOOT_OK */
+    }
+    if (sup->crash_counter >= CANOPUS_SUP_CRASH_THRESHOLD) {
+        return 1;
+    }
+    return 0;
 }
 
 uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,

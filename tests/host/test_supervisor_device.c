@@ -293,8 +293,86 @@ TEST(supervisor_safe_mode_sets_flag)
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
     CHECK(sup.safe_mode == 1);
+    CHECK(sup.safe_mode_reason == CANOPUS_SAFE_MODE_USER_REQUESTED);
     canopus_supervisor_render_status(&sup, status);
     CHECK(r32(status, 12) == 1);
+}
+
+/* ---- CAN-P0-006: safe-mode policy matrix + boot markers ------------- */
+
+TEST(supervisor_safe_mode_rejects_activation)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1,
+                                        "mod.hello") == 0);
+    /* enter safe mode */
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    /* INSTALL / ENABLE / UPDATE are rejected by policy, not just shown */
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_SAFE_MODE);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_UPDATE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
+    /* QUERY stays read-only and allowed */
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_QUERY, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+}
+
+TEST(supervisor_safe_mode_rejects_removable_unload)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1,
+                                        "mod.hello") == 0);
+    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    /* an immediate removable unload (disable/remove now) is not read-only */
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_ACTIVE); /* untouched */
+    g_unloads = 0;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
+    CHECK(g_unloads == 0);
+}
+
+TEST(supervisor_safe_mode_allows_resident_next_boot)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1,
+                                        "mod.bt") == 0);
+    sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    /* disable-next-boot for a resident module is read-only and allowed */
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_DISABLED_NEXT_BOOT);
+}
+
+TEST(supervisor_boot_markers_drive_safe_mode)
+{
+    struct canopus_supervisor_v1 sup;
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    /* a boot that never commits BOOT_OK forces safe mode next boot */
+    canopus_supervisor_boot_begin(&sup, 42);
+    CHECK(sup.boot_state == CANOPUS_BOOT_BOOTING);
+    CHECK(canopus_supervisor_boot_should_safe_mode(&sup) != 0);
+    canopus_supervisor_boot_ok(&sup);
+    CHECK(sup.boot_state == CANOPUS_BOOT_OK);
+    CHECK(canopus_supervisor_boot_should_safe_mode(&sup) == 0);
+    /* a crash counter past the threshold forces safe mode */
+    sup.crash_counter = CANOPUS_SUP_CRASH_THRESHOLD;
+    CHECK(canopus_supervisor_boot_should_safe_mode(&sup) != 0);
 }
 
 /* ---- CAN-P1-003: sequence snapshot ---------------------------------- */
@@ -690,6 +768,10 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_resident_remove_is_remove_pending", supervisor_resident_remove_is_remove_pending_wrapper },
     { "supervisor_unknown_slot_disallowed", supervisor_unknown_slot_disallowed_wrapper },
     { "supervisor_safe_mode_sets_flag", supervisor_safe_mode_sets_flag_wrapper },
+    { "supervisor_safe_mode_rejects_activation", supervisor_safe_mode_rejects_activation_wrapper },
+    { "supervisor_safe_mode_rejects_removable_unload", supervisor_safe_mode_rejects_removable_unload_wrapper },
+    { "supervisor_safe_mode_allows_resident_next_boot", supervisor_safe_mode_allows_resident_next_boot_wrapper },
+    { "supervisor_boot_markers_drive_safe_mode", supervisor_boot_markers_drive_safe_mode_wrapper },
     { "supervisor_add_module_rejects_full_table", supervisor_add_module_rejects_full_table_wrapper },
     { "supervisor_repeated_add_remove_never_exhausts_slots", supervisor_repeated_add_remove_never_exhausts_slots_wrapper },
     { "supervisor_status_count_matches_after_remove", supervisor_status_count_matches_after_remove_wrapper },
