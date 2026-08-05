@@ -38,4 +38,16 @@ static inline size_t canopus_strlen(const char *s)
     return n;
 }
 
+/* Bounded strlen: never reads more than `max` characters. Returns max when
+ * no NUL is found within that window, so callers can reject unterminated
+ * fixed-size arrays instead of reading past them. */
+static inline size_t canopus_strnlen(const char *s, size_t max)
+{
+    size_t n = 0;
+    while (n < max && s[n] != '\0') {
+        n++;
+    }
+    return n;
+}
+
 #endif /* CANOPUS_MEMORY_H */

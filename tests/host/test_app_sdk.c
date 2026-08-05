@@ -186,6 +186,94 @@ TEST(ordered_list_serialize_overflow)
     CHECK(canopus_ordered_list_serialize(&app, 1, wire, sizeof(wire)) == -1);
 }
 
+/* ---- CAN-P1-009: input safety --------------------------------------- */
+
+TEST(ordered_list_parse_rejects_name_into_entry_table)
+{
+    uint8_t wire[64];
+    canopus_memset(wire, 0, sizeof(wire));
+    wire[0] = 1; wire[1] = 0; /* count = 1 */
+    /* name offset points INTO the entry table (offset 2); the name region
+       starts at 2 + count*16 = 18 for a single entry */
+    wire[2] = 2; wire[3] = 0;
+    struct canopus_ordered_app_v1 out[1];
+    CHECK(canopus_ordered_list_parse(wire, sizeof(wire), out, 1) == -1);
+    /* a name offset into the u16 header is also rejected */
+    wire[2] = 1; wire[3] = 0;
+    CHECK(canopus_ordered_list_parse(wire, sizeof(wire), out, 1) == -1);
+}
+
+TEST(ordered_list_parse_null_matrix)
+{
+    uint8_t wire[32];
+    struct canopus_ordered_app_v1 out[2];
+    canopus_memset(wire, 0, sizeof(wire));
+    wire[0] = 1; wire[1] = 0; /* count = 1 */
+    CHECK(canopus_ordered_list_parse(0, sizeof(wire), out, 2) == -1);
+    CHECK(canopus_ordered_list_parse(wire, 1, out, 2) == -1); /* len < 2 */
+    /* count > 0 with a NULL out is rejected, not dereferenced */
+    wire[2] = 18; wire[3] = 0;
+    CHECK(canopus_ordered_list_parse(wire, sizeof(wire), 0, 2) == -1);
+    /* out_cap 0 with count > 0 is rejected */
+    CHECK(canopus_ordered_list_parse(wire, sizeof(wire), 0, 0) == -1);
+}
+
+TEST(ordered_list_parse_rejects_uint32max_offset)
+{
+    uint8_t wire[64];
+    canopus_memset(wire, 0, sizeof(wire));
+    wire[0] = 1; wire[1] = 0;
+    wire[2] = 0xFF; wire[3] = 0xFF; wire[4] = 0xFF; wire[5] = 0xFF;
+    struct canopus_ordered_app_v1 out[1];
+    CHECK(canopus_ordered_list_parse(wire, sizeof(wire), out, 1) == -1);
+}
+
+TEST(ordered_list_parse_zeroes_output_on_failure)
+{
+    uint8_t wire[64];
+    struct canopus_ordered_app_v1 out[2];
+    canopus_memset(wire, 0, sizeof(wire));
+    wire[0] = 2; wire[1] = 0; /* count = 2 */
+    /* pre-poison the output; the truncated buffer must fail and leave the
+       output fully zeroed, never half-initialized */
+    canopus_memset(out, 0xCC, sizeof(out));
+    CHECK(canopus_ordered_list_parse(wire, 20, out, 2) == -1);
+    {
+        size_t i, j;
+        for (i = 0; i < 2; i++) {
+            for (j = 0; j < sizeof(out[0].app_name); j++) {
+                CHECK(out[i].app_name[j] == '\0');
+            }
+            CHECK(out[i].enabled == 0);
+            CHECK(out[i].hidden == 0);
+        }
+    }
+}
+
+TEST(ordered_list_serialize_rejects_unnul_app_name)
+{
+    struct canopus_ordered_app_v1 app;
+    uint8_t wire[512];
+    /* a fixed app_name array with no NUL anywhere must be rejected with
+       bounded reads (never canopus_strlen past the array) */
+    canopus_memset(&app, 0xFF, sizeof(app));
+    CHECK(canopus_ordered_list_serialize(&app, 1, wire, sizeof(wire)) == -1);
+}
+
+TEST(ordered_list_serialize_null_matrix)
+{
+    uint8_t wire[32];
+    struct canopus_ordered_app_v1 app;
+    canopus_memset(&app, 0, sizeof(app));
+    canopus_buf_copy(app.app_name, sizeof(app.app_name), "a");
+    /* apps NULL with count > 0 is rejected */
+    CHECK(canopus_ordered_list_serialize(0, 1, wire, sizeof(wire)) == -1);
+    /* buf NULL / cap 0 / cap < 2 are rejected */
+    CHECK(canopus_ordered_list_serialize(&app, 1, 0, 0) == -1);
+    CHECK(canopus_ordered_list_serialize(&app, 1, wire, 1) == -1);
+    CHECK(canopus_ordered_list_serialize(&app, 0, 0, 0) == -1);
+}
+
 static const struct test_registry app_sdk_tests[] = {
     { "app_descriptor_check_ok", app_descriptor_check_ok_wrapper },
     { "app_descriptor_rejects_bad_header", app_descriptor_rejects_bad_header_wrapper },
@@ -198,6 +286,12 @@ static const struct test_registry app_sdk_tests[] = {
     { "ordered_list_rejects_unterminated_name", ordered_list_rejects_unterminated_name_wrapper },
     { "ordered_list_rejects_oversized_count", ordered_list_rejects_oversized_count_wrapper },
     { "ordered_list_serialize_overflow", ordered_list_serialize_overflow_wrapper },
+    { "ordered_list_parse_rejects_name_into_entry_table", ordered_list_parse_rejects_name_into_entry_table_wrapper },
+    { "ordered_list_parse_null_matrix", ordered_list_parse_null_matrix_wrapper },
+    { "ordered_list_parse_rejects_uint32max_offset", ordered_list_parse_rejects_uint32max_offset_wrapper },
+    { "ordered_list_parse_zeroes_output_on_failure", ordered_list_parse_zeroes_output_on_failure_wrapper },
+    { "ordered_list_serialize_rejects_unnul_app_name", ordered_list_serialize_rejects_unnul_app_name_wrapper },
+    { "ordered_list_serialize_null_matrix", ordered_list_serialize_null_matrix_wrapper },
 };
 #define APP_SDK_TESTS_LEN (sizeof(app_sdk_tests) / sizeof(app_sdk_tests[0]))
 

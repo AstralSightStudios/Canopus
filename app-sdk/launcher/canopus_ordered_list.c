@@ -4,6 +4,11 @@
 #include "canopus_runtime.h"
 #include "canopus_memory.h"
 
+/* CAN-P1-009: names are scanned with a bounded window, never with an
+ * unbounded canopus_strlen; name offsets must point at the name region
+ * (>= 2 + count*16) and never into the header or the entry table; a failed
+ * parse leaves the output fully zeroed. */
+
 static const char *name_at(const uint8_t *buf, uint32_t len, uint32_t off)
 {
     uint32_t i;
@@ -26,7 +31,7 @@ int canopus_ordered_list_parse(const uint8_t *buf, uint32_t len,
                                struct canopus_ordered_app_v1 *out,
                                uint32_t out_cap)
 {
-    uint32_t count, i;
+    uint32_t count, i, name_base;
     const uint8_t *p;
     if (buf == 0 || len < 2) {
         return -1;
@@ -38,19 +43,36 @@ int canopus_ordered_list_parse(const uint8_t *buf, uint32_t len,
     if (count > out_cap) {
         return -1;
     }
+    if (count > 0 && out == 0) {
+        return -1; /* non-empty result requires an output array */
+    }
+    /* never leave half-initialized output behind a failed parse: zero the
+     * (bounded) output before any check that could fail midway. */
+    if (out != 0 && out_cap > 0) {
+        uint32_t z = out_cap < CANOPUS_ORDERED_LIST_MAX_ENTRIES
+                         ? out_cap
+                         : CANOPUS_ORDERED_LIST_MAX_ENTRIES;
+        canopus_memset(out, 0, (size_t)z * sizeof(out[0]));
+    }
     /* 2 bytes header + count * 16 entry bytes must fit */
     if ((uint64_t)2 + (uint64_t)count * CANOPUS_ORDERED_LIST_ENTRY_SIZE > len) {
         return -1;
     }
+    /* the canonical writer places names after the entries; a name offset
+     * into the header or the entry table is rejected */
+    name_base = 2u + count * CANOPUS_ORDERED_LIST_ENTRY_SIZE;
     p = buf + 2;
     for (i = 0; i < count; i++) {
         uint32_t off = (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
                        ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
-        const char *name = name_at(buf, len, off);
+        const char *name;
+        if (off < name_base) {
+            return -1; /* points into header/entry table, not a name */
+        }
+        name = name_at(buf, len, off);
         if (name == 0) {
             return -1;
         }
-        canopus_memset(out[i].app_name, 0, sizeof(out[i].app_name));
         canopus_buf_copy(out[i].app_name, sizeof(out[i].app_name), name);
         out[i].enabled = (uint8_t)(p[8] != 0u);
         out[i].hidden = (uint8_t)(p[9] & 1u);
@@ -69,12 +91,21 @@ int canopus_ordered_list_serialize(const struct canopus_ordered_app_v1 *apps,
     if (count > CANOPUS_ORDERED_LIST_MAX_ENTRIES) {
         return -1;
     }
+    if (count > 0 && apps == 0) {
+        return -1; /* non-empty input requires an apps array */
+    }
     if (buf == 0 || cap < 2) {
         return -1;
     }
     needed = 2 + (uint64_t)count * CANOPUS_ORDERED_LIST_ENTRY_SIZE;
     for (i = 0; i < count; i++) {
-        needed += canopus_strlen(apps[i].app_name) + 1;
+        uint32_t nlen =
+            (uint32_t)canopus_strnlen(apps[i].app_name,
+                                      CANOPUS_ORDERED_LIST_NAME_MAX);
+        if (nlen >= CANOPUS_ORDERED_LIST_NAME_MAX) {
+            return -1; /* unterminated or too-long fixed array */
+        }
+        needed += nlen + 1;
     }
     if (needed > cap) {
         return -1;
@@ -86,7 +117,9 @@ int canopus_ordered_list_serialize(const struct canopus_ordered_app_v1 *apps,
 
     name_off = 2 + count * CANOPUS_ORDERED_LIST_ENTRY_SIZE;
     for (i = 0; i < count; i++) {
-        uint32_t nlen = (uint32_t)canopus_strlen(apps[i].app_name);
+        uint32_t nlen =
+            (uint32_t)canopus_strnlen(apps[i].app_name,
+                                      CANOPUS_ORDERED_LIST_NAME_MAX);
         if (nlen >= CANOPUS_ORDERED_LIST_NAME_MAX) {
             return -1;
         }
