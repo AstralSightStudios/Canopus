@@ -1526,7 +1526,7 @@ schema/format
 | Native App/Launcher/UI | 0 | 4 | 11 | APP-001/002/003 逆向中（枚举源+descriptor+register/unregister 静态恢复）；APP-008/011 host 侧 DONE |
 | Rust SDK | 8 | 1 | 0 | RUST-001..006/008/009 DONE；RUST-007 host+verifier PASS，真机 G0 待测 |
 | RE/LLM/MCP | 9 | 0 | 0 | RE-001..009 DONE（canopus-re crate + `canopus re` CLI） |
-| 迁移/多目标/发布 | 3 | 1 | 9 | REL-001/002/004 DONE；REL-003 进行中 |
+| 迁移/多目标/发布 | 5 | 1 | 7 | REL-001/002/004、MULTI-003/004 DONE；REL-003 进行中 |
 
 > 注：参考原型的完成度不能计作 Canopus framework 已实现。
 
@@ -1680,11 +1680,11 @@ schema/format
 | `CAN-MIG-005` | `BACKLOG` | A2DP real-time pacing 修正 | MIG-004 | 五秒 RTP 时间轴与 on-air 时长容差达标 |
 | `CAN-MULTI-001` | `BACKLOG` | 选择第二固件/设备 | TGT-001 | 获得合法固件和身份信息 |
 | `CAN-MULTI-002` | `BACKLOG` | 第二 target pack | MULTI-001,RE-* | 独立证据与 loader profile |
-| `CAN-MULTI-003` | `BACKLOG` | 同模块双 target 构建 | MULTI-002,PKG-003 | 包含并正确选择两个 ELF |
-| `CAN-MULTI-004` | `BACKLOG` | SDK 单目标假设审计 | MULTI-003 | target-private 内容移出公共层 |
+| `CAN-MULTI-003` | `DONE` | 同模块双 target 构建 | MULTI-002,PKG-003 | `planner::expand` 矩阵展开（include/exclude/capability 校验）；CLI build-plan 复用；未注册 target 拒绝 |
+| `CAN-MULTI-004` | `DONE` | SDK 单目标假设审计 | MULTI-003 | sdk_hygiene 测试：公共 SDK 无 target-private 标记；launcher adapter 层显式排除 |
 | `CAN-REL-001` | `DONE` | Production/dev key ceremony | ARCH-006,PKG-002 | KeyRole cert + 签名 revocation list；`canopus key role-cert/revoke/check`；篡改/wrong-role 拒绝 |
 | `CAN-REL-002` | `DONE` | CI pipeline | 各 host/build 任务 | scripts/ci.sh 6 gates + GitHub Actions（macos/thumbv8m/lld） |
-| `CAN-REL-003` | `IN_PROGRESS` | Hardware-in-loop harness | DEV-009,MIG-001 | G0-G7 gate 定义见 §20.3；归档逻辑随 MIG 模块实现 |
+| `CAN-REL-003` | `IN_PROGRESS` | Hardware-in-loop harness | DEV-009,MIG-001 | tests/hardware/gates.md（G0-G13 定义+归档格式）+ scripts/device-gates.sh 检查清单；真机执行待硬件 |
 | `CAN-REL-004` | `DONE` | SDK templates/docs | C-010,RUST-007 | `canopus module new` C/Rust 模板；C 模板产出 verifier-PASS ELF（1 ctor/1 dtor） |
 
 ## 23.14 当前阻塞项
@@ -1735,6 +1735,7 @@ schema/format
 | 2026-08-05 | Phase 7：Manager UI | `CAN-UI-001..004` | canopus_manager 页面+生命周期感知操作；13 host 测试/67 检查；提交 `1e60be9` |
 | 2026-08-05 | Phase 6：App SDK host 侧 + launcher descriptor/register RE | `CAN-APP-002/003/004/008/011` | canopus_app.h + ordered-list parser/serializer + EVID-APP-004（descriptor 布局 + app_launcher_add/del ABI）；提交 `3ccfe42`、`7372e22` |
 | 2026-08-05 | Phase 12：key roles、CI、模板 | `CAN-REL-001/002/004` | `canopus key` + revocation list；scripts/ci.sh 6 gates + GitHub Actions；`canopus module new`；提交 `d10d722`、`1de0c97` |
+| 2026-08-05 | Phase 10/11 脚手架：planner、SDK 审计、G-gate harness | `CAN-MULTI-003/004`,`CAN-REL-003` | planner::expand + sdk_hygiene 审计 + tests/hardware/gates.md + device-gates.sh |
 
 ---
 

@@ -308,44 +308,22 @@ pub fn build_plan(manifest_path: &PathBuf, targets_dir: &PathBuf, json: bool) ->
     let module: ModuleManifest = serde_json::from_value(value)?;
 
     let registry = list_target_packs(targets_dir)?;
-    let mut rows = Vec::new();
-
-    for target_id in &module.targets.include {
-        let pack = match registry.iter().find(|p| &p.target_id == target_id) {
-            Some(p) => p,
-            None => {
-                anyhow::bail!(
-                    "build-plan: target '{}' not registered under {}",
-                    target_id,
-                    targets_dir.display()
-                )
-            }
-        };
-        let req = module
-            .capabilities
-            .as_ref()
-            .map(|c| &c.required)
-            .cloned()
-            .unwrap_or_default();
-        let have = pack.capabilities.clone().unwrap_or_default();
-        let missing: Vec<&String> = req.iter().filter(|c| !have.contains(c)).collect();
-        if !missing.is_empty() {
-            anyhow::bail!(
-                "build-plan: target {} lacks required capabilities: {:?}",
-                target_id,
-                missing
-            );
-        }
-        rows.push(serde_json::json!({
-            "target_id": pack.target_id,
-            "target_pack_revision": pack.revision,
-            "firmware_sha256": pack.firmware_sha256,
-            "module_id": module.module.id,
-            "module_version": module.module.version,
-            "lifecycle": module.module.lifecycle,
-            "language": module.module.language,
-        }));
-    }
+    let rows = canopus_core::planner::expand(&module, &registry)
+        .map_err(|e| anyhow::anyhow!("build-plan: {e}"))?;
+    let rows: Vec<serde_json::Value> = rows
+        .iter()
+        .map(|r| {
+            serde_json::json!({
+                "target_id": r.target_id,
+                "target_pack_revision": r.target_pack_revision,
+                "firmware_sha256": r.firmware_sha256,
+                "module_id": r.module_id,
+                "module_version": r.module_version,
+                "lifecycle": module.module.lifecycle,
+                "language": module.module.language,
+            })
+        })
+        .collect();
 
     if json {
         println!("{}", serde_json::to_string_pretty(&rows)?);

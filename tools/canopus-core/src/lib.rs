@@ -3,6 +3,7 @@
 
 pub mod error;
 pub mod model;
+pub mod planner;
 pub mod policy;
 pub mod registry;
 pub mod rustgen;
