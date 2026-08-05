@@ -50,9 +50,25 @@ tests/          host / integration / fixtures / hardware
 adr/            决策记录（ADR-CAN-001 ...）
 ```
 
+## 能力状态区分
+
+本项目严格区分四种能力状态，任何文档/README 不得混称（`docs/progress.md` 维护
+权威状态；P0/P1/P2 整改状态见 `docs/native-manager-ui-plan.md` §15）：
+
+- **host implemented**：host 测试通过；不代表设备可用。
+- **static recovered**：静态恢复出符号/类型/ABI；未经过设备验证。
+- **device verified**：带 firmware hash 的真机 probe 通过。
+- **production approved**：host + artifact + device gate 全部通过，且
+  `approval_state == APPROVED` 且有 evidence。
+
+当前没有任何能力标记为 production approved。supervisor/transport/lifecycle 等
+处于 host implemented / device pending；launcher/native-app ABI 仍为
+static recovered / BLOCKED-EVIDENCE。
+
 ## 当前阶段
 
 Phase 0-6 实施中。进度见 [`docs/architecture.md`](docs/architecture.md) §23 任务进度追踪区。
+P0/P1/P2 强制整改状态见 [`docs/native-manager-ui-plan.md`](docs/native-manager-ui-plan.md) §15。
 
 ## License
 

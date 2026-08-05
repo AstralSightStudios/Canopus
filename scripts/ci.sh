@@ -33,5 +33,8 @@ else
     echo "  (no lua interpreter; skipping)"
 fi
 
+step "7/7 plan status table validation (CAN-P1-015)"
+./scripts/check-plan-status.sh
+
 echo
 echo "all CI gates passed"
