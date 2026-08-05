@@ -232,6 +232,12 @@ local function format_status(st)
     return table.concat(lines, "\n")
 end
 
+-- Forward-declared UI globals: `refresh_status` (defined below) references
+-- `status` and is called from button handlers, so the label must be declared
+-- before that function even though it is created later in the LVGL section.
+local status
+local busy = false
+
 local function refresh_status(text)
     local st, message = read_status()
     if not st then
@@ -259,13 +265,11 @@ root:clear_flag(lvgl.FLAG.SCROLLABLE)
 lvgl.Label(root, { text = "Canopus Installer", text_color = 0xFFFFFF,
     align = { type = lvgl.ALIGN.TOP_MID, x_ofs = 0, y_ofs = 8 } })
 
-local status = lvgl.Label(root, {
+status = lvgl.Label(root, {
     text = "Load supervisor first.", text_color = 0xBFD9FF, bg_color = 0x0A1830,
     bg_opa = lvgl.OPA(100), pad_all = 4, width = 320, height = 208,
     align = { type = lvgl.ALIGN.TOP_MID, x_ofs = 0, y_ofs = 30 },
 })
-
-local busy = false
 
 local function make_button(text, x, y, color, width, onClicked)
     local button = lvgl.Object(root, {
