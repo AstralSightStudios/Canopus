@@ -66,36 +66,140 @@ struct Transition {
 
 // Table must stay identical to `runtime/lifecycle/canopus_lifecycle.c`.
 const TRANSITIONS: &[Transition] = &[
-    Transition { from: STATE_DISCOVERED, to: STATE_VERIFIED, classes: CLASS_ALL },
-    Transition { from: STATE_VERIFIED, to: STATE_INSTALLED, classes: CLASS_ALL },
-    Transition { from: STATE_INSTALLED, to: STATE_DISABLED, classes: CLASS_ALL },
-    Transition { from: STATE_DISABLED, to: STATE_ENABLED, classes: CLASS_ALL },
-    Transition { from: STATE_ENABLED, to: STATE_DISABLED, classes: CLASS_ALL },
-    Transition { from: STATE_ENABLED, to: STATE_LOADING, classes: CLASS_ALL },
-    Transition { from: STATE_LOADING, to: STATE_PREPARING, classes: CLASS_ALL },
-    Transition { from: STATE_PREPARING, to: STATE_READY, classes: CLASS_ALL },
-    Transition { from: STATE_READY, to: STATE_ACTIVE, classes: CLASS_ALL },
+    Transition {
+        from: STATE_DISCOVERED,
+        to: STATE_VERIFIED,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_VERIFIED,
+        to: STATE_INSTALLED,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_INSTALLED,
+        to: STATE_DISABLED,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_DISABLED,
+        to: STATE_ENABLED,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_ENABLED,
+        to: STATE_DISABLED,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_ENABLED,
+        to: STATE_LOADING,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_LOADING,
+        to: STATE_PREPARING,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_PREPARING,
+        to: STATE_READY,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_READY,
+        to: STATE_ACTIVE,
+        classes: CLASS_ALL,
+    },
     // removable unload path
-    Transition { from: STATE_ACTIVE, to: STATE_STOPPING, classes: CLASS_REMOVABLE },
-    Transition { from: STATE_STOPPING, to: STATE_DRAINING, classes: CLASS_REMOVABLE },
-    Transition { from: STATE_DRAINING, to: STATE_UNLOADED, classes: CLASS_REMOVABLE },
-    Transition { from: STATE_READY, to: STATE_STOPPING, classes: CLASS_REMOVABLE },
-    Transition { from: STATE_DISABLED, to: STATE_UNLOADED, classes: CLASS_REMOVABLE },
+    Transition {
+        from: STATE_ACTIVE,
+        to: STATE_STOPPING,
+        classes: CLASS_REMOVABLE,
+    },
+    Transition {
+        from: STATE_STOPPING,
+        to: STATE_DRAINING,
+        classes: CLASS_REMOVABLE,
+    },
+    Transition {
+        from: STATE_DRAINING,
+        to: STATE_UNLOADED,
+        classes: CLASS_REMOVABLE,
+    },
+    Transition {
+        from: STATE_READY,
+        to: STATE_STOPPING,
+        classes: CLASS_REMOVABLE,
+    },
+    Transition {
+        from: STATE_DISABLED,
+        to: STATE_UNLOADED,
+        classes: CLASS_REMOVABLE,
+    },
     // resident barrier
-    Transition { from: STATE_ACTIVE, to: STATE_BOOT_RESIDENT, classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH },
-    Transition { from: STATE_BOOT_RESIDENT, to: STATE_DISABLED_NEXT_BOOT, classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH },
+    Transition {
+        from: STATE_ACTIVE,
+        to: STATE_BOOT_RESIDENT,
+        classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH,
+    },
+    Transition {
+        from: STATE_BOOT_RESIDENT,
+        to: STATE_DISABLED_NEXT_BOOT,
+        classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH,
+    },
     // failure paths
-    Transition { from: STATE_LOADING, to: STATE_FAILED, classes: CLASS_ALL },
-    Transition { from: STATE_PREPARING, to: STATE_FAILED, classes: CLASS_ALL },
-    Transition { from: STATE_READY, to: STATE_FAILED, classes: CLASS_ALL },
-    Transition { from: STATE_ACTIVE, to: STATE_FAIL_STOP, classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH },
-    Transition { from: STATE_BOOT_RESIDENT, to: STATE_FAIL_STOP, classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH },
-    Transition { from: STATE_FAIL_STOP, to: STATE_QUARANTINED_NEXT_BOOT, classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH },
+    Transition {
+        from: STATE_LOADING,
+        to: STATE_FAILED,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_PREPARING,
+        to: STATE_FAILED,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_READY,
+        to: STATE_FAILED,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_ACTIVE,
+        to: STATE_FAIL_STOP,
+        classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH,
+    },
+    Transition {
+        from: STATE_BOOT_RESIDENT,
+        to: STATE_FAIL_STOP,
+        classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH,
+    },
+    Transition {
+        from: STATE_FAIL_STOP,
+        to: STATE_QUARANTINED_NEXT_BOOT,
+        classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH,
+    },
     // resident update/remove
-    Transition { from: STATE_BOOT_RESIDENT, to: STATE_UPDATE_STAGED, classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH },
-    Transition { from: STATE_UPDATE_STAGED, to: STATE_REBOOT_REQUIRED, classes: CLASS_ALL },
-    Transition { from: STATE_BOOT_RESIDENT, to: STATE_REMOVE_PENDING, classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH },
-    Transition { from: STATE_REMOVE_PENDING, to: STATE_REBOOT_REQUIRED, classes: CLASS_ALL },
+    Transition {
+        from: STATE_BOOT_RESIDENT,
+        to: STATE_UPDATE_STAGED,
+        classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH,
+    },
+    Transition {
+        from: STATE_UPDATE_STAGED,
+        to: STATE_REBOOT_REQUIRED,
+        classes: CLASS_ALL,
+    },
+    Transition {
+        from: STATE_BOOT_RESIDENT,
+        to: STATE_REMOVE_PENDING,
+        classes: CLASS_RESIDENT | CLASS_ALWAYS | CLASS_PATCH,
+    },
+    Transition {
+        from: STATE_REMOVE_PENDING,
+        to: STATE_REBOOT_REQUIRED,
+        classes: CLASS_ALL,
+    },
 ];
 
 fn class_mask(lifecycle_class: u32) -> u32 {
@@ -199,11 +303,7 @@ pub fn snapshot_ready(snap: &SnapshotV1) -> bool {
 /// # Safety
 /// `buf` must point to `capacity` writable bytes for as long as the writer is
 /// used, and must not alias anything read by the module.
-pub unsafe fn status_writer_init(
-    w: &mut StatusWriterV1,
-    buf: *mut u8,
-    capacity: u32,
-) -> bool {
+pub unsafe fn status_writer_init(w: &mut StatusWriterV1, buf: *mut u8, capacity: u32) -> bool {
     if capacity == 0 || capacity > STATUS_RECORD_MAX {
         return false;
     }
@@ -386,7 +486,11 @@ impl ResourceTrackerV1 {
 
     /// Marks RETAINED_UNTIL_REBOOT (not releasable this boot).
     pub fn retain_until_reboot(&mut self, handle: *const core::ffi::c_void) -> bool {
-        self.transition(handle, RES_RETAINED_UNTIL_REBOOT, &[RES_ACTIVE, RES_DRAINING])
+        self.transition(
+            handle,
+            RES_RETAINED_UNTIL_REBOOT,
+            &[RES_ACTIVE, RES_DRAINING],
+        )
     }
 
     /// Releases everything still releasable (rollback on init failure).
@@ -553,11 +657,7 @@ pub fn buf_copy(dst: &mut [u8], src: &str) -> Option<usize> {
     let n = src.len().min(room);
     dst[..n].copy_from_slice(&src.as_bytes()[..n]);
     dst[n] = 0;
-    if n < src.len() {
-        None
-    } else {
-        Some(n)
-    }
+    if n < src.len() { None } else { Some(n) }
 }
 
 /// Validates the descriptor header + ABI version. Returns `false` on a null
@@ -772,7 +872,10 @@ mod tests {
         assert!(snapshot_ready(&w.snap));
         assert_eq!(buf[0], 0xAA);
         assert_eq!(u16::from_le_bytes([buf[1], buf[2]]), 0xBBCC);
-        assert_eq!(u32::from_le_bytes([buf[3], buf[4], buf[5], buf[6]]), 0xDDEE_FF01);
+        assert_eq!(
+            u32::from_le_bytes([buf[3], buf[4], buf[5], buf[6]]),
+            0xDDEE_FF01
+        );
     }
 
     #[test]
@@ -807,7 +910,11 @@ mod tests {
         };
         unsafe {
             assert!(!status_writer_init(&mut w, core::ptr::null_mut(), 0));
-            assert!(!status_writer_init(&mut w, core::ptr::null_mut(), STATUS_RECORD_MAX + 1));
+            assert!(!status_writer_init(
+                &mut w,
+                core::ptr::null_mut(),
+                STATUS_RECORD_MAX + 1
+            ));
         }
     }
 

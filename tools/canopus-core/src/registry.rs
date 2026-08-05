@@ -2,7 +2,7 @@
 
 use crate::error::{Error, Result};
 use crate::model::TargetPack;
-use crate::schema::{validate, SchemaKind};
+use crate::schema::{SchemaKind, validate};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
@@ -21,7 +21,7 @@ pub fn load_target_pack(path: &Path) -> Result<TargetPack> {
         other => {
             return Err(Error::other(format!(
                 "unsupported target file extension {other:?} (expected .json or .toml)"
-            )))
+            )));
         }
     };
     validate(SchemaKind::Target, &value)?;
@@ -69,10 +69,7 @@ pub fn list_target_packs(targets_root: &Path) -> Result<Vec<TargetPack>> {
             Ok(td) => match load_target_pack(&td.manifest) {
                 Ok(pack) => out.push(pack),
                 Err(e) => {
-                    eprintln!(
-                        "warn: target dir {} skipped: {e}",
-                        entry.path().display()
-                    )
+                    eprintln!("warn: target dir {} skipped: {e}", entry.path().display())
                 }
             },
             Err(_) => continue,

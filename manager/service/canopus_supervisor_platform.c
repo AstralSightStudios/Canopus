@@ -34,28 +34,14 @@ static int sup_control_close(void *filep)
 
 static int32_t sup_control_read(void *filep, void *buffer, uint32_t count)
 {
-    struct canopus_supervisor_v1 *sup;
     (void)filep;
-    if (buffer == 0 || count < CANOPUS_SUP_STATUS_SIZE) {
-        return -1;
-    }
-    sup = canopus_supervisor_get();
-    if (canopus_supervisor_render_status(sup, (uint8_t *)buffer) != 0) {
-        return -1;
-    }
-    return (int32_t)CANOPUS_SUP_STATUS_SIZE;
+    return canopus_supervisor_device_read(canopus_supervisor_get(), buffer, count);
 }
 
 static int32_t sup_control_write(void *filep, const void *buffer, uint32_t count)
 {
-    struct canopus_supervisor_v1 *sup;
     (void)filep;
-    if (buffer == 0 || count < CANOPUS_SUP_COMMAND_SIZE) {
-        return -1;
-    }
-    sup = canopus_supervisor_get();
-    (void)canopus_supervisor_handle_command(sup, (const uint8_t *)buffer);
-    return 0;
+    return canopus_supervisor_device_write(canopus_supervisor_get(), buffer, count);
 }
 
 static int sup_register_device(void *cookie)

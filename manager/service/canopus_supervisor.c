@@ -211,6 +211,28 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
     return 0;
 }
 
+int32_t canopus_supervisor_device_read(struct canopus_supervisor_v1 *sup,
+                                       void *buffer, uint32_t count)
+{
+    if (sup == 0 || buffer == 0 || count < CANOPUS_SUP_STATUS_SIZE) {
+        return -1;
+    }
+    if (canopus_supervisor_render_status(sup, (uint8_t *)buffer) != 0) {
+        return -1;
+    }
+    return (int32_t)CANOPUS_SUP_STATUS_SIZE;
+}
+
+int32_t canopus_supervisor_device_write(struct canopus_supervisor_v1 *sup,
+                                        const void *buffer, uint32_t count)
+{
+    if (sup == 0 || buffer == 0 || count != CANOPUS_SUP_COMMAND_SIZE) {
+        return -1;
+    }
+    (void)canopus_supervisor_handle_command(sup, (const uint8_t *)buffer);
+    return (int32_t)count;
+}
+
 /* Host convenience: record a newly installed module into a slot. */
 int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
                                   uint32_t lifecycle_class,

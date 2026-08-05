@@ -21,7 +21,7 @@ const PUBLIC_SDK_DIRS: &[&str] = &[
 const TARGET_PRIVATE_MARKERS: &[&str] = &[
     "xiaomi",
     "band-10-pro",
-    "0x0C4F",   // firmware text segment base (as written in the pack)
+    "0x0C4F",     // firmware text segment base (as written in the pack)
     "0x200D090C", // launcher runtime app list
     "app_launcher_",
     "launcher_app_",
@@ -99,10 +99,10 @@ fn find_in_tree(dir: &std::path::Path, needle: &str) -> bool {
             if find_in_tree(&p, needle) {
                 return true;
             }
-        } else if let Ok(text) = std::fs::read_to_string(&p) {
-            if text.contains(needle) {
-                return true;
-            }
+        } else if let Ok(text) = std::fs::read_to_string(&p)
+            && text.contains(needle)
+        {
+            return true;
         }
     }
     false

@@ -135,7 +135,10 @@ pub enum StoreError {
     #[error("illegal task transition {from:?} -> {to:?}")]
     IllegalTaskTransition { from: ReTaskState, to: ReTaskState },
     #[error("illegal evidence transition {from:?} -> {to:?}")]
-    IllegalEvidenceTransition { from: EvidenceState, to: EvidenceState },
+    IllegalEvidenceTransition {
+        from: EvidenceState,
+        to: EvidenceState,
+    },
     #[error("unknown task {0}")]
     UnknownTask(String),
     #[error("unknown evidence {0}")]
@@ -203,21 +206,17 @@ impl ReStore {
         Ok(())
     }
 
-    pub fn add_evidence(
-        &mut self,
-        rec: EvidenceRecord,
-        actor: &str,
-    ) -> Result<(), StoreError> {
+    pub fn add_evidence(&mut self, rec: EvidenceRecord, actor: &str) -> Result<(), StoreError> {
         if !self.tasks.contains_key(&rec.task_id) {
             return Err(StoreError::UnknownTask(rec.task_id.clone()));
         }
         let task_id = rec.task_id.clone();
         let ev_id = rec.evidence_id.clone();
         self.evidence.insert(ev_id.clone(), rec);
-        if let Some(t) = self.tasks.get_mut(&task_id) {
-            if !t.evidence_ids.contains(&ev_id) {
-                t.evidence_ids.push(ev_id.clone());
-            }
+        if let Some(t) = self.tasks.get_mut(&task_id)
+            && !t.evidence_ids.contains(&ev_id)
+        {
+            t.evidence_ids.push(ev_id.clone());
         }
         self.audit.push(AuditEntry {
             at: now(),
@@ -255,11 +254,7 @@ impl ReStore {
         Ok(())
     }
 
-    pub fn add_review(
-        &mut self,
-        evidence_id: &str,
-        review: Review,
-    ) -> Result<(), StoreError> {
+    pub fn add_review(&mut self, evidence_id: &str, review: Review) -> Result<(), StoreError> {
         let rec = self
             .evidence
             .get_mut(evidence_id)
@@ -276,13 +271,13 @@ impl ReStore {
 
     pub fn load(path: &Path) -> Result<Self, StoreError> {
         let data = std::fs::read(path).map_err(StoreError::Io)?;
-        serde_json::from_slice(&data).map_err(|e| StoreError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, e)))
+        serde_json::from_slice(&data)
+            .map_err(|e| StoreError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, e)))
     }
 
     pub fn save(&self, path: &Path) -> Result<(), StoreError> {
-        let data = serde_json::to_vec_pretty(self).map_err(|e| {
-            StoreError::Io(std::io::Error::other(e))
-        })?;
+        let data = serde_json::to_vec_pretty(self)
+            .map_err(|e| StoreError::Io(std::io::Error::other(e)))?;
         std::fs::write(path, data).map_err(StoreError::Io)
     }
 }
@@ -312,59 +307,79 @@ mod tests {
     #[test]
     fn task_forward_only() {
         let mut s = mk();
-        s.transition_task("T-1", ReTaskState::Analyzing, "a").unwrap();
-        s.transition_task("T-1", ReTaskState::EvidenceGathered, "a").unwrap();
-        s.transition_task("T-1", ReTaskState::Verifying, "a").unwrap();
-        s.transition_task("T-1", ReTaskState::Promoted, "a").unwrap();
+        s.transition_task("T-1", ReTaskState::Analyzing, "a")
+            .unwrap();
+        s.transition_task("T-1", ReTaskState::EvidenceGathered, "a")
+            .unwrap();
+        s.transition_task("T-1", ReTaskState::Verifying, "a")
+            .unwrap();
+        s.transition_task("T-1", ReTaskState::Promoted, "a")
+            .unwrap();
         // promoted -> promoted is illegal
-        assert!(s
-            .transition_task("T-1", ReTaskState::Promoted, "a")
-            .is_err());
+        assert!(
+            s.transition_task("T-1", ReTaskState::Promoted, "a")
+                .is_err()
+        );
         // promoted -> analyzing is illegal (no rollback)
-        assert!(s
-            .transition_task("T-1", ReTaskState::Analyzing, "a")
-            .is_err());
+        assert!(
+            s.transition_task("T-1", ReTaskState::Analyzing, "a")
+                .is_err()
+        );
     }
 
     #[test]
     fn task_illegal_skip() {
         let mut s = mk();
         // new -> promoted is not a legal edge
-        assert!(s
-            .transition_task("T-1", ReTaskState::Promoted, "a")
-            .is_err());
+        assert!(
+            s.transition_task("T-1", ReTaskState::Promoted, "a")
+                .is_err()
+        );
     }
 
     #[test]
     fn evidence_forward_only() {
         let mut s = mk();
         s.add_evidence(ev("T-1", "E-1"), "a").unwrap();
-        s.transition_evidence("E-1", EvidenceState::Candidate, "a").unwrap();
-        s.transition_evidence("E-1", EvidenceState::Verified, "a").unwrap();
-        s.transition_evidence("E-1", EvidenceState::Promoted, "a").unwrap();
+        s.transition_evidence("E-1", EvidenceState::Candidate, "a")
+            .unwrap();
+        s.transition_evidence("E-1", EvidenceState::Verified, "a")
+            .unwrap();
+        s.transition_evidence("E-1", EvidenceState::Promoted, "a")
+            .unwrap();
         // verified is not reachable from promoted
-        assert!(s
-            .transition_evidence("E-1", EvidenceState::Verified, "a")
-            .is_err());
+        assert!(
+            s.transition_evidence("E-1", EvidenceState::Verified, "a")
+                .is_err()
+        );
     }
 
     #[test]
     fn evidence_refute_then_withdraw() {
         let mut s = mk();
         s.add_evidence(ev("T-1", "E-1"), "a").unwrap();
-        s.transition_evidence("E-1", EvidenceState::Candidate, "a").unwrap();
-        s.transition_evidence("E-1", EvidenceState::Refuted, "a").unwrap();
+        s.transition_evidence("E-1", EvidenceState::Candidate, "a")
+            .unwrap();
+        s.transition_evidence("E-1", EvidenceState::Refuted, "a")
+            .unwrap();
         // refuted is terminal (a new task must be opened)
-        assert!(s
-            .transition_evidence("E-1", EvidenceState::Candidate, "a")
-            .is_err());
+        assert!(
+            s.transition_evidence("E-1", EvidenceState::Candidate, "a")
+                .is_err()
+        );
     }
 
     #[test]
     fn unknown_ids_rejected() {
         let mut s = mk();
-        assert!(s.transition_task("NOPE", ReTaskState::Analyzing, "a").is_err());
-        assert!(s.transition_evidence("NOPE", EvidenceState::Verified, "a").is_err());
+        assert!(
+            s.transition_task("NOPE", ReTaskState::Analyzing, "a")
+                .is_err()
+        );
+        assert!(
+            s.transition_evidence("NOPE", EvidenceState::Verified, "a")
+                .is_err()
+        );
         // evidence for an unknown task is rejected
         assert!(s.add_evidence(ev("NOPE", "E-x"), "a").is_err());
     }
@@ -373,7 +388,8 @@ mod tests {
     fn audit_is_append_only() {
         let mut s = mk();
         let before = s.audit.len();
-        s.transition_task("T-1", ReTaskState::Analyzing, "bob").unwrap();
+        s.transition_task("T-1", ReTaskState::Analyzing, "bob")
+            .unwrap();
         assert_eq!(s.audit.len(), before + 1);
         assert_eq!(s.audit.last().unwrap().actor, "bob");
     }
@@ -383,7 +399,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("store.json");
         let mut s = mk();
-        s.transition_task("T-1", ReTaskState::Analyzing, "a").unwrap();
+        s.transition_task("T-1", ReTaskState::Analyzing, "a")
+            .unwrap();
         s.save(&p).unwrap();
         let loaded = ReStore::load(&p).unwrap();
         assert_eq!(loaded.tasks.len(), 1);

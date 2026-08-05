@@ -116,8 +116,8 @@ impl RevocationList {
     /// declared role certificate.
     pub fn verify(&self, signer_cert: &KeyCert) -> Result<(), String> {
         use ed25519_dalek::Verifier;
-        let bytes = hex::decode(&signer_cert.public_key_hex)
-            .map_err(|e| format!("bad pubkey hex: {e}"))?;
+        let bytes =
+            hex::decode(&signer_cert.public_key_hex).map_err(|e| format!("bad pubkey hex: {e}"))?;
         let arr: [u8; 32] = bytes
             .try_into()
             .map_err(|_| "public key must be 32 bytes".to_string())?;

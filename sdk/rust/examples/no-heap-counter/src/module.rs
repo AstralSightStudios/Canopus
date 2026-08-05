@@ -45,14 +45,14 @@ static STARTED: AtomicBool = AtomicBool::new(false);
 // Descriptor callbacks (extern "C", never panic across FFI)
 // ---------------------------------------------------------------------------
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn canopus_mod_prepare(_ctx: *const ContextV1) -> i32 {
     COUNT.store(0, Ordering::Relaxed);
     STARTED.store(false, Ordering::Relaxed);
     0
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn canopus_mod_activate(_ctx: *const ContextV1) -> i32 {
     #[cfg(feature = "device")]
     {
@@ -65,13 +65,13 @@ pub extern "C" fn canopus_mod_activate(_ctx: *const ContextV1) -> i32 {
     0
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn canopus_mod_deactivate(_ctx: *const ContextV1) -> i32 {
     STARTED.store(false, Ordering::Relaxed);
     0
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn canopus_mod_stop(_ctx: *const ContextV1) -> i32 {
     STARTED.store(false, Ordering::Relaxed);
     0
@@ -81,7 +81,7 @@ pub extern "C" fn canopus_mod_stop(_ctx: *const ContextV1) -> i32 {
 // be `unsafe fn`; the raw-pointer dereference is the module's only contract
 // with the loader-supplied writer.
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn canopus_mod_query(w: *mut StatusWriterV1) -> i32 {
     if w.is_null() {
         return -1;
@@ -100,7 +100,7 @@ pub extern "C" fn canopus_mod_query(w: *mut StatusWriterV1) -> i32 {
 }
 
 /// Test/control entry: bumps the counter. Called by host tests.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn canopus_mod_increment() {
     COUNT.fetch_add(1, Ordering::Relaxed);
 }
@@ -109,7 +109,7 @@ pub extern "C" fn canopus_mod_increment() {
 // Module descriptor + loader entry
 // ---------------------------------------------------------------------------
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub static canopus_module_descriptor: ModuleDescriptorV1 = ModuleDescriptorV1 {
     struct_size: core::mem::size_of::<ModuleDescriptorV1>() as u32,
     abi_major: ABI_MAJOR,
@@ -127,7 +127,7 @@ pub static canopus_module_descriptor: ModuleDescriptorV1 = ModuleDescriptorV1 {
 };
 
 /// The C constructor shim calls this to let the loader discover the descriptor.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn canopus_module_descriptor_ptr() -> *const ModuleDescriptorV1 {
     &canopus_module_descriptor
 }

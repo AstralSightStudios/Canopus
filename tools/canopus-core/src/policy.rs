@@ -39,11 +39,7 @@ pub fn symbol_policy_check(sym: &Symbol) -> Vec<String> {
             }
         }
         "DEVICE_PROVEN" => {
-            let proven = sym
-                .proof
-                .device
-                .as_deref()
-                .is_some_and(|d| d == "proven");
+            let proven = sym.proof.device.as_deref().is_some_and(|d| d == "proven");
             let has_evidence = sym
                 .proof
                 .evidence_ids
@@ -66,31 +62,32 @@ pub fn symbol_policy_check(sym: &Symbol) -> Vec<String> {
     }
 
     // Blocking calls must not be allowed from interrupt contexts.
-    if let Some(ctx) = &sym.contexts {
-        if ctx.blocking == Some(true) {
-            if let Some(allowed) = &ctx.allowed {
-                if allowed.iter().any(|a| a.contains("isr") || a.contains("ISR")) {
-                    out.push(format!(
-                        "{}: blocking call allowed in ISR context",
-                        sym.symbol_id
-                    ));
-                }
-            }
-        }
+    if let Some(ctx) = &sym.contexts
+        && ctx.blocking == Some(true)
+        && let Some(allowed) = &ctx.allowed
+        && allowed
+            .iter()
+            .any(|a| a.contains("isr") || a.contains("ISR"))
+    {
+        out.push(format!(
+            "{}: blocking call allowed in ISR context",
+            sym.symbol_id
+        ));
     }
 
     // Functions on a thumb target require a callable address with the
     // Thumb bit set.
-    if sym.kind == "function" && sym.instruction_set == "thumb" {
-        if let Some(callable) = &sym.callable_address {
-            let num = u64::from_str_radix(callable.trim_start_matches("0x"), 16);
-            match num {
-                Ok(n) if (n & 1) == 0 => out.push(format!(
-                    "{}: callable_address {} lacks Thumb bit (bit 0)",
-                    sym.symbol_id, callable
-                )),
-                _ => {}
-            }
+    if sym.kind == "function"
+        && sym.instruction_set == "thumb"
+        && let Some(callable) = &sym.callable_address
+    {
+        let num = u64::from_str_radix(callable.trim_start_matches("0x"), 16);
+        match num {
+            Ok(n) if (n & 1) == 0 => out.push(format!(
+                "{}: callable_address {} lacks Thumb bit (bit 0)",
+                sym.symbol_id, callable
+            )),
+            _ => {}
         }
     }
 

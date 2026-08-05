@@ -6,8 +6,8 @@
 
 use canopus_core::model::TargetPack;
 use object::{
-    Architecture, BinaryFormat, Object, ObjectKind, ObjectSection, ObjectSymbol,
-    RelocationFlags, RelocationTarget, SectionFlags, SectionKind, SymbolSection,
+    Architecture, BinaryFormat, Object, ObjectKind, ObjectSection, ObjectSymbol, RelocationFlags,
+    RelocationTarget, SectionFlags, SectionKind, SymbolSection,
 };
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -41,7 +41,12 @@ pub struct Summary {
 /// on device. `.got` / `.tdata` / `.eh_frame` remain forbidden (position-
 /// independent GOT, TLS and C++ exception unwinding are loader-unsupported).
 const FORBIDDEN_SECTIONS: &[&str] = &[
-    ".got", ".got.plt", ".tdata", ".tbss", ".eh_frame", ".eh_frame_hdr",
+    ".got",
+    ".got.plt",
+    ".tdata",
+    ".tbss",
+    ".eh_frame",
+    ".eh_frame_hdr",
 ];
 
 pub struct Verifier<'a> {
@@ -92,9 +97,10 @@ impl<'a> Verifier<'a> {
             report.errors.push("expected little-endian".into());
         }
         if file.kind() != ObjectKind::Relocatable {
-            report
-                .errors
-                .push(format!("expected relocatable (ET_REL), got {:?}", file.kind()));
+            report.errors.push(format!(
+                "expected relocatable (ET_REL), got {:?}",
+                file.kind()
+            ));
         }
 
         let profile = self.target.loader_profile.as_ref();
@@ -105,9 +111,9 @@ impl<'a> Verifier<'a> {
                 let name = sym.name().unwrap_or("<unnamed>");
                 if !name.is_empty() {
                     report.summary.undefined_symbols += 1;
-                    report
-                        .errors
-                        .push(format!("undefined symbol '{name}': zero-import target forbids it"));
+                    report.errors.push(format!(
+                        "undefined symbol '{name}': zero-import target forbids it"
+                    ));
                 }
             }
         }
@@ -139,9 +145,9 @@ impl<'a> Verifier<'a> {
                     .push(format!("writable+executable section '{name}'"));
             }
             if FORBIDDEN_SECTIONS.contains(&name) {
-                report
-                    .errors
-                    .push(format!("unexpected section '{name}' (not supported by stock loader)"));
+                report.errors.push(format!(
+                    "unexpected section '{name}' (not supported by stock loader)"
+                ));
             }
         }
         report.summary.section_count = file.sections().count();
@@ -173,17 +179,16 @@ impl<'a> Verifier<'a> {
                 // veneer generator) whose address is not in the target pack
                 // allowlist is rejected. Local ET_REL symbols carry
                 // section-relative st_value and are not absolute addresses.
-                if let RelocationTarget::Symbol(idx) = reloc.target() {
-                    if let Ok(sym) = file.symbol_by_index(idx) {
-                        if matches!(sym.section(), SymbolSection::Absolute) {
-                            let addr = sym.address();
-                            if !self.allowed_addresses.contains(&addr) {
-                                report.errors.push(format!(
+                if let RelocationTarget::Symbol(idx) = reloc.target()
+                    && let Ok(sym) = file.symbol_by_index(idx)
+                    && matches!(sym.section(), SymbolSection::Absolute)
+                {
+                    let addr = sym.address();
+                    if !self.allowed_addresses.contains(&addr) {
+                        report.errors.push(format!(
                                     "relocation targets absolute symbol '{}' at 0x{addr:x} not in target pack allowlist",
                                     sym.name().unwrap_or("<unnamed>")
                                 ));
-                            }
-                        }
                     }
                 }
             }

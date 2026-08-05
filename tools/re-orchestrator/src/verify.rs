@@ -97,12 +97,13 @@ mod tests {
 
     #[test]
     fn needs_human_approval() {
-        let reviews = vec![
-            review("alice", "confirm", "cross-checked with xrefs"),
-        ];
+        let reviews = vec![review("alice", "confirm", "cross-checked with xrefs")];
         assert_eq!(
             evaluate_gate(&reviews, 2, 1),
-            GateDecision::AwaitingApproval { approvals: 1, needed: 2 }
+            GateDecision::AwaitingApproval {
+                approvals: 1,
+                needed: 2
+            }
         );
     }
 

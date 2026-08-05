@@ -16,12 +16,12 @@ use canopus_runtime::*;
 fn stale_callback_guard_end_to_end() {
     // Generation as an atomic counter (the module owns the generation; the
     // fake target owns the timer).
-    let gen = Arc::new(AtomicU32::new(1));
-    let captured = gen.load(Ordering::SeqCst);
+    let r#gen = Arc::new(AtomicU32::new(1));
+    let captured = r#gen.load(Ordering::SeqCst);
 
     let fires = Arc::new(AtomicU32::new(0));
     let f = Arc::clone(&fires);
-    let g = Arc::clone(&gen);
+    let g = Arc::clone(&r#gen);
 
     let handle = timer_register(
         move || {
@@ -41,7 +41,7 @@ fn stale_callback_guard_end_to_end() {
     assert_eq!(fires.load(Ordering::SeqCst), 2);
 
     // deactivate/stop bumps the generation
-    gen.store(2, Ordering::SeqCst);
+    r#gen.store(2, Ordering::SeqCst);
 
     // stale phase: the same registered callback now fires as a no-op
     timer_tick();

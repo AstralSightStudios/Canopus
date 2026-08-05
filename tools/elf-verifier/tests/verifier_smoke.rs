@@ -51,7 +51,16 @@ fn elf_header(shoff: u32, shnum: u16, shstrndx: u16) -> [u8; 52] {
     h
 }
 
-fn sh(name: u32, ty: u32, flags: u32, off: u32, size: u32, link: u32, align: u32, entsize: u32) -> [u8; 40] {
+fn sh(
+    name: u32,
+    ty: u32,
+    flags: u32,
+    off: u32,
+    size: u32,
+    link: u32,
+    align: u32,
+    entsize: u32,
+) -> [u8; 40] {
     let mut s = [0u8; 40];
     s[0..4].copy_from_slice(&name.to_le_bytes());
     s[4..8].copy_from_slice(&ty.to_le_bytes());
@@ -76,8 +85,26 @@ fn valid_elf() -> Vec<u8> {
     out.extend_from_slice(&text_data);
     out.extend_from_slice(&shstrtab);
     out.extend_from_slice(&sh(0, 0, 0, 0, 0, 0, 0, 0));
-    out.extend_from_slice(&sh(1, SHT_PROGBITS, SHF_ALLOC_EXEC, text_off, text_data.len() as u32, 0, 4, 0));
-    out.extend_from_slice(&sh(7, SHT_STRTAB, 0, str_off, shstrtab.len() as u32, 0, 1, 0));
+    out.extend_from_slice(&sh(
+        1,
+        SHT_PROGBITS,
+        SHF_ALLOC_EXEC,
+        text_off,
+        text_data.len() as u32,
+        0,
+        4,
+        0,
+    ));
+    out.extend_from_slice(&sh(
+        7,
+        SHT_STRTAB,
+        0,
+        str_off,
+        shstrtab.len() as u32,
+        0,
+        1,
+        0,
+    ));
     out
 }
 
@@ -105,10 +132,28 @@ fn elf_with_undefined_symbol() -> Vec<u8> {
     out.extend_from_slice(b"\0foo\0");
     out.extend_from_slice(&shstrtab);
     out.extend_from_slice(&sh(0, 0, 0, 0, 0, 0, 0, 0));
-    out.extend_from_slice(&sh(1, SHT_PROGBITS, SHF_ALLOC_EXEC, text_off, text_data.len() as u32, 0, 4, 0));
+    out.extend_from_slice(&sh(
+        1,
+        SHT_PROGBITS,
+        SHF_ALLOC_EXEC,
+        text_off,
+        text_data.len() as u32,
+        0,
+        4,
+        0,
+    ));
     out.extend_from_slice(&sh(7, SHT_SYMTAB, 0, symtab_off, 32, 3, 4, 16));
     out.extend_from_slice(&sh(14, SHT_STRTAB, 0, strtab_off, 5, 0, 1, 0));
-    out.extend_from_slice(&sh(21, SHT_STRTAB, 0, shstr_off, shstrtab.len() as u32, 0, 1, 0));
+    out.extend_from_slice(&sh(
+        21,
+        SHT_STRTAB,
+        0,
+        shstr_off,
+        shstrtab.len() as u32,
+        0,
+        1,
+        0,
+    ));
     out
 }
 
@@ -133,9 +178,19 @@ fn undefined_symbol_fails_zero_import() {
         allowed_addresses: &[],
     };
     let report = v.verify(&elf);
-    assert!(!report.ok, "expected failure, got errors={:?} summary={:?}", report.errors, report.summary);
-    assert!(report.errors.iter().any(|e| e.contains("undefined symbol 'foo'")),
-        "errors were: {:?}", report.errors);
+    assert!(
+        !report.ok,
+        "expected failure, got errors={:?} summary={:?}",
+        report.errors, report.summary
+    );
+    assert!(
+        report
+            .errors
+            .iter()
+            .any(|e| e.contains("undefined symbol 'foo'")),
+        "errors were: {:?}",
+        report.errors
+    );
 }
 
 #[test]

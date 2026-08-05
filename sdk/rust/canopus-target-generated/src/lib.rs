@@ -53,7 +53,7 @@ mod layout_tests {
         assert_eq!(offset_of!(ordered_app_entry, hidden), 9);
         assert_eq!(size_of::<service_object>(), 60);
         assert_eq!(offset_of!(service_object, startup_cb), 0x24);
-        assert_eq!(size_of::<file_operations>(), 0x18);
+        assert_eq!(size_of::<file_operations>(), 0x30);
         assert_eq!(offset_of!(file_operations, ioctl), 0x14);
         // launcher app record (EVID-APP-004): u16 id@0, icons/name@4..12,
         // flags@20, total 24.
@@ -103,6 +103,7 @@ mod layout_tests {
             write: core::ptr::null_mut(),
             _pad_10: [0; 4],
             ioctl: core::ptr::null_mut(),
+            _tail: [0; 0x18],
         };
         // launcher app record/descriptor (EVID-APP-004) also compile on host.
         let _r = launcher_app_record {
@@ -141,8 +142,7 @@ mod layout_tests {
     fn clock_gettime_binding_compiles() {
         // Cannot be *called* on host (absolute address); referencing it proves
         // the transmuted extern fn type is valid for the recovered prototype.
-        let _f: unsafe fn(u32, *const stock_timespec_t) -> i32 =
-            canopus_fw_clock_gettime;
+        let _f: unsafe fn(u32, *const stock_timespec_t) -> i32 = canopus_fw_clock_gettime;
     }
 
     #[test]

@@ -197,7 +197,6 @@ pub fn keygen() -> Result<(String, String)> {
     Ok((secret, public))
 }
 
-
 fn sha256(data: &[u8]) -> Vec<u8> {
     let mut h = Sha256::new();
     h.update(data);

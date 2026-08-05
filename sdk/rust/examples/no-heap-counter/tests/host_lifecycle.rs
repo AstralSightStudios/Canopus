@@ -50,7 +50,10 @@ fn query_reports_counter_after_increment() {
     assert_eq!(status[1], 0x54);
     assert_eq!(status[2], 0x4E);
     assert_eq!(status[3], 0x43);
-    assert_eq!(u32::from_le_bytes([status[4], status[5], status[6], status[7]]), 3);
+    assert_eq!(
+        u32::from_le_bytes([status[4], status[5], status[6], status[7]]),
+        3
+    );
     assert_eq!(fake_alloc_live_count(), 0);
 }
 
@@ -79,7 +82,10 @@ fn null_query_writer_rejected() {
 fn descriptor_abi_fields_valid() {
     let _g = lock();
     let d = unsafe { *module::canopus_module_descriptor_ptr() };
-    assert_eq!(d.struct_size, core::mem::size_of::<ModuleDescriptorV1>() as u32);
+    assert_eq!(
+        d.struct_size,
+        core::mem::size_of::<ModuleDescriptorV1>() as u32
+    );
     assert_eq!(d.abi_major, ABI_MAJOR);
     assert!(d.prepare.is_some());
     assert!(d.activate.is_some());
@@ -93,5 +99,6 @@ fn descriptor_abi_fields_valid() {
 
 // Compile-time check that the callbacks are valid `extern "C"` fns.
 const _: Option<canopus_abi::CbPrepare> = Some(module::canopus_mod_prepare);
-const _: Option<canopus_abi::CbQuery> = Some(module::canopus_mod_query as extern "C" fn(*mut StatusWriterV1) -> i32);
+const _: Option<canopus_abi::CbQuery> =
+    Some(module::canopus_mod_query as extern "C" fn(*mut StatusWriterV1) -> i32);
 const _: extern "C" fn(*const ContextV1) -> i32 = module::canopus_mod_activate;

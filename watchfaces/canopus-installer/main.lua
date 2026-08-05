@@ -200,9 +200,12 @@ local function write_command(command, arg0, arg1)
     payload = payload .. word(command) .. word(arg0 or 0) .. word(arg1 or 0)
     local file = io.open(DEVICE_PATH, "wb")
     if not file then return false, "Cannot open /dev/canopus" end
-    local ok, err = pcall(function() return file:write(payload) end)
-    file:close()
-    if not ok then return false, tostring(err) end
+    local call_ok, write_result, write_error = pcall(file.write, file, payload)
+    local close_ok, close_result, close_error = pcall(file.close, file)
+    if not call_ok then return false, tostring(write_result) end
+    if write_result == nil then return false, tostring(write_error or "write failed") end
+    if not close_ok then return false, tostring(close_result) end
+    if close_result == nil then return false, tostring(close_error or "close failed") end
     return true
 end
 

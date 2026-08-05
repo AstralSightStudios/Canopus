@@ -2,4 +2,4 @@
 
 pub mod verifier;
 
-pub use verifier::{hex_sha256, Verifier, VerifyReport};
+pub use verifier::{Verifier, VerifyReport, hex_sha256};

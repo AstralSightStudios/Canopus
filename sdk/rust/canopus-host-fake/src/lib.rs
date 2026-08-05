@@ -113,10 +113,7 @@ fn timers() -> std::sync::MutexGuard<'static, TimerState> {
 }
 
 /// Registers a periodic timer; returns a handle, or `None` when full.
-pub fn timer_register<F: FnMut() + Send + 'static>(
-    cb: F,
-    period_ms: u32,
-) -> Option<u32> {
+pub fn timer_register<F: FnMut() + Send + 'static>(cb: F, period_ms: u32) -> Option<u32> {
     let mut st = timers();
     let active = st.slots.iter().filter(|s| s.is_some()).count();
     if active >= FAKE_TIMER_MAX {
@@ -142,7 +139,11 @@ pub fn timer_register<F: FnMut() + Send + 'static>(
 /// cancelled). A cancelled slot is freed for reuse but keeps its position.
 pub fn timer_cancel(id: u32) -> bool {
     let mut st = timers();
-    match st.slots.iter_mut().find(|s| s.as_ref().map(|t| t.id) == Some(id)) {
+    match st
+        .slots
+        .iter_mut()
+        .find(|s| s.as_ref().map(|t| t.id) == Some(id))
+    {
         Some(slot) => slot.take().is_some(),
         None => false,
     }
@@ -186,7 +187,11 @@ pub fn timer_tick() {
         if let Some(mut cb) = cb {
             cb();
             let mut st = timers();
-            if let Some(slot) = st.slots.iter_mut().find(|s| s.as_ref().map(|t| t.id) == Some(id)) {
+            if let Some(slot) = st
+                .slots
+                .iter_mut()
+                .find(|s| s.as_ref().map(|t| t.id) == Some(id))
+            {
                 if let Some(t) = slot.as_mut() {
                     t.cb = cb;
                 }
@@ -239,7 +244,11 @@ pub fn driver_register(name: &str, ops: usize, private_data: usize) -> i32 {
     }
     st.names.push((
         name.to_string(),
-        Driver { ops, private_data, held: false },
+        Driver {
+            ops,
+            private_data,
+            held: false,
+        },
     ));
     0
 }
@@ -289,9 +298,7 @@ pub fn driver_count() -> usize {
 // Module harness
 // ===========================================================================
 
-use canopus_abi::{
-    ContextV1, ModuleDescriptorV1, SnapshotV1, StatusWriterV1, STATUS_RECORD_MAX,
-};
+use canopus_abi::{ContextV1, ModuleDescriptorV1, STATUS_RECORD_MAX, SnapshotV1, StatusWriterV1};
 use canopus_runtime::{LifecycleV1, lifecycle_init, status_writer_init};
 
 /// Drives a module descriptor through its callbacks with a fake context,
@@ -340,10 +347,7 @@ impl ModuleHarness {
     }
 
     pub fn prepare(&mut self) -> i32 {
-        self.descriptor
-            .prepare
-            .map(|f| f(self.ctx()))
-            .unwrap_or(-1)
+        self.descriptor.prepare.map(|f| f(self.ctx())).unwrap_or(-1)
     }
 
     pub fn activate(&mut self) -> i32 {

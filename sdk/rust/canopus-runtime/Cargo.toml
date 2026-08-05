@@ -4,7 +4,7 @@ description = "Canopus portable module runtime in Rust — lifecycle, resource t
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-rust-version = "1.77"
+rust-version = "1.85"
 
 [dependencies]
 canopus-abi = { workspace = true }

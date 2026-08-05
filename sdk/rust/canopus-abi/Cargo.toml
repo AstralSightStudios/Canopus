@@ -4,6 +4,6 @@ description = "Canopus public module ABI v1 — Rust layout-parity with sdk/c/ca
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-rust-version = "1.77"
+rust-version = "1.85"
 
 [dependencies]

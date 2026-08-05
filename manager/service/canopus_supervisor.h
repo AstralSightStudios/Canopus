@@ -4,7 +4,7 @@
  * A native module (boot-resident, like btpatch_phase5) that registers the
  * /dev/canopus char device and implements the installer control ABI that the
  * Lua installer watchface drives. This is the concrete Phase 5 supervisor:
- *   - a fixed 256-byte status ABI (read from /dev/canopus);
+ *   - a fixed 384-byte status ABI (read from /dev/canopus);
  *   - a fixed 16-byte command ABI (written to /dev/canopus);
  *   - module slots tracked through the portable lifecycle semantics.
  *
@@ -76,9 +76,16 @@ int canopus_supervisor_init(struct canopus_supervisor_v1 *sup,
 /* Handles one 16-byte command; returns the result state. */
 uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
                                            const uint8_t command[CANOPUS_SUP_COMMAND_SIZE]);
-/* Renders the 256-byte status ABI into out. Returns 0 on success. */
+/* Renders the 384-byte status ABI into out. Returns 0 on success. */
 int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
                                      uint8_t out[CANOPUS_SUP_STATUS_SIZE]);
+
+/* Character-device transfer helpers. A successful operation returns the
+ * number of bytes consumed/produced, as required by the NuttX read/write ABI. */
+int32_t canopus_supervisor_device_read(struct canopus_supervisor_v1 *sup,
+                                       void *buffer, uint32_t count);
+int32_t canopus_supervisor_device_write(struct canopus_supervisor_v1 *sup,
+                                        const void *buffer, uint32_t count);
 
 /* ABI helpers for the char-device front end (host test uses them too). */
 int canopus_supervisor_validate_command(const uint8_t command[CANOPUS_SUP_COMMAND_SIZE]);

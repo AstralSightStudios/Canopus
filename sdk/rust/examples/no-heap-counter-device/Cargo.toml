@@ -4,7 +4,7 @@ description = "Device staticlib build of the no-heap-counter module (panic handl
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-rust-version = "1.77"
+rust-version = "1.85"
 
 [lib]
 name = "no_heap_counter_device"

@@ -4,7 +4,7 @@ description = "Generated per-target Rust bindings (CAN-RUST-002 / TGT-006). Rege
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-rust-version = "1.77"
+rust-version = "1.85"
 
 [dependencies]
 canopus-abi = { workspace = true }

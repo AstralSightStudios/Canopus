@@ -1,10 +1,12 @@
 //! Subcommand implementations for the canopus CLI.
 
 use canopus_core::error::Error as CoreError;
-use canopus_core::model::{ModuleManifest, PackageManifest, Symbol, TargetPack, TypeRecord, EvidenceBundle};
+use canopus_core::model::{
+    EvidenceBundle, ModuleManifest, PackageManifest, Symbol, TargetPack, TypeRecord,
+};
 use canopus_core::policy::symbol_policy_check;
 use canopus_core::registry::{discover_target_dir, list_target_packs, load_target_pack};
-use canopus_core::schema::{validate, SchemaKind};
+use canopus_core::schema::{SchemaKind, validate};
 use canopus_elf::Verifier;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
@@ -26,7 +28,11 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
                 println!("no target packs found under {}", targets_dir.display());
                 return Ok(());
             }
-            println!("{} registered target(s) under {}:", packs.len(), targets_dir.display());
+            println!(
+                "{} registered target(s) under {}:",
+                packs.len(),
+                targets_dir.display()
+            );
             for p in &packs {
                 println!("  {}", canopus_core::registry::describe(p));
             }
@@ -40,12 +46,12 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
             let pack = find_target(&targets_dir, &target)?;
             let root = targets_dir.join(&target);
             let (symbols, types) = canopus_core::veneer::load_records(&root)?;
-            let gen = canopus_core::veneer::VeneerGen {
+            let r#gen = canopus_core::veneer::VeneerGen {
                 pack: &pack,
                 symbols: &symbols,
                 types: &types,
             };
-            let text = gen.generate();
+            let text = r#gen.generate();
             let out = output.unwrap_or_else(|| root.join("generated").join("canopus_veneer.h"));
             if let Some(parent) = out.parent() {
                 std::fs::create_dir_all(parent)?;
@@ -75,14 +81,13 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
             let pack = find_target(&targets_dir, &target)?;
             let root = targets_dir.join(&target);
             let (symbols, types) = canopus_core::veneer::load_records(&root)?;
-            let gen = canopus_core::rustgen::RustGen {
+            let r#gen = canopus_core::rustgen::RustGen {
                 pack: &pack,
                 symbols: &symbols,
                 types: &types,
             };
-            let text = gen.generate();
-            let out =
-                output.unwrap_or_else(|| root.join("generated").join("canopus_bindings.rs"));
+            let text = r#gen.generate();
+            let out = output.unwrap_or_else(|| root.join("generated").join("canopus_bindings.rs"));
             if let Some(parent) = out.parent() {
                 std::fs::create_dir_all(parent)?;
             }
@@ -164,7 +169,10 @@ pub fn module(cmd: ModuleCmd) -> anyhow::Result<()> {
             let value = load_json(&path)?;
             validate(SchemaKind::Module, &value)?;
             let m: ModuleManifest = serde_json::from_value(value)?;
-            println!("module OK: {} v{} lifecycle={}", m.module.id, m.module.version, m.module.lifecycle);
+            println!(
+                "module OK: {} v{} lifecycle={}",
+                m.module.id, m.module.version, m.module.lifecycle
+            );
             Ok(())
         }
         ModuleCmd::New {
@@ -328,7 +336,10 @@ pub fn build_plan(manifest_path: &Path, targets_dir: &Path, json: bool) -> anyho
     if json {
         println!("{}", serde_json::to_string_pretty(&rows)?);
     } else {
-        println!("build plan for {} v{}", module.module.id, module.module.version);
+        println!(
+            "build plan for {} v{}",
+            module.module.id, module.module.version
+        );
         for r in &rows {
             println!("  {}", serde_json::to_string(r)?);
         }
@@ -339,7 +350,12 @@ pub fn build_plan(manifest_path: &Path, targets_dir: &Path, json: bool) -> anyho
 
 // ---------------------------------------------------------------- verify
 
-pub fn verify(elf_path: &Path, target_id: &str, targets_dir: &Path, json: bool) -> anyhow::Result<()> {
+pub fn verify(
+    elf_path: &Path,
+    target_id: &str,
+    targets_dir: &Path,
+    json: bool,
+) -> anyhow::Result<()> {
     let pack = find_target(targets_dir, target_id)?;
     let data = std::fs::read(elf_path)
         .map_err(|e| anyhow::anyhow!("cannot read {}: {e}", elf_path.display()))?;
@@ -470,7 +486,12 @@ pub fn re(cmd: ReCmd) -> anyhow::Result<()> {
             println!("task {id} -> {state}");
             Ok(())
         }
-        ReCmd::AddEvidence { task, id, kind, summary } => {
+        ReCmd::AddEvidence {
+            task,
+            id,
+            kind,
+            summary,
+        } => {
             let mut store = load_re_store()?;
             let rec = canopus_re::EvidenceRecord {
                 evidence_id: id.clone(),
@@ -595,7 +616,8 @@ fn re_revision_sign(
         .map_err(|e| anyhow::anyhow!("sign failed: {e}"))?;
     let doc = serde_json::json!({ "manifest": m, "signature": signature });
     let out = output.clone().unwrap_or_else(|| {
-        root.join("generated").join(format!("revision-v{revision}.json"))
+        root.join("generated")
+            .join(format!("revision-v{revision}.json"))
     });
     if let Some(p) = out.parent() {
         std::fs::create_dir_all(p)?;
@@ -652,9 +674,9 @@ int probe_{name}_run(void)
 "#,
         name = symbol
     );
-    let out = output.clone().unwrap_or_else(|| {
-        root.join("generated").join(format!("probe_{symbol}.c"))
-    });
+    let out = output
+        .clone()
+        .unwrap_or_else(|| root.join("generated").join(format!("probe_{symbol}.c")));
     if let Some(p) = out.parent() {
         std::fs::create_dir_all(p)?;
     }
@@ -666,7 +688,7 @@ int probe_{name}_run(void)
 // ---------------------------------------------------------------- key
 
 use crate::KeyCmd;
-use canopus_package::keyroles::{KeyCert, KeyRole, RevocationList, check_cert_revoked, certify};
+use canopus_package::keyroles::{KeyCert, KeyRole, RevocationList, certify, check_cert_revoked};
 
 fn parse_role(s: &str) -> anyhow::Result<KeyRole> {
     Ok(match s {

@@ -149,8 +149,7 @@ pub struct ControlHeaderV1 {
 // Capability query
 // ---------------------------------------------------------------------------
 
-pub type CbHasCapability =
-    extern "C" fn(q: *const CapabilityQueryV1, name: *const c_char) -> i32;
+pub type CbHasCapability = extern "C" fn(q: *const CapabilityQueryV1, name: *const c_char) -> i32;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]

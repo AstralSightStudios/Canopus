@@ -4,7 +4,7 @@
   "target_id": "xiaomi-band-10-pro-3.101.030",
   "kind": "struct",
   "name": "file_operations",
-  "size": 24,
+  "size": 48,
   "alignment": 4,
   "fields": [
     { "name": "open", "offset": 0, "width": 4, "signedness": "pointer",

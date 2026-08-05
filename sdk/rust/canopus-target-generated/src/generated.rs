@@ -20,6 +20,7 @@ pub struct file_operations {
     pub write: *mut core::ffi::c_void, // +0xc
     pub _pad_10: [u8; 0x4], // 4
     pub ioctl: *mut core::ffi::c_void, // +0x14
+    pub _tail: [u8; 0x18], // 24
 }
 
 #[repr(C, packed)]

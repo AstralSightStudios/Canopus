@@ -24,7 +24,10 @@ fn load_pack() -> canopus_core::model::TargetPack {
     canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap()
 }
 
-fn load_symtypes() -> (Vec<canopus_core::model::Symbol>, Vec<canopus_core::model::TypeRecord>) {
+fn load_symtypes() -> (
+    Vec<canopus_core::model::Symbol>,
+    Vec<canopus_core::model::TypeRecord>,
+) {
     load_records(&pack_dir()).unwrap()
 }
 
@@ -32,12 +35,12 @@ fn load_symtypes() -> (Vec<canopus_core::model::Symbol>, Vec<canopus_core::model
 fn rust_bindings_regenerate_identically() {
     let (symbols, types) = load_symtypes();
     let pack = load_pack();
-    let gen = RustGen {
+    let r#gen = RustGen {
         pack: &pack,
         symbols: &symbols,
         types: &types,
     };
-    let regenerated = gen.generate();
+    let regenerated = r#gen.generate();
     let committed = std::fs::read_to_string(
         repo_root().join("sdk/rust/canopus-target-generated/src/generated.rs"),
     )
@@ -53,16 +56,13 @@ fn rust_bindings_regenerate_identically() {
 fn c_veneer_regenerates_identically() {
     let (symbols, types) = load_symtypes();
     let pack = load_pack();
-    let gen = VeneerGen {
+    let r#gen = VeneerGen {
         pack: &pack,
         symbols: &symbols,
         types: &types,
     };
-    let regenerated = gen.generate();
-    let committed = std::fs::read_to_string(
-        pack_dir().join("generated/canopus_veneer.h"),
-    )
-    .unwrap();
+    let regenerated = r#gen.generate();
+    let committed = std::fs::read_to_string(pack_dir().join("generated/canopus_veneer.h")).unwrap();
     assert_eq!(
         committed, regenerated,
         "generated veneer header is stale; run `canopus target generate-veneer \
@@ -74,12 +74,16 @@ fn c_veneer_regenerates_identically() {
 fn rust_bindings_have_exact_recovered_layout() {
     let (symbols, types) = load_symtypes();
     let pack = load_pack();
-    let gen = RustGen {
+    let r#gen = RustGen {
         pack: &pack,
         symbols: &symbols,
         types: &types,
     };
-    let text = gen.generate();
+    let text = r#gen.generate();
+
+    // stock file_operations is the full 0x30-byte target table.
+    assert!(text.contains("pub ioctl: *mut core::ffi::c_void, // +0x14"));
+    assert!(text.contains("pub _tail: [u8; 0x18], // 24"));
 
     // launcher_order_record: 128-byte name @0, u32 flags @132, total 140.
     assert!(text.contains("pub app_name: [u8; 128], // +0x0"));
@@ -104,13 +108,14 @@ fn rust_bindings_have_exact_recovered_layout() {
 fn c_veneer_have_exact_recovered_layout() {
     let (symbols, types) = load_symtypes();
     let pack = load_pack();
-    let gen = VeneerGen {
+    let r#gen = VeneerGen {
         pack: &pack,
         symbols: &symbols,
         types: &types,
     };
-    let text = gen.generate();
+    let text = r#gen.generate();
 
+    assert!(text.contains("uint8_t _tail[24];"));
     assert!(text.contains("uint8_t app_name[128]; /* +0x0 */"));
     assert!(text.contains("uint32_t flags; /* +0x84 */"));
     assert!(text.contains("* bt_adapter_register_a2dp_callbacks: FORBIDDEN"));
@@ -120,12 +125,12 @@ fn c_veneer_have_exact_recovered_layout() {
 fn identity_guard_uses_pack_version_build() {
     let (symbols, types) = load_symtypes();
     let pack = load_pack();
-    let gen = RustGen {
+    let r#gen = RustGen {
         pack: &pack,
         symbols: &symbols,
         types: &types,
     };
-    let text = gen.generate();
+    let text = r#gen.generate();
     assert!(text.contains("b\"3.101.030\""));
     assert!(text.contains("b\"CONBINE_LTALM078_T3.101.030_06011854\""));
     // Thumb callable addresses carry the +1 bit.

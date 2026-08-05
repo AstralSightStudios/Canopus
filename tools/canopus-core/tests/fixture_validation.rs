@@ -1,7 +1,7 @@
 //! Integration tests: every fixture under tests/fixtures must validate
 //! (valid/) or fail (invalid/) against the corresponding schema.
 
-use canopus_core::schema::{validate, SchemaKind};
+use canopus_core::schema::{SchemaKind, validate};
 use std::path::{Path, PathBuf};
 
 const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures");

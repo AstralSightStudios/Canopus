@@ -20,6 +20,7 @@ typedef struct {
     void * write; /* +0xc */
     uint8_t _pad_10[4];
     void * ioctl; /* +0x14 */
+    uint8_t _tail[24];
 } file_operations;
 typedef struct {
     uint8_t app_name[128]; /* +0x0 */

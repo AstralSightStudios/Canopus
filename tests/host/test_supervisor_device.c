@@ -1,6 +1,6 @@
 /* Host tests: device-side supervisor status/command ABI (Phase 5).
  * Drives canopus_supervisor.c through a fake platform and checks the exact
- * 256-byte status + 16-byte command ABI the Lua installer watchface uses. */
+ * 384-byte status + 16-byte command ABI the Lua installer watchface uses. */
 #include "canopus_test.h"
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
@@ -84,6 +84,28 @@ TEST(supervisor_command_abi_validates)
     CHECK(canopus_supervisor_validate_command(cmd) == 0);
     make_command(cmd, 0xDEADBEEF, CANOPUS_SUP_CMD_QUERY, 0, 0);
     CHECK(canopus_supervisor_validate_command(cmd) == -1);
+}
+
+TEST(supervisor_device_transfers_report_bytes)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    uint8_t status[CANOPUS_SUP_STATUS_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
+
+    g_stages = 0;
+    CHECK(canopus_supervisor_device_write(&sup, cmd, sizeof(cmd)) ==
+          CANOPUS_SUP_COMMAND_SIZE);
+    CHECK(g_stages == 1);
+    CHECK(sup.pending_state == CANOPUS_RESULT_COMPLETED);
+    CHECK(canopus_supervisor_device_write(&sup, cmd, sizeof(cmd) - 1) == -1);
+    CHECK(canopus_supervisor_device_write(&sup, cmd, sizeof(cmd) + 1) == -1);
+
+    CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status)) ==
+          CANOPUS_SUP_STATUS_SIZE);
+    CHECK(r32(status, 24) == CANOPUS_RESULT_COMPLETED);
+    CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status) - 1) == -1);
 }
 
 TEST(supervisor_query_returns_completed)
@@ -224,6 +246,7 @@ TEST(supervisor_add_module_rejects_full_table)
 static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_status_abi_layout", supervisor_status_abi_layout_wrapper },
     { "supervisor_command_abi_validates", supervisor_command_abi_validates_wrapper },
+    { "supervisor_device_transfers_report_bytes", supervisor_device_transfers_report_bytes_wrapper },
     { "supervisor_query_returns_completed", supervisor_query_returns_completed_wrapper },
     { "supervisor_install_stages_package", supervisor_install_stages_package_wrapper },
     { "supervisor_enable_removable_loads_module", supervisor_enable_removable_loads_module_wrapper },

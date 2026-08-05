@@ -133,14 +133,31 @@ mod tests {
 
     #[test]
     fn read_tools_allowed() {
-        for t in ["decompile", "xrefs_to", "disasm", "callgraph", "search_text", "find_bytes", "get_bytes", "survey_binary"] {
+        for t in [
+            "decompile",
+            "xrefs_to",
+            "disasm",
+            "callgraph",
+            "search_text",
+            "find_bytes",
+            "get_bytes",
+            "survey_binary",
+        ] {
             assert_eq!(decide(t), IdaDecision::Allowed, "{t}");
         }
     }
 
     #[test]
     fn write_tools_denied() {
-        for t in ["patch", "patch_asm", "rename", "set_type", "put_int", "idb_save", "make_data"] {
+        for t in [
+            "patch",
+            "patch_asm",
+            "rename",
+            "set_type",
+            "put_int",
+            "idb_save",
+            "make_data",
+        ] {
             match decide(t) {
                 IdaDecision::DeniedWriteTool { .. } => {}
                 other => panic!("{t}: expected deny, got {other:?}"),

@@ -42,7 +42,10 @@ fn artifact_file(tag: &str) -> PathBuf {
 fn real_manifest(tag: &str) -> (PackageManifest, HashMap<String, PathBuf>) {
     let manifest = test_manifest();
     let mut files = HashMap::new();
-    files.insert("xiaomi-band-10-pro-3.101.030".to_string(), artifact_file(tag));
+    files.insert(
+        "xiaomi-band-10-pro-3.101.030".to_string(),
+        artifact_file(tag),
+    );
     let manifest = canopus_package::manifest_with_real_hashes(&manifest, &files).unwrap();
     (manifest, files)
 }

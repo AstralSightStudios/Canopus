@@ -131,8 +131,20 @@ pub fn signature_candidates_from_decompile(decompile: &str) -> Vec<SignatureCand
         }
         let args = sig[open + 1..].trim_end_matches(')').trim();
         // Normalize empty args to "void".
-        let args_norm = if args.is_empty() { "void".to_string() } else { args.to_string() };
-        let ret = if name.is_empty() { "int".into() } else { before.split_whitespace().next().unwrap_or("int").to_string() };
+        let args_norm = if args.is_empty() {
+            "void".to_string()
+        } else {
+            args.to_string()
+        };
+        let ret = if name.is_empty() {
+            "int".into()
+        } else {
+            before
+                .split_whitespace()
+                .next()
+                .unwrap_or("int")
+                .to_string()
+        };
         out.push(SignatureCandidate {
             function: name.to_string(),
             prototype: format!("{ret}({args_norm})"),

@@ -21,16 +21,8 @@ pub struct PlanRow {
 /// Errors on an unregistered target or a missing required capability. The
 /// `exclude` list is honored by removing those target ids from the include
 /// set (matching the manifest semantics).
-pub fn expand(
-    module: &ModuleManifest,
-    targets: &[TargetPack],
-) -> Result<Vec<PlanRow>, String> {
-    let include: Vec<&str> = module
-        .targets
-        .include
-        .iter()
-        .map(|s| s.as_str())
-        .collect();
+pub fn expand(module: &ModuleManifest, targets: &[TargetPack]) -> Result<Vec<PlanRow>, String> {
+    let include: Vec<&str> = module.targets.include.iter().map(|s| s.as_str()).collect();
     let exclude_vec = module.targets.exclude.clone().unwrap_or_default();
     let exclude: Vec<&str> = exclude_vec.iter().map(|s| s.as_str()).collect();
 

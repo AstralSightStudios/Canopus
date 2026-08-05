@@ -159,10 +159,7 @@ impl<'a> RustGen<'a> {
             }
             if total > cursor {
                 let gap = total - cursor;
-                out.push_str(&format!(
-                    "    pub _tail: [u8; 0x{:x}], // {}\n",
-                    gap, gap
-                ));
+                out.push_str(&format!("    pub _tail: [u8; 0x{:x}], // {}\n", gap, gap));
             }
             out.push_str("}\n\n");
         }
