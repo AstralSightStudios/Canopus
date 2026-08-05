@@ -67,6 +67,11 @@ static void make_command(uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE],
 
 /* ---- ABI shape (must match main.lua) -------------------------------- */
 
+TEST(supervisor_init_rejects_null)
+{
+    CHECK(canopus_supervisor_init(0, 7, &fake_platform, 0) == -1);
+}
+
 TEST(supervisor_status_abi_layout)
 {
     struct canopus_supervisor_v1 sup;
@@ -675,6 +680,35 @@ TEST(v2_install_accepts_only_bounded_token)
           (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 12));
     CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
     CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_DISALLOWED);
+
+    /* "." and ".." are traversal components, not basenames */
+    canopus_memcpy(payload, ".", 2);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_INSTALL, 0x13,
+                    payload, 2);
+    CHECK(canopus_supervisor_device_write(
+              &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + 2) ==
+          (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 2));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_DISALLOWED);
+
+    canopus_memcpy(payload, "..", 3);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_INSTALL, 0x14,
+                    payload, 3);
+    CHECK(canopus_supervisor_device_write(
+              &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + 3) ==
+          (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 3));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_DISALLOWED);
+
+    /* a leading dot (hidden name) is also rejected */
+    canopus_memcpy(payload, ".hidden", 8);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_INSTALL, 0x15,
+                    payload, 8);
+    CHECK(canopus_supervisor_device_write(
+              &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + 8) ==
+          (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 8));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_DISALLOWED);
 }
 
 TEST(v2_unknown_magic_rejected)
@@ -825,6 +859,7 @@ TEST(supervisor_add_module_rejects_full_table)
 }
 
 static const struct test_registry supervisor_device_tests[] = {
+    { "supervisor_init_rejects_null", supervisor_init_rejects_null_wrapper },
     { "supervisor_status_abi_layout", supervisor_status_abi_layout_wrapper },
     { "supervisor_command_abi_validates", supervisor_command_abi_validates_wrapper },
     { "supervisor_device_transfers_report_bytes", supervisor_device_transfers_report_bytes_wrapper },

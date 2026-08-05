@@ -243,7 +243,7 @@ fn manifest_with_resource(path: &str) -> PackageManifest {
 
 #[test]
 fn build_embeds_declared_resource() {
-    let mut manifest = manifest_with_resource("resources/icon.png");
+    let manifest = manifest_with_resource("resources/icon.png");
     let mut files = HashMap::new();
     files.insert(
         "xiaomi-band-10-pro-3.101.030".to_string(),
@@ -274,7 +274,7 @@ fn build_rejects_missing_declared_resource() {
 
 #[test]
 fn build_rejects_undeclared_resource_file() {
-    let mut manifest = manifest_with_resource("resources/icon.png");
+    let manifest = manifest_with_resource("resources/icon.png");
     let mut files = HashMap::new();
     files.insert(
         "xiaomi-band-10-pro-3.101.030".to_string(),
@@ -291,7 +291,7 @@ fn build_rejects_undeclared_resource_file() {
 
 #[test]
 fn resource_hash_mismatch_fails_build() {
-    let mut manifest = manifest_with_resource("resources/icon.png");
+    let manifest = manifest_with_resource("resources/icon.png");
     let mut files = HashMap::new();
     files.insert(
         "xiaomi-band-10-pro-3.101.030".to_string(),
@@ -310,7 +310,7 @@ fn resource_hash_mismatch_fails_build() {
 
 #[test]
 fn tampered_resource_fails_verify() {
-    let mut manifest = manifest_with_resource("resources/icon.png");
+    let manifest = manifest_with_resource("resources/icon.png");
     let mut files = HashMap::new();
     files.insert(
         "xiaomi-band-10-pro-3.101.030".to_string(),

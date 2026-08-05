@@ -100,6 +100,9 @@ int canopus_supervisor_init(struct canopus_supervisor_v1 *sup,
                             const struct canopus_sup_platform_v1 *platform,
                             void *cookie)
 {
+    if (sup == 0) {
+        return -1; /* CAN-P2-001: never dereference a NULL supervisor */
+    }
     canopus_memset(sup, 0, sizeof(*sup));
     sup->abi = CANOPUS_SUP_ABI;
     sup->framework_revision = framework_revision;
@@ -435,25 +438,45 @@ static int sup_slot_from_module_id(const struct canopus_supervisor_v1 *sup,
 }
 
 /* CAN-P0-003: an INSTALL stage token is a bounded basename, never an
- * arbitrary path. Only [a-z0-9._-] and NUL-terminated within the bound. */
+ * arbitrary path. Only [a-z0-9._-], NUL-terminated within the bound, and
+ * never ".", ".." or a leading/trailing "."/"-" (a "." component could
+ * escape a future open-at-root resolution). */
 static int sup_stage_token_ok(const void *payload, uint32_t len)
 {
     const uint8_t *p = (const uint8_t *)payload;
-    uint32_t i;
+    uint32_t i, n = 0;
     if (payload == 0 || len == 0 || len > CANOPUS_SUP_STAGE_TOKEN_MAX) {
         return 0;
     }
     for (i = 0; i < len; i++) {
-        uint8_t c = p[i];
-        if (c == 0) {
-            return 1; /* NUL terminates inside the bound */
+        if (p[i] == 0) {
+            n = i;
+            break;
         }
+    }
+    if (i == len) {
+        return 0; /* no NUL within the bound */
+    }
+    if (n == 0) {
+        return 0; /* empty token */
+    }
+    /* "." and ".." are traversal components, never valid basenames */
+    if ((n == 1 && p[0] == '.') ||
+        (n == 2 && p[0] == '.' && p[1] == '.')) {
+        return 0;
+    }
+    /* leading/trailing separators and hidden names are not valid boundaries */
+    if (p[0] == '.' || p[0] == '-' || p[n - 1] == '.' || p[n - 1] == '-') {
+        return 0;
+    }
+    for (i = 0; i < n; i++) {
+        uint8_t c = p[i];
         if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
               c == '.' || c == '-' || c == '_')) {
             return 0;
         }
     }
-    return 0; /* no NUL within the bound */
+    return 1;
 }
 
 int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
