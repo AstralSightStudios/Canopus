@@ -88,4 +88,6 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_load_module,
     sup_unload_module,
     sup_stage_package,
+    0, /* deactivate: device teardown happens inside unload (G0 pending) */
+    0, /* stop */
 };

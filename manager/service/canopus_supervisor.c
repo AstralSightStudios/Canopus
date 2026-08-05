@@ -22,6 +22,79 @@ static int module_lifecycle_ok(uint32_t lifecycle_class)
     return lifecycle_class <= CANOPUS_LIFECYCLE_PATCH_REBOOT_REQUIRED;
 }
 
+/* CAN-P0-005: a module with running code (as opposed to INSTALLED/DISABLED
+ * where nothing is resident) needs a real stop/drain/unload to disable. */
+static int sup_module_running(uint32_t state)
+{
+    return state == CANOPUS_STATE_ACTIVE || state == CANOPUS_STATE_READY ||
+           state == CANOPUS_STATE_ENABLED || state == CANOPUS_STATE_BOOT_RESIDENT;
+}
+
+/* Removable disable: reject-new-work barrier -> drain tracked resources ->
+ * never unload while refs/retained resources exist -> platform unload.
+ * Only on a successful unload does the slot become UNLOADED; a failure
+ * keeps the real loaded state so the UI never reports DISABLED for code
+ * that is still resident. */
+static uint32_t sup_disable_removable(struct canopus_supervisor_v1 *sup, int slot)
+{
+    struct canopus_sup_module_v1 *m = &sup->modules[slot];
+    uint32_t was_state = m->state;
+    uint32_t retained = 0;
+    uint32_t i;
+    uint32_t rc;
+
+    if (sup->platform && sup->platform->deactivate) {
+        (void)sup->platform->deactivate(sup->platform_cookie, (uint32_t)slot);
+    }
+    if (sup->platform && sup->platform->stop) {
+        (void)sup->platform->stop(sup->platform_cookie, (uint32_t)slot);
+    }
+    /* reject-new-work barrier + drain */
+    m->state = CANOPUS_STATE_STOPPING;
+    m->flags |= CANOPUS_SUP_FLAG_DISABLING;
+    if (m->tracker != 0) {
+        canopus_tracker_release_all(m->tracker);
+        for (i = 0; i < CANOPUS_RESOURCE_MAX; i++) {
+            if (m->tracker->slots[i].state == CANOPUS_RES_RETAINED_UNTIL_REBOOT) {
+                retained++;
+            }
+        }
+    }
+    if (retained > 0 || m->open_refs > 0) {
+        /* retained/detached resources or open refs: never unload, fail-stop */
+        m->state = CANOPUS_STATE_FAIL_STOP;
+        m->flags &= ~CANOPUS_SUP_FLAG_DISABLING;
+        sup->error_code = CANOPUS_SUP_ERR_BUSY;
+        return CANOPUS_RESULT_REBOOT_REQUIRED;
+    }
+    if (sup->platform && sup->platform->unload_module) {
+        rc = sup_result_state(sup->platform->unload_module(
+            sup->platform_cookie, (uint32_t)slot));
+    } else {
+        rc = CANOPUS_RESULT_FAILED;
+    }
+    if (rc == CANOPUS_RESULT_COMPLETED) {
+        m->state = CANOPUS_STATE_UNLOADED;
+        m->flags &= ~CANOPUS_SUP_FLAG_DISABLING;
+        m->flags &= ~CANOPUS_SUP_FLAG_SIGNATURE_OK;
+        return CANOPUS_RESULT_COMPLETED;
+    }
+    /* unload failed: keep the real loaded state, never DISABLED/UNLOADED */
+    m->state = was_state;
+    m->flags &= ~CANOPUS_SUP_FLAG_DISABLING;
+    sup->error_code = CANOPUS_SUP_ERR_UNLOAD;
+    return CANOPUS_RESULT_FAILED;
+}
+
+/* CAN-P1-007: reclaim a slot after a successful REMOVE. */
+static void sup_clear_slot(struct canopus_supervisor_v1 *sup, int slot)
+{
+    if (sup->modules[slot].state != 0) {
+        sup->module_count--;
+    }
+    canopus_memset(&sup->modules[slot], 0, sizeof(sup->modules[slot]));
+}
+
 int canopus_supervisor_init(struct canopus_supervisor_v1 *sup,
                             uint32_t framework_revision,
                             const struct canopus_sup_platform_v1 *platform,
@@ -120,21 +193,24 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
             }
         }
         if (op == CANOPUS_SUP_CMD_REMOVE) {
-            if (sup->platform && sup->platform->unload_module) {
-                rc = sup_result_state(sup->platform->unload_module(
-                    sup->platform_cookie, (uint32_t)slot));
-            } else {
-                rc = CANOPUS_RESULT_FAILED;
-            }
+            /* CAN-P0-005 point 12: REMOVE reuses the same disable
+             * transaction (stop/drain/unload), then reclaims the slot. */
+            rc = sup_module_running(sup->modules[slot].state)
+                     ? sup_disable_removable(sup, slot)
+                     : CANOPUS_RESULT_COMPLETED;
             if (rc == CANOPUS_RESULT_COMPLETED) {
-                sup->modules[slot].state = CANOPUS_STATE_UNLOADED;
-                sup->modules[slot].flags &= ~1u;
-            } else {
-                sup->error_code = CANOPUS_SUP_ERR_UNLOAD;
+                sup_clear_slot(sup, slot);
             }
         } else if (op == CANOPUS_SUP_CMD_DISABLE) {
-            sup->modules[slot].state = CANOPUS_STATE_DISABLED;
-            rc = CANOPUS_RESULT_COMPLETED;
+            /* CAN-P0-005: a removable disable really stops, drains and
+             * unloads; it never reports DISABLED while the code is still
+             * resident or while refs/retained resources exist. */
+            if (sup_module_running(sup->modules[slot].state)) {
+                rc = sup_disable_removable(sup, slot);
+            } else {
+                sup->modules[slot].state = CANOPUS_STATE_DISABLED;
+                rc = CANOPUS_RESULT_COMPLETED;
+            }
         } else if (op == CANOPUS_SUP_CMD_ENABLE) {
             if (sup->platform && sup->platform->load_module) {
                 int st = sup->platform->load_module(
@@ -506,4 +582,17 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
     }
     sup->error_code = CANOPUS_SUP_ERR_TABLE_FULL;
     return -1;
+}
+
+int canopus_supervisor_attach_tracker(struct canopus_supervisor_v1 *sup,
+                                      uint32_t index,
+                                      struct canopus_resource_tracker_v1 *tracker,
+                                      uint32_t open_refs)
+{
+    if (sup == 0 || index >= CANOPUS_SUP_MODULE_SLOTS) {
+        return -1;
+    }
+    sup->modules[index].tracker = tracker;
+    sup->modules[index].open_refs = open_refs;
+    return 0;
 }

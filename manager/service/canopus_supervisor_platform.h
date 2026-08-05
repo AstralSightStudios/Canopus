@@ -36,6 +36,11 @@ struct canopus_sup_platform_v1 {
     int (*unload_module)(void *cookie, uint32_t index);
     /* Make the latest staged package available for INSTALL. Returns 0/1. */
     int (*stage_package)(void *cookie, const char *package_path);
+    /* CAN-P0-005: per-module teardown phases called by a removable disable
+     * before unload. Both are optional (the device unload path may perform
+     * them itself); NULL hooks are skipped. */
+    int (*deactivate)(void *cookie, uint32_t index);
+    int (*stop)(void *cookie, uint32_t index);
 };
 
 #ifdef __cplusplus

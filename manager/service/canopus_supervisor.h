@@ -20,6 +20,10 @@
 #include "canopus_abi.h"
 #include "canopus_protocol.h"
 
+/* The module's resource tracker (defined in canopus_runtime.h); only a
+ * pointer is stored per slot. */
+struct canopus_resource_tracker_v1;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -64,16 +68,30 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_LOAD = -6,         /* module load failed */
     CANOPUS_SUP_ERR_UNLOAD = -7,       /* module unload failed */
     CANOPUS_SUP_ERR_UNKNOWN_OP = -8,   /* unrecognized opcode */
+    CANOPUS_SUP_ERR_BUSY = -9,         /* open refs / retained resources block unload */
 };
 
 #define CANOPUS_SUP_MODULE_ID_MAX 32u
+
+/* Slot flag bits. bit0 is the legacy signature_ok bit (also rendered in the
+ * 384-byte CPS1 status). bit1 is the reject-new-work barrier set while a
+ * removable module is being stopped/drained. */
+#define CANOPUS_SUP_FLAG_SIGNATURE_OK  (1u << 0)
+#define CANOPUS_SUP_FLAG_DISABLING     (1u << 1)
 
 /* A tracked module slot. */
 struct canopus_sup_module_v1 {
     uint32_t state;            /* CANOPUS_STATE_* */
     uint32_t lifecycle_class;  /* CANOPUS_LIFECYCLE_* */
     uint32_t version;
-    uint32_t flags;            /* bit0 = signature_ok */
+    uint32_t flags;            /* CANOPUS_SUP_FLAG_* */
+    /* CAN-P0-005: open references / inflight work the drain must observe.
+     * A module with open refs or retained/detached resources can never be
+     * unloaded; the supervisor fails the disable with REBOOT_REQUIRED. */
+    uint32_t open_refs;
+    /* The module's resource tracker (owned by the module; the supervisor
+     * drains it before unload). NULL when the module tracks nothing. */
+    struct canopus_resource_tracker_v1 *tracker;
     /* CAN-P0-008/CAN-P1-007: stable module identity, used to resolve v2
      * per-module commands by id instead of a UI index. Not part of the
      * 384-byte CPS1 slot render (which keeps the 16-byte stride). */
@@ -157,6 +175,14 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
                                   uint32_t version,
                                   uint32_t signature_ok,
                                   const char *module_id);
+
+/* CAN-P0-005: attach the module's resource tracker and open-reference
+ * count to a slot so a removable disable can drain them before unload.
+ * `tracker` stays owned by the module. Returns 0 on success. */
+int canopus_supervisor_attach_tracker(struct canopus_supervisor_v1 *sup,
+                                      uint32_t index,
+                                      struct canopus_resource_tracker_v1 *tracker,
+                                      uint32_t open_refs);
 
 #ifdef __cplusplus
 }

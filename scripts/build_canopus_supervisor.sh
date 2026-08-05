@@ -42,7 +42,8 @@ for s in \
     manager/service/canopus_supervisor_module.c \
     manager/service/canopus_supervisor_platform.c \
     manager/protocol/canopus_protocol.c \
-    runtime/control/canopus_control.c; do
+    runtime/control/canopus_control.c \
+    runtime/resources/canopus_resource.c; do
     base=$(basename "$s")
     $CC $TARGET_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
 done
@@ -53,7 +54,8 @@ ld.lld -r -o "$OUT/canopus_supervisor.elf" \
     "$OUT/canopus_supervisor_module.o" \
     "$OUT/canopus_supervisor_platform.o" \
     "$OUT/canopus_protocol.o" \
-    "$OUT/canopus_control.o"
+    "$OUT/canopus_control.o" \
+    "$OUT/canopus_resource.o"
 
 echo "[3/3] Canopus ELF verifier"
 "$ROOT/target/debug/canopus" verify "$OUT/canopus_supervisor.elf" \
