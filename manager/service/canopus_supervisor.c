@@ -68,7 +68,7 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
     if (canopus_supervisor_validate_command(command) != 0) {
         sup->pending_op = 0;
         sup->pending_state = CANOPUS_RESULT_REJECTED;
-        sup->error_code = -1;
+        sup->error_code = CANOPUS_SUP_ERR_BAD_COMMAND;
         return sup->pending_state;
     }
     op = cmd_word(command, 0);
@@ -77,6 +77,9 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
 
     sup->pending_op = op;
     sup->selected = (int32_t)arg0;
+    /* CAN-P1-008: clear this command's error at the start; failure paths
+     * set a stable code and it is never cleared again at the tail. */
+    sup->error_code = CANOPUS_SUP_ERR_NONE;
 
     switch (op) {
     case CANOPUS_SUP_CMD_QUERY:
@@ -93,6 +96,9 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
         } else {
             rc = CANOPUS_RESULT_FAILED;
         }
+        if (rc == CANOPUS_RESULT_FAILED) {
+            sup->error_code = CANOPUS_SUP_ERR_STAGE;
+        }
         break;
     }
 
@@ -105,6 +111,7 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
         if (slot < 0 || (uint32_t)slot >= CANOPUS_SUP_MODULE_SLOTS ||
             sup->modules[slot].state == 0) {
             rc = CANOPUS_RESULT_DISALLOWED;
+            sup->error_code = CANOPUS_SUP_ERR_BAD_SLOT;
             break;
         }
         if (op == CANOPUS_SUP_CMD_ENABLE ||
@@ -134,6 +141,8 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
             if (rc == CANOPUS_RESULT_COMPLETED) {
                 sup->modules[slot].state = CANOPUS_STATE_UNLOADED;
                 sup->modules[slot].flags &= ~1u;
+            } else {
+                sup->error_code = CANOPUS_SUP_ERR_UNLOAD;
             }
         } else if (op == CANOPUS_SUP_CMD_DISABLE) {
             sup->modules[slot].state = CANOPUS_STATE_DISABLED;
@@ -151,6 +160,9 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
             } else {
                 rc = CANOPUS_RESULT_FAILED;
             }
+            if (rc == CANOPUS_RESULT_FAILED) {
+                sup->error_code = CANOPUS_SUP_ERR_LOAD;
+            }
         } else { /* UPDATE / ROLLBACK */
             sup->modules[slot].state = CANOPUS_STATE_UPDATE_STAGED;
             rc = CANOPUS_RESULT_REBOOT_REQUIRED;
@@ -165,11 +177,11 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
 
     default:
         rc = CANOPUS_RESULT_REJECTED;
+        sup->error_code = CANOPUS_SUP_ERR_UNKNOWN_OP;
         break;
     }
 
     sup->pending_state = rc;
-    sup->error_code = 0;
     (void)arg1;
     return rc;
 }

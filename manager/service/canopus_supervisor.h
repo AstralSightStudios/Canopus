@@ -43,6 +43,21 @@ enum canopus_sup_command {
     CANOPUS_SUP_CMD_ENTER_SAFE_MODE,
 };
 
+/* Stable supervisor error codes (CAN-P1-008). `error_code` holds the
+ * last operation's error until the next command clears it; a successful
+ * command leaves it at NONE. Shown in the CPS1 status at offset 32. */
+enum canopus_sup_error {
+    CANOPUS_SUP_ERR_NONE = 0,
+    CANOPUS_SUP_ERR_BAD_COMMAND = -1,  /* magic/format mismatch */
+    CANOPUS_SUP_ERR_BAD_CLASS = -2,    /* invalid lifecycle class */
+    CANOPUS_SUP_ERR_TABLE_FULL = -3,   /* module slot table exhausted */
+    CANOPUS_SUP_ERR_BAD_SLOT = -4,     /* unknown / empty slot index */
+    CANOPUS_SUP_ERR_STAGE = -5,        /* package staging failed */
+    CANOPUS_SUP_ERR_LOAD = -6,         /* module load failed */
+    CANOPUS_SUP_ERR_UNLOAD = -7,       /* module unload failed */
+    CANOPUS_SUP_ERR_UNKNOWN_OP = -8,   /* unrecognized opcode */
+};
+
 /* A tracked module slot. */
 struct canopus_sup_module_v1 {
     uint32_t state;            /* CANOPUS_STATE_* */

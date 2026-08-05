@@ -14,6 +14,8 @@ static int g_loads;
 static int g_unloads;
 static int g_stages;
 static int g_load_result = CANOPUS_STATE_ACTIVE;
+static int g_stage_result = 0;
+static int g_unload_result = 0;
 
 static int fake_register(void *c) { (void)c; return 0; }
 static int fake_unregister(void *c) { (void)c; return 0; }
@@ -23,8 +25,14 @@ static int fake_load(void *c, uint32_t i, const char *n, uint32_t cls)
     g_loads++;
     return g_load_result;
 }
-static int fake_unload(void *c, uint32_t i) { (void)c; (void)i; g_unloads++; return 0; }
-static int fake_stage(void *c, const char *p) { (void)c; (void)p; g_stages++; return 0; }
+static int fake_unload(void *c, uint32_t i)
+{
+    (void)c; (void)i; g_unloads++; return g_unload_result;
+}
+static int fake_stage(void *c, const char *p)
+{
+    (void)c; (void)p; g_stages++; return g_stage_result;
+}
 
 static const struct canopus_sup_platform_v1 fake_platform = {
     fake_register, fake_unregister, fake_load, fake_unload, fake_stage,
@@ -227,6 +235,75 @@ TEST(supervisor_safe_mode_sets_flag)
     CHECK(r32(status, 12) == 1);
 }
 
+/* ---- CAN-P1-008: error code persistence semantics ------------------ */
+
+TEST(supervisor_error_persists_until_next_command)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+
+    /* a failing INSTALL leaves a readable, stable error */
+    g_stage_result = -1;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
+    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_STAGE);
+
+    /* a later successful QUERY clears it — the next success does not
+     * inherit the previous failure */
+    g_stage_result = 0;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_QUERY, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_NONE);
+}
+
+TEST(supervisor_bad_slot_sets_error)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 99, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_BAD_SLOT);
+}
+
+TEST(supervisor_load_failure_sets_error)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1) == 0);
+    sup.modules[0].state = CANOPUS_STATE_INSTALLED;
+    g_load_result = -1;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
+    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_LOAD);
+}
+
+TEST(supervisor_unload_failure_sets_error)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1) == 0);
+    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
+    g_unload_result = -1;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
+    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_UNLOAD);
+    g_unload_result = 0;
+}
+
+TEST(supervisor_unknown_op_sets_error)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, 0xDEAD0000u, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REJECTED);
+    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_UNKNOWN_OP);
+}
+
 TEST(supervisor_add_module_rejects_full_table)
 {
     struct canopus_supervisor_v1 sup;
@@ -257,6 +334,11 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_unknown_slot_disallowed", supervisor_unknown_slot_disallowed_wrapper },
     { "supervisor_safe_mode_sets_flag", supervisor_safe_mode_sets_flag_wrapper },
     { "supervisor_add_module_rejects_full_table", supervisor_add_module_rejects_full_table_wrapper },
+    { "supervisor_error_persists_until_next_command", supervisor_error_persists_until_next_command_wrapper },
+    { "supervisor_bad_slot_sets_error", supervisor_bad_slot_sets_error_wrapper },
+    { "supervisor_load_failure_sets_error", supervisor_load_failure_sets_error_wrapper },
+    { "supervisor_unload_failure_sets_error", supervisor_unload_failure_sets_error_wrapper },
+    { "supervisor_unknown_op_sets_error", supervisor_unknown_op_sets_error_wrapper },
 };
 #define SUPERVISOR_DEVICE_TESTS_LEN \
     (sizeof(supervisor_device_tests) / sizeof(supervisor_device_tests[0]))
