@@ -18,6 +18,8 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use tar::{Builder, Header};
 
+pub mod keyroles;
+
 pub const SIGNATURE_ENTRY: &str = "signature.ed25519";
 
 /// Assembles a deterministic tar archive from a manifest and the on-disk

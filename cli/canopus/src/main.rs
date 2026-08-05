@@ -36,6 +36,9 @@ enum Command {
     /// Package manifest commands.
     #[command(subcommand)]
     Package(PackageCmd),
+    /// Key roles and revocation commands (CAN-REL-001).
+    #[command(subcommand)]
+    Key(KeyCmd),
     /// RE orchestrator commands (Phase 9).
     #[command(subcommand)]
     Re(ReCmd),
@@ -62,6 +65,42 @@ enum Command {
         targets_dir: PathBuf,
         #[arg(long)]
         json: bool,
+    },
+}
+
+#[derive(Subcommand)]
+enum KeyCmd {
+    /// Print a key certificate binding a public key to a role.
+    RoleCert {
+        /// dev or production.
+        role: String,
+        /// Public key hex (32 bytes).
+        #[arg(long)]
+        public: String,
+        #[arg(long)]
+        note: Option<String>,
+    },
+    /// Append a revocation entry to a revocation list and sign it.
+    Revoke {
+        /// Fingerprint to revoke.
+        fingerprint: String,
+        /// Signer role of the list: dev or production.
+        #[arg(long, default_value = "dev")]
+        role: String,
+        /// Secret key hex (32 bytes) of the list signer.
+        #[arg(long)]
+        key: String,
+        /// Revocation list path (created if missing).
+        #[arg(long, default_value = "revocations.json")]
+        list: String,
+    },
+    /// Check a certificate against the revocation list.
+    Check {
+        /// Path to a key certificate JSON.
+        cert: String,
+        /// Revocation list path.
+        #[arg(long, default_value = "revocations.json")]
+        list: String,
     },
 }
 
@@ -185,6 +224,20 @@ enum EvidenceCmd {
 enum ModuleCmd {
     /// Validate a module manifest (Canopus.toml / .json).
     Validate { path: PathBuf },
+    /// Scaffold a new module from a template (CAN-REL-004).
+    New {
+        /// Module name (reverse-dns-safe; sanitized for C identifiers).
+        name: String,
+        /// Language: c or rust.
+        #[arg(long, default_value = "c")]
+        lang: String,
+        /// Target id to bake into the descriptor, e.g. xiaomi-band-10-pro-3.101.030.
+        #[arg(long, default_value = "xiaomi-band-10-pro-3.101.030")]
+        target: String,
+        /// Directory to create the module in (default: modules/).
+        #[arg(long, default_value = "modules")]
+        out_dir: PathBuf,
+    },
 }
 
 #[derive(Subcommand)]
@@ -245,6 +298,7 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         Command::Evidence(cmd) => commands::evidence(cmd),
         Command::Module(cmd) => commands::module(cmd),
         Command::Package(cmd) => commands::package(cmd),
+        Command::Key(cmd) => commands::key(cmd),
         Command::Re(cmd) => commands::re(cmd),
         Command::BuildPlan {
             manifest,

@@ -7,4 +7,5 @@ pub mod policy;
 pub mod registry;
 pub mod rustgen;
 pub mod schema;
+pub mod template;
 pub mod veneer;

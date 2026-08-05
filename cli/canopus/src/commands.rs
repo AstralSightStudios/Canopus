@@ -167,6 +167,53 @@ pub fn module(cmd: ModuleCmd) -> anyhow::Result<()> {
             println!("module OK: {} v{} lifecycle={}", m.module.id, m.module.version, m.module.lifecycle);
             Ok(())
         }
+        ModuleCmd::New {
+            name,
+            lang,
+            target,
+            out_dir,
+        } => {
+            let lang = match lang.as_str() {
+                "c" => canopus_core::template::ModuleLang::C,
+                "rust" => canopus_core::template::ModuleLang::Rust,
+                other => anyhow::bail!("unknown language '{other}' (expected c or rust)"),
+            };
+            let files = canopus_core::template::render(&name, &target, lang);
+            let dir = out_dir.join(&name);
+            std::fs::create_dir_all(&dir)?;
+            let mut n = 0;
+            for (path, contents) in &files {
+                let full = dir.join(path);
+                if let Some(parent) = full.parent() {
+                    std::fs::create_dir_all(parent)?;
+                }
+                std::fs::write(&full, contents)?;
+                n += 1;
+            }
+            // build.sh must be executable
+            let sh = dir.join("build.sh");
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                if sh.exists() {
+                    let mut p = std::fs::metadata(&sh)?.permissions();
+                    p.set_mode(0o755);
+                    std::fs::set_permissions(&sh, p)?;
+                }
+            }
+            println!(
+                "scaffolded {} module '{}' in {} ({} files, target {})",
+                match lang {
+                    canopus_core::template::ModuleLang::C => "C",
+                    canopus_core::template::ModuleLang::Rust => "Rust",
+                },
+                name,
+                dir.display(),
+                n,
+                target
+            );
+            Ok(())
+        }
     }
 }
 
@@ -636,4 +683,75 @@ int probe_{name}_run(void)
     std::fs::write(&out, text)?;
     println!("wrote probe {}", out.display());
     Ok(())
+}
+
+// ---------------------------------------------------------------- key
+
+use crate::KeyCmd;
+use canopus_package::keyroles::{KeyCert, KeyRole, RevocationList, check_cert_revoked, certify};
+
+fn parse_role(s: &str) -> anyhow::Result<KeyRole> {
+    Ok(match s {
+        "dev" => KeyRole::Dev,
+        "production" => KeyRole::Production,
+        other => anyhow::bail!("unknown key role '{other}' (expected dev or production)"),
+    })
+}
+
+pub fn key(cmd: KeyCmd) -> anyhow::Result<()> {
+    match cmd {
+        KeyCmd::RoleCert { role, public, note } => {
+            let role = parse_role(&role)?;
+            let cert = certify(role, &public, note.as_deref().unwrap_or(""));
+            let text = serde_json::to_string_pretty(&cert)?;
+            println!("{text}");
+            Ok(())
+        }
+        KeyCmd::Revoke {
+            fingerprint,
+            role,
+            key,
+            list,
+        } => {
+            let role = parse_role(&role)?;
+            let path = std::path::Path::new(&list);
+            let mut rl = if path.exists() {
+                RevocationList::load(path).map_err(|e| anyhow::anyhow!(e))?
+            } else {
+                RevocationList::new_empty(role)
+            };
+            rl.add(&fingerprint);
+            rl.sign(&key).map_err(|e| anyhow::anyhow!("sign: {e}"))?;
+            rl.save(path).map_err(|e| anyhow::anyhow!(e))?;
+            println!(
+                "revoked {} (list now has {} entries, signer={})",
+                fingerprint,
+                rl.revoked.len(),
+                rl.signer_role.as_str()
+            );
+            Ok(())
+        }
+        KeyCmd::Check { cert, list } => {
+            let path = std::path::Path::new(&list);
+            if !path.exists() {
+                anyhow::bail!("revocation list not found: {list}");
+            }
+            let rl = RevocationList::load(path).map_err(|e| anyhow::anyhow!(e))?;
+            let cdata = std::fs::read_to_string(&cert)?;
+            let c: KeyCert = serde_json::from_str(&cdata)?;
+            rl.verify(&c).map_err(|e| anyhow::anyhow!(e))?;
+            match check_cert_revoked(&c, &rl) {
+                Ok(()) => println!(
+                    "cert {} ({}): NOT revoked",
+                    c.role.as_str(),
+                    &c.fingerprint[..16.min(c.fingerprint.len())]
+                ),
+                Err(e) => {
+                    println!("{}", e);
+                    std::process::exit(2);
+                }
+            }
+            Ok(())
+        }
+    }
 }
