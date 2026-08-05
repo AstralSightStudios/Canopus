@@ -22,6 +22,25 @@ pub mod keyroles;
 
 pub const SIGNATURE_ENTRY: &str = "signature.ed25519";
 
+/// Recursively removes `null` object members so an in-memory manifest (with
+/// `None` Options serialized as null) validates like a hand-written one.
+fn strip_nulls(v: &mut serde_json::Value) {
+    match v {
+        serde_json::Value::Object(map) => {
+            map.retain(|_, val| !val.is_null());
+            for val in map.values_mut() {
+                strip_nulls(val);
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for val in arr.iter_mut() {
+                strip_nulls(val);
+            }
+        }
+        _ => {}
+    }
+}
+
 /// CAN-P0-003: canonical, security-bounded archive entry path. Rejects
 /// absolute paths, `..` / `.` / empty components, backslash confusion, NUL
 /// and any non-regular file type (symlink, hardlink, device node, FIFO,
@@ -75,6 +94,14 @@ pub fn build_archive(
     files: &HashMap<String, PathBuf>,         // target_id -> source file
     resource_files: &HashMap<String, PathBuf>, // resource path -> source file
 ) -> Result<Vec<u8>> {
+    // CAN-P2-009: the library enforces the package schema itself (not just
+    // the CLI), so build and CLI contracts cannot drift apart. Absent
+    // Option fields serialize as `null`, which the schema treats as absent;
+    // strip them so an in-memory manifest validates like a hand-written one.
+    let mut value = serde_json::to_value(manifest)?;
+    strip_nulls(&mut value);
+    canopus_core::schema::validate(canopus_core::schema::SchemaKind::Package, &value)?;
+
     let mut entries: Vec<(String, Vec<u8>)> = Vec::new();
 
     // manifest.json
@@ -226,9 +253,12 @@ pub fn verify_archive(archive: &[u8], public_key_hex: &str) -> Result<()> {
         .map_err(|_| Error::other("Ed25519 signature verification FAILED"))
 }
 
-/// sha256 over (path, 0x00, content) for every entry except the signature,
-/// sorted by path. This is the canonical signed payload: binding path to
-/// content and independent of tar encoding details.
+/// sha256 over a framed, versioned canonical form of every entry except the
+/// signature, sorted by path. CAN-P2-008: the digest is self-describing —
+/// a domain/version prefix and explicit u64 name/content length framing — so
+/// a future format change produces a distinct domain or bumps the version
+/// instead of silently reinterpreting old digests. Binding path to content
+/// makes it independent of tar encoding details.
 fn canonical_digest(entries: &[(String, Vec<u8>)]) -> Vec<u8> {
     let mut sorted: Vec<&(String, Vec<u8>)> = entries
         .iter()
@@ -236,9 +266,11 @@ fn canonical_digest(entries: &[(String, Vec<u8>)]) -> Vec<u8> {
         .collect();
     sorted.sort_by(|a, b| a.0.cmp(&b.0));
     let mut h = Sha256::new();
+    h.update(b"canopus.package.digest.v1\0");
     for (name, bytes) in sorted {
+        h.update((name.len() as u64).to_le_bytes());
         h.update(name.as_bytes());
-        h.update([0u8]);
+        h.update((bytes.len() as u64).to_le_bytes());
         h.update(bytes);
     }
     h.finalize().to_vec()

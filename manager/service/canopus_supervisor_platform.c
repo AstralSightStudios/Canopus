@@ -18,7 +18,17 @@
 #define CANOPUS_SUP_DEVICE_MODE 438u /* 0666 */
 #define CANOPUS_SUP_FOPS_WORDS 12u   /* matches the stock file_operations table */
 
-static uint32_t s_fops[CANOPUS_SUP_FOPS_WORDS];
+/* CAN-P2-002: the fops table is typed from the recovered layout instead of a
+ * bare uint32_t[12]. The veneer's `file_operations` carries the exact device
+ * byte layout (open/close/read/write at +0x0..+0xc, ioctl at +0x14, 0x30
+ * total); a compile-time size assertion locks it to the 12-word table the
+ * driver expects. */
+static file_operations s_fops;
+
+CANOPUS_STATIC_ASSERT(sizeof(file_operations) == 0x30u,
+                      "file_operations must match the 12-word stock table");
+CANOPUS_STATIC_ASSERT(CANOPUS_SUP_FOPS_WORDS * 4u == sizeof(file_operations),
+                      "fops word count must equal the typed layout");
 
 static int sup_control_open(void *filep)
 {
@@ -47,12 +57,12 @@ static int32_t sup_control_write(void *filep, const void *buffer, uint32_t count
 static int sup_register_device(void *cookie)
 {
     (void)cookie;
-    s_fops[0] = (uint32_t)(uintptr_t)&sup_control_open;
-    s_fops[1] = (uint32_t)(uintptr_t)&sup_control_close;
-    s_fops[2] = (uint32_t)(uintptr_t)&sup_control_read;
-    s_fops[3] = (uint32_t)(uintptr_t)&sup_control_write;
+    s_fops.open = (void *)(uintptr_t)&sup_control_open;
+    s_fops.close = (void *)(uintptr_t)&sup_control_close;
+    s_fops.read = (void *)(uintptr_t)&sup_control_read;
+    s_fops.write = (void *)(uintptr_t)&sup_control_write;
     return canopus_fw_register_driver(CANOPUS_SUP_DEVICE_PATH,
-                                     (const void *)s_fops,
+                                     (const void *)&s_fops,
                                      CANOPUS_SUP_DEVICE_MODE,
                                      (void *)0);
 }

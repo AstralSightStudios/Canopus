@@ -164,6 +164,16 @@ local function read_status()
     if not words or words[1] ~= EXPECTED_MAGIC then
         return nil, "Bad supervisor status magic"
     end
+    -- CAN-P2-007: the legacy parser verifies ABI and the sequence snapshot,
+    -- not just the magic, so a torn/mismatched status is never accepted.
+    if words[2] ~= 1 then
+        return nil, "Supervisor ABI mismatch (expected 1, got " .. tostring(words[2]) .. ")"
+    end
+    local seq_begin = words[10] -- bytes 36..39 (1-based words)
+    local seq_end = words[11]   -- bytes 40..43
+    if seq_begin ~= seq_end or seq_begin % 2 ~= 0 then
+        return nil, "Supervisor status snapshot inconsistent"
+    end
     local st = {
         abi = words[2], framework_revision = words[3],
         safe_mode = words[4], module_count = words[5],
@@ -171,11 +181,18 @@ local function read_status()
         flags = words[8], error_code = words[9],
         modules = {},
     }
+    if st.pending_state < 0 or st.pending_state > 8 then
+        return nil, "Supervisor result state out of range"
+    end
     for i = 0, MODULE_SLOTS - 1 do
         local base = 32 + i * (MODULE_SLOT_STRIDE // 4)
         if base + 3 <= #words then
+            local state = words[base + 1]
+            if state < 0 or state > 20 then
+                return nil, "Supervisor module state out of range"
+            end
             st.modules[i + 1] = {
-                state = words[base + 1],
+                state = state,
                 lifecycle_class = words[base + 2],
                 version = words[base + 3],
                 flags = words[base + 4],

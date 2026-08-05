@@ -50,7 +50,7 @@ int canopus_store_init(struct canopus_store_v1 *store, const char *root);
 
 /* Builds the path for a package slot into out (nul-terminated). Returns -1
  * if the package id is not a valid token. */
-int canopus_store_slot_path(const struct canopus_store_v1 *store,
+int canopus_store_slot_path(struct canopus_store_v1 *store,
                             const char *package_id, int slot,
                             char *out, size_t out_size);
 
@@ -58,29 +58,29 @@ int canopus_store_slot_path(const struct canopus_store_v1 *store,
 int canopus_store_write_atomic(const char *path, const void *data, size_t len);
 
 /* Stage directory: returns 0 when the staged slot exists and is non-empty. */
-int canopus_store_has_staged(const struct canopus_store_v1 *store,
+int canopus_store_has_staged(struct canopus_store_v1 *store,
                              const char *package_id);
 
 /* Installs the staged payload as active. Previous active is moved to the
  * previous slot first (never replaced in place). */
-int canopus_store_install_staged(const struct canopus_store_v1 *store,
+int canopus_store_install_staged(struct canopus_store_v1 *store,
                                  const char *package_id);
 
 /* Rolls the previous slot back to active. */
-int canopus_store_rollback(const struct canopus_store_v1 *store,
+int canopus_store_rollback(struct canopus_store_v1 *store,
                            const char *package_id);
 
 /* Moves the active payload to quarantined. */
-int canopus_store_quarantine(const struct canopus_store_v1 *store,
+int canopus_store_quarantine(struct canopus_store_v1 *store,
                              const char *package_id);
 
 /* Removes a slot directory recursively (idempotent; a non-empty slot is
  * fully deleted, not just rmdir'd). */
-int canopus_store_remove_slot(const struct canopus_store_v1 *store,
+int canopus_store_remove_slot(struct canopus_store_v1 *store,
                               const char *package_id, int slot);
 
 /* Test convenience: creates packages/<id>/ with the staged slot. */
-int canopus_store_ensure_package_dir(const struct canopus_store_v1 *store,
+int canopus_store_ensure_package_dir(struct canopus_store_v1 *store,
                                      const char *package_id);
 
 /* Boot-time recovery: reads the package's transaction journal and completes

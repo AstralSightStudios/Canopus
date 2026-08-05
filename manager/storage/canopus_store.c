@@ -52,23 +52,23 @@ static int valid_package_id(const char *id)
     return 1;
 }
 
-int canopus_store_slot_path(const struct canopus_store_v1 *store,
+int canopus_store_slot_path(struct canopus_store_v1 *store,
                             const char *package_id, int slot,
                             char *out, size_t out_size)
 {
     int n;
     if (!valid_package_id(package_id)) {
-        ((struct canopus_store_v1 *)store)->last_error = "invalid package id";
+        store->last_error = "invalid package id";
         return -1;
     }
     if (slot < 0 || slot >= CANOPUS_STORE_SLOTS) {
-        ((struct canopus_store_v1 *)store)->last_error = "invalid slot";
+        store->last_error = "invalid slot";
         return -1;
     }
     n = snprintf(out, out_size, "%s/packages/%s/%s",
                  store->root, package_id, SLOT_NAMES[slot]);
     if (n < 0 || (size_t)n >= out_size) {
-        ((struct canopus_store_v1 *)store)->last_error = "path too long";
+        store->last_error = "path too long";
         return -1;
     }
     return 0;
@@ -170,7 +170,7 @@ static int dir_exists(const char *path)
     return path != 0 && stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 }
 
-int canopus_store_has_staged(const struct canopus_store_v1 *store,
+int canopus_store_has_staged(struct canopus_store_v1 *store,
                              const char *package_id)
 {
     char p[CANOPUS_STORE_PATH_MAX];
@@ -316,12 +316,11 @@ static int rmtree(const char *path)
     return 0;
 }
 
-int canopus_store_install_staged(const struct canopus_store_v1 *store,
+int canopus_store_install_staged(struct canopus_store_v1 *store,
                                  const char *package_id)
 {
     char staged[CANOPUS_STORE_PATH_MAX], active[CANOPUS_STORE_PATH_MAX];
     char previous[CANOPUS_STORE_PATH_MAX];
-    struct canopus_store_v1 *self = (struct canopus_store_v1 *)store;
 
     if (canopus_store_slot_path(store, package_id, CANOPUS_STORE_SLOT_STAGED,
                                 staged, sizeof(staged)) != 0 ||
@@ -332,62 +331,61 @@ int canopus_store_install_staged(const struct canopus_store_v1 *store,
         return -1;
     }
     if (!dir_exists(staged)) {
-        self->last_error = "no staged payload";
+        store->last_error = "no staged payload";
         return -1;
     }
     /* CAN-P1-006: journaled transaction, idempotently recoverable. */
     if (txn_write(store, package_id, CANOPUS_STORE_TXN_PREPARED) != 0) {
-        self->last_error = "journal write failed";
+        store->last_error = "journal write failed";
         return -1;
     }
     fsync_parent(active);
     /* a stale previous never blocks the update: clear it first */
     if (dir_exists(previous)) {
         if (rmtree(previous) != 0) {
-            self->last_error = "previous slot cleanup failed";
+            store->last_error = "previous slot cleanup failed";
             return -1;
         }
     }
     if (txn_write(store, package_id,
                   CANOPUS_STORE_TXN_ACTIVE_TO_PREVIOUS) != 0) {
-        self->last_error = "journal write failed";
+        store->last_error = "journal write failed";
         return -1;
     }
     if (dir_exists(active)) {
         if (move_dir(active, previous) != 0) {
-            self->last_error = "active->previous rename failed";
+            store->last_error = "active->previous rename failed";
             return -1;
         }
     }
     fsync_parent(active);
     if (txn_write(store, package_id,
                   CANOPUS_STORE_TXN_STAGED_TO_ACTIVE) != 0) {
-        self->last_error = "journal write failed";
+        store->last_error = "journal write failed";
         return -1;
     }
     if (move_dir(staged, active) != 0) {
-        self->last_error = "staged->active rename failed";
+        store->last_error = "staged->active rename failed";
         return -1;
     }
     fsync_parent(active);
     if (txn_write(store, package_id, CANOPUS_STORE_TXN_COMMITTED) != 0) {
-        self->last_error = "journal write failed";
+        store->last_error = "journal write failed";
         return -1;
     }
     if (txn_write(store, package_id, CANOPUS_STORE_TXN_NONE) != 0) {
-        self->last_error = "journal write failed";
+        store->last_error = "journal write failed";
         return -1;
     }
     fsync_parent(active);
     return 0;
 }
 
-int canopus_store_rollback(const struct canopus_store_v1 *store,
+int canopus_store_rollback(struct canopus_store_v1 *store,
                            const char *package_id)
 {
     char active[CANOPUS_STORE_PATH_MAX], previous[CANOPUS_STORE_PATH_MAX];
     char junk[CANOPUS_STORE_PATH_MAX + 16];
-    struct canopus_store_v1 *self = (struct canopus_store_v1 *)store;
     static uint32_t s_old_seq;
 
     if (canopus_store_slot_path(store, package_id, CANOPUS_STORE_SLOT_ACTIVE,
@@ -397,13 +395,13 @@ int canopus_store_rollback(const struct canopus_store_v1 *store,
         return -1;
     }
     if (!dir_exists(previous)) {
-        self->last_error = "no previous payload";
+        store->last_error = "no previous payload";
         return -1;
     }
     /* CAN-P1-006: journaled rollback. The discarded active goes to a
      * transaction-tagged `.old.<seq>` so boot recovery can identify it. */
     if (txn_write(store, package_id, CANOPUS_STORE_TXN_PREPARED) != 0) {
-        self->last_error = "journal write failed";
+        store->last_error = "journal write failed";
         return -1;
     }
     if (dir_exists(active)) {
@@ -411,38 +409,37 @@ int canopus_store_rollback(const struct canopus_store_v1 *store,
         if (snprintf(junk, sizeof(junk), "%s.old.%08x", active,
                      (unsigned)s_old_seq) < 0 ||
             canopus_strlen(junk) >= sizeof(junk)) {
-            self->last_error = "rollback path too long";
+            store->last_error = "rollback path too long";
             return -1; /* CAN-P1-014: check .old truncation */
         }
         if (move_dir(active, junk) != 0) {
-            self->last_error = "active busy";
+            store->last_error = "active busy";
             return -1;
         }
         fsync_parent(active);
     }
     if (txn_write(store, package_id,
                   CANOPUS_STORE_TXN_STAGED_TO_ACTIVE) != 0) {
-        self->last_error = "journal write failed";
+        store->last_error = "journal write failed";
         return -1;
     }
     if (move_dir(previous, active) != 0) {
-        self->last_error = "previous->active failed";
+        store->last_error = "previous->active failed";
         return -1;
     }
     fsync_parent(active);
     if (txn_write(store, package_id, CANOPUS_STORE_TXN_NONE) != 0) {
-        self->last_error = "journal write failed";
+        store->last_error = "journal write failed";
         return -1;
     }
     fsync_parent(active);
     return 0;
 }
 
-int canopus_store_quarantine(const struct canopus_store_v1 *store,
+int canopus_store_quarantine(struct canopus_store_v1 *store,
                              const char *package_id)
 {
     char active[CANOPUS_STORE_PATH_MAX], quar[CANOPUS_STORE_PATH_MAX];
-    struct canopus_store_v1 *self = (struct canopus_store_v1 *)store;
 
     if (canopus_store_slot_path(store, package_id, CANOPUS_STORE_SLOT_ACTIVE,
                                 active, sizeof(active)) != 0 ||
@@ -451,13 +448,13 @@ int canopus_store_quarantine(const struct canopus_store_v1 *store,
         return -1;
     }
     if (move_dir(active, quar) != 0) {
-        self->last_error = "quarantine move failed";
+        store->last_error = "quarantine move failed";
         return -1;
     }
     return 0;
 }
 
-int canopus_store_remove_slot(const struct canopus_store_v1 *store,
+int canopus_store_remove_slot(struct canopus_store_v1 *store,
                               const char *package_id, int slot)
 {
     char p[CANOPUS_STORE_PATH_MAX];
@@ -524,7 +521,7 @@ int canopus_store_recover(struct canopus_store_v1 *store,
 }
 
 /* Convenience for tests: ensure the packages/<id> tree exists. */
-int canopus_store_ensure_package_dir(const struct canopus_store_v1 *store,
+int canopus_store_ensure_package_dir(struct canopus_store_v1 *store,
                                      const char *package_id)
 {
     char p[CANOPUS_STORE_PATH_MAX];
