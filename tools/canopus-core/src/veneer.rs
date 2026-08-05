@@ -96,6 +96,34 @@ fn width_type(f: &TypeField) -> String {
 }
 
 impl<'a> VeneerGen<'a> {
+    /// CAN-P2-018: deterministic digest over the codegen inputs (symbol
+    /// identity/policy/status/address and type identity/size), so a generated
+    /// header carries reproducible provenance independent of the firmware hash.
+    fn input_digest(&self) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        let mut records: Vec<String> = self
+            .symbols
+            .iter()
+            .map(|s| {
+                format!(
+                    "sym:{}:{}:{}:{}",
+                    s.symbol_id,
+                    s.policy,
+                    s.status,
+                    s.callable_address.as_deref().unwrap_or("")
+                )
+            })
+            .collect();
+        records.extend(self.types.iter().map(|t| {
+            format!("type:{}:{}:{}", t.type_id, t.kind, t.size)
+        }));
+        records.sort();
+        let mut h = DefaultHasher::new();
+        records.hash(&mut h);
+        format!("{:016x}", h.finish())
+    }
+
     /// Generates the full header text.
     pub fn generate(&self) -> String {
         let id = &self.pack.target_id;
@@ -111,6 +139,7 @@ impl<'a> VeneerGen<'a> {
         ));
         out.push_str(&format!(" * sha256   : {}\n", self.pack.firmware_sha256));
         out.push_str(&format!(" * revision : {}\n", self.pack.revision));
+        out.push_str(&format!(" * input_digest: {}\n", self.input_digest()));
         out.push_str(" */\n");
         out.push_str("#ifndef CANOPUS_VENEER_");
         out.push_str(&guard);
