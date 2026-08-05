@@ -909,24 +909,24 @@ Gate：所有 security/device gates 通过后，才能将 native app/UI SDK 标�
 | CAN-P1-013 | P1 | HOST-FIXED/DEVICE-PENDING | native app resources 没有完整进入 build/embed/hash/verify/capability 流程 | `schemas/package.schema.json:30-95`、`tools/package-builder/src/lib.rs:28-58` |
 | CAN-P1-014 | P1 | HOST-FIXED/DEVICE-PENDING | package store/root/helper 的截断、partial write、EINTR、fsync-directory 和清理规则不足 | `manager/storage/canopus_store.c:19-103,135-150` |
 | CAN-P1-015 | P1 | OPEN | 进度/安全治理文档与实际代码能力不一致，容易让执行 LLM 越过 device gate | `docs/progress.md:7-18`、`docs/security-model.md:1-9` |
-| CAN-P2-001 | P2 | OPEN | supervisor/public helpers 对 NULL、损坏模型和初始化失败的防御不一致 | `manager/service/canopus_supervisor.c:25-36,61-72,177-223,237-259` |
-| CAN-P2-002 | P2 | OPEN | device fops 使用裸 `uint32_t[12]`，缺 typed layout/static assertion/slot ownership | `manager/service/canopus_supervisor_platform.c:17-57` |
+| CAN-P2-001 | P2 | CLOSED | supervisor/public helpers 对 NULL、损坏模型和初始化失败的防御不一致 | `manager/service/canopus_supervisor.c:25-36,61-72,177-223,237-259` |
+| CAN-P2-002 | P2 | CLOSED | device fops 使用裸 `uint32_t[12]`，缺 typed layout/static assertion/slot ownership | `manager/service/canopus_supervisor_platform.c:17-57` |
 | CAN-P2-003 | P2 | OPEN | protocol minor、flags、reserved 字段和未知 command 的兼容策略没有统一 schema | `manager/protocol/canopus_protocol.c:7-67` |
 | CAN-P2-004 | P2 | OPEN | 多处对外部/固定数组使用无界 `canopus_strlen`，字符串 contract 分散 | `sdk/c/canopus_memory.h:32-39` 及调用点 |
 | CAN-P2-005 | P2 | OPEN | Manager model 固定 32 项、全量复制，缺分页、增量同步和 stable module generation | `manager/ui/canopus_manager.h:26-100` |
-| CAN-P2-006 | P2 | OPEN | Manager operation availability 只看局部 state，未纳入 policy/capability/pending/safe mode | `manager/ui/canopus_manager.c:177-224` |
-| CAN-P2-007 | P2 | OPEN | legacy Lua status parser 只看 magic，未完整验证 ABI、长度、状态值和 snapshot | `watchfaces/canopus-installer/main.lua` |
-| CAN-P2-008 | P2 | OPEN | package canonical digest 缺显式 domain/version/entry length framing，格式演进困难 | `tools/package-builder/src/lib.rs:133-149` |
-| CAN-P2-009 | P2 | OPEN | package build API 注释声称 schema 校验，但函数本身没有 enforce；CLI/library contract 易分叉 | `tools/package-builder/src/lib.rs:25-58` |
-| CAN-P2-010 | P2 | OPEN | diagnostics record 缺 timestamp、module ID、request ID、target/build 和 reboot 语义 | `runtime/diagnostics/canopus_diagnostics.c:19-38` |
-| CAN-P2-011 | P2 | OPEN | target-generated Rust binding 存在两份提交副本，单一来源和同步边界不清晰 | `targets/xiaomi-band-10-pro-3.101.030/generated/canopus_bindings.rs`、`sdk/rust/canopus-target-generated/src/generated.rs` |
+| CAN-P2-006 | P2 | CLOSED | Manager operation availability 只看局部 state，未纳入 policy/capability/pending/safe mode | `manager/ui/canopus_manager.c:177-224` |
+| CAN-P2-007 | P2 | CLOSED | legacy Lua status parser 只看 magic，未完整验证 ABI、长度、状态值和 snapshot | `watchfaces/canopus-installer/main.lua` |
+| CAN-P2-008 | P2 | CLOSED | package canonical digest 缺显式 domain/version/entry length framing，格式演进困难 | `tools/package-builder/src/lib.rs:133-149` |
+| CAN-P2-009 | P2 | CLOSED | package build API 注释声称 schema 校验，但函数本身没有 enforce；CLI/library contract 易分叉 | `tools/package-builder/src/lib.rs:25-58` |
+| CAN-P2-010 | P2 | CLOSED | diagnostics record 缺 timestamp、module ID、request ID、target/build 和 reboot 语义 | `runtime/diagnostics/canopus_diagnostics.c:19-38` |
+| CAN-P2-011 | P2 | CLOSED | target-generated Rust binding 存在两份提交副本，单一来源和同步边界不清晰 | `targets/xiaomi-band-10-pro-3.101.030/generated/canopus_bindings.rs`、`sdk/rust/canopus-target-generated/src/generated.rs` |
 | CAN-P2-012 | P2 | OPEN | 32-bit firmware packed pointer layout 可在 64-bit host 被误用，缺 compile-time usage barrier | `sdk/rust/canopus-target-generated/src/lib.rs:46-131` |
 | CAN-P2-013 | P2 | OPEN | public error 仍混用 `-1`、字符串和 target errno，Manager 无稳定可本地化错误模型 | manager/runtime/store 多处 |
 | CAN-P2-014 | P2 | OPEN | UI component catalog、host fake、C backend 与 Rust app/UI crates 当前为空或不存在 | `app-sdk/ui/`、`app-sdk/rust/` |
-| CAN-P2-015 | P2 | OPEN | CI 缺 protocol schema drift、evidence completeness、文档状态和 device-evidence metadata gate | `scripts/ci.sh`、`tools/canopus-core/tests/generated_stability.rs` |
-| CAN-P2-016 | P2 | OPEN | 固定容量表/计数器的 overflow、saturation、pagination 和 boot wrap policy 未统一 | supervisor/protocol/diagnostics/UI bounded tables |
-| CAN-P2-017 | P2 | OPEN | store API 通过 cast 修改 `const` 对象，错误状态与并发所有权不清晰 | `manager/storage/canopus_store.c:42-60,153-231` |
-| CAN-P2-018 | P2 | OPEN | 构建工具链/target pack/codegen 输入摘要尚未完全进入可复现 provenance | build scripts、package manifest、generated headers |
+| CAN-P2-015 | P2 | CLOSED | CI 缺 protocol schema drift、evidence completeness、文档状态和 device-evidence metadata gate | `scripts/ci.sh`、`tools/canopus-core/tests/generated_stability.rs` |
+| CAN-P2-016 | P2 | CLOSED | 固定容量表/计数器的 overflow、saturation、pagination 和 boot wrap policy 未统一 | supervisor/protocol/diagnostics/UI bounded tables |
+| CAN-P2-017 | P2 | CLOSED | store API 通过 cast 修改 `const` 对象，错误状态与并发所有权不清晰 | `manager/storage/canopus_store.c:42-60,153-231` |
+| CAN-P2-018 | P2 | CLOSED | 构建工具链/target pack/codegen 输入摘要尚未完全进入可复现 provenance | build scripts、package manifest、generated headers |
 
 表中状态只有在对应“完成判据”全部满足后才能修改。单元测试通过但真机 gate 未通过时，最多改为 `HOST-FIXED/DEVICE-PENDING`。
 
