@@ -1,6 +1,7 @@
 /* Host tests: bounded semantic native UI tree. */
 #include "canopus_test.h"
 #include "canopus_ui.h"
+#include <stddef.h>
 #include <string.h>
 
 struct fake_ui_backend {
@@ -291,6 +292,238 @@ TEST(ui_validates_backend_and_property_headers)
     canopus_ui_tree_abort(tree);
 }
 
+TEST(ui_extended_catalog_supports_style_layout_and_values)
+{
+    struct canopus_ui_context_v1 context;
+    struct fake_ui_backend backend;
+    struct fake_event_sink sink;
+    struct canopus_ui_tree_v1 *tree;
+    struct canopus_ui_component_props_v1 slider = {
+        sizeof(slider), "Brightness", 10, "65%", 3, 201,
+        CANOPUS_UI_NODE_FLAG_ENABLED | CANOPUS_UI_NODE_FLAG_VISIBLE,
+        65, 0, 100, 5, 0
+    };
+    struct canopus_ui_component_props_v1 image = {
+        sizeof(image), "Module icon", 11, "", 0, 0,
+        CANOPUS_UI_NODE_FLAG_VISIBLE, 0, 0, 0, 0, 0xCA10u
+    };
+    struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
+    struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
+    const struct canopus_ui_snapshot_v1 *snapshot;
+
+    init_context(&context, &backend, &sink);
+    tree = begin_page(&context, "Catalog");
+    CHECK(CANOPUS_UI_SCROLL(tree, 2) == CANOPUS_UI_OK);
+    CHECK(CANOPUS_UI_LIST(tree, 3, "Controls") == CANOPUS_UI_OK);
+    CHECK(CANOPUS_UI_CHECKBOX(tree, 4, "Telemetry", 200, 1, 1) ==
+          CANOPUS_UI_OK);
+    CHECK(canopus_ui_component(tree, 5, CANOPUS_UI_NODE_SLIDER, &slider) ==
+          CANOPUS_UI_OK);
+    CHECK(canopus_ui_component(tree, 6, CANOPUS_UI_NODE_IMAGE, &image) ==
+          CANOPUS_UI_OK);
+    CHECK(CANOPUS_UI_DIVIDER(tree, 7) == CANOPUS_UI_OK);
+    CHECK(CANOPUS_UI_SPACER(tree, 8) == CANOPUS_UI_OK);
+
+    style.variant = CANOPUS_UI_VARIANT_TONAL;
+    style.foreground = CANOPUS_UI_COLOR_TEXT_PRIMARY;
+    style.background = CANOPUS_UI_COLOR_SURFACE_ALT;
+    style.accent = CANOPUS_UI_COLOR_ACCENT;
+    style.corner_radius = 8;
+    style.opacity = 900;
+    CHECK(canopus_ui_node_set_style(tree, 5, &style) == CANOPUS_UI_OK);
+
+    layout.width = 240;
+    layout.min_height = 44;
+    layout.padding_left = 12;
+    layout.padding_right = 12;
+    layout.axis = CANOPUS_UI_AXIS_HORIZONTAL;
+    layout.align = CANOPUS_UI_ALIGN_CENTER;
+    layout.justify = CANOPUS_UI_JUSTIFY_SPACE_BETWEEN;
+    layout.grow = 1;
+    CHECK(canopus_ui_node_set_layout(tree, 5, &layout) == CANOPUS_UI_OK);
+
+    CHECK(canopus_ui_end(tree) == CANOPUS_UI_OK); /* list */
+    CHECK(canopus_ui_end(tree) == CANOPUS_UI_OK); /* scroll */
+    CHECK(canopus_ui_end(tree) == CANOPUS_UI_OK); /* page */
+    CHECK(canopus_ui_tree_commit(tree) == CANOPUS_UI_OK);
+
+    snapshot = canopus_ui_current(&context);
+    CHECK(snapshot != 0);
+    CHECK(snapshot->nodes[4].type == CANOPUS_UI_NODE_SLIDER);
+    CHECK(snapshot->values[4].value == 65);
+    CHECK(snapshot->values[4].maximum == 100);
+    CHECK(snapshot->styles[4].variant == CANOPUS_UI_VARIANT_TONAL);
+    CHECK(snapshot->styles[4].corner_radius == 8);
+    CHECK(snapshot->layouts[4].width == 240);
+    CHECK(snapshot->layouts[4].justify == CANOPUS_UI_JUSTIFY_SPACE_BETWEEN);
+    CHECK(snapshot->values[5].resource_id == 0xCA10u);
+    CHECK(canopus_ui_dispatch_event(&context, snapshot->generation, 4, 200) == 0);
+    CHECK(canopus_ui_dispatch_event(&context, snapshot->generation, 5, 201) == 0);
+    CHECK(sink.call_count == 2);
+}
+
+TEST(ui_extended_catalog_rejects_invalid_metadata)
+{
+    struct canopus_ui_context_v1 context;
+    struct fake_ui_backend backend;
+    struct canopus_ui_tree_v1 *tree;
+    struct canopus_ui_component_props_v1 slider = {
+        sizeof(slider), "x", 1, "", 0, 1,
+        CANOPUS_UI_NODE_FLAG_ENABLED, 101, 0, 100, 1, 0
+    };
+    struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
+    struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
+
+    init_context(&context, &backend, 0);
+    tree = begin_page(&context, "Invalid");
+    CHECK(canopus_ui_component(tree, 2, CANOPUS_UI_NODE_SLIDER, &slider) ==
+          CANOPUS_UI_ERR_ARGUMENT);
+    slider.value = 50;
+    CHECK(canopus_ui_component(tree, 2, CANOPUS_UI_NODE_SLIDER, &slider) ==
+          CANOPUS_UI_OK);
+    style.opacity = 1001;
+    CHECK(canopus_ui_node_set_style(tree, 2, &style) == CANOPUS_UI_ERR_ARGUMENT);
+    layout.width = -2;
+    CHECK(canopus_ui_node_set_layout(tree, 2, &layout) == CANOPUS_UI_ERR_ARGUMENT);
+    canopus_ui_tree_abort(tree);
+}
+
+TEST(ui_negotiates_legacy_backend_capabilities)
+{
+    struct canopus_ui_context_v1 context;
+    struct fake_ui_backend state;
+    struct canopus_ui_backend_v1 legacy = fake_backend;
+    struct canopus_ui_tree_v1 *tree;
+    struct canopus_ui_text_props_v1 title = {
+        sizeof(title), "title", 5, CANOPUS_UI_TEXT_TITLE
+    };
+    struct canopus_ui_component_props_v1 divider = {
+        sizeof(divider), "", 0, "", 0, 0,
+        CANOPUS_UI_NODE_FLAG_VISIBLE, 0, 0, 0, 0, 0
+    };
+    struct canopus_ui_navigation_header_props_v1 header = {
+        sizeof(header), "Header", 6, "", 0, 1, 1, 1, 0
+    };
+    struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
+    struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
+
+    memset(&state, 0, sizeof(state));
+    legacy.abi_minor = 2u;
+    CHECK(canopus_ui_context_init(&context, &legacy, &state, 0, 0) ==
+          CANOPUS_UI_OK);
+    CHECK(canopus_ui_context_capabilities(&context) == 0u);
+    tree = begin_page(&context, "Legacy");
+    CHECK(tree->_snapshot.abi_minor == 2u);
+    CHECK(canopus_ui_text(tree, 2, &title) == CANOPUS_UI_ERR_UNSUPPORTED);
+    CHECK(canopus_ui_component(tree, 2, CANOPUS_UI_NODE_DIVIDER, &divider) ==
+          CANOPUS_UI_ERR_UNSUPPORTED);
+    CHECK(canopus_ui_node_set_style(tree, 1, &style) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_node_set_layout(tree, 1, &layout) == CANOPUS_UI_OK);
+    style.variant = CANOPUS_UI_VARIANT_TONAL;
+    layout.width = 240;
+    CHECK(canopus_ui_node_set_style(tree, 1, &style) ==
+          CANOPUS_UI_ERR_UNSUPPORTED);
+    CHECK(canopus_ui_node_set_layout(tree, 1, &layout) ==
+          CANOPUS_UI_ERR_UNSUPPORTED);
+    CHECK(canopus_ui_end(tree) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_tree_commit(tree) == CANOPUS_UI_OK);
+    CHECK(state.applied.abi_minor == 2u);
+
+    memset(&state, 0, sizeof(state));
+    legacy.abi_minor = 3u;
+    CHECK(canopus_ui_context_init(&context, &legacy, &state, 0, 0) ==
+          CANOPUS_UI_OK);
+    CHECK(canopus_ui_context_capabilities(&context) ==
+          (CANOPUS_UI_CAP_EXTENDED_COMPONENTS | CANOPUS_UI_CAP_STYLE |
+           CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VALUES));
+    tree = begin_page(&context, "ABI 1.3");
+    CHECK(canopus_ui_navigation_header(tree, 2, &header) ==
+          CANOPUS_UI_ERR_UNSUPPORTED);
+    CHECK(canopus_ui_end(tree) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_tree_commit(tree) == CANOPUS_UI_OK);
+
+    init_context(&context, &state, 0);
+    CHECK(canopus_ui_context_capabilities(&context) ==
+          (CANOPUS_UI_CAP_EXTENDED_COMPONENTS | CANOPUS_UI_CAP_STYLE |
+           CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VALUES |
+           CANOPUS_UI_CAP_NAVIGATION_HEADER));
+}
+
+TEST(ui_navigation_header_and_router_are_bounded)
+{
+    struct canopus_ui_context_v1 context;
+    struct fake_ui_backend backend;
+    struct fake_event_sink sink;
+    struct canopus_ui_tree_v1 *tree;
+    struct canopus_ui_navigation_header_props_v1 header = {
+        sizeof(header), "Modules", 7, "2 installed", 11,
+        301, 1, 1, 0
+    };
+    struct canopus_ui_router_v1 router;
+    const struct canopus_ui_snapshot_v1 *snapshot;
+    uint32_t route = 0;
+    uint32_t stale_generation;
+    uint32_t i;
+
+    init_context(&context, &backend, &sink);
+    tree = begin_page(&context, "Canopus");
+    CHECK(canopus_ui_navigation_header(tree, 2, &header) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_end(tree) == CANOPUS_UI_OK); /* header */
+    CHECK(canopus_ui_end(tree) == CANOPUS_UI_OK); /* page */
+    CHECK(canopus_ui_tree_commit(tree) == CANOPUS_UI_OK);
+    snapshot = canopus_ui_current(&context);
+    CHECK(snapshot != 0);
+    CHECK(snapshot->nodes[1].type == CANOPUS_UI_NODE_NAVIGATION_HEADER);
+    CHECK((snapshot->nodes[1].flags & CANOPUS_UI_NODE_FLAG_HEADER_BACK) != 0u);
+    CHECK((snapshot->nodes[1].flags & CANOPUS_UI_NODE_FLAG_HEADER_CENTERED) != 0u);
+    CHECK(canopus_ui_dispatch_event(&context, snapshot->generation, 2, 301) == 0);
+
+    CHECK(canopus_ui_router_init(&router, 10) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_router_current(&router) == 10u);
+    CHECK(canopus_ui_router_depth(&router) == 1u);
+    CHECK(canopus_ui_router_pop(&router, &route) == CANOPUS_UI_ERR_STATE);
+    stale_generation = router.generation;
+    CHECK(canopus_ui_router_push(&router, 20) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_router_back(&router, stale_generation, &route) ==
+          CANOPUS_UI_ERR_STALE);
+    CHECK(canopus_ui_router_back(&router, router.generation, &route) ==
+          CANOPUS_UI_OK);
+    CHECK(route == 10u);
+    CHECK(canopus_ui_router_replace(&router, 11) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_router_current(&router) == 11u);
+    for (i = 1u; i < CANOPUS_UI_ROUTER_MAX_DEPTH; i++) {
+        CHECK(canopus_ui_router_push(&router, 100u + i) == CANOPUS_UI_OK);
+    }
+    CHECK(canopus_ui_router_push(&router, 999) == CANOPUS_UI_ERR_CAPACITY);
+    CHECK(canopus_ui_router_pop_to(&router, 103) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_router_current(&router) == 103u);
+    CHECK(canopus_ui_router_clear_to_root(&router) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_router_depth(&router) == 1u);
+}
+
+TEST(ui_abi_1_3_metadata_layout_is_append_only)
+{
+    const size_t prefix = 12u +
+        CANOPUS_UI_MAX_NODES * sizeof(struct canopus_ui_node_v1) +
+        CANOPUS_UI_STRING_CAPACITY;
+
+    CHECK(sizeof(struct canopus_ui_node_v1) == 28u);
+    CHECK(sizeof(struct canopus_ui_style_v1) == 20u);
+    CHECK(sizeof(struct canopus_ui_layout_v1) == 38u);
+    CHECK(sizeof(struct canopus_ui_value_v1) == 20u);
+    CHECK(offsetof(struct canopus_ui_snapshot_v1, nodes) == 12u);
+    CHECK(offsetof(struct canopus_ui_snapshot_v1, strings) ==
+          12u + CANOPUS_UI_MAX_NODES * sizeof(struct canopus_ui_node_v1));
+    CHECK(offsetof(struct canopus_ui_snapshot_v1, styles) == prefix);
+    CHECK(offsetof(struct canopus_ui_snapshot_v1, layouts) ==
+          prefix + CANOPUS_UI_MAX_NODES * sizeof(struct canopus_ui_style_v1));
+    CHECK(offsetof(struct canopus_ui_snapshot_v1, values) ==
+          prefix + CANOPUS_UI_MAX_NODES *
+          (sizeof(struct canopus_ui_style_v1) +
+           sizeof(struct canopus_ui_layout_v1)));
+    CHECK(sizeof(struct canopus_ui_snapshot_v1) == 4940u);
+}
+
 static const struct test_registry ui_tests[] = {
     { "ui_builds_linked_tree_and_copies_strings",
       ui_builds_linked_tree_and_copies_strings_wrapper },
@@ -306,6 +539,16 @@ static const struct test_registry ui_tests[] = {
       ui_events_are_generation_checked_and_interactive_only_wrapper },
     { "ui_validates_backend_and_property_headers",
       ui_validates_backend_and_property_headers_wrapper },
+    { "ui_extended_catalog_supports_style_layout_and_values",
+      ui_extended_catalog_supports_style_layout_and_values_wrapper },
+    { "ui_extended_catalog_rejects_invalid_metadata",
+      ui_extended_catalog_rejects_invalid_metadata_wrapper },
+    { "ui_negotiates_legacy_backend_capabilities",
+      ui_negotiates_legacy_backend_capabilities_wrapper },
+    { "ui_navigation_header_and_router_are_bounded",
+      ui_navigation_header_and_router_are_bounded_wrapper },
+    { "ui_abi_1_3_metadata_layout_is_append_only",
+      ui_abi_1_3_metadata_layout_is_append_only_wrapper },
 };
 
 int run_ui_tests(void)

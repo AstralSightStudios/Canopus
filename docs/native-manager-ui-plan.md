@@ -514,6 +514,17 @@ fn view(model: &ManagerModel) -> impl View<Message> {
 
 “类似 SwiftUI”只指声明式组合、状态驱动和可复用 View，不引入运行时反射、GC、隐式堆分配或不受控闭包。
 
+#### 6.3.1 NavigationHeader 与 bounded Router
+
+公共页面框架由两个互不泄漏固件对象的层组成：
+
+- `NavigationHeader` 是 semantic titlebar，携带 title、可选 subtitle、back event、centered/elevated flags、style/layout 以及 bounded trailing child actions；
+- C `canopus_ui_router_v1` 与 Rust `Router<Route, DEPTH>` 只保存固定容量 route IDs/values，支持 push、replace、pop、pop-to 与 clear-to-root；
+- 每次实际导航变更推进非零 generation；header back 必须携带当前 generation，旧页面或重复点击产生的 stale back 被拒绝；
+- root 不可 pop，栈满明确返回 capacity error，公共 Router 永不保存 firmware page/widget、AIOTJS object 或 allocator-owned path。
+
+当前固件静态证据分层如下：`sub_C575084` 是 sport app 私有的 336x56 titlebar/index dispatcher，不能作为通用公共 constructor；AIOTJS `PageNavigator`/`system.router` wrappers 依赖私有 app/vtable/GC runtime，已拒绝作为 C/`no_std` Rust ABI。target backend 继续只映射到 `EVID-NAV-001` 中单独恢复的 native `page_goto/page_finish` 生命周期，并由 `EVID-UI-003`、`EVID-NAV-002` 记录 Header/Router 的边界。没有 device probe 前，semantic Header 不得宣称为已批准的 exact firmware prefab。
+
 ### 6.4 Reconciliation
 
 目标固件很可能采用 retained widget tree，因此公共 runtime 负责有限 diff：
@@ -779,6 +790,26 @@ Gate：所有 security/device gates 通过后，才能将 native app/UI SDK 标�
 
 ---
 
+### 10.1 2026-08-06 实施审计（按证据分层）
+
+本表记录当前工作树相对 Phase A–I 的真实覆盖，不替代各 Phase 的 device Gate。`HOST-FIXED/DEVICE-PENDING` 仅表示公共逻辑与 host/artifact tests 已有实现；没有 exact-target backend 或真机记录时，不得据此宣称原生 prefab、launcher ABI 或完整 Manager 已完成。
+
+| Phase | 当前状态 | 已实现并验证 | 尚缺 / Gate 阻塞 |
+|---|---|---|---|
+| A | PARTIAL / HOST-FIXED | legacy 与 Manager protocol 的 bounded codec、兼容字段检查、pending 状态约束及 host conformance tests 已存在 | v2 wire schema/codegen、HELLO、完整 event/query、C/Rust/Lua 共用 vectors、设备短读写与异步完成仍未闭环 |
+| B | PARTIAL / DEVICE-PENDING | Manager host model 已按 request/pending/safe-mode 约束消费 supervisor 语义，生产能力不会因 host fake 自动提升 | 目标设备上的 `/dev/canopus` v2 client、页面重开后的 operation 恢复及只读 recovery 协商仍缺 |
+| C | HOST-FIXED / DEVICE-PENDING | package canonicalization/signature/verifier、slot transaction/recovery、lifecycle transition 与 hostile-input host tests 已覆盖主要不变量 | device verifier、真实 stage/load/unload、stop/drain、持久 safe mode、fault-injected 真机 package store 尚未通过 |
+| D | BLOCKED-EVIDENCE | launcher ordered-list 与 descriptor 的静态记录、最小注册相关证据已保留 | registration/unregistration、page factory、dispatcher、callback ownership 与 100-cycle/reboot gate 未证明；相关 veneer 继续 restricted |
+| E | PARTIAL / STATIC-ONLY | 公共 semantic catalog 已覆盖 21 种节点类型（含 `NavigationHeader`）；目标已知函数建立 51 条 canonical exact-target 特征码，2 条缺入口记录保持 unresolved；Header 与 AIOTJS Router 候选边界已记录到 `EVID-UI-003`/`EVID-NAV-002` | semantic 节点不等于固件原生 prefab。仍需 tokens/resources/localization、多路径 completeness review 与逐组件 device probe；特征码目前也不是跨版本证明 |
+| F | HOST-FIXED / DEVICE-PENDING | C ABI 1.4 已实现 bounded tree/string arena、stable key、transactional commit、generation event、host fake、builder/macros、ABI 1.3 append-only style/layout/value metadata、backend minor capability negotiation、ABI 1.4 semantic `NavigationHeader` 与 generation-safe bounded Router；21 种语义组件通过 host tests | exact-target native renderer/backend、UI-thread/lifecycle device proof 尚缺 |
+| G | PARTIAL / HOST-FIXED | `canopus-ui-core` 为 `no_std`；C ABI 镜像、可借用 model text 的 `View`/`view!`/`SystemComponent`、fluent semantic/style/layout modifiers、`NavigationHeader`、`Router<Route, DEPTH>`、`State`/`Binding`/`BoundedList`/`CommandQueue`、`CAbiBackend` 与 `ApplicationRuntime` 已通过 host 和 compile-fail doctests；runtime 已完成 checked event→typed Message→update→bounded command drain→generation rebuild→transactional backend publish | 完整 C/Rust catalog byte-equivalence、exact-target Header/page backend device proof，以及计划中的可选 crate split 尚缺 |
+| H | PARTIAL / HOST-ONLY | Manager 已有 Overview、Modules、Detail 与 confirmation 的公共语义页面，能够作为 C UI API 的 host dogfood | Install progress、Recovery、launcher entry、真实 transport 与完整 install→rollback→remove device flow 未完成 |
+| I | PARTIAL | schema/evidence/codegen/CI gates、bounded diagnostics、package/ELF hostile-input tests及文档状态检查已有覆盖 | node caller boundary、完整 signer/revocation UI、resource-exhaustion/fuzz/long-run/watchdog/device compatibility matrix 与迁移恢复闭环仍缺 |
+
+审计结论：Phase F 的公共语义层已达到 host 可用；Phase G 的声明式构建语法、无堆基础设施和 typed update/rebuild runtime 已存在，但 compile-fail/全 catalog 等价性与 crate 分层仍未闭环；Phase D/E 的“原生”含义仍受 exact-target ownership/thread/lifecycle 证据约束。任何 host fake、静态反编译或单固件特征码结果都不能替代 Phase D–I 的真机 Gate。
+
+---
+
 ## 11. 测试矩阵
 
 ### Host
@@ -922,7 +953,7 @@ Gate：所有 security/device gates 通过后，才能将 native app/UI SDK 标�
 | CAN-P2-011 | P2 | CLOSED | target-generated Rust binding 存在两份提交副本，单一来源和同步边界不清晰 | `targets/xiaomi-band-10-pro-3.101.030/generated/canopus_bindings.rs`、`sdk/rust/canopus-target-generated/src/generated.rs` |
 | CAN-P2-012 | P2 | OPEN | 32-bit firmware packed pointer layout 可在 64-bit host 被误用，缺 compile-time usage barrier | `sdk/rust/canopus-target-generated/src/lib.rs:46-131` |
 | CAN-P2-013 | P2 | OPEN | public error 仍混用 `-1`、字符串和 target errno，Manager 无稳定可本地化错误模型 | manager/runtime/store 多处 |
-| CAN-P2-014 | P2 | OPEN | UI component catalog、host fake、C backend 与 Rust app/UI crates 当前为空或不存在 | `app-sdk/ui/`、`app-sdk/rust/` |
+| CAN-P2-014 | P2 | HOST-FIXED/DEVICE-PENDING | C UI ABI 1.4、21 种 semantic components（含 `NavigationHeader`）、backend capability negotiation、generation-safe bounded Router、host fake、Rust `canopus-ui-core`、compile-fail checks 与 bounded typed app runtime 已实现；仍缺 exact-target native prefab backend/device lifecycle proof，以及完整 C-Rust catalog byte-equivalence tests | `app-sdk/ui/`、`sdk/rust/canopus-ui-core/`、`tests/host/test_ui.c` |
 | CAN-P2-015 | P2 | CLOSED | CI 缺 protocol schema drift、evidence completeness、文档状态和 device-evidence metadata gate | `scripts/ci.sh`、`tools/canopus-core/tests/generated_stability.rs` |
 | CAN-P2-016 | P2 | CLOSED | 固定容量表/计数器的 overflow、saturation、pagination 和 boot wrap policy 未统一 | supervisor/protocol/diagnostics/UI bounded tables |
 | CAN-P2-017 | P2 | CLOSED | store API 通过 cast 修改 `const` 对象，错误状态与并发所有权不清晰 | `manager/storage/canopus_store.c:42-60,153-231` |

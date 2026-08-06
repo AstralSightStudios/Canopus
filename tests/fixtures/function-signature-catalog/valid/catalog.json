@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "target_id": "test-target",
+  "firmware_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "canonical_mapping": {
+    "name": "XIP_TEXT_RO",
+    "base_address": "0x1000",
+    "file_offset": 0,
+    "size": 4096,
+    "alias_policy": "canonical mapping only"
+  },
+  "signature_policy": "test fixture",
+  "signatures": [
+    {
+      "symbol_id": "test-target.ui.button_create",
+      "expected_entry_address": "0x1100",
+      "pattern": "2d e9 f0 41",
+      "mask": "ff ff ff ff",
+      "pattern_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "pattern_length": 4,
+      "instruction_set": "thumb",
+      "scope": "canonical:XIP_TEXT_RO",
+      "current_match_count": 1,
+      "portability": "exact-target",
+      "anchors": {
+        "entry_offset": 256,
+        "tiny_thunk": false
+      }
+    }
+  ],
+  "unresolved": []
+}

@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "target_id": "test-target",
+  "firmware_sha256": "not-a-hash",
+  "canonical_mapping": {
+    "name": "FLASH_CACHED",
+    "base_address": "1000",
+    "file_offset": -1,
+    "size": 0
+  },
+  "signatures": [],
+  "unresolved": []
+}

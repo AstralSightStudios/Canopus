@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.ui.sport_titlebar_dispatch",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "sport_titlebar_dispatch",
+  "kind": "function",
+  "entry_address": "0x0C575084",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": ["EVID-UI-003"]
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "approval_state": "REJECTED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "evidence_ids": ["EVID-UI-003"],
+    "source": "ida://vela_ap.bin.i64 sub_C575084"
+  },
+  "notes": "Sport-private lazy titlebar/index dispatcher with global retained LVGL state. Signature-tracked for future firmware comparison; never generate a callable veneer."
+}

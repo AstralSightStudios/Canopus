@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-003",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "question": "Does the firmware expose a reusable native navigation-header/titlebar prefab suitable for the public SDK?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "sub_C575084(parent, titlebar_index) is a sport-app titlebar dispatcher: it lazily creates a 336x56 LVGL container and returns or mutates titlebar children selected by index.",
+  "callsite_evidence": [
+    "The FLASH_CACHED alias of '[%s] %s: create titlebar!' is referenced through pointer storage 0x0C5751C4 by sub_C575084 at 0x0C575106.",
+    "sub_C575084 logs module 'sport' and function 'draw_in_titlebar', stores one global object in dword_20111754, creates it under the supplied parent through sub_C588448, and sizes it to 336x56 through sub_C587EF8.",
+    "The function configures the object with LVGL wrappers, moves it to the foreground, registers sub_C573730 for event code 36, and selects children through titlebar indices 1 through 4.",
+    "sub_C573730 is an 18-byte lifecycle callback whose only recovered effect is dword_20111754 = 0. This establishes singleton-pointer reset when the registered lifecycle event fires, but does not establish a public destroy API or third-party ownership contract.",
+    "Index 3 creates or returns a time label formatted as 'HH:mm'; index 4 logs the sport-specific recording titlebar path."
+  ],
+  "control_flow_evidence": [
+    "The recovered function is a lazy sport feature wrapper around low-level LVGL constructors, not a target-wide constructor with a stable title/subtitle/back-action property ABI.",
+    "The public C/Rust NavigationHeader therefore remains semantic: exact-target backends may map it to approved stock primitives, but public applications never call sub_C575084 or retain dword_20111754.",
+    "Header back actions are represented by an ordinary generation-checked semantic event and route pop, avoiding assumptions about the sport callback or its global singleton."
+  ],
+  "ownership_analysis": "The created LVGL object is parent-owned but also retained in a sport-global singleton. The registered sub_C573730 lifecycle callback clears that singleton pointer, so deletion-reset behavior is statically recovered. The actual destroy initiator, UI-thread contract, and safety of reuse by third-party pages remain unproven, so direct reuse would still couple Canopus to private sport lifecycle state.",
+  "unsafe_assumptions": [
+    "No generic titlebar prefab constructor with a stable independent ownership contract has been identified in this firmware.",
+    "The low-level LVGL calls used by the sport wrapper still require exact-target UI-thread and lifecycle proof before a backend can reproduce the same native composition.",
+    "The semantic NavigationHeader is host-tested but its exact visual mapping remains device-pending."
+  ],
+  "recommended_probe": "Map NavigationHeader to a target-private stock composition under the Manager page root, then verify centered title, optional subtitle, back affordance, trailing icon action, status-bar spacing, 100 push/pop cycles, and stale back-event rejection on device.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-06T00:00:00Z",
+  "artifacts": [
+    { "uri": "ida://vela_ap.bin.i64 sub_C575084", "role": "sport-specific titlebar create/index dispatcher" },
+    { "uri": "ida://vela_ap.bin.i64 sub_C573730", "role": "sport titlebar lifecycle callback that clears dword_20111754" },
+    { "uri": "ida://vela_ap.bin.i64 dword_20111754", "role": "sport-global retained titlebar object" }
+  ]
+}

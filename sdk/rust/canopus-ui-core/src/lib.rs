@@ -29,12 +29,18 @@
 // ---------------------------------------------------------------------------
 
 pub const ABI_MAJOR: u16 = 1;
-pub const ABI_MINOR: u16 = 2;
+pub const ABI_MINOR: u16 = 4;
 
 pub const MAX_NODES: usize = 32;
 pub const MAX_DEPTH: usize = 8;
 pub const STRING_CAPACITY: usize = 1536;
 pub const NO_NODE: u16 = 0xFFFF;
+
+pub const CAP_EXTENDED_COMPONENTS: u32 = 1 << 0;
+pub const CAP_STYLE: u32 = 1 << 1;
+pub const CAP_LAYOUT: u32 = 1 << 2;
+pub const CAP_VALUES: u32 = 1 << 3;
+pub const CAP_NAVIGATION_HEADER: u32 = 1 << 4;
 
 pub type NodeId = u32;
 
@@ -53,6 +59,20 @@ pub enum NodeKind {
     Button = 5,
     ActionRow = 6,
     SwitchRow = 7,
+    List = 8,
+    Scroll = 9,
+    Dialog = 10,
+    Toast = 11,
+    Image = 12,
+    Icon = 13,
+    RichText = 14,
+    Checkbox = 15,
+    RadioRow = 16,
+    Slider = 17,
+    Progress = 18,
+    Divider = 19,
+    Spacer = 20,
+    NavigationHeader = 21,
 }
 
 impl NodeKind {
@@ -65,6 +85,20 @@ impl NodeKind {
             5 => Some(NodeKind::Button),
             6 => Some(NodeKind::ActionRow),
             7 => Some(NodeKind::SwitchRow),
+            8 => Some(NodeKind::List),
+            9 => Some(NodeKind::Scroll),
+            10 => Some(NodeKind::Dialog),
+            11 => Some(NodeKind::Toast),
+            12 => Some(NodeKind::Image),
+            13 => Some(NodeKind::Icon),
+            14 => Some(NodeKind::RichText),
+            15 => Some(NodeKind::Checkbox),
+            16 => Some(NodeKind::RadioRow),
+            17 => Some(NodeKind::Slider),
+            18 => Some(NodeKind::Progress),
+            19 => Some(NodeKind::Divider),
+            20 => Some(NodeKind::Spacer),
+            21 => Some(NodeKind::NavigationHeader),
             _ => None,
         }
     }
@@ -83,6 +117,172 @@ pub enum TextStyle {
 
 pub const FLAG_ENABLED: u32 = 1 << 0;
 pub const FLAG_CHECKED: u32 = 1 << 1;
+pub const FLAG_SELECTED: u32 = 1 << 2;
+pub const FLAG_INDETERMINATE: u32 = 1 << 3;
+pub const FLAG_VISIBLE: u32 = 1 << 4;
+pub const FLAG_WRAP: u32 = 1 << 5;
+pub const FLAG_HEADER_BACK: u32 = 1 << 6;
+pub const FLAG_HEADER_CENTERED: u32 = 1 << 7;
+pub const FLAG_HEADER_ELEVATED: u32 = 1 << 8;
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[repr(u16)]
+pub enum ComponentVariant {
+    #[default]
+    Default = 0,
+    Plain = 1,
+    Filled = 2,
+    Outlined = 3,
+    Tonal = 4,
+    Destructive = 5,
+    Compact = 6,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[repr(u16)]
+pub enum ColorRole {
+    #[default]
+    Inherit = 0,
+    Surface = 1,
+    SurfaceAlt = 2,
+    TextPrimary = 3,
+    TextSecondary = 4,
+    Accent = 5,
+    Success = 6,
+    Warning = 7,
+    Danger = 8,
+    Disabled = 9,
+    Transparent = 10,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[repr(u8)]
+pub enum Axis {
+    #[default]
+    Vertical = 0,
+    Horizontal = 1,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[repr(u8)]
+pub enum Alignment {
+    #[default]
+    Auto = 0,
+    Start = 1,
+    Center = 2,
+    End = 3,
+    Stretch = 4,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[repr(u8)]
+pub enum Justification {
+    #[default]
+    Start = 0,
+    Center = 1,
+    End = 2,
+    SpaceBetween = 3,
+    SpaceAround = 4,
+    SpaceEvenly = 5,
+}
+
+/// Target-independent semantic appearance. Signed dimensions use `-1` for
+/// automatic/inherited values; color roles map to approved stock tokens.
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct Style {
+    pub variant: u16,
+    pub text_style: u16,
+    pub foreground: u16,
+    pub background: u16,
+    pub accent: u16,
+    pub border_color: u16,
+    pub corner_radius: i16,
+    pub border_width: i16,
+    pub opacity: u16,
+    pub reserved: u16,
+}
+
+impl Default for Style {
+    fn default() -> Self {
+        Self {
+            variant: ComponentVariant::Default as u16,
+            text_style: TextStyle::Body as u16,
+            foreground: ColorRole::Inherit as u16,
+            background: ColorRole::Inherit as u16,
+            accent: ColorRole::Inherit as u16,
+            border_color: ColorRole::Inherit as u16,
+            corner_radius: -1,
+            border_width: -1,
+            opacity: 0,
+            reserved: 0,
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct Layout {
+    pub width: i16,
+    pub height: i16,
+    pub min_width: i16,
+    pub min_height: i16,
+    pub max_width: i16,
+    pub max_height: i16,
+    pub margin_top: i16,
+    pub margin_right: i16,
+    pub margin_bottom: i16,
+    pub margin_left: i16,
+    pub padding_top: i16,
+    pub padding_right: i16,
+    pub padding_bottom: i16,
+    pub padding_left: i16,
+    pub gap: i16,
+    pub axis: u8,
+    pub align: u8,
+    pub justify: u8,
+    pub grow: u8,
+    pub shrink: u8,
+    pub reserved: [u8; 3],
+}
+
+impl Default for Layout {
+    fn default() -> Self {
+        Self {
+            width: -1,
+            height: -1,
+            min_width: -1,
+            min_height: -1,
+            max_width: -1,
+            max_height: -1,
+            margin_top: 0,
+            margin_right: 0,
+            margin_bottom: 0,
+            margin_left: 0,
+            padding_top: 0,
+            padding_right: 0,
+            padding_bottom: 0,
+            padding_left: 0,
+            gap: 0,
+            axis: Axis::Vertical as u8,
+            align: Alignment::Auto as u8,
+            justify: Justification::Start as u8,
+            grow: 0,
+            shrink: 1,
+            reserved: [0; 3],
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct Value {
+    pub value: i32,
+    pub minimum: i32,
+    pub maximum: i32,
+    pub step: i32,
+    pub resource_id: u32,
+}
 
 // ---------------------------------------------------------------------------
 // Semantic ABI records (repr(C), mirror canopus_ui.h)
@@ -113,7 +313,16 @@ impl Node {
     pub fn is_interactive(&self) -> bool {
         matches!(
             self.kind(),
-            Some(NodeKind::Button | NodeKind::ActionRow | NodeKind::SwitchRow)
+            Some(
+                NodeKind::Button
+                    | NodeKind::ActionRow
+                    | NodeKind::SwitchRow
+                    | NodeKind::Checkbox
+                    | NodeKind::RadioRow
+                    | NodeKind::Slider
+                    | NodeKind::Icon
+                    | NodeKind::NavigationHeader
+            )
         )
     }
 
@@ -137,6 +346,10 @@ pub struct Snapshot {
     pub string_used: u16,
     pub nodes: [Node; MAX_NODES],
     pub strings: [u8; STRING_CAPACITY],
+    /// ABI 1.3 append-only metadata; the ABI 1.2 prefix remains unchanged.
+    pub styles: [Style; MAX_NODES],
+    pub layouts: [Layout; MAX_NODES],
+    pub values: [Value; MAX_NODES],
 }
 
 impl Snapshot {
@@ -161,6 +374,15 @@ impl Snapshot {
                 flags: 0,
             }; MAX_NODES],
             strings: [0; STRING_CAPACITY],
+            styles: [Style::default(); MAX_NODES],
+            layouts: [Layout::default(); MAX_NODES],
+            values: [Value {
+                value: 0,
+                minimum: 0,
+                maximum: 0,
+                step: 0,
+                resource_id: 0,
+            }; MAX_NODES],
         }
     }
 
@@ -178,6 +400,18 @@ impl Snapshot {
 
     pub fn secondary(&self, node: &Node) -> &str {
         self.slice(node.secondary_off, node.secondary_len)
+    }
+
+    pub fn style(&self, index: usize) -> Option<&Style> {
+        (index < self.node_count as usize).then(|| &self.styles[index])
+    }
+
+    pub fn layout(&self, index: usize) -> Option<&Layout> {
+        (index < self.node_count as usize).then(|| &self.layouts[index])
+    }
+
+    pub fn value(&self, index: usize) -> Option<&Value> {
+        (index < self.node_count as usize).then(|| &self.values[index])
     }
 
     fn slice(&self, off: u16, len: u16) -> &str {
@@ -211,6 +445,28 @@ pub enum UiError {
     Backend,
     StaleGeneration,
     Disabled,
+}
+
+/// Properties shared by the extended semantic prefab catalog.
+#[derive(Copy, Clone, Debug)]
+pub struct ComponentSpec<'a> {
+    pub primary: &'a str,
+    pub secondary: &'a str,
+    pub event_id: u32,
+    pub flags: u32,
+    pub value: Value,
+}
+
+impl Default for ComponentSpec<'_> {
+    fn default() -> Self {
+        Self {
+            primary: "",
+            secondary: "",
+            event_id: 0,
+            flags: FLAG_VISIBLE,
+            value: Value::default(),
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -322,6 +578,9 @@ impl Tree {
             event_id,
             flags,
         };
+        self.snapshot.styles[index] = Style::default();
+        self.snapshot.layouts[index] = Layout::default();
+        self.snapshot.values[index] = Value::default();
         self.snapshot.node_count += 1;
         if parent != NO_NODE {
             let parent_index = parent as usize;
@@ -344,19 +603,38 @@ impl Tree {
     }
 
     pub fn navigation_page(&mut self, key: NodeId, title: &str) -> Result<(), UiError> {
-        self.append(key, NodeKind::NavigationPage, title, "", 0, 0, true)
+        self.append(
+            key,
+            NodeKind::NavigationPage,
+            title,
+            "",
+            0,
+            FLAG_VISIBLE,
+            true,
+        )
     }
 
     pub fn section(&mut self, key: NodeId, title: &str) -> Result<(), UiError> {
-        self.append(key, NodeKind::Section, title, "", 0, 0, true)
+        self.append(key, NodeKind::Section, title, "", 0, FLAG_VISIBLE, true)
     }
 
     pub fn text(&mut self, key: NodeId, text: &str, style: TextStyle) -> Result<(), UiError> {
-        self.append(key, NodeKind::Text, text, "", 0, style as u32, false)
+        self.append(key, NodeKind::Text, text, "", 0, FLAG_VISIBLE, false)?;
+        let index = self.snapshot.node_count as usize - 1;
+        self.snapshot.styles[index].text_style = style as u16;
+        Ok(())
     }
 
     pub fn status_row(&mut self, key: NodeId, label: &str, value: &str) -> Result<(), UiError> {
-        self.append(key, NodeKind::StatusRow, label, value, 0, 0, false)
+        self.append(
+            key,
+            NodeKind::StatusRow,
+            label,
+            value,
+            0,
+            FLAG_VISIBLE,
+            false,
+        )
     }
 
     pub fn button(
@@ -369,7 +647,7 @@ impl Tree {
         if event_id == 0 {
             return Err(UiError::Argument);
         }
-        let flags = if enabled { FLAG_ENABLED } else { 0 };
+        let flags = FLAG_VISIBLE | if enabled { FLAG_ENABLED } else { 0 };
         self.append(key, NodeKind::Button, label, "", event_id, flags, false)
     }
 
@@ -384,7 +662,7 @@ impl Tree {
         if event_id == 0 {
             return Err(UiError::Argument);
         }
-        let flags = if enabled { FLAG_ENABLED } else { 0 };
+        let flags = FLAG_VISIBLE | if enabled { FLAG_ENABLED } else { 0 };
         self.append(
             key,
             NodeKind::ActionRow,
@@ -408,7 +686,7 @@ impl Tree {
         if event_id == 0 {
             return Err(UiError::Argument);
         }
-        let mut flags = 0;
+        let mut flags = FLAG_VISIBLE;
         if enabled {
             flags |= FLAG_ENABLED;
         }
@@ -424,6 +702,112 @@ impl Tree {
             flags,
             false,
         )
+    }
+
+    /// Appends any extended system-semantic component. `List`, `Scroll` and
+    /// `Dialog` are containers and must later be closed with [`Tree::end`].
+    pub fn component(
+        &mut self,
+        key: NodeId,
+        kind: NodeKind,
+        spec: ComponentSpec<'_>,
+    ) -> Result<(), UiError> {
+        let valid = matches!(
+            kind,
+            NodeKind::List
+                | NodeKind::Scroll
+                | NodeKind::Dialog
+                | NodeKind::Toast
+                | NodeKind::Image
+                | NodeKind::Icon
+                | NodeKind::RichText
+                | NodeKind::Checkbox
+                | NodeKind::RadioRow
+                | NodeKind::Slider
+                | NodeKind::Progress
+                | NodeKind::Divider
+                | NodeKind::Spacer
+                | NodeKind::NavigationHeader
+        );
+        if !valid {
+            return Err(UiError::Argument);
+        }
+        let interactive = matches!(
+            kind,
+            NodeKind::Checkbox | NodeKind::RadioRow | NodeKind::Slider
+        );
+        if interactive && spec.event_id == 0 {
+            return Err(UiError::Argument);
+        }
+        if matches!(kind, NodeKind::Slider | NodeKind::Progress)
+            && (spec.value.minimum > spec.value.maximum
+                || spec.value.value < spec.value.minimum
+                || spec.value.value > spec.value.maximum
+                || spec.value.step < 0)
+        {
+            return Err(UiError::Argument);
+        }
+        let container = matches!(
+            kind,
+            NodeKind::List | NodeKind::Scroll | NodeKind::Dialog | NodeKind::NavigationHeader
+        );
+        self.append(
+            key,
+            kind,
+            spec.primary,
+            spec.secondary,
+            spec.event_id,
+            spec.flags,
+            container,
+        )?;
+        let index = self.snapshot.node_count as usize - 1;
+        self.snapshot.values[index] = spec.value;
+        Ok(())
+    }
+
+    pub fn set_style(&mut self, key: NodeId, style: Style) -> Result<(), UiError> {
+        if style.variant > ComponentVariant::Compact as u16
+            || style.text_style > TextStyle::Warning as u16
+            || style.foreground > ColorRole::Transparent as u16
+            || style.background > ColorRole::Transparent as u16
+            || style.accent > ColorRole::Transparent as u16
+            || style.border_color > ColorRole::Transparent as u16
+            || style.corner_radius < -1
+            || style.border_width < -1
+            || style.opacity > 1000
+            || style.reserved != 0
+        {
+            return Err(UiError::Argument);
+        }
+        let index = self.snapshot.nodes[..self.snapshot.node_count as usize]
+            .iter()
+            .position(|node| node.key == key)
+            .ok_or(UiError::Argument)?;
+        self.snapshot.styles[index] = style;
+        Ok(())
+    }
+
+    pub fn set_layout(&mut self, key: NodeId, layout: Layout) -> Result<(), UiError> {
+        if layout.width < -1
+            || layout.height < -1
+            || layout.min_width < -1
+            || layout.min_height < -1
+            || layout.max_width < -1
+            || layout.max_height < -1
+            || layout.gap < -1
+            || layout.axis > Axis::Horizontal as u8
+            || layout.align > Alignment::Stretch as u8
+            || layout.justify > Justification::SpaceEvenly as u8
+            || layout.reserved != [0; 3]
+        {
+            return Err(UiError::Argument);
+        }
+        let index = self.snapshot.nodes[..self.snapshot.node_count as usize]
+            .iter()
+            .position(|node| node.key == key)
+            .ok_or(UiError::Argument)?;
+        self.snapshot.layouts[index] = layout;
+        Ok(())
     }
 
     pub fn end(&mut self) -> Result<(), UiError> {
@@ -468,8 +852,45 @@ impl Tree {
 /// `Message` is the app's action type; each component encodes one action as an
 /// event id. Rendering is a pure build; the app mutates its model in `update`
 /// and rebuilds the view.
+///
+/// Message types must be bounded, copyable values with an explicit stable event
+/// encoding. A closure or non-copy action cannot be retained by the view:
+///
+/// ```compile_fail
+/// use canopus_ui_core::{ActionRow, Tree, View};
+///
+/// struct UnboundedAction(core::cell::Cell<u32>);
+/// let row = ActionRow {
+///     key: 1,
+///     label: "Run",
+///     detail: "",
+///     event: UnboundedAction(core::cell::Cell::new(7)),
+///     enabled: true,
+/// };
+/// let mut tree = Tree::begin();
+/// row.render(&mut tree).unwrap();
+/// ```
 pub trait View<Message: Copy + Into<u32>> {
     fn render(&self, tree: &mut Tree) -> Result<(), UiError>;
+}
+
+/// Allocation-free declarative syntax. It intentionally expands to ordinary
+/// typed values, so diagnostics point at the component fields and device builds
+/// do not depend on a procedural macro runtime. One tuple is bounded to eight
+/// children; larger pages must nest semantic containers rather than creating an
+/// unbounded flat list.
+///
+/// ```compile_fail
+/// use canopus_ui_core::{Tree, View};
+///
+/// let too_many = ((), (), (), (), (), (), (), (), ());
+/// let mut tree = Tree::begin();
+/// <_ as View<u32>>::render(&too_many, &mut tree).unwrap();
+/// ```
+#[macro_export]
+macro_rules! view {
+    ($single:expr $(,)?) => { $single };
+    ($first:expr, $($rest:expr),+ $(,)?) => { ($first, $($rest,)+) };
 }
 
 impl<M: Copy + Into<u32>> View<M> for () {
@@ -499,14 +920,452 @@ impl_tuple_view!(A : 0, B : 1, C : 2, D : 3, E : 4, F : 5);
 impl_tuple_view!(A : 0, B : 1, C : 2, D : 3, E : 4, F : 5, G : 6);
 impl_tuple_view!(A : 0, B : 1, C : 2, D : 3, E : 4, F : 5, G : 6, H : 7);
 
-/// Root container rendered as a navigation page.
-pub struct NavigationPage<C> {
+// ---------------------------------------------------------------------------
+// Bounded application state and commands
+// ---------------------------------------------------------------------------
+
+/// A small state cell used by application models and bindings.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct State<T> {
+    value: T,
+}
+
+impl<T> State<T> {
+    pub const fn new(value: T) -> Self {
+        Self { value }
+    }
+
+    pub const fn get(&self) -> &T {
+        &self.value
+    }
+
+    pub fn get_mut(&mut self) -> &mut T {
+        &mut self.value
+    }
+
+    pub fn set(&mut self, value: T) {
+        self.value = value;
+    }
+
+    pub fn binding(&mut self) -> Binding<'_, T> {
+        Binding {
+            value: &mut self.value,
+        }
+    }
+}
+
+/// A temporary two-way reference to model state. It never escapes the borrow
+/// of the model and therefore carries no runtime pointer into a UI snapshot.
+pub struct Binding<'a, T> {
+    value: &'a mut T,
+}
+
+impl<T> Binding<'_, T> {
+    pub fn get(&self) -> &T {
+        self.value
+    }
+
+    pub fn set(&mut self, value: T) {
+        *self.value = value;
+    }
+
+    pub fn update(&mut self, update: impl FnOnce(&mut T)) {
+        update(self.value);
+    }
+}
+
+/// Fixed-capacity list for model-owned repeated state.
+pub struct BoundedList<T: Copy, const N: usize> {
+    items: [Option<T>; N],
+    len: usize,
+}
+
+impl<T: Copy, const N: usize> BoundedList<T, N> {
+    pub const fn new() -> Self {
+        Self {
+            items: [None; N],
+            len: 0,
+        }
+    }
+
+    pub const fn len(&self) -> usize {
+        self.len
+    }
+
+    pub const fn capacity(&self) -> usize {
+        N
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
+    pub const fn is_full(&self) -> bool {
+        self.len == N
+    }
+
+    pub fn get(&self, index: usize) -> Option<&T> {
+        self.items.get(index).and_then(Option::as_ref)
+    }
+
+    pub fn push(&mut self, value: T) -> Result<(), UiError> {
+        if self.is_full() {
+            return Err(UiError::Capacity);
+        }
+        self.items[self.len] = Some(value);
+        self.len += 1;
+        Ok(())
+    }
+
+    pub fn pop(&mut self) -> Option<T> {
+        if self.len == 0 {
+            return None;
+        }
+        self.len -= 1;
+        self.items[self.len].take()
+    }
+
+    pub fn remove(&mut self, index: usize) -> Option<T> {
+        if index >= self.len {
+            return None;
+        }
+        let removed = self.items[index].take();
+        for current in index..self.len - 1 {
+            self.items[current] = self.items[current + 1].take();
+        }
+        self.len -= 1;
+        self.items[self.len] = None;
+        removed
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.items[..self.len].iter().filter_map(Option::as_ref)
+    }
+}
+
+impl<T: Copy, const N: usize> Default for BoundedList<T, N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Deferred work requested by an application's `update` function.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum Command<Message> {
+    Emit(Message),
+    Rebuild,
+}
+
+/// Sink abstraction lets an update function remain independent of queue size.
+pub trait CommandSink<Message> {
+    fn submit(&mut self, command: Command<Message>) -> Result<(), UiError>;
+}
+
+/// FIFO command queue with compile-time capacity and no allocator.
+pub struct CommandQueue<Message: Copy, const N: usize> {
+    commands: [Option<Command<Message>>; N],
+    head: usize,
+    len: usize,
+}
+
+impl<Message: Copy, const N: usize> CommandQueue<Message, N> {
+    pub const fn new() -> Self {
+        Self {
+            commands: [None; N],
+            head: 0,
+            len: 0,
+        }
+    }
+
+    pub const fn len(&self) -> usize {
+        self.len
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
+    pub const fn is_full(&self) -> bool {
+        self.len == N
+    }
+
+    pub fn pop(&mut self) -> Option<Command<Message>> {
+        if self.len == 0 {
+            return None;
+        }
+        let command = self.commands[self.head].take();
+        if N != 0 {
+            self.head = (self.head + 1) % N;
+        }
+        self.len -= 1;
+        command
+    }
+
+    pub fn clear(&mut self) {
+        while self.pop().is_some() {}
+        self.head = 0;
+    }
+}
+
+impl<Message: Copy, const N: usize> CommandSink<Message> for CommandQueue<Message, N> {
+    fn submit(&mut self, command: Command<Message>) -> Result<(), UiError> {
+        if self.is_full() {
+            return Err(UiError::Capacity);
+        }
+        let tail = if N == 0 {
+            0
+        } else {
+            (self.head + self.len) % N
+        };
+        self.commands[tail] = Some(command);
+        self.len += 1;
+        Ok(())
+    }
+}
+
+impl<Message: Copy, const N: usize> Default for CommandQueue<Message, N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Model/message/update contract used by allocator-free applications.
+pub trait Application {
+    type Model;
+    type Message: Copy + Into<u32>;
+
+    /// Converts a semantic event id back into the application's typed message.
+    /// Unknown ids must return `None`; the runtime never guesses enum layouts.
+    fn decode_message(event_id: u32) -> Option<Self::Message>;
+
+    fn update(
+        &mut self,
+        model: &mut Self::Model,
+        message: Self::Message,
+        commands: &mut impl CommandSink<Self::Message>,
+    );
+}
+
+/// Declarative wrapper for every extended prefab. This single type keeps the
+/// component catalog exhaustive without duplicating style/layout APIs.
+pub struct SystemComponent<'a, Message, Children = ()> {
     pub key: NodeId,
-    pub title: &'static str,
+    pub kind: NodeKind,
+    pub primary: &'a str,
+    pub secondary: &'a str,
+    pub event: Option<Message>,
+    pub flags: u32,
+    pub value: Value,
+    pub style: Style,
+    pub layout: Layout,
+    pub children: Children,
+}
+
+impl<'a, M> SystemComponent<'a, M, ()> {
+    pub fn leaf(key: NodeId, kind: NodeKind, primary: &'a str) -> Self {
+        Self {
+            key,
+            kind,
+            primary,
+            secondary: "",
+            event: None,
+            flags: FLAG_VISIBLE,
+            value: Value::default(),
+            style: Style::default(),
+            layout: Layout::default(),
+            children: (),
+        }
+    }
+}
+
+impl<'a, M, C> SystemComponent<'a, M, C> {
+    pub fn container(key: NodeId, kind: NodeKind, primary: &'a str, children: C) -> Self {
+        Self {
+            key,
+            kind,
+            primary,
+            secondary: "",
+            event: None,
+            flags: FLAG_VISIBLE,
+            value: Value::default(),
+            style: Style::default(),
+            layout: Layout::default(),
+            children,
+        }
+    }
+
+    pub fn secondary(mut self, secondary: &'a str) -> Self {
+        self.secondary = secondary;
+        self
+    }
+
+    pub fn event(mut self, event: M) -> Self {
+        self.event = Some(event);
+        self
+    }
+
+    pub fn enabled(mut self, enabled: bool) -> Self {
+        if enabled {
+            self.flags |= FLAG_ENABLED;
+        } else {
+            self.flags &= !FLAG_ENABLED;
+        }
+        self
+    }
+
+    pub fn checked(mut self, checked: bool) -> Self {
+        if checked {
+            self.flags |= FLAG_CHECKED;
+        } else {
+            self.flags &= !FLAG_CHECKED;
+        }
+        self
+    }
+
+    pub fn selected(mut self, selected: bool) -> Self {
+        if selected {
+            self.flags |= FLAG_SELECTED;
+        } else {
+            self.flags &= !FLAG_SELECTED;
+        }
+        self
+    }
+
+    pub fn indeterminate(mut self, indeterminate: bool) -> Self {
+        if indeterminate {
+            self.flags |= FLAG_INDETERMINATE;
+        } else {
+            self.flags &= !FLAG_INDETERMINATE;
+        }
+        self
+    }
+
+    pub fn visible(mut self, visible: bool) -> Self {
+        if visible {
+            self.flags |= FLAG_VISIBLE;
+        } else {
+            self.flags &= !FLAG_VISIBLE;
+        }
+        self
+    }
+
+    pub fn wrap(mut self, wrap: bool) -> Self {
+        if wrap {
+            self.flags |= FLAG_WRAP;
+        } else {
+            self.flags &= !FLAG_WRAP;
+        }
+        self
+    }
+
+    pub fn value(mut self, value: Value) -> Self {
+        self.value = value;
+        self
+    }
+
+    pub fn resource(mut self, resource_id: u32) -> Self {
+        self.value.resource_id = resource_id;
+        self
+    }
+
+    pub fn style(mut self, style: Style) -> Self {
+        self.style = style;
+        self
+    }
+
+    pub fn layout(mut self, layout: Layout) -> Self {
+        self.layout = layout;
+        self
+    }
+}
+
+impl<M: Copy + Into<u32>, C: View<M>> View<M> for SystemComponent<'_, M, C> {
+    fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
+        let container = matches!(
+            self.kind,
+            NodeKind::List | NodeKind::Scroll | NodeKind::Dialog | NodeKind::NavigationHeader
+        );
+        tree.component(
+            self.key,
+            self.kind,
+            ComponentSpec {
+                primary: self.primary,
+                secondary: self.secondary,
+                event_id: self.event.map(Into::into).unwrap_or(0),
+                flags: self.flags,
+                value: self.value,
+            },
+        )?;
+        tree.set_style(self.key, self.style)?;
+        tree.set_layout(self.key, self.layout)?;
+        if container {
+            let result = self.children.render(tree);
+            if result.is_ok() {
+                tree.end()?;
+            }
+            result
+        } else {
+            Ok(())
+        }
+    }
+}
+
+/// Stock page titlebar. The semantic node carries the title, optional subtitle
+/// and generation-checked back event; a target backend maps it to the approved
+/// firmware titlebar prefab. Trailing actions can be supplied as child icons.
+pub struct NavigationHeader<'a, Message, Children = ()> {
+    pub key: NodeId,
+    pub title: &'a str,
+    pub subtitle: &'a str,
+    pub back: Option<Message>,
+    pub centered: bool,
+    pub elevated: bool,
+    pub style: Style,
+    pub layout: Layout,
+    pub children: Children,
+}
+
+impl<M: Copy + Into<u32>, C: View<M>> View<M> for NavigationHeader<'_, M, C> {
+    fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
+        let mut flags = FLAG_VISIBLE;
+        if self.back.is_some() {
+            flags |= FLAG_ENABLED | FLAG_HEADER_BACK;
+        }
+        if self.centered {
+            flags |= FLAG_HEADER_CENTERED;
+        }
+        if self.elevated {
+            flags |= FLAG_HEADER_ELEVATED;
+        }
+        tree.component(
+            self.key,
+            NodeKind::NavigationHeader,
+            ComponentSpec {
+                primary: self.title,
+                secondary: self.subtitle,
+                event_id: self.back.map(Into::into).unwrap_or(0),
+                flags,
+                value: Value::default(),
+            },
+        )?;
+        tree.set_style(self.key, self.style)?;
+        tree.set_layout(self.key, self.layout)?;
+        let result = self.children.render(tree);
+        if result.is_ok() {
+            tree.end()?;
+        }
+        result
+    }
+}
+
+/// Root container rendered as a navigation page.
+pub struct NavigationPage<'a, C> {
+    pub key: NodeId,
+    pub title: &'a str,
     pub children: C,
 }
 
-impl<M: Copy + Into<u32>, C: View<M>> View<M> for NavigationPage<C> {
+impl<M: Copy + Into<u32>, C: View<M>> View<M> for NavigationPage<'_, C> {
     fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
         tree.navigation_page(self.key, self.title)?;
         let rc = self.children.render(tree);
@@ -518,13 +1377,13 @@ impl<M: Copy + Into<u32>, C: View<M>> View<M> for NavigationPage<C> {
 }
 
 /// A titled group of rows.
-pub struct Section<C> {
+pub struct Section<'a, C> {
     pub key: NodeId,
-    pub title: &'static str,
+    pub title: &'a str,
     pub children: C,
 }
 
-impl<M: Copy + Into<u32>, C: View<M>> View<M> for Section<C> {
+impl<M: Copy + Into<u32>, C: View<M>> View<M> for Section<'_, C> {
     fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
         tree.section(self.key, self.title)?;
         let rc = self.children.render(tree);
@@ -536,28 +1395,28 @@ impl<M: Copy + Into<u32>, C: View<M>> View<M> for Section<C> {
 }
 
 /// Informational label/value row (no affordance).
-pub struct StatusRow {
+pub struct StatusRow<'a> {
     pub key: NodeId,
-    pub label: &'static str,
-    pub value: &'static str,
+    pub label: &'a str,
+    pub value: &'a str,
 }
 
-impl<M: Copy + Into<u32>> View<M> for StatusRow {
+impl<M: Copy + Into<u32>> View<M> for StatusRow<'_> {
     fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
         tree.status_row(self.key, self.label, self.value)
     }
 }
 
 /// Navigable row with the stock forward affordance.
-pub struct ActionRow<Message> {
+pub struct ActionRow<'a, Message> {
     pub key: NodeId,
-    pub label: &'static str,
-    pub detail: &'static str,
+    pub label: &'a str,
+    pub detail: &'a str,
     pub event: Message,
     pub enabled: bool,
 }
 
-impl<M: Copy + Into<u32>> View<M> for ActionRow<M> {
+impl<M: Copy + Into<u32>> View<M> for ActionRow<'_, M> {
     fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
         tree.action_row(
             self.key,
@@ -570,16 +1429,16 @@ impl<M: Copy + Into<u32>> View<M> for ActionRow<M> {
 }
 
 /// Row whose trailing control is a stock switch.
-pub struct SwitchRow<Message> {
+pub struct SwitchRow<'a, Message> {
     pub key: NodeId,
-    pub label: &'static str,
-    pub detail: &'static str,
+    pub label: &'a str,
+    pub detail: &'a str,
     pub event: Message,
     pub checked: bool,
     pub enabled: bool,
 }
 
-impl<M: Copy + Into<u32>> View<M> for SwitchRow<M> {
+impl<M: Copy + Into<u32>> View<M> for SwitchRow<'_, M> {
     fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
         tree.switch_row(
             self.key,
@@ -593,15 +1452,111 @@ impl<M: Copy + Into<u32>> View<M> for SwitchRow<M> {
 }
 
 /// Plain text node.
-pub struct Text {
+pub struct Text<'a> {
     pub key: NodeId,
-    pub text: &'static str,
+    pub text: &'a str,
     pub style: TextStyle,
 }
 
-impl<M: Copy + Into<u32>> View<M> for Text {
+impl<M: Copy + Into<u32>> View<M> for Text<'_> {
     fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
         tree.text(self.key, self.text, self.style)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Bounded semantic routing
+// ---------------------------------------------------------------------------
+
+/// Allocation-free route stack. Routes are application-owned semantic values;
+/// firmware page/widget pointers never cross into this public state.
+pub struct Router<Route: Copy + Eq, const DEPTH: usize> {
+    routes: [Route; DEPTH],
+    depth: usize,
+    generation: u32,
+}
+
+impl<Route: Copy + Eq, const DEPTH: usize> Router<Route, DEPTH> {
+    pub fn new(root: Route) -> Result<Self, UiError> {
+        if DEPTH == 0 {
+            return Err(UiError::Capacity);
+        }
+        Ok(Self {
+            routes: [root; DEPTH],
+            depth: 1,
+            generation: 1,
+        })
+    }
+
+    pub fn current(&self) -> Route {
+        self.routes[self.depth - 1]
+    }
+
+    pub const fn depth(&self) -> usize {
+        self.depth
+    }
+
+    pub const fn generation(&self) -> u32 {
+        self.generation
+    }
+
+    fn advance(&mut self) {
+        self.generation = self.generation.wrapping_add(1);
+        if self.generation == 0 {
+            self.generation = 1;
+        }
+    }
+
+    pub fn push(&mut self, route: Route) -> Result<(), UiError> {
+        if self.depth == DEPTH {
+            return Err(UiError::Capacity);
+        }
+        self.routes[self.depth] = route;
+        self.depth += 1;
+        self.advance();
+        Ok(())
+    }
+
+    /// Replaces even an equal route, deliberately advancing generation so a
+    /// reopened page cannot accept events emitted by its previous instance.
+    pub fn replace(&mut self, route: Route) {
+        self.routes[self.depth - 1] = route;
+        self.advance();
+    }
+
+    pub fn pop(&mut self) -> Result<Route, UiError> {
+        if self.depth == 1 {
+            return Err(UiError::State);
+        }
+        self.depth -= 1;
+        self.advance();
+        Ok(self.current())
+    }
+
+    pub fn back(&mut self, generation: u32) -> Result<Route, UiError> {
+        if generation != self.generation {
+            return Err(UiError::StaleGeneration);
+        }
+        self.pop()
+    }
+
+    pub fn pop_to(&mut self, route: Route) -> Result<(), UiError> {
+        let index = self.routes[..self.depth]
+            .iter()
+            .rposition(|candidate| *candidate == route)
+            .ok_or(UiError::Argument)?;
+        if index + 1 != self.depth {
+            self.depth = index + 1;
+            self.advance();
+        }
+        Ok(())
+    }
+
+    pub fn clear_to_root(&mut self) {
+        if self.depth > 1 {
+            self.depth = 1;
+            self.advance();
+        }
     }
 }
 
@@ -612,6 +1567,7 @@ impl<M: Copy + Into<u32>> View<M> for Text {
 /// Holds the committed snapshot and generation-checked dispatch state.
 pub struct Runtime {
     committed: Snapshot,
+    has_committed: bool,
     pub dropped_events: u32,
 }
 
@@ -619,6 +1575,7 @@ impl Runtime {
     pub fn new() -> Runtime {
         Runtime {
             committed: Snapshot::empty(),
+            has_committed: false,
             dropped_events: 0,
         }
     }
@@ -630,6 +1587,15 @@ impl Runtime {
     /// Atomically replaces the committed snapshot.
     pub fn commit(&mut self, snapshot: Snapshot) {
         self.committed = snapshot;
+        self.has_committed = true;
+    }
+
+    fn next_generation(&self) -> u32 {
+        if !self.has_committed {
+            return 1;
+        }
+        let next = self.committed.generation.wrapping_add(1);
+        if next == 0 { 1 } else { next }
     }
 
     /// Generation-checked dispatch. Returns the sink result for an interactive,
@@ -663,6 +1629,153 @@ impl Default for Runtime {
     }
 }
 
+/// Transactional sink for committed semantic snapshots. A target
+/// implementation may cross the C ABI here; it must not retain pointers into
+/// the temporary Rust builder.
+pub trait SnapshotBackend {
+    fn apply(&mut self, snapshot: &Snapshot) -> Result<(), UiError>;
+}
+
+/// C ABI adapter for [`SnapshotBackend`]. It mirrors the `apply(cookie,
+/// snapshot)` seam used by `canopus_ui_backend_v1`, while keeping the complete
+/// target backend and its firmware pointers outside public Rust UI values.
+pub struct CAbiBackend {
+    cookie: *mut core::ffi::c_void,
+    apply: unsafe extern "C" fn(*mut core::ffi::c_void, *const Snapshot) -> i32,
+}
+
+impl CAbiBackend {
+    /// Creates an adapter around a C backend callback.
+    ///
+    /// # Safety
+    /// `cookie` must remain valid for every call to `apply`, and the callback
+    /// must only read the snapshot during the call. It must not unwind or retain
+    /// the temporary snapshot pointer.
+    pub const unsafe fn new(
+        cookie: *mut core::ffi::c_void,
+        apply: unsafe extern "C" fn(*mut core::ffi::c_void, *const Snapshot) -> i32,
+    ) -> Self {
+        Self { cookie, apply }
+    }
+}
+
+impl SnapshotBackend for CAbiBackend {
+    fn apply(&mut self, snapshot: &Snapshot) -> Result<(), UiError> {
+        // SAFETY: upheld by `CAbiBackend::new`; `snapshot` remains valid for the
+        // complete synchronous callback and is not retained.
+        let result = unsafe { (self.apply)(self.cookie, snapshot) };
+        if result == 0 {
+            Ok(())
+        } else {
+            Err(UiError::Backend)
+        }
+    }
+}
+
+/// Allocation-free Model/Message runtime. It validates a firmware event against
+/// the committed generation, decodes it into a typed message, drains a bounded
+/// command queue, rebuilds the view, and publishes only after the backend has
+/// accepted the complete snapshot.
+pub struct ApplicationRuntime<A: Application, B: SnapshotBackend, const COMMANDS: usize> {
+    app: A,
+    model: A::Model,
+    backend: B,
+    runtime: Runtime,
+    commands: CommandQueue<A::Message, COMMANDS>,
+}
+
+impl<A: Application, B: SnapshotBackend, const COMMANDS: usize> ApplicationRuntime<A, B, COMMANDS> {
+    pub fn new(app: A, model: A::Model, backend: B) -> Self {
+        Self {
+            app,
+            model,
+            backend,
+            runtime: Runtime::new(),
+            commands: CommandQueue::new(),
+        }
+    }
+
+    pub fn model(&self) -> &A::Model {
+        &self.model
+    }
+
+    pub fn model_mut(&mut self) -> &mut A::Model {
+        &mut self.model
+    }
+
+    pub fn backend(&self) -> &B {
+        &self.backend
+    }
+
+    pub fn backend_mut(&mut self) -> &mut B {
+        &mut self.backend
+    }
+
+    pub fn current(&self) -> &Snapshot {
+        self.runtime.current()
+    }
+
+    pub fn dropped_events(&self) -> u32 {
+        self.runtime.dropped_events
+    }
+
+    /// Builds and transactionally publishes a view. The closure form permits
+    /// model-borrowed strings without requiring them to be `'static`.
+    pub fn rebuild(
+        &mut self,
+        render: impl FnOnce(&A::Model, &mut Tree) -> Result<(), UiError>,
+    ) -> Result<(), UiError> {
+        let mut tree = Tree::begin();
+        render(&self.model, &mut tree)?;
+        let mut snapshot = tree.commit()?;
+        snapshot.generation = self.runtime.next_generation();
+        self.backend.apply(&snapshot)?;
+        self.runtime.commit(snapshot);
+        Ok(())
+    }
+
+    /// Processes one checked UI event and publishes the resulting model view.
+    /// At most `COMMANDS` queued commands are executed per event, preventing an
+    /// `Emit` cycle from becoming an unbounded UI-thread loop.
+    pub fn dispatch_event(
+        &mut self,
+        generation: u32,
+        key: NodeId,
+        event_id: u32,
+        render: impl FnOnce(&A::Model, &mut Tree) -> Result<(), UiError>,
+    ) -> Result<(), UiError> {
+        self.runtime
+            .dispatch(generation, key, event_id, &mut |_, _, _| Ok(0))?;
+        let message = A::decode_message(event_id).ok_or(UiError::Argument)?;
+        if !self.commands.is_empty() {
+            self.commands.clear();
+            return Err(UiError::State);
+        }
+
+        self.app
+            .update(&mut self.model, message, &mut self.commands);
+        let mut processed = 0usize;
+        while !self.commands.is_empty() {
+            if processed == COMMANDS {
+                self.commands.clear();
+                return Err(UiError::Capacity);
+            }
+            let command = match self.commands.pop() {
+                Some(command) => command,
+                None => return Err(UiError::State),
+            };
+            match command {
+                Command::Emit(next) => {
+                    self.app.update(&mut self.model, next, &mut self.commands);
+                }
+                Command::Rebuild => {}
+            }
+            processed += 1;
+        }
+        self.rebuild(render)
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Layout parity (mirror the C static asserts)
 // ---------------------------------------------------------------------------
@@ -683,10 +1796,26 @@ mod layout {
 
     #[test]
     fn snapshot_layout() {
-        // header 12 bytes, then 32 nodes, then the string arena.
+        let prefix = 12 + MAX_NODES * 28 + STRING_CAPACITY;
         assert_eq!(offset_of!(Snapshot, nodes), 12);
         assert_eq!(offset_of!(Snapshot, strings), 12 + MAX_NODES * 28);
-        assert_eq!(size_of::<Snapshot>(), 12 + MAX_NODES * 28 + STRING_CAPACITY);
+        assert_eq!(offset_of!(Snapshot, styles), prefix);
+        assert_eq!(
+            offset_of!(Snapshot, layouts),
+            prefix + MAX_NODES * size_of::<Style>()
+        );
+        assert_eq!(
+            offset_of!(Snapshot, values),
+            prefix + MAX_NODES * (size_of::<Style>() + size_of::<Layout>())
+        );
+        assert_eq!(size_of::<Style>(), 20);
+        assert_eq!(size_of::<Layout>(), 38);
+        assert_eq!(size_of::<Value>(), 20);
+        assert_eq!(size_of::<Snapshot>(), 4940);
+        assert_eq!(
+            size_of::<Snapshot>(),
+            prefix + MAX_NODES * (size_of::<Style>() + size_of::<Layout>() + size_of::<Value>())
+        );
     }
 }
 
@@ -885,5 +2014,432 @@ mod tests {
         let install = snapshot.find_by_key(14).unwrap();
         assert!(!install.enabled());
         assert_eq!(install.event_id, event::INSTALL);
+    }
+
+    #[test]
+    fn declarative_catalog_exposes_style_layout_and_values() {
+        let slider_style = Style {
+            variant: ComponentVariant::Tonal as u16,
+            foreground: ColorRole::TextPrimary as u16,
+            background: ColorRole::SurfaceAlt as u16,
+            accent: ColorRole::Accent as u16,
+            corner_radius: 8,
+            opacity: 900,
+            ..Style::default()
+        };
+        let slider_layout = Layout {
+            width: 240,
+            min_height: 44,
+            padding_left: 12,
+            padding_right: 12,
+            axis: Axis::Horizontal as u8,
+            align: Alignment::Center as u8,
+            justify: Justification::SpaceBetween as u8,
+            grow: 1,
+            ..Layout::default()
+        };
+        let catalog = view!(NavigationPage {
+            key: 1,
+            title: "Catalog",
+            children: SystemComponent {
+                key: 2,
+                kind: NodeKind::Scroll,
+                primary: "",
+                secondary: "",
+                event: None,
+                flags: FLAG_VISIBLE,
+                value: Value::default(),
+                style: Style::default(),
+                layout: Layout::default(),
+                children: (
+                    SystemComponent {
+                        key: 3,
+                        kind: NodeKind::Slider,
+                        primary: "Brightness",
+                        secondary: "65%",
+                        event: Some(ManagerEvent::SafeMode),
+                        flags: FLAG_VISIBLE | FLAG_ENABLED,
+                        value: Value {
+                            value: 65,
+                            minimum: 0,
+                            maximum: 100,
+                            step: 5,
+                            resource_id: 0,
+                        },
+                        style: slider_style,
+                        layout: slider_layout,
+                        children: (),
+                    },
+                    SystemComponent {
+                        key: 4,
+                        kind: NodeKind::Image,
+                        primary: "Module icon",
+                        secondary: "",
+                        event: None,
+                        flags: FLAG_VISIBLE,
+                        value: Value {
+                            resource_id: 0xCA10,
+                            ..Value::default()
+                        },
+                        style: Style::default(),
+                        layout: Layout::default(),
+                        children: (),
+                    },
+                ),
+            },
+        });
+
+        let mut tree = Tree::begin();
+        catalog.render(&mut tree).unwrap();
+        let snapshot = tree.commit().unwrap();
+        assert_eq!(
+            snapshot.find_by_key(3).unwrap().kind(),
+            Some(NodeKind::Slider)
+        );
+        assert_eq!(snapshot.value(2).unwrap().value, 65);
+        assert_eq!(
+            snapshot.style(2).unwrap().variant,
+            ComponentVariant::Tonal as u16
+        );
+        assert_eq!(snapshot.layout(2).unwrap().width, 240);
+        assert_eq!(snapshot.value(3).unwrap().resource_id, 0xCA10);
+    }
+
+    #[test]
+    fn catalog_rejects_invalid_ranges_and_metadata() {
+        let mut tree = Tree::begin();
+        tree.navigation_page(1, "Invalid").unwrap();
+        assert_eq!(
+            tree.component(
+                2,
+                NodeKind::Slider,
+                ComponentSpec {
+                    event_id: 1,
+                    value: Value {
+                        value: 101,
+                        minimum: 0,
+                        maximum: 100,
+                        step: 1,
+                        resource_id: 0,
+                    },
+                    ..ComponentSpec::default()
+                }
+            ),
+            Err(UiError::Argument)
+        );
+        let style = Style {
+            opacity: 1001,
+            ..Style::default()
+        };
+        assert_eq!(tree.set_style(1, style), Err(UiError::Argument));
+        let layout = Layout {
+            width: -2,
+            ..Layout::default()
+        };
+        assert_eq!(tree.set_layout(1, layout), Err(UiError::Argument));
+    }
+
+    #[test]
+    fn fluent_system_component_customizes_semantics_and_metadata() {
+        let checkbox = SystemComponent::leaf(2, NodeKind::Checkbox, "Telemetry")
+            .secondary("Send bounded diagnostics")
+            .event(ManagerEvent::SafeMode)
+            .enabled(true)
+            .checked(true)
+            .selected(true)
+            .wrap(true)
+            .style(Style {
+                variant: ComponentVariant::Outlined as u16,
+                ..Style::default()
+            })
+            .layout(Layout {
+                min_height: 44,
+                ..Layout::default()
+            });
+        let view = NavigationPage {
+            key: 1,
+            title: "Settings",
+            children: checkbox,
+        };
+        let mut tree = Tree::begin();
+        view.render(&mut tree).unwrap();
+        let snapshot = tree.commit().unwrap();
+        let node = snapshot.find_by_key(2).unwrap();
+        assert_eq!(node.kind(), Some(NodeKind::Checkbox));
+        assert!(node.enabled());
+        assert!(node.checked());
+        assert_ne!(node.flags & FLAG_SELECTED, 0);
+        assert_ne!(node.flags & FLAG_WRAP, 0);
+        assert_eq!(snapshot.style(1).unwrap().variant, 3);
+        assert_eq!(snapshot.layout(1).unwrap().min_height, 44);
+    }
+
+    #[test]
+    fn declarative_views_copy_model_borrowed_text() {
+        let snapshot = {
+            let title_storage = *b"Borrowed title";
+            let value_storage = *b"runtime value";
+            let title = core::str::from_utf8(&title_storage).unwrap();
+            let value = core::str::from_utf8(&value_storage).unwrap();
+            let view = NavigationPage {
+                key: 1,
+                title,
+                children: StatusRow {
+                    key: 2,
+                    label: "State",
+                    value,
+                },
+            };
+            let mut tree = Tree::begin();
+            <_ as View<u32>>::render(&view, &mut tree).unwrap();
+            tree.commit().unwrap()
+        };
+
+        assert_eq!(
+            snapshot.primary(snapshot.node(0).unwrap()),
+            "Borrowed title"
+        );
+        assert_eq!(
+            snapshot.secondary(snapshot.node(1).unwrap()),
+            "runtime value"
+        );
+    }
+
+    #[test]
+    fn c_abi_backend_forwards_snapshot_synchronously() {
+        unsafe extern "C" fn apply(
+            cookie: *mut core::ffi::c_void,
+            snapshot: *const Snapshot,
+        ) -> i32 {
+            if cookie.is_null() || snapshot.is_null() {
+                return -1;
+            }
+            // SAFETY: the test creates both pointers from live, aligned values
+            // and the callback does not retain either pointer.
+            unsafe {
+                *cookie.cast::<u32>() = (*snapshot).generation;
+            }
+            0
+        }
+
+        let mut observed = 0u32;
+        // SAFETY: `observed` outlives the adapter and `apply` obeys the
+        // synchronous callback contract.
+        let mut backend = unsafe {
+            CAbiBackend::new(
+                core::ptr::addr_of_mut!(observed).cast::<core::ffi::c_void>(),
+                apply,
+            )
+        };
+        let snapshot = Snapshot::empty();
+        backend.apply(&snapshot).unwrap();
+        assert_eq!(observed, 1);
+    }
+
+    #[test]
+    fn application_runtime_decodes_drains_rebuilds_and_commits_transactionally() {
+        #[derive(Copy, Clone)]
+        enum Message {
+            Increment,
+            AddTen,
+            Cycle,
+        }
+
+        impl From<Message> for u32 {
+            fn from(message: Message) -> Self {
+                match message {
+                    Message::Increment => 41,
+                    Message::AddTen => 42,
+                    Message::Cycle => 43,
+                }
+            }
+        }
+
+        struct App;
+
+        impl Application for App {
+            type Model = u32;
+            type Message = Message;
+
+            fn decode_message(event_id: u32) -> Option<Self::Message> {
+                match event_id {
+                    41 => Some(Message::Increment),
+                    42 => Some(Message::AddTen),
+                    43 => Some(Message::Cycle),
+                    _ => None,
+                }
+            }
+
+            fn update(
+                &mut self,
+                model: &mut Self::Model,
+                message: Self::Message,
+                commands: &mut impl CommandSink<Self::Message>,
+            ) {
+                match message {
+                    Message::Increment => {
+                        *model += 1;
+                        let _ = commands.submit(Command::Emit(Message::AddTen));
+                    }
+                    Message::AddTen => *model += 10,
+                    Message::Cycle => {
+                        let _ = commands.submit(Command::Emit(Message::Cycle));
+                    }
+                }
+            }
+        }
+
+        struct Backend {
+            applied: Snapshot,
+            apply_count: u32,
+            fail: bool,
+        }
+
+        impl SnapshotBackend for Backend {
+            fn apply(&mut self, snapshot: &Snapshot) -> Result<(), UiError> {
+                self.apply_count += 1;
+                if self.fail {
+                    return Err(UiError::Backend);
+                }
+                self.applied = snapshot.clone();
+                Ok(())
+            }
+        }
+
+        fn render(model: &u32, tree: &mut Tree) -> Result<(), UiError> {
+            tree.navigation_page(1, "Runtime")?;
+            tree.button(2, "Increment", 41, true)?;
+            tree.button(3, "Cycle", 43, true)?;
+            tree.status_row(4, "Value", if *model == 0 { "0" } else { "11" })?;
+            tree.end()
+        }
+
+        let backend = Backend {
+            applied: Snapshot::empty(),
+            apply_count: 0,
+            fail: false,
+        };
+        let mut runtime: ApplicationRuntime<App, Backend, 2> =
+            ApplicationRuntime::new(App, 0, backend);
+        runtime.rebuild(render).unwrap();
+        assert_eq!(runtime.current().generation, 1);
+
+        runtime.dispatch_event(1, 2, 41, render).unwrap();
+        assert_eq!(*runtime.model(), 11);
+        assert_eq!(runtime.current().generation, 2);
+        assert_eq!(runtime.backend().applied.generation, 2);
+        assert_eq!(runtime.backend().apply_count, 2);
+
+        assert_eq!(
+            runtime.dispatch_event(1, 2, 41, render),
+            Err(UiError::StaleGeneration)
+        );
+        assert_eq!(runtime.dropped_events(), 1);
+
+        runtime.backend_mut().fail = true;
+        assert_eq!(
+            runtime.dispatch_event(2, 2, 41, render),
+            Err(UiError::Backend)
+        );
+        assert_eq!(runtime.current().generation, 2);
+        assert_eq!(runtime.backend().applied.generation, 2);
+
+        runtime.backend_mut().fail = false;
+        assert_eq!(
+            runtime.dispatch_event(2, 3, 43, render),
+            Err(UiError::Capacity)
+        );
+        assert!(runtime.commands.is_empty());
+        assert_eq!(runtime.current().generation, 2);
+    }
+
+    #[test]
+    fn navigation_header_and_router_form_a_bounded_page_frame() {
+        #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+        enum Route {
+            Overview,
+            Modules,
+            Detail,
+        }
+
+        let mut router: Router<Route, 3> = Router::new(Route::Overview).unwrap();
+        let root_generation = router.generation();
+        router.push(Route::Modules).unwrap();
+        let modules_generation = router.generation();
+        router.push(Route::Detail).unwrap();
+        assert_eq!(router.push(Route::Detail), Err(UiError::Capacity));
+        assert_eq!(
+            router.back(modules_generation),
+            Err(UiError::StaleGeneration)
+        );
+        assert_eq!(router.back(router.generation()), Ok(Route::Modules));
+        assert_eq!(router.depth(), 2);
+        router.replace(Route::Modules);
+        assert_ne!(router.generation(), root_generation);
+        router.pop_to(Route::Overview).unwrap();
+        assert_eq!(router.current(), Route::Overview);
+        assert_eq!(router.pop(), Err(UiError::State));
+
+        let header = NavigationHeader {
+            key: 2,
+            title: "Modules",
+            subtitle: "2 installed",
+            back: Some(ManagerEvent::SafeMode),
+            centered: true,
+            elevated: false,
+            style: Style::default(),
+            layout: Layout::default(),
+            children: (),
+        };
+        let view = NavigationPage {
+            key: 1,
+            title: "Canopus",
+            children: header,
+        };
+        let mut tree = Tree::begin();
+        view.render(&mut tree).unwrap();
+        let snapshot = tree.commit().unwrap();
+        let node = snapshot.find_by_key(2).unwrap();
+        assert_eq!(node.kind(), Some(NodeKind::NavigationHeader));
+        assert_eq!(snapshot.primary(node), "Modules");
+        assert_eq!(snapshot.secondary(node), "2 installed");
+        assert_ne!(node.flags & FLAG_HEADER_BACK, 0);
+        assert_ne!(node.flags & FLAG_HEADER_CENTERED, 0);
+        assert!(node.enabled());
+    }
+
+    #[test]
+    fn bounded_state_list_and_command_queue_are_allocator_free() {
+        let mut state = State::new(4u32);
+        {
+            let mut binding = state.binding();
+            binding.update(|value| *value += 3);
+            assert_eq!(*binding.get(), 7);
+            binding.set(9);
+        }
+        assert_eq!(*state.get(), 9);
+
+        let mut list: BoundedList<u32, 2> = BoundedList::new();
+        assert!(list.is_empty());
+        list.push(10).unwrap();
+        list.push(20).unwrap();
+        assert_eq!(list.push(30), Err(UiError::Capacity));
+        assert_eq!(list.iter().copied().sum::<u32>(), 30);
+        assert_eq!(list.remove(0), Some(10));
+        assert_eq!(list.pop(), Some(20));
+        assert!(list.is_empty());
+
+        let mut commands: CommandQueue<u32, 2> = CommandQueue::new();
+        commands.submit(Command::Emit(7)).unwrap();
+        commands.submit(Command::Rebuild).unwrap();
+        assert_eq!(commands.submit(Command::Emit(8)), Err(UiError::Capacity));
+        assert_eq!(commands.pop(), Some(Command::Emit(7)));
+        commands.submit(Command::Emit(8)).unwrap();
+        assert_eq!(commands.pop(), Some(Command::Rebuild));
+        assert_eq!(commands.pop(), Some(Command::Emit(8)));
+        assert_eq!(commands.pop(), None);
+
+        let mut zero: CommandQueue<u32, 0> = CommandQueue::new();
+        assert_eq!(zero.submit(Command::Rebuild), Err(UiError::Capacity));
     }
 }

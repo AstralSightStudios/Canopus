@@ -4,7 +4,7 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 1
-// input_digest: 1997ce3fe9e989b8
+// input_digest: 7734ab35c6f8fbd7
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -258,6 +258,7 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 // open: restricted - not exported until context/ownership approved
 // page_finish: restricted - not exported until context/ownership approved
 // page_goto: restricted - not exported until context/ownership approved
+// page_navigator_open_page: FORBIDDEN - no binding may ever be generated
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
 // pthread_create_internal: FORBIDDEN - no binding may ever be generated
 // public_work_queue: FORBIDDEN - no binding may ever be generated
@@ -271,6 +272,11 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 // service_manager_register: restricted - not exported until context/ownership approved
 // service_manager_shutdown: restricted - not exported until context/ownership approved
 // service_manager_startup: restricted - not exported until context/ownership approved
+// sport_titlebar_dispatch: FORBIDDEN - no binding may ever be generated
+// sport_titlebar_lifecycle_reset: FORBIDDEN - no binding may ever be generated
+// system_router_app_wrapper: FORBIDDEN - no binding may ever be generated
+// system_router_get_pages_wrapper: FORBIDDEN - no binding may ever be generated
+// system_router_page_record_wrapper: FORBIDDEN - no binding may ever be generated
 // unregister_blockdriver: restricted - not exported until context/ownership approved
 // vendor_hci_transport_register: FORBIDDEN - no binding may ever be generated
 // write: restricted - not exported until context/ownership approved

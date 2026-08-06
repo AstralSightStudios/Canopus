@@ -14,6 +14,8 @@ pub const SCHEMA_TYPE: &str = include_str!("../../../schemas/type.schema.json");
 pub const SCHEMA_EVIDENCE: &str = include_str!("../../../schemas/evidence.schema.json");
 pub const SCHEMA_MODULE: &str = include_str!("../../../schemas/module.schema.json");
 pub const SCHEMA_PACKAGE: &str = include_str!("../../../schemas/package.schema.json");
+pub const SCHEMA_FUNCTION_SIGNATURE_CATALOG: &str =
+    include_str!("../../../schemas/function-signature-catalog.schema.json");
 
 /// Which schema family an instance belongs to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -24,6 +26,7 @@ pub enum SchemaKind {
     Evidence,
     Module,
     Package,
+    FunctionSignatureCatalog,
 }
 
 impl SchemaKind {
@@ -35,6 +38,7 @@ impl SchemaKind {
             SchemaKind::Evidence => "evidence",
             SchemaKind::Module => "module",
             SchemaKind::Package => "package",
+            SchemaKind::FunctionSignatureCatalog => "function-signature-catalog",
         }
     }
 
@@ -46,6 +50,7 @@ impl SchemaKind {
             SchemaKind::Evidence => SCHEMA_EVIDENCE,
             SchemaKind::Module => SCHEMA_MODULE,
             SchemaKind::Package => SCHEMA_PACKAGE,
+            SchemaKind::FunctionSignatureCatalog => SCHEMA_FUNCTION_SIGNATURE_CATALOG,
         }
     }
 }

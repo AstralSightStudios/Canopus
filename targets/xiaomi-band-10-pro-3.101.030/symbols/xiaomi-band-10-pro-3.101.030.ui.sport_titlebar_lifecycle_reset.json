@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.ui.sport_titlebar_lifecycle_reset",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "sport_titlebar_lifecycle_reset",
+  "kind": "function",
+  "entry_address": "0x0C573730",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": ["EVID-UI-003"]
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "approval_state": "REJECTED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "evidence_ids": ["EVID-UI-003"],
+    "source": "ida://vela_ap.bin.i64 sub_C573730"
+  },
+  "notes": "Sport-private titlebar lifecycle callback that clears the retained dword_20111754 singleton. Signature-tracked only; never generate a callable veneer."
+}

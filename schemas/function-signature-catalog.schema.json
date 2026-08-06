@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://canopus.dev/schemas/function-signature-catalog.schema.json",
+  "title": "Canopus firmware function signature catalog",
+  "description": "Versioned, target-scoped byte signatures used to relocate tracked firmware functions without treating aliased mappings as independent matches.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "target_id",
+    "firmware_sha256",
+    "canonical_mapping",
+    "signatures",
+    "unresolved"
+  ],
+  "properties": {
+    "schema": { "const": 1 },
+    "target_id": { "type": "string", "minLength": 1 },
+    "firmware_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "canonical_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "base_address", "file_offset", "size"],
+      "properties": {
+        "name": { "const": "XIP_TEXT_RO" },
+        "base_address": { "type": "string", "pattern": "^0x[0-9a-fA-F]+$" },
+        "file_offset": { "type": "integer", "minimum": 0 },
+        "size": { "type": "integer", "minimum": 1 },
+        "alias_policy": { "type": "string" }
+      }
+    },
+    "signature_policy": {
+      "type": "string",
+      "description": "How signatures were produced and how they may be used."
+    },
+    "signatures": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/signature" }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["symbol_id", "reason"],
+        "properties": {
+          "symbol_id": { "type": "string" },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol_id",
+        "expected_entry_address",
+        "pattern",
+        "mask",
+        "pattern_sha256",
+        "pattern_length",
+        "instruction_set",
+        "scope",
+        "current_match_count",
+        "portability"
+      ],
+      "properties": {
+        "symbol_id": { "type": "string", "minLength": 1 },
+        "expected_entry_address": { "type": "string", "pattern": "^0x[0-9a-fA-F]+$" },
+        "pattern": { "type": "string", "pattern": "^([0-9a-f]{2})( [0-9a-f]{2})*$" },
+        "mask": { "type": "string", "pattern": "^([0-9a-f]{2})( [0-9a-f]{2})*$" },
+        "pattern_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "pattern_length": { "type": "integer", "minimum": 4, "maximum": 128 },
+        "instruction_set": { "const": "thumb" },
+        "scope": { "const": "canonical:XIP_TEXT_RO" },
+        "current_match_count": { "const": 1 },
+        "portability": {
+          "type": "string",
+          "enum": ["exact-target", "relocation-masked", "cross-version-confirmed"]
+        },
+        "anchors": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "entry_offset": { "type": "integer", "minimum": 0 },
+            "tiny_thunk": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}
