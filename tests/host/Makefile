@@ -11,7 +11,8 @@ INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../runtime/diagnostics -I../../runtime/control -I../../runtime/module \
       -I../../modules/examples/hello -I../../manager/protocol -I../../manager/storage \
       -I../../manager/ui -I../../manager/service -I../../manager/client \
-      -I../../manager/native-app -I../../tests/host \
+      -I../../manager/native-app -I../../manager/package -I../../tests/host \
+      -I../../third_party/monocypher \
       -I../../app-sdk/c -I../../app-sdk/launcher -I../../app-sdk/ui
 CFLAGS += -DCANOPUS_HOST=1
 
@@ -26,6 +27,9 @@ PORTABLE_SRCS = \
 	../../manager/protocol/canopus_protocol.c \
 	../../manager/client/canopus_client.c \
 	../../manager/service/canopus_supervisor.c \
+	../../manager/package/canopus_installer_bundle.c \
+	../../third_party/monocypher/monocypher.c \
+	../../third_party/monocypher/monocypher-ed25519.c \
 	../../manager/ui/canopus_manager.c \
 	../../manager/ui/canopus_manager_native.c \
 	../../manager/native-app/canopus_manager_app.c \
@@ -57,7 +61,8 @@ TEST_SRCS = \
 	test_app_sdk.c \
 	test_ui.c \
 	test_client.c \
-	test_supervisor_device.c
+	test_supervisor_device.c \
+	test_installer_receipt.c
 
 BIN = canopus_host_tests
 

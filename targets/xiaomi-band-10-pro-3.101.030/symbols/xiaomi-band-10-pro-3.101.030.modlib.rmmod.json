@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.modlib.rmmod",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "rmmod",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *)",
+  "proof": { "static": "confirmed" },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "EVID-MODLIB-001"
+  },
+  "entry_address": "0x0C1EE09C",
+  "callable_address": "0x0C1EE09D",
+  "notes": "NuttX rmmod wrapper. Exact-target supervisor use only after lifecycle stop/drain and removable-class resource checks."
+}

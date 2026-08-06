@@ -12,6 +12,7 @@
 
 static int g_loads;
 static int g_unloads;
+static int g_artifact_removals;
 static int g_stages;
 static int g_load_result = CANOPUS_STATE_ACTIVE;
 static int g_stage_result = 0;
@@ -29,6 +30,10 @@ static int fake_unload(void *c, uint32_t i)
 {
     (void)c; (void)i; g_unloads++; return g_unload_result;
 }
+static int fake_remove_artifact(void *c, uint32_t i)
+{
+    (void)c; (void)i; g_artifact_removals++; return 0;
+}
 static int fake_stage(void *c, const char *p)
 {
     (void)c; (void)p; g_stages++; return g_stage_result;
@@ -36,7 +41,7 @@ static int fake_stage(void *c, const char *p)
 
 static const struct canopus_sup_platform_v1 fake_platform = {
     fake_register, fake_unregister, fake_load, fake_unload, fake_stage,
-    0, 0, /* deactivate / stop: optional hooks left unset in tests */
+    fake_remove_artifact, 0, 0, /* deactivate / stop optional */
 };
 
 /* ---- command/status builders --------------------------------------- */
@@ -186,12 +191,14 @@ TEST(supervisor_remove_removable_unloads)
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     g_unloads = 0;
+    g_artifact_removals = 0;
     g_unload_result = 0;
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_ACTIVE;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
     CHECK(g_unloads == 1);
+    CHECK(g_artifact_removals == 1);
     /* CAN-P0-005/18.7: REMOVE reuses the disable transaction, then reclaims
      * the slot (state cleared, module_count decremented) */
     CHECK(sup.modules[0].state == 0);

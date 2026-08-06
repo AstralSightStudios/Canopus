@@ -36,6 +36,9 @@ struct canopus_sup_platform_v1 {
     int (*unload_module)(void *cookie, uint32_t index);
     /* Make the latest staged package available for INSTALL. Returns 0/1. */
     int (*stage_package)(void *cookie, const char *package_path);
+    /* Remove the supervisor-owned artifact after a successful removable
+     * REMOVE. Failure retains the unloaded slot so the command can retry. */
+    int (*remove_artifact)(void *cookie, uint32_t index);
     /* CAN-P0-005: per-module teardown phases called by a removable disable
      * before unload. Both are optional (the device unload path may perform
      * them itself); NULL hooks are skipped. */

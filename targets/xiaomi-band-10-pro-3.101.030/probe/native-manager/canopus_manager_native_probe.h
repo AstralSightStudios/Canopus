@@ -7,5 +7,8 @@
  * signals its libuv loop through process-local file descriptors.
  */
 int canopus_manager_native_install(void);
+/* Queues a static Manager notification after a module is verified and recorded
+ * as installed/disabled. Must run from the miwear /dev/canopus write context. */
+int canopus_manager_native_notify_module_installed(void);
 
 #endif /* CANOPUS_MANAGER_NATIVE_PROBE_H */

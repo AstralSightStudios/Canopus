@@ -348,6 +348,54 @@
       }
     },
     {
+      "symbol_id": "xiaomi-band-10-pro-3.101.030.modlib.insmod",
+      "expected_entry_address": "0x0C1EE090",
+      "pattern": "80 b5 00 af eb f7 7c f8 80 bd 00 bf 80 b5 00 af eb f7 ba f9 80 bd 00 bf 80 b5 00 af eb f7 52 f8",
+      "mask": "ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff",
+      "pattern_sha256": "faca6dff3547501754624eaa59819ee99c336a3d28f460c38b8ecac6d6cafe59",
+      "pattern_length": 32,
+      "instruction_set": "thumb",
+      "scope": "canonical:XIP_TEXT_RO",
+      "current_match_count": 1,
+      "portability": "exact-target",
+      "anchors": {
+        "entry_offset": 1237136,
+        "tiny_thunk": false
+      }
+    },
+    {
+      "symbol_id": "xiaomi-band-10-pro-3.101.030.modlib.modhandle",
+      "expected_entry_address": "0x0C1EE0A8",
+      "pattern": "80 b5 00 af eb f7 52 f8 80 bd 00 bf 0b 46 80 b5 68 22 00 21 18 46 00 af 99 f3 ae f8 48 f2 24 12",
+      "mask": "ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff",
+      "pattern_sha256": "5c80adeb02d6e5e3d86a75aa4d65aa48281b3ee9c28e4155032490ec003b25cb",
+      "pattern_length": 32,
+      "instruction_set": "thumb",
+      "scope": "canonical:XIP_TEXT_RO",
+      "current_match_count": 1,
+      "portability": "exact-target",
+      "anchors": {
+        "entry_offset": 1237160,
+        "tiny_thunk": false
+      }
+    },
+    {
+      "symbol_id": "xiaomi-band-10-pro-3.101.030.modlib.rmmod",
+      "expected_entry_address": "0x0C1EE09C",
+      "pattern": "80 b5 00 af eb f7 ba f9 80 bd 00 bf 80 b5 00 af eb f7 52 f8 80 bd 00 bf 0b 46 80 b5 68 22 00 21",
+      "mask": "ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff",
+      "pattern_sha256": "df372ea877211597fe3689b05cfe00ce4065e5a85951c795c619cf7d256b014d",
+      "pattern_length": 32,
+      "instruction_set": "thumb",
+      "scope": "canonical:XIP_TEXT_RO",
+      "current_match_count": 1,
+      "portability": "exact-target",
+      "anchors": {
+        "entry_offset": 1237148,
+        "tiny_thunk": false
+      }
+    },
+    {
       "symbol_id": "xiaomi-band-10-pro-3.101.030.notification.lvx_notification_insert_message",
       "expected_entry_address": "0x0CA81F10",
       "pattern": "2d e9 f0 41 82 b0 02 af 00 28 6a d0 06 46 ff f7 ef fa 04 46 ff f7 a4 fe 05 46 d8 b1 ff f7 8e fc",
@@ -456,6 +504,22 @@
       "portability": "exact-target",
       "anchors": {
         "entry_offset": 1056036,
+        "tiny_thunk": false
+      }
+    },
+    {
+      "symbol_id": "xiaomi-band-10-pro-3.101.030.nuttx.errno_location",
+      "expected_entry_address": "0x0C1D5144",
+      "pattern": "80 b5 00 af 10 f0 f0 fb 08 b1 3c 30 80 bd 01 48 80 bd 00 bf a4 fd 0e 20 80 b5 08 22 00 af ec f7",
+      "mask": "ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff",
+      "pattern_sha256": "d0b0f0fccc141bef3726a4f028f7cdd795e12f49d7b707b58ff1353e2c8c57bc",
+      "pattern_length": 32,
+      "instruction_set": "thumb",
+      "scope": "canonical:XIP_TEXT_RO",
+      "current_match_count": 1,
+      "portability": "exact-target",
+      "anchors": {
+        "entry_offset": 1134916,
         "tiny_thunk": false
       }
     },
@@ -620,6 +684,22 @@
       }
     },
     {
+      "symbol_id": "xiaomi-band-10-pro-3.101.030.nuttx.rename",
+      "expected_entry_address": "0x0C1C1E70",
+      "pattern": "2d e9 f0 4f ab b0 00 af 00 28 00 f0 74 81 03 78 06 46 00 2b 00 f0 6f 81 0d 46 00 29 00 f0 6b 81",
+      "mask": "ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff",
+      "pattern_sha256": "dcb7c1ea3287e3e1f1941fe365530ade65b69dcbe03bbd23506c4ff9febbe387",
+      "pattern_length": 32,
+      "instruction_set": "thumb",
+      "scope": "canonical:XIP_TEXT_RO",
+      "current_match_count": 1,
+      "portability": "exact-target",
+      "anchors": {
+        "entry_offset": 1056368,
+        "tiny_thunk": false
+      }
+    },
+    {
       "symbol_id": "xiaomi-band-10-pro-3.101.030.nuttx.sem_post",
       "expected_entry_address": "0x0C1F14C4",
       "pattern": "f8 b5 00 af 00 28 4e d0 83 78 5b 07 0b d5 4f f0 01 03 d0 e8 5f 2f 00 2a 04 bf c0 e8 d1 3f 00 29",
@@ -664,6 +744,22 @@
       "portability": "exact-target",
       "anchors": {
         "entry_offset": 1248568,
+        "tiny_thunk": false
+      }
+    },
+    {
+      "symbol_id": "xiaomi-band-10-pro-3.101.030.nuttx.unlink",
+      "expected_entry_address": "0x0C1C2EDC",
+      "pattern": "f0 b5 00 23 05 46 01 22 89 b0 00 af 38 1d c7 e9 02 33 c7 e9 04 33 bb 61 3a 77 7d 60 e7 f7 b0 ff",
+      "mask": "ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff",
+      "pattern_sha256": "78080c368da5633d9a5e44bf384012fd1c4dc6dc18357e14666ca50bd5938f19",
+      "pattern_length": 32,
+      "instruction_set": "thumb",
+      "scope": "canonical:XIP_TEXT_RO",
+      "current_match_count": 1,
+      "portability": "exact-target",
+      "anchors": {
+        "entry_offset": 1060572,
         "tiny_thunk": false
       }
     },
@@ -968,6 +1064,22 @@
       "portability": "exact-target",
       "anchors": {
         "entry_offset": 4929328,
+        "tiny_thunk": false
+      }
+    },
+    {
+      "symbol_id": "xiaomi-band-10-pro-3.101.030.watchface.manager_delete_watchface",
+      "expected_entry_address": "0x0CA7D2E0",
+      "pattern": "80 b5 00 af 18 b1 01 21 e6 f7 e2 ff 80 bd 03 20 03 4b 04 4a 04 49 63 f7 87 df 4f f0 ff 30 80 bd",
+      "mask": "ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff",
+      "pattern_sha256": "9ab50c23b94210981c8bbfd88df50fb781199b997ce4c7c3d5578f1583b7605f",
+      "pattern_length": 32,
+      "instruction_set": "thumb",
+      "scope": "canonical:XIP_TEXT_RO",
+      "current_match_count": 1,
+      "portability": "exact-target",
+      "anchors": {
+        "entry_offset": 10212064,
         "tiny_thunk": false
       }
     }

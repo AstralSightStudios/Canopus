@@ -7,15 +7,21 @@
     "xiaomi-band-10-pro-3.101.030.nuttx.open",
     "xiaomi-band-10-pro-3.101.030.nuttx.close",
     "xiaomi-band-10-pro-3.101.030.nuttx.read",
-    "xiaomi-band-10-pro-3.101.030.nuttx.write"
+    "xiaomi-band-10-pro-3.101.030.nuttx.write",
+    "xiaomi-band-10-pro-3.101.030.nuttx.rename",
+    "xiaomi-band-10-pro-3.101.030.nuttx.unlink",
+    "xiaomi-band-10-pro-3.101.030.nuttx.errno_location"
   ],
-  "prototype_hypothesis": "open(path, flags, ...)->fd; close(fd)->0; read(fd, buffer, count)->bytes; write(fd, buffer, count)->bytes",
+  "prototype_hypothesis": "open(path, flags, ...)->fd; close(fd)->0; read(fd, buffer, count)->bytes; write(fd, buffer, count)->bytes; rename(oldpath, newpath)->0 or -1; unlink(path)->0 or -1; errno_location()->int *",
   "callsite_evidence": [
     "sub_C1ED1C8 calls sub_C1C15B0('/dev/console', 3), treats a nonnegative return as an fd, and closes a positive fd through sub_C1AAB70",
     "sub_C1C1E24 resolves the current process fd with sub_C1AA4F0, dispatches through sub_C1C1D24, releases the file reference, and exposes libc-style -1/error behavior",
     "sub_C1C31C8 resolves the current process fd with sub_C1AA4F0, dispatches through sub_C1C30C8, releases the file reference, and is referenced by hundreds of firmware callsites",
     "sub_C1C30C8 validates write access and invokes the file_operations slot at +0x0c; sub_C1C1D24 is the corresponding read path through +0x08",
-    "sub_C1AAB70 validates the current process fd table entry, drops references, and reaches the recovered file_close path"
+    "sub_C1AAB70 validates the current process fd table entry, drops references, and reaches the recovered file_close path",
+    "sub_C1C1E70 is the NuttX VFS rename wrapper: it validates both nonempty paths, resolves source/destination VFS nodes, and transfers the source node through the destination filesystem rename operation",
+    "sub_C1C2EDC is the NuttX VFS unlink wrapper: it validates one path, resolves its VFS node, dispatches the filesystem unlink operation, and returns 0 or a negative errno",
+    "sub_C1D5144 returns the current errno storage; public read/open wrappers call it after a negative VFS result and write the positive errno through the returned pointer"
   ],
   "control_flow_evidence": [
     "All four wrappers resolve state through the current process file table, so calling them from the Manager page preserves /dev/canopus process-local fd semantics",

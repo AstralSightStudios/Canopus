@@ -194,7 +194,8 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
         } else {
             rc = CANOPUS_RESULT_FAILED;
         }
-        if (rc == CANOPUS_RESULT_FAILED) {
+        if (rc == CANOPUS_RESULT_FAILED &&
+            sup->error_code == CANOPUS_SUP_ERR_NONE) {
             sup->error_code = CANOPUS_SUP_ERR_STAGE;
         }
         break;
@@ -235,6 +236,15 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
             rc = sup_module_running(sup->modules[slot].state)
                      ? sup_disable_removable(sup, slot)
                      : CANOPUS_RESULT_COMPLETED;
+            if (rc == CANOPUS_RESULT_COMPLETED &&
+                sup->platform != 0 && sup->platform->remove_artifact != 0 &&
+                sup->platform->remove_artifact(sup->platform_cookie,
+                                               (uint32_t)slot) != 0) {
+                /* The module is unloaded but its owned ELF remains. Keep the
+                 * slot so REMOVE can retry cleanup rather than orphaning it. */
+                sup->error_code = CANOPUS_SUP_ERR_STAGE;
+                rc = CANOPUS_RESULT_FAILED;
+            }
             if (rc == CANOPUS_RESULT_COMPLETED) {
                 sup_clear_slot(sup, slot);
             }
@@ -358,6 +368,12 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
     canopus_snapshot_begin(&sup->snap);
     sup->pending_op = op;
     sup->selected = (int32_t)arg0;
+    if (op == CANOPUS_SUP_CMD_QUERY && arg0 == CANOPUS_SUP_DIAG_QUERY_MAGIC) {
+        /* Read the last mutation result without erasing its failure code. */
+        sup->pending_state = CANOPUS_RESULT_COMPLETED;
+        canopus_snapshot_commit(&sup->snap);
+        return sup->pending_state;
+    }
     /* CAN-P1-008: clear this command's error at the start; failure paths
      * set a stable code and it is never cleared again at the tail. */
     sup->error_code = CANOPUS_SUP_ERR_NONE;

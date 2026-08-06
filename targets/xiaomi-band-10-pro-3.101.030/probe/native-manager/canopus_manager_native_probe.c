@@ -263,6 +263,8 @@ static const char display_name[] = "Canopus Manager";
 static const char empty_detail[] = "";
 static const char notification_title[] = "Canopus";
 static const char notification_body[] = "Canpous Loaded! Just ENJOY~";
+static const char module_notification_body[] =
+    "A new module was installed disabled. Open Canopus Manager to enable it.";
 /* The watchface bootstrap stages the first-frame PNG at this stable path. */
 static const char notification_icon[] = "/data/canopus/manager_loaded.png";
 /* Reuse a stock, proven launcher asset for the first destructive device probe. */
@@ -1002,6 +1004,29 @@ static const struct firmware_notification_message loaded_notification = {
     .large_icon_path = notification_icon,
     .start_reminder = 1u,
 };
+
+static const struct firmware_notification_message module_notification = {
+    .message_id = UINT64_C(0x43414E4F50555302),
+    .title = notification_title,
+    .source = notification_title,
+    .body = module_notification_body,
+    .small_icon_path = notification_icon,
+    .large_icon_path = notification_icon,
+    .start_reminder = 1u,
+};
+
+int canopus_manager_native_notify_module_installed(void)
+{
+    typedef int (*notification_insert_fn)(
+        const struct firmware_notification_message *);
+    notification_insert_fn notification_insert =
+        (notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT;
+
+    if (identity_guard() != 0) {
+        return -1;
+    }
+    return notification_insert(&module_notification);
+}
 
 static void __attribute__((constructor, used)) canopus_manager_probe_init(void)
 {

@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.nuttx.unlink",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "unlink",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(const char *)",
+  "proof": { "static": "confirmed" },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "EVID-IO-001"
+  },
+  "entry_address": "0x0C1C2EDC",
+  "callable_address": "0x0C1C2EDD",
+  "notes": "NuttX VFS unlink wrapper. Static recovery shows a single path argument, VFS resolution, filesystem unlink dispatch, and 0/-errno behavior. Used only to remove a supervisor-owned artifact after a failed installation transaction."
+}

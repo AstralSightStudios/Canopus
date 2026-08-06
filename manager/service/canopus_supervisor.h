@@ -70,6 +70,22 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_UNKNOWN_OP = -8,   /* unrecognized opcode */
     CANOPUS_SUP_ERR_BUSY = -9,         /* open refs / retained resources block unload */
     CANOPUS_SUP_ERR_SAFE_MODE = -10,   /* command disallowed by safe-mode policy */
+    /* Exact-target installer diagnostics. These stay in the CPS1 status record
+     * so a constrained watchface can surface a deterministic failing stage. */
+    CANOPUS_SUP_ERR_STAGE_PATH = -101,
+    CANOPUS_SUP_ERR_STAGE_RECEIPT = -102,
+    CANOPUS_SUP_ERR_STAGE_SIGNATURE = -103,
+    CANOPUS_SUP_ERR_STAGE_ARTIFACT = -104,
+    CANOPUS_SUP_ERR_STAGE_DUPLICATE = -105,
+    CANOPUS_SUP_ERR_STAGE_REGISTER = -106,
+    CANOPUS_SUP_ERR_STAGE_RECEIPT_OPEN = -107,
+    CANOPUS_SUP_ERR_STAGE_RECEIPT_READ = -108,
+    /* Read-return diagnostics: -1100 is EOF, -1101 is the NuttX read
+     * wrapper's generic -1 failure. */
+    CANOPUS_SUP_ERR_STAGE_RECEIPT_READ_BASE = -1100,
+    /* -1200 - errno captures NuttX read(2)'s specific failure after the
+     * current-process wrapper returned -1. */
+    CANOPUS_SUP_ERR_STAGE_RECEIPT_ERRNO_BASE = -1200,
 };
 
 /* CAN-P0-006: safe-mode reason and boot-state markers. */
@@ -93,6 +109,9 @@ enum canopus_boot_state {
 /* CAN-P0-003: maximum length of a staged-object token. INSTALL never
  * accepts an arbitrary path; only a bounded basename token is allowed. */
 #define CANOPUS_SUP_STAGE_TOKEN_MAX 128u
+/* Legacy CPC1 QUERY arg0 value that reads the last failure without clearing
+ * it. It is diagnostic-only and has no state-changing interpretation. */
+#define CANOPUS_SUP_DIAG_QUERY_MAGIC 0x43514431u /* "CQD1" */
 
 #define CANOPUS_SUP_MODULE_ID_MAX 32u
 

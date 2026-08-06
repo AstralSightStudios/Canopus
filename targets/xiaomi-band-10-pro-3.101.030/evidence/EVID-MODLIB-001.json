@@ -3,8 +3,12 @@
   "evidence_id": "EVID-MODLIB-001",
   "target_id": "xiaomi-band-10-pro-3.101.030",
   "question": "Does stock modlib_insert call an ELF entry point, or only .init_array/.fini_array?",
-  "candidate_symbols": [],
-  "prototype_hypothesis": "modlib_insert() resolves relocations, then calls every .preinit_array/.init_array entry and retains .fini_array",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.modlib.insmod",
+    "xiaomi-band-10-pro-3.101.030.modlib.modhandle",
+    "xiaomi-band-10-pro-3.101.030.modlib.rmmod"
+  ],
+  "prototype_hypothesis": "insmod(path,module_name) returns a module handle after modlib_insert resolves relocations and runs .preinit_array/.init_array; modhandle(name) resolves the registry handle; rmmod(handle) invokes .fini_array through modlib_remove",
   "callsite_evidence": [
     "modlib_insert 0x0C1D9190 -> modlib_load 0x0C1D8738 -> modlib_bind 0x0C1D7C00 -> up_relocate 0x0C1D6A48",
     "modlib_getsymtab 0x0C1D906C reads globals 0x200EFDE8/0x200EFDEC (both zero, no writer found)"
