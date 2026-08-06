@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.ui.lv_event_get_code",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "lv_event_get_code",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "uint32_t(void *event)",
+  "proof": { "static": "confirmed" },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "EVID-UI-002"
+  },
+  "entry_address": "0x0C5886D0",
+  "callable_address": "0x0C5886D1",
+  "notes": "Returns the LVGL event code of a delivered event. Stock switch rows register for LV_EVENT_ALL (code 0) on the switch object and act only when the code is LV_EVENT_VALUE_CHANGED (30); stock list rows act on LV_EVENT_CLICKED (7)."
+}

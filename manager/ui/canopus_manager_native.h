@@ -20,7 +20,6 @@ enum canopus_manager_native_route {
     CANOPUS_MANAGER_ROUTE_OVERVIEW = 1,
     CANOPUS_MANAGER_ROUTE_MODULES,
     CANOPUS_MANAGER_ROUTE_MODULE_DETAIL,
-    CANOPUS_MANAGER_ROUTE_CONFIRMATION,
 };
 
 typedef int32_t (*canopus_manager_native_route_v1)(

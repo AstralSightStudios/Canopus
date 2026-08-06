@@ -4,7 +4,7 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 1
-// input_digest: 0b3bf20d218145d8
+// input_digest: 1997ce3fe9e989b8
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -247,6 +247,7 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 // hfp_ag_connect: FORBIDDEN - no binding may ever be generated
 // hfp_ag_disconnect: FORBIDDEN - no binding may ever be generated
 // hidden_and_show_app_cb: restricted - not exported until context/ownership approved
+// lv_event_get_code: restricted - not exported until context/ownership approved
 // lv_event_get_user_data: restricted - not exported until context/ownership approved
 // lv_obj_add_event_cb: restricted - not exported until context/ownership approved
 // lv_obj_align_to: restricted - not exported until context/ownership approved
@@ -255,6 +256,8 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 // lvx_notification_insert_message: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
 // open: restricted - not exported until context/ownership approved
+// page_finish: restricted - not exported until context/ownership approved
+// page_goto: restricted - not exported until context/ownership approved
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
 // pthread_create_internal: FORBIDDEN - no binding may ever be generated
 // public_work_queue: FORBIDDEN - no binding may ever be generated

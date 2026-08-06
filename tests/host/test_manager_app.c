@@ -109,16 +109,21 @@ TEST(manager_app_runs_native_end_to_end_path)
     snapshot = canopus_ui_current(&app.native.ui);
     safe_mode = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE);
     CHECK(safe_mode != 0);
-    CHECK(canopus_ui_dispatch_event(&app.native.ui, snapshot->generation,
-                                    safe_mode->key, safe_mode->event_id) == 0);
-    snapshot = canopus_ui_current(&app.native.ui);
-    safe_mode = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
-    CHECK(safe_mode != 0);
+    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_CHECKED) == 0u);
+    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_ENABLED) != 0u);
+    /* The stock switch toggles directly without an intermediate confirmation. */
     CHECK(canopus_ui_dispatch_event(&app.native.ui, snapshot->generation,
                                     safe_mode->key, safe_mode->event_id) == 0);
     CHECK(fixture.supervisor.safe_mode == 1);
     CHECK(app.model.safe_mode == 1);
     CHECK(app.model.pending_op == CANOPUS_CMD_ENTER_SAFE_MODE);
+    /* Once active the switch renders checked and disabled: it cannot pretend
+     * that an active safe mode is an instant exit. */
+    snapshot = canopus_ui_current(&app.native.ui);
+    safe_mode = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE);
+    CHECK(safe_mode != 0);
+    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u);
+    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);
 
     CHECK(descriptor->on_pause(0) == 0);
     CHECK(app.state == CANOPUS_MANAGER_APP_STATE_PAUSED);

@@ -12,6 +12,9 @@
 #[path = "../../no-heap-counter/src/module.rs"]
 pub mod module;
 
+/// canopus-ui-core device compile gate (semantic UI tree, no allocator).
+pub mod ui;
+
 pub use module::*;
 
 // Present on both the device and host staticlib builds: a no_std archive

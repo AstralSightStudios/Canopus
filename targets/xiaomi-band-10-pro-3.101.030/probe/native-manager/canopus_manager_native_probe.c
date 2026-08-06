@@ -33,6 +33,7 @@
 #define FW_LVX_LABEL_SET_TEXT UINT32_C(0x0C588849)
 #define FW_LVX_EVENT_ADD UINT32_C(0x0C5882B9)
 #define FW_LVX_EVENT_GET_USER_DATA UINT32_C(0x0C588601)
+#define FW_LVX_EVENT_GET_CODE UINT32_C(0x0C5886D1)
 #define FW_LVX_SET_HIDDEN UINT32_C(0x0C588459)
 #define FW_LVX_ALIGN_TO UINT32_C(0x0C588BE9)
 #define FW_NUTTX_OPEN UINT32_C(0x0C1C15B1)
@@ -40,13 +41,13 @@
 #define FW_NUTTX_READ UINT32_C(0x0C1C1E25)
 #define FW_NUTTX_WRITE UINT32_C(0x0C1C31C9)
 #define FW_NOTIFICATION_INSERT UINT32_C(0x0CA81F11)
-#define FW_ACTIVITY_NAVIGATE_SLOT UINT32_C(0x200EB0E4)
+#define FW_ACTIVITY_NAVIGATE UINT32_C(0x0CA539F9)
+#define FW_ACTIVITY_FINISH UINT32_C(0x0CA53089)
 
-#define CANOPUS_TARGET_PAGE_COUNT 4u
+#define CANOPUS_TARGET_PAGE_COUNT 3u
 #define CANOPUS_TARGET_PAGE_OVERVIEW 0u
 #define CANOPUS_TARGET_PAGE_MODULES 1u
 #define CANOPUS_TARGET_PAGE_DETAIL 2u
-#define CANOPUS_TARGET_PAGE_CONFIRM 3u
 #define CANOPUS_TARGET_UI_MAX_ROWS 25u
 #define CANOPUS_TARGET_UI_MAX_LABELS 6u
 #define CANOPUS_TARGET_MODULE_FLAG_SIGNATURE_OK (1u << 0)
@@ -59,6 +60,9 @@
 #define CANOPUS_TARGET_ALIGN_TOP_MID 2u
 #define CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID 14u
 #define CANOPUS_TARGET_ROW_GAP 8
+#define CANOPUS_TARGET_EVENT_ALL 0u
+#define CANOPUS_TARGET_EVENT_CLICKED 7u
+#define CANOPUS_TARGET_EVENT_VALUE_CHANGED 30u
 
 struct firmware_page_descriptor;
 
@@ -187,22 +191,12 @@ struct canopus_target_page_context {
     uint8_t active;
 };
 
-struct firmware_navigation_request {
-    uint32_t reserved_0;
-    uint32_t page_key;
-    uint8_t reserved_8[36];
-};
-
-struct canopus_target_route_state {
-    uint32_t confirm_event;
-    uint32_t confirm_return_view;
-};
-
 static struct canopus_manager_model_v1 manager_model;
 static struct canopus_client_v1 manager_client;
 static struct canopus_target_page_context
     manager_pages[CANOPUS_TARGET_PAGE_COUNT];
-static struct canopus_target_route_state manager_route_state;
+static struct firmware_page_descriptor
+    manager_pages_desc[CANOPUS_TARGET_PAGE_COUNT];
 static uint32_t manager_active_pages;
 static uint8_t manager_session_ready;
 
@@ -220,10 +214,6 @@ _Static_assert(offsetof(struct firmware_page_descriptor, on_destroy) == 92,
                "page destroy offset");
 _Static_assert(sizeof(struct firmware_app_descriptor) == 64,
                "firmware app descriptor size");
-_Static_assert(sizeof(struct firmware_navigation_request) == 44,
-               "firmware navigation request size");
-_Static_assert(offsetof(struct firmware_navigation_request, page_key) == 4,
-               "firmware navigation page key offset");
 _Static_assert(sizeof(struct firmware_notification_message) == 88,
                "firmware notification message size");
 _Static_assert(offsetof(struct firmware_notification_message, title) == 12,
@@ -237,7 +227,6 @@ static const char package_name[] = "com.canopus.manager";
 static const char page_name_overview[] = "main";
 static const char page_name_modules[] = "modules";
 static const char page_name_detail[] = "module_detail";
-static const char page_name_confirm[] = "confirm";
 static const char display_name[] = "Canopus Manager";
 static const char empty_detail[] = "";
 static const char notification_title[] = "Canopus";
@@ -414,8 +403,12 @@ static int target_refresh_model(void)
 static void target_row_event(void *event)
 {
     typedef uintptr_t (*get_user_data_fn)(void *);
+    typedef uint32_t (*get_event_code_fn)(void *);
     get_user_data_fn get_user_data =
         (get_user_data_fn)(uintptr_t)FW_LVX_EVENT_GET_USER_DATA;
+    get_event_code_fn get_code =
+        (get_event_code_fn)(uintptr_t)FW_LVX_EVENT_GET_CODE;
+    uint32_t code = get_code(event);
     uintptr_t encoded = get_user_data(event);
     uint32_t page_index = (uint32_t)(encoded >> 8);
     uint32_t row_index = (uint32_t)(encoded & UINT32_C(0xFF));
@@ -429,6 +422,16 @@ static void target_row_event(void *event)
     }
     context = &manager_pages[page_index];
     if (!context->active) {
+        return;
+    }
+    /* Stock switch rows register for LV_EVENT_ALL on the switch and act only
+     * on LV_EVENT_VALUE_CHANGED (sub_C661410/sub_C6613C0); action/status rows
+     * register for LV_EVENT_CLICKED on the row (sub_C52C228). */
+    if (context->backend.row_kinds[row_index] == CANOPUS_TARGET_ROW_SWITCH) {
+        if (code != CANOPUS_TARGET_EVENT_VALUE_CHANGED) {
+            return;
+        }
+    } else if (code != CANOPUS_TARGET_EVENT_CLICKED) {
         return;
     }
     binding = &context->backend.bindings[row_index];
@@ -600,6 +603,7 @@ static int32_t target_ui_apply(
         if (object == NULL) {
             void *event_object;
             uintptr_t event_cookie;
+            uint32_t event_code;
             object = create_row(backend->root, primary, secondary, trailing);
             if (object == NULL) {
                 return -1;
@@ -611,9 +615,14 @@ static int32_t target_ui_apply(
             if (event_object == NULL) {
                 return -1;
             }
+            /* Switches register on the trailing object for LV_EVENT_ALL and
+             * toggle on VALUE_CHANGED, exactly like the stock VAS alarm switch
+             * (sub_C661410); rows register on the row for LV_EVENT_CLICKED. */
+            event_code = kind == CANOPUS_TARGET_ROW_SWITCH ?
+                CANOPUS_TARGET_EVENT_ALL : CANOPUS_TARGET_EVENT_CLICKED;
             event_cookie = ((uintptr_t)backend->page_index << 8) |
                            (uintptr_t)(uint32_t)slot;
-            add_event(event_object, target_row_event, 7u,
+            add_event(event_object, target_row_event, event_code,
                       (void *)event_cookie);
             backend->row_count++;
         }
@@ -662,82 +671,199 @@ static const struct canopus_ui_backend_v1 target_ui_backend_api = {
     target_ui_apply,
 };
 
-static int manager_on_create(struct firmware_page_descriptor *page, void *root,
-                             void *start_data)
+static struct canopus_target_page_context *context_for_native(
+    struct canopus_manager_native_v1 *native)
 {
+    uint32_t i;
+
+    if (native == NULL) {
+        return NULL;
+    }
+    for (i = 0; i < CANOPUS_TARGET_PAGE_COUNT; i++) {
+        if (&manager_pages[i].native == native) {
+            return &manager_pages[i];
+        }
+    }
+    return NULL;
+}
+
+static struct canopus_target_page_context *context_for_page(
+    const struct firmware_page_descriptor *page)
+{
+    uint32_t i;
+
+    if (page == NULL) {
+        return NULL;
+    }
+    for (i = 0; i < CANOPUS_TARGET_PAGE_COUNT; i++) {
+        if (&manager_pages_desc[i] == page) {
+            return &manager_pages[i];
+        }
+    }
+    return NULL;
+}
+
+static uint32_t target_page_key(uint32_t page_index)
+{
+    return ((uint32_t)CANOPUS_PROBE_APP_ID << 16) | page_index;
+}
+
+/* Routes a semantic view change to the real firmware page stack. Forward
+ * routes push the target page through the stock page_goto transition; backward
+ * routes finish the source page so the paused page below it resumes. The
+ * fallback re-render keeps the flow working if a push is refused. */
+static int32_t target_route(void *cookie,
+                            struct canopus_manager_native_v1 *native,
+                            uint32_t route)
+{
+    typedef int32_t (*page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+    typedef int32_t (*page_finish_fn)(void *);
+    struct canopus_target_page_context *source;
+    page_goto_fn page_goto = (page_goto_fn)(uintptr_t)FW_ACTIVITY_NAVIGATE;
+    page_finish_fn page_finish =
+        (page_finish_fn)(uintptr_t)FW_ACTIVITY_FINISH;
+    uint32_t target_page;
+    uint32_t source_page;
+
+    (void)cookie;
+    switch (route) {
+    case CANOPUS_MANAGER_ROUTE_OVERVIEW:
+        target_page = CANOPUS_TARGET_PAGE_OVERVIEW;
+        break;
+    case CANOPUS_MANAGER_ROUTE_MODULES:
+        target_page = CANOPUS_TARGET_PAGE_MODULES;
+        break;
+    case CANOPUS_MANAGER_ROUTE_MODULE_DETAIL:
+        target_page = CANOPUS_TARGET_PAGE_DETAIL;
+        break;
+    default:
+        return CANOPUS_UI_ERR_ARGUMENT;
+    }
+    source = context_for_native(native);
+    if (source == NULL || !source->active) {
+        return CANOPUS_UI_ERR_STATE;
+    }
+    source_page = (uint32_t)source->backend.page_index;
+    if (target_page == source_page) {
+        return canopus_manager_native_render(native);
+    }
+    if (target_page < source_page) {
+        (void)page_finish(&manager_pages_desc[source_page]);
+        return CANOPUS_UI_OK;
+    }
+    (void)page_goto(target_page_key(target_page), 0u, 0u, 0u);
+    if (source->active) {
+        /* page_goto pauses rather than destroys the source page; re-rendering
+         * it keeps the paused view fresh and covers a refused push. */
+        return canopus_manager_native_render(native);
+    }
+    return CANOPUS_UI_OK;
+}
+
+static int manager_page_on_create(struct firmware_page_descriptor *page,
+                                  void *root, void *start_data)
+{
+    struct canopus_target_page_context *context;
     int32_t rc;
 
-    (void)page;
     (void)start_data;
+    context = context_for_page(page);
+    if (context == NULL) {
+        return -1;
+    }
     canopus_native_probe_record.create_count += 1u;
     canopus_native_probe_record.root_object = (uintptr_t)root;
-    canopus_memset(&manager_backend, 0, sizeof(manager_backend));
-    manager_backend.root = root;
-    rc = canopus_client_init(&manager_client, &target_device_io, NULL);
-    if (rc != CANOPUS_CLIENT_OK ||
-        canopus_client_open(&manager_client) != CANOPUS_CLIENT_OK) {
-        return -1;
+    canopus_memset(&context->backend, 0, sizeof(context->backend));
+    context->backend.root = root;
+    context->backend.page_index = (uint8_t)page->page_id;
+    if (!manager_session_ready) {
+        rc = canopus_client_init(&manager_client, &target_device_io, NULL);
+        if (rc != CANOPUS_CLIENT_OK ||
+            canopus_client_open(&manager_client) != CANOPUS_CLIENT_OK) {
+            return -1;
+        }
+        canopus_manager_init(&manager_model, canopus_client_transport,
+                             &manager_client);
+        canopus_manager_set_identity(
+            &manager_model, "xiaomi-band-10-pro-3.101.030", "3.101.030",
+            "CONBINE_LTALM078_T3.101.030_06011854", 1u);
+        if (target_refresh_model() != 0) {
+            (void)canopus_client_close(&manager_client);
+            manager_client.fd = -1;
+            return -1;
+        }
+        manager_session_ready = 1u;
     }
-    canopus_manager_init(&manager_model, canopus_client_transport,
-                         &manager_client);
-    canopus_manager_set_identity(
-        &manager_model, "xiaomi-band-10-pro-3.101.030", "3.101.030",
-        "CONBINE_LTALM078_T3.101.030_06011854", 1u);
-    if (target_refresh_model() != 0) {
-        (void)canopus_client_close(&manager_client);
-        return -1;
-    }
-    rc = canopus_manager_native_init(&manager_native, &manager_model,
-                                     &target_ui_backend_api,
-                                     &manager_backend);
+    rc = canopus_manager_native_init(&context->native, &manager_model,
+                                     &target_ui_backend_api, &context->backend);
     if (rc != CANOPUS_UI_OK) {
-        (void)canopus_client_close(&manager_client);
         return -1;
+    }
+    canopus_manager_native_set_router(&context->native, target_route, NULL);
+    if (!context->active) {
+        context->active = 1u;
+        manager_active_pages++;
     }
     return 0;
 }
 
-static int manager_on_resume(struct firmware_page_descriptor *page)
+static int manager_page_on_resume(struct firmware_page_descriptor *page)
 {
-    (void)page;
+    struct canopus_target_page_context *context;
+
+    context = context_for_page(page);
+    if (context == NULL || !context->active) {
+        return -1;
+    }
     canopus_native_probe_record.resume_count += 1u;
+    if (manager_session_ready && target_refresh_model() == 0) {
+        (void)canopus_manager_native_render(&context->native);
+    }
     return 0;
 }
 
-static int manager_on_pause(struct firmware_page_descriptor *page)
+static int manager_page_on_pause(struct firmware_page_descriptor *page)
 {
-    (void)page;
+    struct canopus_target_page_context *context;
+
+    context = context_for_page(page);
+    if (context == NULL) {
+        return -1;
+    }
     canopus_native_probe_record.pause_count += 1u;
     return 0;
 }
 
-static int manager_on_destroy(struct firmware_page_descriptor *page)
+static int manager_page_on_destroy(struct firmware_page_descriptor *page)
 {
-    (void)page;
+    struct canopus_target_page_context *context;
+
+    context = context_for_page(page);
+    if (context == NULL) {
+        return -1;
+    }
     canopus_native_probe_record.destroy_count += 1u;
     canopus_native_probe_record.list_row = 0u;
     canopus_native_probe_record.root_object = 0u;
-    if (manager_client.fd >= 0) {
-        (void)canopus_client_close(&manager_client);
+    if (context->active) {
+        context->active = 0u;
+        if (manager_active_pages > 0u) {
+            manager_active_pages--;
+        }
     }
-    canopus_memset(&manager_backend, 0, sizeof(manager_backend));
-    canopus_memset(&manager_native, 0, sizeof(manager_native));
-    canopus_memset(&manager_model, 0, sizeof(manager_model));
-    canopus_memset(&manager_client, 0, sizeof(manager_client));
-    manager_client.fd = -1;
+    canopus_memset(&context->backend, 0, sizeof(context->backend));
+    canopus_memset(&context->native, 0, sizeof(context->native));
+    if (manager_active_pages == 0u && manager_session_ready) {
+        if (manager_client.fd >= 0) {
+            (void)canopus_client_close(&manager_client);
+        }
+        manager_session_ready = 0u;
+        canopus_memset(&manager_model, 0, sizeof(manager_model));
+        canopus_memset(&manager_client, 0, sizeof(manager_client));
+        manager_client.fd = -1;
+    }
     return 0;
 }
-
-static struct firmware_page_descriptor manager_page = {
-    .page_name = page_name,
-    .page_id = CANOPUS_PROBE_PAGE_ID,
-    .app_id = CANOPUS_PROBE_APP_ID,
-    .on_signal = manager_on_signal,
-    .on_create = manager_on_create,
-    .on_resume = manager_on_resume,
-    .on_pause = manager_on_pause,
-    .on_destroy = manager_on_destroy,
-};
 
 static const struct firmware_app_descriptor manager_app = {
     .package_name = package_name,
@@ -762,6 +888,24 @@ static void __attribute__((constructor, used)) canopus_manager_probe_init(void)
     canopus_native_probe_record.identity_result = identity_guard();
 }
 
+static void target_descriptor_init(uint32_t page_index, const char *name,
+                                   uint16_t page_id)
+{
+    if (page_index >= CANOPUS_TARGET_PAGE_COUNT) {
+        return;
+    }
+    canopus_memset(&manager_pages_desc[page_index], 0,
+                   sizeof(manager_pages_desc[page_index]));
+    manager_pages_desc[page_index].page_name = name;
+    manager_pages_desc[page_index].page_id = page_id;
+    manager_pages_desc[page_index].app_id = CANOPUS_PROBE_APP_ID;
+    manager_pages_desc[page_index].on_signal = manager_on_signal;
+    manager_pages_desc[page_index].on_create = manager_page_on_create;
+    manager_pages_desc[page_index].on_resume = manager_page_on_resume;
+    manager_pages_desc[page_index].on_pause = manager_page_on_pause;
+    manager_pages_desc[page_index].on_destroy = manager_page_on_destroy;
+}
+
 int canopus_manager_native_install(void)
 {
     typedef int (*app_install_fn)(const struct firmware_app_descriptor *,
@@ -771,7 +915,7 @@ int canopus_manager_native_install(void)
     typedef int (*launcher_add_fn)(uint16_t);
     typedef int (*notification_insert_fn)(
         const struct firmware_notification_message *);
-    struct firmware_page_descriptor *pages[1];
+    struct firmware_page_descriptor *pages[CANOPUS_TARGET_PAGE_COUNT];
     app_install_fn app_install = (app_install_fn)(uintptr_t)FW_APP_INSTALL;
     app_lookup_fn app_lookup = (app_lookup_fn)(uintptr_t)FW_APP_LOOKUP;
     launcher_add_fn launcher_add =
@@ -793,9 +937,15 @@ int canopus_manager_native_install(void)
                    : -101;
     }
 
-    pages[0] = &manager_page;
+    target_descriptor_init(CANOPUS_TARGET_PAGE_OVERVIEW, page_name_overview,
+                           0u);
+    target_descriptor_init(CANOPUS_TARGET_PAGE_MODULES, page_name_modules, 1u);
+    target_descriptor_init(CANOPUS_TARGET_PAGE_DETAIL, page_name_detail, 2u);
+    pages[0] = &manager_pages_desc[0];
+    pages[1] = &manager_pages_desc[1];
+    pages[2] = &manager_pages_desc[2];
     canopus_native_probe_record.app_install_result =
-        app_install(&manager_app, pages, 1u);
+        app_install(&manager_app, pages, CANOPUS_TARGET_PAGE_COUNT);
     if (app_lookup(CANOPUS_PROBE_APP_ID) == NULL) {
         canopus_native_probe_record.app_install_result = -100;
         return -100;

@@ -1,0 +1,10 @@
+[package]
+name = "canopus-ui-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "no_std declarative semantic UI tree that mirrors the C canopus_ui ABI"
+
+[dependencies]
+
+[dev-dependencies]

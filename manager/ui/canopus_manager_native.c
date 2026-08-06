@@ -369,8 +369,6 @@ static const char *confirmation_message(uint32_t event_id)
     switch (event_id) {
     case CANOPUS_MANAGER_EVENT_INSTALL:
         return "Install the verified staged package?";
-    case CANOPUS_MANAGER_EVENT_SAFE_MODE:
-        return "Enter safe mode on the next boot?";
     case CANOPUS_MANAGER_EVENT_DISABLE:
         return "Disable this module? Resident modules require a reboot.";
     case CANOPUS_MANAGER_EVENT_ROLLBACK:
@@ -489,24 +487,9 @@ static uint32_t execute_event(struct canopus_manager_native_v1 *native,
 static int event_needs_confirmation(uint32_t event_id)
 {
     return event_id == CANOPUS_MANAGER_EVENT_INSTALL ||
-           event_id == CANOPUS_MANAGER_EVENT_SAFE_MODE ||
            event_id == CANOPUS_MANAGER_EVENT_DISABLE ||
            event_id == CANOPUS_MANAGER_EVENT_ROLLBACK ||
            event_id == CANOPUS_MANAGER_EVENT_REMOVE;
-}
-
-static uint32_t route_for_view(uint32_t view)
-{
-    switch (view) {
-    case CANOPUS_MANAGER_VIEW_DEVICE:
-        return CANOPUS_MANAGER_ROUTE_OVERVIEW;
-    case CANOPUS_MANAGER_VIEW_MODULE_LIST:
-        return CANOPUS_MANAGER_ROUTE_MODULES;
-    case CANOPUS_MANAGER_VIEW_MODULE_DETAIL:
-        return CANOPUS_MANAGER_ROUTE_MODULE_DETAIL;
-    default:
-        return 0u;
-    }
 }
 
 static int32_t route_or_render(struct canopus_manager_native_v1 *native,
@@ -528,7 +511,6 @@ static int32_t manager_event(void *cookie, uint32_t generation,
         (struct canopus_manager_native_v1 *)cookie;
     struct canopus_manager_model_v1 *model;
     uint32_t index;
-    uint32_t route = 0u;
     (void)generation;
     (void)key;
     if (native == 0 || native->model == 0) {
@@ -550,22 +532,19 @@ static int32_t manager_event(void *cookie, uint32_t generation,
         native->confirm_event = 0u;
         if (canopus_manager_goto(model, CANOPUS_MANAGER_VIEW_DEVICE, 0) != 0)
             return CANOPUS_UI_ERR_STATE;
-        route = CANOPUS_MANAGER_ROUTE_OVERVIEW;
-        break;
+        return route_or_render(native, CANOPUS_MANAGER_ROUTE_OVERVIEW);
     case CANOPUS_MANAGER_EVENT_SHOW_MODULES:
         native->confirm_event = 0u;
         if (canopus_manager_goto(model, CANOPUS_MANAGER_VIEW_MODULE_LIST, 0) != 0)
             return CANOPUS_UI_ERR_STATE;
-        route = CANOPUS_MANAGER_ROUTE_MODULES;
-        break;
+        return route_or_render(native, CANOPUS_MANAGER_ROUTE_MODULES);
     case CANOPUS_MANAGER_EVENT_CANCEL:
         if (native->confirm_event == 0u) return CANOPUS_UI_ERR_STATE;
         native->confirm_event = 0u;
         if (canopus_manager_goto(model, native->confirm_return_view,
                                  model->selected) != 0)
             return CANOPUS_UI_ERR_STATE;
-        route = route_for_view(native->confirm_return_view);
-        break;
+        return canopus_manager_native_render(native);
     case CANOPUS_MANAGER_EVENT_CONFIRM:
         if (native->confirm_event == 0u) return CANOPUS_UI_ERR_STATE;
         event_id = native->confirm_event;
@@ -574,31 +553,33 @@ static int32_t manager_event(void *cookie, uint32_t generation,
         if (canopus_manager_goto(model, native->confirm_return_view,
                                  model->selected) != 0)
             return CANOPUS_UI_ERR_STATE;
-        route = route_for_view(native->confirm_return_view);
-        break;
+        return canopus_manager_native_render(native);
+    case CANOPUS_MANAGER_EVENT_SAFE_MODE:
+        /* The stock switch toggles directly: flipping it requests safe mode on
+         * the next boot. Once active the row is rendered checked and disabled,
+         * so the switch cannot pretend it is an instant exit. */
+        (void)execute_event(native, event_id);
+        return canopus_manager_native_render(native);
     case CANOPUS_MANAGER_EVENT_INSTALL:
         if (native->stage_token[0] == '\0') return CANOPUS_UI_ERR_DISABLED;
         /* fall through */
-    case CANOPUS_MANAGER_EVENT_SAFE_MODE:
     case CANOPUS_MANAGER_EVENT_DISABLE:
     case CANOPUS_MANAGER_EVENT_ROLLBACK:
     case CANOPUS_MANAGER_EVENT_REMOVE:
         native->confirm_return_view = model->view;
         native->confirm_event = event_id;
-        route = CANOPUS_MANAGER_ROUTE_CONFIRMATION;
-        break;
+        return canopus_manager_native_render(native);
     case CANOPUS_MANAGER_EVENT_ENABLE:
     case CANOPUS_MANAGER_EVENT_UPDATE:
         (void)execute_event(native, event_id);
-        route = route_for_view(model->view);
-        break;
+        return canopus_manager_native_render(native);
     default:
         if (!event_needs_confirmation(event_id)) {
             return CANOPUS_UI_ERR_ARGUMENT;
         }
         break;
     }
-    return route_or_render(native, route);
+    return canopus_manager_native_render(native);
 }
 
 int32_t canopus_manager_native_init(

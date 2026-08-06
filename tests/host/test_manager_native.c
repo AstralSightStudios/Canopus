@@ -223,6 +223,83 @@ TEST(manager_native_stage_token_is_bounded_and_installable)
     CHECK(strcmp(native_transport_payload, "pkg-001") == 0);
 }
 
+struct native_route_sink {
+    uint32_t last_route;
+    uint32_t calls;
+};
+
+static int32_t native_route_sink_fn(void *cookie,
+                                    struct canopus_manager_native_v1 *native,
+                                    uint32_t route)
+{
+    struct native_route_sink *sink = (struct native_route_sink *)cookie;
+    (void)native;
+    sink->calls++;
+    sink->last_route = route;
+    return CANOPUS_UI_OK;
+}
+
+TEST(manager_native_safe_mode_switch_toggles_directly)
+{
+    struct canopus_manager_model_v1 model;
+    struct canopus_manager_native_v1 native;
+    struct manager_native_backend backend;
+    const struct canopus_ui_snapshot_v1 *snapshot;
+    const struct canopus_ui_node_v1 *safe_mode;
+
+    native_transport_calls = 0;
+    native_transport_command = 0;
+    canopus_memset(&backend, 0, sizeof(backend));
+    canopus_manager_init(&model, native_transport, 0);
+    CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
+                                      &backend) == CANOPUS_UI_OK);
+    snapshot = canopus_ui_current(&native.ui);
+    safe_mode = find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE);
+    CHECK(safe_mode != 0);
+    CHECK(safe_mode->type == CANOPUS_UI_NODE_SWITCH_ROW);
+    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_CHECKED) == 0u);
+    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_ENABLED) != 0u);
+    /* Flipping the switch executes the operation directly, no confirmation. */
+    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+                                    safe_mode->key, safe_mode->event_id) ==
+          CANOPUS_UI_OK);
+    CHECK(native_transport_calls == 1);
+    CHECK(native_transport_command == CANOPUS_CMD_ENTER_SAFE_MODE);
+    CHECK(model.safe_mode == 1);
+    snapshot = canopus_ui_current(&native.ui);
+    CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM) == 0);
+    safe_mode = find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE);
+    CHECK(safe_mode != 0);
+    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u);
+    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);
+}
+
+TEST(manager_native_router_receives_navigation_routes)
+{
+    struct canopus_manager_model_v1 model;
+    struct canopus_manager_native_v1 native;
+    struct manager_native_backend backend;
+    struct native_route_sink sink;
+    const struct canopus_ui_snapshot_v1 *snapshot;
+    const struct canopus_ui_node_v1 *modules;
+
+    canopus_memset(&backend, 0, sizeof(backend));
+    canopus_memset(&sink, 0, sizeof(sink));
+    canopus_manager_init(&model, native_transport, 0);
+    CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
+                                      &backend) == CANOPUS_UI_OK);
+    canopus_manager_native_set_router(&native, native_route_sink_fn, &sink);
+    snapshot = canopus_ui_current(&native.ui);
+    modules = find_event(snapshot, CANOPUS_MANAGER_EVENT_SHOW_MODULES);
+    CHECK(modules != 0);
+    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+                                    modules->key, modules->event_id) ==
+          CANOPUS_UI_OK);
+    CHECK(sink.calls == 1);
+    CHECK(sink.last_route == CANOPUS_MANAGER_ROUTE_MODULES);
+    CHECK(model.view == CANOPUS_MANAGER_VIEW_MODULE_LIST);
+}
+
 TEST(manager_native_empty_module_list_is_valid)
 {
     struct canopus_manager_model_v1 model;
@@ -258,6 +335,10 @@ static const struct test_registry manager_native_tests[] = {
       manager_native_dispatches_real_model_operations_wrapper },
     { "manager_native_stage_token_is_bounded_and_installable",
       manager_native_stage_token_is_bounded_and_installable_wrapper },
+    { "manager_native_safe_mode_switch_toggles_directly",
+      manager_native_safe_mode_switch_toggles_directly_wrapper },
+    { "manager_native_router_receives_navigation_routes",
+      manager_native_router_receives_navigation_routes_wrapper },
     { "manager_native_empty_module_list_is_valid",
       manager_native_empty_module_list_is_valid_wrapper },
 };

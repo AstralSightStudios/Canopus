@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.activity.page_goto",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "page_goto",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int32_t(uint32_t page_key, uint32_t start_data, uint32_t param, uint32_t callbacks)",
+  "proof": { "static": "confirmed" },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "EVID-NAV-001"
+  },
+  "entry_address": "0x0CA539F8",
+  "callable_address": "0x0CA539F9",
+  "notes": "activitymanager page goto (log tag 'pagemanager/goto_page_no_check_stacktop'). Walks the registered-page registry comparing the 32-bit composite page key at descriptor +20, returns early when the target is already the current top page, pauses the current page, pushes the target page onto the app page stack, and runs the stock transition coordinator. The launcher show_app path and stock Settings sub-page navigation both converge on this function. The composite page key is (app_id << 16) | page_id."
+}

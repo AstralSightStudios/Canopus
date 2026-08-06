@@ -18,12 +18,12 @@ production installer.
 | --- | --- |
 | Watchface UI (`main.lua`) | Structurally complete; mirrors the btpatch pattern (verify ELF, `insmod`, LVGL buttons, fixed ABI). |
 | Supervisor core (`manager/service/canopus_supervisor.c`) | Host-tested (12 tests): command/status ABI, lifecycle-aware enable/disable/remove, safe mode. |
-| `canopus_supervisor.bin` | **Verifier PASS** (sha256 `fbb78b33`, 0 undefined, 2 ctors/1 dtor) — a valid zero-import ELF32 ET_REL containing the supervisor, CPC2 snapshot query path, and resident exact-target Manager implementation. |
+| `canopus_supervisor.bin` | **Verifier PASS** (sha256 `1855791d`, 0 undefined, 2 ctors/1 dtor) — a valid zero-import ELF32 ET_REL containing the supervisor, CPC2 snapshot query path, and resident exact-target Manager implementation. |
 | Device registration (`/dev/canopus`) | **Implemented.** `canopus_supervisor_platform.c` registers the device via the stock `register_driver` (0x0C1A0D51) exactly like btpatch registers `/dev/btpatch` — the same managed symbol the veneer exposes as `canopus_fw_register_driver`. The read side renders the status ABI, the write side dispatches commands. |
 | Native Manager registration path | **DEVICE PASS.** The exact-target Manager code is linked into the resident supervisor. INSTALL writes the legacy bootstrap command to `/dev/canopus`, so `app_install`, `app_launcher_add`, and notification insertion execute synchronously in the calling miwear process rather than the `system -c insmod` process. Manager registration, Launcher opening, stock LVX row rendering, and opening/closing transitions are device-proven with collision-checked system-range app ID `0x00CA`. |
 | Manager installed notification | **DEVICE PASS.** After registry lookup succeeds, inserts title `Canopus`, body `Canpous Loaded! Just ENJOY~`, and uses `/data/canopus/manager_loaded.png` for both notification image paths. The watchface packages the original GIF's cleaned first frame as PNG bytes in `manager_loaded.bin`, then restores the `.png` suffix while staging them before sending INSTALL. |
 | Loading external Canopus modules via stock modlib | **Pending (G0 for arbitrary target modules).** The native Manager probe itself uses the already-proven zero-import stock `insmod` path. |
-| Native Manager UI/backend | **HOST + TARGET BUILD PASS; DEVICE RETEST PENDING.** The first multi-row device run exposed that stock rows were all created at the same coordinates, leaving only the final Build row visible. The backend now reproduces the recovered stock vertical `align_to` chain, keeps informational rows free of the forward-arrow affordance, uses the stock trailing switch for Safe mode, and maintains separate reusable status/action/switch pools. |
+| Native Manager UI/backend | **HOST + TARGET BUILD PASS; DEVICE RETEST PENDING.** The backend renders the page title and description text as centered stock labels, reproduces the recovered stock vertical `align_to` chain, keeps informational rows free of the forward-arrow affordance, uses the stock trailing switch for Safe mode, and maintains separate reusable status/action/switch pools. Navigation between Overview / Modules / module detail is real firmware page transitions via the recovered `page_goto`/`page_finish` ABI (`EVID-NAV-001`), with the system back gesture as the natural pop path. |
 | Package staging + signature verify | **Pending for arbitrary third-party packages.** Manager bootstrap no longer depends on the old staged INSTALL command. |
 
 **What you can test on device now:** LOAD brings up the stable supervisor;
@@ -102,15 +102,20 @@ generate-veneer xiaomi-band-10-pro-3.101.030` to have run.
    the bootstrap INSTALL command to `/dev/canopus`. This keeps the recovered UI
    registration chain in the miwear process and its valid libuv descriptor table.
 4. Expected device effects are: app registry entry `0x00CA`, Launcher item
-   **Canopus Manager**, and a scrollable native Overview whose rows are explicitly
-   stacked with the recovered stock alignment ABI. Informational rows such as
-   **Build** have no forward arrow, navigable rows retain the forward affordance,
-   and **Safe mode** uses the stock switch control. Installation also sends a
-   system notification titled **Canopus** with body
+   **Canopus Manager**, and a native Overview that opens with the stock system
+   transition. **Canopus** is rendered as a centered plain-text title with a
+   description line below it; informational rows such as **Build** have no
+   forward arrow; navigable rows retain the forward affordance; **Safe mode** is
+   a stock switch that toggles directly (flipping it requests safe mode on the
+   next boot and the switch renders checked+disabled once active). Installation
+   also sends a system notification titled **Canopus** with body
    **Canpous Loaded! Just ENJOY~** and the supplied static PNG.
-5. Open Manager from Launcher. Verify Overview → Modules → Overview, enter and
-   cancel the Safe mode confirmation, and close/reopen it to exercise
-   create/resume/pause/destroy. Preserve the Band log after any crash.
+5. Open Manager from Launcher. Verify the Overview → Modules → module detail
+   transitions are real firmware page pushes with stock animations, that the
+   system back gesture pops each page, and that the `/dev/canopus` fd survives
+   page switches. Enter and cancel a destructive-operation confirmation, then
+   close/reopen it to exercise create/resume/pause/destroy. Preserve the Band
+   log after any crash.
 6. Reboot before retrying INSTALL. Do not unload the probe during this first
    lifecycle test; reboot is the reliable cleanup path.
 7. REFRESH/QUERY/SAFE MODE continue to exercise `/dev/canopus`; arbitrary

@@ -5,6 +5,7 @@ members = [
     "canopus-runtime",
     "canopus-host-fake",
     "canopus-target-generated",
+    "canopus-ui-core",
     "examples/no-heap-counter",
     "examples/no-heap-counter-device",
 ]

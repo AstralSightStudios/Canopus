@@ -21,4 +21,5 @@ device = ["dep:canopus-target-generated"]
 [dependencies]
 canopus-abi = { workspace = true }
 canopus-runtime = { workspace = true }
+canopus-ui-core = { path = "../../canopus-ui-core" }
 canopus-target-generated = { path = "../../canopus-target-generated", optional = true }

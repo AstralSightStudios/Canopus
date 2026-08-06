@@ -7,6 +7,7 @@
     "xiaomi-band-10-pro-3.101.030.ui.lvx_list_item_update",
     "xiaomi-band-10-pro-3.101.030.ui.lv_obj_add_event_cb",
     "xiaomi-band-10-pro-3.101.030.ui.lv_event_get_user_data",
+    "xiaomi-band-10-pro-3.101.030.ui.lv_event_get_code",
     "xiaomi-band-10-pro-3.101.030.ui.lv_obj_set_hidden",
     "xiaomi-band-10-pro-3.101.030.ui.lv_obj_align_to"
   ],
@@ -25,15 +26,20 @@
     "canopus_ui_dispatch_event rejects stale generations and disabled actions before the Manager model executes an operation",
     "Renders reuse rows by visual kind, hide unused rows, and explicitly align visible rows in a vertical chain, avoiding unproved concurrent object deletion",
     "Informational text/status nodes use trailing_kind=0, interactive button/action nodes use the forward affordance trailing_kind=3, and switch rows use trailing_kind=1",
-    "sub_C4A74D4 maps trailing_kind=1 to the stock switch constructor sub_CA475B0; sub_C4A7BD0 applies checked/unchecked state through its final argument"
+    "sub_C4A74D4 maps trailing_kind=1 to the stock switch constructor sub_CA475B0; sub_C4A7BD0 applies checked/unchecked state through its final argument",
+    "The navigation page title and semantic text nodes are rendered as centered stock labels created through sub_C588338 and updated through sub_C588848, so a title like 'Canopus' is plain centered text rather than a button",
+    "Switch rows register the event on the trailing switch object returned by sub_C4A7F2C (row+0x50) for LV_EVENT_ALL (code 0) and dispatch only on LV_EVENT_VALUE_CHANGED (code 30), exactly matching the stock VAS alarm switch sub_C661410/sub_C6613C0; action/status rows register LV_EVENT_CLICKED (code 7) on the row like sub_C52C228",
+    "sub_C5886D0 lv_event_get_code filters delivered events so a switch toggle (VALUE_CHANGED) fires the semantic event directly while unrelated LVGL events are ignored",
+    "View changes that cross page boundaries are routed to the recovered page_goto/page_finish ABI (EVID-NAV-001) instead of rewriting rows in place"
   ],
   "ownership_analysis": "Rows remain children of the page root and are destroyed by the proven page lifecycle. Portable snapshots contain no firmware pointers. Target-private row pointers and bindings are cleared only after page destroy begins.",
   "unsafe_assumptions": [
     "The update/show-hide/alignment path has strong stock callsite evidence but has not yet been exercised by the Canopus page on device",
     "The firmware page root must expose the same scroll/content behavior as the recovered stock page-content parents when explicitly aligned children extend below the viewport",
+    "The stock label create/set-text thunks sub_C588338/sub_C588848 and the switch-row event registration on the trailing object are statically recovered; their exact default styling on the Manager page is device-gated",
     "The backend is resident-first and does not unregister callbacks or unload code before reboot"
   ],
-  "recommended_probe": "Open Overview, tap Modules and Back repeatedly, enter and cancel a confirmation, verify no duplicate rows or stale callback dispatch, then close/reopen the page 100 times.",
+  "recommended_probe": "Open Overview, confirm the centered 'Canopus' title and description label, flip the Safe mode switch (it must toggle and then render disabled), tap Modules and a module row to verify real page transitions, pop with the system back gesture, enter and cancel a confirmation, verify no duplicate rows or stale callback dispatch, then close/reopen the app 100 times.",
   "reviewers": ["canopus-maintainer"],
   "verdict": "STATIC_RECOVERED",
   "created": "2026-08-06T00:00:00Z",
