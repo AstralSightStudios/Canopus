@@ -66,6 +66,19 @@ static const struct canopus_ui_node_v1 *find_event(
     return 0;
 }
 
+static const struct canopus_ui_node_v1 *find_primary(
+    const struct canopus_ui_snapshot_v1 *snapshot, const char *text)
+{
+    uint16_t i;
+    for (i = 0; i < snapshot->node_count; i++) {
+        if (strcmp(snapshot->strings + snapshot->nodes[i].primary_off,
+                   text) == 0) {
+            return &snapshot->nodes[i];
+        }
+    }
+    return 0;
+}
+
 static void add_native_module(struct canopus_manager_model_v1 *model,
                               uint32_t lifecycle_class)
 {
@@ -88,7 +101,7 @@ TEST(manager_native_renders_device_prefabs)
     struct manager_native_backend backend;
     const struct canopus_ui_snapshot_v1 *snapshot;
     const struct canopus_ui_node_v1 *modules;
-    const struct canopus_ui_node_v1 *safe_mode;
+    const struct canopus_ui_node_v1 *manager;
 
     canopus_memset(&backend, 0, sizeof(backend));
     canopus_manager_init(&model, native_transport, 0);
@@ -102,13 +115,18 @@ TEST(manager_native_renders_device_prefabs)
     CHECK(snapshot->nodes[0].type == CANOPUS_UI_NODE_NAVIGATION_PAGE);
     CHECK(strcmp(snapshot->strings + snapshot->nodes[0].primary_off,
                  "Canopus") == 0);
+    CHECK(snapshot->styles[0].text_style == CANOPUS_UI_TEXT_TITLE);
+    manager = find_primary(snapshot, "Manager");
+    CHECK(manager != 0);
+    CHECK(strcmp(snapshot->strings + manager->secondary_off,
+                 "Native UI ABI 1.4") == 0);
+    CHECK(find_primary(snapshot, "Firmware") != 0);
+    CHECK(find_primary(snapshot, "Build") != 0);
+    CHECK(find_primary(snapshot, "Target") != 0);
     modules = find_event(snapshot, CANOPUS_MANAGER_EVENT_SHOW_MODULES);
     CHECK(modules != 0);
     CHECK(modules->type == CANOPUS_UI_NODE_ACTION_ROW);
-    safe_mode = find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE);
-    CHECK(safe_mode != 0);
-    CHECK(safe_mode->type == CANOPUS_UI_NODE_SWITCH_ROW);
-    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_CHECKED) == 0u);
+    CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE) == 0);
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_INSTALL) != 0);
     CHECK((find_event(snapshot, CANOPUS_MANAGER_EVENT_INSTALL)->flags &
            CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);
@@ -239,39 +257,29 @@ static int32_t native_route_sink_fn(void *cookie,
     return CANOPUS_UI_OK;
 }
 
-TEST(manager_native_safe_mode_switch_toggles_directly)
+TEST(manager_native_hides_safe_mode_and_enforces_it)
 {
     struct canopus_manager_model_v1 model;
     struct canopus_manager_native_v1 native;
     struct manager_native_backend backend;
     const struct canopus_ui_snapshot_v1 *snapshot;
-    const struct canopus_ui_node_v1 *safe_mode;
+    const struct canopus_ui_node_v1 *install;
 
-    native_transport_calls = 0;
-    native_transport_command = 0;
     canopus_memset(&backend, 0, sizeof(backend));
     canopus_manager_init(&model, native_transport, 0);
+    model.safe_mode = 1u;
     CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
                                       &backend) == CANOPUS_UI_OK);
-    snapshot = canopus_ui_current(&native.ui);
-    safe_mode = find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE);
-    CHECK(safe_mode != 0);
-    CHECK(safe_mode->type == CANOPUS_UI_NODE_SWITCH_ROW);
-    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_CHECKED) == 0u);
-    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_ENABLED) != 0u);
-    /* Flipping the switch executes the operation directly, no confirmation. */
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
-                                    safe_mode->key, safe_mode->event_id) ==
+    CHECK(canopus_manager_native_set_stage_token(&native, "pkg-001") ==
           CANOPUS_UI_OK);
-    CHECK(native_transport_calls == 1);
-    CHECK(native_transport_command == CANOPUS_CMD_ENTER_SAFE_MODE);
-    CHECK(model.safe_mode == 1);
+    CHECK(canopus_manager_native_render(&native) == CANOPUS_UI_OK);
+
     snapshot = canopus_ui_current(&native.ui);
-    CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM) == 0);
-    safe_mode = find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE);
-    CHECK(safe_mode != 0);
-    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u);
-    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);
+    CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE) == 0);
+    CHECK(find_primary(snapshot, "Safe mode") == 0);
+    install = find_event(snapshot, CANOPUS_MANAGER_EVENT_INSTALL);
+    CHECK(install != 0);
+    CHECK((install->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);
 }
 
 TEST(manager_native_router_receives_navigation_routes)
@@ -335,8 +343,8 @@ static const struct test_registry manager_native_tests[] = {
       manager_native_dispatches_real_model_operations_wrapper },
     { "manager_native_stage_token_is_bounded_and_installable",
       manager_native_stage_token_is_bounded_and_installable_wrapper },
-    { "manager_native_safe_mode_switch_toggles_directly",
-      manager_native_safe_mode_switch_toggles_directly_wrapper },
+    { "manager_native_hides_safe_mode_and_enforces_it",
+      manager_native_hides_safe_mode_and_enforces_it_wrapper },
     { "manager_native_router_receives_navigation_routes",
       manager_native_router_receives_navigation_routes_wrapper },
     { "manager_native_empty_module_list_is_valid",

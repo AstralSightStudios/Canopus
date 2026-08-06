@@ -233,8 +233,10 @@ static int32_t ui_append_node(struct canopus_ui_tree_v1 *tree,
 
     index = snapshot->node_count;
     snapshot->nodes[index] = node;
-    snapshot->styles[index] = ui_default_style;
-    snapshot->layouts[index] = ui_default_layout;
+    canopus_memcpy(&snapshot->styles[index], &ui_default_style,
+                   sizeof(ui_default_style));
+    canopus_memcpy(&snapshot->layouts[index], &ui_default_layout,
+                   sizeof(ui_default_layout));
     canopus_memset(&snapshot->values[index], 0, sizeof(snapshot->values[index]));
     snapshot->node_count++;
     if (parent != CANOPUS_UI_NO_NODE) {
@@ -510,7 +512,7 @@ int32_t canopus_ui_node_set_style(
         return ui_style_is_default(style) ? CANOPUS_UI_OK :
                                             CANOPUS_UI_ERR_UNSUPPORTED;
     }
-    tree->_snapshot.styles[index] = *style;
+    canopus_memcpy(&tree->_snapshot.styles[index], style, sizeof(*style));
     return CANOPUS_UI_OK;
 }
 
@@ -538,7 +540,7 @@ int32_t canopus_ui_node_set_layout(
         return ui_layout_is_default(layout) ? CANOPUS_UI_OK :
                                               CANOPUS_UI_ERR_UNSUPPORTED;
     }
-    tree->_snapshot.layouts[index] = *layout;
+    canopus_memcpy(&tree->_snapshot.layouts[index], layout, sizeof(*layout));
     return CANOPUS_UI_OK;
 }
 

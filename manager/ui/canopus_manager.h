@@ -2,7 +2,7 @@
  * canopus_manager.h — Manager UI model, pages and operations (CAN-UI-001..004).
  *
  * Host-testable view/controller layer for the device Manager:
- *   - device page   (identity / target / framework / safe mode)
+ *   - device page   (identity / target / framework / firmware metadata)
  *   - module list   (id + lifecycle state, one line each)
  *   - module detail (lifecycle, class, capability, signature, risk, the
  *                    operations that are ACTUALLY available for that class)

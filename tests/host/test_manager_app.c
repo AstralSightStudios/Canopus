@@ -3,6 +3,7 @@
 #include "canopus_manager_app.h"
 #include "canopus_supervisor.h"
 #include "canopus_memory.h"
+#include <string.h>
 
 struct manager_app_fixture {
     struct canopus_supervisor_v1 supervisor;
@@ -87,7 +88,7 @@ TEST(manager_app_runs_native_end_to_end_path)
     struct canopus_manager_app_v1 app;
     const struct canopus_app_descriptor_v1 *descriptor;
     const struct canopus_ui_snapshot_v1 *snapshot;
-    const struct canopus_ui_node_v1 *safe_mode;
+    const struct canopus_ui_node_v1 *modules;
 
     canopus_memset(&fixture, 0, sizeof(fixture));
     CHECK(canopus_supervisor_init(&fixture.supervisor, 12, 0, 0) == 0);
@@ -107,23 +108,17 @@ TEST(manager_app_runs_native_end_to_end_path)
     CHECK(app.state == CANOPUS_MANAGER_APP_STATE_RESUMED);
 
     snapshot = canopus_ui_current(&app.native.ui);
-    safe_mode = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE);
-    CHECK(safe_mode != 0);
-    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_CHECKED) == 0u);
-    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_ENABLED) != 0u);
-    /* The stock switch toggles directly without an intermediate confirmation. */
+    CHECK(app_find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE) == 0);
+    modules = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_SHOW_MODULES);
+    CHECK(modules != 0);
     CHECK(canopus_ui_dispatch_event(&app.native.ui, snapshot->generation,
-                                    safe_mode->key, safe_mode->event_id) == 0);
-    CHECK(fixture.supervisor.safe_mode == 1);
-    CHECK(app.model.safe_mode == 1);
-    CHECK(app.model.pending_op == CANOPUS_CMD_ENTER_SAFE_MODE);
-    /* Once active the switch renders checked and disabled: it cannot pretend
-     * that an active safe mode is an instant exit. */
+                                    modules->key, modules->event_id) == 0);
+    CHECK(app.model.view == CANOPUS_MANAGER_VIEW_MODULE_LIST);
     snapshot = canopus_ui_current(&app.native.ui);
-    safe_mode = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE);
-    CHECK(safe_mode != 0);
-    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u);
-    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);
+    CHECK(snapshot->generation == 3u);
+    CHECK(strcmp(snapshot->strings + snapshot->nodes[0].primary_off,
+                 "Modules") == 0);
+    CHECK(fixture.supervisor.safe_mode == 0u);
 
     CHECK(descriptor->on_pause(0) == 0);
     CHECK(app.state == CANOPUS_MANAGER_APP_STATE_PAUSED);

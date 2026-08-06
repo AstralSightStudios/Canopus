@@ -30,6 +30,7 @@ enum canopus_manager_native_event {
     CANOPUS_MANAGER_EVENT_SHOW_DEVICE = 1,
     CANOPUS_MANAGER_EVENT_SHOW_MODULES,
     CANOPUS_MANAGER_EVENT_INSTALL,
+    /* Retained for numeric compatibility; safe mode is policy state, not UI. */
     CANOPUS_MANAGER_EVENT_SAFE_MODE,
     CANOPUS_MANAGER_EVENT_ENABLE,
     CANOPUS_MANAGER_EVENT_DISABLE,

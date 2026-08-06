@@ -4,18 +4,17 @@
 #include "canopus_runtime.h"
 
 #define UI_KEY_ROOT                1u
-#define UI_KEY_OVERVIEW_SECTION   10u
 #define UI_KEY_FRAMEWORK          11u
 #define UI_KEY_MODULES            12u
-#define UI_KEY_SAFE_MODE          13u
 #define UI_KEY_INSTALL            14u
-#define UI_KEY_DEVICE_SECTION     20u
-#define UI_KEY_FIRMWARE           21u
-#define UI_KEY_TARGET             22u
-#define UI_KEY_BUILD              23u
+#define UI_KEY_SYSTEM_SECTION     20u
+#define UI_KEY_MANAGER            21u
+#define UI_KEY_FIRMWARE           22u
+#define UI_KEY_TARGET             23u
+#define UI_KEY_BUILD              24u
+#define UI_KEY_ACTIONS_SECTION    25u
 #define UI_KEY_MODULE_SECTION     30u
 #define UI_KEY_MODULE_EMPTY       31u
-#define UI_KEY_MODULE_BACK        32u
 #define UI_KEY_MODULE_BASE       100u
 #define UI_KEY_DETAIL_SECTION    200u
 #define UI_KEY_DETAIL_STATE      201u
@@ -26,7 +25,6 @@
 #define UI_KEY_DETAIL_ENABLE     212u
 #define UI_KEY_DETAIL_DISABLE    213u
 #define UI_KEY_DETAIL_REMOVE     214u
-#define UI_KEY_DETAIL_BACK       215u
 #define UI_KEY_CONFIRM_SECTION   300u
 #define UI_KEY_CONFIRM_MESSAGE   301u
 #define UI_KEY_CONFIRM_ACCEPT    302u
@@ -184,24 +182,6 @@ static int32_t append_action(struct canopus_ui_tree_v1 *tree,
     return canopus_ui_action_row(tree, key, &props);
 }
 
-static int32_t append_switch(struct canopus_ui_tree_v1 *tree,
-                             canopus_ui_node_id key,
-                             const char *label, uint32_t label_cap,
-                             const char *detail, uint32_t detail_cap,
-                             uint32_t event_id, int checked, int enabled)
-{
-    struct canopus_ui_switch_row_props_v1 props;
-    props.struct_size = sizeof(props);
-    props.label = label;
-    props.label_len = bounded_len(label, label_cap);
-    props.detail = detail;
-    props.detail_len = bounded_len(detail, detail_cap);
-    props.event_id = event_id;
-    props.checked = checked ? 1u : 0u;
-    props.enabled = enabled ? 1u : 0u;
-    return canopus_ui_switch_row(tree, key, &props);
-}
-
 static int32_t append_text(struct canopus_ui_tree_v1 *tree,
                            canopus_ui_node_id key, const char *text,
                            uint32_t text_cap, uint32_t style)
@@ -224,40 +204,37 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
     format_framework(model->framework_revision, framework);
     format_overview(model, modules);
 
-    rc = CANOPUS_UI_SECTION(tree, UI_KEY_OVERVIEW_SECTION, "Overview");
+    rc = CANOPUS_UI_SECTION(tree, UI_KEY_SYSTEM_SECTION, "System information");
     if (rc != CANOPUS_UI_OK) return rc;
-    rc = append_text(tree, UI_KEY_FRAMEWORK, framework, sizeof(framework),
-                     CANOPUS_UI_TEXT_DESCRIPTION);
+    rc = append_status(tree, UI_KEY_FRAMEWORK, "Framework", 10u,
+                       framework, sizeof(framework));
+    if (rc != CANOPUS_UI_OK) return rc;
+    rc = append_status(tree, UI_KEY_MANAGER, "Manager", 8u,
+                       "Native UI ABI 1.4", 18u);
+    if (rc != CANOPUS_UI_OK) return rc;
+    rc = append_status(tree, UI_KEY_FIRMWARE, "Firmware", 9u,
+                       model->firmware_version, sizeof(model->firmware_version));
+    if (rc != CANOPUS_UI_OK) return rc;
+    rc = append_status(tree, UI_KEY_BUILD, "Build", 6u,
+                       model->firmware_build, sizeof(model->firmware_build));
+    if (rc != CANOPUS_UI_OK) return rc;
+    rc = append_status(tree, UI_KEY_TARGET, "Target", 7u,
+                       model->target_id, sizeof(model->target_id));
+    if (rc != CANOPUS_UI_OK) return rc;
+    rc = CANOPUS_UI_END(tree);
+    if (rc != CANOPUS_UI_OK) return rc;
+
+    rc = CANOPUS_UI_SECTION(tree, UI_KEY_ACTIONS_SECTION, "Manage");
     if (rc != CANOPUS_UI_OK) return rc;
     rc = append_action(tree, UI_KEY_MODULES, "Modules", 8u,
                        modules, sizeof(modules),
                        CANOPUS_MANAGER_EVENT_SHOW_MODULES, 1);
-    if (rc != CANOPUS_UI_OK) return rc;
-    rc = append_switch(tree, UI_KEY_SAFE_MODE, "Safe mode", 10u,
-                       model->safe_mode ? "Active / changes restricted" :
-                                          "Off / recovery available",
-                       27u, CANOPUS_MANAGER_EVENT_SAFE_MODE,
-                       model->safe_mode != 0u, model->safe_mode == 0u);
     if (rc != CANOPUS_UI_OK) return rc;
     rc = append_action(tree, UI_KEY_INSTALL, "Install package", 16u,
                        native->stage_token[0] != '\0' ?
                            "Verified staged package" : "No staged package",
                        24u, CANOPUS_MANAGER_EVENT_INSTALL,
                        native->stage_token[0] != '\0' && !model->safe_mode);
-    if (rc != CANOPUS_UI_OK) return rc;
-    rc = CANOPUS_UI_END(tree);
-    if (rc != CANOPUS_UI_OK) return rc;
-
-    rc = CANOPUS_UI_SECTION(tree, UI_KEY_DEVICE_SECTION, "Device");
-    if (rc != CANOPUS_UI_OK) return rc;
-    rc = append_status(tree, UI_KEY_FIRMWARE, "Firmware", 9u,
-                       model->firmware_version, sizeof(model->firmware_version));
-    if (rc != CANOPUS_UI_OK) return rc;
-    rc = append_status(tree, UI_KEY_TARGET, "Target", 7u,
-                       model->target_id, sizeof(model->target_id));
-    if (rc != CANOPUS_UI_OK) return rc;
-    rc = append_status(tree, UI_KEY_BUILD, "Build", 6u,
-                       model->firmware_build, sizeof(model->firmware_build));
     if (rc != CANOPUS_UI_OK) return rc;
     return CANOPUS_UI_END(tree);
 }
@@ -287,10 +264,6 @@ static int32_t render_module_list(struct canopus_manager_native_v1 *native,
                            CANOPUS_MANAGER_EVENT_OPEN_MODULE_BASE + i, 1);
         if (rc != CANOPUS_UI_OK) return rc;
     }
-    rc = append_action(tree, UI_KEY_MODULE_BACK, "Overview", 9u,
-                       "Back to Manager status", 23u,
-                       CANOPUS_MANAGER_EVENT_SHOW_DEVICE, 1);
-    if (rc != CANOPUS_UI_OK) return rc;
     return CANOPUS_UI_END(tree);
 }
 
@@ -357,10 +330,6 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
                            CANOPUS_MANAGER_EVENT_REMOVE, 1);
         if (rc != CANOPUS_UI_OK) return rc;
     }
-    rc = append_action(tree, UI_KEY_DETAIL_BACK, "Modules", 8u,
-                       "Back to installed modules", 26u,
-                       CANOPUS_MANAGER_EVENT_SHOW_MODULES, 1);
-    if (rc != CANOPUS_UI_OK) return rc;
     return CANOPUS_UI_END(tree);
 }
 
@@ -403,6 +372,7 @@ static int32_t render_confirmation(struct canopus_manager_native_v1 *native,
 int32_t canopus_manager_native_render(struct canopus_manager_native_v1 *native)
 {
     struct canopus_ui_navigation_page_props_v1 page;
+    struct canopus_ui_style_v1 title_style;
     struct canopus_ui_tree_v1 *tree = 0;
     const char *title = "Canopus";
     uint32_t title_cap = 8u;
@@ -429,6 +399,13 @@ int32_t canopus_manager_native_render(struct canopus_manager_native_v1 *native)
     page.title = title;
     page.title_len = bounded_len(title, title_cap);
     rc = canopus_ui_navigation_page(tree, UI_KEY_ROOT, &page);
+    if (rc == CANOPUS_UI_OK) {
+        canopus_memset(&title_style, 0, sizeof(title_style));
+        title_style.text_style = CANOPUS_UI_TEXT_TITLE;
+        title_style.corner_radius = -1;
+        title_style.border_width = -1;
+        rc = canopus_ui_node_set_style(tree, UI_KEY_ROOT, &title_style);
+    }
     if (rc == CANOPUS_UI_OK) {
         if (native->confirm_event != 0u) {
             rc = render_confirmation(native, tree);
@@ -467,8 +444,6 @@ static uint32_t execute_event(struct canopus_manager_native_v1 *native,
     case CANOPUS_MANAGER_EVENT_INSTALL:
         if (native->stage_token[0] == '\0') return CANOPUS_RESULT_DISALLOWED;
         return canopus_manager_op_install(model, native->stage_token);
-    case CANOPUS_MANAGER_EVENT_SAFE_MODE:
-        return canopus_manager_op_safe_mode(model);
     case CANOPUS_MANAGER_EVENT_ENABLE:
         return canopus_manager_op_enable(model, model->selected);
     case CANOPUS_MANAGER_EVENT_DISABLE:
@@ -553,12 +528,6 @@ static int32_t manager_event(void *cookie, uint32_t generation,
         if (canopus_manager_goto(model, native->confirm_return_view,
                                  model->selected) != 0)
             return CANOPUS_UI_ERR_STATE;
-        return canopus_manager_native_render(native);
-    case CANOPUS_MANAGER_EVENT_SAFE_MODE:
-        /* The stock switch toggles directly: flipping it requests safe mode on
-         * the next boot. Once active the row is rendered checked and disabled,
-         * so the switch cannot pretend it is an instant exit. */
-        (void)execute_event(native, event_id);
         return canopus_manager_native_render(native);
     case CANOPUS_MANAGER_EVENT_INSTALL:
         if (native->stage_token[0] == '\0') return CANOPUS_UI_ERR_DISABLED;

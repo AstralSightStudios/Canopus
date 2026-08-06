@@ -31,6 +31,8 @@
 #define FW_LVX_LIST_ROW_TRAILING UINT32_C(0x0C4A7F2D)
 #define FW_LVX_LABEL_CREATE UINT32_C(0x0C588339)
 #define FW_LVX_LABEL_SET_TEXT UINT32_C(0x0C588849)
+#define FW_LVX_STYLE_APPLY UINT32_C(0x0C49EA99)
+#define FW_STYLE_MISANS_DEMIBOLD_32 UINT32_C(0x2010A02C)
 #define FW_LVX_EVENT_ADD UINT32_C(0x0C5882B9)
 #define FW_LVX_EVENT_GET_USER_DATA UINT32_C(0x0C588601)
 #define FW_LVX_EVENT_GET_CODE UINT32_C(0x0C5886D1)
@@ -489,6 +491,7 @@ static int32_t target_ui_apply(
     typedef void *(*get_trailing_fn)(void *);
     typedef void *(*create_label_fn)(void *);
     typedef void (*set_label_text_fn)(void *, const char *);
+    typedef int (*apply_style_fn)(void *, const void *, uint32_t, uint32_t);
     typedef void (*add_event_fn)(void *, void (*)(void *), uint32_t, void *);
     typedef void (*set_hidden_fn)(void *, uint32_t);
     typedef void (*align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
@@ -504,6 +507,8 @@ static int32_t target_ui_apply(
         (create_label_fn)(uintptr_t)FW_LVX_LABEL_CREATE;
     set_label_text_fn set_label_text =
         (set_label_text_fn)(uintptr_t)FW_LVX_LABEL_SET_TEXT;
+    apply_style_fn apply_style =
+        (apply_style_fn)(uintptr_t)FW_LVX_STYLE_APPLY;
     add_event_fn add_event = (add_event_fn)(uintptr_t)FW_LVX_EVENT_ADD;
     set_hidden_fn set_hidden = (set_hidden_fn)(uintptr_t)FW_LVX_SET_HIDDEN;
     align_to_fn align_to = (align_to_fn)(uintptr_t)FW_LVX_ALIGN_TO;
@@ -570,6 +575,15 @@ static int32_t target_ui_apply(
                 backend->label_count++;
             }
             set_label_text(object, primary);
+            if (snapshot->styles[i].text_style == CANOPUS_UI_TEXT_TITLE) {
+                /* lvx_theme_default_init maps this exact-target style object to
+                 * MiSans-Demibold at 32 px. sub_C49EA98 is the stock helper used
+                 * by firmware labels to replace the inherited text style. */
+                (void)apply_style(
+                    object,
+                    (const void *)(uintptr_t)FW_STYLE_MISANS_DEMIBOLD_32,
+                    255u, 0u);
+            }
             set_hidden(object, 0u);
             if (previous == NULL) {
                 align_to(object, backend->root, CANOPUS_TARGET_ALIGN_TOP_MID,
@@ -708,10 +722,37 @@ static uint32_t target_page_key(uint32_t page_index)
     return ((uint32_t)CANOPUS_PROBE_APP_ID << 16) | page_index;
 }
 
+static int target_select_page_view(
+    const struct canopus_target_page_context *context)
+{
+    uint32_t selected;
+
+    if (context == NULL) {
+        return -1;
+    }
+    switch (context->backend.page_index) {
+    case CANOPUS_TARGET_PAGE_OVERVIEW:
+        return canopus_manager_goto(&manager_model,
+                                    CANOPUS_MANAGER_VIEW_DEVICE, 0u);
+    case CANOPUS_TARGET_PAGE_MODULES:
+        return canopus_manager_goto(&manager_model,
+                                    CANOPUS_MANAGER_VIEW_MODULE_LIST, 0u);
+    case CANOPUS_TARGET_PAGE_DETAIL:
+        selected = manager_model.selected;
+        if (selected >= manager_model.module_count) {
+            return -1;
+        }
+        return canopus_manager_goto(&manager_model,
+                                    CANOPUS_MANAGER_VIEW_MODULE_DETAIL,
+                                    selected);
+    default:
+        return -1;
+    }
+}
+
 /* Routes a semantic view change to the real firmware page stack. Forward
  * routes push the target page through the stock page_goto transition; backward
- * routes finish the source page so the paused page below it resumes. The
- * fallback re-render keeps the flow working if a push is refused. */
+ * routes finish the source page so the paused page below it resumes. */
 static int32_t target_route(void *cookie,
                             struct canopus_manager_native_v1 *native,
                             uint32_t route)
@@ -752,11 +793,8 @@ static int32_t target_route(void *cookie,
         return CANOPUS_UI_OK;
     }
     (void)page_goto(target_page_key(target_page), 0u, 0u, 0u);
-    if (source->active) {
-        /* page_goto pauses rather than destroys the source page; re-rendering
-         * it keeps the paused view fresh and covers a refused push. */
-        return canopus_manager_native_render(native);
-    }
+    /* A push pauses the source. Rendering the destination snapshot into that
+     * paused root caused the old two-tap/mixed-content defect. */
     return CANOPUS_UI_OK;
 }
 
@@ -794,6 +832,9 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         }
         manager_session_ready = 1u;
     }
+    if (target_select_page_view(context) != 0) {
+        return -1;
+    }
     rc = canopus_manager_native_init(&context->native, &manager_model,
                                      &target_ui_backend_api, &context->backend);
     if (rc != CANOPUS_UI_OK) {
@@ -816,7 +857,8 @@ static int manager_page_on_resume(struct firmware_page_descriptor *page)
         return -1;
     }
     canopus_native_probe_record.resume_count += 1u;
-    if (manager_session_ready && target_refresh_model() == 0) {
+    if (manager_session_ready && target_refresh_model() == 0 &&
+        target_select_page_view(context) == 0) {
         (void)canopus_manager_native_render(&context->native);
     }
     return 0;
