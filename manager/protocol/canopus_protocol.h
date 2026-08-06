@@ -61,6 +61,13 @@ struct canopus_proto_response_v1 {
 /* Fixed max control payload; bulk data must use a separate stream. */
 #define CANOPUS_PROTO_MAX_PAYLOAD 512u
 
+/* Read-only Manager query payloads carried inside CPC2 responses. They are
+ * byte-encoded little-endian records, never cast to packed C structs. */
+#define CANOPUS_QUERY_DEVICE_MAGIC 0x43514431u /* "CQD1" */
+#define CANOPUS_QUERY_DEVICE_SIZE  32u
+#define CANOPUS_QUERY_MODULE_MAGIC 0x43514D31u /* "CQM1" */
+#define CANOPUS_QUERY_MODULE_SIZE  64u
+
 /* Returns 0 when the request envelope is well-formed for the current ABI. */
 int canopus_proto_validate_request(const struct canopus_proto_request_v1 *r,
                                    uint32_t buffer_capacity);

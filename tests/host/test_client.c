@@ -3,6 +3,8 @@
 #include "canopus_client.h"
 #include "canopus_supervisor.h"
 #include "canopus_memory.h"
+#include "canopus_runtime.h"
+#include <string.h>
 
 struct fake_client_device {
     struct canopus_supervisor_v1 supervisor;
@@ -175,6 +177,45 @@ TEST(client_validates_lifecycle_and_io_abi)
     CHECK(canopus_client_open(&client) == CANOPUS_CLIENT_ERR_STATE);
 }
 
+TEST(client_queries_authoritative_device_and_module_snapshots)
+{
+    struct fake_client_device device;
+    struct canopus_client_v1 client;
+    struct canopus_client_device_snapshot_v1 status;
+    struct canopus_client_module_snapshot_v1 module;
+
+    canopus_memset(&device, 0, sizeof(device));
+    CHECK(canopus_supervisor_init(&device.supervisor, 23, 0, 0) == 0);
+    device.supervisor.safe_mode = 1u;
+    device.supervisor.safe_mode_reason = CANOPUS_SAFE_MODE_USER_REQUESTED;
+    CHECK(canopus_supervisor_add_module(
+              &device.supervisor, CANOPUS_LIFECYCLE_REMOVABLE, 7, 1,
+              "mod.hello") == 0);
+    CHECK(canopus_client_init(&client, &device_io, &device) ==
+          CANOPUS_CLIENT_OK);
+    CHECK(canopus_client_open(&client) == CANOPUS_CLIENT_OK);
+
+    CHECK(canopus_client_query_device(&client, 100u, &status) ==
+          CANOPUS_CLIENT_OK);
+    CHECK(status.framework_revision == 23u);
+    CHECK(status.safe_mode == 1u);
+    CHECK(status.module_count == 1u);
+    CHECK(status.safe_mode_reason == CANOPUS_SAFE_MODE_USER_REQUESTED);
+    CHECK(canopus_pending_find(&device.supervisor.pending, 100u) == 0);
+
+    CHECK(canopus_client_query_module(&client, 101u, 0u, &module) ==
+          CANOPUS_CLIENT_OK);
+    CHECK(module.slot == 0u);
+    CHECK(module.state == CANOPUS_STATE_INSTALLED);
+    CHECK(module.lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE);
+    CHECK(module.version == 7u);
+    CHECK((module.flags & CANOPUS_SUP_FLAG_SIGNATURE_OK) != 0u);
+    CHECK(strcmp(module.module_id, "mod.hello") == 0);
+    CHECK(canopus_pending_find(&device.supervisor.pending, 101u) == 0);
+    CHECK(canopus_client_query_module(&client, 102u, 1u, &module) ==
+          CANOPUS_CLIENT_ERR_PROTOCOL);
+}
+
 static const struct test_registry client_tests[] = {
     { "client_cpc2_roundtrip_reaches_supervisor",
       client_cpc2_roundtrip_reaches_supervisor_wrapper },
@@ -184,6 +225,8 @@ static const struct test_registry client_tests[] = {
       client_rejects_malformed_and_mismatched_responses_wrapper },
     { "client_validates_lifecycle_and_io_abi",
       client_validates_lifecycle_and_io_abi_wrapper },
+    { "client_queries_authoritative_device_and_module_snapshots",
+      client_queries_authoritative_device_and_module_snapshots_wrapper },
 };
 
 int run_client_tests(void)

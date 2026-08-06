@@ -1,17 +1,21 @@
 /*
- * Exact-target native Manager registration/UI probe.
+ * Exact-target native Manager registration and stock-LVX semantic UI backend.
  *
  * This deliberately uses fixed-address veneers for firmware 3.101.030 and is
  * resident-first: its constructor only records target identity. The supervisor
  * invokes the exported install entry from a /dev/canopus write made by miwear,
  * then install registers one writable page descriptor and one launcher record.
- * The page creates a stock LVX list row. Device testing must treat reboot as
- * the reliable recovery path until concurrent callback drain is proven.
+ * The page maps the portable Manager snapshot to stock LVX rows; firmware widget
+ * pointers remain private to this target backend. Device testing must treat
+ * reboot as the reliable recovery path until concurrent callback drain is proven.
  */
 #include <stddef.h>
 #include <stdint.h>
 
 #include "canopus_manager_native_probe.h"
+#include "canopus_client.h"
+#include "canopus_manager_native.h"
+#include "canopus_memory.h"
 
 #define CANOPUS_PROBE_APP_ID UINT16_C(0x00CA)
 #define CANOPUS_PROBE_PAGE_ID UINT16_C(0)
@@ -23,7 +27,38 @@
 #define FW_APP_INSTALL UINT32_C(0x0CA519AD)
 #define FW_LAUNCHER_ADD UINT32_C(0x0C4F2BDD)
 #define FW_LVX_LIST_ROW_CREATE UINT32_C(0x0C52B235)
+#define FW_LVX_LIST_ROW_UPDATE UINT32_C(0x0C4A7BD1)
+#define FW_LVX_LIST_ROW_TRAILING UINT32_C(0x0C4A7F2D)
+#define FW_LVX_LABEL_CREATE UINT32_C(0x0C588339)
+#define FW_LVX_LABEL_SET_TEXT UINT32_C(0x0C588849)
+#define FW_LVX_EVENT_ADD UINT32_C(0x0C5882B9)
+#define FW_LVX_EVENT_GET_USER_DATA UINT32_C(0x0C588601)
+#define FW_LVX_SET_HIDDEN UINT32_C(0x0C588459)
+#define FW_LVX_ALIGN_TO UINT32_C(0x0C588BE9)
+#define FW_NUTTX_OPEN UINT32_C(0x0C1C15B1)
+#define FW_NUTTX_CLOSE UINT32_C(0x0C1AAB71)
+#define FW_NUTTX_READ UINT32_C(0x0C1C1E25)
+#define FW_NUTTX_WRITE UINT32_C(0x0C1C31C9)
 #define FW_NOTIFICATION_INSERT UINT32_C(0x0CA81F11)
+#define FW_ACTIVITY_NAVIGATE_SLOT UINT32_C(0x200EB0E4)
+
+#define CANOPUS_TARGET_PAGE_COUNT 4u
+#define CANOPUS_TARGET_PAGE_OVERVIEW 0u
+#define CANOPUS_TARGET_PAGE_MODULES 1u
+#define CANOPUS_TARGET_PAGE_DETAIL 2u
+#define CANOPUS_TARGET_PAGE_CONFIRM 3u
+#define CANOPUS_TARGET_UI_MAX_ROWS 25u
+#define CANOPUS_TARGET_UI_MAX_LABELS 6u
+#define CANOPUS_TARGET_MODULE_FLAG_SIGNATURE_OK (1u << 0)
+#define CANOPUS_TARGET_ROW_STATUS 1u
+#define CANOPUS_TARGET_ROW_ACTION 2u
+#define CANOPUS_TARGET_ROW_SWITCH 3u
+#define CANOPUS_TARGET_TRAILING_NONE 0u
+#define CANOPUS_TARGET_TRAILING_SWITCH 1u
+#define CANOPUS_TARGET_TRAILING_FORWARD 3u
+#define CANOPUS_TARGET_ALIGN_TOP_MID 2u
+#define CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID 14u
+#define CANOPUS_TARGET_ROW_GAP 8
 
 struct firmware_page_descriptor;
 
@@ -128,6 +163,49 @@ struct canopus_native_probe_record {
     uintptr_t list_row;
 };
 
+struct canopus_target_ui_binding {
+    uint32_t generation;
+    canopus_ui_node_id key;
+    uint32_t event_id;
+};
+
+struct canopus_target_ui_backend {
+    void *root;
+    void *rows[CANOPUS_TARGET_UI_MAX_ROWS];
+    void *labels[CANOPUS_TARGET_UI_MAX_LABELS];
+    uint8_t row_kinds[CANOPUS_TARGET_UI_MAX_ROWS];
+    struct canopus_target_ui_binding bindings[CANOPUS_TARGET_UI_MAX_ROWS];
+    uint32_t row_count;
+    uint32_t label_count;
+    uint32_t rendered_generation;
+    uint8_t page_index;
+};
+
+struct canopus_target_page_context {
+    struct canopus_target_ui_backend backend;
+    struct canopus_manager_native_v1 native;
+    uint8_t active;
+};
+
+struct firmware_navigation_request {
+    uint32_t reserved_0;
+    uint32_t page_key;
+    uint8_t reserved_8[36];
+};
+
+struct canopus_target_route_state {
+    uint32_t confirm_event;
+    uint32_t confirm_return_view;
+};
+
+static struct canopus_manager_model_v1 manager_model;
+static struct canopus_client_v1 manager_client;
+static struct canopus_target_page_context
+    manager_pages[CANOPUS_TARGET_PAGE_COUNT];
+static struct canopus_target_route_state manager_route_state;
+static uint32_t manager_active_pages;
+static uint8_t manager_session_ready;
+
 _Static_assert(CANOPUS_PROBE_APP_ID <= UINT16_C(0x00FF),
                "system launch animation requires an 8-bit app id");
 _Static_assert(sizeof(struct firmware_page_descriptor) == 116,
@@ -142,6 +220,10 @@ _Static_assert(offsetof(struct firmware_page_descriptor, on_destroy) == 92,
                "page destroy offset");
 _Static_assert(sizeof(struct firmware_app_descriptor) == 64,
                "firmware app descriptor size");
+_Static_assert(sizeof(struct firmware_navigation_request) == 44,
+               "firmware navigation request size");
+_Static_assert(offsetof(struct firmware_navigation_request, page_key) == 4,
+               "firmware navigation page key offset");
 _Static_assert(sizeof(struct firmware_notification_message) == 88,
                "firmware notification message size");
 _Static_assert(offsetof(struct firmware_notification_message, title) == 12,
@@ -152,9 +234,12 @@ _Static_assert(offsetof(struct firmware_notification_message, start_reminder) ==
                "notification reminder offset");
 
 static const char package_name[] = "com.canopus.manager";
-static const char page_name[] = "main";
+static const char page_name_overview[] = "main";
+static const char page_name_modules[] = "modules";
+static const char page_name_detail[] = "module_detail";
+static const char page_name_confirm[] = "confirm";
 static const char display_name[] = "Canopus Manager";
-static const char row_detail[] = "Native UI probe";
+static const char empty_detail[] = "";
 static const char notification_title[] = "Canopus";
 static const char notification_body[] = "Canpous Loaded! Just ENJOY~";
 /* The watchface bootstrap stages the first-frame PNG at this stable path. */
@@ -205,20 +290,411 @@ static int manager_on_signal(struct firmware_page_descriptor *page,
     return 0;
 }
 
+static int32_t target_device_open(void *cookie, const char *path)
+{
+    typedef int (*open_fn)(const char *, int, ...);
+    open_fn open_device = (open_fn)(uintptr_t)FW_NUTTX_OPEN;
+    (void)cookie;
+    return open_device(path, 3); /* O_RDWR in this NuttX image. */
+}
+
+static int32_t target_device_close(void *cookie, int32_t fd)
+{
+    typedef int (*close_fn)(int);
+    close_fn close_device = (close_fn)(uintptr_t)FW_NUTTX_CLOSE;
+    (void)cookie;
+    return close_device(fd);
+}
+
+static int32_t target_device_read(void *cookie, int32_t fd, void *buffer,
+                                  uint32_t count)
+{
+    typedef int32_t (*read_fn)(int, void *, uint32_t);
+    read_fn read_device = (read_fn)(uintptr_t)FW_NUTTX_READ;
+    (void)cookie;
+    return read_device(fd, buffer, count);
+}
+
+static int32_t target_device_write(void *cookie, int32_t fd,
+                                   const void *buffer, uint32_t count)
+{
+    typedef int32_t (*write_fn)(int, const void *, uint32_t);
+    write_fn write_device = (write_fn)(uintptr_t)FW_NUTTX_WRITE;
+    (void)cookie;
+    return write_device(fd, buffer, count);
+}
+
+static const struct canopus_client_io_v1 target_device_io = {
+    sizeof(struct canopus_client_io_v1),
+    CANOPUS_CLIENT_ABI_MAJOR,
+    CANOPUS_CLIENT_ABI_MINOR,
+    target_device_open,
+    target_device_close,
+    target_device_read,
+    target_device_write,
+};
+
+static uint32_t target_next_request_id(void)
+{
+    uint32_t id = manager_model.next_request_id;
+    manager_model.next_request_id++;
+    if (id == 0u) {
+        id = manager_model.next_request_id++;
+    }
+    if (manager_model.next_request_id == 0u) {
+        manager_model.next_request_id = 1u;
+    }
+    return id;
+}
+
+static int target_refresh_model(void)
+{
+    struct canopus_client_device_snapshot_v1 device;
+    char selected_id[CANOPUS_MANAGER_MODULE_ID_MAX];
+    uint32_t old_view = manager_model.view;
+    uint32_t slot;
+    uint32_t found = 0u;
+    uint32_t selected_found = 0u;
+
+    canopus_memset(selected_id, 0, sizeof(selected_id));
+    if (old_view == CANOPUS_MANAGER_VIEW_MODULE_DETAIL &&
+        manager_model.selected < manager_model.module_count) {
+        canopus_memcpy(selected_id,
+                       manager_model.modules[manager_model.selected].module_id,
+                       sizeof(selected_id));
+    }
+    if (canopus_client_query_device(&manager_client,
+                                    target_next_request_id(), &device) !=
+        CANOPUS_CLIENT_OK || device.module_count > CANOPUS_MANAGER_MAX_MODULES) {
+        return -1;
+    }
+    manager_model.framework_revision = device.framework_revision;
+    manager_model.safe_mode = device.safe_mode;
+    manager_model.module_count = 0u;
+    for (slot = 0; slot < CANOPUS_MANAGER_MAX_MODULES; slot++) {
+        struct canopus_client_module_snapshot_v1 source;
+        struct canopus_manager_module_v1 module;
+        if (canopus_client_query_module(&manager_client,
+                                        target_next_request_id(), slot,
+                                        &source) != CANOPUS_CLIENT_OK) {
+            continue;
+        }
+        canopus_memset(&module, 0, sizeof(module));
+        canopus_memcpy(module.module_id, source.module_id,
+                       sizeof(module.module_id));
+        module.lifecycle_class = source.lifecycle_class;
+        module.state = source.state;
+        module.flags = source.flags;
+        module.version = source.version;
+        module.signature_ok =
+            (source.flags & CANOPUS_TARGET_MODULE_FLAG_SIGNATURE_OK) != 0u;
+        module.risk = source.lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ?
+            CANOPUS_MANAGER_RISK_MODERATE :
+            CANOPUS_MANAGER_RISK_RESIDENT_CRITICAL;
+        {
+            int index = canopus_manager_upsert_module(&manager_model, &module);
+            if (index < 0) {
+                return -1;
+            }
+            if (selected_id[0] != '\0' &&
+                strings_differ(selected_id, module.module_id) == 0) {
+                manager_model.selected = (uint32_t)index;
+                selected_found = 1u;
+            }
+        }
+        found++;
+    }
+    if (old_view == CANOPUS_MANAGER_VIEW_MODULE_DETAIL && !selected_found) {
+        manager_model.view = CANOPUS_MANAGER_VIEW_MODULE_LIST;
+        manager_model.selected = 0u;
+    }
+    return found == device.module_count ? 0 : -1;
+}
+
+static void target_row_event(void *event)
+{
+    typedef uintptr_t (*get_user_data_fn)(void *);
+    get_user_data_fn get_user_data =
+        (get_user_data_fn)(uintptr_t)FW_LVX_EVENT_GET_USER_DATA;
+    uintptr_t encoded = get_user_data(event);
+    uint32_t page_index = (uint32_t)(encoded >> 8);
+    uint32_t row_index = (uint32_t)(encoded & UINT32_C(0xFF));
+    struct canopus_target_page_context *context;
+    struct canopus_target_ui_binding *binding;
+    int32_t rc;
+
+    if (page_index >= CANOPUS_TARGET_PAGE_COUNT ||
+        row_index >= CANOPUS_TARGET_UI_MAX_ROWS) {
+        return;
+    }
+    context = &manager_pages[page_index];
+    if (!context->active) {
+        return;
+    }
+    binding = &context->backend.bindings[row_index];
+    if (binding->event_id == 0u) {
+        return;
+    }
+    rc = canopus_ui_dispatch_event(&context->native.ui,
+                                   binding->generation,
+                                   binding->key,
+                                   binding->event_id);
+    if (rc == CANOPUS_UI_ERR_DISABLED) {
+        /* A disabled stock switch may optimistically animate before its event.
+         * Reapplying the authoritative snapshot immediately restores its state. */
+        (void)canopus_manager_native_render(&context->native);
+    }
+}
+
+static uint8_t target_row_kind(uint16_t node_type)
+{
+    if (node_type == CANOPUS_UI_NODE_SWITCH_ROW) {
+        return CANOPUS_TARGET_ROW_SWITCH;
+    }
+    if (node_type == CANOPUS_UI_NODE_BUTTON ||
+        node_type == CANOPUS_UI_NODE_ACTION_ROW) {
+        return CANOPUS_TARGET_ROW_ACTION;
+    }
+    return CANOPUS_TARGET_ROW_STATUS;
+}
+
+static int target_find_row(struct canopus_target_ui_backend *backend,
+                           uint8_t kind, uint32_t used_mask)
+{
+    uint32_t i;
+    int empty = -1;
+
+    for (i = 0; i < CANOPUS_TARGET_UI_MAX_ROWS; i++) {
+        if (backend->rows[i] == NULL) {
+            if (empty < 0) {
+                empty = (int)i;
+            }
+        } else if (backend->row_kinds[i] == kind &&
+                   (used_mask & (UINT32_C(1) << i)) == 0u) {
+            return (int)i;
+        }
+    }
+    return empty;
+}
+
+static int32_t target_ui_apply(
+    void *cookie, const struct canopus_ui_snapshot_v1 *snapshot)
+{
+    typedef void *(*create_row_fn)(void *, const char *, const char *, uint8_t);
+    typedef int (*update_row_fn)(void *, const char *, const char *,
+                                 const char *, int32_t, uint8_t);
+    typedef void *(*get_trailing_fn)(void *);
+    typedef void *(*create_label_fn)(void *);
+    typedef void (*set_label_text_fn)(void *, const char *);
+    typedef void (*add_event_fn)(void *, void (*)(void *), uint32_t, void *);
+    typedef void (*set_hidden_fn)(void *, uint32_t);
+    typedef void (*align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
+    struct canopus_target_ui_backend *backend =
+        (struct canopus_target_ui_backend *)cookie;
+    create_row_fn create_row =
+        (create_row_fn)(uintptr_t)FW_LVX_LIST_ROW_CREATE;
+    update_row_fn update_row =
+        (update_row_fn)(uintptr_t)FW_LVX_LIST_ROW_UPDATE;
+    get_trailing_fn get_trailing =
+        (get_trailing_fn)(uintptr_t)FW_LVX_LIST_ROW_TRAILING;
+    create_label_fn create_label =
+        (create_label_fn)(uintptr_t)FW_LVX_LABEL_CREATE;
+    set_label_text_fn set_label_text =
+        (set_label_text_fn)(uintptr_t)FW_LVX_LABEL_SET_TEXT;
+    add_event_fn add_event = (add_event_fn)(uintptr_t)FW_LVX_EVENT_ADD;
+    set_hidden_fn set_hidden = (set_hidden_fn)(uintptr_t)FW_LVX_SET_HIDDEN;
+    align_to_fn align_to = (align_to_fn)(uintptr_t)FW_LVX_ALIGN_TO;
+    uint16_t i;
+    uint32_t visible_rows = 0u;
+    uint32_t visible_labels = 0u;
+    uint32_t used_mask = 0u;
+    uint32_t label_used = 0u;
+    void *previous = NULL;
+    void *first = NULL;
+
+    if (backend == NULL || backend->root == NULL || snapshot == NULL ||
+        snapshot->node_count == 0u ||
+        backend->page_index >= CANOPUS_TARGET_PAGE_COUNT) {
+        return -1;
+    }
+    for (i = 0; i < snapshot->node_count; i++) {
+        uint16_t type = snapshot->nodes[i].type;
+        if (type == CANOPUS_UI_NODE_SECTION) {
+            continue;
+        }
+        if (type == CANOPUS_UI_NODE_NAVIGATION_PAGE ||
+            type == CANOPUS_UI_NODE_TEXT) {
+            visible_labels++;
+            continue;
+        }
+        if (type != CANOPUS_UI_NODE_STATUS_ROW &&
+            type != CANOPUS_UI_NODE_BUTTON &&
+            type != CANOPUS_UI_NODE_ACTION_ROW &&
+            type != CANOPUS_UI_NODE_SWITCH_ROW) {
+            return -1;
+        }
+        visible_rows++;
+    }
+    if (visible_labels == 0u ||
+        visible_labels > CANOPUS_TARGET_UI_MAX_LABELS ||
+        visible_rows > CANOPUS_TARGET_UI_MAX_ROWS) {
+        return -1;
+    }
+
+    for (i = 0; i < snapshot->node_count; i++) {
+        const struct canopus_ui_node_v1 *node = &snapshot->nodes[i];
+        const char *primary;
+        const char *secondary = empty_detail;
+        uint8_t kind;
+        uint8_t trailing;
+        int slot;
+        void *object;
+        int32_t gap = CANOPUS_TARGET_ROW_GAP;
+
+        if (node->type == CANOPUS_UI_NODE_SECTION) {
+            continue;
+        }
+        primary = snapshot->strings + node->primary_off;
+        if (node->type == CANOPUS_UI_NODE_NAVIGATION_PAGE ||
+            node->type == CANOPUS_UI_NODE_TEXT) {
+            object = backend->labels[label_used];
+            if (object == NULL) {
+                object = create_label(backend->root);
+                if (object == NULL) {
+                    return -1;
+                }
+                backend->labels[label_used] = object;
+                backend->label_count++;
+            }
+            set_label_text(object, primary);
+            set_hidden(object, 0u);
+            if (previous == NULL) {
+                align_to(object, backend->root, CANOPUS_TARGET_ALIGN_TOP_MID,
+                         0, 12);
+                first = object;
+            } else {
+                gap = node->type == CANOPUS_UI_NODE_TEXT ? 4 : 8;
+                align_to(object, previous,
+                         CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID, 0, gap);
+            }
+            previous = object;
+            label_used++;
+            continue;
+        }
+        if (node->secondary_len != 0u) {
+            secondary = snapshot->strings + node->secondary_off;
+        }
+        kind = target_row_kind(node->type);
+        if (kind == CANOPUS_TARGET_ROW_ACTION) {
+            trailing = CANOPUS_TARGET_TRAILING_FORWARD;
+        } else if (kind == CANOPUS_TARGET_ROW_SWITCH) {
+            trailing = CANOPUS_TARGET_TRAILING_SWITCH;
+        } else {
+            trailing = CANOPUS_TARGET_TRAILING_NONE;
+        }
+        slot = target_find_row(backend, kind, used_mask);
+        if (slot < 0) {
+            return -1;
+        }
+        object = backend->rows[slot];
+        if (object == NULL) {
+            void *event_object;
+            uintptr_t event_cookie;
+            object = create_row(backend->root, primary, secondary, trailing);
+            if (object == NULL) {
+                return -1;
+            }
+            backend->rows[slot] = object;
+            backend->row_kinds[slot] = kind;
+            event_object = kind == CANOPUS_TARGET_ROW_SWITCH ?
+                get_trailing(object) : object;
+            if (event_object == NULL) {
+                return -1;
+            }
+            event_cookie = ((uintptr_t)backend->page_index << 8) |
+                           (uintptr_t)(uint32_t)slot;
+            add_event(event_object, target_row_event, 7u,
+                      (void *)event_cookie);
+            backend->row_count++;
+        }
+        {
+            uint8_t selected = kind == CANOPUS_TARGET_ROW_SWITCH ?
+                ((node->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u ? 1u : 0u) :
+                1u;
+            (void)update_row(object, NULL, primary, secondary, 0, selected);
+        }
+        set_hidden(object, 0u);
+        if (previous == NULL) {
+            align_to(object, backend->root, CANOPUS_TARGET_ALIGN_TOP_MID, 0, 12);
+            first = object;
+        } else {
+            align_to(object, previous, CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID, 0,
+                     gap);
+        }
+        previous = object;
+        backend->bindings[slot].generation = snapshot->generation;
+        backend->bindings[slot].key = node->key;
+        backend->bindings[slot].event_id = node->event_id;
+        used_mask |= UINT32_C(1) << (uint32_t)slot;
+    }
+    for (i = 0; i < CANOPUS_TARGET_UI_MAX_ROWS; i++) {
+        if (backend->rows[i] != NULL &&
+            (used_mask & (UINT32_C(1) << i)) == 0u) {
+            set_hidden(backend->rows[i], 1u);
+            canopus_memset(&backend->bindings[i], 0,
+                           sizeof(backend->bindings[i]));
+        }
+    }
+    for (i = (uint16_t)label_used; i < CANOPUS_TARGET_UI_MAX_LABELS; i++) {
+        if (backend->labels[i] != NULL) {
+            set_hidden(backend->labels[i], 1u);
+        }
+    }
+    backend->rendered_generation = snapshot->generation;
+    canopus_native_probe_record.list_row = (uintptr_t)first;
+    return 0;
+}
+
+static const struct canopus_ui_backend_v1 target_ui_backend_api = {
+    sizeof(struct canopus_ui_backend_v1),
+    CANOPUS_UI_ABI_MAJOR,
+    CANOPUS_UI_ABI_MINOR,
+    target_ui_apply,
+};
+
 static int manager_on_create(struct firmware_page_descriptor *page, void *root,
                              void *start_data)
 {
-    typedef void *(*create_row_fn)(void *, const char *, const char *, uint8_t);
-    create_row_fn create_row =
-        (create_row_fn)(uintptr_t)FW_LVX_LIST_ROW_CREATE;
+    int32_t rc;
 
     (void)page;
     (void)start_data;
     canopus_native_probe_record.create_count += 1u;
     canopus_native_probe_record.root_object = (uintptr_t)root;
-    canopus_native_probe_record.list_row =
-        (uintptr_t)create_row(root, display_name, row_detail, 3u);
-    return canopus_native_probe_record.list_row != 0u ? 0 : -1;
+    canopus_memset(&manager_backend, 0, sizeof(manager_backend));
+    manager_backend.root = root;
+    rc = canopus_client_init(&manager_client, &target_device_io, NULL);
+    if (rc != CANOPUS_CLIENT_OK ||
+        canopus_client_open(&manager_client) != CANOPUS_CLIENT_OK) {
+        return -1;
+    }
+    canopus_manager_init(&manager_model, canopus_client_transport,
+                         &manager_client);
+    canopus_manager_set_identity(
+        &manager_model, "xiaomi-band-10-pro-3.101.030", "3.101.030",
+        "CONBINE_LTALM078_T3.101.030_06011854", 1u);
+    if (target_refresh_model() != 0) {
+        (void)canopus_client_close(&manager_client);
+        return -1;
+    }
+    rc = canopus_manager_native_init(&manager_native, &manager_model,
+                                     &target_ui_backend_api,
+                                     &manager_backend);
+    if (rc != CANOPUS_UI_OK) {
+        (void)canopus_client_close(&manager_client);
+        return -1;
+    }
+    return 0;
 }
 
 static int manager_on_resume(struct firmware_page_descriptor *page)
@@ -241,6 +717,14 @@ static int manager_on_destroy(struct firmware_page_descriptor *page)
     canopus_native_probe_record.destroy_count += 1u;
     canopus_native_probe_record.list_row = 0u;
     canopus_native_probe_record.root_object = 0u;
+    if (manager_client.fd >= 0) {
+        (void)canopus_client_close(&manager_client);
+    }
+    canopus_memset(&manager_backend, 0, sizeof(manager_backend));
+    canopus_memset(&manager_native, 0, sizeof(manager_native));
+    canopus_memset(&manager_model, 0, sizeof(manager_model));
+    canopus_memset(&manager_client, 0, sizeof(manager_client));
+    manager_client.fd = -1;
     return 0;
 }
 

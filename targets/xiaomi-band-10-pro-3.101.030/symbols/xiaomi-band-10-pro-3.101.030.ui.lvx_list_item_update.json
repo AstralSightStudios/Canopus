@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.ui.lvx_list_item_update",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "lvx_list_item_update",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *, const char *, const char *, const char *, int32_t, uint8_t)",
+  "proof": { "static": "confirmed" },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "EVID-UI-001"
+  },
+  "entry_address": "0x0C4A7BD0",
+  "callable_address": "0x0C4A7BD1",
+  "notes": "Updates the existing stock row's icon, primary/secondary labels, badge and trailing state. Target-private use only."
+}

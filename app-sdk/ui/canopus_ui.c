@@ -247,6 +247,43 @@ int32_t canopus_ui_button(
                           props->event_id, flags, 0);
 }
 
+int32_t canopus_ui_action_row(
+    struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
+    const struct canopus_ui_action_row_props_v1 *props)
+{
+    uint32_t flags;
+    if (props == 0 || props->struct_size != sizeof(*props) ||
+        props->event_id == 0u) {
+        return CANOPUS_UI_ERR_ARGUMENT;
+    }
+    flags = props->enabled ? CANOPUS_UI_NODE_FLAG_ENABLED : 0u;
+    return ui_append_node(tree, key, CANOPUS_UI_NODE_ACTION_ROW,
+                          props->label, props->label_len,
+                          props->detail, props->detail_len,
+                          props->event_id, flags, 0);
+}
+
+int32_t canopus_ui_switch_row(
+    struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
+    const struct canopus_ui_switch_row_props_v1 *props)
+{
+    uint32_t flags = 0u;
+    if (props == 0 || props->struct_size != sizeof(*props) ||
+        props->event_id == 0u) {
+        return CANOPUS_UI_ERR_ARGUMENT;
+    }
+    if (props->enabled) {
+        flags |= CANOPUS_UI_NODE_FLAG_ENABLED;
+    }
+    if (props->checked) {
+        flags |= CANOPUS_UI_NODE_FLAG_CHECKED;
+    }
+    return ui_append_node(tree, key, CANOPUS_UI_NODE_SWITCH_ROW,
+                          props->label, props->label_len,
+                          props->detail, props->detail_len,
+                          props->event_id, flags, 0);
+}
+
 int32_t canopus_ui_end(struct canopus_ui_tree_v1 *tree)
 {
     if (!ui_tree_active(tree)) {
@@ -277,7 +314,8 @@ int32_t canopus_ui_tree_commit(struct canopus_ui_tree_v1 *tree)
     if (rc != 0) {
         return CANOPUS_UI_ERR_BACKEND;
     }
-    context->committed = tree->_snapshot;
+    canopus_memcpy(&context->committed, &tree->_snapshot,
+                   sizeof(context->committed));
     context->has_committed = 1u;
     return CANOPUS_UI_OK;
 }
@@ -320,7 +358,10 @@ int32_t canopus_ui_dispatch_event(
             break;
         }
     }
-    if (node == 0 || node->type != CANOPUS_UI_NODE_BUTTON ||
+    if (node == 0 ||
+        (node->type != CANOPUS_UI_NODE_BUTTON &&
+         node->type != CANOPUS_UI_NODE_ACTION_ROW &&
+         node->type != CANOPUS_UI_NODE_SWITCH_ROW) ||
         node->event_id != event_id) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }

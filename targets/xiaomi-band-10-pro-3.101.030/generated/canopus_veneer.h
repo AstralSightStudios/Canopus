@@ -4,7 +4,7 @@
  * firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
  * sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
  * revision : 1
- * input_digest: f25b56f7fd61fad5
+ * input_digest: 0b3bf20d218145d8
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
@@ -188,6 +188,7 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_socket_server_receive: FORBIDDEN - no veneer may ever be generated
  * btsnoop_avdtp_recognizer: FORBIDDEN - no veneer may ever be generated
+ * close: restricted - not exported until context/ownership approved
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * driver_close_dispatch: restricted - not exported until context/ownership approved
  * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
@@ -202,11 +203,18 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
  * hfp_ag_connect: FORBIDDEN - no veneer may ever be generated
  * hfp_ag_disconnect: FORBIDDEN - no veneer may ever be generated
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
+ * lv_event_get_user_data: restricted - not exported until context/ownership approved
+ * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
+ * lv_obj_align_to: restricted - not exported until context/ownership approved
+ * lv_obj_set_hidden: restricted - not exported until context/ownership approved
+ * lvx_list_item_update: restricted - not exported until context/ownership approved
  * lvx_notification_insert_message: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
+ * open: restricted - not exported until context/ownership approved
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
+ * read: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
  * sem_post: restricted - not exported until context/ownership approved
  * sem_trywait: restricted - not exported until context/ownership approved
@@ -218,6 +226,7 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
  * service_manager_startup: restricted - not exported until context/ownership approved
  * unregister_blockdriver: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
+ * write: restricted - not exported until context/ownership approved
  */
 
 

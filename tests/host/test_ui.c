@@ -221,7 +221,7 @@ TEST(ui_backend_failure_preserves_previous_commit)
     canopus_ui_tree_abort(tree);
 }
 
-TEST(ui_events_are_generation_checked_and_button_only)
+TEST(ui_events_are_generation_checked_and_interactive_only)
 {
     struct canopus_ui_context_v1 context;
     struct fake_ui_backend backend;
@@ -234,12 +234,17 @@ TEST(ui_events_are_generation_checked_and_button_only)
         sizeof(disabled), "Remove", 6, 88, 0
     };
     struct canopus_ui_text_props_v1 text = { sizeof(text), "body", 4, 0 };
+    struct canopus_ui_switch_row_props_v1 toggle = {
+        sizeof(toggle), "Safe mode", 9, "Recovery", 8, 99, 1, 1
+    };
 
     init_context(&context, &backend, &sink);
     tree = begin_page(&context, "Manager");
     CHECK(canopus_ui_button(tree, 2, &enabled) == CANOPUS_UI_OK);
     CHECK(canopus_ui_button(tree, 3, &disabled) == CANOPUS_UI_OK);
     CHECK(canopus_ui_text(tree, 4, &text) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_switch_row(tree, 5, &toggle) == CANOPUS_UI_OK);
+    CHECK((tree->_snapshot.nodes[4].flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u);
     CHECK(canopus_ui_end(tree) == CANOPUS_UI_OK);
     CHECK(canopus_ui_tree_commit(tree) == CANOPUS_UI_OK);
 
@@ -254,8 +259,9 @@ TEST(ui_events_are_generation_checked_and_button_only)
           CANOPUS_UI_ERR_ARGUMENT);
     CHECK(canopus_ui_dispatch_event(&context, 1, 2, 78) ==
           CANOPUS_UI_ERR_ARGUMENT);
+    CHECK(canopus_ui_dispatch_event(&context, 1, 5, 99) == 19);
     CHECK(canopus_ui_dispatch_event(&context, 1, 2, 77) == 19);
-    CHECK(sink.call_count == 1);
+    CHECK(sink.call_count == 2);
     CHECK(sink.generation == 1);
     CHECK(sink.key == 2);
     CHECK(sink.event_id == 77);
@@ -296,8 +302,8 @@ static const struct test_registry ui_tests[] = {
       ui_string_failure_rolls_back_entire_node_wrapper },
     { "ui_backend_failure_preserves_previous_commit",
       ui_backend_failure_preserves_previous_commit_wrapper },
-    { "ui_events_are_generation_checked_and_button_only",
-      ui_events_are_generation_checked_and_button_only_wrapper },
+    { "ui_events_are_generation_checked_and_interactive_only",
+      ui_events_are_generation_checked_and_interactive_only_wrapper },
     { "ui_validates_backend_and_property_headers",
       ui_validates_backend_and_property_headers_wrapper },
 };

@@ -33,7 +33,8 @@ TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
 
 INC="-I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \
-  -I$ROOT/manager/service -I$ROOT/manager/protocol -I$PACK_DIR/generated \
+  -I$ROOT/manager/service -I$ROOT/manager/protocol -I$ROOT/manager/client \
+  -I$ROOT/manager/ui -I$ROOT/app-sdk/ui -I$PACK_DIR/generated \
   -I$PACK_DIR/probe/native-manager"
 
 # The v2 transport (CAN-P0-008) pulls the protocol codec and the snapshot
@@ -43,8 +44,14 @@ for s in \
     manager/service/canopus_supervisor_module.c \
     manager/service/canopus_supervisor_platform.c \
     manager/protocol/canopus_protocol.c \
+    manager/client/canopus_client.c \
+    manager/ui/canopus_manager.c \
+    manager/ui/canopus_manager_native.c \
+    app-sdk/ui/canopus_ui.c \
     targets/$TARGET_ID/probe/native-manager/canopus_manager_native_probe.c \
     runtime/control/canopus_control.c \
+    runtime/lifecycle/canopus_lifecycle.c \
+    runtime/module/canopus_module.c \
     runtime/resources/canopus_resource.c; do
     base=$(basename "$s")
     $CC $TARGET_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
@@ -56,8 +63,14 @@ ld.lld -r -o "$OUT/canopus_supervisor.elf" \
     "$OUT/canopus_supervisor_module.o" \
     "$OUT/canopus_supervisor_platform.o" \
     "$OUT/canopus_protocol.o" \
+    "$OUT/canopus_client.o" \
+    "$OUT/canopus_manager.o" \
+    "$OUT/canopus_manager_native.o" \
+    "$OUT/canopus_ui.o" \
     "$OUT/canopus_manager_native_probe.o" \
     "$OUT/canopus_control.o" \
+    "$OUT/canopus_lifecycle.o" \
+    "$OUT/canopus_module.o" \
     "$OUT/canopus_resource.o"
 
 echo "[3/3] Canopus ELF verifier"

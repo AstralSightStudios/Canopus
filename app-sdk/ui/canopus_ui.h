@@ -16,11 +16,11 @@ extern "C" {
 #endif
 
 #define CANOPUS_UI_ABI_MAJOR 1u
-#define CANOPUS_UI_ABI_MINOR 0u
+#define CANOPUS_UI_ABI_MINOR 2u
 
 #define CANOPUS_UI_MAX_NODES        32u
 #define CANOPUS_UI_MAX_DEPTH         8u
-#define CANOPUS_UI_STRING_CAPACITY 768u
+#define CANOPUS_UI_STRING_CAPACITY 1536u
 #define CANOPUS_UI_NO_NODE          0xFFFFu
 
 #define CANOPUS_UI_OK             0
@@ -40,9 +40,23 @@ enum canopus_ui_node_type {
     CANOPUS_UI_NODE_TEXT,
     CANOPUS_UI_NODE_STATUS_ROW,
     CANOPUS_UI_NODE_BUTTON,
+    /* A wearable-sized stock row with primary/secondary text and an action. */
+    CANOPUS_UI_NODE_ACTION_ROW,
+    /* A stock list row whose trailing control is a checked/unchecked switch. */
+    CANOPUS_UI_NODE_SWITCH_ROW,
 };
 
 #define CANOPUS_UI_NODE_FLAG_ENABLED (1u << 0)
+#define CANOPUS_UI_NODE_FLAG_CHECKED (1u << 1)
+
+/* Semantic typography roles. Target backends must map supported roles to stock
+ * typography instead of exposing private firmware style IDs. */
+enum canopus_ui_text_style {
+    CANOPUS_UI_TEXT_BODY = 0,
+    CANOPUS_UI_TEXT_TITLE,
+    CANOPUS_UI_TEXT_DESCRIPTION,
+    CANOPUS_UI_TEXT_WARNING,
+};
 
 /* A node references strings copied into its tree's bounded string arena. */
 struct canopus_ui_node_v1 {
@@ -145,6 +159,27 @@ struct canopus_ui_button_props_v1 {
     uint32_t enabled;
 };
 
+struct canopus_ui_action_row_props_v1 {
+    uint32_t struct_size;
+    const char *label;
+    uint32_t label_len;
+    const char *detail;
+    uint32_t detail_len;
+    uint32_t event_id;
+    uint32_t enabled;
+};
+
+struct canopus_ui_switch_row_props_v1 {
+    uint32_t struct_size;
+    const char *label;
+    uint32_t label_len;
+    const char *detail;
+    uint32_t detail_len;
+    uint32_t event_id;
+    uint32_t checked;
+    uint32_t enabled;
+};
+
 int32_t canopus_ui_context_init(
     struct canopus_ui_context_v1 *context,
     const struct canopus_ui_backend_v1 *backend,
@@ -171,6 +206,12 @@ int32_t canopus_ui_status_row(
 int32_t canopus_ui_button(
     struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
     const struct canopus_ui_button_props_v1 *props);
+int32_t canopus_ui_action_row(
+    struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
+    const struct canopus_ui_action_row_props_v1 *props);
+int32_t canopus_ui_switch_row(
+    struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
+    const struct canopus_ui_switch_row_props_v1 *props);
 
 /* Ends the current navigation-page or section container. */
 int32_t canopus_ui_end(struct canopus_ui_tree_v1 *tree);
@@ -223,6 +264,20 @@ int32_t canopus_ui_dispatch_event(
             sizeof(struct canopus_ui_button_props_v1), \
             (label_), (uint32_t)(sizeof(label_) - 1u), \
             (event_), (enabled_) })
+#define CANOPUS_UI_ACTION_ROW(tree_, key_, label_, detail_, event_, enabled_) \
+    canopus_ui_action_row((tree_), (key_), \
+        &(const struct canopus_ui_action_row_props_v1){ \
+            sizeof(struct canopus_ui_action_row_props_v1), \
+            (label_), (uint32_t)(sizeof(label_) - 1u), \
+            (detail_), (uint32_t)(sizeof(detail_) - 1u), \
+            (event_), (enabled_) })
+#define CANOPUS_UI_SWITCH_ROW(tree_, key_, label_, detail_, event_, checked_, enabled_) \
+    canopus_ui_switch_row((tree_), (key_), \
+        &(const struct canopus_ui_switch_row_props_v1){ \
+            sizeof(struct canopus_ui_switch_row_props_v1), \
+            (label_), (uint32_t)(sizeof(label_) - 1u), \
+            (detail_), (uint32_t)(sizeof(detail_) - 1u), \
+            (event_), (checked_), (enabled_) })
 
 #ifdef __cplusplus
 }

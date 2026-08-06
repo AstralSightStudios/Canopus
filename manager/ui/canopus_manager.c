@@ -73,14 +73,14 @@ int canopus_manager_upsert_module(struct canopus_manager_model_v1 *m,
     uint32_t i;
     for (i = 0; i < m->module_count; i++) {
         if (mod_id_eq(m->modules[i].module_id, mod->module_id)) {
-            m->modules[i] = *mod;
+            canopus_memcpy(&m->modules[i], mod, sizeof(*mod));
             return (int)i;
         }
     }
     if (m->module_count >= CANOPUS_MANAGER_MAX_MODULES) {
         return -1;
     }
-    m->modules[m->module_count] = *mod;
+    canopus_memcpy(&m->modules[m->module_count], mod, sizeof(*mod));
     m->module_count++;
     return (int)(m->module_count - 1);
 }

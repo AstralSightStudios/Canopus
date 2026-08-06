@@ -573,7 +573,12 @@ TEST(v2_device_write_echoes_request_id)
     CHECK(canopus_supervisor_device_write(&sup, wbuf, sizeof(wbuf)) ==
           (int32_t)sizeof(wbuf));
     CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) ==
-          CANOPUS_TRANSPORT_V2_HEADER_SIZE);
+          CANOPUS_TRANSPORT_V2_HEADER_SIZE + CANOPUS_QUERY_DEVICE_SIZE);
+    CHECK(v2_word(rbuf, 12) ==
+          CANOPUS_TRANSPORT_V2_HEADER_SIZE + CANOPUS_QUERY_DEVICE_SIZE);
+    CHECK(v2_word(rbuf, 32) == CANOPUS_QUERY_DEVICE_SIZE);
+    CHECK(v2_word(rbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE) ==
+          CANOPUS_QUERY_DEVICE_MAGIC);
     CHECK(v2_word(rbuf, 0) == CANOPUS_TRANSPORT_V2_MAGIC);
     CHECK((v2_word(rbuf, 6) & 0xffffu) == CANOPUS_TRANSPORT_V2_RESPONSE);
     CHECK(v2_word(rbuf, 16) == CANOPUS_CMD_QUERY_DEVICE); /* opcode echoed */

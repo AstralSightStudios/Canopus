@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.ui.lv_obj_set_hidden",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "lv_obj_set_hidden",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *, uint32_t)",
+  "proof": { "static": "confirmed" },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "EVID-UI-002"
+  },
+  "entry_address": "0x0C588458",
+  "callable_address": "0x0C588459",
+  "notes": "Stock list update paths toggle child visibility with 0/1 through this LVGL compatibility thunk."
+}

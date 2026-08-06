@@ -88,6 +88,7 @@ TEST(manager_native_renders_device_prefabs)
     struct manager_native_backend backend;
     const struct canopus_ui_snapshot_v1 *snapshot;
     const struct canopus_ui_node_v1 *modules;
+    const struct canopus_ui_node_v1 *safe_mode;
 
     canopus_memset(&backend, 0, sizeof(backend));
     canopus_manager_init(&model, native_transport, 0);
@@ -100,10 +101,14 @@ TEST(manager_native_renders_device_prefabs)
     CHECK(snapshot->generation == 1);
     CHECK(snapshot->nodes[0].type == CANOPUS_UI_NODE_NAVIGATION_PAGE);
     CHECK(strcmp(snapshot->strings + snapshot->nodes[0].primary_off,
-                 "Canopus Manager") == 0);
+                 "Canopus") == 0);
     modules = find_event(snapshot, CANOPUS_MANAGER_EVENT_SHOW_MODULES);
     CHECK(modules != 0);
-    CHECK(modules->type == CANOPUS_UI_NODE_BUTTON);
+    CHECK(modules->type == CANOPUS_UI_NODE_ACTION_ROW);
+    safe_mode = find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE);
+    CHECK(safe_mode != 0);
+    CHECK(safe_mode->type == CANOPUS_UI_NODE_SWITCH_ROW);
+    CHECK((safe_mode->flags & CANOPUS_UI_NODE_FLAG_CHECKED) == 0u);
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_INSTALL) != 0);
     CHECK((find_event(snapshot, CANOPUS_MANAGER_EVENT_INSTALL)->flags &
            CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);
@@ -167,10 +172,16 @@ TEST(manager_native_dispatches_real_model_operations)
     CHECK(node != 0);
     CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
+    CHECK(native_transport_calls == 0);
+    snapshot = canopus_ui_current(&native.ui);
+    node = find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
+    CHECK(node != 0);
+    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+                                    node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(native_transport_calls == 1);
     CHECK(native_transport_command == CANOPUS_CMD_DISABLE);
     CHECK(model.pending_op == CANOPUS_CMD_DISABLE);
-    CHECK(backend.applies == 2);
+    CHECK(backend.applies == 3);
 }
 
 TEST(manager_native_stage_token_is_bounded_and_installable)
@@ -201,6 +212,12 @@ TEST(manager_native_stage_token_is_bounded_and_installable)
     CHECK((node->flags & CANOPUS_UI_NODE_FLAG_ENABLED) != 0u);
     CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
+    CHECK(native_transport_calls == 0);
+    snapshot = canopus_ui_current(&native.ui);
+    node = find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
+    CHECK(node != 0);
+    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+                                    node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(native_transport_calls == 1);
     CHECK(native_transport_command == CANOPUS_CMD_INSTALL);
     CHECK(strcmp(native_transport_payload, "pkg-001") == 0);
@@ -224,7 +241,7 @@ TEST(manager_native_empty_module_list_is_valid)
     for (i = 0; i < snapshot->node_count; i++) {
         if (snapshot->nodes[i].type == CANOPUS_UI_NODE_TEXT &&
             strcmp(snapshot->strings + snapshot->nodes[i].primary_off,
-                   "No modules installed") == 0) {
+                   "No external modules installed") == 0) {
             found = 1;
         }
     }

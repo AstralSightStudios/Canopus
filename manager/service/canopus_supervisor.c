@@ -399,7 +399,13 @@ static int v2_op_needs_slot(uint32_t cmd)
 {
     return cmd == CANOPUS_CMD_ENABLE || cmd == CANOPUS_CMD_DISABLE ||
            cmd == CANOPUS_CMD_REMOVE || cmd == CANOPUS_CMD_UPDATE ||
-           cmd == CANOPUS_CMD_ROLLBACK || cmd == CANOPUS_CMD_QUERY_MODULE;
+           cmd == CANOPUS_CMD_ROLLBACK;
+}
+
+static uint32_t wire_u32(const uint8_t *p)
+{
+    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
 
 /* NUL-aware bounded compare of a slot's stored module id against a request
@@ -487,6 +493,7 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
 {
     uint32_t op, slot_arg;
     uint32_t rc;
+    int track_request;
 
     if (sup == 0 || req == 0 || resp == 0 || opcode == 0) {
         return -1;
@@ -503,7 +510,20 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         canopus_proto_response_init(resp, req->request_id, CANOPUS_RESULT_DISALLOWED, 0);
         return 0;
     }
-    if (v2_op_needs_slot(req->command)) {
+    if (req->command == CANOPUS_CMD_QUERY_MODULE) {
+        if (payload == 0 || req->payload_size != 4u) {
+            canopus_proto_response_init(resp, req->request_id,
+                                        CANOPUS_RESULT_DISALLOWED, 0);
+            return 0;
+        }
+        slot_arg = wire_u32((const uint8_t *)payload);
+        if (slot_arg >= CANOPUS_SUP_MODULE_SLOTS ||
+            sup->modules[slot_arg].state == 0u) {
+            canopus_proto_response_init(resp, req->request_id,
+                                        CANOPUS_RESULT_DISALLOWED, 0);
+            return 0;
+        }
+    } else if (v2_op_needs_slot(req->command)) {
         int found = sup_slot_from_module_id(sup, payload, req->payload_size);
         if (found < 0) {
             canopus_proto_response_init(resp, req->request_id,
@@ -514,9 +534,17 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
     } else {
         slot_arg = 0;
     }
-    /* track the request in the pending table (CAN-P1-002) */
-    if (canopus_pending_accept(&sup->pending, req->request_id, req->command) != 0) {
-        canopus_proto_response_init(resp, req->request_id, CANOPUS_RESULT_REJECTED, 0);
+    /* Read-only queries complete synchronously and do not consume retained
+     * pending slots. Mutations remain observable until an explicit ACK path is
+     * negotiated. */
+    track_request = req->command != CANOPUS_CMD_ECHO &&
+                    req->command != CANOPUS_CMD_QUERY_DEVICE &&
+                    req->command != CANOPUS_CMD_QUERY_MODULE;
+    if (track_request &&
+        canopus_pending_accept(&sup->pending, req->request_id,
+                               req->command) != 0) {
+        canopus_proto_response_init(resp, req->request_id,
+                                    CANOPUS_RESULT_REJECTED, 0);
         return 0;
     }
     /* run under the snapshot protocol; INSTALL receives the request payload
@@ -530,10 +558,62 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
                           ? (const char *)payload : 0);
     sup->pending_state = rc;
     canopus_snapshot_commit(&sup->snap);
-    canopus_pending_set_error(&sup->pending, req->request_id, sup->error_code);
-    (void)canopus_pending_finish(&sup->pending, req->request_id, rc);
+    if (track_request) {
+        canopus_pending_set_error(&sup->pending, req->request_id,
+                                  sup->error_code);
+        (void)canopus_pending_finish(&sup->pending, req->request_id, rc);
+    }
     canopus_proto_response_init(resp, req->request_id, rc, 0);
     return 0;
+}
+
+static void put_wire_u32(uint8_t *out, uint32_t offset, uint32_t value)
+{
+    out[offset] = (uint8_t)value;
+    out[offset + 1u] = (uint8_t)(value >> 8);
+    out[offset + 2u] = (uint8_t)(value >> 16);
+    out[offset + 3u] = (uint8_t)(value >> 24);
+}
+
+static uint32_t render_v2_query_payload(
+    const struct canopus_supervisor_v1 *sup,
+    const struct canopus_proto_request_v1 *req,
+    const struct canopus_proto_response_v1 *resp,
+    uint8_t out[CANOPUS_PROTO_MAX_PAYLOAD])
+{
+    if (resp->result_state != CANOPUS_RESULT_COMPLETED) {
+        return 0u;
+    }
+    if (req->command == CANOPUS_CMD_QUERY_DEVICE) {
+        canopus_memset(out, 0, CANOPUS_QUERY_DEVICE_SIZE);
+        put_wire_u32(out, 0u, CANOPUS_QUERY_DEVICE_MAGIC);
+        put_wire_u32(out, 4u, CANOPUS_QUERY_DEVICE_SIZE);
+        put_wire_u32(out, 8u, sup->framework_revision);
+        put_wire_u32(out, 12u, sup->safe_mode);
+        put_wire_u32(out, 16u, sup->module_count);
+        put_wire_u32(out, 20u, sup->safe_mode_reason);
+        put_wire_u32(out, 24u, (uint32_t)sup->error_code);
+        put_wire_u32(out, 28u, sup->flags);
+        return CANOPUS_QUERY_DEVICE_SIZE;
+    }
+    if (req->command == CANOPUS_CMD_QUERY_MODULE &&
+        sup->selected >= 0 &&
+        (uint32_t)sup->selected < CANOPUS_SUP_MODULE_SLOTS) {
+        const struct canopus_sup_module_v1 *module =
+            &sup->modules[(uint32_t)sup->selected];
+        canopus_memset(out, 0, CANOPUS_QUERY_MODULE_SIZE);
+        put_wire_u32(out, 0u, CANOPUS_QUERY_MODULE_MAGIC);
+        put_wire_u32(out, 4u, CANOPUS_QUERY_MODULE_SIZE);
+        put_wire_u32(out, 8u, (uint32_t)sup->selected);
+        put_wire_u32(out, 12u, module->state);
+        put_wire_u32(out, 16u, module->lifecycle_class);
+        put_wire_u32(out, 20u, module->version);
+        put_wire_u32(out, 24u, module->flags);
+        canopus_memcpy(out + 28u, module->module_id,
+                       CANOPUS_SUP_MODULE_ID_MAX);
+        return CANOPUS_QUERY_MODULE_SIZE;
+    }
+    return 0u;
 }
 
 static uint32_t status_word(const uint8_t *b, unsigned int o)
@@ -647,6 +727,8 @@ int32_t canopus_supervisor_device_write(struct canopus_supervisor_v1 *sup,
     if (count >= CANOPUS_TRANSPORT_V2_HEADER_SIZE) {
         struct canopus_proto_request_v1 req;
         struct canopus_proto_response_v1 resp;
+        uint8_t response_payload[CANOPUS_PROTO_MAX_PAYLOAD];
+        uint32_t response_payload_len;
         uint32_t poff = 0;
         int rc;
         magic = (uint32_t)b[0] | ((uint32_t)b[1] << 8) |
@@ -661,8 +743,13 @@ int32_t canopus_supervisor_device_write(struct canopus_supervisor_v1 *sup,
             if (rc != 0) {
                 return -1;
             }
+            response_payload_len = render_v2_query_payload(
+                sup, &req, &resp, response_payload);
+            resp.payload_size = response_payload_len;
             sup->v2_response_len = (uint32_t)canopus_transport_v2_encode_response(
-                &resp, magic, 0, 0, sup->v2_response_buf,
+                &resp, magic,
+                response_payload_len != 0u ? response_payload : 0,
+                response_payload_len, sup->v2_response_buf,
                 sizeof(sup->v2_response_buf));
             if (sup->v2_response_len == (uint32_t)-1) {
                 return -1;

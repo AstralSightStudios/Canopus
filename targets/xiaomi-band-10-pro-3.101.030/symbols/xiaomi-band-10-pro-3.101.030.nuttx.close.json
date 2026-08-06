@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.nuttx.close",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(int)",
+  "proof": { "static": "confirmed" },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "EVID-IO-001"
+  },
+  "entry_address": "0x0C1AAB70",
+  "callable_address": "0x0C1AAB71",
+  "notes": "Current-process fd close wrapper; validates fd table entry and releases through file_close. Device probe pending."
+}
