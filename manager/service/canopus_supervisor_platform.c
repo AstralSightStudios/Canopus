@@ -25,10 +25,15 @@
 #define CANOPUS_SUP_PATH_MAX 224u
 #define CANOPUS_SUP_READ_CHUNK 512u
 #define CANOPUS_SUP_NUTTX_O_RDONLY 1
+#define CANOPUS_SUP_NUTTX_O_WRONLY 2u
+#define CANOPUS_SUP_NUTTX_O_CREAT 0x10u
 #define CANOPUS_SUP_NUTTX_OPEN UINT32_C(0x0C1C15B1)
 #define CANOPUS_SUP_NUTTX_CLOSE UINT32_C(0x0C1AAB71)
 #define CANOPUS_SUP_NUTTX_READ UINT32_C(0x0C1C1E25)
 #define CANOPUS_SUP_NUTTX_ERRNO_LOCATION UINT32_C(0x0C1D5145)
+#define CANOPUS_SUP_NUTTX_WRITE UINT32_C(0x0C1C31C9)
+#define CANOPUS_SUP_NUTTX_RENAME UINT32_C(0x0C1C1E71)
+#define CANOPUS_SUP_NUTTX_UNLINK UINT32_C(0x0C1C2EDD)
 #define CANOPUS_SUP_INSMOD UINT32_C(0x0C1EE091)
 #define CANOPUS_SUP_RMMOD UINT32_C(0x0C1EE09D)
 #define CANOPUS_SUP_MODHANDLE UINT32_C(0x0C1EE0A9)
@@ -36,6 +41,9 @@
 #define CANOPUS_SUP_TARGET_ID "xiaomi-band-10-pro-3.101.030"
 #define CANOPUS_SUP_DEVICE_MODE 438u /* 0666 */
 #define CANOPUS_SUP_FOPS_WORDS 12u   /* matches the stock file_operations table */
+/* Next-boot registry persistence (see canopus_supervisor.h for the format). */
+#define CANOPUS_SUP_REGISTRY_PATH "/data/canopus/registry.bin"
+#define CANOPUS_SUP_REGISTRY_TMP_PATH "/data/canopus/registry.tmp"
 
 /* CAN-P2-002: the fops table is typed from the recovered layout instead of a
  * bare uint32_t[12]. The veneer's `file_operations` carries the exact device
@@ -186,6 +194,62 @@ static int sup_read_exact(const char *path, void *buffer, uint32_t size,
     return 0;
 }
 
+/* Whole-record file write (fixed-size registry). Writes exactly `size`
+ * bytes; O_CREAT (bit 4) with the device mode. No O_TRUNC is needed because
+ * the registry is a fixed 784-byte record and callers always rewrite it
+ * whole through a freshly-unlinked temp name. */
+static int sup_write_all(const char *path, const void *data, uint32_t size)
+{
+    typedef int (*open_fn)(const char *, int, ...);
+    typedef int (*close_fn)(int);
+    typedef int32_t (*write_fn)(int, const void *, uint32_t);
+    open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
+    close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
+    write_fn write_file = (write_fn)(uintptr_t)CANOPUS_SUP_NUTTX_WRITE;
+    const uint8_t *bytes = (const uint8_t *)data;
+    uint32_t used = 0u;
+    int fd;
+
+    if (path == 0 || data == 0 || size == 0u) {
+        return -1;
+    }
+    fd = open_file(path, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT,
+                   CANOPUS_SUP_DEVICE_MODE);
+    if (fd < 0) {
+        return -1;
+    }
+    while (used < size) {
+        int32_t written = write_file(fd, bytes + used, size - used);
+        if (written <= 0) {
+            (void)close_file(fd);
+            return -1;
+        }
+        used += (uint32_t)written;
+    }
+    (void)close_file(fd);
+    return 0;
+}
+
+static int sup_unlink_path(const char *path)
+{
+    typedef int (*unlink_fn)(const char *);
+    unlink_fn unlink_file = (unlink_fn)(uintptr_t)CANOPUS_SUP_NUTTX_UNLINK;
+    if (path == 0) {
+        return -1;
+    }
+    return unlink_file(path);
+}
+
+static int sup_rename_path(const char *from, const char *to)
+{
+    typedef int (*rename_fn)(const char *, const char *);
+    rename_fn rename_file = (rename_fn)(uintptr_t)CANOPUS_SUP_NUTTX_RENAME;
+    if (from == 0 || to == 0) {
+        return -1;
+    }
+    return rename_file(from, to);
+}
+
 static int sup_hash_artifact(const char *path, uint32_t expected_size,
                              uint8_t digest[32])
 {
@@ -300,20 +364,81 @@ static int sup_load_module(void *cookie, uint32_t index,
                ? CANOPUS_STATE_ACTIVE : CANOPUS_STATE_BOOT_RESIDENT;
 }
 
-static int sup_unload_module(void *cookie, uint32_t index)
+/* Remove intent applied at boot: delete the module's inbox receipt and ELF.
+ * The module id resolves through the (briefly registered) slot. */
+static int sup_remove_artifact(void *cookie, uint32_t index)
 {
-    typedef void *(*modhandle_fn)(const char *);
-    typedef int (*rmmod_fn)(void *);
     struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
-    modhandle_fn modhandle = (modhandle_fn)(uintptr_t)CANOPUS_SUP_MODHANDLE;
-    rmmod_fn rmmod = (rmmod_fn)(uintptr_t)CANOPUS_SUP_RMMOD;
-    void *handle;
+    char receipt_path[CANOPUS_SUP_PATH_MAX];
+    char module_path[CANOPUS_SUP_PATH_MAX];
+    const char *module_id;
 
     (void)cookie;
     if (sup == 0 || index >= CANOPUS_SUP_MODULE_SLOTS ||
-        sup->modules[index].state == 0u) return -1;
-    handle = modhandle((const char *)sup->modules[index].module_id);
-    return handle != 0 && rmmod(handle) >= 0 ? 0 : -1;
+        sup->modules[index].state == 0u) {
+        return -1;
+    }
+    module_id = (const char *)sup->modules[index].module_id;
+    if (sup_make_path(receipt_path, module_id, CANOPUS_SUP_RECEIPT_SUFFIX) != 0) {
+        return -1;
+    }
+    if (sup_make_path(module_path, module_id, CANOPUS_SUP_MODULE_SUFFIX) != 0) {
+        return -1;
+    }
+    (void)sup_unlink_path(receipt_path);
+    (void)sup_unlink_path(module_path);
+    return 0;
+}
+
+static int sup_registry_persist(void *cookie, const uint8_t *data, uint32_t len)
+{
+    (void)cookie;
+    if (data == 0 || len == 0u || len > CANOPUS_SUP_REGISTRY_SIZE) {
+        return -1;
+    }
+    /* Atomic: write the temp, rename over the target. A stale temp from a
+     * crashed write is unlinked first so O_CREAT always yields a fresh file. */
+    (void)sup_unlink_path(CANOPUS_SUP_REGISTRY_TMP_PATH);
+    if (sup_write_all(CANOPUS_SUP_REGISTRY_TMP_PATH, data, len) != 0) {
+        return -1;
+    }
+    if (sup_rename_path(CANOPUS_SUP_REGISTRY_TMP_PATH,
+                        CANOPUS_SUP_REGISTRY_PATH) != 0) {
+        (void)sup_unlink_path(CANOPUS_SUP_REGISTRY_TMP_PATH);
+        return -1;
+    }
+    return 0;
+}
+
+static int sup_registry_restore(void *cookie, uint8_t *data, uint32_t len)
+{
+    typedef int (*open_fn)(const char *, int, ...);
+    typedef int (*close_fn)(int);
+    typedef int32_t (*read_fn)(int, void *, uint32_t);
+    open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
+    close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
+    read_fn read_file = (read_fn)(uintptr_t)CANOPUS_SUP_NUTTX_READ;
+    uint32_t used = 0u;
+    int fd;
+
+    (void)cookie;
+    if (data == 0 || len == 0u || len > CANOPUS_SUP_REGISTRY_SIZE) {
+        return -1;
+    }
+    fd = open_file(CANOPUS_SUP_REGISTRY_PATH, CANOPUS_SUP_NUTTX_O_RDONLY);
+    if (fd < 0) {
+        return 1; /* no registry yet: a fresh install, not an error */
+    }
+    while (used < len) {
+        int32_t got = read_file(fd, data + used, len - used);
+        if (got <= 0) {
+            (void)close_file(fd);
+            return -1;
+        }
+        used += (uint32_t)got;
+    }
+    (void)close_file(fd);
+    return 0;
 }
 
 static int sup_stage_package(void *cookie, const char *token)
@@ -378,9 +503,8 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_register_device,
     sup_unregister_device,
     sup_load_module,
-    sup_unload_module,
     sup_stage_package,
-    0, /* remove_artifact: inbox module remains for disabled/retry flow */
-    0, /* deactivate: device teardown happens inside unload (G0 pending) */
-    0, /* stop */
+    sup_remove_artifact,
+    sup_registry_persist,
+    sup_registry_restore,
 };

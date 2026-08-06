@@ -5,13 +5,12 @@
  * therefore require real-device RE before they can be implemented:
  *
  *   register_device   : create /dev/canopus with read(status)/write(command).
- *                       The btpatch module proves a char-device path exists on
- *                       this firmware; the exact register_driver/device API is
- *                       still device RE (G0/G4).
  *   load_module       : load a Canopus ELF32 ET_REL module through the stock
  *                       modlib and let it run its constructor.
- *   unload_module     : drain + rmmod (removable classes only).
  *   stage_package     : make a staged .canopus available for INSTALL.
+ *   remove_artifact   : delete a module's owned files at boot (remove intent).
+ *   persist/restore   : atomic write / read of the module registry so slots
+ *                       survive reboot and canopus reinstall.
  *
  * Host tests provide a fake platform; the device build provides the real
  * implementation once the APIs are proven.
@@ -29,21 +28,19 @@ struct canopus_sup_platform_v1 {
     /* Returns 0 on success. */
     int (*register_device)(void *cookie);
     int (*unregister_device)(void *cookie);
-    /* Load/unload a module slot. load returns the module's state on success
+    /* Load a module slot. Returns the module's state on success
      * (CANOPUS_STATE_ACTIVE / BOOT_RESIDENT) or -1 on failure. */
     int (*load_module)(void *cookie, uint32_t index,
                        const char *module_name, uint32_t lifecycle_class);
-    int (*unload_module)(void *cookie, uint32_t index);
     /* Make the latest staged package available for INSTALL. Returns 0/1. */
     int (*stage_package)(void *cookie, const char *package_path);
-    /* Remove the supervisor-owned artifact after a successful removable
-     * REMOVE. Failure retains the unloaded slot so the command can retry. */
+    /* Delete the module's owned inbox artifacts (remove intent, applied at
+     * boot). Returns 0 on success. */
     int (*remove_artifact)(void *cookie, uint32_t index);
-    /* CAN-P0-005: per-module teardown phases called by a removable disable
-     * before unload. Both are optional (the device unload path may perform
-     * them itself); NULL hooks are skipped. */
-    int (*deactivate)(void *cookie, uint32_t index);
-    int (*stop)(void *cookie, uint32_t index);
+    /* Atomic save of the registry bytes. Returns 0 on success. */
+    int (*persist)(void *cookie, const uint8_t *data, uint32_t len);
+    /* Read the registry bytes. Returns 0 (present), 1 (absent) or -1. */
+    int (*restore)(void *cookie, uint8_t *data, uint32_t len);
 };
 
 #ifdef __cplusplus

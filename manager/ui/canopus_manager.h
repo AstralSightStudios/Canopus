@@ -132,6 +132,8 @@ uint32_t canopus_manager_op_safe_mode(struct canopus_manager_model_v1 *m);
 
 /* ---- availability helpers (for the detail page) ------------------ */
 /* Returns non-zero when the operation is available for the module. */
+int canopus_manager_can_enable(const struct canopus_manager_model_v1 *m,
+                               uint32_t index);
 int canopus_manager_can_disable(const struct canopus_manager_model_v1 *m,
                                 uint32_t index);
 int canopus_manager_can_remove(const struct canopus_manager_model_v1 *m,

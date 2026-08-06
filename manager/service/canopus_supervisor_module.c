@@ -31,6 +31,10 @@ __attribute__((constructor)) static void canopus_sup_ctor(void)
         && canopus_sup_platform.register_device(0) == 0) {
         g_device_registered = 1;
     }
+    /* Restore the persisted slot table so modules installed in a previous
+     * session survive reboot / canopus reinstall. Enabled intents are loaded
+     * here; remove intents delete their inbox artifacts. */
+    (void)canopus_supervisor_restore_registry(&g_sup);
 }
 
 __attribute__((destructor)) static void canopus_sup_dtor(void)

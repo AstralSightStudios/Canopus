@@ -20,10 +20,6 @@
 #include "canopus_abi.h"
 #include "canopus_protocol.h"
 
-/* The module's resource tracker (defined in canopus_runtime.h); only a
- * pointer is stored per slot. */
-struct canopus_resource_tracker_v1;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -116,10 +112,34 @@ enum canopus_boot_state {
 #define CANOPUS_SUP_MODULE_ID_MAX 32u
 
 /* Slot flag bits. bit0 is the legacy signature_ok bit (also rendered in the
- * 384-byte CPS1 status). bit1 is the reject-new-work barrier set while a
- * removable module is being stopped/drained. */
+ * 384-byte CPS1 status). */
 #define CANOPUS_SUP_FLAG_SIGNATURE_OK  (1u << 0)
-#define CANOPUS_SUP_FLAG_DISABLING     (1u << 1)
+
+/* CAN-P0-005 revision (next-boot lifecycle): enable/disable/remove are never
+ * hot operations. Each slot carries a persisted *boot intent* — what the
+ * next supervisor load should do with the module. INSTALL always records
+ * DISABLED, so a freshly installed module is never loaded. */
+enum canopus_sup_intent {
+    CANOPUS_SUP_INTENT_DISABLED = 0, /* never load at boot (default) */
+    CANOPUS_SUP_INTENT_ENABLED  = 1, /* load at boot */
+    CANOPUS_SUP_INTENT_REMOVE   = 2, /* delete artifacts + drop at boot */
+};
+
+/* Fixed-format on-disk registry that makes module slots survive reboot and
+ * canopus reinstall. One file, written atomically (tmp + rename) on every
+ * mutation, read back at supervisor load. Format:
+ *   header (16): u32 magic "CRD1", u32 version, u32 module_count, u32 rsvd
+ *   16 slots x 48: module_id[32] + u32 class + u32 version + u32 flags +
+ *                  u32 intent
+ * The slot table is the in-memory source of truth; the registry is the
+ * boot-time restore source. */
+#define CANOPUS_SUP_REGISTRY_MAGIC   0x31524443u /* "CRD1" */
+#define CANOPUS_SUP_REGISTRY_VERSION 1u
+#define CANOPUS_SUP_REGISTRY_HEADER  16u
+#define CANOPUS_SUP_REGISTRY_SLOT_SIZE 48u
+#define CANOPUS_SUP_REGISTRY_SIZE \
+    (CANOPUS_SUP_REGISTRY_HEADER + \
+     CANOPUS_SUP_MODULE_SLOTS * CANOPUS_SUP_REGISTRY_SLOT_SIZE)
 
 /* A tracked module slot. */
 struct canopus_sup_module_v1 {
@@ -127,13 +147,7 @@ struct canopus_sup_module_v1 {
     uint32_t lifecycle_class;  /* CANOPUS_LIFECYCLE_* */
     uint32_t version;
     uint32_t flags;            /* CANOPUS_SUP_FLAG_* */
-    /* CAN-P0-005: open references / inflight work the drain must observe.
-     * A module with open refs or retained/detached resources can never be
-     * unloaded; the supervisor fails the disable with REBOOT_REQUIRED. */
-    uint32_t open_refs;
-    /* The module's resource tracker (owned by the module; the supervisor
-     * drains it before unload). NULL when the module tracks nothing. */
-    struct canopus_resource_tracker_v1 *tracker;
+    uint32_t intent;           /* CANOPUS_SUP_INTENT_* (persisted) */
     /* CAN-P0-008/CAN-P1-007: stable module identity, used to resolve v2
      * per-module commands by id instead of a UI index. Not part of the
      * 384-byte CPS1 slot render (which keeps the 16-byte stride). */
@@ -226,13 +240,16 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
                                   uint32_t signature_ok,
                                   const char *module_id);
 
-/* CAN-P0-005: attach the module's resource tracker and open-reference
- * count to a slot so a removable disable can drain them before unload.
- * `tracker` stays owned by the module. Returns 0 on success. */
-int canopus_supervisor_attach_tracker(struct canopus_supervisor_v1 *sup,
-                                      uint32_t index,
-                                      struct canopus_resource_tracker_v1 *tracker,
-                                      uint32_t open_refs);
+/* CAN-P0-005 revision (next-boot): persist the whole slot table (module id,
+ * class, version, flags, boot intent) through the platform `persist` hook.
+ * Returns 0 on success; a failure leaves the in-memory table authoritative
+ * for the current session but the change will not survive reboot. */
+int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup);
+/* Restore the slot table from the platform `restore` hook. Absence of a
+ * registry (fresh install) is not an error. Enabled intents are loaded via
+ * the platform `load_module` hook; remove intents have their artifacts
+ * deleted through `remove_artifact` and are not re-registered. Returns 0. */
+int canopus_supervisor_restore_registry(struct canopus_supervisor_v1 *sup);
 
 /* CAN-P0-006: boot markers. boot_begin records BOOTING (before loading any
  * third-party module); boot_ok commits BOOT_OK once READY. A boot that never

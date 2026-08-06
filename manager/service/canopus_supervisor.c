@@ -9,84 +9,22 @@
 #include "canopus_memory.h"
 #include "canopus_runtime.h"
 
-static uint32_t sup_result_state(int rc)
-{
-    if (rc < 0) {
-        return CANOPUS_RESULT_FAILED;
-    }
-    return CANOPUS_RESULT_COMPLETED;
-}
-
 static int module_lifecycle_ok(uint32_t lifecycle_class)
 {
     return lifecycle_class <= CANOPUS_LIFECYCLE_PATCH_REBOOT_REQUIRED;
 }
 
-/* CAN-P0-005: a module with running code (as opposed to INSTALLED/DISABLED
- * where nothing is resident) needs a real stop/drain/unload to disable. */
-static int sup_module_running(uint32_t state)
+/* CAN-P0-005 revision (next-boot): a module is *loaded* only when its code
+ * is actually resident this session. INSTALLED/DISABLED/ENABLED are all
+ * non-resident bookkeeping states. */
+static int sup_module_loaded(uint32_t state)
 {
     return state == CANOPUS_STATE_ACTIVE || state == CANOPUS_STATE_READY ||
-           state == CANOPUS_STATE_ENABLED || state == CANOPUS_STATE_BOOT_RESIDENT;
+           state == CANOPUS_STATE_BOOT_RESIDENT;
 }
 
-/* Removable disable: reject-new-work barrier -> drain tracked resources ->
- * never unload while refs/retained resources exist -> platform unload.
- * Only on a successful unload does the slot become UNLOADED; a failure
- * keeps the real loaded state so the UI never reports DISABLED for code
- * that is still resident. */
-static uint32_t sup_disable_removable(struct canopus_supervisor_v1 *sup, int slot)
-{
-    struct canopus_sup_module_v1 *m = &sup->modules[slot];
-    uint32_t was_state = m->state;
-    uint32_t retained = 0;
-    uint32_t i;
-    uint32_t rc;
-
-    if (sup->platform && sup->platform->deactivate) {
-        (void)sup->platform->deactivate(sup->platform_cookie, (uint32_t)slot);
-    }
-    if (sup->platform && sup->platform->stop) {
-        (void)sup->platform->stop(sup->platform_cookie, (uint32_t)slot);
-    }
-    /* reject-new-work barrier + drain */
-    m->state = CANOPUS_STATE_STOPPING;
-    m->flags |= CANOPUS_SUP_FLAG_DISABLING;
-    if (m->tracker != 0) {
-        canopus_tracker_release_all(m->tracker);
-        for (i = 0; i < CANOPUS_RESOURCE_MAX; i++) {
-            if (m->tracker->slots[i].state == CANOPUS_RES_RETAINED_UNTIL_REBOOT) {
-                retained++;
-            }
-        }
-    }
-    if (retained > 0 || m->open_refs > 0) {
-        /* retained/detached resources or open refs: never unload, fail-stop */
-        m->state = CANOPUS_STATE_FAIL_STOP;
-        m->flags &= ~CANOPUS_SUP_FLAG_DISABLING;
-        sup->error_code = CANOPUS_SUP_ERR_BUSY;
-        return CANOPUS_RESULT_REBOOT_REQUIRED;
-    }
-    if (sup->platform && sup->platform->unload_module) {
-        rc = sup_result_state(sup->platform->unload_module(
-            sup->platform_cookie, (uint32_t)slot));
-    } else {
-        rc = CANOPUS_RESULT_FAILED;
-    }
-    if (rc == CANOPUS_RESULT_COMPLETED) {
-        m->state = CANOPUS_STATE_UNLOADED;
-        m->flags &= ~CANOPUS_SUP_FLAG_DISABLING;
-        m->flags &= ~CANOPUS_SUP_FLAG_SIGNATURE_OK;
-        return CANOPUS_RESULT_COMPLETED;
-    }
-    /* unload failed: keep the real loaded state, never DISABLED/UNLOADED */
-    m->state = was_state;
-    m->flags &= ~CANOPUS_SUP_FLAG_DISABLING;
-    sup->error_code = CANOPUS_SUP_ERR_UNLOAD;
-    return CANOPUS_RESULT_FAILED;
-}
-
-/* CAN-P1-007: reclaim a slot after a successful REMOVE. */
+/* CAN-P1-007: reclaim a slot (used after a remove intent is applied at
+ * boot restore). */
 static void sup_clear_slot(struct canopus_supervisor_v1 *sup, int slot)
 {
     if (sup->modules[slot].state != 0) {
@@ -140,29 +78,26 @@ static uint32_t cmd_word(const uint8_t command[CANOPUS_SUP_COMMAND_SIZE],
  * (CAN-P0-008). `stage_arg` is the optional package path for INSTALL (v2
  * passes the request payload; the legacy path passes 0). */
 /* CAN-P0-006: safe-mode command policy. Only read/diagnostic and next-boot
- * operations are allowed: QUERY, ROLLBACK, ENTER_SAFE_MODE, and for resident
- * classes DISABLE/REMOVE (which are next-boot only anyway). INSTALL, ENABLE,
- * UPDATE, and any immediate removable unload are rejected. */
+ * operations are allowed: QUERY, ROLLBACK, ENTER_SAFE_MODE, DISABLE and
+ * REMOVE (which are next-boot only for every lifecycle class, so they never
+ * run third-party code in safe mode). INSTALL, ENABLE and UPDATE — anything
+ * that activates code — are rejected. */
 static int sup_safe_mode_allows(const struct canopus_supervisor_v1 *sup,
                                 uint32_t op, int slot)
 {
+    (void)sup;
+    (void)slot;
     switch (op) {
     case CANOPUS_SUP_CMD_QUERY:
     case CANOPUS_SUP_CMD_ROLLBACK:
     case CANOPUS_SUP_CMD_ENTER_SAFE_MODE:
+    case CANOPUS_SUP_CMD_DISABLE:
+    case CANOPUS_SUP_CMD_REMOVE:
         return 1;
     case CANOPUS_SUP_CMD_INSTALL:
     case CANOPUS_SUP_CMD_ENABLE:
     case CANOPUS_SUP_CMD_UPDATE:
         return 0; /* activation is never allowed in safe mode */
-    case CANOPUS_SUP_CMD_DISABLE:
-    case CANOPUS_SUP_CMD_REMOVE:
-        /* only the next-boot (resident) semantics are read-only enough */
-        if (slot < 0 || (uint32_t)slot >= CANOPUS_SUP_MODULE_SLOTS ||
-            sup->modules[slot].state == 0) {
-            return 0;
-        }
-        return sup->modules[slot].lifecycle_class != CANOPUS_LIFECYCLE_REMOVABLE;
     default:
         return 0;
     }
@@ -213,70 +148,43 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
             sup->error_code = CANOPUS_SUP_ERR_BAD_SLOT;
             break;
         }
-        if (op == CANOPUS_SUP_CMD_ENABLE ||
-            op == CANOPUS_SUP_CMD_DISABLE ||
-            op == CANOPUS_SUP_CMD_REMOVE) {
-            /* Lifecycle-aware: a resident class has no unload path, so only
-             * removable classes get real disable/remove. Next-boot semantics
-             * are reported as REBOOT_REQUIRED for resident classes. */
-            if (sup->modules[slot].lifecycle_class != CANOPUS_LIFECYCLE_REMOVABLE) {
-                if (op == CANOPUS_SUP_CMD_REMOVE) {
-                    sup->modules[slot].state = CANOPUS_STATE_REMOVE_PENDING;
-                    rc = CANOPUS_RESULT_REBOOT_REQUIRED;
-                } else {
-                    sup->modules[slot].state = CANOPUS_STATE_DISABLED_NEXT_BOOT;
-                    rc = CANOPUS_RESULT_REBOOT_REQUIRED;
-                }
-                break;
-            }
+        /* CAN-P0-005 revision (next-boot): no lifecycle class hot-loads or
+         * hot-unloads anymore. Every op records a boot intent and reports
+         * REBOOT_REQUIRED; the next supervisor load applies the intent.
+         * A remove-pending slot is committed and not re-targetable. */
+        if (sup->modules[slot].state == CANOPUS_STATE_REMOVE_PENDING &&
+            op != CANOPUS_SUP_CMD_REMOVE) {
+            rc = CANOPUS_RESULT_DISALLOWED;
+            sup->error_code = CANOPUS_SUP_ERR_BAD_SLOT;
+            break;
         }
-        if (op == CANOPUS_SUP_CMD_REMOVE) {
-            /* CAN-P0-005 point 12: REMOVE reuses the same disable
-             * transaction (stop/drain/unload), then reclaims the slot. */
-            rc = sup_module_running(sup->modules[slot].state)
-                     ? sup_disable_removable(sup, slot)
-                     : CANOPUS_RESULT_COMPLETED;
-            if (rc == CANOPUS_RESULT_COMPLETED &&
-                sup->platform != 0 && sup->platform->remove_artifact != 0 &&
-                sup->platform->remove_artifact(sup->platform_cookie,
-                                               (uint32_t)slot) != 0) {
-                /* The module is unloaded but its owned ELF remains. Keep the
-                 * slot so REMOVE can retry cleanup rather than orphaning it. */
-                sup->error_code = CANOPUS_SUP_ERR_STAGE;
-                rc = CANOPUS_RESULT_FAILED;
-            }
-            if (rc == CANOPUS_RESULT_COMPLETED) {
-                sup_clear_slot(sup, slot);
-            }
-        } else if (op == CANOPUS_SUP_CMD_DISABLE) {
-            /* CAN-P0-005: a removable disable really stops, drains and
-             * unloads; it never reports DISABLED while the code is still
-             * resident or while refs/retained resources exist. */
-            if (sup_module_running(sup->modules[slot].state)) {
-                rc = sup_disable_removable(sup, slot);
-            } else {
-                sup->modules[slot].state = CANOPUS_STATE_DISABLED;
-                rc = CANOPUS_RESULT_COMPLETED;
-            }
-        } else if (op == CANOPUS_SUP_CMD_ENABLE) {
-            if (sup->platform && sup->platform->load_module) {
-                int st = sup->platform->load_module(
-                    sup->platform_cookie, (uint32_t)slot, 0,
-                    sup->modules[slot].lifecycle_class);
-                rc = sup_result_state(st);
-                if (rc == CANOPUS_RESULT_COMPLETED) {
-                    sup->modules[slot].state =
-                        (uint32_t)(st < 0 ? CANOPUS_STATE_FAILED : st);
-                }
-            } else {
-                rc = CANOPUS_RESULT_FAILED;
-            }
-            if (rc == CANOPUS_RESULT_FAILED) {
-                sup->error_code = CANOPUS_SUP_ERR_LOAD;
-            }
-        } else { /* UPDATE / ROLLBACK */
+        switch (op) {
+        case CANOPUS_SUP_CMD_ENABLE:
+            sup->modules[slot].intent = CANOPUS_SUP_INTENT_ENABLED;
+            sup->modules[slot].state = CANOPUS_STATE_ENABLED;
+            rc = CANOPUS_RESULT_REBOOT_REQUIRED;
+            break;
+        case CANOPUS_SUP_CMD_DISABLE:
+            sup->modules[slot].intent = CANOPUS_SUP_INTENT_DISABLED;
+            sup->modules[slot].state = sup_module_loaded(sup->modules[slot].state)
+                ? CANOPUS_STATE_DISABLED_NEXT_BOOT : CANOPUS_STATE_DISABLED;
+            rc = CANOPUS_RESULT_REBOOT_REQUIRED;
+            break;
+        case CANOPUS_SUP_CMD_REMOVE:
+            sup->modules[slot].intent = CANOPUS_SUP_INTENT_REMOVE;
+            sup->modules[slot].state = CANOPUS_STATE_REMOVE_PENDING;
+            rc = CANOPUS_RESULT_REBOOT_REQUIRED;
+            break;
+        default: /* UPDATE / ROLLBACK */
+            sup->modules[slot].intent = CANOPUS_SUP_INTENT_ENABLED;
             sup->modules[slot].state = CANOPUS_STATE_UPDATE_STAGED;
             rc = CANOPUS_RESULT_REBOOT_REQUIRED;
+            break;
+        }
+        if (rc == CANOPUS_RESULT_REBOOT_REQUIRED &&
+            canopus_supervisor_save_registry(sup) != 0 &&
+            sup->error_code == CANOPUS_SUP_ERR_NONE) {
+            sup->error_code = CANOPUS_SUP_ERR_STAGE;
         }
         break;
     }
@@ -808,6 +716,8 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
             sup->modules[i].lifecycle_class = lifecycle_class;
             sup->modules[i].version = version;
             sup->modules[i].flags = signature_ok ? 1u : 0u;
+            /* Disabled by default: nothing is ever loaded at install. */
+            sup->modules[i].intent = CANOPUS_SUP_INTENT_DISABLED;
             canopus_memset(sup->modules[i].module_id, 0,
                            sizeof(sup->modules[i].module_id));
             canopus_memcpy(sup->modules[i].module_id, module_id, n);
@@ -820,15 +730,105 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
     return -1;
 }
 
-int canopus_supervisor_attach_tracker(struct canopus_supervisor_v1 *sup,
-                                      uint32_t index,
-                                      struct canopus_resource_tracker_v1 *tracker,
-                                      uint32_t open_refs)
+/* ---- CAN-P0-005 revision: next-boot registry persistence ------------ */
+
+int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup)
 {
-    if (sup == 0 || index >= CANOPUS_SUP_MODULE_SLOTS) {
+    uint8_t buf[CANOPUS_SUP_REGISTRY_SIZE];
+    uint32_t i;
+    if (sup == 0 || sup->platform == 0 || sup->platform->persist == 0) {
         return -1;
     }
-    sup->modules[index].tracker = tracker;
-    sup->modules[index].open_refs = open_refs;
+    canopus_memset(buf, 0, sizeof(buf));
+    put_wire_u32(buf, 0u, CANOPUS_SUP_REGISTRY_MAGIC);
+    put_wire_u32(buf, 4u, CANOPUS_SUP_REGISTRY_VERSION);
+    put_wire_u32(buf, 8u, sup->module_count);
+    for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+        const struct canopus_sup_module_v1 *m = &sup->modules[i];
+        uint32_t o = CANOPUS_SUP_REGISTRY_HEADER +
+                     i * CANOPUS_SUP_REGISTRY_SLOT_SIZE;
+        if (m->state != 0u) {
+            canopus_memcpy(buf + o, m->module_id, CANOPUS_SUP_MODULE_ID_MAX);
+            put_wire_u32(buf, o + 32u, m->lifecycle_class);
+            put_wire_u32(buf, o + 36u, m->version);
+            put_wire_u32(buf, o + 40u, m->flags);
+            put_wire_u32(buf, o + 44u, m->intent);
+        }
+    }
+    return sup->platform->persist(sup->platform_cookie, buf, sizeof(buf));
+}
+
+/* Restore the slot table after a fresh load. Absent registry == fresh
+ * install (not an error). Enabled intents are loaded through the platform;
+ * remove intents delete their artifacts and never re-register. */
+int canopus_supervisor_restore_registry(struct canopus_supervisor_v1 *sup)
+{
+    uint8_t buf[CANOPUS_SUP_REGISTRY_SIZE];
+    uint32_t i;
+    int rc;
+    if (sup == 0 || sup->platform == 0 || sup->platform->restore == 0) {
+        return -1;
+    }
+    rc = sup->platform->restore(sup->platform_cookie, buf, sizeof(buf));
+    if (rc != 0) {
+        return rc > 0 ? 0 : -1; /* absent (1) is fine; hard error fails */
+    }
+    if (wire_u32(buf) != CANOPUS_SUP_REGISTRY_MAGIC ||
+        wire_u32(buf + 4u) != CANOPUS_SUP_REGISTRY_VERSION) {
+        return -1;
+    }
+    for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+        uint32_t o = CANOPUS_SUP_REGISTRY_HEADER +
+                     i * CANOPUS_SUP_REGISTRY_SLOT_SIZE;
+        const uint8_t *id = buf + o;
+        uint32_t lifecycle_class = wire_u32(buf + o + 32u);
+        uint32_t version = wire_u32(buf + o + 36u);
+        uint32_t flags = wire_u32(buf + o + 40u);
+        uint32_t intent = wire_u32(buf + o + 44u);
+        int slot;
+
+        if (id[0] == 0u) {
+            continue; /* empty entry */
+        }
+        if (lifecycle_class > CANOPUS_LIFECYCLE_PATCH_REBOOT_REQUIRED) {
+            continue;
+        }
+        if (intent == CANOPUS_SUP_INTENT_REMOVE) {
+            /* commit the removal: register briefly so the platform hook can
+             * resolve the module id, delete the artifacts, then reclaim */
+            slot = canopus_supervisor_add_module(
+                sup, lifecycle_class, version, 1u, (const char *)id);
+            if (slot >= 0) {
+                if (sup->platform->remove_artifact != 0) {
+                    (void)sup->platform->remove_artifact(
+                        sup->platform_cookie, (uint32_t)slot);
+                }
+                sup_clear_slot(sup, slot);
+            }
+            continue;
+        }
+        slot = canopus_supervisor_add_module(
+            sup, lifecycle_class, version,
+            (flags & CANOPUS_SUP_FLAG_SIGNATURE_OK) != 0u,
+            (const char *)id);
+        if (slot < 0) {
+            continue;
+        }
+        sup->modules[slot].intent =
+            intent == CANOPUS_SUP_INTENT_ENABLED
+                ? CANOPUS_SUP_INTENT_ENABLED : CANOPUS_SUP_INTENT_DISABLED;
+        if (sup->modules[slot].intent == CANOPUS_SUP_INTENT_ENABLED &&
+            sup->platform->load_module != 0) {
+            int st = sup->platform->load_module(
+                sup->platform_cookie, (uint32_t)slot, (const char *)id,
+                lifecycle_class);
+            if (st < 0) {
+                sup->modules[slot].state = CANOPUS_STATE_FAILED;
+                sup->error_code = CANOPUS_SUP_ERR_LOAD;
+            } else {
+                sup->modules[slot].state = (uint32_t)st;
+            }
+        }
+    }
     return 0;
 }

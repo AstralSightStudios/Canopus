@@ -512,21 +512,23 @@ struct canopus_module_descriptor_v1 {
 
 ### 10.2 生命周期类别
 
+> 现行实现（next-boot 语义）：enable/disable/remove 对**所有**类别统一为 boot intent，返回 `REBOOT_REQUIRED`。lifecycle class 不再区分“可热卸载”与“必须重启”，只作为元数据（风险显示、boot 加载后的状态命名、安全模式策略）。REMOVABLE 不再是即时 unload 的许可，见 §16.3。
+
 #### REMOVABLE
 
-模块可以停止 admission、排空 callback、撤销资源并安全 `rmmod`。
+历史上可停止 admission、排空 callback、撤销资源并 `rmmod`。现在：与其它类别一样 next-boot；boot 加载后状态为 `ACTIVE`。
 
 #### RESIDENT_AFTER_ACTIVATION
 
-激活前可能可卸载；第一次注册 retained callback、timer、worker、hook、listener 或 SDP 后进入 boot-resident barrier。
+激活前可能可卸载；第一次注册 retained callback、timer、worker、hook、listener 或 SDP 后进入 boot-resident barrier。现在：与其它类别一样 next-boot；boot 加载后状态为 `BOOT_RESIDENT`。
 
 #### ALWAYS_RESIDENT
 
-加载后立即驻留到重启，管理器永不提供当前 boot 的 unload。
+加载后驻留到重启。现在：与其它类别一样 next-boot；boot 加载后状态为 `BOOT_RESIDENT`。
 
 #### PATCH_REBOOT_REQUIRED
 
-涉及无法在所有状态安全恢复的 hook/patch；禁用和更新只能作用于下次启动。
+涉及无法在所有状态安全恢复的 hook/patch。现在：与其它类别一样 next-boot；boot 加载后状态为 `BOOT_RESIDENT`。
 
 建议 descriptor flags 还包括：
 
@@ -546,21 +548,26 @@ APP_UNREGISTER_REBOOT_REQUIRED
 ```text
 DISCOVERED
 → VERIFIED
-→ INSTALLED
-→ DISABLED
-→ ENABLED
-→ LOADING
+→ INSTALLED            ← 安装即禁用（intent DISABLED），绝不自动加载
+→ DISABLED             ← ENABLE 之前的状态
+→ ENABLED              ← next-boot：已记录 intent ENABLED，等待下次加载
+→ LOADING              ← 仅在 boot restore 时发生（insmod）
 → PREPARING
 → READY
 → ACTIVE
-   ├─ REMOVABLE: STOPPING → DRAINING → UNLOADED
-   └─ RESIDENT:  BOOT_RESIDENT → DISABLED_NEXT_BOOT
+   └─ BOOT_RESIDENT     ← 所有类别：启动时加载，重启前不卸载
+
+命令（全部 next-boot，返回 REBOOT_REQUIRED）：
+ENABLE   → intent ENABLED, 状态 ENABLED
+DISABLE  → intent DISABLED; 已加载 → DISABLED_NEXT_BOOT, 未加载 → DISABLED
+REMOVE   → intent REMOVE,   状态 REMOVE_PENDING（boot 时删文件并回收 slot）
+UPDATE/ROLLBACK → intent ENABLED, 状态 UPDATE_STAGED
 
 任意初始化失败：FAILED
-resident 运行期失败：FAIL_STOP → QUARANTINED_NEXT_BOOT
-更新 resident：UPDATE_STAGED → REBOOT_REQUIRED
-删除 resident：REMOVE_PENDING → REBOOT_REQUIRED
+运行期失败：FAIL_STOP → QUARANTINED_NEXT_BOOT
 ```
+
+没有热插拔：stop/drain/unload 路径已从 supervisor 移除。所有 enable/disable/remove 都是 boot intent，由下一次 supervisor 加载（boot restore）执行。状态机描述的是运行时可见状态；持久化的是 intent。
 
 ### 10.4 Resource tracker
 
@@ -1135,34 +1142,35 @@ MVP 可使用当前已证明的 Lua/NSH/字符设备能力，但 UI 只能是 cl
 → INSTALLED/DISABLED
 ```
 
-#### Enable
+#### Enable（next-boot，所有 lifecycle class）
 
-- removable：可立即加载；
-- resident：可加载，但 UI 必须先提示本 boot 无法卸载；
-- reboot-only：标记下次启动启用。
+所有类别统一为 next-boot 语义：`ENABLE` 只记录 boot intent `ENABLED`、把状态改为 `ENABLED`（“下次启动启用”），并返回 `REBOOT_REQUIRED`。当前 boot 绝不 insmod；模块只在下次 supervisor 加载时由 boot restore 实际加载。safe mode 下拒绝（激活类操作）。
 
-#### Disable
+#### Disable（next-boot，所有 lifecycle class）
 
-- removable：stop → drain → unload；
-- resident：停止新操作（如果模块支持），标记下次启动禁用，当前代码仍驻留；
-- 不得把逻辑 disabled 显示为 unloaded。
+统一 next-boot：`DISABLE` 记录 intent `DISABLED`。模块已加载（ACTIVE/READY/BOOT_RESIDENT）时状态改为 `DISABLED_NEXT_BOOT`（代码仍驻留到重启）；未加载时改为 `DISABLED`。一律返回 `REBOOT_REQUIRED`，不做 stop/drain/unload（热插拔路径已移除）。safe mode 允许（只读、不执行第三方代码）。
 
-#### Remove
+#### Remove（next-boot，所有 lifecycle class）
 
-- 未加载：原子移除；
-- removable active：安全卸载后移除；
-- resident active：`REMOVE_PENDING`，重启后不加载并删除；
-- 删除包不得破坏当前仍被 callback 引用的代码文件映射假设，具体由 target loader profile 定义。
+统一 next-boot：`REMOVE` 记录 intent `REMOVE`、状态改为 `REMOVE_PENDING`，返回 `REBOOT_REQUIRED`。代码驻留到重启；下次 boot restore 删除 inbox 的 `.cmi`/`.ko` 并回收 slot。safe mode 允许。
 
 #### Update/Rollback
 
-active resident module 永不原地替换。新版本进入 staged slot，下次启动切换；保留 previous slot 用于回滚。
+active resident module 永不原地替换。新版本进入 staged slot，下次启动切换；保留 previous slot 用于回滚。操作记录 intent `ENABLED` 并返回 `REBOOT_REQUIRED`。
+
+#### 持久化（模块注册表）
+
+模块 slot（module_id、lifecycle class、version、flags、boot intent）在每次变更时原子写入 `/data/canopus/registry.bin`（固定 784 字节格式，tmp + rename）。重启 / 重装 canopus 后，supervisor 构造函数读取注册表并恢复 slot：intent `ENABLED` 的模块立即加载，intent `DISABLED` 的保持未加载，intent `REMOVE` 的删除 inbox 文件并丢弃 slot。安装默认记 intent `DISABLED`，因此“安装即禁用、重启生效”。注册表缺失或 magic 非法视为全新安装（非错误）。
 
 ### 16.4 Package store
 
 ```text
 /data/canopus/
 ├── state.cbor
+├── registry.bin        # 模块注册表（固定 784 字节：16 slot x {id[32],class,version,flags,intent} + header）
+├── registry.tmp        # 原子写临时文件
+├── inbox/              # 安装接收收件箱：<token>.cmi（签名回执）+ <token>.ko（ELF），持久化
+│   ├── manager.ko      # （split 落地后）Manager core 模块
 ├── targets/
 ├── packages/
 │   └── package-id/
@@ -1174,7 +1182,7 @@ active resident module 永不原地替换。新版本进入 staged slot，下次
 └── recovery/
 ```
 
-实际路径由 target adapter 决定。所有状态写入采用 write-temp、flush、atomic rename；不直接覆盖 active manifest。
+实际路径由 target adapter 决定。所有状态写入采用 write-temp、flush、atomic rename；不直接覆盖 active manifest。`registry.bin` 由 supervisor 在每次 slot 变更（INSTALL/ENABLE/DISABLE/REMOVE/UPDATE）时原子写入；boot restore 在 supervisor 构造函数中读取并应用 intent。
 
 ### 16.5 Safe mode
 

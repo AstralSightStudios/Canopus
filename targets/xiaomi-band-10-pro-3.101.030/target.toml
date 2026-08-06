@@ -49,7 +49,12 @@ elf_type = "ET_REL"
 endianness = "little"
 constructor_discovery = "init_array"
 symbol_imports = "none"
-max_size = 65536
+# Project module-size budget. The stock modlib allocates module text
+# dynamically (no 64 KiB cap observed in the load path); 65536 was a
+# conservative round budget and a 65040-byte module has loaded on-device.
+# Raised to 68 KiB to hold next-boot registry persistence until the shell /
+# core split lands (see docs/architecture.md §16).
+max_size = 69632
 alignment = 4
 module_name_rules = "must match ^[a-zA-Z0-9_]+$; passed as argv[2] to insmod"
 load_command = "insmod <path> <name>"

@@ -6,6 +6,10 @@
  */
 #include "canopus_runtime.h"
 
+/* The transition table serves both host tests and device modules that drive
+ * the lifecycle explicitly (e.g. the hello example). The supervisor itself
+ * sets module states directly (next-boot semantics) and only consumes
+ * canopus_state_name, but the table stays for the module SDK. */
 struct transition {
     uint32_t from;
     uint32_t to;
@@ -113,7 +117,6 @@ int canopus_lifecycle_transition(struct canopus_lifecycle_v1 *lc,
     lc->generation += 1u;
     return 0;
 }
-
 const char *canopus_state_name(uint32_t state)
 {
     switch (state) {

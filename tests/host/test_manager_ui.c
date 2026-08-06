@@ -180,10 +180,11 @@ TEST(safe_mode_blocks_activation_ops)
     CHECK(canopus_manager_op_install(&m, "org.example.pkg") == CANOPUS_RESULT_DISALLOWED);
     CHECK(canopus_manager_can_update(&m, 0) == 0);
     CHECK(canopus_manager_can_update(&m, 1) == 0);
-    /* an immediate removable unload is not offered */
-    CHECK(canopus_manager_can_disable(&m, 0) == 0);
-    CHECK(canopus_manager_can_remove(&m, 0) == 0);
-    /* resident next-boot semantics stay available (read-only) */
+    CHECK(canopus_manager_can_enable(&m, 0) == 0);
+    /* every disable/remove is next-boot (never runs third-party code), so
+     * safe mode keeps them for all lifecycle classes as recovery paths */
+    CHECK(canopus_manager_can_disable(&m, 0) != 0);
+    CHECK(canopus_manager_can_remove(&m, 0) != 0);
     CHECK(canopus_manager_can_disable(&m, 1) != 0);
     CHECK(canopus_manager_can_remove(&m, 1) != 0);
 }

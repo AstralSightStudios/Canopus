@@ -29,6 +29,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "canopus-target-private"
+version = "0.1.0"
+dependencies = [
+ "canopus-target-generated",
+]
+
+[[package]]
 name = "canopus-ui-core"
 version = "0.1.0"
 

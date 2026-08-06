@@ -8,6 +8,10 @@
 #include "canopus_runtime.h"
 #include "canopus_memory.h"
 
+#ifdef CANOPUS_HOST
+/* Legacy text rendering is host-test-only; the device Manager uses the
+ * semantic native UI (canopus_manager_native.c). Kept out of the supervisor
+ * module so the boot-resident footprint stays below the loader limit. */
 #define CLASS_REMOVABLE_ONLY(c) ((c) == CANOPUS_LIFECYCLE_REMOVABLE)
 
 static void writer_append_u32(struct canopus_text_writer_v1 *w, uint32_t value)
@@ -26,6 +30,7 @@ static void writer_append_u32(struct canopus_text_writer_v1 *w, uint32_t value)
     text[used] = '\0';
     canopus_text_writer_append(w, text);
 }
+#endif /* CANOPUS_HOST */
 
 static int mod_id_eq(const char *a, const char *b)
 {
@@ -102,7 +107,8 @@ int canopus_manager_goto(struct canopus_manager_model_v1 *m, uint32_t view,
     return 0;
 }
 
-/* ---- pages -------------------------------------------------------- */
+#ifdef CANOPUS_HOST
+/* ---- pages (host-test only) ---------------------------------------- */
 
 int canopus_manager_render_device(const struct canopus_manager_model_v1 *m,
                                   char *out, uint32_t cap)
@@ -200,8 +206,33 @@ int canopus_manager_render_module_detail(const struct canopus_manager_model_v1 *
     canopus_text_writer_append(&w, "\n");
     return w.truncated ? CANOPUS_TEXT_TRUNCATED : 0;
 }
+#endif /* CANOPUS_HOST */
 
 /* ---- availability helpers ------------------------------------------ */
+
+int canopus_manager_can_enable(const struct canopus_manager_model_v1 *m,
+                               uint32_t index)
+{
+    const struct canopus_manager_module_v1 *mod;
+    if (index >= m->module_count) {
+        return 0;
+    }
+    /* CAN-P2-006: activation is never offered in safe mode. */
+    if (m->safe_mode) {
+        return 0;
+    }
+    mod = &m->modules[index];
+    /* next-boot: every non-resident state can be armed to load at reboot. */
+    switch (mod->state) {
+    case CANOPUS_STATE_INSTALLED:
+    case CANOPUS_STATE_DISABLED:
+    case CANOPUS_STATE_UNLOADED:
+    case CANOPUS_STATE_DISABLED_NEXT_BOOT:
+        return 1;
+    default:
+        return 0;
+    }
+}
 
 int canopus_manager_can_disable(const struct canopus_manager_model_v1 *m,
                                 uint32_t index)
@@ -211,15 +242,17 @@ int canopus_manager_can_disable(const struct canopus_manager_model_v1 *m,
         return 0;
     }
     mod = &m->modules[index];
-    /* CAN-P2-006: in safe mode an immediate removable unload is not offered;
-     * only the next-boot (resident) semantics remain. */
-    if (m->safe_mode &&
-        mod->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE) {
+    /* next-boot: a module can only be armed to stop if its code is resident,
+     * or a pending enable can be cancelled. */
+    switch (mod->state) {
+    case CANOPUS_STATE_ACTIVE:
+    case CANOPUS_STATE_READY:
+    case CANOPUS_STATE_BOOT_RESIDENT:
+    case CANOPUS_STATE_ENABLED:
+        return 1;
+    default:
         return 0;
     }
-    /* removable: DISABLED may be unloaded. resident: only next-boot. */
-    return mod->state != CANOPUS_STATE_DISABLED &&
-           mod->state != CANOPUS_STATE_UNLOADED;
 }
 
 int canopus_manager_can_remove(const struct canopus_manager_model_v1 *m,
@@ -230,12 +263,6 @@ int canopus_manager_can_remove(const struct canopus_manager_model_v1 *m,
         return 0;
     }
     mod = &m->modules[index];
-    /* CAN-P2-006: in safe mode an immediate removable remove is not offered;
-     * resident remove+reboot stays available. */
-    if (m->safe_mode &&
-        mod->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE) {
-        return 0;
-    }
     return mod->state != CANOPUS_STATE_UNLOADED &&
            mod->state != CANOPUS_STATE_REMOVE_PENDING;
 }

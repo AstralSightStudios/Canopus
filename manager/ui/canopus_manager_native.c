@@ -144,7 +144,11 @@ static void format_module_detail(const struct canopus_manager_module_v1 *module,
                                  char out[64])
 {
     uint32_t used = 0;
-    const char *state = canopus_state_name(module->state);
+    /* INSTALLED is the disabled-by-default state; say so explicitly so a
+     * freshly installed module is never mistaken for an enabled one. */
+    const char *state = module->state == CANOPUS_STATE_INSTALLED
+                            ? "installed (disabled)"
+                            : canopus_state_name(module->state);
     out[0] = '\0';
     used = append_string(out, used, 64u, state, 32u);
     used = append_string(out, used, 64u, " / version ", 11u);
@@ -293,11 +297,10 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
                        21u);
     if (rc != CANOPUS_UI_OK) return rc;
 
-    if (module->state == CANOPUS_STATE_DISABLED ||
-        module->state == CANOPUS_STATE_UNLOADED) {
+    if (canopus_manager_can_enable(model, model->selected)) {
         rc = append_action(tree, UI_KEY_DETAIL_ENABLE, "Enable", 7u,
-                           "Activate this module", 21u,
-                           CANOPUS_MANAGER_EVENT_ENABLE, !model->safe_mode);
+                           "Applies after reboot", 21u,
+                           CANOPUS_MANAGER_EVENT_ENABLE, 1);
         if (rc != CANOPUS_UI_OK) return rc;
     }
     if (canopus_manager_can_update(model, model->selected)) {
@@ -312,21 +315,16 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
                            CANOPUS_MANAGER_EVENT_ROLLBACK, 1);
         if (rc != CANOPUS_UI_OK) return rc;
     }
+    /* CAN-P0-005 revision: every lifecycle operation is next-boot. */
     if (canopus_manager_can_disable(model, model->selected)) {
-        rc = append_action(tree, UI_KEY_DETAIL_DISABLE,
-                           module->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ?
-                               "Disable" : "Disable next boot",
-                           18u,
-                           module->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ?
-                               "Stop without reboot" : "Applies after reboot",
-                           20u, CANOPUS_MANAGER_EVENT_DISABLE, 1);
+        rc = append_action(tree, UI_KEY_DETAIL_DISABLE, "Disable", 8u,
+                           "Applies after reboot", 21u,
+                           CANOPUS_MANAGER_EVENT_DISABLE, 1);
         if (rc != CANOPUS_UI_OK) return rc;
     }
     if (canopus_manager_can_remove(model, model->selected)) {
-        rc = append_action(tree, UI_KEY_DETAIL_REMOVE,
-                           module->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ?
-                               "Remove" : "Remove and reboot",
-                           18u, "Delete module from Canopus", 27u,
+        rc = append_action(tree, UI_KEY_DETAIL_REMOVE, "Remove", 7u,
+                           "Deleted after reboot", 21u,
                            CANOPUS_MANAGER_EVENT_REMOVE, 1);
         if (rc != CANOPUS_UI_OK) return rc;
     }
@@ -338,12 +336,14 @@ static const char *confirmation_message(uint32_t event_id)
     switch (event_id) {
     case CANOPUS_MANAGER_EVENT_INSTALL:
         return "Install the verified staged package?";
+    case CANOPUS_MANAGER_EVENT_ENABLE:
+        return "Enable this module on next boot?";
     case CANOPUS_MANAGER_EVENT_DISABLE:
-        return "Disable this module? Resident modules require a reboot.";
+        return "Disable this module after next reboot?";
     case CANOPUS_MANAGER_EVENT_ROLLBACK:
         return "Restore the previous verified module version?";
     case CANOPUS_MANAGER_EVENT_REMOVE:
-        return "Remove this module? This cannot be undone.";
+        return "Remove this module after reboot? Cannot be undone.";
     default:
         return "Continue with this operation?";
     }
@@ -462,9 +462,18 @@ static uint32_t execute_event(struct canopus_manager_native_v1 *native,
 static int event_needs_confirmation(uint32_t event_id)
 {
     return event_id == CANOPUS_MANAGER_EVENT_INSTALL ||
+           event_id == CANOPUS_MANAGER_EVENT_ENABLE ||
            event_id == CANOPUS_MANAGER_EVENT_DISABLE ||
            event_id == CANOPUS_MANAGER_EVENT_ROLLBACK ||
            event_id == CANOPUS_MANAGER_EVENT_REMOVE;
+}
+
+static int32_t refresh_model(struct canopus_manager_native_v1 *native)
+{
+    if (native->refresh == 0) {
+        return CANOPUS_UI_OK;
+    }
+    return native->refresh(native->refresh_cookie);
 }
 
 static int32_t route_or_render(struct canopus_manager_native_v1 *native,
@@ -525,6 +534,9 @@ static int32_t manager_event(void *cookie, uint32_t generation,
         event_id = native->confirm_event;
         native->confirm_event = 0u;
         (void)execute_event(native, event_id);
+        /* Re-read the device model so the page reflects the committed state
+         * (e.g. enabled/disabled-next-boot) instead of the stale snapshot. */
+        (void)refresh_model(native);
         if (canopus_manager_goto(model, native->confirm_return_view,
                                  model->selected) != 0)
             return CANOPUS_UI_ERR_STATE;
@@ -532,15 +544,16 @@ static int32_t manager_event(void *cookie, uint32_t generation,
     case CANOPUS_MANAGER_EVENT_INSTALL:
         if (native->stage_token[0] == '\0') return CANOPUS_UI_ERR_DISABLED;
         /* fall through */
+    case CANOPUS_MANAGER_EVENT_ENABLE:
     case CANOPUS_MANAGER_EVENT_DISABLE:
     case CANOPUS_MANAGER_EVENT_ROLLBACK:
     case CANOPUS_MANAGER_EVENT_REMOVE:
         native->confirm_return_view = model->view;
         native->confirm_event = event_id;
         return canopus_manager_native_render(native);
-    case CANOPUS_MANAGER_EVENT_ENABLE:
     case CANOPUS_MANAGER_EVENT_UPDATE:
         (void)execute_event(native, event_id);
+        (void)refresh_model(native);
         return canopus_manager_native_render(native);
     default:
         if (!event_needs_confirmation(event_id)) {
@@ -582,6 +595,18 @@ void canopus_manager_native_set_router(
     }
     native->route = route;
     native->route_cookie = route_cookie;
+}
+
+void canopus_manager_native_set_refresh(
+    struct canopus_manager_native_v1 *native,
+    canopus_manager_native_refresh_v1 refresh,
+    void *refresh_cookie)
+{
+    if (native == 0) {
+        return;
+    }
+    native->refresh = refresh;
+    native->refresh_cookie = refresh_cookie;
 }
 
 int32_t canopus_manager_native_set_stage_token(

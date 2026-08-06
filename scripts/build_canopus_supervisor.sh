@@ -13,7 +13,12 @@ TARGET_ID="xiaomi-band-10-pro-3.101.030"
 PACK_DIR="$ROOT/targets/$TARGET_ID"
 GENERATED="$PACK_DIR/generated/canopus_veneer.h"
 OUT="$ROOT/watchfaces/canopus-installer/build"
-MAX_SIZE=65536
+# Project module-size budget. The stock modlib allocates module text
+# dynamically (no 64 KiB cap in the load path); 65536 was a conservative
+# round budget. A 65040-byte supervisor has already loaded on-device, so
+# 68 KiB is a modest, low-risk raise that keeps room for the next-boot
+# registry persistence without restructuring into a shell + core.
+MAX_SIZE=69632
 CC=${CC:-clang}
 
 [ -f "$GENERATED" ] || {
@@ -56,8 +61,7 @@ for s in \
     targets/$TARGET_ID/probe/native-manager/canopus_manager_native_probe.c \
     runtime/control/canopus_control.c \
     runtime/lifecycle/canopus_lifecycle.c \
-    runtime/module/canopus_module.c \
-    runtime/resources/canopus_resource.c; do
+    runtime/module/canopus_module.c; do
     base=$(basename "$s")
     $CC $TARGET_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
 done

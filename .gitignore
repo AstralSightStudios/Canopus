@@ -62,6 +62,9 @@ venv/
 *.swp
 *.swo
 
+# Claude Code local state (settings + ephemeral agent worktrees)
+.claude/
+
 # Local secrets / signing keys
 *.pem
 *.key

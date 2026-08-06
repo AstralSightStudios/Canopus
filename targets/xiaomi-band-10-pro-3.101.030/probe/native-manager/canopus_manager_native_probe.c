@@ -827,6 +827,22 @@ static int target_select_page_view(
     }
 }
 
+/* Re-read the device model after an operation so the page immediately shows
+ * the committed pending state instead of the pre-operation snapshot. */
+static int32_t target_refresh(void *cookie)
+{
+    struct canopus_target_page_context *context =
+        (struct canopus_target_page_context *)cookie;
+    if (context == NULL) {
+        return CANOPUS_UI_ERR_ARGUMENT;
+    }
+    if (target_refresh_model() != 0) {
+        return CANOPUS_UI_ERR_STATE;
+    }
+    return target_select_page_view(context) == 0
+               ? CANOPUS_UI_OK : CANOPUS_UI_ERR_STATE;
+}
+
 /* Routes a semantic view change to the real firmware page stack. Forward
  * routes push the target page through the stock page_goto transition; backward
  * routes finish the source page so the paused page below it resumes. */
@@ -919,6 +935,8 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         return -1;
     }
     canopus_manager_native_set_router(&context->native, target_route, NULL);
+    canopus_manager_native_set_refresh(&context->native, target_refresh,
+                                       context);
     if (!context->active) {
         context->active = 1u;
         manager_active_pages++;

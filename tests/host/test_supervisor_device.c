@@ -11,12 +11,13 @@
 /* ---- fake platform ------------------------------------------------- */
 
 static int g_loads;
-static int g_unloads;
 static int g_artifact_removals;
 static int g_stages;
+static int g_persists;
 static int g_load_result = CANOPUS_STATE_ACTIVE;
 static int g_stage_result = 0;
-static int g_unload_result = 0;
+static uint8_t g_registry[CANOPUS_SUP_REGISTRY_SIZE];
+static int g_registry_present;
 
 static int fake_register(void *c) { (void)c; return 0; }
 static int fake_unregister(void *c) { (void)c; return 0; }
@@ -26,10 +27,6 @@ static int fake_load(void *c, uint32_t i, const char *n, uint32_t cls)
     g_loads++;
     return g_load_result;
 }
-static int fake_unload(void *c, uint32_t i)
-{
-    (void)c; (void)i; g_unloads++; return g_unload_result;
-}
 static int fake_remove_artifact(void *c, uint32_t i)
 {
     (void)c; (void)i; g_artifact_removals++; return 0;
@@ -38,10 +35,33 @@ static int fake_stage(void *c, const char *p)
 {
     (void)c; (void)p; g_stages++; return g_stage_result;
 }
+static int fake_persist(void *c, const uint8_t *d, uint32_t n)
+{
+    (void)c;
+    if (d == 0 || n == 0u || n > sizeof(g_registry)) {
+        return -1;
+    }
+    canopus_memcpy(g_registry, d, n);
+    g_persists++;
+    g_registry_present = 1;
+    return 0;
+}
+static int fake_restore(void *c, uint8_t *d, uint32_t n)
+{
+    (void)c;
+    if (d == 0 || n == 0u || n > sizeof(g_registry)) {
+        return -1;
+    }
+    if (!g_registry_present) {
+        return 1; /* no registry yet: a fresh install */
+    }
+    canopus_memcpy(d, g_registry, n);
+    return 0;
+}
 
 static const struct canopus_sup_platform_v1 fake_platform = {
-    fake_register, fake_unregister, fake_load, fake_unload, fake_stage,
-    fake_remove_artifact, 0, 0, /* deactivate / stop optional */
+    fake_register, fake_unregister, fake_load, fake_stage,
+    fake_remove_artifact, fake_persist, fake_restore,
 };
 
 /* ---- command/status builders --------------------------------------- */
@@ -153,108 +173,155 @@ TEST(supervisor_install_stages_package)
     CHECK(g_stages == 1);
 }
 
-TEST(supervisor_enable_removable_loads_module)
+/* ---- CAN-P0-005 revision: next-boot lifecycle ----------------------- */
+
+TEST(supervisor_enable_is_next_boot)
 {
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    g_loads = 0;
-    g_load_result = CANOPUS_STATE_ACTIVE;
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     CHECK(sup.modules[0].state == CANOPUS_STATE_INSTALLED);
+    CHECK(sup.modules[0].intent == CANOPUS_SUP_INTENT_DISABLED);
+    g_loads = 0;
+    g_persists = 0;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
-    CHECK(g_loads == 1);
-    CHECK(sup.modules[0].state == CANOPUS_STATE_ACTIVE);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK(g_loads == 0); /* nothing loads at ENABLE time */
+    CHECK(sup.modules[0].state == CANOPUS_STATE_ENABLED);
+    CHECK(sup.modules[0].intent == CANOPUS_SUP_INTENT_ENABLED);
+    CHECK(g_persists == 1); /* the boot intent was persisted */
 }
 
-TEST(supervisor_disable_removable_stops)
+TEST(supervisor_disable_loaded_module_is_next_boot)
 {
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_ACTIVE;
-    g_unloads = 0;
-    g_unload_result = 0;
+    g_persists = 0;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
-    /* a removable disable really drains + unloads; UNLOADED, never a fake
-     * DISABLED while the code is still resident */
-    CHECK(g_unloads == 1);
-    CHECK(sup.modules[0].state == CANOPUS_STATE_UNLOADED);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
+    /* a loaded module stays resident; only the intent changes */
+    CHECK(sup.modules[0].state == CANOPUS_STATE_DISABLED_NEXT_BOOT);
+    CHECK(sup.modules[0].intent == CANOPUS_SUP_INTENT_DISABLED);
+    CHECK(g_persists == 1);
 }
 
-TEST(supervisor_remove_removable_unloads)
+TEST(supervisor_disable_installed_module_is_next_boot)
 {
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    g_unloads = 0;
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_DISABLED);
+}
+
+TEST(supervisor_remove_is_next_boot)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
     g_artifact_removals = 0;
-    g_unload_result = 0;
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
-    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
+    g_persists = 0;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
-    CHECK(g_unloads == 1);
-    CHECK(g_artifact_removals == 1);
-    /* CAN-P0-005/18.7: REMOVE reuses the disable transaction, then reclaims
-     * the slot (state cleared, module_count decremented) */
-    CHECK(sup.modules[0].state == 0);
-    CHECK(sup.module_count == 0);
-}
-
-/* ---- CAN-P0-005: removable stop/drain/unload ------------------------ */
-
-TEST(supervisor_disable_with_retained_resource_fail_stops)
-{
-    struct canopus_supervisor_v1 sup;
-    struct canopus_resource_tracker_v1 tracker;
-    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
-    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
-    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
-    canopus_tracker_init(&tracker);
-    CHECK(canopus_supervisor_attach_tracker(&sup, 0, &tracker, 0) == 0);
-    tracker.slots[0].state = CANOPUS_RES_RETAINED_UNTIL_REBOOT;
-    tracker.count = 1;
-    g_unloads = 0;
-    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
-    CHECK(sup.modules[0].state == CANOPUS_STATE_FAIL_STOP);
-    CHECK(g_unloads == 0); /* never unloaded while a resource is retained */
+    /* the module stays resident; artifact deletion happens at the next boot */
+    CHECK(sup.modules[0].state == CANOPUS_STATE_REMOVE_PENDING);
+    CHECK(sup.modules[0].intent == CANOPUS_SUP_INTENT_REMOVE);
+    CHECK(g_artifact_removals == 0);
+    CHECK(g_persists == 1);
 }
 
-TEST(supervisor_disable_with_open_ref_fail_stops)
+TEST(supervisor_remove_pending_slot_not_reclaimed_by_command)
 {
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
-    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
-    CHECK(canopus_supervisor_attach_tracker(&sup, 0, 0, 1) == 0); /* 1 open ref */
-    g_unloads = 0;
-    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.one") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.two") == 1);
+    CHECK(sup.module_count == 2);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
-    CHECK(sup.modules[0].state == CANOPUS_STATE_FAIL_STOP);
-    CHECK(g_unloads == 0);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 1, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK(sup.module_count == 2); /* pending removal does not reclaim */
+    CHECK(sup.modules[0].state == CANOPUS_STATE_REMOVE_PENDING);
+    CHECK(sup.modules[1].state == CANOPUS_STATE_REMOVE_PENDING);
 }
 
-TEST(supervisor_disable_unload_failure_keeps_loaded_state)
+/* ---- CAN-P0-005 revision: registry persistence ---------------------- */
+
+TEST(supervisor_registry_survives_reload)
 {
-    struct canopus_supervisor_v1 sup;
-    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
-    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
-    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
-    g_unload_result = -1;
-    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
-    /* unload failed: the real loaded state is kept, never DISABLED */
-    CHECK(sup.modules[0].state == CANOPUS_STATE_ACTIVE);
-    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_UNLOAD);
-    g_unload_result = 0;
+    struct canopus_supervisor_v1 a, b;
+    canopus_supervisor_init(&a, 7, &fake_platform, 0);
+    canopus_supervisor_init(&b, 7, &fake_platform, 0);
+    g_registry_present = 0;
+    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_REMOVABLE, 3, 1, "mod.hello") == 0);
+    a.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    a.modules[0].state = CANOPUS_STATE_ENABLED;
+    g_persists = 0;
+    CHECK(canopus_supervisor_save_registry(&a) == 0);
+    CHECK(g_persists == 1);
+    /* a fresh supervisor (the reload after reboot / reinstall) restores the
+     * slot and loads the enabled module */
+    g_loads = 0;
+    g_load_result = CANOPUS_STATE_ACTIVE;
+    CHECK(canopus_supervisor_restore_registry(&b) == 0);
+    CHECK(b.module_count == 1);
+    CHECK(b.modules[0].intent == CANOPUS_SUP_INTENT_ENABLED);
+    CHECK(b.modules[0].state == CANOPUS_STATE_ACTIVE);
+    CHECK(g_loads == 1);
+}
+
+TEST(supervisor_registry_restore_keeps_disabled_modules_unloaded)
+{
+    struct canopus_supervisor_v1 a, b;
+    canopus_supervisor_init(&a, 7, &fake_platform, 0);
+    canopus_supervisor_init(&b, 7, &fake_platform, 0);
+    g_registry_present = 0;
+    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1, "mod.bt") == 0);
+    CHECK(a.modules[0].intent == CANOPUS_SUP_INTENT_DISABLED);
+    CHECK(canopus_supervisor_save_registry(&a) == 0);
+    g_loads = 0;
+    CHECK(canopus_supervisor_restore_registry(&b) == 0);
+    CHECK(b.module_count == 1);
+    CHECK(b.modules[0].state == CANOPUS_STATE_INSTALLED); /* not loaded */
+    CHECK(g_loads == 0);
+}
+
+TEST(supervisor_registry_remove_intent_clears_at_boot)
+{
+    struct canopus_supervisor_v1 a, b;
+    canopus_supervisor_init(&a, 7, &fake_platform, 0);
+    canopus_supervisor_init(&b, 7, &fake_platform, 0);
+    g_registry_present = 0;
+    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1, "mod.bt") == 0);
+    a.modules[0].intent = CANOPUS_SUP_INTENT_REMOVE;
+    a.modules[0].state = CANOPUS_STATE_REMOVE_PENDING;
+    CHECK(canopus_supervisor_save_registry(&a) == 0);
+    g_artifact_removals = 0;
+    CHECK(canopus_supervisor_restore_registry(&b) == 0);
+    CHECK(g_artifact_removals == 1); /* inbox artifacts deleted */
+    CHECK(b.module_count == 0);      /* slot not re-registered */
+}
+
+TEST(supervisor_registry_corrupt_magic_is_ignored)
+{
+    struct canopus_supervisor_v1 b;
+    canopus_supervisor_init(&b, 7, &fake_platform, 0);
+    g_registry_present = 1;
+    canopus_memset(g_registry, 0, sizeof(g_registry));
+    g_registry[0] = 0xEE; /* bad magic */
+    CHECK(canopus_supervisor_restore_registry(&b) == -1);
+    CHECK(b.module_count == 0);
+    g_registry_present = 0;
 }
 
 TEST(supervisor_resident_disable_is_reboot_required)
@@ -262,13 +329,12 @@ TEST(supervisor_resident_disable_is_reboot_required)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    g_unloads = 0;
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1, "mod.bt") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
     CHECK(sup.modules[0].state == CANOPUS_STATE_DISABLED_NEXT_BOOT);
-    CHECK(g_unloads == 0); /* resident never unloads now */
+    CHECK(sup.modules[0].intent == CANOPUS_SUP_INTENT_DISABLED);
 }
 
 TEST(supervisor_resident_remove_is_remove_pending)
@@ -276,13 +342,12 @@ TEST(supervisor_resident_remove_is_remove_pending)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    g_unloads = 0;
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1, "mod.bt") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
     CHECK(sup.modules[0].state == CANOPUS_STATE_REMOVE_PENDING);
-    CHECK(g_unloads == 0);
+    CHECK(sup.modules[0].intent == CANOPUS_SUP_INTENT_REMOVE);
 }
 
 TEST(supervisor_unknown_slot_disallowed)
@@ -335,7 +400,7 @@ TEST(supervisor_safe_mode_rejects_activation)
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
 }
 
-TEST(supervisor_safe_mode_rejects_removable_unload)
+TEST(supervisor_safe_mode_allows_next_boot_disable_remove)
 {
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
@@ -345,14 +410,15 @@ TEST(supervisor_safe_mode_rejects_removable_unload)
     sup.modules[0].state = CANOPUS_STATE_ACTIVE;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
-    /* an immediate removable unload (disable/remove now) is not read-only */
+    /* next-boot disable/remove never run third-party code, so safe mode
+     * allows them for every lifecycle class */
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
-    CHECK(sup.modules[0].state == CANOPUS_STATE_ACTIVE); /* untouched */
-    g_unloads = 0;
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_DISABLED_NEXT_BOOT);
+    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
-    CHECK(g_unloads == 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_REMOVE_PENDING);
 }
 
 TEST(supervisor_safe_mode_allows_resident_next_boot)
@@ -465,13 +531,13 @@ TEST(supervisor_read_staging_never_torn)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
     /* the read returns a fully consistent record: slot state present, no
      * torn mix of module states */
     CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status)) ==
           CANOPUS_SUP_STATUS_SIZE);
     CHECK_EQ(r32(status, 128 + 0 * CANOPUS_SUP_MODULE_SLOT_STRIDE + 0),
-             CANOPUS_STATE_ACTIVE);
+             CANOPUS_STATE_ENABLED);
     CHECK_EQ(r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF),
              r32(status, CANOPUS_SUP_STATUS_SEQ_END_OFF));
 }
@@ -628,7 +694,6 @@ TEST(v2_enable_by_module_id)
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1,
                                         "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_INSTALLED;
-    g_load_result = CANOPUS_STATE_ACTIVE;
 
     canopus_memset(payload, 0, sizeof(payload));
     canopus_memcpy(payload, "mod.hello", 9);
@@ -638,8 +703,10 @@ TEST(v2_enable_by_module_id)
               &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(payload)) ==
           (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(payload)));
     CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
-    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_COMPLETED);
-    CHECK(sup.modules[0].state == CANOPUS_STATE_ACTIVE);
+    /* enable is next-boot and never loads now */
+    CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_ENABLED);
+    CHECK(sup.modules[0].intent == CANOPUS_SUP_INTENT_ENABLED);
 
     /* an unknown module id resolves to DISALLOWED, not a fake success */
     canopus_memcpy(payload, "mod.nope", 8);
@@ -768,31 +835,21 @@ TEST(supervisor_bad_slot_sets_error)
     CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_BAD_SLOT);
 }
 
-TEST(supervisor_load_failure_sets_error)
+TEST(supervisor_enable_never_loads_so_no_load_error)
 {
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_INSTALLED;
+    /* even a platform whose load would fail is never touched: enable only
+     * records the boot intent */
     g_load_result = -1;
+    g_loads = 0;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
-    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_LOAD);
-}
-
-TEST(supervisor_unload_failure_sets_error)
-{
-    struct canopus_supervisor_v1 sup;
-    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
-    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
-    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
-    g_unload_result = -1;
-    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
-    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_UNLOAD);
-    g_unload_result = 0;
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK(g_loads == 0);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_ENABLED);
 }
 
 TEST(supervisor_unknown_op_sets_error)
@@ -807,51 +864,25 @@ TEST(supervisor_unknown_op_sets_error)
 
 /* ---- CAN-P1-007: slot reclaim + authoritative identity -------------- */
 
-TEST(supervisor_repeated_add_remove_never_exhausts_slots)
-{
-    struct canopus_supervisor_v1 sup;
-    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
-    uint32_t i;
-    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    g_unload_result = 0;
-    for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS + 4u; i++) {
-        char id[32];
-        int idx = canopus_supervisor_add_module(
-            &sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello");
-        CHECK(idx >= 0);
-        CHECK(sup.module_count == 1); /* one live module at a time */
-        sup.modules[idx].state = CANOPUS_STATE_ACTIVE;
-        make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, (uint32_t)idx, 0);
-        CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
-        CHECK(sup.modules[idx].state == 0); /* slot reclaimed */
-        CHECK(sup.module_count == 0);
-        (void)id;
-    }
-    /* more than CANOPUS_SUP_MODULE_SLOTS add/remove cycles are fine because
-     * REMOVE reclaims the slot instead of leaving it UNLOADED */
-    CHECK(sup.module_count == 0);
-}
-
-TEST(supervisor_status_count_matches_after_remove)
+TEST(supervisor_status_reflects_remove_pending)
 {
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     uint8_t status[CANOPUS_SUP_STATUS_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    g_unload_result = 0;
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.two") == 1);
-    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
-    sup.modules[1].state = CANOPUS_STATE_ACTIVE;
     CHECK(sup.module_count == 2);
-    /* remove slot 0: the enumerated count and slot are consistent */
+    /* remove slot 0: the enumerated count and slot stay consistent; the
+     * pending removal is visible in the ABI */
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
-    CHECK(sup.module_count == 1);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK(sup.module_count == 2); /* pending removal does not reclaim */
     canopus_supervisor_render_status(&sup, status);
-    CHECK_EQ(r32(status, 16), 1u); /* module_count */
-    CHECK_EQ(r32(status, 128 + 0 * CANOPUS_SUP_MODULE_SLOT_STRIDE + 0), 0u); /* freed */
-    CHECK(r32(status, 128 + 1 * CANOPUS_SUP_MODULE_SLOT_STRIDE + 0) != 0u); /* slot 1 live */
+    CHECK_EQ(r32(status, 16), 2u);
+    CHECK_EQ(r32(status, 128 + 0 * CANOPUS_SUP_MODULE_SLOT_STRIDE + 0),
+             CANOPUS_STATE_REMOVE_PENDING);
+    CHECK(r32(status, 128 + 1 * CANOPUS_SUP_MODULE_SLOT_STRIDE + 0) != 0u);
 }
 
 TEST(supervisor_add_module_rejects_full_table)
@@ -877,33 +908,34 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_device_transfers_report_bytes", supervisor_device_transfers_report_bytes_wrapper },
     { "supervisor_query_returns_completed", supervisor_query_returns_completed_wrapper },
     { "supervisor_install_stages_package", supervisor_install_stages_package_wrapper },
-    { "supervisor_enable_removable_loads_module", supervisor_enable_removable_loads_module_wrapper },
-    { "supervisor_disable_removable_stops", supervisor_disable_removable_stops_wrapper },
-    { "supervisor_remove_removable_unloads", supervisor_remove_removable_unloads_wrapper },
-    { "supervisor_disable_with_retained_resource_fail_stops", supervisor_disable_with_retained_resource_fail_stops_wrapper },
-    { "supervisor_disable_with_open_ref_fail_stops", supervisor_disable_with_open_ref_fail_stops_wrapper },
-    { "supervisor_disable_unload_failure_keeps_loaded_state", supervisor_disable_unload_failure_keeps_loaded_state_wrapper },
+    { "supervisor_enable_is_next_boot", supervisor_enable_is_next_boot_wrapper },
+    { "supervisor_disable_loaded_module_is_next_boot", supervisor_disable_loaded_module_is_next_boot_wrapper },
+    { "supervisor_disable_installed_module_is_next_boot", supervisor_disable_installed_module_is_next_boot_wrapper },
+    { "supervisor_remove_is_next_boot", supervisor_remove_is_next_boot_wrapper },
+    { "supervisor_remove_pending_slot_not_reclaimed_by_command", supervisor_remove_pending_slot_not_reclaimed_by_command_wrapper },
+    { "supervisor_registry_survives_reload", supervisor_registry_survives_reload_wrapper },
+    { "supervisor_registry_restore_keeps_disabled_modules_unloaded", supervisor_registry_restore_keeps_disabled_modules_unloaded_wrapper },
+    { "supervisor_registry_remove_intent_clears_at_boot", supervisor_registry_remove_intent_clears_at_boot_wrapper },
+    { "supervisor_registry_corrupt_magic_is_ignored", supervisor_registry_corrupt_magic_is_ignored_wrapper },
     { "supervisor_resident_disable_is_reboot_required", supervisor_resident_disable_is_reboot_required_wrapper },
     { "supervisor_resident_remove_is_remove_pending", supervisor_resident_remove_is_remove_pending_wrapper },
     { "supervisor_unknown_slot_disallowed", supervisor_unknown_slot_disallowed_wrapper },
     { "supervisor_safe_mode_sets_flag", supervisor_safe_mode_sets_flag_wrapper },
     { "supervisor_safe_mode_rejects_activation", supervisor_safe_mode_rejects_activation_wrapper },
-    { "supervisor_safe_mode_rejects_removable_unload", supervisor_safe_mode_rejects_removable_unload_wrapper },
+    { "supervisor_safe_mode_allows_next_boot_disable_remove", supervisor_safe_mode_allows_next_boot_disable_remove_wrapper },
     { "supervisor_safe_mode_allows_resident_next_boot", supervisor_safe_mode_allows_resident_next_boot_wrapper },
     { "supervisor_boot_markers_drive_safe_mode", supervisor_boot_markers_drive_safe_mode_wrapper },
     { "supervisor_crash_counter_saturates", supervisor_crash_counter_saturates_wrapper },
     { "supervisor_render_status_rejects_null", supervisor_render_status_rejects_null_wrapper },
     { "supervisor_add_module_rejects_full_table", supervisor_add_module_rejects_full_table_wrapper },
-    { "supervisor_repeated_add_remove_never_exhausts_slots", supervisor_repeated_add_remove_never_exhausts_slots_wrapper },
-    { "supervisor_status_count_matches_after_remove", supervisor_status_count_matches_after_remove_wrapper },
+    { "supervisor_status_reflects_remove_pending", supervisor_status_reflects_remove_pending_wrapper },
     { "supervisor_status_sequence_embedded_and_even", supervisor_status_sequence_embedded_and_even_wrapper },
     { "supervisor_command_advances_sequence", supervisor_command_advances_sequence_wrapper },
     { "supervisor_read_rejects_torn_snapshot", supervisor_read_rejects_torn_snapshot_wrapper },
     { "supervisor_read_staging_never_torn", supervisor_read_staging_never_torn_wrapper },
     { "supervisor_error_persists_until_next_command", supervisor_error_persists_until_next_command_wrapper },
     { "supervisor_bad_slot_sets_error", supervisor_bad_slot_sets_error_wrapper },
-    { "supervisor_load_failure_sets_error", supervisor_load_failure_sets_error_wrapper },
-    { "supervisor_unload_failure_sets_error", supervisor_unload_failure_sets_error_wrapper },
+    { "supervisor_enable_never_loads_so_no_load_error", supervisor_enable_never_loads_so_no_load_error_wrapper },
     { "supervisor_unknown_op_sets_error", supervisor_unknown_op_sets_error_wrapper },
     { "v2_golden_query_device_request", v2_golden_query_device_request_wrapper },
     { "v2_decode_rejects_malformed", v2_decode_rejects_malformed_wrapper },

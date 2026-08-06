@@ -26,6 +26,10 @@ typedef int32_t (*canopus_manager_native_route_v1)(
     void *cookie, struct canopus_manager_native_v1 *native,
     uint32_t route);
 
+/* Re-read the device model before a re-render (e.g. after an operation
+ * changed the supervisor state). Optional; the target backend installs it. */
+typedef int32_t (*canopus_manager_native_refresh_v1)(void *cookie);
+
 enum canopus_manager_native_event {
     CANOPUS_MANAGER_EVENT_SHOW_DEVICE = 1,
     CANOPUS_MANAGER_EVENT_SHOW_MODULES,
@@ -50,6 +54,8 @@ struct canopus_manager_native_v1 {
     uint32_t confirm_return_view;
     canopus_manager_native_route_v1 route;
     void *route_cookie;
+    canopus_manager_native_refresh_v1 refresh;
+    void *refresh_cookie;
 };
 
 int32_t canopus_manager_native_init(
@@ -67,6 +73,11 @@ void canopus_manager_native_set_router(
     struct canopus_manager_native_v1 *native,
     canopus_manager_native_route_v1 route,
     void *route_cookie);
+
+void canopus_manager_native_set_refresh(
+    struct canopus_manager_native_v1 *native,
+    canopus_manager_native_refresh_v1 refresh,
+    void *refresh_cookie);
 
 int32_t canopus_manager_native_render(struct canopus_manager_native_v1 *native);
 
