@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.ui.lvx_page_content_create",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "lvx_page_content_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void *(void *)",
+  "proof": { "static": "confirmed" },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "source": "EVID-UI-003"
+  },
+  "entry_address": "0x0CA4E8E8",
+  "callable_address": "0x0CA4E8E9",
+  "notes": "Exact-target stock content container used by Settings below lvx_page_title_create. Manager uses it as a page-owned 336x424 body root placed at y=56 so the title/time header stays outside content scrolling. Device lifecycle and scroll behavior remain pending."
+}

@@ -892,6 +892,38 @@
       }
     },
     {
+      "symbol_id": "xiaomi-band-10-pro-3.101.030.ui.lvx_page_content_create",
+      "expected_entry_address": "0x0CA4E8E8",
+      "pattern": "98 b5 01 46 00 af 04 48 57 f0 ce fe 04 46 00 21 58 f0 c2 f8 20 46 98 bd 04 f2 d8 2c 90 b5 83 b0",
+      "mask": "ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff",
+      "pattern_sha256": "198730a88e8f407474d54c73f921a991f04aad08c0d4e01e262fd505539c2944",
+      "pattern_length": 32,
+      "instruction_set": "thumb",
+      "scope": "canonical:XIP_TEXT_RO",
+      "current_match_count": 1,
+      "portability": "exact-target",
+      "anchors": {
+        "entry_offset": 10021096,
+        "tiny_thunk": false
+      }
+    },
+    {
+      "symbol_id": "xiaomi-band-10-pro-3.101.030.ui.lvx_page_title_create",
+      "expected_entry_address": "0x0C4A9990",
+      "pattern": "2d e9 f0 4f 81 46 83 b0 8a 46 00 af 49 46 95 48 16 46 98 46 de f0 48 f9 04 46 00 21 de f0 60 ff",
+      "mask": "ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff",
+      "pattern_sha256": "dcf4f66bca6ce44e827ebe64665a0614321145f3be603b0e321dfcde6f7cc997",
+      "pattern_length": 32,
+      "instruction_set": "thumb",
+      "scope": "canonical:XIP_TEXT_RO",
+      "current_match_count": 1,
+      "portability": "exact-target",
+      "anchors": {
+        "entry_offset": 4102544,
+        "tiny_thunk": false
+      }
+    },
+    {
       "symbol_id": "xiaomi-band-10-pro-3.101.030.ui.lvx_style_apply",
       "expected_entry_address": "0x0C49EA98",
       "pattern": "2d e9 f0 41 13 4c 0e 46 94 f8 00 c0 90 46 04 46 1d 46 00 af bc f1 00 0f 01 d1 ff f7 8d fe 2a 46",

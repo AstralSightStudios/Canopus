@@ -98,6 +98,6 @@ fn current_target_signature_catalog_validates() {
     let value: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
     validate(SchemaKind::FunctionSignatureCatalog, &value).unwrap();
-    assert_eq!(value["signatures"].as_array().unwrap().len(), 58);
+    assert_eq!(value["signatures"].as_array().unwrap().len(), 60);
     assert_eq!(value["unresolved"].as_array().unwrap().len(), 2);
 }

@@ -4,7 +4,7 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 1
-// input_digest: 89ff04c6ee36cf05
+// input_digest: eaab15e407c059fc
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -254,6 +254,8 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
 // lvx_list_item_update: restricted - not exported until context/ownership approved
 // lvx_notification_insert_message: restricted - not exported until context/ownership approved
+// lvx_page_content_create: restricted - not exported until context/ownership approved
+// lvx_page_title_create: restricted - not exported until context/ownership approved
 // lvx_style_apply: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
 // open: restricted - not exported until context/ownership approved

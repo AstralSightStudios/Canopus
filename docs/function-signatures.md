@@ -6,7 +6,7 @@ a tracked function can be located when a later firmware moves it.
 The current catalog is:
 
 - `targets/xiaomi-band-10-pro-3.101.030/function-signatures.json`
-- 58 function records with recovered entry addresses
+- 60 function records with recovered entry addresses
 - 2 unresolved function records without an entry address
 - canonical mapping: raw `vela_ap.bin` at `0x0C0C0000` (`XIP_TEXT_RO`)
 
