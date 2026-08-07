@@ -257,6 +257,31 @@ TEST(supervisor_remove_pending_slot_not_reclaimed_by_command)
 
 /* ---- CAN-P0-005 revision: registry persistence ---------------------- */
 
+TEST(supervisor_install_persists_disabled_module)
+{
+    struct canopus_supervisor_v1 a, b;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&a, 7, &fake_platform, 0);
+    g_registry_present = 0;
+    g_persists = 0;
+    /* a freshly staged, disabled module sits in the table when INSTALL
+     * completes (stage_package registers it before returning COMPLETED) */
+    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    CHECK(a.modules[0].intent == CANOPUS_SUP_INTENT_DISABLED);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&a, cmd) == CANOPUS_RESULT_COMPLETED);
+    /* §16.4: INSTALL persists the table, so an installed-but-never-enabled
+     * module survives a reboot. */
+    CHECK(g_persists == 1);
+    CHECK(g_registry_present == 1);
+    /* a fresh supervisor restores it as disabled, not lost */
+    canopus_supervisor_init(&b, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_restore_registry(&b) == 0);
+    CHECK(b.module_count == 1);
+    CHECK(b.modules[0].intent == CANOPUS_SUP_INTENT_DISABLED);
+    CHECK(g_loads == 0); /* disabled intents never load */
+}
+
 TEST(supervisor_registry_survives_reload)
 {
     struct canopus_supervisor_v1 a, b;
@@ -913,6 +938,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_disable_installed_module_is_next_boot", supervisor_disable_installed_module_is_next_boot_wrapper },
     { "supervisor_remove_is_next_boot", supervisor_remove_is_next_boot_wrapper },
     { "supervisor_remove_pending_slot_not_reclaimed_by_command", supervisor_remove_pending_slot_not_reclaimed_by_command_wrapper },
+    { "supervisor_install_persists_disabled_module", supervisor_install_persists_disabled_module_wrapper },
     { "supervisor_registry_survives_reload", supervisor_registry_survives_reload_wrapper },
     { "supervisor_registry_restore_keeps_disabled_modules_unloaded", supervisor_registry_restore_keeps_disabled_modules_unloaded_wrapper },
     { "supervisor_registry_remove_intent_clears_at_boot", supervisor_registry_remove_intent_clears_at_boot_wrapper },

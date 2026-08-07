@@ -26,7 +26,7 @@
 #define CANOPUS_SUP_READ_CHUNK 512u
 #define CANOPUS_SUP_NUTTX_O_RDONLY 1
 #define CANOPUS_SUP_NUTTX_O_WRONLY 2u
-#define CANOPUS_SUP_NUTTX_O_CREAT 0x10u
+#define CANOPUS_SUP_NUTTX_O_CREAT 0x4u
 #define CANOPUS_SUP_NUTTX_OPEN UINT32_C(0x0C1C15B1)
 #define CANOPUS_SUP_NUTTX_CLOSE UINT32_C(0x0C1AAB71)
 #define CANOPUS_SUP_NUTTX_READ UINT32_C(0x0C1C1E25)
@@ -197,7 +197,13 @@ static int sup_read_exact(const char *path, void *buffer, uint32_t size,
 /* Whole-record file write (fixed-size registry). Writes exactly `size`
  * bytes; O_CREAT (bit 4) with the device mode. No O_TRUNC is needed because
  * the registry is a fixed 784-byte record and callers always rewrite it
- * whole through a freshly-unlinked temp name. */
+ * whole through a freshly-unlinked temp name.
+ *
+ * O_CREAT is 0x4 on this firmware, NOT 0x10: fs_open.c (sub_C1C1238) gates
+ * the mode argument on flag bit 4 (`TST.W R2, #4`), which is the NuttX
+ * `file_vopen` O_CREAT check; bit 5 (0x10) is not the create bit. With the
+ * old 0x10 the registry tmp open failed on a non-existent file and the
+ * registry was never persisted — modules always vanished after reboot. */
 static int sup_write_all(const char *path, const void *data, uint32_t size)
 {
     typedef int (*open_fn)(const char *, int, ...);

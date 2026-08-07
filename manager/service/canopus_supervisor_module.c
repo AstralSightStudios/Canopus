@@ -33,8 +33,14 @@ __attribute__((constructor)) static void canopus_sup_ctor(void)
     }
     /* Restore the persisted slot table so modules installed in a previous
      * session survive reboot / canopus reinstall. Enabled intents are loaded
-     * here; remove intents delete their inbox artifacts. */
-    (void)canopus_supervisor_restore_registry(&g_sup);
+     * here; remove intents delete their inbox artifacts. A registry that
+     * exists but cannot be read back (truncated write, bad magic) is a real
+     * storage failure, not a fresh install: surface it as ERR_REGISTRY so the
+     * installer status shows error= instead of silently dropping every module.
+     * Per-module load failures already leave the slot FAILED with ERR_LOAD. */
+    if (canopus_supervisor_restore_registry(&g_sup) != 0) {
+        g_sup.error_code = CANOPUS_SUP_ERR_REGISTRY;
+    }
 }
 
 __attribute__((destructor)) static void canopus_sup_dtor(void)

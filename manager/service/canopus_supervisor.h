@@ -66,6 +66,7 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_UNKNOWN_OP = -8,   /* unrecognized opcode */
     CANOPUS_SUP_ERR_BUSY = -9,         /* open refs / retained resources block unload */
     CANOPUS_SUP_ERR_SAFE_MODE = -10,   /* command disallowed by safe-mode policy */
+    CANOPUS_SUP_ERR_REGISTRY = -11,    /* persisted registry present but unreadable/corrupt */
     /* Exact-target installer diagnostics. These stay in the CPS1 status record
      * so a constrained watchface can surface a deterministic failing stage. */
     CANOPUS_SUP_ERR_STAGE_PATH = -101,

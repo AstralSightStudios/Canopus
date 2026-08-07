@@ -129,6 +129,15 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
         } else {
             rc = CANOPUS_RESULT_FAILED;
         }
+        /* §16.4: the registry is written on every slot change, INSTALL
+         * included. A freshly installed (disabled) module must survive a
+         * reboot even before it is ever enabled; otherwise "install then
+         * reboot" silently loses it. Persist immediately after staging. */
+        if (rc == CANOPUS_RESULT_COMPLETED &&
+            canopus_supervisor_save_registry(sup) != 0 &&
+            sup->error_code == CANOPUS_SUP_ERR_NONE) {
+            sup->error_code = CANOPUS_SUP_ERR_STAGE;
+        }
         if (rc == CANOPUS_RESULT_FAILED &&
             sup->error_code == CANOPUS_SUP_ERR_NONE) {
             sup->error_code = CANOPUS_SUP_ERR_STAGE;

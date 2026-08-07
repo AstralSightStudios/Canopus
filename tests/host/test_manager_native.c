@@ -132,6 +132,36 @@ TEST(manager_native_renders_device_prefabs)
            CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);
 }
 
+TEST(manager_native_overview_surfaces_supervisor_error)
+{
+    struct canopus_manager_model_v1 model;
+    struct canopus_manager_native_v1 native;
+    struct manager_native_backend backend;
+    const struct canopus_ui_snapshot_v1 *snapshot;
+    const struct canopus_ui_node_v1 *error;
+
+    canopus_memset(&backend, 0, sizeof(backend));
+    canopus_manager_init(&model, native_transport, 0);
+    canopus_manager_set_identity(&model, "xiaomi-band-10-pro-3.101.030",
+                                 "3.101.030", "CONBINE_LTALM078", 5);
+    /* a silently-failed registry write/restore must be visible, not hidden */
+    model.error_code = -11; /* CANOPUS_SUP_ERR_REGISTRY */
+    CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
+                                      &backend) == CANOPUS_UI_OK);
+    snapshot = canopus_ui_current(&native.ui);
+    CHECK(snapshot != 0);
+    error = find_primary(snapshot, "Error");
+    CHECK(error != 0);
+    CHECK(strcmp(snapshot->strings + error->secondary_off,
+                 "err -11 registry corrupt") == 0);
+
+    /* a clean supervisor shows no error row */
+    model.error_code = 0;
+    CHECK(canopus_manager_native_render(&native) == CANOPUS_UI_OK);
+    snapshot = canopus_ui_current(&native.ui);
+    CHECK(find_primary(snapshot, "Error") == 0);
+}
+
 TEST(manager_native_navigates_list_and_detail)
 {
     struct canopus_manager_model_v1 model;
@@ -435,6 +465,8 @@ TEST(manager_native_empty_module_list_is_valid)
 static const struct test_registry manager_native_tests[] = {
     { "manager_native_renders_device_prefabs",
       manager_native_renders_device_prefabs_wrapper },
+    { "manager_native_overview_surfaces_supervisor_error",
+      manager_native_overview_surfaces_supervisor_error_wrapper },
     { "manager_native_navigates_list_and_detail",
       manager_native_navigates_list_and_detail_wrapper },
     { "manager_native_dispatches_real_model_operations",

@@ -393,6 +393,7 @@ static int target_refresh_model(void)
     }
     manager_model.framework_revision = device.framework_revision;
     manager_model.safe_mode = device.safe_mode;
+    manager_model.error_code = device.error_code;
     manager_model.module_count = 0u;
     for (slot = 0; slot < CANOPUS_MANAGER_MAX_MODULES; slot++) {
         struct canopus_client_module_snapshot_v1 source;

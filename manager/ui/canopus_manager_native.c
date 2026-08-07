@@ -13,6 +13,7 @@
 #define UI_KEY_TARGET             23u
 #define UI_KEY_BUILD              24u
 #define UI_KEY_ACTIONS_SECTION    25u
+#define UI_KEY_ERROR              26u
 #define UI_KEY_MODULE_SECTION     30u
 #define UI_KEY_MODULE_EMPTY       31u
 #define UI_KEY_MODULE_BASE       100u
@@ -140,6 +141,31 @@ static void format_framework(uint32_t revision, char out[32])
     (void)append_u32(out, used, 32u, revision);
 }
 
+/* Render a non-zero supervisor error_code so a silently-failed persistence
+ * write or boot restore is visible on the overview instead of looking like a
+ * clean REBOOT_REQUIRED. The values mirror canopus_supervisor.h; the wearable
+ * UI intentionally does not include the supervisor-private header. */
+static void format_error(int32_t code, char out[48])
+{
+    const char *what = "";
+    uint32_t used = 0;
+    out[0] = '\0';
+    if (code == -5)      what = "package stage failed";
+    else if (code == -6) what = "module load failed";
+    else if (code == -11) what = "registry corrupt";
+    used = append_string(out, used, 48u, "err ", 4u);
+    if (code < 0) {
+        out[used++] = '-';
+    } else {
+        out[used++] = '+';
+    }
+    used = append_u32(out, used, 48u, (uint32_t)(code < 0 ? -code : code));
+    if (what[0] != '\0') {
+        used = append_string(out, used, 48u, " ", 1u);
+        (void)append_string(out, used, 48u, what, 22u);
+    }
+}
+
 static void format_module_detail(const struct canopus_manager_module_v1 *module,
                                  char out[64])
 {
@@ -225,6 +251,13 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
     rc = append_status(tree, UI_KEY_TARGET, "Target", 7u,
                        model->target_id, sizeof(model->target_id));
     if (rc != CANOPUS_UI_OK) return rc;
+    if (model->error_code != 0) {
+        char errtext[48];
+        format_error(model->error_code, errtext);
+        rc = append_status(tree, UI_KEY_ERROR, "Error", 6u,
+                           errtext, sizeof(errtext));
+        if (rc != CANOPUS_UI_OK) return rc;
+    }
     rc = CANOPUS_UI_END(tree);
     if (rc != CANOPUS_UI_OK) return rc;
 
