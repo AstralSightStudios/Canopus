@@ -203,6 +203,9 @@ int32_t canopus_client_query_module(
                         sizeof(payload), &size) != 0) {
         return CANOPUS_CLIENT_ERR_IO;
     }
+    if (response.result_state == CANOPUS_RESULT_DISALLOWED && size == 0u) {
+        return CANOPUS_CLIENT_ERR_NOT_FOUND;
+    }
     if (response.result_state != CANOPUS_RESULT_COMPLETED ||
         size != CANOPUS_QUERY_MODULE_SIZE ||
         read_u32(payload) != CANOPUS_QUERY_MODULE_MAGIC ||
@@ -215,6 +218,7 @@ int32_t canopus_client_query_module(
     snapshot->lifecycle_class = read_u32(payload + 16u);
     snapshot->version = read_u32(payload + 20u);
     snapshot->flags = read_u32(payload + 24u);
+    snapshot->activation_error = (int32_t)read_u32(payload + 60u);
     canopus_memcpy(snapshot->module_id, payload + 28u,
                    sizeof(snapshot->module_id));
     for (i = 0; i < sizeof(snapshot->module_id); i++) {

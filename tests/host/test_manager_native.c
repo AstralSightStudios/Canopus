@@ -1,6 +1,7 @@
 /* Host tests: Manager semantic native UI controller. */
 #include "canopus_test.h"
 #include "canopus_manager_native.h"
+#include "canopus_client.h"
 #include "canopus_memory.h"
 #include "canopus_runtime.h"
 #include <string.h>
@@ -155,11 +156,53 @@ TEST(manager_native_overview_surfaces_supervisor_error)
     CHECK(strcmp(snapshot->strings + error->secondary_off,
                  "err -11 registry corrupt") == 0);
 
+    model.error_code = -16;
+    model.supervisor_flags = (3u << 24) | (18u << 8) | 5u;
+    CHECK(canopus_manager_native_render(&native) == CANOPUS_UI_OK);
+    snapshot = canopus_ui_current(&native.ui);
+    error = find_primary(snapshot, "Error");
+    CHECK(error != 0);
+    CHECK(strcmp(snapshot->strings + error->secondary_off,
+                 "err -16 registry rename failed") == 0);
+    CHECK(strcmp(snapshot->strings + find_primary(snapshot, "Registry")->secondary_off,
+                 "Rename registry") == 0);
+    CHECK(strcmp(snapshot->strings + find_primary(snapshot, "Filesystem errno")->secondary_off,
+                 "18") == 0);
+    CHECK(strcmp(snapshot->strings + find_primary(snapshot, "Verified saves")->secondary_off,
+                 "3") == 0);
+
     /* a clean supervisor shows no error row */
     model.error_code = 0;
+    model.supervisor_flags = 0u;
     CHECK(canopus_manager_native_render(&native) == CANOPUS_UI_OK);
     snapshot = canopus_ui_current(&native.ui);
     CHECK(find_primary(snapshot, "Error") == 0);
+}
+
+TEST(manager_native_surfaces_module_query_failure)
+{
+    struct canopus_manager_model_v1 model;
+    struct canopus_manager_native_v1 native;
+    struct manager_native_backend backend;
+    const struct canopus_ui_snapshot_v1 *snapshot;
+    const struct canopus_ui_node_v1 *error;
+
+    canopus_memset(&backend, 0, sizeof(backend));
+    canopus_manager_init(&model, native_transport, 0);
+    canopus_manager_set_identity(&model, "xiaomi-band-10-pro-3.101.030",
+                                 "3.101.030", "CONBINE_LTALM078", 5);
+    model.reported_module_count = 1u;
+    model.module_query_error = CANOPUS_CLIENT_ERR_PROTOCOL;
+    model.module_query_error_slot = 0u;
+    CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
+                                      &backend) == CANOPUS_UI_OK);
+    snapshot = canopus_ui_current(&native.ui);
+    CHECK(snapshot != 0);
+    error = find_primary(snapshot, "Module query");
+    CHECK(error != 0);
+    CHECK(strcmp(snapshot->strings + error->secondary_off,
+                 "slot 0 query failed 4") == 0);
+    CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_SHOW_MODULES) != 0);
 }
 
 TEST(manager_native_navigates_list_and_detail)
@@ -196,6 +239,32 @@ TEST(manager_native_navigates_list_and_detail)
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_DISABLE) != 0);
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_REMOVE) != 0);
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_ROLLBACK) != 0);
+}
+
+TEST(manager_native_ready_module_has_no_manual_activation)
+{
+    struct canopus_manager_model_v1 model;
+    struct canopus_manager_native_v1 native;
+    struct manager_native_backend backend;
+    struct canopus_manager_module_v1 module;
+    const struct canopus_ui_snapshot_v1 *snapshot;
+
+    native_transport_calls = 0;
+    native_transport_command = 0;
+    canopus_memset(&backend, 0, sizeof(backend));
+    canopus_manager_init(&model, native_transport, 0);
+    canopus_memset(&module, 0, sizeof(module));
+    canopus_buf_copy(module.module_id, sizeof(module.module_id), "mod.ready");
+    module.lifecycle_class = CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION;
+    module.state = CANOPUS_STATE_READY;
+    module.signature_ok = 1u;
+    CHECK(canopus_manager_upsert_module(&model, &module) == 0);
+    model.view = CANOPUS_MANAGER_VIEW_MODULE_DETAIL;
+    CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
+                                      &backend) == CANOPUS_UI_OK);
+    snapshot = canopus_ui_current(&native.ui);
+    CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_ACTIVATE) == 0);
+    CHECK(native_transport_calls == 0);
 }
 
 TEST(manager_native_dispatches_real_model_operations)
@@ -467,8 +536,12 @@ static const struct test_registry manager_native_tests[] = {
       manager_native_renders_device_prefabs_wrapper },
     { "manager_native_overview_surfaces_supervisor_error",
       manager_native_overview_surfaces_supervisor_error_wrapper },
+    { "manager_native_surfaces_module_query_failure",
+      manager_native_surfaces_module_query_failure_wrapper },
     { "manager_native_navigates_list_and_detail",
       manager_native_navigates_list_and_detail_wrapper },
+    { "manager_native_ready_module_has_no_manual_activation",
+      manager_native_ready_module_has_no_manual_activation_wrapper },
     { "manager_native_dispatches_real_model_operations",
       manager_native_dispatches_real_model_operations_wrapper },
     { "manager_native_enable_is_confirmable_and_dispatches",

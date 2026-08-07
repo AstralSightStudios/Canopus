@@ -14,6 +14,7 @@
 #include "canopus_supervisor_platform.h"
 #include "canopus_manager_native_probe.h"
 #include "canopus_installer_bundle.h"
+#include "canopus_module_registration.h"
 #include "canopus_runtime.h"
 #include "canopus_veneer.h" /* canopus_fw_register_driver / canopus_fw_unregister_driver */
 #include "sha256.h"
@@ -77,8 +78,25 @@ static int32_t sup_control_read(void *filep, void *buffer, uint32_t count)
 
 static int32_t sup_control_write(void *filep, const void *buffer, uint32_t count)
 {
+    const struct canopus_module_registration_v1 *registration;
+    struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
+    int rc;
+
     (void)filep;
-    return canopus_supervisor_device_write(canopus_supervisor_get(), buffer, count);
+    if (canopus_module_registration_is_frame(buffer, count)) {
+        registration = (const struct canopus_module_registration_v1 *)buffer;
+        if (registration->descriptor == 0u ||
+            registration->module_id[0] == 0u ||
+            registration->module_id[CANOPUS_SUP_MODULE_ID_MAX - 1u] != 0u) {
+            return -1;
+        }
+        rc = canopus_supervisor_register_descriptor(
+            sup, (const char *)registration->module_id,
+            (const struct canopus_module_descriptor_v1 *)(uintptr_t)
+                registration->descriptor);
+        return rc == 0 ? (int32_t)count : -1;
+    }
+    return canopus_supervisor_device_write(sup, buffer, count);
 }
 
 static int sup_register_device(void *cookie)
@@ -194,6 +212,79 @@ static int sup_read_exact(const char *path, void *buffer, uint32_t size,
     return 0;
 }
 
+static int sup_registry_errno(void)
+{
+    typedef int *(*errno_location_fn)(void);
+    errno_location_fn errno_location =
+        (errno_location_fn)(uintptr_t)CANOPUS_SUP_NUTTX_ERRNO_LOCATION;
+    int *value = errno_location();
+    return value != 0 && *value > 0 ? *value : 0;
+}
+
+static void sup_registry_diag(uint32_t stage, int error)
+{
+    struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
+    uint32_t count;
+    uint32_t encoded_error;
+    if (sup == 0) return;
+    count = sup->flags & CANOPUS_SUP_DIAG_SAVE_COUNT_MASK;
+    encoded_error = error > 0 ? (uint32_t)error : 0u;
+    if (encoded_error > 0xFFFFu) encoded_error = 0xFFFFu;
+    sup->flags = count |
+        (stage & CANOPUS_SUP_DIAG_STAGE_MASK) |
+        (encoded_error << CANOPUS_SUP_DIAG_ERRNO_SHIFT);
+}
+
+static void sup_registry_diag_success(void)
+{
+    struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
+    uint32_t count;
+    if (sup == 0) return;
+    count = (sup->flags & CANOPUS_SUP_DIAG_SAVE_COUNT_MASK) >>
+            CANOPUS_SUP_DIAG_SAVE_COUNT_SHIFT;
+    if (count < 0xFFu) count++;
+    sup->flags = count << CANOPUS_SUP_DIAG_SAVE_COUNT_SHIFT;
+}
+
+static int sup_bytes_equal(const uint8_t *left, const uint8_t *right,
+                           uint32_t size)
+{
+    uint8_t diff = 0u;
+    uint32_t i;
+    for (i = 0u; i < size; i++) diff |= (uint8_t)(left[i] ^ right[i]);
+    return diff == 0u;
+}
+
+static int sup_verify_file(const char *path, const uint8_t *expected,
+                           uint32_t size)
+{
+    typedef int (*open_fn)(const char *, int, ...);
+    typedef int (*close_fn)(int);
+    typedef int32_t (*read_fn)(int, void *, uint32_t);
+    open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
+    close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
+    read_fn read_file = (read_fn)(uintptr_t)CANOPUS_SUP_NUTTX_READ;
+    uint8_t chunk[CANOPUS_SUP_READ_CHUNK];
+    uint32_t used = 0u;
+    int fd = open_file(path, CANOPUS_SUP_NUTTX_O_RDONLY);
+
+    if (fd < 0) return -1;
+    while (used < size) {
+        uint32_t want = size - used;
+        int32_t got;
+        if (want > sizeof(chunk)) want = sizeof(chunk);
+        got = read_file(fd, chunk, want);
+        if (got <= 0 || !sup_bytes_equal(chunk, expected + used,
+                                          (uint32_t)(got > 0 ? got : 0))) {
+            (void)close_file(fd);
+            return -1;
+        }
+        used += (uint32_t)got;
+    }
+    if (read_file(fd, chunk, 1u) != 0 || close_file(fd) < 0) return -1;
+    return 0;
+}
+
 /* Whole-record file write (fixed-size registry). Writes exactly `size`
  * bytes; O_CREAT (bit 4) with the device mode. No O_TRUNC is needed because
  * the registry is a fixed 784-byte record and callers always rewrite it
@@ -217,22 +308,28 @@ static int sup_write_all(const char *path, const void *data, uint32_t size)
     int fd;
 
     if (path == 0 || data == 0 || size == 0u) {
-        return -1;
+        return CANOPUS_SUP_ERR_REGISTRY_OPEN;
     }
     fd = open_file(path, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT,
                    CANOPUS_SUP_DEVICE_MODE);
     if (fd < 0) {
-        return -1;
+        sup_registry_diag(CANOPUS_SUP_REG_STAGE_OPEN_TMP, sup_registry_errno());
+        return CANOPUS_SUP_ERR_REGISTRY_OPEN;
     }
     while (used < size) {
         int32_t written = write_file(fd, bytes + used, size - used);
         if (written <= 0) {
+            int error = sup_registry_errno();
             (void)close_file(fd);
-            return -1;
+            sup_registry_diag(CANOPUS_SUP_REG_STAGE_WRITE_TMP, error);
+            return CANOPUS_SUP_ERR_REGISTRY_WRITE;
         }
         used += (uint32_t)written;
     }
-    (void)close_file(fd);
+    if (close_file(fd) < 0) {
+        sup_registry_diag(CANOPUS_SUP_REG_STAGE_CLOSE_TMP, sup_registry_errno());
+        return CANOPUS_SUP_ERR_REGISTRY_CLOSE;
+    }
     return 0;
 }
 
@@ -364,10 +461,15 @@ static int sup_load_module(void *cookie, uint32_t index,
         receipt.module_version != sup->modules[index].version) {
         return -1;
     }
+    sup->loading_slot = (int32_t)index;
     handle = insmod(path, module_name);
+    sup->loading_slot = -1;
     if (handle == 0) return -1;
-    return lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE
-               ? CANOPUS_STATE_ACTIVE : CANOPUS_STATE_BOOT_RESIDENT;
+    if (sup->modules[index].descriptor == 0) {
+        sup->error_code = CANOPUS_SUP_ERR_DESCRIPTOR_MISSING;
+        return -1;
+    }
+    return CANOPUS_STATE_READY;
 }
 
 /* Remove intent applied at boot: delete the module's inbox receipt and ELF.
@@ -398,21 +500,30 @@ static int sup_remove_artifact(void *cookie, uint32_t index)
 
 static int sup_registry_persist(void *cookie, const uint8_t *data, uint32_t len)
 {
+    int rc;
     (void)cookie;
     if (data == 0 || len == 0u || len > CANOPUS_SUP_REGISTRY_SIZE) {
-        return -1;
+        return CANOPUS_SUP_ERR_REGISTRY_OPEN;
     }
-    /* Atomic: write the temp, rename over the target. A stale temp from a
-     * crashed write is unlinked first so O_CREAT always yields a fresh file. */
+    /* Keep a failed temp file as evidence. A successful rename consumes it. */
     (void)sup_unlink_path(CANOPUS_SUP_REGISTRY_TMP_PATH);
-    if (sup_write_all(CANOPUS_SUP_REGISTRY_TMP_PATH, data, len) != 0) {
-        return -1;
+    rc = sup_write_all(CANOPUS_SUP_REGISTRY_TMP_PATH, data, len);
+    if (rc != 0) return rc;
+    if (sup_verify_file(CANOPUS_SUP_REGISTRY_TMP_PATH, data, len) != 0) {
+        sup_registry_diag(CANOPUS_SUP_REG_STAGE_VERIFY_TMP, sup_registry_errno());
+        return CANOPUS_SUP_ERR_REGISTRY_VERIFY_TMP;
     }
     if (sup_rename_path(CANOPUS_SUP_REGISTRY_TMP_PATH,
                         CANOPUS_SUP_REGISTRY_PATH) != 0) {
-        (void)sup_unlink_path(CANOPUS_SUP_REGISTRY_TMP_PATH);
-        return -1;
+        sup_registry_diag(CANOPUS_SUP_REG_STAGE_RENAME, sup_registry_errno());
+        return CANOPUS_SUP_ERR_REGISTRY_RENAME;
     }
+    if (sup_verify_file(CANOPUS_SUP_REGISTRY_PATH, data, len) != 0) {
+        sup_registry_diag(CANOPUS_SUP_REG_STAGE_VERIFY_FINAL,
+                          sup_registry_errno());
+        return CANOPUS_SUP_ERR_REGISTRY_VERIFY_FINAL;
+    }
+    sup_registry_diag_success();
     return 0;
 }
 
@@ -433,12 +544,17 @@ static int sup_registry_restore(void *cookie, uint8_t *data, uint32_t len)
     }
     fd = open_file(CANOPUS_SUP_REGISTRY_PATH, CANOPUS_SUP_NUTTX_O_RDONLY);
     if (fd < 0) {
-        return 1; /* no registry yet: a fresh install, not an error */
+        int error = sup_registry_errno();
+        if (error == 2) return 1; /* ENOENT: fresh install */
+        sup_registry_diag(CANOPUS_SUP_REG_STAGE_RESTORE_OPEN, error);
+        return -1;
     }
     while (used < len) {
         int32_t got = read_file(fd, data + used, len - used);
         if (got <= 0) {
+            int error = got < 0 ? sup_registry_errno() : 0;
             (void)close_file(fd);
+            sup_registry_diag(CANOPUS_SUP_REG_STAGE_RESTORE_READ, error);
             return -1;
         }
         used += (uint32_t)got;
@@ -460,8 +576,15 @@ static int sup_stage_package(void *cookie, const char *token)
     int slot;
 
     (void)cookie;
-    /* Legacy payload-free INSTALL remains the Manager bootstrap. */
-    if (token == 0) return canopus_manager_native_install();
+    /* Legacy payload-free INSTALL is the miwear-owned publication bootstrap.
+     * Register Manager first, then let loaded ABI 1.1 modules publish their
+     * native apps from the same caller process. Both operations are idempotent. */
+    if (token == 0) {
+        int manager_rc = canopus_manager_native_install();
+        int modules_rc = manager_rc == 0
+                             ? canopus_supervisor_publish_native_apps(sup) : -1;
+        return manager_rc == 0 && modules_rc == 0 ? 0 : -1;
+    }
     if (sup == 0) return -1;
     /* Reject a duplicate before registering a second slot. */
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {

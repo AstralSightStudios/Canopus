@@ -39,6 +39,28 @@ extern "C" {
 #define CANOPUS_SUP_STATUS_SEQ_END_OFF   40u
 #define CANOPUS_SUP_STATUS_RETRIES       4u
 
+/* `flags` persistence diagnostic layout, also returned by QUERY_DEVICE:
+ * bits 0..7   last registry stage (0 = none/success)
+ * bits 8..23  positive NuttX errno (0 when unavailable)
+ * bits 24..31 successful registry transaction count (saturating) */
+#define CANOPUS_SUP_DIAG_STAGE_MASK       0x000000FFu
+#define CANOPUS_SUP_DIAG_ERRNO_SHIFT      8u
+#define CANOPUS_SUP_DIAG_ERRNO_MASK       0x00FFFF00u
+#define CANOPUS_SUP_DIAG_SAVE_COUNT_SHIFT 24u
+#define CANOPUS_SUP_DIAG_SAVE_COUNT_MASK  0xFF000000u
+
+enum canopus_sup_registry_stage {
+    CANOPUS_SUP_REG_STAGE_NONE = 0,
+    CANOPUS_SUP_REG_STAGE_OPEN_TMP = 1,
+    CANOPUS_SUP_REG_STAGE_WRITE_TMP = 2,
+    CANOPUS_SUP_REG_STAGE_CLOSE_TMP = 3,
+    CANOPUS_SUP_REG_STAGE_VERIFY_TMP = 4,
+    CANOPUS_SUP_REG_STAGE_RENAME = 5,
+    CANOPUS_SUP_REG_STAGE_VERIFY_FINAL = 6,
+    CANOPUS_SUP_REG_STAGE_RESTORE_OPEN = 7,
+    CANOPUS_SUP_REG_STAGE_RESTORE_READ = 8,
+};
+
 /* Installer commands (arg0 = module index for enable/disable/remove/...). */
 enum canopus_sup_command {
     CANOPUS_SUP_CMD_QUERY = 0x43510001u,
@@ -49,6 +71,7 @@ enum canopus_sup_command {
     CANOPUS_SUP_CMD_UPDATE,
     CANOPUS_SUP_CMD_ROLLBACK,
     CANOPUS_SUP_CMD_ENTER_SAFE_MODE,
+    CANOPUS_SUP_CMD_ACTIVATE,
 };
 
 /* Stable supervisor error codes (CAN-P1-008). `error_code` holds the
@@ -67,6 +90,15 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_BUSY = -9,         /* open refs / retained resources block unload */
     CANOPUS_SUP_ERR_SAFE_MODE = -10,   /* command disallowed by safe-mode policy */
     CANOPUS_SUP_ERR_REGISTRY = -11,    /* persisted registry present but unreadable/corrupt */
+    CANOPUS_SUP_ERR_REGISTRY_OPEN = -12,
+    CANOPUS_SUP_ERR_REGISTRY_WRITE = -13,
+    CANOPUS_SUP_ERR_REGISTRY_CLOSE = -14,
+    CANOPUS_SUP_ERR_REGISTRY_VERIFY_TMP = -15,
+    CANOPUS_SUP_ERR_REGISTRY_RENAME = -16,
+    CANOPUS_SUP_ERR_REGISTRY_VERIFY_FINAL = -17,
+    CANOPUS_SUP_ERR_DESCRIPTOR_MISSING = -18,
+    CANOPUS_SUP_ERR_DESCRIPTOR_INVALID = -19,
+    CANOPUS_SUP_ERR_ACTIVATE = -20,
     /* Exact-target installer diagnostics. These stay in the CPS1 status record
      * so a constrained watchface can surface a deterministic failing stage. */
     CANOPUS_SUP_ERR_STAGE_PATH = -101,
@@ -113,8 +145,12 @@ enum canopus_boot_state {
 #define CANOPUS_SUP_MODULE_ID_MAX 32u
 
 /* Slot flag bits. bit0 is the legacy signature_ok bit (also rendered in the
- * 384-byte CPS1 status). */
+ * 384-byte CPS1 status). The registry uses the otherwise-unused upper 31 bits
+ * to retain a zigzag-encoded activation error without changing the version-1
+ * 784-byte file shape. In-memory flags never contain the encoded error. */
 #define CANOPUS_SUP_FLAG_SIGNATURE_OK  (1u << 0)
+#define CANOPUS_SUP_FLAG_PUBLIC_MASK   CANOPUS_SUP_FLAG_SIGNATURE_OK
+#define CANOPUS_SUP_REGISTRY_ERROR_SHIFT 1u
 
 /* CAN-P0-005 revision (next-boot lifecycle): enable/disable/remove are never
  * hot operations. Each slot carries a persisted *boot intent* — what the
@@ -130,8 +166,10 @@ enum canopus_sup_intent {
  * canopus reinstall. One file, written atomically (tmp + rename) on every
  * mutation, read back at supervisor load. Format:
  *   header (16): u32 magic "CRD1", u32 version, u32 module_count, u32 rsvd
- *   16 slots x 48: module_id[32] + u32 class + u32 version + u32 flags +
+ *   16 slots x 48: module_id[32] + u32 class + u32 version + u32 flags/error +
  *                  u32 intent
+ * Registry flags bit 0 is signature_ok; bits 1..31 retain a zigzag-encoded
+ * activation error. Old files used zero in those bits and remain valid.
  * The slot table is the in-memory source of truth; the registry is the
  * boot-time restore source. */
 #define CANOPUS_SUP_REGISTRY_MAGIC   0x31524443u /* "CRD1" */
@@ -153,6 +191,8 @@ struct canopus_sup_module_v1 {
      * per-module commands by id instead of a UI index. Not part of the
      * 384-byte CPS1 slot render (which keeps the 16-byte stride). */
     uint8_t module_id[CANOPUS_SUP_MODULE_ID_MAX];
+    const struct canopus_module_descriptor_v1 *descriptor;
+    uint32_t activation_error;
 };
 
 /* Supervisor model. */
@@ -167,6 +207,7 @@ struct canopus_supervisor_v1 {
     uint32_t error_code;
     struct canopus_sup_module_v1 modules[CANOPUS_SUP_MODULE_SLOTS];
     int32_t  selected;         /* arg0 from the last command */
+    int32_t  loading_slot;     /* slot allowed to self-register during insmod */
     /* CAN-P1-003: sequence snapshot guarding the status record. Every state
      * mutation runs under canopus_snapshot_begin/commit; the sequence value
      * is embedded in the status at SEQ_BEGIN/SEQ_END and advances by 2 per
@@ -251,6 +292,14 @@ int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup);
  * the platform `load_module` hook; remove intents have their artifacts
  * deleted through `remove_artifact` and are not re-registered. Returns 0. */
 int canopus_supervisor_restore_registry(struct canopus_supervisor_v1 *sup);
+/* Publish native apps for loaded modules from a caller-owned UI-process
+ * bootstrap transaction. Never call this from boot restore or a worker. */
+int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup);
+
+int canopus_supervisor_register_descriptor(
+    struct canopus_supervisor_v1 *sup,
+    const char *module_id,
+    const struct canopus_module_descriptor_v1 *descriptor);
 
 /* CAN-P0-006: boot markers. boot_begin records BOOTING (before loading any
  * third-party module); boot_ok commits BOOT_OK once READY. A boot that never

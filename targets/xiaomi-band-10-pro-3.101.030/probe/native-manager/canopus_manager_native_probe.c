@@ -49,6 +49,9 @@
 #define FW_NOTIFICATION_INSERT UINT32_C(0x0CA81F11)
 #define FW_ACTIVITY_NAVIGATE UINT32_C(0x0CA539F9)
 #define FW_ACTIVITY_FINISH UINT32_C(0x0CA53089)
+#define FW_LVX_MSGBOX_CREATE UINT32_C(0x0C4A93A5)
+#define FW_LVX_MSGBOX_SET_CONTENT UINT32_C(0x0C4A93FD)
+#define FW_LVX_OBJECT_DELETE UINT32_C(0x0C5888F1)
 
 #define CANOPUS_TARGET_PAGE_COUNT 3u
 #define CANOPUS_TARGET_PAGE_OVERVIEW 0u
@@ -182,6 +185,28 @@ struct canopus_target_ui_binding {
     uint32_t event_id;
 };
 
+struct canopus_target_msgbox_button {
+    void (*callback)(void *event);
+    const char *text;
+    void *user_data;
+    const void *visual;
+    uint32_t reserved;
+};
+
+struct canopus_target_dialog {
+    void *native_box;
+    struct canopus_target_msgbox_button buttons[2];
+    struct canopus_target_ui_binding cancel_binding;
+    struct canopus_target_ui_binding confirm_binding;
+    uint32_t generation;
+    canopus_ui_node_id confirm_key;
+    uint32_t confirm_event;
+    canopus_ui_node_id cancel_key;
+    uint32_t cancel_event;
+    uint8_t active;
+    uint8_t dispatching;
+};
+
 struct canopus_target_ui_backend {
     void *root;
     void *page_shell;
@@ -191,6 +216,8 @@ struct canopus_target_ui_backend {
     void *labels[CANOPUS_TARGET_UI_MAX_LABELS];
     uint8_t row_kinds[CANOPUS_TARGET_UI_MAX_ROWS];
     struct canopus_target_ui_binding bindings[CANOPUS_TARGET_UI_MAX_ROWS];
+    struct firmware_page_descriptor *firmware_page;
+    struct canopus_target_dialog dialog;
     uint32_t row_count;
     uint32_t label_count;
     uint32_t rendered_generation;
@@ -394,14 +421,28 @@ static int target_refresh_model(void)
     manager_model.framework_revision = device.framework_revision;
     manager_model.safe_mode = device.safe_mode;
     manager_model.error_code = device.error_code;
+    manager_model.supervisor_flags = device.flags;
+    manager_model.reported_module_count = device.module_count;
+    manager_model.module_query_error = 0;
+    manager_model.module_query_error_slot = 0u;
     manager_model.module_count = 0u;
     for (slot = 0; slot < CANOPUS_MANAGER_MAX_MODULES; slot++) {
         struct canopus_client_module_snapshot_v1 source;
         struct canopus_manager_module_v1 module;
-        if (canopus_client_query_module(&manager_client,
-                                        target_next_request_id(), slot,
-                                        &source) != CANOPUS_CLIENT_OK) {
-            continue;
+        {
+            int32_t query_rc = canopus_client_query_module(
+                &manager_client, target_next_request_id(), slot, &source);
+            if (query_rc == CANOPUS_CLIENT_ERR_NOT_FOUND) {
+                continue;
+            }
+            if (query_rc != CANOPUS_CLIENT_OK) {
+                if (manager_model.module_query_error == 0 &&
+                    found < device.module_count) {
+                    manager_model.module_query_error = query_rc;
+                    manager_model.module_query_error_slot = slot;
+                }
+                continue;
+            }
         }
         canopus_memset(&module, 0, sizeof(module));
         canopus_memcpy(module.module_id, source.module_id,
@@ -410,6 +451,7 @@ static int target_refresh_model(void)
         module.state = source.state;
         module.flags = source.flags;
         module.version = source.version;
+        module.activation_error = source.activation_error;
         module.signature_ok =
             (source.flags & CANOPUS_TARGET_MODULE_FLAG_SIGNATURE_OK) != 0u;
         module.risk = source.lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ?
@@ -432,7 +474,7 @@ static int target_refresh_model(void)
         manager_model.view = CANOPUS_MANAGER_VIEW_MODULE_LIST;
         manager_model.selected = 0u;
     }
-    return found == device.module_count ? 0 : -1;
+    return 0;
 }
 
 static void target_row_event(void *event)
@@ -515,6 +557,118 @@ static int target_find_row(struct canopus_target_ui_backend *backend,
     return empty;
 }
 
+static int target_find_confirmation(
+    const struct canopus_ui_snapshot_v1 *snapshot,
+    const struct canopus_ui_node_v1 **message,
+    const struct canopus_ui_node_v1 **confirm,
+    const struct canopus_ui_node_v1 **cancel)
+{
+    uint16_t i;
+    *message = NULL;
+    *confirm = NULL;
+    *cancel = NULL;
+    for (i = 0; i < snapshot->node_count; i++) {
+        const struct canopus_ui_node_v1 *node = &snapshot->nodes[i];
+        if (node->type == CANOPUS_UI_NODE_TEXT) {
+            *message = node;
+        } else if (node->event_id == CANOPUS_MANAGER_EVENT_CONFIRM) {
+            *confirm = node;
+        } else if (node->event_id == CANOPUS_MANAGER_EVENT_CANCEL) {
+            *cancel = node;
+        }
+    }
+    return *message != NULL && *confirm != NULL && *cancel != NULL;
+}
+
+static void target_dialog_dismiss(struct canopus_target_ui_backend *backend)
+{
+    typedef void (*delete_fn)(void *);
+    delete_fn delete_object = (delete_fn)(uintptr_t)FW_LVX_OBJECT_DELETE;
+    void *box;
+    if (backend == NULL || !backend->dialog.active) return;
+    box = backend->dialog.native_box;
+    backend->dialog.active = 0u;
+    backend->dialog.native_box = NULL;
+    if (box != NULL) delete_object(box);
+}
+
+static void target_dialog_event(void *event)
+{
+    typedef uintptr_t (*get_user_data_fn)(void *);
+    get_user_data_fn get_user_data =
+        (get_user_data_fn)(uintptr_t)FW_LVX_EVENT_GET_USER_DATA;
+    struct canopus_target_ui_binding *binding =
+        (struct canopus_target_ui_binding *)get_user_data(event);
+    struct canopus_target_page_context *context;
+    uint32_t page_index;
+
+    if (binding == NULL) return;
+    /* The callback stores the page index in the binding key's high byte and
+     * the semantic key in its low 24 bits. */
+    page_index = binding->key >> 24;
+    if (page_index >= CANOPUS_TARGET_PAGE_COUNT) return;
+    context = &manager_pages[page_index];
+    if (!context->active || !context->interactive ||
+        context->backend.dialog.dispatching) return;
+    context->backend.dialog.dispatching = 1u;
+    target_dialog_dismiss(&context->backend);
+    (void)canopus_ui_dispatch_event(&context->native.ui,
+                                    binding->generation,
+                                    binding->key & UINT32_C(0x00FFFFFF),
+                                    binding->event_id);
+    context->backend.dialog.dispatching = 0u;
+}
+
+static int target_show_confirmation(
+    struct canopus_target_ui_backend *backend,
+    const struct canopus_ui_snapshot_v1 *snapshot,
+    const struct canopus_ui_node_v1 *message,
+    const struct canopus_ui_node_v1 *confirm,
+    const struct canopus_ui_node_v1 *cancel)
+{
+    typedef void *(*create_fn)(void *, void *);
+    typedef void (*set_content_fn)(
+        void *, uint32_t, const char *, const char *, const char *,
+        const struct canopus_target_msgbox_button *, uint32_t);
+    create_fn create_box = (create_fn)(uintptr_t)FW_LVX_MSGBOX_CREATE;
+    set_content_fn set_content =
+        (set_content_fn)(uintptr_t)FW_LVX_MSGBOX_SET_CONTENT;
+    struct canopus_target_ui_binding *cancel_binding;
+    struct canopus_target_ui_binding *confirm_binding;
+    const char *text;
+
+    if (backend->dialog.active) return 0;
+    if (backend->content_root == NULL || backend->firmware_page == NULL) return -1;
+    canopus_memset(&backend->dialog, 0, sizeof(backend->dialog));
+    backend->dialog.generation = snapshot->generation;
+    backend->dialog.confirm_key = confirm->key;
+    backend->dialog.confirm_event = confirm->event_id;
+    backend->dialog.cancel_key = cancel->key;
+    backend->dialog.cancel_event = cancel->event_id;
+    cancel_binding = &backend->dialog.cancel_binding;
+    confirm_binding = &backend->dialog.confirm_binding;
+    cancel_binding->generation = snapshot->generation;
+    cancel_binding->key = ((uint32_t)backend->page_index << 24) | cancel->key;
+    cancel_binding->event_id = cancel->event_id;
+    confirm_binding->generation = snapshot->generation;
+    confirm_binding->key = ((uint32_t)backend->page_index << 24) | confirm->key;
+    confirm_binding->event_id = confirm->event_id;
+    backend->dialog.buttons[0].callback = target_dialog_event;
+    backend->dialog.buttons[0].text = "Cancel";
+    backend->dialog.buttons[0].user_data = cancel_binding;
+    backend->dialog.buttons[1].callback = target_dialog_event;
+    backend->dialog.buttons[1].text = "Confirm";
+    backend->dialog.buttons[1].user_data = confirm_binding;
+    backend->dialog.native_box = create_box(backend->content_root,
+                                             backend->firmware_page);
+    if (backend->dialog.native_box == NULL) return -1;
+    backend->dialog.active = 1u;
+    text = snapshot->strings + message->primary_off;
+    set_content(backend->dialog.native_box, 2u, NULL, text, NULL,
+                backend->dialog.buttons, 2u);
+    return 0;
+}
+
 static int32_t target_ui_apply(
     void *cookie, const struct canopus_ui_snapshot_v1 *snapshot)
 {
@@ -569,6 +723,17 @@ static int32_t target_ui_apply(
         backend->page_index >= CANOPUS_TARGET_PAGE_COUNT) {
         return -1;
     }
+    {
+        const struct canopus_ui_node_v1 *message;
+        const struct canopus_ui_node_v1 *confirm;
+        const struct canopus_ui_node_v1 *cancel;
+        if (target_find_confirmation(snapshot, &message, &confirm, &cancel) &&
+            target_show_confirmation(backend, snapshot, message,
+                                     confirm, cancel) == 0) {
+            return 0;
+        }
+    }
+    target_dialog_dismiss(backend);
     if (backend->content_root == NULL) {
         backend->content_root = create_content(backend->root);
         if (backend->content_root == NULL) {
@@ -908,6 +1073,7 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
     canopus_native_probe_record.root_object = (uintptr_t)root;
     canopus_memset(&context->backend, 0, sizeof(context->backend));
     context->backend.root = root;
+    context->backend.firmware_page = page;
     context->backend.page_index = (uint8_t)page->page_id;
     if (!manager_session_ready) {
         rc = canopus_client_init(&manager_client, &target_device_io, NULL);
@@ -988,6 +1154,7 @@ static int manager_page_on_destroy(struct firmware_page_descriptor *page)
     canopus_native_probe_record.list_row = 0u;
     canopus_native_probe_record.root_object = 0u;
     if (context->active) {
+        target_dialog_dismiss(&context->backend);
         context->active = 0u;
         if (manager_active_pages > 0u) {
             manager_active_pages--;

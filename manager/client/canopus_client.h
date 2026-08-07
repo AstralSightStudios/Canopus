@@ -22,6 +22,7 @@ extern "C" {
 #define CANOPUS_CLIENT_ERR_STATE     -2
 #define CANOPUS_CLIENT_ERR_IO        -3
 #define CANOPUS_CLIENT_ERR_PROTOCOL  -4
+#define CANOPUS_CLIENT_ERR_NOT_FOUND -5
 
 struct canopus_client_io_v1 {
     uint32_t struct_size;
@@ -58,6 +59,7 @@ struct canopus_client_module_snapshot_v1 {
     uint32_t version;
     uint32_t flags;
     char module_id[32];
+    int32_t activation_error;
 };
 
 int32_t canopus_client_init(struct canopus_client_v1 *client,

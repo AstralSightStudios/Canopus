@@ -50,6 +50,7 @@ struct canopus_manager_module_v1 {
     uint32_t signature_ok;    /* 1 = signature verified, 0 = unsigned/dev */
     uint32_t risk;
     uint32_t has_previous;    /* rollback target exists */
+    int32_t activation_error;
 };
 
 struct canopus_manager_model_v1 {
@@ -69,6 +70,10 @@ struct canopus_manager_model_v1 {
      * registry save/restore or package stage is visible, not just a returned
      * REBOOT_REQUIRED with no durable state change. */
     int32_t  error_code;
+    uint32_t supervisor_flags; /* persistence stage/errno/save-count diagnostics */
+    int32_t module_query_error;
+    uint32_t module_query_error_slot;
+    uint32_t reported_module_count;
 
     uint32_t pending_op;      /* last canopus_command issued, 0 = none */
     uint32_t pending_state;   /* CANOPUS_RESULT_* of pending_op */
@@ -123,6 +128,8 @@ int canopus_manager_render_module_detail(const struct canopus_manager_model_v1 *
 
 uint32_t canopus_manager_op_install(struct canopus_manager_model_v1 *m,
                                     const char *package_ref);
+uint32_t canopus_manager_op_activate(struct canopus_manager_model_v1 *m,
+                                     uint32_t index);
 uint32_t canopus_manager_op_enable(struct canopus_manager_model_v1 *m,
                                    uint32_t index);
 uint32_t canopus_manager_op_disable(struct canopus_manager_model_v1 *m,

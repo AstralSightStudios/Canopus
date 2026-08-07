@@ -217,6 +217,9 @@ local function read_status()
         safe_mode = words[4], module_count = words[5],
         pending_op = words[6], pending_state = words[7],
         flags = words[8], error_code = words[9],
+        registry_stage = words[8] % 0x100,
+        registry_errno = math.floor(words[8] / 0x100) % 0x10000,
+        registry_saves = math.floor(words[8] / 0x1000000) % 0x100,
         modules = {},
     }
     if st.pending_state < 0 or st.pending_state > 8 then
@@ -284,6 +287,10 @@ local function format_status(st)
     if st.safe_mode ~= 0 then lines[#lines + 1] = "** SAFE MODE **" end
     if st.error_code ~= 0 then
         lines[#lines + 1] = string.format("error=%d", signed32(st.error_code))
+    end
+    if st.registry_stage ~= 0 or st.registry_saves ~= 0 then
+        lines[#lines + 1] = string.format("registry stage=%u errno=%u saves=%u",
+            st.registry_stage, st.registry_errno, st.registry_saves)
     end
     for i, mod in ipairs(st.modules) do
         if mod.state ~= 0 and mod.state ~= 12 then

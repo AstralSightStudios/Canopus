@@ -193,6 +193,35 @@ pub unsafe fn bt_remove_bond(address: *const u8, transport: u32) -> i32 {
 /// this is a retriable precondition, not a submission.
 pub const CREATE_BOND_ADAPTER_NOT_READY: i32 = 2;
 
+pub const CORE_BT_BIND_STATE_ADDRESS: usize = 0x20122D2C;
+pub const CORE_BT_COMPANION_ADDRESS: usize = 0x20122D2E;
+pub const CORE_BT_ADAPTER_ADDRESS: usize = 0x20122FC0;
+pub const CORE_BT_CALLBACK_HANDLE_ADDRESS: usize = 0x20122FBC;
+pub const CORE_BT_CALLBACK_TABLE: usize = 0x2CD1F930;
+pub const CORE_BT_PAIR_REQUEST_CALLBACK: usize = 0x0C6E1E25;
+pub const CORE_BT_BOUND_STATE: u8 = 1;
+pub const CORE_BT_PAIR_REQUEST_SLOT: usize = 5;
+
+pub unsafe fn core_bt_bind_state() -> u8 {
+    unsafe { *(CORE_BT_BIND_STATE_ADDRESS as *const u8) }
+}
+
+pub unsafe fn core_bt_companion() -> *const u8 {
+    CORE_BT_COMPANION_ADDRESS as *const u8
+}
+
+pub unsafe fn core_bt_adapter() -> *mut core::ffi::c_void {
+    unsafe { *(CORE_BT_ADAPTER_ADDRESS as *const *mut core::ffi::c_void) }
+}
+
+pub unsafe fn core_bt_callback_handle() -> *mut u32 {
+    CORE_BT_CALLBACK_HANDLE_ADDRESS as *mut u32
+}
+
+pub unsafe fn core_bt_callback_table() -> *const u32 {
+    CORE_BT_CALLBACK_TABLE as *const u32
+}
+
 // ---------------------------------------------------------------------------
 // L2CAP / buffers / allocator / timer / queue
 // ---------------------------------------------------------------------------
@@ -328,21 +357,23 @@ pub unsafe fn bt_timer_cancel(handle: *mut u32) -> i32 {
 
 pub type QueueWork = extern "C" fn(i32, i32, *mut core::ffi::c_void) -> i32;
 
-/// Queues `run` on the Bluetooth owner; `cancel` is the free callback.
+/// Queues `run` on the Bluetooth owner; `cancel` owns the argument if the
+/// queued work is cancelled. The return value is the inserted queue node, not
+/// a status code; stock callers do not use it to determine success.
 pub unsafe fn bt_queue_external(
     owner: *mut core::ffi::c_void,
     run: QueueWork,
     cancel: *mut core::ffi::c_void,
     argument: *mut core::ffi::c_void,
     event: u8,
-) -> i32 {
+) -> *mut core::ffi::c_void {
     type F = extern "C" fn(
         *mut core::ffi::c_void,
         QueueWork,
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
         u8,
-    ) -> i32;
+    ) -> *mut core::ffi::c_void;
     let f: F = unsafe { core::mem::transmute(0x0C7D3319usize) };
     f(owner, run, cancel, argument, event)
 }

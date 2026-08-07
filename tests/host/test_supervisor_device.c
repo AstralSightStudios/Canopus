@@ -4,6 +4,7 @@
 #include "canopus_test.h"
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
+#include "canopus_module_registration.h"
 #include "canopus_runtime.h"
 #include "canopus_memory.h"
 #include <string.h>
@@ -16,15 +17,67 @@ static int g_stages;
 static int g_persists;
 static int g_load_result = CANOPUS_STATE_ACTIVE;
 static int g_stage_result = 0;
+static int g_persist_result = 0;
 static uint8_t g_registry[CANOPUS_SUP_REGISTRY_SIZE];
 static int g_registry_present;
+static int g_activations;
+static int g_activation_result;
+static int g_publications;
+static int g_publication_result;
+static struct canopus_supervisor_v1 *g_loading_supervisor;
+static const struct canopus_module_descriptor_v1 *g_load_descriptor;
+
+static int fake_activate(const struct canopus_context_v1 *ctx)
+{
+    (void)ctx;
+    g_activations++;
+    return g_activation_result;
+}
+static int fake_module_callback(const struct canopus_context_v1 *ctx)
+{
+    (void)ctx;
+    return 0;
+}
+static int fake_query(struct canopus_status_writer_v1 *writer)
+{
+    (void)writer;
+    return 0;
+}
+
+static int fake_publish_native_app(const struct canopus_context_v1 *ctx)
+{
+    (void)ctx;
+    g_publications++;
+    return g_publication_result;
+}
+
+static struct canopus_module_descriptor_v1 fake_descriptor = {
+    sizeof(struct canopus_module_descriptor_v1),
+    CANOPUS_ABI_MAJOR,
+    CANOPUS_ABI_MINOR,
+    0u,
+    "mod.hello",
+    "1.0.0",
+    "host-test",
+    "xiaomi-band-10-pro-3.101.030",
+    fake_module_callback,
+    fake_activate,
+    fake_module_callback,
+    fake_module_callback,
+    fake_query,
+    fake_publish_native_app,
+};
 
 static int fake_register(void *c) { (void)c; return 0; }
 static int fake_unregister(void *c) { (void)c; return 0; }
 static int fake_load(void *c, uint32_t i, const char *n, uint32_t cls)
 {
-    (void)c; (void)i; (void)n; (void)cls;
+    (void)c; (void)n; (void)cls;
     g_loads++;
+    if (g_loading_supervisor != 0 && g_load_descriptor != 0 &&
+        i < CANOPUS_SUP_MODULE_SLOTS) {
+        g_loading_supervisor->modules[i].descriptor = g_load_descriptor;
+    }
     return g_load_result;
 }
 static int fake_remove_artifact(void *c, uint32_t i)
@@ -40,6 +93,9 @@ static int fake_persist(void *c, const uint8_t *d, uint32_t n)
     (void)c;
     if (d == 0 || n == 0u || n > sizeof(g_registry)) {
         return -1;
+    }
+    if (g_persist_result != 0) {
+        return g_persist_result;
     }
     canopus_memcpy(g_registry, d, n);
     g_persists++;
@@ -125,6 +181,26 @@ TEST(supervisor_command_abi_validates)
     CHECK(canopus_supervisor_validate_command(cmd) == -1);
 }
 
+TEST(module_registration_frame_requires_magic_not_only_size)
+{
+    uint8_t cpc2_query_module[CANOPUS_MODULE_REGISTRATION_SIZE];
+    struct canopus_module_registration_v1 registration;
+    canopus_memset(cpc2_query_module, 0, sizeof(cpc2_query_module));
+    cpc2_query_module[0] = (uint8_t)CANOPUS_TRANSPORT_V2_MAGIC;
+    cpc2_query_module[1] = (uint8_t)(CANOPUS_TRANSPORT_V2_MAGIC >> 8);
+    cpc2_query_module[2] = (uint8_t)(CANOPUS_TRANSPORT_V2_MAGIC >> 16);
+    cpc2_query_module[3] = (uint8_t)(CANOPUS_TRANSPORT_V2_MAGIC >> 24);
+    CHECK(!canopus_module_registration_is_frame(
+              cpc2_query_module, sizeof(cpc2_query_module)));
+
+    canopus_memset(&registration, 0, sizeof(registration));
+    registration.magic = CANOPUS_MODULE_REGISTRATION_MAGIC;
+    CHECK(canopus_module_registration_is_frame(
+              &registration, sizeof(registration)));
+    CHECK(!canopus_module_registration_is_frame(
+              &registration, sizeof(registration) - 1u));
+}
+
 TEST(supervisor_device_transfers_report_bytes)
 {
     struct canopus_supervisor_v1 sup;
@@ -171,6 +247,69 @@ TEST(supervisor_install_stages_package)
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
     CHECK(g_stages == 1);
+}
+
+TEST(supervisor_descriptor_registration_is_load_scoped)
+{
+    struct canopus_supervisor_v1 sup;
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
+                                        1, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_register_descriptor(
+              &sup, "mod.hello", &fake_descriptor) == -1);
+    sup.loading_slot = 0;
+    CHECK(canopus_supervisor_register_descriptor(
+              &sup, "mod.hello", &fake_descriptor) == 0);
+    CHECK(sup.modules[0].descriptor == &fake_descriptor);
+    sup.loading_slot = -1;
+}
+
+TEST(supervisor_explicit_activate_targets_ready_slot)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup,
+              CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+              1, 1, "mod.hello") == 0);
+    sup.loading_slot = 0;
+    CHECK(canopus_supervisor_register_descriptor(
+              &sup, "mod.hello", &fake_descriptor) == 0);
+    sup.loading_slot = -1;
+    sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    sup.modules[0].state = CANOPUS_STATE_READY;
+    g_activations = 0;
+    g_activation_result = 0;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ACTIVATE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) ==
+          CANOPUS_RESULT_COMPLETED);
+    CHECK(g_activations == 1);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_BOOT_RESIDENT);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) ==
+          CANOPUS_RESULT_DISALLOWED);
+    CHECK(g_activations == 1);
+}
+
+TEST(supervisor_explicit_activation_reports_callback_failure)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
+                                        1, 1, "mod.hello") == 0);
+    sup.loading_slot = 0;
+    CHECK(canopus_supervisor_register_descriptor(
+              &sup, "mod.hello", &fake_descriptor) == 0);
+    sup.loading_slot = -1;
+    sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    sup.modules[0].state = CANOPUS_STATE_READY;
+    g_activation_result = -77;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ACTIVATE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_FAILED);
+    CHECK((int32_t)sup.modules[0].activation_error == -77);
+    CHECK((int32_t)sup.error_code == CANOPUS_SUP_ERR_ACTIVATE);
+    g_activation_result = 0;
 }
 
 /* ---- CAN-P0-005 revision: next-boot lifecycle ----------------------- */
@@ -255,6 +394,38 @@ TEST(supervisor_remove_pending_slot_not_reclaimed_by_command)
     CHECK(sup.modules[1].state == CANOPUS_STATE_REMOVE_PENDING);
 }
 
+TEST(supervisor_persist_failure_rolls_back_enable)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
+                                        1, 1, "mod.hello") == 0);
+    g_persist_result = CANOPUS_SUP_ERR_REGISTRY_RENAME;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
+    CHECK((int32_t)sup.error_code == CANOPUS_SUP_ERR_REGISTRY_RENAME);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_INSTALLED);
+    CHECK(sup.modules[0].intent == CANOPUS_SUP_INTENT_DISABLED);
+    g_persist_result = 0;
+}
+
+TEST(supervisor_persist_failure_rolls_back_install)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
+                                        1, 1, "existing") == 0);
+    g_persist_result = CANOPUS_SUP_ERR_REGISTRY_WRITE;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
+    CHECK((int32_t)sup.error_code == CANOPUS_SUP_ERR_REGISTRY_WRITE);
+    CHECK(sup.module_count == 1);
+    CHECK(strcmp((const char *)sup.modules[0].module_id, "existing") == 0);
+    g_persist_result = 0;
+}
+
 /* ---- CAN-P0-005 revision: registry persistence ---------------------- */
 
 TEST(supervisor_install_persists_disabled_module)
@@ -303,6 +474,108 @@ TEST(supervisor_registry_survives_reload)
     CHECK(b.modules[0].intent == CANOPUS_SUP_INTENT_ENABLED);
     CHECK(b.modules[0].state == CANOPUS_STATE_ACTIVE);
     CHECK(g_loads == 1);
+}
+
+TEST(supervisor_registry_restore_auto_activates_ready_module)
+{
+    struct canopus_supervisor_v1 a, b;
+    canopus_supervisor_init(&a, 7, &fake_platform, 0);
+    canopus_supervisor_init(&b, 7, &fake_platform, 0);
+    g_registry_present = 0;
+    CHECK(canopus_supervisor_add_module(&a,
+                                        CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+                                        3, 1, "mod.hello") == 0);
+    a.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    a.modules[0].state = CANOPUS_STATE_ENABLED;
+    CHECK(canopus_supervisor_save_registry(&a) == 0);
+
+    g_loads = 0;
+    g_load_result = CANOPUS_STATE_READY;
+    g_loading_supervisor = &b;
+    g_load_descriptor = &fake_descriptor;
+    g_activations = 0;
+    g_activation_result = 0;
+    CHECK(canopus_supervisor_restore_registry(&b) == 0);
+    CHECK(g_loads == 1);
+    CHECK(g_activations == 1);
+    CHECK(b.modules[0].state == CANOPUS_STATE_BOOT_RESIDENT);
+    CHECK(b.modules[0].activation_error == 0u);
+    g_loading_supervisor = 0;
+    g_load_descriptor = 0;
+}
+
+TEST(supervisor_registry_retains_boot_activation_error)
+{
+    struct canopus_supervisor_v1 a, b, c;
+    canopus_supervisor_init(&a, 7, &fake_platform, 0);
+    canopus_supervisor_init(&b, 7, &fake_platform, 0);
+    canopus_supervisor_init(&c, 7, &fake_platform, 0);
+    g_registry_present = 0;
+    CHECK(canopus_supervisor_add_module(&a,
+                                        CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+                                        3, 1, "mod.hello") == 0);
+    a.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    a.modules[0].state = CANOPUS_STATE_ENABLED;
+    CHECK(canopus_supervisor_save_registry(&a) == 0);
+
+    g_load_result = CANOPUS_STATE_READY;
+    g_loading_supervisor = &b;
+    g_load_descriptor = &fake_descriptor;
+    g_activation_result = -1102;
+    CHECK(canopus_supervisor_restore_registry(&b) == 0);
+    CHECK(b.modules[0].state == CANOPUS_STATE_FAILED);
+    CHECK((int32_t)b.modules[0].activation_error == -1102);
+
+    g_loading_supervisor = 0;
+    g_load_descriptor = 0;
+    g_load_result = CANOPUS_STATE_ACTIVE;
+    CHECK(canopus_supervisor_restore_registry(&c) == 0);
+    CHECK((int32_t)c.modules[0].activation_error == -1102);
+    CHECK(c.modules[0].flags == CANOPUS_SUP_FLAG_SIGNATURE_OK);
+    g_activation_result = 0;
+}
+
+TEST(supervisor_native_app_publication_is_version_gated)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_module_descriptor_v1 descriptor = fake_descriptor;
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(
+              &sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+              1, 1, "mod.hello") == 0);
+    sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
+    sup.modules[0].descriptor = &descriptor;
+    descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
+    descriptor.abi_minor = 0u;
+    descriptor.struct_size = CANOPUS_MODULE_DESCRIPTOR_V1_0_SIZE;
+    g_publications = 0;
+    g_registry_present = 0;
+    CHECK(canopus_supervisor_publish_native_apps(&sup) == 0);
+    CHECK(g_publications == 0);
+}
+
+TEST(supervisor_native_app_publication_persists_error)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_module_descriptor_v1 descriptor = fake_descriptor;
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(
+              &sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+              1, 1, "mod.hello") == 0);
+    sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
+    sup.modules[0].descriptor = &descriptor;
+    descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
+    descriptor.abi_minor = 1u;
+    descriptor.struct_size = sizeof(descriptor);
+    g_publications = 0;
+    g_publication_result = -100;
+    g_registry_present = 0;
+    g_persists = 0;
+    CHECK(canopus_supervisor_publish_native_apps(&sup) == -1);
+    CHECK(g_publications == 1);
+    CHECK((int32_t)sup.modules[0].activation_error == -100);
+    CHECK(g_persists == 1);
+    g_publication_result = 0;
 }
 
 TEST(supervisor_registry_restore_keeps_disabled_modules_unloaded)
@@ -930,16 +1203,26 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_init_rejects_null", supervisor_init_rejects_null_wrapper },
     { "supervisor_status_abi_layout", supervisor_status_abi_layout_wrapper },
     { "supervisor_command_abi_validates", supervisor_command_abi_validates_wrapper },
+    { "module_registration_frame_requires_magic_not_only_size", module_registration_frame_requires_magic_not_only_size_wrapper },
     { "supervisor_device_transfers_report_bytes", supervisor_device_transfers_report_bytes_wrapper },
     { "supervisor_query_returns_completed", supervisor_query_returns_completed_wrapper },
     { "supervisor_install_stages_package", supervisor_install_stages_package_wrapper },
+    { "supervisor_descriptor_registration_is_load_scoped", supervisor_descriptor_registration_is_load_scoped_wrapper },
+    { "supervisor_explicit_activate_targets_ready_slot", supervisor_explicit_activate_targets_ready_slot_wrapper },
+    { "supervisor_explicit_activation_reports_callback_failure", supervisor_explicit_activation_reports_callback_failure_wrapper },
     { "supervisor_enable_is_next_boot", supervisor_enable_is_next_boot_wrapper },
     { "supervisor_disable_loaded_module_is_next_boot", supervisor_disable_loaded_module_is_next_boot_wrapper },
     { "supervisor_disable_installed_module_is_next_boot", supervisor_disable_installed_module_is_next_boot_wrapper },
     { "supervisor_remove_is_next_boot", supervisor_remove_is_next_boot_wrapper },
     { "supervisor_remove_pending_slot_not_reclaimed_by_command", supervisor_remove_pending_slot_not_reclaimed_by_command_wrapper },
+    { "supervisor_persist_failure_rolls_back_enable", supervisor_persist_failure_rolls_back_enable_wrapper },
+    { "supervisor_persist_failure_rolls_back_install", supervisor_persist_failure_rolls_back_install_wrapper },
     { "supervisor_install_persists_disabled_module", supervisor_install_persists_disabled_module_wrapper },
     { "supervisor_registry_survives_reload", supervisor_registry_survives_reload_wrapper },
+    { "supervisor_registry_restore_auto_activates_ready_module", supervisor_registry_restore_auto_activates_ready_module_wrapper },
+    { "supervisor_registry_retains_boot_activation_error", supervisor_registry_retains_boot_activation_error_wrapper },
+    { "supervisor_native_app_publication_is_version_gated", supervisor_native_app_publication_is_version_gated_wrapper },
+    { "supervisor_native_app_publication_persists_error", supervisor_native_app_publication_persists_error_wrapper },
     { "supervisor_registry_restore_keeps_disabled_modules_unloaded", supervisor_registry_restore_keeps_disabled_modules_unloaded_wrapper },
     { "supervisor_registry_remove_intent_clears_at_boot", supervisor_registry_remove_intent_clears_at_boot_wrapper },
     { "supervisor_registry_corrupt_magic_is_ignored", supervisor_registry_corrupt_magic_is_ignored_wrapper },

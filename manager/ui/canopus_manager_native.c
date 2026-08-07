@@ -14,6 +14,10 @@
 #define UI_KEY_BUILD              24u
 #define UI_KEY_ACTIONS_SECTION    25u
 #define UI_KEY_ERROR              26u
+#define UI_KEY_PERSIST_STAGE      27u
+#define UI_KEY_PERSIST_ERRNO      28u
+#define UI_KEY_PERSIST_SAVES      29u
+#define UI_KEY_MODULE_QUERY_ERROR 32u
 #define UI_KEY_MODULE_SECTION     30u
 #define UI_KEY_MODULE_EMPTY       31u
 #define UI_KEY_MODULE_BASE       100u
@@ -21,6 +25,7 @@
 #define UI_KEY_DETAIL_STATE      201u
 #define UI_KEY_DETAIL_CLASS      202u
 #define UI_KEY_DETAIL_SIGN       203u
+#define UI_KEY_DETAIL_ERROR      204u
 #define UI_KEY_DETAIL_UPDATE     210u
 #define UI_KEY_DETAIL_ROLLBACK   211u
 #define UI_KEY_DETAIL_ENABLE     212u
@@ -153,6 +158,15 @@ static void format_error(int32_t code, char out[48])
     if (code == -5)      what = "package stage failed";
     else if (code == -6) what = "module load failed";
     else if (code == -11) what = "registry corrupt";
+    else if (code == -12) what = "registry open failed";
+    else if (code == -13) what = "registry write failed";
+    else if (code == -14) what = "registry close failed";
+    else if (code == -15) what = "temp verify failed";
+    else if (code == -16) what = "registry rename failed";
+    else if (code == -17) what = "final verify failed";
+    else if (code == -18) what = "descriptor missing";
+    else if (code == -19) what = "descriptor invalid";
+    else if (code == -20) what = "activation failed";
     used = append_string(out, used, 48u, "err ", 4u);
     if (code < 0) {
         out[used++] = '-';
@@ -164,6 +178,27 @@ static void format_error(int32_t code, char out[48])
         used = append_string(out, used, 48u, " ", 1u);
         (void)append_string(out, used, 48u, what, 22u);
     }
+}
+
+static const char *persistence_stage_name(uint32_t flags)
+{
+    switch (flags & 0xFFu) {
+    case 0: return "Ready";
+    case 1: return "Open temporary file";
+    case 2: return "Write temporary file";
+    case 3: return "Close temporary file";
+    case 4: return "Verify temporary file";
+    case 5: return "Rename registry";
+    case 6: return "Verify final registry";
+    case 7: return "Open registry at boot";
+    default: return "Read registry at boot";
+    }
+}
+
+static void format_diag_u32(uint32_t value, char out[16])
+{
+    out[0] = '\0';
+    (void)append_u32(out, 0u, 16u, value);
 }
 
 static void format_module_detail(const struct canopus_manager_module_v1 *module,
@@ -251,11 +286,45 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
     rc = append_status(tree, UI_KEY_TARGET, "Target", 7u,
                        model->target_id, sizeof(model->target_id));
     if (rc != CANOPUS_UI_OK) return rc;
-    if (model->error_code != 0) {
+    if (model->error_code != 0 || model->supervisor_flags != 0u) {
         char errtext[48];
-        format_error(model->error_code, errtext);
-        rc = append_status(tree, UI_KEY_ERROR, "Error", 6u,
-                           errtext, sizeof(errtext));
+        char errno_text[16];
+        char saves_text[16];
+        uint32_t error = (model->supervisor_flags >> 8) & 0xFFFFu;
+        uint32_t saves = model->supervisor_flags >> 24;
+        if (model->error_code != 0) {
+            format_error(model->error_code, errtext);
+            rc = append_status(tree, UI_KEY_ERROR, "Error", 6u,
+                               errtext, sizeof(errtext));
+            if (rc != CANOPUS_UI_OK) return rc;
+        }
+        rc = append_status(tree, UI_KEY_PERSIST_STAGE, "Registry", 9u,
+                           persistence_stage_name(model->supervisor_flags), 28u);
+        if (rc != CANOPUS_UI_OK) return rc;
+        format_diag_u32(error, errno_text);
+        rc = append_status(tree, UI_KEY_PERSIST_ERRNO, "Filesystem errno", 17u,
+                           errno_text, sizeof(errno_text));
+        if (rc != CANOPUS_UI_OK) return rc;
+        format_diag_u32(saves, saves_text);
+        rc = append_status(tree, UI_KEY_PERSIST_SAVES, "Verified saves", 15u,
+                           saves_text, sizeof(saves_text));
+        if (rc != CANOPUS_UI_OK) return rc;
+    }
+    if (model->module_query_error != 0) {
+        char query_error[48];
+        uint32_t used = 0u;
+        query_error[0] = '\0';
+        used = append_string(query_error, used, sizeof(query_error),
+                             "slot ", 5u);
+        used = append_u32(query_error, used, sizeof(query_error),
+                          model->module_query_error_slot);
+        used = append_string(query_error, used, sizeof(query_error),
+                             " query failed ", 14u);
+        (void)append_u32(query_error, used, sizeof(query_error),
+                         (uint32_t)(-model->module_query_error));
+        rc = append_status(tree, UI_KEY_MODULE_QUERY_ERROR,
+                           "Module query", 13u,
+                           query_error, sizeof(query_error));
         if (rc != CANOPUS_UI_OK) return rc;
     }
     rc = CANOPUS_UI_END(tree);
@@ -329,6 +398,13 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
                        module->signature_ok ? "Verified" : "Unsigned / developer",
                        21u);
     if (rc != CANOPUS_UI_OK) return rc;
+    if (module->activation_error != 0) {
+        char error[48];
+        format_error(module->activation_error, error);
+        rc = append_status(tree, UI_KEY_DETAIL_ERROR, "Module error", 13u,
+                           error, sizeof(error));
+        if (rc != CANOPUS_UI_OK) return rc;
+    }
 
     if (canopus_manager_can_enable(model, model->selected)) {
         rc = append_action(tree, UI_KEY_DETAIL_ENABLE, "Enable", 7u,
@@ -367,6 +443,8 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
 static const char *confirmation_message(uint32_t event_id)
 {
     switch (event_id) {
+    case CANOPUS_MANAGER_EVENT_ACTIVATE:
+        return "Activate this module now? This runs third-party code.";
     case CANOPUS_MANAGER_EVENT_INSTALL:
         return "Install the verified staged package?";
     case CANOPUS_MANAGER_EVENT_ENABLE:
@@ -474,6 +552,8 @@ static uint32_t execute_event(struct canopus_manager_native_v1 *native,
 {
     struct canopus_manager_model_v1 *model = native->model;
     switch (event_id) {
+    case CANOPUS_MANAGER_EVENT_ACTIVATE:
+        return canopus_manager_op_activate(model, model->selected);
     case CANOPUS_MANAGER_EVENT_INSTALL:
         if (native->stage_token[0] == '\0') return CANOPUS_RESULT_DISALLOWED;
         return canopus_manager_op_install(model, native->stage_token);
@@ -494,7 +574,8 @@ static uint32_t execute_event(struct canopus_manager_native_v1 *native,
 
 static int event_needs_confirmation(uint32_t event_id)
 {
-    return event_id == CANOPUS_MANAGER_EVENT_INSTALL ||
+    return event_id == CANOPUS_MANAGER_EVENT_ACTIVATE ||
+           event_id == CANOPUS_MANAGER_EVENT_INSTALL ||
            event_id == CANOPUS_MANAGER_EVENT_ENABLE ||
            event_id == CANOPUS_MANAGER_EVENT_DISABLE ||
            event_id == CANOPUS_MANAGER_EVENT_ROLLBACK ||
@@ -577,6 +658,7 @@ static int32_t manager_event(void *cookie, uint32_t generation,
     case CANOPUS_MANAGER_EVENT_INSTALL:
         if (native->stage_token[0] == '\0') return CANOPUS_UI_ERR_DISABLED;
         /* fall through */
+    case CANOPUS_MANAGER_EVENT_ACTIVATE:
     case CANOPUS_MANAGER_EVENT_ENABLE:
     case CANOPUS_MANAGER_EVENT_DISABLE:
     case CANOPUS_MANAGER_EVENT_ROLLBACK:

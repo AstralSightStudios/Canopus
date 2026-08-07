@@ -345,6 +345,17 @@ uint32_t canopus_manager_op_install(struct canopus_manager_model_v1 *m,
                         (uint32_t)(package_ref ? canopus_strlen(package_ref) + 1 : 0));
 }
 
+uint32_t canopus_manager_op_activate(struct canopus_manager_model_v1 *m,
+                                     uint32_t index)
+{
+    if (index >= m->module_count || m->safe_mode ||
+        m->modules[index].state != CANOPUS_STATE_READY) {
+        return CANOPUS_RESULT_DISALLOWED;
+    }
+    return send_command(m, CANOPUS_CMD_ACTIVATE, m->modules[index].module_id,
+                        CANOPUS_MANAGER_MODULE_ID_MAX);
+}
+
 uint32_t canopus_manager_op_enable(struct canopus_manager_model_v1 *m,
                                    uint32_t index)
 {

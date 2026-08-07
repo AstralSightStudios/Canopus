@@ -203,6 +203,7 @@ TEST(client_queries_authoritative_device_and_module_snapshots)
     CHECK(status.safe_mode_reason == CANOPUS_SAFE_MODE_USER_REQUESTED);
     CHECK(canopus_pending_find(&device.supervisor.pending, 100u) == 0);
 
+    device.supervisor.modules[0].activation_error = (uint32_t)-77;
     CHECK(canopus_client_query_module(&client, 101u, 0u, &module) ==
           CANOPUS_CLIENT_OK);
     CHECK(module.slot == 0u);
@@ -211,9 +212,10 @@ TEST(client_queries_authoritative_device_and_module_snapshots)
     CHECK(module.version == 7u);
     CHECK((module.flags & CANOPUS_SUP_FLAG_SIGNATURE_OK) != 0u);
     CHECK(strcmp(module.module_id, "mod.hello") == 0);
+    CHECK(module.activation_error == -77);
     CHECK(canopus_pending_find(&device.supervisor.pending, 101u) == 0);
     CHECK(canopus_client_query_module(&client, 102u, 1u, &module) ==
-          CANOPUS_CLIENT_ERR_PROTOCOL);
+          CANOPUS_CLIENT_ERR_NOT_FOUND);
 }
 
 static const struct test_registry client_tests[] = {
