@@ -81,6 +81,11 @@ fn rust_bindings_have_exact_recovered_layout() {
     };
     let text = r#gen.generate();
 
+    // Every recovered type declares four-byte ARM alignment; generated host
+    // bindings must retain it without allowing 64-bit pointers to expand fields.
+    assert_eq!(text.matches("#[repr(C, packed(4))]").count(), types.len());
+    assert!(!text.contains("#[repr(C, packed)]"));
+
     // stock file_operations is the full 0x30-byte target table.
     assert!(text.contains("pub ioctl: *mut core::ffi::c_void, // +0x14"));
     assert!(text.contains("pub _tail: [u8; 0x18], // 24"));

@@ -563,7 +563,7 @@ static int sup_registry_restore(void *cookie, uint8_t *data, uint32_t len)
     return 0;
 }
 
-static int sup_stage_package(void *cookie, const char *token)
+static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
 {
     typedef int (*watchface_delete_fn)(const char *);
     watchface_delete_fn delete_watchface =
@@ -576,15 +576,19 @@ static int sup_stage_package(void *cookie, const char *token)
     int slot;
 
     (void)cookie;
-    /* Legacy payload-free INSTALL is the miwear-owned publication bootstrap.
-     * Register Manager first, then let loaded ABI 1.1 modules publish their
-     * native apps from the same caller process. Both operations are idempotent. */
+    /* Payload-free INSTALL is split across separate miwear callbacks so each
+     * transaction performs at most one app-registry/Launcher mutation before
+     * returning to the event loop. Stage 0 registers Manager. Stages 1 and 2
+     * invoke idempotent module callbacks: modules register app/pages first,
+     * then publish their Launcher entries on the following event turn. */
     if (token == 0) {
-        int manager_rc = canopus_manager_native_install();
-        int modules_rc = manager_rc == 0
-                             ? canopus_supervisor_publish_native_apps(sup) : -1;
-        return manager_rc == 0 && modules_rc == 0 ? 0 : -1;
+        if (stage == 0u) return canopus_manager_native_install();
+        if (stage == 1u || stage == 2u) {
+            return canopus_supervisor_publish_native_apps(sup, stage);
+        }
+        return -1;
     }
+    if (stage != 0u) return -1;
     if (sup == 0) return -1;
     /* Reject a duplicate before registering a second slot. */
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {

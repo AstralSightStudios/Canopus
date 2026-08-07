@@ -294,6 +294,7 @@ pub static canopus_module_descriptor: ModuleDescriptorV1 = ModuleDescriptorV1 {{
     stop: Some({n}_stop),
     query: Some({n}_query),
     publish_native_app: None,
+    publish_native_app_stage: None,
 }};
 
 const fn pack<const N: usize>(s: &[u8]) -> [u8; N] {{

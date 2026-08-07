@@ -24,7 +24,7 @@ extern "C" {
 /* ------------------------------------------------------------------ */
 
 #define CANOPUS_ABI_MAJOR 1u
-#define CANOPUS_ABI_MINOR 1u
+#define CANOPUS_ABI_MINOR 2u
 
 /* Module descriptor flags. */
 #define CANOPUS_FLAG_HAS_NATIVE_APP        (1u << 0)
@@ -75,11 +75,18 @@ struct canopus_module_descriptor_v1 {
      * caller-owned UI-process bootstrap transaction, never during boot
      * activation or from a Bluetooth worker. */
     int32_t (*publish_native_app)(const struct canopus_context_v1 *context);
+    /* ABI 1.2 append-only callback. `stage` is 1 for app/page registration and
+     * 2 for Launcher publication; each call runs in a separate UI event turn. */
+    int32_t (*publish_native_app_stage)(
+        const struct canopus_context_v1 *context, uint32_t stage);
 };
 
 #define CANOPUS_MODULE_DESCRIPTOR_V1_0_SIZE \
     ((uint32_t)offsetof(struct canopus_module_descriptor_v1, \
                         publish_native_app))
+#define CANOPUS_MODULE_DESCRIPTOR_V1_1_SIZE \
+    ((uint32_t)offsetof(struct canopus_module_descriptor_v1, \
+                        publish_native_app_stage))
 
 /* ------------------------------------------------------------------ */
 /* Control plane                                                       */
@@ -214,12 +221,18 @@ CANOPUS_STATIC_ASSERT(offsetof(struct canopus_module_descriptor_v1, target_id) =
 #if UINTPTR_MAX == 0xffffffffu
 CANOPUS_STATIC_ASSERT(offsetof(struct canopus_module_descriptor_v1, prepare) == 124,
                       "canopus_module_descriptor_v1 prepare offset (32-bit)");
-CANOPUS_STATIC_ASSERT(sizeof(struct canopus_module_descriptor_v1) == 148,
+CANOPUS_STATIC_ASSERT(offsetof(struct canopus_module_descriptor_v1,
+                              publish_native_app_stage) == 148,
+                      "canopus_module_descriptor_v1 staged callback offset (32-bit)");
+CANOPUS_STATIC_ASSERT(sizeof(struct canopus_module_descriptor_v1) == 152,
                       "canopus_module_descriptor_v1 32-bit size");
 #else
 CANOPUS_STATIC_ASSERT(offsetof(struct canopus_module_descriptor_v1, prepare) == 128,
                       "canopus_module_descriptor_v1 prepare offset (64-bit host)");
-CANOPUS_STATIC_ASSERT(sizeof(struct canopus_module_descriptor_v1) == 176,
+CANOPUS_STATIC_ASSERT(offsetof(struct canopus_module_descriptor_v1,
+                              publish_native_app_stage) == 176,
+                      "canopus_module_descriptor_v1 staged callback offset (64-bit host)");
+CANOPUS_STATIC_ASSERT(sizeof(struct canopus_module_descriptor_v1) == 184,
                       "canopus_module_descriptor_v1 64-bit host size");
 #endif
 

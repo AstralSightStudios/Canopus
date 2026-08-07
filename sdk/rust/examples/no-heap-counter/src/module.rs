@@ -125,6 +125,7 @@ pub static canopus_module_descriptor: ModuleDescriptorV1 = ModuleDescriptorV1 {
     stop: Some(canopus_mod_stop),
     query: Some(canopus_mod_query),
     publish_native_app: None,
+    publish_native_app_stage: None,
 };
 
 /// The C constructor shim calls this to let the loader discover the descriptor.

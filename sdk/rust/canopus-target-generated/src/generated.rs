@@ -10,9 +10,9 @@
 // where the ABI and ownership have been proven (architecture §12.1).
 
 // ---- recovered type layouts ----
-// `#[repr(C, packed)]` + explicit padding reproduces the exact
-// recovered byte layout even when fields are sparse.
-#[repr(C, packed)]
+// `#[repr(C, packed(N))]` + explicit padding reproduces the exact
+// recovered byte layout and its target-declared alignment.
+#[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct file_operations {
     pub open: *mut core::ffi::c_void, // +0x0
@@ -24,7 +24,7 @@ pub struct file_operations {
     pub _tail: [u8; 0x18], // 24
 }
 
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct launcher_order_record {
     pub app_name: [u8; 128], // +0x0
@@ -33,14 +33,14 @@ pub struct launcher_order_record {
     pub _tail: [u8; 0x4], // 4
 }
 
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct stock_timespec_t {
     pub tv_sec: i32, // +0x0
     pub tv_nsec: i32, // +0x4
 }
 
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct firmware_page_descriptor {
     pub parent_descriptor: *mut core::ffi::c_void, // +0x0
@@ -77,7 +77,7 @@ pub struct firmware_page_descriptor {
     pub _tail: [u8; 0x4], // 4
 }
 
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct firmware_notification_message {
     pub message_id: u64, // +0x0
@@ -105,7 +105,7 @@ pub struct firmware_notification_message {
     pub callback_data: *mut core::ffi::c_void, // +0x54
 }
 
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct service_object {
     pub enabled_state: u8, // +0x0
@@ -122,7 +122,7 @@ pub struct service_object {
     pub _tail: [u8; 0x4], // 4
 }
 
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct ordered_app_entry {
     pub app_name: *mut core::ffi::c_void, // +0x0
@@ -132,7 +132,7 @@ pub struct ordered_app_entry {
     pub _tail: [u8; 0x6], // 6
 }
 
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct launcher_app_struct {
     pub name: [u8; 128], // +0x0
@@ -140,7 +140,7 @@ pub struct launcher_app_struct {
     pub _tail: [u8; 0x3], // 3
 }
 
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct launcher_app_record {
     pub app_id: u16, // +0x0
@@ -153,7 +153,7 @@ pub struct launcher_app_record {
     pub _tail: [u8; 0x3], // 3
 }
 
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct launcher_app_descriptor {
     pub registry_links: u64, // +0x0

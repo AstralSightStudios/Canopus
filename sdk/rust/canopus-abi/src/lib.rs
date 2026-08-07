@@ -19,7 +19,7 @@ use core::ffi::{c_char, c_void};
 // ---------------------------------------------------------------------------
 
 pub const ABI_MAJOR: u16 = 1;
-pub const ABI_MINOR: u16 = 1;
+pub const ABI_MINOR: u16 = 2;
 
 // ---------------------------------------------------------------------------
 // Module descriptor flags
@@ -107,6 +107,7 @@ pub type CbDeactivate = extern "C" fn(ctx: *const ContextV1) -> i32;
 pub type CbStop = extern "C" fn(ctx: *const ContextV1) -> i32;
 pub type CbQuery = extern "C" fn(writer: *mut StatusWriterV1) -> i32;
 pub type CbPublishNativeApp = extern "C" fn(ctx: *const ContextV1) -> i32;
+pub type CbPublishNativeAppStage = extern "C" fn(ctx: *const ContextV1, stage: u32) -> i32;
 
 /// Public module descriptor (architecture §10.1).
 ///
@@ -130,6 +131,9 @@ pub struct ModuleDescriptorV1 {
     pub query: Option<CbQuery>,
     /// ABI 1.1 append-only callback. Called only from a UI-process bootstrap.
     pub publish_native_app: Option<CbPublishNativeApp>,
+    /// ABI 1.2 append-only callback. Stage 1 registers app/pages; stage 2 adds
+    /// the Launcher entry in a later UI event turn.
+    pub publish_native_app_stage: Option<CbPublishNativeAppStage>,
 }
 
 // ---------------------------------------------------------------------------
@@ -193,7 +197,11 @@ mod layout {
         assert_eq!(offset_of!(ModuleDescriptorV1, prepare), 128);
         assert_eq!(offset_of!(ModuleDescriptorV1, query), 160);
         assert_eq!(offset_of!(ModuleDescriptorV1, publish_native_app), 168);
-        assert_eq!(size_of::<ModuleDescriptorV1>(), 176);
+        assert_eq!(
+            offset_of!(ModuleDescriptorV1, publish_native_app_stage),
+            176
+        );
+        assert_eq!(size_of::<ModuleDescriptorV1>(), 184);
         assert_eq!(align_of::<ModuleDescriptorV1>(), 8);
     }
 
@@ -203,7 +211,11 @@ mod layout {
         assert_eq!(offset_of!(ModuleDescriptorV1, prepare), 124);
         assert_eq!(offset_of!(ModuleDescriptorV1, query), 140);
         assert_eq!(offset_of!(ModuleDescriptorV1, publish_native_app), 144);
-        assert_eq!(size_of::<ModuleDescriptorV1>(), 148);
+        assert_eq!(
+            offset_of!(ModuleDescriptorV1, publish_native_app_stage),
+            148
+        );
+        assert_eq!(size_of::<ModuleDescriptorV1>(), 152);
         assert_eq!(align_of::<ModuleDescriptorV1>(), 4);
     }
 
@@ -265,6 +277,6 @@ mod layout {
     #[test]
     fn abi_version_constants() {
         assert_eq!(ABI_MAJOR, 1);
-        assert_eq!(ABI_MINOR, 1);
+        assert_eq!(ABI_MINOR, 2);
     }
 }

@@ -1106,6 +1106,7 @@ mod tests {
             stop: None,
             query: None,
             publish_native_app: None,
+            publish_native_app_stage: None,
         };
         unsafe {
             assert!(module_descriptor_check(&d));

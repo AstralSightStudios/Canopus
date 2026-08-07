@@ -37,6 +37,7 @@ extern "C" {
  * consistent; a reader accepts only begin == end with an even value. */
 #define CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF 36u
 #define CANOPUS_SUP_STATUS_SEQ_END_OFF   40u
+#define CANOPUS_SUP_STATUS_MODULE_ERROR_OFF 44u
 #define CANOPUS_SUP_STATUS_RETRIES       4u
 
 /* `flags` persistence diagnostic layout, also returned by QUERY_DEVICE:
@@ -294,7 +295,8 @@ int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup);
 int canopus_supervisor_restore_registry(struct canopus_supervisor_v1 *sup);
 /* Publish native apps for loaded modules from a caller-owned UI-process
  * bootstrap transaction. Never call this from boot restore or a worker. */
-int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup);
+int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
+                                           uint32_t stage);
 
 int canopus_supervisor_register_descriptor(
     struct canopus_supervisor_v1 *sup,

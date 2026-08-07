@@ -203,7 +203,7 @@ pub const CORE_BT_BOUND_STATE: u8 = 1;
 pub const CORE_BT_PAIR_REQUEST_SLOT: usize = 5;
 
 pub unsafe fn core_bt_bind_state() -> u8 {
-    unsafe { *(CORE_BT_BIND_STATE_ADDRESS as *const u8) }
+    unsafe { core::ptr::read_volatile(CORE_BT_BIND_STATE_ADDRESS as *const u8) }
 }
 
 pub unsafe fn core_bt_companion() -> *const u8 {
@@ -640,14 +640,14 @@ pub unsafe fn lvx_page_title_create(
     parent: *mut core::ffi::c_void,
     title: *const u8,
     mode: u32,
-    back_callback: LvxEventCallback,
+    back_callback: *const (),
     back_context: *mut core::ffi::c_void,
 ) -> *mut core::ffi::c_void {
     type F = extern "C" fn(
         *mut core::ffi::c_void,
         *const u8,
         u32,
-        LvxEventCallback,
+        *const (),
         *mut core::ffi::c_void,
     ) -> *mut core::ffi::c_void;
     let f: F = unsafe { core::mem::transmute(0x0C4A9991usize) };

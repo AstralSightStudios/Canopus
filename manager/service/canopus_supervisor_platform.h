@@ -32,8 +32,12 @@ struct canopus_sup_platform_v1 {
      * (CANOPUS_STATE_ACTIVE / BOOT_RESIDENT) or -1 on failure. */
     int (*load_module)(void *cookie, uint32_t index,
                        const char *module_name, uint32_t lifecycle_class);
-    /* Make the latest staged package available for INSTALL. Returns 0/1. */
-    int (*stage_package)(void *cookie, const char *package_path);
+    /* Stage a signed package when package_path is non-null. A payload-free
+     * legacy INSTALL uses stage 0 for Manager registration, stage 1 for loaded
+     * modules' app/page registration, and stage 2 for Launcher publication.
+     * Returns 0 on success. */
+    int (*stage_package)(void *cookie, const char *package_path,
+                         uint32_t stage);
     /* Delete the module's owned inbox artifacts (remove intent, applied at
      * boot). Returns 0 on success. */
     int (*remove_artifact)(void *cookie, uint32_t index);

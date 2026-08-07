@@ -227,8 +227,11 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
         for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
             if (sup->modules[i].state != 0u) previous_occupied |= 1u << i;
         }
-        if (sup->platform && sup->platform->stage_package) {
-            rc = sup->platform->stage_package(sup->platform_cookie, stage_arg) == 0
+        if (stage_arg == 0 && arg0 > 2u) {
+            rc = CANOPUS_RESULT_FAILED;
+        } else if (sup->platform && sup->platform->stage_package) {
+            rc = sup->platform->stage_package(sup->platform_cookie, stage_arg,
+                                              arg0) == 0
                      ? CANOPUS_RESULT_COMPLETED
                      : CANOPUS_RESULT_FAILED;
         } else {
@@ -634,7 +637,8 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         req->command != CANOPUS_CMD_ECHO) {
         sup->error_code = CANOPUS_SUP_ERR_NONE;
     }
-    rc = sup_dispatch(sup, op, slot_arg, 0,
+    rc = sup_dispatch(sup, op,
+                      req->command == CANOPUS_CMD_INSTALL ? 0u : slot_arg, 0,
                       req->command == CANOPUS_CMD_INSTALL
                           ? (const char *)payload : 0);
     sup->pending_state = rc;
@@ -709,6 +713,7 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
 {
     uint32_t i;
     uint32_t seq_begin;
+    uint32_t module_error = 0u;
     if (sup == 0 || out == 0) {
         return -1;
     }
@@ -734,6 +739,12 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
      * payload so a concurrent mutation leaves begin != end (or odd). */
     seq_begin = sup->snap.sequence;
     PUT32(CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF, seq_begin);
+    for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+        if (module_error == 0u && sup->modules[i].activation_error != 0u) {
+            module_error = sup->modules[i].activation_error;
+        }
+    }
+    PUT32(CANOPUS_SUP_STATUS_MODULE_ERROR_OFF, module_error);
     for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         uint32_t o = 128u + i * CANOPUS_SUP_MODULE_SLOT_STRIDE;
         const struct canopus_sup_module_v1 *m = &sup->modules[i];
@@ -888,26 +899,40 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
     return -1;
 }
 
-int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup)
+int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
+                                           uint32_t stage)
 {
     uint32_t i;
     int failed = 0;
-    if (sup == 0) return -1;
+    if (sup == 0 || (stage != 1u && stage != 2u)) return -1;
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         struct canopus_sup_module_v1 *module = &sup->modules[i];
-        uint32_t callback_end =
+        uint32_t legacy_end;
+        uint32_t staged_end;
+        int rc;
+        if (!sup_module_loaded(module->state) || module->descriptor == 0 ||
+            (module->descriptor->flags & CANOPUS_FLAG_HAS_NATIVE_APP) == 0u) {
+            continue;
+        }
+        legacy_end =
             (uint32_t)offsetof(struct canopus_module_descriptor_v1,
                                publish_native_app) +
             (uint32_t)sizeof(module->descriptor->publish_native_app);
-        int rc;
-        if (!sup_module_loaded(module->state) || module->descriptor == 0 ||
-            (module->descriptor->flags & CANOPUS_FLAG_HAS_NATIVE_APP) == 0u ||
-            module->descriptor->abi_minor < 1u ||
-            module->descriptor->struct_size < callback_end ||
-            module->descriptor->publish_native_app == 0) {
+        staged_end =
+            (uint32_t)offsetof(struct canopus_module_descriptor_v1,
+                               publish_native_app_stage) +
+            (uint32_t)sizeof(module->descriptor->publish_native_app_stage);
+        if (module->descriptor->abi_minor >= 2u &&
+            module->descriptor->struct_size >= staged_end &&
+            module->descriptor->publish_native_app_stage != 0) {
+            rc = module->descriptor->publish_native_app_stage(0, stage);
+        } else if (stage == 1u && module->descriptor->abi_minor >= 1u &&
+                   module->descriptor->struct_size >= legacy_end &&
+                   module->descriptor->publish_native_app != 0) {
+            rc = module->descriptor->publish_native_app(0);
+        } else {
             continue;
         }
-        rc = module->descriptor->publish_native_app(0);
         if (rc != 0) {
             module->activation_error = (uint32_t)rc;
             failed = -1;

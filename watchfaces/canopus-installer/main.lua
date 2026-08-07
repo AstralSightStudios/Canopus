@@ -183,7 +183,10 @@ end
 --   24..27 u32 pending_state (CANOPUS_RESULT_*)
 --   28..31 u32 flags
 --   32..35 u32 error_code
---   36..127 reserved
+--   36..39 u32 snapshot sequence begin
+--   40..43 u32 snapshot sequence end
+--   44..47 i32 first non-zero module callback error
+--   48..127 reserved
 --   128..383 16 module slots x 16 bytes:
 --     slot+0  u32 state
 --     slot+4  u32 lifecycle_class
@@ -217,6 +220,7 @@ local function read_status()
         safe_mode = words[4], module_count = words[5],
         pending_op = words[6], pending_state = words[7],
         flags = words[8], error_code = words[9],
+        module_error = words[12],
         registry_stage = words[8] % 0x100,
         registry_errno = math.floor(words[8] / 0x100) % 0x10000,
         registry_saves = math.floor(words[8] / 0x1000000) % 0x100,
@@ -288,6 +292,9 @@ local function format_status(st)
     if st.error_code ~= 0 then
         lines[#lines + 1] = string.format("error=%d", signed32(st.error_code))
     end
+    if st.module_error ~= 0 then
+        lines[#lines + 1] = string.format("module callback=%d", signed32(st.module_error))
+    end
     if st.registry_stage ~= 0 or st.registry_saves ~= 0 then
         lines[#lines + 1] = string.format("registry stage=%u errno=%u saves=%u",
             st.registry_stage, st.registry_errno, st.registry_saves)
@@ -305,6 +312,7 @@ end
 -- before that function even though it is created later in the LVGL section.
 local status
 local busy = false
+local install_stage = 0
 
 local function refresh_status(text)
     local st, message = read_status()
@@ -406,21 +414,47 @@ local install_button = make_button("INSTALL", -96, 118, 0x1E6B2E, 134, function(
         status:set { text = "Manager icon staging failed: " .. tostring(icon_error) }
         return
     end
-    status:set { text = "Registering Manager from miwear context..." }
-    local ok, message = write_command(CMD_INSTALL, 0, 0)
+    local stage_text = {
+        [0] = "Registering Manager from miwear context...",
+        [1] = "Registering module apps and pages...",
+        [2] = "Publishing module Launcher entries from a fresh event turn...",
+    }
+    status:set { text = stage_text[install_stage] or "Invalid install stage" }
+    local requested_stage = install_stage
+    local ok, message = write_command(CMD_INSTALL, requested_stage, 0)
     if not ok then
-        status:set { text = "Manager install request failed: " .. tostring(message) }
+        local operation = ({
+            [0] = "Manager install",
+            [1] = "Module app registration",
+            [2] = "Module Launcher publication",
+        })[requested_stage] or "Install"
+        status:set { text = operation .. " request failed: " .. tostring(message) }
         return
     end
     local st, status_error = read_status()
     if not st then
-        status:set { text = "Manager install status unavailable: "
-            .. tostring(status_error) }
+        status:set { text = "Install status unavailable: " .. tostring(status_error) }
     elseif st.pending_op ~= CMD_INSTALL or st.pending_state ~= 5 then
-        status:set { text = "Manager registration did not complete.\n"
+        local operation = ({
+            [0] = "Manager registration",
+            [1] = "Module app registration",
+            [2] = "Module Launcher publication",
+        })[requested_stage] or "Install"
+        status:set { text = operation .. " did not complete.\n"
             .. format_status(st) .. "\nReboot before retrying." }
+    elseif requested_stage == 0 then
+        install_stage = 1
+        status:set { text = "Manager registered; its event was returned to miwear.\n\n"
+            .. "Press INSTALL again to register loaded module apps and pages.\n"
+            .. format_status(st) }
+    elseif requested_stage == 1 then
+        install_stage = 2
+        status:set { text = "Module apps/pages registered; their events returned to miwear.\n\n"
+            .. "Press INSTALL a third time to add module Launcher entries.\n"
+            .. format_status(st) }
     else
-        status:set { text = "Manager registered in Launcher; notification queued\n"
+        install_stage = 0
+        status:set { text = "Module Launcher entries published in a separate miwear transaction.\n"
             .. format_status(st) }
     end
 end)

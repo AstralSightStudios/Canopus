@@ -146,8 +146,8 @@ impl<'a> RustGen<'a> {
             return;
         }
         out.push_str("// ---- recovered type layouts ----\n");
-        out.push_str("// `#[repr(C, packed)]` + explicit padding reproduces the exact\n");
-        out.push_str("// recovered byte layout even when fields are sparse.\n");
+        out.push_str("// `#[repr(C, packed(N))]` + explicit padding reproduces the exact\n");
+        out.push_str("// recovered byte layout and its target-declared alignment.\n");
         for t in self.types {
             if t.kind != "struct" && t.kind != "union" {
                 continue;
@@ -156,7 +156,8 @@ impl<'a> RustGen<'a> {
             let kw = if t.kind == "union" { "union" } else { "struct" };
             let total = t.size;
             out.push_str(&format!(
-                "#[repr(C, packed)]\n#[derive(Copy, Clone, Debug)]\npub {kw} {name} {{\n"
+                "#[repr(C, packed({alignment}))]\n#[derive(Copy, Clone, Debug)]\npub {kw} {name} {{\n",
+                alignment = t.alignment,
             ));
             let mut cursor = 0u64;
             let mut fields = t.fields.clone().unwrap_or_default();
