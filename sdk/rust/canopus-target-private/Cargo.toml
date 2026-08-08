@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2024"
 license = "AGPL-3.0"
 rust-version = "1.85"
-description = "Target-private full-trust bindings for xiaomi-band-10-pro-3.101.030"
+description = "Target-selectable private full-trust firmware bindings"
+
+[features]
+default = ["target-xiaomi-band-10-pro-3-101-030"]
+target-xiaomi-band-10-pro-3-101-030 = ["dep:canopus-target-generated"]
 
 [dependencies]
-canopus-target-generated = { path = "../canopus-target-generated" }
+canopus-target-generated = { path = "../canopus-target-generated", optional = true }

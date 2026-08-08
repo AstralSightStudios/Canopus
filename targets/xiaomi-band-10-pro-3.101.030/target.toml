@@ -1,5 +1,5 @@
 # xiaomi-band-10-pro-3.101.030 — Xiaomi Band 10 Pro firmware 3.101.030
-# Imported from firmware_latest evidence (ADR-CAN-001/002). Revision 1.
+# Imported from firmware_latest evidence (ADR-CAN-001/002). Revision 3.
 schema = 1
 target_id = "xiaomi-band-10-pro-3.101.030"
 device_family = "xiaomi-smart-band"
@@ -17,7 +17,7 @@ firmware_version = "3.101.030"
 firmware_build = "CONBINE_LTALM078_T3.101.030_06011854"
 module_abi = 1
 relocation_profile = "best1503-v1"
-revision = 1
+revision = 3
 
 # Firmware absolute-address space (CAN-P1-011). This is the RECOVERED
 # firmware extent, not the full 16 MB addressable window: every recovered
@@ -32,14 +32,22 @@ firmware_address_ranges = [
   { base = 0x0C000000, size = 0x00500000 },
 ]
 
-# Capabilities proven or probed on this exact firmware. Bluetooth/service
-# managers remain FORBIDDEN until individually proven.
+# Capabilities proven on this exact firmware. Public generated bindings remain
+# restricted; full-trust Bluetooth/native-app consumers select the target-private
+# Rust backend and must pass the identity guard before invoking them.
 capabilities = [
   "identity-guard",
   "clock.gettime",
   "char-device.register",
   "char-device.unregister",
   "control-abi",
+  "classic.adapter",
+  "classic.l2cap",
+  "classic.sdp",
+  "bt.timer",
+  "native-app.register",
+  "launcher.entry",
+  "ui.dispatch",
 ]
 
 [loader_profile]
@@ -52,9 +60,9 @@ symbol_imports = "none"
 # Project module-size budget. The stock modlib allocates module text
 # dynamically (no 64 KiB cap observed in the load path); 65536 was a
 # conservative round budget and a 65040-byte module has loaded on-device.
-# Raised to 68 KiB to hold next-boot registry persistence until the shell /
-# core split lands (see docs/architecture.md §16).
-max_size = 69632
+# Raised to 80 KiB for the Bluetooth Audio module's software MP3/SBC codecs;
+# the signed installer retains its independent 128 KiB artifact ceiling.
+max_size = 81920
 alignment = 4
 module_name_rules = "must match ^[a-zA-Z0-9_]+$; passed as argv[2] to insmod"
 load_command = "insmod <path> <name>"

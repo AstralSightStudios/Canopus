@@ -3,8 +3,8 @@
 // target_id: xiaomi-band-10-pro-3.101.030
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
-// revision : 1
-// input_digest: af85fb0389cb845d
+// revision : 3
+// input_digest: db1320b1bfe4379d
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -254,6 +254,8 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 // lv_obj_add_event_cb: restricted - not exported until context/ownership approved
 // lv_obj_align_to: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
+// lv_timer_create: restricted - not exported until context/ownership approved
+// lv_timer_del: restricted - not exported until context/ownership approved
 // lvx_list_item_update: restricted - not exported until context/ownership approved
 // lvx_notification_insert_message: restricted - not exported until context/ownership approved
 // lvx_page_content_create: restricted - not exported until context/ownership approved

@@ -1690,6 +1690,7 @@ schema/format
 | `CAN-MULTI-002` | `BACKLOG` | 第二 target pack | MULTI-001,RE-* | 独立证据与 loader profile |
 | `CAN-MULTI-003` | `DONE` | 同模块双 target 构建 | MULTI-002,PKG-003 | `planner::expand` 矩阵展开（include/exclude/capability 校验）；CLI build-plan 复用；未注册 target 拒绝 |
 | `CAN-MULTI-004` | `DONE` | SDK 单目标假设审计 | MULTI-003 | sdk_hygiene 测试：公共 SDK 无 target-private 标记；launcher adapter 层显式排除 |
+| `CAN-MULTI-005` | `DONE` | Rust private ABI target 选择 | MULTI-003,004 | `canopus-target-private` 以互斥 `target-*` feature 选择 exact-target backend；缺失选择 fail-closed；模块从 facade 导出 target ID，构建 profile 映射 target/feature/triple/CPU/size |
 | `CAN-REL-001` | `DONE` | Production/dev key ceremony | ARCH-006,PKG-002 | KeyRole cert + 签名 revocation list；`canopus key role-cert/revoke/check`；篡改/wrong-role 拒绝 |
 | `CAN-REL-002` | `DONE` | CI pipeline | 各 host/build 任务 | scripts/ci.sh 6 gates + GitHub Actions（macos/thumbv8m/lld） |
 | `CAN-REL-003` | `IN_PROGRESS` | Hardware-in-loop harness | DEV-009,MIG-001 | tests/hardware/gates.md（G0-G13 定义+归档格式）+ scripts/device-gates.sh 检查清单；真机执行待硬件 |

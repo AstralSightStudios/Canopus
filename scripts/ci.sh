@@ -16,6 +16,16 @@ cargo build --package canopus-cli
 
 step "2/6 Rust SDK workspace tests"
 (cd sdk/rust && cargo test --workspace)
+# Private firmware calls must never compile without one exact target backend.
+if private_output=$(cd sdk/rust && cargo check -p canopus-target-private --no-default-features 2>&1); then
+    echo "target-private unexpectedly compiled without a target feature" >&2
+    exit 1
+fi
+printf '%s\n' "$private_output" | grep -q "requires exactly one target-" || {
+    printf '%s\n' "$private_output" >&2
+    echo "target-private failed for an unexpected reason" >&2
+    exit 1
+}
 
 step "3/6 C host tests"
 (cd tests/host && make clean >/dev/null && make >/dev/null && ./canopus_host_tests)
