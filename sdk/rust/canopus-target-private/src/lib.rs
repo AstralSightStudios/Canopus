@@ -273,6 +273,7 @@ pub struct DisconnectRequest {
 #[derive(Copy, Clone, Debug, Default)]
 pub struct MediaTimerToken {
     pub generation: u32,
+    pub timer_generation: u32,
 }
 
 pub const EVENT_CONNECTION_CONFIRM: u32 = 2;
@@ -285,9 +286,36 @@ pub const EVENT_FLOW_STATUS: u32 = 8;
 pub const EVENT_COMPLETE_MTU_OFFSET: usize = 72;
 pub const EVENT_COMPLETE_CID_OFFSET: usize = 108;
 
-/// PSM for AVDTP signaling.
+/// Stock connect-request option bit that installs the local receive MTU from
+/// [`CONNECT_CONFIG_OFFSET`] into the new channel.
+pub const CONNECT_OPTION_LOCAL_MTU: u16 = 1 << 0;
+
+/// PSM for AVDTP signaling and media transport.
 pub const AVDTP_SIGNALING_PSM: u16 = 0x0019;
-pub const AVDTP_L2CAP_CONFIG: u16 = 0x0030;
+/// Local receive MTU advertised by Android for both AVDTP channels. The stock
+/// connect worker uses this field only when [`CONNECT_OPTION_LOCAL_MTU`] is set.
+pub const AVDTP_LOCAL_RX_MTU: u16 = 0x0400;
+
+/// Installs the exact-target AVDTP policy in a zeroed stock connect request.
+///
+/// # Safety
+/// `request` must point to a writable [`CONNECT_REQUEST_SIZE`]-byte allocation.
+pub unsafe fn configure_avdtp_connect_request(request: *mut u8) {
+    unsafe {
+        core::ptr::write_unaligned(
+            request.add(CONNECT_PSM_OFFSET).cast::<u16>(),
+            AVDTP_SIGNALING_PSM.to_le(),
+        );
+        core::ptr::write_unaligned(
+            request.add(CONNECT_CONFIG_OFFSET).cast::<u16>(),
+            AVDTP_LOCAL_RX_MTU.to_le(),
+        );
+        core::ptr::write_unaligned(
+            request.add(CONNECT_OPTIONS_OFFSET).cast::<u16>(),
+            CONNECT_OPTION_LOCAL_MTU.to_le(),
+        );
+    }
+}
 
 pub unsafe fn bt_buffer_new(payload_length: u16, headroom: u16) -> *mut StockBuffer {
     type F = extern "C" fn(u16, u16) -> *mut StockBuffer;
@@ -295,8 +323,10 @@ pub unsafe fn bt_buffer_new(payload_length: u16, headroom: u16) -> *mut StockBuf
     f(payload_length, headroom)
 }
 
-pub unsafe fn bt_l2cap_connect(request: *const core::ffi::c_void) -> i32 {
-    type F = extern "C" fn(*const core::ffi::c_void) -> i32;
+/// Queues an L2CAP connect request. Returns the nonzero queue node on accepted
+/// submission and 0 when insertion fails; it is not a zero-on-success status.
+pub unsafe fn bt_l2cap_connect(request: *const core::ffi::c_void) -> u32 {
+    type F = extern "C" fn(*const core::ffi::c_void) -> u32;
     let f: F = unsafe { core::mem::transmute(0x0C7ED49Dusize) };
     f(request)
 }
@@ -393,6 +423,128 @@ pub unsafe fn bt_l2cap_owner() -> *mut core::ffi::c_void {
 pub unsafe fn bt_hci_fsm_owner() -> *mut core::ffi::c_void {
     let slot = 0x20137B14usize as *const *mut core::ffi::c_void;
     unsafe { *slot }
+}
+
+/// GAP host receive callback used for inbound H4 packets.
+pub type BtGapTransportReceive = extern "C" fn(*mut core::ffi::c_void, *mut u8, i32) -> i32;
+
+const GAP_HOST_RECEIVE_SLOT: usize = 0x20137EA4;
+const GAP_HOST_STOCK_RECEIVE: usize = 0x0C7D3E0D;
+
+/// Replaces the active GAP host receive entry after verifying the exact-target
+/// stock pointer. Powering Bluetooth on rebuilds the dispatcher, so callers
+/// reassert the hook after adapter ON.
+///
+/// # Safety
+/// The hook must preserve the declared ABI, forward every unmatched packet,
+/// and remain resident until reboot.
+pub unsafe fn bt_gap_install_receive_hook(receive_hook: BtGapTransportReceive) -> bool {
+    let receive_slot = GAP_HOST_RECEIVE_SLOT as *mut u32;
+    let receive_replacement = receive_hook as usize as u32;
+    let receive_current = unsafe { core::ptr::read_volatile(receive_slot) };
+
+    if receive_current != receive_replacement && receive_current as usize != GAP_HOST_STOCK_RECEIVE
+    {
+        return false;
+    }
+
+    unsafe { core::ptr::write_volatile(receive_slot, receive_replacement) };
+    unsafe { core::ptr::read_volatile(receive_slot) == receive_replacement }
+}
+
+/// Calls the exact stock GAP host receive dispatcher.
+///
+/// # Safety
+/// The arguments must satisfy [`BtGapTransportReceive`]'s stock H4-buffer
+/// contract.
+pub unsafe fn bt_gap_stock_receive(
+    state: *mut core::ffi::c_void,
+    packet: *mut u8,
+    packet_length: i32,
+) -> i32 {
+    let receive: BtGapTransportReceive = unsafe { core::mem::transmute(GAP_HOST_STOCK_RECEIVE) };
+    receive(state, packet, packet_length)
+}
+
+/// Removes the exact BES mHDT capability option (`7F 01 01`) from an inbound
+/// Configuration Request for `local_cid`, leaving all standard options intact.
+/// The stock parser in this firmware was built without mHDT support and would
+/// otherwise reject this peer capability as an unknown mandatory option.
+///
+/// The input excludes the H4 type byte. On success, ACL/L2CAP/command lengths
+/// are reduced in place and the returned value is the new ACL packet length.
+pub fn strip_l2cap_mhdt_option(payload: &mut [u8], local_cid: u16) -> Option<usize> {
+    const ACL_HEADER_SIZE: usize = 4;
+    const L2CAP_HEADER_SIZE: usize = 4;
+    const SIGNALING_CID: u16 = 1;
+    const CONFIGURATION_REQUEST: u8 = 0x04;
+    const MHDT_TYPE: u8 = 0x7F;
+    const MHDT_LENGTH: u8 = 1;
+    const MHDT_SUPPORTED: u8 = 1;
+    const MHDT_OPTION_SIZE: usize = 3;
+
+    if local_cid <= 0x3F || payload.len() < ACL_HEADER_SIZE + L2CAP_HEADER_SIZE {
+        return None;
+    }
+    // Only an ACL start packet carries the L2CAP header. The observed mHDT
+    // request is a complete 19-byte ACL payload (PB=2); continuation fragments
+    // are forwarded untouched rather than being misparsed as new L2CAP SDUs.
+    let packet_boundary = (u16::from_le_bytes([payload[0], payload[1]]) >> 12) & 0x3;
+    if !matches!(packet_boundary, 0 | 2) {
+        return None;
+    }
+    let acl_length = u16::from_le_bytes([payload[2], payload[3]]) as usize;
+    let acl_end = ACL_HEADER_SIZE.checked_add(acl_length)?;
+    if acl_end > payload.len() || acl_length < L2CAP_HEADER_SIZE {
+        return None;
+    }
+    let l2cap_length = u16::from_le_bytes([payload[4], payload[5]]) as usize;
+    let l2cap_end = (ACL_HEADER_SIZE + L2CAP_HEADER_SIZE).checked_add(l2cap_length)?;
+    if u16::from_le_bytes([payload[6], payload[7]]) != SIGNALING_CID || l2cap_end > acl_end {
+        return None;
+    }
+
+    let mut command = ACL_HEADER_SIZE + L2CAP_HEADER_SIZE;
+    while command + 4 <= l2cap_end {
+        let command_length =
+            u16::from_le_bytes([payload[command + 2], payload[command + 3]]) as usize;
+        let command_end = command.checked_add(4 + command_length)?;
+        if command_end > l2cap_end {
+            return None;
+        }
+        if payload[command] == CONFIGURATION_REQUEST && command_length >= 4 {
+            let destination_cid = u16::from_le_bytes([payload[command + 4], payload[command + 5]]);
+            let flags = u16::from_le_bytes([payload[command + 6], payload[command + 7]]);
+            if destination_cid == local_cid && flags == 0 {
+                let mut option = command + 8;
+                while option + 2 <= command_end {
+                    let option_length = payload[option + 1] as usize;
+                    let option_end = option.checked_add(2 + option_length)?;
+                    if option_end > command_end {
+                        return None;
+                    }
+                    if payload[option] == MHDT_TYPE
+                        && payload[option + 1] == MHDT_LENGTH
+                        && payload[option + 2] == MHDT_SUPPORTED
+                    {
+                        payload.copy_within(option_end..acl_end, option);
+                        payload[acl_end - MHDT_OPTION_SIZE..acl_end].fill(0);
+                        let new_command_length = command_length - MHDT_OPTION_SIZE;
+                        let new_l2cap_length = l2cap_length - MHDT_OPTION_SIZE;
+                        let new_acl_length = acl_length - MHDT_OPTION_SIZE;
+                        payload[command + 2..command + 4]
+                            .copy_from_slice(&(new_command_length as u16).to_le_bytes());
+                        payload[4..6].copy_from_slice(&(new_l2cap_length as u16).to_le_bytes());
+                        payload[2..4].copy_from_slice(&(new_acl_length as u16).to_le_bytes());
+                        return Some(acl_end - MHDT_OPTION_SIZE);
+                    }
+                    option = option_end;
+                }
+            }
+        }
+        command = command_end;
+    }
+    None
 }
 
 // ---------------------------------------------------------------------------
@@ -573,6 +725,27 @@ pub const CONTENT_WIDTH: i32 = 336;
 pub const CONTENT_HEIGHT: i32 = 424;
 pub const ROW_GAP: i32 = 8;
 
+pub type LvxTimerCallback = extern "C" fn(*mut core::ffi::c_void);
+
+/// Creates a periodic LVGL timer on the UI owner thread. The callback receives
+/// the timer object; `user_data` is retained by LVGL for page-owned context.
+pub unsafe fn lvx_timer_create(
+    callback: LvxTimerCallback,
+    period_ms: u32,
+    user_data: *mut core::ffi::c_void,
+) -> *mut core::ffi::c_void {
+    type F = extern "C" fn(LvxTimerCallback, u32, *mut core::ffi::c_void) -> *mut core::ffi::c_void;
+    let f: F = unsafe { core::mem::transmute(0x0C588759usize) };
+    f(callback, period_ms, user_data)
+}
+
+/// Deletes a page-owned LVGL timer. Must run on the UI owner thread.
+pub unsafe fn lvx_timer_delete(timer: *mut core::ffi::c_void) {
+    type F = extern "C" fn(*mut core::ffi::c_void);
+    let f: F = unsafe { core::mem::transmute(0x0C587EF1usize) };
+    f(timer);
+}
+
 pub unsafe fn lvx_list_row_create(
     parent: *mut core::ffi::c_void,
     primary: *const u8,
@@ -750,8 +923,57 @@ const _: () = {
     assert!(core::mem::size_of::<StockBuffer>() == 12);
     assert!(core::mem::offset_of!(StockBuffer, route) == 4);
     assert!(core::mem::size_of::<DisconnectRequest>() == 4);
-    assert!(core::mem::size_of::<MediaTimerToken>() == 4);
+    assert!(core::mem::size_of::<MediaTimerToken>() == 8);
     assert!(CONNECT_CALLBACK_OFFSET + 4 <= CONNECT_REQUEST_SIZE);
     assert!(CONNECT_ADDRESS_OFFSET + 6 <= CONNECT_REQUEST_SIZE);
     assert!(CONNECT_OPTIONS_OFFSET + 2 <= CONNECT_REQUEST_SIZE);
 };
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn avdtp_connect_policy_enables_1024_byte_local_mtu() {
+        let mut request = [0u8; CONNECT_REQUEST_SIZE];
+        unsafe { configure_avdtp_connect_request(request.as_mut_ptr()) };
+
+        assert_eq!(
+            &request[CONNECT_PSM_OFFSET..CONNECT_PSM_OFFSET + 2],
+            &AVDTP_SIGNALING_PSM.to_le_bytes()
+        );
+        assert_eq!(
+            &request[CONNECT_CONFIG_OFFSET..CONNECT_CONFIG_OFFSET + 2],
+            &AVDTP_LOCAL_RX_MTU.to_le_bytes()
+        );
+        assert_eq!(
+            &request[CONNECT_OPTIONS_OFFSET..CONNECT_OPTIONS_OFFSET + 2],
+            &CONNECT_OPTION_LOCAL_MTU.to_le_bytes()
+        );
+    }
+
+    #[test]
+    fn mhdt_filter_only_changes_exact_target_configuration_request() {
+        let original = [
+            0x81, 0x20, 0x13, 0x00, 0x0F, 0x00, 0x01, 0x00, 0x04, 0x25, 0x0B, 0x00, 0x41, 0x00,
+            0x00, 0x00, 0x01, 0x02, 0x04, 0x0B, 0x7F, 0x01, 0x01,
+        ];
+        let mut continuation = original;
+        continuation[1] = 0x10;
+        assert_eq!(strip_l2cap_mhdt_option(&mut continuation, 0x0041), None);
+        assert_eq!(continuation[20..23], [0x7F, 0x01, 0x01]);
+
+        let mut wrong_cid = original;
+        assert_eq!(strip_l2cap_mhdt_option(&mut wrong_cid, 0x0042), None);
+        assert_eq!(wrong_cid, original);
+
+        let mut request = original;
+        assert_eq!(strip_l2cap_mhdt_option(&mut request, 0x0041), Some(20));
+        assert_eq!(&request[2..4], &[0x10, 0x00]);
+        assert_eq!(&request[4..6], &[0x0C, 0x00]);
+        assert_eq!(&request[10..12], &[0x08, 0x00]);
+        assert_eq!(&request[16..20], &[0x01, 0x02, 0x04, 0x0B]);
+        assert_eq!(&request[20..23], &[0, 0, 0]);
+        assert_eq!(strip_l2cap_mhdt_option(&mut request[..20], 0x0041), None);
+    }
+}
