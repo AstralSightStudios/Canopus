@@ -292,10 +292,10 @@ static const char notification_title[] = "Canopus";
 static const char notification_body[] = "Canpous Loaded! Just ENJOY~";
 static const char module_notification_body[] =
     "A new module was installed disabled. Open Canopus Manager to enable it.";
-/* The watchface bootstrap stages the first-frame PNG at this stable path. */
-static const char notification_icon[] = "/data/canopus/manager_loaded.png";
-/* Reuse a stock, proven launcher asset for the first destructive device probe. */
-static const char launcher_icon[] = "/resource/app/launcher/flashlight.bin";
+/* The watchface bootstrap stages the LVGL v9 ARGB8888 bin (alpha preserved)
+ * at this stable path; used for both the notification icons and the app icon. */
+static const char notification_icon[] = "/data/canopus/manager_icon.bin";
+static const char launcher_icon[] = "/data/canopus/manager_icon.bin";
 
 __attribute__((used, visibility("default"), section(".data.canopus_probe")))
 volatile struct canopus_native_probe_record canopus_native_probe_record;

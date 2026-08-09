@@ -2,8 +2,11 @@
 
 # Firmware images and analysis databases — NEVER commit these.
 *.bin
-# Watchface packager accepts only .lua/.bin; this is a PNG payload, not firmware.
+# Watchface packager accepts only .lua/.bin; keep bundled watchface resources
+# tracked. manager_loaded.bin is a legacy PNG payload; manager_icon.bin is the
+# active LVGL v9 ARGB8888 icon bin (not a firmware image).
 !watchfaces/canopus-installer/manager_loaded.bin
+!watchfaces/canopus-installer/manager_icon.bin
 *.img
 *.i64
 *.idb

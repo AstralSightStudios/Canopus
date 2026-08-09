@@ -18,16 +18,16 @@ production installer.
 | --- | --- |
 | Watchface UI (`main.lua`) | Structurally complete; mirrors the btpatch pattern (verify ELF, `insmod`, LVGL buttons, fixed ABI). |
 | Supervisor core (`manager/service/canopus_supervisor.c`) | Host-tested: command/status ABI, lifecycle-aware enable/disable/remove, persistence/restore, automatic activation, and staged native-app publication. |
-| `canopus_supervisor.bin` | **Verifier PASS** (sha256 `7952dc86`, 0 undefined, 2 ctors/1 dtor) — a valid zero-import ELF32 ET_REL containing the supervisor, CPC2 snapshot query path, persistence diagnostics, native message-box confirmation, external descriptor registration, automatic enabled-module boot activation with retained callback errors, ABI 1.2 staged miwear native-app publication, and resident exact-target Manager implementation. |
+| `canopus_supervisor.bin` | **Verifier PASS** (sha256 `91af9061`, 0 undefined, 2 ctors/1 dtor) — a valid zero-import ELF32 ET_REL containing the supervisor, CPC2 snapshot query path, persistence diagnostics, native message-box confirmation, external descriptor registration, automatic enabled-module boot activation with retained callback errors, ABI 1.2 staged miwear native-app publication, and resident exact-target Manager implementation. |
 | Device registration (`/dev/canopus`) | **Implemented.** `canopus_supervisor_platform.c` registers the device via the stock `register_driver` (0x0C1A0D51) exactly like btpatch registers `/dev/btpatch` — the same managed symbol the veneer exposes as `canopus_fw_register_driver`. The read side renders the status ABI, the write side dispatches commands. |
 | Native Manager registration path | **MANAGER DEVICE PASS; ABI 1.2 STAGED MODULE PUBLICATION DEVICE RETEST PENDING.** Manager registration, Launcher opening, stock LVX row rendering, and opening/closing transitions are device-proven with app ID `0x00CA`. The former two-transaction flow still crashed during BluetoothAudio publication: miwear faulted in an unQLite allocation after `app_install` and immediate `launcher_add`. ABI 1.2 now separates module publication into stage 1 app/page registration and stage 2 Launcher publication on distinct button callbacks; BluetoothAudio uses app ID `0x00CB`. |
-| Manager installed notification | **DEVICE PASS.** After registry lookup succeeds, inserts title `Canopus`, body `Canpous Loaded! Just ENJOY~`, and uses `/data/canopus/manager_loaded.png` for both notification image paths. The watchface packages the original GIF's cleaned first frame as PNG bytes in `manager_loaded.bin`, then restores the `.png` suffix while staging them before sending INSTALL. |
+| Manager installed notification | **DEVICE PASS (icon format RETEST PENDING).** After registry lookup succeeds, inserts title `Canopus`, body `Canpous Loaded! Just ENJOY~`, and uses `/data/canopus/manager_icon.bin` for both notification image paths and as the app's Launcher icon. The watchface packages the icon as an LVGL v9 ARGB8888 bin (alpha channel preserved) in `manager_icon.bin` and stages it byte-for-byte before sending INSTALL. The previous `manager_loaded.png` first-frame PNG flow is retained only as an unused legacy resource. |
 | Loading external Canopus modules via stock modlib | **HOST + TARGET BUILD PASS; DEVICE RETEST PENDING.** Enabled artifacts self-register their ABI descriptor during `insmod`; the supervisor requires an exact slot/id/target match, activates READY descriptors automatically during reboot restore, and persists callback success/error for later Manager queries. Ordinary `/dev/canopus` traffic never invokes third-party activation, and Manager no longer exposes a manual Activate action. |
 | Native Manager UI/backend | **HOST + TARGET BUILD PASS; DEVICE RETEST PENDING.** Navigation between Overview / Modules / module detail uses the recovered `page_goto`/`page_finish` ABI (`EVID-NAV-001`). Confirmations use Xiaomi's page-owned `lvx_page_msgbox` two-button prefab (`EVID-MSGBOX-001`) and retain the semantic confirmation page as a constructor-failure fallback. Registry failures expose the exact transaction stage, NuttX errno, and verified-save count in Manager. |
 | Package staging + signature verify | **Pending for arbitrary third-party packages.** Manager bootstrap no longer depends on the old staged INSTALL command. |
 
 **What you can test on device now:** LOAD brings up the supervisor. Press INSTALL
-once to stage the PNG and register Manager. After its event has returned to
+once to stage the icon bin and register Manager. After its event has returned to
 miwear, press INSTALL a second time to register loaded ABI 1.2 module apps and
 pages without touching Launcher persistence. Press INSTALL a third time to add
 their Launcher entries in another event-loop transaction. Do not skip or combine
@@ -43,7 +43,8 @@ closed.
 watchfaces/canopus-installer/
 ├── main.lua                          Lua LVGL bootstrap/recovery page
 ├── canopus_supervisor.bin            built supervisor + native Manager code
-├── manager_loaded.bin                first-frame PNG with packager-safe suffix
+├── manager_icon.bin                  LVGL v9 ARGB8888 icon bin (alpha preserved)
+├── manager_loaded.bin                unused legacy first-frame PNG resource
 └── build/                            build output (gitignored)
 ```
 
@@ -101,8 +102,8 @@ generate-veneer xiaomi-band-10-pro-3.101.030` to have run.
 1. Reboot the Band.
 2. Press **LOAD** once to load the supervisor. Never load it twice or use
    `rmmod`.
-3. Press **INSTALL** once. The watchface validates and copies the PNG bytes from
-   bundled `manager_loaded.bin` to `/data/canopus/manager_loaded.png`, then writes
+3. Press **INSTALL** once. The watchface validates and copies the LVGL v9 icon bin
+   from bundled `manager_icon.bin` to `/data/canopus/manager_icon.bin`, then writes
    stage 0 to `/dev/canopus`. This registers Manager in the miwear process.
 4. Press **INSTALL** a second time. Stage 1 invokes loaded ABI 1.2 modules only to
    register their app/page descriptors, then returns so miwear can process the

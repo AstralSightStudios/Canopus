@@ -13,8 +13,8 @@ local lvgl = require("lvgl")
 
 local MODULE_PATH = SCRIPT_PATH .. "canopus_supervisor.bin"
 local MODULE_NAME = "canopus_supervisor"
-local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_loaded.bin"
-local MANAGER_ICON_PATH = "/data/canopus/manager_loaded.png"
+local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_icon.bin"
+local MANAGER_ICON_PATH = "/data/canopus/manager_icon.bin"
 local DEVICE_PATH = "/dev/canopus"
 -- The supervisor is a small module (~3-4 KB with -Os); the 4096 floor copied
 -- from btpatch was sized for that project's 33 KB A2DP amalgamation. 512 still
@@ -128,9 +128,18 @@ end
 
 local function stage_manager_icon()
     local content = read_all(MANAGER_ICON_RESOURCE, "rb")
-    if type(content) ~= "string" or #content < 8
-        or content:sub(1, 8) ~= "\137PNG\r\n\26\n" then
-        return false, "Missing or invalid manager_loaded.bin PNG resource"
+    -- LVGL v9 bin resource: 12-byte header (magic 0x19, cf, flags, w, h,
+    -- stride, reserved) followed by ARGB8888 pixel data carrying the alpha
+    -- channel. Validate the magic and that the size matches w*h*4.
+    if type(content) ~= "string" or #content < 13
+        or content:byte(1) ~= 0x19 then
+        return false, "Missing or invalid manager_icon.bin LVGL resource"
+    end
+    local width = content:byte(5) + content:byte(6) * 0x100
+    local height = content:byte(7) + content:byte(8) * 0x100
+    if width < 1 or height < 1
+        or #content ~= 12 + width * height * 4 then
+        return false, "manager_icon.bin size mismatch"
     end
     -- The target mkdir command returns failure when the directory already
     -- exists, even with -p. Try the actual file first; create its parent only
@@ -142,17 +151,17 @@ local function stage_manager_icon()
         end
         output = io.open(MANAGER_ICON_PATH, "wb")
     end
-    if not output then return false, "Cannot stage Manager PNG" end
+    if not output then return false, "Cannot stage Manager icon" end
     local call_ok, write_result, write_error = pcall(output.write, output, content)
     local close_ok, close_result, close_error = pcall(output.close, output)
     if not call_ok or write_result == nil then
-        return false, tostring(write_error or write_result or "PNG write failed")
+        return false, tostring(write_error or write_result or "icon write failed")
     end
     if not close_ok or close_result == nil then
-        return false, tostring(close_error or close_result or "PNG close failed")
+        return false, tostring(close_error or close_result or "icon close failed")
     end
     local staged = read_all(MANAGER_ICON_PATH, "rb")
-    if staged ~= content then return false, "Staged Manager PNG mismatch" end
+    if staged ~= content then return false, "Staged Manager icon mismatch" end
     return true
 end
 
