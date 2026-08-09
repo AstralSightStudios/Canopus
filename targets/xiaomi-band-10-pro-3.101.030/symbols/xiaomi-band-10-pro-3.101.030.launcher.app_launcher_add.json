@@ -31,7 +31,7 @@
       "EVID-APP-004"
     ]
   },
-  "policy": "restricted",
+  "policy": "native-full-trust",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
@@ -40,5 +40,15 @@
     ],
     "source": "IDA sub_C4F2BDC entry forwards R0 to off_200EB058[1] registry lookup; sub_C527E38 callsite supplies u16 app ID"
   },
-  "notes": "This is not the descriptor registration function. The descriptor and pages must first be registered through app_install (sub_CA519AC/off_200EB060). The returned descriptor is passed to load_app_info, which creates the launcher record. Do not use the former descriptor-pointer prototype. Return semantics are not proven boolean."
+  "notes": "This is not the descriptor registration function. The descriptor and pages must first be registered through app_install (sub_CA519AC/off_200EB060). The returned descriptor is passed to load_app_info, which creates the launcher record. Do not use the former descriptor-pointer prototype. Return semantics are not proven boolean.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "int(uint16_t app_id)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
 }

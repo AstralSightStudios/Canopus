@@ -4,7 +4,7 @@
  * firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
  * sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
  * revision : 3
- * input_digest: c953bf43c3e20e52
+ * input_digest: 130576733a57c13a
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
@@ -14,6 +14,7 @@
 /* ---- recovered type layouts ---- */
 /* Explicit padding reproduces the exact recovered byte layout
  * even when fields are sparse (e.g. launcher_order_record). */
+typedef void (*canopus_interconnect_recv_cb)(void *, int32_t, const canopus_interconnect_message *, const char *);
 typedef struct {
     void * open; /* +0x0 */
     void * close; /* +0x4 */
@@ -29,6 +30,7 @@ typedef struct {
     uint32_t flags; /* +0x84 */
     uint8_t _tail[4];
 } launcher_order_record;
+typedef void (*canopus_lvx_event_cb)(void *);
 typedef struct {
     int64_t tv_sec; /* +0x0 */
     int32_t tv_nsec; /* +0x8 */
@@ -68,6 +70,13 @@ typedef struct {
     uint8_t _tail[4];
 } firmware_page_descriptor;
 typedef struct {
+    void * package_name; /* +0x0 */
+    void * display_name; /* +0x4 */
+    void * icon_file; /* +0x8 */
+    void * extra; /* +0xc */
+    uint8_t fingerprint[20]; /* +0x10 */
+} canopus_interconnect_app_info;
+typedef struct {
     uint64_t message_id; /* +0x0 */
     uint32_t repeat_count; /* +0x8 */
     void * title; /* +0xc */
@@ -106,6 +115,14 @@ typedef struct {
     void * cleanup_cb; /* +0x38 */
     uint8_t _tail[4];
 } service_object;
+typedef void (*canopus_interconnect_send_done)(void *, int32_t, const canopus_interconnect_message *, void *);
+typedef struct {
+    uint8_t type; /* +0x0 */
+    uint8_t _pad_1[3];
+    uint32_t length; /* +0x4 */
+    uint8_t _pad_8[8];
+    void * value; /* +0x10 */
+} canopus_interconnect_message;
 typedef struct {
     void * app_name; /* +0x0 */
     uint8_t _pad_4[4];
@@ -164,9 +181,79 @@ static inline int canopus_identity_guard(void)
 }
 
 /* ---- typed veneers ---- */
+typedef int (*canopus_fw_lvx_list_item_update_fn)(void *, const char *, const char *, const char *, int32_t, uint8_t);
+static inline int canopus_fw_lvx_list_item_update(void * a0, const char * a1, const char * a2, const char * a3, int32_t a4, uint8_t a5) {
+    return ((canopus_fw_lvx_list_item_update_fn)(uintptr_t)0x0C4A7BD1)(a0, a1, a2, a3, a4, a5);
+}
+
+typedef int (*canopus_fw_open_fn)(const char *, int);
+static inline int canopus_fw_open(const char * a0, int a1) {
+    return ((canopus_fw_open_fn)(uintptr_t)0x0C1C15B1)(a0, a1);
+}
+
+typedef void (*canopus_fw_lvx_object_align_fn)(void *, uint32_t, int32_t, int32_t);
+static inline void canopus_fw_lvx_object_align(void * a0, uint32_t a1, int32_t a2, int32_t a3) {
+    return ((canopus_fw_lvx_object_align_fn)(uintptr_t)0x0C5880A9)(a0, a1, a2, a3);
+}
+
 typedef int (*canopus_fw_clock_gettime_fn)(uint32_t, stock_timespec_t *);
 static inline int canopus_fw_clock_gettime(uint32_t a0, stock_timespec_t * a1) {
     return ((canopus_fw_clock_gettime_fn)(uintptr_t)0x0C1EC8B5)(a0, a1);
+}
+
+typedef void (*canopus_fw_lvx_object_set_size_fn)(void *, int32_t, int32_t);
+static inline void canopus_fw_lvx_object_set_size(void * a0, int32_t a1, int32_t a2) {
+    return ((canopus_fw_lvx_object_set_size_fn)(uintptr_t)0x0C587EF9)(a0, a1, a2);
+}
+
+typedef int (*canopus_fw_app_launcher_add_fn)(uint16_t);
+static inline int canopus_fw_app_launcher_add(uint16_t a0) {
+    return ((canopus_fw_app_launcher_add_fn)(uintptr_t)0x0C4F2BDD)(a0);
+}
+
+typedef int (*canopus_fw_interconnect_close_fn)(void *);
+static inline int canopus_fw_interconnect_close(void * a0) {
+    return ((canopus_fw_interconnect_close_fn)(uintptr_t)0x0C2D2199)(a0);
+}
+
+typedef int (*canopus_fw_lvx_notification_insert_message_fn)(const firmware_notification_message *);
+static inline int canopus_fw_lvx_notification_insert_message(const firmware_notification_message * a0) {
+    return ((canopus_fw_lvx_notification_insert_message_fn)(uintptr_t)0x0CA81F11)(a0);
+}
+
+typedef uint32_t (*canopus_fw_lv_event_get_code_fn)(void *);
+static inline uint32_t canopus_fw_lv_event_get_code(void * a0) {
+    return ((canopus_fw_lv_event_get_code_fn)(uintptr_t)0x0C5886D1)(a0);
+}
+
+typedef void * (*canopus_fw_lvx_page_title_create_fn)(void *, const char *, uint32_t, canopus_lvx_event_cb, void *);
+static inline void * canopus_fw_lvx_page_title_create(void * a0, const char * a1, uint32_t a2, canopus_lvx_event_cb a3, void * a4) {
+    return ((canopus_fw_lvx_page_title_create_fn)(uintptr_t)0x0C4A9991)(a0, a1, a2, a3, a4);
+}
+
+typedef void * (*canopus_fw_lvx_label_create_fn)(void *);
+static inline void * canopus_fw_lvx_label_create(void * a0) {
+    return ((canopus_fw_lvx_label_create_fn)(uintptr_t)0x0C588339)(a0);
+}
+
+typedef void * (*canopus_fw_app_lookup_fn)(uint16_t);
+static inline void * canopus_fw_app_lookup(uint16_t a0) {
+    return ((canopus_fw_app_lookup_fn)(uintptr_t)0x0CA50FD5)(a0);
+}
+
+typedef void * (*canopus_fw_lvx_msgbox_create_fn)(void *, void *);
+static inline void * canopus_fw_lvx_msgbox_create(void * a0, void * a1) {
+    return ((canopus_fw_lvx_msgbox_create_fn)(uintptr_t)0x0C4A93A5)(a0, a1);
+}
+
+typedef void * (*canopus_fw_lvx_page_content_create_fn)(void *);
+static inline void * canopus_fw_lvx_page_content_create(void * a0) {
+    return ((canopus_fw_lvx_page_content_create_fn)(uintptr_t)0x0CA4E8E9)(a0);
+}
+
+typedef int (*canopus_fw_app_install_fn)(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t);
+static inline int canopus_fw_app_install(const launcher_app_descriptor * a0, const firmware_page_descriptor *const * a1, uint32_t a2) {
+    return ((canopus_fw_app_install_fn)(uintptr_t)0x0CA519AD)(a0, a1, a2);
 }
 
 typedef int (*canopus_fw_register_driver_fn)(const char *, const void *, uint32_t, void *);
@@ -174,21 +261,114 @@ static inline int canopus_fw_register_driver(const char * a0, const void * a1, u
     return ((canopus_fw_register_driver_fn)(uintptr_t)0x0C1A0D51)(a0, a1, a2, a3);
 }
 
+typedef int (*canopus_fw_interconnect_send_fn)(void *, const char *, const canopus_interconnect_message *, canopus_interconnect_send_done, void *);
+static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const canopus_interconnect_message * a2, canopus_interconnect_send_done a3, void * a4) {
+    return ((canopus_fw_interconnect_send_fn)(uintptr_t)0x0C2D20C5)(a0, a1, a2, a3, a4);
+}
+
+typedef int32_t (*canopus_fw_write_fn)(int, const void *, uint32_t);
+static inline int32_t canopus_fw_write(int a0, const void * a1, uint32_t a2) {
+    return ((canopus_fw_write_fn)(uintptr_t)0x0C1C31C9)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_lv_obj_align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
+static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2, int32_t a3, int32_t a4) {
+    return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0x0C588BE9)(a0, a1, a2, a3, a4);
+}
+
+typedef void (*canopus_fw_lv_obj_add_event_cb_fn)(void *, canopus_lvx_event_cb, uint32_t, void *);
+static inline void canopus_fw_lv_obj_add_event_cb(void * a0, canopus_lvx_event_cb a1, uint32_t a2, void * a3) {
+    return ((canopus_fw_lv_obj_add_event_cb_fn)(uintptr_t)0x0C5882B9)(a0, a1, a2, a3);
+}
+
+typedef void (*canopus_fw_lv_obj_set_hidden_fn)(void *, uint32_t);
+static inline void canopus_fw_lv_obj_set_hidden(void * a0, uint32_t a1) {
+    return ((canopus_fw_lv_obj_set_hidden_fn)(uintptr_t)0x0C588459)(a0, a1);
+}
+
+typedef void * (*canopus_fw_lv_event_get_user_data_fn)(void *);
+static inline void * canopus_fw_lv_event_get_user_data(void * a0) {
+    return ((canopus_fw_lv_event_get_user_data_fn)(uintptr_t)0x0C588601)(a0);
+}
+
+typedef void * (*canopus_fw_lvx_list_row_trailing_fn)(void *);
+static inline void * canopus_fw_lvx_list_row_trailing(void * a0) {
+    return ((canopus_fw_lvx_list_row_trailing_fn)(uintptr_t)0x0C4A7F2D)(a0);
+}
+
+typedef int (*canopus_fw_quickapp_register_app_fn)(uint16_t, const canopus_interconnect_app_info *);
+static inline int canopus_fw_quickapp_register_app(uint16_t a0, const canopus_interconnect_app_info * a1) {
+    return ((canopus_fw_quickapp_register_app_fn)(uintptr_t)0x0C527E39)(a0, a1);
+}
+
+typedef int32_t (*canopus_fw_page_finish_fn)(void *);
+static inline int32_t canopus_fw_page_finish(void * a0) {
+    return ((canopus_fw_page_finish_fn)(uintptr_t)0x0CA53089)(a0);
+}
+
+typedef void (*canopus_fw_lvx_msgbox_set_content_fn)(void *, uint32_t, const char *, const char *, const char *, const void *, uint32_t);
+static inline void canopus_fw_lvx_msgbox_set_content(void * a0, uint32_t a1, const char * a2, const char * a3, const char * a4, const void * a5, uint32_t a6) {
+    return ((canopus_fw_lvx_msgbox_set_content_fn)(uintptr_t)0x0C4A93FD)(a0, a1, a2, a3, a4, a5, a6);
+}
+
+typedef int32_t (*canopus_fw_page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+static inline int32_t canopus_fw_page_goto(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
+    return ((canopus_fw_page_goto_fn)(uintptr_t)0x0CA539F9)(a0, a1, a2, a3);
+}
+
+typedef void (*canopus_fw_lvx_object_delete_fn)(void *);
+static inline void canopus_fw_lvx_object_delete(void * a0) {
+    return ((canopus_fw_lvx_object_delete_fn)(uintptr_t)0x0C5888F1)(a0);
+}
+
 typedef int (*canopus_fw_unregister_driver_fn)(const char *);
 static inline int canopus_fw_unregister_driver(const char * a0) {
     return ((canopus_fw_unregister_driver_fn)(uintptr_t)0x0C1A0E1D)(a0);
 }
 
+typedef void (*canopus_fw_lvx_label_set_text_fn)(void *, const char *);
+static inline void canopus_fw_lvx_label_set_text(void * a0, const char * a1) {
+    return ((canopus_fw_lvx_label_set_text_fn)(uintptr_t)0x0C588849)(a0, a1);
+}
+
+typedef int32_t (*canopus_fw_read_fn)(int, void *, uint32_t);
+static inline int32_t canopus_fw_read(int a0, void * a1, uint32_t a2) {
+    return ((canopus_fw_read_fn)(uintptr_t)0x0C1C1E25)(a0, a1, a2);
+}
+
+typedef int (*canopus_fw_interconnect_connect_fn)(void *, void *, const char *, canopus_interconnect_recv_cb);
+static inline int canopus_fw_interconnect_connect(void * a0, void * a1, const char * a2, canopus_interconnect_recv_cb a3) {
+    return ((canopus_fw_interconnect_connect_fn)(uintptr_t)0x0C2D2035)(a0, a1, a2, a3);
+}
+
+typedef void * (*canopus_fw_lvx_list_row_create_fn)(void *, const char *, const char *, uint8_t);
+static inline void * canopus_fw_lvx_list_row_create(void * a0, const char * a1, const char * a2, uint8_t a3) {
+    return ((canopus_fw_lvx_list_row_create_fn)(uintptr_t)0x0C52B235)(a0, a1, a2, a3);
+}
+
+typedef int (*canopus_fw_lvx_style_apply_fn)(void *, const void *, uint32_t, uint32_t);
+static inline int canopus_fw_lvx_style_apply(void * a0, const void * a1, uint32_t a2, uint32_t a3) {
+    return ((canopus_fw_lvx_style_apply_fn)(uintptr_t)0x0C49EA99)(a0, a1, a2, a3);
+}
+
+typedef int (*canopus_fw_close_fn)(int);
+static inline int canopus_fw_close(int a0) {
+    return ((canopus_fw_close_fn)(uintptr_t)0x0C1AAB71)(a0);
+}
+
+/* Recovered global `interconnect_loop` at 0x20121F90. */
+#define canopus_fw_interconnect_loop ((void *)(uintptr_t)0x20121F90u)
+
+/* Recovered global `style_misans_demibold_32` at 0x2010A02C. */
+#define canopus_fw_style_misans_demibold_32 ((void *)(uintptr_t)0x2010A02Cu)
+
 /* ---- excluded symbols ----
- * app_install: restricted - not exported until context/ownership approved
- * app_launcher_add: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_socket_server_receive: FORBIDDEN - no veneer may ever be generated
  * btsnoop_avdtp_recognizer: FORBIDDEN - no veneer may ever be generated
- * close: restricted - not exported until context/ownership approved
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * driver_close_dispatch: restricted - not exported until context/ownership approved
  * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
@@ -205,28 +385,14 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
  * hfp_ag_disconnect: FORBIDDEN - no veneer may ever be generated
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
  * insmod: restricted - not exported until context/ownership approved
- * lv_event_get_code: restricted - not exported until context/ownership approved
- * lv_event_get_user_data: restricted - not exported until context/ownership approved
- * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
- * lv_obj_align_to: restricted - not exported until context/ownership approved
- * lv_obj_set_hidden: restricted - not exported until context/ownership approved
  * lv_timer_create: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
- * lvx_list_item_update: restricted - not exported until context/ownership approved
- * lvx_notification_insert_message: restricted - not exported until context/ownership approved
- * lvx_page_content_create: restricted - not exported until context/ownership approved
- * lvx_page_title_create: restricted - not exported until context/ownership approved
- * lvx_style_apply: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
- * open: restricted - not exported until context/ownership approved
- * page_finish: restricted - not exported until context/ownership approved
- * page_goto: restricted - not exported until context/ownership approved
  * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
- * read: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved
@@ -247,7 +413,6 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
  * unregister_blockdriver: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
  * watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
- * write: restricted - not exported until context/ownership approved
  */
 
 

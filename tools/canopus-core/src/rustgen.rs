@@ -60,6 +60,16 @@ fn map_rust_type(t: &str) -> Option<String> {
     }
 }
 
+/// Escapes a recovered C field name that collides with a Rust keyword (e.g.
+/// the interconnect message `type` field) so the generated struct compiles.
+fn rust_field_name(name: &str) -> String {
+    if matches!(name, "type" | "ref" | "match" | "move" | "fn" | "impl") {
+        format!("r#{name}")
+    } else {
+        name.to_string()
+    }
+}
+
 fn width_rust_type(f: &crate::model::TypeField) -> String {
     match f.signedness.as_str() {
         "signed" => match f.width {
@@ -149,6 +159,40 @@ impl<'a> RustGen<'a> {
         out.push_str("// `#[repr(C, packed(N))]` + explicit padding reproduces the exact\n");
         out.push_str("// recovered byte layout and its target-declared alignment.\n");
         for t in self.types {
+            if t.kind == "typedef" {
+                if let Some(proto) = &t.prototype {
+                    if let Some((ret, args)) = parse_proto(proto) {
+                        let ret_t = match self.resolve_rust_type(&ret) {
+                            Some(t) => t,
+                            None => continue,
+                        };
+                        let mut arg_r = Vec::new();
+                        let mut mappable = true;
+                        for a in &args {
+                            match self.resolve_rust_type(a) {
+                                Some(t) => arg_r.push(t),
+                                None => {
+                                    mappable = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if !mappable {
+                            continue;
+                        }
+                        let name = t.name.clone().unwrap_or_else(|| t.type_id.clone());
+                        let arg_list = if arg_r.is_empty() {
+                            "()".to_string()
+                        } else {
+                            arg_r.join(", ")
+                        };
+                        out.push_str(&format!(
+                            "pub type {name} = extern \"C\" fn({arg_list}) -> {ret_t};\n"
+                        ));
+                    }
+                }
+                continue;
+            }
             if t.kind != "struct" && t.kind != "union" {
                 continue;
             }
@@ -180,7 +224,7 @@ impl<'a> RustGen<'a> {
                 }
                 out.push_str(&format!(
                     "    pub {}: {}, // +0x{:x}\n",
-                    f.name,
+                    rust_field_name(&f.name),
                     width_rust_type(f),
                     f.offset
                 ));
@@ -247,9 +291,67 @@ impl<'a> RustGen<'a> {
         }
     }
 
+    /// Resolves a prototype argument/return type to a Rust type.
+    ///
+    /// Falls back to [`map_rust_type`] for primitive types, then recognizes
+    /// recovered typedef names (emitted as `pub type` aliases) and typed
+    /// pointers to recovered structs/unions. Returns `None` for anything that
+    /// cannot be expressed faithfully so the caller skips the symbol.
+    fn resolve_rust_type(&self, t: &str) -> Option<String> {
+        let t = t.trim();
+        // Typed pointer to a recovered type: `const X *` / `X *`. Handle this
+        // before the primitive fallback so the `const` qualifier is dropped
+        // (map_rust_type's suffix fallback would otherwise emit `*const const
+        // X`, which is not valid Rust).
+        if let Some((leading_const, inner, suffix)) =
+            crate::veneer::pointer_chain(t)
+        {
+            if self.type_names().contains(&inner) {
+                let _ = leading_const;
+                // `X *` -> `*const X`; `X *const *` -> `*const *const X`
+                // (outer pointer is the trailing `*`).
+                let levels = suffix.matches('*').count();
+                let stars = "*const ".repeat(levels);
+                return Some(format!("{stars}{inner}"));
+            }
+        }
+        if let Some(mapped) = map_rust_type(t) {
+            return Some(mapped);
+        }
+        if self.type_names().contains(&t) {
+            // By value (rare) or typedef alias — the name is emitted elsewhere.
+            return Some(t.to_string());
+        }
+        None
+    }
+
+    fn type_names(&self) -> std::collections::BTreeSet<&str> {
+        self.types
+            .iter()
+            .filter_map(|t| t.name.as_deref())
+            .collect()
+    }
+
     fn emit_bindings(&self, out: &mut String) {
         out.push_str("// ---- typed firmware bindings (unsafe) ----\n");
         for s in self.symbols {
+            if s.kind == "global" || s.kind == "data" {
+                // A fixed firmware data address, emitted as a constant so Rust
+                // modules can read the slot through the generated surface.
+                if FORBIDDEN_STATUS.contains(&s.status.as_str())
+                    || s.policy == "restricted"
+                    || !s.approved_for_codegen()
+                {
+                    continue; // audit comment in emit_notes
+                }
+                if let Some(addr) = &s.entry_address {
+                    let name = &s.name;
+                    out.push_str(&format!(
+                        "/// Recovered global `{name}` at {addr}.\npub const canopus_fw_{name}: usize = {addr}usize;\n\n"
+                    ));
+                }
+                continue;
+            }
             if s.kind != "function" {
                 continue;
             }
@@ -276,7 +378,7 @@ impl<'a> RustGen<'a> {
                 Some(x) => x,
                 None => continue,
             };
-            let ret_t = match map_rust_type(&ret) {
+            let ret_t = match self.resolve_rust_type(&ret) {
                 Some(t) => t,
                 None => {
                     out.push_str(&format!(
@@ -289,7 +391,7 @@ impl<'a> RustGen<'a> {
             let mut arg_r = Vec::new();
             let mut mappable = true;
             for a in &args {
-                match map_rust_type(a) {
+                match self.resolve_rust_type(a) {
                     Some(t) => arg_r.push(t),
                     None => {
                         mappable = false;

@@ -10,7 +10,9 @@
   "prototype": "int(uint16_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
-    "allowed": ["launcher_owner"],
+    "allowed": [
+      "launcher_owner"
+    ],
     "blocking": false
   },
   "ownership": {
@@ -23,13 +25,17 @@
   ],
   "proof": {
     "static": "recovered",
-    "evidence_ids": ["EVID-APP-004"]
+    "evidence_ids": [
+      "EVID-APP-004"
+    ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
-    "evidence_ids": ["EVID-APP-004"],
+    "evidence_ids": [
+      "EVID-APP-004"
+    ],
     "source": "ida sub_C4F2CC4 (log tag app_launcher_del); also the hide path of hidden_and_show_app_cb (msg 26)"
   },
   "notes": "unregisters app by u16 appid: finds record in the launcher apps table 0x200D0924 (matching *record == appid), removes it and the page-list entry in 0x200D090C, frees both. Hide (System msg 26) calls this."

@@ -178,6 +178,10 @@ pub struct TypeRecord {
     pub fields: Option<Vec<TypeField>>,
     pub layout_diffs: Option<Vec<LayoutDiff>>,
     pub provenance: TypeProvenance,
+    /// For `kind == "typedef"` function pointers: the C signature without the
+    /// name (e.g. `void(void *, int32_t, const X *, const char *)`). Emits as
+    /// `typedef <ret> (*<name>)(<args>);` in the veneer.
+    pub prototype: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

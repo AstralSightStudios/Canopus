@@ -6,7 +6,9 @@
   "kind": "function",
   "instruction_set": "thumb",
   "prototype": "void *(const char *)",
-  "proof": { "static": "confirmed" },
+  "proof": {
+    "static": "confirmed"
+  },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {

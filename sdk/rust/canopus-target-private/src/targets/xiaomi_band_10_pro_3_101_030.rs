@@ -949,39 +949,21 @@ pub unsafe fn nuttx_write(fd: i32, buffer: *const core::ffi::c_void, count: u32)
 // `interconnect_impl.cpp` feature module; a native module can register a
 // connection the same way, without the JS engine. The global loop handle
 // (`dword_20121F90`) is the registry all named servers live on.
-
-/// Connection/event message header (`uv_miwear_message_t`), 20 bytes.
-///
-/// Kept pointer-free (like [`StockBuffer`]) so the fixed-width 32-bit layout
-/// holds on the host test toolchain as well as the Cortex-M33 target.
-///
-/// For data messages (`type_ == [`CONN_MSG_TYPE_DATA`]`) `length` is the payload
-/// length and `value` is the 32-bit payload address. For connection events
-/// (`type_ == [`CONN_MSG_TYPE_EVENT`]`) `value` is the address of a 32-bit
-/// status word whose values are the `CONN_STATUS_*` codes below.
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-pub struct InterconnectConnMessage {
-    pub type_: u8,
-    pub _pad_type: [u8; 3],
-    /// Payload length for data messages; `8` for connection events.
-    pub length: u32,
-    pub _reserved: [u32; 2],
-    /// 32-bit payload address (data) or status-word address (events).
-    pub value: u32,
-}
+//
+// The recovered callables, message/app-info layouts, and callback typedefs are
+// generated from `symbols/` + `types/` into `canopus_target_generated` (single
+// source of truth); this module re-exports them under the same names the C
+// veneer uses, so a Rust module and a C module call the identical ABI.
 
 /// Connection-event message type.
 pub const CONN_MSG_TYPE_EVENT: u8 = 2;
 /// Data message type (byte `0x83`; a negative signed byte by design).
 pub const CONN_MSG_TYPE_DATA: u8 = 0x83;
 
-/// Event status word values delivered to [`InterconnectRecvCb`]. The raw
-/// connection framework uses `1` for connected at its socket layer; the miwear
-/// proxy re-stamps these `5/6/7` codes through `byte_2CCF98F4`, which is what
-/// the AIOTJS glue and a native peer observe (`CONN_STATUS_CONNECTED`,
-/// `CONN_STATUS_DISCONNECTED`, `CONN_STATUS_UNINSTALLED`,
-/// `CONN_STATUS_FAILED`, `CONN_STATUS_CLOSED`).
+/// Event status word values delivered to the recv callback. The raw connection
+/// framework uses `1` for connected at its socket layer; the miwear proxy
+/// re-stamps these `5/6/7` codes through `byte_2CCF98F4`, which is what a peer
+/// observes.
 pub const CONN_STATUS_CONNECTED: i32 = 5;
 pub const CONN_STATUS_DISCONNECTED: i32 = 6;
 pub const CONN_STATUS_UNINSTALLED: i32 = 7;
@@ -1002,88 +984,34 @@ pub const CONN_RECV_CB_OFFSET: usize = 4;
 /// name (see [`quickapp_register_app`]).
 pub const INTERCONNECT_APK_PACKAGE: &[u8] = b"com.xiaomi.miwear.interconnect\0";
 
+/// Connection/event message header (`uv_miwear_message_t`), 20 bytes.
+pub type InterconnectConnMessage = canopus_target_generated::canopus_interconnect_message;
+
 /// App descriptor passed to [`quickapp_register_app`]. Matches the firmware
 /// `quickapp_app_info` layout (36 bytes on the 32-bit target).
-///
-/// `package_name` is the phone-side routing key; `display_name` and `icon_file`
-/// are UI metadata; `extra` mirrors a string slot the stock registrar logs;
-/// `fingerprint` is a 20-byte blob compared by `quickapp_get_appinfo`.
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-pub struct QuickAppInfo {
-    /// `com.*` package name — the routing key the phone uses.
-    pub package_name: *const u8,
-    /// Human-readable app name (not used for routing).
-    pub display_name: *const u8,
-    /// Icon file name under `/data/app/<package>/` (e.g. `b"icon.png\0"`).
-    pub icon_file: *const u8,
-    /// Extra string slot (the stock registrar echoes it in its log).
-    pub extra: *const u8,
-    /// 20-byte app fingerprint verified by `quickapp_get_appinfo`.
-    pub fingerprint: [u8; 20],
-}
-
-/// Registers a package in the quickapp routing registry. The firmware seeds the
-/// registry at bootup from `rpk_info.json` (`quickapp_bootup_register`); the
-/// watch→phone send path (`quickapp_send_wearmsg`) looks a package up here, so
-/// a native module that wants its own package name must register it first.
-///
-/// `app_id` is a `u16` identifier; the stock registrar hands out sequential
-/// ids. `info` must stay valid for the call. Returns `0` on success, `-1` on
-/// allocation failure.
-///
-/// # Safety
-/// `info` must point at a valid [`QuickAppInfo`]; every string field must be a
-/// NUL-terminated address readable by the firmware.
-pub unsafe fn quickapp_register_app(app_id: u16, info: *const QuickAppInfo) -> i32 {
-    type F = extern "C" fn(u16, *const QuickAppInfo) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C527E39usize) };
-    f(app_id, info)
-}
+pub type QuickAppInfo = canopus_target_generated::canopus_interconnect_app_info;
 
 /// Receives connection events and data for an interconnect link.
-///
-/// `status` is nonzero on events; `msg` is either a connection-event message or
-/// a data message; `name` is the connection name registered with
-/// [`interconnect_connect`]. Runs on the connection-framework owner thread, so
-/// the callback must never block and must re-enter the module Core only through
-/// a non-blocking lock.
-pub type InterconnectRecvCb = extern "C" fn(
-    conn: *mut core::ffi::c_void,
-    status: i32,
-    msg: *const InterconnectConnMessage,
-    name: *const u8,
-);
+pub type InterconnectRecvCb = canopus_target_generated::canopus_interconnect_recv_cb;
 
-/// Completion callback for [`interconnect_send`]: `(conn, status, msg, arg)`.
-/// Invoked when the queued message is delivered or fails; `status` is `0` on
-/// success.
-pub type InterconnectSendDone = extern "C" fn(
-    conn: *mut core::ffi::c_void,
-    status: i32,
-    msg: *const InterconnectConnMessage,
-    arg: *mut core::ffi::c_void,
-);
+/// Completion callback for [`interconnect_send`].
+pub type InterconnectSendDone = canopus_target_generated::canopus_interconnect_send_done;
 
 /// Reads the global connection-framework loop handle. Every named server
 /// ("btserver", "miwear-server") and connection lives on this registry.
+///
+/// # Safety
+/// The firmware must be running and the connection framework initialized.
 pub unsafe fn interconnect_loop() -> *mut core::ffi::c_void {
-    let slot = 0x20121F90usize as *const *mut core::ffi::c_void;
+    let slot =
+        canopus_target_generated::canopus_fw_interconnect_loop as *const *mut core::ffi::c_void;
     unsafe { *slot }
 }
 
 /// Registers a named connection on the connection framework and attaches it to
-/// the firmware's "miwear-server". This is the native equivalent of the
-/// quickapp `system.interconnect` connect path (`interconnect_impl.cpp`
-/// `onRequired` and `jse_miwear.cpp` `__miwear_connect`).
-///
-/// `conn` is a caller-owned buffer of at least 12 bytes that stays alive for
-/// the link; the firmware writes the node pointer, `cb`, and an active flag into
-/// it. `name` is the phone-side **package name** — the routing key the phone
-/// uses to deliver messages (e.g. [`INTERCONNECT_APK_PACKAGE`]); it is copied
-/// into a 64-byte firmware slot. The app display name is not part of the
-/// routing. Returns `0` on accepted registration, `-22` on a null argument,
-/// `-12` on allocation failure.
+/// the firmware's "miwear-server". `name` is the phone-side **package name** —
+/// the routing key (e.g. [`INTERCONNECT_APK_PACKAGE`]); the app display name is
+/// not part of routing. `conn` is a caller-owned buffer of at least 12 bytes.
 ///
 /// # Safety
 /// The connection framework must already have a "miwear-server" registered
@@ -1095,26 +1023,19 @@ pub unsafe fn interconnect_connect(
     name: *const u8,
     cb: InterconnectRecvCb,
 ) -> i32 {
-    type F = extern "C" fn(
-        *mut core::ffi::c_void,
-        *mut core::ffi::c_void,
-        *const u8,
-        InterconnectRecvCb,
-    ) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C2D2035usize) };
-    f(loop_handle, conn, name, cb)
+    unsafe {
+        canopus_target_generated::canopus_fw_interconnect_connect(loop_handle, conn, name, cb)
+    }
 }
 
 /// Queues one message to the connection framework. `handle` is the `conn` from
 /// [`interconnect_connect`] (send to self) or a server handle (broadcast with
-/// `name == null`, or targeted at the connection named `name`). `done` is called
-/// once the message is accepted or fails; the payload referenced by `msg` must
-/// remain valid until then.
+/// `name == null`, or targeted at the connection named `name`). The payload
+/// referenced by `msg` must remain valid until `done` fires.
 ///
 /// # Safety
-/// `msg` must point at a valid [`InterconnectConnMessage`] (type data, length,
-/// payload) that outlives the asynchronous send. `done` and `arg` follow
-/// [`InterconnectSendDone`].
+/// `msg` must point at a valid [`InterconnectConnMessage`] that outlives the
+/// asynchronous send. `done` and `arg` follow [`InterconnectSendDone`].
 pub unsafe fn interconnect_send(
     handle: *mut core::ffi::c_void,
     name: *const u8,
@@ -1122,22 +1043,22 @@ pub unsafe fn interconnect_send(
     done: InterconnectSendDone,
     arg: *mut core::ffi::c_void,
 ) -> i32 {
-    type F = extern "C" fn(
-        *mut core::ffi::c_void,
-        *const u8,
-        *const InterconnectConnMessage,
-        InterconnectSendDone,
-        *mut core::ffi::c_void,
-    ) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C2D20C5usize) };
-    f(handle, name, msg, done, arg)
+    unsafe { canopus_target_generated::canopus_fw_interconnect_send(handle, name, msg, done, arg) }
 }
 
 /// Closes an interconnect connection registered by [`interconnect_connect`].
 pub unsafe fn interconnect_close(conn: *mut core::ffi::c_void) -> i32 {
-    type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C2D2199usize) };
-    f(conn)
+    unsafe { canopus_target_generated::canopus_fw_interconnect_close(conn) }
+}
+
+/// Registers a package in the quickapp routing registry so a native module's own
+/// package name resolves on the watch→phone send path.
+///
+/// # Safety
+/// `info` must point at a valid [`QuickAppInfo`]; every string field must be a
+/// NUL-terminated address readable by the firmware.
+pub unsafe fn quickapp_register_app(app_id: u16, info: *const QuickAppInfo) -> i32 {
+    unsafe { canopus_target_generated::canopus_fw_quickapp_register_app(app_id, info) }
 }
 
 // ---------------------------------------------------------------------------
@@ -1152,6 +1073,10 @@ const _: () = {
     assert!(core::mem::offset_of!(StockBuffer, route) == 4);
     assert!(core::mem::size_of::<DisconnectRequest>() == 4);
     assert!(core::mem::size_of::<MediaTimerToken>() == 8);
+    // The interconnect message is pointer-free in the firmware (value is a 32-bit
+    // address) but `canopus_interconnect_message` is generated with a host-sized
+    // pointer field, so its exact size holds only on the 32-bit device target.
+    #[cfg(target_pointer_width = "32")]
     assert!(core::mem::size_of::<InterconnectConnMessage>() == 20);
     assert!(core::mem::offset_of!(InterconnectConnMessage, length) == 4);
     assert!(core::mem::offset_of!(InterconnectConnMessage, value) == 16);
@@ -1192,7 +1117,11 @@ mod tests {
 
     #[test]
     fn interconnect_message_layout_and_status_codes_are_stable() {
-        assert_eq!(core::mem::size_of::<InterconnectConnMessage>(), 20);
+        // Exact 20-byte size holds on the 32-bit device target only (the
+        // generated `value` pointer field is host-sized in tests).
+        if core::mem::size_of::<*const u8>() == 4 {
+            assert_eq!(core::mem::size_of::<InterconnectConnMessage>(), 20);
+        }
         assert_eq!(core::mem::offset_of!(InterconnectConnMessage, length), 4);
         assert_eq!(core::mem::offset_of!(InterconnectConnMessage, value), 16);
         assert_eq!(CONN_MSG_TYPE_EVENT, 2);

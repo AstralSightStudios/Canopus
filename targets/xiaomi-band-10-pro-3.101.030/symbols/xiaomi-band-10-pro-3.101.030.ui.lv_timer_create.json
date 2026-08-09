@@ -5,8 +5,10 @@
   "name": "lv_timer_create",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "void *(void (*)(void *), uint32_t, void *)",
-  "proof": { "static": "confirmed" },
+  "prototype": "void *(canopus_lvx_event_cb, uint32_t, void *)",
+  "proof": {
+    "static": "confirmed"
+  },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {

@@ -6,8 +6,13 @@
   "kind": "function",
   "instruction_set": "thumb",
   "prototype": "void *(void *)",
-  "proof": { "static": "confirmed" },
-  "policy": "restricted",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-UI-001"
+    ]
+  },
+  "policy": "native-full-trust",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
@@ -15,5 +20,15 @@
   },
   "entry_address": "0x0C588600",
   "callable_address": "0x0C588601",
-  "notes": "Stock settings click callbacks recover their row index/user data through this event accessor."
+  "notes": "Stock settings click callbacks recover their row index/user data through this event accessor.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "void *(void *)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
 }

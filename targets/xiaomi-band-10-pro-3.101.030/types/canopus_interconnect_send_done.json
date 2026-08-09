@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.030.type.canopus_interconnect_send_done.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "kind": "typedef",
+  "name": "canopus_interconnect_send_done",
+  "size": 4,
+  "alignment": 4,
+  "prototype": "void(void *, int32_t, const canopus_interconnect_message *, void *)",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "evidence_ids": ["EVID-CONN-001"],
+    "source": "Send-completion callback ABI: sub_C2D1A0C invokes (conn, status, msg, arg) with R0=conn, R1=status, R2=msg, R3=arg"
+  }
+}

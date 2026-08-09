@@ -53,7 +53,9 @@ pub(crate) fn map_type(t: &str) -> Option<String> {
     }
 }
 
-/// Parses `RET(ARG, ARG, ...)` into (ret, args).
+/// Parses `RET(ARG, ARG, ...)` into (ret, args), stripping any C parameter
+/// name so `uint16_t app_id` becomes `uint16_t` and `void *object` becomes
+/// `void *`. Function-pointer arguments (`void (*)(void *)`) are left intact.
 pub(crate) fn parse_proto(p: &str) -> Option<(String, Vec<String>)> {
     let open = p.find('(')?;
     let close = p.rfind(')')?;
@@ -63,10 +65,108 @@ pub(crate) fn parse_proto(p: &str) -> Option<(String, Vec<String>)> {
     let ret = p[..open].trim().to_string();
     let args: Vec<String> = p[open + 1..close]
         .split(',')
-        .map(|s| s.trim().to_string())
+        .map(|s| strip_param_name(s.trim()))
         .filter(|s| !s.is_empty())
         .collect();
     Some((ret, args))
+}
+
+/// Strips a trailing C parameter identifier from `uint16_t app_id` /
+/// `void *object` / `const char *name`, leaving the type. Does nothing for
+/// function-pointer types (`void (*)(void *)`) and untyped forms.
+fn strip_param_name(arg: &str) -> String {
+    let arg = arg.trim();
+    if arg.is_empty() || arg == "void" || arg == "..." {
+        return arg.to_string();
+    }
+    // Function-pointer args contain `(*)`; the name, if any, sits inside the
+    // closing paren. Leave them untouched (callers resolve via typedef names).
+    if arg.contains("(*") {
+        return arg.to_string();
+    }
+    // A C parameter is `TYPE name` where `name` is the trailing identifier and
+    // TYPE may itself contain spaces (`void *`, `const char *`, multi-level
+    // pointers). Strip the trailing identifier and verify the remainder still
+    // looks like a type. A bare scalar with no name (`uint32_t`, `int`) is
+    // left untouched because its "identifier" occupies the whole string.
+    if let Some((name_start, name)) = last_identifier(arg) {
+        let ty = arg[..name_start].trim();
+        if is_plausible_c_type(ty) {
+            return ty.to_string();
+        }
+    }
+    arg.to_string()
+}
+
+/// Returns the byte index of the final identifier token and the identifier,
+/// when the string ends with one (e.g. `void *object` -> (`5`, `object`)).
+fn last_identifier(arg: &str) -> Option<(usize, &str)> {
+    let bytes = arg.as_bytes();
+    let mut end = bytes.len();
+    while end > 0 && bytes[end - 1].is_ascii_whitespace() {
+        end -= 1;
+    }
+    let mut start = end;
+    while start > 0 && (bytes[start - 1].is_ascii_alphanumeric() || bytes[start - 1] == b'_') {
+        start -= 1;
+    }
+    if start == end {
+        return None;
+    }
+    // Must be preceded by a non-identifier boundary (whitespace or `*`), and
+    // there must be a type prefix before it — a bare scalar (`uint32_t`) has
+    // its whole string as the identifier with no prefix, so it is left alone.
+    let before = if start == 0 { None } else { Some(bytes[start - 1]) };
+    if start == 0 || !matches!(before, Some(b' ') | Some(b'*')) {
+        return None;
+    }
+    let name = &arg[start..end];
+    if is_identifier(name) {
+        Some((start, name))
+    } else {
+        None
+    }
+}
+
+fn is_plausible_c_type(ty: &str) -> bool {
+    ty.is_empty()
+        || ty.contains('*')
+        || ty.contains('[')
+        || matches!(
+            ty,
+            "int" | "int8_t" | "int16_t" | "int32_t" | "int64_t"
+                | "uint8_t" | "uint16_t" | "uint32_t" | "uint64_t"
+                | "char" | "float" | "double" | "size_t" | "mode_t"
+                | "void"
+        )
+        || ty.starts_with("const ")
+        || ty.starts_with("enum ")
+        || ty.starts_with("struct ")
+        || ty.starts_with("union ")
+}
+
+fn is_identifier(s: &str) -> bool {
+    let mut chars = s.chars();
+    matches!(chars.next(), Some(c) if c.is_ascii_alphabetic() || c == '_')
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+/// Splits a typed pointer string into `(leading_const, inner_type, pointer_suffix)`.
+/// Handles `X *`, `const X *`, `X *const *`, `const X *const *` where `X` is a
+/// bare type name. Returns `None` when the string is not such a chain.
+pub(crate) fn pointer_chain(t: &str) -> Option<(bool, &str, &str)> {
+    let leading_const = t.starts_with("const ");
+    let body = t.strip_prefix("const ").unwrap_or(t).trim();
+    let star = body.find('*')?;
+    let inner = body[..star].trim();
+    if inner.is_empty() {
+        return None;
+    }
+    // `inner` must be a single type token or a `struct`/`union`-prefixed name.
+    if inner.split_whitespace().count() > 2 {
+        return None;
+    }
+    Some((leading_const, inner, body[star..].trim()))
 }
 
 fn width_type(f: &TypeField) -> String {
@@ -167,6 +267,41 @@ impl<'a> VeneerGen<'a> {
         out.push_str("/* Explicit padding reproduces the exact recovered byte layout\n");
         out.push_str(" * even when fields are sparse (e.g. launcher_order_record). */\n");
         for t in self.types {
+            if t.kind == "typedef" {
+                if let Some(proto) = &t.prototype {
+                    if let Some((ret, args)) = parse_proto(proto) {
+                        let ret_t = match map_type(&ret) {
+                            Some(t) => t,
+                            None => continue,
+                        };
+                        let mut arg_c = Vec::new();
+                        let mut mappable = true;
+                        for a in &args {
+                            match self.resolve_c_type(a) {
+                                Some(t) => arg_c.push(t),
+                                None => {
+                                    mappable = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if !mappable {
+                            continue;
+                        }
+                        let name = t.name.clone().unwrap_or_else(|| t.type_id.clone());
+                        let arg_list = if arg_c.is_empty() {
+                            "void".to_string()
+                        } else {
+                            arg_c.join(", ")
+                        };
+                        out.push_str(&format!(
+                            "typedef {} (*{})({});\n",
+                            ret_t, name, arg_list
+                        ));
+                    }
+                }
+                continue;
+            }
             if t.kind != "struct" && t.kind != "union" {
                 continue;
             }
@@ -264,9 +399,70 @@ impl<'a> VeneerGen<'a> {
         }
     }
 
+    /// Resolves a prototype argument/return type to a C type.
+    ///
+    /// Falls back to [`map_type`] for the primitive types it knows, then
+    /// recognizes recovered typedef names and typed pointers to recovered
+    /// structs/unions (e.g. `canopus_interconnect_recv_cb`,
+    /// `const canopus_interconnect_message *`). Returns `None` when the type
+    /// cannot be expressed faithfully so the caller skips the symbol.
+    fn resolve_c_type(&self, t: &str) -> Option<String> {
+        let t = t.trim();
+        if let Some(mapped) = map_type(t) {
+            return Some(mapped);
+        }
+        // Typed pointer chain to a recovered type: `const X *`, `X *const *`,
+        // `const X *const *`. Reconstruct the exact pointer decoration so the
+        // generated call site matches the firmware ABI.
+        if let Some((leading_const, inner, suffix)) = pointer_chain(t) {
+            if self.type_names().contains(&inner) {
+                let const_pref = if leading_const { "const " } else { "" };
+                return Some(format!("{const_pref}{inner} {suffix}"));
+            }
+            return None;
+        }
+        // Bare recovered type name used by value (struct, union, typedef).
+        if self.type_names().contains(&t) {
+            return Some(t.to_string());
+        }
+        None
+    }
+
+    /// The set of recovered type names emitted by this pack.
+    fn type_names(&self) -> std::collections::BTreeSet<&str> {
+        self.types
+            .iter()
+            .filter_map(|t| t.name.as_deref())
+            .collect()
+    }
+
     fn emit_veneer_functions(&self, out: &mut String) {
         out.push_str("/* ---- typed veneers ---- */\n");
         for s in self.symbols {
+            if s.kind == "global" || s.kind == "data" {
+                // A fixed firmware data address, emitted as a constant so C
+                // modules can read the slot (e.g. the connection-framework
+                // loop handle) through the same generated surface.
+                if s.status == "FORBIDDEN" || s.status == "WITHDRAWN"
+                    || s.policy == "restricted"
+                    || !s.approved_for_codegen()
+                {
+                    continue; // handled in notes
+                }
+                if let Some(addr) = &s.entry_address {
+                    let name = &s.name;
+                    let proto = s.prototype.as_deref().unwrap_or("void *");
+                    let mut t = proto.trim();
+                    if t.is_empty() || t == "void" {
+                        t = "void *";
+                    }
+                    let ctype = self.resolve_c_type(t).unwrap_or_else(|| "void *".to_string());
+                    out.push_str(&format!(
+                        "/* Recovered global `{name}` at {addr}. */\n#define canopus_fw_{name} (({ctype})(uintptr_t){addr}u)\n\n"
+                    ));
+                }
+                continue;
+            }
             if s.kind != "function" {
                 continue;
             }
@@ -303,7 +499,7 @@ impl<'a> VeneerGen<'a> {
                 Some(x) => x,
                 None => continue,
             };
-            let ret_t = match map_type(&ret) {
+            let ret_t = match self.resolve_c_type(&ret) {
                 Some(t) => t,
                 None => {
                     out.push_str(&format!(
@@ -316,7 +512,7 @@ impl<'a> VeneerGen<'a> {
             let mut arg_c = Vec::new();
             let mut mappable = true;
             for a in &args {
-                match map_type(a) {
+                match self.resolve_c_type(a) {
                     Some(t) => arg_c.push(t),
                     None => {
                         mappable = false;

@@ -81,9 +81,14 @@ fn rust_bindings_have_exact_recovered_layout() {
     };
     let text = r#gen.generate();
 
-    // Every recovered type declares four-byte ARM alignment; generated host
-    // bindings must retain it without allowing 64-bit pointers to expand fields.
-    assert_eq!(text.matches("#[repr(C, packed(4))]").count(), types.len());
+    // Every recovered struct/union type declares four-byte ARM alignment;
+    // generated host bindings must retain it without allowing 64-bit pointers
+    // to expand fields. Typedef records emit `pub type` aliases, not structs.
+    let struct_count = types
+        .iter()
+        .filter(|t| t.kind == "struct" || t.kind == "union")
+        .count();
+    assert_eq!(text.matches("#[repr(C, packed(4))]").count(), struct_count);
     assert!(!text.contains("#[repr(C, packed)]"));
 
     // stock file_operations is the full 0x30-byte target table.
@@ -104,9 +109,12 @@ fn rust_bindings_have_exact_recovered_layout() {
     // forbidden symbols never produce a binding; they appear only as comments.
     assert!(text.contains("// bt_adapter_register_a2dp_callbacks: FORBIDDEN"));
     assert!(!text.contains("pub unsafe fn canopus_fw_bt_adapter_register_a2dp_callbacks"));
-    // restricted symbols are audit comments only.
-    assert!(text.contains("// app_launcher_add: restricted"));
-    assert!(!text.contains("pub unsafe fn canopus_fw_app_launcher_add"));
+    // probe-approved symbols DO generate now (app_launcher_add is APPROVED for
+    // the native Manager / probe path), while still-restricted symbols remain
+    // audit comments only.
+    assert!(text.contains("pub unsafe fn canopus_fw_app_launcher_add"));
+    assert!(text.contains("// bt_socket_server_receive: FORBIDDEN"));
+    assert!(!text.contains("pub unsafe fn canopus_fw_bt_socket_server_receive"));
 }
 
 #[test]

@@ -5,9 +5,14 @@
   "name": "lv_obj_add_event_cb",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "void(void *, void (*)(void *), uint32_t, void *)",
-  "proof": { "static": "confirmed" },
-  "policy": "restricted",
+  "prototype": "void(void *, canopus_lvx_event_cb, uint32_t, void *)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-UI-001"
+    ]
+  },
+  "policy": "native-full-trust",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
@@ -15,5 +20,15 @@
   },
   "entry_address": "0x0C5882B8",
   "callable_address": "0x0C5882B9",
-  "notes": "Stock settings rows register click event code 7 and bounded user data through this LVGL thunk."
+  "notes": "Stock settings rows register click event code 7 and bounded user data through this LVGL thunk.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "void(void *, canopus_lvx_event_cb, uint32_t, void *)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
 }

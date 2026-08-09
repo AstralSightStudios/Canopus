@@ -6,8 +6,13 @@
   "kind": "function",
   "instruction_set": "thumb",
   "prototype": "int32_t(void *page_descriptor)",
-  "proof": { "static": "confirmed" },
-  "policy": "restricted",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-NAV-001"
+    ]
+  },
+  "policy": "native-full-trust",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
@@ -15,5 +20,15 @@
   },
   "entry_address": "0x0CA53088",
   "callable_address": "0x0CA53089",
-  "notes": "activitymanager page finish (log tag 'pagemanager/finish_page'). Pops the referenced page descriptor off the app page stack, resumes the page below it, and drives the page destroy lifecycle. The system back handler calls this when the current page provides no back callback at descriptor +104."
+  "notes": "activitymanager page finish (log tag 'pagemanager/finish_page'). Pops the referenced page descriptor off the app page stack, resumes the page below it, and drives the page destroy lifecycle. The system back handler calls this when the current page provides no back callback at descriptor +104.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "int32_t(void *page_descriptor)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
 }

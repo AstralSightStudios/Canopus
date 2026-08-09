@@ -7,7 +7,7 @@
   "entry_address": "0x0CA519AC",
   "callable_address": "0x0CA519AD",
   "instruction_set": "thumb",
-  "prototype": "int(const firmware_app_descriptor_64_t *descriptor, const firmware_page_descriptor_t *const *pages, uint32_t page_count)",
+  "prototype": "int(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
@@ -33,7 +33,7 @@
       "EVID-APP-005"
     ]
   },
-  "policy": "restricted",
+  "policy": "native-full-trust",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
@@ -42,5 +42,15 @@
     ],
     "source": "IDA sub_CA519AC; function-table entry off_200EB060; built-in and quickapp registration callsites"
   },
-  "notes": "This is the actual descriptor/page registration function. It must precede app_launcher_add(app_id). It is not approved for production target calls until the page descriptor ABI, owner thread, unregister pair, and lifecycle have passed device probes. Do not interpret the return value as a boolean success code."
+  "notes": "This is the actual descriptor/page registration function. It must precede app_launcher_add(app_id). It is not approved for production target calls until the page descriptor ABI, owner thread, unregister pair, and lifecycle have passed device probes. Do not interpret the return value as a boolean success code.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "int(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
 }

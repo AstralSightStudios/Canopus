@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.miwear.interconnect_connect",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "interconnect_connect",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C2D2034",
+  "callable_address": "0x0C2D2035",
+  "prototype": "int(void *, void *, const char *, canopus_interconnect_recv_cb)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "connection_framework_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "return_value": "0_on_acceptance_else_negative_errno"
+  },
+  "side_effects": [
+    "queues_one_message_to_named_connection_or_broadcast"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-CONN-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "evidence_ids": [
+      "EVID-CONN-001"
+    ],
+    "source": "IDA sub_C2D2034; native equivalent of quickapp __miwear_connect and interconnect_impl onRequired"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "int(void *, void *, const char *, canopus_interconnect_recv_cb)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "connection_framework_owner",
+    "device_probe": "pending"
+  },
+  "notes": "Registers a named connection on the firmware miwear-server. conn is a caller-owned buffer of at least 12 bytes; name is the phone-side package name and the routing key."
+}

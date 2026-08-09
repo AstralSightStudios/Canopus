@@ -10,7 +10,9 @@
   "prototype": "int(ordered_app_list_t *)",
   "calling_convention": "arm-aapcs",
   "contexts": {
-    "allowed": ["launcher_owner"],
+    "allowed": [
+      "launcher_owner"
+    ],
     "blocking": false
   },
   "ownership": {
@@ -24,13 +26,17 @@
   ],
   "proof": {
     "static": "recovered",
-    "evidence_ids": ["EVID-APP-003"]
+    "evidence_ids": [
+      "EVID-APP-003"
+    ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
-    "evidence_ids": ["EVID-APP-003"],
+    "evidence_ids": [
+      "EVID-APP-003"
+    ],
     "source": "ida sub_C4F26C0 (log tag protobuf_set_ordered_app_list)"
   },
   "notes": "applies the System service's ordered app list (u16 count + 16-byte entries {name@+0,enabled@+8,hidden@+9}) to the launcher runtime list 0x200D090C and page structs (+60 hidden bit)."

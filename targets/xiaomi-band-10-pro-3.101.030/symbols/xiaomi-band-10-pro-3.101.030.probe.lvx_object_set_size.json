@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.probe.lvx_object_set_size",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "lvx_object_set_size",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C587EF8",
+  "callable_address": "0x0C587EF9",
+  "prototype": "void(void *object, int32_t width, int32_t height)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "probed",
+    "evidence_ids": [
+      "EVID-UI-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "DEVICE_PROBED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "evidence_ids": [
+      "EVID-UI-001"
+    ],
+    "source": "Rust canopus-target-private lvx_object_set_size; probe set_size"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "void(void *object, int32_t width, int32_t height)",
+    "ownership": "stock LVX/native-manager call; caller owns widget pointers",
+    "thread": "UI owner thread",
+    "device_probe": "used by native-manager probe on device"
+  },
+  "notes": "Stock LVX/native-manager call recovered for the resident probe."
+}

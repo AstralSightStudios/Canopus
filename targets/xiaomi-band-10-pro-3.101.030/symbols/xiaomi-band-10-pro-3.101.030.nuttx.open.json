@@ -5,9 +5,14 @@
   "name": "open",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "int(const char *, int, ...)",
-  "proof": { "static": "confirmed" },
-  "policy": "restricted",
+  "prototype": "int(const char *, int)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-IO-001"
+    ]
+  },
+  "policy": "native-full-trust",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
@@ -15,5 +20,15 @@
   },
   "entry_address": "0x0C1C15B0",
   "callable_address": "0x0C1C15B1",
-  "notes": "Current-process fd open wrapper; /dev/console caller proves flags=3 opens read/write. Device probe pending for /dev/canopus."
+  "notes": "Current-process fd open wrapper; /dev/console caller proves flags=3 opens read/write. Device probe pending for /dev/canopus.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "int(const char *, int)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
 }

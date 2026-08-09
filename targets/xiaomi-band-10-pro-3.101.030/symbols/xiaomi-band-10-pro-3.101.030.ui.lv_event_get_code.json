@@ -6,8 +6,13 @@
   "kind": "function",
   "instruction_set": "thumb",
   "prototype": "uint32_t(void *event)",
-  "proof": { "static": "confirmed" },
-  "policy": "restricted",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-UI-001"
+    ]
+  },
+  "policy": "native-full-trust",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
@@ -15,5 +20,15 @@
   },
   "entry_address": "0x0C5886D0",
   "callable_address": "0x0C5886D1",
-  "notes": "Returns the LVGL event code of a delivered event. Stock switch rows register for LV_EVENT_ALL (code 0) on the switch object and act only when the code is LV_EVENT_VALUE_CHANGED (30); stock list rows act on LV_EVENT_CLICKED (7)."
+  "notes": "Returns the LVGL event code of a delivered event. Stock switch rows register for LV_EVENT_ALL (code 0) on the switch object and act only when the code is LV_EVENT_VALUE_CHANGED (30); stock list rows act on LV_EVENT_CLICKED (7).",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "prototype": "uint32_t(void *event)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
 }
