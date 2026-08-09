@@ -323,18 +323,26 @@ pub unsafe fn bt_buffer_new(payload_length: u16, headroom: u16) -> *mut StockBuf
 
 /// Queues an L2CAP connect request. Returns the nonzero queue node on accepted
 /// submission and 0 when insertion fails; it is not a zero-on-success status.
+///
+/// Firmware `0x0C7ED49C` delegates directly to the owner-only FSM work list at
+/// `0x0C7D3318`. Invoke it from an already-running owner callback; callers on an
+/// unrelated thread must first dispatch through [`bt_queue_external`].
 pub unsafe fn bt_l2cap_connect(request: *const core::ffi::c_void) -> u32 {
     type F = extern "C" fn(*const core::ffi::c_void) -> u32;
     let f: F = unsafe { core::mem::transmute(0x0C7ED49Dusize) };
     f(request)
 }
 
+/// Queues L2CAP teardown through firmware `0x0C7ED54C`. Invoke from an active
+/// Bluetooth-owner callback; the wrapper only inserts owner-local work.
 pub unsafe fn bt_l2cap_disconnect(request: *const DisconnectRequest) -> i32 {
     type F = extern "C" fn(*const DisconnectRequest) -> i32;
     let f: F = unsafe { core::mem::transmute(0x0C7ED54Dusize) };
     f(request)
 }
 
+/// Queues one CID submission through firmware `0x0C7ED578`. Invoke from an
+/// active Bluetooth-owner callback; the wrapper only inserts owner-local work.
 pub unsafe fn bt_l2cap_submit_cid(buffer: *mut StockBuffer, private_cid: u16) -> i32 {
     type F = extern "C" fn(*mut StockBuffer, u16) -> i32;
     let f: F = unsafe { core::mem::transmute(0x0C7ED579usize) };
@@ -354,6 +362,9 @@ pub unsafe fn bt_free(allocation: *mut core::ffi::c_void) {
 }
 
 /// One-shot Bluetooth FSM timer. Returns a nonzero handle, 0 on failure.
+/// Timer insertion at `0x0C7D2C00` updates the timer list but does not signal the
+/// sleeping FSM semaphore; use it from an active owner callback, or pair delayed
+/// work with a separately guaranteed external wake.
 pub unsafe fn bt_timer_add(
     owner: *mut core::ffi::c_void,
     delay_ms: u32,
@@ -385,24 +396,29 @@ pub unsafe fn bt_timer_cancel(handle: *mut u32) -> i32 {
 
 pub type QueueWork = extern "C" fn(i32, i32, *mut core::ffi::c_void) -> i32;
 
-/// Queues `run` on the Bluetooth owner; `cancel` owns the argument if the
-/// queued work is cancelled. The return value is the inserted queue node, not
-/// a status code; stock callers do not use it to determine success.
+/// Queues work through the firmware's external-event ring and wakes the Bluetooth
+/// FSM when the ring transitions from empty to non-empty. IDA `0x0C7D335C`
+/// inserts the event while holding the FSM lock and signals its semaphore at
+/// `0x0C828580`; this is the correct entry point for callers outside the owner.
+///
+/// The integer return is the firmware lock-release result, not an enqueue handle
+/// or acceptance status. Once the FSM is initialized, stock callers treat this
+/// operation as infallible and ignore the return value.
 pub unsafe fn bt_queue_external(
     owner: *mut core::ffi::c_void,
     run: QueueWork,
     cancel: *mut core::ffi::c_void,
     argument: *mut core::ffi::c_void,
     event: u8,
-) -> *mut core::ffi::c_void {
+) -> i32 {
     type F = extern "C" fn(
         *mut core::ffi::c_void,
         QueueWork,
         *mut core::ffi::c_void,
         *mut core::ffi::c_void,
         u8,
-    ) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C7D3319usize) };
+    ) -> i32;
+    let f: F = unsafe { core::mem::transmute(0x0C7D335Dusize) };
     f(owner, run, cancel, argument, event)
 }
 
