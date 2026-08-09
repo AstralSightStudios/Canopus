@@ -225,7 +225,7 @@
         },
         "max_size": {
           "type": "integer",
-          "description": "Maximum module size in bytes."
+          "description": "Maximum project module size in bytes; zero disables the project budget."
         },
         "alignment": {
           "type": "integer",

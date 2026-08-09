@@ -16,9 +16,9 @@
 pub const TARGET_ID: &str = "xiaomi-band-10-pro-3.101.030";
 
 pub use canopus_target_generated::{
-    canopus_fw_register_driver, canopus_fw_unregister_driver, canopus_identity_guard,
-    file_operations, firmware_notification_message, firmware_page_descriptor,
-    launcher_app_descriptor,
+    canopus_fw_clock_gettime, canopus_fw_register_driver, canopus_fw_unregister_driver,
+    canopus_identity_guard, file_operations, firmware_notification_message,
+    firmware_page_descriptor, launcher_app_descriptor, stock_timespec_t,
 };
 
 // ---------------------------------------------------------------------------

@@ -57,12 +57,10 @@ elf_type = "ET_REL"
 endianness = "little"
 constructor_discovery = "init_array"
 symbol_imports = "none"
-# Project module-size budget. The stock modlib allocates module text
-# dynamically (no 64 KiB cap observed in the load path); 65536 was a
-# conservative round budget and a 65040-byte module has loaded on-device.
-# Raised to 80 KiB for the Bluetooth Audio module's software MP3/SBC codecs;
-# the signed installer retains its independent 128 KiB artifact ceiling.
-max_size = 81920
+# The stock modlib allocates SHF_ALLOC sections dynamically and its insertion
+# path has no fixed module-size ceiling. Zero means no project loaded-size budget;
+# installation retains a separate transport sanity bound.
+max_size = 0
 alignment = 4
 module_name_rules = "must match ^[a-zA-Z0-9_]+$; passed as argv[2] to insmod"
 load_command = "insmod <path> <name>"

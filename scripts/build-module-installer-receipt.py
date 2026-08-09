@@ -14,6 +14,7 @@ FIRMWARE_SHA256 = bytes.fromhex(
 MAGIC = 0x31494D43
 RECEIPT_SIZE = 256
 SIGNED_SIZE = 192
+ARTIFACT_MAX = 256 * 1024
 
 
 def fixed(value: bytes, size: int) -> bytes:
@@ -37,7 +38,7 @@ def main() -> None:
            for c in module_id):
         raise ValueError("module id must contain only lowercase ASCII, digits, _, -, .")
     artifact = args.module.read_bytes()
-    if not artifact.startswith(b"\x7fELF") or not (0 < len(artifact) <= 131072):
+    if not artifact.startswith(b"\x7fELF") or not (0 < len(artifact) <= ARTIFACT_MAX):
         raise ValueError("artifact must be a non-empty bounded ELF")
 
     prefix = b"".join([

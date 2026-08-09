@@ -20,7 +20,7 @@ local DEVICE_PATH = "/dev/canopus"
 -- from btpatch was sized for that project's 33 KB A2DP amalgamation. 512 still
 -- rejects truncated/empty resources while allowing a minimal valid module.
 local MODULE_MIN_SIZE = 512
-local MODULE_MAX_SIZE = 131072
+local MODULE_MAX_SIZE = 262144
 local EXPECTED_MAGIC = 0x43505331 -- "CPS1" supervisor status magic
 local EXPECTED_CMD_MAGIC = 0x43504331 -- "CPC1" command magic
 -- 128 header + 16 slots x 16 bytes

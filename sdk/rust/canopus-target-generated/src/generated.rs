@@ -4,7 +4,7 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 3
-// input_digest: db1320b1bfe4379d
+// input_digest: c953bf43c3e20e52
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -36,8 +36,8 @@ pub struct launcher_order_record {
 #[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct stock_timespec_t {
-    pub tv_sec: i32, // +0x0
-    pub tv_nsec: i32, // +0x4
+    pub tv_sec: i64, // +0x0
+    pub tv_nsec: i32, // +0x8
 }
 
 #[repr(C, packed(4))]

@@ -11,7 +11,9 @@
     "stock_f701a84_symbols.csv row category=nuttx name=clock_gettime"
   ],
   "control_flow_evidence": [
-    "veneer call clock_gettime(1, &ts) returns 0 and tv_nsec=79600000 on 2026-07-22 device probe (documented in types/stock_timespec.json provenance)"
+    "0x0C1ECA68 stores tv_sec with STRD at offsets +0/+4 and tv_nsec with STR at +8",
+    "2026-07-22 veneer call clock_gettime(1, &ts) returned 0 and a valid tv_nsec",
+    "2026-08-09 module crash showed the former 8-byte declaration allowed the +8 store to corrupt adjacent caller storage"
   ],
   "ownership_analysis": "caller-allocated output struct; no retained pointer",
   "unsafe_assumptions": [

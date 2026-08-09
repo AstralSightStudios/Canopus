@@ -37,8 +37,8 @@ mod layout_tests {
     fn pointer_free_layouts_exact_on_both() {
         assert_eq!(size_of::<launcher_order_record>(), 140);
         assert_eq!(offset_of!(launcher_order_record, flags), 132);
-        assert_eq!(size_of::<stock_timespec_t>(), 8);
-        assert_eq!(offset_of!(stock_timespec_t, tv_nsec), 4);
+        assert_eq!(size_of::<stock_timespec_t>(), 12);
+        assert_eq!(offset_of!(stock_timespec_t, tv_nsec), 8);
         assert_eq!(size_of::<launcher_app_struct>(), 0x84);
         assert_eq!(offset_of!(launcher_app_struct, flags), 0x80);
     }

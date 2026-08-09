@@ -4,7 +4,7 @@
  * firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
  * sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
  * revision : 3
- * input_digest: db1320b1bfe4379d
+ * input_digest: c953bf43c3e20e52
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
@@ -30,8 +30,8 @@ typedef struct {
     uint8_t _tail[4];
 } launcher_order_record;
 typedef struct {
-    int32_t tv_sec; /* +0x0 */
-    int32_t tv_nsec; /* +0x4 */
+    int64_t tv_sec; /* +0x0 */
+    int32_t tv_nsec; /* +0x8 */
 } stock_timespec_t;
 typedef struct {
     void * parent_descriptor; /* +0x0 */
