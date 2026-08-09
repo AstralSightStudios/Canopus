@@ -2,12 +2,12 @@
 //!
 //! These are **not** part of `canopus-target-generated` (the public, audited
 //! per-target bindings). They expose recovered launcher, LVX, Bluetooth, L2CAP,
-//! SDP, and timer calls that the generated public crate deliberately leaves
-//! restricted or FORBIDDEN. They are valid only for firmware SHA-256
-//! `f701a84f…dccd225b`, must never be called before
-//! [`canopus_target_generated::canopus_identity_guard`] passes, and are the
-//! source of every absolute address a module links. Future targets provide a
-//! sibling backend module with the same interface instead of editing this one.
+//! SDP, timer, and miwear/interconnect connection-framework calls that the
+//! generated public crate deliberately leaves restricted or FORBIDDEN. They are
+//! valid only for firmware SHA-256 `f701a84f…dccd225b`, must never be called
+//! before [`canopus_target_generated::canopus_identity_guard`] passes, and are
+//! the source of every absolute address a module links. Future targets provide
+//! a sibling backend module with the same interface instead of editing this one.
 //!
 //! Every recovered callable address carries the Thumb bit. All functions are
 //! `unsafe`; the module is responsible for state, ownership, and lifecycle
@@ -928,6 +928,219 @@ pub unsafe fn nuttx_write(fd: i32, buffer: *const core::ffi::c_void, count: u32)
 }
 
 // ---------------------------------------------------------------------------
+// miwear / interconnect connection framework
+// ---------------------------------------------------------------------------
+//
+// Firmware map (IDA `vela_ap.bin.i64`; exact target only):
+//
+//   Phone app (`com.xiaomi.miwear.interconnect` / Mi Fitness)
+//     ↕ BLE GATT (miwear private protocol)
+//   "btserver"        start_btmsg_server        @0x0CAA37E8
+//     └ uv_miwear_message_recv_cb @0x0CAA35A0 routes to per-client msq
+//   "miwear-server"   quickapp_proxy_server_start @0x0C526628
+//   connection framework (named servers over a polled socket/msq transport)
+//     ├ server create  sub_C2D1EF0
+//     ├ client connect sub_C2D2034  ← [`interconnect_connect`]
+//     ├ send           sub_C2D20C4  ← [`interconnect_send`]
+//     └ close          sub_C2D2198  ← [`interconnect_close`]
+//   quickapp JS: system.interconnect → jse_miwear.cpp → the four calls above.
+//
+// The framework is shared by the AIOTJS quickapp glue and the
+// `interconnect_impl.cpp` feature module; a native module can register a
+// connection the same way, without the JS engine. The global loop handle
+// (`dword_20121F90`) is the registry all named servers live on.
+
+/// Connection/event message header (`uv_miwear_message_t`), 20 bytes.
+///
+/// Kept pointer-free (like [`StockBuffer`]) so the fixed-width 32-bit layout
+/// holds on the host test toolchain as well as the Cortex-M33 target.
+///
+/// For data messages (`type_ == [`CONN_MSG_TYPE_DATA`]`) `length` is the payload
+/// length and `value` is the 32-bit payload address. For connection events
+/// (`type_ == [`CONN_MSG_TYPE_EVENT`]`) `value` is the address of a 32-bit
+/// status word whose values are the `CONN_STATUS_*` codes below.
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct InterconnectConnMessage {
+    pub type_: u8,
+    pub _pad_type: [u8; 3],
+    /// Payload length for data messages; `8` for connection events.
+    pub length: u32,
+    pub _reserved: [u32; 2],
+    /// 32-bit payload address (data) or status-word address (events).
+    pub value: u32,
+}
+
+/// Connection-event message type.
+pub const CONN_MSG_TYPE_EVENT: u8 = 2;
+/// Data message type (byte `0x83`; a negative signed byte by design).
+pub const CONN_MSG_TYPE_DATA: u8 = 0x83;
+
+/// Event status word values delivered to [`InterconnectRecvCb`]. The raw
+/// connection framework uses `1` for connected at its socket layer; the miwear
+/// proxy re-stamps these `5/6/7` codes through `byte_2CCF98F4`, which is what
+/// the AIOTJS glue and a native peer observe (`CONN_STATUS_CONNECTED`,
+/// `CONN_STATUS_DISCONNECTED`, `CONN_STATUS_UNINSTALLED`,
+/// `CONN_STATUS_FAILED`, `CONN_STATUS_CLOSED`).
+pub const CONN_STATUS_CONNECTED: i32 = 5;
+pub const CONN_STATUS_DISCONNECTED: i32 = 6;
+pub const CONN_STATUS_UNINSTALLED: i32 = 7;
+pub const CONN_STATUS_FAILED: i32 = 2;
+pub const CONN_STATUS_CLOSED: i32 = 3;
+
+/// Connection-object layout written by [`interconnect_connect`]: `conn[0]` is
+/// the firmware node, `conn[4]` the recv callback, `conn[8]` the active flag.
+/// A module owns a buffer of at least 12 bytes for the lifetime of the link.
+pub const CONN_RECV_CB_OFFSET: usize = 4;
+
+/// Default interconnect phone-side package. The firmware reads it from the
+/// `interconnect.appname` config property (`property_get("interconnect.appname")`
+/// at `0x0C66B8C0`); every `*.appname` property holds a `com.xiaomi.miwear.*`
+/// package name. The phone routes messages to a connection by this package
+/// name only — the app display name is not part of the routing. A native module
+/// is not limited to this value: it may register and connect its own package
+/// name (see [`quickapp_register_app`]).
+pub const INTERCONNECT_APK_PACKAGE: &[u8] = b"com.xiaomi.miwear.interconnect\0";
+
+/// App descriptor passed to [`quickapp_register_app`]. Matches the firmware
+/// `quickapp_app_info` layout (36 bytes on the 32-bit target).
+///
+/// `package_name` is the phone-side routing key; `display_name` and `icon_file`
+/// are UI metadata; `extra` mirrors a string slot the stock registrar logs;
+/// `fingerprint` is a 20-byte blob compared by `quickapp_get_appinfo`.
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct QuickAppInfo {
+    /// `com.*` package name — the routing key the phone uses.
+    pub package_name: *const u8,
+    /// Human-readable app name (not used for routing).
+    pub display_name: *const u8,
+    /// Icon file name under `/data/app/<package>/` (e.g. `b"icon.png\0"`).
+    pub icon_file: *const u8,
+    /// Extra string slot (the stock registrar echoes it in its log).
+    pub extra: *const u8,
+    /// 20-byte app fingerprint verified by `quickapp_get_appinfo`.
+    pub fingerprint: [u8; 20],
+}
+
+/// Registers a package in the quickapp routing registry. The firmware seeds the
+/// registry at bootup from `rpk_info.json` (`quickapp_bootup_register`); the
+/// watch→phone send path (`quickapp_send_wearmsg`) looks a package up here, so
+/// a native module that wants its own package name must register it first.
+///
+/// `app_id` is a `u16` identifier; the stock registrar hands out sequential
+/// ids. `info` must stay valid for the call. Returns `0` on success, `-1` on
+/// allocation failure.
+///
+/// # Safety
+/// `info` must point at a valid [`QuickAppInfo`]; every string field must be a
+/// NUL-terminated address readable by the firmware.
+pub unsafe fn quickapp_register_app(app_id: u16, info: *const QuickAppInfo) -> i32 {
+    type F = extern "C" fn(u16, *const QuickAppInfo) -> i32;
+    let f: F = unsafe { core::mem::transmute(0x0C527E39usize) };
+    f(app_id, info)
+}
+
+/// Receives connection events and data for an interconnect link.
+///
+/// `status` is nonzero on events; `msg` is either a connection-event message or
+/// a data message; `name` is the connection name registered with
+/// [`interconnect_connect`]. Runs on the connection-framework owner thread, so
+/// the callback must never block and must re-enter the module Core only through
+/// a non-blocking lock.
+pub type InterconnectRecvCb = extern "C" fn(
+    conn: *mut core::ffi::c_void,
+    status: i32,
+    msg: *const InterconnectConnMessage,
+    name: *const u8,
+);
+
+/// Completion callback for [`interconnect_send`]: `(conn, status, msg, arg)`.
+/// Invoked when the queued message is delivered or fails; `status` is `0` on
+/// success.
+pub type InterconnectSendDone = extern "C" fn(
+    conn: *mut core::ffi::c_void,
+    status: i32,
+    msg: *const InterconnectConnMessage,
+    arg: *mut core::ffi::c_void,
+);
+
+/// Reads the global connection-framework loop handle. Every named server
+/// ("btserver", "miwear-server") and connection lives on this registry.
+pub unsafe fn interconnect_loop() -> *mut core::ffi::c_void {
+    let slot = 0x20121F90usize as *const *mut core::ffi::c_void;
+    unsafe { *slot }
+}
+
+/// Registers a named connection on the connection framework and attaches it to
+/// the firmware's "miwear-server". This is the native equivalent of the
+/// quickapp `system.interconnect` connect path (`interconnect_impl.cpp`
+/// `onRequired` and `jse_miwear.cpp` `__miwear_connect`).
+///
+/// `conn` is a caller-owned buffer of at least 12 bytes that stays alive for
+/// the link; the firmware writes the node pointer, `cb`, and an active flag into
+/// it. `name` is the phone-side **package name** — the routing key the phone
+/// uses to deliver messages (e.g. [`INTERCONNECT_APK_PACKAGE`]); it is copied
+/// into a 64-byte firmware slot. The app display name is not part of the
+/// routing. Returns `0` on accepted registration, `-22` on a null argument,
+/// `-12` on allocation failure.
+///
+/// # Safety
+/// The connection framework must already have a "miwear-server" registered
+/// (quickapp proxy started, phone miwear link present). `cb` must follow
+/// [`InterconnectRecvCb`]'s threading constraints.
+pub unsafe fn interconnect_connect(
+    loop_handle: *mut core::ffi::c_void,
+    conn: *mut core::ffi::c_void,
+    name: *const u8,
+    cb: InterconnectRecvCb,
+) -> i32 {
+    type F = extern "C" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        *const u8,
+        InterconnectRecvCb,
+    ) -> i32;
+    let f: F = unsafe { core::mem::transmute(0x0C2D2035usize) };
+    f(loop_handle, conn, name, cb)
+}
+
+/// Queues one message to the connection framework. `handle` is the `conn` from
+/// [`interconnect_connect`] (send to self) or a server handle (broadcast with
+/// `name == null`, or targeted at the connection named `name`). `done` is called
+/// once the message is accepted or fails; the payload referenced by `msg` must
+/// remain valid until then.
+///
+/// # Safety
+/// `msg` must point at a valid [`InterconnectConnMessage`] (type data, length,
+/// payload) that outlives the asynchronous send. `done` and `arg` follow
+/// [`InterconnectSendDone`].
+pub unsafe fn interconnect_send(
+    handle: *mut core::ffi::c_void,
+    name: *const u8,
+    msg: *const InterconnectConnMessage,
+    done: InterconnectSendDone,
+    arg: *mut core::ffi::c_void,
+) -> i32 {
+    type F = extern "C" fn(
+        *mut core::ffi::c_void,
+        *const u8,
+        *const InterconnectConnMessage,
+        InterconnectSendDone,
+        *mut core::ffi::c_void,
+    ) -> i32;
+    let f: F = unsafe { core::mem::transmute(0x0C2D20C5usize) };
+    f(handle, name, msg, done, arg)
+}
+
+/// Closes an interconnect connection registered by [`interconnect_connect`].
+pub unsafe fn interconnect_close(conn: *mut core::ffi::c_void) -> i32 {
+    type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
+    let f: F = unsafe { core::mem::transmute(0x0C2D2199usize) };
+    f(conn)
+}
+
+// ---------------------------------------------------------------------------
 // Compile-time ABI checks
 // ---------------------------------------------------------------------------
 
@@ -939,6 +1152,16 @@ const _: () = {
     assert!(core::mem::offset_of!(StockBuffer, route) == 4);
     assert!(core::mem::size_of::<DisconnectRequest>() == 4);
     assert!(core::mem::size_of::<MediaTimerToken>() == 8);
+    assert!(core::mem::size_of::<InterconnectConnMessage>() == 20);
+    assert!(core::mem::offset_of!(InterconnectConnMessage, length) == 4);
+    assert!(core::mem::offset_of!(InterconnectConnMessage, value) == 16);
+    assert!(CONN_RECV_CB_OFFSET + 4 <= 12);
+    // QuickAppInfo carries string pointers, so its 36-byte firmware layout only
+    // holds on the 32-bit target (host tests keep the natural 64-bit size).
+    #[cfg(target_pointer_width = "32")]
+    assert!(core::mem::size_of::<QuickAppInfo>() == 36);
+    #[cfg(target_pointer_width = "32")]
+    assert!(core::mem::offset_of!(QuickAppInfo, fingerprint) == 16);
     assert!(CONNECT_CALLBACK_OFFSET + 4 <= CONNECT_REQUEST_SIZE);
     assert!(CONNECT_ADDRESS_OFFSET + 6 <= CONNECT_REQUEST_SIZE);
     assert!(CONNECT_OPTIONS_OFFSET + 2 <= CONNECT_REQUEST_SIZE);
@@ -965,6 +1188,35 @@ mod tests {
             &request[CONNECT_OPTIONS_OFFSET..CONNECT_OPTIONS_OFFSET + 2],
             &CONNECT_OPTION_LOCAL_MTU.to_le_bytes()
         );
+    }
+
+    #[test]
+    fn interconnect_message_layout_and_status_codes_are_stable() {
+        assert_eq!(core::mem::size_of::<InterconnectConnMessage>(), 20);
+        assert_eq!(core::mem::offset_of!(InterconnectConnMessage, length), 4);
+        assert_eq!(core::mem::offset_of!(InterconnectConnMessage, value), 16);
+        assert_eq!(CONN_MSG_TYPE_EVENT, 2);
+        assert_eq!(CONN_MSG_TYPE_DATA, 0x83);
+        assert_eq!(CONN_STATUS_CONNECTED, 5);
+        assert_eq!(CONN_STATUS_DISCONNECTED, 6);
+        assert_eq!(CONN_STATUS_UNINSTALLED, 7);
+        assert_eq!(CONN_STATUS_FAILED, 2);
+        assert_eq!(CONN_STATUS_CLOSED, 3);
+        assert_eq!(CONN_RECV_CB_OFFSET, 4);
+        assert_eq!(
+            INTERCONNECT_APK_PACKAGE,
+            b"com.xiaomi.miwear.interconnect\0"
+        );
+        // On the 32-bit target the QuickAppInfo layout must be 36 bytes with
+        // the fingerprint at +16 (matching the firmware sub_C526B84 copy of
+        // words +0..+8). On 64-bit host the pointer fields are wider; only the
+        // leading field offset is portable.
+        assert_eq!(core::mem::offset_of!(QuickAppInfo, package_name), 0);
+        if core::mem::size_of::<*const u8>() == 4 {
+            assert_eq!(core::mem::offset_of!(QuickAppInfo, display_name), 4);
+            assert_eq!(core::mem::offset_of!(QuickAppInfo, fingerprint), 16);
+            assert_eq!(core::mem::size_of::<QuickAppInfo>(), 36);
+        }
     }
 
     #[test]
