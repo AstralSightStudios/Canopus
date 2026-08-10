@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-9-pro-3.1.175.type.canopus_interconnect_recv_cb.v1",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "kind": "typedef",
+  "name": "canopus_interconnect_recv_cb",
+  "size": 4,
+  "alignment": 4,
+  "prototype": "void(void *, int32_t, const canopus_interconnect_message *, const char *)",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-CONN-001"
+    ],
+    "source": "Connection-framework recv callback ABI: sub_C2D1E68 and sub_C2D1AD8 both BLX the stored callback with (conn, status, msg, name); status is 0 on data and nonzero on connection events"
+  }
+}

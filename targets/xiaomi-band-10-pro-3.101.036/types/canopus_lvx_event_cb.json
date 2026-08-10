@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.036.type.canopus_lvx_event_cb.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "kind": "typedef",
+  "name": "canopus_lvx_event_cb",
+  "size": 4,
+  "alignment": 4,
+  "prototype": "void(void *)",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-UI-001"
+    ],
+    "source": "LVGL event callback ABI; used by lvx_page_title_create back-callback, lv_obj_add_event_cb, and lv_timer_create"
+  }
+}

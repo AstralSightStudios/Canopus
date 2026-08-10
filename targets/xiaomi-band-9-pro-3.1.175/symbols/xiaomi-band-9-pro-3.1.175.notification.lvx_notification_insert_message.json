@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.notification.lvx_notification_insert_message",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "lvx_notification_insert_message",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C4F1C44",
+  "callable_address": "0x0C4F1C45",
+  "prototype": "int(const firmware_notification_message *)",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-NOTIFY-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-NOTIFY-001"
+    ],
+    "source": "IDA sub_C4F1C44; lvx_notification_insert_message log"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int(const firmware_notification_message *)",
+    "ownership": "caller-borrowed msg",
+    "thread": "notification_owner",
+    "device_probe": "pending"
+  },
+  "notes": "band-9 notification insert."
+}

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.ui.lvx_event_add",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "lvx_event_add",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C244F3C",
+  "callable_address": "0x0C244F3D",
+  "prototype": "void(void *, canopus_lvx_event_cb, uint32_t, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui_owner"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-UI-005"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-UI-005"
+    ],
+    "source": "IDA sub_C244F3C; appends a 12-byte event entry [cb@0, user_data@4, code@8] to the object event array at *(obj+8)+12; code 7 = LV_EVENT_CLICKED"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "void(void *, canopus_lvx_event_cb, uint32_t, void *)",
+    "ownership": "caller-owned",
+    "thread": "ui_owner",
+    "device_probe": "pending"
+  },
+  "notes": "Band-9 event registration, corresponds to band-10 ui.lv_obj_add_event_cb. Callback receives a lv_event_t whose code is at +8."
+}

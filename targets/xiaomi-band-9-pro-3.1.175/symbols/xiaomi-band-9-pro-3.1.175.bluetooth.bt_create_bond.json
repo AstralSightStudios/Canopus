@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.bluetooth.bt_create_bond",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "bt_create_bond",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C3BFDE0",
+  "callable_address": "0x0C3BFDE1",
+  "prototype": "int(void *, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "connection_framework_owner"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-B9-BTCREATEBOND-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-B9-BTCREATEBOND-001"
+    ],
+    "source": "IDA sub_C3BFDE0 = btm_create_bond; validates handle, dispatches gap_iface(handle+8)->create_bond at +44. Log anchors 'btm_create_bond' / 'PERFORMANCE-GAP-BTM-BOND-START'. Also bts_create_bond = sub_C3BDD70 sends the actual bond command."
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int(void *, void *)",
+    "ownership": "caller-owned",
+    "thread": "calling thread",
+    "device_probe": "pending"
+  },
+  "notes": "Band-9 btm_gap dispatch = btm_create_bond int(handle, addr6). Signature differs from band-10 bt_create_bond 0x0C3A01A8: band-9 requires explicit btm handle."
+}

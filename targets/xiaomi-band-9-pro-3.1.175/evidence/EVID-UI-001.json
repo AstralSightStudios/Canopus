@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-001",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "Which exact-target firmware functions construct and update the system-styled list item prefab?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.ui.lvx_style_apply"
+  ],
+  "prototype_hypothesis": "lvx_list_item_create(parent) -> object; lvx_list_item_init(object, optional_icon, primary_text, secondary_text, badge_value, style, trailing_kind); lvx_list_item_update(object, icon_resource, primary_text, secondary_text, badge_value, compact_flag); lvx_style_apply(object, text_style, opacity, selector)",
+  "callsite_evidence": [
+    "sub_C52B234 creates a Settings list row: item=sub_C4A77E0(parent); sub_C4A782C(item, 0, primary, secondary, 0, 0, trailing_kind); then applies size and layout",
+    "sub_C4A77E0 has more than 150 app callsites and constructs an object with class table off_2CCF06C8 under the supplied parent",
+    "sub_C4A782C has hundreds of system-app callsites and creates icon, primary/secondary label, trailing control, badge and layout children in object fields +52 through +92",
+    "sub_C4A7BD0 has dozens of app callsites and updates icon/text/trailing state on an existing list item",
+    "sub_C4A7D70 logs component='lvx_list_item' operation='lvx_list_item_set_icon' and updates the object at item+52",
+    "sub_C49EA98 is a stock style replacement helper with more than 1,000 callsites. It removes inherited base/text styles, applies the supplied style object, then applies opacity/state; sub_C4A2A04 demonstrates label usage with opacity 255 and selector 0.",
+    "lvx_theme_default_init at sub_C49F85C initializes style object 0x2010A02C from MiSans-Demibold at 32 px through sub_C4973B4 and sub_C587430."
+  ],
+  "control_flow_evidence": [
+    "sub_C4A77E0 delegates to the LVGL-style class constructor sub_C587C38(class,parent) and returns the resulting object",
+    "sub_C4A782C creates the system common forward/check/radio/setting/instruction assets according to trailing_kind and reads theme/style values",
+    "sub_C4A7BD0 updates child objects stored at offsets +52/+60/+64/+80/+84 while preserving system theme/layout behavior",
+    "sub_C49EA98 follows the stock LVX style replacement sequence and lazily initializes its base theme state before applying the caller-supplied style",
+    "firmware source strings identify vendor/xiaomi/miwear/apps/frameworks/lvx_widgets/lvx_list.c and component name lvx_list"
+  ],
+  "ownership_analysis": "The returned list item is an LVGL/LVX object parented into the page object tree. Static evidence strongly suggests recursive parent teardown owns it, but the delete function, owner thread, and safe mutation phase have not yet been proved. Public application code must never retain this pointer; only the exact-target backend may hold it.",
+  "unsafe_assumptions": [
+    "parameter 6/7 enum meanings are only partially inferred from common assets and callsites",
+    "construct/update calls are not yet device-probed on a synthetic page",
+    "the page/UI owner thread and recursive destruction contract remain unresolved",
+    "no callable should be generated while status remains STATIC_RECOVERED/restricted",
+    "MiSans-Demibold 32 px mapping is statically confirmed for this exact firmware, but visual size, clipping and initialization order still require the disposable Manager page probe"
+  ],
+  "recommended_probe": "On a disposable synthetic native page, call create+init on the page-owned root, render one primary/secondary row with trailing_kind=3 (forward icon), update only copied strings, then close the page and verify recursive teardown with allocator/UI diagnostics.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-06T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4A77E0",
+      "role": "constructor"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4A782C",
+      "role": "initializer"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4A7BD0",
+      "role": "updater"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4A7D70",
+      "role": "set-icon/log identity"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C52B234",
+      "role": "settings wrapper callsite"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C49EA98",
+      "role": "stock style replacement/application helper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C49F85C",
+      "role": "theme initializer proving MiSans-Demibold 32 px style object 0x2010A02C"
+    }
+  ]
+}

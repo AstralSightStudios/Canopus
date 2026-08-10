@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.driver_ioctl_dispatch",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "driver_ioctl_dispatch",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(file *, int, uintptr_t) via fops+0x14",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_CONFIRMED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=nuttx name=driver_ioctl_dispatch (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "entry_address": "0xc1c0b10",
+  "callable_address": "0xc1c0b11",
+  "notes": "R1=command R2=argument before BLX; Lua runtime has no ioctl binding"
+}

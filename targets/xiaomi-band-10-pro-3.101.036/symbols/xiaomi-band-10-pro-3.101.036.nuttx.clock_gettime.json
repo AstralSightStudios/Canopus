@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.clock_gettime",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "clock_gettime",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc1ec8b4",
+  "callable_address": "0xc1ec8b5",
+  "prototype": "int(uint32_t, stock_timespec_t *)",
+  "proof": {
+    "static": "confirmed",
+    "device": "probed",
+    "evidence_ids": [
+      "EVID-CLOCK-001"
+    ]
+  },
+  "policy": "managed",
+  "status": "DEVICE_PROBED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=nuttx name=clock_gettime (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-07-22",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int(uint32_t, stock_timespec_t *)",
+    "ownership": "caller-allocated output struct",
+    "thread": "calling thread",
+    "device_probe": "probed on device"
+  },
+  "notes": "2026-07-22 clock id 1 returned 0 with tv_nsec 79600000"
+}

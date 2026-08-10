@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.activity.page_goto",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "page_goto",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C49E7CC",
+  "callable_address": "0x0C49E7CD",
+  "prototype": "int32_t(uint32_t, uint32_t, uint32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-NAV-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-NAV-001"
+    ],
+    "source": "IDA sub_C49E7CC; goto_page_no_check_stacktop log"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int32_t(uint32_t, uint32_t, uint32_t, uint32_t)",
+    "ownership": "caller-owned",
+    "thread": "UI owner thread",
+    "device_probe": "pending"
+  },
+  "notes": "band-9 page navigation (pagemanager goto_page_no_check_stacktop)."
+}

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.app_registry.app_lookup",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "app_lookup",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C449334",
+  "callable_address": "0x0C449335",
+  "prototype": "void *(uint16_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "any"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-UI-005"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-UI-005"
+    ],
+    "source": "IDA sub_C449334; walks the miwear app registry linked list (off_200A28B0) comparing app+16 against the app_id"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "void *(uint16_t)",
+    "ownership": "caller-owned",
+    "thread": "any",
+    "device_probe": "pending"
+  },
+  "notes": "Band-9 app lookup, used by module native_app to detect an already-installed app."
+}

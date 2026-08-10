@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.036.type.launcher_app_descriptor.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "kind": "struct",
+  "name": "launcher_app_descriptor",
+  "size": 64,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "registry_links",
+      "offset": 0,
+      "width": 8,
+      "signedness": "unsigned",
+      "ownership": "runtime_owned",
+      "provenance": "app_install overwrites +0/+4 with intrusive registry links after copying"
+    },
+    {
+      "name": "package_name",
+      "offset": 8,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_by_app_install",
+      "provenance": "required by app_install; load_app_info logs and stores it as runtime record name"
+    },
+    {
+      "name": "launcher_icon_resource",
+      "offset": 12,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null",
+      "provenance": "load_app_info requires non-zero; built-ins use /resource/app/launcher/*.bin"
+    },
+    {
+      "name": "app_id",
+      "offset": 16,
+      "width": 2,
+      "signedness": "unsigned",
+      "provenance": "u16 registry key; duplicate checked by app_install; consumed by app_launcher_add/del"
+    },
+    {
+      "name": "flags",
+      "offset": 18,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "bit2 means cannot be uninstalled; other bits unresolved"
+    },
+    {
+      "name": "owned_string_20",
+      "offset": 20,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null",
+      "provenance": "app_install duplicates descriptor +20"
+    },
+    {
+      "name": "owned_string_24",
+      "offset": 24,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null",
+      "provenance": "app_install duplicates descriptor +24"
+    },
+    {
+      "name": "launcher_metadata_callback",
+      "offset": 28,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "callable",
+      "provenance": "load_app_info invokes it with one and two observed arguments; settings callback resolves localized app display text; exact ABI remains restricted"
+    },
+    {
+      "name": "page_registry",
+      "offset": 48,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "runtime_owned",
+      "provenance": "app_install assigns an allocated page registry at descriptor +48"
+    },
+    {
+      "name": "hidden_flags",
+      "offset": 60,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "bit0 = hidden; app_install clears bit0 on successful installation; load_app_info rejects when set"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-APP-004",
+      "EVID-APP-005"
+    ],
+    "source": "sub_CA519AC app_install copies 64 bytes and deep-copies +8/+12/+20/+24; sub_C4F2898 load_app_info reads +8/+12/+16/+18/+28/+60"
+  }
+}

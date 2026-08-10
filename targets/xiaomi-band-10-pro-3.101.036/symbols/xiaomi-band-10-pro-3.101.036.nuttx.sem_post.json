@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.sem_post",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "sem_post",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *)",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_CONFIRMED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=nuttx name=sem_post (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "entry_address": "0xc1f14c4",
+  "callable_address": "0xc1f14c5",
+  "notes": "sem_t layout and ISR rules unresolved"
+}

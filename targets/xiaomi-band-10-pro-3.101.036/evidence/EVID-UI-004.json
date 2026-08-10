@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-004",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Which firmware LVGL timer veneers can safely drive page-owner incremental refresh?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.ui.lv_timer_create",
+    "xiaomi-band-10-pro-3.101.030.ui.lv_timer_del"
+  ],
+  "prototype_hypothesis": "lv_timer_create(callback, period_ms, user_data) returns a periodic LVGL timer whose callback receives the timer object; lv_timer_del(timer) synchronously removes that timer. Both calls must run in the LVGL/page-owner context.",
+  "callsite_evidence": [
+    "sub_C588758 is a one-instruction Thumb veneer to 0x1C060035 and has more than 200 firmware callsites using r0=callback, r1=period, r2=user_data; sub_C49C32C calls it with sub_C49BDFC, 100 ms, and NULL, then retains the returned pointer",
+    "sub_C16CF3C is the recovered LVGL lv_timer_handler and invokes the callback stored in each timer with the timer object in r0, matching the standard LVGL timer callback ABI",
+    "sub_C587EF0 is a one-instruction Thumb veneer to 0x1C0600A9 and has hundreds of timer cleanup callsites; sub_C49BDFC and sub_C5F3748 pass their retained timer pointer in r0, call it, then clear the retained pointer",
+    "The recorder path sub_C5F273C creates a 120000 ms timer through sub_C588758 and sub_C5F3748 deletes the same retained timer through sub_C587EF0"
+  ],
+  "control_flow_evidence": [
+    "Creation returns an opaque timer pointer retained by the caller; callback execution is serialized by lv_timer_handler in the LVGL context",
+    "Deletion receives the retained pointer in r0; observed callers clear their ownership slot immediately after deletion",
+    "A native page may therefore create the timer during on_create, suppress work while paused, and delete it during on_destroy without allowing Bluetooth callbacks to touch LVX"
+  ],
+  "ownership_analysis": "The page backend exclusively owns one timer pointer per live page. The timer is created only after the first page render succeeds, remains valid across pause/resume, and is deleted before page widget pointers are cleared on destroy.",
+  "unsafe_assumptions": [
+    "These are target-private LVGL veneers and must only be called after the exact firmware identity guard succeeds",
+    "Callbacks and delete must remain on the page/LVGL owner thread",
+    "The callback must not retain widget pointers beyond page destruction or delete the timer concurrently from another firmware context"
+  ],
+  "recommended_probe": "Open the Headphones page, leave it active through repeated discovery callbacks, pause/resume it, then open/close it 100 times while confirming automatic model updates, preserved scroll position, and no timer callback after on_destroy.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-08T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C588758",
+      "role": "lv_timer_create Thumb veneer"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C587EF0",
+      "role": "lv_timer_del Thumb veneer"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C16CF3C",
+      "role": "LVGL timer handler and callback ABI"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C49C32C",
+      "role": "100 ms create and retain callsite"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C49BDFC",
+      "role": "retained timer delete and clear callsite"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C5F273C",
+      "role": "120000 ms timer create callsite"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C5F3748",
+      "role": "timer cleanup callsite"
+    }
+  ]
+}

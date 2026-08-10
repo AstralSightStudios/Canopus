@@ -12,10 +12,15 @@
 #![allow(non_snake_case)]
 #![allow(clippy::missing_safety_doc)]
 
-#[cfg(not(feature = "target-xiaomi-band-10-pro-3-101-030"))]
+#[cfg(not(any(
+    feature = "target-xiaomi-band-10-pro-3-101-030",
+    feature = "target-xiaomi-band-10-pro-3-101-036",
+    feature = "target-xiaomi-band-9-pro-3-1-175"
+)))]
 compile_error!(
     "canopus-target-private requires exactly one target feature; supported: \
-     target-xiaomi-band-10-pro-3-101-030"
+     target-xiaomi-band-10-pro-3-101-030, target-xiaomi-band-10-pro-3-101-036, \
+     target-xiaomi-band-9-pro-3-1-175"
 );
 
 #[cfg(feature = "target-xiaomi-band-10-pro-3-101-030")]
@@ -23,4 +28,18 @@ compile_error!(
 mod selected;
 
 #[cfg(feature = "target-xiaomi-band-10-pro-3-101-030")]
+pub use selected::*;
+
+#[cfg(feature = "target-xiaomi-band-10-pro-3-101-036")]
+#[path = "targets/xiaomi_band_10_pro_3_101_036.rs"]
+mod selected;
+
+#[cfg(feature = "target-xiaomi-band-10-pro-3-101-036")]
+pub use selected::*;
+
+#[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
+#[path = "targets/xiaomi_band_9_pro_3_1_175.rs"]
+mod selected;
+
+#[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
 pub use selected::*;

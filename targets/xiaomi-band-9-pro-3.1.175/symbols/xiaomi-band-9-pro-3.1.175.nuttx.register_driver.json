@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.nuttx.register_driver",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "register_driver",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C4F0108",
+  "callable_address": "0x0C4F0109",
+  "prototype": "int(const char *, const void *, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "connection_framework_owner"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-B9-REGDRV-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-B9-REGDRV-001"
+    ],
+    "source": "IDA sub_C4F0108; inode_lock(sub_C37ABF8) -> inode_reserve(sub_C4F0044, path) -> set inode->u.i_ops=@+16, i_flags type=1, i_private=@+28 -> inode_unlock(sub_C37BEF4)."
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int(const char *, const void *, void *)",
+    "ownership": "caller-owned",
+    "thread": "calling thread",
+    "device_probe": "pending"
+  },
+  "notes": "NuttX fs/driver/fs_registerdriver.c. ABI DIFFERENCE vs band-10 (int(const char*,const void*,uint32_t,void*)): band-9 register_driver DROPS the mode_t argument (3-arg). r3 mode is ignored when called with band-10's 4-arg convention, so calling band-9 sub_C4F0108 from band-10-style call sites is ABI-compatible. register_blockdriver = sub_C4DB968 (type 2). Matches band-10 register_driver 0x0C1A0D50."
+}

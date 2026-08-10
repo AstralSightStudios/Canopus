@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.service.service_manager_get_profile",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "service_manager_get_profile",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void *(uint32_t)",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_CONFIRMED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=service name=service_manager_get_profile (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "entry_address": "0xc3a77f4",
+  "callable_address": "0xc3a77f5",
+  "notes": "Missing profile can enter assertion path"
+}

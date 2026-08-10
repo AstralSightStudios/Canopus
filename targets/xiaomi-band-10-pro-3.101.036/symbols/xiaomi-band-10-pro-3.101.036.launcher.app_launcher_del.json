@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.launcher.app_launcher_del",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "app_launcher_del",
+  "kind": "function",
+  "entry_address": "0xc4f2d34",
+  "callable_address": "0xc4f2d35",
+  "instruction_set": "thumb",
+  "prototype": "int(uint16_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "launcher_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "by_value",
+    "return_value": "int"
+  },
+  "side_effects": [
+    "removes_app_from_launcher",
+    "frees_app_record_and_page_entry"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-APP-004"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-APP-004"
+    ],
+    "source": "ida sub_C4F2CC4 (log tag app_launcher_del); also the hide path of hidden_and_show_app_cb (msg 26) (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "notes": "unregisters app by u16 appid: finds record in the launcher apps table 0x200D0924 (matching *record == appid), removes it and the page-list entry in 0x200D090C, frees both. Hide (System msg 26) calls this."
+}

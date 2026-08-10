@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.ui.lvx_page_content_create",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "lvx_page_content_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void *(void *)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-UI-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "EVID-UI-003 (3.101.036 pattern-matched) (3.101.036 IDA-confirmed)"
+  },
+  "entry_address": "0xca4e990",
+  "callable_address": "0xca4e991",
+  "notes": "Exact-target stock content container used by Settings below lvx_page_title_create. Manager uses it as a page-owned 336x424 body root placed at y=56 so the title/time header stays outside content scrolling. Device lifecycle and scroll behavior remain pending.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "void *(void *)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
+}

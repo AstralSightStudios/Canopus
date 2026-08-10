@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-APP-005",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "How are a native app descriptor and its page descriptors installed into the firmware app registry? (CAN-APP-002/003)",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.app_registry.app_install"
+  ],
+  "prototype_hypothesis": "app_install(const firmware_app_descriptor_64 *descriptor, const firmware_page_descriptor *const *pages, u32 page_count) -> implementation-defined int",
+  "callsite_evidence": [
+    "sub_C52B9FC registers Settings with off_200EB060(&unk_200D1C58, pages[67], 67)",
+    "sub_C527E38 quickapp_register_app builds a 64-byte descriptor and one page pointer, calls off_200EB060(descriptor, &page, 1), then calls app_launcher_add(u16 app_id)",
+    "many built-in app registration thunks call sub_CA519AC directly with a descriptor, page pointer array, and constant page count"
+  ],
+  "control_flow_evidence": [
+    "rejects a null descriptor and a descriptor with null package_name at +8",
+    "walks the installed-app registry comparing u16 descriptor +16 and returns without inserting on duplicate",
+    "allocates and copies exactly 64 descriptor bytes",
+    "deep-copies non-null pointers at descriptor +8, +12, +20, and +24",
+    "overwrites descriptor +0/+4 with intrusive registry links",
+    "allocates 4*(page_count+2) bytes for page registry metadata; stores u16 page_count at +0 and a 10-bucket lookup object at +4",
+    "for each page pointer, calls off_200EB090(page), stores the pointer, and indexes page field +16",
+    "stores the page registry at copied descriptor +48, clears copied descriptor +60 bit0, and emits app event 28 with package_name"
+  ],
+  "ownership_analysis": "The firmware registry owns the allocated 64-byte descriptor copy and deep-copied descriptor strings. Page descriptor pointers are stored rather than deep-copied by this function; their backing storage must therefore outlive registration. Failure cleanup frees the copied strings, page registry, and descriptor copy.",
+  "unsafe_assumptions": [
+    "the exact firmware_page_descriptor size and callback layout remain unresolved",
+    "off_200EB090 page registration return/error behavior is unresolved",
+    "the function's return value is not a proven zero/nonzero success code; early rejects return the input value and success returns the event-dispatch result",
+    "registration/unregistration thread affinity and teardown pairing are not yet lifecycle-proved"
+  ],
+  "recommended_probe": "Use a single-page descriptor recovered byte-for-byte from a minimal built-in pattern, permanent module-owned page storage, and a unique u16 app ID. Verify registry lookup and event 28 before adding it to Launcher. Do not unload the module until an unregister ABI and page teardown are proved.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-05T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA519AC",
+      "role": "decompile"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C52B9FC",
+      "role": "settings callsite"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C527E38",
+      "role": "quickapp callsite"
+    }
+  ]
+}

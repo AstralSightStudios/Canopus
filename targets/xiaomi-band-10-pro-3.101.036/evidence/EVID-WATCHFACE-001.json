@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-WATCHFACE-001",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Can a completed one-shot module-installer watchface safely request deletion of itself?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.watchface.manager_delete_watchface"
+  ],
+  "prototype_hypothesis": "watchface_manager_delete_watchface(id) -> int",
+  "callsite_evidence": [
+    "sub_CA7D2E0 logs watchface_manager_delete_watchface, rejects a null id, and delegates to sub_CA642B0(id,1)",
+    "sub_CA63E14 resolves the watchface record by id, rejects deletion of the last usable watchface, and chooses another eligible watchface before deleting the active record",
+    "sub_CA63E14 removes the selected watchface directory and logs delete watchface success; sub_CA642B0 then refreshes/persists manager state"
+  ],
+  "control_flow_evidence": [
+    "active-watchface deletion first marks an alternative record selected and updates the current watchface manager pointer",
+    "the path rejects missing IDs and the last-watchface case rather than deleting arbitrary unregistered directories"
+  ],
+  "ownership_analysis": "The firmware watchface manager owns registry records, active selection and directory removal. Callers pass a borrowed stable id string for the duration of the synchronous call.",
+  "unsafe_assumptions": [
+    "self-deletion after a /dev/canopus install write is statically recovered but not yet device-probed with a Lua installer still executing",
+    "a failed deletion must not roll back an already committed module install; the installer remains visible for manual cleanup"
+  ],
+  "recommended_probe": "Install a disposable signed module installer while at least two watchfaces exist, verify module state becomes INSTALLED/DISABLED and notification insertion completes, then verify the manager switches away and removes only the installer id.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-06T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA7D2E0",
+      "role": "public watchface-manager delete wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA642B0",
+      "role": "delete and manager-state refresh wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA63E14",
+      "role": "selection-safe watchface deletion implementation"
+    }
+  ]
+}

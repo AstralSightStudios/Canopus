@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.open",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "open",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(const char *, int)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-IO-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "EVID-IO-001 (3.101.036 pattern-matched)"
+  },
+  "entry_address": "0xc1c15b0",
+  "callable_address": "0xc1c15b1",
+  "notes": "Current-process fd open wrapper; /dev/console caller proves flags=3 opens read/write. Device probe pending for /dev/canopus.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int(const char *, int)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
+}

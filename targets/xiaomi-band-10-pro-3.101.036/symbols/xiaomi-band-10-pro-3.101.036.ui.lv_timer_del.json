@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.ui.lv_timer_del",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "lv_timer_del",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *)",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "EVID-UI-004 (3.101.036 pattern-matched)"
+  },
+  "entry_address": "0xc587ef0",
+  "callable_address": "0xc587ef1",
+  "notes": "Stock LVGL timer-delete veneer. Caller passes its retained timer pointer and clears ownership after return."
+}

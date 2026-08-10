@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.app_registry.app_install",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "app_install",
+  "kind": "function",
+  "entry_address": "0xca51a54",
+  "callable_address": "0xca51a55",
+  "instruction_set": "thumb",
+  "prototype": "int(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "app_registry_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "descriptor": "callee_copies_64_bytes_and_deep_copies_selected_strings",
+    "pages": "callee_borrows_each_page_pointer_for_registration_lifetime",
+    "return_value": "implementation_defined"
+  },
+  "side_effects": [
+    "inserts_app_into_registry",
+    "allocates_descriptor_copy",
+    "allocates_page_registry",
+    "registers_each_page",
+    "emits_app_event_28"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-APP-005"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-APP-005"
+    ],
+    "source": "IDA sub_CA519AC; function-table entry off_200EB060; built-in and quickapp registration callsites (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "notes": "This is the actual descriptor/page registration function. It must precede app_launcher_add(app_id). It is not approved for production target calls until the page descriptor ABI, owner thread, unregister pair, and lifecycle have passed device probes. Do not interpret the return value as a boolean success code.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
+}

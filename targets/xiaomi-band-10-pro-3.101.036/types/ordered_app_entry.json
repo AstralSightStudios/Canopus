@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.036.type.ordered_app_entry.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "kind": "struct",
+  "name": "ordered_app_entry",
+  "size": 16,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "app_name",
+      "offset": 0,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed",
+      "provenance": "passed to page lookup off_200EB058[3]"
+    },
+    {
+      "name": "enabled",
+      "offset": 8,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "if non-zero, hidden flag taken from +9"
+    },
+    {
+      "name": "hidden",
+      "offset": 9,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "bit0; applied to page struct +60 bit0"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-APP-003"
+    ],
+    "source": "protobuf_set_ordered_app_list (sub_C4F26C0); array stride 16 bytes after u16 count"
+  }
+}

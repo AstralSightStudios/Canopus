@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-DRIVER-001",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "Are register_driver/unregister_driver usable as a control channel for removable modules?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.nuttx.register_driver",
+    "xiaomi-band-10-pro-3.101.030.nuttx.unregister_driver"
+  ],
+  "prototype_hypothesis": "int register_driver(const char*, const file_operations*, uint32_t mode, void* priv); int unregister_driver(const char*)",
+  "callsite_evidence": [
+    "register_driver 0x0C1A0D50; unregister_driver 0x0C1A0E1C"
+  ],
+  "control_flow_evidence": [
+    "2026-07-22 Phase 4B-1 registered /dev/btpatch_p4b with static 0x30-byte null fops/private state",
+    "no-open removal passed; static branch order proves -16 is returned after unlink and must not be retried"
+  ],
+  "ownership_analysis": "fops struct and private data must outlive the driver; module owns them; unregister detaches namespace, not necessarily frees private data",
+  "unsafe_assumptions": [
+    "file_operations layout taken from stock dispatch offsets; ioctl slot at +0x14"
+  ],
+  "recommended_probe": "character-device lifecycle module: open/write control record/read status/close/rmmod",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "DEVICE_PROBED",
+  "created": "2026-07-22T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "analysis/PHASE4_NATIVE_ABI_FINDINGS.md",
+      "role": "findings-doc"
+    }
+  ]
+}

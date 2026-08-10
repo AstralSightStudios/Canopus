@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.036.type.canopus_interconnect_app_info.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "kind": "struct",
+  "name": "canopus_interconnect_app_info",
+  "size": 36,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "package_name",
+      "offset": 0,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "com.* package name — the phone-side routing key"
+    },
+    {
+      "name": "display_name",
+      "offset": 4,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "human-readable app name (not used for routing)"
+    },
+    {
+      "name": "icon_file",
+      "offset": 8,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "icon file name under /data/app/<package>/"
+    },
+    {
+      "name": "extra",
+      "offset": 12,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "extra string slot echoed by quickapp_register_app"
+    },
+    {
+      "name": "fingerprint",
+      "offset": 16,
+      "width": 20,
+      "signedness": "array",
+      "array_length": 20,
+      "provenance": "20-byte app fingerprint verified by quickapp_get_appinfo"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-CONN-001"
+    ],
+    "source": "quickapp_app_info layout; sub_C526B84 copies 9 words (+0..+32) into the 208-byte registration context"
+  }
+}

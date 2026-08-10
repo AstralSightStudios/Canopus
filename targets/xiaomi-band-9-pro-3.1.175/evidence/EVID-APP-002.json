@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-APP-002",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "What is the app hide/show wire ABI and app-id type? (CAN-APP-003 partial)",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.launcher.hidden_and_show_app_cb"
+  ],
+  "prototype_hypothesis": "System service messages drive launcher app visibility: type 26 = hide appid, 27 = show appid, where appid is u16.",
+  "callsite_evidence": [
+    "hidden_and_show_app_cb = sub_C4F3388 registered for msg 26 and 27 (dword_2010CFFC/2010CFF8)",
+    "message struct: [0]=type (26/27), [2]=appid",
+    "hide: sub_C4F2CC4(appid); show: rebuilds launcher UI (sub_C4F2FBC -> sub_C4F6EC8 -> sub_C4F6A74 -> sub_C4F6EAC)"
+  ],
+  "control_flow_evidence": [
+    "logs 'hidden appid %lu' / 'show appid %lu' with (unsigned __int16)appid"
+  ],
+  "ownership_analysis": "message struct borrowed from the System service; launcher owns the runtime app list",
+  "unsafe_assumptions": [
+    "the protobuf ordered-list payload format (fields) not yet fully reversed",
+    "how new app ids are allocated not yet proven"
+  ],
+  "recommended_probe": "host parse of the ordered-list protobuf message; minimal launcher probe registering an app id",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-05T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4F3388 (hidden_and_show_app_cb)",
+      "role": "decompile"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-APP-003",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "What is the ordered app list wire format delivered to the launcher? (CAN-APP-003)",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.launcher.protobuf_set_ordered_app_list"
+  ],
+  "prototype_hypothesis": "ordered list payload = u16 count + array of 16-byte entries {name_ptr@+0, enabled@+8, hidden@+9}; launcher applies it to page structs (name@+8, hidden flag@+60) and replaces its runtime list.",
+  "callsite_evidence": [
+    "protobuf_set_ordered_app_list = sub_C4F26C0: reads *a1 = u16 count, iterates ((u32*)a1+1)[i] as 16-byte entries",
+    "per entry: page = off_200EB058[3](entry.name); if entry.enabled(!=0) hidden = entry.hidden&1 else hidden=0; page+60 bit0 = hidden",
+    "validates count == list length (sub_C5872D8); replaces runtime list 0x200D090C from temp list v15",
+    "final: sub_CA28CE4(0x10000,0,1) signals the launcher UI thread"
+  ],
+  "control_flow_evidence": [
+    "logs 'can't found app %s' when page lookup fails; 'count error, list count %d, order info list len %d' on mismatch"
+  ],
+  "ownership_analysis": "ordered list buffer borrowed from System service; launcher copies names into its own structs",
+  "unsafe_assumptions": [
+    "the exact protobuf field numbers/tags not yet recovered (this is the post-decode struct)",
+    "entry array ownership (who frees it) not proven"
+  ],
+  "recommended_probe": "host parser for the ordered-list struct; a minimal 'add app to ordered list' probe",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-05T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4F26C0 (protobuf_set_ordered_app_list)",
+      "role": "decompile"
+    }
+  ]
+}

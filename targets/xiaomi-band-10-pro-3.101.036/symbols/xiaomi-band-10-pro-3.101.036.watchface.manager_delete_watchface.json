@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.watchface.manager_delete_watchface",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "watchface_manager_delete_watchface",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(const char *)",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "EVID-WATCHFACE-001 (3.101.036 pattern-matched)"
+  },
+  "entry_address": "0xca7d388",
+  "callable_address": "0xca7d389",
+  "notes": "Selection-safe watchface-manager deletion wrapper. The signed one-shot installer invokes it only with the verified module/watchface token after recording the module disabled and queuing the Manager notification."
+}

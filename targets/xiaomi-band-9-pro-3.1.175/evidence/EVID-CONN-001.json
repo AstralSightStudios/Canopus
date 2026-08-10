@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-CONN-001",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "Which exact-target firmware functions implement the miwear/interconnect named-connection framework that quickapp system.interconnect uses to talk to the phone?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.miwear.interconnect_connect",
+    "xiaomi-band-10-pro-3.101.030.miwear.interconnect_send",
+    "xiaomi-band-10-pro-3.101.030.miwear.interconnect_close",
+    "xiaomi-band-10-pro-3.101.030.miwear.interconnect_loop",
+    "xiaomi-band-10-pro-3.101.030.miwear.quickapp_register_app"
+  ],
+  "prototype_hypothesis": "interconnect_connect(loop, conn, name, cb) registers a named connection on miwear-server; interconnect_send(handle, name, msg, done, arg) queues one message; interconnect_close(conn) tears down a connection; interconnect_loop reads the global 0x20121F90 registry; quickapp_register_app(app_id, app_info) registers a package in the quickapp routing registry.",
+  "callsite_evidence": [
+    "sub_C2D2034 copies name into a 64-byte slot, stores cb at conn+4 and the node at conn[0], and registers on the miwear-server via sub_C2CB828",
+    "sub_C2D20C4 walks the connection list matching name (sub_C587530) then queues through sub_C2D1B58; conn+8==0 routes through sub_C2D1D7C which copies the 5-word message header (+0..+16) into the send request",
+    "sub_C2D1A0C invokes the send-done callback as (conn, status, msg, arg) with R0=conn R1=status R2=msg R3=arg",
+    "sub_C2D2198 queues connection teardown via loc_C2C56B4",
+    "sub_C527E38 registers a package in the quickapp routing registry, echoing 'registered quickapp' and handing out sequential app ids via word_200D194E",
+    "quickapp_send_wearmsg (sub_C5289A8) resolves the package through sub_C528F5C -> sub_C8CE848 before sending, so a custom package must be registered first",
+    "sub_C66B8C0 reads the 'interconnect.appname' config property (default com.xiaomi.miwear.interconnect); the phone routes by package name only"
+  ],
+  "control_flow_evidence": [
+    "sub_C2D2034 -> sub_C2CB828(owner, node, \"miwear-server\", handler, arg) confirms the framework is a named-server socket/msq transport",
+    "sub_C2D20C4 dispatch: conn[8]==0 -> sub_C2D1D7C (direct connection send), conn[8]!=0 -> named/broadcast walk",
+    "sub_CAA35A0 (uv_miwear_message_recv_cb) routes inbound messages to client queues (apps/algo/capture/miconnect) that reconnect into sub_C2D20C4",
+    "sub_C8876A0 (jse_miwear.cpp __miwear_connect_cb) maps event status words 2/3/5/6/7 to failure/close/connected/disconnected/uninstalled, matching the CONN_STATUS_* codes",
+    "the framework is shared by quickapp jse_miwear.cpp and feature modules/interconnect_impl.cpp; a native module can register the same way without the JS engine"
+  ],
+  "ownership_analysis": "conn is a caller-owned buffer of at least 12 bytes for the link lifetime. Messages passed to send must remain valid until the send-done callback fires. Callbacks run on the connection-framework owner thread and must re-enter a module core only through a non-blocking lock.",
+  "unsafe_assumptions": [
+    "STATIC_RECOVERED: signatures recovered from IDA; device probe pending",
+    "the phone-side routing for a custom package name depends on the phone app recognizing it",
+    "loop handle 0x20121F90 is the quickapp proxy loop; the exact threading context of recv callbacks needs a device probe"
+  ],
+  "recommended_probe": "On device, register a test package, open a named connection, send a message, and observe the recv callback under the miwear link; verify the phone delivers by package name.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-10T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C2D2034",
+      "role": "connect"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C2D20C4",
+      "role": "send dispatch"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C2D1D7C",
+      "role": "send request build"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C2D1A0C",
+      "role": "send-done callback"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C2D2198",
+      "role": "close"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C527E38",
+      "role": "quickapp_register_app"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CAA35A0",
+      "role": "uv_miwear recv router"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C8876A0",
+      "role": "jse_miwear connect callback"
+    }
+  ]
+}

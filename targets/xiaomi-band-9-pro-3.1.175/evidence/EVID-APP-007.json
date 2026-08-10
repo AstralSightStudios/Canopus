@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-APP-007",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "May app_install run from a stock modlib constructor launched by the system shell?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "app_install must execute in the miwear/UI process because its registration path signals the miwear libuv loop through process-local descriptors",
+  "callsite_evidence": [
+    "the device crash occurs in task 137, command 'system -c insmod', while the native Manager constructor is inside app_install sub_CA519AC",
+    "the crashing backtrace is app_install 0x0CA51AEC -> lvx_eventbus_send_with_cb 0x0CA28D28 -> libuv async sender sub_C2CB39C 0x0C2CB40E",
+    "libuv asserts at ../../apps/system/libuv/libuv/src/unix/async.c:213 because its one-byte wakeup write does not return exactly one byte",
+    "the async sender obtains the wakeup descriptor from the global loop object at loop+364; the crash stack records descriptor value 0xD5 while the current process is system rather than miwear"
+  ],
+  "control_flow_evidence": [
+    "app_install emits an event through the LVX eventbus after copying and linking the app descriptor",
+    "lvx_eventbus_send_with_cb queues an event and calls the libuv async sender",
+    "the libuv sender retries EINTR, accepts EAGAIN, and asserts for every other short/error result",
+    "the assertion is followed by rtc_watchdog reset, so constructor-thread registration is dynamically disproven"
+  ],
+  "ownership_analysis": "The resident descriptor and callback storage remain valid, but execution context is part of the ABI: fixed-address UI APIs are not safely callable merely because their addresses and layouts are correct. The Manager bootstrap must enter from miwear or be explicitly marshalled onto its event loop.",
+  "unsafe_assumptions": [
+    "the exact errno returned by the failed wakeup write was not printed",
+    "successful app/page/launcher/notification behavior in miwear context still requires the next device probe"
+  ],
+  "recommended_probe": "Link the exact-target Manager code into the resident supervisor. Stage the GIF from Lua, then send legacy INSTALL through /dev/canopus. The synchronous device write callback executes in the calling watchface/miwear process and invokes app_install there. Keep CPC2 third-party package staging fail-closed.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "DEVICE_REJECTED_CONSTRUCTOR_CONTEXT",
+  "created": "2026-08-06T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "file:///Users/searchstars/Library/Logs/moe.astralsight.astrobox/device/data/offlinelog/crash1.txt#L863-L925",
+      "role": "device assertion, registers, backtrace, and crashing task"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA519AC",
+      "role": "app_install path"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA28CE4",
+      "role": "LVX eventbus enqueue path"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C2CB39C",
+      "role": "libuv async wakeup and line-213 assertion"
+    }
+  ]
+}

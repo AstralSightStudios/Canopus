@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.rename",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "rename",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(const char *, const char *)",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "EVID-IO-001 (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "entry_address": "0xc1c1e70",
+  "callable_address": "0xc1c1e71",
+  "notes": "NuttX VFS rename wrapper. Static recovery shows two nonempty path arguments, current-process VFS resolution, and errno-style -1 failure. Used only to atomically claim a verified module artifact from the public installer inbox."
+}

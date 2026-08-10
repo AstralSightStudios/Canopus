@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-9-pro-3.1.175.type.canopus_lvx_event_cb.v1",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "kind": "typedef",
+  "name": "canopus_lvx_event_cb",
+  "size": 4,
+  "alignment": 4,
+  "prototype": "void(void *)",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-UI-001"
+    ],
+    "source": "LVGL event callback ABI; used by lvx_page_title_create back-callback, lv_obj_add_event_cb, and lv_timer_create"
+  }
+}

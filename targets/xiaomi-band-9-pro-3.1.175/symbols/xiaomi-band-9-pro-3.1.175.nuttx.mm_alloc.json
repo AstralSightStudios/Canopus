@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.nuttx.mm_alloc",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "mm_alloc",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C0F24E0",
+  "callable_address": "0x0C0F24E1",
+  "prototype": "void *(uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "any"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-IO-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-IO-001"
+    ],
+    "source": "IDA sub_C0F24E0; mm_malloc on the dword_200B17F4 heap via sub_C0F1F20 (mm_heap/mm_malloc.c)"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "void *(uint32_t)",
+    "ownership": "caller-owned",
+    "thread": "any",
+    "device_probe": "pending"
+  },
+  "notes": "Band-9 heap allocator; the module's bt_alloc uses this."
+}

@@ -1,0 +1,179 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.036.type.firmware_notification_message.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "kind": "struct",
+  "name": "firmware_notification_message",
+  "size": 88,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "message_id",
+      "offset": 0,
+      "width": 8,
+      "signedness": "unsigned",
+      "provenance": "copied by notification clone; system callers initialize through sub_CA81E08"
+    },
+    {
+      "name": "repeat_count",
+      "offset": 8,
+      "width": 4,
+      "signedness": "unsigned",
+      "provenance": "system activity caller increments it before insertion"
+    },
+    {
+      "name": "title",
+      "offset": 12,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_by_notification_manager",
+      "provenance": "sub_CA81E28 setter; app-name/title strings at callsites"
+    },
+    {
+      "name": "source",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_by_notification_manager",
+      "provenance": "sub_CA81E38 setter; category/application strings at callsites"
+    },
+    {
+      "name": "body",
+      "offset": 20,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_by_notification_manager",
+      "provenance": "sub_CA81E48 setter; reminder content strings at callsites"
+    },
+    {
+      "name": "auxiliary_text",
+      "offset": 24,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_by_notification_manager",
+      "provenance": "cloned when present; exact display role unresolved"
+    },
+    {
+      "name": "small_icon_path",
+      "offset": 28,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "path_deep_copied_image_loaded_later",
+      "provenance": "sub_CA81E58 setter; launcher/small app image at callsites; default.bin fallback"
+    },
+    {
+      "name": "large_icon_path",
+      "offset": 32,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "path_deep_copied_image_loaded_later",
+      "provenance": "sub_CA81E68 setter; alert/content image at callsites; default_small.bin fallback"
+    },
+    {
+      "name": "extension_text_36",
+      "offset": 36,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_by_notification_manager",
+      "provenance": "cloned when present; semantics unresolved"
+    },
+    {
+      "name": "extension_text_40",
+      "offset": 40,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_by_notification_manager",
+      "provenance": "cloned when present; semantics unresolved"
+    },
+    {
+      "name": "timestamp",
+      "offset": 44,
+      "width": 4,
+      "signedness": "unsigned",
+      "ownership": "runtime_defaulted",
+      "provenance": "sub_CA81500 fills current time when zero"
+    },
+    {
+      "name": "action_callback",
+      "offset": 56,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "callable",
+      "provenance": "sub_CA81E88 setter"
+    },
+    {
+      "name": "action_context",
+      "offset": 60,
+      "width": 4,
+      "signedness": "unsigned",
+      "provenance": "copied verbatim by sub_CA818CC; exact semantics unresolved"
+    },
+    {
+      "name": "extension_64",
+      "offset": 64,
+      "width": 4,
+      "signedness": "unsigned",
+      "provenance": "copied verbatim by sub_CA818CC"
+    },
+    {
+      "name": "extension_68",
+      "offset": 68,
+      "width": 4,
+      "signedness": "unsigned",
+      "provenance": "copied verbatim by sub_CA818CC"
+    },
+    {
+      "name": "open_callback",
+      "offset": 72,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "callable",
+      "provenance": "sub_CA81EF0 setter; system callers provide notification-open handler"
+    },
+    {
+      "name": "destroy_callback",
+      "offset": 76,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "callable",
+      "provenance": "sub_CA81F00 setter; system callers provide notification-destroy handler"
+    },
+    {
+      "name": "start_reminder",
+      "offset": 80,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "sub_CA81E98 setter; nonzero triggers reminder event path"
+    },
+    {
+      "name": "flags_81",
+      "offset": 81,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "copied verbatim; semantics unresolved"
+    },
+    {
+      "name": "flags_82",
+      "offset": 82,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "sub_CA81EA8 setter; semantics unresolved"
+    },
+    {
+      "name": "callback_data",
+      "offset": 84,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed",
+      "provenance": "sub_CA81ED0 setter; copied verbatim into the stored message"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-NOTIFY-001"
+    ],
+    "source": "sub_CA81500/sub_CA818CC exact 88-byte clone; sub_CA81E08..sub_CA81F00 field setters; system notification builder callsites"
+  }
+}

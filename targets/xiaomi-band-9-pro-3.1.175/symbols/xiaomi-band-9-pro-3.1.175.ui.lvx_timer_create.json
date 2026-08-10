@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.ui.lvx_timer_create",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "lvx_timer_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C25CB8C",
+  "callable_address": "0x0C25CB8D",
+  "prototype": "void *(canopus_lvx_event_cb, uint32_t, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui_owner"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-UI-005"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-UI-005"
+    ],
+    "source": "IDA sub_C25CB8C; allocates a timer node (pool &dword_200C026C), stores cb@+8, period@+0, user_data@+12, repeat=-1, stamps clock_gettime; equivalent of LVGL v8 lv_timer_create"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "void *(canopus_lvx_event_cb, uint32_t, void *)",
+    "ownership": "caller-owned",
+    "thread": "ui_owner",
+    "device_probe": "pending"
+  },
+  "notes": "Band-9 LVGL v8 timer create; 3-arg (cb, period_ms, user_data) matches band-10 lvx_timer_create ABI."
+}

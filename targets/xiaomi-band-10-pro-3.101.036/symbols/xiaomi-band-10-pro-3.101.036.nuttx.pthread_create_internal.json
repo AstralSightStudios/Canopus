@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.pthread_create_internal",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "pthread_create_internal",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "proof": {
+    "static": "candidate"
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=nuttx name=pthread_create_internal (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "entry_address": "0xc1ef0b8",
+  "callable_address": "0xc1ef0b9",
+  "notes": "Possible internal fifth argument/context"
+}

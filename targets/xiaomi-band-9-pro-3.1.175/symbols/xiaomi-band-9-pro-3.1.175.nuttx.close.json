@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.nuttx.close",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C37EFF8",
+  "callable_address": "0x0C37EFF9",
+  "prototype": "int(int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "connection_framework_owner"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-B9-CLOSE-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-B9-CLOSE-001"
+    ],
+    "source": "IDA sub_C37EFF8; public POSIX close: calls nx_close(sub_C37AB5C) then sets errno/returns -1 on failure. nx_close internal = sub_C37AB5C(fd)->sub_C4F16A0(filelist,fd) locks list, extracts 24-byte filep, zeroes slot, fs_close(sub_C37C650)."
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int(int)",
+    "ownership": "caller-owned",
+    "thread": "calling thread",
+    "device_probe": "pending"
+  },
+  "notes": "NuttX fs/vfs/fs_close.c. fs_close internal = sub_C37C650; nx_close = sub_C37AB5C. Matches band-10 close 0x0C1AAB70."
+}

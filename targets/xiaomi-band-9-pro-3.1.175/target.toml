@@ -1,0 +1,109 @@
+# xiaomi-band-9-pro-3.1.175 — Xiaomi Band 9 Pro firmware 3.1.175
+# Imported from old_fw_extract evidence. Revision 1.
+schema = 1
+target_id = "xiaomi-band-9-pro-3.1.175"
+device_family = "xiaomi-smart-band"
+device_model = "Xiaomi Band 9 Pro"
+board_revision = "unknown"
+os_family = "nuttx-derived"
+architecture = "armv8-m.main"
+cpu = "cortex-m33"
+instruction_set = "thumb2"
+endianness = "little"
+float_abi = "soft"
+loader = "nuttx-modlib-elf32-rel"
+firmware_sha256 = "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b"
+firmware_version = "3.1.175"
+firmware_build = "CONBINE_LTALM054_T1175_04141021_release_5793"
+module_abi = 1
+relocation_profile = "best1503-v1"
+revision = 1
+
+# Firmware absolute-address space (CAN-P1-011). Identity strings 0x0C080810 ..
+# code through 0x0C7C5000 (XIP). Data constants may fall anywhere in the window.
+firmware_address_ranges = [
+  { base = 0x0C000000, size = 0x00800000 },
+]
+
+capabilities = [
+  "identity-guard",
+  "clock.gettime",
+  "char-device.register",
+  "char-device.unregister",
+  "control-abi",
+  "classic.adapter",
+  "classic.l2cap",
+  "classic.sdp",
+  "bt.timer",
+  "native-app.register",
+  "launcher.entry",
+  "ui.dispatch",
+]
+
+[loader_profile]
+elf_class = 32
+elf_machine = "ARM"
+elf_type = "ET_REL"
+endianness = "little"
+constructor_discovery = "init_array"
+symbol_imports = "none"
+max_size = 0
+alignment = 4
+module_name_rules = "must match ^[a-zA-Z0-9_]+$; passed as argv[2] to insmod"
+load_command = "insmod <path> <name>"
+unload_command = "rmmod <name>"
+persistent_autoload = false
+
+[[loader_profile.relocations]]
+name = "R_ARM_NONE"
+arm_type = 0
+notes = "no-op; accepted"
+
+[[loader_profile.relocations]]
+name = "R_ARM_ABS32"
+arm_type = 2
+notes = "verified"
+
+[[loader_profile.relocations]]
+name = "R_ARM_REL32"
+arm_type = 23
+notes = "verified"
+
+[[loader_profile.relocations]]
+name = "R_ARM_TARGET1"
+arm_type = 38
+notes = "handled with ABS32 semantics"
+
+[[loader_profile.relocations]]
+name = "R_ARM_PREL31"
+arm_type = 42
+notes = "verified"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVW_ABS_NC"
+arm_type = 47
+notes = "verified Thumb movw"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVT_ABS"
+arm_type = 48
+notes = "verified Thumb movt"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_CALL"
+arm_type = 10
+notes = "intra-module Thumb BL; standard modlib up_relocate case"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_JUMP24"
+arm_type = 30
+notes = "intra-module Thumb conditional branch; standard modlib case"
+
+[provenance]
+source_repo = "old_fw_extract"
+source_findings = [
+  "data/ota/app/vela_ap.bin (3.1.175)",
+]
+import_date = "2026-08-10"
+maintainer = "canopus-maintainer"
+reviewers = ["canopus-maintainer"]

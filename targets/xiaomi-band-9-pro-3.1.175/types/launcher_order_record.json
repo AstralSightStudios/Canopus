@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-9-pro-3.1.175.type.launcher_order_record.v1",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "kind": "struct",
+  "name": "launcher_order_record",
+  "size": 140,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "app_name",
+      "offset": 0,
+      "width": 128,
+      "signedness": "array",
+      "array_length": 128,
+      "ownership": "launcher_owns",
+      "provenance": "read_order_info_list_from_storage copies <=127 bytes from +0"
+    },
+    {
+      "name": "flags",
+      "offset": 132,
+      "width": 4,
+      "signedness": "unsigned",
+      "provenance": "bit0 = show(0)/hidden(1); read as v3[35*v4+33]&1"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-APP-001"
+    ],
+    "source": "sub_C4F3028 app_launcher_data_init read_order_info_list_from_storage path; record stride 35 u32"
+  }
+}

@@ -16,7 +16,26 @@
 // target's own identifiers, so the lint is suppressed crate-wide.
 #![allow(non_camel_case_types)]
 
+// Exactly one target feature must be selected. `generated.rs` is the band-10
+// 3.101.030 bindings; `generated_1036.rs` is band-10 3.101.036;
+// `generated_b9.rs` is the band-9 (3.1.175) bindings.
+#[cfg(all(
+    not(feature = "target-xiaomi-band-10-pro-3-101-030"),
+    not(feature = "target-xiaomi-band-10-pro-3-101-036"),
+    not(feature = "target-xiaomi-band-9-pro-3-1-175")
+))]
+compile_error!(
+    "canopus-target-generated requires exactly one target feature; supported: \
+     target-xiaomi-band-10-pro-3-101-030, target-xiaomi-band-10-pro-3-101-036, \
+     target-xiaomi-band-9-pro-3-1-175"
+);
+
+#[cfg(feature = "target-xiaomi-band-10-pro-3-101-030")]
 include!("generated.rs");
+#[cfg(feature = "target-xiaomi-band-10-pro-3-101-036")]
+include!("generated_1036.rs");
+#[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
+include!("generated_b9.rs");
 
 #[cfg(test)]
 mod layout_tests {
@@ -61,12 +80,29 @@ mod layout_tests {
         assert_eq!(offset_of!(launcher_app_record, app_id), 0);
         assert_eq!(offset_of!(launcher_app_record, name), 8);
         assert_eq!(offset_of!(launcher_app_record, flags), 0x14);
-        // descriptor: name@8, icon@12, u16 app_id@16, resolver@28, hidden@60.
-        assert_eq!(size_of::<launcher_app_descriptor>(), 64);
-        assert_eq!(offset_of!(launcher_app_descriptor, name), 8);
-        assert_eq!(offset_of!(launcher_app_descriptor, app_id), 16);
-        assert_eq!(offset_of!(launcher_app_descriptor, icon_resolver), 28);
-        assert_eq!(offset_of!(launcher_app_descriptor, hidden_flags), 60);
+        // descriptor layout differs per target family: band-9 is 60B, band-10
+        // (3.101.030/3.101.036) is 64B.
+        #[cfg(not(feature = "target-xiaomi-band-9-pro-3-1-175"))]
+        {
+            // descriptor: name@8, icon@12, u16 app_id@16, resolver@28, hidden@60.
+            assert_eq!(size_of::<launcher_app_descriptor>(), 64);
+            assert_eq!(offset_of!(launcher_app_descriptor, name), 8);
+            assert_eq!(offset_of!(launcher_app_descriptor, app_id), 16);
+            assert_eq!(offset_of!(launcher_app_descriptor, icon_resolver), 28);
+            assert_eq!(offset_of!(launcher_app_descriptor, hidden_flags), 60);
+        }
+        #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
+        {
+            assert_eq!(size_of::<launcher_app_descriptor>(), 60);
+            assert_eq!(offset_of!(launcher_app_descriptor, package_name), 8);
+            assert_eq!(offset_of!(launcher_app_descriptor, app_id), 16);
+            assert_eq!(
+                offset_of!(launcher_app_descriptor, launcher_metadata_callback),
+                28
+            );
+            assert_eq!(offset_of!(launcher_app_descriptor, page_registry), 44);
+            assert_eq!(offset_of!(launcher_app_descriptor, hidden_flags), 56);
+        }
     }
 
     #[cfg(target_pointer_width = "64")]
@@ -116,23 +152,47 @@ mod layout_tests {
             flags: 0,
             _tail: [0; 3],
         };
-        let _d = launcher_app_descriptor {
-            registry_links: 0,
-            package_name: core::ptr::null_mut(),
-            launcher_icon_resource: core::ptr::null_mut(),
-            app_id: 0,
-            flags: 0,
-            _pad_13: [0; 1],
-            owned_string_20: core::ptr::null_mut(),
-            owned_string_24: core::ptr::null_mut(),
-            launcher_metadata_callback: core::ptr::null_mut(),
-            _pad_20: [0; 16],
-            page_registry: core::ptr::null_mut(),
-            _pad_34: [0; 8],
-            hidden_flags: 0,
-            _tail: [0; 3],
-        };
-        let _ = (_e, _s, _f, _r, _d);
+        let _ = (_e, _s, _f, _r);
+        // The launcher app descriptor layout differs per target family.
+        #[cfg(not(feature = "target-xiaomi-band-9-pro-3-1-175"))]
+        {
+            let _d = launcher_app_descriptor {
+                registry_links: 0,
+                package_name: core::ptr::null_mut(),
+                launcher_icon_resource: core::ptr::null_mut(),
+                app_id: 0,
+                flags: 0,
+                _pad_13: [0; 1],
+                owned_string_20: core::ptr::null_mut(),
+                owned_string_24: core::ptr::null_mut(),
+                launcher_metadata_callback: core::ptr::null_mut(),
+                _pad_20: [0; 16],
+                page_registry: core::ptr::null_mut(),
+                _pad_34: [0; 8],
+                hidden_flags: 0,
+                _tail: [0; 3],
+            };
+            let _ = _d;
+        }
+        #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
+        {
+            let _d = launcher_app_descriptor {
+                registry_links: 0,
+                package_name: core::ptr::null_mut(),
+                launcher_icon_resource: core::ptr::null_mut(),
+                app_id: 0,
+                flags: 0,
+                owned_string_20: core::ptr::null_mut(),
+                owned_string_24: core::ptr::null_mut(),
+                launcher_metadata_callback: core::ptr::null_mut(),
+                _pad_20: [0; 0xc],
+                page_registry: core::ptr::null_mut(),
+                _pad_30: [0; 8],
+                hidden_flags: 0,
+                _tail: [0; 3],
+            };
+            let _ = _d;
+        }
     }
 
     #[test]
@@ -151,8 +211,21 @@ mod layout_tests {
 
     #[test]
     fn register_driver_binding_compiles() {
-        let _f: unsafe fn(*const u8, *const core::ffi::c_void, u32, *mut core::ffi::c_void) -> i32 =
-            canopus_fw_register_driver;
+        // band-10 (3.101.030/3.101.036) register_driver is 4-arg; band-9 is 3-arg.
+        #[cfg(not(feature = "target-xiaomi-band-9-pro-3-1-175"))]
+        let _f: unsafe fn(
+            *const u8,
+            *const core::ffi::c_void,
+            u32,
+            *mut core::ffi::c_void,
+        ) -> i32 = canopus_fw_register_driver;
+        #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
+        let _f: unsafe fn(
+            *const u8,
+            *const core::ffi::c_void,
+            *mut core::ffi::c_void,
+        ) -> i32 = canopus_fw_register_driver;
+        let _ = _f;
     }
 
     #[test]

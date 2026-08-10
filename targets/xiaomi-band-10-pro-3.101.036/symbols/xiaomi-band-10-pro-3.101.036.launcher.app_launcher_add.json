@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.launcher.app_launcher_add",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "app_launcher_add",
+  "kind": "function",
+  "entry_address": "0xc4f2c4c",
+  "callable_address": "0xc4f2c4d",
+  "instruction_set": "thumb",
+  "prototype": "int(uint16_t app_id)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "launcher_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "value",
+    "return_value": "implementation_defined"
+  },
+  "side_effects": [
+    "looks_up_installed_descriptor_by_app_id",
+    "adds_app_to_runtime_list",
+    "writes_launcher_db",
+    "adds_icon"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-APP-004"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-APP-004"
+    ],
+    "source": "IDA sub_C4F2BDC entry forwards R0 to off_200EB058[1] registry lookup; sub_C527E38 callsite supplies u16 app ID (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "notes": "This is not the descriptor registration function. The descriptor and pages must first be registered through app_install (sub_CA519AC/off_200EB060). The returned descriptor is passed to load_app_info, which creates the launcher record. Do not use the former descriptor-pointer prototype. Return semantics are not proven boolean.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int(uint16_t app_id)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
+}

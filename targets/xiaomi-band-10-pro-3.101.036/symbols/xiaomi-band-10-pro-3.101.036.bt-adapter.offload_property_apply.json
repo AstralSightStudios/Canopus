@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.bt-adapter.offload_property_apply",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "offload_property_apply",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *)",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=bt-adapter name=offload_property_apply (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "entry_address": "0xc3a0fa0",
+  "callable_address": "0xc3a0fa1",
+  "notes": "Writes adapter context; not a getter"
+}

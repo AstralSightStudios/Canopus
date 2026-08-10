@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.public_work_queue",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "public_work_queue",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "proof": {
+    "static": "candidate"
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=nuttx name=public_work_queue (3.101.036 pattern-matched)"
+  },
+  "notes": "Only internal kwork thread found"
+}

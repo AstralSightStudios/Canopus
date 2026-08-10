@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-9-pro-3.1.175.type.stock_timespec.v1",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "kind": "struct",
+  "name": "stock_timespec_t",
+  "size": 12,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "tv_sec",
+      "offset": 0,
+      "width": 8,
+      "signedness": "signed"
+    },
+    {
+      "name": "tv_nsec",
+      "offset": 8,
+      "width": 4,
+      "signedness": "signed"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-CLOCK-001"
+    ],
+    "source": "IDA 0x0C1ECA68 stores 64-bit tv_sec at +0 and 32-bit tv_nsec at +8; 2026-08-09 crash BFAR confirmed the old 8-byte declaration corrupted caller storage"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.ui.lvx_list_item_update",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "lvx_list_item_update",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *, const char *, const char *, const char *, int32_t, uint8_t)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-UI-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "EVID-UI-001 (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "entry_address": "0xc4a7bec",
+  "callable_address": "0xc4a7bed",
+  "notes": "Updates the existing stock row's icon, primary/secondary labels, badge and trailing state. Target-private use only.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int(void *, const char *, const char *, const char *, int32_t, uint8_t)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
+}

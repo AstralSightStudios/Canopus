@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.aiotjs.system_router_get_pages_wrapper",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "system_router_get_pages_wrapper",
+  "kind": "function",
+  "entry_address": "0xc860a8c",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NAV-002"
+    ]
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "approval_state": "REJECTED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-NAV-002"
+    ],
+    "source": "ida://vela_ap.bin.i64 sub_C8609E4 (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "notes": "Identified system_router_wrap_getPages JIDL wrapper. Signature-tracked only and forbidden from public codegen.",
+  "callable_address": "0xc860a8d"
+}

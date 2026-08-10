@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-9-pro-3.1.175.type.launcher_app_descriptor.v1",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "kind": "struct",
+  "name": "launcher_app_descriptor",
+  "size": 60,
+  "alignment": 4,
+  "fields": [
+    { "name": "registry_links", "offset": 0, "width": 8, "signedness": "unsigned",
+      "ownership": "runtime_owned", "provenance": "app_install overwrites +0/+4 with intrusive registry links after copying" },
+    { "name": "package_name", "offset": 8, "width": 4, "signedness": "pointer",
+      "ownership": "deep_copied_by_app_install", "provenance": "sub_C44B5D0 duplicates +8" },
+    { "name": "launcher_icon_resource", "offset": 12, "width": 4, "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null", "provenance": "sub_C44B5D0 duplicates +0xC" },
+    { "name": "app_id", "offset": 16, "width": 2, "signedness": "unsigned",
+      "provenance": "u16 registry key; sub_C44B5D0 reads +0x10" },
+    { "name": "flags", "offset": 18, "width": 2, "signedness": "unsigned",
+      "provenance": "16-bit flags slot at +0x12; exact bits unresolved" },
+    { "name": "owned_string_20", "offset": 20, "width": 4, "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null", "provenance": "sub_C44B5D0 duplicates +0x14" },
+    { "name": "owned_string_24", "offset": 24, "width": 4, "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null", "provenance": "sub_C44B5D0 duplicates +0x18" },
+    { "name": "launcher_metadata_callback", "offset": 28, "width": 4, "signedness": "pointer",
+      "ownership": "callable", "provenance": "sub_C44B5D0 invokes +0x1C as free_app callback on failure" },
+    { "name": "page_registry", "offset": 44, "width": 4, "signedness": "pointer",
+      "ownership": "runtime_owned", "provenance": "sub_C44B5D0 assigns allocated page registry at +0x2C" },
+    { "name": "hidden_flags", "offset": 56, "width": 1, "signedness": "unsigned",
+      "provenance": "bit0 = hidden; sub_C44B5D0 clears bit0 on successful installation (BFC +0x38)" }
+  ],
+  "layout_diffs": [
+    { "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b", "diff": "band-10 descriptor is 64B with page_registry@48, hidden_flags@60 and a 16B gap after +28; band-9 is 60B with page_registry@44, hidden_flags@56" }
+  ],
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": ["EVID-APP-004", "EVID-APP-005"],
+    "source": "sub_C44B5D0 app_install allocates 0x3C(60), copies 15 words, deep-copies +8/+0xC/+0x14/+0x18, writes page_registry +0x2C, clears hidden bit +0x38, calls free_app via +0x1C"
+  }
+}

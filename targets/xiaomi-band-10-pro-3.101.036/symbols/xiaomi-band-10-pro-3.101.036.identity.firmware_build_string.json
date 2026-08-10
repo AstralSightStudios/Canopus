@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.identity.firmware_build_string",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "firmware_build_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "prototype": "const char[]",
+  "proof": {
+    "static": "confirmed",
+    "device": "probed",
+    "evidence_ids": [
+      "EVID-ID-001"
+    ]
+  },
+  "policy": "managed",
+  "status": "DEVICE_PROBED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=identity name=firmware_build_string (3.101.036 pattern-matched)"
+  },
+  "entry_address": "0x0C0C0850",
+  "notes": "2026-07-22 identity guard matched expected CONBINE_LTALM078_T3.101.030_06011854",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-07-22",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "const char *",
+    "ownership": "read-only firmware string",
+    "thread": "identity guard",
+    "device_probe": "identity string address read back on device matches CONBINE_LTALM078_T3.101.030_06011854"
+  }
+}

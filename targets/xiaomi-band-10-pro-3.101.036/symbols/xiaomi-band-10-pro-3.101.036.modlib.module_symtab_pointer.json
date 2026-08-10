@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.modlib.module_symtab_pointer",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "module_symtab_pointer",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "void *",
+  "proof": {
+    "static": "confirmed",
+    "device": "probed"
+  },
+  "policy": "managed",
+  "status": "DEVICE_PROBED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=modlib name=module_symtab_pointer (3.101.036 pattern-matched)"
+  },
+  "entry_address": "0x200EFDE8",
+  "notes": "2026-07-22 runtime value zero; no image writer found"
+}

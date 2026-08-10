@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.unregister_driver",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "unregister_driver",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc1a0e1c",
+  "callable_address": "0xc1a0e1d",
+  "prototype": "int(const char *)",
+  "proof": {
+    "static": "confirmed",
+    "device": "probed",
+    "evidence_ids": [
+      "EVID-DRIVER-001"
+    ]
+  },
+  "policy": "managed",
+  "status": "DEVICE_PROBED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "stock unregister_driver row (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-07-22",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int(const char *)",
+    "ownership": "caller-owned pointers",
+    "thread": "calling thread",
+    "device_probe": "probed on device"
+  },
+  "notes": "Stock NuttX driver unregistration."
+}

@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-NOTIFY-001",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "How can an exact-target native module insert a system notification with custom title, body, and image paths?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "lvx_notification_insert_message(const firmware_notification_message_88 *message) -> implementation-defined int",
+  "callsite_evidence": [
+    "sub_CA81F10 is identified by its own log string as lvx_notification_insert_message and has 24 direct system-app callsites",
+    "weather sub_C5DE7C8 and recorder sub_C5F3DBC zero an 88-byte writable message, populate title/body/icon fields through one-field setters, then call sub_CA81F10",
+    "sedentary reminder sub_C4B28AC sets title +12, source/category +16, body +20, small icon +28, large notification image +32, reminder byte +80, callbacks +72/+76, and inserts the message",
+    "sub_CA81500 allocates an 88-byte internal copy and deep-copies supplied string fields, defaulting missing +28/+32 paths to stock notification assets"
+  ],
+  "control_flow_evidence": [
+    "sub_CA81E28 writes pointer +12, sub_CA81E38 writes +16, and sub_CA81E48 writes +20",
+    "sub_CA81E58 writes image path +28 and sub_CA81E68 writes image path +32",
+    "sub_CA81E98 writes reminder flag +80; sub_CA81EF0/sub_CA81F00 write callbacks +72/+76",
+    "insert clones the message, appends it to notification-manager state, emits event 32 when a reminder is requested, and returns zero or one on observed paths"
+  ],
+  "ownership_analysis": "The caller owns the 88-byte input and its strings for the duration of the call. The notification manager allocates its own message and deep-copies string paths/text before returning. Image bytes are not copied: +28/+32 remain paths opened later by the notification UI, so the first-frame PNG must remain at a stable target-visible filesystem path.",
+  "unsafe_assumptions": [
+    "the device accepted Manager registration and navigation and rendered the replacement first-frame PNG; animated GIF rendering is not supported by this notification path",
+    "the exact distinction between +28 small/app icon and +32 large/content image is inferred from weather, recorder, and activity callsites",
+    "notification insertion runs from the /dev/canopus write callback in miwear context and the static PNG path is device-proven",
+    "fields +24/+36/+40/+52..+71/+81..+87 remain only partially interpreted"
+  ],
+  "recommended_probe": "Device probe passed with title 'Canopus', body 'Canpous Loaded! Just ENJOY~', and +28/+32 both pointing to persistent /data/canopus/manager_loaded.png. Keep the first-frame PNG staged before insertion; do not restore the unsupported animated GIF path.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "DEVICE_PROVEN",
+  "created": "2026-08-06T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA81F10",
+      "role": "notification insertion decompile"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA81500",
+      "role": "88-byte clone and string ownership"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4B28AC",
+      "role": "complete activity notification builder callsite"
+    },
+    {
+      "uri": "targets/xiaomi-band-10-pro-3.101.030/probe/native-manager/canopus_manager_native_probe.c",
+      "role": "zero-import resident device probe"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.launcher.app_launcher_data_init",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "app_launcher_data_init",
+  "kind": "function",
+  "entry_address": "0xc4f3098",
+  "callable_address": "0xc4f3099",
+  "instruction_set": "thumb",
+  "prototype": "int(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "launcher_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "none",
+    "return_value": "int"
+  },
+  "side_effects": [
+    "opens_and_reads_launcher_db",
+    "subscribes_protobuf",
+    "registers_msg_handlers"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-APP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-APP-001"
+    ],
+    "source": "ida sub_C4F3028 (log tag app_launcher_data_init) (3.101.036 pattern-matched)"
+  },
+  "notes": "launcher enumeration init: reads orderlist_v001 + layout_v001 from /data/app/launcher/launcher.db, subscribes protobuf ordered list, registers msg 16/26/27/43 handlers"
+}

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-9-pro-3.1.175.type.canopus_interconnect_message.v1",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "kind": "struct",
+  "name": "canopus_interconnect_message",
+  "size": 20,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "type",
+      "offset": 0,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "2=connection event, 0x83=data"
+    },
+    {
+      "name": "length",
+      "offset": 4,
+      "width": 4,
+      "signedness": "unsigned",
+      "provenance": "payload length for data; 8 for connection events"
+    },
+    {
+      "name": "value",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "payload address (data) or status-word address (event)"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-CONN-001"
+    ],
+    "source": "uv_miwear_message_t 20-byte header; sub_C2D1D7C copies 5 words (+0..+16) into the send request"
+  }
+}

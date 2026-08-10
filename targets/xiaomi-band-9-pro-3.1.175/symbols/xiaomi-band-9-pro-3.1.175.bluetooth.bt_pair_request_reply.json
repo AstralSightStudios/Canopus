@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.bluetooth.bt_pair_request_reply",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "bt_pair_request_reply",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C3BFD48",
+  "callable_address": "0x0C3BFD49",
+  "prototype": "int(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "connection_framework_owner"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-B9-BTPAIRREPLY-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-B9-BTPAIRREPLY-001"
+    ],
+    "source": "IDA sub_C3BFD48 = btm_reply_pair_request; validates handle, dispatches gap_iface(handle+8)->reply_pair_request at +36. Log anchor 'btm_reply_pair_request'."
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int(void *)",
+    "ownership": "caller-owned",
+    "thread": "calling thread",
+    "device_probe": "pending"
+  },
+  "notes": "Band-9 btm_gap dispatch = btm_reply_pair_request (int(handle)). Signature differs from band-10 bt_pair_request_reply 0x0C39988C: band-9 requires explicit btm handle."
+}

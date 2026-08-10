@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.errno_location",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "errno_location",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int *(void)",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "EVID-IO-001 (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "entry_address": "0xc1d5144",
+  "callable_address": "0xc1d5145",
+  "notes": "NuttX libc errno-location helper. Read/open wrappers call it after negative VFS results and store the positive errno through its returned pointer. Used only to surface a failed receipt read's errno in installer diagnostics."
+}

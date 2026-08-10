@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-9-pro-3.1.175.type.service_object.v1",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "kind": "struct",
+  "name": "service_object",
+  "size": 64,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "enabled_state",
+      "offset": 0,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "name",
+      "offset": 4,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed"
+    },
+    {
+      "name": "service_id",
+      "offset": 8,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "profile_group",
+      "offset": 9,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "startup_cb",
+      "offset": 36,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "startup_eligibility_cb",
+      "offset": 48,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "get_profile_cb",
+      "offset": 52,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "cleanup_cb",
+      "offset": 56,
+      "width": 4,
+      "signedness": "pointer"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "source": "analysis/PHASE2_STOCK_ABI_FINDINGS.md §3.3 service manager registry 0x2010163C..0x201016DC"
+  }
+}

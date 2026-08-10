@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.launcher.protobuf_set_ordered_app_list",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "protobuf_set_ordered_app_list",
+  "kind": "function",
+  "entry_address": "0xc4f2730",
+  "callable_address": "0xc4f2731",
+  "instruction_set": "thumb",
+  "prototype": "int(ordered_app_list_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "launcher_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed",
+    "return_value": "int"
+  },
+  "side_effects": [
+    "replaces_launcher_runtime_list",
+    "updates_page_hidden_flags",
+    "signals_ui_thread"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-APP-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-APP-003"
+    ],
+    "source": "ida sub_C4F26C0 (log tag protobuf_set_ordered_app_list) (3.101.036 pattern-matched) (3.101.036 partial-16 match)"
+  },
+  "notes": "applies the System service's ordered app list (u16 count + 16-byte entries {name@+0,enabled@+8,hidden@+9}) to the launcher runtime list 0x200D090C and page structs (+60 hidden bit)."
+}

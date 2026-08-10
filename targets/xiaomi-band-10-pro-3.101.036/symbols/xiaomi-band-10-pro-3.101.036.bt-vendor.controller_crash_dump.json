@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.bt-vendor.controller_crash_dump",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "controller_crash_dump",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void)",
+  "proof": {
+    "static": "confirmed"
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "firmware_latest/analysis/stock_f701a84_symbols.csv row category=bt-vendor name=controller_crash_dump (3.101.036 pattern-matched)"
+  },
+  "entry_address": "0xc214128",
+  "callable_address": "0xc214129",
+  "notes": "Touches controller/fault registers and dumps RAM"
+}

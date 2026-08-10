@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-003",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Does the firmware expose a reusable native navigation-header/titlebar prefab suitable for the public SDK?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.ui.lvx_page_title_create"
+  ],
+  "prototype_hypothesis": "lvx_page_title_create(parent, title, mode, back_callback, user_data) creates a stock page header. It owns a left title and right-side HH:mm label; mode 1 additionally creates the stock back affordance and binds the supplied callback. sub_C575084(parent, titlebar_index) remains a separate sport-app titlebar dispatcher.",
+  "callsite_evidence": [
+    "sub_C4A9990 is named by firmware strings lvx_page_title/lvx_page_title_create, has hundreds of ordinary app callsites, and creates a page-owned title component under the supplied parent",
+    "sub_C4A9990 creates a right-side dynamic time label formatted as HH:mm, sets the supplied title on the left-side label, and uses stock LVX layout/theme helpers",
+    "When mode is 1, sub_C4A9990 creates /resource/app/common/icon/back.bin and binds the caller-provided callback and user data to the back object",
+    "Settings on_create (sub_C52BEC4) creates a distinct stock content container through sub_CA4E8E8, sizes it 336x424, places it at y=56 below sub_C4A9990, and keeps the title object parented at page root",
+    "The FLASH_CACHED alias of '[%s] %s: create titlebar!' is referenced through pointer storage 0x0C5751C4 by sub_C575084 at 0x0C575106.",
+    "sub_C575084 logs module 'sport' and function 'draw_in_titlebar', stores one global object in dword_20111754, creates it under the supplied parent through sub_C588448, and sizes it to 336x56 through sub_C587EF8.",
+    "The function configures the object with LVGL wrappers, moves it to the foreground, registers sub_C573730 for event code 36, and selects children through titlebar indices 1 through 4.",
+    "sub_C573730 is an 18-byte lifecycle callback whose only recovered effect is dword_20111754 = 0. This establishes singleton-pointer reset when the registered lifecycle event fires, but does not establish a public destroy API or third-party ownership contract.",
+    "Index 3 creates or returns a time label formatted as 'HH:mm'; index 4 logs the sport-specific recording titlebar path."
+  ],
+  "control_flow_evidence": [
+    "sub_C4A9990 is a stock page-title constructor with a localized ownership boundary: the returned object is parent-owned, and the function owns its time/back children; sub_CA4E8E8 constructs the separate page-owned content root below it; exact callback ABI and device lifecycle remain pending",
+    "sub_C575084 is a lazy sport feature wrapper around low-level LVGL constructors, not a target-wide constructor with a stable title/subtitle/back-action property ABI.",
+    "The public C/Rust NavigationHeader therefore remains semantic: the exact-target Manager backend maps its page title to sub_C4A9990, but public applications never call either firmware helper or retain a firmware pointer.",
+    "Header back actions are represented by an ordinary generation-checked semantic event and route pop, avoiding assumptions about the sport callback or its global singleton."
+  ],
+  "ownership_analysis": "sub_C4A9990 returns an LVX object parented into the caller's page root and constructs the time/back children beneath it. This is the strongest recovered stock page-header boundary, but only static evidence presently confirms callback, UI-thread, and teardown behavior. sub_C575084 remains parent-owned but also retained in a sport-global singleton, so direct reuse would still couple Canopus to private sport lifecycle state.",
+  "unsafe_assumptions": [
+    "sub_C4A9990 mode 0/1 semantics, right-side HH:mm behavior, and callback registration are statically recovered but require disposable Manager-page device proof before this can be promoted from target-private use",
+    "The returned header must not be manually destroyed or retained after parent page teardown; the precise UI-thread and recursive destruction contract remain unproven",
+    "The sport titlebar remains forbidden: it is still singleton-backed and not a generic Header API",
+    "The semantic NavigationHeader is host-tested but the exact target mapping's visual layout and callback timing remain device-pending"
+  ],
+  "recommended_probe": "On a disposable Manager page, create lvx_page_title in modes 0 and 1, verify left title/right HH:mm/stock back icon, trigger header back through 100 push/pop cycles, verify page_finish resumes the page below, then verify parent teardown does not leave a callback or singleton pointer live.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-06T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4A9990",
+      "role": "stock lvx_page_title_create constructor"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA4E8E8",
+      "role": "stock page content-root constructor"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 /resource/app/common/icon/back.bin",
+      "role": "mode-1 stock back affordance"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C575084",
+      "role": "sport-specific titlebar create/index dispatcher"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C573730",
+      "role": "sport titlebar lifecycle callback that clears dword_20111754"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 dword_20111754",
+      "role": "sport-global retained titlebar object"
+    }
+  ]
+}

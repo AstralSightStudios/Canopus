@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.launcher.app_launcher_add",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "app_launcher_add",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C2A7CB8",
+  "callable_address": "0x0C2A7CB9",
+  "prototype": "int(uint16_t)",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-APP-005"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-APP-005"
+    ],
+    "source": "IDA sub_C2A7CB8; app_launcher_add log string"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int(uint16_t)",
+    "ownership": "caller-owned",
+    "thread": "launcher_owner",
+    "device_probe": "pending"
+  },
+  "notes": "band-9 launcher add; registers a launcher icon for a registered app."
+}

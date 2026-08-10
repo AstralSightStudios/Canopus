@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-MSGBOX-001",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "Which stock Xiaomi UI API provides a page-owned modal confirmation dialog?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.lvx.page_msgbox_create",
+    "xiaomi-band-10-pro-3.101.030.lvx.page_msgbox_set_content",
+    "xiaomi-band-10-pro-3.101.030.lvgl.object_delete"
+  ],
+  "prototype_hypothesis": "box = lvx_page_msgbox_create(parent, firmware_page); lvx_page_msgbox_set_content(box, layout_type, icon, primary, secondary, button_descriptors, button_count)",
+  "callsite_evidence": [
+    "sub_C4A93A4 is the common mode-0 wrapper around sub_C4A9244 and has approximately 51 direct firmware call sites",
+    "Settings confirmation flow at 0x0C53C880 creates the box through sub_C4A93A4, zeroes two 20-byte button descriptors, and calls sub_C4A93FC with layout type 2 and button_count 2",
+    "sub_C4A900C advances descriptors by 20 bytes and registers descriptor +0 as an LV_EVENT_CLICKED callback, +4 as button text, and +8 as event user data",
+    "Stock callbacks sub_C53D444 and sub_C53D3FC delete the message-box object before applying or cancelling the operation"
+  ],
+  "control_flow_evidence": [
+    "The common constructor stores the firmware page at box +0x34, saves/replaces the page event callback, and inserts the box into the active message-box list at 0x200CE9F4",
+    "The class destructor at sub_C4A92C4 removes the box from the active list and restores the saved page callback/state",
+    "Layout type 2 is a proven two-text-button confirmation; type 5 is an icon cancel/confirm layout and is not used for Canopus destructive actions"
+  ],
+  "ownership_analysis": "The message box is an LVGL class object owned by the current firmware page. It must be destroyed through lv_obj_del so its class destructor restores page interception. Manager retains static message/button strings and callback records until the modal is dismissed. Page destruction dismisses any active box first.",
+  "unsafe_assumptions": [
+    "The recovered API is exact to firmware 3.101.030 and remains identity-gated",
+    "Static analysis establishes the descriptor and callback ABI, but repeated open/cancel/confirm, back gesture, pause/resume and page teardown still require an on-device lifecycle probe",
+    "The backend falls back to its existing semantic confirmation page if the native constructor cannot be used"
+  ],
+  "recommended_probe": "Open each Manager confirmation, cancel and confirm repeatedly, press system back while modal, leave/re-enter the app, and destroy the detail page while modal. Verify only one callback fires, page input is blocked, and the underlying page remains interactive after dismissal.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-07T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4A93A4",
+      "role": "mode-0 page message-box wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4A9244",
+      "role": "common constructor and page attachment"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4A93FC",
+      "role": "content and button configuration"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4A900C",
+      "role": "20-byte button descriptor consumer"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4A92C4",
+      "role": "message-box class destructor"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 0x0C53C880",
+      "role": "stock two-button Settings confirmation call site"
+    }
+  ]
+}
