@@ -84,3 +84,28 @@ Band-9 运行 LVGL v8 + BES 自研事件系统，与 band-10 的 LVGL v9 有结�
   在当前逆向轮次中未定位到等价物（classic 函数名被深度剥除）；模块的
   band-9 媒体路径（AVDTP Source）相关绑定返回 ENOSYS 并标注 pending，
   需后续恢复 Bluelet classic L2CAP/SDP 层。
+
+## Band-9 蓝牙固件能力边界（AVDTP Source）评估 (2026-08-10)
+
+模块在 band-9 上**可部署**：激活走通、发现/配对/绑定/UI/内存/驱动/应用注册全部可用。
+但 **AVDTP Source 流媒体在 band-9 固件上固件不支持**，证据链如下：
+
+1. **无 AVDTP/A2DP profile**：固件中不存在 AVDTP Source 的 SDP 服务记录
+   （`19 11 0A` = AudioSource UUID 0x110A 的字节模式搜索结果为 0 处匹配），
+   也没有 band-10 的 "Vela Audio Source" SDP 服务名。
+2. **无 SDP 服务端注册**：band-9 只有 SDP **client**（`btm_start_service_discovery` /
+   `bts_start_service_discovery`，用于查询手机服务），没有服务注册 API。
+   手机无法通过 SDP 发现模块的 AudioSource 服务，AVDTP 协商无法启动。
+3. **classic BT 仅覆盖 HFP/RFCOMM**：band-9 的 classic L2CAP 只服务
+   RFCOMM/HFP（`bluelet_rfcomm_*` 字符串证实），BT 架构为 Bluelet 消息队列
+   （profile → 消息队列 → controller），L2CAP 层函数名被深度剥除，无 raw
+   connect/send host API 暴露给模块。
+4. **模块媒体路径行为**：band-9 上 transport 初始化为 READY（无 SDP），
+   媒体连接（connect_avdtp）在 submit 时返回 ERR_STATE 并清晰报告，
+   不影响发现/配对/UI。
+
+结论：band-9（Band 9 Pro 3.1.175）固件设计上蓝牙用于 BLE + HFP/RFCOMM
+（手表侧听手机音频），**未包含对外播放 AVDTP 的能力**。若需在 band-9 上实现
+AVDTP Source 流媒体，必须模块自带完整 BT host 协议栈并经 raw HCI 驱动
+（固件 HCI 层 `bthci_register/send/receive` 已定位），这属于独立的大型工程，
+超出当前固件 API 适配范围。

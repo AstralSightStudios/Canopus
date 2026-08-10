@@ -403,10 +403,12 @@ pub fn bt_queue_free_addr() -> *mut core::ffi::c_void {
     core::ptr::null_mut()
 }
 
-/// Band-9 has no recovered L2CAP owner/FSM context; a NULL owner causes the
-/// module's cross-thread scheduling paths to fail fast rather than misroute.
+/// Band-9 has no recovered L2CAP owner/FSM context. A non-null sentinel lets
+/// the module's activation path (SDP queuing) complete; the actual queue and
+/// timer calls behind it return ENOSYS so the media path fails clearly instead
+/// of misrouting.
 pub unsafe fn bt_l2cap_owner() -> *mut core::ffi::c_void {
-    core::ptr::null_mut()
+    0x1usize as *mut core::ffi::c_void
 }
 
 pub const CONNECT_REQUEST_SIZE: usize = 68;
