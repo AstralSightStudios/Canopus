@@ -64,8 +64,18 @@ fn generate_both(symbols: &[Symbol]) -> (String, String) {
         }"#;
         serde_json::from_str(json).unwrap()
     };
-    let v = VeneerGen { pack: &pack, symbols, types: &[] }.generate();
-    let r = RustGen { pack: &pack, symbols, types: &[] }.generate();
+    let v = VeneerGen {
+        pack: &pack,
+        symbols,
+        types: &[],
+    }
+    .generate();
+    let r = RustGen {
+        pack: &pack,
+        symbols,
+        types: &[],
+    }
+    .generate();
     (v, r)
 }
 
@@ -73,8 +83,14 @@ fn generate_both(symbols: &[Symbol]) -> (String, String) {
 fn pending_never_generates_a_callable() {
     let symbols = [symbol_with(None, &["EVID-1"])]; // no approval_state
     let (veneer, bindings) = generate_both(&symbols);
-    assert!(!veneer.contains("canopus_fw_register_driver"), "PENDING symbol leaked a veneer");
-    assert!(!bindings.contains("canopus_fw_register_driver"), "PENDING symbol leaked a binding");
+    assert!(
+        !veneer.contains("canopus_fw_register_driver"),
+        "PENDING symbol leaked a veneer"
+    );
+    assert!(
+        !bindings.contains("canopus_fw_register_driver"),
+        "PENDING symbol leaked a binding"
+    );
     assert!(veneer.contains("not APPROVED") || bindings.contains("not APPROVED"));
 }
 
@@ -90,7 +106,10 @@ fn rejected_never_generates_a_callable() {
 fn approved_without_evidence_never_generates_a_callable() {
     let symbols = [symbol_with(Some("APPROVED"), &[])];
     let (veneer, bindings) = generate_both(&symbols);
-    assert!(!veneer.contains("canopus_fw_register_driver"), "approved-but-evidence-free leaked");
+    assert!(
+        !veneer.contains("canopus_fw_register_driver"),
+        "approved-but-evidence-free leaked"
+    );
     assert!(!bindings.contains("canopus_fw_register_driver"));
     assert!(veneer.contains("not APPROVED") || bindings.contains("not APPROVED"));
 }
@@ -99,6 +118,12 @@ fn approved_without_evidence_never_generates_a_callable() {
 fn approved_with_evidence_generates_a_callable() {
     let symbols = [symbol_with(Some("APPROVED"), &["EVID-1"])];
     let (veneer, bindings) = generate_both(&symbols);
-    assert!(veneer.contains("canopus_fw_register_driver"), "APPROVED symbol missing a veneer");
-    assert!(bindings.contains("canopus_fw_register_driver"), "APPROVED symbol missing a binding");
+    assert!(
+        veneer.contains("canopus_fw_register_driver"),
+        "APPROVED symbol missing a veneer"
+    );
+    assert!(
+        bindings.contains("canopus_fw_register_driver"),
+        "APPROVED symbol missing a binding"
+    );
 }

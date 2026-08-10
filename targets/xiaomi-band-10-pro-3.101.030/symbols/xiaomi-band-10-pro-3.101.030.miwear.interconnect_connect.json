@@ -19,7 +19,7 @@
     "return_value": "0_on_acceptance_else_negative_errno"
   },
   "side_effects": [
-    "queues_one_message_to_named_connection_or_broadcast"
+    "allocates_and_initializes_a_named_miwear_server_connection"
   ],
   "proof": {
     "static": "recovered",

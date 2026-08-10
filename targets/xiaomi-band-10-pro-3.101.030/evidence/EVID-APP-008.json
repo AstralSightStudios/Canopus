@@ -24,13 +24,27 @@
     "the system-range routing behavior is exact-target and must not be generalized to other firmware versions"
   ],
   "recommended_probe": "Device probe passed: after fresh boot, Manager registered as 0x00CA and showed the stock opening and closing transitions. Preserve the collision guard and <=0x00FF compile-time assertion in production Manager builds.",
-  "reviewers": ["canopus-maintainer"],
+  "reviewers": [
+    "canopus-maintainer"
+  ],
   "verdict": "DEVICE_PROVEN",
   "created": "2026-08-06T00:00:00Z",
   "artifacts": [
-    { "uri": "ida://vela_ap.bin.i64 sub_C4F62D8", "role": "launcher click navigation and icon-origin descriptor" },
-    { "uri": "ida://vela_ap.bin.i64 sub_CA52CF8", "role": "page opening transition branch" },
-    { "uri": "ida://vela_ap.bin.i64 sub_CA51150", "role": "app_id greater-than-0xFF classifier" },
-    { "uri": "targets/xiaomi-band-10-pro-3.101.030/probe/native-manager/canopus_manager_native_probe.c", "role": "collision-checked 0x00CA implementation" }
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4F62D8",
+      "role": "launcher click navigation and icon-origin descriptor"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA52CF8",
+      "role": "page opening transition branch"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA51150",
+      "role": "app_id greater-than-0xFF classifier"
+    },
+    {
+      "uri": "manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c",
+      "role": "collision-checked 0x00CA implementation"
+    }
   ]
 }

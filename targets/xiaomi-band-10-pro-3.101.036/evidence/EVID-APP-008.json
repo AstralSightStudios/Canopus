@@ -43,7 +43,7 @@
       "role": "app_id greater-than-0xFF classifier"
     },
     {
-      "uri": "targets/xiaomi-band-10-pro-3.101.030/probe/native-manager/canopus_manager_native_probe.c",
+      "uri": "manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c",
       "role": "collision-checked 0x00CA implementation"
     }
   ]

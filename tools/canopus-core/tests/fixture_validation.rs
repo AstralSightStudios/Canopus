@@ -92,9 +92,8 @@ fn function_signature_catalog_fixtures() {
 
 #[test]
 fn current_target_signature_catalog_validates() {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(
-        "../../targets/xiaomi-band-10-pro-3.101.030/function-signatures.json",
-    );
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../targets/xiaomi-band-10-pro-3.101.030/function-signatures.json");
     let value: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
     validate(SchemaKind::FunctionSignatureCatalog, &value).unwrap();

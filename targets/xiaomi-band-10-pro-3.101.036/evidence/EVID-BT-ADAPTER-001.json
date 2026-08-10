@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-ADAPTER-001",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Which exact 3.101.036 firmware functions implement the shared Bluetooth adapter client getter, callback registration, callback unregistration, and state query used by the stock headset application?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.036.bluetooth.bt_adapter_get_instance",
+    "xiaomi-band-10-pro-3.101.036.bluetooth.bt_adapter_register",
+    "xiaomi-band-10-pro-3.101.036.bluetooth.bt_adapter_unregister",
+    "xiaomi-band-10-pro-3.101.036.bluetooth.bt_adapter_get_state"
+  ],
+  "prototype_hypothesis": "void *get_instance(void); int register(void *, const uint32_t *); int unregister(void *, uint32_t); int get_state(void *)",
+  "callsite_evidence": [
+    "In the exact 3.101.036 IDB, stock headset on_create sub_C5421B8 calls sub_CA28770, then sub_C398CE4(instance, callback_table), then sub_C398DF0(instance).",
+    "sub_CA28770 returns the shared dword_20139934 adapter instance initialized by the stock Bluetooth application.",
+    "sub_C398CE4 installs the callback table through the adapter client's retained registration object at instance+120.",
+    "sub_C398D4C removes a registration handle and releases the retained registration object when the last callback is removed.",
+    "sub_C398DF0 queries adapter event 27 and returns the state byte."
+  ],
+  "control_flow_evidence": [
+    "The four functions are independently defined Thumb function entries in /Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64.",
+    "The previously copied 3.101.030 getter address 0x0CA286C8 is a literal-pool word inside the 3.101.036 on_adapter_state_changed callback, not executable code; calling it caused the observed CFSR 0x01000000 unaligned-access reset at PC 0x0CA2867E."
+  ],
+  "ownership_analysis": "The getter returns a firmware-owned shared adapter instance. The callback table must remain resident until its registration handle is unregistered. The registration handle is firmware-owned and borrowed by the caller as an integer token.",
+  "unsafe_assumptions": [
+    "Callbacks execute under firmware-selected Bluetooth client context and must remain nonblocking.",
+    "Exact callback payload layouts remain target-private ABI responsibilities."
+  ],
+  "recommended_probe": "Install the regenerated 3.101.036 BluetoothAudio module, load it without reset, verify state/discovery callbacks, then unload and verify callback unregistration.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-11T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C5421B8",
+      "role": "stock headset adapter initialization call chain"
+    },
+    {
+      "uri": "/Users/searchstars/Library/Logs/moe.astralsight.astrobox/device/data/offlinelog/crash1.txt",
+      "role": "device crash proving the copied getter address is invalid on 3.101.036"
+    }
+  ]
+}

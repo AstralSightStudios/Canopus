@@ -376,6 +376,12 @@ fn scan_data_section<'data, S: ObjectSection<'data>>(
         if word == 0 {
             continue;
         }
-        check_absolute_addr(word, &format!("{name}+0x{:x}", i * 4), ranges, allowed, hits);
+        check_absolute_addr(
+            word,
+            &format!("{name}+0x{:x}", i * 4),
+            ranges,
+            allowed,
+            hits,
+        );
     }
 }

@@ -23,6 +23,8 @@ firmware_latest/
 # Rust build output
 target/
 **/target/
+!manager/target/
+!manager/target/**
 Cargo.lock.bak
 
 # C build output

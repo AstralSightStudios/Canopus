@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.bluetooth.bt_adapter_register",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "bt_adapter_register",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C398CE4",
+  "callable_address": "0x0C398CE5",
+  "prototype": "int32(void *, const uint32_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_module_bluetooth_client"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-BT-ADAPTER-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-BT-ADAPTER-001"
+    ],
+    "source": "Exact-target IDA stock headset adapter initialization call chain; Registers a persistent callback table and returns a nonzero registration handle."
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-11",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int32(void *, const uint32_t *)",
+    "ownership": "borrowed adapter and persistent callback table",
+    "thread": "Bluetooth client context",
+    "device_probe": "pending after regenerated module"
+  },
+  "notes": "Registers a persistent callback table and returns a nonzero registration handle."
+}

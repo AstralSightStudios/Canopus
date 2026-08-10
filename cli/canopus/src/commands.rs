@@ -274,8 +274,7 @@ pub fn package(cmd: PackageCmd) -> anyhow::Result<()> {
                 resource_files.insert(path.to_string(), PathBuf::from(file));
             }
 
-            let pkg =
-                canopus_package::manifest_with_real_hashes(&pkg, &files, &resource_files)?;
+            let pkg = canopus_package::manifest_with_real_hashes(&pkg, &files, &resource_files)?;
             let archive = canopus_package::build_archive(&pkg, &files, &resource_files)?;
             let signed = match key {
                 Some(k) => canopus_package::sign_archive(&archive, &k)?,
@@ -428,7 +427,9 @@ fn build_allowed_addresses(targets_dir: &Path, target_id: &str) -> Vec<u64> {
         if p.extension().and_then(|e| e.to_str()) != Some("json") {
             continue;
         }
-        let Ok(text) = std::fs::read_to_string(&p) else { continue };
+        let Ok(text) = std::fs::read_to_string(&p) else {
+            continue;
+        };
         let Ok(sym) = serde_json::from_str::<canopus_core::model::Symbol>(&text) else {
             continue;
         };

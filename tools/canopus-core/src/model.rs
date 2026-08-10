@@ -116,7 +116,11 @@ impl Symbol {
     /// evidence id (a promotion record with no evidence never goes live).
     pub fn approved_for_codegen(&self) -> bool {
         self.approval_state.as_deref() == Some("APPROVED")
-            && self.proof.evidence_ids.as_ref().is_some_and(|e| !e.is_empty())
+            && self
+                .proof
+                .evidence_ids
+                .as_ref()
+                .is_some_and(|e| !e.is_empty())
     }
 }
 

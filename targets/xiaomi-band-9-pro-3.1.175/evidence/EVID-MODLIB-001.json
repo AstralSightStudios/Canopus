@@ -2,34 +2,27 @@
   "schema": 1,
   "evidence_id": "EVID-MODLIB-001",
   "target_id": "xiaomi-band-9-pro-3.1.175",
-  "question": "Does stock modlib_insert call an ELF entry point, or only .init_array/.fini_array?",
-  "candidate_symbols": [
-    "xiaomi-band-10-pro-3.101.030.modlib.insmod",
-    "xiaomi-band-10-pro-3.101.030.modlib.modhandle",
-    "xiaomi-band-10-pro-3.101.030.modlib.rmmod"
-  ],
-  "prototype_hypothesis": "insmod(path,module_name) returns a module handle after modlib_insert resolves relocations and runs .preinit_array/.init_array; modhandle(name) resolves the registry handle; rmmod(handle) invokes .fini_array through modlib_remove",
-  "callsite_evidence": [
-    "modlib_insert 0x0C1D9190 -> modlib_load 0x0C1D8738 -> modlib_bind 0x0C1D7C00 -> up_relocate 0x0C1D6A48",
-    "modlib_getsymtab 0x0C1D906C reads globals 0x200EFDE8/0x200EFDEC (both zero, no writer found)"
-  ],
+  "question": "What are the exact Band-9 public insmod, rmmod, and modhandle entry points and lifecycle semantics?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "insmod(path,module_name) returns a module handle after relocation and constructors; modhandle(name) resolves the registry handle; rmmod(handle) invokes destructors and releases module allocations",
+  "callsite_evidence": [],
   "control_flow_evidence": [
-    "rmmod -> modlib_remove 0x0C1D9418 invokes .fini_array before releasing module allocations"
+    "The exact release vela_ap IDB contains the shared NSH failure-format string but no insmod, rmmod, or modhandle command strings or handlers.",
+    "Unlike the exact Band-10 firmware, Band-9 vela_ap contains no NuttX modlib source-path strings, ELF relocation/section/symbol diagnostics, or verified modlib_insert-style control flow.",
+    "A raw scan of every extracted Band-9 OTA image and filesystem file found no insmod or modhandle string and no modlib_insert/modlib_remove marker; the sole rmmod byte sequence was an unreferenced coincidence inside a watchface resource.bin.",
+    "The prior addresses and call graph in this record were from the Band-10 target and are not valid Band-9 evidence."
   ],
-  "ownership_analysis": "module allocations owned by modlib registry; released on remove",
+  "ownership_analysis": "Unresolved. Current static evidence indicates that the release vela_ap may not link the NuttX ET_REL modlib loader at all; a different proven loading boundary is required before constructor/destructor ownership can be specified.",
   "unsafe_assumptions": [
-    "no modlib_setsymtab writer exists, so undefined-symbol imports cannot resolve"
+    "Band-10 modlib addresses, globals, registry layout, and wrapper signatures must not be copied into Band-9.",
+    "The Band-9 target.toml loader profile is not proof that the exact firmware implements that profile.",
+    "The Band-9 supervisor platform remains incomplete until an exact release-firmware loader boundary is proven."
   ],
-  "recommended_probe": "zero-import ET_REL with constructor/destructor attributes (btpatch_probe)",
+  "recommended_probe": "First prove that the exact Band-9 release firmware can load an ELF32 ET_REL module through a stock command or API. If it can, capture that command's call chain and recover its public load/lookup/remove ABI; otherwise define and verify a different target loader architecture rather than inventing modlib addresses.",
   "reviewers": [
     "canopus-maintainer"
   ],
-  "verdict": "STATIC_CONFIRMED",
-  "created": "2026-07-18T00:00:00Z",
-  "artifacts": [
-    {
-      "uri": "analysis/MODLIB_PHASE1_FINDINGS.md",
-      "role": "findings-doc"
-    }
-  ]
+  "verdict": "UNRESOLVED",
+  "created": "2026-08-10T00:00:00Z",
+  "artifacts": []
 }

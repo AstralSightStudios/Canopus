@@ -1,7 +1,7 @@
 /*
- * Exact-target native Manager registration and stock-LVX semantic UI backend.
+ * Shared Band 10 LVGL v9 Manager target backend.
  *
- * This deliberately uses fixed-address veneers for firmware 3.101.030 and is
+ * Target identity and firmware addresses are supplied by the selected target config. It is
  * resident-first: its constructor only records target identity. The supervisor
  * invokes the exported install entry from a /dev/canopus write made by miwear,
  * then install registers one writable page descriptor and one launcher record.
@@ -12,46 +12,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "canopus_manager_native_probe.h"
+#include "canopus_manager_target.h"
+#include "canopus_target_config.h"
 #include "canopus_client.h"
 #include "canopus_manager_native.h"
 #include "canopus_memory.h"
-
-#define CANOPUS_PROBE_APP_ID UINT16_C(0x00CA)
-#define CANOPUS_PROBE_PAGE_ID UINT16_C(0)
-#define CANOPUS_PROBE_MAGIC UINT32_C(0x434E5031) /* "CNP1" */
-
-#define FW_VERSION_ADDRESS UINT32_C(0x0C0C0810)
-#define FW_BUILD_ADDRESS UINT32_C(0x0C0C0850)
-#define FW_APP_LOOKUP UINT32_C(0x0CA50FD5)
-#define FW_APP_INSTALL UINT32_C(0x0CA519AD)
-#define FW_LAUNCHER_ADD UINT32_C(0x0C4F2BDD)
-#define FW_LVX_LIST_ROW_CREATE UINT32_C(0x0C52B235)
-#define FW_LVX_LIST_ROW_UPDATE UINT32_C(0x0C4A7BD1)
-#define FW_LVX_LIST_ROW_TRAILING UINT32_C(0x0C4A7F2D)
-#define FW_LVX_LABEL_CREATE UINT32_C(0x0C588339)
-#define FW_LVX_LABEL_SET_TEXT UINT32_C(0x0C588849)
-#define FW_LVX_CONTENT_CREATE UINT32_C(0x0CA4E8E9)
-#define FW_LVX_OBJECT_SET_SIZE UINT32_C(0x0C587EF9)
-#define FW_LVX_OBJECT_ALIGN UINT32_C(0x0C5880A9)
-#define FW_LVX_PAGE_TITLE_CREATE UINT32_C(0x0C4A9991)
-#define FW_LVX_STYLE_APPLY UINT32_C(0x0C49EA99)
-#define FW_STYLE_MISANS_DEMIBOLD_32 UINT32_C(0x2010A02C)
-#define FW_LVX_EVENT_ADD UINT32_C(0x0C5882B9)
-#define FW_LVX_EVENT_GET_USER_DATA UINT32_C(0x0C588601)
-#define FW_LVX_EVENT_GET_CODE UINT32_C(0x0C5886D1)
-#define FW_LVX_SET_HIDDEN UINT32_C(0x0C588459)
-#define FW_LVX_ALIGN_TO UINT32_C(0x0C588BE9)
-#define FW_NUTTX_OPEN UINT32_C(0x0C1C15B1)
-#define FW_NUTTX_CLOSE UINT32_C(0x0C1AAB71)
-#define FW_NUTTX_READ UINT32_C(0x0C1C1E25)
-#define FW_NUTTX_WRITE UINT32_C(0x0C1C31C9)
-#define FW_NOTIFICATION_INSERT UINT32_C(0x0CA81F11)
-#define FW_ACTIVITY_NAVIGATE UINT32_C(0x0CA539F9)
-#define FW_ACTIVITY_FINISH UINT32_C(0x0CA53089)
-#define FW_LVX_MSGBOX_CREATE UINT32_C(0x0C4A93A5)
-#define FW_LVX_MSGBOX_SET_CONTENT UINT32_C(0x0C4A93FD)
-#define FW_LVX_OBJECT_DELETE UINT32_C(0x0C5888F1)
 
 #define CANOPUS_TARGET_PAGE_COUNT 3u
 #define CANOPUS_TARGET_PAGE_OVERVIEW 0u
@@ -165,20 +130,6 @@ struct firmware_notification_message {
     void *callback_data;                      /* +0x54 */
 };
 
-struct canopus_native_probe_record {
-    uint32_t magic;
-    int32_t identity_result;
-    int32_t app_install_result;
-    int32_t launcher_add_result;
-    int32_t notification_result;
-    uint32_t create_count;
-    uint32_t resume_count;
-    uint32_t pause_count;
-    uint32_t destroy_count;
-    uintptr_t root_object;
-    uintptr_t list_row;
-};
-
 struct canopus_target_ui_binding {
     uint32_t generation;
     canopus_ui_node_id key;
@@ -259,7 +210,7 @@ static void target_page_title_back(void *event)
     (void)page_finish(&manager_pages_desc[context->backend.page_index]);
 }
 
-_Static_assert(CANOPUS_PROBE_APP_ID <= UINT16_C(0x00FF),
+_Static_assert(CANOPUS_MANAGER_TARGET_APP_ID <= UINT16_C(0x00FF),
                "system launch animation requires an 8-bit app id");
 _Static_assert(sizeof(struct firmware_page_descriptor) == 116,
                "firmware page descriptor size");
@@ -297,8 +248,8 @@ static const char module_notification_body[] =
 static const char notification_icon[] = "/data/canopus/manager_icon.bin";
 static const char launcher_icon[] = "/data/canopus/manager_icon.bin";
 
-__attribute__((used, visibility("default"), section(".data.canopus_probe")))
-volatile struct canopus_native_probe_record canopus_native_probe_record;
+__attribute__((used, visibility("default"), section(".data.canopus_manager_target")))
+volatile struct canopus_manager_target_record canopus_manager_target_record;
 
 static int strings_differ(const char *left, const char *right)
 {
@@ -317,10 +268,10 @@ static int identity_guard(void)
     const char *version = (const char *)(uintptr_t)FW_VERSION_ADDRESS;
     const char *build = (const char *)(uintptr_t)FW_BUILD_ADDRESS;
 
-    if (strings_differ(version, "3.101.030") != 0) {
+    if (strings_differ(version, CANOPUS_TARGET_FIRMWARE_VERSION) != 0) {
         return -1;
     }
-    if (strings_differ(build, "CONBINE_LTALM078_T3.101.030_06011854") != 0) {
+    if (strings_differ(build, CANOPUS_TARGET_FIRMWARE_BUILD) != 0) {
         return -2;
     }
     return 0;
@@ -917,7 +868,7 @@ static int32_t target_ui_apply(
         }
     }
     backend->rendered_generation = snapshot->generation;
-    canopus_native_probe_record.list_row = (uintptr_t)first;
+    canopus_manager_target_record.list_row = (uintptr_t)first;
     return 0;
 }
 
@@ -962,7 +913,7 @@ static struct canopus_target_page_context *context_for_page(
 
 static uint32_t target_page_key(uint32_t page_index)
 {
-    return ((uint32_t)CANOPUS_PROBE_APP_ID << 16) | page_index;
+    return ((uint32_t)CANOPUS_MANAGER_TARGET_APP_ID << 16) | page_index;
 }
 
 static int target_select_page_view(
@@ -1069,8 +1020,8 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
     if (context == NULL) {
         return -1;
     }
-    canopus_native_probe_record.create_count += 1u;
-    canopus_native_probe_record.root_object = (uintptr_t)root;
+    canopus_manager_target_record.create_count += 1u;
+    canopus_manager_target_record.root_object = (uintptr_t)root;
     canopus_memset(&context->backend, 0, sizeof(context->backend));
     context->backend.root = root;
     context->backend.firmware_page = page;
@@ -1084,8 +1035,8 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         canopus_manager_init(&manager_model, canopus_client_transport,
                              &manager_client);
         canopus_manager_set_identity(
-            &manager_model, "xiaomi-band-10-pro-3.101.030", "3.101.030",
-            "CONBINE_LTALM078_T3.101.030_06011854", 1u);
+            &manager_model, CANOPUS_TARGET_ID, CANOPUS_TARGET_FIRMWARE_VERSION,
+            CANOPUS_TARGET_FIRMWARE_BUILD, 1u);
         if (target_refresh_model() != 0) {
             (void)canopus_client_close(&manager_client);
             manager_client.fd = -1;
@@ -1120,7 +1071,7 @@ static int manager_page_on_resume(struct firmware_page_descriptor *page)
     if (context == NULL || !context->active) {
         return -1;
     }
-    canopus_native_probe_record.resume_count += 1u;
+    canopus_manager_target_record.resume_count += 1u;
     context->interactive = 1u;
     if (manager_session_ready && target_refresh_model() == 0 &&
         target_select_page_view(context) == 0) {
@@ -1138,7 +1089,7 @@ static int manager_page_on_pause(struct firmware_page_descriptor *page)
         return -1;
     }
     context->interactive = 0u;
-    canopus_native_probe_record.pause_count += 1u;
+    canopus_manager_target_record.pause_count += 1u;
     return 0;
 }
 
@@ -1150,9 +1101,9 @@ static int manager_page_on_destroy(struct firmware_page_descriptor *page)
     if (context == NULL) {
         return -1;
     }
-    canopus_native_probe_record.destroy_count += 1u;
-    canopus_native_probe_record.list_row = 0u;
-    canopus_native_probe_record.root_object = 0u;
+    canopus_manager_target_record.destroy_count += 1u;
+    canopus_manager_target_record.list_row = 0u;
+    canopus_manager_target_record.root_object = 0u;
     if (context->active) {
         target_dialog_dismiss(&context->backend);
         context->active = 0u;
@@ -1177,7 +1128,7 @@ static int manager_page_on_destroy(struct firmware_page_descriptor *page)
 static const struct firmware_app_descriptor manager_app = {
     .package_name = package_name,
     .launcher_icon_resource = launcher_icon,
-    .app_id = CANOPUS_PROBE_APP_ID,
+    .app_id = CANOPUS_MANAGER_TARGET_APP_ID,
     .launcher_metadata_callback = manager_display_name,
 };
 
@@ -1214,10 +1165,10 @@ int canopus_manager_native_notify_module_installed(void)
     return notification_insert(&module_notification);
 }
 
-static void __attribute__((constructor, used)) canopus_manager_probe_init(void)
+static void __attribute__((constructor, used)) canopus_manager_target_init(void)
 {
-    canopus_native_probe_record.magic = CANOPUS_PROBE_MAGIC;
-    canopus_native_probe_record.identity_result = identity_guard();
+    canopus_manager_target_record.magic = CANOPUS_MANAGER_TARGET_MAGIC;
+    canopus_manager_target_record.identity_result = identity_guard();
 }
 
 static void target_descriptor_init(uint32_t page_index, const char *name,
@@ -1230,7 +1181,7 @@ static void target_descriptor_init(uint32_t page_index, const char *name,
                    sizeof(manager_pages_desc[page_index]));
     manager_pages_desc[page_index].page_name = name;
     manager_pages_desc[page_index].page_id = page_id;
-    manager_pages_desc[page_index].app_id = CANOPUS_PROBE_APP_ID;
+    manager_pages_desc[page_index].app_id = CANOPUS_MANAGER_TARGET_APP_ID;
     manager_pages_desc[page_index].on_signal = manager_on_signal;
     manager_pages_desc[page_index].on_create = manager_page_on_create;
     manager_pages_desc[page_index].on_resume = manager_page_on_resume;
@@ -1256,10 +1207,10 @@ int canopus_manager_native_install(void)
         (notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT;
     void *installed_app;
 
-    if (canopus_native_probe_record.identity_result != 0) {
-        return canopus_native_probe_record.identity_result;
+    if (canopus_manager_target_record.identity_result != 0) {
+        return canopus_manager_target_record.identity_result;
     }
-    installed_app = app_lookup(CANOPUS_PROBE_APP_ID);
+    installed_app = app_lookup(CANOPUS_MANAGER_TARGET_APP_ID);
     if (installed_app != NULL) {
         const char *installed_package =
             *(const char **)((uint8_t *)installed_app + 8u);
@@ -1276,15 +1227,15 @@ int canopus_manager_native_install(void)
     pages[0] = &manager_pages_desc[0];
     pages[1] = &manager_pages_desc[1];
     pages[2] = &manager_pages_desc[2];
-    canopus_native_probe_record.app_install_result =
+    canopus_manager_target_record.app_install_result =
         app_install(&manager_app, pages, CANOPUS_TARGET_PAGE_COUNT);
-    if (app_lookup(CANOPUS_PROBE_APP_ID) == NULL) {
-        canopus_native_probe_record.app_install_result = -100;
+    if (app_lookup(CANOPUS_MANAGER_TARGET_APP_ID) == NULL) {
+        canopus_manager_target_record.app_install_result = -100;
         return -100;
     }
-    canopus_native_probe_record.launcher_add_result =
-        launcher_add(CANOPUS_PROBE_APP_ID);
-    canopus_native_probe_record.notification_result =
+    canopus_manager_target_record.launcher_add_result =
+        launcher_add(CANOPUS_MANAGER_TARGET_APP_ID);
+    canopus_manager_target_record.notification_result =
         notification_insert(&loaded_notification);
     return 0;
 }

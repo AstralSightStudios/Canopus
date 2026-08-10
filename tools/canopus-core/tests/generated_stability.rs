@@ -71,6 +71,128 @@ fn c_veneer_regenerates_identically() {
 }
 
 #[test]
+fn additional_target_artifacts_regenerate_identically() {
+    let cases = [
+        (
+            "xiaomi-band-10-pro-3.101.036",
+            "sdk/rust/canopus-target-generated/src/generated_1036.rs",
+        ),
+        (
+            "xiaomi-band-9-pro-3.1.175",
+            "sdk/rust/canopus-target-generated/src/generated_b9.rs",
+        ),
+    ];
+
+    for (target, rust_path) in cases {
+        let dir = repo_root().join("targets").join(target);
+        let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+        let (symbols, types) = load_records(&dir).unwrap();
+        let rust = RustGen {
+            pack: &pack,
+            symbols: &symbols,
+            types: &types,
+        }
+        .generate();
+        let committed_rust = std::fs::read_to_string(repo_root().join(rust_path)).unwrap();
+        assert_eq!(
+            committed_rust, rust,
+            "generated Rust bindings are stale for {target}"
+        );
+
+        let veneer = VeneerGen {
+            pack: &pack,
+            symbols: &symbols,
+            types: &types,
+        }
+        .generate();
+        let committed_veneer =
+            std::fs::read_to_string(dir.join("generated/canopus_veneer.h")).unwrap();
+        assert_eq!(
+            committed_veneer, veneer,
+            "generated veneer header is stale for {target}"
+        );
+
+        if target == "xiaomi-band-10-pro-3.101.036" {
+            assert!(
+                rust.contains("canopus_fw_bt_adapter_get_instance() -> *mut core::ffi::c_void")
+            );
+            assert!(rust.contains("canopus_thumb_callable(0x0CA28771usize)"));
+            assert!(rust.contains("canopus_thumb_callable(0x0C398CE5usize)"));
+            assert!(rust.contains("canopus_thumb_callable(0x0C398D4Dusize)"));
+            assert!(rust.contains("canopus_thumb_callable(0x0C398DF1usize)"));
+            assert!(rust.contains("canopus_thumb_callable(0x0C39F069usize)"));
+            assert!(rust.contains("canopus_thumb_callable(0x0C39989Dusize)"));
+            assert!(rust.contains("canopus_thumb_callable(0x0C399861usize)"));
+            assert!(rust.contains("canopus_thumb_callable(0x0C39F949usize)"));
+            for invalid in [
+                "0x0CA286C9usize",
+                "0x0C39F021usize",
+                "0x0C39988Dusize",
+                "0x0C3998C9usize",
+                "0x0C39F9B1usize",
+            ] {
+                assert!(
+                    !rust.contains(invalid),
+                    "3.101.036 retained invalid {invalid}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn target_private_never_transmutes_raw_firmware_addresses() {
+    let targets = repo_root().join("sdk/rust/canopus-target-private/src/targets");
+    for entry in std::fs::read_dir(targets).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().and_then(|value| value.to_str()) != Some("rs") {
+            continue;
+        }
+        let source = std::fs::read_to_string(&path).unwrap();
+        assert!(
+            !source.contains("core::mem::transmute(0x"),
+            "{} bypasses generated Thumb-callable normalization",
+            path.display()
+        );
+        if path.file_name().and_then(|value| value.to_str())
+            == Some("xiaomi_band_10_pro_3_101_036.rs")
+        {
+            for invalid in [
+                "0x0CA286C9usize",
+                "0x0C39F021usize",
+                "0x0C39988Dusize",
+                "0x0C3998C9usize",
+                "0x0C39F9B1usize",
+                "0x0C7D36D1usize",
+                "0x0C7D3E0D",
+            ] {
+                assert!(
+                    !source.contains(invalid),
+                    "3.101.036 retained invalid {invalid}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn generated_thumb_callable_normalizes_entry_and_callable() {
+    let (symbols, types) = load_symtypes();
+    let pack = load_pack();
+    let text = RustGen {
+        pack: &pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
+    assert!(
+        text.contains("pub const fn canopus_thumb_callable(entry_or_callable: usize) -> usize")
+    );
+    assert!(text.contains("entry_or_callable | 1usize"));
+    assert!(text.contains("core::mem::transmute(canopus_thumb_callable(0x0C1C31C9usize))"));
+}
+
+#[test]
 fn rust_bindings_have_exact_recovered_layout() {
     let (symbols, types) = load_symtypes();
     let pack = load_pack();
@@ -146,9 +268,10 @@ fn identity_guard_uses_pack_version_build() {
     let text = r#gen.generate();
     assert!(text.contains("b\"3.101.030\""));
     assert!(text.contains("b\"CONBINE_LTALM078_T3.101.030_06011854\""));
-    // Thumb callable addresses carry the +1 bit.
-    assert!(text.contains("transmute(0x0C1EC8B5usize)"));
-    assert!(text.contains("transmute(0x0C1A0D51usize)"));
+    // Generated indirect calls always pass the approved callable address
+    // through the shared Thumb normalization boundary.
+    assert!(text.contains("transmute(canopus_thumb_callable(0x0C1EC8B5usize))"));
+    assert!(text.contains("transmute(canopus_thumb_callable(0x0C1A0D51usize))"));
 }
 
 // Helper assertions reused by the tests above (kept as a compile check that the

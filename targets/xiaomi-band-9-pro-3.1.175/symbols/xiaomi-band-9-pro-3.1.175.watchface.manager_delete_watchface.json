@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.watchface.manager_delete_watchface",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "manager_delete_watchface",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C44F470",
+  "callable_address": "0x0C44F471",
+  "prototype": "int32(const char *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "calling_thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-WATCHFACE-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-WATCHFACE-001"
+    ],
+    "source": "IDA sub_C44F470; rejects a null ID and delegates non-null deletion to sub_C455860(id, 1), propagating its result."
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int32(const char *)",
+    "ownership": "borrowed stable ID for synchronous call",
+    "thread": "calling thread",
+    "device_probe": "pending"
+  },
+  "notes": "Exact Band-9 wrapper; it is distinct from the Band-10 watchface manager implementation."
+}

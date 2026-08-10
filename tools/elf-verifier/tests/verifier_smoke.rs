@@ -345,10 +345,7 @@ fn movw_movt_unknown_address_fails() {
     let report = v.verify(&elf);
     assert!(!report.ok, "expected failure");
     assert!(
-        report
-            .errors
-            .iter()
-            .any(|e| e.contains("0xc1a0d51")),
+        report.errors.iter().any(|e| e.contains("0xc1a0d51")),
         "errors were: {:?}",
         report.errors
     );
@@ -368,7 +365,10 @@ fn data_word_absolute_address_checked() {
         target: pack(),
         allowed_addresses: &[],
     };
-    assert!(!bad.verify(&elf).ok, "unknown firmware-range word must fail");
+    assert!(
+        !bad.verify(&elf).ok,
+        "unknown firmware-range word must fail"
+    );
 }
 
 #[test]
@@ -380,5 +380,8 @@ fn out_of_range_constant_not_flagged() {
         target: pack(),
         allowed_addresses: &[],
     };
-    assert!(v.verify(&elf).ok, "non-firmware constant must not be flagged");
+    assert!(
+        v.verify(&elf).ok,
+        "non-firmware constant must not be flagged"
+    );
 }

@@ -25,6 +25,8 @@ extern "C" {
 #endif
 
 struct canopus_sup_platform_v1 {
+    /* Exact target accepted by module descriptors and package receipts. */
+    const char *target_id;
     /* Returns 0 on success. */
     int (*register_device)(void *cookie);
     int (*unregister_device)(void *cookie);

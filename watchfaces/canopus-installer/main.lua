@@ -326,15 +326,16 @@ local install_stage = 0
 local function refresh_status(text)
     local st, message = read_status()
     if not st then
-        -- Distinguish "module not loaded" from "module loaded but device
-        -- missing" (the current stub-platform boundary, G0/G4).
+        -- A module registry entry only proves modlib accepted the ELF. If the
+        -- device is absent, the constructor either rejected the exact firmware
+        -- identity or register_driver failed.
         local module = find_module()
         local dev = io.open(DEVICE_PATH, "rb")
         if dev then dev:close() end
         if module and not dev then
-            status:set { text = "Supervisor loaded (insmod OK).\n"
-                .. "/dev/canopus missing — device platform pending (G0/G4).\n"
-                .. "Reboot before retrying." }
+            status:set { text = "Supervisor appears in modlib, but /dev/canopus is missing.\n"
+                .. "Exact firmware identity guard rejected it or register_driver failed.\n"
+                .. "Verify the target-specific artifact, then reboot before retrying." }
         else
             status:set { text = tostring(message) }
         end

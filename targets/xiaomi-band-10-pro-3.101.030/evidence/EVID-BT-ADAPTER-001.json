@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-ADAPTER-001",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "question": "Which exact 3.101.030 firmware functions implement the shared Bluetooth adapter client getter, callback registration, callback unregistration, and state query used by the stock headset application?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.bluetooth.bt_adapter_get_instance",
+    "xiaomi-band-10-pro-3.101.030.bluetooth.bt_adapter_register",
+    "xiaomi-band-10-pro-3.101.030.bluetooth.bt_adapter_unregister",
+    "xiaomi-band-10-pro-3.101.030.bluetooth.bt_adapter_get_state"
+  ],
+  "prototype_hypothesis": "void *get_instance(void); int register(void *, const uint32_t *); int unregister(void *, uint32_t); int get_state(void *)",
+  "callsite_evidence": [
+    "In the exact 3.101.030 IDB, stock headset on_create sub_C541D10 calls sub_CA286C8, then sub_C398C24(instance, callback_table), then sub_C398D30(instance).",
+    "sub_CA286C8 returns the shared dword_20139944 adapter instance.",
+    "sub_C398C24 installs the callback table through the adapter client's retained registration object at instance+120.",
+    "sub_C398C8C removes a registration handle and releases the retained registration object when the last callback is removed.",
+    "sub_C398D30 queries adapter event 27 and returns the state byte."
+  ],
+  "control_flow_evidence": [
+    "The four functions are independently defined Thumb function entries in /Volumes/EXT0/firmware_latest/vela_ap.bin.i64.",
+    "The BluetoothAudio module's 3.101.030 adapter registration path has been exercised on device before this record was created."
+  ],
+  "ownership_analysis": "The getter returns a firmware-owned shared adapter instance. The callback table must remain resident until its registration handle is unregistered. The registration handle is firmware-owned and borrowed by the caller as an integer token.",
+  "unsafe_assumptions": [
+    "Callbacks execute under firmware-selected Bluetooth client context and must remain nonblocking.",
+    "Exact callback payload layouts remain target-private ABI responsibilities."
+  ],
+  "recommended_probe": "Load BluetoothAudio, verify adapter registration and state query, then unload and verify callback unregistration without reset.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-11T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida:///Volumes/EXT0/firmware_latest/vela_ap.bin.i64#sub_C541D10",
+      "role": "stock headset adapter initialization call chain"
+    }
+  ]
+}

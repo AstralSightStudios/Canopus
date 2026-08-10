@@ -255,9 +255,11 @@ fn build_embeds_declared_resource() {
         canopus_package::manifest_with_real_hashes(&manifest, &files, &resource_files).unwrap();
     let archive = build_archive(&manifest, &files, &resource_files).unwrap();
     // the resource is embedded alongside the artifact
-    assert!(archive
-        .windows(b"resources/icon.png".len())
-        .any(|w| w == b"resources/icon.png"));
+    assert!(
+        archive
+            .windows(b"resources/icon.png".len())
+            .any(|w| w == b"resources/icon.png")
+    );
 }
 
 #[test]
@@ -302,8 +304,13 @@ fn resource_hash_mismatch_fails_build() {
     let mut manifest =
         canopus_package::manifest_with_real_hashes(&manifest, &files, &resource_files).unwrap();
     // corrupt the declared resource hash after filling it
-    if let Some(rs) = manifest.native_app.as_mut().and_then(|a| a.resources.as_mut()) {
-        rs[0].sha256 = "0000000000000000000000000000000000000000000000000000000000000000".to_string();
+    if let Some(rs) = manifest
+        .native_app
+        .as_mut()
+        .and_then(|a| a.resources.as_mut())
+    {
+        rs[0].sha256 =
+            "0000000000000000000000000000000000000000000000000000000000000000".to_string();
     }
     assert!(build_archive(&manifest, &files, &resource_files).is_err());
 }
@@ -317,7 +324,10 @@ fn tampered_resource_fails_verify() {
         artifact_file("res-tamper-artifact"),
     );
     let mut resource_files = HashMap::new();
-    resource_files.insert("resources/icon.png".to_string(), artifact_file("res-tamper"));
+    resource_files.insert(
+        "resources/icon.png".to_string(),
+        artifact_file("res-tamper"),
+    );
     let manifest =
         canopus_package::manifest_with_real_hashes(&manifest, &files, &resource_files).unwrap();
     let (secret, public) = keygen().unwrap();

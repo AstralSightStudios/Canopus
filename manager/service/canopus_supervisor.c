@@ -111,9 +111,10 @@ int canopus_supervisor_register_descriptor(
         sup->loading_slot < 0 ||
         (uint32_t)sup->loading_slot >= CANOPUS_SUP_MODULE_SLOTS ||
         canopus_module_descriptor_check(descriptor) != 0 ||
+        sup->platform == 0 || sup->platform->target_id == 0 ||
         !sup_fixed_string_equal(descriptor->target_id,
                                 sizeof(descriptor->target_id),
-                                "xiaomi-band-10-pro-3.101.030")) {
+                                sup->platform->target_id)) {
         return -1;
     }
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {

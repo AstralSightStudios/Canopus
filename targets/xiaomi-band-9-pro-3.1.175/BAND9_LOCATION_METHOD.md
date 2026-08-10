@@ -75,37 +75,36 @@ Band-9 运行 LVGL v8 + BES 自研事件系统，与 band-10 的 LVGL v9 有结�
   `lvx_content_create`；模块直接在固件页面 root 上渲染。
 - 事件对象：band-9 回调收到的事件 code@+8、user_data@+12（dispatch sub_C243F28 写入）。
 
-### band-9 BT 栈状态（device-pending）
-- 已逆向：btm_gap（bt_adapter_get_instance / btm_create_bond / btm_remove_bond /
-  btm_start_discovery / btm_stop_discovery / btm_reply_pair_request /
-  btm_reply_pair_display / btm_set_scan_mode 接口分发）、nuttx mm_heap、
-  app_lookup。
-- Bluelet classic L2CAP / SDP 服务注册 / buffer / BT timer / 事件队列
-  在当前逆向轮次中未定位到等价物（classic 函数名被深度剥除）；模块的
-  band-9 媒体路径（AVDTP Source）相关绑定返回 ENOSYS 并标注 pending，
-  需后续恢复 Bluelet classic L2CAP/SDP 层。
+### band-9 BT 栈状态（media facade pending）
+- 已逆向并绑定：GAP client 构造/销毁、发现/配对/绑定 callback 翻译、Bluelet
+  owner-thread 外部队列，以及 miwear one-shot timer 的 callback/lifetime 翻译。
+- 已确认固件存在通用 Classic L2CAP 动态通道、CID 查找、收发分发和通用 SDP
+  builder。profile channel 清理路径也识别 Audio Source/Sink UUID `0x110A/0x110B`。
+- `sub_C3A97D0` 是 profile control-block 创建函数，第二参数是 service UUID，
+  **不是 raw L2CAP PSM**；不得把 AVDTP PSM `0x0019` 直接传入该函数。
+- 字符串 `AVDTP` 位于蓝牙日志模块名称表，`a2dp_state` 位于 AT/应用命令描述区；
+  二者都是元数据，不能当作可调用的 AVDTP 函数表或内建 Source facade 证据。
+- 待恢复的是固定 PSM `0x0019` 的注册/连接请求布局、连接事件 payload、CID 映射、
+  buffer ownership 和 A2DP Source SDP/SEP 注册。现阶段尚未证明存在可直接复用的
+  A2DP Source 上层 wrapper，也不能据此另写 L2CAP/AVDTP host stack。
 
-## Band-9 蓝牙固件能力边界（AVDTP Source）评估 (2026-08-10)
+## Band-9 蓝牙固件能力边界（AVDTP Source）评估 (2026-08-10，修订)
 
-模块在 band-9 上**可部署**：激活走通、发现/配对/绑定/UI/内存/驱动/应用注册全部可用。
-但 **AVDTP Source 流媒体在 band-9 固件上固件不支持**，证据链如下：
+模块目前已可构建、打包并通过 target verifier；发现/配对/UI 与 timer/owner queue
+已有真实固件绑定。AVDTP Source 流媒体仍处于 **facade pending**，不能仅凭编译通过
+宣告完成。
 
-1. **无 AVDTP/A2DP profile**：固件中不存在 AVDTP Source 的 SDP 服务记录
-   （`19 11 0A` = AudioSource UUID 0x110A 的字节模式搜索结果为 0 处匹配），
-   也没有 band-10 的 "Vela Audio Source" SDP 服务名。
-2. **无 SDP 服务端注册**：band-9 只有 SDP **client**（`btm_start_service_discovery` /
-   `bts_start_service_discovery`，用于查询手机服务），没有服务注册 API。
-   手机无法通过 SDP 发现模块的 AudioSource 服务，AVDTP 协商无法启动。
-3. **classic BT 仅覆盖 HFP/RFCOMM**：band-9 的 classic L2CAP 只服务
-   RFCOMM/HFP（`bluelet_rfcomm_*` 字符串证实），BT 架构为 Bluelet 消息队列
-   （profile → 消息队列 → controller），L2CAP 层函数名被深度剥除，无 raw
-   connect/send host API 暴露给模块。
-4. **模块媒体路径行为**：band-9 上 transport 初始化为 READY（无 SDP），
-   媒体连接（connect_avdtp）在 submit 时返回 ERR_STATE 并清晰报告，
-   不影响发现/配对/UI。
+当前可靠证据的边界是：
 
-结论：band-9（Band 9 Pro 3.1.175）固件设计上蓝牙用于 BLE + HFP/RFCOMM
-（手表侧听手机音频），**未包含对外播放 AVDTP 的能力**。若需在 band-9 上实现
-AVDTP Source 流媒体，必须模块自带完整 BT host 协议栈并经 raw HCI 驱动
-（固件 HCI 层 `bthci_register/send/receive` 已定位），这属于独立的大型工程，
-超出当前固件 API 适配范围。
+1. 通用 Classic L2CAP 动态通道引擎存在；RX dispatcher 会把动态 CID 数据交给上层
+   callback，通用 TX 路径按 buffer context 中的 CID 发送并接管 buffer ownership；
+2. 固件存在通用 SDP builder，并且 profile 清理逻辑识别 `0x110A/0x110B`；
+3. `AVDTP` 日志实体和 `a2dp_state` 命令描述仅证明相关诊断/应用语义存在，**不证明**
+   有可供模块调用的 AVDTP Source profile table；
+4. 尚未建立固定 PSM `0x0019` 的安全注册/连接入口、A2DP Source SEP 或 AudioSource
+   SDP wrapper，因此目前不能声称媒体通道可用。
+
+结论：继续从 Bluelet 固件恢复并封装所需 primitive，只在 `canopus-target-private`
+中翻译对象、callback、CID、buffer ownership 与线程模型。在精确确认请求布局和所有权
+前，相关 media facade 必须保持明确失败；禁止把 `sub_C3A97D0(remote, 0x0019, ...)`
+误当通用 L2CAP connect，也不恢复已删除的 `band9_media.rs` 自建协议栈。

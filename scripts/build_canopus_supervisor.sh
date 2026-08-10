@@ -1,6 +1,6 @@
 #!/bin/sh
-# Builds the Canopus supervisor native module for xiaomi-band-10-pro-3.101.030
-# and stages it into watchfaces/canopus-installer/canopus_supervisor.bin.
+# Builds the Canopus supervisor and Manager backend for a selected target.
+# Select with CANOPUS_TARGET; defaults to xiaomi-band-10-pro-3.101.030.
 #
 # Uses the real device platform (register /dev/canopus via the stock
 # register_driver, exactly like btpatch registers /dev/btpatch) so the
@@ -9,10 +9,25 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-TARGET_ID="xiaomi-band-10-pro-3.101.030"
+TARGET_ID=${CANOPUS_TARGET:-xiaomi-band-10-pro-3.101.030}
+case "$TARGET_ID" in
+    xiaomi-band-10-pro-3.101.030|xiaomi-band-10-pro-3.101.036)
+        MANAGER_BACKEND="manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
+        ;;
+    xiaomi-band-9-pro-3.1.175)
+        MANAGER_BACKEND="manager/target/lvgl_v8/canopus_manager_target_lvgl_v8.c"
+        ;;
+    *)
+        echo "error: unsupported supervisor target: $TARGET_ID" >&2
+        exit 2
+        ;;
+esac
+BACKEND_OBJECT=$(basename "$MANAGER_BACKEND" .c).o
+
 PACK_DIR="$ROOT/targets/$TARGET_ID"
 GENERATED="$PACK_DIR/generated/canopus_veneer.h"
-OUT="$ROOT/watchfaces/canopus-installer/build"
+TARGET_CONFIG="$PACK_DIR/generated/canopus_target_config.h"
+OUT="$ROOT/watchfaces/canopus-installer/build/$TARGET_ID"
 # Project module-size budget. The stock modlib allocates module text
 # dynamically (no 64 KiB cap in the load path); 65536 was a conservative
 # round budget. A 65040-byte supervisor has already loaded on-device, so
@@ -25,6 +40,14 @@ CC=${CC:-clang}
     echo "error: run 'canopus target generate-veneer $TARGET_ID' first"
     exit 1
 }
+[ -f "$TARGET_CONFIG" ] || {
+    echo "error: target lacks generated/canopus_target_config.h: $TARGET_ID"
+    exit 1
+}
+if ! grep -q '^#define CANOPUS_SUP_PLATFORM_COMPLETE 1$' "$TARGET_CONFIG"; then
+    echo "error: supervisor platform primitives are incomplete for $TARGET_ID" >&2
+    exit 2
+fi
 
 mkdir -p "$OUT"
 cd "$ROOT"
@@ -40,10 +63,10 @@ TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
 INC="-I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \
   -I$ROOT/manager/service -I$ROOT/manager/protocol -I$ROOT/manager/client \
-  -I$ROOT/manager/ui -I$ROOT/manager/package -I$ROOT/app-sdk/ui \
+  -I$ROOT/manager/ui -I$ROOT/manager/package -I$ROOT/manager/target \
+  -I$ROOT/manager/native-app -I$ROOT/app-sdk/ui \
   -I$ROOT/third_party/monocypher -I$ROOT/third_party/sha256 \
-  -I$PACK_DIR/generated \
-  -I$PACK_DIR/probe/native-manager"
+  -I$PACK_DIR/generated"
 
 # The v2 transport (CAN-P0-008) pulls the protocol codec and the snapshot
 # helpers into the module; both are freestanding (no libc).
@@ -58,10 +81,11 @@ for s in \
     manager/ui/canopus_manager_native.c \
     app-sdk/ui/canopus_ui.c \
     third_party/sha256/sha256.c \
-    targets/$TARGET_ID/probe/native-manager/canopus_manager_native_probe.c \
+    "$MANAGER_BACKEND" \
     runtime/control/canopus_control.c \
     runtime/lifecycle/canopus_lifecycle.c \
-    runtime/module/canopus_module.c; do
+    runtime/module/canopus_module.c \
+    runtime/resources/canopus_resource.c; do
     base=$(basename "$s")
     $CC $TARGET_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
 done
@@ -99,7 +123,7 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_ui.o" \
     "$OUT/monocypher-ed25519-min.o" \
     "$OUT/sha256.o" \
-    "$OUT/canopus_manager_native_probe.o" \
+    "$OUT/$BACKEND_OBJECT" \
     "$OUT/canopus_control.o" \
     "$OUT/canopus_lifecycle.o" \
     "$OUT/canopus_module.o" \
@@ -116,6 +140,9 @@ echo "[3/3] Canopus ELF verifier"
 "$ROOT/target/debug/canopus" verify "$OUT/canopus_supervisor.elf" \
     --target "$TARGET_ID" --targets-dir "$ROOT/targets"
 
-cp "$OUT/canopus_supervisor.elf" \
-    "$ROOT/watchfaces/canopus-installer/canopus_supervisor.bin"
-echo "staged canopus_supervisor.bin"
+TARGET_STAGE="$ROOT/watchfaces/canopus-installer/canopus_supervisor-$TARGET_ID.bin"
+INSTALLER_STAGE="$ROOT/watchfaces/canopus-installer/canopus_supervisor.bin"
+cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
+cp "$OUT/canopus_supervisor.elf" "$INSTALLER_STAGE"
+echo "staged $(basename "$TARGET_STAGE")"
+echo "staged canopus_supervisor.bin for $TARGET_ID"

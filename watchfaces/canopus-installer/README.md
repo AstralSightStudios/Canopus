@@ -1,7 +1,7 @@
 # Canopus installer watchface
 
-A Lua LVGL watchface that installs and manages Canopus modules on the
-xiaomi-band-10-pro-3.101.030, structured exactly like
+A Lua LVGL watchface that installs and manages Canopus modules on a selected
+exact Xiaomi Band target, structured like
 `firmware_latest/btpatch_phase5_watchface`: a native char-device module
 (`canopus_supervisor.bin`) driven by a Lua page over a fixed status/command
 ABI.
@@ -61,13 +61,22 @@ manager/service/
 ## Build
 
 ```sh
+# Default target: xiaomi-band-10-pro-3.101.030
 bash scripts/build_canopus_supervisor.sh
-# Optional: verify the exact-target Manager object in isolation.
-bash targets/xiaomi-band-10-pro-3.101.030/probe/native-manager/build.sh
+
+# Select another supported target explicitly.
+CANOPUS_TARGET=xiaomi-band-10-pro-3.101.036 \
+  bash scripts/build_canopus_supervisor.sh
 ```
 
-Requires `clang` (ARM target) and `ld.lld`, and `canopus target
-generate-veneer xiaomi-band-10-pro-3.101.030` to have run.
+Requires `clang` (ARM target), `ld.lld`, and a generated veneer for the selected
+pack. Outputs are written under `build/<target>/`, staged as
+`canopus_supervisor-<target>.bin`, and copied to the Lua installer path
+`canopus_supervisor.bin` for the target selected by that successful build. Do not
+package the generic file after building a different target; its embedded identity
+guard is intentionally exact-firmware. Band 9 remains blocked until its remaining
+supervisor modlib primitives are recovered; the build never falls back to Band 10
+addresses.
 
 ## Status ABI (`/dev/canopus`, read, 384 bytes)
 
@@ -127,8 +136,8 @@ generate-veneer xiaomi-band-10-pro-3.101.030` to have run.
    page switches. Enter and cancel a destructive-operation confirmation, then
    close/reopen it to exercise create/resume/pause/destroy. Preserve the Band
    log after any crash.
-8. Reboot before retrying INSTALL. Do not unload the probe during this first
-   lifecycle test; reboot is the reliable cleanup path.
+8. Reboot before retrying INSTALL. Do not unload the supervisor/Manager module
+   during this first lifecycle test; reboot is the reliable cleanup path.
 9. REFRESH/QUERY/SAFE MODE continue to exercise `/dev/canopus`; arbitrary
    third-party package install/update/remove remains behind its separate
    package/modlib gate.

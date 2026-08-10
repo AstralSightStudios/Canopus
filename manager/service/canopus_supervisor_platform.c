@@ -1,7 +1,7 @@
 /* canopus_supervisor_platform.c — real device platform.
  *
  * Registers /dev/canopus exactly the way btpatch registers /dev/btpatch:
- * stock `register_driver` (0x0C1A0D51) with a 12-word file_operations array
+ * stock `register_driver` selected by the target veneer, with a 12-word file_operations array
  * whose read side renders the 384-byte status ABI and whose write side
  * dispatches the 16-byte command ABI. This is the same managed symbol the
  * target pack exposes via the generated veneer (`canopus_fw_register_driver`).
@@ -12,7 +12,8 @@
  */
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
-#include "canopus_manager_native_probe.h"
+#include "canopus_manager_target.h"
+#include "canopus_target_config.h"
 #include "canopus_installer_bundle.h"
 #include "canopus_module_registration.h"
 #include "canopus_runtime.h"
@@ -28,18 +29,6 @@
 #define CANOPUS_SUP_NUTTX_O_RDONLY 1
 #define CANOPUS_SUP_NUTTX_O_WRONLY 2u
 #define CANOPUS_SUP_NUTTX_O_CREAT 0x4u
-#define CANOPUS_SUP_NUTTX_OPEN UINT32_C(0x0C1C15B1)
-#define CANOPUS_SUP_NUTTX_CLOSE UINT32_C(0x0C1AAB71)
-#define CANOPUS_SUP_NUTTX_READ UINT32_C(0x0C1C1E25)
-#define CANOPUS_SUP_NUTTX_ERRNO_LOCATION UINT32_C(0x0C1D5145)
-#define CANOPUS_SUP_NUTTX_WRITE UINT32_C(0x0C1C31C9)
-#define CANOPUS_SUP_NUTTX_RENAME UINT32_C(0x0C1C1E71)
-#define CANOPUS_SUP_NUTTX_UNLINK UINT32_C(0x0C1C2EDD)
-#define CANOPUS_SUP_INSMOD UINT32_C(0x0C1EE091)
-#define CANOPUS_SUP_RMMOD UINT32_C(0x0C1EE09D)
-#define CANOPUS_SUP_MODHANDLE UINT32_C(0x0C1EE0A9)
-#define CANOPUS_SUP_WATCHFACE_DELETE UINT32_C(0x0CA7D2E1)
-#define CANOPUS_SUP_TARGET_ID "xiaomi-band-10-pro-3.101.030"
 #define CANOPUS_SUP_DEVICE_MODE 438u /* 0666 */
 #define CANOPUS_SUP_FOPS_WORDS 12u   /* matches the stock file_operations table */
 /* Next-boot registry persistence (see canopus_supervisor.h for the format). */
@@ -106,16 +95,16 @@ static int sup_register_device(void *cookie)
     s_fops.close = (void *)(uintptr_t)&sup_control_close;
     s_fops.read = (void *)(uintptr_t)&sup_control_read;
     s_fops.write = (void *)(uintptr_t)&sup_control_write;
-    return canopus_fw_register_driver(CANOPUS_SUP_DEVICE_PATH,
-                                     (const void *)&s_fops,
-                                     CANOPUS_SUP_DEVICE_MODE,
-                                     (void *)0);
+    return CANOPUS_SUP_REGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH,
+                                        (const void *)&s_fops,
+                                        CANOPUS_SUP_DEVICE_MODE,
+                                        (void *)0);
 }
 
 static int sup_unregister_device(void *cookie)
 {
     (void)cookie;
-    return canopus_fw_unregister_driver(CANOPUS_SUP_DEVICE_PATH);
+    return CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
 }
 
 static const uint8_t s_installer_public_key[32] = {
@@ -125,12 +114,8 @@ static const uint8_t s_installer_public_key[32] = {
     0x28, 0xe9, 0x2a, 0x77, 0x72, 0x5d, 0xa5, 0x55,
 };
 
-static const uint8_t s_firmware_sha256[32] = {
-    0xf7, 0x01, 0xa8, 0x4f, 0xfc, 0xaf, 0xa6, 0x7f,
-    0x4d, 0x46, 0x03, 0xad, 0x8c, 0xd6, 0x6a, 0x11,
-    0xe5, 0x44, 0x2f, 0x27, 0x14, 0x0f, 0x5a, 0xf0,
-    0x98, 0x2e, 0x09, 0x75, 0xdc, 0xcd, 0x22, 0x5b,
-};
+static const uint8_t s_firmware_sha256[32] =
+    CANOPUS_SUP_FIRMWARE_SHA256_BYTES;
 
 static int sup_token_char(uint8_t c)
 {
@@ -633,6 +618,7 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
 }
 
 const struct canopus_sup_platform_v1 canopus_sup_platform = {
+    CANOPUS_SUP_TARGET_ID,
     sup_register_device,
     sup_unregister_device,
     sup_load_module,

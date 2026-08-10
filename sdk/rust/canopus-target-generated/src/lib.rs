@@ -43,6 +43,12 @@ mod layout_tests {
     use core::mem::{offset_of, size_of};
 
     #[test]
+    fn thumb_callable_normalizes_entry_and_callable_addresses() {
+        assert_eq!(canopus_thumb_callable(0x0C1C31C8), 0x0C1C31C9);
+        assert_eq!(canopus_thumb_callable(0x0C1C31C9), 0x0C1C31C9);
+    }
+
+    #[test]
     fn launcher_order_record_is_exact() {
         // 128-byte name @0, 4-byte gap, u32 flags @132, 4-byte tail => 140.
         assert_eq!(size_of::<launcher_order_record>(), 140);

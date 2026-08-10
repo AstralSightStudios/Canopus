@@ -81,60 +81,61 @@ pub type PairDisplayCallback =
     unsafe extern "C" fn(*mut core::ffi::c_void, *const u8, i32, i32, u32);
 pub type BondStateCallback = unsafe extern "C" fn(*mut core::ffi::c_void, *const u8, i32, i32);
 
-/// Recovered `adapter_get_instance` at 0x0CA286C8. Thumb 0x0CA286C9.
+/// Returns the firmware-owned shared Bluetooth adapter client.
 pub unsafe fn bt_adapter_get_instance() -> *mut core::ffi::c_void {
-    type F = extern "C" fn() -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0CA286C9usize) };
-    f()
+    unsafe { canopus_target_generated::canopus_fw_bt_adapter_get_instance() }
 }
 
 /// Registers a persistent 16-word callback table. Returns a nonzero
 /// registration handle on success, 0 on failure.
 pub unsafe fn bt_adapter_register(adapter: *mut core::ffi::c_void, callbacks: *const u32) -> u32 {
-    type F = extern "C" fn(*mut core::ffi::c_void, *const u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C398C25usize) };
-    f(adapter, callbacks) as u32
+    unsafe { canopus_target_generated::canopus_fw_bt_adapter_register(adapter, callbacks) as u32 }
 }
 
 /// Unregisters a callback registration. Returns 0 on failure, nonzero on
 /// success.
 pub unsafe fn bt_adapter_unregister(adapter: *mut core::ffi::c_void, registration: u32) -> i32 {
-    type F = extern "C" fn(*mut core::ffi::c_void, u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C398C8Dusize) };
-    f(adapter, registration)
+    unsafe { canopus_target_generated::canopus_fw_bt_adapter_unregister(adapter, registration) }
 }
 
-/// Recovered `adapter_get_state` at 0x0C398D30. Thumb 0x0C398D31.
 pub unsafe fn bt_adapter_get_state(adapter: *mut core::ffi::c_void) -> i32 {
-    type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C398D31usize) };
-    f(adapter)
+    unsafe { canopus_target_generated::canopus_fw_bt_adapter_get_state(adapter) }
 }
 
 /// Starts discovery. Returns 0 on success, negative errno otherwise.
 pub unsafe fn bt_discovery_start(adapter: *mut core::ffi::c_void, timeout: i32) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void, i32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C398D61usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C398D61usize,
+        ))
+    };
     f(adapter, timeout)
 }
 
 /// Stops discovery. Returns 0 on success, negative errno otherwise.
 pub unsafe fn bt_discovery_stop(adapter: *mut core::ffi::c_void) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C398D8Dusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C398D8Dusize,
+        ))
+    };
     f(adapter)
 }
 
 pub unsafe fn bt_adapter_set_scan_mode(scan_mode: i32, bondable: i32) -> i32 {
     type F = extern "C" fn(i32, i32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C39EFB9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C39EFB9usize,
+        ))
+    };
     f(scan_mode, bondable)
 }
 
 pub unsafe fn bt_adapter_get_scan_mode() -> i32 {
-    type F = extern "C" fn() -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C39F021usize) };
-    f()
+    unsafe { canopus_target_generated::canopus_fw_bt_adapter_get_scan_mode() }
 }
 
 /// Positive Pair Request reply. Returns 0 on success.
@@ -143,9 +144,7 @@ pub unsafe fn bt_pair_request_reply(
     address: *const u8,
     accept: i32,
 ) -> i32 {
-    type F = extern "C" fn(*mut core::ffi::c_void, *const u8, i32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C39988Dusize) };
-    f(adapter, address, accept)
+    unsafe { canopus_target_generated::canopus_fw_bt_pair_request_reply(adapter, address, accept) }
 }
 
 /// Pair Display (numeric comparison) reply. Returns 0 on success.
@@ -155,35 +154,47 @@ pub unsafe fn bt_pair_display_reply(
     transport: i32,
     accept: i32,
 ) -> i32 {
-    type F = extern "C" fn(*mut core::ffi::c_void, *const u8, i32, i32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C3998C9usize) };
-    f(adapter, address, transport, accept)
+    unsafe {
+        canopus_target_generated::canopus_fw_bt_pair_display_reply(
+            adapter, address, transport, accept,
+        )
+    }
 }
 
 /// Reads the adapter bond-state bitmask for `address`.
 pub unsafe fn bt_get_bond_state(address: *const u8) -> u32 {
     type F = extern "C" fn(*const u8) -> u32;
-    let f: F = unsafe { core::mem::transmute(0x0C39F371usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C39F371usize,
+        ))
+    };
     f(address)
 }
 
 /// Reads the exact device-record pairing state for `address` on `transport`.
 pub unsafe fn bt_get_pairing_state(address: *const u8, transport: u32) -> u32 {
-    type F = extern "C" fn(*const u8, u32) -> u32;
-    let f: F = unsafe { core::mem::transmute(0x0C39F9B1usize) };
-    f(address, transport)
+    unsafe { canopus_target_generated::canopus_fw_bt_get_pairing_state(address, transport) }
 }
 
 /// Submits a bond for `address` on `transport`. Returns 0 on success.
 pub unsafe fn bt_create_bond(address: *const u8, transport: u32) -> i32 {
     type F = extern "C" fn(*const u8, u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C3A01A9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3A01A9usize,
+        ))
+    };
     f(address, transport)
 }
 
 pub unsafe fn bt_remove_bond(address: *const u8, transport: u32) -> i32 {
     type F = extern "C" fn(*const u8, u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C3A028Dusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3A028Dusize,
+        ))
+    };
     f(address, transport)
 }
 
@@ -317,7 +328,11 @@ pub unsafe fn configure_avdtp_connect_request(request: *mut u8) {
 
 pub unsafe fn bt_buffer_new(payload_length: u16, headroom: u16) -> *mut StockBuffer {
     type F = extern "C" fn(u16, u16) -> *mut StockBuffer;
-    let f: F = unsafe { core::mem::transmute(0x0C7D294Dusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7D294Dusize,
+        ))
+    };
     f(payload_length, headroom)
 }
 
@@ -329,7 +344,11 @@ pub unsafe fn bt_buffer_new(payload_length: u16, headroom: u16) -> *mut StockBuf
 /// unrelated thread must first dispatch through [`bt_queue_external`].
 pub unsafe fn bt_l2cap_connect(request: *const core::ffi::c_void) -> u32 {
     type F = extern "C" fn(*const core::ffi::c_void) -> u32;
-    let f: F = unsafe { core::mem::transmute(0x0C7ED49Dusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7ED49Dusize,
+        ))
+    };
     f(request)
 }
 
@@ -337,7 +356,11 @@ pub unsafe fn bt_l2cap_connect(request: *const core::ffi::c_void) -> u32 {
 /// Bluetooth-owner callback; the wrapper only inserts owner-local work.
 pub unsafe fn bt_l2cap_disconnect(request: *const DisconnectRequest) -> i32 {
     type F = extern "C" fn(*const DisconnectRequest) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C7ED54Dusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7ED54Dusize,
+        ))
+    };
     f(request)
 }
 
@@ -345,19 +368,31 @@ pub unsafe fn bt_l2cap_disconnect(request: *const DisconnectRequest) -> i32 {
 /// active Bluetooth-owner callback; the wrapper only inserts owner-local work.
 pub unsafe fn bt_l2cap_submit_cid(buffer: *mut StockBuffer, private_cid: u16) -> i32 {
     type F = extern "C" fn(*mut StockBuffer, u16) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C7ED579usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7ED579usize,
+        ))
+    };
     f(buffer, private_cid)
 }
 
 pub unsafe fn bt_alloc(size: u32) -> *mut core::ffi::c_void {
     type F = extern "C" fn(u32) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C828455usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C828455usize,
+        ))
+    };
     f(size)
 }
 
 pub unsafe fn bt_free(allocation: *mut core::ffi::c_void) {
     type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C828461usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C828461usize,
+        ))
+    };
     f(allocation);
 }
 
@@ -383,14 +418,22 @@ pub unsafe fn bt_timer_add(
         *const u8,
         u32,
     ) -> u32;
-    let f: F = unsafe { core::mem::transmute(0x0C7D2C01usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7D2C01usize,
+        ))
+    };
     f(owner, delay_ms, event, run_callback, argument, tag, flags)
 }
 
 /// Cancels a timer; frees its argument.
 pub unsafe fn bt_timer_cancel(handle: *mut u32) -> i32 {
     type F = extern "C" fn(*mut u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C7D2CCDusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7D2CCDusize,
+        ))
+    };
     f(handle)
 }
 
@@ -418,7 +461,11 @@ pub unsafe fn bt_queue_external(
         *mut core::ffi::c_void,
         u8,
     ) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C7D335Dusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7D335Dusize,
+        ))
+    };
     f(owner, run, cancel, argument, event)
 }
 
@@ -624,7 +671,11 @@ pub unsafe fn sdp_builder_create(
     service_name: *const u8,
 ) -> *mut core::ffi::c_void {
     type F = extern "C" fn(u32, u16, u16, u8, *const u8) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C7F2015usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7F2015usize,
+        ))
+    };
     f(
         old_handle,
         service_uuid,
@@ -643,7 +694,11 @@ pub unsafe fn sdp_set_raw_attribute(
 ) -> *mut u8 {
     type F =
         extern "C" fn(*mut core::ffi::c_void, u16, u16, u16, *const core::ffi::c_void) -> *mut u8;
-    let f: F = unsafe { core::mem::transmute(0x0C7EFBD5usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7EFBD5usize,
+        ))
+    };
     f(
         builder,
         attribute_id,
@@ -655,13 +710,21 @@ pub unsafe fn sdp_set_raw_attribute(
 
 pub unsafe fn sdp_commit(builder: *mut core::ffi::c_void) -> u32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> u32;
-    let f: F = unsafe { core::mem::transmute(0x0C7EFFD9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7EFFD9usize,
+        ))
+    };
     f(builder)
 }
 
 pub unsafe fn sdp_unregister(handle: u32) -> i32 {
     type F = extern "C" fn(u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C7F20C5usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C7F20C5usize,
+        ))
+    };
     f(handle)
 }
 
@@ -671,7 +734,11 @@ pub unsafe fn sdp_unregister(handle: u32) -> i32 {
 
 pub unsafe fn app_lookup(app_id: u16) -> *mut core::ffi::c_void {
     type F = extern "C" fn(u16) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0CA50FD5usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0CA50FD5usize,
+        ))
+    };
     f(app_id)
 }
 
@@ -685,19 +752,31 @@ pub unsafe fn app_install(
         *const *mut firmware_page_descriptor,
         u32,
     ) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0CA519ADusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0CA519ADusize,
+        ))
+    };
     f(descriptor, pages, page_count)
 }
 
 pub unsafe fn launcher_add(app_id: u16) -> i32 {
     type F = extern "C" fn(u16) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C4F2BDDusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C4F2BDDusize,
+        ))
+    };
     f(app_id)
 }
 
 pub unsafe fn notification_insert(message: *const firmware_notification_message) -> i32 {
     type F = extern "C" fn(*const firmware_notification_message) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0CA81F11usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0CA81F11usize,
+        ))
+    };
     f(message)
 }
 
@@ -707,13 +786,21 @@ pub unsafe fn notification_insert(message: *const firmware_notification_message)
 
 pub unsafe fn activity_navigate(a: u32, b: u32, c: u32, d: u32) -> i32 {
     type F = extern "C" fn(u32, u32, u32, u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0CA539F9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0CA539F9usize,
+        ))
+    };
     f(a, b, c, d)
 }
 
 pub unsafe fn activity_finish(page: *mut firmware_page_descriptor) -> i32 {
     type F = extern "C" fn(*mut firmware_page_descriptor) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0CA53089usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0CA53089usize,
+        ))
+    };
     f(page)
 }
 
@@ -749,14 +836,22 @@ pub unsafe fn lvx_timer_create(
     user_data: *mut core::ffi::c_void,
 ) -> *mut core::ffi::c_void {
     type F = extern "C" fn(LvxTimerCallback, u32, *mut core::ffi::c_void) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C588759usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C588759usize,
+        ))
+    };
     f(callback, period_ms, user_data)
 }
 
 /// Deletes a page-owned LVGL timer. Must run on the UI owner thread.
 pub unsafe fn lvx_timer_delete(timer: *mut core::ffi::c_void) {
     type F = extern "C" fn(*mut core::ffi::c_void);
-    let f: F = unsafe { core::mem::transmute(0x0C587EF1usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C587EF1usize,
+        ))
+    };
     f(timer);
 }
 
@@ -768,7 +863,11 @@ pub unsafe fn lvx_list_row_create(
 ) -> *mut core::ffi::c_void {
     type F =
         extern "C" fn(*mut core::ffi::c_void, *const u8, *const u8, u8) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C52B235usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C52B235usize,
+        ))
+    };
     f(parent, primary, secondary, trailing)
 }
 
@@ -781,43 +880,71 @@ pub unsafe fn lvx_list_row_update(
     selected: u8,
 ) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void, *const u8, *const u8, *const u8, i32, u8) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C4A7BD1usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C4A7BD1usize,
+        ))
+    };
     f(row, a, primary, secondary, c, selected)
 }
 
 pub unsafe fn lvx_list_row_trailing(row: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C4A7F2Dusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C4A7F2Dusize,
+        ))
+    };
     f(row)
 }
 
 pub unsafe fn lvx_label_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C588339usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C588339usize,
+        ))
+    };
     f(parent)
 }
 
 pub unsafe fn lvx_label_set_text(label: *mut core::ffi::c_void, text: *const u8) {
     type F = extern "C" fn(*mut core::ffi::c_void, *const u8);
-    let f: F = unsafe { core::mem::transmute(0x0C588849usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C588849usize,
+        ))
+    };
     f(label, text);
 }
 
 pub unsafe fn lvx_content_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0CA4E8E9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0CA4E8E9usize,
+        ))
+    };
     f(parent)
 }
 
 pub unsafe fn lvx_object_set_size(object: *mut core::ffi::c_void, width: i32, height: i32) {
     type F = extern "C" fn(*mut core::ffi::c_void, i32, i32);
-    let f: F = unsafe { core::mem::transmute(0x0C587EF9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C587EF9usize,
+        ))
+    };
     f(object, width, height);
 }
 
 pub unsafe fn lvx_object_align(object: *mut core::ffi::c_void, align: u32, x: i32, y: i32) {
     type F = extern "C" fn(*mut core::ffi::c_void, u32, i32, i32);
-    let f: F = unsafe { core::mem::transmute(0x0C5880A9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C5880A9usize,
+        ))
+    };
     f(object, align, x, y);
 }
 
@@ -837,7 +964,11 @@ pub unsafe fn lvx_page_title_create(
         *const (),
         *mut core::ffi::c_void,
     ) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C4A9991usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C4A9991usize,
+        ))
+    };
     f(parent, title, mode, back_callback, back_context)
 }
 
@@ -851,7 +982,11 @@ pub unsafe fn lvx_style_apply(
     b: u32,
 ) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void, *const core::ffi::c_void, u32, u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C49EA99usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C49EA99usize,
+        ))
+    };
     f(object, style, a, b)
 }
 
@@ -862,25 +997,41 @@ pub unsafe fn lvx_event_add(
     cookie: *mut core::ffi::c_void,
 ) {
     type F = extern "C" fn(*mut core::ffi::c_void, LvxEventCallback, u32, *mut core::ffi::c_void);
-    let f: F = unsafe { core::mem::transmute(0x0C5882B9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C5882B9usize,
+        ))
+    };
     f(object, callback, code, cookie);
 }
 
 pub unsafe fn lvx_event_get_user_data(event: *mut core::ffi::c_void) -> usize {
     type F = extern "C" fn(*mut core::ffi::c_void) -> usize;
-    let f: F = unsafe { core::mem::transmute(0x0C588601usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C588601usize,
+        ))
+    };
     f(event)
 }
 
 pub unsafe fn lvx_event_get_code(event: *mut core::ffi::c_void) -> u32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> u32;
-    let f: F = unsafe { core::mem::transmute(0x0C5886D1usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C5886D1usize,
+        ))
+    };
     f(event)
 }
 
 pub unsafe fn lvx_set_hidden(object: *mut core::ffi::c_void, hidden: u32) {
     type F = extern "C" fn(*mut core::ffi::c_void, u32);
-    let f: F = unsafe { core::mem::transmute(0x0C588459usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C588459usize,
+        ))
+    };
     f(object, hidden);
 }
 
@@ -892,7 +1043,11 @@ pub unsafe fn lvx_align_to(
     y: i32,
 ) {
     type F = extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void, u32, i32, i32);
-    let f: F = unsafe { core::mem::transmute(0x0C588BE9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C588BE9usize,
+        ))
+    };
     f(object, target, align, x, y);
 }
 
@@ -905,25 +1060,41 @@ pub const O_RDWR: i32 = 3;
 
 pub unsafe fn nuttx_open(path: *const u8, flags: i32) -> i32 {
     type F = extern "C" fn(*const u8, i32, ...) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C1C15B1usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C1C15B1usize,
+        ))
+    };
     f(path, flags)
 }
 
 pub unsafe fn nuttx_close(fd: i32) -> i32 {
     type F = extern "C" fn(i32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C1AAB71usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C1AAB71usize,
+        ))
+    };
     f(fd)
 }
 
 pub unsafe fn nuttx_read(fd: i32, buffer: *mut core::ffi::c_void, count: u32) -> i32 {
     type F = extern "C" fn(i32, *mut core::ffi::c_void, u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C1C1E25usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C1C1E25usize,
+        ))
+    };
     f(fd, buffer, count)
 }
 
 pub unsafe fn nuttx_write(fd: i32, buffer: *const core::ffi::c_void, count: u32) -> i32 {
     type F = extern "C" fn(i32, *const core::ffi::c_void, u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C1C31C9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C1C31C9usize,
+        ))
+    };
     f(fd, buffer, count)
 }
 

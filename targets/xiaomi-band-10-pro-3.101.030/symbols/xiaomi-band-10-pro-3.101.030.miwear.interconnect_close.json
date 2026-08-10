@@ -19,7 +19,7 @@
     "return_value": "0_on_acceptance_else_negative_errno"
   },
   "side_effects": [
-    "queues_one_message_to_named_connection_or_broadcast"
+    "schedules_connection_shutdown_and_detaches_transport_state"
   ],
   "proof": {
     "static": "recovered",

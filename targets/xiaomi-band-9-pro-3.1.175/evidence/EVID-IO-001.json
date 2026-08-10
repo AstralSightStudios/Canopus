@@ -2,64 +2,52 @@
   "schema": 1,
   "evidence_id": "EVID-IO-001",
   "target_id": "xiaomi-band-9-pro-3.1.175",
-  "question": "Which current-process NuttX fd wrappers can the native Manager use for /dev/canopus without bypassing the versioned transport?",
+  "question": "Which exact Band-9 NuttX fd and filesystem wrappers can the supervisor and native Manager use?",
   "candidate_symbols": [
-    "xiaomi-band-10-pro-3.101.030.nuttx.open",
-    "xiaomi-band-10-pro-3.101.030.nuttx.close",
-    "xiaomi-band-10-pro-3.101.030.nuttx.read",
-    "xiaomi-band-10-pro-3.101.030.nuttx.write",
-    "xiaomi-band-10-pro-3.101.030.nuttx.rename",
-    "xiaomi-band-10-pro-3.101.030.nuttx.unlink",
-    "xiaomi-band-10-pro-3.101.030.nuttx.errno_location"
+    "xiaomi-band-9-pro-3.1.175.nuttx.open",
+    "xiaomi-band-9-pro-3.1.175.nuttx.close",
+    "xiaomi-band-9-pro-3.1.175.nuttx.read",
+    "xiaomi-band-9-pro-3.1.175.nuttx.write",
+    "xiaomi-band-9-pro-3.1.175.nuttx.rename",
+    "xiaomi-band-9-pro-3.1.175.nuttx.unlink",
+    "xiaomi-band-9-pro-3.1.175.nuttx.errno_location"
   ],
   "prototype_hypothesis": "open(path, flags, ...)->fd; close(fd)->0; read(fd, buffer, count)->bytes; write(fd, buffer, count)->bytes; rename(oldpath, newpath)->0 or -1; unlink(path)->0 or -1; errno_location()->int *",
   "callsite_evidence": [
-    "sub_C1ED1C8 calls sub_C1C15B0('/dev/console', 3), treats a nonnegative return as an fd, and closes a positive fd through sub_C1AAB70",
-    "sub_C1C1E24 resolves the current process fd with sub_C1AA4F0, dispatches through sub_C1C1D24, releases the file reference, and exposes libc-style -1/error behavior",
-    "sub_C1C31C8 resolves the current process fd with sub_C1AA4F0, dispatches through sub_C1C30C8, releases the file reference, and is referenced by hundreds of firmware callsites",
-    "sub_C1C30C8 validates write access and invokes the file_operations slot at +0x0c; sub_C1C1D24 is the corresponding read path through +0x08",
-    "sub_C1AAB70 validates the current process fd table entry, drops references, and reaches the recovered file_close path",
-    "sub_C1C1E70 is the NuttX VFS rename wrapper: it validates both nonempty paths, resolves source/destination VFS nodes, and transfers the source node through the destination filesystem rename operation",
-    "sub_C1C2EDC is the NuttX VFS unlink wrapper: it validates one path, resolves its VFS node, dispatches the filesystem unlink operation, and returns 0 or a negative errno",
-    "sub_C1D5144 returns the current errno storage; public read/open wrappers call it after a negative VFS result and write the positive errno through the returned pointer"
+    "Band-9 sub_C37F760/sub_C37EFF8/sub_C37F9EA/sub_C380106 are the recovered current-process open/close/read/write wrappers.",
+    "Band-9 sub_C37FA24 validates both path arguments, resolves VFS nodes, dispatches filesystem rename, and translates a negative internal result to positive errno plus -1.",
+    "Band-9 sub_C3800E8 is the public POSIX unlink wrapper over internal VFS unlink sub_C37D14C; it translates a negative internal result to positive errno plus -1.",
+    "Band-9 sub_C0E4B6C resolves current task storage at +0x14 and falls back to global errno storage 0x200B8558 when no task exists."
   ],
   "control_flow_evidence": [
-    "All four wrappers resolve state through the current process file table, so calling them from the Manager page preserves /dev/canopus process-local fd semantics",
-    "The Manager client continues to enforce one whole CPC2 record per write/read and validates echoed request ID and opcode",
-    "No direct supervisor state pointer or fops callback is exposed to portable Manager code"
+    "The supervisor uses the POSIX wrappers rather than invoking filesystem operation tables directly.",
+    "The Manager client continues to enforce complete CPC2 request and response records and validates request ID and opcode.",
+    "No Band-10 address is used by the Band-9 target configuration."
   ],
-  "ownership_analysis": "The fd is owned by the exact-target Manager page instance. It opens during page create, remains live while callbacks can dispatch, and closes before target-private state is cleared on page destroy.",
+  "ownership_analysis": "Paths and I/O buffers remain caller-owned for each synchronous call. errno_location returns borrowed firmware task-local storage.",
   "unsafe_assumptions": [
-    "The wrappers have not yet been device-probed specifically against /dev/canopus",
-    "Flags value 3 is inferred from the stock /dev/console O_RDWR callsite",
-    "Blocking/no-data behavior is not yet characterized because current Manager operations use synchronous request/response records"
+    "The exact wrappers are statically recovered but still require device probing against the Band-9 /dev/canopus lifecycle.",
+    "Flags value 3 for O_RDWR follows existing Band-9 stock callsite analysis.",
+    "Blocking/no-data behavior has not been stress-tested on device."
   ],
-  "recommended_probe": "Open the Manager repeatedly, issue QUERY_DEVICE and ENTER_SAFE_MODE over CPC2, verify exact byte counts and echoed request IDs, close the page, and repeat at least 100 times while checking fd/resource stability.",
+  "recommended_probe": "Open the Manager repeatedly, issue QUERY_DEVICE and installation operations over CPC2, verify exact byte counts and errno behavior, close the page, and repeat while checking fd/resource stability.",
   "reviewers": [
     "canopus-maintainer"
   ],
   "verdict": "STATIC_RECOVERED",
-  "created": "2026-08-06T00:00:00Z",
+  "created": "2026-08-10T00:00:00Z",
   "artifacts": [
     {
-      "uri": "ida://vela_ap.bin.i64 sub_C1C15B0",
-      "role": "open wrapper"
+      "uri": "ida:///private/tmp/band9-media-3.1.175.i64#sub_C37FA24",
+      "role": "Band-9 POSIX rename wrapper"
     },
     {
-      "uri": "ida://vela_ap.bin.i64 sub_C1AAB70",
-      "role": "close wrapper"
+      "uri": "ida:///private/tmp/band9-media-3.1.175.i64#sub_C3800E8",
+      "role": "Band-9 POSIX unlink wrapper"
     },
     {
-      "uri": "ida://vela_ap.bin.i64 sub_C1C1E24",
-      "role": "read wrapper"
-    },
-    {
-      "uri": "ida://vela_ap.bin.i64 sub_C1C31C8",
-      "role": "write wrapper"
-    },
-    {
-      "uri": "ida://vela_ap.bin.i64 sub_C1ED1C8",
-      "role": "stock /dev/console caller"
+      "uri": "ida:///private/tmp/band9-media-3.1.175.i64#sub_C0E4B6C",
+      "role": "Band-9 errno location"
     }
   ]
 }

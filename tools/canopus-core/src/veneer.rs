@@ -63,11 +63,16 @@ pub(crate) fn parse_proto(p: &str) -> Option<(String, Vec<String>)> {
         return None;
     }
     let ret = p[..open].trim().to_string();
-    let args: Vec<String> = p[open + 1..close]
+    let mut args: Vec<String> = p[open + 1..close]
         .split(',')
         .map(|s| strip_param_name(s.trim()))
         .filter(|s| !s.is_empty())
         .collect();
+    // In a C prototype, a sole `void` means no parameters. It is not a unit
+    // value argument and must not become `a0: ()` in generated Rust.
+    if args.len() == 1 && args[0] == "void" {
+        args.clear();
+    }
     Some((ret, args))
 }
 
@@ -89,7 +94,7 @@ fn strip_param_name(arg: &str) -> String {
     // pointers). Strip the trailing identifier and verify the remainder still
     // looks like a type. A bare scalar with no name (`uint32_t`, `int`) is
     // left untouched because its "identifier" occupies the whole string.
-    if let Some((name_start, name)) = last_identifier(arg) {
+    if let Some((name_start, _name)) = last_identifier(arg) {
         let ty = arg[..name_start].trim();
         if is_plausible_c_type(ty) {
             return ty.to_string();
@@ -116,7 +121,11 @@ fn last_identifier(arg: &str) -> Option<(usize, &str)> {
     // Must be preceded by a non-identifier boundary (whitespace or `*`), and
     // there must be a type prefix before it — a bare scalar (`uint32_t`) has
     // its whole string as the identifier with no prefix, so it is left alone.
-    let before = if start == 0 { None } else { Some(bytes[start - 1]) };
+    let before = if start == 0 {
+        None
+    } else {
+        Some(bytes[start - 1])
+    };
     if start == 0 || !matches!(before, Some(b' ') | Some(b'*')) {
         return None;
     }
@@ -134,9 +143,20 @@ fn is_plausible_c_type(ty: &str) -> bool {
         || ty.contains('[')
         || matches!(
             ty,
-            "int" | "int8_t" | "int16_t" | "int32_t" | "int64_t"
-                | "uint8_t" | "uint16_t" | "uint32_t" | "uint64_t"
-                | "char" | "float" | "double" | "size_t" | "mode_t"
+            "int"
+                | "int8_t"
+                | "int16_t"
+                | "int32_t"
+                | "int64_t"
+                | "uint8_t"
+                | "uint16_t"
+                | "uint32_t"
+                | "uint64_t"
+                | "char"
+                | "float"
+                | "double"
+                | "size_t"
+                | "mode_t"
                 | "void"
         )
         || ty.starts_with("const ")
@@ -215,9 +235,11 @@ impl<'a> VeneerGen<'a> {
                 )
             })
             .collect();
-        records.extend(self.types.iter().map(|t| {
-            format!("type:{}:{}:{}", t.type_id, t.kind, t.size)
-        }));
+        records.extend(
+            self.types
+                .iter()
+                .map(|t| format!("type:{}:{}:{}", t.type_id, t.kind, t.size)),
+        );
         records.sort();
         let mut h = DefaultHasher::new();
         records.hash(&mut h);
@@ -267,6 +289,13 @@ impl<'a> VeneerGen<'a> {
         out.push_str("/* Explicit padding reproduces the exact recovered byte layout\n");
         out.push_str(" * even when fields are sparse (e.g. launcher_order_record). */\n");
         for t in self.types {
+            if t.kind == "struct" || t.kind == "union" {
+                let kw = if t.kind == "union" { "union" } else { "struct" };
+                let name = t.name.clone().unwrap_or_else(|| t.type_id.clone());
+                out.push_str(&format!("typedef {kw} {name} {name};\n"));
+            }
+        }
+        for t in self.types {
             if t.kind == "typedef" {
                 if let Some(proto) = &t.prototype {
                     if let Some((ret, args)) = parse_proto(proto) {
@@ -294,10 +323,7 @@ impl<'a> VeneerGen<'a> {
                         } else {
                             arg_c.join(", ")
                         };
-                        out.push_str(&format!(
-                            "typedef {} (*{})({});\n",
-                            ret_t, name, arg_list
-                        ));
+                        out.push_str(&format!("typedef {} (*{})({});\n", ret_t, name, arg_list));
                     }
                 }
                 continue;
@@ -307,7 +333,8 @@ impl<'a> VeneerGen<'a> {
             }
             let kw = if t.kind == "union" { "union" } else { "struct" };
             let total = t.size;
-            out.push_str(&format!("typedef {kw} {{\n"));
+            let name = t.name.clone().unwrap_or_else(|| t.type_id.clone());
+            out.push_str(&format!("{kw} {name} {{\n"));
             let mut cursor = 0u64;
             let mut fields = t.fields.clone().unwrap_or_default();
             fields.sort_by_key(|f| f.offset);
@@ -344,8 +371,7 @@ impl<'a> VeneerGen<'a> {
             if total > cursor {
                 out.push_str(&format!("    uint8_t _tail[{}];\n", total - cursor));
             }
-            let name = t.name.clone().unwrap_or_else(|| t.type_id.clone());
-            out.push_str(&format!("}} {};\n", name));
+            out.push_str("};\n");
         }
         out.push('\n');
     }
@@ -443,7 +469,8 @@ impl<'a> VeneerGen<'a> {
                 // A fixed firmware data address, emitted as a constant so C
                 // modules can read the slot (e.g. the connection-framework
                 // loop handle) through the same generated surface.
-                if s.status == "FORBIDDEN" || s.status == "WITHDRAWN"
+                if s.status == "FORBIDDEN"
+                    || s.status == "WITHDRAWN"
                     || s.policy == "restricted"
                     || !s.approved_for_codegen()
                 {
@@ -456,7 +483,9 @@ impl<'a> VeneerGen<'a> {
                     if t.is_empty() || t == "void" {
                         t = "void *";
                     }
-                    let ctype = self.resolve_c_type(t).unwrap_or_else(|| "void *".to_string());
+                    let ctype = self
+                        .resolve_c_type(t)
+                        .unwrap_or_else(|| "void *".to_string());
                     out.push_str(&format!(
                         "/* Recovered global `{name}` at {addr}. */\n#define canopus_fw_{name} (({ctype})(uintptr_t){addr}u)\n\n"
                     ));
@@ -479,11 +508,7 @@ impl<'a> VeneerGen<'a> {
                     "/* {}: not APPROVED (approval_state={}, evidence={}) - no veneer */\n",
                     s.name,
                     s.approval_state.as_deref().unwrap_or("PENDING"),
-                    s.proof
-                        .evidence_ids
-                        .as_ref()
-                        .map(|e| e.len())
-                        .unwrap_or(0)
+                    s.proof.evidence_ids.as_ref().map(|e| e.len()).unwrap_or(0)
                 ));
                 continue;
             }

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.nuttx.rename",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "rename",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C37FA24",
+  "callable_address": "0x0C37FA25",
+  "prototype": "int32(const char *, const char *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "calling_thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-IO-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-IO-001"
+    ],
+    "source": "IDA sub_C37FA24; validates both paths, resolves VFS nodes, dispatches filesystem rename, and translates negative internal errors to POSIX errno/-1."
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int32(const char *, const char *)",
+    "ownership": "borrowed paths for synchronous call",
+    "thread": "calling thread",
+    "device_probe": "pending"
+  },
+  "notes": "Band-9 POSIX rename wrapper. This is not the Band-10 address."
+}

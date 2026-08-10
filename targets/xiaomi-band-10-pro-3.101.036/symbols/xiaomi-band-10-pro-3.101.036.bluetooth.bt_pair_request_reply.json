@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.bluetooth.bt_pair_request_reply",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "bt_pair_request_reply",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C39989C",
+  "callable_address": "0x0C39989D",
+  "prototype": "int32(void *, const uint8_t *, int32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_module_bluetooth_client"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-BT-ADAPTER-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-BT-ADAPTER-001"
+    ],
+    "source": "Exact-target IDA function entry and recovered Bluetooth client caller ABI. Three-argument pairing-request reply entry."
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-11",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int32(void *, const uint8_t *, int32_t)",
+    "ownership": "borrowed firmware object/address arguments",
+    "thread": "Bluetooth client context",
+    "device_probe": "pending after regenerated module"
+  },
+  "notes": "Three-argument pairing-request reply entry."
+}

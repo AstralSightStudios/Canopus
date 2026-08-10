@@ -25,13 +25,27 @@
     "fields +24/+36/+40/+52..+71/+81..+87 remain only partially interpreted"
   ],
   "recommended_probe": "Device probe passed with title 'Canopus', body 'Canpous Loaded! Just ENJOY~', and +28/+32 both pointing to persistent /data/canopus/manager_loaded.png. Keep the first-frame PNG staged before insertion; do not restore the unsupported animated GIF path.",
-  "reviewers": ["canopus-maintainer"],
+  "reviewers": [
+    "canopus-maintainer"
+  ],
   "verdict": "DEVICE_PROVEN",
   "created": "2026-08-06T00:00:00Z",
   "artifacts": [
-    { "uri": "ida://vela_ap.bin.i64 sub_CA81F10", "role": "notification insertion decompile" },
-    { "uri": "ida://vela_ap.bin.i64 sub_CA81500", "role": "88-byte clone and string ownership" },
-    { "uri": "ida://vela_ap.bin.i64 sub_C4B28AC", "role": "complete activity notification builder callsite" },
-    { "uri": "targets/xiaomi-band-10-pro-3.101.030/probe/native-manager/canopus_manager_native_probe.c", "role": "zero-import resident device probe" }
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA81F10",
+      "role": "notification insertion decompile"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_CA81500",
+      "role": "88-byte clone and string ownership"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4B28AC",
+      "role": "complete activity notification builder callsite"
+    },
+    {
+      "uri": "manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c",
+      "role": "zero-import resident target backend"
+    }
   ]
 }

@@ -43,13 +43,20 @@ fn map_rust_type(t: &str) -> Option<String> {
         "const char *" => Some("*const u8".into()),
         "const void *" => Some("*const core::ffi::c_void".into()),
         "void *" => Some("*mut core::ffi::c_void".into()),
-        // Typed pointers to recovered layouts (e.g. "stock_timespec_t *").
+        // Typed pointers use the recursively mapped Rust spelling of their
+        // pointee, so standard C primitives never leak into generated Rust
+        // (`int *` becomes `*const i32`, not the invalid `*const int`).
         other => {
             if let Some(inner) = other.strip_suffix(" *") {
+                let inner = inner.strip_prefix("const ").unwrap_or(inner);
                 if inner.contains('*') {
                     return None; // nested pointers not yet expressible
                 }
-                return Some(format!("*const {inner}"));
+                let mapped = map_rust_type(inner)?;
+                if mapped.starts_with('*') || mapped == "()" {
+                    return None;
+                }
+                return Some(format!("*const {mapped}"));
             }
             if other.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
                 // A bare struct name by value.
@@ -116,9 +123,11 @@ impl<'a> RustGen<'a> {
                 )
             })
             .collect();
-        records.extend(self.types.iter().map(|t| {
-            format!("type:{}:{}:{}", t.type_id, t.kind, t.size)
-        }));
+        records.extend(
+            self.types
+                .iter()
+                .map(|t| format!("type:{}:{}:{}", t.type_id, t.kind, t.size)),
+        );
         records.sort();
         let mut h = DefaultHasher::new();
         records.hash(&mut h);
@@ -142,6 +151,17 @@ impl<'a> RustGen<'a> {
         out.push_str("// All firmware calls are `unsafe`; safe wrappers exist only\n");
         out.push_str("// where the ABI and ownership have been proven (architecture §12.1).\n");
         out.push('\n');
+        out.push_str(
+            "/// Converts a recovered Thumb entry or callable address into the only valid\n",
+        );
+        out.push_str(
+            "/// indirect-call address. Target-private ABI adapters must use this instead\n",
+        );
+        out.push_str("/// of transmuting raw firmware addresses directly.\n");
+        out.push_str("#[inline(always)]\n");
+        out.push_str("pub const fn canopus_thumb_callable(entry_or_callable: usize) -> usize {\n");
+        out.push_str("    entry_or_callable | 1usize\n");
+        out.push_str("}\n\n");
 
         self.emit_types(&mut out);
         self.emit_identity(&mut out);
@@ -303,9 +323,7 @@ impl<'a> RustGen<'a> {
         // before the primitive fallback so the `const` qualifier is dropped
         // (map_rust_type's suffix fallback would otherwise emit `*const const
         // X`, which is not valid Rust).
-        if let Some((leading_const, inner, suffix)) =
-            crate::veneer::pointer_chain(t)
-        {
+        if let Some((leading_const, inner, suffix)) = crate::veneer::pointer_chain(t) {
             if self.type_names().contains(&inner) {
                 let _ = leading_const;
                 // `X *` -> `*const X`; `X *const *` -> `*const *const X`
@@ -433,7 +451,7 @@ impl<'a> RustGen<'a> {
                 "#[allow(non_snake_case)]\n#[allow(clippy::missing_safety_doc)]\npub unsafe fn {fn_name}({param_list}) -> {ret_t} {{\n"
             ));
             out.push_str(&format!(
-                "    let f: {fn_ty} = unsafe {{ core::mem::transmute({callable}usize) }};\n"
+                "    let f: {fn_ty} = unsafe {{ core::mem::transmute(canopus_thumb_callable({callable}usize)) }};\n"
             ));
             if ret_t == "()" {
                 out.push_str(&format!("    f({call_args});\n"));
@@ -476,5 +494,25 @@ impl<'a> RustGen<'a> {
             }
             out.push('\n');
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::map_rust_type;
+    use crate::veneer::parse_proto;
+
+    #[test]
+    fn c_void_parameter_list_is_empty() {
+        let (return_type, args) = parse_proto("int *(void)").unwrap();
+        assert_eq!(return_type, "int *");
+        assert!(args.is_empty());
+    }
+
+    #[test]
+    fn primitive_c_pointers_use_rust_pointee_types() {
+        assert_eq!(map_rust_type("int *").as_deref(), Some("*const i32"));
+        assert_eq!(map_rust_type("int32_t *").as_deref(), Some("*const i32"));
+        assert_eq!(map_rust_type("uint32_t *").as_deref(), Some("*const u32"));
     }
 }

@@ -13,6 +13,8 @@
 //! `unsafe`; the module is responsible for state, ownership, and lifecycle
 //! discipline.
 
+use core::sync::atomic::{AtomicUsize, Ordering};
+
 pub const TARGET_ID: &str = "xiaomi-band-9-pro-3.1.175";
 
 pub use canopus_target_generated::{
@@ -177,32 +179,46 @@ pub unsafe fn quickapp_register_app(app_id: u16, info: *const QuickAppInfo) -> i
 // Zephyr-style bt_* adapter API. These bindings match the band-9 signatures
 // (explicit btm handle instead of an adapter object). Modules must adapt.
 
-/// Discovery result header; a NUL-terminated name follows immediately after.
+/// Band-9 Bluelet discovery payload (`bt_device_t`, 240-byte fixed prefix).
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone)]
 pub struct DiscoveryResult {
     pub address: [u8; 6],
-    pub rssi: i8,
+    pub address_type: u8,
     pub reserved: u8,
+    pub name: [u8; 64],
+    pub rssi: i32,
     pub class_of_device: u32,
+    pub service_uuids: [u8; 160],
 }
 
-/// Reads the bounded, NUL-terminated name trailing a discovery-result header.
+const _: [(); 240] = [(); core::mem::size_of::<DiscoveryResult>()];
+
+impl Default for DiscoveryResult {
+    fn default() -> Self {
+        Self {
+            address: [0; 6],
+            address_type: 0,
+            reserved: 0,
+            name: [0; 64],
+            rssi: 0,
+            class_of_device: 0,
+            service_uuids: [0; 160],
+        }
+    }
+}
+
+/// Reads the bounded, NUL-terminated name embedded in a discovery payload.
 ///
 /// # Safety
-/// `result` must point at a firmware-owned discovery payload with at least
-/// `capacity` readable bytes (header included).
-pub unsafe fn discovery_name<'a>(result: *const DiscoveryResult, capacity: usize) -> &'a [u8] {
-    let header = core::mem::size_of::<DiscoveryResult>();
-    if result.is_null() || capacity < header {
+/// `result` must point at a readable firmware-owned [`DiscoveryResult`].
+pub unsafe fn discovery_name<'a>(result: *const DiscoveryResult, _capacity: usize) -> &'a [u8] {
+    if result.is_null() {
         return &[];
     }
-    let name = unsafe { (result.cast::<u8>()).add(header) };
+    let name = unsafe { core::ptr::addr_of!((*result).name).cast::<u8>() };
     let mut length = 0usize;
-    while length < capacity - header {
-        if unsafe { *name.add(length) } == 0 {
-            break;
-        }
+    while length < 64 && unsafe { *name.add(length) } != 0 {
         length += 1;
     }
     unsafe { core::slice::from_raw_parts(name, length) }
@@ -219,11 +235,171 @@ pub const CLASSIC_TRANSPORT: u32 = 1;
 pub const DISCOVERY_TIMEOUT_SECONDS: i32 = 20;
 pub const CREATE_BOND_ADAPTER_NOT_READY: i32 = 2;
 
-/// Gets the btm_gap singleton handle.
+static B9_GAP_HANDLE: AtomicUsize = AtomicUsize::new(0);
+static B9_MODULE_CALLBACKS: AtomicUsize = AtomicUsize::new(0);
+
+unsafe extern "C" fn b9_device_found_bridge(
+    _handle: *mut core::ffi::c_void,
+    device: *const DiscoveryResult,
+) {
+    let callbacks = B9_MODULE_CALLBACKS.load(Ordering::Acquire) as *const u32;
+    if callbacks.is_null() {
+        return;
+    }
+    let address = unsafe { *callbacks.add(CALLBACK_DISCOVERY_RESULT) };
+    if address != 0 {
+        let callback: DiscoveryResultCallback = unsafe { core::mem::transmute(address as usize) };
+        unsafe { callback(core::ptr::null_mut(), device) };
+    }
+}
+
+unsafe extern "C" fn b9_discovery_state_bridge(_handle: *mut core::ffi::c_void, state: i32) {
+    let callbacks = B9_MODULE_CALLBACKS.load(Ordering::Acquire) as *const u32;
+    if callbacks.is_null() {
+        return;
+    }
+    let address = unsafe { *callbacks.add(CALLBACK_DISCOVERY_STATE) };
+    if address != 0 {
+        let callback: DiscoveryStateCallback = unsafe { core::mem::transmute(address as usize) };
+        unsafe { callback(core::ptr::null_mut(), state) };
+    }
+}
+
+unsafe extern "C" fn b9_pair_request_bridge(
+    _handle: *mut core::ffi::c_void,
+    address: *const u8,
+    _local_initiated: i32,
+    _bondable: i32,
+) {
+    let callbacks = B9_MODULE_CALLBACKS.load(Ordering::Acquire) as *const u32;
+    if callbacks.is_null() {
+        return;
+    }
+    let entry = unsafe { *callbacks.add(CALLBACK_PAIR_REQUEST) };
+    if entry != 0 {
+        let callback: PairRequestCallback = unsafe { core::mem::transmute(entry as usize) };
+        unsafe { callback(core::ptr::null_mut(), address) };
+    }
+}
+
+unsafe extern "C" fn b9_pair_display_bridge(_handle: *mut core::ffi::c_void, request: *const u8) {
+    if request.is_null() {
+        return;
+    }
+    let callbacks = B9_MODULE_CALLBACKS.load(Ordering::Acquire) as *const u32;
+    if callbacks.is_null() {
+        return;
+    }
+    let entry = unsafe { *callbacks.add(CALLBACK_PAIR_DISPLAY) };
+    if entry != 0 {
+        let callback: PairDisplayCallback = unsafe { core::mem::transmute(entry as usize) };
+        let passkey = unsafe { core::ptr::read_unaligned(request.add(8).cast::<u32>()) };
+        let kind = unsafe { *request.add(12) } as i32;
+        unsafe {
+            callback(
+                core::ptr::null_mut(),
+                request,
+                CLASSIC_TRANSPORT as i32,
+                kind,
+                passkey,
+            )
+        };
+    }
+}
+
+unsafe extern "C" fn b9_bond_state_bridge(
+    _handle: *mut core::ffi::c_void,
+    address: *const u8,
+    state: i32,
+) {
+    let callbacks = B9_MODULE_CALLBACKS.load(Ordering::Acquire) as *const u32;
+    if callbacks.is_null() {
+        return;
+    }
+    let entry = unsafe { *callbacks.add(CALLBACK_BOND_STATE) };
+    if entry != 0 {
+        let callback: BondStateCallback = unsafe { core::mem::transmute(entry as usize) };
+        unsafe {
+            callback(
+                core::ptr::null_mut(),
+                address,
+                CLASSIC_TRANSPORT as i32,
+                state,
+            )
+        };
+    }
+}
+
+#[repr(C)]
+struct B9GapCallbacks {
+    reserved_00: usize,
+    reserved_04: usize,
+    device_found: unsafe extern "C" fn(*mut core::ffi::c_void, *const DiscoveryResult),
+    reserved_0c: usize,
+    discovery_state: unsafe extern "C" fn(*mut core::ffi::c_void, i32),
+    pair_display: unsafe extern "C" fn(*mut core::ffi::c_void, *const u8),
+    bond_state: unsafe extern "C" fn(*mut core::ffi::c_void, *const u8, i32),
+    reserved_1c_38: [usize; 8],
+    pair_request: unsafe extern "C" fn(*mut core::ffi::c_void, *const u8, i32, i32),
+}
+
+const _: [(); 16] = [(); core::mem::size_of::<B9GapCallbacks>() / core::mem::size_of::<usize>()];
+
+static B9_GAP_CALLBACKS: B9GapCallbacks = B9GapCallbacks {
+    reserved_00: 0,
+    reserved_04: 0,
+    device_found: b9_device_found_bridge,
+    reserved_0c: 0,
+    discovery_state: b9_discovery_state_bridge,
+    pair_display: b9_pair_display_bridge,
+    bond_state: b9_bond_state_bridge,
+    reserved_1c_38: [0; 8],
+    pair_request: b9_pair_request_bridge,
+};
+
+/// Creates one Bluelet btm_gap client backed by the stock manager singleton.
 pub unsafe fn bt_adapter_get_instance() -> *mut core::ffi::c_void {
-    type F = extern "C" fn() -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C3BCAA9usize) };
-    f()
+    let current = B9_GAP_HANDLE.load(Ordering::Acquire);
+    if current != 0 {
+        return current as *mut core::ffi::c_void;
+    }
+    type Factory = extern "C" fn() -> *mut core::ffi::c_void;
+    type Create = extern "C" fn(
+        *mut core::ffi::c_void,
+        *mut *mut core::ffi::c_void,
+        *const B9GapCallbacks,
+    ) -> i32;
+    let factory: Factory = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3BCAA9usize,
+        ))
+    };
+    let create: Create = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3BC1FDusize,
+        ))
+    };
+    let manager = factory();
+    if manager.is_null() {
+        return core::ptr::null_mut();
+    }
+    let mut handle = core::ptr::null_mut();
+    if create(manager, &mut handle, &B9_GAP_CALLBACKS) != 0 || handle.is_null() {
+        return core::ptr::null_mut();
+    }
+    match B9_GAP_HANDLE.compare_exchange(0, handle as usize, Ordering::AcqRel, Ordering::Acquire) {
+        Ok(_) => handle,
+        Err(existing) => {
+            type Cleanup = extern "C" fn(*mut core::ffi::c_void) -> i32;
+            let cleanup: Cleanup = unsafe {
+                core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+                    0x0C3BFA41usize,
+                ))
+            };
+            let _ = cleanup(handle);
+            existing as *mut core::ffi::c_void
+        }
+    }
 }
 
 /// btm_create_bond (`sub_C3BFDE0`, btm_gap). Resolves the btm_gap GAP
@@ -233,7 +409,11 @@ pub unsafe fn btm_create_bond(
     address: *mut core::ffi::c_void,
 ) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C3BFDE1usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3BFDE1usize,
+        ))
+    };
     f(handle, address)
 }
 
@@ -250,7 +430,11 @@ pub unsafe fn btm_remove_bond(
     address: *mut core::ffi::c_void,
 ) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C3BFE99usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3BFE99usize,
+        ))
+    };
     f(handle, address)
 }
 
@@ -264,7 +448,11 @@ pub unsafe fn bt_remove_bond(address: *const u8, _transport: u32) -> i32 {
 /// ABI parity; the exact Bluelet semantics are device-gated.
 pub unsafe fn bt_adapter_set_scan_mode(_mode: i32, _bondable: i32) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C3BFF75usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3BFF75usize,
+        ))
+    };
     f(unsafe { bt_adapter_get_instance() })
 }
 
@@ -282,17 +470,66 @@ pub unsafe fn bt_adapter_get_state(_adapter: *mut core::ffi::c_void) -> i32 {
     4
 }
 
-/// Band-9 btm_gap exposes no separate bond-state getter in the recovered set;
-/// returns BOND_STATE_NONE. Device pairing proceeds through the btm callback
-/// flow.
-pub unsafe fn bt_get_bond_state(_address: *const u8) -> u32 {
-    BOND_STATE_NONE
+unsafe fn b9_is_bonded(address: *const u8) -> bool {
+    if address.is_null() {
+        return false;
+    }
+    type GetBonded = extern "C" fn(*mut DiscoveryResult, i32) -> i32;
+    let get_bonded: GetBonded = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C17AC41usize,
+        ))
+    };
+    let count = get_bonded(core::ptr::null_mut(), 0);
+    if count <= 0 {
+        return false;
+    }
+    let bytes = match (count as usize).checked_mul(core::mem::size_of::<DiscoveryResult>()) {
+        Some(bytes) if bytes <= u32::MAX as usize => bytes,
+        _ => return false,
+    };
+    let devices = unsafe { bt_alloc(bytes as u32) }.cast::<DiscoveryResult>();
+    if devices.is_null() {
+        return false;
+    }
+    let _ = get_bonded(devices, count);
+    let filled = count as usize;
+    let mut found = false;
+    for index in 0..filled {
+        let candidate = unsafe { core::ptr::addr_of!((*devices.add(index)).address) }.cast::<u8>();
+        let mut equal = true;
+        for byte in 0..6 {
+            if unsafe { *candidate.add(byte) != *address.add(byte) } {
+                equal = false;
+                break;
+            }
+        }
+        if equal {
+            found = true;
+            break;
+        }
+    }
+    unsafe { bt_free(devices.cast()) };
+    found
 }
 
-/// Band-9 btm_gap exposes no pairing-state getter in the recovered set; returns
-/// 0 (no pairing in progress).
-pub unsafe fn bt_get_pairing_state(_address: *const u8, _transport: u32) -> u32 {
-    0
+/// Returns the Band-10 stock-view BONDED value (3) when the address appears in
+/// Bluelet's Classic bonded-device enumeration.
+pub unsafe fn bt_get_bond_state(address: *const u8) -> u32 {
+    if unsafe { b9_is_bonded(address) } {
+        3
+    } else {
+        BOND_STATE_NONE
+    }
+}
+
+/// Returns the module device-view BONDED value for a Classic bonded device.
+pub unsafe fn bt_get_pairing_state(address: *const u8, transport: u32) -> u32 {
+    if transport == CLASSIC_TRANSPORT && unsafe { b9_is_bonded(address) } {
+        BOND_STATE_BONDED
+    } else {
+        BOND_STATE_NONE
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -301,8 +538,9 @@ pub unsafe fn bt_get_pairing_state(_address: *const u8, _transport: u32) -> u32 
 //
 // Band-9 Bluelet delivers adapter lifecycle through the btm_manager upper
 // callbacks rather than band-10's 16-word adapter registration. The slot
-// numbers below match the band-10 callback-table contract so the module's
-// registration path compiles; callback delivery on band-9 is device-pending.
+// numbers below preserve the common module contract; discovery, pair, display,
+// and bond delivery are translated by the persistent GAP client above. The
+// separate adapter-state callback remains pending.
 
 pub const CALLBACK_WORDS: usize = 16;
 pub const CALLBACK_ADAPTER_STATE: usize = 0;
@@ -321,15 +559,24 @@ pub type PairDisplayCallback =
     unsafe extern "C" fn(*mut core::ffi::c_void, *const u8, i32, i32, u32);
 pub type BondStateCallback = unsafe extern "C" fn(*mut core::ffi::c_void, *const u8, i32, i32);
 
-/// Registers the module callback table. The Bluelet stack exposes no
-/// band-10-style 16-word registration; a nonzero handle is returned so module
-/// activation proceeds. Callback delivery is device-pending.
-pub unsafe fn bt_adapter_register(_adapter: *mut core::ffi::c_void, _callbacks: *const u32) -> u32 {
-    1
+/// Registers the module callback table behind the persistent Bluelet GAP client.
+pub unsafe fn bt_adapter_register(adapter: *mut core::ffi::c_void, callbacks: *const u32) -> u32 {
+    if adapter.is_null()
+        || callbacks.is_null()
+        || adapter as usize != B9_GAP_HANDLE.load(Ordering::Acquire)
+    {
+        return 0;
+    }
+    B9_MODULE_CALLBACKS.store(callbacks as usize, Ordering::Release);
+    adapter as usize as u32
 }
 
-pub unsafe fn bt_adapter_unregister(_adapter: *mut core::ffi::c_void, _registration: u32) -> i32 {
-    0
+pub unsafe fn bt_adapter_unregister(adapter: *mut core::ffi::c_void, registration: u32) -> i32 {
+    if adapter.is_null() || registration != adapter as usize as u32 {
+        return 0;
+    }
+    B9_MODULE_CALLBACKS.store(0, Ordering::Release);
+    1
 }
 
 /// Module-facing pair-reply API. Band-9 routes both pair request and pair
@@ -357,18 +604,16 @@ pub unsafe fn bt_pair_display_reply(
 // Band-10 Zephyr L2CAP / SDP / buffer / timer / queue interfaces
 // ---------------------------------------------------------------------------
 //
-// These interfaces back the module's AVDTP media path. Band-9's Bluelet stack
-// has no recovered equivalent in the current reverse-engineering pass; the
-// bindings below are the documented boundary of the band-9 media path and
-// return ENOSYS (-38) / 0 so a band-9 build compiles and fails loudly instead
-// of silently misbehaving. Recovering the Bluelet classic L2CAP/SDP layer will
-// replace these.
+// These interfaces preserve the module-facing Band-10 contract while translating
+// to Band-9 Bluelet objects. The owner queue, one-shot timer, and stock buffer
+// are recovered; raw AVDTP/L2CAP and SDP bindings remain explicit ENOSYS/null
+// boundaries until their lower profile-transport layouts and ownership rules
+// are verified.
 
 /// `ENOSYS` sentinel used by the pending band-9 media-path bindings.
 pub const ENOSYS: i32 = -38;
 
-/// Band-10 stock buffer prefix (12 bytes); band-9 Bluelet buffer layout is not
-/// yet recovered, so this mirrors band-10 for ABI parity.
+/// Band-9 Bluelet stock buffer prefix; payload starts at `+4+offset`.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default)]
 pub struct StockBuffer {
@@ -379,36 +624,57 @@ pub struct StockBuffer {
     pub tag: u8,
 }
 
-pub unsafe fn stock_buffer_payload_mut(_buffer: *mut StockBuffer) -> *mut u8 {
-    core::ptr::null_mut()
+/// # Safety
+/// `buffer` must point to a live Band-9 Bluelet stock buffer.
+pub unsafe fn stock_buffer_payload_mut(buffer: *mut StockBuffer) -> *mut u8 {
+    if buffer.is_null() {
+        return core::ptr::null_mut();
+    }
+    let offset = unsafe { (*buffer).offset } as usize;
+    unsafe { buffer.cast::<u8>().add(4 + offset) }
 }
 
-pub unsafe fn bt_buffer_new(_payload_length: u16, _headroom: u16) -> *mut StockBuffer {
-    core::ptr::null_mut()
+pub unsafe fn bt_buffer_new(payload_length: u16, headroom: u16) -> *mut StockBuffer {
+    type F = extern "C" fn(u16, u16) -> *mut StockBuffer;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C38AAA9usize,
+        ))
+    };
+    f(payload_length, headroom)
 }
 
 pub type QueueWork = extern "C" fn(i32, i32, *mut core::ffi::c_void) -> i32;
 
 pub unsafe fn bt_queue_external(
-    _owner: *mut core::ffi::c_void,
-    _run: QueueWork,
-    _cancel: *mut core::ffi::c_void,
-    _argument: *mut core::ffi::c_void,
-    _event: u8,
+    owner: *mut core::ffi::c_void,
+    run: QueueWork,
+    cancel: *mut core::ffi::c_void,
+    argument: *mut core::ffi::c_void,
+    event: u8,
 ) -> i32 {
-    ENOSYS
+    type F = extern "C" fn(
+        *mut core::ffi::c_void,
+        *mut core::ffi::c_void,
+        QueueWork,
+        *mut core::ffi::c_void,
+        u8,
+    ) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C391BC9usize,
+        ))
+    };
+    f(owner, cancel, run, argument, event)
 }
 
 pub fn bt_queue_free_addr() -> *mut core::ffi::c_void {
-    core::ptr::null_mut()
+    0x0C38A0A9usize as *mut core::ffi::c_void
 }
 
-/// Band-9 has no recovered L2CAP owner/FSM context. A non-null sentinel lets
-/// the module's activation path (SDP queuing) complete; the actual queue and
-/// timer calls behind it return ENOSYS so the media path fails clearly instead
-/// of misrouting.
+/// Returns the initialized Bluelet owner-thread context.
 pub unsafe fn bt_l2cap_owner() -> *mut core::ffi::c_void {
-    0x1usize as *mut core::ffi::c_void
+    unsafe { core::ptr::read_volatile(0x200D5F20usize as *const *mut core::ffi::c_void) }
 }
 
 pub const CONNECT_REQUEST_SIZE: usize = 68;
@@ -432,8 +698,28 @@ pub const EVENT_FLOW_STATUS: u32 = 8;
 pub const EVENT_COMPLETE_MTU_OFFSET: usize = 72;
 pub const EVENT_COMPLETE_CID_OFFSET: usize = 108;
 
-pub unsafe fn configure_avdtp_connect_request(_request: *mut u8) {
-    // Band-9 pending: no recovered Bluelet L2CAP connect request layout.
+/// Installs the exact Band-9 AVDTP policy in a zeroed 68-byte connect request.
+/// The Bluelet request header occupies bytes 0..24 and its 44-byte channel
+/// configuration occupies bytes 24..68. The local MTU and option mask are at
+/// configuration offsets 28 and 30, hence request offsets 52 and 54.
+///
+/// # Safety
+/// `request` must point to a writable [`CONNECT_REQUEST_SIZE`]-byte allocation.
+pub unsafe fn configure_avdtp_connect_request(request: *mut u8) {
+    unsafe {
+        core::ptr::write_unaligned(
+            request.add(CONNECT_PSM_OFFSET).cast::<u16>(),
+            AVDTP_SIGNALING_PSM.to_le(),
+        );
+        core::ptr::write_unaligned(
+            request.add(CONNECT_CONFIG_OFFSET).cast::<u16>(),
+            AVDTP_LOCAL_RX_MTU.to_le(),
+        );
+        core::ptr::write_unaligned(
+            request.add(CONNECT_OPTIONS_OFFSET).cast::<u16>(),
+            CONNECT_OPTION_LOCAL_MTU.to_le(),
+        );
+    }
 }
 
 #[repr(C)]
@@ -450,97 +736,504 @@ pub struct MediaTimerToken {
     pub timer_generation: u32,
 }
 
-pub unsafe fn bt_l2cap_connect(_request: *const core::ffi::c_void) -> u32 {
+/// Queues a 68-byte Bluelet basic-mode L2CAP connect request on the Bluetooth
+/// owner. Firmware wrapper `sub_C39E90C` installs `sub_C399FAC` as owner work
+/// and the stock free callback as cancellation ownership. A nonzero return is
+/// the accepted queue node, matching the module-facing Band-10 contract.
+pub unsafe fn bt_l2cap_connect(request: *const core::ffi::c_void) -> u32 {
+    type F = extern "C" fn(*const core::ffi::c_void) -> u32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C39E90Dusize,
+        ))
+    };
+    f(request)
+}
+
+/// Queues local-CID teardown on the Bluetooth owner. Firmware wrapper
+/// `sub_C39E990` runs `sub_C39AA30`, which resolves the channel by the first
+/// `u16`, performs state-aware disconnect, and releases the request.
+pub unsafe fn bt_l2cap_disconnect(request: *const DisconnectRequest) -> i32 {
+    type F = extern "C" fn(*const DisconnectRequest) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C39E991usize,
+        ))
+    };
+    f(request)
+}
+
+/// Submits a Bluelet buffer by local dynamic CID. The firmware consumes the
+/// buffer on both the send and unknown-CID paths.
+///
+/// # Safety
+/// `buffer` must be a live Band-9 Bluelet stock buffer and this must run on the
+/// Bluetooth owner thread.
+pub unsafe fn bt_l2cap_submit_cid(buffer: *mut StockBuffer, private_cid: u16) -> i32 {
+    if buffer.is_null() {
+        return 5;
+    }
+    unsafe { (*buffer).route = u32::from(private_cid) };
+    type F = extern "C" fn(*mut core::ffi::c_void, i32, *mut StockBuffer) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C39E57Fusize,
+        ))
+    };
+    let context =
+        unsafe { core::ptr::read_volatile(0x200D5C7Cusize as *const *mut core::ffi::c_void) };
+    f(context, 1, buffer)
+}
+
+type TimerRun = extern "C" fn(i32, i32, *mut core::ffi::c_void) -> i32;
+
+const B9_TIMER_ACTIVE: usize = 0;
+const B9_TIMER_QUEUED: usize = 1;
+const B9_TIMER_QUEUE_CANCELLED: usize = 2;
+const B9_TIMER_CANCEL_CLAIMED: usize = 3;
+const B9_TIMER_WAIT_CALLBACK: usize = 4;
+const B9_TIMER_CALLBACK_WAIT: usize = 5;
+const B9_TIMER_RECLAIMED: usize = 6;
+
+#[repr(C)]
+struct B9TimerContext {
+    timer: u32,
+    state: AtomicUsize,
+    owner: *mut core::ffi::c_void,
+    run: TimerRun,
+    argument: *mut core::ffi::c_void,
+    event: u8,
+    reserved: [u8; 3],
+}
+
+extern "C" fn b9_timer_owner_work(
+    owner_valid: i32,
+    event: i32,
+    context: *mut core::ffi::c_void,
+) -> i32 {
+    if context.is_null() {
+        return 0;
+    }
+    let context = context.cast::<B9TimerContext>();
+    if unsafe {
+        (*context).state.compare_exchange(
+            B9_TIMER_QUEUED,
+            B9_TIMER_RECLAIMED,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        )
+    }
+    .is_err()
+    {
+        return 0;
+    }
+    let run = unsafe { (*context).run };
+    let argument = unsafe { (*context).argument };
+    let result = run(owner_valid, event, argument);
+    unsafe { bt_free(context.cast()) };
+    result
+}
+
+extern "C" fn b9_timer_queue_cancel(
+    _owner_valid: i32,
+    _event: i32,
+    context: *mut core::ffi::c_void,
+) -> i32 {
+    if context.is_null() {
+        return 0;
+    }
+    let context = context.cast::<B9TimerContext>();
+    if unsafe {
+        (*context).state.compare_exchange(
+            B9_TIMER_QUEUED,
+            B9_TIMER_QUEUE_CANCELLED,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        )
+    }
+    .is_err()
+    {
+        return 0;
+    }
+    let argument = unsafe { (*context).argument };
+    if !argument.is_null() {
+        unsafe { bt_free(argument) };
+    }
+    unsafe { bt_free(context.cast()) };
     0
 }
 
-pub unsafe fn bt_l2cap_disconnect(_request: *const DisconnectRequest) -> i32 {
-    ENOSYS
+extern "C" fn b9_timer_bridge(context: *mut core::ffi::c_void) -> i32 {
+    if context.is_null() {
+        return 0;
+    }
+    let context = context.cast::<B9TimerContext>();
+    let transition = unsafe {
+        (*context).state.compare_exchange(
+            B9_TIMER_ACTIVE,
+            B9_TIMER_QUEUED,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        )
+    };
+    if let Err(state) = transition {
+        if state == B9_TIMER_CANCEL_CLAIMED {
+            let _ = unsafe {
+                (*context).state.compare_exchange(
+                    B9_TIMER_CANCEL_CLAIMED,
+                    B9_TIMER_CALLBACK_WAIT,
+                    Ordering::AcqRel,
+                    Ordering::Acquire,
+                )
+            };
+            return 0;
+        }
+        if state != B9_TIMER_WAIT_CALLBACK
+            || unsafe {
+                (*context).state.compare_exchange(
+                    B9_TIMER_WAIT_CALLBACK,
+                    B9_TIMER_CALLBACK_WAIT,
+                    Ordering::AcqRel,
+                    Ordering::Acquire,
+                )
+            }
+            .is_err()
+        {
+            return 0;
+        }
+        let timer = unsafe { (*context).timer };
+        let argument = unsafe { (*context).argument };
+        type Delete = extern "C" fn(u32) -> i32;
+        let delete: Delete = unsafe {
+            core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+                0x0C16AA31usize,
+            ))
+        };
+        let _ = delete(timer);
+        if !argument.is_null() {
+            unsafe { bt_free(argument) };
+        }
+        unsafe { bt_free(context.cast()) };
+        return 0;
+    }
+    let timer = unsafe { (*context).timer };
+    let owner = unsafe { (*context).owner };
+    let event = unsafe { (*context).event };
+
+    type Delete = extern "C" fn(u32) -> i32;
+    let delete: Delete = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C16AA31usize,
+        ))
+    };
+    let _ = delete(timer);
+    let queued = unsafe {
+        bt_queue_external(
+            owner,
+            b9_timer_owner_work,
+            b9_timer_queue_cancel as *const () as *mut core::ffi::c_void,
+            context.cast(),
+            event,
+        )
+    };
+    if queued == 0
+        && unsafe {
+            (*context).state.compare_exchange(
+                B9_TIMER_QUEUED,
+                B9_TIMER_RECLAIMED,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            )
+        }
+        .is_ok()
+    {
+        let argument = unsafe { (*context).argument };
+        if !argument.is_null() {
+            unsafe { bt_free(argument) };
+        }
+        unsafe { bt_free(context.cast()) };
+    }
+    queued
 }
 
-pub unsafe fn bt_l2cap_submit_cid(_buffer: *mut StockBuffer, _private_cid: u16) -> i32 {
-    ENOSYS
-}
-
+/// Creates a one-shot miwear timer, then queues its callback to the Bluelet
+/// owner thread using the module's owner/event callback contract.
 pub unsafe fn bt_timer_add(
-    _owner: *mut core::ffi::c_void,
-    _delay_ms: u32,
-    _event: u8,
-    _run_callback: *mut core::ffi::c_void,
-    _argument: *mut core::ffi::c_void,
+    owner: *mut core::ffi::c_void,
+    delay_ms: u32,
+    event: u8,
+    run_callback: *mut core::ffi::c_void,
+    argument: *mut core::ffi::c_void,
     _tag: *const u8,
     _flags: u32,
 ) -> u32 {
-    0
+    if owner.is_null() || run_callback.is_null() {
+        return 0;
+    }
+
+    let context =
+        unsafe { bt_alloc(core::mem::size_of::<B9TimerContext>() as u32) }.cast::<B9TimerContext>();
+    if context.is_null() {
+        return 0;
+    }
+    let run: TimerRun = unsafe { core::mem::transmute(run_callback) };
+    unsafe {
+        context.write(B9TimerContext {
+            timer: 0,
+            state: AtomicUsize::new(B9_TIMER_ACTIVE),
+            owner,
+            run,
+            argument,
+            event,
+            reserved: [0; 3],
+        });
+    }
+
+    type Create = extern "C" fn(*mut u32, extern "C" fn(*mut core::ffi::c_void) -> i32, u8) -> i32;
+    type Start = extern "C" fn(u32, u32, *mut core::ffi::c_void) -> i32;
+    let create: Create = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C16A9C9usize,
+        ))
+    };
+    let start: Start = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C16AA61usize,
+        ))
+    };
+
+    let mut timer = 0u32;
+    if create(&mut timer, b9_timer_bridge, 0) != 0 || timer == 0 {
+        if !argument.is_null() {
+            unsafe { bt_free(argument) };
+        }
+        unsafe { bt_free(context.cast()) };
+        return 0;
+    }
+    unsafe { (*context).timer = timer };
+    if start(timer, delay_ms.max(1), context.cast()) != 0 {
+        type Delete = extern "C" fn(u32) -> i32;
+        let delete: Delete = unsafe {
+            core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+                0x0C16AA31usize,
+            ))
+        };
+        let _ = delete(timer);
+        if !argument.is_null() {
+            unsafe { bt_free(argument) };
+        }
+        unsafe { bt_free(context.cast()) };
+        return 0;
+    }
+    context as usize as u32
 }
 
-pub unsafe fn bt_timer_cancel(_handle: *mut u32) -> i32 {
-    ENOSYS
+/// Cancels an active miwear timer and releases the module-owned callback
+/// argument. A callback already queued to Bluelet observes the cancelled state
+/// and performs the release there.
+pub unsafe fn bt_timer_cancel(handle: *mut u32) -> i32 {
+    if handle.is_null() {
+        return 5;
+    }
+    let context = unsafe { core::ptr::replace(handle, 0) } as *mut B9TimerContext;
+    if context.is_null() {
+        return 5;
+    }
+
+    let state = unsafe {
+        (*context).state.compare_exchange(
+            B9_TIMER_ACTIVE,
+            B9_TIMER_CANCEL_CLAIMED,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        )
+    };
+    if state.is_err() {
+        return 0;
+    }
+    let timer = unsafe { (*context).timer };
+    let argument = unsafe { (*context).argument };
+    type Stop = extern "C" fn(u32) -> i32;
+    type Delete = extern "C" fn(u32) -> i32;
+    let stop: Stop = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C16AAD9usize,
+        ))
+    };
+    let delete: Delete = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C16AA31usize,
+        ))
+    };
+    let result = stop(timer);
+    if result != 0 {
+        let previous = unsafe {
+            (*context)
+                .state
+                .swap(B9_TIMER_WAIT_CALLBACK, Ordering::AcqRel)
+        };
+        if previous == B9_TIMER_CALLBACK_WAIT {
+            let _ = delete(timer);
+            if !argument.is_null() {
+                unsafe { bt_free(argument) };
+            }
+            unsafe { bt_free(context.cast()) };
+        }
+        return result;
+    }
+    let _ = delete(timer);
+    if !argument.is_null() {
+        unsafe { bt_free(argument) };
+    }
+    unsafe { bt_free(context.cast()) };
+    result
 }
 
-/// AVDTP Source SDP record (band-10 layout). Band-9 Bluelet SDP registration is
-/// not yet recovered.
+/// AVDTP Audio Source SDP record encoded for the recovered generic Band-9
+/// Bluelet SDP builder.
 pub struct SdpSourceRecord;
 
 impl SdpSourceRecord {
     pub const SERVICE_NAME: &'static [u8] = b"Vela Audio Source\0";
     pub const SERVICE_UUID: u16 = 0x110A;
     pub const PROFILE_VERSION: u16 = 0x0103;
-    pub const ATTRIBUTES: [(u16, &'static [u8]); 0] = [];
+    pub const ATTRIBUTES: [(u16, &'static [u8]); 6] = [
+        (0x0001, ALIGNED_SERVICE_CLASS.as_slice()),
+        (0x0004, ALIGNED_PROTOCOL.as_slice()),
+        (0x0005, ALIGNED_BROWSE.as_slice()),
+        (0x0009, ALIGNED_PROFILE.as_slice()),
+        (0x0100, ALIGNED_SERVICE_NAME.as_slice()),
+        (0x0311, ALIGNED_FEATURES.as_slice()),
+    ];
 }
 
+#[repr(align(4))]
+struct AlignedValue<const N: usize>([u8; N]);
+
+impl<const N: usize> AlignedValue<N> {
+    const fn as_slice(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+const ALIGNED_SERVICE_CLASS: AlignedValue<5> = AlignedValue([0x35, 0x03, 0x19, 0x11, 0x0a]);
+const ALIGNED_PROTOCOL: AlignedValue<18> = AlignedValue([
+    0x35, 0x10, 0x35, 0x06, 0x19, 0x01, 0x00, 0x09, 0x00, 0x19, 0x35, 0x06, 0x19, 0x11, 0x0d, 0x09,
+    0x01, 0x03,
+]);
+const ALIGNED_BROWSE: AlignedValue<5> = AlignedValue([0x35, 0x03, 0x19, 0x10, 0x02]);
+const ALIGNED_PROFILE: AlignedValue<10> =
+    AlignedValue([0x35, 0x08, 0x35, 0x06, 0x19, 0x11, 0x0d, 0x09, 0x01, 0x03]);
+const ALIGNED_SERVICE_NAME: AlignedValue<14> = AlignedValue([
+    0x25, 0x0c, b'A', b'u', b'd', b'i', b'o', b' ', b'S', b'o', b'u', b'r', b'c', b'e',
+]);
+const ALIGNED_FEATURES: AlignedValue<3> = AlignedValue([0x09, 0x00, 0x01]);
+
 pub unsafe fn sdp_builder_create(
-    _old_handle: u32,
-    _service_uuid: u16,
-    _profile_version: u16,
-    _selector: u8,
-    _service_name: *const u8,
+    old_handle: u32,
+    service_uuid: u16,
+    profile_version: u16,
+    selector: u8,
+    service_name: *const u8,
 ) -> *mut core::ffi::c_void {
-    core::ptr::null_mut()
+    type F = extern "C" fn(u32, u16, u16, u8, *const u8) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C39EE31usize,
+        ))
+    };
+    f(
+        old_handle,
+        service_uuid,
+        profile_version,
+        selector,
+        service_name,
+    )
 }
 
 pub unsafe fn sdp_set_raw_attribute(
-    _builder: *mut core::ffi::c_void,
-    _attribute_id: u16,
-    _preserved_prefix_length: u16,
-    _value_length: u16,
-    _encoded_value: *const core::ffi::c_void,
+    builder: *mut core::ffi::c_void,
+    attribute_id: u16,
+    preserved_prefix_length: u16,
+    value_length: u16,
+    encoded_value: *const core::ffi::c_void,
 ) -> *mut u8 {
-    core::ptr::null_mut()
+    type F =
+        extern "C" fn(*mut core::ffi::c_void, u16, u16, u16, *const core::ffi::c_void) -> *mut u8;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C39EB3Fusize,
+        ))
+    };
+    f(
+        builder,
+        attribute_id,
+        preserved_prefix_length,
+        value_length,
+        encoded_value,
+    )
 }
 
-pub unsafe fn sdp_commit(_builder: *mut core::ffi::c_void) -> u32 {
-    0
+pub unsafe fn sdp_commit(builder: *mut core::ffi::c_void) -> u32 {
+    type F = extern "C" fn(*mut core::ffi::c_void) -> u32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C39ECD1usize,
+        ))
+    };
+    f(builder)
 }
 
-pub unsafe fn sdp_unregister(_handle: u32) -> i32 {
-    ENOSYS
+pub unsafe fn sdp_unregister(handle: u32) -> i32 {
+    type F = extern "C" fn(u32) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C39EDE9usize,
+        ))
+    };
+    f(handle)
 }
 
 /// `btm_reply_pair_request` dispatch on the btm_gap singleton (used by the
 /// module-facing pair-reply APIs below).
 pub unsafe fn btm_reply_pair_request() -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C3BFD49usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3BFD49usize,
+        ))
+    };
     f(unsafe { bt_adapter_get_instance() })
 }
 
 /// `btm_pair_display_reply` dispatch on the btm_gap singleton.
 pub unsafe fn btm_reply_pair_display() -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C3BFD95usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3BFD95usize,
+        ))
+    };
     f(unsafe { bt_adapter_get_instance() })
 }
 
 pub unsafe fn bt_discovery_start(handle: *mut core::ffi::c_void, timeout: i32) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void, i32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C3BFFC1usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3BFFC1usize,
+        ))
+    };
     f(handle, timeout)
 }
 
 pub unsafe fn bt_discovery_stop(handle: *mut core::ffi::c_void) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C3C002Dusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C3C002Dusize,
+        ))
+    };
     f(handle)
 }
 
@@ -554,32 +1247,52 @@ pub const O_RDWR: i32 = 3;
 /// BES mm_heap free (`sub_C0F19DC` against the `dword_200B17F4` heap).
 pub unsafe fn bt_free(allocation: *mut core::ffi::c_void) {
     type F = extern "C" fn(usize, *mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C0F19DDusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C0F19DDusize,
+        ))
+    };
     let heap = unsafe { core::ptr::read_volatile(0x200B17F4usize as *const usize) };
     f(heap, allocation);
 }
 
 pub unsafe fn nuttx_open(path: *const u8, flags: i32) -> i32 {
     type F = extern "C" fn(*const u8, i32, ...) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C37F761usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C37F761usize,
+        ))
+    };
     f(path, flags)
 }
 
 pub unsafe fn nuttx_close(fd: i32) -> i32 {
     type F = extern "C" fn(i32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C37EFF9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C37EFF9usize,
+        ))
+    };
     f(fd)
 }
 
 pub unsafe fn nuttx_read(fd: i32, buffer: *mut core::ffi::c_void, count: u32) -> i32 {
     type F = extern "C" fn(i32, *mut core::ffi::c_void, u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C37F9EBusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C37F9EBusize,
+        ))
+    };
     f(fd, buffer, count)
 }
 
 pub unsafe fn nuttx_write(fd: i32, buffer: *const core::ffi::c_void, count: u32) -> i32 {
     type F = extern "C" fn(i32, *const core::ffi::c_void, u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C380107usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C380107usize,
+        ))
+    };
     f(fd, buffer, count)
 }
 
@@ -590,13 +1303,21 @@ pub unsafe fn canopus_fw_register_driver_b9(
     private: *mut core::ffi::c_void,
 ) -> i32 {
     type F = extern "C" fn(*const u8, *const core::ffi::c_void, *mut core::ffi::c_void) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C4F0109usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C4F0109usize,
+        ))
+    };
     f(path, fops, private)
 }
 
 pub unsafe fn canopus_fw_unregister_driver_b9(path: *const u8) -> i32 {
     type F = extern "C" fn(*const u8) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C381C01usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C381C01usize,
+        ))
+    };
     f(path)
 }
 
@@ -606,7 +1327,11 @@ pub unsafe fn canopus_fw_unregister_driver_b9(path: *const u8) -> i32 {
 
 pub unsafe fn launcher_add(app_id: u16) -> i32 {
     type F = extern "C" fn(u16) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C2A7CB9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C2A7CB9usize,
+        ))
+    };
     f(app_id)
 }
 
@@ -621,19 +1346,31 @@ pub unsafe fn app_install(
 
 pub unsafe fn activity_navigate(a: u32, b: u32, c: u32, d: u32) -> i32 {
     type F = extern "C" fn(u32, u32, u32, u32) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C49E7CDusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C49E7CDusize,
+        ))
+    };
     f(a, b, c, d)
 }
 
 pub unsafe fn activity_finish(page: *mut firmware_page_descriptor) -> i32 {
     type F = extern "C" fn(*mut firmware_page_descriptor) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C44FC91usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C44FC91usize,
+        ))
+    };
     f(page)
 }
 
 pub unsafe fn notification_insert(message: *const firmware_notification_message) -> i32 {
     type F = extern "C" fn(*const firmware_notification_message) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C4F1C45usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C4F1C45usize,
+        ))
+    };
     f(message)
 }
 
@@ -649,7 +1386,11 @@ pub unsafe fn lvx_list_row_create(
     primary: *const u8,
 ) -> *mut core::ffi::c_void {
     type F = extern "C" fn(*mut core::ffi::c_void, *const u8) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C2D9C09usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C2D9C09usize,
+        ))
+    };
     f(parent, primary)
 }
 
@@ -662,7 +1403,11 @@ pub unsafe fn lvx_list_row_update(
     switch_state: u8,
 ) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void, i32, *const u8, *const u8, i32, u8) -> i32;
-    let f: F = unsafe { core::mem::transmute(0x0C2797B9usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C2797B9usize,
+        ))
+    };
     f(
         row,
         icon as usize as i32,
@@ -675,7 +1420,11 @@ pub unsafe fn lvx_list_row_update(
 
 pub unsafe fn lvx_list_row_trailing(row: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C272C8Fusize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C272C8Fusize,
+        ))
+    };
     f(row)
 }
 
@@ -742,8 +1491,16 @@ pub type LvxEventCallback = extern "C" fn(*mut core::ffi::c_void);
 /// LVGL `LV_OBJ_FLAG_HIDDEN` flag through `lv_obj_add_flag` / `lv_obj_clear_flag`.
 pub unsafe fn lvx_set_hidden(object: *mut core::ffi::c_void, hidden: u32) {
     type F = extern "C" fn(*mut core::ffi::c_void, u32) -> i32;
-    let add: F = unsafe { core::mem::transmute(0x0C23E8F9usize) };
-    let clear: F = unsafe { core::mem::transmute(0x0C23E96Fusize) };
+    let add: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C23E8F9usize,
+        ))
+    };
+    let clear: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C23E96Fusize,
+        ))
+    };
     if hidden != 0 {
         add(object, LV_OBJ_FLAG_HIDDEN);
     } else {
@@ -779,7 +1536,11 @@ pub unsafe fn lvx_page_title_create(
         *const (),
         *mut core::ffi::c_void,
     ) -> *mut core::ffi::c_void;
-    let f: F = unsafe { core::mem::transmute(0x0C2781D5usize) };
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            0x0C2781D5usize,
+        ))
+    };
     f(parent, title, mode, back_callback, back_context)
 }
 
@@ -804,6 +1565,14 @@ const _: () = {
     assert!(core::mem::offset_of!(launcher_app_descriptor, page_registry) == 44);
     #[cfg(target_pointer_width = "32")]
     assert!(core::mem::offset_of!(launcher_app_descriptor, hidden_flags) == 56);
+    assert!(core::mem::size_of::<DisconnectRequest>() == 4);
+    assert!(CONNECT_REQUEST_SIZE == 68);
+    assert!(CONNECT_CALLBACK_OFFSET + 4 <= CONNECT_REQUEST_SIZE);
+    assert!(CONNECT_ADDRESS_OFFSET + 8 <= 24);
+    assert!(CONNECT_CONFIG_OFFSET == 24 + 28);
+    assert!(CONNECT_OPTIONS_OFFSET == 24 + 30);
+    assert!(CONNECT_OPTIONS_OFFSET + 2 <= CONNECT_REQUEST_SIZE);
+    assert!(EVENT_COMPLETE_CID_OFFSET == 108);
 };
 
 #[cfg(test)]
@@ -829,6 +1598,29 @@ mod tests {
             INTERCONNECT_APK_PACKAGE,
             b"com.xiaomi.miwear.interconnect\0"
         );
+    }
+
+    #[test]
+    fn band9_avdtp_connect_policy_matches_bluelet_layout() {
+        let mut request = [0u8; CONNECT_REQUEST_SIZE];
+        unsafe { configure_avdtp_connect_request(request.as_mut_ptr()) };
+        assert_eq!(
+            &request[CONNECT_PSM_OFFSET..CONNECT_PSM_OFFSET + 2],
+            &AVDTP_SIGNALING_PSM.to_le_bytes()
+        );
+        assert_eq!(
+            &request[CONNECT_CONFIG_OFFSET..CONNECT_CONFIG_OFFSET + 2],
+            &AVDTP_LOCAL_RX_MTU.to_le_bytes()
+        );
+        assert_eq!(
+            &request[CONNECT_OPTIONS_OFFSET..CONNECT_OPTIONS_OFFSET + 2],
+            &CONNECT_OPTION_LOCAL_MTU.to_le_bytes()
+        );
+        assert_eq!(CONNECT_CONFIG_OFFSET, 24 + 28);
+        assert_eq!(CONNECT_OPTIONS_OFFSET, 24 + 30);
+        assert_eq!(EVENT_COMPLETE_MTU_OFFSET, 72);
+        assert_eq!(EVENT_COMPLETE_CID_OFFSET, 108);
+        assert_eq!(core::mem::size_of::<DisconnectRequest>(), 4);
     }
 
     #[test]

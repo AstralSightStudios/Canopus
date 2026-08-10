@@ -4,7 +4,7 @@
  * firmware : 3.1.175 (CONBINE_LTALM054_T1175_04141021_release_5793)
  * sha256   : 4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b
  * revision : 1
- * input_digest: acbc315c446080d8
+ * input_digest: d872dab8097b664e
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
 #define CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
@@ -14,8 +14,20 @@
 /* ---- recovered type layouts ---- */
 /* Explicit padding reproduces the exact recovered byte layout
  * even when fields are sparse (e.g. launcher_order_record). */
+typedef struct file_operations file_operations;
+typedef struct launcher_order_record launcher_order_record;
+typedef struct stock_timespec_t stock_timespec_t;
+typedef struct firmware_page_descriptor firmware_page_descriptor;
+typedef struct canopus_interconnect_app_info canopus_interconnect_app_info;
+typedef struct firmware_notification_message firmware_notification_message;
+typedef struct service_object service_object;
+typedef struct canopus_interconnect_message canopus_interconnect_message;
+typedef struct ordered_app_entry ordered_app_entry;
+typedef struct launcher_app_struct launcher_app_struct;
+typedef struct launcher_app_record launcher_app_record;
+typedef struct launcher_app_descriptor launcher_app_descriptor;
 typedef void (*canopus_interconnect_recv_cb)(void *, int32_t, const canopus_interconnect_message *, const char *);
-typedef struct {
+struct file_operations {
     void * open; /* +0x0 */
     void * close; /* +0x4 */
     void * read; /* +0x8 */
@@ -23,19 +35,19 @@ typedef struct {
     uint8_t _pad_10[4];
     void * ioctl; /* +0x14 */
     uint8_t _tail[24];
-} file_operations;
-typedef struct {
+};
+struct launcher_order_record {
     uint8_t app_name[128]; /* +0x0 */
     uint8_t _pad_80[4];
     uint32_t flags; /* +0x84 */
     uint8_t _tail[4];
-} launcher_order_record;
+};
 typedef void (*canopus_lvx_event_cb)(void *);
-typedef struct {
+struct stock_timespec_t {
     int64_t tv_sec; /* +0x0 */
     int32_t tv_nsec; /* +0x8 */
-} stock_timespec_t;
-typedef struct {
+};
+struct firmware_page_descriptor {
     void * parent_descriptor; /* +0x0 */
     uint8_t _pad_4[12];
     void * page_name; /* +0x10 */
@@ -68,15 +80,15 @@ typedef struct {
     void * extension_callback_104; /* +0x68 */
     void * extension_callback_108; /* +0x6c */
     uint8_t _tail[4];
-} firmware_page_descriptor;
-typedef struct {
+};
+struct canopus_interconnect_app_info {
     void * package_name; /* +0x0 */
     void * display_name; /* +0x4 */
     void * icon_file; /* +0x8 */
     void * extra; /* +0xc */
     uint8_t fingerprint[20]; /* +0x10 */
-} canopus_interconnect_app_info;
-typedef struct {
+};
+struct firmware_notification_message {
     uint64_t message_id; /* +0x0 */
     uint32_t repeat_count; /* +0x8 */
     void * title; /* +0xc */
@@ -100,8 +112,8 @@ typedef struct {
     uint8_t flags_82; /* +0x52 */
     uint8_t _pad_53[1];
     void * callback_data; /* +0x54 */
-} firmware_notification_message;
-typedef struct {
+};
+struct service_object {
     uint8_t enabled_state; /* +0x0 */
     uint8_t _pad_1[3];
     void * name; /* +0x4 */
@@ -114,28 +126,28 @@ typedef struct {
     void * get_profile_cb; /* +0x34 */
     void * cleanup_cb; /* +0x38 */
     uint8_t _tail[4];
-} service_object;
+};
 typedef void (*canopus_interconnect_send_done)(void *, int32_t, const canopus_interconnect_message *, void *);
-typedef struct {
+struct canopus_interconnect_message {
     uint8_t type; /* +0x0 */
     uint8_t _pad_1[3];
     uint32_t length; /* +0x4 */
     uint8_t _pad_8[8];
     void * value; /* +0x10 */
-} canopus_interconnect_message;
-typedef struct {
+};
+struct ordered_app_entry {
     void * app_name; /* +0x0 */
     uint8_t _pad_4[4];
     uint8_t enabled; /* +0x8 */
     uint8_t hidden; /* +0x9 */
     uint8_t _tail[6];
-} ordered_app_entry;
-typedef struct {
+};
+struct launcher_app_struct {
     uint8_t name[128]; /* +0x0 */
     uint8_t flags; /* +0x80 */
     uint8_t _tail[3];
-} launcher_app_struct;
-typedef struct {
+};
+struct launcher_app_record {
     uint16_t app_id; /* +0x0 */
     uint8_t _pad_2[2];
     void * icon_handle; /* +0x4 */
@@ -144,8 +156,8 @@ typedef struct {
     uint8_t _pad_10[4];
     uint8_t flags; /* +0x14 */
     uint8_t _tail[3];
-} launcher_app_record;
-typedef struct {
+};
+struct launcher_app_descriptor {
     uint64_t registry_links; /* +0x0 */
     void * package_name; /* +0x8 */
     void * launcher_icon_resource; /* +0xc */
@@ -159,7 +171,7 @@ typedef struct {
     uint8_t _pad_30[8];
     uint8_t hidden_flags; /* +0x38 */
     uint8_t _tail[3];
-} launcher_app_descriptor;
+};
 
 /* ---- runtime identity guard ---- */
 static inline int canopus_str_neq(const char *a, const char *b)
@@ -180,6 +192,21 @@ static inline int canopus_identity_guard(void)
 }
 
 /* ---- typed veneers ---- */
+typedef void (*canopus_fw_lvx_object_set_size_fn)(void *, int32_t, int32_t);
+static inline void canopus_fw_lvx_object_set_size(void * a0, int32_t a1, int32_t a2) {
+    return ((canopus_fw_lvx_object_set_size_fn)(uintptr_t)0x0C23DDE1)(a0, a1, a2);
+}
+
+typedef void * (*canopus_fw_lvx_page_title_create_fn)(void *, const char *, uint32_t, canopus_lvx_event_cb, void *);
+static inline void * canopus_fw_lvx_page_title_create(void * a0, const char * a1, uint32_t a2, canopus_lvx_event_cb a3, void * a4) {
+    return ((canopus_fw_lvx_page_title_create_fn)(uintptr_t)0x0C2781D5)(a0, a1, a2, a3, a4);
+}
+
+typedef void (*canopus_fw_lvx_align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
+static inline void canopus_fw_lvx_align_to(void * a0, void * a1, uint32_t a2, int32_t a3, int32_t a4) {
+    return ((canopus_fw_lvx_align_to_fn)(uintptr_t)0x0C240CE9)(a0, a1, a2, a3, a4);
+}
+
 typedef int (*canopus_fw_interconnect_close_fn)(void *);
 static inline int canopus_fw_interconnect_close(void * a0) {
     return ((canopus_fw_interconnect_close_fn)(uintptr_t)0x0C4F7171)(a0);
@@ -188,6 +215,11 @@ static inline int canopus_fw_interconnect_close(void * a0) {
 typedef int (*canopus_fw_bt_remove_bond_fn)(void *, void *);
 static inline int canopus_fw_bt_remove_bond(void * a0, void * a1) {
     return ((canopus_fw_bt_remove_bond_fn)(uintptr_t)0x0C3BFE99)(a0, a1);
+}
+
+typedef void (*canopus_fw_mm_free_fn)(void *, void *);
+static inline void canopus_fw_mm_free(void * a0, void * a1) {
+    return ((canopus_fw_mm_free_fn)(uintptr_t)0x0C0F19DD)(a0, a1);
 }
 
 typedef int (*canopus_fw_bt_discovery_stop_fn)(void *);
@@ -200,6 +232,16 @@ static inline int32_t canopus_fw_write(int a0, const void * a1, uint32_t a2) {
     return ((canopus_fw_write_fn)(uintptr_t)0x0C380107)(a0, a1, a2);
 }
 
+typedef void * (*canopus_fw_mm_alloc_fn)(uint32_t);
+static inline void * canopus_fw_mm_alloc(uint32_t a0) {
+    return ((canopus_fw_mm_alloc_fn)(uintptr_t)0x0C0F24E1)(a0);
+}
+
+typedef int32_t (*canopus_fw_unlink_fn)(const char *);
+static inline int32_t canopus_fw_unlink(const char * a0) {
+    return ((canopus_fw_unlink_fn)(uintptr_t)0x0C3800E9)(a0);
+}
+
 typedef int (*canopus_fw_app_install_fn)(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t);
 static inline int canopus_fw_app_install(const launcher_app_descriptor * a0, const firmware_page_descriptor *const * a1, uint32_t a2) {
     return ((canopus_fw_app_install_fn)(uintptr_t)0x0C44B5D1)(a0, a1, a2);
@@ -210,9 +252,24 @@ static inline int canopus_fw_bt_pair_request_reply(void * a0) {
     return ((canopus_fw_bt_pair_request_reply_fn)(uintptr_t)0x0C3BFD49)(a0);
 }
 
+typedef void * (*canopus_fw_lvx_timer_create_fn)(canopus_lvx_event_cb, uint32_t, void *);
+static inline void * canopus_fw_lvx_timer_create(canopus_lvx_event_cb a0, uint32_t a1, void * a2) {
+    return ((canopus_fw_lvx_timer_create_fn)(uintptr_t)0x0C25CB8D)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_lvx_label_set_text_fn)(void *, const char *);
+static inline void canopus_fw_lvx_label_set_text(void * a0, const char * a1) {
+    return ((canopus_fw_lvx_label_set_text_fn)(uintptr_t)0x0C266C29)(a0, a1);
+}
+
 typedef int32_t (*canopus_fw_read_fn)(int, void *, uint32_t);
 static inline int32_t canopus_fw_read(int a0, void * a1, uint32_t a2) {
     return ((canopus_fw_read_fn)(uintptr_t)0x0C37F9EB)(a0, a1, a2);
+}
+
+typedef void * (*canopus_fw_app_lookup_fn)(uint16_t);
+static inline void * canopus_fw_app_lookup(uint16_t a0) {
+    return ((canopus_fw_app_lookup_fn)(uintptr_t)0x0C449335)(a0);
 }
 
 typedef int (*canopus_fw_app_launcher_add_fn)(uint16_t);
@@ -233,6 +290,11 @@ static inline int canopus_fw_bt_create_bond(void * a0, void * a1) {
 typedef int (*canopus_fw_interconnect_connect_fn)(void *, void *, const char *, const char *, canopus_interconnect_recv_cb);
 static inline int canopus_fw_interconnect_connect(void * a0, void * a1, const char * a2, const char * a3, canopus_interconnect_recv_cb a4) {
     return ((canopus_fw_interconnect_connect_fn)(uintptr_t)0x0C1134D5)(a0, a1, a2, a3, a4);
+}
+
+typedef int (*canopus_fw_lvx_list_row_set_trailing_fn)(void *, uint8_t, uint8_t);
+static inline int canopus_fw_lvx_list_row_set_trailing(void * a0, uint8_t a1, uint8_t a2) {
+    return ((canopus_fw_lvx_list_row_set_trailing_fn)(uintptr_t)0x0C272E1D)(a0, a1, a2);
 }
 
 typedef int (*canopus_fw_unregister_driver_fn)(const char *);
@@ -257,6 +319,11 @@ static inline int32_t canopus_fw_page_goto(uint32_t a0, uint32_t a1, uint32_t a2
     return ((canopus_fw_page_goto_fn)(uintptr_t)0x0C49E7CD)(a0, a1, a2, a3);
 }
 
+typedef void (*canopus_fw_lvx_object_align_fn)(void *, uint32_t, int32_t, int32_t);
+static inline void canopus_fw_lvx_object_align(void * a0, uint32_t a1, int32_t a2, int32_t a3) {
+    return ((canopus_fw_lvx_object_align_fn)(uintptr_t)0x0C23DE6B)(a0, a1, a2, a3);
+}
+
 typedef int (*canopus_fw_clock_gettime_fn)(uint32_t, stock_timespec_t *);
 static inline int canopus_fw_clock_gettime(uint32_t a0, stock_timespec_t * a1) {
     return ((canopus_fw_clock_gettime_fn)(uintptr_t)0x0C0BBB11)(a0, a1);
@@ -267,14 +334,25 @@ static inline int canopus_fw_quickapp_register_app(uint16_t a0, const canopus_in
     return ((canopus_fw_quickapp_register_app_fn)(uintptr_t)0x0C2C655D)(a0, a1);
 }
 
+/* errno_location: skipped (return type 'int *' not mappable) */
 typedef int32_t (*canopus_fw_page_finish_fn)(void *);
 static inline int32_t canopus_fw_page_finish(void * a0) {
     return ((canopus_fw_page_finish_fn)(uintptr_t)0x0C44FC91)(a0);
 }
 
+typedef int32_t (*canopus_fw_manager_delete_watchface_fn)(const char *);
+static inline int32_t canopus_fw_manager_delete_watchface(const char * a0) {
+    return ((canopus_fw_manager_delete_watchface_fn)(uintptr_t)0x0C44F471)(a0);
+}
+
 typedef int (*canopus_fw_bt_pair_display_reply_fn)(void *);
 static inline int canopus_fw_bt_pair_display_reply(void * a0) {
     return ((canopus_fw_bt_pair_display_reply_fn)(uintptr_t)0x0C3BFD95)(a0);
+}
+
+typedef void (*canopus_fw_lvx_timer_delete_fn)(void *);
+static inline void canopus_fw_lvx_timer_delete(void * a0) {
+    return ((canopus_fw_lvx_timer_delete_fn)(uintptr_t)0x0C25B4B9)(a0);
 }
 
 typedef int (*canopus_fw_lvx_notification_insert_message_fn)(const firmware_notification_message *);
@@ -285,14 +363,34 @@ static inline int canopus_fw_lvx_notification_insert_message(const firmware_noti
 /* Recovered global `interconnect_loop` at 0x200C9D28. */
 #define canopus_fw_interconnect_loop ((void *)(uintptr_t)0x200C9D28u)
 
+typedef void (*canopus_fw_lvx_event_add_fn)(void *, canopus_lvx_event_cb, uint32_t, void *);
+static inline void canopus_fw_lvx_event_add(void * a0, canopus_lvx_event_cb a1, uint32_t a2, void * a3) {
+    return ((canopus_fw_lvx_event_add_fn)(uintptr_t)0x0C244F3D)(a0, a1, a2, a3);
+}
+
 typedef void * (*canopus_fw_bt_adapter_get_instance_fn)(void);
 static inline void * canopus_fw_bt_adapter_get_instance(void) {
     return ((canopus_fw_bt_adapter_get_instance_fn)(uintptr_t)0x0C3BCAA9)();
 }
 
+typedef void * (*canopus_fw_lvx_label_create_fn)(void *);
+static inline void * canopus_fw_lvx_label_create(void * a0) {
+    return ((canopus_fw_lvx_label_create_fn)(uintptr_t)0x0C261661)(a0);
+}
+
 typedef int (*canopus_fw_interconnect_send_fn)(void *, const char *, const canopus_interconnect_message *, canopus_interconnect_send_done, void *);
 static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const canopus_interconnect_message * a2, canopus_interconnect_send_done a3, void * a4) {
     return ((canopus_fw_interconnect_send_fn)(uintptr_t)0x0C114045)(a0, a1, a2, a3, a4);
+}
+
+typedef int32_t (*canopus_fw_rename_fn)(const char *, const char *);
+static inline int32_t canopus_fw_rename(const char * a0, const char * a1) {
+    return ((canopus_fw_rename_fn)(uintptr_t)0x0C37FA25)(a0, a1);
+}
+
+typedef int (*canopus_fw_lvx_style_apply_fn)(void *, const void *, uint32_t, uint32_t);
+static inline int canopus_fw_lvx_style_apply(void * a0, const void * a1, uint32_t a2, uint32_t a3) {
+    return ((canopus_fw_lvx_style_apply_fn)(uintptr_t)0x0C371CA1)(a0, a1, a2, a3);
 }
 
 typedef void * (*canopus_fw_lvx_list_row_create_fn)(void *, const char *);

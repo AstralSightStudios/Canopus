@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.nuttx.unlink",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "unlink",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C3800E8",
+  "callable_address": "0x0C3800E9",
+  "prototype": "int32(const char *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "calling_thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-IO-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-IO-001"
+    ],
+    "source": "IDA sub_C3800E8; public POSIX wrapper over internal VFS unlink sub_C37D14C, translating a negative internal result to errno and -1."
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int32(const char *)",
+    "ownership": "borrowed path for synchronous call",
+    "thread": "calling thread",
+    "device_probe": "pending"
+  },
+  "notes": "Use the public wrapper at 0x0C3800E8, not internal VFS unlink 0x0C37D14C."
+}

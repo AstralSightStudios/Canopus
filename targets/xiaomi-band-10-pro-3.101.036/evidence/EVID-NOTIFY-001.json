@@ -44,8 +44,8 @@
       "role": "complete activity notification builder callsite"
     },
     {
-      "uri": "targets/xiaomi-band-10-pro-3.101.030/probe/native-manager/canopus_manager_native_probe.c",
-      "role": "zero-import resident device probe"
+      "uri": "manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c",
+      "role": "zero-import resident target backend"
     }
   ]
 }

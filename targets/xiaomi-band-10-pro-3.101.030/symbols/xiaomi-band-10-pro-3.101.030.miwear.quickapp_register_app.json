@@ -19,7 +19,7 @@
     "return_value": "0_on_acceptance_else_negative_errno"
   },
   "side_effects": [
-    "queues_one_message_to_named_connection_or_broadcast"
+    "updates_quickapp_registry_launcher_state_and_registration_notifications"
   ],
   "proof": {
     "static": "recovered",

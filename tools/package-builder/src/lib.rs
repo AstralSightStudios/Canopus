@@ -91,7 +91,7 @@ pub fn validate_entry(name: &str, entry_type: &EntryType) -> Result<()> {
 /// is rejected so the signed payload can never diverge from the manifest.
 pub fn build_archive(
     manifest: &PackageManifest,
-    files: &HashMap<String, PathBuf>,         // target_id -> source file
+    files: &HashMap<String, PathBuf>, // target_id -> source file
     resource_files: &HashMap<String, PathBuf>, // resource path -> source file
 ) -> Result<Vec<u8>> {
     // CAN-P2-009: the library enforces the package schema itself (not just
@@ -133,7 +133,11 @@ pub fn build_archive(
     // CAN-P1-013: declared native-app resources (hash-verified, canonical
     // path). A supplied file that is not declared is rejected so nothing
     // unverified can ride along in the package.
-    if let Some(resources) = manifest.native_app.as_ref().and_then(|a| a.resources.as_ref()) {
+    if let Some(resources) = manifest
+        .native_app
+        .as_ref()
+        .and_then(|a| a.resources.as_ref())
+    {
         for r in resources {
             validate_entry(&r.path, &EntryType::Regular)?;
             let src = resource_files.get(&r.path).ok_or_else(|| {

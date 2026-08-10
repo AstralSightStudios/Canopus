@@ -4,10 +4,18 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 3
-// input_digest: 130576733a57c13a
+// input_digest: 3a44b60d44602f87
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
+
+/// Converts a recovered Thumb entry or callable address into the only valid
+/// indirect-call address. Target-private ABI adapters must use this instead
+/// of transmuting raw firmware addresses directly.
+#[inline(always)]
+pub const fn canopus_thumb_callable(entry_or_callable: usize) -> usize {
+    entry_or_callable | 1usize
+}
 
 // ---- recovered type layouts ----
 // `#[repr(C, packed(N))]` + explicit padding reproduces the exact
@@ -226,15 +234,23 @@ fn c_str_eq(addr: usize, expected: &[u8]) -> bool {
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_list_item_update(a0: *mut core::ffi::c_void, a1: *const u8, a2: *const u8, a3: *const u8, a4: i32, a5: u8) -> i32 {
-    let f: extern "C" fn(*mut core::ffi::c_void, *const u8, *const u8, *const u8, i32, u8) -> i32 = unsafe { core::mem::transmute(0x0C4A7BD1usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, *const u8, *const u8, *const u8, i32, u8) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C4A7BD1usize)) };
     f(a0, a1, a2, a3, a4, a5)
+}
+
+/// Recovered `bt_adapter_unregister` at 0x0C398C8C. Thumb callable address 0x0C398C8D.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_bt_adapter_unregister(a0: *mut core::ffi::c_void, a1: u32) -> i32 {
+    let f: extern "C" fn(*mut core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C398C8Dusize)) };
+    f(a0, a1)
 }
 
 /// Recovered `open` at 0x0C1C15B0. Thumb callable address 0x0C1C15B1.
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_open(a0: *const u8, a1: i32) -> i32 {
-    let f: extern "C" fn(*const u8, i32) -> i32 = unsafe { core::mem::transmute(0x0C1C15B1usize) };
+    let f: extern "C" fn(*const u8, i32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C1C15B1usize)) };
     f(a0, a1)
 }
 
@@ -242,7 +258,7 @@ pub unsafe fn canopus_fw_open(a0: *const u8, a1: i32) -> i32 {
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_object_align(a0: *mut core::ffi::c_void, a1: u32, a2: i32, a3: i32) -> () {
-    let f: extern "C" fn(*mut core::ffi::c_void, u32, i32, i32) -> () = unsafe { core::mem::transmute(0x0C5880A9usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, u32, i32, i32) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C5880A9usize)) };
     f(a0, a1, a2, a3);
 }
 
@@ -250,7 +266,7 @@ pub unsafe fn canopus_fw_lvx_object_align(a0: *mut core::ffi::c_void, a1: u32, a
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_clock_gettime(a0: u32, a1: *const stock_timespec_t) -> i32 {
-    let f: extern "C" fn(u32, *const stock_timespec_t) -> i32 = unsafe { core::mem::transmute(0x0C1EC8B5usize) };
+    let f: extern "C" fn(u32, *const stock_timespec_t) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C1EC8B5usize)) };
     f(a0, a1)
 }
 
@@ -258,7 +274,7 @@ pub unsafe fn canopus_fw_clock_gettime(a0: u32, a1: *const stock_timespec_t) -> 
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_object_set_size(a0: *mut core::ffi::c_void, a1: i32, a2: i32) -> () {
-    let f: extern "C" fn(*mut core::ffi::c_void, i32, i32) -> () = unsafe { core::mem::transmute(0x0C587EF9usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, i32, i32) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C587EF9usize)) };
     f(a0, a1, a2);
 }
 
@@ -266,7 +282,7 @@ pub unsafe fn canopus_fw_lvx_object_set_size(a0: *mut core::ffi::c_void, a1: i32
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_app_launcher_add(a0: u16) -> i32 {
-    let f: extern "C" fn(u16) -> i32 = unsafe { core::mem::transmute(0x0C4F2BDDusize) };
+    let f: extern "C" fn(u16) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C4F2BDDusize)) };
     f(a0)
 }
 
@@ -274,7 +290,7 @@ pub unsafe fn canopus_fw_app_launcher_add(a0: u16) -> i32 {
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_interconnect_close(a0: *mut core::ffi::c_void) -> i32 {
-    let f: extern "C" fn(*mut core::ffi::c_void) -> i32 = unsafe { core::mem::transmute(0x0C2D2199usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C2D2199usize)) };
     f(a0)
 }
 
@@ -282,7 +298,7 @@ pub unsafe fn canopus_fw_interconnect_close(a0: *mut core::ffi::c_void) -> i32 {
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_notification_insert_message(a0: *const firmware_notification_message) -> i32 {
-    let f: extern "C" fn(*const firmware_notification_message) -> i32 = unsafe { core::mem::transmute(0x0CA81F11usize) };
+    let f: extern "C" fn(*const firmware_notification_message) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0CA81F11usize)) };
     f(a0)
 }
 
@@ -290,7 +306,7 @@ pub unsafe fn canopus_fw_lvx_notification_insert_message(a0: *const firmware_not
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lv_event_get_code(a0: *mut core::ffi::c_void) -> u32 {
-    let f: extern "C" fn(*mut core::ffi::c_void) -> u32 = unsafe { core::mem::transmute(0x0C5886D1usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void) -> u32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C5886D1usize)) };
     f(a0)
 }
 
@@ -298,15 +314,23 @@ pub unsafe fn canopus_fw_lv_event_get_code(a0: *mut core::ffi::c_void) -> u32 {
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_page_title_create(a0: *mut core::ffi::c_void, a1: *const u8, a2: u32, a3: canopus_lvx_event_cb, a4: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
-    let f: extern "C" fn(*mut core::ffi::c_void, *const u8, u32, canopus_lvx_event_cb, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(0x0C4A9991usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, *const u8, u32, canopus_lvx_event_cb, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C4A9991usize)) };
     f(a0, a1, a2, a3, a4)
+}
+
+/// Recovered `bt_adapter_get_state` at 0x0C398D30. Thumb callable address 0x0C398D31.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_bt_adapter_get_state(a0: *mut core::ffi::c_void) -> i32 {
+    let f: extern "C" fn(*mut core::ffi::c_void) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C398D31usize)) };
+    f(a0)
 }
 
 /// Recovered `lvx_label_create` at 0x0C588338. Thumb callable address 0x0C588339.
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_label_create(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
-    let f: extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(0x0C588339usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C588339usize)) };
     f(a0)
 }
 
@@ -314,15 +338,23 @@ pub unsafe fn canopus_fw_lvx_label_create(a0: *mut core::ffi::c_void) -> *mut co
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_app_lookup(a0: u16) -> *mut core::ffi::c_void {
-    let f: extern "C" fn(u16) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(0x0CA50FD5usize) };
+    let f: extern "C" fn(u16) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0CA50FD5usize)) };
     f(a0)
+}
+
+/// Recovered `bt_adapter_register` at 0x0C398C24. Thumb callable address 0x0C398C25.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_bt_adapter_register(a0: *mut core::ffi::c_void, a1: *const u32) -> i32 {
+    let f: extern "C" fn(*mut core::ffi::c_void, *const u32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C398C25usize)) };
+    f(a0, a1)
 }
 
 /// Recovered `lvx_msgbox_create` at 0x0C4A93A4. Thumb callable address 0x0C4A93A5.
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_msgbox_create(a0: *mut core::ffi::c_void, a1: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
-    let f: extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(0x0C4A93A5usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C4A93A5usize)) };
     f(a0, a1)
 }
 
@@ -330,7 +362,7 @@ pub unsafe fn canopus_fw_lvx_msgbox_create(a0: *mut core::ffi::c_void, a1: *mut 
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_page_content_create(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
-    let f: extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(0x0CA4E8E9usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0CA4E8E9usize)) };
     f(a0)
 }
 
@@ -338,15 +370,31 @@ pub unsafe fn canopus_fw_lvx_page_content_create(a0: *mut core::ffi::c_void) -> 
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_app_install(a0: *const launcher_app_descriptor, a1: *const *const firmware_page_descriptor, a2: u32) -> i32 {
-    let f: extern "C" fn(*const launcher_app_descriptor, *const *const firmware_page_descriptor, u32) -> i32 = unsafe { core::mem::transmute(0x0CA519ADusize) };
+    let f: extern "C" fn(*const launcher_app_descriptor, *const *const firmware_page_descriptor, u32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0CA519ADusize)) };
     f(a0, a1, a2)
+}
+
+/// Recovered `bt_adapter_get_scan_mode` at 0x0C39F020. Thumb callable address 0x0C39F021.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_bt_adapter_get_scan_mode() -> i32 {
+    let f: extern "C" fn() -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C39F021usize)) };
+    f()
 }
 
 /// Recovered `register_driver` at 0x0C1A0D50. Thumb callable address 0x0C1A0D51.
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_register_driver(a0: *const u8, a1: *const core::ffi::c_void, a2: u32, a3: *mut core::ffi::c_void) -> i32 {
-    let f: extern "C" fn(*const u8, *const core::ffi::c_void, u32, *mut core::ffi::c_void) -> i32 = unsafe { core::mem::transmute(0x0C1A0D51usize) };
+    let f: extern "C" fn(*const u8, *const core::ffi::c_void, u32, *mut core::ffi::c_void) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C1A0D51usize)) };
+    f(a0, a1, a2, a3)
+}
+
+/// Recovered `bt_pair_display_reply` at 0x0C3998C8. Thumb callable address 0x0C3998C9.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_bt_pair_display_reply(a0: *mut core::ffi::c_void, a1: *const u8, a2: i32, a3: i32) -> i32 {
+    let f: extern "C" fn(*mut core::ffi::c_void, *const u8, i32, i32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C3998C9usize)) };
     f(a0, a1, a2, a3)
 }
 
@@ -354,15 +402,31 @@ pub unsafe fn canopus_fw_register_driver(a0: *const u8, a1: *const core::ffi::c_
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *const u8, a2: *const canopus_interconnect_message, a3: canopus_interconnect_send_done, a4: *mut core::ffi::c_void) -> i32 {
-    let f: extern "C" fn(*mut core::ffi::c_void, *const u8, *const canopus_interconnect_message, canopus_interconnect_send_done, *mut core::ffi::c_void) -> i32 = unsafe { core::mem::transmute(0x0C2D20C5usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, *const u8, *const canopus_interconnect_message, canopus_interconnect_send_done, *mut core::ffi::c_void) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C2D20C5usize)) };
     f(a0, a1, a2, a3, a4)
+}
+
+/// Recovered `bt_get_pairing_state` at 0x0C39F9B0. Thumb callable address 0x0C39F9B1.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_bt_get_pairing_state(a0: *const u8, a1: u32) -> u32 {
+    let f: extern "C" fn(*const u8, u32) -> u32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C39F9B1usize)) };
+    f(a0, a1)
+}
+
+/// Recovered `bt_adapter_get_instance` at 0x0CA286C8. Thumb callable address 0x0CA286C9.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_bt_adapter_get_instance() -> *mut core::ffi::c_void {
+    let f: extern "C" fn() -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0CA286C9usize)) };
+    f()
 }
 
 /// Recovered `write` at 0x0C1C31C8. Thumb callable address 0x0C1C31C9.
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_write(a0: i32, a1: *const core::ffi::c_void, a2: u32) -> i32 {
-    let f: extern "C" fn(i32, *const core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(0x0C1C31C9usize) };
+    let f: extern "C" fn(i32, *const core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C1C31C9usize)) };
     f(a0, a1, a2)
 }
 
@@ -370,7 +434,7 @@ pub unsafe fn canopus_fw_write(a0: i32, a1: *const core::ffi::c_void, a2: u32) -
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lv_obj_align_to(a0: *mut core::ffi::c_void, a1: *mut core::ffi::c_void, a2: u32, a3: i32, a4: i32) -> () {
-    let f: extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void, u32, i32, i32) -> () = unsafe { core::mem::transmute(0x0C588BE9usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void, u32, i32, i32) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C588BE9usize)) };
     f(a0, a1, a2, a3, a4);
 }
 
@@ -378,7 +442,7 @@ pub unsafe fn canopus_fw_lv_obj_align_to(a0: *mut core::ffi::c_void, a1: *mut co
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lv_obj_add_event_cb(a0: *mut core::ffi::c_void, a1: canopus_lvx_event_cb, a2: u32, a3: *mut core::ffi::c_void) -> () {
-    let f: extern "C" fn(*mut core::ffi::c_void, canopus_lvx_event_cb, u32, *mut core::ffi::c_void) -> () = unsafe { core::mem::transmute(0x0C5882B9usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, canopus_lvx_event_cb, u32, *mut core::ffi::c_void) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C5882B9usize)) };
     f(a0, a1, a2, a3);
 }
 
@@ -386,7 +450,7 @@ pub unsafe fn canopus_fw_lv_obj_add_event_cb(a0: *mut core::ffi::c_void, a1: can
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lv_obj_set_hidden(a0: *mut core::ffi::c_void, a1: u32) -> () {
-    let f: extern "C" fn(*mut core::ffi::c_void, u32) -> () = unsafe { core::mem::transmute(0x0C588459usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, u32) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C588459usize)) };
     f(a0, a1);
 }
 
@@ -394,7 +458,7 @@ pub unsafe fn canopus_fw_lv_obj_set_hidden(a0: *mut core::ffi::c_void, a1: u32) 
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lv_event_get_user_data(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
-    let f: extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(0x0C588601usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C588601usize)) };
     f(a0)
 }
 
@@ -402,7 +466,7 @@ pub unsafe fn canopus_fw_lv_event_get_user_data(a0: *mut core::ffi::c_void) -> *
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_list_row_trailing(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
-    let f: extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(0x0C4A7F2Dusize) };
+    let f: extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C4A7F2Dusize)) };
     f(a0)
 }
 
@@ -410,7 +474,7 @@ pub unsafe fn canopus_fw_lvx_list_row_trailing(a0: *mut core::ffi::c_void) -> *m
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_quickapp_register_app(a0: u16, a1: *const canopus_interconnect_app_info) -> i32 {
-    let f: extern "C" fn(u16, *const canopus_interconnect_app_info) -> i32 = unsafe { core::mem::transmute(0x0C527E39usize) };
+    let f: extern "C" fn(u16, *const canopus_interconnect_app_info) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C527E39usize)) };
     f(a0, a1)
 }
 
@@ -418,7 +482,7 @@ pub unsafe fn canopus_fw_quickapp_register_app(a0: u16, a1: *const canopus_inter
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_page_finish(a0: *mut core::ffi::c_void) -> i32 {
-    let f: extern "C" fn(*mut core::ffi::c_void) -> i32 = unsafe { core::mem::transmute(0x0CA53089usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0CA53089usize)) };
     f(a0)
 }
 
@@ -426,7 +490,7 @@ pub unsafe fn canopus_fw_page_finish(a0: *mut core::ffi::c_void) -> i32 {
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_msgbox_set_content(a0: *mut core::ffi::c_void, a1: u32, a2: *const u8, a3: *const u8, a4: *const u8, a5: *const core::ffi::c_void, a6: u32) -> () {
-    let f: extern "C" fn(*mut core::ffi::c_void, u32, *const u8, *const u8, *const u8, *const core::ffi::c_void, u32) -> () = unsafe { core::mem::transmute(0x0C4A93FDusize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, u32, *const u8, *const u8, *const u8, *const core::ffi::c_void, u32) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C4A93FDusize)) };
     f(a0, a1, a2, a3, a4, a5, a6);
 }
 
@@ -434,7 +498,7 @@ pub unsafe fn canopus_fw_lvx_msgbox_set_content(a0: *mut core::ffi::c_void, a1: 
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_page_goto(a0: u32, a1: u32, a2: u32, a3: u32) -> i32 {
-    let f: extern "C" fn(u32, u32, u32, u32) -> i32 = unsafe { core::mem::transmute(0x0CA539F9usize) };
+    let f: extern "C" fn(u32, u32, u32, u32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0CA539F9usize)) };
     f(a0, a1, a2, a3)
 }
 
@@ -442,7 +506,7 @@ pub unsafe fn canopus_fw_page_goto(a0: u32, a1: u32, a2: u32, a3: u32) -> i32 {
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_object_delete(a0: *mut core::ffi::c_void) -> () {
-    let f: extern "C" fn(*mut core::ffi::c_void) -> () = unsafe { core::mem::transmute(0x0C5888F1usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C5888F1usize)) };
     f(a0);
 }
 
@@ -450,7 +514,7 @@ pub unsafe fn canopus_fw_lvx_object_delete(a0: *mut core::ffi::c_void) -> () {
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
-    let f: extern "C" fn(*const u8) -> i32 = unsafe { core::mem::transmute(0x0C1A0E1Dusize) };
+    let f: extern "C" fn(*const u8) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C1A0E1Dusize)) };
     f(a0)
 }
 
@@ -458,7 +522,7 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_label_set_text(a0: *mut core::ffi::c_void, a1: *const u8) -> () {
-    let f: extern "C" fn(*mut core::ffi::c_void, *const u8) -> () = unsafe { core::mem::transmute(0x0C588849usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, *const u8) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C588849usize)) };
     f(a0, a1);
 }
 
@@ -466,7 +530,7 @@ pub unsafe fn canopus_fw_lvx_label_set_text(a0: *mut core::ffi::c_void, a1: *con
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_read(a0: i32, a1: *mut core::ffi::c_void, a2: u32) -> i32 {
-    let f: extern "C" fn(i32, *mut core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(0x0C1C1E25usize) };
+    let f: extern "C" fn(i32, *mut core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C1C1E25usize)) };
     f(a0, a1, a2)
 }
 
@@ -474,7 +538,7 @@ pub unsafe fn canopus_fw_read(a0: i32, a1: *mut core::ffi::c_void, a2: u32) -> i
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_interconnect_connect(a0: *mut core::ffi::c_void, a1: *mut core::ffi::c_void, a2: *const u8, a3: canopus_interconnect_recv_cb) -> i32 {
-    let f: extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void, *const u8, canopus_interconnect_recv_cb) -> i32 = unsafe { core::mem::transmute(0x0C2D2035usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void, *const u8, canopus_interconnect_recv_cb) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C2D2035usize)) };
     f(a0, a1, a2, a3)
 }
 
@@ -482,7 +546,7 @@ pub unsafe fn canopus_fw_interconnect_connect(a0: *mut core::ffi::c_void, a1: *m
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_list_row_create(a0: *mut core::ffi::c_void, a1: *const u8, a2: *const u8, a3: u8) -> *mut core::ffi::c_void {
-    let f: extern "C" fn(*mut core::ffi::c_void, *const u8, *const u8, u8) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(0x0C52B235usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, *const u8, *const u8, u8) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C52B235usize)) };
     f(a0, a1, a2, a3)
 }
 
@@ -490,15 +554,23 @@ pub unsafe fn canopus_fw_lvx_list_row_create(a0: *mut core::ffi::c_void, a1: *co
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_style_apply(a0: *mut core::ffi::c_void, a1: *const core::ffi::c_void, a2: u32, a3: u32) -> i32 {
-    let f: extern "C" fn(*mut core::ffi::c_void, *const core::ffi::c_void, u32, u32) -> i32 = unsafe { core::mem::transmute(0x0C49EA99usize) };
+    let f: extern "C" fn(*mut core::ffi::c_void, *const core::ffi::c_void, u32, u32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C49EA99usize)) };
     f(a0, a1, a2, a3)
+}
+
+/// Recovered `bt_pair_request_reply` at 0x0C39988C. Thumb callable address 0x0C39988D.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_bt_pair_request_reply(a0: *mut core::ffi::c_void, a1: *const u8, a2: i32) -> i32 {
+    let f: extern "C" fn(*mut core::ffi::c_void, *const u8, i32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C39988Dusize)) };
+    f(a0, a1, a2)
 }
 
 /// Recovered `close` at 0x0C1AAB70. Thumb callable address 0x0C1AAB71.
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_close(a0: i32) -> i32 {
-    let f: extern "C" fn(i32) -> i32 = unsafe { core::mem::transmute(0x0C1AAB71usize) };
+    let f: extern "C" fn(i32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C1AAB71usize)) };
     f(a0)
 }
 
