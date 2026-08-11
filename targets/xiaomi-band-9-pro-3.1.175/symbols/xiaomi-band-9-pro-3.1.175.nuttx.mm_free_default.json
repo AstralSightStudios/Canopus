@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.nuttx.mm_free_default",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "mm_free_default",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C0F1B00",
+  "callable_address": "0x0C0F1B01",
+  "prototype": "void(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": ["any"],
+    "blocking": false
+  },
+  "ownership": {
+    "argument_0": "allocation previously returned by mm_alloc, or null"
+  },
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": ["EVID-IO-001", "EVID-LOADER-001"]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": ["EVID-IO-001", "EVID-LOADER-001"],
+    "source": "Exact IDA sub_C0F1B00 forwards (dword_200B17F4, pointer) to mm_free sub_C0F19DC; same heap used by mm_alloc sub_C0F24E0"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-11",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "void(void *)",
+    "ownership": "releases allocations from mm_alloc default heap",
+    "thread": "any",
+    "device_probe": "pending"
+  },
+  "notes": "Default-heap free wrapper paired with mm_alloc; use instead of exposing heap global 0x200B17F4 to portable loader code."
+}

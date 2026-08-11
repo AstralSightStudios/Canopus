@@ -4,7 +4,7 @@
  * firmware : 3.1.175 (CONBINE_LTALM054_T1175_04141021_release_5793)
  * sha256   : 4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b
  * revision : 1
- * input_digest: d872dab8097b664e
+ * input_digest: 91d5d6df0064ef75
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
 #define CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
@@ -280,6 +280,11 @@ static inline int canopus_fw_app_launcher_add(uint16_t a0) {
 typedef int (*canopus_fw_close_fn)(int);
 static inline int canopus_fw_close(int a0) {
     return ((canopus_fw_close_fn)(uintptr_t)0x0C37EFF9)(a0);
+}
+
+typedef void (*canopus_fw_mm_free_default_fn)(void *);
+static inline void canopus_fw_mm_free_default(void * a0) {
+    return ((canopus_fw_mm_free_default_fn)(uintptr_t)0x0C0F1B01)(a0);
 }
 
 typedef int (*canopus_fw_bt_create_bond_fn)(void *, void *);

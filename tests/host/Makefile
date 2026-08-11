@@ -26,6 +26,7 @@ PORTABLE_SRCS = \
 	../../runtime/diagnostics/canopus_diagnostics.c \
 	../../runtime/module/canopus_module.c \
 	../../runtime/loader/canopus_arm_reloc.c \
+	../../runtime/loader/canopus_elf32_loader.c \
 	../../manager/protocol/canopus_protocol.c \
 	../../manager/client/canopus_client.c \
 	../../manager/service/canopus_supervisor.c \
@@ -68,8 +69,10 @@ TEST_SRCS = \
 	test_arm_reloc.c
 
 BIN = canopus_host_tests
+ELF_LOADER_HARNESS = elf_loader_harness
+BAND9_ELF ?= ../../../Canopus-Module-BluetoothAudio/build/xiaomi-band-9-pro-3.1.175/bluetooth-audio.elf
 
-.PHONY: all run clean cross-arm64 cross-thumb
+.PHONY: all run clean cross-arm64 cross-thumb real-elf-loader
 
 all: $(BIN)
 
@@ -78,6 +81,14 @@ $(BIN): $(RUNTIME_SRCS) $(TEST_SRCS) ../../sdk/c/canopus_abi.h ../../sdk/c/canop
 
 run: $(BIN)
 	./$(BIN)
+
+$(ELF_LOADER_HARNESS): ../../runtime/loader/canopus_arm_reloc.c \
+		../../runtime/loader/canopus_elf32_loader.c elf_loader_harness.c
+	$(CC) $(CFLAGS) -I../../sdk/c -I../../runtime/loader $^ -o $@
+
+real-elf-loader: $(ELF_LOADER_HARNESS)
+	test -f $(BAND9_ELF)
+	./$(ELF_LOADER_HARNESS) $(BAND9_ELF)
 
 # Sanity: the bare-metal portable runtime must compile for the actual target
 # profile (Cortex-M33 Thumb soft-float). Only compile+assemble, no link.
@@ -90,4 +101,4 @@ cross-thumb:
 		-DCANOPUS_HOST=1 $(INC) -c $(PORTABLE_SRCS)
 
 clean:
-	rm -f $(BIN) *.o
+	rm -f $(BIN) $(ELF_LOADER_HARNESS) *.o

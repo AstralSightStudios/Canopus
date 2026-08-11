@@ -4,7 +4,7 @@
 // firmware : 3.1.175 (CONBINE_LTALM054_T1175_04141021_release_5793)
 // sha256   : 4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b
 // revision : 1
-// input_digest: d872dab8097b664e
+// input_digest: 91d5d6df0064ef75
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -371,6 +371,14 @@ pub unsafe fn canopus_fw_app_launcher_add(a0: u16) -> i32 {
 pub unsafe fn canopus_fw_close(a0: i32) -> i32 {
     let f: extern "C" fn(i32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C37EFF9usize)) };
     f(a0)
+}
+
+/// Recovered `mm_free_default` at 0x0C0F1B00. Thumb callable address 0x0C0F1B01.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_mm_free_default(a0: *mut core::ffi::c_void) -> () {
+    let f: extern "C" fn(*mut core::ffi::c_void) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C0F1B01usize)) };
+    f(a0);
 }
 
 /// Recovered `bt_create_bond` at 0x0C3BFDE0. Thumb callable address 0x0C3BFDE1.
