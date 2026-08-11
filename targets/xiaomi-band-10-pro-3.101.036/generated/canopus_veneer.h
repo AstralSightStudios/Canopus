@@ -4,7 +4,7 @@
  * firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
  * sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
  * revision : 2
- * input_digest: bfeef8ec3d7e21c1
+ * input_digest: a5f4a82011169a00
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
@@ -213,6 +213,11 @@ static inline void * canopus_fw_lvx_msgbox_create(void * a0, void * a1) {
     return ((canopus_fw_lvx_msgbox_create_fn)(uintptr_t)0xc4a93c1)(a0, a1);
 }
 
+typedef void * (*canopus_fw_lv_timer_create_fn)(canopus_lvx_event_cb, uint32_t, void *);
+static inline void * canopus_fw_lv_timer_create(canopus_lvx_event_cb a0, uint32_t a1, void * a2) {
+    return ((canopus_fw_lv_timer_create_fn)(uintptr_t)0xc587721)(a0, a1, a2);
+}
+
 typedef void * (*canopus_fw_lvx_page_content_create_fn)(void *);
 static inline void * canopus_fw_lvx_page_content_create(void * a0) {
     return ((canopus_fw_lvx_page_content_create_fn)(uintptr_t)0xca4e991)(a0);
@@ -363,6 +368,11 @@ static inline void * canopus_fw_bt_adapter_get_instance(void) {
     return ((canopus_fw_bt_adapter_get_instance_fn)(uintptr_t)0x0CA28771)();
 }
 
+typedef uint32_t (*canopus_fw_bt_l2cap_connect_fn)(const void *);
+static inline uint32_t canopus_fw_bt_l2cap_connect(const void * a0) {
+    return ((canopus_fw_bt_l2cap_connect_fn)(uintptr_t)0x0C7ED545)(a0);
+}
+
 typedef void (*canopus_fw_lvx_label_set_text_fn)(void *, const char *);
 static inline void canopus_fw_lvx_label_set_text(void * a0, const char * a1) {
     return ((canopus_fw_lvx_label_set_text_fn)(uintptr_t)0xc587f51)(a0, a1);
@@ -421,7 +431,6 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * hfp_ag_disconnect: FORBIDDEN - no veneer may ever be generated
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
  * insmod: restricted - not exported until context/ownership approved
- * lv_timer_create: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated

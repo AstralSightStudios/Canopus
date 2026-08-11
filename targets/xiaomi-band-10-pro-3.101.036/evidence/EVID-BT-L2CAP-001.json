@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-L2CAP-001",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Which exact 3.101.036 firmware entry submits a caller-owned dynamic L2CAP connection request to the L2CAP owner FSM?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.036.bluetooth.bt_l2cap_connect"
+  ],
+  "prototype_hypothesis": "uint32_t(const void *request)",
+  "callsite_evidence": [
+    "Exact IDA sub_C7ED544 forwards its sole request argument to owner dword_20137B0C through sub_C7D33C0 and worker sub_C7E94FC.",
+    "Worker sub_C7E94FC consumes the recovered request fields including address/config/options and invokes the request callback at offset +20.",
+    "The previous 0x0C7ED48C entry takes no request argument and queues sub_C7EA764 L2CAP subsystem cleanup."
+  ],
+  "control_flow_evidence": [
+    "0x0C7ED544 is an independent Thumb function entry; callable address is 0x0C7ED545."
+  ],
+  "ownership_analysis": "The caller-owned request is passed to the owner queue and consumed by the worker/callback lifecycle on accepted insertion.",
+  "unsafe_assumptions": [
+    "The request layout and callback ABI are enforced by target-private compile-time constants.",
+    "Call only after dword_20137B0C owner initialization."
+  ],
+  "recommended_probe": "Submit one AVDTP PSM 0x0019 request and verify callback event progression and negotiated CID/MTU.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-11T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C7ED544",
+      "role": "L2CAP request submission wrapper"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C7E94FC",
+      "role": "dynamic channel connect worker"
+    }
+  ]
+}

@@ -165,6 +165,12 @@ fn target_private_never_transmutes_raw_firmware_addresses() {
                 "0x0C39F9B1usize",
                 "0x0C7D36D1usize",
                 "0x0C7D3E0D",
+                "0x0C588601usize",
+                "0x0C5886D1usize",
+                "0x0C588759usize",
+                "0x0C7ED48Dusize",
+                "0x20137B1Cusize",
+                "0x20137EA4",
             ] {
                 assert!(
                     !source.contains(invalid),

@@ -7,15 +7,31 @@
   "instruction_set": "thumb",
   "prototype": "void *(canopus_lvx_event_cb, uint32_t, void *)",
   "proof": {
-    "static": "confirmed"
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-UI-004"
+    ]
   },
-  "policy": "restricted",
+  "policy": "native-full-trust",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "source": "EVID-UI-004 (3.101.036 pattern-matched) (3.101.036 IDA-confirmed)"
+    "source": "EVID-UI-004 (3.101.036 pattern-matched) (3.101.036 IDA-confirmed)",
+    "evidence_ids": [
+      "EVID-UI-004"
+    ]
   },
   "entry_address": "0xc587720",
   "callable_address": "0xc587721",
-  "notes": "Stock LVGL timer-create veneer. Page-owner use only; returned timer must be deleted before page teardown."
+  "notes": "Stock LVGL timer-create veneer. Exact-target IDA confirms stock callers pass (callback, period_ms, user_data); returned timer must be deleted before page teardown.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-11",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "void *(canopus_lvx_event_cb, uint32_t, void *)",
+    "ownership": "LVGL-owned timer returned; caller deletes before page teardown",
+    "thread": "UI owner thread",
+    "device_probe": "module native-app page refresh timer"
+  }
 }

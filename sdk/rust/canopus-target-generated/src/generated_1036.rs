@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 2
-// input_digest: bfeef8ec3d7e21c1
+// input_digest: a5f4a82011169a00
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -262,6 +262,14 @@ pub unsafe fn canopus_fw_lvx_msgbox_create(a0: *mut core::ffi::c_void, a1: *mut 
     f(a0, a1)
 }
 
+/// Recovered `lv_timer_create` at 0xc587720. Thumb callable address 0xc587721.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_lv_timer_create(a0: canopus_lvx_event_cb, a1: u32, a2: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
+    let f: extern "C" fn(canopus_lvx_event_cb, u32, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0xc587721usize)) };
+    f(a0, a1, a2)
+}
+
 /// Recovered `lvx_page_content_create` at 0xca4e990. Thumb callable address 0xca4e991.
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
@@ -513,6 +521,14 @@ pub unsafe fn canopus_fw_bt_adapter_get_instance() -> *mut core::ffi::c_void {
     f()
 }
 
+/// Recovered `bt_l2cap_connect` at 0x0C7ED544. Thumb callable address 0x0C7ED545.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_bt_l2cap_connect(a0: *const core::ffi::c_void) -> u32 {
+    let f: extern "C" fn(*const core::ffi::c_void) -> u32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C7ED545usize)) };
+    f(a0)
+}
+
 /// Recovered `lvx_label_set_text` at 0xc587f50. Thumb callable address 0xc587f51.
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
@@ -603,7 +619,6 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // hfp_ag_disconnect: FORBIDDEN - no binding may ever be generated
 // hidden_and_show_app_cb: restricted - not exported until context/ownership approved
 // insmod: restricted - not exported until context/ownership approved
-// lv_timer_create: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated

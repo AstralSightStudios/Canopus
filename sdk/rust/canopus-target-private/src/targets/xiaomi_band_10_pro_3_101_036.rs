@@ -336,20 +336,10 @@ pub unsafe fn bt_buffer_new(payload_length: u16, headroom: u16) -> *mut StockBuf
     f(payload_length, headroom)
 }
 
-/// Queues an L2CAP connect request. Returns the nonzero queue node on accepted
-/// submission and 0 when insertion fails; it is not a zero-on-success status.
-///
-/// Firmware `0x0C7ED49C` delegates directly to the owner-only FSM work list at
-/// `0x0C7D3318`. Invoke it from an already-running owner callback; callers on an
-/// unrelated thread must first dispatch through [`bt_queue_external`].
+/// Queues a dynamic L2CAP connect request on the exact owner FSM. Returns the
+/// nonzero queue node on accepted submission and 0 when insertion fails.
 pub unsafe fn bt_l2cap_connect(request: *const core::ffi::c_void) -> u32 {
-    type F = extern "C" fn(*const core::ffi::c_void) -> u32;
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C7ED48Dusize,
-        ))
-    };
-    f(request)
+    unsafe { canopus_target_generated::canopus_fw_bt_l2cap_connect(request) }
 }
 
 /// Queues L2CAP teardown through firmware `0x0C7ED54C`. Invoke from an active
@@ -475,84 +465,28 @@ pub fn bt_queue_free_addr() -> *mut core::ffi::c_void {
     0x0C828509usize as *mut core::ffi::c_void
 }
 
-/// Reads the L2CAP owner pointer (module load context) for timers and queues.
+/// Reads the exact L2CAP FSM owner pointer used by every stock dynamic-channel
+/// queue wrapper in this firmware.
 pub unsafe fn bt_l2cap_owner() -> *mut core::ffi::c_void {
-    let slot = 0x20137B1Cusize as *const *mut core::ffi::c_void;
+    let slot = 0x20137B0Cusize as *const *mut core::ffi::c_void;
     unsafe { *slot }
 }
 
-/// Reads the HCI FSM owner pointer (reserved; unused by this module).
-pub unsafe fn bt_hci_fsm_owner() -> *mut core::ffi::c_void {
-    let slot = 0x20137B14usize as *const *mut core::ffi::c_void;
-    unsafe { *slot }
-}
-
-/// GAP host receive callback used for inbound H4 packets.
+/// Band 10 .036 has no proven raw HCI receive hook. The previously selected
+/// slot is a one-argument GAP device-record observer and must never be replaced
+/// by the three-argument H4 compatibility callback.
 pub type BtGapTransportReceive = extern "C" fn(*mut core::ffi::c_void, *mut u8, i32) -> i32;
 
-const GAP_HOST_RECEIVE_SLOT: usize = 0x20137EA4;
-static GAP_HOST_STOCK_RECEIVE: core::sync::atomic::AtomicU32 =
-    core::sync::atomic::AtomicU32::new(0);
-
-/// Replaces the active GAP host receive entry after capturing the exact callable
-/// installed by this firmware. Powering Bluetooth on rebuilds the dispatcher,
-/// so callers reassert the hook after adapter ON.
-///
-/// # Safety
-/// The hook must preserve the declared ABI, forward every unmatched packet,
-/// and remain resident until reboot.
-pub unsafe fn bt_gap_install_receive_hook(receive_hook: BtGapTransportReceive) -> bool {
-    use core::sync::atomic::Ordering;
-
-    let receive_slot = GAP_HOST_RECEIVE_SLOT as *mut u32;
-    let receive_replacement = receive_hook as usize as u32;
-    let receive_current = unsafe { core::ptr::read_volatile(receive_slot) };
-    let mut stock = GAP_HOST_STOCK_RECEIVE.load(Ordering::Acquire);
-
-    if stock == 0 {
-        if receive_current == receive_replacement
-            || receive_current & 1 == 0
-            || !(0x0C00_0001..0x0D00_0000).contains(&receive_current)
-        {
-            return false;
-        }
-        match GAP_HOST_STOCK_RECEIVE.compare_exchange(
-            0,
-            receive_current,
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
-            Ok(_) => stock = receive_current,
-            Err(captured) => stock = captured,
-        }
-    }
-
-    if receive_current != receive_replacement && receive_current != stock {
-        return false;
-    }
-
-    unsafe { core::ptr::write_volatile(receive_slot, receive_replacement) };
-    unsafe { core::ptr::read_volatile(receive_slot) == receive_replacement }
+pub unsafe fn bt_gap_install_receive_hook(_receive_hook: BtGapTransportReceive) -> bool {
+    false
 }
 
-/// Calls the stock GAP host receive dispatcher captured before hook installation.
-///
-/// # Safety
-/// The arguments must satisfy [`BtGapTransportReceive`]'s stock H4-buffer
-/// contract, and the hook must have been installed successfully first.
 pub unsafe fn bt_gap_stock_receive(
-    state: *mut core::ffi::c_void,
-    packet: *mut u8,
-    packet_length: i32,
+    _state: *mut core::ffi::c_void,
+    _packet: *mut u8,
+    _packet_length: i32,
 ) -> i32 {
-    use core::sync::atomic::Ordering;
-
-    let stock = GAP_HOST_STOCK_RECEIVE.load(Ordering::Acquire);
-    if stock == 0 {
-        return -1;
-    }
-    let receive: BtGapTransportReceive = unsafe { core::mem::transmute(stock as usize) };
-    receive(state, packet, packet_length)
+    -1
 }
 
 /// Removes the exact BES mHDT capability option (`7F 01 01`) from an inbound
@@ -863,13 +797,7 @@ pub unsafe fn lvx_timer_create(
     period_ms: u32,
     user_data: *mut core::ffi::c_void,
 ) -> *mut core::ffi::c_void {
-    type F = extern "C" fn(LvxTimerCallback, u32, *mut core::ffi::c_void) -> *mut core::ffi::c_void;
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C588759usize,
-        ))
-    };
-    f(callback, period_ms, user_data)
+    unsafe { canopus_target_generated::canopus_fw_lv_timer_create(callback, period_ms, user_data) }
 }
 
 /// Deletes a page-owned LVGL timer. Must run on the UI owner thread.
@@ -1024,33 +952,17 @@ pub unsafe fn lvx_event_add(
     code: u32,
     cookie: *mut core::ffi::c_void,
 ) {
-    type F = extern "C" fn(*mut core::ffi::c_void, LvxEventCallback, u32, *mut core::ffi::c_void);
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C5881A9usize,
-        ))
+    unsafe {
+        canopus_target_generated::canopus_fw_lv_obj_add_event_cb(object, callback, code, cookie)
     };
-    f(object, callback, code, cookie);
 }
 
 pub unsafe fn lvx_event_get_user_data(event: *mut core::ffi::c_void) -> usize {
-    type F = extern "C" fn(*mut core::ffi::c_void) -> usize;
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C588601usize,
-        ))
-    };
-    f(event)
+    unsafe { canopus_target_generated::canopus_fw_lv_event_get_user_data(event) as usize }
 }
 
 pub unsafe fn lvx_event_get_code(event: *mut core::ffi::c_void) -> u32 {
-    type F = extern "C" fn(*mut core::ffi::c_void) -> u32;
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C5886D1usize,
-        ))
-    };
-    f(event)
+    unsafe { canopus_target_generated::canopus_fw_lv_event_get_code(event) }
 }
 
 pub unsafe fn lvx_set_hidden(object: *mut core::ffi::c_void, hidden: u32) {
