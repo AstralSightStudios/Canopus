@@ -4,7 +4,7 @@
  * firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
  * sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
  * revision : 2
- * input_digest: a5f4a82011169a00
+ * input_digest: 046cbeaffca0f34e
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
@@ -193,6 +193,9 @@ static inline int canopus_identity_guard(void)
 }
 
 /* ---- typed veneers ---- */
+/* Recovered global `core_bt_callback_table` at 0x2CD1F920. */
+#define canopus_fw_core_bt_callback_table ((void *)(uintptr_t)0x2CD1F920u)
+
 typedef int (*canopus_fw_app_install_fn)(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t);
 static inline int canopus_fw_app_install(const launcher_app_descriptor * a0, const firmware_page_descriptor *const * a1, uint32_t a2) {
     return ((canopus_fw_app_install_fn)(uintptr_t)0xca51a55)(a0, a1, a2);
@@ -320,6 +323,7 @@ static inline void * canopus_fw_lvx_list_row_trailing(void * a0) {
     return ((canopus_fw_lvx_list_row_trailing_fn)(uintptr_t)0xc4a7f49)(a0);
 }
 
+/* core_bt_pair_request_callback: skipped (argument type not mappable) */
 typedef void (*canopus_fw_lv_obj_add_event_cb_fn)(void *, canopus_lvx_event_cb, uint32_t, void *);
 static inline void canopus_fw_lv_obj_add_event_cb(void * a0, canopus_lvx_event_cb a1, uint32_t a2, void * a3) {
     return ((canopus_fw_lv_obj_add_event_cb_fn)(uintptr_t)0xc5881a9)(a0, a1, a2, a3);
@@ -387,6 +391,9 @@ static inline void * canopus_fw_lvx_label_create(void * a0) {
 #define canopus_fw_style_misans_demibold_32 ((void *)(uintptr_t)0x2010A02Cu)
 
 /* bt_get_pairing_state: skipped (argument type not mappable) */
+/* Recovered global `core_bt_adapter_instance` at 0x20122FB0. */
+#define canopus_fw_core_bt_adapter_instance ((void *)(uintptr_t)0x20122FB0u)
+
 typedef void (*canopus_fw_lvx_object_align_fn)(void *, uint32_t, int32_t, int32_t);
 static inline void canopus_fw_lvx_object_align(void * a0, uint32_t a1, int32_t a2, int32_t a3) {
     return ((canopus_fw_lvx_object_align_fn)(uintptr_t)0xc587c11)(a0, a1, a2, a3);
@@ -402,6 +409,9 @@ typedef int (*canopus_fw_clock_gettime_fn)(uint32_t, stock_timespec_t *);
 static inline int canopus_fw_clock_gettime(uint32_t a0, stock_timespec_t * a1) {
     return ((canopus_fw_clock_gettime_fn)(uintptr_t)0xc1ec8b5)(a0, a1);
 }
+
+/* Recovered global `core_bt_registration_handle` at 0x20122FAC. */
+#define canopus_fw_core_bt_registration_handle ((uint32_t)(uintptr_t)0x20122FACu)
 
 typedef int (*canopus_fw_interconnect_send_fn)(void *, const char *, const canopus_interconnect_message *, canopus_interconnect_send_done, void *);
 static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const canopus_interconnect_message * a2, canopus_interconnect_send_done a3, void * a4) {

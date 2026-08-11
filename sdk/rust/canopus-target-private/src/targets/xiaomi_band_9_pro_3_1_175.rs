@@ -559,6 +559,29 @@ pub type PairDisplayCallback =
     unsafe extern "C" fn(*mut core::ffi::c_void, *const u8, i32, i32, u32);
 pub type BondStateCallback = unsafe extern "C" fn(*mut core::ffi::c_void, *const u8, i32, i32);
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum PairRequestFilterError {
+    Policy,
+    Allocation,
+    Registration,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct PairRequestFilter {
+    pub allocation: usize,
+    pub registration: u32,
+}
+
+pub unsafe fn bt_install_pair_request_filter(
+    _replacement: PairRequestCallback,
+) -> Result<Option<PairRequestFilter>, PairRequestFilterError> {
+    Ok(None)
+}
+
+pub unsafe fn bt_forward_pair_request(_cookie: *mut core::ffi::c_void, _address: *const u8) -> i32 {
+    0
+}
+
 /// Registers the module callback table behind the persistent Bluelet GAP client.
 pub unsafe fn bt_adapter_register(adapter: *mut core::ffi::c_void, callbacks: *const u32) -> u32 {
     if adapter.is_null()

@@ -425,6 +425,7 @@ impl<'a> RustGen<'a> {
                 continue;
             }
             let fn_name = format!("canopus_fw_{}", s.name);
+            let callable_name = format!("CANOPUS_FW_{}_CALLABLE", s.name.to_ascii_uppercase());
             let param_list = if arg_r.is_empty() {
                 String::new()
             } else {
@@ -448,10 +449,13 @@ impl<'a> RustGen<'a> {
                 callable
             ));
             out.push_str(&format!(
+                "pub const {callable_name}: usize = canopus_thumb_callable({callable}usize);\n"
+            ));
+            out.push_str(&format!(
                 "#[allow(non_snake_case)]\n#[allow(clippy::missing_safety_doc)]\npub unsafe fn {fn_name}({param_list}) -> {ret_t} {{\n"
             ));
             out.push_str(&format!(
-                "    let f: {fn_ty} = unsafe {{ core::mem::transmute(canopus_thumb_callable({callable}usize)) }};\n"
+                "    let f: {fn_ty} = unsafe {{ core::mem::transmute({callable_name}) }};\n"
             ));
             if ret_t == "()" {
                 out.push_str(&format!("    f({call_args});\n"));

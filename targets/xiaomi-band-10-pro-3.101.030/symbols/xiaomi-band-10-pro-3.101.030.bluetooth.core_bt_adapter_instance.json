@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.bluetooth.core_bt_adapter_instance",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "core_bt_adapter_instance",
+  "kind": "global", "instruction_set": "n/a", "prototype": "void *",
+  "proof": {"static": "confirmed", "device": "probed", "evidence_ids": ["EVID-BT-PAIR-FILTER-001"]},
+  "policy": "native-full-trust", "status": "DEVICE_PROBED",
+  "provenance": {"firmware_sha256": "f701a84f8f7ce41d7e21ae98a77a220cd822ab19fe6d35d230143495dccd225b", "evidence_ids": ["EVID-BT-PAIR-FILTER-001"], "source": "Exact IDA sub_C6E2F90 writes dword_20122FC0"},
+  "entry_address": "0x20122FC0", "approval_state": "APPROVED",
+  "promotion": {"reviewer": "canopus-maintainer", "date": "2026-08-11", "firmware_sha256": "f701a84f8f7ce41d7e21ae98a77a220cd822ab19fe6d35d230143495dccd225b", "prototype": "void *", "ownership": "firmware-owned global adapter pointer", "thread": "callback re-registration", "device_probe": "passed through BluetoothAudio pairing"},
+  "notes": "Companion Bluetooth client adapter instance."
+}

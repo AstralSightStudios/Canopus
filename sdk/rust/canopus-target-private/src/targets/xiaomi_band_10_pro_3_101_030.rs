@@ -202,33 +202,68 @@ pub unsafe fn bt_remove_bond(address: *const u8, transport: u32) -> i32 {
 /// this is a retriable precondition, not a submission.
 pub const CREATE_BOND_ADAPTER_NOT_READY: i32 = 2;
 
-pub const CORE_BT_BIND_STATE_ADDRESS: usize = 0x20122D2C;
-pub const CORE_BT_COMPANION_ADDRESS: usize = 0x20122D2E;
-pub const CORE_BT_ADAPTER_ADDRESS: usize = 0x20122FC0;
-pub const CORE_BT_CALLBACK_HANDLE_ADDRESS: usize = 0x20122FBC;
-pub const CORE_BT_CALLBACK_TABLE: usize = 0x2CD1F930;
-pub const CORE_BT_PAIR_REQUEST_CALLBACK: usize = 0x0C6E1E25;
-pub const CORE_BT_BOUND_STATE: u8 = 1;
-pub const CORE_BT_PAIR_REQUEST_SLOT: usize = 5;
+const CORE_BT_PAIR_REQUEST_SLOT: usize = 5;
 
-pub unsafe fn core_bt_bind_state() -> u8 {
-    unsafe { core::ptr::read_volatile(CORE_BT_BIND_STATE_ADDRESS as *const u8) }
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum PairRequestFilterError {
+    Policy,
+    Allocation,
+    Registration,
 }
 
-pub unsafe fn core_bt_companion() -> *const u8 {
-    CORE_BT_COMPANION_ADDRESS as *const u8
+#[derive(Copy, Clone, Debug)]
+pub struct PairRequestFilter {
+    pub allocation: usize,
+    pub registration: u32,
 }
 
-pub unsafe fn core_bt_adapter() -> *mut core::ffi::c_void {
-    unsafe { *(CORE_BT_ADAPTER_ADDRESS as *const *mut core::ffi::c_void) }
+pub unsafe fn bt_install_pair_request_filter(
+    replacement: PairRequestCallback,
+) -> Result<Option<PairRequestFilter>, PairRequestFilterError> {
+    let adapter = unsafe {
+        *(canopus_target_generated::canopus_fw_core_bt_adapter_instance
+            as *const *mut core::ffi::c_void)
+    };
+    let handle_ptr = canopus_target_generated::canopus_fw_core_bt_registration_handle as *mut u32;
+    let original_handle = unsafe { core::ptr::read_volatile(handle_ptr) };
+    let stock = canopus_target_generated::canopus_fw_core_bt_callback_table as *const u32;
+    let original =
+        canopus_target_generated::CANOPUS_FW_CORE_BT_PAIR_REQUEST_CALLBACK_CALLABLE as u32;
+    if adapter.is_null() || original_handle == 0 {
+        return Ok(None);
+    }
+    if unsafe { *stock.add(CORE_BT_PAIR_REQUEST_SLOT) } != original {
+        return Err(PairRequestFilterError::Policy);
+    }
+    let mirror = unsafe { bt_alloc((CALLBACK_WORDS * 4) as u32) } as *mut u32;
+    if mirror.is_null() {
+        return Err(PairRequestFilterError::Allocation);
+    }
+    unsafe {
+        core::ptr::copy_nonoverlapping(stock, mirror, CALLBACK_WORDS);
+        *mirror.add(CORE_BT_PAIR_REQUEST_SLOT) = replacement as *const () as usize as u32;
+    }
+    let mirror_handle = unsafe { bt_adapter_register(adapter, mirror) };
+    if mirror_handle == 0 {
+        unsafe { bt_free(mirror.cast()) };
+        return Err(PairRequestFilterError::Registration);
+    }
+    if unsafe { bt_adapter_unregister(adapter, original_handle) } == 0 {
+        unsafe {
+            bt_adapter_unregister(adapter, mirror_handle);
+            bt_free(mirror.cast());
+        }
+        return Err(PairRequestFilterError::Registration);
+    }
+    unsafe { core::ptr::write_volatile(handle_ptr, mirror_handle) };
+    Ok(Some(PairRequestFilter {
+        allocation: mirror as usize,
+        registration: mirror_handle,
+    }))
 }
 
-pub unsafe fn core_bt_callback_handle() -> *mut u32 {
-    CORE_BT_CALLBACK_HANDLE_ADDRESS as *mut u32
-}
-
-pub unsafe fn core_bt_callback_table() -> *const u32 {
-    CORE_BT_CALLBACK_TABLE as *const u32
+pub unsafe fn bt_forward_pair_request(cookie: *mut core::ffi::c_void, address: *const u8) -> i32 {
+    unsafe { canopus_target_generated::canopus_fw_core_bt_pair_request_callback(cookie, address) }
 }
 
 // ---------------------------------------------------------------------------

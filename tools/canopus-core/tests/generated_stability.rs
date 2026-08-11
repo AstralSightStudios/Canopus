@@ -124,12 +124,20 @@ fn additional_target_artifacts_regenerate_identically() {
             assert!(rust.contains("canopus_thumb_callable(0x0C39989Dusize)"));
             assert!(rust.contains("canopus_thumb_callable(0x0C399861usize)"));
             assert!(rust.contains("canopus_thumb_callable(0x0C39F949usize)"));
+            assert!(
+                rust.contains(
+                    "pub const canopus_fw_core_bt_callback_table: usize = 0x2CD1F920usize"
+                )
+            );
+            assert!(rust.contains("canopus_thumb_callable(0x0C6E1ECDusize)"));
             for invalid in [
                 "0x0CA286C9usize",
                 "0x0C39F021usize",
                 "0x0C39988Dusize",
                 "0x0C3998C9usize",
                 "0x0C39F9B1usize",
+                "0x0C6E1E25usize",
+                "0x2CD1F930usize",
             ] {
                 assert!(
                     !rust.contains(invalid),
@@ -195,7 +203,9 @@ fn generated_thumb_callable_normalizes_entry_and_callable() {
         text.contains("pub const fn canopus_thumb_callable(entry_or_callable: usize) -> usize")
     );
     assert!(text.contains("entry_or_callable | 1usize"));
-    assert!(text.contains("core::mem::transmute(canopus_thumb_callable(0x0C1C31C9usize))"));
+    assert!(text.contains("pub const CANOPUS_FW_CLOCK_GETTIME_CALLABLE: usize"));
+    assert!(text.contains("canopus_thumb_callable(0x0C1EC8B5usize)"));
+    assert!(text.contains("core::mem::transmute(CANOPUS_FW_CLOCK_GETTIME_CALLABLE)"));
 }
 
 #[test]
@@ -274,10 +284,14 @@ fn identity_guard_uses_pack_version_build() {
     let text = r#gen.generate();
     assert!(text.contains("b\"3.101.030\""));
     assert!(text.contains("b\"CONBINE_LTALM078_T3.101.030_06011854\""));
-    // Generated indirect calls always pass the approved callable address
-    // through the shared Thumb normalization boundary.
-    assert!(text.contains("transmute(canopus_thumb_callable(0x0C1EC8B5usize))"));
-    assert!(text.contains("transmute(canopus_thumb_callable(0x0C1A0D51usize))"));
+    // Generated indirect calls expose and consume the shared normalized callable
+    // constant, so callback-table comparisons never take the host wrapper address.
+    assert!(text.contains("pub const CANOPUS_FW_APP_LOOKUP_CALLABLE: usize"));
+    assert!(text.contains("canopus_thumb_callable(0x0CA50FD5usize)"));
+    assert!(text.contains("transmute(CANOPUS_FW_APP_LOOKUP_CALLABLE)"));
+    assert!(text.contains("pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize"));
+    assert!(text.contains("canopus_thumb_callable(0x0C1A0D51usize)"));
+    assert!(text.contains("transmute(CANOPUS_FW_REGISTER_DRIVER_CALLABLE)"));
 }
 
 // Helper assertions reused by the tests above (kept as a compile check that the

@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-PAIR-FILTER-001",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "question": "Which exact companion Bluetooth client state and callback reject non-companion Pair Requests on 3.101.030?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.030.bluetooth.core_bt_adapter_instance",
+    "xiaomi-band-10-pro-3.101.030.bluetooth.core_bt_registration_handle",
+    "xiaomi-band-10-pro-3.101.030.bluetooth.core_bt_callback_table",
+    "xiaomi-band-10-pro-3.101.030.bluetooth.core_bt_pair_request_callback"
+  ],
+  "prototype_hypothesis": "adapter instance and registration handle globals; uint32_t callback table[16]; int pair_request(void *cookie, const uint8_t address[6])",
+  "callsite_evidence": [
+    "Exact sub_C6E2F90 (bts_adapter_init) stores the adapter instance at 0x20122FC0, registers callback table 0x2CD1F930 through sub_C398C24, and stores its handle at 0x20122FBC.",
+    "Callback-table slot 5 at 0x2CD1F944 contains Thumb callable 0x0C6E1E25, exact sub_C6E1E24.",
+    "sub_C6E1E24 compares the incoming address with the companion address and replies accepted only for the companion while one is bound.",
+    "Replacing only this companion-client slot prevents its rejection of the module's target headset and preserves all unrelated callbacks."
+  ],
+  "control_flow_evidence": [
+    "The callback table has 16 retained word slots and remains live for registration handle 0x20122FBC.",
+    "The replacement must forward unmatched Pair Requests to 0x0C6E1E25 and remain resident until reboot.",
+    "Installation compare-checks slot 5 before registering the mirror and unregistering the original handle."
+  ],
+  "ownership_analysis": "The adapter and stock table are firmware-owned. The mirror is module-owned and boot-resident; failure rollback unregisters and frees the mirror before preserving the original registration.",
+  "unsafe_assumptions": ["The filter is valid only while the module remains resident; unloading requires reboot."],
+  "recommended_probe": "Pair a non-companion headset and verify Pair Request, BONDED, and AVDTP connection.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "DEVICE_PROBED",
+  "created": "2026-08-11T00:00:00Z",
+  "artifacts": [
+    {"uri": "ida:///Volumes/EXT0/firmware_latest/vela_ap.bin.i64#sub_C6E2F90", "role": "companion adapter initialization"},
+    {"uri": "ida:///Volumes/EXT0/firmware_latest/vela_ap.bin.i64#sub_C6E1E24", "role": "companion Pair Request callback"}
+  ]
+}

@@ -4,7 +4,7 @@
  * firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
  * sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
  * revision : 3
- * input_digest: 3a44b60d44602f87
+ * input_digest: 8e77930e7f78ad0c
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
@@ -203,10 +203,16 @@ static inline int32_t canopus_fw_bt_adapter_unregister(void * a0, uint32_t a1) {
     return ((canopus_fw_bt_adapter_unregister_fn)(uintptr_t)0x0C398C8D)(a0, a1);
 }
 
+/* Recovered global `core_bt_registration_handle` at 0x20122FBC. */
+#define canopus_fw_core_bt_registration_handle ((uint32_t)(uintptr_t)0x20122FBCu)
+
 typedef int (*canopus_fw_open_fn)(const char *, int);
 static inline int canopus_fw_open(const char * a0, int a1) {
     return ((canopus_fw_open_fn)(uintptr_t)0x0C1C15B1)(a0, a1);
 }
+
+/* Recovered global `core_bt_callback_table` at 0x2CD1F930. */
+#define canopus_fw_core_bt_callback_table ((void *)(uintptr_t)0x2CD1F930u)
 
 typedef void (*canopus_fw_lvx_object_align_fn)(void *, uint32_t, int32_t, int32_t);
 static inline void canopus_fw_lvx_object_align(void * a0, uint32_t a1, int32_t a2, int32_t a3) {
@@ -290,6 +296,9 @@ static inline int canopus_fw_register_driver(const char * a0, const void * a1, u
 }
 
 /* bt_pair_display_reply: skipped (argument type not mappable) */
+/* Recovered global `core_bt_adapter_instance` at 0x20122FC0. */
+#define canopus_fw_core_bt_adapter_instance ((void *)(uintptr_t)0x20122FC0u)
+
 typedef int (*canopus_fw_interconnect_send_fn)(void *, const char *, const canopus_interconnect_message *, canopus_interconnect_send_done, void *);
 static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const canopus_interconnect_message * a2, canopus_interconnect_send_done a3, void * a4) {
     return ((canopus_fw_interconnect_send_fn)(uintptr_t)0x0C2D20C5)(a0, a1, a2, a3, a4);
@@ -371,6 +380,7 @@ static inline int32_t canopus_fw_read(int a0, void * a1, uint32_t a2) {
     return ((canopus_fw_read_fn)(uintptr_t)0x0C1C1E25)(a0, a1, a2);
 }
 
+/* core_bt_pair_request_callback: skipped (argument type not mappable) */
 typedef int (*canopus_fw_interconnect_connect_fn)(void *, void *, const char *, canopus_interconnect_recv_cb);
 static inline int canopus_fw_interconnect_connect(void * a0, void * a1, const char * a2, canopus_interconnect_recv_cb a3) {
     return ((canopus_fw_interconnect_connect_fn)(uintptr_t)0x0C2D2035)(a0, a1, a2, a3);

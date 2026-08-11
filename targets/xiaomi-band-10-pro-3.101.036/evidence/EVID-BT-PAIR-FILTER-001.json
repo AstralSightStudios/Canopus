@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-PAIR-FILTER-001",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Which exact companion Bluetooth client state and callback reject non-companion Pair Requests on 3.101.036?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.036.bluetooth.core_bt_adapter_instance",
+    "xiaomi-band-10-pro-3.101.036.bluetooth.core_bt_registration_handle",
+    "xiaomi-band-10-pro-3.101.036.bluetooth.core_bt_callback_table",
+    "xiaomi-band-10-pro-3.101.036.bluetooth.core_bt_pair_request_callback"
+  ],
+  "prototype_hypothesis": "adapter instance and registration handle globals; uint32_t callback table[16]; int pair_request(void *cookie, const uint8_t address[6])",
+  "callsite_evidence": [
+    "Exact sub_C6E3038 (bts_adapter_init) stores the adapter instance at 0x20122FB0, registers callback table 0x2CD1F920 through sub_C398CE4, and stores its handle at 0x20122FAC.",
+    "Callback-table slot 5 at 0x2CD1F934 contains Thumb callable 0x0C6E1ECD, exact sub_C6E1ECC.",
+    "sub_C6E1ECC is gap_pair_request_callback: it compares the incoming address with the companion address and calls pair_request_reply(adapter, address, accepted). A non-companion address is rejected when a companion is bound.",
+    "BluetoothAudio's own adapter callback client receives the same Pair Request independently; replacing only the companion client's slot prevents its competing rejection while preserving every unrelated callback."
+  ],
+  "control_flow_evidence": [
+    "The callback table has 16 retained word slots and remains live for the lifetime of registration handle 0x20122FAC.",
+    "The replacement must forward unmatched Pair Requests to exact callable 0x0C6E1ECD and remain resident until reboot.",
+    "Installation must compare the stock slot before copying and replacing it, then unregister the old companion registration only after the mirror registration succeeds."
+  ],
+  "ownership_analysis": "The adapter and original callback table are firmware-owned. The replacement mirror is module-owned but boot-resident; the new registration handle is firmware-owned. Failure rollback unregisters the mirror and frees its allocation before touching the original registration.",
+  "unsafe_assumptions": [
+    "Static recovery is exact for 3.101.036 but device retest remains pending.",
+    "The filter is valid only while the module remains resident; unloading requires reboot."
+  ],
+  "recommended_probe": "Build the exact 3.101.036 BluetoothAudio module, select a non-companion headset, verify Pair Request/Display and BONDED callbacks, then confirm AVDTP signaling connects without -1105.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-11T00:00:00Z",
+  "artifacts": [
+    {"uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C6E3038", "role": "companion adapter initialization"},
+    {"uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C6E1ECC", "role": "companion Pair Request rejection callback"}
+  ]
+}
