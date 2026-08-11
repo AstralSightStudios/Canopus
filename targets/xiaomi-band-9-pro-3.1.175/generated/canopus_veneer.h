@@ -4,7 +4,7 @@
  * firmware : 3.1.175 (CONBINE_LTALM054_T1175_04141021_release_5793)
  * sha256   : 4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b
  * revision : 1
- * input_digest: 91d5d6df0064ef75
+ * input_digest: 995430cc031f4f8a
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
 #define CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
@@ -222,6 +222,11 @@ static inline void canopus_fw_mm_free(void * a0, void * a1) {
     return ((canopus_fw_mm_free_fn)(uintptr_t)0x0C0F19DD)(a0, a1);
 }
 
+typedef int (*canopus_fw_mpu_region_configure_fn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+static inline int canopus_fw_mpu_region_configure(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) {
+    return ((canopus_fw_mpu_region_configure_fn)(uintptr_t)0x0C51D759)(a0, a1, a2, a3, a4);
+}
+
 typedef int (*canopus_fw_bt_discovery_stop_fn)(void *);
 static inline int canopus_fw_bt_discovery_stop(void * a0) {
     return ((canopus_fw_bt_discovery_stop_fn)(uintptr_t)0x0C3C002D)(a0);
@@ -242,6 +247,11 @@ static inline int32_t canopus_fw_unlink(const char * a0) {
     return ((canopus_fw_unlink_fn)(uintptr_t)0x0C3800E9)(a0);
 }
 
+typedef void * (*canopus_fw_mm_memalign_default_fn)(uint32_t, uint32_t);
+static inline void * canopus_fw_mm_memalign_default(uint32_t a0, uint32_t a1) {
+    return ((canopus_fw_mm_memalign_default_fn)(uintptr_t)0x0C0F21ED)(a0, a1);
+}
+
 typedef int (*canopus_fw_app_install_fn)(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t);
 static inline int canopus_fw_app_install(const launcher_app_descriptor * a0, const firmware_page_descriptor *const * a1, uint32_t a2) {
     return ((canopus_fw_app_install_fn)(uintptr_t)0x0C44B5D1)(a0, a1, a2);
@@ -255,6 +265,11 @@ static inline int canopus_fw_bt_pair_request_reply(void * a0) {
 typedef void * (*canopus_fw_lvx_timer_create_fn)(canopus_lvx_event_cb, uint32_t, void *);
 static inline void * canopus_fw_lvx_timer_create(canopus_lvx_event_cb a0, uint32_t a1, void * a2) {
     return ((canopus_fw_lvx_timer_create_fn)(uintptr_t)0x0C25CB8D)(a0, a1, a2);
+}
+
+typedef uint32_t (*canopus_fw_mpu_region_allocate_fn)(void);
+static inline uint32_t canopus_fw_mpu_region_allocate(void) {
+    return ((canopus_fw_mpu_region_allocate_fn)(uintptr_t)0x0C51D8D1)();
 }
 
 typedef void (*canopus_fw_lvx_label_set_text_fn)(void *, const char *);
@@ -401,6 +416,16 @@ static inline int canopus_fw_lvx_style_apply(void * a0, const void * a1, uint32_
 typedef void * (*canopus_fw_lvx_list_row_create_fn)(void *, const char *);
 static inline void * canopus_fw_lvx_list_row_create(void * a0, const char * a1) {
     return ((canopus_fw_lvx_list_row_create_fn)(uintptr_t)0x0C2D9C09)(a0, a1);
+}
+
+typedef void (*canopus_fw_mpu_region_release_fn)(uint32_t);
+static inline void canopus_fw_mpu_region_release(uint32_t a0) {
+    return ((canopus_fw_mpu_region_release_fn)(uintptr_t)0x0C51D929)(a0);
+}
+
+typedef void (*canopus_fw_lvx_object_add_flag_fn)(void *, uint32_t);
+static inline void canopus_fw_lvx_object_add_flag(void * a0, uint32_t a1) {
+    return ((canopus_fw_lvx_object_add_flag_fn)(uintptr_t)0x0C23E8F9)(a0, a1);
 }
 
 typedef void * (*canopus_fw_lvx_list_row_trailing_fn)(void *);

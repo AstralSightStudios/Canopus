@@ -1,9 +1,8 @@
 -- Canopus installer watchface.
 --
--- Drives the Canopus supervisor native module (which registers /dev/canopus)
--- exactly the way btpatch_phase5_watchface drives its module through
--- /dev/btpatch: verify the bundled ELF, insmod it, then read a fixed status
--- ABI and write a fixed command ABI over the char device.
+-- Loads the exact-target supervisor, which registers /dev/canopus, then drives
+-- its fixed status/command ABI. Band 10 uses stock insmod. Band 9 uses a
+-- compare-before-write NSH mw/exec bootstrap that stages a custom ET_REL loader.
 --
 -- Opening this watchface performs no native operation; every action requires
 -- an explicit button press. The supervisor module is boot-resident: never
@@ -15,10 +14,19 @@ local MODULE_PATH = SCRIPT_PATH .. "canopus_supervisor.bin"
 local MODULE_NAME = "canopus_supervisor"
 local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_icon.bin"
 local MANAGER_ICON_PATH = "/data/canopus/manager_icon.bin"
+local BAND9_STAGE1_RESOURCE = SCRIPT_PATH .. "canopus_stage1_band9.lua"
+local BAND9_STAGE2_RESOURCE = SCRIPT_PATH .. "canopus_stage2-band9.bin"
+local BAND9_SUPERVISOR_RESOURCE = SCRIPT_PATH .. "canopus_supervisor-band9.bin"
+local BAND9_STAGE2_PATH = "/data/canopus/stage2.bin"
+local BAND9_SUPERVISOR_PATH = "/data/canopus/supervisor.elf"
+local BAND9_CAVE = 0x20084E10
+local BAND9_CAVE_ORIGINAL = {
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x726F6E5F, 0x73616C66, 0x70615F68, 0x72665F69,
+}
 local DEVICE_PATH = "/dev/canopus"
--- The supervisor is a small module (~3-4 KB with -Os); the 4096 floor copied
--- from btpatch was sized for that project's 33 KB A2DP amalgamation. 512 still
--- rejects truncated/empty resources while allowing a minimal valid module.
+-- The 512-byte floor rejects truncated/empty resources while remaining below
+-- every exact-target supervisor artifact.
 local MODULE_MIN_SIZE = 512
 local MODULE_MAX_SIZE = 262144
 local EXPECTED_MAGIC = 0x43505331 -- "CPS1" supervisor status magic
@@ -80,6 +88,181 @@ local function read_all(path, mode)
     local content = file:read("*a")
     file:close()
     return content
+end
+
+local function write_all(path, content)
+    local file = io.open(path, "wb")
+    if not file then return false end
+    local ok, result = pcall(file.write, file, content)
+    local close_ok, close_result = pcall(file.close, file)
+    return ok and result ~= nil and close_ok and close_result ~= nil
+end
+
+local function band9_shell_word(address)
+    local output = "/data/canopus/bootstrap-word.txt"
+    if not run(string.format("mw %08x 4 > %s", address, output)) then return nil end
+    local text = read_all(output, "r")
+    if type(text) ~= "string" then return nil end
+    local value = text:match("=%s*0[xX]([0-9a-fA-F]+)")
+        or text:match("%-%>%s*0[xX]([0-9a-fA-F]+)")
+    return value and tonumber(value, 16) or nil
+end
+
+local function band9_check_cave()
+    for i, expected in ipairs(BAND9_CAVE_ORIGINAL) do
+        if band9_shell_word(BAND9_CAVE + (i - 1) * 4) ~= expected then
+            return false
+        end
+    end
+    return true
+end
+
+local function band9_write_words(address, words)
+    for i, value in ipairs(words) do
+        if not run(string.format("mw %08x=%08x", address + (i - 1) * 4, value)) then
+            return false
+        end
+    end
+    return true
+end
+
+local function band9_restore_cave()
+    return band9_write_words(BAND9_CAVE, BAND9_CAVE_ORIGINAL)
+end
+
+local function band9_call_mailbox(callable, r0, r1)
+    -- ldr r0/r1/r3/r2 from the trailing literal pool, blx r3, store r0.
+    local trampoline = {
+        0x49044803,
+        0x47984B04,
+        0x60104A04,
+        0xBF004770,
+        r0,
+        r1,
+        callable,
+        BAND9_CAVE + 28,
+    }
+    if not band9_check_cave() then return nil end
+    if not band9_write_words(BAND9_CAVE, trampoline) then
+        band9_restore_cave()
+        return nil
+    end
+    run(string.format("exec %08x", BAND9_CAVE + 1))
+    local result = band9_shell_word(BAND9_CAVE + 28)
+    if not band9_restore_cave() or not band9_check_cave() then return nil end
+    if result == BAND9_CAVE + 28 then return nil end
+    return result
+end
+
+local function band9_barrier_and_exec(address)
+    local trampoline = {
+        0x8F4FF3BF, 0x8F6FF3BF, 0xBF004770,
+        0, 0, 0, 0, 0,
+    }
+    if not band9_check_cave() then return false end
+    if not band9_write_words(BAND9_CAVE, trampoline) then
+        band9_restore_cave()
+        return false
+    end
+    run(string.format("exec %08x", BAND9_CAVE + 1))
+    if not band9_restore_cave() or not band9_check_cave() then return false end
+    return run(string.format("exec %08x", address + 1))
+end
+
+local function band9_release_allocation(address)
+    return band9_call_mailbox(0x0C0F1B01, address, 0) ~= nil
+end
+
+local function band9_release_region(region)
+    if not run(string.format("mw e000ed98=%08x", region))
+        or not run("mw e000eda0=00000000") then return false end
+    return band9_call_mailbox(0x0C51D929, region, 0) ~= nil
+end
+
+local function band9_cleanup_stage1(address, region)
+    if not band9_release_region(region) then return false end
+    return band9_release_allocation(address)
+end
+
+local function load_band9_stage1()
+    local stage1_source = read_all(BAND9_STAGE1_RESOURCE, "r")
+    local stage2 = read_all(BAND9_STAGE2_RESOURCE, "rb")
+    local supervisor = read_all(BAND9_SUPERVISOR_RESOURCE, "rb")
+    if type(stage1_source) ~= "string" or type(stage2) ~= "string"
+        or type(supervisor) ~= "string" then
+        return false, "Missing Band-9 bootstrap resources"
+    end
+    local compiler = loadstring or load
+    if type(compiler) ~= "function" then return false, "Lua compiler unavailable" end
+    local compiled, chunk, compile_error = pcall(compiler, stage1_source)
+    if not compiled then return false, tostring(chunk) end
+    if type(chunk) ~= "function" then return false, tostring(compile_error) end
+    local loaded, payload = pcall(chunk)
+    if not loaded then return false, tostring(payload) end
+    if type(payload) ~= "table" or type(payload.words) ~= "table" then
+        return false, "Invalid Band-9 stage-1 table"
+    end
+    if not write_all(BAND9_STAGE2_PATH, stage2)
+        or not write_all(BAND9_SUPERVISOR_PATH, supervisor) then
+        return false, "Cannot stage Band-9 loader files"
+    end
+    local allocation = band9_call_mailbox(0x0C0F21ED, 32, payload.size)
+    if not allocation or allocation == 0 or allocation % 32 ~= 0 then
+        return false, "Band-9 stage-1 allocation failed"
+    end
+    if not band9_write_words(allocation, payload.words) then
+        if not band9_release_allocation(allocation) then
+            return false, "Band-9 stage-1 write cleanup failed; reboot before retrying"
+        end
+        return false, "Band-9 stage-1 write failed"
+    end
+    local region = band9_call_mailbox(0x0C51D8D1, 0, 0)
+    if not region or region > 7 then
+        if not band9_release_allocation(allocation) then
+            return false, "Band-9 MPU failure cleanup failed; reboot before retrying"
+        end
+        return false, "Band-9 MPU region unavailable"
+    end
+    local size = math.floor((payload.size + 31) / 32) * 32
+    local rbar = allocation + 6
+    local rlar = allocation + size - 32 + 5
+    if not run(string.format("mw e000ed98=%08x", region))
+        or not run(string.format("mw e000ed9c=%08x", rbar))
+        or not run(string.format("mw e000eda0=%08x", rlar)) then
+        if not band9_cleanup_stage1(allocation, region) then
+            return false, "Band-9 MPU cleanup failed; reboot before retrying"
+        end
+        return false, "Band-9 MPU configuration failed"
+    end
+    local executed = band9_barrier_and_exec(allocation)
+    local cleaned = band9_cleanup_stage1(allocation, region)
+    if not cleaned then
+        return false, "Band-9 stage-1 cleanup failed; reboot before retrying"
+    end
+    if not executed then
+        return false, "Band-9 stage-1 execution failed"
+    end
+    return true
+end
+
+local function has_band9_bootstrap()
+    local resources = {
+        { BAND9_STAGE1_RESOURCE, "r" },
+        { BAND9_STAGE2_RESOURCE, "rb" },
+        { BAND9_SUPERVISOR_RESOURCE, "rb" },
+    }
+    for _, resource in ipairs(resources) do
+        local file = io.open(resource[1], resource[2])
+        if not file then return false end
+        file:close()
+    end
+    return true
+end
+
+local function supervisor_present()
+    local file = io.open(DEVICE_PATH, "rb")
+    if file then file:close(); return true end
+    return false
 end
 
 local function find_named_module(name)
@@ -389,33 +572,39 @@ end
 
 -- Row 1: supervisor lifecycle
 local load_button = make_button("LOAD", -96, 74, 0x14508A, 134, function()
-    if find_module() then
+    if supervisor_present() then
         status:set { text = "Already loaded. Never load twice or rmmod." }
         return
     end
-    local valid, message = verify_module_file()
+    local valid, message = verify_module_file(
+        has_band9_bootstrap() and BAND9_SUPERVISOR_RESOURCE or MODULE_PATH)
     if not valid then status:set { text = tostring(message) }; return end
     status:set { text = "Loading supervisor..." }
-    local inserted = run(string.format("insmod %s %s",
-        shell_quote(MODULE_PATH), MODULE_NAME))
-    if not inserted or not find_module() then
-        status:set { text = find_module() and
+    local inserted
+    if has_band9_bootstrap() then
+        inserted, message = load_band9_stage1()
+    else
+        inserted = run(string.format("insmod %s %s",
+            shell_quote(MODULE_PATH), MODULE_NAME))
+    end
+    if not inserted or not supervisor_present() then
+        status:set { text = supervisor_present() and
             "Supervisor appeared after error. Reboot; do not retry." or
-            "Load failed. Save log; do not retry." }
+            ("Load failed: " .. tostring(message or "save log; do not retry")) }
     else
         refresh_status("Supervisor loaded")
     end
 end)
 
 local refresh_button = make_button("REFRESH", 96, 74, 0x14355A, 134, function()
-    if not find_module() then status:set { text = "Load supervisor first." }
+    if not supervisor_present() then status:set { text = "Load supervisor first." }
         return end
     refresh_status()
 end)
 
 -- Row 2: install
 local install_button = make_button("INSTALL", -96, 118, 0x1E6B2E, 134, function()
-    if not find_module() then
+    if not supervisor_present() then
         status:set { text = "Load supervisor first." }
         return
     end

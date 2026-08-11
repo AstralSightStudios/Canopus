@@ -4,7 +4,7 @@
 // firmware : 3.1.175 (CONBINE_LTALM054_T1175_04141021_release_5793)
 // sha256   : 4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b
 // revision : 1
-// input_digest: 91d5d6df0064ef75
+// input_digest: 995430cc031f4f8a
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -277,6 +277,14 @@ pub unsafe fn canopus_fw_mm_free(a0: *mut core::ffi::c_void, a1: *mut core::ffi:
     f(a0, a1);
 }
 
+/// Recovered `mpu_region_configure` at 0x0C51D758. Thumb callable address 0x0C51D759.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_mpu_region_configure(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> i32 {
+    let f: extern "C" fn(u32, u32, u32, u32, u32) -> i32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C51D759usize)) };
+    f(a0, a1, a2, a3, a4)
+}
+
 /// Recovered `bt_discovery_stop` at 0x0C3C002C. Thumb callable address 0x0C3C002D.
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
@@ -309,6 +317,14 @@ pub unsafe fn canopus_fw_unlink(a0: *const u8) -> i32 {
     f(a0)
 }
 
+/// Recovered `mm_memalign_default` at 0x0C0F21EC. Thumb callable address 0x0C0F21ED.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_mm_memalign_default(a0: u32, a1: u32) -> *mut core::ffi::c_void {
+    let f: extern "C" fn(u32, u32) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C0F21EDusize)) };
+    f(a0, a1)
+}
+
 /// Recovered `app_install` at 0x0C44B5D0. Thumb callable address 0x0C44B5D1.
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
@@ -331,6 +347,14 @@ pub unsafe fn canopus_fw_bt_pair_request_reply(a0: *mut core::ffi::c_void) -> i3
 pub unsafe fn canopus_fw_lvx_timer_create(a0: canopus_lvx_event_cb, a1: u32, a2: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     let f: extern "C" fn(canopus_lvx_event_cb, u32, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C25CB8Dusize)) };
     f(a0, a1, a2)
+}
+
+/// Recovered `mpu_region_allocate` at 0x0C51D8D0. Thumb callable address 0x0C51D8D1.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_mpu_region_allocate() -> u32 {
+    let f: extern "C" fn() -> u32 = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C51D8D1usize)) };
+    f()
 }
 
 /// Recovered `lvx_label_set_text` at 0x0C266C28. Thumb callable address 0x0C266C29.
@@ -568,6 +592,22 @@ pub unsafe fn canopus_fw_lvx_style_apply(a0: *mut core::ffi::c_void, a1: *const 
 pub unsafe fn canopus_fw_lvx_list_row_create(a0: *mut core::ffi::c_void, a1: *const u8) -> *mut core::ffi::c_void {
     let f: extern "C" fn(*mut core::ffi::c_void, *const u8) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C2D9C09usize)) };
     f(a0, a1)
+}
+
+/// Recovered `mpu_region_release` at 0x0C51D928. Thumb callable address 0x0C51D929.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_mpu_region_release(a0: u32) -> () {
+    let f: extern "C" fn(u32) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C51D929usize)) };
+    f(a0);
+}
+
+/// Recovered `lvx_object_add_flag` at 0x0C23E8F8. Thumb callable address 0x0C23E8F9.
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_lvx_object_add_flag(a0: *mut core::ffi::c_void, a1: u32) -> () {
+    let f: extern "C" fn(*mut core::ffi::c_void, u32) -> () = unsafe { core::mem::transmute(canopus_thumb_callable(0x0C23E8F9usize)) };
+    f(a0, a1);
 }
 
 /// Recovered `lvx_list_row_trailing` at 0x0C272C8E. Thumb callable address 0x0C272C8F.

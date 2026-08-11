@@ -18,6 +18,10 @@
 #include "canopus_module_registration.h"
 #include "canopus_runtime.h"
 #include "canopus_veneer.h" /* canopus_fw_register_driver / canopus_fw_unregister_driver */
+#ifdef CANOPUS_SUP_CUSTOM_LOADER
+#include "canopus_elf32_loader.h"
+#include "canopus_memory.h"
+#endif
 #include "sha256.h"
 
 #define CANOPUS_SUP_DEVICE_PATH "/dev/canopus"
@@ -34,6 +38,16 @@
 /* Next-boot registry persistence (see canopus_supervisor.h for the format). */
 #define CANOPUS_SUP_REGISTRY_PATH "/data/canopus/registry.bin"
 #define CANOPUS_SUP_REGISTRY_TMP_PATH "/data/canopus/registry.tmp"
+
+#ifdef CANOPUS_SUP_CUSTOM_LOADER
+struct sup_loaded_module {
+    struct canopus_elf_module image;
+    uint8_t mpu_regions[3];
+    uint32_t mpu_region_count;
+};
+
+static struct sup_loaded_module s_loaded_modules[CANOPUS_SUP_MODULE_SLOTS];
+#endif
 
 /* CAN-P2-002: the fops table is typed from the recovered layout instead of a
  * bare uint32_t[12]. The veneer's `file_operations` carries the exact device
@@ -419,16 +433,165 @@ static int sup_verify_package_at(
     return 0;
 }
 
+#ifdef CANOPUS_SUP_CUSTOM_LOADER
+static void *sup_loader_allocate(void *cookie, uint32_t size,
+                                 uint32_t alignment, uint32_t *target_base)
+{
+    void *allocation;
+    (void)cookie;
+
+    allocation = canopus_fw_mm_memalign_default(alignment, size);
+    if (allocation != 0) *target_base = (uint32_t)(uintptr_t)allocation;
+    return allocation;
+}
+
+static void sup_loader_release(void *cookie, void *allocation, uint32_t size)
+{
+    struct sup_loaded_module *loaded = cookie;
+    (void)size;
+
+    while (loaded->mpu_region_count != 0u) {
+        uint32_t region;
+        loaded->mpu_region_count--;
+        region = loaded->mpu_regions[loaded->mpu_region_count];
+        *(volatile uint32_t *)(uintptr_t)0xE000ED98u = region;
+        *(volatile uint32_t *)(uintptr_t)0xE000EDA0u = 0u;
+        __asm__ volatile("dsb sy\n"
+                         "isb sy\n"
+                         ::: "memory");
+        canopus_fw_mpu_region_release(region);
+    }
+    canopus_fw_mm_free_default(allocation);
+}
+
+static int sup_loader_finalize(void *cookie, void *allocation,
+                               uint32_t target_base, uint32_t size,
+                               const struct canopus_elf_region *regions,
+                               uint32_t region_count)
+{
+    struct sup_loaded_module *loaded = cookie;
+    uint32_t i;
+    uint32_t physical_count;
+    uint32_t region;
+    uint32_t base;
+    uint32_t length;
+    uint32_t access;
+    (void)allocation;
+    (void)target_base;
+    (void)size;
+
+    if (region_count < 2u || region_count > 3u ||
+        regions[0].kind != CANOPUS_ELF_REGION_EXEC) return -1;
+    physical_count = regions[1].kind == CANOPUS_ELF_REGION_RO ?
+                     region_count - 1u : region_count;
+    for (i = 0u; i < physical_count; i++) {
+        region = canopus_fw_mpu_region_allocate();
+        if (region > 7u) goto fail;
+        loaded->mpu_regions[loaded->mpu_region_count++] = (uint8_t)region;
+        if (i == 0u && regions[1].kind == CANOPUS_ELF_REGION_RO) {
+            base = target_base + regions[0].offset;
+            length = regions[0].size + regions[1].size;
+            access = 1u;
+        } else {
+            uint32_t logical = i +
+                (regions[1].kind == CANOPUS_ELF_REGION_RO ? 1u : 0u);
+            base = target_base + regions[logical].offset;
+            length = regions[logical].size;
+            access = regions[logical].kind == CANOPUS_ELF_REGION_EXEC ? 1u :
+                     (regions[logical].kind == CANOPUS_ELF_REGION_RW ? 4u : 5u);
+        }
+        if (canopus_fw_mpu_region_configure(region, base, length, access, 2u) != 0) {
+            goto fail;
+        }
+    }
+    return 0;
+
+fail:
+    while (loaded->mpu_region_count != 0u) {
+        uint32_t region;
+        loaded->mpu_region_count--;
+        region = loaded->mpu_regions[loaded->mpu_region_count];
+        *(volatile uint32_t *)(uintptr_t)0xE000ED98u = region;
+        *(volatile uint32_t *)(uintptr_t)0xE000EDA0u = 0u;
+        __asm__ volatile("dsb sy\n"
+                         "isb sy\n"
+                         ::: "memory");
+        canopus_fw_mpu_region_release(region);
+    }
+    return -1;
+}
+
+static int sup_loader_invoke(void *cookie, uint32_t callable)
+{
+    typedef void (*entry_fn)(void);
+    entry_fn entry = (entry_fn)(uintptr_t)(callable | 1u);
+    (void)cookie;
+    entry();
+    return 0;
+}
+
+static int sup_read_artifact(const char *path, uint32_t size, uint8_t **out)
+{
+    uint8_t *buffer = canopus_fw_mm_memalign_default(4u, size);
+    uint32_t failure;
+
+    if (buffer == 0) return -1;
+    if (sup_read_exact(path, buffer, size, &failure) != 0) {
+        canopus_fw_mm_free_default(buffer);
+        return -1;
+    }
+    *out = buffer;
+    return 0;
+}
+
+static int sup_load_custom(const char *path, uint32_t artifact_size,
+                           uint32_t index)
+{
+    struct sup_loaded_module *loaded = &s_loaded_modules[index];
+    struct canopus_elf_loader_ops ops;
+    uint8_t *elf;
+    int rc;
+
+    if (loaded->image.allocation != 0 ||
+        sup_read_artifact(path, artifact_size, &elf) != 0) return -1;
+    canopus_memset(loaded, 0, sizeof(*loaded));
+    ops.cookie = loaded;
+    ops.allocate = sup_loader_allocate;
+    ops.release = sup_loader_release;
+    ops.finalize = sup_loader_finalize;
+    ops.invoke = sup_loader_invoke;
+    rc = canopus_elf32_load(elf, artifact_size, &ops, &loaded->image);
+    canopus_fw_mm_free_default(elf);
+    return rc;
+}
+static void sup_unload_custom(uint32_t index)
+{
+    struct sup_loaded_module *loaded = &s_loaded_modules[index];
+    struct canopus_elf_loader_ops ops;
+
+    ops.cookie = loaded;
+    ops.allocate = sup_loader_allocate;
+    ops.release = sup_loader_release;
+    ops.finalize = sup_loader_finalize;
+    ops.invoke = sup_loader_invoke;
+    canopus_elf32_unload(&ops, &loaded->image);
+}
+#endif
+
 static int sup_load_module(void *cookie, uint32_t index,
                            const char *name, uint32_t lifecycle_class)
 {
+#ifndef CANOPUS_SUP_CUSTOM_LOADER
     typedef void *(*insmod_fn)(const char *, const char *);
+    insmod_fn insmod = (insmod_fn)(uintptr_t)CANOPUS_SUP_INSMOD;
+#endif
     struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
     struct canopus_install_receipt_v1 receipt;
-    insmod_fn insmod = (insmod_fn)(uintptr_t)CANOPUS_SUP_INSMOD;
     char path[CANOPUS_SUP_PATH_MAX];
     const char *module_name;
+#ifndef CANOPUS_SUP_CUSTOM_LOADER
     void *handle;
+#endif
 
     (void)cookie;
     if (sup == 0 || index >= CANOPUS_SUP_MODULE_SLOTS ||
@@ -447,11 +610,24 @@ static int sup_load_module(void *cookie, uint32_t index,
         return -1;
     }
     sup->loading_slot = (int32_t)index;
+#ifdef CANOPUS_SUP_CUSTOM_LOADER
+    if (sup_load_custom(path, receipt.artifact_size, index) != 0) {
+        sup->loading_slot = -1;
+        return -1;
+    }
+#else
     handle = insmod(path, module_name);
+    if (handle == 0) {
+        sup->loading_slot = -1;
+        return -1;
+    }
+#endif
     sup->loading_slot = -1;
-    if (handle == 0) return -1;
     if (sup->modules[index].descriptor == 0) {
         sup->error_code = CANOPUS_SUP_ERR_DESCRIPTOR_MISSING;
+#ifdef CANOPUS_SUP_CUSTOM_LOADER
+        sup_unload_custom(index);
+#endif
         return -1;
     }
     return CANOPUS_STATE_READY;

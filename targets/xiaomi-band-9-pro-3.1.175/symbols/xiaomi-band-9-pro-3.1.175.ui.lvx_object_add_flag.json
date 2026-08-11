@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.ui.lvx_object_add_flag",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "lvx_object_add_flag",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C23E8F8",
+  "callable_address": "0x0C23E8F9",
+  "prototype": "void(void *, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {"allowed": ["ui_owner"], "blocking": false},
+  "ownership": {"argument_0": "borrowed LVGL v8 object"},
+  "proof": {"static": "recovered", "evidence_ids": ["EVID-UI-004"]},
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {"firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b", "evidence_ids": ["EVID-UI-004"], "source": "Exact IDA sub_C23E8F8 ORs flags into object+28 and invalidates layout/draw state"},
+  "approval_state": "APPROVED",
+  "promotion": {"reviewer": "canopus-maintainer", "date": "2026-08-11", "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b", "prototype": "void(void *, uint32_t)", "ownership": "borrowed object", "thread": "ui_owner", "device_probe": "Manager native page visibility"},
+  "notes": "Exact Band-9 LVGL v8 object flag setter used for hidden/clickable state."
+}

@@ -10,12 +10,15 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 TARGET_ID=${CANOPUS_TARGET:-xiaomi-band-10-pro-3.101.030}
+LOADER_SRCS=""
+LOADER_OBJECTS=""
 case "$TARGET_ID" in
     xiaomi-band-10-pro-3.101.030|xiaomi-band-10-pro-3.101.036)
         MANAGER_BACKEND="manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
         ;;
     xiaomi-band-9-pro-3.1.175)
         MANAGER_BACKEND="manager/target/lvgl_v8/canopus_manager_target_lvgl_v8.c"
+        LOADER_SRCS="runtime/loader/canopus_arm_reloc.c runtime/loader/canopus_elf32_loader.c"
         ;;
     *)
         echo "error: unsupported supervisor target: $TARGET_ID" >&2
@@ -28,12 +31,16 @@ PACK_DIR="$ROOT/targets/$TARGET_ID"
 GENERATED="$PACK_DIR/generated/canopus_veneer.h"
 TARGET_CONFIG="$PACK_DIR/generated/canopus_target_config.h"
 OUT="$ROOT/watchfaces/canopus-installer/build/$TARGET_ID"
-# Project module-size budget. The stock modlib allocates module text
-# dynamically (no 64 KiB cap in the load path); 65536 was a conservative
-# round budget. A 65040-byte supervisor has already loaded on-device, so
-# 68 KiB is a modest, low-risk raise that keeps room for the next-boot
-# registry persistence without restructuring into a shell + core.
-MAX_SIZE=69632
+if [ -n "$LOADER_SRCS" ]; then
+    LOADER_OBJECTS="$OUT/canopus_arm_reloc.o $OUT/canopus_elf32_loader.o"
+fi
+# Stock modlib targets retain the proven 68 KiB budget. The Band-9 custom
+# loader allocates its verified image from the default heap and has a separate
+# 96 KiB ceiling covering the portable ELF loader itself.
+case "$TARGET_ID" in
+    xiaomi-band-9-pro-3.1.175) MAX_SIZE=98304 ;;
+    *) MAX_SIZE=69632 ;;
+esac
 CC=${CC:-clang}
 
 [ -f "$GENERATED" ] || {
@@ -62,6 +69,7 @@ TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
 
 INC="-I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \
+  -I$ROOT/runtime/loader \
   -I$ROOT/manager/service -I$ROOT/manager/protocol -I$ROOT/manager/client \
   -I$ROOT/manager/ui -I$ROOT/manager/package -I$ROOT/manager/target \
   -I$ROOT/manager/native-app -I$ROOT/app-sdk/ui \
@@ -85,7 +93,8 @@ for s in \
     runtime/control/canopus_control.c \
     runtime/lifecycle/canopus_lifecycle.c \
     runtime/module/canopus_module.c \
-    runtime/resources/canopus_resource.c; do
+    runtime/resources/canopus_resource.c \
+    $LOADER_SRCS; do
     base=$(basename "$s")
     $CC $TARGET_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
 done
@@ -127,7 +136,8 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_control.o" \
     "$OUT/canopus_lifecycle.o" \
     "$OUT/canopus_module.o" \
-    "$OUT/canopus_resource.o"
+    "$OUT/canopus_resource.o" \
+    $LOADER_OBJECTS
 
 actual_size=$(wc -c < "$OUT/canopus_supervisor.elf")
 [ "$actual_size" -le "$MAX_SIZE" ] || {
@@ -146,3 +156,11 @@ cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
 cp "$OUT/canopus_supervisor.elf" "$INSTALLER_STAGE"
 echo "staged $(basename "$TARGET_STAGE")"
 echo "staged canopus_supervisor.bin for $TARGET_ID"
+if [ "$TARGET_ID" = xiaomi-band-9-pro-3.1.175 ]; then
+    "$ROOT/scripts/build_band9_bootstrap.sh"
+else
+    rm -f "$ROOT/watchfaces/canopus-installer/canopus_supervisor-band9.bin" \
+          "$ROOT/watchfaces/canopus-installer/canopus_supervisor-band9.elf" \
+          "$ROOT/watchfaces/canopus-installer/canopus_stage2-band9.bin" \
+          "$ROOT/watchfaces/canopus-installer/canopus_stage1_band9.lua"
+fi

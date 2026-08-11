@@ -11,7 +11,7 @@ cpu = "cortex-m33"
 instruction_set = "thumb2"
 endianness = "little"
 float_abi = "soft"
-loader = "nsh-mw-stage0-planned"
+loader = "nsh-mw-stage1-stage2"
 firmware_sha256 = "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b"
 firmware_version = "3.1.175"
 firmware_build = "CONBINE_LTALM054_T1175_04141021_release_5793"
@@ -40,9 +40,10 @@ capabilities = [
   "ui.dispatch",
 ]
 
-# Desired ET_REL module format and verifier envelope for a planned custom
-# NSH mw/exec stage-0. Stock insmod/rmmod is absent, and the stage-0 loader is
-# not implemented yet.
+# Custom NSH mw/exec bootstrap and ET_REL loader. Stock insmod/rmmod is
+# absent. The installer injects stage-1 through a statically recovered,
+# compare-checked SRAM-text cave; stage-1 reads stage-2, and stage-2 loads the
+# resident supervisor. First device execution remains pending.
 [loader_profile]
 elf_class = 32
 elf_machine = "ARM"

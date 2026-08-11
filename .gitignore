@@ -7,6 +7,8 @@
 # active LVGL v9 ARGB8888 icon bin (not a firmware image).
 !watchfaces/canopus-installer/manager_loaded.bin
 !watchfaces/canopus-installer/manager_icon.bin
+!watchfaces/canopus-installer/canopus_stage2-band9.bin
+!watchfaces/canopus-installer/canopus_supervisor-band9.bin
 *.img
 *.i64
 *.idb

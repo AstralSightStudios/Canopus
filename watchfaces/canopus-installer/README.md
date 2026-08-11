@@ -16,13 +16,13 @@ production installer.
 
 | Part | Status |
 | --- | --- |
-| Watchface UI (`main.lua`) | Structurally complete; mirrors the btpatch pattern (verify ELF, `insmod`, LVGL buttons, fixed ABI). |
+| Watchface UI (`main.lua`) | Structurally complete; verifies the exact-target ELF, uses stock `insmod` on Band 10 or the NSH `mw`/`exec` bootstrap on Band 9, and exposes the fixed ABI through LVGL buttons. |
 | Supervisor core (`manager/service/canopus_supervisor.c`) | Host-tested: command/status ABI, lifecycle-aware enable/disable/remove, persistence/restore, automatic activation, and staged native-app publication. |
-| `canopus_supervisor.bin` | **Verifier PASS** (sha256 `91af9061`, 0 undefined, 2 ctors/1 dtor) — a valid zero-import ELF32 ET_REL containing the supervisor, CPC2 snapshot query path, persistence diagnostics, native message-box confirmation, external descriptor registration, automatic enabled-module boot activation with retained callback errors, ABI 1.2 staged miwear native-app publication, and resident exact-target Manager implementation. |
-| Device registration (`/dev/canopus`) | **Implemented.** `canopus_supervisor_platform.c` registers the device via the stock `register_driver` (0x0C1A0D51) exactly like btpatch registers `/dev/btpatch` — the same managed symbol the veneer exposes as `canopus_fw_register_driver`. The read side renders the status ABI, the write side dispatches commands. |
+| Supervisor artifacts | **BUILD VERIFIER PASS on all three targets; this is not device proof.** Band 10 remains on stock modlib. Band 9 packages stage-1 Lua, stage-2 flat PIC code, and the supervisor ET_REL as `.lua/.bin` resources and loads modules through the portable custom loader; its first device bootstrap remains pending. |
+| Device registration (`/dev/canopus`) | **Implemented.** Every exact target uses its generated `register_driver` veneer. The read side renders the status ABI and the write side dispatches commands. |
 | Native Manager registration path | **MANAGER DEVICE PASS; ABI 1.2 STAGED MODULE PUBLICATION DEVICE RETEST PENDING.** Manager registration, Launcher opening, stock LVX row rendering, and opening/closing transitions are device-proven with app ID `0x00CA`. The former two-transaction flow still crashed during BluetoothAudio publication: miwear faulted in an unQLite allocation after `app_install` and immediate `launcher_add`. ABI 1.2 now separates module publication into stage 1 app/page registration and stage 2 Launcher publication on distinct button callbacks; BluetoothAudio uses app ID `0x00CB`. |
 | Manager installed notification | **DEVICE PASS (icon format RETEST PENDING).** After registry lookup succeeds, inserts title `Canopus`, body `Canpous Loaded! Just ENJOY~`, and uses `/data/canopus/manager_icon.bin` for both notification image paths and as the app's Launcher icon. The watchface packages the icon as an LVGL v9 ARGB8888 bin (alpha channel preserved) in `manager_icon.bin` and stages it byte-for-byte before sending INSTALL. The previous `manager_loaded.png` first-frame PNG flow is retained only as an unused legacy resource. |
-| Loading external Canopus modules via stock modlib | **HOST + TARGET BUILD PASS; DEVICE RETEST PENDING.** Enabled artifacts self-register their ABI descriptor during `insmod`; the supervisor requires an exact slot/id/target match, activates READY descriptors automatically during reboot restore, and persists callback success/error for later Manager queries. Ordinary `/dev/canopus` traffic never invokes third-party activation, and Manager no longer exposes a manual Activate action. |
+| Loading external Canopus modules | **HOST + TARGET BUILD PASS; DEVICE RETEST PENDING.** Band 10 uses stock modlib. Band 9 uses the freestanding ELF32 loader with exact heap/MPU ownership and normal non-cacheable mappings. Enabled artifacts self-register their ABI descriptor during constructors; the supervisor requires an exact slot/id/target match and unloads on missing registration. |
 | Native Manager UI/backend | **HOST + TARGET BUILD PASS; DEVICE RETEST PENDING.** Navigation between Overview / Modules / module detail uses the recovered `page_goto`/`page_finish` ABI (`EVID-NAV-001`). Confirmations use Xiaomi's page-owned `lvx_page_msgbox` two-button prefab (`EVID-MSGBOX-001`) and retain the semantic confirmation page as a constructor-failure fallback. Registry failures expose the exact transaction stage, NuttX errno, and verified-save count in Manager. |
 | Package staging + signature verify | **Pending for arbitrary third-party packages.** Manager bootstrap no longer depends on the old staged INSTALL command. |
 
@@ -34,15 +34,19 @@ their Launcher entries in another event-loop transaction. Do not skip or combine
 these stages. The second and third module-publication stages remain device gates;
 preserve the log and reboot rather than retrying if either fails. Manager obtains
 safe-mode/module state through CPC2 `QUERY_DEVICE` and `QUERY_MODULE` responses.
-External package load/update/remove remains fail-closed until the loader gate is
-closed.
+External package loading is statically closed for all targets; Band 9's first
+real-device bootstrap remains a gate. Preserve the log and reboot rather than
+retrying if LOAD reports cave restoration or cleanup failure.
 
 ## Structure
 
 ```text
 watchfaces/canopus-installer/
 ├── main.lua                          Lua LVGL bootstrap/recovery page
-├── canopus_supervisor.bin            built supervisor + native Manager code
+├── canopus_supervisor.bin            selected exact-target supervisor
+├── canopus_stage1_band9.lua          Band 9 NSH-injected stage-1 words
+├── canopus_stage2-band9.bin          Band 9 flat PIC ET_REL loader
+├── canopus_supervisor-band9.bin      Band 9 supervisor ET_REL resource
 ├── manager_icon.bin                  LVGL v9 ARGB8888 icon bin (alpha preserved)
 ├── manager_loaded.bin                unused legacy first-frame PNG resource
 └── build/                            build output (gitignored)
@@ -64,8 +68,8 @@ manager/service/
 # Default target: xiaomi-band-10-pro-3.101.030
 bash scripts/build_canopus_supervisor.sh
 
-# Select another supported target explicitly.
-CANOPUS_TARGET=xiaomi-band-10-pro-3.101.036 \
+# Band 9 builds and stages the three additional bootstrap resources.
+CANOPUS_TARGET=xiaomi-band-9-pro-3.1.175 \
   bash scripts/build_canopus_supervisor.sh
 ```
 
@@ -74,9 +78,9 @@ pack. Outputs are written under `build/<target>/`, staged as
 `canopus_supervisor-<target>.bin`, and copied to the Lua installer path
 `canopus_supervisor.bin` for the target selected by that successful build. Do not
 package the generic file after building a different target; its embedded identity
-guard is intentionally exact-firmware. Band 9 remains blocked until its remaining
-supervisor modlib primitives are recovered; the build never falls back to Band 10
-addresses.
+guard is intentionally exact-firmware. A non-Band-9 build removes stale Band 9
+bootstrap resources; a Band 9 build restores all three and never falls back to
+Band 10 addresses.
 
 ## Status ABI (`/dev/canopus`, read, 384 bytes)
 
@@ -129,7 +133,7 @@ addresses.
    a stock switch that toggles directly (flipping it requests safe mode on the
    next boot and the switch renders checked+disabled once active). Installation
    also sends a system notification titled **Canopus** with body
-   **Canpous Loaded! Just ENJOY~** and the supplied static PNG.
+   **Canpous Loaded! Just ENJOY~** and the staged LVGL v9 ARGB8888 icon bin.
 7. Open Manager from Launcher. Verify the Overview → Modules → module detail
    transitions are real firmware page pushes with stock animations, that the
    system back gesture pops each page, and that the `/dev/canopus` fd survives
