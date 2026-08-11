@@ -143,6 +143,12 @@ fn additional_target_artifacts_regenerate_identically() {
                 )
             );
             assert!(rust.contains("canopus_thumb_callable(0x0C6E1ECDusize)"));
+            assert!(
+                rust.contains(
+                    "pub const canopus_fw_gap_host_receive_slot: usize = 0x20137E94usize"
+                )
+            );
+            assert!(rust.contains("canopus_thumb_callable(0x0C7D3EB5usize)"));
             for invalid in [
                 "0x0CA286C9usize",
                 "0x0C39F021usize",
@@ -151,6 +157,8 @@ fn additional_target_artifacts_regenerate_identically() {
                 "0x0C3998C9usize",
                 "0x0C39F9B1usize",
                 "0x0C6E1E25usize",
+                "0x0C7D3E0Dusize",
+                "0x20137EA4usize",
                 "0x2CD1F930usize",
             ] {
                 assert!(
@@ -285,6 +293,8 @@ fn target_private_never_transmutes_raw_firmware_addresses() {
                 "0x0C5886D1usize",
                 "0x0C588759usize",
                 "0x0C7ED48Dusize",
+                "0x0C7D3E0Dusize",
+                "0x20137EA4usize",
                 "0x20137B1Cusize",
                 "0x20137EA4",
             ] {

@@ -3,8 +3,8 @@
 // target_id: xiaomi-band-10-pro-3.101.036
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
-// revision : 3
-// input_digest: 64824560c6e72210
+// revision : 4
+// input_digest: 0fc9d9947579158b
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -464,6 +464,9 @@ pub unsafe fn canopus_fw_bt_pair_display_reply(a0: *mut core::ffi::c_void, a1: *
     f(a0, a1, a2, a3)
 }
 
+/// Recovered global `gap_host_receive_slot` at 0x20137E94.
+pub const canopus_fw_gap_host_receive_slot: usize = 0x20137E94usize;
+
 /// Recovered `lv_obj_set_hidden` at 0xc5879b8. Thumb callable address 0xc5879b9.
 pub const CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE: usize = canopus_thumb_callable(0xc5879b9usize);
 #[allow(non_snake_case)]
@@ -532,6 +535,9 @@ pub unsafe fn canopus_fw_lvx_list_item_update(a0: *mut core::ffi::c_void, a1: *c
     let f: extern "C" fn(*mut core::ffi::c_void, *const u8, *const u8, *const u8, i32, u8) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_LVX_LIST_ITEM_UPDATE_CALLABLE) };
     f(a0, a1, a2, a3, a4, a5)
 }
+
+/// Recovered `gap_host_stock_receive` at 0x0C7D3EB4. Thumb callable address 0x0C7D3EB5.
+pub const CANOPUS_FW_GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = canopus_thumb_callable(0x0C7D3EB5usize);
 
 /// Recovered `lvx_list_row_trailing` at 0xc4a7f48. Thumb callable address 0xc4a7f49.
 pub const CANOPUS_FW_LVX_LIST_ROW_TRAILING_CALLABLE: usize = canopus_thumb_callable(0xc4a7f49usize);
@@ -845,6 +851,7 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // driver_write_dispatch: FORBIDDEN - no binding may ever be generated
 // errno_location: restricted - not exported until context/ownership approved
 // firmware_log: restricted - not exported until context/ownership approved
+// gap_host_stock_receive: restricted - not exported until context/ownership approved
 // heap_free: restricted - not exported until context/ownership approved
 // heap_mallinfo: restricted - not exported until context/ownership approved
 // heap_malloc: restricted - not exported until context/ownership approved

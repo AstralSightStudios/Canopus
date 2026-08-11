@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-HCI-RECEIVE-001",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Which exact 3.101.036 writable callback slot and stock function receive complete inbound H4 packets before host-stack dispatch?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.036.private_abi.gap_host_receive_slot",
+    "xiaomi-band-10-pro-3.101.036.private_abi.gap_host_stock_receive"
+  ],
+  "prototype_hypothesis": "int(void *state, uint8_t *h4_packet, int packet_length)",
+  "callsite_evidence": [
+    "Exact raw transport reader sub_C3A4318 frames H4 packet types 2, 4, and 5 and calls sub_C7FECF8(packet, packet_length).",
+    "Trampoline sub_C7FECF8 loads state from dword_20137E90 and a three-argument callback from off_20137E94, then invokes callback(state, packet, packet_length).",
+    "Registration wrapper sub_C7F9D84 stores its third argument in dword_20137E90 and dereferences its second argument into off_20137E94.",
+    "Power-on path sub_C7FAE50 publishes sub_C7F9D84 in the active Bluetooth transport vtable at 0x20138064; the pending-power-on path sub_C7FAFEC rebuilds the same vtable.",
+    "Stock host initialization sub_C7D4868 allocates a callback holder, stores sub_C7D3EB4 into it, and constructs the HCI host owner consumed by the registration path."
+  ],
+  "control_flow_evidence": [
+    "sub_C7D3EB4 accepts exactly three arguments, logs Recv, switches on complete H4 packet types, copies packet bytes, and queues host-stack processing.",
+    "0x0C7D3EB4 is an even Thumb function entry and 0x0C7D3EB5 is its indirect-callable address.",
+    "The slot 0x20137E94 is writable RAM and is cleared together with companion state by sub_C7F9DA0."
+  ],
+  "ownership_analysis": "The hook borrows the firmware-owned state and packet for the duration of the callback, may shorten the packet in place, and must forward exactly once to the stock callback. The module must remain resident until reboot after installing the hook.",
+  "unsafe_assumptions": [
+    "Install only after Bluetooth power-on has populated the slot with 0x0C7D3EB5.",
+    "Use compare-before-write and accept only the exact stock callback or the already-installed replacement.",
+    "Device validation of the BES mHDT path remains pending."
+  ],
+  "recommended_probe": "Connect a BES headset and preserve diagnostics showing bonded, signaling CID assignment, mhdt-fixed, L2CAP completion, and AVDTP discovery progression.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_CONFIRMED",
+  "created": "2026-08-11T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C3A4318",
+      "role": "raw transport framing and receive trampoline caller"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C7FECF8",
+      "role": "three-argument callback trampoline through 0x20137E94"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C7F9D84",
+      "role": "callback and state registration wrapper"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C7D3EB4",
+      "role": "stock H4 receive callback"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C7D4868",
+      "role": "stock host callback-holder initialization"
+    }
+  ]
+}

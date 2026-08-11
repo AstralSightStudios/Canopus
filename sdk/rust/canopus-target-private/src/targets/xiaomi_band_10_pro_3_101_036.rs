@@ -507,21 +507,42 @@ pub unsafe fn bt_l2cap_owner() -> *mut core::ffi::c_void {
     unsafe { *slot }
 }
 
-/// Band 10 .036 has no proven raw HCI receive hook. The previously selected
-/// slot is a one-argument GAP device-record observer and must never be replaced
-/// by the three-argument H4 compatibility callback.
+/// GAP host receive callback used for inbound H4 packets.
 pub type BtGapTransportReceive = extern "C" fn(*mut core::ffi::c_void, *mut u8, i32) -> i32;
 
-pub unsafe fn bt_gap_install_receive_hook(_receive_hook: BtGapTransportReceive) -> bool {
-    false
+/// This exact firmware needs the BES mHDT compatibility filter and exposes a
+/// statically confirmed raw-H4 receive seam.
+pub const HCI_RECEIVE_HOOK_REQUIRED: bool = true;
+
+const GAP_HOST_RECEIVE_SLOT: usize = canopus_target_generated::canopus_fw_gap_host_receive_slot;
+const GAP_HOST_STOCK_RECEIVE: usize =
+    canopus_target_generated::CANOPUS_FW_GAP_HOST_STOCK_RECEIVE_CALLABLE;
+
+/// Replaces the active GAP host receive entry after verifying the exact-target
+/// stock pointer. Powering Bluetooth on rebuilds the dispatcher, so callers
+/// reassert the hook after adapter ON.
+pub unsafe fn bt_gap_install_receive_hook(receive_hook: BtGapTransportReceive) -> bool {
+    let receive_slot = GAP_HOST_RECEIVE_SLOT as *mut u32;
+    let receive_replacement = receive_hook as usize as u32;
+    let receive_current = unsafe { core::ptr::read_volatile(receive_slot) };
+
+    if receive_current != receive_replacement && receive_current as usize != GAP_HOST_STOCK_RECEIVE
+    {
+        return false;
+    }
+
+    unsafe { core::ptr::write_volatile(receive_slot, receive_replacement) };
+    unsafe { core::ptr::read_volatile(receive_slot) == receive_replacement }
 }
 
+/// Calls the exact stock GAP host receive dispatcher.
 pub unsafe fn bt_gap_stock_receive(
-    _state: *mut core::ffi::c_void,
-    _packet: *mut u8,
-    _packet_length: i32,
+    state: *mut core::ffi::c_void,
+    packet: *mut u8,
+    packet_length: i32,
 ) -> i32 {
-    -1
+    let receive: BtGapTransportReceive = unsafe { core::mem::transmute(GAP_HOST_STOCK_RECEIVE) };
+    receive(state, packet, packet_length)
 }
 
 /// Removes the exact BES mHDT capability option (`7F 01 01`) from an inbound

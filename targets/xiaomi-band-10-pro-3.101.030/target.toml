@@ -1,5 +1,5 @@
 # xiaomi-band-10-pro-3.101.030 — Xiaomi Band 10 Pro firmware 3.101.030
-# Imported from firmware_latest evidence (ADR-CAN-001/002). Revision 3.
+# Imported from firmware_latest evidence (ADR-CAN-001/002). Revision 4.
 schema = 1
 target_id = "xiaomi-band-10-pro-3.101.030"
 device_family = "xiaomi-smart-band"
@@ -17,7 +17,7 @@ firmware_version = "3.101.030"
 firmware_build = "CONBINE_LTALM078_T3.101.030_06011854"
 module_abi = 1
 relocation_profile = "best1503-v1"
-revision = 3
+revision = 4
 
 # Firmware absolute-address space (CAN-P1-011). This is the RECOVERED
 # firmware extent, not the full 16 MB addressable window: every recovered
@@ -43,6 +43,7 @@ capabilities = [
   "control-abi",
   "classic.adapter",
   "classic.l2cap",
+  "classic.hci-receive-hook",
   "classic.sdp",
   "bt.timer",
   "native-app.register",

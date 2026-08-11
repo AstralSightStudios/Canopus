@@ -525,6 +525,10 @@ pub unsafe fn bt_hci_fsm_owner() -> *mut core::ffi::c_void {
 /// GAP host receive callback used for inbound H4 packets.
 pub type BtGapTransportReceive = extern "C" fn(*mut core::ffi::c_void, *mut u8, i32) -> i32;
 
+/// This exact firmware needs the BES mHDT compatibility filter and exposes a
+/// proven raw-H4 receive seam.
+pub const HCI_RECEIVE_HOOK_REQUIRED: bool = true;
+
 const GAP_HOST_RECEIVE_SLOT: usize = canopus_target_generated::canopus_fw_gap_host_receive_slot;
 const GAP_HOST_STOCK_RECEIVE: usize =
     canopus_target_generated::CANOPUS_FW_GAP_HOST_STOCK_RECEIVE_CALLABLE;

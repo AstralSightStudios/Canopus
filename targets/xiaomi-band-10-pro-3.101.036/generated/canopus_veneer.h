@@ -3,8 +3,8 @@
  * target_id: xiaomi-band-10-pro-3.101.036
  * firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
  * sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
- * revision : 3
- * input_digest: 64824560c6e72210
+ * revision : 4
+ * input_digest: 0fc9d9947579158b
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
@@ -448,6 +448,7 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * driver_write_dispatch: FORBIDDEN - no veneer may ever be generated
  * errno_location: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
+ * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved
  * heap_malloc: restricted - not exported until context/ownership approved

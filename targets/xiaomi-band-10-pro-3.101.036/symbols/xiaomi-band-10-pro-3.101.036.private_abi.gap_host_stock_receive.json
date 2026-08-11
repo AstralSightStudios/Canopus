@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.gap_host_stock_receive",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "gap_host_stock_receive",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C7D3EB4",
+  "callable_address": "0x0C7D3EB5",
+  "prototype": "int(void *, uint8_t *, int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-BT-HCI-RECEIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_CONFIRMED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-BT-HCI-RECEIVE-001"
+    ],
+    "source": "Exact 3.101.036 IDA stock H4 receive implementation and registration chain"
+  },
+  "approval_state": "PENDING",
+  "notes": "Exact stock three-argument raw H4 receive callback. Generated callable constant only; semantic forwarding and hook ownership remain in canopus-target-private."
+}

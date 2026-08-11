@@ -21,7 +21,7 @@ production installer.
 | Supervisor artifacts | **BUILD VERIFIER PASS on all three targets; this is not device proof.** Band 10 remains on stock modlib. Band 9 packages stage-1 Lua, stage-2 flat PIC code, and the supervisor ET_REL as `.lua/.bin` resources and loads modules through the portable custom loader; its first device bootstrap remains pending. |
 | Device registration (`/dev/canopus`) | **Implemented.** Every exact target uses its generated `register_driver` veneer. The read side renders the status ABI and the write side dispatches commands. |
 | Native Manager registration path | **MANAGER DEVICE PASS; ABI 1.2 STAGED MODULE PUBLICATION DEVICE RETEST PENDING.** Manager registration, Launcher opening, stock LVX row rendering, and opening/closing transitions are device-proven with app ID `0x00CA`. The former two-transaction flow still crashed during BluetoothAudio publication: miwear faulted in an unQLite allocation after `app_install` and immediate `launcher_add`. ABI 1.2 now separates module publication into stage 1 app/page registration and stage 2 Launcher publication on distinct button callbacks; BluetoothAudio uses app ID `0x00CB`. |
-| Manager installed notification | **DEVICE PASS (icon format RETEST PENDING).** After registry lookup succeeds, inserts title `Canopus`, body `Canpous Loaded! Just ENJOY~`, and uses `/data/canopus/manager_icon.bin` for both notification image paths and as the app's Launcher icon. The watchface packages the icon as an LVGL v9 ARGB8888 bin (alpha channel preserved) in `manager_icon.bin` and stages it byte-for-byte before sending INSTALL. The previous `manager_loaded.png` first-frame PNG flow is retained only as an unused legacy resource. |
+| Manager installed notification | **DEVICE PASS (icon format RETEST PENDING).** After registry lookup succeeds, inserts title `Canopus`, body `Canpous Loaded! Just ENJOY~`, and uses `/data/canopus/manager_icon.bin` for both notification image paths and as the app's Launcher icon. The watchface packages the icon as an LVGL v9 ARGB8888 bin (alpha channel preserved) in `manager_icon.bin` and stages it byte-for-byte before sending INSTALL. |
 | Loading external Canopus modules | **HOST + TARGET BUILD PASS; DEVICE RETEST PENDING.** Band 10 uses stock modlib. Band 9 uses the freestanding ELF32 loader with exact heap/MPU ownership and normal non-cacheable mappings. Enabled artifacts self-register their ABI descriptor during constructors; the supervisor requires an exact slot/id/target match and unloads on missing registration. |
 | Native Manager UI/backend | **HOST + TARGET BUILD PASS; DEVICE RETEST PENDING.** Navigation between Overview / Modules / module detail uses the recovered `page_goto`/`page_finish` ABI (`EVID-NAV-001`). Confirmations use Xiaomi's page-owned `lvx_page_msgbox` two-button prefab (`EVID-MSGBOX-001`) and retain the semantic confirmation page as a constructor-failure fallback. Registry failures expose the exact transaction stage, NuttX errno, and verified-save count in Manager. |
 | Package staging + signature verify | **Pending for arbitrary third-party packages.** Manager bootstrap no longer depends on the old staged INSTALL command. |
@@ -43,13 +43,10 @@ retrying if LOAD reports cave restoration or cleanup failure.
 ```text
 watchfaces/canopus-installer/
 ├── main.lua                          Lua LVGL bootstrap/recovery page
-├── canopus_supervisor.bin            selected exact-target supervisor
 ├── canopus_stage1_band9.lua          Band 9 NSH-injected stage-1 words
 ├── canopus_stage2-band9.bin          Band 9 flat PIC ET_REL loader
 ├── canopus_supervisor-band9.bin      Band 9 supervisor ET_REL resource
-├── manager_icon.bin                  LVGL v9 ARGB8888 icon bin (alpha preserved)
-├── manager_loaded.bin                unused legacy first-frame PNG resource
-└── build/                            build output (gitignored)
+└── manager_icon.bin                  Manager icon staged during INSTALL
 ```
 
 Supervisor source:

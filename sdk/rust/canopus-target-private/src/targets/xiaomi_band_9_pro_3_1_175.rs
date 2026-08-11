@@ -1120,6 +1120,25 @@ pub unsafe fn bt_timer_cancel(handle: *mut u32) -> i32 {
     result
 }
 
+/// Band 9 uses the Bluelet transport rather than the Band 10 raw-H4 host
+/// dispatcher. Current exact-target evidence does not require the BES mHDT
+/// workaround, but the common module still consumes this explicit capability.
+pub const HCI_RECEIVE_HOOK_REQUIRED: bool = false;
+
+pub type BtGapTransportReceive = extern "C" fn(*mut core::ffi::c_void, *mut u8, i32) -> i32;
+
+pub unsafe fn bt_gap_install_receive_hook(_receive_hook: BtGapTransportReceive) -> bool {
+    false
+}
+
+pub unsafe fn bt_gap_stock_receive(
+    _state: *mut core::ffi::c_void,
+    _packet: *mut u8,
+    _packet_length: i32,
+) -> i32 {
+    -1
+}
+
 /// AVDTP Audio Source SDP record encoded for the recovered generic Band-9
 /// Bluelet SDP builder.
 pub struct SdpSourceRecord;

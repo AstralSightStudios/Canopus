@@ -3,7 +3,7 @@
 // target_id: xiaomi-band-10-pro-3.101.030
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
-// revision : 3
+// revision : 4
 // input_digest: 09a950a4d3ed16c6
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
