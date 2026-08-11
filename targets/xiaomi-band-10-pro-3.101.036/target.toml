@@ -1,5 +1,6 @@
 # xiaomi-band-10-pro-3.101.036 — Xiaomi Band 10 Pro firmware 3.101.036
-# Imported from miwear.watch.p67cn_v3.101.036_full_17a1ea48 evidence (ADR-CAN-001/002). Revision 3.
+# Independently recovered from the exact 3.101.036 firmware image and IDB
+# (ADR-CAN-001/002). Revision 3.
 schema = 1
 target_id = "xiaomi-band-10-pro-3.101.036"
 device_family = "xiaomi-smart-band"
@@ -17,7 +18,7 @@ firmware_version = "3.101.036"
 firmware_build = "CONBINE_LTALM078_T3.101.036_06242053"
 module_abi = 1
 relocation_profile = "best1503-v1"
-revision = 2
+revision = 3
 
 # Firmware absolute-address space (CAN-P1-011). This is the RECOVERED
 # firmware extent, not the full 16 MB addressable window: every recovered
@@ -113,9 +114,9 @@ arm_type = 30
 notes = "intra-module Thumb conditional branch; standard modlib case; G0 must confirm"
 
 [provenance]
-source_repo = "firmware_latest"
+source_repo = "miwear.watch.p67cn_v3.101.036_full_17a1ea48"
 source_findings = [
-  "vela_ap.bin 3.101.036 (pattern-matched from 3.101.030)",
+  "Exact 3.101.036 IDA/xref/call-chain recovery; neighboring targets are locator hints only",
 ]
 import_date = "2026-08-05"
 maintainer = "canopus-maintainer"

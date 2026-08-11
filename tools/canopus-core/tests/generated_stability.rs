@@ -134,7 +134,7 @@ fn additional_target_artifacts_regenerate_identically() {
             assert!(rust.contains("canopus_thumb_callable(0x0C398D4Dusize)"));
             assert!(rust.contains("canopus_thumb_callable(0x0C398DF1usize)"));
             assert!(rust.contains("canopus_thumb_callable(0x0C39F069usize)"));
-            assert!(rust.contains("canopus_thumb_callable(0x0C39989Dusize)"));
+            assert!(rust.contains("canopus_thumb_callable(0x0C39994Dusize)"));
             assert!(rust.contains("canopus_thumb_callable(0x0C399861usize)"));
             assert!(rust.contains("canopus_thumb_callable(0x0C39F949usize)"));
             assert!(
@@ -147,6 +147,7 @@ fn additional_target_artifacts_regenerate_identically() {
                 "0x0CA286C9usize",
                 "0x0C39F021usize",
                 "0x0C39988Dusize",
+                "0x0C39989Dusize",
                 "0x0C3998C9usize",
                 "0x0C39F9B1usize",
                 "0x0C6E1E25usize",

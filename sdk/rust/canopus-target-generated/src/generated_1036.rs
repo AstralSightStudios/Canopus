@@ -3,8 +3,8 @@
 // target_id: xiaomi-band-10-pro-3.101.036
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
-// revision : 2
-// input_digest: 81bc0558e71d7f5a
+// revision : 3
+// input_digest: 64824560c6e72210
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -761,8 +761,8 @@ pub const CANOPUS_FW_BT_TIMER_CANCEL_CALLABLE: usize = canopus_thumb_callable(0x
 /// Recovered `driver_read_dispatch` at 0xc1c1d24. Thumb callable address 0xc1c1d25.
 pub const CANOPUS_FW_DRIVER_READ_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc1c1d25usize);
 
-/// Recovered `bt_pair_request_reply` at 0x0C39989C. Thumb callable address 0x0C39989D.
-pub const CANOPUS_FW_BT_PAIR_REQUEST_REPLY_CALLABLE: usize = canopus_thumb_callable(0x0C39989Dusize);
+/// Recovered `bt_pair_request_reply` at 0x0C39994C. Thumb callable address 0x0C39994D.
+pub const CANOPUS_FW_BT_PAIR_REQUEST_REPLY_CALLABLE: usize = canopus_thumb_callable(0x0C39994Dusize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_bt_pair_request_reply(a0: *mut core::ffi::c_void, a1: *const u8, a2: i32) -> i32 {

@@ -3,8 +3,8 @@
  * target_id: xiaomi-band-10-pro-3.101.036
  * firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
  * sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
- * revision : 2
- * input_digest: 81bc0558e71d7f5a
+ * revision : 3
+ * input_digest: 64824560c6e72210
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H

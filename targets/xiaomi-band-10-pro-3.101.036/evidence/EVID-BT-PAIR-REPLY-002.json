@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-PAIR-REPLY-002",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Which exact 3.101.036 Bluetooth client entry replies to an inbound Pair Request rather than initiating a new bond?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.036.bluetooth.bt_pair_request_reply"
+  ],
+  "prototype_hypothesis": "int32(void *adapter, const uint8_t *address, int32_t accept)",
+  "callsite_evidence": [
+    "Exact 3.101.036 gap_pair_request_callback sub_C6E1ECC calls sub_C39994C(dword_20122FB0, address, accepted).",
+    "sub_C39994C constructs Bluetooth client command 97 before dispatch, matching Pair Request reply semantics.",
+    "The previously recorded sub_C39989C constructs command 94; the exact bttool/create-bond call chain identifies command 94 as bond initiation rather than reply."
+  ],
+  "control_flow_evidence": [
+    "0x0C39994C is an independent even Thumb function entry; its callable address is 0x0C39994D.",
+    "The stock 3.101.036 inbound Pair Request callback directly selects this entry, providing stronger semantic evidence than a cross-version pattern match."
+  ],
+  "ownership_analysis": "The adapter and six-byte address are firmware-owned borrowed arguments. The integer accept decision is consumed synchronously while the resulting bond-state completion remains asynchronous.",
+  "unsafe_assumptions": [
+    "The caller executes in the Bluetooth client callback context.",
+    "A successful reply submission does not itself prove the later Bond callback; device validation remains pending."
+  ],
+  "recommended_probe": "Rebuild BluetoothAudio for 3.101.036, accept one headset Pair Request, and preserve diagnostics showing filter-hit, request reply, and the subsequent success/failure Bond callback.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_CONFIRMED",
+  "created": "2026-08-11T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C39994C",
+      "role": "pair-request reply command wrapper"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C6E1ECC",
+      "role": "stock inbound Pair Request callback and direct caller"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C39989C",
+      "role": "refuted command-94 create-bond candidate"
+    }
+  ]
+}

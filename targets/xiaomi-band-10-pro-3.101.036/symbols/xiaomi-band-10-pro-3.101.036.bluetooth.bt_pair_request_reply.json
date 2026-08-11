@@ -5,8 +5,8 @@
   "name": "bt_pair_request_reply",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C39989C",
-  "callable_address": "0x0C39989D",
+  "entry_address": "0x0C39994C",
+  "callable_address": "0x0C39994D",
   "prototype": "int32(void *, const uint8_t *, int32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -17,8 +17,9 @@
   },
   "proof": {
     "static": "confirmed",
+    "device": "not_probed",
     "evidence_ids": [
-      "EVID-BT-ADAPTER-001"
+      "EVID-BT-PAIR-REPLY-002"
     ]
   },
   "policy": "native-full-trust",
@@ -26,9 +27,9 @@
   "provenance": {
     "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
     "evidence_ids": [
-      "EVID-BT-ADAPTER-001"
+      "EVID-BT-PAIR-REPLY-002"
     ],
-    "source": "Exact-target IDA function entry and recovered Bluetooth client caller ABI. Three-argument pairing-request reply entry."
+    "source": "Exact 3.101.036 IDA: stock gap_pair_request_callback sub_C6E1ECC directly calls sub_C39994C(adapter, address, accepted); command 97 distinguishes reply from command-94 create bond."
   },
   "approval_state": "APPROVED",
   "promotion": {
@@ -40,5 +41,5 @@
     "thread": "Bluetooth client context",
     "device_probe": "pending after regenerated module"
   },
-  "notes": "Three-argument pairing-request reply entry."
+  "notes": "Replies to an inbound Pair Request through Bluetooth client command 97. The former 0x0C39989C candidate is command-94 create bond and is invalid for this API."
 }
