@@ -262,6 +262,13 @@ const FW_9: &[Mapping] = &[
         symbol_name: "lvx_object_add_flag",
         address: Address::Callable,
     },
+    // The record may be restricted, but the config surface must retain this
+    // explicit name mapping; emission still requires its target-pack record.
+    Mapping {
+        macro_name: "FW_LVX_OBJECT_CLEAR_FLAG",
+        symbol_name: "lvx_object_clear_flag",
+        address: Address::Callable,
+    },
     Mapping {
         macro_name: "FW_NUTTX_OPEN",
         symbol_name: "open",
