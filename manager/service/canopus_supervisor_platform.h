@@ -5,8 +5,8 @@
  * therefore require real-device RE before they can be implemented:
  *
  *   register_device   : create /dev/canopus with read(status)/write(command).
- *   load_module       : load a Canopus ELF32 ET_REL module through the stock
- *                       modlib and let it run its constructor.
+ *   load_module       : load a verified Canopus ELF32 ET_REL module through
+ *                       the exact target loader and run its constructors.
  *   stage_package     : make a staged .canopus available for INSTALL.
  *   remove_artifact   : delete a module's owned files at boot (remove intent).
  *   persist/restore   : atomic write / read of the module registry so slots

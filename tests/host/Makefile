@@ -9,6 +9,7 @@ CFLAGS ?= -std=c11 -Wall -Wextra -Werror -g -O0
 
 INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../runtime/diagnostics -I../../runtime/control -I../../runtime/module \
+      -I../../runtime/loader \
       -I../../modules/examples/hello -I../../manager/protocol -I../../manager/storage \
       -I../../manager/ui -I../../manager/service -I../../manager/client \
       -I../../manager/native-app -I../../manager/package -I../../tests/host \
@@ -24,6 +25,7 @@ PORTABLE_SRCS = \
 	../../runtime/resources/canopus_resource.c \
 	../../runtime/diagnostics/canopus_diagnostics.c \
 	../../runtime/module/canopus_module.c \
+	../../runtime/loader/canopus_arm_reloc.c \
 	../../manager/protocol/canopus_protocol.c \
 	../../manager/client/canopus_client.c \
 	../../manager/service/canopus_supervisor.c \
@@ -62,7 +64,8 @@ TEST_SRCS = \
 	test_ui.c \
 	test_client.c \
 	test_supervisor_device.c \
-	test_installer_receipt.c
+	test_installer_receipt.c \
+	test_arm_reloc.c
 
 BIN = canopus_host_tests
 
