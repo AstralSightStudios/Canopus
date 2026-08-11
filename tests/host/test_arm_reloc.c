@@ -39,6 +39,41 @@ static uint16_t decode_mov(const uint8_t *p)
                       (second & 0x00ffu));
 }
 
+static int32_t decode_branch(const uint8_t *p)
+{
+    uint16_t first = (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+    uint16_t second = (uint16_t)p[2] | ((uint16_t)p[3] << 8);
+    uint32_t s = (first >> 10) & 1u;
+    uint32_t j1 = (second >> 13) & 1u;
+    uint32_t j2 = (second >> 11) & 1u;
+    uint32_t i1 = !(j1 ^ s);
+    uint32_t i2 = !(j2 ^ s);
+    uint32_t value = (s << 24) | (i1 << 23) | (i2 << 22) |
+                     ((uint32_t)(first & 0x03ffu) << 12) |
+                     ((uint32_t)(second & 0x07ffu) << 1);
+    return (int32_t)(value << 7) >> 7;
+}
+
+static void encode_branch(uint8_t *p, uint16_t second_opcode,
+                          int32_t displacement)
+{
+    uint32_t value = (uint32_t)displacement;
+    uint32_t s = (value >> 24) & 1u;
+    uint32_t i1 = (value >> 23) & 1u;
+    uint32_t i2 = (value >> 22) & 1u;
+    uint32_t j1 = !(i1 ^ s);
+    uint32_t j2 = !(i2 ^ s);
+    uint16_t first = (uint16_t)(0xf000u | (s << 10) |
+                                ((value >> 12) & 0x03ffu));
+    uint16_t second = (uint16_t)(second_opcode | (j1 << 13) |
+                                 (j2 << 11) |
+                                 ((value >> 1) & 0x07ffu));
+    p[0] = (uint8_t)first;
+    p[1] = (uint8_t)(first >> 8);
+    p[2] = (uint8_t)second;
+    p[3] = (uint8_t)(second >> 8);
+}
+
 TEST(arm_reloc_word_types_apply_implicit_addends)
 {
     uint8_t word[4];
@@ -68,6 +103,11 @@ TEST(arm_reloc_prel31_preserves_flag_and_checks_range)
                                 0x20001100u, 0x20001000u) == 0);
     CHECK(read_le32(word) == UINT32_C(0x80000104));
 
+    write_le32(word, UINT32_C(0x7ffffffc));
+    CHECK(canopus_arm_rel_apply(CANOPUS_R_ARM_PREL31, word,
+                                0x20001000u, 0x20001000u) == 0);
+    CHECK(read_le32(word) == UINT32_C(0x7ffffffc));
+
     write_le32(word, 0);
     CHECK(canopus_arm_rel_apply(CANOPUS_R_ARM_PREL31, word,
                                 UINT32_C(0x80000000), 0) ==
@@ -92,14 +132,37 @@ TEST(arm_reloc_thumb_movw_movt_update_immediates)
     CHECK((movt[3] & 0x0fu) == 7u);
 }
 
-TEST(arm_reloc_rejects_unimplemented_and_malformed_types)
+TEST(arm_reloc_thumb_branches_apply_forward_and_backward_addends)
+{
+    uint8_t call[4];
+    uint8_t jump[4];
+
+    encode_branch(call, 0xd000u, 4);
+    CHECK(canopus_arm_rel_apply(CANOPUS_R_ARM_THM_CALL, call,
+                                0x20002001u, 0x20001000u) == 0);
+    CHECK(decode_branch(call) == 0x1004);
+    CHECK((call[3] & 0xd0u) == 0xd0u);
+
+    encode_branch(jump, 0x9000u, -4);
+    CHECK(canopus_arm_rel_apply(CANOPUS_R_ARM_THM_JUMP24, jump,
+                                0x20000001u, 0x20001000u) == 0);
+    CHECK(decode_branch(jump) == -0x1004);
+    CHECK((jump[3] & 0xd0u) == 0x90u);
+
+    encode_branch(call, 0xd000u, 0);
+    CHECK(canopus_arm_rel_apply(CANOPUS_R_ARM_THM_CALL, call,
+                                0x22000001u, 0x20000000u) ==
+          CANOPUS_RELOC_OVERFLOW);
+}
+
+TEST(arm_reloc_rejects_unknown_and_malformed_types)
 {
     uint8_t place[4] = { 0, 0, 0, 0 };
 
     CHECK(canopus_arm_rel_apply(CANOPUS_R_ARM_THM_CALL, place, 0, 0) ==
-          CANOPUS_RELOC_UNSUPPORTED);
+          CANOPUS_RELOC_INVALID);
     CHECK(canopus_arm_rel_apply(CANOPUS_R_ARM_THM_JUMP24, place, 0, 0) ==
-          CANOPUS_RELOC_UNSUPPORTED);
+          CANOPUS_RELOC_INVALID);
     CHECK(canopus_arm_rel_apply(255u, place, 0, 0) ==
           CANOPUS_RELOC_UNSUPPORTED);
     CHECK(canopus_arm_rel_apply(CANOPUS_R_ARM_THM_MOVW_ABS_NC, place,
@@ -115,8 +178,10 @@ static struct test_registry arm_reloc_tests[] = {
       arm_reloc_prel31_preserves_flag_and_checks_range_wrapper },
     { "arm_reloc_thumb_movw_movt_update_immediates",
       arm_reloc_thumb_movw_movt_update_immediates_wrapper },
-    { "arm_reloc_rejects_unimplemented_and_malformed_types",
-      arm_reloc_rejects_unimplemented_and_malformed_types_wrapper },
+    { "arm_reloc_thumb_branches_apply_forward_and_backward_addends",
+      arm_reloc_thumb_branches_apply_forward_and_backward_addends_wrapper },
+    { "arm_reloc_rejects_unknown_and_malformed_types",
+      arm_reloc_rejects_unknown_and_malformed_types_wrapper },
 };
 
 int run_arm_reloc_tests(void)
