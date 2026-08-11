@@ -371,12 +371,12 @@ pub unsafe fn bt_adapter_get_instance() -> *mut core::ffi::c_void {
     ) -> i32;
     let factory: Factory = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C3BCAA9usize,
+            canopus_target_generated::CANOPUS_FW_BT_ADAPTER_GET_INSTANCE_CALLABLE,
         ))
     };
     let create: Create = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C3BC1FDusize,
+            canopus_target_generated::CANOPUS_FW_BT_GAP_CLIENT_CREATE_CALLABLE,
         ))
     };
     let manager = factory();
@@ -393,7 +393,7 @@ pub unsafe fn bt_adapter_get_instance() -> *mut core::ffi::c_void {
             type Cleanup = extern "C" fn(*mut core::ffi::c_void) -> i32;
             let cleanup: Cleanup = unsafe {
                 core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-                    0x0C3BFA41usize,
+                    canopus_target_generated::CANOPUS_FW_BT_GAP_CLIENT_CLEANUP_CALLABLE,
                 ))
             };
             let _ = cleanup(handle);
@@ -411,7 +411,7 @@ pub unsafe fn btm_create_bond(
     type F = extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C3BFDE1usize,
+            canopus_target_generated::CANOPUS_FW_BT_CREATE_BOND_CALLABLE,
         ))
     };
     f(handle, address)
@@ -432,7 +432,7 @@ pub unsafe fn btm_remove_bond(
     type F = extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C3BFE99usize,
+            canopus_target_generated::CANOPUS_FW_BT_REMOVE_BOND_CALLABLE,
         ))
     };
     f(handle, address)
@@ -450,7 +450,7 @@ pub unsafe fn bt_adapter_set_scan_mode(_mode: i32, _bondable: i32) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C3BFF75usize,
+            canopus_target_generated::CANOPUS_FW_BT_ADAPTER_SET_SCAN_MODE_PRIVATE_CALLABLE,
         ))
     };
     f(unsafe { bt_adapter_get_instance() })
@@ -477,7 +477,7 @@ unsafe fn b9_is_bonded(address: *const u8) -> bool {
     type GetBonded = extern "C" fn(*mut DiscoveryResult, i32) -> i32;
     let get_bonded: GetBonded = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C17AC41usize,
+            canopus_target_generated::CANOPUS_FW_BT_GET_BONDED_DEVICES_CALLABLE,
         ))
     };
     let count = get_bonded(core::ptr::null_mut(), 0);
@@ -661,7 +661,7 @@ pub unsafe fn bt_buffer_new(payload_length: u16, headroom: u16) -> *mut StockBuf
     type F = extern "C" fn(u16, u16) -> *mut StockBuffer;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C38AAA9usize,
+            canopus_target_generated::CANOPUS_FW_BT_BUFFER_NEW_CALLABLE,
         ))
     };
     f(payload_length, headroom)
@@ -685,19 +685,23 @@ pub unsafe fn bt_queue_external(
     ) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C391BC9usize,
+            canopus_target_generated::CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE,
         ))
     };
     f(owner, cancel, run, argument, event)
 }
 
 pub fn bt_queue_free_addr() -> *mut core::ffi::c_void {
-    0x0C38A0A9usize as *mut core::ffi::c_void
+    canopus_target_generated::CANOPUS_FW_BT_QUEUE_FREE_CALLABLE as *mut core::ffi::c_void
 }
 
 /// Returns the initialized Bluelet owner-thread context.
 pub unsafe fn bt_l2cap_owner() -> *mut core::ffi::c_void {
-    unsafe { core::ptr::read_volatile(0x200D5F20usize as *const *mut core::ffi::c_void) }
+    unsafe {
+        core::ptr::read_volatile(
+            canopus_target_generated::canopus_fw_bt_l2cap_owner as *const *mut core::ffi::c_void,
+        )
+    }
 }
 
 pub const CONNECT_REQUEST_SIZE: usize = 68;
@@ -767,7 +771,7 @@ pub unsafe fn bt_l2cap_connect(request: *const core::ffi::c_void) -> u32 {
     type F = extern "C" fn(*const core::ffi::c_void) -> u32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C39E90Dusize,
+            canopus_target_generated::CANOPUS_FW_BT_L2CAP_CONNECT_PRIVATE_CALLABLE,
         ))
     };
     f(request)
@@ -780,7 +784,7 @@ pub unsafe fn bt_l2cap_disconnect(request: *const DisconnectRequest) -> i32 {
     type F = extern "C" fn(*const DisconnectRequest) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C39E991usize,
+            canopus_target_generated::CANOPUS_FW_BT_L2CAP_DISCONNECT_CALLABLE,
         ))
     };
     f(request)
@@ -800,11 +804,15 @@ pub unsafe fn bt_l2cap_submit_cid(buffer: *mut StockBuffer, private_cid: u16) ->
     type F = extern "C" fn(*mut core::ffi::c_void, i32, *mut StockBuffer) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C39E57Fusize,
+            canopus_target_generated::CANOPUS_FW_BT_L2CAP_SUBMIT_CID_CALLABLE,
         ))
     };
-    let context =
-        unsafe { core::ptr::read_volatile(0x200D5C7Cusize as *const *mut core::ffi::c_void) };
+    let context = unsafe {
+        core::ptr::read_volatile(
+            canopus_target_generated::canopus_fw_bt_l2cap_submit_context
+                as *const *mut core::ffi::c_void,
+        )
+    };
     f(context, 1, buffer)
 }
 
@@ -929,7 +937,7 @@ extern "C" fn b9_timer_bridge(context: *mut core::ffi::c_void) -> i32 {
         type Delete = extern "C" fn(u32) -> i32;
         let delete: Delete = unsafe {
             core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-                0x0C16AA31usize,
+                canopus_target_generated::CANOPUS_FW_BT_TIMER_DELETE_PRIVATE_CALLABLE,
             ))
         };
         let _ = delete(timer);
@@ -946,7 +954,7 @@ extern "C" fn b9_timer_bridge(context: *mut core::ffi::c_void) -> i32 {
     type Delete = extern "C" fn(u32) -> i32;
     let delete: Delete = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C16AA31usize,
+            canopus_target_generated::CANOPUS_FW_BT_TIMER_DELETE_PRIVATE_CALLABLE,
         ))
     };
     let _ = delete(timer);
@@ -1016,12 +1024,12 @@ pub unsafe fn bt_timer_add(
     type Start = extern "C" fn(u32, u32, *mut core::ffi::c_void) -> i32;
     let create: Create = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C16A9C9usize,
+            canopus_target_generated::CANOPUS_FW_BT_TIMER_CREATE_PRIVATE_CALLABLE,
         ))
     };
     let start: Start = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C16AA61usize,
+            canopus_target_generated::CANOPUS_FW_BT_TIMER_START_PRIVATE_CALLABLE,
         ))
     };
 
@@ -1038,7 +1046,7 @@ pub unsafe fn bt_timer_add(
         type Delete = extern "C" fn(u32) -> i32;
         let delete: Delete = unsafe {
             core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-                0x0C16AA31usize,
+                canopus_target_generated::CANOPUS_FW_BT_TIMER_DELETE_PRIVATE_CALLABLE,
             ))
         };
         let _ = delete(timer);
@@ -1080,12 +1088,12 @@ pub unsafe fn bt_timer_cancel(handle: *mut u32) -> i32 {
     type Delete = extern "C" fn(u32) -> i32;
     let stop: Stop = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C16AAD9usize,
+            canopus_target_generated::CANOPUS_FW_BT_TIMER_STOP_PRIVATE_CALLABLE,
         ))
     };
     let delete: Delete = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C16AA31usize,
+            canopus_target_generated::CANOPUS_FW_BT_TIMER_DELETE_PRIVATE_CALLABLE,
         ))
     };
     let result = stop(timer);
@@ -1162,7 +1170,7 @@ pub unsafe fn sdp_builder_create(
     type F = extern "C" fn(u32, u16, u16, u8, *const u8) -> *mut core::ffi::c_void;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C39EE31usize,
+            canopus_target_generated::CANOPUS_FW_SDP_BUILDER_CREATE_CALLABLE,
         ))
     };
     f(
@@ -1185,7 +1193,7 @@ pub unsafe fn sdp_set_raw_attribute(
         extern "C" fn(*mut core::ffi::c_void, u16, u16, u16, *const core::ffi::c_void) -> *mut u8;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C39EB3Fusize,
+            canopus_target_generated::CANOPUS_FW_SDP_SET_RAW_ATTRIBUTE_CALLABLE,
         ))
     };
     f(
@@ -1201,7 +1209,7 @@ pub unsafe fn sdp_commit(builder: *mut core::ffi::c_void) -> u32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> u32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C39ECD1usize,
+            canopus_target_generated::CANOPUS_FW_SDP_COMMIT_CALLABLE,
         ))
     };
     f(builder)
@@ -1211,7 +1219,7 @@ pub unsafe fn sdp_unregister(handle: u32) -> i32 {
     type F = extern "C" fn(u32) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C39EDE9usize,
+            canopus_target_generated::CANOPUS_FW_SDP_UNREGISTER_CALLABLE,
         ))
     };
     f(handle)
@@ -1223,7 +1231,7 @@ pub unsafe fn btm_reply_pair_request() -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C3BFD49usize,
+            canopus_target_generated::CANOPUS_FW_BT_PAIR_REQUEST_REPLY_CALLABLE,
         ))
     };
     f(unsafe { bt_adapter_get_instance() })
@@ -1234,7 +1242,7 @@ pub unsafe fn btm_reply_pair_display() -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C3BFD95usize,
+            canopus_target_generated::CANOPUS_FW_BT_PAIR_DISPLAY_REPLY_CALLABLE,
         ))
     };
     f(unsafe { bt_adapter_get_instance() })
@@ -1244,7 +1252,7 @@ pub unsafe fn bt_discovery_start(handle: *mut core::ffi::c_void, timeout: i32) -
     type F = extern "C" fn(*mut core::ffi::c_void, i32) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C3BFFC1usize,
+            canopus_target_generated::CANOPUS_FW_BT_DISCOVERY_START_CALLABLE,
         ))
     };
     f(handle, timeout)
@@ -1254,7 +1262,7 @@ pub unsafe fn bt_discovery_stop(handle: *mut core::ffi::c_void) -> i32 {
     type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C3C002Dusize,
+            canopus_target_generated::CANOPUS_FW_BT_DISCOVERY_STOP_CALLABLE,
         ))
     };
     f(handle)
@@ -1272,10 +1280,12 @@ pub unsafe fn bt_free(allocation: *mut core::ffi::c_void) {
     type F = extern "C" fn(usize, *mut core::ffi::c_void) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C0F19DDusize,
+            canopus_target_generated::CANOPUS_FW_MM_FREE_CALLABLE,
         ))
     };
-    let heap = unsafe { core::ptr::read_volatile(0x200B17F4usize as *const usize) };
+    let heap = unsafe {
+        core::ptr::read_volatile(canopus_target_generated::canopus_fw_default_heap as *const usize)
+    };
     f(heap, allocation);
 }
 
@@ -1283,7 +1293,7 @@ pub unsafe fn nuttx_open(path: *const u8, flags: i32) -> i32 {
     type F = extern "C" fn(*const u8, i32, ...) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C37F761usize,
+            canopus_target_generated::CANOPUS_FW_OPEN_CALLABLE,
         ))
     };
     f(path, flags)
@@ -1293,7 +1303,7 @@ pub unsafe fn nuttx_close(fd: i32) -> i32 {
     type F = extern "C" fn(i32) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C37EFF9usize,
+            canopus_target_generated::CANOPUS_FW_CLOSE_CALLABLE,
         ))
     };
     f(fd)
@@ -1303,7 +1313,7 @@ pub unsafe fn nuttx_read(fd: i32, buffer: *mut core::ffi::c_void, count: u32) ->
     type F = extern "C" fn(i32, *mut core::ffi::c_void, u32) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C37F9EBusize,
+            canopus_target_generated::CANOPUS_FW_READ_CALLABLE,
         ))
     };
     f(fd, buffer, count)
@@ -1313,7 +1323,7 @@ pub unsafe fn nuttx_write(fd: i32, buffer: *const core::ffi::c_void, count: u32)
     type F = extern "C" fn(i32, *const core::ffi::c_void, u32) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C380107usize,
+            canopus_target_generated::CANOPUS_FW_WRITE_CALLABLE,
         ))
     };
     f(fd, buffer, count)
@@ -1328,7 +1338,7 @@ pub unsafe fn canopus_fw_register_driver_b9(
     type F = extern "C" fn(*const u8, *const core::ffi::c_void, *mut core::ffi::c_void) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C4F0109usize,
+            canopus_target_generated::CANOPUS_FW_REGISTER_DRIVER_CALLABLE,
         ))
     };
     f(path, fops, private)
@@ -1338,7 +1348,7 @@ pub unsafe fn canopus_fw_unregister_driver_b9(path: *const u8) -> i32 {
     type F = extern "C" fn(*const u8) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C381C01usize,
+            canopus_target_generated::CANOPUS_FW_UNREGISTER_DRIVER_CALLABLE,
         ))
     };
     f(path)
@@ -1352,7 +1362,7 @@ pub unsafe fn launcher_add(app_id: u16) -> i32 {
     type F = extern "C" fn(u16) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C2A7CB9usize,
+            canopus_target_generated::CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE,
         ))
     };
     f(app_id)
@@ -1371,7 +1381,7 @@ pub unsafe fn activity_navigate(a: u32, b: u32, c: u32, d: u32) -> i32 {
     type F = extern "C" fn(u32, u32, u32, u32) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C49E7CDusize,
+            canopus_target_generated::CANOPUS_FW_PAGE_GOTO_CALLABLE,
         ))
     };
     f(a, b, c, d)
@@ -1381,7 +1391,7 @@ pub unsafe fn activity_finish(page: *mut firmware_page_descriptor) -> i32 {
     type F = extern "C" fn(*mut firmware_page_descriptor) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C44FC91usize,
+            canopus_target_generated::CANOPUS_FW_PAGE_FINISH_CALLABLE,
         ))
     };
     f(page)
@@ -1391,7 +1401,7 @@ pub unsafe fn notification_insert(message: *const firmware_notification_message)
     type F = extern "C" fn(*const firmware_notification_message) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C4F1C45usize,
+            canopus_target_generated::CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE,
         ))
     };
     f(message)
@@ -1411,7 +1421,7 @@ pub unsafe fn lvx_list_row_create(
     type F = extern "C" fn(*mut core::ffi::c_void, *const u8) -> *mut core::ffi::c_void;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C2D9C09usize,
+            canopus_target_generated::CANOPUS_FW_LVX_LIST_ROW_CREATE_CALLABLE,
         ))
     };
     f(parent, primary)
@@ -1428,7 +1438,7 @@ pub unsafe fn lvx_list_row_update(
     type F = extern "C" fn(*mut core::ffi::c_void, i32, *const u8, *const u8, i32, u8) -> i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C2797B9usize,
+            canopus_target_generated::CANOPUS_FW_LVX_LIST_ROW_UPDATE_CALLABLE,
         ))
     };
     f(
@@ -1445,7 +1455,7 @@ pub unsafe fn lvx_list_row_trailing(row: *mut core::ffi::c_void) -> *mut core::f
     type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C272C8Fusize,
+            canopus_target_generated::CANOPUS_FW_LVX_LIST_ROW_TRAILING_CALLABLE,
         ))
     };
     f(row)
@@ -1484,7 +1494,8 @@ pub const TRAILING_B9_FORWARD: u8 = 12;
 
 pub const LV_OBJ_FLAG_HIDDEN: u32 = 0x10;
 /// MiSans-Demibold 32 px title style (stock theme object, `unk_200CA048`).
-pub const STYLE_MISANS_DEMIBOLD_32: usize = 0x200CA048;
+pub const STYLE_MISANS_DEMIBOLD_32: usize =
+    canopus_target_generated::canopus_fw_style_misans_demibold_32;
 
 // LVGL v8 event/alignment/layout constants (values are version-stable, so they
 // match band-10's v9 numbers).
@@ -1516,12 +1527,12 @@ pub unsafe fn lvx_set_hidden(object: *mut core::ffi::c_void, hidden: u32) {
     type F = extern "C" fn(*mut core::ffi::c_void, u32) -> i32;
     let add: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C23E8F9usize,
+            canopus_target_generated::CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE,
         ))
     };
     let clear: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C23E96Fusize,
+            canopus_target_generated::CANOPUS_FW_LVX_OBJECT_CLEAR_FLAG_CALLABLE,
         ))
     };
     if hidden != 0 {
@@ -1561,7 +1572,7 @@ pub unsafe fn lvx_page_title_create(
     ) -> *mut core::ffi::c_void;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            0x0C2781D5usize,
+            canopus_target_generated::CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE,
         ))
     };
     f(parent, title, mode, back_callback, back_context)

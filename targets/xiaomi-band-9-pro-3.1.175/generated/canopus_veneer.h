@@ -4,7 +4,7 @@
  * firmware : 3.1.175 (CONBINE_LTALM054_T1175_04141021_release_5793)
  * sha256   : 4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b
  * revision : 1
- * input_digest: 995430cc031f4f8a
+ * input_digest: 3d097eefe4b45c83
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
 #define CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
@@ -432,6 +432,28 @@ typedef void * (*canopus_fw_lvx_list_row_trailing_fn)(void *);
 static inline void * canopus_fw_lvx_list_row_trailing(void * a0) {
     return ((canopus_fw_lvx_list_row_trailing_fn)(uintptr_t)0x0C272C8F)(a0);
 }
+
+/* ---- excluded symbols ----
+ * bt_adapter_set_scan_mode_private: restricted - not exported until context/ownership approved
+ * bt_buffer_new: restricted - not exported until context/ownership approved
+ * bt_gap_client_cleanup: restricted - not exported until context/ownership approved
+ * bt_gap_client_create: restricted - not exported until context/ownership approved
+ * bt_get_bonded_devices: restricted - not exported until context/ownership approved
+ * bt_l2cap_connect_private: restricted - not exported until context/ownership approved
+ * bt_l2cap_disconnect: restricted - not exported until context/ownership approved
+ * bt_l2cap_submit_cid: restricted - not exported until context/ownership approved
+ * bt_queue_external: restricted - not exported until context/ownership approved
+ * bt_queue_free: restricted - not exported until context/ownership approved
+ * bt_timer_create_private: restricted - not exported until context/ownership approved
+ * bt_timer_delete_private: restricted - not exported until context/ownership approved
+ * bt_timer_start_private: restricted - not exported until context/ownership approved
+ * bt_timer_stop_private: restricted - not exported until context/ownership approved
+ * lvx_object_clear_flag: restricted - not exported until context/ownership approved
+ * sdp_builder_create: restricted - not exported until context/ownership approved
+ * sdp_commit: restricted - not exported until context/ownership approved
+ * sdp_set_raw_attribute: restricted - not exported until context/ownership approved
+ * sdp_unregister: restricted - not exported until context/ownership approved
+ */
 
 
 #endif /* CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H */

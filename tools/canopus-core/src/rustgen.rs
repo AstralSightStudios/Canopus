@@ -354,12 +354,11 @@ impl<'a> RustGen<'a> {
         out.push_str("// ---- typed firmware bindings (unsafe) ----\n");
         for s in self.symbols {
             if s.kind == "global" || s.kind == "data" {
-                // A fixed firmware data address, emitted as a constant so Rust
-                // modules can read the slot through the generated surface.
-                if FORBIDDEN_STATUS.contains(&s.status.as_str())
-                    || s.policy == "restricted"
-                    || !s.approved_for_codegen()
-                {
+                // Every evidence-backed, non-forbidden data symbol gets a
+                // mechanical address constant. Approval controls callable
+                // wrappers, not whether target-private code can name a recovered
+                // address through the generated source of truth.
+                if FORBIDDEN_STATUS.contains(&s.status.as_str()) {
                     continue; // audit comment in emit_notes
                 }
                 if let Some(addr) = &s.entry_address {
@@ -376,18 +375,28 @@ impl<'a> RustGen<'a> {
             if FORBIDDEN_STATUS.contains(&s.status.as_str()) {
                 continue; // audit comment in emit_notes
             }
-            if s.policy == "restricted" {
-                continue; // audit comment in emit_notes
-            }
-            /* CAN-P1-012: a callable requires an explicit APPROVED promotion
-             * with at least one evidence id. PENDING/REJECTED never binds. */
-            if !s.approved_for_codegen() {
-                continue; // audit comment in emit_notes
-            }
             let callable = match &s.callable_address {
                 Some(c) => c.clone(),
                 None => continue,
             };
+            let callable_name = format!("CANOPUS_FW_{}_CALLABLE", s.name.to_ascii_uppercase());
+            out.push_str(&format!(
+                "/// Recovered `{}` at {}. Thumb callable address {}.\n",
+                s.name,
+                s.entry_address.as_deref().unwrap_or("?"),
+                callable
+            ));
+            out.push_str(&format!(
+                "pub const {callable_name}: usize = canopus_thumb_callable({callable}usize);\n"
+            ));
+
+            // Constants are available to target-private ABI adapters once static
+            // evidence exists. A typed callable wrapper remains gated by explicit
+            // codegen approval and public policy.
+            if s.policy == "restricted" || !s.approved_for_codegen() {
+                out.push('\n');
+                continue;
+            }
             let proto = match &s.prototype {
                 Some(p) if !p.is_empty() && p != "unknown" => p.clone(),
                 _ => continue,
@@ -442,15 +451,6 @@ impl<'a> RustGen<'a> {
             // The return type for () is spelled `()`; the extern fn pointer
             // type must be spelled exactly.
             let fn_ty = format!("extern \"C\" fn({}) -> {ret_t}", arg_r.join(", "));
-            out.push_str(&format!(
-                "/// Recovered `{}` at {}. Thumb callable address {}.\n",
-                s.name,
-                s.entry_address.as_deref().unwrap_or("?"),
-                callable
-            ));
-            out.push_str(&format!(
-                "pub const {callable_name}: usize = canopus_thumb_callable({callable}usize);\n"
-            ));
             out.push_str(&format!(
                 "#[allow(non_snake_case)]\n#[allow(clippy::missing_safety_doc)]\npub unsafe fn {fn_name}({param_list}) -> {ret_t} {{\n"
             ));

@@ -161,6 +161,85 @@ fn additional_target_artifacts_regenerate_identically() {
     }
 }
 
+fn parse_address(value: &str) -> usize {
+    usize::from_str_radix(
+        value
+            .strip_prefix("0x")
+            .or_else(|| value.strip_prefix("0X"))
+            .unwrap_or(value),
+        16,
+    )
+    .unwrap()
+}
+
+#[test]
+fn private_abi_records_have_exact_thumb_callables() {
+    for target in [
+        "xiaomi-band-10-pro-3.101.030",
+        "xiaomi-band-10-pro-3.101.036",
+        "xiaomi-band-9-pro-3.1.175",
+    ] {
+        let dir = repo_root().join("targets").join(target);
+        let (symbols, types) = load_records(&dir).unwrap();
+        let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+        let generated = RustGen {
+            pack: &pack,
+            symbols: &symbols,
+            types: &types,
+        }
+        .generate();
+
+        for symbol in symbols
+            .iter()
+            .filter(|symbol| symbol.symbol_id.contains(".private_abi."))
+        {
+            assert_eq!(symbol.target_id, target, "wrong target for {}", symbol.name);
+            assert_eq!(
+                symbol.policy, "restricted",
+                "{} escaped private policy",
+                symbol.name
+            );
+            assert_ne!(
+                symbol.approval_state.as_deref(),
+                Some("APPROVED"),
+                "{} was unexpectedly promoted",
+                symbol.name
+            );
+            let entry = parse_address(symbol.entry_address.as_deref().unwrap());
+            if symbol.kind == "function" {
+                let callable = parse_address(symbol.callable_address.as_deref().unwrap());
+                assert_eq!(entry & 1, 0, "{} entry is not even", symbol.name);
+                assert_eq!(callable, entry | 1, "{} callable is not Thumb", symbol.name);
+                let constant = format!(
+                    "pub const CANOPUS_FW_{}_CALLABLE: usize = canopus_thumb_callable({}usize)",
+                    symbol.name.to_ascii_uppercase(),
+                    symbol.callable_address.as_deref().unwrap()
+                );
+                assert!(
+                    generated.contains(&constant),
+                    "missing generated {constant}"
+                );
+                let wrapper = format!("pub unsafe fn canopus_fw_{}(", symbol.name);
+                assert!(
+                    !generated.contains(&wrapper),
+                    "restricted symbol {} emitted a public wrapper",
+                    symbol.name
+                );
+            } else {
+                let constant = format!(
+                    "pub const canopus_fw_{}: usize = {}usize",
+                    symbol.name,
+                    symbol.entry_address.as_deref().unwrap()
+                );
+                assert!(
+                    generated.contains(&constant),
+                    "missing generated {constant}"
+                );
+            }
+        }
+    }
+}
+
 #[test]
 fn target_private_never_transmutes_raw_firmware_addresses() {
     let targets = repo_root().join("sdk/rust/canopus-target-private/src/targets");
@@ -175,6 +254,21 @@ fn target_private_never_transmutes_raw_firmware_addresses() {
             "{} bypasses generated Thumb-callable normalization",
             path.display()
         );
+        assert!(
+            !source.contains("canopus_thumb_callable(0x"),
+            "{} owns a firmware callable instead of consuming generated metadata",
+            path.display()
+        );
+        for line in source.lines() {
+            let code = line.split("//").next().unwrap_or("");
+            assert!(
+                !code.contains("0x0C") && !code.contains("0x0c") && !code.contains("0x20")
+                    || !code.contains("usize"),
+                "{} retains an active firmware address: {}",
+                path.display(),
+                line.trim()
+            );
+        }
         if path.file_name().and_then(|value| value.to_str())
             == Some("xiaomi_band_10_pro_3_101_036.rs")
         {

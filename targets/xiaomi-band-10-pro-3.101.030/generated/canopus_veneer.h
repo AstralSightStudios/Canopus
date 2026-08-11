@@ -4,7 +4,7 @@
  * firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
  * sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
  * revision : 3
- * input_digest: 8e77930e7f78ad0c
+ * input_digest: 09a950a4d3ed16c6
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
@@ -413,7 +413,23 @@ static inline int canopus_fw_close(int a0) {
  * app_launcher_del: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
+ * bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved
+ * bt_alloc: restricted - not exported until context/ownership approved
+ * bt_buffer_new: restricted - not exported until context/ownership approved
+ * bt_create_bond_private: restricted - not exported until context/ownership approved
+ * bt_discovery_start: restricted - not exported until context/ownership approved
+ * bt_discovery_stop: restricted - not exported until context/ownership approved
+ * bt_free: restricted - not exported until context/ownership approved
+ * bt_get_bond_state: restricted - not exported until context/ownership approved
+ * bt_l2cap_connect_private: restricted - not exported until context/ownership approved
+ * bt_l2cap_disconnect: restricted - not exported until context/ownership approved
+ * bt_l2cap_submit_cid: restricted - not exported until context/ownership approved
+ * bt_queue_external: restricted - not exported until context/ownership approved
+ * bt_queue_free: restricted - not exported until context/ownership approved
+ * bt_remove_bond_private: restricted - not exported until context/ownership approved
  * bt_socket_server_receive: FORBIDDEN - no veneer may ever be generated
+ * bt_timer_add: restricted - not exported until context/ownership approved
+ * bt_timer_cancel: restricted - not exported until context/ownership approved
  * btsnoop_avdtp_recognizer: FORBIDDEN - no veneer may ever be generated
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -423,6 +439,7 @@ static inline int canopus_fw_close(int a0) {
  * driver_write_dispatch: FORBIDDEN - no veneer may ever be generated
  * errno_location: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
+ * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved
  * heap_malloc: restricted - not exported until context/ownership approved
@@ -442,6 +459,10 @@ static inline int canopus_fw_close(int a0) {
  * register_blockdriver: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved
+ * sdp_builder_create: restricted - not exported until context/ownership approved
+ * sdp_commit: restricted - not exported until context/ownership approved
+ * sdp_set_raw_attribute: restricted - not exported until context/ownership approved
+ * sdp_unregister: restricted - not exported until context/ownership approved
  * sem_post: restricted - not exported until context/ownership approved
  * sem_trywait: restricted - not exported until context/ownership approved
  * sem_wait: restricted - not exported until context/ownership approved

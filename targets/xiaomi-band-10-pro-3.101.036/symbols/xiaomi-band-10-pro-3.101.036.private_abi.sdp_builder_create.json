@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.sdp_builder_create",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "sdp_builder_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C7F20BC",
+  "prototype": "void *(uint32_t, uint16_t, uint16_t, uint8_t, const uint8_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PRIVATE-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PRIVATE-ABI-001"
+    ],
+    "source": "Exact-target target-private ABI migration; address and prototype preserved without promotion"
+  },
+  "approval_state": "PENDING",
+  "notes": "Generated address/callable constant only; semantic use remains in canopus-target-private.",
+  "callable_address": "0x0C7F20BD"
+}

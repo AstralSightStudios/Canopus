@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PRIVATE-ABI-001",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Which exact firmware addresses are consumed by the handwritten target-private ABI facade?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_discovery_start",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_discovery_stop",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_adapter_set_scan_mode",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_get_bond_state",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_create_bond_private",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_remove_bond_private",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_buffer_new",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_l2cap_disconnect",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_l2cap_submit_cid",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_alloc",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_free",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_timer_add",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_timer_cancel",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_queue_external",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_queue_free",
+    "xiaomi-band-10-pro-3.101.036.private_abi.bt_l2cap_owner",
+    "xiaomi-band-10-pro-3.101.036.private_abi.sdp_builder_create",
+    "xiaomi-band-10-pro-3.101.036.private_abi.sdp_set_raw_attribute",
+    "xiaomi-band-10-pro-3.101.036.private_abi.sdp_commit",
+    "xiaomi-band-10-pro-3.101.036.private_abi.sdp_unregister"
+  ],
+  "prototype_hypothesis": "Per-symbol prototypes preserved from the exact-target target-private facade",
+  "callsite_evidence": [
+    "Each address and prototype was already consumed by the exact-target Rust backend and checked by its target build/verifier gates."
+  ],
+  "control_flow_evidence": [
+    "This migration moves address ownership into target records without changing call sites, prototypes, or runtime semantics."
+  ],
+  "ownership_analysis": "Ownership remains documented and enforced by canopus-target-private semantic wrappers.",
+  "unsafe_assumptions": [
+    "Static recovery only unless an existing symbol record separately states device proof.",
+    "The identity guard must pass before any target-private operation."
+  ],
+  "recommended_probe": "Exercise each target-private capability on its exact firmware before promoting any restricted symbol to a public wrapper.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-11T00:00:00Z"
+}

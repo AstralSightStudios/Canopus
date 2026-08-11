@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.private_abi.bt_timer_create_private",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "bt_timer_create_private",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C16A9C8",
+  "prototype": "int(uint32_t *, void *, uint8_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PRIVATE-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-PRIVATE-ABI-001"
+    ],
+    "source": "Exact-target target-private ABI migration; address and prototype preserved without promotion"
+  },
+  "approval_state": "PENDING",
+  "notes": "Generated address/callable constant only; semantic use remains in canopus-target-private.",
+  "callable_address": "0x0C16A9C9"
+}

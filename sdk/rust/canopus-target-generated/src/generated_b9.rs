@@ -4,7 +4,7 @@
 // firmware : 3.1.175 (CONBINE_LTALM054_T1175_04141021_release_5793)
 // sha256   : 4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b
 // revision : 1
-// input_digest: 995430cc031f4f8a
+// input_digest: 3d097eefe4b45c83
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -229,6 +229,12 @@ fn c_str_eq(addr: usize, expected: &[u8]) -> bool {
 }
 
 // ---- typed firmware bindings (unsafe) ----
+/// Recovered `bt_l2cap_submit_cid` at 0x0C39E57E. Thumb callable address 0x0C39E57F.
+pub const CANOPUS_FW_BT_L2CAP_SUBMIT_CID_CALLABLE: usize = canopus_thumb_callable(0x0C39E57Fusize);
+
+/// Recovered global `bt_l2cap_owner` at 0x200D5F20.
+pub const canopus_fw_bt_l2cap_owner: usize = 0x200D5F20usize;
+
 /// Recovered `lvx_object_set_size` at 0x0C23DDE0. Thumb callable address 0x0C23DDE1.
 pub const CANOPUS_FW_LVX_OBJECT_SET_SIZE_CALLABLE: usize = canopus_thumb_callable(0x0C23DDE1usize);
 #[allow(non_snake_case)]
@@ -246,6 +252,9 @@ pub unsafe fn canopus_fw_lvx_page_title_create(a0: *mut core::ffi::c_void, a1: *
     let f: extern "C" fn(*mut core::ffi::c_void, *const u8, u32, canopus_lvx_event_cb, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE) };
     f(a0, a1, a2, a3, a4)
 }
+
+/// Recovered `bt_gap_client_cleanup` at 0x0C3BFA40. Thumb callable address 0x0C3BFA41.
+pub const CANOPUS_FW_BT_GAP_CLIENT_CLEANUP_CALLABLE: usize = canopus_thumb_callable(0x0C3BFA41usize);
 
 /// Recovered `lvx_align_to` at 0x0C240CE8. Thumb callable address 0x0C240CE9.
 pub const CANOPUS_FW_LVX_ALIGN_TO_CALLABLE: usize = canopus_thumb_callable(0x0C240CE9usize);
@@ -364,6 +373,9 @@ pub unsafe fn canopus_fw_lvx_timer_create(a0: canopus_lvx_event_cb, a1: u32, a2:
     f(a0, a1, a2)
 }
 
+/// Recovered global `bt_l2cap_submit_context` at 0x200D5C7C.
+pub const canopus_fw_bt_l2cap_submit_context: usize = 0x200D5C7Cusize;
+
 /// Recovered `mpu_region_allocate` at 0x0C51D8D0. Thumb callable address 0x0C51D8D1.
 pub const CANOPUS_FW_MPU_REGION_ALLOCATE_CALLABLE: usize = canopus_thumb_callable(0x0C51D8D1usize);
 #[allow(non_snake_case)]
@@ -381,6 +393,9 @@ pub unsafe fn canopus_fw_lvx_label_set_text(a0: *mut core::ffi::c_void, a1: *con
     let f: extern "C" fn(*mut core::ffi::c_void, *const u8) -> () = unsafe { core::mem::transmute(CANOPUS_FW_LVX_LABEL_SET_TEXT_CALLABLE) };
     f(a0, a1);
 }
+
+/// Recovered `bt_buffer_new` at 0x0C38AAA8. Thumb callable address 0x0C38AAA9.
+pub const CANOPUS_FW_BT_BUFFER_NEW_CALLABLE: usize = canopus_thumb_callable(0x0C38AAA9usize);
 
 /// Recovered `read` at 0x0C37F9EA. Thumb callable address 0x0C37F9EB.
 pub const CANOPUS_FW_READ_CALLABLE: usize = canopus_thumb_callable(0x0C37F9EBusize);
@@ -409,6 +424,9 @@ pub unsafe fn canopus_fw_app_launcher_add(a0: u16) -> i32 {
     f(a0)
 }
 
+/// Recovered `sdp_commit` at 0x0C39ECD0. Thumb callable address 0x0C39ECD1.
+pub const CANOPUS_FW_SDP_COMMIT_CALLABLE: usize = canopus_thumb_callable(0x0C39ECD1usize);
+
 /// Recovered `close` at 0x0C37EFF8. Thumb callable address 0x0C37EFF9.
 pub const CANOPUS_FW_CLOSE_CALLABLE: usize = canopus_thumb_callable(0x0C37EFF9usize);
 #[allow(non_snake_case)]
@@ -417,6 +435,9 @@ pub unsafe fn canopus_fw_close(a0: i32) -> i32 {
     let f: extern "C" fn(i32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_CLOSE_CALLABLE) };
     f(a0)
 }
+
+/// Recovered `bt_timer_create_private` at 0x0C16A9C8. Thumb callable address 0x0C16A9C9.
+pub const CANOPUS_FW_BT_TIMER_CREATE_PRIVATE_CALLABLE: usize = canopus_thumb_callable(0x0C16A9C9usize);
 
 /// Recovered `mm_free_default` at 0x0C0F1B00. Thumb callable address 0x0C0F1B01.
 pub const CANOPUS_FW_MM_FREE_DEFAULT_CALLABLE: usize = canopus_thumb_callable(0x0C0F1B01usize);
@@ -454,6 +475,9 @@ pub unsafe fn canopus_fw_lvx_list_row_set_trailing(a0: *mut core::ffi::c_void, a
     f(a0, a1, a2)
 }
 
+/// Recovered `bt_l2cap_connect_private` at 0x0C39E90C. Thumb callable address 0x0C39E90D.
+pub const CANOPUS_FW_BT_L2CAP_CONNECT_PRIVATE_CALLABLE: usize = canopus_thumb_callable(0x0C39E90Dusize);
+
 /// Recovered `unregister_driver` at 0x0C381C00. Thumb callable address 0x0C381C01.
 pub const CANOPUS_FW_UNREGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0x0C381C01usize);
 #[allow(non_snake_case)]
@@ -463,6 +487,14 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
     f(a0)
 }
 
+/// Recovered `bt_gap_client_create` at 0x0C3BC1FC. Thumb callable address 0x0C3BC1FD.
+pub const CANOPUS_FW_BT_GAP_CLIENT_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0C3BC1FDusize);
+
+/// Recovered global `default_heap` at 0x200B17F4.
+pub const canopus_fw_default_heap: usize = 0x200B17F4usize;
+
+/// Recovered `lvx_list_row_update` at 0x0C2797B8. Thumb callable address 0x0C2797B9.
+pub const CANOPUS_FW_LVX_LIST_ROW_UPDATE_CALLABLE: usize = canopus_thumb_callable(0x0C2797B9usize);
 // lvx_list_row_update: skipped (argument type not mappable)
 /// Recovered `register_driver` at 0x0C4F0108. Thumb callable address 0x0C4F0109.
 pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0x0C4F0109usize);
@@ -482,6 +514,11 @@ pub unsafe fn canopus_fw_bt_discovery_start(a0: *mut core::ffi::c_void, a1: i32)
     f(a0, a1)
 }
 
+/// Recovered `bt_timer_start_private` at 0x0C16AA60. Thumb callable address 0x0C16AA61.
+pub const CANOPUS_FW_BT_TIMER_START_PRIVATE_CALLABLE: usize = canopus_thumb_callable(0x0C16AA61usize);
+
+/// Recovered `open` at 0x0C37F760. Thumb callable address 0x0C37F761.
+pub const CANOPUS_FW_OPEN_CALLABLE: usize = canopus_thumb_callable(0x0C37F761usize);
 // open: skipped (argument type not mappable)
 /// Recovered `page_goto` at 0x0C49E7CC. Thumb callable address 0x0C49E7CD.
 pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0x0C49E7CDusize);
@@ -491,6 +528,9 @@ pub unsafe fn canopus_fw_page_goto(a0: u32, a1: u32, a2: u32, a3: u32) -> i32 {
     let f: extern "C" fn(u32, u32, u32, u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_PAGE_GOTO_CALLABLE) };
     f(a0, a1, a2, a3)
 }
+
+/// Recovered `sdp_set_raw_attribute` at 0x0C39EB3E. Thumb callable address 0x0C39EB3F.
+pub const CANOPUS_FW_SDP_SET_RAW_ATTRIBUTE_CALLABLE: usize = canopus_thumb_callable(0x0C39EB3Fusize);
 
 /// Recovered `lvx_object_align` at 0x0C23DE6A. Thumb callable address 0x0C23DE6B.
 pub const CANOPUS_FW_LVX_OBJECT_ALIGN_CALLABLE: usize = canopus_thumb_callable(0x0C23DE6Busize);
@@ -537,6 +577,9 @@ pub unsafe fn canopus_fw_page_finish(a0: *mut core::ffi::c_void) -> i32 {
     f(a0)
 }
 
+/// Recovered `bt_timer_stop_private` at 0x0C16AAD8. Thumb callable address 0x0C16AAD9.
+pub const CANOPUS_FW_BT_TIMER_STOP_PRIVATE_CALLABLE: usize = canopus_thumb_callable(0x0C16AAD9usize);
+
 /// Recovered `manager_delete_watchface` at 0x0C44F470. Thumb callable address 0x0C44F471.
 pub const CANOPUS_FW_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = canopus_thumb_callable(0x0C44F471usize);
 #[allow(non_snake_case)]
@@ -545,6 +588,9 @@ pub unsafe fn canopus_fw_manager_delete_watchface(a0: *const u8) -> i32 {
     let f: extern "C" fn(*const u8) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_MANAGER_DELETE_WATCHFACE_CALLABLE) };
     f(a0)
 }
+
+/// Recovered `lvx_object_clear_flag` at 0x0C23E96E. Thumb callable address 0x0C23E96F.
+pub const CANOPUS_FW_LVX_OBJECT_CLEAR_FLAG_CALLABLE: usize = canopus_thumb_callable(0x0C23E96Fusize);
 
 /// Recovered `bt_pair_display_reply` at 0x0C3BFD94. Thumb callable address 0x0C3BFD95.
 pub const CANOPUS_FW_BT_PAIR_DISPLAY_REPLY_CALLABLE: usize = canopus_thumb_callable(0x0C3BFD95usize);
@@ -564,6 +610,9 @@ pub unsafe fn canopus_fw_lvx_timer_delete(a0: *mut core::ffi::c_void) -> () {
     f(a0);
 }
 
+/// Recovered `bt_queue_external` at 0x0C391BC8. Thumb callable address 0x0C391BC9.
+pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(0x0C391BC9usize);
+
 /// Recovered `lvx_notification_insert_message` at 0x0C4F1C44. Thumb callable address 0x0C4F1C45.
 pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_thumb_callable(0x0C4F1C45usize);
 #[allow(non_snake_case)]
@@ -575,6 +624,9 @@ pub unsafe fn canopus_fw_lvx_notification_insert_message(a0: *const firmware_not
 
 /// Recovered global `interconnect_loop` at 0x200C9D28.
 pub const canopus_fw_interconnect_loop: usize = 0x200C9D28usize;
+
+/// Recovered global `style_misans_demibold_32` at 0x200CA048.
+pub const canopus_fw_style_misans_demibold_32: usize = 0x200CA048usize;
 
 /// Recovered `lvx_event_add` at 0x0C244F3C. Thumb callable address 0x0C244F3D.
 pub const CANOPUS_FW_LVX_EVENT_ADD_CALLABLE: usize = canopus_thumb_callable(0x0C244F3Dusize);
@@ -630,6 +682,12 @@ pub unsafe fn canopus_fw_lvx_style_apply(a0: *mut core::ffi::c_void, a1: *const 
     f(a0, a1, a2, a3)
 }
 
+/// Recovered `bt_get_bonded_devices` at 0x0C17AC40. Thumb callable address 0x0C17AC41.
+pub const CANOPUS_FW_BT_GET_BONDED_DEVICES_CALLABLE: usize = canopus_thumb_callable(0x0C17AC41usize);
+
+/// Recovered `bt_queue_free` at 0x0C38A0A8. Thumb callable address 0x0C38A0A9.
+pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0x0C38A0A9usize);
+
 /// Recovered `lvx_list_row_create` at 0x0C2D9C08. Thumb callable address 0x0C2D9C09.
 pub const CANOPUS_FW_LVX_LIST_ROW_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0C2D9C09usize);
 #[allow(non_snake_case)]
@@ -638,6 +696,9 @@ pub unsafe fn canopus_fw_lvx_list_row_create(a0: *mut core::ffi::c_void, a1: *co
     let f: extern "C" fn(*mut core::ffi::c_void, *const u8) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_LVX_LIST_ROW_CREATE_CALLABLE) };
     f(a0, a1)
 }
+
+/// Recovered `bt_l2cap_disconnect` at 0x0C39E990. Thumb callable address 0x0C39E991.
+pub const CANOPUS_FW_BT_L2CAP_DISCONNECT_CALLABLE: usize = canopus_thumb_callable(0x0C39E991usize);
 
 /// Recovered `mpu_region_release` at 0x0C51D928. Thumb callable address 0x0C51D929.
 pub const CANOPUS_FW_MPU_REGION_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0C51D929usize);
@@ -657,6 +718,15 @@ pub unsafe fn canopus_fw_lvx_object_add_flag(a0: *mut core::ffi::c_void, a1: u32
     f(a0, a1);
 }
 
+/// Recovered `bt_timer_delete_private` at 0x0C16AA30. Thumb callable address 0x0C16AA31.
+pub const CANOPUS_FW_BT_TIMER_DELETE_PRIVATE_CALLABLE: usize = canopus_thumb_callable(0x0C16AA31usize);
+
+/// Recovered `sdp_unregister` at 0x0C39EDE8. Thumb callable address 0x0C39EDE9.
+pub const CANOPUS_FW_SDP_UNREGISTER_CALLABLE: usize = canopus_thumb_callable(0x0C39EDE9usize);
+
+/// Recovered `sdp_builder_create` at 0x0C39EE30. Thumb callable address 0x0C39EE31.
+pub const CANOPUS_FW_SDP_BUILDER_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0C39EE31usize);
+
 /// Recovered `lvx_list_row_trailing` at 0x0C272C8E. Thumb callable address 0x0C272C8F.
 pub const CANOPUS_FW_LVX_LIST_ROW_TRAILING_CALLABLE: usize = canopus_thumb_callable(0x0C272C8Fusize);
 #[allow(non_snake_case)]
@@ -665,4 +735,28 @@ pub unsafe fn canopus_fw_lvx_list_row_trailing(a0: *mut core::ffi::c_void) -> *m
     let f: extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_LVX_LIST_ROW_TRAILING_CALLABLE) };
     f(a0)
 }
+
+/// Recovered `bt_adapter_set_scan_mode_private` at 0x0C3BFF74. Thumb callable address 0x0C3BFF75.
+pub const CANOPUS_FW_BT_ADAPTER_SET_SCAN_MODE_PRIVATE_CALLABLE: usize = canopus_thumb_callable(0x0C3BFF75usize);
+
+// ---- excluded symbols ----
+// bt_adapter_set_scan_mode_private: restricted - not exported until context/ownership approved
+// bt_buffer_new: restricted - not exported until context/ownership approved
+// bt_gap_client_cleanup: restricted - not exported until context/ownership approved
+// bt_gap_client_create: restricted - not exported until context/ownership approved
+// bt_get_bonded_devices: restricted - not exported until context/ownership approved
+// bt_l2cap_connect_private: restricted - not exported until context/ownership approved
+// bt_l2cap_disconnect: restricted - not exported until context/ownership approved
+// bt_l2cap_submit_cid: restricted - not exported until context/ownership approved
+// bt_queue_external: restricted - not exported until context/ownership approved
+// bt_queue_free: restricted - not exported until context/ownership approved
+// bt_timer_create_private: restricted - not exported until context/ownership approved
+// bt_timer_delete_private: restricted - not exported until context/ownership approved
+// bt_timer_start_private: restricted - not exported until context/ownership approved
+// bt_timer_stop_private: restricted - not exported until context/ownership approved
+// lvx_object_clear_flag: restricted - not exported until context/ownership approved
+// sdp_builder_create: restricted - not exported until context/ownership approved
+// sdp_commit: restricted - not exported until context/ownership approved
+// sdp_set_raw_attribute: restricted - not exported until context/ownership approved
+// sdp_unregister: restricted - not exported until context/ownership approved
 
