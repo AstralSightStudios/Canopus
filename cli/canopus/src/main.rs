@@ -189,6 +189,9 @@ enum TargetCmd {
         /// Write output to this path (default: <pack>/generated/canopus_veneer.h).
         #[arg(long)]
         output: Option<PathBuf>,
+        /// Write the authoritative target config header (default: <pack>/generated/canopus_target_config.h).
+        #[arg(long)]
+        config_output: Option<PathBuf>,
     },
     /// Generate the Rust no_std bindings crate module for a target pack.
     GenerateRustBindings {

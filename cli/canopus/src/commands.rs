@@ -42,6 +42,7 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
             target,
             targets_dir,
             output,
+            config_output,
         } => {
             let pack = find_target(&targets_dir, &target)?;
             let root = targets_dir.join(&target);
@@ -57,9 +58,20 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
                 std::fs::create_dir_all(parent)?;
             }
             std::fs::write(&out, text)?;
+            let config_gen = canopus_core::target_config::TargetConfigGen {
+                pack: &pack,
+                symbols: &symbols,
+            };
+            let config_out = config_output
+                .unwrap_or_else(|| root.join("generated").join("canopus_target_config.h"));
+            if let Some(parent) = config_out.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(&config_out, config_gen.generate())?;
             println!(
-                "wrote veneer header {} ({} callable, {} types, {} symbols)",
+                "wrote veneer header {} and target config {} ({} callable, {} types, {} symbols)",
                 out.display(),
+                config_out.display(),
                 symbols
                     .iter()
                     .filter(|s| s.kind == "function"

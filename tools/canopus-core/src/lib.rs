@@ -8,5 +8,6 @@ pub mod policy;
 pub mod registry;
 pub mod rustgen;
 pub mod schema;
+pub mod target_config;
 pub mod template;
 pub mod veneer;

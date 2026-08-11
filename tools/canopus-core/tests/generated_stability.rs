@@ -7,6 +7,7 @@
 use std::path::{Path, PathBuf};
 
 use canopus_core::rustgen::RustGen;
+use canopus_core::target_config::TargetConfigGen;
 use canopus_core::veneer::{VeneerGen, load_records};
 
 fn repo_root() -> PathBuf {
@@ -110,6 +111,18 @@ fn additional_target_artifacts_regenerate_identically() {
         assert_eq!(
             committed_veneer, veneer,
             "generated veneer header is stale for {target}"
+        );
+
+        let config = TargetConfigGen {
+            pack: &pack,
+            symbols: &symbols,
+        }
+        .generate();
+        let committed_config =
+            std::fs::read_to_string(dir.join("generated/canopus_target_config.h")).unwrap();
+        assert_eq!(
+            committed_config, config,
+            "generated target config header is stale for {target}"
         );
 
         if target == "xiaomi-band-10-pro-3.101.036" {
