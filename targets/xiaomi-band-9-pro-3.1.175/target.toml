@@ -11,7 +11,7 @@ cpu = "cortex-m33"
 instruction_set = "thumb2"
 endianness = "little"
 float_abi = "soft"
-loader = "nuttx-modlib-elf32-rel"
+loader = "nsh-mw-stage0-planned"
 firmware_sha256 = "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b"
 firmware_version = "3.1.175"
 firmware_build = "CONBINE_LTALM054_T1175_04141021_release_5793"
@@ -40,6 +40,9 @@ capabilities = [
   "ui.dispatch",
 ]
 
+# Desired ET_REL module format and verifier envelope for a planned custom
+# NSH mw/exec stage-0. Stock insmod/rmmod is absent, and the stage-0 loader is
+# not implemented yet.
 [loader_profile]
 elf_class = 32
 elf_machine = "ARM"
@@ -49,9 +52,6 @@ constructor_discovery = "init_array"
 symbol_imports = "none"
 max_size = 0
 alignment = 4
-module_name_rules = "must match ^[a-zA-Z0-9_]+$; passed as argv[2] to insmod"
-load_command = "insmod <path> <name>"
-unload_command = "rmmod <name>"
 persistent_autoload = false
 
 [[loader_profile.relocations]]
