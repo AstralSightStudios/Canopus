@@ -34,12 +34,11 @@ OUT="$ROOT/watchfaces/canopus-installer/build/$TARGET_ID"
 if [ -n "$LOADER_SRCS" ]; then
     LOADER_OBJECTS="$OUT/canopus_arm_reloc.o $OUT/canopus_elf32_loader.o"
 fi
-# Stock modlib targets retain the proven 68 KiB budget. The Band-9 custom
-# loader allocates its verified image from the default heap and has a separate
-# 96 KiB ceiling covering the portable ELF loader itself.
+# Stock modlib has no fixed insertion ceiling; retain a conservative transport
+# bound with room for the Manager's per-row firmware callbacks.
 case "$TARGET_ID" in
     xiaomi-band-9-pro-3.1.175) MAX_SIZE=98304 ;;
-    *) MAX_SIZE=69632 ;;
+    *) MAX_SIZE=73728 ;;
 esac
 CC=${CC:-clang}
 

@@ -190,6 +190,7 @@ static struct canopus_target_page_context
 static struct firmware_page_descriptor
     manager_pages_desc[CANOPUS_TARGET_PAGE_COUNT];
 static uint32_t manager_active_pages;
+static uint32_t manager_pending_detail;
 static uint8_t manager_session_ready;
 
 static void target_page_title_back(void *event)
@@ -249,6 +250,22 @@ static const char launcher_icon[] = "/data/canopus/manager_icon.bin";
 
 __attribute__((used, visibility("default"), section(".data.canopus_manager_target")))
 volatile struct canopus_manager_target_record canopus_manager_target_record;
+
+void canopus_manager_target_render_diagnostics(uint8_t out[36])
+{
+    const volatile uint32_t *source =
+        &canopus_manager_target_record.build_id;
+    uint32_t i;
+
+    if (out == NULL) return;
+    for (i = 0u; i < 9u; i++) {
+        uint32_t value = source[i];
+        out[i * 4u] = (uint8_t)value;
+        out[i * 4u + 1u] = (uint8_t)(value >> 8);
+        out[i * 4u + 2u] = (uint8_t)(value >> 16);
+        out[i * 4u + 3u] = (uint8_t)(value >> 24);
+    }
+}
 
 static int strings_differ(const char *left, const char *right)
 {
@@ -427,51 +444,78 @@ static int target_refresh_model(void)
     return 0;
 }
 
-static void target_row_event(void *event)
+static void target_dispatch_row(uint32_t row_index, void *event)
 {
+    uint32_t page_index;
     uint32_t code;
-    uintptr_t encoded;
-    if (event == NULL) return;
-    code = *(const uint32_t *)((const uint8_t *)event + 8u);
-    encoded = *(const uintptr_t *)((const uint8_t *)event + 12u);
-    uint32_t page_index = (uint32_t)(encoded >> 8);
-    uint32_t row_index = (uint32_t)(encoded & UINT32_C(0xFF));
-    struct canopus_target_page_context *context;
-    struct canopus_target_ui_binding *binding;
-    int32_t rc;
 
-    if (page_index >= CANOPUS_TARGET_PAGE_COUNT ||
-        row_index >= CANOPUS_TARGET_UI_MAX_ROWS) {
-        return;
-    }
-    context = &manager_pages[page_index];
-    if (!context->active || !context->interactive) {
-        return;
-    }
-    /* Band 9 stock switch rows register for LV_EVENT_ALL on the switch and act only
-     * on LV_EVENT_VALUE_CHANGED (sub_C661410/sub_C6613C0); action/status rows
-     * register for LV_EVENT_CLICKED on the row (sub_C52C228). */
-    if (context->backend.row_kinds[row_index] == CANOPUS_TARGET_ROW_SWITCH) {
-        if (code != CANOPUS_TARGET_EVENT_VALUE_CHANGED) {
+    if (event == NULL || row_index >= CANOPUS_TARGET_UI_MAX_ROWS) return;
+    code = *(const uint32_t *)((const uint8_t *)event + 8u);
+    for (page_index = 0; page_index < CANOPUS_TARGET_PAGE_COUNT; page_index++) {
+        struct canopus_target_page_context *context = &manager_pages[page_index];
+        struct canopus_target_ui_binding *binding;
+        int32_t rc;
+
+        if (!context->active || !context->interactive ||
+            context->backend.rows[row_index] == NULL) continue;
+        if (context->backend.row_kinds[row_index] == CANOPUS_TARGET_ROW_SWITCH) {
+            if (code != CANOPUS_TARGET_EVENT_VALUE_CHANGED) return;
+        } else if (code != CANOPUS_TARGET_EVENT_CLICKED) {
             return;
         }
-    } else if (code != CANOPUS_TARGET_EVENT_CLICKED) {
+        binding = &context->backend.bindings[row_index];
+        if (binding->event_id == 0u) return;
+        canopus_manager_target_record.click_count += 1u;
+        canopus_manager_target_record.clicked_row = row_index;
+        canopus_manager_target_record.clicked_generation = binding->generation;
+        canopus_manager_target_record.clicked_key = binding->key;
+        canopus_manager_target_record.clicked_event = binding->event_id;
+        canopus_manager_target_record.selected_before = manager_model.selected;
+        rc = canopus_ui_dispatch_event(&context->native.ui,
+                                       binding->generation,
+                                       binding->key,
+                                       binding->event_id);
+        canopus_manager_target_record.selected_after = manager_model.selected;
+        if (rc == CANOPUS_UI_ERR_DISABLED) {
+            (void)canopus_manager_native_render(&context->native);
+        }
         return;
-    }
-    binding = &context->backend.bindings[row_index];
-    if (binding->event_id == 0u) {
-        return;
-    }
-    rc = canopus_ui_dispatch_event(&context->native.ui,
-                                   binding->generation,
-                                   binding->key,
-                                   binding->event_id);
-    if (rc == CANOPUS_UI_ERR_DISABLED) {
-        /* A disabled stock switch may optimistically animate before its event.
-         * Reapplying the authoritative snapshot immediately restores its state. */
-        (void)canopus_manager_native_render(&context->native);
     }
 }
+
+#define CANOPUS_TARGET_ROW_CALLBACK(index) \
+    static void target_row_event_##index(void *event) \
+    { \
+        target_dispatch_row(index, event); \
+    }
+
+CANOPUS_TARGET_ROW_CALLBACK(0)
+CANOPUS_TARGET_ROW_CALLBACK(1)
+CANOPUS_TARGET_ROW_CALLBACK(2)
+CANOPUS_TARGET_ROW_CALLBACK(3)
+CANOPUS_TARGET_ROW_CALLBACK(4)
+CANOPUS_TARGET_ROW_CALLBACK(5)
+CANOPUS_TARGET_ROW_CALLBACK(6)
+CANOPUS_TARGET_ROW_CALLBACK(7)
+CANOPUS_TARGET_ROW_CALLBACK(8)
+CANOPUS_TARGET_ROW_CALLBACK(9)
+CANOPUS_TARGET_ROW_CALLBACK(10)
+CANOPUS_TARGET_ROW_CALLBACK(11)
+CANOPUS_TARGET_ROW_CALLBACK(12)
+CANOPUS_TARGET_ROW_CALLBACK(13)
+CANOPUS_TARGET_ROW_CALLBACK(14)
+CANOPUS_TARGET_ROW_CALLBACK(15)
+
+static void (*const target_row_events[CANOPUS_TARGET_UI_MAX_ROWS])(void *) = {
+    target_row_event_0, target_row_event_1, target_row_event_2,
+    target_row_event_3, target_row_event_4, target_row_event_5,
+    target_row_event_6, target_row_event_7, target_row_event_8,
+    target_row_event_9, target_row_event_10, target_row_event_11,
+    target_row_event_12, target_row_event_13, target_row_event_14,
+    target_row_event_15,
+};
+
+#undef CANOPUS_TARGET_ROW_CALLBACK
 
 static uint8_t target_row_kind(uint16_t node_type)
 {
@@ -688,7 +732,6 @@ static int32_t target_ui_apply(
         object = backend->rows[slot];
         if (object == NULL) {
             void *event_object;
-            uintptr_t event_cookie;
             uint32_t event_code;
             object = create_row(backend->content_root, primary);
             if (object == NULL || set_trailing(object, trailing, 0u) < 0) {
@@ -706,10 +749,7 @@ static int32_t target_ui_apply(
              * (sub_C661410); rows register on the row for LV_EVENT_CLICKED. */
             event_code = kind == CANOPUS_TARGET_ROW_SWITCH ?
                 CANOPUS_TARGET_EVENT_ALL : CANOPUS_TARGET_EVENT_CLICKED;
-            event_cookie = ((uintptr_t)backend->page_index << 8) |
-                           (uintptr_t)(uint32_t)slot;
-            add_event(event_object, target_row_event, event_code,
-                      (void *)event_cookie);
+            add_event(event_object, target_row_events[slot], event_code, NULL);
             backend->row_count++;
         }
         {
@@ -866,6 +906,7 @@ static int32_t target_route(void *cookie,
         break;
     case CANOPUS_MANAGER_ROUTE_MODULE_DETAIL:
         target_page = CANOPUS_TARGET_PAGE_DETAIL;
+        manager_pending_detail = manager_model.selected + 1u;
         break;
     default:
         return CANOPUS_UI_ERR_ARGUMENT;
@@ -883,7 +924,10 @@ static int32_t target_route(void *cookie,
         (void)page_finish(&manager_pages_desc[source_page]);
         return CANOPUS_UI_OK;
     }
-    (void)page_goto(target_page_key(target_page), 0u, 0u, 0u);
+    (void)page_goto(target_page_key(target_page),
+                    target_page == CANOPUS_TARGET_PAGE_DETAIL
+                        ? manager_pending_detail : 0u,
+                    0u, 0u);
     /* A push pauses the source. Rendering the destination snapshot into that
      * paused root caused the old two-tap/mixed-content defect. */
     return CANOPUS_UI_OK;
@@ -893,12 +937,18 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
                                   void *root, void *start_data)
 {
     struct canopus_target_page_context *context;
+    uint32_t requested_detail = 0u;
     int32_t rc;
 
-    (void)start_data;
     context = context_for_page(page);
     if (context == NULL) {
         return -1;
+    }
+    if ((uint32_t)page->page_id == CANOPUS_TARGET_PAGE_DETAIL) {
+        requested_detail = (uint32_t)(uintptr_t)start_data;
+        if (requested_detail == 0u) {
+            requested_detail = manager_pending_detail;
+        }
     }
     canopus_manager_target_record.create_count += 1u;
     canopus_manager_target_record.root_object = (uintptr_t)root;
@@ -924,8 +974,20 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         }
         manager_session_ready = 1u;
     }
+    if (context->backend.page_index == CANOPUS_TARGET_PAGE_DETAIL &&
+        requested_detail != 0u) {
+        uint32_t selected = requested_detail - 1u;
+        if (selected >= manager_model.module_count) {
+            return -1;
+        }
+        manager_model.selected = selected;
+        canopus_manager_target_record.detail_selected = selected;
+    }
     if (target_select_page_view(context) != 0) {
         return -1;
+    }
+    if (context->backend.page_index == CANOPUS_TARGET_PAGE_DETAIL) {
+        manager_pending_detail = 0u;
     }
     rc = canopus_manager_native_init(&context->native, &manager_model,
                                      &target_ui_backend_api, &context->backend);
@@ -1047,6 +1109,7 @@ int canopus_manager_native_notify_module_installed(void)
 static void __attribute__((constructor, used)) canopus_manager_target_init(void)
 {
     canopus_manager_target_record.magic = CANOPUS_MANAGER_TARGET_MAGIC;
+    canopus_manager_target_record.build_id = CANOPUS_MANAGER_TARGET_BUILD_ID;
     canopus_manager_target_record.identity_result = identity_guard();
 }
 

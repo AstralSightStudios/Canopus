@@ -9,6 +9,12 @@
 #include "canopus_memory.h"
 #include "canopus_runtime.h"
 
+__attribute__((weak)) void canopus_manager_target_render_diagnostics(
+    uint8_t out[36])
+{
+    canopus_memset(out, 0, 36u);
+}
+
 static int module_lifecycle_ok(uint32_t lifecycle_class)
 {
     return lifecycle_class <= CANOPUS_LIFECYCLE_PATCH_REBOOT_REQUIRED;
@@ -746,6 +752,7 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
         }
     }
     PUT32(CANOPUS_SUP_STATUS_MODULE_ERROR_OFF, module_error);
+    canopus_manager_target_render_diagnostics(out + 48u);
     for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         uint32_t o = 128u + i * CANOPUS_SUP_MODULE_SLOT_STRIDE;
         const struct canopus_sup_module_v1 *m = &sup->modules[i];

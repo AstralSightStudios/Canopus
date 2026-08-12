@@ -378,7 +378,16 @@ end
 --   36..39 u32 snapshot sequence begin
 --   40..43 u32 snapshot sequence end
 --   44..47 i32 first non-zero module callback error
---   48..127 reserved
+--   48..51 u32 Manager backend build ID
+--   52..55 u32 Manager row callback count
+--   56..59 u32 last clicked row slot
+--   60..63 u32 last clicked semantic generation
+--   64..67 u32 last clicked semantic key
+--   68..71 u32 last clicked semantic event ID
+--   72..75 u32 selected module before dispatch
+--   76..79 u32 selected module after dispatch
+--   80..83 u32 selected module observed by detail on_create
+--   84..127 reserved
 --   128..383 16 module slots x 16 bytes:
 --     slot+0  u32 state
 --     slot+4  u32 lifecycle_class
@@ -413,6 +422,15 @@ local function read_status()
         pending_op = words[6], pending_state = words[7],
         flags = words[8], error_code = words[9],
         module_error = words[12],
+        manager_build = words[13],
+        manager_clicks = words[14],
+        manager_row = words[15],
+        manager_generation = words[16],
+        manager_key = words[17],
+        manager_event = words[18],
+        manager_selected_before = words[19],
+        manager_selected_after = words[20],
+        manager_detail_selected = words[21],
         registry_stage = words[8] % 0x100,
         registry_errno = math.floor(words[8] / 0x100) % 0x10000,
         registry_saves = math.floor(words[8] / 0x1000000) % 0x100,
@@ -478,6 +496,12 @@ local function format_status(st)
     local result = result_names[st.pending_state] or ("res?" .. st.pending_state)
     local lines = {
         string.format("framework v%u  modules=%u", st.framework_revision, st.module_count),
+        string.format("Manager build=%08X clicks=%u", st.manager_build,
+            st.manager_clicks),
+        string.format("row=%u gen=%u key=%08X event=%08X", st.manager_row,
+            st.manager_generation, st.manager_key, st.manager_event),
+        string.format("selected %u -> %u detail=%u", st.manager_selected_before,
+            st.manager_selected_after, st.manager_detail_selected),
         string.format("last op=%s", result),
     }
     if st.safe_mode ~= 0 then lines[#lines + 1] = "** SAFE MODE **" end

@@ -505,6 +505,45 @@ TEST(manager_native_router_receives_navigation_routes)
     CHECK(model.view == CANOPUS_MANAGER_VIEW_MODULE_LIST);
 }
 
+TEST(manager_native_router_preserves_second_module_selection)
+{
+    struct canopus_manager_model_v1 model;
+    struct canopus_manager_native_v1 native;
+    struct manager_native_backend backend;
+    struct native_route_sink sink;
+    struct canopus_manager_module_v1 module;
+    const struct canopus_ui_snapshot_v1 *snapshot;
+    const struct canopus_ui_node_v1 *second;
+
+    canopus_memset(&backend, 0, sizeof(backend));
+    canopus_memset(&sink, 0, sizeof(sink));
+    canopus_manager_init(&model, native_transport, 0);
+    add_native_module(&model, CANOPUS_LIFECYCLE_REMOVABLE);
+    canopus_memset(&module, 0, sizeof(module));
+    canopus_buf_copy(module.module_id, sizeof(module.module_id), "mod.second");
+    module.lifecycle_class = CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION;
+    module.state = CANOPUS_STATE_BOOT_RESIDENT;
+    module.version = 9u;
+    module.signature_ok = 1u;
+    CHECK(canopus_manager_upsert_module(&model, &module) == 1);
+    model.view = CANOPUS_MANAGER_VIEW_MODULE_LIST;
+
+    CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
+                                      &backend) == CANOPUS_UI_OK);
+    canopus_manager_native_set_router(&native, native_route_sink_fn, &sink);
+    snapshot = canopus_ui_current(&native.ui);
+    second = find_event(snapshot, CANOPUS_MANAGER_EVENT_OPEN_MODULE_BASE + 1u);
+    CHECK(second != 0);
+    CHECK(strcmp(snapshot->strings + second->primary_off, "mod.second") == 0);
+    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+                                    second->key, second->event_id) ==
+          CANOPUS_UI_OK);
+    CHECK(model.view == CANOPUS_MANAGER_VIEW_MODULE_DETAIL);
+    CHECK(model.selected == 1u);
+    CHECK(sink.calls == 1);
+    CHECK(sink.last_route == CANOPUS_MANAGER_ROUTE_MODULE_DETAIL);
+}
+
 TEST(manager_native_empty_module_list_is_valid)
 {
     struct canopus_manager_model_v1 model;
@@ -554,6 +593,8 @@ static const struct test_registry manager_native_tests[] = {
       manager_native_hides_safe_mode_and_enforces_it_wrapper },
     { "manager_native_router_receives_navigation_routes",
       manager_native_router_receives_navigation_routes_wrapper },
+    { "manager_native_router_preserves_second_module_selection",
+      manager_native_router_preserves_second_module_selection_wrapper },
     { "manager_native_empty_module_list_is_valid",
       manager_native_empty_module_list_is_valid_wrapper },
 };
