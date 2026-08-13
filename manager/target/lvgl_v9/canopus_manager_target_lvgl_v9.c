@@ -24,6 +24,8 @@
 #define CANOPUS_TARGET_PAGE_DETAIL 2u
 #define CANOPUS_TARGET_UI_MAX_ROWS 25u
 #define CANOPUS_TARGET_UI_MAX_LABELS 6u
+#define CANOPUS_TARGET_UI_MAX_IMAGES 2u
+#define CANOPUS_TARGET_UI_MAX_PROGRESS 4u
 #define CANOPUS_TARGET_MODULE_FLAG_SIGNATURE_OK (1u << 0)
 #define CANOPUS_TARGET_ROW_STATUS 1u
 #define CANOPUS_TARGET_ROW_ACTION 2u
@@ -165,6 +167,12 @@ struct canopus_target_ui_backend {
     void *content_root;
     void *rows[CANOPUS_TARGET_UI_MAX_ROWS];
     void *labels[CANOPUS_TARGET_UI_MAX_LABELS];
+    void *images[CANOPUS_TARGET_UI_MAX_IMAGES];
+    void *progress[CANOPUS_TARGET_UI_MAX_PROGRESS];
+    uint32_t image_resources[CANOPUS_TARGET_UI_MAX_IMAGES];
+    int32_t progress_minimum[CANOPUS_TARGET_UI_MAX_PROGRESS];
+    int32_t progress_maximum[CANOPUS_TARGET_UI_MAX_PROGRESS];
+    int32_t progress_value[CANOPUS_TARGET_UI_MAX_PROGRESS];
     uint8_t row_kinds[CANOPUS_TARGET_UI_MAX_ROWS];
     struct canopus_target_ui_binding bindings[CANOPUS_TARGET_UI_MAX_ROWS];
     struct firmware_page_descriptor *firmware_page;
@@ -692,6 +700,11 @@ static int32_t target_ui_apply(
     typedef void (*add_event_fn)(void *, void (*)(void *), uint32_t, void *);
     typedef void (*set_hidden_fn)(void *, uint32_t);
     typedef void (*align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
+    typedef void *(*image_create_fn)(void *);
+    typedef void (*image_set_src_fn)(void *, const void *);
+    typedef void *(*bar_create_fn)(void *);
+    typedef void (*bar_set_range_fn)(void *, int32_t, int32_t);
+    typedef void (*bar_set_value_fn)(void *, int32_t, uint32_t);
     struct canopus_target_ui_backend *backend =
         (struct canopus_target_ui_backend *)cookie;
     create_row_fn create_row =
@@ -715,11 +728,24 @@ static int32_t target_ui_apply(
     add_event_fn add_event = (add_event_fn)(uintptr_t)FW_LVX_EVENT_ADD;
     set_hidden_fn set_hidden = (set_hidden_fn)(uintptr_t)FW_LVX_SET_HIDDEN;
     align_to_fn align_to = (align_to_fn)(uintptr_t)FW_LVX_ALIGN_TO;
+    image_create_fn image_create =
+        (image_create_fn)(uintptr_t)FW_LVX_IMAGE_CREATE;
+    image_set_src_fn image_set_src =
+        (image_set_src_fn)(uintptr_t)FW_LVX_IMAGE_SET_SRC;
+    bar_create_fn bar_create = (bar_create_fn)(uintptr_t)FW_LVX_BAR_CREATE;
+    bar_set_range_fn bar_set_range =
+        (bar_set_range_fn)(uintptr_t)FW_LVX_BAR_SET_RANGE;
+    bar_set_value_fn bar_set_value =
+        (bar_set_value_fn)(uintptr_t)FW_LVX_BAR_SET_VALUE;
     uint16_t i;
     uint32_t visible_rows = 0u;
     uint32_t visible_labels = 0u;
+    uint32_t visible_images = 0u;
+    uint32_t visible_progress = 0u;
     uint32_t used_mask = 0u;
     uint32_t label_used = 0u;
+    uint32_t image_used = 0u;
+    uint32_t progress_used = 0u;
     void *previous = NULL;
     void *first = NULL;
 
@@ -761,6 +787,14 @@ static int32_t target_ui_apply(
             visible_labels++;
             continue;
         }
+        if (type == CANOPUS_UI_NODE_IMAGE) {
+            visible_images++;
+            continue;
+        }
+        if (type == CANOPUS_UI_NODE_PROGRESS) {
+            visible_progress++;
+            continue;
+        }
         if (type != CANOPUS_UI_NODE_STATUS_ROW &&
             type != CANOPUS_UI_NODE_BUTTON &&
             type != CANOPUS_UI_NODE_ACTION_ROW &&
@@ -770,7 +804,9 @@ static int32_t target_ui_apply(
         visible_rows++;
     }
     if (visible_labels > CANOPUS_TARGET_UI_MAX_LABELS ||
-        visible_rows > CANOPUS_TARGET_UI_MAX_ROWS) {
+        visible_rows > CANOPUS_TARGET_UI_MAX_ROWS ||
+        visible_images > CANOPUS_TARGET_UI_MAX_IMAGES ||
+        visible_progress > CANOPUS_TARGET_UI_MAX_PROGRESS) {
         return -1;
     }
 
@@ -845,6 +881,74 @@ static int32_t target_ui_apply(
             label_used++;
             continue;
         }
+        if (node->type == CANOPUS_UI_NODE_IMAGE) {
+            const struct canopus_ui_layout_v1 *layout = &snapshot->layouts[i];
+            uint32_t resource = snapshot->values[i].resource_id;
+            if (primary[0] == '\0' || resource == 0u ||
+                layout->width <= 0 || layout->height <= 0) return -1;
+            object = backend->images[image_used];
+            if (object == NULL) {
+                object = image_create(backend->content_root);
+                if (object == NULL) return -1;
+                backend->images[image_used] = object;
+            }
+            image_set_src(object, primary);
+            backend->image_resources[image_used] = resource;
+            set_size(object, layout->width, layout->height);
+            set_hidden(object, 0u);
+            if (previous == NULL) {
+                align_to(object, backend->content_root,
+                         CANOPUS_TARGET_ALIGN_TOP_MID, 0, 0);
+                first = object;
+            } else {
+                align_to(object, previous,
+                         CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID, 0, 8);
+            }
+            previous = object;
+            image_used++;
+            continue;
+        }
+        if (node->type == CANOPUS_UI_NODE_PROGRESS) {
+            const struct canopus_ui_layout_v1 *layout = &snapshot->layouts[i];
+            const struct canopus_ui_value_v1 *value = &snapshot->values[i];
+            if (layout->width <= 0 || layout->height <= 0 ||
+                value->minimum >= value->maximum) return -1;
+            object = backend->progress[progress_used];
+            if (object == NULL) {
+                object = bar_create(backend->content_root);
+                if (object == NULL) return -1;
+                backend->progress[progress_used] = object;
+                bar_set_range(object, value->minimum, value->maximum);
+                bar_set_value(object, value->value, 0u);
+                backend->progress_minimum[progress_used] = value->minimum;
+                backend->progress_maximum[progress_used] = value->maximum;
+                backend->progress_value[progress_used] = value->value;
+            } else {
+                if (backend->progress_minimum[progress_used] != value->minimum ||
+                    backend->progress_maximum[progress_used] != value->maximum) {
+                    bar_set_range(object, value->minimum, value->maximum);
+                    backend->progress_minimum[progress_used] = value->minimum;
+                    backend->progress_maximum[progress_used] = value->maximum;
+                }
+                if (backend->progress_value[progress_used] != value->value) {
+                    bar_set_value(object, value->value, 0u);
+                    backend->progress_value[progress_used] = value->value;
+                }
+            }
+            set_size(object, layout->width, layout->height);
+            set_hidden(object, 0u);
+            if (previous == NULL) {
+                align_to(object, backend->content_root,
+                         CANOPUS_TARGET_ALIGN_TOP_MID, 0, 0);
+                first = object;
+            } else {
+                align_to(object, previous,
+                         CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID, 0, 8);
+            }
+            previous = object;
+            progress_used++;
+            continue;
+        }
         if (node->secondary_len != 0u) {
             secondary = snapshot->strings + node->secondary_off;
         }
@@ -913,9 +1017,13 @@ static int32_t target_ui_apply(
         }
     }
     for (i = (uint16_t)label_used; i < CANOPUS_TARGET_UI_MAX_LABELS; i++) {
-        if (backend->labels[i] != NULL) {
-            set_hidden(backend->labels[i], 1u);
-        }
+        if (backend->labels[i] != NULL) set_hidden(backend->labels[i], 1u);
+    }
+    for (i = (uint16_t)image_used; i < CANOPUS_TARGET_UI_MAX_IMAGES; i++) {
+        if (backend->images[i] != NULL) set_hidden(backend->images[i], 1u);
+    }
+    for (i = (uint16_t)progress_used; i < CANOPUS_TARGET_UI_MAX_PROGRESS; i++) {
+        if (backend->progress[i] != NULL) set_hidden(backend->progress[i], 1u);
     }
     backend->rendered_generation = snapshot->generation;
     canopus_manager_target_record.list_row = (uintptr_t)first;

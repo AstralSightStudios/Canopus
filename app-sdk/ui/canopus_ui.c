@@ -47,7 +47,9 @@ uint32_t canopus_ui_context_capabilities(
                    CANOPUS_UI_CAP_LAYOUT |
                    CANOPUS_UI_CAP_VALUES;
     if (context->backend->abi_minor >= 4u) {
-        capabilities |= CANOPUS_UI_CAP_NAVIGATION_HEADER;
+        capabilities |= CANOPUS_UI_CAP_NAVIGATION_HEADER |
+                        CANOPUS_UI_CAP_IMAGE |
+                        CANOPUS_UI_CAP_PROGRESS;
     }
     return capabilities;
 }
@@ -467,9 +469,16 @@ int32_t canopus_ui_component(
     if (ui_component_interactive(type) && props->event_id == 0u) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
+    if (type == CANOPUS_UI_NODE_IMAGE &&
+        (props->resource_id == 0u || props->primary == 0 ||
+         props->primary_len == 0u)) {
+        return CANOPUS_UI_ERR_ARGUMENT;
+    }
     if ((type == CANOPUS_UI_NODE_SLIDER || type == CANOPUS_UI_NODE_PROGRESS) &&
         (props->minimum > props->maximum || props->value < props->minimum ||
-         props->value > props->maximum || props->step < 0)) {
+         props->value > props->maximum || props->step < 0 ||
+         (type == CANOPUS_UI_NODE_PROGRESS &&
+          props->minimum == props->maximum))) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
     rc = ui_append_node(tree, key, type, props->primary, props->primary_len,

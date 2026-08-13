@@ -4,7 +4,7 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 4
-// input_digest: 09a950a4d3ed16c6
+// input_digest: 1a0b912ea5cb9842
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -335,6 +335,12 @@ pub unsafe fn canopus_fw_clock_gettime(a0: u32, a1: *const stock_timespec_t) -> 
     f(a0, a1)
 }
 
+/// Recovered `lv_bar_set_range` at 0x0C587B18. Thumb callable address 0x0C587B19.
+pub const CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE: usize = canopus_thumb_callable(0x0C587B19usize);
+
+/// Recovered `lv_bar_create` at 0x0C587FF0. Thumb callable address 0x0C587FF1.
+pub const CANOPUS_FW_LV_BAR_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0C587FF1usize);
+
 /// Recovered `lvx_object_set_size` at 0x0C587EF8. Thumb callable address 0x0C587EF9.
 pub const CANOPUS_FW_LVX_OBJECT_SET_SIZE_CALLABLE: usize = canopus_thumb_callable(0x0C587EF9usize);
 #[allow(non_snake_case)]
@@ -397,6 +403,9 @@ pub unsafe fn canopus_fw_lvx_page_title_create(a0: *mut core::ffi::c_void, a1: *
     let f: extern "C" fn(*mut core::ffi::c_void, *const u8, u32, canopus_lvx_event_cb, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE) };
     f(a0, a1, a2, a3, a4)
 }
+
+/// Recovered `lv_bar_set_value` at 0x0C588D48. Thumb callable address 0x0C588D49.
+pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0x0C588D49usize);
 
 /// Recovered `insmod` at 0x0C1EE090. Thumb callable address 0x0C1EE091.
 pub const CANOPUS_FW_INSMOD_CALLABLE: usize = canopus_thumb_callable(0x0C1EE091usize);
@@ -491,8 +500,14 @@ pub unsafe fn canopus_fw_bt_adapter_get_scan_mode() -> i32 {
     f()
 }
 
+/// Recovered `lv_image_set_src` at 0x0C179FD0. Thumb callable address 0x0C179FD1.
+pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0x0C179FD1usize);
+
 /// Recovered `bt_adapter_set_scan_mode` at 0x0C39EFB8. Thumb callable address 0x0C39EFB9.
 pub const CANOPUS_FW_BT_ADAPTER_SET_SCAN_MODE_CALLABLE: usize = canopus_thumb_callable(0x0C39EFB9usize);
+
+/// Recovered `lv_image_create` at 0x0C179BDC. Thumb callable address 0x0C179BDD.
+pub const CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0C179BDDusize);
 
 /// Recovered `sem_post` at 0x0C1F14C4. Thumb callable address 0x0C1F14C5.
 pub const CANOPUS_FW_SEM_POST_CALLABLE: usize = canopus_thumb_callable(0x0C1F14C5usize);
@@ -514,6 +529,9 @@ pub unsafe fn canopus_fw_bt_pair_display_reply(a0: *mut core::ffi::c_void, a1: *
     let f: extern "C" fn(*mut core::ffi::c_void, *const u8, i32, i32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_BT_PAIR_DISPLAY_REPLY_CALLABLE) };
     f(a0, a1, a2, a3)
 }
+
+/// Recovered `ioctl` at 0x0C1C0D2C. Thumb callable address 0x0C1C0D2D.
+pub const CANOPUS_FW_IOCTL_CALLABLE: usize = canopus_thumb_callable(0x0C1C0D2Dusize);
 
 /// Recovered global `core_bt_adapter_instance` at 0x20122FC0.
 pub const canopus_fw_core_bt_adapter_instance: usize = 0x20122FC0usize;
@@ -852,6 +870,12 @@ pub const canopus_fw_style_misans_demibold_32: usize = 0x2010A02Cusize;
 // hfp_ag_disconnect: FORBIDDEN - no binding may ever be generated
 // hidden_and_show_app_cb: restricted - not exported until context/ownership approved
 // insmod: restricted - not exported until context/ownership approved
+// ioctl: restricted - not exported until context/ownership approved
+// lv_bar_create: restricted - not exported until context/ownership approved
+// lv_bar_set_range: restricted - not exported until context/ownership approved
+// lv_bar_set_value: restricted - not exported until context/ownership approved
+// lv_image_create: restricted - not exported until context/ownership approved
+// lv_image_set_src: restricted - not exported until context/ownership approved
 // lv_timer_create: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved

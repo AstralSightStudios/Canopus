@@ -125,6 +125,31 @@ const FW_10: &[Mapping] = &[
         address: Address::Callable,
     },
     Mapping {
+        macro_name: "FW_LVX_IMAGE_CREATE",
+        symbol_name: "lv_image_create",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LVX_IMAGE_SET_SRC",
+        symbol_name: "lv_image_set_src",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LVX_BAR_CREATE",
+        symbol_name: "lv_bar_create",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LVX_BAR_SET_RANGE",
+        symbol_name: "lv_bar_set_range",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LVX_BAR_SET_VALUE",
+        symbol_name: "lv_bar_set_value",
+        address: Address::Callable,
+    },
+    Mapping {
         macro_name: "FW_NUTTX_OPEN",
         symbol_name: "open",
         address: Address::Callable,
@@ -267,6 +292,31 @@ const FW_9: &[Mapping] = &[
     Mapping {
         macro_name: "FW_LVX_OBJECT_CLEAR_FLAG",
         symbol_name: "lvx_object_clear_flag",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LVX_IMAGE_CREATE",
+        symbol_name: "lv_img_create",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LVX_IMAGE_SET_SRC",
+        symbol_name: "lv_img_set_src",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LVX_BAR_CREATE",
+        symbol_name: "lv_bar_create",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LVX_BAR_SET_RANGE",
+        symbol_name: "lv_bar_set_range",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LVX_BAR_SET_VALUE",
+        symbol_name: "lv_bar_set_value",
         address: Address::Callable,
     },
     Mapping {

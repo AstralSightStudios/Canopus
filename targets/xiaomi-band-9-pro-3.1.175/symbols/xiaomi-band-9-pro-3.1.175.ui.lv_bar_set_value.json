@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.ui.lv_bar_set_value",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "lv_bar_set_value",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C25E53C",
+  "callable_address": "0x0C25E53D",
+  "prototype": "void(void *, int32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed page parent/widget and source",
+    "return_value": "n/a"
+  },
+  "side_effects": [
+    "updates_widget_value"
+  ],
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-UI-MEDIA-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_CONFIRMED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-UI-MEDIA-001"
+    ],
+    "source": "IDA exact-target analysis: /Volumes/EXT0/old_fw_extract/data/ota/app/vela_ap.bin.i64"
+  },
+  "notes": "Exact-target UI-owner primitive. Exposed through target-private semantic adapters; device proof remains pending.",
+  "approval_state": "PENDING"
+}

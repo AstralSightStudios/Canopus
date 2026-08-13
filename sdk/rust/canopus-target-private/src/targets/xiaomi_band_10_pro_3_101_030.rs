@@ -336,6 +336,8 @@ pub const CONNECT_OPTION_LOCAL_MTU: u16 = 1 << 0;
 
 /// PSM for AVDTP signaling and media transport.
 pub const AVDTP_SIGNALING_PSM: u16 = 0x0019;
+pub const AVCTP_CONTROL_PSM: u16 = 0x0017;
+pub const AVCTP_LOCAL_RX_MTU: u16 = 0x0200;
 /// Local receive MTU advertised by Android for both AVDTP channels. The stock
 /// connect worker uses this field only when [`CONNECT_OPTION_LOCAL_MTU`] is set.
 pub const AVDTP_LOCAL_RX_MTU: u16 = 0x0400;
@@ -353,6 +355,23 @@ pub unsafe fn configure_avdtp_connect_request(request: *mut u8) {
         core::ptr::write_unaligned(
             request.add(CONNECT_CONFIG_OFFSET).cast::<u16>(),
             AVDTP_LOCAL_RX_MTU.to_le(),
+        );
+        core::ptr::write_unaligned(
+            request.add(CONNECT_OPTIONS_OFFSET).cast::<u16>(),
+            CONNECT_OPTION_LOCAL_MTU.to_le(),
+        );
+    }
+}
+
+pub unsafe fn configure_avctp_connect_request(request: *mut u8) {
+    unsafe {
+        core::ptr::write_unaligned(
+            request.add(CONNECT_PSM_OFFSET).cast::<u16>(),
+            AVCTP_CONTROL_PSM.to_le(),
+        );
+        core::ptr::write_unaligned(
+            request.add(CONNECT_CONFIG_OFFSET).cast::<u16>(),
+            AVCTP_LOCAL_RX_MTU.to_le(),
         );
         core::ptr::write_unaligned(
             request.add(CONNECT_OPTIONS_OFFSET).cast::<u16>(),
@@ -677,6 +696,22 @@ impl SdpSourceRecord {
     ];
 }
 
+pub struct SdpAvrcpControllerRecord;
+
+impl SdpAvrcpControllerRecord {
+    pub const SERVICE_NAME: &'static [u8] = b"Vela Media Controller\0";
+    pub const SERVICE_UUID: u16 = 0x110E;
+    pub const PROFILE_VERSION: u16 = 0x0106;
+    pub const ATTRIBUTES: [(u16, &'static [u8]); 6] = [
+        (0x0001, ALIGNED_AVRCP_SERVICE_CLASS.as_slice()),
+        (0x0004, ALIGNED_AVRCP_PROTOCOL.as_slice()),
+        (0x0005, ALIGNED_BROWSE.as_slice()),
+        (0x0009, ALIGNED_AVRCP_PROFILE.as_slice()),
+        (0x0100, ALIGNED_AVRCP_SERVICE_NAME.as_slice()),
+        (0x0311, ALIGNED_AVRCP_FEATURES.as_slice()),
+    ];
+}
+
 // Each SDP encoded value lives in a 4-byte-aligned static. With function
 // sections merged (lean module link), separate byte arrays otherwise abut inside
 // one `.rodata`, and a window spanning the tail of one value and the `0x25 0x0c`
@@ -703,6 +738,19 @@ const ALIGNED_SERVICE_NAME: AlignedValue<14> = AlignedValue([
     0x25, 0x0c, b'A', b'u', b'd', b'i', b'o', b' ', b'S', b'o', b'u', b'r', b'c', b'e',
 ]);
 const ALIGNED_FEATURES: AlignedValue<3> = AlignedValue([0x09, 0x00, 0x01]);
+const ALIGNED_AVRCP_SERVICE_CLASS: AlignedValue<8> =
+    AlignedValue([0x35, 0x06, 0x19, 0x11, 0x0e, 0x19, 0x11, 0x0f]);
+const ALIGNED_AVRCP_PROTOCOL: AlignedValue<18> = AlignedValue([
+    0x35, 0x10, 0x35, 0x06, 0x19, 0x01, 0x00, 0x09, 0x00, 0x17, 0x35, 0x06, 0x19, 0x00, 0x17, 0x09,
+    0x01, 0x04,
+]);
+const ALIGNED_AVRCP_PROFILE: AlignedValue<10> =
+    AlignedValue([0x35, 0x08, 0x35, 0x06, 0x19, 0x11, 0x0e, 0x09, 0x01, 0x06]);
+const ALIGNED_AVRCP_SERVICE_NAME: AlignedValue<23> = AlignedValue([
+    0x25, 0x15, b'V', b'e', b'l', b'a', b' ', b'M', b'e', b'd', b'i', b'a', b' ', b'C', b'o', b'n',
+    b't', b'r', b'o', b'l', b'l', b'e', b'r',
+]);
+const ALIGNED_AVRCP_FEATURES: AlignedValue<3> = AlignedValue([0x09, 0x00, 0x01]);
 
 pub unsafe fn sdp_builder_create(
     old_handle: u32,
@@ -939,6 +987,46 @@ pub unsafe fn lvx_list_row_trailing(row: *mut core::ffi::c_void) -> *mut core::f
     f(row)
 }
 
+pub unsafe fn lvx_image_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
+    type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE)
+    };
+    f(parent)
+}
+
+pub unsafe fn lvx_image_set_src(image: *mut core::ffi::c_void, source: *const core::ffi::c_void) {
+    type F = extern "C" fn(*mut core::ffi::c_void, *const core::ffi::c_void);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE)
+    };
+    f(image, source);
+}
+
+pub unsafe fn lvx_bar_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
+    type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_BAR_CREATE_CALLABLE)
+    };
+    f(parent)
+}
+
+pub unsafe fn lvx_bar_set_range(bar: *mut core::ffi::c_void, minimum: i32, maximum: i32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, i32, i32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE)
+    };
+    f(bar, minimum, maximum);
+}
+
+pub unsafe fn lvx_bar_set_value(bar: *mut core::ffi::c_void, value: i32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, i32, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE)
+    };
+    f(bar, value, 0);
+}
+
 pub unsafe fn lvx_label_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
     let f: F = unsafe {
@@ -1138,6 +1226,34 @@ pub unsafe fn nuttx_write(fd: i32, buffer: *const core::ffi::c_void, count: u32)
         ))
     };
     f(fd, buffer, count)
+}
+
+/// POSIX fd-level ioctl wrapper (`sub_C1C0D2C`), not the restricted
+/// file-pointer driver dispatcher at `sub_C1C0B10`.
+pub unsafe fn nuttx_ioctl(fd: i32, command: u32, argument: usize) -> i32 {
+    type F = extern "C" fn(i32, u32, ...) -> i32;
+    let f: F = unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_IOCTL_CALLABLE) };
+    f(fd, command, argument)
+}
+
+pub unsafe fn nuttx_create(path: *const u8, flags: i32, mode: u32) -> i32 {
+    type F = extern "C" fn(*const u8, i32, ...) -> i32;
+    let f: F = unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_OPEN_CALLABLE) };
+    f(path, flags, mode)
+}
+
+pub unsafe fn nuttx_unlink(path: *const u8) -> i32 {
+    type F = extern "C" fn(*const u8) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_UNLINK_CALLABLE) };
+    f(path)
+}
+
+pub unsafe fn nuttx_rename(old_path: *const u8, new_path: *const u8) -> i32 {
+    type F = extern "C" fn(*const u8, *const u8) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_RENAME_CALLABLE) };
+    f(old_path, new_path)
 }
 
 // ---------------------------------------------------------------------------

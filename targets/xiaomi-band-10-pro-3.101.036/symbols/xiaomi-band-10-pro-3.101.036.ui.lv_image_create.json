@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.ui.lv_image_create",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "lv_image_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C179BDC",
+  "callable_address": "0x0C179BDD",
+  "prototype": "void *(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed page parent/widget and source",
+    "return_value": "page-owned widget"
+  },
+  "side_effects": [
+    "creates_page_owned_widget"
+  ],
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-UI-MEDIA-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_CONFIRMED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-UI-MEDIA-001"
+    ],
+    "source": "IDA exact-target analysis: /Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64"
+  },
+  "notes": "Exact-target UI-owner primitive. Exposed through target-private semantic adapters; device proof remains pending.",
+  "approval_state": "PENDING"
+}

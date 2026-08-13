@@ -713,6 +713,8 @@ pub const CONNECT_CONFIG_OFFSET: usize = 52;
 pub const CONNECT_OPTIONS_OFFSET: usize = 54;
 pub const CONNECT_OPTION_LOCAL_MTU: u16 = 1 << 0;
 pub const AVDTP_SIGNALING_PSM: u16 = 0x0019;
+pub const AVCTP_CONTROL_PSM: u16 = 0x0017;
+pub const AVCTP_LOCAL_RX_MTU: u16 = 0x0200;
 pub const AVDTP_LOCAL_RX_MTU: u16 = 0x0400;
 
 pub const EVENT_CONNECTION_CONFIRM: u32 = 2;
@@ -741,6 +743,23 @@ pub unsafe fn configure_avdtp_connect_request(request: *mut u8) {
         core::ptr::write_unaligned(
             request.add(CONNECT_CONFIG_OFFSET).cast::<u16>(),
             AVDTP_LOCAL_RX_MTU.to_le(),
+        );
+        core::ptr::write_unaligned(
+            request.add(CONNECT_OPTIONS_OFFSET).cast::<u16>(),
+            CONNECT_OPTION_LOCAL_MTU.to_le(),
+        );
+    }
+}
+
+pub unsafe fn configure_avctp_connect_request(request: *mut u8) {
+    unsafe {
+        core::ptr::write_unaligned(
+            request.add(CONNECT_PSM_OFFSET).cast::<u16>(),
+            AVCTP_CONTROL_PSM.to_le(),
+        );
+        core::ptr::write_unaligned(
+            request.add(CONNECT_CONFIG_OFFSET).cast::<u16>(),
+            AVCTP_LOCAL_RX_MTU.to_le(),
         );
         core::ptr::write_unaligned(
             request.add(CONNECT_OPTIONS_OFFSET).cast::<u16>(),
@@ -1157,6 +1176,22 @@ impl SdpSourceRecord {
     ];
 }
 
+pub struct SdpAvrcpControllerRecord;
+
+impl SdpAvrcpControllerRecord {
+    pub const SERVICE_NAME: &'static [u8] = b"Vela Media Controller\0";
+    pub const SERVICE_UUID: u16 = 0x110E;
+    pub const PROFILE_VERSION: u16 = 0x0106;
+    pub const ATTRIBUTES: [(u16, &'static [u8]); 6] = [
+        (0x0001, ALIGNED_AVRCP_SERVICE_CLASS.as_slice()),
+        (0x0004, ALIGNED_AVRCP_PROTOCOL.as_slice()),
+        (0x0005, ALIGNED_BROWSE.as_slice()),
+        (0x0009, ALIGNED_AVRCP_PROFILE.as_slice()),
+        (0x0100, ALIGNED_AVRCP_SERVICE_NAME.as_slice()),
+        (0x0311, ALIGNED_AVRCP_FEATURES.as_slice()),
+    ];
+}
+
 #[repr(align(4))]
 struct AlignedValue<const N: usize>([u8; N]);
 
@@ -1178,6 +1213,19 @@ const ALIGNED_SERVICE_NAME: AlignedValue<14> = AlignedValue([
     0x25, 0x0c, b'A', b'u', b'd', b'i', b'o', b' ', b'S', b'o', b'u', b'r', b'c', b'e',
 ]);
 const ALIGNED_FEATURES: AlignedValue<3> = AlignedValue([0x09, 0x00, 0x01]);
+const ALIGNED_AVRCP_SERVICE_CLASS: AlignedValue<8> =
+    AlignedValue([0x35, 0x06, 0x19, 0x11, 0x0e, 0x19, 0x11, 0x0f]);
+const ALIGNED_AVRCP_PROTOCOL: AlignedValue<18> = AlignedValue([
+    0x35, 0x10, 0x35, 0x06, 0x19, 0x01, 0x00, 0x09, 0x00, 0x17, 0x35, 0x06, 0x19, 0x00, 0x17, 0x09,
+    0x01, 0x04,
+]);
+const ALIGNED_AVRCP_PROFILE: AlignedValue<10> =
+    AlignedValue([0x35, 0x08, 0x35, 0x06, 0x19, 0x11, 0x0e, 0x09, 0x01, 0x06]);
+const ALIGNED_AVRCP_SERVICE_NAME: AlignedValue<23> = AlignedValue([
+    0x25, 0x15, b'V', b'e', b'l', b'a', b' ', b'M', b'e', b'd', b'i', b'a', b' ', b'C', b'o', b'n',
+    b't', b'r', b'o', b'l', b'l', b'e', b'r',
+]);
+const ALIGNED_AVRCP_FEATURES: AlignedValue<3> = AlignedValue([0x09, 0x00, 0x01]);
 
 pub unsafe fn sdp_builder_create(
     old_handle: u32,
@@ -1348,6 +1396,26 @@ pub unsafe fn nuttx_write(fd: i32, buffer: *const core::ffi::c_void, count: u32)
     f(fd, buffer, count)
 }
 
+/// Band-9's fd-level ioctl wrapper has not yet passed exact-firmware evidence
+/// review. Fail closed instead of invoking the known file-pointer dispatcher.
+pub unsafe fn nuttx_ioctl(_fd: i32, _command: u32, _argument: usize) -> i32 {
+    -1
+}
+
+pub unsafe fn nuttx_create(path: *const u8, flags: i32, mode: u32) -> i32 {
+    type F = extern "C" fn(*const u8, i32, ...) -> i32;
+    let f: F = unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_OPEN_CALLABLE) };
+    f(path, flags, mode)
+}
+
+pub unsafe fn nuttx_unlink(path: *const u8) -> i32 {
+    unsafe { canopus_target_generated::canopus_fw_unlink(path) }
+}
+
+pub unsafe fn nuttx_rename(old_path: *const u8, new_path: *const u8) -> i32 {
+    unsafe { canopus_target_generated::canopus_fw_rename(old_path, new_path) }
+}
+
 /// Band-9 register_driver is 3-arg (no mode_t), unlike band-10's 4-arg form.
 pub unsafe fn canopus_fw_register_driver_b9(
     path: *const u8,
@@ -1432,6 +1500,46 @@ pub unsafe fn notification_insert(message: *const firmware_notification_message)
 //
 // Band-9 is LVGL v8 with a different lvx_* widget ABI than band-10's v9. The
 // list-row factory takes (parent, primary) instead of v9's 4-argument form.
+
+pub unsafe fn lvx_image_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
+    type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_IMG_CREATE_CALLABLE)
+    };
+    f(parent)
+}
+
+pub unsafe fn lvx_image_set_src(image: *mut core::ffi::c_void, source: *const core::ffi::c_void) {
+    type F = extern "C" fn(*mut core::ffi::c_void, *const core::ffi::c_void);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_IMG_SET_SRC_CALLABLE)
+    };
+    f(image, source);
+}
+
+pub unsafe fn lvx_bar_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
+    type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_BAR_CREATE_CALLABLE)
+    };
+    f(parent)
+}
+
+pub unsafe fn lvx_bar_set_range(bar: *mut core::ffi::c_void, minimum: i32, maximum: i32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, i32, i32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE)
+    };
+    f(bar, minimum, maximum);
+}
+
+pub unsafe fn lvx_bar_set_value(bar: *mut core::ffi::c_void, value: i32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, i32, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE)
+    };
+    f(bar, value, 0);
+}
 
 pub unsafe fn lvx_list_row_create(
     parent: *mut core::ffi::c_void,

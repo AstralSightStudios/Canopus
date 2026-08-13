@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.ioctl",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "ioctl",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C1C0D2C",
+  "callable_address": "0x0C1C0D2D",
+  "prototype": "int32_t(int32_t, uint32_t, uintptr_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "borrowed fd and ioctl argument",
+    "return_value": "status"
+  },
+  "side_effects": [
+    "dispatches fd-level ioctl"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-NUTTX-IOCTL-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-NUTTX-IOCTL-001"
+    ],
+    "source": "IDA exact-target VFS wrapper analysis: /Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64"
+  },
+  "notes": "POSIX fd-level ioctl wrapper, distinct from file-pointer driver dispatcher. Used only by target-private.",
+  "approval_state": "PENDING"
+}

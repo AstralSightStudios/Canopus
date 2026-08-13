@@ -39,6 +39,8 @@ extern "C" {
 #define CANOPUS_UI_CAP_LAYOUT              (1u << 2)
 #define CANOPUS_UI_CAP_VALUES              (1u << 3)
 #define CANOPUS_UI_CAP_NAVIGATION_HEADER   (1u << 4)
+#define CANOPUS_UI_CAP_IMAGE               (1u << 5)
+#define CANOPUS_UI_CAP_PROGRESS            (1u << 6)
 
 typedef uint32_t canopus_ui_node_id;
 
@@ -531,6 +533,19 @@ uint16_t canopus_ui_router_depth(
     CANOPUS_UI_COMPONENT((tree_), (key_), CANOPUS_UI_NODE_RADIO_ROW, (label_), (detail_), \
         (event_), ((enabled_) ? CANOPUS_UI_NODE_FLAG_ENABLED : 0u) | \
         ((selected_) ? CANOPUS_UI_NODE_FLAG_SELECTED : 0u) | CANOPUS_UI_NODE_FLAG_VISIBLE)
+#define CANOPUS_UI_IMAGE(tree_, key_, description_, resource_) \
+    canopus_ui_component((tree_), (key_), CANOPUS_UI_NODE_IMAGE, \
+        &(const struct canopus_ui_component_props_v1){ \
+            sizeof(struct canopus_ui_component_props_v1), \
+            (description_), (uint32_t)(sizeof(description_) - 1u), \
+            "", 0u, 0u, CANOPUS_UI_NODE_FLAG_VISIBLE, \
+            0, 0, 0, 0, (resource_) })
+#define CANOPUS_UI_PROGRESS(tree_, key_, value_, minimum_, maximum_) \
+    canopus_ui_component((tree_), (key_), CANOPUS_UI_NODE_PROGRESS, \
+        &(const struct canopus_ui_component_props_v1){ \
+            sizeof(struct canopus_ui_component_props_v1), \
+            "", 0u, "", 0u, 0u, CANOPUS_UI_NODE_FLAG_VISIBLE, \
+            (value_), (minimum_), (maximum_), 0, 0u })
 #define CANOPUS_UI_DIVIDER(tree_, key_) \
     CANOPUS_UI_COMPONENT((tree_), (key_), CANOPUS_UI_NODE_DIVIDER, "", "", 0u, \
                          CANOPUS_UI_NODE_FLAG_VISIBLE)

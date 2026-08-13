@@ -307,6 +307,10 @@ TEST(ui_extended_catalog_supports_style_layout_and_values)
         sizeof(image), "Module icon", 11, "", 0, 0,
         CANOPUS_UI_NODE_FLAG_VISIBLE, 0, 0, 0, 0, 0xCA10u
     };
+    struct canopus_ui_component_props_v1 progress = {
+        sizeof(progress), "", 0, "", 0, 0,
+        CANOPUS_UI_NODE_FLAG_VISIBLE, 250, 0, 1000, 0, 0u
+    };
     struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
     struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
     const struct canopus_ui_snapshot_v1 *snapshot;
@@ -321,6 +325,7 @@ TEST(ui_extended_catalog_supports_style_layout_and_values)
           CANOPUS_UI_OK);
     CHECK(canopus_ui_component(tree, 6, CANOPUS_UI_NODE_IMAGE, &image) ==
           CANOPUS_UI_OK);
+    CHECK(CANOPUS_UI_PROGRESS(tree, 9, 250, 0, 1000) == CANOPUS_UI_OK);
     CHECK(CANOPUS_UI_DIVIDER(tree, 7) == CANOPUS_UI_OK);
     CHECK(CANOPUS_UI_SPACER(tree, 8) == CANOPUS_UI_OK);
 
@@ -357,6 +362,9 @@ TEST(ui_extended_catalog_supports_style_layout_and_values)
     CHECK(snapshot->layouts[4].width == 240);
     CHECK(snapshot->layouts[4].justify == CANOPUS_UI_JUSTIFY_SPACE_BETWEEN);
     CHECK(snapshot->values[5].resource_id == 0xCA10u);
+    CHECK(snapshot->nodes[6].type == CANOPUS_UI_NODE_PROGRESS);
+    CHECK(snapshot->values[6].value == 250);
+    CHECK(snapshot->values[6].maximum == 1000);
     CHECK(canopus_ui_dispatch_event(&context, snapshot->generation, 4, 200) == 0);
     CHECK(canopus_ui_dispatch_event(&context, snapshot->generation, 5, 201) == 0);
     CHECK(sink.call_count == 2);
@@ -446,7 +454,8 @@ TEST(ui_negotiates_legacy_backend_capabilities)
     CHECK(canopus_ui_context_capabilities(&context) ==
           (CANOPUS_UI_CAP_EXTENDED_COMPONENTS | CANOPUS_UI_CAP_STYLE |
            CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VALUES |
-           CANOPUS_UI_CAP_NAVIGATION_HEADER));
+           CANOPUS_UI_CAP_NAVIGATION_HEADER | CANOPUS_UI_CAP_IMAGE |
+           CANOPUS_UI_CAP_PROGRESS));
 }
 
 TEST(ui_navigation_header_and_router_are_bounded)

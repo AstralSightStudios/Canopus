@@ -41,6 +41,8 @@ pub const CAP_STYLE: u32 = 1 << 1;
 pub const CAP_LAYOUT: u32 = 1 << 2;
 pub const CAP_VALUES: u32 = 1 << 3;
 pub const CAP_NAVIGATION_HEADER: u32 = 1 << 4;
+pub const CAP_IMAGE: u32 = 1 << 5;
+pub const CAP_PROGRESS: u32 = 1 << 6;
 
 pub type NodeId = u32;
 
@@ -637,6 +639,62 @@ impl Tree {
         )
     }
 
+    /// Appends an image resource. `source` is a target-resolvable file path;
+    /// `resource_id` is a stable semantic identity used for cache invalidation.
+    pub fn image(
+        &mut self,
+        key: NodeId,
+        resource_id: u32,
+        source: &str,
+        layout: Layout,
+    ) -> Result<(), UiError> {
+        if resource_id == 0 || source.is_empty() {
+            return Err(UiError::Argument);
+        }
+        self.component(
+            key,
+            NodeKind::Image,
+            ComponentSpec {
+                primary: source,
+                value: Value {
+                    resource_id,
+                    ..Value::default()
+                },
+                ..ComponentSpec::default()
+            },
+        )?;
+        self.set_layout(key, layout)
+    }
+
+    /// Appends a non-interactive determinate progress indicator.
+    pub fn progress(
+        &mut self,
+        key: NodeId,
+        value: i32,
+        minimum: i32,
+        maximum: i32,
+        layout: Layout,
+    ) -> Result<(), UiError> {
+        if minimum >= maximum || value < minimum || value > maximum {
+            return Err(UiError::Argument);
+        }
+        self.component(
+            key,
+            NodeKind::Progress,
+            ComponentSpec {
+                value: Value {
+                    value,
+                    minimum,
+                    maximum,
+                    step: 0,
+                    resource_id: 0,
+                },
+                ..ComponentSpec::default()
+            },
+        )?;
+        self.set_layout(key, layout)
+    }
+
     pub fn button(
         &mut self,
         key: NodeId,
@@ -739,11 +797,15 @@ impl Tree {
         if interactive && spec.event_id == 0 {
             return Err(UiError::Argument);
         }
+        if kind == NodeKind::Image && spec.value.resource_id == 0 {
+            return Err(UiError::Argument);
+        }
         if matches!(kind, NodeKind::Slider | NodeKind::Progress)
             && (spec.value.minimum > spec.value.maximum
                 || spec.value.value < spec.value.minimum
                 || spec.value.value > spec.value.maximum
-                || spec.value.step < 0)
+                || spec.value.step < 0
+                || (kind == NodeKind::Progress && spec.value.minimum == spec.value.maximum))
         {
             return Err(UiError::Argument);
         }
@@ -1464,6 +1526,41 @@ impl<M: Copy + Into<u32>> View<M> for Text<'_> {
     }
 }
 
+/// Image loaded by the target backend from a stable resource path.
+pub struct Image<'a> {
+    pub key: NodeId,
+    pub resource_id: u32,
+    pub source: &'a str,
+    pub layout: Layout,
+}
+
+impl<M: Copy + Into<u32>> View<M> for Image<'_> {
+    fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
+        tree.image(self.key, self.resource_id, self.source, self.layout)
+    }
+}
+
+/// Native non-interactive determinate progress indicator.
+pub struct Progress {
+    pub key: NodeId,
+    pub value: i32,
+    pub minimum: i32,
+    pub maximum: i32,
+    pub layout: Layout,
+}
+
+impl<M: Copy + Into<u32>> View<M> for Progress {
+    fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
+        tree.progress(
+            self.key,
+            self.value,
+            self.minimum,
+            self.maximum,
+            self.layout,
+        )
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Bounded semantic routing
 // ---------------------------------------------------------------------------
@@ -2103,6 +2200,74 @@ mod tests {
         );
         assert_eq!(snapshot.layout(2).unwrap().width, 240);
         assert_eq!(snapshot.value(3).unwrap().resource_id, 0xCA10);
+    }
+
+    #[test]
+    fn typed_image_and_progress_preserve_semantics() {
+        let image_layout = Layout {
+            width: 180,
+            height: 180,
+            align: Alignment::Center as u8,
+            ..Layout::default()
+        };
+        let progress_layout = Layout {
+            width: 280,
+            height: 12,
+            ..Layout::default()
+        };
+        let view = NavigationPage {
+            key: 1,
+            title: "Media",
+            children: (
+                Image {
+                    key: 2,
+                    resource_id: 7,
+                    source: "/data/canopus/test.bin",
+                    layout: image_layout,
+                },
+                Progress {
+                    key: 3,
+                    value: 25,
+                    minimum: 0,
+                    maximum: 100,
+                    layout: progress_layout,
+                },
+            ),
+        };
+        let mut tree = Tree::begin();
+        <_ as View<ManagerEvent>>::render(&view, &mut tree).unwrap();
+        let snapshot = tree.commit().unwrap();
+        assert_eq!(
+            snapshot.find_by_key(2).unwrap().kind(),
+            Some(NodeKind::Image)
+        );
+        assert_eq!(snapshot.value(1).unwrap().resource_id, 7);
+        assert_eq!(snapshot.layout(1).unwrap(), &image_layout);
+        assert_eq!(
+            snapshot.find_by_key(3).unwrap().kind(),
+            Some(NodeKind::Progress)
+        );
+        assert_eq!(snapshot.value(2).unwrap().value, 25);
+        assert_eq!(snapshot.value(2).unwrap().maximum, 100);
+        assert_eq!(snapshot.layout(2).unwrap(), &progress_layout);
+    }
+
+    #[test]
+    fn typed_image_and_progress_reject_invalid_inputs() {
+        let mut tree = Tree::begin();
+        tree.navigation_page(1, "Invalid").unwrap();
+        assert_eq!(
+            tree.image(2, 0, "missing", Layout::default()),
+            Err(UiError::Argument)
+        );
+        assert_eq!(
+            tree.progress(3, 0, 0, 0, Layout::default()),
+            Err(UiError::Argument)
+        );
+        assert_eq!(
+            tree.progress(4, 101, 0, 100, Layout::default()),
+            Err(UiError::Argument)
+        );
     }
 
     #[test]

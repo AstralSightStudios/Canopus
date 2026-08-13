@@ -5,8 +5,8 @@
   "name": "bt_get_pairing_state",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C39F948",
-  "callable_address": "0x0C39F949",
+  "entry_address": "0x0C39FA70",
+  "callable_address": "0x0C39FA71",
   "prototype": "uint32(const uint8_t *, uint32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -28,7 +28,7 @@
     "evidence_ids": [
       "EVID-BT-ADAPTER-001"
     ],
-    "source": "Exact-target IDA function entry and recovered Bluetooth client caller ABI. Finds the transport-specific device record by six-byte address and returns pairing state."
+    "source": "Exact-target IDA function entry matched to the 3.101.030 sibling ABI. Finds the transport-specific device record by six-byte address and returns the exact state byte at record offset 172; 0x0C39F948 is a different boolean predicate over offset 171."
   },
   "approval_state": "APPROVED",
   "promotion": {
@@ -40,5 +40,5 @@
     "thread": "Bluetooth client context",
     "device_probe": "pending after regenerated module"
   },
-  "notes": "Finds the transport-specific device record by six-byte address and returns pairing state."
+  "notes": "Returns the exact transport-specific bond state byte (0/1/2) at device-record offset 172; do not substitute the adjacent boolean state predicate."
 }

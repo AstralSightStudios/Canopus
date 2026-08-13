@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-MEDIA-001",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "Which exact-target LVGL image and bar functions implement semantic Image and Progress nodes?",
+  "candidate_symbols": [
+    "lv_img_create",
+    "lv_img_set_src",
+    "lv_bar_create",
+    "lv_bar_set_range",
+    "lv_bar_set_value"
+  ],
+  "prototype_hypothesis": "Image create(parent)->object, image set_src(object, source); bar create(parent)->object, set_range(object,min,max), set_value(object,value,animation_enabled)",
+  "callsite_evidence": [
+    "lv_img_create 0x0C261644 allocates the LVGL v8 image class and has 594 code xrefs",
+    "lv_img_set_src 0x0C2645F8 contains exact lv_img_set_src diagnostics and source-type handling; 766 code xrefs",
+    "lv_bar_create 0x0C262EC8 creates the LVGL v8 bar class; 13 code xrefs",
+    "lv_bar_set_range 0x0C25E57C is identified by exact source diagnostics and 47 code xrefs",
+    "lv_bar_set_value 0x0C25E53C clamps against bar min/max fields, stores current value, and branches on animation; 69 code xrefs",
+    "0x0C25E400 is excluded: it is the bar class constructor callback, not lv_bar_set_value"
+  ],
+  "control_flow_evidence": [
+    "constructors allocate the recovered widget class and initialize it",
+    "setters are reached from stock firmware widget paths on the UI owner thread"
+  ],
+  "ownership_analysis": "Created widgets are owned by the firmware page tree. Image source storage must remain valid while referenced; Canopus backends retain page-owned descriptors and buffers. Bar setters borrow the widget only.",
+  "unsafe_assumptions": [
+    "No device probe has yet exercised the new Canopus Image/Progress rendering path",
+    "Image descriptor format and cache lifetime are reviewed separately before dynamic pixel sources are enabled"
+  ],
+  "recommended_probe": "Create one image and one progress bar on a disposable page; update source/range/value, hide, resume, and destroy the page.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_CONFIRMED",
+  "created": "2026-08-13T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida:///Volumes/EXT0/old_fw_extract/data/ota/app/vela_ap.bin.i64 lv_img_create@0x0C261644",
+      "role": "decompile-and-xref"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/old_fw_extract/data/ota/app/vela_ap.bin.i64 lv_img_set_src@0x0C2645F8",
+      "role": "decompile-and-xref"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/old_fw_extract/data/ota/app/vela_ap.bin.i64 lv_bar_create@0x0C262EC8",
+      "role": "decompile-and-xref"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/old_fw_extract/data/ota/app/vela_ap.bin.i64 lv_bar_set_range@0x0C25E57C",
+      "role": "decompile-and-xref"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/old_fw_extract/data/ota/app/vela_ap.bin.i64 lv_bar_set_value@0x0C25E53C",
+      "role": "decompile-and-xref"
+    }
+  ]
+}

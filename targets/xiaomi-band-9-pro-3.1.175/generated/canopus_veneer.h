@@ -4,7 +4,7 @@
  * firmware : 3.1.175 (CONBINE_LTALM054_T1175_04141021_release_5793)
  * sha256   : 4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b
  * revision : 1
- * input_digest: 3d097eefe4b45c83
+ * input_digest: be5d2634472cd9ef
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
 #define CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
@@ -448,6 +448,11 @@ static inline void * canopus_fw_lvx_list_row_trailing(void * a0) {
  * bt_timer_delete_private: restricted - not exported until context/ownership approved
  * bt_timer_start_private: restricted - not exported until context/ownership approved
  * bt_timer_stop_private: restricted - not exported until context/ownership approved
+ * lv_bar_create: restricted - not exported until context/ownership approved
+ * lv_bar_set_range: restricted - not exported until context/ownership approved
+ * lv_bar_set_value: restricted - not exported until context/ownership approved
+ * lv_img_create: restricted - not exported until context/ownership approved
+ * lv_img_set_src: restricted - not exported until context/ownership approved
  * lvx_object_clear_flag: restricted - not exported until context/ownership approved
  * sdp_builder_create: restricted - not exported until context/ownership approved
  * sdp_commit: restricted - not exported until context/ownership approved
