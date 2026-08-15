@@ -4,7 +4,7 @@
  * firmware : 4.100.108 (user-4.100.108-cn-202607230300)
  * sha256   : 9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99
  * revision : 1
- * input_digest: 7c548396461a139b
+ * input_digest: e2e6c63535137366
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_108_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_108_H
@@ -32,8 +32,10 @@ static inline int canopus_identity_guard(void)
 /* ---- typed veneers ---- */
 /* ---- excluded symbols ----
  * app_install: restricted - not exported until context/ownership approved
+ * controller_crash_dump: restricted - not exported until context/ownership approved
  * ioctl: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
+ * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
  * sem_post: restricted - not exported until context/ownership approved
  * sem_trywait: restricted - not exported until context/ownership approved

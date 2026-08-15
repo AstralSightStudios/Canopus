@@ -53,6 +53,14 @@ VERIFIED = [
      "int32_t(void *, const void *, int32_t)",
      ["EVID-APP-001"],
      "Stock app-registry install. Verified in exact IDB: references 'app_install'/'free_app' strings; copies app record, registers into the app list, allocates the ordered-list buffer, logs '[%s] %s: [%s] installation failed'."),
+    ("controller_crash_dump", "bt-vendor", "0xC926EE8",
+     "int32_t(void)",
+     ["EVID-BT-001"],
+     "BT controller crash dump. Verified in exact IDB: references 'bt_drv_reg_op_crash_dump' and 'BT controller BusFault_Handler'; dumps the BT controller PC/LR/R0-R7/SL/FP/IP/SP registers after waiting for BT response."),
+    ("protobuf_set_ordered_app_list", "launcher", "0xC5490B4",
+     "int32_t(const void *)",
+     ["EVID-APP-001"],
+     "Launcher ordered-app-list setter. Verified in exact IDB: references 'protobuf_set_ordered_app_list' with '[%s] %s: app list is null'/'can't found app %s'/'show'/'hidden' diagnostics; serializes the 16-byte-per-app ordered list to the launcher."),
 ]
 
 
