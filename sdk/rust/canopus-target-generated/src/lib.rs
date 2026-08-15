@@ -18,16 +18,18 @@
 
 // Exactly one target feature must be selected. `generated.rs` is the band-10
 // 3.101.030 bindings; `generated_1036.rs` is band-10 3.101.036;
-// `generated_b9.rs` is the band-9 (3.1.175) bindings.
+// `generated_b9.rs` is the band-9 (3.1.175) bindings; `generated_1108.rs` is
+// the band-11 (4.100.108) bindings.
 #[cfg(all(
     not(feature = "target-xiaomi-band-10-pro-3-101-030"),
     not(feature = "target-xiaomi-band-10-pro-3-101-036"),
-    not(feature = "target-xiaomi-band-9-pro-3-1-175")
+    not(feature = "target-xiaomi-band-9-pro-3-1-175"),
+    not(feature = "target-xiaomi-band-11-4-100-108")
 ))]
 compile_error!(
     "canopus-target-generated requires exactly one target feature; supported: \
      target-xiaomi-band-10-pro-3-101-030, target-xiaomi-band-10-pro-3-101-036, \
-     target-xiaomi-band-9-pro-3-1-175"
+     target-xiaomi-band-9-pro-3-1-175, target-xiaomi-band-11-4-100-108"
 );
 
 #[cfg(feature = "target-xiaomi-band-10-pro-3-101-030")]
@@ -36,8 +38,11 @@ include!("generated.rs");
 include!("generated_1036.rs");
 #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
 include!("generated_b9.rs");
+#[cfg(feature = "target-xiaomi-band-11-4-100-108")]
+include!("generated_1108.rs");
 
 #[cfg(test)]
+#[cfg(not(feature = "target-xiaomi-band-11-4-100-108"))]
 mod layout_tests {
     use super::*;
     use core::mem::{offset_of, size_of};
@@ -240,5 +245,35 @@ mod layout_tests {
         // This is a compile-time contract: any `canopus_fw_bt_adapter_...`
         // below would fail to compile.
         let _ = (concat!(module_path!(), " for the record"),);
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "target-xiaomi-band-11-4-100-108")]
+mod layout_tests_1108 {
+    use super::*;
+
+    #[test]
+    fn thumb_callable_normalizes_entry_and_callable_addresses() {
+        assert_eq!(canopus_thumb_callable(0x0C341B98), 0x0C341B99);
+        assert_eq!(canopus_thumb_callable(0x0C341B99), 0x0C341B99);
+    }
+
+    #[test]
+    fn restricted_callables_are_odd() {
+        for c in [
+            CANOPUS_FW_IOCTL_CALLABLE,
+            CANOPUS_FW_UNLINK_CALLABLE,
+            CANOPUS_FW_RENAME_CALLABLE,
+            CANOPUS_FW_SEM_WAIT_CALLABLE,
+            CANOPUS_FW_SEM_TRYWAIT_CALLABLE,
+            CANOPUS_FW_SEM_POST_CALLABLE,
+            CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE,
+            CANOPUS_FW_APP_INSTALL_CALLABLE,
+            CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE,
+            CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE,
+        ] {
+            assert_eq!(c & 1, 1, "callable {c:#x} must be odd (Thumb)");
+        }
     }
 }
