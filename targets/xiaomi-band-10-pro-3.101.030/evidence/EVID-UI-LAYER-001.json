@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-LAYER-001",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "question": "Which exact-target LVGL v9 functions safely place a page-owned image behind stock content and make stock surfaces transparent?",
+  "candidate_symbols": [
+    "lv_obj_move_to_index",
+    "lv_obj_set_local_style_prop",
+    "lv_obj_set_style_bg_opa"
+  ],
+  "prototype_hypothesis": "move_to_index(object,index); set_local_style_prop(object,property,value,selector); set_style_bg_opa(object,opacity,selector)",
+  "callsite_evidence": [
+    "move-to-index compatibility veneer 0x0C587DC0 is used by the stock foreground path with child_count - 1; passing 0 selects the back-most child",
+    "direct LVGL implementation 0x0C13C064 contains lv_obj_move_to_index and lv_obj_tree.c diagnostics and performs child-array relocation plus invalidation",
+    "bg-opa helper 0x0C108048 loads property 0x1D, forwards opacity as value and selector as argument 4 to 0x0C107464",
+    "LVGL v9 style metadata confirms low property 29 is BG_OPA, 48 is BORDER_WIDTH and 50 is BORDER_OPA"
+  ],
+  "control_flow_evidence": [
+    "stock page content, title and list-row objects are created and styled on the target-private UI owner thread",
+    "the style helper writes a local style property without accessing private object offsets"
+  ],
+  "ownership_analysis": "All functions borrow page-owned live LVGL objects and neither retain nor free them. Calls must remain on the page owner thread before parent teardown.",
+  "unsafe_assumptions": [
+    "No device probe has yet exercised transparent stock rows over a full-screen BIN background"
+  ],
+  "recommended_probe": "On a disposable player page, create a root child background, move it to index 0, clear BG_OPA and border width on content/title/outer rows, exercise touch, change tracks, pause/resume and destroy.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_CONFIRMED",
+  "created": "2026-08-15T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida:///Volumes/EXT0/firmware_latest/vela_ap.bin.i64 lv_obj_move_to_index@0x0C587DC0",
+      "role": "decompile-disasm-xref"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/firmware_latest/vela_ap.bin.i64 lv_obj_set_local_style_prop@0x0C107464",
+      "role": "disasm-callsite"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/firmware_latest/vela_ap.bin.i64 lv_obj_set_style_bg_opa@0x0C108048",
+      "role": "disasm-forwarding-proof"
+    }
+  ]
+}

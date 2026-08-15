@@ -2,12 +2,14 @@
 
 A Lua LVGL watchface that installs and manages Canopus modules on a selected
 exact Xiaomi Band target, structured like
-`firmware_latest/btpatch_phase5_watchface`: a native char-device module
-(`canopus_supervisor.bin`) driven by a Lua page over a fixed status/command
-ABI.
+`firmware_latest/btpatch_phase5_watchface`: a versioned native char-device module
+(`canopus_supervisor-<target>.bin`) driven by a Lua page over a fixed
+status/command ABI.
 
-Opening the page performs no native operation; every action requires an
-explicit button press.
+Opening the page performs one read-only firmware identity query:
+`getprop ro.build.version`. Loading and registration still require an explicit
+button press. The installer selects only the exact versioned Supervisor bundled
+for that firmware and refuses LOAD when no matching resource exists.
 
 ## ⚠️ Gate status — read before real-device use
 
@@ -44,8 +46,9 @@ retrying if LOAD reports cave restoration or cleanup failure.
 
 ```text
 watchfaces/canopus-installer/
-├── main.lua                          Lua LVGL bootstrap/recovery page
-├── canopus_stage1_band9.lua          Band 9 NSH-injected stage-1 words
+├── main.lua                              Lua LVGL bootstrap/recovery page
+├── canopus_supervisor-<target>.bin       exact-version Supervisor resources
+├── canopus_stage1_band9.lua             Band 9 NSH-injected stage-1 words
 ├── canopus_stage2-band9.bin          Band 9 flat PIC ET_REL loader
 ├── canopus_supervisor-band9.bin      Band 9 supervisor ET_REL resource
 └── manager_icon.bin                  Manager icon staged during INSTALL
@@ -73,11 +76,11 @@ CANOPUS_TARGET=xiaomi-band-9-pro-3.1.175 \
 ```
 
 Requires `clang` (ARM target), `ld.lld`, and a generated veneer for the selected
-pack. Outputs are written under `build/<target>/`, staged as
-`canopus_supervisor-<target>.bin`, and copied to the Lua installer path
-`canopus_supervisor.bin` for the target selected by that successful build. Do not
-package the generic file after building a different target; its embedded identity
-guard is intentionally exact-firmware. A non-Band-9 build removes stale Band 9
+pack. Outputs are written under `build/<target>/` and staged only as
+`canopus_supervisor-<target>.bin`. The watchface derives the exact resource name
+from `ro.build.version`; no mutable `canopus_supervisor.bin` alias is created.
+Several Band 10 firmware artifacts can therefore be packaged together without
+one build silently replacing another. A non-Band-9 build removes stale Band 9
 bootstrap resources; a Band 9 build restores all three and never falls back to
 Band 10 addresses.
 

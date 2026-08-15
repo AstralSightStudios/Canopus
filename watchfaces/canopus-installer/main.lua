@@ -4,13 +4,17 @@
 -- its fixed status/command ABI. Band 10 uses stock insmod. Band 9 uses a
 -- compare-before-write NSH mw/exec bootstrap that stages a custom ET_REL loader.
 --
--- Opening this watchface performs no native operation; every action requires
--- an explicit button press. The supervisor module is boot-resident: never
--- run `rmmod`, never insert a second copy, reboot for complete recovery.
+-- Reading ro.build.version is the only action performed while opening this
+-- watchface. Loading and registration still require explicit button presses.
+-- The supervisor module is boot-resident: never run `rmmod`, never insert a
+-- second copy, reboot for complete recovery.
 
 local lvgl = require("lvgl")
 
-local MODULE_PATH = SCRIPT_PATH .. "canopus_supervisor.bin"
+local BAND10_TARGET_ID_PREFIX = "xiaomi-band-10-pro-"
+local FIRMWARE_VERSION_PROPERTY = "ro.build.version"
+local FIRMWARE_VERSION_OUTPUT = "/data/canopus-installer-firmware-version.tmp"
+local MODULE_PATH
 local MODULE_NAME = "canopus_supervisor"
 local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_icon.bin"
 local MANAGER_ICON_PATH = "/data/canopus/manager_icon.bin"
@@ -90,6 +94,27 @@ local function read_all(path, mode)
     local content = file:read("*a")
     file:close()
     return content
+end
+
+local function detect_firmware_version()
+    local command = string.format("getprop %s > %s",
+        shell_quote(FIRMWARE_VERSION_PROPERTY),
+        shell_quote(FIRMWARE_VERSION_OUTPUT))
+    local command_ok = run(command)
+    local raw
+    if command_ok then raw = read_all(FIRMWARE_VERSION_OUTPUT, "r") end
+    if type(os.remove) == "function" then
+        pcall(os.remove, FIRMWARE_VERSION_OUTPUT)
+    end
+    if not command_ok or type(raw) ~= "string" then return nil end
+    local version = raw:match("^%s*(.-)%s*$")
+    if not version or not version:match("^%d+%.%d+%.%d+$") then return nil end
+    return version
+end
+
+local function band10_module_path_for(version)
+    return SCRIPT_PATH .. "canopus_supervisor-" .. BAND10_TARGET_ID_PREFIX
+        .. version .. ".bin"
 end
 
 local function write_all(path, content)
@@ -282,10 +307,11 @@ end
 
 local function verify_module_file(path, missing_name)
     path = path or MODULE_PATH
-    missing_name = missing_name or "canopus_supervisor.bin"
+    missing_name = missing_name or "matching versioned Supervisor"
     if type(io) ~= "table" or type(io.open) ~= "function" then
         return false, "io.open unavailable"
     end
+    if type(path) ~= "string" then return false, "Missing " .. missing_name end
     local file = io.open(path, "rb")
     if not file then return false, "Missing " .. missing_name end
     local header = file:read(20)
@@ -566,6 +592,14 @@ local function refresh_status(text)
     return st
 end
 
+local firmware_version = detect_firmware_version()
+local band9_selected = firmware_version == "3.1.175" and has_band9_bootstrap()
+if firmware_version and not band9_selected then
+    MODULE_PATH = band10_module_path_for(firmware_version)
+end
+local firmware_supported = band9_selected
+if MODULE_PATH then firmware_supported = verify_module_file() end
+
 -- ---- LVGL page (336x480) -------------------------------------------
 
 local rootbase = lvgl.Object(nil, {
@@ -616,12 +650,17 @@ local load_button = make_button("LOAD", -96, 74, 0x14508A, 134, function()
             ("Already loaded, but boot restore failed:\n" .. restore_message) }
         return
     end
+    if not firmware_supported then
+        status:set { text = "Firmware version not supported\n"
+            .. tostring(firmware_version or "Unknown") }
+        return
+    end
     local valid, message = verify_module_file(
-        has_band9_bootstrap() and BAND9_SUPERVISOR_RESOURCE or MODULE_PATH)
+        band9_selected and BAND9_SUPERVISOR_RESOURCE or MODULE_PATH)
     if not valid then status:set { text = tostring(message) }; return end
     status:set { text = "Loading supervisor..." }
     local inserted
-    if has_band9_bootstrap() then
+    if band9_selected then
         inserted, message = load_band9_stage1()
     else
         inserted = run(string.format("insmod %s %s",
@@ -763,7 +802,11 @@ end)
 local initial, initial_err = read_status()
 if initial then
     status:set { text = format_status(initial) }
+elseif not firmware_supported then
+    status:set { text = "Firmware version not supported\n"
+        .. tostring(firmware_version or "Unknown") }
 else
-    status:set { text = "Supervisor not present. Press LOAD."
+    status:set { text = "Supervisor not present. Press LOAD.\nFirmware "
+        .. firmware_version
         .. (initial_err and ("\n" .. tostring(initial_err)) or "") }
 end

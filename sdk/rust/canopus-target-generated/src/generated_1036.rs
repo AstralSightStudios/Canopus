@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 4
-// input_digest: d1a9ca7e6658b36a
+// input_digest: e9e32059f407bd7a
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -605,6 +605,9 @@ pub unsafe fn canopus_fw_lv_obj_align_to(a0: *mut core::ffi::c_void, a1: *mut co
 /// Recovered `rename` at 0xc1c1e70. Thumb callable address 0xc1c1e71.
 pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0xc1c1e71usize);
 
+/// Recovered `lv_obj_move_to_index` at 0x0C5891F8. Thumb callable address 0x0C5891F9.
+pub const CANOPUS_FW_LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = canopus_thumb_callable(0x0C5891F9usize);
+
 /// Recovered `driver_open_dispatch` at 0xc1c1238. Thumb callable address 0xc1c1239.
 pub const CANOPUS_FW_DRIVER_OPEN_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc1c1239usize);
 
@@ -622,6 +625,9 @@ pub const canopus_fw_module_symtab_count: usize = 0x200EFDECusize;
 
 /// Recovered global `interconnect_loop` at 0x20121F80.
 pub const canopus_fw_interconnect_loop: usize = 0x20121F80usize;
+
+/// Recovered `lv_obj_set_style_bg_opa` at 0x0C108048. Thumb callable address 0x0C108049.
+pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = canopus_thumb_callable(0x0C108049usize);
 
 /// Recovered `read` at 0xc1c1e24. Thumb callable address 0xc1c1e25.
 pub const CANOPUS_FW_READ_CALLABLE: usize = canopus_thumb_callable(0xc1c1e25usize);
@@ -848,6 +854,9 @@ pub const CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `bt_discovery_stop` at 0x0C398E4C. Thumb callable address 0x0C398E4D.
 pub const CANOPUS_FW_BT_DISCOVERY_STOP_CALLABLE: usize = canopus_thumb_callable(0x0C398E4Dusize);
 
+/// Recovered `lv_obj_set_local_style_prop` at 0x0C107464. Thumb callable address 0x0C107465.
+pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x0C107465usize);
+
 /// Recovered `firmware_log` at 0xc1e1208. Thumb callable address 0xc1e1209.
 pub const CANOPUS_FW_FIRMWARE_LOG_CALLABLE: usize = canopus_thumb_callable(0xc1e1209usize);
 
@@ -914,6 +923,9 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // lv_bar_set_value: restricted - not exported until context/ownership approved
 // lv_image_create: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
+// lv_obj_move_to_index: restricted - not exported until context/ownership approved
+// lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
+// lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated

@@ -4,7 +4,7 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 4
-// input_digest: a36446835943b372
+// input_digest: f34e2b03ead06d14
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -298,6 +298,9 @@ pub unsafe fn canopus_fw_open(a0: *const u8, a1: i32) -> i32 {
 
 /// Recovered global `core_bt_callback_table` at 0x2CD1F930.
 pub const canopus_fw_core_bt_callback_table: usize = 0x2CD1F930usize;
+
+/// Recovered `lv_obj_move_to_index` at 0x0C587DC0. Thumb callable address 0x0C587DC1.
+pub const CANOPUS_FW_LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = canopus_thumb_callable(0x0C587DC1usize);
 
 /// Recovered `unregister_blockdriver` at 0x0C1A0E8C. Thumb callable address 0x0C1A0E8D.
 pub const CANOPUS_FW_UNREGISTER_BLOCKDRIVER_CALLABLE: usize = canopus_thumb_callable(0x0C1A0E8Dusize);
@@ -701,6 +704,9 @@ pub unsafe fn canopus_fw_lvx_msgbox_set_content(a0: *mut core::ffi::c_void, a1: 
     f(a0, a1, a2, a3, a4, a5, a6);
 }
 
+/// Recovered `lv_obj_set_local_style_prop` at 0x0C107464. Thumb callable address 0x0C107465.
+pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x0C107465usize);
+
 /// Recovered `page_goto` at 0x0CA539F8. Thumb callable address 0x0CA539F9.
 pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0x0CA539F9usize);
 #[allow(non_snake_case)]
@@ -839,6 +845,9 @@ pub unsafe fn canopus_fw_bt_pair_request_reply(a0: *mut core::ffi::c_void, a1: *
 /// Recovered `bt_discovery_start` at 0x0C398D60. Thumb callable address 0x0C398D61.
 pub const CANOPUS_FW_BT_DISCOVERY_START_CALLABLE: usize = canopus_thumb_callable(0x0C398D61usize);
 
+/// Recovered `lv_obj_set_style_bg_opa` at 0x0C108048. Thumb callable address 0x0C108049.
+pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = canopus_thumb_callable(0x0C108049usize);
+
 /// Recovered global `module_symtab_count` at 0x200EFDEC.
 pub const canopus_fw_module_symtab_count: usize = 0x200EFDECusize;
 
@@ -906,6 +915,9 @@ pub const canopus_fw_style_misans_demibold_32: usize = 0x2010A02Cusize;
 // lv_bar_set_value: restricted - not exported until context/ownership approved
 // lv_image_create: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
+// lv_obj_move_to_index: restricted - not exported until context/ownership approved
+// lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
+// lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_timer_create: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved

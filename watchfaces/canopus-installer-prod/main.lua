@@ -7,7 +7,10 @@
 
 local lvgl = require("lvgl")
 
-local MODULE_PATH = SCRIPT_PATH .. "canopus_supervisor.bin"
+local TARGET_ID_PREFIX = "xiaomi-band-10-pro-"
+local FIRMWARE_VERSION_PROPERTY = "ro.build.version"
+local FIRMWARE_VERSION_OUTPUT = "/data/canopus-installer-firmware-version.tmp"
+local MODULE_PATH
 local MODULE_NAME = "canopus_supervisor"
 local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_icon.bin"
 local MANAGER_ICON_PATH = "/data/canopus/manager_icon.bin"
@@ -24,7 +27,7 @@ local RESULT_COMPLETED = 5
 local status
 local run_timer
 local run_phase = 1
-local run_completed = false
+local run_attempted = false
 local clear_armed = false
 
 local function shell_quote(value)
@@ -50,6 +53,27 @@ local function read_all(path, mode)
     return content
 end
 
+local function detect_firmware_version()
+    local command = string.format("getprop %s > %s",
+        shell_quote(FIRMWARE_VERSION_PROPERTY),
+        shell_quote(FIRMWARE_VERSION_OUTPUT))
+    local command_ok = run(command)
+    local raw
+    if command_ok then raw = read_all(FIRMWARE_VERSION_OUTPUT, "r") end
+    if type(os.remove) == "function" then
+        pcall(os.remove, FIRMWARE_VERSION_OUTPUT)
+    end
+    if not command_ok or type(raw) ~= "string" then return nil end
+    local version = raw:match("^%s*(.-)%s*$")
+    if not version or not version:match("^%d+%.%d+%.%d+$") then return nil end
+    return version
+end
+
+local function module_path_for(version)
+    return SCRIPT_PATH .. "canopus_supervisor-" .. TARGET_ID_PREFIX
+        .. version .. ".bin"
+end
+
 local function supervisor_present()
     local file = io.open(DEVICE_PATH, "rb")
     if not file then return false end
@@ -62,7 +86,7 @@ local function verify_module_file()
         return false, "io.open unavailable"
     end
     local file = io.open(MODULE_PATH, "rb")
-    if not file then return false, "missing canopus_supervisor.bin" end
+    if not file then return false, "missing matching Supervisor" end
     local header = file:read(20)
     local size = file:seek("end")
     file:close()
@@ -199,7 +223,6 @@ local steps = {
 local function finish_run(timer, success, message)
     timer:delete()
     if run_timer == timer then run_timer = nil end
-    if success then run_completed = true end
     set_status(message, success and 0x8FF0A4 or 0xFF9A9A)
 end
 
@@ -271,18 +294,32 @@ local function make_button(text, y, color, on_clicked)
         local ok, message = pcall(on_clicked)
         if not ok then set_status("Error: " .. tostring(message), 0xFF9A9A) end
     end)
+    return button
 end
 
-make_button("Run", -36, 0x14508A, function()
+local firmware_version = detect_firmware_version()
+if firmware_version then MODULE_PATH = module_path_for(firmware_version) end
+local module_supported = false
+if MODULE_PATH then module_supported = verify_module_file() end
+if not module_supported then
+    status = lvgl.Label(root, {
+        text = "Firmware version not supported\n"
+            .. tostring(firmware_version or "Unknown"),
+        text_color = 0xFF9A9A, width = 300, height = 96,
+        align = lvgl.ALIGN.CENTER,
+    })
+    return
+end
+
+local run_button
+run_button = make_button("Run", -36, 0x14508A, function()
     clear_armed = false
-    if run_timer then
-        set_status("Run is already in progress")
+    if run_attempted then
+        set_status("Run can only be used once; reboot before retrying")
         return
     end
-    if run_completed then
-        set_status("Run already completed; reboot before running again")
-        return
-    end
+    run_attempted = true
+    run_button:clear_flag(lvgl.FLAG.CLICKABLE)
     local valid, validation_error = verify_module_file()
     if not valid then
         set_status("LOAD failed: " .. tostring(validation_error)
@@ -332,6 +369,7 @@ make_button("Clear Env", 36, 0x8A1F14, function()
 end)
 
 status = lvgl.Label(root, {
-    text = "Ready", text_color = 0xBFD9FF, width = 300, height = 96,
+    text = "Ready\nFirmware " .. firmware_version,
+    text_color = 0xBFD9FF, width = 300, height = 96,
     align = { type = lvgl.ALIGN.CENTER, x_ofs = 0, y_ofs = 132 },
 })

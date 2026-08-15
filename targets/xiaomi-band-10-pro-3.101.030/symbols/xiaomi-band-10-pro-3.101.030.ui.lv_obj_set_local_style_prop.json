@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.030.ui.lv_obj_set_local_style_prop",
+  "target_id": "xiaomi-band-10-pro-3.101.030",
+  "name": "lv_obj_set_local_style_prop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C107464",
+  "callable_address": "0x0C107465",
+  "prototype": "void (void *, uint32_t, uint32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrows a live LVGL object; numeric style value is passed in one 32-bit AAPCS register",
+    "return_value": "none"
+  },
+  "side_effects": [
+    "mutates_local_widget_style"
+  ],
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-UI-LAYER-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_CONFIRMED",
+  "provenance": {
+    "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
+    "evidence_ids": [
+      "EVID-UI-LAYER-001"
+    ],
+    "source": "IDA exact-target analysis: /Volumes/EXT0/firmware_latest/vela_ap.bin.i64"
+  },
+  "notes": "Exact-target LVGL v9 UI-owner primitive. Device probe remains required.",
+  "approval_state": "PENDING"
+}

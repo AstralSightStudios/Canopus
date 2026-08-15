@@ -39,9 +39,10 @@ step "5/6 C module cross-build + verifier (hello)"
 step "6/6 Rust module cross-build + verifier (no-heap-counter)"
 ./sdk/rust/examples/no-heap-counter/build.sh
 
-step "extra: watchface Lua smoke (only if a Lua interpreter exists)"
+step "extra: watchface Lua tests (only if a Lua interpreter exists)"
 if command -v lua >/dev/null 2>&1; then
     lua scripts/lua/watchface_smoke.lua
+    lua scripts/lua/test_installer_firmware_selection.lua
 else
     echo "  (no lua interpreter; skipping)"
 fi

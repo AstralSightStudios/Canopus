@@ -150,18 +150,16 @@ echo "[3/3] Canopus ELF verifier"
     --target "$TARGET_ID" --targets-dir "$ROOT/targets"
 
 TARGET_STAGE="$ROOT/watchfaces/canopus-installer/canopus_supervisor-$TARGET_ID.bin"
-INSTALLER_STAGE="$ROOT/watchfaces/canopus-installer/canopus_supervisor.bin"
-PROD_INSTALLER_STAGE="$ROOT/watchfaces/canopus-installer-prod/canopus_supervisor.bin"
+PROD_TARGET_STAGE="$ROOT/watchfaces/canopus-installer-prod/canopus_supervisor-$TARGET_ID.bin"
 cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
-cp "$OUT/canopus_supervisor.elf" "$INSTALLER_STAGE"
+rm -f "$ROOT/watchfaces/canopus-installer/canopus_supervisor.bin" \
+      "$ROOT/watchfaces/canopus-installer-prod/canopus_supervisor.bin"
 echo "staged $(basename "$TARGET_STAGE")"
-echo "staged canopus_supervisor.bin for $TARGET_ID"
 if [ "$TARGET_ID" = xiaomi-band-9-pro-3.1.175 ]; then
-    rm -f "$PROD_INSTALLER_STAGE"
     "$ROOT/scripts/build_band9_bootstrap.sh"
 else
-    cp "$OUT/canopus_supervisor.elf" "$PROD_INSTALLER_STAGE"
-    echo "staged canopus-installer-prod/canopus_supervisor.bin for $TARGET_ID"
+    cp "$OUT/canopus_supervisor.elf" "$PROD_TARGET_STAGE"
+    echo "staged canopus-installer-prod/$(basename "$PROD_TARGET_STAGE")"
     rm -f "$ROOT/watchfaces/canopus-installer/canopus_supervisor-band9.bin" \
           "$ROOT/watchfaces/canopus-installer/canopus_supervisor-band9.elf" \
           "$ROOT/watchfaces/canopus-installer/canopus_stage2-band9.bin" \

@@ -158,6 +158,12 @@ local function band9_installer_io(fault)
         return nil
     end
     local function execute(command)
+        local property_output = command:match(
+            "^getprop 'ro%.build%.version' > '(.+)'$")
+        if property_output then
+            files[property_output] = "3.1.175\n"
+            return true
+        end
         if command:match("^insmod ") then used_insmod = true; return false end
         local address, value = command:match("^mw ([0-9a-fA-F]+)=([0-9a-fA-F]+)$")
         if address then

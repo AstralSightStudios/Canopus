@@ -901,6 +901,9 @@ pub const CONTENT_TOP_OFFSET: i32 = 56;
 pub const CONTENT_WIDTH: i32 = 336;
 pub const CONTENT_HEIGHT: i32 = 424;
 pub const ROW_GAP: i32 = 8;
+pub const LV_STYLE_BG_OPA: u32 = 29;
+pub const LV_STYLE_BORDER_WIDTH: u32 = 48;
+pub const LV_STYLE_BORDER_OPA: u32 = 50;
 
 pub type LvxTimerCallback = extern "C" fn(*mut core::ffi::c_void);
 
@@ -1056,6 +1059,50 @@ pub unsafe fn lvx_object_align(object: *mut core::ffi::c_void, align: u32, x: i3
         ))
     };
     f(object, align, x, y);
+}
+
+/// Moves an object to an exact index in its parent's child list. Index zero is
+/// the back-most draw position. Must run on the LVGL owner thread.
+pub unsafe fn lvx_object_move_to_index(object: *mut core::ffi::c_void, index: i32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, i32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            canopus_target_generated::CANOPUS_FW_LV_OBJ_MOVE_TO_INDEX_CALLABLE,
+        ))
+    };
+    f(object, index);
+}
+
+/// Sets one local LVGL style property for the requested selector. Property and
+/// value encoding follow this exact target's LVGL v9 ABI.
+pub unsafe fn lvx_object_set_local_style_u32(
+    object: *mut core::ffi::c_void,
+    property: u32,
+    value: u32,
+    selector: u32,
+) {
+    type F = extern "C" fn(*mut core::ffi::c_void, u32, u32, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE,
+        ))
+    };
+    f(object, property, value, selector);
+}
+
+/// Sets the object's background opacity for the requested style selector.
+pub unsafe fn lvx_object_set_background_opacity(
+    object: *mut core::ffi::c_void,
+    opacity: u32,
+    selector: u32,
+) {
+    type F = extern "C" fn(*mut core::ffi::c_void, u32, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_CALLABLE,
+        ))
+    };
+    f(object, opacity, selector);
 }
 
 pub type LvxEventCallback = extern "C" fn(*mut core::ffi::c_void);
