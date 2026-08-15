@@ -143,7 +143,7 @@ mod layout_tests {
             close: core::ptr::null_mut(),
             read: core::ptr::null_mut(),
             write: core::ptr::null_mut(),
-            _pad_10: [0; 4],
+            lseek: core::ptr::null_mut(),
             ioctl: core::ptr::null_mut(),
             _tail: [0; 0x18],
         };

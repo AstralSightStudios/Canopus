@@ -1,0 +1,15 @@
+[package]
+name = "canopus-fw-match"
+description = "Multi-layer firmware function matcher: GA + CFG + xref + pattern"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+hex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

@@ -6,6 +6,7 @@ members = [
     "tools/elf-verifier",
     "tools/package-builder",
     "tools/re-orchestrator",
+    "tools/fw-match",
 ]
 
 [workspace.package]
@@ -25,3 +26,4 @@ sha2 = "0.10"
 tar = "0.4"
 thiserror = "2"
 toml = "0.8"
+

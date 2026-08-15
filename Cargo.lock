@@ -210,6 +210,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "canopus-fw-match"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "hex",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "canopus-package"
 version = "0.1.0"
 dependencies = [

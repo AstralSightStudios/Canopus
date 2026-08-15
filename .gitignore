@@ -82,3 +82,6 @@ secrets/
 captures/
 dumps/
 probes/bin/
+
+# Derived firmware function corpora (regenerable from IDBs, large)
+targets/fw-corpus/
