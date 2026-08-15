@@ -16,7 +16,10 @@ FW_SHA = "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99"
 OUT = Path("targets/xiaomi-band-11-4.100.108/symbols")
 
 # Verified matches: (name, domain, entry_addr, prototype, evidence, notes)
-# entry is the EVEN Thumb entry address recovered from the exact IDB.
+# Each entry was DECOMPILED in the exact 4.100.108 IDB and its behavior
+# matched the 3.101.036 source semantics (string refs, command dispatch,
+# error paths). Candidates that only passed structural scoring but could not
+# be confirmed by decompilation are deliberately excluded.
 VERIFIED = [
     ("ioctl", "nuttx", "0xC341B98",
      "int32_t(int32_t, uint32_t, uintptr_t)",
@@ -42,6 +45,14 @@ VERIFIED = [
      "int32_t(void *)",
      ["EVID-NUTTX-SEM-001"],
      "NuttX sem_post. Verified in exact IDB: releases count and wakes highest-priority waiter via list-wake helper."),
+    ("lv_image_set_src", "ui", "0xC3B2A5C",
+     "int32_t(void *, const void *)",
+     ["EVID-UI-LVGL-001"],
+     "LVGL v9 lv_image_set_src. Verified in exact IDB: references ../../apps/graphics/lvgl/lvgl/src/widgets/image/lv_image.c (lines 161/172/184); image-source type dispatch, draw-buffer validation, cache invalidation."),
+    ("app_install", "app_registry", "0xC6A6BF8",
+     "int32_t(void *, const void *, int32_t)",
+     ["EVID-APP-001"],
+     "Stock app-registry install. Verified in exact IDB: references 'app_install'/'free_app' strings; copies app record, registers into the app list, allocates the ordered-list buffer, logs '[%s] %s: [%s] installation failed'."),
 ]
 
 

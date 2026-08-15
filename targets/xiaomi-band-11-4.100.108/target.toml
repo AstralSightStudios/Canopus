@@ -38,8 +38,8 @@ capabilities = [
   "nuttx.vfs-rename",
   "nuttx.vfs-ioctl",
   "nuttx.semaphore",
-  "ui.lvgl-v9",
-  "launcher.entry",
+  "ui.lvgl-v9.image",
+  "app-registry.install",
 ]
 
 [loader_profile]
