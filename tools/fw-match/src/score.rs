@@ -21,6 +21,7 @@ pub struct LayerScores {
     pub strings: f64,
     pub constants: f64,
     pub size: f64,
+    pub degree: f64,
 }
 
 impl LayerScores {
@@ -31,11 +32,12 @@ impl LayerScores {
             + 3.0 * self.strings
             + 1.5 * self.constants
             + 1.0 * self.size
+            + 2.0 * self.degree
     }
 
     /// Composite without the size prior (for final ranking clarity).
     pub fn structural(&self) -> f64 {
-        4.0 * self.pattern + 4.0 * self.cfg + 3.0 * self.strings + 1.5 * self.constants
+        4.0 * self.pattern + 4.0 * self.cfg + 3.0 * self.strings + 1.5 * self.constants + 2.0 * self.degree
     }
 }
 
@@ -176,6 +178,29 @@ pub fn size_score(src: &FunctionRecord, dst: &FunctionRecord) -> f64 {
     r * r
 }
 
+/// Degree proximity: caller-count and callee-count closeness.
+///
+/// Tiny wrappers and veneers are structurally identical, but a function
+/// called by 64 sites is a different function than one called by 7. Caller
+/// and callee *counts* are position-independent (the addresses move, the
+/// in-degree does not), so this layer discriminates where pattern/CFG tie.
+pub fn degree_score(src: &FunctionRecord, dst: &FunctionRecord) -> f64 {
+    let callers = ratio_closeness(src.callers.len(), dst.callers.len());
+    let callees = ratio_closeness(src.callees.len(), dst.callees.len());
+    0.5 * callers + 0.5 * callees
+}
+
+fn ratio_closeness(a: usize, b: usize) -> f64 {
+    if a == 0 && b == 0 {
+        return 1.0;
+    }
+    if a == 0 || b == 0 {
+        return 0.0;
+    }
+    let (lo, hi) = (a.min(b) as f64, a.max(b) as f64);
+    (lo / hi).powi(2)
+}
+
 /// Full layer scores for a pair.
 pub fn score_pair(src: &FunctionRecord, dst: &FunctionRecord) -> LayerScores {
     LayerScores {
@@ -184,6 +209,7 @@ pub fn score_pair(src: &FunctionRecord, dst: &FunctionRecord) -> LayerScores {
         strings: string_score(src, dst),
         constants: constant_score(src, dst),
         size: size_score(src, dst),
+        degree: degree_score(src, dst),
     }
 }
 

@@ -40,9 +40,14 @@ impl Default for EngineConfig {
 
 /// Run the match: source symbols -> target candidates.
 ///
-/// Iterative anchoring: round 1 runs with no anchors; confident matches from
-/// each round become anchors for the next, letting callee-overlap (xref)
-/// bootstrap from strong pairs to weaker ones.
+/// Iterative anchoring with monotonic freeze:
+///   - Round 0: search all symbols structurally (no anchors).
+///   - Any symbol reaching a decisive score+margin is *frozen*: its match is
+///     recorded permanently and it is removed from the search set.
+///   - Later rounds build anchors from frozen matches and re-search only the
+///     unfrozen symbols, so callee-overlap (xref) bootstraps from strong pairs
+///     to weak ones. A frozen match is never re-scored, so anchoring can only
+///     add confidence, never degrade a good match.
 pub fn match_symbols(
     symbols: &[SourceSymbol],
     src_corpus: &Corpus,
@@ -50,8 +55,6 @@ pub fn match_symbols(
     cfg: &EngineConfig,
 ) -> (Vec<MatchResult>, Option<Individual>) {
     // Resolve each symbol to a source corpus index, carrying the semantic name.
-    // Only symbols found in the source corpus become pool problems; the pool
-    // index for a symbol is its position in `source_indices`.
     let mut source_indices: Vec<(usize, String)> = Vec::new();
     for sym in symbols.iter() {
         let addr = u64::from_str_radix(sym.entry_address.trim_start_matches("0x"), 16)
@@ -60,56 +63,91 @@ pub fn match_symbols(
             source_indices.push((idx, sym.name.clone()));
         }
     }
+    let n = source_indices.len();
 
-    // Anchor rounds: grow the anchor set until stable (max 4 rounds).
+    // Per-symbol frozen result (index into source_indices).
+    let mut frozen_target: Vec<Option<u64>> = vec![None; n];
+    let mut frozen_score: Vec<Option<f64>> = vec![None; n];
+    let mut frozen_margin: Vec<Option<f64>> = vec![None; n];
+    let mut frozen_name: Vec<Option<String>> = vec![None; n];
     let mut anchors: Vec<Anchor> = Vec::new();
     let mut best: Option<Individual> = None;
-    let mut results = Vec::new();
+
+    // Symbols still being searched (their index into source_indices).
+    let mut active: Vec<usize> = (0..n).collect();
+
+    const CONF_SCORE: f64 = 11.0;
+    const CONF_MARGIN: f64 = 0.25;
     let rounds = 4;
+
     for round in 0..rounds {
-        let pools = build_pools(&source_indices, src_corpus, dst_corpus, cfg.max_pool, &anchors);
-        // GA resolves assignment collisions over the (structurally-ranked,
-        // xref-tiebroken) pools.
-        let ind = run_ga(&pools, &cfg.ga, cfg.seed + round as u64 * 0x9E37);
-        results = finalize(&ind, &pools, src_corpus, dst_corpus);
-        let prev = anchors.len();
-        anchors = extract_anchors(&results, &anchors);
-        if anchors.len() == prev {
-            break; // converged
+        if active.is_empty() {
+            break;
         }
+        let active_src: Vec<(usize, String)> = active
+            .iter()
+            .map(|&i| source_indices[i].clone())
+            .collect();
+        let pools = build_pools(&active_src, src_corpus, dst_corpus, cfg.max_pool, &anchors);
+        let ind = run_ga(&pools, &cfg.ga, cfg.seed + round as u64 * 0x9E37);
+        let round_results = finalize(&ind, &pools, src_corpus, dst_corpus);
         best = Some(ind);
+
+        // Freeze decisive matches; keep searching the rest.
+        let mut still_active = Vec::new();
+        for (k, r) in round_results.iter().enumerate() {
+            let sym_idx = active[k];
+            let (Some(ta), Some(sc), Some(mg)) =
+                (r.target_addr.as_deref(), r.score, r.margin)
+            else {
+                still_active.push(sym_idx);
+                continue;
+            };
+            if sc >= CONF_SCORE && mg >= CONF_MARGIN {
+                let target_addr = u64::from_str_radix(ta.trim_start_matches("0x"), 16)
+                    .unwrap_or(0);
+                frozen_target[sym_idx] = Some(target_addr);
+                frozen_score[sym_idx] = Some(sc);
+                frozen_margin[sym_idx] = Some(mg);
+                frozen_name[sym_idx] = Some(r.name.clone());
+                anchors.push(Anchor {
+                    source_addr: src_corpus.functions[source_indices[sym_idx].0].addr_u64(),
+                    target_addr,
+                });
+            } else {
+                still_active.push(sym_idx);
+            }
+        }
+        active = still_active;
+    }
+
+    // Assemble the final report: frozen matches + whatever active symbols
+    // still lack a decisive match (report their best candidate as-is).
+    let mut results = Vec::new();
+    for (i, (fn_idx, name)) in source_indices.iter().enumerate() {
+        let src = &src_corpus.functions[*fn_idx];
+        if let Some(ta) = frozen_target[i] {
+            results.push(MatchResult {
+                name: name.clone(),
+                source_addr: src.addr.clone(),
+                target_addr: Some(format!("0x{ta:x}")),
+                target_name: dst_corpus.function_at(ta).map(|f| f.name.clone()),
+                score: frozen_score[i],
+                margin: frozen_margin[i],
+                pool_size: 0,
+            });
+        } else {
+            // Unfrozen: re-run a single structural pass over just this symbol
+            // (no anchors) to report its best candidate without degrading.
+            let one = vec![(source_indices[i].0, name.clone())];
+            let pools = build_pools(&one, src_corpus, dst_corpus, cfg.max_pool, &anchors);
+            let ind = run_ga(&pools, &cfg.ga, cfg.seed + 999);
+            let mut r = finalize(&ind, &pools, src_corpus, dst_corpus);
+            results.append(&mut r);
+        }
     }
 
     (results, best)
-}
-
-/// Turn confident matches into anchors for the next round. An anchor needs a
-/// high absolute score and a decisive margin over the runner-up. Anchors that
-/// contradict an existing anchor (same source, different target) are dropped.
-fn extract_anchors(results: &[MatchResult], existing: &[Anchor]) -> Vec<Anchor> {
-    let mut out: Vec<Anchor> = existing.to_vec();
-    for r in results {
-        let (Some(target_addr), Some(score), Some(margin)) =
-            (r.target_addr.as_deref(), r.score, r.margin)
-        else {
-            continue;
-        };
-        if score < 11.0 || margin < 0.25 {
-            continue;
-        }
-        let source_addr = u64::from_str_radix(r.source_addr.trim_start_matches("0x"), 16)
-            .unwrap_or(0);
-        let target_addr = u64::from_str_radix(target_addr.trim_start_matches("0x"), 16)
-            .unwrap_or(0);
-        // Drop any existing anchor claiming the same source addr with a
-        // different target (round-over-round conflict).
-        out.retain(|a| a.source_addr != source_addr || a.target_addr == target_addr);
-        out.push(Anchor {
-            source_addr,
-            target_addr,
-        });
-    }
-    out
 }
 
 /// Filter matched results to those passing a composite-score threshold and a
