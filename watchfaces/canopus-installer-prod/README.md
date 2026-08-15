@@ -4,7 +4,9 @@ A streamlined Xiaomi Band 10 installer watchface with two controls:
 
 - **Run** loads the exact-target Supervisor, applies enabled boot intents after
   `insmod` has returned, then executes native registration stages 0, 1, and 2.
-- **Clear Env** executes `rm -rf /data/canopus` and asks for a reboot.
+- **Clear Env** requires two consecutive clicks. The first displays
+  `Click again to clear`; only the second executes `rm -rf /data/canopus` and
+  asks for a reboot.
 
 `Run` uses LuaLVGL's `lvgl.Timer`. The restore operation and each INSTALL stage
 run in separate timer callbacks, returning to the LVGL/miwear event loop between

@@ -25,6 +25,7 @@ local status
 local run_timer
 local run_phase = 1
 local run_completed = false
+local clear_armed = false
 
 local function shell_quote(value)
     return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
@@ -273,6 +274,7 @@ local function make_button(text, y, color, on_clicked)
 end
 
 make_button("Run", -36, 0x14508A, function()
+    clear_armed = false
     if run_timer then
         set_status("Run is already in progress")
         return
@@ -312,9 +314,16 @@ end)
 
 make_button("Clear Env", 36, 0x8A1F14, function()
     if run_timer then
+        clear_armed = false
         set_status("Run is in progress; reboot before clearing")
         return
     end
+    if not clear_armed then
+        clear_armed = true
+        set_status("Click again to clear", 0xFFD27A)
+        return
+    end
+    clear_armed = false
     if run("rm -rf /data/canopus") then
         set_status("Environment cleared; reboot before Run", 0x8FF0A4)
     else

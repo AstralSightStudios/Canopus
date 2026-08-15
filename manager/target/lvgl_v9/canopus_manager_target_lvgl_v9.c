@@ -652,7 +652,7 @@ static int target_show_confirmation(
     const char *text;
 
     if (backend->dialog.active) return 0;
-    if (backend->content_root == NULL || backend->firmware_page == NULL) return -1;
+    if (backend->root == NULL || backend->firmware_page == NULL) return -1;
     canopus_memset(&backend->dialog, 0, sizeof(backend->dialog));
     backend->dialog.generation = snapshot->generation;
     backend->dialog.confirm_key = confirm->key;
@@ -673,7 +673,12 @@ static int target_show_confirmation(
     backend->dialog.buttons[1].callback = target_dialog_event;
     backend->dialog.buttons[1].text = "Confirm";
     backend->dialog.buttons[1].user_data = confirm_binding;
-    backend->dialog.native_box = create_box(backend->content_root,
+    /* The stock prefab sizes its modal scrim from its parent. Parenting it to
+     * content_root confines it to the scrollable page body, so the dialog
+     * scrolls and the page title remains above it. The firmware page root is
+     * the full-screen owner; a newly created root child is also frontmost over
+     * the existing title and content children. */
+    backend->dialog.native_box = create_box(backend->root,
                                              backend->firmware_page);
     if (backend->dialog.native_box == NULL) return -1;
     backend->dialog.active = 1u;
