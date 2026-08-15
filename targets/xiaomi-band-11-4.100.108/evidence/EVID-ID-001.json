@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ID-001",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "question": "Which 4.100.108 addresses hold the firmware version and build identity strings?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.108.identity.firmware_version_string",
+    "xiaomi-band-11-4.100.108.identity.firmware_build_string"
+  ],
+  "prototype_hypothesis": "The 4.100.108 image stores version/build identity in a ro.* property block near XIP 0x0CA00440 (ro.build.version=4.100.108, ro.build.id=user-4.100.108-cn-202607230300), each line `key=value\\n`-terminated with a NUL after the block.",
+  "callsite_evidence": [
+    "Raw binary at file offset 0x940440 holds the ASCII property block: \"...ro.build.version=4.100.108\\nro.product.device.screenshape=pill-shaped\\nro.product.device.devicetype=band\\nro.sf.lcd_density=320\\nro.build.id=user-4.100.108-cn-202607230300\\n\\0\"",
+    "The version value `4.100.108` appears at address 0x0CA0045E (within the ro.build.version line); the full build id `user-4.100.108-cn-202607230300` starts at address 0x0CA004D6",
+    "IDA string listing confirms the property block is a single contiguous C string; no standalone NUL-terminated `4.100.108\\0` exists anywhere in the image",
+    "Unlike 3.101.036 (which had a dedicated early-XIP identity area at 0x0C0C0810/0x0C0C0850), 4.100.108 moved identity into the property table, so the identity guard must read the property-formatted strings"
+  ],
+  "control_flow_evidence": [
+    "The version and build values are consumed by the firmware's property system (ro.build.* getters), not by a direct string reference from a fixed identity symbol",
+    "The identity guard's canopus_str_neq compares byte-by-byte until NUL; because the property lines are `key=value\\n`-terminated (NUL only after the whole block), a direct comparison of the expected bare version against the value start will mismatch on the `\\n`",
+    "Target-private must therefore either (a) set the expected string to include the `key=` prefix and trailing newline, or (b) read the version through the firmware's property accessor"
+  ],
+  "ownership_analysis": "Read-only firmware strings. The addresses are stable within this exact image and are safe for a read-only identity comparison.",
+  "unsafe_assumptions": [
+    "The property block layout is recovered from this exact image and is not portable to other firmware versions",
+    "The identity guard behavior with `key=value\\n` strings is not yet validated; the symbol records stay PENDING until the guard string format is decided and host-tested"
+  ],
+  "recommended_probe": "After deciding the guard string format, run the identity guard on-device and confirm it accepts the exact 4.100.108 image and rejects a neighboring version.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-16T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 0x0CA0044D",
+      "role": "ro.build.version property line"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 0x0CA004D6",
+      "role": "ro.build.id value (user-4.100.108-cn-202607230300)"
+    }
+  ]
+}

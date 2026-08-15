@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-NUTTX-SEM-001",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "question": "Which 4.100.108 functions implement the NuttX semaphore wait/post/trywait primitives?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.108.nuttx.sem_wait",
+    "xiaomi-band-11-4.100.108.nuttx.sem_post",
+    "xiaomi-band-11-4.100.108.nuttx.sem_trywait"
+  ],
+  "prototype_hypothesis": "sem_wait(sem) blocks until the semaphore count is positive (with priority-inheritance list insertion); sem_post(sem) releases the semaphore and wakes the highest-priority waiter; sem_trywait(sem) returns immediately with EBUSY if the count is zero.",
+  "callsite_evidence": [
+    "sub_C359510 (candidate sem_wait) decompiles to the canonical NuttX sem_wait and references \"../../nuttx/sched/semaphore/sem_wait.c\" and \"../../nuttx/sched/sched/sched.h\"; it uses the hardware spinlock/atomic path (LDAEXH/STLEXH, BASEPRI manipulation), the priority-inheritance waiting list insert, and the linux_eabi_syscall scheduler handoff",
+    "sub_C359470 (candidate sem_trywait) and sub_C359980 (candidate sem_post) share the same NuttX semaphore core helpers (sub_C354AF0 list-wake, the sched_lock region byte_200AD130) and the same spinlock pattern",
+    "The three candidates sit in the same XIP cluster as the 3.101.036 sem_* wrappers and were produced by the multi-layer matcher, then confirmed by decompiling the exact 4.100.108 IDB"
+  ],
+  "control_flow_evidence": [
+    "sem_wait first checks the semaphore count via an atomic decrement; on failure it links the waiting TCB into the priority-ordered list (offset +4/+8 of the semaphore) and calls the scheduler handoff, returning -v12[35] (the saved errno) on timeout",
+    "sem_post releases the count and wakes the waiter with the highest priority via the list-wake helper sub_C354AF0",
+    "sem_trywait performs the same atomic check without blocking, returning immediately on a zero count"
+  ],
+  "ownership_analysis": "Semaphores are caller-owned; the wrappers touch the NuttX global scheduler state (dword_200AEE0C g_readytorun) and must run in a scheduler-aware context. Suitable for target-private thread synchronization.",
+  "unsafe_assumptions": [
+    "The scheduler global offsets (dword_200AEE0C + 27/+11/+35, byte_200AD130) are recovered from this exact IDB and are BES1503 NuttX layout specifics",
+    "sem_post may run in an interrupt/worker context; callers must match the 036 facade contract for allowed contexts"
+  ],
+  "recommended_probe": "Exercise sem_wait/sem_post/sem_trywait through the target-private facade from a worker thread and confirm blocking, waking, and EBUSY behavior.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-16T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C359510",
+      "role": "sem_wait (sem_wait.c)"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C359470",
+      "role": "sem_trywait"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C359980",
+      "role": "sem_post"
+    }
+  ]
+}

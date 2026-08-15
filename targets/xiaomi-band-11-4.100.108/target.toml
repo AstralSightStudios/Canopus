@@ -1,0 +1,114 @@
+# xiaomi-band-11-4.100.108 — Xiaomi Band 11 firmware 4.100.108
+# Independently recovered from the exact 4.100.108 firmware image and IDB.
+# Revision 1.
+schema = 1
+target_id = "xiaomi-band-11-4.100.108"
+device_family = "xiaomi-smart-band"
+device_model = "Xiaomi Band 11"
+board_revision = "q66cn"
+os_family = "nuttx-derived"
+architecture = "armv8-m.main"
+cpu = "cortex-m33"
+instruction_set = "thumb2"
+endianness = "little"
+float_abi = "soft"
+loader = "nuttx-modlib-elf32-rel"
+firmware_sha256 = "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99"
+firmware_version = "4.100.108"
+firmware_build = "user-4.100.108-cn-202607230300"
+module_abi = 1
+relocation_profile = "best1503-v1"
+revision = 1
+
+# Firmware absolute-address space (recovered so far). This is the RECOVERED
+# firmware extent, not the full addressable window: identity/build property
+# strings at 0x0CA0044D .. verified NuttX VFS/UI symbols .. 0x0C92xxxx. The
+# ELF verifier flags module words in this range that are not in the approved
+# address allowlist.
+firmware_address_ranges = [
+  { base = 0x0C000000, size = 0x00950000 },
+]
+
+# Capabilities proven on this exact firmware. Public generated bindings remain
+# restricted; full-trust consumers select the target-private Rust backend and
+# must pass the identity guard before invoking them.
+capabilities = [
+  "identity-guard",
+  "nuttx.vfs-unlink",
+  "nuttx.vfs-rename",
+  "nuttx.vfs-ioctl",
+  "nuttx.semaphore",
+  "ui.lvgl-v9",
+  "launcher.entry",
+]
+
+[loader_profile]
+elf_class = 32
+elf_machine = "ARM"
+elf_type = "ET_REL"
+endianness = "little"
+constructor_discovery = "init_array"
+symbol_imports = "none"
+# Same BES1503 NuttX modlib family as Band 10 Pro: stock insmod/rmmod with
+# dynamic allocation and no fixed module-size ceiling.
+max_size = 0
+alignment = 4
+module_name_rules = "must match ^[a-zA-Z0-9_]+$; passed as argv[2] to insmod"
+load_command = "insmod <path> <name>"
+unload_command = "rmmod <name>"
+persistent_autoload = false
+
+[[loader_profile.relocations]]
+name = "R_ARM_NONE"
+arm_type = 0
+notes = "no-op; accepted"
+
+[[loader_profile.relocations]]
+name = "R_ARM_ABS32"
+arm_type = 2
+notes = "verified"
+
+[[loader_profile.relocations]]
+name = "R_ARM_REL32"
+arm_type = 23
+notes = "verified"
+
+[[loader_profile.relocations]]
+name = "R_ARM_TARGET1"
+arm_type = 38
+notes = "handled with ABS32 semantics"
+
+[[loader_profile.relocations]]
+name = "R_ARM_PREL31"
+arm_type = 42
+notes = "verified"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVW_ABS_NC"
+arm_type = 47
+notes = "verified Thumb movw"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVT_ABS"
+arm_type = 48
+notes = "verified Thumb movt"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_CALL"
+arm_type = 10
+notes = "intra-module Thumb BL; standard modlib up_relocate case; probe never emitted one (single-function), G0 must confirm"
+
+[[loader_profile.relocations]]
+name = "R_ARM_THM_JUMP24"
+arm_type = 30
+notes = "intra-module Thumb conditional branch; standard modlib case; G0 must confirm"
+
+[provenance]
+source_repo = "992e3cbba9cb4b379f7f7c9a816abc3b_upd_miwear.watch.q66cn"
+source_findings = [
+  "Exact 4.100.108 IDA/xref/call-chain recovery; matched from the verified xiaomi-band-10-pro-3.101.036 symbol set via the multi-layer GA+CFG+xref+pattern matcher, then confirmed by decompilation in the exact IDB.",
+  "Neighboring targets are locator hints only; every symbol was re-verified in the exact 4.100.108 IDB.",
+]
+import_date = "2026-08-16"
+maintainer = "canopus-maintainer"
+reviewers = ["canopus-maintainer"]

@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""Generate 11-108 symbol records from verified matcher output.
+
+Each record carries the evidence of the exact-IDB decompilation confirmation
+(per target-authoring.md §7): prototype, entry/callable, ownership, evidence
+IDs, and the PENDING approval gate. Nothing here is auto-promoted.
+
+Usage:
+    generate_1108_symbols.py
+"""
+import json
+from pathlib import Path
+
+TARGET = "xiaomi-band-11-4.100.108"
+FW_SHA = "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99"
+OUT = Path("targets/xiaomi-band-11-4.100.108/symbols")
+
+# Verified matches: (name, domain, entry_addr, prototype, evidence, notes)
+# entry is the EVEN Thumb entry address recovered from the exact IDB.
+VERIFIED = [
+    ("ioctl", "nuttx", "0xC341B98",
+     "int32_t(int32_t, uint32_t, uintptr_t)",
+     ["EVID-NUTTX-VFS-001"],
+     "NuttX fs_ioctl dispatch wrapper. Verified in exact IDB: references ../../nuttx/fs/vfs/fs_ioctl.c:52 and implements the canonical command dispatch (returns -ENOTTY for unsupported)."),
+    ("unlink", "nuttx", "0xC33CAF8",
+     "int32_t(const char *)",
+     ["EVID-NUTTX-VFS-001"],
+     "NuttX fs_unlink wrapper. Verified in exact IDB: references ../../nuttx/fs/vfs/fs_unlink.c:84; inode-type dispatch, -ENOSYS/-ENOTDIR paths."),
+    ("rename", "nuttx", "0xC33D6C4",
+     "int32_t(const char *, const char *)",
+     ["EVID-NUTTX-VFS-001"],
+     "NuttX fs_rename wrapper. Verified in exact IDB: references ../../nuttx/fs/vfs/fs_rename.c:534; two-path resolution, inode ops dispatch at offsets 100/104."),
+    ("sem_wait", "nuttx", "0xC359510",
+     "int32_t(void *)",
+     ["EVID-NUTTX-SEM-001"],
+     "NuttX sem_wait. Verified in exact IDB: references ../../nuttx/sched/semaphore/sem_wait.c; spinlock atomic path, priority-inheritance wait list, scheduler handoff."),
+    ("sem_trywait", "nuttx", "0xC359470",
+     "int32_t(void *)",
+     ["EVID-NUTTX-SEM-001"],
+     "NuttX sem_trywait. Verified in exact IDB: non-blocking atomic semaphore check."),
+    ("sem_post", "nuttx", "0xC359980",
+     "int32_t(void *)",
+     ["EVID-NUTTX-SEM-001"],
+     "NuttX sem_post. Verified in exact IDB: releases count and wakes highest-priority waiter via list-wake helper."),
+]
+
+
+def main() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    for name, domain, entry, proto, evids, notes in VERIFIED:
+        entry = entry.lower()
+        callable_addr = f"0x{int(entry, 16) | 1:x}"
+        record = {
+            "schema": 1,
+            "symbol_id": f"{TARGET}.{domain}.{name}",
+            "target_id": TARGET,
+            "name": name,
+            "kind": "function",
+            "instruction_set": "thumb",
+            "entry_address": entry,
+            "callable_address": callable_addr,
+            "prototype": proto,
+            "calling_convention": "arm-aapcs",
+            "contexts": {"allowed": ["target-private-thread"], "blocking": True},
+            "ownership": {"argument": "borrowed", "return_value": "status"},
+            "side_effects": ["mutates NuttX kernel state"],
+            "proof": {
+                "static": "confirmed",
+                "device": "not_probed",
+                "host_tested": False,
+                "evidence_ids": evids,
+            },
+            "policy": "restricted",
+            "status": "STATIC_RECOVERED",
+            "provenance": {
+                "firmware_sha256": FW_SHA,
+                "evidence_ids": evids,
+                "source": "multi-layer matcher (GA+CFG+xref+pattern) from verified 3.101.036 set, confirmed by decompiling the exact 4.100.108 IDB",
+            },
+            "notes": notes,
+            "approval_state": "PENDING",
+        }
+        path = OUT / f"{TARGET}.{domain}.{name}.json"
+        path.write_text(json.dumps(record, indent=2) + "\n")
+        print(f"wrote {path.name}")
+
+
+if __name__ == "__main__":
+    main()
