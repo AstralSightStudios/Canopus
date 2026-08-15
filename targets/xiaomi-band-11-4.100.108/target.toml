@@ -40,6 +40,8 @@ capabilities = [
   "nuttx.semaphore",
   "ui.lvgl-v9.image",
   "app-registry.install",
+  "launcher.app-list",
+  "bluetooth.service-manager",
 ]
 
 [loader_profile]

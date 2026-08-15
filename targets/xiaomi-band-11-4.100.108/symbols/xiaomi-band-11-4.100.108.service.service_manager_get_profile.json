@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.service.service_manager_get_profile",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "service_manager_get_profile",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc471cf4",
+  "callable_address": "0xc471cf5",
+  "prototype": "int32_t(int32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "borrowed",
+    "return_value": "status"
+  },
+  "side_effects": [
+    "mutates NuttX kernel state"
+  ],
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-BT-SERVICE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "evidence_ids": [
+      "EVID-BT-SERVICE-001"
+    ],
+    "source": "multi-layer matcher (GA+CFG+xref+pattern) from verified 3.101.036 set, confirmed by decompiling the exact 4.100.108 IDB"
+  },
+  "notes": "Bluetooth service-manager get-profile. Verified in exact IDB: references '[195][service_manager]: %s profile-id:%d is not found' and ../../frameworks/connectivity/bluetooth/service/profiles/service_manager.c:196; returns the registered profile for a profile id.",
+  "approval_state": "PENDING"
+}

@@ -272,6 +272,9 @@ mod layout_tests_1108 {
             CANOPUS_FW_APP_INSTALL_CALLABLE,
             CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE,
             CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE,
+            CANOPUS_FW_HIDDEN_AND_SHOW_APP_CB_CALLABLE,
+            CANOPUS_FW_SERVICE_MANAGER_REGISTER_CALLABLE,
+            CANOPUS_FW_SERVICE_MANAGER_GET_PROFILE_CALLABLE,
         ] {
             assert_eq!(c & 1, 1, "callable {c:#x} must be odd (Thumb)");
         }

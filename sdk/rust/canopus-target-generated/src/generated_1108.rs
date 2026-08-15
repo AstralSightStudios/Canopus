@@ -4,7 +4,7 @@
 // firmware : 4.100.108 (user-4.100.108-cn-202607230300)
 // sha256   : 9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99
 // revision : 1
-// input_digest: e2e6c63535137366
+// input_digest: fc94248e574c5cc1
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -65,6 +65,15 @@ pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `ioctl` at 0xc341b98. Thumb callable address 0xc341b99.
 pub const CANOPUS_FW_IOCTL_CALLABLE: usize = canopus_thumb_callable(0xc341b99usize);
 
+/// Recovered `hidden_and_show_app_cb` at 0xc545e50. Thumb callable address 0xc545e51.
+pub const CANOPUS_FW_HIDDEN_AND_SHOW_APP_CB_CALLABLE: usize = canopus_thumb_callable(0xc545e51usize);
+
+/// Recovered `service_manager_register` at 0xc471ca4. Thumb callable address 0xc471ca5.
+pub const CANOPUS_FW_SERVICE_MANAGER_REGISTER_CALLABLE: usize = canopus_thumb_callable(0xc471ca5usize);
+
+/// Recovered `service_manager_get_profile` at 0xc471cf4. Thumb callable address 0xc471cf5.
+pub const CANOPUS_FW_SERVICE_MANAGER_GET_PROFILE_CALLABLE: usize = canopus_thumb_callable(0xc471cf5usize);
+
 /// Recovered `unlink` at 0xc33caf8. Thumb callable address 0xc33caf9.
 pub const CANOPUS_FW_UNLINK_CALLABLE: usize = canopus_thumb_callable(0xc33caf9usize);
 
@@ -77,6 +86,7 @@ pub const CANOPUS_FW_SEM_WAIT_CALLABLE: usize = canopus_thumb_callable(0xc359511
 // ---- excluded symbols ----
 // app_install: restricted - not exported until context/ownership approved
 // controller_crash_dump: restricted - not exported until context/ownership approved
+// hidden_and_show_app_cb: restricted - not exported until context/ownership approved
 // ioctl: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
@@ -84,5 +94,7 @@ pub const CANOPUS_FW_SEM_WAIT_CALLABLE: usize = canopus_thumb_callable(0xc359511
 // sem_post: restricted - not exported until context/ownership approved
 // sem_trywait: restricted - not exported until context/ownership approved
 // sem_wait: restricted - not exported until context/ownership approved
+// service_manager_get_profile: restricted - not exported until context/ownership approved
+// service_manager_register: restricted - not exported until context/ownership approved
 // unlink: restricted - not exported until context/ownership approved
 

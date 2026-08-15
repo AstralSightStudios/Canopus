@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-SERVICE-001",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "question": "Which 4.100.108 functions implement the Bluetooth service-manager register and get-profile paths?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.108.service.service_manager_register",
+    "xiaomi-band-11-4.100.108.service.service_manager_get_profile"
+  ],
+  "prototype_hypothesis": "service_manager_register(service) registers a Bluetooth service into the per-type slot table; service_manager_get_profile(profile_id) returns the registered profile or asserts/logs when absent.",
+  "callsite_evidence": [
+    "sub_C471CA4 decompiles to the service register path and references '[129][service_manager]: %s service register success' and '[131][service_manager]: %s service had registered', storing the service into the slot table unk_200BC73C indexed by the service-type byte",
+    "sub_C471CF4 decompiles to the profile getter and references '[195][service_manager]: %s profile-id:%d is not found, profile:%p' plus the source path ../../frameworks/connectivity/bluetooth/service/profiles/service_manager.c:196, returning the profile callback from the registered service slot",
+    "Both use the same slot table base (dword_200BC73C) and the same BT notification helper (sub_C470614) as the 3.101.036 service-manager, and sit in the same XIP cluster",
+    "Produced by the multi-layer matcher from the verified 3.101.036 set and confirmed by decompiling the exact 4.100.108 IDB"
+  ],
+  "control_flow_evidence": [
+    "register fails closed when the slot is already taken (logs 'service had registered' and returns the error)",
+    "get_profile calls the profile callback at offset 52 of the registered service, and logs the 'not found' diagnostic before the assert helper when the slot is empty",
+    "Both must run in the Bluetooth service context (not a bare loader constructor)"
+  ],
+  "ownership_analysis": "The service manager owns the registered service slots; callers must not free a registered service while it is live. get_profile borrows the profile for the duration of the call.",
+  "unsafe_assumptions": [
+    "The slot table layout (unk_200BC73C, 2 words per service type) and the profile callback offset (+52) are exact 4.100.108 layout",
+    "The service-type byte and profile-id encodings must match the caller's protocol; not cross-validated against other firmware"
+  ],
+  "recommended_probe": "Register a service and fetch its profile through the target-private facade; confirm the success log and the profile callback dispatch.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-16T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C471CA4",
+      "role": "service_manager_register"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C471CF4",
+      "role": "service_manager_get_profile"
+    }
+  ]
+}

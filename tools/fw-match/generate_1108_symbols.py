@@ -61,6 +61,18 @@ VERIFIED = [
      "int32_t(const void *)",
      ["EVID-APP-001"],
      "Launcher ordered-app-list setter. Verified in exact IDB: references 'protobuf_set_ordered_app_list' with '[%s] %s: app list is null'/'can't found app %s'/'show'/'hidden' diagnostics; serializes the 16-byte-per-app ordered list to the launcher."),
+    ("hidden_and_show_app_cb", "launcher", "0xC545E50",
+     "int32_t(const void *)",
+     ["EVID-APP-001"],
+     "Launcher hidden/show app callback. Verified in exact IDB: references '[%s] %s: hidden_and_show_app_cb' with 'hidden appid %lu'/'show appid %lu' logs; handles appid 26 (hide) and 27 (show)."),
+    ("service_manager_register", "service", "0xC471CA4",
+     "int32_t(const void *)",
+     ["EVID-BT-SERVICE-001"],
+     "Bluetooth service-manager register. Verified in exact IDB: references '[129][service_manager]: %s service register success' and '[131][service_manager]: %s service had registered'; registers the service into the slot table indexed by service type."),
+    ("service_manager_get_profile", "service", "0xC471CF4",
+     "int32_t(int32_t)",
+     ["EVID-BT-SERVICE-001"],
+     "Bluetooth service-manager get-profile. Verified in exact IDB: references '[195][service_manager]: %s profile-id:%d is not found' and ../../frameworks/connectivity/bluetooth/service/profiles/service_manager.c:196; returns the registered profile for a profile id."),
 ]
 
 
