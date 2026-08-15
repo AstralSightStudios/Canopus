@@ -4,7 +4,7 @@
  * firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
  * sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
  * revision : 4
- * input_digest: 1a0b912ea5cb9842
+ * input_digest: 3276acd71721550f
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
@@ -17,6 +17,7 @@
 typedef struct file_operations file_operations;
 typedef struct launcher_order_record launcher_order_record;
 typedef struct stock_timespec_t stock_timespec_t;
+typedef struct canopus_thirdparty_message_content canopus_thirdparty_message_content;
 typedef struct firmware_page_descriptor firmware_page_descriptor;
 typedef struct canopus_interconnect_app_info canopus_interconnect_app_info;
 typedef struct firmware_notification_message firmware_notification_message;
@@ -32,7 +33,7 @@ struct file_operations {
     void * close; /* +0x4 */
     void * read; /* +0x8 */
     void * write; /* +0xc */
-    uint8_t _pad_10[4];
+    void * lseek; /* +0x10 */
     void * ioctl; /* +0x14 */
     uint8_t _tail[24];
 };
@@ -46,6 +47,15 @@ typedef void (*canopus_lvx_event_cb)(void *);
 struct stock_timespec_t {
     int64_t tv_sec; /* +0x0 */
     int32_t tv_nsec; /* +0x8 */
+};
+struct canopus_thirdparty_message_content {
+    uint32_t message_id; /* +0x0 */
+    uint16_t message_kind; /* +0x4 */
+    uint8_t _pad_6[10];
+    void * package_name; /* +0x10 */
+    void * fingerprint_blob; /* +0x14 */
+    void * payload_blob; /* +0x18 */
+    uint8_t _tail[308];
 };
 struct firmware_page_descriptor {
     void * parent_descriptor; /* +0x0 */
@@ -259,6 +269,11 @@ static inline int32_t canopus_fw_bt_adapter_get_state(void * a0) {
     return ((canopus_fw_bt_adapter_get_state_fn)(uintptr_t)0x0C398D31)(a0);
 }
 
+typedef int64_t (*canopus_fw_lseek_fn)(int, int64_t, int);
+static inline int64_t canopus_fw_lseek(int a0, int64_t a1, int a2) {
+    return ((canopus_fw_lseek_fn)(uintptr_t)0x0C1C10AD)(a0, a1, a2);
+}
+
 typedef void * (*canopus_fw_lvx_label_create_fn)(void *);
 static inline void * canopus_fw_lvx_label_create(void * a0) {
     return ((canopus_fw_lvx_label_create_fn)(uintptr_t)0x0C588339)(a0);
@@ -275,6 +290,7 @@ static inline void * canopus_fw_lvx_msgbox_create(void * a0, void * a1) {
     return ((canopus_fw_lvx_msgbox_create_fn)(uintptr_t)0x0C4A93A5)(a0, a1);
 }
 
+/* lv_timer_del: not APPROVED (approval_state=PENDING, evidence=0) - no veneer */
 typedef void * (*canopus_fw_lvx_page_content_create_fn)(void *);
 static inline void * canopus_fw_lvx_page_content_create(void * a0) {
     return ((canopus_fw_lvx_page_content_create_fn)(uintptr_t)0x0CA4E8E9)(a0);
@@ -358,6 +374,11 @@ static inline void canopus_fw_lvx_msgbox_set_content(void * a0, uint32_t a1, con
 typedef int32_t (*canopus_fw_page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
 static inline int32_t canopus_fw_page_goto(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
     return ((canopus_fw_page_goto_fn)(uintptr_t)0x0CA539F9)(a0, a1, a2, a3);
+}
+
+typedef int (*canopus_fw_thirdparty_submit_message_content_fn)(const void *, uint32_t, uint32_t);
+static inline int canopus_fw_thirdparty_submit_message_content(const void * a0, uint32_t a1, uint32_t a2) {
+    return ((canopus_fw_thirdparty_submit_message_content_fn)(uintptr_t)0x0CA8B0BD)(a0, a1, a2);
 }
 
 typedef void (*canopus_fw_lvx_object_delete_fn)(void *);
@@ -455,7 +476,7 @@ static inline int canopus_fw_close(int a0) {
  * lv_image_create: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
  * lv_timer_create: restricted - not exported until context/ownership approved
- * lv_timer_del: restricted - not exported until context/ownership approved
+ * lv_timer_del: not APPROVED - no veneer until approval_state=APPROVED with evidence
  * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
  * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated

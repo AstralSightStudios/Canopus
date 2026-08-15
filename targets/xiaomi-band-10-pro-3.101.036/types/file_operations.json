@@ -33,7 +33,14 @@
       "offset": 12,
       "width": 4,
       "signedness": "pointer",
-      "provenance": "slot order matches stock table; entry not located"
+      "provenance": "driver_write_dispatch 0x0C1C30C8 via fops+0x0c"
+    },
+    {
+      "name": "lseek",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "public fs_lseek wrapper 0x0C1C10AC dispatches fops+0x10; returns int64_t"
     },
     {
       "name": "ioctl",

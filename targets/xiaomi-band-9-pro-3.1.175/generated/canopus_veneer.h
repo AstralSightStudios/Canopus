@@ -4,7 +4,7 @@
  * firmware : 3.1.175 (CONBINE_LTALM054_T1175_04141021_release_5793)
  * sha256   : 4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b
  * revision : 1
- * input_digest: be5d2634472cd9ef
+ * input_digest: 3e0d09824655519c
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
 #define CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_175_H
@@ -17,6 +17,7 @@
 typedef struct file_operations file_operations;
 typedef struct launcher_order_record launcher_order_record;
 typedef struct stock_timespec_t stock_timespec_t;
+typedef struct canopus_thirdparty_message_content canopus_thirdparty_message_content;
 typedef struct firmware_page_descriptor firmware_page_descriptor;
 typedef struct canopus_interconnect_app_info canopus_interconnect_app_info;
 typedef struct firmware_notification_message firmware_notification_message;
@@ -32,9 +33,11 @@ struct file_operations {
     void * close; /* +0x4 */
     void * read; /* +0x8 */
     void * write; /* +0xc */
-    uint8_t _pad_10[4];
+    void * lseek; /* +0x10 */
     void * ioctl; /* +0x14 */
-    uint8_t _tail[24];
+    uint8_t _pad_18[8];
+    void * fsync; /* +0x20 */
+    uint8_t _tail[12];
 };
 struct launcher_order_record {
     uint8_t app_name[128]; /* +0x0 */
@@ -46,6 +49,15 @@ typedef void (*canopus_lvx_event_cb)(void *);
 struct stock_timespec_t {
     int64_t tv_sec; /* +0x0 */
     int32_t tv_nsec; /* +0x8 */
+};
+struct canopus_thirdparty_message_content {
+    uint32_t message_id; /* +0x0 */
+    uint16_t message_kind; /* +0x4 */
+    uint8_t _pad_6[10];
+    void * package_name; /* +0x10 */
+    void * fingerprint_blob; /* +0x14 */
+    void * payload_blob; /* +0x18 */
+    uint8_t _tail[268];
 };
 struct firmware_page_descriptor {
     void * parent_descriptor; /* +0x0 */
@@ -242,6 +254,11 @@ static inline void * canopus_fw_mm_alloc(uint32_t a0) {
     return ((canopus_fw_mm_alloc_fn)(uintptr_t)0x0C0F24E1)(a0);
 }
 
+typedef int (*canopus_fw_thirdparty_submit_message_content_fn)(const void *);
+static inline int canopus_fw_thirdparty_submit_message_content(const void * a0) {
+    return ((canopus_fw_thirdparty_submit_message_content_fn)(uintptr_t)0x0C4CF24B)(a0);
+}
+
 typedef int32_t (*canopus_fw_unlink_fn)(const char *);
 static inline int32_t canopus_fw_unlink(const char * a0) {
     return ((canopus_fw_unlink_fn)(uintptr_t)0x0C3800E9)(a0);
@@ -370,6 +387,11 @@ static inline int canopus_fw_bt_pair_display_reply(void * a0) {
     return ((canopus_fw_bt_pair_display_reply_fn)(uintptr_t)0x0C3BFD95)(a0);
 }
 
+typedef int (*canopus_fw_fsync_fn)(int);
+static inline int canopus_fw_fsync(int a0) {
+    return ((canopus_fw_fsync_fn)(uintptr_t)0x0C380149)(a0);
+}
+
 typedef void (*canopus_fw_lvx_timer_delete_fn)(void *);
 static inline void canopus_fw_lvx_timer_delete(void * a0) {
     return ((canopus_fw_lvx_timer_delete_fn)(uintptr_t)0x0C25B4B9)(a0);
@@ -406,6 +428,11 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
 typedef int32_t (*canopus_fw_rename_fn)(const char *, const char *);
 static inline int32_t canopus_fw_rename(const char * a0, const char * a1) {
     return ((canopus_fw_rename_fn)(uintptr_t)0x0C37FA25)(a0, a1);
+}
+
+typedef int64_t (*canopus_fw_lseek_fn)(int, int64_t, int);
+static inline int64_t canopus_fw_lseek(int a0, int64_t a1, int a2) {
+    return ((canopus_fw_lseek_fn)(uintptr_t)0x0C37F649)(a0, a1, a2);
 }
 
 typedef int (*canopus_fw_lvx_style_apply_fn)(void *, const void *, uint32_t, uint32_t);

@@ -203,6 +203,7 @@ static int sup_safe_mode_allows(const struct canopus_supervisor_v1 *sup,
     case CANOPUS_SUP_CMD_ENABLE:
     case CANOPUS_SUP_CMD_UPDATE:
     case CANOPUS_SUP_CMD_ACTIVATE:
+    case CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT:
         return 0; /* activation is never allowed in safe mode */
     default:
         return 0;
@@ -338,7 +339,29 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
             break;
         }
         module = &sup->modules[slot];
-        rc = sup_activate_module(sup, module);
+        if ((module->state == CANOPUS_STATE_INSTALLED ||
+             module->state == CANOPUS_STATE_ENABLED) &&
+            module->intent == CANOPUS_SUP_INTENT_ENABLED) {
+            int st = sup->platform != 0 && sup->platform->load_module != 0
+                         ? sup->platform->load_module(
+                               sup->platform_cookie, (uint32_t)slot,
+                               (const char *)module->module_id,
+                               module->lifecycle_class)
+                         : -1;
+            if (st < 0) {
+                module->state = CANOPUS_STATE_FAILED;
+                module->activation_error = (uint32_t)st;
+                sup->error_code = CANOPUS_SUP_ERR_LOAD;
+                rc = CANOPUS_RESULT_FAILED;
+            } else {
+                module->state = (uint32_t)st;
+                rc = st == CANOPUS_STATE_READY
+                         ? sup_activate_module(sup, module)
+                         : CANOPUS_RESULT_COMPLETED;
+            }
+        } else {
+            rc = sup_activate_module(sup, module);
+        }
         if (rc == CANOPUS_RESULT_COMPLETED ||
             rc == CANOPUS_RESULT_FAILED) {
             int persist_rc = canopus_supervisor_save_registry(sup);
@@ -349,6 +372,16 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
         }
         break;
     }
+
+    case CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT:
+        rc = canopus_supervisor_activate_restored_modules(sup) == 0
+                 ? CANOPUS_RESULT_COMPLETED
+                 : CANOPUS_RESULT_FAILED;
+        if (rc == CANOPUS_RESULT_FAILED &&
+            sup->error_code == CANOPUS_SUP_ERR_NONE) {
+            sup->error_code = CANOPUS_SUP_ERR_LOAD;
+        }
+        break;
 
     case CANOPUS_SUP_CMD_ENTER_SAFE_MODE:
         sup->safe_mode = 1u;
@@ -986,7 +1019,8 @@ int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup)
 /* Restore the slot table after a fresh load. Absent registry == fresh
  * install (not an error). Enabled intents are loaded through the platform;
  * remove intents delete their artifacts and never re-register. */
-int canopus_supervisor_restore_registry(struct canopus_supervisor_v1 *sup)
+static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
+                                int load_enabled_modules)
 {
     uint8_t buf[CANOPUS_SUP_REGISTRY_SIZE];
     uint32_t i;
@@ -1045,7 +1079,8 @@ int canopus_supervisor_restore_registry(struct canopus_supervisor_v1 *sup)
         sup->modules[slot].activation_error =
             sup_registry_error_decode(flags);
         sup->modules[slot].flags &= CANOPUS_SUP_FLAG_PUBLIC_MASK;
-        if (sup->modules[slot].intent == CANOPUS_SUP_INTENT_ENABLED &&
+        if (load_enabled_modules &&
+            sup->modules[slot].intent == CANOPUS_SUP_INTENT_ENABLED &&
             sup->platform->load_module != 0) {
             int st = sup->platform->load_module(
                 sup->platform_cookie, (uint32_t)slot, (const char *)id,
@@ -1069,4 +1104,54 @@ int canopus_supervisor_restore_registry(struct canopus_supervisor_v1 *sup)
         }
     }
     return 0;
+}
+
+int canopus_supervisor_restore_registry(struct canopus_supervisor_v1 *sup)
+{
+    return sup_restore_registry(sup, 1);
+}
+
+int canopus_supervisor_restore_registry_metadata(struct canopus_supervisor_v1 *sup)
+{
+    return sup_restore_registry(sup, 0);
+}
+
+int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *sup)
+{
+    uint32_t i;
+    int changed = 0;
+    int failed = 0;
+
+    if (sup == 0 || sup->platform == 0 || sup->platform->load_module == 0) {
+        return -1;
+    }
+    for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+        struct canopus_sup_module_v1 *module = &sup->modules[i];
+        int st;
+
+        if (module->intent != CANOPUS_SUP_INTENT_ENABLED ||
+            module->state != CANOPUS_STATE_INSTALLED) {
+            continue;
+        }
+        changed = 1;
+        st = sup->platform->load_module(sup->platform_cookie, i,
+                                        (const char *)module->module_id,
+                                        module->lifecycle_class);
+        if (st < 0) {
+            module->state = CANOPUS_STATE_FAILED;
+            module->activation_error = (uint32_t)st;
+            sup->error_code = CANOPUS_SUP_ERR_LOAD;
+            failed = -1;
+            continue;
+        }
+        module->state = (uint32_t)st;
+        if (st == CANOPUS_STATE_READY &&
+            sup_activate_module(sup, module) != CANOPUS_RESULT_COMPLETED) {
+            failed = -1;
+        }
+    }
+    if (changed && canopus_supervisor_save_registry(sup) != 0) {
+        return -1;
+    }
+    return failed;
 }

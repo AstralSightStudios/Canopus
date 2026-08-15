@@ -79,14 +79,26 @@ pub const CONN_STATUS_FAILED: i32 = 2;
 pub const CONN_STATUS_CLOSED: i32 = 3;
 
 /// Connection-object layout written by [`interconnect_connect`]: `conn[0]` is
-/// the firmware node, `conn[4]` the recv callback, `conn[8]` the active flag.
-/// A module owns a buffer of at least 12 bytes for the lifetime of the link.
+/// the firmware node, `conn[4]` the recv callback, and `conn[8]` a
+/// client/server-mode word used by send dispatch. It is not a reliable
+/// connection-active flag. A module owns a buffer of at least 12 bytes for the
+/// lifetime of the link.
 pub const CONN_RECV_CB_OFFSET: usize = 4;
 
-/// Default interconnect phone-side package. The phone routes messages to a
-/// connection by this package name only — the app display name is not part of
-/// the routing.
+/// Firmware-configured phone companion package. This is **not** a synthetic
+/// wearable quick-app identity: named proxy routing still resolves the client
+/// through the wearable quick-app appinfo registry. Native modules use this as
+/// the `BasicInfo.package_name` of [`thirdparty_send_phone_message`] instead.
+/// [`quickapp_register_app`] is not a routing-only substitute because it also
+/// installs quick-app/page/launcher state.
 pub const INTERCONNECT_APK_PACKAGE: &[u8] = b"com.xiaomi.miwear.interconnect\0";
+
+/// Exact stock payload bound used by the native Lyra bridge. It keeps the
+/// synchronous direct-submission scratch allocation bounded below `u16::MAX`.
+pub const THIRD_PARTY_PAYLOAD_CAPACITY: usize = 8192;
+const THIRD_PARTY_MESSAGE_ID: u32 = 0x0016_0914;
+const THIRD_PARTY_MESSAGE_KIND: u16 = 9;
+const THIRD_PARTY_MESSAGE_TAIL_SIZE: usize = 0x10c;
 
 /// Connection/event message header (`uv_miwear_message_t`), 20 bytes.
 pub type InterconnectConnMessage = canopus_target_generated::canopus_interconnect_message;
@@ -161,8 +173,56 @@ pub unsafe fn interconnect_close(conn: *mut core::ffi::c_void) -> i32 {
     unsafe { canopus_target_generated::canopus_fw_interconnect_close(conn) }
 }
 
-/// Registers a package in the quickapp routing registry so a native module's
-/// own package name resolves on the watch→phone send path.
+/// Submits one THIRDPARTY_APP/SEND_PHONE_MESSAGE payload without requiring a
+/// wearable quick-app appinfo entry. `fingerprint` is deliberately omitted.
+/// The firmware borrows the exact-target envelope and payload only until the
+/// generated submit binding returns.
+///
+/// # Safety
+/// `package_name` must point to a readable NUL-terminated string. `payload` must
+/// point to `length` readable bytes when `length != 0`. Call only from a context
+/// allowed to enter the miwear message dispatcher.
+pub unsafe fn thirdparty_send_phone_message(
+    package_name: *const u8,
+    payload: *const u8,
+    length: u16,
+) -> i32 {
+    if package_name.is_null() || (length != 0 && payload.is_null()) {
+        return -22;
+    }
+
+    let mut payload_blob = [0u8; THIRD_PARTY_PAYLOAD_CAPACITY + 2];
+    payload_blob[..2].copy_from_slice(&length.to_le_bytes());
+    if length != 0 {
+        unsafe {
+            core::ptr::copy_nonoverlapping(
+                payload,
+                payload_blob.as_mut_ptr().add(2),
+                length as usize,
+            );
+        }
+    }
+    let content = canopus_target_generated::canopus_thirdparty_message_content {
+        message_id: THIRD_PARTY_MESSAGE_ID,
+        message_kind: THIRD_PARTY_MESSAGE_KIND,
+        _pad_6: [0; 10],
+        package_name: package_name.cast_mut().cast(),
+        fingerprint_blob: core::ptr::null_mut(),
+        payload_blob: payload_blob.as_mut_ptr().cast(),
+        _tail: [0; THIRD_PARTY_MESSAGE_TAIL_SIZE],
+    };
+    unsafe {
+        canopus_target_generated::canopus_fw_thirdparty_submit_message_content(
+            core::ptr::addr_of!(content).cast(),
+        )
+    }
+}
+
+/// Performs the firmware's full quick-app registration flow. Besides adding
+/// appinfo used by interconnect routing, this can create a quick-app context,
+/// register page/app descriptors, update launcher state, and emit registration
+/// events. It must not be used merely to give a Canopus native module a custom
+/// transport package.
 ///
 /// # Safety
 /// `info` must point at a valid [`QuickAppInfo`]; every string field must be a
@@ -1007,7 +1067,9 @@ extern "C" fn b9_timer_bridge(context: *mut core::ffi::c_void) -> i32 {
 }
 
 /// Creates a one-shot miwear timer, then queues its callback to the Bluelet
-/// owner thread using the module's owner/event callback contract.
+/// owner thread using the module's owner/event callback contract. A nonzero
+/// handle transfers ownership of `argument` to the timer; on failure the caller
+/// retains ownership.
 pub unsafe fn bt_timer_add(
     owner: *mut core::ffi::c_void,
     delay_ms: u32,
@@ -1054,9 +1116,6 @@ pub unsafe fn bt_timer_add(
 
     let mut timer = 0u32;
     if create(&mut timer, b9_timer_bridge, 0) != 0 || timer == 0 {
-        if !argument.is_null() {
-            unsafe { bt_free(argument) };
-        }
         unsafe { bt_free(context.cast()) };
         return 0;
     }
@@ -1069,9 +1128,6 @@ pub unsafe fn bt_timer_add(
             ))
         };
         let _ = delete(timer);
-        if !argument.is_null() {
-            unsafe { bt_free(argument) };
-        }
         unsafe { bt_free(context.cast()) };
         return 0;
     }
@@ -1394,6 +1450,17 @@ pub unsafe fn nuttx_write(fd: i32, buffer: *const core::ffi::c_void, count: u32)
         ))
     };
     f(fd, buffer, count)
+}
+
+/// Positions the current-process fd using the recovered 64-bit POSIX ABI.
+pub unsafe fn nuttx_lseek(fd: i32, offset: i64, whence: i32) -> i64 {
+    unsafe { canopus_target_generated::canopus_fw_lseek(fd, offset, whence) }
+}
+
+/// Flushes the current-process fd. Band-9's wrapper uses fops+0x20 and falls
+/// back to ioctl FIOC_SYNC (0x50D) when the filesystem has no fsync slot.
+pub unsafe fn nuttx_fsync(fd: i32) -> i32 {
+    unsafe { canopus_target_generated::canopus_fw_fsync(fd) }
 }
 
 /// Band-9's fd-level ioctl wrapper has not yet passed exact-firmware evidence
@@ -1719,6 +1786,32 @@ const _: () = {
     assert!(core::mem::offset_of!(InterconnectConnMessage, length) == 4);
     assert!(core::mem::offset_of!(InterconnectConnMessage, value) == 16);
     assert!(CONN_RECV_CB_OFFSET + 4 <= 12);
+    #[cfg(target_pointer_width = "32")]
+    assert!(
+        core::mem::size_of::<canopus_target_generated::canopus_thirdparty_message_content>() == 296
+    );
+    #[cfg(target_pointer_width = "32")]
+    assert!(
+        core::mem::offset_of!(
+            canopus_target_generated::canopus_thirdparty_message_content,
+            package_name
+        ) == 16
+    );
+    #[cfg(target_pointer_width = "32")]
+    assert!(
+        core::mem::offset_of!(
+            canopus_target_generated::canopus_thirdparty_message_content,
+            fingerprint_blob
+        ) == 20
+    );
+    #[cfg(target_pointer_width = "32")]
+    assert!(
+        core::mem::offset_of!(
+            canopus_target_generated::canopus_thirdparty_message_content,
+            payload_blob
+        ) == 24
+    );
+    assert!(THIRD_PARTY_PAYLOAD_CAPACITY <= u16::MAX as usize);
     // The band-9 launcher app descriptor is 60 bytes (band-10 is 64).
     #[cfg(target_pointer_width = "32")]
     assert!(core::mem::size_of::<launcher_app_descriptor>() == 60);
@@ -1759,6 +1852,35 @@ mod tests {
             INTERCONNECT_APK_PACKAGE,
             b"com.xiaomi.miwear.interconnect\0"
         );
+        if core::mem::size_of::<*const u8>() == 4 {
+            assert_eq!(
+                core::mem::size_of::<canopus_target_generated::canopus_thirdparty_message_content>(
+                ),
+                296
+            );
+            assert_eq!(
+                core::mem::offset_of!(
+                    canopus_target_generated::canopus_thirdparty_message_content,
+                    package_name
+                ),
+                16
+            );
+            assert_eq!(
+                core::mem::offset_of!(
+                    canopus_target_generated::canopus_thirdparty_message_content,
+                    fingerprint_blob
+                ),
+                20
+            );
+            assert_eq!(
+                core::mem::offset_of!(
+                    canopus_target_generated::canopus_thirdparty_message_content,
+                    payload_blob
+                ),
+                24
+            );
+        }
+        assert_eq!(THIRD_PARTY_PAYLOAD_CAPACITY, 8192);
     }
 
     #[test]

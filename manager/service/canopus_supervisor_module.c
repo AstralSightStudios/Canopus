@@ -13,10 +13,20 @@ extern const struct canopus_sup_platform_v1 canopus_sup_platform;
 
 static struct canopus_supervisor_v1 g_sup;
 static int g_device_registered;
+static int g_module_activation_started;
 
 struct canopus_supervisor_v1 *canopus_supervisor_get(void)
 {
     return &g_sup;
+}
+
+int canopus_supervisor_restore_after_boot(void)
+{
+    if (g_module_activation_started) {
+        return 0;
+    }
+    g_module_activation_started = 1;
+    return canopus_supervisor_activate_restored_modules(&g_sup);
 }
 
 __attribute__((constructor)) static void canopus_sup_ctor(void)
@@ -31,14 +41,11 @@ __attribute__((constructor)) static void canopus_sup_ctor(void)
         && canopus_sup_platform.register_device(0) == 0) {
         g_device_registered = 1;
     }
-    /* Restore the persisted slot table so modules installed in a previous
-     * session survive reboot / canopus reinstall. Enabled intents are loaded
-     * here; remove intents delete their inbox artifacts. A registry that
-     * exists but cannot be read back (truncated write, bad magic) is a real
-     * storage failure, not a fresh install: surface it as ERR_REGISTRY so the
-     * installer status shows error= instead of silently dropping every module.
-     * Per-module load failures already leave the slot FAILED with ERR_LOAD. */
-    if (canopus_supervisor_restore_registry(&g_sup) != 0) {
+    /* Preserve the registry-visible slot table during boot, but do not load
+     * enabled third-party modules here. Stock `insmod` executes constructors on
+     * a 7.9 KiB stack; nested Rust modules belong on the first Manager page's
+     * regular UI task. */
+    if (canopus_supervisor_restore_registry_metadata(&g_sup) != 0) {
         g_sup.error_code = CANOPUS_SUP_ERR_REGISTRY;
     }
 }

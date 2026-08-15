@@ -32,6 +32,7 @@ fn map_rust_type(t: &str) -> Option<String> {
         "void" => Some("()".into()),
         "int" => Some("i32".into()),
         "int32" | "int32_t" => Some("i32".into()),
+        "int64" | "int64_t" => Some("i64".into()),
         "int16" | "int16_t" => Some("i16".into()),
         "int8" | "int8_t" => Some("i8".into()),
         "uint32" | "uint32_t" => Some("u32".into()),
@@ -511,6 +512,15 @@ mod tests {
         let (return_type, args) = parse_proto("int *(void)").unwrap();
         assert_eq!(return_type, "int *");
         assert!(args.is_empty());
+    }
+
+    #[test]
+    fn int64_lseek_prototype_maps_to_i64() {
+        assert_eq!(map_rust_type("int64_t").as_deref(), Some("i64"));
+        let (return_type, args) = parse_proto("int64_t(int, int64_t, int)").unwrap();
+        assert_eq!(map_rust_type(&return_type).as_deref(), Some("i64"));
+        assert_eq!(args, vec!["int", "int64_t", "int"]);
+        assert_eq!(map_rust_type(&args[1]).as_deref(), Some("i64"));
     }
 
     #[test]

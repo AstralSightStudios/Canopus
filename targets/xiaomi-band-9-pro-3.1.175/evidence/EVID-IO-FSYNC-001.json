@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-IO-FSYNC-001",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "Does the exact Band-9 firmware expose a public fd-level fsync wrapper suitable for target-private streaming?",
+  "candidate_symbols": ["xiaomi-band-9-pro-3.1.175.nuttx.fsync"],
+  "prototype_hypothesis": "int fsync(int fd);",
+  "callsite_evidence": [
+    "IDA sub_C380148 @ 0x0C380148 resolves the current-process fd and dispatches a filesystem fsync callback through fops+0x20.",
+    "When the fsync callback is absent, the wrapper dispatches ioctl command 0x50D (FIOC_SYNC); negative internal errno is converted to positive errno and -1."
+  ],
+  "control_flow_evidence": [
+    "The wrapper is called by multiple exact-target firmware functions, including stream/storage paths.",
+    "The recovered ABI is one fd argument in R0 and an int result; no pointer or hidden argument is used."
+  ],
+  "ownership_analysis": "fd is current-process and caller-owned; fsync does not transfer ownership.",
+  "unsafe_assumptions": ["Device probe remains pending; filesystem-specific persistence behavior is not characterized."],
+  "recommended_probe": "Write a known stream record, call fsync, remove power or restart according to the target test protocol, then verify persistence and errno behavior.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-14T00:00:00Z",
+  "artifacts": [
+    { "uri": "ida://old_fw_extract/data/ota/app/vela_ap.bin.i64#0x0C380148", "role": "public fsync wrapper" },
+    { "uri": "ida://old_fw_extract/data/ota/app/vela_ap.bin.i64#fops+0x20", "role": "fsync dispatch slot" }
+  ]
+}

@@ -446,7 +446,9 @@ pub unsafe fn bt_free(allocation: *mut core::ffi::c_void) {
     f(allocation);
 }
 
-/// One-shot Bluetooth FSM timer. Returns a nonzero handle, 0 on failure.
+/// One-shot Bluetooth FSM timer. Returns a nonzero handle, 0 on failure. A
+/// nonzero handle transfers ownership of `argument` to the timer; on failure
+/// the caller retains ownership.
 /// Timer insertion at `0x0C7D2C00` updates the timer list but does not signal the
 /// sleeping FSM semaphore; use it from an active owner callback, or pair delayed
 /// work with a separately guaranteed external wake.
@@ -1191,6 +1193,12 @@ pub unsafe fn nuttx_write(fd: i32, buffer: *const core::ffi::c_void, count: u32)
     f(fd, buffer, count)
 }
 
+/// Positions the current-process fd using the recovered 64-bit NuttX ABI.
+/// `offset` is aligned to R2/R3 by AAPCS; `whence` is passed on the stack.
+pub unsafe fn nuttx_lseek(fd: i32, offset: i64, whence: i32) -> i64 {
+    unsafe { canopus_target_generated::canopus_fw_lseek(fd, offset, whence) }
+}
+
 /// POSIX fd-level ioctl wrapper. The 3.101.036 NuttX VFS text is identical to
 /// 3.101.030 around this wrapper; the Thumb callable is `sub_C1C0D2C + 1`.
 pub unsafe fn nuttx_ioctl(fd: i32, command: u32, argument: usize) -> i32 {
@@ -1231,16 +1239,16 @@ pub unsafe fn nuttx_rename(old_path: *const u8, new_path: *const u8) -> i32 {
 //     └ uv_miwear_message_recv_cb @0x0CAA35A0 routes to per-client msq
 //   "miwear-server"   quickapp_proxy_server_start @0x0C526628
 //   connection framework (named servers over a polled socket/msq transport)
-//     ├ server create  sub_C2D1EF0
-//     ├ client connect sub_C2D2034  ← [`interconnect_connect`]
-//     ├ send           sub_C2D20C4  ← [`interconnect_send`]
+//     ├ server create  sub_C2D1FB0
+//     ├ client connect sub_C2D20F4  ← [`interconnect_connect`]
+//     ├ send           sub_C2D2184  ← [`interconnect_send`]
 //     └ close          sub_C2D2198  ← [`interconnect_close`]
 //   quickapp JS: system.interconnect → jse_miwear.cpp → the four calls above.
 //
 // The framework is shared by the AIOTJS quickapp glue and the
 // `interconnect_impl.cpp` feature module; a native module can register a
 // connection the same way, without the JS engine. The global loop handle
-// (`dword_20121F90`) is the registry all named servers live on.
+// (`dword_20121F80`) is the registry all named servers live on.
 //
 // The recovered callables, message/app-info layouts, and callback typedefs are
 // generated from `symbols/` + `types/` into `canopus_target_generated` (single
@@ -1263,18 +1271,26 @@ pub const CONN_STATUS_FAILED: i32 = 2;
 pub const CONN_STATUS_CLOSED: i32 = 3;
 
 /// Connection-object layout written by [`interconnect_connect`]: `conn[0]` is
-/// the firmware node, `conn[4]` the recv callback, `conn[8]` the active flag.
-/// A module owns a buffer of at least 12 bytes for the lifetime of the link.
+/// the firmware node, `conn[4]` the recv callback, and `conn[8]` a
+/// client/server-mode word used by send dispatch. It is not a reliable
+/// connection-active flag. A module owns a buffer of at least 12 bytes for the
+/// lifetime of the link.
 pub const CONN_RECV_CB_OFFSET: usize = 4;
 
-/// Default interconnect phone-side package. The firmware reads it from the
-/// `interconnect.appname` config property (`property_get("interconnect.appname")`
-/// at `0x0C66B8C0`); every `*.appname` property holds a `com.xiaomi.miwear.*`
-/// package name. The phone routes messages to a connection by this package
-/// name only — the app display name is not part of the routing. A native module
-/// is not limited to this value: it may register and connect its own package
-/// name (see [`quickapp_register_app`]).
+/// Firmware-configured phone companion package. This is **not** a synthetic
+/// wearable quick-app identity: named proxy routing still resolves the client
+/// through the wearable quick-app appinfo registry. Native modules use this as
+/// the `BasicInfo.package_name` of [`thirdparty_send_phone_message`] instead.
+/// [`quickapp_register_app`] is not a routing-only substitute because it also
+/// installs quick-app/page/launcher state.
 pub const INTERCONNECT_APK_PACKAGE: &[u8] = b"com.xiaomi.miwear.interconnect\0";
+
+/// Exact stock payload bound used by the native Lyra bridge. It keeps the
+/// synchronous direct-submission scratch allocation bounded below `u16::MAX`.
+pub const THIRD_PARTY_PAYLOAD_CAPACITY: usize = 8192;
+const THIRD_PARTY_MESSAGE_ID: u32 = 0x0016_0914;
+const THIRD_PARTY_MESSAGE_KIND: u16 = 9;
+const THIRD_PARTY_MESSAGE_TAIL_SIZE: usize = 0x134;
 
 /// Connection/event message header (`uv_miwear_message_t`), 20 bytes.
 pub type InterconnectConnMessage = canopus_target_generated::canopus_interconnect_message;
@@ -1343,8 +1359,58 @@ pub unsafe fn interconnect_close(conn: *mut core::ffi::c_void) -> i32 {
     unsafe { canopus_target_generated::canopus_fw_interconnect_close(conn) }
 }
 
-/// Registers a package in the quickapp routing registry so a native module's own
-/// package name resolves on the watch→phone send path.
+/// Submits one THIRDPARTY_APP/SEND_PHONE_MESSAGE payload without requiring a
+/// wearable quick-app appinfo entry. `fingerprint` is deliberately omitted.
+/// The firmware borrows the exact-target envelope and payload only until the
+/// generated submit binding returns.
+///
+/// # Safety
+/// `package_name` must point to a readable NUL-terminated string. `payload` must
+/// point to `length` readable bytes when `length != 0`. Call only from a context
+/// allowed to enter the miwear message dispatcher.
+pub unsafe fn thirdparty_send_phone_message(
+    package_name: *const u8,
+    payload: *const u8,
+    length: u16,
+) -> i32 {
+    if package_name.is_null() || (length != 0 && payload.is_null()) {
+        return -22;
+    }
+
+    let mut payload_blob = [0u8; THIRD_PARTY_PAYLOAD_CAPACITY + 2];
+    payload_blob[..2].copy_from_slice(&length.to_le_bytes());
+    if length != 0 {
+        unsafe {
+            core::ptr::copy_nonoverlapping(
+                payload,
+                payload_blob.as_mut_ptr().add(2),
+                length as usize,
+            );
+        }
+    }
+    let content = canopus_target_generated::canopus_thirdparty_message_content {
+        message_id: THIRD_PARTY_MESSAGE_ID,
+        message_kind: THIRD_PARTY_MESSAGE_KIND,
+        _pad_6: [0; 10],
+        package_name: package_name.cast_mut().cast(),
+        fingerprint_blob: core::ptr::null_mut(),
+        payload_blob: payload_blob.as_mut_ptr().cast(),
+        _tail: [0; THIRD_PARTY_MESSAGE_TAIL_SIZE],
+    };
+    unsafe {
+        canopus_target_generated::canopus_fw_thirdparty_submit_message_content(
+            core::ptr::addr_of!(content).cast(),
+            0,
+            0,
+        )
+    }
+}
+
+/// Performs the firmware's full quick-app registration flow. Besides adding
+/// appinfo used by interconnect routing, this can create a quick-app context,
+/// register page/app descriptors, update launcher state, and emit registration
+/// events. It must not be used merely to give a Canopus native module a custom
+/// transport package.
 ///
 /// # Safety
 /// `info` must point at a valid [`QuickAppInfo`]; every string field must be a
@@ -1379,6 +1445,32 @@ const _: () = {
     assert!(core::mem::size_of::<QuickAppInfo>() == 36);
     #[cfg(target_pointer_width = "32")]
     assert!(core::mem::offset_of!(QuickAppInfo, fingerprint) == 16);
+    #[cfg(target_pointer_width = "32")]
+    assert!(
+        core::mem::size_of::<canopus_target_generated::canopus_thirdparty_message_content>() == 336
+    );
+    #[cfg(target_pointer_width = "32")]
+    assert!(
+        core::mem::offset_of!(
+            canopus_target_generated::canopus_thirdparty_message_content,
+            package_name
+        ) == 16
+    );
+    #[cfg(target_pointer_width = "32")]
+    assert!(
+        core::mem::offset_of!(
+            canopus_target_generated::canopus_thirdparty_message_content,
+            fingerprint_blob
+        ) == 20
+    );
+    #[cfg(target_pointer_width = "32")]
+    assert!(
+        core::mem::offset_of!(
+            canopus_target_generated::canopus_thirdparty_message_content,
+            payload_blob
+        ) == 24
+    );
+    assert!(THIRD_PARTY_PAYLOAD_CAPACITY <= u16::MAX as usize);
     assert!(CONNECT_CALLBACK_OFFSET + 4 <= CONNECT_REQUEST_SIZE);
     assert!(CONNECT_ADDRESS_OFFSET + 6 <= CONNECT_REQUEST_SIZE);
     assert!(CONNECT_OPTIONS_OFFSET + 2 <= CONNECT_REQUEST_SIZE);
@@ -1456,7 +1548,34 @@ mod tests {
             assert_eq!(core::mem::offset_of!(QuickAppInfo, display_name), 4);
             assert_eq!(core::mem::offset_of!(QuickAppInfo, fingerprint), 16);
             assert_eq!(core::mem::size_of::<QuickAppInfo>(), 36);
+            assert_eq!(
+                core::mem::size_of::<canopus_target_generated::canopus_thirdparty_message_content>(
+                ),
+                336
+            );
+            assert_eq!(
+                core::mem::offset_of!(
+                    canopus_target_generated::canopus_thirdparty_message_content,
+                    package_name
+                ),
+                16
+            );
+            assert_eq!(
+                core::mem::offset_of!(
+                    canopus_target_generated::canopus_thirdparty_message_content,
+                    fingerprint_blob
+                ),
+                20
+            );
+            assert_eq!(
+                core::mem::offset_of!(
+                    canopus_target_generated::canopus_thirdparty_message_content,
+                    payload_blob
+                ),
+                24
+            );
         }
+        assert_eq!(THIRD_PARTY_PAYLOAD_CAPACITY, 8192);
     }
 
     #[test]

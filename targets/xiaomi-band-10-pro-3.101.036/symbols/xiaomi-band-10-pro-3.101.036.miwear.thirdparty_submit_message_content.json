@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.miwear.thirdparty_submit_message_content",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "thirdparty_submit_message_content",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0CA8B164",
+  "callable_address": "0x0CA8B165",
+  "prototype": "int(const void *, uint32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": ["miwear_message_owner"],
+    "blocking": false
+  },
+  "ownership": {
+    "arguments": "message envelope and all referenced data are borrowed only for the synchronous call",
+    "return_value": "0_on_submission_else_negative_errno"
+  },
+  "side_effects": [
+    "submits_one_prebuilt_miwear_message_without_wearable_quickapp_appinfo_lookup"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": ["EVID-CONN-001"]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": ["EVID-CONN-001"],
+    "source": "IDA sub_C528F00 stock quickapp_send_wearmsg caller and sub_CA8B164 descriptor wrapper"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-14",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int(const void *, uint32_t, uint32_t)",
+    "ownership": "caller-owned envelope and referenced buffers / borrowed for synchronous call",
+    "thread": "miwear_message_owner",
+    "device_probe": "pending"
+  },
+  "notes": "Returns -22 for null. Stock quickapp_send_wearmsg builds a zeroed 336-byte envelope and calls this function with the envelope pointer; the lower wrapper accepts it without repeating the wearable appinfo lookup."
+}

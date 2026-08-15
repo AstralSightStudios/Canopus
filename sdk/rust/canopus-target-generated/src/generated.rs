@@ -4,7 +4,7 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 4
-// input_digest: 1a0b912ea5cb9842
+// input_digest: a36446835943b372
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -28,7 +28,7 @@ pub struct file_operations {
     pub close: *mut core::ffi::c_void, // +0x4
     pub read: *mut core::ffi::c_void, // +0x8
     pub write: *mut core::ffi::c_void, // +0xc
-    pub _pad_10: [u8; 0x4], // 4
+    pub lseek: *mut core::ffi::c_void, // +0x10
     pub ioctl: *mut core::ffi::c_void, // +0x14
     pub _tail: [u8; 0x18], // 24
 }
@@ -48,6 +48,18 @@ pub type canopus_lvx_event_cb = extern "C" fn(*mut core::ffi::c_void) -> ();
 pub struct stock_timespec_t {
     pub tv_sec: i64, // +0x0
     pub tv_nsec: i32, // +0x8
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct canopus_thirdparty_message_content {
+    pub message_id: u32, // +0x0
+    pub message_kind: u16, // +0x4
+    pub _pad_6: [u8; 0xa], // 10
+    pub package_name: *mut core::ffi::c_void, // +0x10
+    pub fingerprint_blob: *mut core::ffi::c_void, // +0x14
+    pub payload_blob: *mut core::ffi::c_void, // +0x18
+    pub _tail: [u8; 0x134], // 308
 }
 
 #[repr(C, packed(4))]
@@ -419,6 +431,15 @@ pub unsafe fn canopus_fw_bt_adapter_get_state(a0: *mut core::ffi::c_void) -> i32
     f(a0)
 }
 
+/// Recovered `lseek` at 0x0C1C10AC. Thumb callable address 0x0C1C10AD.
+pub const CANOPUS_FW_LSEEK_CALLABLE: usize = canopus_thumb_callable(0x0C1C10ADusize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_lseek(a0: i32, a1: i64, a2: i32) -> i64 {
+    let f: extern "C" fn(i32, i64, i32) -> i64 = unsafe { core::mem::transmute(CANOPUS_FW_LSEEK_CALLABLE) };
+    f(a0, a1, a2)
+}
+
 /// Recovered `lvx_label_create` at 0x0C588338. Thumb callable address 0x0C588339.
 pub const CANOPUS_FW_LVX_LABEL_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0C588339usize);
 #[allow(non_snake_case)]
@@ -687,6 +708,15 @@ pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0x0CA539
 pub unsafe fn canopus_fw_page_goto(a0: u32, a1: u32, a2: u32, a3: u32) -> i32 {
     let f: extern "C" fn(u32, u32, u32, u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_PAGE_GOTO_CALLABLE) };
     f(a0, a1, a2, a3)
+}
+
+/// Recovered `thirdparty_submit_message_content` at 0x0CA8B0BC. Thumb callable address 0x0CA8B0BD.
+pub const CANOPUS_FW_THIRDPARTY_SUBMIT_MESSAGE_CONTENT_CALLABLE: usize = canopus_thumb_callable(0x0CA8B0BDusize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_thirdparty_submit_message_content(a0: *const core::ffi::c_void, a1: u32, a2: u32) -> i32 {
+    let f: extern "C" fn(*const core::ffi::c_void, u32, u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_THIRDPARTY_SUBMIT_MESSAGE_CONTENT_CALLABLE) };
+    f(a0, a1, a2)
 }
 
 /// Recovered `heap_zalloc` at 0x0C1E8C88. Thumb callable address 0x0C1E8C89.

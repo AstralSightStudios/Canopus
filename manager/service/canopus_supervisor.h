@@ -73,6 +73,10 @@ enum canopus_sup_command {
     CANOPUS_SUP_CMD_ROLLBACK,
     CANOPUS_SUP_CMD_ENTER_SAFE_MODE,
     CANOPUS_SUP_CMD_ACTIVATE,
+    /* Apply enabled boot intents after the supervisor's own insmod has returned.
+     * The installer watchface invokes this from a Lua/LVGL event turn before
+     * staged native-app publication. */
+    CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT,
 };
 
 /* Stable supervisor error codes (CAN-P1-008). `error_code` holds the
@@ -273,6 +277,12 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
  * it to render status / dispatch commands. */
 struct canopus_supervisor_v1 *canopus_supervisor_get(void);
 
+/* Activate enabled slots after metadata was restored by the supervisor's own
+ * constructor. This must run from a regular miwear UI callback (Manager or
+ * installer watchface command), never from the loader's restricted stack. It
+ * is idempotent for one boot. */
+int canopus_supervisor_restore_after_boot(void);
+
 /* Host convenience: record a newly installed module into a free slot.
  * `module_id` is copied (bounded) and becomes the stable identity used by
  * v2 per-module commands. Returns the slot index or -1 when the table is
@@ -293,6 +303,11 @@ int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup);
  * the platform `load_module` hook; remove intents have their artifacts
  * deleted through `remove_artifact` and are not re-registered. Returns 0. */
 int canopus_supervisor_restore_registry(struct canopus_supervisor_v1 *sup);
+/* Restore only persistent slot metadata. This preserves module count and boot
+ * intents while keeping nested module loading out of the stock `insmod` stack. */
+int canopus_supervisor_restore_registry_metadata(struct canopus_supervisor_v1 *sup);
+/* Load and activate enabled slots previously restored as metadata. */
+int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *sup);
 /* Publish native apps for loaded modules from a caller-owned UI-process
  * bootstrap transaction. Never call this from boot restore or a worker. */
 int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,

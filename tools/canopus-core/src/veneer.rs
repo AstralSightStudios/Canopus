@@ -35,6 +35,7 @@ pub(crate) fn map_type(t: &str) -> Option<String> {
         "void" => Some("void".into()),
         "int" => Some("int".into()),
         "int32" | "int32_t" => Some("int32_t".into()),
+        "int64" | "int64_t" => Some("int64_t".into()),
         "int16" | "int16_t" => Some("int16_t".into()),
         "int8" | "int8_t" => Some("int8_t".into()),
         "uint32" | "uint32_t" => Some("uint32_t".into()),

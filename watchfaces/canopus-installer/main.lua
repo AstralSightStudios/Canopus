@@ -47,6 +47,8 @@ local CMD_REMOVE = 0x43510005
 local CMD_UPDATE = 0x43510006
 local CMD_ROLLBACK = 0x43510007
 local CMD_ENTER_SAFE_MODE = 0x43510008
+local CMD_ACTIVATE = 0x43510009
+local CMD_RESTORE_AFTER_BOOT = 0x4351000A
 
 -- Result states (CANOPUS_RESULT_* from canopus_abi.h).
 local result_names = {
@@ -523,6 +525,17 @@ local function format_status(st)
     return table.concat(lines, "\n")
 end
 
+local function restore_enabled_modules()
+    local ok, message = write_command(CMD_RESTORE_AFTER_BOOT, 0, 0)
+    if not ok then return false, tostring(message) end
+    local st, status_error = read_status()
+    if not st then return false, tostring(status_error) end
+    if st.pending_op ~= CMD_RESTORE_AFTER_BOOT or st.pending_state ~= 5 then
+        return false, format_status(st)
+    end
+    return true, format_status(st)
+end
+
 -- Forward-declared UI globals: `refresh_status` (defined below) references
 -- `status` and is called from button handlers, so the label must be declared
 -- before that function even though it is created later in the LVGL section.
@@ -597,7 +610,10 @@ end
 -- Row 1: supervisor lifecycle
 local load_button = make_button("LOAD", -96, 74, 0x14508A, 134, function()
     if supervisor_present() then
-        status:set { text = "Already loaded. Never load twice or rmmod." }
+        local restored, restore_message = restore_enabled_modules()
+        status:set { text = restored and
+            ("Already loaded; enabled modules restored.\n" .. restore_message) or
+            ("Already loaded, but boot restore failed:\n" .. restore_message) }
         return
     end
     local valid, message = verify_module_file(
@@ -616,7 +632,14 @@ local load_button = make_button("LOAD", -96, 74, 0x14508A, 134, function()
             "Supervisor appeared after error. Reboot; do not retry." or
             ("Load failed: " .. tostring(message or "save log; do not retry")) }
     else
-        refresh_status("Supervisor loaded")
+        local restored, restore_message = restore_enabled_modules()
+        if restored then
+            status:set { text = "Supervisor loaded; enabled modules restored.\n"
+                .. restore_message }
+        else
+            status:set { text = "Supervisor loaded, but boot restore failed:\n"
+                .. restore_message .. "\nReboot before retrying." }
+        end
     end
 end)
 
@@ -692,15 +715,17 @@ local query_button = make_button("QUERY", 96, 118, 0x14355A, 134, function()
     end
 end)
 
--- Row 3: per-module enable / disable (arg0 = module index)
+-- Row 3: persist the next-boot enable intent. LOAD applies it only after the
+-- required reboot and only after the supervisor's own insmod has returned.
 local enable_button = make_button("ENABLE 0", -96, 162, 0x1E6B2E, 134, function()
     if not find_module() then status:set { text = "Load supervisor first." }
         return end
     local ok, message = write_command(CMD_ENABLE, 0, 0)
-    if not ok then status:set { text = "Enable rejected: " .. tostring(message) }
-    else
-        refresh_status("Enable 0 sent")
+    if not ok then
+        status:set { text = "Enable rejected: " .. tostring(message) }
+        return
     end
+    refresh_status("Enabled slot 0 for next boot; reboot required")
 end)
 
 local disable_button = make_button("DISABLE 0", 96, 162, 0x8A4A14, 134, function()

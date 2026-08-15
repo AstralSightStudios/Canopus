@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-IO-LSEEK-001",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "What exact-target public fd-level seek wrapper provides 64-bit stream positioning?",
+  "candidate_symbols": ["xiaomi-band-9-pro-3.1.175.nuttx.lseek"],
+  "prototype_hypothesis": "int64_t lseek(int fd, int64_t offset, int whence); AAPCS places fd in R0, leaves R1 for 8-byte alignment, places offset in R2/R3, and passes whence on the stack; result is returned in R0/R1.",
+  "callsite_evidence": [
+    "IDA sub_C37F648 @ 0x0C37F648 is a distinct public vfs/fs_lseek.c wrapper that resolves the current-process fd and calls sub_C37C9F0 with a 64-bit offset.",
+    "STRD R2,R3 captures the aligned 64-bit offset, LDRD restores it, and the wrapper returns the complete i64 pair while translating negative results to errno and -1."
+  ],
+  "control_flow_evidence": [
+    "sub_C37F648 has many exact-target callsites and is separate from the internal lseek implementation sub_C37C9F0.",
+    "The public wrapper's error path preserves POSIX libc behavior while the successful path returns the firmware 64-bit file position in R0/R1."
+  ],
+  "ownership_analysis": "fd is current-process and caller-owned; offset is passed by value; no pointer ownership is transferred.",
+  "unsafe_assumptions": ["Device probe against /dev/canopus remains pending."],
+  "recommended_probe": "Open a seekable test stream, issue SEEK_SET/CUR/END with offsets crossing 32-bit boundaries, verify returned i64 and subsequent bounded I/O position, then close.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-14T00:00:00Z",
+  "artifacts": [
+    { "uri": "ida://old_fw_extract/data/ota/app/vela_ap.bin.i64#0x0C37F648", "role": "public 64-bit lseek wrapper" },
+    { "uri": "ida://old_fw_extract/data/ota/app/vela_ap.bin.i64#0x0C37C9F0", "role": "internal lseek implementation" }
+  ]
+}

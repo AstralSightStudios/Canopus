@@ -26,7 +26,9 @@ production installer.
 | Native Manager UI/backend | **HOST + TARGET BUILD PASS; DEVICE RETEST PENDING.** Navigation between Overview / Modules / module detail uses the recovered `page_goto`/`page_finish` ABI (`EVID-NAV-001`). Confirmations use Xiaomi's page-owned `lvx_page_msgbox` two-button prefab (`EVID-MSGBOX-001`) and retain the semantic confirmation page as a constructor-failure fallback. Registry failures expose the exact transaction stage, NuttX errno, and verified-save count in Manager. |
 | Package staging + signature verify | **Pending for arbitrary third-party packages.** Manager bootstrap no longer depends on the old staged INSTALL command. |
 
-**What you can test on device now:** LOAD brings up the supervisor. Press INSTALL
+**What you can test on device now:** LOAD brings up the supervisor and, only after
+its `insmod` has returned, applies enabled boot intents through `/dev/canopus` so
+those modules reach `boot-resident` without opening Manager. Press INSTALL
 once to stage the icon bin and register Manager. After its event has returned to
 miwear, press INSTALL a second time to register loaded ABI 1.2 module apps and
 pages without touching Launcher persistence. Press INSTALL a third time to add
@@ -103,14 +105,17 @@ Band 10 addresses.
 | Offset | Size | Field |
 | --- | --- | --- |
 | 0 | 4 | magic `0x43504331` ("CPC1") |
-| 4 | 4 | command (`QUERY/INSTALL/ENABLE/DISABLE/REMOVE/UPDATE/ROLLBACK/SAFE_MODE`) |
+| 4 | 4 | command (`QUERY/INSTALL/ENABLE/DISABLE/REMOVE/UPDATE/ROLLBACK/SAFE_MODE/ACTIVATE/RESTORE_AFTER_BOOT`) |
 | 8 | 4 | arg0 (module index) |
 | 12 | 4 | arg1 (reserved) |
 
 ## Fresh-boot procedure (staged)
 
 1. Reboot the Band.
-2. Press **LOAD** once to load the supervisor. Never load it twice or use
+2. Press **LOAD** once to load the supervisor. After `insmod` returns, LOAD sends
+   `RESTORE_AFTER_BOOT` through `/dev/canopus`; enabled modules are loaded and
+   activated from the watchface's regular miwear context, so opening Manager is
+   not required to reach `boot-resident`. Never load the supervisor twice or use
    `rmmod`.
 3. Press **INSTALL** once. The watchface validates and copies the LVGL v9 icon bin
    from bundled `manager_icon.bin` to `/data/canopus/manager_icon.bin`, then writes

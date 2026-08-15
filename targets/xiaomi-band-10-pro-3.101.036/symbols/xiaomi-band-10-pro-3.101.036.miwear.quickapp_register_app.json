@@ -19,7 +19,7 @@
     "return_value": "0_on_acceptance_else_negative_errno"
   },
   "side_effects": [
-    "queues_one_message_to_named_connection_or_broadcast"
+    "updates_quickapp_registry_launcher_state_and_registration_notifications"
   ],
   "proof": {
     "static": "recovered",
@@ -46,5 +46,5 @@
     "thread": "connection_framework_owner",
     "device_probe": "pending"
   },
-  "notes": "Registers a package in the quickapp routing registry so a native module's own package name resolves on the watch->phone send path."
+  "notes": "Performs the firmware's full quick-app registration flow, including app/page descriptors, launcher state, and registration notifications. Although this also populates appinfo used by watch-to-phone routing, it is not a routing-only API and must not be used merely to assign a custom package to a native module."
 }

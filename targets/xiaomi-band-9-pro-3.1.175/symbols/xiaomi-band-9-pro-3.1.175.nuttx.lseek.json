@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.nuttx.lseek",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "lseek",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C37F648",
+  "callable_address": "0x0C37F649",
+  "prototype": "int64_t(int, int64_t, int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": { "allowed": ["connection_framework_owner"], "blocking": true },
+  "proof": { "static": "confirmed", "evidence_ids": ["EVID-IO-LSEEK-001"] },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": ["EVID-IO-LSEEK-001"],
+    "source": "IDA sub_C37F648; public current-process fd lseek wrapper, calls sub_C37C9F0 with i64 offset in R2/R3 and whence on stack, returns i64 in R0/R1 and translates negative result to errno/-1"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-14",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int64_t(int, int64_t, int)",
+    "ownership": "fd is caller-owned; offset is by value",
+    "thread": "connection framework owner",
+    "device_probe": "pending"
+  },
+  "notes": "64-bit POSIX lseek wrapper; the public entry is distinct from internal sub_C37C9F0."
+}

@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.lseek",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "lseek",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C1C10AC",
+  "callable_address": "0x0C1C10AD",
+  "prototype": "int64_t(int, int64_t, int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": { "allowed": ["connection_framework_owner"], "blocking": true },
+  "proof": { "static": "confirmed", "evidence_ids": ["EVID-IO-LSEEK-001"] },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": ["EVID-IO-LSEEK-001"],
+    "source": "IDA sub_C1C10AC; current-process fd wrapper, fops lseek slot at +0x10, AAPCS fd in R0, i64 offset in R2/R3 with R1 alignment hole, whence on stack, i64 result in R0/R1"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-14",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int64_t(int, int64_t, int)",
+    "ownership": "fd is caller-owned; offset is by value",
+    "thread": "connection framework owner",
+    "device_probe": "pending"
+  },
+  "notes": "64-bit lseek ABI; do not collapse to 32-bit off_t. sub_C1D8B08 passes a 64-bit offset and compares the complete R0/R1 result."
+}

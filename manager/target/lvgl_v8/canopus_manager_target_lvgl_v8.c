@@ -17,6 +17,7 @@
 #include "canopus_client.h"
 #include "canopus_manager_native.h"
 #include "canopus_memory.h"
+#include "canopus_supervisor.h"
 
 #define CANOPUS_TARGET_PAGE_COUNT 3u
 #define CANOPUS_TARGET_PAGE_OVERVIEW 0u
@@ -1066,6 +1067,9 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
     context->backend.root = root;
     context->backend.firmware_page = page;
     context->backend.page_index = (uint8_t)page->page_id;
+    /* Restore only after the supervisor's stock `insmod` constructor returns;
+     * nested module loads need the regular page-owner task's stack. */
+    (void)canopus_supervisor_restore_after_boot();
     if (!manager_session_ready) {
         rc = canopus_client_init(&manager_client, &target_device_io, NULL);
         if (rc != CANOPUS_CLIENT_OK ||

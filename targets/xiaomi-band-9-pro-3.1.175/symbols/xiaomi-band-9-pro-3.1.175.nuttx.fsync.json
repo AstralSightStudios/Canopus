@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.nuttx.fsync",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "fsync",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C380148",
+  "callable_address": "0x0C380149",
+  "prototype": "int(int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": { "allowed": ["connection_framework_owner"], "blocking": true },
+  "proof": { "static": "confirmed", "evidence_ids": ["EVID-IO-FSYNC-001"] },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": ["EVID-IO-FSYNC-001"],
+    "source": "IDA sub_C380148; public fd wrapper resolves current-process file and dispatches fops fsync slot at +0x20, fallback ioctl FIOC_SYNC 0x50D"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-14",
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "prototype": "int(int)",
+    "ownership": "fd is caller-owned",
+    "thread": "connection framework owner",
+    "device_probe": "pending"
+  },
+  "notes": "Band-9 only: fsync slot +0x20 is explicitly observed; unsupported filesystems use ioctl 0x50D fallback."
+}

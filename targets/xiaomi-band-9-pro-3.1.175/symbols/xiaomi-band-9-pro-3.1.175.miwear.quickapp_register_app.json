@@ -15,6 +15,12 @@
     ],
     "blocking": false
   },
+  "ownership": {
+    "return_value": "0_on_acceptance_else_negative_errno"
+  },
+  "side_effects": [
+    "updates_quickapp_registry_launcher_state_and_registration_notifications"
+  ],
   "proof": {
     "static": "recovered",
     "evidence_ids": [
@@ -40,5 +46,5 @@
     "thread": "connection_framework_owner",
     "device_probe": "pending"
   },
-  "notes": "Matches band-10 quickapp_register_app layout."
+  "notes": "Matches the Band 10 full quick-app registration flow. Although this populates appinfo used by watch-to-phone routing, it also registers app/page/launcher state and must not be used merely to assign a custom package to a native module."
 }

@@ -345,6 +345,98 @@ TEST(supervisor_explicit_activation_reports_callback_failure)
     g_activation_result = 0;
 }
 
+TEST(supervisor_explicit_activation_loads_enabled_installed_slot)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(&sup,
+                                        CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+                                        1, 1, "mod.hello") == 0);
+    sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    sup.modules[0].state = CANOPUS_STATE_INSTALLED;
+    g_loads = 0;
+    g_load_result = CANOPUS_STATE_READY;
+    g_loading_supervisor = &sup;
+    g_load_descriptor = &fake_descriptor;
+    g_activations = 0;
+    g_activation_result = 0;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ACTIVATE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    CHECK(g_loads == 1);
+    CHECK(g_activations == 1);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_BOOT_RESIDENT);
+    g_loading_supervisor = 0;
+    g_load_descriptor = 0;
+}
+
+TEST(supervisor_restore_after_boot_command_loads_enabled_slots_once)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(
+              &sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+              1, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(
+              &sup, CANOPUS_LIFECYCLE_REMOVABLE,
+              1, 1, "mod.disabled") == 1);
+    sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    sup.modules[0].state = CANOPUS_STATE_INSTALLED;
+    sup.modules[1].intent = CANOPUS_SUP_INTENT_DISABLED;
+    sup.modules[1].state = CANOPUS_STATE_INSTALLED;
+    g_loads = 0;
+    g_load_result = CANOPUS_STATE_READY;
+    g_loading_supervisor = &sup;
+    g_load_descriptor = &fake_descriptor;
+    g_activations = 0;
+    g_activation_result = 0;
+    g_persists = 0;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC,
+                 CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT, 0, 0);
+
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) ==
+          CANOPUS_RESULT_COMPLETED);
+    CHECK(g_loads == 1);
+    CHECK(g_activations == 1);
+    CHECK(g_persists == 1);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_BOOT_RESIDENT);
+    CHECK(sup.modules[1].state == CANOPUS_STATE_INSTALLED);
+    CHECK(sup.pending_op == CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT);
+
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) ==
+          CANOPUS_RESULT_COMPLETED);
+    CHECK(g_loads == 1);
+    CHECK(g_activations == 1);
+    CHECK(g_persists == 1);
+    g_loading_supervisor = 0;
+    g_load_descriptor = 0;
+}
+
+TEST(supervisor_restore_after_boot_command_reports_load_failure)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_add_module(
+              &sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+              1, 1, "mod.hello") == 0);
+    sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    sup.modules[0].state = CANOPUS_STATE_INSTALLED;
+    g_loads = 0;
+    g_load_result = -77;
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC,
+                 CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT, 0, 0);
+
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) ==
+          CANOPUS_RESULT_FAILED);
+    CHECK(g_loads == 1);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_FAILED);
+    CHECK((int32_t)sup.modules[0].activation_error == -77);
+    CHECK((int32_t)sup.error_code == CANOPUS_SUP_ERR_LOAD);
+    g_load_result = CANOPUS_STATE_ACTIVE;
+}
+
 /* ---- CAN-P0-005 revision: next-boot lifecycle ----------------------- */
 
 TEST(supervisor_enable_is_next_boot)
@@ -533,6 +625,40 @@ TEST(supervisor_registry_restore_auto_activates_ready_module)
     CHECK(g_activations == 1);
     CHECK(b.modules[0].state == CANOPUS_STATE_BOOT_RESIDENT);
     CHECK(b.modules[0].activation_error == 0u);
+    g_loading_supervisor = 0;
+    g_load_descriptor = 0;
+}
+
+TEST(supervisor_registry_metadata_restore_defers_enabled_module_load)
+{
+    struct canopus_supervisor_v1 a, b;
+    canopus_supervisor_init(&a, 7, &fake_platform, 0);
+    canopus_supervisor_init(&b, 7, &fake_platform, 0);
+    g_registry_present = 0;
+    CHECK(canopus_supervisor_add_module(&a,
+                                        CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+                                        3, 1, "mod.hello") == 0);
+    a.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    a.modules[0].state = CANOPUS_STATE_ENABLED;
+    CHECK(canopus_supervisor_save_registry(&a) == 0);
+
+    g_loads = 0;
+    g_load_result = CANOPUS_STATE_READY;
+    g_loading_supervisor = &b;
+    g_load_descriptor = &fake_descriptor;
+    g_activations = 0;
+    g_activation_result = 0;
+    CHECK(canopus_supervisor_restore_registry_metadata(&b) == 0);
+    CHECK(b.module_count == 1);
+    CHECK(b.modules[0].intent == CANOPUS_SUP_INTENT_ENABLED);
+    CHECK(b.modules[0].state == CANOPUS_STATE_INSTALLED);
+    CHECK(g_loads == 0);
+    CHECK(g_activations == 0);
+
+    CHECK(canopus_supervisor_activate_restored_modules(&b) == 0);
+    CHECK(g_loads == 1);
+    CHECK(g_activations == 1);
+    CHECK(b.modules[0].state == CANOPUS_STATE_BOOT_RESIDENT);
     g_loading_supervisor = 0;
     g_load_descriptor = 0;
 }
@@ -770,6 +896,11 @@ TEST(supervisor_safe_mode_rejects_activation)
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_UPDATE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC,
+                 CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) ==
+          CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_SAFE_MODE);
     /* QUERY stays read-only and allowed */
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_QUERY, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
@@ -1303,6 +1434,9 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_descriptor_registration_is_load_scoped", supervisor_descriptor_registration_is_load_scoped_wrapper },
     { "supervisor_explicit_activate_targets_ready_slot", supervisor_explicit_activate_targets_ready_slot_wrapper },
     { "supervisor_explicit_activation_reports_callback_failure", supervisor_explicit_activation_reports_callback_failure_wrapper },
+    { "supervisor_explicit_activation_loads_enabled_installed_slot", supervisor_explicit_activation_loads_enabled_installed_slot_wrapper },
+    { "supervisor_restore_after_boot_command_loads_enabled_slots_once", supervisor_restore_after_boot_command_loads_enabled_slots_once_wrapper },
+    { "supervisor_restore_after_boot_command_reports_load_failure", supervisor_restore_after_boot_command_reports_load_failure_wrapper },
     { "supervisor_enable_is_next_boot", supervisor_enable_is_next_boot_wrapper },
     { "supervisor_disable_loaded_module_is_next_boot", supervisor_disable_loaded_module_is_next_boot_wrapper },
     { "supervisor_disable_installed_module_is_next_boot", supervisor_disable_installed_module_is_next_boot_wrapper },
@@ -1313,6 +1447,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_install_persists_disabled_module", supervisor_install_persists_disabled_module_wrapper },
     { "supervisor_registry_survives_reload", supervisor_registry_survives_reload_wrapper },
     { "supervisor_registry_restore_auto_activates_ready_module", supervisor_registry_restore_auto_activates_ready_module_wrapper },
+    { "supervisor_registry_metadata_restore_defers_enabled_module_load", supervisor_registry_metadata_restore_defers_enabled_module_load_wrapper },
     { "supervisor_registry_retains_boot_activation_error", supervisor_registry_retains_boot_activation_error_wrapper },
     { "supervisor_native_app_publication_is_version_gated", supervisor_native_app_publication_is_version_gated_wrapper },
     { "supervisor_legacy_native_app_publishes_only_in_stage_one", supervisor_legacy_native_app_publishes_only_in_stage_one_wrapper },

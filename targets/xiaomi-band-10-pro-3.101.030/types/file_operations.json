@@ -14,7 +14,9 @@
     { "name": "read", "offset": 8, "width": 4, "signedness": "pointer",
       "provenance": "driver_read_dispatch 0x0C1C1D24 via fops+0x08" },
     { "name": "write", "offset": 12, "width": 4, "signedness": "pointer",
-      "provenance": "slot order matches stock table; entry not located" },
+      "provenance": "driver_write_dispatch 0x0C1C30C8 via fops+0x0c" },
+    { "name": "lseek", "offset": 16, "width": 4, "signedness": "pointer",
+      "provenance": "public fs_lseek wrapper 0x0C1C10AC dispatches fops+0x10; returns int64_t" },
     { "name": "ioctl", "offset": 20, "width": 4, "signedness": "pointer",
       "provenance": "driver_ioctl_dispatch 0x0C1C0B10 via fops+0x14; R1=cmd R2=arg" }
   ],

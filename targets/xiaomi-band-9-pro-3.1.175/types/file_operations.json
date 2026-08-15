@@ -33,7 +33,14 @@
       "offset": 12,
       "width": 4,
       "signedness": "pointer",
-      "provenance": "slot order matches stock table; entry not located"
+      "provenance": "public fs_write wrapper 0x0C380106 dispatches fops+0x0c"
+    },
+    {
+      "name": "lseek",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "public fs_lseek wrapper 0x0C37F648 dispatches fops+0x10; returns int64_t"
     },
     {
       "name": "ioctl",
@@ -41,6 +48,13 @@
       "width": 4,
       "signedness": "pointer",
       "provenance": "driver_ioctl_dispatch 0x0C1C0B10 via fops+0x14; R1=cmd R2=arg"
+    },
+    {
+      "name": "fsync",
+      "offset": 32,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "public fsync wrapper 0x0C380148 dispatches fops+0x20; fallback ioctl 0x50D"
     }
   ],
   "provenance": {

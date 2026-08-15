@@ -10,7 +10,7 @@ import tempfile
 MAGIC = 0x31494D43
 RECEIPT_SIZE = 256
 SIGNED_SIZE = 192
-ARTIFACT_MAX = 256 * 1024
+ARTIFACT_MAX = 384 * 1024
 
 
 def fixed(value: bytes, size: int) -> bytes:

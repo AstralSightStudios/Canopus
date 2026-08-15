@@ -4,7 +4,7 @@
 // firmware : 3.1.175 (CONBINE_LTALM054_T1175_04141021_release_5793)
 // sha256   : 4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b
 // revision : 1
-// input_digest: be5d2634472cd9ef
+// input_digest: 3e0d09824655519c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -28,9 +28,11 @@ pub struct file_operations {
     pub close: *mut core::ffi::c_void, // +0x4
     pub read: *mut core::ffi::c_void, // +0x8
     pub write: *mut core::ffi::c_void, // +0xc
-    pub _pad_10: [u8; 0x4], // 4
+    pub lseek: *mut core::ffi::c_void, // +0x10
     pub ioctl: *mut core::ffi::c_void, // +0x14
-    pub _tail: [u8; 0x18], // 24
+    pub _pad_18: [u8; 0x8], // 8
+    pub fsync: *mut core::ffi::c_void, // +0x20
+    pub _tail: [u8; 0xc], // 12
 }
 
 #[repr(C, packed(4))]
@@ -48,6 +50,18 @@ pub type canopus_lvx_event_cb = extern "C" fn(*mut core::ffi::c_void) -> ();
 pub struct stock_timespec_t {
     pub tv_sec: i64, // +0x0
     pub tv_nsec: i32, // +0x8
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct canopus_thirdparty_message_content {
+    pub message_id: u32, // +0x0
+    pub message_kind: u16, // +0x4
+    pub _pad_6: [u8; 0xa], // 10
+    pub package_name: *mut core::ffi::c_void, // +0x10
+    pub fingerprint_blob: *mut core::ffi::c_void, // +0x14
+    pub payload_blob: *mut core::ffi::c_void, // +0x18
+    pub _tail: [u8; 0x10c], // 268
 }
 
 #[repr(C, packed(4))]
@@ -328,6 +342,15 @@ pub const CANOPUS_FW_MM_ALLOC_CALLABLE: usize = canopus_thumb_callable(0x0C0F24E
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_mm_alloc(a0: u32) -> *mut core::ffi::c_void {
     let f: extern "C" fn(u32) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_MM_ALLOC_CALLABLE) };
+    f(a0)
+}
+
+/// Recovered `thirdparty_submit_message_content` at 0x0C4CF24A. Thumb callable address 0x0C4CF24B.
+pub const CANOPUS_FW_THIRDPARTY_SUBMIT_MESSAGE_CONTENT_CALLABLE: usize = canopus_thumb_callable(0x0C4CF24Busize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_thirdparty_submit_message_content(a0: *const core::ffi::c_void) -> i32 {
+    let f: extern "C" fn(*const core::ffi::c_void) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_THIRDPARTY_SUBMIT_MESSAGE_CONTENT_CALLABLE) };
     f(a0)
 }
 
@@ -613,6 +636,15 @@ pub unsafe fn canopus_fw_bt_pair_display_reply(a0: *mut core::ffi::c_void) -> i3
 /// Recovered `lv_bar_create` at 0x0C262EC8. Thumb callable address 0x0C262EC9.
 pub const CANOPUS_FW_LV_BAR_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0C262EC9usize);
 
+/// Recovered `fsync` at 0x0C380148. Thumb callable address 0x0C380149.
+pub const CANOPUS_FW_FSYNC_CALLABLE: usize = canopus_thumb_callable(0x0C380149usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_fsync(a0: i32) -> i32 {
+    let f: extern "C" fn(i32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_FSYNC_CALLABLE) };
+    f(a0)
+}
+
 /// Recovered `lvx_timer_delete` at 0x0C25B4B8. Thumb callable address 0x0C25B4B9.
 pub const CANOPUS_FW_LVX_TIMER_DELETE_CALLABLE: usize = canopus_thumb_callable(0x0C25B4B9usize);
 #[allow(non_snake_case)]
@@ -683,6 +715,15 @@ pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0x0C37FA25u
 pub unsafe fn canopus_fw_rename(a0: *const u8, a1: *const u8) -> i32 {
     let f: extern "C" fn(*const u8, *const u8) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_RENAME_CALLABLE) };
     f(a0, a1)
+}
+
+/// Recovered `lseek` at 0x0C37F648. Thumb callable address 0x0C37F649.
+pub const CANOPUS_FW_LSEEK_CALLABLE: usize = canopus_thumb_callable(0x0C37F649usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_lseek(a0: i32, a1: i64, a2: i32) -> i64 {
+    let f: extern "C" fn(i32, i64, i32) -> i64 = unsafe { core::mem::transmute(CANOPUS_FW_LSEEK_CALLABLE) };
+    f(a0, a1, a2)
 }
 
 /// Recovered `lvx_style_apply` at 0x0C371CA0. Thumb callable address 0x0C371CA1.
