@@ -93,8 +93,11 @@ pub fn match_symbols(
         let round_results = finalize(&ind, &pools, src_corpus, dst_corpus);
         best = Some(ind);
 
-        // Freeze decisive matches; keep searching the rest.
+        // Freeze decisive matches; keep searching the rest. If two symbols
+        // claim the same target address, keep only the higher-score one and
+        // put the loser back into the active set (it may map elsewhere).
         let mut still_active = Vec::new();
+        let mut frozen_this_round: Vec<(usize, u64, f64, f64, String)> = Vec::new();
         for (k, r) in round_results.iter().enumerate() {
             let sym_idx = active[k];
             let (Some(ta), Some(sc), Some(mg)) =
@@ -106,17 +109,33 @@ pub fn match_symbols(
             if sc >= CONF_SCORE && mg >= CONF_MARGIN {
                 let target_addr = u64::from_str_radix(ta.trim_start_matches("0x"), 16)
                     .unwrap_or(0);
-                frozen_target[sym_idx] = Some(target_addr);
-                frozen_score[sym_idx] = Some(sc);
-                frozen_margin[sym_idx] = Some(mg);
-                frozen_name[sym_idx] = Some(r.name.clone());
-                anchors.push(Anchor {
-                    source_addr: src_corpus.functions[source_indices[sym_idx].0].addr_u64(),
-                    target_addr,
-                });
+                frozen_this_round.push((sym_idx, target_addr, sc, mg, r.name.clone()));
             } else {
                 still_active.push(sym_idx);
             }
+        }
+        // Resolve collisions among this round's new frozen matches: one
+        // target address per symbol, also against targets frozen in earlier
+        // rounds.
+        frozen_this_round.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap());
+        let mut claimed_targets: std::collections::HashSet<u64> = frozen_target
+            .iter()
+            .flatten()
+            .copied()
+            .collect();
+        for (sym_idx, target_addr, sc, mg, name) in frozen_this_round {
+            if !claimed_targets.insert(target_addr) {
+                still_active.push(sym_idx); // collision: loser goes back to search
+                continue;
+            }
+            frozen_target[sym_idx] = Some(target_addr);
+            frozen_score[sym_idx] = Some(sc);
+            frozen_margin[sym_idx] = Some(mg);
+            frozen_name[sym_idx] = Some(name);
+            anchors.push(Anchor {
+                source_addr: src_corpus.functions[source_indices[sym_idx].0].addr_u64(),
+                target_addr,
+            });
         }
         active = still_active;
     }
@@ -124,6 +143,7 @@ pub fn match_symbols(
     // Assemble the final report: frozen matches + whatever active symbols
     // still lack a decisive match (report their best candidate as-is).
     let mut results = Vec::new();
+    let mut claimed: std::collections::HashSet<u64> = frozen_target.iter().flatten().copied().collect();
     for (i, (fn_idx, name)) in source_indices.iter().enumerate() {
         let src = &src_corpus.functions[*fn_idx];
         if let Some(ta) = frozen_target[i] {
@@ -137,12 +157,23 @@ pub fn match_symbols(
                 pool_size: 0,
             });
         } else {
-            // Unfrozen: re-run a single structural pass over just this symbol
-            // (no anchors) to report its best candidate without degrading.
+            // Unfrozen: re-run a single structural pass over just this symbol,
+            // excluding targets already claimed by frozen matches OR by an
+            // earlier fallback result, so an ambiguous symbol never collides
+            // with a confident one.
             let one = vec![(source_indices[i].0, name.clone())];
-            let pools = build_pools(&one, src_corpus, dst_corpus, cfg.max_pool, &anchors);
+            let mut pools = build_pools(&one, src_corpus, dst_corpus, cfg.max_pool, &anchors);
+            for p in pools.iter_mut() {
+                p.candidates
+                    .retain(|c| !claimed.contains(&dst_corpus.functions[c.target_idx].addr_u64()));
+            }
             let ind = run_ga(&pools, &cfg.ga, cfg.seed + 999);
             let mut r = finalize(&ind, &pools, src_corpus, dst_corpus);
+            if let Some(ta) = r[0].target_addr.as_deref()
+                && let Ok(addr) = u64::from_str_radix(ta.trim_start_matches("0x"), 16)
+            {
+                claimed.insert(addr);
+            }
             results.append(&mut r);
         }
     }
