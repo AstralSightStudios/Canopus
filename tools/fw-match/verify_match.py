@@ -98,9 +98,12 @@ def main() -> None:
                            m.get("score", 0.0)))
 
     recall_any = correct_any / n_shared if n_shared else 1.0
-    recall_confirmed = correct_confirmed / n_confirmed if n_confirmed else 0.0
+    # Confirmed recall/precision are over the confirmed matches whose name is
+    # actually verifiable in the target pack (n_confirmed_shared), not over all
+    # confirmed (which may include names the target pack never recorded).
+    recall_confirmed = correct_confirmed / n_confirmed_shared if n_confirmed_shared else 0.0
     precision_confirmed = (
-        correct_confirmed / n_confirmed if n_confirmed else 1.0
+        correct_confirmed / n_confirmed_shared if n_confirmed_shared else 1.0
     )
 
     report = {
@@ -123,7 +126,7 @@ def main() -> None:
               f"(shared: {n_confirmed_shared})")
         print(f"  recall (any cand)   : {recall_any:.1%} ({correct_any}/{n_shared})")
         print(f"  recall (confirmed)  : {recall_confirmed:.1%} "
-              f"({correct_confirmed}/{n_confirmed})")
+              f"({correct_confirmed}/{n_confirmed_shared})")
         print(f"  precision (confirmed): {precision_confirmed:.1%}")
         print(f"  unmatched           : {unmatched}")
         print(f"  wrong candidates    : {wrong_any}")
