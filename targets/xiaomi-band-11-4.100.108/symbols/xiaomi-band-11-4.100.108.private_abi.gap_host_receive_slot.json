@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.private_abi.gap_host_receive_slot",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "gap_host_receive_slot",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "void *",
+  "proof": {
+    "static": "withheld",
+    "device": "not_probed",
+    "host_tested": false
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Synchronized from the complete 3.101.036 inventory; no 4.100.108 address has been semantically confirmed."
+  },
+  "approval_state": "PENDING",
+  "notes": "Writable three-argument raw H4 receive callback slot. Compare against the exact stock callback before replacement; do not confuse with the one-argument GAP device-record observer previously refuted. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof."
+}

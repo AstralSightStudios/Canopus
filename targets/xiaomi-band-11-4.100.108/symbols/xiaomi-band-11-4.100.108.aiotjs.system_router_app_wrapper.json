@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.aiotjs.system_router_app_wrapper",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "system_router_app_wrapper",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "withheld",
+    "device": "not_probed",
+    "host_tested": false
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Synchronized from the complete 3.101.036 inventory; no 4.100.108 address has been semantically confirmed."
+  },
+  "notes": "JIDL system.router wrapper around a private app virtual method. Signature-tracked only and forbidden from public codegen. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof."
+}

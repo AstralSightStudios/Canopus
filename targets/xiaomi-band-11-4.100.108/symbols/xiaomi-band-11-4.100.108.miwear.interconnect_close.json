@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.miwear.interconnect_close",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "interconnect_close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "connection_framework_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "return_value": "0_on_acceptance_else_negative_errno"
+  },
+  "side_effects": [
+    "queues_one_message_to_named_connection_or_broadcast"
+  ],
+  "proof": {
+    "static": "withheld",
+    "device": "not_probed",
+    "host_tested": false
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Synchronized from the complete 3.101.036 inventory; no 4.100.108 address has been semantically confirmed."
+  },
+  "approval_state": "PENDING",
+  "notes": "Closes an interconnect connection registered by interconnect_connect. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof."
+}

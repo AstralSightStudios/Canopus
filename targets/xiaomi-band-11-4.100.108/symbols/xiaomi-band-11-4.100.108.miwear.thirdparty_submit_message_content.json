@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.miwear.thirdparty_submit_message_content",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "thirdparty_submit_message_content",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(const void *, uint32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "miwear_message_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "arguments": "message envelope and all referenced data are borrowed only for the synchronous call",
+    "return_value": "0_on_submission_else_negative_errno"
+  },
+  "side_effects": [
+    "submits_one_prebuilt_miwear_message_without_wearable_quickapp_appinfo_lookup"
+  ],
+  "proof": {
+    "static": "withheld",
+    "device": "not_probed",
+    "host_tested": false
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Synchronized from the complete 3.101.036 inventory; no 4.100.108 address has been semantically confirmed."
+  },
+  "approval_state": "PENDING",
+  "notes": "Returns -22 for null. Stock quickapp_send_wearmsg builds a zeroed 336-byte envelope and calls this function with the envelope pointer; the lower wrapper accepts it without repeating the wearable appinfo lookup. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof."
+}

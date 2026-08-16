@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.ui.lv_event_get_code",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "lv_event_get_code",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "uint32_t(void *event)",
+  "proof": {
+    "static": "withheld",
+    "device": "not_probed",
+    "host_tested": false
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Synchronized from the complete 3.101.036 inventory; no 4.100.108 address has been semantically confirmed."
+  },
+  "notes": "Returns the LVGL event code of a delivered event. Stock switch rows register for LV_EVENT_ALL (code 0) on the switch object and act only when the code is LV_EVENT_VALUE_CHANGED (30); stock list rows act on LV_EVENT_CLICKED (7). 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof.",
+  "approval_state": "PENDING"
+}

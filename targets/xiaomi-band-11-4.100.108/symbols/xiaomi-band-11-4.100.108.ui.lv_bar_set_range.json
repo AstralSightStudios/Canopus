@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.ui.lv_bar_set_range",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "lv_bar_set_range",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3ad934",
+  "callable_address": "0xc3ad935",
+  "prototype": "void(void *, int32_t, int32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "borrowed",
+    "return_value": "status"
+  },
+  "side_effects": [
+    "mutates firmware UI/OS state"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-1108-SYNC-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Exact 4.100.108 IDB semantic confirmation recorded in confirmed_mappings.json",
+    "evidence_ids": [
+      "EVID-1108-SYNC-001"
+    ]
+  },
+  "notes": "LVGL v9 lv_bar_set_range (sets min/max)",
+  "approval_state": "PENDING"
+}

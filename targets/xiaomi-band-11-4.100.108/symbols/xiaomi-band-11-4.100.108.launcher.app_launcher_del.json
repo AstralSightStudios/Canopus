@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.launcher.app_launcher_del",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "app_launcher_del",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc545c48",
+  "callable_address": "0xc545c49",
+  "prototype": "int32_t(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "borrowed",
+    "return_value": "status"
+  },
+  "side_effects": [
+    "mutates firmware UI/OS state"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-1108-SYNC-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Exact 4.100.108 IDB semantic confirmation recorded in confirmed_mappings.json",
+    "evidence_ids": [
+      "EVID-1108-SYNC-001"
+    ]
+  },
+  "notes": "Launcher del app; '[%s] %s: del app id'",
+  "approval_state": "PENDING"
+}

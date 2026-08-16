@@ -972,11 +972,16 @@ pub unsafe fn lvx_list_row_trailing(row: *mut core::ffi::c_void) -> *mut core::f
 }
 
 pub unsafe fn lvx_image_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
-    type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
+    // Firmware `lv_image_create` takes (parent, extra); the second argument is
+    // dereferenced by `lv_obj_class_init_obj` when non-null. The stock callers
+    // always pass NULL for it, so mirror that exactly instead of leaking a
+    // stale R1 through the 1-arg ABI (which dereferences garbage -> Bus Fault).
+    type F =
+        extern "C" fn(*mut core::ffi::c_void, *const core::ffi::c_void) -> *mut core::ffi::c_void;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE)
     };
-    f(parent)
+    f(parent, core::ptr::null())
 }
 
 pub unsafe fn lvx_image_set_src(image: *mut core::ffi::c_void, source: *const core::ffi::c_void) {
@@ -1252,6 +1257,17 @@ pub unsafe fn nuttx_ioctl(fd: i32, command: u32, argument: usize) -> i32 {
     type F = extern "C" fn(i32, u32, ...) -> i32;
     let f: F = unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_IOCTL_CALLABLE) };
     f(fd, command, argument)
+}
+
+/// Reads the current task's `errno`. NuttX collapses every driver error into a
+/// `-1` return with the real code parked in the task's errno slot, so callers
+/// must read it immediately after a failed firmware call to recover the cause.
+pub unsafe fn get_errno() -> i32 {
+    type F = extern "C" fn() -> *const i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_ERRNO_LOCATION_CALLABLE)
+    };
+    unsafe { *f() }
 }
 
 pub unsafe fn nuttx_create(path: *const u8, flags: i32, mode: u32) -> i32 {

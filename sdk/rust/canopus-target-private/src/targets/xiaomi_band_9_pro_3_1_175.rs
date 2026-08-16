@@ -22,6 +22,7 @@ pub use canopus_target_generated::{
     // Symbols-driven LVGL v8 UI / app / heap recovered calls (band-9).
     canopus_fw_app_lookup as app_lookup,
     canopus_fw_clock_gettime,
+    canopus_fw_errno_location,
     canopus_fw_interconnect_close,
     canopus_fw_interconnect_connect,
     canopus_fw_interconnect_loop,
@@ -1397,6 +1398,14 @@ pub unsafe fn bt_discovery_stop(handle: *mut core::ffi::c_void) -> i32 {
 
 pub const O_RDONLY: i32 = 1;
 pub const O_RDWR: i32 = 3;
+
+pub unsafe fn get_errno() -> i32 {
+    let pointer = unsafe { canopus_fw_errno_location() };
+    if pointer.is_null() {
+        return 0;
+    }
+    unsafe { *pointer }
+}
 
 /// BES mm_heap free (`sub_C0F19DC` against the `dword_200B17F4` heap).
 pub unsafe fn bt_free(allocation: *mut core::ffi::c_void) {

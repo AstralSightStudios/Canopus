@@ -20,25 +20,25 @@
     "return_value": "status"
   },
   "side_effects": [
-    "mutates NuttX kernel state"
+    "mutates firmware UI/OS state"
   ],
   "proof": {
-    "static": "confirmed",
+    "static": "recovered",
     "device": "not_probed",
     "host_tested": false,
     "evidence_ids": [
-      "EVID-APP-001"
+      "EVID-1108-SYNC-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Exact 4.100.108 IDB semantic confirmation recorded in confirmed_mappings.json",
     "evidence_ids": [
-      "EVID-APP-001"
-    ],
-    "source": "multi-layer matcher (GA+CFG+xref+pattern) from verified 3.101.036 set, confirmed by decompiling the exact 4.100.108 IDB"
+      "EVID-1108-SYNC-001"
+    ]
   },
-  "notes": "Launcher ordered-app-list setter. Verified in exact IDB: references 'protobuf_set_ordered_app_list' with '[%s] %s: app list is null'/'can't found app %s'/'show'/'hidden' diagnostics; serializes the 16-byte-per-app ordered list to the launcher.",
+  "notes": "Launcher ordered-app-list setter",
   "approval_state": "PENDING"
 }

@@ -7,22 +7,23 @@
   "instruction_set": "n/a",
   "prototype": "const char[]",
   "proof": {
-    "static": "confirmed",
+    "static": "recovered",
     "device": "not_probed",
+    "host_tested": false,
     "evidence_ids": [
-      "EVID-ID-001"
+      "EVID-1108-SYNC-001"
     ]
   },
-  "policy": "managed",
+  "policy": "forbidden",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Exact 4.100.108 IDB semantic confirmation recorded in confirmed_mappings.json",
     "evidence_ids": [
-      "EVID-ID-001"
-    ],
-    "source": "exact 4.100.108 IDB property-block string recovery; cross-checked against raw binary bytes"
+      "EVID-1108-SYNC-001"
+    ]
   },
-  "entry_address": "0xCA004D6",
-  "notes": "user-4.100.108-cn-202607230300\\n (ro.build.id value) (trailing newline before NUL; guard must match the exact property format)",
-  "approval_state": "PENDING"
+  "notes": "user-4.100.108-cn-202607230300\\n (ro.build.id value) (trailing newline before NUL; guard must match the exact property format) 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof.",
+  "approval_state": "PENDING",
+  "entry_address": "0xca004d6"
 }

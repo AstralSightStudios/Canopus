@@ -1,6 +1,6 @@
 # xiaomi-band-11-4.100.108 — Target Adaptation Report
 
-> Status: **static adaptation in progress** (see Claims). Device proof pending.
+> Status: **inventory synchronized; static adaptation in progress** (see Claims). Device proof pending.
 > Generated per `docs/target-authoring.md` §18.
 
 ## Target
@@ -20,17 +20,14 @@
 
 ## Evidence added
 
-- 7 evidence bundles: EVID-ID-001, EVID-NUTTX-VFS-001, EVID-NUTTX-SEM-001,
-  EVID-UI-LVGL-001, EVID-APP-001, EVID-BT-001, EVID-BT-SERVICE-001
-- 15 symbol records: 13 decompile-confirmed functions + 2 identity strings
-  - NuttX VFS: `ioctl`, `unlink`, `rename`
-  - NuttX semaphore: `sem_wait`, `sem_trywait`, `sem_post`
-  - LVGL v9: `lv_image_set_src`
-  - app-registry: `app_install`
-  - launcher: `protobuf_set_ordered_app_list`, `hidden_and_show_app_cb`
-  - BT vendor: `controller_crash_dump`
-  - BT service-manager: `service_manager_register`, `service_manager_get_profile`
-  - identity: `firmware_version_string`, `firmware_build_string` (property block)
+- complete synchronized inventory: **137 symbol records**, matching every 036 function/global/string name
+  - 50 exact-IDB address mappings (48 functions + 2 identity strings), all restricted/PENDING
+  - 87 inventory-only placeholders with address withheld and `FORBIDDEN` fail-closed policy
+  - the two previously ambiguous dispatch mappings were removed rather than guessed
+- 8 evidence bundles: EVID-ID-001, EVID-NUTTX-VFS-001, EVID-NUTTX-SEM-001,
+  EVID-UI-LVGL-001, EVID-APP-001, EVID-BT-001, EVID-BT-SERVICE-001,
+  and systematic mapping bundle EVID-1108-SYNC-001
+- mapped records retain their reviewed prototypes/notes; unresolved records explicitly carry no callable address
 - unproven assumptions recorded in each evidence bundle
 
 ## Generated artifacts
@@ -39,7 +36,7 @@
   all restricted/PENDING, fail-closed)
 - C target config: `generated/canopus_target_config.h`
 - Rust bindings: `sdk/rust/canopus-target-generated/src/generated_1108.rs`
-  (13 restricted callable constants + identity guard)
+  (restricted callable constants for the 48 mapped functions + identity guard)
 - target-private facade: `sdk/rust/canopus-target-private/src/targets/xiaomi_band_11_4_100_108.rs`
   (fail-closed, exposes only restricted callables + identity guard)
 
@@ -55,15 +52,14 @@
 ## Validation
 
 - schema: `canopus target validate` PASS
-- symbol/evidence records: all PASS
+- symbol/evidence records: synchronized inventory validates; 87 unresolved placeholders remain intentionally fail-closed
 - generated stability: `cargo test -p canopus-core --test generated_stability` PASS
 - Rust features: 11-108 feature compiles+tests in both generated and private crates
-- full CI: `./scripts/ci.sh` all gates PASS
+- full workspace tests: `cargo test --workspace` PASS (including matcher ground truth)
+- full CI: `./scripts/ci.sh` PASS (all 7 gates)
 - multi-layer matcher ground truth (036→030): **78.9% best-candidate recall,
   71 confirmed at 100% precision, 0 duplicate claims**
-- matcher cross-model (036→11-108): 18 confirmed; the ones verified by
-  decompilation are exact; unconfirmed candidates were individually checked
-  and ambiguous ones (e.g. lv_timer_create veneer, driver_*_dispatch) excluded
+- matcher cross-model (036→11-108): only semantically confirmed mappings are retained; ambiguous candidates remain withheld
 
 ## Remaining limits
 
@@ -78,8 +74,8 @@
 
 ## Claims
 
-- STATIC_RECOVERED: 13 functions + 2 identity strings, each decompile-confirmed
-  in the exact 4.100.108 IDB
-- HOST/BUILD VERIFIED: schema, generated stability, SDK features, full CI
+- STATIC_RECOVERED/PENDING: 48 functions + 2 identity strings with exact-IDB addresses
+- inventory synchronized: every one of the 137 036 names is represented; 87 entries have no 11-108 address and are `FORBIDDEN`
+- HOST/BUILD VERIFIED: generated stability, full workspace tests, SDK features, and full CI
 - DEVICE_PROBED: **no**
 - DEVICE_PROVEN: **no**

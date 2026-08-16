@@ -7,7 +7,7 @@
   "instruction_set": "thumb",
   "entry_address": "0xc3b2a5c",
   "callable_address": "0xc3b2a5d",
-  "prototype": "int32_t(void *, const void *)",
+  "prototype": "void(void *, const void *)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
@@ -20,25 +20,25 @@
     "return_value": "status"
   },
   "side_effects": [
-    "mutates NuttX kernel state"
+    "mutates firmware UI/OS state"
   ],
   "proof": {
-    "static": "confirmed",
+    "static": "recovered",
     "device": "not_probed",
     "host_tested": false,
     "evidence_ids": [
-      "EVID-UI-LVGL-001"
+      "EVID-1108-SYNC-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Exact 4.100.108 IDB semantic confirmation recorded in confirmed_mappings.json",
     "evidence_ids": [
-      "EVID-UI-LVGL-001"
-    ],
-    "source": "multi-layer matcher (GA+CFG+xref+pattern) from verified 3.101.036 set, confirmed by decompiling the exact 4.100.108 IDB"
+      "EVID-1108-SYNC-001"
+    ]
   },
-  "notes": "LVGL v9 lv_image_set_src. Verified in exact IDB: references ../../apps/graphics/lvgl/lvgl/src/widgets/image/lv_image.c (lines 161/172/184); image-source type dispatch, draw-buffer validation, cache invalidation.",
+  "notes": "LVGL v9 lv_image_set_src; references lv_image.c:161/172/184",
   "approval_state": "PENDING"
 }

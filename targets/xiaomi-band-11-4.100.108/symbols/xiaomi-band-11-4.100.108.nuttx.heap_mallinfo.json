@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.nuttx.heap_mallinfo",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "heap_mallinfo",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void *(void *)",
+  "proof": {
+    "static": "withheld",
+    "device": "not_probed",
+    "host_tested": false
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Synchronized from the complete 3.101.036 inventory; no 4.100.108 address has been semantically confirmed."
+  },
+  "notes": "Caller reserves 36-byte output; static layout only, no module-side dynamic probe 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof.",
+  "approval_state": "PENDING"
+}

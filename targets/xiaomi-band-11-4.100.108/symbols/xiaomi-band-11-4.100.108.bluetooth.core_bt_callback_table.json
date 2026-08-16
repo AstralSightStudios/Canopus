@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.bluetooth.core_bt_callback_table",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "core_bt_callback_table",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "const uint32_t[16]",
+  "proof": {
+    "static": "withheld",
+    "device": "not_probed",
+    "host_tested": false
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Synchronized from the complete 3.101.036 inventory; no 4.100.108 address has been semantically confirmed."
+  },
+  "approval_state": "PENDING",
+  "notes": "Pair Request is slot 5 (address 0x2CD1F934), callable 0x0C6E1ECD. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof."
+}

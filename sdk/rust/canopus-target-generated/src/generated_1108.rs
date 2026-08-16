@@ -4,7 +4,7 @@
 // firmware : 4.100.108 (user-4.100.108-cn-202607230300)
 // sha256   : 9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99
 // revision : 1
-// input_digest: fc94248e574c5cc1
+// input_digest: 17b51875ada581d6
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -23,8 +23,8 @@ pub const fn canopus_thumb_callable(entry_or_callable: usize) -> usize {
 pub fn canopus_identity_guard() -> i32 {
     const EXPECT_VERSION: &[u8] = b"4.100.108";
     const EXPECT_BUILD: &[u8] = b"user-4.100.108-cn-202607230300";
-    if !c_str_eq(0xCA0044D, EXPECT_VERSION) { return -1; }
-    if !c_str_eq(0xCA004D6, EXPECT_BUILD) { return -1; }
+    if !c_str_eq(0xca0044d, EXPECT_VERSION) { return -1; }
+    if !c_str_eq(0xca004d6, EXPECT_BUILD) { return -1; }
     0
 }
 
@@ -44,17 +44,71 @@ fn c_str_eq(addr: usize, expected: &[u8]) -> bool {
 }
 
 // ---- typed firmware bindings (unsafe) ----
+/// Recovered `core_bt_pair_request_callback` at 0xc7ea894. Thumb callable address 0xc7ea895.
+pub const CANOPUS_FW_CORE_BT_PAIR_REQUEST_CALLBACK_CALLABLE: usize = canopus_thumb_callable(0xc7ea895usize);
+
+/// Recovered `lvx_page_title_create` at 0xc89892c. Thumb callable address 0xc89892d.
+pub const CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc89892dusize);
+
+/// Recovered `lv_timer_create` at 0xc3abd34. Thumb callable address 0xc3abd35.
+pub const CANOPUS_FW_LV_TIMER_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc3abd35usize);
+
+/// Recovered `app_launcher_add` at 0xc54601c. Thumb callable address 0xc54601d.
+pub const CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc54601dusize);
+
+/// Recovered `page_finish` at 0xc6964e8. Thumb callable address 0xc6964e9.
+pub const CANOPUS_FW_PAGE_FINISH_CALLABLE: usize = canopus_thumb_callable(0xc6964e9usize);
+
+/// Recovered `lv_bar_set_range` at 0xc3ad934. Thumb callable address 0xc3ad935.
+pub const CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE: usize = canopus_thumb_callable(0xc3ad935usize);
+
+/// Recovered `bt_adapter_register` at 0xc469e46. Thumb callable address 0xc469e47.
+pub const CANOPUS_FW_BT_ADAPTER_REGISTER_CALLABLE: usize = canopus_thumb_callable(0xc469e47usize);
+
+/// Recovered `bt_adapter_get_scan_mode` at 0xc469f52. Thumb callable address 0xc469f53.
+pub const CANOPUS_FW_BT_ADAPTER_GET_SCAN_MODE_CALLABLE: usize = canopus_thumb_callable(0xc469f53usize);
+
+/// Recovered `bt_adapter_get_state` at 0xc469f04. Thumb callable address 0xc469f05.
+pub const CANOPUS_FW_BT_ADAPTER_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0xc469f05usize);
+
 /// Recovered `sem_post` at 0xc359980. Thumb callable address 0xc359981.
 pub const CANOPUS_FW_SEM_POST_CALLABLE: usize = canopus_thumb_callable(0xc359981usize);
+
+/// Recovered `service_manager_shutdown` at 0xc90856c. Thumb callable address 0xc90856d.
+pub const CANOPUS_FW_SERVICE_MANAGER_SHUTDOWN_CALLABLE: usize = canopus_thumb_callable(0xc90856dusize);
+
+/// Recovered `app_launcher_del` at 0xc545c48. Thumb callable address 0xc545c49.
+pub const CANOPUS_FW_APP_LAUNCHER_DEL_CALLABLE: usize = canopus_thumb_callable(0xc545c49usize);
+
+/// Recovered `lv_timer_del` at 0xc3abe84. Thumb callable address 0xc3abe85.
+pub const CANOPUS_FW_LV_TIMER_DEL_CALLABLE: usize = canopus_thumb_callable(0xc3abe85usize);
+
+/// Recovered `unregister_driver` at 0xc338a92. Thumb callable address 0xc338a93.
+pub const CANOPUS_FW_UNREGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc338a93usize);
+
+/// Recovered `service_manager_startup` at 0xc9085cc. Thumb callable address 0xc9085cd.
+pub const CANOPUS_FW_SERVICE_MANAGER_STARTUP_CALLABLE: usize = canopus_thumb_callable(0xc9085cdusize);
 
 /// Recovered `app_install` at 0xc6a6bf8. Thumb callable address 0xc6a6bf9.
 pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc6a6bf9usize);
 
+/// Recovered `app_launcher_data_init` at 0xc54859c. Thumb callable address 0xc54859d.
+pub const CANOPUS_FW_APP_LAUNCHER_DATA_INIT_CALLABLE: usize = canopus_thumb_callable(0xc54859dusize);
+
+/// Recovered `lseek` at 0xc33c920. Thumb callable address 0xc33c921.
+pub const CANOPUS_FW_LSEEK_CALLABLE: usize = canopus_thumb_callable(0xc33c921usize);
+
 /// Recovered `controller_crash_dump` at 0xc926ee8. Thumb callable address 0xc926ee9.
 pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_callable(0xc926ee9usize);
 
+/// Recovered `quickapp_register_app` at 0xc57e774. Thumb callable address 0xc57e775.
+pub const CANOPUS_FW_QUICKAPP_REGISTER_APP_CALLABLE: usize = canopus_thumb_callable(0xc57e775usize);
+
 /// Recovered `rename` at 0xc33d6c4. Thumb callable address 0xc33d6c5.
 pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0xc33d6c5usize);
+
+/// Recovered `heap_zalloc` at 0xc3513dc. Thumb callable address 0xc3513dd.
+pub const CANOPUS_FW_HEAP_ZALLOC_CALLABLE: usize = canopus_thumb_callable(0xc3513ddusize);
 
 /// Recovered `protobuf_set_ordered_app_list` at 0xc5490b4. Thumb callable address 0xc5490b5.
 pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thumb_callable(0xc5490b5usize);
@@ -62,39 +116,203 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 /// Recovered `lv_image_set_src` at 0xc3b2a5c. Thumb callable address 0xc3b2a5d.
 pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0xc3b2a5dusize);
 
+/// Recovered `vendor_hci_transport_register` at 0xc35a760. Thumb callable address 0xc35a761.
+pub const CANOPUS_FW_VENDOR_HCI_TRANSPORT_REGISTER_CALLABLE: usize = canopus_thumb_callable(0xc35a761usize);
+
+/// Recovered `page_goto` at 0xc8e7f90. Thumb callable address 0xc8e7f91.
+pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc8e7f91usize);
+
+/// Recovered `driver_open_dispatch` at 0xc342a94. Thumb callable address 0xc342a95.
+pub const CANOPUS_FW_DRIVER_OPEN_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc342a95usize);
+
 /// Recovered `ioctl` at 0xc341b98. Thumb callable address 0xc341b99.
 pub const CANOPUS_FW_IOCTL_CALLABLE: usize = canopus_thumb_callable(0xc341b99usize);
+
+/// Recovered `lv_bar_set_value` at 0xc3ad868. Thumb callable address 0xc3ad869.
+pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0xc3ad869usize);
 
 /// Recovered `hidden_and_show_app_cb` at 0xc545e50. Thumb callable address 0xc545e51.
 pub const CANOPUS_FW_HIDDEN_AND_SHOW_APP_CB_CALLABLE: usize = canopus_thumb_callable(0xc545e51usize);
 
+/// Recovered `lv_bar_create` at 0xc3ad808. Thumb callable address 0xc3ad809.
+pub const CANOPUS_FW_LV_BAR_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc3ad809usize);
+
 /// Recovered `service_manager_register` at 0xc471ca4. Thumb callable address 0xc471ca5.
 pub const CANOPUS_FW_SERVICE_MANAGER_REGISTER_CALLABLE: usize = canopus_thumb_callable(0xc471ca5usize);
+
+/// Recovered `lv_image_create` at 0xc3ae1c4. Thumb callable address 0xc3ae1c5.
+pub const CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc3ae1c5usize);
+
+/// Recovered `lvx_msgbox_create` at 0xc8e6a7c. Thumb callable address 0xc8e6a7d.
+pub const CANOPUS_FW_LVX_MSGBOX_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc8e6a7dusize);
 
 /// Recovered `service_manager_get_profile` at 0xc471cf4. Thumb callable address 0xc471cf5.
 pub const CANOPUS_FW_SERVICE_MANAGER_GET_PROFILE_CALLABLE: usize = canopus_thumb_callable(0xc471cf5usize);
 
+/// Recovered `lv_obj_set_style_bg_opa` at 0xc6c2d94. Thumb callable address 0xc6c2d95.
+pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = canopus_thumb_callable(0xc6c2d95usize);
+
 /// Recovered `unlink` at 0xc33caf8. Thumb callable address 0xc33caf9.
 pub const CANOPUS_FW_UNLINK_CALLABLE: usize = canopus_thumb_callable(0xc33caf9usize);
+
+/// Recovered `lvx_notification_insert_message` at 0xc8ecca8. Thumb callable address 0xc8ecca9.
+pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_thumb_callable(0xc8ecca9usize);
 
 /// Recovered `sem_trywait` at 0xc359470. Thumb callable address 0xc359471.
 pub const CANOPUS_FW_SEM_TRYWAIT_CALLABLE: usize = canopus_thumb_callable(0xc359471usize);
 
+/// Recovered `heap_malloc` at 0xc3510a0. Thumb callable address 0xc3510a1.
+pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc3510a1usize);
+
+/// Recovered `offload_property_apply` at 0xc4681d8. Thumb callable address 0xc4681d9.
+pub const CANOPUS_FW_OFFLOAD_PROPERTY_APPLY_CALLABLE: usize = canopus_thumb_callable(0xc4681d9usize);
+
+/// Recovered `heap_free` at 0xc34cb9c. Thumb callable address 0xc34cb9d.
+pub const CANOPUS_FW_HEAP_FREE_CALLABLE: usize = canopus_thumb_callable(0xc34cb9dusize);
+
 /// Recovered `sem_wait` at 0xc359510. Thumb callable address 0xc359511.
 pub const CANOPUS_FW_SEM_WAIT_CALLABLE: usize = canopus_thumb_callable(0xc359511usize);
 
+/// Recovered `close` at 0xc334920. Thumb callable address 0xc334921.
+pub const CANOPUS_FW_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc334921usize);
+
+/// Recovered `bt_pair_request_reply` at 0xc46a47c. Thumb callable address 0xc46a47d.
+pub const CANOPUS_FW_BT_PAIR_REQUEST_REPLY_CALLABLE: usize = canopus_thumb_callable(0xc46a47dusize);
+
+/// Recovered `bt_adapter_set_scan_mode` at 0xc469fc6. Thumb callable address 0xc469fc7.
+pub const CANOPUS_FW_BT_ADAPTER_SET_SCAN_MODE_CALLABLE: usize = canopus_thumb_callable(0xc469fc7usize);
+
+/// Recovered `system_router_get_pages_wrapper` at 0xc4aade0. Thumb callable address 0xc4aade1.
+pub const CANOPUS_FW_SYSTEM_ROUTER_GET_PAGES_WRAPPER_CALLABLE: usize = canopus_thumb_callable(0xc4aade1usize);
+
+/// Recovered `watchface_manager_delete_watchface` at 0xc6b91a4. Thumb callable address 0xc6b91a5.
+pub const CANOPUS_FW_WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = canopus_thumb_callable(0xc6b91a5usize);
+
 // ---- excluded symbols ----
 // app_install: restricted - not exported until context/ownership approved
+// app_launcher_add: restricted - not exported until context/ownership approved
+// app_launcher_data_init: restricted - not exported until context/ownership approved
+// app_launcher_del: restricted - not exported until context/ownership approved
+// app_lookup: FORBIDDEN - no binding may ever be generated
+// bt_adapter_get_instance: FORBIDDEN - no binding may ever be generated
+// bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
+// bt_adapter_get_state: restricted - not exported until context/ownership approved
+// bt_adapter_register: restricted - not exported until context/ownership approved
+// bt_adapter_register_a2dp_callbacks: FORBIDDEN - no binding may ever be generated
+// bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no binding may ever be generated
+// bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved
+// bt_adapter_unregister: FORBIDDEN - no binding may ever be generated
+// bt_alloc: FORBIDDEN - no binding may ever be generated
+// bt_buffer_new: FORBIDDEN - no binding may ever be generated
+// bt_create_bond_private: FORBIDDEN - no binding may ever be generated
+// bt_discovery_start: FORBIDDEN - no binding may ever be generated
+// bt_discovery_stop: FORBIDDEN - no binding may ever be generated
+// bt_free: FORBIDDEN - no binding may ever be generated
+// bt_get_bond_state: FORBIDDEN - no binding may ever be generated
+// bt_get_pairing_state: FORBIDDEN - no binding may ever be generated
+// bt_l2cap_connect: FORBIDDEN - no binding may ever be generated
+// bt_l2cap_disconnect: FORBIDDEN - no binding may ever be generated
+// bt_l2cap_submit_cid: FORBIDDEN - no binding may ever be generated
+// bt_pair_display_reply: FORBIDDEN - no binding may ever be generated
+// bt_pair_request_reply: restricted - not exported until context/ownership approved
+// bt_queue_external: FORBIDDEN - no binding may ever be generated
+// bt_queue_free: FORBIDDEN - no binding may ever be generated
+// bt_remove_bond_private: FORBIDDEN - no binding may ever be generated
+// bt_socket_server_receive: FORBIDDEN - no binding may ever be generated
+// bt_timer_add: FORBIDDEN - no binding may ever be generated
+// bt_timer_cancel: FORBIDDEN - no binding may ever be generated
+// btsnoop_avdtp_recognizer: FORBIDDEN - no binding may ever be generated
+// clock_gettime: FORBIDDEN - no binding may ever be generated
+// close: restricted - not exported until context/ownership approved
 // controller_crash_dump: restricted - not exported until context/ownership approved
+// core_bt_pair_request_callback: restricted - not exported until context/ownership approved
+// driver_close_dispatch: FORBIDDEN - no binding may ever be generated
+// driver_ioctl_dispatch: FORBIDDEN - no binding may ever be generated
+// driver_open_dispatch: restricted - not exported until context/ownership approved
+// driver_read_dispatch: FORBIDDEN - no binding may ever be generated
+// driver_write_dispatch: FORBIDDEN - no binding may ever be generated
+// errno_location: FORBIDDEN - no binding may ever be generated
+// firmware_log: FORBIDDEN - no binding may ever be generated
+// gap_host_stock_receive: FORBIDDEN - no binding may ever be generated
+// heap_free: restricted - not exported until context/ownership approved
+// heap_mallinfo: FORBIDDEN - no binding may ever be generated
+// heap_malloc: restricted - not exported until context/ownership approved
+// heap_zalloc: restricted - not exported until context/ownership approved
+// hfp_ag_connect: FORBIDDEN - no binding may ever be generated
+// hfp_ag_disconnect: FORBIDDEN - no binding may ever be generated
 // hidden_and_show_app_cb: restricted - not exported until context/ownership approved
+// insmod: FORBIDDEN - no binding may ever be generated
+// interconnect_close: FORBIDDEN - no binding may ever be generated
+// interconnect_connect: FORBIDDEN - no binding may ever be generated
+// interconnect_send: FORBIDDEN - no binding may ever be generated
 // ioctl: restricted - not exported until context/ownership approved
+// lseek: restricted - not exported until context/ownership approved
+// lv_bar_create: restricted - not exported until context/ownership approved
+// lv_bar_set_range: restricted - not exported until context/ownership approved
+// lv_bar_set_value: restricted - not exported until context/ownership approved
+// lv_event_get_code: FORBIDDEN - no binding may ever be generated
+// lv_event_get_user_data: FORBIDDEN - no binding may ever be generated
+// lv_image_create: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
+// lv_obj_add_event_cb: FORBIDDEN - no binding may ever be generated
+// lv_obj_align_to: FORBIDDEN - no binding may ever be generated
+// lv_obj_move_to_index: FORBIDDEN - no binding may ever be generated
+// lv_obj_set_hidden: FORBIDDEN - no binding may ever be generated
+// lv_obj_set_local_style_prop: FORBIDDEN - no binding may ever be generated
+// lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
+// lv_timer_create: restricted - not exported until context/ownership approved
+// lv_timer_del: restricted - not exported until context/ownership approved
+// lvx_label_create: FORBIDDEN - no binding may ever be generated
+// lvx_label_set_text: FORBIDDEN - no binding may ever be generated
+// lvx_list_item_update: FORBIDDEN - no binding may ever be generated
+// lvx_list_row_create: FORBIDDEN - no binding may ever be generated
+// lvx_list_row_trailing: FORBIDDEN - no binding may ever be generated
+// lvx_msgbox_create: restricted - not exported until context/ownership approved
+// lvx_msgbox_set_content: FORBIDDEN - no binding may ever be generated
+// lvx_notification_insert_message: restricted - not exported until context/ownership approved
+// lvx_object_align: FORBIDDEN - no binding may ever be generated
+// lvx_object_delete: FORBIDDEN - no binding may ever be generated
+// lvx_object_set_size: FORBIDDEN - no binding may ever be generated
+// lvx_page_content_create: FORBIDDEN - no binding may ever be generated
+// lvx_page_title_create: restricted - not exported until context/ownership approved
+// lvx_style_apply: FORBIDDEN - no binding may ever be generated
+// modhandle: FORBIDDEN - no binding may ever be generated
+// offload_property_apply: restricted - not exported until context/ownership approved
+// open: FORBIDDEN - no binding may ever be generated
+// page_finish: restricted - not exported until context/ownership approved
+// page_goto: restricted - not exported until context/ownership approved
+// page_navigator_open_page: FORBIDDEN - no binding may ever be generated
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
+// pthread_create_internal: FORBIDDEN - no binding may ever be generated
+// public_work_queue: FORBIDDEN - no binding may ever be generated
+// quickapp_register_app: restricted - not exported until context/ownership approved
+// read: FORBIDDEN - no binding may ever be generated
+// register_blockdriver: FORBIDDEN - no binding may ever be generated
+// register_driver: FORBIDDEN - no binding may ever be generated
 // rename: restricted - not exported until context/ownership approved
+// rmmod: FORBIDDEN - no binding may ever be generated
+// sdp_builder_create: FORBIDDEN - no binding may ever be generated
+// sdp_commit: FORBIDDEN - no binding may ever be generated
+// sdp_set_raw_attribute: FORBIDDEN - no binding may ever be generated
+// sdp_unregister: FORBIDDEN - no binding may ever be generated
 // sem_post: restricted - not exported until context/ownership approved
 // sem_trywait: restricted - not exported until context/ownership approved
 // sem_wait: restricted - not exported until context/ownership approved
+// service_manager_cleanup: FORBIDDEN - no binding may ever be generated
 // service_manager_get_profile: restricted - not exported until context/ownership approved
 // service_manager_register: restricted - not exported until context/ownership approved
+// service_manager_shutdown: restricted - not exported until context/ownership approved
+// service_manager_startup: restricted - not exported until context/ownership approved
+// sport_titlebar_dispatch: FORBIDDEN - no binding may ever be generated
+// sport_titlebar_lifecycle_reset: FORBIDDEN - no binding may ever be generated
+// system_router_app_wrapper: FORBIDDEN - no binding may ever be generated
+// system_router_get_pages_wrapper: restricted - not exported until context/ownership approved
+// system_router_page_record_wrapper: FORBIDDEN - no binding may ever be generated
+// thirdparty_submit_message_content: FORBIDDEN - no binding may ever be generated
 // unlink: restricted - not exported until context/ownership approved
+// unregister_blockdriver: FORBIDDEN - no binding may ever be generated
+// unregister_driver: restricted - not exported until context/ownership approved
+// vendor_hci_transport_register: restricted - not exported until context/ownership approved
+// watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
+// write: FORBIDDEN - no binding may ever be generated
 

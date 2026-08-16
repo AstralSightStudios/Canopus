@@ -20,25 +20,25 @@
     "return_value": "status"
   },
   "side_effects": [
-    "mutates NuttX kernel state"
+    "mutates firmware UI/OS state"
   ],
   "proof": {
-    "static": "confirmed",
+    "static": "recovered",
     "device": "not_probed",
     "host_tested": false,
     "evidence_ids": [
-      "EVID-NUTTX-VFS-001"
+      "EVID-1108-SYNC-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Exact 4.100.108 IDB semantic confirmation recorded in confirmed_mappings.json",
     "evidence_ids": [
-      "EVID-NUTTX-VFS-001"
-    ],
-    "source": "multi-layer matcher (GA+CFG+xref+pattern) from verified 3.101.036 set, confirmed by decompiling the exact 4.100.108 IDB"
+      "EVID-1108-SYNC-001"
+    ]
   },
-  "notes": "NuttX fs_unlink wrapper. Verified in exact IDB: references ../../nuttx/fs/vfs/fs_unlink.c:84; inode-type dispatch, -ENOSYS/-ENOTDIR paths.",
+  "notes": "NuttX fs_unlink; references ../../nuttx/fs/vfs/fs_unlink.c:84",
   "approval_state": "PENDING"
 }

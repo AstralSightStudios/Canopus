@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.nuttx.driver_read_dispatch",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "driver_read_dispatch",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int32_t(file *, void *, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "borrowed",
+    "return_value": "status"
+  },
+  "side_effects": [
+    "mutates firmware UI/OS state"
+  ],
+  "proof": {
+    "static": "withheld",
+    "device": "not_probed",
+    "host_tested": false
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "source": "Synchronized from the complete 3.101.036 inventory; no 4.100.108 address has been semantically confirmed."
+  },
+  "notes": "NuttX file-read dispatch; fops+0x08 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof.",
+  "approval_state": "PENDING"
+}
