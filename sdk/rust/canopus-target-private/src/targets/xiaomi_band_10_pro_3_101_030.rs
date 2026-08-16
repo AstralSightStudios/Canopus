@@ -917,8 +917,12 @@ pub const CONTENT_WIDTH: i32 = 336;
 pub const CONTENT_HEIGHT: i32 = 424;
 pub const ROW_GAP: i32 = 8;
 pub const LV_STYLE_BG_OPA: u32 = 29;
+pub const LV_STYLE_RADIUS: u32 = 44;
+pub const LV_STYLE_CLIP_CORNER: u32 = 45;
 pub const LV_STYLE_BORDER_WIDTH: u32 = 48;
 pub const LV_STYLE_BORDER_OPA: u32 = 50;
+pub const LV_STYLE_TEXT_OPA: u32 = 89;
+pub const LV_STYLE_TEXT_ALIGN: u32 = 94;
 
 pub type LvxTimerCallback = extern "C" fn(*mut core::ffi::c_void);
 
@@ -1055,6 +1059,15 @@ pub unsafe fn lvx_label_set_text(label: *mut core::ffi::c_void, text: *const u8)
         ))
     };
     f(label, text);
+}
+
+/// Applies centered text alignment to a freshly-created label. This must run
+/// before any stock font/style is attached; the generic firmware dispatcher is
+/// unsafe once the object's local property array has been populated.
+pub unsafe fn lvx_label_set_text_align_center(label: *mut core::ffi::c_void) {
+    unsafe {
+        lvx_object_set_local_style_u32(label, LV_STYLE_TEXT_ALIGN, 2, 0);
+    }
 }
 
 pub unsafe fn lvx_content_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
