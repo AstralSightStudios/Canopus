@@ -687,6 +687,11 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         canopus_pending_set_error(&sup->pending, req->request_id,
                                   sup->error_code);
         (void)canopus_pending_finish(&sup->pending, req->request_id, rc);
+        /* CPC2 operations are synchronous today: the final result is returned
+         * in this response, so retaining the terminal record would consume
+         * one of the bounded request slots forever. Future genuinely async
+         * operations may retain their record until an explicit ACK path. */
+        (void)canopus_pending_ack(&sup->pending, req->request_id);
     }
     canopus_proto_response_init(resp, req->request_id, rc, 0);
     return 0;
@@ -1025,6 +1030,7 @@ static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
     uint8_t buf[CANOPUS_SUP_REGISTRY_SIZE];
     uint32_t i;
     int rc;
+    int restored_enabled = 0;
     if (sup == 0 || sup->platform == 0 || sup->platform->restore == 0) {
         return -1;
     }
@@ -1079,28 +1085,36 @@ static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
         sup->modules[slot].activation_error =
             sup_registry_error_decode(flags);
         sup->modules[slot].flags &= CANOPUS_SUP_FLAG_PUBLIC_MASK;
-        if (load_enabled_modules &&
-            sup->modules[slot].intent == CANOPUS_SUP_INTENT_ENABLED &&
-            sup->platform->load_module != 0) {
-            int st = sup->platform->load_module(
-                sup->platform_cookie, (uint32_t)slot, (const char *)id,
-                lifecycle_class);
+        /* Full restore is deliberately two-phase: import every slot before
+         * loading code, so an intermediate save can never truncate trailing
+         * metadata. The production constructor uses the metadata-only phase
+         * for the same low-stack reason. */
+    }
+    if (load_enabled_modules && sup->platform->load_module != 0) {
+        for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+            struct canopus_sup_module_v1 *module = &sup->modules[i];
+            int st;
+            if (module->intent != CANOPUS_SUP_INTENT_ENABLED ||
+                module->state != CANOPUS_STATE_INSTALLED) {
+                continue;
+            }
+            restored_enabled = 1;
+            st = sup->platform->load_module(
+                sup->platform_cookie, i, (const char *)module->module_id,
+                module->lifecycle_class);
             if (st < 0) {
-                sup->modules[slot].state = CANOPUS_STATE_FAILED;
-                sup->modules[slot].activation_error = (uint32_t)st;
+                module->state = CANOPUS_STATE_FAILED;
+                module->activation_error = (uint32_t)st;
                 sup->error_code = CANOPUS_SUP_ERR_LOAD;
-            } else {
-                sup->modules[slot].state = (uint32_t)st;
-                if (st == CANOPUS_STATE_READY) {
-                    (void)sup_activate_module(sup, &sup->modules[slot]);
-                }
+                continue;
             }
-            {
-                int persist_rc = canopus_supervisor_save_registry(sup);
-                if (persist_rc != 0) {
-                    sup->error_code = persist_rc;
-                }
+            module->state = (uint32_t)st;
+            if (st == CANOPUS_STATE_READY) {
+                (void)sup_activate_module(sup, module);
             }
+        }
+        if (restored_enabled && canopus_supervisor_save_registry(sup) != 0) {
+            sup->error_code = CANOPUS_SUP_ERR_REGISTRY;
         }
     }
     return 0;

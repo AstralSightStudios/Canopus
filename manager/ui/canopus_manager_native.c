@@ -18,6 +18,7 @@
 #define UI_KEY_PERSIST_ERRNO      28u
 #define UI_KEY_PERSIST_SAVES      29u
 #define UI_KEY_MODULE_QUERY_ERROR 32u
+#define UI_KEY_LAST_OPERATION    33u
 #define UI_KEY_MODULE_SECTION     30u
 #define UI_KEY_MODULE_EMPTY       31u
 #define UI_KEY_MODULE_BASE       100u
@@ -201,6 +202,24 @@ static void format_diag_u32(uint32_t value, char out[16])
     (void)append_u32(out, 0u, 16u, value);
 }
 
+static void format_operation_result(const struct canopus_manager_model_v1 *model,
+                                    char out[48])
+{
+    const char *name = "unknown";
+    uint32_t used = 0u;
+    switch (model->pending_state) {
+    case CANOPUS_RESULT_REJECTED: name = "rejected"; break;
+    case CANOPUS_RESULT_FAILED: name = "failed"; break;
+    case CANOPUS_RESULT_DISALLOWED: name = "disallowed"; break;
+    default: break;
+    }
+    out[0] = '\0';
+    used = append_string(out, used, 48u, name, 16u);
+    used = append_string(out, used, 48u, " (result ", 9u);
+    used = append_u32(out, used, 48u, model->pending_state);
+    used = append_string(out, used, 48u, ")", 1u);
+}
+
 static void format_module_detail(const struct canopus_manager_module_v1 *module,
                                  char out[64])
 {
@@ -308,6 +327,16 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
         format_diag_u32(saves, saves_text);
         rc = append_status(tree, UI_KEY_PERSIST_SAVES, "Verified saves", 15u,
                            saves_text, sizeof(saves_text));
+        if (rc != CANOPUS_UI_OK) return rc;
+    }
+    if (model->pending_op != 0u &&
+        (model->pending_state == CANOPUS_RESULT_REJECTED ||
+         model->pending_state == CANOPUS_RESULT_FAILED ||
+         model->pending_state == CANOPUS_RESULT_DISALLOWED)) {
+        char operation[48];
+        format_operation_result(model, operation);
+        rc = append_status(tree, UI_KEY_LAST_OPERATION, "Last operation", 14u,
+                           operation, sizeof(operation));
         if (rc != CANOPUS_UI_OK) return rc;
     }
     if (model->module_query_error != 0) {

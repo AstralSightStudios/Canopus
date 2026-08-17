@@ -663,6 +663,50 @@ TEST(supervisor_registry_metadata_restore_defers_enabled_module_load)
     g_load_descriptor = 0;
 }
 
+TEST(supervisor_registry_restores_multiple_pending_intents)
+{
+    struct canopus_supervisor_v1 a, b;
+    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
+    canopus_supervisor_init(&a, 7, &fake_platform, 0);
+    canopus_supervisor_init(&b, 7, &fake_platform, 0);
+    g_registry_present = 0;
+    g_persists = 0;
+    CHECK(canopus_supervisor_add_module(
+              &a, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+              1, 1, "mod.one") == 0);
+    CHECK(canopus_supervisor_add_module(
+              &a, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+              1, 1, "mod.two") == 1);
+    CHECK(canopus_supervisor_add_module(
+              &a, CANOPUS_LIFECYCLE_REMOVABLE,
+              1, 1, "mod.disabled") == 2);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
+    CHECK(canopus_supervisor_handle_command(&a, cmd) ==
+          CANOPUS_RESULT_REBOOT_REQUIRED);
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 1, 0);
+    CHECK(canopus_supervisor_handle_command(&a, cmd) ==
+          CANOPUS_RESULT_REBOOT_REQUIRED);
+
+    g_loads = 0;
+    g_load_result = CANOPUS_STATE_ACTIVE;
+    g_loading_supervisor = &b;
+    g_load_descriptor = &fake_descriptor;
+    CHECK(canopus_supervisor_restore_registry_metadata(&b) == 0);
+    CHECK(b.module_count == 3);
+    CHECK(b.modules[0].intent == CANOPUS_SUP_INTENT_ENABLED);
+    CHECK(b.modules[1].intent == CANOPUS_SUP_INTENT_ENABLED);
+    CHECK(b.modules[2].intent == CANOPUS_SUP_INTENT_DISABLED);
+    CHECK(g_loads == 0);
+
+    CHECK(canopus_supervisor_activate_restored_modules(&b) == 0);
+    CHECK(g_loads == 2);
+    CHECK(b.modules[0].state == CANOPUS_STATE_ACTIVE);
+    CHECK(b.modules[1].state == CANOPUS_STATE_ACTIVE);
+    CHECK(b.modules[2].state == CANOPUS_STATE_INSTALLED);
+    g_loading_supervisor = 0;
+    g_load_descriptor = 0;
+}
+
 TEST(supervisor_registry_retains_boot_activation_error)
 {
     struct canopus_supervisor_v1 a, b, c;
@@ -1193,11 +1237,9 @@ TEST(v2_request_tracked_in_pending)
     CHECK(canopus_supervisor_device_write(
               &sup, wbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + 16) ==
           (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 16));
-    const struct canopus_pending_request_v1 *p =
-        canopus_pending_find(&sup.pending, 0x77);
-    CHECK(p != 0);
-    CHECK(p->command == CANOPUS_CMD_INSTALL);
-    CHECK(p->state == CANOPUS_RESULT_COMPLETED); /* retained terminal */
+    /* Mutations complete synchronously; their response is authoritative and
+     * the terminal pending slot is immediately reusable. */
+    CHECK(canopus_pending_find(&sup.pending, 0x77) == 0);
     CHECK(g_stages == 1);
     CHECK(g_last_stage == 0u); /* package INSTALL never becomes publication */
     CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) ==
@@ -1228,6 +1270,21 @@ TEST(v2_enable_by_module_id)
     CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_REBOOT_REQUIRED);
     CHECK(sup.modules[0].state == CANOPUS_STATE_ENABLED);
     CHECK(sup.modules[0].intent == CANOPUS_SUP_INTENT_ENABLED);
+
+    /* Synchronous mutations must not exhaust the eight-slot request table. */
+    {
+        uint32_t request_id;
+        for (request_id = 0x100u; request_id < 0x10Cu; request_id++) {
+            make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_ENABLE,
+                            request_id, payload, sizeof(payload));
+            CHECK(canopus_supervisor_device_write(
+                      &sup, wbuf,
+                      CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(payload)) ==
+                  (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(payload)));
+            CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+            CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_REBOOT_REQUIRED);
+        }
+    }
 
     /* an unknown module id resolves to DISALLOWED, not a fake success */
     canopus_memcpy(payload, "mod.nope", 8);
@@ -1449,6 +1506,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_registry_restore_auto_activates_ready_module", supervisor_registry_restore_auto_activates_ready_module_wrapper },
     { "supervisor_registry_metadata_restore_defers_enabled_module_load", supervisor_registry_metadata_restore_defers_enabled_module_load_wrapper },
     { "supervisor_registry_retains_boot_activation_error", supervisor_registry_retains_boot_activation_error_wrapper },
+    { "supervisor_registry_restores_multiple_pending_intents", supervisor_registry_restores_multiple_pending_intents_wrapper },
     { "supervisor_native_app_publication_is_version_gated", supervisor_native_app_publication_is_version_gated_wrapper },
     { "supervisor_legacy_native_app_publishes_only_in_stage_one", supervisor_legacy_native_app_publishes_only_in_stage_one_wrapper },
     { "supervisor_staged_native_app_receives_each_stage", supervisor_staged_native_app_receives_each_stage_wrapper },

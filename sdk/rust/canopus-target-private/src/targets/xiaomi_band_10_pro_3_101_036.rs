@@ -908,8 +908,7 @@ pub const LV_STYLE_BORDER_WIDTH: u32 = 48;
 pub const LV_STYLE_BORDER_OPA: u32 = 50;
 pub const LV_STYLE_TEXT_OPA: u32 = 89;
 pub const LV_STYLE_TEXT_ALIGN: u32 = 94;
-pub const LV_STYLE_TRANSFORM_SCALE_X: u32 = 108;
-pub const LV_STYLE_TRANSFORM_SCALE_Y: u32 = 109;
+pub const LV_OBJ_FLAG_CLICKABLE: u32 = 0x20;
 
 pub type LvxTimerCallback = extern "C" fn(*mut core::ffi::c_void);
 
@@ -998,6 +997,17 @@ pub unsafe fn lvx_image_set_src(image: *mut core::ffi::c_void, source: *const co
     f(image, source);
 }
 
+/// Sets the LVGL image transform scale in 1/256th units on both axes.
+/// The recovered firmware entry is the image-widget setter used by stock
+/// `img_zoom` handling; 256 means 100 percent.
+pub unsafe fn lvx_image_set_scale(image: *mut core::ffi::c_void, scale_x: i32, scale_y: i32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, i32, i32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(0x0C179A8C))
+    };
+    f(image, scale_x, scale_y);
+}
+
 pub unsafe fn lvx_bar_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     type F = extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
     let f: F = unsafe {
@@ -1048,15 +1058,6 @@ pub unsafe fn lvx_label_set_text(label: *mut core::ffi::c_void, text: *const u8)
 pub unsafe fn lvx_label_set_text_align_center(label: *mut core::ffi::c_void) {
     unsafe {
         lvx_object_set_local_style_u32(label, LV_STYLE_TEXT_ALIGN, 2, 0);
-    }
-}
-
-/// Scales the freshly-created author label to 75% after applying the 32px
-/// MiSans style, keeping CJK coverage without making the artist as large as the title.
-pub unsafe fn lvx_label_set_author_scale(label: *mut core::ffi::c_void) {
-    unsafe {
-        lvx_object_set_local_style_u32(label, LV_STYLE_TRANSFORM_SCALE_X, 192, 0);
-        lvx_object_set_local_style_u32(label, LV_STYLE_TRANSFORM_SCALE_Y, 192, 0);
     }
 }
 
@@ -1158,6 +1159,9 @@ pub unsafe fn lvx_page_title_create(
     f(parent, title, mode, back_callback, back_context)
 }
 
+/// MiSans-Regular at 24 px (stock theme object address).
+pub const STYLE_MISANS_REGULAR_24: usize = 0x20109E1C;
+
 /// MiSans-Demibold at 32 px (stock theme object address).
 pub const STYLE_MISANS_DEMIBOLD_32: usize =
     canopus_target_generated::canopus_fw_style_misans_demibold_32;
@@ -1194,6 +1198,14 @@ pub unsafe fn lvx_event_get_user_data(event: *mut core::ffi::c_void) -> usize {
 
 pub unsafe fn lvx_event_get_code(event: *mut core::ffi::c_void) -> u32 {
     unsafe { canopus_target_generated::canopus_fw_lv_event_get_code(event) }
+}
+
+pub unsafe fn lvx_object_add_flag(object: *mut core::ffi::c_void, flags: u32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(0x0CAA6A10))
+    };
+    f(object, flags);
 }
 
 pub unsafe fn lvx_set_hidden(object: *mut core::ffi::c_void, hidden: u32) {

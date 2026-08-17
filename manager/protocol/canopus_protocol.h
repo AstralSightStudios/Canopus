@@ -133,9 +133,12 @@ int canopus_transport_v2_encode_response(const struct canopus_proto_response_v1 
  * Legal edges (see canopus_pending.c): ACCEPTED -> QUEUED/RUNNING/terminal,
  * QUEUED -> RUNNING/terminal, RUNNING -> terminal. Backwards, terminal ->
  * anything, REJECTED and unknown states are rejected. A terminal record is
- * retained (active stays 1) until the client ACKs it, so a late query still
- * observes the outcome. Slots carry the boot_id that accepted them; after a
- * boot_id change the old slots are stale and reject further operations. */
+ * normally retained (active stays 1) until the client ACKs it, so a late query
+ * still observes the outcome; synchronous supervisor operations may ACK their
+ * terminal record before returning the response because that response is the
+ * authoritative completion record. Slots carry the boot_id that accepted
+ * them; after a boot_id change the old slots are stale and reject further
+ * operations. */
 #define CANOPUS_PENDING_MAX 8u
 
 struct canopus_pending_request_v1 {
