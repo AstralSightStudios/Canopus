@@ -923,6 +923,8 @@ pub const LV_STYLE_BORDER_WIDTH: u32 = 48;
 pub const LV_STYLE_BORDER_OPA: u32 = 50;
 pub const LV_STYLE_TEXT_OPA: u32 = 89;
 pub const LV_STYLE_TEXT_ALIGN: u32 = 94;
+pub const LV_STYLE_TRANSFORM_SCALE_X: u32 = 108;
+pub const LV_STYLE_TRANSFORM_SCALE_Y: u32 = 109;
 
 pub type LvxTimerCallback = extern "C" fn(*mut core::ffi::c_void);
 
@@ -1067,6 +1069,15 @@ pub unsafe fn lvx_label_set_text(label: *mut core::ffi::c_void, text: *const u8)
 pub unsafe fn lvx_label_set_text_align_center(label: *mut core::ffi::c_void) {
     unsafe {
         lvx_object_set_local_style_u32(label, LV_STYLE_TEXT_ALIGN, 2, 0);
+    }
+}
+
+/// Scales the freshly-created author label to 75% after applying the 32px
+/// MiSans style, keeping CJK coverage without making the artist as large as the title.
+pub unsafe fn lvx_label_set_author_scale(label: *mut core::ffi::c_void) {
+    unsafe {
+        lvx_object_set_local_style_u32(label, LV_STYLE_TRANSFORM_SCALE_X, 192, 0);
+        lvx_object_set_local_style_u32(label, LV_STYLE_TRANSFORM_SCALE_Y, 192, 0);
     }
 }
 
