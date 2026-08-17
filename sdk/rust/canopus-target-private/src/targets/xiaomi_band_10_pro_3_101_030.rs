@@ -925,6 +925,7 @@ pub const LV_STYLE_TEXT_OPA: u32 = 89;
 pub const LV_STYLE_TEXT_ALIGN: u32 = 94;
 pub const LV_STYLE_TRANSFORM_SCALE_X: u32 = 108;
 pub const LV_STYLE_TRANSFORM_SCALE_Y: u32 = 109;
+pub const LV_OBJ_FLAG_CLICKABLE: u32 = 0x20;
 
 pub type LvxTimerCallback = extern "C" fn(*mut core::ffi::c_void);
 
@@ -1017,6 +1018,16 @@ pub unsafe fn lvx_image_set_src(image: *mut core::ffi::c_void, source: *const co
         core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE)
     };
     f(image, source);
+}
+
+/// Sets the LVGL image transform scale in 1/256th units on both axes.
+/// The 3.101.030 image widget uses the same recovered setter as 3.101.036.
+pub unsafe fn lvx_image_set_scale(image: *mut core::ffi::c_void, scale_x: i32, scale_y: i32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, i32, i32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(0x0C179A8C))
+    };
+    f(image, scale_x, scale_y);
 }
 
 pub unsafe fn lvx_bar_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
@@ -1231,6 +1242,14 @@ pub unsafe fn lvx_event_get_code(event: *mut core::ffi::c_void) -> u32 {
         ))
     };
     f(event)
+}
+
+pub unsafe fn lvx_object_add_flag(object: *mut core::ffi::c_void, flags: u32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(0x0C5871D9))
+    };
+    f(object, flags);
 }
 
 pub unsafe fn lvx_set_hidden(object: *mut core::ffi::c_void, hidden: u32) {
