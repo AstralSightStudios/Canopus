@@ -95,6 +95,7 @@ TEST(manager_app_runs_native_end_to_end_path)
     descriptor = canopus_manager_app_descriptor();
     CHECK(canopus_app_descriptor_check(descriptor) == 0);
     CHECK((descriptor->flags & CANOPUS_APP_FLAG_LAUNCHER_VISIBLE) != 0u);
+    CHECK(strcmp((const char *)descriptor->app_name, "Canopus 管理器") == 0);
     CHECK(canopus_manager_app_configure(&app, &app_device_io, &fixture,
                                         &app_ui_backend, &fixture) == 0);
     canopus_manager_app_set_identity(&app, "xiaomi-band-10-pro-3.101.030",
@@ -117,7 +118,7 @@ TEST(manager_app_runs_native_end_to_end_path)
     snapshot = canopus_ui_current(&app.native.ui);
     CHECK(snapshot->generation == 3u);
     CHECK(strcmp(snapshot->strings + snapshot->nodes[0].primary_off,
-                 "Modules") == 0);
+                 "模块") == 0);
     CHECK(fixture.supervisor.safe_mode == 0u);
 
     CHECK(descriptor->on_pause(0) == 0);

@@ -16,12 +16,14 @@
     feature = "target-xiaomi-band-10-pro-3-101-030",
     feature = "target-xiaomi-band-10-pro-3-101-036",
     feature = "target-xiaomi-band-9-pro-3-1-175",
-    feature = "target-xiaomi-band-11-4-100-108"
+    feature = "target-xiaomi-band-11-4-100-108",
+    feature = "target-xiaomi-band-10-pro-3-101-043"
 )))]
 compile_error!(
     "canopus-target-private requires exactly one target feature; supported: \
      target-xiaomi-band-10-pro-3-101-030, target-xiaomi-band-10-pro-3-101-036, \
-     target-xiaomi-band-9-pro-3-1-175, target-xiaomi-band-11-4-100-108"
+     target-xiaomi-band-9-pro-3-1-175, target-xiaomi-band-11-4-100-108, \
+     target-xiaomi-band-10-pro-3-101-043"
 );
 
 #[cfg(feature = "target-xiaomi-band-10-pro-3-101-030")]
@@ -50,4 +52,11 @@ pub use selected::*;
 mod selected;
 
 #[cfg(feature = "target-xiaomi-band-11-4-100-108")]
+pub use selected::*;
+
+#[cfg(feature = "target-xiaomi-band-10-pro-3-101-043")]
+#[path = "targets/xiaomi_band_10_pro_3_101_043.rs"]
+mod selected;
+
+#[cfg(feature = "target-xiaomi-band-10-pro-3-101-043")]
 pub use selected::*;

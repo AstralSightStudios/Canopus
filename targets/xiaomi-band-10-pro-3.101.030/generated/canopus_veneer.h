@@ -4,7 +4,7 @@
  * firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
  * sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
  * revision : 4
- * input_digest: f34e2b03ead06d14
+ * input_digest: 0fbeb128a667ecaa
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_030_H
@@ -479,6 +479,8 @@ static inline int canopus_fw_close(int a0) {
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
  * lv_timer_create: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
+ * lvx_image_set_scale: restricted - not exported until context/ownership approved
+ * lvx_object_add_flag: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
  * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated

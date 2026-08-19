@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.system_router_page_record_wrapper",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "system_router_page_record_wrapper",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ]
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "approval_state": "REJECTED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ],
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
+    "withdrawal_reason": "No independent exact-target global recovery; fail-closed rather than reuse neighboring firmware address."
+  },
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (system_router_page_record_wrapper)"
+}

@@ -247,12 +247,12 @@ static const char package_name[] = "com.canopus.manager";
 static const char page_name_overview[] = "main";
 static const char page_name_modules[] = "modules";
 static const char page_name_detail[] = "module_detail";
-static const char display_name[] = "Canopus Manager";
+static const char display_name[] = "Canopus 管理器";
 static const char empty_detail[] = "";
 static const char notification_title[] = "Canopus";
-static const char notification_body[] = "Canpous Loaded! Just ENJOY~";
+static const char notification_body[] = "Canopus 已加载！尽情享受吧～";
 static const char module_notification_body[] =
-    "A new module was installed disabled. Open Canopus Manager to enable it.";
+    "新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。";
 /* The watchface bootstrap stages the LVGL v9 ARGB8888 bin (alpha preserved)
  * at this stable path; used for both the notification icons and the app icon. */
 static const char notification_icon[] = "/data/canopus/manager_icon.bin";
@@ -668,10 +668,10 @@ static int target_show_confirmation(
     confirm_binding->key = ((uint32_t)backend->page_index << 24) | confirm->key;
     confirm_binding->event_id = confirm->event_id;
     backend->dialog.buttons[0].callback = target_dialog_event;
-    backend->dialog.buttons[0].text = "Cancel";
+    backend->dialog.buttons[0].text = "取消";
     backend->dialog.buttons[0].user_data = cancel_binding;
     backend->dialog.buttons[1].callback = target_dialog_event;
-    backend->dialog.buttons[1].text = "Confirm";
+    backend->dialog.buttons[1].text = "确认";
     backend->dialog.buttons[1].user_data = confirm_binding;
     /* The stock prefab sizes its modal scrim from its parent. Parenting it to
      * content_root confines it to the scrollable page body, so the dialog
@@ -731,6 +731,9 @@ static int32_t target_ui_apply(
         (create_page_title_fn)(uintptr_t)FW_LVX_PAGE_TITLE_CREATE;
     apply_style_fn apply_style =
         (apply_style_fn)(uintptr_t)FW_LVX_STYLE_APPLY;
+#ifndef FW_STYLE_MISANS_DEMIBOLD_32
+    (void)apply_style;
+#endif
     add_event_fn add_event = (add_event_fn)(uintptr_t)FW_LVX_EVENT_ADD;
     set_hidden_fn set_hidden = (set_hidden_fn)(uintptr_t)FW_LVX_SET_HIDDEN;
     align_to_fn align_to = (align_to_fn)(uintptr_t)FW_LVX_ALIGN_TO;
@@ -865,6 +868,7 @@ static int32_t target_ui_apply(
             }
             set_label_text(object, primary);
             if (snapshot->styles[i].text_style == CANOPUS_UI_TEXT_TITLE) {
+#ifdef FW_STYLE_MISANS_DEMIBOLD_32
                 /* lvx_theme_default_init maps this exact-target style object to
                  * MiSans-Demibold at 32 px. sub_C49EA98 is the stock helper used
                  * by firmware labels to replace the inherited text style. */
@@ -872,6 +876,7 @@ static int32_t target_ui_apply(
                     object,
                     (const void *)(uintptr_t)FW_STYLE_MISANS_DEMIBOLD_32,
                     255u, 0u);
+#endif
             }
             set_hidden(object, 0u);
             if (previous == NULL) {

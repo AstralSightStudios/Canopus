@@ -246,12 +246,12 @@ static const char package_name[] = "com.canopus.manager";
 static const char page_name_overview[] = "main";
 static const char page_name_modules[] = "modules";
 static const char page_name_detail[] = "module_detail";
-static const char display_name[] = "Canopus Manager";
+static const char display_name[] = "Canopus 管理器";
 static const char empty_detail[] = "";
 static const char notification_title[] = "Canopus";
-static const char notification_body[] = "Canpous Loaded! Just ENJOY~";
+static const char notification_body[] = "Canopus 已加载！尽情享受吧～";
 static const char module_notification_body[] =
-    "A new module was installed disabled. Open Canopus Manager to enable it.";
+    "新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。";
 /* The watchface bootstrap stages the LVGL v9 ARGB8888 bin (alpha preserved)
  * at this stable path; used for both the notification icons and the app icon. */
 static const char notification_icon[] = "/data/canopus/manager_icon.bin";

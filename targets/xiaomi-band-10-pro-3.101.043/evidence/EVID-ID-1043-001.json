@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ID-1043-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Are the 3.101.043 firmware identity strings present at the recovered addresses?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.identity.firmware_version_string",
+    "xiaomi-band-10-pro-3.101.043.identity.firmware_build_string"
+  ],
+  "prototype_hypothesis": "const char[] at 0x0C0C0810 (3.101.043) and 0x0C0C0850 (CONBINE_LTALM078_T3.101.043_08041658)",
+  "callsite_evidence": [
+    "The exact IDA contains 3.101.043 at 0x0C0C0810 and CONBINE_LTALM078_T3.101.043_08041658 at 0x0C0C0850.",
+    "Raw vela_ap.bin SHA-256: 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec."
+  ],
+  "control_flow_evidence": [
+    "Identity guard addresses are generated from these exact-target string records; device probe is pending."
+  ],
+  "ownership_analysis": "read-only firmware strings; borrowed for module lifetime",
+  "unsafe_assumptions": [
+    "String comparison is not a full runtime SHA-256 recompute."
+  ],
+  "recommended_probe": "Minimal fixed-address read of both strings in the module constructor.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-19T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "/Volumes/EXT0/miwear.watch.p67cn_v3.101.043_full_a4ce8564/vela_ap.bin.i64",
+      "role": "exact-idb"
+    }
+  ]
+}

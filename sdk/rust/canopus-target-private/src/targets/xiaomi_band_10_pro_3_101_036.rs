@@ -1003,7 +1003,7 @@ pub unsafe fn lvx_image_set_src(image: *mut core::ffi::c_void, source: *const co
 pub unsafe fn lvx_image_set_scale(image: *mut core::ffi::c_void, scale_x: i32, scale_y: i32) {
     type F = extern "C" fn(*mut core::ffi::c_void, i32, i32);
     let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(0x0C179A8C))
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE)
     };
     f(image, scale_x, scale_y);
 }
@@ -1160,7 +1160,8 @@ pub unsafe fn lvx_page_title_create(
 }
 
 /// MiSans-Regular at 24 px (stock theme object address).
-pub const STYLE_MISANS_REGULAR_24: usize = 0x20109E1C;
+pub const STYLE_MISANS_REGULAR_24: usize =
+    canopus_target_generated::CANOPUS_FW_STYLE_MISANS_REGULAR_24;
 
 /// MiSans-Demibold at 32 px (stock theme object address).
 pub const STYLE_MISANS_DEMIBOLD_32: usize =
@@ -1203,7 +1204,7 @@ pub unsafe fn lvx_event_get_code(event: *mut core::ffi::c_void) -> u32 {
 pub unsafe fn lvx_object_add_flag(object: *mut core::ffi::c_void, flags: u32) {
     type F = extern "C" fn(*mut core::ffi::c_void, u32);
     let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(0x0CAA6A10))
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE)
     };
     f(object, flags);
 }

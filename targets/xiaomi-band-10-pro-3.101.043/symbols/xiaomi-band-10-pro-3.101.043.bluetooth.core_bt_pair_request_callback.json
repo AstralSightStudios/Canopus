@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.core_bt_pair_request_callback",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "core_bt_pair_request_callback",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc709e90",
+  "callable_address": "0xc709e91",
+  "prototype": "int(void *, const uint8_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "bluetooth_callback"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed callback cookie and six-byte address"
+  },
+  "side_effects": [
+    "accepts companion Pair Request",
+    "rejects non-companion Pair Request"
+  ],
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ],
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-11",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int(void *, const uint8_t *)",
+    "ownership": "borrowed callback arguments",
+    "thread": "bluetooth_callback",
+    "device_probe": "pending"
+  },
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (core_bt_pair_request_callback)"
+}

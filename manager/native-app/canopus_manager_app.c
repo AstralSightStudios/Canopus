@@ -97,7 +97,7 @@ static const struct canopus_app_descriptor_v1 descriptor = {
     CANOPUS_APP_ABI_MINOR,
     CANOPUS_APP_FLAG_MANAGER_PAGE | CANOPUS_APP_FLAG_LAUNCHER_VISIBLE,
     "com.canopus.manager",
-    "Canopus Manager",
+    "Canopus 管理器",
     "canopus/manager",
     manager_on_create,
     manager_on_resume,

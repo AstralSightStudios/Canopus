@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.style_misans_regular_24",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "style_misans_regular_24",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x20109E1C",
+  "prototype": "void *",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-UI-001"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {"firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81", "evidence_ids": ["EVID-UI-001"], "source": "Exact-target read-only MiSans Regular 24 style global retained by the existing 3.101.036 UI facade."},
+  "approval_state": "PENDING",
+  "notes": "Generated address constant only; semantic use remains in canopus-target-private. Device probe pending."
+}

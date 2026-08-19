@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.firmware_build_string",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "firmware_build_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "prototype": "const char[]",
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ID-1043-001"
+    ]
+  },
+  "policy": "managed",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
+    "evidence_ids": [
+      "EVID-ID-1043-001"
+    ]
+  },
+  "entry_address": "0x0C0C0850",
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (firmware_build_string)",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-07-22",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "const char *",
+    "ownership": "read-only firmware string",
+    "thread": "identity guard",
+    "device_probe": "identity string address read back on device matches CONBINE_LTALM078_T3.101.030_06011854"
+  }
+}

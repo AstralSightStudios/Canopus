@@ -1,0 +1,103 @@
+# xiaomi-band-10-pro-3.101.043 — Xiaomi Band 10 Pro firmware 3.101.043
+# Static exact-IDB recovery; device gates remain pending.
+schema = 1
+target_id = "xiaomi-band-10-pro-3.101.043"
+device_family = "xiaomi-smart-band"
+device_model = "Xiaomi Band 10 Pro"
+board_revision = "unknown"
+os_family = "nuttx-derived"
+architecture = "armv8-m.main"
+cpu = "cortex-m33"
+instruction_set = "thumb2"
+endianness = "little"
+float_abi = "soft"
+loader = "nuttx-modlib-elf32-rel"
+firmware_sha256 = "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec"
+firmware_version = "3.101.043"
+firmware_build = "CONBINE_LTALM078_T3.101.043_08041658"
+module_abi = 1
+relocation_profile = "best1503-v1"
+revision = 1
+
+# Recovered code/data extent from the exact 3.101.043 IDB; verifier range is
+# intentionally bounded to the recovered XIP window, not the full address bus.
+firmware_address_ranges = [
+  { base = 0x0C000000, size = 0x00E00000 },
+]
+
+capabilities = [
+  "identity-guard",
+  "clock.gettime",
+  "char-device.register",
+  "char-device.unregister",
+  "control-abi",
+  "classic.adapter",
+  "classic.l2cap",
+  "classic.sdp",
+  "bt.timer",
+  "native-app.register",
+  "launcher.entry",
+  "ui.dispatch",
+]
+
+[loader_profile]
+elf_class = 32
+elf_machine = "ARM"
+elf_type = "ET_REL"
+endianness = "little"
+constructor_discovery = "init_array"
+symbol_imports = "none"
+max_size = 0
+alignment = 4
+module_name_rules = "must match ^[a-zA-Z0-9_]+$; passed as argv[2] to insmod"
+load_command = "insmod <path> <name>"
+unload_command = "rmmod <name>"
+persistent_autoload = false
+
+[[loader_profile.relocations]]
+name = "R_ARM_NONE"
+arm_type = 0
+notes = "no-op; accepted"
+[[loader_profile.relocations]]
+name = "R_ARM_ABS32"
+arm_type = 2
+notes = "verified by stock modlib profile; exact 3.101.043 device gate pending"
+[[loader_profile.relocations]]
+name = "R_ARM_REL32"
+arm_type = 23
+notes = "verified by stock modlib profile; exact 3.101.043 device gate pending"
+[[loader_profile.relocations]]
+name = "R_ARM_TARGET1"
+arm_type = 38
+notes = "handled with ABS32 semantics"
+[[loader_profile.relocations]]
+name = "R_ARM_PREL31"
+arm_type = 42
+notes = "verified by stock modlib profile"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVW_ABS_NC"
+arm_type = 47
+notes = "verified Thumb movw"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVT_ABS"
+arm_type = 48
+notes = "verified Thumb movt"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_CALL"
+arm_type = 10
+notes = "intra-module Thumb BL; exact device gate pending"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_JUMP24"
+arm_type = 30
+notes = "intra-module Thumb conditional branch; exact device gate pending"
+
+[provenance]
+source_repo = "miwear.watch.p67cn_v3.101.043_full_a4ce8564"
+source_findings = [
+  "Exact 3.101.043 IDA corpus with 42,246 functions",
+  "Dual-source fw-match: 71 confirmed mappings from 3.101.036 and 72 confirmed mappings from 3.101.030; only confirmed intersections were promoted",
+  "Unresolved global slots remain withdrawn/fail-closed",
+]
+import_date = "2026-08-19"
+maintainer = "canopus-maintainer"
+reviewers = ["canopus-maintainer"]

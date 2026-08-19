@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.bt_l2cap_submit_cid",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "bt_l2cap_submit_cid",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc805be8",
+  "prototype": "int(void *, uint16_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ],
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+  },
+  "approval_state": "PENDING",
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (bt_l2cap_submit_cid)",
+  "callable_address": "0xc805be9"
+}

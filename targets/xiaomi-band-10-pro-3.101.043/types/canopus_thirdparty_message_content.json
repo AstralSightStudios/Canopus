@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.043.type.canopus_thirdparty_message_content.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "kind": "struct",
+  "name": "canopus_thirdparty_message_content",
+  "size": 336,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "message_id",
+      "offset": 0,
+      "width": 4,
+      "signedness": "unsigned",
+      "provenance": "0x00160914 in quickapp_send_wearmsg"
+    },
+    {
+      "name": "message_kind",
+      "offset": 4,
+      "width": 2,
+      "signedness": "unsigned",
+      "provenance": "9 selects THIRDPARTY_APP"
+    },
+    {
+      "name": "package_name",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_for_call",
+      "provenance": "NUL-terminated BasicInfo package"
+    },
+    {
+      "name": "fingerprint_blob",
+      "offset": 20,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_for_call",
+      "provenance": "NULL omits optional BasicInfo fingerprint; stock points to u16-length-prefixed 20-byte digest"
+    },
+    {
+      "name": "payload_blob",
+      "offset": 24,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_for_call",
+      "provenance": "u16 little-endian length followed by payload bytes"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-CONN-001"
+    ],
+    "source": "sub_C528F00 zeroes 336 bytes, writes message constants and pointers at +0x10/+0x14/+0x18 before sub_CA8B164"
+  }
+}

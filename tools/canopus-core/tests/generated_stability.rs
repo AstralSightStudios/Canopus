@@ -82,6 +82,10 @@ fn additional_target_artifacts_regenerate_identically() {
             "xiaomi-band-9-pro-3.1.175",
             "sdk/rust/canopus-target-generated/src/generated_b9.rs",
         ),
+        (
+            "xiaomi-band-10-pro-3.101.043",
+            "sdk/rust/canopus-target-generated/src/generated_1043.rs",
+        ),
     ];
 
     for (target, rust_path) in cases {
@@ -187,6 +191,7 @@ fn private_abi_records_have_exact_thumb_callables() {
         "xiaomi-band-10-pro-3.101.030",
         "xiaomi-band-10-pro-3.101.036",
         "xiaomi-band-9-pro-3.1.175",
+        "xiaomi-band-10-pro-3.101.043",
     ] {
         let dir = repo_root().join("targets").join(target);
         let (symbols, types) = load_records(&dir).unwrap();

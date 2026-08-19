@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.module_symtab_pointer",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "module_symtab_pointer",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "void *",
+  "proof": {
+    "static": "candidate",
+    "device": "probed",
+    "evidence_ids": [
+      "EVID-ID-1043-001"
+    ]
+  },
+  "policy": "withdrawn",
+  "status": "WITHDRAWN",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
+    "withdrawal_reason": "No independent exact-target global recovery; fail-closed rather than reuse neighboring firmware address.",
+    "evidence_ids": [
+      "EVID-ID-1043-001"
+    ]
+  },
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (module_symtab_pointer)",
+  "approval_state": "REJECTED"
+}

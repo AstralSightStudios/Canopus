@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lvx_notification_insert_message",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lvx_notification_insert_message",
+  "kind": "function",
+  "entry_address": "0xca9a898",
+  "callable_address": "0xca9a899",
+  "instruction_set": "thumb",
+  "prototype": "int(const firmware_notification_message *message)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "notification_owner",
+      "system_app_lifecycle_callback"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "return_value": "zero_or_one_observed_but_exact_failure_contract_not_proved"
+  },
+  "side_effects": [
+    "allocates_and_inserts_notification_record",
+    "may_start_reminder",
+    "may_emit_notification_event_32",
+    "schedules_notification_timer"
+  ],
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ],
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+  },
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lvx_notification_insert_message)",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-10",
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "prototype": "int(const firmware_notification_message *message)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "native-manager probe runs this on device"
+  }
+}

@@ -117,13 +117,13 @@ TEST(manager_native_renders_device_prefabs)
     CHECK(strcmp(snapshot->strings + snapshot->nodes[0].primary_off,
                  "Canopus") == 0);
     CHECK(snapshot->styles[0].text_style == CANOPUS_UI_TEXT_TITLE);
-    manager = find_primary(snapshot, "Manager");
+    manager = find_primary(snapshot, "管理器");
     CHECK(manager != 0);
     CHECK(strcmp(snapshot->strings + manager->secondary_off,
-                 "Native UI ABI 1.4") == 0);
-    CHECK(find_primary(snapshot, "Firmware") != 0);
-    CHECK(find_primary(snapshot, "Build") != 0);
-    CHECK(find_primary(snapshot, "Target") != 0);
+                 "原生 UI ABI 1.4") == 0);
+    CHECK(find_primary(snapshot, "固件") != 0);
+    CHECK(find_primary(snapshot, "构建") != 0);
+    CHECK(find_primary(snapshot, "目标设备") != 0);
     modules = find_event(snapshot, CANOPUS_MANAGER_EVENT_SHOW_MODULES);
     CHECK(modules != 0);
     CHECK(modules->type == CANOPUS_UI_NODE_ACTION_ROW);
@@ -151,7 +151,7 @@ TEST(manager_native_overview_surfaces_supervisor_error)
                                       &backend) == CANOPUS_UI_OK);
     snapshot = canopus_ui_current(&native.ui);
     CHECK(snapshot != 0);
-    error = find_primary(snapshot, "Error");
+    error = find_primary(snapshot, "错误");
     CHECK(error != 0);
     CHECK(strcmp(snapshot->strings + error->secondary_off,
                  "err -11 registry corrupt") == 0);
@@ -160,15 +160,15 @@ TEST(manager_native_overview_surfaces_supervisor_error)
     model.supervisor_flags = (3u << 24) | (18u << 8) | 5u;
     CHECK(canopus_manager_native_render(&native) == CANOPUS_UI_OK);
     snapshot = canopus_ui_current(&native.ui);
-    error = find_primary(snapshot, "Error");
+    error = find_primary(snapshot, "错误");
     CHECK(error != 0);
     CHECK(strcmp(snapshot->strings + error->secondary_off,
                  "err -16 registry rename failed") == 0);
-    CHECK(strcmp(snapshot->strings + find_primary(snapshot, "Registry")->secondary_off,
-                 "Rename registry") == 0);
-    CHECK(strcmp(snapshot->strings + find_primary(snapshot, "Filesystem errno")->secondary_off,
+    CHECK(strcmp(snapshot->strings + find_primary(snapshot, "注册表")->secondary_off,
+                 "重命名注册表") == 0);
+    CHECK(strcmp(snapshot->strings + find_primary(snapshot, "文件系统错误号")->secondary_off,
                  "18") == 0);
-    CHECK(strcmp(snapshot->strings + find_primary(snapshot, "Verified saves")->secondary_off,
+    CHECK(strcmp(snapshot->strings + find_primary(snapshot, "已验证保存次数")->secondary_off,
                  "3") == 0);
 
     /* a clean supervisor shows no error row */
@@ -176,7 +176,7 @@ TEST(manager_native_overview_surfaces_supervisor_error)
     model.supervisor_flags = 0u;
     CHECK(canopus_manager_native_render(&native) == CANOPUS_UI_OK);
     snapshot = canopus_ui_current(&native.ui);
-    CHECK(find_primary(snapshot, "Error") == 0);
+    CHECK(find_primary(snapshot, "错误") == 0);
 }
 
 TEST(manager_native_surfaces_module_query_failure)
@@ -198,7 +198,7 @@ TEST(manager_native_surfaces_module_query_failure)
                                       &backend) == CANOPUS_UI_OK);
     snapshot = canopus_ui_current(&native.ui);
     CHECK(snapshot != 0);
-    error = find_primary(snapshot, "Module query");
+    error = find_primary(snapshot, "模块查询");
     CHECK(error != 0);
     CHECK(strcmp(snapshot->strings + error->secondary_off,
                  "slot 0 query failed 4") == 0);
@@ -473,7 +473,7 @@ TEST(manager_native_hides_safe_mode_and_enforces_it)
 
     snapshot = canopus_ui_current(&native.ui);
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE) == 0);
-    CHECK(find_primary(snapshot, "Safe mode") == 0);
+    CHECK(find_primary(snapshot, "安全模式") == 0);
     install = find_event(snapshot, CANOPUS_MANAGER_EVENT_INSTALL);
     CHECK(install != 0);
     CHECK((install->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);

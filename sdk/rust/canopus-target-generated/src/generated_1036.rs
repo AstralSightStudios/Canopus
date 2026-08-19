@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 4
-// input_digest: e9e32059f407bd7a
+// input_digest: efd1e59416e17c04
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -331,6 +331,9 @@ pub unsafe fn canopus_fw_app_lookup(a0: u16) -> *mut core::ffi::c_void {
     let f: extern "C" fn(u16) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_APP_LOOKUP_CALLABLE) };
     f(a0)
 }
+
+/// Recovered `lvx_image_set_scale` at 0x0C179A8C. Thumb callable address 0x0C179A8D.
+pub const CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE: usize = canopus_thumb_callable(0x0C179A8Dusize);
 
 /// Recovered `write` at 0xc1c31c8. Thumb callable address 0xc1c31c9.
 pub const CANOPUS_FW_WRITE_CALLABLE: usize = canopus_thumb_callable(0xc1c31c9usize);
@@ -857,6 +860,9 @@ pub const CANOPUS_FW_BT_DISCOVERY_STOP_CALLABLE: usize = canopus_thumb_callable(
 /// Recovered `lv_obj_set_local_style_prop` at 0x0C107464. Thumb callable address 0x0C107465.
 pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x0C107465usize);
 
+/// Recovered `lvx_object_add_flag` at 0x0CAA6A10. Thumb callable address 0x0CAA6A11.
+pub const CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE: usize = canopus_thumb_callable(0x0CAA6A11usize);
+
 /// Recovered `firmware_log` at 0xc1e1208. Thumb callable address 0xc1e1209.
 pub const CANOPUS_FW_FIRMWARE_LOG_CALLABLE: usize = canopus_thumb_callable(0xc1e1209usize);
 
@@ -868,6 +874,9 @@ pub unsafe fn canopus_fw_lseek(a0: i32, a1: i64, a2: i32) -> i64 {
     let f: extern "C" fn(i32, i64, i32) -> i64 = unsafe { core::mem::transmute(CANOPUS_FW_LSEEK_CALLABLE) };
     f(a0, a1, a2)
 }
+
+/// Recovered global `style_misans_regular_24` at 0x20109E1C.
+pub const canopus_fw_style_misans_regular_24: usize = 0x20109E1Cusize;
 
 /// Recovered `interconnect_send` at 0x0C2D2184. Thumb callable address 0x0C2D2185.
 pub const CANOPUS_FW_INTERCONNECT_SEND_CALLABLE: usize = canopus_thumb_callable(0x0C2D2185usize);
@@ -927,6 +936,8 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
+// lvx_image_set_scale: restricted - not exported until context/ownership approved
+// lvx_object_add_flag: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
 // page_navigator_open_page: FORBIDDEN - no binding may ever be generated

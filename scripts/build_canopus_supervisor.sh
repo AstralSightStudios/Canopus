@@ -13,7 +13,7 @@ TARGET_ID=${CANOPUS_TARGET:-xiaomi-band-10-pro-3.101.030}
 LOADER_SRCS=""
 LOADER_OBJECTS=""
 case "$TARGET_ID" in
-    xiaomi-band-10-pro-3.101.030|xiaomi-band-10-pro-3.101.036)
+    xiaomi-band-10-pro-3.101.030|xiaomi-band-10-pro-3.101.036|xiaomi-band-10-pro-3.101.043)
         MANAGER_BACKEND="manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
         ;;
     xiaomi-band-9-pro-3.1.175)

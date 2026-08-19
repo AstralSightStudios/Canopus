@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lv_bar_set_value",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_bar_set_value",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc587ef0",
+  "callable_address": "0xc587ef1",
+  "prototype": "void(void *, int32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed page parent/widget and source",
+    "return_value": "n/a"
+  },
+  "side_effects": [
+    "updates_widget_value"
+  ],
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_CONFIRMED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ],
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+  },
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lv_bar_set_value)",
+  "approval_state": "APPROVED"
+}

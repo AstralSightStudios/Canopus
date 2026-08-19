@@ -14,6 +14,27 @@
  * module so the boot-resident footprint stays below the loader limit. */
 #define CLASS_REMOVABLE_ONLY(c) ((c) == CANOPUS_LIFECYCLE_REMOVABLE)
 
+static const char *manager_state_name(uint32_t state)
+{
+    switch (state) {
+    case CANOPUS_STATE_DISCOVERED: return "已发现";
+    case CANOPUS_STATE_VERIFIED: return "已验证";
+    case CANOPUS_STATE_INSTALLED: return "已安装";
+    case CANOPUS_STATE_DISABLED: return "已禁用";
+    case CANOPUS_STATE_ENABLED: return "已启用";
+    case CANOPUS_STATE_LOADING: return "加载中";
+    case CANOPUS_STATE_PREPARING: return "准备中";
+    case CANOPUS_STATE_READY: return "就绪";
+    case CANOPUS_STATE_ACTIVE: return "运行中";
+    case CANOPUS_STATE_STOPPING: return "停止中";
+    case CANOPUS_STATE_DRAINING: return "排空中";
+    case CANOPUS_STATE_UNLOADED: return "已卸载";
+    case CANOPUS_STATE_BOOT_RESIDENT: return "启动时常驻";
+    case CANOPUS_STATE_DISABLED_NEXT_BOOT: return "下次启动时禁用";
+    default: return canopus_state_name(state);
+    }
+}
+
 static void writer_append_u32(struct canopus_text_writer_v1 *w, uint32_t value)
 {
     char reverse[10];
@@ -117,18 +138,18 @@ int canopus_manager_render_device(const struct canopus_manager_model_v1 *m,
     if (canopus_text_writer_init(&w, out, cap) != 0) {
         return -1;
     }
-    canopus_text_writer_append(&w, "== Canopus Manager ==\n");
-    canopus_text_writer_append(&w, "target   : ");
+    canopus_text_writer_append(&w, "== Canopus 管理器 ==\n");
+    canopus_text_writer_append(&w, "目标设备 : ");
     canopus_text_writer_append(&w, m->target_id);
-    canopus_text_writer_append(&w, "\nfirmware : ");
+    canopus_text_writer_append(&w, "\n固件     : ");
     canopus_text_writer_append(&w, m->firmware_version);
     canopus_text_writer_append(&w, " (");
     canopus_text_writer_append(&w, m->firmware_build);
-    canopus_text_writer_append(&w, ")\nframework: v");
+    canopus_text_writer_append(&w, ")\n框架     : v");
     writer_append_u32(&w, m->framework_revision);
     canopus_text_writer_append(&w, "\n");
     if (m->safe_mode) {
-        canopus_text_writer_append(&w, "** SAFE MODE **\n");
+        canopus_text_writer_append(&w, "** 安全模式 **\n");
     }
     return w.truncated ? CANOPUS_TEXT_TRUNCATED : 0;
 }
@@ -141,16 +162,16 @@ int canopus_manager_render_module_list(const struct canopus_manager_model_v1 *m,
     if (canopus_text_writer_init(&w, out, cap) != 0) {
         return -1;
     }
-    canopus_text_writer_append(&w, "== modules ==\n");
+    canopus_text_writer_append(&w, "== 模块 ==\n");
     for (i = 0; i < m->module_count; i++) {
         const struct canopus_manager_module_v1 *mod = &m->modules[i];
         canopus_text_writer_append(&w, " ");
         canopus_text_writer_append(&w, i == m->selected ? "* " : "  ");
         canopus_text_writer_append(&w,
-                                   mod->module_id[0] ? mod->module_id : "(unnamed)");
+                                   mod->module_id[0] ? mod->module_id : "（未命名）");
         canopus_text_writer_append(&w, "  ");
-        canopus_text_writer_append(&w, canopus_state_name(mod->state));
-        canopus_text_writer_append(&w, " v");
+        canopus_text_writer_append(&w, manager_state_name(mod->state));
+        canopus_text_writer_append(&w, " 版本");
         writer_append_u32(&w, mod->version);
         canopus_text_writer_append(&w, "\n");
     }
@@ -167,41 +188,41 @@ int canopus_manager_render_module_detail(const struct canopus_manager_model_v1 *
         return -1;
     }
     mod = &m->modules[m->selected];
-    canopus_text_writer_append(&w, "== module ==\n");
+    canopus_text_writer_append(&w, "== 模块 ==\n");
     canopus_text_writer_append(&w,
-                               mod->module_id[0] ? mod->module_id : "(unnamed)");
-    canopus_text_writer_append(&w, "\nstate    : ");
-    canopus_text_writer_append(&w, canopus_state_name(mod->state));
-    canopus_text_writer_append(&w, "\nclass    : ");
+                               mod->module_id[0] ? mod->module_id : "（未命名）");
+    canopus_text_writer_append(&w, "\n状态     : ");
+    canopus_text_writer_append(&w, manager_state_name(mod->state));
+    canopus_text_writer_append(&w, "\n类别     : ");
     canopus_text_writer_append(
-        &w, mod->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ? "removable" :
-            mod->lifecycle_class == CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION ? "resident-after-activation" :
-            mod->lifecycle_class == CANOPUS_LIFECYCLE_ALWAYS_RESIDENT ? "always-resident" :
-            "patch-reboot-required");
-    canopus_text_writer_append(&w, "\nsignature: ");
+        &w, mod->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ? "可移除" :
+            mod->lifecycle_class == CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION ? "激活后常驻" :
+            mod->lifecycle_class == CANOPUS_LIFECYCLE_ALWAYS_RESIDENT ? "始终常驻" :
+            "需补丁/重启");
+    canopus_text_writer_append(&w, "\n签名     : ");
     canopus_text_writer_append(&w,
-                               mod->signature_ok ? "verified" : "unsigned/dev");
-    canopus_text_writer_append(&w, "\nrisk     : ");
+                               mod->signature_ok ? "已验证" : "未签名/开发版");
+    canopus_text_writer_append(&w, "\n风险     : ");
     writer_append_u32(&w, mod->risk);
     canopus_text_writer_append(&w, "\n");
 
     /* available operations for THIS class — never a fake unload. */
-    canopus_text_writer_append(&w, "ops: ");
+    canopus_text_writer_append(&w, "操作: ");
     if (canopus_manager_can_update(m, m->selected)) {
-        canopus_text_writer_append(&w, "[update] ");
+        canopus_text_writer_append(&w, "[更新] ");
     }
     if (canopus_manager_can_rollback(m, m->selected)) {
-        canopus_text_writer_append(&w, "[rollback] ");
+        canopus_text_writer_append(&w, "[回滚] ");
     }
     if (canopus_manager_can_disable(m, m->selected)) {
         canopus_text_writer_append(&w,
                                    CLASS_REMOVABLE_ONLY(mod->lifecycle_class) ?
-                                   "[disable] " : "[disable-next-boot] ");
+                                   "[禁用] " : "[下次启动禁用] ");
     }
     if (canopus_manager_can_remove(m, m->selected)) {
         canopus_text_writer_append(&w,
                                    CLASS_REMOVABLE_ONLY(mod->lifecycle_class) ?
-                                   "[remove] " : "[remove+reboot] ");
+                                   "[移除] " : "[移除并重启] ");
     }
     canopus_text_writer_append(&w, "\n");
     return w.truncated ? CANOPUS_TEXT_TRUNCATED : 0;

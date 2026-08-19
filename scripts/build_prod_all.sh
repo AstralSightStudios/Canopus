@@ -4,6 +4,7 @@ set -eu
 TARGETS="
   xiaomi-band-10-pro-3.101.030
   xiaomi-band-10-pro-3.101.036
+  xiaomi-band-10-pro-3.101.043
   xiaomi-band-9-pro-3.1.175
 "
 

@@ -73,10 +73,10 @@ TEST(device_page_shows_identity)
     canopus_manager_set_identity(&m, "xiaomi-band-10-pro-3.101.030",
                                  "3.101.030", "CONBINE_LTALM078", 5);
     CHECK(canopus_manager_render_device(&m, buf, sizeof(buf)) == 0);
-    CHECK(strstr(buf, "target   : xiaomi-band-10-pro-3.101.030") != 0);
-    CHECK(strstr(buf, "firmware : 3.101.030") != 0);
-    CHECK(strstr(buf, "framework: v5") != 0);
-    CHECK(strstr(buf, "SAFE MODE") == 0);
+    CHECK(strstr(buf, "目标设备 : xiaomi-band-10-pro-3.101.030") != 0);
+    CHECK(strstr(buf, "固件     : 3.101.030") != 0);
+    CHECK(strstr(buf, "框架     : v5") != 0);
+    CHECK(strstr(buf, "安全模式") == 0);
 }
 
 TEST(device_page_shows_safe_mode)
@@ -87,7 +87,7 @@ TEST(device_page_shows_safe_mode)
     canopus_manager_set_identity(&m, "tgt", "v", "b", 1);
     m.safe_mode = 1;
     CHECK(canopus_manager_render_device(&m, buf, sizeof(buf)) == 0);
-    CHECK(strstr(buf, "SAFE MODE") != 0);
+    CHECK(strstr(buf, "安全模式") != 0);
 }
 
 /* ---- module list (CAN-UI-002) -------------------------------------- */
@@ -102,8 +102,8 @@ TEST(module_list_lists_state)
     CHECK(canopus_manager_render_module_list(&m, buf, sizeof(buf)) == 0);
     CHECK(strstr(buf, "mod.hello") != 0);
     CHECK(strstr(buf, "mod.bt") != 0);
-    CHECK(strstr(buf, "active") != 0);
-    CHECK(strstr(buf, "boot-resident") != 0);
+    CHECK(strstr(buf, "运行中") != 0);
+    CHECK(strstr(buf, "启动时常驻") != 0);
 }
 
 /* ---- module detail: ops are class-aware (CAN-UI-004) ---------------- */
@@ -116,12 +116,12 @@ TEST(removable_detail_offers_disable_and_remove)
     add_removable(&m, "mod.hello");
     CHECK(canopus_manager_goto(&m, CANOPUS_MANAGER_VIEW_MODULE_DETAIL, 0) == 0);
     CHECK(canopus_manager_render_module_detail(&m, buf, sizeof(buf)) == 0);
-    CHECK(strstr(buf, "class    : removable") != 0);
-    CHECK(strstr(buf, "[disable]") != 0);
-    CHECK(strstr(buf, "[remove]") != 0);
+    CHECK(strstr(buf, "类别     : 可移除") != 0);
+    CHECK(strstr(buf, "[禁用]") != 0);
+    CHECK(strstr(buf, "[移除]") != 0);
     /* a removable module may have a real unload */
-    CHECK(strstr(buf, "[remove+reboot]") == 0);
-    CHECK(strstr(buf, "[disable-next-boot]") == 0);
+    CHECK(strstr(buf, "[移除并重启]") == 0);
+    CHECK(strstr(buf, "[下次启动禁用]") == 0);
 }
 
 TEST(resident_detail_has_no_fake_unload)
@@ -132,15 +132,15 @@ TEST(resident_detail_has_no_fake_unload)
     add_resident(&m, "mod.bt");
     CHECK(canopus_manager_goto(&m, CANOPUS_MANAGER_VIEW_MODULE_DETAIL, 0) == 0);
     CHECK(canopus_manager_render_module_detail(&m, buf, sizeof(buf)) == 0);
-    CHECK(strstr(buf, "class    : always-resident") != 0);
+    CHECK(strstr(buf, "类别     : 始终常驻") != 0);
     /* never a plain disable/remove for resident */
-    CHECK(strstr(buf, "[disable]") == 0);
-    CHECK(strstr(buf, "[remove]") == 0);
+    CHECK(strstr(buf, "[禁用]") == 0);
+    CHECK(strstr(buf, "[移除]") == 0);
     /* only next-boot/reboot semantics */
-    CHECK(strstr(buf, "[disable-next-boot]") != 0);
-    CHECK(strstr(buf, "[remove+reboot]") != 0);
+    CHECK(strstr(buf, "[下次启动禁用]") != 0);
+    CHECK(strstr(buf, "[移除并重启]") != 0);
     /* resident with no previous slot has no rollback */
-    CHECK(strstr(buf, "[rollback]") == 0);
+    CHECK(strstr(buf, "[回滚]") == 0);
 }
 
 /* ---- operations are lifecycle-aware --------------------------------- */

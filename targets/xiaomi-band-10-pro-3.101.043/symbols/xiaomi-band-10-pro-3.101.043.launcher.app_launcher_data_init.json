@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.app_launcher_data_init",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "app_launcher_data_init",
+  "kind": "function",
+  "entry_address": "0xc513e90",
+  "callable_address": "0xc513e91",
+  "instruction_set": "thumb",
+  "prototype": "int(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "launcher_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "none",
+    "return_value": "int"
+  },
+  "side_effects": [
+    "opens_and_reads_launcher_db",
+    "subscribes_protobuf",
+    "registers_msg_handlers"
+  ],
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-MATCH-001"
+    ],
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+  },
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (app_launcher_data_init)",
+  "approval_state": "APPROVED"
+}

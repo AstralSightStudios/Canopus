@@ -4,7 +4,7 @@
 // firmware : 3.101.030 (CONBINE_LTALM078_T3.101.030_06011854)
 // sha256   : f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b
 // revision : 4
-// input_digest: f34e2b03ead06d14
+// input_digest: 0fbeb128a667ecaa
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -286,6 +286,9 @@ pub const CANOPUS_FW_FIRMWARE_LOG_CALLABLE: usize = canopus_thumb_callable(0x0C1
 
 /// Recovered `bt_timer_cancel` at 0x0C7D2CCC. Thumb callable address 0x0C7D2CCD.
 pub const CANOPUS_FW_BT_TIMER_CANCEL_CALLABLE: usize = canopus_thumb_callable(0x0C7D2CCDusize);
+
+/// Recovered `lvx_object_add_flag` at 0x0C5871D8. Thumb callable address 0x0C5871D9.
+pub const CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE: usize = canopus_thumb_callable(0x0C5871D9usize);
 
 /// Recovered `open` at 0x0C1C15B0. Thumb callable address 0x0C1C15B1.
 pub const CANOPUS_FW_OPEN_CALLABLE: usize = canopus_thumb_callable(0x0C1C15B1usize);
@@ -728,6 +731,9 @@ pub unsafe fn canopus_fw_thirdparty_submit_message_content(a0: *const core::ffi:
 /// Recovered `heap_zalloc` at 0x0C1E8C88. Thumb callable address 0x0C1E8C89.
 pub const CANOPUS_FW_HEAP_ZALLOC_CALLABLE: usize = canopus_thumb_callable(0x0C1E8C89usize);
 
+/// Recovered `lvx_image_set_scale` at 0x0C179A8C. Thumb callable address 0x0C179A8D.
+pub const CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE: usize = canopus_thumb_callable(0x0C179A8Dusize);
+
 /// Recovered global `bt_hci_fsm_owner` at 0x20137B14.
 pub const canopus_fw_bt_hci_fsm_owner: usize = 0x20137B14usize;
 
@@ -920,6 +926,8 @@ pub const canopus_fw_style_misans_demibold_32: usize = 0x2010A02Cusize;
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_timer_create: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
+// lvx_image_set_scale: restricted - not exported until context/ownership approved
+// lvx_object_add_flag: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
 // page_navigator_open_page: FORBIDDEN - no binding may ever be generated

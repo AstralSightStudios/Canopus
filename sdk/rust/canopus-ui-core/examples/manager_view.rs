@@ -58,7 +58,7 @@ impl Application for ManagerApp {
         commands: &mut impl CommandSink<Self::Message>,
     ) {
         match message {
-            Message::Refresh => model.status = "Ready",
+            Message::Refresh => model.status = "就绪",
             Message::ToggleSafeMode => {
                 model.safe_mode = !model.safe_mode;
                 let _ = commands.submit(Command::Rebuild);
@@ -95,12 +95,12 @@ fn render(model: &Model, tree: &mut Tree) -> Result<(), UiError> {
     match model.router.current() {
         Route::Overview => view!(NavigationPage {
             key: 1,
-            title: "Canopus Manager",
+            title: "Canopus 管理器",
             children: (
                 NavigationHeader {
                     key: 2,
-                    title: "Canopus Manager",
-                    subtitle: "Native framework",
+                    title: "Canopus 管理器",
+                    subtitle: "原生框架",
                     back: None,
                     centered: true,
                     elevated: false,
@@ -110,28 +110,28 @@ fn render(model: &Model, tree: &mut Tree) -> Result<(), UiError> {
                 },
                 StatusRow {
                     key: 3,
-                    label: "Supervisor",
+                    label: "监督器",
                     value: model.status,
                 },
                 SwitchRow {
                     key: 4,
-                    label: "Safe mode",
-                    detail: "Restrict module activation",
+                    label: "安全模式",
+                    detail: "限制模块启用",
                     event: Message::ToggleSafeMode,
                     checked: model.safe_mode,
                     enabled: true,
                 },
                 ActionRow {
                     key: 5,
-                    label: "Modules",
-                    detail: "Inspect installed modules",
+                    label: "模块",
+                    detail: "查看已安装模块",
                     event: Message::OpenModules,
                     enabled: true,
                 },
                 ActionRow {
                     key: 6,
-                    label: "Refresh",
-                    detail: "Read authoritative state",
+                    label: "刷新",
+                    detail: "读取权威状态",
                     event: Message::Refresh,
                     enabled: true,
                 },
@@ -140,12 +140,12 @@ fn render(model: &Model, tree: &mut Tree) -> Result<(), UiError> {
         .render(tree),
         Route::Modules => view!(NavigationPage {
             key: 1,
-            title: "Canopus Manager",
+            title: "Canopus 管理器",
             children: (
                 NavigationHeader {
                     key: 2,
-                    title: "Modules",
-                    subtitle: "Installed components",
+                    title: "模块",
+                    subtitle: "已安装组件",
                     back: Some(Message::Back),
                     centered: true,
                     elevated: false,
@@ -155,8 +155,8 @@ fn render(model: &Model, tree: &mut Tree) -> Result<(), UiError> {
                 },
                 StatusRow {
                     key: 3,
-                    label: "Example module",
-                    value: "Active",
+                    label: "示例模块",
+                    value: "运行中",
                 },
             ),
         })
@@ -166,7 +166,7 @@ fn render(model: &Model, tree: &mut Tree) -> Result<(), UiError> {
 
 fn main() {
     let model = Model {
-        status: "Starting",
+        status: "启动中",
         safe_mode: false,
         router: Router::new(Route::Overview).unwrap(),
     };
