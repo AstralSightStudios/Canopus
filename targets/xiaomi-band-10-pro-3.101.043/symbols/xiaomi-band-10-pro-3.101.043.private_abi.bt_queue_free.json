@@ -5,7 +5,7 @@
   "name": "bt_queue_free",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc42f0cc",
+  "entry_address": "0xc840c60",
   "prototype": "int(void *)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -18,7 +18,7 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-ALLOC-001"
     ]
   },
   "policy": "restricted",
@@ -26,11 +26,11 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-ALLOC-001"
     ],
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; Bluetooth allocator, stock cleanup, buffer, timer, and queue call-flow review"
   },
   "approval_state": "PENDING",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (bt_queue_free)",
-  "callable_address": "0xc42f0cd"
+  "notes": "Exact 3.101.043 queue cancellation free callback, shared with bt_free; stock cleanup adapter sub_C7EBD40 forwards its R2 argument to sub_C840C60.",
+  "callable_address": "0xc840c61"
 }

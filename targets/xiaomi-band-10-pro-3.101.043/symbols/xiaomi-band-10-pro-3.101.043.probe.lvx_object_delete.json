@@ -5,8 +5,8 @@
   "name": "lvx_object_delete",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc5879e0",
-  "callable_address": "0xc5879e1",
+  "entry_address": "0xc588de8",
+  "callable_address": "0xc588de9",
   "prototype": "void(void *object)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -19,7 +19,7 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-UI-DIALOG-001"
     ]
   },
   "policy": "native-full-trust",
@@ -27,19 +27,10 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-UI-DIALOG-001"
     ],
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; exact stock destroy paths and cross-version wrapper anchors"
   },
   "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "prototype": "void(void *object)",
-    "ownership": "stock LVX/native-manager call; caller owns widget pointers",
-    "thread": "UI owner thread",
-    "device_probe": "used by native-manager probe on device"
-  },
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lvx_object_delete)"
+  "notes": "Exact 3.101.043 recovery: sub_C588DE8 is the object-delete veneer. Stock destroy callers pass one live UI object in R0, then clear the owning global. Two 036 wrapper anchors map to sub_C4C70C8 and sub_C4C934C, both of which call this veneer. The former 0xc5879e0 candidate is an event-object accessor and is rejected by exact event callsites."
 }

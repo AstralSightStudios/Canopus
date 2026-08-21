@@ -12,49 +12,51 @@
       "offset": 0,
       "width": 4,
       "signedness": "pointer",
-      "provenance": "driver_open_dispatch 0x0C1C1238 via fops+0x00"
+      "provenance": "exact sub_C1D06B0 internal fs_open path dispatches fops+0x00; this proves the slot only, not the withdrawn direct-call ABI"
     },
     {
       "name": "close",
       "offset": 4,
       "width": 4,
       "signedness": "pointer",
-      "provenance": "driver_close_dispatch 0x0C1BF790 via fops+0x04"
+      "provenance": "exact sub_C1CEC08 file_close dispatches fops+0x04"
     },
     {
       "name": "read",
       "offset": 8,
       "width": 4,
       "signedness": "pointer",
-      "provenance": "driver_read_dispatch 0x0C1C1D24 via fops+0x08"
+      "provenance": "exact sub_C1D119C vectored-read path dispatches fops+0x08; this proves the slot only, not the withdrawn flat-buffer ABI"
     },
     {
       "name": "write",
       "offset": 12,
       "width": 4,
       "signedness": "pointer",
-      "provenance": "driver_write_dispatch 0x0C1C30C8 via fops+0x0c"
+      "provenance": "exact sub_C1D2640 public fs_write path dispatches fops+0x0c"
     },
     {
       "name": "lseek",
       "offset": 16,
       "width": 4,
       "signedness": "pointer",
-      "provenance": "public fs_lseek wrapper 0x0C1C10AC dispatches fops+0x10; returns int64_t"
+      "provenance": "exact sub_C1D0524 public fs_lseek path dispatches fops+0x10 and preserves an AAPCS-aligned int64_t offset"
     },
     {
       "name": "ioctl",
       "offset": 20,
       "width": 4,
       "signedness": "pointer",
-      "provenance": "driver_ioctl_dispatch 0x0C1C0B10 via fops+0x14; R1=cmd R2=arg"
+      "provenance": "exact sub_C1CFF88 variadic file_ioctl path dispatches fops+0x14 with R1=request and an optional argument"
     }
   ],
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-DRIVER-001"
+      "EVID-IO-1043-001",
+      "EVID-IO-1043-002",
+      "EVID-IO-1043-003"
     ],
-    "source": "stock_f701a84_symbols.csv driver_*_dispatch rows"
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; NuttX source-path strings, fops loads, register flow, and exact dispatch sites"
   }
 }

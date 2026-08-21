@@ -5,8 +5,8 @@
   "name": "lvx_object_align",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc588960",
-  "callable_address": "0xc588961",
+  "entry_address": "0xc589188",
+  "callable_address": "0xc589189",
   "prototype": "void(void *object, uint32_t align, int32_t x, int32_t y)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -15,11 +15,16 @@
     ],
     "blocking": false
   },
+  "ownership": {
+    "argument": "borrows a live LVGL object",
+    "return_value": "none"
+  },
   "proof": {
     "static": "confirmed",
     "device": "not_probed",
+    "host_tested": false,
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-UI-WIDGET-001"
     ]
   },
   "policy": "native-full-trust",
@@ -27,19 +32,10 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-UI-WIDGET-001"
     ],
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+    "source": "exact 3.101.043 IDB stock callsites sub_C4C3804 and sub_C56D5B0"
   },
   "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "prototype": "void(void *object, uint32_t align, int32_t x, int32_t y)",
-    "ownership": "stock LVX/native-manager call; caller owns widget pointers",
-    "thread": "UI owner thread",
-    "device_probe": "used by native-manager probe on device"
-  },
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lvx_object_align)"
+  "notes": "Stock page construction calls sub_C589188(content, 2, 0, 56). The former corpus candidate sub_C588960 is used as a two-argument operation during object removal and is not the four-argument align helper."
 }

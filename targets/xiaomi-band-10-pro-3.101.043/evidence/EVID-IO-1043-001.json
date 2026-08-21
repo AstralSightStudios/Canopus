@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-IO-1043-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 NuttX functions implement open, close, read, write, rename, unlink, and errno_location, and what are their call ABIs?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.open",
+    "xiaomi-band-10-pro-3.101.043.close",
+    "xiaomi-band-10-pro-3.101.043.read",
+    "xiaomi-band-10-pro-3.101.043.write",
+    "xiaomi-band-10-pro-3.101.043.rename",
+    "xiaomi-band-10-pro-3.101.043.unlink",
+    "xiaomi-band-10-pro-3.101.043.errno_location"
+  ],
+  "prototype_hypothesis": "sub_C1D0A28 is int open(const char *path, int flags, ...); sub_C1B9D80 is int close(int fd); sub_C1D129C is int32_t read(int fd, void *buffer, uint32_t count); sub_C1D2640 is int32_t write(int fd, const void *buffer, uint32_t count); sub_C1D12E8 is int rename(const char *old_path, const char *new_path); sub_C1D2354 is int unlink(const char *path); and sub_C1E45BC is int *errno_location(void).",
+  "callsite_evidence": [
+    "sub_C1D0A28 begins with PUSH {R1-R3}, builds a va_list from the saved argument registers, and passes path in R1, flags in R2, and the va_list pointer as the fifth argument to internal sub_C1D06B0. This proves the public open entry is variadic. Exact caller sub_C202A14 passes R0=\"/dev/console\" and R1=3 at 0x0C202A18-0x0C202A1C.",
+    "The same exact caller retains the open result as an fd, checks it, and passes it in R0 to sub_C1B9D80 at 0x0C202A38, proving close(int fd). sub_C1B9D80 validates the fd against the current task's descriptor table and executes the file close operation.",
+    "sub_C1D129C preserves incoming R1/R2 as a buffer/count pair, resolves R0 as an fd with sub_C1B9700, submits one I/O vector to the internal read path, releases the fd reference, and stores -status through sub_C1E45BC on failure.",
+    "sub_C1D2640 has the corresponding fd, const-buffer, count flow into the internal write path and the same negative-status to errno translation. Import veneers sub_C187918 and sub_C187988 jump directly to sub_C1D129C+1 and sub_C1D2640+1 without changing arguments.",
+    "sub_C1D12E8 rejects null or empty R0/R1 paths and references ../../nuttx/fs/vfs/fs_rename.c. Exact NSH caller sub_C23A8D0 places the old path in R0 and new path in R1 at 0x0C23A8F4-0x0C23A8F8, checks the returned int, and reads errno through sub_C1E45BC on failure.",
+    "sub_C1D2354 stores the sole R0 path in its path-resolution state and references ../../nuttx/fs/vfs/fs_unlink.c. Exact wrapper sub_C1AFFB4 forwards one path in R0 and checks the signed int result.",
+    "sub_C1E45BC calls the current-task accessor, returns task+0x3C when a task exists, otherwise returns the fallback global at 0x200F0DAC. read/write and the rename caller dereference its result as int errno storage."
+  ],
+  "control_flow_evidence": [
+    "Independent fw-match from exact 3.101.036 records maps all seven functions to these exact 3.101.043 entries with scores 13.73-15.5 and margins 0.182-0.430; exact 043 disassembly and callers, not those matches, establish promotion.",
+    "read and write return the nonnegative byte count from their internal I/O paths. On a negative internal status they store its negation in thread-local errno and return -1.",
+    "rename and unlink expose the NuttX VFS public paths rather than driver-operation dispatch slots; their source-path strings and path-resolution logic distinguish them from lower-level callbacks."
+  ],
+  "ownership_analysis": "Path strings and read/write buffers remain caller-owned and are borrowed for each synchronous call. File descriptors are process/task table indices; open creates one retained descriptor and close releases it. errno_location returns borrowed thread/task-local storage or a fallback global.",
+  "unsafe_assumptions": [
+    "Exact stock callsites prove addresses and AAPCS argument flow statically; device execution by external Canopus modules remains unprobed.",
+    "The generated two-fixed-argument open wrapper is valid only when flags do not require a mode argument. Callers using O_CREAT or equivalent must invoke the variadic entry with the required mode value."
+  ],
+  "recommended_probe": "On exact 3.101.043, create a temporary file with an explicit mode, write and read known bytes, close it, rename it, reopen and verify contents, unlink it, then verify a failing open/read reports the expected errno and leaves no descriptor leak.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1D0A28",
+      "role": "exact variadic public open implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C202A14",
+      "role": "stock open and close caller"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1D129C",
+      "role": "exact public read implementation and errno translation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1D2640",
+      "role": "exact public write implementation and errno translation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1D12E8",
+      "role": "exact NuttX VFS rename implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1D2354",
+      "role": "exact NuttX VFS unlink implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1E45BC",
+      "role": "exact task-local errno accessor"
+    },
+    {
+      "uri": "file:///tmp/io-036-to-043-matches.json",
+      "role": "candidate-only seven-function cross-version corroboration"
+    }
+  ]
+}

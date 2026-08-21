@@ -9,7 +9,7 @@
   "proof": {
     "static": "confirmed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-UI-EVENT-001"
     ],
     "device": "not_probed"
   },
@@ -22,17 +22,8 @@
       "EVID-MATCH-001"
     ]
   },
-  "entry_address": "0xc187f18",
-  "callable_address": "0xc187f19",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lv_event_get_user_data)",
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "prototype": "void *(void *)",
-    "ownership": "caller-owned pointers / borrowed for call",
-    "thread": "UI owner thread",
-    "device_probe": "native-manager probe runs this on device"
-  }
+  "entry_address": "0xc588310",
+  "callable_address": "0xc588311",
+  "notes": "exact 3.101.043 LVGL v9 event user-data accessor (sub_C588310); stock callback sub_C4F0148 calls it with the incoming event pointer, then separately calls sub_C588210 for the event code. Stock Settings callback sub_C56DA44 branches on the registered user-data values 0 through 3.",
+  "approval_state": "APPROVED"
 }

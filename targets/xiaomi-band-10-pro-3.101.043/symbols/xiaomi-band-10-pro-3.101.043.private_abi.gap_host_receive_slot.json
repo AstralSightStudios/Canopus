@@ -11,7 +11,7 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-ID-1043-001"
+      "EVID-BT-1043-GAP-001"
     ]
   },
   "policy": "restricted",
@@ -19,10 +19,10 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-ID-1043-001"
+      "EVID-BT-1043-GAP-001"
     ],
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; GAP initializer, owner/state layout, and raw-H4 receive call-flow review"
   },
   "approval_state": "PENDING",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (gap_host_receive_slot)"
+  "notes": "Exact 3.101.043 GAP FSM owner-root global, not a direct callback slot. Resolve owner -> state -> *(state+0x28) before reading or replacing the live raw-H4 callback."
 }

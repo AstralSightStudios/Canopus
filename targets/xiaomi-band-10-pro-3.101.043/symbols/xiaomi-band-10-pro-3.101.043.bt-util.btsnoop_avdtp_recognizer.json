@@ -5,25 +5,24 @@
   "name": "btsnoop_avdtp_recognizer",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "internal",
+  "prototype": "withdrawn",
   "proof": {
-    "static": "candidate",
+    "static": "refuted",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-MISC-002"
     ]
   },
-  "policy": "forbidden",
-  "status": "FORBIDDEN",
+  "policy": "withdrawn",
+  "status": "WITHDRAWN",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; HCI packet switch, ACL registry flow, filter strings, and downstream protocol branches",
+    "withdrawal_reason": "sub_C3C33D8 is the broad btsnoop_filter packet entry; AVDTP recognition occurs only in a downstream branch and does not establish the recorded standalone symbol identity.",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-MISC-002"
     ]
   },
-  "entry_address": "0xc3c33d8",
-  "callable_address": "0xc3c33d9",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (btsnoop_avdtp_recognizer)",
+  "notes": "The corpus-derived identity and direct-call contract are refuted; no replacement standalone AVDTP recognizer is exposed.",
   "approval_state": "REJECTED"
 }

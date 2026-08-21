@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-IO-1043-002",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 entries implement lseek, ioctl, driver registration/unregistration, and clock_gettime for the production audio modules?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.lseek",
+    "xiaomi-band-10-pro-3.101.043.ioctl",
+    "xiaomi-band-10-pro-3.101.043.register_driver",
+    "xiaomi-band-10-pro-3.101.043.unregister_driver",
+    "xiaomi-band-10-pro-3.101.043.clock_gettime"
+  ],
+  "prototype_hypothesis": "sub_C1D0524 is int64_t lseek(int fd, int64_t offset, int whence); sub_C1D01A4 is int ioctl(int fd, uint32_t request, ...); sub_C1AFF60 is int register_driver(const char *path, const void *fops, uint32_t mode, void *private_data); sub_C1B002C is int unregister_driver(const char *path); sub_C201FE0 is int clock_gettime(uint32_t clock_id, stock_timespec_t *result).",
+  "callsite_evidence": [
+    "sub_C1D0524 references ../../nuttx/fs/vfs/fs_lseek.c, resolves R0 as an fd, preserves the AAPCS-aligned 64-bit offset from R2/R3, reads whence from the stack, invokes the driver seek operation, updates the file position, and translates negative status through errno_location.",
+    "sub_C1D01A4 begins with PUSH {R1-R3}, references ../../nuttx/fs/vfs/fs_ioctl.c, resolves R0 as an fd, preserves request R1, constructs access to the variadic argument area, dispatches special and driver ioctl commands, and writes errno on failure.",
+    "sub_C1AFF60 preserves path R0, fops R1, mode R2, and private-data R3, reserves the inode under lock, stores fops at inode+0x10, sets the driver inode type, and stores private data at inode+0x18.",
+    "sub_C1B002C preserves the sole R0 path, removes the inode under the same registry lock, and returns the removal status.",
+    "sub_C201FE0 rejects a null output pointer and clock ids above four, dispatches realtime/monotonic and related clock sources, and writes the two-field stock timespec result before returning status."
+  ],
+  "control_flow_evidence": [
+    "The lseek and ioctl NuttX source-path strings plus fd lookup and errno behavior distinguish the public VFS entries from file-operation callbacks.",
+    "register_driver and unregister_driver share the inode registry lock and inverse reserve/remove paths, proving both identity and lifecycle.",
+    "The clock_gettime entry has hundreds of exact stock callers and the expected clock-id validation and output-pointer flow."
+  ],
+  "ownership_analysis": "File descriptors and inode objects remain firmware-owned. register_driver borrows the path and stores the caller-provided operations and private-data pointers for the entire registration lifetime; those objects must remain live through unregister_driver. clock_gettime writes to caller-owned output storage synchronously.",
+  "unsafe_assumptions": [
+    "The fixed three-argument target-private ioctl helper is valid for commands that consume one uintptr_t argument; the underlying public entry is variadic.",
+    "Static exact-IDB analysis proves the entries and ABI; production audio-device registration and file positioning on a physical exact target remain unprobed."
+  ],
+  "recommended_probe": "Register a temporary character driver on exact 3.101.043, open it, issue a one-argument ioctl, exercise 64-bit lseek across zero and a positive offset, read all supported clock ids into guarded storage, close and unregister, and verify errno and inode cleanup on deliberate failures.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1D0524",
+      "role": "exact public NuttX lseek implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1D01A4",
+      "role": "exact variadic public NuttX ioctl implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1AFF60",
+      "role": "exact NuttX driver registration implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1B002C",
+      "role": "exact NuttX driver unregistration implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C201FE0",
+      "role": "exact clock_gettime implementation"
+    }
+  ]
+}

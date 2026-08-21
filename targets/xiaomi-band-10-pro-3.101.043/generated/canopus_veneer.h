@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 1
- * input_digest: a095b41e89401727
+ * input_digest: 9a4571fdfed532fc
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -213,6 +213,11 @@ static inline int canopus_fw_lvx_notification_insert_message(const firmware_noti
     return ((canopus_fw_lvx_notification_insert_message_fn)(uintptr_t)0xca9a899)(a0);
 }
 
+typedef void (*canopus_fw_lvx_content_pad_bottom_fn)(void *, int32_t, uint32_t);
+static inline void canopus_fw_lvx_content_pad_bottom(void * a0, int32_t a1, uint32_t a2) {
+    return ((canopus_fw_lvx_content_pad_bottom_fn)(uintptr_t)0xc5893c1)(a0, a1, a2);
+}
+
 typedef int (*canopus_fw_lvx_list_item_update_fn)(void *, const char *, const char *, const char *, int32_t, uint8_t);
 static inline int canopus_fw_lvx_list_item_update(void * a0, const char * a1, const char * a2, const char * a3, int32_t a4, uint8_t a5) {
     return ((canopus_fw_lvx_list_item_update_fn)(uintptr_t)0xc4c8905)(a0, a1, a2, a3, a4, a5);
@@ -230,7 +235,7 @@ static inline void * canopus_fw_lv_timer_create(canopus_lvx_event_cb a0, uint32_
 
 typedef void * (*canopus_fw_lvx_label_create_fn)(void *);
 static inline void * canopus_fw_lvx_label_create(void * a0) {
-    return ((canopus_fw_lvx_label_create_fn)(uintptr_t)0xc588bf9)(a0);
+    return ((canopus_fw_lvx_label_create_fn)(uintptr_t)0xc588f31)(a0);
 }
 
 typedef int (*canopus_fw_lvx_style_apply_fn)(void *, const void *, uint32_t, uint32_t);
@@ -266,7 +271,7 @@ static inline int canopus_fw_interconnect_connect(void * a0, void * a1, const ch
 
 typedef void (*canopus_fw_lvx_object_align_fn)(void *, uint32_t, int32_t, int32_t);
 static inline void canopus_fw_lvx_object_align(void * a0, uint32_t a1, int32_t a2, int32_t a3) {
-    return ((canopus_fw_lvx_object_align_fn)(uintptr_t)0xc588961)(a0, a1, a2, a3);
+    return ((canopus_fw_lvx_object_align_fn)(uintptr_t)0xc589189)(a0, a1, a2, a3);
 }
 
 typedef int (*canopus_fw_app_launcher_add_fn)(uint16_t);
@@ -281,14 +286,10 @@ static inline void canopus_fw_lvx_object_set_size(void * a0, int32_t a1, int32_t
 
 typedef void (*canopus_fw_lv_obj_align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
 static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2, int32_t a3, int32_t a4) {
-    return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0xc5879b1)(a0, a1, a2, a3, a4);
+    return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0xc588ef1)(a0, a1, a2, a3, a4);
 }
 
-typedef int (*canopus_fw_open_fn)(const char *, int);
-static inline int canopus_fw_open(const char * a0, int a1) {
-    return ((canopus_fw_open_fn)(uintptr_t)0xc1d0a29)(a0, a1);
-}
-
+/* open: skipped (argument type not mappable) */
 typedef int (*canopus_fw_register_driver_fn)(const char *, const void *, uint32_t, void *);
 static inline int canopus_fw_register_driver(const char * a0, const void * a1, uint32_t a2, void * a3) {
     return ((canopus_fw_register_driver_fn)(uintptr_t)0xc1aff61)(a0, a1, a2, a3);
@@ -301,7 +302,7 @@ static inline int32_t canopus_fw_bt_adapter_get_state(void * a0) {
 
 typedef void (*canopus_fw_lvx_label_set_text_fn)(void *, const char *);
 static inline void canopus_fw_lvx_label_set_text(void * a0, const char * a1) {
-    return ((canopus_fw_lvx_label_set_text_fn)(uintptr_t)0xc588a71)(a0, a1);
+    return ((canopus_fw_lvx_label_set_text_fn)(uintptr_t)0xc589491)(a0, a1);
 }
 
 /* bt_adapter_register: skipped (argument type not mappable) */
@@ -317,7 +318,7 @@ static inline void * canopus_fw_lvx_list_row_trailing(void * a0) {
 
 typedef void * (*canopus_fw_lvx_page_content_create_fn)(void *);
 static inline void * canopus_fw_lvx_page_content_create(void * a0) {
-    return ((canopus_fw_lvx_page_content_create_fn)(uintptr_t)0xca48475)(a0);
+    return ((canopus_fw_lvx_page_content_create_fn)(uintptr_t)0xca67245)(a0);
 }
 
 typedef void * (*canopus_fw_lvx_msgbox_create_fn)(void *, void *);
@@ -373,7 +374,7 @@ static inline void * canopus_fw_bt_adapter_get_instance(void) {
 
 typedef uint32_t (*canopus_fw_lv_event_get_code_fn)(void *);
 static inline uint32_t canopus_fw_lv_event_get_code(void * a0) {
-    return ((canopus_fw_lv_event_get_code_fn)(uintptr_t)0xc587a41)(a0);
+    return ((canopus_fw_lv_event_get_code_fn)(uintptr_t)0xc588211)(a0);
 }
 
 typedef int64_t (*canopus_fw_lseek_fn)(int, int64_t, int);
@@ -393,7 +394,7 @@ static inline int canopus_fw_app_install(const launcher_app_descriptor * a0, con
 
 typedef void (*canopus_fw_lvx_object_delete_fn)(void *);
 static inline void canopus_fw_lvx_object_delete(void * a0) {
-    return ((canopus_fw_lvx_object_delete_fn)(uintptr_t)0xc5879e1)(a0);
+    return ((canopus_fw_lvx_object_delete_fn)(uintptr_t)0xc588de9)(a0);
 }
 
 typedef uint32_t (*canopus_fw_bt_l2cap_connect_fn)(const void *);
@@ -411,12 +412,12 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
 
 typedef void (*canopus_fw_lv_obj_add_event_cb_fn)(void *, canopus_lvx_event_cb, uint32_t, void *);
 static inline void canopus_fw_lv_obj_add_event_cb(void * a0, canopus_lvx_event_cb a1, uint32_t a2, void * a3) {
-    return ((canopus_fw_lv_obj_add_event_cb_fn)(uintptr_t)0xc587fa1)(a0, a1, a2, a3);
+    return ((canopus_fw_lv_obj_add_event_cb_fn)(uintptr_t)0xc5883f1)(a0, a1, a2, a3);
 }
 
 typedef void * (*canopus_fw_lv_event_get_user_data_fn)(void *);
 static inline void * canopus_fw_lv_event_get_user_data(void * a0) {
-    return ((canopus_fw_lv_event_get_user_data_fn)(uintptr_t)0xc187f19)(a0);
+    return ((canopus_fw_lv_event_get_user_data_fn)(uintptr_t)0xc588311)(a0);
 }
 
 typedef void * (*canopus_fw_lvx_page_title_create_fn)(void *, const char *, uint32_t, canopus_lvx_event_cb, void *);
@@ -450,13 +451,13 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * bt_socket_server_receive: FORBIDDEN - no veneer may ever be generated
  * bt_timer_add: restricted - not exported until context/ownership approved
  * bt_timer_cancel: restricted - not exported until context/ownership approved
- * btsnoop_avdtp_recognizer: FORBIDDEN - no veneer may ever be generated
+ * btsnoop_avdtp_recognizer: WITHDRAWN - no veneer may ever be generated
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * driver_close_dispatch: restricted - not exported until context/ownership approved
  * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
- * driver_open_dispatch: restricted - not exported until context/ownership approved
- * driver_read_dispatch: restricted - not exported until context/ownership approved
- * driver_write_dispatch: FORBIDDEN - no veneer may ever be generated
+ * driver_open_dispatch: WITHDRAWN - no veneer may ever be generated
+ * driver_read_dispatch: WITHDRAWN - no veneer may ever be generated
+ * driver_write_dispatch: WITHDRAWN - no veneer may ever be generated
  * errno_location: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved

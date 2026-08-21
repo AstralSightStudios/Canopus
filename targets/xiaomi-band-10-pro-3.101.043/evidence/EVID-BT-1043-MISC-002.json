@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-1043-MISC-002",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Does exact 3.101.043 address sub_C3C33D8 implement a standalone btsnoop AVDTP recognizer with the recorded identity?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.btsnoop_avdtp_recognizer"
+  ],
+  "prototype_hypothesis": "The candidate is an internal three-argument btsnoop_filter packet/event entry, not a standalone AVDTP recognizer.",
+  "callsite_evidence": [
+    "sub_C3C33D8 switches over HCI packet types, creates and removes ACL connection records, tracks connection handles and directions, and dispatches L2CAP payloads through multiple filter helpers.",
+    "Its exact strings identify snoop_filter state and errors, including uninitialized filter, missing ACL connection information, duplicate connection information, and ACL-record allocation failure.",
+    "The downstream sub_C3C3054 contains check_channel_need_filtered and an AVDTP signaling channel recognized trace, proving AVDTP recognition is only one branch of the broader filter pipeline rather than the identity of sub_C3C33D8."
+  ],
+  "control_flow_evidence": [
+    "The candidate handles HCI packet types 2, 3, 4, and 5 and connection lifecycle events before any protocol-specific channel recognition.",
+    "The recovered scope contradicts the corpus-derived standalone recognizer name and does not provide a supported direct-call ABI."
+  ],
+  "ownership_analysis": "The filter's global ACL-connection registry and packet views are firmware-owned. Because the recorded identity and callable contract are refuted, the address is withdrawn rather than exposed.",
+  "unsafe_assumptions": [
+    "No standalone exact-target AVDTP recognizer address is inferred from the downstream helper family.",
+    "Physical btsnoop filtering on exact 3.101.043 remains unprobed."
+  ],
+  "recommended_probe": "Capture stock btsnoop output while creating and releasing an AVDTP signaling channel, and observe filter-state transitions without directly invoking the withdrawn internal entry.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_REFUTED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3C33D8",
+      "role": "exact counterexample: broad btsnoop_filter packet entry"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3C3054",
+      "role": "downstream channel filter containing one AVDTP recognition branch"
+    }
+  ]
+}

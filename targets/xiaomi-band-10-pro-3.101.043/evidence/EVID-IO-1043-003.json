@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-IO-1043-003",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 internal file-dispatch and block-driver entries are valid, and which corpus-matched dispatch records must be withdrawn because their recorded prototypes are false?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.driver_open_dispatch",
+    "xiaomi-band-10-pro-3.101.043.driver_close_dispatch",
+    "xiaomi-band-10-pro-3.101.043.driver_read_dispatch",
+    "xiaomi-band-10-pro-3.101.043.driver_write_dispatch",
+    "xiaomi-band-10-pro-3.101.043.driver_ioctl_dispatch",
+    "xiaomi-band-10-pro-3.101.043.register_blockdriver",
+    "xiaomi-band-10-pro-3.101.043.unregister_blockdriver"
+  ],
+  "prototype_hypothesis": "sub_C1CEC08 is int file_close(struct file *file); sub_C1CFF88 is int file_ioctl(struct file *file, uint32_t request, ...); sub_C1AFFD8 and sub_C1B009C are register_blockdriver(const char *, const void *, uint32_t, void *) and unregister_blockdriver(const char *). sub_C1D06B0 is a multi-argument internal open path, not int(struct file *), and sub_C1D119C is a vectored-read path, not int32_t(struct file *, void *, uint32_t). No independently recovered direct write-dispatch callable supports the existing record.",
+  "callsite_evidence": [
+    "sub_C1CEC08 references ../../nuttx/fs/vfs/fs_close.c, accepts one file pointer in R0, resolves its inode operations, and calls the close slot at fops+0x04 when non-null.",
+    "sub_C1CFF88 begins with PUSH {R1-R3}, references ../../nuttx/fs/vfs/fs_ioctl.c, keeps R0 as a file pointer and R1 as the request, consumes the optional argument from its variadic register area, handles framework commands, and calls the ioctl slot at fops+0x14.",
+    "sub_C1D06B0 references ../../nuttx/fs/vfs/fs_open.c, processes path, flags, O_CREAT mode, variadic state, inode lookup, and the eventual fops+0x00 call. Its multi-argument public/internal-open ABI contradicts the recorded int(file *) prototype.",
+    "sub_C1D119C references ../../nuttx/fs/vfs/fs_read.c, accepts a file plus an I/O-vector description, iterates vector elements, and calls fops+0x08 for each element. Its vector ABI contradicts the recorded flat file/buffer/count prototype.",
+    "sub_C1D2640 proves the public variadic-free write path and file_operations+0x0C slot, but no independent exact-target direct file-level write wrapper was recovered for the existing driver_write_dispatch record.",
+    "sub_C1AFFD8 preserves path R0, fops R1, mode R2, and private-data R3, reserves an inode, stores fops and private data, and writes block-driver inode type 0xA.",
+    "sub_C1B009C removes the block-driver inode by the sole path argument under the matching registry lock and returns the removal status."
+  ],
+  "control_flow_evidence": [
+    "Exact NuttX source-path strings distinguish close, ioctl, open, and read families; slot loads at +0x04, +0x14, +0x00, and +0x08 establish the file_operations layout independently of the rejected wrapper prototypes.",
+    "The open and read candidates are real exact-target functions but not the symbols their records claim; the write record lacks an independently recovered direct callable. All three are withdrawn rather than exposed under unsupported or incompatible prototypes.",
+    "register_blockdriver and unregister_blockdriver form the inverse inode lifecycle and are distinct from the character-driver pair recovered in EVID-IO-1043-002."
+  ],
+  "ownership_analysis": "File and inode objects remain firmware-owned. Internal dispatch helpers borrow live struct file objects. Driver registration stores caller-owned fops and private-data pointers until unregistration, so both must outlive the registration. The withdrawn open/read records carry no callable contract.",
+  "unsafe_assumptions": [
+    "Only the six file_operations slot offsets are promoted from the rejected open/read candidates; no direct-call ABI is inferred for those two addresses.",
+    "Exact static analysis establishes the retained entries and refutes the withdrawn records, but block-driver and internal file-dispatch behavior on physical 3.101.043 hardware remains unprobed."
+  ],
+  "recommended_probe": "Register a temporary block driver with persistent fops/private storage, exercise open/close/read/ioctl through normal public VFS calls rather than the withdrawn internal addresses, unregister it, and verify callback arguments, errno translation, and inode cleanup with guarded buffers.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1CEC08",
+      "role": "exact one-file close dispatcher"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1CFF88",
+      "role": "exact variadic file ioctl dispatcher"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1D06B0",
+      "role": "exact counterexample to recorded driver_open_dispatch ABI"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1D119C",
+      "role": "exact counterexample to recorded driver_read_dispatch ABI"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1D2640",
+      "role": "exact public write path proving fops+0x0C but not a direct file wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1AFFD8",
+      "role": "exact block-driver registration implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1B009C",
+      "role": "exact block-driver unregistration implementation"
+    }
+  ]
+}

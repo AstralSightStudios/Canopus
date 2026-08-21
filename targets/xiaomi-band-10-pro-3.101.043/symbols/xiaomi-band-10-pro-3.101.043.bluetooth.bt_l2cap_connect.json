@@ -24,7 +24,7 @@
   "proof": {
     "static": "confirmed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-CORE-001"
     ],
     "device": "not_probed"
   },
@@ -33,19 +33,10 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-CORE-001"
     ],
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; core adapter, cpevent, L2CAP owner, and queue-wrapper xref review"
   },
   "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-11",
-    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "prototype": "uint32_t(const void *)",
-    "ownership": "request consumed by owner queue on accepted insertion",
-    "thread": "bluetooth_owner",
-    "device_probe": "pending"
-  },
   "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (bt_l2cap_connect)"
 }

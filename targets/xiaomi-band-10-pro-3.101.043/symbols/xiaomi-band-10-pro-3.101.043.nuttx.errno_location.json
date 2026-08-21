@@ -10,16 +10,16 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-IO-1043-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; exact NuttX implementation and stock callsite ABI review",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-IO-1043-001"
     ]
   },
   "entry_address": "0xc1e45bc",

@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-EVENT-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 LVGL v9 functions return an event's user data and event code?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.lv_event_get_user_data",
+    "xiaomi-band-10-pro-3.101.043.lv_event_get_code"
+  ],
+  "prototype_hypothesis": "sub_C588310 implements void *lv_event_get_user_data(void *event), while sub_C588210 implements uint32_t lv_event_get_code(void *event).",
+  "callsite_evidence": [
+    "Exact callback sub_C4F0148 saves incoming R0 (the event pointer) in R4, calls sub_C588310, restores R4 to R0, calls sub_C588210, and immediately compares the second return value with LV_EVENT_CLICKED (7).",
+    "Exact Settings callback sub_C56DA44 branches on the sub_C588310 return values 0 through 3, matching the fourth user_data argument passed by its four sub_C5883F0 event registrations.",
+    "The 3.101.036 lv_event_get_code veneer target 0x002BFA3D shifted by the independently established LVGL veneer delta 0x328 gives 0x002BFD65; the 3.101.043 veneer that targets 0x002BFD65 is sub_C588210.",
+    "The raw fw-match candidate sub_C587A40 is disproved by exact caller sub_C56DB54: it passes R0=0x58, treats the return value as a pointer, then clears 0x58 bytes at that pointer. This is an allocator, not an event accessor."
+  ],
+  "control_flow_evidence": [
+    "sub_C4F0148 filters the sub_C588210 return value against event code 7 before executing the click path.",
+    "sub_C56DA44 uses sub_C588310 as callback registration metadata and dispatches four distinct actions for user_data values 0, 1, 2, and 3."
+  ],
+  "ownership_analysis": "Both functions borrow the caller-owned LVGL event for the duration of the call. The user-data pointer remains owned according to the event registration contract. Calls must run on the LVGL owner thread.",
+  "unsafe_assumptions": [
+    "The exact callsites prove the accessor identities and prototypes statically; device execution of the corrected Manager callback remains unprobed.",
+    "The raw fw-match report is candidate evidence only and its 0x0C587A40 lv_event_get_code row must not be promoted."
+  ],
+  "recommended_probe": "Install the regenerated 3.101.043 Supervisor, click the Manager Modules row, confirm navigation without assert/reboot, then open a module detail page and return.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-20T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4F0148",
+      "role": "callback separating user data from event code"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C56DA44",
+      "role": "Settings callback dispatching registered user data"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C56DB54",
+      "role": "allocator callsite disproving sub_C587A40"
+    }
+  ]
+}

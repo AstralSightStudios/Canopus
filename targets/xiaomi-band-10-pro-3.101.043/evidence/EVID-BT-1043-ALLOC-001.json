@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-1043-ALLOC-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 Bluetooth allocator, paired free, stock buffer, timer, and external-queue entries are safe for target-private callers?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_alloc",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_free",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_queue_free",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_buffer_new",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_queue_external",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_timer_add",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_timer_cancel"
+  ],
+  "prototype_hypothesis": "sub_C840C54 is the Bluetooth allocation wrapper; sub_C840C60 is its paired one-argument free wrapper and is also the queue cancellation free callback; sub_C7EAFBC creates a stock Bluetooth buffer; sub_C7EB270 and sub_C7EB33C add and cancel owner-local timers; sub_C7EB9CC queues and wakes an external Bluetooth FSM event.",
+  "callsite_evidence": [
+    "sub_C7ECE30 allocates a 0x38-byte GAP state and a separate 4-byte receive slot through sub_C840C54, establishing the subsystem allocator and one-argument size ABI.",
+    "sub_C808244 grows an SDP attribute allocation and frees the old allocation through sub_C840C60; sub_C808648 likewise frees attribute nodes and their list owner through sub_C840C60.",
+    "Stock queue cleanup adapter sub_C7EBD40 moves its third callback argument from R2 into R0 and calls sub_C840C60, proving the exact cancellation callback must use the same paired free as bt_alloc.",
+    "sub_C7EAFBC contains the string BuffNew and initializes the stock buffer prefix from payload length and headroom supplied in R0/R1.",
+    "sub_C7EB270 contains TimerAdd and constructs a 24-byte owner timer record from the seven AAPCS arguments; sub_C7EB33C locates a timer handle, removes it, and releases the retained handle, record, and argument.",
+    "sub_C7EB9CC contains External, inserts the five-argument work item under the owner lock, and signals the owner semaphore when the external queue transitions from empty."
+  ],
+  "control_flow_evidence": [
+    "sub_C840C54 and sub_C840C60 are adjacent Bluetooth wrappers around the generic allocation/free pair sub_C1F903C and sub_C1F8FF8. Exact 3.101.036 has the same adjacent allocator/free structure and uses one callable for bt_free and bt_queue_free.",
+    "The former bt_free candidate sub_C42F0C0 calls sub_C588980. Exact stock callers pass destination, zero, and size to sub_C588980, and the veneer accepts three arguments; it is a memset-like path rather than a free operation.",
+    "The former queue-free candidate sub_C42F0CC reaches generic NuttX free but is not the paired Bluetooth wrapper selected by stock queue cleanup. Promotion therefore uses sub_C840C60 for both records."
+  ],
+  "ownership_analysis": "Allocations returned by bt_alloc and bt_buffer_new are owned by the caller until transferred to a stock queue/timer or explicitly released with sub_C840C60. A successful timer or queue submission transfers its argument according to the stock cleanup callback contract; cancellation must use the Bluetooth-paired free wrapper.",
+  "unsafe_assumptions": [
+    "Static exact-IDB analysis proves the callable family and ownership flow; external module execution on an exact 3.101.043 device remains unprobed.",
+    "Timer and owner-local queue functions require a live Bluetooth FSM owner and the firmware lifecycle state expected by stock callers."
+  ],
+  "recommended_probe": "On exact 3.101.043, allocate and free guarded blocks through the paired wrappers, then enqueue and cancel one Bluetooth work token while checking allocator guards, owner progress, and heap integrity.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C840C54",
+      "role": "exact Bluetooth allocation wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C840C60",
+      "role": "exact paired Bluetooth free wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C7EBD40",
+      "role": "stock queue cleanup adapter proving the free callback ABI"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C7EAFBC",
+      "role": "exact stock buffer constructor"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C7EB270",
+      "role": "exact Bluetooth timer-add implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C7EB33C",
+      "role": "exact Bluetooth timer-cancel implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C7EB9CC",
+      "role": "exact external-event queue implementation"
+    }
+  ]
+}

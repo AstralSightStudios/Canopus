@@ -22,17 +22,8 @@
       "EVID-MATCH-001"
     ]
   },
-  "entry_address": "0xc5879b0",
-  "callable_address": "0xc5879b1",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lv_obj_align_to)",
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "prototype": "void(void *, void *, uint32_t, int32_t, int32_t)",
-    "ownership": "caller-owned pointers / borrowed for call",
-    "thread": "UI owner thread",
-    "device_probe": "native-manager probe runs this on device"
-  }
+  "entry_address": "0xc588ef0",
+  "callable_address": "0xc588ef1",
+  "notes": "exact 3.101.043 LVGL compatibility thunk used by stock page code to place the first row against page content and subsequent rows below the preceding row (align 14 with an 8 px gap)",
+  "approval_state": "APPROVED"
 }

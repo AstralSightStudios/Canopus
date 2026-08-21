@@ -137,9 +137,11 @@
   ],
   "ownership_analysis": "No device ownership or runtime behavior is claimed.",
   "unsafe_assumptions": [
-    "A corpus match is not a device probe; unresolved globals and capabilities remain unavailable."
+    "A corpus match is not a device probe; unresolved globals and capabilities remain unavailable.",
+    "Known false positive: both archived raw reports map lv_event_get_code to sub_C587A40 (0x0C587A40), but exact IDB callsites prove that function is an allocator. EVID-UI-EVENT-001 supersedes that candidate with sub_C588210 (callable 0x0C588211).",
+    "Known false positives: archived rows map lvx_label_create to sub_C588BF8, lvx_label_set_text to sub_C588A70, and lvx_object_align to sub_C588960. Exact stock callsites disprove all three; EVID-UI-WIDGET-001 supersedes them with sub_C588F30, sub_C589490, and sub_C589188 respectively."
   ],
-  "recommended_probe": "Identity guard and minimal manager/UI probes on exact 3.101.043 device.",
+  "recommended_probe": "Identity guard followed by exact-device Manager navigation, empty-label rendering, module detail, back-navigation, layout, and full-scroll probes on 3.101.043.",
   "reviewers": [
     "canopus-maintainer"
   ],

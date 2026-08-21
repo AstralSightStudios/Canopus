@@ -699,6 +699,9 @@ static int32_t target_ui_apply(
     typedef void (*set_label_text_fn)(void *, const char *);
     typedef void *(*create_content_fn)(void *);
     typedef void (*set_size_fn)(void *, int32_t, int32_t);
+#ifdef FW_LVX_CONTENT_PAD_BOTTOM
+    typedef void (*set_content_pad_bottom_fn)(void *, int32_t, uint32_t);
+#endif
     typedef void (*align_fn)(void *, uint32_t, int32_t, int32_t);
     typedef void *(*create_page_title_fn)(void *, const char *, uint32_t,
                                           void (*)(void *), void *);
@@ -726,6 +729,10 @@ static int32_t target_ui_apply(
     create_content_fn create_content =
         (create_content_fn)(uintptr_t)FW_LVX_CONTENT_CREATE;
     set_size_fn set_size = (set_size_fn)(uintptr_t)FW_LVX_OBJECT_SET_SIZE;
+#ifdef FW_LVX_CONTENT_PAD_BOTTOM
+    set_content_pad_bottom_fn set_content_pad_bottom =
+        (set_content_pad_bottom_fn)(uintptr_t)FW_LVX_CONTENT_PAD_BOTTOM;
+#endif
     align_fn align = (align_fn)(uintptr_t)FW_LVX_OBJECT_ALIGN;
     create_page_title_fn create_page_title =
         (create_page_title_fn)(uintptr_t)FW_LVX_PAGE_TITLE_CREATE;
@@ -783,6 +790,9 @@ static int32_t target_ui_apply(
                  CANOPUS_TARGET_CONTENT_HEIGHT);
         align(backend->content_root, CANOPUS_TARGET_ALIGN_TOP_MID, 0,
               CANOPUS_TARGET_CONTENT_TOP_OFFSET);
+#ifdef FW_LVX_CONTENT_PAD_BOTTOM
+        set_content_pad_bottom(backend->content_root, 32, 0u);
+#endif
     }
     for (i = 0; i < snapshot->node_count; i++) {
         uint16_t type = snapshot->nodes[i].type;

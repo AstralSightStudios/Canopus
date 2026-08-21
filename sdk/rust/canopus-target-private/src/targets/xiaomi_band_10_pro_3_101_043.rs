@@ -502,15 +502,43 @@ pub type BtGapTransportReceive = extern "C" fn(*mut core::ffi::c_void, *mut u8, 
 /// statically confirmed raw-H4 receive seam.
 pub const HCI_RECEIVE_HOOK_REQUIRED: bool = true;
 
-const GAP_HOST_RECEIVE_SLOT: usize = canopus_target_generated::canopus_fw_gap_host_receive_slot;
+const GAP_HOST_OWNER_ROOT: usize = canopus_target_generated::canopus_fw_gap_host_receive_slot;
+const GAP_HOST_STATE_RECEIVE_SLOT_OFFSET: usize = 0x28;
 const GAP_HOST_STOCK_RECEIVE: usize =
     canopus_target_generated::CANOPUS_FW_GAP_HOST_STOCK_RECEIVE_CALLABLE;
 
+unsafe fn gap_host_receive_slot() -> *mut u32 {
+    let owner =
+        unsafe { core::ptr::read_volatile(GAP_HOST_OWNER_ROOT as *const *mut core::ffi::c_void) };
+    if owner.is_null() {
+        return core::ptr::null_mut();
+    }
+
+    let state = unsafe { core::ptr::read_volatile(owner.cast::<*mut core::ffi::c_void>()) };
+    if state.is_null() {
+        return core::ptr::null_mut();
+    }
+
+    unsafe {
+        core::ptr::read_volatile(
+            state
+                .cast::<u8>()
+                .add(GAP_HOST_STATE_RECEIVE_SLOT_OFFSET)
+                .cast::<*mut u32>(),
+        )
+    }
+}
+
 /// Replaces the active GAP host receive entry after verifying the exact-target
-/// stock pointer. Powering Bluetooth on rebuilds the dispatcher, so callers
-/// reassert the hook after adapter ON.
+/// stock pointer. The exported global is the GAP FSM owner root; its state owns
+/// the separately allocated callback slot at offset `0x28`. Powering Bluetooth
+/// on rebuilds this chain, so callers reassert the hook after adapter ON.
 pub unsafe fn bt_gap_install_receive_hook(receive_hook: BtGapTransportReceive) -> bool {
-    let receive_slot = GAP_HOST_RECEIVE_SLOT as *mut u32;
+    let receive_slot = unsafe { gap_host_receive_slot() };
+    if receive_slot.is_null() {
+        return false;
+    }
+
     let receive_replacement = receive_hook as usize as u32;
     let receive_current = unsafe { core::ptr::read_volatile(receive_slot) };
 
@@ -1048,6 +1076,20 @@ pub unsafe fn lvx_object_align(object: *mut core::ffi::c_void, align: u32, x: i3
     f(object, align, x, y);
 }
 
+pub unsafe fn lvx_object_set_content_pad_bottom(
+    object: *mut core::ffi::c_void,
+    value: i32,
+    selector: u32,
+) {
+    type F = extern "C" fn(*mut core::ffi::c_void, i32, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            canopus_target_generated::CANOPUS_FW_LVX_CONTENT_PAD_BOTTOM_CALLABLE,
+        ))
+    };
+    f(object, value, selector);
+}
+
 /// Moves an object to an exact index in its parent's child list. Index zero is
 /// the back-most draw position. Must run on the LVGL owner thread.
 pub unsafe fn lvx_object_move_to_index(object: *mut core::ffi::c_void, index: i32) {
@@ -1232,8 +1274,9 @@ pub unsafe fn nuttx_lseek(fd: i32, offset: i64, whence: i32) -> i64 {
     unsafe { canopus_target_generated::canopus_fw_lseek(fd, offset, whence) }
 }
 
-/// POSIX fd-level ioctl wrapper. The 3.101.043 NuttX VFS text is identical to
-/// 3.101.030 around this wrapper; the Thumb callable is `sub_C1C0D2C + 1`.
+/// POSIX fd-level variadic ioctl wrapper. Exact 3.101.043 entry
+/// `sub_C1D01A4 + 1` preserves the command in R1 and consumes the optional
+/// argument from the saved variadic register area.
 pub unsafe fn nuttx_ioctl(fd: i32, command: u32, argument: usize) -> i32 {
     type F = extern "C" fn(i32, u32, ...) -> i32;
     let f: F = unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_IOCTL_CALLABLE) };

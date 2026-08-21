@@ -7,23 +7,23 @@
   "instruction_set": "thumb",
   "prototype": "int(void *, const void *)",
   "proof": {
-    "static": "candidate",
+    "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-MISC-001"
     ]
   },
   "policy": "forbidden",
   "status": "FORBIDDEN",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; exact adapter+0x80 registration-state lifecycle and register flow",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-MISC-001"
     ]
   },
   "entry_address": "0xc3af280",
   "callable_address": "0xc3af281",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (bt_adapter_register_a2dp_callbacks)",
+  "notes": "Exact A2DP registration identity is recovered, but callback-table field ABI and supported lifecycle are not exposed; the callable remains forbidden.",
   "approval_state": "REJECTED"
 }

@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 1
-// input_digest: a095b41e89401727
+// input_digest: 9a4571fdfed532fc
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -263,6 +263,15 @@ pub unsafe fn canopus_fw_lvx_notification_insert_message(a0: *const firmware_not
     f(a0)
 }
 
+/// Recovered `lvx_content_pad_bottom` at 0xc5893c0. Thumb callable address 0xc5893c1.
+pub const CANOPUS_FW_LVX_CONTENT_PAD_BOTTOM_CALLABLE: usize = canopus_thumb_callable(0xc5893c1usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_lvx_content_pad_bottom(a0: *mut core::ffi::c_void, a1: i32, a2: u32) -> () {
+    let f: extern "C" fn(*mut core::ffi::c_void, i32, u32) -> () = unsafe { core::mem::transmute(CANOPUS_FW_LVX_CONTENT_PAD_BOTTOM_CALLABLE) };
+    f(a0, a1, a2);
+}
+
 /// Recovered `lvx_list_item_update` at 0xc4c8904. Thumb callable address 0xc4c8905.
 pub const CANOPUS_FW_LVX_LIST_ITEM_UPDATE_CALLABLE: usize = canopus_thumb_callable(0xc4c8905usize);
 #[allow(non_snake_case)]
@@ -271,9 +280,6 @@ pub unsafe fn canopus_fw_lvx_list_item_update(a0: *mut core::ffi::c_void, a1: *c
     let f: extern "C" fn(*mut core::ffi::c_void, *const u8, *const u8, *const u8, i32, u8) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_LVX_LIST_ITEM_UPDATE_CALLABLE) };
     f(a0, a1, a2, a3, a4, a5)
 }
-
-/// Recovered `driver_open_dispatch` at 0xc1d06b0. Thumb callable address 0xc1d06b1.
-pub const CANOPUS_FW_DRIVER_OPEN_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc1d06b1usize);
 
 /// Recovered `lv_obj_set_hidden` at 0xc587c48. Thumb callable address 0xc587c49.
 pub const CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE: usize = canopus_thumb_callable(0xc587c49usize);
@@ -305,8 +311,8 @@ pub unsafe fn canopus_fw_lv_timer_create(a0: canopus_lvx_event_cb, a1: u32, a2: 
     f(a0, a1, a2)
 }
 
-/// Recovered `lvx_label_create` at 0xc588bf8. Thumb callable address 0xc588bf9.
-pub const CANOPUS_FW_LVX_LABEL_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc588bf9usize);
+/// Recovered `lvx_label_create` at 0xc588f30. Thumb callable address 0xc588f31.
+pub const CANOPUS_FW_LVX_LABEL_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc588f31usize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_label_create(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
@@ -395,8 +401,8 @@ pub const canopus_fw_bt_l2cap_owner: usize = 0x2013BDBCusize;
 /// Recovered `bt_adapter_set_scan_mode` at 0xc3b56a8. Thumb callable address 0xc3b56a9.
 pub const CANOPUS_FW_BT_ADAPTER_SET_SCAN_MODE_CALLABLE: usize = canopus_thumb_callable(0xc3b56a9usize);
 
-/// Recovered `lvx_object_align` at 0xc588960. Thumb callable address 0xc588961.
-pub const CANOPUS_FW_LVX_OBJECT_ALIGN_CALLABLE: usize = canopus_thumb_callable(0xc588961usize);
+/// Recovered `lvx_object_align` at 0xc589188. Thumb callable address 0xc589189.
+pub const CANOPUS_FW_LVX_OBJECT_ALIGN_CALLABLE: usize = canopus_thumb_callable(0xc589189usize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_object_align(a0: *mut core::ffi::c_void, a1: u32, a2: i32, a3: i32) -> () {
@@ -404,8 +410,8 @@ pub unsafe fn canopus_fw_lvx_object_align(a0: *mut core::ffi::c_void, a1: u32, a
     f(a0, a1, a2, a3);
 }
 
-/// Recovered `insmod` at 0xc1c5f34. Thumb callable address 0xc1c5f35.
-pub const CANOPUS_FW_INSMOD_CALLABLE: usize = canopus_thumb_callable(0xc1c5f35usize);
+/// Recovered `insmod` at 0xc203a50. Thumb callable address 0xc203a51.
+pub const CANOPUS_FW_INSMOD_CALLABLE: usize = canopus_thumb_callable(0xc203a51usize);
 
 /// Recovered `app_launcher_add` at 0xc513a44. Thumb callable address 0xc513a45.
 pub const CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc513a45usize);
@@ -425,8 +431,8 @@ pub unsafe fn canopus_fw_lvx_object_set_size(a0: *mut core::ffi::c_void, a1: i32
     f(a0, a1, a2);
 }
 
-/// Recovered `bt_free` at 0xc42f0c0. Thumb callable address 0xc42f0c1.
-pub const CANOPUS_FW_BT_FREE_CALLABLE: usize = canopus_thumb_callable(0xc42f0c1usize);
+/// Recovered `bt_free` at 0xc840c60. Thumb callable address 0xc840c61.
+pub const CANOPUS_FW_BT_FREE_CALLABLE: usize = canopus_thumb_callable(0xc840c61usize);
 
 /// Recovered `heap_malloc` at 0xc1f903c. Thumb callable address 0xc1f903d.
 pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc1f903dusize);
@@ -437,8 +443,8 @@ pub const CANOPUS_FW_DRIVER_IOCTL_DISPATCH_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `bt_create_bond_private` at 0xc3b6898. Thumb callable address 0xc3b6899.
 pub const CANOPUS_FW_BT_CREATE_BOND_PRIVATE_CALLABLE: usize = canopus_thumb_callable(0xc3b6899usize);
 
-/// Recovered `lv_obj_align_to` at 0xc5879b0. Thumb callable address 0xc5879b1.
-pub const CANOPUS_FW_LV_OBJ_ALIGN_TO_CALLABLE: usize = canopus_thumb_callable(0xc5879b1usize);
+/// Recovered `lv_obj_align_to` at 0xc588ef0. Thumb callable address 0xc588ef1.
+pub const CANOPUS_FW_LV_OBJ_ALIGN_TO_CALLABLE: usize = canopus_thumb_callable(0xc588ef1usize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lv_obj_align_to(a0: *mut core::ffi::c_void, a1: *mut core::ffi::c_void, a2: u32, a3: i32, a4: i32) -> () {
@@ -451,13 +457,7 @@ pub const CANOPUS_FW_SEM_TRYWAIT_CALLABLE: usize = canopus_thumb_callable(0xc206
 
 /// Recovered `open` at 0xc1d0a28. Thumb callable address 0xc1d0a29.
 pub const CANOPUS_FW_OPEN_CALLABLE: usize = canopus_thumb_callable(0xc1d0a29usize);
-#[allow(non_snake_case)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn canopus_fw_open(a0: *const u8, a1: i32) -> i32 {
-    let f: extern "C" fn(*const u8, i32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_OPEN_CALLABLE) };
-    f(a0, a1)
-}
-
+// open: skipped (argument type not mappable)
 /// Recovered `register_driver` at 0xc1aff60. Thumb callable address 0xc1aff61.
 pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc1aff61usize);
 #[allow(non_snake_case)]
@@ -485,8 +485,8 @@ pub unsafe fn canopus_fw_bt_adapter_get_state(a0: *mut core::ffi::c_void) -> i32
     f(a0)
 }
 
-/// Recovered `lvx_label_set_text` at 0xc588a70. Thumb callable address 0xc588a71.
-pub const CANOPUS_FW_LVX_LABEL_SET_TEXT_CALLABLE: usize = canopus_thumb_callable(0xc588a71usize);
+/// Recovered `lvx_label_set_text` at 0xc589490. Thumb callable address 0xc589491.
+pub const CANOPUS_FW_LVX_LABEL_SET_TEXT_CALLABLE: usize = canopus_thumb_callable(0xc589491usize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_label_set_text(a0: *mut core::ffi::c_void, a1: *const u8) -> () {
@@ -527,8 +527,8 @@ pub unsafe fn canopus_fw_lvx_list_row_trailing(a0: *mut core::ffi::c_void) -> *m
     f(a0)
 }
 
-/// Recovered `lvx_page_content_create` at 0xca48474. Thumb callable address 0xca48475.
-pub const CANOPUS_FW_LVX_PAGE_CONTENT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xca48475usize);
+/// Recovered `lvx_page_content_create` at 0xca67244. Thumb callable address 0xca67245.
+pub const CANOPUS_FW_LVX_PAGE_CONTENT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xca67245usize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_page_content_create(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
@@ -647,9 +647,6 @@ pub unsafe fn canopus_fw_bt_pair_display_reply(a0: *mut core::ffi::c_void, a1: *
     f(a0, a1, a2, a3)
 }
 
-/// Recovered `driver_read_dispatch` at 0xc1d119c. Thumb callable address 0xc1d119d.
-pub const CANOPUS_FW_DRIVER_READ_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc1d119dusize);
-
 /// Recovered `clock_gettime` at 0xc201fe0. Thumb callable address 0xc201fe1.
 pub const CANOPUS_FW_CLOCK_GETTIME_CALLABLE: usize = canopus_thumb_callable(0xc201fe1usize);
 #[allow(non_snake_case)]
@@ -713,8 +710,8 @@ pub const CANOPUS_FW_BT_L2CAP_DISCONNECT_CALLABLE: usize = canopus_thumb_callabl
 /// Recovered `service_manager_shutdown` at 0xc3bdce8. Thumb callable address 0xc3bdce9.
 pub const CANOPUS_FW_SERVICE_MANAGER_SHUTDOWN_CALLABLE: usize = canopus_thumb_callable(0xc3bdce9usize);
 
-/// Recovered `lv_event_get_code` at 0xc587a40. Thumb callable address 0xc587a41.
-pub const CANOPUS_FW_LV_EVENT_GET_CODE_CALLABLE: usize = canopus_thumb_callable(0xc587a41usize);
+/// Recovered `lv_event_get_code` at 0xc588210. Thumb callable address 0xc588211.
+pub const CANOPUS_FW_LV_EVENT_GET_CODE_CALLABLE: usize = canopus_thumb_callable(0xc588211usize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lv_event_get_code(a0: *mut core::ffi::c_void) -> u32 {
@@ -764,8 +761,8 @@ pub const CANOPUS_FW_SDP_UNREGISTER_CALLABLE: usize = canopus_thumb_callable(0xc
 /// Recovered `service_manager_get_profile` at 0xc3bdd88. Thumb callable address 0xc3bdd89.
 pub const CANOPUS_FW_SERVICE_MANAGER_GET_PROFILE_CALLABLE: usize = canopus_thumb_callable(0xc3bdd89usize);
 
-/// Recovered `lvx_object_delete` at 0xc5879e0. Thumb callable address 0xc5879e1.
-pub const CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE: usize = canopus_thumb_callable(0xc5879e1usize);
+/// Recovered `lvx_object_delete` at 0xc588de8. Thumb callable address 0xc588de9.
+pub const CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE: usize = canopus_thumb_callable(0xc588de9usize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lvx_object_delete(a0: *mut core::ffi::c_void) -> () {
@@ -800,8 +797,8 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
     f(a0)
 }
 
-/// Recovered `lv_obj_add_event_cb` at 0xc587fa0. Thumb callable address 0xc587fa1.
-pub const CANOPUS_FW_LV_OBJ_ADD_EVENT_CB_CALLABLE: usize = canopus_thumb_callable(0xc587fa1usize);
+/// Recovered `lv_obj_add_event_cb` at 0xc5883f0. Thumb callable address 0xc5883f1.
+pub const CANOPUS_FW_LV_OBJ_ADD_EVENT_CB_CALLABLE: usize = canopus_thumb_callable(0xc5883f1usize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lv_obj_add_event_cb(a0: *mut core::ffi::c_void, a1: canopus_lvx_event_cb, a2: u32, a3: *mut core::ffi::c_void) -> () {
@@ -809,8 +806,8 @@ pub unsafe fn canopus_fw_lv_obj_add_event_cb(a0: *mut core::ffi::c_void, a1: can
     f(a0, a1, a2, a3);
 }
 
-/// Recovered `lv_event_get_user_data` at 0xc187f18. Thumb callable address 0xc187f19.
-pub const CANOPUS_FW_LV_EVENT_GET_USER_DATA_CALLABLE: usize = canopus_thumb_callable(0xc187f19usize);
+/// Recovered `lv_event_get_user_data` at 0xc588310. Thumb callable address 0xc588311.
+pub const CANOPUS_FW_LV_EVENT_GET_USER_DATA_CALLABLE: usize = canopus_thumb_callable(0xc588311usize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_lv_event_get_user_data(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
@@ -833,8 +830,8 @@ pub unsafe fn canopus_fw_lvx_page_title_create(a0: *mut core::ffi::c_void, a1: *
     f(a0, a1, a2, a3, a4)
 }
 
-/// Recovered `bt_queue_free` at 0xc42f0cc. Thumb callable address 0xc42f0cd.
-pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc42f0cdusize);
+/// Recovered `bt_queue_free` at 0xc840c60. Thumb callable address 0xc840c61.
+pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc840c61usize);
 
 /// Recovered `app_lookup` at 0xca69934. Thumb callable address 0xca69935.
 pub const CANOPUS_FW_APP_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0xca69935usize);
@@ -881,13 +878,13 @@ pub const CANOPUS_FW_SERVICE_MANAGER_STARTUP_CALLABLE: usize = canopus_thumb_cal
 // bt_socket_server_receive: FORBIDDEN - no binding may ever be generated
 // bt_timer_add: restricted - not exported until context/ownership approved
 // bt_timer_cancel: restricted - not exported until context/ownership approved
-// btsnoop_avdtp_recognizer: FORBIDDEN - no binding may ever be generated
+// btsnoop_avdtp_recognizer: WITHDRAWN - no binding may ever be generated
 // controller_crash_dump: FORBIDDEN - no binding may ever be generated
 // driver_close_dispatch: restricted - not exported until context/ownership approved
 // driver_ioctl_dispatch: restricted - not exported until context/ownership approved
-// driver_open_dispatch: restricted - not exported until context/ownership approved
-// driver_read_dispatch: restricted - not exported until context/ownership approved
-// driver_write_dispatch: FORBIDDEN - no binding may ever be generated
+// driver_open_dispatch: WITHDRAWN - no binding may ever be generated
+// driver_read_dispatch: WITHDRAWN - no binding may ever be generated
+// driver_write_dispatch: WITHDRAWN - no binding may ever be generated
 // errno_location: restricted - not exported until context/ownership approved
 // firmware_log: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved

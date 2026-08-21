@@ -12,27 +12,18 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-IO-1043-002"
     ]
   },
   "policy": "managed",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; NuttX VFS, inode registry, and clock implementation review",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-IO-1043-002"
     ]
   },
   "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-07-22",
-    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "prototype": "int(const char *)",
-    "ownership": "caller-owned pointers",
-    "thread": "calling thread",
-    "device_probe": "probed on device"
-  },
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (unregister_driver)"
+  "notes": "Exact 3.101.043 NuttX driver unregistration entry for a sole path argument."
 }

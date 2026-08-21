@@ -1161,7 +1161,7 @@ pub unsafe fn lvx_page_title_create(
 
 /// MiSans-Regular at 24 px (stock theme object address).
 pub const STYLE_MISANS_REGULAR_24: usize =
-    canopus_target_generated::CANOPUS_FW_STYLE_MISANS_REGULAR_24;
+    canopus_target_generated::canopus_fw_style_misans_regular_24;
 
 /// MiSans-Demibold at 32 px (stock theme object address).
 pub const STYLE_MISANS_DEMIBOLD_32: usize =

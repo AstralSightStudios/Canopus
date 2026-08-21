@@ -8,7 +8,7 @@
   "prototype": "void *",
   "proof": {
     "static": "candidate",
-    "device": "probed",
+    "device": "not_probed",
     "evidence_ids": [
       "EVID-ID-1043-001"
     ]

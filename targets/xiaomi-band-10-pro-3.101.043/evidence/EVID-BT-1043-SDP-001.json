@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-1043-SDP-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 functions create, populate, commit, and unregister stock SDP service records?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.sdp_builder_create",
+    "xiaomi-band-10-pro-3.101.043.private_abi.sdp_set_raw_attribute",
+    "xiaomi-band-10-pro-3.101.043.private_abi.sdp_commit",
+    "xiaomi-band-10-pro-3.101.043.private_abi.sdp_unregister"
+  ],
+  "prototype_hypothesis": "sub_C80A684 creates an SDP service-record builder from five AAPCS arguments; sub_C808244 sets or resizes one raw attribute and returns its payload pointer; sub_C808648 commits a builder and returns its service handle; sub_C80A734 unregisters one handle.",
+  "callsite_evidence": [
+    "sub_C80A684 contains SDAP_CreateServiceRecord, preserves R0-R3 plus the fifth stack argument, creates a builder, and writes standard attributes through sub_C808244 before returning the builder.",
+    "sub_C808244 accepts builder, attribute id, prefix length, payload length, and optional source data. It finds or allocates the attribute node, copies retained prefix bytes when resizing, copies source data when non-null, and returns the writable payload position.",
+    "sub_C808648 commits either a supplied builder or a newly allocated empty builder into the global SDP registry, assigns or preserves the service handle, merges replacement attributes, and frees consumed builder storage with sub_C840C60.",
+    "sub_C80A734 contains SDAP_ServiceUnregister, passes its sole R0 handle to the registry removal function, and returns one."
+  ],
+  "control_flow_evidence": [
+    "The SDAP_CreateServiceRecord and SDAP_ServiceUnregister trace strings identify the public ends of the service lifecycle.",
+    "Shared attribute-list helpers and direct calls among the four exact entries establish one coherent SDP builder family rather than isolated cross-version lookalikes."
+  ],
+  "ownership_analysis": "The caller owns a new builder until sdp_commit consumes it. Attribute payload pointers are borrowed writable views into builder-owned allocations and become invalid after resize or commit. A committed service handle remains firmware-owned and is released through sdp_unregister.",
+  "unsafe_assumptions": [
+    "The fifth builder argument must point to at least the fixed four-byte raw value expected by the stock record creator when used.",
+    "Static exact-IDB analysis proves the function family; registering an external A2DP/AVRCP service record on device remains unprobed."
+  ],
+  "recommended_probe": "Build one minimal service record on exact 3.101.043, set a known raw attribute, commit and query the nonzero handle, verify discovery sees the record, unregister it, and verify both registry and allocator state return to baseline.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C80A684",
+      "role": "exact SDP builder constructor"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C808244",
+      "role": "exact raw attribute insertion and resize function"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C808648",
+      "role": "exact SDP commit and ownership-transfer function"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C80A734",
+      "role": "exact SDP service unregister function"
+    }
+  ]
+}

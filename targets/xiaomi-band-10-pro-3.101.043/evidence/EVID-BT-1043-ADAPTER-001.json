@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-1043-ADAPTER-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Do the exact 3.101.043 adapter, discovery, scan-mode, bond, pairing-state, and pair-reply entries match the production module ABIs?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.bt_adapter_get_instance",
+    "xiaomi-band-10-pro-3.101.043.bt_adapter_register",
+    "xiaomi-band-10-pro-3.101.043.bt_adapter_unregister",
+    "xiaomi-band-10-pro-3.101.043.bt_adapter_get_state",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_discovery_start",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_discovery_stop",
+    "xiaomi-band-10-pro-3.101.043.bt_adapter_get_scan_mode",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_adapter_set_scan_mode",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_get_bond_state",
+    "xiaomi-band-10-pro-3.101.043.bt_get_pairing_state",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_create_bond_private",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_remove_bond_private",
+    "xiaomi-band-10-pro-3.101.043.bt_pair_display_reply",
+    "xiaomi-band-10-pro-3.101.043.bt_pair_request_reply"
+  ],
+  "prototype_hypothesis": "The exact entries preserve the AAPCS signatures recorded for adapter object and callback registration, discovery timeout, scan mode/bondable flags, six-byte address and transport, and pair reply arguments.",
+  "callsite_evidence": [
+    "sub_CA40F68 directly returns the adapter object stored at 0x2013DBE4.",
+    "sub_C3AF3E8 preserves R0 as adapter and R1 as a callback-table pointer, creates or reuses adapter+0x78 registration state, and registers the table; stock callers including sub_CA40ED4 use this two-argument flow.",
+    "sub_C3AF450 preserves R0 as adapter and R1 as the registration token, submits the unregister operation, clears adapter+0x78 only after removal, and returns a success indicator.",
+    "sub_C3AF4F4 issues adapter command 0x1B and returns the state byte; sub_C3AF524 stores incoming timeout R1 into command 0x1E; sub_C3AF550 issues one-argument stop command 0x1F.",
+    "sub_C3B5698 is a no-argument scan-mode getter returning the stock mode value, while sub_C3B56A8 consumes two scan-mode bytes and forwards them to the underlying setter.",
+    "The bond/query wrappers sub_C3B5A60, sub_C3B5F78, sub_C3B6898, and sub_C3B697C consistently preserve the six-byte address and, where present, the transport argument through the stock device-record path.",
+    "sub_C3AFF64 is a four-argument pair-display reply wrapper; sub_C3B0050 is a three-argument pair-request reply wrapper and is called by stock gap_pair_request_callback sub_C709E90."
+  ],
+  "control_flow_evidence": [
+    "The adapter wrapper sequence is contiguous and its command IDs and adapter+0x78 registration field distinguish register, unregister, state, discovery start, and discovery stop from neighboring operations.",
+    "Exact callers and register flow, rather than cross-version match scores, establish promotion and the callback-table/register-token distinction."
+  ],
+  "ownership_analysis": "The adapter and registration structures are firmware-owned. The 16-word callback table supplied at registration must remain live until unregister completes. Address arrays are borrowed for synchronous wrapper execution; queued bond operations copy or retain data according to the stock service path.",
+  "unsafe_assumptions": [
+    "The callback table layout already recovered for the target-private interface remains subject to device probing even though the registration pointer ABI is statically confirmed.",
+    "Physical adapter/discovery/bond behavior on exact 3.101.043 remains unprobed."
+  ],
+  "recommended_probe": "Register a persistent callback table on exact 3.101.043, verify state and discovery callbacks, read/set scan mode, query and modify one test bond, exercise both pair-reply paths, then unregister and verify no callbacks arrive afterward.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3AF3E8",
+      "role": "exact adapter callback registration wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3AF450",
+      "role": "exact adapter callback unregistration wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3AF4F4",
+      "role": "exact adapter-state getter"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3AF524",
+      "role": "exact discovery-start wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3AF550",
+      "role": "exact discovery-stop wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3B5698",
+      "role": "exact scan-mode getter"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3B56A8",
+      "role": "exact scan-mode setter"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3AFF64",
+      "role": "exact pair-display reply wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3B0050",
+      "role": "exact pair-request reply wrapper"
+    }
+  ]
+}

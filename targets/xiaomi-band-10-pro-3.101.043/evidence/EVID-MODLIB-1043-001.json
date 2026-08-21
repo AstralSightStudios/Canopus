@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-MODLIB-1043-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 entry implements the two-argument module insertion API used by the Supervisor, and is the prior insmod candidate valid?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.insmod"
+  ],
+  "prototype_hypothesis": "sub_C203A50 is void *(const char *path, const char *module_name), a two-argument veneer over sub_C1E8650; the callable address is 0x0C203A51.",
+  "callsite_evidence": [
+    "sub_C203A50 at 0x0C203A50 consists of PUSH {R7,LR}, ADD R7,SP,#0, BL sub_C1E8650, and POP {R7,PC}; it preserves the two incoming AAPCS arguments and returns the underlying module-insert result unchanged.",
+    "sub_C1E8650 at 0x0C1E8650 is the exact implementation whose embedded source string is ../../nuttx/libs/libc/modlib/modlib_insert.c. It validates the path/module arguments, allocates and populates the module image, applies relocations, invokes constructors, and returns a non-null module handle on success while setting errno on failure.",
+    "sub_C23EC54 loads the path and module-name pair, calls sub_C203A50, treats a non-null result as successful insertion, and formats the literal `insmod` failure diagnostic from errno when the result is null. This independently identifies sub_C203A50 as the two-argument insertion veneer.",
+    "The former candidate sub_C1C5F34 at 0x0C1C5F34 is a four-instruction wrapper over sub_C1C5EAC. Its implementation references ../../nuttx/fs/mmap/fs_munmap.c, walks an mmap cleanup chain, and returns -22 on an invalid cleanup path; it has no module-insertion behavior and cannot implement insmod."
+  ],
+  "control_flow_evidence": [
+    "Exact 3.101.043 IDA analysis resolves the public veneer at 0x0C203A50 and its implementation at 0x0C1E8650; no cross-version candidate is needed for promotion.",
+    "The corrected callable address is the Thumb address 0x0C203A51, matching the target's ARM Thumb veneer convention."
+  ],
+  "ownership_analysis": "The path and module-name strings are borrowed for the synchronous insertion call. The returned non-null module handle is owned by the module loader and is later used by the corresponding unload/handle path.",
+  "unsafe_assumptions": [
+    "The exact static call chain proves the address and ABI; execution on the physical 3.101.043 device remains unprobed.",
+    "The receipt, artifact digest, target identity, and lifecycle checks remain the Supervisor's responsibility before this insertion veneer is called."
+  ],
+  "recommended_probe": "On exact 3.101.043, enable one signed module, reboot, run the Supervisor restore command, and verify that insertion reaches the module constructor and returns READY/BOOT_RESIDENT without result=6 error=-6; repeat with LyraPlayer and BluetoothAudio.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_CONFIRMED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C203A50",
+      "role": "exact two-argument module insertion veneer"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1E8650",
+      "role": "exact modlib_insert.c implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C23EC54",
+      "role": "exact insmod command caller and failure diagnostic"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C1C5F34",
+      "role": "refuted former candidate; fs_munmap cleanup wrapper"
+    }
+  ]
+}

@@ -42,14 +42,5 @@
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
   },
   "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lvx_notification_insert_message)",
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "prototype": "int(const firmware_notification_message *message)",
-    "ownership": "caller-owned pointers / borrowed for call",
-    "thread": "UI owner thread",
-    "device_probe": "native-manager probe runs this on device"
-  }
+  "approval_state": "APPROVED"
 }

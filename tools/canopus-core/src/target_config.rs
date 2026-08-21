@@ -125,6 +125,11 @@ const FW_10: &[Mapping] = &[
         address: Address::Callable,
     },
     Mapping {
+        macro_name: "FW_LVX_CONTENT_PAD_BOTTOM",
+        symbol_name: "lvx_content_pad_bottom",
+        address: Address::Callable,
+    },
+    Mapping {
         macro_name: "FW_LVX_IMAGE_CREATE",
         symbol_name: "lv_image_create",
         address: Address::Callable,

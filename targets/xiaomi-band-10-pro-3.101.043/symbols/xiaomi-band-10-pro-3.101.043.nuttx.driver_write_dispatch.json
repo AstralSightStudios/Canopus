@@ -5,24 +5,24 @@
   "name": "driver_write_dispatch",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "int32(file *, const void *, uint32_t) via fops+0x0C",
+  "prototype": "withdrawn",
   "proof": {
-    "static": "candidate",
+    "static": "withheld",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-IO-1043-003"
     ]
   },
-  "policy": "forbidden",
-  "status": "FORBIDDEN",
+  "policy": "withdrawn",
+  "status": "WITHDRAWN",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
-    "withdrawal_reason": "No independent exact-target global recovery; fail-closed rather than reuse neighboring firmware address.",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; exact public fs_write path and file_operations+0x0C slot review",
+    "withdrawal_reason": "The write slot is exact, but no independent exact-target direct file-level write wrapper has been recovered for this record; fail closed rather than infer a callable from a neighboring firmware.",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-IO-1043-003"
     ]
   },
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (driver_write_dispatch)",
+  "notes": "Use the exact public write entry instead of an unrecovered internal direct-dispatch helper.",
   "approval_state": "REJECTED"
 }

@@ -32,14 +32,5 @@
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
   },
   "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "prototype": "void *(uint16_t app_id)",
-    "ownership": "stock LVX/native-manager call; caller owns widget pointers",
-    "thread": "UI owner thread",
-    "device_probe": "used by native-manager probe on device"
-  },
   "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (app_lookup)"
 }

@@ -5,25 +5,25 @@
   "name": "driver_ioctl_dispatch",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "int(file *, int, uintptr_t) via fops+0x14",
+  "prototype": "int(file *, uint32_t, ...)",
   "proof": {
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-IO-1043-003"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_CONFIRMED",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; exact NuttX fs_ioctl path, variadic register flow, and fops+0x14 dispatch",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-IO-1043-003"
     ]
   },
   "entry_address": "0xc1cff88",
   "callable_address": "0xc1cff89",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (driver_ioctl_dispatch)",
+  "notes": "Internal file-level ioctl entry. PUSH {R1-R3} and access to the saved register area prove a variadic third argument; callers must not use a fixed prototype for zero-argument commands.",
   "approval_state": "APPROVED"
 }

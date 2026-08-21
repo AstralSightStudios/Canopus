@@ -7,23 +7,23 @@
   "instruction_set": "thumb",
   "prototype": "int(void *, const void *)",
   "proof": {
-    "static": "candidate",
+    "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-MISC-003"
     ]
   },
   "policy": "forbidden",
   "status": "FORBIDDEN",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; exact six-byte peer-address copy and HFP-AG command 0x9B dispatch",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-MISC-003"
     ]
   },
   "entry_address": "0xc3b0db0",
   "callable_address": "0xc3b0db1",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (hfp_ag_connect)",
+  "notes": "Exact HFP-AG connect wrapper; remains forbidden because the internal adapter command lifecycle is not a supported module contract.",
   "approval_state": "REJECTED"
 }

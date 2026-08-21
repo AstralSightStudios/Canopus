@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-1043-MISC-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Are the three remaining forbidden 3.101.043 Bluetooth candidates exact A2DP registration, HFP-AG registration, and socket-server receive functions?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.bt_adapter_register_a2dp_callbacks",
+    "xiaomi-band-10-pro-3.101.043.bt_adapter_register_hfp_ag_callbacks",
+    "xiaomi-band-10-pro-3.101.043.bt_socket_server_receive"
+  ],
+  "prototype_hypothesis": "sub_C3AF280 and sub_C3B0CE0 each accept an adapter object and callback-table pointer. sub_C3AEB08 is an internal socket event/receive handler accepting an event source, revents, and server state.",
+  "callsite_evidence": [
+    "sub_C3AF280 preserves adapter R0 and callback-table R1, creates or reuses registration state at adapter+0x80, and registers command family 6; error cleanup frees that same registration state.",
+    "sub_C3B0CE0 has the same two-argument registration lifecycle at adapter+0x98 and identifies the HFP-AG command family through exact neighboring service flow and command value 0x96.",
+    "sub_C3AEB08 carries the literal function name bt_socket_server_receive and source path ../../frameworks/connectivity/bluetooth/service/ipc/socket/src/bt_socket_server.c. It resolves the fd from R0, interprets R1 as revents, uses R2 as server state, receives into server+0x44, and dispatches the framed message."
+  ],
+  "control_flow_evidence": [
+    "The distinct persistent adapter offsets +0x80 and +0x98 plus inverse allocation/registration cleanup distinguish the two callback families from generic adapter commands.",
+    "Socket receive identity is direct from exact-target strings, fd/revents flow, recv error handling through errno_location, and message dispatch over the complete server frame."
+  ],
+  "ownership_analysis": "The adapter and registration states are firmware-owned. Callback-table pointers must remain live for the registration lifetime. The socket handler owns its receive cursor and frame buffer through server state. All three records stay forbidden and rejected despite exact identity because no supported target-private contract exposes their lifecycles.",
+  "unsafe_assumptions": [
+    "Exact identity does not establish every callback-table field ABI, so neither callback registration function is promoted for SDK use.",
+    "The socket handler is an internal event-loop callback and must not be called directly.",
+    "Physical A2DP, HFP-AG, and socket IPC behavior on exact 3.101.043 remains unprobed."
+  ],
+  "recommended_probe": "Observe stock registration and teardown while A2DP and HFP-AG profiles are enabled, then exercise one stock Bluetooth socket IPC transaction and verify persistent state offsets and callback lifetimes without directly invoking the forbidden entries.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3AF280",
+      "role": "exact A2DP callback-registration implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3B0CE0",
+      "role": "exact HFP-AG callback-registration implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3AEB08",
+      "role": "exact internal Bluetooth socket receive handler"
+    }
+  ]
+}

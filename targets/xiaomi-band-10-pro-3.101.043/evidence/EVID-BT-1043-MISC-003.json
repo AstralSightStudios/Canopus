@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-1043-MISC-003",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Do the remaining forbidden 3.101.043 Bluetooth offload, HFP-AG, controller-dump, and vendor-HCI candidates have exact-target identities and register contracts?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.offload_property_apply",
+    "xiaomi-band-10-pro-3.101.043.hfp_ag_connect",
+    "xiaomi-band-10-pro-3.101.043.hfp_ag_disconnect",
+    "xiaomi-band-10-pro-3.101.043.controller_crash_dump",
+    "xiaomi-band-10-pro-3.101.043.vendor_hci_transport_register"
+  ],
+  "prototype_hypothesis": "sub_C3B7598 applies offload properties to adapter state; sub_C3B0DB0 and sub_C3B0DE8 accept an adapter and six-byte peer address for HFP-AG connect/disconnect; sub_C229F28 performs a no-argument controller crash dump; sub_C19F104 registers a vendor HCI tty by integer id and byte option.",
+  "callsite_evidence": [
+    "sub_C3B7598 reads persist.bluetooth.a2dp.offloading, persist.bluetooth.hfp.offloading, and persist.bluetooth.lea.offloading and writes normalized bytes to adapter-state offsets +0x12, +0x13, and +0x14.",
+    "sub_C3B0DB0 copies four plus two bytes from the peer-address pointer into command storage and submits HFP-AG command 0x9B; sub_C3B0DE8 has the identical ABI and submits inverse command 0x9C.",
+    "sub_C229F28 contains bt_drv_reg_op_crash_dump, BT controller BusFault_Handler, controller register names, controller RAM ranges, and BT crash dump complete; it reads controller fault state and dumps the controller memory without incoming arguments.",
+    "sub_C19F104 stores R0 as the tty id, stores low R1 as a byte option, initializes the HCI transport callback structure, formats /dev/ttyBT%d, registers the device, and reports failure with bthci_register."
+  ],
+  "control_flow_evidence": [
+    "Offload property names and exact adapter field stores directly identify the adapter state-entry helper.",
+    "Consecutive command IDs 0x9B/0x9C, identical six-byte address copies, and inverse command dispatch establish the HFP-AG connect/disconnect pair.",
+    "The crash-dump and vendor-HCI strings are exact identities rather than cross-version similarity; their hardware and registration side effects justify retaining forbidden policy."
+  ],
+  "ownership_analysis": "Adapter state, HFP command storage, controller fault registers, and vendor transport state are firmware-owned. Peer addresses are borrowed and copied synchronously. All five entries remain forbidden and rejected because their side effects and lifecycle are outside the supported SDK contract.",
+  "unsafe_assumptions": [
+    "Exact function identity does not promote these internal entries for direct module use.",
+    "Controller crash-dump execution can alter controller/host state and is not part of normal validation.",
+    "Physical offload, HFP-AG, controller-fault, and vendor-HCI behavior on exact 3.101.043 remains unprobed."
+  ],
+  "recommended_probe": "Observe stock offload-state initialization and one HFP-AG connect/disconnect pair, verify /dev/ttyBT registration through the supported boot path, and validate crash dump only from a controlled real controller fault without directly calling forbidden entries.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3B7598",
+      "role": "exact Bluetooth offload-property state helper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3B0DB0",
+      "role": "exact HFP-AG connect command wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C3B0DE8",
+      "role": "exact HFP-AG disconnect command wrapper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C229F28",
+      "role": "exact Bluetooth controller crash-dump implementation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C19F104",
+      "role": "exact vendor HCI tty registration implementation"
+    }
+  ]
+}

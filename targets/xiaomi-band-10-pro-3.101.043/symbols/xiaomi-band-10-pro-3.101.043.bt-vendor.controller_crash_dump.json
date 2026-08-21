@@ -7,23 +7,23 @@
   "instruction_set": "thumb",
   "prototype": "int(void)",
   "proof": {
-    "static": "candidate",
+    "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-MISC-003"
     ]
   },
   "policy": "forbidden",
   "status": "FORBIDDEN",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; exact controller BusFault register and RAM dump implementation",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-BT-1043-MISC-003"
     ]
   },
   "entry_address": "0xc229f28",
   "callable_address": "0xc229f29",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (controller_crash_dump)",
+  "notes": "Exact no-argument controller crash-dump entry; remains forbidden because it reads fault hardware and forces the controller dump lifecycle.",
   "approval_state": "REJECTED"
 }

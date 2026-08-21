@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lvx_content_pad_bottom",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lvx_content_pad_bottom",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc5893c0",
+  "callable_address": "0xc5893c1",
+  "prototype": "void(void *object, int32_t value, uint32_t selector)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrows a live LVGL object; value and selector are passed in R1 and R2",
+    "return_value": "none"
+  },
+  "side_effects": [
+    "mutates_content_scroll_style"
+  ],
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-UI-WIDGET-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-UI-WIDGET-001"
+    ],
+    "source": "exact 3.101.043 IDB stock page constructor sub_C56D5B0"
+  },
+  "approval_state": "APPROVED",
+  "notes": "At 0x0C56D5F8-0x0C56D5FE stock code sets R0=content, R1=32, and R2=0 before calling sub_C5893C0. No fourth argument is established."
+}

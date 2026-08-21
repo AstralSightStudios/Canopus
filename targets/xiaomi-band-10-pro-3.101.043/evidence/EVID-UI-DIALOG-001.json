@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-DIALOG-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 LVGL v9 veneer deletes a dialog object after a confirmation-button click?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.lvx_object_delete"
+  ],
+  "prototype_hypothesis": "sub_C588DE8 implements void lv_obj_delete(void *object); its Thumb-callable address is 0x0C588DE9.",
+  "callsite_evidence": [
+    "Exact stock teardown sub_C5358A4 loads the live object from dword_20111340 into R0 at 0x0C5358CC, calls wrapper sub_C4C70C8 at 0x0C5358CE, and clears the owning global at 0x0C5358D4. sub_C4C70C8 preserves R0 and calls sub_C588DE8.",
+    "Exact stock teardown sub_C56E2B8 loads the live object from dword_201133D0 into R0 at 0x0C56E2C2, calls wrapper sub_C4C934C at 0x0C56E2CC, and clears the owning global at 0x0C56E2D0. sub_C4C934C preserves R0 and calls sub_C588DE8.",
+    "Exact stock UI removal path sub_C4C39B8 moves its retained UI object into R0 at 0x0C4C39E2 and directly calls sub_C588DE8 at 0x0C4C39E6; the object is not dereferenced after the call.",
+    "The 3.101.036 wrappers sub_C4A63B0 and sub_C4A8634 map structurally to exact 3.101.043 wrappers sub_C4C70C8 and sub_C4C934C. The 036 wrappers call its proven delete veneer sub_C588ED8; both 043 wrappers call sub_C588DE8.",
+    "sub_C588DE8 is a public veneer containing LDR.W PC, =0x1C02ECDD. The independently working 3.101.036 delete veneer sub_C588ED8 targets the same runtime Thumb callable 0x1C02ECDD."
+  ],
+  "control_flow_evidence": [
+    "Each teardown checks the stored object for NULL, passes it as the sole semantic argument in R0, invokes the delete veneer through either a transparent wrapper or a direct BL, then clears the only retained owner slot.",
+    "The former candidate sub_C5879E0 is disproved by exact event callback sub_C4C81B0: the incoming event is passed to sub_C5879E0, its returned object is retained and compared with the result of another event-target accessor. It returns event metadata and does not delete its argument.",
+    "Manager target_dialog_dismiss already follows the proven one-argument ownership transition: it detaches native_box from backend state and calls the target delete veneer with the detached object. No shared Manager behavior change is required."
+  ],
+  "ownership_analysis": "The function consumes a live LVGL object owned by the current UI tree. Stock teardown paths clear their retained owner slots immediately after deletion. Manager similarly clears dialog.active and dialog.native_box before calling it, preventing reentrant reuse.",
+  "unsafe_assumptions": [
+    "Exact 3.101.043 callsites prove the public veneer identity and one-pointer ABI statically; device execution of dialog dismissal remains unprobed.",
+    "The runtime implementation at 0x1C02ECDD is not materialized in the static firmware IDB, so its internal instructions are not available; the exact public callsites and identical proven 036 runtime target establish the veneer contract."
+  ],
+  "recommended_probe": "Install the regenerated exact-043 Supervisor; open a Manager confirmation dialog; verify Cancel closes it without executing the action and Confirm closes it while executing the action; then reopen dialogs repeatedly and verify navigation, list layout, and scrolling remain intact.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C5358A4",
+      "role": "stock destroy path through sub_C4C70C8 with owner-slot clearing"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C56E2B8",
+      "role": "independent stock destroy path through sub_C4C934C with owner-slot clearing"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4C39B8",
+      "role": "direct exact-target UI-object deletion callsite"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C588DE8",
+      "role": "exact 3.101.043 object-delete veneer targeting 0x1C02ECDD"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4C81B0",
+      "role": "event callback disproving former sub_C5879E0 delete candidate"
+    },
+    {
+      "uri": "file:///tmp/dialog-delete-matches.json",
+      "role": "candidate-only cross-version wrapper mapping report, manually verified in both exact IDBs"
+    }
+  ]
+}

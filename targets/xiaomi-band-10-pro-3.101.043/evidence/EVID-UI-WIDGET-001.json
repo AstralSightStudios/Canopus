@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-WIDGET-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 LVGL v9 veneers create labels, set label text, align objects, and preserve the stock page's bottom scroll padding?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.lvx_label_create",
+    "xiaomi-band-10-pro-3.101.043.lvx_label_set_text",
+    "xiaomi-band-10-pro-3.101.043.lvx_object_align",
+    "xiaomi-band-10-pro-3.101.043.lvx_content_pad_bottom"
+  ],
+  "prototype_hypothesis": "sub_C588F30 implements void *lvx_label_create(void *parent); sub_C589490 implements void lvx_label_set_text(void *label, const char *text); sub_C589188 implements void lvx_object_align(void *object, uint32_t align, int32_t x, int32_t y); and sub_C5893C0 implements the three-argument bottom-padding/style setter used by stock page construction.",
+  "callsite_evidence": [
+    "In exact stock caller sub_C4C3804, 0x0C4C3894 moves the parent object into R0, 0x0C4C3896 calls sub_C588F30, and 0x0C4C389A retains returned R0 as the new label. At 0x0C4C38E4-0x0C4C38E8 the retained label is passed in R0 and the text pointer in R1 to sub_C589490.",
+    "The former label-create candidate sub_C588BF8 is disproved in the same caller: 0x0C4C38C6-0x0C4C38CA passes an already-created label in R0 and integer 0 in R1. It is an existing-object property operation, not a one-argument constructor.",
+    "The former label-text candidate sub_C588A70 is disproved by exact caller sub_C4C83A0: after creating and retaining a label with sub_C588F30, 0x0C4C840A-0x0C4C8410 passes that label in R0, a packed color/property value in R1, and selector 0 in R2 to sub_C588A70.",
+    "Exact stock page constructor sub_C56D5B0 creates content with sub_CA67244 at 0x0C56D5D8, sets it to 336 by 424 with sub_C588628 at 0x0C56D5E6, then sets R0=content, R1=2, R2=0, R3=56 and calls sub_C589188 at 0x0C56D5F4. This proves the four-argument object-align ABI and the top-middle, x=0, y=56 call used by Manager.",
+    "Immediately afterward, 0x0C56D5F8-0x0C56D5FE sets R0=content, R1=32, and R2=0 before calling sub_C5893C0. No fourth argument is established, proving the three-argument ABI used to preserve the stock bottom scroll padding.",
+    "The former object-align candidate sub_C588960 is disproved by exact removal caller sub_C4C27A0: 0x0C4C27D2-0x0C4C27D6 passes only an existing object in R0 and integer 1 in R1 before calling sub_C588960, then invokes a separate removal/deletion operation."
+  ],
+  "control_flow_evidence": [
+    "The stock construction order is sub_CA67244 content creation, sub_C588628 size, sub_C589188 alignment, then sub_C5893C0 bottom style/padding. The 043 Manager target backend now follows the same order.",
+    "In regenerated Supervisor SHA-256 46764ffa7f50c9740faeedcae8d682520a638838d4358645791723e45963e1c1, target_ui_apply materializes 0x0C588629 at 0x7B98, derives 0x0C589189 as 0x0C588EF1+0x298 before the BLX at 0x7BC0, and derives 0x0C5893C1 as 0x0C588EF1+0x4D0 before the BLX at 0x7BCE. Its text-node branch derives 0x0C588F31 as 0x0C588EF1+0x40 before the BLX at 0x7D06 and 0x0C589491 as 0x0C588EF1+0x5A0 before the BLX at 0x7D34.",
+    "The empty Modules view emits a CANOPUS_UI_NODE_TEXT node, so it is the first normal Manager route that exercises label construction and label-text assignment rather than only list-row helpers.",
+    "The public 0x0C58xxxx entries are runtime veneers: sub_C588BF8 jumps to 0x1C06F15D, sub_C588F30 to 0x1C06E27D, sub_C589490 to 0x1C06F039, and sub_C589188 to 0x1C02A501. The retained BusFault PC in the device log is likewise in the 0x1Cxxxxxx runtime region, consistent with a bad LVGL veneer invocation."
+  ],
+  "ownership_analysis": "All four functions borrow live LVGL objects and must run on the UI owner thread. Label creation returns a child owned by the LVGL object tree; label text is borrowed according to the stock LVGL text-setter contract used by the Manager's persistent snapshot arena.",
+  "unsafe_assumptions": [
+    "The exact callsites prove the public veneer identities, argument registers, and call order statically; device execution of the regenerated Supervisor remains unprobed.",
+    "The runtime implementations behind the veneers are not materialized in this static firmware IDB, so the retained 0x1C05E738 fault PC cannot be instruction-level symbolized here and is corroborating rather than dispositive evidence.",
+    "Archived fw-match rows are candidate evidence only. Their lvx_label_create, lvx_label_set_text, and lvx_object_align rows are superseded by these exact-target stock callsites."
+  ],
+  "recommended_probe": "Install the regenerated exact-043 Supervisor; open Modules with zero modules installed and confirm the empty label renders without reboot; then verify a non-empty module list, module detail, back navigation, Overview layout, and full bottom scroll extent.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-21T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4C3804",
+      "role": "label constructor, property setter, and text setter separation"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4C83A0",
+      "role": "packed color/property call disproving sub_C588A70 as text setter"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4C27A0",
+      "role": "two-argument removal-path call disproving sub_C588960 as align"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C56D5B0",
+      "role": "stock content size, alignment, bottom-padding, and label sequence"
+    },
+    {
+      "uri": "file:///Users/searchstars/Library/Logs/moe.astralsight.astrobox/device/data/offlinelog/tmp.log",
+      "role": "exact-device BusFault report after routing to Modules"
+    },
+    {
+      "uri": "../../../watchfaces/canopus-installer/build/xiaomi-band-10-pro-3.101.043/canopus_supervisor.elf",
+      "sha256": "46764ffa7f50c9740faeedcae8d682520a638838d4358645791723e45963e1c1",
+      "role": "regenerated Supervisor whose target_ui_apply machine code was checked for corrected callable addresses and call order"
+    }
+  ]
+}
