@@ -136,6 +136,12 @@ fn additional_target_artifacts_regenerate_identically() {
             committed_config, config,
             "generated target config header is stale for {target}"
         );
+        if target == "xiaomi-band-9-3.1.32" {
+            assert!(
+                config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 0"),
+                "Band 9 must remain fail-closed until its Supervisor ABI is complete"
+            );
+        }
 
         if target == "xiaomi-band-10-pro-3.101.036" {
             assert!(

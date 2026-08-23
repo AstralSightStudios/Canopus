@@ -1,8 +1,8 @@
 {
-  "schema": 1,
+  "schema": 2,
   "target_id": "xiaomi-band-10-pro-3.101.043",
   "source_target_id": "xiaomi-band-10-pro-3.101.036",
-  "purpose": "Independent manual/static oracle for the first BinDiff-inspired 036-to-043 ensemble experiment",
+  "purpose": "Independent manual/static function and global oracle for the 036-to-043 ensemble matcher",
   "entries": [
     {
       "name": "lv_event_get_code",
@@ -39,6 +39,20 @@
       "target_entry_address": "0x0c5893c0",
       "evidence_id": "EVID-UI-WIDGET-001",
       "basis": "Exact stock page constructor establishes the three-argument bottom-padding call"
+    },
+    {
+      "kind": "global",
+      "name": "style_misans_regular_24",
+      "target_entry_address": "0x2010ce44",
+      "evidence_id": "EVID-UI-1043-FONT-001",
+      "basis": "Exact 043 stock theme initializer and consumers identify the Regular 24 style object"
+    },
+    {
+      "kind": "global",
+      "name": "style_misans_demibold_32",
+      "target_entry_address": "0x2010d054",
+      "evidence_id": "EVID-UI-1043-FONT-001",
+      "basis": "Exact 043 stock theme initializer and consumers identify the Demibold 32 style object"
     }
   ]
 }

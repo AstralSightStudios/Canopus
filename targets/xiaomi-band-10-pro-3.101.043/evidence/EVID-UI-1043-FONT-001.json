@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-1043-FONT-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 firmware globals provide MiSans Regular 24 and MiSans Demibold 32 style objects?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.style_misans_regular_24",
+    "xiaomi-band-10-pro-3.101.043.probe.style_misans_demibold_32"
+  ],
+  "callsite_evidence": [
+    "The device-probed 3.101.036 MiSans-Demibold 32 style global is 0x2010A02C.",
+    "The statically recovered 3.101.036 MiSans-Regular 24 style global is 0x20109E1C.",
+    "In 3.101.036, sub_C49F944 is the stock lvx_theme_default_init state machine. It references the unique MiSans font resource strings and constructs every family/size style object into a 12-byte-stride writable table.",
+    "Within the Regular-family case, 0x20109E1C is initialized by the exact (family=2, size=24, flags=0) constructor sequence.",
+    "Within the Demibold-family case, 0x2010A02C occupies the same exact constructor position used by the already device-probed 32px style."
+  ],
+  "control_flow_evidence": [
+    "The unique /resource/font/MiSans-Regular.ttf and /resource/font/MiSans-Demibold.ttf strings identify exact 3.101.043 sub_C4C065C as lvx_theme_default_init.",
+    "sub_C4C065C and 3.101.036 sub_C49F944 are both exactly 0xFC4 bytes and retain the same switch cases, constructor order, family selectors, size selectors, and 12-byte style-object stride.",
+    "At the instruction position corresponding to 3.101.036 0x20109E1C, sub_C4C065C initializes 0x2010CE44 with family selector 2 and size 0x18, proving MiSans-Regular 24.",
+    "At the instruction position corresponding to device-probed 3.101.036 0x2010A02C, sub_C4C065C initializes 0x2010D054, proving MiSans-Demibold 32.",
+    "0x2010CE44 has 41 exact-target data xrefs and 0x2010D054 has 86 exact-target data xrefs, including their initializer and stock UI consumers; both addresses are writable firmware-owned style objects rather than copied neighboring-firmware addresses."
+  ],
+  "ownership_analysis": "Both addresses are exact 3.101.043 firmware-owned writable style objects initialized by lvx_theme_default_init and subsequently borrowed read-only by UI code. LyraPlayer passes their addresses to the stock lvx_style_apply helper and does not mutate their storage.",
+  "unsafe_assumptions": [
+    "Static recovery proves exact family/size identity and stock use but does not replace an exact 3.101.043 device-rendering gate.",
+    "The UI call remains restricted to the firmware UI owner thread."
+  ],
+  "recommended_probe": "Build LyraPlayer for exact 3.101.043, open each native page, compare page-title, primary-label, and author typography against the known-working 3.101.036 UI, and retain the exact artifact hash and crash log if rendering diverges.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-23T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://3.101.036/vela_ap.bin.i64 sub_C49F944,unk_20109E1C,unk_2010A02C",
+      "role": "trusted reference theme initializer and style globals"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C4C065C,unk_2010CE44,unk_2010D054",
+      "role": "exact 3.101.043 theme initializer and recovered style globals"
+    },
+    {
+      "uri": "repo://Canopus/docs/firmware-symbol-porting-plan.md",
+      "role": "global data-flow and promotion policy"
+    }
+  ]
+}

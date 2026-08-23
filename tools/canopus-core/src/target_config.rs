@@ -504,12 +504,43 @@ impl<'a> TargetConfigGen<'a> {
     fn custom_loader(&self) -> bool {
         self.pack.loader != "nuttx-modlib-elf32-rel"
     }
+    fn veneer_callable_available(&self, name: &str) -> bool {
+        self.symbol(name).is_some_and(|symbol| {
+            symbol.callable_address.is_some()
+                && symbol.policy != "restricted"
+                && symbol.policy != "forbidden"
+                && symbol.approved_for_codegen()
+        })
+    }
+    fn platform_complete(&self, custom: bool) -> bool {
+        let firmware = if custom { FW_9 } else { FW_10 };
+        let supervisor = if custom { SUP_9 } else { SUP_10 };
+        let mapped = firmware
+            .iter()
+            .chain(supervisor.iter())
+            .all(|mapping| self.address(*mapping).is_some());
+        let mut veneer = vec!["register_driver", "unregister_driver"];
+        if custom {
+            veneer.extend([
+                "mm_memalign_default",
+                "mm_free_default",
+                "mpu_region_allocate",
+                "mpu_region_configure",
+                "mpu_region_release",
+            ]);
+        }
+        mapped
+            && veneer
+                .into_iter()
+                .all(|name| self.veneer_callable_available(name))
+    }
 
     pub fn generate(&self) -> String {
         let custom = self.custom_loader();
+        let complete = self.platform_complete(custom);
         let mut out = String::new();
         out.push_str("#ifndef CANOPUS_TARGET_CONFIG_H\n#define CANOPUS_TARGET_CONFIG_H\n\n#include <stdint.h>\n\n");
-        out.push_str(&format!("#define CANOPUS_TARGET_ID \"{}\"\n#define CANOPUS_TARGET_FIRMWARE_VERSION \"{}\"\n#define CANOPUS_TARGET_FIRMWARE_BUILD \\\n    \"{}\"\n#define CANOPUS_SUP_PLATFORM_COMPLETE 1\n", self.pack.target_id, self.pack.firmware_version, self.pack.firmware_build));
+        out.push_str(&format!("#define CANOPUS_TARGET_ID \"{}\"\n#define CANOPUS_TARGET_FIRMWARE_VERSION \"{}\"\n#define CANOPUS_TARGET_FIRMWARE_BUILD \\\n    \"{}\"\n#define CANOPUS_SUP_PLATFORM_COMPLETE {}\n", self.pack.target_id, self.pack.firmware_version, self.pack.firmware_build, u8::from(complete)));
         if custom {
             out.push_str("#define CANOPUS_SUP_CUSTOM_LOADER 1\n");
         }

@@ -508,6 +508,7 @@ mod tests {
             strings: vec![],
             constants: vec![],
             entry: entry.into(),
+            data_refs: vec![],
         }
     }
 
@@ -517,6 +518,7 @@ mod tests {
             target_id: id.into(),
             image_base: "0x0".into(),
             functions: funcs,
+            globals: vec![],
         }
     }
 

@@ -1,30 +1,28 @@
 {
   "schema": 1,
-  "symbol_id": "xiaomi-band-10-pro-3.101.043.probe.style_misans_demibold_32",
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.style_misans_regular_24",
   "target_id": "xiaomi-band-10-pro-3.101.043",
-  "name": "style_misans_demibold_32",
+  "name": "style_misans_regular_24",
   "kind": "global",
   "instruction_set": "n/a",
+  "entry_address": "0x2010CE44",
   "prototype": "void *",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-ID-1043-001",
       "EVID-UI-1043-FONT-001"
     ]
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-ID-1043-001",
       "EVID-UI-1043-FONT-001"
     ],
-    "source": "Exact 3.101.043 lvx_theme_default_init data-flow recovery: sub_C4C065C initializes 0x2010D054 at the same family/size constructor position as device-probed 3.101.036 0x2010A02C. The earlier cross-version candidate was withdrawn because it lacked independent exact-target global recovery; EVID-UI-1043-FONT-001 supplies the missing initializer and stock-consumer data-flow proof."
+    "source": "Exact 3.101.043 lvx_theme_default_init data-flow recovery: sub_C4C065C initializes 0x2010CE44 with family selector 2 and size 24 at the position corresponding to 3.101.036 0x20109E1C."
   },
-  "entry_address": "0x2010D054",
   "approval_state": "APPROVED",
   "promotion": {
     "reviewer": "canopus-maintainer",
@@ -35,5 +33,5 @@
     "thread": "UI owner thread",
     "device_probe": "pending exact 3.101.043 LyraPlayer typography comparison"
   },
-  "notes": "Exact 3.101.043 MiSans-Demibold 32px style object. The previous withdrawal remains recorded in provenance; this promotion is based on new exact-target initializer data flow, not address transfer."
+  "notes": "Exact 3.101.043 MiSans-Regular 24px style object."
 }

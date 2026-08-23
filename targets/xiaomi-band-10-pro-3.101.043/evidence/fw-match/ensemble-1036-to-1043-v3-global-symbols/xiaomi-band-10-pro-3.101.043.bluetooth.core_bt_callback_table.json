@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.bluetooth.core_bt_callback_table",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "core_bt_callback_table",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "const uint32_t[16]",
+  "proof": {
+    "static": "candidate",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-xiaomi-band-10-pro-3-101-036-xiaomi-band-10-pro-3-101-043"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-xiaomi-band-10-pro-3-101-036-xiaomi-band-10-pro-3-101-043"
+    ],
+    "source": "bindiff-inspired-ensemble-v3-global-dataflow source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-10-pro-3.101.043/evidence/fw-match/ensemble-1036-to-1043-v3-global-dataflow.json"
+  },
+  "entry_address": "0x2cd4a744",
+  "approval_state": "PENDING",
+  "notes": "Generated global candidate only; requires exact-target initializer/consumer data-flow, ownership/pointer-depth review, and reviewer promotion. state=REVIEW_REQUIRED score=10.3144 margin=4.7565"
+}

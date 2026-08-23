@@ -1,12 +1,14 @@
 # 固件符号适配 2.0：BinDiff 风格多算法证据融合方案
 
-> 状态：043 BluetoothAudio 的三次 Bond 失败均已进入 failure-feedback；`-1113` 的 registration-node 修复和 `Bond 3/2 0F -1105` 的通用 mHDT/CID 调度修复均已完成 host gate，device retest pending。036/043 支持矩阵、BinDiff-inspired ensemble matcher、failure-feedback hard-negative、043 正式 symbol pack、以及 9/9 Pro/11 三个新 IDB 的 static candidate pack 已落地；设备 gates、三新 target 的 exact ABI/codegen gate 仍保持 pending。
+> 状态：043 BluetoothAudio 的三次 Bond 失败均已进入 failure-feedback；`-1113` 的 registration-node 修复和 `Bond 3/2 0F -1105` 的通用 mHDT/CID 调度修复均已完成 host gate，device retest pending。036/043 支持矩阵、BinDiff-inspired ensemble matcher、failure-feedback hard-negative、043 正式 symbol pack、以及 9/9 Pro/11 三个新 IDB 的 static candidate pack 已落地；`fw-match` 已开始落地 bounded Corpus v2（函数 data refs + 独立 DataObjectRecord）和 global candidate-only 数据流检索，但真实 036/043 corpus 回归及独立 oracle 晋级仍 pending；设备 gates、三新 target 的 exact ABI/codegen gate 仍保持 pending。
 >
 > 当前实验结论：043 的 `Bond 1/0 00 -1107` 和 `-1113` 都不是 `bt_create_bond` 固件返回值，而是在调用它之前由 pair-request filter fail closed。第一轮正确撤销了 036 的 16-word/global ABI，并恢复 `core_bt_adapter_instance=0x20126738`、`core_bt_registration_handle=0x20126734` 与 17-word descriptor `0x2CD4A744`，但把 adapter+120 的对象误读成带 +72 descriptor 字段的 client。第二轮 exact IDB 证明该对象是仅 `0x24` 字节的 `callbacks_list` manager；registration handle 才是 `sub_C3A96EC` 返回的 8-byte `{cookie, descriptor}` node。代码现通过固件 register/unregister API 替换节点，不再越界访问 manager+72，并将后续失败细分为 `-1114..-1117`；该修复仍无真机通过结论。
 >
 > `Bond 3/2 0F -1105` 已证明 Classic 配对完成，但当次运行没有记录 mHDT rewrite。静态地址和 compare/write 成功不能证明 callback data path 的调度顺序：wire Connection Response 与 Configuration Request 可以早于 firmware connection-confirm callback。现由 portable core 从成功的 Connection Response 预取 local CID 并处理 exact `7F 01 01`，所有 runtime-capable targets 均要求 raw-H4 hook；target-private 仅保留 exact writable seam 与 stock dispatcher。新诊断以 `0x80` 区分 hook installed、以 `0x40` 区分 rewrite hit，仍待 exact 043 真机复测。
 >
 > 036→043 caller-neighborhood graph matcher 将 5/5 可比较人工 UI oracle 找回，`lvx_content_pad_bottom` 正确标记为 source-missing；043 production records 保留 forbidden/withdrawn policy，未把 static 命中声明为 device-proven。新 9-Pro、11、9-3.1.32 corpus 分别重新提取 28065、34775、26325 个函数，ensemble 各产生 123/126 个 static candidates。
+>
+> 036→043 的 bounded v2 实测 corpus 分别包含 41,763/42,251 个函数和 19,533/19,875 个 referenced data objects。global pass 对 10 个 source globals 完整报告：7 个产生 candidate、3 个因 source/data-flow 不足 `BLOCKED`；新增独立 global oracle 中 `style_misans_regular_24 → 0x2010CE44`、`style_misans_demibold_32 → 0x2010D054` 均命中，连同 5 个 function oracle 为 7/7。输出仍只有 `CANDIDATE/PENDING`，不生成 callable address，不覆盖已晋级、`WITHDRAWN` 或 `FORBIDDEN` production record。
 >
 > 目标：把“把一个固件 target 的地址迁移到另一个固件”从人工修地址，升级为可审计、可拒绝错误结果、可由一条命令驱动的自动化适配流水线。
 >
@@ -184,23 +186,25 @@ exact firmware 仍必须单独恢复 raw-H4 writable callback seam、pointer cha
 
 ### 3.1 Corpus 特征过于短和扁平
 
-`tools/fw-match/extract_corpus.py` 当前主要提取：
+`tools/fw-match/extract_corpus.py` 现已把原有函数摘要扩展为 bounded Corpus v2：
 
-- 函数入口前最多 32 bytes：`extract_corpus.py:35-40、177-196`；
-- block 数量、block 相对偏移和大小：`extract_corpus.py:52-73`；
-- 最多 64 个 callees/callers：`extract_corpus.py:75-128`；
-- 最多 32 个 C string 和 128 个小常量：`extract_corpus.py:132-175`；
-- 原始 IDB 地址：`extract_corpus.py:183-196`。
+- 函数入口前最多 32 bytes；
+- block 数量、block 相对偏移、大小和 successor edges；
+- 最多 64 个 callees/callers；
+- 最多 32 个 C string 和 128 个小常量；
+- 每函数最多 128 个非代码 data refs（函数内 offset、目标地址、read/write/offset）；
+- 顶层独立 `DataObjectRecord`（segment class、writable、size、alignment、bounded bytes、readers/writers/xrefs）；
+- 原始 IDB 地址。
 
-这些信息能做粗筛，但不足以支持高风险 ABI 迁移：
+v1 corpus 仍可由 Rust/Python matcher 读取，缺失的 `globals`/`data_refs` 默认为空。v2 当前实现足以进行 candidate-only global 检索，但仍不足以支持高风险 ABI 自动晋级：
 
 1. 入口 32 bytes 对 tiny veneer、wrapper、通用 prologue 极易产生碰撞；
 2. string 只有内容，没有引用位置、访问方式、字符串长度/编码类别和调用上下文；
 3. 常量只有数值集合，没有区分协议值、枚举、位掩码、地址片段、数组长度和编译器生成常量；
 4. caller/callee 被 64 个上限截断，公共函数的 degree 会饱和；
-5. 没有栈帧、寄存器读写、返回值使用、全局访问和 callback 保存信息；
+5. 已有 bounded global access offset/direction，但还没有栈帧、寄存器读写、返回值使用、pointer depth 和 callback 保存/生命周期信息；
 6. 没有描述一个函数在模块 ABI 中属于 allocator、dispatcher、constructor、callback、UI factory 还是数据 accessor；
-7. corpus schema 只有 `schema=1`，无法表达证据来源、分析器版本、别名归一化和候选状态。
+7. bounded `schema=2` 还没有表达完整证据来源、分析器版本、alias 归一化、normalized instructions 和 ABI hypotheses。
 
 ### 3.2 CFG 提取了拓扑，但评分没有真正使用拓扑
 
@@ -438,7 +442,7 @@ BLOCKED
 
 ## 6. Corpus v2：从函数摘要升级为可验证对象
 
-当前 `schema=1` corpus 不删除，新增 `schema=2`。
+当前 `schema=1` corpus 不删除，新增 `schema=2`。bounded v1/v2 wire format 由 `schemas/fw-corpus.schema.json` 约束；036/043 两份真实 v2 corpus 已通过该 schema 验证。
 
 ### 6.1 函数特征
 

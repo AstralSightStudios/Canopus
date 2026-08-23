@@ -55,12 +55,7 @@ python3 "$ROOT/scripts/generate_band9_loader_config.py" \
 "$CANOPUS" verify "$SUPERVISOR" \
     --target "$TARGET_ID" --targets-dir "$ROOT/targets"
 
-if [ "$MODE" = stage ]; then
-    mkdir -p "$TARGET_STAGE"
-    PROFILE_LUA="$TARGET_STAGE/canopus_loader_profile.lua"
-else
-    PROFILE_LUA="$OUT/canopus_loader_profile.lua"
-fi
+PROFILE_LUA="$OUT/canopus_loader_profile.lua"
 python3 "$ROOT/scripts/generate_band9_loader_config.py" \
     --profile "$PROFILE" --target-toml "$TARGET_TOML" \
     --lua "$PROFILE_LUA"
@@ -113,10 +108,17 @@ $CC $FLAGS $COMMON -DCANOPUS_BAND9_CAVE_RESULT="$CAVE_RESULT" \
 
 if [ "$MODE" = stage ]; then
     python3 "$ROOT/tools/band9-stage1-lua.py" "$OUT/stage1.bin" \
-        "$TARGET_STAGE/canopus_stage1.lua"
-    cp "$OUT/stage2.bin" "$TARGET_STAGE/canopus_stage2.bin"
-    cp "$SUPERVISOR" "$TARGET_STAGE/canopus_supervisor.bin"
-    echo "[4/4] staged target-local bootstrap"
+        "$OUT/canopus_stage1.lua"
+    TARGET_STAGE_TMP="$TARGET_STAGE.tmp.$$"
+    rm -rf "$TARGET_STAGE_TMP"
+    mkdir -p "$TARGET_STAGE_TMP"
+    cp "$PROFILE_LUA" "$TARGET_STAGE_TMP/canopus_loader_profile.lua"
+    cp "$OUT/canopus_stage1.lua" "$TARGET_STAGE_TMP/canopus_stage1.lua"
+    cp "$OUT/stage2.bin" "$TARGET_STAGE_TMP/canopus_stage2.bin"
+    cp "$SUPERVISOR" "$TARGET_STAGE_TMP/canopus_supervisor.bin"
+    rm -rf "$TARGET_STAGE"
+    mv "$TARGET_STAGE_TMP" "$TARGET_STAGE"
+    echo "[4/4] staged complete target-local bootstrap"
 else
     python3 "$ROOT/tools/band9-stage1-lua.py" "$OUT/stage1.bin" \
         "$OUT/canopus_stage1.lua"

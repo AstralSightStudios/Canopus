@@ -16,6 +16,10 @@ pub struct Corpus {
     #[serde(default)]
     pub image_base: String,
     pub functions: Vec<FunctionRecord>,
+    /// Referenced non-code data objects. Corpus v1 files deserialize with an
+    /// empty list so function-only reports remain reproducible.
+    #[serde(default)]
+    pub globals: Vec<DataObjectRecord>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,6 +55,61 @@ pub struct FunctionRecord {
     /// Raw entry bytes, hex.
     #[serde(default)]
     pub entry: String,
+    /// Non-code references made by instructions in this function.
+    #[serde(default)]
+    pub data_refs: Vec<DataReference>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DataReference {
+    /// Instruction offset from the containing function start.
+    pub off: u64,
+    /// Absolute data-object address.
+    pub addr: String,
+    /// `read`, `write`, `offset`, or `unknown`.
+    #[serde(default)]
+    pub access: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DataObjectRecord {
+    /// Absolute address in the IDB data mapping.
+    pub addr: String,
+    #[serde(default)]
+    pub name: String,
+    /// Canonical segment class (`ram`, `xip-ro`, or a normalized segment name).
+    #[serde(default)]
+    pub segment: String,
+    #[serde(default)]
+    pub writable: bool,
+    #[serde(default)]
+    pub size: u64,
+    #[serde(default)]
+    pub alignment: u64,
+    /// At most the first 64 bytes. Pointer-bearing objects must not be matched
+    /// from these bytes alone.
+    #[serde(default)]
+    pub bytes: String,
+    #[serde(default)]
+    pub readers: Vec<String>,
+    #[serde(default)]
+    pub writers: Vec<String>,
+    #[serde(default)]
+    pub xrefs: Vec<DataObjectXref>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DataObjectXref {
+    pub function: String,
+    pub off: u64,
+    #[serde(default)]
+    pub access: String,
+}
+
+impl DataObjectRecord {
+    pub fn addr_u64(&self) -> u64 {
+        u64::from_str_radix(self.addr.trim_start_matches("0x"), 16).unwrap_or(0)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -96,6 +155,10 @@ impl Corpus {
     pub fn function_by_addr_str(&self, addr: &str) -> Option<&FunctionRecord> {
         self.functions.iter().find(|f| f.addr == addr)
     }
+
+    pub fn global_at(&self, addr: u64) -> Option<&DataObjectRecord> {
+        self.globals.iter().find(|g| g.addr_u64() == addr)
+    }
 }
 
 /// Load a corpus from a JSON file.
@@ -127,6 +190,7 @@ mod tests {
             strings: vec!["hello".into()],
             constants: vec![5, 0x100],
             entry: "00be".into(),
+            data_refs: vec![],
         }
     }
 
@@ -149,12 +213,25 @@ mod tests {
     }
 
     #[test]
+    fn corpus_v1_defaults_data_flow_fields() {
+        let text = r#"{
+            "schema": 1,
+            "target_id": "legacy",
+            "functions": [{"addr": "0x1234"}]
+        }"#;
+        let corpus: Corpus = serde_json::from_str(text).unwrap();
+        assert!(corpus.globals.is_empty());
+        assert!(corpus.functions[0].data_refs.is_empty());
+    }
+
+    #[test]
     fn corpus_json_roundtrip() {
         let c = Corpus {
             schema: 1,
             target_id: "t".into(),
             image_base: "0x0".into(),
             functions: vec![sample()],
+            globals: vec![],
         };
         let s = serde_json::to_string(&c).unwrap();
         let back: Corpus = serde_json::from_str(&s).unwrap();

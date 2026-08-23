@@ -15,5 +15,6 @@
 pub mod corpus;
 pub mod engine;
 pub mod ga;
+pub mod globals;
 pub mod score;
 pub mod thumb;

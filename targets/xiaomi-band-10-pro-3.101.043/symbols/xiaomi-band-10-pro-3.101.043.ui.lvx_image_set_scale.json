@@ -20,7 +20,8 @@
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043",
+      "EVID-UI-1043-CONTROL-001"
     ]
   },
   "policy": "restricted",
@@ -28,10 +29,20 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043",
+      "EVID-UI-1043-CONTROL-001"
     ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-10-pro-3.101.043/evidence/fw-match/ensemble-1036-to-1043-v2.json"
+    "source": "Exact 3.101.043 IDB confirmation: sub_C179DB0 is a 0x14C-byte, seven-block structural match for working 3.101.036 sub_C179A8C and stores AAPCS arguments 1/2 at image-object offsets +0x50/+0x54; candidate retrieval originated in ensemble v2."
   },
-  "approval_state": "PENDING",
-  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record."
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-23",
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "prototype": "void(void *, int32_t, int32_t)",
+    "ownership": "borrowed live LVX image object",
+    "thread": "UI owner thread",
+    "device_probe": "pending exact 3.101.043 LyraPlayer control animation comparison"
+  },
+  "notes": "Exact 3.101.043 LVX image-scale callable. Address retrieval came from fw-match; semantic ABI promotion is based on independent exact-target structural and object-field data-flow confirmation."
 }

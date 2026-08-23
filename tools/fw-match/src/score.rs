@@ -255,6 +255,7 @@ mod tests {
             strings: vec![],
             constants: vec![],
             entry: entry.into(),
+            data_refs: vec![],
         }
     }
 

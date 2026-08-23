@@ -665,11 +665,11 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
     TargetPrivateSymbolRecord {
         name: "gap_host_receive_slot",
         kind: "global",
-        entry: 0x2013bdb4usize,
-        callable: 0x2013bdb4usize,
+        entry: 0x2013c144usize,
+        callable: 0x2013c144usize,
         status: "STATIC_RECOVERED",
         policy: "restricted",
-        prototype: "void *",
+        prototype: "int (*)(void *state, uint8_t *packet, int packet_length)",
     },
     TargetPrivateSymbolRecord {
         name: "gap_host_stock_receive",
@@ -724,6 +724,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "const uint32_t[17]",
+    },
+    TargetPrivateSymbolRecord {
+        name: "style_misans_regular_24",
+        kind: "global",
+        entry: 0x2010ce44usize,
+        callable: 0x2010ce44usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *",
     },
     TargetPrivateSymbolRecord {
         name: "app_lookup",
@@ -814,6 +823,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "native-full-trust",
         prototype: "void(void *object, int32_t width, int32_t height)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "style_misans_demibold_32",
+        kind: "global",
+        entry: 0x2010d054usize,
+        callable: 0x2010d054usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "void *",
     },
     TargetPrivateSymbolRecord {
         name: "service_manager_get_profile",
@@ -1188,7 +1206,7 @@ pub const BT_TIMER_ADD_ENTRY: usize = 0xc7eb270usize;
 pub const BT_TIMER_ADD_CALLABLE: usize = 0xc7eb271usize;
 pub const BT_TIMER_CANCEL_ENTRY: usize = 0xc7eb33cusize;
 pub const BT_TIMER_CANCEL_CALLABLE: usize = 0xc7eb33dusize;
-pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x2013bdb4usize;
+pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x2013c144usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7ec47cusize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7ec47dusize;
 pub const SDP_BUILDER_CREATE_ENTRY: usize = 0xc80a684usize;
@@ -1200,6 +1218,7 @@ pub const SDP_SET_RAW_ATTRIBUTE_CALLABLE: usize = 0xc808245usize;
 pub const SDP_UNREGISTER_ENTRY: usize = 0xc80a734usize;
 pub const SDP_UNREGISTER_CALLABLE: usize = 0xc80a735usize;
 pub const STOCK_BT_CALLBACK_DESCRIPTOR_ENTRY: usize = 0x2cd4a744usize;
+pub const STYLE_MISANS_REGULAR_24_ENTRY: usize = 0x2010ce44usize;
 pub const APP_LOOKUP_ENTRY: usize = 0xca69934usize;
 pub const APP_LOOKUP_CALLABLE: usize = 0xca69935usize;
 pub const LVX_LABEL_CREATE_ENTRY: usize = 0xc588f30usize;
@@ -1220,6 +1239,7 @@ pub const LVX_OBJECT_DELETE_ENTRY: usize = 0xc588de8usize;
 pub const LVX_OBJECT_DELETE_CALLABLE: usize = 0xc588de9usize;
 pub const LVX_OBJECT_SET_SIZE_ENTRY: usize = 0xc588628usize;
 pub const LVX_OBJECT_SET_SIZE_CALLABLE: usize = 0xc588629usize;
+pub const STYLE_MISANS_DEMIBOLD_32_ENTRY: usize = 0x2010d054usize;
 pub const SERVICE_MANAGER_GET_PROFILE_ENTRY: usize = 0xc3bdd88usize;
 pub const SERVICE_MANAGER_GET_PROFILE_CALLABLE: usize = 0xc3bdd89usize;
 pub const SERVICE_MANAGER_REGISTER_ENTRY: usize = 0xc3bdbacusize;

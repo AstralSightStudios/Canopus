@@ -12,6 +12,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 TARGET_ID=${CANOPUS_TARGET:-xiaomi-band-10-pro-3.101.036}
 LOADER_SRCS=""
 LOADER_OBJECTS=""
+LOADER_PROFILE=""
 case "$TARGET_ID" in
     xiaomi-band-10-pro-3.101.036|xiaomi-band-10-pro-3.101.043)
         MANAGER_BACKEND="manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
@@ -21,6 +22,7 @@ case "$TARGET_ID" in
     xiaomi-band-9-3.1.32)
         MANAGER_BACKEND="manager/target/lvgl_v8/canopus_manager_target_lvgl_v8.c"
         LOADER_SRCS="runtime/loader/canopus_arm_reloc.c runtime/loader/canopus_elf32_loader.c"
+        LOADER_PROFILE="targets/$TARGET_ID/loader/bootstrap.toml"
         PROD_FAMILY=xiaomi-band-9
         MAX_SIZE=98304
         ;;
@@ -51,11 +53,20 @@ CC=${CC:-clang}
     exit 1
 }
 if ! grep -q '^#define CANOPUS_SUP_PLATFORM_COMPLETE 1$' "$TARGET_CONFIG"; then
-    echo "error: supervisor platform primitives are incomplete for $TARGET_ID" >&2
+    echo "error: supervisor platform ABI is not production-complete for $TARGET_ID" >&2
+    if [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
+        echo "       recover and approve the missing exact-target identity, LVGL v8," >&2
+        echo "       driver, allocator, and MPU veneers before staging prod resources" >&2
+    fi
     exit 2
 fi
 
 mkdir -p "$OUT"
+if [ -n "$LOADER_PROFILE" ]; then
+    python3 "$ROOT/scripts/generate_band9_loader_config.py" \
+        --profile "$ROOT/$LOADER_PROFILE" --target-toml "$PACK_DIR/target.toml" \
+        --header "$OUT/canopus_band9_loader_config.h"
+fi
 cd "$ROOT"
 
 echo "[1/3] compile supervisor (Cortex-M33 Thumb soft-float)"
@@ -66,7 +77,7 @@ TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
   -fno-stack-protector -fno-unwind-tables -fno-asynchronous-unwind-tables \
   -fdata-sections -fno-function-sections -Os -Wall -Wextra -Werror"
 
-INC="-I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
+INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \
   -I$ROOT/runtime/loader \
   -I$ROOT/manager/service -I$ROOT/manager/protocol -I$ROOT/manager/client \
@@ -151,6 +162,13 @@ echo "[3/3] Canopus ELF verifier"
 
 TARGET_STAGE="$ROOT/watchfaces/canopus-installer/canopus_supervisor-$TARGET_ID.bin"
 PROD_FAMILY_STAGE="$ROOT/watchfaces/canopus-installer-prod/$PROD_FAMILY"
+MANAGER_ICON_SOURCE="$ROOT/watchfaces/canopus-installer/manager_icon.bin"
+[ -f "$MANAGER_ICON_SOURCE" ] || {
+    echo "error: missing production Manager icon: $MANAGER_ICON_SOURCE" >&2
+    exit 1
+}
+mkdir -p "$PROD_FAMILY_STAGE"
+cp "$MANAGER_ICON_SOURCE" "$PROD_FAMILY_STAGE/manager_icon.bin"
 cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
 if [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
     CANOPUS_INSTALLER_STAGE_ROOT="$ROOT/watchfaces/canopus-installer" \

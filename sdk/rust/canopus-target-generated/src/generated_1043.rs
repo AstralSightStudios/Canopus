@@ -3,8 +3,8 @@
 // target_id: xiaomi-band-10-pro-3.101.043
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
-// revision : 3
-// input_digest: 024e69b5db07475a
+// revision : 4
+// input_digest: 2457d6a784840c39
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -575,6 +575,9 @@ pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(
 /// Recovered `bt_alloc` at 0xc840c54. Thumb callable address 0xc840c55.
 pub const CANOPUS_FW_BT_ALLOC_CALLABLE: usize = canopus_thumb_callable(0xc840c55usize);
 
+/// Recovered global `style_misans_regular_24` at 0x2010CE44.
+pub const canopus_fw_style_misans_regular_24: usize = 0x2010CE44usize;
+
 /// Recovered `modhandle` at 0xc203a68. Thumb callable address 0xc203a69.
 pub const CANOPUS_FW_MODHANDLE_CALLABLE: usize = canopus_thumb_callable(0xc203a69usize);
 
@@ -772,6 +775,9 @@ pub const CANOPUS_FW_BT_DISCOVERY_START_CALLABLE: usize = canopus_thumb_callable
 
 /// Recovered `sdp_unregister` at 0xc80a734. Thumb callable address 0xc80a735.
 pub const CANOPUS_FW_SDP_UNREGISTER_CALLABLE: usize = canopus_thumb_callable(0xc80a735usize);
+
+/// Recovered global `style_misans_demibold_32` at 0x2010D054.
+pub const canopus_fw_style_misans_demibold_32: usize = 0x2010D054usize;
 
 /// Recovered `service_manager_get_profile` at 0xc3bdd88. Thumb callable address 0xc3bdd89.
 pub const CANOPUS_FW_SERVICE_MANAGER_GET_PROFILE_CALLABLE: usize = canopus_thumb_callable(0xc3bdd89usize);

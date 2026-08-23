@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-1043-CONTROL-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 callable preserves the 3.101.036 LVX image scale behavior used by LyraPlayer controls?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.ui.lvx_image_set_scale"
+  ],
+  "callsite_evidence": [
+    "The working 3.101.036 callable is sub_C179A8C at 0x0C179A8C with prototype void(void *, int32_t, int32_t).",
+    "The 3.101.036 function is 0x14C bytes, stores the second and third AAPCS arguments together at image-object offsets +0x50/+0x54, and invalidates the old and new transformed bounds around the write.",
+    "LyraPlayer's working 3.101.036 control path passes equal x/y scale values in 1/256 units to this callable."
+  ],
+  "control_flow_evidence": [
+    "Exact 3.101.043 sub_C179DB0 at 0x0C179DB0 is also 0x14C bytes and has the same seven-block control-flow graph as 3.101.036 sub_C179A8C.",
+    "The two functions preserve the same instruction sequence, object offsets, constants, argument registers, branch structure, and seven stock callsites; only relocated callee addresses differ.",
+    "At 0x0C179E3E the exact 3.101.043 function executes STRD R1, R2, [R4,#0x50], proving the same three-argument image-pointer/x-scale/y-scale ABI.",
+    "The generated exact-target callable is 0x0C179DB1 and remains restricted to the UI owner thread."
+  ],
+  "ownership_analysis": "The first argument is a borrowed firmware LVX image object. The callable mutates only the object's transform fields and firmware-managed invalidation state; LyraPlayer retains no firmware-owned pointer beyond the page lifecycle.",
+  "unsafe_assumptions": [
+    "Static equivalence does not replace an exact 3.101.043 touch-and-animation device gate.",
+    "Scale calls must remain on the firmware UI owner thread and receive a live LVX image object."
+  ],
+  "recommended_probe": "Open LyraPlayer on exact 3.101.043, press previous/play/next repeatedly, and compare normal (192/256) and pressed (100/256) control rendering and touch dispatch with the known-working 3.101.036 build.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-23T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://3.101.036/vela_ap.bin.i64 sub_C179A8C",
+      "role": "trusted working image-scale reference"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C179DB0",
+      "role": "exact 3.101.043 structurally equivalent image-scale callable"
+    },
+    {
+      "uri": "repo://Canopus/docs/firmware-symbol-porting-plan.md",
+      "role": "independent confirmation and promotion policy"
+    }
+  ]
+}

@@ -945,10 +945,14 @@ pub unsafe fn lvx_image_set_src(image: *mut core::ffi::c_void, source: *const co
 }
 
 /// Sets the LVGL image transform scale in 1/256th units on both axes.
-/// The recovered firmware entry is the image-widget setter used by stock
-/// `img_zoom` handling; 256 means 100 percent.
-pub unsafe fn lvx_image_set_scale(_image: *mut core::ffi::c_void, _scale_x: i32, _scale_y: i32) {
-    // 043 has no exact-target recovered image-scale callable.
+/// The exact 043 entry is instruction-for-instruction structurally equivalent
+/// to the recovered 036 image-widget setter; 256 means 100 percent.
+pub unsafe fn lvx_image_set_scale(image: *mut core::ffi::c_void, scale_x: i32, scale_y: i32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, i32, i32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE)
+    };
+    f(image, scale_x, scale_y);
 }
 
 pub unsafe fn lvx_bar_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
@@ -1110,10 +1114,13 @@ pub unsafe fn lvx_page_title_create(
     f(parent, title, mode, back_callback, back_context)
 }
 
-pub const STYLE_MISANS_REGULAR_24: usize = 0;
+/// MiSans-Regular at 24 px (exact 043 stock theme object address).
+pub const STYLE_MISANS_REGULAR_24: usize =
+    canopus_target_generated::canopus_fw_style_misans_regular_24;
 
-/// 043 has no exact-target recovered MiSans-Demibold style global.
-pub const STYLE_MISANS_DEMIBOLD_32: usize = 0;
+/// MiSans-Demibold at 32 px (exact 043 stock theme object address).
+pub const STYLE_MISANS_DEMIBOLD_32: usize =
+    canopus_target_generated::canopus_fw_style_misans_demibold_32;
 
 pub unsafe fn lvx_style_apply(
     object: *mut core::ffi::c_void,

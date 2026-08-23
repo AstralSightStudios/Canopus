@@ -7,7 +7,7 @@
 # active LVGL v9 ARGB8888 icon bin (not a firmware image).
 !watchfaces/canopus-installer/manager_loaded.bin
 !watchfaces/canopus-installer/manager_icon.bin
-!watchfaces/canopus-installer-prod/manager_icon.bin
+!watchfaces/canopus-installer-prod/*/manager_icon.bin
 *.img
 *.i64
 *.idb
@@ -85,3 +85,5 @@ probes/bin/
 
 # Derived firmware function corpora (regenerable from IDBs, large)
 targets/fw-corpus/
+
+fwbins/

@@ -275,6 +275,7 @@ mod tests {
             strings: vec![],
             constants: vec![],
             entry: entry.into(),
+            data_refs: vec![],
         }
     }
 
@@ -324,6 +325,7 @@ mod tests {
             target_id: "s".into(),
             image_base: "0x0".into(),
             functions: vec![rec("0x1000", 64, 32, "00f0b500be00bd", "foo")],
+            globals: vec![],
         };
         let dst = Corpus {
             schema: 1,
@@ -334,6 +336,7 @@ mod tests {
                 rec("0xA000", 200, 90, "00e40000f0b5", "sub_A000"),
                 rec("0xB000", 16, 4, "f8bd7047", "sub_B000"), // tiny unrelated
             ],
+            globals: vec![],
         };
         let syms = vec![SourceSymbol {
             symbol_id: "s.ui.foo".into(),

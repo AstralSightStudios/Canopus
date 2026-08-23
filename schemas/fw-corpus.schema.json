@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canopus.local/schemas/fw-corpus.schema.json",
+  "title": "Canopus firmware matching corpus",
+  "type": "object",
+  "required": ["schema", "target_id", "functions"],
+  "properties": {
+    "schema": {
+      "type": "integer",
+      "enum": [1, 2]
+    },
+    "target_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "image_base": {
+      "$ref": "#/$defs/address"
+    },
+    "functions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/function"
+      }
+    },
+    "globals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dataObject"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema": {
+            "const": 2
+          }
+        },
+        "required": ["schema"]
+      },
+      "then": {
+        "required": ["globals"]
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "address": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]+$"
+    },
+    "block": {
+      "type": "object",
+      "required": ["off", "size"],
+      "properties": {
+        "off": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "edge": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "integer",
+          "minimum": 0
+        }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "dataReference": {
+      "type": "object",
+      "required": ["off", "addr", "access"],
+      "properties": {
+        "off": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "addr": {
+          "$ref": "#/$defs/address"
+        },
+        "access": {
+          "type": "string",
+          "enum": ["read", "write", "offset", "unknown"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "function": {
+      "type": "object",
+      "required": ["addr"],
+      "properties": {
+        "addr": {
+          "$ref": "#/$defs/address"
+        },
+        "name": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "insn": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "block_offs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/block"
+          }
+        },
+        "succ": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/edge"
+          }
+        },
+        "callees": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/address"
+          }
+        },
+        "callers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/address"
+          }
+        },
+        "strings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "constants": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "entry": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-fA-F]{2})*$"
+        },
+        "data_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dataReference"
+          }
+        },
+        "cyclic": {
+          "type": ["boolean", "null"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "dataObjectXref": {
+      "type": "object",
+      "required": ["function", "off", "access"],
+      "properties": {
+        "function": {
+          "$ref": "#/$defs/address"
+        },
+        "off": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "access": {
+          "type": "string",
+          "enum": ["read", "write", "offset", "unknown"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "dataObject": {
+      "type": "object",
+      "required": [
+        "addr",
+        "segment",
+        "writable",
+        "size",
+        "alignment",
+        "bytes",
+        "readers",
+        "writers",
+        "xrefs"
+      ],
+      "properties": {
+        "addr": {
+          "$ref": "#/$defs/address"
+        },
+        "name": {
+          "type": "string"
+        },
+        "segment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "writable": {
+          "type": "boolean"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "alignment": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "bytes": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-fA-F]{2})*$",
+          "maxLength": 128
+        },
+        "readers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/address"
+          }
+        },
+        "writers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/address"
+          }
+        },
+        "xrefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dataObjectXref"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

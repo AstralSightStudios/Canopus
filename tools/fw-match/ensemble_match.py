@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""BinDiff-inspired multi-evidence matcher for firmware corpus v1.
+"""BinDiff-inspired multi-evidence matcher for firmware corpus v1/v2.
 
-This is deliberately a candidate generator, not a symbol promoter.  It uses
-several evidence families that are available in the current corpus format:
+This is deliberately a candidate generator, not a symbol promoter. It matches
+functions from either corpus version and, when corpus v2 data-flow records are
+available, separately retrieves global/data-object candidates through matched
+xref-owner functions. Function matching uses:
 
 * exact and Thumb relocation-masked entry bytes;
 * CFG shape and normalized edge topology;
@@ -14,9 +16,9 @@ The output keeps per-family evidence, margins, conflicts and states.  It can
 also emit candidate symbol records, but those records are written outside the
 production ``symbols/`` directory and are marked CANDIDATE/PENDING.
 
-The next corpus schema will add full normalized instructions, data-flow and
-ABI callsite records.  This tool intentionally reports those families as
-missing instead of pretending that corpus v1 proves them.
+Corpus v2 adds bounded data references and referenced data objects, but still
+lacks normalized instructions and ABI callsite records. Missing families are
+reported explicitly instead of being inferred from correlated evidence.
 """
 
 from __future__ import annotations
@@ -630,11 +632,11 @@ def assign_one_to_one(
     return assignments
 
 
-def load_source_symbols(symbol_dir: Path) -> list[dict[str, Any]]:
+def load_source_symbols(symbol_dir: Path, kind: str = "function") -> list[dict[str, Any]]:
     out = []
     for path in sorted(symbol_dir.glob("*.json")):
         value = read_json(path)
-        if value.get("kind") != "function" or not value.get("entry_address"):
+        if value.get("kind") != kind or not value.get("entry_address"):
             continue
         out.append(value)
     return out
@@ -689,6 +691,251 @@ def make_symbol_candidate(source: dict[str, Any], target_id: str, target: dict[s
     return record
 
 
+def make_global_candidate(
+    source: dict[str, Any],
+    target_id: str,
+    target_address: str,
+    result: dict[str, Any],
+    report_rel: str,
+) -> dict[str, Any]:
+    record = dict(source)
+    source_id = str(source.get("symbol_id", ""))
+    record["symbol_id"] = source_id.replace(str(source.get("target_id", "")), target_id, 1)
+    record["target_id"] = target_id
+    record["kind"] = "global"
+    record["entry_address"] = target_address
+    record.pop("callable_address", None)
+    record["status"] = "CANDIDATE"
+    record["approval_state"] = "PENDING"
+    record["policy"] = "restricted"
+    record.pop("promotion", None)
+    proof = dict(record.get("proof") or {})
+    proof["static"] = "candidate"
+    proof["device"] = "not_probed"
+    proof["evidence_ids"] = [result["evidence_id"]]
+    record["proof"] = proof
+    record["provenance"] = {
+        "firmware_sha256": result["target_firmware_sha256"],
+        "evidence_ids": [result["evidence_id"]],
+        "source": (
+            f"{result['matcher']} source={result['source_target_id']} "
+            f"report={report_rel}"
+        ),
+    }
+    record["notes"] = (
+        "Generated global candidate only; requires exact-target initializer/consumer "
+        "data-flow, ownership/pointer-depth review, and reviewer promotion. "
+        f"state={result['state']} score={result.get('score', 0.0):.4f} "
+        f"margin={result.get('margin', 0.0):.4f}"
+    )
+    return record
+
+
+def object_property_score(source: dict[str, Any], target: dict[str, Any]) -> float:
+    score = 0.0
+    if source.get("segment") == target.get("segment"):
+        score += 2.0
+    if bool(source.get("writable")) == bool(target.get("writable")):
+        score += 2.0
+    size_ratio = ratio(source.get("size", 0), target.get("size", 0))
+    if size_ratio >= 0.98:
+        score += 2.0
+    elif size_ratio >= 0.90:
+        score += 1.0
+    source_alignment = int(source.get("alignment", 0))
+    if source_alignment and source_alignment == int(target.get("alignment", 0)):
+        score += 0.5
+    return score
+
+
+def infer_data_owner(
+    source: dict[str, Any],
+    targets: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """Infer an unnamed data-xref owner under a strict structural gate."""
+    ranked = []
+    source_sizes = sorted(int(x.get("size", 0)) for x in source.get("block_offs") or [])
+    source_cfg = (source_sizes, len(source.get("succ") or []))
+    source_strings = set(source.get("strings") or [])
+    source_constants = {int(x) for x in source.get("constants") or []}
+    for target in targets:
+        if ratio(source.get("size", 0), target.get("size", 0)) < 0.90:
+            continue
+        if abs(len(source.get("block_offs") or []) - len(target.get("block_offs") or [])) > 1:
+            continue
+        target_sizes = sorted(int(x.get("size", 0)) for x in target.get("block_offs") or [])
+        target_cfg = (target_sizes, len(target.get("succ") or []))
+        strings = jaccard(source_strings, set(target.get("strings") or [])) or 0.0
+        constants = jaccard(
+            source_constants, {int(x) for x in target.get("constants") or []}
+        ) or 0.0
+        size_points = 2.0 if ratio(source.get("size", 0), target.get("size", 0)) >= 0.98 else 1.0
+        insn_ratio = ratio(source.get("insn", 0), target.get("insn", 0))
+        insn_points = 2.0 if insn_ratio >= 0.98 else (1.0 if insn_ratio >= 0.90 else 0.0)
+        score = size_points + insn_points
+        score += 5.0 if source_cfg == target_cfg else 0.0
+        score += strings * 10.0 + constants * 2.0
+        ranked.append((score, addr(target.get("addr")), target))
+    ranked.sort(key=lambda item: (item[0], item[1]), reverse=True)
+    if not ranked:
+        return None
+    best_score, _, best = ranked[0]
+    second_score = ranked[1][0] if len(ranked) > 1 else 0.0
+    return best if best_score >= 8.0 and best_score - second_score >= 1.5 else None
+
+
+def match_global_symbols(
+    symbols: list[dict[str, Any]],
+    source_functions: list[dict[str, Any]],
+    target_functions: list[dict[str, Any]],
+    source_globals: list[dict[str, Any]],
+    target_globals: list[dict[str, Any]],
+    function_results: dict[str, dict[str, Any]],
+    evidence_id: str,
+    source_target_id: str,
+    target_firmware_sha256: str,
+    target_corpus_sha256: str,
+) -> dict[str, dict[str, Any]]:
+    source_function_by_addr = {addr(item.get("addr")): item for item in source_functions}
+    target_function_by_addr = {addr(item.get("addr")): item for item in target_functions}
+    source_global_by_addr = {addr(item.get("addr")): item for item in source_globals}
+    target_global_by_addr = {addr(item.get("addr")): item for item in target_globals}
+
+    owner_map: dict[int, dict[str, Any]] = {}
+    for result in function_results.values():
+        if result.get("state") != "REVIEW_REQUIRED" or not result.get("predicted_address"):
+            continue
+        target_owner = target_function_by_addr.get(addr(result["predicted_address"]))
+        if target_owner is not None:
+            owner_map[addr(result.get("source_address"))] = target_owner
+    for source_owner in source_functions:
+        source_address = addr(source_owner.get("addr"))
+        if source_address in owner_map or not source_owner.get("data_refs"):
+            continue
+        inferred = infer_data_owner(source_owner, target_functions)
+        if inferred is not None:
+            owner_map[source_address] = inferred
+
+    results: dict[str, dict[str, Any]] = {}
+    for symbol in symbols:
+        name = str(symbol.get("name") or "")
+        source_object = source_global_by_addr.get(addr(symbol.get("entry_address")))
+        if source_object is None:
+            results[name] = {
+                "kind": "global",
+                "name": name,
+                "symbol_id": symbol.get("symbol_id", ""),
+                "source_target_id": source_target_id,
+                "matcher": "bindiff-inspired-ensemble-v3-global-dataflow",
+                "evidence_id": evidence_id,
+                "source_address": symbol.get("entry_address"),
+                "predicted_address": None,
+                "score": None,
+                "margin": 0.0,
+                "state": "BLOCKED",
+                "top_candidates": [],
+                "required_evidence_missing": [
+                    "source corpus data-object record",
+                    "exact-target initializer/consumer data flow",
+                    "object ownership and pointer depth",
+                    "reviewer promotion",
+                ],
+                "target_firmware_sha256": target_firmware_sha256,
+                "target_corpus_sha256": target_corpus_sha256,
+            }
+            continue
+        scores: dict[int, dict[str, Any]] = {}
+        for xref in source_object.get("xrefs") or []:
+            source_owner_address = addr(xref.get("function"))
+            source_owner = source_function_by_addr.get(source_owner_address)
+            target_owner = owner_map.get(source_owner_address)
+            if source_owner is None or target_owner is None:
+                continue
+            source_position = int(xref.get("off", 0)) / max(1, int(source_owner.get("size", 0)))
+            source_access = str(xref.get("access") or "unknown")
+            for target_ref in target_owner.get("data_refs") or []:
+                target_access = str(target_ref.get("access") or "unknown")
+                if (
+                    source_access != target_access
+                    and source_access != "unknown"
+                    and target_access != "unknown"
+                ):
+                    continue
+                target_position = int(target_ref.get("off", 0)) / max(
+                    1, int(target_owner.get("size", 0))
+                )
+                distance = abs(source_position - target_position)
+                if distance > 0.08 and abs(
+                    int(xref.get("off", 0)) - int(target_ref.get("off", 0))
+                ) > 24:
+                    continue
+                candidate_address = addr(target_ref.get("addr"))
+                target_object = target_global_by_addr.get(candidate_address)
+                if target_object is None:
+                    continue
+                item = scores.setdefault(
+                    candidate_address,
+                    {"score": 0.0, "supporting_functions": set(), "access_evidence": 0},
+                )
+                item["score"] += max(0.0, 1.0 - distance / 0.08) * 4.0 + 1.0
+                item["score"] += object_property_score(source_object, target_object)
+                item["supporting_functions"].add(f"0x{source_owner_address:x}")
+                item["access_evidence"] += 1
+        ranked = []
+        for candidate_address, item in scores.items():
+            ranked.append({
+                "address": f"0x{candidate_address:x}",
+                "score": item["score"],
+                "supporting_functions": sorted(item["supporting_functions"]),
+                "access_evidence": item["access_evidence"],
+            })
+        ranked.sort(key=lambda item: (-item["score"], addr(item["address"])))
+        ranked = ranked[:8]
+        best = ranked[0] if ranked else None
+        result_margin = (
+            best["score"] - (ranked[1]["score"] if len(ranked) > 1 else 0.0)
+            if best else 0.0
+        )
+        state = "BLOCKED"
+        if best is not None:
+            state = "REVIEW_REQUIRED" if best["score"] >= 8.0 and result_margin >= 2.0 else "CANDIDATE"
+        results[name] = {
+            "kind": "global",
+            "name": name,
+            "symbol_id": symbol.get("symbol_id", ""),
+            "source_target_id": source_target_id,
+            "matcher": "bindiff-inspired-ensemble-v3-global-dataflow",
+            "evidence_id": evidence_id,
+            "source_address": symbol.get("entry_address"),
+            "predicted_address": best["address"] if best else None,
+            "score": best["score"] if best else None,
+            "margin": result_margin,
+            "state": state,
+            "top_candidates": ranked,
+            "required_evidence_missing": [
+                "exact-target initializer/consumer data flow",
+                "object ownership and pointer depth",
+                "reviewer promotion",
+            ],
+            "target_firmware_sha256": target_firmware_sha256,
+            "target_corpus_sha256": target_corpus_sha256,
+        }
+    return results
+
+
+def write_candidate_record(path: Path, candidate: dict[str, Any]) -> bool:
+    """Write candidates without replacing any promoted or forbidden record."""
+    if path.exists():
+        current = read_json(path)
+        if (
+            current.get("status") != "CANDIDATE"
+            or current.get("approval_state") not in (None, "PENDING")
+        ):
+            return False
+    path.write_text(json.dumps(candidate, indent=2, ensure_ascii=False) + "\n")
+    return True
+
+
 def compare_oracle(results: dict[str, dict[str, Any]], oracle: list[dict[str, Any]]) -> list[dict[str, Any]]:
     comparison = []
     for item in oracle:
@@ -736,7 +983,11 @@ def main() -> int:
     )
     source_functions = source_corpus_doc.get("functions") or []
     target_functions = target_corpus_doc.get("functions") or []
+    source_globals = source_corpus_doc.get("globals") or []
+    target_globals = target_corpus_doc.get("globals") or []
     source_symbols = load_source_symbols(args.source_symbols)
+    source_global_symbols = load_source_symbols(args.source_symbols, "global")
+    target_corpus_sha256 = sha256_file(args.target_corpus)
     source_by_addr = {addr(fn.get("addr")): fn for fn in source_functions}
     target_by_addr = {addr(fn.get("addr")): fn for fn in target_functions}
 
@@ -852,6 +1103,7 @@ def main() -> int:
             predicted_address = None
             selected_rank = None
         result = {
+            "kind": "function",
             "name": name,
             "symbol_id": symbol.get("symbol_id", ""),
             "source_target_id": source_corpus_doc.get("target_id"),
@@ -868,12 +1120,37 @@ def main() -> int:
             "top_candidates": top_candidates,
             "required_evidence_missing": ["normalized-instructions", "abi-callsite", "dataflow"],
             "target_firmware_sha256": args.target_firmware_sha256,
-            "target_corpus_sha256": sha256_file(args.target_corpus),
+            "target_corpus_sha256": target_corpus_sha256,
             "top_collision_with": assignment["top_collision_with"],
         }
         result_by_name[result["name"]] = result
         if selected is not None and target is not None:
             symbol_candidates.append({"source": symbol, "target": target, "result": result})
+
+    global_result_by_name = match_global_symbols(
+        source_global_symbols,
+        source_functions,
+        target_functions,
+        source_globals,
+        target_globals,
+        result_by_name,
+        evidence_id,
+        str(source_corpus_doc.get("target_id") or ""),
+        args.target_firmware_sha256,
+        target_corpus_sha256,
+    )
+    global_symbol_by_name = {
+        str(symbol.get("name") or ""): symbol for symbol in source_global_symbols
+    }
+    global_candidates = [
+        {
+            "source": global_symbol_by_name[name],
+            "target_address": result["predicted_address"],
+            "result": result,
+        }
+        for name, result in global_result_by_name.items()
+        if result.get("predicted_address") and name in global_symbol_by_name
+    ]
 
     predicted_addresses = [
         item["predicted_address"]
@@ -897,9 +1174,28 @@ def main() -> int:
         ),
     }
 
+    global_quality_summary = {
+        "assigned": sum(
+            item.get("predicted_address") is not None
+            for item in global_result_by_name.values()
+        ),
+        "blocked": sum(
+            item["state"] == "BLOCKED" for item in global_result_by_name.values()
+        ),
+        "candidate": sum(
+            item["state"] == "CANDIDATE" for item in global_result_by_name.values()
+        ),
+        "review_required": sum(
+            item["state"] == "REVIEW_REQUIRED"
+            for item in global_result_by_name.values()
+        ),
+    }
+    all_result_by_name = dict(result_by_name)
+    all_result_by_name.update(global_result_by_name)
+
     report = {
-        "schema": 2,
-        "matcher": "bindiff-inspired-ensemble-v2",
+        "schema": 3,
+        "matcher": "bindiff-inspired-ensemble-v3-global-dataflow",
         "source_target_id": source_corpus_doc.get("target_id"),
         "target_target_id": target_corpus_doc.get("target_id"),
         "target_firmware_sha256": args.target_firmware_sha256,
@@ -909,7 +1205,9 @@ def main() -> int:
         "source_corpus_sha256": sha256_file(args.source_corpus),
         "target_corpus_sha256": sha256_file(args.target_corpus),
         "source_symbol_count": len(source_symbols),
+        "source_global_symbol_count": len(source_global_symbols),
         "matched_symbol_count": len(result_by_name),
+        "matched_global_count": len(global_result_by_name),
         "parameters": {
             "pool": args.pool,
             "rounds": args.rounds,
@@ -921,18 +1219,26 @@ def main() -> int:
             len(item["negative_abi_assumptions"]) for item in failure_feedback
         ),
         "quality_summary": quality_summary,
+        "global_quality_summary": global_quality_summary,
         "evidence_families": ["bytes", "cfg", "data", "context", "callgraph"],
-        "missing_families": ["normalized-instructions", "abi-callsite", "dataflow"],
+        "global_evidence_families": [
+            "matched-owner-dataflow",
+            "access-direction",
+            "instruction-relative-position",
+            "segment-and-object-shape",
+        ],
+        "missing_families": ["normalized-instructions", "abi-callsite"],
         "confidence_note": "confidence_heuristic is a ranking aid, not an oracle-calibrated probability",
         "anchor_history": anchor_history,
         "oracle_comparison": [],
         "matches": result_by_name,
+        "global_matches": global_result_by_name,
     }
     if args.oracle:
         oracle = read_json(args.oracle)
         if isinstance(oracle, dict):
             oracle = oracle.get("entries") or []
-        report["oracle_comparison"] = compare_oracle(result_by_name, oracle)
+        report["oracle_comparison"] = compare_oracle(all_result_by_name, oracle)
         comparable = [x for x in report["oracle_comparison"] if not x["source_missing"]]
         report["oracle_summary"] = {
             "total": len(comparable),
@@ -955,7 +1261,17 @@ def main() -> int:
                 item["source"], args.target_id, item["target"], item["result"], report_rel
             )
             out_name = f"{candidate['symbol_id']}.json".replace("/", "_")
-            (args.symbols_output / out_name).write_text(json.dumps(candidate, indent=2, ensure_ascii=False) + "\n")
+            write_candidate_record(args.symbols_output / out_name, candidate)
+        for item in global_candidates:
+            candidate = make_global_candidate(
+                item["source"],
+                args.target_id,
+                item["target_address"],
+                item["result"],
+                report_rel,
+            )
+            out_name = f"{candidate['symbol_id']}.json".replace("/", "_")
+            write_candidate_record(args.symbols_output / out_name, candidate)
 
     oracle_summary = report.get("oracle_summary")
     if oracle_summary:
@@ -963,7 +1279,11 @@ def main() -> int:
             f"manual oracle: {oracle_summary['matched']}/{oracle_summary['total']} "
             f"({oracle_summary['precision_on_manual_oracle']:.1%})"
         )
-    print(f"matched {len(result_by_name)}/{len(source_symbols)} source symbols")
+    print(f"matched {len(result_by_name)}/{len(source_symbols)} source function symbols")
+    print(
+        f"global candidates: {global_quality_summary['assigned']}/"
+        f"{len(source_global_symbols)} source global symbols"
+    )
     print(f"anchors: {len(anchors)}; report: {args.output}")
     return 0
 

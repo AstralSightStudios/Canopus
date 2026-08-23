@@ -13,6 +13,7 @@ use std::path::PathBuf;
 use canopus_fw_match::corpus::load_corpus;
 use canopus_fw_match::engine::{EngineConfig, confirm, load_source_symbols, match_symbols};
 use canopus_fw_match::ga::GaParams;
+use canopus_fw_match::globals::{load_source_globals, match_globals};
 
 fn main() -> anyhow::Result<()> {
     let args: Vec<String> = std::env::args().collect();
@@ -82,6 +83,7 @@ fn main() -> anyhow::Result<()> {
     let output = output.unwrap_or_else(|| PathBuf::from("matches.json"));
 
     let syms = load_source_symbols(&symbols).map_err(anyhow::Error::msg)?;
+    let global_syms = load_source_globals(&symbols).map_err(anyhow::Error::msg)?;
     let src = load_corpus(&src_corpus).map_err(anyhow::Error::msg)?;
     let dst = load_corpus(&dst_corpus).map_err(anyhow::Error::msg)?;
 
@@ -96,17 +98,19 @@ fn main() -> anyhow::Result<()> {
     };
 
     eprintln!(
-        "matching {} source symbols ({} source fns) -> {} target fns",
+        "matching {} function and {} global symbols ({} source fns) -> {} target fns",
         syms.len(),
+        global_syms.len(),
         src.functions.len(),
         dst.functions.len()
     );
 
     let (results, _best) = match_symbols(&syms, &src, &dst, &cfg);
     let confirmed = confirm(&results, min_score, min_margin);
+    let global_results = match_globals(&global_syms, &src, &dst, &results);
 
     let report = serde_json::json!({
-        "schema": 1,
+        "schema": 2,
         "source_target_id": src.target_id,
         "target_target_id": dst.target_id,
         "params": {
@@ -120,11 +124,22 @@ fn main() -> anyhow::Result<()> {
         "num_symbols": syms.len(),
         "num_matched": results.iter().filter(|r| r.target_addr.is_some()).count(),
         "num_confirmed": confirmed.len(),
+        "num_globals": global_syms.len(),
+        "num_global_candidates": global_results.iter().filter(|item| item.target_addr.is_some()).count(),
         "matches": results,
         "confirmed": confirmed,
+        "global_matches": global_results,
     });
 
     std::fs::write(&output, serde_json::to_string_pretty(&report)?)?;
-    eprintln!("wrote {} ({} confirmed)", output.display(), confirmed.len());
+    eprintln!(
+        "wrote {} ({} functions confirmed, {} global candidates)",
+        output.display(),
+        confirmed.len(),
+        global_results
+            .iter()
+            .filter(|item| item.target_addr.is_some())
+            .count()
+    );
     Ok(())
 }
