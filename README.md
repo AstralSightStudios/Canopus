@@ -22,17 +22,22 @@ Canopus 允许开发者：
 
 完整设计见 [`docs/architecture.md`](docs/architecture.md)。
 
-## 首个目标
+## 当前 registered target packs
 
-| 字段 | 值 |
-|---|---|
-| target_id | `xiaomi-band-10-pro-3.101.030` |
-| 设备 | 小米手环 10 Pro |
-| 固件版本 | `3.101.030` |
-| 固件 build | `CONBINE_LTALM078_T3.101.030_06011854` |
-| 固件 SHA-256 | `f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b` |
-| CPU | Cortex-M33 / Thumb-2 / soft-float |
-| loader | NuttX `modlib` ELF32 `ET_REL`（zero-import） |
+| target_id | 固件版本 | 固件 SHA-256 | 状态 |
+|---|---|---|---|
+| `xiaomi-band-10-pro-3.101.036` | `3.101.036` | `662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81` | trusted build target |
+| `xiaomi-band-10-pro-3.101.043` | `3.101.043` | `519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec` | static pack/build target; device gate pending |
+| `xiaomi-band-9-pro-3.1.175` | `3.1.175` | `4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b` | fresh static candidate pack; NSH/mw loader profile static-recovered; ABI/Supervisor/device gates pending |
+| `xiaomi-band-11-4.100.108` | `4.100.108` | `9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99` | fresh static candidate pack; LVGL v9 ABI/codegen gate pending |
+| `xiaomi-band-9-3.1.32` | `3.1.32` | `9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264` | fresh static candidate pack; NSH/mw loader profile static-recovered; LVGL/ABI/Supervisor/device gates pending |
+
+036/043 are Xiaomi Band 10 Pro Cortex-M33 / Thumb-2 / soft-float targets using the
+NuttX `modlib` ELF32 `ET_REL` zero-import loader. The three newly regenerated Band 9/9
+Pro/11 packs are static candidate packs; their target-private ABI and LVGL gates remain
+pending. Band 9/9 Pro use firmware-bound NSH `mw`/`exec` bootstrap profiles whose
+command/VFS/heap/MPU/SRAM primitives are static-recovered; no verifier-clean Band 9
+Supervisor is currently staged, and no device loader gate has passed.
 
 ## 仓库结构
 
@@ -43,7 +48,7 @@ sdk/            C / Rust / ABI 定义
 runtime/        portable C runtime（module/lifecycle/resources/diagnostics/control）
 manager/        device-side supervisor / protocol / storage
 app-sdk/        native app SDK（C/Rust/UI/launcher/resources）
-targets/        target packs（xiaomi-band-10-pro-3.101.030/...）
+targets/        target packs (036/043 build support; 9/9 Pro/11 static candidates)
 modules/        示例与参考模块
 tools/          RE orchestrator / symbol-generator / elf-verifier / package-builder
 tests/          host / integration / fixtures / hardware

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds the no-heap-counter Rust module for xiaomi-band-10-pro-3.101.030.
+# Builds the no-heap-counter Rust module for xiaomi-band-10-pro-3.101.036.
 #
 # Pipeline (architecture §12.3):
 #   Rust no_std staticlib (panic=abort, feature=device)
@@ -11,7 +11,7 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../../../.." && pwd)
 SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-TARGET_ID="xiaomi-band-10-pro-3.101.030"
+TARGET_ID="xiaomi-band-10-pro-3.101.036"
 OUT="$SELF_DIR/build"
 TRIPLE="thumbv8m.main-none-eabi"
 CC=${CC:-clang}

@@ -10,15 +10,24 @@ local lvgl = {}
 lvgl.HOR_RES = function() return 336 end
 lvgl.VER_RES = function() return 480 end
 lvgl.OPA = function(v) return v end
-lvgl.FLAG = { SCROLLABLE = 1, CLICKABLE = 2 }
+lvgl.Font = function(name, size) return { name = name, size = size } end
+lvgl.FLAG = { SCROLLABLE = 1, CLICKABLE = 2, EVENT_BUBBLE = 4 }
+lvgl.EVENT = { CLICKED = 7 }
 lvgl.ALIGN = { CENTER = 1, TOP_MID = 2, BOTTOM_MID = 3 }
 
 local created = {}
+local subscriptions = {}
 local obj_mt = {}
 function obj_mt:clear_flag() return self end
 function obj_mt:add_flag() return self end
 function obj_mt:set(props) self._last_set = props; return self end
 function obj_mt:onClicked(fn) self._click = fn; table.insert(created, self); return self end
+function obj_mt:onevent(event, fn)
+    assert(event == lvgl.EVENT.CLICKED)
+    self._click = fn
+    table.insert(created, self)
+    return self
+end
 function lvgl.Object(parent, props)
     local o = setmetatable({ _parent = parent, _props = props }, { __index = obj_mt })
     table.insert(created, o)
@@ -32,6 +41,15 @@ end
 
 _G.SCRIPT_PATH = "/fake/"
 package.loaded["lvgl"] = lvgl
+package.loaded["dataman"] = {
+    subscribe = function(name, owner, callback)
+        subscriptions[#subscriptions + 1] = {
+            name = name,
+            owner = owner,
+            callback = callback,
+        }
+    end,
+}
 
 local original_io_open = io.open
 local original_os_execute = os.execute
@@ -88,18 +106,68 @@ local function module_installer_io(fault)
     end
 end
 
-local function band9_installer_io(fault)
+local function band9_installer_io(fault, firmware_version)
+    firmware_version = firmware_version or "3.1.175"
+    local target_id = "xiaomi-band-9-pro-3.1.175"
+    local firmware_sha256 =
+        "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b"
+    local cave_base = 0x20084e10
+    local memalign = 0x0c0f21ed
+    local free = 0x0c0f1b01
+    local mpu_alloc = 0x0c51d8d1
+    local mpu_configure = 0x0c51d759
+    local mpu_release = 0x0c51d929
+    if firmware_version == "3.1.32" then
+        target_id = "xiaomi-band-9-3.1.32"
+        firmware_sha256 =
+            "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264"
+        cave_base = 0x2006a9b0
+        memalign = 0x0c16ab8d
+        free = 0x0c16a425
+        mpu_alloc = 0x0c5228a5
+        mpu_configure = 0x0c52272d
+        mpu_release = 0x0c5228fd
+    end
+    local cave_result = cave_base + 28
+    local mpu_rlar = 0xe000eda0
+    local target_dir = "/fake/targets/" .. target_id .. "/"
     local cave = {
-        [0x20084e10] = 0, [0x20084e14] = 0,
-        [0x20084e18] = 0, [0x20084e1c] = 0,
-        [0x20084e20] = 0x726f6e5f, [0x20084e24] = 0x73616c66,
-        [0x20084e28] = 0x70615f68, [0x20084e2c] = 0x72665f69,
+        [cave_base] = 0, [cave_base + 4] = 0,
+        [cave_base + 8] = 0, [cave_base + 12] = 0,
+        [cave_base + 16] = 0x726f6e5f, [cave_base + 20] = 0x73616c66,
+        [cave_base + 24] = 0x70615f68, [cave_result] = 0x72665f69,
     }
+    local profile = string.format([[
+return {
+    target_id = %q,
+    firmware_sha256 = %q,
+    status = "STATIC_RECOVERED",
+    loader_family = "nsh-mw-stage1-stage2",
+    memalign = 0x%08x,
+    free = 0x%08x,
+    mpu_alloc = 0x%08x,
+    mpu_configure = 0x%08x,
+    mpu_release = 0x%08x,
+    mpu_rnr = 0xe000ed98,
+    mpu_rbar = 0xe000ed9c,
+    mpu_rlar = 0xe000eda0,
+    mpu_region_count = 8,
+    cave = 0x%08x,
+    cave_result = 0x%08x,
+    cave_original = {
+        0, 0, 0, 0, 0x726f6e5f, 0x73616c66, 0x70615f68, 0x72665f69,
+    },
+}
+]], target_id, firmware_sha256, memalign, free, mpu_alloc, mpu_configure,
+        mpu_release, cave_base, cave_result)
     local files = {
-        ["/fake/canopus_stage1_band9.lua"] =
+        ["/fake/manager_icon.bin"] = string.char(
+            0x19, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        [target_dir .. "canopus_loader_profile.lua"] = profile,
+        [target_dir .. "canopus_stage1.lua"] =
             "return { size=8, words={0xbf00bf00,0xbf00bf00} }",
-        ["/fake/canopus_stage2-band9.bin"] = string.rep("S", 64),
-        ["/fake/canopus_supervisor-band9.bin"] =
+        [target_dir .. "canopus_stage2.bin"] = string.rep("S", 64),
+        [target_dir .. "canopus_supervisor.bin"] =
             "\127ELF\1\1\1" .. string.rep("\0", 9) .. "\1\0\40\0" .. string.rep("X", 492),
     }
     local device_present = false
@@ -107,14 +175,16 @@ local function band9_installer_io(fault)
     local freed = false
     local released = false
     local configured_rlar
-    if fault == "cave_mismatch" then cave[0x20084e10] = 1 end
+    local pending_op = 0
+    local pending_state = 0
+    if fault == "cave_mismatch" then cave[cave_base] = 1 end
     local function le32(value)
         return string.char(value % 256, math.floor(value / 256) % 256,
             math.floor(value / 65536) % 256,
             math.floor(value / 16777216) % 256)
     end
     local function status()
-        local words = { 0x43505331, 1, 1, 0, 0, 0, 0, 0, 0, 2, 2, 0 }
+        local words = { 0x43505331, 1, 1, 0, 0, pending_op, pending_state, 0, 0, 2, 2, 0 }
         local out = ""
         for _, value in ipairs(words) do out = out .. le32(value) end
         return out .. string.rep("\0", 384 - #out)
@@ -123,7 +193,16 @@ local function band9_installer_io(fault)
         if path == "/dev/canopus" then
             if not device_present then return nil end
             if mode == "wb" then
-                return { write = function(_, data) return #data end,
+                return { write = function(_, data)
+                        if #data >= 8 then
+                            pending_op = data:byte(5)
+                                + data:byte(6) * 0x100
+                                + data:byte(7) * 0x10000
+                                + data:byte(8) * 0x1000000
+                            pending_state = 5
+                        end
+                        return #data
+                    end,
                     close = function() return true end }
             end
             return { read = function() return status() end,
@@ -161,7 +240,7 @@ local function band9_installer_io(fault)
         local property_output = command:match(
             "^getprop 'ro%.build%.version' > '(.+)'$")
         if property_output then
-            files[property_output] = "3.1.175\n"
+            files[property_output] = firmware_version .. "\n"
             return true
         end
         if command:match("^insmod ") then used_insmod = true; return false end
@@ -170,7 +249,7 @@ local function band9_installer_io(fault)
             local addr = tonumber(address, 16)
             local word = tonumber(value, 16)
             cave[addr] = word
-            if addr == 0xe000eda0 and word ~= 0 then
+            if addr == mpu_rlar and word ~= 0 then
                 configured_rlar = word
                 if fault == "mpu_configuration_failure" then return false end
             end
@@ -185,20 +264,20 @@ local function band9_installer_io(fault)
         local exec_address = command:match("^exec ([0-9a-fA-F]+)$")
         if exec_address then
             local addr = tonumber(exec_address, 16)
-            if addr == 0x20084e11 then
-                local callable = cave[0x20084e28]
+            if addr == cave_base + 1 then
+                local callable = cave[cave_base + 24]
                 if fault == "mailbox_exec_failure" then return false end
                 local result = 0
-                if callable == 0x0c0f21ed then
+                if callable == memalign then
                     result = fault == "allocation_failure" and 0 or 0x21000000
-                elseif callable == 0x0c51d8d1 then
+                elseif callable == mpu_alloc then
                     result = fault == "mpu_exhaustion" and 255 or 3
-                elseif callable == 0x0c51d929 then
+                elseif callable == mpu_release then
                     released = true
-                elseif callable == 0x0c0f1b01 then
+                elseif callable == free then
                     freed = true
                 end
-                cave[0x20084e2c] = result
+                cave[cave_result] = result
                 return result == 0
             end
             if addr == 0x21000001 then
@@ -211,17 +290,25 @@ local function band9_installer_io(fault)
     end
     return open, execute, function()
         return cave, files, device_present, used_insmod, freed, released,
-            configured_rlar
+            configured_rlar, cave_base
     end
 end
 
-local function check(path, installer_fault)
+local function check(path, installer_fault, installer_firmware)
     created = {}
+    subscriptions = {}
     local installer_state
     local band9_state
     local band9_fault = installer_fault and installer_fault:match("^band9:(.+)$")
-    if path:match("canopus%-installer/main%.lua$") then
-        io.open, os.execute, band9_state = band9_installer_io(band9_fault)
+    if path:match("canopus%-installer/main%.lua$")
+        or path:match("canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") then
+        local selected_firmware = installer_firmware
+        if selected_firmware == nil
+            and path:match("canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") then
+            selected_firmware = "3.1.32"
+        end
+        io.open, os.execute, band9_state =
+            band9_installer_io(band9_fault, selected_firmware)
     elseif path:match("canopus_hello/main%.lua$") then
         io.open, installer_state = module_installer_io(installer_fault)
         os.execute = function() return true end
@@ -270,14 +357,25 @@ local function check(path, installer_fault)
             clicks = clicks + 1
         end
     end
+    for _ = 1, 5 do
+        for _, subscription in ipairs(subscriptions) do
+            local ok2, err2 = pcall(subscription.callback, subscription.owner, 0)
+            if not ok2 then
+                io.open = original_io_open
+                os.execute = original_os_execute
+                print("SUBSCRIPTION FAIL:", path, tostring(err2))
+                return false
+            end
+        end
+    end
     if band9_state then
         local cave, files, device_present, used_insmod, freed, released,
-            configured_rlar = band9_state()
+            configured_rlar, cave_base = band9_state()
         local original = { 0, 0, 0, 0, 0x726f6e5f, 0x73616c66,
             0x70615f68, 0x72665f69 }
         if band9_fault == "cave_mismatch" then original[1] = 1 end
         for i, value in ipairs(original) do
-            if cave[0x20084e10 + (i - 1) * 4] ~= value then
+            if cave[cave_base + (i - 1) * 4] ~= value then
                 io.open = original_io_open
                 os.execute = original_os_execute
                 print("BAND9 CAVE RESTORE FAIL:", path, installer_fault or "success")
@@ -330,6 +428,7 @@ local args = { ... }
 if #args == 0 then
     args = {
         "watchfaces/canopus-installer/main.lua",
+        "watchfaces/canopus-installer-prod/xiaomi-band-9/main.lua",
         "watchfaces/canopus_hello/main.lua",
     }
 end
@@ -338,12 +437,25 @@ for _, p in ipairs(args) do
     if not check(p) then ok_all = false end
 end
 if ok_all then
+    if not check("watchfaces/canopus-installer/main.lua", nil, "3.1.32") then
+        ok_all = false
+    end
+    local band9_firmware_versions = { "3.1.175", "3.1.32" }
     local band9_faults = {
         "cave_mismatch", "mailbox_exec_failure", "allocation_failure",
         "mpu_exhaustion", "mpu_configuration_failure", "stage1_exec_failure",
     }
+    for _, firmware_version in ipairs(band9_firmware_versions) do
+        for _, fault in ipairs(band9_faults) do
+            if not check("watchfaces/canopus-installer/main.lua",
+                "band9:" .. fault, firmware_version) then
+                ok_all = false
+            end
+        end
+    end
     for _, fault in ipairs(band9_faults) do
-        if not check("watchfaces/canopus-installer/main.lua", "band9:" .. fault) then
+        if not check("watchfaces/canopus-installer-prod/xiaomi-band-9/main.lua",
+            "band9:" .. fault, "3.1.32") then
             ok_all = false
         end
     end

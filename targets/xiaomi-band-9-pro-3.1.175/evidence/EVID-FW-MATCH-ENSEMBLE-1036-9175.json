@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-FW-MATCH-ENSEMBLE-1036-9175",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "question": "Does the fresh 036-only BinDiff-inspired ensemble produce a static candidate set for the exact 3.1.175 IDB?",
+  "candidate_symbols": ["ensemble_candidate_set_123_of_126"],
+  "prototype_hypothesis": "No target prototype is device-approved by this experiment; source prototypes remain static candidates until exact callsite and ABI verification.",
+  "callsite_evidence": [
+    "The exact 3.1.175 corpus was freshly extracted from /Volumes/EXT0/old_fw_extract/data/ota/app/vela_ap.bin.i64.",
+    "The matcher used bytes, CFG, data, context and caller-neighborhood graph families with pool 128 and four propagation rounds.",
+    "123 of 126 source function records received target candidates; three source records were not matched."
+  ],
+  "control_flow_evidence": ["The report retains per-family scores, margins, collisions and missing ABI/callsite/dataflow evidence."],
+  "ownership_analysis": "None; static candidate-generation evidence only.",
+  "unsafe_assumptions": ["Candidate ranking is not ABI proof or device proof.", "The retained LVGL v8 types were not re-proven by this address experiment."],
+  "recommended_probe": "Perform exact-target ABI/callsite review before generating a callable production binding or attempting a device module load.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "CANDIDATE",
+  "created": "2026-08-23T00:00:00Z",
+  "artifacts": [{"uri": "fw-match/ensemble-1036-to-9175-v2.json", "role": "fresh ensemble report with semantic hard-negatives and one-to-one assignment"}]
+}

@@ -1,0 +1,41 @@
+# xiaomi-band-9-3.1.32 — Xiaomi Band 9 firmware 3.1.32
+# New exact-IDB static pack generated from the 036->9132 ensemble.
+schema = 1
+target_id = "xiaomi-band-9-3.1.32"
+device_family = "xiaomi-smart-band"
+device_model = "Xiaomi Band 9"
+board_revision = "n66nfc"
+os_family = "nuttx-derived"
+architecture = "armv8-m.main"
+cpu = "cortex-m33"
+instruction_set = "thumb2"
+endianness = "little"
+float_abi = "soft"
+loader = "nsh-mw-stage1-stage2-static-recovered"
+firmware_sha256 = "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264"
+firmware_version = "3.1.32"
+firmware_build = "N66NFC_3.1.32"
+module_abi = 1
+relocation_profile = "best1503-v1"
+revision = 1
+
+firmware_address_ranges = [
+  { base = 0x0C000000, size = 0x00800000 },
+]
+
+# No capability is build-available yet: regenerated callable symbols remain
+# restricted/PENDING. The loader profile is independently STATIC_RECOVERED but
+# remains behind Supervisor, packaging, ABI, and device gates.
+capabilities = []
+
+[provenance]
+source_repo = "miwear.watch.n66nfc_v3.1.32_full_489f2050"
+source_findings = [
+  "Exact 3.1.32 IDB corpus freshly extracted on 2026-08-23",
+  "123/126 036 source functions matched by bindiff-inspired ensemble v2",
+  "Candidate records remain static/restricted/pending until loader, ABI and device gates",
+  "Loader NSH/VFS/heap/MPU/SRAM cave primitives are STATIC_RECOVERED from the exact IDB; device gate remains pending",
+]
+import_date = "2026-08-23"
+maintainer = "canopus-maintainer"
+reviewers = ["canopus-maintainer"]

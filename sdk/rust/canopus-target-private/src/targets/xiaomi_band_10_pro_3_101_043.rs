@@ -32,14 +32,22 @@ pub const BOND_STATE_BONDED: u32 = 2;
 pub const CLASSIC_TRANSPORT: u32 = 1;
 pub const DISCOVERY_TIMEOUT_SECONDS: i32 = 20;
 
-/// Stock adapter client callback table has 16 word slots.
-pub const CALLBACK_WORDS: usize = 16;
+/// The module callback table uses the same 17-word descriptor shape as stock.
+pub const CALLBACK_WORDS: usize = 17;
 pub const CALLBACK_ADAPTER_STATE: usize = 0;
 pub const CALLBACK_DISCOVERY_STATE: usize = 1;
 pub const CALLBACK_DISCOVERY_RESULT: usize = 2;
 pub const CALLBACK_PAIR_REQUEST: usize = 5;
 pub const CALLBACK_PAIR_DISPLAY: usize = 6;
 pub const CALLBACK_BOND_STATE: usize = 9;
+
+/// The 3.101.043 stock Bluetooth client uses a 17-word callback descriptor.
+/// Its registration handle points to an 8-byte callback-list node containing
+/// `{ cookie, descriptor }`.
+pub const STOCK_CALLBACK_WORDS: usize = 17;
+pub const STOCK_CALLBACK_PAIR_REQUEST_SLOT: usize = 5;
+const STOCK_REGISTRATION_COOKIE_WORD: usize = 0;
+const STOCK_REGISTRATION_DESCRIPTOR_WORD: usize = 1;
 
 /// Discovery result header; a NUL-terminated name follows immediately after.
 #[repr(C)]
@@ -86,7 +94,7 @@ pub unsafe fn bt_adapter_get_instance() -> *mut core::ffi::c_void {
     unsafe { canopus_target_generated::canopus_fw_bt_adapter_get_instance() }
 }
 
-/// Registers a persistent 16-word callback table. Returns a nonzero
+/// Registers a persistent 17-word callback descriptor. Returns a nonzero
 /// registration handle on success, 0 on failure.
 pub unsafe fn bt_adapter_register(adapter: *mut core::ffi::c_void, callbacks: *const u32) -> u32 {
     unsafe { canopus_target_generated::canopus_fw_bt_adapter_register(adapter, callbacks) as u32 }
@@ -205,6 +213,9 @@ pub const CREATE_BOND_ADAPTER_NOT_READY: i32 = 2;
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum PairRequestFilterError {
     Policy,
+    DescriptorUnavailable,
+    DescriptorMismatch,
+    PairSlotMismatch,
     Allocation,
     Registration,
 }
@@ -215,10 +226,68 @@ pub struct PairRequestFilter {
     pub registration: u32,
 }
 
+/// Replaces the stock 3.101.043 Pair Request registration with a resident
+/// 17-word mirror. The stock handle is the callback-list node allocated by
+/// `sub_C3A96EC`; word 1 owns the descriptor pointer. Registration and removal
+/// go through the firmware callback-list API so the manager's private storage is
+/// never modified directly.
 pub unsafe fn bt_install_pair_request_filter(
-    _replacement: PairRequestCallback,
+    replacement: PairRequestCallback,
 ) -> Result<Option<PairRequestFilter>, PairRequestFilterError> {
-    Err(PairRequestFilterError::Policy)
+    let adapter = unsafe {
+        *(canopus_target_generated::canopus_fw_core_bt_adapter_instance
+            as *const *mut core::ffi::c_void)
+    };
+    let handle_ptr = canopus_target_generated::canopus_fw_core_bt_registration_handle as *mut u32;
+    let original_handle = unsafe { core::ptr::read_volatile(handle_ptr) };
+    if adapter.is_null() || original_handle == 0 {
+        return Ok(None);
+    }
+
+    let registration = original_handle as usize as *const u32;
+    let cookie =
+        unsafe { core::ptr::read_volatile(registration.add(STOCK_REGISTRATION_COOKIE_WORD)) };
+    let live_descriptor =
+        unsafe { core::ptr::read_volatile(registration.add(STOCK_REGISTRATION_DESCRIPTOR_WORD)) }
+            as usize;
+    if live_descriptor == 0 {
+        return Err(PairRequestFilterError::DescriptorUnavailable);
+    }
+    let stock = canopus_target_generated::canopus_fw_stock_bt_callback_descriptor as *const u32;
+    if cookie != 0 || live_descriptor != stock as usize {
+        return Err(PairRequestFilterError::DescriptorMismatch);
+    }
+    let original =
+        canopus_target_generated::CANOPUS_FW_CORE_BT_PAIR_REQUEST_CALLBACK_CALLABLE as u32;
+    if unsafe { core::ptr::read_volatile(stock.add(STOCK_CALLBACK_PAIR_REQUEST_SLOT)) } != original
+    {
+        return Err(PairRequestFilterError::PairSlotMismatch);
+    }
+
+    let mirror = unsafe { bt_alloc((STOCK_CALLBACK_WORDS * 4) as u32) } as *mut u32;
+    if mirror.is_null() {
+        return Err(PairRequestFilterError::Allocation);
+    }
+    unsafe {
+        core::ptr::copy_nonoverlapping(stock, mirror, STOCK_CALLBACK_WORDS);
+        *mirror.add(STOCK_CALLBACK_PAIR_REQUEST_SLOT) = replacement as *const () as usize as u32;
+    }
+    let mirror_handle = unsafe { bt_adapter_register(adapter, mirror) };
+    if mirror_handle == 0 {
+        unsafe { bt_free(mirror.cast()) };
+        return Err(PairRequestFilterError::Registration);
+    }
+    if unsafe { bt_adapter_unregister(adapter, original_handle) } == 0 {
+        if unsafe { bt_adapter_unregister(adapter, mirror_handle) } != 0 {
+            unsafe { bt_free(mirror.cast()) };
+        }
+        return Err(PairRequestFilterError::Registration);
+    }
+    unsafe { core::ptr::write_volatile(handle_ptr, mirror_handle) };
+    Ok(Some(PairRequestFilter {
+        allocation: mirror as usize,
+        registration: mirror_handle,
+    }))
 }
 
 pub unsafe fn bt_forward_pair_request(cookie: *mut core::ffi::c_void, address: *const u8) -> i32 {
@@ -498,47 +567,17 @@ pub unsafe fn bt_l2cap_owner() -> *mut core::ffi::c_void {
 /// GAP host receive callback used for inbound H4 packets.
 pub type BtGapTransportReceive = extern "C" fn(*mut core::ffi::c_void, *mut u8, i32) -> i32;
 
-/// This exact firmware needs the BES mHDT compatibility filter and exposes a
-/// statically confirmed raw-H4 receive seam.
-pub const HCI_RECEIVE_HOOK_REQUIRED: bool = true;
-
-const GAP_HOST_OWNER_ROOT: usize = canopus_target_generated::canopus_fw_gap_host_receive_slot;
-const GAP_HOST_STATE_RECEIVE_SLOT_OFFSET: usize = 0x28;
+/// Exact-target raw-H4 receive seam used by module-owned compatibility policy.
+const GAP_HOST_RECEIVE_SLOT: usize = canopus_target_generated::canopus_fw_gap_host_receive_slot;
 const GAP_HOST_STOCK_RECEIVE: usize =
     canopus_target_generated::CANOPUS_FW_GAP_HOST_STOCK_RECEIVE_CALLABLE;
 
-unsafe fn gap_host_receive_slot() -> *mut u32 {
-    let owner =
-        unsafe { core::ptr::read_volatile(GAP_HOST_OWNER_ROOT as *const *mut core::ffi::c_void) };
-    if owner.is_null() {
-        return core::ptr::null_mut();
-    }
-
-    let state = unsafe { core::ptr::read_volatile(owner.cast::<*mut core::ffi::c_void>()) };
-    if state.is_null() {
-        return core::ptr::null_mut();
-    }
-
-    unsafe {
-        core::ptr::read_volatile(
-            state
-                .cast::<u8>()
-                .add(GAP_HOST_STATE_RECEIVE_SLOT_OFFSET)
-                .cast::<*mut u32>(),
-        )
-    }
-}
-
 /// Replaces the active GAP host receive entry after verifying the exact-target
-/// stock pointer. The exported global is the GAP FSM owner root; its state owns
-/// the separately allocated callback slot at offset `0x28`. Powering Bluetooth
-/// on rebuilds this chain, so callers reassert the hook after adapter ON.
+/// stock pointer. The transport registration method copies the callback from
+/// its holder into this direct dispatch slot, so patch the live slot rather
+/// than the initializer-owned holder.
 pub unsafe fn bt_gap_install_receive_hook(receive_hook: BtGapTransportReceive) -> bool {
-    let receive_slot = unsafe { gap_host_receive_slot() };
-    if receive_slot.is_null() {
-        return false;
-    }
-
+    let receive_slot = GAP_HOST_RECEIVE_SLOT as *mut u32;
     let receive_replacement = receive_hook as usize as u32;
     let receive_current = unsafe { core::ptr::read_volatile(receive_slot) };
 
@@ -559,87 +598,6 @@ pub unsafe fn bt_gap_stock_receive(
 ) -> i32 {
     let receive: BtGapTransportReceive = unsafe { core::mem::transmute(GAP_HOST_STOCK_RECEIVE) };
     receive(state, packet, packet_length)
-}
-
-/// Removes the exact BES mHDT capability option (`7F 01 01`) from an inbound
-/// Configuration Request for `local_cid`, leaving all standard options intact.
-/// The stock parser in this firmware was built without mHDT support and would
-/// otherwise reject this peer capability as an unknown mandatory option.
-///
-/// The input excludes the H4 type byte. On success, ACL/L2CAP/command lengths
-/// are reduced in place and the returned value is the new ACL packet length.
-pub fn strip_l2cap_mhdt_option(payload: &mut [u8], local_cid: u16) -> Option<usize> {
-    const ACL_HEADER_SIZE: usize = 4;
-    const L2CAP_HEADER_SIZE: usize = 4;
-    const SIGNALING_CID: u16 = 1;
-    const CONFIGURATION_REQUEST: u8 = 0x04;
-    const MHDT_TYPE: u8 = 0x7F;
-    const MHDT_LENGTH: u8 = 1;
-    const MHDT_SUPPORTED: u8 = 1;
-    const MHDT_OPTION_SIZE: usize = 3;
-
-    if local_cid <= 0x3F || payload.len() < ACL_HEADER_SIZE + L2CAP_HEADER_SIZE {
-        return None;
-    }
-    // Only an ACL start packet carries the L2CAP header. The observed mHDT
-    // request is a complete 19-byte ACL payload (PB=2); continuation fragments
-    // are forwarded untouched rather than being misparsed as new L2CAP SDUs.
-    let packet_boundary = (u16::from_le_bytes([payload[0], payload[1]]) >> 12) & 0x3;
-    if !matches!(packet_boundary, 0 | 2) {
-        return None;
-    }
-    let acl_length = u16::from_le_bytes([payload[2], payload[3]]) as usize;
-    let acl_end = ACL_HEADER_SIZE.checked_add(acl_length)?;
-    if acl_end > payload.len() || acl_length < L2CAP_HEADER_SIZE {
-        return None;
-    }
-    let l2cap_length = u16::from_le_bytes([payload[4], payload[5]]) as usize;
-    let l2cap_end = (ACL_HEADER_SIZE + L2CAP_HEADER_SIZE).checked_add(l2cap_length)?;
-    if u16::from_le_bytes([payload[6], payload[7]]) != SIGNALING_CID || l2cap_end > acl_end {
-        return None;
-    }
-
-    let mut command = ACL_HEADER_SIZE + L2CAP_HEADER_SIZE;
-    while command + 4 <= l2cap_end {
-        let command_length =
-            u16::from_le_bytes([payload[command + 2], payload[command + 3]]) as usize;
-        let command_end = command.checked_add(4 + command_length)?;
-        if command_end > l2cap_end {
-            return None;
-        }
-        if payload[command] == CONFIGURATION_REQUEST && command_length >= 4 {
-            let destination_cid = u16::from_le_bytes([payload[command + 4], payload[command + 5]]);
-            let flags = u16::from_le_bytes([payload[command + 6], payload[command + 7]]);
-            if destination_cid == local_cid && flags == 0 {
-                let mut option = command + 8;
-                while option + 2 <= command_end {
-                    let option_length = payload[option + 1] as usize;
-                    let option_end = option.checked_add(2 + option_length)?;
-                    if option_end > command_end {
-                        return None;
-                    }
-                    if payload[option] == MHDT_TYPE
-                        && payload[option + 1] == MHDT_LENGTH
-                        && payload[option + 2] == MHDT_SUPPORTED
-                    {
-                        payload.copy_within(option_end..acl_end, option);
-                        payload[acl_end - MHDT_OPTION_SIZE..acl_end].fill(0);
-                        let new_command_length = command_length - MHDT_OPTION_SIZE;
-                        let new_l2cap_length = l2cap_length - MHDT_OPTION_SIZE;
-                        let new_acl_length = acl_length - MHDT_OPTION_SIZE;
-                        payload[command + 2..command + 4]
-                            .copy_from_slice(&(new_command_length as u16).to_le_bytes());
-                        payload[4..6].copy_from_slice(&(new_l2cap_length as u16).to_le_bytes());
-                        payload[2..4].copy_from_slice(&(new_acl_length as u16).to_le_bytes());
-                        return Some(acl_end - MHDT_OPTION_SIZE);
-                    }
-                    option = option_end;
-                }
-            }
-        }
-        command = command_end;
-    }
-    None
 }
 
 // ---------------------------------------------------------------------------
@@ -1665,27 +1623,23 @@ mod tests {
     }
 
     #[test]
-    fn mhdt_filter_only_changes_exact_target_configuration_request() {
-        let original = [
-            0x81, 0x20, 0x13, 0x00, 0x0F, 0x00, 0x01, 0x00, 0x04, 0x25, 0x0B, 0x00, 0x41, 0x00,
-            0x00, 0x00, 0x01, 0x02, 0x04, 0x0B, 0x7F, 0x01, 0x01,
-        ];
-        let mut continuation = original;
-        continuation[1] = 0x10;
-        assert_eq!(strip_l2cap_mhdt_option(&mut continuation, 0x0041), None);
-        assert_eq!(continuation[20..23], [0x7F, 0x01, 0x01]);
-
-        let mut wrong_cid = original;
-        assert_eq!(strip_l2cap_mhdt_option(&mut wrong_cid, 0x0042), None);
-        assert_eq!(wrong_cid, original);
-
-        let mut request = original;
-        assert_eq!(strip_l2cap_mhdt_option(&mut request, 0x0041), Some(20));
-        assert_eq!(&request[2..4], &[0x10, 0x00]);
-        assert_eq!(&request[4..6], &[0x0C, 0x00]);
-        assert_eq!(&request[10..12], &[0x08, 0x00]);
-        assert_eq!(&request[16..20], &[0x01, 0x02, 0x04, 0x0B]);
-        assert_eq!(&request[20..23], &[0, 0, 0]);
-        assert_eq!(strip_l2cap_mhdt_option(&mut request[..20], 0x0041), None);
+    fn stock_pair_filter_abi_is_not_the_036_global_table() {
+        assert_eq!(CALLBACK_WORDS, 17);
+        assert_eq!(STOCK_CALLBACK_WORDS, 17);
+        assert_eq!(STOCK_CALLBACK_PAIR_REQUEST_SLOT, 5);
+        assert_eq!(STOCK_ADAPTER_CLIENT_OFFSET, 120);
+        assert_eq!(STOCK_CLIENT_CALLBACK_OFFSET, 72);
+        assert_eq!(
+            canopus_target_generated::canopus_fw_core_bt_adapter_instance,
+            0x20126738
+        );
+        assert_eq!(
+            canopus_target_generated::canopus_fw_core_bt_registration_handle,
+            0x20126734
+        );
+        assert_eq!(
+            canopus_target_generated::canopus_fw_stock_bt_callback_descriptor,
+            0x2CD4A744
+        );
     }
 }

@@ -1,5 +1,10 @@
 .syntax unified
 .thumb
+
+#ifndef CANOPUS_BAND9_CAVE_RESULT
+#error "CANOPUS_BAND9_CAVE_RESULT is required"
+#endif
+
 .section .text.band9_cave,"ax",%progbits
 .global canopus_band9_cave_call
 .type canopus_band9_cave_call,%function
@@ -16,7 +21,7 @@ canopus_band9_cave_call:
 1:  .word 0
 2:  .word 0
 3:  .word 0
-4:  .word 0x20084e2c
+4:  .word CANOPUS_BAND9_CAVE_RESULT
 .size canopus_band9_cave_call, .-canopus_band9_cave_call
 
 .global canopus_band9_cave_barrier

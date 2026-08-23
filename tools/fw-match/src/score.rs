@@ -37,7 +37,11 @@ impl LayerScores {
 
     /// Composite without the size prior (for final ranking clarity).
     pub fn structural(&self) -> f64 {
-        4.0 * self.pattern + 4.0 * self.cfg + 3.0 * self.strings + 1.5 * self.constants + 2.0 * self.degree
+        4.0 * self.pattern
+            + 4.0 * self.cfg
+            + 3.0 * self.strings
+            + 1.5 * self.constants
+            + 2.0 * self.degree
     }
 }
 
@@ -101,14 +105,21 @@ pub fn cfg_score(src: &FunctionRecord, dst: &FunctionRecord) -> f64 {
     } else if src.blocks == 0 || dst.blocks == 0 {
         0.0
     } else {
-        let (a, b) = (src.blocks.min(dst.blocks) as f64, src.blocks.max(dst.blocks) as f64);
+        let (a, b) = (
+            src.blocks.min(dst.blocks) as f64,
+            src.blocks.max(dst.blocks) as f64,
+        );
         a / b
     };
 
     // Normalized block-size multiset overlap: sizes relative to function size.
     fn norm_sizes(f: &FunctionRecord) -> Vec<u64> {
         let total = f.size.max(1);
-        let mut v: Vec<u64> = f.block_offs.iter().map(|b| (b.size * 1024) / total).collect();
+        let mut v: Vec<u64> = f
+            .block_offs
+            .iter()
+            .map(|b| (b.size * 1024) / total)
+            .collect();
         v.sort_unstable();
         v
     }
@@ -147,7 +158,10 @@ pub fn cfg_score(src: &FunctionRecord, dst: &FunctionRecord) -> f64 {
     } else if src.succ.is_empty() || dst.succ.is_empty() {
         0.0
     } else {
-        let (a, b) = (src.succ.len().min(dst.succ.len()) as f64, src.succ.len().max(dst.succ.len()) as f64);
+        let (a, b) = (
+            src.succ.len().min(dst.succ.len()) as f64,
+            src.succ.len().max(dst.succ.len()) as f64,
+        );
         a / b
     };
 
@@ -220,7 +234,10 @@ mod tests {
 
     fn rec(addr: &str, size: u64, insn: u64, blocks: u64, entry: &str) -> FunctionRecord {
         let block_offs: Vec<BlockShape> = (0..blocks)
-            .map(|i| BlockShape { off: i * 8, size: 8 })
+            .map(|i| BlockShape {
+                off: i * 8,
+                size: 8,
+            })
             .collect();
         let succ: Vec<(usize, usize)> = (0..blocks.saturating_sub(1))
             .map(|i| (i as usize, (i + 1) as usize))
@@ -272,7 +289,11 @@ mod tests {
         let a = rec("0x1000", 32, 16, 4, "00f000f8");
         let b = rec("0x5000", 32, 16, 4, "00f000f9");
         let s = score_pair(&a, &b);
-        assert!(s.pattern > 0.5, "pattern {} should tolerate BL offset", s.pattern);
+        assert!(
+            s.pattern > 0.5,
+            "pattern {} should tolerate BL offset",
+            s.pattern
+        );
     }
 
     #[test]

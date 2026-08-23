@@ -251,7 +251,10 @@ mod tests {
         assert_eq!(m[4], 0x00, "literal target must be masked");
         assert_eq!(m[7], 0x00);
         let (matched, total) = masked_compare(&a, &b, &m);
-        assert_eq!(matched, total, "different veneer targets must score identical");
+        assert_eq!(
+            matched, total,
+            "different veneer targets must score identical"
+        );
     }
 
     #[test]
@@ -273,6 +276,9 @@ mod tests {
         let m = entry_mask(&a);
         let (matched, total) = masked_compare(&a, &b, &m);
         assert!(matched < total);
-        assert!(matched < 5, "opcode change must lose masked bits, got {matched}");
+        assert!(
+            matched < 5,
+            "opcode change must lose masked bits, got {matched}"
+        );
     }
 }

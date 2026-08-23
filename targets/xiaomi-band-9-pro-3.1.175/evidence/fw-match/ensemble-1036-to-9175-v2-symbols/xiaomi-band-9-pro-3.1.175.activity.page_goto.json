@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.activity.page_goto",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "page_goto",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int32_t(uint32_t page_key, uint32_t start_data, uint32_t param, uint32_t callbacks)",
+  "proof": {
+    "static": "candidate",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
+  },
+  "entry_address": "0xc1010b0",
+  "callable_address": "0xc1010b1",
+  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=CANDIDATE confidence=0.5316 margin=0.0265",
+  "approval_state": "PENDING"
+}

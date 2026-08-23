@@ -3,8 +3,8 @@
  * target_id: xiaomi-band-10-pro-3.101.043
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
- * revision : 1
- * input_digest: 9a4571fdfed532fc
+ * revision : 3
+ * input_digest: 024e69b5db07475a
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -225,12 +225,12 @@ static inline int canopus_fw_lvx_list_item_update(void * a0, const char * a1, co
 
 typedef void (*canopus_fw_lv_obj_set_hidden_fn)(void *, uint32_t);
 static inline void canopus_fw_lv_obj_set_hidden(void * a0, uint32_t a1) {
-    return ((canopus_fw_lv_obj_set_hidden_fn)(uintptr_t)0xc587c49)(a0, a1);
+    return ((canopus_fw_lv_obj_set_hidden_fn)(uintptr_t)0xc588519)(a0, a1);
 }
 
 typedef void * (*canopus_fw_lv_timer_create_fn)(canopus_lvx_event_cb, uint32_t, void *);
 static inline void * canopus_fw_lv_timer_create(canopus_lvx_event_cb a0, uint32_t a1, void * a2) {
-    return ((canopus_fw_lv_timer_create_fn)(uintptr_t)0xc187dd1)(a0, a1, a2);
+    return ((canopus_fw_lv_timer_create_fn)(uintptr_t)0xc587ed1)(a0, a1, a2);
 }
 
 typedef void * (*canopus_fw_lvx_label_create_fn)(void *);
@@ -364,8 +364,8 @@ static inline void canopus_fw_lvx_msgbox_set_content(void * a0, uint32_t a1, con
     return ((canopus_fw_lvx_msgbox_set_content_fn)(uintptr_t)0xc4ca131)(a0, a1, a2, a3, a4, a5, a6);
 }
 
-/* Recovered global `core_bt_registration_handle` at 0x2013DBE0. */
-#define canopus_fw_core_bt_registration_handle ((uint32_t)(uintptr_t)0x2013DBE0u)
+/* Recovered global `core_bt_registration_handle` at 0x20126734. */
+#define canopus_fw_core_bt_registration_handle ((uint32_t)(uintptr_t)0x20126734u)
 
 typedef void * (*canopus_fw_bt_adapter_get_instance_fn)(void);
 static inline void * canopus_fw_bt_adapter_get_instance(void) {
@@ -402,8 +402,8 @@ static inline uint32_t canopus_fw_bt_l2cap_connect(const void * a0) {
     return ((canopus_fw_bt_l2cap_connect_fn)(uintptr_t)0xc805b0d)(a0);
 }
 
-/* Recovered global `core_bt_adapter_instance` at 0x2013DBE4. */
-#define canopus_fw_core_bt_adapter_instance ((void *)(uintptr_t)0x2013DBE4u)
+/* Recovered global `core_bt_adapter_instance` at 0x20126738. */
+#define canopus_fw_core_bt_adapter_instance ((void *)(uintptr_t)0x20126738u)
 
 typedef int (*canopus_fw_unregister_driver_fn)(const char *);
 static inline int canopus_fw_unregister_driver(const char * a0) {
@@ -479,6 +479,8 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * lv_obj_set_local_style_prop: WITHDRAWN - no veneer may ever be generated
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
+ * lvx_image_set_scale: restricted - not exported until context/ownership approved
+ * lvx_object_add_flag: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
  * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated

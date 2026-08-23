@@ -1,9 +1,10 @@
 //! canopus-target-generated — per-target Rust bindings (CAN-RUST-002 / TGT-006).
 //!
-//! `generated.rs` is produced by
-//! `canopus target generate-rust-bindings xiaomi-band-10-pro-3.101.030` and is
-//! committed so the crate always builds. A regression test in `canopus-core`
-//! fails when the pack changes without regenerating it.
+//! `generated_1036.rs`, `generated_1043.rs`, `generated_9175.rs`,
+//! `generated_1108.rs` and `generated_9132.rs` are produced by
+//! `canopus target generate-rust-bindings <target>` and committed so the crate
+//! always has an exact-target source artifact. A regression test in
+//! `canopus-core` fails when a supported generated pack changes without regenerating it.
 //!
 //! Layout notes: recovered structs are `#[repr(packed)]` with explicit padding,
 //! so `size_of` and `offset_of` reproduce the exact device byte layout on both
@@ -15,38 +16,73 @@
 // Recovered firmware struct names are snake_case on purpose; they mirror the
 // target's own identifiers, so the lint is suppressed crate-wide.
 #![allow(non_camel_case_types)]
+#![allow(non_upper_case_globals)]
 
-// Exactly one target feature must be selected. `generated.rs` is the band-10
-// 3.101.030 bindings; `generated_1036.rs` is band-10 3.101.036;
-// `generated_b9.rs` is the band-9 (3.1.175) bindings; `generated_1108.rs` is
-// the band-11 (4.100.108) bindings.
+// Exactly one target feature must be selected. 036 and 043 are build-supported;
+// 9175, 1108 and 9132 are static candidate binding packs with callable
+// approval still pending.
 #[cfg(all(
-    not(feature = "target-xiaomi-band-10-pro-3-101-030"),
     not(feature = "target-xiaomi-band-10-pro-3-101-036"),
+    not(feature = "target-xiaomi-band-10-pro-3-101-043"),
     not(feature = "target-xiaomi-band-9-pro-3-1-175"),
     not(feature = "target-xiaomi-band-11-4-100-108"),
-    not(feature = "target-xiaomi-band-10-pro-3-101-043")
+    not(feature = "target-xiaomi-band-9-3-1-32")
 ))]
-compile_error!(
-    "canopus-target-generated requires exactly one target feature; supported: \
-     target-xiaomi-band-10-pro-3-101-030, target-xiaomi-band-10-pro-3-101-036, \
-     target-xiaomi-band-9-pro-3-1-175, target-xiaomi-band-11-4-100-108, \
-     target-xiaomi-band-10-pro-3-101-043"
-);
+compile_error!("canopus-target-generated requires exactly one registered target feature");
+#[cfg(any(
+    all(
+        feature = "target-xiaomi-band-10-pro-3-101-036",
+        any(
+            feature = "target-xiaomi-band-10-pro-3-101-043",
+            feature = "target-xiaomi-band-9-pro-3-1-175",
+            feature = "target-xiaomi-band-11-4-100-108",
+            feature = "target-xiaomi-band-9-3-1-32"
+        )
+    ),
+    all(
+        feature = "target-xiaomi-band-10-pro-3-101-043",
+        any(
+            feature = "target-xiaomi-band-9-pro-3-1-175",
+            feature = "target-xiaomi-band-11-4-100-108",
+            feature = "target-xiaomi-band-9-3-1-32"
+        )
+    ),
+    all(
+        feature = "target-xiaomi-band-9-pro-3-1-175",
+        any(
+            feature = "target-xiaomi-band-11-4-100-108",
+            feature = "target-xiaomi-band-9-3-1-32"
+        )
+    ),
+    all(
+        feature = "target-xiaomi-band-11-4-100-108",
+        feature = "target-xiaomi-band-9-3-1-32"
+    )
+))]
+compile_error!("canopus-target-generated requires exactly one target feature");
 
-#[cfg(feature = "target-xiaomi-band-10-pro-3-101-030")]
-include!("generated.rs");
 #[cfg(feature = "target-xiaomi-band-10-pro-3-101-036")]
 include!("generated_1036.rs");
-#[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
-include!("generated_b9.rs");
-#[cfg(feature = "target-xiaomi-band-11-4-100-108")]
-include!("generated_1108.rs");
+
 #[cfg(feature = "target-xiaomi-band-10-pro-3-101-043")]
 include!("generated_1043.rs");
 
-#[cfg(test)]
-#[cfg(not(feature = "target-xiaomi-band-11-4-100-108"))]
+#[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
+include!("generated_9175.rs");
+
+#[cfg(feature = "target-xiaomi-band-11-4-100-108")]
+include!("generated_1108.rs");
+
+#[cfg(feature = "target-xiaomi-band-9-3-1-32")]
+include!("generated_9132.rs");
+
+#[cfg(all(
+    test,
+    any(
+        feature = "target-xiaomi-band-10-pro-3-101-036",
+        feature = "target-xiaomi-band-10-pro-3-101-043"
+    )
+))]
 mod layout_tests {
     use super::*;
     use core::mem::{offset_of, size_of};
@@ -95,29 +131,13 @@ mod layout_tests {
         assert_eq!(offset_of!(launcher_app_record, app_id), 0);
         assert_eq!(offset_of!(launcher_app_record, name), 8);
         assert_eq!(offset_of!(launcher_app_record, flags), 0x14);
-        // descriptor layout differs per target family: band-9 is 60B, band-10
-        // (3.101.030/3.101.036) is 64B.
-        #[cfg(not(feature = "target-xiaomi-band-9-pro-3-1-175"))]
-        {
-            // descriptor: name@8, icon@12, u16 app_id@16, resolver@28, hidden@60.
-            assert_eq!(size_of::<launcher_app_descriptor>(), 64);
-            assert_eq!(offset_of!(launcher_app_descriptor, name), 8);
-            assert_eq!(offset_of!(launcher_app_descriptor, app_id), 16);
-            assert_eq!(offset_of!(launcher_app_descriptor, icon_resolver), 28);
-            assert_eq!(offset_of!(launcher_app_descriptor, hidden_flags), 60);
-        }
-        #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
-        {
-            assert_eq!(size_of::<launcher_app_descriptor>(), 60);
-            assert_eq!(offset_of!(launcher_app_descriptor, package_name), 8);
-            assert_eq!(offset_of!(launcher_app_descriptor, app_id), 16);
-            assert_eq!(
-                offset_of!(launcher_app_descriptor, launcher_metadata_callback),
-                28
-            );
-            assert_eq!(offset_of!(launcher_app_descriptor, page_registry), 44);
-            assert_eq!(offset_of!(launcher_app_descriptor, hidden_flags), 56);
-        }
+        // Band-10 descriptor: name@8, icon@12, u16 app_id@16,
+        // resolver@28, hidden@60.
+        assert_eq!(size_of::<launcher_app_descriptor>(), 64);
+        assert_eq!(offset_of!(launcher_app_descriptor, name), 8);
+        assert_eq!(offset_of!(launcher_app_descriptor, app_id), 16);
+        assert_eq!(offset_of!(launcher_app_descriptor, icon_resolver), 28);
+        assert_eq!(offset_of!(launcher_app_descriptor, hidden_flags), 60);
     }
 
     #[cfg(target_pointer_width = "64")]
@@ -168,46 +188,23 @@ mod layout_tests {
             _tail: [0; 3],
         };
         let _ = (_e, _s, _f, _r);
-        // The launcher app descriptor layout differs per target family.
-        #[cfg(not(feature = "target-xiaomi-band-9-pro-3-1-175"))]
-        {
-            let _d = launcher_app_descriptor {
-                registry_links: 0,
-                package_name: core::ptr::null_mut(),
-                launcher_icon_resource: core::ptr::null_mut(),
-                app_id: 0,
-                flags: 0,
-                _pad_13: [0; 1],
-                owned_string_20: core::ptr::null_mut(),
-                owned_string_24: core::ptr::null_mut(),
-                launcher_metadata_callback: core::ptr::null_mut(),
-                _pad_20: [0; 16],
-                page_registry: core::ptr::null_mut(),
-                _pad_34: [0; 8],
-                hidden_flags: 0,
-                _tail: [0; 3],
-            };
-            let _ = _d;
-        }
-        #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
-        {
-            let _d = launcher_app_descriptor {
-                registry_links: 0,
-                package_name: core::ptr::null_mut(),
-                launcher_icon_resource: core::ptr::null_mut(),
-                app_id: 0,
-                flags: 0,
-                owned_string_20: core::ptr::null_mut(),
-                owned_string_24: core::ptr::null_mut(),
-                launcher_metadata_callback: core::ptr::null_mut(),
-                _pad_20: [0; 0xc],
-                page_registry: core::ptr::null_mut(),
-                _pad_30: [0; 8],
-                hidden_flags: 0,
-                _tail: [0; 3],
-            };
-            let _ = _d;
-        }
+        let _d = launcher_app_descriptor {
+            registry_links: 0,
+            package_name: core::ptr::null_mut(),
+            launcher_icon_resource: core::ptr::null_mut(),
+            app_id: 0,
+            flags: 0,
+            _pad_13: [0; 1],
+            owned_string_20: core::ptr::null_mut(),
+            owned_string_24: core::ptr::null_mut(),
+            launcher_metadata_callback: core::ptr::null_mut(),
+            _pad_20: [0; 16],
+            page_registry: core::ptr::null_mut(),
+            _pad_34: [0; 8],
+            hidden_flags: 0,
+            _tail: [0; 3],
+        };
+        let _ = _d;
     }
 
     #[test]
@@ -226,20 +223,8 @@ mod layout_tests {
 
     #[test]
     fn register_driver_binding_compiles() {
-        // band-10 (3.101.030/3.101.036) register_driver is 4-arg; band-9 is 3-arg.
-        #[cfg(not(feature = "target-xiaomi-band-9-pro-3-1-175"))]
-        let _f: unsafe fn(
-            *const u8,
-            *const core::ffi::c_void,
-            u32,
-            *mut core::ffi::c_void,
-        ) -> i32 = canopus_fw_register_driver;
-        #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
-        let _f: unsafe fn(
-            *const u8,
-            *const core::ffi::c_void,
-            *mut core::ffi::c_void,
-        ) -> i32 = canopus_fw_register_driver;
+        let _f: unsafe fn(*const u8, *const core::ffi::c_void, u32, *mut core::ffi::c_void) -> i32 =
+            canopus_fw_register_driver;
         let _ = _f;
     }
 
@@ -249,38 +234,5 @@ mod layout_tests {
         // This is a compile-time contract: any `canopus_fw_bt_adapter_...`
         // below would fail to compile.
         let _ = (concat!(module_path!(), " for the record"),);
-    }
-}
-
-#[cfg(test)]
-#[cfg(feature = "target-xiaomi-band-11-4-100-108")]
-mod layout_tests_1108 {
-    use super::*;
-
-    #[test]
-    fn thumb_callable_normalizes_entry_and_callable_addresses() {
-        assert_eq!(canopus_thumb_callable(0x0C341B98), 0x0C341B99);
-        assert_eq!(canopus_thumb_callable(0x0C341B99), 0x0C341B99);
-    }
-
-    #[test]
-    fn restricted_callables_are_odd() {
-        for c in [
-            CANOPUS_FW_IOCTL_CALLABLE,
-            CANOPUS_FW_UNLINK_CALLABLE,
-            CANOPUS_FW_RENAME_CALLABLE,
-            CANOPUS_FW_SEM_WAIT_CALLABLE,
-            CANOPUS_FW_SEM_TRYWAIT_CALLABLE,
-            CANOPUS_FW_SEM_POST_CALLABLE,
-            CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE,
-            CANOPUS_FW_APP_INSTALL_CALLABLE,
-            CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE,
-            CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE,
-            CANOPUS_FW_HIDDEN_AND_SHOW_APP_CB_CALLABLE,
-            CANOPUS_FW_SERVICE_MANAGER_REGISTER_CALLABLE,
-            CANOPUS_FW_SERVICE_MANAGER_GET_PROFILE_CALLABLE,
-        ] {
-            assert_eq!(c & 1, 1, "callable {c:#x} must be odd (Thumb)");
-        }
     }
 }

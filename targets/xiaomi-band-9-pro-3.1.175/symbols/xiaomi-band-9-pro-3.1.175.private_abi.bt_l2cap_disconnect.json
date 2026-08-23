@@ -5,7 +5,7 @@
   "name": "bt_l2cap_disconnect",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C39E990",
+  "entry_address": "0xc259de4",
   "prototype": "int(const void *)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -18,7 +18,7 @@
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PRIVATE-ABI-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ]
   },
   "policy": "restricted",
@@ -26,11 +26,11 @@
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-PRIVATE-ABI-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "Exact-target target-private ABI migration; address and prototype preserved without promotion"
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
   "approval_state": "PENDING",
-  "notes": "Generated address/callable constant only; semantic use remains in canopus-target-private.",
-  "callable_address": "0x0C39E991"
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "callable_address": "0xc259de5"
 }

@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.nuttx.write",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "write",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int32(int, const void *, uint32_t)",
+  "proof": {
+    "static": "candidate",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-10-pro-3.101.043/evidence/fw-match/ensemble-1036-to-1043-v2.json"
+  },
+  "entry_address": "0xc1d2640",
+  "callable_address": "0xc1d2641",
+  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=REVIEW_REQUIRED confidence=0.8903 margin=0.2905",
+  "approval_state": "PENDING"
+}

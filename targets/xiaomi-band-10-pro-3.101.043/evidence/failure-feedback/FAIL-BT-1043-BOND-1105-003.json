@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "failure_id": "FAIL-BT-1043-BOND-1105-003",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "stage": "bluetooth.l2cap-avdtp.after-bond",
+  "observed_error": {
+    "display": "Bond 3/2 0F -1105",
+    "code": -1105,
+    "module_constant": "ERR_REMOTE",
+    "source": "Canopus-Module-BluetoothAudio/crates/bluetooth-audio-device/src/target/runtime.rs",
+    "reporter_context": "user-reported exact 3.101.043 device extension"
+  },
+  "observation_decode": {
+    "stock_bond_state": 3,
+    "device_bond_state": 2,
+    "pairing_flags": "0x0F",
+    "milestones": [
+      "stock companion Pair Request filter hit",
+      "module Pair Request callback observed",
+      "module Pair Display callback observed",
+      "Classic bond completed"
+    ],
+    "missing_milestone": "mHDT Configuration Request rewrite was not observed"
+  },
+  "branch_scope": "ERR_REMOTE can be emitted by an AVDTP Reject response or by a non-clean signaling L2CAP disconnection. The compact Bond line does not distinguish those branches, but 0x0F proves pairing completed and no mHDT rewrite flag was set before failure.",
+  "root_cause_hypothesis": "The generic mHDT transform previously depended on signaling_cid/media_cid published by firmware connection-confirm callbacks. On 3.101.043 the inbound L2CAP Configuration Request can reach the raw-H4 hook after the wire Connection Response but before the module callback publishes that CID, so the exact 7F 01 01 option is forwarded untouched and the stock parser can reject it as an unknown mandatory option.",
+  "negative_abi_assumptions": [
+    {
+      "role": "mhdt_cid_availability",
+      "expression": "runtime signaling_cid is always published before inbound L2CAP Configuration Request",
+      "reason": "wire Connection Response precedes Configuration, while firmware callback dispatch can lag behind both packets"
+    },
+    {
+      "role": "mhdt_policy_ownership",
+      "expression": "target backend decides whether mHDT compatibility is enabled",
+      "reason": "mHDT packet semantics are target-independent module policy; only the raw-H4 writable seam and stock dispatcher addresses are target-private"
+    }
+  ],
+  "negative_matches": [],
+  "corrective_evidence_id": "EVID-BT-1043-MHDT-002",
+  "corrective_action": "Always install the raw-H4 compatibility hook for every runtime-capable target, learn the local CID directly from a successful inbound L2CAP Connection Response, use that CID hint for the immediately following Configuration Request, and keep only the raw hook seam in target-private backends.",
+  "diagnostic_split": {
+    "pairing_bit_0x80": "raw-H4 compatibility hook installed",
+    "pairing_bit_0x40": "mHDT option rewritten",
+    "expected_after_rewrite": "Bond 3/2 CF",
+    "-1109": "raw-H4 hook installation failed closed before connect"
+  },
+  "status": "HOST_FIXED_DEVICE_RETEST_PENDING",
+  "device_verification": "pending"
+}

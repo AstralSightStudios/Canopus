@@ -89,9 +89,7 @@ impl FunctionRecord {
 
 impl Corpus {
     pub fn function_at(&self, addr: u64) -> Option<&FunctionRecord> {
-        self.functions
-            .iter()
-            .find(|f| f.addr_u64() == addr)
+        self.functions.iter().find(|f| f.addr_u64() == addr)
     }
 
     /// Look up a function by exact address string.

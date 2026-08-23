@@ -25,7 +25,8 @@
   "proof": {
     "static": "confirmed",
     "evidence_ids": [
-      "EVID-BT-1043-CORE-001"
+      "EVID-BT-1043-CORE-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ],
     "device": "not_probed"
   },
@@ -34,10 +35,11 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-BT-1043-CORE-001"
+      "EVID-BT-1043-CORE-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ],
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; core adapter, cpevent, L2CAP owner, and queue-wrapper xref review"
   },
   "approval_state": "APPROVED",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (core_bt_pair_request_callback)"
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (core_bt_pair_request_callback) Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record."
 }

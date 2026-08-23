@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.notification.lvx_notification_insert_message",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "lvx_notification_insert_message",
+  "kind": "function",
+  "entry_address": "0xc4f1c44",
+  "callable_address": "0xc4f1c45",
+  "instruction_set": "thumb",
+  "prototype": "int(const firmware_notification_message *message)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "notification_owner",
+      "system_app_lifecycle_callback"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "message": "borrowed_for_call_then_cloned_with_strings_deep_copied",
+    "image_paths": "path_strings_copied_but_image_files_must_remain_available",
+    "return_value": "zero_or_one_observed_but_exact_failure_contract_not_proved"
+  },
+  "side_effects": [
+    "allocates_and_inserts_notification_record",
+    "may_start_reminder",
+    "may_emit_notification_event_32",
+    "schedules_notification_timer"
+  ],
+  "proof": {
+    "static": "candidate",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
+  },
+  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=CANDIDATE confidence=0.5302 margin=0.0265",
+  "approval_state": "PENDING"
+}

@@ -10,7 +10,8 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-IO-1043-003"
+      "EVID-IO-1043-003",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "policy": "restricted",
@@ -19,11 +20,12 @@
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; exact inverse block-driver inode removal flow",
     "evidence_ids": [
-      "EVID-IO-1043-003"
+      "EVID-IO-1043-003",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "entry_address": "0xc1b009c",
   "callable_address": "0xc1b009d",
-  "notes": "Exact path-only inverse of register_blockdriver; fops and private-data storage may be released only after this call completes.",
+  "notes": "Exact path-only inverse of register_blockdriver; fops and private-data storage may be released only after this call completes. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
   "approval_state": "APPROVED"
 }

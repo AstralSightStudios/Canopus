@@ -8,21 +8,17 @@
   "prototype": "void *",
   "proof": {
     "static": "recovered",
-    "evidence_ids": [
-      "EVID-BT-1043-CORE-001"
-    ],
+    "evidence_ids": ["EVID-BT-1043-PAIR-FILTER-003"],
     "device": "not_probed"
   },
   "policy": "native-full-trust",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
-    "evidence_ids": [
-      "EVID-BT-1043-CORE-001"
-    ],
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; core adapter, cpevent, L2CAP owner, and queue-wrapper xref review"
+    "evidence_ids": ["EVID-BT-1043-PAIR-FILTER-003"],
+    "source": "Exact 3.101.043 IDB sub_C70B058 stock bts adapter initialization and sub_C709D7C unregister lifecycle."
   },
-  "entry_address": "0x2013DBE4",
+  "entry_address": "0x20126738",
   "approval_state": "APPROVED",
-  "notes": "Exact 3.101.043 core Bluetooth adapter instance written by sub_CA40ED4 and returned by sub_CA40F68."
+  "notes": "Corrected after FAIL-BT-1043-BOND-1107-001 and re-audited after FAIL-BT-1043-BOND-1113-002: this is the stock bts adapter; adapter+120 owns a 0x24-byte callbacks_list manager, not a descriptor-bearing client. 0x2013DBE4 is a different miwear cpevent adapter."
 }

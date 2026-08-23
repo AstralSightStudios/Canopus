@@ -18,7 +18,8 @@
   "proof": {
     "static": "confirmed",
     "evidence_ids": [
-      "EVID-BT-1043-ADAPTER-001"
+      "EVID-BT-1043-ADAPTER-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ],
     "device": "not_probed"
   },
@@ -27,10 +28,11 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-BT-1043-ADAPTER-001"
+      "EVID-BT-1043-ADAPTER-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ],
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; adapter command wrappers and stock caller ABI review"
   },
   "approval_state": "APPROVED",
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (bt_adapter_get_instance)"
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (bt_adapter_get_instance) Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record."
 }

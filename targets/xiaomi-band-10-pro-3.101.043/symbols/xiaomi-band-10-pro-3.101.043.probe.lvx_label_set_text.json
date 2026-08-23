@@ -24,7 +24,8 @@
     "device": "not_probed",
     "host_tested": false,
     "evidence_ids": [
-      "EVID-UI-WIDGET-001"
+      "EVID-UI-WIDGET-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "policy": "native-full-trust",
@@ -32,10 +33,11 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-UI-WIDGET-001"
+      "EVID-UI-WIDGET-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ],
     "source": "exact 3.101.043 IDB stock callsites sub_C4C3804 and sub_C56D5B0"
   },
   "approval_state": "APPROVED",
-  "notes": "Stock callers load a retained label into R0 and a text pointer into R1 before calling sub_C589490. The former corpus candidate sub_C588A70 is called with a packed color/property value and selector, not a text pointer."
+  "notes": "Stock callers load a retained label into R0 and a text pointer into R1 before calling sub_C589490. The former corpus candidate sub_C588A70 is called with a packed color/property value and selector, not a text pointer. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record."
 }

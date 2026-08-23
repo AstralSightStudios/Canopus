@@ -10,7 +10,7 @@
 //! failing CI on a machine that has not run the extraction.
 
 use canopus_fw_match::corpus::load_corpus;
-use canopus_fw_match::engine::{confirm, load_source_symbols, match_symbols, EngineConfig};
+use canopus_fw_match::engine::{EngineConfig, confirm, load_source_symbols, match_symbols};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -30,8 +30,12 @@ fn syms_by_name(dir: &std::path::Path) -> HashMap<String, u64> {
         if v.get("kind").and_then(|k| k.as_str()) != Some("function") {
             continue;
         }
-        let Some(name) = v.get("name").and_then(|n| n.as_str()) else { continue };
-        let Some(addr) = v.get("entry_address").and_then(|a| a.as_str()) else { continue };
+        let Some(name) = v.get("name").and_then(|n| n.as_str()) else {
+            continue;
+        };
+        let Some(addr) = v.get("entry_address").and_then(|a| a.as_str()) else {
+            continue;
+        };
         if let Ok(a) = u64::from_str_radix(addr.trim_start_matches("0x"), 16) {
             out.insert(name.to_string(), a);
         }
@@ -45,6 +49,12 @@ fn corpora_path() -> PathBuf {
 
 #[test]
 fn match_036_into_030_against_ground_truth() {
+    let root = repo();
+    let legacy_target_dir = root.join("targets/xiaomi-band-10-pro-3.101.030");
+    if !legacy_target_dir.exists() {
+        eprintln!("SKIP: legacy 030 target pack was intentionally removed");
+        return;
+    }
     let corpus_dir = corpora_path();
     let src_path = corpus_dir.join("xiaomi-band-10-pro-3.101.036.json");
     let dst_path = corpus_dir.join("xiaomi-band-10-pro-3.101.030.json");
@@ -55,7 +65,6 @@ fn match_036_into_030_against_ground_truth() {
         );
         return;
     }
-    let root = repo();
     let symbols_dir = root.join("targets/xiaomi-band-10-pro-3.101.036/symbols");
     let target_syms_dir = root.join("targets/xiaomi-band-10-pro-3.101.030/symbols");
 
@@ -72,7 +81,9 @@ fn match_036_into_030_against_ground_truth() {
     let by_name: HashMap<&str, &canopus_fw_match::ga::MatchResult> =
         results.iter().map(|r| (r.name.as_str(), r)).collect();
     for (name, gt) in &ground_truth {
-        let Some(r) = by_name.get(name.as_str()) else { continue };
+        let Some(r) = by_name.get(name.as_str()) else {
+            continue;
+        };
         shared += 1;
         if let Some(pred) = &r.target_addr {
             if let Ok(p) = u64::from_str_radix(pred.trim_start_matches("0x"), 16) {

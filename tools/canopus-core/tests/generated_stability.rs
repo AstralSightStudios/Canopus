@@ -17,7 +17,7 @@ fn repo_root() -> PathBuf {
 }
 
 fn pack_dir() -> PathBuf {
-    repo_root().join("targets/xiaomi-band-10-pro-3.101.030")
+    repo_root().join("targets/xiaomi-band-10-pro-3.101.036")
 }
 
 fn load_pack() -> canopus_core::model::TargetPack {
@@ -43,13 +43,13 @@ fn rust_bindings_regenerate_identically() {
     };
     let regenerated = r#gen.generate();
     let committed = std::fs::read_to_string(
-        repo_root().join("sdk/rust/canopus-target-generated/src/generated.rs"),
+        repo_root().join("sdk/rust/canopus-target-generated/src/generated_1036.rs"),
     )
     .unwrap();
     assert_eq!(
         committed, regenerated,
         "generated Rust bindings are stale; run `canopus target generate-rust-bindings \
-         xiaomi-band-10-pro-3.101.030` and copy into sdk/rust/canopus-target-generated/src/"
+         xiaomi-band-10-pro-3.101.036` and copy into sdk/rust/canopus-target-generated/src/"
     );
 }
 
@@ -67,7 +67,7 @@ fn c_veneer_regenerates_identically() {
     assert_eq!(
         committed, regenerated,
         "generated veneer header is stale; run `canopus target generate-veneer \
-         xiaomi-band-10-pro-3.101.030`"
+         xiaomi-band-10-pro-3.101.036`"
     );
 }
 
@@ -79,12 +79,20 @@ fn additional_target_artifacts_regenerate_identically() {
             "sdk/rust/canopus-target-generated/src/generated_1036.rs",
         ),
         (
-            "xiaomi-band-9-pro-3.1.175",
-            "sdk/rust/canopus-target-generated/src/generated_b9.rs",
-        ),
-        (
             "xiaomi-band-10-pro-3.101.043",
             "sdk/rust/canopus-target-generated/src/generated_1043.rs",
+        ),
+        (
+            "xiaomi-band-9-pro-3.1.175",
+            "sdk/rust/canopus-target-generated/src/generated_9175.rs",
+        ),
+        (
+            "xiaomi-band-11-4.100.108",
+            "sdk/rust/canopus-target-generated/src/generated_1108.rs",
+        ),
+        (
+            "xiaomi-band-9-3.1.32",
+            "sdk/rust/canopus-target-generated/src/generated_9132.rs",
         ),
     ];
 
@@ -188,10 +196,11 @@ fn parse_address(value: &str) -> usize {
 #[test]
 fn private_abi_records_have_exact_thumb_callables() {
     for target in [
-        "xiaomi-band-10-pro-3.101.030",
         "xiaomi-band-10-pro-3.101.036",
-        "xiaomi-band-9-pro-3.1.175",
         "xiaomi-band-10-pro-3.101.043",
+        "xiaomi-band-9-pro-3.1.175",
+        "xiaomi-band-11-4.100.108",
+        "xiaomi-band-9-3.1.32",
     ] {
         let dir = repo_root().join("targets").join(target);
         let (symbols, types) = load_records(&dir).unwrap();
@@ -327,7 +336,7 @@ fn generated_thumb_callable_normalizes_entry_and_callable() {
     );
     assert!(text.contains("entry_or_callable | 1usize"));
     assert!(text.contains("pub const CANOPUS_FW_CLOCK_GETTIME_CALLABLE: usize"));
-    assert!(text.contains("canopus_thumb_callable(0x0C1EC8B5usize)"));
+    assert!(text.contains("canopus_thumb_callable(0xc1ec8b5usize)"));
     assert!(text.contains("core::mem::transmute(CANOPUS_FW_CLOCK_GETTIME_CALLABLE)"));
 }
 
@@ -405,15 +414,15 @@ fn identity_guard_uses_pack_version_build() {
         types: &types,
     };
     let text = r#gen.generate();
-    assert!(text.contains("b\"3.101.030\""));
-    assert!(text.contains("b\"CONBINE_LTALM078_T3.101.030_06011854\""));
+    assert!(text.contains("b\"3.101.036\""));
+    assert!(text.contains("b\"CONBINE_LTALM078_T3.101.036_06242053\""));
     // Generated indirect calls expose and consume the shared normalized callable
     // constant, so callback-table comparisons never take the host wrapper address.
     assert!(text.contains("pub const CANOPUS_FW_APP_LOOKUP_CALLABLE: usize"));
-    assert!(text.contains("canopus_thumb_callable(0x0CA50FD5usize)"));
+    assert!(text.contains("canopus_thumb_callable(0xca5107dusize)"));
     assert!(text.contains("transmute(CANOPUS_FW_APP_LOOKUP_CALLABLE)"));
     assert!(text.contains("pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize"));
-    assert!(text.contains("canopus_thumb_callable(0x0C1A0D51usize)"));
+    assert!(text.contains("canopus_thumb_callable(0xc1a0d51usize)"));
     assert!(text.contains("transmute(CANOPUS_FW_REGISTER_DRIVER_CALLABLE)"));
 }
 

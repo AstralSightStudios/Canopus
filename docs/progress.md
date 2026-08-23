@@ -15,7 +15,7 @@
 | 0 项目边界与 schema | READY | 待独立仓库确认（BLK-001） |
 | 1 Host CLI 与 target registry | READY（host） | `canopus` CLI：registry/schema/veneer/bindings/verify/package/re |
 | 2 C ABI 与 portable runtime | READY（host） | control/lifecycle/resource/diagnostics/module/protocol/supervisor host tests |
-| 3 首个 target adapter | READY（host） | xiaomi-band-10-pro-3.101.030 target pack、veneer、bindings |
+| 3 首个 target adapter | READY（host） | xiaomi-band-10-pro-3.101.036 trusted pack、3.101.043 promoted pack、以及 9/9 Pro/11 新生成 static candidate packs、veneer、bindings |
 | 4 C module build/package | READY（host） | hello 模块过 verifier；package build/sign/verify 闭环 |
 | 5 Device supervisor MVP | HOST-FIXED/DEVICE-PENDING | `/dev/canopus` 注册、v2 transport、生命周期、safe mode host 通过 |
 | 6 Native App 与 Launcher adapter | BLOCKED-EVIDENCE | launcher 注册/注销 ABI 需真机证据（CAN-P0-007） |
@@ -56,3 +56,9 @@
 |---|---|---|
 | 2026-08-05 | 建立独立仓库 /Volumes/EXT0/Canopus | AGPL-3.0；CLI 采用 Rust；target id 重命名见 ADR-CAN-001 |
 | 2026-08-05 | P0/P1 host 整改批次（见上） | 每项一个 commit、测试先行、`./scripts/ci.sh` 全绿 |
+| 2026-08-23 | 043 BluetoothAudio Bond `-1107` 第一轮静态纠错 | 撤销错误的 036 16-word/global ABI，恢复 043 stock bts globals 与 17-word descriptor；中间提出的 adapter+120/client+72 布局随后被 `-1113` 真机反馈推翻，不是闭环 |
+| 2026-08-23 | 043 BluetoothAudio Bond `-1113` host 修复，device retest pending | exact IDB 证明 adapter+120 是仅 0x24-byte 的 callbacks_list manager，registration handle 才是 `{cookie, descriptor}` 8-byte node；移除 manager+72 越界访问，改为 register mirror → unregister original → 更新 stock handle；新增 `-1114..-1117` 分支诊断与 failure evidence；无真机通过结论 |
+| 2026-08-23 | 043 BluetoothAudio `Bond 3/2 0F -1105` 通用 mHDT 修复，device retest pending | 配对已成功但 mHDT rewrite 未命中；删除 target policy bool 与 target-private 重复 packet transform，portable core 从 wire Connection Response 预取 local CID，避免 Configuration 早于 firmware callback 的调度竞态；新增 hook-installed 0x80 / rewrite-hit 0x40 诊断；无真机通过结论 |
+| 2026-08-23 | 删除旧 030/9-Pro/11 pack，重提取 9/9-Pro/11 corpus 并生成新 static candidate packs | exact IDB SHA 绑定；036→目标 ensemble 各 123/126；ABI、loader、真机 gate pending |
+| 2026-08-23 | 三个新 target 接入 BluetoothAudio 与 LyraPlayer compile-only 构建矩阵 | 6 个 exact-target ELF 均通过 verifier（0 undefined）；candidate facade 无固件 callable、identity gate fail-closed；无真机结论 |
+| 2026-08-23 | 按 exact firmware 分离 Band 9/9 Pro NSH mw/exec bootstrap profile | 9175/9132：各自 NSH/VFS/heap/MPU/SRAM cave 静态恢复，两个 exact-target host-check、Lua success/fault smoke、portable ELF loader harness 通过；当前 9175 遗留 Supervisor 被新 verifier 拒绝，9132 尚无重建 Supervisor，release staging 均 fail-closed；无真机结论 |

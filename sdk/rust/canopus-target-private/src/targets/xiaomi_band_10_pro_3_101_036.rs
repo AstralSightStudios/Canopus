@@ -13,7 +13,7 @@
 //! `unsafe`; the module is responsible for state, ownership, and lifecycle
 //! discipline.
 
-pub const TARGET_ID: &str = "xiaomi-band-10-pro-3.101.036";
+pub use crate::generated_symbols::TARGET_ID;
 
 pub use canopus_target_generated::{
     canopus_fw_clock_gettime, canopus_fw_register_driver, canopus_fw_unregister_driver,
@@ -102,37 +102,11 @@ pub unsafe fn bt_adapter_get_state(adapter: *mut core::ffi::c_void) -> i32 {
     unsafe { canopus_target_generated::canopus_fw_bt_adapter_get_state(adapter) }
 }
 
-/// Starts discovery. Returns 0 on success, negative errno otherwise.
-pub unsafe fn bt_discovery_start(adapter: *mut core::ffi::c_void, timeout: i32) -> i32 {
-    type F = extern "C" fn(*mut core::ffi::c_void, i32) -> i32;
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            canopus_target_generated::CANOPUS_FW_BT_DISCOVERY_START_CALLABLE,
-        ))
-    };
-    f(adapter, timeout)
-}
+pub use crate::generated_symbols::raw_bt_discovery_start as bt_discovery_start;
 
-/// Stops discovery. Returns 0 on success, negative errno otherwise.
-pub unsafe fn bt_discovery_stop(adapter: *mut core::ffi::c_void) -> i32 {
-    type F = extern "C" fn(*mut core::ffi::c_void) -> i32;
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            canopus_target_generated::CANOPUS_FW_BT_DISCOVERY_STOP_CALLABLE,
-        ))
-    };
-    f(adapter)
-}
+pub use crate::generated_symbols::raw_bt_discovery_stop as bt_discovery_stop;
 
-pub unsafe fn bt_adapter_set_scan_mode(scan_mode: i32, bondable: i32) -> i32 {
-    type F = extern "C" fn(i32, i32) -> i32;
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            canopus_target_generated::CANOPUS_FW_BT_ADAPTER_SET_SCAN_MODE_CALLABLE,
-        ))
-    };
-    f(scan_mode, bondable)
-}
+pub use crate::generated_symbols::raw_bt_adapter_set_scan_mode as bt_adapter_set_scan_mode;
 
 pub unsafe fn bt_adapter_get_scan_mode() -> i32 {
     unsafe { canopus_target_generated::canopus_fw_bt_adapter_get_scan_mode() }
@@ -161,42 +135,16 @@ pub unsafe fn bt_pair_display_reply(
     }
 }
 
-/// Reads the adapter bond-state bitmask for `address`.
-pub unsafe fn bt_get_bond_state(address: *const u8) -> u32 {
-    type F = extern "C" fn(*const u8) -> u32;
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            canopus_target_generated::CANOPUS_FW_BT_GET_BOND_STATE_CALLABLE,
-        ))
-    };
-    f(address)
-}
+pub use crate::generated_symbols::raw_bt_get_bond_state as bt_get_bond_state;
 
 /// Reads the exact device-record pairing state for `address` on `transport`.
 pub unsafe fn bt_get_pairing_state(address: *const u8, transport: u32) -> u32 {
     unsafe { canopus_target_generated::canopus_fw_bt_get_pairing_state(address, transport) }
 }
 
-/// Submits a bond for `address` on `transport`. Returns 0 on success.
-pub unsafe fn bt_create_bond(address: *const u8, transport: u32) -> i32 {
-    type F = extern "C" fn(*const u8, u32) -> i32;
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            canopus_target_generated::CANOPUS_FW_BT_CREATE_BOND_PRIVATE_CALLABLE,
-        ))
-    };
-    f(address, transport)
-}
+pub use crate::generated_symbols::raw_bt_create_bond_private as bt_create_bond;
 
-pub unsafe fn bt_remove_bond(address: *const u8, transport: u32) -> i32 {
-    type F = extern "C" fn(*const u8, u32) -> i32;
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            canopus_target_generated::CANOPUS_FW_BT_REMOVE_BOND_PRIVATE_CALLABLE,
-        ))
-    };
-    f(address, transport)
-}
+pub use crate::generated_symbols::raw_bt_remove_bond_private as bt_remove_bond;
 
 /// `create_bond` returns 2 when the adapter lifecycle byte is not READY (4);
 /// this is a retriable precondition, not a submission.
@@ -207,6 +155,9 @@ const CORE_BT_PAIR_REQUEST_SLOT: usize = 5;
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum PairRequestFilterError {
     Policy,
+    DescriptorUnavailable,
+    DescriptorMismatch,
+    PairSlotMismatch,
     Allocation,
     Registration,
 }
@@ -233,7 +184,7 @@ pub unsafe fn bt_install_pair_request_filter(
         return Ok(None);
     }
     if unsafe { *stock.add(CORE_BT_PAIR_REQUEST_SLOT) } != original {
-        return Err(PairRequestFilterError::Policy);
+        return Err(PairRequestFilterError::PairSlotMismatch);
     }
     let mirror = unsafe { bt_alloc((CALLBACK_WORDS * 4) as u32) } as *mut u32;
     if mirror.is_null() {
@@ -537,9 +488,7 @@ pub unsafe fn bt_l2cap_owner() -> *mut core::ffi::c_void {
 /// GAP host receive callback used for inbound H4 packets.
 pub type BtGapTransportReceive = extern "C" fn(*mut core::ffi::c_void, *mut u8, i32) -> i32;
 
-/// This exact firmware needs the BES mHDT compatibility filter and exposes a
-/// statically confirmed raw-H4 receive seam.
-pub const HCI_RECEIVE_HOOK_REQUIRED: bool = true;
+/// Exact-target raw-H4 receive seam used by module-owned compatibility policy.
 
 const GAP_HOST_RECEIVE_SLOT: usize = canopus_target_generated::canopus_fw_gap_host_receive_slot;
 const GAP_HOST_STOCK_RECEIVE: usize =
@@ -570,87 +519,6 @@ pub unsafe fn bt_gap_stock_receive(
 ) -> i32 {
     let receive: BtGapTransportReceive = unsafe { core::mem::transmute(GAP_HOST_STOCK_RECEIVE) };
     receive(state, packet, packet_length)
-}
-
-/// Removes the exact BES mHDT capability option (`7F 01 01`) from an inbound
-/// Configuration Request for `local_cid`, leaving all standard options intact.
-/// The stock parser in this firmware was built without mHDT support and would
-/// otherwise reject this peer capability as an unknown mandatory option.
-///
-/// The input excludes the H4 type byte. On success, ACL/L2CAP/command lengths
-/// are reduced in place and the returned value is the new ACL packet length.
-pub fn strip_l2cap_mhdt_option(payload: &mut [u8], local_cid: u16) -> Option<usize> {
-    const ACL_HEADER_SIZE: usize = 4;
-    const L2CAP_HEADER_SIZE: usize = 4;
-    const SIGNALING_CID: u16 = 1;
-    const CONFIGURATION_REQUEST: u8 = 0x04;
-    const MHDT_TYPE: u8 = 0x7F;
-    const MHDT_LENGTH: u8 = 1;
-    const MHDT_SUPPORTED: u8 = 1;
-    const MHDT_OPTION_SIZE: usize = 3;
-
-    if local_cid <= 0x3F || payload.len() < ACL_HEADER_SIZE + L2CAP_HEADER_SIZE {
-        return None;
-    }
-    // Only an ACL start packet carries the L2CAP header. The observed mHDT
-    // request is a complete 19-byte ACL payload (PB=2); continuation fragments
-    // are forwarded untouched rather than being misparsed as new L2CAP SDUs.
-    let packet_boundary = (u16::from_le_bytes([payload[0], payload[1]]) >> 12) & 0x3;
-    if !matches!(packet_boundary, 0 | 2) {
-        return None;
-    }
-    let acl_length = u16::from_le_bytes([payload[2], payload[3]]) as usize;
-    let acl_end = ACL_HEADER_SIZE.checked_add(acl_length)?;
-    if acl_end > payload.len() || acl_length < L2CAP_HEADER_SIZE {
-        return None;
-    }
-    let l2cap_length = u16::from_le_bytes([payload[4], payload[5]]) as usize;
-    let l2cap_end = (ACL_HEADER_SIZE + L2CAP_HEADER_SIZE).checked_add(l2cap_length)?;
-    if u16::from_le_bytes([payload[6], payload[7]]) != SIGNALING_CID || l2cap_end > acl_end {
-        return None;
-    }
-
-    let mut command = ACL_HEADER_SIZE + L2CAP_HEADER_SIZE;
-    while command + 4 <= l2cap_end {
-        let command_length =
-            u16::from_le_bytes([payload[command + 2], payload[command + 3]]) as usize;
-        let command_end = command.checked_add(4 + command_length)?;
-        if command_end > l2cap_end {
-            return None;
-        }
-        if payload[command] == CONFIGURATION_REQUEST && command_length >= 4 {
-            let destination_cid = u16::from_le_bytes([payload[command + 4], payload[command + 5]]);
-            let flags = u16::from_le_bytes([payload[command + 6], payload[command + 7]]);
-            if destination_cid == local_cid && flags == 0 {
-                let mut option = command + 8;
-                while option + 2 <= command_end {
-                    let option_length = payload[option + 1] as usize;
-                    let option_end = option.checked_add(2 + option_length)?;
-                    if option_end > command_end {
-                        return None;
-                    }
-                    if payload[option] == MHDT_TYPE
-                        && payload[option + 1] == MHDT_LENGTH
-                        && payload[option + 2] == MHDT_SUPPORTED
-                    {
-                        payload.copy_within(option_end..acl_end, option);
-                        payload[acl_end - MHDT_OPTION_SIZE..acl_end].fill(0);
-                        let new_command_length = command_length - MHDT_OPTION_SIZE;
-                        let new_l2cap_length = l2cap_length - MHDT_OPTION_SIZE;
-                        let new_acl_length = acl_length - MHDT_OPTION_SIZE;
-                        payload[command + 2..command + 4]
-                            .copy_from_slice(&(new_command_length as u16).to_le_bytes());
-                        payload[4..6].copy_from_slice(&(new_l2cap_length as u16).to_le_bytes());
-                        payload[2..4].copy_from_slice(&(new_acl_length as u16).to_le_bytes());
-                        return Some(acl_end - MHDT_OPTION_SIZE);
-                    }
-                    option = option_end;
-                }
-            }
-        }
-        command = command_end;
-    }
-    None
 }
 
 // ---------------------------------------------------------------------------
@@ -1676,30 +1544,5 @@ mod tests {
             );
         }
         assert_eq!(THIRD_PARTY_PAYLOAD_CAPACITY, 8192);
-    }
-
-    #[test]
-    fn mhdt_filter_only_changes_exact_target_configuration_request() {
-        let original = [
-            0x81, 0x20, 0x13, 0x00, 0x0F, 0x00, 0x01, 0x00, 0x04, 0x25, 0x0B, 0x00, 0x41, 0x00,
-            0x00, 0x00, 0x01, 0x02, 0x04, 0x0B, 0x7F, 0x01, 0x01,
-        ];
-        let mut continuation = original;
-        continuation[1] = 0x10;
-        assert_eq!(strip_l2cap_mhdt_option(&mut continuation, 0x0041), None);
-        assert_eq!(continuation[20..23], [0x7F, 0x01, 0x01]);
-
-        let mut wrong_cid = original;
-        assert_eq!(strip_l2cap_mhdt_option(&mut wrong_cid, 0x0042), None);
-        assert_eq!(wrong_cid, original);
-
-        let mut request = original;
-        assert_eq!(strip_l2cap_mhdt_option(&mut request, 0x0041), Some(20));
-        assert_eq!(&request[2..4], &[0x10, 0x00]);
-        assert_eq!(&request[4..6], &[0x0C, 0x00]);
-        assert_eq!(&request[10..12], &[0x08, 0x00]);
-        assert_eq!(&request[16..20], &[0x01, 0x02, 0x04, 0x0B]);
-        assert_eq!(&request[20..23], &[0, 0, 0]);
-        assert_eq!(strip_l2cap_mhdt_option(&mut request[..20], 0x0041), None);
     }
 }

@@ -7,7 +7,7 @@
   "instruction_set": "n/a",
   "prototype": "const uint32_t[16]",
   "proof": {
-    "static": "withheld",
+    "static": "candidate",
     "device": "not_probed",
     "evidence_ids": [
       "EVID-BT-1043-CORE-001"

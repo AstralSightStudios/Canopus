@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.bt-client.bt_adapter_register_hfp_ag_callbacks",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "bt_adapter_register_hfp_ag_callbacks",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *, const void *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+  },
+  "entry_address": "0xc1faeca",
+  "callable_address": "0xc1faecb",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
+}

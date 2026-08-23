@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "failure_id": "FAIL-BT-1043-BOND-1113-002",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "stage": "bluetooth.bond.submit_bond.install_core_pair_filter",
+  "observed_error": {
+    "display": "Bond 1/0 00 -1113",
+    "code": -1113,
+    "module_constant": "ERR_CORE_POLICY",
+    "source": "Canopus-Module-BluetoothAudio/crates/bluetooth-audio-device/src/target/bluetooth.rs",
+    "reporter_context": "user-reported exact 3.101.043 device extension"
+  },
+  "observed_branch_scope": "The affected build emitted -1113 only when the manager+72 descriptor read was null or its word 5 differed from 0x0C709E91. The device display alone does not distinguish those two branches.",
+  "root_cause": "EVID-BT-1043-PAIR-FILTER-002 misread adapter+120 as a client with a descriptor pointer at +72. Exact IDB re-audit proves adapter+120 points to a callbacks_list manager allocated by sub_C3A9688 with size 0x24. sub_C3A96EC separately allocates and returns an 8-byte registration node {cookie, descriptor}; dword_20126734 is that node pointer and node+4 owns off_2CD4A744. Reading or writing manager+72 is therefore out of bounds and caused the pre-bond policy failure, with possible heap corruption if the accidental slot check ever passed.",
+  "negative_abi_assumptions": [
+    {
+      "role": "stock_callback_descriptor_owner",
+      "expression": "*(*(core_bt_adapter_instance + 120) + 72)",
+      "reason": "adapter+120 is a 0x24-byte callbacks_list manager; +72 is outside the allocation and is not a descriptor field"
+    },
+    {
+      "role": "stock_callback_registration_handle",
+      "expression": "core_bt_registration_handle is an opaque token unrelated to descriptor ownership",
+      "reason": "sub_C3A96EC returns the exact 8-byte registration-node pointer and sub_C3A9770 removes that same pointer"
+    }
+  ],
+  "negative_matches": [],
+  "corrective_evidence_id": "EVID-BT-1043-PAIR-FILTER-003",
+  "corrective_action": "Validate the exact registration node, create a resident 17-word mirror, register it through the firmware API, unregister the original node, and update dword_20126734 only after both operations succeed. Keep descriptor identity and Pair Request slot checks fail-closed.",
+  "diagnostic_split": {
+    "-1113": "unsupported target policy",
+    "-1114": "registration descriptor unavailable",
+    "-1115": "registration cookie or descriptor identity mismatch",
+    "-1116": "Pair Request slot mismatch",
+    "-1117": "firmware mirror registration or original-node removal failure"
+  },
+  "required_checks": [
+    "Never write an internal manager offset unless allocation bounds and a writer/reader lifecycle prove that field.",
+    "Treat registration return values as candidate ownership objects and trace their allocator, fields, lookup predicate, and destructor before classifying them as opaque handles.",
+    "Keep module-local diagnostics separate from firmware bt_create_bond return values.",
+    "Do not mark the correction device-verified until an exact-target retest passes."
+  ],
+  "status": "HOST_FIXED_DEVICE_RETEST_PENDING",
+  "device_verification": "pending"
+}

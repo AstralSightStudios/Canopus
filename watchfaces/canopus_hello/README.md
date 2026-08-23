@@ -35,7 +35,7 @@ python3 scripts/build-module-installer-receipt.py \
   --module-id canopus_hello \
   --version 1 \
   --lifecycle 0 \
-  --target-id xiaomi-band-10-pro-3.101.030 \
+  --target-id xiaomi-band-10-pro-3.101.036 \
   --firmware-sha256 f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b \
   --private-key /secure/path/module-installer-ed25519.pem \
   --output watchfaces/canopus_hello/receipt.bin
@@ -48,7 +48,7 @@ watchface package is assembled.
 
 Current target lock:
 
-- Target: `xiaomi-band-10-pro-3.101.030`
+- Target: `xiaomi-band-10-pro-3.101.036`
 - Firmware SHA-256:
   `f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b`
 - Receipt wire format: CMI1, 256 bytes, 192-byte signed prefix

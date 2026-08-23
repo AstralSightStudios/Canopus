@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.miwear.interconnect_send",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "interconnect_send",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc368810",
+  "callable_address": "0xc368811",
+  "prototype": "int(void *, const char *, const canopus_interconnect_message *, canopus_interconnect_send_done, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "connection_framework_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "return_value": "0_on_acceptance_else_negative_errno"
+  },
+  "side_effects": [
+    "queues_one_message_to_named_connection_or_broadcast"
+  ],
+  "proof": {
+    "static": "candidate",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-11-4.100.108/evidence/fw-match/ensemble-1036-to-1108-v2.json"
+  },
+  "approval_state": "PENDING",
+  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=CANDIDATE confidence=0.5424 margin=0.0225"
+}

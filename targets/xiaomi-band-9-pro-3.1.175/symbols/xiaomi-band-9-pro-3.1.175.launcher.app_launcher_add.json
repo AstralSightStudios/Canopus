@@ -4,35 +4,43 @@
   "target_id": "xiaomi-band-9-pro-3.1.175",
   "name": "app_launcher_add",
   "kind": "function",
+  "entry_address": "0xc1a3720",
+  "callable_address": "0xc1a3721",
   "instruction_set": "thumb",
-  "entry_address": "0x0C2A7CB8",
-  "callable_address": "0x0C2A7CB9",
-  "prototype": "int(uint16_t)",
+  "prototype": "int(uint16_t app_id)",
   "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "launcher_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "value",
+    "return_value": "implementation_defined"
+  },
+  "side_effects": [
+    "looks_up_installed_descriptor_by_app_id",
+    "adds_app_to_runtime_list",
+    "writes_launcher_db",
+    "adds_icon"
+  ],
   "proof": {
     "static": "recovered",
     "evidence_ids": [
-      "EVID-APP-005"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-APP-005"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C2A7CB8; app_launcher_add log string"
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int(uint16_t)",
-    "ownership": "caller-owned",
-    "thread": "launcher_owner",
-    "device_probe": "pending"
-  },
-  "notes": "band-9 launcher add; registers a launcher icon for a registered app."
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
 }

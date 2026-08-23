@@ -1,6 +1,6 @@
 #!/bin/sh
 # Builds the Canopus supervisor and Manager backend for a selected target.
-# Select with CANOPUS_TARGET; defaults to xiaomi-band-10-pro-3.101.030.
+# Select with CANOPUS_TARGET; defaults to the trusted 3.101.036 target.
 #
 # Uses the real device platform (register /dev/canopus via the stock
 # register_driver, exactly like btpatch registers /dev/btpatch) so the
@@ -9,16 +9,20 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-TARGET_ID=${CANOPUS_TARGET:-xiaomi-band-10-pro-3.101.030}
+TARGET_ID=${CANOPUS_TARGET:-xiaomi-band-10-pro-3.101.036}
 LOADER_SRCS=""
 LOADER_OBJECTS=""
 case "$TARGET_ID" in
-    xiaomi-band-10-pro-3.101.030|xiaomi-band-10-pro-3.101.036|xiaomi-band-10-pro-3.101.043)
+    xiaomi-band-10-pro-3.101.036|xiaomi-band-10-pro-3.101.043)
         MANAGER_BACKEND="manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
+        PROD_FAMILY=xiaomi-band-10-pro
+        MAX_SIZE=73728
         ;;
-    xiaomi-band-9-pro-3.1.175)
+    xiaomi-band-9-3.1.32)
         MANAGER_BACKEND="manager/target/lvgl_v8/canopus_manager_target_lvgl_v8.c"
         LOADER_SRCS="runtime/loader/canopus_arm_reloc.c runtime/loader/canopus_elf32_loader.c"
+        PROD_FAMILY=xiaomi-band-9
+        MAX_SIZE=98304
         ;;
     *)
         echo "error: unsupported supervisor target: $TARGET_ID" >&2
@@ -34,12 +38,8 @@ OUT="$ROOT/watchfaces/canopus-installer/build/$TARGET_ID"
 if [ -n "$LOADER_SRCS" ]; then
     LOADER_OBJECTS="$OUT/canopus_arm_reloc.o $OUT/canopus_elf32_loader.o"
 fi
-# Stock modlib has no fixed insertion ceiling; retain a conservative transport
-# bound with room for the Manager's per-row firmware callbacks.
-case "$TARGET_ID" in
-    xiaomi-band-9-pro-3.1.175) MAX_SIZE=98304 ;;
-    *) MAX_SIZE=73728 ;;
-esac
+# Stock modlib has no fixed insertion ceiling. Band 9 also carries the portable
+# child-module loader because its firmware has no approved insmod command.
 CC=${CC:-clang}
 
 [ -f "$GENERATED" ] || {
@@ -150,18 +150,23 @@ echo "[3/3] Canopus ELF verifier"
     --target "$TARGET_ID" --targets-dir "$ROOT/targets"
 
 TARGET_STAGE="$ROOT/watchfaces/canopus-installer/canopus_supervisor-$TARGET_ID.bin"
-PROD_TARGET_STAGE="$ROOT/watchfaces/canopus-installer-prod/canopus_supervisor-$TARGET_ID.bin"
+PROD_FAMILY_STAGE="$ROOT/watchfaces/canopus-installer-prod/$PROD_FAMILY"
 cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
-rm -f "$ROOT/watchfaces/canopus-installer/canopus_supervisor.bin" \
-      "$ROOT/watchfaces/canopus-installer-prod/canopus_supervisor.bin"
-echo "staged $(basename "$TARGET_STAGE")"
-if [ "$TARGET_ID" = xiaomi-band-9-pro-3.1.175 ]; then
-    "$ROOT/scripts/build_band9_bootstrap.sh"
+if [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
+    CANOPUS_INSTALLER_STAGE_ROOT="$ROOT/watchfaces/canopus-installer" \
+        "$ROOT/scripts/build_band9_bootstrap.sh" "$TARGET_ID" "$OUT"
+    CANOPUS_INSTALLER_STAGE_ROOT="$PROD_FAMILY_STAGE" \
+        "$ROOT/scripts/build_band9_bootstrap.sh" "$TARGET_ID" "$OUT"
+    echo "staged canopus-installer-prod/$PROD_FAMILY/targets/$TARGET_ID"
 else
+    mkdir -p "$PROD_FAMILY_STAGE"
+    PROD_TARGET_STAGE="$PROD_FAMILY_STAGE/canopus_supervisor-$TARGET_ID.bin"
     cp "$OUT/canopus_supervisor.elf" "$PROD_TARGET_STAGE"
-    echo "staged canopus-installer-prod/$(basename "$PROD_TARGET_STAGE")"
-    rm -f "$ROOT/watchfaces/canopus-installer/canopus_supervisor-band9.bin" \
-          "$ROOT/watchfaces/canopus-installer/canopus_supervisor-band9.elf" \
-          "$ROOT/watchfaces/canopus-installer/canopus_stage2-band9.bin" \
-          "$ROOT/watchfaces/canopus-installer/canopus_stage1_band9.lua"
+    echo "staged canopus-installer-prod/$PROD_FAMILY/$(basename "$PROD_TARGET_STAGE")"
 fi
+rm -f "$ROOT/watchfaces/canopus-installer/canopus_supervisor.bin" \
+      "$ROOT/watchfaces/canopus-installer-prod/canopus_supervisor.bin" \
+      "$ROOT/watchfaces/canopus-installer/canopus_supervisor-band9.bin" \
+      "$ROOT/watchfaces/canopus-installer/canopus_supervisor-band9.elf" \
+      "$ROOT/watchfaces/canopus-installer/canopus_stage2-band9.bin" \
+      "$ROOT/watchfaces/canopus-installer/canopus_stage1_band9.lua"

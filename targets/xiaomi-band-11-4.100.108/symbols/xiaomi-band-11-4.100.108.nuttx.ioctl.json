@@ -5,8 +5,8 @@
   "name": "ioctl",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc341b98",
-  "callable_address": "0xc341b99",
+  "entry_address": "0xc4e6d6c",
+  "callable_address": "0xc4e6d6d",
   "prototype": "int32_t(int32_t, uint32_t, uintptr_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -16,29 +16,29 @@
     "blocking": true
   },
   "ownership": {
-    "argument": "borrowed",
+    "argument": "borrowed fd and ioctl argument",
     "return_value": "status"
   },
   "side_effects": [
-    "mutates firmware UI/OS state"
+    "dispatches fd-level ioctl"
   ],
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "host_tested": false,
     "evidence_ids": [
-      "EVID-1108-SYNC-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
-    "source": "Exact 4.100.108 IDB semantic confirmation recorded in confirmed_mappings.json",
     "evidence_ids": [
-      "EVID-1108-SYNC-001"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-11-4.100.108/evidence/fw-match/ensemble-1036-to-1108-v2.json"
   },
-  "notes": "NuttX fs_ioctl dispatch; references ../../nuttx/fs/vfs/fs_ioctl.c:52",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
   "approval_state": "PENDING"
 }

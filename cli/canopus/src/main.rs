@@ -57,7 +57,7 @@ enum Command {
     Verify {
         /// Module ELF (ET_REL) to verify.
         elf: PathBuf,
-        /// Target id to verify against, e.g. xiaomi-band-10-pro-3.101.030.
+        /// Target id to verify against, e.g. xiaomi-band-10-pro-3.101.036.
         #[arg(long)]
         target: String,
         /// Directory containing target packs.
@@ -182,7 +182,7 @@ enum TargetCmd {
     },
     /// Generate the C veneer + identity guard header for a target pack.
     GenerateVeneer {
-        /// Target id, e.g. xiaomi-band-10-pro-3.101.030.
+        /// Target id, e.g. xiaomi-band-10-pro-3.101.036.
         target: String,
         #[arg(long, default_value = "targets")]
         targets_dir: PathBuf,
@@ -195,7 +195,7 @@ enum TargetCmd {
     },
     /// Generate the Rust no_std bindings crate module for a target pack.
     GenerateRustBindings {
-        /// Target id, e.g. xiaomi-band-10-pro-3.101.030.
+        /// Target id, e.g. xiaomi-band-10-pro-3.101.036.
         target: String,
         #[arg(long, default_value = "targets")]
         targets_dir: PathBuf,
@@ -235,8 +235,8 @@ enum ModuleCmd {
         /// Language: c or rust.
         #[arg(long, default_value = "c")]
         lang: String,
-        /// Target id to bake into the descriptor, e.g. xiaomi-band-10-pro-3.101.030.
-        #[arg(long, default_value = "xiaomi-band-10-pro-3.101.030")]
+        /// Target id to bake into the descriptor, e.g. xiaomi-band-10-pro-3.101.036.
+        #[arg(long, default_value = "xiaomi-band-10-pro-3.101.036")]
         target: String,
         /// Directory to create the module in (default: modules/).
         #[arg(long, default_value = "modules")]

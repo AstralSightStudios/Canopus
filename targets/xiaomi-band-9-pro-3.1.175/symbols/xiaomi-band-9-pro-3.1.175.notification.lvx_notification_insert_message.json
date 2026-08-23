@@ -4,35 +4,43 @@
   "target_id": "xiaomi-band-9-pro-3.1.175",
   "name": "lvx_notification_insert_message",
   "kind": "function",
+  "entry_address": "0xc4f1c44",
+  "callable_address": "0xc4f1c45",
   "instruction_set": "thumb",
-  "entry_address": "0x0C4F1C44",
-  "callable_address": "0x0C4F1C45",
-  "prototype": "int(const firmware_notification_message *)",
+  "prototype": "int(const firmware_notification_message *message)",
   "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "notification_owner",
+      "system_app_lifecycle_callback"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "return_value": "zero_or_one_observed_but_exact_failure_contract_not_proved"
+  },
+  "side_effects": [
+    "allocates_and_inserts_notification_record",
+    "may_start_reminder",
+    "may_emit_notification_event_32",
+    "schedules_notification_timer"
+  ],
   "proof": {
     "static": "recovered",
     "evidence_ids": [
-      "EVID-NOTIFY-001"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-NOTIFY-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C4F1C44; lvx_notification_insert_message log"
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int(const firmware_notification_message *)",
-    "ownership": "caller-borrowed msg",
-    "thread": "notification_owner",
-    "device_probe": "pending"
-  },
-  "notes": "band-9 notification insert."
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
 }

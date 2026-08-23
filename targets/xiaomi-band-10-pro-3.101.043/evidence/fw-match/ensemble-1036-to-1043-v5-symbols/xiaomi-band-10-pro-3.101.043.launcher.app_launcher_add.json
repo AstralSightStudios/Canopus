@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.launcher.app_launcher_add",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "app_launcher_add",
+  "kind": "function",
+  "entry_address": "0xc513a44",
+  "callable_address": "0xc513a45",
+  "instruction_set": "thumb",
+  "prototype": "int(uint16_t app_id)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "launcher_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "value",
+    "return_value": "implementation_defined"
+  },
+  "side_effects": [
+    "looks_up_installed_descriptor_by_app_id",
+    "adds_app_to_runtime_list",
+    "writes_launcher_db",
+    "adds_icon"
+  ],
+  "proof": {
+    "static": "candidate",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=/Volumes/EXT0/Canopus/targets/xiaomi-band-10-pro-3.101.043/evidence/fw-match/ensemble-1036-to-1043-v5.json"
+  },
+  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=REVIEW_REQUIRED confidence=0.9485 margin=0.3971",
+  "approval_state": "PENDING"
+}

@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-LOADER-9175-002",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+  "question": "Does the exact 3.1.175 release expose the NSH mw/exec and runtime primitives required by the custom ET_REL bootstrap?",
+  "source": "ida:///Volumes/EXT0/old_fw_extract/data/ota/app/vela_ap.bin.i64",
+  "static_findings": {
+    "nsh_exec": {
+      "entry_address": "0x0c0fe4fc",
+      "callable_address": "0x0c0fe4fd",
+      "behavior": "Parses a hexadecimal callable, prints Calling %p, then invokes it through BLX; the entry tolerates the print callback return value in r0."
+    },
+    "nsh_mw": {
+      "entry_address": "0x0c102df0",
+      "callable_address": "0x0c102df1",
+      "behavior": "Parses address[=value] and optional count, performs four-byte writes or reads, and has no cache maintenance."
+    },
+    "file_io": {
+      "open_callable": "0x0c37f761",
+      "close_callable": "0x0c37eff9",
+      "read_callable": "0x0c37f9eb"
+    },
+    "heap": {
+      "memalign_callable": "0x0c0f21ed",
+      "free_callable": "0x0c0f1b01"
+    },
+    "mpu": {
+      "alloc_callable": "0x0c51d8d1",
+      "configure_callable": "0x0c51d759",
+      "release_callable": "0x0c51d929",
+      "region_count": 8,
+      "configure_contract": "Rejects region > 7, length <= 0x1f, unaligned base, and unsupported access attributes; publishes RBAR/RLAR and requires DSB/ISB before transfer."
+    },
+    "sram_text": {
+      "base": "0x20082d40",
+      "size": "0x20e0",
+      "cave": "0x20084e10",
+      "result_word": "0x20084e2c",
+      "original_words": ["0x00000000", "0x00000000", "0x00000000", "0x00000000", "0x726f6e5f", "0x73616c66", "0x70615f68", "0x72665f69"],
+      "publication": "The exact firmware startup protects the copied SRAM text range; custom executable allocations use the recovered MPU helpers and DSB/ISB."
+    }
+  },
+  "control_flow_evidence": [
+    "The exec handler calls the parsed address with BLX and does not retain the image.",
+    "The mw handler writes four-byte words and performs no instruction synchronization.",
+    "The bootstrap must restore the cave and clear RLAR before releasing a temporary MPU region.",
+    "The exact firmware contains no verified stock insmod/rmmod loader boundary for this path."
+  ],
+  "unsafe_assumptions": [
+    "All findings are static IDA evidence; no device execution was performed.",
+    "The resident stage-2 loader must assume ownership of allocations and MPU regions before stage 1 returns."
+  ],
+  "verdict": "STATIC_RECOVERED"
+}

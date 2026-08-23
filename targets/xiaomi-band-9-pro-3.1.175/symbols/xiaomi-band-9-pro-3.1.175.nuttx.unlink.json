@@ -5,40 +5,25 @@
   "name": "unlink",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C3800E8",
-  "callable_address": "0x0C3800E9",
-  "prototype": "int32(const char *)",
-  "calling_convention": "arm-aapcs",
-  "contexts": {
-    "allowed": [
-      "calling_thread"
-    ],
-    "blocking": true
-  },
+  "prototype": "int(const char *)",
   "proof": {
     "static": "recovered",
+    "device": "not_probed",
     "evidence_ids": [
-      "EVID-IO-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ]
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-IO-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C3800E8; public POSIX wrapper over internal VFS unlink sub_C37D14C, translating a negative internal result to errno and -1."
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int32(const char *)",
-    "ownership": "borrowed path for synchronous call",
-    "thread": "calling thread",
-    "device_probe": "pending"
-  },
-  "notes": "Use the public wrapper at 0x0C3800E8, not internal VFS unlink 0x0C37D14C."
+  "entry_address": "0xc37c0d0",
+  "callable_address": "0xc37c0d1",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
 }

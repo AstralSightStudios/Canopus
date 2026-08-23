@@ -2,43 +2,28 @@
   "schema": 1,
   "symbol_id": "xiaomi-band-9-pro-3.1.175.watchface.manager_delete_watchface",
   "target_id": "xiaomi-band-9-pro-3.1.175",
-  "name": "manager_delete_watchface",
+  "name": "watchface_manager_delete_watchface",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C44F470",
-  "callable_address": "0x0C44F471",
-  "prototype": "int32(const char *)",
-  "calling_convention": "arm-aapcs",
-  "contexts": {
-    "allowed": [
-      "calling_thread"
-    ],
-    "blocking": true
-  },
+  "prototype": "int(const char *)",
   "proof": {
     "static": "recovered",
+    "device": "not_probed",
     "evidence_ids": [
-      "EVID-WATCHFACE-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ]
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-WATCHFACE-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C44F470; rejects a null ID and delegates non-null deletion to sub_C455860(id, 1), propagating its result."
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int32(const char *)",
-    "ownership": "borrowed stable ID for synchronous call",
-    "thread": "calling thread",
-    "device_probe": "pending"
-  },
-  "notes": "Exact Band-9 wrapper; it is distinct from the Band-10 watchface manager implementation."
+  "entry_address": "0xc3d75ac",
+  "callable_address": "0xc3d75ad",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
 }

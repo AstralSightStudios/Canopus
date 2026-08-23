@@ -10,7 +10,8 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-IO-1043-003"
+      "EVID-IO-1043-003",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "policy": "restricted",
@@ -19,11 +20,12 @@
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; exact NuttX fs_ioctl path, variadic register flow, and fops+0x14 dispatch",
     "evidence_ids": [
-      "EVID-IO-1043-003"
+      "EVID-IO-1043-003",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "entry_address": "0xc1cff88",
   "callable_address": "0xc1cff89",
-  "notes": "Internal file-level ioctl entry. PUSH {R1-R3} and access to the saved register area prove a variadic third argument; callers must not use a fixed prototype for zero-argument commands.",
+  "notes": "Internal file-level ioctl entry. PUSH {R1-R3} and access to the saved register area prove a variadic third argument; callers must not use a fixed prototype for zero-argument commands. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
   "approval_state": "APPROVED"
 }

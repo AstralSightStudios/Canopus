@@ -93,7 +93,7 @@ fn descriptor_abi_fields_valid() {
     assert!(d.stop.is_some());
     assert!(d.query.is_some());
     // target_id is a fixed 32-byte NUL-padded field (28-char id).
-    assert_eq!(&d.target_id[..28], b"xiaomi-band-10-pro-3.101.030");
+    assert_eq!(&d.target_id[..28], b"xiaomi-band-10-pro-3.101.036");
     assert_eq!(d.target_id[28], 0);
 }
 

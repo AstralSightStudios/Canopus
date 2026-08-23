@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.stock_bt_callback_descriptor",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "stock_bt_callback_descriptor",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "const uint32_t[17]",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": ["EVID-BT-1043-PAIR-FILTER-003"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": ["EVID-BT-1043-PAIR-FILTER-003"],
+    "source": "Exact 3.101.043 IDB sub_C70B058 passes off_2CD4A744 to sub_C3AF3E8. The descriptor contains 17 callback words; slot 5 is the Thumb callable address of sub_C709E90 gap_pair_request_callback. sub_C3A96EC stores the descriptor in word 1 of the returned 8-byte registration node."
+  },
+  "entry_address": "0x2CD4A744",
+  "approval_state": "PENDING",
+  "notes": "Static stock descriptor used as the copy source for the resident pair-request filter mirror."
+}

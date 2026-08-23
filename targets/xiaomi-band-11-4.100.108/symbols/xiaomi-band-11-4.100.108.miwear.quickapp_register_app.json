@@ -5,40 +5,38 @@
   "name": "quickapp_register_app",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc57e774",
-  "callable_address": "0xc57e775",
-  "prototype": "int32_t(const void *, const void *)",
+  "entry_address": "0xc528c5c",
+  "callable_address": "0xc528c5d",
+  "prototype": "int(uint16_t, const canopus_interconnect_app_info *)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
-      "target-private-thread"
+      "connection_framework_owner"
     ],
-    "blocking": true
+    "blocking": false
   },
   "ownership": {
-    "argument": "borrowed",
-    "return_value": "status"
+    "return_value": "0_on_acceptance_else_negative_errno"
   },
   "side_effects": [
-    "mutates firmware UI/OS state"
+    "updates_quickapp_registry_launcher_state_and_registration_notifications"
   ],
   "proof": {
     "static": "recovered",
-    "device": "not_probed",
-    "host_tested": false,
     "evidence_ids": [
-      "EVID-1108-SYNC-001"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "device": "not_probed"
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
-    "source": "Exact 4.100.108 IDB semantic confirmation recorded in confirmed_mappings.json",
     "evidence_ids": [
-      "EVID-1108-SYNC-001"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-11-4.100.108/evidence/fw-match/ensemble-1036-to-1108-v2.json"
   },
-  "notes": "Quickapp register; 'quickapp_register_app' strings",
-  "approval_state": "PENDING"
+  "approval_state": "PENDING",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
 }

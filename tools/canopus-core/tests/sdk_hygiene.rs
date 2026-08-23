@@ -79,7 +79,7 @@ fn public_sdk_markers_are_actually_caught_by_the_audit() {
     // the target pack (so the audit really has teeth) and the audit must flag
     // a planted marker.
     let root = repo_root();
-    let pack_dir = root.join("targets/xiaomi-band-10-pro-3.101.030");
+    let pack_dir = root.join("targets/xiaomi-band-10-pro-3.101.036");
     for marker in TARGET_PRIVATE_MARKERS {
         let found = find_in_tree(&pack_dir, marker);
         assert!(

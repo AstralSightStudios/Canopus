@@ -1,43 +1,27 @@
 # Canopus Installer Prod
 
-A streamlined Xiaomi Band 10 installer watchface with two controls:
+Production installer watchfaces are packaged per device family. Do not merge the
+family directories into one watchface: their LuaLVGL API, display geometry, and
+Supervisor loading path differ.
 
-- **Run** loads the exact-target Supervisor, applies enabled boot intents after
-  `insmod` has returned, then executes native registration stages 0, 1, and 2.
-- **Run** is one-shot for the lifetime of the loaded watchface: its first click
-  locks the action immediately, including while it is running or after any
-  failure. Reboot before retrying so native registration stages cannot be
-  replayed in the same session.
-- **Clear Env** requires two consecutive clicks. The first displays
-  `Click again to clear`; only the second executes `rm -rf /data/canopus` and
-  asks for a reboot.
+- `xiaomi-band-10-pro/`: 336×480, LVGL v9, exact-target stock `insmod`.
+- `xiaomi-band-9/`: 192×490, LVGL v8, exact-target NSH `mw`/`exec` stage-1 and
+  stage-2 loader. It currently packages only `xiaomi-band-9-3.1.32`.
 
-`Run` uses LuaLVGL's `lvgl.Timer`. The restore operation and each INSTALL stage
-run in separate timer callbacks, returning to the LVGL/miwear event loop between
-native registration transactions. It never loads a third-party module from the
-Supervisor constructor's restricted stock-loader stack.
+Both variants preserve the same production workflow:
 
-The watchface reads `ro.build.version` with `getprop` while opening and derives
-`canopus_supervisor-xiaomi-band-10-pro-<version>.bin`. Multiple exact firmware
-artifacts may be bundled together. If the detected version has no matching valid
-Supervisor resource, the page creates neither button and displays only
-`Firmware version not supported` with the detected value.
+1. **Run** loads the exact-target Supervisor once.
+2. It restores enabled boot intents.
+3. It runs INSTALL stages 0, 1, and 2 in separate miwear event-loop turns.
+4. **Clear Env** requires two clicks and removes `/data/canopus` only after the
+   explicit confirmation.
 
-The selected versioned Supervisor is exact-firmware-specific. A LOAD failure
-instructs the user to verify that the firmware version matches the installer.
-Do not retry LOAD or Run without rebooting after a partial failure.
-
-Build and stage every firmware artifact intended for the package; later builds
-preserve earlier versioned files:
+Build all packaged targets with:
 
 ```sh
-CANOPUS_TARGET=xiaomi-band-10-pro-3.101.030 \
-  bash scripts/build_canopus_supervisor.sh
-CANOPUS_TARGET=xiaomi-band-10-pro-3.101.036 \
-  bash scripts/build_canopus_supervisor.sh
+./scripts/build_prod_all.sh
 ```
 
-The build script copies each verified Supervisor under its full target ID into
-this directory. It removes obsolete unversioned `canopus_supervisor.bin`
-aliases. `manager_icon.bin` is staged to `/data/canopus/manager_icon.bin` before
-native registration stage 0.
+Each verified artifact is staged only into its matching family directory. Host
+builds and Lua smoke tests are not device proof; reboot is still required before
+retrying any partial Supervisor load or native registration failure.

@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.launcher.protobuf_set_ordered_app_list",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "protobuf_set_ordered_app_list",
+  "kind": "function",
+  "entry_address": "0xc2a8494",
+  "callable_address": "0xc2a8495",
+  "instruction_set": "thumb",
+  "prototype": "int(ordered_app_list_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "launcher_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed",
+    "return_value": "int"
+  },
+  "side_effects": [
+    "replaces_launcher_runtime_list",
+    "updates_page_hidden_flags",
+    "signals_ui_thread"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
+  },
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
+}

@@ -7,7 +7,7 @@
   "instruction_set": "thumb",
   "prototype": "withdrawn",
   "proof": {
-    "static": "withheld",
+    "static": "candidate",
     "device": "not_probed",
     "evidence_ids": [
       "EVID-IO-1043-003"

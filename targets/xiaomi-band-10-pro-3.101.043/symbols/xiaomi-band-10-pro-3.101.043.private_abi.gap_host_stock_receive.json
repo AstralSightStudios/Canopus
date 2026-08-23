@@ -19,7 +19,8 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-BT-1043-GAP-001"
+      "EVID-BT-1043-GAP-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "policy": "restricted",
@@ -27,10 +28,11 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-BT-1043-GAP-001"
+      "EVID-BT-1043-GAP-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ],
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; GAP initializer, owner/state layout, and raw-H4 receive call-flow review"
   },
   "approval_state": "PENDING",
-  "notes": "Exact 3.101.043 stock raw-H4 receive callback stored in the dynamically allocated callback cell owned by GAP state."
+  "notes": "Exact 3.101.043 stock raw-H4 receive callback stored in the dynamically allocated callback cell owned by GAP state. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record."
 }

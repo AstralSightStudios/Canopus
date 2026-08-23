@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-1043-PAIR-FILTER-002",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "superseded": {
+    "status": "REFUTED_BY_DEVICE_FEEDBACK_AND_STATIC_REAUDIT",
+    "failure_id": "FAIL-BT-1043-BOND-1113-002",
+    "replacement_evidence_id": "EVID-BT-1043-PAIR-FILTER-003",
+    "reason": "adapter+120 is a 0x24-byte callbacks_list manager; the claimed manager+72 descriptor field is out of bounds. The registration handle is the 8-byte {cookie, descriptor} node returned by sub_C3A96EC."
+  },
+  "question": "What exact 3.101.043 stock Bluetooth client state owns the competing companion Pair Request callback, and how can it be mirrored without applying the 3.101.036 global-table ABI?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.core_bt_adapter_instance",
+    "xiaomi-band-10-pro-3.101.043.core_bt_registration_handle",
+    "xiaomi-band-10-pro-3.101.043.private_abi.stock_bt_callback_descriptor",
+    "xiaomi-band-10-pro-3.101.043.core_bt_pair_request_callback"
+  ],
+  "prototype_hypothesis": "The cross-target core_bt adapter role on 043 is dword_20126738, its callback registration handle is dword_20126734, and sub_C70B058 registers the 17-word descriptor off_2CD4A744 through sub_C3AF3E8. The live callback descriptor pointer is stored in the registration client at adapter+120, client+72; slot 5 contains sub_C709E90.",
+  "callsite_evidence": [
+    "Exact sub_C70B058 assigns dword_20126738 = sub_C3AF1A8(), then dword_20126734 = sub_C3AF3E8(dword_20126738, &off_2CD4A744).",
+    "Exact sub_C709D7C calls sub_C3AF450(dword_20126738, dword_20126734), proving these globals belong to the stock bts registration lifecycle and are not the miwear cpevent globals at 0x2013DBE4/0x2013DBE0.",
+    "Exact sub_C3AF3E8 stores the callback descriptor pointer in its client object at +72; the client object is stored by the adapter at +120.",
+    "Bytes at off_2CD4A744 contain 17 little-endian callback words; word 5 is 0x0C709E91, the callable address of sub_C709E90 gap_pair_request_callback.",
+    "The filter must allocate a resident 17-word mirror, preserve all stock callbacks, replace only slot 5, and publish the mirror pointer at client+72. It must not reuse the withdrawn 036-style 16-word global table or the unrelated cpevent handle."
+  ],
+  "control_flow_evidence": [
+    "sub_C709E90 compares the incoming address with the companion address and forwards the accepted decision through sub_C3B0050 command 97.",
+    "The stock registration object remains live until sub_C3AF450; the mirror must therefore remain resident for the module lifetime and cannot be freed after installation."
+  ],
+  "ownership_analysis": "The stock adapter, registration handle, client object, and descriptor are firmware-owned. The mirror is module-owned and boot-resident; publishing the pointer is a target-private operation that requires the exact client offsets and must be fail-closed if any live pointer or slot check differs.",
+  "negative_evidence": [
+    "The prior 043 core_bt_callback_table candidate at 0x2CD1F920 was withdrawn: it was a neighboring/036-style immutable 16-word global with no exact 043 writer or reader.",
+    "The existing 043 core_bt_adapter_instance at 0x2013DBE4 and core_bt_registration_handle at 0x2013DBE0 belong to the miwear Bluetooth cpevent lifecycle, not the stock bts companion callback client."
+  ],
+  "unsafe_assumptions": [
+    "Exact static recovery establishes the target offsets and descriptor shape; device probe remains pending.",
+    "The mirror remains valid only while the resident module remains loaded; unloading requires reboot."
+  ],
+  "recommended_probe": "On exact 3.101.043, pair with a non-companion Classic headset while a companion record is present, verify the stock callback mirror receives the request and forwards unmatched requests, then confirm BONDED state and AVDTP signaling.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "REFUTED",
+  "created": "2026-08-23T00:00:00Z",
+  "artifacts": [
+    {"uri": "ida://vela_ap.bin.i64 sub_C70B058", "role": "stock bts adapter initialization and callback registration"},
+    {"uri": "ida://vela_ap.bin.i64 sub_C709D7C", "role": "stock bts callback unregister lifecycle"},
+    {"uri": "ida://vela_ap.bin.i64 sub_C3AF3E8", "role": "callback descriptor storage at client+72 and adapter+120 client ownership"},
+    {"uri": "ida://vela_ap.bin.i64 0x2CD4A744", "role": "exact 17-word stock callback descriptor"},
+    {"uri": "ida://vela_ap.bin.i64 sub_C709E90", "role": "stock companion Pair Request rejection callback"}
+  ]
+}

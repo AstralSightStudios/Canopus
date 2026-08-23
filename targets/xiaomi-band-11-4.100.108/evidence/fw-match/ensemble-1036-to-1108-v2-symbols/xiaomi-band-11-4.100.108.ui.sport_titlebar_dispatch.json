@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.108.ui.sport_titlebar_dispatch",
+  "target_id": "xiaomi-band-11-4.100.108",
+  "name": "sport_titlebar_dispatch",
+  "kind": "function",
+  "entry_address": "0xc54efdc",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-11-4.100.108/evidence/fw-match/ensemble-1036-to-1108-v2.json"
+  },
+  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=CANDIDATE confidence=0.5028 margin=0.0092",
+  "callable_address": "0xc54efdd"
+}

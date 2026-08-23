@@ -4,7 +4,7 @@
  * firmware : 4.100.108 (user-4.100.108-cn-202607230300)
  * sha256   : 9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99
  * revision : 1
- * input_digest: 17b51875ada581d6
+ * input_digest: 952a88dd69a0e053
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_108_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_108_H
@@ -18,16 +18,7 @@ static inline int canopus_str_neq(const char *a, const char *b)
     return *a != *b;
 }
 
-static inline int canopus_identity_guard(void)
-{
-    const char *const expect_version = "4.100.108";
-    const char *const expect_build = "user-4.100.108-cn-202607230300";
-    const char *const actual_version = (const char *)(uintptr_t)0xca0044d;
-    const char *const actual_build = (const char *)(uintptr_t)0xca004d6;
-    if (canopus_str_neq(actual_version, expect_version)) return -1;
-    if (canopus_str_neq(actual_build, expect_build)) return -1;
-    return 0;
-}
+/* identity strings not present in this pack; guard unavailable */
 
 /* ---- typed veneers ---- */
 /* ---- excluded symbols ----
@@ -35,128 +26,125 @@ static inline int canopus_identity_guard(void)
  * app_launcher_add: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved
- * app_lookup: FORBIDDEN - no veneer may ever be generated
- * bt_adapter_get_instance: FORBIDDEN - no veneer may ever be generated
+ * app_lookup: restricted - not exported until context/ownership approved
+ * bt_adapter_get_instance: restricted - not exported until context/ownership approved
  * bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
  * bt_adapter_get_state: restricted - not exported until context/ownership approved
  * bt_adapter_register: restricted - not exported until context/ownership approved
- * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
- * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
+ * bt_adapter_register_a2dp_callbacks: restricted - not exported until context/ownership approved
+ * bt_adapter_register_hfp_ag_callbacks: restricted - not exported until context/ownership approved
  * bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved
- * bt_adapter_unregister: FORBIDDEN - no veneer may ever be generated
- * bt_alloc: FORBIDDEN - no veneer may ever be generated
- * bt_buffer_new: FORBIDDEN - no veneer may ever be generated
- * bt_create_bond_private: FORBIDDEN - no veneer may ever be generated
- * bt_discovery_start: FORBIDDEN - no veneer may ever be generated
- * bt_discovery_stop: FORBIDDEN - no veneer may ever be generated
- * bt_free: FORBIDDEN - no veneer may ever be generated
- * bt_get_bond_state: FORBIDDEN - no veneer may ever be generated
- * bt_get_pairing_state: FORBIDDEN - no veneer may ever be generated
- * bt_l2cap_connect: FORBIDDEN - no veneer may ever be generated
- * bt_l2cap_disconnect: FORBIDDEN - no veneer may ever be generated
- * bt_l2cap_submit_cid: FORBIDDEN - no veneer may ever be generated
- * bt_pair_display_reply: FORBIDDEN - no veneer may ever be generated
+ * bt_adapter_unregister: restricted - not exported until context/ownership approved
+ * bt_alloc: restricted - not exported until context/ownership approved
+ * bt_buffer_new: restricted - not exported until context/ownership approved
+ * bt_create_bond_private: restricted - not exported until context/ownership approved
+ * bt_discovery_start: restricted - not exported until context/ownership approved
+ * bt_discovery_stop: restricted - not exported until context/ownership approved
+ * bt_free: restricted - not exported until context/ownership approved
+ * bt_get_bond_state: restricted - not exported until context/ownership approved
+ * bt_get_pairing_state: restricted - not exported until context/ownership approved
+ * bt_l2cap_connect: restricted - not exported until context/ownership approved
+ * bt_l2cap_disconnect: restricted - not exported until context/ownership approved
+ * bt_l2cap_submit_cid: restricted - not exported until context/ownership approved
+ * bt_pair_display_reply: restricted - not exported until context/ownership approved
  * bt_pair_request_reply: restricted - not exported until context/ownership approved
- * bt_queue_external: FORBIDDEN - no veneer may ever be generated
- * bt_queue_free: FORBIDDEN - no veneer may ever be generated
- * bt_remove_bond_private: FORBIDDEN - no veneer may ever be generated
- * bt_socket_server_receive: FORBIDDEN - no veneer may ever be generated
- * bt_timer_add: FORBIDDEN - no veneer may ever be generated
- * bt_timer_cancel: FORBIDDEN - no veneer may ever be generated
- * btsnoop_avdtp_recognizer: FORBIDDEN - no veneer may ever be generated
- * clock_gettime: FORBIDDEN - no veneer may ever be generated
+ * bt_queue_external: restricted - not exported until context/ownership approved
+ * bt_queue_free: restricted - not exported until context/ownership approved
+ * bt_remove_bond_private: restricted - not exported until context/ownership approved
+ * bt_socket_server_receive: restricted - not exported until context/ownership approved
+ * bt_timer_add: restricted - not exported until context/ownership approved
+ * bt_timer_cancel: restricted - not exported until context/ownership approved
+ * btsnoop_avdtp_recognizer: restricted - not exported until context/ownership approved
+ * clock_gettime: restricted - not exported until context/ownership approved
  * close: restricted - not exported until context/ownership approved
  * controller_crash_dump: restricted - not exported until context/ownership approved
  * core_bt_pair_request_callback: restricted - not exported until context/ownership approved
- * driver_close_dispatch: FORBIDDEN - no veneer may ever be generated
- * driver_ioctl_dispatch: FORBIDDEN - no veneer may ever be generated
+ * driver_close_dispatch: restricted - not exported until context/ownership approved
+ * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
  * driver_open_dispatch: restricted - not exported until context/ownership approved
- * driver_read_dispatch: FORBIDDEN - no veneer may ever be generated
- * driver_write_dispatch: FORBIDDEN - no veneer may ever be generated
- * errno_location: FORBIDDEN - no veneer may ever be generated
- * firmware_log: FORBIDDEN - no veneer may ever be generated
- * gap_host_stock_receive: FORBIDDEN - no veneer may ever be generated
+ * driver_read_dispatch: restricted - not exported until context/ownership approved
+ * errno_location: restricted - not exported until context/ownership approved
+ * firmware_log: restricted - not exported until context/ownership approved
+ * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
- * heap_mallinfo: FORBIDDEN - no veneer may ever be generated
+ * heap_mallinfo: restricted - not exported until context/ownership approved
  * heap_malloc: restricted - not exported until context/ownership approved
  * heap_zalloc: restricted - not exported until context/ownership approved
- * hfp_ag_connect: FORBIDDEN - no veneer may ever be generated
- * hfp_ag_disconnect: FORBIDDEN - no veneer may ever be generated
+ * hfp_ag_connect: restricted - not exported until context/ownership approved
+ * hfp_ag_disconnect: restricted - not exported until context/ownership approved
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
- * insmod: FORBIDDEN - no veneer may ever be generated
- * interconnect_close: FORBIDDEN - no veneer may ever be generated
- * interconnect_connect: FORBIDDEN - no veneer may ever be generated
- * interconnect_send: FORBIDDEN - no veneer may ever be generated
+ * insmod: restricted - not exported until context/ownership approved
+ * interconnect_close: restricted - not exported until context/ownership approved
+ * interconnect_connect: restricted - not exported until context/ownership approved
+ * interconnect_send: restricted - not exported until context/ownership approved
  * ioctl: restricted - not exported until context/ownership approved
  * lseek: restricted - not exported until context/ownership approved
  * lv_bar_create: restricted - not exported until context/ownership approved
  * lv_bar_set_range: restricted - not exported until context/ownership approved
  * lv_bar_set_value: restricted - not exported until context/ownership approved
- * lv_event_get_code: FORBIDDEN - no veneer may ever be generated
- * lv_event_get_user_data: FORBIDDEN - no veneer may ever be generated
+ * lv_event_get_code: restricted - not exported until context/ownership approved
+ * lv_event_get_user_data: restricted - not exported until context/ownership approved
  * lv_image_create: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
- * lv_obj_add_event_cb: FORBIDDEN - no veneer may ever be generated
- * lv_obj_align_to: FORBIDDEN - no veneer may ever be generated
- * lv_obj_move_to_index: FORBIDDEN - no veneer may ever be generated
- * lv_obj_set_hidden: FORBIDDEN - no veneer may ever be generated
- * lv_obj_set_local_style_prop: FORBIDDEN - no veneer may ever be generated
+ * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
+ * lv_obj_align_to: restricted - not exported until context/ownership approved
+ * lv_obj_move_to_index: restricted - not exported until context/ownership approved
+ * lv_obj_set_hidden: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
  * lv_timer_create: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
- * lvx_label_create: FORBIDDEN - no veneer may ever be generated
- * lvx_label_set_text: FORBIDDEN - no veneer may ever be generated
- * lvx_list_item_update: FORBIDDEN - no veneer may ever be generated
- * lvx_list_row_create: FORBIDDEN - no veneer may ever be generated
- * lvx_list_row_trailing: FORBIDDEN - no veneer may ever be generated
+ * lvx_image_set_scale: restricted - not exported until context/ownership approved
+ * lvx_label_create: restricted - not exported until context/ownership approved
+ * lvx_label_set_text: restricted - not exported until context/ownership approved
+ * lvx_list_item_update: restricted - not exported until context/ownership approved
+ * lvx_list_row_create: restricted - not exported until context/ownership approved
+ * lvx_list_row_trailing: restricted - not exported until context/ownership approved
  * lvx_msgbox_create: restricted - not exported until context/ownership approved
- * lvx_msgbox_set_content: FORBIDDEN - no veneer may ever be generated
+ * lvx_msgbox_set_content: restricted - not exported until context/ownership approved
  * lvx_notification_insert_message: restricted - not exported until context/ownership approved
- * lvx_object_align: FORBIDDEN - no veneer may ever be generated
- * lvx_object_delete: FORBIDDEN - no veneer may ever be generated
- * lvx_object_set_size: FORBIDDEN - no veneer may ever be generated
- * lvx_page_content_create: FORBIDDEN - no veneer may ever be generated
+ * lvx_object_add_flag: restricted - not exported until context/ownership approved
+ * lvx_object_align: restricted - not exported until context/ownership approved
+ * lvx_object_delete: restricted - not exported until context/ownership approved
+ * lvx_object_set_size: restricted - not exported until context/ownership approved
+ * lvx_page_content_create: restricted - not exported until context/ownership approved
  * lvx_page_title_create: restricted - not exported until context/ownership approved
- * lvx_style_apply: FORBIDDEN - no veneer may ever be generated
- * modhandle: FORBIDDEN - no veneer may ever be generated
+ * lvx_style_apply: restricted - not exported until context/ownership approved
+ * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: restricted - not exported until context/ownership approved
- * open: FORBIDDEN - no veneer may ever be generated
+ * open: restricted - not exported until context/ownership approved
  * page_finish: restricted - not exported until context/ownership approved
  * page_goto: restricted - not exported until context/ownership approved
- * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated
+ * page_navigator_open_page: restricted - not exported until context/ownership approved
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
- * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
- * public_work_queue: FORBIDDEN - no veneer may ever be generated
+ * pthread_create_internal: restricted - not exported until context/ownership approved
  * quickapp_register_app: restricted - not exported until context/ownership approved
- * read: FORBIDDEN - no veneer may ever be generated
- * register_blockdriver: FORBIDDEN - no veneer may ever be generated
- * register_driver: FORBIDDEN - no veneer may ever be generated
+ * read: restricted - not exported until context/ownership approved
+ * register_blockdriver: restricted - not exported until context/ownership approved
+ * register_driver: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
- * rmmod: FORBIDDEN - no veneer may ever be generated
- * sdp_builder_create: FORBIDDEN - no veneer may ever be generated
- * sdp_commit: FORBIDDEN - no veneer may ever be generated
- * sdp_set_raw_attribute: FORBIDDEN - no veneer may ever be generated
- * sdp_unregister: FORBIDDEN - no veneer may ever be generated
+ * rmmod: restricted - not exported until context/ownership approved
+ * sdp_builder_create: restricted - not exported until context/ownership approved
+ * sdp_commit: restricted - not exported until context/ownership approved
+ * sdp_set_raw_attribute: restricted - not exported until context/ownership approved
+ * sdp_unregister: restricted - not exported until context/ownership approved
  * sem_post: restricted - not exported until context/ownership approved
  * sem_trywait: restricted - not exported until context/ownership approved
  * sem_wait: restricted - not exported until context/ownership approved
- * service_manager_cleanup: FORBIDDEN - no veneer may ever be generated
+ * service_manager_cleanup: restricted - not exported until context/ownership approved
  * service_manager_get_profile: restricted - not exported until context/ownership approved
  * service_manager_register: restricted - not exported until context/ownership approved
  * service_manager_shutdown: restricted - not exported until context/ownership approved
  * service_manager_startup: restricted - not exported until context/ownership approved
- * sport_titlebar_dispatch: FORBIDDEN - no veneer may ever be generated
- * sport_titlebar_lifecycle_reset: FORBIDDEN - no veneer may ever be generated
- * system_router_app_wrapper: FORBIDDEN - no veneer may ever be generated
+ * sport_titlebar_dispatch: restricted - not exported until context/ownership approved
+ * system_router_app_wrapper: restricted - not exported until context/ownership approved
  * system_router_get_pages_wrapper: restricted - not exported until context/ownership approved
- * system_router_page_record_wrapper: FORBIDDEN - no veneer may ever be generated
- * thirdparty_submit_message_content: FORBIDDEN - no veneer may ever be generated
+ * thirdparty_submit_message_content: restricted - not exported until context/ownership approved
  * unlink: restricted - not exported until context/ownership approved
- * unregister_blockdriver: FORBIDDEN - no veneer may ever be generated
+ * unregister_blockdriver: restricted - not exported until context/ownership approved
  * unregister_driver: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: restricted - not exported until context/ownership approved
  * watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
- * write: FORBIDDEN - no veneer may ever be generated
+ * write: restricted - not exported until context/ownership approved
  */
 
 

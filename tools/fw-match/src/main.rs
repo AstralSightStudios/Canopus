@@ -11,9 +11,7 @@
 use std::path::PathBuf;
 
 use canopus_fw_match::corpus::load_corpus;
-use canopus_fw_match::engine::{
-    confirm, load_source_symbols, match_symbols, EngineConfig,
-};
+use canopus_fw_match::engine::{EngineConfig, confirm, load_source_symbols, match_symbols};
 use canopus_fw_match::ga::GaParams;
 
 fn main() -> anyhow::Result<()> {

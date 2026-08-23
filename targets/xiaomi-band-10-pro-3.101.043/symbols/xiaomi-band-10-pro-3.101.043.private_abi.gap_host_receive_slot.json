@@ -5,11 +5,11 @@
   "name": "gap_host_receive_slot",
   "kind": "global",
   "instruction_set": "n/a",
-  "entry_address": "0x2013BDB4",
-  "prototype": "void *",
+  "entry_address": "0x2013C144",
+  "prototype": "int (*)(void *state, uint8_t *packet, int packet_length)",
   "proof": {
     "static": "confirmed",
-    "device": "not_probed",
+    "device": "retest_pending",
     "evidence_ids": [
       "EVID-BT-1043-GAP-001"
     ]
@@ -21,8 +21,8 @@
     "evidence_ids": [
       "EVID-BT-1043-GAP-001"
     ],
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; GAP initializer, owner/state layout, and raw-H4 receive call-flow review"
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; callback registration, direct dispatch wrapper, and 3.101.036 structural comparison"
   },
   "approval_state": "PENDING",
-  "notes": "Exact 3.101.043 GAP FSM owner-root global, not a direct callback slot. Resolve owner -> state -> *(state+0x28) before reading or replacing the live raw-H4 callback."
+  "notes": "Direct live raw-H4 callback slot. sub_C81234C copies *callback_holder into 0x2013C144 and stores callback state at 0x2013C140; sub_C8172C0 dispatches every completed H4 packet through those two words. This is the exact 3.101.043 analogue of the proven 3.101.036 slot 0x20137E94."
 }

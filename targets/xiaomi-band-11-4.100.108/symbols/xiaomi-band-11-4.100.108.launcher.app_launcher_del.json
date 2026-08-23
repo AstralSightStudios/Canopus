@@ -4,41 +4,41 @@
   "target_id": "xiaomi-band-11-4.100.108",
   "name": "app_launcher_del",
   "kind": "function",
+  "entry_address": "0xc573204",
+  "callable_address": "0xc573205",
   "instruction_set": "thumb",
-  "entry_address": "0xc545c48",
-  "callable_address": "0xc545c49",
-  "prototype": "int32_t(void *)",
+  "prototype": "int(uint16_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
-      "target-private-thread"
+      "launcher_owner"
     ],
-    "blocking": true
+    "blocking": false
   },
   "ownership": {
-    "argument": "borrowed",
-    "return_value": "status"
+    "argument": "by_value",
+    "return_value": "int"
   },
   "side_effects": [
-    "mutates firmware UI/OS state"
+    "removes_app_from_launcher",
+    "frees_app_record_and_page_entry"
   ],
   "proof": {
     "static": "recovered",
-    "device": "not_probed",
-    "host_tested": false,
     "evidence_ids": [
-      "EVID-1108-SYNC-001"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "device": "not_probed"
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
-    "source": "Exact 4.100.108 IDB semantic confirmation recorded in confirmed_mappings.json",
     "evidence_ids": [
-      "EVID-1108-SYNC-001"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-11-4.100.108/evidence/fw-match/ensemble-1036-to-1108-v2.json"
   },
-  "notes": "Launcher del app; '[%s] %s: del app id'",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
   "approval_state": "PENDING"
 }

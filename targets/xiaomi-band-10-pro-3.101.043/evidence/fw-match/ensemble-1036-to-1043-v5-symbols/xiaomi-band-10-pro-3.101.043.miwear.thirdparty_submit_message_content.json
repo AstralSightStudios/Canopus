@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.miwear.thirdparty_submit_message_content",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "thirdparty_submit_message_content",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xcaa5204",
+  "callable_address": "0xcaa5205",
+  "prototype": "int(const void *, uint32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "miwear_message_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "arguments": "message envelope and all referenced data are borrowed only for the synchronous call",
+    "return_value": "0_on_submission_else_negative_errno"
+  },
+  "side_effects": [
+    "submits_one_prebuilt_miwear_message_without_wearable_quickapp_appinfo_lookup"
+  ],
+  "proof": {
+    "static": "candidate",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=/Volumes/EXT0/Canopus/targets/xiaomi-band-10-pro-3.101.043/evidence/fw-match/ensemble-1036-to-1043-v5.json"
+  },
+  "approval_state": "PENDING",
+  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=REVIEW_REQUIRED confidence=0.9542 margin=0.4184"
+}

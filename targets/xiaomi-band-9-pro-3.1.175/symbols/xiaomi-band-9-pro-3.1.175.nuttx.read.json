@@ -5,40 +5,25 @@
   "name": "read",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C37F9EA",
-  "callable_address": "0x0C37F9EB",
   "prototype": "int32(int, void *, uint32_t)",
-  "calling_convention": "arm-aapcs",
-  "contexts": {
-    "allowed": [
-      "connection_framework_owner"
-    ],
-    "blocking": true
-  },
   "proof": {
     "static": "recovered",
     "evidence_ids": [
-      "EVID-B9-READ-001"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-B9-READ-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C37F9EA; disasm confirms r0=fd, r1=buf, r2=nbytes: fs_getfilep(sub_C37D3FC)->fs_read(sub_C37CE70); sets errno, returns -1 on failure."
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int32(int, void *, uint32_t)",
-    "ownership": "caller-owned",
-    "thread": "calling thread",
-    "device_probe": "pending"
-  },
-  "notes": "NuttX fs/vfs/fs_read.c. fs_read internal = sub_C37CE70. Matches band-10 read 0x0C1C1E24."
+  "entry_address": "0xc407f14",
+  "callable_address": "0xc407f15",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
 }

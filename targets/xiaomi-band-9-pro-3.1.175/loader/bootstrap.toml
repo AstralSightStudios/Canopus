@@ -1,0 +1,54 @@
+# Firmware-bound NSH/mw bootstrap profile for Xiaomi Band 9 Pro 3.1.175.
+# This file is consumed by scripts/build_band9_bootstrap.sh. It is not a
+# target-private callable ABI and does not imply device verification.
+schema = 1
+target_id = "xiaomi-band-9-pro-3.1.175"
+firmware_sha256 = "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b"
+loader_family = "nsh-mw-stage1-stage2"
+status = "STATIC_RECOVERED"
+command_family = "mw-exec"
+
+[stage]
+stage2_path = "/data/canopus/stage2.bin"
+supervisor_path = "/data/canopus/supervisor.elf"
+entry_argument = "unspecified-r0"
+thumb_entry = true
+
+[firmware]
+exec_handler = 0x0C0FE4FC
+mw_handler = 0x0C102DF0
+open = 0x0C37F760
+close = 0x0C37EFF8
+read = 0x0C37F9EA
+memalign = 0x0C0F21EC
+free = 0x0C0F1B00
+mpu_alloc = 0x0C51D8D0
+mpu_configure = 0x0C51D758
+mpu_release = 0x0C51D928
+
+[architecture]
+mpu_rnr = 0xE000ED98
+mpu_rbar = 0xE000ED9C
+mpu_rlar = 0xE000EDA0
+mpu_region_count = 8
+exec_access_attr = 1
+exec_mem_attr = 2
+ro_access_attr = 5
+rw_access_attr = 4
+
+[sram_text]
+base = 0x20082D40
+size = 0x20E0
+cave = 0x20084E10
+result_word = 0x20084E2C
+original_words = [
+  0x00000000, 0x00000000, 0x00000000, 0x00000000,
+  0x726F6E5F, 0x73616C66, 0x70615F68, 0x72665F69,
+]
+
+[evidence]
+ids = ["EVID-LOADER-9175-002"]
+unsafe_assumptions = [
+  "Device execution, cave restoration, and /dev/canopus publication remain untested.",
+  "The one-shot bootstrap must transfer allocation and MPU ownership to the resident loader before returning.",
+]

@@ -4,9 +4,9 @@
   "target_id": "xiaomi-band-9-pro-3.1.175",
   "name": "app_install",
   "kind": "function",
+  "entry_address": "0xc44b5d0",
+  "callable_address": "0xc44b5d1",
   "instruction_set": "thumb",
-  "entry_address": "0x0C44B5D0",
-  "callable_address": "0x0C44B5D1",
   "prototype": "int(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -15,30 +15,32 @@
     ],
     "blocking": false
   },
+  "ownership": {
+    "return_value": "implementation_defined"
+  },
+  "side_effects": [
+    "inserts_app_into_registry",
+    "allocates_descriptor_copy",
+    "allocates_page_registry",
+    "registers_each_page",
+    "emits_app_event_28"
+  ],
   "proof": {
     "static": "recovered",
     "evidence_ids": [
-      "EVID-APP-005"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-APP-005"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C44B5D0; off_200A28D0; 'app_install' log string; quickapp_register_app call site"
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t)",
-    "ownership": "caller-owned descriptors for call",
-    "thread": "app_registry_owner",
-    "device_probe": "pending"
-  },
-  "notes": "band-9 app registration; copies 15-word descriptor, registers pages; must precede launcher_add."
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
 }

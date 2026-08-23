@@ -118,7 +118,7 @@ pub static canopus_module_descriptor: ModuleDescriptorV1 = ModuleDescriptorV1 {
     module_id: pack(b"org.canopus.no-heap-counter"),
     module_version: pack(b"0.1.0"),
     build_id: pack(b"no-heap-counter-0.1.0"),
-    target_id: pack(b"xiaomi-band-10-pro-3.101.030"),
+    target_id: pack(b"xiaomi-band-10-pro-3.101.036"),
     prepare: Some(canopus_mod_prepare),
     activate: Some(canopus_mod_activate),
     deactivate: Some(canopus_mod_deactivate),

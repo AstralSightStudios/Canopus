@@ -8,21 +8,17 @@
   "prototype": "uint32_t",
   "proof": {
     "static": "recovered",
-    "evidence_ids": [
-      "EVID-BT-1043-CORE-001"
-    ],
+    "evidence_ids": ["EVID-BT-1043-PAIR-FILTER-003"],
     "device": "not_probed"
   },
   "policy": "native-full-trust",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
-    "evidence_ids": [
-      "EVID-BT-1043-CORE-001"
-    ],
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; core adapter, cpevent, L2CAP owner, and queue-wrapper xref review"
+    "evidence_ids": ["EVID-BT-1043-PAIR-FILTER-003"],
+    "source": "Exact 3.101.043 IDB sub_C70B058 stores sub_C3AF3E8 result in dword_20126734 and sub_C709D7C passes it to sub_C3AF450."
   },
-  "entry_address": "0x2013DBE0",
+  "entry_address": "0x20126734",
   "approval_state": "APPROVED",
-  "notes": "Exact 3.101.043 cpevent registration handle. This is a registration token, not the core adapter object."
+  "notes": "Corrected after FAIL-BT-1043-BOND-1107-001 and re-audited after FAIL-BT-1043-BOND-1113-002: this global stores the stock bts 8-byte callback-list node pointer {cookie, descriptor}. 0x2013DBE0 is the unrelated miwear cpevent handle."
 }

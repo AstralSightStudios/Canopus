@@ -12,7 +12,8 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-IO-1043-002"
+      "EVID-IO-1043-002",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "policy": "managed",
@@ -21,9 +22,10 @@
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; NuttX VFS, inode registry, and clock implementation review",
     "evidence_ids": [
-      "EVID-IO-1043-002"
+      "EVID-IO-1043-002",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "approval_state": "APPROVED",
-  "notes": "Exact 3.101.043 NuttX driver unregistration entry for a sole path argument."
+  "notes": "Exact 3.101.043 NuttX driver unregistration entry for a sole path argument. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record."
 }

@@ -5,40 +5,32 @@
   "name": "bt_adapter_get_instance",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C3BCAA8",
-  "callable_address": "0x0C3BCAA9",
+  "entry_address": "0xc27d5b4",
+  "callable_address": "0xc27d5b5",
   "prototype": "void *()",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
-      "connection_framework_owner"
+      "native_module_bluetooth_client"
     ],
     "blocking": false
   },
   "proof": {
     "static": "recovered",
     "evidence_ids": [
-      "EVID-B9-BTGINST-001"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-B9-BTGINST-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C3BCAA8; lazily sets bluetooth service vtable dword_200D6340 = &unk_200ADE14 and returns service object &unk_200ADDEC. Called by miwear_bluetooth app sub_C17D13C and btservice 0xc3cb callers."
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "void *()",
-    "ownership": "returned singleton (not caller-owned)",
-    "thread": "calling thread",
-    "device_probe": "pending"
-  },
-  "notes": "Band-9 btservice singleton getter (btservice/btservice/bts_service_interface.c). Returns service/adapter object &unk_200ADDEC, init vtable dword_200D6340. Matches band-10 bt_adapter_get_instance 0x0CA286C8."
+  "approval_state": "PENDING",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
 }

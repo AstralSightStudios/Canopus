@@ -5,8 +5,8 @@
   "name": "lv_obj_move_to_index",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc5889d0",
-  "callable_address": "0xc5889d1",
+  "entry_address": "0xc589550",
+  "callable_address": "0xc589551",
   "prototype": "void (void *, int32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -28,7 +28,8 @@
     "device": "not_probed",
     "host_tested": false,
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-MATCH-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "policy": "restricted",
@@ -36,10 +37,11 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-MATCH-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ],
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
   },
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lv_obj_move_to_index)",
+  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lv_obj_move_to_index) Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
   "approval_state": "APPROVED"
 }

@@ -5,34 +5,25 @@
   "name": "page_goto",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C49E7CC",
-  "callable_address": "0x0C49E7CD",
-  "prototype": "int32_t(uint32_t, uint32_t, uint32_t, uint32_t)",
-  "calling_convention": "arm-aapcs",
+  "prototype": "int32_t(uint32_t page_key, uint32_t start_data, uint32_t param, uint32_t callbacks)",
   "proof": {
     "static": "recovered",
     "evidence_ids": [
-      "EVID-NAV-001"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-NAV-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C49E7CC; goto_page_no_check_stacktop log"
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int32_t(uint32_t, uint32_t, uint32_t, uint32_t)",
-    "ownership": "caller-owned",
-    "thread": "UI owner thread",
-    "device_probe": "pending"
-  },
-  "notes": "band-9 page navigation (pagemanager goto_page_no_check_stacktop)."
+  "entry_address": "0xc1010b0",
+  "callable_address": "0xc1010b1",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
 }

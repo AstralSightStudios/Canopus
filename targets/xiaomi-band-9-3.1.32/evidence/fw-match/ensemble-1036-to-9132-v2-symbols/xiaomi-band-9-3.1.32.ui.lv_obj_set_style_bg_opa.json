@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.ui.lv_obj_set_style_bg_opa",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "lv_obj_set_style_bg_opa",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc44feba",
+  "callable_address": "0xc44febb",
+  "prototype": "void (void *, uint32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrows a live LVGL object; opacity and selector use 32-bit AAPCS registers",
+    "return_value": "none"
+  },
+  "side_effects": [
+    "mutates_local_widget_style"
+  ],
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+  },
+  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=CANDIDATE confidence=0.6257 margin=0.0183",
+  "approval_state": "PENDING"
+}

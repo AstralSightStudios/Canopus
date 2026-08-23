@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-1043-PAIR-FILTER-003",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "What object does the 3.101.043 stock callback registration handle identify, and how can the Pair Request callback be replaced without writing outside the callback manager?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.core_bt_adapter_instance",
+    "xiaomi-band-10-pro-3.101.043.core_bt_registration_handle",
+    "xiaomi-band-10-pro-3.101.043.private_abi.stock_bt_callback_descriptor",
+    "xiaomi-band-10-pro-3.101.043.core_bt_pair_request_callback"
+  ],
+  "prototype_hypothesis": "dword_20126738 is the stock bts adapter and dword_20126734 is the pointer-sized callback-list node returned by sub_C3A96EC through sub_C3AF3E8. The 8-byte node is {cookie, descriptor}; its descriptor is at +4 and initially equals off_2CD4A744. adapter+120 instead owns a 0x24-byte callbacks_list manager and has no valid +72 descriptor field.",
+  "callsite_evidence": [
+    "sub_C70B058 assigns dword_20126738 = sub_C3AF1A8(), then stores sub_C3AF3E8(dword_20126738, &off_2CD4A744) in dword_20126734.",
+    "sub_C3A9688 allocates exactly 0x24 bytes for callbacks_list, initializes capacity/count at +0/+1, a list at +4, and synchronization state beginning at +8.",
+    "sub_C3AF3E8 stores the callbacks_list manager at adapter+120 and calls sub_C3A96EC(manager, 0, descriptor). It returns the result of sub_C3A96EC as the registration handle.",
+    "sub_C3A96EC allocates exactly 8 bytes for each registration node, stores cookie at word 0 and descriptor at word 1, inserts that node into the manager list, increments the manager count, and returns the node address.",
+    "sub_C3A9770 finds and removes the exact registration-node pointer; sub_C3AF450 calls it with the dword_20126734 handle and destroys the manager only after its count reaches zero.",
+    "off_2CD4A744 contains 17 little-endian callback words; word 5 is 0x0C709E91, the Thumb callable for sub_C709E90 gap_pair_request_callback."
+  ],
+  "control_flow_evidence": [
+    "The safe replacement sequence is: validate handle word 0 == 0 and word 1 == off_2CD4A744; validate descriptor word 5; allocate and copy a 17-word mirror; register the mirror through sub_C3AF3E8; unregister the original node through sub_C3AF450; then publish the returned mirror handle in dword_20126734.",
+    "The replacement must not write manager+72. That address is 36 bytes beyond the end of the 0x24-byte manager allocation and is neither a descriptor owner nor a registration node.",
+    "sub_C709D7C later unregisters the handle stored in dword_20126734, so updating that global preserves the stock shutdown lifecycle for the replacement node."
+  ],
+  "ownership_analysis": "The adapter and callbacks_list manager are firmware-owned. Each registration node is allocated and freed by the firmware registration API. The 17-word mirror is module-owned and must remain resident while its firmware-owned registration node exists. The stock global handle is updated only after mirror registration succeeds and original-node removal succeeds.",
+  "negative_evidence": [
+    "FAIL-BT-1043-BOND-1113-002 device feedback refutes the EVID-BT-1043-PAIR-FILTER-002 manager+72 interpretation: the first corrective build failed before bt_create_bond with module-local -1113.",
+    "The manager+72 expression is statically impossible because sub_C3A9688 allocates only 0x24 bytes for that manager.",
+    "The prior 043 core_bt_callback_table candidate at 0x2CD1F920 remains withdrawn; it is not the stock bts 17-word descriptor.",
+    "The globals at 0x2013DBE4/0x2013DBE0 remain unrelated miwear cpevent state and are not valid substitutes for dword_20126738/dword_20126734."
+  ],
+  "unsafe_assumptions": [
+    "The exact static recovery proves object layout and control flow for firmware SHA-256 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec only.",
+    "The replacement remains HOST-FIXED/DEVICE-PENDING until an exact-target device retest reaches Pair Request and bonding without any -1114..-1117 diagnostic."
+  ],
+  "recommended_probe": "On exact 3.101.043 after a reboot, load the rebuilt module once and pair a non-companion Classic headset. Record any Bond diagnostic exactly: -1114 means descriptor unavailable, -1115 node/descriptor ownership mismatch, -1116 Pair Request slot mismatch, and -1117 firmware register/unregister failure.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "STATIC_RECOVERED_HOST_FIXED_DEVICE_PENDING",
+  "created": "2026-08-23T00:00:00Z",
+  "artifacts": [
+    {"uri": "ida://vela_ap.bin.i64 sub_C70B058", "role": "stock bts adapter initialization and callback registration"},
+    {"uri": "ida://vela_ap.bin.i64 sub_C3AF3E8", "role": "adapter+120 callbacks_list manager owner and registration wrapper"},
+    {"uri": "ida://vela_ap.bin.i64 sub_C3A9688", "role": "0x24-byte callbacks_list manager allocation"},
+    {"uri": "ida://vela_ap.bin.i64 sub_C3A96EC", "role": "8-byte registration-node allocation and insertion"},
+    {"uri": "ida://vela_ap.bin.i64 sub_C3A9770", "role": "registration-node removal by exact handle"},
+    {"uri": "ida://vela_ap.bin.i64 sub_C3AF450", "role": "adapter callback unregister wrapper"},
+    {"uri": "ida://vela_ap.bin.i64 0x2CD4A744", "role": "exact 17-word stock callback descriptor"},
+    {"uri": "ida://vela_ap.bin.i64 sub_C709E90", "role": "stock companion Pair Request callback"}
+  ]
+}

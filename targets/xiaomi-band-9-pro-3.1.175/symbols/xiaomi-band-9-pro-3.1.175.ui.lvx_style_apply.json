@@ -5,40 +5,25 @@
   "name": "lvx_style_apply",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C371CA0",
-  "callable_address": "0x0C371CA1",
   "prototype": "int(void *, const void *, uint32_t, uint32_t)",
-  "calling_convention": "arm-aapcs",
-  "contexts": {
-    "allowed": [
-      "ui_owner"
-    ],
-    "blocking": false
-  },
   "proof": {
     "static": "recovered",
     "evidence_ids": [
-      "EVID-UI-005"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-UI-005"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C371CA0; applies a stock theme style with opacity/state via sub_C2448FC/sub_C245B4C; row factory applies unk_200CA048 (MiSans-Demibold 32) with (255,0)"
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int(void *, const void *, uint32_t, uint32_t)",
-    "ownership": "caller-owned",
-    "thread": "ui_owner",
-    "device_probe": "pending"
-  },
-  "notes": "Band-9 style apply, corresponds to band-10 ui.lvx_style_apply."
+  "entry_address": "0xc2c10a4",
+  "callable_address": "0xc2c10a5",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
 }

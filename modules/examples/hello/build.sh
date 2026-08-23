@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds the hello module for the xiaomi-band-10-pro-3.101.030 target.
+# Builds the hello module for the xiaomi-band-10-pro-3.101.036 target.
 #
 # Produces a zero-import ELF32 ET_REL (Cortex-M33 Thumb soft-float) and runs
 # the Canopus ELF verifier against the target pack. Flags match architecture
@@ -7,7 +7,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
-TARGET_ID="xiaomi-band-10-pro-3.101.030"
+TARGET_ID="xiaomi-band-10-pro-3.101.036"
 PACK_DIR="$ROOT/targets/$TARGET_ID"
 GENERATED="$PACK_DIR/generated/canopus_veneer.h"
 OUT="$ROOT/modules/examples/hello/build"

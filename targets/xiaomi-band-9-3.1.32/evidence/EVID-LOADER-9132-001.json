@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-LOADER-9132-001",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+  "question": "Does the exact 3.1.32 release expose the same NSH mw/exec loader family, and which primitives are firmware-specific?",
+  "source": "ida:///Volumes/EXT0/miwear.watch.n66nfc_v3.1.32_full_489f2050/vela_ap.bin.i64",
+  "static_findings": {
+    "nsh_exec": {
+      "entry_address": "0x0c1c9528",
+      "callable_address": "0x0c1c9529",
+      "behavior": "The exact handler parses a hexadecimal callable, prints Calling %p, then invokes it through BLX; the called entry must tolerate an unspecified r0 value."
+    },
+    "nsh_mw": {
+      "entry_address": "0x0c1cc340",
+      "callable_address": "0x0c1cc341",
+      "behavior": "The exact handler parses address[=value] and optional count, performs four-byte accesses, and has no cache maintenance."
+    },
+    "file_io": {
+      "open_callable": "0x0c3942a1",
+      "close_callable": "0x0c39025d",
+      "read_callable": "0x0c393467",
+      "open_internal": "0x0c394229",
+      "close_internal": "0x0c4f8e2d",
+      "read_dispatcher": "0x0c3918e1",
+      "notes": "The exact public wrappers were identified by their fd-table and errno control flow: sub_C3942A0 wraps sub_C394228, sub_C39025C wraps sub_C4F8E2C, and sub_C393466 resolves the fd before calling sub_C3918E0."
+    },
+    "heap": {
+      "memalign_callable": "0x0c16ab8d",
+      "free_callable": "0x0c16a425",
+      "notes": "The exact two-argument memalign wrapper sub_C16AB8C and one-argument free wrapper sub_C16A424 were decompiled; their shared heap implementations are separate functions."
+    },
+    "mpu": {
+      "alloc_callable": "0x0c5228a5",
+      "configure_callable": "0x0c52272d",
+      "release_callable": "0x0c5228fd",
+      "region_count": 8,
+      "configure_contract": "The exact helper rejects region > 7, length <= 0x1f, unaligned base, and unsupported attributes, then publishes MPU registers with DSB/ISB."
+    },
+    "sram_text": {
+      "base": "0x200686c0",
+      "protected_size": "0x2300",
+      "startup_copy": "sub_C1001E4 copies 0x2720 bytes from 0x2c10c3dc..0x2c10eafc to 0x200686c0..0x2006ade0, then executes DSB/ISB.",
+      "protection_callsite": "sub_C52293C allocates a tracked MPU region and configures base 0x200686c0/size 0x2300 with access attribute 1.",
+      "cave": "0x2006a9b0",
+      "result_word": "0x2006a9cc",
+      "cave_source": "0x2c10e6cc",
+      "original_words": ["0x00000000", "0x00000000", "0x00000000", "0x00000000", "0x726f6e5f", "0x73616c66", "0x70615f68", "0x72665f69"],
+      "xref_result": "No exact-IDB references target the eight flash-source words corresponding to the cave."
+    }
+  },
+  "control_flow_evidence": [
+    "The exact exec handler uses BLX and does not retain or supervise the called image.",
+    "The exact mw handler writes four-byte words and does not publish instruction cache state.",
+    "The exact target contains a separate eight-region MPU allocator/configurer/releaser and a DSB/ISB publication path.",
+    "The exact startup copy maps flash 0x2c10e6cc to SRAM 0x2006a9b0; the 32-byte candidate has no exact-IDB references and reproduces the independently recovered 9 Pro cave word pattern at a different SRAM address."
+  ],
+  "unsafe_assumptions": [
+    "The loader family and cave findings are static only; no device execution was performed.",
+    "The installer must compare and restore all eight exact cave words and reboot after any cleanup failure."
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "approval_state": "PENDING"
+}

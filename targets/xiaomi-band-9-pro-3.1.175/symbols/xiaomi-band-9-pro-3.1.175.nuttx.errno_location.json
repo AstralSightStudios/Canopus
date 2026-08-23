@@ -5,40 +5,25 @@
   "name": "errno_location",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C0E4B6C",
-  "callable_address": "0x0C0E4B6D",
   "prototype": "int *(void)",
-  "calling_convention": "arm-aapcs",
-  "contexts": {
-    "allowed": [
-      "calling_thread"
-    ],
-    "blocking": false
-  },
   "proof": {
     "static": "recovered",
+    "device": "not_probed",
     "evidence_ids": [
-      "EVID-IO-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ]
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-IO-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C0E4B6C; returns current task storage at task+0x14, or fallback errno storage at 0x200B8558 when no current task exists."
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int *(void)",
-    "ownership": "firmware-owned task-local pointer",
-    "thread": "calling thread",
-    "device_probe": "pending"
-  },
-  "notes": "The returned pointer is borrowed firmware storage and must not be retained across task lifetime changes."
+  "entry_address": "0xc43f1fe",
+  "callable_address": "0xc43f1ff",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
 }

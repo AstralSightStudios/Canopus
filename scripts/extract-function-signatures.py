@@ -180,7 +180,7 @@ def main() -> None:
     parser.add_argument("--firmware", required=True, type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--catalog", type=Path)
-    parser.add_argument("--target-id", default="xiaomi-band-10-pro-3.101.030")
+    parser.add_argument("--target-id", default="xiaomi-band-10-pro-3.101.036")
     parser.add_argument("--base-address", default=f"0x{DEFAULT_BASE:08X}")
     args = parser.parse_args()
 

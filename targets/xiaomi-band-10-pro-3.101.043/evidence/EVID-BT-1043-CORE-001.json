@@ -4,15 +4,15 @@
   "target_id": "xiaomi-band-10-pro-3.101.043",
   "question": "Which exact 3.101.043 globals and wrappers carry the core adapter, cpevent registration, L2CAP owner, L2CAP requests, and stock pair-request forwarding?",
   "candidate_symbols": [
-    "xiaomi-band-10-pro-3.101.043.core_bt_adapter_instance",
-    "xiaomi-band-10-pro-3.101.043.core_bt_registration_handle",
+    "xiaomi-band-10-pro-3.101.043.bluetooth.miwear_bt_adapter_instance",
+    "xiaomi-band-10-pro-3.101.043.bluetooth.miwear_bt_cpevent_registration_handle",
     "xiaomi-band-10-pro-3.101.043.private_abi.bt_l2cap_owner",
     "xiaomi-band-10-pro-3.101.043.bt_l2cap_connect",
     "xiaomi-band-10-pro-3.101.043.private_abi.bt_l2cap_disconnect",
     "xiaomi-band-10-pro-3.101.043.private_abi.bt_l2cap_submit_cid",
     "xiaomi-band-10-pro-3.101.043.core_bt_pair_request_callback"
   ],
-  "prototype_hypothesis": "0x2013DBE4 stores the core adapter instance, 0x2013DBE0 stores the cpevent registration handle, and 0x2013BDBC stores the L2CAP FSM owner. sub_C805B0C, sub_C805B38, and sub_C805BE8 enqueue connect, disconnect, and CID-submit requests; sub_C709E90 forwards the stock pair request through the adapter reply wrapper.",
+  "prototype_hypothesis": "0x2013DBE4 stores the miwear Bluetooth app adapter instance, 0x2013DBE0 stores its cpevent registration handle, and 0x2013BDBC stores the L2CAP FSM owner. sub_C805B0C, sub_C805B38, and sub_C805BE8 enqueue connect, disconnect, and CID-submit requests; sub_C709E90 forwards the stock pair request through the adapter reply wrapper. The stock bts companion client used by the pair filter is documented separately by EVID-BT-1043-PAIR-FILTER-003.",
   "callsite_evidence": [
     "sub_CA40ED4 creates the core Bluetooth adapter and stores the returned object in dword_2013DBE4; sub_CA40F68 directly returns dword_2013DBE4.",
     "sub_CA40E3C registers cpevent through sub_CAA5048 when adapter state becomes ON and stores the returned handle in dword_2013DBE0; on OFF it passes that handle to sub_CAA5108 and clears the global.",
@@ -20,7 +20,7 @@
     "sub_C709E90 contains gap_pair_request_callback and forwards the stock request to sub_C3B0050 with the live adapter context and device address."
   ],
   "control_flow_evidence": [
-    "The globals have distinct writers and consumer families: 0x2013DBE4 is an adapter object, 0x2013DBE0 is a registration token, and 0x2013BDBC is an FSM owner root. None is interchangeable with a callback table or callable address.",
+    "The globals have distinct writers and consumer families: 0x2013DBE4 is the miwear Bluetooth app adapter object, 0x2013DBE0 is its cpevent registration token, and 0x2013BDBC is an FSM owner root. None is interchangeable with the stock bts companion callback state recovered in EVID-BT-1043-PAIR-FILTER-003.",
     "The three L2CAP wrappers preserve their request arguments before loading the same owner and selecting different owner-local work handlers, confirming both address family and queue-only behavior."
   ],
   "ownership_analysis": "The three globals and their pointed objects are firmware-owned and borrowed. Connect/disconnect/CID request ownership follows each stock queue wrapper: callers must keep or transfer request/buffer storage exactly as required by the target-private interface and active owner lifecycle.",

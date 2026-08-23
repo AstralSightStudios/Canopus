@@ -7,12 +7,12 @@ rust-version = "1.85"
 description = "Target-selectable private full-trust firmware bindings"
 
 [features]
-default = ["target-xiaomi-band-10-pro-3-101-030"]
-target-xiaomi-band-10-pro-3-101-030 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-10-pro-3-101-030"]
+default = ["target-xiaomi-band-10-pro-3-101-036"]
 target-xiaomi-band-10-pro-3-101-036 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-10-pro-3-101-036"]
+target-xiaomi-band-10-pro-3-101-043 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-10-pro-3-101-043"]
 target-xiaomi-band-9-pro-3-1-175 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-9-pro-3-1-175"]
 target-xiaomi-band-11-4-100-108 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-11-4-100-108"]
-target-xiaomi-band-10-pro-3-101-043 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-10-pro-3-101-043"]
+target-xiaomi-band-9-3-1-32 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-9-3-1-32"]
 
 [dependencies]
 canopus-target-generated = { path = "../canopus-target-generated", optional = true, default-features = false }

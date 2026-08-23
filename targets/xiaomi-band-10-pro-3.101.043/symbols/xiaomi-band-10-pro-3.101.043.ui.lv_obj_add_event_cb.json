@@ -9,7 +9,8 @@
   "proof": {
     "static": "confirmed",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-MATCH-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ],
     "device": "not_probed"
   },
@@ -19,11 +20,12 @@
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-MATCH-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "entry_address": "0xc5883f0",
   "callable_address": "0xc5883f1",
-  "notes": "exact 3.101.043 stock-row event registration helper used by Settings rows (sub_C5883F0); registers click event code 7 and the caller-owned callback/user-data tuple.",
+  "notes": "exact 3.101.043 stock-row event registration helper used by Settings rows (sub_C5883F0); registers click event code 7 and the caller-owned callback/user-data tuple. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
   "approval_state": "APPROVED"
 }

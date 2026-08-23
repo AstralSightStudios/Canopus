@@ -5,8 +5,8 @@
   "name": "quickapp_register_app",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C2C655C",
-  "callable_address": "0x0C2C655D",
+  "entry_address": "0xc2c5698",
+  "callable_address": "0xc2c5699",
   "prototype": "int(uint16_t, const canopus_interconnect_app_info *)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -24,27 +24,19 @@
   "proof": {
     "static": "recovered",
     "evidence_ids": [
-      "EVID-CONN-001"
-    ]
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-CONN-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C2C655C; registers package, copies 9 words of app_info"
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int(uint16_t, const canopus_interconnect_app_info *)",
-    "ownership": "caller-owned",
-    "thread": "connection_framework_owner",
-    "device_probe": "pending"
-  },
-  "notes": "Matches the Band 10 full quick-app registration flow. Although this populates appinfo used by watch-to-phone routing, it also registers app/page/launcher state and must not be used merely to assign a custom package to a native module."
+  "approval_state": "PENDING",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
 }

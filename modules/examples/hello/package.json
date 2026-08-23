@@ -8,10 +8,10 @@
   "lifecycle": "removable",
   "artifacts": [
     {
-      "target_id": "xiaomi-band-10-pro-3.101.030",
+      "target_id": "xiaomi-band-10-pro-3.101.036",
       "target_pack_revision": 1,
-      "firmware_sha256": "f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b",
-      "path": "artifacts/xiaomi-band-10-pro-3.101.030/module.elf",
+      "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+      "path": "artifacts/xiaomi-band-10-pro-3.101.036/module.elf",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
     }
   ],

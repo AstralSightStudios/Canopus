@@ -2,28 +2,37 @@
   "schema": 1,
   "evidence_id": "EVID-BT-1043-GAP-001",
   "target_id": "xiaomi-band-10-pro-3.101.043",
-  "question": "What does global 0x2013BDB4 contain on exact 3.101.043, and where is the writable stock raw-H4 receive callback actually stored?",
+  "follow_up": {
+    "failure_id": "FAIL-BT-1043-BOND-1105-003",
+    "evidence_id": "EVID-BT-1043-MHDT-002",
+    "status": "LIVE_DISPATCH_SLOT_FIXED_DEVICE_RETEST_PENDING",
+    "reason": "The previous 043 backend patched the initializer-owned callback holder after firmware registration had already copied its value. Exact static tracing recovered the separate direct callback slot used by the completed-H4 dispatch path."
+  },
+  "question": "Which writable word does exact 3.101.043 actually call for completed inbound H4 packets?",
   "candidate_symbols": [
     "xiaomi-band-10-pro-3.101.043.private_abi.gap_host_receive_slot",
     "xiaomi-band-10-pro-3.101.043.private_abi.gap_host_stock_receive"
   ],
-  "prototype_hypothesis": "0x2013BDB4 is a GAP FSM owner-root global rather than a direct callback slot. The active callback is reached as owner = *(void **)0x2013BDB4; state = *(void **)owner; slot = *(void ***)(state + 0x28); callback = *slot. sub_C7EC47C is int stock_receive(void *state, uint8_t *packet, int packet_length).",
+  "prototype_hypothesis": "0x2013C144 is the direct int (*)(void *state, uint8_t *packet, int packet_length) callback slot. Its state word is 0x2013C140. sub_C7EC47C is the exact stock callback with that three-argument ABI.",
   "callsite_evidence": [
-    "Initializer sub_C7ECE30 allocates 0x38 bytes through sub_C840C54, clears that state, allocates a separate 4-byte object, stores the 4-byte object's pointer at state+0x28, and writes sub_C7EC47C+1 into the 4-byte object.",
-    "The initializer then passes state to sub_C7EB5B0. sub_C7EB5B0 allocates a 12-byte owner, stores state at owner+0, zeroes owner+4 and owner+8, and returns the owner; sub_C7ECE30 stores that returned owner in dword_2013BDB4.",
-    "sub_C7EC47C contains Recv, parses an inbound H4 packet type and length from R1/R2, and submits resulting work through the owner rooted at dword_2013BDB4."
+    "sub_C81234C receives (object, callback_holder, state), reads *callback_holder, stores state at 0x2013C140, and stores the copied callback at 0x2013C144.",
+    "sub_C8172C0 is the completed-H4 dispatch wrapper. It tests 0x2013C144, moves packet and packet_length into R1/R2, loads callback state from 0x2013C140 into R0, and executes BLX through 0x2013C144.",
+    "sub_C8172C0 is called from sub_C3BA8F4 on the host receive path.",
+    "sub_C7EC47C consumes R0/R1/R2 as state, complete H4 packet, and packet length and parses packet type values 2 through 5.",
+    "The 3.101.036 firmware has the same three-function structure: sub_C7F9D84 copies *callback_holder into 0x20137E94, sub_C7FECF8 dispatches through 0x20137E94, and the proven stock callback is sub_C7D3EB4."
   ],
   "control_flow_evidence": [
-    "The exact initializer's two allocations distinguish the owner root, 0x38-byte state, and separately allocated callback cell. A direct volatile write to 0x2013BDB4 would replace the owner, not the callback.",
-    "Power-on reconstruction replaces the owner/state/callback chain, so a hook must resolve the chain after adapter ON and verify the live callback before replacing it.",
-    "The previous target-private implementation compared the owner pointer itself with sub_C7EC47C+1. It normally failed closed and therefore never installed the 043 receive hook."
+    "0x2013BDB4 is only the GAP FSM owner root. Its state+0x28 callback holder seeds registration but is not the direct post-registration dispatch word.",
+    "Patching the holder after sub_C81234C has run leaves the copied callback at 0x2013C144 unchanged, explaining why compare/write installation could report success without any rewrite hit.",
+    "The serial HCI parser's four-argument callback at 0x200EE814 is a lower framing seam and is ABI-incompatible with the three-argument stock host callback; it must not be replaced by the module hook.",
+    "The corrected backend compare-writes 0x2013C144 only when it contains either sub_C7EC47C+1 or the module replacement, and verifies the written word."
   ],
-  "ownership_analysis": "All owner, state, and callback-cell objects are firmware-owned. A module borrows the live pointers, modifies only the final callback word after stock/replacement verification, and must not retain the chain across Bluetooth power transitions.",
+  "ownership_analysis": "0x2013C140 and 0x2013C144 are firmware-owned registration outputs. The module borrows and modifies only the direct callback word after exact stock/replacement verification. The owner rooted at 0x2013BDB4 and its initializer-owned callback holder remain untouched.",
   "unsafe_assumptions": [
-    "The callback cell is word-aligned because stock firmware obtains it from the Bluetooth allocator and writes one Thumb pointer into it.",
-    "Static exact-IDB analysis proves the pointer chain; hook installation and mHDT packet flow on an exact 3.101.043 device remain unprobed."
+    "0x2013C144 is word-aligned and used as a Thumb callback pointer by sub_C8172C0.",
+    "Exact-device execution of the corrected direct slot and the resulting mHDT rewrite remain pending a device retest."
   ],
-  "recommended_probe": "After adapter ON on exact 3.101.043, resolve the owner/state/slot chain, verify the cell initially contains 0x0C7EC47D, install the hook, process one ordinary H4 packet and one mHDT configuration request, then cycle Bluetooth power and repeat without retaining stale pointers.",
+  "recommended_probe": "Rebuild and load the exact 043 module, confirm diagnostic bit 0x80 after installation, then process one peer Configuration Request carrying 7F 01 01 and confirm rewrite bit 0x40. If 0x80 appears without 0x40, capture the inbound H4 packet bytes before changing packet policy.",
   "reviewers": [
     "canopus-maintainer"
   ],
@@ -31,20 +40,24 @@
   "created": "2026-08-21T00:00:00Z",
   "artifacts": [
     {
-      "uri": "ida://vela_ap.bin.i64 sub_C7ECE30",
-      "role": "exact GAP state, callback-cell, and owner initializer"
+      "uri": "ida://vela_ap.bin.i64 sub_C81234C",
+      "role": "exact callback-holder copy into direct state and callback globals"
     },
     {
-      "uri": "ida://vela_ap.bin.i64 sub_C7EB5B0",
-      "role": "exact 12-byte owner constructor"
+      "uri": "ida://vela_ap.bin.i64 sub_C8172C0",
+      "role": "exact completed-H4 direct callback dispatch wrapper"
     },
     {
-      "uri": "ida://vela_ap.bin.i64 dword_2013BDB4",
-      "role": "exact GAP FSM owner-root global"
+      "uri": "ida://vela_ap.bin.i64 off_2013C144",
+      "role": "exact writable live receive callback slot"
     },
     {
       "uri": "ida://vela_ap.bin.i64 sub_C7EC47C",
-      "role": "exact stock raw-H4 receive callback"
+      "role": "exact stock three-argument raw-H4 receive callback"
+    },
+    {
+      "uri": "ida://3.101.036/vela_ap.bin.i64 sub_C7F9D84,sub_C7FECF8",
+      "role": "known-working structural comparison"
     }
   ]
 }

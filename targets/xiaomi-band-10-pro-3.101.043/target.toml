@@ -17,7 +17,7 @@ firmware_version = "3.101.043"
 firmware_build = "CONBINE_LTALM078_T3.101.043_08041658"
 module_abi = 1
 relocation_profile = "best1503-v1"
-revision = 1
+revision = 3
 
 # Recovered code/data extent from the exact 3.101.043 IDB; verifier range is
 # intentionally bounded to the recovered XIP window, not the full address bus.
@@ -95,8 +95,10 @@ notes = "intra-module Thumb conditional branch; exact device gate pending"
 source_repo = "miwear.watch.p67cn_v3.101.043_full_a4ce8564"
 source_findings = [
   "Exact 3.101.043 IDA corpus with 42,246 functions",
-  "Dual-source fw-match: 71 confirmed mappings from 3.101.036 and 72 confirmed mappings from 3.101.030; only confirmed intersections were promoted",
+  "Trusted 3.101.036 source pack promoted through caller-neighborhood ensemble v2; 5/5 comparable manual UI oracle addresses matched",
+  "043 production records retain curated policy/ownership and permanent forbidden/withdrawn decisions; ensemble v2 refreshed active addresses",
   "Unresolved global slots remain withdrawn/fail-closed",
+  "Pair-filter failure feedback corrected the 036-style 16-word global assumption: 043 stock bts state is dword_20126738/dword_20126734 with a 17-word descriptor at 0x2CD4A744 and live client pointer offsets +120/+72",
 ]
 import_date = "2026-08-19"
 maintainer = "canopus-maintainer"

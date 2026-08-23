@@ -91,12 +91,20 @@ fn function_signature_catalog_fixtures() {
 }
 
 #[test]
-fn current_target_signature_catalog_validates() {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../targets/xiaomi-band-10-pro-3.101.030/function-signatures.json");
-    let value: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
-    validate(SchemaKind::FunctionSignatureCatalog, &value).unwrap();
-    assert_eq!(value["signatures"].as_array().unwrap().len(), 67);
-    assert_eq!(value["unresolved"].as_array().unwrap().len(), 2);
+fn active_target_packs_validate_without_legacy_catalog() {
+    let targets = [
+        "xiaomi-band-10-pro-3.101.036",
+        "xiaomi-band-10-pro-3.101.043",
+        "xiaomi-band-9-pro-3.1.175",
+        "xiaomi-band-11-4.100.108",
+        "xiaomi-band-9-3.1.32",
+    ];
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../targets");
+    for target in targets {
+        assert!(
+            root.join(target).join("target.toml").exists(),
+            "missing {target}"
+        );
+    }
+    assert!(!root.join("xiaomi-band-10-pro-3.101.030").exists());
 }

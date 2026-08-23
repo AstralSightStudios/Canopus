@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "failure_id": "FAIL-BT-1043-BOND-1107-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "stage": "bluetooth.bond.submit_bond.install_core_pair_filter",
+  "observed_error": {
+    "display": "Bond 1/0 00 -1107",
+    "code": -1107,
+    "module_constant": "ERR_CORE_POLICY",
+    "source": "Canopus-Module-BluetoothAudio/crates/bluetooth-audio-device/src/target/bluetooth.rs"
+  },
+  "root_cause": "The 043 backend returned PairRequestFilterError::Policy before calling bt_create_bond because it incorrectly required the 036-style immutable 16-word core_bt_callback_table. The first correction recovered the right stock globals and 17-word descriptor but misclassified adapter+120 as a client with a descriptor field at +72; that follow-up layout was refuted by FAIL-BT-1043-BOND-1113-002 and EVID-BT-1043-PAIR-FILTER-003.",
+  "wrong_assumptions": [
+    "The 036 global callback-table ABI transfers unchanged to 043.",
+    "043 core_bt_adapter_instance at 0x2013DBE4 and core_bt_registration_handle at 0x2013DBE0 are the stock companion Pair Request client state.",
+    "A missing old-style callback-table global should be represented only by a fail-closed module stub, even when exact client-owned callback state is recoverable."
+  ],
+  "negative_matches": [
+    {
+      "source_name": "core_bt_adapter_instance",
+      "target_entry_address": "0x2013DBE4",
+      "reason": "043 address is the miwear cpevent adapter, not the stock bts companion client; use stock_bt_adapter_instance at 0x20126738 for pair-filter ownership."
+    },
+    {
+      "source_name": "core_bt_registration_handle",
+      "target_entry_address": "0x2013DBE0",
+      "reason": "043 address is the miwear cpevent handle, not the stock bts callback registration; use stock_bt_registration_handle at 0x20126734."
+    },
+    {
+      "source_name": "core_bt_callback_table",
+      "target_entry_address": "0x2CD1F920",
+      "reason": "036-style immutable 16-word callback global has no exact 043 owner/writer and must remain withdrawn."
+    }
+  ],
+  "corrective_evidence_id": "EVID-BT-1043-PAIR-FILTER-003",
+  "superseded_intermediate_evidence_id": "EVID-BT-1043-PAIR-FILTER-002",
+  "corrective_symbols": [
+    "xiaomi-band-10-pro-3.101.043.core_bt_adapter_instance",
+    "xiaomi-band-10-pro-3.101.043.core_bt_registration_handle",
+    "xiaomi-band-10-pro-3.101.043.private_abi.stock_bt_callback_descriptor"
+  ],
+  "required_checks": [
+    "Do not promote a candidate that is vetoed by negative_matches even if its ensemble score is high.",
+    "For callback-table roles, require an exact writer/reader lifecycle and descriptor word count before generating a raw binding.",
+    "Keep module-internal error-code provenance separate from firmware return values; -1107 here is a policy gate, not bt_create_bond's return."
+  ],
+  "status": "SUPERSEDED_INTERMEDIATE_LAYOUT",
+  "device_verification": "failed again as FAIL-BT-1043-BOND-1113-002; corrected layout retest pending"
+}

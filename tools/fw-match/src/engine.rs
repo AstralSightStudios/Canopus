@@ -7,7 +7,7 @@
 
 use crate::corpus::{Corpus, FunctionRecord};
 use crate::ga::{
-    build_pools, finalize, run_ga, Anchor, ConfirmedMatch, GaParams, Individual, MatchResult,
+    Anchor, ConfirmedMatch, GaParams, Individual, MatchResult, build_pools, finalize, run_ga,
 };
 
 /// A source symbol to match (typically read from a target pack symbol record).
@@ -57,9 +57,12 @@ pub fn match_symbols(
     // Resolve each symbol to a source corpus index, carrying the semantic name.
     let mut source_indices: Vec<(usize, String)> = Vec::new();
     for sym in symbols.iter() {
-        let addr = u64::from_str_radix(sym.entry_address.trim_start_matches("0x"), 16)
-            .unwrap_or(0);
-        if let Some(idx) = src_corpus.functions.iter().position(|f| f.addr_u64() == addr) {
+        let addr = u64::from_str_radix(sym.entry_address.trim_start_matches("0x"), 16).unwrap_or(0);
+        if let Some(idx) = src_corpus
+            .functions
+            .iter()
+            .position(|f| f.addr_u64() == addr)
+        {
             source_indices.push((idx, sym.name.clone()));
         }
     }
@@ -84,10 +87,8 @@ pub fn match_symbols(
         if active.is_empty() {
             break;
         }
-        let active_src: Vec<(usize, String)> = active
-            .iter()
-            .map(|&i| source_indices[i].clone())
-            .collect();
+        let active_src: Vec<(usize, String)> =
+            active.iter().map(|&i| source_indices[i].clone()).collect();
         let pools = build_pools(&active_src, src_corpus, dst_corpus, cfg.max_pool, &anchors);
         let ind = run_ga(&pools, &cfg.ga, cfg.seed + round as u64 * 0x9E37);
         let round_results = finalize(&ind, &pools, src_corpus, dst_corpus);
@@ -100,15 +101,13 @@ pub fn match_symbols(
         let mut frozen_this_round: Vec<(usize, u64, f64, f64, String)> = Vec::new();
         for (k, r) in round_results.iter().enumerate() {
             let sym_idx = active[k];
-            let (Some(ta), Some(sc), Some(mg)) =
-                (r.target_addr.as_deref(), r.score, r.margin)
+            let (Some(ta), Some(sc), Some(mg)) = (r.target_addr.as_deref(), r.score, r.margin)
             else {
                 still_active.push(sym_idx);
                 continue;
             };
             if sc >= CONF_SCORE && mg >= CONF_MARGIN {
-                let target_addr = u64::from_str_radix(ta.trim_start_matches("0x"), 16)
-                    .unwrap_or(0);
+                let target_addr = u64::from_str_radix(ta.trim_start_matches("0x"), 16).unwrap_or(0);
                 frozen_this_round.push((sym_idx, target_addr, sc, mg, r.name.clone()));
             } else {
                 still_active.push(sym_idx);
@@ -118,11 +117,8 @@ pub fn match_symbols(
         // target address per symbol, also against targets frozen in earlier
         // rounds.
         frozen_this_round.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap());
-        let mut claimed_targets: std::collections::HashSet<u64> = frozen_target
-            .iter()
-            .flatten()
-            .copied()
-            .collect();
+        let mut claimed_targets: std::collections::HashSet<u64> =
+            frozen_target.iter().flatten().copied().collect();
         for (sym_idx, target_addr, sc, mg, name) in frozen_this_round {
             if !claimed_targets.insert(target_addr) {
                 still_active.push(sym_idx); // collision: loser goes back to search
@@ -143,7 +139,8 @@ pub fn match_symbols(
     // Assemble the final report: frozen matches + whatever active symbols
     // still lack a decisive match (report their best candidate as-is).
     let mut results = Vec::new();
-    let mut claimed: std::collections::HashSet<u64> = frozen_target.iter().flatten().copied().collect();
+    let mut claimed: std::collections::HashSet<u64> =
+        frozen_target.iter().flatten().copied().collect();
     for (i, (fn_idx, name)) in source_indices.iter().enumerate() {
         let src = &src_corpus.functions[*fn_idx];
         if let Some(ta) = frozen_target[i] {
@@ -183,11 +180,7 @@ pub fn match_symbols(
 
 /// Filter matched results to those passing a composite-score threshold and a
 /// margin floor, then emit stable, address-carrying records.
-pub fn confirm(
-    results: &[MatchResult],
-    min_score: f64,
-    min_margin: f64,
-) -> Vec<ConfirmedMatch> {
+pub fn confirm(results: &[MatchResult], min_score: f64, min_margin: f64) -> Vec<ConfirmedMatch> {
     results
         .iter()
         .filter_map(|r| {
@@ -236,7 +229,11 @@ pub fn load_source_symbols(symbols_dir: &std::path::Path) -> Result<Vec<SourceSy
             .and_then(|s| s.as_str())
             .unwrap_or("")
             .to_string();
-        let name = value.get("name").and_then(|n| n.as_str()).unwrap_or("").to_string();
+        let name = value
+            .get("name")
+            .and_then(|n| n.as_str())
+            .unwrap_or("")
+            .to_string();
         out.push(SourceSymbol {
             symbol_id,
             name,
@@ -267,7 +264,10 @@ mod tests {
             blocks,
             block_offs: vec![
                 BlockShape { off: 0, size: 8 },
-                BlockShape { off: 8, size: size.saturating_sub(8).max(8) },
+                BlockShape {
+                    off: 8,
+                    size: size.saturating_sub(8).max(8),
+                },
             ],
             succ: vec![(0, 1)],
             callees: vec![],
@@ -301,8 +301,16 @@ mod tests {
             "status": "STATIC_RECOVERED", "proof": {"static": "recovered"},
             "provenance": {"firmware_sha256": "a".repeat(64)}
         });
-        std::fs::write(dir.path().join("a.json"), serde_json::to_string(&good).unwrap()).unwrap();
-        std::fs::write(dir.path().join("b.json"), serde_json::to_string(&data).unwrap()).unwrap();
+        std::fs::write(
+            dir.path().join("a.json"),
+            serde_json::to_string(&good).unwrap(),
+        )
+        .unwrap();
+        std::fs::write(
+            dir.path().join("b.json"),
+            serde_json::to_string(&data).unwrap(),
+        )
+        .unwrap();
         let syms = load_source_symbols(dir.path()).unwrap();
         assert_eq!(syms.len(), 1);
         assert_eq!(syms[0].name, "foo");

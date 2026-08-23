@@ -1,6 +1,5 @@
 # xiaomi-band-11-4.100.108 — Xiaomi Band 11 firmware 4.100.108
-# Independently recovered from the exact 4.100.108 firmware image and IDB.
-# Revision 1.
+# Fresh static pack generated from the exact IDB and 036->1108 ensemble.
 schema = 1
 target_id = "xiaomi-band-11-4.100.108"
 device_family = "xiaomi-smart-band"
@@ -20,29 +19,13 @@ module_abi = 1
 relocation_profile = "best1503-v1"
 revision = 1
 
-# Firmware absolute-address space (recovered so far). This is the RECOVERED
-# firmware extent, not the full addressable window: identity/build property
-# strings at 0x0CA0044D .. verified NuttX VFS/UI symbols .. 0x0C92xxxx. The
-# ELF verifier flags module words in this range that are not in the approved
-# address allowlist.
 firmware_address_ranges = [
-  { base = 0x0C000000, size = 0x00950000 },
+  { base = 0x0C000000, size = 0x00D00000 },
 ]
 
-# Capabilities proven on this exact firmware. Public generated bindings remain
-# restricted; full-trust consumers select the target-private Rust backend and
-# must pass the identity guard before invoking them.
-capabilities = [
-  "identity-guard",
-  "nuttx.vfs-unlink",
-  "nuttx.vfs-rename",
-  "nuttx.vfs-ioctl",
-  "nuttx.semaphore",
-  "ui.lvgl-v9.image",
-  "app-registry.install",
-  "launcher.app-list",
-  "bluetooth.service-manager",
-]
+# No capability is build-available yet: all regenerated symbols are restricted
+# and PENDING. LVGL v9 is recorded in provenance, not as an approved capability.
+capabilities = []
 
 [loader_profile]
 elf_class = 32
@@ -51,66 +34,55 @@ elf_type = "ET_REL"
 endianness = "little"
 constructor_discovery = "init_array"
 symbol_imports = "none"
-# Same BES1503 NuttX modlib family as Band 10 Pro: stock insmod/rmmod with
-# dynamic allocation and no fixed module-size ceiling.
 max_size = 0
 alignment = 4
-module_name_rules = "must match ^[a-zA-Z0-9_]+$; passed as argv[2] to insmod"
-load_command = "insmod <path> <name>"
-unload_command = "rmmod <name>"
 persistent_autoload = false
 
 [[loader_profile.relocations]]
 name = "R_ARM_NONE"
 arm_type = 0
 notes = "no-op; accepted"
-
 [[loader_profile.relocations]]
 name = "R_ARM_ABS32"
 arm_type = 2
-notes = "verified"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_REL32"
 arm_type = 23
-notes = "verified"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_TARGET1"
 arm_type = 38
 notes = "handled with ABS32 semantics"
-
 [[loader_profile.relocations]]
 name = "R_ARM_PREL31"
 arm_type = 42
-notes = "verified"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_THM_MOVW_ABS_NC"
 arm_type = 47
-notes = "verified Thumb movw"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_THM_MOVT_ABS"
 arm_type = 48
-notes = "verified Thumb movt"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_THM_CALL"
 arm_type = 10
-notes = "intra-module Thumb BL; standard modlib up_relocate case; probe never emitted one (single-function), G0 must confirm"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_THM_JUMP24"
 arm_type = 30
-notes = "intra-module Thumb conditional branch; standard modlib case; G0 must confirm"
+notes = "static pack; device gate pending"
 
 [provenance]
 source_repo = "992e3cbba9cb4b379f7f7c9a816abc3b_upd_miwear.watch.q66cn"
 source_findings = [
-  "Exact 4.100.108 IDA/xref/call-chain recovery; matched from the verified xiaomi-band-10-pro-3.101.036 symbol set via the multi-layer GA+CFG+xref+pattern matcher, then confirmed by decompilation in the exact IDB.",
-  "Neighboring targets are locator hints only; every symbol was re-verified in the exact 4.100.108 IDB.",
+  "Exact 4.100.108 IDB corpus freshly extracted on 2026-08-23",
+  "123/126 036 source functions matched by bindiff-inspired ensemble v2",
+  "Candidate records remain static/restricted/pending until ABI and device gates",
+  "LVGL v9 type/layout work must be independently audited against the exact IDB",
 ]
-import_date = "2026-08-16"
+import_date = "2026-08-23"
 maintainer = "canopus-maintainer"
 reviewers = ["canopus-maintainer"]

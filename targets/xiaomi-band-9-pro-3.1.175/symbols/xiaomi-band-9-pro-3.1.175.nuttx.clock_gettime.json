@@ -5,33 +5,25 @@
   "name": "clock_gettime",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C0BBB10",
-  "callable_address": "0x0C0BBB11",
+  "entry_address": "0xc371860",
+  "callable_address": "0xc371861",
   "prototype": "int(uint32_t, stock_timespec_t *)",
   "proof": {
     "static": "recovered",
+    "device": "not_probed",
     "evidence_ids": [
-      "EVID-CLOCK-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ]
   },
-  "policy": "native-full-trust",
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
     "evidence_ids": [
-      "EVID-CLOCK-001"
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
     ],
-    "source": "IDA sub_C0BBB10; 'clock/clock_gettime.c' string; 12-byte timespec store (i64@0, i32@8)"
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-10",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int(uint32_t, stock_timespec_t *)",
-    "ownership": "caller-allocated output struct",
-    "thread": "calling thread",
-    "device_probe": "pending"
-  },
-  "notes": "12-byte stock_timespec_t: tv_sec i64 @0, tv_nsec i32 @8."
+  "approval_state": "PENDING",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
 }

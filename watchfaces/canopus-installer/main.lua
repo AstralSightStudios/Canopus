@@ -18,16 +18,18 @@ local MODULE_PATH
 local MODULE_NAME = "canopus_supervisor"
 local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_icon.bin"
 local MANAGER_ICON_PATH = "/data/canopus/manager_icon.bin"
-local BAND9_STAGE1_RESOURCE = SCRIPT_PATH .. "canopus_stage1_band9.lua"
-local BAND9_STAGE2_RESOURCE = SCRIPT_PATH .. "canopus_stage2-band9.bin"
-local BAND9_SUPERVISOR_RESOURCE = SCRIPT_PATH .. "canopus_supervisor-band9.bin"
+local BAND9_TARGET_BY_VERSION = {
+    ["3.1.175"] = "xiaomi-band-9-pro-3.1.175",
+    ["3.1.32"] = "xiaomi-band-9-3.1.32",
+}
+local BAND9_TARGET_ID
+local BAND9_PROFILE
+local BAND9_RESOURCE_DIR
+local BAND9_STAGE1_RESOURCE
+local BAND9_STAGE2_RESOURCE
+local BAND9_SUPERVISOR_RESOURCE
 local BAND9_STAGE2_PATH = "/data/canopus/stage2.bin"
 local BAND9_SUPERVISOR_PATH = "/data/canopus/supervisor.elf"
-local BAND9_CAVE = 0x20084E10
-local BAND9_CAVE_ORIGINAL = {
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x726F6E5F, 0x73616C66, 0x70615F68, 0x72665F69,
-}
 local DEVICE_PATH = "/dev/canopus"
 -- The 512-byte floor rejects truncated/empty resources while remaining below
 -- every exact-target supervisor artifact.
@@ -112,6 +114,48 @@ local function detect_firmware_version()
     return version
 end
 
+local function load_band9_profile(target_id)
+    local path = SCRIPT_PATH .. "targets/" .. target_id .. "/canopus_loader_profile.lua"
+    local source = read_all(path, "r")
+    if type(source) ~= "string" then return nil end
+    local compiler = loadstring or load
+    if type(compiler) ~= "function" then return nil end
+    local compiled, chunk = pcall(compiler, source)
+    if not compiled or type(chunk) ~= "function" then return nil end
+    local loaded, profile = pcall(chunk)
+    if not loaded or type(profile) ~= "table"
+        or profile.target_id ~= target_id
+        or type(profile.status) ~= "string"
+        or type(profile.loader_family) ~= "string" then
+        return nil
+    end
+    return profile
+end
+
+local function select_band9_target(version)
+    local target_id = BAND9_TARGET_BY_VERSION[version]
+    if not target_id then return nil end
+    local profile = load_band9_profile(target_id)
+    if not profile then return nil end
+    BAND9_TARGET_ID = target_id
+    BAND9_PROFILE = profile
+    BAND9_RESOURCE_DIR = SCRIPT_PATH .. "targets/" .. target_id .. "/"
+    BAND9_STAGE1_RESOURCE = BAND9_RESOURCE_DIR .. "canopus_stage1.lua"
+    BAND9_STAGE2_RESOURCE = BAND9_RESOURCE_DIR .. "canopus_stage2.bin"
+    BAND9_SUPERVISOR_RESOURCE = BAND9_RESOURCE_DIR .. "canopus_supervisor.bin"
+    return target_id
+end
+
+local function band9_profile_ready()
+    return type(BAND9_PROFILE) == "table"
+        and BAND9_PROFILE.status == "STATIC_RECOVERED"
+        and type(BAND9_PROFILE.cave) == "number"
+        and BAND9_PROFILE.cave ~= 0
+        and type(BAND9_PROFILE.cave_result) == "number"
+        and type(BAND9_PROFILE.cave_original) == "table"
+        and #BAND9_PROFILE.cave_original == 8
+end
+
 local function band10_module_path_for(version)
     return SCRIPT_PATH .. "canopus_supervisor-" .. BAND10_TARGET_ID_PREFIX
         .. version .. ".bin"
@@ -136,8 +180,9 @@ local function band9_shell_word(address)
 end
 
 local function band9_check_cave()
-    for i, expected in ipairs(BAND9_CAVE_ORIGINAL) do
-        if band9_shell_word(BAND9_CAVE + (i - 1) * 4) ~= expected then
+    if not band9_profile_ready() then return false end
+    for i, expected in ipairs(BAND9_PROFILE.cave_original) do
+        if band9_shell_word(BAND9_PROFILE.cave + (i - 1) * 4) ~= expected then
             return false
         end
     end
@@ -154,7 +199,7 @@ local function band9_write_words(address, words)
 end
 
 local function band9_restore_cave()
-    return band9_write_words(BAND9_CAVE, BAND9_CAVE_ORIGINAL)
+    return band9_write_words(BAND9_PROFILE.cave, BAND9_PROFILE.cave_original)
 end
 
 local function band9_call_mailbox(callable, r0, r1)
@@ -167,17 +212,17 @@ local function band9_call_mailbox(callable, r0, r1)
         r0,
         r1,
         callable,
-        BAND9_CAVE + 28,
+        BAND9_PROFILE.cave_result,
     }
     if not band9_check_cave() then return nil end
-    if not band9_write_words(BAND9_CAVE, trampoline) then
+    if not band9_write_words(BAND9_PROFILE.cave, trampoline) then
         band9_restore_cave()
         return nil
     end
-    run(string.format("exec %08x", BAND9_CAVE + 1))
-    local result = band9_shell_word(BAND9_CAVE + 28)
+    run(string.format("exec %08x", BAND9_PROFILE.cave + 1))
+    local result = band9_shell_word(BAND9_PROFILE.cave_result)
     if not band9_restore_cave() or not band9_check_cave() then return nil end
-    if result == BAND9_CAVE + 28 then return nil end
+    if result == BAND9_PROFILE.cave_result then return nil end
     return result
 end
 
@@ -187,23 +232,23 @@ local function band9_barrier_and_exec(address)
         0, 0, 0, 0, 0,
     }
     if not band9_check_cave() then return false end
-    if not band9_write_words(BAND9_CAVE, trampoline) then
+    if not band9_write_words(BAND9_PROFILE.cave, trampoline) then
         band9_restore_cave()
         return false
     end
-    run(string.format("exec %08x", BAND9_CAVE + 1))
+    run(string.format("exec %08x", BAND9_PROFILE.cave + 1))
     if not band9_restore_cave() or not band9_check_cave() then return false end
     return run(string.format("exec %08x", address + 1))
 end
 
 local function band9_release_allocation(address)
-    return band9_call_mailbox(0x0C0F1B01, address, 0) ~= nil
+    return band9_call_mailbox(BAND9_PROFILE.free, address, 0) ~= nil
 end
 
 local function band9_release_region(region)
-    if not run(string.format("mw e000ed98=%08x", region))
-        or not run("mw e000eda0=00000000") then return false end
-    return band9_call_mailbox(0x0C51D929, region, 0) ~= nil
+    if not run(string.format("mw %08x=%08x", BAND9_PROFILE.mpu_rnr, region))
+        or not run(string.format("mw %08x=00000000", BAND9_PROFILE.mpu_rlar)) then return false end
+    return band9_call_mailbox(BAND9_PROFILE.mpu_release, region, 0) ~= nil
 end
 
 local function band9_cleanup_stage1(address, region)
@@ -233,7 +278,7 @@ local function load_band9_stage1()
         or not write_all(BAND9_SUPERVISOR_PATH, supervisor) then
         return false, "Cannot stage Band-9 loader files"
     end
-    local allocation = band9_call_mailbox(0x0C0F21ED, 32, payload.size)
+    local allocation = band9_call_mailbox(BAND9_PROFILE.memalign, 32, payload.size)
     if not allocation or allocation == 0 or allocation % 32 ~= 0 then
         return false, "Band-9 stage-1 allocation failed"
     end
@@ -243,8 +288,8 @@ local function load_band9_stage1()
         end
         return false, "Band-9 stage-1 write failed"
     end
-    local region = band9_call_mailbox(0x0C51D8D1, 0, 0)
-    if not region or region > 7 then
+    local region = band9_call_mailbox(BAND9_PROFILE.mpu_alloc, 0, 0)
+    if not region or region >= BAND9_PROFILE.mpu_region_count then
         if not band9_release_allocation(allocation) then
             return false, "Band-9 MPU failure cleanup failed; reboot before retrying"
         end
@@ -253,9 +298,9 @@ local function load_band9_stage1()
     local size = math.floor((payload.size + 31) / 32) * 32
     local rbar = allocation + 6
     local rlar = allocation + size - 32 + 5
-    if not run(string.format("mw e000ed98=%08x", region))
-        or not run(string.format("mw e000ed9c=%08x", rbar))
-        or not run(string.format("mw e000eda0=%08x", rlar)) then
+    if not run(string.format("mw %08x=%08x", BAND9_PROFILE.mpu_rnr, region))
+        or not run(string.format("mw %08x=%08x", BAND9_PROFILE.mpu_rbar, rbar))
+        or not run(string.format("mw %08x=%08x", BAND9_PROFILE.mpu_rlar, rlar)) then
         if not band9_cleanup_stage1(allocation, region) then
             return false, "Band-9 MPU cleanup failed; reboot before retrying"
         end
@@ -593,8 +638,10 @@ local function refresh_status(text)
 end
 
 local firmware_version = detect_firmware_version()
-local band9_selected = firmware_version == "3.1.175" and has_band9_bootstrap()
-if firmware_version and not band9_selected then
+local band9_target = select_band9_target(firmware_version)
+local band9_selected = band9_target ~= nil
+    and band9_profile_ready() and has_band9_bootstrap()
+if firmware_version == "3.101.036" or firmware_version == "3.101.043" then
     MODULE_PATH = band10_module_path_for(firmware_version)
 end
 local firmware_supported = band9_selected

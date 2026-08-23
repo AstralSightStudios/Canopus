@@ -5,33 +5,38 @@
   "name": "thirdparty_submit_message_content",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C4CF24A",
-  "callable_address": "0x0C4CF24B",
-  "prototype": "int(const void *)",
+  "entry_address": "0xc5105b8",
+  "callable_address": "0xc5105b9",
+  "prototype": "int(const void *, uint32_t, uint32_t)",
   "calling_convention": "arm-aapcs",
-  "contexts": { "allowed": ["miwear_message_owner"], "blocking": false },
-  "ownership": {
-    "arguments": "message envelope and all referenced data are borrowed only for the synchronous call",
-    "return_value": "forwarded_submission_status"
+  "contexts": {
+    "allowed": [
+      "miwear_message_owner"
+    ],
+    "blocking": false
   },
-  "side_effects": ["submits_one_prebuilt_miwear_message_without_wearable_quickapp_appinfo_lookup"],
-  "proof": { "static": "recovered", "evidence_ids": ["EVID-CONN-001"] },
-  "policy": "native-full-trust",
+  "ownership": {
+    "return_value": "0_on_submission_else_negative_errno"
+  },
+  "side_effects": [
+    "submits_one_prebuilt_miwear_message_without_wearable_quickapp_appinfo_lookup"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "evidence_ids": ["EVID-CONN-001"],
-    "source": "IDA sub_C2C2044 stock quickapp_send_wearmsg caller and sub_C4CF24A route-minus-one wrapper"
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
   },
-  "approval_state": "APPROVED",
-  "promotion": {
-    "reviewer": "canopus-maintainer",
-    "date": "2026-08-14",
-    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
-    "prototype": "int(const void *)",
-    "ownership": "caller-owned envelope and referenced buffers / borrowed for synchronous call",
-    "thread": "miwear_message_owner",
-    "device_probe": "pending"
-  },
-  "notes": "Stock quickapp_send_wearmsg builds a zeroed 296-byte envelope. This wrapper forwards route -1 and the envelope pointer to sub_C4CF214."
+  "approval_state": "PENDING",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
 }

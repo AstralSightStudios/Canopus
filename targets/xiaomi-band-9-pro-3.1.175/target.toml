@@ -1,5 +1,5 @@
 # xiaomi-band-9-pro-3.1.175 — Xiaomi Band 9 Pro firmware 3.1.175
-# Imported from old_fw_extract evidence. Revision 1.
+# Fresh static pack generated from the exact IDB and 036->9175 ensemble.
 schema = 1
 target_id = "xiaomi-band-9-pro-3.1.175"
 device_family = "xiaomi-smart-band"
@@ -11,7 +11,7 @@ cpu = "cortex-m33"
 instruction_set = "thumb2"
 endianness = "little"
 float_abi = "soft"
-loader = "nsh-mw-stage1-stage2"
+loader = "nsh-mw-stage1-stage2-static-recovered"
 firmware_sha256 = "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b"
 firmware_version = "3.1.175"
 firmware_build = "CONBINE_LTALM054_T1175_04141021_release_5793"
@@ -19,31 +19,14 @@ module_abi = 1
 relocation_profile = "best1503-v1"
 revision = 1
 
-# Firmware absolute-address space (CAN-P1-011). Identity strings 0x0C080810 ..
-# code through 0x0C7C5000 (XIP). Data constants may fall anywhere in the window.
 firmware_address_ranges = [
   { base = 0x0C000000, size = 0x00800000 },
 ]
 
-capabilities = [
-  "identity-guard",
-  "clock.gettime",
-  "char-device.register",
-  "char-device.unregister",
-  "control-abi",
-  "classic.adapter",
-  "classic.l2cap",
-  "classic.sdp",
-  "bt.timer",
-  "native-app.register",
-  "launcher.entry",
-  "ui.dispatch",
-]
+# No capability is build-available yet: all regenerated symbols are restricted
+# and PENDING. LVGL v8 is recorded in provenance, not as an approved capability.
+capabilities = []
 
-# Custom NSH mw/exec bootstrap and ET_REL loader. Stock insmod/rmmod is
-# absent. The installer injects stage-1 through a statically recovered,
-# compare-checked SRAM-text cave; stage-1 reads stage-2, and stage-2 loads the
-# resident supervisor. First device execution remains pending.
 [loader_profile]
 elf_class = 32
 elf_machine = "ARM"
@@ -59,52 +42,47 @@ persistent_autoload = false
 name = "R_ARM_NONE"
 arm_type = 0
 notes = "no-op; accepted"
-
 [[loader_profile.relocations]]
 name = "R_ARM_ABS32"
 arm_type = 2
-notes = "verified"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_REL32"
 arm_type = 23
-notes = "verified"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_TARGET1"
 arm_type = 38
 notes = "handled with ABS32 semantics"
-
 [[loader_profile.relocations]]
 name = "R_ARM_PREL31"
 arm_type = 42
-notes = "verified"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_THM_MOVW_ABS_NC"
 arm_type = 47
-notes = "verified Thumb movw"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_THM_MOVT_ABS"
 arm_type = 48
-notes = "verified Thumb movt"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_THM_CALL"
 arm_type = 10
-notes = "intra-module Thumb BL; standard modlib up_relocate case"
-
+notes = "static pack; device gate pending"
 [[loader_profile.relocations]]
 name = "R_ARM_THM_JUMP24"
 arm_type = 30
-notes = "intra-module Thumb conditional branch; standard modlib case"
+notes = "static pack; device gate pending"
 
 [provenance]
-source_repo = "old_fw_extract"
+source_repo = "old_fw_extract/data/ota/app/vela_ap.bin"
 source_findings = [
-  "data/ota/app/vela_ap.bin (3.1.175)",
+  "Exact 3.1.175 IDB corpus freshly extracted on 2026-08-23",
+  "123/126 036 source functions matched by bindiff-inspired ensemble v2",
+  "Candidate records remain static/restricted/pending until ABI and device gates",
+  "LVGL v8 type layouts retained from the prior exact-target type pack; addresses were not retained",
 ]
-import_date = "2026-08-10"
+import_date = "2026-08-23"
 maintainer = "canopus-maintainer"
 reviewers = ["canopus-maintainer"]

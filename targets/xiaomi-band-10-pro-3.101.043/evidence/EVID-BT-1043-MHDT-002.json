@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-1043-MHDT-002",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Why did exact 3.101.043 complete Classic bonding but fail with ERR_REMOTE without recording an mHDT rewrite?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.gap_host_receive_slot",
+    "xiaomi-band-10-pro-3.101.043.private_abi.gap_host_stock_receive"
+  ],
+  "device_evidence": [
+    "The exact device displayed Bond 3/2 0F -1105 after the registration-node Pair Request fix.",
+    "Bond 3/2 proves aggregate Classic key state 3 and exact transport BONDED state 2.",
+    "Flags 0x0F prove Pair Request filtering, Pair Request, Pair Display, and BONDED milestones, but omit the 0x40 mHDT-rewrite milestone.",
+    "The first 043 migration could report installation after modifying the initializer-owned callback holder, but static tracing now proves completed H4 packets dispatch through a separate copied callback at 0x2013C144."
+  ],
+  "static_and_protocol_evidence": [
+    "sub_C81234C copies the callback value out of the holder into the direct callback word at 0x2013C144 and stores callback state at 0x2013C140.",
+    "sub_C8172C0 dispatches completed H4 packets through 0x2013C144 with the exact three-argument stock ABI.",
+    "The old backend followed 0x2013BDB4 to state+0x28 and patched the holder after registration; this did not change the copied direct callback and therefore could not observe packets.",
+    "The lower serial framing callback at 0x200EE814 takes four arguments and is not the host callback seam.",
+    "mHDT option parsing, validation, removal, and ACL/L2CAP/command length repair use only protocol bytes and remain target-independent in bluetooth-audio-core."
+  ],
+  "implementation_evidence": [
+    "The 043 generated gap_host_receive_slot address is corrected from owner root 0x2013BDB4 to direct callback word 0x2013C144.",
+    "The 043 target-private backend now compare-writes the direct callback slot, matching the proven 036 design at 0x20137E94.",
+    "compatibility::install is target-neutral: every runtime-capable target must provide bt_gap_install_receive_hook or fail closed with ERR_HCI_POLICY.",
+    "The packet transform filters the exact 7F 01 01 option on any dynamic destination CID and does not depend on target callback scheduling or module-owned CID state.",
+    "Portable host tests retain byte-exact comparison with the pre-migration transform and cover continuations, malformed lengths, wrong CIDs, and fixed channels.",
+    "Diagnostic bit 0x80 records verified direct-slot installation separately from the 0x40 rewrite bit."
+  ],
+  "ownership_analysis": "The module owns packet compatibility policy. Target-private code owns only borrowed exact-firmware addresses and compare-write access to the verified live callback slot. No owner/state chain or lower serial parser callback is modified.",
+  "unsafe_assumptions": [
+    "Exact-device execution of the corrected 0x2013C144 hook remains a device gate; static dispatch evidence does not substitute for the rewrite diagnostic.",
+    "ERR_REMOTE still needs richer stage diagnostics if a retest records both hook-installed and rewrite-hit but fails later in AVDTP."
+  ],
+  "recommended_probe": "After rebooting and loading the rebuilt exact 043 module, repeat the same headset connection. Flags should include 0x80 when the direct hook is installed and 0x40 when 7F 01 01 is rewritten. Preserve the exact error and packet bytes if -1105 remains.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "HOST_FIXED_DEVICE_PENDING",
+  "created": "2026-08-23T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C81234C",
+      "role": "043 callback registration copy"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C8172C0",
+      "role": "043 live completed-H4 dispatcher"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C7EC47C",
+      "role": "043 stock raw-H4 receive callback"
+    },
+    {
+      "uri": "repo://Canopus-Module-BluetoothAudio/crates/bluetooth-audio-core/src/compatibility.rs",
+      "role": "target-independent mHDT transform"
+    },
+    {
+      "uri": "repo://Canopus-Module-BluetoothAudio/crates/bluetooth-audio-device/src/target/compatibility.rs",
+      "role": "target-neutral runtime hook policy"
+    }
+  ]
+}

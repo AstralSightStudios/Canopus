@@ -18,7 +18,8 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-BT-1043-ALLOC-001"
+      "EVID-BT-1043-ALLOC-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "policy": "restricted",
@@ -26,11 +27,12 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-BT-1043-ALLOC-001"
+      "EVID-BT-1043-ALLOC-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ],
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; Bluetooth allocator, stock cleanup, buffer, timer, and queue call-flow review"
   },
   "approval_state": "PENDING",
-  "notes": "Exact 3.101.043 Bluetooth allocator wrapper; paired with bt_free at sub_C840C60.",
+  "notes": "Exact 3.101.043 Bluetooth allocator wrapper; paired with bt_free at sub_C840C60. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
   "callable_address": "0xc840c55"
 }

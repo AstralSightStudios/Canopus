@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.175.bluetooth.core_bt_pair_request_callback",
+  "target_id": "xiaomi-band-9-pro-3.1.175",
+  "name": "core_bt_pair_request_callback",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc44e93c",
+  "callable_address": "0xc44e93d",
+  "prototype": "int(void *, const uint8_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "bluetooth_callback"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed callback cookie and six-byte address"
+  },
+  "side_effects": [
+    "accepts companion Pair Request",
+    "rejects non-companion Pair Request"
+  ],
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9175"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-pro-3.1.175/evidence/fw-match/ensemble-1036-to-9175-v2.json"
+  },
+  "approval_state": "PENDING",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
+}

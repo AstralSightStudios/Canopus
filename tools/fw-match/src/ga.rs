@@ -163,7 +163,10 @@ pub fn build_pools(
                 }
                 // Block-count similarity (both trivial or within 2x).
                 if sf.blocks != 0 || tf.blocks != 0 {
-                    let (a, b) = (sf.blocks.min(tf.blocks) as f64, sf.blocks.max(tf.blocks) as f64);
+                    let (a, b) = (
+                        sf.blocks.min(tf.blocks) as f64,
+                        sf.blocks.max(tf.blocks) as f64,
+                    );
                     if a == 0.0 || (b / a) > 2.0 {
                         continue;
                     }
@@ -245,11 +248,7 @@ fn callee_addr(s: &str) -> u64 {
 
 /// Fitness of an individual: sum of structural pair scores + tiebreaking xref
 /// - collision penalties.
-fn evaluate(
-    indiv: &mut Individual,
-    pools: &[SymbolProblem],
-    params: &GaParams,
-) -> f64 {
+fn evaluate(indiv: &mut Individual, pools: &[SymbolProblem], params: &GaParams) -> f64 {
     let mut fitness = 0.0;
     let mut claimed: std::collections::HashMap<usize, usize> = std::collections::HashMap::new();
     for (i, pool) in pools.iter().enumerate() {
@@ -296,7 +295,13 @@ pub fn run_ga(pools: &[SymbolProblem], params: &GaParams, seed: u64) -> Individu
 
     let greedy: Vec<Option<usize>> = pools
         .iter()
-        .map(|p| if p.candidates.is_empty() { None } else { Some(0) })
+        .map(|p| {
+            if p.candidates.is_empty() {
+                None
+            } else {
+                Some(0)
+            }
+        })
         .collect();
 
     // Population seeded near the greedy baseline: every individual starts from
@@ -314,7 +319,10 @@ pub fn run_ga(pools: &[SymbolProblem], params: &GaParams, seed: u64) -> Individu
             }
             genes[i] = Some(rng.below(pools[i].candidates.len()));
         }
-        let mut indiv = Individual { genes, fitness: 0.0 };
+        let mut indiv = Individual {
+            genes,
+            fitness: 0.0,
+        };
         evaluate(&mut indiv, pools, params);
         pop.push(indiv);
     }
@@ -356,12 +364,25 @@ fn crossover(a: &Individual, b: &Individual, rng: &mut Rng) -> Individual {
     let n = a.genes.len();
     let mut genes = vec![None; n];
     for i in 0..n {
-        genes[i] = if rng.chance(0.5) { a.genes[i] } else { b.genes[i] };
+        genes[i] = if rng.chance(0.5) {
+            a.genes[i]
+        } else {
+            b.genes[i]
+        };
     }
-    Individual { genes, fitness: 0.0 }
+    Individual {
+        genes,
+        fitness: 0.0,
+    }
 }
 
-fn mutate(indiv: &mut Individual, pools: &[SymbolProblem], locked: &[bool], rng: &mut Rng, rate: f64) {
+fn mutate(
+    indiv: &mut Individual,
+    pools: &[SymbolProblem],
+    locked: &[bool],
+    rng: &mut Rng,
+    rate: f64,
+) {
     for i in 0..indiv.genes.len() {
         if locked[i] {
             continue; // never drift a confident match
@@ -476,7 +497,10 @@ mod tests {
             blocks,
             block_offs: vec![
                 BlockShape { off: 0, size: 8 },
-                BlockShape { off: 8, size: size.saturating_sub(8).max(8) },
+                BlockShape {
+                    off: 8,
+                    size: size.saturating_sub(8).max(8),
+                },
             ],
             succ: vec![(0, 1)],
             callees: vec![],
@@ -508,10 +532,7 @@ mod tests {
     #[test]
     fn pools_find_exact_duplicate() {
         // Source function identical bytes to one target function, different address.
-        let src = corpus(
-            "s",
-            vec![rec("0x1000", 64, 32, "00f0b500be00bd")],
-        );
+        let src = corpus("s", vec![rec("0x1000", 64, 32, "00f0b500be00bd")]);
         let dst = corpus(
             "d",
             vec![

@@ -10,7 +10,8 @@
     "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-MODLIB-1043-001"
+      "EVID-MODLIB-1043-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "policy": "restricted",
@@ -19,11 +20,12 @@
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; sub_C203A50 is the exact two-argument modlib_insert veneer, and sub_C1E8650 references modlib_insert.c",
     "evidence_ids": [
-      "EVID-MODLIB-1043-001"
+      "EVID-MODLIB-1043-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ]
   },
   "entry_address": "0xc203a50",
   "callable_address": "0xc203a51",
-  "notes": "Exact 3.101.043 modlib_insert veneer. The former 0xc1c5f34 candidate is a fs_munmap.c cleanup wrapper and is not a module loader.",
+  "notes": "Exact 3.101.043 modlib_insert veneer. The former 0xc1c5f34 candidate is a fs_munmap.c cleanup wrapper and is not a module loader. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
   "approval_state": "APPROVED"
 }

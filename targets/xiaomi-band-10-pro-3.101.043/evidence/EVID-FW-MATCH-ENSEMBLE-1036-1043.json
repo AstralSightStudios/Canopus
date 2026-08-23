@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-FW-MATCH-ENSEMBLE-1036-1043",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Does a 036-only BinDiff-inspired multi-evidence matcher locate manually corrected 043 UI symbols?",
+  "candidate_symbols": [
+    "lv_event_get_code",
+    "lv_event_get_user_data",
+    "lvx_label_create",
+    "lvx_label_set_text",
+    "lvx_object_align",
+    "lvx_content_pad_bottom"
+  ],
+  "prototype_hypothesis": "No new prototype is promoted by this experiment; source prototypes remain candidates until target callsite/ABI verification.",
+  "callsite_evidence": [
+    "The matcher uses exact and Thumb relocation-masked entry bytes, CFG shape/topology, strings/constants, size/degree context and caller-neighborhood matching.",
+    "The 036 source corpus contributes 126 function-entry records; the 043 target corpus contains 42,246 functions.",
+    "The five oracle symbols present in the 036 source pack all match the independently corrected 043 entry addresses.",
+    "lvx_content_pad_bottom is source-missing in the 036 symbol pack and is not guessed or counted as a failed address match."
+  ],
+  "control_flow_evidence": [
+    "Caller-neighborhood matching compares distinct normalized caller correspondences rather than treating identical 8-byte veneer bytes as unique evidence.",
+    "The report retains per-family scores, candidate margins, graph evidence and missing ABI/data-flow evidence."
+  ],
+  "ownership_analysis": "None. This is static candidate-generation evidence only.",
+  "unsafe_assumptions": [
+    "A 5/5 oracle hit does not prove all 123 generated candidates are correct.",
+    "The matcher still lacks normalized instruction streams, exact callsite register-flow verification and global/table data-flow proof.",
+    "Candidate files are written outside the production symbols directory and must not be used to generate callable bindings.",
+    "A static hit is not a device probe or device proof."
+  ],
+  "recommended_probe": "Use the corrected 043 UI addresses in the staged T0-T6 native-app/Launcher device gates only after ABI and descriptor verification.",
+  "reviewers": ["canopus-maintainer"],
+  "verdict": "CANDIDATE",
+  "created": "2026-08-22T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "fw-match/ensemble-1036-to-1043-v2.json",
+      "role": "BinDiff-inspired ensemble report"
+    },
+    {
+      "uri": "fw-match/manual-043-oracle.json",
+      "role": "independent manual/static oracle"
+    }
+  ]
+}

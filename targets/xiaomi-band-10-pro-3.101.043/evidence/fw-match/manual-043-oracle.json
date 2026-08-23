@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "source_target_id": "xiaomi-band-10-pro-3.101.036",
+  "purpose": "Independent manual/static oracle for the first BinDiff-inspired 036-to-043 ensemble experiment",
+  "entries": [
+    {
+      "name": "lv_event_get_code",
+      "target_entry_address": "0x0c588210",
+      "evidence_id": "EVID-UI-EVENT-001",
+      "basis": "Exact 043 stock callback separates event-code return from allocator behavior"
+    },
+    {
+      "name": "lv_event_get_user_data",
+      "target_entry_address": "0x0c588310",
+      "evidence_id": "EVID-UI-EVENT-001",
+      "basis": "Exact 043 stock callbacks use the returned pointer as registered user data"
+    },
+    {
+      "name": "lvx_label_create",
+      "target_entry_address": "0x0c588f30",
+      "evidence_id": "EVID-UI-WIDGET-001",
+      "basis": "Exact stock caller passes a parent in R0 and retains returned R0 as a new label"
+    },
+    {
+      "name": "lvx_label_set_text",
+      "target_entry_address": "0x0c589490",
+      "evidence_id": "EVID-UI-WIDGET-001",
+      "basis": "Exact stock caller passes label in R0 and text pointer in R1"
+    },
+    {
+      "name": "lvx_object_align",
+      "target_entry_address": "0x0c589188",
+      "evidence_id": "EVID-UI-WIDGET-001",
+      "basis": "Exact stock page constructor passes object, align, x and y in R0-R3"
+    },
+    {
+      "name": "lvx_content_pad_bottom",
+      "target_entry_address": "0x0c5893c0",
+      "evidence_id": "EVID-UI-WIDGET-001",
+      "basis": "Exact stock page constructor establishes the three-argument bottom-padding call"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.bluetooth.miwear_bt_cpevent_registration_handle",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "miwear_bt_cpevent_registration_handle",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "uint32_t",
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": ["EVID-BT-1043-CORE-001"],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": ["EVID-BT-1043-CORE-001"],
+    "source": "Exact 3.101.043 IDB sub_CA40E3C/sub_CA40ED4 store sub_CAA5048 cpevent registration in dword_2013DBE0."
+  },
+  "entry_address": "0x2013DBE0",
+  "approval_state": "PENDING",
+  "notes": "Miwear cpevent registration token; intentionally distinct from core_bt_registration_handle used by stock bts callback registration."
+}

@@ -1,4 +1,6 @@
 /* Band-9 position-independent stage-1 file loader entered through NSH exec. */
+#include "canopus_band9_loader_config.h"
+
 #include <stdint.h>
 
 #ifndef CANOPUS_BAND9_STAGE2_SIZE
@@ -6,17 +8,16 @@
 #endif
 
 #define STAGE2_PATH "/data/canopus/stage2.bin"
-#define FW_OPEN UINT32_C(0x0C37F761)
-#define FW_CLOSE UINT32_C(0x0C37EFF9)
-#define FW_READ UINT32_C(0x0C37F9EB)
-#define FW_MEMALIGN UINT32_C(0x0C0F21ED)
-#define FW_FREE UINT32_C(0x0C0F1B01)
-#define FW_MPU_ALLOC UINT32_C(0x0C51D8D1)
-#define FW_MPU_CONFIGURE UINT32_C(0x0C51D759)
-#define FW_MPU_RELEASE UINT32_C(0x0C51D929)
-#define MPU_RNR UINT32_C(0xE000ED98)
-#define MPU_RLAR UINT32_C(0xE000EDA0)
-#define CAVE_CLEANUP UINT32_C(0x20084E11)
+#define FW_OPEN CANOPUS_FW_OPEN
+#define FW_CLOSE CANOPUS_FW_CLOSE
+#define FW_READ CANOPUS_FW_READ
+#define FW_MEMALIGN CANOPUS_FW_MEMALIGN
+#define FW_FREE CANOPUS_FW_FREE
+#define FW_MPU_ALLOC CANOPUS_FW_MPU_ALLOC
+#define FW_MPU_CONFIGURE CANOPUS_FW_MPU_CONFIGURE
+#define FW_MPU_RELEASE CANOPUS_FW_MPU_RELEASE
+#define MPU_RNR CANOPUS_MPU_RNR
+#define MPU_RLAR CANOPUS_MPU_RLAR
 
 __attribute__((used, visibility("default")))
 int canopus_band9_stage1_entry(int ignored)
@@ -60,12 +61,13 @@ int canopus_band9_stage1_entry(int ignored)
     }
     ((close_fn)(uintptr_t)FW_CLOSE)(fd);
     region = ((mpu_alloc_fn)(uintptr_t)FW_MPU_ALLOC)();
-    if (region > 7u) {
+    if (region >= CANOPUS_BAND9_MPU_REGION_COUNT) {
         ((free_fn)(uintptr_t)FW_FREE)(image);
         return -13;
     }
     if (((mpu_configure_fn)(uintptr_t)FW_MPU_CONFIGURE)(
-            region, (uint32_t)(uintptr_t)image, allocation_size, 1u, 2u) != 0) {
+            region, (uint32_t)(uintptr_t)image, allocation_size,
+            CANOPUS_BAND9_EXEC_ACCESS_ATTR, CANOPUS_BAND9_EXEC_MEM_ATTR) != 0) {
         *(volatile uint32_t *)(uintptr_t)MPU_RNR = region;
         *(volatile uint32_t *)(uintptr_t)MPU_RLAR = 0u;
         __asm__ volatile("dsb sy\n"

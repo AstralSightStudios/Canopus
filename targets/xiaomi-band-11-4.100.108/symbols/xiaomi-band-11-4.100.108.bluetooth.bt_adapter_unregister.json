@@ -5,6 +5,8 @@
   "name": "bt_adapter_unregister",
   "kind": "function",
   "instruction_set": "thumb",
+  "entry_address": "0xc469eb0",
+  "callable_address": "0xc469eb1",
   "prototype": "int32(void *, uint32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -14,16 +16,21 @@
     "blocking": false
   },
   "proof": {
-    "static": "withheld",
-    "device": "not_probed",
-    "host_tested": false
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "device": "not_probed"
   },
-  "policy": "forbidden",
-  "status": "FORBIDDEN",
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
-    "source": "Synchronized from the complete 3.101.036 inventory; no 4.100.108 address has been semantically confirmed."
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-11-4.100.108/evidence/fw-match/ensemble-1036-to-1108-v2.json"
   },
   "approval_state": "PENDING",
-  "notes": "Unregisters the callback registration token. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof."
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
 }

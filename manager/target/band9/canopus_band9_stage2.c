@@ -1,6 +1,7 @@
 /* Band-9 position-independent stage-2 loader entered through NSH exec. */
 #include "canopus_elf32_loader.h"
 #include "canopus_memory.h"
+#include "canopus_band9_loader_config.h"
 
 #include <stdint.h>
 
@@ -9,14 +10,14 @@
 #endif
 
 #define SUPERVISOR_PATH "/data/canopus/supervisor.elf"
-#define FW_OPEN UINT32_C(0x0C37F761)
-#define FW_CLOSE UINT32_C(0x0C37EFF9)
-#define FW_READ UINT32_C(0x0C37F9EB)
-#define FW_MEMALIGN UINT32_C(0x0C0F21ED)
-#define FW_FREE UINT32_C(0x0C0F1B01)
-#define FW_MPU_ALLOC UINT32_C(0x0C51D8D1)
-#define FW_MPU_CONFIGURE UINT32_C(0x0C51D759)
-#define FW_MPU_RELEASE UINT32_C(0x0C51D929)
+#define FW_OPEN CANOPUS_FW_OPEN
+#define FW_CLOSE CANOPUS_FW_CLOSE
+#define FW_READ CANOPUS_FW_READ
+#define FW_MEMALIGN CANOPUS_FW_MEMALIGN
+#define FW_FREE CANOPUS_FW_FREE
+#define FW_MPU_ALLOC CANOPUS_FW_MPU_ALLOC
+#define FW_MPU_CONFIGURE CANOPUS_FW_MPU_CONFIGURE
+#define FW_MPU_RELEASE CANOPUS_FW_MPU_RELEASE
 
 struct stage2_state {
     uint8_t regions[3];
@@ -44,8 +45,8 @@ static void image_release(void *cookie, void *allocation, uint32_t size)
         uint32_t region;
         state->region_count--;
         region = state->regions[state->region_count];
-        *(volatile uint32_t *)(uintptr_t)0xE000ED98u = region;
-        *(volatile uint32_t *)(uintptr_t)0xE000EDA0u = 0u;
+        *(volatile uint32_t *)(uintptr_t)CANOPUS_MPU_RNR = region;
+        *(volatile uint32_t *)(uintptr_t)CANOPUS_MPU_RLAR = 0u;
         __asm__ volatile("dsb sy\n"
                          "isb sy\n"
                          ::: "memory");
@@ -78,22 +79,24 @@ static int image_finalize(void *cookie, void *allocation, uint32_t target_base,
                      count - 1u : count;
     for (i = 0; i < physical_count; i++) {
         id = ((alloc_fn)(uintptr_t)FW_MPU_ALLOC)();
-        if (id > 7u) return -1;
+        if (id >= CANOPUS_BAND9_MPU_REGION_COUNT) return -1;
         state->regions[state->region_count++] = (uint8_t)id;
         if (i == 0u && regions[1].kind == CANOPUS_ELF_REGION_RO) {
             base = target_base + regions[0].offset;
             length = regions[0].size + regions[1].size;
-            access = 1u;
+            access = CANOPUS_BAND9_EXEC_ACCESS_ATTR;
         } else {
             uint32_t logical = i +
                 (regions[1].kind == CANOPUS_ELF_REGION_RO ? 1u : 0u);
             base = target_base + regions[logical].offset;
             length = regions[logical].size;
-            access = regions[logical].kind == CANOPUS_ELF_REGION_EXEC ? 1u :
-                     (regions[logical].kind == CANOPUS_ELF_REGION_RW ? 4u : 5u);
+            access = regions[logical].kind == CANOPUS_ELF_REGION_EXEC ?
+                     CANOPUS_BAND9_EXEC_ACCESS_ATTR :
+                     (regions[logical].kind == CANOPUS_ELF_REGION_RW ?
+                      CANOPUS_BAND9_RW_ACCESS_ATTR : CANOPUS_BAND9_RO_ACCESS_ATTR);
         }
         if (((configure_fn)(uintptr_t)FW_MPU_CONFIGURE)(
-                id, base, length, access, 2u) != 0) return -1;
+                id, base, length, access, CANOPUS_BAND9_EXEC_MEM_ATTR) != 0) return -1;
     }
     return 0;
 }

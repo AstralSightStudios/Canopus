@@ -5,32 +5,25 @@
   "name": "driver_read_dispatch",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "int32_t(file *, void *, uint32_t)",
-  "calling_convention": "arm-aapcs",
-  "contexts": {
-    "allowed": [
-      "target-private-thread"
-    ],
-    "blocking": true
-  },
-  "ownership": {
-    "argument": "borrowed",
-    "return_value": "status"
-  },
-  "side_effects": [
-    "mutates firmware UI/OS state"
-  ],
+  "prototype": "int32(file *, void *, uint32_t) via fops+0x08",
   "proof": {
-    "static": "withheld",
+    "static": "recovered",
     "device": "not_probed",
-    "host_tested": false
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ]
   },
-  "policy": "forbidden",
-  "status": "FORBIDDEN",
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99",
-    "source": "Synchronized from the complete 3.101.036 inventory; no 4.100.108 address has been semantically confirmed."
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-1108"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-11-4.100.108/evidence/fw-match/ensemble-1036-to-1108-v2.json"
   },
-  "notes": "NuttX file-read dispatch; fops+0x08 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof. 11-108 inventory-only placeholder; address withheld until exact-IDB semantic proof.",
+  "entry_address": "0xc33b708",
+  "callable_address": "0xc33b709",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
   "approval_state": "PENDING"
 }
