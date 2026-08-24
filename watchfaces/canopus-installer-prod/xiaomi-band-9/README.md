@@ -22,18 +22,19 @@ The loading path is device-specific:
    constructor.
 7. Restore the exact cave words and release temporary allocation/MPU ownership.
 
-Packaged resources are isolated by target:
+Packaged resources use the same flat, exact-target naming scheme as the Band 10
+Pro production watchface. Watchface packages cannot contain child directories or
+more than one `.lua` file, so the generated profile and stage-1 Lua chunks are
+packaged with `.bin` resource names and compiled explicitly by `main.lua`:
 
 ```text
 xiaomi-band-9/
 ├── main.lua
 ├── manager_icon.bin
-└── targets/
-    └── xiaomi-band-9-3.1.32/
-        ├── canopus_loader_profile.lua
-        ├── canopus_stage1.lua
-        ├── canopus_stage2.bin
-        └── canopus_supervisor.bin
+├── canopus_loader_profile-xiaomi-band-9-3.1.32.bin
+├── canopus_stage1-xiaomi-band-9-3.1.32.bin
+├── canopus_stage2-xiaomi-band-9-3.1.32.bin
+└── canopus_supervisor-xiaomi-band-9-3.1.32.bin
 ```
 
 Build and stage with:

@@ -138,8 +138,8 @@ fn additional_target_artifacts_regenerate_identically() {
         );
         if target == "xiaomi-band-9-3.1.32" {
             assert!(
-                config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 0"),
-                "Band 9 must remain fail-closed until its Supervisor ABI is complete"
+                config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 1"),
+                "Band 9 exact Supervisor ABI must remain production-complete"
             );
         }
 
@@ -186,6 +186,61 @@ fn additional_target_artifacts_regenerate_identically() {
             }
         }
     }
+}
+
+#[test]
+fn stock_modlib_supervisor_platform_remains_complete() {
+    let dir = repo_root().join("targets/xiaomi-band-10-pro-3.101.036");
+    let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+    let (symbols, _) = load_records(&dir).unwrap();
+    let config = TargetConfigGen {
+        pack: &pack,
+        symbols: &symbols,
+    }
+    .generate();
+
+    assert!(config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 1"));
+}
+
+#[test]
+fn band9_supervisor_platform_remains_complete() {
+    let dir = repo_root().join("targets/xiaomi-band-9-3.1.32");
+    let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+    let (symbols, types) = load_records(&dir).unwrap();
+    let config = TargetConfigGen {
+        pack: &pack,
+        symbols: &symbols,
+    }
+    .generate();
+    let veneer = VeneerGen {
+        pack: &pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
+    let rust = RustGen {
+        pack: &pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
+
+    assert!(config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 1"));
+    assert_eq!(
+        config,
+        std::fs::read_to_string(dir.join("generated/canopus_target_config.h")).unwrap()
+    );
+    assert_eq!(
+        veneer,
+        std::fs::read_to_string(dir.join("generated/canopus_veneer.h")).unwrap()
+    );
+    assert_eq!(
+        rust,
+        std::fs::read_to_string(
+            repo_root().join("sdk/rust/canopus-target-generated/src/generated_9132.rs")
+        )
+        .unwrap()
+    );
 }
 
 fn parse_address(value: &str) -> usize {

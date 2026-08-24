@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lvx_label_set_long_mode",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lvx_label_set_long_mode",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc588bf8",
+  "callable_address": "0xc588bf9",
+  "prototype": "void(void *label, uint32_t mode)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrows a live LVGL label",
+    "return_value": "none"
+  },
+  "side_effects": [
+    "changes_label_long_mode"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": false,
+    "evidence_ids": [
+      "EVID-UI-1043-LABEL-MARQUEE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-UI-1043-LABEL-MARQUEE-001"
+    ],
+    "source": "Exact 3.101.043 IDB stock mode-3 caller and create_long_label argument flow; byte-identical veneer and corresponding constructor independently confirmed against exact 3.101.036."
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-24",
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "prototype": "void(void *label, uint32_t mode)",
+    "ownership": "borrowed live LVGL label",
+    "thread": "target-private UI owner thread",
+    "device_probe": "pending long-title circular-scroll comparison"
+  },
+  "notes": "LVGL v9 label long-mode veneer; mode 3 is LV_LABEL_LONG_SCROLL_CIRCULAR."
+}

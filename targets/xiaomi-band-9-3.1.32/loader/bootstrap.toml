@@ -6,6 +6,7 @@ target_id = "xiaomi-band-9-3.1.32"
 firmware_sha256 = "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264"
 loader_family = "nsh-mw-stage1-stage2"
 status = "STATIC_RECOVERED"
+device_status = "DEVICE_REJECTED"
 command_family = "mw-exec"
 
 [stage]
@@ -52,6 +53,7 @@ original_words = [
 [evidence]
 ids = ["EVID-LOADER-9132-001"]
 unsafe_assumptions = [
-  "The exact firmware establishes DSB/ISB as the SRAM-text publication sequence; device execution remains pending.",
-  "The one-shot bootstrap must restore the exact cave words and transfer allocation/MPU ownership correctly.",
+  "DEVICE_REJECTED: on-device NSH mw write to 0x2006A9B0 raised CFSR 0x82 Data Access Violation with MMFAR 0x2006A9B0.",
+  "The static SRAM cave exists in the image but is privileged and not writable from the unprivileged system -c mw task.",
+  "A different privileged bootstrap primitive is required before device loading can be enabled.",
 ]

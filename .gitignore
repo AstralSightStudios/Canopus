@@ -7,7 +7,15 @@
 # active LVGL v9 ARGB8888 icon bin (not a firmware image).
 !watchfaces/canopus-installer/manager_loaded.bin
 !watchfaces/canopus-installer/manager_icon.bin
+!watchfaces/canopus-installer/canopus_loader_profile-xiaomi-band-9-3.1.32.bin
+!watchfaces/canopus-installer/canopus_stage1-xiaomi-band-9-3.1.32.bin
+!watchfaces/canopus-installer/canopus_stage2-xiaomi-band-9-3.1.32.bin
+!watchfaces/canopus-installer/canopus_supervisor-xiaomi-band-9-3.1.32.bin
 !watchfaces/canopus-installer-prod/*/manager_icon.bin
+!watchfaces/canopus-installer-prod/xiaomi-band-9/canopus_loader_profile-xiaomi-band-9-3.1.32.bin
+!watchfaces/canopus-installer-prod/xiaomi-band-9/canopus_stage1-xiaomi-band-9-3.1.32.bin
+!watchfaces/canopus-installer-prod/xiaomi-band-9/canopus_stage2-xiaomi-band-9-3.1.32.bin
+!watchfaces/canopus-installer-prod/xiaomi-band-9/canopus_supervisor-xiaomi-band-9-3.1.32.bin
 *.img
 *.i64
 *.idb

@@ -1,46 +1,38 @@
 {
   "schema": 1,
-  "symbol_id": "xiaomi-band-9-3.1.32.app_registry.app_install",
+  "symbol_id": "xiaomi-band-9-3.1.32.exact.app_install",
   "target_id": "xiaomi-band-9-3.1.32",
   "name": "app_install",
   "kind": "function",
-  "entry_address": "0xc109348",
-  "callable_address": "0xc109349",
   "instruction_set": "thumb",
-  "prototype": "int(const launcher_app_descriptor *, const firmware_page_descriptor *const *, uint32_t)",
-  "calling_convention": "arm-aapcs",
-  "contexts": {
-    "allowed": [
-      "app_registry_owner"
-    ],
-    "blocking": false
-  },
-  "ownership": {
-    "return_value": "implementation_defined"
-  },
-  "side_effects": [
-    "inserts_app_into_registry",
-    "allocates_descriptor_copy",
-    "allocates_page_registry",
-    "registers_each_page",
-    "emits_app_event_28"
-  ],
+  "entry_address": "0x0c4594d8",
+  "prototype": "int(const void *, void *const *, uint32_t)",
   "proof": {
-    "static": "recovered",
+    "static": "confirmed",
+    "device": "not_probed",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
-    ],
-    "device": "not_probed"
+      "EVID-ABI-9132-EXACT-001"
+    ]
   },
-  "policy": "restricted",
-  "status": "STATIC_RECOVERED",
+  "policy": "managed",
+  "status": "STATIC_CONFIRMED",
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "source": "exact Xiaomi Band 9 3.1.32 IDB; decompilation, disassembly, and stock callsite review",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
-    ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+      "EVID-ABI-9132-EXACT-001"
+    ]
   },
-  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
-  "approval_state": "PENDING"
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-static-abi-review",
+    "date": "2026-08-24",
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "prototype": "int(const void *, void *const *, uint32_t)",
+    "ownership": "caller-owned unless documented by exact stock callsite",
+    "thread": "calling thread / LVGL owner thread for UI entries",
+    "device_probe": "pending release-candidate device gate"
+  },
+  "notes": "inserts the 0x2c-byte app descriptor and registers the supplied page array",
+  "callable_address": "0x0c4594d9"
 }

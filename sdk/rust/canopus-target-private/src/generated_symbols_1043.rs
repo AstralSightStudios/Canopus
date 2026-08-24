@@ -726,15 +726,6 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "const uint32_t[17]",
     },
     TargetPrivateSymbolRecord {
-        name: "style_misans_regular_24",
-        kind: "global",
-        entry: 0x2010ce44usize,
-        callable: 0x2010ce44usize,
-        status: "STATIC_RECOVERED",
-        policy: "restricted",
-        prototype: "void *",
-    },
-    TargetPrivateSymbolRecord {
         name: "app_lookup",
         kind: "function",
         entry: 0xca69934usize,
@@ -831,6 +822,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         callable: 0x2010d054usize,
         status: "STATIC_RECOVERED",
         policy: "native-full-trust",
+        prototype: "void *",
+    },
+    TargetPrivateSymbolRecord {
+        name: "style_misans_regular_24",
+        kind: "global",
+        entry: 0x2010ce44usize,
+        callable: 0x2010ce44usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
         prototype: "void *",
     },
     TargetPrivateSymbolRecord {
@@ -969,6 +969,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void(void *, uint32_t)",
     },
     TargetPrivateSymbolRecord {
+        name: "lv_obj_set_local_style_prop",
+        kind: "function",
+        entry: 0xc107790usize,
+        callable: 0xc107791usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void (void *, uint32_t, uint32_t, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
         name: "lv_obj_set_style_bg_opa",
         kind: "function",
         entry: 0xc108374usize,
@@ -1012,6 +1021,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "void(void *, int32_t, int32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lvx_label_set_long_mode",
+        kind: "function",
+        entry: 0xc588bf8usize,
+        callable: 0xc588bf9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *label, uint32_t mode)",
     },
     TargetPrivateSymbolRecord {
         name: "lvx_list_item_update",
@@ -1218,7 +1236,6 @@ pub const SDP_SET_RAW_ATTRIBUTE_CALLABLE: usize = 0xc808245usize;
 pub const SDP_UNREGISTER_ENTRY: usize = 0xc80a734usize;
 pub const SDP_UNREGISTER_CALLABLE: usize = 0xc80a735usize;
 pub const STOCK_BT_CALLBACK_DESCRIPTOR_ENTRY: usize = 0x2cd4a744usize;
-pub const STYLE_MISANS_REGULAR_24_ENTRY: usize = 0x2010ce44usize;
 pub const APP_LOOKUP_ENTRY: usize = 0xca69934usize;
 pub const APP_LOOKUP_CALLABLE: usize = 0xca69935usize;
 pub const LVX_LABEL_CREATE_ENTRY: usize = 0xc588f30usize;
@@ -1240,6 +1257,7 @@ pub const LVX_OBJECT_DELETE_CALLABLE: usize = 0xc588de9usize;
 pub const LVX_OBJECT_SET_SIZE_ENTRY: usize = 0xc588628usize;
 pub const LVX_OBJECT_SET_SIZE_CALLABLE: usize = 0xc588629usize;
 pub const STYLE_MISANS_DEMIBOLD_32_ENTRY: usize = 0x2010d054usize;
+pub const STYLE_MISANS_REGULAR_24_ENTRY: usize = 0x2010ce44usize;
 pub const SERVICE_MANAGER_GET_PROFILE_ENTRY: usize = 0xc3bdd88usize;
 pub const SERVICE_MANAGER_GET_PROFILE_CALLABLE: usize = 0xc3bdd89usize;
 pub const SERVICE_MANAGER_REGISTER_ENTRY: usize = 0xc3bdbacusize;
@@ -1270,6 +1288,8 @@ pub const LV_OBJ_MOVE_TO_INDEX_ENTRY: usize = 0xc589550usize;
 pub const LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = 0xc589551usize;
 pub const LV_OBJ_SET_HIDDEN_ENTRY: usize = 0xc588518usize;
 pub const LV_OBJ_SET_HIDDEN_CALLABLE: usize = 0xc588519usize;
+pub const LV_OBJ_SET_LOCAL_STYLE_PROP_ENTRY: usize = 0xc107790usize;
+pub const LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = 0xc107791usize;
 pub const LV_OBJ_SET_STYLE_BG_OPA_ENTRY: usize = 0xc108374usize;
 pub const LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = 0xc108375usize;
 pub const LV_TIMER_CREATE_ENTRY: usize = 0xc587ed0usize;
@@ -1280,6 +1300,8 @@ pub const LVX_CONTENT_PAD_BOTTOM_ENTRY: usize = 0xc5893c0usize;
 pub const LVX_CONTENT_PAD_BOTTOM_CALLABLE: usize = 0xc5893c1usize;
 pub const LVX_IMAGE_SET_SCALE_ENTRY: usize = 0xc179db0usize;
 pub const LVX_IMAGE_SET_SCALE_CALLABLE: usize = 0xc179db1usize;
+pub const LVX_LABEL_SET_LONG_MODE_ENTRY: usize = 0xc588bf8usize;
+pub const LVX_LABEL_SET_LONG_MODE_CALLABLE: usize = 0xc588bf9usize;
 pub const LVX_LIST_ITEM_UPDATE_ENTRY: usize = 0xc4c8904usize;
 pub const LVX_LIST_ITEM_UPDATE_CALLABLE: usize = 0xc4c8905usize;
 pub const LVX_OBJECT_ADD_FLAG_ENTRY: usize = 0xcac00c0usize;
@@ -1912,6 +1934,21 @@ pub unsafe fn raw_lv_obj_set_hidden(a0: *mut core::ffi::c_void, a1: u32) -> () {
     unsafe { f(a0, a1) }
 }
 
+pub unsafe fn raw_lv_obj_set_local_style_prop(
+    a0: *mut core::ffi::c_void,
+    a1: u32,
+    a2: u32,
+    a3: u32,
+) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32, u32, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(
+            canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE,
+        )
+    };
+    unsafe { f(a0, a1, a2, a3) }
+}
+
 pub unsafe fn raw_lv_obj_set_style_bg_opa(a0: *mut core::ffi::c_void, a1: u32, a2: u32) -> () {
     type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32, u32) -> ();
     let f: F = unsafe {
@@ -2033,4 +2070,4 @@ pub unsafe fn raw_watchface_manager_delete_watchface(a0: *const u8) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 74
+// generated target-private raw wrapper count: 75

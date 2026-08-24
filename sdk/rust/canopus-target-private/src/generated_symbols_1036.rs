@@ -1041,6 +1041,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void(void *, int32_t, int32_t)",
     },
     TargetPrivateSymbolRecord {
+        name: "lvx_label_set_long_mode",
+        kind: "function",
+        entry: 0xc588bc0usize,
+        callable: 0xc588bc1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *label, uint32_t mode)",
+    },
+    TargetPrivateSymbolRecord {
         name: "lvx_list_item_update",
         kind: "function",
         entry: 0xc4a7becusize,
@@ -1312,6 +1321,8 @@ pub const LV_TIMER_DEL_ENTRY: usize = 0xc587ef0usize;
 pub const LV_TIMER_DEL_CALLABLE: usize = 0xc587ef1usize;
 pub const LVX_IMAGE_SET_SCALE_ENTRY: usize = 0xc179a8cusize;
 pub const LVX_IMAGE_SET_SCALE_CALLABLE: usize = 0xc179a8dusize;
+pub const LVX_LABEL_SET_LONG_MODE_ENTRY: usize = 0xc588bc0usize;
+pub const LVX_LABEL_SET_LONG_MODE_CALLABLE: usize = 0xc588bc1usize;
 pub const LVX_LIST_ITEM_UPDATE_ENTRY: usize = 0xc4a7becusize;
 pub const LVX_LIST_ITEM_UPDATE_CALLABLE: usize = 0xc4a7bedusize;
 pub const LVX_OBJECT_ADD_FLAG_ENTRY: usize = 0xcaa6a10usize;

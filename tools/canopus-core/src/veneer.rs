@@ -418,6 +418,21 @@ impl<'a> VeneerGen<'a> {
                 out.push_str("    if (canopus_str_neq(actual_build, expect_build)) return -1;\n");
                 out.push_str("    return 0;\n}\n\n");
             }
+            (Some(v), None) if self.pack.loader != "nuttx-modlib-elf32-rel" => {
+                let va = v.entry_address.as_deref().unwrap();
+                out.push_str("static inline int canopus_identity_guard(void)\n{\n");
+                out.push_str(&format!(
+                    "    const char *const expect_version = \"{}\";\n",
+                    self.pack.firmware_version
+                ));
+                out.push_str(&format!(
+                    "    const char *const actual_version = (const char *)(uintptr_t){};\n",
+                    va
+                ));
+                out.push_str(
+                    "    return canopus_str_neq(actual_version, expect_version) ? -1 : 0;\n}\n\n",
+                );
+            }
             _ => {
                 out.push_str(
                     "/* identity strings not present in this pack; guard unavailable */\n\n",

@@ -38,26 +38,28 @@ their Launcher entries in another event-loop transaction. Do not skip or combine
 these stages. The second and third module-publication stages remain device gates;
 preserve the log and reboot rather than retrying if either fails. Manager obtains
 safe-mode/module state through CPC2 `QUERY_DEVICE` and `QUERY_MODULE` responses.
-Band 9 LOAD is not currently a device-testable path: no verifier-clean Supervisor
-resource is staged, and the first real-device bootstrap remains a gate. Band 9
-Pro 3.1.175 and Band 9 3.1.32 each have independent `STATIC_RECOVERED`
-target-local profiles, but neither is `DEVICE_PROVEN`. Preserve the log and
-reboot rather than retrying if a future gated LOAD reports cave restoration or
-cleanup failure.
+Band 9 LOAD remains device-gated even when a verifier-clean Supervisor resource
+is staged: the first real-device bootstrap is still a release gate. Band 9 Pro
+3.1.175 and Band 9 3.1.32 each have independent `STATIC_RECOVERED` target-local
+profiles, but neither is `DEVICE_PROVEN`. Preserve the log and reboot rather than
+retrying if a gated LOAD reports cave restoration or cleanup failure.
 
 ## Structure
 
 ```text
 watchfaces/canopus-installer/
-├── main.lua                                  Lua LVGL bootstrap/recovery page
-├── canopus_supervisor-<target>.bin           Band 10 exact-version resources
-├── targets/<band9-target-id>/
-│   ├── canopus_loader_profile.lua            generated firmware-bound profile
-│   ├── canopus_stage1.lua                    generated NSH-injected words
-│   ├── canopus_stage2.bin                    flat PIC ET_REL loader
-│   └── canopus_supervisor.bin                verifier-gated Supervisor ET_REL
-└── manager_icon.bin                          Manager icon staged during INSTALL
+├── main.lua                                      Lua LVGL bootstrap/recovery page
+├── canopus_loader_profile-<band9-target>.bin     generated firmware-bound profile
+├── canopus_stage1-<band9-target>.bin             generated NSH-injected words
+├── canopus_stage2-<band9-target>.bin             flat PIC ET_REL loader
+├── canopus_supervisor-<target>.bin               exact-target Supervisor ET_REL
+└── manager_icon.bin                              Manager icon staged during INSTALL
 ```
+
+All resource files are flat because watchface packages cannot contain child
+directories, and `main.lua` is the package's only `.lua` file. Generated profile
+and stage-1 chunks therefore use `.bin` resource names and are compiled explicitly
+by `main.lua`. The exact target ID in each filename prevents cross-version reuse.
 
 Supervisor source:
 
@@ -90,9 +92,8 @@ word from `targets/<target-id>/loader/bootstrap.toml`, checks the profile's targ
 ID and firmware SHA-256 against `target.toml`, emits Thumb callables from even IDA
 entry addresses, and runs the Canopus ELF verifier before staging any installer
 resource. The common stage-1/stage-2 C implementation contains no firmware
-address. `build_canopus_supervisor.sh` currently supports the Band 10 production
-backends only; rebuilding and approving a Band 9 Supervisor remains a separate
-release gate.
+address. `build_canopus_supervisor.sh` supports the Band 10 and exact Band 9
+production backends; device execution remains a separate release gate.
 
 ## Status ABI (`/dev/canopus`, read, 384 bytes)
 

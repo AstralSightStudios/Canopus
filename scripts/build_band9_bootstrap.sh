@@ -13,12 +13,11 @@ TARGET_ID=${1:-xiaomi-band-9-pro-3.1.175}
 if [ "$MODE" = host-check ]; then
     SUPERVISOR=${2:?usage: build_band9_bootstrap.sh --host-check target-id exact-target-et-rel [output-dir]}
     OUT=${3:-"/tmp/canopus-band9-host-check-$TARGET_ID"}
-    TARGET_STAGE=
+    STAGE_ROOT=
 else
     OUT=${2:-"$ROOT/watchfaces/canopus-installer/build/$TARGET_ID"}
     SUPERVISOR="$OUT/canopus_supervisor.elf"
     STAGE_ROOT=${CANOPUS_INSTALLER_STAGE_ROOT:-"$ROOT/watchfaces/canopus-installer"}
-    TARGET_STAGE="$STAGE_ROOT/targets/$TARGET_ID"
 fi
 PROFILE="$ROOT/targets/$TARGET_ID/loader/bootstrap.toml"
 TARGET_TOML="$ROOT/targets/$TARGET_ID/target.toml"
@@ -109,16 +108,24 @@ $CC $FLAGS $COMMON -DCANOPUS_BAND9_CAVE_RESULT="$CAVE_RESULT" \
 if [ "$MODE" = stage ]; then
     python3 "$ROOT/tools/band9-stage1-lua.py" "$OUT/stage1.bin" \
         "$OUT/canopus_stage1.lua"
-    TARGET_STAGE_TMP="$TARGET_STAGE.tmp.$$"
-    rm -rf "$TARGET_STAGE_TMP"
-    mkdir -p "$TARGET_STAGE_TMP"
-    cp "$PROFILE_LUA" "$TARGET_STAGE_TMP/canopus_loader_profile.lua"
-    cp "$OUT/canopus_stage1.lua" "$TARGET_STAGE_TMP/canopus_stage1.lua"
-    cp "$OUT/stage2.bin" "$TARGET_STAGE_TMP/canopus_stage2.bin"
-    cp "$SUPERVISOR" "$TARGET_STAGE_TMP/canopus_supervisor.bin"
-    rm -rf "$TARGET_STAGE"
-    mv "$TARGET_STAGE_TMP" "$TARGET_STAGE"
-    echo "[4/4] staged complete target-local bootstrap"
+    mkdir -p "$STAGE_ROOT"
+    PROFILE_STAGE="$STAGE_ROOT/canopus_loader_profile-$TARGET_ID.bin"
+    STAGE1_STAGE="$STAGE_ROOT/canopus_stage1-$TARGET_ID.bin"
+    STAGE2_STAGE="$STAGE_ROOT/canopus_stage2-$TARGET_ID.bin"
+    SUPERVISOR_STAGE="$STAGE_ROOT/canopus_supervisor-$TARGET_ID.bin"
+    cp "$PROFILE_LUA" "$PROFILE_STAGE.tmp.$$"
+    cp "$OUT/canopus_stage1.lua" "$STAGE1_STAGE.tmp.$$"
+    cp "$OUT/stage2.bin" "$STAGE2_STAGE.tmp.$$"
+    cp "$SUPERVISOR" "$SUPERVISOR_STAGE.tmp.$$"
+    mv "$PROFILE_STAGE.tmp.$$" "$PROFILE_STAGE"
+    mv "$STAGE1_STAGE.tmp.$$" "$STAGE1_STAGE"
+    mv "$STAGE2_STAGE.tmp.$$" "$STAGE2_STAGE"
+    mv "$SUPERVISOR_STAGE.tmp.$$" "$SUPERVISOR_STAGE"
+    rm -f "$STAGE_ROOT/canopus_loader_profile-$TARGET_ID.lua" \
+          "$STAGE_ROOT/canopus_stage1-$TARGET_ID.lua"
+    rm -rf "$STAGE_ROOT/targets/$TARGET_ID"
+    rmdir "$STAGE_ROOT/targets" 2>/dev/null || true
+    echo "[4/4] staged complete flat target-local bootstrap"
 else
     python3 "$ROOT/tools/band9-stage1-lua.py" "$OUT/stage1.bin" \
         "$OUT/canopus_stage1.lua"

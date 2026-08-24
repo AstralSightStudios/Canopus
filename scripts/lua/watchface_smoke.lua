@@ -7,8 +7,10 @@
 -- Returns non-zero on any load/click failure.
 
 local lvgl = {}
-lvgl.HOR_RES = function() return 336 end
-lvgl.VER_RES = function() return 480 end
+local horizontal_resolution = 336
+local vertical_resolution = 480
+lvgl.HOR_RES = function() return horizontal_resolution end
+lvgl.VER_RES = function() return vertical_resolution end
 lvgl.OPA = function(v) return v end
 lvgl.Font = function(name, size) return { name = name, size = size } end
 lvgl.FLAG = { SCROLLABLE = 1, CLICKABLE = 2, EVENT_BUBBLE = 4 }
@@ -130,7 +132,8 @@ local function band9_installer_io(fault, firmware_version)
     end
     local cave_result = cave_base + 28
     local mpu_rlar = 0xe000eda0
-    local target_dir = "/fake/targets/" .. target_id .. "/"
+    local resource_prefix = "/fake/"
+    local resource_suffix = "-" .. target_id
     local cave = {
         [cave_base] = 0, [cave_base + 4] = 0,
         [cave_base + 8] = 0, [cave_base + 12] = 0,
@@ -163,11 +166,12 @@ return {
     local files = {
         ["/fake/manager_icon.bin"] = string.char(
             0x19, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        [target_dir .. "canopus_loader_profile.lua"] = profile,
-        [target_dir .. "canopus_stage1.lua"] =
+        [resource_prefix .. "canopus_loader_profile" .. resource_suffix .. ".bin"] = profile,
+        [resource_prefix .. "canopus_stage1" .. resource_suffix .. ".bin"] =
             "return { size=8, words={0xbf00bf00,0xbf00bf00} }",
-        [target_dir .. "canopus_stage2.bin"] = string.rep("S", 64),
-        [target_dir .. "canopus_supervisor.bin"] =
+        [resource_prefix .. "canopus_stage2" .. resource_suffix .. ".bin"] =
+            string.rep("S", 64),
+        [resource_prefix .. "canopus_supervisor" .. resource_suffix .. ".bin"] =
             "\127ELF\1\1\1" .. string.rep("\0", 9) .. "\1\0\40\0" .. string.rep("X", 492),
     }
     local device_present = false
@@ -297,6 +301,12 @@ end
 local function check(path, installer_fault, installer_firmware)
     created = {}
     subscriptions = {}
+    horizontal_resolution = 336
+    vertical_resolution = 480
+    if path:match("canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") then
+        horizontal_resolution = 192
+        vertical_resolution = 490
+    end
     local installer_state
     local band9_state
     local band9_fault = installer_fault and installer_fault:match("^band9:(.+)$")

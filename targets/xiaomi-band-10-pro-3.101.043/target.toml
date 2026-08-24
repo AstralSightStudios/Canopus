@@ -17,7 +17,7 @@ firmware_version = "3.101.043"
 firmware_build = "CONBINE_LTALM078_T3.101.043_08041658"
 module_abi = 1
 relocation_profile = "best1503-v1"
-revision = 4
+revision = 5
 
 # Recovered code/data extent from the exact 3.101.043 IDB; verifier range is
 # intentionally bounded to the recovered XIP window, not the full address bus.

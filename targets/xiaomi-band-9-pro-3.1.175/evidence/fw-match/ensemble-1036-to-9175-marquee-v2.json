@@ -1,0 +1,341 @@
+{
+  "schema": 3,
+  "matcher": "bindiff-inspired-ensemble-v3-global-dataflow",
+  "source_target_id": "xiaomi-band-10-pro-3.101.036",
+  "target_target_id": "xiaomi-band-9-pro-3.1.175",
+  "target_firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+  "evidence_id": "EVID-FW-MATCH-ENSEMBLE-xiaomi-band-10-pro-3-101-036-xiaomi-band-9-pro-3-1-175",
+  "source_corpus_schema": 2,
+  "target_corpus_schema": 2,
+  "source_corpus_sha256": "e94153d71bd6d4c5623198752be2dbf980fc1644fd1b03d088ccf10fcabbf5f7",
+  "target_corpus_sha256": "3c2a447b8c87e2d7c2046aa6eb6b8a9ce1dc3937131a1604a3689c210416b395",
+  "source_symbol_count": 1,
+  "source_global_symbol_count": 0,
+  "matched_symbol_count": 1,
+  "matched_global_count": 0,
+  "parameters": {
+    "pool": 96,
+    "rounds": 4,
+    "failure_feedback_paths": []
+  },
+  "failure_feedback": [],
+  "hard_negative_match_count": 0,
+  "hard_negative_abi_assumption_count": 0,
+  "quality_summary": {
+    "assigned": 1,
+    "unique_assigned": 1,
+    "one_to_one": true,
+    "reassigned_below_top_rank": 0,
+    "top_candidate_collisions": 0,
+    "blocked": 0,
+    "candidate": 1,
+    "review_required": 0
+  },
+  "global_quality_summary": {
+    "assigned": 0,
+    "blocked": 0,
+    "candidate": 0,
+    "review_required": 0
+  },
+  "evidence_families": [
+    "bytes",
+    "cfg",
+    "data",
+    "context",
+    "callgraph"
+  ],
+  "global_evidence_families": [
+    "matched-owner-dataflow",
+    "access-direction",
+    "instruction-relative-position",
+    "segment-and-object-shape"
+  ],
+  "missing_families": [
+    "normalized-instructions",
+    "abi-callsite"
+  ],
+  "confidence_note": "confidence_heuristic is a ranking aid, not an oracle-calibrated probability",
+  "anchor_history": [
+    {
+      "round": 0,
+      "anchors_added": [],
+      "anchor_count": 0
+    }
+  ],
+  "oracle_comparison": [],
+  "matches": {
+    "lvx_label_set_long_mode": {
+      "kind": "function",
+      "name": "lvx_label_set_long_mode",
+      "symbol_id": "xiaomi-band-10-pro-3.101.036.lvx_label_set_long_mode",
+      "source_target_id": "xiaomi-band-10-pro-3.101.036",
+      "matcher": "bindiff-inspired-ensemble-v2",
+      "evidence_id": "EVID-FW-MATCH-ENSEMBLE-xiaomi-band-10-pro-3-101-036-xiaomi-band-9-pro-3-1-175",
+      "source_address": "0xc588bc0",
+      "predicted_address": "0xc4b5648",
+      "selected_rank": 1,
+      "margin": 0.0027797797381662174,
+      "confidence_heuristic": 0.6085644579297821,
+      "state": "CANDIDATE",
+      "top_candidates": [
+        {
+          "address": "0xc4b5648",
+          "score": 0.7403173964739981,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.4517326233429946
+          },
+          "evidence": {
+            "anchor": {
+              "callee": null,
+              "caller": null,
+              "known": 0
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.4517326233429946,
+              "min_best_match": 0.24296348078672916
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": true
+        },
+        {
+          "address": "0xc4b5090",
+          "score": 0.7382594771754677,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.4459018519971584
+          },
+          "evidence": {
+            "anchor": {
+              "callee": null,
+              "caller": null,
+              "known": 0
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.4459018519971584,
+              "min_best_match": 0.16576678389134364
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc4b5628",
+          "score": 0.7334909120997994,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.4323909176160981
+          },
+          "evidence": {
+            "anchor": {
+              "callee": null,
+              "caller": null,
+              "known": 0
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.4323909176160981,
+              "min_best_match": 0.1545045549599418
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc4b52a0",
+          "score": 0.7331528139720515,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.43143297292081206
+          },
+          "evidence": {
+            "anchor": {
+              "callee": null,
+              "caller": null,
+              "known": 0
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.43143297292081206,
+              "min_best_match": 0.22843811107975484
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc4b5058",
+          "score": 0.7315495431649097,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.42689037230057764
+          },
+          "evidence": {
+            "anchor": {
+              "callee": null,
+              "caller": null,
+              "known": 0
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.42689037230057764,
+              "min_best_match": 0.203960236013298
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc4b50b8",
+          "score": 0.7282597502954178,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.4175692925036837
+          },
+          "evidence": {
+            "anchor": {
+              "callee": null,
+              "caller": null,
+              "known": 0
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.4175692925036837,
+              "min_best_match": 0.17674777921216428
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc4b5200",
+          "score": 0.727748660272822,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.416121204106329
+          },
+          "evidence": {
+            "anchor": {
+              "callee": null,
+              "caller": null,
+              "known": 0
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.416121204106329,
+              "min_best_match": 0.10475859044571802
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc4b56b8",
+          "score": 0.7256733503390265,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.4102411592939082
+          },
+          "evidence": {
+            "anchor": {
+              "callee": null,
+              "caller": null,
+              "known": 0
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.4102411592939082,
+              "min_best_match": 0.12982471462667533
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        }
+      ],
+      "required_evidence_missing": [
+        "normalized-instructions",
+        "abi-callsite",
+        "dataflow"
+      ],
+      "target_firmware_sha256": "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b",
+      "target_corpus_sha256": "3c2a447b8c87e2d7c2046aa6eb6b8a9ce1dc3937131a1604a3689c210416b395",
+      "top_collision_with": null
+    }
+  },
+  "global_matches": {}
+}

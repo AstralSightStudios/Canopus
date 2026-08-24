@@ -41,6 +41,13 @@
       "basis": "Exact stock page constructor establishes the three-argument bottom-padding call"
     },
     {
+      "name": "lvx_label_set_long_mode",
+      "source_entry_address": "0x0c588bc0",
+      "target_entry_address": "0x0c588bf8",
+      "evidence_id": "EVID-UI-1043-LABEL-MARQUEE-001",
+      "basis": "Exact 043 stock create-long-label path passes label in R0 and circular-scroll mode 3 in R1"
+    },
+    {
       "kind": "global",
       "name": "style_misans_regular_24",
       "target_entry_address": "0x2010ce44",

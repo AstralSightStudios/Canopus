@@ -175,7 +175,7 @@ if [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
         "$ROOT/scripts/build_band9_bootstrap.sh" "$TARGET_ID" "$OUT"
     CANOPUS_INSTALLER_STAGE_ROOT="$PROD_FAMILY_STAGE" \
         "$ROOT/scripts/build_band9_bootstrap.sh" "$TARGET_ID" "$OUT"
-    echo "staged canopus-installer-prod/$PROD_FAMILY/targets/$TARGET_ID"
+    echo "staged flat canopus-installer-prod/$PROD_FAMILY resources for $TARGET_ID"
 else
     mkdir -p "$PROD_FAMILY_STAGE"
     PROD_TARGET_STAGE="$PROD_FAMILY_STAGE/canopus_supervisor-$TARGET_ID.bin"

@@ -3,8 +3,8 @@
  * target_id: xiaomi-band-10-pro-3.101.043
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
- * revision : 3
- * input_digest: 024e69b5db07475a
+ * revision : 5
+ * input_digest: e83e6609df8f7d5c
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -392,6 +392,9 @@ static inline int canopus_fw_app_install(const launcher_app_descriptor * a0, con
     return ((canopus_fw_app_install_fn)(uintptr_t)0xca6a30d)(a0, a1, a2);
 }
 
+/* Recovered global `style_misans_demibold_32` at 0x2010D054. */
+#define canopus_fw_style_misans_demibold_32 ((void *)(uintptr_t)0x2010D054u)
+
 typedef void (*canopus_fw_lvx_object_delete_fn)(void *);
 static inline void canopus_fw_lvx_object_delete(void * a0) {
     return ((canopus_fw_lvx_object_delete_fn)(uintptr_t)0xc588de9)(a0);
@@ -476,10 +479,11 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * lv_image_create: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
  * lv_obj_move_to_index: restricted - not exported until context/ownership approved
- * lv_obj_set_local_style_prop: WITHDRAWN - no veneer may ever be generated
+ * lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
  * lvx_image_set_scale: restricted - not exported until context/ownership approved
+ * lvx_label_set_long_mode: restricted - not exported until context/ownership approved
  * lvx_object_add_flag: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated

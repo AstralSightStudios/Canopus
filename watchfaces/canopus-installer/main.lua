@@ -24,7 +24,6 @@ local BAND9_TARGET_BY_VERSION = {
 }
 local BAND9_TARGET_ID
 local BAND9_PROFILE
-local BAND9_RESOURCE_DIR
 local BAND9_STAGE1_RESOURCE
 local BAND9_STAGE2_RESOURCE
 local BAND9_SUPERVISOR_RESOURCE
@@ -115,7 +114,7 @@ local function detect_firmware_version()
 end
 
 local function load_band9_profile(target_id)
-    local path = SCRIPT_PATH .. "targets/" .. target_id .. "/canopus_loader_profile.lua"
+    local path = SCRIPT_PATH .. "canopus_loader_profile-" .. target_id .. ".bin"
     local source = read_all(path, "r")
     if type(source) ~= "string" then return nil end
     local compiler = loadstring or load
@@ -139,10 +138,9 @@ local function select_band9_target(version)
     if not profile then return nil end
     BAND9_TARGET_ID = target_id
     BAND9_PROFILE = profile
-    BAND9_RESOURCE_DIR = SCRIPT_PATH .. "targets/" .. target_id .. "/"
-    BAND9_STAGE1_RESOURCE = BAND9_RESOURCE_DIR .. "canopus_stage1.lua"
-    BAND9_STAGE2_RESOURCE = BAND9_RESOURCE_DIR .. "canopus_stage2.bin"
-    BAND9_SUPERVISOR_RESOURCE = BAND9_RESOURCE_DIR .. "canopus_supervisor.bin"
+    BAND9_STAGE1_RESOURCE = SCRIPT_PATH .. "canopus_stage1-" .. target_id .. ".bin"
+    BAND9_STAGE2_RESOURCE = SCRIPT_PATH .. "canopus_stage2-" .. target_id .. ".bin"
+    BAND9_SUPERVISOR_RESOURCE = SCRIPT_PATH .. "canopus_supervisor-" .. target_id .. ".bin"
     return target_id
 end
 

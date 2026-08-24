@@ -4,7 +4,7 @@
   "target_id": "xiaomi-band-10-pro-3.101.043",
   "question": "Which exact 3.101.043 firmware globals provide MiSans Regular 24 and MiSans Demibold 32 style objects?",
   "candidate_symbols": [
-    "xiaomi-band-10-pro-3.101.043.private_abi.style_misans_regular_24",
+    "xiaomi-band-10-pro-3.101.043.probe.style_misans_regular_24",
     "xiaomi-band-10-pro-3.101.043.probe.style_misans_demibold_32"
   ],
   "callsite_evidence": [

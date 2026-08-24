@@ -5,6 +5,8 @@
   "name": "lv_obj_set_local_style_prop",
   "kind": "function",
   "instruction_set": "thumb",
+  "entry_address": "0xc107790",
+  "callable_address": "0xc107791",
   "prototype": "void (void *, uint32_t, uint32_t, uint32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -15,30 +17,40 @@
     "blocking": false
   },
   "ownership": {
-    "argument": "borrows a live LVGL object; numeric style value is passed in one 32-bit AAPCS register",
+    "argument": "borrows a live LVGL object; property, numeric style value and selector are passed in AAPCS registers R1-R3",
     "return_value": "none"
   },
   "side_effects": [
     "mutates_local_widget_style"
   ],
   "proof": {
-    "static": "confirmed",
+    "static": "recovered",
     "device": "not_probed",
     "host_tested": false,
     "evidence_ids": [
-      "EVID-UI-LAYER-001"
+      "EVID-UI-LAYER-001",
+      "EVID-UI-1043-LOCAL-STYLE-001"
     ]
   },
-  "policy": "withdrawn",
-  "status": "WITHDRAWN",
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-MATCH-001"
+      "EVID-MATCH-001",
+      "EVID-UI-1043-LOCAL-STYLE-001"
     ],
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review",
-    "withdrawal_reason": "No independent exact-target function match; fail-closed rather than reuse neighboring firmware address."
+    "source": "Exact 3.101.043 IDB confirmation at loc_C107790: byte-identical 32-byte dispatcher prefix, an exactly corresponding family of 94 stock style wrappers, and independent BG_OPA wrapper argument-flow confirmation against working 3.101.036 loc_C107464. The prior matcher-only candidate was withdrawn until this exact-target evidence was established."
   },
-  "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lv_obj_set_local_style_prop)",
-  "approval_state": "REJECTED"
+  "notes": "Exact 3.101.043 LVGL v9 local-style dispatcher. Restricted to freshly created live UI objects on the owner thread; exact-device centered-label rendering probe remains pending.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-08-24",
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "prototype": "void (void *, uint32_t, uint32_t, uint32_t)",
+    "ownership": "borrowed live LVGL object",
+    "thread": "target-private UI owner thread",
+    "device_probe": "pending exact 3.101.043 LyraPlayer title and author centering comparison"
+  }
 }

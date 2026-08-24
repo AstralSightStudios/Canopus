@@ -628,7 +628,7 @@ impl SdpSourceRecord {
     ];
 }
 
-/// AVRCP Controller SDP record advertised alongside the A2DP source.
+/// AVRCP Controller/Target SDP record advertised alongside the A2DP source.
 pub struct SdpAvrcpControllerRecord;
 
 impl SdpAvrcpControllerRecord {
@@ -672,8 +672,9 @@ const ALIGNED_SERVICE_NAME: AlignedValue<14> = AlignedValue([
     0x25, 0x0c, b'A', b'u', b'd', b'i', b'o', b' ', b'S', b'o', b'u', b'r', b'c', b'e',
 ]);
 const ALIGNED_FEATURES: AlignedValue<3> = AlignedValue([0x09, 0x00, 0x01]);
-const ALIGNED_AVRCP_SERVICE_CLASS: AlignedValue<8> =
-    AlignedValue([0x35, 0x06, 0x19, 0x11, 0x0e, 0x19, 0x11, 0x0f]);
+const ALIGNED_AVRCP_SERVICE_CLASS: AlignedValue<11> = AlignedValue([
+    0x35, 0x09, 0x19, 0x11, 0x0e, 0x19, 0x11, 0x0f, 0x19, 0x11, 0x0c,
+]);
 const ALIGNED_AVRCP_PROTOCOL: AlignedValue<18> = AlignedValue([
     0x35, 0x10, 0x35, 0x06, 0x19, 0x01, 0x00, 0x09, 0x00, 0x17, 0x35, 0x06, 0x19, 0x00, 0x17, 0x09,
     0x01, 0x04,
@@ -999,6 +1000,18 @@ pub unsafe fn lvx_label_set_text(label: *mut core::ffi::c_void, text: *const u8)
     f(label, text);
 }
 
+pub const LV_LABEL_LONG_SCROLL_CIRCULAR: u32 = 3;
+
+pub unsafe fn lvx_label_set_long_mode(label: *mut core::ffi::c_void, mode: u32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            canopus_target_generated::CANOPUS_FW_LVX_LABEL_SET_LONG_MODE_CALLABLE,
+        ))
+    };
+    f(label, mode);
+}
+
 /// Applies centered text alignment to a freshly-created label. This must run
 /// before any stock font/style is attached; the generic firmware dispatcher is
 /// unsafe once the object's local property array has been populated.
@@ -1067,12 +1080,18 @@ pub unsafe fn lvx_object_move_to_index(object: *mut core::ffi::c_void, index: i3
 /// Sets one local LVGL style property for the requested selector. Property and
 /// value encoding follow this exact target's LVGL v9 ABI.
 pub unsafe fn lvx_object_set_local_style_u32(
-    _object: *mut core::ffi::c_void,
-    _property: u32,
-    _value: u32,
-    _selector: u32,
+    object: *mut core::ffi::c_void,
+    property: u32,
+    value: u32,
+    selector: u32,
 ) {
-    // 043 withdrew the exact-target local-style setter; fail closed.
+    type F = extern "C" fn(*mut core::ffi::c_void, u32, u32, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE,
+        ))
+    };
+    f(object, property, value, selector);
 }
 
 /// Sets the object's background opacity for the requested style selector.

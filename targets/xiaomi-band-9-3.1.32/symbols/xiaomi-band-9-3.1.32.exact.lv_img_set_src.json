@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.exact.lv_img_set_src",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "lv_img_set_src",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c293c08",
+  "prototype": "void(void *, const void *)",
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ABI-9132-EXACT-001"
+    ]
+  },
+  "policy": "managed",
+  "status": "STATIC_CONFIRMED",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "source": "exact Xiaomi Band 9 3.1.32 IDB; decompilation, disassembly, and stock callsite review",
+    "evidence_ids": [
+      "EVID-ABI-9132-EXACT-001"
+    ]
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-static-abi-review",
+    "date": "2026-08-24",
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "prototype": "void(void *, const void *)",
+    "ownership": "caller-owned unless documented by exact stock callsite",
+    "thread": "calling thread / LVGL owner thread for UI entries",
+    "device_probe": "pending release-candidate device gate"
+  },
+  "notes": "exact image source setter used by stock launcher/notification pages",
+  "callable_address": "0x0c293c09"
+}

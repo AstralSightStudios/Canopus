@@ -4,12 +4,26 @@
  * firmware : 3.1.32 (N66NFC_3.1.32)
  * sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
  * revision : 1
- * input_digest: d855dbbd4a14da90
+ * input_digest: b6a1dd04bb365910
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_9_3_1_32_H
 #define CANOPUS_VENEER_XIAOMI_BAND_9_3_1_32_H
 
 #include <stdint.h>
+
+/* ---- recovered type layouts ---- */
+/* Explicit padding reproduces the exact recovered byte layout
+ * even when fields are sparse (e.g. launcher_order_record). */
+typedef struct file_operations file_operations;
+struct file_operations {
+    void * open; /* +0x0 */
+    void * close; /* +0x4 */
+    void * read; /* +0x8 */
+    void * write; /* +0xc */
+    void * lseek; /* +0x10 */
+    void * ioctl; /* +0x14 */
+    uint8_t _tail[24];
+};
 
 /* ---- runtime identity guard ---- */
 static inline int canopus_str_neq(const char *a, const char *b)
@@ -18,15 +32,186 @@ static inline int canopus_str_neq(const char *a, const char *b)
     return *a != *b;
 }
 
-/* identity strings not present in this pack; guard unavailable */
+static inline int canopus_identity_guard(void)
+{
+    const char *const expect_version = "3.1.32";
+    const char *const actual_version = (const char *)(uintptr_t)0x0c5fc5c1;
+    return canopus_str_neq(actual_version, expect_version) ? -1 : 0;
+}
 
 /* ---- typed veneers ---- */
+typedef void (*canopus_fw_mpu_region_release_fn)(uint32_t);
+static inline void canopus_fw_mpu_region_release(uint32_t a0) {
+    return ((canopus_fw_mpu_region_release_fn)(uintptr_t)0x0c5228fd)(a0);
+}
+
+/* open: skipped (argument type not mappable) */
+typedef void * (*canopus_fw_mm_memalign_default_fn)(uint32_t, uint32_t);
+static inline void * canopus_fw_mm_memalign_default(uint32_t a0, uint32_t a1) {
+    return ((canopus_fw_mm_memalign_default_fn)(uintptr_t)0x0c16ab8d)(a0, a1);
+}
+
+typedef int (*canopus_fw_page_goto_fn)(uint32_t, uint32_t, void *, void *);
+static inline int canopus_fw_page_goto(uint32_t a0, uint32_t a1, void * a2, void * a3) {
+    return ((canopus_fw_page_goto_fn)(uintptr_t)0x0c45b589)(a0, a1, a2, a3);
+}
+
+typedef void (*canopus_fw_lv_obj_clear_flag_fn)(void *, uint32_t);
+static inline void canopus_fw_lv_obj_clear_flag(void * a0, uint32_t a1) {
+    return ((canopus_fw_lv_obj_clear_flag_fn)(uintptr_t)0x0c26f56b)(a0, a1);
+}
+
+typedef int (*canopus_fw_page_finish_fn)(void *);
+static inline int canopus_fw_page_finish(void * a0) {
+    return ((canopus_fw_page_finish_fn)(uintptr_t)0x0c45e5c1)(a0);
+}
+
+typedef int (*canopus_fw_launcher_reset_order_info_fn)(void);
+static inline int canopus_fw_launcher_reset_order_info(void) {
+    return ((canopus_fw_launcher_reset_order_info_fn)(uintptr_t)0x0c4c7165)();
+}
+
+/* errno_location: skipped (return type 'int *' not mappable) */
+typedef void (*canopus_fw_lv_obj_align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
+static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2, int32_t a3, int32_t a4) {
+    return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0x0c278bdd)(a0, a1, a2, a3, a4);
+}
+
+typedef int (*canopus_fw_register_driver_fn)(const char *, const void *, void *);
+static inline int canopus_fw_register_driver(const char * a0, const void * a1, void * a2) {
+    return ((canopus_fw_register_driver_fn)(uintptr_t)0x0c4e38cf)(a0, a1, a2);
+}
+
+/* app_install: skipped (argument type not mappable) */
+typedef int (*canopus_fw_unregister_driver_fn)(const char *);
+static inline int canopus_fw_unregister_driver(const char * a0) {
+    return ((canopus_fw_unregister_driver_fn)(uintptr_t)0x0c390f79)(a0);
+}
+
+typedef void * (*canopus_fw_lv_img_create_fn)(void *);
+static inline void * canopus_fw_lv_img_create(void * a0) {
+    return ((canopus_fw_lv_img_create_fn)(uintptr_t)0x0c28f5d9)(a0);
+}
+
+typedef void (*canopus_fw_lv_obj_set_size_fn)(void *, int32_t, int32_t);
+static inline void canopus_fw_lv_obj_set_size(void * a0, int32_t a1, int32_t a2) {
+    return ((canopus_fw_lv_obj_set_size_fn)(uintptr_t)0x0c27845f)(a0, a1, a2);
+}
+
+typedef int (*canopus_fw_rename_fn)(const char *, const char *);
+static inline int canopus_fw_rename(const char * a0, const char * a1) {
+    return ((canopus_fw_rename_fn)(uintptr_t)0x0c391975)(a0, a1);
+}
+
+typedef uint8_t (*canopus_fw_mpu_region_allocate_fn)(void);
+static inline uint8_t canopus_fw_mpu_region_allocate(void) {
+    return ((canopus_fw_mpu_region_allocate_fn)(uintptr_t)0x0c5228a5)();
+}
+
+typedef void * (*canopus_fw_lvx_page_title_create_fn)(void *, const char *, uint32_t, void *);
+static inline void * canopus_fw_lvx_page_title_create(void * a0, const char * a1, uint32_t a2, void * a3) {
+    return ((canopus_fw_lvx_page_title_create_fn)(uintptr_t)0x0c4c5f61)(a0, a1, a2, a3);
+}
+
+typedef void (*canopus_fw_lv_obj_add_flag_fn)(void *, uint32_t);
+static inline void canopus_fw_lv_obj_add_flag(void * a0, uint32_t a1) {
+    return ((canopus_fw_lv_obj_add_flag_fn)(uintptr_t)0x0c26f4f5)(a0, a1);
+}
+
+typedef int (*canopus_fw_mpu_region_configure_fn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+static inline int canopus_fw_mpu_region_configure(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) {
+    return ((canopus_fw_mpu_region_configure_fn)(uintptr_t)0x0c52272d)(a0, a1, a2, a3, a4);
+}
+
+typedef int (*canopus_fw_unlink_fn)(const char *);
+static inline int canopus_fw_unlink(const char * a0) {
+    return ((canopus_fw_unlink_fn)(uintptr_t)0x0c3920fd)(a0);
+}
+
+typedef void * (*canopus_fw_app_lookup_fn)(uint16_t);
+static inline void * canopus_fw_app_lookup(uint16_t a0) {
+    return ((canopus_fw_app_lookup_fn)(uintptr_t)0x0c458cd9)(a0);
+}
+
+typedef int (*canopus_fw_close_fn)(int);
+static inline int canopus_fw_close(int a0) {
+    return ((canopus_fw_close_fn)(uintptr_t)0x0c39025d)(a0);
+}
+
+typedef void (*canopus_fw_lv_bar_set_value_fn)(void *, int32_t, uint32_t);
+static inline void canopus_fw_lv_bar_set_value(void * a0, int32_t a1, uint32_t a2) {
+    return ((canopus_fw_lv_bar_set_value_fn)(uintptr_t)0x0c28ff75)(a0, a1, a2);
+}
+
+typedef void * (*canopus_fw_launcher_load_app_info_fn)(const void *);
+static inline void * canopus_fw_launcher_load_app_info(const void * a0) {
+    return ((canopus_fw_launcher_load_app_info_fn)(uintptr_t)0x0c2c8ebd)(a0);
+}
+
+typedef void (*canopus_fw_lv_img_set_src_fn)(void *, const void *);
+static inline void canopus_fw_lv_img_set_src(void * a0, const void * a1) {
+    return ((canopus_fw_lv_img_set_src_fn)(uintptr_t)0x0c293c09)(a0, a1);
+}
+
+typedef void * (*canopus_fw_lv_obj_create_fn)(void *);
+static inline void * canopus_fw_lv_obj_create(void * a0) {
+    return ((canopus_fw_lv_obj_create_fn)(uintptr_t)0x0c26d371)(a0);
+}
+
+typedef int32_t (*canopus_fw_read_fn)(int, void *, uint32_t);
+static inline int32_t canopus_fw_read(int a0, void * a1, uint32_t a2) {
+    return ((canopus_fw_read_fn)(uintptr_t)0x0c393467)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_lv_bar_set_range_fn)(void *, int32_t, int32_t);
+static inline void canopus_fw_lv_bar_set_range(void * a0, int32_t a1, int32_t a2) {
+    return ((canopus_fw_lv_bar_set_range_fn)(uintptr_t)0x0c28ffb5)(a0, a1, a2);
+}
+
+typedef int32_t (*canopus_fw_write_fn)(int, const void *, uint32_t);
+static inline int32_t canopus_fw_write(int a0, const void * a1, uint32_t a2) {
+    return ((canopus_fw_write_fn)(uintptr_t)0x0c39349f)(a0, a1, a2);
+}
+
+typedef void * (*canopus_fw_lv_label_create_fn)(void *);
+static inline void * canopus_fw_lv_label_create(void * a0) {
+    return ((canopus_fw_lv_label_create_fn)(uintptr_t)0x0c28f5f5)(a0);
+}
+
+typedef void * (*canopus_fw_lv_obj_add_event_cb_fn)(void *, void *, uint32_t, void *);
+static inline void * canopus_fw_lv_obj_add_event_cb(void * a0, void * a1, uint32_t a2, void * a3) {
+    return ((canopus_fw_lv_obj_add_event_cb_fn)(uintptr_t)0x0c274c8d)(a0, a1, a2, a3);
+}
+
+typedef int (*canopus_fw_launcher_page_insert_icon_fn)(void *);
+static inline int canopus_fw_launcher_page_insert_icon(void * a0) {
+    return ((canopus_fw_launcher_page_insert_icon_fn)(uintptr_t)0x0c2ceb4d)(a0);
+}
+
+typedef void (*canopus_fw_mm_free_default_fn)(void *);
+static inline void canopus_fw_mm_free_default(void * a0) {
+    return ((canopus_fw_mm_free_default_fn)(uintptr_t)0x0c16a425)(a0);
+}
+
+typedef void * (*canopus_fw_lv_bar_create_fn)(void *);
+static inline void * canopus_fw_lv_bar_create(void * a0) {
+    return ((canopus_fw_lv_bar_create_fn)(uintptr_t)0x0c28fed9)(a0);
+}
+
+typedef int (*canopus_fw_watchface_manager_delete_watchface_fn)(const char *);
+static inline int canopus_fw_watchface_manager_delete_watchface(const char * a0) {
+    return ((canopus_fw_watchface_manager_delete_watchface_fn)(uintptr_t)0x0c45e3ad)(a0);
+}
+
+typedef void (*canopus_fw_lv_label_set_text_fn)(void *, const char *);
+static inline void canopus_fw_lv_label_set_text(void * a0, const char * a1) {
+    return ((canopus_fw_lv_label_set_text_fn)(uintptr_t)0x0c294ef9)(a0, a1);
+}
+
 /* ---- excluded symbols ----
- * app_install: restricted - not exported until context/ownership approved
  * app_launcher_add: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved
- * app_lookup: restricted - not exported until context/ownership approved
  * bt_adapter_get_instance: restricted - not exported until context/ownership approved
  * bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
  * bt_adapter_get_state: restricted - not exported until context/ownership approved
@@ -56,14 +241,12 @@ static inline int canopus_str_neq(const char *a, const char *b)
  * bt_timer_cancel: restricted - not exported until context/ownership approved
  * btsnoop_avdtp_recognizer: restricted - not exported until context/ownership approved
  * clock_gettime: restricted - not exported until context/ownership approved
- * close: restricted - not exported until context/ownership approved
  * controller_crash_dump: restricted - not exported until context/ownership approved
  * core_bt_pair_request_callback: restricted - not exported until context/ownership approved
  * driver_close_dispatch: restricted - not exported until context/ownership approved
  * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
  * driver_open_dispatch: restricted - not exported until context/ownership approved
  * driver_read_dispatch: restricted - not exported until context/ownership approved
- * errno_location: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
@@ -79,15 +262,10 @@ static inline int canopus_str_neq(const char *a, const char *b)
  * interconnect_send: restricted - not exported until context/ownership approved
  * ioctl: restricted - not exported until context/ownership approved
  * lseek: restricted - not exported until context/ownership approved
- * lv_bar_create: restricted - not exported until context/ownership approved
- * lv_bar_set_range: restricted - not exported until context/ownership approved
- * lv_bar_set_value: restricted - not exported until context/ownership approved
  * lv_event_get_code: restricted - not exported until context/ownership approved
  * lv_event_get_user_data: restricted - not exported until context/ownership approved
  * lv_image_create: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
- * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
- * lv_obj_align_to: restricted - not exported until context/ownership approved
  * lv_obj_move_to_index: restricted - not exported until context/ownership approved
  * lv_obj_set_hidden: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
@@ -107,21 +285,14 @@ static inline int canopus_str_neq(const char *a, const char *b)
  * lvx_object_delete: restricted - not exported until context/ownership approved
  * lvx_object_set_size: restricted - not exported until context/ownership approved
  * lvx_page_content_create: restricted - not exported until context/ownership approved
- * lvx_page_title_create: restricted - not exported until context/ownership approved
  * lvx_style_apply: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: restricted - not exported until context/ownership approved
- * open: restricted - not exported until context/ownership approved
- * page_finish: restricted - not exported until context/ownership approved
- * page_goto: restricted - not exported until context/ownership approved
  * page_navigator_open_page: restricted - not exported until context/ownership approved
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: restricted - not exported until context/ownership approved
  * quickapp_register_app: restricted - not exported until context/ownership approved
- * read: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
- * register_driver: restricted - not exported until context/ownership approved
- * rename: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved
  * sdp_builder_create: restricted - not exported until context/ownership approved
  * sdp_commit: restricted - not exported until context/ownership approved
@@ -139,12 +310,8 @@ static inline int canopus_str_neq(const char *a, const char *b)
  * system_router_app_wrapper: restricted - not exported until context/ownership approved
  * system_router_get_pages_wrapper: restricted - not exported until context/ownership approved
  * thirdparty_submit_message_content: restricted - not exported until context/ownership approved
- * unlink: restricted - not exported until context/ownership approved
  * unregister_blockdriver: restricted - not exported until context/ownership approved
- * unregister_driver: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: restricted - not exported until context/ownership approved
- * watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
- * write: restricted - not exported until context/ownership approved
  */
 
 

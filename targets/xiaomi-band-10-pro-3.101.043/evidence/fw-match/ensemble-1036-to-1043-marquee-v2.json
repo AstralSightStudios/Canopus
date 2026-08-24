@@ -1,0 +1,771 @@
+{
+  "schema": 3,
+  "matcher": "bindiff-inspired-ensemble-v3-global-dataflow",
+  "source_target_id": "xiaomi-band-10-pro-3.101.036",
+  "target_target_id": "xiaomi-band-10-pro-3.101.043",
+  "target_firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+  "evidence_id": "EVID-FW-MATCH-ENSEMBLE-xiaomi-band-10-pro-3-101-036-xiaomi-band-10-pro-3-101-043",
+  "source_corpus_schema": 2,
+  "target_corpus_schema": 2,
+  "source_corpus_sha256": "e94153d71bd6d4c5623198752be2dbf980fc1644fd1b03d088ccf10fcabbf5f7",
+  "target_corpus_sha256": "5ba1478cae74473f73d02191bb39fef57a2cf49cd08de33d21cb2f9544094774",
+  "source_symbol_count": 1,
+  "source_global_symbol_count": 0,
+  "matched_symbol_count": 1,
+  "matched_global_count": 0,
+  "parameters": {
+    "pool": 96,
+    "rounds": 4,
+    "failure_feedback_paths": []
+  },
+  "failure_feedback": [],
+  "hard_negative_match_count": 0,
+  "hard_negative_abi_assumption_count": 0,
+  "quality_summary": {
+    "assigned": 1,
+    "unique_assigned": 1,
+    "one_to_one": true,
+    "reassigned_below_top_rank": 0,
+    "top_candidate_collisions": 0,
+    "blocked": 0,
+    "candidate": 0,
+    "review_required": 1
+  },
+  "global_quality_summary": {
+    "assigned": 0,
+    "blocked": 0,
+    "candidate": 0,
+    "review_required": 0
+  },
+  "evidence_families": [
+    "bytes",
+    "cfg",
+    "data",
+    "context",
+    "callgraph"
+  ],
+  "global_evidence_families": [
+    "matched-owner-dataflow",
+    "access-direction",
+    "instruction-relative-position",
+    "segment-and-object-shape"
+  ],
+  "missing_families": [
+    "normalized-instructions",
+    "abi-callsite"
+  ],
+  "confidence_note": "confidence_heuristic is a ranking aid, not an oracle-calibrated probability",
+  "anchor_history": [
+    {
+      "round": 0,
+      "anchors_added": [
+        {
+          "name": "lvx_label_set_long_mode",
+          "source": "0xc588bc0",
+          "target": "0xc588bf8"
+        }
+      ],
+      "anchor_count": 1
+    },
+    {
+      "round": 1,
+      "anchors_added": [],
+      "anchor_count": 1
+    }
+  ],
+  "oracle_comparison": [
+    {
+      "name": "lv_event_get_code",
+      "expected_address": "0xc588210",
+      "predicted_address": null,
+      "match": null,
+      "source_missing": true,
+      "confidence_heuristic": null,
+      "margin": null,
+      "top_candidates": [],
+      "oracle_evidence_id": "EVID-UI-EVENT-001"
+    },
+    {
+      "name": "lv_event_get_user_data",
+      "expected_address": "0xc588310",
+      "predicted_address": null,
+      "match": null,
+      "source_missing": true,
+      "confidence_heuristic": null,
+      "margin": null,
+      "top_candidates": [],
+      "oracle_evidence_id": "EVID-UI-EVENT-001"
+    },
+    {
+      "name": "lvx_label_create",
+      "expected_address": "0xc588f30",
+      "predicted_address": null,
+      "match": null,
+      "source_missing": true,
+      "confidence_heuristic": null,
+      "margin": null,
+      "top_candidates": [],
+      "oracle_evidence_id": "EVID-UI-WIDGET-001"
+    },
+    {
+      "name": "lvx_label_set_text",
+      "expected_address": "0xc589490",
+      "predicted_address": null,
+      "match": null,
+      "source_missing": true,
+      "confidence_heuristic": null,
+      "margin": null,
+      "top_candidates": [],
+      "oracle_evidence_id": "EVID-UI-WIDGET-001"
+    },
+    {
+      "name": "lvx_object_align",
+      "expected_address": "0xc589188",
+      "predicted_address": null,
+      "match": null,
+      "source_missing": true,
+      "confidence_heuristic": null,
+      "margin": null,
+      "top_candidates": [],
+      "oracle_evidence_id": "EVID-UI-WIDGET-001"
+    },
+    {
+      "name": "lvx_content_pad_bottom",
+      "expected_address": "0xc5893c0",
+      "predicted_address": null,
+      "match": null,
+      "source_missing": true,
+      "confidence_heuristic": null,
+      "margin": null,
+      "top_candidates": [],
+      "oracle_evidence_id": "EVID-UI-WIDGET-001"
+    },
+    {
+      "name": "lvx_label_set_long_mode",
+      "expected_address": "0xc588bf8",
+      "predicted_address": "0xc588bf8",
+      "match": true,
+      "source_missing": false,
+      "confidence_heuristic": 0.8082673985173687,
+      "margin": 0.19203372414980985,
+      "top_candidates": [
+        {
+          "address": "0xc588bf8",
+          "score": 0.9313646117135704,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.9930330665217828
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 1.0,
+              "caller": null,
+              "callee_hits": 1,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.9900472378882611,
+              "min_best_match": 0.8997767857142857
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": true
+        },
+        {
+          "address": "0xc588830",
+          "score": 0.7525111967848719,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.4862817242238035
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6946881774625765,
+              "min_best_match": 0.2272710170667418
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc588a70",
+          "score": 0.7509954616214188,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.4819871412606867
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6885530589438382,
+              "min_best_match": 0.24334775995113364
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc588f30",
+          "score": 0.7466374905994105,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.46963955669832996
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6709136524261857,
+              "min_best_match": 0.24793518090577
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc588ef0",
+          "score": 0.7448971467019911,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.46470858232230833
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6638694033175834,
+              "min_best_match": 0.23316946076153486
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc589490",
+          "score": 0.7428805436235097,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.45899487359994434
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6557069622856349,
+              "min_best_match": 0.2075382038954023
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc588628",
+          "score": 0.7395427218365619,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.44953771187025876
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6421967312432268,
+              "min_best_match": 0.21368694894954515
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc588420",
+          "score": 0.7392981272452461,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.44884469386153064
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6412067055164724,
+              "min_best_match": 0.20327948746780353
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        }
+      ],
+      "oracle_evidence_id": "EVID-UI-1043-LABEL-MARQUEE-001"
+    },
+    {
+      "name": "style_misans_regular_24",
+      "expected_address": "0x2010ce44",
+      "predicted_address": null,
+      "match": null,
+      "source_missing": true,
+      "confidence_heuristic": null,
+      "margin": null,
+      "top_candidates": [],
+      "oracle_evidence_id": "EVID-UI-1043-FONT-001"
+    },
+    {
+      "name": "style_misans_demibold_32",
+      "expected_address": "0x2010d054",
+      "predicted_address": null,
+      "match": null,
+      "source_missing": true,
+      "confidence_heuristic": null,
+      "margin": null,
+      "top_candidates": [],
+      "oracle_evidence_id": "EVID-UI-1043-FONT-001"
+    }
+  ],
+  "matches": {
+    "lvx_label_set_long_mode": {
+      "kind": "function",
+      "name": "lvx_label_set_long_mode",
+      "symbol_id": "xiaomi-band-10-pro-3.101.036.lvx_label_set_long_mode",
+      "source_target_id": "xiaomi-band-10-pro-3.101.036",
+      "matcher": "bindiff-inspired-ensemble-v2",
+      "evidence_id": "EVID-FW-MATCH-ENSEMBLE-xiaomi-band-10-pro-3-101-036-xiaomi-band-10-pro-3-101-043",
+      "source_address": "0xc588bc0",
+      "predicted_address": "0xc588bf8",
+      "selected_rank": 1,
+      "margin": 0.19203372414980985,
+      "confidence_heuristic": 0.8082673985173687,
+      "state": "REVIEW_REQUIRED",
+      "top_candidates": [
+        {
+          "address": "0xc588bf8",
+          "score": 0.9313646117135704,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.9930330665217828
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 1.0,
+              "caller": null,
+              "callee_hits": 1,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.9900472378882611,
+              "min_best_match": 0.8997767857142857
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": true
+        },
+        {
+          "address": "0xc588830",
+          "score": 0.7525111967848719,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.4862817242238035
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6946881774625765,
+              "min_best_match": 0.2272710170667418
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc588a70",
+          "score": 0.7509954616214188,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.4819871412606867
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6885530589438382,
+              "min_best_match": 0.24334775995113364
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc588f30",
+          "score": 0.7466374905994105,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.46963955669832996
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6709136524261857,
+              "min_best_match": 0.24793518090577
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc588ef0",
+          "score": 0.7448971467019911,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.46470858232230833
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6638694033175834,
+              "min_best_match": 0.23316946076153486
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc589490",
+          "score": 0.7428805436235097,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.45899487359994434
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6557069622856349,
+              "min_best_match": 0.2075382038954023
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc588628",
+          "score": 0.7395427218365619,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.44953771187025876
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6421967312432268,
+              "min_best_match": 0.21368694894954515
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        },
+        {
+          "address": "0xc588420",
+          "score": 0.7392981272452461,
+          "families": {
+            "bytes": 1.0,
+            "cfg": 0.775,
+            "context": 1.0,
+            "callgraph": 0.44884469386153064
+          },
+          "evidence": {
+            "anchor": {
+              "callee": 0.0,
+              "caller": null,
+              "callee_hits": 0,
+              "callee_known": 1,
+              "caller_hits": 0,
+              "caller_known": 0,
+              "known": 1
+            },
+            "caller_neighborhood": {
+              "source_callers": 64,
+              "target_callers": 64,
+              "matched_callers": 64,
+              "mean_best_match": 0.6412067055164724,
+              "min_best_match": 0.20327948746780353
+            }
+          },
+          "independence_groups": [
+            "bytes",
+            "callgraph",
+            "cfg",
+            "context"
+          ],
+          "selected": false
+        }
+      ],
+      "required_evidence_missing": [
+        "normalized-instructions",
+        "abi-callsite",
+        "dataflow"
+      ],
+      "target_firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "target_corpus_sha256": "5ba1478cae74473f73d02191bb39fef57a2cf49cd08de33d21cb2f9544094774",
+      "top_collision_with": null
+    }
+  },
+  "global_matches": {},
+  "oracle_summary": {
+    "total": 1,
+    "matched": 1,
+    "source_missing": 8,
+    "precision_on_manual_oracle": 1.0
+  }
+}

@@ -86,51 +86,23 @@ struct firmware_page_descriptor {
     void *extension_callback_100;             /* +0x64 */
     void *extension_callback_104;             /* +0x68 */
     void *extension_callback_108;             /* +0x6c */
-    uint32_t _tail_70;                        /* +0x70 */
 };
 
 struct firmware_app_descriptor {
     uint32_t registry_prev;                   /* +0x00 */
     uint32_t registry_next;                   /* +0x04 */
-    const char *package_name;                  /* +0x08 */
-    const char *launcher_icon_resource;        /* +0x0c */
+    const char *package_name;                 /* +0x08 */
+    const char *launcher_icon_resource;       /* +0x0c */
     uint16_t app_id;                          /* +0x10 */
     uint8_t flags;                            /* +0x12 */
     uint8_t _pad_13;                         /* +0x13 */
-    const char *owned_string_20;               /* +0x14 */
-    const char *owned_string_24;               /* +0x18 */
-    const char *(*launcher_metadata_callback)(void); /* +0x1c */
-    uint8_t _pad_20[16];                     /* +0x20 */
-    void *page_registry;                      /* +0x30 */
-    uint8_t _pad_34[8];                      /* +0x34 */
-    uint8_t hidden_flags;                     /* +0x3c */
-    uint8_t _tail_3d[3];                     /* +0x3d */
-};
-
-struct firmware_notification_message {
-    uint64_t message_id;                      /* +0x00 */
-    uint32_t repeat_count;                    /* +0x08 */
-    const char *title;                        /* +0x0c */
-    const char *source;                       /* +0x10 */
-    const char *body;                         /* +0x14 */
-    const char *auxiliary_text;               /* +0x18 */
-    const char *small_icon_path;              /* +0x1c */
-    const char *large_icon_path;              /* +0x20 */
-    const char *extension_text_36;             /* +0x24 */
-    const char *extension_text_40;             /* +0x28 */
-    uint32_t timestamp;                       /* +0x2c */
-    uint8_t _pad_30[8];                      /* +0x30 */
-    void *action_callback;                    /* +0x38 */
-    uint32_t action_context;                  /* +0x3c */
-    uint32_t extension_64;                    /* +0x40 */
-    uint32_t extension_68;                    /* +0x44 */
-    void *open_callback;                      /* +0x48 */
-    void *destroy_callback;                   /* +0x4c */
-    uint8_t start_reminder;                   /* +0x50 */
-    uint8_t flags_81;                         /* +0x51 */
-    uint8_t flags_82;                         /* +0x52 */
-    uint8_t _pad_53;                         /* +0x53 */
-    void *callback_data;                      /* +0x54 */
+    const char *(*launcher_metadata_callback)(void); /* +0x14 */
+    void *launcher_activate_callback;         /* +0x18 */
+    void *page_registry;                      /* +0x1c */
+    void *secondary_page_registry;            /* +0x20 */
+    void *extension_callback;                 /* +0x24 */
+    uint8_t hidden_flags;                     /* +0x28 */
+    uint8_t _tail_29[3];                     /* +0x29 */
 };
 
 struct canopus_target_ui_binding {
@@ -167,6 +139,7 @@ struct canopus_target_ui_backend {
     void *page_title;
     void *content_root;
     void *rows[CANOPUS_TARGET_UI_MAX_ROWS];
+    void *row_labels[CANOPUS_TARGET_UI_MAX_ROWS];
     void *labels[CANOPUS_TARGET_UI_MAX_LABELS];
     void *images[CANOPUS_TARGET_UI_MAX_IMAGES];
     void *progress[CANOPUS_TARGET_UI_MAX_PROGRESS];
@@ -202,26 +175,9 @@ static uint32_t manager_active_pages;
 static uint32_t manager_pending_detail;
 static uint8_t manager_session_ready;
 
-static void target_page_title_back(void *event)
-{
-    typedef int32_t (*page_finish_fn)(void *);
-    struct canopus_target_page_context *context = event != NULL
-        ? *(struct canopus_target_page_context **)((uint8_t *)event + 12u)
-        : NULL;
-    page_finish_fn page_finish =
-        (page_finish_fn)(uintptr_t)FW_ACTIVITY_FINISH;
-
-    if (context == NULL || !context->active || !context->interactive ||
-        context->backend.page_index == CANOPUS_TARGET_PAGE_OVERVIEW) {
-        return;
-    }
-    context->interactive = 0u;
-    (void)page_finish(&manager_pages_desc[context->backend.page_index]);
-}
-
 _Static_assert(CANOPUS_MANAGER_TARGET_APP_ID <= UINT16_C(0x00FF),
                "system launch animation requires an 8-bit app id");
-_Static_assert(sizeof(struct firmware_page_descriptor) == 116,
+_Static_assert(sizeof(struct firmware_page_descriptor) == 112,
                "firmware page descriptor size");
 _Static_assert(offsetof(struct firmware_page_descriptor, page_name) == 16,
                "page name offset");
@@ -231,30 +187,14 @@ _Static_assert(offsetof(struct firmware_page_descriptor, on_create) == 76,
                "page create offset");
 _Static_assert(offsetof(struct firmware_page_descriptor, on_destroy) == 92,
                "page destroy offset");
-_Static_assert(sizeof(struct firmware_app_descriptor) == 64,
+_Static_assert(sizeof(struct firmware_app_descriptor) == 44,
                "firmware app descriptor size");
-_Static_assert(sizeof(struct firmware_notification_message) == 88,
-               "firmware notification message size");
-_Static_assert(offsetof(struct firmware_notification_message, title) == 12,
-               "notification title offset");
-_Static_assert(offsetof(struct firmware_notification_message, small_icon_path) == 28,
-               "notification icon offset");
-_Static_assert(offsetof(struct firmware_notification_message, start_reminder) == 80,
-               "notification reminder offset");
 
 static const char package_name[] = "com.canopus.manager";
 static const char page_name_overview[] = "main";
 static const char page_name_modules[] = "modules";
 static const char page_name_detail[] = "module_detail";
 static const char display_name[] = "Canopus 管理器";
-static const char empty_detail[] = "";
-static const char notification_title[] = "Canopus";
-static const char notification_body[] = "Canopus 已加载！尽情享受吧～";
-static const char module_notification_body[] =
-    "新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。";
-/* The watchface bootstrap stages the LVGL v9 ARGB8888 bin (alpha preserved)
- * at this stable path; used for both the notification icons and the app icon. */
-static const char notification_icon[] = "/data/canopus/manager_icon.bin";
 static const char launcher_icon[] = "/data/canopus/manager_icon.bin";
 
 __attribute__((used, visibility("default"), section(".data.canopus_manager_target")))
@@ -291,15 +231,8 @@ static int strings_differ(const char *left, const char *right)
 static int identity_guard(void)
 {
     const char *version = (const char *)(uintptr_t)FW_VERSION_ADDRESS;
-    const char *build = (const char *)(uintptr_t)FW_BUILD_ADDRESS;
 
-    if (strings_differ(version, CANOPUS_TARGET_FIRMWARE_VERSION) != 0) {
-        return -1;
-    }
-    if (strings_differ(build, CANOPUS_TARGET_FIRMWARE_BUILD) != 0) {
-        return -2;
-    }
-    return 0;
+    return strings_differ(version, CANOPUS_TARGET_FIRMWARE_VERSION) == 0 ? 0 : -1;
 }
 
 static const char *manager_display_name(void)
@@ -467,9 +400,7 @@ static void target_dispatch_row(uint32_t row_index, void *event)
 
         if (!context->active || !context->interactive ||
             context->backend.rows[row_index] == NULL) continue;
-        if (context->backend.row_kinds[row_index] == CANOPUS_TARGET_ROW_SWITCH) {
-            if (code != CANOPUS_TARGET_EVENT_VALUE_CHANGED) return;
-        } else if (code != CANOPUS_TARGET_EVENT_CLICKED) {
+        if (code != CANOPUS_TARGET_EVENT_CLICKED) {
             return;
         }
         binding = &context->backend.bindings[row_index];
@@ -583,22 +514,18 @@ static void target_set_hidden(void *object, uint32_t hidden)
 {
     typedef void (*flag_fn)(void *, uint32_t);
     flag_fn set_flag = (flag_fn)(uintptr_t)(hidden != 0u
-        ? FW_LVX_OBJECT_ADD_FLAG : FW_LVX_OBJECT_CLEAR_FLAG);
+        ? FW_LV_OBJECT_ADD_FLAG : FW_LV_OBJECT_CLEAR_FLAG);
     if (object != NULL) set_flag(object, UINT32_C(0x10));
 }
 
 static int32_t target_ui_apply(
     void *cookie, const struct canopus_ui_snapshot_v1 *snapshot)
 {
-    typedef void *(*create_row_fn)(void *, const char *);
-    typedef int (*set_trailing_fn)(void *, uint8_t, uint8_t);
-    typedef int (*update_row_fn)(void *, const char *, const char *,
-                                 const char *, int32_t, uint8_t);
-    typedef void *(*get_trailing_fn)(void *);
+    typedef void *(*object_create_fn)(void *);
     typedef void *(*create_label_fn)(void *);
     typedef void (*set_label_text_fn)(void *, const char *);
     typedef void *(*create_page_title_fn)(void *, const char *, uint32_t,
-                                          void (*)(void *), void *);
+                                          void (*)(void *));
     typedef void (*add_event_fn)(void *, void (*)(void *), uint32_t, void *);
     typedef void (*align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
     typedef void (*set_size_fn)(void *, int32_t, int32_t);
@@ -609,32 +536,26 @@ static int32_t target_ui_apply(
     typedef void (*bar_set_value_fn)(void *, int32_t, uint32_t);
     struct canopus_target_ui_backend *backend =
         (struct canopus_target_ui_backend *)cookie;
-    create_row_fn create_row =
-        (create_row_fn)(uintptr_t)FW_LVX_LIST_ROW_CREATE;
-    set_trailing_fn set_trailing =
-        (set_trailing_fn)(uintptr_t)FW_LVX_LIST_ROW_SET_TRAILING;
-    update_row_fn update_row =
-        (update_row_fn)(uintptr_t)FW_LVX_LIST_ROW_UPDATE;
-    get_trailing_fn get_trailing =
-        (get_trailing_fn)(uintptr_t)FW_LVX_LIST_ROW_TRAILING;
+    object_create_fn object_create =
+        (object_create_fn)(uintptr_t)FW_LV_OBJECT_CREATE;
     create_label_fn create_label =
-        (create_label_fn)(uintptr_t)FW_LVX_LABEL_CREATE;
+        (create_label_fn)(uintptr_t)FW_LV_LABEL_CREATE;
     set_label_text_fn set_label_text =
-        (set_label_text_fn)(uintptr_t)FW_LVX_LABEL_SET_TEXT;
+        (set_label_text_fn)(uintptr_t)FW_LV_LABEL_SET_TEXT;
     create_page_title_fn create_page_title =
-        (create_page_title_fn)(uintptr_t)FW_LVX_PAGE_TITLE_CREATE;
-    add_event_fn add_event = (add_event_fn)(uintptr_t)FW_LVX_EVENT_ADD;
-    align_to_fn align_to = (align_to_fn)(uintptr_t)FW_LVX_ALIGN_TO;
-    set_size_fn set_size = (set_size_fn)(uintptr_t)FW_LVX_OBJECT_SET_SIZE;
+        (create_page_title_fn)(uintptr_t)FW_LV_PAGE_TITLE_CREATE;
+    add_event_fn add_event = (add_event_fn)(uintptr_t)FW_LV_EVENT_ADD;
+    align_to_fn align_to = (align_to_fn)(uintptr_t)FW_LV_ALIGN_TO;
+    set_size_fn set_size = (set_size_fn)(uintptr_t)FW_LV_OBJECT_SET_SIZE;
     image_create_fn image_create =
-        (image_create_fn)(uintptr_t)FW_LVX_IMAGE_CREATE;
+        (image_create_fn)(uintptr_t)FW_LV_IMAGE_CREATE;
     image_set_src_fn image_set_src =
-        (image_set_src_fn)(uintptr_t)FW_LVX_IMAGE_SET_SRC;
-    bar_create_fn bar_create = (bar_create_fn)(uintptr_t)FW_LVX_BAR_CREATE;
+        (image_set_src_fn)(uintptr_t)FW_LV_IMAGE_SET_SRC;
+    bar_create_fn bar_create = (bar_create_fn)(uintptr_t)FW_LV_BAR_CREATE;
     bar_set_range_fn bar_set_range =
-        (bar_set_range_fn)(uintptr_t)FW_LVX_BAR_SET_RANGE;
+        (bar_set_range_fn)(uintptr_t)FW_LV_BAR_SET_RANGE;
     bar_set_value_fn bar_set_value =
-        (bar_set_value_fn)(uintptr_t)FW_LVX_BAR_SET_VALUE;
+        (bar_set_value_fn)(uintptr_t)FW_LV_BAR_SET_VALUE;
     uint16_t i;
     uint32_t visible_rows = 0u;
     uint32_t visible_labels = 0u;
@@ -693,9 +614,7 @@ static int32_t target_ui_apply(
     for (i = 0; i < snapshot->node_count; i++) {
         const struct canopus_ui_node_v1 *node = &snapshot->nodes[i];
         const char *primary;
-        const char *secondary = empty_detail;
         uint8_t kind;
-        uint8_t trailing;
         int slot;
         void *object;
         int32_t gap = CANOPUS_TARGET_ROW_GAP;
@@ -710,10 +629,7 @@ static int32_t target_ui_apply(
 
             if (backend->page_title == NULL) {
                 backend->page_title = create_page_title(
-                    backend->root, primary, title_mode,
-                    title_mode != 0u ? target_page_title_back : NULL,
-                    title_mode != 0u ? (void *)&manager_pages[
-                        backend->page_index] : NULL);
+                    backend->root, primary, title_mode, NULL);
                 if (backend->page_title == NULL) {
                     return -1;
                 }
@@ -820,17 +736,7 @@ static int32_t target_ui_apply(
             progress_used++;
             continue;
         }
-        if (node->secondary_len != 0u) {
-            secondary = snapshot->strings + node->secondary_off;
-        }
         kind = target_row_kind(node->type);
-        if (kind == CANOPUS_TARGET_ROW_ACTION) {
-            trailing = CANOPUS_TARGET_TRAILING_FORWARD;
-        } else if (kind == CANOPUS_TARGET_ROW_SWITCH) {
-            trailing = CANOPUS_TARGET_TRAILING_SWITCH;
-        } else {
-            trailing = CANOPUS_TARGET_TRAILING_NONE;
-        }
         slot = target_find_row(backend, snapshot, kind, node->key,
                                used_mask);
         if (slot < 0) {
@@ -838,33 +744,25 @@ static int32_t target_ui_apply(
         }
         object = backend->rows[slot];
         if (object == NULL) {
-            void *event_object;
-            uint32_t event_code;
-            object = create_row(backend->content_root, primary);
-            if (object == NULL || set_trailing(object, trailing, 0u) < 0) {
+            void *label;
+            object = object_create(backend->content_root);
+            if (object == NULL) {
                 return -1;
             }
+            label = create_label(object);
+            if (label == NULL) {
+                return -1;
+            }
+            set_size(object, CANOPUS_TARGET_CONTENT_WIDTH, 56);
+            align_to(label, object, 9u, 0, 0);
+            add_event(object, target_row_events[slot],
+                      CANOPUS_TARGET_EVENT_CLICKED, NULL);
             backend->rows[slot] = object;
+            backend->row_labels[slot] = label;
             backend->row_kinds[slot] = kind;
-            event_object = kind == CANOPUS_TARGET_ROW_SWITCH ?
-                get_trailing(object) : object;
-            if (event_object == NULL) {
-                return -1;
-            }
-            /* Switches register on the trailing object for LV_EVENT_ALL and
-             * toggle on VALUE_CHANGED, exactly like the stock VAS alarm switch
-             * (sub_C661410); rows register on the row for LV_EVENT_CLICKED. */
-            event_code = kind == CANOPUS_TARGET_ROW_SWITCH ?
-                CANOPUS_TARGET_EVENT_ALL : CANOPUS_TARGET_EVENT_CLICKED;
-            add_event(event_object, target_row_events[slot], event_code, NULL);
             backend->row_count++;
         }
-        {
-            uint8_t selected = kind == CANOPUS_TARGET_ROW_SWITCH ?
-                ((node->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u ? 1u : 0u) :
-                1u;
-            (void)update_row(object, NULL, primary, secondary, 0, selected);
-        }
+        set_label_text(backend->row_labels[slot], primary);
         target_set_hidden(object, 0u);
         if (previous == NULL) {
             align_to(object, backend->content_root,
@@ -1187,37 +1085,9 @@ static const struct firmware_app_descriptor manager_app = {
     .launcher_metadata_callback = manager_display_name,
 };
 
-static const struct firmware_notification_message loaded_notification = {
-    .message_id = UINT64_C(0x43414E4F50555301),
-    .title = notification_title,
-    .source = notification_title,
-    .body = notification_body,
-    .small_icon_path = notification_icon,
-    .large_icon_path = notification_icon,
-    .start_reminder = 1u,
-};
-
-static const struct firmware_notification_message module_notification = {
-    .message_id = UINT64_C(0x43414E4F50555302),
-    .title = notification_title,
-    .source = notification_title,
-    .body = module_notification_body,
-    .small_icon_path = notification_icon,
-    .large_icon_path = notification_icon,
-    .start_reminder = 1u,
-};
-
 int canopus_manager_native_notify_module_installed(void)
 {
-    typedef int (*notification_insert_fn)(
-        const struct firmware_notification_message *);
-    notification_insert_fn notification_insert =
-        (notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT;
-
-    if (identity_guard() != 0) {
-        return -1;
-    }
-    return notification_insert(&module_notification);
+    return 0;
 }
 
 static void __attribute__((constructor, used)) canopus_manager_target_init(void)
@@ -1251,17 +1121,20 @@ int canopus_manager_native_install(void)
                                   struct firmware_page_descriptor *const *,
                                   uint32_t);
     typedef void *(*app_lookup_fn)(uint16_t);
-    typedef int (*launcher_add_fn)(uint16_t);
-    typedef int (*notification_insert_fn)(
-        const struct firmware_notification_message *);
+    typedef void *(*launcher_load_fn)(void *);
+    typedef int (*launcher_insert_fn)(void *);
+    typedef int (*launcher_reset_fn)(void);
     struct firmware_page_descriptor *pages[CANOPUS_TARGET_PAGE_COUNT];
     app_install_fn app_install = (app_install_fn)(uintptr_t)FW_APP_INSTALL;
     app_lookup_fn app_lookup = (app_lookup_fn)(uintptr_t)FW_APP_LOOKUP;
-    launcher_add_fn launcher_add =
-        (launcher_add_fn)(uintptr_t)FW_LAUNCHER_ADD;
-    notification_insert_fn notification_insert =
-        (notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT;
+    launcher_load_fn launcher_load =
+        (launcher_load_fn)(uintptr_t)FW_LAUNCHER_LOAD_APP_INFO;
+    launcher_insert_fn launcher_insert =
+        (launcher_insert_fn)(uintptr_t)FW_LAUNCHER_PAGE_INSERT_ICON;
+    launcher_reset_fn launcher_reset =
+        (launcher_reset_fn)(uintptr_t)FW_LAUNCHER_RESET_ORDER_INFO;
     void *installed_app;
+    void *launcher_item;
 
     if (canopus_manager_target_record.identity_result != 0) {
         return canopus_manager_target_record.identity_result;
@@ -1285,13 +1158,17 @@ int canopus_manager_native_install(void)
     pages[2] = &manager_pages_desc[2];
     canopus_manager_target_record.app_install_result =
         app_install(&manager_app, pages, CANOPUS_TARGET_PAGE_COUNT);
-    if (app_lookup(CANOPUS_MANAGER_TARGET_APP_ID) == NULL) {
+    installed_app = app_lookup(CANOPUS_MANAGER_TARGET_APP_ID);
+    if (installed_app == NULL) {
         canopus_manager_target_record.app_install_result = -100;
         return -100;
     }
-    canopus_manager_target_record.launcher_add_result =
-        launcher_add(CANOPUS_MANAGER_TARGET_APP_ID);
-    canopus_manager_target_record.notification_result =
-        notification_insert(&loaded_notification);
+    launcher_item = launcher_load(installed_app);
+    canopus_manager_target_record.launcher_add_result = launcher_item != NULL
+        ? launcher_insert(launcher_item) : -102;
+    if (launcher_item != NULL) {
+        (void)launcher_reset();
+    }
+    canopus_manager_target_record.notification_result = 0;
     return 0;
 }

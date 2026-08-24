@@ -1,45 +1,38 @@
 {
   "schema": 1,
-  "symbol_id": "xiaomi-band-9-3.1.32.ui.lv_bar_set_value",
+  "symbol_id": "xiaomi-band-9-3.1.32.exact.lv_bar_set_value",
   "target_id": "xiaomi-band-9-3.1.32",
   "name": "lv_bar_set_value",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc534c38",
-  "callable_address": "0xc534c39",
+  "entry_address": "0x0c28ff74",
   "prototype": "void(void *, int32_t, uint32_t)",
-  "calling_convention": "arm-aapcs",
-  "contexts": {
-    "allowed": [
-      "native_manager_owner",
-      "target-private-ui-owner"
-    ],
-    "blocking": false
-  },
-  "ownership": {
-    "argument": "borrowed page parent/widget and source",
-    "return_value": "n/a"
-  },
-  "side_effects": [
-    "updates_widget_value"
-  ],
   "proof": {
-    "static": "recovered",
+    "static": "confirmed",
     "device": "not_probed",
-    "host_tested": false,
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+      "EVID-ABI-9132-EXACT-001"
     ]
   },
-  "policy": "restricted",
-  "status": "STATIC_RECOVERED",
+  "policy": "managed",
+  "status": "STATIC_CONFIRMED",
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "source": "exact Xiaomi Band 9 3.1.32 IDB; decompilation, disassembly, and stock callsite review",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
-    ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+      "EVID-ABI-9132-EXACT-001"
+    ]
   },
-  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
-  "approval_state": "PENDING"
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-static-abi-review",
+    "date": "2026-08-24",
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "prototype": "void(void *, int32_t, uint32_t)",
+    "ownership": "caller-owned unless documented by exact stock callsite",
+    "thread": "calling thread / LVGL owner thread for UI entries",
+    "device_probe": "pending release-candidate device gate"
+  },
+  "notes": "clamps and publishes bar value; R2 is animation selector",
+  "callable_address": "0x0c28ff75"
 }

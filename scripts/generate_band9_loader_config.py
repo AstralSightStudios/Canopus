@@ -123,6 +123,7 @@ def write_lua(path: pathlib.Path, profile: dict, firmware: dict, architecture: d
         f"    target_id = {profile['target_id']!r},",
         f"    firmware_sha256 = {profile['firmware_sha256']!r},",
         f"    status = {profile['status']!r},",
+        f"    device_status = {profile.get('device_status', 'NOT_PROBED')!r},",
         f"    loader_family = {profile['loader_family']!r},",
         field("exec_handler", firmware["exec_handler"] | 1),
         field("mw_handler", firmware["mw_handler"] | 1),

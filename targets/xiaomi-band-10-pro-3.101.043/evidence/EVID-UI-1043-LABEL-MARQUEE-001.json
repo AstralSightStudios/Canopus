@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-1043-LABEL-MARQUEE-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 callable sets LVGL label long mode, including circular scrolling for the LyraPlayer title?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.lvx_label_set_long_mode"
+  ],
+  "callsite_evidence": [
+    "Exact 3.101.043 sub_C588BF8 is a Thumb veneer to platform callable 0x1C06F15D and is called with a live label in R0 and a small long-mode enum in R1 at 955 exact-target callsites.",
+    "Exact stock helper sub_C4C8038 loads a retained label from [R0], loads enum value 3 into R1, and calls sub_C588BF8; LVGL v9 defines value 3 as LV_LABEL_LONG_SCROLL_CIRCULAR.",
+    "Exact stock create_long_label helper sub_C543748 creates a label, applies a label style, calls sub_C588BF8(label, 0), sets a fixed width, then assigns text, independently establishing the label-and-long-mode two-argument ABI.",
+    "The exact firmware contains the LVGL enum name LONG_SCROLL_CIRCULAR in its registered label API metadata."
+  ],
+  "control_flow_evidence": [
+    "Working 3.101.036 sub_C588BC0 and exact 3.101.043 sub_C588BF8 have identical eight-byte Thumb veneers and both resolve to the same platform callable 0x1C06F15D.",
+    "The 3.101.036 create_long_label helper sub_C522460 and exact 3.101.043 sub_C543748 are both 0x5E bytes with identical eight-block control flow and corresponding label-create, style, long-mode, width and text calls.",
+    "The exact 3.101.043 veneer entry is 0x0C588BF8 and its Thumb callable address is 0x0C588BF9.",
+    "A targeted Corpus v2 ensemble run using only the independently proven 3.101.036 symbol ranked 0x0C588BF8 first and matched the manual 043 oracle (1/1); this validates matcher recovery but is not used as the promotion proof."
+  ],
+  "ownership_analysis": "The function borrows a live LVGL label and changes only its long-mode state. It neither retains nor frees the label and must run on the firmware UI owner thread.",
+  "unsafe_assumptions": [
+    "Static recovery does not replace a device gate confirming animation timing and clipping on exact 3.101.043.",
+    "The label must have a finite one-line width and height before circular scrolling can be visually bounded."
+  ],
+  "recommended_probe": "Play a track with a title wider than 336 pixels on exact 3.101.043; verify one-line circular scrolling, centered short titles, fixed author placement, no overlap, and clean behavior across track changes and page teardown.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-24T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida:///Volumes/EXT0/Canopus/fwbins/xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64 sub_C588BF8,sub_C4C8038,sub_C543748",
+      "role": "exact-target long-mode veneer, circular-mode caller and long-label constructor"
+    },
+    {
+      "uri": "ida:///Volumes/EXT0/Canopus/fwbins/xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 sub_C588BC0,sub_C522460",
+      "role": "working-target structurally corresponding veneer and constructor"
+    },
+    {
+      "uri": "fw-match/ensemble-1036-to-1043-marquee-v2.json",
+      "role": "targeted Corpus v2 recovery report; independently checked against the exact-target oracle"
+    },
+    {
+      "uri": "repo://Canopus/docs/firmware-symbol-porting-plan.md",
+      "role": "independent confirmation and promotion policy"
+    }
+  ]
+}

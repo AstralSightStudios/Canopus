@@ -213,11 +213,6 @@ const FW_9: &[Mapping] = &[
         address: Address::Entry,
     },
     Mapping {
-        macro_name: "FW_BUILD_ADDRESS",
-        symbol_name: "firmware_build_string",
-        address: Address::Entry,
-    },
-    Mapping {
         macro_name: "FW_APP_LOOKUP",
         symbol_name: "app_lookup",
         address: Address::Callable,
@@ -228,99 +223,87 @@ const FW_9: &[Mapping] = &[
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LAUNCHER_ADD",
-        symbol_name: "app_launcher_add",
+        macro_name: "FW_LAUNCHER_LOAD_APP_INFO",
+        symbol_name: "launcher_load_app_info",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_LIST_ROW_CREATE",
-        symbol_name: "lvx_list_row_create",
+        macro_name: "FW_LAUNCHER_PAGE_INSERT_ICON",
+        symbol_name: "launcher_page_insert_icon",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_LIST_ROW_UPDATE",
-        symbol_name: "lvx_list_row_update",
+        macro_name: "FW_LAUNCHER_RESET_ORDER_INFO",
+        symbol_name: "launcher_reset_order_info",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_LIST_ROW_SET_TRAILING",
-        symbol_name: "lvx_list_row_set_trailing",
+        macro_name: "FW_LV_OBJECT_CREATE",
+        symbol_name: "lv_obj_create",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_LIST_ROW_TRAILING",
-        symbol_name: "lvx_list_row_trailing",
+        macro_name: "FW_LV_LABEL_CREATE",
+        symbol_name: "lv_label_create",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_LABEL_CREATE",
-        symbol_name: "lvx_label_create",
+        macro_name: "FW_LV_LABEL_SET_TEXT",
+        symbol_name: "lv_label_set_text",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_LABEL_SET_TEXT",
-        symbol_name: "lvx_label_set_text",
+        macro_name: "FW_LV_OBJECT_SET_SIZE",
+        symbol_name: "lv_obj_set_size",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_OBJECT_SET_SIZE",
-        symbol_name: "lvx_object_set_size",
-        address: Address::Callable,
-    },
-    Mapping {
-        macro_name: "FW_LVX_OBJECT_ALIGN",
-        symbol_name: "lvx_object_align",
-        address: Address::Callable,
-    },
-    Mapping {
-        macro_name: "FW_LVX_PAGE_TITLE_CREATE",
+        macro_name: "FW_LV_PAGE_TITLE_CREATE",
         symbol_name: "lvx_page_title_create",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_EVENT_ADD",
-        symbol_name: "lvx_event_add",
+        macro_name: "FW_LV_EVENT_ADD",
+        symbol_name: "lv_obj_add_event_cb",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_ALIGN_TO",
-        symbol_name: "lvx_align_to",
+        macro_name: "FW_LV_ALIGN_TO",
+        symbol_name: "lv_obj_align_to",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_OBJECT_ADD_FLAG",
-        symbol_name: "lvx_object_add_flag",
-        address: Address::Callable,
-    },
-    // The record may be restricted, but the config surface must retain this
-    // explicit name mapping; emission still requires its target-pack record.
-    Mapping {
-        macro_name: "FW_LVX_OBJECT_CLEAR_FLAG",
-        symbol_name: "lvx_object_clear_flag",
+        macro_name: "FW_LV_OBJECT_ADD_FLAG",
+        symbol_name: "lv_obj_add_flag",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_IMAGE_CREATE",
+        macro_name: "FW_LV_OBJECT_CLEAR_FLAG",
+        symbol_name: "lv_obj_clear_flag",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LV_IMAGE_CREATE",
         symbol_name: "lv_img_create",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_IMAGE_SET_SRC",
+        macro_name: "FW_LV_IMAGE_SET_SRC",
         symbol_name: "lv_img_set_src",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_BAR_CREATE",
+        macro_name: "FW_LV_BAR_CREATE",
         symbol_name: "lv_bar_create",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_BAR_SET_RANGE",
+        macro_name: "FW_LV_BAR_SET_RANGE",
         symbol_name: "lv_bar_set_range",
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_BAR_SET_VALUE",
+        macro_name: "FW_LV_BAR_SET_VALUE",
         symbol_name: "lv_bar_set_value",
         address: Address::Callable,
     },
@@ -345,11 +328,6 @@ const FW_9: &[Mapping] = &[
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_NOTIFICATION_INSERT",
-        symbol_name: "lvx_notification_insert_message",
-        address: Address::Callable,
-    },
-    Mapping {
         macro_name: "FW_ACTIVITY_NAVIGATE",
         symbol_name: "page_goto",
         address: Address::Callable,
@@ -360,7 +338,6 @@ const FW_9: &[Mapping] = &[
         address: Address::Callable,
     },
 ];
-
 const SUP_10: &[Mapping] = &[
     Mapping {
         macro_name: "CANOPUS_SUP_NUTTX_OPEN",
@@ -456,7 +433,7 @@ const SUP_9: &[Mapping] = &[
     },
     Mapping {
         macro_name: "CANOPUS_SUP_WATCHFACE_DELETE",
-        symbol_name: "manager_delete_watchface",
+        symbol_name: "watchface_manager_delete_watchface",
         address: Address::Callable,
     },
 ];
@@ -512,23 +489,36 @@ impl<'a> TargetConfigGen<'a> {
                 && symbol.approved_for_codegen()
         })
     }
+    fn mapping_available(&self, map: Mapping) -> bool {
+        let Some(symbol) = self.symbol(map.symbol_name) else {
+            return false;
+        };
+        self.address(map).is_some()
+            && symbol.policy != "restricted"
+            && symbol.policy != "forbidden"
+            && symbol.approved_for_codegen()
+    }
     fn platform_complete(&self, custom: bool) -> bool {
-        let firmware = if custom { FW_9 } else { FW_10 };
-        let supervisor = if custom { SUP_9 } else { SUP_10 };
-        let mapped = firmware
-            .iter()
-            .chain(supervisor.iter())
-            .all(|mapping| self.address(*mapping).is_some());
-        let mut veneer = vec!["register_driver", "unregister_driver"];
-        if custom {
-            veneer.extend([
-                "mm_memalign_default",
-                "mm_free_default",
-                "mpu_region_allocate",
-                "mpu_region_configure",
-                "mpu_region_release",
-            ]);
+        // Stock modlib targets retain their established production contract. The
+        // explicit completeness gate below covers custom-loader targets, whose
+        // Supervisor embeds every firmware callable and allocator/MPU veneer.
+        if !custom {
+            return true;
         }
+
+        let mapped = FW_9
+            .iter()
+            .chain(SUP_9.iter())
+            .all(|mapping| self.mapping_available(*mapping));
+        let veneer = [
+            "register_driver",
+            "unregister_driver",
+            "mm_memalign_default",
+            "mm_free_default",
+            "mpu_region_allocate",
+            "mpu_region_configure",
+            "mpu_region_release",
+        ];
         mapped
             && veneer
                 .into_iter()

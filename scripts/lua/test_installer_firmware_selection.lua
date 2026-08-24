@@ -124,7 +124,8 @@ local function inspect_page()
             buttons[#buttons + 1] = object._button_text
         end
         if type(object.text) == "string"
-            and object.text:match("^Firmware version not supported") then
+            and (object.text:match("^Firmware version not supported")
+                or object.text == "Installer resources unavailable") then
             unsupported_text = object.text
         end
     end
@@ -187,29 +188,31 @@ end
 
 local function run_band9_case(property_value, command_succeeds, resource_present)
     local installer_dir = "watchfaces/canopus-installer-prod/xiaomi-band-9/"
-    local target_dir = installer_dir .. "targets/xiaomi-band-9-3.1.32/"
+    local target_id = "xiaomi-band-9-3.1.32"
     horizontal_resolution = 192
     vertical_resolution = 490
     objects = {}
     subscriptions = {}
     local files = {}
     if resource_present then
-        files[target_dir .. "canopus_loader_profile.lua"] = band9_profile()
-        files[target_dir .. "canopus_stage1.lua"] =
+        files[installer_dir .. "canopus_loader_profile-" .. target_id .. ".bin"] =
+            band9_profile()
+        files[installer_dir .. "canopus_stage1-" .. target_id .. ".bin"] =
             "return { size = 8, words = { 0xbf00bf00, 0xbf00bf00 } }"
-        files[target_dir .. "canopus_stage2.bin"] = string.rep("S", 64)
-        files[target_dir .. "canopus_supervisor.bin"] = fake_elf
+        files[installer_dir .. "canopus_stage2-" .. target_id .. ".bin"] =
+            string.rep("S", 64)
+        files[installer_dir .. "canopus_supervisor-" .. target_id .. ".bin"] = fake_elf
     end
     local commands = install_environment(files, property_value, command_succeeds)
     SCRIPT_PATH = installer_dir
     assert(loadfile(installer_dir .. "main.lua"))()
 
     local buttons, unsupported_text = inspect_page()
-    assert(#commands == 1 and commands[1] == getprop_command)
+    assert(#commands == 0, "Band 9 installer must not query firmware version")
     if resource_present then
         assert(#buttons == 2 and buttons[1] == "Clear Env" and buttons[2] == "Run")
         assert(unsupported_text == nil)
-        assert(#subscriptions == 1 and subscriptions[1].name == "timeSecond")
+        assert(#subscriptions == 0, "Band 9 installer must not depend on dataman")
         local fixed_band10_geometry = false
         for _, object in ipairs(objects) do
             if object._props.w == 336 or object._props.h == 480 then
@@ -220,8 +223,7 @@ local function run_band9_case(property_value, command_succeeds, resource_present
             "Band 9 production page must not inherit Band 10 fixed geometry")
     else
         assert(#buttons == 0)
-        assert(unsupported_text == "Firmware version not supported\n"
-            .. tostring(property_value and property_value:match("^%s*(.-)%s*$") or "Unknown"))
+        assert(unsupported_text == "Installer resources unavailable")
     end
 end
 

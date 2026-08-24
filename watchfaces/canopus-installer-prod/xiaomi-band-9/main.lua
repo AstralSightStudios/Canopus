@@ -3,18 +3,13 @@
 -- Run performs, in order:
 --   NSH mw/exec stage-1 -> stage-2 -> Supervisor constructor
 --   -> apply restored boot intents -> INSTALL 0 -> 1 -> 2.
--- Loading happens only after the explicit Run click. The restore and INSTALL
--- operations run from separate dataman second events so miwear receives an
--- event-loop turn between native registration stages.
+-- Loading happens only after the explicit Run click. After the Supervisor is
+-- available, the fixed registration sequence is issued directly from that click;
+-- this page has no external scheduling dependency.
 
 local lvgl = require("lvgl")
-local dataman = require("dataman")
 
-local TARGET_BY_VERSION = {
-    ["3.1.32"] = "xiaomi-band-9-3.1.32",
-}
-local FIRMWARE_VERSION_PROPERTY = "ro.build.version"
-local FIRMWARE_VERSION_OUTPUT = "/data/canopus-installer-firmware-version.tmp"
+local TARGET_ID = "xiaomi-band-9-3.1.32"
 local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_icon.bin"
 local MANAGER_ICON_PATH = "/data/canopus/manager_icon.bin"
 local STAGE2_PATH = "/data/canopus/stage2.bin"
@@ -31,7 +26,6 @@ local RESULT_COMPLETED = 5
 
 local target_id
 local profile
-local target_resource_dir
 local stage1_resource
 local stage2_resource
 local supervisor_resource
@@ -40,10 +34,6 @@ local run_phase = 1
 local run_active = false
 local run_attempted = false
 local clear_armed = false
-
-local function shell_quote(value)
-    return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
-end
 
 local function run(command)
     print("[canopus-installer-prod:band9] exec: " .. command)
@@ -68,25 +58,8 @@ local function write_all(path, content)
     return write_ok and write_result ~= nil and close_ok and close_result ~= nil
 end
 
-local function detect_firmware_version()
-    local command = string.format("getprop %s > %s",
-        shell_quote(FIRMWARE_VERSION_PROPERTY),
-        shell_quote(FIRMWARE_VERSION_OUTPUT))
-    local command_ok = run(command)
-    local raw
-    if command_ok then raw = read_all(FIRMWARE_VERSION_OUTPUT, "r") end
-    if type(os.remove) == "function" then
-        pcall(os.remove, FIRMWARE_VERSION_OUTPUT)
-    end
-    if not command_ok or type(raw) ~= "string" then return nil end
-    local version = raw:match("^%s*(.-)%s*$")
-    if not version or not version:match("^%d+%.%d+%.%d+$") then return nil end
-    return version
-end
-
 local function load_profile(selected_target)
-    local path = SCRIPT_PATH .. "targets/" .. selected_target
-        .. "/canopus_loader_profile.lua"
+    local path = SCRIPT_PATH .. "canopus_loader_profile-" .. selected_target .. ".bin"
     local source = read_all(path, "r")
     if type(source) ~= "string" then return nil end
     local compiler = loadstring or load
@@ -97,6 +70,7 @@ local function load_profile(selected_target)
     if not loaded or type(value) ~= "table"
         or value.target_id ~= selected_target
         or value.status ~= "STATIC_RECOVERED"
+        or type(value.device_status) ~= "string"
         or value.loader_family ~= "nsh-mw-stage1-stage2" then
         return nil
     end
@@ -113,17 +87,14 @@ local function load_profile(selected_target)
     return value
 end
 
-local function select_target(version)
-    local selected = TARGET_BY_VERSION[version]
-    if not selected then return false end
-    local loaded_profile = load_profile(selected)
+local function select_target()
+    local loaded_profile = load_profile(TARGET_ID)
     if not loaded_profile then return false end
-    target_id = selected
+    target_id = TARGET_ID
     profile = loaded_profile
-    target_resource_dir = SCRIPT_PATH .. "targets/" .. target_id .. "/"
-    stage1_resource = target_resource_dir .. "canopus_stage1.lua"
-    stage2_resource = target_resource_dir .. "canopus_stage2.bin"
-    supervisor_resource = target_resource_dir .. "canopus_supervisor.bin"
+    stage1_resource = SCRIPT_PATH .. "canopus_stage1-" .. target_id .. ".bin"
+    stage2_resource = SCRIPT_PATH .. "canopus_stage2-" .. target_id .. ".bin"
+    supervisor_resource = SCRIPT_PATH .. "canopus_supervisor-" .. target_id .. ".bin"
     return true
 end
 
@@ -275,9 +246,15 @@ local function load_supervisor()
         or type(payload.size) ~= "number" then
         return false, "invalid Band 9 stage-1 table"
     end
-    if not write_all(STAGE2_PATH, stage2)
-        or not write_all(SUPERVISOR_PATH, supervisor) then
-        return false, "cannot stage Band 9 loader files"
+    -- `/data/canopus` does not exist on a clean device. Ignore mkdir's status:
+    -- NSH reports failure when the directory already exists, but staging is still
+    -- valid in that case and the following writes are authoritative.
+    run("mkdir /data/canopus")
+    if not write_all(STAGE2_PATH, stage2) then
+        return false, "cannot stage Band 9 stage-2"
+    end
+    if not write_all(SUPERVISOR_PATH, supervisor) then
+        return false, "cannot stage Band 9 Supervisor"
     end
     local allocation = call_mailbox(profile.memalign, 32, payload.size)
     if not allocation or allocation == 0 or allocation % 32 ~= 0 then
@@ -428,35 +405,35 @@ local steps = {
 }
 
 local function set_status(text, color)
-    status:set { text = tostring(text), text_color = color or 0xBFD9FF }
+    status:set { text = tostring(text), text_color = color or '#bfd9ff' }
 end
 
 local function finish_run(success, message)
     run_active = false
-    set_status(message, success and 0x8FF0A4 or 0xFF9A9A)
+    set_status(message, success and '#8ff0a4' or '#ff9a9a')
 end
 
-local function run_next_step()
-    local step = steps[run_phase]
-    if not step then
-        finish_run(true, "Run completed")
-        return
+local function run_all_steps()
+    run_active = true
+    for index, step in ipairs(steps) do
+        run_phase = index
+        set_status(step.progress)
+        local ok, message = execute_step(step.command, step.arg0)
+        if not ok then
+            finish_run(false, "Run failed: " .. tostring(message)
+                .. "\nReboot before retrying.")
+            return false
+        end
     end
-    set_status(step.progress)
-    local ok, message = execute_step(step.command, step.arg0)
-    if not ok then
-        finish_run(false, "Run failed: " .. tostring(message)
-            .. "\nReboot before retrying.")
-        return
-    end
-    run_phase = run_phase + 1
-    if run_phase > #steps then finish_run(true, "Run completed") end
+    run_phase = #steps + 1
+    finish_run(true, "Run completed")
+    return true
 end
 
 local rootbase = lvgl.Object(nil, {
     w = lvgl.HOR_RES(),
     h = lvgl.VER_RES(),
-    bg_color = 0x07111F,
+    bg_color = 0,
     bg_opa = lvgl.OPA(100),
     border_width = 0,
 })
@@ -468,7 +445,7 @@ local root = lvgl.Object(rootbase, {
     border_width = 0,
     pad_all = 0,
     bg_opa = 0,
-    bg_color = 0x07111F,
+    bg_color = 0,
     align = lvgl.ALIGN.CENTER,
     w = lvgl.HOR_RES(),
     h = lvgl.VER_RES(),
@@ -484,32 +461,30 @@ root:clear_flag(lvgl.FLAG.SCROLLABLE)
 if lvgl.FLAG.EVENT_BUBBLE then root:add_flag(lvgl.FLAG.EVENT_BUBBLE) end
 
 local title = lvgl.Label(root, {
-    text_font = lvgl.Font("MiSans-Regular", 24),
+    text_font = lvgl.Font("MiSans-Regular", 18),
     text = "Canopus Installer",
-    text_color = 0xFFFFFF,
-    width = 176,
-    height = 40,
+    text_color = '#eee',
+    w = 176,
+    h = 40,
     align = lvgl.ALIGN.CENTER,
 })
 if lvgl.FLAG.EVENT_BUBBLE then title:add_flag(lvgl.FLAG.EVENT_BUBBLE) end
 
 status = lvgl.Label(root, {
-    text_font = lvgl.Font("MiSans-Regular", 16),
-    text = "Checking firmware...",
-    text_color = 0xBFD9FF,
-    bg_color = 0x0A1830,
-    bg_opa = lvgl.OPA(100),
+    text_font = lvgl.Font("MiSans-Regular", 14),
+    text = "Loading installer...",
+    text_color = '#bfd9ff',
+    bg_color = 0,
+    bg_opa = 0,
     pad_all = 4,
-    width = 176,
-    height = 246,
+    w = 176,
+    h = 246,
 })
 if lvgl.FLAG.EVENT_BUBBLE then status:add_flag(lvgl.FLAG.EVENT_BUBBLE) end
 
-local firmware_version = detect_firmware_version()
-local firmware_supported = select_target(firmware_version) and resources_ready()
-if not firmware_supported then
-    set_status("Firmware version not supported\n"
-        .. tostring(firmware_version or "Unknown"), 0xFF9A9A)
+local resources_available = select_target() and resources_ready()
+if not resources_available then
+    set_status("Installer resources unavailable", '#ff9a9a')
     return
 end
 
@@ -519,33 +494,25 @@ local function make_button(text, color, on_clicked)
         h = 48,
         bg_color = color,
         bg_opa = lvgl.OPA(100),
-        radius = 14,
     })
     button:clear_flag(lvgl.FLAG.SCROLLABLE)
     button:add_flag(lvgl.FLAG.CLICKABLE)
     if lvgl.FLAG.EVENT_BUBBLE then button:add_flag(lvgl.FLAG.EVENT_BUBBLE) end
     lvgl.Label(button, {
-        text_font = lvgl.Font("MiSans-Regular", 20),
+        text_font = lvgl.Font("MiSans-Regular", 16),
         text = text,
-        text_color = 0xFFFFFF,
+        text_color = '#eee',
         align = lvgl.ALIGN.CENTER,
     })
-    if type(button.onevent) == "function" then
-        button:onevent(lvgl.EVENT.CLICKED, function()
-            local ok, message = pcall(on_clicked)
-            if not ok then set_status("Error: " .. tostring(message), 0xFF9A9A) end
-        end)
-    else
-        button:onClicked(function()
-            local ok, message = pcall(on_clicked)
-            if not ok then set_status("Error: " .. tostring(message), 0xFF9A9A) end
-        end)
-    end
+    button:onevent(lvgl.EVENT.CLICKED, function(obj, code)
+        local ok, message = pcall(on_clicked)
+        if not ok then set_status("Error: " .. tostring(message), '#ff9a9a') end
+    end)
     return button
 end
 
 local run_button
-run_button = make_button("Run", 0x14508A, function()
+run_button = make_button("Run", '#14508a', function()
     clear_armed = false
     if run_attempted then
         set_status("Run can only be used once; reboot before retrying")
@@ -555,8 +522,7 @@ run_button = make_button("Run", 0x14508A, function()
     run_button:clear_flag(lvgl.FLAG.CLICKABLE)
     local valid, validation_error = verify_module_file(supervisor_resource)
     if not valid then
-        set_status("LOAD failed: " .. tostring(validation_error)
-            .. "\nEnsure firmware 3.1.32 matches this installer.", 0xFF9A9A)
+        set_status("LOAD failed: " .. tostring(validation_error), '#ff9a9a')
         return
     end
     if not supervisor_present() then
@@ -564,21 +530,21 @@ run_button = make_button("Run", 0x14508A, function()
         local loaded, load_error = load_supervisor()
         if not loaded or not supervisor_present() then
             set_status("LOAD failed: " .. tostring(load_error or "no /dev/canopus")
-                .. "\nReboot before retrying.", 0xFF9A9A)
+                .. "\nReboot before retrying.", '#ff9a9a')
             return
         end
     end
     local icon_ok, icon_error = stage_manager_icon()
     if not icon_ok then
-        set_status("Run failed: " .. tostring(icon_error), 0xFF9A9A)
+        set_status("Run failed: " .. tostring(icon_error), '#ff9a9a')
         return
     end
     run_phase = 1
-    run_active = true
-    set_status("Supervisor loaded; waiting for boot restore...")
+    set_status("Supervisor loaded; installing...")
+    run_all_steps()
 end)
 
-make_button("Clear Env", 0x8A1F14, function()
+make_button("Clear Env", '#8a1f14', function()
     if run_active then
         clear_armed = false
         set_status("Run is in progress; reboot before clearing")
@@ -586,24 +552,15 @@ make_button("Clear Env", 0x8A1F14, function()
     end
     if not clear_armed then
         clear_armed = true
-        set_status("Click again to clear", 0xFFD27A)
+        set_status("Click again to clear", '#ffd27a')
         return
     end
     clear_armed = false
     if run("rm -rf /data/canopus") then
-        set_status("Environment cleared; reboot before Run", 0x8FF0A4)
+        set_status("Environment cleared; reboot before Run", '#8ff0a4')
     else
-        set_status("Clear Env failed", 0xFF9A9A)
+        set_status("Clear Env failed", '#ff9a9a')
     end
 end)
 
-set_status("Ready\nFirmware " .. firmware_version)
-
-dataman.subscribe("timeSecond", root, function()
-    if not run_active then return end
-    local ok, message = pcall(run_next_step)
-    if not ok then
-        finish_run(false, "Run failed: " .. tostring(message)
-            .. "\nReboot before retrying.")
-    end
-end)
+set_status("Ready")

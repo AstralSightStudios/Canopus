@@ -3,8 +3,8 @@
 // target_id: xiaomi-band-10-pro-3.101.043
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
-// revision : 4
-// input_digest: 2457d6a784840c39
+// revision : 5
+// input_digest: e83e6609df8f7d5c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -458,6 +458,9 @@ pub unsafe fn canopus_fw_lv_obj_align_to(a0: *mut core::ffi::c_void, a1: *mut co
     f(a0, a1, a2, a3, a4);
 }
 
+/// Recovered `lvx_label_set_long_mode` at 0xc588bf8. Thumb callable address 0xc588bf9.
+pub const CANOPUS_FW_LVX_LABEL_SET_LONG_MODE_CALLABLE: usize = canopus_thumb_callable(0xc588bf9usize);
+
 /// Recovered `sem_trywait` at 0xc206bfc. Thumb callable address 0xc206bfd.
 pub const CANOPUS_FW_SEM_TRYWAIT_CALLABLE: usize = canopus_thumb_callable(0xc206bfdusize);
 
@@ -560,6 +563,9 @@ pub unsafe fn canopus_fw_lvx_msgbox_create(a0: *mut core::ffi::c_void, a1: *mut 
 /// Recovered `bt_buffer_new` at 0xc7eafbc. Thumb callable address 0xc7eafbd.
 pub const CANOPUS_FW_BT_BUFFER_NEW_CALLABLE: usize = canopus_thumb_callable(0xc7eafbdusize);
 
+/// Recovered global `style_misans_regular_24` at 0x2010CE44.
+pub const canopus_fw_style_misans_regular_24: usize = 0x2010CE44usize;
+
 /// Recovered `close` at 0xc1b9d80. Thumb callable address 0xc1b9d81.
 pub const CANOPUS_FW_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc1b9d81usize);
 #[allow(non_snake_case)]
@@ -575,9 +581,6 @@ pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(
 /// Recovered `bt_alloc` at 0xc840c54. Thumb callable address 0xc840c55.
 pub const CANOPUS_FW_BT_ALLOC_CALLABLE: usize = canopus_thumb_callable(0xc840c55usize);
 
-/// Recovered global `style_misans_regular_24` at 0x2010CE44.
-pub const canopus_fw_style_misans_regular_24: usize = 0x2010CE44usize;
-
 /// Recovered `modhandle` at 0xc203a68. Thumb callable address 0xc203a69.
 pub const CANOPUS_FW_MODHANDLE_CALLABLE: usize = canopus_thumb_callable(0xc203a69usize);
 
@@ -589,6 +592,9 @@ pub const CANOPUS_FW_BT_GET_BOND_STATE_CALLABLE: usize = canopus_thumb_callable(
 
 /// Recovered `app_launcher_data_init` at 0xc513e90. Thumb callable address 0xc513e91.
 pub const CANOPUS_FW_APP_LAUNCHER_DATA_INIT_CALLABLE: usize = canopus_thumb_callable(0xc513e91usize);
+
+/// Recovered `lv_obj_set_local_style_prop` at 0xc107790. Thumb callable address 0xc107791.
+pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc107791usize);
 
 /// Recovered `read` at 0xc1d129c. Thumb callable address 0xc1d129d.
 pub const CANOPUS_FW_READ_CALLABLE: usize = canopus_thumb_callable(0xc1d129dusize);
@@ -924,10 +930,11 @@ pub const CANOPUS_FW_SERVICE_MANAGER_STARTUP_CALLABLE: usize = canopus_thumb_cal
 // lv_image_create: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
-// lv_obj_set_local_style_prop: WITHDRAWN - no binding may ever be generated
+// lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // lvx_image_set_scale: restricted - not exported until context/ownership approved
+// lvx_label_set_long_mode: restricted - not exported until context/ownership approved
 // lvx_object_add_flag: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated

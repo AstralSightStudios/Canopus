@@ -3,8 +3,8 @@
 // target_id: xiaomi-band-10-pro-3.101.036
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
-// revision : 4
-// input_digest: efd1e59416e17c04
+// revision : 5
+// input_digest: 68a975c7a2bcffb2
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -400,6 +400,9 @@ pub unsafe fn canopus_fw_app_launcher_add(a0: u16) -> i32 {
     let f: extern "C" fn(u16) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE) };
     f(a0)
 }
+
+/// Recovered `lvx_label_set_long_mode` at 0xc588bc0. Thumb callable address 0xc588bc1.
+pub const CANOPUS_FW_LVX_LABEL_SET_LONG_MODE_CALLABLE: usize = canopus_thumb_callable(0xc588bc1usize);
 
 /// Recovered `insmod` at 0xc1ee090. Thumb callable address 0xc1ee091.
 pub const CANOPUS_FW_INSMOD_CALLABLE: usize = canopus_thumb_callable(0xc1ee091usize);
@@ -937,6 +940,7 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // lvx_image_set_scale: restricted - not exported until context/ownership approved
+// lvx_label_set_long_mode: restricted - not exported until context/ownership approved
 // lvx_object_add_flag: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated

@@ -1,29 +1,38 @@
 {
   "schema": 1,
-  "symbol_id": "xiaomi-band-9-3.1.32.nuttx.register_driver",
+  "symbol_id": "xiaomi-band-9-3.1.32.exact.register_driver",
   "target_id": "xiaomi-band-9-3.1.32",
   "name": "register_driver",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc2176c6",
-  "callable_address": "0xc2176c7",
-  "prototype": "int(const char *, const void *, uint32_t, void *)",
+  "entry_address": "0x0c4e38ce",
+  "prototype": "int(const char *, const void *, void *)",
   "proof": {
-    "static": "recovered",
+    "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+      "EVID-ABI-9132-EXACT-001"
     ]
   },
-  "policy": "restricted",
-  "status": "STATIC_RECOVERED",
+  "policy": "managed",
+  "status": "STATIC_CONFIRMED",
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "source": "exact Xiaomi Band 9 3.1.32 IDB; decompilation, disassembly, and stock callsite review",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
-    ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+      "EVID-ABI-9132-EXACT-001"
+    ]
   },
-  "approval_state": "PENDING",
-  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-static-abi-review",
+    "date": "2026-08-24",
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "prototype": "int(const char *, const void *, void *)",
+    "ownership": "caller-owned unless documented by exact stock callsite",
+    "thread": "calling thread / LVGL owner thread for UI entries",
+    "device_probe": "pending release-candidate device gate"
+  },
+  "notes": "exact three-argument character-driver registration; stores fops and private pointer",
+  "callable_address": "0x0c4e38cf"
 }
