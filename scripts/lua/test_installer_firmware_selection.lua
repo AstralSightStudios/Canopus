@@ -161,15 +161,18 @@ local function run_band10_case(property_value, command_succeeds,
     end
 end
 
-local function band9_profile()
+local function band9_profile(device_status)
     return [[
 return {
     target_id = "xiaomi-band-9-3.1.32",
     firmware_sha256 = "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
     status = "STATIC_RECOVERED",
+    device_status = "]] .. device_status .. [[",
     loader_family = "nsh-mw-stage1-stage2",
     memalign = 0x0c16ab8d,
     free = 0x0c16a425,
+    kmem_malloc = 0x0c16af05,
+    kmem_free = 0x0c16a4b5,
     mpu_alloc = 0x0c5228a5,
     mpu_configure = 0x0c52272d,
     mpu_release = 0x0c5228fd,
@@ -177,6 +180,11 @@ return {
     mpu_rbar = 0xe000ed9c,
     mpu_rlar = 0xe000eda0,
     mpu_region_count = 8,
+    exec_access_attr = 1,
+    exec_mem_attr = 1,
+    stage0_region = 7,
+    stage0_size = 4096,
+    stage0_exec_size = 64,
     cave = 0x2006a9b0,
     cave_result = 0x2006a9cc,
     cave_original = {
@@ -186,9 +194,11 @@ return {
 ]]
 end
 
-local function run_band9_case(property_value, command_succeeds, resource_present)
+local function run_band9_case(property_value, command_succeeds, resource_present,
+                             device_status)
     local installer_dir = "watchfaces/canopus-installer-prod/xiaomi-band-9/"
     local target_id = "xiaomi-band-9-3.1.32"
+    device_status = device_status or "DEVICE_PROVEN"
     horizontal_resolution = 192
     vertical_resolution = 490
     objects = {}
@@ -196,7 +206,7 @@ local function run_band9_case(property_value, command_succeeds, resource_present
     local files = {}
     if resource_present then
         files[installer_dir .. "canopus_loader_profile-" .. target_id .. ".bin"] =
-            band9_profile()
+            band9_profile(device_status)
         files[installer_dir .. "canopus_stage1-" .. target_id .. ".bin"] =
             "return { size = 8, words = { 0xbf00bf00, 0xbf00bf00 } }"
         files[installer_dir .. "canopus_stage2-" .. target_id .. ".bin"] =
@@ -235,6 +245,38 @@ run_band10_case(nil, false, false, nil)
 run_band9_case("3.1.32\n", true, true)
 run_band9_case("3.1.175\n", true, false)
 run_band9_case(nil, false, false)
+
+-- A profile without device proof may render the installer page, but its Run
+-- action must issue no NSH mw/exec command.
+for _, device_status in ipairs({ "STATIC_CANDIDATE", "DEVICE_REJECTED" }) do
+    local installer_dir = "watchfaces/canopus-installer-prod/xiaomi-band-9/"
+    local target_id = "xiaomi-band-9-3.1.32"
+    horizontal_resolution = 192
+    vertical_resolution = 490
+    objects = {}
+    subscriptions = {}
+    local files = {
+        [installer_dir .. "canopus_loader_profile-" .. target_id .. ".bin"] =
+            band9_profile(device_status),
+        [installer_dir .. "canopus_stage1-" .. target_id .. ".bin"] =
+            "return { size = 8, words = { 0xbf00bf00, 0xbf00bf00 } }",
+        [installer_dir .. "canopus_stage2-" .. target_id .. ".bin"] = string.rep("S", 64),
+        [installer_dir .. "canopus_supervisor-" .. target_id .. ".bin"] = fake_elf,
+    }
+    local commands = install_environment(files, "3.1.32\n", true)
+    SCRIPT_PATH = installer_dir
+    assert(loadfile(installer_dir .. "main.lua"))()
+    for _, object in ipairs(objects) do
+        if object._button_text == "Run" then object._clicked() end
+    end
+    local expected_commands = device_status == "DEVICE_REJECTED" and 0 or 1
+    assert(#commands == expected_commands,
+        device_status .. " Band 9 gate emitted unexpected commands")
+    if device_status ~= "DEVICE_REJECTED" then
+        assert(commands[1] == "mkdir /data/canopus",
+            "STATIC_CANDIDATE must pass the gate before staging")
+    end
+end
 
 io = native_io
 os.execute = native_execute

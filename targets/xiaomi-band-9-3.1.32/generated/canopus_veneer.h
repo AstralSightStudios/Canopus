@@ -4,7 +4,7 @@
  * firmware : 3.1.32 (N66NFC_3.1.32)
  * sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
  * revision : 1
- * input_digest: b6a1dd04bb365910
+ * input_digest: fe3b0a42986f5043
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_9_3_1_32_H
 #define CANOPUS_VENEER_XIAOMI_BAND_9_3_1_32_H
@@ -256,7 +256,7 @@ static inline void canopus_fw_lv_label_set_text(void * a0, const char * a1) {
  * hfp_ag_connect: restricted - not exported until context/ownership approved
  * hfp_ag_disconnect: restricted - not exported until context/ownership approved
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
- * insmod: restricted - not exported until context/ownership approved
+ * insmod: FORBIDDEN - no veneer may ever be generated
  * interconnect_close: restricted - not exported until context/ownership approved
  * interconnect_connect: restricted - not exported until context/ownership approved
  * interconnect_send: restricted - not exported until context/ownership approved
@@ -286,14 +286,14 @@ static inline void canopus_fw_lv_label_set_text(void * a0, const char * a1) {
  * lvx_object_set_size: restricted - not exported until context/ownership approved
  * lvx_page_content_create: restricted - not exported until context/ownership approved
  * lvx_style_apply: restricted - not exported until context/ownership approved
- * modhandle: restricted - not exported until context/ownership approved
+ * modhandle: FORBIDDEN - no veneer may ever be generated
  * offload_property_apply: restricted - not exported until context/ownership approved
  * page_navigator_open_page: restricted - not exported until context/ownership approved
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: restricted - not exported until context/ownership approved
  * quickapp_register_app: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
- * rmmod: restricted - not exported until context/ownership approved
+ * rmmod: FORBIDDEN - no veneer may ever be generated
  * sdp_builder_create: restricted - not exported until context/ownership approved
  * sdp_commit: restricted - not exported until context/ownership approved
  * sdp_set_raw_attribute: restricted - not exported until context/ownership approved

@@ -97,7 +97,7 @@ CAVE_RESULT=$(python3 - "$PROFILE" <<'PY'
 import pathlib, sys, tomllib
 with pathlib.Path(sys.argv[1]).open("rb") as stream:
     profile = tomllib.load(stream)
-print(profile["sram_text"]["result_word"])
+print(profile["stage0"]["result_word"])
 PY
 )
 echo "[3/4] compile target-local mailbox veneer"

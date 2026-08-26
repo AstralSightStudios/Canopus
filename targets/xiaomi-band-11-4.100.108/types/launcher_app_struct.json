@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.043.type.launcher_app_struct.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "kind": "struct",
+  "name": "launcher_app_struct",
+  "size": 132,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "name",
+      "offset": 0,
+      "width": 128,
+      "signedness": "array",
+      "array_length": 128,
+      "ownership": "launcher_owns",
+      "provenance": "runtime list 0x200D090C; name copied from storage record +0"
+    },
+    {
+      "name": "flags",
+      "offset": 128,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "bit0 = show(0)/hidden(1), bit1 = add-state; set from storage +132 and +20 in reset path"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-APP-001"
+    ],
+    "source": "runtime app list at 0x200D090C; app_launcher_data_init + app_launcher_add (sub_C4F2BDC)"
+  }
+}

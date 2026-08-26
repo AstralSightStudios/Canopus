@@ -12,6 +12,16 @@ extern "C" {
 #define CANOPUS_ELF32_MAX_SECTIONS 256u
 #define CANOPUS_ELF32_MAX_ARRAY_ENTRIES 64u
 
+struct canopus_elf_section_info {
+    uint32_t memory_offset;
+    uint32_t kind;
+    uint8_t loaded;
+    uint8_t reserved[3];
+};
+
+#define CANOPUS_ELF32_SCRATCH_SIZE \
+    (CANOPUS_ELF32_MAX_SECTIONS * sizeof(struct canopus_elf_section_info))
+
 #define CANOPUS_ELF_LOAD_OK             0
 #define CANOPUS_ELF_LOAD_INVALID       -1
 #define CANOPUS_ELF_LOAD_UNSUPPORTED   -2
@@ -60,10 +70,11 @@ struct canopus_elf_module {
     uint32_t fini_count;
 };
 
-/* Parses, lays out, relocates, finalizes, then invokes preinit/init arrays. */
+/* Parses, lays out, relocates, finalizes, then invokes preinit/init arrays.
+ * scratch must point to writable CANOPUS_ELF32_SCRATCH_SIZE bytes. */
 int canopus_elf32_load(const uint8_t *elf, uint32_t elf_size,
                        const struct canopus_elf_loader_ops *ops,
-                       struct canopus_elf_module *module);
+                       struct canopus_elf_module *module, void *scratch);
 
 /* Invokes fini entries in reverse order, then releases the allocation. */
 void canopus_elf32_unload(const struct canopus_elf_loader_ops *ops,

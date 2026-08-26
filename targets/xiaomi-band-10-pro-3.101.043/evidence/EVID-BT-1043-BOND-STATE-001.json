@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BT-1043-BOND-STATE-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 function returns the transport-specific pairing-state byte used by bond removal and creation?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.bt_get_pairing_state",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_create_bond_private",
+    "xiaomi-band-10-pro-3.101.043.private_abi.bt_remove_bond_private"
+  ],
+  "prototype_hypothesis": "The exact-state accessor preserves the AAPCS signature uint32(const uint8_t *, uint32_t) and returns the record byte at offset 0xAC.",
+  "callsite_evidence": [
+    "IDA decompilation of sub_C3B60A0 at entry 0x0C3B60A0 resolves the address and transport through the same device-record lookup path used by the bond wrappers, then returns sub_C3B7B68(record).",
+    "IDA decompilation of sub_C3B7B68 shows return *(uint8_t *)(record + 172), which is record + 0xAC and is the state byte consumed by sub_C3B6898 (create) and sub_C3B697C (remove).",
+    "The previous sub_C3B5F78 candidate returns sub_C3B7B10(record), which evaluates *(uint8_t *)(record + 171) > 3 and therefore returns a boolean rather than the transport-specific state byte."
+  ],
+  "control_flow_evidence": [
+    "The 3.101.036 exact-state accessor at 0x0C39FA70 has the same record lookup and record + 0xAC return shape, providing a cross-version ABI control.",
+    "The 3.101.043 create/remove wrappers reject a missing record or a state other than 2 and write state 0 through the same record-state helper, so the accessor must expose record + 0xAC for the module's 0/2 policy."
+  ],
+  "ownership_analysis": "The record and state byte are firmware-owned. The module only reads the returned value and must wait for the authoritative NONE callback before issuing a fresh bond request.",
+  "unsafe_assumptions": [
+    "Exact 3.101.043 device behavior and the observed UI diagnostic sequence remain unprobed.",
+    "The positive firmware return values and later transport errors still require runtime phase diagnostics to distinguish from the corrected state-query ABI."
+  ],
+  "recommended_probe": "On exact 3.101.043, retain one Classic bond, query it, remove it, verify the authoritative transport=1 state=0 callback, then create it again and record the phase-specific return values.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-08-26T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 0x0C3B60A0",
+      "role": "exact 3.101.043 transport-specific pairing-state accessor"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 0x0C3B7B68",
+      "role": "record + 0xAC state-byte helper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 0x0C3B6898",
+      "role": "stock bond-create caller of the state-byte helper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 0x0C3B697C",
+      "role": "stock bond-remove caller of the state-byte helper"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 0x0C39FA70",
+      "role": "3.101.036 cross-version exact-state accessor shape control"
+    }
+  ]
+}

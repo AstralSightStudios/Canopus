@@ -49,6 +49,15 @@
       "xref_result": "No exact-IDB references target the eight flash-source words corresponding to the cave."
     }
   },
+  "device_findings": {
+    "observed_at": "2026-08-24T03:37:29",
+    "crash_log": "device minidump crash20260824033737.log",
+    "fault": "Memory Management Fault: CFSR 0x00000082, data access violation, MMFAR 0x2006a9b0",
+    "faulting_task": "system -c mw",
+    "faulting_instruction": "sub_C1CC340+0x82 at 0x0c1cc3c2 stores the requested word through the parsed address",
+    "attempted_write": "0x49044803 to 0x2006a9b0",
+    "conclusion": "The statically identified SRAM-text cave is MPU read-only and cannot be written by the `system -c mw` command context. The fault register dump has CONTROL=0x0000000c, so this is not evidence that the command task is unprivileged; it is evidence that the explicit SRAM-text MPU policy rejects the store."
+  },
   "control_flow_evidence": [
     "The exact exec handler uses BLX and does not retain or supervise the called image.",
     "The exact mw handler writes four-byte words and does not publish instruction cache state.",
@@ -56,9 +65,9 @@
     "The exact startup copy maps flash 0x2c10e6cc to SRAM 0x2006a9b0; the 32-byte candidate has no exact-IDB references and reproduces the independently recovered 9 Pro cave word pattern at a different SRAM address."
   ],
   "unsafe_assumptions": [
-    "The loader family and cave findings are static only; no device execution was performed.",
-    "The installer must compare and restore all eight exact cave words and reboot after any cleanup failure."
+    "No writable executable cave or privileged publication primitive is currently device-proven.",
+    "The installer must refuse this loader until a replacement bootstrap passes a device probe without an MPU fault."
   ],
-  "verdict": "STATIC_RECOVERED",
-  "approval_state": "PENDING"
+  "verdict": "DEVICE_REJECTED",
+  "approval_state": "REJECTED"
 }

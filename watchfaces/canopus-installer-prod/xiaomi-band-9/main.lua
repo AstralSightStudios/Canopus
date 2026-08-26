@@ -23,6 +23,9 @@ local EXPECTED_CMD_MAGIC = 0x43504331 -- "CPC1"
 local CMD_INSTALL = 0x43510002
 local CMD_RESTORE_AFTER_BOOT = 0x4351000A
 local RESULT_COMPLETED = 5
+local STAGE0_ENTRY_MARKER = 0xA5A5A5A5
+local STAGE0_ENTRY_PROBE_MARKER = 0x5A5A5A5A
+local STAGE0_DIAGNOSTIC = "stage-fixed-continuation-v1"
 
 local target_id
 local profile
@@ -71,13 +74,16 @@ local function load_profile(selected_target)
         or value.target_id ~= selected_target
         or value.status ~= "STATIC_RECOVERED"
         or type(value.device_status) ~= "string"
+        or (value.cave_original_known ~= nil
+            and type(value.cave_original_known) ~= "boolean")
         or value.loader_family ~= "nsh-mw-stage1-stage2" then
         return nil
     end
     for _, key in ipairs({
-        "memalign", "free", "mpu_alloc", "mpu_configure", "mpu_release",
-        "mpu_rnr", "mpu_rbar", "mpu_rlar", "mpu_region_count", "cave",
-        "cave_result",
+        "memalign", "free", "kmem_malloc", "kmem_free", "mpu_alloc", "mpu_configure", "mpu_release",
+        "mpu_rnr", "mpu_rbar", "mpu_rlar", "mpu_region_count",
+        "exec_access_attr", "exec_mem_attr", "cave",
+        "cave_result", "stage0_size", "stage0_region", "stage0_exec_size",
     }) do
         if type(value[key]) ~= "number" then return nil end
     end
@@ -156,7 +162,12 @@ local function shell_word(address)
     return value and tonumber(value, 16) or nil
 end
 
+local function run_sequence(commands, separator)
+    return run(table.concat(commands, separator or "; "))
+end
+
 local function check_cave()
+    if profile.cave_original_known == false then return true end
     for index, expected in ipairs(profile.cave_original) do
         if shell_word(profile.cave + (index - 1) * 4) ~= expected then
             return false
@@ -176,47 +187,179 @@ local function write_words(address, words)
 end
 
 local function restore_cave()
+    if profile.cave_original_known == false then return true end
     return write_words(profile.cave, profile.cave_original)
 end
 
-local function call_mailbox(callable, r0, r1)
-    local trampoline = {
-        0x49044803, 0x47984B04, 0x60104A04, 0xBF004770,
-        r0, r1, callable, profile.cave_result,
-    }
-    if not check_cave() then return nil end
-    if not write_words(profile.cave, trampoline) then
-        restore_cave()
-        return nil
+local function mpu_rlar_attr(mem_attr)
+    return (mem_attr * 2) % 16 + 1
+end
+
+local function stage0_mpu_values()
+    local limit = profile.cave + profile.stage0_exec_size - 32
+    return profile.cave + 0x06, limit + mpu_rlar_attr(profile.exec_mem_attr)
+end
+
+local function stage0_mpu_release()
+    return run_sequence({
+        string.format("mw %08x=%08x", profile.mpu_rnr,
+            profile.stage0_region),
+        string.format("mw %08x=00000000", profile.mpu_rlar),
+    })
+end
+
+local function stage0_exec_with_mpu(address, prefix, keep_region, postfix)
+    local rbar, rlar = stage0_mpu_values()
+    local commands = {}
+    if prefix then
+        for _, command in ipairs(prefix) do
+            commands[#commands + 1] = command
+        end
     end
-    run(string.format("exec %08x", profile.cave + 1))
+    commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rnr,
+        profile.stage0_region)
+    commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rbar, rbar)
+    commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rlar, rlar)
+    commands[#commands + 1] = string.format("exec 0x%08x", profile.cave + 1)
+    if address then
+        commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rnr,
+            profile.stage0_region)
+        commands[#commands + 1] = string.format("mw %08x=00000000", profile.mpu_rlar)
+        commands[#commands + 1] = string.format("exec 0x%08x", address)
+        if postfix then
+            for _, command in ipairs(postfix) do
+                commands[#commands + 1] = command
+            end
+        end
+    elseif not keep_region then
+        commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rnr,
+            profile.stage0_region)
+        commands[#commands + 1] = string.format("mw %08x=00000000", profile.mpu_rlar)
+    end
+    return run(table.concat(commands, "; ")), nil
+end
+
+local function execute_stage0_trampoline()
+    local exec_ok, mpu_error = stage0_exec_with_mpu(nil, nil, true)
+    if mpu_error then return nil, mpu_error end
+    local released = stage0_mpu_release()
     local result = shell_word(profile.cave_result)
-    if not restore_cave() or not check_cave() then return nil end
-    if result == profile.cave_result then return nil end
+    if not released then return nil, "stage-0 MPU release failed" end
+    if result == nil then return nil, "stage-0 result read failed" end
+    if result == profile.cave_result and not exec_ok then
+        return nil, "stage-0 exec parser rejected target ["
+            .. STAGE0_DIAGNOSTIC .. "]"
+    end
     return result
 end
 
-local function barrier_and_exec(address)
+local function call_mailbox(callable, r0, r1)
+    local probe = {
+        0x49034802, 0x4A036008, 0xBF004710,
+        STAGE0_ENTRY_PROBE_MARKER, profile.cave_result, 0x0c1c956d,
+    }
     local trampoline = {
-        0x8F4FF3BF, 0x8F6FF3BF, 0xBF004770, 0, 0, 0, 0, 0,
+        0x8F4FF3BF, 0x8F6FF3BF,
+        0x49064805, 0x4B074A06, 0x4B076013, 0x4A044798,
+        0x4B066010, 0xBF004718,
+        r0, r1, profile.cave_result, STAGE0_ENTRY_MARKER, callable,
+        0x0c1c956d,
+    }
+    if not check_cave() then return nil, "stage-0 preflight mismatch" end
+    if not run(string.format("mw %08x=%08x", profile.cave_result,
+        profile.cave_result)) then
+        return nil, "stage-0 result sentinel write failed"
+    end
+    if not write_words(profile.cave, probe) then
+        restore_cave()
+        return nil, "stage-0 entry probe write failed"
+    end
+    local probe_result, probe_error = execute_stage0_trampoline()
+    if probe_error then
+        restore_cave()
+        return nil, probe_error
+    end
+    if probe_result == profile.cave_result then
+        restore_cave()
+        return nil, "stage-0 entry probe returned sentinel ["
+            .. STAGE0_DIAGNOSTIC .. "]"
+    end
+    if probe_result ~= STAGE0_ENTRY_PROBE_MARKER then
+        restore_cave()
+        return nil, string.format("stage-0 entry probe result=0x%08x ["
+            .. STAGE0_DIAGNOSTIC .. "]", probe_result)
+    end
+    if not run(string.format("mw %08x=%08x", profile.cave_result,
+        profile.cave_result)) then
+        restore_cave()
+        return nil, "stage-0 result sentinel write failed"
+    end
+    if not write_words(profile.cave, trampoline) then
+        restore_cave()
+        return nil, "stage-0 mailbox write failed"
+    end
+    local result, callback_error = execute_stage0_trampoline()
+    if callback_error then
+        restore_cave()
+        return nil, callback_error
+    end
+    if not restore_cave() or not check_cave() then
+        return nil, "stage-0 mailbox restore failed"
+    end
+    if result == nil then return nil, "stage-0 result read failed" end
+    if result == profile.cave_result then
+        return nil, "stage-0 callback returned result sentinel ["
+            .. STAGE0_DIAGNOSTIC .. "]"
+    end
+    if result == STAGE0_ENTRY_MARKER then
+        return nil, "stage-0 callback did not return ["
+            .. STAGE0_DIAGNOSTIC .. "]"
+    end
+    return result
+end
+
+local function barrier_and_exec(address, region, rbar, rlar)
+    local trampoline = {
+        0x8F4FF3BF, 0x8F6FF3BF, 0x47702001, 0, 0, 0, 0, 0,
     }
     if not check_cave() then return false end
     if not write_words(profile.cave, trampoline) then
         restore_cave()
         return false
     end
-    run(string.format("exec %08x", profile.cave + 1))
+    local commands = {
+        string.format("mw %08x=%08x", profile.mpu_rnr, region),
+        string.format("mw %08x=%08x", profile.mpu_rbar, rbar),
+        string.format("mw %08x=%08x", profile.mpu_rlar, rlar),
+    }
+    local release_stage1 = {
+        string.format("mw %08x=%08x", profile.mpu_rnr, region),
+        string.format("mw %08x=00000000", profile.mpu_rlar),
+    }
+    local stage0_ok, stage0_error = stage0_exec_with_mpu(
+        address + 1, commands, false, release_stage1)
+    if stage0_error then
+        stage0_mpu_release()
+        restore_cave()
+        return false
+    end
+    if not stage0_ok then
+        restore_cave()
+        return false
+    end
     if not restore_cave() or not check_cave() then return false end
-    return run(string.format("exec %08x", address + 1))
+    return true
 end
 
-local function release_allocation(address)
-    return call_mailbox(profile.free, address, 0) ~= nil
+local function release_allocation(address, free_callable)
+    return call_mailbox(free_callable or profile.kmem_free, address, 0) ~= nil
 end
 
 local function release_region(region)
-    if not run(string.format("mw %08x=%08x", profile.mpu_rnr, region))
-        or not run(string.format("mw %08x=00000000", profile.mpu_rlar)) then
+    if not run_sequence({
+        string.format("mw %08x=%08x", profile.mpu_rnr, region),
+        string.format("mw %08x=00000000", profile.mpu_rlar),
+    }) then
         return false
     end
     return call_mailbox(profile.mpu_release, region, 0) ~= nil
@@ -224,7 +367,7 @@ end
 
 local function cleanup_stage1(address, region)
     if not release_region(region) then return false end
-    return release_allocation(address)
+    return release_allocation(address, profile.kmem_free)
 end
 
 local function load_supervisor()
@@ -256,36 +399,43 @@ local function load_supervisor()
     if not write_all(SUPERVISOR_PATH, supervisor) then
         return false, "cannot stage Band 9 Supervisor"
     end
-    local allocation = call_mailbox(profile.memalign, 32, payload.size)
-    if not allocation or allocation == 0 or allocation % 32 ~= 0 then
-        return false, "Band 9 stage-1 allocation failed"
+    local exec_size = math.floor((payload.size + 31) / 32) * 32
+    local raw_allocation, allocation_error = call_mailbox(
+        profile.kmem_malloc, exec_size + 31, 0)
+    if not raw_allocation or raw_allocation == 0 then
+        return false, "Band 9 stage-1 Kmem allocation failed: "
+            .. tostring(allocation_error or ("result=" .. tostring(raw_allocation)))
+    end
+    local allocation = raw_allocation + 31
+        - ((raw_allocation + 31) % 32)
+    if allocation < raw_allocation or allocation % 32 ~= 0 then
+        release_allocation(raw_allocation)
+        return false, "Band 9 stage-1 alignment failed"
     end
     if not write_words(allocation, payload.words) then
-        if not release_allocation(allocation) then
+        if not release_allocation(raw_allocation) then
             return false, "stage-1 write cleanup failed; reboot before retrying"
         end
         return false, "Band 9 stage-1 write failed"
     end
     local region = call_mailbox(profile.mpu_alloc, 0, 0)
     if not region or region >= profile.mpu_region_count then
-        if not release_allocation(allocation) then
+        if not release_allocation(raw_allocation) then
             return false, "MPU failure cleanup failed; reboot before retrying"
         end
         return false, "Band 9 MPU region unavailable"
     end
-    local size = math.floor((payload.size + 31) / 32) * 32
-    local rbar = allocation + 6
-    local rlar = allocation + size - 32 + 5
-    if not run(string.format("mw %08x=%08x", profile.mpu_rnr, region))
-        or not run(string.format("mw %08x=%08x", profile.mpu_rbar, rbar))
-        or not run(string.format("mw %08x=%08x", profile.mpu_rlar, rlar)) then
-        if not cleanup_stage1(allocation, region) then
-            return false, "MPU cleanup failed; reboot before retrying"
+    if region == profile.stage0_region then
+        if not release_allocation(raw_allocation) then
+            return false, "MPU collision cleanup failed; reboot before retrying"
         end
-        return false, "Band 9 MPU configuration failed"
+        return false, "Band 9 MPU region collides with stage-0 region"
     end
-    local executed = barrier_and_exec(allocation)
-    local cleaned = cleanup_stage1(allocation, region)
+    local rbar = allocation + 6
+    local rlar = allocation + exec_size - 32
+        + mpu_rlar_attr(profile.exec_mem_attr)
+    local executed = barrier_and_exec(allocation, region, rbar, rlar)
+    local cleaned = cleanup_stage1(raw_allocation, region)
     if not cleaned then
         return false, "stage-1 cleanup failed; reboot before retrying"
     end
@@ -514,6 +664,11 @@ end
 local run_button
 run_button = make_button("Run", '#14508a', function()
     clear_armed = false
+    if profile.device_status == "DEVICE_REJECTED" then
+        set_status("LOAD blocked: stage-0 candidate rejected\n"
+            .. "Select a replacement candidate before testing.", '#ff9a9a')
+        return
+    end
     if run_attempted then
         set_status("Run can only be used once; reboot before retrying")
         return

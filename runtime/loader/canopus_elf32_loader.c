@@ -32,12 +32,6 @@
 #define SHN_ABS 0xfff1u
 #define SHN_COMMON 0xfff2u
 
-struct section_info {
-    uint32_t memory_offset;
-    uint32_t kind;
-    uint8_t loaded;
-};
-
 static uint16_t u16(const uint8_t *p)
 {
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
@@ -143,9 +137,9 @@ static void release_module(const struct canopus_elf_loader_ops *ops,
 
 int canopus_elf32_load(const uint8_t *elf, uint32_t elf_size,
                        const struct canopus_elf_loader_ops *ops,
-                       struct canopus_elf_module *module)
+                       struct canopus_elf_module *module, void *scratch)
 {
-    struct section_info sections[CANOPUS_ELF32_MAX_SECTIONS];
+    struct canopus_elf_section_info *sections = scratch;
     const uint8_t *section;
     const uint8_t *target;
     const uint8_t *symtab;
@@ -182,12 +176,13 @@ int canopus_elf32_load(const uint8_t *elf, uint32_t elf_size,
     uint32_t exec_end = 0;
     int rc;
 
-    if (elf == 0 || ops == 0 || module == 0 || ops->allocate == 0 ||
+    if (elf == 0 || ops == 0 || module == 0 || scratch == 0 ||
+        ops->allocate == 0 ||
         ops->release == 0 || ops->finalize == 0 || ops->invoke == 0) {
         return CANOPUS_ELF_LOAD_INVALID;
     }
     canopus_memset(module, 0, sizeof(*module));
-    canopus_memset(sections, 0, sizeof(sections));
+    canopus_memset(sections, 0, CANOPUS_ELF32_SCRATCH_SIZE);
     if (elf_size < ELF32_EHDR_SIZE || elf[0] != 0x7f || elf[1] != 'E' ||
         elf[2] != 'L' || elf[3] != 'F' || elf[EI_CLASS] != ELFCLASS32 ||
         elf[EI_DATA] != ELFDATA2LSB || u16(elf + 16) != ET_REL ||

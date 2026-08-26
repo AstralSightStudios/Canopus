@@ -18,7 +18,7 @@ def number(value: object, name: str) -> int:
     return value
 
 
-def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict]:
+def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict, dict]:
     target_id = profile.get("target_id")
     if not isinstance(target_id, str) or target.get("target_id") != target_id:
         raise SystemExit("loader profile target_id does not match target.toml")
@@ -33,15 +33,33 @@ def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict]:
         raise SystemExit("unsupported Band 9 loader family")
 
     stage = profile.get("stage")
+    stage0 = profile.get("stage0")
     firmware = profile.get("firmware")
     architecture = profile.get("architecture")
     sram = profile.get("sram_text")
-    if not all(isinstance(item, dict) for item in (stage, firmware, architecture, sram)):
+    if not all(isinstance(item, dict) for item in (stage, stage0, firmware, architecture, sram)):
         raise SystemExit("loader profile is missing a required table")
+
+    stage0_base = number(stage0.get("base"), "stage0.base")
+    stage0_size = number(stage0.get("size"), "stage0.size")
+    stage0_exec_size = number(stage0.get("exec_size", stage0_size), "stage0.exec_size")
+    stage0_region = number(stage0.get("stage0_region"), "stage0.stage0_region")
+    stage0_result = number(stage0.get("result_word"), "stage0.result_word")
+    original_words_known = stage0.get("original_words_known", True)
+    if not isinstance(original_words_known, bool):
+        raise SystemExit("stage0.original_words_known must be boolean")
+    if stage0_region >= number(architecture.get("mpu_region_count"),
+                              "architecture.mpu_region_count"):
+        raise SystemExit("stage0.stage0_region is outside the MPU region count")
+    if stage0_base & 31 or stage0_size < 32 or stage0_exec_size < 32 \
+            or stage0_exec_size > stage0_size or stage0_exec_size & 31 \
+            or stage0_result < stage0_base or stage0_result + 4 > stage0_base + stage0_size \
+            or stage0_base <= stage0_result < stage0_base + stage0_exec_size:
+        raise SystemExit("stage0 must be an aligned region containing result_word")
 
     for key in (
         "exec_handler", "mw_handler", "open", "close", "read", "memalign", "free",
-        "mpu_alloc", "mpu_configure", "mpu_release",
+        "kmem_malloc", "kmem_free", "mpu_alloc", "mpu_configure", "mpu_release",
     ):
         entry = number(firmware[key], f"firmware.{key}")
         if entry == 0 and profile.get("status") != "STATIC_RECOVERED":
@@ -65,7 +83,7 @@ def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict]:
             raise SystemExit("STATIC_RECOVERED profile needs an exact cave and eight original words")
         for index, word in enumerate(words):
             number(word, f"sram_text.original_words[{index}]")
-    return stage, firmware, architecture, sram
+    return stage, stage0, firmware, architecture, sram
 
 
 def hex32(value: int) -> str:
@@ -76,7 +94,11 @@ def hex_lua(value: int) -> str:
     return f"0x{value:08x}"
 
 
-def write_header(path: pathlib.Path, profile: dict, firmware: dict, architecture: dict, sram: dict) -> None:
+def lua_bool(value: bool) -> str:
+    return "true" if value else "false"
+
+
+def write_header(path: pathlib.Path, profile: dict, stage0: dict, firmware: dict, architecture: dict) -> None:
     lines = [
         "#ifndef CANOPUS_BAND9_LOADER_CONFIG_H",
         "#define CANOPUS_BAND9_LOADER_CONFIG_H",
@@ -89,14 +111,19 @@ def write_header(path: pathlib.Path, profile: dict, firmware: dict, architecture
         "CANOPUS_FW_READ": firmware["read"] | 1,
         "CANOPUS_FW_MEMALIGN": firmware["memalign"] | 1,
         "CANOPUS_FW_FREE": firmware["free"] | 1,
+        "CANOPUS_FW_KMEM_MALLOC": firmware["kmem_malloc"] | 1,
+        "CANOPUS_FW_KMEM_FREE": firmware["kmem_free"] | 1,
         "CANOPUS_FW_MPU_ALLOC": firmware["mpu_alloc"] | 1,
         "CANOPUS_FW_MPU_CONFIGURE": firmware["mpu_configure"] | 1,
         "CANOPUS_FW_MPU_RELEASE": firmware["mpu_release"] | 1,
         "CANOPUS_MPU_RNR": architecture["mpu_rnr"],
         "CANOPUS_MPU_RBAR": architecture["mpu_rbar"],
         "CANOPUS_MPU_RLAR": architecture["mpu_rlar"],
-        "CANOPUS_BAND9_CAVE": sram["cave"],
-        "CANOPUS_BAND9_CAVE_RESULT": sram.get("result_word", 0),
+        "CANOPUS_BAND9_CAVE": stage0["base"],
+        "CANOPUS_BAND9_CAVE_RESULT": stage0["result_word"],
+        "CANOPUS_BAND9_STAGE0_SIZE": stage0["size"],
+        "CANOPUS_BAND9_STAGE0_REGION": stage0["stage0_region"],
+        "CANOPUS_BAND9_STAGE0_EXEC_SIZE": stage0["exec_size"],
     }
     for key, value in mapping.items():
         lines.append(f"#define {key} UINT32_C(0x{number(value, key):08x})")
@@ -113,8 +140,8 @@ def write_header(path: pathlib.Path, profile: dict, firmware: dict, architecture
     path.write_text("\n".join(lines))
 
 
-def write_lua(path: pathlib.Path, profile: dict, firmware: dict, architecture: dict, sram: dict) -> None:
-    words = sram.get("original_words") or []
+def write_lua(path: pathlib.Path, profile: dict, firmware: dict, architecture: dict, stage0: dict) -> None:
+    words = [0] * 8
     def field(name: str, value: int) -> str:
         return f"    {name} = {hex_lua(value)},"
     lines = [
@@ -132,6 +159,8 @@ def write_lua(path: pathlib.Path, profile: dict, firmware: dict, architecture: d
         field("read", firmware["read"] | 1),
         field("memalign", firmware["memalign"] | 1),
         field("free", firmware["free"] | 1),
+        field("kmem_malloc", firmware["kmem_malloc"] | 1),
+        field("kmem_free", firmware["kmem_free"] | 1),
         field("mpu_alloc", firmware["mpu_alloc"] | 1),
         field("mpu_configure", firmware["mpu_configure"] | 1),
         field("mpu_release", firmware["mpu_release"] | 1),
@@ -139,8 +168,14 @@ def write_lua(path: pathlib.Path, profile: dict, firmware: dict, architecture: d
         field("mpu_rbar", architecture["mpu_rbar"]),
         field("mpu_rlar", architecture["mpu_rlar"]),
         field("mpu_region_count", architecture["mpu_region_count"]),
-        field("cave", sram["cave"]),
-        field("cave_result", sram.get("result_word", 0)),
+        field("exec_access_attr", architecture["exec_access_attr"]),
+        field("exec_mem_attr", architecture["exec_mem_attr"]),
+        field("cave", stage0["base"]),
+        field("cave_result", stage0["result_word"]),
+        field("stage0_size", stage0["size"]),
+        field("stage0_region", stage0["stage0_region"]),
+        field("stage0_exec_size", stage0["exec_size"]),
+        f"    cave_original_known = {lua_bool(stage0.get('original_words_known', True))},",
         "    cave_original = {",
     ]
     lines.extend(f"        {hex_lua(word)}," for word in words)
@@ -157,18 +192,18 @@ def main() -> None:
     args = parser.parse_args()
     profile = load(args.profile)
     target = load(args.target_toml)
-    stage, firmware, architecture, sram = validate(profile, target)
-    del stage
+    stage, stage0, firmware, architecture, sram = validate(profile, target)
+    del stage, sram
     if profile.get("status") != "STATIC_RECOVERED":
         raise SystemExit(
             f"loader profile is {profile.get('status')}; refusing to emit executable bootstrap config"
         )
     if args.header:
         args.header.parent.mkdir(parents=True, exist_ok=True)
-        write_header(args.header, profile, firmware, architecture, sram)
+        write_header(args.header, profile, stage0, firmware, architecture)
     if args.lua:
         args.lua.parent.mkdir(parents=True, exist_ok=True)
-        write_lua(args.lua, profile, firmware, architecture, sram)
+        write_lua(args.lua, profile, firmware, architecture, stage0)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-pro-3.101.043.type.file_operations.v1",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "kind": "struct",
+  "name": "file_operations",
+  "size": 48,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "open",
+      "offset": 0,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact sub_C1D06B0 internal fs_open path dispatches fops+0x00; this proves the slot only, not the withdrawn direct-call ABI"
+    },
+    {
+      "name": "close",
+      "offset": 4,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact sub_C1CEC08 file_close dispatches fops+0x04"
+    },
+    {
+      "name": "read",
+      "offset": 8,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact sub_C1D119C vectored-read path dispatches fops+0x08; this proves the slot only, not the withdrawn flat-buffer ABI"
+    },
+    {
+      "name": "write",
+      "offset": 12,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact sub_C1D2640 public fs_write path dispatches fops+0x0c"
+    },
+    {
+      "name": "lseek",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact sub_C1D0524 public fs_lseek path dispatches fops+0x10 and preserves an AAPCS-aligned int64_t offset"
+    },
+    {
+      "name": "ioctl",
+      "offset": 20,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact sub_C1CFF88 variadic file_ioctl path dispatches fops+0x14 with R1=request and an optional argument"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-IO-1043-001",
+      "EVID-IO-1043-002",
+      "EVID-IO-1043-003"
+    ],
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; NuttX source-path strings, fops loads, register flow, and exact dispatch sites"
+  }
+}

@@ -1,4 +1,4 @@
-//! Target-private full-trust bindings for `xiaomi-band-10-pro-3.101.043`.
+//! Target-private full-trust bindings for `xiaomi-band-11-4.100.108`.
 //!
 //! These are **not** part of `canopus-target-generated` (the public, audited
 //! per-target bindings). They expose recovered launcher, LVX, Bluetooth, L2CAP,
@@ -13,7 +13,7 @@
 //! `unsafe`; the module is responsible for state, ownership, and lifecycle
 //! discipline.
 
-pub const TARGET_ID: &str = "xiaomi-band-10-pro-3.101.043";
+pub const TARGET_ID: &str = "xiaomi-band-11-4.100.108";
 
 pub use canopus_target_generated::{
     canopus_fw_clock_gettime, canopus_fw_register_driver, canopus_fw_unregister_driver,
@@ -41,7 +41,7 @@ pub const CALLBACK_PAIR_REQUEST: usize = 5;
 pub const CALLBACK_PAIR_DISPLAY: usize = 6;
 pub const CALLBACK_BOND_STATE: usize = 9;
 
-/// The 3.101.043 stock Bluetooth client uses a 17-word callback descriptor.
+/// The 4.100.108 stock Bluetooth client uses a 17-word callback descriptor.
 /// Its registration handle points to an 8-byte callback-list node containing
 /// `{ cookie, descriptor }`.
 pub const STOCK_CALLBACK_WORDS: usize = 17;
@@ -226,7 +226,7 @@ pub struct PairRequestFilter {
     pub registration: u32,
 }
 
-/// Replaces the stock 3.101.043 Pair Request registration with a resident
+/// Replaces the stock 4.100.108 Pair Request registration with a resident
 /// 17-word mirror. The stock handle is the callback-list node allocated by
 /// `sub_C3A96EC`; word 1 owns the descriptor pointer. Registration and removal
 /// go through the firmware callback-list API so the manager's private storage is
@@ -1258,7 +1258,7 @@ pub unsafe fn nuttx_lseek(fd: i32, offset: i64, whence: i32) -> i64 {
     unsafe { canopus_target_generated::canopus_fw_lseek(fd, offset, whence) }
 }
 
-/// POSIX fd-level variadic ioctl wrapper. Exact 3.101.043 entry
+/// POSIX fd-level variadic ioctl wrapper. Exact 4.100.108 entry
 /// `sub_C1D01A4 + 1` preserves the command in R1 and consumes the optional
 /// argument from the saved variadic register area.
 pub unsafe fn nuttx_ioctl(fd: i32, command: u32, argument: usize) -> i32 {
@@ -1649,10 +1649,12 @@ mod tests {
     }
 
     #[test]
-    fn stock_pair_filter_abi_uses_the_043_registration_node() {
+    fn stock_pair_filter_abi_is_not_the_036_global_table() {
         assert_eq!(CALLBACK_WORDS, 17);
         assert_eq!(STOCK_CALLBACK_WORDS, 17);
         assert_eq!(STOCK_CALLBACK_PAIR_REQUEST_SLOT, 5);
+        assert_eq!(STOCK_ADAPTER_CLIENT_OFFSET, 120);
+        assert_eq!(STOCK_CLIENT_CALLBACK_OFFSET, 72);
         assert_eq!(
             canopus_target_generated::canopus_fw_core_bt_adapter_instance,
             0x20126738
@@ -1664,14 +1666,6 @@ mod tests {
         assert_eq!(
             canopus_target_generated::canopus_fw_stock_bt_callback_descriptor,
             0x2CD4A744
-        );
-        assert_eq!(
-            crate::generated_symbols::BT_GET_PAIRING_STATE_ENTRY,
-            0x0C3B60A0
-        );
-        assert_eq!(
-            crate::generated_symbols::BT_GET_PAIRING_STATE_CALLABLE,
-            0x0C3B60A1
         );
     }
 }

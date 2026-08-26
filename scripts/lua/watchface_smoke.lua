@@ -119,18 +119,26 @@ local function band9_installer_io(fault, firmware_version)
     local mpu_alloc = 0x0c51d8d1
     local mpu_configure = 0x0c51d759
     local mpu_release = 0x0c51d929
+    local kmem_malloc = 0x0c51d8e1
+    local kmem_free = 0x0c51d8f1
     if firmware_version == "3.1.32" then
         target_id = "xiaomi-band-9-3.1.32"
         firmware_sha256 =
             "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264"
-        cave_base = 0x2006a9b0
+        cave_base = 0x200cb400
         memalign = 0x0c16ab8d
         free = 0x0c16a425
         mpu_alloc = 0x0c5228a5
         mpu_configure = 0x0c52272d
         mpu_release = 0x0c5228fd
+        kmem_malloc = 0x0c16af05
+        kmem_free = 0x0c16a4b5
     end
-    local cave_result = cave_base + 28
+    local cave_result = cave_base + 64
+    local stage0_rbar = cave_base + 6
+    local stage0_rlar = cave_base + 64 - 32 + 3
+    local mpu_rnr = 0xe000ed98
+    local mpu_rbar = 0xe000ed9c
     local mpu_rlar = 0xe000eda0
     local resource_prefix = "/fake/"
     local resource_suffix = "-" .. target_id
@@ -138,16 +146,20 @@ local function band9_installer_io(fault, firmware_version)
         [cave_base] = 0, [cave_base + 4] = 0,
         [cave_base + 8] = 0, [cave_base + 12] = 0,
         [cave_base + 16] = 0x726f6e5f, [cave_base + 20] = 0x73616c66,
-        [cave_base + 24] = 0x70615f68, [cave_result] = 0x72665f69,
+        [cave_base + 24] = 0x70615f68, [cave_base + 28] = 0x72665f69,
+        [cave_result] = 0,
     }
     local profile = string.format([[
 return {
     target_id = %q,
     firmware_sha256 = %q,
     status = "STATIC_RECOVERED",
+    device_status = "DEVICE_PROVEN",
     loader_family = "nsh-mw-stage1-stage2",
     memalign = 0x%08x,
     free = 0x%08x,
+    kmem_malloc = 0x%08x,
+    kmem_free = 0x%08x,
     mpu_alloc = 0x%08x,
     mpu_configure = 0x%08x,
     mpu_release = 0x%08x,
@@ -155,14 +167,19 @@ return {
     mpu_rbar = 0xe000ed9c,
     mpu_rlar = 0xe000eda0,
     mpu_region_count = 8,
+    exec_access_attr = 1,
+    exec_mem_attr = 1,
+    stage0_region = 7,
+    stage0_size = 4096,
+    stage0_exec_size = 64,
     cave = 0x%08x,
     cave_result = 0x%08x,
     cave_original = {
         0, 0, 0, 0, 0x726f6e5f, 0x73616c66, 0x70615f68, 0x72665f69,
     },
 }
-]], target_id, firmware_sha256, memalign, free, mpu_alloc, mpu_configure,
-        mpu_release, cave_base, cave_result)
+]], target_id, firmware_sha256, memalign, free, kmem_malloc, kmem_free,
+        mpu_alloc, mpu_configure, mpu_release, cave_base, cave_result)
     local files = {
         ["/fake/manager_icon.bin"] = string.char(
             0x19, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -178,9 +195,13 @@ return {
     local used_insmod = false
     local freed = false
     local released = false
+    local configured_rbar
     local configured_rlar
+    local selected_region
+    local compound_commands = 0
     local pending_op = 0
     local pending_state = 0
+    local stage1_exec_address
     if fault == "cave_mismatch" then cave[cave_base] = 1 end
     local function le32(value)
         return string.char(value % 256, math.floor(value / 256) % 256,
@@ -241,6 +262,27 @@ return {
         return nil
     end
     local function execute(command)
+        if command:find(";", 1, true) or command:find("&&", 1, true) then
+            compound_commands = compound_commands + 1
+            local all_ok = true
+            for sequence in command:gmatch("[^;]+") do
+                local sequence_ok = true
+                for part in sequence:gmatch("[^&]+") do
+                    if sequence_ok then
+                        local trimmed = part:match("^%s*(.-)%s*$")
+                        sequence_ok = execute(trimmed)
+                        if not sequence_ok and fault == "mpu_configuration_failure" then
+                            break
+                        end
+                    end
+                end
+                if not sequence_ok then
+                    all_ok = false
+                    if fault == "mpu_configuration_failure" then break end
+                end
+            end
+            return all_ok
+        end
         local property_output = command:match(
             "^getprop 'ro%.build%.version' > '(.+)'$")
         if property_output then
@@ -253,9 +295,18 @@ return {
             local addr = tonumber(address, 16)
             local word = tonumber(value, 16)
             cave[addr] = word
+            if addr == mpu_rbar then
+                configured_rbar = word
+            end
+            if addr == mpu_rnr then
+                selected_region = word
+            end
             if addr == mpu_rlar and word ~= 0 then
                 configured_rlar = word
-                if fault == "mpu_configuration_failure" then return false end
+                if fault == "mpu_configuration_failure"
+                    and selected_region ~= 7 then
+                    return false
+                end
             end
             return true
         end
@@ -265,26 +316,129 @@ return {
             files[output] = string.format("  0x%08x = 0x%08x\n", addr, cave[addr] or 0)
             return true
         end
-        local exec_address = command:match("^exec ([0-9a-fA-F]+)$")
+        local exec_address, exec_output = command:match(
+            "^exec (0[xX][0-9a-fA-F]+) > (.+)$")
+        if not exec_address then
+            exec_address, exec_output = command:match(
+                "^exec ([0-9a-fA-F]+) > (.+)$")
+        end
+        if not exec_address then
+            exec_address = command:match("^exec (0[xX][0-9a-fA-F]+)$")
+        end
+        if not exec_address then
+            exec_address = command:match("^exec ([0-9a-fA-F]+)$")
+        end
         if exec_address then
+            exec_address = exec_address:gsub("^0[xX]", "")
             local addr = tonumber(exec_address, 16)
+            if exec_output then
+                files[exec_output] = string.format("Calling 0x%08x\\n", addr)
+            end
             if addr == cave_base + 1 then
-                local callable = cave[cave_base + 24]
+                local is_barrier = cave[cave_base] == 0x8f4ff3bf
+                    and cave[cave_base + 8] == 0x47702001
+                if is_barrier then return true end
+                local entry_probe = cave[cave_base] == 0x49034802
+                    and cave[cave_base + 4] == 0x4a036008
+                    and cave[cave_base + 8] == 0xbf004710
+                if entry_probe then
+                    local result_address = cave[cave_base + 16]
+                    if result_address == nil then return false end
+                    if fault == "mailbox_exec_failure" then return false end
+                    cave[result_address] = 0x5a5a5a5a
+                    return true
+                end
+                local extended_mailbox = cave[cave_base + 8] == 0x49064805
+                    and cave[cave_base + 12] == 0x4B074A06
+                    and cave[cave_base + 16] == 0x4B076013
+                    and cave[cave_base + 20] == 0x4A044798
+                    and cave[cave_base + 24] == 0x4B066010
+                    and cave[cave_base + 28] == 0xBF004718
+                local new_mailbox = cave[cave_base + 8] == 0x49044803
+                    and cave[cave_base + 12] == 0x47984B04
+                    and cave[cave_base + 16] == 0x60104A04
+                    and cave[cave_base + 20] == 0xBF004770
+                local old_mailbox = cave[cave_base] == 0x49044803
+                    and cave[cave_base + 4] == 0x47984B04
+                    and cave[cave_base + 8] == 0x60104A04
+                    and cave[cave_base + 12] == 0xBF004770
+                if not extended_mailbox and not new_mailbox and not old_mailbox then
+                    return false
+                end
+                local literal_base
+                local callable
+                local result_address
+                local argument0
+                local argument1
+                local entry_marker
+                local continuation
+                if extended_mailbox then
+                    local function load_literal(offset)
+                        local container = cave[cave_base + offset - (offset % 4)]
+                        if container == nil then return nil end
+                        local instruction
+                        if offset % 4 == 0 then
+                            instruction = container % 0x10000
+                        else
+                            instruction = math.floor(container / 0x10000) % 0x10000
+                        end
+                        if instruction < 0x4800 or instruction >= 0x5000 then
+                            return nil
+                        end
+                        local pc = cave_base + offset + 4
+                        pc = pc - (pc % 4)
+                        return cave[pc + (instruction % 0x100) * 4]
+                    end
+                    argument0 = load_literal(8)
+                    argument1 = load_literal(10)
+                    result_address = load_literal(12)
+                    entry_marker = load_literal(14)
+                    callable = load_literal(18)
+                    continuation = load_literal(26)
+                    if argument0 == nil or argument1 == nil
+                        or result_address == nil or entry_marker == nil
+                        or callable == nil or continuation == nil
+                        or argument0 ~= cave[cave_base + 32]
+                        or argument1 ~= cave[cave_base + 36]
+                        or result_address ~= cave[cave_base + 40]
+                        or entry_marker ~= cave[cave_base + 44]
+                        or callable ~= cave[cave_base + 48]
+                        or continuation ~= cave[cave_base + 52] then
+                        return false
+                    end
+                else
+                    if new_mailbox then
+                        literal_base = cave_base + 24
+                    else
+                        literal_base = cave_base + 16
+                    end
+                    callable = cave[literal_base + 8]
+                    result_address = cave[literal_base + 12]
+                end
+                if callable == nil or result_address == nil then return false end
+                if extended_mailbox then cave[result_address] = 0xA5A5A5A5 end
                 if fault == "mailbox_exec_failure" then return false end
                 local result = 0
-                if callable == memalign then
-                    result = fault == "allocation_failure" and 0 or 0x21000000
+                if callable == memalign or callable == kmem_malloc then
+                    result = fault == "allocation_failure" and 0 or
+                        (callable == kmem_malloc and 0x21000008 or 0x21000000)
+                    if callable == kmem_malloc and result ~= 0 then
+                        local aligned = result + 31
+                            - ((result + 31) % 32)
+                        stage1_exec_address = aligned + 1
+                    end
                 elseif callable == mpu_alloc then
-                    result = fault == "mpu_exhaustion" and 255 or 3
+                    result = fault == "mpu_exhaustion" and 255 or
+                        (fault == "mpu_region_collision" and 7 or 3)
                 elseif callable == mpu_release then
                     released = true
-                elseif callable == free then
+                elseif callable == free or callable == kmem_free then
                     freed = true
                 end
-                cave[cave_result] = result
+                cave[result_address] = result
                 return result == 0
             end
-            if addr == 0x21000001 then
+            if addr == 0x21000001 or addr == stage1_exec_address then
                 if fault == "stage1_exec_failure" then return false end
                 device_present = true
                 return true
@@ -294,7 +448,7 @@ return {
     end
     return open, execute, function()
         return cave, files, device_present, used_insmod, freed, released,
-            configured_rlar, cave_base
+            configured_rbar, configured_rlar, compound_commands, cave_base
     end
 end
 
@@ -380,7 +534,7 @@ local function check(path, installer_fault, installer_firmware)
     end
     if band9_state then
         local cave, files, device_present, used_insmod, freed, released,
-            configured_rlar, cave_base = band9_state()
+            configured_rbar, configured_rlar, compound_commands, cave_base = band9_state()
         local original = { 0, 0, 0, 0, 0x726f6e5f, 0x73616c66,
             0x70615f68, 0x72665f69 }
         if band9_fault == "cave_mismatch" then original[1] = 1 end
@@ -399,8 +553,11 @@ local function check(path, installer_fault, installer_firmware)
             or (band9_fault == "mailbox_exec_failure" and not freed and not released)
             or (band9_fault == "allocation_failure" and not freed and not released)
             or (band9_fault == "mpu_exhaustion" and freed and not released)
+            or (band9_fault == "mpu_region_collision" and freed and not released)
             or (band9_fault == "mpu_configuration_failure" and freed and released)
             or (band9_fault == "stage1_exec_failure" and freed and released)
+        local strict_stage0_mpu = path:match(
+            "canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") ~= nil
         if band9_fault then
             if device_present or used_insmod or not staged or not fault_ok then
                 io.open = original_io_open
@@ -414,7 +571,11 @@ local function check(path, installer_fault, installer_firmware)
             end
         elseif not device_present or used_insmod or not staged
             or not freed or not released
-            or configured_rlar == nil or configured_rlar % 8 ~= 5 then
+            or (strict_stage0_mpu and (configured_rbar ~= cave_base + 6
+                or configured_rlar ~= cave_base + 64 - 32 + 3
+                or configured_rlar % 8 ~= 3))
+            or (path:match("canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$")
+                and compound_commands == 0) then
             io.open = original_io_open
             os.execute = original_os_execute
             print("BAND9 BOOTSTRAP FLOW FAIL:", path,
@@ -453,7 +614,7 @@ if ok_all then
     local band9_firmware_versions = { "3.1.175", "3.1.32" }
     local band9_faults = {
         "cave_mismatch", "mailbox_exec_failure", "allocation_failure",
-        "mpu_exhaustion", "mpu_configuration_failure", "stage1_exec_failure",
+        "mpu_exhaustion", "mpu_region_collision", "mpu_configuration_failure", "stage1_exec_failure",
     }
     for _, firmware_version in ipairs(band9_firmware_versions) do
         for _, fault in ipairs(band9_faults) do

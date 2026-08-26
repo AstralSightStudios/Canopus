@@ -83,6 +83,7 @@ int main(int argc, char **argv)
     FILE *file;
     long length;
     uint8_t *data;
+    void *scratch;
     int rc;
 
     if (argc != 2) {
@@ -98,7 +99,13 @@ int main(int argc, char **argv)
         return 2;
     }
     fclose(file);
-    rc = canopus_elf32_load(data, (uint32_t)length, &ops, &module);
+    scratch = aligned_alloc(32u, CANOPUS_ELF32_SCRATCH_SIZE);
+    if (scratch == NULL) {
+        free(data);
+        return 2;
+    }
+    rc = canopus_elf32_load(data, (uint32_t)length, &ops, &module, scratch);
+    free(scratch);
     free(data);
     if (rc != 0) {
         fprintf(stderr, "load failed: %d\n", rc);

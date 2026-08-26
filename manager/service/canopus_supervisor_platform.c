@@ -498,9 +498,9 @@ static int sup_loader_finalize(void *cookie, void *allocation,
             base = target_base + regions[logical].offset;
             length = regions[logical].size;
             access = regions[logical].kind == CANOPUS_ELF_REGION_EXEC ? 1u :
-                     (regions[logical].kind == CANOPUS_ELF_REGION_RW ? 4u : 5u);
+                     (regions[logical].kind == CANOPUS_ELF_REGION_RW ? 0u : 4u);
         }
-        if (canopus_fw_mpu_region_configure(region, base, length, access, 2u) != 0) {
+        if (canopus_fw_mpu_region_configure(region, base, length, access, 1u) != 0) {
             goto fail;
         }
     }
@@ -550,17 +550,25 @@ static int sup_load_custom(const char *path, uint32_t artifact_size,
     struct sup_loaded_module *loaded = &s_loaded_modules[index];
     struct canopus_elf_loader_ops ops;
     uint8_t *elf;
+    void *scratch;
     int rc;
 
     if (loaded->image.allocation != 0 ||
         sup_read_artifact(path, artifact_size, &elf) != 0) return -1;
+    scratch = canopus_fw_mm_memalign_default(32u,
+                                               CANOPUS_ELF32_SCRATCH_SIZE);
+    if (scratch == 0) {
+        canopus_fw_mm_free_default(elf);
+        return -1;
+    }
     canopus_memset(loaded, 0, sizeof(*loaded));
     ops.cookie = loaded;
     ops.allocate = sup_loader_allocate;
     ops.release = sup_loader_release;
     ops.finalize = sup_loader_finalize;
     ops.invoke = sup_loader_invoke;
-    rc = canopus_elf32_load(elf, artifact_size, &ops, &loaded->image);
+    rc = canopus_elf32_load(elf, artifact_size, &ops, &loaded->image, scratch);
+    canopus_fw_mm_free_default(scratch);
     canopus_fw_mm_free_default(elf);
     return rc;
 }

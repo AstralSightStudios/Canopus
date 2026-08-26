@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (N66NFC_3.1.32)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 1
-// input_digest: b6a1dd04bb365910
+// input_digest: fe3b0a42986f5043
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -222,9 +222,6 @@ pub const CANOPUS_FW_SEM_TRYWAIT_CALLABLE: usize = canopus_thumb_callable(0xc288
 /// Recovered `bt_get_bond_state` at 0xc183e9e. Thumb callable address 0xc183e9f.
 pub const CANOPUS_FW_BT_GET_BOND_STATE_CALLABLE: usize = canopus_thumb_callable(0xc183e9fusize);
 
-/// Recovered `rmmod` at 0xc1489f8. Thumb callable address 0xc1489f9.
-pub const CANOPUS_FW_RMMOD_CALLABLE: usize = canopus_thumb_callable(0xc1489f9usize);
-
 /// Recovered `unregister_driver` at 0x0c390f78. Thumb callable address 0x0c390f79.
 pub const CANOPUS_FW_UNREGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0x0c390f79usize);
 #[allow(non_snake_case)]
@@ -308,9 +305,6 @@ pub unsafe fn canopus_fw_mpu_region_allocate() -> u8 {
     let f: extern "C" fn() -> u8 = unsafe { core::mem::transmute(CANOPUS_FW_MPU_REGION_ALLOCATE_CALLABLE) };
     f()
 }
-
-/// Recovered `insmod` at 0xc148a40. Thumb callable address 0xc148a41.
-pub const CANOPUS_FW_INSMOD_CALLABLE: usize = canopus_thumb_callable(0xc148a41usize);
 
 /// Recovered `bt_pair_display_reply` at 0xc4e38ce. Thumb callable address 0xc4e38cf.
 pub const CANOPUS_FW_BT_PAIR_DISPLAY_REPLY_CALLABLE: usize = canopus_thumb_callable(0xc4e38cfusize);
@@ -588,9 +582,6 @@ pub const CANOPUS_FW_BT_BUFFER_NEW_CALLABLE: usize = canopus_thumb_callable(0xc2
 /// Recovered `lvx_msgbox_create` at 0xc35d608. Thumb callable address 0xc35d609.
 pub const CANOPUS_FW_LVX_MSGBOX_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc35d609usize);
 
-/// Recovered `modhandle` at 0xc150da8. Thumb callable address 0xc150da9.
-pub const CANOPUS_FW_MODHANDLE_CALLABLE: usize = canopus_thumb_callable(0xc150da9usize);
-
 /// Recovered `mm_free_default` at 0x0c16a424. Thumb callable address 0x0c16a425.
 pub const CANOPUS_FW_MM_FREE_DEFAULT_CALLABLE: usize = canopus_thumb_callable(0x0c16a425usize);
 #[allow(non_snake_case)]
@@ -705,7 +696,7 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // hfp_ag_connect: restricted - not exported until context/ownership approved
 // hfp_ag_disconnect: restricted - not exported until context/ownership approved
 // hidden_and_show_app_cb: restricted - not exported until context/ownership approved
-// insmod: restricted - not exported until context/ownership approved
+// insmod: FORBIDDEN - no binding may ever be generated
 // interconnect_close: restricted - not exported until context/ownership approved
 // interconnect_connect: restricted - not exported until context/ownership approved
 // interconnect_send: restricted - not exported until context/ownership approved
@@ -735,14 +726,14 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // lvx_object_set_size: restricted - not exported until context/ownership approved
 // lvx_page_content_create: restricted - not exported until context/ownership approved
 // lvx_style_apply: restricted - not exported until context/ownership approved
-// modhandle: restricted - not exported until context/ownership approved
+// modhandle: FORBIDDEN - no binding may ever be generated
 // offload_property_apply: restricted - not exported until context/ownership approved
 // page_navigator_open_page: restricted - not exported until context/ownership approved
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
 // pthread_create_internal: restricted - not exported until context/ownership approved
 // quickapp_register_app: restricted - not exported until context/ownership approved
 // register_blockdriver: restricted - not exported until context/ownership approved
-// rmmod: restricted - not exported until context/ownership approved
+// rmmod: FORBIDDEN - no binding may ever be generated
 // sdp_builder_create: restricted - not exported until context/ownership approved
 // sdp_commit: restricted - not exported until context/ownership approved
 // sdp_set_raw_attribute: restricted - not exported until context/ownership approved

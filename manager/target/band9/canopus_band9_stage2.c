@@ -121,6 +121,7 @@ int canopus_band9_stage2_entry(int ignored)
     struct canopus_elf_module module;
     struct canopus_elf_loader_ops ops;
     uint8_t *elf;
+    void *scratch;
     uint32_t used = 0;
     int fd;
     int32_t got;
@@ -131,8 +132,15 @@ int canopus_band9_stage2_entry(int ignored)
     elf = ((memalign_fn)(uintptr_t)FW_MEMALIGN)(4u,
                                                CANOPUS_BAND9_SUPERVISOR_SIZE);
     if (elf == 0) return -3;
+    scratch = ((memalign_fn)(uintptr_t)FW_MEMALIGN)(32u,
+                                                     CANOPUS_ELF32_SCRATCH_SIZE);
+    if (scratch == 0) {
+        ((free_fn)(uintptr_t)FW_FREE)(elf);
+        return -6;
+    }
     fd = ((open_fn)(uintptr_t)FW_OPEN)(SUPERVISOR_PATH, 1);
     if (fd < 0) {
+        ((free_fn)(uintptr_t)FW_FREE)(scratch);
         ((free_fn)(uintptr_t)FW_FREE)(elf);
         return -4;
     }
@@ -141,6 +149,7 @@ int canopus_band9_stage2_entry(int ignored)
             fd, elf + used, CANOPUS_BAND9_SUPERVISOR_SIZE - used);
         if (got <= 0) {
             ((close_fn)(uintptr_t)FW_CLOSE)(fd);
+            ((free_fn)(uintptr_t)FW_FREE)(scratch);
             ((free_fn)(uintptr_t)FW_FREE)(elf);
             return -5;
         }
@@ -152,7 +161,9 @@ int canopus_band9_stage2_entry(int ignored)
     ops.release = image_release;
     ops.finalize = image_finalize;
     ops.invoke = image_invoke;
-    rc = canopus_elf32_load(elf, CANOPUS_BAND9_SUPERVISOR_SIZE, &ops, &module);
+    rc = canopus_elf32_load(elf, CANOPUS_BAND9_SUPERVISOR_SIZE, &ops,
+                            &module, scratch);
+    ((free_fn)(uintptr_t)FW_FREE)(scratch);
     ((free_fn)(uintptr_t)FW_FREE)(elf);
     return rc;
 }

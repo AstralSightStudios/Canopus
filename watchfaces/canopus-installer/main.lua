@@ -147,9 +147,11 @@ end
 local function band9_profile_ready()
     return type(BAND9_PROFILE) == "table"
         and BAND9_PROFILE.status == "STATIC_RECOVERED"
+        and BAND9_PROFILE.device_status == "DEVICE_PROVEN"
         and type(BAND9_PROFILE.cave) == "number"
         and BAND9_PROFILE.cave ~= 0
         and type(BAND9_PROFILE.cave_result) == "number"
+        and type(BAND9_PROFILE.exec_mem_attr) == "number"
         and type(BAND9_PROFILE.cave_original) == "table"
         and #BAND9_PROFILE.cave_original == 8
 end
@@ -224,7 +226,11 @@ local function band9_call_mailbox(callable, r0, r1)
     return result
 end
 
-local function band9_barrier_and_exec(address)
+local function band9_mpu_rlar_attr(mem_attr)
+    return (mem_attr * 2) % 16 + 1
+end
+
+local function band9_barrier_and_exec(address, region)
     local trampoline = {
         0x8F4FF3BF, 0x8F6FF3BF, 0xBF004770,
         0, 0, 0, 0, 0,
@@ -236,7 +242,11 @@ local function band9_barrier_and_exec(address)
     end
     run(string.format("exec %08x", BAND9_PROFILE.cave + 1))
     if not band9_restore_cave() or not band9_check_cave() then return false end
-    return run(string.format("exec %08x", address + 1))
+    return run(table.concat({
+        string.format("exec %08x", address + 1),
+        string.format("mw %08x=%08x", BAND9_PROFILE.mpu_rnr, region),
+        string.format("mw %08x=00000000", BAND9_PROFILE.mpu_rlar),
+    }, "; "))
 end
 
 local function band9_release_allocation(address)
@@ -244,8 +254,12 @@ local function band9_release_allocation(address)
 end
 
 local function band9_release_region(region)
-    if not run(string.format("mw %08x=%08x", BAND9_PROFILE.mpu_rnr, region))
-        or not run(string.format("mw %08x=00000000", BAND9_PROFILE.mpu_rlar)) then return false end
+    if not run(table.concat({
+        string.format("mw %08x=%08x", BAND9_PROFILE.mpu_rnr, region),
+        string.format("mw %08x=00000000", BAND9_PROFILE.mpu_rlar),
+    }, "; ")) then
+        return false
+    end
     return band9_call_mailbox(BAND9_PROFILE.mpu_release, region, 0) ~= nil
 end
 
@@ -276,7 +290,8 @@ local function load_band9_stage1()
         or not write_all(BAND9_SUPERVISOR_PATH, supervisor) then
         return false, "Cannot stage Band-9 loader files"
     end
-    local allocation = band9_call_mailbox(BAND9_PROFILE.memalign, 32, payload.size)
+    local exec_size = math.floor((payload.size + 31) / 32) * 32
+    local allocation = band9_call_mailbox(BAND9_PROFILE.memalign, 32, exec_size)
     if not allocation or allocation == 0 or allocation % 32 ~= 0 then
         return false, "Band-9 stage-1 allocation failed"
     end
@@ -293,9 +308,15 @@ local function load_band9_stage1()
         end
         return false, "Band-9 MPU region unavailable"
     end
-    local size = math.floor((payload.size + 31) / 32) * 32
+    if region == BAND9_PROFILE.stage0_region then
+        if not band9_release_allocation(allocation) then
+            return false, "Band-9 MPU collision cleanup failed; reboot before retrying"
+        end
+        return false, "Band-9 MPU region collides with stage-0 region"
+    end
     local rbar = allocation + 6
-    local rlar = allocation + size - 32 + 5
+    local rlar = allocation + exec_size - 32
+        + band9_mpu_rlar_attr(BAND9_PROFILE.exec_mem_attr)
     if not run(string.format("mw %08x=%08x", BAND9_PROFILE.mpu_rnr, region))
         or not run(string.format("mw %08x=%08x", BAND9_PROFILE.mpu_rbar, rbar))
         or not run(string.format("mw %08x=%08x", BAND9_PROFILE.mpu_rlar, rlar)) then
@@ -304,7 +325,7 @@ local function load_band9_stage1()
         end
         return false, "Band-9 MPU configuration failed"
     end
-    local executed = band9_barrier_and_exec(allocation)
+    local executed = band9_barrier_and_exec(allocation, region)
     local cleaned = band9_cleanup_stage1(allocation, region)
     if not cleaned then
         return false, "Band-9 stage-1 cleanup failed; reboot before retrying"

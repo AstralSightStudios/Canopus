@@ -17,7 +17,7 @@ firmware_version = "3.101.043"
 firmware_build = "CONBINE_LTALM078_T3.101.043_08041658"
 module_abi = 1
 relocation_profile = "best1503-v1"
-revision = 5
+revision = 6
 
 # Recovered code/data extent from the exact 3.101.043 IDB; verifier range is
 # intentionally bounded to the recovered XIP window, not the full address bus.
@@ -99,6 +99,7 @@ source_findings = [
   "043 production records retain curated policy/ownership and permanent forbidden/withdrawn decisions; ensemble v2 refreshed active addresses",
   "Exact 3.101.043 MiSans Regular 24 and Demibold 32 globals recovered from the stock lvx_theme_default_init constructor matrix and exact stock-consumer xrefs",
   "Pair-filter failure feedback corrected the 036-style 16-word global assumption: 043 stock bts state is dword_20126738/dword_20126734 with a 17-word descriptor at 0x2CD4A744 and live client pointer offsets +120/+72",
+  "Exact 3.101.043 IDA comparison identified 0x0C3B60A0/0x0C3B60A1 as the transport-specific pairing-state accessor returning record + 0xAC; 0x0C3B5F78 returns record[0xAB] > 3 and is not the state byte",
 ]
 import_date = "2026-08-19"
 maintainer = "canopus-maintainer"

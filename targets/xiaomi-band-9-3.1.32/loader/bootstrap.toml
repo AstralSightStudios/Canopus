@@ -6,8 +6,22 @@ target_id = "xiaomi-band-9-3.1.32"
 firmware_sha256 = "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264"
 loader_family = "nsh-mw-stage1-stage2"
 status = "STATIC_RECOVERED"
-device_status = "DEVICE_REJECTED"
+device_status = "STATIC_CANDIDATE"
 command_family = "mw-exec"
+
+[stage0]
+# Static candidate: this RAM interval is between the DATA/BSS image and the
+# recovered Kmem heap start, with no IDA segment/global ownership. Its runtime
+# contents are not assumed to be zero and are not restored after use.
+kind = "unassigned_privileged_ram_gap"
+base = 0x200CB400
+size = 0x1000
+exec_size = 0x40
+stage0_region = 7
+result_word = 0x200CB440
+original_words_known = false
+preserve_original = false
+status = "STATIC_CANDIDATE"
 
 [stage]
 stage2_path = "/data/canopus/stage2.bin"
@@ -23,6 +37,8 @@ close = 0x0C39025C
 read = 0x0C393466
 memalign = 0x0C16AB8C
 free = 0x0C16A424
+kmem_malloc = 0x0C16AF04
+kmem_free = 0x0C16A4B4
 mpu_alloc = 0x0C5228A4
 mpu_configure = 0x0C52272C
 mpu_release = 0x0C5228FC
@@ -33,9 +49,9 @@ mpu_rbar = 0xE000ED9C
 mpu_rlar = 0xE000EDA0
 mpu_region_count = 8
 exec_access_attr = 1
-exec_mem_attr = 2
-ro_access_attr = 5
-rw_access_attr = 4
+exec_mem_attr = 1
+ro_access_attr = 4
+rw_access_attr = 0
 
 [sram_text]
 base = 0x200686C0
@@ -54,6 +70,6 @@ original_words = [
 ids = ["EVID-LOADER-9132-001"]
 unsafe_assumptions = [
   "DEVICE_REJECTED: on-device NSH mw write to 0x2006A9B0 raised CFSR 0x82 Data Access Violation with MMFAR 0x2006A9B0.",
-  "The static SRAM cave exists in the image but is privileged and not writable from the unprivileged system -c mw task.",
-  "A different privileged bootstrap primitive is required before device loading can be enabled.",
+  "The static SRAM cave exists in the image but is MPU read-only from the system -c mw task.",
+  "The unassigned RAM candidate at 0x200CB400 is statically identified but runtime ownership and instruction-fetch permission are not device-proven.",
 ]

@@ -3,8 +3,8 @@
 // target_id: xiaomi-band-10-pro-3.101.043
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
-// revision : 5
-// input_digest: e83e6609df8f7d5c
+// revision : 6
+// input_digest: 217066db3e5afd83
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -638,8 +638,8 @@ pub unsafe fn canopus_fw_quickapp_register_app(a0: u16, a1: *const canopus_inter
     f(a0, a1)
 }
 
-/// Recovered `bt_get_pairing_state` at 0xc3b5f78. Thumb callable address 0xc3b5f79.
-pub const CANOPUS_FW_BT_GET_PAIRING_STATE_CALLABLE: usize = canopus_thumb_callable(0xc3b5f79usize);
+/// Recovered `bt_get_pairing_state` at 0xc3b60a0. Thumb callable address 0xc3b60a1.
+pub const CANOPUS_FW_BT_GET_PAIRING_STATE_CALLABLE: usize = canopus_thumb_callable(0xc3b60a1usize);
 #[allow(non_snake_case)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn canopus_fw_bt_get_pairing_state(a0: *const u8, a1: u32) -> u32 {
