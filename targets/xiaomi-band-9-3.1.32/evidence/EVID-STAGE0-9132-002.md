@@ -4,6 +4,11 @@
 
 ## Result
 
+> Publication update: the ROX-first region-7 sequence described by the original
+> review was rejected by the 2026-08-27 device fault. The corrected RWX-first,
+> RX-final sequence and pre-entry firmware barrier are recorded in
+> `EVID-STAGE0-9132-003.md` and remain `STATIC_CANDIDATE` pending retest.
+
 The existing Band 9 implementation already has a complete stage-1/stage-2 loader design. The old mailbox trampoline requires writes to `0x2006a9b0`, a protected SRAM-text address, and device evidence records `CFSR=0x82` / `MMFAR=0x2006a9b0` during the first `mw` store.
 
 The exact IDB does contain a better static stage-0 candidate: `0x200cb400`, inside the unassigned RAM interval `0x200cb3d4..0x200db418` between the end of BSS and the start of Kmem. The candidate has 0x1000 bytes, is 32-byte aligned, and leaves the existing SRAM-text cave untouched. Unlike the earlier startup-zeroed candidate, this gap is not assumed to retain zeroes after boot; the production profile therefore skips the original-word preflight and restoration for this explicitly unassigned stage-0 workspace. It is outside the explicit SRAM-text ROX region and remains `STATIC_CANDIDATE` until a device probe confirms the live MPU policy and runtime ownership.
@@ -39,7 +44,7 @@ The code path is in `watchfaces/canopus-installer-prod/xiaomi-band-9/main.lua` a
 | Direct MPU publisher | `0x0c5226e8` | Writes `0xe000ed98`, `0xe000ed9c`, and `0xe000eda0`; temporarily disables IRQs around publication. |
 | SRAM-text protection | `0x0c52293c` | Allocates a region and configures `0x200686c0`, length `0x2300`, which contains the prior cave. |
 
-The only static code xrefs to the configuration helper are MPU initialization/protection paths (`0x0c5227d4` and `0x0c52293c`). The initial table passed by `0x0c522a6c` contains regions at `0x00000000/0x20000`, `0x0025c000/0x160000`, and `0x00000000/0xd02000`; none covers the `0x200cb400` candidate. The SRAM-text protector explicitly covers only `0x200686c0..0x2006ade0`. The fast-RAM branch receives a zero length (`0x2015fe80/0`), so it publishes no additional range. This proves that the candidate is outside every recovered explicit MPU range; the live background policy remains a device-side validation item.
+The only static code xrefs to the configuration helper are MPU initialization/protection paths (`0x0c5227d4` and `0x0c52293c`). The initial table passed by `0x0c522a6c` contains regions at `0x00000000/0x20000`, `0x0025c000/0x160000`, and `0xd0200000/0x10000`; none covers the `0x200cb400` candidate. The SRAM-text protector explicitly covers only `0x200686c0..0x2006ade0`. The fast-RAM branch receives a zero length (`0x2015fe80/0`), so it publishes no additional range. This proves that the candidate is outside every recovered explicit MPU range; the live background policy remains a device-side validation item.
 
 ## Ordinary-RAM candidate
 
@@ -62,21 +67,29 @@ The first device retest of the gap candidate reported `stage-1 allocation failed
 
 A subsequent retest after correcting the shifted mailbox literal offsets returned `result=0`. The exact `sub_C16AB8C` body returns zero when its Umem allocation path cannot produce a block. The production path therefore moves only the outer stage-1 workspace to the exact Kmem `malloc` wrapper, requests an extra 31 bytes, aligns an interior image base to 32 bytes, and frees the original Kmem pointer after stage-1 execution. Stage-2 keeps using Umem `memalign` because its ELF image still requires the existing two-argument allocator ABI.
 
-The stage-0 implementation now explicitly configures an otherwise unused MPU slot before every mailbox call:
+The stage-0 implementation now explicitly configures the temporary MPU slot before every mailbox call:
 
 ```text
 stage0 region: 7
 stage0 executable span: 0x200cb400..0x200cb43f (0x40 bytes)
-RBAR: 0x200cb406  (base | access=1 encoding)
-RLAR: 0x200cb423  (limit | mem_attr=1 | enable)
-result word: 0x200cb440  (outside the ROX span, remains writable)
+initial RBAR: 0x200cb402  (base | writable access=0 encoding)
+RLAR:        0x200cb423  (limit | mem_attr=1 | enable)
+final RBAR:  0x200cb406  (base | read-only executable access=1 encoding)
+result word: 0x200cb440  (outside the mapped code span, remains writable)
 ```
 
-The mailbox starts with DSB/ISB, then loads its two arguments and callback, and stores an entry marker (`0xA5A5A5A5`) into `0x200cb440` before BLX. Before each mailbox execution, Lua initializes that word to its own address as a sentinel. After the callback returns, the stage-0 MPU slot is disabled before `mw` reads the result; an unchanged sentinel means that the callback entry store was not observed, the entry marker means the callback did not return, and `result=0` means the callback actually returned zero. Region 7 is intentionally used as a temporary untracked slot; the firmware allocator can still return its tracked free slot for stage-1's own executable mapping, so the installer must reject that collision before configuring stage-1. Stage-1's mapping, stage-0 barrier, stage-0 release, and stage-1 entry are likewise chained in one NSH command context. This removes the default-map XN assumption while preserving the device check for live region ownership and MPU publication.
+After RLAR publication, the loader narrows RBAR to RX and then calls the firmware-resident barrier tail
+at `0x0c5226db`; the mailbox retains its own DSB/ISB as a second guard, then loads
+its two arguments and callback, and stores an entry marker (`0xA5A5A5A5`) into `0x200cb440` before BLX. Before each mailbox execution, Lua initializes that word to its own address as a sentinel. After the callback returns, the stage-0 MPU slot is disabled before `mw` reads the result; an unchanged sentinel means that the callback entry store was not observed, the entry marker means the callback did not return, and `result=0` means the callback actually returned zero. Region 7 is intentionally used as a temporary untracked slot; the firmware allocator can still return its tracked free slot for stage-1's own executable mapping, so the installer must reject that collision before configuring stage-1. Stage-1's mapping, stage-0 barrier, stage-0 release, and stage-1 entry are likewise chained in one NSH command context. Both stages are published RWX before being narrowed to RX. This removes the default-map XN assumption without transiently making a retained live stack range read-only; see `EVID-STAGE0-9132-003.md` for the rejected sequence and fault binding.
 
 ## Device evidence binding
 
-The rejected write is recorded in `EVID-LOADER-9132-001.json`:
+The region-7 ROX publication failure is recorded in
+`EVID-STAGE0-9132-003.md`: `CFSR=0xb2`, `MMFAR=0x3c80874c`, with
+`DACCVIOL`, `MSTKERR`, and `MLSPERR` while `system -c mw` was publishing
+`RBAR=0x200cb406`.
+
+The earlier rejected write is recorded in `EVID-LOADER-9132-001.json`:
 
 ```text
 attempted write: 0x49044803 -> 0x2006a9b0
@@ -149,6 +162,6 @@ stage1.outer_alloc   = Kmem malloc(0x200 + 31), 32-byte interior alignment
 stage1.outer_free    = Kmem free(original_pointer)
 ```
 
-The second requested target was also fully audited: OTA/mass supplies a trusted copy and asynchronous file state machine, but the exact call graph terminates at VFS/file write and never reaches MPU, DMA, or executable callback. No independent resource-package, NFC, or RPMsg path provides a stronger copy-to-exec route. The candidate therefore removes the old cave dependency; the only remaining gate is live confirmation that the privileged background map permits instruction fetch from the unassigned interval.
+The second requested target was also fully audited: OTA/mass supplies a trusted copy and asynchronous file state machine, but the exact call graph terminates at VFS/file write and never reaches MPU, DMA, or executable callback. No independent resource-package, NFC, or RPMsg path provides a stronger copy-to-exec route. The candidate therefore removes the old cave dependency; the remaining gate is an on-device retest of the corrected RWX-first/RX-final, pre-entry-synchronized MPU transition.
 
 The production installer accepts this explicit `STATIC_CANDIDATE` for the requested device validation; `DEVICE_REJECTED` remains hard-blocked. The target profile is intentionally not promoted to `DEVICE_PROVEN` by static analysis.

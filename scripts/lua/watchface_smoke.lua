@@ -108,7 +108,7 @@ local function module_installer_io(fault)
     end
 end
 
-local function band9_installer_io(fault, firmware_version)
+local function band9_installer_io(fault, firmware_version, require_pre_entry_sync)
     firmware_version = firmware_version or "3.1.175"
     local target_id = "xiaomi-band-9-pro-3.1.175"
     local firmware_sha256 =
@@ -135,11 +135,13 @@ local function band9_installer_io(fault, firmware_version)
         kmem_free = 0x0c16a4b5
     end
     local cave_result = cave_base + 64
-    local stage0_rbar = cave_base + 6
+    local stage0_writable_rbar = cave_base + 2
+    local stage0_executable_rbar = cave_base + 6
     local stage0_rlar = cave_base + 64 - 32 + 3
     local mpu_rnr = 0xe000ed98
     local mpu_rbar = 0xe000ed9c
     local mpu_rlar = 0xe000eda0
+    local mpu_sync = 0x0c5226db
     local resource_prefix = "/fake/"
     local resource_suffix = "-" .. target_id
     local cave = {
@@ -163,12 +165,14 @@ return {
     mpu_alloc = 0x%08x,
     mpu_configure = 0x%08x,
     mpu_release = 0x%08x,
+    mpu_sync = 0x0c5226db,
     mpu_rnr = 0xe000ed98,
     mpu_rbar = 0xe000ed9c,
     mpu_rlar = 0xe000eda0,
     mpu_region_count = 8,
     exec_access_attr = 1,
     exec_mem_attr = 1,
+    rw_access_attr = 0,
     stage0_region = 7,
     stage0_size = 4096,
     stage0_exec_size = 64,
@@ -198,10 +202,16 @@ return {
     local configured_rbar
     local configured_rlar
     local selected_region
+    local mpu_events = {}
+    local region_rbar = {}
+    local region_rlar = {}
+    local mpu_synced = false
+    local pre_entry_syncs = 0
     local compound_commands = 0
     local pending_op = 0
     local pending_state = 0
     local stage1_exec_address
+    local next_command_id = 0
     if fault == "cave_mismatch" then cave[cave_base] = 1 end
     local function le32(value)
         return string.char(value % 256, math.floor(value / 256) % 256,
@@ -261,7 +271,11 @@ return {
         end
         return nil
     end
-    local function execute(command)
+    local function execute(command, command_id)
+        if not command_id then
+            next_command_id = next_command_id + 1
+            command_id = next_command_id
+        end
         if command:find(";", 1, true) or command:find("&&", 1, true) then
             compound_commands = compound_commands + 1
             local all_ok = true
@@ -270,7 +284,7 @@ return {
                 for part in sequence:gmatch("[^&]+") do
                     if sequence_ok then
                         local trimmed = part:match("^%s*(.-)%s*$")
-                        sequence_ok = execute(trimmed)
+                        sequence_ok = execute(trimmed, command_id)
                         if not sequence_ok and fault == "mpu_configuration_failure" then
                             break
                         end
@@ -297,9 +311,17 @@ return {
             cave[addr] = word
             if addr == mpu_rbar then
                 configured_rbar = word
+                region_rbar[selected_region] = word
+                mpu_events[#mpu_events + 1] = { selected_region, "rbar", word, command_id }
+                mpu_synced = false
             end
             if addr == mpu_rnr then
                 selected_region = word
+            end
+            if addr == mpu_rlar then
+                region_rlar[selected_region] = word
+                mpu_events[#mpu_events + 1] = { selected_region, "rlar", word, command_id }
+                mpu_synced = false
             end
             if addr == mpu_rlar and word ~= 0 then
                 configured_rlar = word
@@ -331,10 +353,24 @@ return {
         if exec_address then
             exec_address = exec_address:gsub("^0[xX]", "")
             local addr = tonumber(exec_address, 16)
+            if addr == mpu_sync then
+                mpu_synced = true
+                mpu_events[#mpu_events + 1] = {
+                    selected_region, "sync", addr, command_id }
+                return true
+            end
             if exec_output then
                 files[exec_output] = string.format("Calling 0x%08x\\n", addr)
             end
             if addr == cave_base + 1 then
+                mpu_events[#mpu_events + 1] = {
+                    selected_region, "exec", addr, command_id }
+                if require_pre_entry_sync and (not mpu_synced
+                    or region_rbar[7] ~= stage0_executable_rbar
+                    or region_rlar[7] ~= stage0_rlar) then
+                    return false
+                end
+                if mpu_synced then pre_entry_syncs = pre_entry_syncs + 1 end
                 local is_barrier = cave[cave_base] == 0x8f4ff3bf
                     and cave[cave_base + 8] == 0x47702001
                 if is_barrier then return true end
@@ -439,6 +475,11 @@ return {
                 return result == 0
             end
             if addr == 0x21000001 or addr == stage1_exec_address then
+                if require_pre_entry_sync and stage1_exec_address
+                    and (not mpu_synced or region_rbar[3] ~= addr - 1 + 6
+                        or region_rlar[3] ~= addr - 1 + 3) then
+                    return false
+                end
                 if fault == "stage1_exec_failure" then return false end
                 device_present = true
                 return true
@@ -448,7 +489,8 @@ return {
     end
     return open, execute, function()
         return cave, files, device_present, used_insmod, freed, released,
-            configured_rbar, configured_rlar, compound_commands, cave_base
+            configured_rbar, configured_rlar, compound_commands, cave_base,
+            pre_entry_syncs, mpu_events, stage1_exec_address
     end
 end
 
@@ -471,8 +513,10 @@ local function check(path, installer_fault, installer_firmware)
             and path:match("canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") then
             selected_firmware = "3.1.32"
         end
+        local strict_mpu = path:match(
+            "canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") ~= nil
         io.open, os.execute, band9_state =
-            band9_installer_io(band9_fault, selected_firmware)
+            band9_installer_io(band9_fault, selected_firmware, strict_mpu)
     elseif path:match("canopus_hello/main%.lua$") then
         io.open, installer_state = module_installer_io(installer_fault)
         os.execute = function() return true end
@@ -534,7 +578,8 @@ local function check(path, installer_fault, installer_firmware)
     end
     if band9_state then
         local cave, files, device_present, used_insmod, freed, released,
-            configured_rbar, configured_rlar, compound_commands, cave_base = band9_state()
+            configured_rbar, configured_rlar, compound_commands, cave_base,
+            pre_entry_syncs, mpu_events, stage1_exec_address = band9_state()
         local original = { 0, 0, 0, 0, 0x726f6e5f, 0x73616c66,
             0x70615f68, 0x72665f69 }
         if band9_fault == "cave_mismatch" then original[1] = 1 end
@@ -558,6 +603,55 @@ local function check(path, installer_fault, installer_firmware)
             or (band9_fault == "stage1_exec_failure" and freed and released)
         local strict_stage0_mpu = path:match(
             "canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") ~= nil
+        local function matches_mpu_sequence(start, region, expected)
+            if start < 1 or start + #expected - 1 > #mpu_events then
+                return false
+            end
+            local command_id = mpu_events[start][4]
+            for offset, item in ipairs(expected) do
+                local actual = mpu_events[start + offset - 1]
+                if actual[1] ~= region or actual[2] ~= item[1]
+                    or actual[3] ~= item[2] or actual[4] ~= command_id then
+                    return false
+                end
+            end
+            return true
+        end
+        local function has_mpu_sequence(region, expected)
+            for start = 1, #mpu_events - #expected + 1 do
+                if matches_mpu_sequence(start, region, expected) then
+                    return true
+                end
+            end
+            return false
+        end
+        local stage0_expected = {
+            { "rbar", cave_base + 2 },
+            { "rlar", cave_base + 64 - 32 + 3 },
+            { "rbar", cave_base + 6 },
+            { "sync", 0x0c5226db },
+            { "exec", cave_base + 1 },
+            { "rlar", 0 },
+            { "sync", 0x0c5226db },
+        }
+        local stage0_exec_count = 0
+        local stage0_sequences = true
+        for index, event in ipairs(mpu_events) do
+            if event[1] == 7 and event[2] == "exec"
+                and event[3] == cave_base + 1 then
+                stage0_exec_count = stage0_exec_count + 1
+                if not matches_mpu_sequence(index - 4, 7, stage0_expected) then
+                    stage0_sequences = false
+                end
+            end
+        end
+        stage0_sequences = stage0_sequences and stage0_exec_count > 0
+        local stage1_base = stage1_exec_address and stage1_exec_address - 1
+        local stage1_sequence = stage1_base and has_mpu_sequence(3, {
+            { "rbar", stage1_base + 2 },
+            { "rlar", stage1_base + 3 },
+            { "rbar", stage1_base + 6 },
+        })
         if band9_fault then
             if device_present or used_insmod or not staged or not fault_ok then
                 io.open = original_io_open
@@ -573,7 +667,9 @@ local function check(path, installer_fault, installer_firmware)
             or not freed or not released
             or (strict_stage0_mpu and (configured_rbar ~= cave_base + 6
                 or configured_rlar ~= cave_base + 64 - 32 + 3
-                or configured_rlar % 8 ~= 3))
+                or configured_rlar % 8 ~= 3
+                or pre_entry_syncs == 0
+                or not stage0_sequences or not stage1_sequence))
             or (path:match("canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$")
                 and compound_commands == 0) then
             io.open = original_io_open

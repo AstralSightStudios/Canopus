@@ -61,6 +61,14 @@ local function write_all(path, content)
     return write_ok and write_result ~= nil and close_ok and close_result ~= nil
 end
 
+local function mpu_rbar_attr(access_attr)
+    if access_attr == 0 then return 0x02 end
+    if access_attr == 1 or access_attr == 2 then return 0x06 end
+    if access_attr == 3 then return 0x03 end
+    if access_attr == 4 then return 0x07 end
+    return nil
+end
+
 local function load_profile(selected_target)
     local path = SCRIPT_PATH .. "canopus_loader_profile-" .. selected_target .. ".bin"
     local source = read_all(path, "r")
@@ -81,13 +89,18 @@ local function load_profile(selected_target)
     end
     for _, key in ipairs({
         "memalign", "free", "kmem_malloc", "kmem_free", "mpu_alloc", "mpu_configure", "mpu_release",
-        "mpu_rnr", "mpu_rbar", "mpu_rlar", "mpu_region_count",
-        "exec_access_attr", "exec_mem_attr", "cave",
+        "mpu_sync", "mpu_rnr", "mpu_rbar", "mpu_rlar", "mpu_region_count",
+        "exec_access_attr", "exec_mem_attr", "rw_access_attr", "cave",
         "cave_result", "stage0_size", "stage0_region", "stage0_exec_size",
     }) do
         if type(value[key]) ~= "number" then return nil end
     end
-    if type(value.cave_original) ~= "table" or #value.cave_original ~= 8 then
+    if (value.exec_access_attr ~= 1 and value.exec_access_attr ~= 2)
+        or value.rw_access_attr ~= 0
+        or value.exec_mem_attr < 0 or value.exec_mem_attr > 7
+        or value.exec_mem_attr ~= math.floor(value.exec_mem_attr)
+        or type(value.cave_original) ~= "table"
+        or #value.cave_original ~= 8 then
         return nil
     end
     return value
@@ -197,7 +210,15 @@ end
 
 local function stage0_mpu_values()
     local limit = profile.cave + profile.stage0_exec_size - 32
-    return profile.cave + 0x06, limit + mpu_rlar_attr(profile.exec_mem_attr)
+    -- Publish writable while the old RLAR can still cover a live task stack, then
+    -- narrow to RX only after the new limit confines the region to the mailbox.
+    return profile.cave + mpu_rbar_attr(profile.rw_access_attr),
+        profile.cave + mpu_rbar_attr(profile.exec_access_attr),
+        limit + mpu_rlar_attr(profile.exec_mem_attr)
+end
+
+local function mpu_sync_command()
+    return string.format("exec 0x%08x", profile.mpu_sync)
 end
 
 local function stage0_mpu_release()
@@ -205,11 +226,12 @@ local function stage0_mpu_release()
         string.format("mw %08x=%08x", profile.mpu_rnr,
             profile.stage0_region),
         string.format("mw %08x=00000000", profile.mpu_rlar),
+        mpu_sync_command(),
     })
 end
 
 local function stage0_exec_with_mpu(address, prefix, keep_region, postfix)
-    local rbar, rlar = stage0_mpu_values()
+    local writable_rbar, executable_rbar, rlar = stage0_mpu_values()
     local commands = {}
     if prefix then
         for _, command in ipairs(prefix) do
@@ -218,13 +240,18 @@ local function stage0_exec_with_mpu(address, prefix, keep_region, postfix)
     end
     commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rnr,
         profile.stage0_region)
-    commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rbar, rbar)
+    commands[#commands + 1] = string.format("mw %08x=%08x",
+        profile.mpu_rbar, writable_rbar)
     commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rlar, rlar)
+    commands[#commands + 1] = string.format("mw %08x=%08x",
+        profile.mpu_rbar, executable_rbar)
+    commands[#commands + 1] = mpu_sync_command()
     commands[#commands + 1] = string.format("exec 0x%08x", profile.cave + 1)
     if address then
         commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rnr,
             profile.stage0_region)
         commands[#commands + 1] = string.format("mw %08x=00000000", profile.mpu_rlar)
+        commands[#commands + 1] = mpu_sync_command()
         commands[#commands + 1] = string.format("exec 0x%08x", address)
         if postfix then
             for _, command in ipairs(postfix) do
@@ -235,16 +262,15 @@ local function stage0_exec_with_mpu(address, prefix, keep_region, postfix)
         commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rnr,
             profile.stage0_region)
         commands[#commands + 1] = string.format("mw %08x=00000000", profile.mpu_rlar)
+        commands[#commands + 1] = mpu_sync_command()
     end
     return run(table.concat(commands, "; ")), nil
 end
 
 local function execute_stage0_trampoline()
-    local exec_ok, mpu_error = stage0_exec_with_mpu(nil, nil, true)
+    local exec_ok, mpu_error = stage0_exec_with_mpu(nil, nil, false)
     if mpu_error then return nil, mpu_error end
-    local released = stage0_mpu_release()
     local result = shell_word(profile.cave_result)
-    if not released then return nil, "stage-0 MPU release failed" end
     if result == nil then return nil, "stage-0 result read failed" end
     if result == profile.cave_result and not exec_ok then
         return nil, "stage-0 exec parser rejected target ["
@@ -329,12 +355,15 @@ local function barrier_and_exec(address, region, rbar, rlar)
     end
     local commands = {
         string.format("mw %08x=%08x", profile.mpu_rnr, region),
-        string.format("mw %08x=%08x", profile.mpu_rbar, rbar),
+        string.format("mw %08x=%08x", profile.mpu_rbar,
+            address + mpu_rbar_attr(profile.rw_access_attr)),
         string.format("mw %08x=%08x", profile.mpu_rlar, rlar),
+        string.format("mw %08x=%08x", profile.mpu_rbar, rbar),
     }
     local release_stage1 = {
         string.format("mw %08x=%08x", profile.mpu_rnr, region),
         string.format("mw %08x=00000000", profile.mpu_rlar),
+        mpu_sync_command(),
     }
     local stage0_ok, stage0_error = stage0_exec_with_mpu(
         address + 1, commands, false, release_stage1)
@@ -359,6 +388,7 @@ local function release_region(region)
     if not run_sequence({
         string.format("mw %08x=%08x", profile.mpu_rnr, region),
         string.format("mw %08x=00000000", profile.mpu_rlar),
+        mpu_sync_command(),
     }) then
         return false
     end
@@ -431,7 +461,7 @@ local function load_supervisor()
         end
         return false, "Band 9 MPU region collides with stage-0 region"
     end
-    local rbar = allocation + 6
+    local rbar = allocation + mpu_rbar_attr(profile.exec_access_attr)
     local rlar = allocation + exec_size - 32
         + mpu_rlar_attr(profile.exec_mem_attr)
     local executed = barrier_and_exec(allocation, region, rbar, rlar)

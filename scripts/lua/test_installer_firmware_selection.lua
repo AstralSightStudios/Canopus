@@ -176,12 +176,14 @@ return {
     mpu_alloc = 0x0c5228a5,
     mpu_configure = 0x0c52272d,
     mpu_release = 0x0c5228fd,
+    mpu_sync = 0x0c5226db,
     mpu_rnr = 0xe000ed98,
     mpu_rbar = 0xe000ed9c,
     mpu_rlar = 0xe000eda0,
     mpu_region_count = 8,
     exec_access_attr = 1,
     exec_mem_attr = 1,
+    rw_access_attr = 0,
     stage0_region = 7,
     stage0_size = 4096,
     stage0_exec_size = 64,
@@ -245,6 +247,38 @@ run_band10_case(nil, false, false, nil)
 run_band9_case("3.1.32\n", true, true)
 run_band9_case("3.1.175\n", true, false)
 run_band9_case(nil, false, false)
+
+-- Numerically valid attributes with the wrong permission semantics must be
+-- rejected before exposing Run.
+for _, replacement in ipairs({
+    { "rw_access_attr = 0", "rw_access_attr = 4" },
+    { "rw_access_attr = 0", "rw_access_attr = 3" },
+    { "exec_access_attr = 1", "exec_access_attr = 0" },
+}) do
+    local installer_dir = "watchfaces/canopus-installer-prod/xiaomi-band-9/"
+    local target_id = "xiaomi-band-9-3.1.32"
+    horizontal_resolution = 192
+    vertical_resolution = 490
+    objects = {}
+    subscriptions = {}
+    local invalid_profile = band9_profile("STATIC_CANDIDATE"):gsub(
+        replacement[1], replacement[2])
+    local files = {
+        [installer_dir .. "canopus_loader_profile-" .. target_id .. ".bin"] =
+            invalid_profile,
+        [installer_dir .. "canopus_stage1-" .. target_id .. ".bin"] =
+            "return { size = 8, words = { 0xbf00bf00, 0xbf00bf00 } }",
+        [installer_dir .. "canopus_stage2-" .. target_id .. ".bin"] =
+            string.rep("S", 64),
+        [installer_dir .. "canopus_supervisor-" .. target_id .. ".bin"] = fake_elf,
+    }
+    local commands = install_environment(files, "3.1.32\n", true)
+    SCRIPT_PATH = installer_dir
+    assert(loadfile(installer_dir .. "main.lua"))()
+    local buttons, unsupported_text = inspect_page()
+    assert(#commands == 0 and #buttons == 0)
+    assert(unsupported_text == "Installer resources unavailable")
+end
 
 -- A profile without device proof may render the installer page, but its Run
 -- action must issue no NSH mw/exec command.

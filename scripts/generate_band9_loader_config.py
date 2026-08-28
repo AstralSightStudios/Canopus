@@ -46,8 +46,11 @@ def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict, dict]
     stage0_region = number(stage0.get("stage0_region"), "stage0.stage0_region")
     stage0_result = number(stage0.get("result_word"), "stage0.result_word")
     original_words_known = stage0.get("original_words_known", True)
+    requires_mpu_sync = stage0.get("requires_mpu_sync", False)
     if not isinstance(original_words_known, bool):
         raise SystemExit("stage0.original_words_known must be boolean")
+    if not isinstance(requires_mpu_sync, bool):
+        raise SystemExit("stage0.requires_mpu_sync must be boolean")
     if stage0_region >= number(architecture.get("mpu_region_count"),
                               "architecture.mpu_region_count"):
         raise SystemExit("stage0.stage0_region is outside the MPU region count")
@@ -57,10 +60,15 @@ def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict, dict]
             or stage0_base <= stage0_result < stage0_base + stage0_exec_size:
         raise SystemExit("stage0 must be an aligned region containing result_word")
 
-    for key in (
+    firmware_entries = [
         "exec_handler", "mw_handler", "open", "close", "read", "memalign", "free",
         "kmem_malloc", "kmem_free", "mpu_alloc", "mpu_configure", "mpu_release",
-    ):
+    ]
+    if requires_mpu_sync and "mpu_sync" not in firmware:
+        raise SystemExit("stage0.requires_mpu_sync needs an exact firmware.mpu_sync entry")
+    if "mpu_sync" in firmware:
+        firmware_entries.append("mpu_sync")
+    for key in firmware_entries:
         entry = number(firmware[key], f"firmware.{key}")
         if entry == 0 and profile.get("status") != "STATIC_RECOVERED":
             continue
@@ -74,6 +82,20 @@ def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict, dict]
 
     for key in ("mpu_rnr", "mpu_rbar", "mpu_rlar", "mpu_region_count"):
         number(architecture[key], f"architecture.{key}")
+    for key in (
+        "exec_access_attr", "exec_mem_attr", "ro_access_attr", "rw_access_attr",
+    ):
+        number(architecture[key], f"architecture.{key}")
+    if requires_mpu_sync:
+        if architecture["exec_access_attr"] not in (1, 2):
+            raise SystemExit(
+                "synchronized publication requires executable read-only access")
+        if architecture["rw_access_attr"] != 0:
+            raise SystemExit(
+                "synchronized publication requires executable read-write access")
+        if architecture["exec_mem_attr"] not in range(8):
+            raise SystemExit(
+                "synchronized publication requires a valid MPU memory attribute")
     number(sram["base"], "sram_text.base")
     number(sram["size"], "sram_text.size")
     cave = number(sram["cave"], "sram_text.cave")
@@ -125,6 +147,8 @@ def write_header(path: pathlib.Path, profile: dict, stage0: dict, firmware: dict
         "CANOPUS_BAND9_STAGE0_REGION": stage0["stage0_region"],
         "CANOPUS_BAND9_STAGE0_EXEC_SIZE": stage0["exec_size"],
     }
+    if "mpu_sync" in firmware:
+        mapping["CANOPUS_FW_MPU_SYNC"] = firmware["mpu_sync"] | 1
     for key, value in mapping.items():
         lines.append(f"#define {key} UINT32_C(0x{number(value, key):08x})")
     lines.extend([
@@ -164,12 +188,17 @@ def write_lua(path: pathlib.Path, profile: dict, firmware: dict, architecture: d
         field("mpu_alloc", firmware["mpu_alloc"] | 1),
         field("mpu_configure", firmware["mpu_configure"] | 1),
         field("mpu_release", firmware["mpu_release"] | 1),
+        *(
+            [field("mpu_sync", firmware["mpu_sync"] | 1)]
+            if "mpu_sync" in firmware else []
+        ),
         field("mpu_rnr", architecture["mpu_rnr"]),
         field("mpu_rbar", architecture["mpu_rbar"]),
         field("mpu_rlar", architecture["mpu_rlar"]),
         field("mpu_region_count", architecture["mpu_region_count"]),
         field("exec_access_attr", architecture["exec_access_attr"]),
         field("exec_mem_attr", architecture["exec_mem_attr"]),
+        field("rw_access_attr", architecture["rw_access_attr"]),
         field("cave", stage0["base"]),
         field("cave_result", stage0["result_word"]),
         field("stage0_size", stage0["size"]),

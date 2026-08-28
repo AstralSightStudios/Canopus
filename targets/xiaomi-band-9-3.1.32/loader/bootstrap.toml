@@ -22,6 +22,7 @@ result_word = 0x200CB440
 original_words_known = false
 preserve_original = false
 status = "STATIC_CANDIDATE"
+requires_mpu_sync = true
 
 [stage]
 stage2_path = "/data/canopus/stage2.bin"
@@ -42,6 +43,8 @@ kmem_free = 0x0C16A4B4
 mpu_alloc = 0x0C5228A4
 mpu_configure = 0x0C52272C
 mpu_release = 0x0C5228FC
+# Entry at the barrier tail of the MPU helper: DSB SY; ISB SY; BX LR.
+mpu_sync = 0x0C5226DA
 
 [architecture]
 mpu_rnr = 0xE000ED98
@@ -67,9 +70,11 @@ original_words = [
 ]
 
 [evidence]
-ids = ["EVID-LOADER-9132-001"]
+ids = ["EVID-LOADER-9132-001", "EVID-STAGE0-9132-003"]
 unsafe_assumptions = [
   "DEVICE_REJECTED: on-device NSH mw write to 0x2006A9B0 raised CFSR 0x82 Data Access Violation with MMFAR 0x2006A9B0.",
   "The static SRAM cave exists in the image but is MPU read-only from the system -c mw task.",
-  "The unassigned RAM candidate at 0x200CB400 is statically identified but runtime ownership and instruction-fetch permission are not device-proven.",
+  "The unassigned RAM candidate at 0x200CB400 is statically identified, but runtime ownership is not device-proven.",
+  "DEVICE_REJECTED: ROX-first publication into live region 7 caused CFSR 0xB2 stacking failure at MMFAR 0x3C80874C.",
+  "The corrected 0x200CB400 RWX-first/RX-final mapping and pre-entry firmware barrier remain pending an on-device retest.",
 ]
