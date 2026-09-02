@@ -80,12 +80,12 @@ struct firmware_page_descriptor {
     page_create_fn on_create;                 /* +0x4c */
     page_lifecycle_fn on_resume;              /* +0x50 */
     page_foreground_data_fn on_foreground_data; /* +0x54 */
-    page_lifecycle_fn on_pause;               /* +0x58 */
-    page_lifecycle_fn on_destroy;             /* +0x5c */
-    page_lifecycle_fn on_ui_destroy;          /* +0x60 */
-    void *extension_callback_100;             /* +0x64 */
-    void *extension_callback_104;             /* +0x68 */
-    void *extension_callback_108;             /* +0x6c */
+    page_lifecycle_fn on_start;                /* +0x58 */
+    page_lifecycle_fn on_pause;               /* +0x5c */
+    page_lifecycle_fn on_stop;                /* +0x60 */
+    page_lifecycle_fn on_destroy;             /* +0x64 */
+    page_lifecycle_fn on_back;                /* +0x68 */
+    page_lifecycle_fn on_keyevent;            /* +0x6c */
     uint32_t _tail_70;                        /* +0x70 */
 };
 
