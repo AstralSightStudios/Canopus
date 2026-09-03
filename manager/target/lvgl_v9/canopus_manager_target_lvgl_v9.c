@@ -79,14 +79,14 @@ struct firmware_page_descriptor {
     void *runtime_parent;                     /* +0x48 */
     page_create_fn on_create;                 /* +0x4c */
     page_lifecycle_fn on_resume;              /* +0x50 */
-    page_foreground_data_fn on_foreground_data; /* +0x54 */
-    page_lifecycle_fn on_start;                /* +0x58 */
+    page_foreground_data_fn on_newdata;       /* +0x54 */
+    page_lifecycle_fn on_start;               /* +0x58 */
     page_lifecycle_fn on_pause;               /* +0x5c */
     page_lifecycle_fn on_stop;                /* +0x60 */
     page_lifecycle_fn on_destroy;             /* +0x64 */
     page_lifecycle_fn on_back;                /* +0x68 */
     page_lifecycle_fn on_keyevent;            /* +0x6c */
-    uint32_t _tail_70;                        /* +0x70 */
+    page_lifecycle_fn get_scroll_obj;         /* +0x70 */
 };
 
 struct firmware_app_descriptor {
