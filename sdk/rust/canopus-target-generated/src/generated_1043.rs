@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 6
-// input_digest: 217066db3e5afd83
+// input_digest: 08ecdd6e2f85ac44
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -256,6 +256,9 @@ pub unsafe fn canopus_fw_write(a0: i32, a1: *const core::ffi::c_void, a2: u32) -
 
 /// Recovered global `miwear_bt_cpevent_registration_handle` at 0x2013DBE0.
 pub const canopus_fw_miwear_bt_cpevent_registration_handle: usize = 0x2013DBE0usize;
+
+/// Recovered `watchface_reset_watchface` at 0xc5f36c0. Thumb callable address 0xc5f36c1.
+pub const CANOPUS_FW_WATCHFACE_RESET_WATCHFACE_CALLABLE: usize = canopus_thumb_callable(0xc5f36c1usize);
 
 /// Recovered `lvx_notification_insert_message` at 0xca9a898. Thumb callable address 0xca9a899.
 pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_thumb_callable(0xca9a899usize);
@@ -966,4 +969,5 @@ pub const CANOPUS_FW_SERVICE_MANAGER_STARTUP_CALLABLE: usize = canopus_thumb_cal
 // unregister_blockdriver: restricted - not exported until context/ownership approved
 // vendor_hci_transport_register: FORBIDDEN - no binding may ever be generated
 // watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
+// watchface_reset_watchface: restricted - not exported until context/ownership approved
 

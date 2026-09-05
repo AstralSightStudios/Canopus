@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 6
- * input_digest: 217066db3e5afd83
+ * input_digest: 08ecdd6e2f85ac44
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -515,6 +515,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * unregister_blockdriver: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
  * watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
+ * watchface_reset_watchface: restricted - not exported until context/ownership approved
  */
 
 

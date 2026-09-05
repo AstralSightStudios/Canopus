@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.watchface_reset_watchface",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "watchface_reset_watchface",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(int)",
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-WATCHFACE-1043-RESET-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64 sub_C5F36C0; own \"reset_watchface\" log tag plus refresh_cur_watchface callee review",
+    "evidence_ids": [
+      "EVID-WATCHFACE-1043-RESET-001"
+    ]
+  },
+  "entry_address": "0xc5f36c0",
+  "callable_address": "0xc5f36c1",
+  "notes": "Rebuilds the current watchface after a face is deleted; stock callers include remove_multi_watchface. The single argument is the force flag forwarded to refresh_cur_watchface (0x0c5f32b8): 0 refreshes only when the current watchface record changed, nonzero forces destroy/create. Upstream commit ad07252 reached the same code through the 0x2C5F36C0 read-only data mirror; this record uses the canonical XIP_TEXT_RO address. UI owner thread only, like watchface_manager_delete_watchface.",
+  "approval_state": "APPROVED"
+}

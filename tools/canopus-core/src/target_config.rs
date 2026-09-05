@@ -394,6 +394,13 @@ const SUP_10: &[Mapping] = &[
         symbol_name: "watchface_manager_delete_watchface",
         address: Address::Callable,
     },
+    // Optional: only packs that recovered the post-delete watchface refresh
+    // emit this macro, so Supervisor code must guard on it.
+    Mapping {
+        macro_name: "CANOPUS_SUP_WATCHFACE_RESET",
+        symbol_name: "watchface_reset_watchface",
+        address: Address::Callable,
+    },
 ];
 const SUP_9: &[Mapping] = &[
     Mapping {

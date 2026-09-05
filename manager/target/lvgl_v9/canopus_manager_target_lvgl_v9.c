@@ -79,14 +79,18 @@ struct firmware_page_descriptor {
     void *runtime_parent;                     /* +0x48 */
     page_create_fn on_create;                 /* +0x4c */
     page_lifecycle_fn on_resume;              /* +0x50 */
-    page_foreground_data_fn on_newdata;       /* +0x54 */
-    page_lifecycle_fn on_start;               /* +0x58 */
-    page_lifecycle_fn on_pause;               /* +0x5c */
-    page_lifecycle_fn on_stop;                /* +0x60 */
-    page_lifecycle_fn on_destroy;             /* +0x64 */
-    page_lifecycle_fn on_back;                /* +0x68 */
-    page_lifecycle_fn on_keyevent;            /* +0x6c */
-    page_lifecycle_fn get_scroll_obj;         /* +0x70 */
+    page_foreground_data_fn on_foreground_data; /* +0x54 */
+    /* Slot order below follows the recovered type record
+     * (targets/<id>/types/firmware_page_descriptor.json) and the exact
+     * 3.101.043 IDB: on_destroy_wrapped dispatches descriptor word 23
+     * (+0x5c) and on_resume_wrapped dispatches word 22 (+0x58). */
+    page_lifecycle_fn on_pause;               /* +0x58 */
+    page_lifecycle_fn on_destroy;             /* +0x5c */
+    page_lifecycle_fn on_ui_destroy;          /* +0x60 */
+    void *extension_callback_100;             /* +0x64 */
+    void *extension_callback_104;             /* +0x68 */
+    void *extension_callback_108;             /* +0x6c */
+    void *get_scroll_obj;                     /* +0x70, not in the type record */
 };
 
 struct firmware_app_descriptor {

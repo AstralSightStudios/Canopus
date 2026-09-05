@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-WATCHFACE-1043-RESET-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 callable rebuilds the current watchface after the Supervisor deletes an installed face, and what is its real argument?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.watchface_reset_watchface"
+  ],
+  "prototype_hypothesis": "int(int force)",
+  "callsite_evidence": [
+    "Upstream commit ad07252 reported that the stock watchface layout stays consistent after a Supervisor face deletion only when this callable runs, and used the read-only data alias 0x2C5F36C0 | 1.",
+    "The exact 3.101.043 IDB (vela_ap.bin, SHA-256 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec) places the function at 0x0C5F36C0 in segment XIP_TEXT_RO; 0x2C5F36C0 is the read-only data mirror of the same flash, so every recorded callable in this pack uses the 0x0C text view.",
+    "Stock callers are watchface-manager paths: watchface_manager_deal_edit_request (0x0C5ED6D8), remove_multi_watchface (0x0C5EF108), app_watchface_mass_data_handle (0x0C5EF4AC), select_watchface (0x0C5F6024), trial_restore_last_wf (0x0C5FE1B4).",
+    "remove_multi_watchface is the stock deletion path and calls it directly after removing a face, which is exactly the Supervisor's post-delete situation."
+  ],
+  "control_flow_evidence": [
+    "sub_C5F36C0 is 0x42 bytes / 28 instructions and logs with the firmware's [%s] %s: convention using module tag \"watchface\" and function tag \"reset_watchface\" (string at 0x2CD2F02C), which names the function.",
+    "It calls sub_CA95B40 to fetch the current watchface record; a null record logs \"use watchface is null\" and returns without touching UI state.",
+    "It then calls sub_C5F32B8 (\"refresh_cur_watchface\") as refresh_cur_watchface(R0 = its own first argument, R1 = current watchface record), so the single incoming AAPCS argument is forwarded unchanged.",
+    "refresh_cur_watchface treats that argument as a force flag, not a pointer: with force == 0 and an unchanged cached record (dword_20119770) it logs \"ignore. force: %d\" and returns 0; otherwise it destroys and recreates the current watchface.",
+    "Return value is int: negative results from refresh_cur_watchface are propagated, success paths return the logger result."
+  ],
+  "ownership_analysis": "The callable takes no caller-owned memory. It reads the firmware-owned current-watchface record through sub_CA95B40 and hands it to refresh_cur_watchface, which owns destruction and recreation of the firmware watchface object. The Supervisor passes only the force flag and retains no firmware pointer.",
+  "unsafe_assumptions": [
+    "Static recovery does not replace a 3.101.043 device gate: the call must run on the firmware UI owner thread, like the sibling watchface_manager_delete_watchface.",
+    "force == 0 only refreshes when the current watchface record actually changed; a Supervisor delete that leaves the cached record untouched is a no-op by design.",
+    "Device behaviour after deletion is reported by the upstream contributor's build, not by a Canopus device probe."
+  ],
+  "recommended_probe": "On exact 3.101.043, install a watchface through the Canopus installer, let the Supervisor delete the staged face, and confirm the launcher watchface layout is rebuilt with no UI-thread fault, then repeat with the currently active face selected.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-05T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C5F36C0",
+      "sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "role": "exact 3.101.043 reset_watchface callable"
+    },
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C5F32B8",
+      "sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "role": "refresh_cur_watchface callee that defines the force-flag argument"
+    },
+    {
+      "uri": "repo://Canopus/manager/service/canopus_supervisor_platform.c",
+      "role": "Supervisor post-delete call site"
+    }
+  ]
+}
