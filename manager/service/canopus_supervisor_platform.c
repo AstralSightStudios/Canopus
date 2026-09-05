@@ -737,6 +737,10 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
     typedef int (*watchface_delete_fn)(const char *);
     watchface_delete_fn delete_watchface =
         (watchface_delete_fn)(uintptr_t)CANOPUS_SUP_WATCHFACE_DELETE;
+    typedef int (*watchface_reset_fn)(const char *);
+    watchface_reset_fn watchface_reset =
+        (watchface_reset_fn)(uintptr_t)CANOPUS_SUP_WATCHFACE_RESET;
+		
     struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
     struct canopus_install_receipt_v1 receipt;
     char module_path[CANOPUS_SUP_PATH_MAX];
@@ -798,6 +802,7 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
      * non-last watchface. Failure is non-fatal: installation remains complete
      * and the installer page can show diagnostics for manual removal. */
     (void)delete_watchface(token);
+    watchface_reset(NULL);
     return 0;
 }
 
