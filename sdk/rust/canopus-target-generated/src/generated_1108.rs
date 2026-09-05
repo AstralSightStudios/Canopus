@@ -4,7 +4,7 @@
 // firmware : 4.100.108 (user-4.100.108-cn-202607230300)
 // sha256   : 9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99
 // revision : 1
-// input_digest: 952a88dd69a0e053
+// input_digest: 8035d55dca881f62
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -15,6 +15,204 @@
 #[inline(always)]
 pub const fn canopus_thumb_callable(entry_or_callable: usize) -> usize {
     entry_or_callable | 1usize
+}
+
+// ---- recovered type layouts ----
+// `#[repr(C, packed(N))]` + explicit padding reproduces the exact
+// recovered byte layout and its target-declared alignment.
+pub type canopus_interconnect_recv_cb = extern "C" fn(*mut core::ffi::c_void, i32, *const canopus_interconnect_message, *const u8) -> ();
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct file_operations {
+    pub open: *mut core::ffi::c_void, // +0x0
+    pub close: *mut core::ffi::c_void, // +0x4
+    pub read: *mut core::ffi::c_void, // +0x8
+    pub write: *mut core::ffi::c_void, // +0xc
+    pub lseek: *mut core::ffi::c_void, // +0x10
+    pub ioctl: *mut core::ffi::c_void, // +0x14
+    pub _tail: [u8; 0x18], // 24
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct launcher_order_record {
+    pub app_name: [u8; 128], // +0x0
+    pub _pad_80: [u8; 0x4], // 4
+    pub flags: u32, // +0x84
+    pub _tail: [u8; 0x4], // 4
+}
+
+pub type canopus_lvx_event_cb = extern "C" fn(*mut core::ffi::c_void) -> ();
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct stock_timespec_t {
+    pub tv_sec: i64, // +0x0
+    pub tv_nsec: i32, // +0x8
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct canopus_thirdparty_message_content {
+    pub message_id: u32, // +0x0
+    pub message_kind: u16, // +0x4
+    pub _pad_6: [u8; 0xa], // 10
+    pub package_name: *mut core::ffi::c_void, // +0x10
+    pub fingerprint_blob: *mut core::ffi::c_void, // +0x14
+    pub payload_blob: *mut core::ffi::c_void, // +0x18
+    pub _tail: [u8; 0x134], // 308
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct firmware_page_descriptor {
+    pub parent_descriptor: *mut core::ffi::c_void, // +0x0
+    pub _pad_4: [u8; 0xc], // 12
+    pub page_name: *mut core::ffi::c_void, // +0x10
+    pub page_id: u16, // +0x14
+    pub app_id: u16, // +0x16
+    pub flags: u16, // +0x18
+    pub _pad_1a: [u8; 0x2], // 2
+    pub scheduler_deadline: i32, // +0x1c
+    pub scheduler_priority: i32, // +0x20
+    pub async_destroy_state: u32, // +0x24
+    pub lifecycle_state: u8, // +0x28
+    pub layer: u8, // +0x29
+    pub page_kind: u8, // +0x2a
+    pub _pad_2b: [u8; 0x1], // 1
+    pub activity_context: *mut core::ffi::c_void, // +0x2c
+    pub root_object: *mut core::ffi::c_void, // +0x30
+    pub on_signal: *mut core::ffi::c_void, // +0x34
+    pub runtime_default_56: *mut core::ffi::c_void, // +0x38
+    pub _pad_3c: [u8; 0x4], // 4
+    pub registry_prev: *mut core::ffi::c_void, // +0x40
+    pub registry_next: *mut core::ffi::c_void, // +0x44
+    pub runtime_parent: *mut core::ffi::c_void, // +0x48
+    pub on_create: *mut core::ffi::c_void, // +0x4c
+    pub on_resume: *mut core::ffi::c_void, // +0x50
+    pub on_foreground_data: *mut core::ffi::c_void, // +0x54
+    pub on_pause: *mut core::ffi::c_void, // +0x58
+    pub on_destroy: *mut core::ffi::c_void, // +0x5c
+    pub on_ui_destroy: *mut core::ffi::c_void, // +0x60
+    pub extension_callback_100: *mut core::ffi::c_void, // +0x64
+    pub extension_callback_104: *mut core::ffi::c_void, // +0x68
+    pub extension_callback_108: *mut core::ffi::c_void, // +0x6c
+    pub _tail: [u8; 0x4], // 4
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct canopus_interconnect_app_info {
+    pub package_name: *mut core::ffi::c_void, // +0x0
+    pub display_name: *mut core::ffi::c_void, // +0x4
+    pub icon_file: *mut core::ffi::c_void, // +0x8
+    pub extra: *mut core::ffi::c_void, // +0xc
+    pub fingerprint: [u8; 20], // +0x10
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct firmware_notification_message {
+    pub message_id: u64, // +0x0
+    pub repeat_count: u32, // +0x8
+    pub title: *mut core::ffi::c_void, // +0xc
+    pub source: *mut core::ffi::c_void, // +0x10
+    pub body: *mut core::ffi::c_void, // +0x14
+    pub auxiliary_text: *mut core::ffi::c_void, // +0x18
+    pub small_icon_path: *mut core::ffi::c_void, // +0x1c
+    pub large_icon_path: *mut core::ffi::c_void, // +0x20
+    pub extension_text_36: *mut core::ffi::c_void, // +0x24
+    pub extension_text_40: *mut core::ffi::c_void, // +0x28
+    pub timestamp: u32, // +0x2c
+    pub _pad_30: [u8; 0x8], // 8
+    pub action_callback: *mut core::ffi::c_void, // +0x38
+    pub action_context: u32, // +0x3c
+    pub extension_64: u32, // +0x40
+    pub extension_68: u32, // +0x44
+    pub open_callback: *mut core::ffi::c_void, // +0x48
+    pub destroy_callback: *mut core::ffi::c_void, // +0x4c
+    pub start_reminder: u8, // +0x50
+    pub flags_81: u8, // +0x51
+    pub flags_82: u8, // +0x52
+    pub _pad_53: [u8; 0x1], // 1
+    pub callback_data: *mut core::ffi::c_void, // +0x54
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct service_object {
+    pub enabled_state: u8, // +0x0
+    pub _pad_1: [u8; 0x3], // 3
+    pub name: *mut core::ffi::c_void, // +0x4
+    pub service_id: u8, // +0x8
+    pub profile_group: u8, // +0x9
+    pub _pad_a: [u8; 0x1a], // 26
+    pub startup_cb: *mut core::ffi::c_void, // +0x24
+    pub _pad_28: [u8; 0x8], // 8
+    pub startup_eligibility_cb: *mut core::ffi::c_void, // +0x30
+    pub get_profile_cb: *mut core::ffi::c_void, // +0x34
+    pub cleanup_cb: *mut core::ffi::c_void, // +0x38
+    pub _tail: [u8; 0x4], // 4
+}
+
+pub type canopus_interconnect_send_done = extern "C" fn(*mut core::ffi::c_void, i32, *const canopus_interconnect_message, *mut core::ffi::c_void) -> ();
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct canopus_interconnect_message {
+    pub r#type: u8, // +0x0
+    pub _pad_1: [u8; 0x3], // 3
+    pub length: u32, // +0x4
+    pub _pad_8: [u8; 0x8], // 8
+    pub value: *mut core::ffi::c_void, // +0x10
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct ordered_app_entry {
+    pub app_name: *mut core::ffi::c_void, // +0x0
+    pub _pad_4: [u8; 0x4], // 4
+    pub enabled: u8, // +0x8
+    pub hidden: u8, // +0x9
+    pub _tail: [u8; 0x6], // 6
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct launcher_app_struct {
+    pub name: [u8; 128], // +0x0
+    pub flags: u8, // +0x80
+    pub _tail: [u8; 0x3], // 3
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct launcher_app_record {
+    pub app_id: u16, // +0x0
+    pub _pad_2: [u8; 0x2], // 2
+    pub icon_handle: *mut core::ffi::c_void, // +0x4
+    pub name: *mut core::ffi::c_void, // +0x8
+    pub icon_name: *mut core::ffi::c_void, // +0xc
+    pub _pad_10: [u8; 0x4], // 4
+    pub flags: u8, // +0x14
+    pub _tail: [u8; 0x3], // 3
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct launcher_app_descriptor {
+    pub registry_links: u64, // +0x0
+    pub package_name: *mut core::ffi::c_void, // +0x8
+    pub launcher_icon_resource: *mut core::ffi::c_void, // +0xc
+    pub app_id: u16, // +0x10
+    pub flags: u8, // +0x12
+    pub _pad_13: [u8; 0x1], // 1
+    pub owned_string_20: *mut core::ffi::c_void, // +0x14
+    pub owned_string_24: *mut core::ffi::c_void, // +0x18
+    pub launcher_metadata_callback: *mut core::ffi::c_void, // +0x1c
+    pub _pad_20: [u8; 0x10], // 16
+    pub page_registry: *mut core::ffi::c_void, // +0x30
+    pub _pad_34: [u8; 0x8], // 8
+    pub hidden_flags: u8, // +0x3c
+    pub _tail: [u8; 0x3], // 3
 }
 
 // ---- runtime identity guard ----

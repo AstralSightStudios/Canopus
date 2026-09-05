@@ -4,12 +4,185 @@
  * firmware : 4.100.108 (user-4.100.108-cn-202607230300)
  * sha256   : 9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99
  * revision : 1
- * input_digest: 952a88dd69a0e053
+ * input_digest: 8035d55dca881f62
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_108_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_108_H
 
 #include <stdint.h>
+
+/* ---- recovered type layouts ---- */
+/* Explicit padding reproduces the exact recovered byte layout
+ * even when fields are sparse (e.g. launcher_order_record). */
+typedef struct file_operations file_operations;
+typedef struct launcher_order_record launcher_order_record;
+typedef struct stock_timespec_t stock_timespec_t;
+typedef struct canopus_thirdparty_message_content canopus_thirdparty_message_content;
+typedef struct firmware_page_descriptor firmware_page_descriptor;
+typedef struct canopus_interconnect_app_info canopus_interconnect_app_info;
+typedef struct firmware_notification_message firmware_notification_message;
+typedef struct service_object service_object;
+typedef struct canopus_interconnect_message canopus_interconnect_message;
+typedef struct ordered_app_entry ordered_app_entry;
+typedef struct launcher_app_struct launcher_app_struct;
+typedef struct launcher_app_record launcher_app_record;
+typedef struct launcher_app_descriptor launcher_app_descriptor;
+typedef void (*canopus_interconnect_recv_cb)(void *, int32_t, const canopus_interconnect_message *, const char *);
+struct file_operations {
+    void * open; /* +0x0 */
+    void * close; /* +0x4 */
+    void * read; /* +0x8 */
+    void * write; /* +0xc */
+    void * lseek; /* +0x10 */
+    void * ioctl; /* +0x14 */
+    uint8_t _tail[24];
+};
+struct launcher_order_record {
+    uint8_t app_name[128]; /* +0x0 */
+    uint8_t _pad_80[4];
+    uint32_t flags; /* +0x84 */
+    uint8_t _tail[4];
+};
+typedef void (*canopus_lvx_event_cb)(void *);
+struct stock_timespec_t {
+    int64_t tv_sec; /* +0x0 */
+    int32_t tv_nsec; /* +0x8 */
+};
+struct canopus_thirdparty_message_content {
+    uint32_t message_id; /* +0x0 */
+    uint16_t message_kind; /* +0x4 */
+    uint8_t _pad_6[10];
+    void * package_name; /* +0x10 */
+    void * fingerprint_blob; /* +0x14 */
+    void * payload_blob; /* +0x18 */
+    uint8_t _tail[308];
+};
+struct firmware_page_descriptor {
+    void * parent_descriptor; /* +0x0 */
+    uint8_t _pad_4[12];
+    void * page_name; /* +0x10 */
+    uint16_t page_id; /* +0x14 */
+    uint16_t app_id; /* +0x16 */
+    uint16_t flags; /* +0x18 */
+    uint8_t _pad_1a[2];
+    int32_t scheduler_deadline; /* +0x1c */
+    int32_t scheduler_priority; /* +0x20 */
+    uint32_t async_destroy_state; /* +0x24 */
+    uint8_t lifecycle_state; /* +0x28 */
+    uint8_t layer; /* +0x29 */
+    uint8_t page_kind; /* +0x2a */
+    uint8_t _pad_2b[1];
+    void * activity_context; /* +0x2c */
+    void * root_object; /* +0x30 */
+    void * on_signal; /* +0x34 */
+    void * runtime_default_56; /* +0x38 */
+    uint8_t _pad_3c[4];
+    void * registry_prev; /* +0x40 */
+    void * registry_next; /* +0x44 */
+    void * runtime_parent; /* +0x48 */
+    void * on_create; /* +0x4c */
+    void * on_resume; /* +0x50 */
+    void * on_foreground_data; /* +0x54 */
+    void * on_pause; /* +0x58 */
+    void * on_destroy; /* +0x5c */
+    void * on_ui_destroy; /* +0x60 */
+    void * extension_callback_100; /* +0x64 */
+    void * extension_callback_104; /* +0x68 */
+    void * extension_callback_108; /* +0x6c */
+    uint8_t _tail[4];
+};
+struct canopus_interconnect_app_info {
+    void * package_name; /* +0x0 */
+    void * display_name; /* +0x4 */
+    void * icon_file; /* +0x8 */
+    void * extra; /* +0xc */
+    uint8_t fingerprint[20]; /* +0x10 */
+};
+struct firmware_notification_message {
+    uint64_t message_id; /* +0x0 */
+    uint32_t repeat_count; /* +0x8 */
+    void * title; /* +0xc */
+    void * source; /* +0x10 */
+    void * body; /* +0x14 */
+    void * auxiliary_text; /* +0x18 */
+    void * small_icon_path; /* +0x1c */
+    void * large_icon_path; /* +0x20 */
+    void * extension_text_36; /* +0x24 */
+    void * extension_text_40; /* +0x28 */
+    uint32_t timestamp; /* +0x2c */
+    uint8_t _pad_30[8];
+    void * action_callback; /* +0x38 */
+    uint32_t action_context; /* +0x3c */
+    uint32_t extension_64; /* +0x40 */
+    uint32_t extension_68; /* +0x44 */
+    void * open_callback; /* +0x48 */
+    void * destroy_callback; /* +0x4c */
+    uint8_t start_reminder; /* +0x50 */
+    uint8_t flags_81; /* +0x51 */
+    uint8_t flags_82; /* +0x52 */
+    uint8_t _pad_53[1];
+    void * callback_data; /* +0x54 */
+};
+struct service_object {
+    uint8_t enabled_state; /* +0x0 */
+    uint8_t _pad_1[3];
+    void * name; /* +0x4 */
+    uint8_t service_id; /* +0x8 */
+    uint8_t profile_group; /* +0x9 */
+    uint8_t _pad_a[26];
+    void * startup_cb; /* +0x24 */
+    uint8_t _pad_28[8];
+    void * startup_eligibility_cb; /* +0x30 */
+    void * get_profile_cb; /* +0x34 */
+    void * cleanup_cb; /* +0x38 */
+    uint8_t _tail[4];
+};
+typedef void (*canopus_interconnect_send_done)(void *, int32_t, const canopus_interconnect_message *, void *);
+struct canopus_interconnect_message {
+    uint8_t type; /* +0x0 */
+    uint8_t _pad_1[3];
+    uint32_t length; /* +0x4 */
+    uint8_t _pad_8[8];
+    void * value; /* +0x10 */
+};
+struct ordered_app_entry {
+    void * app_name; /* +0x0 */
+    uint8_t _pad_4[4];
+    uint8_t enabled; /* +0x8 */
+    uint8_t hidden; /* +0x9 */
+    uint8_t _tail[6];
+};
+struct launcher_app_struct {
+    uint8_t name[128]; /* +0x0 */
+    uint8_t flags; /* +0x80 */
+    uint8_t _tail[3];
+};
+struct launcher_app_record {
+    uint16_t app_id; /* +0x0 */
+    uint8_t _pad_2[2];
+    void * icon_handle; /* +0x4 */
+    void * name; /* +0x8 */
+    void * icon_name; /* +0xc */
+    uint8_t _pad_10[4];
+    uint8_t flags; /* +0x14 */
+    uint8_t _tail[3];
+};
+struct launcher_app_descriptor {
+    uint64_t registry_links; /* +0x0 */
+    void * package_name; /* +0x8 */
+    void * launcher_icon_resource; /* +0xc */
+    uint16_t app_id; /* +0x10 */
+    uint8_t flags; /* +0x12 */
+    uint8_t _pad_13[1];
+    void * owned_string_20; /* +0x14 */
+    void * owned_string_24; /* +0x18 */
+    void * launcher_metadata_callback; /* +0x1c */
+    uint8_t _pad_20[16];
+    void * page_registry; /* +0x30 */
+    uint8_t _pad_34[8];
+    uint8_t hidden_flags; /* +0x3c */
+    uint8_t _tail[3];
+};
 
 /* ---- runtime identity guard ---- */
 static inline int canopus_str_neq(const char *a, const char *b)
