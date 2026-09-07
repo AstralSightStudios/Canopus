@@ -15,3 +15,4 @@ sha2.workspace = true
 tar.workspace = true
 
 [dev-dependencies]
+tempfile = "3"

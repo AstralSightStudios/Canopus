@@ -25,3 +25,8 @@ Build all packaged targets with:
 Each verified artifact is staged only into its matching family directory. Host
 builds and Lua smoke tests are not device proof; reboot is still required before
 retrying any partial Supervisor load or native registration failure.
+
+Generated `.bin` resources, including the production icon copies, are ignored
+by Git. Run the build above before packaging a fresh checkout. The source icon
+is tracked at `watchfaces/canopus-installer/manager_icon.bin`; loader resources
+are regenerated from the target profiles and source code.

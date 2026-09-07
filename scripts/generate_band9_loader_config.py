@@ -32,13 +32,23 @@ def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict, dict]
     if profile.get("loader_family") != "nsh-mw-stage1-stage2":
         raise SystemExit("unsupported Band 9 loader family")
 
+    if profile.get("status") != "STATIC_RECOVERED":
+        raise SystemExit(
+            f"loader profile is {profile.get('status')}; refusing to emit executable bootstrap config"
+        )
+
+    missing_tables = [
+        name for name in ("stage", "stage0", "firmware", "architecture", "sram_text")
+        if not isinstance(profile.get(name), dict)
+    ]
+    if missing_tables:
+        raise SystemExit(f"loader profile is missing required tables: {', '.join(missing_tables)}")
+
     stage = profile.get("stage")
     stage0 = profile.get("stage0")
     firmware = profile.get("firmware")
     architecture = profile.get("architecture")
     sram = profile.get("sram_text")
-    if not all(isinstance(item, dict) for item in (stage, stage0, firmware, architecture, sram)):
-        raise SystemExit("loader profile is missing a required table")
 
     stage0_base = number(stage0.get("base"), "stage0.base")
     stage0_size = number(stage0.get("size"), "stage0.size")
@@ -223,10 +233,6 @@ def main() -> None:
     target = load(args.target_toml)
     stage, stage0, firmware, architecture, sram = validate(profile, target)
     del stage, sram
-    if profile.get("status") != "STATIC_RECOVERED":
-        raise SystemExit(
-            f"loader profile is {profile.get('status')}; refusing to emit executable bootstrap config"
-        )
     if args.header:
         args.header.parent.mkdir(parents=True, exist_ok=True)
         write_header(args.header, profile, stage0, firmware, architecture)

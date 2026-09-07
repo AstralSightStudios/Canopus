@@ -5,7 +5,10 @@ schema = 1
 target_id = "xiaomi-band-9-pro-3.1.175"
 firmware_sha256 = "4f43b325addd6d9e6e7c7e2a4d00ffe3f23d5fb1560d8fe503544002ac1f516b"
 loader_family = "nsh-mw-stage1-stage2"
-status = "STATIC_RECOVERED"
+# EVID-LOADER-9175-002 covers the legacy SRAM cave and Umem allocator only.
+# The current bootstrap requires an exact stage0 workspace and Kmem allocator
+# pair, which have not been recovered for 9175. Keep code generation blocked.
+status = "PENDING"
 command_family = "mw-exec"
 
 [stage]
@@ -49,6 +52,7 @@ original_words = [
 [evidence]
 ids = ["EVID-LOADER-9175-002"]
 unsafe_assumptions = [
+  "Current bootstrap generation is pending exact stage0, kmem_malloc and kmem_free recovery; the legacy SRAM cave must not be substituted for stage0.",
   "Device execution, cave restoration, and /dev/canopus publication remain untested.",
   "The one-shot bootstrap must transfer allocation and MPU ownership to the resident loader before returning.",
 ]

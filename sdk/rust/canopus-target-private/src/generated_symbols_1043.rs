@@ -1085,6 +1085,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         policy: "restricted",
         prototype: "int(const char *)",
     },
+    TargetPrivateSymbolRecord {
+        name: "watchface_reset_watchface",
+        kind: "function",
+        entry: 0xc5f36c0usize,
+        callable: 0xc5f36c1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(int)",
+    },
 ];
 
 pub const PAGE_FINISH_ENTRY: usize = 0xca6b9e8usize;
@@ -1314,6 +1323,8 @@ pub const LVX_STYLE_APPLY_ENTRY: usize = 0xc4bf898usize;
 pub const LVX_STYLE_APPLY_CALLABLE: usize = 0xc4bf899usize;
 pub const WATCHFACE_MANAGER_DELETE_WATCHFACE_ENTRY: usize = 0xca95c68usize;
 pub const WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = 0xca95c69usize;
+pub const WATCHFACE_RESET_WATCHFACE_ENTRY: usize = 0xc5f36c0usize;
+pub const WATCHFACE_RESET_WATCHFACE_CALLABLE: usize = 0xc5f36c1usize;
 
 // ---- generated target-private raw wrappers ----
 // Mechanical ABI only; ownership and policy stay in the handwritten facade.
@@ -2070,4 +2081,14 @@ pub unsafe fn raw_watchface_manager_delete_watchface(a0: *const u8) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 75
+pub unsafe fn raw_watchface_reset_watchface(a0: i32) -> i32 {
+    type F = unsafe extern "C" fn(i32) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(
+            canopus_target_generated::CANOPUS_FW_WATCHFACE_RESET_WATCHFACE_CALLABLE,
+        )
+    };
+    unsafe { f(a0) }
+}
+
+// generated target-private raw wrapper count: 76

@@ -74,34 +74,7 @@ else
 fi
 
 step "loader target profile gating"
-loader_tmp=$(mktemp -d)
-python3 scripts/generate_band9_loader_config.py \
-    --profile targets/xiaomi-band-9-pro-3.1.175/loader/bootstrap.toml \
-    --target-toml targets/xiaomi-band-9-pro-3.1.175/target.toml \
-    --header "$loader_tmp/9175.h" --lua "$loader_tmp/9175.lua"
-python3 scripts/generate_band9_loader_config.py \
-    --profile targets/xiaomi-band-9-3.1.32/loader/bootstrap.toml \
-    --target-toml targets/xiaomi-band-9-3.1.32/target.toml \
-    --header "$loader_tmp/9132.h" --lua "$loader_tmp/9132.lua"
-python3 - \
-    targets/xiaomi-band-9-3.1.32/loader/bootstrap.toml \
-    "$loader_tmp/pending.toml" <<'PY'
-import pathlib, sys
-source = pathlib.Path(sys.argv[1]).read_text()
-pathlib.Path(sys.argv[2]).write_text(
-    source.replace('status = "STATIC_RECOVERED"', 'status = "PENDING"', 1)
-)
-PY
-if python3 scripts/generate_band9_loader_config.py \
-    --profile "$loader_tmp/pending.toml" \
-    --target-toml targets/xiaomi-band-9-3.1.32/target.toml \
-    --header "$loader_tmp/pending.h"; then
-    rm -rf "$loader_tmp"
-    echo "PENDING loader profile unexpectedly emitted executable config" >&2
-    exit 1
-fi
-rm -rf "$loader_tmp"
-
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 
 step "7/7 plan status table validation (CAN-P1-015)"
 ./scripts/check-plan-status.sh
