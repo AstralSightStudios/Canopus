@@ -2,6 +2,7 @@
 #include "canopus_elf32_loader.h"
 #include "canopus_memory.h"
 #include "canopus_band9_loader_config.h"
+#include "canopus_band9_loader_status.h"
 
 #include <stdint.h>
 
@@ -13,8 +14,8 @@
 #define FW_OPEN CANOPUS_FW_OPEN
 #define FW_CLOSE CANOPUS_FW_CLOSE
 #define FW_READ CANOPUS_FW_READ
-#define FW_MEMALIGN CANOPUS_FW_MEMALIGN
-#define FW_FREE CANOPUS_FW_FREE
+#define FW_KMEM_MALLOC CANOPUS_FW_KMEM_MALLOC
+#define FW_KMEM_FREE CANOPUS_FW_KMEM_FREE
 #define FW_MPU_ALLOC CANOPUS_FW_MPU_ALLOC
 #define FW_MPU_CONFIGURE CANOPUS_FW_MPU_CONFIGURE
 #define FW_MPU_RELEASE CANOPUS_FW_MPU_RELEASE
@@ -22,17 +23,25 @@
 struct stage2_state {
     uint8_t regions[3];
     uint32_t region_count;
+    void *image_raw;
 };
 
 static void *image_allocate(void *cookie, uint32_t size, uint32_t alignment,
                             uint32_t *target_base)
 {
-    typedef void *(*fn)(uint32_t, uint32_t);
-    void *p;
-    (void)cookie;
-    p = ((fn)(uintptr_t)FW_MEMALIGN)(alignment, size);
-    if (p != 0) *target_base = (uint32_t)(uintptr_t)p;
-    return p;
+    typedef void *(*malloc_fn)(uint32_t);
+    struct stage2_state *state = cookie;
+    uintptr_t aligned;
+    uint32_t extra;
+
+    if (alignment == 0u || (alignment & (alignment - 1u)) != 0u) return 0;
+    extra = alignment - 1u;
+    if (size > UINT32_MAX - extra) return 0;
+    state->image_raw = ((malloc_fn)(uintptr_t)FW_KMEM_MALLOC)(size + extra);
+    if (state->image_raw == 0) return 0;
+    aligned = ((uintptr_t)state->image_raw + extra) & ~((uintptr_t)extra);
+    *target_base = (uint32_t)aligned;
+    return (void *)aligned;
 }
 
 static void image_release(void *cookie, void *allocation, uint32_t size)
@@ -52,7 +61,11 @@ static void image_release(void *cookie, void *allocation, uint32_t size)
                          ::: "memory");
         ((release_fn)(uintptr_t)FW_MPU_RELEASE)(region);
     }
-    ((free_fn)(uintptr_t)FW_FREE)(allocation);
+    (void)allocation;
+    if (state->image_raw != 0) {
+        ((free_fn)(uintptr_t)FW_KMEM_FREE)(state->image_raw);
+        state->image_raw = 0;
+    }
 }
 
 static int image_finalize(void *cookie, void *allocation, uint32_t target_base,
@@ -115,12 +128,13 @@ int canopus_band9_stage2_entry(int ignored)
     typedef int (*open_fn)(const char *, int, ...);
     typedef int (*close_fn)(int);
     typedef int32_t (*read_fn)(int, void *, uint32_t);
-    typedef void *(*memalign_fn)(uint32_t, uint32_t);
+    typedef void *(*malloc_fn)(uint32_t);
     typedef void (*free_fn)(void *);
     struct stage2_state state;
     struct canopus_elf_module module;
     struct canopus_elf_loader_ops ops;
     uint8_t *elf;
+    void *scratch_raw;
     void *scratch;
     uint32_t used = 0;
     int fd;
@@ -129,19 +143,24 @@ int canopus_band9_stage2_entry(int ignored)
     (void)ignored;
 
     canopus_memset(&state, 0, sizeof(state));
-    elf = ((memalign_fn)(uintptr_t)FW_MEMALIGN)(4u,
-                                               CANOPUS_BAND9_SUPERVISOR_SIZE);
+    *(volatile uint32_t *)(uintptr_t)CANOPUS_BAND9_CAVE_RESULT =
+        CANOPUS_BAND9_CTOR_SENTINEL;
+    __asm__ volatile("dsb sy\n"
+                     ::: "memory");
+    elf = ((malloc_fn)(uintptr_t)FW_KMEM_MALLOC)(
+        CANOPUS_BAND9_SUPERVISOR_SIZE);
     if (elf == 0) return -3;
-    scratch = ((memalign_fn)(uintptr_t)FW_MEMALIGN)(32u,
-                                                     CANOPUS_ELF32_SCRATCH_SIZE);
-    if (scratch == 0) {
-        ((free_fn)(uintptr_t)FW_FREE)(elf);
+    scratch_raw = ((malloc_fn)(uintptr_t)FW_KMEM_MALLOC)(
+        CANOPUS_ELF32_SCRATCH_SIZE + 31u);
+    if (scratch_raw == 0) {
+        ((free_fn)(uintptr_t)FW_KMEM_FREE)(elf);
         return -6;
     }
+    scratch = (void *)(((uintptr_t)scratch_raw + 31u) & ~((uintptr_t)31u));
     fd = ((open_fn)(uintptr_t)FW_OPEN)(SUPERVISOR_PATH, 1);
     if (fd < 0) {
-        ((free_fn)(uintptr_t)FW_FREE)(scratch);
-        ((free_fn)(uintptr_t)FW_FREE)(elf);
+        ((free_fn)(uintptr_t)FW_KMEM_FREE)(scratch_raw);
+        ((free_fn)(uintptr_t)FW_KMEM_FREE)(elf);
         return -4;
     }
     while (used < CANOPUS_BAND9_SUPERVISOR_SIZE) {
@@ -149,8 +168,8 @@ int canopus_band9_stage2_entry(int ignored)
             fd, elf + used, CANOPUS_BAND9_SUPERVISOR_SIZE - used);
         if (got <= 0) {
             ((close_fn)(uintptr_t)FW_CLOSE)(fd);
-            ((free_fn)(uintptr_t)FW_FREE)(scratch);
-            ((free_fn)(uintptr_t)FW_FREE)(elf);
+            ((free_fn)(uintptr_t)FW_KMEM_FREE)(scratch_raw);
+            ((free_fn)(uintptr_t)FW_KMEM_FREE)(elf);
             return -5;
         }
         used += (uint32_t)got;
@@ -163,7 +182,12 @@ int canopus_band9_stage2_entry(int ignored)
     ops.invoke = image_invoke;
     rc = canopus_elf32_load(elf, CANOPUS_BAND9_SUPERVISOR_SIZE, &ops,
                             &module, scratch);
-    ((free_fn)(uintptr_t)FW_FREE)(scratch);
-    ((free_fn)(uintptr_t)FW_FREE)(elf);
+    ((free_fn)(uintptr_t)FW_KMEM_FREE)(scratch_raw);
+    ((free_fn)(uintptr_t)FW_KMEM_FREE)(elf);
+    if (rc != CANOPUS_ELF_LOAD_OK) return -100 + rc;
+    rc = *(volatile int32_t *)(uintptr_t)CANOPUS_BAND9_CAVE_RESULT;
+    if ((uint32_t)rc == CANOPUS_BAND9_CTOR_SENTINEL) {
+        return CANOPUS_BAND9_CTOR_NOT_OBSERVED;
+    }
     return rc;
 }

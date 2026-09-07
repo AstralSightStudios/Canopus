@@ -96,6 +96,15 @@
     "firmware_build": {
       "type": "string"
     },
+    "identity_terminator": {
+      "type": "string",
+      "enum": [
+        "nul",
+        "line"
+      ],
+      "default": "nul",
+      "description": "Boundary following recovered firmware identity values: NUL only, or a build.prop line ending (LF/CR/NUL)."
+    },
     "module_abi": {
       "type": "integer",
       "minimum": 1

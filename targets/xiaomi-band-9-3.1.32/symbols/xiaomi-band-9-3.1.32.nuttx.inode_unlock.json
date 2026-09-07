@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "target_id": "xiaomi-band-9-3.1.32",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-SUPERVISOR-9132-004"
+    ]
+  },
+  "policy": "managed",
+  "status": "STATIC_CONFIRMED",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "source": "exact Xiaomi Band 9 3.1.32 IDB; direct register_driver/inode reserve call-chain review",
+    "evidence_ids": [
+      "EVID-SUPERVISOR-9132-004"
+    ]
+  },
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-static-abi-review",
+    "date": "2026-08-31",
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "ownership": "firmware inode tree; caller must hold/release the exact global inode lock",
+    "thread": "privileged loader task only",
+    "device_probe": "pending direct registration device gate",
+    "prototype": "int(void)"
+  },
+  "symbol_id": "xiaomi-band-9-3.1.32.exact.inode_unlock",
+  "name": "inode_unlock",
+  "entry_address": "0x0c3908c4",
+  "callable_address": "0x0c3908c5",
+  "prototype": "int(void)",
+  "notes": "releases the exact global inode semaphore used by register_driver"
+}

@@ -386,11 +386,25 @@ impl<'a> VeneerGen<'a> {
             .symbols
             .iter()
             .find(|s| s.name == "firmware_build_string" && s.entry_address.is_some());
+        let line_terminated = self.pack.identity_terminator.as_deref() == Some("line");
+        let compare = if line_terminated {
+            "canopus_identity_token_neq"
+        } else {
+            "canopus_str_neq"
+        };
 
         out.push_str("/* ---- runtime identity guard ---- */\n");
-        out.push_str("static inline int canopus_str_neq(const char *a, const char *b)\n{\n");
-        out.push_str("    while (*a && *b) { if (*a++ != *b++) return 1; }\n");
-        out.push_str("    return *a != *b;\n}\n\n");
+        if line_terminated {
+            out.push_str("static inline int canopus_identity_token_neq(const char *actual, const char *expected)\n{\n");
+            out.push_str("    while (*expected) { if (*actual++ != *expected++) return 1; }\n");
+            out.push_str(
+                "    return *actual != '\\0' && *actual != '\\n' && *actual != '\\r';\n}\n\n",
+            );
+        } else {
+            out.push_str("static inline int canopus_str_neq(const char *a, const char *b)\n{\n");
+            out.push_str("    while (*a && *b) { if (*a++ != *b++) return 1; }\n");
+            out.push_str("    return *a != *b;\n}\n\n");
+        }
         match (ver, build) {
             (Some(v), Some(b)) => {
                 let va = v.entry_address.as_deref().unwrap();
@@ -412,10 +426,12 @@ impl<'a> VeneerGen<'a> {
                     "    const char *const actual_build = (const char *)(uintptr_t){};\n",
                     ba
                 ));
-                out.push_str(
-                    "    if (canopus_str_neq(actual_version, expect_version)) return -1;\n",
-                );
-                out.push_str("    if (canopus_str_neq(actual_build, expect_build)) return -1;\n");
+                out.push_str(&format!(
+                    "    if ({compare}(actual_version, expect_version)) return -1;\n"
+                ));
+                out.push_str(&format!(
+                    "    if ({compare}(actual_build, expect_build)) return -1;\n"
+                ));
                 out.push_str("    return 0;\n}\n\n");
             }
             (Some(v), None) if self.pack.loader != "nuttx-modlib-elf32-rel" => {
@@ -429,9 +445,9 @@ impl<'a> VeneerGen<'a> {
                     "    const char *const actual_version = (const char *)(uintptr_t){};\n",
                     va
                 ));
-                out.push_str(
-                    "    return canopus_str_neq(actual_version, expect_version) ? -1 : 0;\n}\n\n",
-                );
+                out.push_str(&format!(
+                    "    return {compare}(actual_version, expect_version) ? -1 : 0;\n}}\n\n"
+                ));
             }
             _ => {
                 out.push_str(

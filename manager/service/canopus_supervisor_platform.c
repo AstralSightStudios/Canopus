@@ -18,6 +18,9 @@
 #include "canopus_module_registration.h"
 #include "canopus_runtime.h"
 #include "canopus_veneer.h" /* canopus_fw_register_driver / canopus_fw_unregister_driver */
+#ifdef CANOPUS_SUP_BAND9_BOOTSTRAP
+#include "canopus_band9_loader_config.h"
+#endif
 #ifdef CANOPUS_SUP_CUSTOM_LOADER
 #include "canopus_elf32_loader.h"
 #include "canopus_memory.h"
@@ -60,6 +63,40 @@ CANOPUS_STATIC_ASSERT(sizeof(file_operations) == 0x30u,
                       "file_operations must match the 12-word stock table");
 CANOPUS_STATIC_ASSERT(CANOPUS_SUP_FOPS_WORDS * 4u == sizeof(file_operations),
                       "fops word count must equal the typed layout");
+
+static int sup_register_driver_exact(const char *path, const void *fops,
+                                     void *private_data)
+{
+#ifdef CANOPUS_SUP_BAND9_BOOTSTRAP
+    typedef int (*lock_fn)(void);
+    typedef int (*reserve_fn)(const char *, void **);
+    typedef int (*unlock_fn)(void);
+    lock_fn lock_inode = (lock_fn)(uintptr_t)CANOPUS_FW_INODE_LOCK;
+    reserve_fn reserve_inode =
+        (reserve_fn)(uintptr_t)CANOPUS_FW_INODE_RESERVE;
+    unlock_fn unlock_inode = (unlock_fn)(uintptr_t)CANOPUS_FW_INODE_UNLOCK;
+    uint8_t *inode = 0;
+    uint16_t type;
+    int unlock_result;
+    int result = lock_inode();
+
+    if (result < 0) return result;
+    result = reserve_inode(path, (void **)&inode);
+    if (result == 0) {
+        type = *(uint16_t *)(void *)(inode + 14u);
+        *(const void **)(void *)(inode + 16u) = fops;
+        *(uint16_t *)(void *)(inode + 14u) =
+            (uint16_t)((type & UINT16_C(0xFFF0)) | UINT16_C(7));
+        *(void **)(void *)(inode + 28u) = private_data;
+    }
+    unlock_result = unlock_inode();
+    return result != 0 ? result : unlock_result;
+#else
+    return CANOPUS_SUP_REGISTER_DRIVER(path, fops,
+                                        CANOPUS_SUP_DEVICE_MODE,
+                                        private_data);
+#endif
+}
 
 static int sup_control_open(void *filep)
 {
@@ -104,15 +141,43 @@ static int32_t sup_control_write(void *filep, const void *buffer, uint32_t count
 
 static int sup_register_device(void *cookie)
 {
+    typedef int (*open_fn)(const char *, int, ...);
+    typedef int (*close_fn)(int);
+    typedef int *(*errno_location_fn)(void);
+    open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
+    close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
+    errno_location_fn errno_location =
+        (errno_location_fn)(uintptr_t)CANOPUS_SUP_NUTTX_ERRNO_LOCATION;
+    int *error_pointer;
+    int error;
+    int fd;
+    int rc;
+
     (void)cookie;
     s_fops.open = (void *)(uintptr_t)&sup_control_open;
     s_fops.close = (void *)(uintptr_t)&sup_control_close;
     s_fops.read = (void *)(uintptr_t)&sup_control_read;
     s_fops.write = (void *)(uintptr_t)&sup_control_write;
-    return CANOPUS_SUP_REGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH,
-                                        (const void *)&s_fops,
-                                        CANOPUS_SUP_DEVICE_MODE,
-                                        (void *)0);
+    /* The exact firmware wrapper discards inode_reserve failures and returns
+     * the inode-lock release result. Remove a stale same-name inode first so
+     * repeated loader attempts cannot be misreported as successful register. */
+    (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
+    rc = sup_register_driver_exact(CANOPUS_SUP_DEVICE_PATH,
+                                   (const void *)&s_fops, (void *)0);
+    if (rc != 0) return rc;
+    fd = open_file(CANOPUS_SUP_DEVICE_PATH, CANOPUS_SUP_NUTTX_O_RDONLY);
+    if (fd < 0) {
+        error_pointer = errno_location();
+        error = error_pointer != 0 ? *error_pointer : 0;
+        if (error < 0) error = -error;
+        if (error > CANOPUS_SUP_REGISTER_ERRNO_MAX) {
+            error = CANOPUS_SUP_REGISTER_ERRNO_MAX;
+        }
+        (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
+        return -(CANOPUS_SUP_REGISTER_VERIFY_ERRNO_BASE + error);
+    }
+    (void)close_file(fd);
+    return 0;
 }
 
 static int sup_unregister_device(void *cookie)

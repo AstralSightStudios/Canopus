@@ -462,7 +462,25 @@ fn c_veneer_have_exact_recovered_layout() {
     assert!(text.contains("uint8_t _tail[24];"));
     assert!(text.contains("uint8_t app_name[128]; /* +0x0 */"));
     assert!(text.contains("uint32_t flags; /* +0x84 */"));
+    assert!(text.contains("canopus_str_neq"));
     assert!(text.contains("* bt_adapter_register_a2dp_callbacks: FORBIDDEN"));
+}
+
+#[test]
+fn line_terminated_identity_guard_uses_a_bounded_token() {
+    let dir = repo_root().join("targets/xiaomi-band-9-3.1.32");
+    let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+    let (symbols, types) = load_records(&dir).unwrap();
+    let text = VeneerGen {
+        pack: &pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
+
+    assert!(text.contains("canopus_identity_token_neq"));
+    assert!(text.contains(r"*actual != '\0' && *actual != '\n' && *actual != '\r'"));
+    assert!(text.contains("canopus_identity_token_neq(actual_version, expect_version)"));
 }
 
 #[test]
@@ -477,6 +495,7 @@ fn identity_guard_uses_pack_version_build() {
     let text = r#gen.generate();
     assert!(text.contains("b\"3.101.036\""));
     assert!(text.contains("b\"CONBINE_LTALM078_T3.101.036_06242053\""));
+    assert!(text.contains("fn c_str_eq"));
     // Generated indirect calls expose and consume the shared normalized callable
     // constant, so callback-table comparisons never take the host wrapper address.
     assert!(text.contains("pub const CANOPUS_FW_APP_LOOKUP_CALLABLE: usize"));

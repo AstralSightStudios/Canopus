@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (N66NFC_3.1.32)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 1
-// input_digest: fe3b0a42986f5043
+// input_digest: 5bbba3124f69b08b
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -36,6 +36,9 @@ pub struct file_operations {
 // identity strings not present in this pack; guard unavailable
 
 // ---- typed firmware bindings (unsafe) ----
+/// Recovered `inode_reserve` at 0x0c4f7b7c. Thumb callable address 0x0c4f7b7d.
+pub const CANOPUS_FW_INODE_RESERVE_CALLABLE: usize = canopus_thumb_callable(0x0c4f7b7dusize);
+// inode_reserve: skipped (argument type not mappable)
 /// Recovered `lvx_list_row_trailing` at 0xc543d74. Thumb callable address 0xc543d75.
 pub const CANOPUS_FW_LVX_LIST_ROW_TRAILING_CALLABLE: usize = canopus_thumb_callable(0xc543d75usize);
 
@@ -112,6 +115,15 @@ pub const CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE: usize = canopus_thumb_callable(
 pub unsafe fn canopus_fw_lv_obj_clear_flag(a0: *mut core::ffi::c_void, a1: u32) -> () {
     let f: extern "C" fn(*mut core::ffi::c_void, u32) -> () = unsafe { core::mem::transmute(CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE) };
     f(a0, a1);
+}
+
+/// Recovered `inode_unlock` at 0x0c3908c4. Thumb callable address 0x0c3908c5.
+pub const CANOPUS_FW_INODE_UNLOCK_CALLABLE: usize = canopus_thumb_callable(0x0c3908c5usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_inode_unlock() -> i32 {
+    let f: extern "C" fn() -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_INODE_UNLOCK_CALLABLE) };
+    f()
 }
 
 /// Recovered `service_manager_register` at 0xc5639a0. Thumb callable address 0xc5639a1.
@@ -308,6 +320,15 @@ pub unsafe fn canopus_fw_mpu_region_allocate() -> u8 {
 
 /// Recovered `bt_pair_display_reply` at 0xc4e38ce. Thumb callable address 0xc4e38cf.
 pub const CANOPUS_FW_BT_PAIR_DISPLAY_REPLY_CALLABLE: usize = canopus_thumb_callable(0xc4e38cfusize);
+
+/// Recovered `inode_lock` at 0x0c390058. Thumb callable address 0x0c390059.
+pub const CANOPUS_FW_INODE_LOCK_CALLABLE: usize = canopus_thumb_callable(0x0c390059usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_inode_lock() -> i32 {
+    let f: extern "C" fn() -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_INODE_LOCK_CALLABLE) };
+    f()
+}
 
 /// Recovered `lvx_page_title_create` at 0x0c4c5f60. Thumb callable address 0x0c4c5f61.
 pub const CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c4c5f61usize);

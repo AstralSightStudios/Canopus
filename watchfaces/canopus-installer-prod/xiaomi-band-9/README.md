@@ -31,11 +31,20 @@ The loading path is device-specific:
 4. Use NSH `mw` and `exec` to call the firmware Kmem allocator and MPU helpers.
    Stage 1 requests `payload.size + 31` bytes from Kmem, aligns the code image
    inside that block to 32 bytes for MPU placement, and releases the original
-   Kmem pointer after execution. Stage 2 continues to use the exact Umem
-   `memalign`/`free` pair for its own image.
+   Kmem pointer after execution. Stage 1 and stage 2 also use Kmem for the
+   stage-2 image, Supervisor ELF input, relocation scratch, and resident runtime
+   image; each aligned interior pointer retains its original Kmem owner for free.
+   The Umem `memalign` path is no longer used by the bootstrap because it has
+   already returned zero on this device path.
 5. Execute position-independent stage 1, which loads stage 2.
 6. Stage 2 loads the verified Supervisor ELF32 `ET_REL` and invokes its
-   constructor.
+   constructor. Stage 1 writes the stage-2 return code to `0x200cb440`, so ELF
+   parse, allocation, relocation, MPU-finalize, and constructor-table failures
+   are reported separately instead of collapsing to `no /dev/canopus` or the
+   shell-level `stage-1 execution failed`. A stage-1 entry marker distinguishes
+   failure before entry from entry without return. The Supervisor constructor
+   also returns identity, initialization, registration-hook, and verified
+   `/dev/canopus` publication failures as dedicated `-200..-204` status codes.
 7. Release the temporary stage-0 MPU slot and stage-1 allocation/ownership;
    the unassigned stage-0 workspace is not restored because its original
    contents are intentionally unknown.
@@ -44,10 +53,23 @@ The production action accepts the explicit `STATIC_CANDIDATE` package for device
 validation; `DEVICE_REJECTED` profiles remain hard-blocked. A device run of the
 previous ROX-first publication failed with `CFSR=0x000000b2` and
 `MMFAR=0x3c80874c`: IRQ 3 attempted to stack while the live shell stack was
-transiently covered by the new read-only RBAR and the old region-7 RLAR. The
-corrected RWX-first/RX-final, pre-entry-synchronized sequence remains `STATIC_CANDIDATE`
-until it is retested on-device. The older SRAM-text cave at `0x2006a9b0` is also
-rejected by separate device fault evidence and is no longer used.
+transiently covered by the new read-only RBAR and the old region-7 RLAR. A 2026-08-31 retest reached the post-load `/dev/canopus` check without repeating
+that fault. The remaining failure was a deterministic Supervisor identity-guard
+mismatch: firmware address `0x0c5fc5c1` contains `3.1.32` followed by LF as part
+of build.prop, while the old generated guard required NUL immediately after the
+version. The target now declares a line-terminated identity token, and the guard
+accepts only NUL/LF/CR at the exact token boundary. The full path remains
+`STATIC_CANDIDATE` until this rebuilt Supervisor registers `/dev/canopus` on
+device. A later all-Kmem/result-first run completed the ELF loader with result
+zero but still found no device, narrowing the remaining path to constructor
+identity/init/registration. The instrumented constructor now publishes that
+phase through the stage result. The exact firmware `register_driver` wrapper was
+then found to discard `inode_reserve` failures and return only the unlock result.
+Band 9 now uses the exact inode lock/reserve/unlock primitives directly, preserves
+the real errno, removes a stale same-name inode before reserve, and verifies
+publication by opening and closing the new inode before reporting success. The older SRAM-text
+cave at `0x2006a9b0` is also rejected by separate device fault evidence and is
+no longer used.
 
 Packaged resources use the same flat, exact-target naming scheme as the Band 10
 Pro production watchface. Watchface packages cannot contain child directories or

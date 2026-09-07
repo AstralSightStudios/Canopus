@@ -8,7 +8,7 @@
 
 The `0x200cb400` stage-0 RAM candidate is writable, but the first implementation published its MPU mapping unsafely. It selected live region 7 and wrote the new ROX RBAR before replacing that region's old RLAR. For the interval between those two `mw` stores, the cave base and the running shell task's old stack limit formed one enabled, read-only MPU range. IRQ 3 arrived in that interval, and exception stacking to the shell stack failed.
 
-The ROX-first sequence is device-rejected. The corrected sequence publishes stage 0 as RWX while replacing the retained limit, narrows the confined cave range to RX, performs a firmware-resident DSB/ISB before the first cave fetch, and remains `STATIC_CANDIDATE` pending device retest.
+The ROX-first sequence is device-rejected. The corrected sequence publishes stage 0 as RWX while replacing the retained limit, narrows the confined cave range to RX, and performs a firmware-resident DSB/ISB before the first cave fetch. A 2026-08-31 retest reached the post-load `/dev/canopus` check without repeating this fault. The subsequent Supervisor identity rejection is recorded in `EVID-SUPERVISOR-9132-004.md`; the full path remains `STATIC_CANDIDATE` pending another device run.
 
 ## Fault binding
 
@@ -99,7 +99,8 @@ The profile now exports `rw_access_attr` and the exact-firmware `mpu_sync` calla
 ```text
 0x2006a9b0 SRAM-text cave:                 DEVICE_REJECTED
 0x200cb400 with ROX-first publication:     DEVICE_REJECTED
-0x200cb400 with RWX-first/RX-final + sync: STATIC_CANDIDATE
+0x200cb400 with RWX-first/RX-final + sync: DEVICE_RETEST_REACHED_LOAD_CHECK
+full Supervisor publication path:           STATIC_CANDIDATE
 ```
 
-Host tests can verify command ordering, permissions, cleanup, and the pre-entry synchronization call. Only an on-device run can promote the corrected sequence to `DEVICE_PROVEN`.
+Host tests verify command ordering, permissions, cleanup, and the pre-entry synchronization call. The 2026-08-31 run confirms that the corrected transition reached the load check; another on-device run of the rebuilt Supervisor is required before the complete path can be promoted to `DEVICE_PROVEN`.

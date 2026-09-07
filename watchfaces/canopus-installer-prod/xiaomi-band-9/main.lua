@@ -25,6 +25,8 @@ local CMD_RESTORE_AFTER_BOOT = 0x4351000A
 local RESULT_COMPLETED = 5
 local STAGE0_ENTRY_MARKER = 0xA5A5A5A5
 local STAGE0_ENTRY_PROBE_MARKER = 0x5A5A5A5A
+local STAGE1_RESULT_SENTINEL = 0x7FFFFFFE
+local STAGE1_ENTRY_MARKER = 0xA1A1A1A1
 local STAGE0_DIAGNOSTIC = "stage-fixed-continuation-v1"
 
 local target_id
@@ -349,6 +351,10 @@ local function barrier_and_exec(address, region, rbar, rlar)
         0x8F4FF3BF, 0x8F6FF3BF, 0x47702001, 0, 0, 0, 0, 0,
     }
     if not check_cave() then return false end
+    if not run(string.format("mw %08x=%08x", profile.cave_result,
+        STAGE1_RESULT_SENTINEL)) then
+        return false
+    end
     if not write_words(profile.cave, trampoline) then
         restore_cave()
         return false
@@ -372,12 +378,57 @@ local function barrier_and_exec(address, region, rbar, rlar)
         restore_cave()
         return false
     end
-    if not stage0_ok then
-        restore_cave()
-        return false
+    if not restore_cave() or not check_cave() then
+        return false, nil, "stage-0 workspace restore failed"
     end
-    if not restore_cave() or not check_cave() then return false end
-    return true
+    local result = shell_word(profile.cave_result)
+    if result == nil then
+        return false, nil, "stage-1 result read failed"
+    end
+    if result == STAGE1_RESULT_SENTINEL then
+        return false, nil, stage0_ok and "stage-1 entry was not observed"
+            or "stage-1 command failed before entry"
+    end
+    if result == STAGE1_ENTRY_MARKER then
+        return false, nil, "stage-1 entered but did not return"
+    end
+    if result >= 0x80000000 then result = result - 0x100000000 end
+    return true, result
+end
+
+local function stage_result_error(result)
+    if result <= -65536 and result >= -(65536 + 4095) then
+        return string.format(
+            "Supervisor /dev/canopus open verification failed errno=%d",
+            -result - 65536)
+    end
+    if result <= -73728 and result >= -(73728 + 4095) then
+        return string.format("Supervisor inode_reserve failed errno=%d",
+            -result - 73728)
+    end
+    local errors = {
+        [-3] = "Supervisor ELF buffer allocation failed",
+        [-4] = "cannot open staged Supervisor ELF",
+        [-5] = "cannot read staged Supervisor ELF",
+        [-6] = "Supervisor ELF scratch allocation failed",
+        [-10] = "stage-2 image allocation failed",
+        [-11] = "cannot open staged stage-2 image",
+        [-12] = "cannot read staged stage-2 image",
+        [-13] = "stage-2 MPU region unavailable",
+        [-14] = "stage-2 MPU configuration failed",
+        [-101] = "Supervisor ELF is invalid",
+        [-102] = "Supervisor ELF feature is unsupported",
+        [-103] = "Supervisor runtime image allocation failed",
+        [-104] = "Supervisor ELF relocation failed",
+        [-105] = "Supervisor MPU finalization failed",
+        [-106] = "Supervisor constructor table failed",
+        [-200] = "Supervisor constructor was not observed",
+        [-201] = "Supervisor firmware identity rejected",
+        [-202] = "Supervisor initialization failed",
+        [-203] = "Supervisor register-device hook is missing",
+        [-204] = "Supervisor /dev/canopus registration failed",
+    }
+    return errors[result] or string.format("stage loader rc=%d", result)
 end
 
 local function release_allocation(address, free_callable)
@@ -464,12 +515,16 @@ local function load_supervisor()
     local rbar = allocation + mpu_rbar_attr(profile.exec_access_attr)
     local rlar = allocation + exec_size - 32
         + mpu_rlar_attr(profile.exec_mem_attr)
-    local executed = barrier_and_exec(allocation, region, rbar, rlar)
+    local executed, stage_result, execution_error = barrier_and_exec(
+        allocation, region, rbar, rlar)
     local cleaned = cleanup_stage1(raw_allocation, region)
     if not cleaned then
         return false, "stage-1 cleanup failed; reboot before retrying"
     end
-    if not executed then return false, "Band 9 stage-1 execution failed" end
+    if not executed then
+        return false, execution_error or "Band 9 stage-1 execution failed"
+    end
+    if stage_result ~= 0 then return false, stage_result_error(stage_result) end
     return true
 end
 

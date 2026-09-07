@@ -36,7 +36,7 @@ The code path is in `watchfaces/canopus-installer-prod/xiaomi-band-9/main.lua` a
 | Item | Address | Finding |
 |---|---:|---|
 | NSH `exec` handler | `0x0c1c9528` | Parses a callable and invokes it with BLX. It does not supply a caller-controlled AAPCS argument frame. |
-| Default `memalign` wrapper | `0x0c16ab8d` | Two-argument Umem wrapper; a device retest returned `0` for the stage-1 request, so it is retained for stage-2 only. |
+| Default `memalign` wrapper | `0x0c16ab8d` | Two-argument Umem wrapper; a device retest returned `0` on this bootstrap path, so the corrected stage-1/stage-2 chain no longer uses it. |
 | Kmem `malloc` wrapper | `0x0c16af05` | One-argument wrapper over the initialized Kmem heap at `dword_2007D5D4`; used for the outer stage-1 workspace. |
 | Kmem `free` wrapper | `0x0c16a4b5` | One-argument Kmem release wrapper for the original, pre-alignment stage-1 pointer. |
 | MPU region allocation | `0x0c5228a5` | Allocates one of eight tracked MPU regions. |
@@ -65,7 +65,7 @@ The startup clear loop explains why `0x2006ade0..0x2006be60` looked attractive, 
 
 The first device retest of the gap candidate reported `stage-1 allocation failed: stage-0 callback returned result sentinel`. The sentinel is the literal result address left in the mailbox when the trampoline's final store is not observed; it does not prove that the callback body was reached. This distinguishes the earlier startup-zeroed candidate failure from a real allocator result: the candidate was writable enough for the mailbox image, but the split `mw`/`exec` task contexts did not preserve the temporary execute mapping.
 
-A subsequent retest after correcting the shifted mailbox literal offsets returned `result=0`. The exact `sub_C16AB8C` body returns zero when its Umem allocation path cannot produce a block. The production path therefore moves only the outer stage-1 workspace to the exact Kmem `malloc` wrapper, requests an extra 31 bytes, aligns an interior image base to 32 bytes, and frees the original Kmem pointer after stage-1 execution. Stage-2 keeps using Umem `memalign` because its ELF image still requires the existing two-argument allocator ABI.
+A subsequent retest after correcting the shifted mailbox literal offsets returned `result=0`. The exact `sub_C16AB8C` body returns zero when its Umem allocation path cannot produce a block. The production path first moved the outer stage-1 workspace to the exact Kmem `malloc` wrapper. The follow-up `stage-1 execution failed` result exposed that stage 1 still called the already-rejected Umem `memalign` as its first internal allocation. The corrected chain now uses Kmem throughout stage 1 and stage 2, requests alignment slack where needed, and always frees the original Kmem pointer rather than its aligned interior address.
 
 The stage-0 implementation now explicitly configures the temporary MPU slot before every mailbox call:
 

@@ -27,6 +27,7 @@ pub struct TargetPack {
     pub firmware_sha256: String,
     pub firmware_version: String,
     pub firmware_build: String,
+    pub identity_terminator: Option<String>,
     pub module_abi: u32,
     pub relocation_profile: String,
     pub revision: u32,

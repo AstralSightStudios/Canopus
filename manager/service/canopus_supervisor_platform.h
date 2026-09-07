@@ -20,6 +20,10 @@
 
 #include <stdint.h>
 
+#define CANOPUS_SUP_REGISTER_VERIFY_ERRNO_BASE 65536
+#define CANOPUS_SUP_REGISTER_CALL_ERRNO_BASE 73728
+#define CANOPUS_SUP_REGISTER_ERRNO_MAX 4095
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -15,6 +15,8 @@ loader = "nsh-mw-stage1-stage2-static-recovered"
 firmware_sha256 = "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264"
 firmware_version = "3.1.32"
 firmware_build = "N66NFC_3.1.32"
+# The approved version address points into build.prop and is LF-terminated.
+identity_terminator = "line"
 module_abi = 1
 relocation_profile = "best1503-v1"
 revision = 1

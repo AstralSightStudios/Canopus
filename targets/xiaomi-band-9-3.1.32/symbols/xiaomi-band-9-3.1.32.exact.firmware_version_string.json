@@ -33,5 +33,5 @@
     "thread": "calling thread / LVGL owner thread for UI entries",
     "device_probe": "pending release-candidate device gate"
   },
-  "notes": "build.prop contains exact ro.build.version=3.1.32 value at this address"
+  "notes": "build.prop contains exact ro.build.version=3.1.32 value at this address; the value is followed by LF and the next property, so the target uses identity_terminator=line"
 }

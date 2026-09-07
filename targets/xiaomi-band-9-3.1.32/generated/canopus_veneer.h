@@ -4,7 +4,7 @@
  * firmware : 3.1.32 (N66NFC_3.1.32)
  * sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
  * revision : 1
- * input_digest: fe3b0a42986f5043
+ * input_digest: 5bbba3124f69b08b
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_9_3_1_32_H
 #define CANOPUS_VENEER_XIAOMI_BAND_9_3_1_32_H
@@ -26,20 +26,21 @@ struct file_operations {
 };
 
 /* ---- runtime identity guard ---- */
-static inline int canopus_str_neq(const char *a, const char *b)
+static inline int canopus_identity_token_neq(const char *actual, const char *expected)
 {
-    while (*a && *b) { if (*a++ != *b++) return 1; }
-    return *a != *b;
+    while (*expected) { if (*actual++ != *expected++) return 1; }
+    return *actual != '\0' && *actual != '\n' && *actual != '\r';
 }
 
 static inline int canopus_identity_guard(void)
 {
     const char *const expect_version = "3.1.32";
     const char *const actual_version = (const char *)(uintptr_t)0x0c5fc5c1;
-    return canopus_str_neq(actual_version, expect_version) ? -1 : 0;
+    return canopus_identity_token_neq(actual_version, expect_version) ? -1 : 0;
 }
 
 /* ---- typed veneers ---- */
+/* inode_reserve: skipped (argument type not mappable) */
 typedef void (*canopus_fw_mpu_region_release_fn)(uint32_t);
 static inline void canopus_fw_mpu_region_release(uint32_t a0) {
     return ((canopus_fw_mpu_region_release_fn)(uintptr_t)0x0c5228fd)(a0);
@@ -59,6 +60,11 @@ static inline int canopus_fw_page_goto(uint32_t a0, uint32_t a1, void * a2, void
 typedef void (*canopus_fw_lv_obj_clear_flag_fn)(void *, uint32_t);
 static inline void canopus_fw_lv_obj_clear_flag(void * a0, uint32_t a1) {
     return ((canopus_fw_lv_obj_clear_flag_fn)(uintptr_t)0x0c26f56b)(a0, a1);
+}
+
+typedef int (*canopus_fw_inode_unlock_fn)(void);
+static inline int canopus_fw_inode_unlock(void) {
+    return ((canopus_fw_inode_unlock_fn)(uintptr_t)0x0c3908c5)();
 }
 
 typedef int (*canopus_fw_page_finish_fn)(void *);
@@ -106,6 +112,11 @@ static inline int canopus_fw_rename(const char * a0, const char * a1) {
 typedef uint8_t (*canopus_fw_mpu_region_allocate_fn)(void);
 static inline uint8_t canopus_fw_mpu_region_allocate(void) {
     return ((canopus_fw_mpu_region_allocate_fn)(uintptr_t)0x0c5228a5)();
+}
+
+typedef int (*canopus_fw_inode_lock_fn)(void);
+static inline int canopus_fw_inode_lock(void) {
+    return ((canopus_fw_inode_lock_fn)(uintptr_t)0x0c390059)();
 }
 
 typedef void * (*canopus_fw_lvx_page_title_create_fn)(void *, const char *, uint32_t, void *);

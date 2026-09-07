@@ -78,7 +78,11 @@ def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict, dict]
         raise SystemExit("stage0.requires_mpu_sync needs an exact firmware.mpu_sync entry")
     if "mpu_sync" in firmware:
         firmware_entries.append("mpu_sync")
+    if requires_mpu_sync:
+        firmware_entries.extend(("inode_lock", "inode_reserve", "inode_unlock"))
     for key in firmware_entries:
+        if key not in firmware:
+            raise SystemExit(f"firmware.{key} is required")
         entry = number(firmware[key], f"firmware.{key}")
         if entry == 0 and profile.get("status") != "STATIC_RECOVERED":
             continue
@@ -159,6 +163,10 @@ def write_header(path: pathlib.Path, profile: dict, stage0: dict, firmware: dict
     }
     if "mpu_sync" in firmware:
         mapping["CANOPUS_FW_MPU_SYNC"] = firmware["mpu_sync"] | 1
+    if "inode_lock" in firmware:
+        mapping["CANOPUS_FW_INODE_LOCK"] = firmware["inode_lock"] | 1
+        mapping["CANOPUS_FW_INODE_RESERVE"] = firmware["inode_reserve"] | 1
+        mapping["CANOPUS_FW_INODE_UNLOCK"] = firmware["inode_unlock"] | 1
     for key, value in mapping.items():
         lines.append(f"#define {key} UINT32_C(0x{number(value, key):08x})")
     lines.extend([

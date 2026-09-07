@@ -45,6 +45,11 @@ mpu_configure = 0x0C52272C
 mpu_release = 0x0C5228FC
 # Entry at the barrier tail of the MPU helper: DSB SY; ISB SY; BX LR.
 mpu_sync = 0x0C5226DA
+# Exact inode primitives used to preserve inode_reserve errors that the stock
+# register_driver wrapper discards before returning the unlock result.
+inode_lock = 0x0C390058
+inode_reserve = 0x0C4F7B7C
+inode_unlock = 0x0C3908C4
 
 [architecture]
 mpu_rnr = 0xE000ED98
@@ -70,11 +75,19 @@ original_words = [
 ]
 
 [evidence]
-ids = ["EVID-LOADER-9132-001", "EVID-STAGE0-9132-003"]
+ids = [
+  "EVID-LOADER-9132-001",
+  "EVID-STAGE0-9132-003",
+  "EVID-SUPERVISOR-9132-004",
+]
 unsafe_assumptions = [
   "DEVICE_REJECTED: on-device NSH mw write to 0x2006A9B0 raised CFSR 0x82 Data Access Violation with MMFAR 0x2006A9B0.",
   "The static SRAM cave exists in the image but is MPU read-only from the system -c mw task.",
   "The unassigned RAM candidate at 0x200CB400 is statically identified, but runtime ownership is not device-proven.",
   "DEVICE_REJECTED: ROX-first publication into live region 7 caused CFSR 0xB2 stacking failure at MMFAR 0x3C80874C.",
-  "The corrected 0x200CB400 RWX-first/RX-final mapping and pre-entry firmware barrier remain pending an on-device retest.",
+  "The 2026-08-31 retest reached the post-load /dev/canopus check without repeating the ROX-first CFSR 0xB2 fault.",
+  "The corrected line-bounded Supervisor identity guard remains pending an on-device retest.",
+  "The follow-up stage-1 shell failure was misclassified before reading the result word; result-first diagnostics and the all-Kmem bootstrap subsequently returned stage result zero.",
+  "The all-Kmem loader invoked the constructor table but /dev/canopus remained absent; constructor phase publication returned -204 at register-device verification.",
+  "The exact register_driver wrapper discards inode_reserve failures; direct idempotent inode lock/reserve/unlock registration with errno preservation remains pending an on-device retest.",
 ]

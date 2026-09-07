@@ -13,6 +13,7 @@ TARGET_ID=${CANOPUS_TARGET:-xiaomi-band-10-pro-3.101.036}
 LOADER_SRCS=""
 LOADER_OBJECTS=""
 LOADER_PROFILE=""
+TARGET_DEFINES=""
 case "$TARGET_ID" in
     xiaomi-band-10-pro-3.101.036|xiaomi-band-10-pro-3.101.043)
         MANAGER_BACKEND="manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
@@ -23,6 +24,7 @@ case "$TARGET_ID" in
         MANAGER_BACKEND="manager/target/lvgl_v8/canopus_manager_target_lvgl_v8.c"
         LOADER_SRCS="runtime/loader/canopus_arm_reloc.c runtime/loader/canopus_elf32_loader.c"
         LOADER_PROFILE="targets/$TARGET_ID/loader/bootstrap.toml"
+        TARGET_DEFINES="-DCANOPUS_SUP_BAND9_BOOTSTRAP=1"
         PROD_FAMILY=xiaomi-band-9
         MAX_SIZE=98304
         ;;
@@ -75,7 +77,8 @@ echo "[1/3] compile supervisor (Cortex-M33 Thumb soft-float)"
 TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
   -ffreestanding -fno-common -fno-builtin -fno-jump-tables \
   -fno-stack-protector -fno-unwind-tables -fno-asynchronous-unwind-tables \
-  -fdata-sections -fno-function-sections -Os -Wall -Wextra -Werror"
+  -fdata-sections -fno-function-sections -Os -Wall -Wextra -Werror \
+  $TARGET_DEFINES"
 
 INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \

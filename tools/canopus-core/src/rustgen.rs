@@ -268,6 +268,12 @@ impl<'a> RustGen<'a> {
             .symbols
             .iter()
             .find(|s| s.name == "firmware_build_string" && s.entry_address.is_some());
+        let line_terminated = self.pack.identity_terminator.as_deref() == Some("line");
+        let compare = if line_terminated {
+            "identity_token_eq"
+        } else {
+            "c_str_eq"
+        };
 
         out.push_str("// ---- runtime identity guard ----\n");
         match (ver, build) {
@@ -284,22 +290,31 @@ impl<'a> RustGen<'a> {
                 out.push_str(&format!("b\"{}\"", self.pack.firmware_build));
                 out.push_str(";\n");
                 out.push_str(&format!(
-                    "    if !c_str_eq({va}, EXPECT_VERSION) {{ return -1; }}\n"
+                    "    if !{compare}({va}, EXPECT_VERSION) {{ return -1; }}\n"
                 ));
                 out.push_str(&format!(
-                    "    if !c_str_eq({ba}, EXPECT_BUILD) {{ return -1; }}\n"
+                    "    if !{compare}({ba}, EXPECT_BUILD) {{ return -1; }}\n"
                 ));
                 out.push_str("    0\n");
                 out.push_str("}\n\n");
-                out.push_str("/// Compares a NUL-terminated string at `addr` to `expected`.\n");
-                out.push_str("fn c_str_eq(addr: usize, expected: &[u8]) -> bool {\n");
+                if line_terminated {
+                    out.push_str("/// Compares an LF-, CR-, or NUL-terminated identity token.\n");
+                    out.push_str("fn identity_token_eq(addr: usize, expected: &[u8]) -> bool {\n");
+                } else {
+                    out.push_str("/// Compares a NUL-terminated string at `addr` to `expected`.\n");
+                    out.push_str("fn c_str_eq(addr: usize, expected: &[u8]) -> bool {\n");
+                }
                 out.push_str("    let mut i = 0usize;\n");
                 out.push_str("    while i <= expected.len() && i < 64 {\n");
                 out.push_str("        let b = unsafe { *((addr + i) as *const u8) };\n");
                 out.push_str("        if i < expected.len() {\n");
                 out.push_str("            if b != expected[i] { return false; }\n");
                 out.push_str("        } else {\n");
-                out.push_str("            return b == 0;\n");
+                if line_terminated {
+                    out.push_str("            return b == 0 || b == b'\\n' || b == b'\\r';\n");
+                } else {
+                    out.push_str("            return b == 0;\n");
+                }
                 out.push_str("        }\n");
                 out.push_str("        i += 1;\n");
                 out.push_str("    }\n");

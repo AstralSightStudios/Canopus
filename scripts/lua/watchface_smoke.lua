@@ -22,7 +22,12 @@ local subscriptions = {}
 local obj_mt = {}
 function obj_mt:clear_flag() return self end
 function obj_mt:add_flag() return self end
-function obj_mt:set(props) self._last_set = props; return self end
+function obj_mt:set(props)
+    self._last_set = props
+    self._set_history = self._set_history or {}
+    self._set_history[#self._set_history + 1] = props
+    return self
+end
 function obj_mt:onClicked(fn) self._click = fn; table.insert(created, self); return self end
 function obj_mt:onevent(event, fn)
     assert(event == lvgl.EVENT.CLICKED)
@@ -481,6 +486,31 @@ return {
                     return false
                 end
                 if fault == "stage1_exec_failure" then return false end
+                if fault == "stage1_return_failure" then
+                    cave[cave_result] = 0xa1a1a1a1
+                    return false
+                end
+                if fault == "stage2_relocation_failure" then
+                    cave[cave_result] = 0xffffff98
+                    return false
+                end
+                if fault == "ctor_identity_failure" then
+                    cave[cave_result] = 0xffffff37
+                    return false
+                end
+                if fault == "ctor_registration_failure" then
+                    cave[cave_result] = 0xffffff34
+                    return false
+                end
+                if fault == "ctor_open_errno" then
+                    cave[cave_result] = 0xfffefffe
+                    return false
+                end
+                if fault == "inode_reserve_errno" then
+                    cave[cave_result] = 0xfffedfef
+                    return false
+                end
+                cave[cave_result] = 0
                 device_present = true
                 return true
             end
@@ -601,6 +631,12 @@ local function check(path, installer_fault, installer_firmware)
             or (band9_fault == "mpu_region_collision" and freed and not released)
             or (band9_fault == "mpu_configuration_failure" and freed and released)
             or (band9_fault == "stage1_exec_failure" and freed and released)
+            or (band9_fault == "stage1_return_failure" and freed and released)
+            or (band9_fault == "stage2_relocation_failure" and freed and released)
+            or (band9_fault == "ctor_identity_failure" and freed and released)
+            or (band9_fault == "ctor_registration_failure" and freed and released)
+            or (band9_fault == "ctor_open_errno" and freed and released)
+            or (band9_fault == "inode_reserve_errno" and freed and released)
         local strict_stage0_mpu = path:match(
             "canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") ~= nil
         local function matches_mpu_sequence(start, region, expected)
@@ -653,7 +689,34 @@ local function check(path, installer_fault, installer_firmware)
             { "rbar", stage1_base + 6 },
         })
         if band9_fault then
-            if device_present or used_insmod or not staged or not fault_ok then
+            local stage_diagnosed = true
+            local expected_diagnostic = {
+                stage1_exec_failure = "stage%-1 command failed before entry",
+                stage1_return_failure = "stage%-1 entered but did not return",
+                stage2_relocation_failure = "Supervisor ELF relocation failed",
+                ctor_identity_failure = "Supervisor firmware identity rejected",
+                ctor_registration_failure =
+                    "Supervisor /dev/canopus registration failed",
+                ctor_open_errno =
+                    "Supervisor /dev/canopus open verification failed errno=2",
+                inode_reserve_errno =
+                    "Supervisor inode_reserve failed errno=17",
+            }
+            local diagnostic = expected_diagnostic[band9_fault]
+            if diagnostic
+                and path:match("canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") then
+                stage_diagnosed = false
+                for _, object in ipairs(created) do
+                    for _, props in ipairs(object._set_history or {}) do
+                        local text = props.text
+                        if type(text) == "string" and text:match(diagnostic) then
+                            stage_diagnosed = true
+                        end
+                    end
+                end
+            end
+            if device_present or used_insmod or not staged or not fault_ok
+                or not stage_diagnosed then
                 io.open = original_io_open
                 os.execute = original_os_execute
                 print("BAND9 FAULT FLOW FAIL:", path, band9_fault,
@@ -710,7 +773,11 @@ if ok_all then
     local band9_firmware_versions = { "3.1.175", "3.1.32" }
     local band9_faults = {
         "cave_mismatch", "mailbox_exec_failure", "allocation_failure",
-        "mpu_exhaustion", "mpu_region_collision", "mpu_configuration_failure", "stage1_exec_failure",
+        "mpu_exhaustion", "mpu_region_collision", "mpu_configuration_failure",
+        "stage1_exec_failure", "stage1_return_failure",
+        "stage2_relocation_failure", "ctor_identity_failure",
+        "ctor_registration_failure", "ctor_open_errno",
+        "inode_reserve_errno",
     }
     for _, firmware_version in ipairs(band9_firmware_versions) do
         for _, fault in ipairs(band9_faults) do
