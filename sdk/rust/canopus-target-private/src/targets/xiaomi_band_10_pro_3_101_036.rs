@@ -972,6 +972,15 @@ pub unsafe fn lvx_object_align(object: *mut core::ffi::c_void, align: u32, x: i3
     f(object, align, x, y);
 }
 
+/// 3.101.036 has no recovered `lvx_content_pad_bottom` veneer (043-only in
+/// EVID-UI-WIDGET-001). No-op keeps the Loop/Manager call site portable.
+pub unsafe fn lvx_object_set_content_pad_bottom(
+    _object: *mut core::ffi::c_void,
+    _value: i32,
+    _selector: u32,
+) {
+}
+
 /// Moves an object to an exact index in its parent's child list. Index zero is
 /// the back-most draw position. Must run on the LVGL owner thread.
 pub unsafe fn lvx_object_move_to_index(object: *mut core::ffi::c_void, index: i32) {
