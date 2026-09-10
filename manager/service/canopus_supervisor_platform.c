@@ -14,6 +14,9 @@
 #include "canopus_supervisor_platform.h"
 #include "canopus_manager_target.h"
 #include "canopus_target_config.h"
+#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+#include "band11/canopus_band11_abi.h"
+#endif
 #include "canopus_installer_bundle.h"
 #include "canopus_module_registration.h"
 #include "canopus_runtime.h"
@@ -161,7 +164,14 @@ static int sup_register_device(void *cookie)
     /* The exact firmware wrapper discards inode_reserve failures and returns
      * the inode-lock release result. Remove a stale same-name inode first so
      * repeated loader attempts cannot be misreported as successful register. */
+#ifndef CANOPUS_SUP_BAND11_BOOTSTRAP
     (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
+#endif
+#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+    /* Never replace a live resident Supervisor's device node. */
+    fd = open_file(CANOPUS_SUP_DEVICE_PATH, CANOPUS_SUP_NUTTX_O_RDONLY);
+    if (fd >= 0) { (void)close_file(fd); return -17; }
+#endif
     rc = sup_register_driver_exact(CANOPUS_SUP_DEVICE_PATH,
                                    (const void *)&s_fops, (void *)0);
     if (rc != 0) return rc;
@@ -173,7 +183,9 @@ static int sup_register_device(void *cookie)
         if (error > CANOPUS_SUP_REGISTER_ERRNO_MAX) {
             error = CANOPUS_SUP_REGISTER_ERRNO_MAX;
         }
-        (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
+    #ifndef CANOPUS_SUP_BAND11_BOOTSTRAP
+    (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
+#endif
         return -(CANOPUS_SUP_REGISTER_VERIFY_ERRNO_BASE + error);
     }
     (void)close_file(fd);
@@ -183,7 +195,11 @@ static int sup_register_device(void *cookie)
 static int sup_unregister_device(void *cookie)
 {
     (void)cookie;
+#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+    return -38; /* resident Supervisor: teardown is reboot, not an unverified ABI */
+#else
     return CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
+#endif
 }
 
 static const uint8_t s_installer_public_key[32] = {
@@ -515,6 +531,9 @@ static void sup_loader_release(void *cookie, void *allocation, uint32_t size)
     struct sup_loaded_module *loaded = cookie;
     (void)size;
 
+#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+    while (loaded->mpu_region_count) b11_unmap(loaded->mpu_regions[--loaded->mpu_region_count]);
+#else
     while (loaded->mpu_region_count != 0u) {
         uint32_t region;
         loaded->mpu_region_count--;
@@ -526,6 +545,7 @@ static void sup_loader_release(void *cookie, void *allocation, uint32_t size)
                          ::: "memory");
         canopus_fw_mpu_region_release(region);
     }
+#endif
     canopus_fw_mm_free_default(allocation);
 }
 
@@ -534,6 +554,20 @@ static int sup_loader_finalize(void *cookie, void *allocation,
                                const struct canopus_elf_region *regions,
                                uint32_t region_count)
 {
+#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+    struct sup_loaded_module *loaded = cookie;
+    uint32_t length; int id;
+    (void)allocation;
+    if (region_count < 2 || region_count > 3 || regions[0].kind != CANOPUS_ELF_REGION_EXEC ||
+        regions[0].offset || !b11_heap_contains(target_base, size)) return -1;
+    length = regions[0].size;
+    if (regions[1].kind == CANOPUS_ELF_REGION_RO) length += regions[1].size;
+    if (length > size) return -1;
+    id = b11_map_exec(target_base, length);
+    if (id < 0) return -1;
+    loaded->mpu_regions[loaded->mpu_region_count++] = (uint8_t)id;
+    return 0;
+#else
     struct sup_loaded_module *loaded = cookie;
     uint32_t i;
     uint32_t physical_count;
@@ -584,6 +618,7 @@ fail:
         canopus_fw_mpu_region_release(region);
     }
     return -1;
+#endif
 }
 
 static int sup_loader_invoke(void *cookie, uint32_t callable)
@@ -799,9 +834,11 @@ static int sup_registry_restore(void *cookie, uint8_t *data, uint32_t len)
 
 static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
 {
+#ifdef CANOPUS_SUP_WATCHFACE_DELETE
     typedef int (*watchface_delete_fn)(const char *);
     watchface_delete_fn delete_watchface =
         (watchface_delete_fn)(uintptr_t)CANOPUS_SUP_WATCHFACE_DELETE;
+#endif
 #ifdef CANOPUS_SUP_WATCHFACE_RESET
     /* reset_watchface(force): the argument is forwarded to the firmware's
      * refresh_cur_watchface. force == 0 rebuilds only when the current
@@ -871,7 +908,9 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
     /* The firmware watchface manager switches away before deleting an active
      * non-last watchface. Failure is non-fatal: installation remains complete
      * and the installer page can show diagnostics for manual removal. */
+#ifdef CANOPUS_SUP_WATCHFACE_DELETE
     (void)delete_watchface(token);
+#endif
 #ifdef CANOPUS_SUP_WATCHFACE_RESET
     /* Keeps the stock watchface layout consistent after the deletion. */
     (void)watchface_reset(0);

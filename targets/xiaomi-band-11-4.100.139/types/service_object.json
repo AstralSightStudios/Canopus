@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.139.type.service_object.v1",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "kind": "struct",
+  "name": "service_object",
+  "size": 64,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "enabled_state",
+      "offset": 0,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "name",
+      "offset": 4,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed"
+    },
+    {
+      "name": "service_id",
+      "offset": 8,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "profile_group",
+      "offset": 9,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "startup_cb",
+      "offset": 36,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "startup_eligibility_cb",
+      "offset": 48,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "get_profile_cb",
+      "offset": 52,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "cleanup_cb",
+      "offset": 56,
+      "width": 4,
+      "signedness": "pointer"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "source": "layout shape carried from same-model Xiaomi Band 11 analysis (4.100.108/043 recovered layout); pointer-free offsets are architecture-fixed (Cortex-M33/thumb2). Independent 4.100.139 field-offset audit pending.",
+    "evidence_ids": [
+      "EVID-VERIFY-4139-001"
+    ]
+  }
+}

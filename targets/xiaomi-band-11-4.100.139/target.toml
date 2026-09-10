@@ -1,0 +1,104 @@
+# xiaomi-band-11-4.100.139 — Xiaomi Band 11 firmware 4.100.139
+# Fresh static candidate pack generated from the exact 4.100.139 IDB and the
+# 043->4.100.139 BinDiff-inspired ensemble, with identity strings and a
+# high-value symbol subset independently re-verified in the exact IDB.
+#
+# General SDK callables remain restricted/PENDING. The exact .139 native
+# installer has a separate statically audited ABI and a complete host-tested
+# staged implementation. Physical cache/alias/MPU and display behavior are NOT_PROBED.
+schema = 1
+target_id = "xiaomi-band-11-4.100.139"
+device_family = "xiaomi-smart-band"
+device_model = "Xiaomi Band 11"
+board_revision = "q66cn"
+os_family = "nuttx-derived"
+architecture = "armv8-m.main"
+cpu = "cortex-m33"
+instruction_set = "thumb2"
+endianness = "little"
+float_abi = "soft"
+loader = "custom-staged-band11-lua-owned-static-test"
+firmware_sha256 = "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74"
+firmware_version = "4.100.139"
+firmware_build = "user-4.100.139-cn-202608280000"
+identity_terminator = "line"
+module_abi = 1
+relocation_profile = "best1503-v1"
+revision = 2
+
+# Recovered code/data extent from the exact 4.100.139 IDB. All 35,192 recovered
+# functions and the identity strings fall inside this XIP window.
+firmware_address_ranges = [
+  { base = 0x0C000000, size = 0x00D00000 },
+]
+
+# No capability is build-available yet: every regenerated symbol is restricted
+# and PENDING; only the private native installer ABI is compiled for hardware testing.
+capabilities = []
+
+[loader_profile]
+# The supervisor is still authored as a zero-import ELF32 ET_REL (so it can be
+# compiled and verifier-checked). A Lua-owned PIC stage1 loads stage2 and this
+# ET_REL image. Native loader and Manager are host-tested, device NOT_PROBED.
+elf_class = 32
+elf_machine = "ARM"
+elf_type = "ET_REL"
+endianness = "little"
+constructor_discovery = "init_array"
+symbol_imports = "none"
+max_size = 0
+alignment = 4
+persistent_autoload = false
+
+[[loader_profile.relocations]]
+name = "R_ARM_NONE"
+arm_type = 0
+notes = "no-op; accepted"
+[[loader_profile.relocations]]
+name = "R_ARM_ABS32"
+arm_type = 2
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_REL32"
+arm_type = 23
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_TARGET1"
+arm_type = 38
+notes = "handled with ABS32 semantics"
+[[loader_profile.relocations]]
+name = "R_ARM_PREL31"
+arm_type = 42
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVW_ABS_NC"
+arm_type = 47
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVT_ABS"
+arm_type = 48
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_CALL"
+arm_type = 10
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_JUMP24"
+arm_type = 30
+notes = "static candidate; no device loader gate"
+
+[provenance]
+source_repo = "992e3cbba9cb4b379f7f7c9a816abc3b_upd_miwear.watch.q66cn (4.100.139)"
+source_findings = [
+  "Exact 4.100.139 IDB corpus freshly extracted 2026-09-08: 35,192 functions, 16,127 referenced data objects (schema-2 fw-corpus).",
+  "043->4.100.139 BinDiff-inspired ensemble matched 123/124 source function symbols one-to-one; this is cross-MODEL (Band 10 Pro -> Band 11) so most matches are low-margin (median margin 0.0085; only 14 have margin>=0.10).",
+  "Secondary verification in the exact 4.100.139 IDB confirmed the two matcher anchors (controller_crash_dump 0xC92C388, lv_image_set_src 0xC3B2C28) and two high-value symbols (app_install 0xC6AB350, lvx_page_title_create 0xC89E7DC).",
+  "Secondary verification FALSIFIED the register_driver candidate (0xC46C2FE is a command-311 dispatcher, not NuttX VFS register_driver); it is kept CANDIDATE/restricted and generates no callable.",
+  "Firmware identity strings recovered exactly: '4.100.139' at 0x0CA0D216 and 'user-4.100.139-cn-202608280000' at 0x0CA0D28E (LF-terminated build.prop tokens; identity_terminator=line).",
+  "LVGL v9 confirmed (lv_image.c source-path). Type layouts carry the same-model Band 11 shape pending an independent 4.100.139 field-offset audit.",
+  "Follow-up EVID-BOOTSTRAP-4139-002 independently recovered eight VFS/user-heap primitives; register_driver is the three-argument 0x0C914F64 entry (inode type 1, private +0x18). The old insmod candidate was rejected as a strchr-like wrapper. All recovered records remain restricted/PENDING.",
+  "EVID-NATIVE-4139-003 adds exact Kmem/VFS/LVGL/page/launcher ABI evidence and corrects app/page layouts. Complete flat installer resources include Lua recovery, owned PIC stage1, stage2 and Supervisor. Host Lua and ARM emulation pass; physical device NOT_PROBED; see loader/native-audit.md.",
+]
+import_date = "2026-09-08"
+maintainer = "canopus-maintainer"
+reviewers = ["canopus-maintainer"]

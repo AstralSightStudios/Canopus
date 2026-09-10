@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.page_goto",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "page_goto",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(uint32_t, uint32_t, uint32_t, uint32_t)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+  },
+  "entry_address": "0xc8ed780",
+  "callable_address": "0xc8ed781",
+  "notes": "goto_page_no_check_stacktop: looks up key, installs start data, creates/resumes target and pauses source. Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval.",
+  "approval_state": "PENDING"
+}

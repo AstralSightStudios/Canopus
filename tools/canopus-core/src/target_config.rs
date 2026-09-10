@@ -542,16 +542,28 @@ impl<'a> TargetConfigGen<'a> {
             out.push_str("#define CANOPUS_SUP_CUSTOM_LOADER 1\n");
         }
         out.push('\n');
-        self.emit(&mut out, if custom { FW_9 } else { FW_10 }, false);
-        out.push('\n');
-        self.emit(&mut out, if custom { SUP_9 } else { SUP_10 }, custom);
-        out.push_str("#define CANOPUS_SUP_TARGET_ID CANOPUS_TARGET_ID\n");
-        if custom {
-            out.push_str("#define CANOPUS_SUP_REGISTER_DRIVER(path, fops, mode, priv) \\\n    ((void)(mode), canopus_fw_register_driver((path), (fops), (priv)))\n");
+        // A zero completeness flag must not accompany executable candidate
+        // addresses: consumers other than the Supervisor build script can
+        // include this header. Incomplete custom targets expose identity only.
+        if complete {
+            self.emit(&mut out, if custom { FW_9 } else { FW_10 }, false);
+            out.push('\n');
+            self.emit(&mut out, if custom { SUP_9 } else { SUP_10 }, custom);
         } else {
+            out.push_str("/* Platform ABI incomplete: firmware call macros are withheld. */\n");
+        }
+        out.push_str("#define CANOPUS_SUP_TARGET_ID CANOPUS_TARGET_ID\n");
+        if complete && custom {
+            out.push_str("#define CANOPUS_SUP_REGISTER_DRIVER(path, fops, mode, priv) \\\n    ((void)(mode), canopus_fw_register_driver((path), (fops), (priv)))\n");
+        } else if complete {
             out.push_str("#define CANOPUS_SUP_REGISTER_DRIVER(path, fops, mode, priv) \\\n    canopus_fw_register_driver((path), (fops), (mode), (priv))\n");
         }
-        out.push_str("#define CANOPUS_SUP_UNREGISTER_DRIVER(path) canopus_fw_unregister_driver(path)\n#define CANOPUS_SUP_FIRMWARE_SHA256_BYTES \\\n");
+        if complete {
+            out.push_str(
+                "#define CANOPUS_SUP_UNREGISTER_DRIVER(path) canopus_fw_unregister_driver(path)\n",
+            );
+        }
+        out.push_str("#define CANOPUS_SUP_FIRMWARE_SHA256_BYTES \\\n");
         for i in 0..32 {
             if i == 0 {
                 out.push_str("    { ");

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_bar_set_range",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_bar_set_range",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3ad920",
+  "callable_address": "0xc3ad921",
+  "prototype": "void(void *, int32_t, int32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed page parent/widget and source",
+    "return_value": "n/a"
+  },
+  "side_effects": [
+    "updates_widget_range"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+  },
+  "notes": "Sets +0x38/+0x3c bounds, clamps +0x34 current via lv_bar_set_value; same class fields as constructor. Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval.",
+  "approval_state": "PENDING"
+}

@@ -28,14 +28,19 @@ Canopus 允许开发者：
 |---|---|---|---|
 | `xiaomi-band-10-pro-3.101.036` | `3.101.036` | `662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81` | trusted build target |
 | `xiaomi-band-10-pro-3.101.043` | `3.101.043` | `519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec` | static pack/build target; device gate pending |
-| `xiaomi-band-11-4.100.108` | `4.100.108` | `9315ca353f624cec25dfcfc98a95ba959e2d7b24573bf1d6adf16ea10341bd99` | fresh static candidate pack; LVGL v9 ABI/codegen gate pending |
+| `xiaomi-band-11-4.100.139` | `4.100.139` | `31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74` | complete native installer test candidate; Lua recovery, owned staged loader and Manager host-tested; general SDK/device gates pending |
 
 036/043 are Xiaomi Band 10 Pro Cortex-M33 / Thumb-2 / soft-float targets using the
-NuttX `modlib` ELF32 `ET_REL` zero-import loader. The three newly regenerated Band 9/9
-Pro/11 packs are static candidate packs; their target-private ABI and LVGL gates remain
-pending. Band 9/9 Pro use firmware-bound NSH `mw`/`exec` bootstrap profiles whose
-command/VFS/heap/MPU/SRAM primitives are static-recovered; no verifier-clean Band 9
-Supervisor is currently staged, and no device loader gate has passed.
+NuttX `modlib` ELF32 `ET_REL` zero-import loader. The Band 9 / 9 Pro / 11 packs are
+static candidate packs; their target-private ABI and LVGL gates remain pending. Band 9/9
+Pro use firmware-bound NSH `mw`/`exec` bootstrap profiles whose command/VFS/heap/MPU/SRAM
+primitives are static-recovered; no verifier-clean Band 9 Supervisor is currently staged,
+and no device loader gate has passed. Band 11 (`4.100.139`, BES best1503 q66) has no approved insmod. Its independent
+Lua-owned staged loader and corrected native Manager ABI now build as a complete test
+candidate. The pack replaced `4.100.108`; general SDK callables and physical-device
+validation remain pending. See the [native audit](targets/xiaomi-band-11-4.100.139/loader/native-audit.md)
+and [packing/testing instructions](watchfaces/canopus-installer-prod/xiaomi-band-11/docs/README.md).
+The Band 11 resource root contains only `main.lua` and `.bin` files.
 
 ## 仓库结构
 

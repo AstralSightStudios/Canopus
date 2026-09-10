@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_obj_align_to",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_obj_align_to",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *, void *, uint32_t, int32_t, int32_t)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+  },
+  "entry_address": "0xc3877b0",
+  "callable_address": "0xc3877b1",
+  "notes": "Lua align_to table 0x2ca72ef0 -> 0xc6c94f0 parses base, align, x, y and supplies fifth arg on stack. Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval.",
+  "approval_state": "PENDING"
+}

@@ -15,6 +15,13 @@ LOADER_OBJECTS=""
 LOADER_PROFILE=""
 TARGET_DEFINES=""
 case "$TARGET_ID" in
+    xiaomi-band-11-4.100.139)
+        MANAGER_BACKEND="manager/target/band11/canopus_manager_target_band11.c"
+        LOADER_SRCS="runtime/loader/canopus_arm_reloc.c runtime/loader/canopus_elf32_loader.c"
+        TARGET_DEFINES="-DCANOPUS_SUP_BAND11_BOOTSTRAP=1"
+        PROD_FAMILY=xiaomi-band-11
+        MAX_SIZE=131072
+        ;;
     xiaomi-band-10-pro-3.101.036|xiaomi-band-10-pro-3.101.043)
         MANAGER_BACKEND="manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
         PROD_FAMILY=xiaomi-band-10-pro
@@ -54,7 +61,7 @@ CC=${CC:-clang}
     echo "error: target lacks generated/canopus_target_config.h: $TARGET_ID"
     exit 1
 }
-if ! grep -q '^#define CANOPUS_SUP_PLATFORM_COMPLETE 1$' "$TARGET_CONFIG"; then
+if [ "$PROD_FAMILY" != xiaomi-band-11 ] && ! grep -q '^#define CANOPUS_SUP_PLATFORM_COMPLETE 1$' "$TARGET_CONFIG"; then
     echo "error: supervisor platform ABI is not production-complete for $TARGET_ID" >&2
     if [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
         echo "       recover and approve the missing exact-target identity, LVGL v8," >&2
@@ -173,7 +180,11 @@ MANAGER_ICON_SOURCE="$ROOT/watchfaces/canopus-installer/manager_icon.bin"
 mkdir -p "$PROD_FAMILY_STAGE"
 cp "$MANAGER_ICON_SOURCE" "$PROD_FAMILY_STAGE/manager_icon.bin"
 cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
-if [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
+if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
+    python3 "$ROOT/scripts/build_band11_installer.py" --supervisor "$OUT/canopus_supervisor.elf" \
+        --output-dir "${CANOPUS_BAND11_OUTPUT_DIR:-$PROD_FAMILY_STAGE}" \
+        --firmware "${CANOPUS_BAND11_FIRMWARE:-$ROOT/fwbins/$TARGET_ID/vela_ap.bin}"
+elif [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
     CANOPUS_INSTALLER_STAGE_ROOT="$ROOT/watchfaces/canopus-installer" \
         "$ROOT/scripts/build_band9_bootstrap.sh" "$TARGET_ID" "$OUT"
     CANOPUS_INSTALLER_STAGE_ROOT="$PROD_FAMILY_STAGE" \

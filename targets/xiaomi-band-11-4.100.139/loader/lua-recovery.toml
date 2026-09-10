@@ -1,0 +1,19 @@
+# Lua bootstrap metadata only. This is NOT an executable-memory loader profile.
+schema = 1
+target_id = "xiaomi-band-11-4.100.139"
+firmware_sha256 = "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74"
+status = "STATIC_RECOVERED"
+device_status = "NOT_PROBED"
+loader_status = "STATIC_TEST_CANDIDATE"
+evidence_id = "EVID-BOOTSTRAP-4139-002"
+lua_version = "Lua 5.4"
+identity_path = "/etc/build.prop"
+firmware_version = "4.100.139"
+firmware_build = "user-4.100.139-cn-202608280000"
+pmain = 0x0C6D33B0
+pmain_error_handler = 0x0C6CECD0
+os_execute = 0x0C717D70
+luaopen_os = 0x0C71444C
+system = 0x0C370774
+reentry_unwind_leaks_path = true
+io_open = 0x0C717998

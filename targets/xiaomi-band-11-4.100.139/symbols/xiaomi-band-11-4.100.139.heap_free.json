@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.heap_free",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "heap_free",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1043-4139",
+      "EVID-BOOTSTRAP-4139-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1043-4139",
+      "EVID-BOOTSTRAP-4139-002"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.043 report=targets/xiaomi-band-11-4.100.139/evidence/fw-match/ensemble-1043-to-4139-v2.json"
+  },
+  "entry_address": "0xc34cd2c",
+  "callable_address": "0xc34cd2d",
+  "notes": "Independent raw Thumb verification supersedes ensemble candidate 0xc7a33b2. Wrapper passes the same heap pointer from 0x200B2590 and pointer to 0x0C34CC90. pmain releases strdup path through this wrapper at 0x0C6D3854. This proves a user-heap pair, NOT Kmem suitability or executable memory. Device/context/layout gates remain pending; no callable is approved.",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs"
+}

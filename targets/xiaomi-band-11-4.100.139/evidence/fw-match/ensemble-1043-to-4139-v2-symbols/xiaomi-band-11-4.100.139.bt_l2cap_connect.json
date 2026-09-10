@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.bt_l2cap_connect",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "bt_l2cap_connect",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3a9028",
+  "callable_address": "0xc3a9029",
+  "prototype": "uint32_t(const void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "bluetooth_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "return_value": "nonzero_queue_node_on_acceptance_else_zero"
+  },
+  "side_effects": [
+    "queues_dynamic_l2cap_connection_request"
+  ],
+  "proof": {
+    "static": "candidate",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1043-4139"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1043-4139"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.043 report=targets/xiaomi-band-11-4.100.139/evidence/fw-match/ensemble-1043-to-4139-v2.json"
+  },
+  "approval_state": "PENDING",
+  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=CANDIDATE confidence=0.6053 margin=0.0000"
+}

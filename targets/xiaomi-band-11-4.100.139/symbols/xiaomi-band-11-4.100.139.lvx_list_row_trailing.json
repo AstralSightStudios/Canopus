@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lvx_list_row_trailing",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lvx_list_row_trailing",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3a06c4",
+  "prototype": "void *(void *row)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1043-4139",
+      "EVID-NATIVE-UI-4139-004"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1043-4139",
+      "EVID-NATIVE-UI-4139-004"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.043 report=targets/xiaomi-band-11-4.100.139/evidence/fw-match/ensemble-1043-to-4139-v2.json"
+  },
+  "approval_state": "REJECTED",
+  "notes": "0x0C3A06C4 indexes a container, not a row trailing accessor. Exact .139 row trailing field is +0x54. Rejected by EVID-NATIVE-UI-4139-004; retained for provenance."
+}

@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BOOTSTRAP-4139-002",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Which exact Band 11 bootstrap primitives survive independent raw Thumb callsite verification, and does the current code implement a working no-insmod loader?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.register_driver",
+    "xiaomi-band-11-4.100.139.open",
+    "xiaomi-band-11-4.100.139.close",
+    "xiaomi-band-11-4.100.139.read",
+    "xiaomi-band-11-4.100.139.write",
+    "xiaomi-band-11-4.100.139.lseek",
+    "xiaomi-band-11-4.100.139.heap_malloc",
+    "xiaomi-band-11-4.100.139.heap_free",
+    "xiaomi-band-11-4.100.139.insmod"
+  ],
+  "prototype_hypothesis": "Only the explicitly recovered callsite ABIs below; all remain restricted/PENDING. No Band 9 MPU, heap, inode layout or stage0 memory is inherited.",
+  "callsite_evidence": [
+    "register_driver: Stock /dev/log and /dev/null callers at 0x0C3586DE/0x0C3586E8 pass path=r0, fops=r1, private=r2. Internal helper locks 0x0C332CD4, reserves 0x0C914DB8, unlocks 0x0C332CE4; inode type=1 at +0x0E, fops +0x10, private +0x18. This is a THREE-argument LTO entry, not the source-level four-argument API; returns reserve failure faithfully.",
+    "open: LVGL POSIX fs_open calls 0x0C342C54 at 0x0C3A61C0 with path, NuttX flags and mode. Wrapper converts negative internal errno to -1 and sets errno.",
+    "close: LVGL POSIX fs_close at 0x0C3A620C calls 0x0C33818C at 0x0C3A6216; fd is decoded from the opaque LVGL handle.",
+    "read: LVGL POSIX fs_read calls 0x0C33D784 at 0x0C3A6260 with fd, buffer and count. Wrapper builds a one-element iovec and calls 0x0C33D740.",
+    "write: LVGL POSIX fs_write calls 0x0C33DC4E at 0x0C3A62B0. The old candidate 0x0C33D510 is lseek with a 64-bit offset, NOT write.",
+    "lseek: LVGL POSIX fs_seek calls 0x0C33D510 at 0x0C3A6302. Offset is passed in r2:r3 and whence on the stack; result/sign is checked in r0:r1.",
+    "heap_malloc: Wrapper passes heap pointer from 0x200B2590 and requested size to 0x0C350E5C; sets errno=12 on allocation failure. Used by miwear_lua_run at 0x0C6C1EB8. Old 0x0C71F2D0 copies an object into r1 and installs a vtable; it is not malloc.",
+    "heap_free: Wrapper passes the same heap pointer from 0x200B2590 and pointer to 0x0C34CC90. pmain releases strdup path through this wrapper at 0x0C6D3854. This proves a user-heap pair, NOT Kmem suitability or executable memory.",
+    "insmod candidate 0x0C3492C4 calls 0x0C3490B6, a byte-scanning strchr-like function comparing bytes with r1. Reject this candidate; this does not prove absence of every kernel module-loading routine.",
+    "NSH command table at data mirror 0x2CA0E8E0 has mw=0x0C372835 and exec=0x0C36C699; no insmod/rmmod/lsmod command. cmd_exec branches through r5 at 0x0C36C6DA after printing; r0 is not a caller-controlled argument at that point.",
+    "Lua pmain=0x0C6D33B0 is pushed as a zero-upvalue C function at 0x0C6C1EDC..0x0C6C1EE0; path and two lightuserdata arguments are pushed before protected call 0x0C6C1F08.",
+    "pmain calls luaL_openlibs=0x0C717144 at 0x0C6D37D0; luaopen_os=0x0C71444C creates the full table. luaL_requiref uses lua_setfield at 0x0C88C4D2 to store _LOADED.os before pmain clears execute at 0x0C6D396E..0x0C6D3980.",
+    "OS registration table 0x2CA7A258 exposes execute=0x0C717D71; handler calls system=0x0C370774 at 0x0C717D8C.",
+    "ROMFS /etc/build.prop bytes at file offset 0x94D205 contain exact version and build. Property service reads /etc/build.prop (string at file 0xB34F6B)."
+  ],
+  "control_flow_evidence": [
+    "Raw .bin disassembled with Capstone Thumb little-endian; existing schema-2 corpus used only to locate/cross-check entries. No IDB edits or new IDA decompilation performed in this follow-up.",
+    "Band 9 Supervisor custom registration writes inode type=7 and private +0x1C; Band 11 stock writes type=1 and private +0x18. Direct reuse is invalid.",
+    "build_canopus_supervisor.sh did not select Band 11; platform-complete=0. The prior Rust private backend returns -38 even from identity guard. ELF verifier success cannot imply Manager or native module functionality.",
+    "The generated target config previously emitted candidate absolute addresses even with platform-complete=0. Incomplete custom target configs now withhold firmware call macros.",
+    "2026-09-10 startup correction: first-use loop getter 0x0C6C89E4 pops the original root at 0x0C6C8A3A; pmain replaces slot 3 with error handler 0x0C6CECD1. Cached luavgl_key has the same first three root words but a destructor in word 4; reentry isolates dataman.meta and restores it on both outcomes. Actual loop-getter/prefix instructions and real Lua C frames now cover this behavior; see loader/pmain-startup-fix-2026-09-10.md."
+  ],
+  "ownership_analysis": "This initial evidence record does not establish executable allocation/MPU/cache or stage0 ownership; later native evidence covers those separately. Lua recovery runs in the original pmain frame and uses retained arguments or the verified cached-root layout with dataman isolation. Early Lua error skips one strdup free in reentered pmain; recovery is limited to one attempt per Lua state.",
+  "unsafe_assumptions": [
+    "The user reported Unexpected pmain arguments from the previous bundle on device. The corrected cached-root bundle awaits device confirmation. Its host C-frame tests and partial raw-firmware execution do not prove complete device behavior.",
+    "os.execute restoration does not supply an executable SRAM cave, Kmem allocator, MPU/cache policy, Supervisor ABI or compatible file_operations layout.",
+    "No generic native function invocation with arbitrary arguments is provided by NSH exec.",
+    "The remaining cross-model candidates and transferred type layouts are not individually verified."
+  ],
+  "recommended_probe": "Exact identity and pmain match first; recover once during entry script; on explicit user click run only echo CANOPUS_EXEC_OK. Do not issue mw/exec memory mutations or attempt Supervisor load until a separate exact Band 11 bootstrap is reviewed.",
+  "reviewers": [
+    "codex-static-audit"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-08T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../../../fwbins/xiaomi-band-11-4.100.139/vela_ap.bin",
+      "sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+      "role": "exact-firmware-read-only"
+    },
+    {
+      "uri": "../loader/README.md",
+      "role": "bootstrap-audit"
+    }
+  ]
+}

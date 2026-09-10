@@ -87,8 +87,8 @@ fn additional_target_artifacts_regenerate_identically() {
             "sdk/rust/canopus-target-generated/src/generated_9175.rs",
         ),
         (
-            "xiaomi-band-11-4.100.108",
-            "sdk/rust/canopus-target-generated/src/generated_1108.rs",
+            "xiaomi-band-11-4.100.139",
+            "sdk/rust/canopus-target-generated/src/generated_1139.rs",
         ),
         (
             "xiaomi-band-9-3.1.32",
@@ -141,6 +141,18 @@ fn additional_target_artifacts_regenerate_identically() {
                 config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 1"),
                 "Band 9 exact Supervisor ABI must remain production-complete"
             );
+        }
+        if matches!(
+            target,
+            "xiaomi-band-11-4.100.139" | "xiaomi-band-9-pro-3.1.175"
+        ) {
+            assert!(config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 0"));
+            assert!(
+                !config.contains("#define FW_"),
+                "incomplete target leaked firmware addresses"
+            );
+            assert!(!config.contains("#define CANOPUS_SUP_REGISTER_DRIVER("));
+            assert!(!config.contains("#define CANOPUS_SUP_NUTTX_"));
         }
 
         if target == "xiaomi-band-10-pro-3.101.036" {
@@ -260,7 +272,7 @@ fn private_abi_records_have_exact_thumb_callables() {
         "xiaomi-band-10-pro-3.101.036",
         "xiaomi-band-10-pro-3.101.043",
         "xiaomi-band-9-pro-3.1.175",
-        "xiaomi-band-11-4.100.108",
+        "xiaomi-band-11-4.100.139",
         "xiaomi-band-9-3.1.32",
     ] {
         let dir = repo_root().join("targets").join(target);

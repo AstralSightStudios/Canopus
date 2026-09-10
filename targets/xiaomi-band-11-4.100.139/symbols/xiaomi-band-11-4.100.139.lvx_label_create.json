@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lvx_label_create",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lvx_label_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3ab300",
+  "callable_address": "0xc3ab301",
+  "prototype": "void *(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrows a live LVGL parent object",
+    "return_value": "returns a child label owned by the LVGL object tree"
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+  },
+  "approval_state": "PENDING",
+  "notes": "Lua Label table 0x2ca72eb0 -> 0xc6caadc -> 0xc3ab300, label class 0x2ca177f0. Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval."
+}

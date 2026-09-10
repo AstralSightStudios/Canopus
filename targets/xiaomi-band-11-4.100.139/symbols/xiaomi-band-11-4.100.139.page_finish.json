@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.page_finish",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "page_finish",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(uint32_t)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+  },
+  "entry_address": "0xc69b5ac",
+  "callable_address": "0xc69b5ad",
+  "notes": "Lua navigator finish -> 0xc6d152c -> 0xc626930 -> 0xc69b614 extracts key +4 then calls this entry. Takes key, NOT descriptor pointer. Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval.",
+  "approval_state": "PENDING"
+}

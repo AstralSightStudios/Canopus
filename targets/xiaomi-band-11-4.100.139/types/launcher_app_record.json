@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.139.type.launcher_app_record.v1",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "kind": "struct",
+  "name": "launcher_app_record",
+  "size": 28,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "app_id",
+      "offset": 0,
+      "width": 2,
+      "signedness": "unsigned",
+      "provenance": "0xc547a28 allocates/zeros0x1c and populates id+0, display_name+4, package+8, icon+c, flags+0x18"
+    },
+    {
+      "name": "display_name",
+      "offset": 4,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "launcher_owns",
+      "provenance": "0xc547a28 allocates/zeros0x1c and populates id+0, display_name+4, package+8, icon+c, flags+0x18"
+    },
+    {
+      "name": "package_name",
+      "offset": 8,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed",
+      "provenance": "0xc547a28 allocates/zeros0x1c and populates id+0, display_name+4, package+8, icon+c, flags+0x18"
+    },
+    {
+      "name": "icon_name",
+      "offset": 12,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed",
+      "provenance": "0xc547a28 allocates/zeros0x1c and populates id+0, display_name+4, package+8, icon+c, flags+0x18"
+    },
+    {
+      "name": "flags",
+      "offset": 24,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "0xc547a28 allocates/zeros0x1c and populates id+0, display_name+4, package+8, icon+c, flags+0x18"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact .139 raw Thumb field-offset audit; unspecified fields remain unknown and device validation is pending."
+  }
+}

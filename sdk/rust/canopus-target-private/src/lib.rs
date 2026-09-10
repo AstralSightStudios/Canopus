@@ -17,15 +17,11 @@ pub mod generated_symbols;
 #[path = "generated_symbols_1043.rs"]
 pub mod generated_symbols;
 
-#[cfg(feature = "target-xiaomi-band-11-4-100-108")]
-#[path = "generated_symbols_1108.rs"]
-pub mod generated_symbols;
-
 #[cfg(not(any(
     feature = "target-xiaomi-band-10-pro-3-101-036",
     feature = "target-xiaomi-band-10-pro-3-101-043",
     feature = "target-xiaomi-band-9-pro-3-1-175",
-    feature = "target-xiaomi-band-11-4-100-108",
+    feature = "target-xiaomi-band-11-4-100-139",
     feature = "target-xiaomi-band-9-3-1-32"
 )))]
 compile_error!("canopus-target-private requires exactly one target-feature");
@@ -36,7 +32,7 @@ compile_error!("canopus-target-private requires exactly one target-feature");
         any(
             feature = "target-xiaomi-band-10-pro-3-101-043",
             feature = "target-xiaomi-band-9-pro-3-1-175",
-            feature = "target-xiaomi-band-11-4-100-108",
+            feature = "target-xiaomi-band-11-4-100-139",
             feature = "target-xiaomi-band-9-3-1-32"
         )
     ),
@@ -44,19 +40,19 @@ compile_error!("canopus-target-private requires exactly one target-feature");
         feature = "target-xiaomi-band-10-pro-3-101-043",
         any(
             feature = "target-xiaomi-band-9-pro-3-1-175",
-            feature = "target-xiaomi-band-11-4-100-108",
+            feature = "target-xiaomi-band-11-4-100-139",
             feature = "target-xiaomi-band-9-3-1-32"
         )
     ),
     all(
         feature = "target-xiaomi-band-9-pro-3-1-175",
         any(
-            feature = "target-xiaomi-band-11-4-100-108",
+            feature = "target-xiaomi-band-11-4-100-139",
             feature = "target-xiaomi-band-9-3-1-32"
         )
     ),
     all(
-        feature = "target-xiaomi-band-11-4-100-108",
+        feature = "target-xiaomi-band-11-4-100-139",
         feature = "target-xiaomi-band-9-3-1-32"
     )
 ))]
@@ -70,12 +66,9 @@ mod selected;
 #[path = "targets/xiaomi_band_10_pro_3_101_043.rs"]
 mod selected;
 
-#[cfg(feature = "target-xiaomi-band-11-4-100-108")]
-#[path = "targets/xiaomi_band_11_4_100_108.rs"]
-mod selected;
-
 #[cfg(any(
     feature = "target-xiaomi-band-9-pro-3-1-175",
+    feature = "target-xiaomi-band-11-4-100-139",
     feature = "target-xiaomi-band-9-3-1-32"
 ))]
 #[path = "targets/static_candidate.rs"]
@@ -85,7 +78,7 @@ mod selected;
     feature = "target-xiaomi-band-10-pro-3-101-036",
     feature = "target-xiaomi-band-10-pro-3-101-043",
     feature = "target-xiaomi-band-9-pro-3-1-175",
-    feature = "target-xiaomi-band-11-4-100-108",
+    feature = "target-xiaomi-band-11-4-100-139",
     feature = "target-xiaomi-band-9-3-1-32"
 ))]
 pub use selected::*;

@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.139.type.canopus_thirdparty_message_content.v1",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "kind": "struct",
+  "name": "canopus_thirdparty_message_content",
+  "size": 336,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "message_id",
+      "offset": 0,
+      "width": 4,
+      "signedness": "unsigned",
+      "provenance": "0x00160914 in quickapp_send_wearmsg"
+    },
+    {
+      "name": "message_kind",
+      "offset": 4,
+      "width": 2,
+      "signedness": "unsigned",
+      "provenance": "9 selects THIRDPARTY_APP"
+    },
+    {
+      "name": "package_name",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_for_call",
+      "provenance": "NUL-terminated BasicInfo package"
+    },
+    {
+      "name": "fingerprint_blob",
+      "offset": 20,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_for_call",
+      "provenance": "NULL omits optional BasicInfo fingerprint; stock points to u16-length-prefixed 20-byte digest"
+    },
+    {
+      "name": "payload_blob",
+      "offset": 24,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_for_call",
+      "provenance": "u16 little-endian length followed by payload bytes"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-VERIFY-4139-001"
+    ],
+    "source": "layout shape carried from same-model Xiaomi Band 11 analysis (4.100.108/043 recovered layout); pointer-free offsets are architecture-fixed (Cortex-M33/thumb2). Independent 4.100.139 field-offset audit pending."
+  }
+}

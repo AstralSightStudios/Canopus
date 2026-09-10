@@ -7,12 +7,16 @@ Supervisor loading path differ.
 - `xiaomi-band-10-pro/`: 336×480, LVGL v9, exact-target stock `insmod`.
 - `xiaomi-band-9/`: 192×490, LVGL v8, exact-target NSH `mw`/`exec` stage-1 and
   stage-2 loader. It currently packages only `xiaomi-band-9-3.1.32`.
+- `xiaomi-band-11/`: 212×520, LVGL v9, exact `4.100.139` Lua execute recovery,
+  owned stage1/stage2 and native Supervisor/Manager test candidate. Same Run / Clear Env
+  UI and flat resource structure as Band 9. See [device testing](xiaomi-band-11/docs/README.md).
+  Root files are exactly one `main.lua` plus `.bin` resources; build/docs/src stay in folders.
 
-Both variants preserve the same production workflow:
+All three variants use this workflow:
 
 1. **Run** loads the exact-target Supervisor once.
 2. It restores enabled boot intents.
-3. It runs INSTALL stages 0, 1, and 2 in separate miwear event-loop turns.
+3. It runs INSTALL stages 0, 1, and 2 in sequence from the Run callback.
 4. **Clear Env** requires two clicks and removes `/data/canopus` only after the
    explicit confirmation.
 

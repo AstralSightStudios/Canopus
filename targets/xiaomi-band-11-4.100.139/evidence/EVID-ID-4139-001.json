@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ID-4139-001",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Are the 4.100.139 firmware identity strings present at the recovered addresses?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.identity.firmware_version_string",
+    "xiaomi-band-11-4.100.139.identity.firmware_build_string"
+  ],
+  "prototype_hypothesis": "const char[]: '4.100.139' at 0x0CA0D216 and 'user-4.100.139-cn-202608280000' at 0x0CA0D28E",
+  "callsite_evidence": [
+    "idalib read of the exact 4.100.139 IDB: 0x0CA0D216 -> '4.100.139\\n...' and 0x0CA0D28E -> 'user-4.100.139-cn-202608280000\\n' (build.prop blob at 0x0CA0D205 'ro.build.version='/'ro.build.id=').",
+    "Raw vela_ap.bin SHA-256: 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74.",
+    "Tokens are LF-terminated (build.prop), so the generated guard uses identity_terminator=line (identity_token_eq accepts NUL/LF/CR)."
+  ],
+  "control_flow_evidence": [
+    "Identity guard addresses are generated from these exact-target string records; device probe is pending."
+  ],
+  "ownership_analysis": "read-only firmware strings; borrowed for module lifetime",
+  "unsafe_assumptions": [
+    "String comparison is not a full runtime SHA-256 recompute.",
+    "0x0C XIP-alias addresses are used; the same bytes also alias at 0x28.../0x2C..."
+  ],
+  "recommended_probe": "Minimal fixed-address read of both tokens in the module constructor.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-08T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "/Volumes/EXT0/Canopus/fwbins/xiaomi-band-11-4.100.139/vela_ap.bin.i64",
+      "role": "exact-idb"
+    }
+  ]
+}

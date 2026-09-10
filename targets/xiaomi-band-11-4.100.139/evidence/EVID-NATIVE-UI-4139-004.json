@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-NATIVE-UI-4139-004",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Restore the native settings list theme and Chinese fonts in the .139 Manager",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.lvx_list_item_create",
+    "xiaomi-band-11-4.100.139.lvx_list_item_add_content",
+    "xiaomi-band-11-4.100.139.lvx_list_item_update",
+    "xiaomi-band-11-4.100.139.lvx_style_apply",
+    "xiaomi-band-11-4.100.139.lv_obj_remove_style_all",
+    "xiaomi-band-11-4.100.139.lv_obj_set_style_pad_top",
+    "xiaomi-band-11-4.100.139.lv_obj_set_style_pad_bottom"
+  ],
+  "prototype_hypothesis": "Exact per-symbol private AAPCS contracts; general SDK remains restricted/PENDING",
+  "callsite_evidence": [
+    "lvx_list_item_create 0xc50f4e4: 0x0C5962F4 settings create_row_to_list calls this class constructor. Class 0x2CA3ED20 invokes theme_apply; default size204x96, background#222222, radius24, MiSans Medium28/24. Not the four-argument 10 Pro row wrapper.",
+    "lvx_list_item_add_content 0xc50fad0: Seven-argument wrapper ->0x0C50F520. Stack args number,selected,trailing. TBH type1 creates native switch class2CA3ECFC; type3 loads forward.bin. Stores trailing at row+0x54. Call once per new row.",
+    "lvx_list_item_update 0xc50ec5c: Reads stack number,selected; 0x0C507140 updates trailing checked state; 0x0C50EAAC updates primary, creates/hides secondary as needed. Replaces unrelated ensemble candidate.",
+    "lvx_style_apply 0xc4fbe54: Stock settings0x0C597FC4 applies style200C1568 opacity255 selector0. Removes/re-adds base white and supplied style, sets text opacity. Replaces unrelated ensemble candidate0x0C63B414.",
+    "lv_obj_remove_style_all 0xc38583c: Frees local styles and style list, zeros object style count and style cache, refreshes all parts; called by activity-root constructor0x0C693FB0.",
+    "lv_obj_set_style_pad_top 0xc387c58: Local style setter property0x10; stock settings list sets top padding88 at0x0C597FC4.",
+    "lv_obj_set_style_pad_bottom 0xc387c6e: Local style setter property0x11; stock settings list sets bottom padding86 at0x0C597FC4."
+  ],
+  "control_flow_evidence": [
+    "theme_apply0x0C5048D8 list branch0x0C504F90..0x0C505118 attaches styles200C1760 MAIN,200C176C part90000,200C1778 partA0000; sets204x96 and inset4. Primary font from200C1574, secondary200C1568.",
+    "miwear_init_steps0x0C7E92AC..0x0C7E9300 builds Medium28/24/22 styles via0x0C89A7E4. Font-family table2CA71738 entry1 is MiSans-Medium.",
+    "Class event0x0C506B24 uses event current_target+4 and code+8; forwards pointer events to trailing+54. Manager listens to switch VALUE_CHANGED30 and verifies current_target, action CLICKED7.",
+    "0x0C50EAAC supports secondary NULL by hiding existing label, and creates a missing secondary with the native partA0000 font."
+  ],
+  "ownership_analysis": "Native rows own their children. Allocate content once, use updater for snapshots; no font allocation or filesystem resource copying. Native LVGL theme owns shared fonts.",
+  "unsafe_assumptions": [
+    "Physical rendering and new switch interactions require a device retest; emulation cannot draw the system font files.",
+    "User reports prior loader and basic Manager succeeded on device; this does not validate newly recovered UI calls or arbitrary SDK candidates."
+  ],
+  "recommended_probe": "Reboot to remove old resident Manager, install the rebuilt flat bundle; check Chinese/native rows/scrolling/switch once and navigate all pages.",
+  "reviewers": [
+    "codex-static-audit"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-10T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../../../watchfaces/canopus-installer-prod/xiaomi-band-11/docs/NATIVE_UI_AUDIT.md",
+      "role": "native-ui-audit"
+    },
+    {
+      "uri": "../../../scripts/tests/band11_native_ui_firmware.py",
+      "role": "firmware-ui-execution-tests"
+    }
+  ]
+}

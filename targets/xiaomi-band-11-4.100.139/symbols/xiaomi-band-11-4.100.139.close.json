@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.close",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(int)",
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1043-4139",
+      "EVID-BOOTSTRAP-4139-002"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1043-4139",
+      "EVID-BOOTSTRAP-4139-002"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.043 report=targets/xiaomi-band-11-4.100.139/evidence/fw-match/ensemble-1043-to-4139-v2.json"
+  },
+  "entry_address": "0xc33818c",
+  "callable_address": "0xc33818d",
+  "notes": "Independent raw Thumb verification supersedes ensemble candidate 0xc4037c8. LVGL POSIX fs_close at 0x0C3A620C calls 0x0C33818C at 0x0C3A6216; fd is decoded from the opaque LVGL handle. Device/context/layout gates remain pending; no callable is approved.",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs"
+}

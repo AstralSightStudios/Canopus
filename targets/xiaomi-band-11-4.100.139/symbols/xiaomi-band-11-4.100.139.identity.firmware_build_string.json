@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.identity.firmware_build_string",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "firmware_build_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "prototype": "const char[]",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ID-4139-001"
+    ]
+  },
+  "policy": "managed",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "source": "exact 4.100.139 IDB vela_ap.bin.i64; string located and read via idalib",
+    "evidence_ids": [
+      "EVID-ID-4139-001"
+    ]
+  },
+  "entry_address": "0x0CA0D28E",
+  "notes": "exact 4.100.139 recovery (user-4.100.139-cn-202608280000 (LF-terminated build.prop token)); identity_terminator=line",
+  "approval_state": "APPROVED"
+}

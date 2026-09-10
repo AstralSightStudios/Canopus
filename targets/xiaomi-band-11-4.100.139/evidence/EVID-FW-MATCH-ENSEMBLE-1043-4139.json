@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-FW-MATCH-ENSEMBLE-1043-4139",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Does a 043-referenced BinDiff-inspired multi-evidence ensemble locate 4.100.139 symbol candidates?",
+  "candidate_symbols": [
+    "(123 of 124 043 source function symbols; see fw-match/ensemble-1043-to-4139-v2-symbols)"
+  ],
+  "prototype_hypothesis": "No prototype is promoted; 043 source prototypes remain candidates until target callsite/ABI verification.",
+  "callsite_evidence": [
+    "Source: xiaomi-band-10-pro-3.101.043 symbols + fw-corpus (schema 1). Target: exact 4.100.139 fw-corpus (schema 2, 35,192 functions).",
+    "Matcher: exact/Thumb-normalized entry bytes, CFG shape/topology, strings/constants, size/degree context, caller-neighborhood. Missing families: normalized-instructions, abi-callsite.",
+    "123/124 matched one-to-one; 2 anchors (controller_crash_dump, lv_image_set_src). Cross-MODEL migration (Band 10 Pro -> Band 11): median margin 0.0085, only 14 candidates margin>=0.10.",
+    "Globals: 0/9 (043 source corpus is schema 1 with no data-flow); global recovery is BLOCKED for this reference pair."
+  ],
+  "control_flow_evidence": [
+    "Candidate files were written outside the production flow and promoted into symbols/ as restricted/PENDING; matcher-strong (margin>=0.10) or decompile-verified -> STATIC_RECOVERED, the rest -> CANDIDATE.",
+    "No candidate generates a callable typed wrapper (all restricted)."
+  ],
+  "ownership_analysis": "None. Static candidate-generation evidence only.",
+  "unsafe_assumptions": [
+    "A one-to-one assignment does not prove any candidate is correct; the matcher lacks normalized-instruction and callsite ABI verification.",
+    "Cross-model recall must not be read as precision; a static hit is not a device probe or proof."
+  ],
+  "recommended_probe": "Independent callsite/ABI recovery per symbol; do not generate callable bindings from candidates.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "CANDIDATE",
+  "created": "2026-09-08T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "fw-match/ensemble-1043-to-4139-v2.json",
+      "role": "BinDiff-inspired ensemble report"
+    },
+    {
+      "uri": "fw-match/ensemble-1043-to-4139-v2-symbols",
+      "role": "per-symbol candidate records"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.unlink",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "unlink",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(const char *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+  },
+  "entry_address": "0xc33dbec",
+  "callable_address": "0xc33dbed",
+  "notes": "Lua os.remove at 0xc7166c8 -> remove 0xc349796 -> this wrapper; rmdir fallback only for EISDIR. Converts negative nx_unlink result to errno/-1. Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval.",
+  "approval_state": "PENDING"
+}

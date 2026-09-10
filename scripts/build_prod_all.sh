@@ -6,6 +6,7 @@ TARGETS=${CANOPUS_PROD_TARGETS:-"
   xiaomi-band-10-pro-3.101.036
   xiaomi-band-10-pro-3.101.043
   xiaomi-band-9-3.1.32
+  xiaomi-band-11-4.100.139
 "}
 BUILD_SCRIPT="$ROOT/scripts/build_canopus_supervisor.sh"
 
@@ -14,6 +15,7 @@ echo "Preparing exact-target verifier..."
 cargo build -p canopus-cli
 
 BAND9_REQUESTED=false
+BAND11_REQUESTED=false
 for target in $TARGETS; do
     echo "=========================================="
     echo "Building target: $target"
@@ -21,6 +23,9 @@ for target in $TARGETS; do
 
     case "$target" in
         xiaomi-band-9-*) BAND9_REQUESTED=true ;;
+        xiaomi-band-11-4.100.139)
+            BAND11_REQUESTED=true
+            ;;
     esac
     CANOPUS_TARGET="$target" "$BUILD_SCRIPT"
 
@@ -52,4 +57,8 @@ cmp "$ROOT/watchfaces/canopus-installer/manager_icon.bin" \
     --target "$BAND9_TARGET" --targets-dir "$ROOT/targets"
 fi
 
-echo "All targets built, verified, and staged successfully."
+if [ "$BAND11_REQUESTED" = true ]; then
+    python3 "$ROOT/scripts/build_band11_installer.py" --check
+    echo "Band 11 complete native installer resources built; device validation pending."
+fi
+echo "Requested artifacts built; native installation support remains target-specific."

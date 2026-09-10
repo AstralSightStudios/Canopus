@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.register_driver",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "register_driver",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc914f64",
+  "callable_address": "0xc914f65",
+  "prototype": "int(const char *, const void *, void *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1043-4139",
+      "EVID-BOOTSTRAP-4139-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1043-4139",
+      "EVID-BOOTSTRAP-4139-002"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.043 report=targets/xiaomi-band-11-4.100.139/evidence/fw-match/ensemble-1043-to-4139-v2.json"
+  },
+  "approval_state": "PENDING",
+  "notes": "Independent raw Thumb verification supersedes ensemble candidate 0xc46c2fe. Stock /dev/log and /dev/null callers at 0x0C3586DE/0x0C3586E8 pass path=r0, fops=r1, private=r2. Internal helper locks 0x0C332CD4, reserves 0x0C914DB8, unlocks 0x0C332CE4; inode type=1 at +0x0E, fops +0x10, private +0x18. This is a THREE-argument LTO entry, not the source-level four-argument API; returns reserve failure faithfully. Device/context/layout gates remain pending; no callable is approved.",
+  "calling_convention": "arm-aapcs"
+}

@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.app_launcher_add",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "app_launcher_add",
+  "kind": "function",
+  "entry_address": "0xc547b54",
+  "callable_address": "0xc547b55",
+  "instruction_set": "thumb",
+  "prototype": "void(uint16_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "launcher_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "value",
+    "return_value": "implementation_defined"
+  },
+  "side_effects": [
+    "looks_up_installed_descriptor_by_app_id",
+    "adds_app_to_runtime_list",
+    "writes_launcher_db",
+    "adds_icon"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+  },
+  "notes": "Resolves ID through app manager, builds launcher record (0xc547a28), publishes via 0xc5454a4, refreshes order 0xc547668. Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval.",
+  "approval_state": "PENDING"
+}

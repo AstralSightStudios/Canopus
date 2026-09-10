@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.139.type.launcher_app_struct.v1",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "kind": "struct",
+  "name": "launcher_app_struct",
+  "size": 132,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "name",
+      "offset": 0,
+      "width": 128,
+      "signedness": "array",
+      "array_length": 128,
+      "ownership": "launcher_owns",
+      "provenance": "runtime list 0x200D090C; name copied from storage record +0"
+    },
+    {
+      "name": "flags",
+      "offset": 128,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "bit0 = show(0)/hidden(1), bit1 = add-state; set from storage +132 and +20 in reset path"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-VERIFY-4139-001"
+    ],
+    "source": "layout shape carried from same-model Xiaomi Band 11 analysis (4.100.108/043 recovered layout); pointer-free offsets are architecture-fixed (Cortex-M33/thumb2). Independent 4.100.139 field-offset audit pending."
+  }
+}

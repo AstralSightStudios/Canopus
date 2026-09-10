@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_obj_set_style_pad_top",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_obj_set_style_pad_top",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc387c58",
+  "callable_address": "0xc387c59",
+  "prototype": "void (void *, int32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed UI-owner widget and synchronous text arguments",
+    "return_value": "page-owned widget or none"
+  },
+  "side_effects": [
+    "mutates_page_owned_ui"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-UI-4139-004"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-UI-4139-004"
+    ],
+    "source": "Exact .139 raw Thumb, IDB corpus boundaries, stock settings and theme call sites"
+  },
+  "notes": "Local style setter property0x10; stock settings list sets top padding88 at0x0C597FC4. New UI device rendering not yet tested; no general SDK approval.",
+  "approval_state": "PENDING"
+}

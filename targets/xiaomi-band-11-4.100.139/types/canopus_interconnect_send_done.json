@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.139.type.canopus_interconnect_send_done.v1",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "kind": "typedef",
+  "name": "canopus_interconnect_send_done",
+  "size": 4,
+  "alignment": 4,
+  "prototype": "void(void *, int32_t, const canopus_interconnect_message *, void *)",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-VERIFY-4139-001"
+    ],
+    "source": "layout shape carried from same-model Xiaomi Band 11 analysis (4.100.108/043 recovered layout); pointer-free offsets are architecture-fixed (Cortex-M33/thumb2). Independent 4.100.139 field-offset audit pending."
+  }
+}

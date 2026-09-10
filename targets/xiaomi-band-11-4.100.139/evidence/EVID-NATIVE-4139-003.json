@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-NATIVE-4139-003",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Exact .139 native bootstrap and Manager test ABI",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.app_lookup",
+    "xiaomi-band-11-4.100.139.app_launcher_add",
+    "xiaomi-band-11-4.100.139.lvx_object_create",
+    "xiaomi-band-11-4.100.139.lvx_label_create",
+    "xiaomi-band-11-4.100.139.lvx_label_set_text",
+    "xiaomi-band-11-4.100.139.lvx_label_set_long_mode",
+    "xiaomi-band-11-4.100.139.lvx_object_set_size",
+    "xiaomi-band-11-4.100.139.lv_obj_set_width",
+    "xiaomi-band-11-4.100.139.lv_obj_add_event_cb",
+    "xiaomi-band-11-4.100.139.lv_obj_align_to",
+    "xiaomi-band-11-4.100.139.ui.lvx_object_add_flag",
+    "xiaomi-band-11-4.100.139.lv_obj_clear_flag",
+    "xiaomi-band-11-4.100.139.lv_image_create",
+    "xiaomi-band-11-4.100.139.lv_bar_create",
+    "xiaomi-band-11-4.100.139.lv_bar_set_range",
+    "xiaomi-band-11-4.100.139.lv_bar_set_value",
+    "xiaomi-band-11-4.100.139.page_goto",
+    "xiaomi-band-11-4.100.139.page_finish",
+    "xiaomi-band-11-4.100.139.mm_memalign",
+    "xiaomi-band-11-4.100.139.kmem_free",
+    "xiaomi-band-11-4.100.139.errno_location",
+    "xiaomi-band-11-4.100.139.rename",
+    "xiaomi-band-11-4.100.139.unlink"
+  ],
+  "prototype_hypothesis": "Per-symbol prototypes below, private static test ABI only",
+  "callsite_evidence": [
+    "app_lookup 0x0c6ac54c: Reads app ID at +0x14; called by app_install 0xc6ab350.",
+    "app_launcher_add 0x0c547b54: Resolves ID through app manager, builds launcher record (0xc547a28), publishes via 0xc5454a4, refreshes order 0xc547668.",
+    "lvx_object_create 0x0c380686: Lua Object table 0x2ca72e80 -> 0xc6cab2c -> 0xc380686 -> class 0x2ca1082c create/init at 0xc37905c. Small wrapper is valid; initial semantic doubt resolved by binding.",
+    "lvx_label_create 0x0c3ab300: Lua Label table 0x2ca72eb0 -> 0xc6caadc -> 0xc3ab300, label class 0x2ca177f0.",
+    "lvx_label_set_text 0x0c3b3948: Lua text setter 0xc6cc840 parses string then calls this function; text storage at +0x34.",
+    "lvx_label_set_long_mode 0x0c3b3f5c: Lua long_mode property table 0x2ca73738 stores this setter directly.",
+    "lvx_object_set_size 0x0c387ba8: Native page root at 0xc696ae8 calls this with width 212, height 520.",
+    "lv_obj_set_width 0x0c387b2e: Lua w property 0x2ca735e0 directly references this setter; paired h is 0xc387b76.",
+    "lv_obj_add_event_cb 0x0c37fc1c: Native page title calls it with object, callback, event 7, user data 0.",
+    "lv_obj_align_to 0x0c3877b0: Lua align_to table 0x2ca72ef0 -> 0xc6c94f0 parses base, align, x, y and supplies fifth arg on stack.",
+    "lvx_object_add_flag 0x0c38404c: Flag mutation counterpart of 0xc3840d8, matches object +flag mask semantics.",
+    "lv_obj_clear_flag 0x0c3840d8: Resume wrapper 0xc696c18 removes root flag 1; bar constructor removes flag 16 (scrollable).",
+    "lv_image_create 0x0c3ae1d0: Lua Image table 0x2ca72ea0 -> 0xc6caabc -> 0xc3ae1d0.",
+    "lv_bar_create 0x0c3ad7f4: Creates class 0x2ca17de8, whose constructor 0xc3ad988 initializes min/max/current and clears scrollable. Earlier 043/transferred candidate rejected.",
+    "lv_bar_set_range 0x0c3ad920: Sets +0x38/+0x3c bounds, clamps +0x34 current via lv_bar_set_value; same class fields as constructor.",
+    "lv_bar_set_value 0x0c3ad8b4: Clamps value against min/max/start, updates +0x34 or invokes animation.",
+    "page_goto 0x0c8ed780: goto_page_no_check_stacktop: looks up key, installs start data, creates/resumes target and pauses source.",
+    "page_finish 0x0c69b5ac: Lua navigator finish -> 0xc6d152c -> 0xc626930 -> 0xc69b614 extracts key +4 then calls this entry. Takes key, NOT descriptor pointer.",
+    "mm_memalign 0x0c3507e8: mm_memalign.c assertions and power-of-two alignment; Kmem caller 0xc32b920 loads *0x200b01c8, alignment32, sector size. 0xc350cf8 is realloc and is NOT used.",
+    "kmem_free 0x0c34ccb8: Loads same Kmem heap *0x200b01c8, validates heap+1c/+20 boundaries then mm_free 0xc34cc90.",
+    "errno_location 0x0c349538: Returns current TLS+0x28 or 0x200b4f20; used by malloc failure and Lua/VFS error paths.",
+    "rename 0x0c33d79c: Lua os.rename at 0xc7166ec parses two strings, calls this, passes success into luaL_fileresult.",
+    "unlink 0x0c33dbec: Lua os.remove at 0xc7166c8 -> remove 0xc349796 -> this wrapper; rmdir fallback only for EISDIR. Converts negative nx_unlink result to errno/-1."
+  ],
+  "control_flow_evidence": [
+    "Heap startup 0xc35804a..0xc358070: Umem 0x3c356b40..0x3cfefe00, Kmem 0x2010e9e0..0x2015f2bc. mm_initialize puts heap descriptor at aligned start; bounds +0x1c/+0x20.",
+    "Page callbacks differ: create+0x4c, resume+0x50, foreground+0x54, pause+0x5c (0xc693a0e), stop+0x60, UI destroy+0x64 (0xc696aa4). Static page table stride0x78.",
+    "App install 0xc6ab350 copies0x50, ID+0x14, package+0xc, icon+0x10, name callback+0x24, page registry+0x38, flags+0x48. Input is writable; +0x17/+0x18 defaulted.",
+    "BES cache range bodies at raw0xc0cb550/0xc0cb4f8 write line addresses at Dbase+0x80 and Ibase+0x84. Barrier-only tail0xc91e542 is used; entry0xc91e530 would disable MPU and is never called.",
+    "Second audit: actual firmware MPU boot 0xc91e8e4 produces CTRL5, MAIR0=0x00447722 and bitmap0x0f; actual configure 0xc91e594 produces RBAR/RLAR matching native leases. Relocated HAL save/restore 0x0027a7dc/0x0027a818 preserves all eight banks in emulation.",
+    "Second audit: actual NSH dispatcher 0xc3692c0 and exec 0xc36c698 execute the staged loader and return normally on the PSP thread stack. Only allocator/VFS/logging are modeled; libc and HAL startup-copy mappings are populated from raw firmware.",
+    "Temporary Umem free 0xc34cd2c loads *0x200b2590, moves pointer to r1 and calls mm_free 0xc34cc90; paired with explicit-heap mm_memalign 0xc3507e8.",
+    "2026-09-10: actual system 0xc370774 sets a 4096-byte stack. task_init/task_setup reaches up_initial_state 0xc329ee8, which clears CONTROL.nPRIV at 0xc329f68; tested for caller CONTROL 0, 2 and 3. Context restore uses the saved CONTROL at 0xc919558.",
+    "2026-09-10 cache revision: cmd_mw 0xc372834 reads before and after writes, so Lua no longer uses mw on cache command ports. Fixed leaf 0xc93021a writes 1 to Dbase+0x34; fixed leaf 0xc0c181e with cache enabled writes 1 to Ibase+0x38. Real NSH execution validates register/stack return and unchanged cache configuration/MPU. DSB/ISB tail 0xc91e542 separates the operations. Physical cache behavior remains unprobed.",
+    "2026-09-10: actual app_install, app_lookup, page registration/lookup and Launcher record construction execute against the built Manager in Unicorn; allocations, maps, notifications and list persistence remain modeled. See revalidation-2026-09-10.md."
+  ],
+  "ownership_analysis": "Lua-owned closed long string holds temporary PIC stage1 and mailbox, rooted through synchronous exec. No GC headers, static cave, MPU CTRL, or stack-guard region are modified. Native Kmem image leases use only4..6 with PRIMASK critical section and restore RNR. Once Supervisor constructors run its image remains resident even if initialization fails.",
+  "unsafe_assumptions": [
+    "DEVICE_NOT_PROBED: PSRAM alias/default Code map, BES cache maintenance and SRAM native stage execution require the first hardware test.",
+    "General SDK static candidates remain restricted; a compiled Rust module still requires independently implemented target SDK services.",
+    "Region7 is conservatively excluded regardless of the bitmap; its scheduler ownership is NOT established. Exact context-switch instructions use MSPLIM/PSPLIM. Child modules consume one executable lease each.",
+    "Supervisor unload is reboot only. Unverified watchface deletion is omitted; installed package watchfaces remain for manual removal.",
+    "Lua pmain recovery may leak one strdup allocation per Lua state on early unwind."
+  ],
+  "recommended_probe": "Build complete flat Band11 resources, install as the same Lua watchface workflow as Band9, press Run once; collect bootstrap-result.txt and /dev/canopus status. Reboot on any loader failure; do not infer on-device success from ELF verification.",
+  "reviewers": [
+    "codex-static-audit"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-09T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../../../fwbins/xiaomi-band-11-4.100.139/vela_ap.bin",
+      "sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+      "role": "exact-firmware-read-only"
+    },
+    {
+      "uri": "../loader/native-audit.md",
+      "role": "native-bootstrap-audit"
+    },
+    {
+      "uri": "../loader/validation-2026-09-09.md",
+      "role": "second-audit-firmware-execution-and-mpu-validation"
+    },
+    {
+      "uri": "../loader/revalidation-2026-09-10.md",
+      "role": "firmware-integration-and-cache-entry-revalidation"
+    }
+  ]
+}

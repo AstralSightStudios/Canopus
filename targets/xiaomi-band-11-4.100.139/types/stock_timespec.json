@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.139.type.stock_timespec_t.v1",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "kind": "struct",
+  "name": "stock_timespec_t",
+  "size": 12,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "tv_sec",
+      "offset": 0,
+      "width": 8,
+      "signedness": "signed"
+    },
+    {
+      "name": "tv_nsec",
+      "offset": 8,
+      "width": 4,
+      "signedness": "signed"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-VERIFY-4139-001"
+    ],
+    "source": "layout shape carried from same-model Xiaomi Band 11 analysis (4.100.108/043 recovered layout); pointer-free offsets are architecture-fixed (Cortex-M33/thumb2). Independent 4.100.139 field-offset audit pending."
+  }
+}

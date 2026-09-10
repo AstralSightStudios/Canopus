@@ -12,16 +12,16 @@
 
 #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
 pub const TARGET_ID: &str = "xiaomi-band-9-pro-3.1.175";
-#[cfg(feature = "target-xiaomi-band-11-4-100-108")]
-pub const TARGET_ID: &str = "xiaomi-band-11-4.100.108";
+#[cfg(feature = "target-xiaomi-band-11-4-100-139")]
+pub const TARGET_ID: &str = "xiaomi-band-11-4.100.139";
 #[cfg(feature = "target-xiaomi-band-9-3-1-32")]
 pub const TARGET_ID: &str = "xiaomi-band-9-3.1.32";
 pub const ERR_UNSUPPORTED: i32 = -38;
 
 #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
 pub const SELECTED_TARGET_ID: &str = "xiaomi-band-9-pro-3.1.175";
-#[cfg(feature = "target-xiaomi-band-11-4-100-108")]
-pub const SELECTED_TARGET_ID: &str = "xiaomi-band-11-4.100.108";
+#[cfg(feature = "target-xiaomi-band-11-4-100-139")]
+pub const SELECTED_TARGET_ID: &str = "xiaomi-band-11-4.100.139";
 #[cfg(feature = "target-xiaomi-band-9-3-1-32")]
 pub const SELECTED_TARGET_ID: &str = "xiaomi-band-9-3.1.32";
 
@@ -578,6 +578,10 @@ pub unsafe fn lvx_label_create(_: *mut core::ffi::c_void) -> *mut core::ffi::c_v
 }
 pub unsafe fn lvx_label_set_text(_: *mut core::ffi::c_void, _: *const u8) {}
 pub unsafe fn lvx_label_set_text_align_center(_: *mut core::ffi::c_void) {}
+// LVGL long-mode enum value (protocol constant, architecture-fixed). The setter
+// is a fail-closed no-op until an exact-target lvx_label_set_long_mode is proven.
+pub const LV_LABEL_LONG_SCROLL_CIRCULAR: u32 = 3;
+pub unsafe fn lvx_label_set_long_mode(_: *mut core::ffi::c_void, _: u32) {}
 pub unsafe fn lvx_content_create(_: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     core::ptr::null_mut()
 }
