@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.mm_mallinfo",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "mm_mallinfo",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+  },
+  "entry_address": "0xc34f0a0",
+  "callable_address": "0xc34f0a1",
+  "prototype": "void *(void *, void *)",
+  "status": "STATIC_RECOVERED",
+  "policy": "restricted",
+  "approval_state": "PENDING",
+  "notes": "struct mallinfo mm_mallinfo(heap): AAPCS returns the 7-word record through the hidden r0 pointer, heap in r1. Asserts against \"../../nuttx/mm/mm_heap/mm_mallinfo.c\"; walks the heap through mm_foreach 0xc34f028 (heap lock held) with per-node callback 0xc347d0c filling ordblks/aordblks/mxordblk/uordblks/fordblks. mm_malloc 0xc35056c calls it on its failure path before _assert(mm_malloc.c, 417, \"panic\"), so mxordblk is the exact quantity a request is matched against. The ensemble candidate heap_mallinfo 0xc3608b8 is a different function (vtable store + 0xc35e358) and is NOT this symbol. Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval.",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  }
+}

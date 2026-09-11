@@ -174,6 +174,9 @@ int canopus_elf32_load(const uint8_t *elf, uint32_t elf_size,
     uint32_t place_addr;
     uint32_t exec_start = 0;
     uint32_t exec_end = 0;
+    /* Region kind (1..3) -> the base a symbol in that region is reached
+     * through. Index 0 is unused; section_kind() never returns it. */
+    uint32_t region_base[4];
     int rc;
 
     if (elf == 0 || ops == 0 || module == 0 || scratch == 0 ||
@@ -266,11 +269,17 @@ int canopus_elf32_load(const uint8_t *elf, uint32_t elf_size,
         return CANOPUS_ELF_LOAD_INVALID;
     }
     module->allocation = ops->allocate(ops->cookie, module->allocation_size,
-                                       32u, &module->target_base);
-    if (module->allocation == 0 || (module->target_base & 31u) != 0) {
+                                       32u, &module->code_base,
+                                       &module->target_base);
+    if (module->allocation == 0 || (module->target_base & 31u) != 0 ||
+        (module->code_base & 31u) != 0) {
         release_module(ops, module);
         return CANOPUS_ELF_LOAD_NOMEM;
     }
+    region_base[0] = module->target_base;
+    region_base[CANOPUS_ELF_REGION_EXEC] = module->code_base;
+    region_base[CANOPUS_ELF_REGION_RO] = module->code_base;
+    region_base[CANOPUS_ELF_REGION_RW] = module->target_base;
     memory = (uint8_t *)module->allocation;
     canopus_memset(memory, 0, module->allocation_size);
     for (i = 1; i < shnum; i++) {
@@ -350,11 +359,14 @@ int canopus_elf32_load(const uint8_t *elf, uint32_t elf_size,
                     release_module(ops, module);
                     return CANOPUS_ELF_LOAD_INVALID;
                 }
-                symbol = module->target_base + sections[symbol_section].memory_offset +
-                         symbol_value;
+                symbol = region_base[sections[symbol_section].kind] +
+                         sections[symbol_section].memory_offset + symbol_value;
             }
-            place_addr = module->target_base + sections[target_index].memory_offset +
-                         place_offset;
+            /* Both operands of a PC-relative relocation come from their own
+             * section's view, so the encoded difference stays correct even
+             * when code and data are reached through different bases. */
+            place_addr = region_base[sections[target_index].kind] +
+                         sections[target_index].memory_offset + place_offset;
             rc = canopus_arm_rel_apply(type,
                                        memory + sections[target_index].memory_offset +
                                            place_offset,
@@ -371,7 +383,7 @@ int canopus_elf32_load(const uint8_t *elf, uint32_t elf_size,
         release_module(ops, module);
         return CANOPUS_ELF_LOAD_CONSTRUCTORS;
     }
-    exec_start = module->target_base + module->regions[0].offset;
+    exec_start = module->code_base + module->regions[0].offset;
     exec_end = exec_start + module->regions[0].size;
     for (i = 1; i < shnum; i++) {
         uint32_t name;
@@ -400,9 +412,9 @@ int canopus_elf32_load(const uint8_t *elf, uint32_t elf_size,
             return rc;
         }
     }
-    if (ops->finalize(ops->cookie, module->allocation, module->target_base,
-                      module->allocation_size, module->regions,
-                      module->region_count) != 0) {
+    if (ops->finalize(ops->cookie, module->allocation, module->code_base,
+                      module->target_base, module->allocation_size,
+                      module->regions, module->region_count) != 0) {
         release_module(ops, module);
         return CANOPUS_ELF_LOAD_FINALIZE;
     }

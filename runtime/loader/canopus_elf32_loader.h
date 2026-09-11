@@ -44,13 +44,21 @@ struct canopus_elf_region {
 
 struct canopus_elf_loader_ops {
     void *cookie;
-    /* Returns writable storage and its 32-bit target virtual base. */
+    /* Returns writable storage plus the two 32-bit target addresses the module
+     * must use to reach it: `code_base` for the executable and read-only
+     * regions, `data_base` for the writable region. Both are bases of the same
+     * allocation and differ only when the platform executes the image through a
+     * second view of the same physical memory (an instruction-side alias); a
+     * single-view platform sets both to the allocation address. Writes always
+     * go through the returned pointer, never through either base. */
     void *(*allocate)(void *cookie, uint32_t size, uint32_t alignment,
-                      uint32_t *target_base);
+                      uint32_t *code_base, uint32_t *data_base);
     void (*release)(void *cookie, void *allocation, uint32_t size);
-    /* Establish permissions and perform all required D/I-cache maintenance. */
-    int (*finalize)(void *cookie, void *allocation, uint32_t target_base,
-                    uint32_t size, const struct canopus_elf_region *regions,
+    /* Establish permissions and perform all required D/I-cache maintenance.
+     * Region offsets are relative to either base according to region kind. */
+    int (*finalize)(void *cookie, void *allocation, uint32_t code_base,
+                    uint32_t data_base, uint32_t size,
+                    const struct canopus_elf_region *regions,
                     uint32_t region_count);
     /* Invokes one relocated constructor at an odd Thumb callable address. */
     int (*invoke)(void *cookie, uint32_t callable);
@@ -58,7 +66,11 @@ struct canopus_elf_loader_ops {
 
 struct canopus_elf_module {
     void *allocation;
+    /* Writable view of `allocation`; the RW region and release/finalize use it. */
     uint32_t target_base;
+    /* View the EXEC and RO regions are reached through. Equals target_base
+     * unless the platform executes through an instruction-side alias. */
+    uint32_t code_base;
     uint32_t allocation_size;
     struct canopus_elf_region regions[3];
     uint32_t region_count;

@@ -4,7 +4,7 @@
 // firmware : 4.100.139 (user-4.100.139-cn-202608280000)
 // sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
 // revision : 2
-// input_digest: 38befbe59ac81144
+// input_digest: 39067fc282f4bcfc
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -279,6 +279,9 @@ pub const CANOPUS_FW_SDP_BUILDER_CREATE_CALLABLE: usize = canopus_thumb_callable
 /// Recovered `heap_zalloc` at 0xc484430. Thumb callable address 0xc484431.
 pub const CANOPUS_FW_HEAP_ZALLOC_CALLABLE: usize = canopus_thumb_callable(0xc484431usize);
 
+/// Recovered `cache_i_clean_invalidate_all` at 0xc0c181e. Thumb callable address 0xc0c181f.
+pub const CANOPUS_FW_CACHE_I_CLEAN_INVALIDATE_ALL_CALLABLE: usize = canopus_thumb_callable(0xc0c181fusize);
+
 /// Recovered `vendor_hci_transport_register` at 0xc6c922c. Thumb callable address 0xc6c922d.
 pub const CANOPUS_FW_VENDOR_HCI_TRANSPORT_REGISTER_CALLABLE: usize = canopus_thumb_callable(0xc6c922dusize);
 
@@ -296,6 +299,9 @@ pub const CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE: usize = canopus_thumb_callable(0
 
 /// Recovered `lvx_content_pad_bottom` at 0xc387c6e. Thumb callable address 0xc387c6f.
 pub const CANOPUS_FW_LVX_CONTENT_PAD_BOTTOM_CALLABLE: usize = canopus_thumb_callable(0xc387c6fusize);
+
+/// Recovered `cache_barrier` at 0xc91e542. Thumb callable address 0xc91e543.
+pub const CANOPUS_FW_CACHE_BARRIER_CALLABLE: usize = canopus_thumb_callable(0xc91e543usize);
 
 /// Recovered `app_launcher_data_init` at 0xc344108. Thumb callable address 0xc344109.
 pub const CANOPUS_FW_APP_LAUNCHER_DATA_INIT_CALLABLE: usize = canopus_thumb_callable(0xc344109usize);
@@ -326,6 +332,9 @@ pub const CANOPUS_FW_HIDDEN_AND_SHOW_APP_CB_CALLABLE: usize = canopus_thumb_call
 
 /// Recovered `lv_image_set_src` at 0xc3b2c28. Thumb callable address 0xc3b2c29.
 pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0xc3b2c29usize);
+
+/// Recovered `mm_mallinfo` at 0xc34f0a0. Thumb callable address 0xc34f0a1.
+pub const CANOPUS_FW_MM_MALLINFO_CALLABLE: usize = canopus_thumb_callable(0xc34f0a1usize);
 
 /// Recovered `bt_free` at 0xc34cd2c. Thumb callable address 0xc34cd2d.
 pub const CANOPUS_FW_BT_FREE_CALLABLE: usize = canopus_thumb_callable(0xc34cd2dusize);
@@ -651,6 +660,9 @@ pub const CANOPUS_FW_LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = canopus_thumb_callab
 /// Recovered `lv_bar_create` at 0xc3ad7f4. Thumb callable address 0xc3ad7f5.
 pub const CANOPUS_FW_LV_BAR_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc3ad7f5usize);
 
+/// Recovered `cache_d_clean_all` at 0xc93021a. Thumb callable address 0xc93021b.
+pub const CANOPUS_FW_CACHE_D_CLEAN_ALL_CALLABLE: usize = canopus_thumb_callable(0xc93021busize);
+
 /// Recovered `app_install` at 0xc6ab350. Thumb callable address 0xc6ab351.
 pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc6ab351usize);
 
@@ -689,6 +701,9 @@ pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc6ab
 // bt_timer_add: restricted - not exported until context/ownership approved
 // bt_timer_cancel: restricted - not exported until context/ownership approved
 // bt_timer_cancel_owned: restricted - not exported until context/ownership approved
+// cache_barrier: restricted - not exported until context/ownership approved
+// cache_d_clean_all: restricted - not exported until context/ownership approved
+// cache_i_clean_invalidate_all: restricted - not exported until context/ownership approved
 // clock_gettime: restricted - not exported until context/ownership approved
 // close: restricted - not exported until context/ownership approved
 // controller_crash_dump: restricted - not exported until context/ownership approved
@@ -753,6 +768,7 @@ pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc6ab
 // lvx_page_content_create: restricted - not exported until context/ownership approved
 // lvx_page_title_create: restricted - not exported until context/ownership approved
 // lvx_style_apply: restricted - not exported until context/ownership approved
+// mm_mallinfo: restricted - not exported until context/ownership approved
 // mm_memalign: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // offload_property_apply: restricted - not exported until context/ownership approved

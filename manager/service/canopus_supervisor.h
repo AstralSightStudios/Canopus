@@ -104,6 +104,7 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_DESCRIPTOR_MISSING = -18,
     CANOPUS_SUP_ERR_DESCRIPTOR_INVALID = -19,
     CANOPUS_SUP_ERR_ACTIVATE = -20,
+    CANOPUS_SUP_ERR_NOMEM = -21,       /* no heap domain could hold the image */
     /* Exact-target installer diagnostics. These stay in the CPS1 status record
      * so a constrained watchface can surface a deterministic failing stage. */
     CANOPUS_SUP_ERR_STAGE_PATH = -101,

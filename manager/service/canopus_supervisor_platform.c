@@ -49,11 +49,22 @@
 #define CANOPUS_SUP_REGISTRY_PATH "/data/canopus/registry.bin"
 #define CANOPUS_SUP_REGISTRY_TMP_PATH "/data/canopus/registry.tmp"
 
+/* Targets that expose a second allocator domain route the loader's throwaway
+ * buffers there; everywhere else this collapses to the default heap. Only the
+ * resident image needs the executable-capable domain. */
+#ifndef canopus_fw_mm_memalign_scratch
+#define canopus_fw_mm_memalign_scratch canopus_fw_mm_memalign_default
+#define canopus_fw_mm_free_scratch canopus_fw_mm_free_default
+#endif
+
 #ifdef CANOPUS_SUP_CUSTOM_LOADER
 struct sup_loaded_module {
     struct canopus_elf_module image;
     uint8_t mpu_regions[3];
     uint32_t mpu_region_count;
+    /* Set when the image lives in the scratch domain and is executed through
+     * an instruction-side alias rather than an MPU-leased executable heap. */
+    uint32_t aliased;
 };
 
 static struct sup_loaded_module s_loaded_modules[CANOPUS_SUP_MODULE_SLOTS];
@@ -547,13 +558,40 @@ static int sup_verify_package_at(
 
 #ifdef CANOPUS_SUP_CUSTOM_LOADER
 static void *sup_loader_allocate(void *cookie, uint32_t size,
-                                 uint32_t alignment, uint32_t *target_base)
+                                 uint32_t alignment, uint32_t *code_base,
+                                 uint32_t *data_base)
 {
     void *allocation;
-    (void)cookie;
+#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+    struct sup_loaded_module *loaded = cookie;
+    uint32_t alias;
 
+    /* Prefer the scratch domain reached through the PSRAM instruction alias.
+     * Kmem is the firmware's own heap with roughly 50 KiB to spare, and an
+     * allocation it cannot serve panics the device rather than failing, so
+     * taking a module image out of it starves the firmware as well as
+     * capping module size. Umem has megabytes and needs no MPU lease. */
+    loaded->aliased = 0u;
+    allocation = canopus_fw_mm_memalign_scratch(alignment, size);
+    if (allocation != 0) {
+        alias = b11_exec_alias((uintptr_t)allocation, size);
+        if (alias != 0u && (alias & 31u) == 0u) {
+            loaded->aliased = 1u;
+            *code_base = alias;
+            *data_base = (uint32_t)(uintptr_t)allocation;
+            return allocation;
+        }
+        canopus_fw_mm_free_scratch(allocation);
+    }
+    /* Fall back to the MPU-leased executable heap. */
+#else
+    (void)cookie;
+#endif
     allocation = canopus_fw_mm_memalign_default(alignment, size);
-    if (allocation != 0) *target_base = (uint32_t)(uintptr_t)allocation;
+    if (allocation != 0) {
+        *code_base = (uint32_t)(uintptr_t)allocation;
+        *data_base = (uint32_t)(uintptr_t)allocation;
+    }
     return allocation;
 }
 
@@ -563,6 +601,11 @@ static void sup_loader_release(void *cookie, void *allocation, uint32_t size)
     (void)size;
 
 #ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+    if (loaded->aliased) {
+        loaded->aliased = 0u;
+        canopus_fw_mm_free_scratch(allocation);
+        return;
+    }
     while (loaded->mpu_region_count) b11_unmap(loaded->mpu_regions[--loaded->mpu_region_count]);
 #else
     while (loaded->mpu_region_count != 0u) {
@@ -581,7 +624,8 @@ static void sup_loader_release(void *cookie, void *allocation, uint32_t size)
 }
 
 static int sup_loader_finalize(void *cookie, void *allocation,
-                               uint32_t target_base, uint32_t size,
+                               uint32_t code_base, uint32_t data_base,
+                               uint32_t size,
                                const struct canopus_elf_region *regions,
                                uint32_t region_count)
 {
@@ -590,11 +634,23 @@ static int sup_loader_finalize(void *cookie, void *allocation,
     uint32_t length; int id;
     (void)allocation;
     if (region_count < 2 || region_count > 3 || regions[0].kind != CANOPUS_ELF_REGION_EXEC ||
-        regions[0].offset || !b11_heap_contains(target_base, size)) return -1;
+        regions[0].offset) return -1;
     length = regions[0].size;
     if (regions[1].kind == CANOPUS_ELF_REGION_RO) length += regions[1].size;
     if (length > size) return -1;
-    id = b11_map_exec(target_base, length);
+    if (loaded->aliased) {
+        /* No lease: the privileged default Code map already makes the alias
+         * executable, and the MPU is checked for an overriding region when
+         * the alias is derived. Recompute it here so finalize never trusts a
+         * base it did not verify, then push the bytes written through the
+         * data view out to where instruction fetch will find them. */
+        if (code_base == 0u || code_base != b11_exec_alias(data_base, size)) {
+            return -1;
+        }
+        return b11_publish_code();
+    }
+    if (code_base != data_base || !b11_heap_contains(data_base, size)) return -1;
+    id = b11_map_exec(data_base, length);
     if (id < 0) return -1;
     loaded->mpu_regions[loaded->mpu_region_count++] = (uint8_t)id;
     return 0;
@@ -606,10 +662,11 @@ static int sup_loader_finalize(void *cookie, void *allocation,
     uint32_t base;
     uint32_t length;
     uint32_t access;
+    uint32_t target_base = data_base;
     (void)allocation;
-    (void)target_base;
     (void)size;
 
+    if (code_base != data_base) return -1; /* no second view on this target */
     if (region_count < 2u || region_count > 3u ||
         regions[0].kind != CANOPUS_ELF_REGION_EXEC) return -1;
     physical_count = regions[1].kind == CANOPUS_ELF_REGION_RO ?
@@ -661,14 +718,17 @@ static int sup_loader_invoke(void *cookie, uint32_t callable)
     return 0;
 }
 
+/* The input image is parsed and copied out, never executed, so it belongs in
+ * the scratch domain. Reading it into the executable heap is what exhausted
+ * Kmem on .139: the artifact alone is half that heap's total size. */
 static int sup_read_artifact(const char *path, uint32_t size, uint8_t **out)
 {
-    uint8_t *buffer = canopus_fw_mm_memalign_default(4u, size);
+    uint8_t *buffer = canopus_fw_mm_memalign_scratch(4u, size);
     uint32_t failure;
 
     if (buffer == 0) return -1;
     if (sup_read_exact(path, buffer, size, &failure) != 0) {
-        canopus_fw_mm_free_default(buffer);
+        canopus_fw_mm_free_scratch(buffer);
         return -1;
     }
     *out = buffer;
@@ -684,13 +744,15 @@ static int sup_load_custom(const char *path, uint32_t artifact_size,
     void *scratch;
     int rc;
 
-    if (loaded->image.allocation != 0 ||
-        sup_read_artifact(path, artifact_size, &elf) != 0) return -1;
-    scratch = canopus_fw_mm_memalign_default(32u,
+    if (loaded->image.allocation != 0) return CANOPUS_ELF_LOAD_INVALID;
+    if (sup_read_artifact(path, artifact_size, &elf) != 0) {
+        return CANOPUS_ELF_LOAD_NOMEM;
+    }
+    scratch = canopus_fw_mm_memalign_scratch(32u,
                                                CANOPUS_ELF32_SCRATCH_SIZE);
     if (scratch == 0) {
-        canopus_fw_mm_free_default(elf);
-        return -1;
+        canopus_fw_mm_free_scratch(elf);
+        return CANOPUS_ELF_LOAD_NOMEM;
     }
     canopus_memset(loaded, 0, sizeof(*loaded));
     ops.cookie = loaded;
@@ -699,8 +761,8 @@ static int sup_load_custom(const char *path, uint32_t artifact_size,
     ops.finalize = sup_loader_finalize;
     ops.invoke = sup_loader_invoke;
     rc = canopus_elf32_load(elf, artifact_size, &ops, &loaded->image, scratch);
-    canopus_fw_mm_free_default(scratch);
-    canopus_fw_mm_free_default(elf);
+    canopus_fw_mm_free_scratch(scratch);
+    canopus_fw_mm_free_scratch(elf);
     return rc;
 }
 static void sup_unload_custom(uint32_t index)
@@ -750,9 +812,18 @@ static int sup_load_module(void *cookie, uint32_t index,
     }
     sup->loading_slot = (int32_t)index;
 #ifdef CANOPUS_SUP_CUSTOM_LOADER
-    if (sup_load_custom(path, receipt.artifact_size, index) != 0) {
-        sup->loading_slot = -1;
-        return -1;
+    {
+        int load_rc = sup_load_custom(path, receipt.artifact_size, index);
+        if (load_rc != 0) {
+            sup->loading_slot = -1;
+            /* A heap that cannot hold this image is the one failure the
+             * operator can act on (shrink the module, free a slot), so it
+             * gets its own code instead of the generic load error. */
+            if (load_rc == CANOPUS_ELF_LOAD_NOMEM) {
+                sup->error_code = CANOPUS_SUP_ERR_NOMEM;
+            }
+            return -1;
+        }
     }
 #else
     handle = insmod(path, module_name);

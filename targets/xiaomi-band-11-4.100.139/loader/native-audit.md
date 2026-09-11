@@ -95,6 +95,15 @@ No claim is made that all imported symbols or Rust module services now work on-d
 Unverified Supervisor unregister and watchface-delete calls are omitted; reboot is its
 lifecycle boundary, and module installer watchfaces remain available for manual cleanup.
 
+The [2026-09-12 heap budget record](heap-budget-2026-09-12.md) adds the first
+device evidence for Kmem capacity and for mm_malloc's panic-on-failure, which
+closes the "allocate and check for NULL" option on this target: every allocation
+is gated on mm_mallinfo 0x0c34f0a0 first. The Supervisor's own module loader now
+keeps its input ELF and bookkeeping in Umem, as stage2 already did, and module
+images are resident in Umem too — executed through the 1c... instruction alias
+with no MPU lease, so "module capacity is also limited by the remaining leases
+and Kmem" above now applies only to the Supervisor itself.
+
 The [2026-09-10 revalidation](revalidation-2026-09-10.md) adds actual firmware
 execution for task privilege initialization, system stack attributes, NSH word
 access, both cache approaches and app/page/Launcher record creation. It records

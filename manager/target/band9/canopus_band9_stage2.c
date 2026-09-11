@@ -26,8 +26,10 @@ struct stage2_state {
     void *image_raw;
 };
 
+/* Band 9 keeps code and data in one MPU-mapped SRAM view, so both bases are
+ * the allocation itself. */
 static void *image_allocate(void *cookie, uint32_t size, uint32_t alignment,
-                            uint32_t *target_base)
+                            uint32_t *code_base, uint32_t *data_base)
 {
     typedef void *(*malloc_fn)(uint32_t);
     struct stage2_state *state = cookie;
@@ -40,7 +42,8 @@ static void *image_allocate(void *cookie, uint32_t size, uint32_t alignment,
     state->image_raw = ((malloc_fn)(uintptr_t)FW_KMEM_MALLOC)(size + extra);
     if (state->image_raw == 0) return 0;
     aligned = ((uintptr_t)state->image_raw + extra) & ~((uintptr_t)extra);
-    *target_base = (uint32_t)aligned;
+    *code_base = (uint32_t)aligned;
+    *data_base = (uint32_t)aligned;
     return (void *)aligned;
 }
 
@@ -69,7 +72,7 @@ static void image_release(void *cookie, void *allocation, uint32_t size)
 }
 
 static int image_finalize(void *cookie, void *allocation, uint32_t target_base,
-                          uint32_t size,
+                          uint32_t data_base, uint32_t size,
                           const struct canopus_elf_region *regions,
                           uint32_t count)
 {
@@ -86,6 +89,7 @@ static int image_finalize(void *cookie, void *allocation, uint32_t target_base,
     (void)allocation;
     (void)size;
 
+    if (target_base != data_base) return -1; /* no second view on this target */
     if (count < 2u || count > 3u ||
         regions[0].kind != CANOPUS_ELF_REGION_EXEC) return -1;
     physical_count = regions[1].kind == CANOPUS_ELF_REGION_RO ?

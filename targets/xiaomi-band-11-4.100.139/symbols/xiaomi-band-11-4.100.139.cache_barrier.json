@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "target_id": "xiaomi-band-11-4.100.139",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+  },
+  "prototype": "int(void)",
+  "status": "STATIC_RECOVERED",
+  "policy": "restricted",
+  "approval_state": "PENDING",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  },
+  "symbol_id": "xiaomi-band-11-4.100.139.cache_barrier",
+  "name": "cache_barrier",
+  "entry_address": "0xc91e542",
+  "callable_address": "0xc91e543",
+  "notes": "Barrier-only tail of 0xc91e530: DSB SY; ISB; BX LR. It never reaches that routine's MPU-disable entry, so cache and MPU configuration are unchanged. BES cache controller bases are 0x07ffa000 (I) and 0x07ffc000 (D). This is a branch entry inside a larger routine, chosen so the leaf establishes its own arguments; it clobbers only r0/r2/r3 and returns 0. The shipped Lua bootstrap fingerprints these instructions and their PC-relative literals on-device before entering them (scripts/build_band11_installer.py). Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval."
+}

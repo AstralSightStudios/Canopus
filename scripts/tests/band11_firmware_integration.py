@@ -97,7 +97,6 @@ class FirmwareIntegrationTests(unittest.TestCase):
 
     def test_real_mw_and_relocated_cache_range_functions(self):
         m = Machine()
-        m.uc.mem_map(0x07ffa000, 0x4000)
         output, accesses = [], []
         state, argv, arg = 0x200d1000, 0x200d2000, 0x200d2080
         printer = 0x1c000200
@@ -163,7 +162,6 @@ class FirmwareIntegrationTests(unittest.TestCase):
     def test_cache_fixed_entries_through_real_nsh_preserve_configuration(self):
         m = Machine()
         m.control = 2
-        m.uc.mem_map(0x07ffa000, 0x4000)
         m.uc.mem_write(0x07ffa000, b'\xa5' * 0x4000)
         m.word(0x07ffa000, 1)
         m.word(0x07ffc000, 1)

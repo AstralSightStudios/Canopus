@@ -61,6 +61,10 @@ step "4/6 bare-metal portable runtime cross-thumb sanity"
 
 step "5/6 C module cross-build + verifier (hello)"
 ./modules/examples/hello/build.sh
+# Load that module through the portable ELF loader with distinct code and data
+# bases, so a regression in the per-region base arithmetic shows up as a failed
+# constructor-pointer check rather than only on a device.
+(cd tests/host && make real-elf-loader BAND9_ELF=../../modules/examples/hello/build/hello_module.elf)
 
 step "6/6 Rust module cross-build + verifier (no-heap-counter)"
 ./sdk/rust/examples/no-heap-counter/build.sh

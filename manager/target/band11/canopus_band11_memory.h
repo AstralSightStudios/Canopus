@@ -28,21 +28,75 @@ static inline int b11_heap_contains(uintptr_t p, uint32_t size) {
     return p > B11_REG(heap + 0x1cu) && p < 0x20160000u &&
            size <= 0x20160000u - p && p + size <= B11_REG(heap + 0x20u);
 }
+/* mm_malloc 0x0c35056c ends its failure path with _assert("mm_malloc.c", 417,
+ * "panic") for exactly the two well-known heaps (Umem *0x200b2590 and Kmem
+ * *0x200b01c8), so a request this heap cannot satisfy takes the whole device
+ * down instead of returning NULL. Every allocation here is therefore gated on
+ * mm_mallinfo first.
+ *
+ * mm_mallinfo 0x0c34f0a0 is `struct mallinfo mm_mallinfo(heap)`: AAPCS returns
+ * the 7-word record through the hidden r0 pointer with the heap in r1. Its
+ * per-node callback 0x0c347d0c fills ordblks/aordblks/mxordblk/uordblks/
+ * fordblks, and mm_foreach 0x0c34f028 holds the heap lock across the walk.
+ * mxordblk is the largest free node's `size & ~3` — the very quantity
+ * mm_malloc compares its rounded request against, so `request <= mxordblk`
+ * is the allocator's own success test, not an estimate. */
+struct b11_mallinfo {
+    uint32_t arena, ordblks, aordblks, mxordblk, uordblks, fordblks, usmblks;
+};
+/* mm_malloc rounds a request to (max(size,12)+11)&~7 before matching a free
+ * node. mm_memalign 0x0c3507e8 forwards the request unchanged while the
+ * alignment is <= 8 and otherwise asks for 2*max(align,16) + align8(size).
+ * Reproduce both so the gate tests what will actually be requested. */
+static inline uint32_t b11_alloc_request(uint32_t alignment, uint32_t size) {
+    uint32_t want = size < 12u ? 12u : size;
+    if (alignment == 0u || (alignment & (alignment - 1u)) != 0u ||
+        alignment >= 0x7FFFFFFFu) return 0xFFFFFFFFu;
+    if (alignment > 8u) {
+        uint32_t slack = alignment < 16u ? 16u : alignment;
+        if (want > 0xFFFFFFFFu - 7u) return 0xFFFFFFFFu;
+        want = (want + 7u) & ~7u;
+        if (slack > 0x3FFFFFFFu || want > 0xFFFFFFFFu - 2u * slack) return 0xFFFFFFFFu;
+        want += 2u * slack;
+    }
+    if (want > 0xFFFFFFFFu - 11u) return 0xFFFFFFFFu;
+    return (want + 11u) & ~7u;
+}
+/* Leave a chunk of headroom: another task may allocate between the query and
+ * the request, and a false negative only fails one module load. */
+#define B11_ALLOC_MARGIN 256u
+static inline int b11_heap_can_alloc(uintptr_t heap, uint32_t alignment,
+                                     uint32_t size) {
+    typedef void *(*fn)(struct b11_mallinfo *, void *);
+    struct b11_mallinfo info;
+    uint32_t need = b11_alloc_request(alignment, size);
+    if (heap == 0u || need == 0xFFFFFFFFu ||
+        need > 0xFFFFFFFFu - B11_ALLOC_MARGIN) return 0;
+    info.mxordblk = 0u;
+    ((fn)(uintptr_t)0x0C34F0A1u)(&info, (void *)heap);
+    return info.mxordblk >= need + B11_ALLOC_MARGIN;
+}
 static inline void *b11_alloc(uint32_t alignment, uint32_t size) {
     typedef void *(*fn)(void *, uint32_t, uint32_t);
-    void *p = ((fn)(uintptr_t)0x0C3507E9u)((void *)(uintptr_t)B11_REG(0x200B01C8u), alignment, size);
+    uintptr_t heap = B11_REG(0x200B01C8u);
+    void *p;
+    if (!b11_heap_can_alloc(heap, alignment, size)) return 0;
+    p = ((fn)(uintptr_t)0x0C3507E9u)((void *)heap, alignment, size);
     return p;
 }
 static inline void b11_free(void *p) {
     if (p) ((void (*)(void *))(uintptr_t)0x0C34CCB9u)(p);
 }
 /* The input ELF and loader bookkeeping are never executed. Keep them out of
- * the small kernel heap. mm_memalign takes an explicit heap; umm_free at
- * 0x0c34cd2c uses this same Umem global (not the separate libc pool wrapper). */
+ * the small kernel heap: Kmem is 2010e9e0..2015f2bc (~322 KiB, most of it
+ * already resident firmware) while Umem is 3c356b40..3cfefe00. mm_memalign
+ * takes an explicit heap; umm_free at 0x0c34cd2c uses this same Umem global
+ * (not the separate libc pool wrapper). */
 static inline void *b11_temp_alloc(uint32_t alignment, uint32_t size) {
     typedef void *(*fn)(void *, uint32_t, uint32_t);
     uintptr_t heap = B11_REG(0x200B2590u), p;
     if (heap != 0x3C356B40u) return 0;
+    if (!b11_heap_can_alloc(heap, alignment, size)) return 0;
     p = (uintptr_t)((fn)(uintptr_t)0x0C3507E9u)((void *)heap, alignment, size);
     if (!p) return 0;
     if (p <= B11_REG(heap + 0x1cu) || p >= 0x3D000000u ||
@@ -51,6 +105,58 @@ static inline void *b11_temp_alloc(uint32_t alignment, uint32_t size) {
 }
 static inline void b11_temp_free(void *p) {
     if (p) ((void (*)(void *))(uintptr_t)0x0C34CD2Du)(p);
+}
+/* PSRAM is visible through more than one window. The startup copy 0x0c0c024c
+ * writes the PSRAM image at 0x3c000000 while its code runs at 0x1c000000
+ * (delta 0x20000000), which the privileged default Code map covers with
+ * MPU_CTRL=5 — stage1 already executes Lua-owned Umem bytes that way on
+ * hardware. Its read-only data is addressed through the 0x3c view (the blob
+ * holds 362 words pointing into 0x3c0xxxxx against 106 odd 0x1c... callables)
+ * and its writable data through a third window at 0x38280000, so the windows
+ * are per-attribute, not interchangeable. Literal pools inside .text are still
+ * read through 0x1c on every PC-relative load, which is why the executable and
+ * read-only extent may share the code view.
+ *
+ * A Umem-resident image therefore executes at `address - 0x20000000` with no
+ * MPU lease, leaving Kmem — the firmware's own ~322 KiB heap — untouched. */
+#define B11_PSRAM_EXEC_DELTA 0x20000000u
+/* Returns the instruction view of a Umem range, or 0 when the range is not
+ * Umem or an enabled MPU region overrides the default map there. */
+static inline uint32_t b11_exec_alias(uintptr_t data, uint32_t size) {
+    uint32_t irq, old, id, base, end, rbar, rlar;
+    uint32_t result;
+    if (data < 0x3C000000u || data >= 0x3D000000u || !size ||
+        size > 0x3D000000u - data) return 0;
+    base = (uint32_t)(data - B11_PSRAM_EXEC_DELTA);
+    end = base + size - 1u;
+    result = base;
+    irq = b11_irq_lock(); old = B11_REG(B11_MPU_RNR);
+    for (id = 0u; id < 8u; id++) {
+        B11_REG(B11_MPU_RNR) = id;
+        rbar = B11_REG(B11_MPU_RBAR); rlar = B11_REG(B11_MPU_RLAR);
+        if ((rlar & 1u) && base <= (rlar | 31u) && end >= (rbar & ~31u)) {
+            result = 0u;
+            break;
+        }
+    }
+    B11_REG(B11_MPU_RNR) = old; b11_barrier(); b11_irq_unlock(irq);
+    return result;
+}
+/* Make bytes written through the data view fetchable through the code view:
+ * D clean-all 0x0c93021a, DSB/ISB 0x0c91e542, the enabled I cache's
+ * clean/invalidate-all branch 0x0c0c181e, DSB/ISB again. This is the exact
+ * sequence the Lua bootstrap runs before entering stage1, and each leaf
+ * establishes its own arguments and clobbers only r0/r2/r3. Both controllers
+ * must already be enabled; the I-cache leaf would otherwise take its enable
+ * branch and change cache configuration. */
+static inline int b11_publish_code(void) {
+    typedef void (*leaf_fn)(void);
+    if (!(B11_REG(0x07FFA000u) & 1u) || !(B11_REG(0x07FFC000u) & 1u)) return -1;
+    ((leaf_fn)(uintptr_t)0x0C93021Bu)();
+    ((leaf_fn)(uintptr_t)0x0C91E543u)();
+    ((leaf_fn)(uintptr_t)0x0C0C181Fu)();
+    ((leaf_fn)(uintptr_t)0x0C91E543u)();
+    return 0;
 }
 /* Reserve only 4..6, leaving region 7 available to firmware. The .139
  * scheduler uses MSPLIM/PSPLIM; region-7 stack-guard ownership is NOT proven.

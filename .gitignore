@@ -39,6 +39,7 @@ dist/
 *.lst
 *.dSYM/
 tests/host/canopus_host_tests
+tests/host/elf_loader_harness
 
 # Packaging output
 *.canopus

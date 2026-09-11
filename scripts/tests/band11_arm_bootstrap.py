@@ -6,11 +6,12 @@ PIC rebasing, relocation, AAPCS return paths, ctor mailbox and /dev registration
 it cannot validate physical BES cache/alias behavior or a real display.
 Run with build/band11-tests/bin/python scripts/tests/band11_arm_bootstrap.py.
 """
+import ctypes
 from pathlib import Path
 import struct
 import sys
 import unittest
-from unicorn import Uc, UC_ARCH_ARM, UC_MODE_THUMB, UC_MODE_MCLASS, UC_HOOK_CODE, UC_HOOK_BLOCK, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UC_MEM_WRITE
+from unicorn import Uc, UC_ARCH_ARM, UC_MODE_THUMB, UC_MODE_MCLASS, UC_HOOK_CODE, UC_HOOK_BLOCK, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UC_MEM_WRITE, UC_PROT_ALL
 from unicorn.arm_const import *
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,8 +28,24 @@ class Machine:
         u.mem_write(0x0c0c0000, firmware)
         u.mem_map(0x2c0c0000, (len(firmware) + 4095) & ~4095)
         u.mem_write(0x2c0c0000, firmware)
-        for base, size in [(0x20000000,0x160000),(0x1c000000,0x1000000),(0x3c000000,0x1000000),(0xe000e000,0x2000)]:
+        for base, size in [(0x20000000,0x160000),(0xe000e000,0x2000),(0x07ffa000,0x4000)]:
             u.mem_map(base,size)
+        # BES cache controllers: I at 0x07ffa000, D at 0x07ffc000, both enabled
+        # (bit0). Command ports are plain storage here, so a test reads back
+        # which command was issued; no write hook is installed over them because
+        # the enabled-I branch is an ITET block and Unicorn 2.1.4 corrupts
+        # ITSTATE for conditional memory instructions under UC_HOOK_MEM_WRITE.
+        u.mem_write(0x07ffa000,struct.pack('<I',1))
+        u.mem_write(0x07ffc000,struct.pack('<I',1))
+        # One physical PSRAM behind both windows: startup copy 0x0c0c024c
+        # writes the image at 3c... and its code runs at 1c... . Backing the
+        # two ranges with the same host buffer models the alias itself; the
+        # cache behaviour that makes a write visible to instruction fetch is
+        # not modeled and remains a hardware question.
+        self.psram = ctypes.create_string_buffer(0x1000000)
+        psram_ptr = ctypes.cast(self.psram, ctypes.c_void_p).value
+        for base in (0x1c000000, 0x3c000000):
+            u.mem_map_ptr(base,0x1000000,UC_PROT_ALL,psram_ptr)
         # Startup-copy mappings from the actual image; permits executing libc
         # and HAL veneers instead of replacing their target bodies with mocks.
         u.mem_map(0x00260000,0x140000)
@@ -42,6 +59,13 @@ class Machine:
         u.mem_write(code,bytes(blob)); self.word(self.mailbox,0x7ffffffe)
         self.next_alloc = kernel_base
         self.next_temp = 0x3c500000
+        # Largest free chunk each modeled heap reports through mm_mallinfo.
+        # None == "whatever is left in this harness's arena"; a test sets a
+        # number to reproduce the real .139 Kmem, which is mostly resident
+        # firmware. mm_malloc PANICs instead of returning NULL on both known
+        # heaps, so the supervisor must consult this before every request.
+        self.kernel_largest = None
+        self.temp_largest = None
         self.alloc_calls = 0; self.peak_kernel = 0
         self.allocations, self.frees, self.files, self.next_fd = {}, [], {}, 3
         self.registered = False; self.fops = None; self.installer_fops = None; self.disk = {}
@@ -62,7 +86,7 @@ class Machine:
         self.register_calls = 0
         self.app = 0; self.pages = []; self.launcher = []; self.widgets = {}; self.next_widget = 0x200a0000
         hooks = {0x0c3507e8:self.allocate,0x0c34ccb8:self.free,
-                 0x0c34cd2c:self.free,
+                 0x0c34cd2c:self.free,0x0c34f0a0:self.mallinfo,
                  0x0c342c54:self.open,0x0c33818c:self.close,0x0c33d784:self.read,
                  0x0c914f64:self.register,0x0c349538:lambda:0x200e0000,
                  0x0c33dc4e:self.write,0x0c33dbec:self.unlink,0x0c33d79c:self.rename,0x0c6ac54c:lambda:self.app,
@@ -109,9 +133,30 @@ class Machine:
             u.reg_write(reg,0xdeadc0de)
         u.reg_write(UC_ARM_REG_R0,value & 0xffffffff)
         u.reg_write(UC_ARM_REG_PC,u.reg_read(UC_ARM_REG_LR))
+    def heap_largest(self,heap):
+        if heap==0x2010e9e0:
+            if self.kernel_largest is not None: return self.kernel_largest
+            return max(0,self.stack_low-32-self.next_alloc)
+        if self.temp_largest is not None: return self.temp_largest
+        return max(0,0x3cfefdf8-self.next_temp)
+    def mallinfo(self):
+        # struct mallinfo mm_mallinfo(heap): AAPCS sret pointer in r0, heap in
+        # r1, 7 words {arena, ordblks, aordblks, mxordblk, uordblks, fordblks,
+        # usmblks}. Only mxordblk gates an allocation.
+        out,heap=self.reg(0),self.reg(1)
+        assert heap in (0x2010e9e0,0x3c356b40),hex(heap)
+        largest=self.heap_largest(heap)
+        used=sum(n for p,n in self.allocations.items()
+                 if p not in self.frees and (p<0x30000000)==(heap==0x2010e9e0))
+        for i,value in enumerate((largest+used,1,len(self.allocations),largest,used,largest,largest)):
+            self.word(out+4*i,value)
+        return out
     def allocate(self):
         heap,align,size=self.reg(0),self.reg(1),self.reg(2)
         assert heap in (0x2010e9e0,0x3c356b40) and align and align & (align-1)==0
+        # Nothing may reach mm_malloc that mm_mallinfo said would not fit:
+        # this firmware panics on the failure path rather than returning NULL.
+        assert size <= self.heap_largest(heap),('unchecked allocation',hex(heap),size)
         self.alloc_calls += 1
         if self.fault=='nomem' or self.fault==f'alloc_{self.alloc_calls}': return 0
         if heap==0x2010e9e0:
@@ -146,7 +191,7 @@ class Machine:
             if self.fault=='truncated_stage2' and name=='stage2':data=data[:-1]
             if self.fault=='extra_stage2' and name=='stage2':data+=b'\x00'
         else:
-            assert path in ('/data/canopus/registry.bin','/data/canopus/registry.tmp'),path
+            assert path.startswith('/data/canopus/'),path
             if self.reg(1)&4:data=bytearray()
             elif path in self.disk:data=bytearray(self.disk[path])
             else:return -1
@@ -347,6 +392,21 @@ class BootstrapTests(unittest.TestCase):
                 else:
                     self.assertEqual(sum(p not in m.frees for p in m.allocations),1)
                 self.assertFalse(m.registered)
+    def test_starved_kernel_heap_is_declined_before_the_allocator_panics(self):
+        # A 4.100.139 device reported Total:329940 free:56136 largest:51056 for
+        # Kmem while restoring an enabled module; mm_malloc 0x0c35056c ends its
+        # failure path in _assert(mm_malloc.c, 417, "panic") for that heap, so
+        # an over-budget request crashes the watch instead of returning NULL.
+        # Every allocation must therefore be declined from mm_mallinfo first.
+        # `allocate` asserts that nothing oversized ever reaches mm_memalign.
+        m=Machine(); m.kernel_largest=51056
+        self.assertEqual(m.boot(),-403) # CANOPUS_ELF_LOAD_NOMEM from stage2
+        self.assertEqual(set(m.allocations),set(m.frees))
+        self.assertFalse(m.registered)
+        # Umem stays the domain for the loader's input and bookkeeping, so a
+        # starved Kmem must not have stopped those from being served.
+        self.assertTrue(any(p>=0x3c000000 for p in m.allocations))
+
     def test_real_nsh_exec_and_nonnegative_result_normalization(self):
         m=Machine(fault='kernel_budget')
         m.control=2 # privileged thread using PSP, as the .139 scheduler does

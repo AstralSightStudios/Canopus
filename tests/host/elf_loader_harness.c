@@ -12,14 +12,20 @@ struct harness {
     uint32_t finalized;
 };
 
+/* Two distinct bases, so a regression that mixes the code and data views up
+ * shows as a wrong relocation rather than an accidentally-correct one. */
+#define HARNESS_DATA_BASE UINT32_C(0x21000000)
+#define HARNESS_CODE_BASE UINT32_C(0x01000000)
+
 static void *allocate_image(void *cookie, uint32_t size, uint32_t alignment,
-                            uint32_t *target_base)
+                            uint32_t *code_base, uint32_t *data_base)
 {
     struct harness *h = cookie;
     void *allocation = aligned_alloc(alignment, size);
     h->allocation = allocation;
     h->allocation_size = size;
-    *target_base = UINT32_C(0x21000000);
+    *code_base = HARNESS_CODE_BASE;
+    *data_base = HARNESS_DATA_BASE;
     return allocation;
 }
 
@@ -31,8 +37,8 @@ static void release_image(void *cookie, void *allocation, uint32_t size)
     h->allocation = NULL;
 }
 
-static int finalize_image(void *cookie, void *allocation, uint32_t target_base,
-                          uint32_t size,
+static int finalize_image(void *cookie, void *allocation, uint32_t code_base,
+                          uint32_t data_base, uint32_t size,
                           const struct canopus_elf_region *regions,
                           uint32_t region_count)
 {
@@ -40,8 +46,10 @@ static int finalize_image(void *cookie, void *allocation, uint32_t target_base,
     uint32_t i;
     uint32_t end = 0;
     (void)allocation;
-    (void)target_base;
 
+    if (code_base != HARNESS_CODE_BASE || data_base != HARNESS_DATA_BASE) {
+        return -1;
+    }
     if (region_count == 0 || region_count > 3) {
         return -1;
     }

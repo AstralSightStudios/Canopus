@@ -6,6 +6,7 @@ and the corrected native Manager app/page/launcher backend. General SDK callable
 
 - [Current native ABI, ownership, MPU/cache audit and validation](native-audit.md)
 - [Latest firmware integration checks and tested bundle](revalidation-2026-09-10.md)
+- [Device heap budget, mm_malloc panic-on-failure and the module size ceiling](heap-budget-2026-09-12.md)
 - [Packing and device-test instructions](../../../watchfaces/canopus-installer-prod/xiaomi-band-11/docs/README.md)
 - [Initial audit before the native implementation](audit-2026-09-08.md)
 

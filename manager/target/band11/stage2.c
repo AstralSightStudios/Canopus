@@ -8,10 +8,13 @@ struct stage_state {
     int region;
     uint32_t invoked;
 };
-static void *allocate(void *cookie, uint32_t size, uint32_t align, uint32_t *base) {
+/* The Supervisor stays in Kmem behind an MPU lease: a single view, so both
+ * bases are the allocation itself. */
+static void *allocate(void *cookie, uint32_t size, uint32_t align,
+                      uint32_t *code, uint32_t *data) {
     void *p = b11_alloc(align, size); (void)cookie;
     if (p && !b11_heap_contains((uintptr_t)p, size)) { b11_free(p); return 0; }
-    if (p) *base = (uint32_t)(uintptr_t)p;
+    if (p) *code = *data = (uint32_t)(uintptr_t)p;
     return p;
 }
 static void release(void *cookie, void *p, uint32_t size) {
@@ -22,10 +25,12 @@ static void release(void *cookie, void *p, uint32_t size) {
     if (s->region >= 0) b11_unmap((uint32_t)s->region);
     b11_free(p);
 }
-static int finalize(void *cookie, void *p, uint32_t base, uint32_t size,
-                    const struct canopus_elf_region *r, uint32_t count) {
+static int finalize(void *cookie, void *p, uint32_t base, uint32_t data,
+                    uint32_t size, const struct canopus_elf_region *r,
+                    uint32_t count) {
     struct stage_state *s = cookie; uint32_t length;
     (void)p;
+    if (base != data) return -1; /* this path never uses a second view */
     if (count < 2 || count > 3 || r[0].kind != CANOPUS_ELF_REGION_EXEC || r[0].offset ||
         !b11_heap_contains(base, size)) return -1;
     length = r[0].size;

@@ -4,7 +4,7 @@
  * firmware : 4.100.139 (user-4.100.139-cn-202608280000)
  * sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
  * revision : 2
- * input_digest: 38befbe59ac81144
+ * input_digest: 39067fc282f4bcfc
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
@@ -239,6 +239,9 @@ static inline int canopus_identity_guard(void)
  * bt_timer_add: restricted - not exported until context/ownership approved
  * bt_timer_cancel: restricted - not exported until context/ownership approved
  * bt_timer_cancel_owned: restricted - not exported until context/ownership approved
+ * cache_barrier: restricted - not exported until context/ownership approved
+ * cache_d_clean_all: restricted - not exported until context/ownership approved
+ * cache_i_clean_invalidate_all: restricted - not exported until context/ownership approved
  * clock_gettime: restricted - not exported until context/ownership approved
  * close: restricted - not exported until context/ownership approved
  * controller_crash_dump: restricted - not exported until context/ownership approved
@@ -303,6 +306,7 @@ static inline int canopus_identity_guard(void)
  * lvx_page_content_create: restricted - not exported until context/ownership approved
  * lvx_page_title_create: restricted - not exported until context/ownership approved
  * lvx_style_apply: restricted - not exported until context/ownership approved
+ * mm_mallinfo: restricted - not exported until context/ownership approved
  * mm_memalign: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: restricted - not exported until context/ownership approved

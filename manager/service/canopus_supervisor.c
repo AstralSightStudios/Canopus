@@ -351,7 +351,11 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
             if (st < 0) {
                 module->state = CANOPUS_STATE_FAILED;
                 module->activation_error = (uint32_t)st;
-                sup->error_code = CANOPUS_SUP_ERR_LOAD;
+                /* Keep a specific diagnostic the platform already recorded for
+                 * this command (error_code was cleared when it started). */
+                if (sup->error_code == CANOPUS_SUP_ERR_NONE) {
+                    sup->error_code = CANOPUS_SUP_ERR_LOAD;
+                }
                 rc = CANOPUS_RESULT_FAILED;
             } else {
                 module->state = (uint32_t)st;
@@ -1144,7 +1148,9 @@ static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
             if (st < 0) {
                 module->state = CANOPUS_STATE_FAILED;
                 module->activation_error = (uint32_t)st;
-                sup->error_code = CANOPUS_SUP_ERR_LOAD;
+                if (sup->error_code == CANOPUS_SUP_ERR_NONE) {
+                    sup->error_code = CANOPUS_SUP_ERR_LOAD;
+                }
                 continue;
             }
             module->state = (uint32_t)st;
@@ -1193,7 +1199,9 @@ int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *s
         if (st < 0) {
             module->state = CANOPUS_STATE_FAILED;
             module->activation_error = (uint32_t)st;
-            sup->error_code = CANOPUS_SUP_ERR_LOAD;
+            if (sup->error_code == CANOPUS_SUP_ERR_NONE) {
+                sup->error_code = CANOPUS_SUP_ERR_LOAD;
+            }
             failed = -1;
             continue;
         }

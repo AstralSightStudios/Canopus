@@ -53,4 +53,8 @@
     ((void)(mode), ((int (*)(const char *, const void *, void *))(uintptr_t)0x0C914F65u)((path), (fops), (priv)))
 #define canopus_fw_mm_memalign_default b11_alloc
 #define canopus_fw_mm_free_default b11_free
+/* Scratch domain for buffers the loader never executes (the input ELF and its
+ * section bookkeeping). Kmem has to stay free for the resident image. */
+#define canopus_fw_mm_memalign_scratch b11_temp_alloc
+#define canopus_fw_mm_free_scratch b11_temp_free
 #endif

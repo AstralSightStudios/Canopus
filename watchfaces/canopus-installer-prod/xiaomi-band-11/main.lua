@@ -609,6 +609,12 @@ local function write_command(command, arg0)
     return true
 end
 
+-- Supervisor error codes worth explaining in place. -21 is the one an
+-- operator can act on: no heap domain could hold the module image.
+local ERROR_HINTS = {
+    [-21] = "内存不足：模块镜像放不进内核堆，请缩小模块",
+}
+
 local function execute_step(command, arg0, description)
     checkpoint(description)
     local ok, message = write_command(command, arg0)
@@ -618,8 +624,10 @@ local function execute_step(command, arg0, description)
     local current, status_error = read_status()
     if not current then return false, status_error end
     if current.pending_op ~= command or current.pending_state ~= RESULT_COMPLETED then
-        return false, string.format("result=%d error=%d",
-            current.pending_state, current.error_code)
+        local hint = ERROR_HINTS[current.error_code]
+        return false, string.format("result=%d error=%d%s",
+            current.pending_state, current.error_code,
+            hint and ("\n" .. hint) or "")
     end
     return true
 end

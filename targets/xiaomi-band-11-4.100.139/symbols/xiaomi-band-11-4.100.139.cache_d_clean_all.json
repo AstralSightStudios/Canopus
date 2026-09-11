@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "target_id": "xiaomi-band-11-4.100.139",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+  },
+  "prototype": "int(void)",
+  "status": "STATIC_RECOVERED",
+  "policy": "restricted",
+  "approval_state": "PENDING",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  },
+  "symbol_id": "xiaomi-band-11-4.100.139.cache_d_clean_all",
+  "name": "cache_d_clean_all",
+  "entry_address": "0xc93021a",
+  "callable_address": "0xc93021b",
+  "notes": "D-cache clean-all branch of 0xc930214: LDR R3,=0x07FFC000; MOVS R2,#1; STR R2,[R3,#0x34]; MOVS R0,#0; BX LR. BES cache controller bases are 0x07ffa000 (I) and 0x07ffc000 (D). This is a branch entry inside a larger routine, chosen so the leaf establishes its own arguments; it clobbers only r0/r2/r3 and returns 0. The shipped Lua bootstrap fingerprints these instructions and their PC-relative literals on-device before entering them (scripts/build_band11_installer.py). Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval."
+}
