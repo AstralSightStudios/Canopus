@@ -20,7 +20,10 @@ RES = ROOT / 'watchfaces/canopus-installer-prod/xiaomi-band-11'
 
 class Machine:
     def __init__(self, fault=None, code=0x1c400020, kernel_base=0x20110000):
+        # Comma-separated so a matrix can combine, e.g. an unavailable alias
+        # with an MPU rejection that only the Kmem fallback can hit.
         self.fault = fault
+        self.faults = set(fault.split(',')) if fault else set()
         self.uc = u = Uc(UC_ARCH_ARM, UC_MODE_THUMB | UC_MODE_MCLASS)
         u.ctl_set_cpu_model(UC_CPU_ARM_CORTEX_M33)
         firmware = (ROOT / 'fwbins' / TARGET / 'vela_ap.bin').read_bytes()
@@ -108,12 +111,17 @@ class Machine:
         self.stack_highwater = 0
         self.control = 0
         self.mpu_write_attempts = 0; self.firmware_mpu_setup = False
-        if fault == 'overlap': self.regions[3] = (kernel_base | 1, (kernel_base + 0x1000) | 3)
-        if fault == 'occupied': self.word(0x200f5190,0x7f)
-        if fault == 'hardware_occupied':
+        if self.hurt('overlap'): self.regions[3] = (kernel_base | 1, (kernel_base + 0x1000) | 3)
+        if self.hurt('occupied'): self.word(0x200f5190,0x7f)
+        if self.hurt('hardware_occupied'):
             for i in (4,5,6): self.regions[i] = (0x200c0007 + i*32,0x200c0003 + i*32)
-        if fault == 'bad_context': self.word(0xe000edc0,0)
-        if fault == 'wrong_identity': u.mem_write(0x0ca0d216,b'4.100.138')
+        if self.hurt('bad_context'): self.word(0xe000edc0,0)
+        if self.hurt('wrong_identity'): u.mem_write(0x0ca0d216,b'4.100.138')
+        # An enabled region over the whole 1c... alias overrides the privileged
+        # default Code map there, so every image falls back to Kmem + a lease.
+        if self.hurt('alias_blocked'): self.regions[2] = (0x1c000006,0x1cffffe3)
+        if self.hurt('cache_disabled'): self.word(0x07ffa000,0)
+    def hurt(self,name): return name in self.faults
     def word(self,a,v=None):
         if v is not None: self.uc.mem_write(a,struct.pack('<I',v & 0xffffffff))
         return struct.unpack('<I',self.uc.mem_read(a,4))[0]
@@ -158,7 +166,7 @@ class Machine:
         # this firmware panics on the failure path rather than returning NULL.
         assert size <= self.heap_largest(heap),('unchecked allocation',hex(heap),size)
         self.alloc_calls += 1
-        if self.fault=='nomem' or self.fault==f'alloc_{self.alloc_calls}': return 0
+        if self.hurt('nomem') or self.hurt(f'alloc_{self.alloc_calls}'): return 0
         if heap==0x2010e9e0:
             p=(self.next_alloc+align-1)&~(align-1); self.next_alloc=p+size+16
             assert self.next_alloc < self.stack_low-32, (hex(p),size)
@@ -167,7 +175,7 @@ class Machine:
         self.allocations[p]=size
         live_kernel=sum(n for p,n in self.allocations.items() if p < 0x30000000 and p not in self.frees)
         self.peak_kernel=max(self.peak_kernel,live_kernel)
-        if self.fault=='kernel_budget': assert live_kernel <= 105*1024
+        if self.hurt('kernel_budget'): assert live_kernel <= 105*1024
         self.uc.mem_write(p,b'\xcc'*size)
         return p
     def free(self):
@@ -185,11 +193,11 @@ class Machine:
             data='installer'
         elif path in ('/data/canopus/stage2.bin','/data/canopus/supervisor.elf'):
             name='stage2' if path.endswith('stage2.bin') else 'supervisor'
-            if self.fault=='missing_stage2' and name=='stage2':return -1
+            if self.hurt('missing_stage2') and name=='stage2':return -1
             data=(RES/f'canopus_{name}-{TARGET}.bin').read_bytes()
-            if self.fault=='bad_supervisor' and name=='supervisor':data=data[:-1]+bytes([data[-1]^1])
-            if self.fault=='truncated_stage2' and name=='stage2':data=data[:-1]
-            if self.fault=='extra_stage2' and name=='stage2':data+=b'\x00'
+            if self.hurt('bad_supervisor') and name=='supervisor':data=data[:-1]+bytes([data[-1]^1])
+            if self.hurt('truncated_stage2') and name=='stage2':data=data[:-1]
+            if self.hurt('extra_stage2') and name=='stage2':data+=b'\x00'
         else:
             assert path.startswith('/data/canopus/'),path
             if self.reg(1)&4:data=bytearray()
@@ -249,7 +257,7 @@ class Machine:
         assert path in ('/dev/canopus','/canopus/install') and self.reg(2)==0
         fops=self.reg(1); self.register_calls+=1
         for offset in (0,4,8,12):assert self.word(fops+offset)&1
-        if self.fault=='register_fail':return -5
+        if self.hurt('register_fail'):return -5
         if path=='/dev/canopus': self.fops=fops;self.registered=True
         else:self.installer_fops=fops
         return 0
@@ -261,7 +269,7 @@ class Machine:
             b,l=self.regions[region]
             if address==0xe000eda0 and value&1:
                 self.mpu_write_attempts+=1
-                if self.fault=='mpu_write_rejected':value=0
+                if self.hurt('mpu_write_rejected'):value=0
             self.regions[region]=(value,l) if address==0xe000ed9c else (b,value)
     def mpu_read(self,u,access,address,size,value,data):
         b,l=self.regions[self.word(0xe000ed98)]
@@ -339,7 +347,10 @@ class BootstrapTests(unittest.TestCase):
             self.assertTrue(m.registered)
             self.assertEqual(m.register_calls,2)
             self.assertIsNotNone(m.installer_fops)
-            self.assertEqual(m.word(0x200f5190),0x2f) # stage2 slot4 released, Supervisor slot5 resident
+            # No lease at all: every image runs from Umem through the 1c...
+            # alias, which the privileged default Code map already covers.
+            self.assertEqual(m.word(0x200f5190),0x0f)
+            self.assertEqual(m.peak_kernel,0,'the bootstrap drew on Kmem')
             self.assertEqual(sum(p not in m.frees for p in m.allocations),1)
             buffer=0x200d0000
             m.uc.reg_write(UC_ARM_REG_R1,buffer);m.uc.reg_write(UC_ARM_REG_R2,384)
@@ -380,18 +391,35 @@ class BootstrapTests(unittest.TestCase):
         self.assertFalse(m.files)
 
     def test_failures_return_and_release_temporary_storage(self):
-        for fault,expected in [('nomem',-303),('missing_stage2',-304),('occupied',-305),
-                               ('overlap',-305),('hardware_occupied',-305),('mpu_write_rejected',-305),
+        # 'alias_blocked' puts an enabled MPU region over the whole 1c... view,
+        # which is the only way to reach the Kmem + lease fallback; the MPU
+        # rejections are only fatal on that path.
+        for fault,expected in [('nomem',-303),('missing_stage2',-304),
+                               ('alias_blocked,occupied',-305),
+                               ('alias_blocked,overlap',-305),
+                               ('alias_blocked,hardware_occupied',-305),
+                               ('alias_blocked,mpu_write_rejected',-305),
+                               ('cache_disabled',-307),
                                ('bad_context',-302),('truncated_stage2',-304),('extra_stage2',-304),
-                               ('alloc_2',-311),('alloc_3',-312),('alloc_4',-312),('alloc_5',-403),
+                               ('alloc_2',-311),('alloc_3',-312),('alloc_4',-312),
+                               ('alias_blocked,alloc_7',-403),
                                ('bad_supervisor',-313),('wrong_identity',-201),('register_fail',-73733)]:
             with self.subTest(fault=fault):
                 m=Machine(fault=fault); self.assertEqual(m.boot(),expected)
-                if fault not in ('wrong_identity','register_fail'):
+                if 'wrong_identity' not in fault and 'register_fail' not in fault:
                     self.assertEqual(set(m.allocations),set(m.frees))
                 else:
                     self.assertEqual(sum(p not in m.frees for p in m.allocations),1)
                 self.assertFalse(m.registered)
+
+    def test_kmem_fallback_still_boots_behind_an_mpu_lease(self):
+        # With the alias unavailable the bootstrap must still work the way it
+        # did before it moved to Umem, leases and all.
+        m=Machine(fault='alias_blocked')
+        self.assertEqual(m.boot(),0)
+        self.assertTrue(m.registered)
+        self.assertEqual(m.word(0x200f5190),0x2f) # stage2 slot4 released, Supervisor slot5 resident
+        self.assertGreater(m.peak_kernel,64*1024)
     def test_starved_kernel_heap_is_declined_before_the_allocator_panics(self):
         # A 4.100.139 device reported Total:329940 free:56136 largest:51056 for
         # Kmem while restoring an enabled module; mm_malloc 0x0c35056c ends its
@@ -400,12 +428,17 @@ class BootstrapTests(unittest.TestCase):
         # Every allocation must therefore be declined from mm_mallinfo first.
         # `allocate` asserts that nothing oversized ever reaches mm_memalign.
         m=Machine(); m.kernel_largest=51056
+        self.assertEqual(m.boot(),0,'a starved Kmem must not stop a Umem bootstrap')
+        self.assertTrue(m.registered)
+        self.assertEqual(m.peak_kernel,0)
+        self.assertTrue(any(p>=0x3c000000 for p in m.allocations))
+        # Only when the alias is unavailable does that chunk matter, and then
+        # the gate has to decline instead of letting the request reach
+        # mm_malloc: the Supervisor image is far larger than 51056 bytes.
+        m=Machine(fault='alias_blocked'); m.kernel_largest=51056
         self.assertEqual(m.boot(),-403) # CANOPUS_ELF_LOAD_NOMEM from stage2
         self.assertEqual(set(m.allocations),set(m.frees))
         self.assertFalse(m.registered)
-        # Umem stays the domain for the loader's input and bookkeeping, so a
-        # starved Kmem must not have stopped those from being served.
-        self.assertTrue(any(p>=0x3c000000 for p in m.allocations))
 
     def test_real_nsh_exec_and_nonnegative_result_normalization(self):
         m=Machine(fault='kernel_budget')
@@ -438,14 +471,18 @@ class BootstrapTests(unittest.TestCase):
         # boot register image rather than an all-zero region model.
         m.regions[7]=(0x2015cee7,0x2015cee3);m.word(0xe000ed98,7)
         self.assertEqual(m.boot(),0)
-        native=m.regions[5];base=native[0]&~31;size=(native[1]|31)-base+1
-        # Configure an independent region using the firmware's own 5-argument
-        # function, and compare the resulting bits to b11_map_exec.
-        m.uc.reg_write(UC_ARM_REG_R1,base);m.uc.reg_write(UC_ARM_REG_R2,size)
-        m.uc.reg_write(UC_ARM_REG_R3,1);m.word(m.stack_top,1)
-        self.assertEqual(m.call(0x0c91e594,6),0)
-        self.assertEqual(m.regions[6],native)
-        m.regions[6]=(0,0)
+        # The Supervisor now runs in Umem through the 1c... alias, so no
+        # native MPU lease is expected. Verify the old lease comparison on the
+        # explicit fallback path instead.
+        self.assertEqual(m.regions[5],(0,0))
+        m2=Machine(fault='alias_blocked')
+        self.assertEqual(m2.boot(),0)
+        native=m2.regions[5];base=native[0]&~31;size=(native[1]|31)-base+1
+        m2.uc.reg_write(UC_ARM_REG_R1,base);m2.uc.reg_write(UC_ARM_REG_R2,size)
+        m2.uc.reg_write(UC_ARM_REG_R3,1);m2.word(m2.stack_top,1)
+        self.assertEqual(m2.call(0x0c91e594,6),0)
+        self.assertEqual(m2.regions[6],native)
+        m2.regions[6]=(0,0)
         # Execute actual relocated HAL save/restore code. These are called with
         # interrupts masked by firmware power transitions; no call is shipped
         # to the device installer. All eight MPU banks must survive, including
