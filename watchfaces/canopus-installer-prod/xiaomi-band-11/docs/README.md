@@ -19,8 +19,21 @@ CANOPUS_TARGET=xiaomi-band-11-4.100.139 scripts/build_canopus_supervisor.sh
 
 UI 与 Band 9 一致：同样的页面结构、标题、状态区和 Run / Clear Env 按钮。
 分辨率从设备读取。进入页面时恢复 os.execute；不会自动执行 shell 命令或加载模块。
-点击 Run 后同步加载 Supervisor，并通过 /dev/canopus 执行 RESTORE、INSTALL 0/1/2，
+点击 Run 后按步骤显示进度、加载 Supervisor，并通过 /dev/canopus 执行 RESTORE、INSTALL 0/1/2，
 注册 Canopus 管理器及其三个原生页面，再发布应用列表入口。Clear Env 需要两次点击。
+
+2026-09-11：进度区显示步骤序号、当前操作和上一项已完成操作；错误会保留失败步骤。
+每个步骤先更新文字，经过120ms的LuaLVGL定时器回调后才继续执行，让界面循环有机会刷新。
+资源读取/CRC校验/写入回读、MPU与固件核验、加载器准备、图标、注册和清理均有对应文字。
+进行操作时禁用两个按钮，离开页面会删除定时器并取消尚未执行的操作。
+布局仍为原来的标题、状态区、Run / Clear Env，根层仍为一个Lua和五个.bin。
+
+两处保持同步：缓存维护至原生exec返回，以及每条Supervisor命令写入至读取结果，
+其中不插入UI回调；屏幕保持显示当前步骤，原生调用内部没有伪造子步骤或百分比。
+初始os.execute恢复仍在pmain入口同步完成（移到定时器会丢失所需C栈帧），
+界面首次可刷新时已完成这一初始化，随后以进度显示检查安装配置和资源。
+Lua5.4实C帧测试、延迟绘制/忙碌点击/错误停止/页面销毁测试和加载器跨yield的GC测试已通过。
+实际屏幕刷新时序待设备复测；模拟器验证的是事件循环调度和文字更新先于操作。
 
 首次测试先重启。若有旧的 `/data/canopus/registry.bin`，可先双击 Clear Env 再重启，
 避免旧模块的启动意图中断此次安装。只支持准确的 `.139` 版本和 build；其他身份不给 Run。

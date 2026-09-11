@@ -899,6 +899,45 @@ int32_t canopus_supervisor_device_write(struct canopus_supervisor_v1 *sup,
     return -1; /* unknown magic / malformed frame */
 }
 
+/* Public watchfaces use /canopus/install through ordinary Lua io.open.
+ * This endpoint never accepts CPC1, registration pointers, management commands
+ * or a payload-free framework INSTALL. Signed-package verification stays in
+ * the existing platform stage_package implementation. */
+int32_t canopus_supervisor_installer_write(struct canopus_supervisor_v1 *sup,
+                                          const void *buffer, uint32_t count)
+{
+    struct canopus_proto_request_v1 req;
+    struct canopus_proto_response_v1 resp;
+    uint32_t offset = 0u, opcode = 0u;
+    uint8_t diagnostic[4];
+    int encoded;
+    if (sup == 0 || buffer == 0) return -1;
+    sup->installer_response_len = 0u;
+    if (canopus_transport_v2_decode_request(buffer, count, &req, &offset) != 0 ||
+        req.command != CANOPUS_CMD_INSTALL || req.flags != 0u ||
+        !sup_stage_token_ok((const uint8_t *)buffer + offset, req.payload_size)) {
+        return -1;
+    }
+    if (canopus_supervisor_handle_v2_request(sup, &req,
+            (const uint8_t *)buffer + offset, &resp, &opcode) != 0) return -1;
+    put_wire_u32(diagnostic, 0u, sup->error_code);
+    resp.payload_size = sizeof(diagnostic);
+    encoded = canopus_transport_v2_encode_response(&resp, opcode, diagnostic,
+        sizeof(diagnostic), sup->installer_response, sizeof(sup->installer_response));
+    if (encoded != (int)sizeof(sup->installer_response)) return -1;
+    sup->installer_response_len = (uint32_t)encoded;
+    return (int32_t)count;
+}
+
+int32_t canopus_supervisor_installer_read(struct canopus_supervisor_v1 *sup,
+                                         void *buffer, uint32_t count)
+{
+    if (sup == 0 || buffer == 0 || sup->installer_response_len == 0u ||
+        count < sup->installer_response_len) return -1;
+    canopus_memcpy(buffer, sup->installer_response, sup->installer_response_len);
+    return (int32_t)sup->installer_response_len;
+}
+
 /* Host convenience: record a newly installed module into a slot.
  * `module_id` becomes the stable identity for v2 per-module commands. */
 int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,

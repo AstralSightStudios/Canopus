@@ -1568,3 +1568,5 @@ mod tests {
         assert_eq!(THIRD_PARTY_PAYLOAD_CAPACITY, 8192);
     }
 }
+
+pub const APP_PACKAGE_OFFSET: usize = 8;

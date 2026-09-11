@@ -53,6 +53,7 @@ class Band11InstallerTests(unittest.TestCase):
         subprocess.run([str(python), "scripts/tests/band11_pmain_firmware.py"], cwd=ROOT, check=True)
         subprocess.run([str(python), "scripts/tests/band11_firmware_integration.py"], cwd=ROOT, check=True)
         subprocess.run([str(python), "scripts/tests/band11_native_ui_firmware.py"], cwd=ROOT, check=True)
+        subprocess.run([str(python), "scripts/tests/band11_bluetooth_firmware.py"], cwd=ROOT, check=True)
 
     def test_recovered_records_are_not_callable(self):
         directory = ROOT / "targets" / builder.TARGET

@@ -5,8 +5,9 @@
 --   NSH mw/exec stage-1 -> stage-2 -> Supervisor constructor
 --   -> apply restored boot intents -> INSTALL 0 -> 1 -> 2.
 -- Loading happens only after the explicit Run click. After the Supervisor is
--- available, the fixed registration sequence is issued directly from that click;
--- this page has no external scheduling dependency.
+-- available, registration runs on the same UI thread through LuaLVGL timers.
+-- Each checkpoint paints before the next operation. The native cache/exec
+-- sequence remains synchronous and has no yield inside it.
 
 local recovery = (function()
 -- Embedded by build_band11_installer.py. Firmware addresses come from the
@@ -185,20 +186,32 @@ local function crc32(data)
     return (~crc) & 0xffffffff
 end
 local function retain(value) return function() return value end end
-function M.load(profile, stage1_path, stage2_path, supervisor_path, run, read_all, write_all)
+function M.load(profile, stage1_path, stage2_path, supervisor_path, run, read_all, write_all, progress)
+    progress = progress or function() end
     local function check(ok, message) if not ok then error(message, 0) end end
     local function work()
         check(type(debug.upvalueid) == "function", "debug.upvalueid unavailable")
-        local stage1, stage2, supervisor = read_all(stage1_path), read_all(stage2_path), read_all(supervisor_path)
+        progress("读取第一阶段加载器")
+        local stage1 = read_all(stage1_path)
+        progress("读取第二阶段加载器")
+        local stage2 = read_all(stage2_path)
+        progress("读取 Supervisor")
+        local supervisor = read_all(supervisor_path)
         for _, item in ipairs({{stage1,"stage1"},{stage2,"stage2"},{supervisor,"supervisor"}}) do
+            progress("校验资源：" .. item[2])
             check(type(item[1]) == "string" and #item[1] == profile[item[2] .. "_size"]
                 and crc32(item[1]) == profile[item[2] .. "_crc"], item[2] .. " resource mismatch")
         end
+        progress("准备安装目录")
         run("mkdir /data/canopus")
-        check(write_all("/data/canopus/stage2.bin", stage2)
-            and read_all("/data/canopus/stage2.bin") == stage2, "stage2 write verification failed")
-        check(write_all("/data/canopus/supervisor.elf", supervisor)
-            and read_all("/data/canopus/supervisor.elf") == supervisor, "Supervisor write verification failed")
+        progress("写入第二阶段加载器")
+        check(write_all("/data/canopus/stage2.bin", stage2), "stage2 write failed")
+        progress("回读校验第二阶段加载器")
+        check(read_all("/data/canopus/stage2.bin") == stage2, "stage2 write verification failed")
+        progress("写入 Supervisor")
+        check(write_all("/data/canopus/supervisor.elf", supervisor), "Supervisor write failed")
+        progress("回读校验 Supervisor")
+        check(read_all("/data/canopus/supervisor.elf") == supervisor, "Supervisor write verification failed")
         local function read_word(address)
             check(type(address) == "number" and address % 4 == 0, "unaligned memory read")
             local path = "/data/canopus/bootstrap-word.txt"
@@ -212,12 +225,15 @@ function M.load(profile, stage1_path, stage2_path, supervisor_path, run, read_al
         local function write_word(address, value)
             check(run(string.format("mw %08x=%08x", address, value)), "memory write failed")
         end
+        progress("检查 MPU 权限和可用区域")
         check(read_word(0xe000ed94) == 5, "unexpected MPU control; reboot with stock firmware")
         check(read_word(0xe000edc0) == 0x00447722, "unexpected MPU memory attributes")
         check((read_word(0x200f5190) & 0x7f) == 0x0f, "MPU leases already occupied; reboot")
-        for _, fingerprint in ipairs(profile.fingerprints) do
+        for index, fingerprint in ipairs(profile.fingerprints) do
+            progress(string.format("核对固件指令 %d/%d", index, #profile.fingerprints))
             check(read_word(fingerprint[1]) == fingerprint[2], "firmware instruction fingerprint mismatch")
         end
+        progress("核对运行内存范围")
         local heap = read_word(0x200b2590)
         check(heap == 0x3c356b40, "unexpected Umem heap descriptor")
         local lo, hi = read_word(heap + 0x1c), read_word(heap + 0x20)
@@ -227,6 +243,7 @@ function M.load(profile, stage1_path, stage2_path, supervisor_path, run, read_al
         end
         -- A fresh, non-interned long string. The only patched bytes are the
         -- result word and stage1's mailbox parameter, both in its own payload.
+        progress("准备加载器内存与参数")
         retained_owner = retain(string.pack("<I4", 0x7ffffffe) .. string.rep("\0", 28) .. stage1 .. string.rep("\0", 32))
         local upvalue = pointer(debug.upvalueid(retained_owner, 1))
         check(owned_range(upvalue, 32), "upvalue is outside Umem")
@@ -245,6 +262,7 @@ function M.load(profile, stage1_path, stage2_path, supervisor_path, run, read_al
         -- MPU CTRL=5 preserves the privileged default Code map at 1c... .
         -- No RNR/RBAR/RLAR writes occur from Lua. Native leases are atomic.
         local executable = code - 0x20000000
+        progress("同步缓存并启动原生加载器\n此步骤完成前请保持页面打开")
         check((read_word(0x07ffa000) & 1) == 1 and (read_word(0x07ffc000) & 1) == 1, "unexpected BES cache state")
         -- Fixed leaf entries in this exact firmware establish their own
         -- arguments: D clean-all; then the already-enabled I cache's
@@ -257,9 +275,12 @@ function M.load(profile, stage1_path, stage2_path, supervisor_path, run, read_al
         -- Run command status is not the native return code; read the owned
         -- mailbox after exec, even if NSH returns a command error.
         local command_ok = run(string.format("exec 0x%08x > /data/canopus/bootstrap-exec.txt", executable | 1))
+        progress("读取原生加载结果")
         local result = read_word(mailbox)
         if result >= 0x80000000 then result = result - 0x100000000 end
+        progress("保存加载诊断结果")
         write_all("/data/canopus/bootstrap-result.txt", string.format("target=%s\nresult=%d\nexec_ok=%s\n", profile.target_id, result, tostring(command_ok)))
+        progress("确认原生加载结果")
         check(result == 0, "native loader rc=" .. result)
         check(command_ok, "NSH exec did not complete successfully")
         return true
@@ -269,6 +290,70 @@ function M.load(profile, stage1_path, stage2_path, supervisor_path, run, read_al
     return ok and result == true, ok and nil or tostring(result)
 end
 M.crc32 = crc32
+-- Called only after cancelling a suspended UI task; synchronous exec cannot
+-- overlap a Lua UI callback, so no native call can still use this owner.
+function M.release() retained_owner = nil end
+return M
+
+end)()
+local progress = (function()
+-- One checkpoint per UI timer tick. Never busy-wait or call timer:ready():
+-- the event loop must get a chance to paint before the next operation.
+local M = {}
+function M.new(lvgl, changed, finished)
+    local timer, task
+    local active = false
+    local function stop()
+        active = false
+        if timer then
+            local old = timer
+            timer = nil
+            old:delete()
+        end
+        task = nil
+    end
+    local function advance()
+        if not active then return end
+        local ok, result = coroutine.resume(task)
+        if not ok then
+            stop()
+            finished(false, tostring(result))
+        elseif coroutine.status(task) == "dead" then
+            stop()
+            finished(true, result)
+        else
+            changed(result)
+        end
+    end
+    return {
+        start = function(work)
+            if active then return false, "An operation is already running" end
+            if type(lvgl.Timer) ~= "function" then return false, "LuaLVGL Timer unavailable" end
+            task = coroutine.create(work)
+            local ok, created = pcall(lvgl.Timer, {
+                period = 120, repeat_count = -1, paused = true,
+                cb = function()
+                    local tick_ok, message = pcall(advance)
+                    if not tick_ok then stop(); finished(false, tostring(message)) end
+                end,
+            })
+            if not ok or not created then task = nil; return false, tostring(created) end
+            timer, active = created, true
+            local started, message = pcall(function()
+                advance() -- first resume only publishes the first checkpoint
+                if timer then timer:resume() end
+            end)
+            if not started then stop(); return false, tostring(message) end
+            return true
+        end,
+        checkpoint = function(text) coroutine.yield(text) end,
+        cancel = function()
+            local old = task
+            stop()
+            if old and coroutine.status(old) == "suspended" then coroutine.close(old) end
+        end,
+    }
+end
 return M
 
 end)()
@@ -308,10 +393,15 @@ local stage1_resource
 local stage2_resource
 local supervisor_resource
 local status
-local run_phase = 1
-local run_active = false
 local run_attempted = false
 local clear_armed = false
+local runner, operation, current_step
+local progress_count = 0
+local run_button, clear_button
+local resources_available = false
+
+local function checkpoint(text) runner.checkpoint(text) end
+local function check(ok, message) if not ok then error(message, 0) end end
 
 local function run(command)
     print("[canopus-installer-prod:band11] exec: " .. command)
@@ -399,14 +489,16 @@ end
 local function resources_ready()
     if type(profile) ~= "table" then return false end
     for _, item in ipairs({
-        { stage1_resource, "r" },
-        { stage2_resource, "rb" },
-        { supervisor_resource, "rb" },
+        { stage1_resource, "r", "检查第一阶段加载资源" },
+        { stage2_resource, "rb", "检查第二阶段加载资源" },
+        { supervisor_resource, "rb", "检查 Supervisor 资源" },
     }) do
+        checkpoint(item[3])
         local file = io.open(item[1], item[2])
         if not file then return false end
         file:close()
     end
+    checkpoint("检查 Supervisor 格式与大小")
     return verify_module_file(supervisor_resource)
 end
 
@@ -419,10 +511,11 @@ end
 
 local function load_supervisor()
     return native_loader.load(profile, stage1_resource, stage2_resource,
-        supervisor_resource, run, read_all, write_all)
+        supervisor_resource, run, read_all, write_all, checkpoint)
 end
 
 local function stage_manager_icon()
+    checkpoint("读取并校验管理器图标")
     local content = read_all(MANAGER_ICON_RESOURCE, "rb")
     if type(content) ~= "string" or #content < 13
         or content:byte(1) ~= 0x19 then
@@ -433,11 +526,14 @@ local function stage_manager_icon()
     if width < 1 or height < 1 or #content ~= 12 + width * height * 4 then
         return false, "manager_icon.bin size mismatch"
     end
+    checkpoint("写入管理器图标")
     local output = io.open(MANAGER_ICON_PATH, "wb")
     if not output then
+        checkpoint("创建管理器资源目录")
         if not run("mkdir /data/canopus") then
             return false, "cannot create /data/canopus"
         end
+        checkpoint("重新写入管理器图标")
         output = io.open(MANAGER_ICON_PATH, "wb")
     end
     if not output then return false, "cannot stage Manager icon" end
@@ -446,9 +542,12 @@ local function stage_manager_icon()
     if not write_ok or write_result == nil or not close_ok or close_result == nil then
         return false, "Manager icon write failed"
     end
+    checkpoint("回读校验管理器图标")
     if read_all(MANAGER_ICON_PATH, "rb") ~= content then
         return false, "Manager icon verification failed"
     end
+    checkpoint("准备外部模块安装目录")
+    run("mkdir /data/canopus/inbox")
     return true
 end
 
@@ -510,9 +609,12 @@ local function write_command(command, arg0)
     return true
 end
 
-local function execute_step(command, arg0)
+local function execute_step(command, arg0, description)
+    checkpoint(description)
     local ok, message = write_command(command, arg0)
     if not ok then return false, message end
+    -- Keep request + status read together: /dev/canopus has a shared result
+    -- mailbox, so yielding here would allow another client to replace it.
     local current, status_error = read_status()
     if not current then return false, status_error end
     if current.pending_op ~= command or current.pending_state ~= RESULT_COMPLETED then
@@ -524,39 +626,34 @@ end
 
 local steps = {
     { command = CMD_RESTORE_AFTER_BOOT, arg0 = 0,
-      progress = "Loading enabled modules..." },
+      progress = "恢复已启用模块" },
     { command = CMD_INSTALL, arg0 = 0,
-      progress = "Registering Manager..." },
+      progress = "注册管理器" },
     { command = CMD_INSTALL, arg0 = 1,
-      progress = "Registering module apps..." },
+      progress = "注册模块应用" },
     { command = CMD_INSTALL, arg0 = 2,
-      progress = "Publishing Launcher entries..." },
+      progress = "发布应用列表入口" },
 }
 
 local function set_status(text, color)
     status:set { text = tostring(text), text_color = color or '#bfd9ff' }
 end
 
-local function finish_run(success, message)
-    run_active = false
-    set_status(message, success and '#8ff0a4' or '#ff9a9a')
+local function update_buttons()
+    for _, button in ipairs({run_button, clear_button}) do
+        if operation or not resources_available or (button == run_button and run_attempted) then
+            button:clear_flag(lvgl.FLAG.CLICKABLE)
+        else
+            button:add_flag(lvgl.FLAG.CLICKABLE)
+        end
+    end
 end
 
 local function run_all_steps()
-    run_active = true
-    for index, step in ipairs(steps) do
-        run_phase = index
-        set_status(step.progress)
-        local ok, message = execute_step(step.command, step.arg0)
-        if not ok then
-            finish_run(false, "Run failed: " .. tostring(message)
-                .. "\nReboot before retrying.")
-            return false
-        end
+    for _, step in ipairs(steps) do
+        check(execute_step(step.command, step.arg0, step.progress))
     end
-    run_phase = #steps + 1
-    finish_run(true, "Run completed")
-    return true
+    return "Run completed\n安装完成，请从应用列表打开管理器"
 end
 
 local rootbase = lvgl.Object(nil, {
@@ -601,7 +698,7 @@ if lvgl.FLAG.EVENT_BUBBLE then title:add_flag(lvgl.FLAG.EVENT_BUBBLE) end
 
 status = lvgl.Label(root, {
     text_font = lvgl.Font("MiSans-Regular", 14),
-    text = "Loading installer...",
+    text = "执行接口已就绪\n正在准备安装器...",
     text_color = '#bfd9ff',
     bg_color = 0,
     bg_opa = 0,
@@ -611,11 +708,51 @@ status = lvgl.Label(root, {
 })
 if lvgl.FLAG.EVENT_BUBBLE then status:add_flag(lvgl.FLAG.EVENT_BUBBLE) end
 
-local resources_available = recovered and control_open and select_target() and resources_ready()
-if not resources_available then
+if not recovered or not control_open then
     set_status(recovery_error and ("Startup failed: " .. recovery_error)
         or "Installer resources unavailable", '#ff9a9a')
     return
+end
+
+runner = progress.new(lvgl, function(text)
+    local previous = current_step
+    current_step = tostring(text)
+    progress_count = progress_count + 1
+    set_status(string.format("步骤 %d\n%s", progress_count, current_step)
+        .. (previous and ("\n\n已完成：" .. previous) or ""))
+end, function(success, message)
+    local completed = operation
+    operation = nil
+    if completed == "startup" then resources_available = success end
+    if success then
+        set_status(message, '#8ff0a4')
+    else
+        set_status("失败步骤：" .. tostring(current_step or "启动进度显示")
+            .. "\n" .. tostring(message)
+            .. (completed == "run" and "\n请重启后再试" or ""), '#ff9a9a')
+    end
+    update_buttons()
+end)
+
+local function start_operation(name, work)
+    if operation then return end
+    operation, current_step, progress_count = name, nil, 0
+    update_buttons()
+    local ok, message = runner.start(work)
+    if not ok then
+        operation = nil
+        set_status("无法启动进度显示：" .. tostring(message), '#ff9a9a')
+        update_buttons()
+    end
+end
+
+-- Timers must not retain a task after its owning page is destroyed.
+if lvgl.EVENT.DELETE then
+    rootbase:onevent(lvgl.EVENT.DELETE, function()
+        runner.cancel()
+        native_loader.release()
+        operation = nil
+    end)
 end
 
 local function make_button(text, color, on_clicked)
@@ -641,8 +778,8 @@ local function make_button(text, color, on_clicked)
     return button
 end
 
-local run_button
 run_button = make_button("Run", '#14508a', function()
+    if operation or not resources_available then return end
     clear_armed = false
     if profile.device_status == "DEVICE_REJECTED" then
         set_status("LOAD blocked: stage-0 candidate rejected\n"
@@ -654,48 +791,40 @@ run_button = make_button("Run", '#14508a', function()
         return
     end
     run_attempted = true
-    run_button:clear_flag(lvgl.FLAG.CLICKABLE)
-    local valid, validation_error = verify_module_file(supervisor_resource)
-    if not valid then
-        set_status("LOAD failed: " .. tostring(validation_error), '#ff9a9a')
-        return
-    end
-    if not supervisor_present() then
-        set_status("Loading supervisor...")
-        local loaded, load_error = load_supervisor()
-        if not loaded or not supervisor_present() then
-            set_status("LOAD failed: " .. tostring(load_error or "no /dev/canopus")
-                .. "\nReboot before retrying.", '#ff9a9a')
-            return
+    start_operation("run", function()
+        checkpoint("复核 Supervisor 文件")
+        check(verify_module_file(supervisor_resource))
+        checkpoint("检查运行环境是否已加载")
+        if not supervisor_present() then
+            check(load_supervisor())
+            checkpoint("确认运行环境已就绪")
+            check(supervisor_present(), "no /dev/canopus")
         end
-    end
-    local icon_ok, icon_error = stage_manager_icon()
-    if not icon_ok then
-        set_status("Run failed: " .. tostring(icon_error), '#ff9a9a')
-        return
-    end
-    run_phase = 1
-    set_status("Supervisor loaded; installing...")
-    run_all_steps()
+        check(stage_manager_icon())
+        return run_all_steps()
+    end)
 end)
 
-make_button("Clear Env", '#8a1f14', function()
-    if run_active then
-        clear_armed = false
-        set_status("Run is in progress; reboot before clearing")
-        return
-    end
+clear_button = make_button("Clear Env", '#8a1f14', function()
+    if operation or not resources_available then return end
     if not clear_armed then
         clear_armed = true
         set_status("Click again to clear", '#ffd27a')
         return
     end
     clear_armed = false
-    if run("rm -rf /data/canopus") then
-        set_status("Environment cleared; reboot before Run", '#8ff0a4')
-    else
-        set_status("Clear Env failed", '#ff9a9a')
-    end
+    start_operation("clear", function()
+        checkpoint("清理安装环境")
+        check(run("rm -rf /data/canopus"), "Clear Env failed")
+        return "Environment cleared; reboot before Run"
+    end)
 end)
 
-set_status("Ready")
+start_operation("startup", function()
+    -- os.execute recovery must finish synchronously while initial pmain is
+    -- live. Everything below may yield after the entry script returns.
+    checkpoint("读取设备安装配置")
+    check(select_target(), "Installer profile unavailable")
+    check(resources_ready(), "Installer resources unavailable")
+    return "Ready\n启动校验完成，点击 Run 开始"
+end)

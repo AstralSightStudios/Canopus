@@ -9,9 +9,9 @@
   "provenance": {
     "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
     "evidence_ids": [
-      "EVID-NATIVE-4139-003"
+      "EVID-BLUETOOTH-4139-006"
     ],
-    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+    "source": "Exact .139 IDA callsite/Thumb audit; typed semantic adapter in target-private. See evidence for scope."
   },
   "entry_address": "0xc3840d8",
   "callable_address": "0xc3840d9",
@@ -19,12 +19,12 @@
   "status": "STATIC_RECOVERED",
   "policy": "restricted",
   "approval_state": "PENDING",
-  "notes": "Resume wrapper 0xc696c18 removes root flag 1; bar constructor removes flag 16 (scrollable). Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval.",
+  "notes": "Private Band 11 runtime binding. ABI is adapted per target; public approval remains PENDING. Radio/physical display validation requires a device. See EVID-BLUETOOTH-4139-006.",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-NATIVE-4139-003"
+      "EVID-BLUETOOTH-4139-006"
     ]
   }
 }

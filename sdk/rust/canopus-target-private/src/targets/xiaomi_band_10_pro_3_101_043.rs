@@ -1675,3 +1675,5 @@ mod tests {
         );
     }
 }
+
+pub const APP_PACKAGE_OFFSET: usize = 8;

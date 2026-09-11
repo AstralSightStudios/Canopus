@@ -21,6 +21,21 @@ class FirmwareIntegrationTests(unittest.TestCase):
     def hook(self, m, address, fn):
         return m.uc.hook_add(UC_HOOK_CODE, m.firmware_call, fn, address, address)
 
+    def test_real_lua_io_policy_allows_public_installer_path(self):
+        m = Machine()
+        path = 0x200d4000
+        # Model successful canonicalization. The firmware's actual prefix
+        # matcher, deny table, strlen and strncmp execute unchanged.
+        def canonicalize():
+            data = m.string(m.reg(0)).encode() + b'\0'
+            m.uc.mem_write(m.reg(1), data)
+            return m.reg(1)
+        self.hook(m, 0x0c352af0, canonicalize)
+        for name, denied in [('/canopus/install', 0), ('/data/canopus/inbox/module.ko', 0),
+                             ('/dev/canopus', 1), ('/dev', 1), ('/proc/x', 1), ('/sys/x', 1)]:
+            m.uc.mem_write(path, name.encode() + b'\0')
+            self.assertEqual(m.call(0x0c6cfb34, path), denied, name)
+
     def test_system_uses_4096_byte_command_stack_and_waits(self):
         m = Machine()
         command = 0x200d4000

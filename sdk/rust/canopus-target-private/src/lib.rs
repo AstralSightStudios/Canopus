@@ -1,8 +1,8 @@
 //! Target-private full-trust ABI facade.
 //!
-//! The two Band 10 Pro backends are approved build backends. The Band 9 Pro,
-//! Band 11, and Band 9 backends deliberately select a compile-only static
-//! candidate facade until their exact ABI/LVGL/loader gates are approved.
+//! Band 10 Pro and Band 11 select exact firmware backends. Band 9 Pro and
+//! Band 9 retain compile-only candidate facades. Private static recovery and
+//! physical device validation are recorded separately in each target pack.
 
 #![no_std]
 #![deny(unsafe_op_in_unsafe_fn)]
@@ -66,9 +66,12 @@ mod selected;
 #[path = "targets/xiaomi_band_10_pro_3_101_043.rs"]
 mod selected;
 
+#[cfg(feature = "target-xiaomi-band-11-4-100-139")]
+#[path = "targets/xiaomi_band_11_4_100_139.rs"]
+mod selected;
+
 #[cfg(any(
     feature = "target-xiaomi-band-9-pro-3-1-175",
-    feature = "target-xiaomi-band-11-4-100-139",
     feature = "target-xiaomi-band-9-3-1-32"
 ))]
 #[path = "targets/static_candidate.rs"]

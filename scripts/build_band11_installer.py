@@ -50,6 +50,7 @@ def render(target_id=TARGET):
         "-- @CANOPUS_RECOVERY@": "local recovery = (function()\n" + (FAMILY / "src/recover_execute.lua").read_text() + "\nend)()",
         "-- @CANOPUS_PROFILE@": lua_profile,
         "-- @CANOPUS_NATIVE_LOADER@": "local native_loader = (function()\n" + (FAMILY / "src/native_loader.lua").read_text() + "\nend)()",
+        "-- @CANOPUS_PROGRESS@": "local progress = (function()\n" + (FAMILY / "src/progress.lua").read_text() + "\nend)()",
     }
     for marker, replacement in replacements.items():
         if source.count(marker) != 1:

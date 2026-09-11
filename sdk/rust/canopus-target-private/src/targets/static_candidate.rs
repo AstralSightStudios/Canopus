@@ -753,3 +753,5 @@ mod tests {
         assert_eq!(unsafe { bt_adapter_get_instance() }, core::ptr::null_mut());
     }
 }
+
+pub const APP_PACKAGE_OFFSET: usize = 8;

@@ -31,6 +31,10 @@
 #include "sha256.h"
 
 #define CANOPUS_SUP_DEVICE_PATH "/dev/canopus"
+/* A separate pseudo-filesystem inode, not a symlink into /dev (Lua .139
+ * resolves paths before checking the /dev, /proc and /sys deny prefixes).
+ * Keep this outside /data, which is a mounted filesystem. */
+#define CANOPUS_SUP_INSTALLER_PATH "/canopus/install"
 #define CANOPUS_SUP_INBOX_ROOT "/data/canopus/inbox/"
 #define CANOPUS_SUP_RECEIPT_SUFFIX ".cmi"
 #define CANOPUS_SUP_MODULE_SUFFIX ".ko"
@@ -61,6 +65,7 @@ static struct sup_loaded_module s_loaded_modules[CANOPUS_SUP_MODULE_SLOTS];
  * total); a compile-time size assertion locks it to the 12-word table the
  * driver expects. */
 static file_operations s_fops;
+static file_operations s_installer_fops;
 
 CANOPUS_STATIC_ASSERT(sizeof(file_operations) == 0x30u,
                       "file_operations must match the 12-word stock table");
@@ -142,6 +147,18 @@ static int32_t sup_control_write(void *filep, const void *buffer, uint32_t count
     return canopus_supervisor_device_write(sup, buffer, count);
 }
 
+static int32_t sup_installer_read(void *filep, void *buffer, uint32_t count)
+{
+    (void)filep;
+    return canopus_supervisor_installer_read(canopus_supervisor_get(), buffer, count);
+}
+
+static int32_t sup_installer_write(void *filep, const void *buffer, uint32_t count)
+{
+    (void)filep;
+    return canopus_supervisor_installer_write(canopus_supervisor_get(), buffer, count);
+}
+
 static int sup_register_device(void *cookie)
 {
     typedef int (*open_fn)(const char *, int, ...);
@@ -161,15 +178,22 @@ static int sup_register_device(void *cookie)
     s_fops.close = (void *)(uintptr_t)&sup_control_close;
     s_fops.read = (void *)(uintptr_t)&sup_control_read;
     s_fops.write = (void *)(uintptr_t)&sup_control_write;
+    s_installer_fops.open = (void *)(uintptr_t)&sup_control_open;
+    s_installer_fops.close = (void *)(uintptr_t)&sup_control_close;
+    s_installer_fops.read = (void *)(uintptr_t)&sup_installer_read;
+    s_installer_fops.write = (void *)(uintptr_t)&sup_installer_write;
     /* The exact firmware wrapper discards inode_reserve failures and returns
      * the inode-lock release result. Remove a stale same-name inode first so
      * repeated loader attempts cannot be misreported as successful register. */
 #ifndef CANOPUS_SUP_BAND11_BOOTSTRAP
     (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
+    (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_INSTALLER_PATH);
 #endif
 #ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
     /* Never replace a live resident Supervisor's device node. */
     fd = open_file(CANOPUS_SUP_DEVICE_PATH, CANOPUS_SUP_NUTTX_O_RDONLY);
+    if (fd >= 0) { (void)close_file(fd); return -17; }
+    fd = open_file(CANOPUS_SUP_INSTALLER_PATH, CANOPUS_SUP_NUTTX_O_RDONLY);
     if (fd >= 0) { (void)close_file(fd); return -17; }
 #endif
     rc = sup_register_driver_exact(CANOPUS_SUP_DEVICE_PATH,
@@ -189,6 +213,12 @@ static int sup_register_device(void *cookie)
         return -(CANOPUS_SUP_REGISTER_VERIFY_ERRNO_BASE + error);
     }
     (void)close_file(fd);
+    rc = sup_register_driver_exact(CANOPUS_SUP_INSTALLER_PATH,
+                                   (const void *)&s_installer_fops, (void *)0);
+    if (rc != 0) return rc;
+    fd = open_file(CANOPUS_SUP_INSTALLER_PATH, CANOPUS_SUP_NUTTX_O_RDONLY);
+    if (fd < 0) return -(CANOPUS_SUP_REGISTER_VERIFY_ERRNO_BASE + 2);
+    (void)close_file(fd);
     return 0;
 }
 
@@ -198,6 +228,7 @@ static int sup_unregister_device(void *cookie)
 #ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
     return -38; /* resident Supervisor: teardown is reboot, not an unverified ABI */
 #else
+    (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_INSTALLER_PATH);
     return CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
 #endif
 }

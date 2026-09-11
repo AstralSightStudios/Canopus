@@ -44,7 +44,7 @@ class Machine:
         self.next_temp = 0x3c500000
         self.alloc_calls = 0; self.peak_kernel = 0
         self.allocations, self.frees, self.files, self.next_fd = {}, [], {}, 3
-        self.registered = False; self.fops = None; self.disk = {}
+        self.registered = False; self.fops = None; self.installer_fops = None; self.disk = {}
         self.regions = {i:(0,0) for i in range(8)}
         # Synthetic reserved RO/XN region: never claimed or cleared. Actual
         # .139 scheduling uses MSPLIM/PSPLIM, not a proven region-7 stack guard.
@@ -135,6 +135,9 @@ class Machine:
         if path=='/dev/canopus':
             if not self.registered:return -1
             data='device'
+        elif path=='/canopus/install':
+            if self.installer_fops is None:return -1
+            data='installer'
         elif path in ('/data/canopus/stage2.bin','/data/canopus/supervisor.elf'):
             name='stage2' if path.endswith('stage2.bin') else 'supervisor'
             if self.fault=='missing_stage2' and name=='stage2':return -1
@@ -154,6 +157,8 @@ class Machine:
         data,off,_=self.files[fd]
         if data=='device':
             self.uc.reg_write(UC_ARM_REG_R0,0);self.uc.reg_write(UC_ARM_REG_PC,self.word(self.fops+8));return None
+        if data=='installer':
+            self.uc.reg_write(UC_ARM_REG_R0,0);self.uc.reg_write(UC_ARM_REG_PC,self.word(self.installer_fops+8));return None
         block=data[off:off+min(count,173)] # partial reads
         self.files[fd][1]+=len(block)
         self.uc.mem_write(ptr,bytes(block));return len(block)
@@ -161,6 +166,8 @@ class Machine:
         data,off,_=self.files[self.reg(0)]
         if data=='device':
             self.uc.reg_write(UC_ARM_REG_R0,0);self.uc.reg_write(UC_ARM_REG_PC,self.word(self.fops+12));return None
+        if data=='installer':
+            self.uc.reg_write(UC_ARM_REG_R0,0);self.uc.reg_write(UC_ARM_REG_PC,self.word(self.installer_fops+12));return None
         n=min(self.reg(2),173);data[off:off+n]=self.uc.mem_read(self.reg(1),n)
         self.files[self.reg(0)][1]+=n;return n
     def unlink(self):
@@ -193,11 +200,14 @@ class Machine:
         if isinstance(data,bytearray):self.disk[path]=bytes(data)
         return 0
     def register(self):
-        assert self.string(self.reg(0))=='/dev/canopus' and self.reg(2)==0
-        self.fops=self.reg(1); self.register_calls+=1
-        for offset in (0,4,8,12):assert self.word(self.fops+offset)&1
+        path=self.string(self.reg(0))
+        assert path in ('/dev/canopus','/canopus/install') and self.reg(2)==0
+        fops=self.reg(1); self.register_calls+=1
+        for offset in (0,4,8,12):assert self.word(fops+offset)&1
         if self.fault=='register_fail':return -5
-        self.registered=True;return 0
+        if path=='/dev/canopus': self.fops=fops;self.registered=True
+        else:self.installer_fops=fops
+        return 0
     def mpu_write(self,u,access,address,size,value,data):
         if address in (0xe000ed9c,0xe000eda0):
             assert u.reg_read(UC_ARM_REG_PRIMASK)&1,'non-atomic MPU mutation'
@@ -282,7 +292,8 @@ class BootstrapTests(unittest.TestCase):
             m=Machine(code=code)
             self.assertEqual(m.boot(),0)
             self.assertTrue(m.registered)
-            self.assertEqual(m.register_calls,1)
+            self.assertEqual(m.register_calls,2)
+            self.assertIsNotNone(m.installer_fops)
             self.assertEqual(m.word(0x200f5190),0x2f) # stage2 slot4 released, Supervisor slot5 resident
             self.assertEqual(sum(p not in m.frees for p in m.allocations),1)
             buffer=0x200d0000

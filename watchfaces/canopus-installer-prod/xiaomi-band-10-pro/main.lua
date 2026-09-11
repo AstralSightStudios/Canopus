@@ -136,6 +136,7 @@ local function stage_manager_icon()
     if read_all(MANAGER_ICON_PATH, "rb") ~= content then
         return false, "Manager icon verification failed"
     end
+    run("mkdir /data/canopus/inbox")
     return true
 end
 

@@ -4,7 +4,7 @@
  * firmware : 4.100.139 (user-4.100.139-cn-202608280000)
  * sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
  * revision : 2
- * input_digest: 3bb7dcfdc56b3bdc
+ * input_digest: 38befbe59ac81144
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
@@ -234,9 +234,11 @@ static inline int canopus_identity_guard(void)
  * bt_queue_external: restricted - not exported until context/ownership approved
  * bt_queue_free: restricted - not exported until context/ownership approved
  * bt_remove_bond_private: restricted - not exported until context/ownership approved
+ * bt_socket_client_sendrecv: restricted - not exported until context/ownership approved
  * bt_socket_server_receive: restricted - not exported until context/ownership approved
  * bt_timer_add: restricted - not exported until context/ownership approved
  * bt_timer_cancel: restricted - not exported until context/ownership approved
+ * bt_timer_cancel_owned: restricted - not exported until context/ownership approved
  * clock_gettime: restricted - not exported until context/ownership approved
  * close: restricted - not exported until context/ownership approved
  * controller_crash_dump: restricted - not exported until context/ownership approved
@@ -273,6 +275,7 @@ static inline int canopus_identity_guard(void)
  * lv_obj_move_to_index: restricted - not exported until context/ownership approved
  * lv_obj_remove_style_all: restricted - not exported until context/ownership approved
  * lv_obj_set_hidden: restricted - not exported until context/ownership approved
+ * lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
  * lv_obj_set_style_pad_bottom: restricted - not exported until context/ownership approved
  * lv_obj_set_style_pad_top: restricted - not exported until context/ownership approved

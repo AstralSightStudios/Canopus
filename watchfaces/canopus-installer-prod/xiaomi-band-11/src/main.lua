@@ -4,12 +4,14 @@
 --   NSH mw/exec stage-1 -> stage-2 -> Supervisor constructor
 --   -> apply restored boot intents -> INSTALL 0 -> 1 -> 2.
 -- Loading happens only after the explicit Run click. After the Supervisor is
--- available, the fixed registration sequence is issued directly from that click;
--- this page has no external scheduling dependency.
+-- available, registration runs on the same UI thread through LuaLVGL timers.
+-- Each checkpoint paints before the next operation. The native cache/exec
+-- sequence remains synchronous and has no yield inside it.
 
 -- @CANOPUS_RECOVERY@
 -- @CANOPUS_PROFILE@
 -- @CANOPUS_NATIVE_LOADER@
+-- @CANOPUS_PROGRESS@
 
 -- pmain's root argument is live only during entry-script evaluation.
 local recovery_ok, recovery_result, recovery_message = pcall(recovery.recover, PROFILE)
@@ -46,10 +48,15 @@ local stage1_resource
 local stage2_resource
 local supervisor_resource
 local status
-local run_phase = 1
-local run_active = false
 local run_attempted = false
 local clear_armed = false
+local runner, operation, current_step
+local progress_count = 0
+local run_button, clear_button
+local resources_available = false
+
+local function checkpoint(text) runner.checkpoint(text) end
+local function check(ok, message) if not ok then error(message, 0) end end
 
 local function run(command)
     print("[canopus-installer-prod:band11] exec: " .. command)
@@ -137,14 +144,16 @@ end
 local function resources_ready()
     if type(profile) ~= "table" then return false end
     for _, item in ipairs({
-        { stage1_resource, "r" },
-        { stage2_resource, "rb" },
-        { supervisor_resource, "rb" },
+        { stage1_resource, "r", "检查第一阶段加载资源" },
+        { stage2_resource, "rb", "检查第二阶段加载资源" },
+        { supervisor_resource, "rb", "检查 Supervisor 资源" },
     }) do
+        checkpoint(item[3])
         local file = io.open(item[1], item[2])
         if not file then return false end
         file:close()
     end
+    checkpoint("检查 Supervisor 格式与大小")
     return verify_module_file(supervisor_resource)
 end
 
@@ -157,10 +166,11 @@ end
 
 local function load_supervisor()
     return native_loader.load(profile, stage1_resource, stage2_resource,
-        supervisor_resource, run, read_all, write_all)
+        supervisor_resource, run, read_all, write_all, checkpoint)
 end
 
 local function stage_manager_icon()
+    checkpoint("读取并校验管理器图标")
     local content = read_all(MANAGER_ICON_RESOURCE, "rb")
     if type(content) ~= "string" or #content < 13
         or content:byte(1) ~= 0x19 then
@@ -171,11 +181,14 @@ local function stage_manager_icon()
     if width < 1 or height < 1 or #content ~= 12 + width * height * 4 then
         return false, "manager_icon.bin size mismatch"
     end
+    checkpoint("写入管理器图标")
     local output = io.open(MANAGER_ICON_PATH, "wb")
     if not output then
+        checkpoint("创建管理器资源目录")
         if not run("mkdir /data/canopus") then
             return false, "cannot create /data/canopus"
         end
+        checkpoint("重新写入管理器图标")
         output = io.open(MANAGER_ICON_PATH, "wb")
     end
     if not output then return false, "cannot stage Manager icon" end
@@ -184,9 +197,12 @@ local function stage_manager_icon()
     if not write_ok or write_result == nil or not close_ok or close_result == nil then
         return false, "Manager icon write failed"
     end
+    checkpoint("回读校验管理器图标")
     if read_all(MANAGER_ICON_PATH, "rb") ~= content then
         return false, "Manager icon verification failed"
     end
+    checkpoint("准备外部模块安装目录")
+    run("mkdir /data/canopus/inbox")
     return true
 end
 
@@ -248,9 +264,12 @@ local function write_command(command, arg0)
     return true
 end
 
-local function execute_step(command, arg0)
+local function execute_step(command, arg0, description)
+    checkpoint(description)
     local ok, message = write_command(command, arg0)
     if not ok then return false, message end
+    -- Keep request + status read together: /dev/canopus has a shared result
+    -- mailbox, so yielding here would allow another client to replace it.
     local current, status_error = read_status()
     if not current then return false, status_error end
     if current.pending_op ~= command or current.pending_state ~= RESULT_COMPLETED then
@@ -262,39 +281,34 @@ end
 
 local steps = {
     { command = CMD_RESTORE_AFTER_BOOT, arg0 = 0,
-      progress = "Loading enabled modules..." },
+      progress = "恢复已启用模块" },
     { command = CMD_INSTALL, arg0 = 0,
-      progress = "Registering Manager..." },
+      progress = "注册管理器" },
     { command = CMD_INSTALL, arg0 = 1,
-      progress = "Registering module apps..." },
+      progress = "注册模块应用" },
     { command = CMD_INSTALL, arg0 = 2,
-      progress = "Publishing Launcher entries..." },
+      progress = "发布应用列表入口" },
 }
 
 local function set_status(text, color)
     status:set { text = tostring(text), text_color = color or '#bfd9ff' }
 end
 
-local function finish_run(success, message)
-    run_active = false
-    set_status(message, success and '#8ff0a4' or '#ff9a9a')
+local function update_buttons()
+    for _, button in ipairs({run_button, clear_button}) do
+        if operation or not resources_available or (button == run_button and run_attempted) then
+            button:clear_flag(lvgl.FLAG.CLICKABLE)
+        else
+            button:add_flag(lvgl.FLAG.CLICKABLE)
+        end
+    end
 end
 
 local function run_all_steps()
-    run_active = true
-    for index, step in ipairs(steps) do
-        run_phase = index
-        set_status(step.progress)
-        local ok, message = execute_step(step.command, step.arg0)
-        if not ok then
-            finish_run(false, "Run failed: " .. tostring(message)
-                .. "\nReboot before retrying.")
-            return false
-        end
+    for _, step in ipairs(steps) do
+        check(execute_step(step.command, step.arg0, step.progress))
     end
-    run_phase = #steps + 1
-    finish_run(true, "Run completed")
-    return true
+    return "Run completed\n安装完成，请从应用列表打开管理器"
 end
 
 local rootbase = lvgl.Object(nil, {
@@ -339,7 +353,7 @@ if lvgl.FLAG.EVENT_BUBBLE then title:add_flag(lvgl.FLAG.EVENT_BUBBLE) end
 
 status = lvgl.Label(root, {
     text_font = lvgl.Font("MiSans-Regular", 14),
-    text = "Loading installer...",
+    text = "执行接口已就绪\n正在准备安装器...",
     text_color = '#bfd9ff',
     bg_color = 0,
     bg_opa = 0,
@@ -349,11 +363,51 @@ status = lvgl.Label(root, {
 })
 if lvgl.FLAG.EVENT_BUBBLE then status:add_flag(lvgl.FLAG.EVENT_BUBBLE) end
 
-local resources_available = recovered and control_open and select_target() and resources_ready()
-if not resources_available then
+if not recovered or not control_open then
     set_status(recovery_error and ("Startup failed: " .. recovery_error)
         or "Installer resources unavailable", '#ff9a9a')
     return
+end
+
+runner = progress.new(lvgl, function(text)
+    local previous = current_step
+    current_step = tostring(text)
+    progress_count = progress_count + 1
+    set_status(string.format("步骤 %d\n%s", progress_count, current_step)
+        .. (previous and ("\n\n已完成：" .. previous) or ""))
+end, function(success, message)
+    local completed = operation
+    operation = nil
+    if completed == "startup" then resources_available = success end
+    if success then
+        set_status(message, '#8ff0a4')
+    else
+        set_status("失败步骤：" .. tostring(current_step or "启动进度显示")
+            .. "\n" .. tostring(message)
+            .. (completed == "run" and "\n请重启后再试" or ""), '#ff9a9a')
+    end
+    update_buttons()
+end)
+
+local function start_operation(name, work)
+    if operation then return end
+    operation, current_step, progress_count = name, nil, 0
+    update_buttons()
+    local ok, message = runner.start(work)
+    if not ok then
+        operation = nil
+        set_status("无法启动进度显示：" .. tostring(message), '#ff9a9a')
+        update_buttons()
+    end
+end
+
+-- Timers must not retain a task after its owning page is destroyed.
+if lvgl.EVENT.DELETE then
+    rootbase:onevent(lvgl.EVENT.DELETE, function()
+        runner.cancel()
+        native_loader.release()
+        operation = nil
+    end)
 end
 
 local function make_button(text, color, on_clicked)
@@ -379,8 +433,8 @@ local function make_button(text, color, on_clicked)
     return button
 end
 
-local run_button
 run_button = make_button("Run", '#14508a', function()
+    if operation or not resources_available then return end
     clear_armed = false
     if profile.device_status == "DEVICE_REJECTED" then
         set_status("LOAD blocked: stage-0 candidate rejected\n"
@@ -392,48 +446,40 @@ run_button = make_button("Run", '#14508a', function()
         return
     end
     run_attempted = true
-    run_button:clear_flag(lvgl.FLAG.CLICKABLE)
-    local valid, validation_error = verify_module_file(supervisor_resource)
-    if not valid then
-        set_status("LOAD failed: " .. tostring(validation_error), '#ff9a9a')
-        return
-    end
-    if not supervisor_present() then
-        set_status("Loading supervisor...")
-        local loaded, load_error = load_supervisor()
-        if not loaded or not supervisor_present() then
-            set_status("LOAD failed: " .. tostring(load_error or "no /dev/canopus")
-                .. "\nReboot before retrying.", '#ff9a9a')
-            return
+    start_operation("run", function()
+        checkpoint("复核 Supervisor 文件")
+        check(verify_module_file(supervisor_resource))
+        checkpoint("检查运行环境是否已加载")
+        if not supervisor_present() then
+            check(load_supervisor())
+            checkpoint("确认运行环境已就绪")
+            check(supervisor_present(), "no /dev/canopus")
         end
-    end
-    local icon_ok, icon_error = stage_manager_icon()
-    if not icon_ok then
-        set_status("Run failed: " .. tostring(icon_error), '#ff9a9a')
-        return
-    end
-    run_phase = 1
-    set_status("Supervisor loaded; installing...")
-    run_all_steps()
+        check(stage_manager_icon())
+        return run_all_steps()
+    end)
 end)
 
-make_button("Clear Env", '#8a1f14', function()
-    if run_active then
-        clear_armed = false
-        set_status("Run is in progress; reboot before clearing")
-        return
-    end
+clear_button = make_button("Clear Env", '#8a1f14', function()
+    if operation or not resources_available then return end
     if not clear_armed then
         clear_armed = true
         set_status("Click again to clear", '#ffd27a')
         return
     end
     clear_armed = false
-    if run("rm -rf /data/canopus") then
-        set_status("Environment cleared; reboot before Run", '#8ff0a4')
-    else
-        set_status("Clear Env failed", '#ff9a9a')
-    end
+    start_operation("clear", function()
+        checkpoint("清理安装环境")
+        check(run("rm -rf /data/canopus"), "Clear Env failed")
+        return "Environment cleared; reboot before Run"
+    end)
 end)
 
-set_status("Ready")
+start_operation("startup", function()
+    -- os.execute recovery must finish synchronously while initial pmain is
+    -- live. Everything below may yield after the entry script returns.
+    checkpoint("读取设备安装配置")
+    check(select_target(), "Installer profile unavailable")
+    check(resources_ready(), "Installer resources unavailable")
+    return "Ready\n启动校验完成，点击 Run 开始"
+end)

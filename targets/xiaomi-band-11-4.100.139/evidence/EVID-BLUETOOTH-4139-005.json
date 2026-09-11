@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BLUETOOTH-4139-005",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Recover the actual .139 Bluelet primitives and identify ABI changes that prevent reusing the .043 BluetoothAudio backend",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.private_abi.bt_queue_external",
+    "xiaomi-band-11-4.100.139.private_abi.bt_timer_add",
+    "xiaomi-band-11-4.100.139.private_abi.bt_timer_cancel",
+    "xiaomi-band-11-4.100.139.bt_l2cap_connect",
+    "xiaomi-band-11-4.100.139.private_abi.bt_l2cap_submit_cid",
+    "xiaomi-band-11-4.100.139.private_abi.sdp_set_raw_attribute",
+    "xiaomi-band-11-4.100.139.private_abi.sdp_commit",
+    "xiaomi-band-11-4.100.139.private_abi.sdp_unregister"
+  ],
+  "prototype_hypothesis": "Per-symbol .139 AAPCS/LTO prototypes. Pending semantic adapters and device validation; restricted SDK gate retained.",
+  "callsite_evidence": [
+    "Bluelet initialization 0C473178 allocates L2CAP owner at 200BE890, SDP owner at 200BE894, external ring at 200BE8F0, lock at 200BE8F4 and wake semaphore at 200BE8E8.",
+    "Bluelet loop 0C470ED8 consumes external ring under lock, invokes run(owner,event,argument) or cancel(0,event,argument). 0C863BC4 executes real ring growth/wake; 0C858998 is the three-argument cancellation thunk forwarding r2 to free.",
+    "L2CAP connection body 0C871568 reads private CID from channel+116 and passes confirm event2 with original request. Configuration body 0C86A304 copies 44-byte config and consumes request+54 options; channel allocation 0C86D90C is124 bytes.",
+    "Timer add 0C8C7FF0 consumes six arguments; handle-value cancel0C863010 returns the owned token. Timer dispatch0C8632B0 instead invokes the expiry callback.",
+    "SDP attribute entry0C86F140 and commit0C86F2CC match sorted ID/encoded value semantics; initialization0C473178 commits stock records. Unregister0C86F3E0 locks/removes/frees by handle."
+  ],
+  "control_flow_evidence": [
+    "Actual firmware ARM tests cover locked enqueue, twenty-entry overflow allocation, first-event wake, uninitialized cancellation registers, timer record layout/cancellation ownership, L2CAP confirm CID and SDP attribute growth.",
+    "Socket A2DP client0C8AC188 sends command12 through0C46A218; dispatcher0C46D20C routes IDs<=0x16 to UnhandledMessage assertion0C9195BA. Client symbol presence is not evidence that source service is enabled."
+  ],
+  "ownership_analysis": "External queue owns submitted argument; cancellation callback must take three arguments. Timer cancel returns argument ownership. SDP commit consumes builder. No device execution or SDK activation is enabled by this evidence.",
+  "unsafe_assumptions": [
+    "Heap/semaphore/timer primitives are modeled in Unicorn; radio, controller, real scheduling and allocator exhaustion are untested.",
+    "The BluetoothAudio .139 runtime still selects static_candidate.rs. L2CAP buffer/event/config layout, adapter callbacks, GAP hook, complete native UI backend and end-to-end audio remain unverified.",
+    "Automatic ensemble results in the target were not reliable enough for direct invocation."
+  ],
+  "recommended_probe": "First implement and test a .139 semantic adapter for all required fields, ownership and callback lifetime; keep current module activation disabled until that work is complete.",
+  "reviewers": [
+    "codex-static-audit"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-11T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../../../scripts/tests/band11_bluetooth_firmware.py",
+      "role": "firmware-arm-abi-tests"
+    },
+    {
+      "uri": "../../../docs/band11-bluetooth-139.md",
+      "role": "abi-audit"
+    }
+  ]
+}

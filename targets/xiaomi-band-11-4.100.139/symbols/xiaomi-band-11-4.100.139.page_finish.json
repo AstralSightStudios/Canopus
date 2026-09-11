@@ -5,12 +5,12 @@
   "name": "page_finish",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "void(uint32_t)",
+  "prototype": "void(firmware_page_descriptor *)",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-NATIVE-4139-003"
+      "EVID-BLUETOOTH-4139-006"
     ]
   },
   "policy": "restricted",
@@ -18,12 +18,13 @@
   "provenance": {
     "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
     "evidence_ids": [
-      "EVID-NATIVE-4139-003"
+      "EVID-BLUETOOTH-4139-006"
     ],
-    "source": "Exact raw Thumb audit with startup-copy mapping and Lua/native callsite verification"
+    "source": "Exact .139 IDA callsite/Thumb audit; typed semantic adapter in target-private. See evidence for scope."
   },
   "entry_address": "0xc69b5ac",
   "callable_address": "0xc69b5ad",
-  "notes": "Lua navigator finish -> 0xc6d152c -> 0xc626930 -> 0xc69b614 extracts key +4 then calls this entry. Takes key, NOT descriptor pointer. Independently recovered for the native static test ABI; device NOT_PROBED. No general SDK callable approval.",
-  "approval_state": "PENDING"
+  "notes": "Private Band 11 runtime binding. ABI is adapted per target; public approval remains PENDING. Radio/physical display validation requires a device. See EVID-BLUETOOTH-4139-006.",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs"
 }

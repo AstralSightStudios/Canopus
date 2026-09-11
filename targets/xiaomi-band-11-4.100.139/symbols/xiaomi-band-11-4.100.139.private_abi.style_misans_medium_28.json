@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.style_misans_medium_28",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "style_misans_medium_28",
+  "kind": "global",
+  "entry_address": "0x200c1574",
+  "prototype": "void *",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-BLUETOOTH-4139-006"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-BLUETOOTH-4139-006"
+    ],
+    "source": "Exact .139 IDA callsite/Thumb audit; typed semantic adapter in target-private. See evidence for scope."
+  },
+  "approval_state": "PENDING",
+  "notes": "Private Band 11 runtime binding. ABI is adapted per target; public approval remains PENDING. Radio/physical display validation requires a device. See EVID-BLUETOOTH-4139-006.",
+  "instruction_set": "n/a"
+}

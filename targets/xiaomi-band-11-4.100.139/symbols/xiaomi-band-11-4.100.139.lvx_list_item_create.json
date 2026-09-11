@@ -27,7 +27,7 @@
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-NATIVE-UI-4139-004"
+      "EVID-BLUETOOTH-4139-006"
     ]
   },
   "policy": "restricted",
@@ -35,10 +35,10 @@
   "provenance": {
     "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
     "evidence_ids": [
-      "EVID-NATIVE-UI-4139-004"
+      "EVID-BLUETOOTH-4139-006"
     ],
-    "source": "Exact .139 raw Thumb, IDB corpus boundaries, stock settings and theme call sites"
+    "source": "Exact .139 IDA callsite/Thumb audit; typed semantic adapter in target-private. See evidence for scope."
   },
-  "notes": "0x0C5962F4 settings create_row_to_list calls this class constructor. Class 0x2CA3ED20 invokes theme_apply; default size204x96, background#222222, radius24, MiSans Medium28/24. Not the four-argument 10 Pro row wrapper. New UI device rendering not yet tested; no general SDK approval.",
+  "notes": "Private Band 11 runtime binding. ABI is adapted per target; public approval remains PENDING. Radio/physical display validation requires a device. See EVID-BLUETOOTH-4139-006.",
   "approval_state": "PENDING"
 }

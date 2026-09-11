@@ -159,6 +159,17 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_resource.o" \
     $LOADER_OBJECTS
 
+# Drop unreferenced debug/local symbol metadata on stock-modlib targets. Keep
+# all relocation targets, global exports and constructors; runtime sections
+# remain byte-identical. This keeps the additional installer endpoint within
+# the existing 72 KiB package budget without increasing that budget.
+if [ "$PROD_FAMILY" = xiaomi-band-10-pro ]; then
+    OBJCOPY=${RUST_OBJCOPY:-"$(rustc --print target-libdir)/../bin/rust-objcopy"}
+    "$OBJCOPY" --strip-debug --strip-unneeded "$OUT/canopus_supervisor.elf" \
+        "$OUT/canopus_supervisor.stripped.elf"
+    mv "$OUT/canopus_supervisor.stripped.elf" "$OUT/canopus_supervisor.elf"
+fi
+
 actual_size=$(wc -c < "$OUT/canopus_supervisor.elf")
 [ "$actual_size" -le "$MAX_SIZE" ] || {
     echo "error: supervisor is $actual_size bytes; target loader limit is $MAX_SIZE"

@@ -5,12 +5,12 @@
   "name": "lvx_list_item_update",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "void (void *, const void *, const char *, const char *, int32_t, uint8_t)",
+  "prototype": "void(void *, const void *, const char *, const char *, int32_t, uint8_t)",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-NATIVE-UI-4139-004"
+      "EVID-BLUETOOTH-4139-006"
     ]
   },
   "policy": "restricted",
@@ -18,13 +18,13 @@
   "provenance": {
     "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
     "evidence_ids": [
-      "EVID-NATIVE-UI-4139-004"
+      "EVID-BLUETOOTH-4139-006"
     ],
-    "source": "Exact .139 raw Thumb, IDB corpus boundaries, stock settings and theme call sites"
+    "source": "Exact .139 IDA callsite/Thumb audit; typed semantic adapter in target-private. See evidence for scope."
   },
   "entry_address": "0xc50ec5c",
   "callable_address": "0xc50ec5d",
-  "notes": "Reads stack number,selected; 0x0C507140 updates trailing checked state; 0x0C50EAAC updates primary, creates/hides secondary as needed. Replaces unrelated ensemble candidate. New UI device rendering not yet tested; no general SDK approval.",
+  "notes": "Private Band 11 runtime binding. ABI is adapted per target; public approval remains PENDING. Radio/physical display validation requires a device. See EVID-BLUETOOTH-4139-006.",
   "approval_state": "PENDING",
   "side_effects": [
     "mutates_page_owned_ui"
@@ -32,5 +32,6 @@
   "ownership": {
     "argument": "borrowed UI-owner widget and synchronous text arguments",
     "return_value": "page-owned widget or none"
-  }
+  },
+  "calling_convention": "arm-aapcs"
 }

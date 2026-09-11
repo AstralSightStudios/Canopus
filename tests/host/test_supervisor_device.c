@@ -1368,6 +1368,47 @@ TEST(v2_install_accepts_only_bounded_token)
     CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_DISALLOWED);
 }
 
+TEST(installer_endpoint_accepts_signed_package_flow_only)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t request[128], response[40], control[128];
+    static const char token[] = "bluetooth_audio";
+    const uint32_t len = CANOPUS_TRANSPORT_V2_HEADER_SIZE + sizeof(token);
+    uint32_t command;
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    g_stage_result = 0;
+    g_stages = 0;
+    CHECK(canopus_supervisor_installer_read(&sup, response, sizeof(response)) < 0);
+    /* A private control request cannot overwrite the installer mailbox. */
+    make_v2_request(control, sizeof(control), CANOPUS_CMD_ECHO, 90, 0, 0);
+    CHECK_EQ(canopus_supervisor_device_write(&sup, control, 36), 36);
+    make_v2_request(request, sizeof(request), CANOPUS_CMD_INSTALL, 123, token, sizeof(token));
+    CHECK_EQ(canopus_supervisor_installer_write(&sup, request, len), (int32_t)len);
+    CHECK_EQ(g_stages, 1);
+    CHECK_EQ(canopus_supervisor_installer_read(&sup, response, sizeof(response)), 40);
+    CHECK_EQ(v2_word(response, 20), 123u);
+    CHECK_EQ(v2_word(response, 28), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(v2_word(response, 32), 4u);
+    CHECK_EQ(v2_word(response, 36), 0u);
+    CHECK_EQ(canopus_supervisor_device_read(&sup, control, sizeof(control)), 36);
+    CHECK_EQ(v2_word(control, 20), 90u);
+    CHECK(canopus_supervisor_installer_read(&sup, response, 39) < 0);
+    for (command = CANOPUS_CMD_ECHO; command <= CANOPUS_CMD_ACTIVATE; command++) {
+        if (command == CANOPUS_CMD_INSTALL) continue;
+        make_v2_request(request, sizeof(request), command, 124, token, sizeof(token));
+        CHECK(canopus_supervisor_installer_write(&sup, request, len) < 0);
+        CHECK_EQ(g_stages, 1);
+        CHECK(canopus_supervisor_installer_read(&sup, response, sizeof(response)) < 0);
+    }
+    make_v2_request(request, sizeof(request), CANOPUS_CMD_INSTALL, 125, "../bad", 7);
+    CHECK(canopus_supervisor_installer_write(&sup, request, 43) < 0);
+    make_v2_request(request, sizeof(request), CANOPUS_CMD_INSTALL, 126, 0, 0);
+    CHECK(canopus_supervisor_installer_write(&sup, request, 36) < 0);
+    canopus_memset(request, 0, sizeof(request));
+    CHECK(canopus_supervisor_installer_write(&sup, request, 16) < 0);
+    CHECK_EQ(g_stages, 1);
+}
+
 TEST(v2_unknown_magic_rejected)
 {
     struct canopus_supervisor_v1 sup;
@@ -1480,6 +1521,7 @@ TEST(supervisor_add_module_rejects_full_table)
 }
 
 static const struct test_registry supervisor_device_tests[] = {
+    { "installer_endpoint_accepts_signed_package_flow_only", installer_endpoint_accepts_signed_package_flow_only_wrapper },
     { "supervisor_init_rejects_null", supervisor_init_rejects_null_wrapper },
     { "supervisor_status_abi_layout", supervisor_status_abi_layout_wrapper },
     { "supervisor_command_abi_validates", supervisor_command_abi_validates_wrapper },

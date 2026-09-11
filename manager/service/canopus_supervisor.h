@@ -233,6 +233,10 @@ struct canopus_supervisor_v1 {
     uint8_t  v2_response_buf[CANOPUS_TRANSPORT_V2_HEADER_SIZE +
                              CANOPUS_PROTO_MAX_PAYLOAD];
     uint32_t v2_response_len;
+    /* Public installer endpoint: separate response mailbox, INSTALL only.
+     * The four-byte payload is the installation diagnostic error code. */
+    uint8_t installer_response[CANOPUS_TRANSPORT_V2_HEADER_SIZE + 4u];
+    uint32_t installer_response_len;
     /* v2 pending-request tracking (CAN-P1-002) */
     struct canopus_pending_table_v1 pending;
     /* platform hooks (see canopus_supervisor_platform.h) */
@@ -258,6 +262,10 @@ int32_t canopus_supervisor_device_read(struct canopus_supervisor_v1 *sup,
                                        void *buffer, uint32_t count);
 int32_t canopus_supervisor_device_write(struct canopus_supervisor_v1 *sup,
                                         const void *buffer, uint32_t count);
+int32_t canopus_supervisor_installer_read(struct canopus_supervisor_v1 *sup,
+                                         void *buffer, uint32_t count);
+int32_t canopus_supervisor_installer_write(struct canopus_supervisor_v1 *sup,
+                                          const void *buffer, uint32_t count);
 
 /* ABI helpers for the char-device front end (host test uses them too). */
 int canopus_supervisor_validate_command(const uint8_t command[CANOPUS_SUP_COMMAND_SIZE]);

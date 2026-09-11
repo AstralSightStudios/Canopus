@@ -151,14 +151,19 @@ end
 -- substituted, but recovery, control-open unwrapping and Run sequencing are real.
 setup()
 local objects, clicks, device_commands, files = {}, {}, {}, {}
+local timers, deletions, painted, history = {}, {}, nil, {}
+local reject_command = false
 local lvgl = {
     HOR_RES = function() return 212 end, VER_RES = function() return 520 end,
-    OPA = function(n) return n end, ALIGN = {CENTER = 0}, EVENT = {CLICKED = 7},
+    OPA = function(n) return n end, ALIGN = {CENTER = 0}, EVENT = {CLICKED = 7, DELETE = 33},
     FLAG = {SCROLLABLE = 16, CLICKABLE = 2}, Font = function(name, size) return size end,
 }
 local methods = {
     clear_flag = function() end, add_flag = function() end,
-    onevent = function(self, code, callback) assert(code == 7); clicks[#clicks + 1] = callback end,
+    onevent = function(self, code, callback)
+        if code == 33 then deletions[#deletions + 1] = callback
+        else assert(code == 7); clicks[#clicks + 1] = callback end
+    end,
     set = function(self, props) for k,v in pairs(props) do self[k] = v end end,
 }
 local function object(parent, props)
@@ -166,6 +171,33 @@ local function object(parent, props)
     return setmetatable(props, {__index = methods})
 end
 lvgl.Object, lvgl.Label = object, object
+lvgl.Timer = function(props)
+    assert(props.period >= 100 and props.paused and props.repeat_count == -1)
+    function props:resume() self.paused = false end
+    function props:delete() self.deleted = true end
+    function props:ready() error("must allow the UI to paint between steps") end
+    timers[#timers + 1] = props
+    return props
+end
+local function tick()
+    -- The previous text reaches the display before the next scheduled action.
+    painted = objects[4].text
+    history[#history + 1] = painted
+    local count = #timers
+    for i = 1,count do
+        local timer = timers[i]
+        if not timer.deleted and not timer.paused then timer.cb(timer) end
+    end
+end
+local function drain()
+    for i = 1,200 do
+        local active = false
+        for _,timer in ipairs(timers) do if not timer.deleted then active = true end end
+        if not active then return end
+        tick()
+    end
+    error("progress timer did not finish")
+end
 loaded.lvgl = lvgl
 SCRIPT_PATH = "watchfaces/canopus-installer-prod/xiaomi-band-11/"
 __band11_fixture_open = function(path, mode)
@@ -175,8 +207,10 @@ __band11_fixture_open = function(path, mode)
     if path == "/dev/canopus" then
         return {
             write = function(self, payload)
+                assert(painted == objects[4].text, "command ran before its status could paint")
                 local magic, op, arg0 = string.unpack("<I4I4I4", payload)
                 assert(magic == 0x43504331 and #payload == 16)
+                if reject_command then return nil, "fixture command rejected" end
                 device_commands[#device_commands + 1] = {op, arg0}
                 return self
             end,
@@ -220,17 +254,71 @@ enter(function() assert(load(source, "band11-generated-entry", "t"))() end)
 assert(#clicks == 2 and #objects == 8, "Run/Clear Env production UI missing")
 assert(objects[1].w == 212 and objects[1].h == 520)
 assert(objects[3].text == "Canopus Installer" and objects[3].h == 40)
-assert(objects[4].text == "Ready" and objects[4].h == 246)
+assert(objects[4].text:match("读取设备安装配置") and objects[4].h == 246)
 assert(objects[5].w == 164 and objects[5].h == 48 and objects[6].text == "Run")
 assert(objects[8].text == "Clear Env")
 local _, commands = fixture.counts(); assert(commands == 0 and #device_commands == 0)
 clicks[1]()
+assert(#device_commands == 0, "Run started during startup validation")
+drain()
+assert(objects[4].text:match("^Ready"))
+clicks[1]()
+assert(#device_commands == 0, "Run must publish progress before executing")
+local in_progress = objects[4].text
+clicks[1](); clicks[2]()
+assert(objects[4].text == in_progress, "busy clicks obscured the current step")
+drain()
 assert(#device_commands == 4 and device_commands[1][1] == 0x4351000a)
 for i=2,4 do assert(device_commands[i][1] == 0x43510002 and device_commands[i][2] == i-2) end
-assert(objects[4].text == "Run completed")
+assert(objects[4].text:match("^Run completed"))
+for _, step in ipairs({"复核 Supervisor", "检查运行环境", "读取并校验管理器图标",
+    "写入管理器图标", "回读校验管理器图标", "恢复已启用模块", "注册管理器",
+    "注册模块应用", "发布应用列表入口"}) do
+    local found = false
+    for _,text in ipairs(history) do if text:find(step,1,true) then found = true end end
+    assert(found, "missing painted phase: " .. step)
+end
 clicks[1](); assert(#device_commands == 4, "Run must be one-shot")
-clicks[2](); _,commands=fixture.counts(); assert(commands==0, "clear needs second click")
-clicks[2](); _,commands=fixture.counts(); assert(commands==1)
+local _, before_clear = fixture.counts()
+clicks[2](); _,commands=fixture.counts(); assert(commands==before_clear, "clear needs second click")
+clicks[2](); _,commands=fixture.counts(); assert(commands==before_clear, "clear ran before painting progress")
+assert(objects[4].text:match("清理安装环境"))
+drain(); _,commands=fixture.counts(); assert(commands==before_clear+1)
+
+-- Destroying the owning page cancels queued work before another write.
+clicks[2](); clicks[2]()
+local before = #device_commands
+deletions[1]()
+drain()
+_,commands=fixture.counts(); assert(commands==before_clear+1 and #device_commands==before)
+
+-- A failed command keeps its phase on screen and stops all later commands.
+setup()
+io.open = function(...) return original(...) end
+objects, clicks, timers, deletions, history = {}, {}, {}, {}, {}
+device_commands = {}
+enter(function() assert(load(source, "band11-progress-failure", "t"))() end)
+drain()
+reject_command = true
+clicks[1](); drain()
+assert(objects[4].text:find("失败步骤：恢复已启用模块",1,true))
+assert(objects[4].text:find("fixture command rejected",1,true))
+assert(#device_commands == 0)
+local failed = objects[4].text
+tick(); assert(objects[4].text == failed, "failed operation kept running")
+reject_command = false
+
+-- Missing timer support fails before touching the device, rather than
+-- silently reverting to a synchronous flow with invisible progress.
+setup()
+io.open = function(...) return original(...) end
+objects, clicks, timers, deletions, history = {}, {}, {}, {}, {}
+local timer_constructor = lvgl.Timer
+lvgl.Timer = nil
+enter(function() assert(load(source, "band11-progress-no-timer", "t"))() end)
+assert(objects[4].text:find("LuaLVGL Timer unavailable",1,true))
+clicks[1](); assert(#device_commands == 0)
+lvgl.Timer = timer_constructor
 
 -- Wrong firmware has no Run/Clear actions; nil,error is not pcall success.
 setup()

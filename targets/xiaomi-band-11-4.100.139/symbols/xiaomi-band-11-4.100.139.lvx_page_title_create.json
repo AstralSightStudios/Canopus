@@ -5,29 +5,26 @@
   "name": "lvx_page_title_create",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "void *(void *, const char *, uint32_t, canopus_lvx_event_cb)",
+  "prototype": "void *(void *, const char *, uint32_t, void *)",
   "proof": {
     "static": "recovered",
+    "device": "not_probed",
     "evidence_ids": [
-      "EVID-VERIFY-4139-001",
-      "EVID-FW-MATCH-ENSEMBLE-1043-4139",
-      "EVID-NATIVE-4139-003"
-    ],
-    "device": "not_probed"
+      "EVID-BLUETOOTH-4139-006"
+    ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
     "evidence_ids": [
-      "EVID-VERIFY-4139-001",
-      "EVID-FW-MATCH-ENSEMBLE-1043-4139",
-      "EVID-NATIVE-4139-003"
+      "EVID-BLUETOOTH-4139-006"
     ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.043 report=targets/xiaomi-band-11-4.100.139/evidence/fw-match/ensemble-1043-to-4139-v2.json"
+    "source": "Exact .139 IDA callsite/Thumb audit; typed semantic adapter in target-private. See evidence for scope."
   },
   "entry_address": "0xc89e7dc",
   "callable_address": "0xc89e7dd",
-  "notes": "Exact .139 body consumes four register arguments: parent/title/mode/callback. No fifth user-data argument is read. Title/back icon event uses code7; creates a68-pixel title shell. Device NOT_PROBED; no general callable approval.",
-  "approval_state": "PENDING"
+  "notes": "Private Band 11 runtime binding. ABI is adapted per target; public approval remains PENDING. Radio/physical display validation requires a device. See EVID-BLUETOOTH-4139-006.",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs"
 }
