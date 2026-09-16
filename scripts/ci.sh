@@ -39,6 +39,7 @@ rm -f "$private_generated"
 for feature in \
     target-xiaomi-band-9-pro-3-1-175 \
     target-xiaomi-band-11-4-100-139 \
+    target-xiaomi-band-11-4-100-155 \
     target-xiaomi-band-9-3-1-32; do
     (cd sdk/rust && cargo check -p canopus-target-generated --no-default-features --features "$feature")
 done

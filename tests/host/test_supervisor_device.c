@@ -663,6 +663,53 @@ TEST(supervisor_registry_metadata_restore_defers_enabled_module_load)
     g_load_descriptor = 0;
 }
 
+TEST(supervisor_reactivates_opted_in_resident_module_after_second_restore)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_module_descriptor_v1 descriptor = fake_descriptor;
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    descriptor.flags = CANOPUS_FLAG_REACTIVATE_AFTER_UI_RESTART;
+    CHECK(canopus_supervisor_add_module(&sup,
+        CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION, 1, 1, "mod.hello") == 0);
+    sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
+    sup.modules[0].descriptor = &descriptor;
+    g_activations = 0;
+    g_activation_result = 0;
+    CHECK(canopus_supervisor_activate_restored_modules(&sup) == 0);
+    CHECK(g_activations == 1);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_BOOT_RESIDENT);
+    descriptor.flags = 0;
+    CHECK(canopus_supervisor_activate_restored_modules(&sup) == 0);
+    CHECK(g_activations == 1);
+    descriptor.flags = CANOPUS_FLAG_REACTIVATE_AFTER_UI_RESTART;
+    sup.modules[0].intent = CANOPUS_SUP_INTENT_DISABLED;
+    CHECK(canopus_supervisor_activate_restored_modules(&sup) == 0);
+    CHECK(g_activations == 1);
+    sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    g_activation_result = -42;
+    CHECK(canopus_supervisor_activate_restored_modules(&sup) == -1);
+    CHECK(sup.modules[0].activation_error == (uint32_t)-42);
+    CHECK(sup.modules[0].state == CANOPUS_STATE_BOOT_RESIDENT);
+    g_activation_result = 0;
+    CHECK(canopus_supervisor_activate_restored_modules(&sup) == 0);
+    CHECK(sup.modules[0].activation_error == 0);
+    CHECK(canopus_supervisor_add_module(&sup,
+        CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION, 1, 1, "mod.two") == 1);
+    sup.modules[1].state = CANOPUS_STATE_INSTALLED;
+    sup.modules[1].intent = CANOPUS_SUP_INTENT_ENABLED;
+    g_loading_supervisor = &sup;
+    g_load_descriptor = &fake_descriptor;
+    g_load_result = CANOPUS_STATE_READY;
+    g_loads = 0;
+    g_activations = 0;
+    CHECK(canopus_supervisor_activate_restored_modules(&sup) == 0);
+    CHECK(g_loads == 1);
+    CHECK(g_activations == 2);
+    g_loading_supervisor = 0;
+    g_load_descriptor = 0;
+}
+
 TEST(supervisor_registry_restores_multiple_pending_intents)
 {
     struct canopus_supervisor_v1 a, b;
@@ -1547,6 +1594,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_registry_survives_reload", supervisor_registry_survives_reload_wrapper },
     { "supervisor_registry_restore_auto_activates_ready_module", supervisor_registry_restore_auto_activates_ready_module_wrapper },
     { "supervisor_registry_metadata_restore_defers_enabled_module_load", supervisor_registry_metadata_restore_defers_enabled_module_load_wrapper },
+    { "supervisor_reactivates_opted_in_resident_module_after_second_restore", supervisor_reactivates_opted_in_resident_module_after_second_restore_wrapper },
     { "supervisor_registry_retains_boot_activation_error", supervisor_registry_retains_boot_activation_error_wrapper },
     { "supervisor_registry_restores_multiple_pending_intents", supervisor_registry_restores_multiple_pending_intents_wrapper },
     { "supervisor_native_app_publication_is_version_gated", supervisor_native_app_publication_is_version_gated_wrapper },

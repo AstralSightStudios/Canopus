@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.155.type.canopus_interconnect_app_info.v1",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "kind": "struct",
+  "name": "canopus_interconnect_app_info",
+  "size": 36,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "package_name",
+      "offset": 0,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "Baseline .139 field audit: com.* package name — the phone-side routing key"
+    },
+    {
+      "name": "display_name",
+      "offset": 4,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "Baseline .139 field audit: human-readable app name (not used for routing)"
+    },
+    {
+      "name": "icon_file",
+      "offset": 8,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "Baseline .139 field audit: icon file name under /data/app/<package>/"
+    },
+    {
+      "name": "extra",
+      "offset": 12,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "Baseline .139 field audit: extra string slot echoed by quickapp_register_app"
+    },
+    {
+      "name": "fingerprint",
+      "offset": 16,
+      "width": 20,
+      "signedness": "array",
+      "array_length": 20,
+      "provenance": "Baseline .139 field audit: 20-byte app fingerprint verified by quickapp_get_appinfo"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Same-model baseline shape. App/page/launcher, file operations and notification consumer offsets checked through complete .155 body equality and critical-path IDB audit. Unresolved baseline fields remain unresolved; no device proof."
+  }
+}

@@ -15,7 +15,10 @@ pub use fw::{
     canopus_identity_guard, file_operations, firmware_notification_message,
     firmware_page_descriptor, launcher_app_descriptor, stock_timespec_t,
 };
+#[cfg(feature = "target-xiaomi-band-11-4-100-139")]
 pub const TARGET_ID: &str = "xiaomi-band-11-4.100.139";
+#[cfg(feature = "target-xiaomi-band-11-4-100-155")]
+pub const TARGET_ID: &str = "xiaomi-band-11-4.100.155";
 pub const SELECTED_TARGET_ID: &str = TARGET_ID;
 pub const ERR_UNSUPPORTED: i32 = -38;
 pub fn capabilities() -> &'static [&'static str] {

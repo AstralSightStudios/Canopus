@@ -1,0 +1,57 @@
+{
+  "target_id": "xiaomi-band-11-4.100.155",
+  "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+  "source": "Independent critical-path decompilation in the .155 IDB plus crash3 consumer audit. A bounded port regression set, not a broad calibrated accuracy estimate.",
+  "entries": [
+    {
+      "name": "app_install",
+      "target_entry_address": "0xc6ab340",
+      "evidence_id": "EVID-PORT-4155-001"
+    },
+    {
+      "name": "app_lookup",
+      "target_entry_address": "0xc6ac53c",
+      "evidence_id": "EVID-PORT-4155-001"
+    },
+    {
+      "name": "app_launcher_add",
+      "target_entry_address": "0xc547b54",
+      "evidence_id": "EVID-PORT-4155-001"
+    },
+    {
+      "name": "register_driver",
+      "target_entry_address": "0xc914f54",
+      "evidence_id": "EVID-PORT-4155-001"
+    },
+    {
+      "name": "lvx_notification_insert_message",
+      "target_entry_address": "0xc8f2ba0",
+      "evidence_id": "EVID-PORT-4155-001"
+    },
+    {
+      "name": "lvx_list_item_create",
+      "target_entry_address": "0xc50f4e4",
+      "evidence_id": "EVID-PORT-4155-001"
+    },
+    {
+      "name": "lvx_list_item_add_content",
+      "target_entry_address": "0xc50fad0",
+      "evidence_id": "EVID-PORT-4155-001"
+    },
+    {
+      "name": "lvx_list_item_update",
+      "target_entry_address": "0xc50ec5c",
+      "evidence_id": "EVID-PORT-4155-001"
+    },
+    {
+      "name": "bt_queue_free",
+      "target_entry_address": "0xc858988",
+      "evidence_id": "EVID-PORT-4155-001"
+    },
+    {
+      "name": "gap_host_receive_slot",
+      "target_entry_address": "0x200bda80",
+      "evidence_id": "EVID-PORT-4155-001"
+    }
+  ]
+}

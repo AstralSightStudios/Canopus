@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-4139-005",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "How can a live page be rebuilt so widgets holding a redirected resource are recreated rather than repainted?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.page_stack_get",
+    "xiaomi-band-11-4.100.139.exec_pop_lifecycle_without_cachepolicy",
+    "xiaomi-band-11-4.100.139.on_resume_wrapped"
+  ],
+  "prototype_hypothesis": "void(void *page)",
+  "callsite_evidence": [
+    "A page object keeps its lifecycle state byte at +40, its root view at +48, an async-destroy hint at +36, its cache policy at +41, and its handler-chain event callback at +52. Lifecycle callbacks are slots page[19] on_create, page[20] on_resume, page[22] on_start, page[23] on_pause, page[24] on_stop, page[25] on_destroy.",
+    "Teardown is three staged steps: 0x0c6939e4 pause (17->18, event 6, page[23]), 0x0c693a2e stop (8/18->9, event 7, page[24]), on_destroy_wrapped 0x0c696d0c destroy (8/9->4, event 8, page[25]) which ends in on_ui_destroy 0x0c696a7c calling lv_obj_delete (0x0c384e6c) on the root view and zeroing page+48.",
+    "exec_pop_lifecycle_without_cachepolicy (0x0c696e34) always runs all three steps. exec_pop_lifecycle_with_cachepolicy (0x0c696eb8) switches on page+41 and only reaches destroy for policy 1 and 4; policy 2/5/6/7 stop earlier and the root view survives.",
+    "page_stack_push (0x0c697804), the enter path behind page_goto (0x0c8ed780), calls the WITH-cachepolicy variant on the outgoing page. finish_page (0x0c69b518) and insert_page_to_app (0x0c697280) call the WITHOUT-cachepolicy variant.",
+    "on_create_wrapped (0x0c696ae8) runs from state 2 or 4, allocates the root view via 0x0c6acd04, stores it at page+48 and calls page[19](page, root, arg) — where a page builds all of its widgets. on_resume_wrapped (0x0c696c18) calls on_create_wrapped then on_start_wrapped (0x0c693996) before its own resume leg."
+  ],
+  "control_flow_evidence": [
+    "Because ordinary navigation honours the cache policy, a cached page keeps its widgets across a navigation, so a resource redirect installed afterwards is not picked up by navigating away and back. Only the forced teardown deletes the root view.",
+    "Deleting the root view destroys the whole widget subtree, which is the reference release that image cache entries and page-owned font wrappers require.",
+    "on_resume_wrapped climbs from any of states 4/5/8/9/18 back to 17, so it doubles as the recovery path after a forced teardown.",
+    "page_stack_get (0x0c697450) returns app_list_get_page(index, &0x200c33ac); index -1 resolves to the stack-top page.",
+    "on_destroy_wrapped defers the view deletion onto a 10-slot ui-destroy stack (0x200d31a0, count 0x200d319c) when page+36 is set; the root view would then still be set when a re-create ran, tripping the activitymanager assert, so such a page must be skipped.",
+    "on_resume_wrapped performs its resume leg only when the screen state byte 0x200c2a28 is 2 and the page-layer flag 0x20096085 is non-zero."
+  ],
+  "ownership_analysis": "The rebuild is scoped to one page: the stack-top page object is torn down and brought back up in place, and it is never removed from or re-pushed onto the navigation stack. Other pages in the stack are untouched. Must run on the UI owner thread and never under the interrupt lock.",
+  "unsafe_assumptions": [
+    "No hardware execution has been performed; the .139 serial console returned no bytes on this host.",
+    "A rebuild that begins and then fails to come back up leaves that page torn down; the module reports this by not counting the rebuild, but it cannot restore the page.",
+    "Only the stack-top page is rebuilt. Pages deeper in the stack keep their old resources until they are themselves rebuilt.",
+    "Whether every page's on_create callback re-reads its resources from disk, rather than from a private cache of its own, is not established per page.",
+    "The ui-destroy-stack drain semantics are not traced; pages with page+36 set are skipped rather than handled."
+  ],
+  "recommended_probe": "On hardware, confirm that after activate the top page visibly rebuilds with the themed images and fonts, that the page remains interactive and correctly positioned in the navigation stack, and that repeated activations do not leak the root view or exhaust the ui-destroy stack.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-15T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_page_rebuild.py",
+      "role": "firmware-emulation-test"
+    }
+  ]
+}

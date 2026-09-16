@@ -1,0 +1,1531 @@
+{
+  "source_target": "xiaomi-band-11-4.100.139",
+  "source_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+  "normalization": "thumb-full-v1",
+  "unique_full_body_seeds": 27039,
+  "symbols": [
+    {
+      "name": "app_install",
+      "source_address": "0xc6ab350",
+      "target_address": "0xc6ab340",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "app_launcher_add",
+      "source_address": "0xc547b54",
+      "target_address": "0xc547b54",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "app_launcher_data_init",
+      "source_address": "0xc344108",
+      "target_address": "0xc344108",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "app_launcher_del",
+      "source_address": "0xc572cf4",
+      "target_address": "0xc572cf4",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "app_lookup",
+      "source_address": "0xc6ac54c",
+      "target_address": "0xc6ac53c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_adapter_get_instance",
+      "source_address": "0xc56f644",
+      "target_address": "0xc56f644",
+      "status": "CANDIDATE",
+      "basis": "callback reference correspondence plus complete callee body equality"
+    },
+    {
+      "name": "bt_adapter_get_scan_mode",
+      "source_address": "0xc66b0c0",
+      "target_address": "0xc66b0b0",
+      "status": "CANDIDATE",
+      "basis": "ensemble search candidate only; no semantic promotion"
+    },
+    {
+      "name": "bt_adapter_get_state",
+      "source_address": "0xc46a44c",
+      "target_address": "0xc46a44c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_adapter_register",
+      "source_address": "0xc46a38e",
+      "target_address": "0xc46a38e",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_adapter_register_a2dp_callbacks",
+      "source_address": "0xc8ac188",
+      "target_address": "0xc8ac178",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_adapter_register_hfp_ag_callbacks",
+      "source_address": "0xc8abf64",
+      "target_address": "0xc8abf54",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_adapter_unregister",
+      "source_address": "0xc46a3f8",
+      "target_address": "0xc46a3f8",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_get_pairing_state",
+      "source_address": "0xc43e73a",
+      "target_address": "0xc43e73a",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_l2cap_connect",
+      "source_address": "0xc86f020",
+      "target_address": "0xc86f010",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_pair_display_reply",
+      "source_address": "0xc46a9fe",
+      "target_address": "0xc46a9fe",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_pair_request_reply",
+      "source_address": "0xc46a9c4",
+      "target_address": "0xc46a9c4",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_socket_server_receive",
+      "source_address": "0xc4b3218",
+      "target_address": "0xc4b3218",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "cache_barrier",
+      "source_address": "0xc91e542",
+      "target_address": "0xc91e532",
+      "status": "STATIC_RECOVERED",
+      "basis": "same instruction offset inside a matching complete function body (interior leaf)"
+    },
+    {
+      "name": "cache_d_clean_all",
+      "source_address": "0xc93021a",
+      "target_address": "0xc93020a",
+      "status": "STATIC_RECOVERED",
+      "basis": "same instruction offset inside a matching complete function body (interior leaf)"
+    },
+    {
+      "name": "cache_i_clean_invalidate_all",
+      "source_address": "0xc0c181e",
+      "target_address": "0xc0c181e",
+      "status": "STATIC_RECOVERED",
+      "basis": "same instruction offset inside a matching complete function body (interior leaf)"
+    },
+    {
+      "name": "clock_gettime",
+      "source_address": "0xc34d58c",
+      "target_address": "0xc34d58c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "close",
+      "source_address": "0xc33818c",
+      "target_address": "0xc33818c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "controller_crash_dump",
+      "source_address": "0xc92c388",
+      "target_address": "0xc92c378",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "core_bt_pair_request_callback",
+      "source_address": "0xc4f438c",
+      "target_address": "0xc4f438c",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "driver_close_dispatch",
+      "source_address": "0xc53e2bc",
+      "target_address": "0xc53e2bc",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "driver_ioctl_dispatch",
+      "source_address": "0xc7d48e0",
+      "target_address": "0xc7d48d0",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "errno_location",
+      "source_address": "0xc349538",
+      "target_address": "0xc349538",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "firmware_log",
+      "source_address": "0xc36c71c",
+      "target_address": "0xc36c71c",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "heap_free",
+      "source_address": "0xc34cd2c",
+      "target_address": "0xc34cd2c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "heap_mallinfo",
+      "source_address": "0xc3608b8",
+      "target_address": "0xc3608b8",
+      "status": "CANDIDATE",
+      "basis": "ensemble search candidate only; no semantic promotion"
+    },
+    {
+      "name": "heap_malloc",
+      "source_address": "0xc3513e8",
+      "target_address": "0xc3513e8",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "heap_zalloc",
+      "source_address": "0xc484430",
+      "target_address": "0xc484430",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "hfp_ag_connect",
+      "source_address": "0xc46bdd8",
+      "target_address": "0xc46bdd8",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "hfp_ag_disconnect",
+      "source_address": "0xc531644",
+      "target_address": "0xc531644",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "hidden_and_show_app_cb",
+      "source_address": "0xc547988",
+      "target_address": "0xc547988",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "firmware_build_string",
+      "source_address": "0x0CA0D28E",
+      "target_address": "0xca0a91e",
+      "status": "STATIC_RECOVERED",
+      "basis": "exact .155 identity bytes and IDB SHA"
+    },
+    {
+      "name": "firmware_version_string",
+      "source_address": "0x0CA0D216",
+      "target_address": "0xca0a8a6",
+      "status": "STATIC_RECOVERED",
+      "basis": "exact .155 identity bytes and IDB SHA"
+    },
+    {
+      "name": "insmod",
+      "source_address": null,
+      "target_address": null,
+      "status": "FORBIDDEN",
+      "basis": "no executable address"
+    },
+    {
+      "name": "interconnect_close",
+      "source_address": "0xc908358",
+      "target_address": "0xc908348",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "interconnect_connect",
+      "source_address": "0xc3ccef4",
+      "target_address": "0xc3ccef4",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "interconnect_send",
+      "source_address": "0xc3605bc",
+      "target_address": "0xc3605bc",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "ioctl",
+      "source_address": "0xc341e38",
+      "target_address": "0xc341e38",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "kmem_free",
+      "source_address": "0xc34ccb8",
+      "target_address": "0xc34ccb8",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lseek",
+      "source_address": "0xc33d510",
+      "target_address": "0xc33d510",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_bar_create",
+      "source_address": "0xc3ad7f4",
+      "target_address": "0xc3ad7f4",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_bar_set_range",
+      "source_address": "0xc3ad920",
+      "target_address": "0xc3ad920",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_bar_set_value",
+      "source_address": "0xc3ad8b4",
+      "target_address": "0xc3ad8b4",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_cache_drop",
+      "source_address": "0x0c8b8cae",
+      "target_address": "0xc8b8c9e",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_event_get_code",
+      "source_address": "0xc0f7728",
+      "target_address": "0xc0f7728",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_event_get_user_data",
+      "source_address": "0xc720f20",
+      "target_address": "0xc720f10",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_image_cache_drop",
+      "source_address": "0x0c3a3888",
+      "target_address": "0xc3a3888",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_image_create",
+      "source_address": "0xc3ae1d0",
+      "target_address": "0xc3ae1d0",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_image_set_src",
+      "source_address": "0xc3b2c28",
+      "target_address": "0xc3b2c28",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "_lv_inv_area",
+      "source_address": "0x0c382428",
+      "target_address": "0xc382428",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_add_event_cb",
+      "source_address": "0xc37fc1c",
+      "target_address": "0xc37fc1c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_align_to",
+      "source_address": "0xc3877b0",
+      "target_address": "0xc3877b0",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_clear_flag",
+      "source_address": "0xc3840d8",
+      "target_address": "0xc3840d8",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_move_to_index",
+      "source_address": "0xc3846ac",
+      "target_address": "0xc3846ac",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_remove_style_all",
+      "source_address": "0xc38583c",
+      "target_address": "0xc38583c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_set_hidden",
+      "source_address": "0xc721318",
+      "target_address": "0xc721308",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_set_style_bg_opa",
+      "source_address": "0xc6c7dcc",
+      "target_address": "0xc6c7dbc",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_set_style_pad_bottom",
+      "source_address": "0xc387c6e",
+      "target_address": "0xc387c6e",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_set_style_pad_top",
+      "source_address": "0xc387c58",
+      "target_address": "0xc387c58",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_set_width",
+      "source_address": "0xc387b2e",
+      "target_address": "0xc387b2e",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_timer_create",
+      "source_address": "0xc3abd20",
+      "target_address": "0xc3abd20",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_timer_del",
+      "source_address": "0xc3abe70",
+      "target_address": "0xc3abe70",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvgl_posix_open",
+      "source_address": "0x0c3a6194",
+      "target_address": "0xc3a6194",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_content_pad_bottom",
+      "source_address": "0xc387c6e",
+      "target_address": "0xc387c6e",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_label_create",
+      "source_address": "0xc3ab300",
+      "target_address": "0xc3ab300",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_label_set_long_mode",
+      "source_address": "0xc3b3f5c",
+      "target_address": "0xc3b3f5c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_label_set_text",
+      "source_address": "0xc3b3948",
+      "target_address": "0xc3b3948",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_list_item_add_content",
+      "source_address": "0xc50fad0",
+      "target_address": "0xc50fad0",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_list_item_create",
+      "source_address": "0xc50f4e4",
+      "target_address": "0xc50f4e4",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_list_item_update",
+      "source_address": "0xc50ec5c",
+      "target_address": "0xc50ec5c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_list_row_create",
+      "source_address": "0xc78aa68",
+      "target_address": "0xc78aa58",
+      "status": "CANDIDATE",
+      "basis": "callback reference correspondence plus complete callee body equality"
+    },
+    {
+      "name": "lvx_list_row_trailing",
+      "source_address": "0xc3a06c4",
+      "target_address": "0xc3a06c4",
+      "status": "CANDIDATE",
+      "basis": "callback reference correspondence plus complete callee body equality"
+    },
+    {
+      "name": "lvx_msgbox_create",
+      "source_address": "0xc43e7d0",
+      "target_address": "0xc43e7d0",
+      "status": "CANDIDATE",
+      "basis": "ensemble search candidate only; no semantic promotion"
+    },
+    {
+      "name": "lvx_msgbox_set_content",
+      "source_address": "0xc566b9c",
+      "target_address": "0xc566b9c",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_notification_insert_message",
+      "source_address": "0xc8f2bb0",
+      "target_address": "0xc8f2ba0",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_object_align",
+      "source_address": "0xc387788",
+      "target_address": "0xc387788",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_object_create",
+      "source_address": "0xc380686",
+      "target_address": "0xc380686",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_object_delete",
+      "source_address": "0xc720ea8",
+      "target_address": "0xc720e98",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_object_set_size",
+      "source_address": "0xc387ba8",
+      "target_address": "0xc387ba8",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_page_content_create",
+      "source_address": "0xc693f78",
+      "target_address": "0xc3ab258",
+      "status": "CANDIDATE",
+      "basis": "ensemble search candidate only; no semantic promotion"
+    },
+    {
+      "name": "lvx_page_title_create",
+      "source_address": "0xc89e7dc",
+      "target_address": "0xc89e7cc",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_style_apply",
+      "source_address": "0xc4fbe54",
+      "target_address": "0xc4fbe54",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "mm_mallinfo",
+      "source_address": "0xc34f0a0",
+      "target_address": "0xc34f0a0",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "mm_memalign",
+      "source_address": "0xc3507e8",
+      "target_address": "0xc3507e8",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "modhandle",
+      "source_address": "0xc36dd44",
+      "target_address": "0xc36dd44",
+      "status": "CANDIDATE",
+      "basis": "ensemble search candidate only; no semantic promotion"
+    },
+    {
+      "name": "kmem_heap_slot",
+      "source_address": "0x200b01c8",
+      "target_address": "0x200b01c8",
+      "status": "STATIC_RECOVERED",
+      "basis": "ordered reference correspondence in matching complete function bodies"
+    },
+    {
+      "name": "mpu_region_bitmap",
+      "source_address": "0x200f5190",
+      "target_address": "0x200f5190",
+      "status": "STATIC_RECOVERED",
+      "basis": "ordered reference correspondence in matching complete function bodies"
+    },
+    {
+      "name": "umem_heap_descriptor",
+      "source_address": "0x3c356b40",
+      "target_address": "0x3c356b40",
+      "status": "STATIC_RECOVERED",
+      "basis": "ordered reference correspondence in matching complete function bodies"
+    },
+    {
+      "name": "umem_heap_slot",
+      "source_address": "0x200b2590",
+      "target_address": "0x200b2590",
+      "status": "STATIC_RECOVERED",
+      "basis": "ordered reference correspondence in matching complete function bodies"
+    },
+    {
+      "name": "offload_property_apply",
+      "source_address": "0xc468674",
+      "target_address": "0xc468674",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "open",
+      "source_address": "0xc342c54",
+      "target_address": "0xc342c54",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "page_finish",
+      "source_address": "0xc69b5ac",
+      "target_address": "0xc69b59c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "page_goto",
+      "source_address": "0xc8ed780",
+      "target_address": "0xc8ed770",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "page_navigator_open_page",
+      "source_address": "0xc4eec84",
+      "target_address": "0xc4eec84",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_adapter_set_scan_mode",
+      "source_address": "0xc789cf8",
+      "target_address": "0xc789ce8",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_alloc",
+      "source_address": "0xc351724",
+      "target_address": "0xc351724",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_buffer_new",
+      "source_address": "0xc862ed2",
+      "target_address": "0xc862ec2",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_create_bond_private",
+      "source_address": "0xc342412",
+      "target_address": "0xc342412",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_discovery_start",
+      "source_address": "0xc46a472",
+      "target_address": "0xc46a472",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_discovery_stop",
+      "source_address": "0xc46a49a",
+      "target_address": "0xc46a49a",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_free",
+      "source_address": "0xc34cd2c",
+      "target_address": "0xc34cd2c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_get_bond_state",
+      "source_address": "0xc46a884",
+      "target_address": "0xc46a884",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_l2cap_disconnect",
+      "source_address": "0xc86f0a4",
+      "target_address": "0xc86f094",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_l2cap_owner",
+      "source_address": "0x200be890",
+      "target_address": "0x200be890",
+      "status": "STATIC_RECOVERED",
+      "basis": "ordered reference correspondence in matching complete function bodies"
+    },
+    {
+      "name": "bt_l2cap_submit_cid",
+      "source_address": "0xc86f0cc",
+      "target_address": "0xc86f0bc",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_queue_external",
+      "source_address": "0xc863bc4",
+      "target_address": "0xc863bb4",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_queue_free",
+      "source_address": "0xc858998",
+      "target_address": "0xc858988",
+      "status": "STATIC_RECOVERED",
+      "basis": "callback reference correspondence plus complete callee body equality"
+    },
+    {
+      "name": "bt_remove_bond_private",
+      "source_address": "0xc3d5280",
+      "target_address": "0xc3d5280",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_shared_adapter",
+      "source_address": "0x200c3148",
+      "target_address": "0x200c3148",
+      "status": "STATIC_RECOVERED",
+      "basis": "ordered reference correspondence in matching complete function bodies"
+    },
+    {
+      "name": "bt_socket_client_sendrecv",
+      "source_address": "0xc46a218",
+      "target_address": "0xc46a218",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_timer_add",
+      "source_address": "0xc8c7ff0",
+      "target_address": "0xc8c7fe0",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_timer_cancel",
+      "source_address": "0xc863010",
+      "target_address": "0xc863000",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "bt_timer_cancel_owned",
+      "source_address": "0xc863058",
+      "target_address": "0xc863048",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "gap_host_receive_slot",
+      "source_address": "0x200bda80",
+      "target_address": "0x200bda80",
+      "status": "STATIC_RECOVERED",
+      "basis": "exact .155 IDB initializer/consumer xrefs"
+    },
+    {
+      "name": "gap_host_stock_receive",
+      "source_address": "0xc863c98",
+      "target_address": "0xc863c88",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lv_obj_set_local_style_prop",
+      "source_address": "0xc3872b4",
+      "target_address": "0xc3872b4",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "sdp_builder_create",
+      "source_address": "0xc88555c",
+      "target_address": "0xc88554c",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "sdp_commit",
+      "source_address": "0xc86f2cc",
+      "target_address": "0xc86f2bc",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "sdp_set_raw_attribute",
+      "source_address": "0xc86f140",
+      "target_address": "0xc86f130",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "sdp_unregister",
+      "source_address": "0xc86f3e0",
+      "target_address": "0xc86f3d0",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "style_misans_medium_24",
+      "source_address": "0x200c1568",
+      "target_address": "0x200c1568",
+      "status": "STATIC_RECOVERED",
+      "basis": "ordered reference correspondence in matching complete function bodies"
+    },
+    {
+      "name": "style_misans_medium_28",
+      "source_address": "0x200c1574",
+      "target_address": "0x200c1574",
+      "status": "STATIC_RECOVERED",
+      "basis": "ordered reference correspondence in matching complete function bodies"
+    },
+    {
+      "name": "protobuf_set_ordered_app_list",
+      "source_address": "0xc54cb6c",
+      "target_address": "0xc54cb6c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "pthread_create_internal",
+      "source_address": "0xc91bf34",
+      "target_address": "0xc91bf24",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "quickapp_register_app",
+      "source_address": "0xc5239c4",
+      "target_address": "0xc5239c4",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "read",
+      "source_address": "0xc33d784",
+      "target_address": "0xc33d784",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "register_blockdriver",
+      "source_address": "0xc46c25a",
+      "target_address": "0xc46c25a",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "register_driver",
+      "source_address": "0xc914f64",
+      "target_address": "0xc914f54",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "rename",
+      "source_address": "0xc33d79c",
+      "target_address": "0xc33d79c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "rmmod",
+      "source_address": "0xc32a690",
+      "target_address": "0xc32a690",
+      "status": "CANDIDATE",
+      "basis": "callback reference correspondence plus complete callee body equality"
+    },
+    {
+      "name": "sem_post",
+      "source_address": "0xc359150",
+      "target_address": "0xc359150",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "sem_trywait",
+      "source_address": "0xc358c40",
+      "target_address": "0xc358c40",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "sem_wait",
+      "source_address": "0xc358ce0",
+      "target_address": "0xc358ce0",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "service_manager_cleanup",
+      "source_address": "0xc5ab3b8",
+      "target_address": "0xc5ab3b8",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "service_manager_get_profile",
+      "source_address": "0xc54a06c",
+      "target_address": "0xc54a06c",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "service_manager_register",
+      "source_address": "0xc573ba8",
+      "target_address": "0xc573ba8",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "service_manager_shutdown",
+      "source_address": "0xc90d84c",
+      "target_address": "0xc90d83c",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "service_manager_startup",
+      "source_address": "0xc90d8ac",
+      "target_address": "0xc90d89c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "sport_titlebar_dispatch",
+      "source_address": "0xc341178",
+      "target_address": "0xc341178",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "system_router_app_wrapper",
+      "source_address": "0xc45be22",
+      "target_address": "0xc45be22",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "system_router_get_pages_wrapper",
+      "source_address": "0xc8e21bc",
+      "target_address": "0xc8e21ac",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "thirdparty_submit_message_content",
+      "source_address": "0xc9427f0",
+      "target_address": "0xc9427e0",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_image_set_scale",
+      "source_address": "0xc3ae46e",
+      "target_address": "0xc3ae46e",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "lvx_object_add_flag",
+      "source_address": "0xc38404c",
+      "target_address": "0xc38404c",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "unlink",
+      "source_address": "0xc33dbec",
+      "target_address": "0xc33dbec",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "unregister_blockdriver",
+      "source_address": "0xc7b955e",
+      "target_address": "0xc7b954e",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "unregister_driver",
+      "source_address": "0xc6678c4",
+      "target_address": "0xc6678b4",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "vendor_hci_transport_register",
+      "source_address": "0xc6c922c",
+      "target_address": "0xc6c921c",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "watchface_manager_delete_watchface",
+      "source_address": "0xc6c6650",
+      "target_address": "0xc6c6640",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "watchface_reset_watchface",
+      "source_address": "0xc5f3474",
+      "target_address": "0xc5f3474",
+      "status": "CANDIDATE",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    },
+    {
+      "name": "write",
+      "source_address": "0xc33dc4e",
+      "target_address": "0xc33dc4e",
+      "status": "STATIC_RECOVERED",
+      "basis": "matching full instruction body; unique identity or ordered reference corroboration"
+    }
+  ],
+  "native": {
+    "0xc0c181f": {
+      "target": "0xc0c181f",
+      "basis": "interior offset of identical whole body 0xc0c1800"
+    },
+    "0xc33818d": {
+      "target": "0xc33818d",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc33d785": {
+      "target": "0xc33d785",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc33d79d": {
+      "target": "0xc33d79d",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc33dbed": {
+      "target": "0xc33dbed",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc33dc4f": {
+      "target": "0xc33dc4f",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc342c55": {
+      "target": "0xc342c55",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc349539": {
+      "target": "0xc349539",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc34ccb9": {
+      "target": "0xc34ccb9",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc34cd2d": {
+      "target": "0xc34cd2d",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc34f0a1": {
+      "target": "0xc34f0a1",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3507e9": {
+      "target": "0xc3507e9",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc37fc1d": {
+      "target": "0xc37fc1d",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc380687": {
+      "target": "0xc380687",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc38404d": {
+      "target": "0xc38404d",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3840d9": {
+      "target": "0xc3840d9",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc38583d": {
+      "target": "0xc38583d",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3877b1": {
+      "target": "0xc3877b1",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc387b2f": {
+      "target": "0xc387b2f",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc387ba9": {
+      "target": "0xc387ba9",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc387c59": {
+      "target": "0xc387c59",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc387c6f": {
+      "target": "0xc387c6f",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3ab301": {
+      "target": "0xc3ab301",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3ad7f5": {
+      "target": "0xc3ad7f5",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3ad8b5": {
+      "target": "0xc3ad8b5",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3ad921": {
+      "target": "0xc3ad921",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3ae1d1": {
+      "target": "0xc3ae1d1",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3b2c29": {
+      "target": "0xc3b2c29",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3b3949": {
+      "target": "0xc3b3949",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc3b3f5d": {
+      "target": "0xc3b3f5d",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc4fbe55": {
+      "target": "0xc4fbe55",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc50ec5d": {
+      "target": "0xc50ec5d",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc50f4e5": {
+      "target": "0xc50f4e5",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc50fad1": {
+      "target": "0xc50fad1",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc547b55": {
+      "target": "0xc547b55",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc69b5ad": {
+      "target": "0xc69b59d",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc6ab351": {
+      "target": "0xc6ab341",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc6ac54d": {
+      "target": "0xc6ac53d",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc89e7dd": {
+      "target": "0xc89e7cd",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc8ed781": {
+      "target": "0xc8ed771",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc8f2bb1": {
+      "target": "0xc8f2ba1",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc914f65": {
+      "target": "0xc914f55",
+      "basis": "whole-body + unique identity/callers"
+    },
+    "0xc91e543": {
+      "target": "0xc91e533",
+      "basis": "interior offset of identical whole body 0xc91e530"
+    },
+    "0xc93021b": {
+      "target": "0xc93020b",
+      "basis": "interior offset of identical whole body 0xc930214"
+    },
+    "0x200b01c8": {
+      "target": "0x200b01c8",
+      "basis": "ordered literal refs from 6 matching owners"
+    },
+    "0x200b2590": {
+      "target": "0x200b2590",
+      "basis": "ordered literal refs from 21 matching owners"
+    },
+    "0x200c1568": {
+      "target": "0x200c1568",
+      "basis": "ordered literal refs from 315 matching owners"
+    },
+    "0x200c1574": {
+      "target": "0x200c1574",
+      "basis": "ordered literal refs from 559 matching owners"
+    },
+    "0x200f5190": {
+      "target": "0x200f5190",
+      "basis": "ordered literal refs from 3 matching owners"
+    },
+    "0x3c356b40": {
+      "target": "0x3c356b40",
+      "basis": "ordered literal refs from 1 matching owners"
+    }
+  },
+  "independent_idb": {
+    "input_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "segments": [
+      [
+        "0xc0c0000",
+        "0xc0c0010",
+        "BES_HEADER"
+      ],
+      [
+        "0xc0c0010",
+        "0xcc4be54",
+        "XIP_TEXT_RO"
+      ],
+      [
+        "0xcc4be54",
+        "0xcc7c068",
+        "XIP_DATA_LMA"
+      ],
+      [
+        "0xcc7c068",
+        "0xcc7c1d4",
+        "XIP_BOOTINFO"
+      ],
+      [
+        "0x2007dcc8",
+        "0x200adedc",
+        "DATA"
+      ],
+      [
+        "0x200adedc",
+        "0x201029a4",
+        "BSS"
+      ],
+      [
+        "0x2015f2c0",
+        "0x2015fec0",
+        "MSP_STACK"
+      ],
+      [
+        "0x280c0000",
+        "0x28c7c068",
+        "FLASH_NC"
+      ],
+      [
+        "0x28c7c068",
+        "0x28c7c1d4",
+        "BOOT_INFO"
+      ],
+      [
+        "0x2c0c0000",
+        "0x2cc7c1d4",
+        "FLASH_CACHED"
+      ]
+    ],
+    "gap_slot_xrefs": [
+      {
+        "target": "0x200bda80",
+        "from": "0xc476a0c",
+        "function": "0xc476990"
+      },
+      {
+        "target": "0x200bda80",
+        "from": "0xc8765c6",
+        "function": "0xc8765bc"
+      },
+      {
+        "target": "0x200bda80",
+        "from": "0xc8765d8",
+        "function": "0xc8765d0"
+      },
+      {
+        "target": "0x200bda84",
+        "from": "0xc47368c",
+        "function": "0xc473178"
+      },
+      {
+        "target": "0x200bda84",
+        "from": "0xc4737f8",
+        "function": null
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc86ad3c",
+        "function": "0xc86ad18"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc86ade4",
+        "function": "0xc86add4"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc86ae1a",
+        "function": "0xc86ae10"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc86aeb0",
+        "function": "0xc86ae8c"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc870cd2",
+        "function": "0xc870c50"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc870cf6",
+        "function": "0xc870c50"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc870d2c",
+        "function": null
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc8710ce",
+        "function": "0xc8710a8"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc871158",
+        "function": "0xc8710a8"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc871162",
+        "function": "0xc8710a8"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87117c",
+        "function": null
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc8711b4",
+        "function": "0xc871184"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc8727ce",
+        "function": "0xc872784"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc8727ec",
+        "function": null
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87280e",
+        "function": "0xc8727f0"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc877a26",
+        "function": "0xc877a1c"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc878320",
+        "function": "0xc878310"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87862c",
+        "function": "0xc878618"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc879934",
+        "function": "0xc879918"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87ac1c",
+        "function": "0xc87ac14"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87b42e",
+        "function": "0xc87b414"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87c00a",
+        "function": "0xc87c000"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87c12e",
+        "function": "0xc87c080"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87c1b4",
+        "function": "0xc87c080"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87c1c8",
+        "function": "0xc87c080"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87c1ce",
+        "function": "0xc87c080"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87c2c0",
+        "function": null
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87ec22",
+        "function": "0xc87ec1c"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc87ef0a",
+        "function": "0xc87eeec"
+      },
+      {
+        "target": "0x200bda70",
+        "from": "0xc888af4",
+        "function": "0xc888aec"
+      }
+    ],
+    "0xc858988": "int __fastcall sub_C858988(int a1, int a2, int a3)\n{\n  return sub_C34CD2C(a3);\n}\n",
+    "0xc863c88": "int __fastcall sub_C863C88(int a1, unsigned __int8 *a2, unsigned int a3)\n{\n  unsigned int v3; // r3\n  unsigned __int8 *v5; // r6\n  unsigned int v6; // r4\n  unsigned int v7; // r4\n  int v8; // r0\n  int v9; // r9\n  unsigned __int8 *v11; // r3\n  int v12; // t1\n  unsigned int v13; // r4\n  _DWORD *v14; // r5\n  int v15; // r1\n\n  v3 = *a2;\n  v5 = a2;\n  v6 = a3;\n  if ( v3 == 4 )\n  {\n    if ( a2[1] == 39 )\n    {\n      v11 = &a2[a3];\n      while ( v6 > 0x12 )\n      {\n        v12 = *--v11;\n        if ( v12 != 0 )\n          break;\n        a2 = (unsigned __int8 *)(v6 - 1);\n        if ( *(v11 - 1) != 0 )\n          break;\n        --v6;\n      }\n      v5[2] = v6 - 3;\n    }\n    v13 = v6 - 1;\n    v14 = (_DWORD *)sub_C351724(12, a2);\n    *v14 = a1;\n    v14[1] = sub_C351724(v13, v15);\n    ((void (*)(void))sub_C721210)();\n    v14[2] = v14[1] + v13;\n    sub_C863BB4(dword_200BE88C, sub_C865B04, sub_C865B04, v14, 1);\n  }\n  else\n  {\n    if ( v3 > 4 )\n    {\n      if ( v3 != 5 )\n        return 1;\n      goto LABEL_4;\n    }\n    if ( v3 - 2 <= 1 )\n    {\nLABEL_4:\n      v7 = a3 - 1;\n      v8 = sub_C862EC2((unsigned __int16)(a3 - 1), 0);\n      *(_DWORD *)(v8 + 4) = a1;\n      v9 = v8;\n      sub_C721210(*(unsigned __int16 *)(v8 + 2) + v8 + 4, v5 + 1, v7);\n      sub_C863BB4(dword_200BE88C, *(&off_2CAAA024 + *v5 - 2), sub_C858988, v9, 1);\n    }\n  }\n  return 1;\n}\n"
+  }
+}

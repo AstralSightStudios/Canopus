@@ -26,6 +26,40 @@ def candidate(target_index: int, score: float) -> dict:
 
 
 class EnsembleFeedbackTests(unittest.TestCase):
+    def test_function_candidate_does_not_inherit_callable_address(self):
+        source = {'symbol_id': 'old.function', 'target_id': 'old', 'name': 'function',
+                  'kind': 'function', 'callable_address': '0x1001'}
+        result = {'evidence_id': 'EVID-TEST', 'target_firmware_sha256': '0' * 64,
+                  'matcher': 'test', 'source_target_id': 'old', 'state': 'REVIEW_REQUIRED',
+                  'confidence_heuristic': .99, 'margin': .9}
+        record = MATCHER.make_symbol_candidate(source, 'new', {'addr': '0x9000'}, result, 'report.json')
+        self.assertNotIn('callable_address', record)
+        self.assertEqual(record['status'], 'CANDIDATE')
+        self.assertEqual(record['approval_state'], 'PENDING')
+
+    def test_aliases_do_not_displace_other_physical_functions(self):
+        targets = [{"addr": "0x9000"}, {"addr": "0xa000"}]
+        problems = [
+            {"symbol": {"name": "heap_free", "entry_address": "0x1000"}, "candidates": [candidate(0, .99), candidate(1, .5)]},
+            {"symbol": {"name": "bt_free", "entry_address": "0x1000"}, "candidates": [candidate(0, .98), candidate(1, .5)]},
+            {"symbol": {"name": "other", "entry_address": "0x2000"}, "candidates": [candidate(1, .90), candidate(0, .4)]},
+        ]
+        result = MATCHER.assign_one_to_one(problems, targets)
+        self.assertEqual([result[p['symbol']['name']]['selected_index'] for p in problems], [0, 0, 0])
+        # A hard-negative-filtered alias must not quietly take another body.
+        problems[1]['candidates'] = [candidate(1, .5)]
+        result = MATCHER.assign_one_to_one(problems, targets)
+        self.assertIsNone(result['bt_free']['selected_index'])
+
+    def test_full_body_seeds_require_mutual_uniqueness_and_substantial_code(self):
+        def fn(address, digest='a', count=12):
+            return {'addr': address, 'body_fingerprint': {'algorithm': 'thumb-full-v1', 'sha256': digest * 64, 'instructions': count}}
+        source = [fn('0x1000'), fn('0x2000', 'b', 2)]
+        target = [fn('0x9000'), fn('0xa000', 'b', 2)]
+        self.assertEqual(MATCHER.unique_body_anchors(source, target), {0x1000: 0x9000})
+        self.assertEqual(MATCHER.unique_body_anchors(source, target + [fn('0xb000')]), {})
+        self.assertEqual(MATCHER.unique_body_anchors(source + [fn('0x3000')], target), {})
+
     def test_semantic_symbol_name_drives_hard_negative(self) -> None:
         source = {
             "name": "sub_C1000",

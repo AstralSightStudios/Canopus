@@ -12,6 +12,7 @@ target-xiaomi-band-10-pro-3-101-036 = ["dep:canopus-target-generated", "canopus-
 target-xiaomi-band-10-pro-3-101-043 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-10-pro-3-101-043"]
 target-xiaomi-band-9-pro-3-1-175 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-9-pro-3-1-175"]
 target-xiaomi-band-11-4-100-139 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-11-4-100-139"]
+target-xiaomi-band-11-4-100-155 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-11-4-100-155"]
 target-xiaomi-band-9-3-1-32 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-9-3-1-32"]
 
 [dependencies]

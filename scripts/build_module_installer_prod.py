@@ -13,6 +13,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCTS = {
+    'resource-hook': ('resource_hook', 'Resource Hook', 393216, []),
     'bluetooth-audio': ('bluetooth_audio', 'Bluetooth Audio', 262144,
                         ['appicon_headphones.bin']),
     'lyra-player': ('lyra_player', 'Lyra Player', 393216,
@@ -20,7 +21,7 @@ PRODUCTS = {
                      'lyra-pause.bin', 'lyra-next.bin']),
 }
 SUPPORTED = ['xiaomi-band-10-pro-3.101.036', 'xiaomi-band-10-pro-3.101.043',
-             'xiaomi-band-11-4.100.139']
+             'xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155']
 
 
 def lua(value):
@@ -38,6 +39,8 @@ def lua(value):
 
 
 def render(product, targets):
+    if product == 'resource-hook' and (not targets or any(t not in ['xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155'] for t in targets)):
+        raise ValueError('resource-hook supports only Band 11 .139/.155')
     if not targets or len({t.rsplit('-', 1)[0] for t in targets}) != 1:
         raise ValueError('a watchface must contain exactly one device family')
     token, title, maximum, assets = PRODUCTS[product]
@@ -123,10 +126,10 @@ def main():
     docs = base / 'docs'
     docs.mkdir(exist_ok=True)
     (docs / 'README.md').write_text(
-        '# ' + PRODUCTS[args.product][1] + ' production installers\n\n'
-        'Select a device folder, not this parent directory:\n\n'
-        '- `xiaomi-band-10-pro/`: firmware 3.101.036 and 3.101.043.\n'
-        '- `xiaomi-band-11/`: firmware 4.100.139; exact-target private runtime included.\n\n'
+        '# ' + PRODUCTS[args.product][1] + (' integration installers\n\n' if args.product == 'resource-hook' else ' production installers\n\n') +
+        'Select a device folder, not this parent directory:\n\n' +
+        ''.join('- `' + device + '/`: ' + ', '.join(targets) + '.\n'
+                for device, targets in groups.items()) + '\n' +
         'The build selection controls which firmware versions are included in each device folder.\n'
         'Pack that folder\'s single main.lua and all .bin files. The folder\'s build/ contains its ZIP and hash manifest; docs/ is not packed.\n'
         'Update the framework Supervisor first: external installers use ordinary IO at /canopus/install.\n'
@@ -154,6 +157,8 @@ def build_device(args, validate_only=False):
                 and struct.unpack_from('<I', receipt, 24)[0] == len(module)
                 and receipt[144:176] == hashlib.sha256(module).digest()):
             raise ValueError('receipt/payload/target mismatch: ' + target)
+        if args.product == 'resource-hook' and struct.unpack_from('<2I', receipt, 16) != (1, 3):
+            raise ValueError('resource-hook requires resident lifecycle and module version 3')
         verify_signature(receipt)
         resources[args.product + '-' + target + '.bin'] = module
         resources[args.product + '-' + target + '.cmi.bin'] = receipt
@@ -203,7 +208,10 @@ def build_device(args, validate_only=False):
             bundle.writestr(name, data)
     pending = any(item['runtime_pending'] for item in config['targets'].values())
     (docs / 'README.md').write_text(
-        '# ' + config['title'] + ' production installer\n\n'
+        '# ' + config['title'] + (' integration installer\n\n' if args.product == 'resource-hook' else ' production installer\n\n') +
+        ('Resource Hook is NOT_PROBED on hardware. Upload mappings.tsv and theme resources separately before enabling. '
+         'No automatic miwear restart or complete font/image cache refresh is implemented.\n\n'
+         if args.product == 'resource-hook' else '') +
         'Build targets: ' + ', '.join(args.target) + '\n\n'
         'Pack only main.lua and the .bin files in this directory. Requires the matching resident Canopus Supervisor.\n'
         'Opening the watchface installs the signed module in the disabled state; it does not enable or bootstrap the framework.\n'

@@ -7,6 +7,7 @@ TARGETS=${CANOPUS_PROD_TARGETS:-"
   xiaomi-band-10-pro-3.101.043
   xiaomi-band-9-3.1.32
   xiaomi-band-11-4.100.139
+  xiaomi-band-11-4.100.155
 "}
 BUILD_SCRIPT="$ROOT/scripts/build_canopus_supervisor.sh"
 
@@ -23,7 +24,7 @@ for target in $TARGETS; do
 
     case "$target" in
         xiaomi-band-9-*) BAND9_REQUESTED=true ;;
-        xiaomi-band-11-4.100.139)
+        xiaomi-band-11-4.100.139|xiaomi-band-11-4.100.155)
             BAND11_REQUESTED=true
             ;;
     esac

@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.bt_adapter_get_instance",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "bt_adapter_get_instance",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc56f644",
+  "prototype": "void *()",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_module_bluetooth_client"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Exact .155 image/IDB, compared with targets/xiaomi-band-11-4.100.139/symbols/xiaomi-band-11-4.100.139.bt_adapter_get_instance.json: callback reference correspondence plus complete callee body equality."
+  },
+  "approval_state": "PENDING",
+  "notes": "callback reference correspondence plus complete callee body equality. Source semantic status was CANDIDATE; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the baseline record only within the audited port scope. Physical device validation pending."
+}

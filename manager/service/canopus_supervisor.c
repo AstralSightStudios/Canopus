@@ -1188,6 +1188,24 @@ int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *s
         struct canopus_sup_module_v1 *module = &sup->modules[i];
         int st;
 
+        /* The caller must own the UI transaction. Rebinding a resident
+         * module is separate from loading a new image, and does not establish
+         * that a task restart reset the firmware's graphics state. */
+        if (module->intent == CANOPUS_SUP_INTENT_ENABLED &&
+            module->state == CANOPUS_STATE_BOOT_RESIDENT &&
+            module->descriptor != 0 &&
+            (module->descriptor->flags &
+             CANOPUS_FLAG_REACTIVATE_AFTER_UI_RESTART) != 0u) {
+            int rebind_rc = module->descriptor->activate != 0
+                ? module->descriptor->activate(0)
+                : CANOPUS_SUP_ERR_DESCRIPTOR_MISSING;
+            module->activation_error = (uint32_t)rebind_rc;
+            if (rebind_rc != 0) {
+                failed = -1;
+                sup->error_code = CANOPUS_SUP_ERR_ACTIVATE;
+            }
+            continue;
+        }
         if (module->intent != CANOPUS_SUP_INTENT_ENABLED ||
             module->state != CANOPUS_STATE_INSTALLED) {
             continue;

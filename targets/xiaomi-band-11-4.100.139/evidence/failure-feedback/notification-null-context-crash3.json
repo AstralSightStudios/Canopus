@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "failure_id": "BAND11-139-CRASH3",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "stage": "manager-registration-notification",
+  "observed_error": "Precise BusFault PC=0x0c55fe06 LR=0x0c5595d5 BFAR=0x0000000d R5=0",
+  "root_cause": "Reminder consumer unconditionally reads a missing 16-byte user context; insertion-only emulation stubbed the failing consumer.",
+  "negative_matches": [],
+  "negative_abi_assumptions": [
+    "message+92 may be null whenever callbacks and is_focus are zero",
+    "emulating insertion while stubbing event delivery verifies the notification consumer"
+  ],
+  "corrective_evidence_id": "EVID-NOTIFICATION-4139-002"
+}

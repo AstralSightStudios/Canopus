@@ -323,13 +323,20 @@ def main() -> None:
         sys.exit(1)
 
     t0 = time.time()
-    rc = idapro.open_database(str(args.idb), True)
+    rc = idapro.open_database(str(args.idb), False)
     if rc != 0:
         print(f"error: open_database returned {rc} "
               f"(is another process holding the IDB?)", file=sys.stderr)
         sys.exit(2)
 
     try:
+        digest = ida_nalt.retrieve_input_file_sha256()
+        if not digest:
+            raise ValueError('IDB has no input SHA-256')
+        firmware_sha256 = digest.hex()
+        binary = args.idb.with_suffix('')
+        if binary.is_file() and hashlib.sha256(binary.read_bytes()).hexdigest() != firmware_sha256:
+            raise ValueError('IDB input SHA-256 differs from the adjacent firmware')
         fns = []
         n = 0
         for start_ea in idautils.Functions():
@@ -347,11 +354,14 @@ def main() -> None:
                 print(f"  {n} ...", file=sys.stderr)
         print(f"collected {n} functions in {time.time()-t0:.1f}s", file=sys.stderr)
 
+        if not fns:
+            raise ValueError('IDB contains no recoverable functions')
         globals_ = collect_globals(fns)
         print(f"collected {len(globals_)} referenced data objects", file=sys.stderr)
         corpus = {
             "schema": 2,
             "target_id": args.target_id,
+            "firmware_sha256": firmware_sha256,
             "image_base": "0x0",
             "functions": fns,
             "globals": globals_,
@@ -366,7 +376,7 @@ def main() -> None:
             file=sys.stderr,
         )
     finally:
-        idapro.close_database()
+        idapro.close_database(save=False)
 
 
 if __name__ == "__main__":

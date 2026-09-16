@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_image_cache_drop",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_image_cache_drop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(const void *src)",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4139-002"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {"firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74", "evidence_ids": ["EVID-RESOURCE-4139-002"], "source": "Exact .139 LVGL image cache drop: src=0 clears the decoded-image cache (*0x200bd310) and image-header cache (*0x200bd314) via lv_cache_drop_all; recovered from 40+ firmware callers and the LRU-rb class vtable at 0x2ca168c4+28."},
+  "entry_address": "0x0c3a3888",
+  "callable_address": "0x0c3a3889",
+  "notes": "Image-invalidation lever for redirected images: the cache is keyed by source path, so an already-decoded image is served before open() and must be dropped for a path redirect to take effect on the next redraw. Only unreferenced entries are freed; must run on the UI owner thread, never under the interrupt lock. Device probe pending.",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs"
+}

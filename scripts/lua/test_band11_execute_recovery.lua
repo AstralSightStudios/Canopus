@@ -1,3 +1,4 @@
+local host_execute = os.execute
 local fixture = assert(package.loadlib(assert(arg[1]), "luaopen_band11_fixture"))()
 local recovery = assert(loadfile(
     "watchfaces/canopus-installer-prod/xiaomi-band-11/src/recover_execute.lua"))()
@@ -7,8 +8,11 @@ local registry = debug.getregistry()
 local loaded = registry._LOADED
 local original_loaded_os = loaded.os
 local state_key = "canopus.band11.execute_recovery.v1"
-local build = "user-4.100.139-cn-202608280000"
-local identity = "ro.build.version=4.100.139\nro.build.id=" .. build .. "\n"
+local firmware_version = native_os.getenv('CANOPUS_TEST_BAND11_VERSION') or '4.100.139'
+local target_id = 'xiaomi-band-11-' .. firmware_version
+local builds = {['4.100.139']='user-4.100.139-cn-202608280000', ['4.100.155']='user-4.100.155-cn-202609041500'}
+local build = assert(builds[firmware_version])
+local identity = "ro.build.version=" .. firmware_version .. "\nro.build.id=" .. build .. "\n"
 local profile
 
 local function setup(fail, retain_root)
@@ -20,7 +24,8 @@ local function setup(fail, retain_root)
     debug.setmetatable(loaded, nil)
     registry[state_key] = nil
     profile = {
-        identity_path = "/etc/build.prop", firmware_version = "4.100.139",
+        identity_path = "/etc/build.prop", firmware_version = firmware_version,
+        target_id = target_id,
         firmware_build = build, lua_version = "Lua 5.4",
         pmain = fixture.pmain_address - fixture.pmain_address % 2,
         pmain_error_handler = fixture.error_handler_address - fixture.error_handler_address % 2,
@@ -118,8 +123,8 @@ for _, fault in ipairs({"identity", "duplicate", "large", "read", "close",
     "version", "debug", "frame", "metatable", "registry", "address", "init"}) do
     setup(fault == "init")
     local saved_identity = identity
-    if fault == "identity" then identity = identity:gsub("4.100.139", "4.100.138") end
-    if fault == "duplicate" then identity = identity .. "ro.build.version=4.100.139\n" end
+    if fault == "identity" then identity = "ro.build.version=4.100.138\nro.build.id=" .. build .. "\n" end
+    if fault == "duplicate" then identity = identity .. "ro.build.version=" .. firmware_version .. "\n" end
     if fault == "large" then identity = string.rep("x", 4097) end
     if fault == "read" then io.open = function() error("denied") end end
     if fault == "close" then io.open = function()
@@ -227,13 +232,16 @@ __band11_fixture_open = function(path, mode)
                 write = function(self,data) files[path]=data; return self end,
                 close = function() return true end}
     end
+    if path:match('canopus_.*xiaomi%-band%-11%-') then
+        assert(path:find(target_id, 1, true), 'selected resources for another firmware: ' .. path)
+    end
     local file=arg[2] ~= "fresh" and native_io.open(path, mode) or nil
     if file then return file end
     -- Fresh checkouts do not contain ignored binary resources. The UI fixture
     -- supplies inert files; native execution is covered by the ARM test.
     local data
     if path:match('canopus_loader_profile%-') then
-        data='return {target_id="xiaomi-band-11-4.100.139",status="STATIC_RECOVERED",device_status="NOT_PROBED",loader_family="lua-owned-stage1-stage2"}'
+        data='return {target_id="' .. target_id .. '",status="STATIC_RECOVERED",device_status="NOT_PROBED",loader_family="lua-owned-stage1-stage2"}'
     elseif path:match('canopus_supervisor%-') then
         data="\127ELF" .. string.char(1,1,1) .. string.rep("\0",9) .. string.pack("<I2I2",1,40) .. string.rep("\0",492)
     elseif path:match('manager_icon.bin$') then
@@ -244,12 +252,31 @@ __band11_fixture_open = function(path, mode)
 end
 local original = fixture.open
 io.open = function(...) return original(...) end
-local file = assert(native_io.open(SCRIPT_PATH .. "main.lua", "rb"))
+local file = assert(native_io.open(assert(arg[3]), "rb"))
 local source = file:read("*a"); file:close()
-source = source:gsub("pmain = 0x%x+", "pmain = " .. profile.pmain)
-source = source:gsub("pmain_error_handler = 0x%x+", "pmain_error_handler = " .. profile.pmain_error_handler)
-source = source:gsub("os_execute = 0x%x+", "os_execute = " .. profile.os_execute)
-source = source:gsub("io_open = 0x%x+", "io_open = " .. (fixture.open_address & ~1))
+local count
+source, count = source:gsub('(%["' .. firmware_version:gsub('%.', '%%.') .. '"%] = {)(.-)(\n  },)', function(head, body, tail)
+    body = body:gsub("pmain = 0x%x+", "pmain = " .. profile.pmain)
+    body = body:gsub("pmain_error_handler = 0x%x+", "pmain_error_handler = " .. profile.pmain_error_handler)
+    body = body:gsub("os_execute = 0x%x+", "os_execute = " .. profile.os_execute)
+    body = body:gsub("io_open = 0x%x+", "io_open = " .. (fixture.open_address & ~1))
+    return head .. body .. tail
+end)
+assert(count == 1, 'fixture must replace only the selected recovery profile')
+if arg[5] then
+    -- Offline fixture generation only: no shell operation belongs to production.
+    local f=assert(native_io.open(arg[5], "wb")); f:write(source); f:close()
+    assert(host_execute("python3 scripts/tests/encrypt_fixture.py " .. arg[5]) == true)
+    f=assert(native_io.open(arg[5], "rb")); source=f:read("*a"); f:close()
+elseif arg[4] then
+    -- Patch firmware pointers above, then strip debug data and run through the
+    -- exact production wrapper. Compiling here keeps the fixture host ABI.
+    local f = assert(native_io.open(arg[4], "rb"))
+    local template = f:read("*a"); f:close()
+    local binary = string.dump(assert(load(source, "@fixture", "t")), true)
+    local hex = binary:gsub(".", function(c) return string.format("%02x", c:byte()) end)
+    source = template:gsub("%-%- @PAYLOAD@", function() return '"' .. hex .. '"' end)
+end
 enter(function() assert(load(source, "band11-generated-entry", "t"))() end)
 assert(#clicks == 2 and #objects == 8, "Run/Clear Env production UI missing")
 assert(objects[1].w == 212 and objects[1].h == 520)
@@ -327,6 +354,18 @@ objects, clicks = {}, {}
 enter(function() assert(load(source, "band11-wrong-firmware", "t"))() end)
 assert(#clicks == 0)
 assert(fixture.counts() == 1)
+-- A supported version with another version's build must not recover or run.
+for _, bad_identity in ipairs({
+    "ro.build.version=" .. firmware_version .. "\nro.build.id=" .. builds[firmware_version == '4.100.139' and '4.100.155' or '4.100.139'] .. "\n",
+    "ro.build.version=" .. firmware_version .. "\nro.build.id=" .. build .. "\nro.build.version=" .. firmware_version .. "\n",
+}) do
+    setup()
+    identity = bad_identity
+    io.open = function(...) return original(...) end
+    objects, clicks = {}, {}
+    enter(function() assert(load(source, "band11-rejected-identity", "t"))() end)
+    assert(#clicks == 0 and fixture.counts() == 1)
+end
 __band11_fixture_open, __band11_test_execute = nil, nil
 
 os, io, debug, _VERSION = native_os, native_io, native_debug, native_version

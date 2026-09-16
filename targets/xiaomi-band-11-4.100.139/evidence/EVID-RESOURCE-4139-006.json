@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-4139-006",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "How can a theme replace a font, given that fonts never pass through the hooked LVGL POSIX open?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.font_manager_generate_def_path",
+    "xiaomi-band-11-4.100.139.font_manager_add_path",
+    "xiaomi-band-11-4.100.139.font_manager_remove_path"
+  ],
+  "prototype_hypothesis": "const char *(void *manager, const char *name)",
+  "callsite_evidence": [
+    "font_manager_create_font_warpper (0x0c494380) resolves a family through font_manager_generate_def_path (0x0c490edc), checks the result with the NATIVE access() (0x0c34f8ec, which calls stat 0x0c33e92c) and then hands the pathname to lv_freetype_font_create. At no point does it call lv_fs_open, so the '/' LVGL POSIX driver the module hooks never sees a font file. Redirecting that driver therefore cannot theme a font, not even a newly created one.",
+    "font_manager_generate_def_path walks the registry at manager+28 and returns the path of the FIRST entry whose name matches; only if none matches does it build '<base>/<name>.ttf' from the base directory at manager+36.",
+    "font_manager_add_path (0x0c4924e0) resolves the family first and, when the requested path differs, appends a new {name, path} node via the generic list append 0x0c3a46a2. That append links after the tail (a1[2]) and only sets the head (a1[1]) when the list was empty.",
+    "Because the append is at the tail and the lookup takes the first match, calling add_path for a family that is already registered logs 'add success' but has NO effect: the pre-existing head entry keeps winning. The startup path registers MiSans-Regular/Demibold/Medium to /tmp copies, so exactly the families a theme wants are the ones add_path cannot override.",
+    "font_manager_remove_path (0x0c904cfc) validates a node handle against the registry, unlinks it, logs 'remove name: %s, path: %s' and frees the name, the path and the node. It takes the node handle rather than a family name, so the caller must walk the registry itself."
+  ],
+  "control_flow_evidence": [
+    "The font manager is *(0x200bd1e8 + 28). Its registered-path list keeps the node payload size at +24 and the head at +28; the iteration in generate_def_path reads the next pointer at node + payload + 4, and a node is {name, path} followed by the links.",
+    "Remove-then-add is therefore the only way to retarget an already-registered family, and the removal must copy the name out first because it frees the old name string.",
+    "Both allocation and release go through the firmware's own allocator, so the module must not free or replace these strings itself.",
+    "The retarget can be confirmed by calling generate_def_path again for the family and comparing the result with the intended path."
+  ],
+  "ownership_analysis": "The registry only decides what a NEW font wrapper resolves to. Wrappers already held by live pages keep their old face, so a retarget only becomes visible once the owning page is rebuilt (see EVID-RESOURCE-4139-005). Must run on the UI owner thread and never under the interrupt lock.",
+  "unsafe_assumptions": [
+    "No hardware execution has been performed; the .139 serial console returned no bytes on this host.",
+    "There is a window between the remove and the add during which the family resolves to the default '<base>/<name>.ttf' path; a font created in that window would use the default file.",
+    "If the add fails to allocate, the entry is lost and the family falls back to the default path permanently. The module reports this by refusing to count the retarget, but cannot restore the old entry.",
+    "Whether the themed file is a valid face for FreeType is not checked here; font_manager_check_font_file only tests access(), and a file that opens but fails to parse is not handled.",
+    "Only the LVGL/FreeType font path is covered. Any font drawn through another mechanism is unaffected."
+  ],
+  "recommended_probe": "On hardware, confirm that after a retarget plus a page rebuild the themed face is actually rendered, that a missing or malformed themed font degrades to the default rather than faulting, and that repeated activations do not leak registry nodes.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-16T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_font_retarget.py",
+      "role": "firmware-emulation-test"
+    }
+  ]
+}

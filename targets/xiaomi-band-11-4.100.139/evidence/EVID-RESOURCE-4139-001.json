@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-4139-001",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "What is the exact LVGL POSIX open ABI?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.lvgl_posix_open"
+  ],
+  "prototype_hypothesis": "int(void *driver, const char *relative_path, int mode)",
+  "callsite_evidence": [
+    "lv_init at 0x0c3a9598 initializes driver 0x200bd3b8, letter '/', open slot +12 = 0x0c3a6195.",
+    "Actual firmware execution in Canopus-Manager-Resource-Hook/tests/firmware_paths.py checks relative-path slash restoration and fd zero -> LVGL handle one."
+  ],
+  "control_flow_evidence": [
+    "POSIX open at 0x0c3a6194 adds '/' and forwards read mode 2 as NuttX flags 1."
+  ],
+  "ownership_analysis": "Borrowed static firmware driver. Hook replacement must be serialized with its owner and draw work.",
+  "unsafe_assumptions": [
+    "No hardware process restart or cache-coherence test has been performed.",
+    "A delayed callback reinstall is not a first-resource startup barrier."
+  ],
+  "recommended_probe": "Verify owner-thread callback publication and first resource open on hardware.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-13T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Manager-Resource-Hook/tests/firmware_paths.py",
+      "role": "firmware-emulation-test"
+    }
+  ]
+}

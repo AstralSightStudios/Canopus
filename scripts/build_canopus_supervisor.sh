@@ -15,7 +15,7 @@ LOADER_OBJECTS=""
 LOADER_PROFILE=""
 TARGET_DEFINES=""
 case "$TARGET_ID" in
-    xiaomi-band-11-4.100.139)
+    xiaomi-band-11-4.100.139|xiaomi-band-11-4.100.155)
         MANAGER_BACKEND="manager/target/band11/canopus_manager_target_band11.c"
         LOADER_SRCS="runtime/loader/canopus_arm_reloc.c runtime/loader/canopus_elf32_loader.c"
         TARGET_DEFINES="-DCANOPUS_SUP_BAND11_BOOTSTRAP=1"
@@ -77,6 +77,9 @@ if [ -n "$LOADER_PROFILE" ]; then
         --header "$OUT/canopus_band9_loader_config.h"
 fi
 cd "$ROOT"
+if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
+    python3 scripts/generate_band11_native_config.py --target "$TARGET_ID"
+fi
 
 echo "[1/3] compile supervisor (Cortex-M33 Thumb soft-float)"
 # Flags mirror native/scripts/build_btpatch_phase5.sh; -fno-function-sections
@@ -192,7 +195,7 @@ mkdir -p "$PROD_FAMILY_STAGE"
 cp "$MANAGER_ICON_SOURCE" "$PROD_FAMILY_STAGE/manager_icon.bin"
 cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
 if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
-    python3 "$ROOT/scripts/build_band11_installer.py" --supervisor "$OUT/canopus_supervisor.elf" \
+    python3 "$ROOT/scripts/build_band11_installer.py" --target "$TARGET_ID" --supervisor "$OUT/canopus_supervisor.elf" \
         --output-dir "${CANOPUS_BAND11_OUTPUT_DIR:-$PROD_FAMILY_STAGE}" \
         --firmware "${CANOPUS_BAND11_FIRMWARE:-$ROOT/fwbins/$TARGET_ID/vela_ap.bin}"
 elif [ "$PROD_FAMILY" = xiaomi-band-9 ]; then

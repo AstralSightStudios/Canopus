@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Load a real signed Canopus module through the emulated .139 Supervisor.
+"""Load a real signed Canopus module through the selected Band 11 Supervisor.
 
 Covers the path that crashes on hardware when it is wrong: RESTORE_AFTER_BOOT
 reads the staged artifact, lays the image out in Umem, relocates it against the
@@ -25,7 +25,8 @@ from band11_arm_bootstrap import Machine, ROOT, TARGET
 from unicorn import UC_HOOK_BLOCK, UC_HOOK_CODE
 from unicorn.arm_const import UC_ARM_REG_R1, UC_ARM_REG_R2
 
-DEFAULT_DIR = ROOT.parent / 'Canopus-Module-BluetoothAudio/build/bluetooth-audio-prod' / TARGET
+MODULE_TARGET = os.environ.get('CANOPUS_TEST_TARGET', TARGET)
+DEFAULT_DIR = ROOT.parent / 'Canopus-Module-BluetoothAudio/build/bluetooth-audio-prod' / MODULE_TARGET
 MODULE_DIR = pathlib.Path(os.environ.get('CANOPUS_MODULE_DIR', DEFAULT_DIR))
 RESTORE_AFTER_BOOT = 0x4351000A
 CMD_MAGIC = 0x43504331
@@ -65,8 +66,10 @@ def registry(module_id, lifecycle, version):
 class ModuleLoadTests(unittest.TestCase):
     def setUp(self):
         module_id, lifecycle, version, receipt, elf = staged()
+        self.assertEqual(receipt[64:112].split(b'\0', 1)[0].decode(), MODULE_TARGET,
+                         'fixture receipt must belong to the selected firmware')
         self.module_id, self.elf = module_id, elf
-        self.m = m = Machine()
+        self.m = m = Machine(target=MODULE_TARGET)
         m.disk['/data/canopus/registry.bin'] = registry(module_id, lifecycle, version)
         m.disk[f'/data/canopus/inbox/{module_id}.cmi'] = receipt
         m.disk[f'/data/canopus/inbox/{module_id}.ko'] = elf

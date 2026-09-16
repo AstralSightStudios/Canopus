@@ -12,12 +12,13 @@ local targets = {
     ['3.101.036'] = {'xiaomi-band-10-pro-3.101.036', '662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81'},
     ['3.101.043'] = {'xiaomi-band-10-pro-3.101.043', '519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec'},
     ['4.100.139'] = {'xiaomi-band-11-4.100.139', '31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74'},
+    ['4.100.155'] = {'xiaomi-band-11-4.100.155', 'ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f'},
 }
 local function padded(s, n) return s .. string.rep('\0', n - #s) end
 local function rawhex(s) return (s:gsub('..', function(v) return string.char(tonumber(v,16)) end)) end
 local function run_case(version, fault)
     local target = targets[version]
-    local is_band11 = version == '4.100.139'
+    local is_band11 = version == '4.100.139' or version == '4.100.155'
     checks=checks+1
     local objects, timers, callbacks, files, commands = {}, {}, {}, {}, {}
     local request, painted
@@ -53,7 +54,8 @@ local function run_case(version, fault)
         files['/fake/'..product..'-'..target[1]..'.cmi.bin']=receipt
         if fault=='missing_module' then files['/fake/'..product..'-'..target[1]..'.bin']=nil end
     end
-    local assets=product=='bluetooth-audio' and {'appicon_headphones.bin'} or
+    local assets=product=='resource-hook' and {} or
+        product=='bluetooth-audio' and {'appicon_headphones.bin'} or
         {'appicon_lyra.bin','lyra-previous.bin','lyra-play.bin','lyra-pause.bin','lyra-next.bin'}
     for _,name in ipairs(assets) do
         files['/fake/'..name]='\25\16\0\0'..string.pack('<I2I2I2I2',2,2,8,0)..string.rep('\0',16)
@@ -64,7 +66,7 @@ local function run_case(version, fault)
     local config_block = source:match('%["'..version:gsub('%.','%%.')..'"%] = ({.-})')
     build = config_block and config_block:match('%["build"%] = "([^"]+)"') or ''
     files['/etc/build.prop']='ro.build.version='..version..'\nro.build.id='..build..'\n' 
-    if fault=='identity' then files['/etc/build.prop']=files['/etc/build.prop']:gsub('cn%-202608280000','cn-000000000000') end
+    if fault=='identity' then files['/etc/build.prop']=files['/etc/build.prop']:gsub('cn%-%d+','cn-000000000000') end
     if fault=='duplicate_identity' then files['/etc/build.prop']=files['/etc/build.prop']..'ro.build.version='..version..'\n' end
     local function open(path,mode)
         if path=='/canopus/install' then
@@ -124,8 +126,10 @@ for version,target in pairs(targets) do
     if source:find('["id"] = "'..target[1]..'"',1,true) then
         for _,fault in ipairs({'ok','wrong_receipt','wrong_firmware','missing_module','missing_icon',
             'no_supervisor','short_write','stale_response','cancel','duplicate_identity',
-            'staging_short_write','corrupt_readback'}) do run_case(version,fault) end
-        if version=='4.100.139' then run_case(version,'identity') end
+            'staging_short_write','corrupt_readback'}) do
+            if product~='resource-hook' or fault~='missing_icon' then run_case(version,fault) end
+        end
+        if version=='4.100.139' or version=='4.100.155' then run_case(version,'identity') end
     end
 end
 run_case('3.101.999','unsupported')
@@ -133,4 +137,3 @@ io,os,debug,_VERSION=host_io,host_os,host_debug,host_version
 os.execute=host_execute
 __band11_fixture_open,__band11_test_execute=nil,nil
 print(product..': '..checks..' prod selection, ordinary IO, staging, progress and failure checks passed')
-

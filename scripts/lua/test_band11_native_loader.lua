@@ -1,7 +1,7 @@
 -- Bootstrap orchestration checks. ARM execution is tested separately in Unicorn.
 local loader = assert(loadfile('watchfaces/canopus-installer-prod/xiaomi-band-11/src/native_loader.lua'))()
+local target = arg[1] or 'xiaomi-band-11-4.100.139'
 local root = 'watchfaces/canopus-installer-prod/xiaomi-band-11/'
-local target = 'xiaomi-band-11-4.100.139'
 local profile = assert(loadfile(root .. 'canopus_loader_profile-' .. target .. '.bin'))()
 local resources = {}
 for _,name in ipairs({'stage1','stage2','supervisor'}) do
@@ -50,9 +50,9 @@ for _,fault in ipairs({'ok','crc','mpu','heap','upvalue','layout','mailbox','nat
             if a~=object+52 or fault~='mailbox' then memory[a]=v else memory[a]=0 end
             return true
         end
-        if command=='exec 0x0c93021b' then cache_critical=true;cache_commands[#cache_commands+1]='clean';return fault~='clean' end
-        if command=='exec 0x0c0c181f' then cache_commands[#cache_commands+1]='invalidate';return fault~='invalidate' end
-        if command=='exec 0x0c91e543' then
+        if command==string.format('exec 0x%08x',profile.cache_d_clean) then cache_critical=true;cache_commands[#cache_commands+1]='clean';return fault~='clean' end
+        if command==string.format('exec 0x%08x',profile.cache_i_invalidate) then cache_commands[#cache_commands+1]='invalidate';return fault~='invalidate' end
+        if command==string.format('exec 0x%08x',profile.cache_barrier) then
             barriers=barriers+1;cache_commands[#cache_commands+1]='barrier'
             return fault~=('barrier' .. barriers)
         end

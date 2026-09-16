@@ -14,7 +14,11 @@
 -- @CANOPUS_PROGRESS@
 
 -- pmain's root argument is live only during entry-script evaluation.
-local recovery_ok, recovery_result, recovery_message = pcall(recovery.recover, PROFILE)
+local PROFILE, profile_error = recovery.select_profile(PROFILES)
+local recovery_ok, recovery_result, recovery_message = false, profile_error, nil
+if PROFILE then
+    recovery_ok, recovery_result, recovery_message = pcall(recovery.recover, PROFILE)
+end
 local recovered = recovery_ok and type(recovery_result) == "function"
 local execute = recovered and recovery_result or nil
 local recovery_error
@@ -29,7 +33,7 @@ if recovered and type(debug.getupvalue) == "function" then
 end
 local lvgl = require("lvgl")
 
-local TARGET_ID = "xiaomi-band-11-4.100.139"
+local TARGET_ID = PROFILE and PROFILE.target_id
 local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_icon.bin"
 local MANAGER_ICON_PATH = "/data/canopus/manager_icon.bin"
 local DEVICE_PATH = "/dev/canopus"

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.unregister_blockdriver",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "unregister_blockdriver",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(const char *)",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Exact .155 image/IDB, compared with targets/xiaomi-band-11-4.100.139/symbols/xiaomi-band-11-4.100.139.unregister_blockdriver.json: matching full instruction body; unique identity or ordered reference corroboration."
+  },
+  "entry_address": "0xc7b954e",
+  "notes": "matching full instruction body; unique identity or ordered reference corroboration. Source semantic status was CANDIDATE; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the baseline record only within the audited port scope. Physical device validation pending.",
+  "approval_state": "PENDING"
+}

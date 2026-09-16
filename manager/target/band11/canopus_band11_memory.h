@@ -3,9 +3,9 @@
 #ifndef CANOPUS_BAND11_MEMORY_H
 #define CANOPUS_BAND11_MEMORY_H
 #include <stdint.h>
+#include "canopus_band11_addresses.h"
 #include <stddef.h>
 #define B11_REG(a) (*(volatile uint32_t *)(uintptr_t)(a))
-#define B11_MPU_BITMAP 0x200F5190u
 #define B11_MPU_CTRL 0xE000ED94u
 #define B11_MPU_RNR 0xE000ED98u
 #define B11_MPU_RBAR 0xE000ED9Cu
@@ -23,7 +23,7 @@ static inline int b11_context_ok(void) {
            B11_REG(0xE000EDC0u) == 0x00447722u;
 }
 static inline int b11_heap_contains(uintptr_t p, uint32_t size) {
-    uintptr_t heap = B11_REG(0x200B01C8u);
+    uintptr_t heap = B11_REG(B11_KMEM_SLOT);
     if (heap < 0x20000000u || heap > 0x20160000u - 0x24u) return 0;
     return p > B11_REG(heap + 0x1cu) && p < 0x20160000u &&
            size <= 0x20160000u - p && p + size <= B11_REG(heap + 0x20u);
@@ -73,19 +73,19 @@ static inline int b11_heap_can_alloc(uintptr_t heap, uint32_t alignment,
     if (heap == 0u || need == 0xFFFFFFFFu ||
         need > 0xFFFFFFFFu - B11_ALLOC_MARGIN) return 0;
     info.mxordblk = 0u;
-    ((fn)(uintptr_t)0x0C34F0A1u)(&info, (void *)heap);
+    ((fn)(uintptr_t)B11_MM_MALLINFO)(&info, (void *)heap);
     return info.mxordblk >= need + B11_ALLOC_MARGIN;
 }
 static inline void *b11_alloc(uint32_t alignment, uint32_t size) {
     typedef void *(*fn)(void *, uint32_t, uint32_t);
-    uintptr_t heap = B11_REG(0x200B01C8u);
+    uintptr_t heap = B11_REG(B11_KMEM_SLOT);
     void *p;
     if (!b11_heap_can_alloc(heap, alignment, size)) return 0;
-    p = ((fn)(uintptr_t)0x0C3507E9u)((void *)heap, alignment, size);
+    p = ((fn)(uintptr_t)B11_MM_MEMALIGN)((void *)heap, alignment, size);
     return p;
 }
 static inline void b11_free(void *p) {
-    if (p) ((void (*)(void *))(uintptr_t)0x0C34CCB9u)(p);
+    if (p) ((void (*)(void *))(uintptr_t)B11_KMEM_FREE)(p);
 }
 /* The input ELF and loader bookkeeping are never executed. Keep them out of
  * the small kernel heap: Kmem is 2010e9e0..2015f2bc (~322 KiB, most of it
@@ -94,17 +94,17 @@ static inline void b11_free(void *p) {
  * (not the separate libc pool wrapper). */
 static inline void *b11_temp_alloc(uint32_t alignment, uint32_t size) {
     typedef void *(*fn)(void *, uint32_t, uint32_t);
-    uintptr_t heap = B11_REG(0x200B2590u), p;
-    if (heap != 0x3C356B40u) return 0;
+    uintptr_t heap = B11_REG(B11_UMEM_SLOT), p;
+    if (heap != B11_UMEM_DESCRIPTOR) return 0;
     if (!b11_heap_can_alloc(heap, alignment, size)) return 0;
-    p = (uintptr_t)((fn)(uintptr_t)0x0C3507E9u)((void *)heap, alignment, size);
+    p = (uintptr_t)((fn)(uintptr_t)B11_MM_MEMALIGN)((void *)heap, alignment, size);
     if (!p) return 0;
     if (p <= B11_REG(heap + 0x1cu) || p >= 0x3D000000u ||
         size > 0x3D000000u - p || p + size > B11_REG(heap + 0x20u)) return 0;
     return (void *)p;
 }
 static inline void b11_temp_free(void *p) {
-    if (p) ((void (*)(void *))(uintptr_t)0x0C34CD2Du)(p);
+    if (p) ((void (*)(void *))(uintptr_t)B11_UMEM_FREE)(p);
 }
 /* PSRAM is visible through more than one window. The startup copy 0x0c0c024c
  * writes the PSRAM image at 0x3c000000 while its code runs at 0x1c000000
@@ -152,10 +152,10 @@ static inline uint32_t b11_exec_alias(uintptr_t data, uint32_t size) {
 static inline int b11_publish_code(void) {
     typedef void (*leaf_fn)(void);
     if (!(B11_REG(0x07FFA000u) & 1u) || !(B11_REG(0x07FFC000u) & 1u)) return -1;
-    ((leaf_fn)(uintptr_t)0x0C93021Bu)();
-    ((leaf_fn)(uintptr_t)0x0C91E543u)();
-    ((leaf_fn)(uintptr_t)0x0C0C181Fu)();
-    ((leaf_fn)(uintptr_t)0x0C91E543u)();
+    ((leaf_fn)(uintptr_t)B11_CACHE_D_CLEAN)();
+    ((leaf_fn)(uintptr_t)B11_CACHE_BARRIER)();
+    ((leaf_fn)(uintptr_t)B11_CACHE_I_INVALIDATE)();
+    ((leaf_fn)(uintptr_t)B11_CACHE_BARRIER)();
     return 0;
 }
 /* Reserve only 4..6, leaving region 7 available to firmware. The .139
@@ -212,16 +212,16 @@ static inline uint32_t b11_crc32(const void *data, uint32_t size) {
 }
 static inline int b11_read_file(const char *path, void *data, uint32_t size, uint32_t crc) {
     typedef int32_t (*read_fn)(int, void *, uint32_t);
-    int fd = ((int (*)(const char *, int, ...))(uintptr_t)0x0C342C55u)(path, 1);
+    int fd = ((int (*)(const char *, int, ...))(uintptr_t)FW_NUTTX_OPEN)(path, 1);
     uint32_t done = 0; uint8_t extra; int32_t got;
     if (fd < 0) return -1;
     while (done < size) {
-        got = ((read_fn)(uintptr_t)0x0C33D785u)(fd, (uint8_t *)data + done, size - done);
+        got = ((read_fn)(uintptr_t)FW_NUTTX_READ)(fd, (uint8_t *)data + done, size - done);
         if (got <= 0 || (uint32_t)got > size - done) break;
         done += (uint32_t)got;
     }
-    got = ((read_fn)(uintptr_t)0x0C33D785u)(fd, &extra, 1);
-    ((int (*)(int))(uintptr_t)0x0C33818Du)(fd);
+    got = ((read_fn)(uintptr_t)FW_NUTTX_READ)(fd, &extra, 1);
+    ((int (*)(int))(uintptr_t)FW_NUTTX_CLOSE)(fd);
     return done == size && got == 0 && b11_crc32(data, size) == crc ? 0 : -1;
 }
 #endif

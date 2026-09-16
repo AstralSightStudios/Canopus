@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_inv_area",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "_lv_inv_area",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *disp, const void *area)",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4139-003"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {"firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74", "evidence_ids": ["EVID-RESOURCE-4139-003"], "source": "Exact .139 LVGL lv_refr.c invalidate-area primitive: appends an lv_area_t to the display's invalidated-area list (disp+60.., count at disp+604) so _lv_display_refr_timer (0x0c38956c) repaints it on the next tick. Recovered from the firmware's own MiWearScreen wake handler (0x0c6d096c, 'invalidate screen.') and 40+ widget callers."},
+  "entry_address": "0x0c382428",
+  "callable_address": "0x0c382429",
+  "notes": "Forced-repaint lever companion to lv_image_cache_drop: after the image cache is dropped the widget tree is unchanged, so nothing is marked dirty; passing an oversized area (clipped to the screen by lv_area_intersect 0x0c3a39b4) marks the whole active screen dirty so every on-screen image re-opens through the redirect on the next refresh instead of waiting for a navigation. Default display at *0x200bd200, active screen at disp+24; asserts if disp->rendering_in_progress (bit 1 of disp+58) is set, no-ops if lv_display_is_invalidation_enabled (disp+608) is 0. Must run on the UI owner thread, never under the interrupt lock. Device probe pending.",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs"
+}

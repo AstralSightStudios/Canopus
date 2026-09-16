@@ -194,6 +194,16 @@ _Static_assert(offsetof(struct band11_page_descriptor, on_ui_destroy) == 100,
                "page destroy offset");
 _Static_assert(sizeof(struct firmware_app_descriptor) == 80,
                "firmware app descriptor size");
+_Static_assert(sizeof(struct firmware_notification_message) == 96,
+               "firmware notification size");
+_Static_assert(offsetof(struct firmware_notification_message, title) == 12,
+               "notification title offset");
+_Static_assert(offsetof(struct firmware_notification_message, timestamp) == 48,
+               "notification timestamp offset");
+_Static_assert(offsetof(struct firmware_notification_message, start_reminder) == 88,
+               "notification reminder offset");
+_Static_assert(offsetof(struct firmware_notification_message, callback_data) == 92,
+               "notification callback data offset");
 
 static const char package_name[] = "com.canopus.manager";
 static const char page_name_overview[] = "main";
@@ -1157,9 +1167,66 @@ static struct firmware_app_descriptor manager_app = {
     .launcher_metadata_callback = manager_display_name,
 };
 
+/* The reminder UI reads user_data->focus_version even for ordinary messages.
+ * Stock notify_set_user_data allocates this 16-byte object (not just a callback
+ * cookie). The list/reminder clones borrow it. Keep a separate writable,
+ * boot-resident context for each notice; no stock phone/focus callbacks own it.
+ * Evidence: EVID-NOTIFICATION-4139-002, crash3 PC 0x0c55fe06. */
+struct band11_notification_context {
+    void *phone_data;
+    void *focus_v1;
+    void *focus_v2;
+    uint8_t phone_active;
+    uint8_t focus_version;
+    uint8_t reserved[2];
+};
+_Static_assert(sizeof(struct band11_notification_context) == 16,
+               "notification context size");
+_Static_assert(offsetof(struct band11_notification_context, focus_version) == 13,
+               "notification focus version offset");
+static struct band11_notification_context loaded_notification_context;
+static struct band11_notification_context module_notification_context;
+
+static const struct firmware_notification_message loaded_notification = {
+    .message_id = UINT64_C(0x43414E4F50555301),
+    .title = "Canopus",
+    .source = "Canopus",
+    .body = "Canopus 已加载！尽情享受吧～",
+    .small_icon_path = (void *)launcher_icon,
+    .large_icon_path = (void *)launcher_icon,
+    .start_reminder = 1u,
+    .callback_data = &loaded_notification_context,
+};
+
+static const struct firmware_notification_message module_notification = {
+    .message_id = UINT64_C(0x43414E4F50555302),
+    .title = "Canopus",
+    .source = "Canopus",
+    .body = "新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。",
+    .small_icon_path = (void *)launcher_icon,
+    .large_icon_path = (void *)launcher_icon,
+    .start_reminder = 1u,
+    .callback_data = &module_notification_context,
+};
+
+static int target_notify(const struct firmware_notification_message *message)
+{
+    typedef void (*notification_insert_fn)(
+        const struct firmware_notification_message *);
+    notification_insert_fn notification_insert =
+        (notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT;
+
+    if (identity_guard() != 0) {
+        return -1;
+    }
+    /* The stock entry returns free() residue, not a delivery result. */
+    notification_insert(message);
+    return 0;
+}
+
 int canopus_manager_native_notify_module_installed(void)
 {
-    return 0;
+    return target_notify(&module_notification);
 }
 
 static void __attribute__((constructor, used)) canopus_manager_target_init(void)
@@ -1229,6 +1296,7 @@ int canopus_manager_native_install(void)
     }
     launcher_add(CANOPUS_MANAGER_TARGET_APP_ID);
     canopus_manager_target_record.launcher_add_result = 0;
-    canopus_manager_target_record.notification_result = 0;
+    canopus_manager_target_record.notification_result =
+        target_notify(&loaded_notification);
     return 0;
 }

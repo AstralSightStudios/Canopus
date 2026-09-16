@@ -33,6 +33,10 @@ extern "C" {
 #define CANOPUS_FLAG_REGISTERS_LAUNCHER_ENTRY (1u << 3)
 #define CANOPUS_FLAG_REQUIRES_UI_DISPATCHER (1u << 4)
 #define CANOPUS_FLAG_APP_UNREGISTER_REBOOT_REQUIRED (1u << 5)
+/* Opt-in: activate is idempotent and may rebind resident callbacks when
+ * RESTORE_AFTER_BOOT is invoked again by a caller-owned UI transaction.
+ * This flag does not authorize task termination or imply a completed restart. */
+#define CANOPUS_FLAG_REACTIVATE_AFTER_UI_RESTART (1u << 6)
 
 /* Lifecycle classes. */
 #define CANOPUS_LIFECYCLE_REMOVABLE            0
@@ -47,7 +51,7 @@ extern "C" {
 
 /* Every flag bit the current ABI knows; any bit outside this mask is
  * rejected by canopus_module_descriptor_check. */
-#define CANOPUS_MODULE_FLAGS_KNOWN 0x3Fu /* CANOPUS_FLAG_* bits 0..5 */
+#define CANOPUS_MODULE_FLAGS_KNOWN 0x7Fu /* CANOPUS_FLAG_* bits 0..6 */
 
 /* ------------------------------------------------------------------ */
 /* Module descriptor                                                   */

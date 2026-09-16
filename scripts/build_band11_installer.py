@@ -6,19 +6,31 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import protect_lua
+import generate_band11_native_config as native_config
 import struct
 import subprocess
+import tempfile
 import tomllib
 import zipfile
 import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = "xiaomi-band-11-4.100.139"
+TARGETS = (TARGET, "xiaomi-band-11-4.100.155")
 FAMILY = ROOT / "watchfaces/canopus-installer-prod/xiaomi-band-11"
 
 
+def resource_directory(target_id):
+    if target_id not in TARGETS:
+        raise ValueError(f"unsupported target: {target_id}")
+    return FAMILY
+
+
 def metadata(target_id=TARGET):
-    if target_id != TARGET:
+    if target_id not in TARGETS:
         raise ValueError(f"unsupported target: {target_id}")
     directory = ROOT / "targets" / target_id
     pack = tomllib.loads((directory / "target.toml").read_text())
@@ -41,10 +53,14 @@ def render(target_id=TARGET):
     profile = metadata(target_id)
     fields = ("target_id", "firmware_sha256", "firmware_version", "firmware_build",
               "lua_version", "identity_path", "pmain", "pmain_error_handler", "os_execute", "io_open")
-    lua_profile = "local PROFILE = {\n" + "".join(
-        f"    {key} = {hex(profile[key]) if type(profile[key]) is int else json.dumps(profile[key])},\n"
-        for key in fields
-    ) + "}"
+    lua_profile = "local PROFILES = {\n"
+    for target in TARGETS:
+        item = metadata(target)
+        lua_profile += f"  [{json.dumps(item['firmware_version'])}] = {{\n" + "".join(
+            f"    {key} = {hex(item[key]) if type(item[key]) is int else json.dumps(item[key])},\n"
+            for key in fields
+        ) + "  },\n"
+    lua_profile += "}"
     source = (FAMILY / "src/main.lua").read_text()
     replacements = {
         "-- @CANOPUS_RECOVERY@": "local recovery = (function()\n" + (FAMILY / "src/recover_execute.lua").read_text() + "\nend)()",
@@ -97,13 +113,13 @@ def linked_binary(path):
     return bytes(result)
 
 
-def build_stages(out, supervisor):
+def build_stages(out, supervisor, target_id=TARGET):
     cc = os.environ.get("CC", "clang")
     flags = ["--target=arm-none-eabi", "-mcpu=cortex-m33", "-mthumb", "-mfloat-abi=soft",
              "-ffreestanding", "-fPIC", "-fno-common", "-fno-builtin", "-fno-jump-tables",
              "-fno-stack-protector", "-fno-unwind-tables", "-fno-asynchronous-unwind-tables",
              "-fdata-sections", "-ffunction-sections", "-fstack-usage", "-Os", "-Wall", "-Wextra", "-Werror"]
-    inc = [f"-I{ROOT / p}" for p in ("sdk/c", "runtime/loader", "manager/target/band11")] + [f"-I{out}"]
+    inc = [f"-I{ROOT / p}" for p in ("sdk/c", "runtime/loader", "manager/target/band11")] + [f"-I{out}", f"-I{ROOT / 'targets' / target_id / 'generated'}"]
     header = out / "canopus_band11_sizes.h"
     header.write_text(f"#define B11_SUPERVISOR_SIZE {len(supervisor)}u\n#define B11_SUPERVISOR_CRC 0x{zlib.crc32(supervisor):08x}u\n")
     def compile(source, name):
@@ -131,74 +147,154 @@ def build_stages(out, supervisor):
     return stage1, stage2
 
 
+def lua_bytecode_entry(source):
+    # No system luac fallback: the production chunk must use exactly 5.4.0.
+    compiler = Path(os.environ.get("CANOPUS_LUAC54", str(
+        FAMILY / "build/host-lua54/lua-5.4.0/src/luac")))
+    version = subprocess.run([str(compiler), "-v"], check=True,
+                             capture_output=True, text=True)
+    if "Lua 5.4.0 " not in version.stdout + version.stderr:
+        raise ValueError("CANOPUS_LUAC54 must be Lua 5.4.0")
+    with tempfile.TemporaryDirectory(prefix="canopus-lua-") as temp:
+        src, out = Path(temp) / "main.lua", Path(temp) / "main.luac"
+        src.write_text(source, encoding="utf-8")
+        run(compiler, "-s", "-o", out, src)
+        data = out.read_bytes()
+    if data[:15] != bytes.fromhex("1b4c7561540019930d0a1a0a040808"):
+        raise ValueError("expected Lua 5.4 little-endian int64/double bytecode")
+    if data[15:31] != struct.pack("<qd", 0x5678, 370.5):
+        raise ValueError("unexpected Lua numeric format")
+    return data
+
+
+def text_bytecode_wrapper(data):
+    seed_path = ROOT / "build/lua-protection.seed"
+    if not seed_path.exists():
+        seed_path.parent.mkdir(parents=True, exist_ok=True)
+        with seed_path.open("xb") as f:
+            os.chmod(seed_path, 0o600)
+            f.write(os.urandom(32))
+    seed = seed_path.read_bytes()
+    if len(seed) != 32: raise ValueError("invalid protection seed")
+    data = lua_bytecode_entry(protect_lua.wrap(data, seed))
+    # Hex is reversible encoding, not encryption. Decode per chunk to avoid
+    # allocating a Lua table entry for every byte of the implementation.
+    chunks = [data[i:i + 96].hex() for i in range(0, len(data), 96)]
+    template = (ROOT / "scripts/templates/band11_bytecode_entry.lua").read_text()
+    return template.replace("-- @PAYLOAD@", "\n".join(
+        f"    '{chunk}'," for chunk in chunks)).encode()
+
+
+def resource_names(target):
+    return tuple(f"canopus_{kind}-{target}.bin" for kind in
+                 ("loader_profile", "stage1", "stage2", "supervisor"))
+
+
+def bundle_family(out):
+    """Bundle both exact-target payload sets with their single shared entry."""
+    resources = {name: (out / name).read_bytes() for name in ("main.lua", "manager_icon.bin")}
+    targets = {}
+    for target in TARGETS:
+        path = out / 'build' / target / 'manifest.json'
+        if not path.is_file() or any(not (out / name).is_file() for name in resource_names(target)):
+            print(f"Staged resources; build {target} to complete the Band 11 watchface")
+            return None
+        manifest = json.loads(path.read_text())
+        profile = metadata(target)
+        if manifest['target_id'] != target or manifest['firmware_sha256'] != profile['firmware_sha256']:
+            raise ValueError(f"staged manifest identity mismatch: {target}")
+        for name in resource_names(target):
+            data = (out / name).read_bytes()
+            if manifest['resources'][name] != dict(size=len(data), sha256=hashlib.sha256(data).hexdigest()):
+                raise ValueError(f"staged resource hash mismatch: {name}")
+            resources[name] = data
+        targets[target] = {key: profile[key] for key in ('firmware_version', 'firmware_build', 'firmware_sha256')}
+    archive = out / 'build/canopus-installer-prod-xiaomi-band-11.zip'
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
+        for name, data in resources.items():
+            info = zipfile.ZipInfo(name, date_time=(2026,9,9,0,0,0)); info.compress_type=zipfile.ZIP_DEFLATED
+            bundle.writestr(info, data)
+    (out / 'build/manifest.json').write_text(json.dumps(dict(
+        device_family='xiaomi-band-11', targets=targets, device_status='NOT_PROBED',
+        resources={name: dict(size=len(data), sha256=hashlib.sha256(data).hexdigest()) for name, data in resources.items()}
+    ), indent=2) + '\n')
+    print(f"Combined Band 11 resource ZIP: {archive}")
+    return archive
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--target", default=TARGET)
+    parser.add_argument("--target", choices=TARGETS, help="rebuild one payload set; default builds both firmwares")
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--supervisor", type=Path, help="exact target verified ET_REL; otherwise build it")
     parser.add_argument("--firmware", type=Path)
     parser.add_argument("--check", action="store_true", help="check generated Lua without writes")
     args = parser.parse_args()
-    source, profile = render(args.target)
+    source, profile = render(args.target or TARGET)
     if args.check:
-        if (FAMILY / "main.lua").read_text() != source:
-            parser.error("Band 11 main.lua is stale")
-        print("Band 11 production Lua is current; device validation pending")
+        expected = text_bytecode_wrapper(lua_bytecode_entry(source))
+        if ((args.output_dir or FAMILY) / "main.lua").read_bytes() != expected:
+            parser.error("Band 11 production Lua bytecode wrapper is stale")
+        print("Band 11 production Lua bytecode wrapper is current; device validation pending")
         return
     if args.supervisor is None:
-        env = dict(os.environ, CANOPUS_TARGET=TARGET)
+        if args.firmware and not args.target:
+            parser.error("--firmware requires --target")
+        env = dict(os.environ)
         if args.output_dir:
             env["CANOPUS_BAND11_OUTPUT_DIR"] = str(args.output_dir.resolve())
         if args.firmware:
             env["CANOPUS_BAND11_FIRMWARE"] = str(args.firmware.resolve())
-        subprocess.run([str(ROOT / "scripts/build_canopus_supervisor.sh")], cwd=ROOT, env=env, check=True)
+        for target in (args.target,) if args.target else TARGETS:
+            env['CANOPUS_TARGET'] = target
+            subprocess.run([str(ROOT / "scripts/build_canopus_supervisor.sh")], cwd=ROOT, env=env, check=True)
         return
-    out = (args.output_dir or FAMILY).resolve()
+    if not args.target:
+        parser.error("--supervisor requires --target")
+    out = (args.output_dir or resource_directory(args.target)).resolve()
     work = out / "build" / args.target
     work.mkdir(parents=True, exist_ok=True)
     unexpected = [p.name for p in out.iterdir() if p.is_file() and p.name != "main.lua" and p.suffix != ".bin"]
     if unexpected:
         parser.error("non-watchface files in output root: " + ", ".join(sorted(unexpected)))
-    firmware_path = args.firmware or ROOT / "fwbins" / TARGET / "vela_ap.bin"
+    firmware_path = args.firmware or ROOT / "fwbins" / args.target / "vela_ap.bin"
     firmware = firmware_path.read_bytes()
     if hashlib.sha256(firmware).hexdigest() != profile["firmware_sha256"]:
         parser.error("firmware hash differs from target pack")
-    run(ROOT / "target/debug/canopus", "verify", args.supervisor, "--target", TARGET, "--targets-dir", ROOT / "targets")
+    run(ROOT / "target/debug/canopus", "verify", args.supervisor, "--target", args.target, "--targets-dir", ROOT / "targets")
     supervisor = args.supervisor.read_bytes()
-    stage1, stage2 = build_stages(work, supervisor)
-    fingerprints = [0x0c91e540, 0x0c91e594, 0x0c36c6d8, 0x0c3507e8,
-                    0x0c34cd2c, 0x0c914f64, 0x0c6ab350]
-    # Fixed cache leaves and their PC-relative literals, including the enabled
-    # I-cache branch. Every word is checked on-device before entering either.
-    fingerprints += list(range(0x0c930218, 0x0c930224, 4)) + [0x0c930228]
-    fingerprints += list(range(0x0c0c1808, 0x0c0c1824, 4)) + [0x0c0c1828]
-    native_profile = dict(target_id=TARGET, loader_family="lua-owned-stage1-stage2",
+    _, bindings, addresses = native_config.metadata(args.target)
+    run(sys.executable, ROOT / "scripts/generate_band11_native_config.py", "--target", args.target, "--check")
+    stage1, stage2 = build_stages(work, supervisor, args.target)
+    fingerprints = [int(a, 16) for a in bindings["fingerprints"]]
+    native_profile = dict(target_id=args.target, loader_family="lua-owned-stage1-stage2",
                           status="STATIC_RECOVERED", device_status="NOT_PROBED")
+    native_profile.update({key: addresses[macro] for key, macro in {
+        "mpu_bitmap": "B11_MPU_BITMAP", "umem_slot": "B11_UMEM_SLOT",
+        "umem_descriptor": "B11_UMEM_DESCRIPTOR", "cache_d_clean": "B11_CACHE_D_CLEAN",
+        "cache_barrier": "B11_CACHE_BARRIER", "cache_i_invalidate": "B11_CACHE_I_INVALIDATE",
+    }.items()})
     native_profile.update({f"{name}_{key}": value for name, data in (("stage1",stage1),("stage2",stage2),("supervisor",supervisor))
                            for key,value in (("size",len(data)),("crc",zlib.crc32(data)))})
     profile_lua = "return {\n" + "".join(f"  {k} = {json.dumps(v)},\n" for k,v in native_profile.items())
     profile_lua += "  fingerprints = {\n" + "".join(f"    {{0x{a:08x}, 0x{struct.unpack_from('<I', firmware, a - 0x0c0c0000)[0]:08x}}},\n" for a in fingerprints) + "  },\n}\n"
-    resources = {"main.lua": source.encode(), "manager_icon.bin": (ROOT / "watchfaces/canopus-installer/manager_icon.bin").read_bytes(),
-                 f"canopus_loader_profile-{TARGET}.bin": profile_lua.encode(),
-                 f"canopus_stage1-{TARGET}.bin": stage1, f"canopus_stage2-{TARGET}.bin": stage2,
-                 f"canopus_supervisor-{TARGET}.bin": supervisor}
-    manifest = dict(target_id=TARGET, firmware_sha256=profile["firmware_sha256"],
-                    artifact_kind="complete-flat-installer-resources", native_loader_status="STATIC_TEST_CANDIDATE",
+    main_resource = text_bytecode_wrapper(lua_bytecode_entry(source))
+    resources = {"main.lua": main_resource, "manager_icon.bin": (ROOT / "watchfaces/canopus-installer/manager_icon.bin").read_bytes(),
+                 f"canopus_loader_profile-{args.target}.bin": profile_lua.encode(),
+                 f"canopus_stage1-{args.target}.bin": stage1, f"canopus_stage2-{args.target}.bin": stage2,
+                 f"canopus_supervisor-{args.target}.bin": supervisor}
+    manifest = dict(target_id=args.target, firmware_sha256=profile["firmware_sha256"],
+                    artifact_kind="exact-target-native-resources", native_loader_status="STATIC_TEST_CANDIDATE",
                     device_status="NOT_PROBED", supervisor_included=True,
+                    lua_protection="chacha20-hmac-sha256/shuffled-shares/dual-stripped-lua-5.4.0",
                     reentry_unwind_leaks_path=profile["reentry_unwind_leaks_path"],
-                    resources={name:dict(size=len(data),sha256=hashlib.sha256(data).hexdigest()) for name,data in resources.items()})
-    archive = work / f"canopus-installer-prod-{TARGET}.zip"
-    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
-        for name, data in resources.items():
-            info = zipfile.ZipInfo(name, date_time=(2026,9,9,0,0,0)); info.compress_type=zipfile.ZIP_DEFLATED
-            bundle.writestr(info, data)
+                    resources={name:dict(size=len(resources[name]),sha256=hashlib.sha256(resources[name]).hexdigest())
+                               for name in resource_names(args.target)})
     for name,data in resources.items():
         (out / name).write_bytes(data)
-        temporary = FAMILY / (name + ".tmp")
-        temporary.write_bytes(data); temporary.replace(FAMILY / name)
     (work / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(f"Pack this directory (main.lua + .bin files only): {out}")
-    print(f"Resource ZIP: {archive}")
+    bundle_family(out)
     print(f"stage1={len(stage1)} stage2={len(stage2)} Supervisor={len(supervisor)} bytes; device NOT_PROBED")
 
 if __name__ == "__main__":

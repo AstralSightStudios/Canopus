@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.155.type.launcher_app_descriptor.v1",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "kind": "struct",
+  "name": "launcher_app_descriptor",
+  "size": 80,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "registry_links",
+      "offset": 0,
+      "width": 8,
+      "signedness": "unsigned",
+      "ownership": "runtime_owned",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "vtable",
+      "offset": 8,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_or_runtime_default",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 defaults null vtable to 0x20084bb0"
+    },
+    {
+      "name": "package_name",
+      "offset": 12,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_by_app_install",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "launcher_icon_resource",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "app_id",
+      "offset": 20,
+      "width": 2,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "flags",
+      "offset": 22,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "owned_string_28",
+      "offset": 28,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "owned_string_32",
+      "offset": 32,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "launcher_metadata_callback",
+      "offset": 36,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "callable",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "page_registry",
+      "offset": 56,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "runtime_owned",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "hidden_flags",
+      "offset": 72,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Same-model baseline shape. App/page/launcher, file operations and notification consumer offsets checked through complete .155 body equality and critical-path IDB audit. Unresolved baseline fields remain unresolved; no device proof."
+  }
+}

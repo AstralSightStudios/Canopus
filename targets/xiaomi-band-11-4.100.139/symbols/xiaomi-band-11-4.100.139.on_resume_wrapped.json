@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.on_resume_wrapped",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "on_resume_wrapped",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *page)",
+  "entry_address": "0x0c696c18",
+  "callable_address": "0x0c696c19",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4139-005"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {"firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74", "evidence_ids": ["EVID-RESOURCE-4139-005"], "source": "Exact .139 pagemanager decompilation; page lifecycle ladder recovered from the state byte at page+40 and the handler-chain callbacks."},
+  "notes": "Brings a page fully up: calls on_create_wrapped (0x0c696ae8, rebuilding the root view and every widget through the page on_create callback at page[19]), then on_start_wrapped (0x0c693996), then the resume leg. Climbs from states 4/5/8/9/18 to 17, so it is also the recovery path after a forced teardown. UI owner thread only, never under the interrupt lock. Device probe pending."
+}

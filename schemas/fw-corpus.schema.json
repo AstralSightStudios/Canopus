@@ -3,11 +3,18 @@
   "$id": "https://canopus.local/schemas/fw-corpus.schema.json",
   "title": "Canopus firmware matching corpus",
   "type": "object",
-  "required": ["schema", "target_id", "functions"],
+  "required": [
+    "schema",
+    "target_id",
+    "functions"
+  ],
   "properties": {
     "schema": {
       "type": "integer",
-      "enum": [1, 2]
+      "enum": [
+        1,
+        2
+      ]
     },
     "target_id": {
       "type": "string",
@@ -27,6 +34,10 @@
       "items": {
         "$ref": "#/$defs/dataObject"
       }
+    },
+    "firmware_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
     }
   },
   "allOf": [
@@ -37,10 +48,14 @@
             "const": 2
           }
         },
-        "required": ["schema"]
+        "required": [
+          "schema"
+        ]
       },
       "then": {
-        "required": ["globals"]
+        "required": [
+          "globals"
+        ]
       }
     }
   ],
@@ -52,7 +67,10 @@
     },
     "block": {
       "type": "object",
-      "required": ["off", "size"],
+      "required": [
+        "off",
+        "size"
+      ],
       "properties": {
         "off": {
           "type": "integer",
@@ -83,7 +101,11 @@
     },
     "dataReference": {
       "type": "object",
-      "required": ["off", "addr", "access"],
+      "required": [
+        "off",
+        "addr",
+        "access"
+      ],
       "properties": {
         "off": {
           "type": "integer",
@@ -94,14 +116,21 @@
         },
         "access": {
           "type": "string",
-          "enum": ["read", "write", "offset", "unknown"]
+          "enum": [
+            "read",
+            "write",
+            "offset",
+            "unknown"
+          ]
         }
       },
       "additionalProperties": false
     },
     "function": {
       "type": "object",
-      "required": ["addr"],
+      "required": [
+        "addr"
+      ],
       "properties": {
         "addr": {
           "$ref": "#/$defs/address"
@@ -169,14 +198,71 @@
           }
         },
         "cyclic": {
-          "type": ["boolean", "null"]
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "body_fingerprint": {
+          "type": "object",
+          "required": [
+            "algorithm",
+            "sha256",
+            "instructions",
+            "refs"
+          ],
+          "properties": {
+            "algorithm": {
+              "const": "thumb-full-v1"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "instructions": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "refs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "off",
+                  "kind",
+                  "addr"
+                ],
+                "properties": {
+                  "off": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "kind": {
+                    "enum": [
+                      "control",
+                      "literal"
+                    ]
+                  },
+                  "addr": {
+                    "$ref": "#/$defs/address"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
     },
     "dataObjectXref": {
       "type": "object",
-      "required": ["function", "off", "access"],
+      "required": [
+        "function",
+        "off",
+        "access"
+      ],
       "properties": {
         "function": {
           "$ref": "#/$defs/address"
@@ -187,7 +273,12 @@
         },
         "access": {
           "type": "string",
-          "enum": ["read", "write", "offset", "unknown"]
+          "enum": [
+            "read",
+            "write",
+            "offset",
+            "unknown"
+          ]
         }
       },
       "additionalProperties": false

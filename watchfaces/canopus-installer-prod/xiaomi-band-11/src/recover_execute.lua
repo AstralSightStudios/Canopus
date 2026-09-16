@@ -33,6 +33,15 @@ local function read_identity(path)
     return properties
 end
 
+function M.select_profile(profiles)
+    local properties = read_identity("/etc/build.prop")
+    local profile = properties and profiles[properties["ro.build.version"]]
+    if not profile or properties["ro.build.id"] ~= profile.firmware_build then
+        return nil, "Firmware identity mismatch or unreadable"
+    end
+    return profile
+end
+
 function M.recover(profile)
     local properties = read_identity(profile.identity_path)
     if not properties or properties["ro.build.version"] ~= profile.firmware_version

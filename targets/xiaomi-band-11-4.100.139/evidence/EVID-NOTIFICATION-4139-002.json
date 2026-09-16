@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-NOTIFICATION-4139-002",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Why does crash3 fault during Manager registration, and what context must an ordinary reminder retain?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.lvx_notification_insert_message"
+  ],
+  "prototype_hypothesis": "void(const firmware_notification_message *message)",
+  "callsite_evidence": [
+    "crash3: Manager launcher registration completes, then notification event 34/subtype 7 reaches ntf_event_all_cb (0x0c559434), LR 0x0c5595d5.",
+    "0x0c55fde8 loads list->head; 0x0c55fdf4 loads message+92 into r5; 0x0c55fe06 executes ldrb r3,[r5,#13]. Crash r5=0 and BFAR=0x0d exactly reproduce this missing-context dereference.",
+    "Stock analyze_notify_data/notify_set_user_data (0x0c8ff218) allocates and zeros 16 bytes: phone data +0, focus v1 +4, focus v2 +8, phone active +12, focus version +13. Ordinary messages have message+90=0 and focus version=0."
+  ],
+  "control_flow_evidence": [
+    "Reminder start dereferences context+13 unconditionally before any DND/wrist/notification policy branch. Disabling focus does not make user_data optional.",
+    "sub_C562518 gates focus-v1/v2 dereferences on message+90. Canopus leaves this zero and supplies no phone/focus callbacks.",
+    "sub_C6A6DC8 clones message strings but borrows context+92. sub_C6A6D4C and sub_C8F3FD4 free strings/list nodes, not this context. Two separate writable static contexts live for the boot-resident supervisor lifetime."
+  ],
+  "ownership_analysis": "Each Canopus message borrows its own zeroed 16-byte boot-resident user context; no automatic stack lifetime, no stock phone/focus ownership callback and no freeing of a shared payload.",
+  "unsafe_assumptions": [
+    "Real display/vibration/DND/memory-pressure validation is pending. Emulation covers actual insertion, event consumer and reminder decision code; settings and presentation endpoints are modeled."
+  ],
+  "recommended_probe": "Use the rebuilt exact .139 package after reboot. Register Manager, inspect load notification, dismiss it, install a signed module, inspect/dismiss its notification, and reopen the notification list.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-15T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "scripts/tests/band11_notification_firmware.py",
+      "role": "crash-reproduction-and-regression"
+    },
+    {
+      "uri": "manager/target/band11/canopus_manager_target_band11.c",
+      "role": "native-adapter"
+    }
+  ]
+}

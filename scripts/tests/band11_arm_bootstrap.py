@@ -7,6 +7,7 @@ it cannot validate physical BES cache/alias behavior or a real display.
 Run with build/band11-tests/bin/python scripts/tests/band11_arm_bootstrap.py.
 """
 import ctypes
+import json
 from pathlib import Path
 import struct
 import sys
@@ -19,14 +20,20 @@ TARGET = 'xiaomi-band-11-4.100.139'
 RES = ROOT / 'watchfaces/canopus-installer-prod/xiaomi-band-11'
 
 class Machine:
-    def __init__(self, fault=None, code=0x1c400020, kernel_base=0x20110000):
+    def __init__(self, fault=None, code=0x1c400020, kernel_base=0x20110000, target=TARGET):
+        self.target = target
+        self.res = RES
+        self.firmware_map = {}
+        if target != TARGET:
+            audit = json.loads((ROOT / 'targets' / target / 'evidence/fw-match/emulation-addresses.json').read_text())
+            self.firmware_map = {int(a, 16): int(b, 16) for a, b in audit['addresses'].items()}
         # Comma-separated so a matrix can combine, e.g. an unavailable alias
         # with an MPU rejection that only the Kmem fallback can hit.
         self.fault = fault
         self.faults = set(fault.split(',')) if fault else set()
         self.uc = u = Uc(UC_ARCH_ARM, UC_MODE_THUMB | UC_MODE_MCLASS)
         u.ctl_set_cpu_model(UC_CPU_ARM_CORTEX_M33)
-        firmware = (ROOT / 'fwbins' / TARGET / 'vela_ap.bin').read_bytes()
+        firmware = (ROOT / 'fwbins' / target / 'vela_ap.bin').read_bytes()
         u.mem_map(0x0c0c0000, (len(firmware) + 4095) & ~4095)
         u.mem_write(0x0c0c0000, firmware)
         u.mem_map(0x2c0c0000, (len(firmware) + 4095) & ~4095)
@@ -57,7 +64,7 @@ class Machine:
             u.mem_write(dst,firmware[src:src+size])
             u.mem_write(dst-0x1fe00000,firmware[src:src+size])
         self.code, self.mailbox, self.stop = code, 0x3c400000, 0x1c000100
-        blob = bytearray((RES / f'canopus_stage1-{TARGET}.bin').read_bytes())
+        blob = bytearray((self.res / f'canopus_stage1-{target}.bin').read_bytes())
         struct.pack_into('<I',blob,4,self.mailbox)
         u.mem_write(code,bytes(blob)); self.word(self.mailbox,0x7ffffffe)
         self.next_alloc = kernel_base
@@ -88,7 +95,9 @@ class Machine:
         self.word(0x200e0000,2)
         self.register_calls = 0
         self.app = 0; self.pages = []; self.launcher = []; self.widgets = {}; self.next_widget = 0x200a0000
-        hooks = {0x0c3507e8:self.allocate,0x0c34ccb8:self.free,
+        self.notifications = []
+        hooks = {0x0c8f2bb0:self.notification_insert,
+                 0x0c3507e8:self.allocate,0x0c34ccb8:self.free,
                  0x0c34cd2c:self.free,0x0c34f0a0:self.mallinfo,
                  0x0c342c54:self.open,0x0c33818c:self.close,0x0c33d784:self.read,
                  0x0c914f64:self.register,0x0c349538:lambda:0x200e0000,
@@ -99,7 +108,8 @@ class Machine:
         hooks[0xc3b3948]=self.widget_text
         self.firmware_hooks = {}
         for addr,fn in hooks.items():
-            self.firmware_hooks[addr] = u.hook_add(UC_HOOK_CODE,self.firmware_call,fn,addr,addr)
+            actual = self.fw(addr)
+            self.firmware_hooks[addr] = u.hook_add(UC_HOOK_CODE,self.firmware_call,fn,actual,actual)
         u.hook_add(UC_HOOK_CODE,lambda uc,a,s,d:uc.emu_stop(),None,self.stop,self.stop)
         u.hook_add(UC_HOOK_MEM_WRITE,self.mpu_write,None,0xe000ed98,0xe000eda3)
         u.hook_add(UC_HOOK_MEM_READ,self.mpu_read,None,0xe000ed9c,0xe000eda3)
@@ -116,11 +126,16 @@ class Machine:
         if self.hurt('hardware_occupied'):
             for i in (4,5,6): self.regions[i] = (0x200c0007 + i*32,0x200c0003 + i*32)
         if self.hurt('bad_context'): self.word(0xe000edc0,0)
-        if self.hurt('wrong_identity'): u.mem_write(0x0ca0d216,b'4.100.138')
+        if self.hurt('wrong_identity'): u.mem_write(self.fw(0x0ca0d216),b'4.100.138')
         # An enabled region over the whole 1c... alias overrides the privileged
         # default Code map there, so every image falls back to Kmem + a lease.
         if self.hurt('alias_blocked'): self.regions[2] = (0x1c000006,0x1cffffe3)
         if self.hurt('cache_disabled'): self.word(0x07ffa000,0)
+    def fw(self, address):
+        if self.target == TARGET:
+            return address
+        # Unknown addresses are a test failure, never a source-address fallback.
+        return self.firmware_map[address & ~1] | (address & 1)
     def hurt(self,name): return name in self.faults
     def word(self,a,v=None):
         if v is not None: self.uc.mem_write(a,struct.pack('<I',v & 0xffffffff))
@@ -194,7 +209,7 @@ class Machine:
         elif path in ('/data/canopus/stage2.bin','/data/canopus/supervisor.elf'):
             name='stage2' if path.endswith('stage2.bin') else 'supervisor'
             if self.hurt('missing_stage2') and name=='stage2':return -1
-            data=(RES/f'canopus_{name}-{TARGET}.bin').read_bytes()
+            data=(self.res/f'canopus_{name}-{self.target}.bin').read_bytes()
             if self.hurt('bad_supervisor') and name=='supervisor':data=data[:-1]+bytes([data[-1]^1])
             if self.hurt('truncated_stage2') and name=='stage2':data=data[:-1]
             if self.hurt('extra_stage2') and name=='stage2':data+=b'\x00'
@@ -228,6 +243,19 @@ class Machine:
     def rename(self):
         a,b=self.string(self.reg(0)),self.string(self.reg(1))
         self.disk[b]=self.disk.pop(a);return 0
+    def notification_insert(self):
+        ptr = self.reg(0)
+        self.notifications.append({
+            'id': struct.unpack('<Q', self.uc.mem_read(ptr, 8))[0],
+            'title': self.string(self.word(ptr + 12)),
+            'source': self.string(self.word(ptr + 16)),
+            'body': self.string(self.word(ptr + 20)),
+            'small_icon': self.string(self.word(ptr + 28)),
+            'large_icon': self.string(self.word(ptr + 32)),
+            'reminder': self.uc.mem_read(ptr + 88, 1)[0],
+        })
+        # The firmware's void entry leaves free() residue in r0.
+        return 0xdeadc0de
     def app_install(self):
         ptr,pages,count=self.reg(0),self.reg(1),self.reg(2)
         assert count==3 and self.string(self.word(ptr+12))=='com.canopus.manager'
@@ -369,6 +397,9 @@ class BootstrapTests(unittest.TestCase):
             m.uc.reg_write(UC_ARM_REG_R1,frame);m.uc.reg_write(UC_ARM_REG_R2,16)
             self.assertEqual(m.call(m.word(m.fops+12)),16)
         self.assertEqual(m.launcher,[0xca])
+        self.assertEqual(len(m.notifications), 1)
+        self.assertEqual(m.notifications[0]['body'], 'Canopus 已加载！尽情享受吧～')
+        self.assertEqual(m.notifications[0]['reminder'], 1)
         page=m.pages[0]
         m.uc.reg_write(UC_ARM_REG_R1,0x200b0000);m.uc.reg_write(UC_ARM_REG_R2,0)
         self.assertEqual(m.call(m.word(page+0x4c),page),0)

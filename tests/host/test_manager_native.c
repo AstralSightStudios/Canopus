@@ -241,7 +241,7 @@ TEST(manager_native_navigates_list_and_detail)
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_ROLLBACK) != 0);
 }
 
-TEST(manager_native_ready_module_has_no_manual_activation)
+TEST(manager_native_ready_module_requires_manual_activation_confirmation)
 {
     struct canopus_manager_model_v1 model;
     struct canopus_manager_native_v1 native;
@@ -263,8 +263,37 @@ TEST(manager_native_ready_module_has_no_manual_activation)
     CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
                                       &backend) == CANOPUS_UI_OK);
     snapshot = canopus_ui_current(&native.ui);
-    CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_ACTIVATE) == 0);
+    CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_ACTIVATE) != 0);
     CHECK(native_transport_calls == 0);
+    {
+        const struct canopus_ui_node_v1 *node =
+            find_event(snapshot, CANOPUS_MANAGER_EVENT_ACTIVATE);
+        CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+                                        node->key, node->event_id) == CANOPUS_UI_OK);
+        CHECK(native_transport_calls == 0);
+        snapshot = canopus_ui_current(&native.ui);
+        node = find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
+        CHECK(node != 0);
+        CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+                                        node->key, node->event_id) == CANOPUS_UI_OK);
+        CHECK(native_transport_calls == 1);
+        CHECK(native_transport_command == CANOPUS_CMD_ACTIVATE);
+    }
+    model.modules[0].state = CANOPUS_STATE_ENABLED;
+    CHECK(canopus_manager_can_activate(&model, 0));
+    model.safe_mode = 1;
+    CHECK(!canopus_manager_can_activate(&model, 0));
+    CHECK(canopus_manager_op_activate(&model, 0) == CANOPUS_RESULT_DISALLOWED);
+    model.safe_mode = 0;
+    model.modules[0].signature_ok = 0;
+    CHECK(!canopus_manager_can_activate(&model, 0));
+    model.modules[0].signature_ok = 1;
+    model.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
+    CHECK(!canopus_manager_can_activate(&model, 0));
+    model.modules[0].state = CANOPUS_STATE_ENABLED;
+    model.modules[0].lifecycle_class = CANOPUS_LIFECYCLE_PATCH_REBOOT_REQUIRED;
+    CHECK(!canopus_manager_can_activate(&model, 0));
+    CHECK(native_transport_calls == 1);
 }
 
 TEST(manager_native_dispatches_real_model_operations)
@@ -579,8 +608,8 @@ static const struct test_registry manager_native_tests[] = {
       manager_native_surfaces_module_query_failure_wrapper },
     { "manager_native_navigates_list_and_detail",
       manager_native_navigates_list_and_detail_wrapper },
-    { "manager_native_ready_module_has_no_manual_activation",
-      manager_native_ready_module_has_no_manual_activation_wrapper },
+    { "manager_native_ready_module_requires_manual_activation_confirmation",
+      manager_native_ready_module_requires_manual_activation_confirmation_wrapper },
     { "manager_native_dispatches_real_model_operations",
       manager_native_dispatches_real_model_operations_wrapper },
     { "manager_native_enable_is_confirmable_and_dispatches",

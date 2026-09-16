@@ -56,14 +56,14 @@ function M.load(profile, stage1_path, stage2_path, supervisor_path, run, read_al
         progress("检查 MPU 权限和可用区域")
         check(read_word(0xe000ed94) == 5, "unexpected MPU control; reboot with stock firmware")
         check(read_word(0xe000edc0) == 0x00447722, "unexpected MPU memory attributes")
-        check((read_word(0x200f5190) & 0x7f) == 0x0f, "MPU leases already occupied; reboot")
+        check((read_word(profile.mpu_bitmap) & 0x7f) == 0x0f, "MPU leases already occupied; reboot")
         for index, fingerprint in ipairs(profile.fingerprints) do
             progress(string.format("核对固件指令 %d/%d", index, #profile.fingerprints))
             check(read_word(fingerprint[1]) == fingerprint[2], "firmware instruction fingerprint mismatch")
         end
         progress("核对运行内存范围")
-        local heap = read_word(0x200b2590)
-        check(heap == 0x3c356b40, "unexpected Umem heap descriptor")
+        local heap = read_word(profile.umem_slot)
+        check(heap == profile.umem_descriptor, "unexpected Umem heap descriptor")
         local lo, hi = read_word(heap + 0x1c), read_word(heap + 0x20)
         check(lo >= 0x3c000000 and hi > lo and hi <= 0x3d000000, "unexpected PSRAM heap bounds")
         local function owned_range(p, n)
@@ -96,10 +96,10 @@ function M.load(profile, stage1_path, stage2_path, supervisor_path, run, read_al
         -- arguments: D clean-all; then the already-enabled I cache's
         -- clean/invalidate-all branch. Avoid mw on cache command ports:
         -- cmd_mw reads those ports before and after every write.
-        check(run("exec 0x0c93021b"), "data-cache clean failed")
-        check(run("exec 0x0c91e543"), "cache clean barrier failed")
-        check(run("exec 0x0c0c181f"), "instruction-cache invalidation failed")
-        check(run("exec 0x0c91e543"), "instruction-cache barrier failed")
+        check(run(string.format("exec 0x%08x", profile.cache_d_clean)), "data-cache clean failed")
+        check(run(string.format("exec 0x%08x", profile.cache_barrier)), "cache clean barrier failed")
+        check(run(string.format("exec 0x%08x", profile.cache_i_invalidate)), "instruction-cache invalidation failed")
+        check(run(string.format("exec 0x%08x", profile.cache_barrier)), "instruction-cache barrier failed")
         -- Run command status is not the native return code; read the owned
         -- mailbox after exec, even if NSH returns a command error.
         local command_ok = run(string.format("exec 0x%08x > /data/canopus/bootstrap-exec.txt", executable | 1))

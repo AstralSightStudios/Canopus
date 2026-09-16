@@ -118,6 +118,36 @@ def entry_bytes(fn: dict[str, Any]) -> bytes:
         return b""
 
 
+def body_key(fn: dict[str, Any]) -> tuple[str, str, int] | None:
+    fp = fn.get("body_fingerprint") or {}
+    # Tiny veneers and common prologues cannot seed a call-graph identity.
+    if fp.get("algorithm") != "thumb-full-v1" or fp.get("instructions", 0) < 8:
+        return None
+    digest = fp.get("sha256", "")
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        return None
+    return fp["algorithm"], digest, fp["instructions"]
+
+
+def unique_body_anchors(source: list[dict], target: list[dict]) -> dict[int, int]:
+    """Mutually unique full bodies seed unnamed neighbors, not just API symbols.
+
+    Like BinDiff's unique matching steps, duplicates remain unresolved. Body
+    equality is still static identity evidence; it proves neither an inherited
+    semantic name nor a prototype and never promotes a symbol record.
+    """
+    indices = []
+    for functions in (source, target):
+        index: dict[tuple, list[int]] = defaultdict(list)
+        for fn in functions:
+            key = body_key(fn)
+            if key:
+                index[key].append(addr(fn["addr"]))
+        indices.append(index)
+    return {values[0]: indices[1][key][0] for key, values in indices[0].items()
+            if len(values) == 1 and len(indices[1].get(key, [])) == 1}
+
+
 def thumb_mask(raw: bytes) -> bytes:
     """Port the conservative masks from tools/fw-match/src/thumb.rs."""
     out = bytearray([0xFF] * len(raw))
@@ -327,8 +357,13 @@ def base_evidence(a: dict[str, Any], b: dict[str, Any], string_weights: dict[str
     cfg, cfg_detail = cfg_score(a, b)
     data, data_detail = data_scores(a, b, string_weights)
     context, context_detail = context_score(a, b)
+    ka, kb = body_key(a), body_key(b)
+    body_equal = ka == kb if ka is not None and kb is not None else None
+    byte_evidence = max(exact, masked)
+    if body_equal is not None:
+        byte_evidence = 1.0 if body_equal else byte_evidence * 0.8
     families: dict[str, float] = {
-        "bytes": max(exact, masked),
+        "bytes": byte_evidence,
         "cfg": cfg,
         "context": context,
     }
@@ -342,7 +377,7 @@ def base_evidence(a: dict[str, Any], b: dict[str, Any], string_weights: dict[str
         "families": families,
         "base_score": base,
         "detail": {
-            "bytes": {"exact": exact, "masked": masked},
+            "bytes": {"exact": exact, "masked": masked, "full_body_equal": body_equal},
             "cfg": cfg_detail,
             "data": data_detail,
             "context": context_detail,
@@ -594,7 +629,7 @@ def state_at(
 def assign_one_to_one(
     problems: list[dict[str, Any]], target_functions: list[dict[str, Any]]
 ) -> dict[str, dict[str, Any]]:
-    """Assign candidates in confidence order without duplicate target reuse."""
+    """Assign physical functions one-to-one, allowing source symbol aliases."""
     priority = sorted(
         problems,
         key=lambda problem: (
@@ -606,16 +641,26 @@ def assign_one_to_one(
         reverse=True,
     )
     used: dict[int, str] = {}
+    source_owner: dict[int, int] = {}
+    source_assignment: dict[int, int] = {}
     assignments: dict[str, dict[str, Any]] = {}
     for problem in priority:
         name = str(problem["symbol"].get("name") or "")
+        source_address = addr(problem["symbol"].get("entry_address"))
         pool = problem["candidates"]
         selected_index = None
         blocked_by = None
         for index, item in enumerate(pool):
             target_address = addr(target_functions[item["target_index"]].get("addr"))
             owner = used.get(target_address)
-            if owner is None:
+            # Multiple semantic names for one physical source entry must share
+            # one target entry. Do not force bt_free away from heap_free, or
+            # pad-bottom away from its lvx alias. If an alias's hard-negative
+            # rules exclude the shared target, leave that alias unresolved.
+            alias_target = source_assignment.get(source_address) if source_address else None
+            if alias_target is not None and alias_target != target_address:
+                continue
+            if owner is None or (source_address and source_owner.get(target_address) == source_address):
                 selected_index = index
                 break
             if index == 0:
@@ -625,6 +670,9 @@ def assign_one_to_one(
                 target_functions[pool[selected_index]["target_index"]].get("addr")
             )
             used[selected_address] = name
+            if source_address:
+                source_owner[selected_address] = source_address
+                source_assignment[source_address] = selected_address
         assignments[name] = {
             "selected_index": selected_index,
             "top_collision_with": blocked_by,
@@ -661,7 +709,7 @@ def make_symbol_candidate(source: dict[str, Any], target_id: str, target: dict[s
     record["symbol_id"] = source_id.replace(str(source.get("target_id", "")), target_id, 1)
     record["target_id"] = target_id
     record["entry_address"] = target.get("addr")
-    record["callable_address"] = f"0x{addr(target.get('addr')) | 1:x}"
+    record.pop("callable_address", None)
     record["status"] = "CANDIDATE"
     record["approval_state"] = "PENDING"
     record["policy"] = "restricted"
@@ -975,6 +1023,10 @@ def main() -> int:
 
     source_corpus_doc = read_json(args.source_corpus)
     target_corpus_doc = read_json(args.target_corpus)
+    if target_corpus_doc.get("target_id") != args.target_id:
+        parser.error("target corpus identity differs from --target-id")
+    if target_corpus_doc.get("firmware_sha256") not in (None, args.target_firmware_sha256):
+        parser.error("target corpus SHA-256 differs from --target-firmware-sha256")
     evidence_id = args.evidence_id or (
         "EVID-FW-MATCH-ENSEMBLE-"
         + re.sub(r"[^A-Za-z0-9]+", "-", str(source_corpus_doc.get("target_id") or "source"))
@@ -1017,7 +1069,13 @@ def main() -> int:
             ),
         })
 
-    anchors: dict[int, int] = {}
+    anchors = unique_body_anchors(source_functions, target_functions)
+    # Runtime hard negatives take precedence over even identical bodies.
+    for symbol in source_symbols:
+        source_address = addr(symbol.get("entry_address"))
+        if (symbol.get("name"), anchors.get(source_address)) in negative_matches:
+            anchors.pop(source_address, None)
+    body_anchor_count = len(anchors)
     pair_cache: dict[tuple[int, int], float] = {}
     anchor_history = []
     for round_number in range(args.rounds):
@@ -1091,6 +1149,7 @@ def main() -> int:
                 "score": item["fused"]["score"],
                 "families": item["fused"]["families"],
                 "evidence": item["fused"]["graph"],
+                "full_body_equal": item["base"]["detail"]["bytes"]["full_body_equal"],
                 "independence_groups": item["fused"]["independence_groups"],
                 "selected": index == selected_index,
             })
@@ -1118,7 +1177,7 @@ def main() -> int:
             ),
             "state": state_at(pool, selected_index if selected_index is not None else -1),
             "top_candidates": top_candidates,
-            "required_evidence_missing": ["normalized-instructions", "abi-callsite", "dataflow"],
+            "required_evidence_missing": ([] if body_key(problem["source"]) and target and body_key(target) else ["normalized-instructions"]) + ["abi-callsite", "dataflow"],
             "target_firmware_sha256": args.target_firmware_sha256,
             "target_corpus_sha256": target_corpus_sha256,
             "top_collision_with": assignment["top_collision_with"],
@@ -1160,7 +1219,8 @@ def main() -> int:
     quality_summary = {
         "assigned": len(predicted_addresses),
         "unique_assigned": len(set(predicted_addresses)),
-        "one_to_one": len(predicted_addresses) == len(set(predicted_addresses)),
+        "one_to_one": len({(addr(item["source_address"]), addr(item["predicted_address"])) for item in result_by_name.values() if item.get("predicted_address")}) == len(set(predicted_addresses)),
+        "source_aliases": len(predicted_addresses) - len({addr(item["source_address"]) for item in result_by_name.values() if item.get("predicted_address")}),
         "reassigned_below_top_rank": sum(
             (item.get("selected_rank") or 0) > 1 for item in result_by_name.values()
         ),
@@ -1195,7 +1255,7 @@ def main() -> int:
 
     report = {
         "schema": 3,
-        "matcher": "bindiff-inspired-ensemble-v3-global-dataflow",
+        "matcher": "bindiff-inspired-ensemble-v4-full-body-seeds",
         "source_target_id": source_corpus_doc.get("target_id"),
         "target_target_id": target_corpus_doc.get("target_id"),
         "target_firmware_sha256": args.target_firmware_sha256,
@@ -1215,6 +1275,7 @@ def main() -> int:
         },
         "failure_feedback": failure_feedback,
         "hard_negative_match_count": len(negative_matches),
+        "unique_full_body_anchor_count": body_anchor_count,
         "hard_negative_abi_assumption_count": sum(
             len(item["negative_abi_assumptions"]) for item in failure_feedback
         ),
@@ -1227,7 +1288,7 @@ def main() -> int:
             "instruction-relative-position",
             "segment-and-object-shape",
         ],
-        "missing_families": ["normalized-instructions", "abi-callsite"],
+        "missing_families": (["normalized-instructions"] if not body_anchor_count else []) + ["abi-callsite"],
         "confidence_note": "confidence_heuristic is a ranking aid, not an oracle-calibrated probability",
         "anchor_history": anchor_history,
         "oracle_comparison": [],

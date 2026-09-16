@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "target_id": "xiaomi-band-11-4.100.139",
+  "symbol_id": "xiaomi-band-11-4.100.139.native.kmem_heap_slot",
+  "name": "kmem_heap_slot",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x200b01c8",
+  "prototype": "void *",
+  "status": "STATIC_RECOVERED",
+  "policy": "restricted",
+  "approval_state": "PENDING",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ]
+  },
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-NATIVE-4139-003"
+    ],
+    "source": "Existing exact .139 native loader audit: heap-budget-2026-09-12.md and native-audit.md. Moved from the handwritten backend into a symbol record."
+  }
+}

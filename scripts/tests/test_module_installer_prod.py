@@ -16,12 +16,21 @@ spec.loader.exec_module(builder)
 class ModuleInstallerTests(unittest.TestCase):
     def test_exact_target_config(self):
         for product in builder.PRODUCTS:
-            source, config = builder.render(product, builder.SUPPORTED[-1:])
-            self.assertEqual(len(config['targets']), 1)
-            self.assertFalse(config['targets']['4.100.139']['runtime_pending'])
-            source, config = builder.render(product, builder.SUPPORTED[:2])
-            self.assertEqual(len(config['targets']), 2)
-            self.assertFalse(config['targets']['3.101.043']['runtime_pending'])
+            for target in builder.SUPPORTED[2:]:
+                source, config = builder.render(product, [target])
+                self.assertEqual(len(config['targets']), 1)
+                self.assertFalse(config['targets'][target.rsplit('-', 1)[1]]['runtime_pending'])
+            source, config = builder.render(product, builder.SUPPORTED[2:])
+            self.assertEqual(set(config['targets']), {'4.100.139', '4.100.155'})
+            if product == 'resource-hook':
+                self.assertEqual(config['token'], 'resource_hook')
+                self.assertEqual(config['assets'], [])
+                with self.assertRaises(ValueError):
+                    builder.render(product, builder.SUPPORTED[:2])
+            else:
+                source, config = builder.render(product, builder.SUPPORTED[:2])
+                self.assertEqual(len(config['targets']), 2)
+                self.assertFalse(config['targets']['3.101.043']['runtime_pending'])
             self.assertNotIn('-- @', source)
             with self.assertRaises(ValueError):
                 builder.render(product, ['xiaomi-band-11-4.100.108'])
@@ -34,7 +43,9 @@ class ModuleInstallerTests(unittest.TestCase):
             self.skipTest('Lua interpreter required')
         with tempfile.TemporaryDirectory(prefix='canopus-module-prod-test-') as temp:
             for product in builder.PRODUCTS:
-                for targets in (builder.SUPPORTED[:2], [builder.SUPPORTED[-1]]):
+                target_groups = (builder.SUPPORTED[2:],) if product == 'resource-hook' else (
+                    builder.SUPPORTED[:2], builder.SUPPORTED[2:])
+                for targets in target_groups:
                     source, _ = builder.render(product, targets)
                     for forbidden in ('os.execute', 'debug.', 'pmain', 'RECOVERY_PROFILE', '/dev/canopus'):
                         self.assertNotIn(forbidden, source)

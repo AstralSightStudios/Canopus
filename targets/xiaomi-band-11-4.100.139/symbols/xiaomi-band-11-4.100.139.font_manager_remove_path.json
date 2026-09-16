@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.font_manager_remove_path",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "font_manager_remove_path",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *entry)",
+  "entry_address": "0x0c904cfc",
+  "callable_address": "0x0c904cfd",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-4139-006"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-RESOURCE-4139-006"
+    ],
+    "source": "Exact .139 uikit font_manager decompilation; the manager hangs off *0x200bd1e8+28 and its registered-path list uses payload size at +24 and head at +28."
+  },
+  "notes": "Unlinks one registered-path entry from the font manager's registry after validating the handle is in the list, then frees its name, its path and the node itself. Takes the node handle, not a family name. UI owner thread only, never under the interrupt lock. Affects only font wrappers created afterwards. Device probe pending."
+}

@@ -10,7 +10,7 @@ def main():
     ap.add_argument("--output", required=True)
     args = ap.parse_args()
     addrs = json.loads(open(args.addrs_file).read())
-    rc = idapro.open_database(args.idb, True)
+    rc = idapro.open_database(args.idb, False)
     if rc != 0:
         print(f"open fail {rc}", file=sys.stderr); sys.exit(2)
     import idaapi, ida_hexrays, ida_funcs
@@ -29,7 +29,7 @@ def main():
             code = ""
         out[a] = {"name": name, "size": fn.end_ea - fn.start_ea, "code": code[:1200]}
         print(f"done {a}", file=sys.stderr)
-    idapro.close_database()
+    idapro.close_database(save=False)
     json.dump(out, open(args.output, "w"))
     print("wrote", args.output, file=sys.stderr)
 

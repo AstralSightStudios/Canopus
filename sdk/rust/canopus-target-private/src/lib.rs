@@ -22,6 +22,7 @@ pub mod generated_symbols;
     feature = "target-xiaomi-band-10-pro-3-101-043",
     feature = "target-xiaomi-band-9-pro-3-1-175",
     feature = "target-xiaomi-band-11-4-100-139",
+    feature = "target-xiaomi-band-11-4-100-155",
     feature = "target-xiaomi-band-9-3-1-32"
 )))]
 compile_error!("canopus-target-private requires exactly one target-feature");
@@ -66,7 +67,22 @@ mod selected;
 #[path = "targets/xiaomi_band_10_pro_3_101_043.rs"]
 mod selected;
 
-#[cfg(feature = "target-xiaomi-band-11-4-100-139")]
+#[cfg(all(
+    feature = "target-xiaomi-band-11-4-100-155",
+    any(
+        feature = "target-xiaomi-band-10-pro-3-101-036",
+        feature = "target-xiaomi-band-10-pro-3-101-043",
+        feature = "target-xiaomi-band-9-pro-3-1-175",
+        feature = "target-xiaomi-band-11-4-100-139",
+        feature = "target-xiaomi-band-9-3-1-32"
+    )
+))]
+compile_error!("canopus-target-private requires exactly one target feature");
+
+#[cfg(any(
+    feature = "target-xiaomi-band-11-4-100-139",
+    feature = "target-xiaomi-band-11-4-100-155"
+))]
 #[path = "targets/xiaomi_band_11_4_100_139.rs"]
 mod selected;
 
@@ -82,6 +98,7 @@ mod selected;
     feature = "target-xiaomi-band-10-pro-3-101-043",
     feature = "target-xiaomi-band-9-pro-3-1-175",
     feature = "target-xiaomi-band-11-4-100-139",
+    feature = "target-xiaomi-band-11-4-100-155",
     feature = "target-xiaomi-band-9-3-1-32"
 ))]
 pub use selected::*;

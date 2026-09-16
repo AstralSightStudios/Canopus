@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.exec_pop_lifecycle_without_cachepolicy",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "exec_pop_lifecycle_without_cachepolicy",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *page)",
+  "entry_address": "0x0c696e34",
+  "callable_address": "0x0c696e35",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4139-005"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {"firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74", "evidence_ids": ["EVID-RESOURCE-4139-005"], "source": "Exact .139 pagemanager decompilation; page lifecycle ladder recovered from the state byte at page+40 and the handler-chain callbacks."},
+  "notes": "Runs pause, stop and destroy on a page REGARDLESS of its cache policy at page+41, ending in lv_obj_delete of the root view at page+48. The with-cachepolicy variant (0x0c696eb8) used by ordinary navigation stops early for policy 2/5/6/7 and leaves the widgets alive. UI owner thread only, never under the interrupt lock. Device probe pending."
+}

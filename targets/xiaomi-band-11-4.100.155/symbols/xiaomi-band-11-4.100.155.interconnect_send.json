@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.interconnect_send",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "interconnect_send",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3605bc",
+  "prototype": "int(void *, const char *, const canopus_interconnect_message *, canopus_interconnect_send_done, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "connection_framework_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "return_value": "0_on_acceptance_else_negative_errno"
+  },
+  "side_effects": [
+    "queues_one_message_to_named_connection_or_broadcast"
+  ],
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Exact .155 image/IDB, compared with targets/xiaomi-band-11-4.100.139/symbols/xiaomi-band-11-4.100.139.interconnect_send.json: matching full instruction body; unique identity or ordered reference corroboration."
+  },
+  "approval_state": "PENDING",
+  "notes": "matching full instruction body; unique identity or ordered reference corroboration. Source semantic status was CANDIDATE; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the baseline record only within the audited port scope. Physical device validation pending."
+}

@@ -19,6 +19,7 @@ class NativeUI:
 
     def __init__(self, machine):
         self.m = m = machine
+        self.ROW, self.SWITCH = m.fw(self.ROW), m.fw(self.SWITCH)
         self.styles = {0x200c1574: {0x5a: self.FONT28},
                        0x200c1568: {0x5a: self.FONT24}}
         m.word(self.FONT28 + 12, 28)
@@ -31,7 +32,7 @@ class NativeUI:
         self.init_shim = 0x1c100000
         m.uc.mem_write(self.init_shim, bytes.fromhex(
             '10b5 0446 2146 2068 4368 9847 2146 0020 014b 9847 10bd 00bf')
-            + struct.pack('<I', 0x0c5048d9))
+            + struct.pack('<I', m.fw(0x0c5048d9)))
         hooks = {
             0xc3806d4: self.class_create, 0xc385490: self.class_init,
             0xc380686: lambda: self.new(m.reg(0)),
@@ -58,16 +59,19 @@ class NativeUI:
         for a, fn in hooks.items():
             if a in m.firmware_hooks:
                 m.uc.hook_del(m.firmware_hooks.pop(a))
-            m.firmware_hooks[a] = m.uc.hook_add(UC_HOOK_CODE, m.firmware_call, fn, a, a)
+            actual = m.fw(a)
+            m.firmware_hooks[a] = m.uc.hook_add(UC_HOOK_CODE, m.firmware_call, fn, actual, actual)
         for a in (0xc50f4e4, 0xc506af8, 0xc5048d8, 0xc50fad0, 0xc50f520,
                   0xc50ec5c, 0xc50eaac, 0xc507140, 0xc506f6c, 0xc4fbe54):
-            m.uc.hook_add(UC_HOOK_CODE, self.count, None, a, a)
+            m.uc.hook_add(UC_HOOK_CODE, self.count, None, m.fw(a), m.fw(a))
 
     def count(self, uc, address, size, data):
         self.calls[address] = self.calls.get(address, 0) + 1
 
-    def new(self, parent, kind='object', cls=0x2ca1082c, width=0, height=0):
+    def new(self, parent, kind='object', cls=None, width=0, height=0):
         m = self.m
+        if cls is None:
+            cls = m.fw(0x2ca1082c)
         p = m.next_widget
         m.next_widget += 0x100
         m.uc.mem_write(p, bytes(0x100))

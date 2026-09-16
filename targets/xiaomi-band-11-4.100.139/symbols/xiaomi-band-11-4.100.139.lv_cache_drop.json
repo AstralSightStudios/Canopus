@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_cache_drop",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_cache_drop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *cache, const void *key)",
+  "entry_address": "0x0c8b8cae",
+  "callable_address": "0x0c8b8caf",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4139-004"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {"firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74", "evidence_ids": ["EVID-RESOURCE-4139-004"], "source": "Exact .139 disassembly: class find at +12; held entry marked at +12 then class unlink at +20. Zero-ref entry unlinked, payload freed, then entry allocation freed."},
+  "notes": "Logical invalidation, not forced release of a live decoder. UI owner only. See firmware cache-retirement tests and evidence for modeled boundaries."
+}

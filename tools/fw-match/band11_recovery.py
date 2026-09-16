@@ -21,12 +21,15 @@ class Firmware:
         self.functions = json.loads((ROOT / "targets/fw-corpus" / (target + ".json")).read_text())["functions"]
         self.by_addr = {int(f["addr"], 16): f for f in self.functions}
         self.maps = [(BASE, len(self.data), 0), (BASE + 0x20000000, len(self.data), 0)]
-        if target == TARGET:
+        if target in (TARGET, "xiaomi-band-11-4.100.155"):
             # 0x0C0C01A0, 0x0C0C01E4, 0x0C0C024C startup copy loops.
             self.add_copy(0x2006BE00, 0xB710, 0x2C0C1B3C)
             self.add_copy(0x20079420, 0x2F8C, 0x2C0CD24C)
             self.add_copy(0x3C000000, 0x256B40, 0x2C0D01E0)
-            self.add_copy(0x2007DCC8, 0x200ADEDC - 0x2007DCC8, 0x2CC4BE64)
+            # Exact startup DATA LMA is stored in the image header; .155 moves
+            # it by 16 bytes while the copy destination and extent are equal.
+            self.add_copy(0x2007DCC8, 0x200ADEDC - 0x2007DCC8,
+                          struct.unpack_from('<I', self.data, 0x70)[0])
         elif target == "xiaomi-band-10-pro-3.101.043":
             self.add_copy(0x200765C0, 0x3A328, 0x2C0C23A4)
             self.add_copy(0x200B2860, 0x10D6C, 0x2C0FC6CC)

@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_display_get_horizontal_resolution",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_display_get_horizontal_resolution",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int32_t(void *display)",
+  "entry_address": "0x0c380694",
+  "callable_address": "0x0c380695",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-4139-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-RESOURCE-4139-003"
+    ],
+    "source": "Exact .139 lv_display decompilation; falls back to the default display at *0x200bd200 when passed 0."
+  },
+  "notes": "Returns the horizontal resolution. The raw fields at display+0 and display+4 are NOT fixed to an axis: when the rotation bit (display+756 & 2) is set this returns display+4 rather than display+0, i.e. it reports the vertical raw field. _lv_inv_area clips with these accessors, so any code comparing an invalidated area against the screen size must use them too rather than reading the raw fields. Device probe pending."
+}

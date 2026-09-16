@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "target_id": "xiaomi-band-11-4.100.155",
+  "symbol_id": "xiaomi-band-11-4.100.155.native.umem_heap_descriptor",
+  "name": "umem_heap_descriptor",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x3c356b40",
+  "prototype": "void *",
+  "status": "STATIC_RECOVERED",
+  "policy": "restricted",
+  "approval_state": "PENDING",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ]
+  },
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Exact .155 image/IDB, compared with targets/xiaomi-band-11-4.100.139/symbols/xiaomi-band-11-4.100.139.native.umem_heap_descriptor.json: ordered reference correspondence in matching complete function bodies."
+  },
+  "notes": "ordered reference correspondence in matching complete function bodies. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the baseline record only within the audited port scope. Physical device validation pending."
+}

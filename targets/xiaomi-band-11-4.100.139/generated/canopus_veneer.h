@@ -4,7 +4,7 @@
  * firmware : 4.100.139 (user-4.100.139-cn-202608280000)
  * sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
  * revision : 2
- * input_digest: 39067fc282f4bcfc
+ * input_digest: 106948186347f602
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
@@ -109,19 +109,22 @@ struct firmware_notification_message {
     void * large_icon_path; /* +0x20 */
     void * extension_text_36; /* +0x24 */
     void * extension_text_40; /* +0x28 */
-    uint32_t timestamp; /* +0x2c */
-    uint8_t _pad_30[8];
-    void * action_callback; /* +0x38 */
-    uint32_t action_context; /* +0x3c */
-    uint32_t extension_64; /* +0x40 */
-    uint32_t extension_68; /* +0x44 */
-    void * open_callback; /* +0x48 */
-    void * destroy_callback; /* +0x4c */
-    uint8_t start_reminder; /* +0x50 */
-    uint8_t flags_81; /* +0x51 */
-    uint8_t flags_82; /* +0x52 */
-    uint8_t _pad_53[1];
-    void * callback_data; /* +0x54 */
+    uint8_t _pad_2c[4];
+    uint64_t timestamp; /* +0x30 */
+    uint8_t _pad_38[4];
+    uint8_t flags_60[3]; /* +0x3c */
+    uint8_t _pad_3f[1];
+    void * action_callback; /* +0x40 */
+    uint32_t action_context; /* +0x44 */
+    uint32_t extension_72; /* +0x48 */
+    uint32_t extension_76; /* +0x4c */
+    void * open_callback; /* +0x50 */
+    void * destroy_callback; /* +0x54 */
+    uint8_t start_reminder; /* +0x58 */
+    uint8_t flags_89; /* +0x59 */
+    uint8_t flags_90; /* +0x5a */
+    uint8_t _pad_5b[1];
+    void * callback_data; /* +0x5c */
 };
 struct service_object {
     uint8_t enabled_state; /* +0x0 */
@@ -205,6 +208,7 @@ static inline int canopus_identity_guard(void)
 
 /* ---- typed veneers ---- */
 /* ---- excluded symbols ----
+ * _lv_inv_area: restricted - not exported until context/ownership approved
  * app_install: restricted - not exported until context/ownership approved
  * app_launcher_add: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
@@ -249,7 +253,11 @@ static inline int canopus_identity_guard(void)
  * driver_close_dispatch: restricted - not exported until context/ownership approved
  * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
  * errno_location: restricted - not exported until context/ownership approved
+ * exec_pop_lifecycle_without_cachepolicy: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
+ * font_manager_add_path: restricted - not exported until context/ownership approved
+ * font_manager_generate_def_path: restricted - not exported until context/ownership approved
+ * font_manager_remove_path: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved
@@ -268,8 +276,10 @@ static inline int canopus_identity_guard(void)
  * lv_bar_create: restricted - not exported until context/ownership approved
  * lv_bar_set_range: restricted - not exported until context/ownership approved
  * lv_bar_set_value: restricted - not exported until context/ownership approved
+ * lv_cache_drop: restricted - not exported until context/ownership approved
  * lv_event_get_code: restricted - not exported until context/ownership approved
  * lv_event_get_user_data: restricted - not exported until context/ownership approved
+ * lv_image_cache_drop: restricted - not exported until context/ownership approved
  * lv_image_create: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
  * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
@@ -285,6 +295,7 @@ static inline int canopus_identity_guard(void)
  * lv_obj_set_width: restricted - not exported until context/ownership approved
  * lv_timer_create: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
+ * lvgl_posix_open: restricted - not exported until context/ownership approved
  * lvx_content_pad_bottom: restricted - not exported until context/ownership approved
  * lvx_image_set_scale: restricted - not exported until context/ownership approved
  * lvx_label_create: restricted - not exported until context/ownership approved
@@ -310,10 +321,12 @@ static inline int canopus_identity_guard(void)
  * mm_memalign: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: restricted - not exported until context/ownership approved
+ * on_resume_wrapped: restricted - not exported until context/ownership approved
  * open: restricted - not exported until context/ownership approved
  * page_finish: restricted - not exported until context/ownership approved
  * page_goto: restricted - not exported until context/ownership approved
  * page_navigator_open_page: restricted - not exported until context/ownership approved
+ * page_stack_get: restricted - not exported until context/ownership approved
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: restricted - not exported until context/ownership approved
  * quickapp_register_app: restricted - not exported until context/ownership approved

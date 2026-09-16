@@ -29,6 +29,11 @@ Canopus 允许开发者：
 | `xiaomi-band-10-pro-3.101.036` | `3.101.036` | `662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81` | trusted build target |
 | `xiaomi-band-10-pro-3.101.043` | `3.101.043` | `519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec` | static pack/build target; device gate pending |
 | `xiaomi-band-11-4.100.139` | `4.100.139` | `31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74` | complete native installer test candidate; Lua recovery, owned staged loader and Manager host-tested; general SDK/device gates pending |
+| `xiaomi-band-11-4.100.155` | `4.100.155` | `ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f` | independent target and Rust bindings; shared 139/155 installer; corrected notification context, ARM/Lua/verifier passed; device gates pending |
+
+2026-09-15：修复 `.139` 注册 Manager 时的通知空上下文崩溃，详见
+[crash3 审计](targets/xiaomi-band-11-4.100.139/loader/notification-crash3.md)。
+`.155` 独立构建及测试说明见 [新 target](targets/xiaomi-band-11-4.100.155/loader/README.md)。
 
 036/043 are Xiaomi Band 10 Pro Cortex-M33 / Thumb-2 / soft-float targets using the
 NuttX `modlib` ELF32 `ET_REL` zero-import loader. The Band 9 / 9 Pro / 11 packs are

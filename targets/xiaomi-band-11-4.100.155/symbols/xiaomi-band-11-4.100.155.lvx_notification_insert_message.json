@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.lvx_notification_insert_message",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "lvx_notification_insert_message",
+  "kind": "function",
+  "entry_address": "0xc8f2ba0",
+  "instruction_set": "thumb",
+  "prototype": "void(const firmware_notification_message *message)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "notification_owner",
+      "system_app_lifecycle_callback"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "return_value": "void; r0 is residue from freeing the temporary normalized message, not delivery status"
+  },
+  "side_effects": [
+    "allocates_and_inserts_notification_record",
+    "may_start_reminder",
+    "may_emit_notification_event_34",
+    "schedules_notification_timer"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Exact .155 image/IDB, compared with targets/xiaomi-band-11-4.100.139/symbols/xiaomi-band-11-4.100.139.lvx_notification_insert_message.json: matching full instruction body; unique identity or ordered reference corroboration."
+  },
+  "notes": "matching full instruction body; unique identity or ordered reference corroboration. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the baseline record only within the audited port scope. Physical device validation pending.",
+  "approval_state": "PENDING",
+  "callable_address": "0xc8f2ba1"
+}

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lvgl_posix_open",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lvgl_posix_open",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *, const char *, int)",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4139-001"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {"firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74", "evidence_ids": ["EVID-RESOURCE-4139-001"], "source": "Exact .139 LVGL POSIX driver construction and firmware-path execution audit."},
+  "entry_address": "0x0c3a6194",
+  "callable_address": "0x0c3a6195",
+  "notes": "Private runtime fingerprint for the '/' LVGL POSIX driver's open slot; device probe pending.",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs"
+}

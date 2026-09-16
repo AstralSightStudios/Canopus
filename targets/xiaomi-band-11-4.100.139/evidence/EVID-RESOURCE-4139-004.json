@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-4139-004",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "How can a redirected image be invalidated without destroying cache entries a live widget still holds?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.lv_cache_drop"
+  ],
+  "prototype_hypothesis": "void(void *cache, const void *key)",
+  "callsite_evidence": [
+    "lv_cache_drop (0x0c8b8cae) looks the entry up through the cache class (vtable +12). If the entry's reference count (entry+4) is non-zero it sets the invalidation flag at entry+12 and unlinks it through the class (vtable +20), leaving the payload allocated for the holder. Only a zero-reference entry is unlinked, passed to the payload free callback (cache+24) and then freed via 0x0c3a387a.",
+    "lv_cache_entry_release_data / lv_cache_entry_dec_ref (0x0c8b9790) decrements entry+4 and, when it reaches zero AND the invalidation flag at entry+12 is set, runs the payload free callback and frees the entry. This is the deferred-free path a retired-but-held entry takes when its last holder releases it.",
+    "By contrast the .139 LRU-rb drop_all_cb (0x0c3a7918) logs 'entry (%p) is still referenced' for held entries, skips their payload free, but then walks the red-black tree and frees every node allocation regardless of reference state.",
+    "The LRU-rb class vtable is at 0x2ca168c4; its lookup/unlink slots are 0x0c3a4ace and 0x0c3a472c respectively."
+  ],
+  "control_flow_evidence": [
+    "The image cache is keyed by decoded source path, so a redirected path never reaches an image that is already cached; the entry must be retired for the redirect to be observed on the next decode.",
+    "Retiring per entry keeps the held payload valid for the current holder and guarantees the next lookup misses, so the next open of that source goes through the installed redirect.",
+    "The module walks the cache's entry list head (cache+52) and derives the lookup key from the node's payload (node -> +16), stopping if the head does not advance so a class whose unlink semantics differ cannot spin."
+  ],
+  "ownership_analysis": "Retirement is a logical invalidation, not a forced release. A widget or animation that holds a decoded image keeps a valid payload until it releases its own reference; the module never frees data out from under a live holder. Must run on the UI owner thread, never under the interrupt lock.",
+  "unsafe_assumptions": [
+    "No hardware execution has been performed; the .139 serial console returned no bytes on this host.",
+    "The traversal assumes the recovered LRU/RB class layout (entry list head at cache+52, payload pointer at node+0, key at payload+16) and is guarded by a class-pointer equality check against 0x2ca168c4; it must not be used for any other cache class.",
+    "Whether a widget re-opens its source on the next draw, rather than holding a decoded handle indefinitely, is NOT established by this evidence and remains per-widget.",
+    "Retirement does not reload fonts: font wrappers are page-owned and reference counted, and need the page-rebuild lifecycle."
+  ],
+  "recommended_probe": "On hardware, confirm a redirected on-screen image re-decodes after retirement plus a full-screen invalidation, that a held entry's payload stays valid until its holder releases it, and that no allocator corruption or leak follows repeated activations.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-15T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_rebind.py",
+      "role": "firmware-emulation-test"
+    }
+  ]
+}

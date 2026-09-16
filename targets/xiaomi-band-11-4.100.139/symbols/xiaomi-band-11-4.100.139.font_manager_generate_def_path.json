@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.font_manager_generate_def_path",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "font_manager_generate_def_path",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "const char *(void *manager, const char *name)",
+  "entry_address": "0x0c490edc",
+  "callable_address": "0x0c490edd",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-4139-006"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-RESOURCE-4139-006"
+    ],
+    "source": "Exact .139 uikit font_manager decompilation; the manager hangs off *0x200bd1e8+28 and its registered-path list uses payload size at +24 and head at +28."
+  },
+  "notes": "Resolves a font family name to a native file path: returns the path of the first registry entry whose name matches, otherwise builds '<base>/<name>.ttf'. This is the resolution the module confirms after retargeting. UI owner thread only, never under the interrupt lock. Affects only font wrappers created afterwards. Device probe pending."
+}

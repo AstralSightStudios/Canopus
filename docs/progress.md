@@ -65,3 +65,13 @@
 | 2026-09-08 | 删除低准确度 Band 11 `4.100.108` pack，新建 `xiaomi-band-11-4.100.139`（sha 31ce8225…；exact IDB 35,192 函数、16,127 data objects） | 043→4.100.139 ensemble 匹配 123/124（跨型号，中位 margin 0.0085，仅 14 个 margin≥0.10 记为 STATIC_RECOVERED，其余 CANDIDATE，全部 restricted/PENDING、无 callable wrapper）；idalib 二次核验确认 identity 串（`4.100.139`@0x0CA0D216、`user-4.100.139-cn-202608280000`@0x0CA0D28E）与 4 个锚点/高价值符号（controller_crash_dump、lv_image_set_src、app_install、lvx_page_title_create），并**证伪** register_driver 候选（0xC46C2FE 为 command-311 dispatcher，保持 CANDIDATE）；LVGL v9 确认；loader **BLOCKED**（无 insmod，无 exact Band 11 staged bootstrap，q66 MCU≠Band 9，不得把 Band 9 当成功路线）；SDK generated/private 编译通过、generated stability + fixture + workspace 全绿；BluetoothAudio/LyraPlayer 接入 4.100.139 compile-only env，BluetoothAudio exact-target ELF 过 verifier（27 sections、0 undefined）；无真机结论 |
 | 2026-09-08 | Band 11 bootstrap 独立复核与 Lua 执行恢复资源接入 | 原始 Thumb 调用点恢复 register_driver/open/close/read/write/lseek/malloc/free 八项，仍 restricted/PENDING；撤销被误认作 insmod 的 strchr-like 地址；明确 Band 9 inode type=7/private+0x1C 与 Band 11 type=1/private+0x18 不兼容。未完成 custom platform 不再生成候选调用宏。Band 11 main.lua 内嵌 exact-profile pmain 重入恢复，Lua 5.4.0/5.5 真实 C 帧及失败分支测试、资源构建、完整 CI 通过；仅提供命令测试，Supervisor/MPU/cave/Manager 仍 BLOCKED；恢复提前退出会泄漏一份 strdup 路径，未实机验证，见 EVID-BOOTSTRAP-4139-002。 |
 | 2026-09-09 | Band 11 完整原生安装器实机测试候选 | 130 symbols 中45项 STATIC_RECOVERED、84项 CANDIDATE、1项 FORBIDDEN；通用 SDK callable 仍为0。独立纠正 app80/page120/launcher28 字节布局及回调偏移；Lua自有长字符串 stage1→Kmem stage2→ELF Supervisor，原子 MPU4–6 租用、保留栈保护7，含缓存行处理与 os.execute 恢复。Run/Clear Env 与 Band9 UI结构一致，根层仅main.lua+5个.bin。真实Lua5.4.0、ARM双重基址/错误回收/设备节点/INSTALL/Manager页面生命周期仿真、ELF verifier和全CI通过；物理设备仍NOT_PROBED，Rust未核验接口仍restricted。 |
+
+## 2026-09-15 Band 11 修复与跨版本适配
+
+- `.139` crash3：已确认通知消费者无条件读取空的 message+92 上下文，PC `0x0c55fe06`、BFAR `0x0d`。改为两份16字节驻留上下文；旧路径精确复现、修复后真实消费者回归通过，真机复测 pending。
+- 新增 `.155` 独立 target、C native 生成地址、Rust feature/bindings；139/155 共用 Band 11 prod 目录、统一入口和版本化资源。102 STATIC_RECOVERED / 52 CANDIDATE / 1 FORBIDDEN；继承的拒绝不升级。ARM 启动、Manager 原生列表、通知、Lua编排、ELF verifier 通过；使用本地签名最小ELF验证安装提交与通知（不等于业务模块加载/激活或设备验证）。
+- fw-match 增加完整 Thumb 指纹与双向唯一种子，修正相同源函数的别名被错误分配到不同目标地址。139→155 初始种子27,039对，140个名字对应138个函数，10项独立小型oracle命中；不宣称整体准确率或自动ABI批准。
+
+详见 [crash3](../targets/xiaomi-band-11-4.100.139/loader/notification-crash3.md)、[155 target](../targets/xiaomi-band-11-4.100.155/loader/README.md) 与 [matcher说明](../tools/fw-match/README.md)。
+
+2026-09-16：Band 11 框架 prod 合并为一个目录/入口，同时携带 139/155 的四件 native 资源，根层共1个Lua+9个bin。两个版本的真实Lua C帧选择、错误build/重复身份拒绝、ARM启动及通知回归通过。Bluetooth Audio、Lyra Player 增加155 feature/profile，原生页面销毁槽位与Lyra屏幕布局/释放事件分支覆盖155；两模块prod同目录支持139/155，真实155签名产物过verifier、安装通知和ARM模块加载测试。RF/音频/真实显示仍DEVICE-PENDING。

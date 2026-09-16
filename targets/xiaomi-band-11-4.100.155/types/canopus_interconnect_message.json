@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.155.type.canopus_interconnect_message.v1",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "kind": "struct",
+  "name": "canopus_interconnect_message",
+  "size": 20,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "type",
+      "offset": 0,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 2=connection event, 0x83=data"
+    },
+    {
+      "name": "length",
+      "offset": 4,
+      "width": 4,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: payload length for data; 8 for connection events"
+    },
+    {
+      "name": "value",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "Baseline .139 field audit: payload address (data) or status-word address (event)"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Same-model baseline shape. App/page/launcher, file operations and notification consumer offsets checked through complete .155 body equality and critical-path IDB audit. Unresolved baseline fields remain unresolved; no device proof."
+  }
+}

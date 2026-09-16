@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-4155-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "Which exact .155 functions, globals and native ABI correspond to the corrected .139 target?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "Per-symbol prototypes retained only where static source and exact target evidence agree.",
+  "callsite_evidence": [
+    "IDB input SHA256 equals ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    ".155 independent decompilation: app_install 0xc6ab340 copies 80-byte app descriptor, looks up id+20, page table+56; register_driver 0xc914f54 has 3 arguments and inode private+24.",
+    ".155 notification insert 0xc8f2ba0 / clone 0xc6a6db8 copy 96 bytes and borrow user_data+92. UI consumer 0xc55fdbc and fault site 0xc55fe06 are unchanged; Canopus supplies the fixed 16-byte resident ordinary-notification context.",
+    "pmain 0xc6d33a0, error handler 0xc6cecc0, os.execute 0xc717d60, luaopen_os 0xc71443c and io.open 0xc717988 independently decompiled in .155.",
+    "Raw startup copy loops 0xc0c01a0..0xc0c02cc are byte-identical. Initialized DATA LMA changes from 0x2cc4be64 to 0x2cc4be54; RAM destination 0x2007dcc8 and PSRAM copy source/bounds are unchanged.",
+    "gap_host_receive_slot 0x200bda80 independently has initializer xref 0xc476a0c and consumer xrefs 0xc8765c6/0xc8765d8. bt_queue_free 0xc858988 is still a three-argument callback freeing r2 with 0xc34cd2c."
+  ],
+  "control_flow_evidence": [
+    "27,039 mutually unique full instruction bodies seed matching. Ordered control/literal refs corroborate short functions and writable globals. Per-symbol report distinguishes confirmed static symbols from inherited candidates.",
+    "No whole-firmware address delta is applied. C private macros are generated from .155 symbol records; Lua fingerprints are tied to .155 addresses and raw bytes."
+  ],
+  "ownership_analysis": "Notification user contexts are borrowed for the supervisor lifetime; module ownership, VFS/heap/cache semantics and UI descriptors retain the independently checked same-model ABI. Inherited uncertain APIs remain candidates.",
+  "unsafe_assumptions": [
+    "Static matching does not prove uncertain source names, runtime RF/display behavior or physical cache/MPU behavior. Device verification is pending."
+  ],
+  "recommended_probe": "Use only the .155-specific complete installer after verifying firmware identity. Register Manager, dismiss notification, install/enable/disable a signed module and verify recovery after reboot.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-15T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "targets/xiaomi-band-11-4.100.155/evidence/fw-match/port-139-to-155.json",
+      "role": "audited-symbol-correspondences"
+    },
+    {
+      "uri": "targets/xiaomi-band-11-4.100.155/loader/native-bindings.json",
+      "role": "exact-native-binding-selection"
+    }
+  ]
+}

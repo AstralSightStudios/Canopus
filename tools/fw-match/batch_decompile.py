@@ -21,7 +21,7 @@ def main() -> None:
     args = ap.parse_args()
 
     addrs = json.loads(open(args.addrs_file).read())
-    rc = idapro.open_database(args.idb, True)
+    rc = idapro.open_database(args.idb, False)
     if rc != 0:
         print(f"open failed rc={rc}", file=sys.stderr)
         sys.exit(2)
@@ -62,7 +62,7 @@ def main() -> None:
         out[a] = {"name": name, "size": fn.end_ea - fn.start_ea, "code": code, "strings": strings[:10]}
         print(f"done {a} ({name})", file=sys.stderr)
 
-    idapro.close_database()
+    idapro.close_database(save=False)
     with open(args.output, "w") as f:
         json.dump(out, f, indent=1)
     print(f"wrote {args.output}", file=sys.stderr)

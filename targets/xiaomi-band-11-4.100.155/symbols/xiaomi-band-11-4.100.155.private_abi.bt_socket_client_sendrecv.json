@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.bt_socket_client_sendrecv",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "bt_socket_client_sendrecv",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc46a218",
+  "prototype": "int(void *, void *, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Exact .155 image/IDB, compared with targets/xiaomi-band-11-4.100.139/symbols/xiaomi-band-11-4.100.139.private_abi.bt_socket_client_sendrecv.json: matching full instruction body; unique identity or ordered reference corroboration."
+  },
+  "approval_state": "PENDING",
+  "notes": "matching full instruction body; unique identity or ordered reference corroboration. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the baseline record only within the audited port scope. Physical device validation pending.",
+  "callable_address": "0xc46a219"
+}

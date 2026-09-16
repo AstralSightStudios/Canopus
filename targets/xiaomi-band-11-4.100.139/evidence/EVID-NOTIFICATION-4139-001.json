@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-NOTIFICATION-4139-001",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Which .139 entry and message layout deliver Canopus load/install notifications?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.lvx_notification_insert_message"
+  ],
+  "prototype_hypothesis": "void(const firmware_notification_message *message)",
+  "callsite_evidence": [
+    "The previous ensemble candidate 0xc370ad0 is an NSH command that opens /proc/memdump and takes argc/argv, not a notification entry.",
+    "String lvx_notification_insert_message at 0x2cb068ab is referenced by 0xc8f2bb0. Twenty stock callers include activity reminder 0xc510f08 and weather alert 0xc603ec0.",
+    "sub_C510F08 clears 96 bytes, populates title/source/body at +12/+16/+20 and calls 0xc8f2bb0 with one message pointer.",
+    "sub_C603EC0 clears 96 bytes, sets the 64-bit time at +48, open/destroy callbacks at +80/+84 and borrowed payload at +92."
+  ],
+  "control_flow_evidence": [
+    "0xc8f2bb0 normalizes the message through 0xc6a7bd0, inserts through 0xc6a6f70, trims the list through 0xc6a5430, optionally clones a reminder and sends event 34 (subtype 7) through 0xc8ec158, then schedules a 500 ms timer through 0xc3f0a6e.",
+    "0xc8f2be8 loads the byte at message+88 to decide whether to start a reminder. The old 88-byte layout supplied neither this flag nor the final callback payload.",
+    "0xc6a7bd0 allocates and copies exactly 96 bytes, defaults the 64-bit timestamp at +48 and normalizes the two icon paths at +28/+32.",
+    "0xc6a6dc8 deep-copies strings at +12/+16/+20/+24/+28/+32/+36/+40 and copies uid +0, id +8, time +48, bytes +60..62, words +64/+68/+72/+76/+80/+84, flag bytes +88/+89/+90 and borrowed payload +92.",
+    "0xc8f2bb0 returns through 0xc6a540c, which frees the temporary normalized icon paths and message. r0 is not insertion/delivery status; the native adapter must call it as void rather than treat free() residue as an error."
+  ],
+  "ownership_analysis": "Insertion-only audit: message/string copies are synchronous; context +92 is borrowed. The initial assumption that null callbacks permit a null context was disproved by crash3. EVID-NOTIFICATION-4139-002 supersedes that assumption and audits the actual reminder consumer.",
+  "unsafe_assumptions": [
+    "Hardware notification display, vibration, DND behavior and device memory pressure have not been probed.",
+    "General SDK call approval remains PENDING/restricted; only the exact-target native adapter is wired.",
+    "A returned call is not proof of delivery; firmware allocation and event transport can fail internally without returning a usable status.",
+    "Superseded by EVID-NOTIFICATION-4139-002: the event consumer was originally stubbed. Its unconditional context+13 read makes +92 mandatory for reminders, including ordinary non-focus messages."
+  ],
+  "recommended_probe": "Reboot, install the rebuilt .139 Canopus package and confirm its load notification. Install a valid signed module and confirm the disabled-module notification and manager entry; repeated Manager installation must not resend the load notification.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-13T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "scripts/tests/band11_notification_firmware.py",
+      "role": "firmware-emulation-test"
+    },
+    {
+      "uri": "manager/target/band11/canopus_manager_target_band11.c",
+      "role": "native-adapter"
+    }
+  ]
+}

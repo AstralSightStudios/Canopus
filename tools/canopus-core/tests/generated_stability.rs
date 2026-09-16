@@ -91,6 +91,10 @@ fn additional_target_artifacts_regenerate_identically() {
             "sdk/rust/canopus-target-generated/src/generated_1139.rs",
         ),
         (
+            "xiaomi-band-11-4.100.155",
+            "sdk/rust/canopus-target-generated/src/generated_1155.rs",
+        ),
+        (
             "xiaomi-band-9-3.1.32",
             "sdk/rust/canopus-target-generated/src/generated_9132.rs",
         ),

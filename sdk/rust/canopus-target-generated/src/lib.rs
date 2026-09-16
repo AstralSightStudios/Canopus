@@ -26,6 +26,7 @@
     not(feature = "target-xiaomi-band-10-pro-3-101-043"),
     not(feature = "target-xiaomi-band-9-pro-3-1-175"),
     not(feature = "target-xiaomi-band-11-4-100-139"),
+    not(feature = "target-xiaomi-band-11-4-100-155"),
     not(feature = "target-xiaomi-band-9-3-1-32")
 ))]
 compile_error!("canopus-target-generated requires exactly one registered target feature");
@@ -69,6 +70,21 @@ include!("generated_1043.rs");
 
 #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
 include!("generated_9175.rs");
+
+#[cfg(all(
+    feature = "target-xiaomi-band-11-4-100-155",
+    any(
+        feature = "target-xiaomi-band-10-pro-3-101-036",
+        feature = "target-xiaomi-band-10-pro-3-101-043",
+        feature = "target-xiaomi-band-9-pro-3-1-175",
+        feature = "target-xiaomi-band-11-4-100-139",
+        feature = "target-xiaomi-band-9-3-1-32"
+    )
+))]
+compile_error!("canopus-target-generated requires exactly one target feature");
+
+#[cfg(feature = "target-xiaomi-band-11-4-100-155")]
+include!("generated_1155.rs");
 
 #[cfg(feature = "target-xiaomi-band-11-4-100-139")]
 include!("generated_1139.rs");

@@ -32,6 +32,7 @@
 #define UI_KEY_DETAIL_ENABLE     212u
 #define UI_KEY_DETAIL_DISABLE    213u
 #define UI_KEY_DETAIL_REMOVE     214u
+#define UI_KEY_DETAIL_ACTIVATE   215u
 #define UI_KEY_CONFIRM_SECTION   300u
 #define UI_KEY_CONFIRM_MESSAGE   301u
 #define UI_KEY_CONFIRM_ACCEPT    302u
@@ -456,6 +457,12 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
         if (rc != CANOPUS_UI_OK) return rc;
     }
 
+    if (canopus_manager_can_activate(model, model->selected)) {
+        rc = append_action(tree, UI_KEY_DETAIL_ACTIVATE, "立即激活", sizeof("立即激活") - 1u,
+                           "本次运行加载，需确认", sizeof("本次运行加载，需确认") - 1u,
+                           CANOPUS_MANAGER_EVENT_ACTIVATE, 1);
+        if (rc != CANOPUS_UI_OK) return rc;
+    }
     if (canopus_manager_can_enable(model, model->selected)) {
         rc = append_action(tree, UI_KEY_DETAIL_ENABLE, "启用", sizeof("启用") - 1u,
                            "重启后生效", sizeof("重启后生效") - 1u,
@@ -494,7 +501,7 @@ static const char *confirmation_message(uint32_t event_id)
 {
     switch (event_id) {
     case CANOPUS_MANAGER_EVENT_ACTIVATE:
-        return "Activate this module now? This runs third-party code.";
+        return "立即运行模块？常驻模块需重启才能停用。";
     case CANOPUS_MANAGER_EVENT_INSTALL:
         return "Install the verified staged package?";
     case CANOPUS_MANAGER_EVENT_ENABLE:

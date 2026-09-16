@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-4139-003",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "After the image cache is dropped, how can the module force the on-screen images to re-decode now instead of waiting for the user to navigate?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.lv_inv_area"
+  ],
+  "prototype_hypothesis": "void(void *disp, const void *area)",
+  "callsite_evidence": [
+    "drop_all_cb (0x0c3a7918) frees every cache entry whose reference count (entry+20) is 0 and only skips the ones that are still referenced. An on-screen lv_image widget opens/closes its decoder per draw, so between refresh cycles its cache entry sits at ref 0; the activate-time lv_image_cache_drop(0) therefore already evicts on-screen images. What was missing was forcing the repaint.",
+    "_lv_inv_area (0x0c382428) appends an lv_area_t to the display's invalidated-area list (disp+60.., count at disp+604); _lv_display_refr_timer (0x0c38956c) drains that list and repaints on its next tick, re-opening each image file through the installed redirect.",
+    "The firmware's own MiWearScreen wake handler async_apply_screen_state_change (0x0c6d096c) uses _lv_inv_area for its 'invalidate screen.' path, confirming it as the supported screen-invalidation primitive.",
+    "lv_area_intersect (0x0c3a39b4) clips the requested area to {0,0,hres-1,vres-1}, so passing an oversized area marks exactly the whole active screen dirty without needing the resolution."
+  ],
+  "control_flow_evidence": [
+    "The default display is *0x200bd200 and its active screen is disp+24 (lv_display_get_screen_active 0x0c3807bc returns *(disp+24)).",
+    "lv_display_is_invalidation_enabled (0x0c380b2c) returns disp+608 > 0; _lv_inv_area no-ops safely when it is 0 (e.g. during a screen-load animation).",
+    "_lv_inv_area asserts !disp->rendering_in_progress (bit 1 of disp+58); the module pre-checks that bit and skips the call during a render to avoid the assert path.",
+    "In direct/full render mode (disp+57 == 2) _lv_inv_area writes the whole screen as the single invalidated area; in partial mode it appends the clipped area to the list. Both mark the screen for a full repaint."
+  ],
+  "ownership_analysis": "Invalidation only schedules a repaint; it does not rebuild pages or release references. It complements lv_image_cache_drop: the drop evicts the (unreferenced) decoded images, the invalidation makes the refresh timer re-open them through the redirect immediately. A resource still referenced by a live widget (an animation frame, or any font wrapper) is unaffected and still needs the page-rebuild lifecycle. Must run on the UI owner thread and never under the interrupt lock.",
+  "unsafe_assumptions": [
+    "No hardware execution has been performed; the .139 serial console returned no bytes on this host.",
+    "Whether a given on-screen image's cache entry is at ref 0 at activate time depends on it not being mid-draw or held open by an animation; genuinely referenced entries survive the drop and are not reloaded by the invalidation.",
+    "Display field offsets (act_scr at +24, flags at +58, invalidation-enabled at +608, render mode at +57) are taken from the exact .139 lv_refr.c/lv_display.c decompilation and are not independently field-offset audited on hardware."
+  ],
+  "recommended_probe": "On hardware, confirm that after activate() the whole screen repaints within one refresh tick and that redirected on-screen images (whose entries were unreferenced) show the new resource without a navigation, while animated/referenced images still require navigation.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-13T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_ui_redraw.py",
+      "role": "firmware-emulation-test"
+    }
+  ]
+}

@@ -231,6 +231,19 @@ int canopus_manager_render_module_detail(const struct canopus_manager_model_v1 *
 
 /* ---- availability helpers ------------------------------------------ */
 
+int canopus_manager_can_activate(const struct canopus_manager_model_v1 *m,
+                                 uint32_t index)
+{
+    const struct canopus_manager_module_v1 *mod;
+    if (m == 0 || index >= m->module_count || m->safe_mode) return 0;
+    mod = &m->modules[index];
+    /* Explicit activation is separate from next-boot enable. Never offer an
+     * immediate launch of unsigned or reboot-only modules, or reload a resident. */
+    return mod->signature_ok &&
+           mod->lifecycle_class < CANOPUS_LIFECYCLE_PATCH_REBOOT_REQUIRED &&
+           (mod->state == CANOPUS_STATE_READY || mod->state == CANOPUS_STATE_ENABLED);
+}
+
 int canopus_manager_can_enable(const struct canopus_manager_model_v1 *m,
                                uint32_t index)
 {
@@ -369,8 +382,7 @@ uint32_t canopus_manager_op_install(struct canopus_manager_model_v1 *m,
 uint32_t canopus_manager_op_activate(struct canopus_manager_model_v1 *m,
                                      uint32_t index)
 {
-    if (index >= m->module_count || m->safe_mode ||
-        m->modules[index].state != CANOPUS_STATE_READY) {
+    if (!canopus_manager_can_activate(m, index)) {
         return CANOPUS_RESULT_DISALLOWED;
     }
     return send_command(m, CANOPUS_CMD_ACTIVATE, m->modules[index].module_id,

@@ -308,11 +308,20 @@
               "resident-only",
               "restricted"
             ]
+          },
+          "status": {
+            "not": {
+              "enum": [
+                "CANDIDATE",
+                "WITHDRAWN"
+              ]
+            }
           }
         },
         "required": [
           "kind",
-          "policy"
+          "policy",
+          "status"
         ]
       },
       "then": {

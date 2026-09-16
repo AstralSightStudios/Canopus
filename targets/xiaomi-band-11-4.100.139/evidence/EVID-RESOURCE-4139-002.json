@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-4139-002",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "How does the .139 firmware invalidate cached decoded images so redirected image files are re-decoded?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.lv_image_cache_drop"
+  ],
+  "prototype_hypothesis": "void(const void *src)",
+  "callsite_evidence": [
+    "lv_image_cache_drop at 0x0c3a3888: src==0 drops every entry from the decoded-image cache (*0x200bd310) and the image-header cache (*0x200bd314) via lv_cache_drop_all (0x0c8b8d60); a non-zero src drops one entry per cache by source key.",
+    "lv_cache_drop_all (0x0c8b8d60) dispatches cache->clz->drop_all_cb at vtable offset 28; the LRU-rb class vtable is at 0x2ca168c4 and its +28 slot is drop_all_cb 0x0c3a7918.",
+    "drop_all_cb (0x0c3a7918) frees every UNREFERENCED entry through the per-cache free callback and only logs entries that are still referenced ('entry (%p) is still referenced').",
+    "The firmware itself calls lv_image_cache_drop from 40+ sites (page/album/watchface teardown), confirming it is the supported image-invalidation API."
+  ],
+  "control_flow_evidence": [
+    "The image cache is keyed by the decoded source path, so a cached image is served before open() is ever called; without a drop, a path redirect never reaches an already-cached image.",
+    "lv_init (0x0c3a9598) creates the cache objects; only the backing heap is deferred (defer_init in lv_nuttx_image_cache.c, guard sub_C3A38EC reads *(*0x200bd310+8)). The cache pointer and its class exist from lv_init onward.",
+    "The continuous _lv_display_refr_timer (0x0c38956c) re-decodes on the next redraw after a drop, re-opening the file through the installed redirect."
+  ],
+  "ownership_analysis": "Global caches, not page-owned. Dropping only frees unreferenced entries; on-screen images keep their reference until the next navigation/redraw. Must run on the UI owner thread and never under the interrupt lock, matching the firmware's own callers.",
+  "unsafe_assumptions": [
+    "No hardware execution has been performed; the .139 serial console returned no bytes on this host.",
+    "Fonts are NOT reloaded by this path: live font wrappers are held by page objects with reference counts and require the page-rebuild lifecycle, not a global cache drop.",
+    "Dropping does not force an immediate full redraw; it relies on the firmware's normal refresh or a page navigation."
+  ],
+  "recommended_probe": "On hardware, confirm that after activate() drops the image cache a redirected image re-decodes on the next redraw, and that referenced on-screen images reload after navigation.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-13T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_image_lifecycle.py",
+      "role": "firmware-emulation-test"
+    }
+  ]
+}
