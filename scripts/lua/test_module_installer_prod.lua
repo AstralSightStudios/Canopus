@@ -19,9 +19,11 @@ local function rawhex(s) return (s:gsub('..', function(v) return string.char(ton
 local function run_case(version, fault)
     local target = targets[version]
     local is_band11 = version == '4.100.139' or version == '4.100.155'
+    -- Band 10 Pro keeps its execute-capable /dev/canopus flow.
+    local endpoint = is_band11 and '/canopus/install' or '/dev/canopus'
     checks=checks+1
     local objects, timers, callbacks, files, commands = {}, {}, {}, {}, {}
-    local request, painted
+    local request, painted, reply
     local function after_paint()
         assert(painted and painted==objects[4].text, 'side effect happened before status paint')
     end
@@ -65,23 +67,41 @@ local function run_case(version, fault)
     -- Build identities are taken from the generated target block for each version.
     local config_block = source:match('%["'..version:gsub('%.','%%.')..'"%] = ({.-})')
     build = config_block and config_block:match('%["build"%] = "([^"]+)"') or ''
-    files['/etc/build.prop']='ro.build.version='..version..'\nro.build.id='..build..'\n' 
-    if fault=='identity' then files['/etc/build.prop']=files['/etc/build.prop']:gsub('cn%-%d+','cn-000000000000') end
+    -- Mirror each firmware's ROMFS build.prop: Band 10 Pro's ro.build.id drops
+    -- the date suffix that ro.build.customer_version (the exact build) keeps.
+    files['/etc/build.prop']=is_band11 and
+        'ro.build.version='..version..'\nro.product.device.devicetype=band\nro.build.id='..build..'\n' or
+        'ro.build.version='..version..'\nro.build.customer_version='..build..
+        '\nro.product.device.screenshape=rect\nro.build.id='..build:gsub('_%d+$','')..'\n'
+    local props={['ro.build.version']=version,['ro.build.customer_version']=build}
+    if fault=='identity' then
+        files['/etc/build.prop']=files['/etc/build.prop']:gsub(build:gsub('%p','%%%0'),build:sub(1,-2)..'X')
+    end
+    if fault=='getprop' or fault=='no_identity' then files['/etc/build.prop']=nil end
     if fault=='duplicate_identity' then files['/etc/build.prop']=files['/etc/build.prop']..'ro.build.version='..version..'\n' end
     local function open(path,mode)
-        if path=='/canopus/install' then
+        assert(path~='/canopus/install' and path~='/dev/canopus' or path==endpoint,path)
+        if path==endpoint then
             if fault=='no_supervisor' then return nil end
             return {
                 write=function(self,data)
                     after_paint()
+                    if #data==16 then
+                        assert(not is_band11 and data==string.pack('<I4I4I4I4',0x43504331,0x43510001,0x43514431,0))
+                        reply=string.pack('<I4',0x43505331)..string.rep('\0',28)..string.pack('<i4',-7)..string.rep('\0',348)
+                        return self
+                    end
                     request=data
+                    local id=fault=='stale_response' and 9 or 1
+                    local result=fault=='rejected' and 3 or 5
+                    reply=is_band11 and
+                        string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,1,0,40,2,id,0,result,4)..string.pack('<I4',7) or
+                        string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,1,0,36,2,id,0,result,0)
                     if fault=='short_write' then return #data-1 end
                     return self
                 end,
-                read=function()
-                    local id=fault=='stale_response' and 9 or 1
-                    return string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,1,0,40,2,id,0,5,4)..string.pack('<I4',0)
-                end, close=function() return true end,
+                read=function(_,size) return reply and reply:sub(1,size) end,
+                close=function() return true end,
             }
         end
         if mode=='wb' then
@@ -97,8 +117,23 @@ local function run_case(version, fault)
                     close=function() return true end}
         end
     end
-    local function execute() error('external installer must not execute commands') end
-    io,os,debug,_VERSION={open=open},{execute=execute},nil,host_version
+    local function execute(command)
+        assert(not is_band11, 'external installer must not execute commands')
+        local key,temp=command:match('^getprop ([%w%._]+) > (%S+)$')
+        if key then
+            -- Only when build.prop is unreadable, and before the first paint.
+            assert((fault=='getprop' or fault=='no_identity') and painted==nil,command)
+            if fault=='no_identity' then return 1 end
+            files[temp]=props[key]..'\n'
+            return 0
+        end
+        after_paint()
+        assert(command=='mkdir /data/canopus' or command=='mkdir /data/canopus/inbox',command)
+        commands[#commands+1]=command
+        return 0
+    end
+    local function remove(path) files[path]=nil;return true end
+    io,os,debug,_VERSION={open=open},{execute=execute,remove=remove},nil,host_version
     SCRIPT_PATH='/fake/'
     assert(load(source,'prod-fixture','t'))()
     assert(#objects==4 and objects[2].w==lvgl.HOR_RES())
@@ -108,9 +143,12 @@ local function run_case(version, fault)
         painted=objects[4].text
         for _,timer in ipairs(timers) do if not timer.deleted and not timer.paused then timer.cb(timer) end end
     end
-    local success=target and fault=='ok'
+    local success=target and (fault=='ok' or fault=='getprop')
     if success then
         assert(request and request:sub(37)==token..'\0',objects[4].text)
+        if is_band11 then assert(#commands==0)
+        else assert(#commands==2 and commands[2]=='mkdir /data/canopus/inbox') end
+        for path in pairs(files) do assert(not path:find('%.tmp$'),path) end
         assert(objects[4].text:find('安装完成',1,true),objects[4].text)
         assert(objects[4].text:find('查看和启用模块',1,true))
         assert(files['/data/canopus/inbox/'..token..'.ko']==module)
@@ -118,18 +156,20 @@ local function run_case(version, fault)
     elseif fault=='cancel' then assert(request==nil and #commands==0)
     else
         assert(objects[4].text:find('安装失败',1,true),fault..': '..objects[4].text)
-        if fault~='short_write' and fault~='stale_response' then assert(request==nil) end
+        if fault=='rejected' then
+            assert(objects[4].text:find('Supervisor result 3 error '..(is_band11 and 7 or -7),1,true),objects[4].text)
+        elseif fault~='short_write' and fault~='stale_response' then assert(request==nil) end
     end
     for _,timer in ipairs(timers) do assert(timer.deleted) end
 end
 for version,target in pairs(targets) do
     if source:find('["id"] = "'..target[1]..'"',1,true) then
         for _,fault in ipairs({'ok','wrong_receipt','wrong_firmware','missing_module','missing_icon',
-            'no_supervisor','short_write','stale_response','cancel','duplicate_identity',
-            'staging_short_write','corrupt_readback'}) do
+            'no_supervisor','short_write','stale_response','rejected','cancel','duplicate_identity',
+            'identity','no_identity','staging_short_write','corrupt_readback'}) do
             if product~='resource-hook' or fault~='missing_icon' then run_case(version,fault) end
         end
-        if version=='4.100.139' or version=='4.100.155' then run_case(version,'identity') end
+        if target[1]:find('xiaomi-band-10-pro',1,true) then run_case(version,'getprop') end
     end
 end
 run_case('3.101.999','unsupported')

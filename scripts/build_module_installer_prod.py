@@ -55,10 +55,14 @@ def render(product, targets):
     config = dict(token=token, title=title, max_size=maximum, stem=product,
                   assets=assets, targets=configs)
     family = ROOT / 'watchfaces/canopus-installer-prod/xiaomi-band-11'
-    source = (ROOT / 'watchfaces/module-installer-prod/src/main.lua').read_text()
+    template = ROOT / 'watchfaces/module-installer-prod/src'
+    source = (template / 'main.lua').read_text()
+    # Identity keys and the Supervisor transport differ per device family.
+    device = (template / ('device-' + targets[0].rsplit('-', 1)[0] + '.lua')).read_text()
     replacements = {
         '-- @CONFIG@': 'local CONFIG = ' + lua(config),
         '-- @PROGRESS@': 'local progress = (function()\n' + (family / 'src/progress.lua').read_text() + '\nend)()',
+        '-- @DEVICE@': device.rstrip('\n'),
     }
     for marker, replacement in replacements.items():
         if source.count(marker) != 1:
@@ -132,7 +136,8 @@ def main():
                 for device, targets in groups.items()) + '\n' +
         'The build selection controls which firmware versions are included in each device folder.\n'
         'Pack that folder\'s single main.lua and all .bin files. The folder\'s build/ contains its ZIP and hash manifest; docs/ is not packed.\n'
-        'Update the framework Supervisor first: external installers use ordinary IO at /canopus/install.\n'
+        'Band 11 installers use ordinary IO at /canopus/install: update the framework Supervisor first. '
+        'Band 10 Pro installers keep the /dev/canopus flow and work with any resident Supervisor.\n'
         'No execute recovery or debug access is included. Older mixed-device outputs are retained only as build history.\n')
 
 
@@ -215,10 +220,15 @@ def build_device(args, validate_only=False):
         'Build targets: ' + ', '.join(args.target) + '\n\n'
         'Pack only main.lua and the .bin files in this directory. Requires the matching resident Canopus Supervisor.\n'
         'Opening the watchface installs the signed module in the disabled state; it does not enable or bootstrap the framework.\n'
-        'Use an updated Supervisor with /canopus/install. External Lua uses ordinary IO only; no execute recovery or debug access is embedded.\n'
+        + ('Use an updated Supervisor with /canopus/install. External Lua uses ordinary IO only; no execute recovery or debug access is embedded.\n'
+           'The framework prepares /data/canopus/inbox before external installation.\n'
+           if device_is_band11(args.target) else
+           'Uses /dev/canopus like the earlier Band 10 Pro installers, so any resident Supervisor works. '
+           'Identity comes from /etc/build.prop (ro.build.customer_version), with getprop as fallback; '
+           'the installer creates /data/canopus/inbox with mkdir.\n')
         + ('Runtime adaptation is pending.\n' if pending else '') +
         ('Band 11 adapters pass compiled ARM/firmware ABI tests; physical radio/audio/display remain NOT_PROBED.\n' if device_is_band11(args.target) else '') +
-        'The framework prepares /data/canopus/inbox before external installation. Signatures are verified against the Supervisor trust key during packaging; no private key is packaged.\n')
+        'Signatures are verified against the Supervisor trust key during packaging; no private key is packaged.\n')
     print('Prod resources: ' + str(out))
     print('Targets: ' + ', '.join(args.target))
     print('Flat files: ' + str(len(resources)) + '; signatures and hashes verified')
