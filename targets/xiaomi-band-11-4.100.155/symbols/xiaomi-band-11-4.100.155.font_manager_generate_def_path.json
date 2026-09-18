@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.font_manager_generate_def_path",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "font_manager_generate_def_path",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "const char *(void *manager, const char *name)",
+  "entry_address": "0x0c490edc",
+  "callable_address": "0x0c490edd",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4155-001"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": ["EVID-RESOURCE-4155-001"],
+    "source": "Exact .155 AP-backed IDA function with font_manager_generate_def_path name/source strings; raw function chunk independently rehashed against the pinned AP."
+  },
+  "notes": "Traverses the registry head at manager+28 with payload size at +24; returns the first matching node's path. Otherwise formats '%s/%s.ttf' from base at manager+36 into a 256-byte buffer at manager+292 and returns it. Returned storage is borrowed and may change on later calls. UI owner thread only, never under interrupt lock. Device probe pending."
+}

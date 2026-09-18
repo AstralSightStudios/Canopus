@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.on_resume_wrapped",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "on_resume_wrapped",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *page)",
+  "entry_address": "0x0c696c08",
+  "callable_address": "0x0c696c09",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4155-001"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": ["EVID-RESOURCE-4155-001"],
+    "source": "Exact .155 AP-backed IDA function with on_resume_wrapped log strings and create/start callees; raw function chunk independently rehashed against the pinned AP."
+  },
+  "notes": "Calls on_create_wrapped at 0x0c696ad8 and on_start_wrapped at 0x0c693986 before the resume leg. Requires screen-on state at 0x200c2a28 and active page layer at 0x20096085; states 8/18 resume through callbacks and become 17. Operates on root view at page+48 and may rebuild widgets. UI owner thread only, never under interrupt lock. Do not infer successful rebuild from final state alone. Device probe pending."
+}

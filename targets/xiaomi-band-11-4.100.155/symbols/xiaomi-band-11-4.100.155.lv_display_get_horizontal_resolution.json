@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.lv_display_get_horizontal_resolution",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "lv_display_get_horizontal_resolution",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int32_t(void *display)",
+  "entry_address": "0x0c380694",
+  "callable_address": "0x0c380695",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4155-001"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": ["EVID-RESOURCE-4155-001"],
+    "source": "Exact .155 AP-backed IDA function; raw function chunk independently rehashed against the pinned AP. See evidence bundle for chunk hash and recovered control flow."
+  },
+  "notes": "Returns display+4 when display+756 has rotation bit 2, otherwise display+0. A null argument falls back to *0x200bd200; returns zero if no display. This is not a raw fixed-axis field accessor. UI-owner context only; physical display validation remains pending."
+}

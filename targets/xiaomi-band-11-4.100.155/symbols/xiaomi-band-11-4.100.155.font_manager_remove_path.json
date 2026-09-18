@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.font_manager_remove_path",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "font_manager_remove_path",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *entry)",
+  "entry_address": "0x0c904cec",
+  "callable_address": "0x0c904ced",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4155-001"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": ["EVID-RESOURCE-4155-001"],
+    "source": "Exact .155 AP-backed IDA function with font_manager_remove_path name/source strings; raw function chunk independently rehashed against the pinned AP."
+  },
+  "notes": "Takes a registry node handle, not a name. Retrieves the manager at *(*0x200bd1e8+28), checks membership in its registered-path list, unlinks via 0x0c3a46dc, then frees name, path and node via 0x0c3abe58. UI owner thread only, never under interrupt lock. Invalidates the supplied handle; existing font wrappers are not replaced by this call. Device probe pending."
+}

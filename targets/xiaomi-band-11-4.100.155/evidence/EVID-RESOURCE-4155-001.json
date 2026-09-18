@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-4155-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "Which six exact .155 entry points missing from the target symbol allowlist are required by Resource Hook?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.155.lv_display_get_horizontal_resolution",
+    "xiaomi-band-11-4.100.155.page_stack_get",
+    "xiaomi-band-11-4.100.155.on_resume_wrapped",
+    "xiaomi-band-11-4.100.155.font_manager_remove_path",
+    "xiaomi-band-11-4.100.155.font_manager_add_path",
+    "xiaomi-band-11-4.100.155.font_manager_generate_def_path"
+  ],
+  "prototype_hypothesis": "Restricted ARM AAPCS prototypes follow independently inspected .155 bodies; no target-wide relocation delta is assumed.",
+  "callsite_evidence": [
+    "The analyzed 12304852-byte AP has SHA256 ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f. IDA function chunks match raw AP bytes; this integration independently recomputed each listed SHA256 using file offset = entry - 0x0c0c0000. End addresses below are exclusive, evidence extents only, NOT allowlist ranges.",
+    "lv_display_get_horizontal_resolution [0x0c380694,0x0c3806ae), file offset 2885268, SHA256 93f88bcde98032248d935a78044b700891aef2f4891f112b2e2348cec6bdf322.",
+    "page_stack_get [0x0c697440,0x0c697454), file offset 6124608, SHA256 b84c8a45f0ca975f9ef7b87ac841d093be93ddf1261482ac065c3a0c491d6c6e.",
+    "on_resume_wrapped [0x0c696c08,0x0c696cda), file offset 6122504, SHA256 c9f7702aa89aded2dba460fbb7613dd034895edc0ae2309b1eceebaa28303039.",
+    "font_manager_remove_path [0x0c904cec,0x0c904d56), file offset 8670444, SHA256 5adcec29ed946ced1ee1c4ea2c3fb1075992126f94ac9386bedd84bdfd628784.",
+    "font_manager_add_path [0x0c4924e0,0x0c492578), file offset 4007136, SHA256 6a03af90931f55da294bce79988a0c7f4d9abd25f54083c78e95e3d2d70e514c.",
+    "font_manager_generate_def_path [0x0c490edc,0x0c490f36), file offset 4001500, SHA256 603ea44dd4559260652ec3898fb634e3caadab387ba51b9b93fe4d6ec54c2186."
+  ],
+  "control_flow_evidence": [
+    "0x0c380694 falls back to *0x200bd200 for a null display and selects display+0 or display+4 according to bit 2 at display+756.",
+    "0x0c697440 tests the stack at 0x200c33ac and delegates to 0x0c697318. The latter adds count to negative indices before lookup, confirming -1 means stack top. Callee [0x0c697318,0x0c69737c) raw SHA256 6ddaf5d81f1e3510dc70faa4bbf096b5e51cd077ac09f770786cb300901ff2bf; this callee is evidence only, not a newly allowed symbol.",
+    "0x0c696c08 calls create at 0x0c696ad8 and start at 0x0c693986, tests screen/page-layer state, invokes inherited page callbacks, and promotes states 8/18 to 17. Log strings identify on_resume_wrapped; page state is at +40 and root view at +48.",
+    "0x0c904cec obtains the manager through *0x200bd1e8+28, validates node membership, unlinks through 0x0c3a46dc and frees name, path, then node through 0x0c3abe58. Source/function strings identify font_manager_remove_path.",
+    "0x0c4924e0 first resolves through 0x0c490edc, compares the requested path, and only when different appends a node through 0x0c3a46a2 and copies both strings. Source/function strings identify font_manager_add_path.",
+    "0x0c490edc traverses registry head manager+28 using payload size manager+24 and returns the first matching name's path. Fallback formats base/name.ttf into the manager+292 buffer; source/function strings identify font_manager_generate_def_path."
+  ],
+  "ownership_analysis": "All six are restricted to the caller-owned UI context, outside the interrupt lock. Page and resolved-path pointers are borrowed; registry removal invalidates and frees its handle. Registry changes do not update existing font wrappers. Page recreation has its own guarded lifecycle preconditions.",
+  "unsafe_assumptions": [
+    "No physical-device acceptance is claimed. Static recovery does not prove display behavior, concurrent UI ownership, allocation failure recovery, or complete cache refresh.",
+    "Only the six entry addresses and their Thumb callable forms are added by the companion symbol records. No address ranges, verifier changes, approvals or signing exceptions are added."
+  ],
+  "recommended_probe": "After the normal signed payload and strict ARM verifier gates, validate only on the exact .155 firmware with a recoverable Supervisor installation and caller-owned UI transaction. Check fonts, redraw, page rebuild and reboot recovery.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-18T10:57:37Z",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/build/firmware-analysis/vela_ap_4.100.155.bin",
+      "sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+      "role": "exact-local-AP-input-not-distributed"
+    }
+  ]
+}

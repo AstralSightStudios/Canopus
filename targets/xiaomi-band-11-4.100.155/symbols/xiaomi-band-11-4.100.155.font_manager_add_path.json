@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.font_manager_add_path",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "font_manager_add_path",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void *(const char *name, const char *path)",
+  "entry_address": "0x0c4924e0",
+  "callable_address": "0x0c4924e1",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4155-001"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": ["EVID-RESOURCE-4155-001"],
+    "source": "Exact .155 AP-backed IDA function with font_manager_add_path name/source strings and resolver call; raw function chunk independently rehashed against the pinned AP."
+  },
+  "notes": "Resolves the current family path through 0x0c490edc; returns zero if it already matches. Otherwise appends a registry node through 0x0c3a46a2 and allocates/copies both strings. Lookup takes the first matching name: remove the old entry before adding a replacement. UI owner thread only, never under interrupt lock. Affects subsequently created font wrappers, not existing ones. Device probe pending."
+}

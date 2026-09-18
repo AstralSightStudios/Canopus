@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.page_stack_get",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "page_stack_get",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "uint32_t(int)",
+  "entry_address": "0x0c697440",
+  "callable_address": "0x0c697441",
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-4155-001"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "calling_convention": "arm-aapcs",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": ["EVID-RESOURCE-4155-001"],
+    "source": "Exact .155 AP-backed IDA function and app_list_get_page callee at 0x0c697318; raw function chunk independently rehashed against the pinned AP."
+  },
+  "notes": "Returns zero if the global page stack at 0x200c33ac is absent; otherwise delegates to app_list_get_page. Its callee adds the page count to negative indices, so -1 selects the top page. Borrowed pointer; UI owner thread only, never under interrupt lock. Device probe pending."
+}
