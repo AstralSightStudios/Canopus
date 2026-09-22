@@ -41,6 +41,11 @@ dist/
 tests/host/canopus_host_tests
 tests/host/elf_loader_harness
 
+# Generated module-installer device bundles and their generated overview.
+# Keep templates in watchfaces/module-installer-prod/src/ under version control.
+/watchfaces/module-installer-prod/xiaomi-*/
+/watchfaces/module-installer-prod/docs/
+
 # Packaging output
 *.canopus
 *.canopus.sig

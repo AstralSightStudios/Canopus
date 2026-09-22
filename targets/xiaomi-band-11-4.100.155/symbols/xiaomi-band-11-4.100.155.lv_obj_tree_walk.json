@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.lv_obj_tree_walk",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "lv_obj_tree_walk",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c380574",
+  "callable_address": "0x0c380575",
+  "prototype": "int(void *root, int (*callback)(void *object, void *user_data), void *user_data)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Root, callback and user_data are borrowed synchronously; a null root selects all registered screens on all displays.",
+    "return_value": "Integer walk result; callback 0 continues, 1 skips children, 2 ends the current rooted traversal. Null-root dispatcher does not propagate early termination across all screens and returns 2 after its display loop.",
+    "callback_argument": "Live object and user_data borrowed only for the synchronous invocation; do not mutate the walked tree or retain unchecked pointers."
+  },
+  "side_effects": [
+    "invokes_synchronous_object_callbacks",
+    "recursive_screen_tree_traversal"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": true,
+    "evidence_ids": [
+      "EVID-RESOURCE-4155-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-RESOURCE-4155-002"
+    ],
+    "source": "Exact .155 AP instruction/call-site inspection plus source-compiled Unicorn probes in Canopus-Module-Resource-Hook/tests/firmware_reload.py; see companion evidence for byte-window hashes."
+  },
+  "notes": "Null-root branch traverses display list at 0x200bd1e8+12 and display screens/count at +692/+720. Nonnull branch calls child accessor 0x0c380320 and count 0x0c380342. Callbacks must not mutate/delete the traversed tree. Resource Hook uses read-only bounded collection/membership callbacks, caps parent depth and object count, and performs mutations only after traversal returns. Actual walk/accessor instructions are exercised against modeled trees. UI-owner thread only, outside IRQ lock. Host emulation is not a physical device probe or an approval for general veneer generation."
+}

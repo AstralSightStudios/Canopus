@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.lv_obj_get_style_prop",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "lv_obj_get_style_prop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c382620",
+  "callable_address": "0x0c382621",
+  "prototype": "uint32_t(const void *object, uint32_t part, uint32_t property)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Object is borrowed and must remain live throughout lookup; part and property are scalar selectors.",
+    "return_value": "32-bit ABI carrier for the native style-value union in r0; when property 40 denotes an image source, the pointer is borrowed from the owning style, not allocated or transferred."
+  },
+  "side_effects": [
+    "reads_effective_style_state_and_inheritance"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": true,
+    "evidence_ids": [
+      "EVID-RESOURCE-4155-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-RESOURCE-4155-002"
+    ],
+    "source": "Exact .155 AP instruction/call-site inspection plus source-compiled Unicorn probes in Canopus-Module-Resource-Hook/tests/firmware_reload.py; see companion evidence for byte-window hashes."
+  },
+  "notes": "0x0c382540 selects part/state matches from object styles, delegates property storage to 0x0c378f1e, and returns the highest applicable state value. Probe executes the real getter and selector/state selection for main-part property 40 at states 0/32/128; only the leaf property-storage lookup is modeled. Inline prototype deliberately expresses the observed 32-bit AAPCS return carrier, not a claim about the upstream typedef name. UI-owner thread only, outside IRQ lock. Host emulation is not a physical device probe or an approval for general veneer generation."
+}

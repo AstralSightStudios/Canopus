@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-4155-002",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "Which four unique exact .155 function entries are required by the affected-source reload adapter and missing from its target allowlist? Five verifier call-site findings include tree-walk twice.",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.155.lv_image_decoder_get_info",
+    "xiaomi-band-11-4.100.155.lv_obj_tree_walk",
+    "xiaomi-band-11-4.100.155.lv_obj_get_style_prop",
+    "xiaomi-band-11-4.100.155.lv_obj_refresh_style"
+  ],
+  "prototype_hypothesis": "Restricted ARM AAPCS prototypes recovered from exact .155 bodies and call sites. The style getter prototype uses a uint32_t ABI carrier for the native single-word union. No .139 relocation or upstream struct definition is assumed.",
+  "callsite_evidence": [
+    "Pinned AP size 12304852 bytes, SHA256 ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f; file offset = instruction address - 0x0c0c0000.",
+    "lv_image_decoder_get_info: instruction evidence window [0x0c38e4e4,0x0c38e514), file offset 2942180, SHA256 ce42cb7396cc6656763a85f8097374ee1125db31eb861f7231f20f3c1c3d8f67. These exclusive-end byte windows are evidence extents only, NOT allowlist ranges.",
+    "lv_obj_tree_walk: instruction evidence window [0x0c380574,0x0c3805f4), file offset 2884980, SHA256 07186f28ab7ed93ec28b68a829cbbeafa6d058b47e719c9b1c17d6b4f87d50c0. These exclusive-end byte windows are evidence extents only, NOT allowlist ranges.",
+    "lv_obj_get_style_prop: instruction evidence window [0x0c382620,0x0c382764), file offset 2893344, SHA256 a46811fa3609fb69353ca5f96f8504d1a42ba4a6fc23526b82e49654ec0b922d. These exclusive-end byte windows are evidence extents only, NOT allowlist ranges.",
+    "lv_obj_refresh_style: instruction evidence window [0x0c38525c,0x0c385342), file offset 2904668, SHA256 a78476ae2de2378e77fd902417cddac4ac3412d12485ebfdd91b1633dc86d749. These exclusive-end byte windows are evidence extents only, NOT allowlist ranges.",
+    "r0 is saved source, r1 saved output; the wrapper initializes a 76-byte decoder descriptor and calls 0x0c38e394, then normalizes the returned decoder pointer to 0/1. At 0x0c3b2c64..0x0c3b2c6e the image setter passes source in r0 and stack header storage in r1, checking result == 1.",
+    "Native display refresh calls 0x0c380574 with r0=0, callback in r1 and user_data in r2 at 0x0c38482c..0x0c384832. Body 0x0c3805ba moves saved user_data into callback r1 while object remains callback r0; 0x0c3805be/0x0c3805c2 compare callback result with 2/1.",
+    "Body saves part from r1, property from r2, loads state from object+48 and ORs state with part before calling 0x0c382540. On success it returns the single 32-bit output word in r0. Multiple native style accessors use this calling sequence (e.g. 0x0c8b8d18 for property 20).",
+    "Native local-style setter 0x0c3872b4 calls this entry at 0x0c38735a..0x0c387360 with object in r0, original selector in r1 and property in r2 after the property setter reports a change. Image-style helper 0x0c387d1c passes property 40 to that local-style setter."
+  ],
+  "control_flow_evidence": [
+    "Header cache capacity is read at cache+8 by 0x0c38e3b4. The cache-hit path 0x0c38e3d6..0x0c38e3f4 copies 12 bytes and releases its reference. With nonzero capacity, 0x0c38e47c..0x0c38e4b8 reports failure if insertion fails. With caching disabled, success does not establish a reusable cached header. Native get-info cache-hit/release instructions are emulated in firmware_reload.py; file I/O and decoder callbacks are not hardware validated.",
+    "Null-root branch traverses display list at 0x200bd1e8+12 and display screens/count at +692/+720. Nonnull branch calls child accessor 0x0c380320 and count 0x0c380342. Callbacks must not mutate/delete the traversed tree. Resource Hook uses read-only bounded collection/membership callbacks, caps parent depth and object count, and performs mutations only after traversal returns. Actual walk/accessor instructions are exercised against modeled trees.",
+    "0x0c382540 selects part/state matches from object styles, delegates property storage to 0x0c378f1e, and returns the highest applicable state value. Probe executes the real getter and selector/state selection for main-part property 40 at states 0/32/128; only the leaf property-storage lookup is modeled. Inline prototype deliberately expresses the observed 32-bit AAPCS return carrier, not a claim about the upstream typedef name.",
+    "Body checks global style-refresh enable byte at 0x200bd1e8+40, masks selector part bits and queries property flags at 0x0c3a5808. It invokes invalidation, style events and sizing/layout helpers depending on those flags. Direct refresh of property 40 avoids depending on unchanged-pointer local-style-setter behavior. Native refresh instructions execute in the probe with GUI event/sizing leaves modeled; no GPU drain or physical display acceptance is established."
+  ],
+  "ownership_analysis": "All four require serialized UI-owner access outside the IRQ lock. Tree-walk callback/root/user-data pointers are synchronous borrows; mutations must occur after traversal returns. Get-info writes a caller-provided 12-byte header and may invoke decoder/file/cache operations. Image-style return pointers are borrowed. Style refresh may dispatch callbacks; native receiver/source lifetimes remain caller obligations. This is owner-specific adoption, not a global resource lifetime reset.",
+  "unsafe_assumptions": [
+    "Physical-device status remains NOT_PROBED; no GPU completion or hardware resource-adoption result is claimed.",
+    "Only four exact even entries and their Thumb callable forms are added. No range expansion, verifier bypass, signing exception, approval promotion or generated veneer modification is included.",
+    "Module .139 image adapters remain unsupported and do not use these .155 entries or layouts.",
+    "The module does not hook watchface loaders, globally stop animations, clear global caches or force page rebuilds. Unsupported owner types remain outside the adapter.",
+    "Unicorn probes model heap, decoder/I/O, cache lookup/unlink/free, style property storage and GUI leaves as documented; native instruction coverage does not establish arbitrary callback safety."
+  ],
+  "recommended_probe": "Run strict .155 ELF verification and normal signed-loader tests separately. Then validate on exact hardware with recoverable installation, serialized UI ownership, immutable theme files, held decoder/GPU lifetime, image dimensions, state-specific styles, offscreen adoption, callback liveness, allocation pressure and repeated activation. Do not infer GPU idle from the rendering flag.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-19T15:54:57Z",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/build/firmware-analysis/vela_ap_4.100.155.bin",
+      "sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+      "role": "exact-local-AP-input-not-distributed"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_reload.py",
+      "sha256": "bb155ad0ac76b90f1bdd2d2b699e1022e1e8e030b3eeab133b166e3ccf635a5d",
+      "role": "source-compiled-Unicorn-probe-18-tests-passed-with-modeled-leaves"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/targets/xiaomi-band-11-4.100.155/ui-reload-audit.md",
+      "sha256": "5f2efd781859c52377856597fc236d5e19bc777a93841d6b96f925c6a52f36d0",
+      "role": "current-adapter-layout-and-lifetime-audit"
+    }
+  ]
+}

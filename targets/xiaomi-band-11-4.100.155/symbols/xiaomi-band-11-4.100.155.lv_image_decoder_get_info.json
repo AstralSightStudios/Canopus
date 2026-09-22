@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.lv_image_decoder_get_info",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "lv_image_decoder_get_info",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c38e4e4",
+  "callable_address": "0x0c38e4e5",
+  "prototype": "int(const void *source, void *header_out)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Source is borrowed for this synchronous call; header_out is caller-owned writable storage of at least 12 bytes.",
+    "return_value": "Integer result in r0: 1 on success, 0 on failure; no returned ownership."
+  },
+  "side_effects": [
+    "may_open_and_close_file",
+    "may_allocate_or_acquire_header_cache_entry",
+    "writes_12_byte_header",
+    "may_invoke_decoder_callbacks"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": true,
+    "evidence_ids": [
+      "EVID-RESOURCE-4155-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-RESOURCE-4155-002"
+    ],
+    "source": "Exact .155 AP instruction/call-site inspection plus source-compiled Unicorn probes in Canopus-Module-Resource-Hook/tests/firmware_reload.py; see companion evidence for byte-window hashes."
+  },
+  "notes": "Header cache capacity is read at cache+8 by 0x0c38e3b4. The cache-hit path 0x0c38e3d6..0x0c38e3f4 copies 12 bytes and releases its reference. With nonzero capacity, 0x0c38e47c..0x0c38e4b8 reports failure if insertion fails. With caching disabled, success does not establish a reusable cached header. Native get-info cache-hit/release instructions are emulated in firmware_reload.py; file I/O and decoder callbacks are not hardware validated. UI-owner thread only, outside IRQ lock. Host emulation is not a physical device probe or an approval for general veneer generation."
+}
