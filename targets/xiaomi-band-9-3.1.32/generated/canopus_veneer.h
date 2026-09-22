@@ -77,7 +77,11 @@ static inline int canopus_fw_launcher_reset_order_info(void) {
     return ((canopus_fw_launcher_reset_order_info_fn)(uintptr_t)0x0c4c7165)();
 }
 
-/* errno_location: skipped (return type 'int *' not mappable) */
+typedef int * (*canopus_fw_errno_location_fn)(void);
+static inline int * canopus_fw_errno_location(void) {
+    return ((canopus_fw_errno_location_fn)(uintptr_t)0x0c15f0c9)();
+}
+
 typedef void (*canopus_fw_lv_obj_align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
 static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2, int32_t a3, int32_t a4) {
     return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0x0c278bdd)(a0, a1, a2, a3, a4);

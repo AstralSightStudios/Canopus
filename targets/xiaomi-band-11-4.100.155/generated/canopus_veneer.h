@@ -4,7 +4,7 @@
  * firmware : 4.100.155 (user-4.100.155-cn-202609041500)
  * sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
  * revision : 1
- * input_digest: dcdfb81a1b366a34
+ * input_digest: 7c9b94183796d539
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
@@ -207,6 +207,11 @@ static inline int canopus_identity_guard(void)
 }
 
 /* ---- typed veneers ---- */
+typedef int * (*canopus_fw_errno_location_fn)(void);
+static inline int * canopus_fw_errno_location(void) {
+    return ((canopus_fw_errno_location_fn)(uintptr_t)0xc349539)();
+}
+
 /* ---- excluded symbols ----
  * _lv_inv_area: restricted - not exported until context/ownership approved
  * app_install: restricted - not exported until context/ownership approved
@@ -252,8 +257,10 @@ static inline int canopus_identity_guard(void)
  * core_bt_pair_request_callback: restricted - not exported until context/ownership approved
  * driver_close_dispatch: restricted - not exported until context/ownership approved
  * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
- * errno_location: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
+ * font_manager_add_path: restricted - not exported until context/ownership approved
+ * font_manager_generate_def_path: restricted - not exported until context/ownership approved
+ * font_manager_remove_path: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved
@@ -273,15 +280,19 @@ static inline int canopus_identity_guard(void)
  * lv_bar_set_range: restricted - not exported until context/ownership approved
  * lv_bar_set_value: restricted - not exported until context/ownership approved
  * lv_cache_drop: restricted - not exported until context/ownership approved
+ * lv_display_get_horizontal_resolution: restricted - not exported until context/ownership approved
  * lv_event_get_code: restricted - not exported until context/ownership approved
  * lv_event_get_user_data: restricted - not exported until context/ownership approved
  * lv_image_cache_drop: restricted - not exported until context/ownership approved
  * lv_image_create: restricted - not exported until context/ownership approved
+ * lv_image_decoder_get_info: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
  * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
  * lv_obj_align_to: restricted - not exported until context/ownership approved
  * lv_obj_clear_flag: restricted - not exported until context/ownership approved
+ * lv_obj_get_style_prop: restricted - not exported until context/ownership approved
  * lv_obj_move_to_index: restricted - not exported until context/ownership approved
+ * lv_obj_refresh_style: restricted - not exported until context/ownership approved
  * lv_obj_remove_style_all: restricted - not exported until context/ownership approved
  * lv_obj_set_hidden: restricted - not exported until context/ownership approved
  * lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
@@ -289,6 +300,7 @@ static inline int canopus_identity_guard(void)
  * lv_obj_set_style_pad_bottom: restricted - not exported until context/ownership approved
  * lv_obj_set_style_pad_top: restricted - not exported until context/ownership approved
  * lv_obj_set_width: restricted - not exported until context/ownership approved
+ * lv_obj_tree_walk: restricted - not exported until context/ownership approved
  * lv_timer_create: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
  * lvgl_posix_open: restricted - not exported until context/ownership approved
@@ -317,10 +329,12 @@ static inline int canopus_identity_guard(void)
  * mm_memalign: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * offload_property_apply: restricted - not exported until context/ownership approved
+ * on_resume_wrapped: restricted - not exported until context/ownership approved
  * open: restricted - not exported until context/ownership approved
  * page_finish: restricted - not exported until context/ownership approved
  * page_goto: restricted - not exported until context/ownership approved
  * page_navigator_open_page: restricted - not exported until context/ownership approved
+ * page_stack_get: restricted - not exported until context/ownership approved
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: restricted - not exported until context/ownership approved
  * quickapp_register_app: restricted - not exported until context/ownership approved

@@ -10,10 +10,11 @@
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-BLUETOOTH-4139-006"
+      "EVID-BLUETOOTH-4139-006",
+      "EVID-ERRNO-4139-001"
     ]
   },
-  "policy": "restricted",
+  "policy": "managed",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
@@ -24,7 +25,7 @@
   },
   "entry_address": "0xc349538",
   "callable_address": "0xc349539",
-  "notes": "Private Band 11 runtime binding. ABI is adapted per target; public approval remains PENDING. Radio/physical display validation requires a device. See EVID-BLUETOOTH-4139-006.",
-  "approval_state": "PENDING",
+  "notes": "Read errno immediately after a failed VFS call on the same task. Borrowed firmware-owned pointer: never free, retain, share across tasks, or use from interrupt context. Static ABI approval only; device validation remains pending. See EVID-ERRNO-4139-001.",
+  "approval_state": "APPROVED",
   "calling_convention": "arm-aapcs"
 }

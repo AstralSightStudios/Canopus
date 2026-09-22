@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ERRNO-4139-001",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "May task-context modules read the native VFS errno without exporting unrelated restricted symbols?",
+  "candidate_symbols": ["xiaomi-band-11-4.100.139.errno_location"],
+  "prototype_hypothesis": "int *(void), AAPCS, Thumb callable 0x0c349539",
+  "callsite_evidence": [
+    "EVID-NATIVE-4139-003 records errno_location at 0x0c349538 returning current TLS+0x28 or 0x200b4f20, used by native malloc and Lua/VFS error paths.",
+    "Existing native-bindings.json and Supervisor use this exact accessor for VFS error classification.",
+    "The .155 port records a matching full instruction body; this approval relies on existing .139 evidence, not a new .139 device probe."
+  ],
+  "control_flow_evidence": ["The accessor returns borrowed firmware storage, not an allocation. Read immediately after the failed VFS operation, on that same task, before another firmware call can change errno."],
+  "ownership_analysis": "Firmware owns the pointer. Callers may copy the integer only; do not free, retain, mutate, or transfer the pointer across tasks. Task context only; no ISR use. The fallback cell is not permission for interrupt-context access.",
+  "unsafe_assumptions": ["Static ABI approval only. Physical device validation remains pending.", "The exact .139 firmware identity must be checked by the existing target/loader gates. No address range or loader policy is widened."],
+  "recommended_probe": "Compare missing-file ENOENT with permission and I/O failures on the exact target; confirm a missing optional configuration does not install callbacks or refresh the UI.",
+  "reviewers": ["canopus-static-abi-review"],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-22T13:53:24Z",
+  "artifacts": [{"uri": "EVID-NATIVE-4139-003.json", "role": "prior-exact-target-errno-audit"}]
+}

@@ -4,7 +4,7 @@
  * firmware : 4.100.139 (user-4.100.139-cn-202608280000)
  * sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
  * revision : 2
- * input_digest: 106948186347f602
+ * input_digest: 4be502931d5caf27
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
@@ -207,6 +207,11 @@ static inline int canopus_identity_guard(void)
 }
 
 /* ---- typed veneers ---- */
+typedef int * (*canopus_fw_errno_location_fn)(void);
+static inline int * canopus_fw_errno_location(void) {
+    return ((canopus_fw_errno_location_fn)(uintptr_t)0xc349539)();
+}
+
 /* ---- excluded symbols ----
  * _lv_inv_area: restricted - not exported until context/ownership approved
  * app_install: restricted - not exported until context/ownership approved
@@ -252,7 +257,6 @@ static inline int canopus_identity_guard(void)
  * core_bt_pair_request_callback: restricted - not exported until context/ownership approved
  * driver_close_dispatch: restricted - not exported until context/ownership approved
  * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
- * errno_location: restricted - not exported until context/ownership approved
  * exec_pop_lifecycle_without_cachepolicy: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
  * font_manager_add_path: restricted - not exported until context/ownership approved
@@ -277,6 +281,8 @@ static inline int canopus_identity_guard(void)
  * lv_bar_set_range: restricted - not exported until context/ownership approved
  * lv_bar_set_value: restricted - not exported until context/ownership approved
  * lv_cache_drop: restricted - not exported until context/ownership approved
+ * lv_display_get_horizontal_resolution: restricted - not exported until context/ownership approved
+ * lv_display_get_vertical_resolution: restricted - not exported until context/ownership approved
  * lv_event_get_code: restricted - not exported until context/ownership approved
  * lv_event_get_user_data: restricted - not exported until context/ownership approved
  * lv_image_cache_drop: restricted - not exported until context/ownership approved

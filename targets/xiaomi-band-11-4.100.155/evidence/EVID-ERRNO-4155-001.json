@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ERRNO-4155-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "Can optional configuration distinguish ENOENT from other native open failures?",
+  "candidate_symbols": ["xiaomi-band-11-4.100.155.errno_location"],
+  "prototype_hypothesis": "int *(void), AAPCS, Thumb callable 0x0c349539",
+  "callsite_evidence": [
+    "Exact AP SHA256 ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f; IDA function bytes for open 0x0c342c54, errno_location 0x0c349538 and its helper 0x0c349518 were compared against the AP at XIP base 0x0c0c0000.",
+    "open calls 0x0c342bd8; when its result is negative, it calls 0x0c349538, negates the error, stores it through r0 and returns -1. Testing the open result against -ENOENT is incorrect.",
+    "errno_location calls 0x0c349518, which reads the current TCB through 0x200b04bc then its TLS field at +0x64; the accessor returns TLS+0x28 or fallback 0x200b4f20."
+  ],
+  "control_flow_evidence": ["Copy errno immediately after the failed VFS operation on the same task, before any other firmware call. Only ENOENT (2) is an optional-file absence; all other errors remain failures."],
+  "ownership_analysis": "Firmware owns the pointer. Callers may copy the integer only; do not free, retain, mutate, or transfer the pointer across tasks. Task context only; no ISR use. The fallback cell is not permission for interrupt-context access.",
+  "unsafe_assumptions": ["Static ABI approval only. Physical device validation remains pending.", "No firmware address ranges, verifier rules, or unrelated restricted symbols are changed."],
+  "recommended_probe": "Compare missing configuration and missing parent directory with permission/I/O failures; confirm no hook, timer, cache retirement or redraw on absence, and successful retry after configuration is supplied.",
+  "reviewers": ["canopus-static-abi-review"],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-22T13:53:24Z",
+  "artifacts": [{"uri": "fw-match/port-139-to-155.json", "role": "prior-full-body-port-evidence"}]
+}

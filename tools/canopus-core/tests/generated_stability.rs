@@ -259,6 +259,35 @@ fn band9_supervisor_platform_remains_complete() {
     );
 }
 
+#[test]
+fn band11_errno_is_the_only_approved_callable() {
+    for target in ["xiaomi-band-11-4.100.139", "xiaomi-band-11-4.100.155"] {
+        let dir = repo_root().join("targets").join(target);
+        let (symbols, _) = load_records(&dir).unwrap();
+        let approved: Vec<_> = symbols
+            .iter()
+            .filter(|s| s.kind == "function" && s.approved_for_codegen())
+            .collect();
+        assert_eq!(
+            approved.len(),
+            1,
+            "unexpected approval expansion for {target}"
+        );
+        let errno = approved[0];
+        assert_eq!(errno.name, "errno_location");
+        assert_eq!(errno.policy, "managed");
+        assert_eq!(errno.prototype.as_deref(), Some("int *(void)"));
+        assert_eq!(
+            parse_address(errno.callable_address.as_deref().unwrap()),
+            0x0c349539
+        );
+        let header = std::fs::read_to_string(dir.join("generated/canopus_veneer.h")).unwrap();
+        assert!(header.contains("typedef int * (*canopus_fw_errno_location_fn)(void);"));
+        assert!(header.contains("static inline int * canopus_fw_errno_location(void)"));
+        assert!(!header.contains("errno_location: skipped"));
+    }
+}
+
 fn parse_address(value: &str) -> usize {
     usize::from_str_radix(
         value

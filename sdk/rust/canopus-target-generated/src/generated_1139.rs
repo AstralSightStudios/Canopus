@@ -4,7 +4,7 @@
 // firmware : 4.100.139 (user-4.100.139-cn-202608280000)
 // sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
 // revision : 2
-// input_digest: 106948186347f602
+// input_digest: 4be502931d5caf27
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -333,11 +333,17 @@ pub const CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE: usize = canopus_thumb_callabl
 /// Recovered `bt_l2cap_disconnect` at 0xc86f0a4. Thumb callable address 0xc86f0a5.
 pub const CANOPUS_FW_BT_L2CAP_DISCONNECT_CALLABLE: usize = canopus_thumb_callable(0xc86f0a5usize);
 
+/// Recovered `lv_display_get_horizontal_resolution` at 0x0c380694. Thumb callable address 0x0c380695.
+pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = canopus_thumb_callable(0x0c380695usize);
+
 /// Recovered `page_goto` at 0xc8ed780. Thumb callable address 0xc8ed781.
 pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc8ed781usize);
 
 /// Recovered `sdp_unregister` at 0xc86f3e0. Thumb callable address 0xc86f3e1.
 pub const CANOPUS_FW_SDP_UNREGISTER_CALLABLE: usize = canopus_thumb_callable(0xc86f3e1usize);
+
+/// Recovered `lv_display_get_vertical_resolution` at 0x0c3806b4. Thumb callable address 0x0c3806b5.
+pub const CANOPUS_FW_LV_DISPLAY_GET_VERTICAL_RESOLUTION_CALLABLE: usize = canopus_thumb_callable(0x0c3806b5usize);
 
 /// Recovered `hidden_and_show_app_cb` at 0xc547988. Thumb callable address 0xc547989.
 pub const CANOPUS_FW_HIDDEN_AND_SHOW_APP_CB_CALLABLE: usize = canopus_thumb_callable(0xc547989usize);
@@ -689,6 +695,12 @@ pub const CANOPUS_FW_BT_ADAPTER_REGISTER_A2DP_CALLBACKS_CALLABLE: usize = canopu
 
 /// Recovered `errno_location` at 0xc349538. Thumb callable address 0xc349539.
 pub const CANOPUS_FW_ERRNO_LOCATION_CALLABLE: usize = canopus_thumb_callable(0xc349539usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_errno_location() -> *const i32 {
+    let f: extern "C" fn() -> *const i32 = unsafe { core::mem::transmute(CANOPUS_FW_ERRNO_LOCATION_CALLABLE) };
+    f()
+}
 
 /// Recovered `lv_event_get_code` at 0xc0f7728. Thumb callable address 0xc0f7729.
 pub const CANOPUS_FW_LV_EVENT_GET_CODE_CALLABLE: usize = canopus_thumb_callable(0xc0f7729usize);
@@ -756,7 +768,6 @@ pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc6ab
 // core_bt_pair_request_callback: restricted - not exported until context/ownership approved
 // driver_close_dispatch: restricted - not exported until context/ownership approved
 // driver_ioctl_dispatch: restricted - not exported until context/ownership approved
-// errno_location: restricted - not exported until context/ownership approved
 // exec_pop_lifecycle_without_cachepolicy: restricted - not exported until context/ownership approved
 // firmware_log: restricted - not exported until context/ownership approved
 // font_manager_add_path: restricted - not exported until context/ownership approved
@@ -781,6 +792,8 @@ pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc6ab
 // lv_bar_set_range: restricted - not exported until context/ownership approved
 // lv_bar_set_value: restricted - not exported until context/ownership approved
 // lv_cache_drop: restricted - not exported until context/ownership approved
+// lv_display_get_horizontal_resolution: restricted - not exported until context/ownership approved
+// lv_display_get_vertical_resolution: restricted - not exported until context/ownership approved
 // lv_event_get_code: restricted - not exported until context/ownership approved
 // lv_event_get_user_data: restricted - not exported until context/ownership approved
 // lv_image_cache_drop: restricted - not exported until context/ownership approved
