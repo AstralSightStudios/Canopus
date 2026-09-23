@@ -79,4 +79,10 @@
 ## 2026-09-23 P65 reconnaissance
 
 - Extracted and loaded the exact `vela_ap.bin` from the local P65 3.100.043 OTA with the supplied IDA loader. The loader was narrowly adjusted for the P65 header word and accepts the variant only after footer/alias metadata validates. IDA discovered 42,835 functions; exact AP SHA-256 is recorded in `targets/xiaomi-p65-3.100.043/target.toml`.
-- Added the P65 exact identity pack and generated Rust/C identity guard from the exact `ro.build.version` and boot `REV_INFO` strings. The AP contains NuttX NSH/modlib string leads, but no loader, relocation, subsystem ABI, callable or device capability is promoted. P65 remains analysis-only and the target-private backend is intentionally unavailable.
+- Added the P65 exact identity pack and generated Rust/C identity guard from the exact `ro.build.version` and boot `REV_INFO` strings. P65 remains analysis-only; no callable or device capability is promoted and the target-private backend is intentionally unavailable.
+
+## 2026-09-23 P65 module-loader/ABI follow-up
+
+- User-provided read-only P65 console output confirms `help -v insmod` usage (`<file-path> <module-name>`), `help -v rmmod` (`<module-name>`), and an empty `lsmod` listing. The default help list omits `insmod`, although its verbose help descriptor exists.
+- Exact P65 IDA tracing recovers NSH `insmod` → ELF loader → section binding/ARM relocation → module registry, plus name-based `rmmod` and `lsmod` handlers. ELF32/ARM/little-endian validation, ET_REL/ET_DYN code paths, relocation switch, static symtab and loaded-module lookup are recorded in `EVID-P65-MODLIB-001.json`; 0x3C table contents remain unmapped.
+- A host-only Canopus C template build for P65 verifies as zero-import ET_REL with 107 relocations and one constructor/destructor, but `e_entry=0`. P65's ET_REL loader branch calls `base + e_entry`, so the generic template is not safe to load; the module-initialize ABI and 0x3C symbol table remain blockers. No device module was loaded.
