@@ -31,15 +31,16 @@ firmware_address_ranges = [
 # device-tested Canopus capability for this firmware.
 capabilities = []
 
-# Candidate stock NuttX module-loader profile. Its command names appear in the
-# exact AP image, but entrypoints, relocation behavior and module lifecycle are
-# not yet verified. Keep this target non-deployable until the profile is audited.
+# Candidate stock NuttX module-loader profile. Static code accepts ET_REL/ET_DYN;
+# the Canopus ET_REL path calls e_entry, while the generic template currently
+# emits e_entry=0. Treat this entrypoint policy as non-deployable until the
+# module_initialize ABI and 0x3C symbol table are recovered.
 [loader_profile]
 elf_class = 32
 elf_machine = "ARM"
 elf_type = "ET_REL"
 endianness = "little"
-constructor_discovery = "init_array"
+constructor_discovery = "module_initialize"
 symbol_imports = "none"
 max_size = 0
 alignment = 4
