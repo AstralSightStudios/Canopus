@@ -75,3 +75,8 @@
 详见 [crash3](../targets/xiaomi-band-11-4.100.139/loader/notification-crash3.md)、[155 target](../targets/xiaomi-band-11-4.100.155/loader/README.md) 与 [matcher说明](../tools/fw-match/README.md)。
 
 2026-09-16：Band 11 框架 prod 合并为一个目录/入口，同时携带 139/155 的四件 native 资源，根层共1个Lua+9个bin。两个版本的真实Lua C帧选择、错误build/重复身份拒绝、ARM启动及通知回归通过。Bluetooth Audio、Lyra Player 增加155 feature/profile，原生页面销毁槽位与Lyra屏幕布局/释放事件分支覆盖155；两模块prod同目录支持139/155，真实155签名产物过verifier、安装通知和ARM模块加载测试。RF/音频/真实显示仍DEVICE-PENDING。
+
+## 2026-09-23 P65 reconnaissance
+
+- Extracted and loaded the exact `vela_ap.bin` from the local P65 3.100.043 OTA with the supplied IDA loader. The loader was narrowly adjusted for the P65 header word and accepts the variant only after footer/alias metadata validates. IDA discovered 42,835 functions; exact AP SHA-256 is recorded in `targets/xiaomi-p65-3.100.043/target.toml`.
+- Added the P65 exact identity pack and generated Rust/C identity guard from the exact `ro.build.version` and boot `REV_INFO` strings. The AP contains NuttX NSH/modlib string leads, but no loader, relocation, subsystem ABI, callable or device capability is promoted. P65 remains analysis-only and the target-private backend is intentionally unavailable.

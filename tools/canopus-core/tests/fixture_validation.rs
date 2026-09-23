@@ -98,6 +98,7 @@ fn active_target_packs_validate_without_legacy_catalog() {
         "xiaomi-band-9-pro-3.1.175",
         "xiaomi-band-11-4.100.139",
         "xiaomi-band-9-3.1.32",
+        "xiaomi-p65-3.100.043",
     ];
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../targets");
     for target in targets {

@@ -1,0 +1,63 @@
+# Exact AP target identity for the Xiaomi Vela P65 firmware package.
+# This is an analysis-only pack: no firmware callables or runtime capabilities
+# are approved until the P65 loader and subsystem ABIs are independently audited.
+schema = 1
+target_id = "xiaomi-p65-3.100.043"
+device_family = "xiaomi-vela-wearable"
+device_model = "Xiaomi Vela Watch (P65 internal product code)"
+board_revision = "p65"
+os_family = "nuttx-derived"
+architecture = "armv8-m.main"
+cpu = "best1502p-ap"
+instruction_set = "thumb2"
+endianness = "little"
+float_abi = "soft"
+loader = "nuttx-modlib-elf32-rel-unverified"
+firmware_sha256 = "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858"
+firmware_version = "3.100.043"
+firmware_build = "d516af0:nx_best1502p_ap"
+identity_terminator = "line"
+module_abi = 1
+relocation_profile = "best1502p-unverified-v1"
+revision = 1
+
+# Exact XIP executable/file-backed span established by best1503_vela.py's
+# alias validation for the P65 AP image.
+firmware_address_ranges = [
+  { base = 0x0C0C0000, size = 0x00B3F484 },
+]
+
+# Intentionally empty: static analysis has not established a callable ABI or a
+# device-tested Canopus capability for this firmware.
+capabilities = []
+
+# Candidate stock NuttX module-loader profile. Its command names appear in the
+# exact AP image, but entrypoints, relocation behavior and module lifecycle are
+# not yet verified. Keep this target non-deployable until the profile is audited.
+[loader_profile]
+elf_class = 32
+elf_machine = "ARM"
+elf_type = "ET_REL"
+endianness = "little"
+constructor_discovery = "init_array"
+symbol_imports = "none"
+max_size = 0
+alignment = 4
+module_name_rules = "candidate only; exact NSH argument validation not audited"
+load_command = "insmod <path> <name>"
+unload_command = "rmmod <name>"
+persistent_autoload = false
+
+[provenance]
+source_repo = "local miwear.watch.p65_v3.100.043_full_662aa7db OTA; exact vela_ap.bin payload"
+source_findings = [
+  "Exact AP payload SHA-256 is a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858; containing OTA archive SHA-256 is 662aa7db5dd7ec98c4b7da0f7bec3066478ff45563c57b4cf3f16a2558cbc987.",
+  "IDA 9.4 loaded the AP with the supplied Vela loader after relaxing the legacy header-word check only for images whose FLASH_BASE, FLASH_NC_BASE, OTA_CODE_OFFSET and footer aliases all validate; 42,835 functions were discovered.",
+  "Exact boot metadata identifies CHIP=best1502p, KERNEL=NUTTX, FLASH_BASE=0x2C000000, FLASH_NC_BASE=0x28000000, OTA_CODE_OFFSET=0xC0000, BUILD_DATE=Sep 12 2026 07:22:16 and REV_INFO=d516af0:nx_best1502p_ap.",
+  "Exact build properties contain ro.build.version=3.100.043 and ro.build.id=3.100.043; the internal product ID is miwear.watch.p65 and devicetype=watch.",
+  "The AP contains NSH help strings for insmod/rmmod/lsmod, module/mod_* and modlib source-path strings, plus binfmt module source names. These are static leads only; no command-to-loader call path, relocation behavior, import/export policy or device-load behavior is promoted.",
+  "No firmware API callables or subsystem ABIs have been ported. Capabilities remain empty and the private backend is intentionally unavailable pending exact-P65 review and device gates.",
+]
+import_date = "2026-09-23"
+maintainer = "canopus-maintainer"
+reviewers = []

@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-P65-LOADER-001",
+  "target_id": "xiaomi-p65-3.100.043",
+  "question": "Does the exact P65 AP expose a usable stock NuttX module-loader path for Canopus?",
+  "control_flow_evidence": [
+    "The active IDA database input is the exact P65 AP: SHA-256 a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858, size 11,793,540 bytes, entry 0x0C0C0010.",
+    "The XIP strings include NSH usage entries `insmod <file-path> <module-name>` at 0x0C2848C0/0x0C2848C8, `lsmod` at 0x0C284988, and `rmmod` at 0x0C284B90.",
+    "The XIP strings also include module/mod_insmod.c (0x0C2591FC), module/mod_rmmod.c (0x0C259210), module/mod_modhandle.c (0x0C259224), module/mod_procfs.c (0x0C25923C), modlib/modlib_load.c (0x0C27017C), modlib/modlib_loadhdrs.c (0x0C270194), modlib/modlib_registry.c (0x0C2701B0), modlib/modlib_symtab.c (0x0C2701CC), and binfmt_execmodule.c/binfmt_execsymtab.c near 0x0C3A403D.",
+    "IDA currently has no data xrefs to these command/source strings. Its P65 XIP string inventory has 46,916 strings but only 13 with recorded xrefs, so this is an analysis-coverage limitation, not proof that the strings or corresponding components are inactive.",
+    "No NSH command dispatch, module entrypoint, relocation switch, import/export table policy, constructor path, or load/unload ownership chain has yet been traced to a verified P65 function."
+  ],
+  "unsafe_assumptions": [
+    "A source-path or command-help string is not proof that its implementation is linked, registered, reachable, or compatible with Canopus.",
+    "P65 IDA data-reference coverage is sparse; the module command table and any RAM-resident data/BSS tables may not be represented in the current mapping.",
+    "Relocation support, imported-symbol policy, module-name handling, constructor discovery, memory ownership, autoload behavior and physical-device safety are unverified."
+  ],
+  "recommended_probe": "Trace the command registrations and modlib call chain in this exact IDB; then validate relocation and constructor behavior with a no-op test module on the exact P65 firmware before declaring any loader capability.",
+  "verdict": "CANDIDATE",
+  "created": "2026-09-23T14:23:57Z",
+  "artifacts": [
+    {
+      "uri": "file:///Users/lesetong/develop/temp/p65_v3.100.043_vela_ap.bin",
+      "sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+      "role": "exact AP payload whose string table contains the loader leads"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/temp/p65_v3.100.043_vela_ap.bin.i64",
+      "sha256": "4d2eb1c18f4a14dd27c07482105f76c06d5ab9c057745aef132da34516bcc6e5",
+      "role": "IDA database pending exact loader call-chain review"
+    }
+  ]
+}

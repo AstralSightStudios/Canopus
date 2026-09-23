@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-P65-IDENTITY-001",
+  "target_id": "xiaomi-p65-3.100.043",
+  "question": "What exact firmware identity and AP address layout does the P65 3.100.043 image expose?",
+  "candidate_symbols": [
+    "firmware_version_string",
+    "firmware_build_string",
+    "firmware_product_id_string"
+  ],
+  "control_flow_evidence": [
+    "The supplied IDA 9.4 loader accepted the extracted AP only after validating the entry stub, mapped Thumb pointer, footer base and FLASH_BASE/FLASH_NC_BASE/OTA_CODE_OFFSET aliases.",
+    "The decompiled XIP startup function _start begins at 0x0C0C0010; the mapped entry pointer at file offset 0x64 is 0x0C0C0015.",
+    "The exact AP contains ro.build.version=3.100.043 and ro.build.id=3.100.043 at XIP 0x0C3BF9EC, and the internal product ID miwear.watch.p65 at XIP 0x0C2A7B14.",
+    "The validated boot/build-info block begins at XIP 0x0CBFF30C and contains CHIP=best1502p, KERNEL=NUTTX, BUILD_DATE=Sep 12 2026 07:22:16 and REV_INFO=d516af0:nx_best1502p_ap."
+  ],
+  "unsafe_assumptions": [
+    "The marketing model name is not established; P65 and miwear.watch.p65 are recorded as internal identifiers only.",
+    "The identity bytes are statically recovered but have not been checked on a physical P65 device.",
+    "The full OTA archive and AP payload are different artifacts; the target pack is bound to the exact vela_ap.bin payload SHA-256, while the archive SHA-256 is retained in provenance."
+  ],
+  "recommended_probe": "After an exact-P65 bootstrap exists, run the generated identity guard on the device before exposing any firmware calls; keep all subsystem callables disabled until separately audited.",
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-23T14:23:57Z",
+  "artifacts": [
+    {
+      "uri": "file:///Users/lesetong/develop/temp/p65_v3.100.043_vela_ap.bin",
+      "sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+      "role": "exact AP payload analyzed by IDA"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/temp/p65_v3.100.043_vela_ap.bin.i64",
+      "sha256": "4d2eb1c18f4a14dd27c07482105f76c06d5ab9c057745aef132da34516bcc6e5",
+      "role": "IDA 9.4 database used to recover identity and startup facts"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/temp/miwear.watch.p65_v3.100.043_full_662aa7db.bin",
+      "sha256": "662aa7db5dd7ec98c4b7da0f7bec3066478ff45563c57b4cf3f16a2558cbc987",
+      "role": "containing OTA archive"
+    }
+  ]
+}

@@ -30,6 +30,7 @@ Canopus 允许开发者：
 | `xiaomi-band-10-pro-3.101.043` | `3.101.043` | `519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec` | static pack/build target; device gate pending |
 | `xiaomi-band-11-4.100.139` | `4.100.139` | `31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74` | complete native installer test candidate; Lua recovery, owned staged loader and Manager host-tested; general SDK/device gates pending |
 | `xiaomi-band-11-4.100.155` | `4.100.155` | `ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f` | independent target and Rust bindings; shared 139/155 installer; corrected notification context, ARM/Lua/verifier passed; device gates pending |
+| `xiaomi-p65-3.100.043` | `3.100.043` | `a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858` | exact AP identity + generated identity guard only; loader/API/device gates pending |
 
 2026-09-15：修复 `.139` 注册 Manager 时的通知空上下文崩溃，详见
 [crash3 审计](targets/xiaomi-band-11-4.100.139/loader/notification-crash3.md)。
@@ -46,6 +47,8 @@ candidate. The pack replaced `4.100.108`; general SDK callables and physical-dev
 validation remain pending. See the [native audit](targets/xiaomi-band-11-4.100.139/loader/native-audit.md)
 and [packing/testing instructions](watchfaces/canopus-installer-prod/xiaomi-band-11/docs/README.md).
 The Band 11 resource root contains only `main.lua` and `.bin` files.
+
+P65 (`CHIP=best1502p`, internal product ID `miwear.watch.p65`) is an analysis-only target. Its generated Rust/C bindings contain the exact static version/build identity guard, but no callable firmware symbols, relocation allowlist, target-private backend or runtime capability. NSH `insmod`/`rmmod` and NuttX `modlib` strings are unverified loader leads only; see [`P65 analysis`](targets/xiaomi-p65-3.100.043/analysis-report.md).
 
 ## 仓库结构
 

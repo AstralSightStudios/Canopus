@@ -98,6 +98,10 @@ fn additional_target_artifacts_regenerate_identically() {
             "xiaomi-band-9-3.1.32",
             "sdk/rust/canopus-target-generated/src/generated_9132.rs",
         ),
+        (
+            "xiaomi-p65-3.100.043",
+            "sdk/rust/canopus-target-generated/src/generated_p65.rs",
+        ),
     ];
 
     for (target, rust_path) in cases {
@@ -148,7 +152,7 @@ fn additional_target_artifacts_regenerate_identically() {
         }
         if matches!(
             target,
-            "xiaomi-band-11-4.100.139" | "xiaomi-band-9-pro-3.1.175"
+            "xiaomi-band-11-4.100.139" | "xiaomi-band-9-pro-3.1.175" | "xiaomi-p65-3.100.043"
         ) {
             assert!(config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 0"));
             assert!(
@@ -549,6 +553,54 @@ fn identity_guard_uses_pack_version_build() {
     assert!(text.contains("pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize"));
     assert!(text.contains("canopus_thumb_callable(0xc1a0d51usize)"));
     assert!(text.contains("transmute(CANOPUS_FW_REGISTER_DRIVER_CALLABLE)"));
+}
+
+#[test]
+fn p65_identity_pack_regenerates_identically_and_fails_closed() {
+    let dir = repo_root().join("targets/xiaomi-p65-3.100.043");
+    let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+    let (symbols, types) = load_records(&dir).unwrap();
+
+    let rust = RustGen {
+        pack: &pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
+    assert_eq!(
+        rust,
+        std::fs::read_to_string(
+            repo_root().join("sdk/rust/canopus-target-generated/src/generated_p65.rs")
+        )
+        .unwrap()
+    );
+    assert!(rust.contains("b\"3.100.043\""));
+    assert!(rust.contains("0x0CBFF458"));
+    assert!(!rust.contains("CANOPUS_FW_"));
+
+    let veneer = VeneerGen {
+        pack: &pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
+    assert_eq!(
+        veneer,
+        std::fs::read_to_string(dir.join("generated/canopus_veneer.h")).unwrap()
+    );
+    assert!(veneer.contains("canopus_identity_guard"));
+
+    let config = TargetConfigGen {
+        pack: &pack,
+        symbols: &symbols,
+    }
+    .generate();
+    assert_eq!(
+        config,
+        std::fs::read_to_string(dir.join("generated/canopus_target_config.h")).unwrap()
+    );
+    assert!(config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 0"));
+    assert!(!config.contains("#define FW_"));
 }
 
 // Helper assertions reused by the tests above (kept as a compile check that the

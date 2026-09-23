@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-p65-3.100.043.firmware_version_string",
+  "target_id": "xiaomi-p65-3.100.043",
+  "name": "firmware_version_string",
+  "kind": "string",
+  "entry_address": "0x0C3BF9FD",
+  "instruction_set": "n/a",
+  "prototype": "const char[]",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": ["EVID-P65-IDENTITY-001"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": ["EVID-P65-IDENTITY-001"],
+    "source": "Exact P65 AP IDA database; value bytes follow ro.build.version= at XIP 0x0C3BF9EC and are LF-terminated."
+  },
+  "notes": "Exact value is 3.100.043. Static identity data only; no physical-device identity guard probe has been run."
+}
