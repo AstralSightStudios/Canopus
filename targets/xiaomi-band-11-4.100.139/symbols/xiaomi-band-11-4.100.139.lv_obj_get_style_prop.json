@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_obj_get_style_prop",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_obj_get_style_prop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c382620",
+  "callable_address": "0x0c382621",
+  "prototype": "uint32_t(const void *object, uint32_t part, uint32_t property)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": ["ui-owner-thread"],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Object is borrowed and must remain live throughout lookup; part and property are scalar selectors.",
+    "return_value": "32-bit ABI carrier for the native style-value union in r0; when property 40 denotes an image source, the pointer is borrowed from the owning style."
+  },
+  "side_effects": ["reads_effective_style_state_and_inheritance"],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": true,
+    "evidence_ids": ["EVID-RESOURCE-4139-007"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": ["EVID-RESOURCE-4139-007"],
+    "source": "Exact .139 AP instruction/call-site inspection and source-compiled Unicorn probes; see EVID-RESOURCE-4139-007."
+  },
+  "notes": "Returns the effective state/part property value as a 32-bit ABI carrier. Property-40 source pointers are borrowed, not allocated/transferred. Prototype avoids assuming the upstream union typedef. UI-owner thread only, outside IRQ lock; no general veneer approval."
+}

@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_obj_tree_walk",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_obj_tree_walk",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c380574",
+  "callable_address": "0x0c380575",
+  "prototype": "int(void *root, int (*callback)(void *object, void *user_data), void *user_data)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": ["ui-owner-thread"],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Root, callback and user_data are borrowed synchronously; a null root selects registered screens on displays.",
+    "return_value": "Integer walk result; callback 0 continues, 1 skips children, 2 ends the current rooted traversal. Null-root dispatch does not propagate early termination across all screens.",
+    "callback_argument": "Live object and user_data are borrowed only for the synchronous invocation; do not mutate the walked tree or retain unchecked pointers."
+  },
+  "side_effects": [
+    "invokes_synchronous_object_callbacks",
+    "recursive_screen_tree_traversal"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": true,
+    "evidence_ids": ["EVID-RESOURCE-4139-007"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": ["EVID-RESOURCE-4139-007"],
+    "source": "Exact .139 AP byte-window and call-site inspection plus source-compiled Unicorn probes; see EVID-RESOURCE-4139-007."
+  },
+  "notes": "The adapter uses read-only bounded collection/membership callbacks, caps object count and parent depth, and performs mutations after native traversal returns. UI-owner thread only, outside IRQ lock. Host emulation does not prove arbitrary callback safety or physical-device acceptance."
+}

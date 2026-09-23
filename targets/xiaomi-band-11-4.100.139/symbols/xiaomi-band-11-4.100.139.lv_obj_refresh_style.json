@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_obj_refresh_style",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_obj_refresh_style",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c38525c",
+  "callable_address": "0x0c38525d",
+  "prototype": "void(void *object, uint32_t selector, uint32_t property)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": ["ui-owner-thread"],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Object is borrowed and mutated; selector/property are scalars. Receiver and its resource sources must survive synchronous callbacks.",
+    "return_value": "No owned return value."
+  },
+  "side_effects": [
+    "invalidates_object",
+    "may_refresh_size_layout_and_extra_draw_area",
+    "may_dispatch_style_events",
+    "may_refresh_descendant_styles"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": true,
+    "evidence_ids": ["EVID-RESOURCE-4139-007"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": ["EVID-RESOURCE-4139-007"],
+    "source": "Exact .139 AP instruction/call-site inspection and source-compiled Unicorn probes; see EVID-RESOURCE-4139-007."
+  },
+  "notes": "Explicitly refreshes supported effective image-bearing style properties without replacing style pointers or selectors. Native callbacks may run synchronously. UI-owner thread only, outside IRQ lock; no GPU drain or physical display acceptance is established."
+}

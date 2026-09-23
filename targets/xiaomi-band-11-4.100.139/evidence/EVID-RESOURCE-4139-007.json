@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-4139-007",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Can the exact .155 affected-image reload adapter run on .139 without applying .155 cache or object identities?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.lv_image_decoder_get_info",
+    "xiaomi-band-11-4.100.139.lv_obj_tree_walk",
+    "xiaomi-band-11-4.100.139.lv_obj_get_style_prop",
+    "xiaomi-band-11-4.100.139.lv_obj_refresh_style"
+  ],
+  "prototype_hypothesis": "Exact .139 ARM AAPCS entries use the same observed call prototypes as .155. The style getter returns a 32-bit ABI carrier for the native style-value union. The .139 cache classes and image-object class are separately identified and are not relocated from .155.",
+  "callsite_evidence": [
+    "The analyzed AP is 12304868 bytes with SHA256 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74. It is vela_ap.bin extracted from the local 4.100.139 OTA archive. File offset is instruction address - 0x0c0c0000.",
+    "lv_image_decoder_get_info [0x0c38e4e4,0x0c38e514), file offset 2942180, SHA256 ce42cb7396cc6656763a85f8097374ee1125db31eb861f7231f20f3c1c3d8f67.",
+    "lv_obj_tree_walk [0x0c380574,0x0c3805f4), file offset 2884980, SHA256 07186f28ab7ed93ec28b68a829cbbeafa6d058b47e719c9b1c17d6b4f87d50c0.",
+    "lv_obj_get_style_prop [0x0c382620,0x0c382764), file offset 2893344, SHA256 a46811fa3609fb69353ca5f96f8504d1a42ba4a6fc23526b82e49654ec0b922d.",
+    "lv_obj_refresh_style [0x0c38525c,0x0c385342), file offset 2904668, SHA256 a78476ae2de2378e77fd902417cddac4ac3412d12485ebfdd91b1633dc86d749.",
+    "The .139 lv_image_set_src body window [0x0c3b2c28,0x0c3b2d78), file offset 3091496, SHA256 cac7a4e02dcdb0402099a0f8766388225546c0b1ad5901188045743ebb434dc6. It calls get-info with source in r0 and a writable 12-byte header in r1. On the file-source same-pointer path it compares source against image+52, reuses the returned header, stores width/height at image+0x44/+0x48, then invokes the native size/invalidation path. This .139 body was inspected independently; its size-refresh call is 0x0c909798 (not the .155 0x0c909788).",
+    "The exact .139 image-object class pointer is 0x2ca14cb8, loaded by the native LVGL image-class setup at 0x0c3b3050. The cache classes are distinct: decoded IMAGE 0x2ca168c4 and IMAGE_HEADER 0x2ca16944, with their exact AP initializer literals at 0x0c3a9ca0 and 0x0c3a99d4 respectively.",
+    "The four owner API windows above match the corresponding .155 AP byte-for-byte, but only the exact .139 AP, its distinct class values, and .139 callable addresses are used by this target adapter. The cache-drop entry remains .139 0x0c8b8cae; no .155 function/class relocation is assumed."
+  ],
+  "control_flow_evidence": [
+    "The native get-info function writes the decoded header to caller-owned storage and returns 1 on success, 0 on failure. The exact .139 same-pointer image setter uses that header to refresh dimensions without changing the source pointer; firmware_reload.py executes this setter and verifies 10x20 becomes 77x99 while source identity remains stable.",
+    "The null-root object-tree walk traverses registered screens and child objects synchronously. The module first collects a bounded snapshot, then revalidates current tree membership before each native mutation; callbacks do not mutate the active traversal.",
+    "The exact style getter resolves effective current-state style values. Property 40 on main part 0 is treated only as a borrowed image-source path. The exact style refresh entry is called explicitly for affected mapped values; style pointers, selectors and states are unchanged.",
+    "The adapter validates both cache class pointers, list node size, node-chain bounds and RB/data pointers before retirement. It retires only file-source keys whose absolute slash path resolves through the resident mapping. It uses the exact .139 lv_cache_drop entry so held payload ownership stays with the native cache until last release."
+  ],
+  "ownership_analysis": "All calls are synchronous and require serialized UI-owner access outside the IRQ lock. Tree callback pointers and object/source pointers are short-lived borrows. The bounded snapshot is revalidated before every owner operation. Decoder/cache payloads remain owned by native cache references; style refresh may dispatch callbacks, so the receiver and resource sources must survive the native call. This is targeted resource adoption, not a whole UI or GPU lifetime reset.",
+  "unsafe_assumptions": [
+    "Physical-device status remains NOT_PROBED. Unicorn instruction execution and modeled I/O/cache/GUI leaves do not establish actual display output, GPU completion, arbitrary callback safety, or memory-pressure behavior.",
+    "The probe executes exact .139 image setter, style getter/refresh, object walk, cache-drop and cache-release instructions. Cache list lookup/unlink/free, decoder/I/O, heap, style storage and GUI/event leaves are modeled as documented by tests/firmware_reload.py.",
+    "No watchface loader, global cache clear, animation stop, page rebuild, synchronous display flush, or font-face eviction is introduced. Animation/canvas owners and deferred GPU work remain outside the adapter."
+  ],
+  "recommended_probe": "After strict .139 ELF verification and normal signed-loader checks, test on the exact 4.100.139 device with recoverable installation and serialized UI ownership. Verify a mapped on-screen image, changed image dimensions, state-specific style sources, repeated activation, and held decoder/cache lifetime. Do not infer GPU idle from the LVGL rendering flag.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-23T14:30:00Z",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/build/firmware-analysis/vela_ap_4.100.139.bin",
+      "sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+      "role": "exact-local-AP-extracted-from-the-user-provided-OTA-archive"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_reload.py",
+      "role": "source-compiled-exact-target-Unicorn-probe-18-tests-passed"
+    }
+  ]
+}

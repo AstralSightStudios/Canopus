@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.lv_image_decoder_get_info",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_image_decoder_get_info",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c38e4e4",
+  "callable_address": "0x0c38e4e5",
+  "prototype": "int(const void *source, void *header_out)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": ["ui-owner-thread"],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Source is borrowed for this synchronous call; header_out is caller-owned writable storage of at least 12 bytes.",
+    "return_value": "Integer result in r0: 1 on success, 0 on failure; no returned ownership."
+  },
+  "side_effects": [
+    "may_open_and_close_file",
+    "may_allocate_or_acquire_header_cache_entry",
+    "writes_12_byte_header",
+    "may_invoke_decoder_callbacks"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": true,
+    "evidence_ids": ["EVID-RESOURCE-4139-007"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": ["EVID-RESOURCE-4139-007"],
+    "source": "Exact .139 AP instruction/call-site inspection and exact-target Unicorn probes; see EVID-RESOURCE-4139-007 byte-window hashes and modeled-leaf boundaries."
+  },
+  "notes": "Writes a 12-byte image header and returns 1/0. The .139 same-source image setter path reuses this header to update dimensions without source-pointer churn. UI-owner thread only, outside IRQ lock. Static/host evidence is not a physical device probe or general veneer approval."
+}
