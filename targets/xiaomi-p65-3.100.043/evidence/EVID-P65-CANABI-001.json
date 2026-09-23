@@ -12,19 +12,19 @@
   "callsite_evidence": [
     "The recovered P65 insertion routine branches on ELF e_type: for ET_REL (1), it calls `base + e_entry` with `module_record + 104`; for ET_DYN (3), it walks two function-pointer arrays instead.",
     "The current Canopus C template defines a descriptor accessor plus constructor/destructor functions, but no module_initialize/e_entry symbol. Its build script links with `ld.lld -r` and no `-e` option.",
-    "A temporary P65 C template build produced ELF32 ARM little-endian ET_REL with e_entry=0, one `.init_array` item and one `.fini_array` item. The P65 verifier passed it with zero undefined symbols, 107 relocations, one constructor and one destructor.",
+    "A temporary P65 C template build produced ELF32 ARM little-endian ET_REL with e_entry=0, one `.init_array` item and one `.fini_array` item. Before the entrypoint guard was added, the P65 verifier passed it with zero undefined symbols, 107 relocations, one constructor and one destructor; the current verifier now rejects it for the P65 module_initialize profile."
     "That artifact's relocation set is a subset of the statically recovered P65 handler: 25 R_ARM_ABS32, 43 R_ARM_PREL31, 2 R_ARM_TARGET1, 5 R_ARM_THM_CALL, 16 R_ARM_THM_MOVT_ABS, and 16 R_ARM_THM_MOVW_ABS_NC. This is static format compatibility only; it does not address the entrypoint mismatch."
   ],
   "control_flow_evidence": [
     "The current Canopus artifact has no explicit ELF entrypoint (e_entry=0), while the P65 ET_REL branch calls `base + e_entry`; it does not take the ET_DYN array-walk branch for this ET_REL artifact.",
-    "The current verifier checks ET_REL, undefined imports, relocations, section rules, and constructor/destructor counts, but it does not reject e_entry=0 or assert a P65 module_initialize ABI. Therefore verifier PASS is not sufficient evidence that P65 insmod can safely start the module."
+    "A fail-closed guard now rejects e_entry=0 whenever the target profile selects `module_initialize`; a regression test verifies zero-entry rejection and nonzero-entry acceptance. The guard does not implement or validate the required entrypoint ABI."
   ],
   "unsafe_assumptions": [
     "The exact prototype and semantics expected at P65's ET_REL entrypoint, including how the module record fields +104/+108 are populated for removal, are not fully recovered.",
     "No P65 module has been loaded on-device; calling the current generic artifact could branch to the image base instead of an explicit Canopus initializer.",
     "The matching relocation subset and zero-import verifier result do not prove Canopus service/callback compatibility or that P65's static symbol table is populated."
   ],
-  "recommended_probe": "Keep the generic Canopus ET_REL artifact blocked for P65. Recover the P65 entrypoint/module-record ABI and 0x3C symbol-table state, then add a target-specific entry shim plus verifier checks for e_entry and the observed relocation policy before considering any device test.",
+  "recommended_probe": "Keep the generic Canopus ET_REL artifact blocked for P65. Recover the P65 entrypoint/module-record ABI and 0x3C symbol-table state, then implement and host-test a target-specific entry shim before considering any device test."
   "verdict": "STATIC_RECOVERED",
   "created": "2026-09-23T17:31:55Z",
   "artifacts": [

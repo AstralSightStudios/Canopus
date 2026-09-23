@@ -171,6 +171,35 @@ fn valid_minimal_elf_passes() {
 }
 
 #[test]
+fn module_initialize_profile_rejects_zero_entrypoint() {
+    let target_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../targets/xiaomi-p65-3.100.043/target.toml");
+    let target = canopus_core::registry::load_target_pack(&target_path).unwrap();
+    let verifier = Verifier {
+        target: &target,
+        allowed_addresses: &[],
+    };
+
+    let report = verifier.verify(&valid_elf());
+    assert!(!report.ok, "zero-entry ET_REL unexpectedly passed");
+    assert!(
+        report
+            .errors
+            .iter()
+            .any(|error| error.contains("ELF entrypoint is zero"))
+    );
+
+    let mut with_entrypoint = valid_elf();
+    with_entrypoint[24..28].copy_from_slice(&1u32.to_le_bytes());
+    let report = verifier.verify(&with_entrypoint);
+    assert!(
+        report.ok,
+        "nonzero-entry ET_REL failed: {:?}",
+        report.errors
+    );
+}
+
+#[test]
 fn undefined_symbol_fails_zero_import() {
     let elf = elf_with_undefined_symbol();
     let v = Verifier {

@@ -106,6 +106,15 @@ impl<'a> Verifier<'a> {
 
         let profile = self.target.loader_profile.as_ref();
 
+        if profile.is_some_and(|p| p.constructor_discovery == "module_initialize")
+            && file.entry() == 0
+        {
+            report.errors.push(
+                "ELF entrypoint is zero; target loader requires a module_initialize entrypoint"
+                    .into(),
+            );
+        }
+
         // --- undefined symbols (zero-import policy) ------------------
         for sym in file.symbols() {
             if sym.is_undefined() {
