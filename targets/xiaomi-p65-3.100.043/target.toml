@@ -55,7 +55,7 @@ source_findings = [
   "IDA 9.4 loaded the AP with the supplied Vela loader after relaxing the legacy header-word check only for images whose FLASH_BASE, FLASH_NC_BASE, OTA_CODE_OFFSET and footer aliases all validate; 42,835 functions were discovered.",
   "Exact boot metadata identifies CHIP=best1502p, KERNEL=NUTTX, FLASH_BASE=0x2C000000, FLASH_NC_BASE=0x28000000, OTA_CODE_OFFSET=0xC0000, BUILD_DATE=Sep 12 2026 07:22:16 and REV_INFO=d516af0:nx_best1502p_ap.",
   "Exact build properties contain ro.build.version=3.100.043 and ro.build.id=3.100.043; the internal product ID is miwear.watch.p65 and devicetype=watch.",
-  "The AP contains NSH help strings for insmod/rmmod/lsmod, module/mod_* and modlib source-path strings, plus binfmt module source names. These are static leads only; no command-to-loader call path, relocation behavior, import/export policy or device-load behavior is promoted.",
+  "The AP has an NSH command/help string pool near nsh_command.c: insmod (0x0C2848C0), lsmod (0x0C284988), and rmmod (0x0C284B90), plus module/mod_* and modlib/binfmt source-path strings. These are static leads only: no command references/call path, relocation behavior, import/export policy or device-load behavior is promoted.",
   "No firmware API callables or subsystem ABIs have been ported. Capabilities remain empty and the private backend is intentionally unavailable pending exact-P65 review and device gates.",
 ]
 import_date = "2026-09-23"

@@ -5,13 +5,14 @@
   "question": "Does the exact P65 AP expose a usable stock NuttX module-loader path for Canopus?",
   "control_flow_evidence": [
     "The active IDA database input is the exact P65 AP: SHA-256 a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858, size 11,793,540 bytes, entry 0x0C0C0010.",
-    "The XIP strings include NSH usage entries `insmod <file-path> <module-name>` at 0x0C2848C0/0x0C2848C8, `lsmod` at 0x0C284988, and `rmmod` at 0x0C284B90.",
+    "The NSH command string pool near `nsh_command.c` (0x0C2844F0) includes alphabetized built-in help names: `insmod` at 0x0C2848C0 with usage `<file-path> <module-name>` at 0x0C2848C8, `lsmod` at 0x0C284988, and `rmmod` at 0x0C284B90; ordinary shell commands are adjacent.",
     "The XIP strings also include module/mod_insmod.c (0x0C2591FC), module/mod_rmmod.c (0x0C259210), module/mod_modhandle.c (0x0C259224), module/mod_procfs.c (0x0C25923C), modlib/modlib_load.c (0x0C27017C), modlib/modlib_loadhdrs.c (0x0C270194), modlib/modlib_registry.c (0x0C2701B0), modlib/modlib_symtab.c (0x0C2701CC), and binfmt_execmodule.c/binfmt_execsymtab.c near 0x0C3A403D.",
-    "IDA currently has no data xrefs to these command/source strings. Its P65 XIP string inventory has 46,916 strings but only 13 with recorded xrefs, so this is an analysis-coverage limitation, not proof that the strings or corresponding components are inactive.",
+    "IDA records zero data xrefs to all tested command/source-string addresses. Full-width XIP, cached-alias, non-cached-alias and file-offset pointer searches found no encoding for the tested command/source strings; a scan of 1,890 ADR instructions found no target within 0x80 of the four command-name/usage strings. The XIP inventory has 46,916 strings but only 13 with recorded xrefs, so these negatives are an analysis-coverage limitation, not proof that components are inactive.",
+    "The nearby generic `module` error strings at 0x0C287A44-0x0C287B78 belong to Lua 5.4 (`package.searchers`, `luaopen_%s`, `LUA_CPATH`), not evidence of NuttX `modlib` behavior.",
     "No NSH command dispatch, module entrypoint, relocation switch, import/export table policy, constructor path, or load/unload ownership chain has yet been traced to a verified P65 function."
   ],
   "unsafe_assumptions": [
-    "A source-path or command-help string is not proof that its implementation is linked, registered, reachable, or compatible with Canopus.",
+    "A source-path or command-help string is not proof that its implementation is linked, registered, reachable, or compatible with Canopus; similarly, Lua dynamic-module messages are not evidence of NuttX ELF-loader behavior.",
     "P65 IDA data-reference coverage is sparse; the module command table and any RAM-resident data/BSS tables may not be represented in the current mapping.",
     "Relocation support, imported-symbol policy, module-name handling, constructor discovery, memory ownership, autoload behavior and physical-device safety are unverified."
   ],
