@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-P65-MEMORY-001",
+  "target_id": "xiaomi-p65-3.100.043",
+  "question": "Are the P65 loader's 0x3C module-list and symbol-table addresses backed by the mapped AP image or a locally identified OTA segment?",
+  "callsite_evidence": [
+    "The exact AP loader reads the static-symbol-table pointer at 0x3C3B8FF0 and reads/writes the loaded-module-list head at 0x3C3D67C8. The currently opened AP IDA database maps only XIP 0x0C0C0000, cached 0x2C0C0000, and non-cached 0x280C0000 aliases; it has no 0x3C segment.",
+    "A same-offset AP alias hypothesis is falsified: interpreting 0x3C3B8FF0 and 0x3C3D67C8 as 0x3C000000 plus AP file offsets maps to XIP bytes containing unrelated log strings; 0x3C194F2C maps to executable bytes, not the runtime command-name table. Thus 0x3C is not a simple raw-file alias of this AP payload.",
+    "The exact OTA also contains `vela_ota.bin`, an ELF32 ARM ET_EXEC with e_entry 0x3C800011 and load segments at 0x3C800000/0x3C900000, plus a 218,460,160-byte `vela_resource.bin` ROMFS containing an ELF32 ARM ET_EXEC at raw offset 0x365A400. These confirm auxiliary 0x3C-addressed images exist, but do not map the lower 0x3C3xxxxxx loader globals."
+  ],
+  "unsafe_assumptions": [
+    "No primary memory map or file-backed initialization for 0x3C3B8FF0, 0x3C3D67C8, or the NSH metadata region at 0x3C194F2C has been recovered.",
+    "Do not label the 0x3C region as PSRAM, ROM, or a flash alias solely from these pointers; the OTA executable shows other 0x3C regions but does not prove the mapping of these lower addresses.",
+    "The user-provided empty `lsmod` output is an observation at one time; it does not reveal whether the static system symbol table pointer is populated."
+  ],
+  "recommended_probe": "Continue by tracing initialization and memory-region setup in the locally available auxiliary OTA images and exact P65 startup code. Keep symbol-import policy and 0x3C-backed command/module data unpromoted until their backing and contents are established.",
+  "verdict": "CANDIDATE",
+  "created": "2026-09-23T18:03:49Z",
+  "artifacts": [
+    {
+      "uri": "file:///Users/lesetong/develop/temp/miwear.watch.p65_v3.100.043_full_662aa7db.bin",
+      "sha256": "662aa7db5dd7ec98c4b7da0f7bec3066478ff45563c57b4cf3f16a2558cbc987",
+      "role": "exact P65 OTA containing AP, OTA executable, ROMFS resource and auxiliary payloads"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/temp/p65_v3.100.043_vela_ap.bin.i64",
+      "sha256": "4d2eb1c18f4a14dd27c07482105f76c06d5ab9c057745aef132da34516bcc6e5",
+      "role": "exact P65 AP IDA database used to inspect 0x3C references"
+    }
+  ]
+}

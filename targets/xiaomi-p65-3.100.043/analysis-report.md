@@ -50,6 +50,8 @@ The active IDA database was verified against the exact AP SHA-256 and size above
 
 The startup entry `_start` visibly copies one word from the boot-info alias at `0x2CBFF308` to `0x2019E724`; its following zero-fill loop has an empty range. No general `.data`/BSS mapping has been validated. The command descriptor table and loader handlers are present in XIP, but command-name metadata and globals at `0x3C3B8FF0`/`0x3C3D67C8` are outside the current IDA segment map. Their contents/population remain the main static gap; loader fields stay candidate-only.
 
+The `0x3C` backing was checked against the local OTA: treating it as a same-offset AP flash alias maps the module-list/symtab pointers to unrelated AP strings/code, so that alias hypothesis is false. The OTA's separate `vela_ota.bin` and embedded recovery ELF use addresses around `0x3C800000`/`0x3C900000`, but do not explain the lower `0x3C3xxxxxx` globals. See `EVID-P65-MEMORY-001.json`; do not guess that region is PSRAM or ROM.
+
 ## Static module path recovered
 
 The XIP command descriptor table at `0x0C284CF0` spans 72 records. The inferred hidden `insmod` row at `0x0C284EF0` points to handler `0x0C5B15E4` and has argument spec `0x303`; the handler forwards `argv[1]` and `argv[2]` to `0x0C4C49AC`, matching runtime `help -v insmod`. The name pointer is in the unmapped `0x3C` region, so this association remains an evidence-backed inference rather than a recovered string xref.
