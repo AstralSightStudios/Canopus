@@ -6,13 +6,14 @@
   "control_flow_evidence": [
     "The user provided a read-only NSH `help` transcript from the previously firmware-confirmed P65 device; its built-in command list includes `insmod`, `rmmod`, and `lsmod`.",
     "The user reports that `lsmod` printed the columns `NAME INIT UNINIT ARG NEXPORTS TEXT SIZE DATA SIZE` and no module rows.",
-    "This is runtime evidence that the three command names are visible/registered and that no module was listed at observation time. It does not establish that `insmod` succeeds or prove any module ABI, relocation, symbol-import, constructor, or unload behavior."
+    "Read-only `help -v insmod` returned `insmod usage: insmod <file-path> <module-name>`; `help -v rmmod` returned `rmmod usage: rmmod <module-name>`. Both reported exit code 0 and empty error output.",
+    "This is runtime evidence that the three command names are visible/registered, exposes their argument syntax, and shows no module was listed at observation time. It does not establish that `insmod` succeeds or prove any module ABI, relocation, symbol-import, constructor, or unload behavior."
   ],
   "unsafe_assumptions": [
     "The console transcript was supplied in conversation and was not accompanied by a raw capture, device serial, or same-session firmware identity dump; exact device identity relies on the user's prior confirmation.",
     "Command visibility and an empty `lsmod` listing are not evidence that the stock loader can load a Canopus-compatible module."
   ],
-  "recommended_probe": "Use the read-only `help -v insmod` to capture the command's runtime usage/details, then continue static recovery of the handler and modlib path. Do not invoke insmod/rmmod until module ABI, identity protection, and recovery behavior are verified.",
+  "recommended_probe": "Trace the NSH command-table entries to their handlers and follow `insmod` into modlib, then recover relocation, symbol, constructor, and unload behavior. Do not invoke insmod/rmmod until module ABI, identity protection, and recovery behavior are verified.",
   "verdict": "DEVICE_PROBED",
   "created": "2026-09-23T16:25:12Z",
   "artifacts": [
