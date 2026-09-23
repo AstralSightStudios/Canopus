@@ -4,10 +4,10 @@
   "target_id": "xiaomi-p65-3.100.043",
   "question": "Are the stock NuttX module commands visible in the P65 NSH at runtime, and are modules listed as loaded?",
   "control_flow_evidence": [
-    "The user provided a read-only NSH `help` transcript from the previously firmware-confirmed P65 device; its built-in command list includes `insmod`, `rmmod`, and `lsmod`.",
+    "The user provided a read-only NSH `help` transcript from the previously firmware-confirmed P65 device; its visible built-in command list includes `rmmod` and `lsmod`, but does not show `insmod`.",
     "The user reports that `lsmod` printed the columns `NAME INIT UNINIT ARG NEXPORTS TEXT SIZE DATA SIZE` and no module rows.",
     "Read-only `help -v insmod` returned `insmod usage: insmod <file-path> <module-name>`; `help -v rmmod` returned `rmmod usage: rmmod <module-name>`. Both reported exit code 0 and empty error output.",
-    "This is runtime evidence that the three command names are visible/registered, exposes their argument syntax, and shows no module was listed at observation time. It does not establish that `insmod` succeeds or prove any module ABI, relocation, symbol-import, constructor, or unload behavior."
+    "This confirms runtime visibility of `rmmod`/`lsmod`, and that `insmod` has a help descriptor despite being absent from the default list; the reason for that difference is not known. No module was listed at observation time. This does not establish that `insmod` succeeds or prove any module ABI, relocation, symbol-import, constructor, or unload behavior."
   ],
   "unsafe_assumptions": [
     "The console transcript was supplied in conversation and was not accompanied by a raw capture, device serial, or same-session firmware identity dump; exact device identity relies on the user's prior confirmation.",
