@@ -9,14 +9,14 @@
     "The XIP strings also include module/mod_insmod.c (0x0C2591FC), module/mod_rmmod.c (0x0C259210), module/mod_modhandle.c (0x0C259224), module/mod_procfs.c (0x0C25923C), modlib/modlib_load.c (0x0C27017C), modlib/modlib_loadhdrs.c (0x0C270194), modlib/modlib_registry.c (0x0C2701B0), modlib/modlib_symtab.c (0x0C2701CC), and binfmt_execmodule.c/binfmt_execsymtab.c near 0x0C3A403D.",
     "IDA records zero data xrefs to the tested command/source-string addresses. Full-width XIP, cached, non-cached, bare file-offset, and tested 0x3C raw-flash-alias pointer searches found no encoding for the command/help strings; a scan of 1,890 ADR instructions found no target within 0x80 of the four command-name/usage strings. The XIP inventory has 46,916 strings but only 13 with recorded xrefs, so these negatives are an analysis-coverage limitation, not proof that components are inactive.",
     "The nearby generic `module` error strings at 0x0C287A44-0x0C287B78 belong to Lua 5.4 (`package.searchers`, `luaopen_%s`, `LUA_CPATH`), not evidence of NuttX `modlib` behavior.",
-    "Follow-up exact-AP analysis recovered the NSH insmod/rmmod handlers, ELF load/bind path, ARM relocation switch, module-list insertion/removal, and two symbol-resolution sources; see EVID-P65-MODLIB-001. Canopus compatibility and the runtime contents of the 0x3C data region remain unverified."
+    "Follow-up exact-AP analysis recovered the NSH insmod/rmmod handlers, ELF load/bind path, ARM relocation switch, module-list insertion/removal, and symbol-resolution sources; see EVID-P65-MODLIB-001. Later startup disassembly reconstructed the 0x3C data/BSS VMA and boot values; see EVID-P65-MEMORY-002. Canopus compatibility remains unverified."
   ],
   "unsafe_assumptions": [
     "A source-path or command-help string is not proof that its implementation is linked, registered, reachable, or compatible with Canopus; similarly, Lua dynamic-module messages are not evidence of NuttX ELF-loader behavior.",
-    "P65 IDA data-reference coverage is sparse; the module command table and any RAM-resident data/BSS tables may not be represented in the current mapping.",
+    "P65 IDA data-reference coverage is sparse and the current IDA database still does not map the runtime 0x3C VMA directly. EVID-P65-MEMORY-002 reconstructs command/data contents through the startup copy/zero path, but physical memory type and post-startup writes remain unresolved.",
     "Relocation cases and static lifecycle code are recovered, but runtime relocation behavior, symbol-table population, exact name/path validation, constructor ordering, failure/concurrency ownership, autoload behavior, Canopus compatibility and physical-device safety remain unverified."
   ],
-  "recommended_probe": "Recover the unmapped 0x3C symbol-table/module-list data and reconcile the recovered loader entrypoint/import/relocation ABI with Canopus. Keep P65 non-deployable until a reviewed no-op test module and recovery plan are device-validated.",
+  "recommended_probe": "Determine whether the zero-count static symbol table is populated after startup, audit Canopus Manager imports against available dynamic exports, and reconcile the recovered initializer/unload ABI with a target-specific shim. Keep P65 non-deployable until a reviewed no-op test module and recovery plan are device-validated.",
   "verdict": "CANDIDATE",
   "created": "2026-09-23T14:23:57Z",
   "artifacts": [

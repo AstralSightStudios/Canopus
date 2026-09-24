@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-P65-MEMORY-002",
+  "target_id": "xiaomi-p65-3.100.043",
+  "question": "What AP startup initialization backs the P65 0x3C command table, static-symbol count, and module-list head?",
+  "candidate_symbols": [
+    "AP startup data/BSS initializer: 0x0C0C0314, called from 0x0C0C0394 during _start at 0x0C0C0010",
+    "Candidate static symbol-table count: 0x3C3B8FF0; fixed table base passed to lookup: 0x3C3B9000",
+    "Loaded-module list head: 0x3C3D67C8",
+    "NSH command table runtime VMA: 0x3C194F2C"
+  ],
+  "callsite_evidence": [
+    "IDA pseudocode and Thumb disassembly for 0x0C0C0314 show a word copy from cached-XIP source [0x2C0EFDC4, 0x2C4C1E44) to destination [0x3C000000, 0x3C3D2080), followed by a word-zero loop over [0x3C3D2080, 0x3C4DF960). The source/destination ranges are equal-sized (0x3D2080 bytes). The same routine separately clears [0x384DF960, 0x3855F980); its physical purpose is not identified.",
+    "The NSH command table at runtime VMA 0x3C194F2C is initialized from cached-XIP 0x2C284CF0 (AP file offset 0x1C4CF0) by that copy. Runtime string 0x3C194640 maps to source 0x2C284404 and reads `NSH command forms:\\n`, confirming the VMA-to-file-copy relation. This is a relocated RAM copy, not a same-offset 0x3C flash alias.",
+    "The candidate static-symbol count at 0x3C3B8FF0 lies in the initialized-data range. Its copy source is 0x2C4A8DB4 (AP file offset 0x3E8DB4), whose little-endian dword is zero. The caller at 0x0C4FA3D4 passes table base 0x3C3B9000, this dword as the element count, an 8-byte stride, and a string-comparison callback to the binary-search helper at 0x0C50179C. Thus the static symbol table has zero entries at AP startup.",
+    "The module-list head at 0x3C3D67C8 falls inside the startup-zeroed range [0x3C3D2080, 0x3C4DF960), so it is initialized to null before the NSH/module path runs. This matches the user-provided `lsmod` output with no rows at that observation; the output alone was not used to infer the initialization.",
+    "An exact little-endian AP image scan found the 0x3C3B8FF0 literal only in the static lookup path at 0x0C4FA424, where code reads the dword. No direct AP write reference to the count was found. This scan does not exclude computed-address or external writes after startup."
+  ],
+  "unsafe_assumptions": [
+    "The recovered 0x3C ranges are AP writable-data/BSS VMAs, but the physical RAM type (PSRAM versus another memory) is not established by this startup copy/zero code alone.",
+    "The static-symbol count is zero at startup. Do not claim it stays zero forever without excluding computed or external writes; no direct AP writer was found in the exact-literal scan.",
+    "The initialized words at 0x3C3B9000 are inactive while the table count is zero; their apparent contents must not be promoted as exported firmware symbols.",
+    "No P65 module has been loaded on-device; no import, constructor, entrypoint, or unload behavior has been device-tested."
+  ],
+  "recommended_probe": "Continue static analysis for any post-startup writer to the symbol-count cell and audit Canopus manager imports against the zero-entry startup table. Keep P65 deployment disabled; do not execute insmod until a zero-import entry shim and recovery path are reviewed.",
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-23T23:34:18Z",
+  "artifacts": [
+    {
+      "uri": "file:///Users/lesetong/develop/temp/p65_v3.100.043_vela_ap.bin",
+      "sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+      "role": "exact P65 AP payload whose startup copy source and static loader data were read"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/temp/p65_v3.100.043_vela_ap.bin.i64",
+      "sha256": "4d2eb1c18f4a14dd27c07482105f76c06d5ab9c057745aef132da34516bcc6e5",
+      "role": "exact AP IDA database used for startup and module loader control-flow analysis"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/temp/miwear.watch.p65_v3.100.043_full_662aa7db.bin",
+      "sha256": "662aa7db5dd7ec98c4b7da0f7bec3066478ff45563c57b4cf3f16a2558cbc987",
+      "role": "exact P65 OTA bundle containing the extracted AP payload"
+    }
+  ]
+}
