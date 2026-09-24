@@ -64,7 +64,7 @@ The current generic C template emits a descriptor plus `.init_array`/`.fini_arra
 
 The recovered stock loader invokes `base + e_entry` for `ET_REL` and walks two arrays for `ET_DYN`. For ET_REL, the initializer receives a pointer to module-record words +104/+108; rmmod later treats them as an unload callback and its context, calling `callback(context)`. Thus the machine-level entry/unload contract is recovered, although the vendor C type and edge-case semantics are not. The generic Canopus artifact is still **not safe to load on P65 as built**: its `ET_REL` entrypoint is zero, and its constructors may not run on this branch. The sample relocation set is within the recovered P65 relocation switch, but that alone does not establish compatibility. The verifier now fails closed on zero `e_entry` for targets whose profile selects `module_initialize`; the same temporary artifact fails with `ELF entrypoint is zero`. This guard prevents packaging but does not provide a P65 entry shim. See `EVID-P65-CANABI-001.json`.
 
-At the Canopus integration boundary, `canopus-target-generated` can select the P65 identity pack, but `sdk/rust/canopus-target-private` has no P65 feature or backend. There is therefore still no selectable P65 manager/runtime binding.
+At the Canopus integration boundary, `canopus-target-generated` can select the P65 identity pack, but `sdk/rust/canopus-target-private` has no P65 feature or backend and the generated P65 bindings contain only the identity guard. Combined with the zero-at-startup static-symbol count, there is no selectable P65 Manager/runtime binding today. A host-only ET_REL entry probe passes, but that is not Manager integration or device support; see `EVID-P65-MANAGER-001.json`.
 
 ## Read-only NSH runtime probe
 

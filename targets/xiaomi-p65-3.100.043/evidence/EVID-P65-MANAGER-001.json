@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-P65-MANAGER-001",
+  "target_id": "xiaomi-p65-3.100.043",
+  "question": "Can the current Canopus Manager/runtime backend use P65 firmware services or manage P65 modules?",
+  "callsite_evidence": [
+    "`sdk/rust/canopus-target-generated/src/generated_p65.rs` contains the P65 identity guard and no typed firmware wrappers or callable firmware symbols. The matching generated C veneer contains only the identity guard; the P65 target pack declares `capabilities = []`.",
+    "`sdk/rust/canopus-target-private/Cargo.toml` exposes target-private features for Band 9/10/11 variants, but no `target-xiaomi-p65-3-100-043` feature or P65 implementation module exists. Therefore the current Rust private backend cannot select P65 firmware services.",
+    "P65 startup copies the static symbol-table count from AP data as zero and initializes the loaded-module-list head to null (EVID-P65-MEMORY-002). The exact AP scan found only a read of the count in the static lookup path; no direct AP writer was found. This leaves no verified built-in import surface at startup; later external/dynamic population is not excluded.",
+    "A separate zero-import ET_REL ABI probe with e_entry=1 passed the host verifier, but it only populated the P65 unload callback/context pair. It did not implement a Manager service bridge, call firmware APIs, or run on-device; the production Canopus template still emits e_entry=0 and its constructor arrays are not walked by P65's ET_REL branch. See EVID-P65-CANABI-001."
+  ],
+  "unsafe_assumptions": [
+    "The empty generated P65 backend and startup count zero establish that the current Canopus Manager has no P65 service binding; they do not prove that the P65 stock loader can never support runtime exports or a future backend.",
+    "The host-only ABI probe is not evidence of successful device module loading, lifecycle dispatch, recovery behavior, or Canopus Manager compatibility.",
+    "Do not add firmware callables or capabilities based on cross-target address matching; P65 has no reviewed target-private API bindings."
+  ],
+  "recommended_probe": "Treat P65 Manager support as unavailable. Any future port must first recover/validate the P65 export or service bridge, implement an explicit target-private backend and entry/unload shim, and pass host ABI/relocation/import tests. Only after an independently reviewed recovery path may a zero-import no-op module be considered for device testing.",
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-09-23T23:34:18Z",
+  "artifacts": [
+    {
+      "uri": "file:///Users/lesetong/develop/rust/Canopus-Private/sdk/rust/canopus-target-generated/src/generated_p65.rs",
+      "sha256": "9383dbaceff98492369d30235ec890cd502a7a1bd1edc934f6a836978bf89a71",
+      "role": "P65 generated bindings; only identity guard is present"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/rust/Canopus-Private/sdk/rust/canopus-target-private/Cargo.toml",
+      "sha256": "50233725b2786b7bed9a1699fc60f031ef9d86d7c8d2593761670079195b955f",
+      "role": "available target-private feature list; no P65 backend feature"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/rust/Canopus-Private/targets/xiaomi-p65-3.100.043/target.toml",
+      "sha256": "5e711e2bd6fe93352848a16960b7cfd60f3a089846f39b27738739077c01541c",
+      "role": "P65 pack retains empty capabilities and non-deployable loader profile"
+    },
+    {
+      "uri": "file:///tmp/p65_entry_probe_full.elf",
+      "sha256": "150f7c8f5c140f626193aa03b9366a7b7d85294c00babc0c433fe0d5804760a2",
+      "role": "host-only no-import entry ABI probe; not executed on device"
+    }
+  ]
+}
