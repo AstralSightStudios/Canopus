@@ -6,41 +6,46 @@
   "candidate_symbols": [
     "P65 ELF insertion branch: 0x0C4C49AC",
     "P65 ET_REL entrypoint call: 0x0C4C49AC",
-    "Canopus C module template: tools/canopus-core/src/template.rs::c_source/c_build_sh"
+    "Profile-aware Canopus C module template: tools/canopus-core/src/template.rs::render_with_constructor_discovery/c_source/c_build_sh"
   ],
   "prototype_hypothesis": "P65 ET_REL loading calls e_entry as an integer-returning initializer with an argument pointing at two 32-bit output words in the module record: an unload callback at +104 and its context/argument at +108. The loader accepts nonnegative initialization and rmmod later invokes the callback with that context. This call/storage ABI is recovered from the paired insertion and removal paths; the original C struct/type name is not.",
   "callsite_evidence": [
     "The recovered P65 insertion routine branches on ELF e_type: for ET_REL (1), it calls `base + e_entry` with `module_record + 104`; for ET_DYN (3), it walks two function-pointer arrays instead.",
-    "The current Canopus C template defines a descriptor accessor plus constructor/destructor functions, but no module_initialize/e_entry symbol. Its build script links with `ld.lld -r` and no `-e` option.",
-    "A temporary P65 C template build produced ELF32 ARM little-endian ET_REL with e_entry=0, one `.init_array` item and one `.fini_array` item. Before the entrypoint guard was added, the P65 verifier passed it with zero undefined symbols, 107 relocations, one constructor and one destructor; the current verifier now rejects it for the P65 module_initialize profile.",
+    "Legacy `init_array` C scaffolding still emits constructor/destructor arrays and e_entry=0. The CLI now reads the selected target's loader profile; P65 C scaffolding instead emits `canopus_module_initialize`, a two-word unload callback/context pair, and links with `-e` plus `scripts/canopus_module_sections.ld`. P65 Rust scaffolding fails closed because it has no C entry shim yet.",
+    "Before the profile-aware shim was added, the legacy `init_array` P65 C render produced ELF32 ARM little-endian ET_REL with e_entry=0, one `.init_array` item and one `.fini_array` item. Before the entrypoint guard, the verifier passed that invalid-for-P65 shape with zero undefined symbols and 107 relocations; the current verifier rejects it for the module_initialize profile.",
     "That artifact's relocation set is a subset of the statically recovered P65 handler: 25 R_ARM_ABS32, 43 R_ARM_PREL31, 2 R_ARM_TARGET1, 5 R_ARM_THM_CALL, 16 R_ARM_THM_MOVT_ABS, and 16 R_ARM_THM_MOVW_ABS_NC. This is static format compatibility only; it does not address the entrypoint mismatch.",
-    "A separate host-only ET_REL probe at `/tmp/p65_entry_probe_full.elf` combines a two-word initializer/unload shim with the current Canopus probe objects. It has e_entry=0x1, 0 undefined symbols, 111 relocations, one constructor/destructor, and passes `canopus verify` (168 sections). The entry shim was deliberately linked first as the first non-empty executable section; this artifact is not a device test and does not implement Manager integration. SHA-256: 150f7c8f5c140f626193aa03b9366a7b7d85294c00babc0c433fe0d5804760a2."
+    "Current profile-aware P65 C scaffolding generated via `canopus module new p65-template-probe --lang c --target xiaomi-p65-3.100.043` produces ELF32 ARM ET_REL with e_entry=0x1 matching `canopus_module_initialize` at symbol value 0x1, 0 undefined symbols, 107 relocations, zero init/fini arrays, and passes the P65 verifier (98 sections). The linker script merges `.text` with the entry shim first. SHA-256: 25e863f882f11dc65518d2c84bb5ab8ee19de20902f12db66430eca4de8a6056. This host artifact was not device-loaded and does not implement the Manager UI/backend."
   ],
   "control_flow_evidence": [
     "For ET_REL, 0x0C4C49AC stores `base + e_entry` at module-record offset +100 and calls it as an integer-returning function with argument `module_record + 104`; a negative return follows the load-failure cleanup path, while a nonnegative return permits module-list insertion.",
     "The paired rmmod routine at 0x0C4C4AE4 reads the callback at module-record +104 and context at +108, calls `callback(context)`, and only then clears module callback/entry fields, unlinks the record, and frees owned allocations. The observed ABI is therefore an initializer receiving two output words for unload callback and context; no original C type declaration or sample module is present in the OTA.",
-    "The current Canopus artifact has no explicit ELF entrypoint (e_entry=0), while the P65 ET_REL branch calls `base + e_entry`; it does not take the ET_DYN array-walk branch for this ET_REL artifact.",
-    "A fail-closed guard now rejects e_entry=0 whenever the target profile selects `module_initialize`; a regression test verifies zero-entry rejection and nonzero-entry acceptance. The guard enforces only a nonzero address, not the callback ABI or imports.",
-    "The P65 loader adds e_entry to its text-base pointer. The host probe uses e_entry=1 because module_initialize is deliberately the first executable section; a conventional `ld.lld -r` with no entry option produces e_entry=0, and placing other executable sections before the shim would make the same e_entry unsafe. The production template does not yet enforce this ordering."
+    "The legacy `init_array` Canopus ET_REL artifact has e_entry=0; the profile-aware P65 C scaffold now emits e_entry=0x1 and a module_initialize symbol. The stock ET_REL branch calls `base + e_entry` and does not take the ET_DYN array-walk branch.",
+    "The verifier fails closed for module_initialize profiles unless e_entry is nonzero, matches a defined executable function symbol, and is Thumb for Thumb targets. Regression tests cover zero, mismatched, non-Thumb, and valid entry symbols; this remains a structural check, not runtime callback proof.",
+    "The P65 loader adds e_entry to its text-base pointer. The P65 C scaffold uses `-e canopus_module_initialize` and `scripts/canopus_module_sections.ld`, which merges executable sections with `.text.canopus_module_entry` first; the generated symbol and e_entry are both 1. The verifier now requires a matching defined executable function symbol and a Thumb entry on Thumb targets."
   ],
   "unsafe_assumptions": [
     "The callback pair's machine-level storage/argument contract is recovered, but the vendor's C type name, whether a null callback is considered valid, and failure/concurrency corner cases are not.",
-    "No P65 module has been loaded on-device; calling the current generic artifact could branch to the image base instead of an explicit Canopus initializer.",
+    "No P65 module has been loaded on-device; the generated profile-aware C artifact has only passed host verification and does not prove NuttX runtime execution, Supervisor integration, firmware APIs, or recovery behavior.",
     "The initialized static-symbol count at 0x3C3B8FF0 is zero at AP startup (see EVID-P65-MEMORY-002); no direct AP writer was found, but computed/external post-startup writes are not excluded. A zero-import artifact does not prove Canopus service/callback compatibility.",
-    "The passing host probe links the entry shim first and is not the output of the production module template; it does not show that an arbitrary Canopus module will receive the correct `base + e_entry` target."
+    "The profile-aware C scaffold is verified on the host, but the Supervisor-specific build script still rejects P65 and does not link its conditional initializer/unload wrapper. P65 Rust scaffolding also fails closed until a Rust entry shim exists."
   ],
-  "recommended_probe": "Keep the generic Canopus ET_REL artifact blocked for P65. The initializer/unload callback pair is reconstructed and a link-order-specific host probe passes, but the production template does not emit/enforce that entry layout. Next audit Manager imports/backend and any post-startup static-symbol writer; do not perform a device load without an established recovery path.",
+  "recommended_probe": "Keep the P65 Supervisor build gate closed. The target-aware C module scaffold now emits and verifies the entry/unload pair, but the Supervisor-specific build still rejects P65 and the P65 UI/NuttX backend and import set are absent. Integrate the same entry contract into the Supervisor only after target API/lifecycle review, then validate the full host artifact and recovery path before considering any device load.",
   "verdict": "STATIC_RECOVERED",
   "created": "2026-09-23T17:31:55Z",
   "artifacts": [
     {
       "uri": "file:///tmp/canopus-p65-probe/build/p65_loader_probe.elf",
       "sha256": "a3a3d0b4058414f22fe05973187ca4b84f514ca19aa6dbc00e604ab67ab8aa93",
-      "role": "temporary C module generated from the current Canopus template and built against the P65 generated veneer; host inspection only"
+      "role": "historical legacy init_array C scaffold baseline with e_entry=0; host-only, pre-profile-aware-shim artifact"
     },
     {
       "uri": "file:///Users/lesetong/develop/rust/Canopus-Private/tools/canopus-core/src/template.rs",
-      "role": "current generic C module template/build flags"
+      "role": "profile-aware C module template and target-loader entry generation"
+    },
+    {
+      "uri": "file:///tmp/p65_template_probe_current.elf",
+      "sha256": "25e863f882f11dc65518d2c84bb5ab8ee19de20902f12db66430eca4de8a6056",
+      "role": "profile-aware P65 C module scaffold, host verifier pass only; not loaded on device"
     },
     {
       "uri": "file:///tmp/p65_entry_probe_full.elf",

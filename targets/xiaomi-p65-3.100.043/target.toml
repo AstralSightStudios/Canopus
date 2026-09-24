@@ -31,10 +31,11 @@ firmware_address_ranges = [
 # device-tested Canopus capability for this firmware.
 capabilities = []
 
-# Candidate stock NuttX module-loader profile. Static code accepts ET_REL/ET_DYN;
-# the Canopus ET_REL path calls e_entry, while the generic template currently
-# emits e_entry=0. The callback-pair ABI is statically reconstructed, but no
-# Canopus shim or usable import set is validated; keep this profile non-deployable.
+# Candidate stock NuttX module-loader profile. Static analysis recovers the
+# ET_REL e_entry and +104/+108 unload-pair ABI. The target-aware C scaffold now
+# emits a host-verified module_initialize shim, but the P65 Supervisor build
+# case/backend, API imports and device behavior remain unverified; keep this
+# profile non-deployable.
 [loader_profile]
 elf_class = 32
 elf_machine = "ARM"
