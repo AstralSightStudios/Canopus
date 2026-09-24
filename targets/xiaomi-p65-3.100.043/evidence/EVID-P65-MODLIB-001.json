@@ -23,6 +23,8 @@
     "0x0C4C49AC opens/parses the supplied file through 0x0C4F9A70, validates the ELF header through 0x0C4F9EA0, allocates a module record, lays out sections through 0x0C4F9B58, and loads/binds sections through 0x0C4F901C.",
     "ELF validation checks the 0x7F 'ELF' magic, ELFCLASS32, little-endian encoding, and EM_ARM (40). Its e_type mask accepts ET_REL (1) and ET_DYN (3), while rejecting ET_EXEC (2).",
     "0x0C4F901C applies ARM relocations through 0x0C4F84C4. The observed handled types are 0/NONE, 1, 2, 10, 28, 29, 30, 38, 40, 42, 43, 44, 47, 48, and 102; unsupported types return -EINVAL. This records the implementation's switch, not Canopus's approved relocation policy.",
+    "`targets/xiaomi-p65-3.100.043/target.toml` now binds verifier acceptance to the exact observed P65 switch set: R_ARM_NONE, PC24, ABS32, THM_CALL, CALL, JUMP24, THM_JUMP24, TARGET1, V4BX, PREL31, MOVW_ABS_NC, MOVT_ABS, THM_MOVW_ABS_NC, THM_MOVT_ABS, and THM_PC11. Entries are labeled static-only; this hardens artifact checking but does not promote P65 deployability or validate relocation semantics on device.",
+    "The P65 host Supervisor entry probe and C template artifact both pass the verifier with the allowlist (38 and 107 relocations). A mutated C template whose first R_ARM_PREL31 record was changed to unsupported R_ARM_REL32 (type 3) is rejected with `relocation type 3 ... not in loader allowlist`. This validates host enforcement only. Mutated artifact SHA-256: 4c19e9b9400cc6fe2bf3c54fb79dad728efdd0ece87d6faf0b6159dd44218248.",
     "For relocation symbols, 0x0C4FA208 handles defined-section symbols, accepts SHN_ABS (0xFFF1), rejects SHN_COMMON (0xFFF2) with -ENOSYS, and resolves undefined names through a fixed 8-byte static table at 0x3C3B9000 using the active-entry count at 0x3C3B8FF0, then through the loaded-module list at 0x3C3D67C8. Startup copies the count as zero and zeroes the module-list head; see EVID-P65-MEMORY-002.",
     "The loaded-module list is a singly linked list: 0x0C4F9F90 inserts a successfully initialized module at the head, 0x0C4F9FF8 searches it by name, and 0x0C4F9FB4 removes a record. The list is consulted by the module-symbol resolver at 0x0C4FA054.",
     "After loading, ET_REL (e_type 1) calls the image entrypoint with a pointer to module-record words +104/+108, which serve as unload callback/context; rmmod calls callback(context). ET_DYN (e_type 3) walks two function-pointer arrays before registry insertion. The exact section names/order represented by those arrays have not been validated; callback evidence is detailed in EVID-P65-CANABI-001."
@@ -41,6 +43,15 @@
       "uri": "file:///Users/lesetong/develop/temp/p65_v3.100.043_vela_ap.bin",
       "sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
       "role": "exact P65 AP payload"
+    },
+    {
+      "uri": "file:///tmp/p65_unsupported_reloc_probe.elf",
+      "sha256": "4c19e9b9400cc6fe2bf3c54fb79dad728efdd0ece87d6faf0b6159dd44218248",
+      "role": "host-only negative verifier probe; unsupported R_ARM_REL32 patched into otherwise-valid P65 C scaffold and rejected"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/rust/Canopus-Private/targets/xiaomi-p65-3.100.043/target.toml",
+      "role": "P65 loader profile with a static AP-switch-derived relocation allowlist; not device approval"
     },
     {
       "uri": "file:///Users/lesetong/develop/temp/p65_v3.100.043_vela_ap.bin.i64",

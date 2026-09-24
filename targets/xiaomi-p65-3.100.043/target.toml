@@ -35,7 +35,8 @@ capabilities = []
 # ET_REL e_entry and +104/+108 unload-pair ABI. The target-aware C scaffold now
 # emits a host-verified module_initialize shim, but the P65 Supervisor build
 # case/backend, API imports and device behavior remain unverified; keep this
-# profile non-deployable.
+# profile non-deployable. The relocation allowlist below mirrors the exact AP
+# modlib switch and is a static verifier bound, not a device-validated policy.
 [loader_profile]
 elf_class = 32
 elf_machine = "ARM"
@@ -49,6 +50,67 @@ module_name_rules = "candidate only; exact NSH argument validation not audited"
 load_command = "insmod <path> <name>"
 unload_command = "rmmod <name>"
 persistent_autoload = false
+
+[[loader_profile.relocations]]
+name = "R_ARM_NONE"
+arm_type = 0
+notes = "P65 AP modlib switch case observed; no-op semantics; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_PC24"
+arm_type = 1
+notes = "P65 AP modlib switch case observed; legacy relocation; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_ABS32"
+arm_type = 2
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_CALL"
+arm_type = 10
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_CALL"
+arm_type = 28
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_JUMP24"
+arm_type = 29
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_JUMP24"
+arm_type = 30
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_TARGET1"
+arm_type = 38
+notes = "P65 AP modlib switch case observed; handled with ABS32 semantics; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_V4BX"
+arm_type = 40
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_PREL31"
+arm_type = 42
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_MOVW_ABS_NC"
+arm_type = 43
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_MOVT_ABS"
+arm_type = 44
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVW_ABS_NC"
+arm_type = 47
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVT_ABS"
+arm_type = 48
+notes = "P65 AP modlib switch case observed; static only"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_PC11"
+arm_type = 102
+notes = "P65 AP modlib switch case observed; Thumb 16-bit PC-relative relocation; static only"
 
 [provenance]
 source_repo = "local miwear.watch.p65_v3.100.043_full_662aa7db OTA; exact vela_ap.bin payload"
