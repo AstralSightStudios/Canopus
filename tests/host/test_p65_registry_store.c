@@ -2,6 +2,7 @@
 #include <string.h>
 #include "canopus_test.h"
 #include "canopus_manager_p65_registry.h"
+#include "canopus_supervisor_platform.h"
 
 struct fake_p65_registry_io {
     uint8_t slots[CANOPUS_P65_REGISTRY_SLOT_COUNT]
@@ -57,6 +58,12 @@ static int fake_p65_write_slot(void *cookie, uint32_t slot,
 static const struct canopus_p65_registry_io_v1 fake_p65_registry_ops = {
     fake_p65_read_slot,
     fake_p65_write_slot,
+};
+
+static const struct canopus_sup_platform_v1 p65_registry_platform = {
+    "xiaomi-p65-3.100.043", 0, 0, 0, 0, 0,
+    canopus_manager_p65_registry_persist,
+    canopus_manager_p65_registry_restore,
 };
 
 static void fake_registry_init(struct fake_p65_registry_io *io)
@@ -234,6 +241,33 @@ TEST(p65_registry_fails_closed_on_corruption_or_io_error)
              CANOPUS_P65_REGISTRY_ERR_IO);
 }
 
+TEST(p65_registry_hooks_roundtrip_supervisor_metadata)
+{
+    struct fake_p65_registry_io io;
+    struct canopus_manager_p65_registry_store_v1 store;
+    struct canopus_supervisor_v1 first;
+    struct canopus_supervisor_v1 restored;
+    fake_registry_init(&io);
+    CHECK_EQ(canopus_manager_p65_registry_store_init(
+                 &store, &fake_p65_registry_ops, &io), 0);
+    CHECK_EQ(canopus_supervisor_init(&first, 7u, &p65_registry_platform,
+                                     &store), 0);
+    CHECK_EQ(canopus_supervisor_add_module(
+                 &first, CANOPUS_LIFECYCLE_REMOVABLE, 3u, 1u,
+                 "module.p65.test"), 0);
+    first.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    first.modules[0].activation_error = 0x42u;
+    CHECK_EQ(canopus_supervisor_save_registry(&first), 0);
+    CHECK_EQ(canopus_supervisor_init(&restored, 7u,
+                                     &p65_registry_platform, &store), 0);
+    CHECK_EQ(canopus_supervisor_restore_registry(&restored), 0);
+    CHECK_EQ(restored.module_count, 1u);
+    CHECK(strcmp((const char *)restored.modules[0].module_id,
+                 "module.p65.test") == 0);
+    CHECK_EQ(restored.modules[0].intent, CANOPUS_SUP_INTENT_ENABLED);
+    CHECK_EQ(restored.modules[0].activation_error, 0x42u);
+}
+
 TEST(p65_registry_rejects_bad_registry_payload)
 {
     struct fake_p65_registry_io io;
@@ -268,6 +302,8 @@ static const struct test_registry p65_registry_store_tests[] = {
       p65_registry_torn_write_preserves_last_valid_slot_wrapper },
     { "p65_registry_fails_closed_on_corruption_or_io_error",
       p65_registry_fails_closed_on_corruption_or_io_error_wrapper },
+    { "p65_registry_hooks_roundtrip_supervisor_metadata",
+      p65_registry_hooks_roundtrip_supervisor_metadata_wrapper },
     { "p65_registry_rejects_bad_registry_payload",
       p65_registry_rejects_bad_registry_payload_wrapper },
 };
