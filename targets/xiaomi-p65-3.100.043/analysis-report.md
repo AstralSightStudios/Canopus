@@ -64,7 +64,25 @@ The current generic C template emits a descriptor plus `.init_array`/`.fini_arra
 
 The recovered stock loader invokes `base + e_entry` for `ET_REL` and walks two arrays for `ET_DYN`. For ET_REL, the initializer receives a pointer to module-record words +104/+108; rmmod later treats them as an unload callback and its context, calling `callback(context)`. Thus the machine-level entry/unload contract is recovered, although the vendor C type and edge-case semantics are not. The generic Canopus artifact is still **not safe to load on P65 as built**: its `ET_REL` entrypoint is zero, and its constructors may not run on this branch. The sample relocation set is within the recovered P65 relocation switch, but that alone does not establish compatibility. The verifier now fails closed on zero `e_entry` for targets whose profile selects `module_initialize`; the same temporary artifact fails with `ELF entrypoint is zero`. This guard prevents packaging but does not provide a P65 entry shim. See `EVID-P65-CANABI-001.json`.
 
-At the Canopus integration boundary, `canopus-target-generated` can select the P65 identity pack, but `sdk/rust/canopus-target-private` has no P65 feature/backend and the generated P65 bindings contain only the identity guard. `scripts/build_canopus_supervisor.sh` also rejects P65 and its generated C config sets `CANOPUS_SUP_PLATFORM_COMPLETE=0`. Exact AP analysis has found candidate `app_install`, launcher, and LVX functions, including a 64-byte app descriptor copy and a five-argument `lvx_page_title_create`; P65 also has POSIX-shaped open/close/read/write wrapper candidates. Its LVX list path appears callback-driven through an internal list object (+96/+100/+112 callbacks), but the external struct/callback ABI is still unknown and does not match the v9 row macros directly. P65's `app_launcher_add` is no-argument, and only a `register_driver` ROM-trampoline candidate is known; the unregister counterpart and lifecycle/ownership remain unreviewed. No selectable or device-tested P65 Manager exists. See `EVID-P65-MANAGER-001.json` for the current backend/build gap and `EVID-P65-MANAGER-002.json` for candidate APIs.
+At the Canopus integration boundary, `canopus-target-generated` can select the P65 identity pack, but `sdk/rust/canopus-target-private` has no P65 feature/backend and the generated P65 bindings contain only the identity guard. `scripts/build_canopus_supervisor.sh` also rejects P65 and its generated C config sets `CANOPUS_SUP_PLATFORM_COMPLETE=0`. Exact AP analysis has found candidate `app_install`, launcher, and LVX functions, including a 64-byte app descriptor copy and a five-argument `lvx_page_title_create`; P65 also has POSIX-shaped open/close/read/write wrapper candidates. Its LVX list path is callback-driven through a native list object: an internal 40-byte callback table is copied to object offsets +92..+128. The code reveals key/create/update/count callbacks at +96/+100/+104/+112 and optional scroll/layout hooks, but object construction, ownership, cleanup and thread rules remain unverified; this is not a supported external ABI or a direct match for the v9 row macros. P65's `app_launcher_add` is no-argument, and only a `register_driver` ROM-trampoline candidate is known; the unregister counterpart and lifecycle/ownership remain unreviewed. No selectable or device-tested P65 Manager exists. See `EVID-P65-MANAGER-001.json` for the current backend/build gap and `EVID-P65-MANAGER-002.json` for candidate APIs.
+
+## P65 LVX list callback ABI (internal only)
+
+The P65 `lvx_list` path has a 40-byte configuration table copied by code at `0x0C2358C4` to list-object offsets `+92..+128`. `0x0C2401D4` supplies built-in ROM Thumb callback pointers; the callback bodies are outside the AP database.
+
+| List offset | Observed role / ABI | Evidence note |
+|---:|---|---|
+| `+92` | User context pointer | Passed as the final argument to list callbacks |
+| `+96` | `(list, index, ctx) -> key` | Return is consumed as an 8-bit row-cache key |
+| `+100` | `(list, index, ctx) -> row` | Creates a row object when not cached |
+| `+104` | `(list, row, index, ctx) -> void` | Refreshes/rebinds cached row objects |
+| `+108` | Unknown / unused in examined list paths | Copied but no callsite found |
+| `+112` | `(list, ctx) -> count` | Supplies virtual list item count |
+| `+116`, `+120` | `(list, ctx) -> void` | Two scroll-boundary callbacks; direction mapping unresolved |
+| `+124` | `(list, ctx) -> extent` | Replaces per-row total-extent calculation |
+| `+128` | `(list, ctx) -> geometry value` | Feeds scroll geometry calculations |
+
+The default table points to `0x1C15015D`, `0x1C15034D`, `0x1C150591`, `0x1C15016D`, `0x1C1505E5`, and `0x1C1505F5` for `+96`, `+100`, `+104`, `+112`, `+116`, and `+120` respectively. These are ROM-side defaults, not usable P65 AP exports. Although the internal callback calling conventions are now recoverable, the native list object's construction/size contract, callback lifetime, thread affinity, row ownership, and teardown path are not; do not bind this internal ABI as a target API yet.
 
 ## Read-only NSH runtime probe
 
