@@ -82,7 +82,7 @@ The P65 `lvx_list` path has a 40-byte configuration table copied by code at `0x0
 | `+124` | `(list, ctx) -> extent` | Replaces per-row total-extent calculation |
 | `+128` | `(list, ctx) -> geometry value` | Feeds scroll geometry calculations |
 
-The default table points to `0x1C15015D`, `0x1C15034D`, `0x1C150591`, `0x1C15016D`, `0x1C1505E5`, and `0x1C1505F5` for `+96`, `+100`, `+104`, `+112`, `+116`, and `+120` respectively. These are ROM-side defaults, not usable P65 AP exports. Although the internal callback calling conventions are now recoverable, the native list object's construction/size contract, callback lifetime, thread affinity, row ownership, and teardown path are not; do not bind this internal ABI as a target API yet.
+The default table points to `0x1C15015D`, `0x1C15034D`, `0x1C150591`, `0x1C15016D`, `0x1C1505E5`, and `0x1C1505F5` for `+96`, `+100`, `+104`, `+112`, `+116`, and `+120` respectively. These are ROM-side defaults, not usable P65 AP exports. Row-item candidates also appear in the AP: `sub_C219454` (7 args) initializes a caller-provided item object, populating child slots including `+84/+88/+92/+96`, while `sub_C2196F8` (6 args) mutates existing child/style state. Neither has a direct code/data xref tying it to list callbacks `+100/+104`, and the constructor-like function does not allocate the outer item. Although the internal callback conventions are now recoverable, the native list object's construction/size contract, allocator, callback lifetime, thread affinity, row ownership, and teardown path are not; do not bind this internal ABI as a target API yet.
 
 ## Read-only NSH runtime probe
 
