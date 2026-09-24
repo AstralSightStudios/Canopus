@@ -68,7 +68,7 @@ At the Canopus integration boundary, `canopus-target-generated` can select the P
 
 ## P65 LVX list callback ABI (internal only)
 
-The P65 `lvx_list` path has a 40-byte configuration table copied by code at `0x0C2358C4` to list-object offsets `+92..+128`. `0x0C2401D4` supplies built-in ROM Thumb callback pointers; the callback bodies are outside the AP database.
+The P65 `lvx_list` path has a 40-byte configuration table copied by code at `0x0C2358C4` to list-object offsets `+92..+128`. `0x0C2401D4` supplies built-in ROM Thumb callback pointers; the callback bodies are outside the AP database. A concrete `sub_C764170` all-list caller creates a list widget through `0x0C8BE008(parent, 0x3C19D9EC)`, binds callbacks with `0x0C8BEF60(list, table)`, then finalizes via `0x0C8BEBC0(list)`. Its table binds key/type `sub_C763B84`, create `sub_C764638`, update `sub_C7644A0`, count `sub_C763B34`, and count-like helpers at `+116/+120`. The row callbacks use P65's all_list storage and class `listview`; their ABI is now concrete, but their data model is not a direct Canopus snapshot adapter.
 
 | List offset | Observed role / ABI | Evidence note |
 |---:|---|---|
@@ -78,7 +78,7 @@ The P65 `lvx_list` path has a 40-byte configuration table copied by code at `0x0
 | `+104` | `(list, row, index, ctx) -> void` | Refreshes/rebinds cached row objects |
 | `+108` | Unknown / unused in examined list paths | Copied but no callsite found |
 | `+112` | `(list, ctx) -> count` | Supplies virtual list item count |
-| `+116`, `+120` | `(list, ctx) -> void` | Two scroll-boundary callbacks; direction mapping unresolved |
+| `+116`, `+120` | `(list, ctx) -> int` in one caller | All-list config binds count-like helpers here; list event code invokes these slots at scroll boundaries and ignores return; general role unresolved |
 | `+124` | `(list, ctx) -> extent` | Replaces per-row total-extent calculation |
 | `+128` | `(list, ctx) -> geometry value` | Feeds scroll geometry calculations |
 
