@@ -58,7 +58,8 @@ int canopus_supervisor_restore_after_boot(void)
     return canopus_supervisor_activate_restored_modules(&g_sup);
 }
 
-#ifndef CANOPUS_SUP_BAND11_BOOTSTRAP
+#if !defined(CANOPUS_SUP_BAND11_BOOTSTRAP) && \
+    !defined(CANOPUS_SUP_P65_MODLIB)
 __attribute__((constructor))
 #endif
 static void canopus_sup_ctor(void)
@@ -120,10 +121,59 @@ __attribute__((used, section(".init_array")))
 static void (*const canopus_sup_init_entry)(volatile int32_t *) = canopus_sup_ctor_mailbox;
 #endif
 
-__attribute__((destructor)) static void canopus_sup_dtor(void)
+#if !defined(CANOPUS_SUP_P65_MODLIB)
+__attribute__((destructor))
+#endif
+static void canopus_sup_dtor(void)
 {
     if (g_device_registered && canopus_sup_platform.unregister_device != 0) {
         (void)canopus_sup_platform.unregister_device(0);
         g_device_registered = 0;
     }
 }
+
+#ifdef CANOPUS_SUP_P65_MODLIB
+struct canopus_p65_modlib_unload_pair {
+    void (*callback)(void *context);
+    void *context;
+};
+
+_Static_assert(sizeof(struct canopus_p65_modlib_unload_pair) == 8u,
+               "P65 modlib callback/context pair size");
+
+static void canopus_sup_p65_unload(void *context)
+{
+    (void)context;
+    canopus_sup_dtor();
+}
+
+/* Stock P65 ET_REL modlib calls e_entry(module_record + 104). The two words
+ * are the rmmod callback and its context. Init-array/fini-array are not the
+ * ET_REL lifecycle path, so publish the unload pair explicitly here. */
+__attribute__((used, section(".text.canopus_module_entry")))
+int32_t canopus_supervisor_module_initialize(
+    struct canopus_p65_modlib_unload_pair *unload_pair)
+{
+    if (unload_pair == 0) {
+        return -1;
+    }
+    unload_pair->callback = 0;
+    unload_pair->context = 0;
+
+    /* rmmod cannot cancel this callback. Refuse to register a removable
+     * service unless the target backend also provides its unregister path. */
+    if (canopus_sup_platform.register_device == 0 ||
+        canopus_sup_platform.unregister_device == 0) {
+        return -1;
+    }
+
+    canopus_sup_ctor();
+    if (!g_device_registered) {
+        return -1;
+    }
+
+    unload_pair->callback = canopus_sup_p65_unload;
+    unload_pair->context = 0;
+    return 0;
+}
+#endif
