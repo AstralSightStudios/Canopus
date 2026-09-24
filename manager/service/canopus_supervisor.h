@@ -281,6 +281,13 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
                                          const void *payload,
                                          struct canopus_proto_response_v1 *resp,
                                          uint32_t *opcode);
+/* In-process manager transport for an embedded/native UI in the same module.
+ * It validates the portable request envelope and dispatches directly to the
+ * same v2 supervisor handler without registering/opening a character device.
+ * Query payloads are still obtained through the target's snapshot refresh. */
+int canopus_supervisor_local_transport(
+    const struct canopus_proto_request_v1 *req, const void *payload,
+    struct canopus_proto_response_v1 *resp, void *cookie);
 
 /* The module glue owns the singleton; the platform's read/write handlers use
  * it to render status / dispatch commands. */

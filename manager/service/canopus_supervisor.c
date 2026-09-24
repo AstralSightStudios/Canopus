@@ -701,6 +701,27 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
     return 0;
 }
 
+int canopus_supervisor_local_transport(
+    const struct canopus_proto_request_v1 *req, const void *payload,
+    struct canopus_proto_response_v1 *resp, void *cookie)
+{
+    struct canopus_supervisor_v1 *sup =
+        (struct canopus_supervisor_v1 *)cookie;
+    uint32_t opcode;
+
+    if (sup == 0 || req == 0 || resp == 0 ||
+        req->magic != CANOPUS_PROTO_MAGIC ||
+        req->struct_size != CANOPUS_PROTO_REQUEST_SIZE ||
+        req->abi_major != CANOPUS_ABI_MAJOR ||
+        req->abi_minor > CANOPUS_ABI_MINOR || req->request_id == 0u ||
+        req->payload_size > CANOPUS_PROTO_MAX_PAYLOAD ||
+        req->flags != 0u || (req->payload_size != 0u && payload == 0)) {
+        return -1;
+    }
+    return canopus_supervisor_handle_v2_request(sup, req, payload, resp,
+                                                &opcode);
+}
+
 static void put_wire_u32(uint8_t *out, uint32_t offset, uint32_t value)
 {
     out[offset] = (uint8_t)value;

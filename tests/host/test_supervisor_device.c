@@ -1267,6 +1267,30 @@ TEST(v2_device_write_echoes_request_id)
     CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_COMPLETED);
 }
 
+TEST(v2_local_transport_dispatches_without_device)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_proto_request_v1 req;
+    struct canopus_proto_response_v1 resp;
+
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    canopus_memset(&req, 0, sizeof(req));
+    req.magic = CANOPUS_PROTO_MAGIC;
+    req.struct_size = sizeof(req);
+    req.abi_major = CANOPUS_ABI_MAJOR;
+    req.abi_minor = CANOPUS_ABI_MINOR;
+    req.command = CANOPUS_CMD_ENTER_SAFE_MODE;
+    req.request_id = 0x91u;
+
+    CHECK(canopus_supervisor_local_transport(&req, 0, &resp, &sup) == 0);
+    CHECK_EQ(resp.request_id, req.request_id);
+    CHECK_EQ(resp.result_state, CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(sup.safe_mode, 1u);
+    CHECK(canopus_supervisor_local_transport(&req, 0, &resp, 0) == -1);
+    req.request_id = 0u;
+    CHECK(canopus_supervisor_local_transport(&req, 0, &resp, &sup) == -1);
+}
+
 TEST(v2_request_tracked_in_pending)
 {
     struct canopus_supervisor_v1 sup;
@@ -1628,6 +1652,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "v2_golden_query_device_request", v2_golden_query_device_request_wrapper },
     { "v2_decode_rejects_malformed", v2_decode_rejects_malformed_wrapper },
     { "v2_device_write_echoes_request_id", v2_device_write_echoes_request_id_wrapper },
+    { "v2_local_transport_dispatches_without_device", v2_local_transport_dispatches_without_device_wrapper },
     { "v2_request_tracked_in_pending", v2_request_tracked_in_pending_wrapper },
     { "v2_enable_by_module_id", v2_enable_by_module_id_wrapper },
     { "v2_unknown_magic_rejected", v2_unknown_magic_rejected_wrapper },
