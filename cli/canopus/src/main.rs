@@ -238,6 +238,9 @@ enum ModuleCmd {
         /// Target id to bake into the descriptor, e.g. xiaomi-band-10-pro-3.101.036.
         #[arg(long, default_value = "xiaomi-band-10-pro-3.101.036")]
         target: String,
+        /// Directory containing target packs (default: targets/).
+        #[arg(long, default_value = "targets")]
+        targets_dir: PathBuf,
         /// Directory to create the module in (default: modules/).
         #[arg(long, default_value = "modules")]
         out_dir: PathBuf,

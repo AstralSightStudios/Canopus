@@ -16,6 +16,7 @@ const SHT_STRTAB: u32 = 3;
 const SHF_ALLOC_EXEC: u32 = 0x6; // SHF_ALLOC | SHF_EXECINSTR
 const SHN_UNDEF: u16 = 0;
 const STT_NOTYPE: u8 = 0;
+const STT_FUNC: u8 = 2;
 const STB_GLOBAL: u8 = 1;
 
 fn pack() -> &'static TargetPack {
@@ -73,16 +74,30 @@ fn sh(
     s
 }
 
-/// A valid ET_REL with a single .text section and nothing else.
+/// A valid ET_REL with a Thumb entry function and no undefined symbols.
 fn valid_elf() -> Vec<u8> {
     let text_data = [0x00, 0xbf, 0x00, 0xbf]; // Thumb NOP x2
-    let shstrtab = b"\0.text\0.shstrtab\0".to_vec();
-    let text_off = 52u32;
-    let str_off = text_off + text_data.len() as u32;
-    let shoff = str_off + shstrtab.len() as u32;
+    let mut defined_symbol = [0u8; 16];
+    defined_symbol[0..4].copy_from_slice(&1u32.to_le_bytes()); // strtab name offset
+    defined_symbol[4..8].copy_from_slice(&1u32.to_le_bytes()); // Thumb entry value
+    defined_symbol[8..12].copy_from_slice(&2u32.to_le_bytes()); // size
+    defined_symbol[12] = (STB_GLOBAL << 4) | STT_FUNC;
+    defined_symbol[14..16].copy_from_slice(&1u16.to_le_bytes()); // .text
 
-    let mut out = elf_header(shoff, 3, 2).to_vec();
+    let strtab = b"\0module_initialize\0".to_vec();
+    let shstrtab = b"\0.text\0.symtab\0.strtab\0.shstrtab\0".to_vec();
+    let text_off = 52u32;
+    let symtab_off = text_off + text_data.len() as u32;
+    let symtab_size = 32u32; // null symbol + module_initialize
+    let strtab_off = symtab_off + symtab_size;
+    let shstr_off = strtab_off + strtab.len() as u32;
+    let shoff = shstr_off + shstrtab.len() as u32;
+
+    let mut out = elf_header(shoff, 5, 4).to_vec();
     out.extend_from_slice(&text_data);
+    out.extend_from_slice(&[0u8; 16]); // null symbol
+    out.extend_from_slice(&defined_symbol);
+    out.extend_from_slice(&strtab);
     out.extend_from_slice(&shstrtab);
     out.extend_from_slice(&sh(0, 0, 0, 0, 0, 0, 0, 0));
     out.extend_from_slice(&sh(
@@ -95,11 +110,22 @@ fn valid_elf() -> Vec<u8> {
         4,
         0,
     ));
+    out.extend_from_slice(&sh(7, SHT_SYMTAB, 0, symtab_off, symtab_size, 3, 4, 16));
     out.extend_from_slice(&sh(
-        7,
+        15,
         SHT_STRTAB,
         0,
-        str_off,
+        strtab_off,
+        strtab.len() as u32,
+        0,
+        1,
+        0,
+    ));
+    out.extend_from_slice(&sh(
+        23,
+        SHT_STRTAB,
+        0,
+        shstr_off,
         shstrtab.len() as u32,
         0,
         1,
@@ -196,6 +222,26 @@ fn module_initialize_profile_rejects_zero_entrypoint() {
         report.ok,
         "nonzero-entry ET_REL failed: {:?}",
         report.errors
+    );
+
+    let mut mismatched_entry = valid_elf();
+    mismatched_entry[24..28].copy_from_slice(&3u32.to_le_bytes());
+    let report = verifier.verify(&mismatched_entry);
+    assert!(report.errors.iter().any(|error| {
+        error.contains("does not resolve to a defined executable function symbol")
+    }));
+
+    let mut non_thumb_entry = valid_elf();
+    non_thumb_entry[24..28].copy_from_slice(&2u32.to_le_bytes());
+    // In valid_elf, the function symbol's st_value is at 52 (.text) + 4
+    // (null symbol) + 4 (st_value field).
+    non_thumb_entry[76..80].copy_from_slice(&2u32.to_le_bytes());
+    let report = verifier.verify(&non_thumb_entry);
+    assert!(
+        report
+            .errors
+            .iter()
+            .any(|error| { error.contains("not a Thumb address for a Thumb target") })
     );
 }
 
