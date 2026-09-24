@@ -14,6 +14,8 @@ int run_manager_app_tests(void);
 int run_app_sdk_tests(void);
 int run_ui_tests(void);
 int run_p65_ui_rows_tests(void);
+int run_p65_lvx_adapter_tests(void);
+int run_p65_local_client_tests(void);
 int run_client_tests(void);
 int run_supervisor_device_tests(void);
 int run_installer_receipt_tests(void);
@@ -35,6 +37,8 @@ int main(void)
     total += run_app_sdk_tests();
     total += run_ui_tests();
     total += run_p65_ui_rows_tests();
+    total += run_p65_lvx_adapter_tests();
+    total += run_p65_local_client_tests();
     total += run_client_tests();
     total += run_supervisor_device_tests();
     total += run_installer_receipt_tests();

@@ -37,6 +37,9 @@ PORTABLE_SRCS = \
 	../../manager/ui/canopus_manager.c \
 	../../manager/ui/canopus_manager_native.c \
 	../../manager/target/p65/canopus_manager_p65_rows.c \
+	../../manager/target/p65/canopus_manager_p65_lvx.c \
+	../../manager/target/p65/canopus_manager_p65_backend.c \
+	../../manager/target/p65/canopus_manager_p65_transport.c \
 	../../manager/native-app/canopus_manager_app.c \
 	../../app-sdk/c/canopus_app.c \
 	../../app-sdk/ui/canopus_ui.c \
@@ -66,6 +69,8 @@ TEST_SRCS = \
 	test_app_sdk.c \
 	test_ui.c \
 	test_p65_ui_rows.c \
+	test_p65_lvx_adapter.c \
+	test_p65_local_client.c \
 	test_client.c \
 	test_supervisor_device.c \
 	test_installer_receipt.c \
