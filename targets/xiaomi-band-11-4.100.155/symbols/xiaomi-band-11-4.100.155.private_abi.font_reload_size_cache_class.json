@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.font_reload_size_cache_class",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "font_reload_size_cache_class",
+  "kind": "data",
+  "instruction_set": "n/a",
+  "entry_address": "0x2ca168b4",
+  "type": "const opaque cache class",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed firmware-owned identity/storage; no direct free. Cached-flash size-cache vtable identity used by vector cache. Class+4 is 0x0c3a9eb1, NOT count-cache initializer. Exact class address, not a callable pointer or general data range.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-4155-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-FONT-4155-001"
+    ],
+    "source": "Exact .155 AP/IDA investigation in ../Canopus-Module-Resource-Hook/targets/xiaomi-band-11-4.100.155/font-reload-investigation.md; checked adapter src/font_reload_155.c and native probes. Integration independently fingerprinted AP windows and inspected selected Capstone instructions; see EVID-FONT-4155-001."
+  },
+  "notes": "Cached-flash size-cache vtable identity used by vector cache. Class+4 is 0x0c3a9eb1, NOT count-cache initializer. Exact class address, not a callable pointer or general data range. Experimental exact-target allowlist only, not public ABI promotion or device verification. GPU error/reset, framework restart and unknown owners remain unsupported."
+}

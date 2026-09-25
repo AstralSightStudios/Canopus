@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.font_reload_glyph_pending_release",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "font_reload_glyph_pending_release",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c399b62",
+  "callable_address": "0x0c399b63",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "identity-check-or-native-callback-installation-only"
+    ]
+  },
+  "ownership": {
+    "argument": "Identity only: glyph container callback+36 with 24-byte elements. Calls 0x0c399b4c, which routes through stored font+8 and its CURRENT descriptor. Adapter checks empty arrays but never calls this drain callback.",
+    "return_value": "See restricted adapter use contract; no general public callable approval."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-4155-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-FONT-4155-001"
+    ],
+    "source": "Exact .155 AP/IDA investigation in ../Canopus-Module-Resource-Hook/targets/xiaomi-band-11-4.100.155/font-reload-investigation.md; checked adapter src/font_reload_155.c and native probes. Integration independently fingerprinted AP windows and inspected selected Capstone instructions; see EVID-FONT-4155-001."
+  },
+  "notes": "Identity only: glyph container callback+36 with 24-byte elements. Calls 0x0c399b4c, which routes through stored font+8 and its CURRENT descriptor. Adapter checks empty arrays but never calls this drain callback. Experimental exact-target allowlist only, not public ABI promotion or device verification. GPU error/reset, framework restart and unknown owners remain unsupported."
+}

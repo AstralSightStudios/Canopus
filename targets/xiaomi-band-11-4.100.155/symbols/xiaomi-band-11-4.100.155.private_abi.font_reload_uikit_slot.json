@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.font_reload_uikit_slot",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "font_reload_uikit_slot",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x200bd1e8",
+  "type": "void *",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed firmware-owned identity/storage; no direct free. Live uikit root at LVGL global base; font manager at root+28. Current root must be checked before dereferencing saved native identities. Registry append/remove/resolver and teardown reference this slot.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-4155-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-FONT-4155-001"
+    ],
+    "source": "Exact .155 AP/IDA investigation in ../Canopus-Module-Resource-Hook/targets/xiaomi-band-11-4.100.155/font-reload-investigation.md; checked adapter src/font_reload_155.c and native probes. Integration independently fingerprinted AP windows and inspected selected Capstone instructions; see EVID-FONT-4155-001."
+  },
+  "notes": "Live uikit root at LVGL global base; font manager at root+28. Current root must be checked before dereferencing saved native identities. Registry append/remove/resolver and teardown reference this slot. Experimental exact-target allowlist only, not public ABI promotion or device verification. GPU error/reset, framework restart and unknown owners remain unsupported."
+}

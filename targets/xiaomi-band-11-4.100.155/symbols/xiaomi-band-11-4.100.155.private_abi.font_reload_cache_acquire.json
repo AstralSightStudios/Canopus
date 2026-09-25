@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.font_reload_cache_acquire",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "font_reload_cache_acquire",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c3a3860",
+  "callable_address": "0x0c3a3861",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void *(void *cache, const void *key, void *user_data)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Lookup-only acquire: calls cache class+12 when cache count is nonzero and increments returned entry through 0x0c908f4c. Returned entry is a held reference requiring cache release; never assume it is newly created.",
+    "return_value": "See restricted adapter use contract; no general public callable approval."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-4155-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-FONT-4155-001"
+    ],
+    "source": "Exact .155 AP/IDA investigation in ../Canopus-Module-Resource-Hook/targets/xiaomi-band-11-4.100.155/font-reload-investigation.md; checked adapter src/font_reload_155.c and native probes. Integration independently fingerprinted AP windows and inspected selected Capstone instructions; see EVID-FONT-4155-001."
+  },
+  "notes": "Lookup-only acquire: calls cache class+12 when cache count is nonzero and increments returned entry through 0x0c908f4c. Returned entry is a held reference requiring cache release; never assume it is newly created. Experimental exact-target allowlist only, not public ABI promotion or device verification. GPU error/reset, framework restart and unknown owners remain unsupported."
+}
