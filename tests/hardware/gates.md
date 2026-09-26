@@ -45,6 +45,22 @@ Each device gate appends to `tests/hardware/runs/<date>/gate-<N>.json`:
   "reviewer": "…", "last_successful_gate": 4 }
 ```
 
+### P65 G0 probe
+
+Build the target-specific probe and flat watchface resources with:
+
+```sh
+bash watchfaces/p65-g0-probe/build.sh
+```
+
+The verifier must pass with zero undefined symbols. Import the resulting flat
+resource bundle through the normal watchface packer; it is not a flashed
+watchface image. In the face, CHECK must confirm `ro.build.version=3.100.043`
+and no pre-existing probe, then LOAD and UNLOAD must each be confirmed by
+`lsmod`. The face fails closed if its `os.execute` or `/tmp` output path is
+unavailable. Host smoke is not a device pass; archive the real console result
+and stop after any uncertain state or crash.
+
 ## Migration order (MIG-001..005)
 
 1. MIG-001 harmless probe → G0-G4
