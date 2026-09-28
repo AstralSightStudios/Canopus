@@ -4,7 +4,7 @@
  * firmware : 4.100.139 (user-4.100.139-cn-202608280000)
  * sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
  * revision : 2
- * input_digest: f5cba4725887d98b
+ * input_digest: 1e1a64207849b02c
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
@@ -262,6 +262,37 @@ static inline int * canopus_fw_errno_location(void) {
  * font_manager_add_path: restricted - not exported until context/ownership approved
  * font_manager_generate_def_path: restricted - not exported until context/ownership approved
  * font_manager_remove_path: restricted - not exported until context/ownership approved
+ * font_reload_cache_acquire: restricted - not exported until context/ownership approved
+ * font_reload_cache_acquire_or_create: restricted - not exported until context/ownership approved
+ * font_reload_cache_release: restricted - not exported until context/ownership approved
+ * font_reload_count_cache_init: restricted - not exported until context/ownership approved
+ * font_reload_drop_face_id: restricted - not exported until context/ownership approved
+ * font_reload_face_compare: restricted - not exported until context/ownership approved
+ * font_reload_face_create: restricted - not exported until context/ownership approved
+ * font_reload_face_destroy: restricted - not exported until context/ownership approved
+ * font_reload_ft_mul_fix: restricted - not exported until context/ownership approved
+ * font_reload_ft_set_pixel_size: restricted - not exported until context/ownership approved
+ * font_reload_glyph_metrics: restricted - not exported until context/ownership approved
+ * font_reload_glyph_pending_release: restricted - not exported until context/ownership approved
+ * font_reload_gradient_pending_release: restricted - not exported until context/ownership approved
+ * font_reload_image_pending_release: restricted - not exported until context/ownership approved
+ * font_reload_list_remove: restricted - not exported until context/ownership approved
+ * font_reload_lv_free: restricted - not exported until context/ownership approved
+ * font_reload_lv_malloc: restricted - not exported until context/ownership approved
+ * font_reload_metrics_compare: restricted - not exported until context/ownership approved
+ * font_reload_metrics_create: restricted - not exported until context/ownership approved
+ * font_reload_metrics_destroy: restricted - not exported until context/ownership approved
+ * font_reload_outline_acquire: restricted - not exported until context/ownership approved
+ * font_reload_outline_compare: restricted - not exported until context/ownership approved
+ * font_reload_outline_create: restricted - not exported until context/ownership approved
+ * font_reload_outline_destroy: restricted - not exported until context/ownership approved
+ * font_reload_outline_event: restricted - not exported until context/ownership approved
+ * font_reload_outline_release: restricted - not exported until context/ownership approved
+ * font_reload_sw_dispatch: restricted - not exported until context/ownership approved
+ * font_reload_vector_compare: restricted - not exported until context/ownership approved
+ * font_reload_vector_destroy: restricted - not exported until context/ownership approved
+ * font_reload_vector_drop: restricted - not exported until context/ownership approved
+ * font_reload_vg_dispatch: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved

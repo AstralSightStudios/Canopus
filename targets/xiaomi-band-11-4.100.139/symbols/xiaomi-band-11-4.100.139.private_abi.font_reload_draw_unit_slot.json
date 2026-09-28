@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.font_reload_draw_unit_slot",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "font_reload_draw_unit_slot",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x200bd318",
+  "type": "void *",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed firmware-owned identity/storage; no direct free. Draw-unit list root at global base+304, initialized by 0x0c3a9598. Adapter validates exactly VG/SW dispatch identities, inactive task markers and bounded pending arrays.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-FONT-4139-001"
+    ],
+    "source": "Exact .139 AP verified against ../Canopus-Module-Resource-Hook/targets/xiaomi-band-11-4.100.139/font-reload-compatibility.json and .md; individually audited address map and native layout/ownership compatibility with .155 EVID-FONT-4155-001. See EVID-FONT-4139-001; no blanket relocation or device acceptance."
+  },
+  "notes": "Draw-unit list root at global base+304, initialized by 0x0c3a9598. Adapter validates exactly VG/SW dispatch identities, inactive task markers and bounded pending arrays. Experimental exact-target allowlist only, not public ABI promotion or device verification. GPU error/reset, framework restart and unknown owners remain unsupported."
+}

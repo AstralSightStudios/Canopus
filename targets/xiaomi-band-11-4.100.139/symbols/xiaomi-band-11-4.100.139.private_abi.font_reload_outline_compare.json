@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.font_reload_outline_compare",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "font_reload_outline_compare",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c39fdcc",
+  "callable_address": "0x0c39fdcd",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "identity-check-or-native-callback-installation-only"
+    ]
+  },
+  "ownership": {
+    "argument": "Checked/installed as 8-byte outline-cache compare at cache+16. Orders first 32-bit key word.",
+    "return_value": "See restricted adapter use contract; no general public callable approval."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-FONT-4139-001"
+    ],
+    "source": "Exact .139 AP verified against ../Canopus-Module-Resource-Hook/targets/xiaomi-band-11-4.100.139/font-reload-compatibility.json and .md; individually audited address map and native layout/ownership compatibility with .155 EVID-FONT-4155-001. See EVID-FONT-4139-001; no blanket relocation or device acceptance."
+  },
+  "notes": "Checked/installed as 8-byte outline-cache compare at cache+16. Orders first 32-bit key word. Experimental exact-target allowlist only, not public ABI promotion or device verification. GPU error/reset, framework restart and unknown owners remain unsupported."
+}

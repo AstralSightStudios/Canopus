@@ -4,7 +4,7 @@
 // firmware : 4.100.139 (user-4.100.139-cn-202608280000)
 // sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
 // revision : 2
-// input_digest: f5cba4725887d98b
+// input_digest: 1e1a64207849b02c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -261,11 +261,17 @@ pub const CANOPUS_FW_UNREGISTER_BLOCKDRIVER_CALLABLE: usize = canopus_thumb_call
 /// Recovered `thirdparty_submit_message_content` at 0xc9427f0. Thumb callable address 0xc9427f1.
 pub const CANOPUS_FW_THIRDPARTY_SUBMIT_MESSAGE_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xc9427f1usize);
 
+/// Recovered global `font_reload_display_list` at 0x200bd1f0.
+pub const canopus_fw_font_reload_display_list: usize = 0x200bd1f0usize;
+
 /// Recovered `hfp_ag_disconnect` at 0xc531644. Thumb callable address 0xc531645.
 pub const CANOPUS_FW_HFP_AG_DISCONNECT_CALLABLE: usize = canopus_thumb_callable(0xc531645usize);
 
 /// Recovered `lv_obj_refresh_style` at 0x0c38525c. Thumb callable address 0x0c38525d.
 pub const CANOPUS_FW_LV_OBJ_REFRESH_STYLE_CALLABLE: usize = canopus_thumb_callable(0x0c38525dusize);
+
+/// Recovered global `font_reload_lv_initialized` at 0x200bd1ec.
+pub const canopus_fw_font_reload_lv_initialized: usize = 0x200bd1ecusize;
 
 /// Recovered `font_manager_add_path` at 0x0c4924e0. Thumb callable address 0x0c4924e1.
 pub const CANOPUS_FW_FONT_MANAGER_ADD_PATH_CALLABLE: usize = canopus_thumb_callable(0x0c4924e1usize);
@@ -281,6 +287,9 @@ pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0
 
 /// Recovered `lv_obj_align_to` at 0xc3877b0. Thumb callable address 0xc3877b1.
 pub const CANOPUS_FW_LV_OBJ_ALIGN_TO_CALLABLE: usize = canopus_thumb_callable(0xc3877b1usize);
+
+/// Recovered global `font_reload_freetype_context_slot` at 0x200bd3ec.
+pub const canopus_fw_font_reload_freetype_context_slot: usize = 0x200bd3ecusize;
 
 /// Recovered `sdp_builder_create` at 0xc88555c. Thumb callable address 0xc88555d.
 pub const CANOPUS_FW_SDP_BUILDER_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc88555dusize);
@@ -306,8 +315,17 @@ pub const CANOPUS_FW_BT_BUFFER_NEW_CALLABLE: usize = canopus_thumb_callable(0xc8
 /// Recovered `register_blockdriver` at 0xc46c25a. Thumb callable address 0xc46c25b.
 pub const CANOPUS_FW_REGISTER_BLOCKDRIVER_CALLABLE: usize = canopus_thumb_callable(0xc46c25busize);
 
+/// Recovered `font_reload_sw_dispatch` at 0x0c3948ac. Thumb callable address 0x0c3948ad.
+pub const CANOPUS_FW_FONT_RELOAD_SW_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0x0c3948adusize);
+
+/// Recovered `font_reload_vector_drop` at 0x0c6a1314. Thumb callable address 0x0c6a1315.
+pub const CANOPUS_FW_FONT_RELOAD_VECTOR_DROP_CALLABLE: usize = canopus_thumb_callable(0x0c6a1315usize);
+
 /// Recovered `app_launcher_add` at 0xc547b54. Thumb callable address 0xc547b55.
 pub const CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc547b55usize);
+
+/// Recovered `font_reload_list_remove` at 0x0c3a46dc. Thumb callable address 0x0c3a46dd.
+pub const CANOPUS_FW_FONT_RELOAD_LIST_REMOVE_CALLABLE: usize = canopus_thumb_callable(0x0c3a46ddusize);
 
 /// Recovered `lvx_content_pad_bottom` at 0xc387c6e. Thumb callable address 0xc387c6f.
 pub const CANOPUS_FW_LVX_CONTENT_PAD_BOTTOM_CALLABLE: usize = canopus_thumb_callable(0xc387c6fusize);
@@ -330,6 +348,9 @@ pub const CANOPUS_FW_LV_TIMER_DEL_CALLABLE: usize = canopus_thumb_callable(0xc3a
 /// Recovered `watchface_reset_watchface` at 0xc5f3474. Thumb callable address 0xc5f3475.
 pub const CANOPUS_FW_WATCHFACE_RESET_WATCHFACE_CALLABLE: usize = canopus_thumb_callable(0xc5f3475usize);
 
+/// Recovered global `font_reload_uikit_slot` at 0x200bd1e8.
+pub const canopus_fw_font_reload_uikit_slot: usize = 0x200bd1e8usize;
+
 /// Recovered `lvx_object_add_flag` at 0xc38404c. Thumb callable address 0xc38404d.
 pub const CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc38404dusize);
 
@@ -342,11 +363,17 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 /// Recovered `page_goto` at 0xc8ed780. Thumb callable address 0xc8ed781.
 pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc8ed781usize);
 
+/// Recovered `font_reload_lv_malloc` at 0x0c3abe20. Thumb callable address 0x0c3abe21.
+pub const CANOPUS_FW_FONT_RELOAD_LV_MALLOC_CALLABLE: usize = canopus_thumb_callable(0x0c3abe21usize);
+
 /// Recovered `sdp_unregister` at 0xc86f3e0. Thumb callable address 0xc86f3e1.
 pub const CANOPUS_FW_SDP_UNREGISTER_CALLABLE: usize = canopus_thumb_callable(0xc86f3e1usize);
 
 /// Recovered `lv_display_get_vertical_resolution` at 0x0c3806b4. Thumb callable address 0x0c3806b5.
 pub const CANOPUS_FW_LV_DISPLAY_GET_VERTICAL_RESOLUTION_CALLABLE: usize = canopus_thumb_callable(0x0c3806b5usize);
+
+/// Recovered `font_reload_image_pending_release` at 0x0c395be0. Thumb callable address 0x0c395be1.
+pub const CANOPUS_FW_FONT_RELOAD_IMAGE_PENDING_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c395be1usize);
 
 /// Recovered `hidden_and_show_app_cb` at 0xc547988. Thumb callable address 0xc547989.
 pub const CANOPUS_FW_HIDDEN_AND_SHOW_APP_CB_CALLABLE: usize = canopus_thumb_callable(0xc547989usize);
@@ -375,8 +402,14 @@ pub const canopus_fw_style_misans_medium_28: usize = 0x200c1574usize;
 /// Recovered `lv_obj_set_style_pad_bottom` at 0xc387c6e. Thumb callable address 0xc387c6f.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_PAD_BOTTOM_CALLABLE: usize = canopus_thumb_callable(0xc387c6fusize);
 
+/// Recovered global `font_reload_size_cache_class` at 0x2ca168c4.
+pub const canopus_fw_font_reload_size_cache_class: usize = 0x2ca168c4usize;
+
 /// Recovered `app_launcher_del` at 0xc572cf4. Thumb callable address 0xc572cf5.
 pub const CANOPUS_FW_APP_LAUNCHER_DEL_CALLABLE: usize = canopus_thumb_callable(0xc572cf5usize);
+
+/// Recovered `font_reload_drop_face_id` at 0x0c39a424. Thumb callable address 0x0c39a425.
+pub const CANOPUS_FW_FONT_RELOAD_DROP_FACE_ID_CALLABLE: usize = canopus_thumb_callable(0x0c39a425usize);
 
 /// Recovered `lv_obj_get_style_prop` at 0x0c382620. Thumb callable address 0x0c382621.
 pub const CANOPUS_FW_LV_OBJ_GET_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x0c382621usize);
@@ -390,8 +423,14 @@ pub const CANOPUS_FW_KMEM_FREE_CALLABLE: usize = canopus_thumb_callable(0xc34ccb
 /// Recovered `core_bt_pair_request_callback` at 0xc4f438c. Thumb callable address 0xc4f438d.
 pub const CANOPUS_FW_CORE_BT_PAIR_REQUEST_CALLBACK_CALLABLE: usize = canopus_thumb_callable(0xc4f438dusize);
 
+/// Recovered global `font_reload_vector_label_class` at 0x2ca6ee58.
+pub const canopus_fw_font_reload_vector_label_class: usize = 0x2ca6ee58usize;
+
 /// Recovered `pthread_create_internal` at 0xc91bf34. Thumb callable address 0xc91bf35.
 pub const CANOPUS_FW_PTHREAD_CREATE_INTERNAL_CALLABLE: usize = canopus_thumb_callable(0xc91bf35usize);
+
+/// Recovered `font_reload_metrics_create` at 0x0c3a5ef0. Thumb callable address 0x0c3a5ef1.
+pub const CANOPUS_FW_FONT_RELOAD_METRICS_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c3a5ef1usize);
 
 /// Recovered global `style_misans_medium_24` at 0x200c1568.
 pub const canopus_fw_style_misans_medium_24: usize = 0x200c1568usize;
@@ -402,6 +441,9 @@ pub const CANOPUS_FW_HEAP_FREE_CALLABLE: usize = canopus_thumb_callable(0xc34cd2
 /// Recovered `lv_obj_add_event_cb` at 0xc37fc1c. Thumb callable address 0xc37fc1d.
 pub const CANOPUS_FW_LV_OBJ_ADD_EVENT_CB_CALLABLE: usize = canopus_thumb_callable(0xc37fc1dusize);
 
+/// Recovered `font_reload_cache_acquire` at 0x0c3a3860. Thumb callable address 0x0c3a3861.
+pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0x0c3a3861usize);
+
 /// Recovered `lvx_object_delete` at 0xc720ea8. Thumb callable address 0xc720ea9.
 pub const CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE: usize = canopus_thumb_callable(0xc720ea9usize);
 
@@ -411,14 +453,23 @@ pub const CANOPUS_FW_SEM_POST_CALLABLE: usize = canopus_thumb_callable(0xc359151
 /// Recovered `font_manager_generate_def_path` at 0x0c490edc. Thumb callable address 0x0c490edd.
 pub const CANOPUS_FW_FONT_MANAGER_GENERATE_DEF_PATH_CALLABLE: usize = canopus_thumb_callable(0x0c490eddusize);
 
+/// Recovered `font_reload_face_destroy` at 0x0c396b24. Thumb callable address 0x0c396b25.
+pub const CANOPUS_FW_FONT_RELOAD_FACE_DESTROY_CALLABLE: usize = canopus_thumb_callable(0x0c396b25usize);
+
 /// Recovered `lvx_list_item_add_content` at 0xc50fad0. Thumb callable address 0xc50fad1.
 pub const CANOPUS_FW_LVX_LIST_ITEM_ADD_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xc50fad1usize);
+
+/// Recovered `font_reload_glyph_pending_release` at 0x0c399b62. Thumb callable address 0x0c399b63.
+pub const CANOPUS_FW_FONT_RELOAD_GLYPH_PENDING_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c399b63usize);
 
 /// Recovered `bt_timer_cancel_owned` at 0xc863058. Thumb callable address 0xc863059.
 pub const CANOPUS_FW_BT_TIMER_CANCEL_OWNED_CALLABLE: usize = canopus_thumb_callable(0xc863059usize);
 
 /// Recovered `register_driver` at 0xc914f64. Thumb callable address 0xc914f65.
 pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc914f65usize);
+
+/// Recovered `font_reload_cache_release` at 0x0c8b9790. Thumb callable address 0x0c8b9791.
+pub const CANOPUS_FW_FONT_RELOAD_CACHE_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c8b9791usize);
 
 /// Recovered `write` at 0xc33dc4e. Thumb callable address 0xc33dc4f.
 pub const CANOPUS_FW_WRITE_CALLABLE: usize = canopus_thumb_callable(0xc33dc4fusize);
@@ -446,6 +497,9 @@ pub const CANOPUS_FW_SERVICE_MANAGER_REGISTER_CALLABLE: usize = canopus_thumb_ca
 
 /// Recovered `bt_adapter_get_scan_mode` at 0xc66b0c0. Thumb callable address 0xc66b0c1.
 pub const CANOPUS_FW_BT_ADAPTER_GET_SCAN_MODE_CALLABLE: usize = canopus_thumb_callable(0xc66b0c1usize);
+
+/// Recovered global `font_reload_draw_unit_slot` at 0x200bd318.
+pub const canopus_fw_font_reload_draw_unit_slot: usize = 0x200bd318usize;
 
 /// Recovered `lvx_object_set_size` at 0xc387ba8. Thumb callable address 0xc387ba9.
 pub const CANOPUS_FW_LVX_OBJECT_SET_SIZE_CALLABLE: usize = canopus_thumb_callable(0xc387ba9usize);
@@ -480,6 +534,15 @@ pub const CANOPUS_FW_LVX_STYLE_APPLY_CALLABLE: usize = canopus_thumb_callable(0x
 /// Recovered `sport_titlebar_dispatch` at 0xc341178. Thumb callable address 0xc341179.
 pub const CANOPUS_FW_SPORT_TITLEBAR_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc341179usize);
 
+/// Recovered `font_reload_vector_compare` at 0x0c69fec0. Thumb callable address 0x0c69fec1.
+pub const CANOPUS_FW_FONT_RELOAD_VECTOR_COMPARE_CALLABLE: usize = canopus_thumb_callable(0x0c69fec1usize);
+
+/// Recovered `font_reload_outline_destroy` at 0x0c3a09f4. Thumb callable address 0x0c3a09f5.
+pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_DESTROY_CALLABLE: usize = canopus_thumb_callable(0x0c3a09f5usize);
+
+/// Recovered `font_reload_outline_event` at 0x0c3981d0. Thumb callable address 0x0c3981d1.
+pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_EVENT_CALLABLE: usize = canopus_thumb_callable(0x0c3981d1usize);
+
 /// Recovered `bt_queue_external` at 0xc863bc4. Thumb callable address 0xc863bc5.
 pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(0xc863bc5usize);
 
@@ -489,8 +552,14 @@ pub const CANOPUS_FW_LV_TIMER_CREATE_CALLABLE: usize = canopus_thumb_callable(0x
 /// Recovered `exec_pop_lifecycle_without_cachepolicy` at 0x0c696e34. Thumb callable address 0x0c696e35.
 pub const CANOPUS_FW_EXEC_POP_LIFECYCLE_WITHOUT_CACHEPOLICY_CALLABLE: usize = canopus_thumb_callable(0x0c696e35usize);
 
+/// Recovered global `font_reload_style_refresh_enabled` at 0x200bd210.
+pub const canopus_fw_font_reload_style_refresh_enabled: usize = 0x200bd210usize;
+
 /// Recovered `page_finish` at 0xc69b5ac. Thumb callable address 0xc69b5ad.
 pub const CANOPUS_FW_PAGE_FINISH_CALLABLE: usize = canopus_thumb_callable(0xc69b5adusize);
+
+/// Recovered `font_reload_metrics_destroy` at 0x0c39fd94. Thumb callable address 0x0c39fd95.
+pub const CANOPUS_FW_FONT_RELOAD_METRICS_DESTROY_CALLABLE: usize = canopus_thumb_callable(0x0c39fd95usize);
 
 /// Recovered `lv_obj_set_style_bg_opa` at 0xc6c7dcc. Thumb callable address 0xc6c7dcd.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = canopus_thumb_callable(0xc6c7dcdusize);
@@ -506,6 +575,9 @@ pub const CANOPUS_FW_LVX_MSGBOX_SET_CONTENT_CALLABLE: usize = canopus_thumb_call
 
 /// Recovered `lvx_page_title_create` at 0xc89e7dc. Thumb callable address 0xc89e7dd.
 pub const CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc89e7ddusize);
+
+/// Recovered `font_reload_vg_dispatch` at 0x0c3913ec. Thumb callable address 0x0c3913ed.
+pub const CANOPUS_FW_FONT_RELOAD_VG_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0x0c3913edusize);
 
 /// Recovered `bt_l2cap_connect` at 0xc86f020. Thumb callable address 0xc86f021.
 pub const CANOPUS_FW_BT_L2CAP_CONNECT_CALLABLE: usize = canopus_thumb_callable(0xc86f021usize);
@@ -531,6 +603,9 @@ pub const CANOPUS_FW_BT_TIMER_CANCEL_CALLABLE: usize = canopus_thumb_callable(0x
 /// Recovered `heap_mallinfo` at 0xc3608b8. Thumb callable address 0xc3608b9.
 pub const CANOPUS_FW_HEAP_MALLINFO_CALLABLE: usize = canopus_thumb_callable(0xc3608b9usize);
 
+/// Recovered global `font_reload_count_cache_class` at 0x2ca16944.
+pub const canopus_fw_font_reload_count_cache_class: usize = 0x2ca16944usize;
+
 /// Recovered `heap_malloc` at 0xc3513e8. Thumb callable address 0xc3513e9.
 pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc3513e9usize);
 
@@ -552,6 +627,9 @@ pub const CANOPUS_FW_BT_GET_BOND_STATE_CALLABLE: usize = canopus_thumb_callable(
 /// Recovered `sem_trywait` at 0xc358c40. Thumb callable address 0xc358c41.
 pub const CANOPUS_FW_SEM_TRYWAIT_CALLABLE: usize = canopus_thumb_callable(0xc358c41usize);
 
+/// Recovered `font_reload_face_create` at 0x0c3967b4. Thumb callable address 0x0c3967b5.
+pub const CANOPUS_FW_FONT_RELOAD_FACE_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c3967b5usize);
+
 /// Recovered `bt_queue_free` at 0xc858998. Thumb callable address 0xc858999.
 pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc858999usize);
 
@@ -567,6 +645,9 @@ pub const CANOPUS_FW_SERVICE_MANAGER_GET_PROFILE_CALLABLE: usize = canopus_thumb
 /// Recovered `lv_image_cache_drop` at 0x0c3a3888. Thumb callable address 0x0c3a3889.
 pub const CANOPUS_FW_LV_IMAGE_CACHE_DROP_CALLABLE: usize = canopus_thumb_callable(0x0c3a3889usize);
 
+/// Recovered `font_reload_count_cache_init` at 0x0c3a9e48. Thumb callable address 0x0c3a9e49.
+pub const CANOPUS_FW_FONT_RELOAD_COUNT_CACHE_INIT_CALLABLE: usize = canopus_thumb_callable(0x0c3a9e49usize);
+
 /// Recovered `lvgl_posix_open` at 0x0c3a6194. Thumb callable address 0x0c3a6195.
 pub const CANOPUS_FW_LVGL_POSIX_OPEN_CALLABLE: usize = canopus_thumb_callable(0x0c3a6195usize);
 
@@ -579,6 +660,9 @@ pub const CANOPUS_FW_SDP_COMMIT_CALLABLE: usize = canopus_thumb_callable(0xc86f2
 /// Recovered `rename` at 0xc33d79c. Thumb callable address 0xc33d79d.
 pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0xc33d79dusize);
 
+/// Recovered `font_reload_outline_create` at 0x0c3a8bb8. Thumb callable address 0x0c3a8bb9.
+pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c3a8bb9usize);
+
 /// Recovered `page_navigator_open_page` at 0xc4eec84. Thumb callable address 0xc4eec85.
 pub const CANOPUS_FW_PAGE_NAVIGATOR_OPEN_PAGE_CALLABLE: usize = canopus_thumb_callable(0xc4eec85usize);
 
@@ -587,6 +671,12 @@ pub const CANOPUS_FW_IOCTL_CALLABLE: usize = canopus_thumb_callable(0xc341e39usi
 
 /// Recovered `bt_remove_bond_private` at 0xc3d5280. Thumb callable address 0xc3d5281.
 pub const CANOPUS_FW_BT_REMOVE_BOND_PRIVATE_CALLABLE: usize = canopus_thumb_callable(0xc3d5281usize);
+
+/// Recovered `font_reload_lv_free` at 0x0c3abe58. Thumb callable address 0x0c3abe59.
+pub const CANOPUS_FW_FONT_RELOAD_LV_FREE_CALLABLE: usize = canopus_thumb_callable(0x0c3abe59usize);
+
+/// Recovered `font_reload_outline_release` at 0x0c3a0992. Thumb callable address 0x0c3a0993.
+pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c3a0993usize);
 
 /// Recovered `sem_wait` at 0xc358ce0. Thumb callable address 0xc358ce1.
 pub const CANOPUS_FW_SEM_WAIT_CALLABLE: usize = canopus_thumb_callable(0xc358ce1usize);
@@ -599,6 +689,12 @@ pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb
 
 /// Recovered global `bt_l2cap_owner` at 0x200be890.
 pub const canopus_fw_bt_l2cap_owner: usize = 0x200be890usize;
+
+/// Recovered `font_reload_vector_destroy` at 0x0c6a12e4. Thumb callable address 0x0c6a12e5.
+pub const CANOPUS_FW_FONT_RELOAD_VECTOR_DESTROY_CALLABLE: usize = canopus_thumb_callable(0x0c6a12e5usize);
+
+/// Recovered `font_reload_outline_compare` at 0x0c39fdcc. Thumb callable address 0x0c39fdcd.
+pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_COMPARE_CALLABLE: usize = canopus_thumb_callable(0x0c39fdcdusize);
 
 /// Recovered `lvx_object_create` at 0xc380686. Thumb callable address 0xc380687.
 pub const CANOPUS_FW_LVX_OBJECT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc380687usize);
@@ -615,6 +711,15 @@ pub const CANOPUS_FW_BT_SOCKET_CLIENT_SENDRECV_CALLABLE: usize = canopus_thumb_c
 /// Recovered `driver_close_dispatch` at 0xc53e2bc. Thumb callable address 0xc53e2bd.
 pub const CANOPUS_FW_DRIVER_CLOSE_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc53e2bdusize);
 
+/// Recovered `font_reload_outline_acquire` at 0x0c3a7c44. Thumb callable address 0x0c3a7c45.
+pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0x0c3a7c45usize);
+
+/// Recovered `font_reload_ft_mul_fix` at 0x0c424304. Thumb callable address 0x0c424305.
+pub const CANOPUS_FW_FONT_RELOAD_FT_MUL_FIX_CALLABLE: usize = canopus_thumb_callable(0x0c424305usize);
+
+/// Recovered `font_reload_glyph_metrics` at 0x0c396b5c. Thumb callable address 0x0c396b5d.
+pub const CANOPUS_FW_FONT_RELOAD_GLYPH_METRICS_CALLABLE: usize = canopus_thumb_callable(0x0c396b5dusize);
+
 /// Recovered `bt_discovery_stop` at 0xc46a49a. Thumb callable address 0xc46a49b.
 pub const CANOPUS_FW_BT_DISCOVERY_STOP_CALLABLE: usize = canopus_thumb_callable(0xc46a49busize);
 
@@ -623,6 +728,9 @@ pub const CANOPUS_FW_SERVICE_MANAGER_CLEANUP_CALLABLE: usize = canopus_thumb_cal
 
 /// Recovered global `kmem_heap_slot` at 0x200b01c8.
 pub const canopus_fw_kmem_heap_slot: usize = 0x200b01c8usize;
+
+/// Recovered `font_reload_metrics_compare` at 0x0c39fd9a. Thumb callable address 0x0c39fd9b.
+pub const CANOPUS_FW_FONT_RELOAD_METRICS_COMPARE_CALLABLE: usize = canopus_thumb_callable(0x0c39fd9busize);
 
 /// Recovered `interconnect_send` at 0xc3605bc. Thumb callable address 0xc3605bd.
 pub const CANOPUS_FW_INTERCONNECT_SEND_CALLABLE: usize = canopus_thumb_callable(0xc3605bdusize);
@@ -642,6 +750,9 @@ pub const canopus_fw_umem_heap_slot: usize = 0x200b2590usize;
 /// Recovered `mm_memalign` at 0xc3507e8. Thumb callable address 0xc3507e9.
 pub const CANOPUS_FW_MM_MEMALIGN_CALLABLE: usize = canopus_thumb_callable(0xc3507e9usize);
 
+/// Recovered global `font_reload_vector_cache_slot` at 0x200d3280.
+pub const canopus_fw_font_reload_vector_cache_slot: usize = 0x200d3280usize;
+
 /// Recovered `bt_discovery_start` at 0xc46a472. Thumb callable address 0xc46a473.
 pub const CANOPUS_FW_BT_DISCOVERY_START_CALLABLE: usize = canopus_thumb_callable(0xc46a473usize);
 
@@ -656,6 +767,9 @@ pub const CANOPUS_FW_SERVICE_MANAGER_SHUTDOWN_CALLABLE: usize = canopus_thumb_ca
 
 /// Recovered `lvx_list_item_update` at 0xc50ec5c. Thumb callable address 0xc50ec5d.
 pub const CANOPUS_FW_LVX_LIST_ITEM_UPDATE_CALLABLE: usize = canopus_thumb_callable(0xc50ec5dusize);
+
+/// Recovered `font_reload_face_compare` at 0x0c396784. Thumb callable address 0x0c396785.
+pub const CANOPUS_FW_FONT_RELOAD_FACE_COMPARE_CALLABLE: usize = canopus_thumb_callable(0x0c396785usize);
 
 /// Recovered `bt_pair_request_reply` at 0xc46a9c4. Thumb callable address 0xc46a9c5.
 pub const CANOPUS_FW_BT_PAIR_REQUEST_REPLY_CALLABLE: usize = canopus_thumb_callable(0xc46a9c5usize);
@@ -687,6 +801,9 @@ pub const CANOPUS_FW__LV_INV_AREA_CALLABLE: usize = canopus_thumb_callable(0x0c3
 /// Recovered `lvx_msgbox_create` at 0xc43e7d0. Thumb callable address 0xc43e7d1.
 pub const CANOPUS_FW_LVX_MSGBOX_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc43e7d1usize);
 
+/// Recovered global `font_reload_vector_draw_unit_slot` at 0x200d327c.
+pub const canopus_fw_font_reload_vector_draw_unit_slot: usize = 0x200d327cusize;
+
 /// Recovered `lvx_image_set_scale` at 0xc3ae46e. Thumb callable address 0xc3ae46f.
 pub const CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE: usize = canopus_thumb_callable(0xc3ae46fusize);
 
@@ -695,6 +812,9 @@ pub const CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE: usize = canopus_thumb_callable(0x
 
 /// Recovered `bt_l2cap_submit_cid` at 0xc86f0cc. Thumb callable address 0xc86f0cd.
 pub const CANOPUS_FW_BT_L2CAP_SUBMIT_CID_CALLABLE: usize = canopus_thumb_callable(0xc86f0cdusize);
+
+/// Recovered `font_reload_ft_set_pixel_size` at 0x0c8b8a64. Thumb callable address 0x0c8b8a65.
+pub const CANOPUS_FW_FONT_RELOAD_FT_SET_PIXEL_SIZE_CALLABLE: usize = canopus_thumb_callable(0x0c8b8a65usize);
 
 /// Recovered `bt_socket_server_receive` at 0xc4b3218. Thumb callable address 0xc4b3219.
 pub const CANOPUS_FW_BT_SOCKET_SERVER_RECEIVE_CALLABLE: usize = canopus_thumb_callable(0xc4b3219usize);
@@ -720,6 +840,9 @@ pub const CANOPUS_FW_LV_OBJ_TREE_WALK_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `hfp_ag_connect` at 0xc46bdd8. Thumb callable address 0xc46bdd9.
 pub const CANOPUS_FW_HFP_AG_CONNECT_CALLABLE: usize = canopus_thumb_callable(0xc46bdd9usize);
 
+/// Recovered `font_reload_gradient_pending_release` at 0x0c395bd0. Thumb callable address 0x0c395bd1.
+pub const CANOPUS_FW_FONT_RELOAD_GRADIENT_PENDING_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c395bd1usize);
+
 /// Recovered `lv_event_get_user_data` at 0xc720f20. Thumb callable address 0xc720f21.
 pub const CANOPUS_FW_LV_EVENT_GET_USER_DATA_CALLABLE: usize = canopus_thumb_callable(0xc720f21usize);
 
@@ -734,6 +857,9 @@ pub const CANOPUS_FW_CACHE_D_CLEAN_ALL_CALLABLE: usize = canopus_thumb_callable(
 
 /// Recovered `app_install` at 0xc6ab350. Thumb callable address 0xc6ab351.
 pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc6ab351usize);
+
+/// Recovered `font_reload_cache_acquire_or_create` at 0x0c3a7b78. Thumb callable address 0x0c3a7b79.
+pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c3a7b79usize);
 
 // ---- excluded symbols ----
 // _lv_inv_area: restricted - not exported until context/ownership approved
@@ -785,6 +911,37 @@ pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc6ab
 // font_manager_add_path: restricted - not exported until context/ownership approved
 // font_manager_generate_def_path: restricted - not exported until context/ownership approved
 // font_manager_remove_path: restricted - not exported until context/ownership approved
+// font_reload_cache_acquire: restricted - not exported until context/ownership approved
+// font_reload_cache_acquire_or_create: restricted - not exported until context/ownership approved
+// font_reload_cache_release: restricted - not exported until context/ownership approved
+// font_reload_count_cache_init: restricted - not exported until context/ownership approved
+// font_reload_drop_face_id: restricted - not exported until context/ownership approved
+// font_reload_face_compare: restricted - not exported until context/ownership approved
+// font_reload_face_create: restricted - not exported until context/ownership approved
+// font_reload_face_destroy: restricted - not exported until context/ownership approved
+// font_reload_ft_mul_fix: restricted - not exported until context/ownership approved
+// font_reload_ft_set_pixel_size: restricted - not exported until context/ownership approved
+// font_reload_glyph_metrics: restricted - not exported until context/ownership approved
+// font_reload_glyph_pending_release: restricted - not exported until context/ownership approved
+// font_reload_gradient_pending_release: restricted - not exported until context/ownership approved
+// font_reload_image_pending_release: restricted - not exported until context/ownership approved
+// font_reload_list_remove: restricted - not exported until context/ownership approved
+// font_reload_lv_free: restricted - not exported until context/ownership approved
+// font_reload_lv_malloc: restricted - not exported until context/ownership approved
+// font_reload_metrics_compare: restricted - not exported until context/ownership approved
+// font_reload_metrics_create: restricted - not exported until context/ownership approved
+// font_reload_metrics_destroy: restricted - not exported until context/ownership approved
+// font_reload_outline_acquire: restricted - not exported until context/ownership approved
+// font_reload_outline_compare: restricted - not exported until context/ownership approved
+// font_reload_outline_create: restricted - not exported until context/ownership approved
+// font_reload_outline_destroy: restricted - not exported until context/ownership approved
+// font_reload_outline_event: restricted - not exported until context/ownership approved
+// font_reload_outline_release: restricted - not exported until context/ownership approved
+// font_reload_sw_dispatch: restricted - not exported until context/ownership approved
+// font_reload_vector_compare: restricted - not exported until context/ownership approved
+// font_reload_vector_destroy: restricted - not exported until context/ownership approved
+// font_reload_vector_drop: restricted - not exported until context/ownership approved
+// font_reload_vg_dispatch: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved
 // heap_free: restricted - not exported until context/ownership approved
 // heap_mallinfo: restricted - not exported until context/ownership approved
