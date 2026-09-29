@@ -38,12 +38,15 @@ def lua(value):
     return str(value)
 
 
-def render(product, targets):
-    if product == 'resource-hook' and (not targets or any(t not in ['xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155'] for t in targets)):
-        raise ValueError('resource-hook supports only Band 11 .139/.155')
+def render(product, targets, module_id=None):
+    valid_rh = ['xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155', 'xiaomi-band-10-pro-3.101.043']
+    if product == 'resource-hook' and (not targets or any(t not in valid_rh for t in targets)):
+        raise ValueError('resource-hook supports only Band 11 .139/.155 or 10 Pro .043')
     if not targets or len({t.rsplit('-', 1)[0] for t in targets}) != 1:
         raise ValueError('a watchface must contain exactly one device family')
     token, title, maximum, assets = PRODUCTS[product]
+    if module_id:
+        token = module_id
     configs = {}
     for target in targets:
         if target not in SUPPORTED:
@@ -92,6 +95,7 @@ def verify_signature(receipt):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--product', choices=PRODUCTS, required=True)
+    parser.add_argument('--module-id', default=None, help='override receipt module token (e.g. corona)')
     parser.add_argument('--target', action='append', required=True)
     parser.add_argument('--payload-dir', type=Path, required=True)
     parser.add_argument('--assets-dir', type=Path, required=True)
@@ -146,7 +150,7 @@ def device_is_band11(targets):
 
 
 def build_device(args, validate_only=False):
-    source, config = render(args.product, args.target)
+    source, config = render(args.product, args.target, getattr(args, 'module_id', None))
     resources = {'main.lua': source.encode()}
     for item in config['targets'].values():
         target = item['id']
