@@ -16,6 +16,11 @@
 #include "canopus_target_config.h"
 #ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
 #include "band11/canopus_band11_abi.h"
+#elif defined(CANOPUS_SUP_P65_RESIDENT)
+#include "p65/canopus_p65_abi.h"
+#endif
+#if defined(CANOPUS_SUP_BAND11_BOOTSTRAP) || defined(CANOPUS_SUP_P65_RESIDENT)
+#define CANOPUS_SUP_RESIDENT_DRIVER 1
 #endif
 #include "canopus_installer_bundle.h"
 #include "canopus_module_registration.h"
@@ -196,11 +201,11 @@ static int sup_register_device(void *cookie)
     /* The exact firmware wrapper discards inode_reserve failures and returns
      * the inode-lock release result. Remove a stale same-name inode first so
      * repeated loader attempts cannot be misreported as successful register. */
-#ifndef CANOPUS_SUP_BAND11_BOOTSTRAP
+#ifndef CANOPUS_SUP_RESIDENT_DRIVER
     (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
     (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_INSTALLER_PATH);
 #endif
-#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+#ifdef CANOPUS_SUP_RESIDENT_DRIVER
     /* Never replace a live resident Supervisor's device node. */
     fd = open_file(CANOPUS_SUP_DEVICE_PATH, CANOPUS_SUP_NUTTX_O_RDONLY);
     if (fd >= 0) { (void)close_file(fd); return -17; }
@@ -218,7 +223,7 @@ static int sup_register_device(void *cookie)
         if (error > CANOPUS_SUP_REGISTER_ERRNO_MAX) {
             error = CANOPUS_SUP_REGISTER_ERRNO_MAX;
         }
-    #ifndef CANOPUS_SUP_BAND11_BOOTSTRAP
+    #ifndef CANOPUS_SUP_RESIDENT_DRIVER
     (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_DEVICE_PATH);
 #endif
         return -(CANOPUS_SUP_REGISTER_VERIFY_ERRNO_BASE + error);
@@ -236,7 +241,7 @@ static int sup_register_device(void *cookie)
 static int sup_unregister_device(void *cookie)
 {
     (void)cookie;
-#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+#ifdef CANOPUS_SUP_RESIDENT_DRIVER
     return -38; /* resident Supervisor: teardown is reboot, not an unverified ABI */
 #else
     (void)CANOPUS_SUP_UNREGISTER_DRIVER(CANOPUS_SUP_INSTALLER_PATH);

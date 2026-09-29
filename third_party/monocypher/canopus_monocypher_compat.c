@@ -6,6 +6,17 @@
  */
 #include <stdint.h>
 
+/* Clang may lower structure copies to EABI even in freestanding builds. */
+void __aeabi_memcpy(void *destination, const void *source, uint32_t size)
+{
+    volatile uint8_t *out = (volatile uint8_t *)destination;
+    const volatile uint8_t *in = (const volatile uint8_t *)source;
+    while (size != 0u) {
+        *out++ = *in++;
+        size--;
+    }
+}
+
 void __aeabi_memclr4(void *destination, uint32_t size)
 {
     volatile uint8_t *bytes = (volatile uint8_t *)destination;

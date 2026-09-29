@@ -177,11 +177,15 @@ int32_t canopus_supervisor_module_initialize(
     if (canopus_sup_platform.unregister_device == 0) return -1;
 #endif
 
+    /* Reject a wrong firmware before any registered callback can escape. */
+    if (canopus_identity_guard() != 0) return -1;
     canopus_sup_ctor();
-    if (!g_device_registered) {
-        return -1;
-    }
-
+#ifndef CANOPUS_SUP_P65_RESIDENT
+    if (!g_device_registered) return -1;
+#endif
+    /* Resident registration can fail after publishing the first fops table.
+     * Keep this image alive even then: modlib must not free escaped callbacks.
+     * The operator can inspect lsmod and reboot before retrying. */
     unload_pair->callback = canopus_sup_p65_unload;
     unload_pair->context = 0;
     return 0;
