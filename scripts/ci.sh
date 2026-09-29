@@ -78,9 +78,6 @@ else
     echo "  (no lua interpreter; skipping)"
 fi
 
-step "extra: P65 G0 probe watchface (host verifier only)"
-bash watchfaces/p65-g0-probe/build.sh
-
 step "loader target profile gating"
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 

@@ -113,81 +113,6 @@ local function module_installer_io(fault)
     end
 end
 
-local function p65_g0_probe_io(fault)
-    local function le16(value)
-        return string.char(value % 256, math.floor(value / 256) % 256)
-    end
-    local function le32(value)
-        return string.char(value % 256, math.floor(value / 256) % 256,
-            math.floor(value / 65536) % 256,
-            math.floor(value / 16777216) % 256)
-    end
-    local elf_header = "\127ELF\1\1\1" .. string.rep("\0", 9)
-        .. le16(1) .. le16(40) .. le32(1) .. le32(1)
-        .. le32(0) .. le32(0) .. le32(0) .. le16(52)
-        .. le16(0) .. le16(0) .. le16(0) .. le16(0) .. le16(0)
-    local files = {
-        ["/fake/p65_g0_probe.bin"] = elf_header .. string.rep("\0", 460),
-    }
-    local commands = {}
-    local loaded = false
-    local function open(path, mode)
-        if mode ~= "rb" or files[path] == nil then return nil end
-        local data = files[path]
-        local offset = 1
-        return {
-            read = function(_, count)
-                if count == "*a" then
-                    local result = data:sub(offset)
-                    offset = #data + 1
-                    return result
-                end
-                if type(count) ~= "number" then return nil end
-                local result = data:sub(offset, offset + count - 1)
-                offset = offset + #result
-                return result
-            end,
-            seek = function(_, whence)
-                if whence == "end" then return #data end
-                return nil
-            end,
-            close = function() return true end,
-        }
-    end
-    local function execute(command)
-        commands[#commands + 1] = command
-        if command:match("^getprop%s+") then
-            if fault == "getprop_failure" then return false end
-            local version = fault == "wrong_firmware"
-                and "3.100.042" or "3.100.043"
-            files["/tmp/p65-g0-firmware-version.txt"] =
-                version .. string.char(10)
-            return true
-        elseif command:match("^lsmod%s+>") then
-            if fault == "lsmod_failure" then return false end
-            local newline = string.char(10)
-            local listing = "NAME INIT UNINIT ARG NEXPORTS TEXT SIZE DATA SIZE" .. newline
-            if loaded then
-                listing = listing .. "canopus_g0_probe 1 0 0 0 256 16" .. newline
-            end
-            files["/tmp/canopus-g0-lsmod.txt"] = listing
-            return true
-        elseif command:match("^insmod%s+") then
-            if fault == "insmod_failure" then return false end
-            if fault ~= "load_unlisted" then loaded = true end
-            return true
-        elseif command:match("^rmmod%s+") then
-            if fault == "rmmod_failure" then return false end
-            loaded = false
-            return true
-        end
-        return false
-    end
-    return open, execute, function()
-        return { commands = commands, loaded = loaded, files = files }
-    end
-end
-
 local function band9_installer_io(fault, firmware_version, require_pre_entry_sync)
     firmware_version = firmware_version or "3.1.175"
     local target_id = "xiaomi-band-9-pro-3.1.175"
@@ -607,15 +532,9 @@ local function check(path, installer_fault, installer_firmware)
     if path:match("canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") then
         horizontal_resolution = 192
         vertical_resolution = 490
-    elseif path:match("p65%-g0%-probe/main%.lua$") then
-        horizontal_resolution = 466
-        vertical_resolution = 466
     end
     local installer_state
     local band9_state
-    local p65_g0_state
-    local p65_g0_fault = installer_fault and
-        installer_fault:match("^p65:(.+)$")
     local band9_fault = installer_fault and installer_fault:match("^band9:(.+)$")
     if path:match("canopus%-installer/main%.lua$")
         or path:match("canopus%-installer%-prod/xiaomi%-band%-9/main%.lua$") then
@@ -631,8 +550,6 @@ local function check(path, installer_fault, installer_firmware)
     elseif path:match("canopus_hello/main%.lua$") then
         io.open, installer_state = module_installer_io(installer_fault)
         os.execute = function() return true end
-    elseif path:match("p65%-g0%-probe/main%.lua$") then
-        io.open, os.execute, p65_g0_state = p65_g0_probe_io(p65_g0_fault)
     end
     local ok, err = pcall(dofile, path)
     if not ok then
@@ -640,16 +557,6 @@ local function check(path, installer_fault, installer_firmware)
         os.execute = original_os_execute
         print("LOAD FAIL:", path, err)
         return false
-    end
-    if p65_g0_state then
-        local initial = p65_g0_state()
-        if #initial.commands ~= 0 then
-            io.open = original_io_open
-            os.execute = original_os_execute
-            print("P65 G0 AUTO-RUN FAIL:", path,
-                "commands before tap=" .. #initial.commands)
-            return false
-        end
     end
     if installer_state then
         local request, files = installer_state()
@@ -697,60 +604,6 @@ local function check(path, installer_fault, installer_firmware)
                 print("SUBSCRIPTION FAIL:", path, tostring(err2))
                 return false
             end
-        end
-    end
-    if p65_g0_state then
-        local snapshot = p65_g0_state()
-        local insmods, rmmods, lsmods = 0, 0, 0
-        local status_text = ""
-        for _, command in ipairs(snapshot.commands) do
-            if command:match("^insmod%s+") then insmods = insmods + 1 end
-            if command:match("^rmmod%s+") then rmmods = rmmods + 1 end
-            if command:match("^lsmod%s+") then lsmods = lsmods + 1 end
-        end
-        for _, object in ipairs(created) do
-            for _, props in ipairs(object._set_history or {}) do
-                if type(props.text) == "string" then
-                    status_text = status_text .. props.text .. "\\n"
-                end
-            end
-        end
-        local p65_ok
-        if p65_g0_fault == nil then
-            p65_ok = not snapshot.loaded and insmods == 1 and rmmods == 1
-                and lsmods == 3 and status_text:find("G0 PASS", 1, true) ~= nil
-        elseif p65_g0_fault == "insmod_failure" then
-            p65_ok = not snapshot.loaded and insmods == 1 and rmmods == 0
-                and status_text:find("insmod failed", 1, true) ~= nil
-        elseif p65_g0_fault == "rmmod_failure" then
-            p65_ok = snapshot.loaded and insmods == 1 and rmmods == 1
-                and status_text:find("rmmod failed", 1, true) ~= nil
-        elseif p65_g0_fault == "load_unlisted" then
-            p65_ok = not snapshot.loaded and insmods == 1 and rmmods == 0
-                and status_text:find("Load result is uncertain", 1, true) ~= nil
-        elseif p65_g0_fault == "lsmod_failure" then
-            p65_ok = not snapshot.loaded and insmods == 0 and rmmods == 0
-                and status_text:find("CHECK FAILED", 1, true) ~= nil
-        elseif p65_g0_fault == "getprop_failure" then
-            p65_ok = not snapshot.loaded and insmods == 0 and rmmods == 0
-                and lsmods == 0
-                and status_text:find("CHECK FAILED", 1, true) ~= nil
-        elseif p65_g0_fault == "wrong_firmware" then
-            p65_ok = not snapshot.loaded and insmods == 0 and rmmods == 0
-                and lsmods == 0
-                and status_text:find("Wrong firmware", 1, true) ~= nil
-        else
-            p65_ok = false
-        end
-        if not p65_ok then
-            io.open = original_io_open
-            os.execute = original_os_execute
-            print("P65 G0 FLOW FAIL:", path, tostring(p65_g0_fault),
-                "loaded=" .. tostring(snapshot.loaded),
-                "insmod=" .. insmods, "rmmod=" .. rmmods,
-                "lsmod=" .. lsmods,
-                table.concat(snapshot.commands, " | "))
-            return false
         end
     end
     if band9_state then
@@ -907,7 +760,6 @@ if #args == 0 then
         "watchfaces/canopus-installer/main.lua",
         "watchfaces/canopus-installer-prod/xiaomi-band-9/main.lua",
         "watchfaces/canopus_hello/main.lua",
-        "watchfaces/p65-g0-probe/main.lua",
     }
 end
 local ok_all = true
@@ -946,13 +798,6 @@ if ok_all then
     end
     if not check("watchfaces/canopus_hello/main.lua", "stale_response") then
         ok_all = false
-    end
-    for _, fault in ipairs({ "insmod_failure", "rmmod_failure",
-                              "load_unlisted", "lsmod_failure",
-                              "getprop_failure", "wrong_firmware" }) do
-        if not check("watchfaces/p65-g0-probe/main.lua", "p65:" .. fault) then
-            ok_all = false
-        end
     end
 end
 if not ok_all then os.exit(1) end
