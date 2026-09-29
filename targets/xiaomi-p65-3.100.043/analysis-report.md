@@ -68,6 +68,41 @@ At the Canopus integration boundary, `canopus-target-generated` can select the P
 
 Address-map note: the supplied full OTA archive includes `vela_ap.bin`, `vela_audio.bin`, `vela_ota.bin`, `vela_resource.bin`, and `vela_sensor.bin`. `best1503_vela.py` maps `vela_ap.bin` to XIP `0x0C0C0000` with cached/non-cached aliases `0x2C0C0000`/`0x280C0000`; `vela_ota.bin` is a separate ARM ELF whose PT_LOAD mappings include `0x3C800000` and `0x00200200`, not `0x1C...`. AP trampolines target `0x1C...` addresses outside the AP mapping. In this report, “ROM target” is shorthand for that address-map inference; whether `0x1C...` is silicon ROM or another resident system mapping is not independently verified. This is not a claim that the provided full OTA package is incomplete.
 
+## Host file-I/O adapter for the P65 registry
+
+`manager/target/p65/canopus_manager_p65_registry.{h,c}` now includes an
+injected file adapter between the existing dual-slot store and normalized
+open/size/read/write/close operations. It handles short transfers, rejects
+zero-progress and invalid transfer counts, closes every successfully opened
+handle on failure, propagates close errors, and reports oversized slot lengths
+without overflowing the supplied buffer. Only an exact-sized registry record
+may be written. Missing read-only files are distinguished from I/O failures;
+invalid configuration clears the adapter rather than retaining old hooks.
+
+Integration order (all objects, paths, and operation tables must remain alive):
+
+```c
+/* file_ops are caller-provided normalized wrappers, not raw firmware APIs. */
+canopus_manager_p65_registry_files_init(
+    &files, &file_ops, io_cookie, slot0_path, slot1_path);
+canopus_manager_p65_registry_store_init(
+    &store, &canopus_manager_p65_registry_file_io, &files);
+/* Check both return codes before using store as the persist/restore cookie. */
+```
+
+The provider must create/truncate only the selected slot, supply an exact file
+size, normalize errors, and ensure both paths refer to distinct files in an
+existing directory. Access is serialized; external writers and path aliases are
+not supported. No fsync, atomic-rename, power-loss durability, target path, or
+firmware function address is assumed. This adapter does not install a P65
+filesystem provider or make the Supervisor deployable.
+
+Host regression tests exercise short-transfer round trips, fallback after a
+failed inactive-slot write, read/write/size/open/close failures, invalid transfer
+counts, missing files, rejected configurations, and bounded oversized reads.
+The complete host suite, ASan/UBSan suite, and Cortex-M33 freestanding compile
+passed. These are host results, not P65 device evidence.
+
 ## P65 LVX list callback ABI (internal only)
 
 The P65 `lvx_list` path has a 40-byte configuration table copied by code at `0x0C2358C4` to list-object offsets `+92..+128`. `0x0C2401D4` supplies built-in ROM Thumb callback pointers; the callback bodies are outside the AP database. A concrete `sub_C764170` all-list caller creates a list widget through `0x0C8BE008(parent, 0x3C19D9EC)`, binds callbacks with `0x0C8BEF60(list, table)`, then finalizes via `0x0C8BEBC0(list)`. Its table binds key/type `sub_C763B84`, create `sub_C764638`, update `sub_C7644A0`, count `sub_C763B34`, and count-like helpers at `+116/+120`. The row callbacks use P65's all_list storage and class `listview`; their ABI is now concrete, but their data model is not a direct Canopus snapshot adapter. `sub_C764638` creates each row via ROM class-create trampoline `0x0C8BEB70(class=0x3C21B55C,parent)`, then creates label children through `0x0C78BCB4` using label-class descriptor `0x3C224844`. The listview class data at XIP `0x0C30B320` names `listview` and its packed `+32` size decodes to 76 bytes. These are row-building candidates for a target adapter; their ownership and event drain must still be proven.

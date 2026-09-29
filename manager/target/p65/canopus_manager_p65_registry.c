@@ -2,6 +2,89 @@
 #include "canopus_manager_p65_registry.h"
 #include "canopus_memory.h"
 
+int canopus_manager_p65_registry_files_init(
+    struct canopus_manager_p65_registry_files_v1 *files,
+    const struct canopus_p65_registry_file_ops_v1 *ops, void *cookie,
+    const char *slot0_path, const char *slot1_path)
+{
+    uint32_t i = 0u;
+    if (files == 0) return CANOPUS_P65_REGISTRY_ERR_ARGUMENT;
+    canopus_memset(files, 0, sizeof(*files));
+    if (ops == 0 || ops->open == 0 || ops->size == 0 || ops->read == 0 ||
+        ops->write == 0 || ops->close == 0 || slot0_path == 0 ||
+        slot1_path == 0 || slot0_path[0] == '\0' || slot1_path[0] == '\0') {
+        return CANOPUS_P65_REGISTRY_ERR_ARGUMENT;
+    }
+    while (slot0_path[i] != '\0' && slot0_path[i] == slot1_path[i]) i++;
+    if (slot0_path[i] == slot1_path[i]) {
+        return CANOPUS_P65_REGISTRY_ERR_ARGUMENT;
+    }
+    files->ops = ops;
+    files->cookie = cookie;
+    files->paths[0] = slot0_path;
+    files->paths[1] = slot1_path;
+    return CANOPUS_P65_REGISTRY_OK;
+}
+
+static int p65_file_read_slot(void *cookie, uint32_t slot, uint8_t *buffer,
+                              uint32_t capacity, uint32_t *actual_size)
+{
+    struct canopus_manager_p65_registry_files_v1 *files = cookie;
+    uint32_t length = 0u, offset = 0u, limit;
+    int handle, result = CANOPUS_P65_REGISTRY_ERR_IO;
+    if (actual_size != 0) *actual_size = 0u;
+    if (files == 0 || files->ops == 0 ||
+        slot >= CANOPUS_P65_REGISTRY_SLOT_COUNT || buffer == 0 ||
+        actual_size == 0) return CANOPUS_P65_REGISTRY_ERR_ARGUMENT;
+    handle = files->ops->open(files->cookie, files->paths[slot], 0);
+    if (handle == -2) return CANOPUS_P65_REGISTRY_ABSENT;
+    if (handle < 0) return CANOPUS_P65_REGISTRY_ERR_IO;
+    if (files->ops->size(files->cookie, handle, &length) != 0) goto done;
+    limit = length < capacity ? length : capacity;
+    while (offset < limit) {
+        int32_t count = files->ops->read(files->cookie, handle,
+                                        buffer + offset, limit - offset);
+        if (count <= 0 || (uint32_t)count > limit - offset) goto done;
+        offset += (uint32_t)count;
+    }
+    *actual_size = length;
+    result = CANOPUS_P65_REGISTRY_OK;
+done:
+    if (files->ops->close(files->cookie, handle) != 0)
+        result = CANOPUS_P65_REGISTRY_ERR_IO;
+    if (result != CANOPUS_P65_REGISTRY_OK) *actual_size = 0u;
+    return result;
+}
+
+static int p65_file_write_slot(void *cookie, uint32_t slot,
+                               const uint8_t *buffer, uint32_t size)
+{
+    struct canopus_manager_p65_registry_files_v1 *files = cookie;
+    uint32_t offset = 0u;
+    int handle, result = CANOPUS_P65_REGISTRY_ERR_IO;
+    if (files == 0 || files->ops == 0 ||
+        slot >= CANOPUS_P65_REGISTRY_SLOT_COUNT || buffer == 0 ||
+        size != CANOPUS_P65_REGISTRY_RECORD_SIZE)
+        return CANOPUS_P65_REGISTRY_ERR_ARGUMENT;
+    handle = files->ops->open(files->cookie, files->paths[slot], 1);
+    if (handle < 0) return CANOPUS_P65_REGISTRY_ERR_IO;
+    while (offset < size) {
+        int32_t count = files->ops->write(files->cookie, handle,
+                                         buffer + offset, size - offset);
+        if (count <= 0 || (uint32_t)count > size - offset) goto done;
+        offset += (uint32_t)count;
+    }
+    result = CANOPUS_P65_REGISTRY_OK;
+done:
+    if (files->ops->close(files->cookie, handle) != 0)
+        result = CANOPUS_P65_REGISTRY_ERR_IO;
+    return result;
+}
+
+const struct canopus_p65_registry_io_v1 canopus_manager_p65_registry_file_io = {
+    p65_file_read_slot, p65_file_write_slot,
+};
+
 #define P65_REGISTRY_HEADER_MAGIC 0u
 #define P65_REGISTRY_HEADER_VERSION 4u
 #define P65_REGISTRY_HEADER_SEQUENCE 8u

@@ -43,6 +43,39 @@ struct canopus_p65_registry_io_v1 {
                       uint32_t size);
 };
 
+/* Normalized file operations, not firmware function-pointer signatures.
+ * open(replace=1) must create/truncate only the requested file; replace=0
+ * opens read-only. Return a nonnegative handle, -2 for a missing read-only
+ * file, or another negative error. size returns the exact byte length.
+ * read/write return transferred bytes (short transfers are supported), or a
+ * negative error. Providers handle interrupted syscalls themselves. close
+ * returns zero on success. No firmware addresses or open flags are assumed.
+ * Paths and ops must outlive the adapter, name distinct files, and be owned
+ * by the caller. The directory must already exist. Access must be serialized;
+ * external writers/path aliases are unsupported. No durability is promised. */
+struct canopus_p65_registry_file_ops_v1 {
+    int (*open)(void *cookie, const char *path, int replace);
+    int (*size)(void *cookie, int handle, uint32_t *size);
+    int32_t (*read)(void *cookie, int handle, uint8_t *buffer, uint32_t size);
+    int32_t (*write)(void *cookie, int handle, const uint8_t *buffer,
+                     uint32_t size);
+    int (*close)(void *cookie, int handle);
+};
+
+struct canopus_manager_p65_registry_files_v1 {
+    const struct canopus_p65_registry_file_ops_v1 *ops;
+    void *cookie;
+    const char *paths[CANOPUS_P65_REGISTRY_SLOT_COUNT];
+};
+
+int canopus_manager_p65_registry_files_init(
+    struct canopus_manager_p65_registry_files_v1 *files,
+    const struct canopus_p65_registry_file_ops_v1 *ops, void *cookie,
+    const char *slot0_path, const char *slot1_path);
+
+extern const struct canopus_p65_registry_io_v1
+    canopus_manager_p65_registry_file_io;
+
 /* Caller-owned state; scratch is kept out of the Supervisor's call stack. */
 struct canopus_manager_p65_registry_store_v1 {
     const struct canopus_p65_registry_io_v1 *io;

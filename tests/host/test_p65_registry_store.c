@@ -291,7 +291,188 @@ TEST(p65_registry_rejects_bad_registry_payload)
              CANOPUS_P65_REGISTRY_ERR_ARGUMENT);
 }
 
+/* File-level fake: handles deliberately include zero, and every transfer is
+ * short. Firmware wrappers must normalize their own flags/errno to this ABI. */
+struct fake_p65_files {
+    struct fake_p65_registry_io disk;
+    uint32_t position[2];
+    int opens, closes, live;
+    int fail_open, fail_size, fail_close, fail_read, fail_write;
+};
+
+static int files_open(void *cookie, const char *path, int replace)
+{
+    struct fake_p65_files *f = cookie;
+    int slot = strcmp(path, "slot0") == 0 ? 0 : 1;
+    f->opens++;
+    if (f->fail_open) return -1;
+    if (!replace && !f->disk.present[slot]) return -2;
+    if (replace) {
+        f->disk.present[slot] = 1;
+        f->disk.sizes[slot] = 0;
+    }
+    f->position[slot] = 0;
+    f->live++;
+    return slot;
+}
+
+static int files_size(void *cookie, int handle, uint32_t *size)
+{
+    struct fake_p65_files *f = cookie;
+    *size = f->disk.sizes[handle];
+    return f->fail_size ? -1 : 0;
+}
+
+static int32_t files_read(void *cookie, int handle, uint8_t *buf, uint32_t size)
+{
+    struct fake_p65_files *f = cookie;
+    uint32_t n = size > 7 ? 7 : size;
+    if (f->fail_read == 1) return -1;
+    if (f->fail_read == 2) return 0;
+    if (f->fail_read == 3) return (int32_t)size + 1;
+    if (n > f->disk.sizes[handle] - f->position[handle])
+        n = f->disk.sizes[handle] - f->position[handle];
+    memcpy(buf, f->disk.slots[handle] + f->position[handle], n);
+    f->position[handle] += n;
+    return (int32_t)n;
+}
+
+static int32_t files_write(void *cookie, int handle, const uint8_t *buf,
+                           uint32_t size)
+{
+    struct fake_p65_files *f = cookie;
+    uint32_t n = size > 11 ? 11 : size;
+    if (f->fail_write == 1) return -1;
+    if (f->fail_write == 2) return 0;
+    if (f->fail_write == 3) return (int32_t)size + 1;
+    memcpy(f->disk.slots[handle] + f->position[handle], buf, n);
+    f->position[handle] += n;
+    f->disk.sizes[handle] = f->position[handle];
+    return (int32_t)n;
+}
+
+static int files_close(void *cookie, int handle)
+{
+    struct fake_p65_files *f = cookie;
+    (void)handle;
+    f->closes++;
+    f->live--;
+    return f->fail_close ? -1 : 0;
+}
+
+static const struct canopus_p65_registry_file_ops_v1 file_ops = {
+    files_open, files_size, files_read, files_write, files_close,
+};
+
+TEST(p65_registry_files_roundtrip_and_fallback)
+{
+    struct fake_p65_files f = {0};
+    struct canopus_manager_p65_registry_files_v1 files;
+    struct canopus_manager_p65_registry_store_v1 store;
+    uint8_t data[CANOPUS_SUP_REGISTRY_SIZE], out[CANOPUS_SUP_REGISTRY_SIZE];
+    CHECK_EQ(canopus_manager_p65_registry_files_init(
+        &files, &file_ops, &f, "slot0", "slot1"), 0);
+    CHECK_EQ(canopus_manager_p65_registry_store_init(
+        &store, &canopus_manager_p65_registry_file_io, &files), 0);
+    CHECK_EQ(canopus_manager_p65_registry_restore(&store, out, sizeof(out)), 1);
+    make_registry(data, 0x12);
+    CHECK_EQ(canopus_manager_p65_registry_persist(&store, data, sizeof(data)), 0);
+    make_registry(data, 0x34);
+    CHECK_EQ(canopus_manager_p65_registry_persist(&store, data, sizeof(data)), 0);
+    CHECK_EQ(canopus_manager_p65_registry_restore(&store, out, sizeof(out)), 0);
+    CHECK(memcmp(data, out, sizeof(data)) == 0);
+    f.fail_write = 2;
+    CHECK(canopus_manager_p65_registry_persist(&store, data, sizeof(data)) < 0);
+    f.fail_write = 0;
+    CHECK_EQ(canopus_manager_p65_registry_restore(&store, out, sizeof(out)), 0);
+    CHECK(memcmp(data, out, sizeof(data)) == 0);
+    CHECK_EQ(f.live, 0);
+}
+
+TEST(p65_registry_files_failure_cleanup)
+{
+    struct fake_p65_files f = {0};
+    struct canopus_manager_p65_registry_files_v1 files;
+    const struct canopus_p65_registry_io_v1 *io =
+        &canopus_manager_p65_registry_file_io;
+    uint8_t data[CANOPUS_P65_REGISTRY_RECORD_SIZE] = {0};
+    uint32_t actual;
+    int mode;
+    CHECK_EQ(canopus_manager_p65_registry_files_init(
+        &files, &file_ops, &f, "slot0", "slot1"), 0);
+    for (mode = 1; mode <= 3; mode++) {
+        f.fail_write = mode;
+        CHECK(io->write_slot(&files, 0, data, sizeof(data)) < 0);
+        CHECK_EQ(f.live, 0);
+    }
+    f.fail_write = 0;
+    CHECK_EQ(io->write_slot(&files, 0, data, sizeof(data)), 0);
+    for (mode = 1; mode <= 3; mode++) {
+        f.fail_read = mode;
+        actual = 99;
+        CHECK(io->read_slot(&files, 0, data, sizeof(data), &actual) < 0);
+        CHECK_EQ(actual, 0u);
+        CHECK_EQ(f.live, 0);
+    }
+    f.fail_read = 0;
+    f.fail_size = 1;
+    CHECK(io->read_slot(&files, 0, data, sizeof(data), &actual) < 0);
+    f.fail_size = 0;
+    f.fail_close = 1;
+    CHECK(io->read_slot(&files, 0, data, sizeof(data), &actual) < 0);
+    CHECK_EQ(actual, 0u);
+    CHECK(io->write_slot(&files, 0, data, sizeof(data)) < 0);
+    CHECK_EQ(f.live, 0);
+    CHECK_EQ(f.opens, f.closes);
+    f.fail_close = 0;
+    f.fail_open = 1;
+    mode = f.closes;
+    CHECK(io->read_slot(&files, 0, data, sizeof(data), &actual) < 0);
+    CHECK(io->write_slot(&files, 0, data, sizeof(data)) < 0);
+    CHECK_EQ(f.closes, mode);
+}
+
+TEST(p65_registry_files_bounds_and_configuration)
+{
+    struct fake_p65_files f = {0};
+    struct canopus_manager_p65_registry_files_v1 files;
+    struct canopus_p65_registry_file_ops_v1 incomplete = file_ops;
+    const struct canopus_p65_registry_io_v1 *io =
+        &canopus_manager_p65_registry_file_io;
+    uint8_t data[CANOPUS_P65_REGISTRY_RECORD_SIZE + 1] = {0};
+    uint32_t actual = 99;
+    CHECK(canopus_manager_p65_registry_files_init(
+        &files, &file_ops, &f, "slot0", "slot0") < 0);
+    CHECK(files.ops == 0);
+    CHECK(io->read_slot(&files, 0, data, sizeof(data), &actual) < 0);
+    incomplete.close = 0;
+    CHECK(canopus_manager_p65_registry_files_init(
+        &files, &incomplete, &f, "slot0", "slot1") < 0);
+    CHECK(canopus_manager_p65_registry_files_init(
+        &files, &file_ops, &f, "", "slot1") < 0);
+    CHECK_EQ(canopus_manager_p65_registry_files_init(
+        &files, &file_ops, &f, "slot0", "slot1"), 0);
+    CHECK(io->write_slot(&files, 2, data, sizeof(data) - 1) < 0);
+    CHECK(io->write_slot(&files, 0, data, sizeof(data)) < 0);
+    CHECK_EQ(f.opens, 0);
+    CHECK_EQ(io->read_slot(&files, 0, data, sizeof(data), &actual), 1);
+    CHECK_EQ(actual, 0u);
+    f.disk.present[0] = 1;
+    f.disk.sizes[0] = CANOPUS_P65_REGISTRY_RECORD_SIZE + 100u;
+    data[sizeof(data) - 1] = 0xAB;
+    CHECK_EQ(io->read_slot(&files, 0, data, sizeof(data) - 1, &actual), 0);
+    CHECK_EQ(actual, CANOPUS_P65_REGISTRY_RECORD_SIZE + 100u);
+    CHECK_EQ(data[sizeof(data) - 1], 0xAB);
+    CHECK_EQ(f.live, 0);
+}
+
 static const struct test_registry p65_registry_store_tests[] = {
+    { "p65_registry_files_roundtrip_and_fallback",
+      p65_registry_files_roundtrip_and_fallback_wrapper },
+    { "p65_registry_files_failure_cleanup",
+      p65_registry_files_failure_cleanup_wrapper },
+    { "p65_registry_files_bounds_and_configuration",
+      p65_registry_files_bounds_and_configuration_wrapper },
     { "p65_registry_initial_absent_then_roundtrip",
       p65_registry_initial_absent_then_roundtrip_wrapper },
     { "p65_registry_second_save_uses_inactive_slot",

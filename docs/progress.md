@@ -81,6 +81,11 @@
 - Extracted and loaded the exact `vela_ap.bin` from the local P65 3.100.043 OTA with the supplied IDA loader. The loader was narrowly adjusted for the P65 header word and accepts the variant only after footer/alias metadata validates. IDA discovered 42,835 functions; exact AP SHA-256 is recorded in `targets/xiaomi-p65-3.100.043/target.toml`.
 - Added the P65 exact identity pack and generated Rust/C identity guard from the exact `ro.build.version` and boot `REV_INFO` strings. P65 remains analysis-only; no callable or device capability is promoted and the target-private backend is intentionally unavailable.
 
+## P65 registry file-I/O integration follow-up
+
+- Added normalized, injected open/size/read/write/close glue to the existing P65 dual-slot registry. It supports short transfers, rejects stalled/invalid transfers, propagates close errors, bounds oversized reads, and distinguishes absent slots from I/O failures. Host tests cover round trips, inactive-slot failure fallback, configuration validation, and file-operation failure cleanup. Full host tests, ASan/UBSan, and Cortex-M33 freestanding compilation pass.
+- This is host-implemented integration only: no firmware filesystem addresses, flags, paths, durability semantics, or device capabilities are approved. A firmware-backed provider, bootstrap, UI lifetime, and device loader gates remain unresolved. See the registry file-I/O section in `targets/xiaomi-p65-3.100.043/analysis-report.md`.
+
 ## 2026-09-23 P65 module-loader/ABI follow-up
 
 - User-provided read-only P65 console output confirms `help -v insmod` usage (`<file-path> <module-name>`), `help -v rmmod` (`<module-name>`), and an empty `lsmod` listing. The exact command descriptor/name mapping is now recovered through the AP startup data-copy relation; the default help list still omits `insmod` for an unknown reason.
