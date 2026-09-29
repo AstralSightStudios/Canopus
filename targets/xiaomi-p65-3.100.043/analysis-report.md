@@ -68,6 +68,26 @@ At the Canopus integration boundary, `canopus-target-generated` can select the P
 
 Address-map note: the supplied full OTA archive includes `vela_ap.bin`, `vela_audio.bin`, `vela_ota.bin`, `vela_resource.bin`, and `vela_sensor.bin`. `best1503_vela.py` maps `vela_ap.bin` to XIP `0x0C0C0000` with cached/non-cached aliases `0x2C0C0000`/`0x280C0000`; `vela_ota.bin` is a separate ARM ELF whose PT_LOAD mappings include `0x3C800000` and `0x00200200`, not `0x1C...`. AP trampolines target `0x1C...` addresses outside the AP mapping. In this report, “ROM target” is shorthand for that address-map inference; whether `0x1C...` is silicon ROM or another resident system mapping is not independently verified. This is not a claim that the provided full OTA package is incomplete.
 
+## Experimental integration corrections
+
+A fresh decompilation of exact-AP `0x0C4C4AE4` shows that the module unload
+callback at record+104 returns a signed integer. A negative result branches to
+errno handling **before** callback clearing, registry unlink, or allocation
+release; nonnegative results permit removal. The C scaffold now propagates its
+stop result instead of publishing a void callback. The experimental resident
+Supervisor returns `-16` to keep firmware-held callbacks alive until reboot;
+this follows static code evidence, not a device test.
+
+Additional exact-AP review corrects an earlier LVX interpretation: all-list
+caller `0x0C764170` obtains the list from `0x0C8BC758(parent)`, stores that
+object at `0x3C4509D8`, then calls `0x0C8BE008(list, text)`. Other callers
+`0x0C7524A8` and `0x0C752F84` pass localized string results to the second
+function, identifying a title setter rather than a factory with an opaque
+class descriptor. Experimental bindings must not use `0x0C8BE008` as create.
+Page UI destruction at `0x0C22126C` dispatches page word 25 (+100), not the
+Band10 +96 slot. Errno helper `0x0C4F793C` returns current-task+40 or a fallback
+address; `0x0C25823C` is its AP trampoline used by fd wrappers.
+
 ## Host file-I/O adapter for the P65 registry
 
 `manager/target/p65/canopus_manager_p65_registry.{h,c}` now includes an

@@ -125,17 +125,17 @@ __attribute__((destructor)) static void {n}_dtor(void)
         ),
         EntryStyle::ModuleInitialize => format!(
             r#"struct canopus_modlib_unload_pair_v1 {{
-    void (*callback)(void *context);
+    int32_t (*callback)(void *context);
     void *context;
 }};
 
 _Static_assert(sizeof(struct canopus_modlib_unload_pair_v1) == 8u,
                "P65 modlib unload pair must contain two 32-bit words");
 
-static void {n}_modlib_unload(void *context)
+static int32_t {n}_modlib_unload(void *context)
 {{
     (void)context;
-    (void){n}_stop(0);
+    return {n}_stop(0);
 }}
 
 /* P65 ET_REL modlib calls e_entry with module-record words +104/+108.
@@ -479,6 +479,9 @@ mod tests {
         assert!(src.contains("canopus_module_initialize"));
         assert!(src.contains(".text.canopus_module_entry"));
         assert!(src.contains("unload_pair->callback = p65_probe_modlib_unload"));
+        assert!(src.contains("int32_t (*callback)(void *context)"));
+        assert!(src.contains("static int32_t p65_probe_modlib_unload"));
+        assert!(src.contains("return p65_probe_stop(0);"));
         assert!(!src.contains("__attribute__((constructor))"));
         assert!(!src.contains("__attribute__((destructor))"));
 
