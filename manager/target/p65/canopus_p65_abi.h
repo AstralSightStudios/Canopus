@@ -31,9 +31,10 @@ typedef struct {
 #define CANOPUS_SUP_NUTTX_RENAME UINT32_C(0x0C8BDF89)
 #define CANOPUS_SUP_NUTTX_UNLINK UINT32_C(0x0C8BEFD1)
 #define CANOPUS_SUP_INSMOD UINT32_C(0x0C4C49AD)
+#define P65_REGISTER_DRIVER UINT32_C(0x0C8BD0D1)
 #define CANOPUS_SUP_REGISTER_DRIVER(path, fops, mode, priv) \
     ((int (*)(const char *, const void *, uint32_t, void *)) \
-        (uintptr_t)UINT32_C(0x0C8BD0D1))((path), (fops), (mode), (priv))
+        (uintptr_t)P65_REGISTER_DRIVER)((path), (fops), (mode), (priv))
 
 int canopus_p65_registry_firmware_persist(const uint8_t *data, uint32_t size);
 int canopus_p65_registry_firmware_restore(uint8_t *data, uint32_t size);

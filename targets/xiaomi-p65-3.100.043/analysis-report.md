@@ -1,5 +1,13 @@
 # P65 firmware analysis — 3.100.043
 
+**Current integration:** a separate experimental resident Supervisor/Manager,
+installer resource bundle, C registration scaffold and Rust private facade now
+build. See [experimental.md](experimental.md). Historical statements below
+about the absent backend, rejected build and mandatory pre-device gates are
+superseded for experimental artifacts only; no hardware or production approval
+is implied. The experimental corrections section records newer exact-AP ABI
+findings, including the integer unload result, list factory and page +100 slot.
+
 ## Input identity
 
 - OTA bundle: `~/develop/temp/miwear.watch.p65_v3.100.043_full_662aa7db.bin`

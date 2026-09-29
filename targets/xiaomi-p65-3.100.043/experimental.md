@@ -1,7 +1,9 @@
 # P65 experimental resident integration
 
-This path is separate from the registered identity-only SDK pack. It is not a
-production approval and does not claim Band11 API parity. It builds without a
+This path is separate from the registered identity-only generated SDK pack.
+The target-private Rust facade exposes the Band11-named API surface with
+explicit unsupported fallbacks; it does **not** claim Band11 functional parity
+or production approval. It builds without a
 hardware-validation prerequisite. The exact AP hash, zero-import ELF checks,
 entrypoint rules, and recovered relocation allowlist remain mandatory.
 
@@ -96,7 +98,45 @@ clears the resident image and any partially registered endpoints.
 - Native rendering, launcher visibility and callback ownership are experimental.
   No device execution, screenshot, notification or persistence result is claimed.
 
-The standard Supervisor builder and general Rust target-private backend are
-not promoted by this separate experimental build. The original analysis report
+The standard Supervisor builder now dispatches the P65 target to this separate
+experimental build, without staging production approval. The Rust target-private
+crate has an experimental P65 feature; its unsafe address constants are generated
+from the same private C ABI header, not copied from Band11.
+
+## Rust API coverage
+
+```sh
+cargo test --manifest-path sdk/rust/canopus-target-private/Cargo.toml \
+  --no-default-features --features target-xiaomi-p65-3-100-043
+cargo check --manifest-path sdk/rust/canopus-target-private/Cargo.toml \
+  --no-default-features --features target-xiaomi-p65-3-100-043 \
+  --target thumbv8m.main-none-eabi
+```
+
+| Area | Experimental P65 status |
+|---|---|
+| Exact identity | Generated exact-AP guard |
+| CPC2, module intents, signed installer receipts | Shared native Supervisor implementation |
+| VFS | open/create/close/read/write/errno/unlink/rename bound |
+| Driver registration | P65 four-argument ABI; unregister unsupported, reboot-only |
+| Native UI | labels, size/align, events, event accessors and list bridge bound |
+| App registry | P65 64-byte app + package-name lookup; numeric-ID lookup unsupported |
+| Page lifecycle | P65 +100 UI-destroy slot; generic activity_finish unsupported |
+| Notification center | P65 88-byte deep-copy input, null callbacks; popup unsupported |
+| Bluetooth/L2CAP/SDP | Unsupported fallback, **not implemented** |
+| Interconnect, unrecovered LVGL helpers, VFS seek/ioctl/clock | Unsupported fallback |
+
+All 95 public function names present in the Band11 backend are available through
+the P65 facade or its existing unsupported fallback. This is source-surface
+coverage, not 95 working firmware operations. About twenty common methods have
+P65 overrides; the rest remain error/null/no-op fallbacks as specified by their
+return types. Always check `capabilities()`. Compile-only inherited Bluetooth
+structures do not approve P65 Bluetooth layouts. The P65-specific
+`app_lookup_package` and `launcher_refresh` avoid pretending its ABI is Band11's.
+The host facade tests, P65 Thumb compile and Band11 .155 Thumb regression compile
+pass. Rust module scaffolding still requires a custom C entry pipeline; the
+P65 CLI's verified scaffold is currently C only.
+
+ The original analysis report
 contains historical blockers; newer corrections are in its experimental
 integration section and this document.

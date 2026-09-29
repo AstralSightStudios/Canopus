@@ -16,6 +16,8 @@ pub const TARGET_ID: &str = "xiaomi-band-9-pro-3.1.175";
 pub const TARGET_ID: &str = "xiaomi-band-11-4.100.139";
 #[cfg(feature = "target-xiaomi-band-9-3-1-32")]
 pub const TARGET_ID: &str = "xiaomi-band-9-3.1.32";
+#[cfg(feature = "target-xiaomi-p65-3-100-043")]
+pub const TARGET_ID: &str = "xiaomi-p65-3.100.043";
 pub const ERR_UNSUPPORTED: i32 = -38;
 
 #[cfg(feature = "target-xiaomi-band-9-pro-3-1-175")]
@@ -24,6 +26,9 @@ pub const SELECTED_TARGET_ID: &str = "xiaomi-band-9-pro-3.1.175";
 pub const SELECTED_TARGET_ID: &str = "xiaomi-band-11-4.100.139";
 #[cfg(feature = "target-xiaomi-band-9-3-1-32")]
 pub const SELECTED_TARGET_ID: &str = "xiaomi-band-9-3.1.32";
+
+#[cfg(feature = "target-xiaomi-p65-3-100-043")]
+pub const SELECTED_TARGET_ID: &str = "xiaomi-p65-3.100.043";
 
 pub fn canopus_identity_guard() -> i32 {
     ERR_UNSUPPORTED

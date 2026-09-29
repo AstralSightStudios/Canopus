@@ -30,7 +30,7 @@ Canopus 允许开发者：
 | `xiaomi-band-10-pro-3.101.043` | `3.101.043` | `519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec` | static pack/build target; device gate pending |
 | `xiaomi-band-11-4.100.139` | `4.100.139` | `31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74` | complete native installer test candidate; Lua recovery, owned staged loader and Manager host-tested; general SDK/device gates pending |
 | `xiaomi-band-11-4.100.155` | `4.100.155` | `ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f` | independent target and Rust bindings; shared 139/155 installer; corrected notification context, ARM/Lua/verifier passed; device gates pending |
-| `xiaomi-p65-3.100.043` | `3.100.043` | `a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858` | identity pack + static NSH/ELF loader trace; target-aware C entry shim and injected registry/UI glue host-tested; firmware backend/device gates pending |
+| `xiaomi-p65-3.100.043` | `3.100.043` | `a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858` | experimental resident Supervisor/Manager + resource installer; exact VFS/UI/notification bindings and Rust facade; host/ARM/verifier passed, no device result; Bluetooth unsupported |
 
 2026-09-15：修复 `.139` 注册 Manager 时的通知空上下文崩溃，详见
 [crash3 审计](targets/xiaomi-band-11-4.100.139/loader/notification-crash3.md)。
@@ -48,7 +48,7 @@ validation remain pending. See the [native audit](targets/xiaomi-band-11-4.100.1
 and [packing/testing instructions](watchfaces/canopus-installer-prod/xiaomi-band-11/docs/README.md).
 The Band 11 resource root contains only `main.lua` and `.bin` files.
 
-P65 (`CHIP=best1502p`, internal product ID `miwear.watch.p65`) remains analysis-only. Its generated Rust/C bindings contain the exact static identity guard. Static IDA analysis traces NSH `insmod`/`rmmod` into ELF loading, ARM relocation and module registry code. The target-aware C scaffold emits a host-verified ET_REL entry/unload shim; the legacy generic `e_entry=0` artifact remains incompatible. The 0x3C startup data mapping is recovered, with the static export count initially zero. Injected registry file I/O and Manager UI/transport glue are host-tested, not bound to firmware APIs. No P65 callable firmware symbols, target-private firmware backend or runtime capability are enabled. See [`P65 analysis`](targets/xiaomi-p65-3.100.043/analysis-report.md).
+P65 (`CHIP=best1502p`, internal product ID `miwear.watch.p65`) now has a separate **experimental** resident Supervisor/Manager build, exact-AP VFS/UI/notification bindings, dual-slot registry, C descriptor-registration scaffold and target-private Rust facade. `CANOPUS_TARGET=xiaomi-p65-3.100.043 bash scripts/build_canopus_supervisor.sh` builds the native module and a flat installer resource ZIP; the exact AP or original OTA can be supplied with `CANOPUS_P65_FIRMWARE`. Experimental artifacts do not require a hardware-validation prerequisite, but retain exact identity, entrypoint, import, relocation and per-address checks. Unload is reboot; no device behavior is claimed. Bluetooth/L2CAP/SDP are unsupported, so Rust API-name compatibility is not Band11 functional parity. The registered generated SDK pack remains identity-only with no production-approved capabilities. See [`P65 experimental build`](targets/xiaomi-p65-3.100.043/experimental.md) and [`static analysis`](targets/xiaomi-p65-3.100.043/analysis-report.md).
 
 ## 仓库结构
 

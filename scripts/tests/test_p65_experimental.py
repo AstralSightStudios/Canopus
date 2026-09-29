@@ -81,6 +81,20 @@ class P65ExperimentalTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 INSTALLER.build(artifact, tmp / "bad", tmp / "targets")
 
+    def test_rust_facade_retains_band11_names_without_claiming_bluetooth(self):
+        directory = ROOT / "sdk/rust/canopus-target-private/src/targets"
+        import re
+        names = lambda text: set(re.findall(r"pub (?:unsafe )?fn (\w+)", text))
+        baseline = names((directory / "xiaomi_band_11_4_100_139.rs").read_text())
+        p65 = (directory / "xiaomi_p65_3_100_043.rs").read_text()
+        fallback = names((directory / "static_candidate.rs").read_text())
+        self.assertFalse(baseline - names(p65) - fallback)
+        self.assertIn('pub const EXPERIMENTAL: bool = true', p65)
+        capabilities = p65[p65.index('pub fn capabilities()'):p65.index('/* Unlike Band10')]
+        self.assertNotIn('"bluetooth"', capabilities)
+        self.assertIn('on_ui_destroy) == 100', p65)
+        self.assertIn('P65_REGISTER_DRIVER', p65)
+
     def test_overlay_cannot_overwrite_registered_pack(self):
         with self.assertRaises(ValueError):
             PACK.generate(ROOT / "targets")

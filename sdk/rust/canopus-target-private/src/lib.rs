@@ -3,6 +3,8 @@
 //! Band 10 Pro and Band 11 select exact firmware backends. Band 9 Pro and
 //! Band 9 retain compile-only candidate facades. Private static recovery and
 //! physical device validation are recorded separately in each target pack.
+//! P65 selects an experimental exact-AP VFS/native-UI facade; unsupported
+//! Bluetooth and lifecycle operations remain explicit fail-closed stubs.
 
 #![no_std]
 #![deny(unsafe_op_in_unsafe_fn)]
@@ -23,7 +25,8 @@ pub mod generated_symbols;
     feature = "target-xiaomi-band-9-pro-3-1-175",
     feature = "target-xiaomi-band-11-4-100-139",
     feature = "target-xiaomi-band-11-4-100-155",
-    feature = "target-xiaomi-band-9-3-1-32"
+    feature = "target-xiaomi-band-9-3-1-32",
+    feature = "target-xiaomi-p65-3-100-043"
 )))]
 compile_error!("canopus-target-private requires exactly one target-feature");
 
@@ -93,12 +96,17 @@ mod selected;
 #[path = "targets/static_candidate.rs"]
 mod selected;
 
+#[cfg(feature = "target-xiaomi-p65-3-100-043")]
+#[path = "targets/xiaomi_p65_3_100_043.rs"]
+mod selected;
+
 #[cfg(any(
     feature = "target-xiaomi-band-10-pro-3-101-036",
     feature = "target-xiaomi-band-10-pro-3-101-043",
     feature = "target-xiaomi-band-9-pro-3-1-175",
     feature = "target-xiaomi-band-11-4-100-139",
     feature = "target-xiaomi-band-11-4-100-155",
-    feature = "target-xiaomi-band-9-3-1-32"
+    feature = "target-xiaomi-band-9-3-1-32",
+    feature = "target-xiaomi-p65-3-100-043"
 ))]
 pub use selected::*;
