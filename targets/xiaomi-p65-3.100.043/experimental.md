@@ -55,9 +55,15 @@ clears the resident image and any partially registered endpoints.
 
 - No P65 installer watchface is packaged yet; this is a native build candidate.
 - `/data/canopus`, its inbox and Manager icon must be staged by an installer.
-- The stock child-module path expects modules to register their Canopus
-  descriptor over `/dev/canopus`. The generic P65 C scaffold does not yet do
-  that, so it is not an end-to-end Manager-installable child artifact.
+- The P65 C scaffold now publishes its descriptor over `/dev/canopus` with
+  a single 40-byte CMR1 write. Registration is accepted only during a matching
+  Supervisor load transaction; direct shell loading outside it fails. Once
+  published, the child image refuses `rmmod` until reboot because the Supervisor
+  retains its descriptor. A close failure after publication does not free the
+  image. A generated ARM scaffold passed the experimental verifier with zero
+  imports, 115 relocations and no constructor/destructor arrays. Signed receipt
+  generation and end-to-end device installation remain separate from this host
+  artifact test.
 - Firmware notifications return `-ENOSYS`; the P65 message/context ABI must be
   recovered rather than copied from Band11. Watchface cleanup is not bound.
 - This build currently uses the shared registry file implementation, not the

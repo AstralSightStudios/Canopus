@@ -103,6 +103,35 @@ fn manifest(name: &str, target_id: &str) -> String {
 
 fn c_source(name: &str, target_id: &str, entry_style: EntryStyle) -> String {
     let n = safe_name(name);
+    let p65 = target_id == "xiaomi-p65-3.100.043"
+        && entry_style == EntryStyle::ModuleInitialize;
+    let registration_glue = if p65 {
+        r#"#include "canopus_module_registration.h"
+#include "canopus_p65_abi.h"
+static uint8_t s_registered;
+static int s_registration_close_error;
+static int register_with_supervisor(void)
+{
+    const struct canopus_module_registration_io_v1 io = {
+        (int (*)(const char *, int, ...))(uintptr_t)CANOPUS_SUP_NUTTX_OPEN,
+        (int32_t (*)(int, const void *, uint32_t))(uintptr_t)CANOPUS_SUP_NUTTX_WRITE,
+        (int (*)(int))(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE,
+        2 /* P65 O_WRONLY; open existing endpoint, never create. */
+    };
+    int rc = canopus_module_register_fd(&io, (uint32_t)(uintptr_t)&g_descriptor,
+                                       (const char *)g_descriptor.module_id,
+                                       &s_registration_close_error);
+    if (rc == 0) s_registered = 1u;
+    return rc;
+}
+"#
+    } else { "" };
+    let unload_guard = if p65 {
+        "    if (s_registered) return -16; /* Supervisor owns descriptor pointers. */\n"
+    } else { "" };
+    let register_entry = if p65 {
+        format!("    if (register_with_supervisor() != 0) {{\n        (void){n}_stop(0);\n        return -1;\n    }}\n")
+    } else { String::new() };
     let lifecycle_glue = match entry_style {
         EntryStyle::InitArray => format!(
             r#"__attribute__((constructor)) static void {n}_ctor(void)
@@ -135,7 +164,7 @@ _Static_assert(sizeof(struct canopus_modlib_unload_pair_v1) == 8u,
 static int32_t {n}_modlib_unload(void *context)
 {{
     (void)context;
-    return {n}_stop(0);
+{unload_guard}    return {n}_stop(0);
 }}
 
 /* P65 ET_REL modlib calls e_entry with module-record words +104/+108.
@@ -158,7 +187,7 @@ int32_t canopus_module_initialize(
         return -1;
     }}
 
-    unload_pair->callback = {n}_modlib_unload;
+{register_entry}    unload_pair->callback = {n}_modlib_unload;
     unload_pair->context = 0;
     return 0;
 }}
@@ -242,6 +271,7 @@ const struct canopus_module_descriptor_v1 *{n}_descriptor(void)
     return &g_descriptor;
 }}
 
+{registration_glue}
 {lifecycle_glue}
 "#,
         n = n,
@@ -253,6 +283,13 @@ const struct canopus_module_descriptor_v1 *{n}_descriptor(void)
 
 fn c_build_sh(dir_name: &str, safe: &str, target_id: &str, entry_style: EntryStyle) -> String {
     let n = safe.to_string();
+    let p65 = target_id == "xiaomi-p65-3.100.043"
+        && entry_style == EntryStyle::ModuleInitialize;
+    let extra_flags = if p65 { "-DCANOPUS_SUP_P65_RESIDENT=1" } else { "" };
+    let extra_include = if p65 { "-I$ROOT/manager/target/p65" } else { "" };
+    let verifier_setup = if p65 {
+        "python3 \"$ROOT/scripts/generate_p65_experimental_pack.py\" --output \"$OUT/targets\"\nVERIFY_TARGETS=\"$OUT/targets\""
+    } else { "VERIFY_TARGETS=\"$ROOT/targets\"" };
     let entry_link_flags = match entry_style {
         EntryStyle::InitArray => String::new(),
         EntryStyle::ModuleInitialize => {
@@ -280,11 +317,11 @@ cd "$ROOT"
 TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
   -ffreestanding -fno-common -fno-builtin -fno-stack-protector \
   -fno-unwind-tables -fno-asynchronous-unwind-tables -fdata-sections \
-  -ffunction-sections -Os -Wall -Wextra -Werror -DCANOPUS_TARGET=1"
+  -ffunction-sections -Os -Wall -Wextra -Werror -DCANOPUS_TARGET=1 {extra_flags}"
 
 INC="-I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \
-  -I$PACK_DIR/generated -Imodules/{dir}"
+  -I$PACK_DIR/generated -Imodules/{dir} {extra_include}"
 
 SRCS="runtime/control/canopus_control.c runtime/lifecycle/canopus_lifecycle.c \
   runtime/resources/canopus_resource.c runtime/diagnostics/canopus_diagnostics.c \
@@ -299,8 +336,9 @@ $LD -r {entry_link_flags} -o "$OUT/{n}_module.elf" "$OUT"/canopus_control.o \
     "$OUT"/canopus_lifecycle.o "$OUT"/canopus_resource.o \
     "$OUT"/canopus_diagnostics.o "$OUT"/canopus_module.o "$OUT"/{n}.o
 
+{verifier_setup}
 "$ROOT/target/debug/canopus" verify "$OUT/{n}_module.elf" \
-    --target "$TARGET_ID" --targets-dir "$ROOT/targets"
+    --target "$TARGET_ID" --targets-dir "$VERIFY_TARGETS"
 "#,
         n = n,
         dir = dir_name,
@@ -488,6 +526,9 @@ mod tests {
         let build = &files["build.sh"];
         assert!(build.contains("-e canopus_module_initialize"));
         assert!(build.contains("canopus_module_sections.ld"));
+        assert!(src.contains("register_with_supervisor()"));
+        assert!(src.contains("if (s_registered) return -16;"));
+        assert!(build.contains("generate_p65_experimental_pack.py"));
     }
 
     #[test]
