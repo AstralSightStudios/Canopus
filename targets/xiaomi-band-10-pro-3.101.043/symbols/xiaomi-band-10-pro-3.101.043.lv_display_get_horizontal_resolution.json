@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lv_display_get_horizontal_resolution",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_display_get_horizontal_resolution",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int32_t(uint32_t disp)",
+  "entry_address": "0x0c13cd54",
+  "callable_address": "0x0c13cd55",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "APPROVED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-RESOURCE-1043-001"
+    ],
+    "source": "Exact 3.101.043 AP firmware and IDB verification; byte-for-byte disassembly match."
+  },
+  "notes": "LVGL display horizontal resolution accessor."
+}

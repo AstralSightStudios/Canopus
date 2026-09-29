@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-1043-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 LVGL image, cache, style, display and font functions are safe for Resource-Hook targeted resource redirection?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.lv_image_decoder_get_info",
+    "xiaomi-band-10-pro-3.101.043.lv_obj_tree_walk",
+    "xiaomi-band-10-pro-3.101.043.lv_obj_get_style_prop",
+    "xiaomi-band-10-pro-3.101.043.lv_obj_refresh_style",
+    "xiaomi-band-10-pro-3.101.043.lv_cache_drop",
+    "xiaomi-band-10-pro-3.101.043.lv_cache_release",
+    "xiaomi-band-10-pro-3.101.043.lv_display_invalidate_area",
+    "xiaomi-band-10-pro-3.101.043.lv_display_get_horizontal_resolution",
+    "xiaomi-band-10-pro-3.101.043.lv_display_get_vertical_resolution",
+    "xiaomi-band-10-pro-3.101.043.font_manager_add_path",
+    "xiaomi-band-10-pro-3.101.043.font_manager_remove_path"
+  ],
+  "callsite_evidence": [
+    "lv_image_set_src (0x0c17a2f4) queries header via lv_image_decoder_get_info (0x0c143798) before updating dimensions and invalidating widget area.",
+    "lv_obj_tree_walk (0x0c13c690) traverses the registered display screen list (display + 692, count + 720) when root is null, pruning on callback request.",
+    "lv_obj_get_style_prop (0x0c1068a8) merges object state at +48 and resolves effective main-part style property value.",
+    "lv_obj_set_local_style_prop (0x0c107790) calls lv_obj_refresh_style (0x0c1070ac) with (obj, selector, property) after updating local style property.",
+    "lv_cache_drop (0x0c1667dc) unlinks and releases cached entries by key; lv_cache_release (0x0c1666ec) decrements reference count.",
+    "_lv_inv_area (0x0c105164) invalidates display area for the default display at 0x2010318c.",
+    "lv_display_get_horizontal_resolution (0x0c13cd54) and vertical (0x0c13cd74) return dimensions for display or default display at 0x2010318c.",
+    "uikit_font_manager_add_path (0x0c86037c) and remove_path (0x0c860398) access manager at uikit + 28 and manipulate font path list."
+  ],
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "Exact 3.101.043 IDB vela_ap.bin.i64 and Capstone 5 instruction review of exact firmware image."
+  },
+  "verdict": "STATIC_CONFIRMED",
+  "created": "2026-09-30T00:00:00Z",
+  "reviewers": ["canopus-maintainer"]
+}

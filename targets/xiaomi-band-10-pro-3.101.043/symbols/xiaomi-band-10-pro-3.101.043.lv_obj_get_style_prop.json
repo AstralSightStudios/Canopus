@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lv_obj_get_style_prop",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_obj_get_style_prop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "uint32_t(void *obj, uint32_t part, uint32_t prop)",
+  "entry_address": "0x0c1068a8",
+  "callable_address": "0x0c1068a9",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "APPROVED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-RESOURCE-1043-001"
+    ],
+    "source": "Exact 3.101.043 AP firmware and IDB verification; byte-for-byte disassembly match."
+  },
+  "notes": "LVGL style property getter. Resolves effective property value for matching main-part state."
+}
