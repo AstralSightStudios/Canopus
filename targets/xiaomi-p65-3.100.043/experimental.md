@@ -64,8 +64,12 @@ clears the resident image and any partially registered endpoints.
   imports, 115 relocations and no constructor/destructor arrays. Signed receipt
   generation and end-to-end device installation remain separate from this host
   artifact test.
-- Firmware notifications return `-ENOSYS`; the P65 message/context ABI must be
-  recovered rather than copied from Band11. Watchface cleanup is not bound.
+- Notification-center delivery now uses P65's own 88-byte layout, recovered
+  from `0x0CA5FF3C..0x0CA60084` setters and `0x0CA5FCAC` deep-copy code, with
+  title/source/body/icon strings and no callbacks or popup context. Insertion
+  `0x0CA60098` is bound experimentally; its raw result is retained in diagnostics
+  because flags82-dependent return semantics do not establish delivery success.
+  Popup display and watchface cleanup are not bound.
 - This build currently uses the shared registry file implementation, not the
   new injected P65 dual-slot provider. Close/rename is not an fsync guarantee.
 - Native rendering, launcher visibility and callback ownership are experimental.

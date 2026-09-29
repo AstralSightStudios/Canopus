@@ -4,6 +4,7 @@
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
 #include "canopus_module_registration.h"
+#include "canopus_p65_notification.h"
 #include <string.h>
 
 static const struct canopus_sup_platform_v1 p65_local_platform = {
@@ -108,7 +109,26 @@ TEST(p65_module_registration_atomic_write_and_lifetime)
     CHECK_EQ(registration_opens, 5);
 }
 
+TEST(p65_notification_has_exact_layout_and_no_callback_context)
+{
+    struct canopus_p65_notification_v1 message;
+    const uint8_t *bytes = (const uint8_t *)&message;
+    uint32_t i;
+    memset(&message, 0xAB, sizeof(message));
+    canopus_p65_notification_init(&message, 0x123456789ABCDEF0ULL,
+                                  0x11223344, 0x55667788, 0x99999999, 0x77777777);
+    CHECK_EQ(message.message_id, 0x123456789ABCDEF0ULL);
+    CHECK_EQ(message.title, 0x11223344u);
+    CHECK_EQ(message.source, 0x55667788u);
+    CHECK_EQ(message.body, 0x99999999u);
+    CHECK_EQ(message.small_icon, 0x77777777u);
+    CHECK_EQ(message.large_icon, 0x77777777u);
+    for (i = 36; i < 88; i++) CHECK_EQ(bytes[i], 0u);
+}
+
 static const struct test_registry p65_local_client_tests[] = {
+    { "p65_notification_has_exact_layout_and_no_callback_context",
+      p65_notification_has_exact_layout_and_no_callback_context_wrapper },
     { "p65_module_registration_atomic_write_and_lifetime",
       p65_module_registration_atomic_write_and_lifetime_wrapper },
     { "p65_local_client_reads_supervisor_query_payloads_without_dev",

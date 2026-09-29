@@ -4,6 +4,7 @@
  */
 #include <stddef.h>
 #include "canopus_p65_abi.h"
+#include "canopus_p65_notification.h"
 #include "canopus_manager_target.h"
 #include "canopus_manager_p65_backend.h"
 #include "canopus_supervisor_platform.h"
@@ -223,10 +224,20 @@ int canopus_manager_native_install(void)
 }
 int canopus_manager_native_notify_module_installed(void)
 {
-    /* P65 notification context is not yet recovered; never pass a guessed
-     * Band11 message layout. The Manager model refresh is still available. */
-    canopus_manager_target_record.notification_result = -38;
-    return -38;
+    typedef int (*notify_fn)(const struct canopus_p65_notification_v1 *);
+    struct canopus_p65_notification_v1 message;
+    int result;
+    if (canopus_identity_guard() != 0) return -1;
+    canopus_p65_notification_init(&message, UINT64_C(0x43414E500001),
+        (uint32_t)(uintptr_t)"Module installed",
+        (uint32_t)(uintptr_t)title,
+        (uint32_t)(uintptr_t)"Open Canopus Manager to review and enable it.",
+        (uint32_t)(uintptr_t)"/data/canopus/manager_icon.bin");
+    result = CALL(P65_NOTIFICATION_INSERT, notify_fn)(&message);
+    canopus_manager_target_record.notification_result = result;
+    /* Exact insertion return semantics are inconsistent across flags82
+     * branches. Preserve the raw result, do not fail a committed install. */
+    return result < 0 ? result : 0;
 }
 void canopus_manager_target_render_diagnostics(uint8_t out[36])
 {

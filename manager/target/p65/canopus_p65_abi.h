@@ -35,6 +35,7 @@ typedef struct {
     ((int (*)(const char *, const void *, uint32_t, void *)) \
         (uintptr_t)UINT32_C(0x0C8BD0D1))((path), (fops), (mode), (priv))
 
+#define P65_NOTIFICATION_INSERT UINT32_C(0x0CA60099)
 #define P65_APP_INSTALL UINT32_C(0x0C2418A9)
 #define P65_APP_LOOKUP UINT32_C(0x0C241421)
 #define P65_LAUNCHER_REFRESH UINT32_C(0x0C7EC451)

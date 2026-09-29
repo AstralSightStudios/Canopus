@@ -67,4 +67,4 @@ python3 "$ROOT/scripts/generate_p65_experimental_pack.py" --output "$OUT/targets
 "$ROOT/target/debug/canopus" verify "$OUT/canopus_supervisor.elf" \
     --target "$TARGET" --targets-dir "$OUT/targets"
 printf '\nExperimental resident P65 artifact: %s\n' "$OUT/canopus_supervisor.elf"
-printf 'Recovery/unload: reboot. Firmware notification API is not implemented.\n'
+printf 'Recovery/unload: reboot. Notification-center binding is experimental.\n'
