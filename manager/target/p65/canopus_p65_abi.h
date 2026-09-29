@@ -35,6 +35,9 @@ typedef struct {
     ((int (*)(const char *, const void *, uint32_t, void *)) \
         (uintptr_t)UINT32_C(0x0C8BD0D1))((path), (fops), (mode), (priv))
 
+int canopus_p65_registry_firmware_persist(const uint8_t *data, uint32_t size);
+int canopus_p65_registry_firmware_restore(uint8_t *data, uint32_t size);
+
 #define P65_NOTIFICATION_INSERT UINT32_C(0x0CA60099)
 #define P65_APP_INSTALL UINT32_C(0x0C2418A9)
 #define P65_APP_LOOKUP UINT32_C(0x0C241421)

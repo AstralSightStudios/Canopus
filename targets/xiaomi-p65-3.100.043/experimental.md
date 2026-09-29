@@ -12,9 +12,25 @@ CANOPUS_P65_FIRMWARE=/path/to/p65_v3.100.043_vela_ap.bin \
   bash scripts/build_p65_supervisor.sh
 ```
 
-Output: `watchfaces/canopus-installer/build/xiaomi-p65-3.100.043/canopus_supervisor.elf`.
-This is an ARM ET_REL module, not a flashable image or a packaged watchface.
-The standalone G0 watchface has been removed.
+The input may also be the original full OTA ZIP despite its `.bin` suffix;
+its unique `vela_ap.bin` is hashed in memory without extracting arbitrary paths.
+
+Outputs under `watchfaces/canopus-installer/build/xiaomi-p65-3.100.043/`:
+
+- `canopus_supervisor.elf`: native ARM ET_REL resident module.
+- `installer/canopus-p65-resources.zip`: deterministic flat watchface resource
+  bundle containing `main.lua`, `supervisor.bin`, and `manager_icon.bin`.
+- `installer/build-info.json`: exact target/AP identity, resource sizes/hashes,
+  and archive hash (not included inside the resource ZIP).
+
+Use the existing watchface packing/install workflow for the resource ZIP. It
+is **not** a flashable watchface image. The standalone G0 watchface is removed;
+this installer loads the actual Supervisor and registers the actual Manager.
+
+Open the packed watchface, tap Install Supervisor, then Register Manager on a
+separate event turn. Register/Publish module apps are distinct optional stages.
+There is no auto-load or unload action. Native identity checking still precedes
+firmware registration; the Lua version check is not a whole-image hash check.
 
 The build verifies the exact AP SHA-256 and creates a separate verifier overlay
 under the output's `targets/` directory. That overlay preserves target.toml
@@ -53,8 +69,9 @@ clears the resident image and any partially registered endpoints.
 
 ## Remaining integration work
 
-- No P65 installer watchface is packaged yet; this is a native build candidate.
-- `/data/canopus`, its inbox and Manager icon must be staged by an installer.
+- A flat resource bundle is packaged, but no device-specific flashable
+  watchface container is generated. The installer stages `/data/canopus`, its
+  inbox and Manager icon and checks icon readback before loading native code.
 - The P65 C scaffold now publishes its descriptor over `/dev/canopus` with
   a single 40-byte CMR1 write. Registration is accepted only during a matching
   Supervisor load transaction; direct shell loading outside it fails. Once
@@ -70,8 +87,12 @@ clears the resident image and any partially registered endpoints.
   `0x0CA60098` is bound experimentally; its raw result is retained in diagnostics
   because flags82-dependent return semantics do not establish delivery success.
   Popup display and watchface cleanup are not bound.
-- This build currently uses the shared registry file implementation, not the
-  new injected P65 dual-slot provider. Close/rename is not an fsync guarantee.
+- The experimental platform now binds the P65 dual-slot registry to recovered
+  fd calls. Only the inactive slot is unlinked/recreated; short writes are
+  completed and readback/CRC verifies a save. Reads count oversized records
+  without overflowing scratch (bounded to 64 KiB). The actual provider is
+  host-tested through fake exact-address dispatch, including failure fallback.
+  Close/readback still is not an fsync/power-loss durability guarantee.
 - Native rendering, launcher visibility and callback ownership are experimental.
   No device execution, screenshot, notification or persistence result is claimed.
 

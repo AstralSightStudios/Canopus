@@ -17,6 +17,7 @@ int run_p65_ui_rows_tests(void);
 int run_p65_lvx_adapter_tests(void);
 int run_p65_local_client_tests(void);
 int run_p65_registry_store_tests(void);
+int run_p65_registry_firmware_tests(void);
 int run_client_tests(void);
 int run_supervisor_device_tests(void);
 int run_installer_receipt_tests(void);
@@ -41,6 +42,7 @@ int main(void)
     total += run_p65_lvx_adapter_tests();
     total += run_p65_local_client_tests();
     total += run_p65_registry_store_tests();
+    total += run_p65_registry_firmware_tests();
     total += run_client_tests();
     total += run_supervisor_device_tests();
     total += run_installer_receipt_tests();

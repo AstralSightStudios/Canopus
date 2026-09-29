@@ -13,7 +13,7 @@ INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../modules/examples/hello -I../../manager/protocol -I../../manager/storage \
       -I../../manager/ui -I../../manager/service -I../../manager/client \
       -I../../manager/native-app -I../../manager/package -I../../manager/target/p65 \
-      -I../../tests/host \
+      -I../../tests/host -I../../targets/xiaomi-p65-3.100.043/generated \
       -I../../third_party/monocypher \
       -I../../app-sdk/c -I../../app-sdk/launcher -I../../app-sdk/ui
 CFLAGS += -DCANOPUS_HOST=1
@@ -73,6 +73,7 @@ TEST_SRCS = \
 	test_p65_lvx_adapter.c \
 	test_p65_local_client.c \
 	test_p65_registry_store.c \
+	test_p65_registry_firmware.c \
 	test_client.c \
 	test_supervisor_device.c \
 	test_installer_receipt.c \

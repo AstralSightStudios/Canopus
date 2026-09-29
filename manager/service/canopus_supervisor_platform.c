@@ -876,6 +876,10 @@ static int sup_remove_artifact(void *cookie, uint32_t index)
 
 static int sup_registry_persist(void *cookie, const uint8_t *data, uint32_t len)
 {
+#ifdef CANOPUS_SUP_P65_RESIDENT
+    (void)cookie;
+    return canopus_p65_registry_firmware_persist(data, len);
+#endif
     int rc;
     (void)cookie;
     if (data == 0 || len == 0u || len > CANOPUS_SUP_REGISTRY_SIZE) {
@@ -905,6 +909,10 @@ static int sup_registry_persist(void *cookie, const uint8_t *data, uint32_t len)
 
 static int sup_registry_restore(void *cookie, uint8_t *data, uint32_t len)
 {
+#ifdef CANOPUS_SUP_P65_RESIDENT
+    (void)cookie;
+    return canopus_p65_registry_firmware_restore(data, len);
+#endif
     typedef int (*open_fn)(const char *, int, ...);
     typedef int (*close_fn)(int);
     typedef int32_t (*read_fn)(int, void *, uint32_t);

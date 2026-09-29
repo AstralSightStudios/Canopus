@@ -3,7 +3,10 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import struct
 import subprocess
+import zipfile
+from unittest import mock
 import tempfile
 import unittest
 
@@ -12,6 +15,10 @@ SPEC = importlib.util.spec_from_file_location(
     "p65_pack", ROOT / "scripts/generate_p65_experimental_pack.py")
 PACK = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PACK)
+INSTALLER_SPEC = importlib.util.spec_from_file_location(
+    "p65_installer", ROOT / "scripts/build_p65_installer.py")
+INSTALLER = importlib.util.module_from_spec(INSTALLER_SPEC)
+INSTALLER_SPEC.loader.exec_module(INSTALLER)
 
 
 class P65ExperimentalTests(unittest.TestCase):
@@ -33,6 +40,46 @@ class P65ExperimentalTests(unittest.TestCase):
             stale.write_text("{}")
             PACK.generate(temporary)
             self.assertFalse(stale.exists())
+
+    def test_installer_packaging_and_lua_control_flow(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            tmp = Path(temporary)
+            elf = bytearray(64)
+            elf[:7] = b"\x7fELF\x01\x01\x01"
+            struct.pack_into("<HHI", elf, 16, 1, 40, 1)
+            struct.pack_into("<I", elf, 24, 1)
+            artifact = tmp / "fixture.elf"
+            artifact.write_bytes(elf)
+            # Fixture packaging test only: the real builder always runs the
+            # ELF verifier. Never use this synthetic header as a device image.
+            with mock.patch.object(INSTALLER.subprocess, "run") as verify:
+                archive = INSTALLER.build(artifact, tmp / "first", tmp / "targets")
+                self.assertEqual(verify.call_count, 1)
+                self.assertIn("verify", verify.call_args.args[0])
+                second = INSTALLER.build(artifact, tmp / "second", tmp / "targets")
+            self.assertEqual(archive.read_bytes(), second.read_bytes())
+            with zipfile.ZipFile(archive) as packed:
+                self.assertEqual(set(packed.namelist()),
+                                 {"main.lua", "supervisor.bin", "manager_icon.bin"})
+                self.assertEqual(packed.read("supervisor.bin"), bytes(elf))
+                self.assertIn(b"local EXPECTED_SIZE = 64", packed.read("main.lua"))
+            manifest = json.loads((archive.parent / "build-info.json").read_text())
+            self.assertFalse(manifest["flashable"])
+            self.assertEqual(manifest["resources"]["supervisor.bin"]["size"], 64)
+            if shutil.which("lua"):
+                for fault in [None, "already_running", "resource", "version", "getprop",
+                              "icon", "insmod", "endpoint", "torn_status", "short_write",
+                              "command_result"]:
+                    command = ["lua", str(ROOT / "scripts/lua/test_p65_installer.lua"),
+                               str(archive.parent / "main.lua")]
+                    if fault:
+                        command.append(fault)
+                    subprocess.run(command, check=True, capture_output=True, text=True)
+            # Malformed entry fails before invoking the verifier.
+            elf[24] = 0
+            artifact.write_bytes(elf)
+            with self.assertRaises(ValueError):
+                INSTALLER.build(artifact, tmp / "bad", tmp / "targets")
 
     def test_overlay_cannot_overwrite_registered_pack(self):
         with self.assertRaises(ValueError):

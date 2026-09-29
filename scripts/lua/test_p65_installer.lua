@@ -1,0 +1,133 @@
+-- Isolated host smoke for the real P65 installer source. No host shell I/O.
+local source_path, fault = ...
+local host_open = io.open
+local file = assert(host_open(source_path, "rb"))
+local source = file:read("*a")
+file:close()
+local expected = assert(tonumber(source:match("local EXPECTED_SIZE = (%d+)")))
+assert(expected >= 52)
+local callbacks, labels, commands = {}, {}, {}
+local lvgl = {
+    HOR_RES = function() return 466 end,
+    VER_RES = function() return 466 end,
+    OPA = function(n) return n end,
+    ALIGN = { TOP_MID = 1, CENTER = 2 },
+}
+function lvgl.Object(parent, properties)
+    local object = { parent = parent, properties = properties }
+    function object:onClicked(callback) callbacks[#callbacks + 1] = callback end
+    return object
+end
+function lvgl.Label(parent, properties)
+    local object = { parent = parent, properties = properties }
+    function object:set(value)
+        self.properties = value
+        labels[#labels + 1] = value.text
+    end
+    return object
+end
+package.preload.lvgl = function() return lvgl end
+SCRIPT_PATH = "/resource/"
+local function word(n)
+    return string.char(n % 256, math.floor(n / 256) % 256,
+        math.floor(n / 65536) % 256, math.floor(n / 16777216) % 256)
+end
+local function u32(data, offset)
+    local a, b, c, d = data:byte(offset + 1, offset + 4)
+    return a + b * 256 + c * 65536 + d * 16777216
+end
+local elf = "\127ELF\1\1\1" .. string.rep("\0", 9)
+    .. "\1\0\40\0" .. string.rep("\0", expected - 20)
+local files = { [SCRIPT_PATH .. "supervisor.bin"] = elf,
+                [SCRIPT_PATH .. "manager_icon.bin"] = "test-icon" }
+if fault == "resource" then files[SCRIPT_PATH .. "supervisor.bin"] = "bad" end
+local running = fault == "already_running"
+local op, result = 0, 5
+local stages = {}
+local function status()
+    local data = word(0x43505331) .. word(1) .. word(1) .. word(0)
+        .. word(0) .. word(op) .. word(result) .. word(0) .. word(0)
+        .. word(2) .. word(fault == "torn_status" and 4 or 2)
+    return data .. string.rep("\0", 384 - #data)
+end
+io.open = function(path, mode)
+    if path == "/dev/canopus" then
+        if not running or fault == "endpoint" then return nil end
+        if mode == "rb" then
+            return { read = function() return status() end,
+                     close = function() return true end }
+        end
+        return {
+            write = function(_, data)
+                assert(#data == 16 and u32(data, 0) == 0x43504331)
+                op = u32(data, 4)
+                stages[#stages + 1] = u32(data, 8)
+                result = fault == "command_result" and 4 or 5
+                if fault == "short_write" then return #data - 1 end
+                return #data
+            end,
+            close = function() return true end,
+        }
+    end
+    if mode == "rb" then
+        local data = files[path]
+        if not data then return nil end
+        return { read = function() return data end,
+                 close = function() return true end }
+    end
+    if mode == "wb" then
+        if fault == "icon" then return nil end
+        return { write = function(_, data) files[path] = data; return #data end,
+                 close = function() return true end }
+    end
+    return nil
+end
+os.execute = function(command)
+    commands[#commands + 1] = command
+    if command:match("^getprop") then
+        if fault == "getprop" then return false end
+        files["/tmp/canopus-p65-version.txt"] =
+            (fault == "version" and "3.100.042" or "3.100.043") .. "\n"
+        return true
+    end
+    if command:match("^mkdir") then return true end
+    if command:match("^insmod") then
+        if fault == "insmod" then return false end
+        running = true
+        return true
+    end
+    error("Unexpected shell command: " .. command)
+end
+assert(load(source, source_path))()
+assert(#commands == 0 and #stages == 0, "installer mutated state before tap")
+assert(#callbacks == 5)
+callbacks[1]()
+callbacks[2]()
+callbacks[3]()
+callbacks[4]()
+callbacks[5]()
+local insmods = 0
+for _, command in ipairs(commands) do
+    if command:match("^insmod") then insmods = insmods + 1 end
+    assert(not command:match("rmmod"))
+end
+if fault == nil or fault == "already_running" then
+    assert(insmods == (fault == "already_running" and 0 or 1))
+    assert(#stages == 3 and stages[1] == 0 and stages[2] == 1 and stages[3] == 2)
+else
+    assert(insmods <= 1)
+    local before = insmods
+    callbacks[1]()
+    local after = 0
+    for _, command in ipairs(commands) do
+        if command:match("^insmod") then after = after + 1 end
+    end
+    assert(after == before, "failure allowed a second load")
+    if fault == "command_result" or fault == "short_write" then
+        assert(#stages == 1)
+    else
+        assert(#stages == 0)
+    end
+end
+io.open = host_open
+print("P65 installer smoke OK: " .. tostring(fault or "success"))

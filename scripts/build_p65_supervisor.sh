@@ -10,10 +10,19 @@ CC=${CC:-clang}
 LD=${LD:-ld.lld}
 FIRMWARE=${CANOPUS_P65_FIRMWARE:-"$HOME/develop/temp/p65_v3.100.043_vela_ap.bin"}
 python3 - "$FIRMWARE" <<'PY'
-import hashlib, pathlib, sys
+import hashlib, pathlib, sys, zipfile
 path = pathlib.Path(sys.argv[1])
 expected = 'a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858'
-if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+if zipfile.is_zipfile(path):
+    with zipfile.ZipFile(path) as archive:
+        members = [member for member in archive.infolist()
+                   if pathlib.PurePosixPath(member.filename).name == 'vela_ap.bin']
+        if len(members) != 1 or members[0].file_size != 11793540:
+            raise SystemExit('error: missing or ambiguous P65 AP payload')
+        payload = archive.read(members[0])
+else:
+    payload = path.read_bytes()
+if hashlib.sha256(payload).hexdigest() != expected:
     raise SystemExit('error: P65 AP SHA-256 mismatch')
 PY
 mkdir -p "$OUT"
@@ -41,6 +50,8 @@ for source in \
     manager/target/p65/canopus_manager_p65_transport.c \
     manager/target/p65/canopus_manager_p65_rows.c \
     manager/target/p65/canopus_manager_p65_lvx.c \
+    manager/target/p65/canopus_manager_p65_registry.c \
+    manager/target/p65/canopus_p65_registry_firmware.c \
     runtime/control/canopus_control.c runtime/lifecycle/canopus_lifecycle.c \
     runtime/module/canopus_module.c runtime/resources/canopus_resource.c; do
     object="$OUT/$(basename "$source" .c).o"
@@ -66,5 +77,8 @@ cargo build --locked -p canopus-cli
 python3 "$ROOT/scripts/generate_p65_experimental_pack.py" --output "$OUT/targets"
 "$ROOT/target/debug/canopus" verify "$OUT/canopus_supervisor.elf" \
     --target "$TARGET" --targets-dir "$OUT/targets"
+python3 "$ROOT/scripts/build_p65_installer.py" \
+    --supervisor "$OUT/canopus_supervisor.elf" --targets "$OUT/targets" \
+    --output "$OUT/installer"
 printf '\nExperimental resident P65 artifact: %s\n' "$OUT/canopus_supervisor.elf"
 printf 'Recovery/unload: reboot. Notification-center binding is experimental.\n'
