@@ -41,10 +41,12 @@ local elf = "\127ELF\1\1\1" .. string.rep("\0", 9)
 local files = { [SCRIPT_PATH .. "supervisor.bin"] = elf,
                 [SCRIPT_PATH .. "manager_icon.bin"] = "test-icon" }
 if fault == "resource" then files[SCRIPT_PATH .. "supervisor.bin"] = "bad" end
-local running = fault == "already_running"
+local running = fault == "already_running" or fault == "native_client"
+local native_response = fault == "native_client"
 local op, result = 0, 5
 local stages = {}
 local function status()
+    if native_response then return word(0x43504332) .. string.rep("\0", 32) end
     local data = word(0x43505331) .. word(1) .. word(1) .. word(0)
         .. word(0) .. word(op) .. word(result) .. word(0) .. word(0)
         .. word(2) .. word(fault == "torn_status" and 4 or 2)
@@ -61,7 +63,8 @@ io.open = function(path, mode)
             write = function(_, data)
                 assert(#data == 16 and u32(data, 0) == 0x43504331)
                 op = u32(data, 4)
-                stages[#stages + 1] = u32(data, 8)
+                native_response = false
+                if op ~= 0x43510001 then stages[#stages + 1] = u32(data, 8) end
                 result = fault == "command_result" and 4 or 5
                 if fault == "short_write" then return #data - 1 end
                 return #data
@@ -111,8 +114,8 @@ for _, command in ipairs(commands) do
     if command:match("^insmod") then insmods = insmods + 1 end
     assert(not command:match("rmmod"))
 end
-if fault == nil or fault == "already_running" then
-    assert(insmods == (fault == "already_running" and 0 or 1))
+if fault == nil or fault == "already_running" or fault == "native_client" then
+    assert(insmods == (fault == nil and 1 or 0))
     assert(#stages == 3 and stages[1] == 0 and stages[2] == 1 and stages[3] == 2)
 else
     assert(insmods <= 1)

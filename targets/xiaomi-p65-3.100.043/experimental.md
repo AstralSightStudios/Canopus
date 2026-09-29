@@ -134,7 +134,10 @@ return types. Always check `capabilities()`. Compile-only inherited Bluetooth
 structures do not approve P65 Bluetooth layouts. The P65-specific
 `app_lookup_package` and `launcher_refresh` avoid pretending its ABI is Band11's.
 The host facade tests, P65 Thumb compile and Band11 .155 Thumb regression compile
-pass. Rust module scaffolding still requires a custom C entry pipeline; the
+pass. The full unrelated Python suite is not green: two Band11 cases lack its
+pinned host luac and another rejects errno_location metadata. Core generated
+stability also detects stale Band10 .043 bindings. Those inputs were not changed
+by this port; these failures are not waived or counted as P65 passes. Rust module scaffolding still requires a custom C entry pipeline; the
 P65 CLI's verified scaffold is currently C only.
 
  The original analysis report

@@ -52,8 +52,17 @@ local function execute(command)
     local ok, result = pcall(os.execute, command)
     return ok and (result == true or result == 0)
 end
-local function supervisor_status()
+local function supervisor_status(allow_query)
     local data = read(DEVICE, 384)
+    if type(data) == "string" and u32(data, 0) == 0x43504332
+        and allow_query ~= false then
+        -- The native Manager uses CPC2. Switch this client back to the
+        -- legacy diagnostic view without clearing the previous error code.
+        local query = word(0x43504331) .. word(0x43510001)
+            .. word(0x43514431) .. word(0)
+        if not write(DEVICE, query) then return nil end
+        data = read(DEVICE, 384)
+    end
     if type(data) ~= "string" or #data ~= 384 or u32(data, 0) ~= 0x43505331
         or u32(data, 4) ~= 1 then return nil end
     local first, last = u32(data, 36), u32(data, 40)
@@ -108,7 +117,7 @@ local function command(op, argument)
     if not supervisor_status() then fail("Supervisor endpoint unavailable.") return end
     local frame = word(0x43504331) .. word(op) .. word(argument or 0) .. word(0)
     if not write(DEVICE, frame) then fail("Supervisor command failed.") return end
-    local data = supervisor_status()
+    local data = supervisor_status(false)
     if not data or u32(data, 20) ~= op or u32(data, 24) ~= 5 then
         local code = data and u32(data, 32) or "unavailable"
         fail("Operation failed: " .. tostring(code)) return

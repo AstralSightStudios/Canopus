@@ -67,7 +67,7 @@ class P65ExperimentalTests(unittest.TestCase):
             self.assertFalse(manifest["flashable"])
             self.assertEqual(manifest["resources"]["supervisor.bin"]["size"], 64)
             if shutil.which("lua"):
-                for fault in [None, "already_running", "resource", "version", "getprop",
+                for fault in [None, "already_running", "native_client", "resource", "version", "getprop",
                               "icon", "insmod", "endpoint", "torn_status", "short_write",
                               "command_result"]:
                     command = ["lua", str(ROOT / "scripts/lua/test_p65_installer.lua"),
