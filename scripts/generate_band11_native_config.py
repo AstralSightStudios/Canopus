@@ -28,7 +28,7 @@ def metadata(target_id):
         record = symbols[name]
         if record['target_id'] != target_id or record['provenance']['firmware_sha256'] != pack['firmware_sha256']:
             raise ValueError(f'wrong firmware provenance: {name}')
-        if record['status'] != 'STATIC_RECOVERED' or record['policy'] != 'restricted':
+        if record['status'] != 'STATIC_RECOVERED' or record['policy'] not in ('restricted', 'managed'):
             raise ValueError(f'native test ABI requires reviewed static evidence: {name}')
         for evidence in record['proof']['evidence_ids']:
             if not (root / 'evidence' / f'{evidence}.json').is_file():

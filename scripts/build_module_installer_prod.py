@@ -31,7 +31,8 @@ SUPPORTED = ['xiaomi-band-10-pro-3.101.036', 'xiaomi-band-10-pro-3.101.043',
 # Products whose payload is valid only for a subset of SUPPORTED; anything not
 # listed accepts every supported target.
 PRODUCT_TARGETS = {
-    'resource-hook': ['xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155'],
+    'resource-hook': ['xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155',
+                      'xiaomi-band-10-pro-3.101.043'],
     'data-quota-lift': ['xiaomi-band-11-4.100.155'],
     'refetch': ['xiaomi-band-10-pro-3.101.036', 'xiaomi-band-10-pro-3.101.043'],
 }
