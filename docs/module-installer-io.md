@@ -4,6 +4,11 @@ BluetoothAudio 和 Lyra Player 的 prod 按设备分别构建。设备目录内�
 固件版本，由该目录唯一的 `main.lua` 根据 `/etc/build.prop` 选择。打包范围为
 设备目录根部的 `main.lua` 和所有 `.bin`；`docs/`、`build/` 不参与表盘打包。
 
+只适用于部分固件的模块在 `build_module_installer_prod.py` 的 `PRODUCT_TARGETS`
+里声明其允许的 target，生成器拒绝为其它固件出包：Resource Hook 限 Band 11
+`.139`/`.155`，Data Quota Lift 限 Band 11 `.155`（其 YAFFS 设备链表根地址与结构体
+偏移是 `.155` 专有的）。因此这两者各自只有一个设备目录。
+
 ```sh
 # 在各自模块仓库执行；默认生成两个设备目录
 scripts/build-install-watchface-prod.sh

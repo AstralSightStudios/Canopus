@@ -6,6 +6,17 @@ local f = assert(io.open(assert(arg[1]), 'rb'))
 local source = f:read('*a'); f:close()
 local product = assert(arg[2])
 local token = product:gsub('-', '_')
+-- Packed icons per product; a product with none also skips the missing_icon
+-- fault, which needs at least one asset to remove.
+local ASSET_SETS = {
+    ['resource-hook'] = {},
+    ['data-quota-lift'] = {},
+    ['refetch'] = {},
+    ['bluetooth-audio'] = {'appicon_headphones.bin'},
+    ['lyra-player'] = {'appicon_lyra.bin', 'lyra-previous.bin', 'lyra-play.bin',
+                       'lyra-pause.bin', 'lyra-next.bin'},
+}
+local assets = assert(ASSET_SETS[product], 'unknown product: ' .. product)
 
 local checks, skipped = 0, 0
 local targets = {
@@ -56,9 +67,6 @@ local function run_case(version, fault)
         files['/fake/'..product..'-'..target[1]..'.cmi.bin']=receipt
         if fault=='missing_module' then files['/fake/'..product..'-'..target[1]..'.bin']=nil end
     end
-    local assets=product=='resource-hook' and {} or
-        product=='bluetooth-audio' and {'appicon_headphones.bin'} or
-        {'appicon_lyra.bin','lyra-previous.bin','lyra-play.bin','lyra-pause.bin','lyra-next.bin'}
     for _,name in ipairs(assets) do
         files['/fake/'..name]='\25\16\0\0'..string.pack('<I2I2I2I2',2,2,8,0)..string.rep('\0',16)
     end
@@ -167,7 +175,7 @@ for version,target in pairs(targets) do
         for _,fault in ipairs({'ok','wrong_receipt','wrong_firmware','missing_module','missing_icon',
             'no_supervisor','short_write','stale_response','rejected','cancel','duplicate_identity',
             'identity','no_identity','staging_short_write','corrupt_readback'}) do
-            if product~='resource-hook' or fault~='missing_icon' then run_case(version,fault) end
+            if #assets>0 or fault~='missing_icon' then run_case(version,fault) end
         end
         if target[1]:find('xiaomi-band-10-pro',1,true) then run_case(version,'getprop') end
     end

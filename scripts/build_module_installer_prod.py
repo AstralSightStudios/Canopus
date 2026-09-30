@@ -19,9 +19,22 @@ PRODUCTS = {
     'lyra-player': ('lyra_player', 'Lyra Player', 393216,
                     ['appicon_lyra.bin', 'lyra-previous.bin', 'lyra-play.bin',
                      'lyra-pause.bin', 'lyra-next.bin']),
+    # Clears the 128 MiB YAFFS byte cap .155 installs on /data. The recovered
+    # device-list root and struct offsets are exact to .155, so the installer
+    # must never offer it for another firmware. 64 KiB is the stock modlib
+    # file-size limit the module is linked against.
+    'data-quota-lift': ('data_quota_lift', 'Data Quota Lift', 65536, []),
+    'refetch': ('refetch', 'ReFetch', 262144, []),
 }
 SUPPORTED = ['xiaomi-band-10-pro-3.101.036', 'xiaomi-band-10-pro-3.101.043',
              'xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155']
+# Products whose payload is valid only for a subset of SUPPORTED; anything not
+# listed accepts every supported target.
+PRODUCT_TARGETS = {
+    'resource-hook': ['xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155'],
+    'data-quota-lift': ['xiaomi-band-11-4.100.155'],
+    'refetch': ['xiaomi-band-10-pro-3.101.036', 'xiaomi-band-10-pro-3.101.043'],
+}
 
 
 def lua(value):
@@ -39,9 +52,9 @@ def lua(value):
 
 
 def render(product, targets, module_id=None):
-    valid_rh = ['xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155', 'xiaomi-band-10-pro-3.101.043']
-    if product == 'resource-hook' and (not targets or any(t not in valid_rh for t in targets)):
-        raise ValueError('resource-hook supports only Band 11 .139/.155 or 10 Pro .043')
+    allowed = PRODUCT_TARGETS.get(product)
+    if allowed is not None and (not targets or any(t not in allowed for t in targets)):
+        raise ValueError(product + ' supports only: ' + ', '.join(allowed))
     if not targets or len({t.rsplit('-', 1)[0] for t in targets}) != 1:
         raise ValueError('a watchface must contain exactly one device family')
     token, title, maximum, assets = PRODUCTS[product]
@@ -168,6 +181,10 @@ def build_device(args, validate_only=False):
             raise ValueError('receipt/payload/target mismatch: ' + target)
         if args.product == 'resource-hook' and struct.unpack_from('<2I', receipt, 16) != (1, 3):
             raise ValueError('resource-hook requires resident lifecycle and module version 3')
+        # The lift must be re-applied on every boot (the mount re-installs the
+        # cap), so a removable-lifecycle receipt would silently stop working.
+        if args.product == 'data-quota-lift' and struct.unpack_from('<I', receipt, 16)[0] != 1:
+            raise ValueError('data-quota-lift requires resident lifecycle')
         verify_signature(receipt)
         resources[args.product + '-' + target + '.bin'] = module
         resources[args.product + '-' + target + '.cmi.bin'] = receipt

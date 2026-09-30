@@ -15,29 +15,41 @@ builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)
 
 
+def families(targets):
+    """Group target ids by device family, preserving order."""
+    grouped = {}
+    for target in targets:
+        grouped.setdefault(target.rsplit('-', 1)[0], []).append(target)
+    return grouped
+
+
 class ModuleInstallerTests(unittest.TestCase):
     def test_exact_target_config(self):
         for product in builder.PRODUCTS:
-            for target in builder.SUPPORTED[2:]:
-                source, config = builder.render(product, [target])
-                self.assertEqual(len(config['targets']), 1)
-                self.assertFalse(config['targets'][target.rsplit('-', 1)[1]]['runtime_pending'])
-            source, config = builder.render(product, builder.SUPPORTED[2:])
-            self.assertEqual(set(config['targets']), {'4.100.139', '4.100.155'})
-            if product == 'resource-hook':
-                self.assertEqual(config['token'], 'resource_hook')
-                self.assertEqual(config['assets'], [])
+            allowed = builder.PRODUCT_TARGETS.get(product, builder.SUPPORTED)
+            for targets in families(allowed).values():
+                for target in targets:
+                    source, config = builder.render(product, [target])
+                    self.assertEqual(len(config['targets']), 1)
+                    self.assertFalse(config['targets'][target.rsplit('-', 1)[1]]['runtime_pending'])
+                source, config = builder.render(product, targets)
+                self.assertEqual(set(config['targets']),
+                                 {t.rsplit('-', 1)[1] for t in targets})
+                self.assertEqual(config['token'], builder.PRODUCTS[product][0])
+                self.assertEqual(config['assets'], builder.PRODUCTS[product][3])
+                self.assertNotIn('-- @', source)
+            # A target the product does not claim is refused outright, so a
+            # .155-only payload can never be shipped for another firmware.
+            for target in set(builder.SUPPORTED) - set(allowed):
                 with self.assertRaises(ValueError):
-                    builder.render(product, builder.SUPPORTED[:2])
-            else:
-                source, config = builder.render(product, builder.SUPPORTED[:2])
-                self.assertEqual(len(config['targets']), 2)
-                self.assertFalse(config['targets']['3.101.043']['runtime_pending'])
-            self.assertNotIn('-- @', source)
+                    builder.render(product, [target])
             with self.assertRaises(ValueError):
                 builder.render(product, ['xiaomi-band-11-4.100.108'])
+            # Never mix device families in one watchface.
             with self.assertRaises(ValueError):
                 builder.render(product, builder.SUPPORTED)
+        self.assertEqual(builder.PRODUCT_TARGETS['data-quota-lift'],
+                         ['xiaomi-band-11-4.100.155'])
 
     def test_installer_protocol_with_restricted_lua(self):
         interpreter = os.environ.get('CANOPUS_TEST_LUA', 'lua')
@@ -45,9 +57,8 @@ class ModuleInstallerTests(unittest.TestCase):
             self.skipTest('Lua interpreter required')
         with tempfile.TemporaryDirectory(prefix='canopus-module-prod-test-') as temp:
             for product in builder.PRODUCTS:
-                target_groups = (builder.SUPPORTED[2:],) if product == 'resource-hook' else (
-                    builder.SUPPORTED[:2], builder.SUPPORTED[2:])
-                for targets in target_groups:
+                allowed = builder.PRODUCT_TARGETS.get(product, builder.SUPPORTED)
+                for targets in families(allowed).values():
                     source, _ = builder.render(product, targets)
                     forbidden = ['debug.', 'pmain', 'RECOVERY_PROFILE']
                     # Band 10 Pro keeps its execute-capable /dev/canopus flow.
