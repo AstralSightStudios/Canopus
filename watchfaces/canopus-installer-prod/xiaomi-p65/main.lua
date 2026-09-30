@@ -1,5 +1,6 @@
--- Experimental exact-P65 installer. No mutation until an explicit tap.
--- Supervisor and all registered descriptors remain resident until reboot.
+-- P65 deployment withdrawn after a device Logo boot-loop report.
+-- Disabled actions perform no shell, filesystem or device writes.
+local DEPLOYMENT_ENABLED = false
 local lvgl = require("lvgl")
 local DEVICE = "/dev/canopus"
 local MODULE_NAME = "canopus_p65_sup"
@@ -18,7 +19,7 @@ local title = lvgl.Label(root, {
     align = { type = lvgl.ALIGN.TOP_MID, x_ofs = 0, y_ofs = 24 },
 })
 local status = lvgl.Label(root, {
-    text = "Experimental 3.100.043\nInstall, then register Manager.\nReboot to unload; back up your data.",
+    text = "P65 deployment withdrawn.\nReported boot loop.\nDo not install or retry.",
     text_color = 0xBFD9FF, w = lvgl.HOR_RES() - 48, h = 116,
     align = { type = lvgl.ALIGN.TOP_MID, x_ofs = 0, y_ofs = 70 },
 })
@@ -48,6 +49,11 @@ local function u32(data, offset)
     local a, b, c, d = data:byte(offset + 1, offset + 4)
     return a + b * 256 + c * 65536 + d * 16777216
 end
+local function i32(data, offset)
+    local value = u32(data, offset)
+    if value == nil then return nil end
+    return value >= 2147483648 and value - 4294967296 or value
+end
 local function execute(command)
     local ok, result = pcall(os.execute, command)
     return ok and (result == true or result == 0)
@@ -55,7 +61,7 @@ end
 local function supervisor_status(allow_query)
     local data = read(DEVICE, 384)
     if type(data) == "string" and u32(data, 0) == 0x43504332
-        and allow_query ~= false then
+        and allow_query ~= false and DEPLOYMENT_ENABLED then
         -- The native Manager uses CPC2. Switch this client back to the
         -- legacy diagnostic view without clearing the previous error code.
         local query = word(0x43504331) .. word(0x43510001)
@@ -71,7 +77,7 @@ local function supervisor_status(allow_query)
 end
 local function fail(text)
     blocked = true
-    set_status(text .. "\nReboot before retrying.")
+    set_status(text .. "\nStop testing. Do not reboot to retry.")
 end
 local function check_version()
     if not execute("getprop ro.build.version > " .. VERSION_PATH) then return false end
@@ -79,6 +85,9 @@ local function check_version()
     return type(version) == "string" and version:match("^%s*(.-)%s*$") == "3.100.043"
 end
 local function install_supervisor()
+    if not DEPLOYMENT_ENABLED then
+        set_status("P65 deployment withdrawn.\nDo not install or retry.") return
+    end
     if blocked then return end
     if not check_version() then fail("Firmware version check failed.") return end
     if supervisor_status() then
@@ -112,15 +121,30 @@ local function install_supervisor()
     end
     set_status("Supervisor loaded.\nTap Register Manager.")
 end
+local function manager_diagnostic(data)
+    if u32(data, 48) ~= 0x434E5431 then return "" end
+    return "\nID: " .. tostring(i32(data, 52)) .. " · App: " .. tostring(i32(data, 56))
+end
 local function command(op, argument)
+    if not DEPLOYMENT_ENABLED then
+        set_status("P65 deployment withdrawn.\nDo not install or retry.") return
+    end
     if blocked then return end
     if not supervisor_status() then fail("Supervisor endpoint unavailable.") return end
     local frame = word(0x43504331) .. word(op) .. word(argument or 0) .. word(0)
     if not write(DEVICE, frame) then fail("Supervisor command failed.") return end
     local data = supervisor_status(false)
     if not data or u32(data, 20) ~= op or u32(data, 24) ~= 5 then
-        local code = data and u32(data, 32) or "unavailable"
-        fail("Operation failed: " .. tostring(code)) return
+        local code = data and i32(data, 32) or "unavailable"
+        local text = "Operation failed: " .. tostring(code)
+        if code == -13 or code == -17 then
+            text = "Registry save failed: " .. tostring(code)
+                .. "\nNative registration may have completed."
+        elseif code == -5 then
+            text = "Registration stage failed: -5"
+        end
+        if data then text = text .. manager_diagnostic(data) end
+        fail(text) return
     end
     set_status("Operation complete.\nOpen Canopus from Launcher.\nResident until reboot.")
 end
@@ -129,8 +153,8 @@ local function show_status()
     if not data then set_status("Supervisor endpoint unavailable.") return end
     set_status("Modules: " .. tostring(u32(data, 16))
         .. "\nResult: " .. tostring(u32(data, 24))
-        .. " · Error: " .. tostring(u32(data, 32))
-        .. "\nResident until reboot.")
+        .. " · Error: " .. tostring(i32(data, 32))
+        .. manager_diagnostic(data) .. "\nP65 withdrawn. Do not retry.")
 end
 local function button(text, y, callback)
     local object = lvgl.Object(root, {
@@ -152,4 +176,4 @@ button("Install Supervisor", 200, install_supervisor)
 button("Register Manager", 248, function() command(0x43510002, 0) end)
 button("Register module apps", 296, function() command(0x43510002, 1) end)
 button("Publish module apps", 344, function() command(0x43510002, 2) end)
-button("Status", 392, show_status)
+button("Read status", 392, show_status)

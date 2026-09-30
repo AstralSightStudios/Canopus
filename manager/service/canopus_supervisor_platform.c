@@ -18,6 +18,7 @@
 #include "band11/canopus_band11_abi.h"
 #elif defined(CANOPUS_SUP_P65_RESIDENT)
 #include "p65/canopus_p65_abi.h"
+#include "p65/canopus_manager_p65_registry.h"
 #endif
 #if defined(CANOPUS_SUP_BAND11_BOOTSTRAP) || defined(CANOPUS_SUP_P65_RESIDENT)
 #define CANOPUS_SUP_RESIDENT_DRIVER 1
@@ -878,7 +879,8 @@ static int sup_registry_persist(void *cookie, const uint8_t *data, uint32_t len)
 {
 #ifdef CANOPUS_SUP_P65_RESIDENT
     (void)cookie;
-    return canopus_p65_registry_firmware_persist(data, len);
+    return canopus_p65_registry_supervisor_save_error(
+        canopus_p65_registry_firmware_persist(data, len));
 #endif
     int rc;
     (void)cookie;
@@ -971,6 +973,14 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
     int slot;
 
     (void)cookie;
+#ifdef CANOPUS_SUP_P65_RESIDENT
+    /* Defence in depth for in-process callers; do not mutate stock app state
+     * or the registry while cold-boot safety remains unresolved. */
+    if (!CANOPUS_P65_DEPLOYMENT_ENABLED) {
+        sup->error_code = CANOPUS_P65_ERR_DEPLOYMENT_BLOCKED;
+        return CANOPUS_P65_ERR_DEPLOYMENT_BLOCKED;
+    }
+#endif
     /* Payload-free INSTALL is split across separate miwear callbacks so each
      * transaction performs at most one app-registry/Launcher mutation before
      * returning to the event loop. Stage 0 registers Manager. Stages 1 and 2

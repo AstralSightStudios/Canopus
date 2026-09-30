@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 import struct
 import subprocess
 import zipfile
@@ -16,7 +17,15 @@ TARGET = "xiaomi-p65-3.100.043"
 SHA = "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858"
 
 
+def deployment_enabled():
+    policy = (ROOT / "manager/target/p65/canopus_p65_safety.h").read_text()
+    enabled = re.search(r'^#define CANOPUS_P65_DEPLOYMENT_ENABLED ([01])$', policy, re.M)
+    return enabled is not None and enabled[1] == "1"
+
+
 def build(supervisor, output, targets):
+    if not deployment_enabled():
+        raise ValueError("P65 deployment withdrawn after Logo boot loop; do not package or retry")
     supervisor = Path(supervisor).resolve()
     output = Path(output).resolve()
     data = supervisor.read_bytes()

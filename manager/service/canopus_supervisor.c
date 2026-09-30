@@ -1050,7 +1050,15 @@ int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
             module->activation_error = 0u;
         }
     }
-    if (canopus_supervisor_save_registry(sup) != 0) return -1;
+    {
+        int persist_result = canopus_supervisor_save_registry(sup);
+        if (persist_result != 0) {
+            /* App callbacks may already have committed; retain the specific
+             * storage error rather than reporting a generic stage failure. */
+            sup->error_code = (uint32_t)persist_result;
+            return -1;
+        }
+    }
     return failed;
 }
 

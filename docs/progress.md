@@ -81,7 +81,17 @@
 - Extracted and loaded the exact `vela_ap.bin` from the local P65 3.100.043 OTA with the supplied IDA loader. The loader was narrowly adjusted for the P65 header word and accepts the variant only after footer/alias metadata validates. IDA discovered 42,835 functions; exact AP SHA-256 is recorded in `targets/xiaomi-p65-3.100.043/target.toml`.
 - Added the P65 exact identity pack and generated Rust/C identity guard from the exact `ro.build.version` and boot `REV_INFO` strings. P65 remains analysis-only; no callable or device capability is promoted and the target-private backend is intentionally unavailable.
 
-## P65 experimental native integration (supersedes historical build blockers)
+## P65 safety incident — deployment withdrawn (current)
+
+- User reports Supervisor installation returned normally, Manager displayed `4294967291` (signed `-5`), and following the reboot/retry prompt caused a Logo boot loop before the watchface. REC data wipe/factory reset restored boot. There is no boot log, pre-reset filesystem snapshot or confirmed device artifact hash.
+- Exact AP IDA and Unicorn execution confirm the previous `write` address `0x0C248455` is pwrite, with a fourth, 64-bit stack argument never supplied by the provider. The correct plain fd write is `0x0C2497F1`. Wrong-offset writes are reproduced offline; this is not proof of the boot-loop trigger. Earlier write evidence is corrected.
+- Native stage and provider write errors both surfaced as `-5`; provider saves now map to distinct Supervisor registry errors. Lua displays signed values and native identity/app diagnostics, and removes the unsafe reboot/retry instruction.
+- P65 deployment is disabled in a shared native safety policy. Module entry rejects before initialization or escaped callbacks; native staging/Manager registration also deny. Normal builders and standalone packager refuse before output mutation. Installer mutation actions perform no shell/device writes; status performs no protocol-handoff write. No environment/CLI deployment bypass is provided.
+- The original local pack is preserved at ignored `build/p65-incident-0f62381/`, with hashes recorded in the incident report. The former installable path contains only a withdrawal notice. No replacement device package is provided.
+- Six experimental-policy tests, six exact-Thumb write tests, host ASan/UBSan, Rust P65 host/Thumb and offline guarded ELF verification pass. `--offline-audit` compiles only a module whose entry returns `-130`, without installer resources. These are not device approval or full-workspace passes.
+- Boot-loop trigger, stock app/Launcher persistent effects and failed-save commit ambiguity remain open. See `targets/xiaomi-p65-3.100.043/bootloop-incident.md`. Historical success/build descriptions below do not authorize deployment.
+
+## P65 experimental native integration (historical, now withdrawn)
 
 - At the user's request, P65 experimental builds no longer require a prior hardware gate and the standalone G0 watchface is removed. Exact AP/OTA identity and ABI/import/relocation/address checks remain. No device or production result is claimed.
 - The standard Supervisor builder dispatches P65 to a separate resident build. Its `module_initialize` entrypoint and integer-return unload callback follow exact AP code; negative unload return blocks modlib unlink/free. Exact VFS/fops registration, app/package lookup, page lifecycle (+100 UI-destroy), list/row/label events and notification-center input are bound experimentally. The LVX factory correction uses C8BC758 as create and C8BE008 as title setter.

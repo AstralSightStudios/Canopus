@@ -849,6 +849,39 @@ TEST(supervisor_staged_native_app_receives_each_stage)
     CHECK(canopus_supervisor_publish_native_apps(&sup, 0u) == -1);
 }
 
+static int publication_install_stage(void *cookie, const char *package, uint32_t stage)
+{
+    if (package != 0) return -1;
+    return canopus_supervisor_publish_native_apps(cookie, stage);
+}
+TEST(supervisor_publication_save_failure_retains_registry_diagnostic)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_module_descriptor_v1 descriptor = fake_descriptor;
+    struct canopus_sup_platform_v1 platform = fake_platform;
+    uint8_t command[CANOPUS_SUP_COMMAND_SIZE];
+    uint32_t stage;
+    platform.stage_package = publication_install_stage;
+    CHECK(canopus_supervisor_init(&sup, 7, &platform, &sup) == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
+                                       1, 1, "mod.hello") == 0);
+    sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
+    sup.modules[0].descriptor = &descriptor;
+    descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
+    g_publications = 0;
+    g_publication_result = 0;
+    g_persist_result = CANOPUS_SUP_ERR_REGISTRY_WRITE;
+    for (stage = 1; stage <= 2; stage++) {
+        make_command(command, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, stage, 0);
+        CHECK(canopus_supervisor_handle_command(&sup, command) == CANOPUS_RESULT_FAILED);
+        CHECK((int32_t)sup.error_code == CANOPUS_SUP_ERR_REGISTRY_WRITE);
+        CHECK(g_publications == (int)stage);
+        CHECK(g_publication_stage == stage);
+        CHECK(sup.modules[0].descriptor == &descriptor);
+    }
+    g_persist_result = 0;
+}
+
 TEST(supervisor_native_app_publication_persists_error)
 {
     struct canopus_supervisor_v1 sup;
@@ -1625,6 +1658,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_legacy_native_app_publishes_only_in_stage_one", supervisor_legacy_native_app_publishes_only_in_stage_one_wrapper },
     { "supervisor_staged_native_app_receives_each_stage", supervisor_staged_native_app_receives_each_stage_wrapper },
     { "supervisor_native_app_publication_persists_error", supervisor_native_app_publication_persists_error_wrapper },
+    { "supervisor_publication_save_failure_retains_registry_diagnostic", supervisor_publication_save_failure_retains_registry_diagnostic_wrapper },
     { "supervisor_registry_restore_keeps_disabled_modules_unloaded", supervisor_registry_restore_keeps_disabled_modules_unloaded_wrapper },
     { "supervisor_registry_remove_intent_clears_at_boot", supervisor_registry_remove_intent_clears_at_boot_wrapper },
     { "supervisor_registry_corrupt_magic_is_ignored", supervisor_registry_corrupt_magic_is_ignored_wrapper },

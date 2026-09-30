@@ -27,6 +27,19 @@ enum canopus_p65_registry_error_v1 {
     CANOPUS_P65_REGISTRY_ERR_VERIFY = -6,
 };
 
+/* Provider errors are a different domain from CPS1 supervisor errors.
+ * In particular, provider -5 must not masquerade as native stage failure. */
+static inline int canopus_p65_registry_supervisor_save_error(int result)
+{
+    switch (result) {
+    case CANOPUS_P65_REGISTRY_OK: return CANOPUS_SUP_ERR_NONE;
+    case CANOPUS_P65_REGISTRY_ERR_IO: return CANOPUS_SUP_ERR_REGISTRY_OPEN;
+    case CANOPUS_P65_REGISTRY_ERR_WRITE: return CANOPUS_SUP_ERR_REGISTRY_WRITE;
+    case CANOPUS_P65_REGISTRY_ERR_VERIFY: return CANOPUS_SUP_ERR_REGISTRY_VERIFY_FINAL;
+    default: return CANOPUS_SUP_ERR_REGISTRY;
+    }
+}
+
 /* read_slot returns 0 for a complete read, 1 for a missing slot, or a
  * negative I/O error. On success, *actual_size is the exact on-disk size; it
  * may exceed capacity to report an oversized/corrupt slot, but the callback

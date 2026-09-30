@@ -207,11 +207,20 @@ int canopus_manager_native_install(void)
     typedef void (*install_fn)(void *, void *, uint32_t);
     typedef void *(*lookup_fn)(const char *);
     typedef void (*refresh_fn)(void);
-    int rc = canopus_identity_guard();
+    int rc;
+    if (!CANOPUS_P65_DEPLOYMENT_ENABLED) {
+        canopus_manager_target_record.app_install_result =
+            CANOPUS_P65_ERR_DEPLOYMENT_BLOCKED;
+        return CANOPUS_P65_ERR_DEPLOYMENT_BLOCKED;
+    }
+    rc = canopus_identity_guard();
     canopus_manager_target_record.identity_result = rc;
     if (rc != 0) return rc;
     if (installed) return 0;
-    if (CALL(P65_APP_LOOKUP, lookup_fn)(app.package) != 0) return -17;
+    if (CALL(P65_APP_LOOKUP, lookup_fn)(app.package) != 0) {
+        canopus_manager_target_record.app_install_result = -17;
+        return -17;
+    }
     CALL(P65_APP_INSTALL, install_fn)(&app, pages, 1);
     if (CALL(P65_APP_LOOKUP, lookup_fn)(app.package) == 0) {
         canopus_manager_target_record.app_install_result = -1;

@@ -1,4 +1,14 @@
-# P65 experimental resident integration
+# P65 experimental resident integration — deployment withdrawn
+
+**Do not install or reboot to retry the previous P65 candidate.** The user
+reported a Logo boot loop requiring REC data wipe after Manager failure.
+The former write binding was actually pwrite with an unsupplied 64-bit offset.
+Its correction is host/static only; the cold-boot trigger remains unresolved.
+See [bootloop-incident.md](bootloop-incident.md). Installer actions, normal
+build/package entry points and native initialization are disabled. The former
+resource ZIP was withdrawn and preserved separately for analysis.
+
+Historical implementation details below are not deployment instructions.
 
 This path is separate from the registered identity-only generated SDK pack.
 The target-private Rust facade exposes the Band11-named API surface with
@@ -10,14 +20,19 @@ entrypoint rules, and recovered relocation allowlist remain mandatory.
 ## Build
 
 ```sh
+# OFFLINE AUDIT ONLY: entry returns -130 before initialization. DO NOT INSTALL.
 CANOPUS_P65_FIRMWARE=/path/to/p65_v3.100.043_vela_ap.bin \
-  bash scripts/build_p65_supervisor.sh
+  sh scripts/build_p65_supervisor.sh --offline-audit
 ```
 
 The input may also be the original full OTA ZIP despite its `.bin` suffix;
 its unique `vela_ap.bin` is hashed in memory without extracting arbitrary paths.
 
-Outputs under `watchfaces/canopus-installer/build/xiaomi-p65-3.100.043/`:
+Current audit output is `build/p65-offline-audit/canopus_supervisor.elf`;
+no installer resources are generated. Normal build and standalone packaging
+refuse while the native safety policy is disabled; no environment override.
+
+**Withdrawn historical outputs** (no longer available at the installable path):
 
 - `canopus_supervisor.elf`: native ARM ET_REL resident module.
 - `installer/canopus-p65-resources.zip`: deterministic flat watchface resource
@@ -25,14 +40,10 @@ Outputs under `watchfaces/canopus-installer/build/xiaomi-p65-3.100.043/`:
 - `installer/build-info.json`: exact target/AP identity, resource sizes/hashes,
   and archive hash (not included inside the resource ZIP).
 
-Use the existing watchface packing/install workflow for the resource ZIP. It
-is **not** a flashable watchface image. The standalone G0 watchface is removed;
-this installer loads the actual Supervisor and registers the actual Manager.
-
-Open the packed watchface, tap Install Supervisor, then Register Manager on a
-separate event turn. Register/Publish module apps are distinct optional stages.
-There is no auto-load or unload action. Native identity checking still precedes
-firmware registration; the Lua version check is not a whole-image hash check.
+These original resources are preserved under `build/p65-incident-0f62381/`
+for investigation only. Do not pack or load them. The source Lua now disables
+all install/register/publish actions and allows read-only status without a
+protocol-handoff QUERY write. The standalone G0 watchface remains removed.
 
 The build verifies the exact AP SHA-256 and creates a separate verifier overlay
 under the output's `targets/` directory. That overlay preserves target.toml
@@ -66,8 +77,9 @@ Canopus
 Registration failure after a firmware callback escapes must not release the
 module. The resident entry therefore retains the image even if registration
 partially fails. `insmod` success alone is not proof that both endpoints or the
-Manager exist. Never retry installation without checking current state; reboot
-clears the resident image and any partially registered endpoints.
+Manager exist. The former reboot/retry recommendation is withdrawn: runtime callbacks are
+not the only risk. The user reported a data-dependent Logo boot loop after
+reboot. Do not use reboot as a guaranteed recovery operation for this target.
 
 ## Remaining integration work
 
@@ -95,11 +107,15 @@ clears the resident image and any partially registered endpoints.
   without overflowing scratch (bounded to 64 KiB). The actual provider is
   host-tested through fake exact-address dispatch, including failure fallback.
   Close/readback still is not an fsync/power-loss durability guarantee.
-- Native rendering, launcher visibility and callback ownership are experimental.
-  No device execution, screenshot, notification or persistence result is claimed.
+- Native rendering, launcher visibility and callback ownership remain unsafe
+  to deploy. There is now a user-reported device failure, not a success gate.
+  The original -5 cannot distinguish native stage failure from provider write
+  failure; new diagnostics map save failures to the registry error domain.
+  No notification, persistence durability or cold-boot success is claimed.
 
-The standard Supervisor builder now dispatches the P65 target to this separate
-experimental build, without staging production approval. The Rust target-private
+The standard Supervisor builder dispatches P65 to the now-disabled path and
+refuses deployment. Only the explicit offline-audit mode compiles a guarded ELF;
+it does not stage production approval or installer resources. The Rust target-private
 crate has an experimental P65 feature; its unsafe address constants are generated
 from the same private C ABI header, not copied from Band11.
 

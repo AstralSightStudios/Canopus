@@ -1,6 +1,7 @@
 """P65 experimental overlay and resident modlib lifecycle regression tests."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import struct
@@ -41,6 +42,29 @@ class P65ExperimentalTests(unittest.TestCase):
             PACK.generate(temporary)
             self.assertFalse(stale.exists())
 
+    def test_withdrawn_builders_cannot_create_or_replace_resources(self):
+        self.assertFalse(INSTALLER.deployment_enabled())
+        with tempfile.TemporaryDirectory() as temporary:
+            tmp = Path(temporary)
+            output = tmp / "output"
+            output.mkdir()
+            sentinel = output / "canopus-p65-resources.zip"
+            sentinel.write_bytes(b"incident evidence: must not overwrite")
+            with mock.patch.object(INSTALLER.subprocess, "run") as verify:
+                with self.assertRaisesRegex(ValueError, "withdrawn"):
+                    INSTALLER.build(tmp / "missing.elf", output, tmp / "targets")
+                verify.assert_not_called()
+            environment = dict(os.environ, CANOPUS_P65_OUTPUT_DIR=str(output),
+                               CANOPUS_P65_FIRMWARE=str(tmp / "missing-ap.bin"))
+            for script in ("build_p65_supervisor.sh", "build_canopus_supervisor.sh"):
+                result = subprocess.run(["sh", str(ROOT / "scripts" / script)],
+                    env=dict(environment, CANOPUS_TARGET=PACK.TARGET),
+                    capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("deployment withdrawn", result.stderr)
+            self.assertEqual(list(output.iterdir()), [sentinel])
+            self.assertEqual(sentinel.read_bytes(), b"incident evidence: must not overwrite")
+
     def test_installer_packaging_and_lua_control_flow(self):
         with tempfile.TemporaryDirectory() as temporary:
             tmp = Path(temporary)
@@ -50,9 +74,10 @@ class P65ExperimentalTests(unittest.TestCase):
             struct.pack_into("<I", elf, 24, 1)
             artifact = tmp / "fixture.elf"
             artifact.write_bytes(elf)
-            # Fixture packaging test only: the real builder always runs the
-            # ELF verifier. Never use this synthetic header as a device image.
-            with mock.patch.object(INSTALLER.subprocess, "run") as verify:
+            # Host-only policy override: temporary synthetic ELF, no release.
+            # Neither the real packager nor its CLI has this override.
+            with mock.patch.object(INSTALLER, "deployment_enabled", return_value=True), \
+                    mock.patch.object(INSTALLER.subprocess, "run") as verify:
                 archive = INSTALLER.build(artifact, tmp / "first", tmp / "targets")
                 self.assertEqual(verify.call_count, 1)
                 self.assertIn("verify", verify.call_args.args[0])
@@ -67,18 +92,20 @@ class P65ExperimentalTests(unittest.TestCase):
             self.assertFalse(manifest["flashable"])
             self.assertEqual(manifest["resources"]["supervisor.bin"]["size"], 64)
             if shutil.which("lua"):
-                for fault in [None, "already_running", "native_client", "resource", "version", "getprop",
+                smoke = ["lua", str(ROOT / "scripts/lua/test_p65_installer.lua"),
+                         str(archive.parent / "main.lua")]
+                for fault in ["withdrawn", "already_running", "native_client", "withdrawn_diagnostics"]:
+                    subprocess.run([*smoke, fault], check=True, capture_output=True, text=True)
+                for fault in ["success", "already_running", "native_client", "resource", "version", "getprop",
                               "icon", "insmod", "endpoint", "torn_status", "short_write",
-                              "command_result"]:
-                    command = ["lua", str(ROOT / "scripts/lua/test_p65_installer.lua"),
-                               str(archive.parent / "main.lua")]
-                    if fault:
-                        command.append(fault)
-                    subprocess.run(command, check=True, capture_output=True, text=True)
+                              "command_result", "registry_result"]:
+                    subprocess.run([*smoke, fault, "enabled-model"], check=True,
+                                   capture_output=True, text=True)
             # Malformed entry fails before invoking the verifier.
             elf[24] = 0
             artifact.write_bytes(elf)
-            with self.assertRaises(ValueError):
+            with mock.patch.object(INSTALLER, "deployment_enabled", return_value=True), \
+                    self.assertRaises(ValueError):
                 INSTALLER.build(artifact, tmp / "bad", tmp / "targets")
 
     def test_rust_facade_retains_band11_names_without_claiming_bluetooth(self):
@@ -106,6 +133,8 @@ class P65ExperimentalTests(unittest.TestCase):
             (tmp / "canopus_veneer.h").write_text(
                 "static int identity_result;\n"
                 "static int canopus_identity_guard(void) { return identity_result; }\n")
+            policy = (ROOT / "manager/target/p65/canopus_p65_safety.h").read_text()
+            (tmp / "canopus_p65_safety.h").write_text(policy)
             source = tmp / "test.c"
             source.write_text(r'''
 #include <assert.h>
@@ -144,6 +173,15 @@ int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *s
 int main(void) {
     struct canopus_p65_modlib_unload_pair pair;
     assert(canopus_supervisor_module_initialize(0) == -1);
+    if (!CANOPUS_P65_DEPLOYMENT_ENABLED) {
+        pair.callback = canopus_sup_p65_unload;
+        pair.context = &pair;
+        assert(canopus_supervisor_module_initialize(&pair) == CANOPUS_P65_ERR_DEPLOYMENT_BLOCKED);
+        assert(pair.callback == 0 && pair.context == 0);
+        assert(register_calls == 0 && unregister_calls == 0);
+        assert(g_device_registered == 0);
+        return 0;
+    }
     identity_result = -1;
     assert(canopus_supervisor_module_initialize(&pair) == -1);
     assert(pair.callback == 0 && register_calls == 0);
@@ -164,10 +202,15 @@ int main(void) {
                         ROOT / "runtime/control", ROOT / "runtime/lifecycle",
                         ROOT / "runtime/module", ROOT / "runtime/resources",
                         ROOT / "manager/protocol"]
-            subprocess.run(["cc", "-std=c11", "-Wall", "-Wextra", "-Werror",
-                            *[f"-I{path}" for path in includes], str(source),
-                            "-o", str(tmp / "test")], check=True)
-            subprocess.run([str(tmp / "test")], check=True)
+            for enabled in (0, 1):
+                # In-memory fixture policy only; no target artifact is packaged.
+                (tmp / "canopus_p65_safety.h").write_text(policy.replace(
+                    "#define CANOPUS_P65_DEPLOYMENT_ENABLED 0",
+                    f"#define CANOPUS_P65_DEPLOYMENT_ENABLED {enabled}"))
+                subprocess.run(["cc", "-std=c11", "-Wall", "-Wextra", "-Werror",
+                                *[f"-I{path}" for path in includes], str(source),
+                                "-o", str(tmp / "test")], check=True)
+                subprocess.run([str(tmp / "test")], check=True)
 
 
 if __name__ == "__main__":

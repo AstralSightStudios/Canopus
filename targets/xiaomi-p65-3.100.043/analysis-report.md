@@ -1,8 +1,11 @@
 # P65 firmware analysis — 3.100.043
 
-**Current integration:** a separate experimental resident Supervisor/Manager,
-installer resource bundle, C registration scaffold and Rust private facade now
-build. See [experimental.md](experimental.md). Historical statements below
+**Current safety status: deployment withdrawn.** A user-reported Manager
+failure followed by a Logo boot loop required REC data wipe. The former write
+binding was pwrite with an unsupplied 64-bit stack offset; its correction does
+not prove the cold-boot cause or safety. Native initialization, installation
+and packaging are disabled. See [bootloop-incident.md](bootloop-incident.md)
+and [offline build only](experimental.md). Historical statements below
 about the absent backend, rejected build and mandatory pre-device gates are
 superseded for experimental artifacts only; no hardware or production approval
 is implied. The experimental corrections section records newer exact-AP ABI

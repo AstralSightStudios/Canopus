@@ -5,7 +5,27 @@ set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$ROOT"
 TARGET=xiaomi-p65-3.100.043
-OUT=${CANOPUS_P65_OUTPUT_DIR:-"$ROOT/watchfaces/canopus-installer/build/$TARGET"}
+# The only allowed build while withdrawn is a non-installable audit ELF.
+AUDIT=0
+case "${1:-}" in
+    --offline-audit)
+        AUDIT=1
+        OUT="$ROOT/build/p65-offline-audit"
+        ;;
+    "") OUT=${CANOPUS_P65_OUTPUT_DIR:-"$ROOT/watchfaces/canopus-installer/build/$TARGET"} ;;
+    *) printf 'Usage: %s [--offline-audit]\n' "$0" >&2; exit 2 ;;
+esac
+python3 - "$ROOT/manager/target/p65/canopus_p65_safety.h" "$AUDIT" <<'PY'
+import pathlib, re, sys
+text = pathlib.Path(sys.argv[1]).read_text()
+match = re.search(r'^#define CANOPUS_P65_DEPLOYMENT_ENABLED ([01])$', text, re.M)
+if match is None:
+    raise SystemExit('error: missing or invalid P65 safety policy')
+if sys.argv[2] != '1' and match[1] != '1':
+    raise SystemExit('error: P65 deployment withdrawn after Logo boot loop; do not install or retry')
+if sys.argv[2] == '1' and match[1] != '0':
+    raise SystemExit('error: offline audit requires the native deployment guard disabled')
+PY
 CC=${CC:-clang}
 LD=${LD:-ld.lld}
 FIRMWARE=${CANOPUS_P65_FIRMWARE:-"$HOME/develop/temp/p65_v3.100.043_vela_ap.bin"}
@@ -77,8 +97,11 @@ cargo build --locked -p canopus-cli
 python3 "$ROOT/scripts/generate_p65_experimental_pack.py" --output "$OUT/targets"
 "$ROOT/target/debug/canopus" verify "$OUT/canopus_supervisor.elf" \
     --target "$TARGET" --targets-dir "$OUT/targets"
-python3 "$ROOT/scripts/build_p65_installer.py" \
-    --supervisor "$OUT/canopus_supervisor.elf" --targets "$OUT/targets" \
-    --output "$OUT/installer"
-printf '\nExperimental resident P65 artifact: %s\n' "$OUT/canopus_supervisor.elf"
-printf 'Recovery/unload: reboot. Notification-center binding is experimental.\n'
+if [ "$AUDIT" = 1 ]; then
+    printf '\nOffline-only P65 ELF: %s\n' "$OUT/canopus_supervisor.elf"
+    printf 'Native entry is disabled. No installer resources generated. DO NOT INSTALL.\n'
+else
+    python3 "$ROOT/scripts/build_p65_installer.py" \
+        --supervisor "$OUT/canopus_supervisor.elf" --targets "$OUT/targets" \
+        --output "$OUT/installer"
+fi

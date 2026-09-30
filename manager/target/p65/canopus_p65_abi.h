@@ -3,6 +3,7 @@
 #define CANOPUS_P65_ABI_H
 #include <stdint.h>
 #include "canopus_target_config.h"
+#include "canopus_p65_safety.h"
 /* The experimental P65 path uses its recovered stock ET_REL loader. */
 #undef CANOPUS_SUP_CUSTOM_LOADER
 
@@ -26,7 +27,9 @@ typedef struct {
 #define CANOPUS_SUP_NUTTX_OPEN UINT32_C(0x0C247EA9)
 #define CANOPUS_SUP_NUTTX_CLOSE UINT32_C(0x0C244B61)
 #define CANOPUS_SUP_NUTTX_READ UINT32_C(0x0C2484E5)
-#define CANOPUS_SUP_NUTTX_WRITE UINT32_C(0x0C248455)
+/* Plain fd write: permission check and fops +12 dispatch, no seek.
+ * 0x0C248455 is pwrite with a stack-passed 64-bit offset, NOT this ABI. */
+#define CANOPUS_SUP_NUTTX_WRITE UINT32_C(0x0C2497F1)
 #define CANOPUS_SUP_NUTTX_ERRNO_LOCATION UINT32_C(0x0C4F793D)
 #define CANOPUS_SUP_NUTTX_RENAME UINT32_C(0x0C8BDF89)
 #define CANOPUS_SUP_NUTTX_UNLINK UINT32_C(0x0C8BEFD1)

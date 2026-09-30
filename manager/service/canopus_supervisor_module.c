@@ -8,6 +8,9 @@
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
 #include "canopus_veneer.h"
+#ifdef CANOPUS_SUP_P65_MODLIB
+#include "canopus_p65_safety.h"
+#endif
 #ifdef CANOPUS_SUP_BAND9_BOOTSTRAP
 #include "canopus_band9_loader_config.h"
 #include "band9/canopus_band9_loader_status.h"
@@ -171,6 +174,11 @@ int32_t canopus_supervisor_module_initialize(
     unload_pair->callback = 0;
     unload_pair->context = 0;
 
+    /* Deny before constructor, file I/O or any callback can escape.
+     * Rejecting after partial registration would permit modlib to free it. */
+    if (!CANOPUS_P65_DEPLOYMENT_ENABLED) {
+        return CANOPUS_P65_ERR_DEPLOYMENT_BLOCKED;
+    }
     if (canopus_sup_platform.register_device == 0) return -1;
 #ifndef CANOPUS_SUP_P65_RESIDENT
     /* Removable services must provide their complete teardown path. */
@@ -185,7 +193,8 @@ int32_t canopus_supervisor_module_initialize(
 #endif
     /* Resident registration can fail after publishing the first fops table.
      * Keep this image alive even then: modlib must not free escaped callbacks.
-     * The operator can inspect lsmod and reboot before retrying. */
+     * This historical retention path is not a recovery guarantee; current
+     * P65 deployment is denied before the constructor above. */
     unload_pair->callback = canopus_sup_p65_unload;
     unload_pair->context = 0;
     return 0;
