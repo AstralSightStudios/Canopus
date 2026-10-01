@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.calendar_icon_publish",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "calendar_icon_publish",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc5486d0",
+  "callable_address": "0xc5486d1",
+  "prototype": "void(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Synchronous borrowed registered app/appid; never a fabricated descriptor",
+    "return_value": "No resource-adoption success ABI; lookup results are native borrowed app records"
+  },
+  "side_effects": [
+    "native_calendar_snapshot_or_launcher_update"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ],
+    "source": "Exact AP instruction/call-site audit; see module targets/xiaomi-band-11-4.100.139/calendar-reload.md and tests/firmware_calendar.py. Address entries only, no range expansion."
+  },
+  "notes": "Serialized UI timer only, outside rendering and IRQ locks. No device/GPU or allocation/I/O success claim. Exact native entry for Resource Hook dynamic calendar regeneration."
+}

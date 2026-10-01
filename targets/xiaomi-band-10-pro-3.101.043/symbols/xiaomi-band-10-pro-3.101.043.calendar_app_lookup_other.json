@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.calendar_app_lookup_other",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "calendar_app_lookup_other",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xca6996c",
+  "callable_address": "0xca6996d",
+  "prototype": "void *(uint16_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Synchronous borrowed registered app/appid; never a fabricated descriptor",
+    "return_value": "No resource-adoption success ABI; lookup results are native borrowed app records"
+  },
+  "side_effects": [
+    "native_calendar_snapshot_or_launcher_update"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ],
+    "source": "Exact AP instruction/call-site audit; see module targets/xiaomi-band-10-pro-3.101.043/calendar-reload.md and tests/firmware_calendar.py. Address entries only, no range expansion."
+  },
+  "notes": "Serialized UI timer only, outside rendering and IRQ locks. No device/GPU or allocation/I/O success claim. Exact native entry for Resource Hook dynamic calendar regeneration."
+}

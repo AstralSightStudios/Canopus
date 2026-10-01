@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-CALENDAR-001",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Which exact native entries regenerate and publish the dynamic launcher calendar on resource reload?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.calendar_icon_generate",
+    "xiaomi-band-11-4.100.139.calendar_icon_publish"
+  ],
+  "prototype_hypothesis": "ARM AAPCS call sites and exact AP instruction recovery. Native generation/notify return values are not resource-adoption success codes.",
+  "callsite_evidence": [
+    "calendar_icon_generate: AP instruction/evidence window 0xc5487a4, length 416, SHA256 c9c51f4de4cba1be5ab7ba856472160fb680ff6caa7f1e616b10123280f18794. Window is NOT an allowlist range.",
+    "calendar_icon_publish: AP instruction/evidence window 0xc5486d0, length 212, SHA256 cae8c2d7e5254dd99fe65586887840ea6ad12890a46c04efaacf68ff664252cb. Window is NOT an allowlist range."
+  ],
+  "control_flow_evidence": [
+    "Generator composes launcher_icon.bin with localized weekday/current day in 112x112 widget, takes native snapshot, writes /data/app/perpetual_calendar/calendar_icon.bin and releases it.",
+    "Publication traverses launcher runtime app list, finds ID69, checks hidden/object-validity state and uses real image setter with generated pathname.",
+    "Generator ignores snapshot writer return; native fallback/file failure semantics remain unchanged, not reported as verified adoption."
+  ],
+  "ownership_analysis": "Serialized UI timer, outside IRQ lock and rendering. Module retires only exact file background keys. Native snapshot/file and launcher object lifetimes remain with firmware. No forced global drop, GPU wait/reset or page rebuild added by module.",
+  "unsafe_assumptions": [
+    "User-reported visible calendar reload passed; GPU and failure/recovery acceptance remain NOT_PROBED.",
+    "Native allocation, file-write and actual output pixels are not guaranteed by call completion.",
+    "Default font registry retarget does not replace existing font wrappers.",
+    "Uninitialized/mismatched app owners skip generation. No persistent native app pointer is retained.",
+    "Exact restricted symbol records only; no expanded address range or verifier bypass."
+  ],
+  "recommended_probe": "Run source-compiled adapter tests, exact-AP native calendar probes, strict ELF verification, then recoverable hardware testing with repeated reloads and allocation/storage pressure.",
+  "user_device_validation": {
+    "result": "USER_REPORTED_PASS",
+    "scope": "Visible native calendar regeneration on resource reload using the delivered signed installer",
+    "elf_sha256": "0a65773a84f0b5797de8061c29ba05aea0a9d2c892bd661791daa17a706e875d",
+    "installer_zip_sha256": "73ad1fe4c8a06cf3409478662bca464239a5d3bb396f0495c42404574bc5eb8b",
+    "limitations": "No device logs, screenshots, iteration counts or failure/GPU/restart probes supplied. Does not promote restricted symbol approval.",
+    "report": "../Canopus-Module-Resource-Hook/docs/CALENDAR_RELOAD.md"
+  },
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/build/firmware-analysis/vela_ap_4.100.139.bin",
+      "sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+      "role": "exact AP input, not distributed"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/docs/CALENDAR_RELOAD.md",
+      "role": "implementation contract and evidence boundaries"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_calendar.py",
+      "role": "native instruction probes with modeled leaves"
+    }
+  ]
+}

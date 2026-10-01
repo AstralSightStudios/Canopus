@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-CALENDAR-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact native entries regenerate and publish the dynamic launcher calendar on resource reload?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.calendar_app_lookup",
+    "xiaomi-band-10-pro-3.101.043.calendar_app_lookup_other",
+    "xiaomi-band-10-pro-3.101.043.calendar_icon_notify",
+    "xiaomi-band-10-pro-3.101.043.calendar_app_signal",
+    "xiaomi-band-10-pro-3.101.043.calendar_app_lookup_name",
+    "xiaomi-band-10-pro-3.101.043.calendar_app_lookup_name_other",
+    "xiaomi-band-10-pro-3.101.043.calendar_app_dispatch"
+  ],
+  "prototype_hypothesis": "ARM AAPCS call sites and exact AP instruction recovery. Native generation/notify return values are not resource-adoption success codes.",
+  "callsite_evidence": [
+    "calendar_app_lookup: AP instruction/evidence window 0xca69934, length 56, SHA256 9995be2ff8a60fa0f03829ff6cc0438d7710e4b8308ce49ea5727159c9e99b39. Window is NOT an allowlist range.",
+    "calendar_app_lookup_other: AP instruction/evidence window 0xca6996c, length 56, SHA256 ac2e3c2e6c5ed330e04ec395a1fe6aebd2e581a592e1d26b0f42a6d9aaaea83b. Window is NOT an allowlist range.",
+    "calendar_icon_notify: AP instruction/evidence window 0xca6a004, length 64, SHA256 48272b1861ab2cf2a6fb57f472fec749ffb852906fb693d3c2923c6cf071a35f. Window is NOT an allowlist range.",
+    "calendar_app_signal: AP instruction/evidence window 0xc4efde8, length 564, SHA256 b1f4b52a0f18f2c4ff86248d0714f8d49a88493867cd39b77c9c4c10a477e71b. Window is NOT an allowlist range.",
+    "calendar_app_lookup_name: AP instruction/evidence window 0xca69e80, length 40, SHA256 54580c3172264b9fe8b74afc4bc0108768b3105bb582b0e08399f7c463e74392. Window is NOT an allowlist range.",
+    "calendar_app_lookup_name_other: AP instruction/evidence window 0xca69e54, length 44, SHA256 8892aa5f16994593264dbca6e56d55be9e6943f30183326baa60b35037685a39. Window is NOT an allowlist range.",
+    "calendar_app_dispatch: AP instruction/evidence window 0xca69aa0, length 16, SHA256 c5be8ce548f39ae57b9d71bcc9537814ff93ed3b69d054d4767f7b8d65c2c449. Window is NOT an allowlist range."
+  ],
+  "control_flow_evidence": [
+    "By-ID lookup returns a borrowed real app; verify ID69, appid content and signal callback +56 before notify.",
+    "Native appid notify resolves the registered name, invokes signal 6 and dispatches event 0x2b synchronously with real_app,1.",
+    "Runtime *0x200eb658=0x2cdbb054; slots +12/+16/+44=0x0ca69e81/0x0ca69e55/0x0ca69aa1 from exact AP initialized data and cached vtable.",
+    "Native calendar signal reuses RAM snapshot; launcher consumer adopts app+12. No module-owned snapshot or fabricated app."
+  ],
+  "ownership_analysis": "Serialized UI timer, outside IRQ lock and rendering. Module retires only exact file background keys. Native snapshot/file and launcher object lifetimes remain with firmware. No forced global drop, GPU wait/reset or page rebuild added by module.",
+  "unsafe_assumptions": [
+    "User-reported visible calendar reload passed; GPU and failure/recovery acceptance remain NOT_PROBED.",
+    "Native allocation, file-write and actual output pixels are not guaranteed by call completion.",
+    "Default font registry retarget does not replace existing font wrappers.",
+    "Uninitialized/mismatched app owners skip generation. No persistent native app pointer is retained.",
+    "Exact restricted symbol records only; no expanded address range or verifier bypass."
+  ],
+  "recommended_probe": "Run source-compiled adapter tests, exact-AP native calendar probes, strict ELF verification, then recoverable hardware testing with repeated reloads and allocation/storage pressure.",
+  "user_device_validation": {
+    "result": "USER_REPORTED_PASS",
+    "scope": "Visible native calendar regeneration on resource reload using the delivered signed installer",
+    "elf_sha256": "ebcba54e85172ddbf87686c7e3ad63a446ab7c4b9fceffee5651ddfb8e1c1be7",
+    "installer_zip_sha256": "2580f01149c017165d0099569f66bc4439fca565cfedeef9cba63f5763de3248",
+    "limitations": "No device logs, screenshots, iteration counts or failure/GPU/restart probes supplied. Does not promote restricted symbol approval.",
+    "report": "../Canopus-Module-Resource-Hook/docs/CALENDAR_RELOAD.md"
+  },
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/build/firmware-analysis/vela_ap_3.101.043.bin",
+      "sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "role": "exact AP input, not distributed"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/docs/CALENDAR_RELOAD.md",
+      "role": "implementation contract and evidence boundaries"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_calendar.py",
+      "role": "native instruction probes with modeled leaves"
+    }
+  ]
+}
