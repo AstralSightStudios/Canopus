@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "created": "2026-10-01T12:14:33Z",
+  "evidence_id": "EVID-RESOURCE-QUICKAPP-ICON-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "Which exact read-only package-name lookup can resolve a currently registered QuickApp BIN icon without generating or modifying installed resources?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.155.app_lookup_package"
+  ],
+  "prototype_hypothesis": "ARM AAPCS: const char *package in r0, borrowed app-record pointer or NULL in r0. UI-owner serialized read-only active-registry wrapper.",
+  "callsite_evidence": [
+    "Exact AP wrapper at 0xc6a1692, callable 0xc6a1693, complete body length 10: 80b500af0bf00bf880bd; SHA256 a67024cd98157404fae905668a3cdf63c25e2411944f753d27b70b4d2df1d960. This evidence window is not an allowlist range.",
+    "Package-manager service slot 0x20084ec4 points to 0x2ca3da58; its slot 3 (+12) contains 0xc6a1693. Slot 4 searches a different registry and is not used.",
+    "quickapp_register_app at 0xc582f90 stores descriptor package at +12 and generated icon pathname at +16. Active manager installation duplicates these strings; the launcher consumes the file-path source."
+  ],
+  "control_flow_evidence": [
+    "Wrapper delegates to active package registry lookup using *0x20084ebc. Hashmap returns stored record on success and NULL on miss; lookup neither allocates nor transfers ownership.",
+    "Selected map bucket uses power-of-two count, DJB2 seed 5381 and NUL-inclusive key length; nodes contain key +4, length +8, record +12, next +16. Adapter bounds/readability-checks the selected bucket before native lookup.",
+    "Source-compiled ARM adapter runs the real exact AP wrapper, registry/hashmap/hash/bucket instructions on synthetic registries. The known strcmp thunk targets absent ROM 0x0026c095; only that leaf is explicitly modeled.",
+    "Module copies bounded package/icon strings and verifies exact package-root canonical lowercase BIN pathname. It never invokes quickapp_make_icon_url, PNG conversion, registration or filesystem writes."
+  ],
+  "ownership_analysis": "App records and strings are borrowed manager-owned state; replacement/removal can free them. Serialized UI owner only, no IRQ/manager locks across the call, no pointers retained across owner turns. Coarse region/bucket guards and field rechecks do not establish allocation liveness or arbitrary concurrency safety.",
+  "unsafe_assumptions": [
+    "No physical-device probe, installed-resource adoption, renderer or GPU success is claimed.",
+    "Lookup is only for initialized active registry entries; installed but unregistered packages may be absent. PNG/memory/non-file sources are unsupported.",
+    "Caller must honor owner serialization; native hashmap/ROM leaf behavior on hardware is not established by synthetic-registry emulation.",
+    "Exact callable registration only: no firmware address range expansion, verifier bypass, SDK export approval, transitive leaf allowlisting or .043 promotion."
+  ],
+  "recommended_probe": "Run host adapter tests, fingerprinted AP instruction probes, exact positive/nearby/wrong-target/removal-control ELF verifier tests, then recoverable hardware tests for UI context, repeated reload, install/remove and same-path regeneration.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/build/firmware-analysis/vela_ap_4.100.155.bin",
+      "sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+      "role": "exact AP input, not distributed"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/targets/xiaomi-band-11-4.100.155/quickapp-icons.md",
+      "role": "independent exact target addresses, fingerprints and ownership audit"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/test_quickapp_icon_native.py",
+      "role": "source-compiled host adapter guard and ownership tests"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_quickapp_icon.py",
+      "role": "source-compiled production ARM and real AP lookup instruction probes with documented strcmp leaf"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/test_quickapp_allowlist.py",
+      "role": "exact-address ELF acceptance and nearby/wrong-target/record-removal rejection controls"
+    }
+  ]
+}

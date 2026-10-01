@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.app_lookup_package",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "app_lookup_package",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc6a16a2",
+  "callable_address": "0xc6a16a3",
+  "prototype": "void *(const char *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed bounded NUL-terminated exact package name; selected active registry must be initialized and validated before invocation.",
+    "return_value": "Borrowed manager-owned active app record or NULL on miss; package +12 and icon source +16 can be replaced/freed on update/removal. Copy on the serialized UI owner; do not retain pointers across owner turns."
+  },
+  "side_effects": [
+    "reads_active_package_name_registry"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": true,
+    "evidence_ids": [
+      "EVID-RESOURCE-QUICKAPP-ICON-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-RESOURCE-QUICKAPP-ICON-001"
+    ],
+    "source": "Independent exact 139 AP/IDB recovery and bounded full wrapper fingerprint; see module targets/xiaomi-band-11-4.100.139/quickapp-icons.md and tests/firmware_quickapp_icon.py. User-authorized exact static verifier registration only; no SDK callable promotion or expanded address range."
+  },
+  "notes": "Serialized UI owner only, outside IRQ/manager locks. Read-only active registry lookup, not quickapp_make_icon_url or an installed-package enumeration API. Native hashmap asserts/follows unchecked nodes: caller validates exact service table/slot and bounded selected bucket first. No physical device/context/liveness proof; remain restricted/PENDING."
+}
