@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "created": "2026-10-01T13:36:54Z",
+  "evidence_id": "EVID-RESOURCE-QUICKAPP-ICON-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Can the existing exact active-name lookup safely resolve QuickApp BIN launcher icons on .043, and does the relocated launcher setter have ordinary LVGL file-source semantics?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.calendar_app_lookup_name"
+  ],
+  "prototype_hypothesis": "ARM AAPCS: const char *package in r0, borrowed active app-record pointer or NULL in r0; synchronous miwear/UI-owner read-only lookup. Legacy calendar symbol name is retained.",
+  "callsite_evidence": [
+    "Existing exact entry 0xca69e80, callable 0xca69e81, complete body length 40, SHA256 54580c3172264b9fe8b74afc4bc0108768b3105bb582b0e08399f7c463e74392. Evidence windows are not allowlist ranges.",
+    "Service *0x200eb658=0x2cdbb054; its slot 3 (+12)=0xca69e81. Service-table first 64 bytes SHA256 ce9bcc924fa63a2038852ac7215a2e7fb9ec43bd9f0372ed7add426ab371d282.",
+    "Active-name wrapper reads *0x200eb650, calls hashmap_get 0xcabe234 and returns its stack output only on success. Other-name slot 4 searches uninstalled/recoverable map *0x200eb654 and is not used.",
+    "quickapp_register_app 0xc549678 publishes icon pathname at record +12 and QuickApp context +40; load_app_info 0xc513700 copies record +12 into launcher record +12; insert_icon 0xc5177a4 loads that string at 0xc5177ce and calls setter veneer 0xc587fa0."
+  ],
+  "control_flow_evidence": [
+    "Hashmap 0xcabe234 complete body 158 bytes SHA256 6965575cc2f8fca691779a8478e6d39953aa6bc93580511fbd900a66a3918619 computes DJB2 seed 5381 and searches inline. Map count +0, buckets +4; node hash +0, key +4, NUL-inclusive key length +8, record +12, next +16. Adapter preflights the selected bounded bucket before invoking native lookup.",
+    "Install 0xca6a30c copies a 64-byte app record and duplicates package +8/icon +12 before active-map insertion. Unregister 0xca6a084 removes its active key, then either frees it or moves it to the uninstalled/recoverable registry; reinstall 0xca6a4c8 moves it back. Lookup neither allocates nor acquires a reference.",
+    "Startup 0xc0c0ac8 copies flash [0x2c10d440,0x2c18d940) to PSRAM data 0x3c000000. Setter veneer target 0x1c06ceb5 therefore maps to source 0x2c17a2f4 (execution flash alias 0xc17a2f4), not missing ROM. This lv_image_set_src body is 502 bytes SHA256 8f5e398b35e9f4ac648d42481ca92d0e13c9a55e061250aace6317c1e583a50a.",
+    "Creator veneer maps to 0xc179f00 and uses class 0x2cce61ec. Source classifier 0xc13fc54 recognizes leading '/' as FILE=1; setter stores owned file-path copy at object +52/type +96. Decoder 0xc1435ac uses lv_fs_open 0xc169624. Existing file Hook/cache retirement/image refresh need no special launcher thunk call.",
+    "Production ARM adapter executes fingerprinted AP lookup/hashmap code on synthetic registries; unavailable strcmp veneer 0xcac0a48 -> ROM 0x00276854 is explicitly modeled, not substituted lookup. Separate native reload probes execute .043 cache drop/release, tree walk and image setter with documented GUI/decoder/cache-class/heap leaves.",
+    "Adapter reads only target identities and bounded strings under exactly /data/app/<package>/ ending in lowercase .bin. It never generates icons, writes installed files, registers an app or invokes unknown ROM directly."
+  ],
+  "ownership_analysis": "App records and package/icon strings are borrowed manager-owned state; update/removal may free or replace them. miwear_main 0xc6fcdf0 and QuickApp proxy 0xc548450 use loop 0x20125700. Synchronous UI-owner-only use is required, outside IRQ/manager locks, with copied output and no retained native pointers. Region/bucket guards and field rechecks do not prove allocation liveness or arbitrary-thread safety.",
+  "unsafe_assumptions": [
+    "No .043 physical-device validation, BIN decoding, rendering, GPU completion or storage-failure acceptance is claimed.",
+    "Only the initialized active registry is queried; installed-but-unregistered and uninstalled/recoverable entries may be absent. PNG fallback, non-file, memory/derived/tree-external owners remain unsupported.",
+    "Hardware PSRAM executable/data alias setup includes unavailable ROM initialization; exact AP startup-copy and flash implementation evidence does not emulate that hardware mapping or prove every external installation callback is serialized.",
+    "The valid-input AP lookup is visibly read-only; unavailable comparison ROM is a modeled leaf. Existing blocking metadata is conservatively retained.",
+    "Reuse only the already-registered exact calendar_app_lookup_name callable. No extra generic alias, downstream native permission, verifier bypass, firmware-range expansion or SDK export approval."
+  ],
+  "recommended_probe": "Run host adapter/module lifecycle tests, fingerprinted ARM/AP lookup probes, exact/nearby/all-wrong-target/record-removal ELF controls and .043 native cache/image refresh probes; then use a recoverable device for installation, replacement, restore, repeated reload, reinstall/uninstall and context/lifetime validation.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/build/firmware-analysis/vela_ap_3.101.043.bin",
+      "sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "role": "exact AP input (13795728 bytes), not distributed"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/targets/xiaomi-band-10-pro-3.101.043/quickapp-icons.md",
+      "role": "independent exact .043 ABI, relocated setter, fingerprints and ownership audit"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/test_quickapp_icon_native.py",
+      "role": "host source-compiled adapter bounds/identity/ownership tests"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_quickapp_icon.py",
+      "role": "production ARM plus real .043 AP active lookup/hashmap with documented comparison leaf"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/firmware_quickapp_reload_1043.py",
+      "role": "production ARM and .043 native cache/tree/image-setter targeted refresh probes"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/tests/test_quickapp_allowlist.py",
+      "role": "exact callable positive, nearby/wrong-target and record-removal causal ELF controls"
+    }
+  ]
+}

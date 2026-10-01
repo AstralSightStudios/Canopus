@@ -16,17 +16,19 @@
     "blocking": true
   },
   "ownership": {
-    "argument": "Synchronous borrowed registered app/appid; never a fabricated descriptor",
-    "return_value": "No resource-adoption success ABI; lookup results are native borrowed app records"
+    "argument": "Borrowed bounded NUL-terminated exact package/app name; active registry and selected hash bucket must be initialized and validated before invocation.",
+    "return_value": "Borrowed manager-owned active app record or NULL on miss. Package +8 and icon pathname +12 are replaced/freed by native update/removal; copy synchronously on the serialized UI owner and retain no native pointers."
   },
   "side_effects": [
-    "native_calendar_snapshot_or_launcher_update"
+    "reads_active_package_name_registry"
   ],
   "proof": {
     "static": "recovered",
     "device": "not_probed",
+    "host_tested": true,
     "evidence_ids": [
-      "EVID-RESOURCE-CALENDAR-001"
+      "EVID-RESOURCE-CALENDAR-001",
+      "EVID-RESOURCE-QUICKAPP-ICON-001"
     ]
   },
   "policy": "restricted",
@@ -35,9 +37,10 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-RESOURCE-CALENDAR-001"
+      "EVID-RESOURCE-CALENDAR-001",
+      "EVID-RESOURCE-QUICKAPP-ICON-001"
     ],
-    "source": "Exact AP instruction/call-site audit; see module targets/xiaomi-band-10-pro-3.101.043/calendar-reload.md and tests/firmware_calendar.py. Address entries only, no range expansion."
+    "source": "Exact .043 AP instruction/call-site audit for calendar and QuickApp active-name lookup; see module targets/xiaomi-band-10-pro-3.101.043/calendar-reload.md, quickapp-icons.md and tests/firmware_quickapp_icon.py. Reuses the existing exact callable, no duplicate alias, SDK promotion or range expansion."
   },
-  "notes": "Serialized UI timer only, outside rendering and IRQ locks. No device/GPU or allocation/I/O success claim. Exact native entry for Resource Hook dynamic calendar regeneration."
+  "notes": "Legacy calendar symbol name retained: this entry is the generic read-only active-name lookup, not a snapshot generator or launcher mutation. Service *0x200eb658 must equal 0x2cdbb054, slot +12 must equal 0xca69e81, active registry *0x200eb650 and its selected bucket must be guarded; never use the uninstalled/recoverable map at 0x200eb654 as fallback. Serialized miwear/UI-owner timer only, outside IRQ/manager locks. The valid AP path does not allocate, lock or mutate the registry; blocking metadata remains conservative because comparison veneer 0xcac0a48 targets absent ROM 0x00276854. No hardware context/liveness/GPU acceptance; restricted/PENDING retained."
 }
