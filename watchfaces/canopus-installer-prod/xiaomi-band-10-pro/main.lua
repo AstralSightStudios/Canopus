@@ -1,9 +1,10 @@
 -- Production Canopus installer for Xiaomi Band 10.
 --
 -- Run performs, in order:
---   supervisor LOAD -> apply restored boot intents -> INSTALL 0 -> 1 -> 2.
--- Each supervisor command is issued from a separate LuaLVGL timer callback so
--- miwear receives an event-loop turn between native registration stages.
+--   supervisor LOAD -> INSTALL 0 (Manager app) -> INSTALL 2 (Manager Launcher)
+--   -> apply restored boot intents (third-party modules) -> INSTALL 1 -> INSTALL 2.
+-- Prioritizing Manager ensures the Canopus Manager UI is always accessible,
+-- even if an individual third-party module encounters an activation error.
 
 local lvgl = require("lvgl")
 
@@ -29,6 +30,7 @@ local run_timer
 local run_phase = 1
 local run_attempted = false
 local clear_armed = false
+local module_warning = nil
 
 local function shell_quote(value)
     return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
@@ -210,15 +212,21 @@ local function execute_step(command, arg0)
     return true
 end
 
+-- 注册顺序：以注册管理器原生应用为最高优先级！
+-- 1. 先注册 Manager (Stage 0) 并发布 Launcher 入口 (Stage 2)
+-- 2. 随后再恢复与加载已启用的第三方模块 (即使模块故障，管理器也已就位，不发生死锁)
+-- 3. 最后刷新各模块的原生应用页面与桌面图标
 local steps = {
-    { command = CMD_RESTORE_AFTER_BOOT, arg0 = 0,
-      progress = "Loading enabled modules..." },
     { command = CMD_INSTALL, arg0 = 0,
-      progress = "Registering Manager..." },
-    { command = CMD_INSTALL, arg0 = 1,
-      progress = "Registering module apps..." },
+      progress = "Registering Manager...", critical = true },
     { command = CMD_INSTALL, arg0 = 2,
-      progress = "Publishing Launcher entries..." },
+      progress = "Publishing Launcher entries...", critical = true },
+    { command = CMD_RESTORE_AFTER_BOOT, arg0 = 0,
+      progress = "Loading enabled modules...", critical = false },
+    { command = CMD_INSTALL, arg0 = 1,
+      progress = "Registering module apps...", critical = false },
+    { command = CMD_INSTALL, arg0 = 2,
+      progress = "Updating Launcher entries...", critical = false },
 }
 
 local function finish_run(timer, success, message)
@@ -230,19 +238,34 @@ end
 local function run_next_step(timer)
     local step = steps[run_phase]
     if not step then
-        finish_run(timer, true, "Run completed")
+        if module_warning then
+            finish_run(timer, true, "Manager registered!\nWarning: " .. tostring(module_warning)
+                .. "\nCheck Manager app to fix module.")
+        else
+            finish_run(timer, true, "Run completed")
+        end
         return
     end
     set_status(step.progress)
     local ok, message = execute_step(step.command, step.arg0)
     if not ok then
-        finish_run(timer, false, "Run failed: " .. tostring(message)
-            .. "\nReboot before retrying.")
-        return
+        if step.critical then
+            finish_run(timer, false, "Run failed: " .. tostring(message)
+                .. "\nReboot before retrying.")
+            return
+        else
+            print("[canopus-installer-prod] non-critical step failed: " .. tostring(message))
+            module_warning = message
+        end
     end
     run_phase = run_phase + 1
     if run_phase > #steps then
-        finish_run(timer, true, "Run completed")
+        if module_warning then
+            finish_run(timer, true, "Manager registered!\nWarning: " .. tostring(module_warning)
+                .. "\nCheck Manager app to fix module.")
+        else
+            finish_run(timer, true, "Run completed")
+        end
     else
         timer:ready()
     end
@@ -250,6 +273,7 @@ end
 
 local function start_run_timer()
     run_phase = 1
+    module_warning = nil
     local created = lvgl.Timer {
         period = 1000,
         repeat_count = -1,
@@ -346,7 +370,7 @@ run_button = make_button("Run", -36, 0x14508A, function()
     if not started then
         set_status("Run failed: " .. tostring(timer_error), 0xFF9A9A)
     else
-        set_status("Supervisor loaded; scheduling boot restore...")
+        set_status("Supervisor loaded; scheduling Manager registration...")
     end
 end)
 

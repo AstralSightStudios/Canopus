@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 6
-// input_digest: 08ecdd6e2f85ac44
+// input_digest: 9bd55ef720130bb1
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -287,6 +287,18 @@ pub unsafe fn canopus_fw_lvx_list_item_update(a0: *mut core::ffi::c_void, a1: *c
     f(a0, a1, a2, a3, a4, a5)
 }
 
+/// Recovered `sendto` at 0xc1fd664. Thumb callable address 0xc1fd665.
+pub const CANOPUS_FW_SENDTO_CALLABLE: usize = canopus_thumb_callable(0xc1fd665usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_sendto(a0: i32, a1: *const core::ffi::c_void, a2: u32, a3: i32, a4: *const core::ffi::c_void, a5: u32) -> i32 {
+    let f: extern "C" fn(i32, *const core::ffi::c_void, u32, i32, *const core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_SENDTO_CALLABLE) };
+    f(a0, a1, a2, a3, a4, a5)
+}
+
+/// Recovered `lv_cache_drop` at 0x0c1667dc. Thumb callable address 0x0c1667dd.
+pub const CANOPUS_FW_LV_CACHE_DROP_CALLABLE: usize = canopus_thumb_callable(0x0c1667ddusize);
+
 /// Recovered `lv_obj_set_hidden` at 0xc588518. Thumb callable address 0xc588519.
 pub const CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE: usize = canopus_thumb_callable(0xc588519usize);
 #[allow(non_snake_case)]
@@ -371,6 +383,9 @@ pub unsafe fn canopus_fw_page_finish(a0: *mut core::ffi::c_void) -> i32 {
 /// Recovered `errno_location` at 0xc1e45bc. Thumb callable address 0xc1e45bd.
 pub const CANOPUS_FW_ERRNO_LOCATION_CALLABLE: usize = canopus_thumb_callable(0xc1e45bdusize);
 
+/// Recovered `font_manager_remove_path` at 0x0c860398. Thumb callable address 0x0c860399.
+pub const CANOPUS_FW_FONT_MANAGER_REMOVE_PATH_CALLABLE: usize = canopus_thumb_callable(0x0c860399usize);
+
 /// Recovered `bt_adapter_get_scan_mode` at 0xc3b5698. Thumb callable address 0xc3b5699.
 pub const CANOPUS_FW_BT_ADAPTER_GET_SCAN_MODE_CALLABLE: usize = canopus_thumb_callable(0xc3b5699usize);
 #[allow(non_snake_case)]
@@ -416,6 +431,9 @@ pub unsafe fn canopus_fw_lvx_object_align(a0: *mut core::ffi::c_void, a1: u32, a
     f(a0, a1, a2, a3);
 }
 
+/// Recovered `lv_obj_tree_walk` at 0x0c13c690. Thumb callable address 0x0c13c691.
+pub const CANOPUS_FW_LV_OBJ_TREE_WALK_CALLABLE: usize = canopus_thumb_callable(0x0c13c691usize);
+
 /// Recovered `insmod` at 0xc203a50. Thumb callable address 0xc203a51.
 pub const CANOPUS_FW_INSMOD_CALLABLE: usize = canopus_thumb_callable(0xc203a51usize);
 
@@ -439,6 +457,9 @@ pub unsafe fn canopus_fw_lvx_object_set_size(a0: *mut core::ffi::c_void, a1: i32
     let f: extern "C" fn(*mut core::ffi::c_void, i32, i32) -> () = unsafe { core::mem::transmute(CANOPUS_FW_LVX_OBJECT_SET_SIZE_CALLABLE) };
     f(a0, a1, a2);
 }
+
+/// Recovered `lv_display_get_vertical_resolution` at 0x0c13cd74. Thumb callable address 0x0c13cd75.
+pub const CANOPUS_FW_LV_DISPLAY_GET_VERTICAL_RESOLUTION_CALLABLE: usize = canopus_thumb_callable(0x0c13cd75usize);
 
 /// Recovered `bt_free` at 0xc840c60. Thumb callable address 0xc840c61.
 pub const CANOPUS_FW_BT_FREE_CALLABLE: usize = canopus_thumb_callable(0xc840c61usize);
@@ -470,6 +491,9 @@ pub const CANOPUS_FW_SEM_TRYWAIT_CALLABLE: usize = canopus_thumb_callable(0xc206
 /// Recovered `open` at 0xc1d0a28. Thumb callable address 0xc1d0a29.
 pub const CANOPUS_FW_OPEN_CALLABLE: usize = canopus_thumb_callable(0xc1d0a29usize);
 // open: skipped (argument type not mappable)
+/// Recovered `lv_obj_refresh_style` at 0x0c1070ac. Thumb callable address 0x0c1070ad.
+pub const CANOPUS_FW_LV_OBJ_REFRESH_STYLE_CALLABLE: usize = canopus_thumb_callable(0x0c1070adusize);
+
 /// Recovered `register_driver` at 0xc1aff60. Thumb callable address 0xc1aff61.
 pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc1aff61usize);
 #[allow(non_snake_case)]
@@ -481,6 +505,15 @@ pub unsafe fn canopus_fw_register_driver(a0: *const u8, a1: *const core::ffi::c_
 
 /// Recovered `service_manager_register` at 0xc3bdbac. Thumb callable address 0xc3bdbad.
 pub const CANOPUS_FW_SERVICE_MANAGER_REGISTER_CALLABLE: usize = canopus_thumb_callable(0xc3bdbadusize);
+
+/// Recovered `setsockopt` at 0xc1fdab4. Thumb callable address 0xc1fdab5.
+pub const CANOPUS_FW_SETSOCKOPT_CALLABLE: usize = canopus_thumb_callable(0xc1fdab5usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_setsockopt(a0: i32, a1: i32, a2: i32, a3: *const core::ffi::c_void, a4: u32) -> i32 {
+    let f: extern "C" fn(i32, i32, i32, *const core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_SETSOCKOPT_CALLABLE) };
+    f(a0, a1, a2, a3, a4)
+}
 
 /// Recovered `lvx_object_add_flag` at 0xcac00c0. Thumb callable address 0xcac00c1.
 pub const CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE: usize = canopus_thumb_callable(0xcac00c1usize);
@@ -523,6 +556,9 @@ pub unsafe fn canopus_fw_bt_adapter_register(a0: *mut core::ffi::c_void, a1: *co
 
 /// Recovered `lv_timer_del` at 0xc588128. Thumb callable address 0xc588129.
 pub const CANOPUS_FW_LV_TIMER_DEL_CALLABLE: usize = canopus_thumb_callable(0xc588129usize);
+
+/// Recovered `lv_cache_release` at 0x0c1666ec. Thumb callable address 0x0c1666ed.
+pub const CANOPUS_FW_LV_CACHE_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c1666edusize);
 
 /// Recovered `gap_host_stock_receive` at 0xc7ec47c. Thumb callable address 0xc7ec47d.
 pub const CANOPUS_FW_GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = canopus_thumb_callable(0xc7ec47dusize);
@@ -581,17 +617,50 @@ pub unsafe fn canopus_fw_close(a0: i32) -> i32 {
 /// Recovered `bt_queue_external` at 0xc7eb9cc. Thumb callable address 0xc7eb9cd.
 pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(0xc7eb9cdusize);
 
+/// Recovered `socket` at 0xc1cad34. Thumb callable address 0xc1cad35.
+pub const CANOPUS_FW_SOCKET_CALLABLE: usize = canopus_thumb_callable(0xc1cad35usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_socket(a0: i32, a1: i32, a2: i32) -> i32 {
+    let f: extern "C" fn(i32, i32, i32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_SOCKET_CALLABLE) };
+    f(a0, a1, a2)
+}
+
 /// Recovered `bt_alloc` at 0xc840c54. Thumb callable address 0xc840c55.
 pub const CANOPUS_FW_BT_ALLOC_CALLABLE: usize = canopus_thumb_callable(0xc840c55usize);
 
+/// Recovered `recvfrom` at 0xc1fd570. Thumb callable address 0xc1fd571.
+pub const CANOPUS_FW_RECVFROM_CALLABLE: usize = canopus_thumb_callable(0xc1fd571usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_recvfrom(a0: i32, a1: *mut core::ffi::c_void, a2: u32, a3: i32, a4: *mut core::ffi::c_void, a5: *const u32) -> i32 {
+    let f: extern "C" fn(i32, *mut core::ffi::c_void, u32, i32, *mut core::ffi::c_void, *const u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_RECVFROM_CALLABLE) };
+    f(a0, a1, a2, a3, a4, a5)
+}
+
 /// Recovered `modhandle` at 0xc203a68. Thumb callable address 0xc203a69.
 pub const CANOPUS_FW_MODHANDLE_CALLABLE: usize = canopus_thumb_callable(0xc203a69usize);
+
+/// Recovered `lv_image_decoder_get_info` at 0x0c143798. Thumb callable address 0x0c143799.
+pub const CANOPUS_FW_LV_IMAGE_DECODER_GET_INFO_CALLABLE: usize = canopus_thumb_callable(0x0c143799usize);
+
+/// Recovered `font_manager_add_path` at 0x0c86037c. Thumb callable address 0x0c86037d.
+pub const CANOPUS_FW_FONT_MANAGER_ADD_PATH_CALLABLE: usize = canopus_thumb_callable(0x0c86037dusize);
 
 /// Recovered `watchface_manager_delete_watchface` at 0xca95c68. Thumb callable address 0xca95c69.
 pub const CANOPUS_FW_WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = canopus_thumb_callable(0xca95c69usize);
 
 /// Recovered `bt_get_bond_state` at 0xc3b5a60. Thumb callable address 0xc3b5a61.
 pub const CANOPUS_FW_BT_GET_BOND_STATE_CALLABLE: usize = canopus_thumb_callable(0xc3b5a61usize);
+
+/// Recovered `net_lock` at 0xc201b40. Thumb callable address 0xc201b41.
+pub const CANOPUS_FW_NET_LOCK_CALLABLE: usize = canopus_thumb_callable(0xc201b41usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_net_lock() -> i32 {
+    let f: extern "C" fn() -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_NET_LOCK_CALLABLE) };
+    f()
+}
 
 /// Recovered `app_launcher_data_init` at 0xc513e90. Thumb callable address 0xc513e91.
 pub const CANOPUS_FW_APP_LAUNCHER_DATA_INIT_CALLABLE: usize = canopus_thumb_callable(0xc513e91usize);
@@ -671,6 +740,9 @@ pub unsafe fn canopus_fw_bt_pair_display_reply(a0: *mut core::ffi::c_void, a1: *
     f(a0, a1, a2, a3)
 }
 
+/// Recovered `lv_obj_get_style_prop` at 0x0c1068a8. Thumb callable address 0x0c1068a9.
+pub const CANOPUS_FW_LV_OBJ_GET_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x0c1068a9usize);
+
 /// Recovered `lvx_image_set_scale` at 0xc179db0. Thumb callable address 0xc179db1.
 pub const CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE: usize = canopus_thumb_callable(0xc179db1usize);
 
@@ -706,6 +778,15 @@ pub const CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE: usize = canopus_thumb_callable(0x
 
 /// Recovered `lv_bar_set_value` at 0xc5890a8. Thumb callable address 0xc5890a9.
 pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0xc5890a9usize);
+
+/// Recovered `net_unlock` at 0xc201b50. Thumb callable address 0xc201b51.
+pub const CANOPUS_FW_NET_UNLOCK_CALLABLE: usize = canopus_thumb_callable(0xc201b51usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_net_unlock(a0: i32) -> () {
+    let f: extern "C" fn(i32) -> () = unsafe { core::mem::transmute(CANOPUS_FW_NET_UNLOCK_CALLABLE) };
+    f(a0);
+}
 
 /// Recovered `bt_discovery_stop` at 0xc3af550. Thumb callable address 0xc3af551.
 pub const CANOPUS_FW_BT_DISCOVERY_STOP_CALLABLE: usize = canopus_thumb_callable(0xc3af551usize);
@@ -863,6 +944,15 @@ pub unsafe fn canopus_fw_lvx_page_title_create(a0: *mut core::ffi::c_void, a1: *
 /// Recovered `bt_queue_free` at 0xc6b9cf0. Thumb callable address 0xc6b9cf1.
 pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc6b9cf1usize);
 
+/// Recovered `gethostbyname_r` at 0xc1e8e64. Thumb callable address 0xc1e8e65.
+pub const CANOPUS_FW_GETHOSTBYNAME_R_CALLABLE: usize = canopus_thumb_callable(0xc1e8e65usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_gethostbyname_r(a0: *const u8, a1: *mut core::ffi::c_void, a2: *const u8, a3: u32, a4: *const i32, a5: i32) -> i32 {
+    let f: extern "C" fn(*const u8, *mut core::ffi::c_void, *const u8, u32, *const i32, i32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_GETHOSTBYNAME_R_CALLABLE) };
+    f(a0, a1, a2, a3, a4, a5)
+}
+
 /// Recovered `app_lookup` at 0xca69934. Thumb callable address 0xca69935.
 pub const CANOPUS_FW_APP_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0xca69935usize);
 #[allow(non_snake_case)]
@@ -871,6 +961,9 @@ pub unsafe fn canopus_fw_app_lookup(a0: u16) -> *mut core::ffi::c_void {
     let f: extern "C" fn(u16) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_APP_LOOKUP_CALLABLE) };
     f(a0)
 }
+
+/// Recovered `lv_display_invalidate_area` at 0x0c105164. Thumb callable address 0x0c105165.
+pub const CANOPUS_FW_LV_DISPLAY_INVALIDATE_AREA_CALLABLE: usize = canopus_thumb_callable(0x0c105165usize);
 
 /// Recovered `lv_image_set_src` at 0xc17a2f4. Thumb callable address 0xc17a2f5.
 pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0xc17a2f5usize);
@@ -886,6 +979,9 @@ pub const CANOPUS_FW_DRIVER_CLOSE_DISPATCH_CALLABLE: usize = canopus_thumb_calla
 
 /// Recovered `service_manager_startup` at 0xc3bdc24. Thumb callable address 0xc3bdc25.
 pub const CANOPUS_FW_SERVICE_MANAGER_STARTUP_CALLABLE: usize = canopus_thumb_callable(0xc3bdc25usize);
+
+/// Recovered `lv_display_get_horizontal_resolution` at 0x0c13cd54. Thumb callable address 0x0c13cd55.
+pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = canopus_thumb_callable(0x0c13cd55usize);
 
 // ---- excluded symbols ----
 // app_launcher_data_init: restricted - not exported until context/ownership approved
@@ -917,6 +1013,8 @@ pub const CANOPUS_FW_SERVICE_MANAGER_STARTUP_CALLABLE: usize = canopus_thumb_cal
 // driver_write_dispatch: WITHDRAWN - no binding may ever be generated
 // errno_location: restricted - not exported until context/ownership approved
 // firmware_log: restricted - not exported until context/ownership approved
+// font_manager_add_path: restricted - not exported until context/ownership approved
+// font_manager_remove_path: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved
 // heap_free: restricted - not exported until context/ownership approved
 // heap_mallinfo: restricted - not exported until context/ownership approved
@@ -930,11 +1028,20 @@ pub const CANOPUS_FW_SERVICE_MANAGER_STARTUP_CALLABLE: usize = canopus_thumb_cal
 // lv_bar_create: restricted - not exported until context/ownership approved
 // lv_bar_set_range: restricted - not exported until context/ownership approved
 // lv_bar_set_value: restricted - not exported until context/ownership approved
+// lv_cache_drop: restricted - not exported until context/ownership approved
+// lv_cache_release: restricted - not exported until context/ownership approved
+// lv_display_get_horizontal_resolution: restricted - not exported until context/ownership approved
+// lv_display_get_vertical_resolution: restricted - not exported until context/ownership approved
+// lv_display_invalidate_area: restricted - not exported until context/ownership approved
 // lv_image_create: restricted - not exported until context/ownership approved
+// lv_image_decoder_get_info: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
+// lv_obj_get_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
+// lv_obj_refresh_style: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
+// lv_obj_tree_walk: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // lvx_image_set_scale: restricted - not exported until context/ownership approved
 // lvx_label_set_long_mode: restricted - not exported until context/ownership approved

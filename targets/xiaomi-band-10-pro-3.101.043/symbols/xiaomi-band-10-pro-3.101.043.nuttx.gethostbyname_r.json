@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.nuttx.gethostbyname_r",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "gethostbyname_r",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(const char *, void *, char *, size_t, int *, int)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-NET-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "exact firmware IDB recovery and callsite verification",
+    "evidence_ids": [
+      "EVID-NET-001"
+    ]
+  },
+  "entry_address": "0xc1e8e64",
+  "callable_address": "0xc1e8e65",
+  "notes": "NuttX libc gethostbyname_r (hook target)",
+  "approval_state": "APPROVED"
+}

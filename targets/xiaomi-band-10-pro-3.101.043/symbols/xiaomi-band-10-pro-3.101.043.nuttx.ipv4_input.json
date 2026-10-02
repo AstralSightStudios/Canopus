@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.nuttx.ipv4_input",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "ipv4_input",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-NET-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "exact firmware IDB recovery sub_C1F95C8",
+    "evidence_ids": [
+      "EVID-NET-001"
+    ]
+  },
+  "entry_address": "0xc1f95c8",
+  "callable_address": "0xc1f95c9",
+  "notes": "NuttX ipv4_input",
+  "approval_state": "APPROVED"
+}

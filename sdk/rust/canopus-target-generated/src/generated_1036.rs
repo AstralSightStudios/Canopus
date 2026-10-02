@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: 68a975c7a2bcffb2
+// input_digest: 21e84d72e768bb59
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -242,6 +242,15 @@ fn c_str_eq(addr: usize, expected: &[u8]) -> bool {
 }
 
 // ---- typed firmware bindings (unsafe) ----
+/// Recovered `recvfrom` at 0xc1ebd18. Thumb callable address 0xc1ebd19.
+pub const CANOPUS_FW_RECVFROM_CALLABLE: usize = canopus_thumb_callable(0xc1ebd19usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_recvfrom(a0: i32, a1: *mut core::ffi::c_void, a2: u32, a3: i32, a4: *mut core::ffi::c_void, a5: *const u32) -> i32 {
+    let f: extern "C" fn(i32, *mut core::ffi::c_void, u32, i32, *mut core::ffi::c_void, *const u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_RECVFROM_CALLABLE) };
+    f(a0, a1, a2, a3, a4, a5)
+}
+
 /// Recovered global `core_bt_callback_table` at 0x2CD1F920.
 pub const canopus_fw_core_bt_callback_table: usize = 0x2CD1F920usize;
 
@@ -297,6 +306,24 @@ pub const CANOPUS_FW_LV_TIMER_CREATE_CALLABLE: usize = canopus_thumb_callable(0x
 pub unsafe fn canopus_fw_lv_timer_create(a0: canopus_lvx_event_cb, a1: u32, a2: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     let f: extern "C" fn(canopus_lvx_event_cb, u32, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_LV_TIMER_CREATE_CALLABLE) };
     f(a0, a1, a2)
+}
+
+/// Recovered `net_lock` at 0xc1ec59c. Thumb callable address 0xc1ec59d.
+pub const CANOPUS_FW_NET_LOCK_CALLABLE: usize = canopus_thumb_callable(0xc1ec59dusize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_net_lock() -> i32 {
+    let f: extern "C" fn() -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_NET_LOCK_CALLABLE) };
+    f()
+}
+
+/// Recovered `net_unlock` at 0xc1ec5ac. Thumb callable address 0xc1ec5ad.
+pub const CANOPUS_FW_NET_UNLOCK_CALLABLE: usize = canopus_thumb_callable(0xc1ec5adusize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_net_unlock(a0: i32) -> () {
+    let f: extern "C" fn(i32) -> () = unsafe { core::mem::transmute(CANOPUS_FW_NET_UNLOCK_CALLABLE) };
+    f(a0);
 }
 
 /// Recovered `app_launcher_del` at 0xc4f2d34. Thumb callable address 0xc4f2d35.
@@ -683,6 +710,15 @@ pub unsafe fn canopus_fw_lv_event_get_user_data(a0: *mut core::ffi::c_void) -> *
 /// Recovered `lv_bar_set_value` at 0x0C588778. Thumb callable address 0x0C588779.
 pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0x0C588779usize);
 
+/// Recovered `sendto` at 0xc1ebe0c. Thumb callable address 0xc1ebe0d.
+pub const CANOPUS_FW_SENDTO_CALLABLE: usize = canopus_thumb_callable(0xc1ebe0dusize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_sendto(a0: i32, a1: *const core::ffi::c_void, a2: u32, a3: i32, a4: *const core::ffi::c_void, a5: u32) -> i32 {
+    let f: extern "C" fn(i32, *const core::ffi::c_void, u32, i32, *const core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_SENDTO_CALLABLE) };
+    f(a0, a1, a2, a3, a4, a5)
+}
+
 /// Recovered `protobuf_set_ordered_app_list` at 0xc4f2730. Thumb callable address 0xc4f2731.
 pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thumb_callable(0xc4f2731usize);
 
@@ -730,6 +766,24 @@ pub unsafe fn canopus_fw_bt_adapter_get_instance() -> *mut core::ffi::c_void {
 
 /// Recovered `service_manager_register` at 0xc3a7618. Thumb callable address 0xc3a7619.
 pub const CANOPUS_FW_SERVICE_MANAGER_REGISTER_CALLABLE: usize = canopus_thumb_callable(0xc3a7619usize);
+
+/// Recovered `gethostbyname_r` at 0xc1d9924. Thumb callable address 0xc1d9925.
+pub const CANOPUS_FW_GETHOSTBYNAME_R_CALLABLE: usize = canopus_thumb_callable(0xc1d9925usize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_gethostbyname_r(a0: *const u8, a1: *mut core::ffi::c_void, a2: *const u8, a3: u32, a4: *const i32, a5: i32) -> i32 {
+    let f: extern "C" fn(*const u8, *mut core::ffi::c_void, *const u8, u32, *const i32, i32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_GETHOSTBYNAME_R_CALLABLE) };
+    f(a0, a1, a2, a3, a4, a5)
+}
+
+/// Recovered `setsockopt` at 0xc1ec21c. Thumb callable address 0xc1ec21d.
+pub const CANOPUS_FW_SETSOCKOPT_CALLABLE: usize = canopus_thumb_callable(0xc1ec21dusize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_setsockopt(a0: i32, a1: i32, a2: i32, a3: *const core::ffi::c_void, a4: u32) -> i32 {
+    let f: extern "C" fn(i32, i32, i32, *const core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_SETSOCKOPT_CALLABLE) };
+    f(a0, a1, a2, a3, a4)
+}
 
 /// Recovered `bt_timer_add` at 0x0C7D2CA8. Thumb callable address 0x0C7D2CA9.
 pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0x0C7D2CA9usize);
@@ -862,6 +916,15 @@ pub const CANOPUS_FW_BT_DISCOVERY_STOP_CALLABLE: usize = canopus_thumb_callable(
 
 /// Recovered `lv_obj_set_local_style_prop` at 0x0C107464. Thumb callable address 0x0C107465.
 pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x0C107465usize);
+
+/// Recovered `socket` at 0xc1bb8bc. Thumb callable address 0xc1bb8bd.
+pub const CANOPUS_FW_SOCKET_CALLABLE: usize = canopus_thumb_callable(0xc1bb8bdusize);
+#[allow(non_snake_case)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn canopus_fw_socket(a0: i32, a1: i32, a2: i32) -> i32 {
+    let f: extern "C" fn(i32, i32, i32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_SOCKET_CALLABLE) };
+    f(a0, a1, a2)
+}
 
 /// Recovered `lvx_object_add_flag` at 0x0CAA6A10. Thumb callable address 0x0CAA6A11.
 pub const CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE: usize = canopus_thumb_callable(0x0CAA6A11usize);

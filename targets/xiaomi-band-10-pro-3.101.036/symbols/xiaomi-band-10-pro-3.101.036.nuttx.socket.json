@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.socket",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "socket",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(int, int, int)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-NET-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "exact firmware IDB recovery and callsite verification",
+    "evidence_ids": [
+      "EVID-NET-001"
+    ]
+  },
+  "entry_address": "0xc1bb8bc",
+  "callable_address": "0xc1bb8bd",
+  "notes": "NuttX BSD socket allocation",
+  "approval_state": "APPROVED"
+}

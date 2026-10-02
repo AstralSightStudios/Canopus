@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.nuttx.devif_poll",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "devif_poll",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *, void *)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-NET-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "exact firmware IDB recovery sub_C1F9688",
+    "evidence_ids": [
+      "EVID-NET-001"
+    ]
+  },
+  "entry_address": "0xc1f9688",
+  "callable_address": "0xc1f9689",
+  "notes": "NuttX devif_poll",
+  "approval_state": "APPROVED"
+}

@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.nuttx.net_lock",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "net_lock",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-NET-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "exact firmware IDB recovery and callsite verification",
+    "evidence_ids": [
+      "EVID-NET-001"
+    ]
+  },
+  "entry_address": "0xc201b40",
+  "callable_address": "0xc201b41",
+  "notes": "NuttX net_lock",
+  "approval_state": "APPROVED"
+}

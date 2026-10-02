@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.app_net.connect_state_update",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "app_net_connect_state_update",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(int, int)",
+  "proof": {
+    "static": "confirmed",
+    "evidence_ids": [
+      "EVID-NET-001"
+    ]
+  },
+  "policy": "native-full-trust",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "exact firmware IDB recovery sub_C71132C",
+    "evidence_ids": [
+      "EVID-NET-001"
+    ]
+  },
+  "entry_address": "0xc71132c",
+  "callable_address": "0xc71132d",
+  "notes": "app_net connect state update handler",
+  "approval_state": "APPROVED"
+}
