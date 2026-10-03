@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.font_reload_vector_draw_unit_slot",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "font_reload_vector_draw_unit_slot",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2013eadc",
+  "type": "void *",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed firmware-owned VG draw-unit pointer slot, initialized by native vector init 0x0ca65850; compare only with currently validated VG unit. Exact root, not a RAM range.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ],
+    "source": "Exact .043 AP independently mapped per identity from .155 audit, with startup-copy PSRAM identities and native layout witnesses; see EVID-FONT-1043-001. No blanket relocation, transitive-equivalence or device claim."
+  },
+  "notes": "Borrowed firmware-owned VG draw-unit pointer slot, initialized by native vector init 0x0ca65850; compare only with currently validated VG unit. Exact root, not a RAM range. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+}

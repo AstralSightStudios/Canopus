@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.font_reload_cache_acquire",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "font_reload_cache_acquire",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c1666d0",
+  "callable_address": "0x0c1666d1",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void *(void *cache, const void *key, void *user_data)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Lookup-only native cache acquire. Returns held reference needing native cache release; do not assume entry is newly created.",
+    "return_value": "See restricted adapter use contract; no general public callable approval."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ],
+    "source": "Exact .043 AP independently mapped per identity from .155 audit, with startup-copy PSRAM identities and native layout witnesses; see EVID-FONT-1043-001. No blanket relocation, transitive-equivalence or device claim."
+  },
+  "notes": "Lookup-only native cache acquire. Returns held reference needing native cache release; do not assume entry is newly created. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+}

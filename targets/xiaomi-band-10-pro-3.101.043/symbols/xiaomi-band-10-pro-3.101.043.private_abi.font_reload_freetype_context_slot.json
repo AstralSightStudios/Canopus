@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.font_reload_freetype_context_slot",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "font_reload_freetype_context_slot",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x20103374",
+  "type": "void *",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed exact FreeType context pointer slot. Context28: library+0, face-ID list+4 payload8, outline event+16, max children+20, face cache+24. Pointer equality is not restart/epoch proof.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ],
+    "source": "Exact .043 AP independently mapped per identity from .155 audit, with startup-copy PSRAM identities and native layout witnesses; see EVID-FONT-1043-001. No blanket relocation, transitive-equivalence or device claim."
+  },
+  "notes": "Borrowed exact FreeType context pointer slot. Context28: library+0, face-ID list+4 payload8, outline event+16, max children+20, face cache+24. Pointer equality is not restart/epoch proof. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+}

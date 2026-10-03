@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.font_reload_vector_label_class",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "font_reload_vector_label_class",
+  "kind": "data",
+  "instruction_set": "n/a",
+  "entry_address": "0x2cdba868",
+  "type": "const opaque object class",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed exact class at0x2cdba868, NOT preceding padding0x2cdba864. Class+0 base0x2cce6880, +4 constructor0x0ca65851, +8 destructor0x0ca65c25, +12 event0x0ca66521. Native event0x0ca66520 passes this class. Exact class equality only; unknown/custom text owners excluded.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ],
+    "source": "Exact .043 AP independently mapped per identity from .155 audit, with startup-copy PSRAM identities and native layout witnesses; see EVID-FONT-1043-001. No blanket relocation, transitive-equivalence or device claim."
+  },
+  "notes": "Borrowed exact class at0x2cdba868, NOT preceding padding0x2cdba864. Class+0 base0x2cce6880, +4 constructor0x0ca65851, +8 destructor0x0ca65c25, +12 event0x0ca66521. Native event0x0ca66520 passes this class. Exact class equality only; unknown/custom text owners excluded. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+}

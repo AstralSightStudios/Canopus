@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.font_reload_style_refresh_enabled",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "font_reload_style_refresh_enabled",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2010319c",
+  "type": "uint8_t",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed exact style-refresh enable byte. Must be nonzero before publication so property90 refresh notifies layout/inheritance. Not a lock or lifecycle epoch.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ],
+    "source": "Exact .043 AP independently mapped per identity from .155 audit, with startup-copy PSRAM identities and native layout witnesses; see EVID-FONT-1043-001. No blanket relocation, transitive-equivalence or device claim."
+  },
+  "notes": "Borrowed exact style-refresh enable byte. Must be nonzero before publication so property90 refresh notifies layout/inheritance. Not a lock or lifecycle epoch. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+}

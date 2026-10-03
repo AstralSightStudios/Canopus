@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.font_reload_count_cache_class",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "font_reload_count_cache_class",
+  "kind": "data",
+  "instruction_set": "n/a",
+  "entry_address": "0x2cce571c",
+  "type": "const opaque cache class",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed exact cached-flash count-cache class, installed by context initialization. Class+4 is Thumb count-cache initializer 0x0c272d39. Child entry refcounts do not preserve a destroyed whole cache.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ],
+    "source": "Exact .043 AP independently mapped per identity from .155 audit, with startup-copy PSRAM identities and native layout witnesses; see EVID-FONT-1043-001. No blanket relocation, transitive-equivalence or device claim."
+  },
+  "notes": "Borrowed exact cached-flash count-cache class, installed by context initialization. Class+4 is Thumb count-cache initializer 0x0c272d39. Child entry refcounts do not preserve a destroyed whole cache. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+}

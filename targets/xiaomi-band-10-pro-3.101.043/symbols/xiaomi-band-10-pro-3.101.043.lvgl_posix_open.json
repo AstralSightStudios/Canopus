@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lvgl_posix_open",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lvgl_posix_open",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c057c50",
+  "callable_address": "0x1c057c51",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Identity of firmware-owned LVGL POSIX-open callback already used by the default and experimental Resource-Hook modules. Native driver initialization installs this exact PSRAM pointer; no generalized callable ABI, driver replacement or ownership promotion. Preserve existing module behavior and native callback contract.",
+    "return_value": "Identity metadata only; no new ownership transfer or public wrapper."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ],
+    "source": "Exact .043 AP startup-copy mapping and native LVGL POSIX driver initializer 0x0c1651b0: callback literal 0x0c165208 is 0x1c057c51, stored at driver+12 before native registration 0x0c169bb4. Individually audited related callback required after PSRAM scan; no public ABI promotion."
+  },
+  "notes": "Exact PSRAM callback identity only (no public prototype). Entry bytes come from AP offset0x0a5090 under reviewed startup-copy execution map. XIP/ROM initializer installs callback at firmware driver 0x20103340+12 then registers driver. Only this exact additional related identity is allowlisted; no extra range, transitive callee or unknown PSRAM address is authorized. STATIC_RECOVERED/PENDING; device not_probed."
+}

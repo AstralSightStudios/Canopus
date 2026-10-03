@@ -3,8 +3,8 @@
  * target_id: xiaomi-band-10-pro-3.101.043
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
- * revision : 6
- * input_digest: 9bd55ef720130bb1
+ * revision : 7
+ * input_digest: 36a8b2eaa29146e7
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -269,14 +269,29 @@ static inline int canopus_fw_interconnect_close(void * a0) {
     return ((canopus_fw_interconnect_close_fn)(uintptr_t)0xc2e8759)(a0);
 }
 
+typedef int (*canopus_fw_netdev_input_fn)(void *, void *, int);
+static inline int canopus_fw_netdev_input(void * a0, void * a1, int a2) {
+    return ((canopus_fw_netdev_input_fn)(uintptr_t)0xc1fc9f5)(a0, a1, a2);
+}
+
 typedef int (*canopus_fw_interconnect_connect_fn)(void *, void *, const char *, canopus_interconnect_recv_cb);
 static inline int canopus_fw_interconnect_connect(void * a0, void * a1, const char * a2, canopus_interconnect_recv_cb a3) {
     return ((canopus_fw_interconnect_connect_fn)(uintptr_t)0xc2e85f5)(a0, a1, a2, a3);
 }
 
+typedef int (*canopus_fw_ipv4_input_fn)(void *);
+static inline int canopus_fw_ipv4_input(void * a0) {
+    return ((canopus_fw_ipv4_input_fn)(uintptr_t)0xc1f95c9)(a0);
+}
+
 typedef void (*canopus_fw_lvx_object_align_fn)(void *, uint32_t, int32_t, int32_t);
 static inline void canopus_fw_lvx_object_align(void * a0, uint32_t a1, int32_t a2, int32_t a3) {
     return ((canopus_fw_lvx_object_align_fn)(uintptr_t)0xc589189)(a0, a1, a2, a3);
+}
+
+typedef int (*canopus_fw_netdev_register_fn)(void *, int);
+static inline int canopus_fw_netdev_register(void * a0, int a1) {
+    return ((canopus_fw_netdev_register_fn)(uintptr_t)0xc1fc215)(a0, a1);
 }
 
 typedef int (*canopus_fw_app_launcher_add_fn)(uint16_t);
@@ -287,6 +302,11 @@ static inline int canopus_fw_app_launcher_add(uint16_t a0) {
 typedef void (*canopus_fw_lvx_object_set_size_fn)(void *, int32_t, int32_t);
 static inline void canopus_fw_lvx_object_set_size(void * a0, int32_t a1, int32_t a2) {
     return ((canopus_fw_lvx_object_set_size_fn)(uintptr_t)0xc588629)(a0, a1, a2);
+}
+
+typedef int (*canopus_fw_devif_poll_fn)(void *, void *);
+static inline int canopus_fw_devif_poll(void * a0, void * a1) {
+    return ((canopus_fw_devif_poll_fn)(uintptr_t)0xc1f9689)(a0, a1);
 }
 
 typedef void (*canopus_fw_lv_obj_align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
@@ -350,6 +370,11 @@ static inline int canopus_fw_socket(int a0, int a1, int a2) {
 typedef int (*canopus_fw_net_lock_fn)(void);
 static inline int canopus_fw_net_lock(void) {
     return ((canopus_fw_net_lock_fn)(uintptr_t)0xc201b41)();
+}
+
+typedef int (*canopus_fw_app_net_connect_state_update_fn)(int, int);
+static inline int canopus_fw_app_net_connect_state_update(int a0, int a1) {
+    return ((canopus_fw_app_net_connect_state_update_fn)(uintptr_t)0xc71132d)(a0, a1);
 }
 
 typedef int32_t (*canopus_fw_read_fn)(int, void *, uint32_t);
@@ -434,6 +459,7 @@ static inline uint32_t canopus_fw_bt_l2cap_connect(const void * a0) {
 /* Recovered global `core_bt_adapter_instance` at 0x20126738. */
 #define canopus_fw_core_bt_adapter_instance ((void *)(uintptr_t)0x20126738u)
 
+/* poll_notify: skipped (argument type not mappable) */
 typedef int (*canopus_fw_unregister_driver_fn)(const char *);
 static inline int canopus_fw_unregister_driver(const char * a0) {
     return ((canopus_fw_unregister_driver_fn)(uintptr_t)0xc1b002d)(a0);
@@ -482,6 +508,13 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * bt_timer_add: restricted - not exported until context/ownership approved
  * bt_timer_cancel: restricted - not exported until context/ownership approved
  * btsnoop_avdtp_recognizer: WITHDRAWN - no veneer may ever be generated
+ * calendar_app_dispatch: restricted - not exported until context/ownership approved
+ * calendar_app_lookup: restricted - not exported until context/ownership approved
+ * calendar_app_lookup_name: restricted - not exported until context/ownership approved
+ * calendar_app_lookup_name_other: restricted - not exported until context/ownership approved
+ * calendar_app_lookup_other: restricted - not exported until context/ownership approved
+ * calendar_app_signal: restricted - not exported until context/ownership approved
+ * calendar_icon_notify: restricted - not exported until context/ownership approved
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * driver_close_dispatch: restricted - not exported until context/ownership approved
  * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
@@ -492,6 +525,36 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * firmware_log: restricted - not exported until context/ownership approved
  * font_manager_add_path: restricted - not exported until context/ownership approved
  * font_manager_remove_path: restricted - not exported until context/ownership approved
+ * font_reload_cache_acquire: restricted - not exported until context/ownership approved
+ * font_reload_cache_acquire_or_create: restricted - not exported until context/ownership approved
+ * font_reload_count_cache_init: restricted - not exported until context/ownership approved
+ * font_reload_drop_face_id: restricted - not exported until context/ownership approved
+ * font_reload_face_compare: restricted - not exported until context/ownership approved
+ * font_reload_face_create: restricted - not exported until context/ownership approved
+ * font_reload_face_destroy: restricted - not exported until context/ownership approved
+ * font_reload_ft_mul_fix: restricted - not exported until context/ownership approved
+ * font_reload_ft_set_pixel_size: restricted - not exported until context/ownership approved
+ * font_reload_glyph_metrics: restricted - not exported until context/ownership approved
+ * font_reload_glyph_pending_release: restricted - not exported until context/ownership approved
+ * font_reload_gradient_pending_release: restricted - not exported until context/ownership approved
+ * font_reload_image_pending_release: restricted - not exported until context/ownership approved
+ * font_reload_list_remove: restricted - not exported until context/ownership approved
+ * font_reload_lv_free: restricted - not exported until context/ownership approved
+ * font_reload_lv_malloc: restricted - not exported until context/ownership approved
+ * font_reload_metrics_compare: restricted - not exported until context/ownership approved
+ * font_reload_metrics_create: restricted - not exported until context/ownership approved
+ * font_reload_metrics_destroy: restricted - not exported until context/ownership approved
+ * font_reload_outline_acquire: restricted - not exported until context/ownership approved
+ * font_reload_outline_compare: restricted - not exported until context/ownership approved
+ * font_reload_outline_create: restricted - not exported until context/ownership approved
+ * font_reload_outline_destroy: restricted - not exported until context/ownership approved
+ * font_reload_outline_event: restricted - not exported until context/ownership approved
+ * font_reload_outline_release: restricted - not exported until context/ownership approved
+ * font_reload_sw_dispatch: restricted - not exported until context/ownership approved
+ * font_reload_vector_compare: restricted - not exported until context/ownership approved
+ * font_reload_vector_destroy: restricted - not exported until context/ownership approved
+ * font_reload_vector_drop: restricted - not exported until context/ownership approved
+ * font_reload_vg_dispatch: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved
@@ -520,6 +583,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
  * lv_obj_tree_walk: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
+ * lvgl_posix_open: restricted - not exported until context/ownership approved
  * lvx_image_set_scale: restricted - not exported until context/ownership approved
  * lvx_label_set_long_mode: restricted - not exported until context/ownership approved
  * lvx_object_add_flag: restricted - not exported until context/ownership approved

@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.font_reload_count_cache_init",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "font_reload_count_cache_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c272d38",
+  "callable_address": "0x0c272d39",
+  "calling_convention": "arm-aapcs",
+  "prototype": "int(void *cache)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Initializes caller-allocated zeroed 64-byte count-cache storage. Requires nonzero node size, comparison and destructor; initializes RB payload node_size+20 and intrusive LRU payload4, installs size callback without allocation. No unsafe generic constructor is authorized.",
+    "return_value": "See restricted adapter use contract; no general public callable approval."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ],
+    "source": "Exact .043 AP independently mapped per identity from .155 audit, with startup-copy PSRAM identities and native layout witnesses; see EVID-FONT-1043-001. No blanket relocation, transitive-equivalence or device claim."
+  },
+  "notes": "Initializes caller-allocated zeroed 64-byte count-cache storage. Requires nonzero node size, comparison and destructor; initializes RB payload node_size+20 and intrusive LRU payload4, installs size callback without allocation. No unsafe generic constructor is authorized. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+}

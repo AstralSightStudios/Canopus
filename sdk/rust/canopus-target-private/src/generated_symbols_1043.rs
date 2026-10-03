@@ -42,6 +42,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int32_t(uint32_t page_key, uint32_t start_data, uint32_t param, uint32_t callbacks)",
     },
     TargetPrivateSymbolRecord {
+        name: "app_net_connect_state_update",
+        kind: "function",
+        entry: 0xc71132cusize,
+        callable: 0xc71132dusize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(int, int)",
+    },
+    TargetPrivateSymbolRecord {
         name: "app_install",
         kind: "function",
         entry: 0xca6a30cusize,
@@ -177,6 +186,87 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "uint32_t",
     },
     TargetPrivateSymbolRecord {
+        name: "calendar_app_dispatch",
+        kind: "function",
+        entry: 0xca69aa0usize,
+        callable: 0xca69aa1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_app_lookup",
+        kind: "function",
+        entry: 0xca69934usize,
+        callable: 0xca69935usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(uint16_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_app_lookup_name",
+        kind: "function",
+        entry: 0xca69e80usize,
+        callable: 0xca69e81usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(const char *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_app_lookup_name_other",
+        kind: "function",
+        entry: 0xca69e54usize,
+        callable: 0xca69e55usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(const char *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_app_lookup_other",
+        kind: "function",
+        entry: 0xca6996cusize,
+        callable: 0xca6996dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(uint16_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_app_signal",
+        kind: "function",
+        entry: 0xc4efde8usize,
+        callable: 0xc4efde9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_icon_notify",
+        kind: "function",
+        entry: 0xca6a004usize,
+        callable: 0xca6a005usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(const char *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_manager_add_path",
+        kind: "function",
+        entry: 0xc86037cusize,
+        callable: 0xc86037dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(const char *name, const char *path)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_manager_remove_path",
+        kind: "function",
+        entry: 0xc860398usize,
+        callable: 0xc860399usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(uint32_t node)",
+    },
+    TargetPrivateSymbolRecord {
         name: "app_launcher_add",
         kind: "function",
         entry: 0xc513a44usize,
@@ -220,6 +310,96 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int(ordered_app_list_t *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_cache_drop",
+        kind: "function",
+        entry: 0xc1667dcusize,
+        callable: 0xc1667ddusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(uint32_t cache, const void *key, void *user_data)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_cache_release",
+        kind: "function",
+        entry: 0xc1666ecusize,
+        callable: 0xc1666edusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(uint32_t cache, void *entry, void *user_data)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_display_get_horizontal_resolution",
+        kind: "function",
+        entry: 0xc13cd54usize,
+        callable: 0xc13cd55usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int32_t(uint32_t disp)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_display_get_vertical_resolution",
+        kind: "function",
+        entry: 0xc13cd74usize,
+        callable: 0xc13cd75usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int32_t(uint32_t disp)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_display_invalidate_area",
+        kind: "function",
+        entry: 0xc105164usize,
+        callable: 0xc105165usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(uint32_t disp, const void *area)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_image_decoder_get_info",
+        kind: "function",
+        entry: 0xc143798usize,
+        callable: 0xc143799usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(const void *src, void *header)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_get_style_prop",
+        kind: "function",
+        entry: 0xc1068a8usize,
+        callable: 0xc1068a9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint32_t(void *obj, uint32_t part, uint32_t prop)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_refresh_style",
+        kind: "function",
+        entry: 0xc1070acusize,
+        callable: 0xc1070adusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *obj, uint32_t selector, uint32_t prop)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_tree_walk",
+        kind: "function",
+        entry: 0xc13c690usize,
+        callable: 0xc13c691usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *obj, int (*cb)(void *, void *), void *user_data)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lvgl_posix_open",
+        kind: "function",
+        entry: 0x1c057c50usize,
+        callable: 0x1c057c51usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
     },
     TargetPrivateSymbolRecord {
         name: "interconnect_close",
@@ -321,6 +501,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(int)",
     },
     TargetPrivateSymbolRecord {
+        name: "devif_poll",
+        kind: "function",
+        entry: 0xc1f9688usize,
+        callable: 0xc1f9689usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(void *, void *)",
+    },
+    TargetPrivateSymbolRecord {
         name: "driver_close_dispatch",
         kind: "function",
         entry: 0xc1cec08usize,
@@ -355,6 +544,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_CONFIRMED",
         policy: "restricted",
         prototype: "int(int, const char *, ...)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "gethostbyname_r",
+        kind: "function",
+        entry: 0xc1e8e64usize,
+        callable: 0xc1e8e65usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(const char *, void *, char *, size_t, int *, int)",
     },
     TargetPrivateSymbolRecord {
         name: "heap_free",
@@ -402,6 +600,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int32_t(int32_t, uint32_t, ...)",
     },
     TargetPrivateSymbolRecord {
+        name: "ipv4_input",
+        kind: "function",
+        entry: 0xc1f95c8usize,
+        callable: 0xc1f95c9usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(void *)",
+    },
+    TargetPrivateSymbolRecord {
         name: "lseek",
         kind: "function",
         entry: 0xc1d0524usize,
@@ -409,6 +616,42 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "native-full-trust",
         prototype: "int64_t(int, int64_t, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "net_lock",
+        kind: "function",
+        entry: 0xc201b40usize,
+        callable: 0xc201b41usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(void)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "net_unlock",
+        kind: "function",
+        entry: 0xc201b50usize,
+        callable: 0xc201b51usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "void(int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "netdev_input",
+        kind: "function",
+        entry: 0xc1fc9f4usize,
+        callable: 0xc1fc9f5usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(void *, void *, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "netdev_register",
+        kind: "function",
+        entry: 0xc1fc214usize,
+        callable: 0xc1fc215usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(void *, int)",
     },
     TargetPrivateSymbolRecord {
         name: "open",
@@ -420,6 +663,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(const char *, int, ...)",
     },
     TargetPrivateSymbolRecord {
+        name: "poll_notify",
+        kind: "function",
+        entry: 0xc1d0b44usize,
+        callable: 0xc1d0b45usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "void(void *, int, unsigned int)",
+    },
+    TargetPrivateSymbolRecord {
         name: "read",
         kind: "function",
         entry: 0xc1d129cusize,
@@ -427,6 +679,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "native-full-trust",
         prototype: "int32(int, void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "recvfrom",
+        kind: "function",
+        entry: 0xc1fd570usize,
+        callable: 0xc1fd571usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int32_t(int, void *, uint32_t, int, void *, uint32_t *)",
     },
     TargetPrivateSymbolRecord {
         name: "register_blockdriver",
@@ -481,6 +742,33 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_CONFIRMED",
         policy: "restricted",
         prototype: "int(void *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "sendto",
+        kind: "function",
+        entry: 0xc1fd664usize,
+        callable: 0xc1fd665usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int32_t(int, const void *, uint32_t, int, const void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "setsockopt",
+        kind: "function",
+        entry: 0xc1fdab4usize,
+        callable: 0xc1fdab5usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(int, int, int, const void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "socket",
+        kind: "function",
+        entry: 0xc1cad34usize,
+        callable: 0xc1cad35usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(int, int, int)",
     },
     TargetPrivateSymbolRecord {
         name: "unlink",
@@ -661,6 +949,348 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int(uint32_t *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_cache_acquire",
+        kind: "function",
+        entry: 0xc1666d0usize,
+        callable: 0xc1666d1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(void *cache, const void *key, void *user_data)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_cache_acquire_or_create",
+        kind: "function",
+        entry: 0xc166740usize,
+        callable: 0xc166741usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(void *cache, const void *key, void *user_data)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_count_cache_init",
+        kind: "function",
+        entry: 0xc272d38usize,
+        callable: 0xc272d39usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *cache)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_display_list",
+        kind: "global",
+        entry: 0x2010317cusize,
+        callable: 0x2010317cusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_draw_unit_slot",
+        kind: "global",
+        entry: 0x201032a4usize,
+        callable: 0x201032a4usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_drop_face_id",
+        kind: "function",
+        entry: 0xc163be8usize,
+        callable: 0xc163be9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *context, const char *path)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_face_compare",
+        kind: "function",
+        entry: 0x1c05682cusize,
+        callable: 0x1c05682dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_face_create",
+        kind: "function",
+        entry: 0x1c056718usize,
+        callable: 0x1c056719usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_face_destroy",
+        kind: "function",
+        entry: 0x1c0566ecusize,
+        callable: 0x1c0566edusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_freetype_context_slot",
+        kind: "global",
+        entry: 0x20103374usize,
+        callable: 0x20103374usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_ft_mul_fix",
+        kind: "function",
+        entry: 0xc33d8bcusize,
+        callable: 0xc33d8bdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int32_t(int32_t value, int32_t scale)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_ft_set_pixel_size",
+        kind: "function",
+        entry: 0xc33ef58usize,
+        callable: 0xc33ef59usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *face, uint32_t size)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_glyph_metrics",
+        kind: "function",
+        entry: 0x1c056e14usize,
+        callable: 0x1c056e15usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_glyph_pending_release",
+        kind: "function",
+        entry: 0x1c046cfcusize,
+        callable: 0x1c046cfdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_gradient_pending_release",
+        kind: "function",
+        entry: 0x1c0493bcusize,
+        callable: 0x1c0493bdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_image_pending_release",
+        kind: "function",
+        entry: 0x1c04d258usize,
+        callable: 0x1c04d259usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_list_remove",
+        kind: "function",
+        entry: 0xc169ce8usize,
+        callable: 0xc169ce9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *list, void *node)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_lv_free",
+        kind: "function",
+        entry: 0xc16dae4usize,
+        callable: 0xc16dae5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *memory)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_lv_initialized",
+        kind: "global",
+        entry: 0x20103178usize,
+        callable: 0x20103178usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_lv_malloc",
+        kind: "function",
+        entry: 0xc16daa8usize,
+        callable: 0xc16daa9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(uint32_t size)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_metrics_compare",
+        kind: "function",
+        entry: 0x1c056f04usize,
+        callable: 0x1c056f05usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_metrics_create",
+        kind: "function",
+        entry: 0x1c056d24usize,
+        callable: 0x1c056d25usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_metrics_destroy",
+        kind: "function",
+        entry: 0x1c056d18usize,
+        callable: 0x1c056d19usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_outline_acquire",
+        kind: "function",
+        entry: 0x1c0572a4usize,
+        callable: 0x1c0572a5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_outline_compare",
+        kind: "function",
+        entry: 0x1c057258usize,
+        callable: 0x1c057259usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_outline_create",
+        kind: "function",
+        entry: 0x1c057634usize,
+        callable: 0x1c057635usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_outline_destroy",
+        kind: "function",
+        entry: 0x1c057330usize,
+        callable: 0x1c057331usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_outline_event",
+        kind: "function",
+        entry: 0x1c046d08usize,
+        callable: 0x1c046d09usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_outline_release",
+        kind: "function",
+        entry: 0x1c057288usize,
+        callable: 0x1c057289usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_style_refresh_enabled",
+        kind: "global",
+        entry: 0x2010319cusize,
+        callable: 0x2010319cusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_sw_dispatch",
+        kind: "function",
+        entry: 0x1c03debcusize,
+        callable: 0x1c03debdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_uikit_slot",
+        kind: "global",
+        entry: 0x20103174usize,
+        callable: 0x20103174usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_vector_cache_slot",
+        kind: "global",
+        entry: 0x2013eae0usize,
+        callable: 0x2013eae0usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_vector_compare",
+        kind: "function",
+        entry: 0xca657ecusize,
+        callable: 0xca657edusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_vector_destroy",
+        kind: "function",
+        entry: 0xca6581cusize,
+        callable: 0xca6581dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_vector_draw_unit_slot",
+        kind: "global",
+        entry: 0x2013eadcusize,
+        callable: 0x2013eadcusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_vector_drop",
+        kind: "function",
+        entry: 0xca65c24usize,
+        callable: 0xca65c25usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(uint32_t unused, void *object, uint32_t unused2)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "font_reload_vg_dispatch",
+        kind: "function",
+        entry: 0x1c045360usize,
+        callable: 0x1c045361usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
     },
     TargetPrivateSymbolRecord {
         name: "gap_host_receive_slot",
@@ -1100,6 +1730,8 @@ pub const PAGE_FINISH_ENTRY: usize = 0xca6b9e8usize;
 pub const PAGE_FINISH_CALLABLE: usize = 0xca6b9e9usize;
 pub const PAGE_GOTO_ENTRY: usize = 0xca6c358usize;
 pub const PAGE_GOTO_CALLABLE: usize = 0xca6c359usize;
+pub const APP_NET_CONNECT_STATE_UPDATE_ENTRY: usize = 0xc71132cusize;
+pub const APP_NET_CONNECT_STATE_UPDATE_CALLABLE: usize = 0xc71132dusize;
 pub const APP_INSTALL_ENTRY: usize = 0xca6a30cusize;
 pub const APP_INSTALL_CALLABLE: usize = 0xca6a30dusize;
 pub const BT_ADAPTER_GET_INSTANCE_ENTRY: usize = 0xca40f68usize;
@@ -1126,6 +1758,24 @@ pub const CORE_BT_PAIR_REQUEST_CALLBACK_CALLABLE: usize = 0xc709e91usize;
 pub const CORE_BT_REGISTRATION_HANDLE_ENTRY: usize = 0x20126734usize;
 pub const MIWEAR_BT_ADAPTER_INSTANCE_ENTRY: usize = 0x2013dbe4usize;
 pub const MIWEAR_BT_CPEVENT_REGISTRATION_HANDLE_ENTRY: usize = 0x2013dbe0usize;
+pub const CALENDAR_APP_DISPATCH_ENTRY: usize = 0xca69aa0usize;
+pub const CALENDAR_APP_DISPATCH_CALLABLE: usize = 0xca69aa1usize;
+pub const CALENDAR_APP_LOOKUP_ENTRY: usize = 0xca69934usize;
+pub const CALENDAR_APP_LOOKUP_CALLABLE: usize = 0xca69935usize;
+pub const CALENDAR_APP_LOOKUP_NAME_ENTRY: usize = 0xca69e80usize;
+pub const CALENDAR_APP_LOOKUP_NAME_CALLABLE: usize = 0xca69e81usize;
+pub const CALENDAR_APP_LOOKUP_NAME_OTHER_ENTRY: usize = 0xca69e54usize;
+pub const CALENDAR_APP_LOOKUP_NAME_OTHER_CALLABLE: usize = 0xca69e55usize;
+pub const CALENDAR_APP_LOOKUP_OTHER_ENTRY: usize = 0xca6996cusize;
+pub const CALENDAR_APP_LOOKUP_OTHER_CALLABLE: usize = 0xca6996dusize;
+pub const CALENDAR_APP_SIGNAL_ENTRY: usize = 0xc4efde8usize;
+pub const CALENDAR_APP_SIGNAL_CALLABLE: usize = 0xc4efde9usize;
+pub const CALENDAR_ICON_NOTIFY_ENTRY: usize = 0xca6a004usize;
+pub const CALENDAR_ICON_NOTIFY_CALLABLE: usize = 0xca6a005usize;
+pub const FONT_MANAGER_ADD_PATH_ENTRY: usize = 0xc86037cusize;
+pub const FONT_MANAGER_ADD_PATH_CALLABLE: usize = 0xc86037dusize;
+pub const FONT_MANAGER_REMOVE_PATH_ENTRY: usize = 0xc860398usize;
+pub const FONT_MANAGER_REMOVE_PATH_CALLABLE: usize = 0xc860399usize;
 pub const APP_LAUNCHER_ADD_ENTRY: usize = 0xc513a44usize;
 pub const APP_LAUNCHER_ADD_CALLABLE: usize = 0xc513a45usize;
 pub const APP_LAUNCHER_DATA_INIT_ENTRY: usize = 0xc513e90usize;
@@ -1136,6 +1786,26 @@ pub const HIDDEN_AND_SHOW_APP_CB_ENTRY: usize = 0xc5141f0usize;
 pub const HIDDEN_AND_SHOW_APP_CB_CALLABLE: usize = 0xc5141f1usize;
 pub const PROTOBUF_SET_ORDERED_APP_LIST_ENTRY: usize = 0xc513528usize;
 pub const PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = 0xc513529usize;
+pub const LV_CACHE_DROP_ENTRY: usize = 0xc1667dcusize;
+pub const LV_CACHE_DROP_CALLABLE: usize = 0xc1667ddusize;
+pub const LV_CACHE_RELEASE_ENTRY: usize = 0xc1666ecusize;
+pub const LV_CACHE_RELEASE_CALLABLE: usize = 0xc1666edusize;
+pub const LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_ENTRY: usize = 0xc13cd54usize;
+pub const LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = 0xc13cd55usize;
+pub const LV_DISPLAY_GET_VERTICAL_RESOLUTION_ENTRY: usize = 0xc13cd74usize;
+pub const LV_DISPLAY_GET_VERTICAL_RESOLUTION_CALLABLE: usize = 0xc13cd75usize;
+pub const LV_DISPLAY_INVALIDATE_AREA_ENTRY: usize = 0xc105164usize;
+pub const LV_DISPLAY_INVALIDATE_AREA_CALLABLE: usize = 0xc105165usize;
+pub const LV_IMAGE_DECODER_GET_INFO_ENTRY: usize = 0xc143798usize;
+pub const LV_IMAGE_DECODER_GET_INFO_CALLABLE: usize = 0xc143799usize;
+pub const LV_OBJ_GET_STYLE_PROP_ENTRY: usize = 0xc1068a8usize;
+pub const LV_OBJ_GET_STYLE_PROP_CALLABLE: usize = 0xc1068a9usize;
+pub const LV_OBJ_REFRESH_STYLE_ENTRY: usize = 0xc1070acusize;
+pub const LV_OBJ_REFRESH_STYLE_CALLABLE: usize = 0xc1070adusize;
+pub const LV_OBJ_TREE_WALK_ENTRY: usize = 0xc13c690usize;
+pub const LV_OBJ_TREE_WALK_CALLABLE: usize = 0xc13c691usize;
+pub const LVGL_POSIX_OPEN_ENTRY: usize = 0x1c057c50usize;
+pub const LVGL_POSIX_OPEN_CALLABLE: usize = 0x1c057c51usize;
 pub const INTERCONNECT_CLOSE_ENTRY: usize = 0xc2e8758usize;
 pub const INTERCONNECT_CLOSE_CALLABLE: usize = 0xc2e8759usize;
 pub const INTERCONNECT_CONNECT_ENTRY: usize = 0xc2e85f4usize;
@@ -1158,6 +1828,8 @@ pub const CLOCK_GETTIME_ENTRY: usize = 0xc201fe0usize;
 pub const CLOCK_GETTIME_CALLABLE: usize = 0xc201fe1usize;
 pub const CLOSE_ENTRY: usize = 0xc1b9d80usize;
 pub const CLOSE_CALLABLE: usize = 0xc1b9d81usize;
+pub const DEVIF_POLL_ENTRY: usize = 0xc1f9688usize;
+pub const DEVIF_POLL_CALLABLE: usize = 0xc1f9689usize;
 pub const DRIVER_CLOSE_DISPATCH_ENTRY: usize = 0xc1cec08usize;
 pub const DRIVER_CLOSE_DISPATCH_CALLABLE: usize = 0xc1cec09usize;
 pub const DRIVER_IOCTL_DISPATCH_ENTRY: usize = 0xc1cff88usize;
@@ -1166,6 +1838,8 @@ pub const ERRNO_LOCATION_ENTRY: usize = 0xc1e45bcusize;
 pub const ERRNO_LOCATION_CALLABLE: usize = 0xc1e45bdusize;
 pub const FIRMWARE_LOG_ENTRY: usize = 0xc1f0d20usize;
 pub const FIRMWARE_LOG_CALLABLE: usize = 0xc1f0d21usize;
+pub const GETHOSTBYNAME_R_ENTRY: usize = 0xc1e8e64usize;
+pub const GETHOSTBYNAME_R_CALLABLE: usize = 0xc1e8e65usize;
 pub const HEAP_FREE_ENTRY: usize = 0xc1f8ff8usize;
 pub const HEAP_FREE_CALLABLE: usize = 0xc1f8ff9usize;
 pub const HEAP_MALLINFO_ENTRY: usize = 0xc1f900cusize;
@@ -1176,12 +1850,26 @@ pub const HEAP_ZALLOC_ENTRY: usize = 0xc1f90bcusize;
 pub const HEAP_ZALLOC_CALLABLE: usize = 0xc1f90bdusize;
 pub const IOCTL_ENTRY: usize = 0xc1d01a4usize;
 pub const IOCTL_CALLABLE: usize = 0xc1d01a5usize;
+pub const IPV4_INPUT_ENTRY: usize = 0xc1f95c8usize;
+pub const IPV4_INPUT_CALLABLE: usize = 0xc1f95c9usize;
 pub const LSEEK_ENTRY: usize = 0xc1d0524usize;
 pub const LSEEK_CALLABLE: usize = 0xc1d0525usize;
+pub const NET_LOCK_ENTRY: usize = 0xc201b40usize;
+pub const NET_LOCK_CALLABLE: usize = 0xc201b41usize;
+pub const NET_UNLOCK_ENTRY: usize = 0xc201b50usize;
+pub const NET_UNLOCK_CALLABLE: usize = 0xc201b51usize;
+pub const NETDEV_INPUT_ENTRY: usize = 0xc1fc9f4usize;
+pub const NETDEV_INPUT_CALLABLE: usize = 0xc1fc9f5usize;
+pub const NETDEV_REGISTER_ENTRY: usize = 0xc1fc214usize;
+pub const NETDEV_REGISTER_CALLABLE: usize = 0xc1fc215usize;
 pub const OPEN_ENTRY: usize = 0xc1d0a28usize;
 pub const OPEN_CALLABLE: usize = 0xc1d0a29usize;
+pub const POLL_NOTIFY_ENTRY: usize = 0xc1d0b44usize;
+pub const POLL_NOTIFY_CALLABLE: usize = 0xc1d0b45usize;
 pub const READ_ENTRY: usize = 0xc1d129cusize;
 pub const READ_CALLABLE: usize = 0xc1d129dusize;
+pub const RECVFROM_ENTRY: usize = 0xc1fd570usize;
+pub const RECVFROM_CALLABLE: usize = 0xc1fd571usize;
 pub const REGISTER_BLOCKDRIVER_ENTRY: usize = 0xc1affd8usize;
 pub const REGISTER_BLOCKDRIVER_CALLABLE: usize = 0xc1affd9usize;
 pub const REGISTER_DRIVER_ENTRY: usize = 0xc1aff60usize;
@@ -1194,6 +1882,12 @@ pub const SEM_TRYWAIT_ENTRY: usize = 0xc206bfcusize;
 pub const SEM_TRYWAIT_CALLABLE: usize = 0xc206bfdusize;
 pub const SEM_WAIT_ENTRY: usize = 0xc206944usize;
 pub const SEM_WAIT_CALLABLE: usize = 0xc206945usize;
+pub const SENDTO_ENTRY: usize = 0xc1fd664usize;
+pub const SENDTO_CALLABLE: usize = 0xc1fd665usize;
+pub const SETSOCKOPT_ENTRY: usize = 0xc1fdab4usize;
+pub const SETSOCKOPT_CALLABLE: usize = 0xc1fdab5usize;
+pub const SOCKET_ENTRY: usize = 0xc1cad34usize;
+pub const SOCKET_CALLABLE: usize = 0xc1cad35usize;
 pub const UNLINK_ENTRY: usize = 0xc1d2354usize;
 pub const UNLINK_CALLABLE: usize = 0xc1d2355usize;
 pub const UNREGISTER_BLOCKDRIVER_ENTRY: usize = 0xc1b009cusize;
@@ -1233,6 +1927,74 @@ pub const BT_TIMER_ADD_ENTRY: usize = 0xc7eb270usize;
 pub const BT_TIMER_ADD_CALLABLE: usize = 0xc7eb271usize;
 pub const BT_TIMER_CANCEL_ENTRY: usize = 0xc7eb33cusize;
 pub const BT_TIMER_CANCEL_CALLABLE: usize = 0xc7eb33dusize;
+pub const FONT_RELOAD_CACHE_ACQUIRE_ENTRY: usize = 0xc1666d0usize;
+pub const FONT_RELOAD_CACHE_ACQUIRE_CALLABLE: usize = 0xc1666d1usize;
+pub const FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_ENTRY: usize = 0xc166740usize;
+pub const FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_CALLABLE: usize = 0xc166741usize;
+pub const FONT_RELOAD_COUNT_CACHE_INIT_ENTRY: usize = 0xc272d38usize;
+pub const FONT_RELOAD_COUNT_CACHE_INIT_CALLABLE: usize = 0xc272d39usize;
+pub const FONT_RELOAD_DISPLAY_LIST_ENTRY: usize = 0x2010317cusize;
+pub const FONT_RELOAD_DRAW_UNIT_SLOT_ENTRY: usize = 0x201032a4usize;
+pub const FONT_RELOAD_DROP_FACE_ID_ENTRY: usize = 0xc163be8usize;
+pub const FONT_RELOAD_DROP_FACE_ID_CALLABLE: usize = 0xc163be9usize;
+pub const FONT_RELOAD_FACE_COMPARE_ENTRY: usize = 0x1c05682cusize;
+pub const FONT_RELOAD_FACE_COMPARE_CALLABLE: usize = 0x1c05682dusize;
+pub const FONT_RELOAD_FACE_CREATE_ENTRY: usize = 0x1c056718usize;
+pub const FONT_RELOAD_FACE_CREATE_CALLABLE: usize = 0x1c056719usize;
+pub const FONT_RELOAD_FACE_DESTROY_ENTRY: usize = 0x1c0566ecusize;
+pub const FONT_RELOAD_FACE_DESTROY_CALLABLE: usize = 0x1c0566edusize;
+pub const FONT_RELOAD_FREETYPE_CONTEXT_SLOT_ENTRY: usize = 0x20103374usize;
+pub const FONT_RELOAD_FT_MUL_FIX_ENTRY: usize = 0xc33d8bcusize;
+pub const FONT_RELOAD_FT_MUL_FIX_CALLABLE: usize = 0xc33d8bdusize;
+pub const FONT_RELOAD_FT_SET_PIXEL_SIZE_ENTRY: usize = 0xc33ef58usize;
+pub const FONT_RELOAD_FT_SET_PIXEL_SIZE_CALLABLE: usize = 0xc33ef59usize;
+pub const FONT_RELOAD_GLYPH_METRICS_ENTRY: usize = 0x1c056e14usize;
+pub const FONT_RELOAD_GLYPH_METRICS_CALLABLE: usize = 0x1c056e15usize;
+pub const FONT_RELOAD_GLYPH_PENDING_RELEASE_ENTRY: usize = 0x1c046cfcusize;
+pub const FONT_RELOAD_GLYPH_PENDING_RELEASE_CALLABLE: usize = 0x1c046cfdusize;
+pub const FONT_RELOAD_GRADIENT_PENDING_RELEASE_ENTRY: usize = 0x1c0493bcusize;
+pub const FONT_RELOAD_GRADIENT_PENDING_RELEASE_CALLABLE: usize = 0x1c0493bdusize;
+pub const FONT_RELOAD_IMAGE_PENDING_RELEASE_ENTRY: usize = 0x1c04d258usize;
+pub const FONT_RELOAD_IMAGE_PENDING_RELEASE_CALLABLE: usize = 0x1c04d259usize;
+pub const FONT_RELOAD_LIST_REMOVE_ENTRY: usize = 0xc169ce8usize;
+pub const FONT_RELOAD_LIST_REMOVE_CALLABLE: usize = 0xc169ce9usize;
+pub const FONT_RELOAD_LV_FREE_ENTRY: usize = 0xc16dae4usize;
+pub const FONT_RELOAD_LV_FREE_CALLABLE: usize = 0xc16dae5usize;
+pub const FONT_RELOAD_LV_INITIALIZED_ENTRY: usize = 0x20103178usize;
+pub const FONT_RELOAD_LV_MALLOC_ENTRY: usize = 0xc16daa8usize;
+pub const FONT_RELOAD_LV_MALLOC_CALLABLE: usize = 0xc16daa9usize;
+pub const FONT_RELOAD_METRICS_COMPARE_ENTRY: usize = 0x1c056f04usize;
+pub const FONT_RELOAD_METRICS_COMPARE_CALLABLE: usize = 0x1c056f05usize;
+pub const FONT_RELOAD_METRICS_CREATE_ENTRY: usize = 0x1c056d24usize;
+pub const FONT_RELOAD_METRICS_CREATE_CALLABLE: usize = 0x1c056d25usize;
+pub const FONT_RELOAD_METRICS_DESTROY_ENTRY: usize = 0x1c056d18usize;
+pub const FONT_RELOAD_METRICS_DESTROY_CALLABLE: usize = 0x1c056d19usize;
+pub const FONT_RELOAD_OUTLINE_ACQUIRE_ENTRY: usize = 0x1c0572a4usize;
+pub const FONT_RELOAD_OUTLINE_ACQUIRE_CALLABLE: usize = 0x1c0572a5usize;
+pub const FONT_RELOAD_OUTLINE_COMPARE_ENTRY: usize = 0x1c057258usize;
+pub const FONT_RELOAD_OUTLINE_COMPARE_CALLABLE: usize = 0x1c057259usize;
+pub const FONT_RELOAD_OUTLINE_CREATE_ENTRY: usize = 0x1c057634usize;
+pub const FONT_RELOAD_OUTLINE_CREATE_CALLABLE: usize = 0x1c057635usize;
+pub const FONT_RELOAD_OUTLINE_DESTROY_ENTRY: usize = 0x1c057330usize;
+pub const FONT_RELOAD_OUTLINE_DESTROY_CALLABLE: usize = 0x1c057331usize;
+pub const FONT_RELOAD_OUTLINE_EVENT_ENTRY: usize = 0x1c046d08usize;
+pub const FONT_RELOAD_OUTLINE_EVENT_CALLABLE: usize = 0x1c046d09usize;
+pub const FONT_RELOAD_OUTLINE_RELEASE_ENTRY: usize = 0x1c057288usize;
+pub const FONT_RELOAD_OUTLINE_RELEASE_CALLABLE: usize = 0x1c057289usize;
+pub const FONT_RELOAD_STYLE_REFRESH_ENABLED_ENTRY: usize = 0x2010319cusize;
+pub const FONT_RELOAD_SW_DISPATCH_ENTRY: usize = 0x1c03debcusize;
+pub const FONT_RELOAD_SW_DISPATCH_CALLABLE: usize = 0x1c03debdusize;
+pub const FONT_RELOAD_UIKIT_SLOT_ENTRY: usize = 0x20103174usize;
+pub const FONT_RELOAD_VECTOR_CACHE_SLOT_ENTRY: usize = 0x2013eae0usize;
+pub const FONT_RELOAD_VECTOR_COMPARE_ENTRY: usize = 0xca657ecusize;
+pub const FONT_RELOAD_VECTOR_COMPARE_CALLABLE: usize = 0xca657edusize;
+pub const FONT_RELOAD_VECTOR_DESTROY_ENTRY: usize = 0xca6581cusize;
+pub const FONT_RELOAD_VECTOR_DESTROY_CALLABLE: usize = 0xca6581dusize;
+pub const FONT_RELOAD_VECTOR_DRAW_UNIT_SLOT_ENTRY: usize = 0x2013eadcusize;
+pub const FONT_RELOAD_VECTOR_DROP_ENTRY: usize = 0xca65c24usize;
+pub const FONT_RELOAD_VECTOR_DROP_CALLABLE: usize = 0xca65c25usize;
+pub const FONT_RELOAD_VG_DISPATCH_ENTRY: usize = 0x1c045360usize;
+pub const FONT_RELOAD_VG_DISPATCH_CALLABLE: usize = 0x1c045361usize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x2013c144usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7ec47cusize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7ec47dusize;
@@ -1329,6 +2091,16 @@ pub const WATCHFACE_RESET_WATCHFACE_CALLABLE: usize = 0xc5f36c1usize;
 // ---- generated target-private raw wrappers ----
 // Mechanical ABI only; ownership and policy stay in the handwritten facade.
 
+pub unsafe fn raw_app_net_connect_state_update(a0: i32, a1: i32) -> i32 {
+    type F = unsafe extern "C" fn(i32, i32) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(
+            canopus_target_generated::CANOPUS_FW_APP_NET_CONNECT_STATE_UPDATE_CALLABLE,
+        )
+    };
+    unsafe { f(a0, a1) }
+}
+
 pub unsafe fn raw_bt_adapter_get_instance() -> *mut core::ffi::c_void {
     type F = unsafe extern "C" fn() -> *mut core::ffi::c_void;
     let f: F = unsafe {
@@ -1353,6 +2125,66 @@ pub unsafe fn raw_core_bt_pair_request_callback(a0: *mut core::ffi::c_void, a1: 
         )
     };
     unsafe { f(a0, a1) }
+}
+
+pub unsafe fn raw_calendar_app_dispatch(a0: *mut core::ffi::c_void, a1: u32) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_CALENDAR_APP_DISPATCH_CALLABLE)
+    };
+    unsafe { f(a0, a1) }
+}
+
+pub unsafe fn raw_calendar_app_lookup(a0: u16) -> *mut core::ffi::c_void {
+    type F = unsafe extern "C" fn(u16) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_CALENDAR_APP_LOOKUP_CALLABLE)
+    };
+    unsafe { f(a0) }
+}
+
+pub unsafe fn raw_calendar_app_lookup_name(a0: *const u8) -> *mut core::ffi::c_void {
+    type F = unsafe extern "C" fn(*const u8) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_CALENDAR_APP_LOOKUP_NAME_CALLABLE)
+    };
+    unsafe { f(a0) }
+}
+
+pub unsafe fn raw_calendar_app_lookup_name_other(a0: *const u8) -> *mut core::ffi::c_void {
+    type F = unsafe extern "C" fn(*const u8) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(
+            canopus_target_generated::CANOPUS_FW_CALENDAR_APP_LOOKUP_NAME_OTHER_CALLABLE,
+        )
+    };
+    unsafe { f(a0) }
+}
+
+pub unsafe fn raw_calendar_app_lookup_other(a0: u16) -> *mut core::ffi::c_void {
+    type F = unsafe extern "C" fn(u16) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(
+            canopus_target_generated::CANOPUS_FW_CALENDAR_APP_LOOKUP_OTHER_CALLABLE,
+        )
+    };
+    unsafe { f(a0) }
+}
+
+pub unsafe fn raw_calendar_app_signal(a0: *mut core::ffi::c_void, a1: u32) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_CALENDAR_APP_SIGNAL_CALLABLE)
+    };
+    unsafe { f(a0, a1) }
+}
+
+pub unsafe fn raw_calendar_icon_notify(a0: *const u8) -> () {
+    type F = unsafe extern "C" fn(*const u8) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_CALENDAR_ICON_NOTIFY_CALLABLE)
+    };
+    unsafe { f(a0) }
 }
 
 pub unsafe fn raw_app_launcher_data_init() -> i32 {
@@ -1482,12 +2314,41 @@ pub unsafe fn raw_close(a0: i32) -> i32 {
     unsafe { f(a0) }
 }
 
+pub unsafe fn raw_devif_poll(a0: *mut core::ffi::c_void, a1: *mut core::ffi::c_void) -> i32 {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_DEVIF_POLL_CALLABLE) };
+    unsafe { f(a0, a1) }
+}
+
 pub unsafe fn raw_errno_location() -> *mut i32 {
     type F = unsafe extern "C" fn() -> *mut i32;
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::CANOPUS_FW_ERRNO_LOCATION_CALLABLE)
     };
     unsafe { f() }
+}
+
+pub unsafe fn raw_gethostbyname_r(
+    a0: *const u8,
+    a1: *mut core::ffi::c_void,
+    a2: *mut u8,
+    a3: usize,
+    a4: *mut i32,
+    a5: i32,
+) -> i32 {
+    type F = unsafe extern "C" fn(
+        *const u8,
+        *mut core::ffi::c_void,
+        *mut u8,
+        usize,
+        *mut i32,
+        i32,
+    ) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_GETHOSTBYNAME_R_CALLABLE)
+    };
+    unsafe { f(a0, a1, a2, a3, a4, a5) }
 }
 
 pub unsafe fn raw_heap_free(a0: *mut core::ffi::c_void) -> i32 {
@@ -1519,10 +2380,71 @@ pub unsafe fn raw_heap_zalloc(a0: u32) -> *mut core::ffi::c_void {
     unsafe { f(a0) }
 }
 
+pub unsafe fn raw_ipv4_input(a0: *mut core::ffi::c_void) -> i32 {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_IPV4_INPUT_CALLABLE) };
+    unsafe { f(a0) }
+}
+
 pub unsafe fn raw_lseek(a0: i32, a1: i64, a2: i32) -> i64 {
     type F = unsafe extern "C" fn(i32, i64, i32) -> i64;
     let f: F = unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_LSEEK_CALLABLE) };
     unsafe { f(a0, a1, a2) }
+}
+
+pub unsafe fn raw_net_lock() -> i32 {
+    type F = unsafe extern "C" fn() -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_NET_LOCK_CALLABLE) };
+    unsafe { f() }
+}
+
+pub unsafe fn raw_net_unlock(a0: i32) -> () {
+    type F = unsafe extern "C" fn(i32) -> ();
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_NET_UNLOCK_CALLABLE) };
+    unsafe { f(a0) }
+}
+
+pub unsafe fn raw_netdev_input(
+    a0: *mut core::ffi::c_void,
+    a1: *mut core::ffi::c_void,
+    a2: i32,
+) -> i32 {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void, i32) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_NETDEV_INPUT_CALLABLE) };
+    unsafe { f(a0, a1, a2) }
+}
+
+pub unsafe fn raw_netdev_register(a0: *mut core::ffi::c_void, a1: i32) -> i32 {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, i32) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_NETDEV_REGISTER_CALLABLE)
+    };
+    unsafe { f(a0, a1) }
+}
+
+pub unsafe fn raw_recvfrom(
+    a0: i32,
+    a1: *mut core::ffi::c_void,
+    a2: u32,
+    a3: i32,
+    a4: *mut core::ffi::c_void,
+    a5: *mut u32,
+) -> i32 {
+    type F = unsafe extern "C" fn(
+        i32,
+        *mut core::ffi::c_void,
+        u32,
+        i32,
+        *mut core::ffi::c_void,
+        *mut u32,
+    ) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_RECVFROM_CALLABLE) };
+    unsafe { f(a0, a1, a2, a3, a4, a5) }
 }
 
 pub unsafe fn raw_register_blockdriver(
@@ -1587,6 +2509,47 @@ pub unsafe fn raw_sem_wait(a0: *mut core::ffi::c_void) -> i32 {
     let f: F =
         unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_SEM_WAIT_CALLABLE) };
     unsafe { f(a0) }
+}
+
+pub unsafe fn raw_sendto(
+    a0: i32,
+    a1: *const core::ffi::c_void,
+    a2: u32,
+    a3: i32,
+    a4: *const core::ffi::c_void,
+    a5: u32,
+) -> i32 {
+    type F = unsafe extern "C" fn(
+        i32,
+        *const core::ffi::c_void,
+        u32,
+        i32,
+        *const core::ffi::c_void,
+        u32,
+    ) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_SENDTO_CALLABLE) };
+    unsafe { f(a0, a1, a2, a3, a4, a5) }
+}
+
+pub unsafe fn raw_setsockopt(
+    a0: i32,
+    a1: i32,
+    a2: i32,
+    a3: *const core::ffi::c_void,
+    a4: u32,
+) -> i32 {
+    type F = unsafe extern "C" fn(i32, i32, i32, *const core::ffi::c_void, u32) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_SETSOCKOPT_CALLABLE) };
+    unsafe { f(a0, a1, a2, a3, a4) }
+}
+
+pub unsafe fn raw_socket(a0: i32, a1: i32, a2: i32) -> i32 {
+    type F = unsafe extern "C" fn(i32, i32, i32) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_SOCKET_CALLABLE) };
+    unsafe { f(a0, a1, a2) }
 }
 
 pub unsafe fn raw_unlink(a0: *const u8) -> i32 {
@@ -2091,4 +3054,4 @@ pub unsafe fn raw_watchface_reset_watchface(a0: i32) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 76
+// generated target-private raw wrapper count: 95

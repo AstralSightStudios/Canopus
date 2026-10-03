@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.font_reload_outline_create",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "font_reload_outline_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c057634",
+  "callable_address": "0x1c057635",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "identity-check-or-native-callback-installation-only"
+    ]
+  },
+  "ownership": {
+    "argument": "Checked/installed outline-cache create at cache+20, callback table 0x2cce529c. Uses descriptor context+48, face+52 and style+44, native FT operations; not directly called during initialization.",
+    "return_value": "See restricted adapter use contract; no general public callable approval."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-FONT-1043-001"
+    ],
+    "source": "Exact .043 AP independently mapped per identity from .155 audit, with startup-copy PSRAM identities and native layout witnesses; see EVID-FONT-1043-001. No blanket relocation, transitive-equivalence or device claim."
+  },
+  "notes": "Checked/installed outline-cache create at cache+20, callback table 0x2cce529c. Uses descriptor context+48, face+52 and style+44, native FT operations; not directly called during initialization. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+}
