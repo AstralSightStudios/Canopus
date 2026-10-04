@@ -171,9 +171,27 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
 # remain byte-identical. This keeps the additional installer endpoint within
 # the existing 72 KiB package budget without increasing that budget.
 if [ "$PROD_FAMILY" = xiaomi-band-10-pro ]; then
-    OBJCOPY=${RUST_OBJCOPY:-"$(rustc --print target-libdir)/../bin/rust-objcopy"}
-    "$OBJCOPY" --strip-debug --strip-unneeded "$OUT/canopus_supervisor.elf" \
-        "$OUT/canopus_supervisor.stripped.elf"
+    OBJCOPY=${OBJCOPY:-${RUST_OBJCOPY:-}}
+    if [ -z "$OBJCOPY" ]; then
+        if command -v llvm-objcopy >/dev/null 2>&1; then
+            OBJCOPY="llvm-objcopy"
+        elif [ -x "/opt/homebrew/opt/llvm/bin/llvm-objcopy" ]; then
+            OBJCOPY="/opt/homebrew/opt/llvm/bin/llvm-objcopy"
+        elif [ -x "/usr/local/opt/llvm/bin/llvm-objcopy" ]; then
+            OBJCOPY="/usr/local/opt/llvm/bin/llvm-objcopy"
+        elif command -v arm-none-eabi-objcopy >/dev/null 2>&1; then
+            OBJCOPY="arm-none-eabi-objcopy"
+        elif command -v rust-objcopy >/dev/null 2>&1; then
+            OBJCOPY="rust-objcopy"
+        else
+            OBJCOPY="$(rustc --print target-libdir 2>/dev/null)/../bin/rust-objcopy"
+        fi
+    fi
+    RUST_SYSROOT=$(rustc --print sysroot 2>/dev/null || true)
+    env DYLD_FALLBACK_LIBRARY_PATH="${RUST_SYSROOT}/lib${DYLD_FALLBACK_LIBRARY_PATH:+:$DYLD_FALLBACK_LIBRARY_PATH}" \
+        LD_LIBRARY_PATH="${RUST_SYSROOT}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+        "$OBJCOPY" --strip-debug --strip-unneeded "$OUT/canopus_supervisor.elf" \
+            "$OUT/canopus_supervisor.stripped.elf"
     mv "$OUT/canopus_supervisor.stripped.elf" "$OUT/canopus_supervisor.elf"
 fi
 
