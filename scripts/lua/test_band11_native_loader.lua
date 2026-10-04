@@ -14,10 +14,12 @@ for _,fault in ipairs({'ok','crc','mpu','heap','upvalue','layout','mailbox','nat
     local files,memory,commands={},{},{}
     for k,v in pairs(resources) do files[k]=v end
     memory[0xe000ed94]=fault=='mpu' and 1 or 5
-    memory[0xe000edc0]=0x00447722;memory[0x200f5190]=0x0f
+    memory[0xe000edc0]=0x00447722;memory[profile.mpu_bitmap]=0x0f
     for _,row in ipairs(profile.fingerprints) do memory[row[1]]=row[2] end
-    memory[0x200b2590]=0x3c356b40;memory[0x3c356b5c]=0x3c356ca8;memory[0x3c356b60]=0x3cfefdf8
-    if fault=='heap' then memory[0x200b2590]=0x1234 end
+    memory[profile.umem_slot]=profile.umem_descriptor
+    memory[profile.umem_descriptor+0x1c]=0x3c356ca8
+    memory[profile.umem_descriptor+0x20]=0x3cfefdf8
+    if fault=='heap' then memory[profile.umem_slot]=0x1234 end
     memory[0x07ffa000]=1;memory[0x07ffc000]=1
     if fault=='cache_disabled' then memory[0x07ffa000]=0 end
     local upvalue,object=0x3c400000,0x3c410000

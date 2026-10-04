@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.177.type.stock_timespec_t.v1",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "kind": "struct",
+  "name": "stock_timespec_t",
+  "size": 12,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "tv_sec",
+      "offset": 0,
+      "width": 8,
+      "signedness": "signed"
+    },
+    {
+      "name": "tv_nsec",
+      "offset": 8,
+      "width": 4,
+      "signedness": "signed"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Same-model baseline shape, complete body/critical-path .177 app/page/launcher, VFS and notification consumer review. Unresolved source fields remain unresolved; no device proof."
+  }
+}

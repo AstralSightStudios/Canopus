@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.lv_obj_tree_walk",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "lv_obj_tree_walk",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc38151c",
+  "callable_address": "0xc38151d",
+  "prototype": "int(void *root, int (*callback)(void *object, void *user_data), void *user_data)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Root, callback and user_data are borrowed synchronously; a null root selects all registered screens on all displays.",
+    "return_value": "Integer walk result; callback 0 continues, 1 skips children, 2 ends the current rooted traversal. Null-root dispatcher does not propagate early termination across all screens and returns 2 after its display loop.",
+    "callback_argument": "Live object and user_data borrowed only for the synchronous invocation; do not mutate the walked tree or retain unchecked pointers."
+  },
+  "side_effects": [
+    "invokes_synchronous_object_callbacks",
+    "recursive_screen_tree_traversal"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.lv_obj_tree_walk.json. Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+  },
+  "notes": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded. Physical device validation pending; no public callable approval."
+}

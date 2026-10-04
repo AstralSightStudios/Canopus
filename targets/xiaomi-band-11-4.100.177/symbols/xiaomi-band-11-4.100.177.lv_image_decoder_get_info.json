@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.lv_image_decoder_get_info",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "lv_image_decoder_get_info",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc38e44c",
+  "callable_address": "0xc38e44d",
+  "prototype": "int(const void *source, void *header_out)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Source is borrowed for this synchronous call; header_out is caller-owned writable storage of at least 12 bytes.",
+    "return_value": "Integer result in r0: 1 on success, 0 on failure; no returned ownership."
+  },
+  "side_effects": [
+    "may_open_and_close_file",
+    "may_allocate_or_acquire_header_cache_entry",
+    "writes_12_byte_header",
+    "may_invoke_decoder_callbacks"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.lv_image_decoder_get_info.json. Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+  },
+  "notes": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded. Physical device validation pending; no public callable approval."
+}

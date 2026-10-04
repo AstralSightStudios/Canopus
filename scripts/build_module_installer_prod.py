@@ -27,11 +27,16 @@ PRODUCTS = {
     'refetch': ('refetch', 'ReFetch', 262144, []),
 }
 SUPPORTED = ['xiaomi-band-10-pro-3.101.036', 'xiaomi-band-10-pro-3.101.043',
-             'xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155']
+             'xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155',
+             'xiaomi-band-11-4.100.177']
 # Products whose payload is valid only for a subset of SUPPORTED; anything not
 # listed accepts every supported target.
 PRODUCT_TARGETS = {
+    # External module payloads are not promoted by adding an installer target.
+    'bluetooth-audio': [t for t in SUPPORTED if t != 'xiaomi-band-11-4.100.177'],
+    'lyra-player': [t for t in SUPPORTED if t != 'xiaomi-band-11-4.100.177'],
     'resource-hook': ['xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155',
+                      'xiaomi-band-11-4.100.177',
                       'xiaomi-band-10-pro-3.101.043'],
     'data-quota-lift': ['xiaomi-band-11-4.100.155'],
     'refetch': ['xiaomi-band-10-pro-3.101.036', 'xiaomi-band-10-pro-3.101.043'],

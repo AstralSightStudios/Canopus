@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-4177-001",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+  "kind": "static-port-audit",
+  "status": "STATIC_RECOVERED",
+  "device_status": "NOT_PROBED",
+  "source_target": "xiaomi-band-11-4.100.155",
+  "summary": "Exact .177 input SHA, full instruction bodies and ordered references; independently inspected app registration/page callbacks, driver registration, heap initializers/consumers, MPU bitmap, Lua IO/pmain, notification clone and message+92/context+13 consumer. No source candidate promoted.",
+  "artifacts": [
+    "fw-match/port-155-to-177.json",
+    "fw-match/ensemble-155-to-177.json",
+    "fw-match/critical-pseudocode.json",
+    "fw-match/critical-consumers.json",
+    "fw-match/interior-global-review.json",
+    "fw-match/emulation-addresses.json"
+  ],
+  "limitations": [
+    "No physical watch tested.",
+    "Cache/MPU/task/RF services partly modeled; not a hardware validation.",
+    "Complete-body correspondence is not blanket semantic or ABI approval."
+  ]
+}

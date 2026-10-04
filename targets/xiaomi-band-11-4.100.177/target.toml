@@ -1,0 +1,84 @@
+schema = 1
+target_id = "xiaomi-band-11-4.100.177"
+device_family = "xiaomi-smart-band"
+device_model = "Xiaomi Band 11"
+board_revision = "q66cn"
+os_family = "nuttx-derived"
+architecture = "armv8-m.main"
+cpu = "cortex-m33"
+instruction_set = "thumb2"
+endianness = "little"
+float_abi = "soft"
+loader = "custom-staged-band11-lua-owned-static-test"
+firmware_sha256 = "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b"
+firmware_version = "4.100.177"
+firmware_build = "user-4.100.177-cn-202609241530"
+identity_terminator = "line"
+module_abi = 1
+relocation_profile = "best1503-v1"
+revision = 1
+
+firmware_address_ranges = [
+  { base = 0x0C000000, size = 0x00D00000 },
+]
+
+capabilities = []
+
+[loader_profile]
+elf_class = 32
+elf_machine = "ARM"
+elf_type = "ET_REL"
+endianness = "little"
+constructor_discovery = "init_array"
+symbol_imports = "none"
+max_size = 0
+alignment = 4
+persistent_autoload = false
+
+[[loader_profile.relocations]]
+name = "R_ARM_NONE"
+arm_type = 0
+notes = "no-op; accepted"
+[[loader_profile.relocations]]
+name = "R_ARM_ABS32"
+arm_type = 2
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_REL32"
+arm_type = 23
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_TARGET1"
+arm_type = 38
+notes = "handled with ABS32 semantics"
+[[loader_profile.relocations]]
+name = "R_ARM_PREL31"
+arm_type = 42
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVW_ABS_NC"
+arm_type = 47
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVT_ABS"
+arm_type = 48
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_CALL"
+arm_type = 10
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_JUMP24"
+arm_type = 30
+notes = "static candidate; no device loader gate"
+
+[provenance]
+source_repo = "exact local 4.100.177 vela_ap.bin.i64"
+source_findings = [
+  "Exact IDB input SHA matches the .177 image; 35,143 extracted functions and 16,109 data objects.",
+  "Ported from exact .155 using complete normalized function bodies, ordered references and independent critical-path IDB review; no global address delta.",
+  "Native app/page/notification/heap/cache/Lua paths reviewed; static restricted/PENDING, physical device verification pending.",
+]
+import_date = "2026-10-04"
+maintainer = "canopus-maintainer"
+reviewers = []

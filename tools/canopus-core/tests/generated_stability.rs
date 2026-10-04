@@ -95,6 +95,10 @@ fn additional_target_artifacts_regenerate_identically() {
             "sdk/rust/canopus-target-generated/src/generated_1155.rs",
         ),
         (
+            "xiaomi-band-11-4.100.177",
+            "sdk/rust/canopus-target-generated/src/generated_1177.rs",
+        ),
+        (
             "xiaomi-band-9-3.1.32",
             "sdk/rust/canopus-target-generated/src/generated_9132.rs",
         ),
@@ -209,6 +213,51 @@ fn additional_target_artifacts_regenerate_identically() {
 }
 
 #[test]
+fn band11_177_artifacts_regenerate_identically() {
+    let target = "xiaomi-band-11-4.100.177";
+    let rust_path = "sdk/rust/canopus-target-generated/src/generated_1177.rs";
+    let dir = repo_root().join("targets").join(target);
+    let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+    let (symbols, types) = load_records(&dir).unwrap();
+    let rust = RustGen {
+        pack: &pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
+    let committed_rust = std::fs::read_to_string(repo_root().join(rust_path)).unwrap();
+    assert_eq!(
+        committed_rust, rust,
+        "generated Rust bindings are stale for {target}"
+    );
+
+    let veneer = VeneerGen {
+        pack: &pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
+    let committed_veneer =
+        std::fs::read_to_string(dir.join("generated/canopus_veneer.h")).unwrap();
+    assert_eq!(
+        committed_veneer, veneer,
+        "generated veneer header is stale for {target}"
+    );
+
+    let config = TargetConfigGen {
+        pack: &pack,
+        symbols: &symbols,
+    }
+    .generate();
+    let committed_config =
+        std::fs::read_to_string(dir.join("generated/canopus_target_config.h")).unwrap();
+    assert_eq!(
+        committed_config, config,
+        "generated target config header is stale for {target}"
+    );
+}
+
+#[test]
 fn stock_modlib_supervisor_platform_remains_complete() {
     let dir = repo_root().join("targets/xiaomi-band-10-pro-3.101.036");
     let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
@@ -265,7 +314,7 @@ fn band9_supervisor_platform_remains_complete() {
 
 #[test]
 fn band11_errno_is_the_only_approved_callable() {
-    for target in ["xiaomi-band-11-4.100.139", "xiaomi-band-11-4.100.155"] {
+    for target in ["xiaomi-band-11-4.100.139", "xiaomi-band-11-4.100.155", "xiaomi-band-11-4.100.177"] {
         let dir = repo_root().join("targets").join(target);
         let (symbols, _) = load_records(&dir).unwrap();
         let approved: Vec<_> = symbols
@@ -283,7 +332,11 @@ fn band11_errno_is_the_only_approved_callable() {
         assert_eq!(errno.prototype.as_deref(), Some("int *(void)"));
         assert_eq!(
             parse_address(errno.callable_address.as_deref().unwrap()),
-            0x0c349539
+            if target == "xiaomi-band-11-4.100.177" {
+                0x0c349489
+            } else {
+                0x0c349539
+            }
         );
         let header = std::fs::read_to_string(dir.join("generated/canopus_veneer.h")).unwrap();
         assert!(header.contains("typedef int * (*canopus_fw_errno_location_fn)(void);"));

@@ -1,0 +1,1484 @@
+{
+  "source_target": "xiaomi-band-11-4.100.155",
+  "source_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+  "normalization": "thumb-full-v1",
+  "unique_full_body_seeds": 26762,
+  "symbols": [
+    {
+      "name": "app_install",
+      "source_address": "0xc6ab340",
+      "target_address": "0xc6a9718",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "app_launcher_add",
+      "source_address": "0xc547b54",
+      "target_address": "0xc546c20",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "app_launcher_data_init",
+      "source_address": "0xc344108",
+      "target_address": "0xc3440d0",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "app_launcher_del",
+      "source_address": "0xc572cf4",
+      "target_address": "0xc56fc98",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "app_lookup",
+      "source_address": "0xc6ac53c",
+      "target_address": "0xc6aa914",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "app_lookup_package",
+      "source_address": "0xc6a1692",
+      "target_address": "0xc69fa6a",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_adapter_get_instance",
+      "source_address": "0xc56f644",
+      "target_address": "0xc56bbf8",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_adapter_get_scan_mode",
+      "source_address": "0xc66b0b0",
+      "target_address": "0xc669490",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_adapter_get_state",
+      "source_address": "0xc46a44c",
+      "target_address": "0xc46a3b8",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_adapter_register",
+      "source_address": "0xc46a38e",
+      "target_address": "0xc46a2fa",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_adapter_register_a2dp_callbacks",
+      "source_address": "0xc8ac178",
+      "target_address": "0xc8aa520",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_adapter_register_hfp_ag_callbacks",
+      "source_address": "0xc8abf54",
+      "target_address": "0xc8aa2fc",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_adapter_unregister",
+      "source_address": "0xc46a3f8",
+      "target_address": "0xc46a364",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_get_pairing_state",
+      "source_address": "0xc43e73a",
+      "target_address": "0xc43e6a2",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_l2cap_connect",
+      "source_address": "0xc86f010",
+      "target_address": "0xc86d388",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_pair_display_reply",
+      "source_address": "0xc46a9fe",
+      "target_address": "0xc46a96a",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_pair_request_reply",
+      "source_address": "0xc46a9c4",
+      "target_address": "0xc46a930",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_socket_server_receive",
+      "source_address": "0xc4b3218",
+      "target_address": "0xc4b3098",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "cache_barrier",
+      "source_address": "0xc91e532",
+      "target_address": "0xc91c922",
+      "status": "STATIC_RECOVERED",
+      "basis": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+    },
+    {
+      "name": "cache_d_clean_all",
+      "source_address": "0xc93020a",
+      "target_address": "0xc92e5fa",
+      "status": "STATIC_RECOVERED",
+      "basis": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+    },
+    {
+      "name": "cache_i_clean_invalidate_all",
+      "source_address": "0xc0c181e",
+      "target_address": "0xc0c181e",
+      "status": "STATIC_RECOVERED",
+      "basis": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+    },
+    {
+      "name": "calendar_icon_generate",
+      "source_address": "0xc5487a4",
+      "target_address": "0xc547870",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "calendar_icon_publish",
+      "source_address": "0xc5486d0",
+      "target_address": "0xc54779c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "clock_gettime",
+      "source_address": "0xc34d58c",
+      "target_address": "0xc34d4dc",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "close",
+      "source_address": "0xc33818c",
+      "target_address": "0xc33818c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "controller_crash_dump",
+      "source_address": "0xc92c378",
+      "target_address": "0xc92a768",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "core_bt_pair_request_callback",
+      "source_address": "0xc4f438c",
+      "target_address": "0xc4fa73c",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "driver_close_dispatch",
+      "source_address": "0xc53e2bc",
+      "target_address": "0xc53bef4",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "driver_ioctl_dispatch",
+      "source_address": "0xc7d48d0",
+      "target_address": "0xc7d2c30",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "errno_location",
+      "source_address": "0xc349538",
+      "target_address": "0xc349488",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "firmware_log",
+      "source_address": "0xc36c71c",
+      "target_address": "0xc36c510",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_manager_add_path",
+      "source_address": "0xc4924e0",
+      "target_address": "0xc492450",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_manager_generate_def_path",
+      "source_address": "0xc490edc",
+      "target_address": "0xc490e4c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_manager_remove_path",
+      "source_address": "0xc904cec",
+      "target_address": "0xc9030dc",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "heap_free",
+      "source_address": "0xc34cd2c",
+      "target_address": "0xc34cc7c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "heap_mallinfo",
+      "source_address": "0xc3608b8",
+      "target_address": "0xc3600bc",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "heap_malloc",
+      "source_address": "0xc3513e8",
+      "target_address": "0xc3511b0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "heap_zalloc",
+      "source_address": "0xc484430",
+      "target_address": "0xc48439c",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "hfp_ag_connect",
+      "source_address": "0xc46bdd8",
+      "target_address": "0xc46bd44",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "hfp_ag_disconnect",
+      "source_address": "0xc531644",
+      "target_address": "0xc5371d4",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "hidden_and_show_app_cb",
+      "source_address": "0xc547988",
+      "target_address": "0xc546a54",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "firmware_build_string",
+      "source_address": "0xca0a91e",
+      "target_address": "0xca0802e",
+      "status": "STATIC_RECOVERED",
+      "basis": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+    },
+    {
+      "name": "firmware_version_string",
+      "source_address": "0xca0a8a6",
+      "target_address": "0xca07fb6",
+      "status": "STATIC_RECOVERED",
+      "basis": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+    },
+    {
+      "name": "insmod",
+      "source_address": null,
+      "target_address": null,
+      "status": "FORBIDDEN",
+      "basis": "Baseline forbidden unresolved import retained; no callable address."
+    },
+    {
+      "name": "interconnect_close",
+      "source_address": "0xc908348",
+      "target_address": "0xc906738",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "interconnect_connect",
+      "source_address": "0xc3ccef4",
+      "target_address": "0xc3cce54",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "interconnect_send",
+      "source_address": "0xc3605bc",
+      "target_address": "0xc369760",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "ioctl",
+      "source_address": "0xc341e38",
+      "target_address": "0xc341e00",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "kmem_free",
+      "source_address": "0xc34ccb8",
+      "target_address": "0xc34cc08",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lseek",
+      "source_address": "0xc33d510",
+      "target_address": "0xc33d4d8",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_bar_create",
+      "source_address": "0xc3ad7f4",
+      "target_address": "0xc3ad758",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_bar_set_range",
+      "source_address": "0xc3ad920",
+      "target_address": "0xc3ad884",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_bar_set_value",
+      "source_address": "0xc3ad8b4",
+      "target_address": "0xc3ad818",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_cache_drop",
+      "source_address": "0xc8b8c9e",
+      "target_address": "0xc8b708a",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_display_get_horizontal_resolution",
+      "source_address": "0xc380694",
+      "target_address": "0xc381630",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_event_get_code",
+      "source_address": "0xc0f7728",
+      "target_address": "0xc0f77c0",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_event_get_user_data",
+      "source_address": "0xc720f10",
+      "target_address": "0xc721148",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_image_cache_drop",
+      "source_address": "0xc3a3888",
+      "target_address": "0xc3a37ec",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_image_create",
+      "source_address": "0xc3ae1d0",
+      "target_address": "0xc3ae134",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_image_decoder_get_info",
+      "source_address": "0xc38e4e4",
+      "target_address": "0xc38e44c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_image_set_src",
+      "source_address": "0xc3b2c28",
+      "target_address": "0xc3b2b8c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "_lv_inv_area",
+      "source_address": "0xc382428",
+      "target_address": "0xc382080",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_add_event_cb",
+      "source_address": "0xc37fc1c",
+      "target_address": "0xc37fbec",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_align_to",
+      "source_address": "0xc3877b0",
+      "target_address": "0xc383f3c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_clear_flag",
+      "source_address": "0xc3840d8",
+      "target_address": "0xc3822a6",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_get_style_prop",
+      "source_address": "0xc382620",
+      "target_address": "0xc380164",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_move_to_index",
+      "source_address": "0xc3846ac",
+      "target_address": "0xc383a78",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_refresh_style",
+      "source_address": "0xc38525c",
+      "target_address": "0xc382878",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_remove_style_all",
+      "source_address": "0xc38583c",
+      "target_address": "0xc383318",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_set_hidden",
+      "source_address": "0xc721308",
+      "target_address": "0xc720eb8",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_set_style_bg_opa",
+      "source_address": "0xc6c7dbc",
+      "target_address": "0xc6c6114",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_set_style_pad_bottom",
+      "source_address": "0xc387c6e",
+      "target_address": "0xc383798",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_set_style_pad_top",
+      "source_address": "0xc387c58",
+      "target_address": "0xc383782",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_set_width",
+      "source_address": "0xc387b2e",
+      "target_address": "0xc383658",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_tree_walk",
+      "source_address": "0xc380574",
+      "target_address": "0xc38151c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_timer_create",
+      "source_address": "0xc3abd20",
+      "target_address": "0xc3abc84",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_timer_del",
+      "source_address": "0xc3abe70",
+      "target_address": "0xc3abdd4",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvgl_posix_open",
+      "source_address": "0xc3a6194",
+      "target_address": "0xc3a60bc",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_content_pad_bottom",
+      "source_address": "0xc387c6e",
+      "target_address": "0xc383798",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_label_create",
+      "source_address": "0xc3ab300",
+      "target_address": "0xc3ab228",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_label_set_long_mode",
+      "source_address": "0xc3b3f5c",
+      "target_address": "0xc3b3ec0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_label_set_text",
+      "source_address": "0xc3b3948",
+      "target_address": "0xc3b38ac",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_list_item_add_content",
+      "source_address": "0xc50fad0",
+      "target_address": "0xc50d240",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_list_item_create",
+      "source_address": "0xc50f4e4",
+      "target_address": "0xc50cc54",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_list_item_update",
+      "source_address": "0xc50ec5c",
+      "target_address": "0xc50c3cc",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_list_row_create",
+      "source_address": "0xc78aa58",
+      "target_address": "0xc788db8",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_list_row_trailing",
+      "source_address": "0xc3a06c4",
+      "target_address": "0xc3a0628",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_msgbox_create",
+      "source_address": "0xc43e7d0",
+      "target_address": "0xc43e738",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_msgbox_set_content",
+      "source_address": "0xc566b9c",
+      "target_address": "0xc565ffc",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_notification_insert_message",
+      "source_address": "0xc8f2ba0",
+      "target_address": "0xc8f11d4",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_object_align",
+      "source_address": "0xc387788",
+      "target_address": "0xc38361c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_object_create",
+      "source_address": "0xc380686",
+      "target_address": "0xc382ff0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_object_delete",
+      "source_address": "0xc720e98",
+      "target_address": "0xc720f08",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_object_set_size",
+      "source_address": "0xc387ba8",
+      "target_address": "0xc3836d2",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_page_content_create",
+      "source_address": "0xc3ab258",
+      "target_address": "0xc3ab180",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_page_title_create",
+      "source_address": "0xc89e7cc",
+      "target_address": "0xc89cb3c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_style_apply",
+      "source_address": "0xc4fbe54",
+      "target_address": "0xc502ed0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "mm_mallinfo",
+      "source_address": "0xc34f0a0",
+      "target_address": "0xc34ef94",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "mm_memalign",
+      "source_address": "0xc3507e8",
+      "target_address": "0xc3506d8",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "modhandle",
+      "source_address": "0xc36dd44",
+      "target_address": "0xc36db38",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "kmem_heap_slot",
+      "source_address": "0x200b01c8",
+      "target_address": "0x200b0070",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 6 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "mpu_region_bitmap",
+      "source_address": "0x200f5190",
+      "target_address": "0x200f4080",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 3 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "umem_heap_descriptor",
+      "source_address": "0x3c356b40",
+      "target_address": "0x3c356b40",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 1 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "umem_heap_slot",
+      "source_address": "0x200b2590",
+      "target_address": "0x200b2330",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 45 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "offload_property_apply",
+      "source_address": "0xc468674",
+      "target_address": "0xc4685e0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "on_resume_wrapped",
+      "source_address": "0xc696c08",
+      "target_address": "0xc694fe0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "open",
+      "source_address": "0xc342c54",
+      "target_address": "0xc342c1c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "page_finish",
+      "source_address": "0xc69b59c",
+      "target_address": "0xc699974",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "page_goto",
+      "source_address": "0xc8ed770",
+      "target_address": "0xc8ebac8",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "page_navigator_open_page",
+      "source_address": "0xc4eec84",
+      "target_address": "0xc4f2948",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "page_stack_get",
+      "source_address": "0xc697440",
+      "target_address": "0xc695818",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_adapter_set_scan_mode",
+      "source_address": "0xc789ce8",
+      "target_address": "0xc788048",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_alloc",
+      "source_address": "0xc351724",
+      "target_address": "0xc3514ec",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_buffer_new",
+      "source_address": "0xc862ec2",
+      "target_address": "0xc86123a",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_create_bond_private",
+      "source_address": "0xc342412",
+      "target_address": "0xc3423da",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_discovery_start",
+      "source_address": "0xc46a472",
+      "target_address": "0xc46a3de",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_discovery_stop",
+      "source_address": "0xc46a49a",
+      "target_address": "0xc46a406",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_free",
+      "source_address": "0xc34cd2c",
+      "target_address": "0xc34cc7c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_get_bond_state",
+      "source_address": "0xc46a884",
+      "target_address": "0xc46a7f0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_l2cap_disconnect",
+      "source_address": "0xc86f094",
+      "target_address": "0xc86d40c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_l2cap_owner",
+      "source_address": "0x200be890",
+      "target_address": "0x200be740",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 39 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "bt_l2cap_submit_cid",
+      "source_address": "0xc86f0bc",
+      "target_address": "0xc86d434",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_queue_external",
+      "source_address": "0xc863bb4",
+      "target_address": "0xc861f2c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_queue_free",
+      "source_address": "0xc858988",
+      "target_address": "0xc856d00",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_remove_bond_private",
+      "source_address": "0xc3d5280",
+      "target_address": "0xc3d51e0",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_shared_adapter",
+      "source_address": "0x200c3148",
+      "target_address": "0x200c2ae0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 9 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "bt_socket_client_sendrecv",
+      "source_address": "0xc46a218",
+      "target_address": "0xc46a184",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_timer_add",
+      "source_address": "0xc8c7fe0",
+      "target_address": "0xc8c62f8",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_timer_cancel",
+      "source_address": "0xc863000",
+      "target_address": "0xc861378",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "bt_timer_cancel_owned",
+      "source_address": "0xc863048",
+      "target_address": "0xc8613c0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_cache_acquire",
+      "source_address": "0xc3a3860",
+      "target_address": "0xc3a37c4",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_cache_acquire_or_create",
+      "source_address": "0xc3a7b78",
+      "target_address": "0xc3a7aa0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_cache_release",
+      "source_address": "0xc8b9780",
+      "target_address": "0xc8b7b6c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_count_cache_class",
+      "source_address": "0x2ca16934",
+      "target_address": "0x2ca14a00",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 7 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "font_reload_count_cache_init",
+      "source_address": "0xc3a9e48",
+      "target_address": "0xc3a9d70",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_display_list",
+      "source_address": "0x200bd1f0",
+      "target_address": "0x200bd094",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 2 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "font_reload_draw_unit_slot",
+      "source_address": "0x200bd318",
+      "target_address": "0x200bd1bc",
+      "status": "STATIC_RECOVERED",
+      "basis": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+    },
+    {
+      "name": "font_reload_drop_face_id",
+      "source_address": "0xc39a424",
+      "target_address": "0xc39a388",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_face_compare",
+      "source_address": "0xc396784",
+      "target_address": "0xc3965ba",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_face_create",
+      "source_address": "0xc3967b4",
+      "target_address": "0xc396718",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_face_destroy",
+      "source_address": "0xc396b24",
+      "target_address": "0xc396a88",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_freetype_context_slot",
+      "source_address": "0x200bd3ec",
+      "target_address": "0x200bd290",
+      "status": "STATIC_RECOVERED",
+      "basis": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+    },
+    {
+      "name": "font_reload_ft_mul_fix",
+      "source_address": "0xc424304",
+      "target_address": "0xc42426c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_ft_set_pixel_size",
+      "source_address": "0xc8b8a54",
+      "target_address": "0xc8b6e40",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_glyph_metrics",
+      "source_address": "0xc396b5c",
+      "target_address": "0xc396ac0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_glyph_pending_release",
+      "source_address": "0xc399b62",
+      "target_address": "0xc399ac6",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_gradient_pending_release",
+      "source_address": "0xc395bd0",
+      "target_address": "0xc395b38",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_image_pending_release",
+      "source_address": "0xc395be0",
+      "target_address": "0xc395b48",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_list_remove",
+      "source_address": "0xc3a46dc",
+      "target_address": "0xc3a4640",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_lv_free",
+      "source_address": "0xc3abe58",
+      "target_address": "0xc3abdbc",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_lv_initialized",
+      "source_address": "0x200bd1ec",
+      "target_address": "0x200bd090",
+      "status": "STATIC_RECOVERED",
+      "basis": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+    },
+    {
+      "name": "font_reload_lv_malloc",
+      "source_address": "0xc3abe20",
+      "target_address": "0xc3abd84",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_metrics_compare",
+      "source_address": "0xc39fd9a",
+      "target_address": "0xc39fcfe",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_metrics_create",
+      "source_address": "0xc3a5ef0",
+      "target_address": "0xc3a5e18",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_metrics_destroy",
+      "source_address": "0xc39fd94",
+      "target_address": "0xc326e0e",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_outline_acquire",
+      "source_address": "0xc3a7c44",
+      "target_address": "0xc3a7b6c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_outline_compare",
+      "source_address": "0xc39fdcc",
+      "target_address": "0xc39fd30",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_outline_create",
+      "source_address": "0xc3a8bb8",
+      "target_address": "0xc3a8ae0",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_outline_destroy",
+      "source_address": "0xc3a09f4",
+      "target_address": "0xc3a0958",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_outline_event",
+      "source_address": "0xc3981d0",
+      "target_address": "0xc398134",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_outline_release",
+      "source_address": "0xc3a0992",
+      "target_address": "0xc3a08f6",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_size_cache_class",
+      "source_address": "0x2ca168b4",
+      "target_address": "0x2ca14980",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 2 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "font_reload_style_refresh_enabled",
+      "source_address": "0x200bd210",
+      "target_address": "0x200bd0b4",
+      "status": "STATIC_RECOVERED",
+      "basis": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+    },
+    {
+      "name": "font_reload_sw_dispatch",
+      "source_address": "0xc3948ac",
+      "target_address": "0xc394814",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_uikit_slot",
+      "source_address": "0x200bd1e8",
+      "target_address": "0x200bd08c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 255 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "font_reload_vector_cache_slot",
+      "source_address": "0x200d3280",
+      "target_address": "0x200d2170",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 6 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "font_reload_vector_compare",
+      "source_address": "0xc69feb0",
+      "target_address": "0xc69e288",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_vector_destroy",
+      "source_address": "0xc6a12d4",
+      "target_address": "0xc69f6ac",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_vector_draw_unit_slot",
+      "source_address": "0x200d327c",
+      "target_address": "0x200d216c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 2 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "font_reload_vector_drop",
+      "source_address": "0xc6a1304",
+      "target_address": "0xc69f6dc",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "font_reload_vector_label_class",
+      "source_address": "0x2ca6ee48",
+      "target_address": "0x2ca6cb78",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 1 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "font_reload_vg_dispatch",
+      "source_address": "0xc3913ec",
+      "target_address": "0xc391354",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "gap_host_receive_slot",
+      "source_address": "0x200bda80",
+      "target_address": "0x200bd928",
+      "status": "STATIC_RECOVERED",
+      "basis": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+    },
+    {
+      "name": "gap_host_stock_receive",
+      "source_address": "0xc863c88",
+      "target_address": "0xc862000",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lv_obj_set_local_style_prop",
+      "source_address": "0xc3872b4",
+      "target_address": "0xc383434",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "sdp_builder_create",
+      "source_address": "0xc88554c",
+      "target_address": "0xc8838c4",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "sdp_commit",
+      "source_address": "0xc86f2bc",
+      "target_address": "0xc86d634",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "sdp_set_raw_attribute",
+      "source_address": "0xc86f130",
+      "target_address": "0xc86d4a8",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "sdp_unregister",
+      "source_address": "0xc86f3d0",
+      "target_address": "0xc86d748",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "style_misans_medium_24",
+      "source_address": "0x200c1568",
+      "target_address": "0x200c0f00",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 486 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "style_misans_medium_28",
+      "source_address": "0x200c1574",
+      "target_address": "0x200c0f0c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Ordered literal correspondence in 1089 complete equal-body owners; object identity remains restricted."
+    },
+    {
+      "name": "protobuf_set_ordered_app_list",
+      "source_address": "0xc54cb6c",
+      "target_address": "0xc549ee8",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "pthread_create_internal",
+      "source_address": "0xc91bf24",
+      "target_address": "0xc91a314",
+      "status": "CANDIDATE",
+      "basis": "Matcher candidate only; changed function body, not approved."
+    },
+    {
+      "name": "quickapp_register_app",
+      "source_address": "0xc5239c4",
+      "target_address": "0xc5295b4",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "read",
+      "source_address": "0xc33d784",
+      "target_address": "0xc33d74c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "register_blockdriver",
+      "source_address": "0xc46c25a",
+      "target_address": "0xc46c1c6",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "register_driver",
+      "source_address": "0xc914f54",
+      "target_address": "0xc913344",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "rename",
+      "source_address": "0xc33d79c",
+      "target_address": "0xc33d764",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "rmmod",
+      "source_address": "0xc32a690",
+      "target_address": "0xc32a690",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "sem_post",
+      "source_address": "0xc359150",
+      "target_address": "0xc359a90",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "sem_trywait",
+      "source_address": "0xc358c40",
+      "target_address": "0xc359580",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "sem_wait",
+      "source_address": "0xc358ce0",
+      "target_address": "0xc359620",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "service_manager_cleanup",
+      "source_address": "0xc5ab3b8",
+      "target_address": "0xc5b4c18",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "service_manager_get_profile",
+      "source_address": "0xc54a06c",
+      "target_address": "0xc54c79c",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "service_manager_register",
+      "source_address": "0xc573ba8",
+      "target_address": "0xc5703d4",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "service_manager_shutdown",
+      "source_address": "0xc90d83c",
+      "target_address": "0xc90bc2c",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "service_manager_startup",
+      "source_address": "0xc90d89c",
+      "target_address": "0xc90bc8c",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "sport_titlebar_dispatch",
+      "source_address": "0xc341178",
+      "target_address": "0xc341140",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "system_router_app_wrapper",
+      "source_address": "0xc45be22",
+      "target_address": "0xc45ba42",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "system_router_get_pages_wrapper",
+      "source_address": "0xc8e21ac",
+      "target_address": "0xc8e0504",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "thirdparty_submit_message_content",
+      "source_address": "0xc9427e0",
+      "target_address": "0xc940c00",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_image_set_scale",
+      "source_address": "0xc3ae46e",
+      "target_address": "0xc3ae3d2",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "lvx_object_add_flag",
+      "source_address": "0xc38404c",
+      "target_address": "0xc38221a",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "unlink",
+      "source_address": "0xc33dbec",
+      "target_address": "0xc33dbb4",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "unregister_blockdriver",
+      "source_address": "0xc7b954e",
+      "target_address": "0xc7b78ae",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "unregister_driver",
+      "source_address": "0xc6678b4",
+      "target_address": "0xc665c98",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "vendor_hci_transport_register",
+      "source_address": "0xc6c921c",
+      "target_address": "0xc6c7588",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "watchface_manager_delete_watchface",
+      "source_address": "0xc6c6640",
+      "target_address": "0xc6c4998",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "watchface_reset_watchface",
+      "source_address": "0xc5f3474",
+      "target_address": "0xc5f1ba4",
+      "status": "CANDIDATE",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    },
+    {
+      "name": "write",
+      "source_address": "0xc33dc4e",
+      "target_address": "0xc33dc16",
+      "status": "STATIC_RECOVERED",
+      "basis": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+    }
+  ],
+  "limitations": [
+    "Static private port only; no device proof.",
+    "pthread_create_internal retains candidate status; no uncertain source symbol is promoted."
+  ]
+}

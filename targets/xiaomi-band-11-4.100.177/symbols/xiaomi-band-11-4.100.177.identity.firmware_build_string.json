@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.identity.firmware_build_string",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "firmware_build_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "prototype": "const char[]",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.identity.firmware_build_string.json. Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+  },
+  "entry_address": "0xca0802e",
+  "notes": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports. Physical device validation pending; no public callable approval.",
+  "approval_state": "PENDING"
+}

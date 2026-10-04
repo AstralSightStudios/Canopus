@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.177.type.service_object.v1",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "kind": "struct",
+  "name": "service_object",
+  "size": 64,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "enabled_state",
+      "offset": 0,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "name",
+      "offset": 4,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed"
+    },
+    {
+      "name": "service_id",
+      "offset": 8,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "profile_group",
+      "offset": 9,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "startup_cb",
+      "offset": 36,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "startup_eligibility_cb",
+      "offset": 48,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "get_profile_cb",
+      "offset": 52,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "cleanup_cb",
+      "offset": 56,
+      "width": 4,
+      "signedness": "pointer"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Same-model baseline shape, complete body/critical-path .177 app/page/launcher, VFS and notification consumer review. Unresolved source fields remain unresolved; no device proof."
+  }
+}

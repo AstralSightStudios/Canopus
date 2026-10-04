@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.private_abi.style_misans_medium_24",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "style_misans_medium_24",
+  "kind": "global",
+  "entry_address": "0x200c0f00",
+  "prototype": "void *",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.private_abi.style_misans_medium_24.json. Ordered literal correspondence in 486 complete equal-body owners; object identity remains restricted."
+  },
+  "approval_state": "PENDING",
+  "notes": "Ordered literal correspondence in 486 complete equal-body owners; object identity remains restricted. Physical device validation pending; no public callable approval.",
+  "instruction_set": "n/a"
+}

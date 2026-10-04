@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.lvx_notification_insert_message",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "lvx_notification_insert_message",
+  "kind": "function",
+  "entry_address": "0xc8f11d4",
+  "instruction_set": "thumb",
+  "prototype": "void(const firmware_notification_message *message)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "notification_owner",
+      "system_app_lifecycle_callback"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "return_value": "void; r0 is residue from freeing the temporary normalized message, not delivery status"
+  },
+  "side_effects": [
+    "allocates_and_inserts_notification_record",
+    "may_start_reminder",
+    "may_emit_notification_event_34",
+    "schedules_notification_timer"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.lvx_notification_insert_message.json. Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+  },
+  "notes": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded. Physical device validation pending; no public callable approval.",
+  "approval_state": "PENDING",
+  "callable_address": "0xc8f11d5"
+}

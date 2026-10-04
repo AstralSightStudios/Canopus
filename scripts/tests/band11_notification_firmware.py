@@ -43,9 +43,9 @@ class NotificationFirmware:
         self.events, self.timers, self.updates = [], [], []
         self.reminders, self.focus_reads = [], []
         m.uc.hook_del(m.firmware_hooks[INSERT])
-        m.word(0x20087630, 12)  # Stock LVGL list of per-uid message lists.
-        m.word(0x20087634, 0)
-        m.word(0x20087638, 0)
+        m.word(m.fw_data(0x20087630), 12)  # Stock LVGL list of per-uid message lists.
+        m.word(m.fw_data(0x20087634), 0)
+        m.word(m.fw_data(0x20087638), 0)
         hooks = {
             0x0c351724: self.allocate,
             0x0c3abe20: self.allocate,
@@ -62,7 +62,7 @@ class NotificationFirmware:
             0x0c8cbfe8: self.present,
             0x1c000200: lambda: 0,  # settings provider callback
         }
-        m.word(0x20084ec4, 0x200d8000)
+        m.word(m.fw_data(0x20084ec4), 0x200d8000)
         m.word(0x200d8000 + 44 * 4, 0x1c000201)
         for address, fn in hooks.items():
             actual = m.fw(address) if 0x0c000000 <= address < 0x0d000000 else address
@@ -113,7 +113,7 @@ class NotificationFirmware:
 
     def stored(self):
         m = self.m
-        group = m.word(0x20087634)
+        group = m.word(m.fw_data(0x20087634))
         messages = []
         while group:
             message = m.word(group + 4)
@@ -194,7 +194,7 @@ class NotificationTests(unittest.TestCase):
         self.assertEqual(len(fw.reminders), 2)
         self.assertEqual(fw.focus_reads, [m.fw(0x0c55fe06)] * 2)
         self.assertEqual(len(fw.updates), 2)
-        self.assertEqual(fw.timers, [(0x200c1f08, m.fw(0x0c6a14a5), 500)] * 2)
+        self.assertEqual(fw.timers, [(m.fw_data(0x200c1f08), m.fw(0x0c6a14a5), 500)] * 2)
         stored = fw.stored()
         self.assertEqual(len(stored), 2)
         for index, (uid, body) in enumerate([

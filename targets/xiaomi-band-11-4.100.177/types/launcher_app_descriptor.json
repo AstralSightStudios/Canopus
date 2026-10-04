@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.177.type.launcher_app_descriptor.v1",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "kind": "struct",
+  "name": "launcher_app_descriptor",
+  "size": 80,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "registry_links",
+      "offset": 0,
+      "width": 8,
+      "signedness": "unsigned",
+      "ownership": "runtime_owned",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "vtable",
+      "offset": 8,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_or_runtime_default",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 defaults null vtable to 0x20084bb0"
+    },
+    {
+      "name": "package_name",
+      "offset": 12,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_by_app_install",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "launcher_icon_resource",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "app_id",
+      "offset": 20,
+      "width": 2,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "flags",
+      "offset": 22,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "owned_string_28",
+      "offset": 28,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "owned_string_32",
+      "offset": 32,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "deep_copied_when_non_null",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "launcher_metadata_callback",
+      "offset": 36,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "callable",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "page_registry",
+      "offset": 56,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "runtime_owned",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    },
+    {
+      "name": "hidden_flags",
+      "offset": 72,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 0xc6ab350 copies80 bytes; 0xc547a28 consumes package+0xc, icon+0x10, id+0x14, name callback+0x24 and hidden+0x48"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Same-model baseline shape, complete body/critical-path .177 app/page/launcher, VFS and notification consumer review. Unresolved source fields remain unresolved; no device proof."
+  }
+}

@@ -22,18 +22,23 @@ RES = ROOT / 'watchfaces/canopus-installer-prod/xiaomi-band-11'
 class Machine:
     def __init__(self, fault=None, code=0x1c400020, kernel_base=0x20110000, target=TARGET):
         self.target = target
+        self.firmware_path = ROOT / "fwbins" / target / "vela_ap.bin"
+        self.mpu_bitmap = 0x200f4080 if target == "xiaomi-band-11-4.100.177" else 0x200f5190
         self.res = RES
         self.firmware_map = {}
+        self.firmware_data_map = {}
         if target != TARGET:
             audit = json.loads((ROOT / 'targets' / target / 'evidence/fw-match/emulation-addresses.json').read_text())
             self.firmware_map = {int(a, 16): int(b, 16) for a, b in audit['addresses'].items()}
+            self.firmware_data_map = {int(a, 16): int(b, 16)
+                                      for a, b in audit.get('data_addresses', {}).items()}
         # Comma-separated so a matrix can combine, e.g. an unavailable alias
         # with an MPU rejection that only the Kmem fallback can hit.
         self.fault = fault
         self.faults = set(fault.split(',')) if fault else set()
         self.uc = u = Uc(UC_ARCH_ARM, UC_MODE_THUMB | UC_MODE_MCLASS)
         u.ctl_set_cpu_model(UC_CPU_ARM_CORTEX_M33)
-        firmware = (ROOT / 'fwbins' / target / 'vela_ap.bin').read_bytes()
+        firmware = self.firmware_path.read_bytes()
         u.mem_map(0x0c0c0000, (len(firmware) + 4095) & ~4095)
         u.mem_write(0x0c0c0000, firmware)
         u.mem_map(0x2c0c0000, (len(firmware) + 4095) & ~4095)
@@ -85,11 +90,11 @@ class Machine:
         self.regions[7] = (0x2015cee7,0x2015cee3)
         self.word(0xe000ed90,8 << 8); self.word(0xe000ed94,5)
         self.word(0xe000edc0,0x00447722); self.word(0xe000ed98,7)
-        self.word(0x200f5190,0x0f)
-        self.word(0x200b01c8,0x2010e9e0)
+        self.word(self.mpu_bitmap,0x0f)
+        self.word(self.fw_data(0x200b01c8),0x2010e9e0)
         self.word(0x2010e9e0+0x1c,0x2010eb48)
         self.word(0x2010e9e0+0x20,0x2015f2b0)
-        self.word(0x200b2590,0x3c356b40)
+        self.word(self.fw_data(0x200b2590),0x3c356b40)
         self.word(0x3c356b40+0x1c,0x3c356ca8)
         self.word(0x3c356b40+0x20,0x3cfefdf8)
         self.word(0x200e0000,2)
@@ -122,7 +127,7 @@ class Machine:
         self.control = 0
         self.mpu_write_attempts = 0; self.firmware_mpu_setup = False
         if self.hurt('overlap'): self.regions[3] = (kernel_base | 1, (kernel_base + 0x1000) | 3)
-        if self.hurt('occupied'): self.word(0x200f5190,0x7f)
+        if self.hurt('occupied'): self.word(self.mpu_bitmap,0x7f)
         if self.hurt('hardware_occupied'):
             for i in (4,5,6): self.regions[i] = (0x200c0007 + i*32,0x200c0003 + i*32)
         if self.hurt('bad_context'): self.word(0xe000edc0,0)
@@ -136,6 +141,18 @@ class Machine:
             return address
         # Unknown addresses are a test failure, never a source-address fallback.
         return self.firmware_map[address & ~1] | (address & 1)
+    def fw_data(self, address):
+        """Translate an explicit firmware global, never harness-owned RAM.
+
+        Maps use exact addresses (including fields); no global relocation delta
+        or implicit range inference is safe across independent firmware builds.
+        Legacy .139/.155 data layouts remain unchanged when no map is supplied.
+        """
+        if self.target == TARGET:
+            return address
+        if self.target == 'xiaomi-band-11-4.100.177' or self.firmware_data_map:
+            return self.firmware_data_map[address]
+        return address
     def hurt(self,name): return name in self.faults
     def word(self,a,v=None):
         if v is not None: self.uc.mem_write(a,struct.pack('<I',v & 0xffffffff))
@@ -195,7 +212,7 @@ class Machine:
         return p
     def free(self):
         p=self.reg(0); assert p in self.allocations and p not in self.frees,hex(p)
-        if self.uc.reg_read(UC_ARM_REG_PC)==0x0c34ccb8: assert p < 0x30000000
+        if self.uc.reg_read(UC_ARM_REG_PC)==self.fw(0x0c34ccb8): assert p < 0x30000000
         else: assert p >= 0x3c000000
         self.frees.append(p); return 0
     def open(self):

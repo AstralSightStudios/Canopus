@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.errno_location",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "errno_location",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int *(void)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "managed",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.errno_location.json. Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+  },
+  "entry_address": "0xc349488",
+  "notes": "Exact .177 open wrapper 0x0c342c1c stores a negated failure through this accessor and returns -1. Accessor 0x0c349488 returns the current task errno slot at +40 (or firmware fallback); 0x0c349468 reads the current task through scheduler state. Borrowed firmware-owned int pointer: read immediately on the same task; never free, retain, share across tasks, or use in interrupt context. Static ABI approval only; physical device validation pending.",
+  "approval_state": "APPROVED",
+  "calling_convention": "arm-aapcs",
+  "callable_address": "0xc349489"
+}

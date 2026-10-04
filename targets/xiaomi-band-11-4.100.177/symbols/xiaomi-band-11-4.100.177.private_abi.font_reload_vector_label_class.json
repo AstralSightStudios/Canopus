@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.private_abi.font_reload_vector_label_class",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "font_reload_vector_label_class",
+  "kind": "data",
+  "instruction_set": "n/a",
+  "entry_address": "0x2ca6cb78",
+  "type": "const opaque object class",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed firmware-owned identity/storage; no direct free. Exact vector-label class: base 0x2ca177e0, constructor 0x0c6a1261, destructor 0x0c6a132d, event 0x0c6a5519. Only exact class equality triggers per-object cache drop; unknown/custom text owners remain excluded.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.private_abi.font_reload_vector_label_class.json. Ordered literal correspondence in 1 complete equal-body owners; object identity remains restricted."
+  },
+  "notes": "Ordered literal correspondence in 1 complete equal-body owners; object identity remains restricted. Physical device validation pending; no public callable approval."
+}

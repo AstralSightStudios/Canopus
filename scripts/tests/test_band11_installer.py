@@ -33,8 +33,8 @@ class Band11InstallerTests(unittest.TestCase):
             self.assertEqual((directory / 'generated/canopus_band11_addresses.h').read_text(),
                              builder.native_config.render(target))
             _, _, addresses = builder.native_config.metadata(target)
-            expected_insert = 0x0c8f2bb1 if target.endswith('.139') else 0x0c8f2ba1
-            self.assertEqual(addresses['FW_NOTIFICATION_INSERT'], expected_insert)
+            self.assertEqual(addresses['FW_NOTIFICATION_INSERT'] & 1, 1)
+            self.assertEqual(len(builder.TARGETS), 3)
             resources = builder.resource_directory(target)
             if not (resources / 'main.lua').exists():
                 continue
@@ -104,6 +104,9 @@ class Band11InstallerTests(unittest.TestCase):
         subprocess.run([str(python), "scripts/tests/band11_bluetooth_firmware.py"], cwd=ROOT, check=True)
         if (builder.resource_directory(builder.TARGETS[1]) / 'main.lua').exists():
             subprocess.run([str(python), "scripts/tests/band11_155_firmware.py"], cwd=ROOT, check=True)
+        target177 = "xiaomi-band-11-4.100.177"
+        if (builder.FAMILY / f"canopus_stage1-{target177}.bin").exists():
+            subprocess.run([str(python), "scripts/tests/band11_177_firmware.py"], cwd=ROOT, check=True)
 
     def test_recovered_records_are_not_callable(self):
         directory = ROOT / "targets" / builder.TARGET

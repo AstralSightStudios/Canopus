@@ -1,0 +1,828 @@
+[
+  {
+    "name": "gap_host_receive_slot",
+    "source": {
+      "at": "0xc476a0c",
+      "function": "0xc476990",
+      "off": 124,
+      "disasm": "LDR             R3, [R0,#(off_200BDA80 - 0x200BDA58)]"
+    },
+    "target_at": "0xc476938",
+    "target_disasm": "LDR             R3, [R0,#(off_200BD928 - 0x200BD900)]",
+    "target_data_refs": [
+      "0x200bd928"
+    ]
+  },
+  {
+    "name": "gap_host_receive_slot",
+    "source": {
+      "at": "0xc8765c6",
+      "function": "0xc8765bc",
+      "off": 10,
+      "disasm": "STR             R2, [R3,#(off_200BDA80 - 0x200BDA58)]"
+    },
+    "target_at": "0xc87493e",
+    "target_disasm": "STR             R2, [R3,#(off_200BD928 - 0x200BD900)]",
+    "target_data_refs": [
+      "0x200bd928"
+    ]
+  },
+  {
+    "name": "font_reload_draw_unit_slot",
+    "source": {
+      "at": "0xc3815bc",
+      "function": "0xc381484",
+      "off": 312,
+      "disasm": "LDR.W           R4, [R3,#(dword_200BD318 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3879c8",
+    "target_disasm": "LDR.W           R4, [R3,#(dword_200BD1BC - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd1bc"
+    ]
+  },
+  {
+    "name": "font_reload_draw_unit_slot",
+    "source": {
+      "at": "0xc381660",
+      "function": "0xc381624",
+      "off": 60,
+      "disasm": "LDR.W           R5, [R5,#(dword_200BD318 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc387a6c",
+    "target_disasm": "LDR.W           R5, [R5,#(dword_200BD1BC - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd1bc"
+    ]
+  },
+  {
+    "name": "font_reload_draw_unit_slot",
+    "source": {
+      "at": "0xc381686",
+      "function": "0xc381624",
+      "off": 98,
+      "disasm": "LDR.W           R5, [R5,#(dword_200BD318 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc387a92",
+    "target_disasm": "LDR.W           R5, [R5,#(dword_200BD1BC - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd1bc"
+    ]
+  },
+  {
+    "name": "font_reload_draw_unit_slot",
+    "source": {
+      "at": "0xc3a9a04",
+      "function": "0xc3a9598",
+      "off": 1132,
+      "disasm": "LDR.W           R3, [R4,#(dword_200BD318 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a992c",
+    "target_disasm": "LDR.W           R3, [R4,#(dword_200BD1BC - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd1bc"
+    ]
+  },
+  {
+    "name": "font_reload_draw_unit_slot",
+    "source": {
+      "at": "0xc3a9a0e",
+      "function": "0xc3a9598",
+      "off": 1142,
+      "disasm": "STR.W           R0, [R4,#(dword_200BD318 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a9936",
+    "target_disasm": "STR.W           R0, [R4,#(dword_200BD1BC - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd1bc"
+    ]
+  },
+  {
+    "name": "font_reload_draw_unit_slot",
+    "source": {
+      "at": "0xc3a9ace",
+      "function": "0xc3a9598",
+      "off": 1334,
+      "disasm": "LDR.W           R3, [R4,#(dword_200BD318 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a99f6",
+    "target_disasm": "LDR.W           R3, [R4,#(dword_200BD1BC - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd1bc"
+    ]
+  },
+  {
+    "name": "font_reload_draw_unit_slot",
+    "source": {
+      "at": "0xc3a9ada",
+      "function": "0xc3a9598",
+      "off": 1346,
+      "disasm": "STR.W           R0, [R4,#(dword_200BD318 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a9a02",
+    "target_disasm": "STR.W           R0, [R4,#(dword_200BD1BC - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd1bc"
+    ]
+  },
+  {
+    "name": "font_reload_draw_unit_slot",
+    "source": {
+      "at": "0xc3aa0d2",
+      "function": "0xc3a9f40",
+      "off": 402,
+      "disasm": "LDR.W           R5, [R4,#(dword_200BD318 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a9ffa",
+    "target_disasm": "LDR.W           R5, [R4,#(dword_200BD1BC - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd1bc"
+    ]
+  },
+  {
+    "name": "font_reload_draw_unit_slot",
+    "source": {
+      "at": "0xc3aa0dc",
+      "function": "0xc3a9f40",
+      "off": 412,
+      "disasm": "STR.W           R5, [R4,#(dword_200BD318 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3aa004",
+    "target_disasm": "STR.W           R5, [R4,#(dword_200BD1BC - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd1bc"
+    ]
+  },
+  {
+    "name": "font_reload_draw_unit_slot",
+    "source": {
+      "at": "0xc6a129c",
+      "function": "0xc6a1260",
+      "off": 60,
+      "disasm": "LDR.W           R4, [R3,#(dword_200BD318 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc69f674",
+    "target_disasm": "LDR.W           R4, [R3,#(dword_200BD1BC - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd1bc"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc385264",
+      "function": "0xc38525c",
+      "off": 8,
+      "disasm": "LDRB.W          R3, [R3,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc382880",
+    "target_disasm": "LDRB.W          R3, [R3,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc3854ae",
+      "function": "0xc385490",
+      "off": 30,
+      "disasm": "STRB.W          R3, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc382f5e",
+    "target_disasm": "STRB.W          R3, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc3854c4",
+      "function": "0xc385490",
+      "off": 52,
+      "disasm": "STRB.W          R3, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc382f74",
+    "target_disasm": "STRB.W          R3, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc3858ee",
+      "function": "0xc3858dc",
+      "off": 18,
+      "disasm": "STRB.W          R5, [R6,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3833ca",
+    "target_disasm": "STRB.W          R5, [R6,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc3858fc",
+      "function": "0xc3858dc",
+      "off": 32,
+      "disasm": "STRB.W          R3, [R6,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3833d8",
+    "target_disasm": "STRB.W          R3, [R6,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc387108",
+      "function": "0xc385958",
+      "off": 6064,
+      "disasm": "LDRB.W          R3, [R3,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc386610",
+    "target_disasm": "LDRB.W          R3, [R3,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc3a95dc",
+      "function": "0xc3a9598",
+      "off": 68,
+      "disasm": "STRB.W          R3, [R4,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a9504",
+    "target_disasm": "STRB.W          R3, [R4,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50249e",
+      "function": "0xc50222c",
+      "off": 626,
+      "disasm": "LDRB.W          R3, [R3,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc4feb7a",
+    "target_disasm": "LDRB.W          R3, [R3,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc506f7c",
+      "function": "0xc506f6c",
+      "off": 16,
+      "disasm": "STRB.W          R3, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc503488",
+    "target_disasm": "STRB.W          R3, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50707c",
+      "function": "0xc506f6c",
+      "off": 272,
+      "disasm": "STRB.W          R3, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc503588",
+    "target_disasm": "STRB.W          R3, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50f558",
+      "function": "0xc50f520",
+      "off": 56,
+      "disasm": "STRB.W          R2, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50ccc8",
+    "target_disasm": "STRB.W          R2, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50f56c",
+      "function": "0xc50f520",
+      "off": 76,
+      "disasm": "STRB.W          R3, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50ccdc",
+    "target_disasm": "STRB.W          R3, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50f5fa",
+      "function": "0xc50f520",
+      "off": 218,
+      "disasm": "STRB.W          R8, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50cd6a",
+    "target_disasm": "STRB.W          R8, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50f65e",
+      "function": "0xc50f520",
+      "off": 318,
+      "disasm": "STRB.W          R3, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50cdce",
+    "target_disasm": "STRB.W          R3, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50f670",
+      "function": "0xc50f520",
+      "off": 336,
+      "disasm": "STRB.W          R6, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50cde0",
+    "target_disasm": "STRB.W          R6, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50f6b2",
+      "function": "0xc50f520",
+      "off": 402,
+      "disasm": "STRB.W          R6, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50ce22",
+    "target_disasm": "STRB.W          R6, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50f770",
+      "function": "0xc50f520",
+      "off": 592,
+      "disasm": "STRB.W          R6, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50cee0",
+    "target_disasm": "STRB.W          R6, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50f8a6",
+      "function": "0xc50f520",
+      "off": 902,
+      "disasm": "STRB.W          R3, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50d016",
+    "target_disasm": "STRB.W          R3, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50f8f2",
+      "function": "0xc50f520",
+      "off": 978,
+      "disasm": "STRB.W          R2, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50d062",
+    "target_disasm": "STRB.W          R2, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50f916",
+      "function": "0xc50f520",
+      "off": 1014,
+      "disasm": "STRB.W          R3, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50d086",
+    "target_disasm": "STRB.W          R3, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50fa2a",
+      "function": "0xc50f520",
+      "off": 1290,
+      "disasm": "STRB.W          R6, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50d19a",
+    "target_disasm": "STRB.W          R6, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc50fa98",
+      "function": "0xc50f520",
+      "off": 1400,
+      "disasm": "STRB.W          R3, [R5,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc50d208",
+    "target_disasm": "STRB.W          R3, [R5,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc537726",
+      "function": "0xc537610",
+      "off": 278,
+      "disasm": "STRB.W          R3, [R11,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc536556",
+    "target_disasm": "STRB.W          R3, [R11,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc537772",
+      "function": "0xc537610",
+      "off": 354,
+      "disasm": "STRB.W          R3, [R11,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc5365a2",
+    "target_disasm": "STRB.W          R3, [R11,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc563732",
+      "function": "0xc562518",
+      "off": 4634,
+      "disasm": "STRB.W          R3, [R6,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc55ecc6",
+    "target_disasm": "STRB.W          R3, [R6,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc5637d6",
+      "function": "0xc562518",
+      "off": 4798,
+      "disasm": "STRB.W          R3, [R6,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc55ed6a",
+    "target_disasm": "STRB.W          R3, [R6,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc69b1b4",
+      "function": "0xc69a9c8",
+      "off": 2028,
+      "disasm": "STRB.W          R3, [R11,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc69958c",
+    "target_disasm": "STRB.W          R3, [R11,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc69b1c2",
+      "function": "0xc69a9c8",
+      "off": 2042,
+      "disasm": "STRB.W          R3, [R11,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc69959a",
+    "target_disasm": "STRB.W          R3, [R11,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc69b35a",
+      "function": "0xc69a9c8",
+      "off": 2450,
+      "disasm": "STRB.W          R0, [R10,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc699732",
+    "target_disasm": "STRB.W          R0, [R10,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc69b36a",
+      "function": "0xc69a9c8",
+      "off": 2466,
+      "disasm": "STRB.W          R3, [R10,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc699742",
+    "target_disasm": "STRB.W          R3, [R10,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc6a931e",
+      "function": "0xc6a9300",
+      "off": 30,
+      "disasm": "STRB.W          R9, [R3,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc6a76f6",
+    "target_disasm": "STRB.W          R9, [R3,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_style_refresh_enabled",
+    "source": {
+      "at": "0xc6a9400",
+      "function": "0xc6a9300",
+      "off": 256,
+      "disasm": "STRB.W          R3, [R2,#(byte_200BD210 - 0x200BD1E8)]"
+    },
+    "target_at": "0xc6a77d8",
+    "target_disasm": "STRB.W          R3, [R2,#(byte_200BD0B4 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd0b4"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc3967be",
+      "function": "0xc3967b4",
+      "off": 10,
+      "disasm": "LDR.W           R3, [R3,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc396722",
+    "target_disasm": "LDR.W           R3, [R3,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc3a09fc",
+      "function": "0xc3a09f4",
+      "off": 8,
+      "disasm": "LDR.W           R0, [R3,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a0960",
+    "target_disasm": "LDR.W           R0, [R3,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc3a8b60",
+      "function": "0xc3a8b48",
+      "off": 24,
+      "disasm": "LDR.W           R8, [R3,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a8a88",
+    "target_disasm": "LDR.W           R8, [R3,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc3a96d0",
+      "function": "0xc3a9598",
+      "off": 312,
+      "disasm": "LDR.W           R5, [R4,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a95f8",
+    "target_disasm": "LDR.W           R5, [R4,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc3a9716",
+      "function": "0xc3a9598",
+      "off": 382,
+      "disasm": "STR.W           R0, [R4,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a963e",
+    "target_disasm": "STR.W           R0, [R4,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc3a9bac",
+      "function": "0xc3a9598",
+      "off": 1556,
+      "disasm": "LDR.W           R3, [R4,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a9ad4",
+    "target_disasm": "LDR.W           R3, [R4,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc3a9f94",
+      "function": "0xc3a9f40",
+      "off": 84,
+      "disasm": "LDR.W           R8, [R4,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a9ebc",
+    "target_disasm": "LDR.W           R8, [R4,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc3aa03e",
+      "function": "0xc3a9f40",
+      "off": 254,
+      "disasm": "LDR.W           R0, [R4,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a9f66",
+    "target_disasm": "LDR.W           R0, [R4,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc3aa04c",
+      "function": "0xc3a9f40",
+      "off": 268,
+      "disasm": "STR.W           R3, [R4,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a9f74",
+    "target_disasm": "STR.W           R3, [R4,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc49410c",
+      "function": "0xc4940fc",
+      "off": 16,
+      "disasm": "LDR.W           R8, [R3,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc494064",
+    "target_disasm": "LDR.W           R8, [R3,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_freetype_context_slot",
+    "source": {
+      "at": "0xc494580",
+      "function": "0xc494380",
+      "off": 512,
+      "disasm": "LDR.W           R9, [R3,#(dword_200BD3EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc4944d8",
+    "target_disasm": "LDR.W           R9, [R3,#(dword_200BD290 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd290"
+    ]
+  },
+  {
+    "name": "font_reload_lv_initialized",
+    "source": {
+      "at": "0xc3a95a2",
+      "function": "0xc3a9598",
+      "off": 10,
+      "disasm": "LDRB            R5, [R4,#(byte_200BD1EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a94ca",
+    "target_disasm": "LDRB            R5, [R4,#(byte_200BD090 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd090"
+    ]
+  },
+  {
+    "name": "font_reload_lv_initialized",
+    "source": {
+      "at": "0xc3a9c58",
+      "function": "0xc3a9598",
+      "off": 1728,
+      "disasm": "STRB            R3, [R4,#(byte_200BD1EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a9b80",
+    "target_disasm": "STRB            R3, [R4,#(byte_200BD090 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd090"
+    ]
+  },
+  {
+    "name": "font_reload_lv_initialized",
+    "source": {
+      "at": "0xc3a9f4a",
+      "function": "0xc3a9f40",
+      "off": 10,
+      "disasm": "LDRB            R3, [R4,#(byte_200BD1EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3a9e72",
+    "target_disasm": "LDRB            R3, [R4,#(byte_200BD090 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd090"
+    ]
+  },
+  {
+    "name": "font_reload_lv_initialized",
+    "source": {
+      "at": "0xc3aa114",
+      "function": "0xc3a9f40",
+      "off": 468,
+      "disasm": "STRB            R5, [R4,#(byte_200BD1EC - 0x200BD1E8)]"
+    },
+    "target_at": "0xc3aa03c",
+    "target_disasm": "STRB            R5, [R4,#(byte_200BD090 - 0x200BD08C)]",
+    "target_data_refs": [
+      "0x200bd090"
+    ]
+  }
+]

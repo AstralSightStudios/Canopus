@@ -19,7 +19,7 @@ case "$TARGET_ID" in
         # Separate exact-address experiment; never stage production approval.
         exec sh "$ROOT/scripts/build_p65_supervisor.sh"
         ;;
-    xiaomi-band-11-4.100.139|xiaomi-band-11-4.100.155)
+    xiaomi-band-11-4.100.139|xiaomi-band-11-4.100.155|xiaomi-band-11-4.100.177)
         MANAGER_BACKEND="manager/target/band11/canopus_manager_target_band11.c"
         LOADER_SRCS="runtime/loader/canopus_arm_reloc.c runtime/loader/canopus_elf32_loader.c"
         TARGET_DEFINES="-DCANOPUS_SUP_BAND11_BOOTSTRAP=1"

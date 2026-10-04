@@ -36,8 +36,9 @@ end
 function M.select_profile(profiles)
     local properties = read_identity("/etc/build.prop")
     local profile = properties and profiles[properties["ro.build.version"]]
-    if not profile or properties["ro.build.id"] ~= profile.firmware_build then
-        return nil, "Firmware identity mismatch or unreadable"
+    if not profile then return nil, "Firmware identity unreadable or unsupported" end
+    if properties["ro.build.id"] ~= profile.firmware_build then
+        return nil, "Firmware identity mismatch"
     end
     return profile
 end

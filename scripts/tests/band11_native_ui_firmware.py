@@ -20,8 +20,8 @@ class NativeUI:
     def __init__(self, machine):
         self.m = m = machine
         self.ROW, self.SWITCH = m.fw(self.ROW), m.fw(self.SWITCH)
-        self.styles = {0x200c1574: {0x5a: self.FONT28},
-                       0x200c1568: {0x5a: self.FONT24}}
+        self.styles = {m.fw_data(0x200c1574): {0x5a: self.FONT28},
+                       m.fw_data(0x200c1568): {0x5a: self.FONT24}}
         m.word(self.FONT28 + 12, 28)
         m.word(self.FONT24 + 12, 24)
         self.calls = {}
@@ -284,7 +284,7 @@ class NativeUITests(unittest.TestCase):
         self.assertEqual(requests, [('MiSans-Medium', size, 0) for size in (28, 26, 24)])
         label = ui.new(self.parent, kind='label')
         for _ in range(5):
-            self.call(0xc4fbe54, label, 0x200c1568, 255, 0)
+            self.call(0xc4fbe54, label, m.fw_data(0x200c1568), 255, 0)
         self.assertEqual(ui.get(label, 0, 0x5a), ui.FONT24)
         self.assertEqual(ui.get(label, 0, 0x58), 0xffffff)
         self.assertEqual(len(m.widgets[label]['styles']), 2)

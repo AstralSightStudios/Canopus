@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.private_abi.font_reload_glyph_pending_release",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "font_reload_glyph_pending_release",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc399ac6",
+  "callable_address": "0xc399ac7",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "identity-check-or-native-callback-installation-only"
+    ]
+  },
+  "ownership": {
+    "argument": "Identity only: glyph container callback+36 with 24-byte elements. Calls 0x0c399b4c, which routes through stored font+8 and its CURRENT descriptor. Adapter checks empty arrays but never calls this drain callback.",
+    "return_value": "See restricted adapter use contract; no general public callable approval."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.private_abi.font_reload_glyph_pending_release.json. Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded."
+  },
+  "notes": "Complete normalized Thumb body equality plus ordered references and critical-path IDB review; source semantic uncertainty is not upgraded. Physical device validation pending; no public callable approval."
+}

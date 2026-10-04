@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.pthread_create_internal",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "pthread_create_internal",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.pthread_create_internal.json. Matcher candidate only; changed function body, not approved."
+  },
+  "entry_address": "0xc91a314",
+  "notes": "Matcher candidate only; changed function body, not approved. Physical device validation pending; no public callable approval.",
+  "approval_state": "PENDING"
+}

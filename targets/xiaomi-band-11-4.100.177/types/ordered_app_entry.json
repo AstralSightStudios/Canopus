@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.177.type.ordered_app_entry.v1",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "kind": "struct",
+  "name": "ordered_app_entry",
+  "size": 16,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "app_name",
+      "offset": 0,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed",
+      "provenance": "Baseline .139 field audit: passed to page lookup off_200EB058[3]"
+    },
+    {
+      "name": "enabled",
+      "offset": 8,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: if non-zero, hidden flag taken from +9"
+    },
+    {
+      "name": "hidden",
+      "offset": 9,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: bit0; applied to page struct +60 bit0"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Same-model baseline shape, complete body/critical-path .177 app/page/launcher, VFS and notification consumer review. Unresolved source fields remain unresolved; no device proof."
+  }
+}

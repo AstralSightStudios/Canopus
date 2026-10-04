@@ -19,6 +19,8 @@ pub use fw::{
 pub const TARGET_ID: &str = "xiaomi-band-11-4.100.139";
 #[cfg(feature = "target-xiaomi-band-11-4-100-155")]
 pub const TARGET_ID: &str = "xiaomi-band-11-4.100.155";
+#[cfg(feature = "target-xiaomi-band-11-4-100-177")]
+pub const TARGET_ID: &str = "xiaomi-band-11-4.100.177";
 pub const SELECTED_TARGET_ID: &str = TARGET_ID;
 pub const ERR_UNSUPPORTED: i32 = -38;
 pub fn capabilities() -> &'static [&'static str] {

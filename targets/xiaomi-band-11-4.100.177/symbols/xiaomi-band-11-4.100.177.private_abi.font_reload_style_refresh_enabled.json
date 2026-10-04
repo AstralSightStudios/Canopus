@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.private_abi.font_reload_style_refresh_enabled",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "font_reload_style_refresh_enabled",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x200bd0b4",
+  "type": "uint8_t",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed firmware-owned identity/storage; no direct free. Style refresh enable byte at global base+40, read by 0x0c38525c. Adapter requires nonzero before publication so property 90 can notify layout/inheritance.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.private_abi.font_reload_style_refresh_enabled.json. Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports."
+  },
+  "notes": "Exact-target IDB instruction/callsite or identity bytes reviewed independently; see critical-path and interior-global exports. Physical device validation pending; no public callable approval."
+}

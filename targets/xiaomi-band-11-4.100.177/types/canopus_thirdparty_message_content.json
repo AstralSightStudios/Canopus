@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.177.type.canopus_thirdparty_message_content.v1",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "kind": "struct",
+  "name": "canopus_thirdparty_message_content",
+  "size": 336,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "message_id",
+      "offset": 0,
+      "width": 4,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 0x00160914 in quickapp_send_wearmsg"
+    },
+    {
+      "name": "message_kind",
+      "offset": 4,
+      "width": 2,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 9 selects THIRDPARTY_APP"
+    },
+    {
+      "name": "package_name",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_for_call",
+      "provenance": "Baseline .139 field audit: NUL-terminated BasicInfo package"
+    },
+    {
+      "name": "fingerprint_blob",
+      "offset": 20,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_for_call",
+      "provenance": "Baseline .139 field audit: NULL omits optional BasicInfo fingerprint; stock points to u16-length-prefixed 20-byte digest"
+    },
+    {
+      "name": "payload_blob",
+      "offset": 24,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed_for_call",
+      "provenance": "Baseline .139 field audit: u16 little-endian length followed by payload bytes"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Same-model baseline shape, complete body/critical-path .177 app/page/launcher, VFS and notification consumer review. Unresolved source fields remain unresolved; no device proof."
+  }
+}

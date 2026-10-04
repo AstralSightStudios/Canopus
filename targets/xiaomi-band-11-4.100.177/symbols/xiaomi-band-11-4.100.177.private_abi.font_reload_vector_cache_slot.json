@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.private_abi.font_reload_vector_cache_slot",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "font_reload_vector_cache_slot",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x200d2170",
+  "type": "void *",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed firmware-owned identity/storage; no direct free. Vector-label copied-path cache root, created by 0x0c6a1260 with 16-byte payload and size-cache class. Constructor literal at 0x0c6a12bc. Adapter reads only and calls per-object drop at safe boundary.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB independently compared with targets/xiaomi-band-11-4.100.155/symbols/xiaomi-band-11-4.100.155.private_abi.font_reload_vector_cache_slot.json. Ordered literal correspondence in 6 complete equal-body owners; object identity remains restricted."
+  },
+  "notes": "Ordered literal correspondence in 6 complete equal-body owners; object identity remains restricted. Physical device validation pending; no public callable approval."
+}

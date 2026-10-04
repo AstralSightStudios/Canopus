@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.177.type.launcher_app_record.v1",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "kind": "struct",
+  "name": "launcher_app_record",
+  "size": 28,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "app_id",
+      "offset": 0,
+      "width": 2,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 0xc547a28 allocates/zeros0x1c and populates id+0, display_name+4, package+8, icon+c, flags+0x18"
+    },
+    {
+      "name": "display_name",
+      "offset": 4,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "launcher_owns",
+      "provenance": "Baseline .139 field audit: 0xc547a28 allocates/zeros0x1c and populates id+0, display_name+4, package+8, icon+c, flags+0x18"
+    },
+    {
+      "name": "package_name",
+      "offset": 8,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed",
+      "provenance": "Baseline .139 field audit: 0xc547a28 allocates/zeros0x1c and populates id+0, display_name+4, package+8, icon+c, flags+0x18"
+    },
+    {
+      "name": "icon_name",
+      "offset": 12,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed",
+      "provenance": "Baseline .139 field audit: 0xc547a28 allocates/zeros0x1c and populates id+0, display_name+4, package+8, icon+c, flags+0x18"
+    },
+    {
+      "name": "flags",
+      "offset": 24,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: 0xc547a28 allocates/zeros0x1c and populates id+0, display_name+4, package+8, icon+c, flags+0x18"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Same-model baseline shape, complete body/critical-path .177 app/page/launcher, VFS and notification consumer review. Unresolved source fields remain unresolved; no device proof."
+  }
+}

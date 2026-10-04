@@ -15,19 +15,20 @@ class Notifications155(notifications.NotificationTests):
 
 
 class Bootstrap155(unittest.TestCase):
+    target = TARGET
     def test_boot_at_two_rebases_and_wrong_version(self):
         for code in (0x1c400020, 0x1c712348):
-            m = Machine(code=code, target=TARGET)
+            m = Machine(code=code, target=self.target)
             self.assertEqual(m.boot(), 0)
             self.assertEqual(m.register_calls, 2)
             self.assertEqual(m.peak_kernel, 0)
-            self.assertEqual(m.word(0x200f5190), 0x0f)
-        m = Machine(target=TARGET, fault='wrong_identity')
+            self.assertEqual(m.word(m.mpu_bitmap), 0x0f)
+        m = Machine(target=self.target, fault='wrong_identity')
         self.assertNotEqual(m.boot(), 0)
         self.assertEqual(m.register_calls, 0)
 
     def test_manager_registration_notification_and_real_native_rows(self):
-        m = Machine(target=TARGET)
+        m = Machine(target=self.target)
         self.assertEqual(m.boot(), 0)
         m.finish_access_monitor()
         ui = NativeUI(m)
