@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.private_abi.background_visible_area",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "lv_obj_area_is_visible",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc381d4c",
+  "callable_address": "0xc381d4d",
+  "prototype": "int(void *object, int32_t *area)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-BACKGROUND-REFRESH-177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-RESOURCE-BACKGROUND-REFRESH-177-001"
+    ],
+    "source": "Exact .177 AP/IDB review, no inferred cross-version offset. Function body size:SHA256 = 218:bd0cc1f042f941a3335cc26df6c56162c108d773222770c1c52a985ae4c69319. See resource-hook tests/test_target_177.py and blur-static-diagnosis.md."
+  },
+  "notes": "Intersects caller area with object/ancestor clips; rejects hidden ancestors and screens outside active/previous/top/bottom/system screen membership. No public callable approval or device acceptance."
+}

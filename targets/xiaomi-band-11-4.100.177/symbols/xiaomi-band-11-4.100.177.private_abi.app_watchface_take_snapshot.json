@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.private_abi.app_watchface_take_snapshot",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "app_watchface_take_snapshot",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc5f126c",
+  "callable_address": "0xc5f126d",
+  "prototype": "void *(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-PORT-4177-001"
+    ],
+    "source": "Exact .177 AP/IDB review; takes watchface root container snapshot."
+  },
+  "notes": "Physical device validation pending."
+}

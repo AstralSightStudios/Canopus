@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-BACKGROUND-REFRESH-177-001",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "question": "Which exact .177 UI refresh, visibility, draw-buffer and GPU/cache contracts permit event-driven native backgrounds without late object callbacks or timer-driven snapshots?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.177.private_abi.background_event_list_add",
+    "xiaomi-band-11-4.100.177.private_abi.background_display_event_remove",
+    "xiaomi-band-11-4.100.177.private_abi.background_visible_area",
+    "xiaomi-band-11-4.100.177.private_abi.background_layout_update",
+    "xiaomi-band-11-4.100.177.private_abi.background_gpu_finish",
+    "xiaomi-band-11-4.100.177.private_abi.background_dcache_sync",
+    "xiaomi-band-11-4.100.177.private_abi.background_dcache_invalidate"
+  ],
+  "prototype_hypothesis": "Exact AAPCS contracts from native consumers and Thumb disassembly; see each restricted symbol. ROM invalidation body is not in AP.",
+  "callsite_evidence": [
+    "0x0c3894d0 dispatches display REFR_START=52 before layout/invalid-area join and object drawing; REFR_READY=53 occurs after invalid-area cleanup. 0x0c384528 sends DELETE=36 before event storage free.",
+    "0x0c381eae dispatches display+736 event list in PREPROCESS then ordinary pass; 0x0c3a3e08 tests filter bit 0x8000 and low-15-bit event matching.",
+    "0x0c386c14 stores aligned data at +16 and raw allocation at +20. 0x0c386904 uses +16; 0x0c3868bc frees +20.",
+    "0x0c3998a4 calls vg_lite_finish at 0x0c91e58c and treats zero as success. 0x0c91da14 waits via native kernel command 5.",
+    "0x0c9252c0 passes cache ID 1/start/length to ROM thunk 0x0c721248. hal_cache_sync 0x0c92e5f4 writes D-cache sync register +0x34. _lv_inv_area 0x0c382080 takes a DISPLAY, unlike object wrapper 0x0c382198."
+  ],
+  "control_flow_evidence": [
+    "Resource-hook static tests pin complete function byte spans and the exact AP SHA256.",
+    "ARM-guarded host mocks exercise 39 frame/lifecycle/failure cases with distinct aligned/raw data and explicit fence/cache/publication ordering. These are not physical GPU or ROM validation.",
+    "A read-only independent source reviewer identified lifecycle/deferred-wake issues; implementation corrections and dedicated host regressions followed.",
+    "2026-10-06: the user reported successful hardware validation of the current background implementation and requested a commit. No detailed procedure, captured GPU trace or fault/performance measurements were supplied; this is feature-level user-reported acceptance, not independent per-symbol DEVICE_PROVEN evidence."
+  ],
+  "ownership_analysis": "One module callback per validated live display, removed for all-system mode. DELETE clears saved subscription before native destruction. Epoch checks prevent stale frame writes. Shared blur buffer remains resident for module lifetime; failed post-snapshot fence pins the pool snapshot until successful independent retirement. Reboot-required stop semantics are unchanged.",
+  "unsafe_assumptions": [
+    "Functional device acceptance is user-reported; independent GPU/coherence/fault probes, frame timing and public callable approval remain unverified.",
+    "ROM cache invalidation implementation is outside AP; only caller ABI is statically recovered.",
+    "No framework restart, forced unload, arbitrary concurrent UI mutations or GPU recovery safety is claimed.",
+    "Host registration-failure mocks do not prove native event-list allocator OOM behavior.",
+    "BES OpenPineBuds HAL source corroborates cache API/register conventions, not exact BEST1503 hardware behavior."
+  ],
+  "recommended_probe": "On exact .177 record cold blur display, cached close/reopen and watchface changes, all-system restoration and repeated reload callback counts. Measure latency/memory, inspect GPU timeout/coherence separately. Do not force-unload a resident module.",
+  "reviewers": [
+    "background-events-review (read-only source review; not a hardware approver)"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-06T09:21:03Z",
+  "artifacts": [
+    {
+      "uri": "file://mifw/analysis-q66-177/177/vela_ap.bin",
+      "sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+      "role": "exact AP identity"
+    },
+    {
+      "uri": "file://Canopus-Module-Resource-Hook/tests/test_target_177.py",
+      "role": "full-body AP witnesses and exact call constants"
+    },
+    {
+      "uri": "file://Canopus-Module-Resource-Hook/tests/test_blur_background_native.py",
+      "role": "ARM-guarded native-call host regressions, no device acceptance"
+    },
+    {
+      "uri": "file://Canopus-Module-Resource-Hook/targets/xiaomi-band-11-4.100.177/blur-static-diagnosis.md",
+      "role": "static recovery and corrected ABI analysis"
+    },
+    {
+      "uri": "https://raw.githubusercontent.com/pine64/OpenPineBuds/main/platform/hal/hal_cache.c",
+      "role": "corroborating BES cache register/API conventions only"
+    }
+  ]
+}
