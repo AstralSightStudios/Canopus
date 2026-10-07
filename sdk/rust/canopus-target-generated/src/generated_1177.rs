@@ -3,8 +3,8 @@
 // target_id: xiaomi-band-11-4.100.177
 // firmware : 4.100.177 (user-4.100.177-cn-202609241530)
 // sha256   : ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b
-// revision : 1
-// input_digest: 25b850e461c22925
+// revision : 2
+// input_digest: 7c1839fbd1ce5e0c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -249,6 +249,12 @@ fn identity_token_eq(addr: usize, expected: &[u8]) -> bool {
 /// Recovered `read` at 0xc33d74c. Thumb callable address 0xc33d74d.
 pub const CANOPUS_FW_READ_CALLABLE: usize = canopus_thumb_callable(0xc33d74dusize);
 
+/// Recovered `lv_draw_rect_dsc_init` at 0xc38e03c. Thumb callable address 0xc38e03d.
+pub const CANOPUS_FW_LV_DRAW_RECT_DSC_INIT_CALLABLE: usize = canopus_thumb_callable(0xc38e03dusize);
+
+/// Recovered `calendar_realtime` at 0xc34d45c. Thumb callable address 0xc34d45d.
+pub const CANOPUS_FW_CALENDAR_REALTIME_CALLABLE: usize = canopus_thumb_callable(0xc34d45dusize);
+
 /// Recovered global `font_reload_draw_unit_slot` at 0x200bd1bc.
 pub const canopus_fw_font_reload_draw_unit_slot: usize = 0x200bd1bcusize;
 
@@ -276,6 +282,9 @@ pub const CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `lvx_list_item_add_content` at 0xc50d240. Thumb callable address 0xc50d241.
 pub const CANOPUS_FW_LVX_LIST_ITEM_ADD_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xc50d241usize);
 
+/// Recovered `image_snapshot_release` at 0xc8f29ec. Thumb callable address 0xc8f29ed.
+pub const CANOPUS_FW_IMAGE_SNAPSHOT_RELEASE_CALLABLE: usize = canopus_thumb_callable(0xc8f29edusize);
+
 /// Recovered `lv_obj_clear_flag` at 0xc3822a6. Thumb callable address 0xc3822a7.
 pub const CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc3822a7usize);
 
@@ -290,6 +299,9 @@ pub const CANOPUS_FW_GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = canopus_thumb_call
 
 /// Recovered `lvx_object_set_size` at 0xc3836d2. Thumb callable address 0xc3836d3.
 pub const CANOPUS_FW_LVX_OBJECT_SET_SIZE_CALLABLE: usize = canopus_thumb_callable(0xc3836d3usize);
+
+/// Recovered `lv_obj_remove_event_cb` at 0xc37fc32. Thumb callable address 0xc37fc33.
+pub const CANOPUS_FW_LV_OBJ_REMOVE_EVENT_CB_CALLABLE: usize = canopus_thumb_callable(0xc37fc33usize);
 
 /// Recovered `font_manager_generate_def_path` at 0xc490e4c. Thumb callable address 0xc490e4d.
 pub const CANOPUS_FW_FONT_MANAGER_GENERATE_DEF_PATH_CALLABLE: usize = canopus_thumb_callable(0xc490e4dusize);
@@ -339,8 +351,17 @@ pub const canopus_fw_style_misans_medium_28: usize = 0x200c0f0cusize;
 /// Recovered `write` at 0xc33dc16. Thumb callable address 0xc33dc17.
 pub const CANOPUS_FW_WRITE_CALLABLE: usize = canopus_thumb_callable(0xc33dc17usize);
 
+/// Recovered `calendar_font_resolve` at 0xc50934c. Thumb callable address 0xc50934d.
+pub const CANOPUS_FW_CALENDAR_FONT_RESOLVE_CALLABLE: usize = canopus_thumb_callable(0xc50934dusize);
+
+/// Recovered `calendar_premultiply` at 0xc907918. Thumb callable address 0xc907919.
+pub const CANOPUS_FW_CALENDAR_PREMULTIPLY_CALLABLE: usize = canopus_thumb_callable(0xc907919usize);
+
 /// Recovered `font_reload_vector_compare` at 0xc69e288. Thumb callable address 0xc69e289.
 pub const CANOPUS_FW_FONT_RELOAD_VECTOR_COMPARE_CALLABLE: usize = canopus_thumb_callable(0xc69e289usize);
+
+/// Recovered `calendar_font_create` at 0xc495008. Thumb callable address 0xc495009.
+pub const CANOPUS_FW_CALENDAR_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc495009usize);
 
 /// Recovered global `font_reload_uikit_slot` at 0x200bd08c.
 pub const canopus_fw_font_reload_uikit_slot: usize = 0x200bd08cusize;
@@ -350,6 +371,9 @@ pub const CANOPUS_FW_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc33818dusi
 
 /// Recovered `lvx_notification_insert_message` at 0xc8f11d4. Thumb callable address 0xc8f11d5.
 pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_thumb_callable(0xc8f11d5usize);
+
+/// Recovered `lv_obj_area_is_visible` at 0xc381d4c. Thumb callable address 0xc381d4d.
+pub const CANOPUS_FW_LV_OBJ_AREA_IS_VISIBLE_CALLABLE: usize = canopus_thumb_callable(0xc381d4dusize);
 
 /// Recovered `lvx_label_create` at 0xc3ab228. Thumb callable address 0xc3ab229.
 pub const CANOPUS_FW_LVX_LABEL_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc3ab229usize);
@@ -411,6 +435,9 @@ pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `font_reload_metrics_create` at 0xc3a5e18. Thumb callable address 0xc3a5e19.
 pub const CANOPUS_FW_FONT_RELOAD_METRICS_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc3a5e19usize);
 
+/// Recovered `calendar_font_destroy` at 0xc4924fc. Thumb callable address 0xc4924fd.
+pub const CANOPUS_FW_CALENDAR_FONT_DESTROY_CALLABLE: usize = canopus_thumb_callable(0xc4924fdusize);
+
 /// Recovered `unlink` at 0xc33dbb4. Thumb callable address 0xc33dbb5.
 pub const CANOPUS_FW_UNLINK_CALLABLE: usize = canopus_thumb_callable(0xc33dbb5usize);
 
@@ -429,6 +456,9 @@ pub const CANOPUS_FW_SEM_POST_CALLABLE: usize = canopus_thumb_callable(0xc359a91
 /// Recovered `bt_pair_request_reply` at 0xc46a930. Thumb callable address 0xc46a931.
 pub const CANOPUS_FW_BT_PAIR_REQUEST_REPLY_CALLABLE: usize = canopus_thumb_callable(0xc46a931usize);
 
+/// Recovered `background_object_event_add` at 0xc37fbec. Thumb callable address 0xc37fbed.
+pub const CANOPUS_FW_BACKGROUND_OBJECT_EVENT_ADD_CALLABLE: usize = canopus_thumb_callable(0xc37fbedusize);
+
 /// Recovered `lvx_style_apply` at 0xc502ed0. Thumb callable address 0xc502ed1.
 pub const CANOPUS_FW_LVX_STYLE_APPLY_CALLABLE: usize = canopus_thumb_callable(0xc502ed1usize);
 
@@ -437,6 +467,9 @@ pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_CALLABLE: usize = canopus_thumb_c
 
 /// Recovered `font_reload_ft_set_pixel_size` at 0xc8b6e40. Thumb callable address 0xc8b6e41.
 pub const CANOPUS_FW_FONT_RELOAD_FT_SET_PIXEL_SIZE_CALLABLE: usize = canopus_thumb_callable(0xc8b6e41usize);
+
+/// Recovered `calendar_snapshot` at 0xc6a29c8. Thumb callable address 0xc6a29c9.
+pub const CANOPUS_FW_CALENDAR_SNAPSHOT_CALLABLE: usize = canopus_thumb_callable(0xc6a29c9usize);
 
 /// Recovered `sdp_commit` at 0xc86d634. Thumb callable address 0xc86d635.
 pub const CANOPUS_FW_SDP_COMMIT_CALLABLE: usize = canopus_thumb_callable(0xc86d635usize);
@@ -455,6 +488,9 @@ pub const CANOPUS_FW_LV_OBJ_ADD_EVENT_CB_CALLABLE: usize = canopus_thumb_callabl
 
 /// Recovered `font_reload_outline_destroy` at 0xc3a0958. Thumb callable address 0xc3a0959.
 pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_DESTROY_CALLABLE: usize = canopus_thumb_callable(0xc3a0959usize);
+
+/// Recovered `hal_cache_sync` at 0xc92e5f4. Thumb callable address 0xc92e5f5.
+pub const CANOPUS_FW_HAL_CACHE_SYNC_CALLABLE: usize = canopus_thumb_callable(0xc92e5f5usize);
 
 /// Recovered `kmem_free` at 0xc34cc08. Thumb callable address 0xc34cc09.
 pub const CANOPUS_FW_KMEM_FREE_CALLABLE: usize = canopus_thumb_callable(0xc34cc09usize);
@@ -483,6 +519,9 @@ pub const canopus_fw_font_reload_style_refresh_enabled: usize = 0x200bd0b4usize;
 /// Recovered `mm_memalign` at 0xc3506d8. Thumb callable address 0xc3506d9.
 pub const CANOPUS_FW_MM_MEMALIGN_CALLABLE: usize = canopus_thumb_callable(0xc3506d9usize);
 
+/// Recovered `lv_draw_rect` at 0xc38e47c. Thumb callable address 0xc38e47d.
+pub const CANOPUS_FW_LV_DRAW_RECT_CALLABLE: usize = canopus_thumb_callable(0xc38e47dusize);
+
 /// Recovered `heap_free` at 0xc34cc7c. Thumb callable address 0xc34cc7d.
 pub const CANOPUS_FW_HEAP_FREE_CALLABLE: usize = canopus_thumb_callable(0xc34cc7dusize);
 
@@ -510,6 +549,9 @@ pub const CANOPUS_FW_OFFLOAD_PROPERTY_APPLY_CALLABLE: usize = canopus_thumb_call
 /// Recovered `font_reload_vector_destroy` at 0xc69f6ac. Thumb callable address 0xc69f6ad.
 pub const CANOPUS_FW_FONT_RELOAD_VECTOR_DESTROY_CALLABLE: usize = canopus_thumb_callable(0xc69f6adusize);
 
+/// Recovered `lv_draw_buf_create_ex` at 0xc386c14. Thumb callable address 0xc386c15.
+pub const CANOPUS_FW_LV_DRAW_BUF_CREATE_EX_CALLABLE: usize = canopus_thumb_callable(0xc386c15usize);
+
 /// Recovered `app_lookup_package` at 0xc69fa6a. Thumb callable address 0xc69fa6b.
 pub const CANOPUS_FW_APP_LOOKUP_PACKAGE_CALLABLE: usize = canopus_thumb_callable(0xc69fa6busize);
 
@@ -524,6 +566,9 @@ pub const CANOPUS_FW_BT_ADAPTER_UNREGISTER_CALLABLE: usize = canopus_thumb_calla
 
 /// Recovered `app_lookup` at 0xc6aa914. Thumb callable address 0xc6aa915.
 pub const CANOPUS_FW_APP_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0xc6aa915usize);
+
+/// Recovered `lv_event_add` at 0xc3a3ec0. Thumb callable address 0xc3a3ec1.
+pub const CANOPUS_FW_LV_EVENT_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3a3ec1usize);
 
 /// Recovered global `gap_host_receive_slot` at 0x200bd928.
 pub const canopus_fw_gap_host_receive_slot: usize = 0x200bd928usize;
@@ -546,11 +591,17 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 /// Recovered `app_install` at 0xc6a9718. Thumb callable address 0xc6a9719.
 pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc6a9719usize);
 
+/// Recovered `calendar_text_color` at 0xc3839ae. Thumb callable address 0xc3839af.
+pub const CANOPUS_FW_CALENDAR_TEXT_COLOR_CALLABLE: usize = canopus_thumb_callable(0xc3839afusize);
+
 /// Recovered `bt_timer_cancel` at 0xc861378. Thumb callable address 0xc861379.
 pub const CANOPUS_FW_BT_TIMER_CANCEL_CALLABLE: usize = canopus_thumb_callable(0xc861379usize);
 
 /// Recovered `bt_timer_cancel_owned` at 0xc8613c0. Thumb callable address 0xc8613c1.
 pub const CANOPUS_FW_BT_TIMER_CANCEL_OWNED_CALLABLE: usize = canopus_thumb_callable(0xc8613c1usize);
+
+/// Recovered `calendar_text_font` at 0xc3839e4. Thumb callable address 0xc3839e5.
+pub const CANOPUS_FW_CALENDAR_TEXT_FONT_CALLABLE: usize = canopus_thumb_callable(0xc3839e5usize);
 
 /// Recovered `calendar_icon_publish` at 0xc54779c. Thumb callable address 0xc54779d.
 pub const CANOPUS_FW_CALENDAR_ICON_PUBLISH_CALLABLE: usize = canopus_thumb_callable(0xc54779dusize);
@@ -597,6 +648,9 @@ pub const canopus_fw_mpu_region_bitmap: usize = 0x200f4080usize;
 /// Recovered `font_reload_metrics_compare` at 0xc39fcfe. Thumb callable address 0xc39fcff.
 pub const CANOPUS_FW_FONT_RELOAD_METRICS_COMPARE_CALLABLE: usize = canopus_thumb_callable(0xc39fcffusize);
 
+/// Recovered `calendar_text_align` at 0xc383a10. Thumb callable address 0xc383a11.
+pub const CANOPUS_FW_CALENDAR_TEXT_ALIGN_CALLABLE: usize = canopus_thumb_callable(0xc383a11usize);
+
 /// Recovered `heap_malloc` at 0xc3511b0. Thumb callable address 0xc3511b1.
 pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc3511b1usize);
 
@@ -624,6 +678,9 @@ pub unsafe fn canopus_fw_errno_location() -> *const i32 {
 /// Recovered `bt_l2cap_connect` at 0xc86d388. Thumb callable address 0xc86d389.
 pub const CANOPUS_FW_BT_L2CAP_CONNECT_CALLABLE: usize = canopus_thumb_callable(0xc86d389usize);
 
+/// Recovered `calendar_root_style` at 0xc502de0. Thumb callable address 0xc502de1.
+pub const CANOPUS_FW_CALENDAR_ROOT_STYLE_CALLABLE: usize = canopus_thumb_callable(0xc502de1usize);
+
 /// Recovered `cache_i_clean_invalidate_all` at 0xc0c181e. Thumb callable address 0xc0c181f.
 pub const CANOPUS_FW_CACHE_I_CLEAN_INVALIDATE_ALL_CALLABLE: usize = canopus_thumb_callable(0xc0c181fusize);
 
@@ -648,6 +705,12 @@ pub const CANOPUS_FW_BT_ADAPTER_REGISTER_CALLABLE: usize = canopus_thumb_callabl
 /// Recovered `bt_queue_free` at 0xc856d00. Thumb callable address 0xc856d01.
 pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc856d01usize);
 
+/// Recovered `hal_cache_invalidate_rom_thunk` at 0xc721248. Thumb callable address 0xc721249.
+pub const CANOPUS_FW_HAL_CACHE_INVALIDATE_ROM_THUNK_CALLABLE: usize = canopus_thumb_callable(0xc721249usize);
+
+/// Recovered `lv_display_remove_event_cb_with_user_data` at 0xc381e66. Thumb callable address 0xc381e67.
+pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize = canopus_thumb_callable(0xc381e67usize);
+
 /// Recovered `font_reload_outline_acquire` at 0xc3a7b6c. Thumb callable address 0xc3a7b6d.
 pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0xc3a7b6dusize);
 
@@ -656,6 +719,9 @@ pub const CANOPUS_FW_FONT_RELOAD_LV_MALLOC_CALLABLE: usize = canopus_thumb_calla
 
 /// Recovered `font_reload_face_create` at 0xc396718. Thumb callable address 0xc396719.
 pub const CANOPUS_FW_FONT_RELOAD_FACE_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc396719usize);
+
+/// Recovered `calendar_draw_buf_invalidate` at 0xc8b7720. Thumb callable address 0xc8b7721.
+pub const CANOPUS_FW_CALENDAR_DRAW_BUF_INVALIDATE_CALLABLE: usize = canopus_thumb_callable(0xc8b7721usize);
 
 /// Recovered `font_reload_outline_compare` at 0xc39fd30. Thumb callable address 0xc39fd31.
 pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_COMPARE_CALLABLE: usize = canopus_thumb_callable(0xc39fd31usize);
@@ -669,6 +735,9 @@ pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb
 /// Recovered `bt_adapter_get_state` at 0xc46a3b8. Thumb callable address 0xc46a3b9.
 pub const CANOPUS_FW_BT_ADAPTER_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0xc46a3b9usize);
 
+/// Recovered `calendar_object_delete` at 0xc384488. Thumb callable address 0xc384489.
+pub const CANOPUS_FW_CALENDAR_OBJECT_DELETE_CALLABLE: usize = canopus_thumb_callable(0xc384489usize);
+
 /// Recovered `lv_image_cache_drop` at 0xc3a37ec. Thumb callable address 0xc3a37ed.
 pub const CANOPUS_FW_LV_IMAGE_CACHE_DROP_CALLABLE: usize = canopus_thumb_callable(0xc3a37edusize);
 
@@ -681,11 +750,23 @@ pub const canopus_fw_font_reload_vector_label_class: usize = 0x2ca6cb78usize;
 /// Recovered `lseek` at 0xc33d4d8. Thumb callable address 0xc33d4d9.
 pub const CANOPUS_FW_LSEEK_CALLABLE: usize = canopus_thumb_callable(0xc33d4d9usize);
 
+/// Recovered `calendar_snapshot_free` at 0xc6a2a24. Thumb callable address 0xc6a2a25.
+pub const CANOPUS_FW_CALENDAR_SNAPSHOT_FREE_CALLABLE: usize = canopus_thumb_callable(0xc6a2a25usize);
+
 /// Recovered `lv_image_create` at 0xc3ae134. Thumb callable address 0xc3ae135.
 pub const CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc3ae135usize);
 
+/// Recovered `lv_obj_update_layout` at 0xc383f00. Thumb callable address 0xc383f01.
+pub const CANOPUS_FW_LV_OBJ_UPDATE_LAYOUT_CALLABLE: usize = canopus_thumb_callable(0xc383f01usize);
+
+/// Recovered `calendar_localtime` at 0xc34fcec. Thumb callable address 0xc34fced.
+pub const CANOPUS_FW_CALENDAR_LOCALTIME_CALLABLE: usize = canopus_thumb_callable(0xc34fcedusize);
+
 /// Recovered `lv_bar_create` at 0xc3ad758. Thumb callable address 0xc3ad759.
 pub const CANOPUS_FW_LV_BAR_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc3ad759usize);
+
+/// Recovered `vg_lite_finish` at 0xc91e58c. Thumb callable address 0xc91e58d.
+pub const CANOPUS_FW_VG_LITE_FINISH_CALLABLE: usize = canopus_thumb_callable(0xc91e58dusize);
 
 /// Recovered `lvx_label_set_text` at 0xc3b38ac. Thumb callable address 0xc3b38ad.
 pub const CANOPUS_FW_LVX_LABEL_SET_TEXT_CALLABLE: usize = canopus_thumb_callable(0xc3b38adusize);
@@ -702,6 +783,9 @@ pub const CANOPUS_FW_CACHE_D_CLEAN_ALL_CALLABLE: usize = canopus_thumb_callable(
 /// Recovered `hidden_and_show_app_cb` at 0xc546a54. Thumb callable address 0xc546a55.
 pub const CANOPUS_FW_HIDDEN_AND_SHOW_APP_CB_CALLABLE: usize = canopus_thumb_callable(0xc546a55usize);
 
+/// Recovered `app_watchface_take_snapshot` at 0xc5f126c. Thumb callable address 0xc5f126d.
+pub const CANOPUS_FW_APP_WATCHFACE_TAKE_SNAPSHOT_CALLABLE: usize = canopus_thumb_callable(0xc5f126dusize);
+
 /// Recovered `clock_gettime` at 0xc34d4dc. Thumb callable address 0xc34d4dd.
 pub const CANOPUS_FW_CLOCK_GETTIME_CALLABLE: usize = canopus_thumb_callable(0xc34d4ddusize);
 
@@ -710,6 +794,9 @@ pub const CANOPUS_FW_LV_OBJ_SET_STYLE_PAD_TOP_CALLABLE: usize = canopus_thumb_ca
 
 /// Recovered `lvx_list_item_create` at 0xc50cc54. Thumb callable address 0xc50cc55.
 pub const CANOPUS_FW_LVX_LIST_ITEM_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc50cc55usize);
+
+/// Recovered `calendar_weekday` at 0xc542cdc. Thumb callable address 0xc542cdd.
+pub const CANOPUS_FW_CALENDAR_WEEKDAY_CALLABLE: usize = canopus_thumb_callable(0xc542cddusize);
 
 /// Recovered `lvx_object_add_flag` at 0xc38221a. Thumb callable address 0xc38221b.
 pub const CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc38221busize);
@@ -725,6 +812,8 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // app_launcher_del: restricted - not exported until context/ownership approved
 // app_lookup: restricted - not exported until context/ownership approved
 // app_lookup_package: restricted - not exported until context/ownership approved
+// app_watchface_take_snapshot: restricted - not exported until context/ownership approved
+// background_object_event_add: restricted - not exported until context/ownership approved
 // bt_adapter_get_instance: restricted - not exported until context/ownership approved
 // bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
 // bt_adapter_get_state: restricted - not exported until context/ownership approved
@@ -757,8 +846,23 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // cache_barrier: restricted - not exported until context/ownership approved
 // cache_d_clean_all: restricted - not exported until context/ownership approved
 // cache_i_clean_invalidate_all: restricted - not exported until context/ownership approved
+// calendar_draw_buf_invalidate: restricted - not exported until context/ownership approved
+// calendar_font_create: restricted - not exported until context/ownership approved
+// calendar_font_destroy: restricted - not exported until context/ownership approved
+// calendar_font_resolve: restricted - not exported until context/ownership approved
 // calendar_icon_generate: restricted - not exported until context/ownership approved
 // calendar_icon_publish: restricted - not exported until context/ownership approved
+// calendar_localtime: restricted - not exported until context/ownership approved
+// calendar_object_delete: restricted - not exported until context/ownership approved
+// calendar_premultiply: restricted - not exported until context/ownership approved
+// calendar_realtime: restricted - not exported until context/ownership approved
+// calendar_root_style: restricted - not exported until context/ownership approved
+// calendar_snapshot: restricted - not exported until context/ownership approved
+// calendar_snapshot_free: restricted - not exported until context/ownership approved
+// calendar_text_align: restricted - not exported until context/ownership approved
+// calendar_text_color: restricted - not exported until context/ownership approved
+// calendar_text_font: restricted - not exported until context/ownership approved
+// calendar_weekday: restricted - not exported until context/ownership approved
 // clock_gettime: restricted - not exported until context/ownership approved
 // close: restricted - not exported until context/ownership approved
 // controller_crash_dump: restricted - not exported until context/ownership approved
@@ -801,6 +905,8 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // font_reload_vector_drop: restricted - not exported until context/ownership approved
 // font_reload_vg_dispatch: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved
+// hal_cache_invalidate_rom_thunk: restricted - not exported until context/ownership approved
+// hal_cache_sync: restricted - not exported until context/ownership approved
 // heap_free: restricted - not exported until context/ownership approved
 // heap_mallinfo: restricted - not exported until context/ownership approved
 // heap_malloc: restricted - not exported until context/ownership approved
@@ -808,6 +914,7 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // hfp_ag_connect: restricted - not exported until context/ownership approved
 // hfp_ag_disconnect: restricted - not exported until context/ownership approved
 // hidden_and_show_app_cb: restricted - not exported until context/ownership approved
+// image_snapshot_release: restricted - not exported until context/ownership approved
 // insmod: FORBIDDEN - no binding may ever be generated
 // interconnect_close: restricted - not exported until context/ownership approved
 // interconnect_connect: restricted - not exported until context/ownership approved
@@ -820,6 +927,11 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // lv_bar_set_value: restricted - not exported until context/ownership approved
 // lv_cache_drop: restricted - not exported until context/ownership approved
 // lv_display_get_horizontal_resolution: restricted - not exported until context/ownership approved
+// lv_display_remove_event_cb_with_user_data: restricted - not exported until context/ownership approved
+// lv_draw_buf_create_ex: restricted - not exported until context/ownership approved
+// lv_draw_rect: restricted - not exported until context/ownership approved
+// lv_draw_rect_dsc_init: restricted - not exported until context/ownership approved
+// lv_event_add: restricted - not exported until context/ownership approved
 // lv_event_get_code: restricted - not exported until context/ownership approved
 // lv_event_get_user_data: restricted - not exported until context/ownership approved
 // lv_image_cache_drop: restricted - not exported until context/ownership approved
@@ -828,10 +940,12 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // lv_image_set_src: restricted - not exported until context/ownership approved
 // lv_obj_add_event_cb: restricted - not exported until context/ownership approved
 // lv_obj_align_to: restricted - not exported until context/ownership approved
+// lv_obj_area_is_visible: restricted - not exported until context/ownership approved
 // lv_obj_clear_flag: restricted - not exported until context/ownership approved
 // lv_obj_get_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
 // lv_obj_refresh_style: restricted - not exported until context/ownership approved
+// lv_obj_remove_event_cb: restricted - not exported until context/ownership approved
 // lv_obj_remove_style_all: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
@@ -840,6 +954,7 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // lv_obj_set_style_pad_top: restricted - not exported until context/ownership approved
 // lv_obj_set_width: restricted - not exported until context/ownership approved
 // lv_obj_tree_walk: restricted - not exported until context/ownership approved
+// lv_obj_update_layout: restricted - not exported until context/ownership approved
 // lv_timer_create: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // lvgl_posix_open: restricted - not exported until context/ownership approved
@@ -902,6 +1017,7 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // unregister_blockdriver: restricted - not exported until context/ownership approved
 // unregister_driver: restricted - not exported until context/ownership approved
 // vendor_hci_transport_register: restricted - not exported until context/ownership approved
+// vg_lite_finish: restricted - not exported until context/ownership approved
 // watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
 // watchface_reset_watchface: restricted - not exported until context/ownership approved
 // write: restricted - not exported until context/ownership approved

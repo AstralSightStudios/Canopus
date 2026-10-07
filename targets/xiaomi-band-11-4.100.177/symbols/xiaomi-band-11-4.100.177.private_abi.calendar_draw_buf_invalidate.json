@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.private_abi.calendar_draw_buf_invalidate",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "calendar_draw_buf_invalidate",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc8b7720",
+  "callable_address": "0xc8b7721",
+  "prototype": "void(void *draw_buf)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed valid draw-buffer descriptor/handler table with positive dimensions.",
+    "return_value": "No reliable status; no-op if callback absent."
+  },
+  "side_effects": [
+    "Dispatches handler+12 for rectangle {0,0,w-1,h-1}; NOT a GPU completion primitive or a guaranteed cache synchronization operation."
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "host_tested": true,
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-ALPHA-177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "user (explicit approval in current session)",
+    "date": "2026-10-06T16:22:42Z",
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "prototype": "void(void *draw_buf)",
+    "ownership": "Borrowed valid draw-buffer descriptor/handler table with positive dimensions. No reliable status; no-op if callback absent.",
+    "thread": "target-private-ui-owner",
+    "device_probe": "NOT_PROBED. Human approval is restricted static ABI use for the calendar renderer, not device/GPU validation or a public SDK wrapper."
+  },
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-ALPHA-177-001"
+    ],
+    "source": "Exact q66-ap.i64 read-only ABI audit and fingerprinted AP byte comparison. One contiguous function chunk [0xc8b7720,0xc8b774a), 42 bytes SHA256 50e7c092f35694108b639093146fe1abcc9a4ce449b4881071650b5778c342d6. Full-function hash includes inline code/tables, excludes external literal pools."
+  },
+  "notes": "Dispatches handler+12 for rectangle {0,0,w-1,h-1}; NOT a GPU completion primitive or a guaranteed cache synchronization operation. Explicit user approval recorded 2026-10-06T16:22:42Z; remains private-only/restricted and STATIC_RECOVERED. Adapter tests model native leaves except specific instruction probes; physical device, GPU fault/restart safety and durable storage acceptance remain unproven."
+}

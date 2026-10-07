@@ -313,13 +313,16 @@ fn band9_supervisor_platform_remains_complete() {
 }
 
 #[test]
-fn band11_errno_is_the_only_approved_callable() {
+fn band11_errno_is_the_only_public_approved_callable() {
     for target in ["xiaomi-band-11-4.100.139", "xiaomi-band-11-4.100.155", "xiaomi-band-11-4.100.177"] {
         let dir = repo_root().join("targets").join(target);
         let (symbols, _) = load_records(&dir).unwrap();
         let approved: Vec<_> = symbols
             .iter()
-            .filter(|s| s.kind == "function" && s.approved_for_codegen())
+            .filter(|s| {
+                s.kind == "function" && s.approved_for_codegen()
+                    && matches!(s.policy.as_str(), "managed" | "native-full-trust")
+            })
             .collect();
         assert_eq!(
             approved.len(),
@@ -354,6 +357,46 @@ fn parse_address(value: &str) -> usize {
         16,
     )
     .unwrap()
+}
+
+#[test]
+fn band11_177_calendar_approval_is_exact_and_private_only() {
+    let target = "xiaomi-band-11-4.100.177";
+    let dir = repo_root().join("targets").join(target);
+    let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+    let (symbols, types) = load_records(&dir).unwrap();
+    let expected = [
+        ("realtime", 0x0c34d45c), ("localtime", 0x0c34fcec),
+        ("root_style", 0x0c502de0), ("text_color", 0x0c3839ae),
+        ("text_align", 0x0c383a10), ("text_font", 0x0c3839e4),
+        ("font_resolve", 0x0c50934c), ("font_create", 0x0c495008),
+        ("font_destroy", 0x0c4924fc), ("weekday", 0x0c542cdc),
+        ("snapshot", 0x0c6a29c8), ("snapshot_free", 0x0c6a2a24),
+        ("object_delete", 0x0c384488), ("premultiply", 0x0c907918),
+        ("draw_buf_invalidate", 0x0c8b7720),
+    ];
+    let private_approved: Vec<_> = symbols.iter().filter(|s| {
+        s.kind == "function" && s.approved_for_codegen() && s.policy == "restricted"
+    }).collect();
+    assert_eq!(private_approved.len(), expected.len(), "private approval scope expanded");
+    let header = VeneerGen { pack: &pack, symbols: &symbols, types: &types }.generate();
+    let rust = RustGen { pack: &pack, symbols: &symbols, types: &types }.generate();
+    for (role, entry) in expected {
+        let id = format!("{target}.private_abi.calendar_{role}");
+        let s = private_approved.iter().find(|s| s.symbol_id == id).expect("missing exact approval");
+        assert_eq!(parse_address(s.entry_address.as_deref().unwrap()), entry);
+        assert_eq!(parse_address(s.callable_address.as_deref().unwrap()), entry | 1);
+        assert_eq!(s.status, "STATIC_RECOVERED");
+        assert_eq!(s.proof.device.as_deref(), Some("not_probed"));
+        assert_eq!(s.provenance.firmware_sha256, pack.firmware_sha256);
+        assert_eq!(s.promotion.as_ref().unwrap().firmware_sha256, pack.firmware_sha256);
+        assert!(!header.contains(&format!("canopus_fw_calendar_{role}(")));
+        assert!(!rust.contains(&format!("pub unsafe fn canopus_fw_calendar_{role}(")));
+        assert!(rust.contains(&format!("CANOPUS_FW_CALENDAR_{}_CALLABLE", role.to_uppercase())));
+    }
+    // The pre-existing background alias must not redeclare the canonical name.
+    assert_eq!(rust.matches("pub const CANOPUS_FW_LV_OBJ_ADD_EVENT_CB_CALLABLE:").count(), 1);
+    assert_eq!(rust.matches("pub const CANOPUS_FW_BACKGROUND_OBJECT_EVENT_ADD_CALLABLE:").count(), 1);
 }
 
 #[test]

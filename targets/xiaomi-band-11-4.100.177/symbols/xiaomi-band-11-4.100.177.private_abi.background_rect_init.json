@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.private_abi.background_rect_init",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "lv_draw_rect_dsc_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc38e03c",
+  "callable_address": "0xc38e03d",
+  "prototype": "void(void *descriptor)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {"allowed": ["target-private-ui-owner"], "blocking": true},
+  "proof": {"static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-RESOURCE-BACKGROUND-SCREEN-177-001"]},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {"firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b", "source": "Exact q66-ap.i64 IDA review: 186 bytes SHA256 ee8fa724993a662037349d1c043e900f8ec4269cbdc0a59ce5096d537d3c076c. Zeros 116 bytes; fill opacity +32 and bg image opacity +59 default 255."},
+  "notes": "Serialized UI owner only. No public approval/device acceptance."
+}
