@@ -4,7 +4,7 @@
  * firmware : 4.100.155 (user-4.100.155-cn-202609041500)
  * sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
  * revision : 1
- * input_digest: 6afe2f78a7563a65
+ * input_digest: 2f78a4d90456bfdd
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
@@ -219,6 +219,9 @@ static inline int * canopus_fw_errno_location(void) {
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved
  * app_lookup: restricted - not exported until context/ownership approved
+ * app_lookup_package: restricted - not exported until context/ownership approved
+ * app_watchface_take_snapshot: restricted - not exported until context/ownership approved
+ * background_object_event_add: restricted - not exported until context/ownership approved
  * bt_adapter_get_instance: restricted - not exported until context/ownership approved
  * bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
  * bt_adapter_get_state: restricted - not exported until context/ownership approved
@@ -251,6 +254,23 @@ static inline int * canopus_fw_errno_location(void) {
  * cache_barrier: restricted - not exported until context/ownership approved
  * cache_d_clean_all: restricted - not exported until context/ownership approved
  * cache_i_clean_invalidate_all: restricted - not exported until context/ownership approved
+ * calendar_draw_buf_invalidate: restricted - not exported until context/ownership approved
+ * calendar_font_create: restricted - not exported until context/ownership approved
+ * calendar_font_destroy: restricted - not exported until context/ownership approved
+ * calendar_font_resolve: restricted - not exported until context/ownership approved
+ * calendar_icon_generate: restricted - not exported until context/ownership approved
+ * calendar_icon_publish: restricted - not exported until context/ownership approved
+ * calendar_localtime: restricted - not exported until context/ownership approved
+ * calendar_object_delete: restricted - not exported until context/ownership approved
+ * calendar_premultiply: restricted - not exported until context/ownership approved
+ * calendar_realtime: restricted - not exported until context/ownership approved
+ * calendar_root_style: restricted - not exported until context/ownership approved
+ * calendar_snapshot: restricted - not exported until context/ownership approved
+ * calendar_snapshot_free: restricted - not exported until context/ownership approved
+ * calendar_text_align: restricted - not exported until context/ownership approved
+ * calendar_text_color: restricted - not exported until context/ownership approved
+ * calendar_text_font: restricted - not exported until context/ownership approved
+ * calendar_weekday: restricted - not exported until context/ownership approved
  * clock_gettime: restricted - not exported until context/ownership approved
  * close: restricted - not exported until context/ownership approved
  * controller_crash_dump: restricted - not exported until context/ownership approved
@@ -293,6 +313,8 @@ static inline int * canopus_fw_errno_location(void) {
  * font_reload_vector_drop: restricted - not exported until context/ownership approved
  * font_reload_vg_dispatch: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
+ * hal_cache_invalidate_rom_thunk: restricted - not exported until context/ownership approved
+ * hal_cache_sync: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved
  * heap_malloc: restricted - not exported until context/ownership approved
@@ -300,6 +322,7 @@ static inline int * canopus_fw_errno_location(void) {
  * hfp_ag_connect: restricted - not exported until context/ownership approved
  * hfp_ag_disconnect: restricted - not exported until context/ownership approved
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
+ * image_snapshot_release: restricted - not exported until context/ownership approved
  * insmod: FORBIDDEN - no veneer may ever be generated
  * interconnect_close: restricted - not exported until context/ownership approved
  * interconnect_connect: restricted - not exported until context/ownership approved
@@ -312,6 +335,11 @@ static inline int * canopus_fw_errno_location(void) {
  * lv_bar_set_value: restricted - not exported until context/ownership approved
  * lv_cache_drop: restricted - not exported until context/ownership approved
  * lv_display_get_horizontal_resolution: restricted - not exported until context/ownership approved
+ * lv_display_remove_event_cb_with_user_data: restricted - not exported until context/ownership approved
+ * lv_draw_buf_create_ex: restricted - not exported until context/ownership approved
+ * lv_draw_rect: restricted - not exported until context/ownership approved
+ * lv_draw_rect_dsc_init: restricted - not exported until context/ownership approved
+ * lv_event_add: restricted - not exported until context/ownership approved
  * lv_event_get_code: restricted - not exported until context/ownership approved
  * lv_event_get_user_data: restricted - not exported until context/ownership approved
  * lv_image_cache_drop: restricted - not exported until context/ownership approved
@@ -320,10 +348,12 @@ static inline int * canopus_fw_errno_location(void) {
  * lv_image_set_src: restricted - not exported until context/ownership approved
  * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
  * lv_obj_align_to: restricted - not exported until context/ownership approved
+ * lv_obj_area_is_visible: restricted - not exported until context/ownership approved
  * lv_obj_clear_flag: restricted - not exported until context/ownership approved
  * lv_obj_get_style_prop: restricted - not exported until context/ownership approved
  * lv_obj_move_to_index: restricted - not exported until context/ownership approved
  * lv_obj_refresh_style: restricted - not exported until context/ownership approved
+ * lv_obj_remove_event_cb: restricted - not exported until context/ownership approved
  * lv_obj_remove_style_all: restricted - not exported until context/ownership approved
  * lv_obj_set_hidden: restricted - not exported until context/ownership approved
  * lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
@@ -332,6 +362,7 @@ static inline int * canopus_fw_errno_location(void) {
  * lv_obj_set_style_pad_top: restricted - not exported until context/ownership approved
  * lv_obj_set_width: restricted - not exported until context/ownership approved
  * lv_obj_tree_walk: restricted - not exported until context/ownership approved
+ * lv_obj_update_layout: restricted - not exported until context/ownership approved
  * lv_timer_create: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
  * lvgl_posix_open: restricted - not exported until context/ownership approved
@@ -394,6 +425,7 @@ static inline int * canopus_fw_errno_location(void) {
  * unregister_blockdriver: restricted - not exported until context/ownership approved
  * unregister_driver: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: restricted - not exported until context/ownership approved
+ * vg_lite_finish: restricted - not exported until context/ownership approved
  * watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
  * watchface_reset_watchface: restricted - not exported until context/ownership approved
  * write: restricted - not exported until context/ownership approved
