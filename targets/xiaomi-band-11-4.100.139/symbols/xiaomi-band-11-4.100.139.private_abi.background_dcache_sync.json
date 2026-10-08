@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.background_dcache_sync",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "hal_cache_sync",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc930214",
+  "callable_address": "0xc930215",
+  "prototype": "uint8_t(uint32_t cache_id)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-BACKGROUND-CALENDAR-PORT-139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "APPROVED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-RESOURCE-BACKGROUND-CALENDAR-PORT-139-001"
+    ],
+    "source": "Exact target reference mapping RH_LB_DCACHE_SYNC; thumb-full-v1 fingerprint and per-basic-block AP SHA256 receipts in EVID-RESOURCE-BACKGROUND-CALENDAR-PORT-139-001. No global delta or range broadening. Source ABI semantics inherited from xiaomi-band-11-4.100.177.private_abi.background_dcache_sync"
+  },
+  "notes": "Restricted port approved by user on 2026-10-08 (date only; promotion timestamp normalized to midnight, not approval time). Source .177 ABI constraints retained. Device/GPU/restart/storage behavior unproven. Cache ID 1 selects D-cache controller 0x07ffc000; writes command 1 at +0x34, returns zero. Public BES HAL source corroborates register/prototype; hardware completion/coherence is NOT_PROBED. No public callable approval or device acceptance.",
+  "promotion": {
+    "reviewer": "user (explicit restricted port approval 2026-10-08)",
+    "date": "2026-10-08T00:00:00Z",
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "prototype": "uint8_t(uint32_t cache_id)",
+    "ownership": "Inherited exact .177 private ABI ownership constraints; no new ownership authorization.",
+    "thread": "target-private-ui-owner",
+    "device_probe": "NOT_PROBED. Approval is for restricted static .139/.155 port only, not hardware acceptance or public veneer."
+  }
+}

@@ -1,0 +1,1379 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-BACKGROUND-CALENDAR-PORT-139-001",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Exact restricted blur/calendar port records from supplied .177 reference mappings to this firmware, without range broadening.",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.private_abi.app_watchface_take_snapshot",
+    "xiaomi-band-11-4.100.139.private_abi.background_dcache_invalidate",
+    "xiaomi-band-11-4.100.139.private_abi.background_dcache_sync",
+    "xiaomi-band-11-4.100.139.private_abi.background_display_event_remove",
+    "xiaomi-band-11-4.100.139.private_abi.background_event_list_add",
+    "xiaomi-band-11-4.100.139.private_abi.background_gpu_finish",
+    "xiaomi-band-11-4.100.139.private_abi.background_layout_update",
+    "xiaomi-band-11-4.100.139.private_abi.background_object_event_add",
+    "xiaomi-band-11-4.100.139.private_abi.background_object_event_remove",
+    "xiaomi-band-11-4.100.139.private_abi.background_rect_draw",
+    "xiaomi-band-11-4.100.139.private_abi.background_rect_init",
+    "xiaomi-band-11-4.100.139.private_abi.background_visible_area",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_draw_buf_invalidate",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_font_create",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_font_destroy",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_font_resolve",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_localtime",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_object_delete",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_premultiply",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_realtime",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_root_style",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_snapshot",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_snapshot_free",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_text_align",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_text_color",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_text_font",
+    "xiaomi-band-11-4.100.139.private_abi.calendar_weekday",
+    "xiaomi-band-11-4.100.139.private_abi.image_snapshot_release",
+    "xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex",
+    "xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-08T00:00:00Z",
+  "prototype_hypothesis": "Inherited .177 restricted ABI signatures and ownership; exact ordered-reference/body mappings supplied by parent audit.",
+  "callsite_evidence": [
+    "IDA 9.4 basic blocks; thumb-full-v1 complete body equality and ordered references; ambiguous thin wrappers resolved by caller references. No global delta."
+  ],
+  "control_flow_evidence": [
+    "Per-block AP byte hashes and full normalized fingerprints attached; thin wrappers resolved by caller witnesses, not version delta.",
+    "Parent independently IDA verified all 153 mapping-basis function starts/flowcharts across .177/.139/.155 and recomputed exact-AP thumb-full-v1 hashes and ordered witnesses: all 62 roles per target passed on 2026-10-08.",
+    "Exact .139 production verifier PASS: 20 sections, zero undefined, 1417 relocations. Temporary negative controls reject withdrawn calendar_snapshot and .177 snapshot against .139; exact .139 probe passes."
+  ],
+  "ownership_analysis": "Inherited .177 UI-owner serialization, borrowed defaults/owned wrappers and bounded pending GPU ownership; no new public or device acceptance.",
+  "unsafe_assumptions": [
+    "Physical target NOT_PROBED. Static and ELF verification do not establish GPU, restart or persistent-storage safety."
+  ],
+  "recommended_probe": "Recoverable exact-target UI-owner device trial; GPU fault/restart and storage durability remain unsupported.",
+  "reviewers": [
+    "user (restricted port approval 2026-10-08)"
+  ],
+  "artifacts": [
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap",
+      "sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+      "role": "exact-firmware"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5f2b3c/0xa",
+      "sha256": "783db110b0d9efd39d04d531ceaf7269187777d1bc86a4ed38fe2439ec5fa9e1",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.app_watchface_take_snapshot"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5f2b46/0x8",
+      "sha256": "a766b6ac568dd0fcfe5351ff1964ae538a59ddc58c0349c4a9dac7d5f9256e02",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.app_watchface_take_snapshot"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5f2b4e/0xa",
+      "sha256": "6646a85c498685026fa2a7264b4a0aed1d3c5463c99520c86edf8ffe5424107c",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.app_watchface_take_snapshot"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5f2b58/0xa",
+      "sha256": "16dd6c42258d5901de0cc92881a6c9a14275d3feb40f6cf042e4e96f9824326a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.app_watchface_take_snapshot"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5f2b62/0xc",
+      "sha256": "df9fe1fad2838c52b51e489ff976d1b896e26b8a1b4641b2b508da90424b22d8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.app_watchface_take_snapshot"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5f2b6e/0x2",
+      "sha256": "b8a7fa77eb1a802d69cd0c68721cb9fe2cd8470cde5d595a4b48eb14cfee429e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.app_watchface_take_snapshot"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5f2b70/0x4",
+      "sha256": "fd603ca2f66c7448acde1b612d07e25bfa62519f19f8d96afda128fc26f93d4c",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.app_watchface_take_snapshot"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5f2b74/0xe",
+      "sha256": "447b21d50e63c662a83945a8d57d77d6d26c91147b597ac0f8f1d8c5a5397c35",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.app_watchface_take_snapshot"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5f2b82/0x8",
+      "sha256": "07256a78b5d87908be745049f5a37a5b731e63e0c924292c555518c8167c86e0",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.app_watchface_take_snapshot"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc721190/0x4",
+      "sha256": "f4d6b2f0cb39af1d76e4cbf2e294141b8365610edb68746a69f11246b3ba84c4",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_dcache_invalidate"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc930214/0x2",
+      "sha256": "e6236b9d12ceaa61619fdee923a1a33003c14bcd53cd4d80470de30b8fc79453",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_dcache_sync"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc930216/0x4",
+      "sha256": "a0dcab769b3ef919d0dbefa880f8df11a69bb369fc3e48c8898fc8849d25fdfa",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_dcache_sync"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc93021a/0x2",
+      "sha256": "5fcbc0325d202643ef41f271798bbc65f7ed7774b1e17d89f9daea1e480c2bec",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_dcache_sync"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc93021c/0x4",
+      "sha256": "617734073afb1f13da23202feeaf7ec84e54873e2ece1e270818c239bd7d8cfb",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_dcache_sync"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc930220/0x4",
+      "sha256": "a7ddd513d149ea16fdd4db3f82267f83087aeaddd06b5dde5468adb704205fc4",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_dcache_sync"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc930224/0x4",
+      "sha256": "e2c247732db5af57021e926b8ce3eb1ae57aed311ec513e1bb618aaf80bafa9c",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_dcache_sync"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38095c/0x18",
+      "sha256": "80791e256cf84e6b694628e2b6493f74d2438d1fa247f1bf756a7c62734572c4",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_display_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc380974/0x4",
+      "sha256": "e46aa4d088c84114a056c2b7cd19734762ea26505e955b1acb9cd18889ecdd21",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_display_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc380978/0x6",
+      "sha256": "d038fe9cce9ecea1c30bd432c361b91a66cefcab18bb972bb0ca4c37fdc44b0b",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_display_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38097e/0xa",
+      "sha256": "67eff7a6d7a46dea460a7631ffac410c3ed254b0c50bcabd5e27b0668e7aae80",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_display_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc380988/0x6",
+      "sha256": "f389c66b52ea8c213e6b9385de6625a6a933b2306c5bb7dac570d133344dc7f6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_display_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38098e/0x6",
+      "sha256": "49eaed07eee8b6fd1e211d32942b4f91eb97ae4da3bae9d3c80a85d6156caa4e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_display_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc380994/0xc",
+      "sha256": "74db0663e2ac05a76907ebae4ded49532a24a8ada628fe28e38e91c8ba5d0e17",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_display_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3809a0/0x4",
+      "sha256": "566824a8761e06186acb50b35641534b356de4687a4f21aeaf39b308912bb728",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_display_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3a3f5c/0x26",
+      "sha256": "508ecfca6d2718c37fad114f1056c43d57d198be070d23dfcb03cfac60021b11",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_event_list_add"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3a3f82/0xc",
+      "sha256": "9e1f45e9dfce3e4b5bf312b60c1ac46052048d45d41eb7e34bb3ec6e5449cd3e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_event_list_add"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3a3f8e/0x12",
+      "sha256": "83e14e07dd18985cd7e4974ae4a8533c40ae3cf2cb95c8ddd5ec41cd908a64ec",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_event_list_add"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9201ac/0x12",
+      "sha256": "900ad4b336868c54587f919b92d4563179999d983ece7887214c8d5075f9187a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_gpu_finish"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9201be/0x6",
+      "sha256": "8dedbcd14953dfdc5f7382dbe82e88ee7b337e70c4853beaa7831c93fc61c850",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_gpu_finish"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9201c4/0xa",
+      "sha256": "d733c106fbcc299135a9b4acd4adaa2872cff3529fe6164e086804a1575f803a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_gpu_finish"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9201ce/0xe",
+      "sha256": "f7695363ea886cf7145f69346751b4930ed422611e8dc790b03ddd2b4d936255",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_gpu_finish"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9201dc/0x6",
+      "sha256": "ab823396ea9b74ae976f05476fec939043591a3df54fa3657d15b069ba6b1c3d",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_gpu_finish"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9201e2/0x8",
+      "sha256": "d60d2fe58f91a17fe1f8492a7704cfe02cc0df0a467b794cff78d358b80d4583",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_gpu_finish"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9201ea/0x8",
+      "sha256": "6c60f34d349feb8f8f8a22aa35ba7d14740f311a3d92b42d332cf5dedf658390",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_gpu_finish"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9201f2/0x16",
+      "sha256": "89b56bc408eb6ae7e49a6b1e47df272a7aadba6d346826d885566f1d141cf723",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_gpu_finish"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc920208/0x2",
+      "sha256": "d61f3ece088ca2fb6ebd3f47479ea5514bdbc39d0decd1f678f629b107878331",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_gpu_finish"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc91f634/0x0",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_gpu_finish"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384c4c/0xc",
+      "sha256": "b1345f9004b01a436569d1afcef4d819d7bffa823e771427ede51ac61b094aba",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_layout_update"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384c58/0xc",
+      "sha256": "18b238081a4770c6dc42bfaf1330018e83db29ee9d939640a905761786f249d4",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_layout_update"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384c64/0xa",
+      "sha256": "4c4ac0050ad9ce235ca28b582aa279170d8014dd3576a04979eb9f09d6323877",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_layout_update"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384c6e/0x4",
+      "sha256": "2d85bb1c8669c8c8fa21501bcaaea598e001fad171f49040ffa081bf044df7b6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_layout_update"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384c72/0x2",
+      "sha256": "9b14436d7605de179a767a4dee2993975408d01d89f9b3cf8434c10a1618aa9b",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_layout_update"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384c74/0x10",
+      "sha256": "59283e73669a72e752718ea1dedcd719dd94a05638c236516070ca535659aaf2",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_layout_update"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc37fc1c/0x26",
+      "sha256": "2401b38a366c8d0c3cac76d98f95288060df68ad2d517b42050acc27db004fc6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_object_event_add"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc37fc62/0xe",
+      "sha256": "0bc5cf64d6c1f4645249fe341d52e9dce7fe1628f6817e9a587d57d78303d922",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_object_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc37fc70/0x6",
+      "sha256": "8106753e91eb93110d4a20badedfc9cc8df2ce3e8b4130febfe63127073ae032",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_object_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc37fc76/0x4",
+      "sha256": "c3b739e0fb56f0497762ac8dfa3edb3f82190ab2f5c4fbf0ef7652f60a47b379",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_object_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc37fc7a/0x4",
+      "sha256": "45f33fe848647febf21d812438c1a65aad5c87c6a40dbf3b67e1c97ea13b92f1",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_object_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc37fc7e/0xa",
+      "sha256": "7cb99deb6818a03f7bcea4f3ce20e1092d6d7e820a6bfb7514fc4c1cd1f2cc38",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_object_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc37fc88/0x6",
+      "sha256": "873bcba20d3921360e4b22a4ac62863547e33fb736cf16c50cfc5eca402a476c",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_object_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc37fc8e/0xa",
+      "sha256": "42afbc5ed8263fa6efd349981c4ffc796f7896e7a387b5c33f6db6ea19bc96d3",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_object_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc37fc98/0x4",
+      "sha256": "eaf0da40fe05b4ef52a4fec4d05f04c3449669d45ad668ad6d9d523d0d13df9d",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_object_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc37fc9c/0x4",
+      "sha256": "c1bc830ced30d74a0cfedac2fa493e73f61a21f60a9abce784aa82f1fbea1e14",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_object_event_remove"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e514/0x12",
+      "sha256": "62d2563edb999d220bc0f24ed7558a221394843d1bf98316dea96411d5c5e4f2",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e526/0xa",
+      "sha256": "3200255aec3d4d15e98ebaba67a5604971577370ded4d9959be6ee81c22ee5a0",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e530/0x6",
+      "sha256": "1f01f6755dacd3dbb906c6c176754f99a328d1dff9b01a2dd06192b07bb5fb96",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e536/0x6",
+      "sha256": "6fe95590a548aa4e763e8d269e5837edc93c9ddbd45949fd72be9974e0c98f1f",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e53c/0x4",
+      "sha256": "9c820e127017c10a706efba71dc989d5d894e429db763f1c2ec9234231b6f11d",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e540/0x8",
+      "sha256": "454e2d175742d508346cf57cf20a88511bc4fc58d7af120758b573193c7ed2a8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e548/0x10",
+      "sha256": "d07470bba10e8ec7e1572e280e433686fb45e9b40265a8b7b064b2309d20e2c6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e558/0x8",
+      "sha256": "a4ce4ef74bd58822bc7da7713423bc6311e569f69d3aa5b7f4f261c6998fc702",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e560/0xc",
+      "sha256": "55cd7c581f298ec694491605b5d7d9b6ecef044ff6f304b688c965ebebb20a4c",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e56c/0x8",
+      "sha256": "5fc9d1ca1056a51e88138715c2c0ec90ef3ce9cfc49623624fbc3f0b94fa2999",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e574/0xc",
+      "sha256": "df2ed60bdb119102599359b0ebf5b3925a885162a965c1ad6cb4b955a44e9144",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e580/0xa",
+      "sha256": "0b85a50883822888ffe670e849e25f6343aabe4708a2eaffcbd118a151f7f162",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e58a/0x8",
+      "sha256": "a94f760818ee8370e03389c76e82926e8a5c44bbd097e8297407379edeef8125",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e592/0xa",
+      "sha256": "75488b634dd722e134e2e1a3b68e1b62e18e44633aa8533b2833de5573f0e02d",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e59c/0x8",
+      "sha256": "1f9598b7706bcccb8a23a5858b5fbe9c1ab0f92319ac8fab5f8bdcfeca1f805d",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e5a4/0xa",
+      "sha256": "f3f731af4e0836cab7df3d6777e53a73b5e535c79a9373aedf423fb8da341bd9",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e5ae/0x6",
+      "sha256": "121a25896d138195c5f4fd2f55a4cdb45a073edbf4c39b53337d2dda289384b1",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e5b4/0x4",
+      "sha256": "b26770e066cc07611b90101476aeda187975d1fbbfff6d83dd1672bc951fa601",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e5b8/0x4",
+      "sha256": "29dbaa8f8a22567e11bb9756f266ab80e11e3bfd4091fa3ea5c9884c75f89ab3",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e5bc/0x94",
+      "sha256": "ba9ded5fdcf2174bd533eb9de79c8fbd293e962736373f7a100ff459cb0a0392",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e650/0x6",
+      "sha256": "448380051538ff018e23d49bd1188b1a047f4bc8bb1530b0d42d17f299ef4130",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e656/0x12",
+      "sha256": "a15d786c2909b729016d103fa70b34b3e59b75acc710ce0f93058eea6a5dddae",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e668/0x8",
+      "sha256": "346267f3db4a04ea2c67c6918a70f50a8a399d9016507fd8a1fff6d35c1246ce",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e670/0x4",
+      "sha256": "74d86eebdee753adb3f361742c89e39b81e3b1fa8ac00fdd384cc57c9da49d1e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e674/0x2c",
+      "sha256": "558a7fcd5812aa8e2f232f9b2baddf0cc92ec57b6ff72722311d492f3efff731",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e6a0/0x72",
+      "sha256": "99919f11c6ce036104a253743c3f0598715b95b5bbdc63f1046a4ac197ceb7d1",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e712/0x8",
+      "sha256": "7a8bed8c559e0e0a3d4a1262f2f3d52f62aafe029cbd5a6116e752832a632a8f",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e71a/0xe",
+      "sha256": "049cd26b70cd521a68fbf9faf00aabed0867f16dd4764ba9302e6e0d18128a80",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e728/0x10",
+      "sha256": "0d5b25112b6b2b4c6556103236c4cb480e7e2ac853dba3493031ba38e141a00a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e738/0xa",
+      "sha256": "a05a79609930a6521cf7dc7fe2300057b70d63b3e95e03e18be1c95fde1ab792",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e742/0x26",
+      "sha256": "f079c1b91f38e09ecaebd255c429410420ec91b4af905614abba6e47400d3976",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e768/0x4",
+      "sha256": "ec0c12b6d63d527f40170a777ff4c2c0fa96ee3602100e3c44129b62627181be",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e76c/0x4",
+      "sha256": "1729eb05ceb0245b476ff5cee63e17f56bdf6edb527c8cc0a64e921fed0c5d7e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e770/0x4",
+      "sha256": "d9cb98ecb28b2266ca78f4947c8132956d86666ee891e397c44037f551a1079e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e774/0x6",
+      "sha256": "b2b14cfa4c51fc873782eae29202bd3bcf8371647d4ac3af67ffe83a75af4ffe",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e77a/0x4",
+      "sha256": "f2b68c58096104d9d8fee326b33b8bc88bb988f65705a4661dc074c00e5d2975",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e77e/0x4",
+      "sha256": "fa458257cb7eb0ecb0494a6950c0c9b6f9cfcbd0ec10cb87fc17d555a1f49deb",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e782/0xe",
+      "sha256": "4069324de71bd383078ee300dbb851c379f4a952dd9c4ab54dcd02f3c1848364",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e790/0x4",
+      "sha256": "57ea83a1ae2d7ace69f794ae61d0c98b7952e3f42dc73d463dfc46da8d874986",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e794/0x6",
+      "sha256": "e9cd4e914664b2753f7134b524c7577c816c5e5f731719c5ec64426f824393f8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e79a/0x4",
+      "sha256": "bc4c9fc97299af01cd1923e5b51d3d65ea03f049e438fe74aecfe99ceebcd5bc",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e79e/0x9a",
+      "sha256": "dcf3f46b8f5dac81c08fd615a1554b2fc99b6120a510f9351ea0ac0ed92bcb9f",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e838/0x8",
+      "sha256": "209c67aaa8fda31dd90b3d62e1aa13717a0426d366f3d4ebc9085a691d95265e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e840/0x6",
+      "sha256": "1e964d9d9f14039d7bf6e1e48a1e2cb5dba0f38e5abaac5adf51028e269073c6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e846/0x62",
+      "sha256": "f08bda6505d418c64d344197f8a05518457095f324ecebfc27d2f189f77fb1e4",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e8a8/0x6",
+      "sha256": "1f377b73f9d40ee0c8327678171fe40a04ffb362fe7ae937db44f7761cd33385",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e8ae/0x9e",
+      "sha256": "a9482ad1d7d37d401745762b9cf50f3a08e03f09ffe61bc551929d824a0a56cc",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e94c/0x8",
+      "sha256": "c58c1b1c088392c8c871db67c2335a4341cd7e6b7432b8660fc3201c3fb54536",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e954/0x4",
+      "sha256": "24abe7964a210c896bf4e311159ef36ad5f147bb488c63f2b2e9a62c0792f2d8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e958/0x3a",
+      "sha256": "35cacf7129edacb8f1581befa355544320623022e7f83262c54fb7ce8dcc31aa",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e992/0x16",
+      "sha256": "460ce446a9fa212e94d6cde1147740311597a6f5ee3cbf963759f0c3002bd47b",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e9a8/0x44",
+      "sha256": "34437c3e7375b17c39000d72339af55711a73f99384fec7f68d9409fdb45d3fa",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e9ec/0x6",
+      "sha256": "cd220ae8f4ced9b69521a33be469941aa1c0a26fec9eebe9d5598df380e3aa3e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_draw"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38e0d4/0xba",
+      "sha256": "6c62fcdd071ad3bbb789e95586725d2f91a4ac4d774772aef2b61a3dc0e4e6c6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_rect_init"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383eec/0x12",
+      "sha256": "d0d4d8d3c48eee5f70371b48bd70461bcaf958fb7734810571ec8fcdb05ac1d9",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383efe/0x14",
+      "sha256": "a25a4551f0c3ea3425738a42667534de0d2f7750ec802b26e3e71228ab171074",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383f12/0x2c",
+      "sha256": "731adc6b3decf06412cb193f1734f7f979f643f42447757fa140e94f26f4ace6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383f3e/0x10",
+      "sha256": "2b92cd0ee10a119c5e29eba4749cdd229a9e4c229e95b71fc00275f833a303ad",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383f4e/0x2",
+      "sha256": "16669a8b3f091ba0141d35df979dda1c14bdbd695054984065c6119150ec09ac",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383f50/0xa",
+      "sha256": "de0b5357d7057639bc707167bdafe709ecd5639cf0fdfe6bbdc5ec3b5251e326",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383f5a/0x10",
+      "sha256": "a7f55232e4a9e3e89fa91c50e563d178d824879fb821e53cd99b590f50043221",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383f6a/0x10",
+      "sha256": "c663dca9d0b912d2ea39d720e1cbd47b6e1d4d5cd37f54b4400246b27c652d28",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383f7a/0x16",
+      "sha256": "8409909aef48a930fe3bafbcde19244248af8bcb3b4d48e9e0cd72492234da92",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383f90/0x4",
+      "sha256": "2671e8ee6b4d74c3ee40518148292ac09b6615e28ec7502f811e18e3375133c1",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383f94/0xa",
+      "sha256": "a45a3a85cf347a384b8a087f4510e4752611cee267293cb84faed96eb0d4463a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383f9e/0xa",
+      "sha256": "dd274914e1497bbedc88ac25f6c53efbb13c30461afea084ecd1ad46dcc0f1a0",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383fa8/0xa",
+      "sha256": "d48dd2ab19d9204f8a62a81184152c57ff8d46acb442ade958f7d4f13b313a24",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383fb2/0xa",
+      "sha256": "ece51c1b085a6ef102b782b7fa391992e74214559231e7d78c49ca5ed600fed9",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383fbc/0x4",
+      "sha256": "65f5212c875e34cbcfde70fe943e16943622e7d19b7ed75a167b8df4f1fce17b",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc383fc0/0xa",
+      "sha256": "efbed53211b944eb384d96b2f259bf2a6535dfdcc3fce5ab9f5f3432b109e36d",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.background_visible_area"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8b9344/0xc",
+      "sha256": "18dcd6ff47f5c7a2fe851d55fe8007ee29143e9b79040c20a10d9a74cef06d4b",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_draw_buf_invalidate"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8b9350/0x18",
+      "sha256": "74e0434c04e35904e950e97811eef114051c8cf588996681f3ebb33a57c53662",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_draw_buf_invalidate"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8b9368/0x6",
+      "sha256": "0d108433d0654449197109cc8dcad7991ac696224ba32c61ea1cbd540b539e95",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_draw_buf_invalidate"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4950b0/0x2a",
+      "sha256": "379d18fd761fa66df27d8c034e3b0269bd852605b0e9111ae10d317560c09314",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4950da/0x4",
+      "sha256": "381a5a656442cbe41965039574a3c7db1d7d2fca522b2dc3036d27862d190689",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4950de/0x10",
+      "sha256": "dde8a0afa515544ae3f2183ef4e9c1ca6a7bcc3b86187bc12a8c4fc5a77421bc",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4950ee/0x16",
+      "sha256": "001d4f084da6d4501668c41f56b9b8c73fbfe0c95b636c37a98d13158c36ec52",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc495104/0x16",
+      "sha256": "984d514e782f8a553a9a5e4ccf46cee10daced201bdcaf8a06a0c7d3c018a487",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc49511a/0xc",
+      "sha256": "4ff633d6e66a751ea71c8013f4c0a7102bd62c5687d2943de78341497e6c3605",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc495126/0x12",
+      "sha256": "86474d38387062ad5a78648802f9d27c53febb02997827ec2aba285b9e76c248",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc495138/0xa",
+      "sha256": "1ea31fe9be2dcb4238f9c0b2327eaf0b7f9ed0b57da459fa81b1d08624c24f4b",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc495142/0x14",
+      "sha256": "adc143382743e3cadc7f948295b7c7b463173e7cb6d7f2a75c47301d464eac4f",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc495156/0x4",
+      "sha256": "d03cd893c7635b8eea66a3b3e6c1caa8a73850fcaf2bb6a94f48df6bf08f7fea",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc49515a/0x1a",
+      "sha256": "741a6df53f279281f3cb9c10674e99d9d4417009f78d293f8d3507c950d4e046",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc495174/0x8",
+      "sha256": "5612a85cdcc3c2bf80f417223582ca7856fb0a120378fd070a622fe7c75c65f6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc49517c/0x4",
+      "sha256": "586e0a810b93767557cbc96a3e7a90f522b59fdc0ca6a9f4ad432458b19a6a1e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc495180/0x4",
+      "sha256": "4d78f05ec00318ebf826628ab486516b55893bcceec00f1ae592b427239ddc99",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc495184/0x4",
+      "sha256": "e6253b75ff60ba90863218eb25bdb3743006df030779221ab9c7baec701a0c73",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc495188/0x18",
+      "sha256": "fab14fbf2fe6f08fc7dd7b6f4aa87e39d74db9b25cf6eab50b1411a96a618ba6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4951a0/0xc",
+      "sha256": "2804a45c28fa245d7f6d221a61b521ca375263b49b2c4f4bd310cab302c50b58",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4951ac/0x4",
+      "sha256": "e182bf435c50037730d5455ff22a25caafc2ac4be750b15c2cefa0f6d8651b25",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4951b0/0x2",
+      "sha256": "9734b67ad3470ea464885e572797005174b13f12e1af25fb12f2366eb3b40e80",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4951b2/0x4",
+      "sha256": "dd857cb916bec6be7a698242e1ba54e012628afb0b3172a98ebcd141291e41f3",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4951b6/0x4",
+      "sha256": "8c3189791d6df0fc4c48ae52d8dd950605e513c2a98e888550ebd92cba670e9e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_create"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc49258c/0xc",
+      "sha256": "51222570e9d127a066a6704a08318f5fe145b2eb90bf26d397a18cdfbb622a4c",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_destroy"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc492598/0x10",
+      "sha256": "0217ce713343524b3a19b8d3566ff51f151f9d876394bc29b3f6aa17fe93d5f8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_destroy"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4925a8/0x6",
+      "sha256": "53be6c58d0972128c6a8143c51d5033db79ff55bb7095448d8f2928746423f5a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_destroy"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4925ae/0x6",
+      "sha256": "190f111a1337ef6feb6c8f283d65106f8d527c355d8ef081a694f3d459aaba92",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_destroy"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4925b4/0x6",
+      "sha256": "d716c007dba8f2ed3d54074e6ffff340a6e9193b13ad075969f319f83d4874c8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_destroy"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4925ba/0x6",
+      "sha256": "2ca750a95b2d707633d58888657b0fa044c13b9b55a8185358f134484f82ade7",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_destroy"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4925c0/0xe",
+      "sha256": "7a73062debff1ae46546aef39732026bb5be4034e6cc9797704624d63f01d749",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_destroy"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4925ce/0x2",
+      "sha256": "d56885d493e7769557d40e97bb532a81711416728be4a577a4ceb44ad2e1e910",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_destroy"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4925d0/0xc",
+      "sha256": "816ba83c75eec91453cc1693aca3cba15fc768f0e3e1ef9f9932fde53914ca0a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_destroy"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5047b8/0x1c",
+      "sha256": "18c95f67b6c3287d72827796048d8d1cadfec81a95ded41c7a4693775d4848a6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_font_resolve"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc34fdfc/0x18",
+      "sha256": "a15529f993ca4f7afd3af9610364221d58c38d342ac177f5ce5fbecddac0fc5f",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_localtime"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384e6c/0x14",
+      "sha256": "192760379cc99f7ac92c49e00be6c5a79e9582b1850cdac84f8005b9f2a1df39",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384e80/0xe",
+      "sha256": "1b956ab4625cbbad9b02c5b8027bb0ffd2804d114d677868b1e185dee5274b87",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384e8e/0xa",
+      "sha256": "a7e0dd32503eff4709461c275baaeb261cd9b54e611d607b5b32fda82a98dca3",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384e98/0xa",
+      "sha256": "40a1e70dd1657212bb7d1a5e6a1a57f32a99c1460c364588028eda46bd1b3c8f",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384ea2/0xc",
+      "sha256": "dbe042b9aa5bd044753c4da2503cce866910ab0c6fe0dc3ec760c4fc1af1bfbe",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384eae/0xa",
+      "sha256": "b161be326e14add2d55b7f0590bfb2bd3c78471768b30e25a02c37c40ff3c5ce",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384eb8/0x1a",
+      "sha256": "0e0b95d8407fde7cfa11bc29c60935593661c93321cdf0b9ba6b5f1508a5924d",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384ed2/0x2",
+      "sha256": "bc438cc9fb609ad32431cabfe501321b2673fbbf8776ce6c650c0eab4d4380a3",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384ed4/0x16",
+      "sha256": "d73e3fb4d4490caea731f531bdcfb29153b49af2506a46c7921f8bfb51b28b02",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384eea/0x6",
+      "sha256": "53be6c58d0972128c6a8143c51d5033db79ff55bb7095448d8f2928746423f5a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc384ef0/0x4",
+      "sha256": "0d375f5e348d5e29e8a49f27e7fd11af77b86c58fdd35e1e0f701b15e7919c10",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_object_delete"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909538/0xc",
+      "sha256": "c47aa01e34df423d3d58f4c9fa7c24b286d756c479cfea913fab815511ddec3e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909544/0x6",
+      "sha256": "51447b9dbdff1406050bad5779c61512256b251dfc3c5d9b8f85aa4c39a11f44",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc90954a/0x4",
+      "sha256": "f98609fa95b997f9829d11260b9733524a3231845ed947e40b153593a97c89da",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc90954e/0xe",
+      "sha256": "305f080b489cbc825121a5696d93a11e3de27fd69877a3e96d1795456635ac3e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc90955c/0x6",
+      "sha256": "361f32c17ec4daf4ee10de7d8856c30afcb9fdb0c6cf4e37e0b326a36232b82f",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909562/0x8",
+      "sha256": "5b4d7df5e117002f5b11fa5876f2c6d5db1ec4af5c4b83a8acf80782b6181526",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc90956a/0xa",
+      "sha256": "792128fd4f95f356363fef156c55b5af8e92b9c9250bb27b9e6569f5158f4fc3",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909574/0x4",
+      "sha256": "0e9befa7782c3648cbf8a5e5dab99efc3f55b80a42fbaaa45896f8c88b8b71cb",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909586/0x1a",
+      "sha256": "97af018b9e81d7ced61a307f6519197c528d10d5d9f497307446c8343cea3465",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9095a0/0x4",
+      "sha256": "eb002b7e942c9247da37321f035bb7ed0f4009b78b622bfe459788675fc6b0f7",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9095a4/0x30",
+      "sha256": "a7068a853e90213b0c710eacf757f3aea973ac33aa936baeb13b3a6e8b5106ce",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9095d4/0xc",
+      "sha256": "e29ffd9fb9b14be150007213acd3e2b3ed14fd9fdbedd3d57d2dc5c1da3477d6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9095e0/0x12",
+      "sha256": "91dd1510c1d0de2dee9141640809aba5d28f98425db0d92611f422c8c18a5a75",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9095f2/0x4",
+      "sha256": "f6b83365a91551a81299835367620b8bf17332b691c0f15fa6ff31452f8d9d20",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9095f6/0x4",
+      "sha256": "bced28b3c4cdcda24d9081daccf5d762ca5d1adf5efb7b1263e92337ebe9ef40",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc9095fa/0x6",
+      "sha256": "35605b46b4e9bfd574eadfd0cc92fa55356e0e75720f347afb74a2d50de6adc6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909600/0x8",
+      "sha256": "46ce308602320082cf0d4b15d166d333c3074ab52f32c0d6f1e84d1e7ca3aa35",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909608/0x6",
+      "sha256": "b4ead67d75693336ddd8aa1c973033a14cddfabd20511a283ba2699b16ca69cd",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc90960e/0x18",
+      "sha256": "2f8bf78a983dde70a8db41a62b95ca22c5ef96943c6ef397ba90f0c496f485cd",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909626/0x4",
+      "sha256": "59edc24da1b11b69b4f177be483fdef46c075b1f01492380d1ae20f31474a6e1",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc90962a/0x4",
+      "sha256": "d8b585ae209122ca6fcdc206fb997f7686f98b2eb5797a9de2beb12dccae672a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc90962e/0x12",
+      "sha256": "12c3f005e45d3641d59b80b1eca34c92f1b5d61c95357090c4b4a0e53fdee028",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909640/0x8",
+      "sha256": "ddb8bbb693bda11be748f33d3562fad2161e3e2ec45d50eb7c798d779bc7eb51",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909648/0xa",
+      "sha256": "9a2ed6a4017b4e06b1f490e8dcbf42b744ca6d4590be7a9a1d23b89e8e11c02f",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909652/0x10",
+      "sha256": "851da557720a0dff94a3f2a880ede8b3ce756808a47dd13d71371b2f2f2ce9e1",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909662/0x4",
+      "sha256": "77fa0550924fd446f7e67aa74ac89180c433fe9de884bc054a558ac76f10feea",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909666/0x8",
+      "sha256": "c74aa4c041b81c55eb1ea1fecb23788999f67b286eaac4d253f3f7e847155510",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc90966e/0x12",
+      "sha256": "cd975f461969741f8ed7086e570a2626b031309f81541d04ac424166dd157db9",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909680/0x4",
+      "sha256": "767c9479ca4c63e1c6bdf5ab7e02f298664800a819893820471359858ad4f83e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc909684/0x6",
+      "sha256": "4c106f9a5b05507bc188846e4423afbac6d5ce3ab5ed7b23952e21e3d69fe12d",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc90968a/0xe",
+      "sha256": "a7adb126302436783db3b7d25822bf06b7e6329bb700aab986604382dda92da8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_premultiply"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc34d50c/0x34",
+      "sha256": "1e91e8b1aee26590500c9d568b34f5374368bfef7ada36ae64252264a3c3eb94",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_realtime"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc34d540/0x12",
+      "sha256": "921e7e12c1fb6c98d86c1ba3bbd9fc42724b50f06fcfe980090c6c31f5b80841",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_realtime"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc34d552/0x12",
+      "sha256": "9a9e57b9fa930a21930ec9d0a35fb373fb897a11bc27ed7230a5e8e52a42d26e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_realtime"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4fbd64/0xe",
+      "sha256": "cb59174bd3acfa39dd377c5d85b4de57e66f0ae957aa926ea3651d501d5bff5d",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_root_style"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4fbd72/0x4c",
+      "sha256": "c029fb0ba845ac9d3f692532d3d6a57f1d54c4db15a4655465079cce476d636b",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_root_style"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc4fbdbe/0x1a",
+      "sha256": "225ebf07e6a9e0ebcd84d2695597b0300c5244fc89498859f688f3f59037e721",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_root_style"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc6a4600/0x24",
+      "sha256": "b867821efa847f54776a990cb36ee18b1e374a0af06e952b1301465223b62f3f",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_snapshot"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc6a465c/0x8",
+      "sha256": "710d2a29012a72ae86f36a2528e31be464896f52608d8e4ab536c5ad60820eb2",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_snapshot_free"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc6a4664/0xa",
+      "sha256": "048a545fbf3562b124de5e485b5148012e6d82c151b682610d8be8943de7dbd8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_snapshot_free"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc6a466e/0x2",
+      "sha256": "64f027d99ed578c7921c77efdf5a1e3b9b6b183cf84255e78702288190c091a6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_snapshot_free"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc387ee6/0x16",
+      "sha256": "f5f2f7292dc3fad97182de145f9039b6d8b7905621fd191f1e52eb1c102c5383",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_text_align"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc387e84/0x20",
+      "sha256": "9951f8224860c1d5be73e5ea53db9cc533d37d406dc9f485b96dc0aca8d8d869",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_text_color"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc387eba/0x16",
+      "sha256": "2b3c797970f0fe190e97e75d23ff1d2101085549f1d19f6ad4a6eca2677a51f8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_text_font"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5464f0/0xa",
+      "sha256": "1ca36f04d3d9cf1acf266932b63b91f45b31990152da112c01711316f5d326f0",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc5464fa/0x4",
+      "sha256": "defce75f336c3efc51368aec21e36981bc9360016c5a36050fcea1a83a95ea49",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc546506/0x2",
+      "sha256": "0d915a3817397d574d32fdf36d15d0172f9273a2e9f7b59be1fedfc2fd1c77eb",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc546508/0x10",
+      "sha256": "bad5627a833732ee64511e3e1573e089565a7566063058198478ef86f86aee9c",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc546518/0x2",
+      "sha256": "64f027d99ed578c7921c77efdf5a1e3b9b6b183cf84255e78702288190c091a6",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc54651a/0x4",
+      "sha256": "df5cb7b3847a3a8e36fae63ebd3d8185094d42c1723b65c907ebbf78ae4af249",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc54651e/0x4",
+      "sha256": "d707d9df761668f40820b36421f43ce1a996fb6c9e7d4364698791ccf9558110",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc546522/0x4",
+      "sha256": "d53a4042ce46cbc6def12a14beb75a0f14a0484b6d34c84b6cefe760195142d3",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc546526/0x4",
+      "sha256": "de13013b0d56f21fb6ac6d05c6a487c6a2460ec2977dbe3e9a3c9d61c638810e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc54652a/0x4",
+      "sha256": "475d34e8674fbf78f408b173488f178c02730ce114a1e3136341ec511e4b531b",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc54652e/0x4",
+      "sha256": "7ff3f90c51e9ba7f9bd7480196dfe4dd43d6ec9c9e20f70a3e65c391895814d9",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.calendar_weekday"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8f43c8/0x6",
+      "sha256": "e4e6130891bec928238e04ff579b5f55cbcdcf8b8bbb7f033eba7a0f229afd1c",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.image_snapshot_release"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8f43ce/0x8",
+      "sha256": "e4ebabb4c644fb12be39b3e1e2e436e3de7ef2826d13f6d4a070b6ebcbdc6345",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.image_snapshot_release"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8f43d6/0x6",
+      "sha256": "0c9105fbd712d9d56b273dfcf3ac88ffff4c5e884db85172b390f1dc3df08192",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.image_snapshot_release"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8f43dc/0x8",
+      "sha256": "1b9650f8730cb8036836a86059eb56b550469f5128d4ed3dca7564bfdbd89288",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.image_snapshot_release"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8f43e4/0x2",
+      "sha256": "61fc1bad7481acb8bd80e09b61aac10e32b2f99fb9ab29f98ed3e632718c181a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.image_snapshot_release"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8f43e6/0x12",
+      "sha256": "dc9b8b272c23084c2f3de33232be38113f81bf95143411f85f97de6913a72cb8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.image_snapshot_release"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8f43f8/0x2",
+      "sha256": "8a9d031b50aab2612d550d38f61e85befeef50e3ea8b249551b0c441737f2cb8",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.image_snapshot_release"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8f43fa/0x4",
+      "sha256": "8eab84e5f04c2e8ebd73a217bc444f35478123861908438ca4a4c21f50bb4a87",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.image_snapshot_release"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc8f43fe/0x4",
+      "sha256": "424bd2dd30fd8d04e0691bd5cacf262961a7d1bab774c8c45e15a352dea285dc",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.image_snapshot_release"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3812b4/0x1c",
+      "sha256": "6aaea0fcc9e1cb205a3bfa368b5c211d05972511c648558c2f1816511bc34d34",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3812d0/0x2",
+      "sha256": "4aa92b885ebbf66e1ce9d63f4d837efb5b37a87b38fdf6a078e6e55b73dd6b17",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3812d2/0xa",
+      "sha256": "80708300d951d0016ff2c08e3283ff7f63809a42a7322f031b012848a83a5f35",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3812dc/0x14",
+      "sha256": "9ced5794c1704b42bf0058eca1fa0c176825dc81e9a91a2a9b51562fb260ded3",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3812f0/0x24",
+      "sha256": "65d56cef120cad49fe047dad92433331c02130f20b9ef6419e4e1b5385bd0895",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc381314/0x2",
+      "sha256": "b8a7fa77eb1a802d69cd0c68721cb9fe2cd8470cde5d595a4b48eb14cfee429e",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc381316/0xa",
+      "sha256": "77277a92ac82d931fdc1b091a3914dd8419e57043857be213ae730f3c60381f9",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc381320/0xa",
+      "sha256": "a85ef202f0e2e4e67ae73858b97a157c157493623713dc1a21d2a6730c8f2fa7",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38132a/0x24",
+      "sha256": "0d0ecd934dfba91374e98093818e1b6fe11851154ebdb0be5d6d2e4d8f09daed",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38134e/0xa",
+      "sha256": "ef28c8ba805b79ff8505835314318051c48e548507ac9f76d7b85625b44faa3a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc381358/0xe",
+      "sha256": "85d9f3a9d407ffe46402df79d736a552539c32fa8ca7ebfeaa05464a6aa5a403",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_draw_buf_create_ex"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3872b4/0x18",
+      "sha256": "f3b6ccde8cc21139b317cbb48d925f039bc51c8da8cb18b821c241efc417ff21",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3872cc/0x4",
+      "sha256": "e92a4a7bf78caf7b7edea83d0a5ae69ab8a7e247a8f3ce3932d6c8c7ddd6cc48",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3872d0/0x16",
+      "sha256": "2b7bc9c88738f9015a3d6dda333faf6b6d9000aaf85d66be617a091d0d005aba",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3872e6/0x1a",
+      "sha256": "50ea504a7f5d096c5f4b53ac7f2ebba7ee9f7dd11a798ea5992515eea68466a2",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc387300/0x12",
+      "sha256": "3aab701cc822d3306c195bf047bf2823cd4e1fc68040eeb6e2ba402d5858c4ac",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc387312/0xa",
+      "sha256": "a8578eb62f2e55fb276977e5885b7cbb9db62d7b64109fdd5cf998d19e7da6f3",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38731c/0x2",
+      "sha256": "4b3c094d746dc1e9e68f223ea733e509732d3af2291195be6d0ae3016abfdf50",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38731e/0x2",
+      "sha256": "bc2497011df4e0cb8bef129f05542dccf663a1cceccb25c95560899a7932a6d7",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc387320/0xa",
+      "sha256": "aeed3767aec64caea96b32b0dde73af83f3cf9d882889f16a67c4c1a02f829ec",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38732a/0x6",
+      "sha256": "ede67fe43637e98c24ff1d9a5e85f58bd185452a801c0b24d04a25237a4de9d7",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc387330/0xc",
+      "sha256": "a447744b50ea5f39e0ba935e2d2222455f76755fd9666109cc5f1b7b53e75c63",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38733c/0x28",
+      "sha256": "b912993f4fa130ee6a918ec8952d48a0a2ad2803b2b97026aea5364fcde99fbc",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc387364/0x8",
+      "sha256": "81142e1b187b6d20d1c5c7cdf2ad84e8344ef03c2863894d429663cd7c73d061",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38736c/0x4",
+      "sha256": "1b6134d5f0379df5eb5777b59569890912fc84229694034c6670902bce0a1bdd",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc387370/0x10",
+      "sha256": "c5c6e4ceab572a8ef4216058a2cccffd23eea04b838ff116816f49c34d7be09b",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc387380/0xa",
+      "sha256": "2c033a9d033cbeefb276c74b0c7014d2c497513d0b65bc54684689b5fca1c32a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc38738a/0x40",
+      "sha256": "2f0cb8ff3db1b62fd794ee8e639013421a4f4dcedf3b361f0841451cca8a29fd",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3873ca/0x10",
+      "sha256": "494877407eb08dd61539592942cfaccc8d1600e76de600bcd28251fcf8c2216a",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    },
+    {
+      "uri": "firmware://31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74/ap/0xc3873da/0xa",
+      "sha256": "2853a56781c9637c24c31a94289c6990ffa7ebd895f35da11b56161fef8fb595",
+      "role": "function-block:xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+    }
+  ]
+}

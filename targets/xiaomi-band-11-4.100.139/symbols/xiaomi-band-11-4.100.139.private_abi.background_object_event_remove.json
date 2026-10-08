@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.background_object_event_remove",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "lv_obj_remove_event_cb",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc37fc62",
+  "callable_address": "0xc37fc63",
+  "prototype": "int(void *object, void (*callback)(void *))",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-BACKGROUND-CALENDAR-PORT-139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "APPROVED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-RESOURCE-BACKGROUND-CALENDAR-PORT-139-001"
+    ],
+    "source": "Exact target reference mapping RH_LB_OBJECT_EVENT_REMOVE; thumb-full-v1 fingerprint and per-basic-block AP SHA256 receipts in EVID-RESOURCE-BACKGROUND-CALENDAR-PORT-139-001. No global delta or range broadening. Source ABI semantics inherited from xiaomi-band-11-4.100.177.private_abi.background_object_event_remove"
+  },
+  "notes": "Restricted port approved by user on 2026-10-08 (date only; promotion timestamp normalized to midnight, not approval time). Source .177 ABI constraints retained. Device/GPU/restart/storage behavior unproven. Serialized UI owner only. No public approval/device acceptance.",
+  "promotion": {
+    "reviewer": "user (explicit restricted port approval 2026-10-08)",
+    "date": "2026-10-08T00:00:00Z",
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "prototype": "int(void *object, void (*callback)(void *))",
+    "ownership": "Inherited exact .177 private ABI ownership constraints; no new ownership authorization.",
+    "thread": "target-private-ui-owner",
+    "device_probe": "NOT_PROBED. Approval is for restricted static .139/.155 port only, not hardware acceptance or public veneer."
+  }
+}
