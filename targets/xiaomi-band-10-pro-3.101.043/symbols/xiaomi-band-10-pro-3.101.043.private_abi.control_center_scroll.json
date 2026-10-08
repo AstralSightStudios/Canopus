@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.control_center_scroll",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "control_center_scroll",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c5036c4",
+  "callable_address": "0x0c5036c5",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void(void *event)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Native Control Center callback installed by 0x0c504c20 on parent(page), ALL filter, page user data. Forward native begin/end so capture allocation and retirement remain native; only validated foreground/snapshot visibility is adapted after begin.",
+    "return_value": "No allocation ownership transfer. Ignore setter return; callbacks follow native event ABI."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-P67-FOUR-WAY-LIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-P67-FOUR-WAY-LIVE-001"
+    ],
+    "source": "Independent exact .043 AP IDA disassembly/decompilation and startup-copy alias audit; no relocation inference or device approval."
+  },
+  "notes": "Native Control Center callback installed by 0x0c504c20 on parent(page), ALL filter, page user data. Forward native begin/end so capture allocation and retirement remain native; only validated foreground/snapshot visibility is adapted after begin. Experimental fixed-background/live-foreground use only; NOT_PROBED. No broad range or transitive callee approval."
+}

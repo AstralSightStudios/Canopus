@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-P67-FOUR-WAY-LIVE-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "How can fixed backgrounds retain native timers, widget cache reuse and pool lifetimes on the other three p67 pages?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.control_center_scroll",
+    "xiaomi-band-10-pro-3.101.043.private_abi.widgets_scroll",
+    "xiaomi-band-10-pro-3.101.043.private_abi.notifications_scroll",
+    "xiaomi-band-10-pro-3.101.043.private_abi.background_object_hide",
+    "xiaomi-band-10-pro-3.101.043.private_abi.background_object_show",
+    "xiaomi-band-10-pro-3.101.043.private_abi.background_object_has_flag"
+  ],
+  "prototype_hypothesis": "ARM AAPCS callback/setter ABIs verified by exact creation call-site disassembly and XIP thunk targets. Event user data +12 is page; coordinates are page+28..40.",
+  "callsite_evidence": [
+    "control_center_scroll: AP entry0x0c5036c4, evidence440 bytes, SHA256 f05b5eb31d3aee62ab95f6206fee28a1bb3eb0f8acbb647f2328f84492e7e489.",
+    "widgets_scroll: AP entry0x0c50abb4, evidence510 bytes, SHA256 1a5fc7b2e4bd61af243cec71943ee562c0d9d2092ecd215ec11b5a546afb376d.",
+    "notifications_scroll: AP entry0x0c527bbc, evidence512 bytes, SHA256 a0c8509af790268678a945d0bac12932d3c260d9ec776f73fb14b745df1aed7d.",
+    "background_object_hide: AP entry0x0c588960, thunk8 bytes, SHA256 29e34d39e2218766f85002ea60d0d6844218a49320c2c1b120e5e06ed63641c9.",
+    "background_object_show: AP entry0x0c5891b0, thunk8 bytes, SHA256 a989a66731520fba5f54068a9e55bdb645e0efea88a52346e673ed5c6ec6eddc.",
+    "background_object_has_flag: AP entry0x0c5881c0, thunk8 bytes, SHA256 006f372b0386eb47ed22cbfec40c0388afb78bcc3862bc4b1007d8825f10607a; target1c028d94 reads flags+44 and requires all requested bits.",
+    "Evidence windows are not callable allowlist ranges; each record approves only its exact stated identity."
+  ],
+  "control_flow_evidence": [
+    "CC creation0x0c504c20 and widget creation0x0c50a838 register exact callbacks on parent(page), filter0, userdata=page. Notifications0x0c527a84 has the same binding shape.",
+    "CC event9 captures root2010fe50, publishes native image2010fe64/buffer2010fe68, swaps hidden flags. Event11 at x0/-336 restores live foreground and retires native capture.",
+    "Widget event9 cancels201100d8 timer, pauses widget updates through0x0c50aaa8, then first entry may reuse cached buffer201100d0 and set201100c8. Later entries take new capture. Native end x0/336 restores live and releases native buffer; these effects must remain forwarded.",
+    "Notification event9 writes lastY20110ecc and can scroll list20110ee8 to bottom before pooled capture helper0x0c527640; end0/-480 owns snapshot deletion and may synchronously reconstruct list. Forwarded calls invalidate saved identities.",
+    "CA67244 creates class2cdba8b4 full-page foreground; CA5B504 creates list class2cdba28c. Native image class2cce61ec. Foreign objects and stale slots are not accepted.",
+    "0x1c028bd8 ORs flags at object+44;0x1c028c84 clears requested flags. Adapt only flag1, preserving all other native flags and using native APIs for layout/invalidation.",
+    "Live experiment may retain unused native opaque captures while their images remain hidden. Captures and pooled descriptors remain firmware-owned and are never repurposed as alpha buffers."
+  ],
+  "ownership_analysis": "UI-owner-only borrowed object identities. Forward native lifecycle; no module-owned foreground snapshot or pool release. Hide only exact native transition IMAGE and show only verified live foreground under the same page, after native begin has returned and identities have been rediscovered. End/delete remains native. Module draw handlers require page/screen/native clip intersection and restoration.",
+  "unsafe_assumptions": [
+    "Other three pages have no independent device acceptance yet.",
+    "Native capture still consumes memory/time even when hidden; live rendering performance and power require device testing.",
+    "Widget first-entry cache, notification asynchronous update/rebuild, reversal/cancellation and system restoration need modeled and hardware coverage.",
+    "No GPU recovery, framework restart safety or unknown layout support is approved."
+  ],
+  "recommended_probe": "Mocked native callback effects with sanitizer coverage, exact four-surface ELF verification, then recoverable manual tests of each page and repeated swipes/reload/system restoration.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/docs/P67_BACKGROUNDS.md",
+      "role": "adapter contract and test boundaries"
+    },
+    {
+      "uri": "/Users/lesetong/develop/mifw/analysis-p67-043/vela_ap.bin",
+      "sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "role": "exact AP input; not distributed"
+    }
+  ]
+}

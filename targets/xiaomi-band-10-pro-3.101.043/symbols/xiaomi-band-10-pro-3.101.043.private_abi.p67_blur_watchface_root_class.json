@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_watchface_root_class",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "p67_blur_watchface_root_class",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2cd1f640",
+  "type": "const void *",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Identity-only custom class at native watchface snapshot root. Borrowed immutable data; no dereference-based inference or mutation.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-P67-STATIC-BLUR-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-P67-STATIC-BLUR-001"
+    ],
+    "source": "Exact .043 read-only snapshot reuse audit; custom class creation witness 0x0c50b174."
+  },
+  "notes": "Identity only, not ordinary image class; NOT_PROBED."
+}

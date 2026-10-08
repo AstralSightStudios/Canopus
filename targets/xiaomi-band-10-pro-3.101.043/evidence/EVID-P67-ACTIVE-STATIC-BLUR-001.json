@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-P67-ACTIVE-STATIC-BLUR-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Exact .043 ACTIVE module-owned static snapshot capture boundaries and ABI?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_snapshot_to_buffer",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_event_list_add",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_event_list_count",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_event_list_get",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_event_list_remove",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_pm_stay",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_pm_relax",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_pm_lock"
+  ],
+  "callsite_evidence": [
+    "Thunk to 0x1C06030C lv_snapshot_take_to_draw_buf. Cover search 0x002BB46C returns0 for HIDDEN root; fallback direct 0x002BA788 ignores root HIDDEN, children respect visibility. Explicit raw GPU fence required. NOT_PROBED.",
+    "REFR_START52 emitted at0x002BB8A2 before display+58 decimal (+0x3A), mask0x02 set at0x002BBA20; REFR_READY53 at0x002BBC98 after clear at0x002BBC3E.",
+    "Exact .043 generic event-list add thunk 0x1C07A3E8 delegates to 0x002BFC24. Display list is display+736; ALL|PREPROCESS filter0x8000. Not an object event API or object descriptor getter. Parent provider matches callback and generation metadata before removal. NOT_PROBED.",
+    "Exact .043 generic event-list count thunk 0x1C07AB48 delegates to 0x002BFC6C. Display list is display+736; ALL|PREPROCESS filter0x8000. Not an object event API or object descriptor getter. Parent provider matches callback and generation metadata before removal. NOT_PROBED.",
+    "Exact .043 generic event-list get thunk 0x1C07A4B0 delegates to 0x002BFC7C. Display list is display+736; ALL|PREPROCESS filter0x8000. Not an object event API or object descriptor getter. Parent provider matches callback and generation metadata before removal. NOT_PROBED.",
+    "Exact .043 generic event-list remove thunk 0x1C07A6F8 delegates to 0x002BFC9C. Display list is display+736; ALL|PREPROCESS filter0x8000. Not an object event API or object descriptor getter. Parent provider matches callback and generation metadata before removal. NOT_PROBED.",
+    "Native display initialization at0x1C02F538 uses0x1C07A3E8(display+736,nativecb,51,0). Native event53/52 dispatcher0x002C3028 sends list before/main flag.",
+    "Stock miwear snapshot0x0CA5FB40 wraps snapshot thunk with PM stay/relax: literal0x0CA5FB4A -> native lock0x200EB538; BL stay0x0CA5FB52 ->0x0C1A78F0; BL snapshot0x0CA5FB5C ->0x0CAC0878; BL relax0x0CA5FB64 ->0x0C1A79B4.",
+    "PM primitives reference NuttX drivers/power/pm/pm_activity.c; BASEPRI-protected refcount at lock+40 increment/decrement; domain+32/state+36. Existing initialized116-byte miwear-snapshot lock0x200EB538 domain0/state0."
+  ],
+  "control_flow_evidence": [
+    "Capture only when needed at REFR_START; failures retry at READY, not continuous per-frame capture."
+  ],
+  "ownership_analysis": "Root borrowed synchronously on UI owner; drawbuf module-owned format15 BGR888 336x480. No source pool ownership. 1 success; firmware task-driver/GPU errors are not propagated; explicit raw GPU fence required. Native PM stay/relax must be balanced across owned capture/COPY and each raw GPU fence; nested native refcount safe. Borrow native lock only as argument; never free/init/direct-write.",
+  "unsafe_assumptions": [
+    "No hardware acceptance: GPU/cache coherency, error recovery, latency and rendering NOT_PROBED.",
+    "Static status is not public API approval. Restricted PENDING constants only; retain verifier and exact identity guards.",
+    "Object event add0x0C5883F1 is invalid on display; use generic display+736 event list, no object descriptor getter.",
+    "Static recovery proves omitted native power guard, not that omission caused reported pure-black blur or25s reload. Hardware behavior remains NOT_PROBED."
+  ],
+  "recommended_probe": "Verify exact .043 device raster output, hidden/custom watchfaces, autonomous refresh retries, retirement and frame time. Host/ELF checks do not establish device GPU/cache acceptance.",
+  "reviewers": [
+    "parent-static-audit",
+    "bounded-core-provider-read-only-review"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-07T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "file:///Users/lesetong/develop/mifw/analysis-p67-043/ACTIVE_BLUR_AUDIT.md",
+      "role": "exact-target hidden-root redraw, active ownership and display refresh/list ABI audit"
+    }
+  ]
+}

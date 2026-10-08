@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-P67-STATIC-BLUR-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact .043 restricted primitives support borrowed native watchface static blur without extra capture or native pool ownership?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_style_get",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_gpu_finish",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_draw_buf_create",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_draw_buf_destroy",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_cache_clean",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_cache_invalidate",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_crossview_callback",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_watchface_root_class"
+  ],
+  "callsite_evidence": [
+    "0x0C589448 -> 0x002BCA3C: uint32(obj,selector,prop), stock restoration retrieves (obj,0,40).",
+    "0x0C187BB0 -> 0x002B3DD0: int(void) raw submission/wait, zero success.",
+    "0x0C587F38 -> 0x1C031630: draw buffer create(width,height,format,stride); 0x0CAC0DB8 -> 0x1C0319C4 paired destroy(buf).",
+    "0x0C588F88 -> 0x0029D338: int(id,address,len) clean; id1 Dcache0x07FFC000, <=0x1FE0 per-line register+0x80, larger write1 +0x34.",
+    "0x0C588448 -> 0x0029D36C: int(id,address,len) invalidate; <=0x7FE0 per-line+0x18, larger write1 +0x38.",
+    "0x0C4B6A24 creates three default buffers(width,height,15,0); defaultmalloc ->0x0C1F903C, userheap startup0x0C19D4FC range0x3C271400..0x3DFC0000.",
+    "Format15 BGR888 witnessed0x0C148374 rgb888_image_blend; format18 RGB565 witnessed nativefb format11->18 at0x0C4B79F8 and VG5 mapping0x0C15B5E4."
+  ],
+  "control_flow_evidence": [
+    "Cross-view callback0x0C50B9F1 registered on four gesture owners, filter0 and distinct native userdata; forward unchanged before inspecting event9 publication.",
+    "Snapshot root created at0x0C50B174 uses customclass0x2CD1F640, not ordinary image class. Native source and cache flag must remain independently validated."
+  ],
+  "ownership_analysis": "Borrow source only synchronously within UI-owner callback; copy to module scratch and discard all native pointers before returning. Do not lease/free/reformat pool buffers. Output lifetime requires successful raw GPU finish before destruction. ARM dsb/isb surround range cache operations in module.",
+  "unsafe_assumptions": [
+    "No hardware acceptance: GPU/cache coherency, error recovery, latency and rendering NOT_PROBED.",
+    "Static status is not public API approval. Restricted PENDING constants only; retain verifier and exact identity guards."
+  ],
+  "recommended_probe": "Exact .043 idle/gesture/cached reuse, source retirement, GPU failure, reload/system restore and frame-time gates before device approval.",
+  "reviewers": [
+    "parent-agent-finalized-static-evidence"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-07T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "file:///Users/lesetong/develop/mifw/analysis-p67-043/SNAPSHOT_REUSE_AUDIT.md",
+      "role": "read-only ownership/publication/callback/source audit"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/mifw/analysis-p67-043/BLUR_NATIVE_EVIDENCE.md",
+      "role": "finalized exact-target allocator, channel order, cache ABI and rendering/layer boundaries"
+    },
+    {
+      "uri": "file:///Users/lesetong/develop/mifw/analysis-p67-043/vela_ap.bin.i64",
+      "role": "exact AP IDA database; finalized parent primitive ABI and format evidence"
+    }
+  ]
+}

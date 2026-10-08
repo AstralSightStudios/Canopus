@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.launcher_scroll_prepare",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "launcher_scroll_prepare",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c5166f0",
+  "callable_address": "0x0c5166f1",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void(void *list, int mode, int enabled)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Only audited (list,0,0) use mirrors native y=0 scroll-begin. Updates list+2232 bit2 and byte0x200d0cc8. No pool/snapshot modification.",
+    "return_value": "Borrowed native state only; no allocation ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-P67-LIVE-LAUNCHER-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-P67-LIVE-LAUNCHER-001"
+    ],
+    "source": "Exact AP static IDA audit with startup-copy aliases; see EVID-P67-LIVE-LAUNCHER-001. No device approval."
+  },
+  "notes": "Only audited (list,0,0) use mirrors native y=0 scroll-begin. Updates list+2232 bit2 and byte0x200d0cc8. No pool/snapshot modification. Experimental launcher-only live rendering; NOT_PROBED. No range expansion or verifier bypass."
+}

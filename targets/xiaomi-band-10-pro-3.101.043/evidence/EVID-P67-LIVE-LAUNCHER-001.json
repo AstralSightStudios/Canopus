@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-P67-LIVE-LAUNCHER-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact native entries are required for a launcher-only screen-fixed live-foreground experiment?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.launcher_parent",
+    "xiaomi-band-10-pro-3.101.043.private_abi.launcher_scroll",
+    "xiaomi-band-10-pro-3.101.043.private_abi.launcher_scroll_prepare",
+    "xiaomi-band-10-pro-3.101.043.private_abi.launcher_rect_init"
+  ],
+  "prototype_hypothesis": "ARM AAPCS verified call sites and XIP thunk destinations. Callback user data is page, not event target.",
+  "callsite_evidence": [
+    "launcher_parent: AP file+0x4c9578, 8 bytes, SHA256 4ad29dd2f08117e1778fed239907c141f5537513208763d802f0ac5aca5d31ce.",
+    "launcher_scroll: AP file+0x457d9c, evidence window 360 bytes, SHA256 5affafe1a7071be11740d7d3ce8f7bfd66d27482957753d3936c8cb785069901.",
+    "launcher_scroll_prepare: AP file+0x4566f0, evidence window 96 bytes, SHA256 f5881dd05f19bad91c4782f2ee3ba2965bbcb1ffc6ecefbc4bcbdcdff4d0b676.",
+    "launcher_rect_init: AP file+0x4c8268, 8 bytes, SHA256 2b0c256a9feec0b37c7c9a4d838fa806c67cfd0cf91de57a830ec9bd1aa5e7b0.",
+    "Evidence windows are NOT address allowlist ranges."
+  ],
+  "control_flow_evidence": [
+    "0x0c518228 registers 0x0c517d9d with ALL filter0 on parent(page), with page as user data. Live foreground slot0x201102f4; custom list slot0x201102ec.",
+    "Native scroll callback reads user data through 0x0c588310 ->0x002bfd88 (event+12), then page coordinates+32. Event9 sets byte0x201102d9=1; y=0 prepares list via0x0c5166f0(list,0,0) before optional pooled capture.",
+    "Native end11 and scroll12 handling must remain native. Experimental branch skips only launcher snapshot optimization, not page movement.",
+    "0x0c588268 ->0x1c034324 clears188-byte rectangle descriptor, image source+120. 0x0c588350 ->0x1c034400 submits descriptor.",
+    "Custom list class0x2cd2024c has event callback0x0c515ecc: forwards base class and draws editing decorations on DRAW_POST27; ordinary icon/image content is child traversal."
+  ],
+  "ownership_analysis": "Serialized UI-owner callbacks only. No native pooled descriptors are reformatted or released by the module, no alpha snapshot buffer is published. Exact callback descriptor replacement requires live owner, idle/no snapshot preconditions, DELETE handling and identity-checked restoration.",
+  "unsafe_assumptions": [
+    "Screen fixation, clipping, frame rate and gesture behavior require device testing.",
+    "Live rendering bypasses a native performance optimization; not a production-ready substitute for verified alpha captures.",
+    "No GPU recovery, framework restart safety or unknown-class handling is approved."
+  ],
+  "recommended_probe": "Runtime mocked adapter tests and strict exact-target ELF verification, followed by recoverable device launcher-only testing.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "artifacts": [
+    {
+      "uri": "../Canopus-Module-Resource-Hook/docs/P67_BACKGROUNDS.md",
+      "role": "experimental adapter contract and audit"
+    },
+    {
+      "uri": "/Users/lesetong/develop/mifw/analysis-p67-043/vela_ap.bin",
+      "sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "role": "exact AP input, not distributed"
+    }
+  ]
+}

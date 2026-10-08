@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.launcher_rect_init",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "launcher_rect_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c588268",
+  "callable_address": "0x0c588269",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void(void *descriptor)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "XIP thunk to 0x1c034324. Caller provides 188-byte aligned storage; image source+120, fill opacity+32. Only exact .043 native layout.",
+    "return_value": "Borrowed native state only; no allocation ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-P67-LIVE-LAUNCHER-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-P67-LIVE-LAUNCHER-001"
+    ],
+    "source": "Exact AP static IDA audit with startup-copy aliases; see EVID-P67-LIVE-LAUNCHER-001. No device approval."
+  },
+  "notes": "XIP thunk to 0x1c034324. Caller provides 188-byte aligned storage; image source+120, fill opacity+32. Only exact .043 native layout. Experimental launcher-only live rendering; NOT_PROBED. No range expansion or verifier bypass."
+}

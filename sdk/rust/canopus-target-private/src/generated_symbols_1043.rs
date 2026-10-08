@@ -807,6 +807,33 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int32(int, const void *, uint32_t)",
     },
     TargetPrivateSymbolRecord {
+        name: "background_object_has_flag",
+        kind: "function",
+        entry: 0xc5881c0usize,
+        callable: 0xc5881c1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *object, unsigned int flags)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "background_object_hide",
+        kind: "function",
+        entry: 0xc588960usize,
+        callable: 0xc588961usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *object, unsigned int flags)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "background_object_show",
+        kind: "function",
+        entry: 0xc5891b0usize,
+        callable: 0xc5891b1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *object, unsigned int flags)",
+    },
+    TargetPrivateSymbolRecord {
         name: "bt_adapter_set_scan_mode",
         kind: "function",
         entry: 0xc3b56a8usize,
@@ -949,6 +976,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int(uint32_t *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "control_center_scroll",
+        kind: "function",
+        entry: 0xc5036c4usize,
+        callable: 0xc5036c5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *event)",
     },
     TargetPrivateSymbolRecord {
         name: "font_reload_cache_acquire",
@@ -1311,6 +1347,195 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *, uint8_t *, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "launcher_parent",
+        kind: "function",
+        entry: 0xc589578usize,
+        callable: 0xc589579usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(void *object)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "launcher_rect_init",
+        kind: "function",
+        entry: 0xc588268usize,
+        callable: 0xc588269usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *descriptor)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "launcher_scroll",
+        kind: "function",
+        entry: 0xc517d9cusize,
+        callable: 0xc517d9dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *event)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "launcher_scroll_prepare",
+        kind: "function",
+        entry: 0xc5166f0usize,
+        callable: 0xc5166f1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *list, int mode, int enabled)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "notifications_scroll",
+        kind: "function",
+        entry: 0xc527bbcusize,
+        callable: 0xc527bbdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *event)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_cache_clean",
+        kind: "function",
+        entry: 0xc588f88usize,
+        callable: 0xc588f89usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(uint32_t id, void *address, uint32_t length)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_cache_invalidate",
+        kind: "function",
+        entry: 0xc588448usize,
+        callable: 0xc588449usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(uint32_t id, void *address, uint32_t length)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_crossview_callback",
+        kind: "function",
+        entry: 0xc50b9f0usize,
+        callable: 0xc50b9f1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *event)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_draw_buf_create",
+        kind: "function",
+        entry: 0xc587f38usize,
+        callable: 0xc587f39usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(uint32_t width, uint32_t height, uint32_t format, uint32_t stride)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_draw_buf_destroy",
+        kind: "function",
+        entry: 0xcac0db8usize,
+        callable: 0xcac0db9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *buf)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_event_list_add",
+        kind: "function",
+        entry: 0x1c07a3e8usize,
+        callable: 0x1c07a3e9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint32_t (uint32_t list, uint32_t cb, uint32_t filter, uint32_t userdata)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_event_list_count",
+        kind: "function",
+        entry: 0x1c07ab48usize,
+        callable: 0x1c07ab49usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint32_t (uint32_t list)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_event_list_get",
+        kind: "function",
+        entry: 0x1c07a4b0usize,
+        callable: 0x1c07a4b1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint32_t (uint32_t list, uint32_t index)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_event_list_remove",
+        kind: "function",
+        entry: 0x1c07a6f8usize,
+        callable: 0x1c07a6f9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int (uint32_t list, uint32_t index)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_gpu_finish",
+        kind: "function",
+        entry: 0xc187bb0usize,
+        callable: 0xc187bb1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_pm_lock",
+        kind: "global",
+        entry: 0x200eb538usize,
+        callable: 0x200eb538usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_pm_relax",
+        kind: "function",
+        entry: 0xc1a79b4usize,
+        callable: 0xc1a79b5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int (uint32_t lock)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_pm_stay",
+        kind: "function",
+        entry: 0xc1a78f0usize,
+        callable: 0xc1a78f1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int (uint32_t lock)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_snapshot_to_buffer",
+        kind: "function",
+        entry: 0xcac0878usize,
+        callable: 0xcac0879usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int (uint32_t root, uint32_t format, uint32_t owned_drawbuf)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_style_get",
+        kind: "function",
+        entry: 0xc589448usize,
+        callable: 0xc589449usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint32_t(void *obj, uint32_t selector, uint32_t prop)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_blur_watchface_root_class",
+        kind: "global",
+        entry: 0x2cd1f640usize,
+        callable: 0x2cd1f640usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
         name: "sdp_builder_create",
         kind: "function",
         entry: 0xc80a684usize,
@@ -1354,6 +1579,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "const uint32_t[17]",
+    },
+    TargetPrivateSymbolRecord {
+        name: "widgets_scroll",
+        kind: "function",
+        entry: 0xc50abb4usize,
+        callable: 0xc50abb5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *event)",
     },
     TargetPrivateSymbolRecord {
         name: "app_lookup",
@@ -1896,6 +2130,12 @@ pub const UNREGISTER_DRIVER_ENTRY: usize = 0xc1b002cusize;
 pub const UNREGISTER_DRIVER_CALLABLE: usize = 0xc1b002dusize;
 pub const WRITE_ENTRY: usize = 0xc1d2640usize;
 pub const WRITE_CALLABLE: usize = 0xc1d2641usize;
+pub const BACKGROUND_OBJECT_HAS_FLAG_ENTRY: usize = 0xc5881c0usize;
+pub const BACKGROUND_OBJECT_HAS_FLAG_CALLABLE: usize = 0xc5881c1usize;
+pub const BACKGROUND_OBJECT_HIDE_ENTRY: usize = 0xc588960usize;
+pub const BACKGROUND_OBJECT_HIDE_CALLABLE: usize = 0xc588961usize;
+pub const BACKGROUND_OBJECT_SHOW_ENTRY: usize = 0xc5891b0usize;
+pub const BACKGROUND_OBJECT_SHOW_CALLABLE: usize = 0xc5891b1usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_ENTRY: usize = 0xc3b56a8usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_CALLABLE: usize = 0xc3b56a9usize;
 pub const BT_ALLOC_ENTRY: usize = 0xc840c54usize;
@@ -1927,6 +2167,8 @@ pub const BT_TIMER_ADD_ENTRY: usize = 0xc7eb270usize;
 pub const BT_TIMER_ADD_CALLABLE: usize = 0xc7eb271usize;
 pub const BT_TIMER_CANCEL_ENTRY: usize = 0xc7eb33cusize;
 pub const BT_TIMER_CANCEL_CALLABLE: usize = 0xc7eb33dusize;
+pub const CONTROL_CENTER_SCROLL_ENTRY: usize = 0xc5036c4usize;
+pub const CONTROL_CENTER_SCROLL_CALLABLE: usize = 0xc5036c5usize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_ENTRY: usize = 0xc1666d0usize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_CALLABLE: usize = 0xc1666d1usize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_ENTRY: usize = 0xc166740usize;
@@ -1998,6 +2240,46 @@ pub const FONT_RELOAD_VG_DISPATCH_CALLABLE: usize = 0x1c045361usize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x2013c144usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7ec47cusize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7ec47dusize;
+pub const LAUNCHER_PARENT_ENTRY: usize = 0xc589578usize;
+pub const LAUNCHER_PARENT_CALLABLE: usize = 0xc589579usize;
+pub const LAUNCHER_RECT_INIT_ENTRY: usize = 0xc588268usize;
+pub const LAUNCHER_RECT_INIT_CALLABLE: usize = 0xc588269usize;
+pub const LAUNCHER_SCROLL_ENTRY: usize = 0xc517d9cusize;
+pub const LAUNCHER_SCROLL_CALLABLE: usize = 0xc517d9dusize;
+pub const LAUNCHER_SCROLL_PREPARE_ENTRY: usize = 0xc5166f0usize;
+pub const LAUNCHER_SCROLL_PREPARE_CALLABLE: usize = 0xc5166f1usize;
+pub const NOTIFICATIONS_SCROLL_ENTRY: usize = 0xc527bbcusize;
+pub const NOTIFICATIONS_SCROLL_CALLABLE: usize = 0xc527bbdusize;
+pub const P67_BLUR_CACHE_CLEAN_ENTRY: usize = 0xc588f88usize;
+pub const P67_BLUR_CACHE_CLEAN_CALLABLE: usize = 0xc588f89usize;
+pub const P67_BLUR_CACHE_INVALIDATE_ENTRY: usize = 0xc588448usize;
+pub const P67_BLUR_CACHE_INVALIDATE_CALLABLE: usize = 0xc588449usize;
+pub const P67_BLUR_CROSSVIEW_CALLBACK_ENTRY: usize = 0xc50b9f0usize;
+pub const P67_BLUR_CROSSVIEW_CALLBACK_CALLABLE: usize = 0xc50b9f1usize;
+pub const P67_BLUR_DRAW_BUF_CREATE_ENTRY: usize = 0xc587f38usize;
+pub const P67_BLUR_DRAW_BUF_CREATE_CALLABLE: usize = 0xc587f39usize;
+pub const P67_BLUR_DRAW_BUF_DESTROY_ENTRY: usize = 0xcac0db8usize;
+pub const P67_BLUR_DRAW_BUF_DESTROY_CALLABLE: usize = 0xcac0db9usize;
+pub const P67_BLUR_EVENT_LIST_ADD_ENTRY: usize = 0x1c07a3e8usize;
+pub const P67_BLUR_EVENT_LIST_ADD_CALLABLE: usize = 0x1c07a3e9usize;
+pub const P67_BLUR_EVENT_LIST_COUNT_ENTRY: usize = 0x1c07ab48usize;
+pub const P67_BLUR_EVENT_LIST_COUNT_CALLABLE: usize = 0x1c07ab49usize;
+pub const P67_BLUR_EVENT_LIST_GET_ENTRY: usize = 0x1c07a4b0usize;
+pub const P67_BLUR_EVENT_LIST_GET_CALLABLE: usize = 0x1c07a4b1usize;
+pub const P67_BLUR_EVENT_LIST_REMOVE_ENTRY: usize = 0x1c07a6f8usize;
+pub const P67_BLUR_EVENT_LIST_REMOVE_CALLABLE: usize = 0x1c07a6f9usize;
+pub const P67_BLUR_GPU_FINISH_ENTRY: usize = 0xc187bb0usize;
+pub const P67_BLUR_GPU_FINISH_CALLABLE: usize = 0xc187bb1usize;
+pub const P67_BLUR_PM_LOCK_ENTRY: usize = 0x200eb538usize;
+pub const P67_BLUR_PM_RELAX_ENTRY: usize = 0xc1a79b4usize;
+pub const P67_BLUR_PM_RELAX_CALLABLE: usize = 0xc1a79b5usize;
+pub const P67_BLUR_PM_STAY_ENTRY: usize = 0xc1a78f0usize;
+pub const P67_BLUR_PM_STAY_CALLABLE: usize = 0xc1a78f1usize;
+pub const P67_BLUR_SNAPSHOT_TO_BUFFER_ENTRY: usize = 0xcac0878usize;
+pub const P67_BLUR_SNAPSHOT_TO_BUFFER_CALLABLE: usize = 0xcac0879usize;
+pub const P67_BLUR_STYLE_GET_ENTRY: usize = 0xc589448usize;
+pub const P67_BLUR_STYLE_GET_CALLABLE: usize = 0xc589449usize;
+pub const P67_BLUR_WATCHFACE_ROOT_CLASS_ENTRY: usize = 0x2cd1f640usize;
 pub const SDP_BUILDER_CREATE_ENTRY: usize = 0xc80a684usize;
 pub const SDP_BUILDER_CREATE_CALLABLE: usize = 0xc80a685usize;
 pub const SDP_COMMIT_ENTRY: usize = 0xc808648usize;
@@ -2007,6 +2289,8 @@ pub const SDP_SET_RAW_ATTRIBUTE_CALLABLE: usize = 0xc808245usize;
 pub const SDP_UNREGISTER_ENTRY: usize = 0xc80a734usize;
 pub const SDP_UNREGISTER_CALLABLE: usize = 0xc80a735usize;
 pub const STOCK_BT_CALLBACK_DESCRIPTOR_ENTRY: usize = 0x2cd4a744usize;
+pub const WIDGETS_SCROLL_ENTRY: usize = 0xc50abb4usize;
+pub const WIDGETS_SCROLL_CALLABLE: usize = 0xc50abb5usize;
 pub const APP_LOOKUP_ENTRY: usize = 0xca69934usize;
 pub const APP_LOOKUP_CALLABLE: usize = 0xca69935usize;
 pub const LVX_LABEL_CREATE_ENTRY: usize = 0xc588f30usize;
@@ -2728,6 +3012,14 @@ pub unsafe fn raw_gap_host_stock_receive(a0: *mut core::ffi::c_void, a1: *mut u8
     unsafe { f(a0, a1, a2) }
 }
 
+pub unsafe fn raw_p67_blur_gpu_finish() -> i32 {
+    type F = unsafe extern "C" fn() -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_P67_BLUR_GPU_FINISH_CALLABLE)
+    };
+    unsafe { f() }
+}
+
 pub unsafe fn raw_sdp_builder_create(
     a0: u32,
     a1: u16,
@@ -3054,4 +3346,4 @@ pub unsafe fn raw_watchface_reset_watchface(a0: i32) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 95
+// generated target-private raw wrapper count: 96

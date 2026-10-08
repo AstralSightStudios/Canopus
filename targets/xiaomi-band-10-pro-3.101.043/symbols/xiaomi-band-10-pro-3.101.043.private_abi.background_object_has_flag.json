@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.background_object_has_flag",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "background_object_has_flag",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c5881c0",
+  "callable_address": "0x0c5881c1",
+  "calling_convention": "arm-aapcs",
+  "prototype": "int(void *object, unsigned int flags)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed class/live/page-validated native object only. Only audited hidden flag1 query is used.",
+    "return_value": "Nonzero iff all requested flags are set; no ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-P67-FOUR-WAY-LIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-P67-FOUR-WAY-LIVE-001"
+    ],
+    "source": "Exact .043 XIP thunk C5881C0 ->1C028D94 returns(flags & ~*(object+44)) ==0. No transitive/range/device approval."
+  },
+  "notes": "8-byte AP thunk SHA256 006f372b0386eb47ed22cbfec40c0388afb78bcc3862bc4b1007d8825f10607a. Experimental borrowed foreground/image visibility queries; stale or unknown objects rejected."
+}

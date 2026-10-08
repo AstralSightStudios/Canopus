@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_pm_relax",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "p67_blur_pm_relax",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c1a79b4",
+  "callable_address": "0xc1a79b5",
+  "calling_convention": "arm-aapcs",
+  "prototype": "int (uint32_t lock)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrow existing native miwear-snapshot lock only as argument to native PM stay/relax. Never free, initialize or directly write lock. Balanced stay/relax across owned capture/COPY and each raw GPU fence; nested reference counting is native-managed.",
+    "return_value": "No ownership transfer; hardware success not proven."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-P67-ACTIVE-STATIC-BLUR-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-P67-ACTIVE-STATIC-BLUR-001"
+    ],
+    "source": "Exact .043 parent static audit reviewed; hardware NOT_PROBED. No device approval."
+  },
+  "notes": "Native miwear-snapshot power contract; pm_activity.c references. Native BASEPRI-protected refs at lock+40 increment/decrement, domain+32 and state+36. Native lock 0x200EB538 is 116 bytes, name miwear-snapshot, domain0/state0. Static missing-guard finding does not establish device black-image/latency cause. Hardware NOT_PROBED. Conservatively blocking: PM auto-update/governor at0x0C1A8180 may synchronously invoke resume/suspend driver callbacks."
+}

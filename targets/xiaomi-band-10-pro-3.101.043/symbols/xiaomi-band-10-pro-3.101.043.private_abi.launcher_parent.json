@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.launcher_parent",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "launcher_parent",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c589578",
+  "callable_address": "0x0c589579",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void *(void *object)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed parent pointer only after object live-tree validation. XIP thunk targets 0x1c02f0f8; parent is object+4.",
+    "return_value": "Borrowed native state only; no allocation ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-P67-LIVE-LAUNCHER-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-P67-LIVE-LAUNCHER-001"
+    ],
+    "source": "Exact AP static IDA audit with startup-copy aliases; see EVID-P67-LIVE-LAUNCHER-001. No device approval."
+  },
+  "notes": "Borrowed parent pointer only after object live-tree validation. XIP thunk targets 0x1c02f0f8; parent is object+4. Experimental launcher-only live rendering; NOT_PROBED. No range expansion or verifier bypass."
+}

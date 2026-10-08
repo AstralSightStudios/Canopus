@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 7
- * input_digest: 36a8b2eaa29146e7
+ * input_digest: ad6d805846879b60
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -489,6 +489,9 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
 /* ---- excluded symbols ----
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved
+ * background_object_has_flag: restricted - not exported until context/ownership approved
+ * background_object_hide: restricted - not exported until context/ownership approved
+ * background_object_show: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved
@@ -515,6 +518,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * calendar_app_lookup_other: restricted - not exported until context/ownership approved
  * calendar_app_signal: restricted - not exported until context/ownership approved
  * calendar_icon_notify: restricted - not exported until context/ownership approved
+ * control_center_scroll: restricted - not exported until context/ownership approved
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * driver_close_dispatch: restricted - not exported until context/ownership approved
  * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
@@ -565,6 +569,10 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
  * insmod: restricted - not exported until context/ownership approved
  * ioctl: restricted - not exported until context/ownership approved
+ * launcher_parent: restricted - not exported until context/ownership approved
+ * launcher_rect_init: restricted - not exported until context/ownership approved
+ * launcher_scroll: restricted - not exported until context/ownership approved
+ * launcher_scroll_prepare: restricted - not exported until context/ownership approved
  * lv_bar_create: restricted - not exported until context/ownership approved
  * lv_bar_set_range: restricted - not exported until context/ownership approved
  * lv_bar_set_value: restricted - not exported until context/ownership approved
@@ -588,7 +596,22 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * lvx_label_set_long_mode: restricted - not exported until context/ownership approved
  * lvx_object_add_flag: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
+ * notifications_scroll: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
+ * p67_blur_cache_clean: restricted - not exported until context/ownership approved
+ * p67_blur_cache_invalidate: restricted - not exported until context/ownership approved
+ * p67_blur_crossview_callback: restricted - not exported until context/ownership approved
+ * p67_blur_draw_buf_create: restricted - not exported until context/ownership approved
+ * p67_blur_draw_buf_destroy: restricted - not exported until context/ownership approved
+ * p67_blur_event_list_add: restricted - not exported until context/ownership approved
+ * p67_blur_event_list_count: restricted - not exported until context/ownership approved
+ * p67_blur_event_list_get: restricted - not exported until context/ownership approved
+ * p67_blur_event_list_remove: restricted - not exported until context/ownership approved
+ * p67_blur_gpu_finish: restricted - not exported until context/ownership approved
+ * p67_blur_pm_relax: restricted - not exported until context/ownership approved
+ * p67_blur_pm_stay: restricted - not exported until context/ownership approved
+ * p67_blur_snapshot_to_buffer: restricted - not exported until context/ownership approved
+ * p67_blur_style_get: restricted - not exported until context/ownership approved
  * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
@@ -618,6 +641,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
  * watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
  * watchface_reset_watchface: restricted - not exported until context/ownership approved
+ * widgets_scroll: restricted - not exported until context/ownership approved
  */
 
 

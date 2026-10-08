@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.p67_blur_event_list_add",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "p67_blur_event_list_add",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c07a3e8",
+  "callable_address": "0x1c07a3e9",
+  "calling_convention": "arm-aapcs",
+  "prototype": "uint32_t (uint32_t list, uint32_t cb, uint32_t filter, uint32_t userdata)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Native display event list borrowed on UI owner thread; callback/userdata lifecycle remains module responsibility. Do not treat display as object.",
+    "return_value": "Native event-list result; descriptor from GET remains borrowed, never freed by module."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-P67-ACTIVE-STATIC-BLUR-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-P67-ACTIVE-STATIC-BLUR-001"
+    ],
+    "source": "Exact .043 parent static audit reviewed; hardware NOT_PROBED. No device approval."
+  },
+  "notes": "Exact .043 generic event-list add thunk 0x1C07A3E8 delegates to 0x002BFC24. Display list is display+736; ALL|PREPROCESS filter0x8000. Not an object event API or object descriptor getter. Parent provider matches callback and generation metadata before removal. NOT_PROBED."
+}
