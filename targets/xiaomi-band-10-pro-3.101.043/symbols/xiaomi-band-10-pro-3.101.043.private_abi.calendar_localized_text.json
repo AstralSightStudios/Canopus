@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.calendar_localized_text",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "calendar_localized_text",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c1e5c38",
+  "callable_address": "0x0c1e5c39",
+  "calling_convention": "arm-aapcs",
+  "prototype": "const char *(const char *key)",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed key string pointer",
+    "return_value": "Static localized string pointer"
+  },
+  "side_effects": [
+    "Looks up localized system string"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ],
+    "source": "Exact .043 AP instruction recovery for perpetual calendar localized weekday strings."
+  },
+  "notes": "Exact native localization entry used by sub_C4EFDE8."
+}

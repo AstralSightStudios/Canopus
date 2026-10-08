@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.calendar_eventbus_send",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "calendar_eventbus_send",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0ca41584",
+  "callable_address": "0x0ca41585",
+  "calling_convention": "arm-aapcs",
+  "prototype": "int (uint32_t code, void *payload, uint32_t sync)",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Event code, payload pointer, sync flag",
+    "return_value": "0 on success"
+  },
+  "side_effects": [
+    "Broadcasts event to UI eventbus subscribers"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ],
+    "source": "Exact .043 AP instruction recovery for perpetual calendar eventbus notification."
+  },
+  "notes": "Exact native eventbus dispatch entry used by sub_CA6A004."
+}

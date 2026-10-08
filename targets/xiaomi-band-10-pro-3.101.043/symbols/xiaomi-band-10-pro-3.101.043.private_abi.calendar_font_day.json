@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.calendar_font_day",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "calendar_font_day",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c4bf87c",
+  "callable_address": "0x0c4bf87d",
+  "calling_convention": "arm-aapcs",
+  "prototype": "uint32_t (void *font_desc)",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed static font descriptor",
+    "return_value": "Font wrapper pointer"
+  },
+  "side_effects": [
+    "Resolves native calendar day font wrapper"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ],
+    "source": "Exact .043 AP instruction recovery for perpetual calendar day font resolution."
+  },
+  "notes": "Exact native day font entry used by sub_C4EFDE8."
+}

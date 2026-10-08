@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.calendar_text_color",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "calendar_text_color",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c588a70",
+  "callable_address": "0x0c588a71",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void (uint32_t obj, uint32_t color, uint32_t selector)",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed live UI label object, packed BGR color, and selector",
+    "return_value": "None"
+  },
+  "side_effects": [
+    "Mutates local text color style"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-RESOURCE-CALENDAR-001"
+    ],
+    "source": "Exact .043 AP instruction recovery for perpetual calendar label text color."
+  },
+  "notes": "Exact native text color entry used by sub_C4EFDE8."
+}
