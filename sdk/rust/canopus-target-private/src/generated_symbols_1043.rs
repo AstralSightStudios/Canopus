@@ -978,6 +978,60 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(uint32_t *)",
     },
     TargetPrivateSymbolRecord {
+        name: "calendar_eventbus_send",
+        kind: "function",
+        entry: 0xca41584usize,
+        callable: 0xca41585usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int (uint32_t code, void *payload, uint32_t sync)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_font_day",
+        kind: "function",
+        entry: 0xc4bf87cusize,
+        callable: 0xc4bf87dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint32_t (void *font_desc)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_localized_text",
+        kind: "function",
+        entry: 0xc1e5c38usize,
+        callable: 0xc1e5c39usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "const char *(const char *key)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_localtime",
+        kind: "function",
+        entry: 0xc4e35acusize,
+        callable: 0xc4e35adusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void (int64_t seconds, void *tm_out)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_snapshot",
+        kind: "function",
+        entry: 0xca5fb40usize,
+        callable: 0xca5fb41usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int (uint32_t obj, uint32_t format, uint32_t draw_buf)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "calendar_text_color",
+        kind: "function",
+        entry: 0xc588a70usize,
+        callable: 0xc588a71usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void (uint32_t obj, uint32_t color, uint32_t selector)",
+    },
+    TargetPrivateSymbolRecord {
         name: "control_center_scroll",
         kind: "function",
         entry: 0xc5036c4usize,
@@ -1390,6 +1444,78 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "void(void *event)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_battery_child_count",
+        kind: "function",
+        entry: 0xc5881d8usize,
+        callable: 0xc5881d9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint32_t (void *object)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_battery_child_get",
+        kind: "function",
+        entry: 0xc5886e0usize,
+        callable: 0xc5886e1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void * (void *object, int32_t index)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_battery_class",
+        kind: "global",
+        entry: 0x2cd198dcusize,
+        callable: 0x2cd198dcusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_battery_extra_draw_size",
+        kind: "function",
+        entry: 0xc587e70usize,
+        callable: 0xc587e71usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint32_t (void *object)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_battery_image_draw",
+        kind: "function",
+        entry: 0xc5882a0usize,
+        callable: 0xc5882a1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void (void *layer, const void *descriptor, const int32_t *area)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_battery_image_dsc_init",
+        kind: "function",
+        entry: 0xc5882b8usize,
+        callable: 0xc5882b9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void (void *descriptor)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_battery_native_event",
+        kind: "function",
+        entry: 0xc4c22ccusize,
+        callable: 0xc4c22cdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void (const void *class_p, void *event)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "p67_battery_status_slot",
+        kind: "global",
+        entry: 0x2010fe60usize,
+        callable: 0x2010fe60usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
     },
     TargetPrivateSymbolRecord {
         name: "p67_blur_cache_clean",
@@ -2167,6 +2293,18 @@ pub const BT_TIMER_ADD_ENTRY: usize = 0xc7eb270usize;
 pub const BT_TIMER_ADD_CALLABLE: usize = 0xc7eb271usize;
 pub const BT_TIMER_CANCEL_ENTRY: usize = 0xc7eb33cusize;
 pub const BT_TIMER_CANCEL_CALLABLE: usize = 0xc7eb33dusize;
+pub const CALENDAR_EVENTBUS_SEND_ENTRY: usize = 0xca41584usize;
+pub const CALENDAR_EVENTBUS_SEND_CALLABLE: usize = 0xca41585usize;
+pub const CALENDAR_FONT_DAY_ENTRY: usize = 0xc4bf87cusize;
+pub const CALENDAR_FONT_DAY_CALLABLE: usize = 0xc4bf87dusize;
+pub const CALENDAR_LOCALIZED_TEXT_ENTRY: usize = 0xc1e5c38usize;
+pub const CALENDAR_LOCALIZED_TEXT_CALLABLE: usize = 0xc1e5c39usize;
+pub const CALENDAR_LOCALTIME_ENTRY: usize = 0xc4e35acusize;
+pub const CALENDAR_LOCALTIME_CALLABLE: usize = 0xc4e35adusize;
+pub const CALENDAR_SNAPSHOT_ENTRY: usize = 0xca5fb40usize;
+pub const CALENDAR_SNAPSHOT_CALLABLE: usize = 0xca5fb41usize;
+pub const CALENDAR_TEXT_COLOR_ENTRY: usize = 0xc588a70usize;
+pub const CALENDAR_TEXT_COLOR_CALLABLE: usize = 0xc588a71usize;
 pub const CONTROL_CENTER_SCROLL_ENTRY: usize = 0xc5036c4usize;
 pub const CONTROL_CENTER_SCROLL_CALLABLE: usize = 0xc5036c5usize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_ENTRY: usize = 0xc1666d0usize;
@@ -2250,6 +2388,20 @@ pub const LAUNCHER_SCROLL_PREPARE_ENTRY: usize = 0xc5166f0usize;
 pub const LAUNCHER_SCROLL_PREPARE_CALLABLE: usize = 0xc5166f1usize;
 pub const NOTIFICATIONS_SCROLL_ENTRY: usize = 0xc527bbcusize;
 pub const NOTIFICATIONS_SCROLL_CALLABLE: usize = 0xc527bbdusize;
+pub const P67_BATTERY_CHILD_COUNT_ENTRY: usize = 0xc5881d8usize;
+pub const P67_BATTERY_CHILD_COUNT_CALLABLE: usize = 0xc5881d9usize;
+pub const P67_BATTERY_CHILD_GET_ENTRY: usize = 0xc5886e0usize;
+pub const P67_BATTERY_CHILD_GET_CALLABLE: usize = 0xc5886e1usize;
+pub const P67_BATTERY_CLASS_ENTRY: usize = 0x2cd198dcusize;
+pub const P67_BATTERY_EXTRA_DRAW_SIZE_ENTRY: usize = 0xc587e70usize;
+pub const P67_BATTERY_EXTRA_DRAW_SIZE_CALLABLE: usize = 0xc587e71usize;
+pub const P67_BATTERY_IMAGE_DRAW_ENTRY: usize = 0xc5882a0usize;
+pub const P67_BATTERY_IMAGE_DRAW_CALLABLE: usize = 0xc5882a1usize;
+pub const P67_BATTERY_IMAGE_DSC_INIT_ENTRY: usize = 0xc5882b8usize;
+pub const P67_BATTERY_IMAGE_DSC_INIT_CALLABLE: usize = 0xc5882b9usize;
+pub const P67_BATTERY_NATIVE_EVENT_ENTRY: usize = 0xc4c22ccusize;
+pub const P67_BATTERY_NATIVE_EVENT_CALLABLE: usize = 0xc4c22cdusize;
+pub const P67_BATTERY_STATUS_SLOT_ENTRY: usize = 0x2010fe60usize;
 pub const P67_BLUR_CACHE_CLEAN_ENTRY: usize = 0xc588f88usize;
 pub const P67_BLUR_CACHE_CLEAN_CALLABLE: usize = 0xc588f89usize;
 pub const P67_BLUR_CACHE_INVALIDATE_ENTRY: usize = 0xc588448usize;

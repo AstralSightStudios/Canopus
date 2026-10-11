@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_native_event",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "p67_battery_native_event",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c4c22cc",
+  "callable_address": "0x0c4c22cd",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void (const void *class_p, void *event)",
+  "contexts": {
+    "allowed": ["ui-owner-thread"],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed live battery event and immutable original LvxBattery class 0x2cd198dc. Forward original class explicitly; event and target remain native-owned. During idle snapshot capture forward all native drawing; otherwise a derived per-instance shim may replace DRAW_MAIN only.",
+    "return_value": "No ownership transfer; event and target pointers must not escape dispatch."
+  },
+  "side_effects": ["Native base-event dispatch and battery draw-task submission"],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": ["EVID-P67-BATTERY-TRANSPARENCY-001"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": ["EVID-P67-BATTERY-TRANSPARENCY-001"],
+    "source": "Exact .043 read-only native ABI audit: class+12 at 0x2cd198dc points to 0x0c4c22cd; draw 0x0c4c1d68 receives lv_event_t*."
+  },
+  "notes": "DRAW_MAIN=24, DELETE=36. Native callback calls the base event with the original class. PREPROCESS stop-processing cannot suppress class drawing in this build. Restricted static interoperability record only; no public or hardware approval."
+}

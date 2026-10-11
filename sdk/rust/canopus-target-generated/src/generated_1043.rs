@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 7
-// input_digest: ad6d805846879b60
+// input_digest: 14739a6f0306c1cf
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -242,6 +242,9 @@ fn c_str_eq(addr: usize, expected: &[u8]) -> bool {
 }
 
 // ---- typed firmware bindings (unsafe) ----
+/// Recovered `p67_battery_image_dsc_init` at 0x0c5882b8. Thumb callable address 0x0c5882b9.
+pub const CANOPUS_FW_P67_BATTERY_IMAGE_DSC_INIT_CALLABLE: usize = canopus_thumb_callable(0x0c5882b9usize);
+
 /// Recovered `launcher_scroll_prepare` at 0x0c5166f0. Thumb callable address 0x0c5166f1.
 pub const CANOPUS_FW_LAUNCHER_SCROLL_PREPARE_CALLABLE: usize = canopus_thumb_callable(0x0c5166f1usize);
 
@@ -262,6 +265,9 @@ pub unsafe fn canopus_fw_write(a0: i32, a1: *const core::ffi::c_void, a2: u32) -
     let f: extern "C" fn(i32, *const core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_WRITE_CALLABLE) };
     f(a0, a1, a2)
 }
+
+/// Recovered `p67_battery_extra_draw_size` at 0x0c587e70. Thumb callable address 0x0c587e71.
+pub const CANOPUS_FW_P67_BATTERY_EXTRA_DRAW_SIZE_CALLABLE: usize = canopus_thumb_callable(0x0c587e71usize);
 
 /// Recovered global `miwear_bt_cpevent_registration_handle` at 0x2013DBE0.
 pub const canopus_fw_miwear_bt_cpevent_registration_handle: usize = 0x2013DBE0usize;
@@ -350,6 +356,9 @@ pub unsafe fn canopus_fw_lv_timer_create(a0: canopus_lvx_event_cb, a1: u32, a2: 
 /// Recovered `p67_blur_style_get` at 0x0c589448. Thumb callable address 0x0c589449.
 pub const CANOPUS_FW_P67_BLUR_STYLE_GET_CALLABLE: usize = canopus_thumb_callable(0x0c589449usize);
 
+/// Recovered `calendar_font_day` at 0x0c4bf87c. Thumb callable address 0x0c4bf87d.
+pub const CANOPUS_FW_CALENDAR_FONT_DAY_CALLABLE: usize = canopus_thumb_callable(0x0c4bf87dusize);
+
 /// Recovered `lvx_label_create` at 0xc588f30. Thumb callable address 0xc588f31.
 pub const CANOPUS_FW_LVX_LABEL_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc588f31usize);
 #[allow(non_snake_case)]
@@ -412,6 +421,9 @@ pub const CANOPUS_FW_ERRNO_LOCATION_CALLABLE: usize = canopus_thumb_callable(0xc
 
 /// Recovered `font_manager_remove_path` at 0x0c860398. Thumb callable address 0x0c860399.
 pub const CANOPUS_FW_FONT_MANAGER_REMOVE_PATH_CALLABLE: usize = canopus_thumb_callable(0x0c860399usize);
+
+/// Recovered global `p67_battery_status_slot` at 0x2010fe60.
+pub const canopus_fw_p67_battery_status_slot: usize = 0x2010fe60usize;
 
 /// Recovered `control_center_scroll` at 0x0c5036c4. Thumb callable address 0x0c5036c5.
 pub const CANOPUS_FW_CONTROL_CENTER_SCROLL_CALLABLE: usize = canopus_thumb_callable(0x0c5036c5usize);
@@ -502,6 +514,9 @@ pub const CANOPUS_FW_LV_OBJ_TREE_WALK_CALLABLE: usize = canopus_thumb_callable(0
 
 /// Recovered `font_reload_outline_destroy` at 0x1c057330. Thumb callable address 0x1c057331.
 pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_DESTROY_CALLABLE: usize = canopus_thumb_callable(0x1c057331usize);
+
+/// Recovered global `p67_battery_class` at 0x2cd198dc.
+pub const canopus_fw_p67_battery_class: usize = 0x2cd198dcusize;
 
 /// Recovered `insmod` at 0xc203a50. Thumb callable address 0xc203a51.
 pub const CANOPUS_FW_INSMOD_CALLABLE: usize = canopus_thumb_callable(0xc203a51usize);
@@ -629,6 +644,9 @@ pub unsafe fn canopus_fw_register_driver(a0: *const u8, a1: *const core::ffi::c_
 /// Recovered `p67_blur_event_list_count` at 0x1c07ab48. Thumb callable address 0x1c07ab49.
 pub const CANOPUS_FW_P67_BLUR_EVENT_LIST_COUNT_CALLABLE: usize = canopus_thumb_callable(0x1c07ab49usize);
 
+/// Recovered `p67_battery_image_draw` at 0x0c5882a0. Thumb callable address 0x0c5882a1.
+pub const CANOPUS_FW_P67_BATTERY_IMAGE_DRAW_CALLABLE: usize = canopus_thumb_callable(0x0c5882a1usize);
+
 /// Recovered `service_manager_register` at 0xc3bdbac. Thumb callable address 0xc3bdbad.
 pub const CANOPUS_FW_SERVICE_MANAGER_REGISTER_CALLABLE: usize = canopus_thumb_callable(0xc3bdbadusize);
 
@@ -652,6 +670,9 @@ pub const CANOPUS_FW_FONT_RELOAD_VECTOR_DESTROY_CALLABLE: usize = canopus_thumb_
 
 /// Recovered `bt_timer_add` at 0xc7eb270. Thumb callable address 0xc7eb271.
 pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc7eb271usize);
+
+/// Recovered `p67_battery_child_get` at 0x0c5886e0. Thumb callable address 0x0c5886e1.
+pub const CANOPUS_FW_P67_BATTERY_CHILD_GET_CALLABLE: usize = canopus_thumb_callable(0x0c5886e1usize);
 
 /// Recovered `bt_adapter_get_state` at 0xc3af4f4. Thumb callable address 0xc3af4f5.
 pub const CANOPUS_FW_BT_ADAPTER_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0xc3af4f5usize);
@@ -737,6 +758,9 @@ pub unsafe fn canopus_fw_lvx_msgbox_create(a0: *mut core::ffi::c_void, a1: *mut 
     f(a0, a1)
 }
 
+/// Recovered `calendar_snapshot` at 0x0ca5fb40. Thumb callable address 0x0ca5fb41.
+pub const CANOPUS_FW_CALENDAR_SNAPSHOT_CALLABLE: usize = canopus_thumb_callable(0x0ca5fb41usize);
+
 /// Recovered `bt_buffer_new` at 0xc7eafbc. Thumb callable address 0xc7eafbd.
 pub const CANOPUS_FW_BT_BUFFER_NEW_CALLABLE: usize = canopus_thumb_callable(0xc7eafbdusize);
 
@@ -773,6 +797,9 @@ pub unsafe fn canopus_fw_socket(a0: i32, a1: i32, a2: i32) -> i32 {
     f(a0, a1, a2)
 }
 
+/// Recovered `p67_battery_child_count` at 0x0c5881d8. Thumb callable address 0x0c5881d9.
+pub const CANOPUS_FW_P67_BATTERY_CHILD_COUNT_CALLABLE: usize = canopus_thumb_callable(0x0c5881d9usize);
+
 /// Recovered `bt_alloc` at 0xc840c54. Thumb callable address 0xc840c55.
 pub const CANOPUS_FW_BT_ALLOC_CALLABLE: usize = canopus_thumb_callable(0xc840c55usize);
 
@@ -796,6 +823,9 @@ pub const CANOPUS_FW_LAUNCHER_SCROLL_CALLABLE: usize = canopus_thumb_callable(0x
 
 /// Recovered `p67_blur_event_list_add` at 0x1c07a3e8. Thumb callable address 0x1c07a3e9.
 pub const CANOPUS_FW_P67_BLUR_EVENT_LIST_ADD_CALLABLE: usize = canopus_thumb_callable(0x1c07a3e9usize);
+
+/// Recovered `calendar_localized_text` at 0x0c1e5c38. Thumb callable address 0x0c1e5c39.
+pub const CANOPUS_FW_CALENDAR_LOCALIZED_TEXT_CALLABLE: usize = canopus_thumb_callable(0x0c1e5c39usize);
 
 /// Recovered `font_manager_add_path` at 0x0c86037c. Thumb callable address 0x0c86037d.
 pub const CANOPUS_FW_FONT_MANAGER_ADD_PATH_CALLABLE: usize = canopus_thumb_callable(0x0c86037dusize);
@@ -874,6 +904,9 @@ pub const CANOPUS_FW_LAUNCHER_PARENT_CALLABLE: usize = canopus_thumb_callable(0x
 
 /// Recovered `heap_free` at 0xc1f8ff8. Thumb callable address 0xc1f8ff9.
 pub const CANOPUS_FW_HEAP_FREE_CALLABLE: usize = canopus_thumb_callable(0xc1f8ff9usize);
+
+/// Recovered `calendar_eventbus_send` at 0x0ca41584. Thumb callable address 0x0ca41585.
+pub const CANOPUS_FW_CALENDAR_EVENTBUS_SEND_CALLABLE: usize = canopus_thumb_callable(0x0ca41585usize);
 
 /// Recovered `font_reload_outline_release` at 0x1c057288. Thumb callable address 0x1c057289.
 pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x1c057289usize);
@@ -974,6 +1007,9 @@ pub unsafe fn canopus_fw_lvx_msgbox_set_content(a0: *mut core::ffi::c_void, a1: 
 /// Recovered `lv_bar_set_range` at 0xc5883d8. Thumb callable address 0xc5883d9.
 pub const CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE: usize = canopus_thumb_callable(0xc5883d9usize);
 
+/// Recovered `calendar_localtime` at 0x0c4e35ac. Thumb callable address 0x0c4e35ad.
+pub const CANOPUS_FW_CALENDAR_LOCALTIME_CALLABLE: usize = canopus_thumb_callable(0x0c4e35adusize);
+
 /// Recovered global `core_bt_registration_handle` at 0x20126734.
 pub const canopus_fw_core_bt_registration_handle: usize = 0x20126734usize;
 
@@ -1015,6 +1051,9 @@ pub const CANOPUS_FW_BT_TIMER_CANCEL_CALLABLE: usize = canopus_thumb_callable(0x
 
 /// Recovered `font_reload_glyph_metrics` at 0x1c056e14. Thumb callable address 0x1c056e15.
 pub const CANOPUS_FW_FONT_RELOAD_GLYPH_METRICS_CALLABLE: usize = canopus_thumb_callable(0x1c056e15usize);
+
+/// Recovered `p67_battery_native_event` at 0x0c4c22cc. Thumb callable address 0x0c4c22cd.
+pub const CANOPUS_FW_P67_BATTERY_NATIVE_EVENT_CALLABLE: usize = canopus_thumb_callable(0x0c4c22cdusize);
 
 /// Recovered `bt_remove_bond_private` at 0xc3b697c. Thumb callable address 0xc3b697d.
 pub const CANOPUS_FW_BT_REMOVE_BOND_PRIVATE_CALLABLE: usize = canopus_thumb_callable(0xc3b697dusize);
@@ -1193,6 +1232,9 @@ pub const CANOPUS_FW_FONT_RELOAD_DROP_FACE_ID_CALLABLE: usize = canopus_thumb_ca
 /// Recovered `lv_obj_set_style_bg_opa` at 0xc108374. Thumb callable address 0xc108375.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = canopus_thumb_callable(0xc108375usize);
 
+/// Recovered `calendar_text_color` at 0x0c588a70. Thumb callable address 0x0c588a71.
+pub const CANOPUS_FW_CALENDAR_TEXT_COLOR_CALLABLE: usize = canopus_thumb_callable(0x0c588a71usize);
+
 /// Recovered global `font_reload_freetype_context_slot` at 0x20103374.
 pub const canopus_fw_font_reload_freetype_context_slot: usize = 0x20103374usize;
 
@@ -1287,7 +1329,13 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // calendar_app_lookup_name_other: restricted - not exported until context/ownership approved
 // calendar_app_lookup_other: restricted - not exported until context/ownership approved
 // calendar_app_signal: restricted - not exported until context/ownership approved
+// calendar_eventbus_send: restricted - not exported until context/ownership approved
+// calendar_font_day: restricted - not exported until context/ownership approved
 // calendar_icon_notify: restricted - not exported until context/ownership approved
+// calendar_localized_text: restricted - not exported until context/ownership approved
+// calendar_localtime: restricted - not exported until context/ownership approved
+// calendar_snapshot: restricted - not exported until context/ownership approved
+// calendar_text_color: restricted - not exported until context/ownership approved
 // control_center_scroll: restricted - not exported until context/ownership approved
 // controller_crash_dump: FORBIDDEN - no binding may ever be generated
 // driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -1368,6 +1416,12 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // modhandle: restricted - not exported until context/ownership approved
 // notifications_scroll: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
+// p67_battery_child_count: restricted - not exported until context/ownership approved
+// p67_battery_child_get: restricted - not exported until context/ownership approved
+// p67_battery_extra_draw_size: restricted - not exported until context/ownership approved
+// p67_battery_image_draw: restricted - not exported until context/ownership approved
+// p67_battery_image_dsc_init: restricted - not exported until context/ownership approved
+// p67_battery_native_event: restricted - not exported until context/ownership approved
 // p67_blur_cache_clean: restricted - not exported until context/ownership approved
 // p67_blur_cache_invalidate: restricted - not exported until context/ownership approved
 // p67_blur_crossview_callback: restricted - not exported until context/ownership approved

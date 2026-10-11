@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-P67-BATTERY-TRANSPARENCY-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Exact .043 battery class, discovery and draw-task ABI for idle-only offscreen black-to-transparent rendering?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_native_event",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_extra_draw_size",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_child_count",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_child_get",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_image_dsc_init",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_image_draw",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_class",
+    "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_status_slot"
+  ],
+  "callsite_evidence": [
+    "Read-only native ABI audit supplied by battery-native-audit for exact AP SHA256 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec; the static audit itself did not execute hardware or grant API approval.",
+    "2026-10-11: user reported device test PASS for the signed .043 battery-transparent package, module SHA256 f4d9ae2d0b282c81772720d31145701b3c39858b74ebd77ab875dea993df44c3. This is delivered-rendering acceptance, not a separately instrumented per-symbol, GPU/cache/failure/frame-time probe; restricted PENDING policy is unchanged.",
+    "Control Center constructor 0x0c504c20 creates its battery at callsite0x0c504d28, under the status-bar parent from slot0x2010fe60 (mirrored0x2010fe74), whose parent is the current root from slot0x2010fe50. Enumerate direct children through child_count0x0c5881d9 and child_get0x0c5886e1, bound count<=16 and require one exact battery-class match.",
+    "LvxBattery class0x2cd198dc is36 bytes: base+0, ctor+4=0x0c4c23f1, dtor+8=0x0c4c2161, event+12=0x0c4c22cd; width_def+24=62, height_def+28=32, packed instance_size+32=0x680 (104-byte instance).",
+    "Native event0x0c4c22cd has class,event arguments and delegates base events using the original native class. Native draw0x0c4c1d68 receives the event pointer; target+4, layer+16, DRAW_MAIN=24, DELETE=36.",
+    "Constructor0x0c4c23f0 sets object+68=30; native REFRESH_EXT_DRAW_SIZE(event22) supplies that extent. Getter0x0c587e71 returns current extra drawing size. Default62x32 with extra30 produces122x92 ARGB8888, 44,896 raw bytes (approximately43.8KiB) before actual stride alignment, not64x36.",
+    "Battery key state is bytes52..71 and80..101; ignore subscription pointers72..79 and absolute coordinates. Fields52/56 are image sources;60/64 source dimensions may initialize during first draw;80 level;81..100 BGRA palette;101 charge/percent/charge-position/constructor flags.",
+    "Existing native draw-buffer create0x0c587f39(w,h,16,0) allocates ARGB8888. Descriptor magic25, format16, width/height u16+4/+6, stride u16+8, allocation size+12, pixels+16, unaligned allocation+20, handlers+24. Exact native image descriptor is112 bytes, source+28; image initializer0x0c5882b9, task submission0x0c5882a1."
+  ],
+  "control_flow_evidence": [
+    "Snapshot0x1c06030c runs global layout update and expands object coords by current extra draw size; it drains its LVGL draw tasks. Existing PM wrapper0x0ca5fb41(obj,16,buf) brackets that snapshot with native power stay/relax. GPU completion0x0c187bb1()==0 is additionally required before CPU reads/reuse/free, not a substitute for idle native task queues.",
+    "After successful snapshot and completion, revalidate object generation/lifetime, geometry, extra size and source dimensions; snapshot can update layout and initialize state. Clean unrelated CPU writes before cache invalidation0x0c588449(1,pixels,size); edit only battery-image pure-black alpha, then clean edited source through0x0c588f89(1,0,0x10000) before task submission.",
+    "PREPROCESS list dispatch at0x002bf6d0 in dispatcher0x002bf690 goes directly to class callback at0x002bf710 when list returns1, without checking stop-processing. Stop API0x002bfdac sets event+24 bit1; list0x002bfb50 breaks but returns1. PREPROCESS|stop-processing therefore does NOT suppress native class DRAW_MAIN on this build.",
+    "Use a module-owned derived per-instance RAM class, base=original0x2cd198dc, ctor/dtor=NULL, event=wrapper, remaining class fields preserved. Never instantiate this shim. Destructor walker0x1c02917c visits every base and invokes each destructor: copying native destructor into the shim would execute it twice.",
+    "Class wrapper forwards native callback(original,event) for all events except replacement DRAW_MAIN and forwards drawing during capture. DELETE invalidates retained identity without fencing/freeing or rewriting the deleting object's class; restore native class only for a live identity-matched instance on idle detach.",
+    "Native style refresh0x0c107104 sends STYLE_CHANGED45 (0x2d), and0x0c106560 propagates it recursively. Style/resource/font refresh logically invalidates readiness and generation without freeing queued image storage. Hold the existing snapshot PM lock across capture/readback and revalidate borrowed object identity after native callbacks.",
+    "Capture and alpha edits occur only at validated idle UI-owner boundaries. Normal DRAW_MAIN submits an immutable image using current(coords.x1-extra,coords.y1-extra) and the existing layer's clip/transform/opacity. Scrolling does not change snapshot contents or require wallpaper backfill. No parent layer draw-buffer pointer swap or display-framebuffer postprocessing."
+  ],
+  "ownership_analysis": "Native objects, events, status/root slots and immutable flash class remain borrowed. The module owns the derived class shim and completed ARGB8888 snapshot storage. Retain image pixels and descriptor unchanged until native task queues are idle and GPU completion succeeds; DELETE/draw must not free, fence, recapture or mutate the framebuffer. Failure falls back to full native battery rendering and retains unresolved storage for safe later cleanup. No native pool/source ownership is transferred.",
+  "unsafe_assumptions": [
+    "User-reported delivered-rendering PASS does not grant public API approval or establish instrumented GPU/cache coherency, frame time, failure recovery, or an exhaustive scrolling/state matrix; those remain NOT_PROBED.",
+    "Static exact ABI recovery is not public API approval. All eight new records remain restricted/STATIC_RECOVERED/PENDING; no firmware address-range expansion or verifier bypass.",
+    "Pure-black color key applies to the completed battery-only image, not arbitrary screen pixels. Near-black antialiased edges remain unchanged and require device visual acceptance.",
+    "62x32 and extra30 are stock defaults only; actual geometry/extent must be checked before and after snapshot. A64x36 fixed buffer would omit the charging region."
+  ],
+  "recommended_probe": "On exact .043 hardware, inspect white backing, normal/low/charging battery states, percentage text, high-contrast wallpaper, horizontal transitions and scrolling; exercise redraw/reload, deletion/recreation and GPU failure retention. ELF/schema/host checks cannot establish visual or device GPU acceptance.",
+  "reviewers": ["battery-native-audit"],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-11T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "file:///Users/lesetong/develop/rust/Canopus-Module-Resource-Hook/targets/xiaomi-band-10-pro-3.101.043/battery-transparency.md",
+      "role": "module integration and exact-target native battery ABI evidence"
+    }
+  ]
+}

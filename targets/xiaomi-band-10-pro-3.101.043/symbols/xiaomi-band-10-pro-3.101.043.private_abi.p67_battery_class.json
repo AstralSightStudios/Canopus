@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_class",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "p67_battery_class",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2cd198dc",
+  "type": "const void *",
+  "contexts": {
+    "allowed": ["ui-owner-thread"]
+  },
+  "ownership": {
+    "argument": "Borrowed immutable 36-byte native LvxBattery class, not identity-only. Exact bounded read-copy may construct a module-owned per-instance derived class shim; never write the native flash class or instantiate the shim.",
+    "return_value": "No ownership transfer. Native class remains the shim base and the explicitly forwarded native-event class."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": ["EVID-P67-BATTERY-TRANSPARENCY-001"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": ["EVID-P67-BATTERY-TRANSPARENCY-001"],
+    "source": "Exact .043 read-only native ABI audit of LvxBattery class, constructor, native event, and native destructor walker."
+  },
+  "notes": "Class offsets base+0, ctor+4, dtor+8, event+12; defaults width62 height32 and packed instance_size104 at+32. Derived RAM shim base must be 0x2cd198dc, ctor/dtor NULL, event module wrapper, remaining fields preserved. Destructor walker 0x1c02917c visits every base: copying native destructor into the shim would double-run it. Restore only live identity-matched instance on detach. Hardware NOT_PROBED."
+}

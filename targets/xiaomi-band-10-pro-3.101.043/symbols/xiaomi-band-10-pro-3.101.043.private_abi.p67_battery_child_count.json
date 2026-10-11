@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_child_count",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "p67_battery_child_count",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c5881d8",
+  "callable_address": "0x0c5881d9",
+  "calling_convention": "arm-aapcs",
+  "prototype": "uint32_t (void *object)",
+  "contexts": {
+    "allowed": ["ui-owner-thread"],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed live native Control Center status-bar object from slot 0x2010fe60, independently checked to have parent root from slot 0x2010fe50.",
+    "return_value": "Child count only; reject count above 16 before enumerating."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": ["EVID-P67-BATTERY-TRANSPARENCY-001"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": ["EVID-P67-BATTERY-TRANSPARENCY-001"],
+    "source": "Exact .043 read-only native ABI audit of child-count AP thunk and Control Center construction at 0x0c504c20."
+  },
+  "notes": "Bounded read-only battery discovery by exact class, not a fixed child index. No creation, deletion, or global-tree mutation. Hardware NOT_PROBED."
+}

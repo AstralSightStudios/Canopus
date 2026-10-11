@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.p67_battery_status_slot",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "p67_battery_status_slot",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2010fe60",
+  "type": "void **",
+  "contexts": {
+    "allowed": ["ui-owner-thread"]
+  },
+  "ownership": {
+    "argument": "Read-only native Control Center status-bar object pointer slot. Borrow current value only after live-tree validation and parent equality with the current root from 0x2010fe50; do not write the slot.",
+    "return_value": "Borrowed native status-bar object; no allocation or object ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": ["EVID-P67-BATTERY-TRANSPARENCY-001"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": ["EVID-P67-BATTERY-TRANSPARENCY-001"],
+    "source": "Exact .043 read-only native ABI audit: Control Center constructor 0x0c504c20 stores status-bar parent; battery creation callsite 0x0c504d28."
+  },
+  "notes": "Status-bar pointer is also mirrored at 0x2010fe74; only slot0x2010fe60 is consumed by this adapter. Discover exactly one direct child matching native/derived battery class, never a fixed index. Any native lifetime mutation requires revalidation. NOT_PROBED."
+}

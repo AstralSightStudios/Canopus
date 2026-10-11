@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 7
- * input_digest: ad6d805846879b60
+ * input_digest: 14739a6f0306c1cf
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -517,7 +517,13 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * calendar_app_lookup_name_other: restricted - not exported until context/ownership approved
  * calendar_app_lookup_other: restricted - not exported until context/ownership approved
  * calendar_app_signal: restricted - not exported until context/ownership approved
+ * calendar_eventbus_send: restricted - not exported until context/ownership approved
+ * calendar_font_day: restricted - not exported until context/ownership approved
  * calendar_icon_notify: restricted - not exported until context/ownership approved
+ * calendar_localized_text: restricted - not exported until context/ownership approved
+ * calendar_localtime: restricted - not exported until context/ownership approved
+ * calendar_snapshot: restricted - not exported until context/ownership approved
+ * calendar_text_color: restricted - not exported until context/ownership approved
  * control_center_scroll: restricted - not exported until context/ownership approved
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -598,6 +604,12 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * modhandle: restricted - not exported until context/ownership approved
  * notifications_scroll: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
+ * p67_battery_child_count: restricted - not exported until context/ownership approved
+ * p67_battery_child_get: restricted - not exported until context/ownership approved
+ * p67_battery_extra_draw_size: restricted - not exported until context/ownership approved
+ * p67_battery_image_draw: restricted - not exported until context/ownership approved
+ * p67_battery_image_dsc_init: restricted - not exported until context/ownership approved
+ * p67_battery_native_event: restricted - not exported until context/ownership approved
  * p67_blur_cache_clean: restricted - not exported until context/ownership approved
  * p67_blur_cache_invalidate: restricted - not exported until context/ownership approved
  * p67_blur_crossview_callback: restricted - not exported until context/ownership approved
