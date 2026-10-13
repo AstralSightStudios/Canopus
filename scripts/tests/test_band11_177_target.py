@@ -36,12 +36,16 @@ class Band11Target177Tests(unittest.TestCase):
             baseline = json.loads(path.read_text())
             record = json.loads((target / path.name.replace('4.100.155', '4.100.177')).read_text())
             with self.subTest(symbol=record['name']):
+                self.assertEqual(record['policy'], baseline['policy'])
+                # .155 restricted private_abi approvals are exact-firmware grants
+                # and are not inherited by .177 (see the calendar approval test).
+                if 'private_abi' in record['symbol_id'] and baseline.get('approval_state') == 'APPROVED':
+                    continue
                 self.assertEqual(record['status'], baseline['status'])
                 self.assertEqual(record.get('approval_state'), baseline.get('approval_state'))
-                self.assertEqual(record['policy'], baseline['policy'])
                 self.assertEqual(record['proof']['device'], 'not_probed')
                 self.assertEqual(record['provenance']['firmware_sha256'], SHA)
-                if record.get('approval_state') == 'APPROVED':
+                if record.get('approval_state') == 'APPROVED' and 'private_abi' not in record['symbol_id']:
                     approved.append(record['name'])
         self.assertEqual(approved, ['errno_location'])
 
