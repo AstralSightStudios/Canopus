@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: 21e84d72e768bb59
+// input_digest: 4df022a12b7e756a
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -878,6 +878,9 @@ pub unsafe fn canopus_fw_bt_pair_request_reply(a0: *mut core::ffi::c_void, a1: *
     f(a0, a1, a2)
 }
 
+/// Recovered `poll_notify` at 0xc1c16cc. Thumb callable address 0xc1c16cd.
+pub const CANOPUS_FW_POLL_NOTIFY_CALLABLE: usize = canopus_thumb_callable(0xc1c16cdusize);
+// poll_notify: skipped (argument type not mappable)
 /// Recovered `lvx_list_row_create` at 0xc52b78c. Thumb callable address 0xc52b78d.
 pub const CANOPUS_FW_LVX_LIST_ROW_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc52b78dusize);
 #[allow(non_snake_case)]

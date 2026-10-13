@@ -393,6 +393,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(int, const char *, ...)",
     },
     TargetPrivateSymbolRecord {
+        name: "gethostbyname_r",
+        kind: "function",
+        entry: 0xc1d9924usize,
+        callable: 0xc1d9925usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(const char *, void *, char *, size_t, int *, int)",
+    },
+    TargetPrivateSymbolRecord {
         name: "heap_free",
         kind: "function",
         entry: 0xc1e8bc4usize,
@@ -447,6 +456,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int64_t(int, int64_t, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "net_lock",
+        kind: "function",
+        entry: 0xc1ec59cusize,
+        callable: 0xc1ec59dusize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(void)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "net_unlock",
+        kind: "function",
+        entry: 0xc1ec5acusize,
+        callable: 0xc1ec5adusize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "void(int)",
+    },
+    TargetPrivateSymbolRecord {
         name: "open",
         kind: "function",
         entry: 0xc1c15b0usize,
@@ -456,6 +483,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(const char *, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "poll_notify",
+        kind: "function",
+        entry: 0xc1c16ccusize,
+        callable: 0xc1c16cdusize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "void(void *, int, unsigned int)",
+    },
+    TargetPrivateSymbolRecord {
         name: "read",
         kind: "function",
         entry: 0xc1c1e24usize,
@@ -463,6 +499,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "native-full-trust",
         prototype: "int32(int, void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "recvfrom",
+        kind: "function",
+        entry: 0xc1ebd18usize,
+        callable: 0xc1ebd19usize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int32_t(int, void *, uint32_t, int, void *, uint32_t *)",
     },
     TargetPrivateSymbolRecord {
         name: "register_blockdriver",
@@ -517,6 +562,33 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_CONFIRMED",
         policy: "restricted",
         prototype: "int(void *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "sendto",
+        kind: "function",
+        entry: 0xc1ebe0cusize,
+        callable: 0xc1ebe0dusize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int32_t(int, const void *, uint32_t, int, const void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "setsockopt",
+        kind: "function",
+        entry: 0xc1ec21cusize,
+        callable: 0xc1ec21dusize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(int, int, int, const void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "socket",
+        kind: "function",
+        entry: 0xc1bb8bcusize,
+        callable: 0xc1bb8bdusize,
+        status: "STATIC_RECOVERED",
+        policy: "native-full-trust",
+        prototype: "int(int, int, int)",
     },
     TargetPrivateSymbolRecord {
         name: "unlink",
@@ -1181,6 +1253,8 @@ pub const ERRNO_LOCATION_ENTRY: usize = 0xc1d5144usize;
 pub const ERRNO_LOCATION_CALLABLE: usize = 0xc1d5145usize;
 pub const FIRMWARE_LOG_ENTRY: usize = 0xc1e1208usize;
 pub const FIRMWARE_LOG_CALLABLE: usize = 0xc1e1209usize;
+pub const GETHOSTBYNAME_R_ENTRY: usize = 0xc1d9924usize;
+pub const GETHOSTBYNAME_R_CALLABLE: usize = 0xc1d9925usize;
 pub const HEAP_FREE_ENTRY: usize = 0xc1e8bc4usize;
 pub const HEAP_FREE_CALLABLE: usize = 0xc1e8bc5usize;
 pub const HEAP_MALLINFO_ENTRY: usize = 0xc1e8bd8usize;
@@ -1193,10 +1267,18 @@ pub const IOCTL_ENTRY: usize = 0xc1c0d2cusize;
 pub const IOCTL_CALLABLE: usize = 0xc1c0d2dusize;
 pub const LSEEK_ENTRY: usize = 0xc1c10acusize;
 pub const LSEEK_CALLABLE: usize = 0xc1c10adusize;
+pub const NET_LOCK_ENTRY: usize = 0xc1ec59cusize;
+pub const NET_LOCK_CALLABLE: usize = 0xc1ec59dusize;
+pub const NET_UNLOCK_ENTRY: usize = 0xc1ec5acusize;
+pub const NET_UNLOCK_CALLABLE: usize = 0xc1ec5adusize;
 pub const OPEN_ENTRY: usize = 0xc1c15b0usize;
 pub const OPEN_CALLABLE: usize = 0xc1c15b1usize;
+pub const POLL_NOTIFY_ENTRY: usize = 0xc1c16ccusize;
+pub const POLL_NOTIFY_CALLABLE: usize = 0xc1c16cdusize;
 pub const READ_ENTRY: usize = 0xc1c1e24usize;
 pub const READ_CALLABLE: usize = 0xc1c1e25usize;
+pub const RECVFROM_ENTRY: usize = 0xc1ebd18usize;
+pub const RECVFROM_CALLABLE: usize = 0xc1ebd19usize;
 pub const REGISTER_BLOCKDRIVER_ENTRY: usize = 0xc1a0dc8usize;
 pub const REGISTER_BLOCKDRIVER_CALLABLE: usize = 0xc1a0dc9usize;
 pub const REGISTER_DRIVER_ENTRY: usize = 0xc1a0d50usize;
@@ -1209,6 +1291,12 @@ pub const SEM_TRYWAIT_ENTRY: usize = 0xc1f0ff0usize;
 pub const SEM_TRYWAIT_CALLABLE: usize = 0xc1f0ff1usize;
 pub const SEM_WAIT_ENTRY: usize = 0xc1f0d38usize;
 pub const SEM_WAIT_CALLABLE: usize = 0xc1f0d39usize;
+pub const SENDTO_ENTRY: usize = 0xc1ebe0cusize;
+pub const SENDTO_CALLABLE: usize = 0xc1ebe0dusize;
+pub const SETSOCKOPT_ENTRY: usize = 0xc1ec21cusize;
+pub const SETSOCKOPT_CALLABLE: usize = 0xc1ec21dusize;
+pub const SOCKET_ENTRY: usize = 0xc1bb8bcusize;
+pub const SOCKET_CALLABLE: usize = 0xc1bb8bdusize;
 pub const UNLINK_ENTRY: usize = 0xc1c2edcusize;
 pub const UNLINK_CALLABLE: usize = 0xc1c2eddusize;
 pub const UNREGISTER_BLOCKDRIVER_ENTRY: usize = 0xc1a0e8cusize;
@@ -1500,6 +1588,28 @@ pub unsafe fn raw_errno_location() -> *mut i32 {
     unsafe { f() }
 }
 
+pub unsafe fn raw_gethostbyname_r(
+    a0: *const u8,
+    a1: *mut core::ffi::c_void,
+    a2: *mut u8,
+    a3: usize,
+    a4: *mut i32,
+    a5: i32,
+) -> i32 {
+    type F = unsafe extern "C" fn(
+        *const u8,
+        *mut core::ffi::c_void,
+        *mut u8,
+        usize,
+        *mut i32,
+        i32,
+    ) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_GETHOSTBYNAME_R_CALLABLE)
+    };
+    unsafe { f(a0, a1, a2, a3, a4, a5) }
+}
+
 pub unsafe fn raw_heap_free(a0: *mut core::ffi::c_void) -> i32 {
     type F = unsafe extern "C" fn(*mut core::ffi::c_void) -> i32;
     let f: F =
@@ -1541,10 +1651,45 @@ pub unsafe fn raw_lseek(a0: i32, a1: i64, a2: i32) -> i64 {
     unsafe { f(a0, a1, a2) }
 }
 
+pub unsafe fn raw_net_lock() -> i32 {
+    type F = unsafe extern "C" fn() -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_NET_LOCK_CALLABLE) };
+    unsafe { f() }
+}
+
+pub unsafe fn raw_net_unlock(a0: i32) -> () {
+    type F = unsafe extern "C" fn(i32) -> ();
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_NET_UNLOCK_CALLABLE) };
+    unsafe { f(a0) }
+}
+
 pub unsafe fn raw_open(a0: *const u8, a1: i32) -> i32 {
     type F = unsafe extern "C" fn(*const u8, i32) -> i32;
     let f: F = unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_OPEN_CALLABLE) };
     unsafe { f(a0, a1) }
+}
+
+pub unsafe fn raw_recvfrom(
+    a0: i32,
+    a1: *mut core::ffi::c_void,
+    a2: u32,
+    a3: i32,
+    a4: *mut core::ffi::c_void,
+    a5: *mut u32,
+) -> i32 {
+    type F = unsafe extern "C" fn(
+        i32,
+        *mut core::ffi::c_void,
+        u32,
+        i32,
+        *mut core::ffi::c_void,
+        *mut u32,
+    ) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_RECVFROM_CALLABLE) };
+    unsafe { f(a0, a1, a2, a3, a4, a5) }
 }
 
 pub unsafe fn raw_register_blockdriver(
@@ -1609,6 +1754,47 @@ pub unsafe fn raw_sem_wait(a0: *mut core::ffi::c_void) -> i32 {
     let f: F =
         unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_SEM_WAIT_CALLABLE) };
     unsafe { f(a0) }
+}
+
+pub unsafe fn raw_sendto(
+    a0: i32,
+    a1: *const core::ffi::c_void,
+    a2: u32,
+    a3: i32,
+    a4: *const core::ffi::c_void,
+    a5: u32,
+) -> i32 {
+    type F = unsafe extern "C" fn(
+        i32,
+        *const core::ffi::c_void,
+        u32,
+        i32,
+        *const core::ffi::c_void,
+        u32,
+    ) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_SENDTO_CALLABLE) };
+    unsafe { f(a0, a1, a2, a3, a4, a5) }
+}
+
+pub unsafe fn raw_setsockopt(
+    a0: i32,
+    a1: i32,
+    a2: i32,
+    a3: *const core::ffi::c_void,
+    a4: u32,
+) -> i32 {
+    type F = unsafe extern "C" fn(i32, i32, i32, *const core::ffi::c_void, u32) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_SETSOCKOPT_CALLABLE) };
+    unsafe { f(a0, a1, a2, a3, a4) }
+}
+
+pub unsafe fn raw_socket(a0: i32, a1: i32, a2: i32) -> i32 {
+    type F = unsafe extern "C" fn(i32, i32, i32) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_SOCKET_CALLABLE) };
+    unsafe { f(a0, a1, a2) }
 }
 
 pub unsafe fn raw_unlink(a0: *const u8) -> i32 {
@@ -2103,4 +2289,4 @@ pub unsafe fn raw_watchface_manager_delete_watchface(a0: *const u8) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 77
+// generated target-private raw wrapper count: 84

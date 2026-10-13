@@ -4,7 +4,7 @@
  * firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
  * sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
  * revision : 5
- * input_digest: 21e84d72e768bb59
+ * input_digest: 4df022a12b7e756a
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
@@ -437,6 +437,7 @@ static inline void canopus_fw_lvx_object_align(void * a0, uint32_t a1, int32_t a
 }
 
 /* bt_pair_request_reply: skipped (argument type not mappable) */
+/* poll_notify: skipped (argument type not mappable) */
 typedef void * (*canopus_fw_lvx_list_row_create_fn)(void *, const char *, const char *, uint8_t);
 static inline void * canopus_fw_lvx_list_row_create(void * a0, const char * a1, const char * a2, uint8_t a3) {
     return ((canopus_fw_lvx_list_row_create_fn)(uintptr_t)0xc52b78d)(a0, a1, a2, a3);
