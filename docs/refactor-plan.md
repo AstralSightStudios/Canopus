@@ -1,0 +1,298 @@
+# Canopus 重构计划与进度追踪
+
+创建：2026-10-14；第 2 版：2026-10-14（事实核查 + 决策 K7–K10）。本文档是重构工作的唯一进度来源；能力状态
+（host implemented / static recovered / device verified / production approved）仍以 `progress.md` 与
+`native-manager-ui-plan.md` §15 为准，重构不得提升任何能力状态。P3.7 完成后进度来源合并为一处。
+
+状态标记：`[ ]` 未开始　`[~]` 进行中　`[x]` 完成（附证据/commit）　`[!]` 阻塞（写明原因）
+
+## 1. 背景与痛点（2026-10-14 已核查）
+
+开发体验：
+- D1 地址、target 管理混乱
+  - 同一份 `targets/*/symbols/*.json` 被多条生成链消费：Rust `canopus target generate-veneer` /
+    `generate-rust-bindings`、`tools/generate_target_private_symbols.py`（CI 调用）、
+    `scripts/generate_band11_native_config.py`、`scripts/generate_band9_loader_config.py`。
+  - 另有不经 symbol 记录的地址来源：`loader/lua-recovery.toml` 中的裸地址（pmain/os_execute/io_open…）、
+    `build_band11_installer.py` 构建时从固件镜像读取的指纹字、手写的 `sdk/rust/canopus-target-private/src/targets/*.rs`。
+  - 55 个 target 目录以外的文件硬编码 target id；family 级差异（Manager 后端、Supervisor 体积上限
+    73728/131072/98304、编译宏、loader 源）写在 `build_canopus_supervisor.sh` 的 `case` 里。
+  - symbol 文件命名不一致：036/043/Band 9 为 `<target>.<domain>.<name>.json`，Band 11 为 `<target>.<name>.json`。
+  - 生成物与生成器已不一致：2026-10-14 运行 `scripts/ci.sh`，第 1 步即失败（`generated_stability` 4 项：
+    036 veneer 与 Rust bindings 过期，疑自 `4f87d57`；`calendar_text_color was unexpectedly promoted`
+    与近期 calendar 批准提交冲突）。由于 `set -e`，第 2–7 步未执行。
+- D2 ABI 不稳定、Rust/C API 不统一、SDK 混乱
+  - 根因：模块是 zero-import ELF，直接绑定固件地址，因此每个模块 × 每个固件都要单独构建、发布，固件一升级全部失效。
+    `canopus_context_v1` 只有前向声明，Supervisor 调用 `activate(0)` 传空指针，模块得不到任何 Supervisor 服务。
+  - 线协议：CPC1（16B 命令）/CPS1（384B 状态）与 CPC2 并存（CPRT 只是内存中的 envelope，不是第三套线协议）；
+    命令枚举两套（`CANOPUS_CMD_*` 与 `CANOPUS_SUP_CMD_*` 0x4351xxxx）；另有 CMI1/CMR1/CQD1/CQM1/CAP1 等 magic。
+  - 两个 Cargo workspace；`target-generated` / `target-private` 两层；每 target 一个 feature，外加手写的互斥 `cfg` 矩阵；
+    各 target 的 Rust 公开 API 不一致（036 有 84 个 `pub fn`，139 有 95 个）；Band 11 三个固件共用一个手写文件。
+  - Rust `canopus-runtime` / `canopus-host-fake` / `canopus-ui-core` 是 C 实现的第二份实现；Manager 有
+    lvgl_v9（1451 行）与 band11（1302 行）两套 UI 绑定。
+- D3 无统一打包流程
+  - Rust `package-builder` 产出 `.canopus`（tar + 签名），但设备端从不读取它；设备只认 CMI1 回执 + ELF
+    （`scripts/build-module-installer-receipt.py`）。实际出包靠 Python 生成按设备分目录的 Lua 安装表盘
+    （`build_module_installer_prod.py` 中硬编码 `PRODUCTS` / `SUPPORTED` / `PRODUCT_TARGETS`）。
+  - `hello` 的 `build.sh` 写死 036，`package.json` 的 sha256 为全 0 占位。
+  - 模块身份有四套语法：商店 `^[a-zA-Z0-9][a-zA-Z0-9_-]*$`（AstroBoxCreatorConsole `canopus-id.ts`）、
+    CMI1 `[a-z0-9_.-]{1,31}`、insmod `^[a-zA-Z0-9_]+$`、示例 `org.example.hello`；版本有三套：
+    semver 字符串、CMI1 的 u32、商店 `versionCode`。
+  - Band 11 安装器构建依赖本地固件镜像；8 个测试直接读 `fwbins/`；evidence 中含 `/Volumes/EXT0/...` 绝对路径。
+- D4 文档与进度分散：architecture.md 1771 行、native-manager-ui-plan.md 1461 行、firmware-symbol-porting-plan.md
+  1271 行；进度权威分在 architecture §23、ui-plan §15 与 progress.md 三处；仓库没有 AGENTS.md / CLAUDE.md。
+
+用户体验：
+- U1 Manager 的"更新"和"回滚"按钮都没有意义：二者走同一分支，只记 intent=ENABLED、state=UPDATE_STAGED，
+  设备上既没有新包也没有旧版本。更新之所以要"移除→重启→安装→启用→重启"，是因为 `sup_stage_package`
+  对已存在的 module_id 返回 `STAGE_DUPLICATE`（-105）、安装后默认禁用、inbox 路径 `<token>.elf/.receipt` 固定。
+- U2 只能在手环上管理，无法更新提醒/批量更新。AstroBox 目前把 Canopus 当表盘推送（Mass 16）；表盘 ID 超过
+  16 字节会被随机化，更新匹配因此失效；商店按设备型号而非固件选择下载项，不匹配时回退到 default 或任意条目
+  （`provider/.../officialv2.rs:1259-1264`），存在装到错误固件的风险。
+- U3 Supervisor 不开机自启（`persistent_autoload=false`）：每次重启后都要打开安装表盘点 Run，才会加载 Supervisor
+  并恢复模块。所以"重启生效"实际是"重启 + 手动 Run"，在此之前手机端也无法与设备端通信。
+
+## 2. 已确认决策
+
+| # | 决策 | 日期 |
+|---|---|---|
+| K1 | 允许破坏性变更（协议升版本、旧 Supervisor 须重装、Rust feature 命名可改） | 2026-10-14 |
+| K2 | 更新采用"提交新包，重启生效"，不追求热更新 | 2026-10-14 |
+| K3 | P65 完全移除（target、installer、SDK feature、脚本、文档、测试），事故记录仅在 ADR/历史中留一句；P65 期间产出的通用机制保留（见 P1.1） | 2026-10-14 |
+| K4 | 手机端直接修改 AstroBox-NG，不走 WASM 插件：设备逻辑放 `core`（包名 `corelib`，按其 AGENTS.md 做成 LogicComponent），`app` 只暴露 Tauri 命令，前端在 AstroBox-NG-WebUI | 2026-10-14（第 2 版更正：原写"app crate"） |
+| K5 | 手环端入口不走快应用壳/Corona 方案，另开通道（见 O1、O5） | 2026-10-14 |
+| K6 | Mirage 固件来源使用其固件仓（`miragectl firmware archive/download`），不在 Canopus 内保存固件 | 2026-10-14 |
+| K7 | 引入 Supervisor 服务表 `canopus_services_v1`（经 `canopus_context_v1` 传入）：通用能力每个固件只在 Supervisor 内实现一次，模块只依赖 Canopus ABI 版本；`target-private` 保留为 full-trust 逃生口 | 2026-10-14 |
+| K8 | Band 9 / 9 Pro 冻结：保留 `targets/` 数据并标记 frozen，退出 CI / prod / Rust feature 矩阵 | 2026-10-14 |
+| K9 | 移除全部签名与验签：Ed25519/monocypher、密钥与角色、吊销、`.canopus` 签名、回执签名、target-pack revision 签名。保留非签名的安全检查：artifact SHA-256 完整性、target/固件绑定、模块 ID 合法性、版本单调（保留项为本文解读，如需一并删除请修改） | 2026-10-14 |
+| K10 | 开机自动加载 Supervisor 纳入调查，作为 P4/P5 的前置（P4.0） | 2026-10-14 |
+| K11 | 旧 Supervisor 不做迁移，要求用户重装（原 O2）：不迁移 `registry.bin`；新 Supervisor 遇到旧格式 registry 或旧 inbox 文件时须安全忽略并提示重装，不得崩溃或误加载 | 2026-10-14 |
+| K12 | `calendar_text_color` 保留提升（原 O6）：被提升的是 .139 记录（.043 记录仍为 PENDING），依据为 2026-10-08 的用户授权与 `targets/xiaomi-band-11-4.100.139/background-calendar-port-approval.md`。失败的 `private_abi_records_have_exact_thumb_callables` 早于该授权，改为仿照 `band11_177_calendar_approval_is_exact_and_private_only`：`private_abi` 记录必须保持 restricted；APPROVED 仅限钉死的授权清单，且须满足 STATIC_RECOVERED、not_probed、promotion 固件 SHA 匹配 | 2026-10-14 |
+
+## 3. 待定项（阻塞对应任务，回答后移入 §2）
+
+- O1 手机↔设备端控制通道（阻塞 P5.1 及之后）。
+  - 前提更正：AstroBox 的 `transport.send` 只存在于 WASM 插件 host API，只接受 Xiaomi `WearPacket` protobuf，
+    且只走 Pb 通道（`pluginsystem/src/api/host/transport.rs:21-50`），不能发原始字节。无论选哪种方案，都要在 `core` 中新写代码。
+  - 候选（按现有证据强弱排序）：
+    - a. interconnect：手环端以保留包名注册 connection。`interconnect_connect/send/close` 与
+      `thirdparty_submit_message_content` 在 036/043 已是 STATIC_RECOVERED/APPROVED，在 139/155/177 为 CANDIDATE
+      （路由图见 `sdk/rust/canopus-target-private/src/targets/xiaomi_band_10_pro_3_101_036.rs:1221`）；手机端走
+      ThirdpartyApp `SEND_PHONE_MESSAGE`。待证：miwear-server 是否要求该包名是已安装的快应用、是否校验 fingerprint
+      （`CONN_STATUS_UNINSTALLED=7` 暗示会检查）；AstroBox 侧现从已安装快应用列表查 fingerprint。
+    - b. hook protobuf 分发，处理自定义 WearPacket 类型。
+    - c. hook 一个 L2 通道。
+  - 数据面另行确定：
+    - D-a 复用 Mass 16 投递，由 Supervisor 按 token 拾取（Supervisor 已在调用 `delete_watchface(token)`；ID 须 ≤16 字节）。
+    - D-b 经控制通道分块传输（可借鉴 `core/src/device/res_pack.rs` 的 P/F/A/C 续传设计）。
+- O3 商店清单字段。归属已查明：schema 在 `provider` 的 `ManifestV2`，发布校验在 AstroBoxCreatorConsole，
+  `manifest_v2.json` 在各条目自己的仓库，AstroBox-Repo 只放索引。待定的是字段设计，默认提案见 P5.7。
+- O4 固件可用性（部分已查明）：
+  - Mirage 只有 Band 10 Pro 3.101.043 能启动到 UI；Band 11 4.100.177 只到开机向导/配对二维码；036 和 139 在 Mirage 中没有记录。
+  - Mirage 当前固件库为空，配置的库路径不存在。
+  - `fwbins/` 只有 `vela_ap.bin`，p67 还需要 `vela_resource.bin`。
+  - 待查：MiWearFirmwareArchives 是否有 036/043/139/155/177 的完整包。
+- O5（新）如果 O1-a 证实需要已安装的快应用，是否接受一个无 UI 的"路由锚点"快应用（与 K5 的边界）？P5.0 出证据后再定。
+
+（O2 → K11，O6 → K12，已结案。）
+
+## 4. 总览
+
+| 阶段 | 内容 | 状态 | 依赖 |
+|---|---|---|---|
+| P0 | 基线、ADR、AGENTS.md、CI 恢复 | [~] | — |
+| P1 | Target/地址单一来源；移除 P65；冻结 Band 9 | [ ] | P0 |
+| P2 | ABI/SDK：服务表、协议收敛、移除签名、Rust 整理 | [ ] | P0.1–P0.4；P2.4 起依赖 P1.3 |
+| P3 | 统一打包 + 文档 | [ ] | P1、P2.1 |
+| P4 | 设备端更新语义 + 开机自启调查 | [ ] | P0.1、P0.2（不依赖 P5） |
+| P5 | 手机端管理（AstroBox-NG） | [ ] | P5.0（O1）、P2.5、P3.3 |
+| P6 | Mirage 模拟器调试 | [ ] | P6.0 可立即开始；P6.2 依赖 P3 |
+
+建议里程碑：
+- M1（让用户尽快受益）：P0 → P1.1 移除 P65、P1.8 冻结 Band 9 → P2.7 移除签名 → P4.1–P4.5
+  （同 ID 新版本一步更新，走现有安装表盘路径）。
+- M2（开发体验）：P1 其余任务、P2 服务表与协议收敛、P3 打包。
+- M3（手机端与模拟器）：P5、P6。
+
+## 5. 任务清单
+
+### P0 边界与基线
+- [ ] P0.1 ADR-CAN-003：模块身份、版本与包格式
+  - module_id 取各方语法的交集，默认 `^[a-z][a-z0-9_]{0,15}$`，同时用作商店 id、回执 module_id、insmod 名和 inbox token。
+    取 ≤16 字节，是因为它在 Mass 16 路径上也是表盘 ID，而 AstroBox 会随机化超过 16 字节的 ID；若不再走 Mass 16，可放宽到 31。
+  - 版本：`versionCode`（u32，单调递增）= 回执 `module_version` = 商店 `versionCode`；`version` 字符串仅用于展示。
+  - `.canopus` 内容：manifest、portable 产物（`artifacts/abi-<major>-thumbv8m/`）或 per-target 产物（`artifacts/<target_id>/`），
+    每个产物附一份无签名的安装回执；安装器表盘和商店条目都是它的派生物。
+- [ ] P0.2 ADR-CAN-004：设备协议
+  - 单一线格式（CPC2 升版本）+ 统一的命令枚举。
+  - 逐项写明所有 magic 的去留：CPC1/CPS1 删除；CMI1 改为无签名回执；CMR1 保留；CQD1/CQM1 并入查询 payload；CAP1 并入服务表。
+- [ ] P0.3 ADR-CAN-005：手机端管理协议边界。由常驻的 Supervisor 服务层应答（不是 Manager UI），与 P0.2 使用同一套 opcode；
+  O1 只决定 transport。依赖 O1。
+- [ ] P0.4 ADR-CAN-006：Supervisor 服务表（K7）
+  - `canopus_context_v1` 的定义：struct_size、abi、services 指针。
+  - 服务分组与各组版本；能力缺失时的语义。
+  - portable 模块的 verifier 规则：不允许出现任何固件地址。
+- [x] P0.5 恢复 CI（`CANOPUS_CI_KEEP_GOING=1 scripts/ci.sh` 全绿；Band 11 安装器测试在无本地种子/未构建固件产物时显式跳过）
+  - 给 `ci.sh` 加 keep-going 模式，记录完整的红/绿表。
+  - 在单独提交中重新生成 036 生成物，并按 K12 改写 `private_abi_records_have_exact_thumb_callables`
+    （.139/.155 的已授权清单同样钉死，任何扩大都让测试失败）。
+  - 重构从绿色开始。
+- [ ] P0.6 冻结基线（在 P0.5 之后），记录三类哈希：
+  - (a) 已提交的生成物；
+  - (b) 生成器当前的输出；
+  - (c) 每个 active target 的 Supervisor ELF 与示例模块 ELF。
+  - 重构后须字节一致，或对差异逐项说明。
+- [ ] P0.7 `AGENTS.md`（原 P3.6，前移）：目录结构、常用命令、不可触碰项、证据门槛、"改 symbols 后必须重新生成"。
+
+### P1 Target / 地址单一来源
+- [ ] P1.1 移除 P65（K3）。删除范围：
+  - 目录：`targets/xiaomi-p65-*`、`manager/target/p65`、`watchfaces/canopus-installer-prod/xiaomi-p65`。
+  - 脚本与测试：`scripts/*p65*`、`scripts/lua/test_p65_installer.lua`、`scripts/tests/test_p65_*`、`tests/host/test_p65_*`。
+  - Rust：`target-xiaomi-p65-*` feature、`generated_p65.rs`、`canopus-target-private/build.rs` 的 P65 分支。
+  - 共享代码中的 `CANOPUS_SUP_P65_*` 条件编译（`canopus_supervisor_module.c`、`canopus_supervisor_platform.c`）。
+  - `tools/canopus-core/src/template.rs` 的 P65 `module_initialize` 脚手架。
+  - verifier / fixture / stability 测试中的 P65 用例；README 与 progress 中的相关段落。
+  - 保留 P65 期间产出的通用机制：CMR1 注册帧、registry 错误码细分与诊断、注入式文件 IO 加固。
+  - 完成标准：CI 全绿。
+- [ ] P1.2 target 数据模型：`target.toml` + `symbols/*.json` 为唯一权威
+  - 新增 family 层（如 `targets/_families/<family>.toml`），承载 Manager 后端、Supervisor 体积上限、编译宏、loader 源、安装器布局。
+  - `native-bindings.json` 并入为声明式绑定表；`lua-recovery.toml` 中的裸地址改为 symbol 记录。
+  - 固件指纹预先生成进 target 包，构建不再读取固件。
+  - 统一 symbol 文件命名；target 增加 `status`（active / frozen）。
+- [ ] P1.3 `canopus target generate <id|--all> [--check]`（Rust）统一产出 C 头、Rust 绑定、Lua/loader 配置。
+- [ ] P1.4 迁移并删除 Python 生成脚本（`generate_target_private_symbols.py`、`generate_band11_native_config.py`、
+  `generate_band9_loader_config.py`）；CI 与可选的 pre-commit 钩子只做"生成物未过期"检查，防止再次出现 `4f87d57` 式的过期。
+- [ ] P1.5 target 注册表：CLI / CI / 打包脚本从 `targets/` 发现 active target，删除硬编码清单。
+- [ ] P1.6 保持证据门槛：FORBIDDEN / CANDIDATE / restricted 状态与 evidence 链迁移后语义不变（测试覆盖）。
+- [ ] P1.7 固件定位（K6）：需要固件的测试和工具经统一定位器查找（`CANOPUS_FW_DIR` 或 Mirage 固件库），缺失时显式跳过；
+  evidence URI 改为 `fw://<target_id>/<file>` 相对形式。
+- [ ] P1.8 冻结 Band 9 / 9 Pro（K8）
+  - target 标记为 frozen；退出 `build_prod_all`、CI 和 Rust feature。
+  - 仅 Band 9 使用的代码（lvgl_v8 后端、stage1/2、NSH bootstrap 脚本）移出构建；默认删除，并打 tag `band9-frozen` 以便找回。
+  - 共享的 `runtime/loader` 保留。
+- [ ] P1.9 与 P0.6 的基线对比通过。
+
+### P2 ABI / SDK 整理
+- [ ] P2.1 实现服务表（K7、P0.4）
+  - Supervisor 按 target 填表，并经 context 传给模块回调（目前是 `activate(0)`）。
+  - 第一批服务：日志/状态、时间/定时器、内存、文件、通知、`canopus_ui` 语义树渲染（复用 `app-sdk/ui`）。
+  - BT 与 interconnect 放到后续批次。
+- [ ] P2.2 portable 模块
+  - verifier 增加"零固件地址"模式。
+  - `hello` 与 `no-heap-counter` 迁移为 portable，同一个 ELF 在 036/043/139/155/177 上通过 host 测试。
+- [ ] P2.3 Rust 合并为单一 workspace。
+- [ ] P2.4 target-private 整理
+  - 所有 target 由生成代码提供同一函数集，缺失的能力显式返回 `Unsupported`；手写部分只保留真实差异。
+  - 删除手写的互斥 `cfg` 矩阵（`build.rs` 已保证恰好选中一个 target）。
+- [ ] P2.5 协议收敛（P0.2）：删除 CPC1/CPS1 与第二套命令枚举；更新 `abi/schema`；Lua 安装器与外部模块安装器同步改造。
+- [ ] P2.6 C/Rust 同源
+  - ABI 类型由一份清单生成两侧代码。
+  - `canopus-runtime` / `host-fake` / `ui-core` 二选一：改为绑定 C 实现，或保留双实现并加一致性测试。
+- [ ] P2.7 移除签名（K9）
+  - 设备端：删除 monocypher、`s_installer_public_key` 与回执验签；回执改为无签名格式，继续校验 target/固件、
+    artifact SHA-256、module_id 与 module_version。
+  - 工具：删除 `package sign/verify/keygen`、`key` 子命令、`re revision-sign/verify`、`keyroles.rs`、
+    `build-module-installer-receipt.py` 的签名步骤、`build_module_installer_prod.py` 的 `verify_signature`、schema 中的签名字段。
+  - 文档：`security-model.md`、README 中"未签名包默认不批准"的原则、CAN-P1-013。
+  - 测试：删除签名用例；新增"哈希 / target / 固件不匹配仍被拒绝"的用例。
+- [ ] P2.8 评估把 Manager 的两套 UI 后端（lvgl_v9 / band11）合并为一套，配合声明式绑定表。
+- [ ] P2.9 Supervisor / Manager / client / host tests 同步改造；ASan/UBSan 保持干净；各 family 的 Supervisor 体积不超过上限；
+  新增"遇到旧格式 registry.bin / 旧 inbox 文件时安全忽略"的测试（K11）。
+
+### P3 统一打包流程
+- [ ] P3.1 `canopus new`：生成含 `Canopus.toml`、构建配置、示例源码的模块工程（默认 portable）。
+- [ ] P3.2 `canopus build [--target X | --all]`：portable 模块只构建一次，target-private 模块按矩阵构建；产物均须过 verifier。
+- [ ] P3.3 `canopus package`：产出确定性的 `.canopus`（P0.1 格式，含无签名回执）；`canopus verify` 只做结构 / 哈希 / target 校验。
+- [ ] P3.4 安装器表盘改为 `canopus package --installer` 的输出，替换 `build_module_installer_prod.py` / `build_band11_installer.py` 中的硬编码。
+- [ ] P3.5 `hello` 示例改用 `canopus build` 构建；manifest 的 sha256 由构建填写。
+- [ ] P3.6 （已前移为 P0.7）
+- [ ] P3.7 文档收口
+  - `docs/` 入口页（不超过一屏）。
+  - 进度来源合并为一处（architecture §23、ui-plan §15、progress.md、本文件）。
+  - 过时的大文档归档。
+- [ ] P3.8 外部模块仓库（Bluetooth Audio、Lyra、Resource Hook、Data Quota Lift、ReFetch）迁移指南：
+  去签名、新回执、协议变更，以及能否转为 portable。
+
+### P4 设备端更新语义
+- [ ] P4.0 开机自动加载调查（K10）
+  - 在固件中寻找开机时可挂接的入口：启动脚本或服务、当前表盘 Lua 的自动执行、其他自启机制。
+  - 优先在 Mirage 043 上反复冷启动验证。
+  - 若无可行方案，则维持手动 Run，由手机端检测"Supervisor 未加载"并提示用户。
+- [ ] P4.1 INSTALL 支持升级
+  - 同 module_id 且 `module_version` 更高：写入 `<token>.next.*`，保留原启用状态，返回 REBOOT_REQUIRED。
+  - 同版本或更低版本：拒绝（防回滚）。
+- [ ] P4.2 开机切换
+  - Supervisor 加载时原子地把 next 切为 current，旧版保留为 `<token>.prev.*`。
+  - 加载失败时自动退回 prev，并进入可诊断状态。
+- [ ] P4.3 Manager 按钮
+  - 删除无意义的"更新"按钮；"回滚"只在存在 prev 时显示，作用是切回 prev。
+  - `CANOPUS_CMD_UPDATE` / `ROLLBACK` 按 P4.1/P4.2 重新定义或删除。
+- [ ] P4.4 现有外部安装表盘路径（Lua → inbox → `/canopus/install`）即可投递新版本，无需等待 P5。
+- [ ] P4.5 host 测试：升级成功、同版本/降级被拒、哈希/target 不匹配、写入中断后恢复、加载失败退回 prev。
+
+### P5 手机端管理（AstroBox-NG，K4）
+- [ ] P5.0 解决 O1/O5：静态证据（miwear-server 路由、fingerprint 与安装检查）+ Mirage 043 验证
+  （Mirage 的快应用环境尚未验证，见 R7）。
+- [ ] P5.1 设备端：Supervisor 服务层实现 P0.3 协议的 transport 适配
+  - 握手：框架版本（`framework_revision`）、ABI、target。
+  - 操作：模块列表、安装/升级、启用、禁用、移除、回滚。
+  - 数据面按 O1 结论实现。
+- [ ] P5.2 设备端 host 测试 + Mirage 联调。
+- [ ] P5.3 `core`：新增 Canopus LogicComponent（与 `res_pack` 独立），包含查询、投递、升级；
+  同步 bump Mirage 的 `core` 子模块（现钉在 `dbbaece`，AstroBox-NG 为 `bd541b5`）。
+- [ ] P5.4 `app`：新增 Tauri 命令；`canopus` 类型不再走表盘安装模式（`usesWatchfaceInstallMode`），
+  旧 Supervisor 保留表盘路径作为回退。
+- [ ] P5.5 `device_check_resource_updates` 增加 Canopus 模块列表（来自 Supervisor 查询，而不是按表盘 ID 匹配）；
+  比较 `versionCode`，并检查 ABI 与 target 是否兼容。
+- [ ] P5.6 前端（AstroBox-NG-WebUI）：模块列表、更新提醒、"全部更新"（复用安装队列的 `groupId`）、
+  Supervisor 未加载或需要升级的提示。
+- [ ] P5.7 商店清单（O3）默认提案
+  - `downloads[deviceId]` 下增加 `canopus: { abi, targets?: [target_id], minFramework? }`。
+  - portable 模块只写 abi；target-private 模块必须列出 target。
+  - 客户端安装前比对手环固件，不匹配就拒绝（修复按型号回退到 default 或任意条目的问题）。
+  - CreatorConsole 的 ID 校验改为 P0.1 的语法。
+- [ ] P5.8 Supervisor 自身升级：手机端读取 `framework_revision`，落后时引导安装新框架；跨协议版本升级时
+  明确告知需重装模块（K11），并支持在手机端一键重装此前记录的模块列表。
+
+### P6 Mirage 模拟器调试
+- [ ] P6.0 O4：把 043 完整固件（含 `vela_resource.bin`）导入 Mirage 固件库并修正库路径；查 MiWearFirmwareArchives 对 036/139/155/177 的覆盖。
+- [ ] P6.1 `canopus emu`：包装 `miragectl` 的 create / boot / fs put / sh / screenshot
+  - 日志：读 `<device>/Logs/` 下的 console.log、uart*.log、qemu.log（`miragectl` 没有 `log` 子命令）。
+  - `sh` 与 GUI 互斥，CLI 须独占运行。
+- [ ] P6.2 冒烟测试（在 043 上）
+  - 流程：`fs put` Supervisor → `sh` 执行 insmod 或等效于 Run 的流程 → 安装 hello → 重启 → 验证。
+  - 无固件时跳过并明示；不进入 GitHub CI（固件不能公开）。
+- [ ] P6.3 GDB
+  - gdb.sock 仅在开启 shell 选项时存在；此时 QEMU 以 `-S` 暂停启动，注入器在启动期占用后才 detach。
+  - Supervisor 查询需报告各模块的加载基址，脚本据此执行 `add-symbol-file`。
+- [ ] P6.4 向 Mirage 提需求/PR
+  - `miragectl hmp`（库里已有 `hmp()`）、`--json` 输出、快照、`log` 子命令、控制台多路复用。
+  - AstroBoxBridge 增加 Canopus 方法（它嵌入了 `core`，随 P5.3 一起做）。
+- [ ] P6.5 P5 端到端，两条路径：
+  - AstroBoxBridge（进程内 JSON-RPC）；
+  - AstroBox-NG 的 emu bridge（HCI over TCP 连 qemu-miwear 的 BT 控制器；端口按设备配置，不是固定的 5566）。
+  - QEMU 可能只接受单个客户端，两条路径不能同时连接（待验证）。
+- [ ] P6.6 文档：模拟器结果只算 host/emulator 级证据，不得写成 device verified。
+
+## 6. 风险
+
+- R1 重构期间地址生成物意外漂移 → P0.6 基线 + P1.9 对比。
+- R2 协议升版本使旧设备端不可用，用户须重装模块 → K1、K11 已接受；新 Supervisor 对旧 registry/inbox
+  安全忽略（P2.9 加测试），升级说明写入 P3.8。
+- R3 O1 通道需要固件证据，可能拖慢 P5 → P5.0 先行；P4 不依赖 P5，用户可以先获得一步更新。
+- R4 Mirage 无快照、控制台只能有一个使用者 → CLI 独占运行；P6.4 提需求。
+- R5 移除 P65 后历史事故文档失去上下文 → 在 `adr/` 保留一条简短记录。
+- R6 移除签名（K9）后不再有来源认证：Band 11 上任何表盘 Lua 都能经 `/canopus/install` 安装内核代码
+  （Band 10 Pro 的 Lua 本来就有 `os.execute`，签名在那里也防不住）。可选的非加密缓解：首次安装或升级时在手环 Manager 上弹确认。
+- R7 Mirage 目前只有 043 能启动到 UI，Band 11 只到开机向导，快应用环境未验证 → O1-a 无法在模拟器上做端到端测试，Band 11 联调须用真机。
+- R8 服务表会增加 Supervisor 体积，而 Band 10 Pro 的上限是 73728 字节 → 移除 monocypher 腾出空间；P2.9 设体积门槛。
+- R9 商店按型号选择下载项，target-private 模块可能装到错误固件上 → P5.7 做固件比对；portable 模块缩小这一风险面。
+
+## 7. 变更日志
+
+| 日期 | 变更 |
+|---|---|
+| 2026-10-14 | 创建本文档；记录决策 K1–K6 与待定项 O1–O4 |
+| 2026-10-14 | 第 2 版：事实核查（CI 基线为红、协议与回执、模块身份、U3 等）；K4 更正为 `core`；新增 K7–K10、O5–O6、R6–R9；P4 不再依赖 P5；任务重新编号 |
+| 2026-10-14 | O2 → K11（不迁移，要求重装）；O6 → K12（保留 .139 提升，改写过时测试） |
+| 2026-10-14 | P0.5 完成：ci.sh keep-going 模式、036 生成物重新生成、K12 测试改写、Band 11 测试对无种子克隆的处理 |
