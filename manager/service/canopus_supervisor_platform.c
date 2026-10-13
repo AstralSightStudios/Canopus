@@ -748,10 +748,15 @@ fail:
 
 static int sup_loader_invoke(void *cookie, uint32_t callable)
 {
-    typedef void (*entry_fn)(void);
+    /* Init entries receive the module's service context in r0. Modules that
+     * declare a void() entry ignore it. */
+    typedef void (*entry_fn)(const struct canopus_context_v1 *);
     entry_fn entry = (entry_fn)(uintptr_t)(callable | 1u);
+    struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
     (void)cookie;
-    entry();
+    entry(sup->loading_slot >= 0
+              ? canopus_supervisor_context(sup, (uint32_t)sup->loading_slot)
+              : 0);
     return 0;
 }
 
@@ -1029,6 +1034,50 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
     return staged;
 }
 
+/* FS service hooks: plain NuttX file calls through the proven pointers. */
+static int sup_file_open(void *cookie, const char *path, uint32_t flags)
+{
+    typedef int (*open_fn)(const char *, int, ...);
+    open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
+    (void)cookie;
+    if (flags == CANOPUS_FS_READ) {
+        return open_file(path, CANOPUS_SUP_NUTTX_O_RDONLY);
+    }
+    /* Create/truncate: unlink first, as the registry writer does (no O_TRUNC
+     * is proven on this firmware). */
+    (void)sup_unlink_path(path);
+    return open_file(path, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT,
+                     CANOPUS_SUP_DEVICE_MODE);
+}
+
+static int32_t sup_file_read(void *cookie, int fd, void *buffer, uint32_t size)
+{
+    typedef int32_t (*read_fn)(int, void *, uint32_t);
+    (void)cookie;
+    return ((read_fn)(uintptr_t)CANOPUS_SUP_NUTTX_READ)(fd, buffer, size);
+}
+
+static int32_t sup_file_write(void *cookie, int fd, const void *buffer,
+                              uint32_t size)
+{
+    typedef int32_t (*write_fn)(int, const void *, uint32_t);
+    (void)cookie;
+    return ((write_fn)(uintptr_t)CANOPUS_SUP_NUTTX_WRITE)(fd, buffer, size);
+}
+
+static int sup_file_close(void *cookie, int fd)
+{
+    typedef int (*close_fn)(int);
+    (void)cookie;
+    return ((close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE)(fd);
+}
+
+static int sup_file_remove(void *cookie, const char *path)
+{
+    (void)cookie;
+    return sup_unlink_path(path);
+}
+
 const struct canopus_sup_platform_v1 canopus_sup_platform = {
     CANOPUS_SUP_TARGET_ID,
     sup_register_device,
@@ -1042,4 +1091,9 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_stage_commit,
     sup_gen_exists,
     sup_gen_verify,
+    sup_file_open,
+    sup_file_read,
+    sup_file_write,
+    sup_file_close,
+    sup_file_remove,
 };

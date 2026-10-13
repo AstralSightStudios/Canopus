@@ -16,6 +16,7 @@ int run_ui_tests(void);
 int run_client_tests(void);
 int run_supervisor_device_tests(void);
 int run_supervisor_update_tests(void);
+int run_supervisor_services_tests(void);
 int run_installer_receipt_tests(void);
 int run_arm_reloc_tests(void);
 
@@ -37,6 +38,7 @@ int main(void)
     total += run_client_tests();
     total += run_supervisor_device_tests();
     total += run_supervisor_update_tests();
+    total += run_supervisor_services_tests();
     total += run_installer_receipt_tests();
     total += run_arm_reloc_tests();
     if (total == 0) {

@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include "canopus_abi.h"
 #include "canopus_protocol.h"
+#include "canopus_services.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -322,6 +323,25 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
                                   uint32_t lifecycle_class,
                                   uint32_t version,
                                   const char *module_id);
+
+/* ---- Supervisor service table (ADR-CAN-006) ------------------------- */
+
+/* Descriptor target id of portable modules; accepted on every Supervisor. */
+#define CANOPUS_PORTABLE_TARGET_ID "portable-thumbv8m"
+
+/* Per-module context handed to descriptor callbacks and to the module's init
+ * entry (as its first argument on custom-loader targets). */
+const struct canopus_context_v1 *canopus_supervisor_context(
+    struct canopus_supervisor_v1 *sup, uint32_t slot);
+/* Binds the service table to the Supervisor (called by init). */
+void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup);
+/* Closes the slot's open files; called when its artifacts are removed. */
+void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,
+                                         uint32_t slot);
+/* Log ring (newest last). Returns the message or 0 past the end. */
+uint32_t canopus_supervisor_log_count(void);
+const char *canopus_supervisor_log_entry(uint32_t index, uint32_t *level,
+                                         uint32_t *slot);
 
 /* Stages the package a miwear client wrote to the inbox for `token`
  * (<token>.cmi.next / <token>.ko.next). A token without a slot is installed

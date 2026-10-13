@@ -30,6 +30,7 @@ PORTABLE_SRCS = \
 	../../manager/protocol/canopus_protocol.c \
 	../../manager/client/canopus_client.c \
 	../../manager/service/canopus_supervisor.c \
+	../../manager/service/canopus_supervisor_services.c \
 	../../manager/package/canopus_installer_bundle.c \
 	../../manager/ui/canopus_manager.c \
 	../../manager/ui/canopus_manager_native.c \
@@ -64,6 +65,7 @@ TEST_SRCS = \
 	test_client.c \
 	test_supervisor_device.c \
 	test_supervisor_update.c \
+	test_supervisor_services.c \
 	test_installer_receipt.c \
 	test_arm_reloc.c
 

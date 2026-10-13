@@ -73,6 +73,7 @@ INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
 # helpers into the module; both are freestanding (no libc).
 for s in \
     manager/service/canopus_supervisor.c \
+    manager/service/canopus_supervisor_services.c \
     manager/service/canopus_supervisor_module.c \
     manager/service/canopus_supervisor_platform.c \
     manager/protocol/canopus_protocol.c \
@@ -96,6 +97,7 @@ echo "[2/3] relocatable link (ld.lld -r)"
 ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     -o "$OUT/canopus_supervisor.elf" \
     "$OUT/canopus_supervisor.o" \
+    "$OUT/canopus_supervisor_services.o" \
     "$OUT/canopus_supervisor_module.o" \
     "$OUT/canopus_supervisor_platform.o" \
     "$OUT/canopus_protocol.o" \

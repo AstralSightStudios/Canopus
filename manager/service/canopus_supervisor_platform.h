@@ -67,6 +67,15 @@ struct canopus_sup_platform_v1 {
     int (*gen_exists)(void *cookie, const char *token, uint32_t gen);
     int (*gen_verify)(void *cookie, const char *token, uint32_t gen,
                       uint32_t *version, uint32_t *lifecycle);
+    /* Module-private file access for the FS service. `path` is a complete
+     * path built by the core. file_open: flags are CANOPUS_FS_READ or
+     * CANOPUS_FS_WRITE (create/truncate); returns a file descriptor >= 0 or
+     * a negative error. Optional: without them the FS group is absent. */
+    int (*file_open)(void *cookie, const char *path, uint32_t flags);
+    int32_t (*file_read)(void *cookie, int fd, void *buffer, uint32_t size);
+    int32_t (*file_write)(void *cookie, int fd, const void *buffer, uint32_t size);
+    int (*file_close)(void *cookie, int fd);
+    int (*file_remove)(void *cookie, const char *path);
 };
 
 #ifdef __cplusplus

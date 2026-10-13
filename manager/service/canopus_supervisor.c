@@ -170,7 +170,8 @@ static uint32_t sup_activate_module(struct canopus_supervisor_v1 *sup,
         sup->error_code = CANOPUS_SUP_ERR_DESCRIPTOR_MISSING;
         return CANOPUS_RESULT_FAILED;
     }
-    activate_rc = module->descriptor->activate(0);
+    activate_rc = module->descriptor->activate(
+        canopus_supervisor_context(sup, (uint32_t)(module - sup->modules)));
     if (activate_rc != 0) {
         module->state = CANOPUS_STATE_FAILED;
         module->activation_error = (uint32_t)activate_rc;
@@ -194,9 +195,12 @@ int canopus_supervisor_register_descriptor(
         (uint32_t)sup->loading_slot >= CANOPUS_SUP_MODULE_SLOTS ||
         canopus_module_descriptor_check(descriptor) != 0 ||
         sup->platform == 0 || sup->platform->target_id == 0 ||
-        !sup_fixed_string_equal(descriptor->target_id,
-                                sizeof(descriptor->target_id),
-                                sup->platform->target_id)) {
+        !(sup_fixed_string_equal(descriptor->target_id,
+                                 sizeof(descriptor->target_id),
+                                 sup->platform->target_id) ||
+          sup_fixed_string_equal(descriptor->target_id,
+                                 sizeof(descriptor->target_id),
+                                 CANOPUS_PORTABLE_TARGET_ID))) {
         return -1;
     }
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
@@ -230,6 +234,7 @@ int canopus_supervisor_init(struct canopus_supervisor_v1 *sup,
     sup->loading_slot = -1;
     sup->last_kind = 0; /* default: legacy CPS1 status read */
     canopus_pending_init(&sup->pending);
+    canopus_supervisor_services_bind(sup);
     return 0;
 }
 
@@ -1146,11 +1151,13 @@ int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
         if (module->descriptor->abi_minor >= 2u &&
             module->descriptor->struct_size >= staged_end &&
             module->descriptor->publish_native_app_stage != 0) {
-            rc = module->descriptor->publish_native_app_stage(0, stage);
+            rc = module->descriptor->publish_native_app_stage(
+                canopus_supervisor_context(sup, i), stage);
         } else if (stage == 1u && module->descriptor->abi_minor >= 1u &&
                    module->descriptor->struct_size >= legacy_end &&
                    module->descriptor->publish_native_app != 0) {
-            rc = module->descriptor->publish_native_app(0);
+            rc = module->descriptor->publish_native_app(
+                canopus_supervisor_context(sup, i));
         } else {
             continue;
         }
@@ -1319,6 +1326,7 @@ static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
             slot = canopus_supervisor_add_module(
                 sup, lifecycle_class, version, (const char *)id);
             if (slot >= 0) {
+                canopus_supervisor_release_services(sup, (uint32_t)slot);
                 if (sup->platform->remove_artifact != 0) {
                     (void)sup->platform->remove_artifact(
                         sup->platform_cookie, (uint32_t)slot);
@@ -1414,7 +1422,7 @@ int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *s
             (module->descriptor->flags &
              CANOPUS_FLAG_REACTIVATE_AFTER_UI_RESTART) != 0u) {
             int rebind_rc = module->descriptor->activate != 0
-                ? module->descriptor->activate(0)
+                ? module->descriptor->activate(canopus_supervisor_context(sup, i))
                 : CANOPUS_SUP_ERR_DESCRIPTOR_MISSING;
             module->activation_error = (uint32_t)rebind_rc;
             if (rebind_rc != 0) {
