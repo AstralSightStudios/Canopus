@@ -42,6 +42,10 @@ gate_1() {
 gate_2() {
     step "3/6 C host tests"
     (cd tests/host && make clean >/dev/null && make >/dev/null && ./canopus_host_tests)
+    # The same suite must stay clean under ASan/UBSan (refactor-plan P2.9).
+    (cd tests/host && make clean >/dev/null && \
+        make CFLAGS="-std=c11 -Wall -Wextra -Werror -g -O1 -fsanitize=address,undefined -fno-sanitize-recover=undefined -DCANOPUS_HOST=1" >/dev/null && \
+        ./canopus_host_tests && make clean >/dev/null)
 }
 
 gate_3() {

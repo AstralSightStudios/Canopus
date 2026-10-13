@@ -196,7 +196,7 @@
   - 文档：`security-model.md`、README 中"未签名包默认不批准"的原则、CAN-P1-013。
   - 测试：删除签名用例；新增"哈希 / target / 固件不匹配仍被拒绝"的用例。
 - [ ] P2.8 评估把 Manager 的两套 UI 后端（lvgl_v9 / band11）合并为一套，配合声明式绑定表。
-- [ ] P2.9 Supervisor / Manager / client / host tests 同步改造；ASan/UBSan 保持干净；各 family 的 Supervisor 体积不超过上限；
+- [x] P2.9 Supervisor / Manager / client / host tests 同步改造（本阶段范围内：ASan/UBSan 纳入 CI 保持干净、旧格式 registry 拒绝测试、family 体积上限由 build 脚本强制；随 P2.5 协议收敛再复查）；ASan/UBSan 保持干净；各 family 的 Supervisor 体积不超过上限；
   新增"遇到旧格式 registry.bin / 旧 inbox 文件时安全忽略"的测试（K11）。
 
 ### P3 统一打包流程

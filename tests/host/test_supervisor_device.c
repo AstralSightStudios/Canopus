@@ -950,6 +950,30 @@ TEST(supervisor_registry_corrupt_magic_is_ignored)
     g_registry_present = 0;
 }
 
+/* K11: a registry written by a pre-refactor Supervisor (version 1, signature
+ * bit in flags) is not migrated: it is refused and nothing is loaded. */
+TEST(supervisor_old_format_registry_is_refused_not_loaded)
+{
+    struct canopus_supervisor_v1 b;
+    canopus_supervisor_init(&b, 7, &fake_platform, 0);
+    canopus_memset(g_registry, 0, sizeof(g_registry));
+    g_registry[0] = (uint8_t)(CANOPUS_SUP_REGISTRY_MAGIC & 0xffu);
+    g_registry[1] = (uint8_t)((CANOPUS_SUP_REGISTRY_MAGIC >> 8) & 0xffu);
+    g_registry[2] = (uint8_t)((CANOPUS_SUP_REGISTRY_MAGIC >> 16) & 0xffu);
+    g_registry[3] = (uint8_t)((CANOPUS_SUP_REGISTRY_MAGIC >> 24) & 0xffu);
+    g_registry[4] = 1u; /* version 1 */
+    g_registry[8] = 1u; /* one module */
+    canopus_memcpy(g_registry + CANOPUS_SUP_REGISTRY_HEADER, "mod.old", 8);
+    g_registry[CANOPUS_SUP_REGISTRY_HEADER + 44] = (uint8_t)CANOPUS_SUP_INTENT_ENABLED;
+    g_registry[CANOPUS_SUP_REGISTRY_HEADER + 40] = 1u; /* legacy signature_ok */
+    g_registry_present = 1;
+    g_loads = 0;
+    CHECK(canopus_supervisor_restore_registry(&b) == -1);
+    CHECK(b.module_count == 0);
+    CHECK(g_loads == 0);
+    g_registry_present = 0;
+}
+
 TEST(supervisor_resident_disable_is_reboot_required)
 {
     struct canopus_supervisor_v1 sup;
@@ -1661,6 +1685,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_registry_restore_keeps_disabled_modules_unloaded", supervisor_registry_restore_keeps_disabled_modules_unloaded_wrapper },
     { "supervisor_registry_remove_intent_clears_at_boot", supervisor_registry_remove_intent_clears_at_boot_wrapper },
     { "supervisor_registry_corrupt_magic_is_ignored", supervisor_registry_corrupt_magic_is_ignored_wrapper },
+    { "supervisor_old_format_registry_is_refused_not_loaded", supervisor_old_format_registry_is_refused_not_loaded_wrapper },
     { "supervisor_resident_disable_is_reboot_required", supervisor_resident_disable_is_reboot_required_wrapper },
     { "supervisor_resident_remove_is_remove_pending", supervisor_resident_remove_is_remove_pending_wrapper },
     { "supervisor_unknown_slot_disallowed", supervisor_unknown_slot_disallowed_wrapper },
