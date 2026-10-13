@@ -54,17 +54,17 @@ gate_3() {
 }
 
 gate_4() {
-    step "5/6 C module cross-build + verifier (hello)"
-    ./modules/examples/hello/build.sh
+    step "5/6 C module projects: canopus build + package (hello, hello-portable)"
+    (cd modules/examples/hello && ../../../target/debug/canopus build && ../../../target/debug/canopus package)
     # The portable example is built once and must verify against every target.
-    ./modules/examples/hello-portable/build.sh
+    (cd modules/examples/hello-portable && ../../../target/debug/canopus build && ../../../target/debug/canopus package)
     for target in $(target/debug/canopus target list --active --names); do
         target/debug/canopus verify modules/examples/hello-portable/build/hello_portable.elf --target "$target" >/dev/null
     done
     # Load that module through the portable ELF loader with distinct code and data
     # bases, so a regression in the per-region base arithmetic shows up as a failed
     # constructor-pointer check rather than only on a device.
-    (cd tests/host && make real-elf-loader MODULE_ELF=../../modules/examples/hello/build/hello_module.elf)
+    (cd tests/host && make real-elf-loader MODULE_ELF=../../modules/examples/hello/build/xiaomi-band-10-pro-3.101.036/hello.elf)
 }
 
 gate_5() {

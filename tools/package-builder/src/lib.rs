@@ -75,6 +75,21 @@ pub fn validate_entry(name: &str, entry_type: &EntryType) -> Result<()> {
     Ok(())
 }
 
+/// Adds an entry; an identical duplicate path is stored once, conflicting
+/// content for one path is an error.
+fn push_entry(entries: &mut Vec<(String, Vec<u8>)>, path: String, bytes: Vec<u8>) -> Result<()> {
+    match entries.iter().find(|(p, _)| *p == path) {
+        Some((_, existing)) if *existing == bytes => Ok(()),
+        Some(_) => Err(Error::other(format!(
+            "package build: conflicting content for '{path}'"
+        ))),
+        None => {
+            entries.push((path, bytes));
+            Ok(())
+        }
+    }
+}
+
 /// Assembles a deterministic tar archive from a manifest and the on-disk
 /// artifacts it references. Verifies each artifact SHA-256 against the
 /// manifest before embedding. `resource_files` maps each declared
@@ -85,6 +100,19 @@ pub fn build_archive(
     manifest: &PackageManifest,
     files: &HashMap<String, PathBuf>, // target_id -> source file
     resource_files: &HashMap<String, PathBuf>, // resource path -> source file
+) -> Result<Vec<u8>> {
+    build_archive_with_receipts(manifest, files, resource_files, &HashMap::new())
+}
+
+/// Like [`build_archive`], plus the per-target install receipts the manifest
+/// declares (`receipt_path` / `receipt_sha256`, keyed by target id). Portable
+/// modules point several targets at one artifact path; identical content is
+/// stored once.
+pub fn build_archive_with_receipts(
+    manifest: &PackageManifest,
+    files: &HashMap<String, PathBuf>,
+    resource_files: &HashMap<String, PathBuf>,
+    receipts: &HashMap<String, Vec<u8>>,
 ) -> Result<Vec<u8>> {
     // CAN-P2-009: the library enforces the package schema itself (not just
     // the CLI), so build and CLI contracts cannot drift apart. Absent
@@ -119,7 +147,23 @@ pub fn build_archive(
                 art.target_id, art.sha256, actual
             )));
         }
-        entries.push((art.path.clone(), bytes));
+        push_entry(&mut entries, art.path.clone(), bytes)?;
+        if let (Some(path), Some(sha)) = (&art.receipt_path, &art.receipt_sha256) {
+            validate_entry(path, &EntryType::Regular)?;
+            let receipt = receipts.get(&art.target_id).ok_or_else(|| {
+                Error::other(format!(
+                    "package build: no receipt supplied for target '{}'",
+                    art.target_id
+                ))
+            })?;
+            if !hex_sha256(receipt).eq_ignore_ascii_case(sha) {
+                return Err(Error::other(format!(
+                    "package build: receipt for {} sha256 mismatch",
+                    art.target_id
+                )));
+            }
+            push_entry(&mut entries, path.clone(), receipt.clone())?;
+        }
     }
 
     // CAN-P1-013: declared native-app resources (hash-verified, canonical
@@ -209,6 +253,12 @@ pub fn verify_archive(archive: &[u8]) -> Result<PackageManifest> {
         .artifacts
         .iter()
         .map(|a| (&a.path, &a.sha256))
+        .chain(
+            manifest
+                .artifacts
+                .iter()
+                .filter_map(|a| a.receipt_path.as_ref().zip(a.receipt_sha256.as_ref())),
+        )
         .chain(
             manifest
                 .native_app

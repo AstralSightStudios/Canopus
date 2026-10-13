@@ -32,5 +32,5 @@ for t in xiaomi-band-10-pro-3.101.036 xiaomi-band-10-pro-3.101.043 \
         echo "SKIP  supervisor $t (build failed or needs firmware)"
     fi
 done
-for f in modules/examples/hello/build/hello_module.elf; do [ -f "$f" ] && sum "$f"; done
+for f in modules/examples/hello/build/xiaomi-band-10-pro-3.101.036/hello.elf modules/examples/hello-portable/build/hello_portable.elf; do [ -f "$f" ] && sum "$f"; done
 find sdk/rust/examples/no-heap-counter/build -name '*.elf' | LC_ALL=C sort | while read -r f; do sum "$f"; done

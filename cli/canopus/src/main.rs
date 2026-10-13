@@ -1,6 +1,7 @@
 //! canopus CLI — host tooling entry point.
 
 mod commands;
+mod project;
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -33,9 +34,37 @@ enum Command {
     /// Module manifest (Canopus.toml) commands.
     #[command(subcommand)]
     Module(ModuleCmd),
-    /// Package manifest commands.
-    #[command(subcommand)]
-    Package(PackageCmd),
+    /// Package a built project (no subcommand: Canopus.toml -> .canopus with
+    /// per-target receipts) or work with package manifests/archives.
+    #[command(args_conflicts_with_subcommands = true)]
+    Package {
+        #[command(subcommand)]
+        cmd: Option<PackageCmd>,
+        #[arg(long, default_value = "Canopus.toml")]
+        manifest: PathBuf,
+        /// Output file (default: dist/<id>-<version>.canopus).
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Create a module project: Canopus.toml + a C source (portable by default).
+    New {
+        /// Module id (ADR-CAN-003: ^[a-z][a-z0-9_]{0,15}$).
+        id: String,
+        /// Directory to create the project in.
+        #[arg(long, default_value = ".")]
+        dir: PathBuf,
+        /// Make a target-bound module for these exact target ids (repeatable).
+        #[arg(long = "target", action = clap::ArgAction::Append)]
+        targets: Vec<String>,
+    },
+    /// Build a module project (portable: once; target: per exact target) and verify it.
+    Build {
+        #[arg(long, default_value = "Canopus.toml")]
+        manifest: PathBuf,
+        /// Build only this target (target modules).
+        #[arg(long)]
+        target: Option<String>,
+    },
     /// RE orchestrator commands (Phase 9).
     #[command(subcommand)]
     Re(ReCmd),
@@ -181,7 +210,7 @@ enum EvidenceCmd {
 enum ModuleCmd {
     /// Validate a module manifest (Canopus.toml / .json).
     Validate { path: PathBuf },
-    /// Scaffold a new module from a template (CAN-REL-004).
+    /// Legacy in-repo scaffold (target-bound C or Rust); prefer `canopus new`.
     New {
         /// Module name (reverse-dns-safe; sanitized for C identifiers).
         name: String,
@@ -233,11 +262,18 @@ fn main() {
 fn run(cli: Cli) -> anyhow::Result<()> {
     match cli.command {
         Command::Target(cmd) => commands::target(cmd),
+        Command::New { id, dir, targets } => project::new(&id, &dir, &targets),
+        Command::Build { manifest, target } => project::build(&manifest, target.as_deref()),
         Command::Symbol(cmd) => commands::symbol(cmd),
         Command::Type(cmd) => commands::type_cmd(cmd),
         Command::Evidence(cmd) => commands::evidence(cmd),
         Command::Module(cmd) => commands::module(cmd),
-        Command::Package(cmd) => commands::package(cmd),
+        Command::Package { cmd: Some(cmd), .. } => commands::package(cmd),
+        Command::Package {
+            cmd: None,
+            manifest,
+            output,
+        } => project::package(&manifest, output.as_deref()),
         Command::Re(cmd) => commands::re(cmd),
         Command::BuildPlan {
             manifest,

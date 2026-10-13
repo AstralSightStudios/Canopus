@@ -5,60 +5,187 @@
   "description": "A module project declaration: identity, language, lifecycle, target list, required capabilities and optional native app. Build planner expands source x targets x features into artifacts.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "module", "targets"],
+  "required": [
+    "schema",
+    "module",
+    "build"
+  ],
   "properties": {
-    "schema": { "const": 1 },
+    "schema": {
+      "const": 1
+    },
     "module": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "version", "language", "lifecycle", "canopus_abi"],
+      "required": [
+        "id",
+        "version",
+        "version_code",
+        "language",
+        "lifecycle",
+        "canopus_abi"
+      ],
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$",
-          "description": "Reverse-DNS style, e.g. org.example.a2dp-source"
+          "pattern": "^[a-z][a-z0-9_]{0,15}$",
+          "description": "ADR-CAN-003: also the store id, receipt module_id, insmod name and inbox token."
         },
-        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
-        "language": { "type": "string", "enum": ["c", "rust"] },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "language": {
+          "type": "string",
+          "enum": [
+            "c",
+            "rust"
+          ]
+        },
         "lifecycle": {
           "type": "string",
-          "enum": ["removable", "resident-after-activation", "always-resident", "patch-reboot-required"]
+          "enum": [
+            "removable",
+            "resident-after-activation",
+            "always-resident",
+            "patch-reboot-required"
+          ]
         },
-        "canopus_abi": { "type": "string" },
-        "description": { "type": "string" },
-        "author": { "type": "string" }
+        "canopus_abi": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "version_code": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295,
+          "description": "Monotonic u32 compared by the device; `version` is display only."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "portable",
+            "target"
+          ],
+          "default": "portable",
+          "description": "portable: one ELF, no firmware address; target: one ELF per exact target."
+        }
       }
     },
     "targets": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "include": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-        "exclude": { "type": "array", "items": { "type": "string" } }
+        "include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 0
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       },
-      "required": ["include"]
+      "required": []
     },
-    "features": { "type": "array", "items": { "type": "string" } },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "capabilities": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "required": { "type": "array", "items": { "type": "string" } },
-        "optional": { "type": "array", "items": { "type": "string" } }
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "optional": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       },
-      "required": ["required"]
+      "required": [
+        "required"
+      ]
     },
     "native_app": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["enabled", "app_id", "name"],
+      "required": [
+        "enabled",
+        "app_id",
+        "name"
+      ],
       "properties": {
-        "enabled": { "type": "boolean" },
-        "app_id": { "type": "string" },
-        "name": { "type": "string" },
-        "icon": { "type": "string" },
-        "entry": { "type": "string", "description": "e.g. a2dp_app_create" },
-        "role": { "type": "string", "enum": ["module-manager", "standalone", "integrated"] }
+        "enabled": {
+          "type": "boolean"
+        },
+        "app_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "entry": {
+          "type": "string",
+          "description": "e.g. a2dp_app_create"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "module-manager",
+            "standalone",
+            "integrated"
+          ]
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sources"
+      ],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          },
+          "description": "C sources relative to the project; ${CANOPUS_ROOT} expands to the Canopus checkout."
+        },
+        "include_dirs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     }
   }

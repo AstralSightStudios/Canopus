@@ -1,0 +1,14 @@
+schema = 1
+
+[module]
+id = "hello_portable"
+version = "1.0.0"
+version_code = 1
+kind = "portable"
+language = "c"
+lifecycle = "removable"
+canopus_abi = "1"
+description = "portable example: Supervisor services only, no firmware address"
+
+[build]
+sources = ["hello_portable.c"]

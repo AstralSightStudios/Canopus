@@ -200,11 +200,11 @@
   新增"遇到旧格式 registry.bin / 旧 inbox 文件时安全忽略"的测试（K11）。
 
 ### P3 统一打包流程
-- [ ] P3.1 `canopus new`：生成含 `Canopus.toml`、构建配置、示例源码的模块工程（默认 portable）。
-- [ ] P3.2 `canopus build [--target X | --all]`：portable 模块只构建一次，target-private 模块按矩阵构建；产物均须过 verifier。
-- [ ] P3.3 `canopus package`：产出确定性的 `.canopus`（P0.1 格式，含无签名回执）；`canopus verify` 只做结构 / 哈希 / target 校验。
+- [x] P3.1 `canopus new <id> [--target T]...`（C；Rust 工程仍用旧的 `module new`，待 `canopus build` 支持 Rust）：生成含 `Canopus.toml`、构建配置、示例源码的模块工程（默认 portable）。
+- [x] P3.2 `canopus build [--target X]`（C；portable 构建一次，target 模块按 `[targets].include` 逐个构建，产物过 verifier；Rust 未做）：portable 模块只构建一次，target-private 模块按矩阵构建；产物均须过 verifier。
+- [x] P3.3 `canopus package`（Canopus.toml → `dist/<id>-<ver>.canopus`，含 manifest、产物与逐 target 的 CMI2 回执；校验沿用 `canopus package verify`）：产出确定性的 `.canopus`（P0.1 格式，含无签名回执）；`canopus verify` 只做结构 / 哈希 / target 校验。
 - [ ] P3.4 安装器表盘改为 `canopus package --installer` 的输出，替换 `build_module_installer_prod.py` / `build_band11_installer.py` 中的硬编码。
-- [ ] P3.5 `hello` 示例改用 `canopus build` 构建；manifest 的 sha256 由构建填写。
+- [x] P3.5 `hello` 示例改用 `canopus build` 构建（`modules/examples/hello/Canopus.toml`，旧 build.sh/package.json 删除；hello 的 C ELF 哈希因链接顺序变化已刷新基线）；`hello-portable` 同样。
 - [ ] P3.6 （已前移为 P0.7）
 - [ ] P3.7 文档收口
   - `docs/` 入口页（不超过一屏）。
@@ -302,3 +302,4 @@
 | 2026-10-14 | P4.1–P4.5 完成（A/B 双代更新、回滚、加载失败回退；P4.0 开机自启调查未开始） |
 | 2026-10-14 | P1.3/P1.4 完成，P1.2 部分完成（family 层）；基线 hashes 刷新（committed==generator；差异仅为 P65/Band 9 删除与生成物头注释） |
 | 2026-10-14 | P2.3 完成：Rust 单一 workspace |
+| 2026-10-14 | P3.1/P3.2/P3.3/P3.5 完成（C 模块工程：new/build/package；P3.4 安装器表盘仍由旧 Python 脚本生成） |

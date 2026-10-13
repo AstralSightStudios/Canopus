@@ -28,17 +28,13 @@ for manual removal.
 Build and verify the example module first, then produce the receipt:
 
 ```sh
-cp modules/examples/hello/build/hello_module.elf \
+cp modules/examples/hello/build/xiaomi-band-10-pro-3.101.036/hello.elf \
   watchfaces/canopus_hello/module.bin
 
-python3 scripts/build-module-installer-receipt.py \
-  --module watchfaces/canopus_hello/module.bin \
-  --module-id canopus_hello \
-  --version 1 \
-  --lifecycle 0 \
-  --target-id xiaomi-band-10-pro-3.101.036 \
-  --firmware-sha256 f701a84ffcafa67f4d4603ad8cd66a11e5442f27140f5af0982e0975dccd225b \
-  --output watchfaces/canopus_hello/receipt.bin
+# `canopus package` (run in modules/examples/hello) writes the CMI2 receipt next to the ELF
+# inside dist/hello-0.1.0.canopus (receipts/<target_id>.cmi); extract it as receipt.bin:
+tar -xOf modules/examples/hello/dist/hello-0.1.0.canopus \
+  receipts/xiaomi-band-10-pro-3.101.036.cmi > watchfaces/canopus_hello/receipt.bin
 ```
 
 The `.bin` payloads are build artifacts ignored by Git; they must be present when the

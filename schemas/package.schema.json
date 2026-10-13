@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://canopus.dev/schemas/package.schema.json",
   "title": "Canopus package manifest",
-  "description": "Canonical .canopus package manifest. Contains per-artifact exact target binding, hashes, lifecycle class, optional native app metadata, signing key ID and minimum manager version. Extension of the file is not part of security.",
+  "description": "Canonical .canopus package manifest. Contains per-artifact exact target binding, hashes, lifecycle class, optional native app metadata, minimum manager version. Extension of the file is not part of security.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -84,6 +84,14 @@
             "items": {
               "type": "string"
             }
+          },
+          "receipt_path": {
+            "type": "string",
+            "description": "Unsigned CMI2 install receipt for this target."
+          },
+          "receipt_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
           }
         }
       }
@@ -204,6 +212,11 @@
           "type": "boolean"
         }
       }
+    },
+    "version_code": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967295
     }
   }
 }

@@ -9,6 +9,7 @@ pub mod native_config;
 pub mod planner;
 pub mod policy;
 pub mod private_symbols;
+pub mod receipt;
 pub mod registry;
 pub mod rustgen;
 pub mod schema;

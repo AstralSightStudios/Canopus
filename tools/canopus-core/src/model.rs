@@ -262,7 +262,8 @@ pub struct ModuleManifest {
     #[serde(rename = "schema")]
     pub schema: u32,
     pub module: ModuleInfo,
-    pub targets: ModuleTargets,
+    pub build: ModuleBuild,
+    pub targets: Option<ModuleTargets>,
     pub features: Option<Vec<String>>,
     pub capabilities: Option<ModuleCapabilities>,
     pub native_app: Option<NativeApp>,
@@ -272,6 +273,9 @@ pub struct ModuleManifest {
 pub struct ModuleInfo {
     pub id: String,
     pub version: String,
+    pub version_code: u32,
+    /// `portable` (default) or `target`.
+    pub kind: Option<String>,
     pub language: String,
     pub lifecycle: String,
     pub canopus_abi: String,
@@ -280,9 +284,22 @@ pub struct ModuleInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModuleBuild {
+    pub sources: Vec<String>,
+    pub include_dirs: Option<Vec<String>>,
+    pub defines: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleTargets {
-    pub include: Vec<String>,
+    pub include: Option<Vec<String>>,
     pub exclude: Option<Vec<String>>,
+}
+
+impl ModuleManifest {
+    pub fn is_portable(&self) -> bool {
+        self.module.kind.as_deref() != Some("target")
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -311,6 +328,7 @@ pub struct PackageManifest {
     pub module_id: String,
     pub version: String,
     pub build_generation: u64,
+    pub version_code: Option<u32>,
     pub canopus_abi: String,
     pub lifecycle: String,
     pub artifacts: Vec<PackageArtifact>,
@@ -332,6 +350,8 @@ pub struct PackageArtifact {
     pub firmware_sha256: String,
     pub path: String,
     pub sha256: String,
+    pub receipt_path: Option<String>,
+    pub receipt_sha256: Option<String>,
     pub symbols_used: Option<Vec<String>>,
 }
 

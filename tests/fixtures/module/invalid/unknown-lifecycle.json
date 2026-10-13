@@ -1,16 +1,24 @@
 {
   "schema": 1,
   "module": {
-    "id": "org.example.bad",
+    "id": "hello",
     "version": "0.1.0",
     "language": "c",
     "lifecycle": "always-removable-instantly",
-    "canopus_abi": "1"
+    "canopus_abi": "1",
+    "version_code": 1
   },
   "targets": {
-    "include": ["xiaomi-band-10-pro-3.101.030"]
+    "include": [
+      "xiaomi-band-10-pro-3.101.030"
+    ]
   },
   "capabilities": {
     "required": []
+  },
+  "build": {
+    "sources": [
+      "src/hello.c"
+    ]
   }
 }

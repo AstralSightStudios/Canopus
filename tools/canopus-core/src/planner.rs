@@ -14,6 +14,7 @@ pub struct PlanRow {
     pub firmware_sha256: String,
     pub module_id: String,
     pub module_version: String,
+    pub module_version_code: u32,
 }
 
 /// Expands `module.targets.include` across the registered `targets`.
@@ -22,8 +23,19 @@ pub struct PlanRow {
 /// `exclude` list is honored by removing those target ids from the include
 /// set (matching the manifest semantics).
 pub fn expand(module: &ModuleManifest, targets: &[TargetPack]) -> Result<Vec<PlanRow>, String> {
-    let include: Vec<&str> = module.targets.include.iter().map(|s| s.as_str()).collect();
-    let exclude_vec = module.targets.exclude.clone().unwrap_or_default();
+    // A portable module without an explicit include list targets every pack
+    // the caller registered (the caller passes the active ones).
+    let include_vec: Vec<String> = match module.targets.as_ref().and_then(|t| t.include.clone()) {
+        Some(list) if !list.is_empty() => list,
+        _ if module.is_portable() => targets.iter().map(|p| p.target_id.clone()).collect(),
+        _ => return Err("a target module must list its exact targets in [targets].include".into()),
+    };
+    let include: Vec<&str> = include_vec.iter().map(|s| s.as_str()).collect();
+    let exclude_vec = module
+        .targets
+        .as_ref()
+        .and_then(|t| t.exclude.clone())
+        .unwrap_or_default();
     let exclude: Vec<&str> = exclude_vec.iter().map(|s| s.as_str()).collect();
 
     let mut rows = Vec::new();
@@ -53,6 +65,7 @@ pub fn expand(module: &ModuleManifest, targets: &[TargetPack]) -> Result<Vec<Pla
             firmware_sha256: pack.firmware_sha256.clone(),
             module_id: module.module.id.clone(),
             module_version: module.module.version.clone(),
+            module_version_code: module.module.version_code,
         });
     }
     Ok(rows)
@@ -61,7 +74,7 @@ pub fn expand(module: &ModuleManifest, targets: &[TargetPack]) -> Result<Vec<Pla
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{ModuleCapabilities, ModuleInfo, ModuleTargets};
+    use crate::model::{ModuleBuild, ModuleCapabilities, ModuleInfo, ModuleTargets};
 
     fn pack(id: &str, caps: &[&str]) -> TargetPack {
         serde_json::from_value(serde_json::json!({
@@ -91,18 +104,25 @@ mod tests {
         ModuleManifest {
             schema: 1,
             module: ModuleInfo {
-                id: "org.canopus.test".into(),
+                id: "canopus_test".into(),
                 version: "0.1.0".into(),
+                version_code: 1,
+                kind: Some("target".into()),
                 language: "c".into(),
                 lifecycle: "removable".into(),
                 canopus_abi: "1".into(),
                 description: None,
                 author: None,
             },
-            targets: ModuleTargets {
-                include: include.iter().map(|s| s.to_string()).collect(),
-                exclude: None,
+            build: ModuleBuild {
+                sources: vec!["src/test.c".into()],
+                include_dirs: None,
+                defines: None,
             },
+            targets: Some(ModuleTargets {
+                include: Some(include.iter().map(|s| s.to_string()).collect()),
+                exclude: None,
+            }),
             features: None,
             capabilities: if required.is_empty() {
                 None
@@ -122,7 +142,7 @@ mod tests {
         let rows = expand(&m, &[pack("tgt-a", &[])]).unwrap();
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].target_id, "tgt-a");
-        assert_eq!(rows[0].module_id, "org.canopus.test");
+        assert_eq!(rows[0].module_id, "canopus_test");
     }
 
     #[test]
@@ -144,7 +164,7 @@ mod tests {
     fn excluded_target_skipped() {
         let m = module(&["tgt-a", "tgt-b"], &[]);
         let mut m = m;
-        m.targets.exclude = Some(vec!["tgt-b".into()]);
+        m.targets.as_mut().unwrap().exclude = Some(vec!["tgt-b".into()]);
         let rows = expand(&m, &[pack("tgt-a", &[]), pack("tgt-b", &[])]).unwrap();
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].target_id, "tgt-a");

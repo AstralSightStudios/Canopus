@@ -1,0 +1,34 @@
+schema = 1
+
+[module]
+id = "hello"
+version = "0.1.0"
+version_code = 1
+kind = "target"
+language = "c"
+lifecycle = "removable"
+canopus_abi = "1"
+description = "zero-import removable hello module (target-bound: uses the firmware clock)"
+
+[capabilities]
+required = ["clock.gettime"]
+
+[build]
+sources = [
+  "hello.c",
+  "${CANOPUS_ROOT}/runtime/control/canopus_control.c",
+  "${CANOPUS_ROOT}/runtime/lifecycle/canopus_lifecycle.c",
+  "${CANOPUS_ROOT}/runtime/resources/canopus_resource.c",
+  "${CANOPUS_ROOT}/runtime/diagnostics/canopus_diagnostics.c",
+  "${CANOPUS_ROOT}/runtime/module/canopus_module.c",
+]
+include_dirs = [
+  "${CANOPUS_ROOT}/runtime/lifecycle",
+  "${CANOPUS_ROOT}/runtime/resources",
+  "${CANOPUS_ROOT}/runtime/diagnostics",
+  "${CANOPUS_ROOT}/runtime/control",
+  "${CANOPUS_ROOT}/runtime/module",
+]
+
+[targets]
+include = ["xiaomi-band-10-pro-3.101.036"]
