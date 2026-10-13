@@ -356,18 +356,39 @@ pub fn build_plan(manifest_path: &Path, targets_dir: &Path, json: bool) -> anyho
 
 pub fn verify(
     elf_path: &Path,
-    target_id: &str,
+    target_id: Option<&str>,
+    portable: bool,
     targets_dir: &Path,
     json: bool,
 ) -> anyhow::Result<()> {
-    let pack = find_target(targets_dir, target_id)?;
+    let (pack, allowed) = if portable {
+        // A portable module must not embed an address that is meaningful on
+        // ANY registered firmware: scan against the union of every target's
+        // address space with an empty allowlist.
+        let packs = list_target_packs(targets_dir)?;
+        let mut base = packs
+            .first()
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("no target packs under {}", targets_dir.display()))?;
+        let mut ranges: Vec<canopus_core::model::AddressRange> = packs
+            .iter()
+            .filter_map(|p| p.firmware_address_ranges.clone())
+            .flatten()
+            .collect();
+        ranges.sort_by_key(|r| (r.base, r.size));
+        ranges.dedup_by_key(|r| (r.base, r.size));
+        base.firmware_address_ranges = Some(ranges);
+        (base, Vec::new())
+    } else {
+        let id = target_id.ok_or_else(|| anyhow::anyhow!("--target is required"))?;
+        (find_target(targets_dir, id)?, build_allowed_addresses(targets_dir, id))
+    };
     let data = std::fs::read(elf_path)
         .map_err(|e| anyhow::anyhow!("cannot read {}: {e}", elf_path.display()))?;
 
     // CAN-P1-011: the absolute-address allowlist is the target's own symbol
     // table (entry + callable addresses). Embedded firmware-range addresses
     // in the module must all appear here.
-    let allowed = build_allowed_addresses(targets_dir, target_id);
     let verifier = Verifier {
         target: &pack,
         allowed_addresses: &allowed,

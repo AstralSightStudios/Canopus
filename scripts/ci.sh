@@ -52,6 +52,11 @@ gate_3() {
 gate_4() {
     step "5/6 C module cross-build + verifier (hello)"
     ./modules/examples/hello/build.sh
+    # The portable example is built once and must verify against every target.
+    ./modules/examples/hello-portable/build.sh
+    for target in $(target/debug/canopus target list --active --names); do
+        target/debug/canopus verify modules/examples/hello-portable/build/hello_portable.elf --target "$target" >/dev/null
+    done
     # Load that module through the portable ELF loader with distinct code and data
     # bases, so a regression in the per-region base arithmetic shows up as a failed
     # constructor-pointer check rather than only on a device.

@@ -177,7 +177,7 @@
   - Supervisor 按 target 填表，并经 context 传给模块回调（目前是 `activate(0)`）。
   - 第一批服务：日志/状态、时间/定时器、内存、文件、通知、`canopus_ui` 语义树渲染（复用 `app-sdk/ui`）。
   - BT 与 interconnect 放到后续批次。
-- [ ] P2.2 portable 模块
+- [~] P2.2 portable 模块（已完成：`canopus verify --portable`（任何已注册固件的地址范围内出现地址即失败）、`modules/examples/hello-portable`（同一 ELF 通过 5 个 active target 的 verifier 与 portable 检查，CI 覆盖）；未完成：原 `hello`（依赖固件 timer/clock，等 time 服务）与 `no-heap-counter` 迁移；设备加载需自定义 loader）
   - verifier 增加"零固件地址"模式。
   - `hello` 与 `no-heap-counter` 迁移为 portable，同一个 ELF 在 036/043/139/155/177 上通过 host 测试。
 - [x] P2.3 Rust 合并为单一 workspace（根 Cargo.toml；设备 staticlib 用 `--profile device`，`default-members` 排除不能在宿主构建的 no-heap-counter-device；Rust 模块 ELF 哈希因 crate 路径变化而变，已刷新基线；hello 的 C ELF 不变）。

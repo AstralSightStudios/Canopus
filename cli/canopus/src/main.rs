@@ -55,8 +55,11 @@ enum Command {
         /// Module ELF (ET_REL) to verify.
         elf: PathBuf,
         /// Target id to verify against, e.g. xiaomi-band-10-pro-3.101.036.
+        #[arg(long, required_unless_present = "portable", conflicts_with = "portable")]
+        target: Option<String>,
+        /// Portable module: no firmware address of any registered target may appear.
         #[arg(long)]
-        target: String,
+        portable: bool,
         /// Directory containing target packs.
         #[arg(long, default_value = "targets")]
         targets_dir: PathBuf,
@@ -244,8 +247,9 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         Command::Verify {
             elf,
             target,
+            portable,
             targets_dir,
             json,
-        } => commands::verify(&elf, &target, &targets_dir, json),
+        } => commands::verify(&elf, target.as_deref(), portable, &targets_dir, json),
     }
 }
