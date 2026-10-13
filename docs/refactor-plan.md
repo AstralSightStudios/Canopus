@@ -154,13 +154,13 @@
   - verifier / fixture / stability 测试中的 P65 用例；README 与 progress 中的相关段落。
   - 保留 P65 期间产出的通用机制：CMR1 注册帧、registry 错误码细分与诊断、注入式文件 IO 加固。
   - 完成标准：CI 全绿。
-- [ ] P1.2 target 数据模型：`target.toml` + `symbols/*.json` 为唯一权威
+- [~] P1.2 target 数据模型（已完成：family 层 `targets/_families/*.toml`（Manager 后端、体积上限、loader 源、编译宏、prod 目录、生成选项）、`status`、`rust_module`、build_canopus_supervisor.sh 的 case 改读 `target info --shell`；未完成：`native-bindings.json` 并入声明式绑定表、`lua-recovery.toml` 裸地址转 symbol、指纹预生成、symbol 文件命名统一）：`target.toml` + `symbols/*.json` 为唯一权威
   - 新增 family 层（如 `targets/_families/<family>.toml`），承载 Manager 后端、Supervisor 体积上限、编译宏、loader 源、安装器布局。
   - `native-bindings.json` 并入为声明式绑定表；`lua-recovery.toml` 中的裸地址改为 symbol 记录。
   - 固件指纹预先生成进 target 包，构建不再读取固件。
   - 统一 symbol 文件命名；target 增加 `status`（active / frozen）。
-- [ ] P1.3 `canopus target generate <id|--all> [--check]`（Rust）统一产出 C 头、Rust 绑定、Lua/loader 配置。
-- [ ] P1.4 迁移并删除 Python 生成脚本（`generate_target_private_symbols.py`、`generate_band11_native_config.py`、
+- [x] P1.3 `canopus target generate <id|--all> [--check]`（Rust）统一产出 C 头、target config、Rust 绑定、SDK private-symbol 元数据、Band 11 native 地址头（Lua/loader 配置待 P1.2 一并并入）。另有 `canopus target info <id> --shell|--json`。
+- [x] P1.4 迁移并删除 Python 生成脚本（`generate_band9_loader_config.py` 随 Band 9 删除；其余两个已移植到 Rust 并删除；CI 只跑 `target generate --all --check`；pre-commit 钩子未做）（`generate_target_private_symbols.py`、`generate_band11_native_config.py`、
   `generate_band9_loader_config.py`）；CI 与可选的 pre-commit 钩子只做"生成物未过期"检查，防止再次出现 `4f87d57` 式的过期。
 - [ ] P1.5 target 注册表：CLI / CI / 打包脚本从 `targets/` 发现 active target，删除硬编码清单。
 - [ ] P1.6 保持证据门槛：FORBIDDEN / CANDIDATE / restricted 状态与 evidence 链迁移后语义不变（测试覆盖）。
@@ -300,3 +300,4 @@
 | 2026-10-14 | P1.8 完成：Band 9 冻结 |
 | 2026-10-14 | P2.7 完成：移除全部签名/验签 |
 | 2026-10-14 | P4.1–P4.5 完成（A/B 双代更新、回滚、加载失败回退；P4.0 开机自启调查未开始） |
+| 2026-10-14 | P1.3/P1.4 完成，P1.2 部分完成（family 层）；基线 hashes 刷新（committed==generator；差异仅为 P65/Band 9 删除与生成物头注释） |

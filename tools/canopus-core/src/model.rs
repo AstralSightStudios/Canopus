@@ -16,6 +16,10 @@ pub struct TargetPack {
     pub target_id: String,
     /// `active` (default) or `frozen` (data kept, out of CI/prod/Rust matrix).
     pub status: Option<String>,
+    /// Family layer name (`targets/_families/<family>.toml`).
+    pub family: Option<String>,
+    /// Suffix of the generated Rust bindings (`generated_<rust_module>.rs`).
+    pub rust_module: Option<String>,
     pub device_family: String,
     pub device_model: String,
     pub board_revision: Option<String>,

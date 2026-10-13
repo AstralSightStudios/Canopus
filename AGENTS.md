@@ -13,8 +13,7 @@ device verified / production approved）以 `docs/progress.md` 与 `docs/native-
 ## 常用命令
 - 全量 CI：`scripts/ci.sh`；不中断并输出红/绿表：`CANOPUS_CI_KEEP_GOING=1 scripts/ci.sh`
 - 构建 Supervisor：`CANOPUS_TARGET=<id> sh scripts/build_canopus_supervisor.sh`
-- 重新生成 target 产物：`canopus target generate-veneer <id>`、`canopus target generate-rust-bindings <id> --output sdk/rust/canopus-target-generated/src/generated_<n>.rs`、
-  `python3 tools/generate_target_private_symbols.py ...`（参数见 `scripts/ci.sh`）
+- 重新生成 target 产物：`canopus target generate <id>|--all`（`--check` 只检查是否过期）
 - 基线哈希：`scripts/baseline-hashes.sh`（输出对比 `docs/baseline/hashes.txt`）
 
 ## 规则

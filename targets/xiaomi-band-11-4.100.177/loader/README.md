@@ -30,9 +30,7 @@ See [port manifest](../evidence/fw-match/port-155-to-177.json), [evidence](../ev
 
 ```sh
 cargo build -p canopus-cli
-target/debug/canopus target generate-veneer xiaomi-band-11-4.100.177 --targets-dir targets
-target/debug/canopus target generate-rust-bindings xiaomi-band-11-4.100.177 \
-  --targets-dir targets --output sdk/rust/canopus-target-generated/src/generated_1177.rs
+target/debug/canopus target generate xiaomi-band-11-4.100.177 --targets-dir targets
 CANOPUS_TARGET=xiaomi-band-11-4.100.177 scripts/build_canopus_supervisor.sh
 python3 scripts/build_band11_installer.py
 ```

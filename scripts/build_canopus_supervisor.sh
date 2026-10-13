@@ -10,27 +10,15 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 TARGET_ID=${CANOPUS_TARGET:-xiaomi-band-10-pro-3.101.036}
-LOADER_SRCS=""
 LOADER_OBJECTS=""
-TARGET_DEFINES=""
-case "$TARGET_ID" in
-    xiaomi-band-11-4.100.139|xiaomi-band-11-4.100.155|xiaomi-band-11-4.100.177)
-        MANAGER_BACKEND="manager/target/band11/canopus_manager_target_band11.c"
-        LOADER_SRCS="runtime/loader/canopus_arm_reloc.c runtime/loader/canopus_elf32_loader.c"
-        TARGET_DEFINES="-DCANOPUS_SUP_BAND11_BOOTSTRAP=1"
-        PROD_FAMILY=xiaomi-band-11
-        MAX_SIZE=131072
-        ;;
-    xiaomi-band-10-pro-3.101.036|xiaomi-band-10-pro-3.101.043)
-        MANAGER_BACKEND="manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
-        PROD_FAMILY=xiaomi-band-10-pro
-        MAX_SIZE=73728
-        ;;
-    *)
-        echo "error: unsupported supervisor target: $TARGET_ID" >&2
-        exit 2
-        ;;
-esac
+CANOPUS_BIN="$ROOT/target/debug/canopus"
+[ -x "$CANOPUS_BIN" ] || (cd "$ROOT" && cargo build -q -p canopus-cli)
+# Family build data (manager backend, size limit, loader sources, defines).
+TARGET_INFO=$("$CANOPUS_BIN" target info "$TARGET_ID" --targets-dir "$ROOT/targets" --shell) || {
+    echo "error: unsupported supervisor target: $TARGET_ID" >&2
+    exit 2
+}
+eval "$TARGET_INFO"
 BACKEND_OBJECT=$(basename "$MANAGER_BACKEND" .c).o
 
 PACK_DIR="$ROOT/targets/$TARGET_ID"
@@ -45,7 +33,7 @@ fi
 CC=${CC:-clang}
 
 [ -f "$GENERATED" ] || {
-    echo "error: run 'canopus target generate-veneer $TARGET_ID' first"
+    echo "error: run 'canopus target generate $TARGET_ID' first"
     exit 1
 }
 [ -f "$TARGET_CONFIG" ] || {
@@ -60,7 +48,7 @@ fi
 mkdir -p "$OUT"
 cd "$ROOT"
 if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
-    python3 scripts/generate_band11_native_config.py --target "$TARGET_ID"
+    "$CANOPUS_BIN" target generate "$TARGET_ID" --targets-dir "$ROOT/targets"
 fi
 
 echo "[1/3] compile supervisor (Cortex-M33 Thumb soft-float)"

@@ -189,7 +189,7 @@ OUT="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/build"
 CC=${{CC:-clang}}
 
 [ -f "$GENERATED" ] || {{
-    echo "error: run 'canopus target generate-veneer $TARGET_ID' first"
+    echo "error: run 'canopus target generate $TARGET_ID' first"
     exit 1
 }}
 mkdir -p "$OUT"

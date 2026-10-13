@@ -38,91 +38,77 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
             }
             Ok(())
         }
-        TargetCmd::GenerateVeneer {
+        TargetCmd::Generate {
             target,
+            all,
+            check,
             targets_dir,
-            output,
-            config_output,
         } => {
-            let pack = find_target(&targets_dir, &target)?;
-            let root = targets_dir.join(&target);
-            let (symbols, types) = canopus_core::veneer::load_records(&root)?;
-            let r#gen = canopus_core::veneer::VeneerGen {
-                pack: &pack,
-                symbols: &symbols,
-                types: &types,
+            let packs = match (target, all) {
+                (Some(id), false) => vec![canopus_core::generate::pack_by_id(&targets_dir, &id)?],
+                (None, true) => canopus_core::generate::active_targets(&targets_dir)?,
+                _ => anyhow::bail!("specify either a target id or --all"),
             };
-            let text = r#gen.generate();
-            let out = output.unwrap_or_else(|| root.join("generated").join("canopus_veneer.h"));
-            if let Some(parent) = out.parent() {
-                std::fs::create_dir_all(parent)?;
+            let mut stale = Vec::new();
+            for pack in &packs {
+                let outputs = canopus_core::generate::outputs_for(&targets_dir, pack)?;
+                for path in canopus_core::generate::apply(&outputs, check)? {
+                    if check {
+                        stale.push(path);
+                    } else {
+                        println!("wrote {}", path.display());
+                    }
+                }
             }
-            std::fs::write(&out, text)?;
-            let config_gen = canopus_core::target_config::TargetConfigGen {
-                pack: &pack,
-                symbols: &symbols,
-            };
-            let config_out = config_output
-                .unwrap_or_else(|| root.join("generated").join("canopus_target_config.h"));
-            if let Some(parent) = config_out.parent() {
-                std::fs::create_dir_all(parent)?;
+            if !stale.is_empty() {
+                for path in &stale {
+                    eprintln!("stale: {}", path.display());
+                }
+                anyhow::bail!(
+                    "{} generated file(s) are stale; run `canopus target generate --all`",
+                    stale.len()
+                );
             }
-            std::fs::write(&config_out, config_gen.generate())?;
-            println!(
-                "wrote veneer header {} and target config {} ({} callable, {} types, {} symbols)",
-                out.display(),
-                config_out.display(),
-                symbols
-                    .iter()
-                    .filter(|s| s.kind == "function"
-                        && s.callable_address.is_some()
-                        && s.status != "FORBIDDEN"
-                        && s.status != "WITHDRAWN"
-                        && s.policy != "restricted")
-                    .count(),
-                types.len(),
-                symbols.len()
-            );
+            if check {
+                println!("generated files up to date ({} target(s))", packs.len());
+            }
             Ok(())
         }
-        TargetCmd::GenerateRustBindings {
+        TargetCmd::Info {
             target,
             targets_dir,
-            output,
+            shell,
+            json,
         } => {
-            let pack = find_target(&targets_dir, &target)?;
-            let root = targets_dir.join(&target);
-            let (symbols, types) = canopus_core::veneer::load_records(&root)?;
-            let r#gen = canopus_core::rustgen::RustGen {
-                pack: &pack,
-                symbols: &symbols,
-                types: &types,
-            };
-            let text = r#gen.generate();
-            /* CAN-P2-011: the sdk/rust crate's generated.rs is the single
-             * committed copy; the per-target generated/ directory holds the
-             * C veneer only. */
-            let out = output.unwrap_or_else(|| {
-                root.join("../../sdk/rust/canopus-target-generated/src/generated.rs")
-            });
-            if let Some(parent) = out.parent() {
-                std::fs::create_dir_all(parent)?;
+            let pack = canopus_core::generate::pack_by_id(&targets_dir, &target)?;
+            let family = pack
+                .family
+                .as_deref()
+                .map(|f| canopus_core::family::load_family(&targets_dir, f))
+                .transpose()?;
+            if shell {
+                let family = family.ok_or_else(|| {
+                    anyhow::anyhow!("target {target} has no family; no build data")
+                })?;
+                let q = |s: &str| format!("'{}'", s.replace('\'', "'\\''"));
+                println!("MANAGER_BACKEND={}", q(&family.manager_backend));
+                println!("MAX_SIZE={}", family.supervisor_max_size);
+                println!("LOADER_SRCS={}", q(&family.loader_sources.join(" ")));
+                println!("TARGET_DEFINES={}", q(&family.defines.join(" ")));
+                println!("PROD_FAMILY={}", q(&family.prod_family));
+            } else if json {
+                let mut value = serde_json::json!({ "pack": pack, "family": family });
+                if family.as_ref().is_some_and(|f| f.native_config) {
+                    let cfg = canopus_core::native_config::load(&targets_dir.join(&target), &pack)?;
+                    value["native"] = serde_json::json!({
+                        "profile": cfg.profile,
+                        "addresses": cfg.addresses,
+                    });
+                }
+                println!("{}", serde_json::to_string_pretty(&value)?);
+            } else {
+                println!("{}", canopus_core::registry::describe(&pack));
             }
-            std::fs::write(&out, text)?;
-            println!(
-                "wrote Rust bindings {} ({} callable, {} types, {} symbols)",
-                out.display(),
-                symbols
-                    .iter()
-                    .filter(|s| s.kind == "function"
-                        && s.callable_address.is_some()
-                        && s.status != "FORBIDDEN"
-                        && s.status != "WITHDRAWN"
-                        && s.policy != "restricted")
-                    .count(),
-                types.len(),
-                symbols.len()
-            );
             Ok(())
         }
     }

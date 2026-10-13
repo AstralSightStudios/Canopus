@@ -122,29 +122,31 @@ enum TargetCmd {
         #[arg(long, default_value = "targets")]
         targets_dir: PathBuf,
     },
-    /// Generate the C veneer + identity guard header for a target pack.
-    GenerateVeneer {
-        /// Target id, e.g. xiaomi-band-10-pro-3.101.036.
-        target: String,
+    /// Generate every artifact derived from a target pack: C veneer + config
+    /// header, Rust bindings, SDK private-symbol metadata, native address header.
+    Generate {
+        /// Target id (omit with --all).
+        target: Option<String>,
+        /// All active (non-frozen) targets.
+        #[arg(long)]
+        all: bool,
+        /// Do not write; fail if any generated file is stale.
+        #[arg(long)]
+        check: bool,
         #[arg(long, default_value = "targets")]
         targets_dir: PathBuf,
-        /// Write output to this path (default: <pack>/generated/canopus_veneer.h).
-        #[arg(long)]
-        output: Option<PathBuf>,
-        /// Write the authoritative target config header (default: <pack>/generated/canopus_target_config.h).
-        #[arg(long)]
-        config_output: Option<PathBuf>,
     },
-    /// Generate the Rust no_std bindings crate module for a target pack.
-    GenerateRustBindings {
-        /// Target id, e.g. xiaomi-band-10-pro-3.101.036.
+    /// Print target + family build data (`--shell` for sh-eval, `--json`).
+    Info {
         target: String,
         #[arg(long, default_value = "targets")]
         targets_dir: PathBuf,
-        /// Write output to this path (default: the sdk/rust crate's generated.rs,
-        /// the single committed copy; CAN-P2-011).
+        /// Print VAR='value' lines for `eval` in shell scripts.
         #[arg(long)]
-        output: Option<PathBuf>,
+        shell: bool,
+        /// Include Band 11 native bindings/addresses (JSON only).
+        #[arg(long)]
+        json: bool,
     },
 }
 

@@ -10,15 +10,15 @@ cd "$ROOT"
 sum() { shasum -a 256 "$@" | sed 's#  \./#  #'; }
 
 echo "## committed"
-git ls-files | grep -E 'generated/|generated_[0-9a-z]+\.rs|generated_symbols_' | LC_ALL=C sort | while read -r f; do sum "$f"; done
+git ls-files | grep -E '^targets/[^/]+/generated/|/generated_[0-9]+\.rs$|/generated_symbols_[0-9]+\.rs$' | LC_ALL=C sort | while read -r f; do sum "$f"; done
 
 echo "## generator"
 tmp=$(mktemp -d)
-for t in $(ls targets | grep '^xiaomi-'); do
-    cargo run -q -p canopus-cli -- target generate-veneer "$t" \
-        --output "$tmp/$t.veneer.h" --config-output "$tmp/$t.config.h" >/dev/null
-    (cd "$tmp" && sum "$t.veneer.h" "$t.config.h")
-done
+cp -R targets "$tmp/targets"
+mkdir -p "$tmp/sdk"
+cp -R sdk/rust "$tmp/sdk/rust"
+cargo run -q -p canopus-cli -- target generate --all --targets-dir "$tmp/targets" >/dev/null
+(cd "$tmp" && git -C "$ROOT" ls-files | grep -E '^targets/[^/]+/generated/|/generated_[0-9]+\.rs$|/generated_symbols_[0-9]+\.rs$' | LC_ALL=C sort | while read -r f; do [ -f "$f" ] && sum "$f"; done)
 rm -rf "$tmp"
 
 echo "## elf"

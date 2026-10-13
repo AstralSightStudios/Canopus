@@ -7,7 +7,6 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
 import build_band11_installer as installer
-import generate_band11_native_config as native
 
 TARGET = 'xiaomi-band-11-4.100.177'
 SHA = 'ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b'
@@ -15,7 +14,7 @@ SHA = 'ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b'
 
 class Band11Target177Tests(unittest.TestCase):
     def test_exact_identity_and_native_profile(self):
-        pack, profile, addresses = native.metadata(TARGET)
+        pack, profile, addresses = installer.native_metadata(TARGET)
         recovery = installer.metadata(TARGET)
         self.assertEqual(pack['firmware_sha256'], SHA)
         self.assertEqual(pack['firmware_build'], 'user-4.100.177-cn-202609241530')

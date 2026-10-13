@@ -3,6 +3,8 @@
 # (ADR-CAN-001/002). Revision 5.
 schema = 1
 target_id = "xiaomi-band-10-pro-3.101.036"
+family = "xiaomi-band-10-pro"
+rust_module = "1036"
 device_family = "xiaomi-smart-band"
 device_model = "Xiaomi Band 10 Pro"
 board_revision = "unknown"

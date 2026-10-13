@@ -8,6 +8,8 @@
 # staged implementation. Physical cache/alias/MPU and display behavior are NOT_PROBED.
 schema = 1
 target_id = "xiaomi-band-11-4.100.139"
+family = "xiaomi-band-11"
+rust_module = "1139"
 device_family = "xiaomi-smart-band"
 device_model = "Xiaomi Band 11"
 board_revision = "q66cn"

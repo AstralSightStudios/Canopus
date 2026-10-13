@@ -1,6 +1,6 @@
 //! Generated-artifact stability regression tests.
 //!
-//! `canopus target generate-veneer` / `generate-rust-bindings` must reproduce
+//! `canopus target generate` must reproduce
 //! the committed artifacts byte-for-byte. If a target pack changes without
 //! regenerating, these tests fail loudly so stale generated code never ships.
 
@@ -48,8 +48,7 @@ fn rust_bindings_regenerate_identically() {
     .unwrap();
     assert_eq!(
         committed, regenerated,
-        "generated Rust bindings are stale; run `canopus target generate-rust-bindings \
-         xiaomi-band-10-pro-3.101.036` and copy into sdk/rust/canopus-target-generated/src/"
+        "generated Rust bindings are stale; run `canopus target generate --all`"
     );
 }
 
@@ -66,8 +65,7 @@ fn c_veneer_regenerates_identically() {
     let committed = std::fs::read_to_string(pack_dir().join("generated/canopus_veneer.h")).unwrap();
     assert_eq!(
         committed, regenerated,
-        "generated veneer header is stale; run `canopus target generate-veneer \
-         xiaomi-band-10-pro-3.101.036`"
+        "generated veneer header is stale; run `canopus target generate --all`"
     );
 }
 

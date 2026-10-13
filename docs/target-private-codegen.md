@@ -44,12 +44,10 @@ canopus-target-private generated metadata/raw bindings
 ## 当前已落地
 
 ```sh
-python3 tools/generate_target_private_symbols.py \
-  --target-id xiaomi-band-10-pro-3.101.036 \
-  --symbols-dir targets/xiaomi-band-10-pro-3.101.036/symbols \
-  --generated-rust sdk/rust/canopus-target-generated/src/generated_1036.rs \
-  --output sdk/rust/canopus-target-private/src/generated_symbols_1036.rs
+cargo run -p canopus-cli -- target generate xiaomi-band-10-pro-3.101.036
 ```
+
+（`family.private_symbols = true` 的 target 会同时产出 `generated_symbols_<rust_module>.rs`。）
 
 该生成器当前输出：
 

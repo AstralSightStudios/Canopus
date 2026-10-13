@@ -34,10 +34,7 @@ class Band11InstallerTests(unittest.TestCase):
 
     def test_native_bindings_select_separate_payloads_in_one_watchface(self):
         for target in builder.TARGETS:
-            directory = ROOT / 'targets' / target
-            self.assertEqual((directory / 'generated/canopus_band11_addresses.h').read_text(),
-                             builder.native_config.render(target))
-            _, _, addresses = builder.native_config.metadata(target)
+            _, _, addresses = builder.native_metadata(target)
             self.assertEqual(addresses['FW_NOTIFICATION_INSERT'] & 1, 1)
             self.assertEqual(len(builder.TARGETS), 3)
             resources = builder.resource_directory(target)

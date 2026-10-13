@@ -20,25 +20,9 @@ gate_0() {
 
 gate_1() {
     step "2/6 Rust SDK workspace tests"
-    private_generated=$(mktemp)
-    for target in xiaomi-band-10-pro-3.101.036 xiaomi-band-10-pro-3.101.043; do
-        case "$target" in
-            xiaomi-band-10-pro-3.101.036) suffix=1036 ;;
-            xiaomi-band-10-pro-3.101.043) suffix=1043 ;;
-            *) echo "unknown generated target: $target" >&2; exit 1 ;;
-        esac
-        python3 tools/generate_target_private_symbols.py \
-            --target-id "$target" \
-            --symbols-dir "targets/$target/symbols" \
-            --generated-rust "sdk/rust/canopus-target-generated/src/generated_${suffix}.rs" \
-            --output "$private_generated"
-        if ! cmp -s "$private_generated" "sdk/rust/canopus-target-private/src/generated_symbols_${suffix}.rs"; then
-            echo "generated target-private metadata is stale for $target; rerun tools/generate_target_private_symbols.py" >&2
-            rm -f "$private_generated"
-            exit 1
-        fi
-    done
-    rm -f "$private_generated"
+    # Generated veneers, config headers, Rust bindings, private-symbol metadata
+    # and native address headers must match their generators.
+    cargo run -q -p canopus-cli -- target generate --all --check
     (cd sdk/rust && cargo test --workspace)
     for feature in \
         target-xiaomi-band-11-4-100-139 \

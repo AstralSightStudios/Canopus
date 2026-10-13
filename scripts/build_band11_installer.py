@@ -9,7 +9,6 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import protect_lua
-import generate_band11_native_config as native_config
 import struct
 import subprocess
 import tempfile
@@ -21,6 +20,15 @@ ROOT = Path(__file__).resolve().parents[1]
 TARGET = "xiaomi-band-11-4.100.139"
 TARGETS = (TARGET, "xiaomi-band-11-4.100.155", "xiaomi-band-11-4.100.177")
 FAMILY = ROOT / "watchfaces/canopus-installer-prod/xiaomi-band-11"
+
+
+def native_metadata(target_id):
+    """(pack, native bindings profile, macro -> address) via `canopus target info`."""
+    info = json.loads(subprocess.run(
+        [str(ROOT / "target/debug/canopus"), "target", "info", target_id,
+         "--targets-dir", str(ROOT / "targets"), "--json"],
+        check=True, capture_output=True, text=True).stdout)
+    return info["pack"], info["native"]["profile"], info["native"]["addresses"]
 
 
 def resource_directory(target_id):
@@ -263,8 +271,9 @@ def main():
         parser.error("firmware hash differs from target pack")
     run(ROOT / "target/debug/canopus", "verify", args.supervisor, "--target", args.target, "--targets-dir", ROOT / "targets")
     supervisor = args.supervisor.read_bytes()
-    _, bindings, addresses = native_config.metadata(args.target)
-    run(sys.executable, ROOT / "scripts/generate_band11_native_config.py", "--target", args.target, "--check")
+    _, bindings, addresses = native_metadata(args.target)
+    run(ROOT / "target/debug/canopus", "target", "generate", args.target, "--check",
+        "--targets-dir", ROOT / "targets")
     stage1, stage2 = build_stages(work, supervisor, args.target)
     fingerprints = [int(a, 16) for a in bindings["fingerprints"]]
     native_profile = dict(target_id=args.target, loader_family="lua-owned-stage1-stage2",

@@ -2,6 +2,8 @@
 # Static exact-IDB recovery; device gates remain pending.
 schema = 1
 target_id = "xiaomi-band-10-pro-3.101.043"
+family = "xiaomi-band-10-pro"
+rust_module = "1043"
 device_family = "xiaomi-smart-band"
 device_model = "Xiaomi Band 10 Pro"
 board_revision = "unknown"

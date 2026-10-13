@@ -393,23 +393,14 @@ pub const CANOPUS_FW_<NAME>_CALLABLE: usize = ...;
 
 ### 8.1 生成命令
 
-当前 C 命令同时生成 veneer 和 target config：
+统一生成命令（C veneer、target config、Rust bindings、SDK private-symbol 元数据、Band 11 native 地址头一次产出；
+输出路径由 `target.toml` 的 `rust_module` 与 `targets/_families/<family>.toml` 决定）：
 
 ```sh
-cargo run -p canopus-cli -- \
-  target generate-veneer <target-id> --targets-dir targets
+cargo run -p canopus-cli -- target generate <target-id>   # 单个
+cargo run -p canopus-cli -- target generate --all         # 全部 active target
+cargo run -p canopus-cli -- target generate --all --check # CI：生成物过期则失败
 ```
-
-Rust bindings：
-
-```sh
-cargo run -p canopus-cli -- \
-  target generate-rust-bindings <target-id> \
-  --targets-dir targets \
-  --output sdk/rust/canopus-target-generated/src/<target-file>.rs
-```
-
-新增 target 时不要依赖 Rust 命令的默认 `generated.rs` 路径；为非默认 target 显式指定输出，避免覆盖另一个 target。
 
 生成后必须运行 byte-for-byte stability tests。任何直接编辑 generated 文件的修改都应被丢弃并回到 generator/records 修复。
 

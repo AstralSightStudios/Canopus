@@ -20,9 +20,7 @@ symbol records 与 `native-bindings.json` 生成，Rust 地址来自 `generated_
 
 ```sh
 cargo build -p canopus-cli
-target/debug/canopus target generate-veneer xiaomi-band-11-4.100.155 --targets-dir targets
-target/debug/canopus target generate-rust-bindings xiaomi-band-11-4.100.155 \
-  --targets-dir targets --output sdk/rust/canopus-target-generated/src/generated_1155.rs
+target/debug/canopus target generate xiaomi-band-11-4.100.155 --targets-dir targets
 CANOPUS_TARGET=xiaomi-band-11-4.100.155 scripts/build_canopus_supervisor.sh
 build/band11-tests/bin/python scripts/tests/band11_155_firmware.py
 ```

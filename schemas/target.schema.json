@@ -39,6 +39,16 @@
       "default": "active",
       "description": "frozen targets keep their data but are excluded from CI, prod builds and the Rust feature matrix."
     },
+    "family": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "Family layer name: targets/_families/<family>.toml carries build and generation data shared by targets."
+    },
+    "rust_module": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+$",
+      "description": "Suffix of sdk/rust/canopus-target-generated/src/generated_<rust_module>.rs."
+    },
     "device_family": {
       "type": "string"
     },

@@ -1,0 +1,9 @@
+# Shared build and generation data for Xiaomi Band 10 Pro targets.
+manager_backend = "manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
+supervisor_max_size = 73728
+loader_sources = []
+defines = []
+prod_family = "xiaomi-band-10-pro"
+# Hand-written sdk/rust/canopus-target-private facade consumes generated_symbols_<rust_module>.rs.
+private_symbols = true
+native_config = false
