@@ -1,5 +1,7 @@
 # Canopus 架构与实施路线
 
+> **归档提示（2026-10-14）：** 本文是原始设计，签名/CPC1-CPS1/P65/Band 9 等内容已被重构取代；进度见 [`refactor-plan.md`](refactor-plan.md)，入口见 [`README.md`](README.md)。
+
 > 文档状态：Draft v1  
 > 框架状态：架构设计阶段  
 > 初始参考目标：小米手环 10 Pro（Xiaomi Band 10 Pro），固件 `3.101.030`  

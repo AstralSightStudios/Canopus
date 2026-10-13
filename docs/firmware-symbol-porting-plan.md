@@ -1,5 +1,7 @@
 # 固件符号适配 2.0：BinDiff 风格多算法证据融合方案
 
+> **归档提示（2026-10-14）：** 历史记录；入口见 [`README.md`](README.md)。
+
 > 状态：043 BluetoothAudio 的三次 Bond 失败均已进入 failure-feedback；`-1113` 的 registration-node 修复和 `Bond 3/2 0F -1105` 的通用 mHDT/CID 调度修复均已完成 host gate，device retest pending。036/043 支持矩阵、BinDiff-inspired ensemble matcher、failure-feedback hard-negative、043 正式 symbol pack、以及 9/9 Pro/11 三个新 IDB 的 static candidate pack 已落地；`fw-match` 已开始落地 bounded Corpus v2（函数 data refs + 独立 DataObjectRecord）和 global candidate-only 数据流检索，但真实 036/043 corpus 回归及独立 oracle 晋级仍 pending；设备 gates、三新 target 的 exact ABI/codegen gate 仍保持 pending。
 >
 > 当前实验结论：043 的 `Bond 1/0 00 -1107` 和 `-1113` 都不是 `bt_create_bond` 固件返回值，而是在调用它之前由 pair-request filter fail closed。第一轮正确撤销了 036 的 16-word/global ABI，并恢复 `core_bt_adapter_instance=0x20126738`、`core_bt_registration_handle=0x20126734` 与 17-word descriptor `0x2CD4A744`，但把 adapter+120 的对象误读成带 +72 descriptor 字段的 client。第二轮 exact IDB 证明该对象是仅 `0x24` 字节的 `callbacks_list` manager；registration handle 才是 `sub_C3A96EC` 返回的 8-byte `{cookie, descriptor}` node。代码现通过固件 register/unregister API 替换节点，不再越界访问 manager+72，并将后续失败细分为 `-1114..-1117`；该修复仍无真机通过结论。

@@ -206,7 +206,7 @@
 - [ ] P3.4 安装器表盘改为 `canopus package --installer` 的输出，替换 `build_module_installer_prod.py` / `build_band11_installer.py` 中的硬编码。
 - [x] P3.5 `hello` 示例改用 `canopus build` 构建（`modules/examples/hello/Canopus.toml`，旧 build.sh/package.json 删除；hello 的 C ELF 哈希因链接顺序变化已刷新基线）；`hello-portable` 同样。
 - [ ] P3.6 （已前移为 P0.7）
-- [ ] P3.7 文档收口
+- [~] P3.7 文档收口（已完成：`docs/README.md` 入口页、三份大文档加归档提示、progress.md 指向本文；未做：物理搬入 archive/）
   - `docs/` 入口页（不超过一屏）。
   - 进度来源合并为一处（architecture §23、ui-plan §15、progress.md、本文件）。
   - 过时的大文档归档。

@@ -1,5 +1,7 @@
 # Canopus 实施进度
 
+> 2026-10-14 起任务进度的唯一来源是 [`refactor-plan.md`](refactor-plan.md)；本文只保留能力状态与历史记录。
+
 权威进度追踪位于两份文档：
 
 - 任务进度追踪区：[`architecture.md`](architecture.md) §23。
