@@ -13,6 +13,7 @@
 | 写一个模块（`canopus new/build/package`） | `modules/examples/hello-portable`、[`../adr/ADR-CAN-003-module-identity-version-package.md`](../adr/ADR-CAN-003-module-identity-version-package.md) |
 | 设备协议与服务表 | [`../adr/ADR-CAN-004-device-protocol.md`](../adr/ADR-CAN-004-device-protocol.md)、[`../adr/ADR-CAN-006-supervisor-service-table.md`](../adr/ADR-CAN-006-supervisor-service-table.md) |
 | 安装器表盘、更新与回滚 | [`module-installer-io.md`](module-installer-io.md)、[`module-lifecycle.md`](module-lifecycle.md) |
+| 外部模块迁移（去签名、CMI2、更新语义） | [`external-module-migration.md`](external-module-migration.md) |
 | 安全模型（无签名） | [`security-model.md`](security-model.md) |
 | 重构基线哈希 | [`baseline/hashes.txt`](baseline/hashes.txt)（`scripts/baseline-hashes.sh`） |
 

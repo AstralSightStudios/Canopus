@@ -163,14 +163,14 @@
 - [x] P1.4 迁移并删除 Python 生成脚本（`generate_band9_loader_config.py` 随 Band 9 删除；其余两个已移植到 Rust 并删除；CI 只跑 `target generate --all --check`；pre-commit 钩子未做）（`generate_target_private_symbols.py`、`generate_band11_native_config.py`、
   `generate_band9_loader_config.py`）；CI 与可选的 pre-commit 钩子只做"生成物未过期"检查，防止再次出现 `4f87d57` 式的过期。
 - [x] P1.5 target 注册表（`target list --active --names`；ci.sh 与 build_prod_all.sh 不再硬编码清单）：CLI / CI / 打包脚本从 `targets/` 发现 active target，删除硬编码清单。
-- [ ] P1.6 保持证据门槛：FORBIDDEN / CANDIDATE / restricted 状态与 evidence 链迁移后语义不变（测试覆盖）。
+- [x] P1.6 保持证据门槛（`generated_stability` 中 .139/.177 授权清单测试、FORBIDDEN/restricted 不出 wrapper 的断言原样保留并通过）：FORBIDDEN / CANDIDATE / restricted 状态与 evidence 链迁移后语义不变（测试覆盖）。
 - [x] P1.7 固件定位（K6）（`scripts/fwlocate.py`：`$CANOPUS_FW_DIR`/`fwbins/`；测试与构建脚本改用之，缺固件显式跳过；150 个文件里的 `/Volumes/EXT0/...` 绝对路径改写为仓库相对路径或 `fw://<target_id>/<file>`；Mirage 固件库查找待 P6.0）：需要固件的测试和工具经统一定位器查找（`CANOPUS_FW_DIR` 或 Mirage 固件库），缺失时显式跳过；
   evidence URI 改为 `fw://<target_id>/<file>` 相对形式。
 - [x] P1.8 冻结 Band 9 / 9 Pro（K8；tag `band9-frozen`；target.toml `status = "frozen"`；同时清理了 Rust 互斥 cfg 矩阵，改由 build.rs 校验）
   - target 标记为 frozen；退出 `build_prod_all`、CI 和 Rust feature。
   - 仅 Band 9 使用的代码（lvgl_v8 后端、stage1/2、NSH bootstrap 脚本）移出构建；默认删除，并打 tag `band9-frozen` 以便找回。
   - 共享的 `runtime/loader` 保留。
-- [ ] P1.9 与 P0.6 的基线对比通过。
+- [x] P1.9 与 P0.6 的基线对比通过（committed==generator；差异均已解释：P65/Band 9 删除、生成物头注释、hello/Rust ELF 链接顺序与 crate 路径）。
 
 ### P2 ABI / SDK 整理
 - [~] P2.1 实现服务表（K7、P0.4）（第一批已完成：`sdk/c/canopus_services.h`、`manager/service/canopus_supervisor_services.c`；module/log/fs 三组，per-module context 经 activate/publish 回调与自定义 loader 的 init 入口 r0 传入；fs 为模块私有扁平命名空间；time/mem/notify/ui 与 BT/interconnect 未做；Band 10 stock modlib 的 ctor 无参数，portable 加载需等自定义 loader 迁移）
@@ -210,7 +210,7 @@
   - `docs/` 入口页（不超过一屏）。
   - 进度来源合并为一处（architecture §23、ui-plan §15、progress.md、本文件）。
   - 过时的大文档归档。
-- [ ] P3.8 外部模块仓库（Bluetooth Audio、Lyra、Resource Hook、Data Quota Lift、ReFetch）迁移指南：
+- [x] P3.8 外部模块仓库（指南：`docs/external-module-migration.md`）（Bluetooth Audio、Lyra、Resource Hook、Data Quota Lift、ReFetch）迁移指南：
   去签名、新回执、协议变更，以及能否转为 portable。
 
 ### P4 设备端更新语义
