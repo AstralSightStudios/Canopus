@@ -18,10 +18,10 @@ CC=${CC:-clang}
 
 mkdir -p "$OUT"
 
-cd "$ROOT/sdk/rust"
+cd "$ROOT"
 
 echo "[1/4] cargo build (no_std, panic=abort, device feature, staticlib)"
-cargo build --release --target "$TRIPLE" -p no-heap-counter-device --features device
+cargo build --profile device --target "$TRIPLE" -p no-heap-counter-device --features device
 
 echo "[2/4] compile C constructor/destructor shim"
 $CC --target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
@@ -35,7 +35,7 @@ echo "[3/4] relocatable link (ld.lld -r)"
 # and its callbacks are present even if only the ctor references one symbol.
 ld.lld -r --whole-archive \
     "$OUT/canopus_ctor.o" \
-    "$ROOT/sdk/rust/target/$TRIPLE/release/libno_heap_counter_device.a" \
+    "$ROOT/target/$TRIPLE/device/libno_heap_counter_device.a" \
     -o "$OUT/no_heap_counter.elf"
 
 file "$OUT/no_heap_counter.elf"

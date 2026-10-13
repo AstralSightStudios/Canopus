@@ -11,7 +11,7 @@ step() { echo; echo "==> $1"; }
 
 gate_0() {
     step "1/6 root workspace tests (schemas, CLI, core, verifier, package, re)"
-    cargo test --workspace
+    cargo test --workspace --exclude no-heap-counter-device
     PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools/fw-match/tests -p 'test_*.py'
     # `cargo test` builds test harnesses under target/debug/deps, but the module
     # verifier scripts invoke the standalone CLI at target/debug/canopus.
@@ -19,17 +19,16 @@ gate_0() {
 }
 
 gate_1() {
-    step "2/6 Rust SDK workspace tests"
+    step "2/6 generated-file freshness and SDK feature checks"
     # Generated veneers, config headers, Rust bindings, private-symbol metadata
     # and native address headers must match their generators.
     cargo run -q -p canopus-cli -- target generate --all --check
-    (cd sdk/rust && cargo test --workspace)
     for target in $(cargo run -q -p canopus-cli -- target list --active --names); do
         feature="target-$(printf '%s' "$target" | tr . -)"
-        (cd sdk/rust && cargo check -p canopus-target-generated --no-default-features --features "$feature")
+        cargo check -q -p canopus-target-generated --no-default-features --features "$feature"
     done
     # Private firmware calls must never compile without one exact target backend.
-    if private_output=$(cd sdk/rust && cargo check -p canopus-target-private --no-default-features 2>&1); then
+    if private_output=$(cargo check -p canopus-target-private --no-default-features 2>&1); then
         echo "target-private unexpectedly compiled without a target feature" >&2
         exit 1
     fi

@@ -55,4 +55,4 @@ a802db7c71fbabb29f37a0067d5252217a75ba614d20a94f63576d9f0443631e  watchfaces/can
 43f59889fbb78365040ee38e0970ad92e4a7857776a55f11f9aa2cb028e22c52  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.155/canopus_supervisor.elf
 SKIP  supervisor xiaomi-band-11-4.100.177 (build failed or needs firmware)
 93cea9537d0fc194d36efde757d38d9ca23c145054673d4e02a6caaffe1c60e0  modules/examples/hello/build/hello_module.elf
-8fe3b35667505ae333e021ad9c7f20caafe45bf012e090211b7ab27e8c9d99c7  sdk/rust/examples/no-heap-counter/build/no_heap_counter.elf
+975aedce5957ec4d8ec13308ac989fc5d1e96c8a3ca265e35dba970a2a5dcbc8  sdk/rust/examples/no-heap-counter/build/no_heap_counter.elf

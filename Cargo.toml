@@ -7,6 +7,31 @@ members = [
     "tools/package-builder",
     "tools/re-orchestrator",
     "tools/fw-match",
+    "sdk/rust/canopus-abi",
+    "sdk/rust/canopus-runtime",
+    "sdk/rust/canopus-host-fake",
+    "sdk/rust/canopus-target-generated",
+    "sdk/rust/canopus-target-private",
+    "sdk/rust/canopus-ui-core",
+    "sdk/rust/examples/no-heap-counter",
+    "sdk/rust/examples/no-heap-counter-device",
+]
+# The no_std device staticlib only builds for the device target
+# (`cargo build --profile device --target thumbv8m.main-none-eabi -p no-heap-counter-device`).
+default-members = [
+    "cli/canopus",
+    "tools/canopus-core",
+    "tools/elf-verifier",
+    "tools/package-builder",
+    "tools/re-orchestrator",
+    "tools/fw-match",
+    "sdk/rust/canopus-abi",
+    "sdk/rust/canopus-runtime",
+    "sdk/rust/canopus-host-fake",
+    "sdk/rust/canopus-target-generated",
+    "sdk/rust/canopus-target-private",
+    "sdk/rust/canopus-ui-core",
+    "sdk/rust/examples/no-heap-counter",
 ]
 
 [workspace.package]
@@ -26,4 +51,15 @@ sha2 = "0.10"
 tar = "0.4"
 thiserror = "2"
 toml = "0.8"
+canopus-abi = { path = "sdk/rust/canopus-abi" }
+canopus-runtime = { path = "sdk/rust/canopus-runtime" }
+
+# Device modules are linked for the target with panic=abort (no unwind,
+# architecture §12.1): build them with `cargo build --profile device`.
+[profile.device]
+inherits = "release"
+panic = "abort"
+opt-level = "z"
+lto = "thin"
+codegen-units = 1
 

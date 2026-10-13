@@ -180,7 +180,7 @@
 - [ ] P2.2 portable 模块
   - verifier 增加"零固件地址"模式。
   - `hello` 与 `no-heap-counter` 迁移为 portable，同一个 ELF 在 036/043/139/155/177 上通过 host 测试。
-- [ ] P2.3 Rust 合并为单一 workspace。
+- [x] P2.3 Rust 合并为单一 workspace（根 Cargo.toml；设备 staticlib 用 `--profile device`，`default-members` 排除不能在宿主构建的 no-heap-counter-device；Rust 模块 ELF 哈希因 crate 路径变化而变，已刷新基线；hello 的 C ELF 不变）。
 - [ ] P2.4 target-private 整理
   - 所有 target 由生成代码提供同一函数集，缺失的能力显式返回 `Unsupported`；手写部分只保留真实差异。
   - 删除手写的互斥 `cfg` 矩阵（`build.rs` 已保证恰好选中一个 target）。
@@ -301,3 +301,4 @@
 | 2026-10-14 | P2.7 完成：移除全部签名/验签 |
 | 2026-10-14 | P4.1–P4.5 完成（A/B 双代更新、回滚、加载失败回退；P4.0 开机自启调查未开始） |
 | 2026-10-14 | P1.3/P1.4 完成，P1.2 部分完成（family 层）；基线 hashes 刷新（committed==generator；差异仅为 P65/Band 9 删除与生成物头注释） |
+| 2026-10-14 | P2.3 完成：Rust 单一 workspace |
