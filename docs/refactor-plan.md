@@ -137,12 +137,12 @@
   - 在单独提交中重新生成 036 生成物，并按 K12 改写 `private_abi_records_have_exact_thumb_callables`
     （.139/.155 的已授权清单同样钉死，任何扩大都让测试失败）。
   - 重构从绿色开始。
-- [ ] P0.6 冻结基线（在 P0.5 之后），记录三类哈希：
+- [x] P0.6 冻结基线（`scripts/baseline-hashes.sh` → `docs/baseline/hashes.txt`，两次运行确定；.177 Supervisor 因缺固件跳过）（在 P0.5 之后），记录三类哈希：
   - (a) 已提交的生成物；
   - (b) 生成器当前的输出；
   - (c) 每个 active target 的 Supervisor ELF 与示例模块 ELF。
   - 重构后须字节一致，或对差异逐项说明。
-- [ ] P0.7 `AGENTS.md`（原 P3.6，前移）：目录结构、常用命令、不可触碰项、证据门槛、"改 symbols 后必须重新生成"。
+- [x] P0.7 `AGENTS.md`（原 P3.6，前移）：目录结构、常用命令、不可触碰项、证据门槛、"改 symbols 后必须重新生成"。
 
 ### P1 Target / 地址单一来源
 - [ ] P1.1 移除 P65（K3）。删除范围：
