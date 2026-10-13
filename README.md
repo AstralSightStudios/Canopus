@@ -36,11 +36,9 @@ Canopus 允许开发者：
 `.155` 独立构建及测试说明见 [新 target](targets/xiaomi-band-11-4.100.155/loader/README.md)。
 
 036/043 are Xiaomi Band 10 Pro Cortex-M33 / Thumb-2 / soft-float targets using the
-NuttX `modlib` ELF32 `ET_REL` zero-import loader. The Band 9 / 9 Pro / 11 packs are
-static candidate packs; their target-private ABI and LVGL gates remain pending. Band 9/9
-Pro use firmware-bound NSH `mw`/`exec` bootstrap profiles whose command/VFS/heap/MPU/SRAM
-primitives are static-recovered; no verifier-clean Band 9 Supervisor is currently staged,
-and no device loader gate has passed. Band 11 (`4.100.139`, BES best1503 q66) has no approved insmod. Its independent
+NuttX `modlib` ELF32 `ET_REL` zero-import loader. Band 9 / 9 Pro packs are **frozen** (data kept under `targets/`, out of CI, prod builds and the Rust
+feature matrix; code is recoverable from git tag `band9-frozen`). The Band 11 packs are
+static candidate packs; their target-private ABI and LVGL gates remain pending. Band 11 (`4.100.139`, BES best1503 q66) has no approved insmod. Its independent
 Lua-owned staged loader and corrected native Manager ABI now build as a complete test
 candidate. The pack replaced `4.100.108`; general SDK callables and physical-device
 validation remain pending. See the [native audit](targets/xiaomi-band-11-4.100.139/loader/native-audit.md)

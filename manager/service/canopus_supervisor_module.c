@@ -8,20 +8,17 @@
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
 #include "canopus_veneer.h"
-#ifdef CANOPUS_SUP_BAND9_BOOTSTRAP
-#include "canopus_band9_loader_config.h"
-#include "band9/canopus_band9_loader_status.h"
-#elif defined(CANOPUS_SUP_BAND11_BOOTSTRAP)
-#define CANOPUS_BAND9_CTOR_IDENTITY_FAILED -201
-#define CANOPUS_BAND9_CTOR_INIT_FAILED -202
-#define CANOPUS_BAND9_CTOR_REGISTER_HOOK_MISSING -203
-#define CANOPUS_BAND9_CTOR_REGISTER_FAILED -204
+#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+#define CANOPUS_SUP_CTOR_IDENTITY_FAILED -201
+#define CANOPUS_SUP_CTOR_INIT_FAILED -202
+#define CANOPUS_SUP_CTOR_REGISTER_HOOK_MISSING -203
+#define CANOPUS_SUP_CTOR_REGISTER_FAILED -204
 static volatile int32_t *s_ctor_mailbox;
 #else
-#define CANOPUS_BAND9_CTOR_IDENTITY_FAILED 0
-#define CANOPUS_BAND9_CTOR_INIT_FAILED 0
-#define CANOPUS_BAND9_CTOR_REGISTER_HOOK_MISSING 0
-#define CANOPUS_BAND9_CTOR_REGISTER_FAILED 0
+#define CANOPUS_SUP_CTOR_IDENTITY_FAILED 0
+#define CANOPUS_SUP_CTOR_INIT_FAILED 0
+#define CANOPUS_SUP_CTOR_REGISTER_HOOK_MISSING 0
+#define CANOPUS_SUP_CTOR_REGISTER_FAILED 0
 #endif
 
 extern const struct canopus_sup_platform_v1 canopus_sup_platform;
@@ -32,11 +29,7 @@ static int g_module_activation_started;
 
 static void canopus_sup_publish_ctor_status(int32_t status)
 {
-#ifdef CANOPUS_SUP_BAND9_BOOTSTRAP
-    *(volatile int32_t *)(uintptr_t)CANOPUS_BAND9_CAVE_RESULT = status;
-    __asm__ volatile("dsb sy\n"
-                     ::: "memory");
-#elif defined(CANOPUS_SUP_BAND11_BOOTSTRAP)
+#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
     if (s_ctor_mailbox) *s_ctor_mailbox = status;
     __asm__ volatile("dsb sy" ::: "memory");
 #else
@@ -64,16 +57,16 @@ __attribute__((constructor))
 static void canopus_sup_ctor(void)
 {
     if (canopus_identity_guard() != 0) {
-        canopus_sup_publish_ctor_status(CANOPUS_BAND9_CTOR_IDENTITY_FAILED);
+        canopus_sup_publish_ctor_status(CANOPUS_SUP_CTOR_IDENTITY_FAILED);
         return;
     }
     if (canopus_supervisor_init(&g_sup, 1u, &canopus_sup_platform, 0) != 0) {
-        canopus_sup_publish_ctor_status(CANOPUS_BAND9_CTOR_INIT_FAILED);
+        canopus_sup_publish_ctor_status(CANOPUS_SUP_CTOR_INIT_FAILED);
         return;
     }
     if (canopus_sup_platform.register_device == 0) {
         canopus_sup_publish_ctor_status(
-            CANOPUS_BAND9_CTOR_REGISTER_HOOK_MISSING);
+            CANOPUS_SUP_CTOR_REGISTER_HOOK_MISSING);
         return;
     }
     {
@@ -90,7 +83,7 @@ static void canopus_sup_ctor(void)
                 status = -(CANOPUS_SUP_REGISTER_CALL_ERRNO_BASE -
                            register_result);
             } else {
-                status = CANOPUS_BAND9_CTOR_REGISTER_FAILED;
+                status = CANOPUS_SUP_CTOR_REGISTER_FAILED;
             }
             canopus_sup_publish_ctor_status(status);
             return;

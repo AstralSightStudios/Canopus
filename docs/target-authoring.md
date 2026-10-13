@@ -128,11 +128,9 @@ sdk/rust/
 └── canopus-target-private/      手写语义 facade、ownership 和 ABI 翻译
 
 manager/target/
-├── lvgl_v9/                     当前 Band 10 UI backend
-└── lvgl_v8/                     当前 Band 9 UI backend
+└── lvgl_v9/                     当前 Band 10 UI backend
 
 runtime/loader/                  portable ELF32 loader/relocation core
-manager/target/band9/            Band 9 early bootstrap/stage adapter
 watchfaces/canopus-installer/    Lua bootstrap、staged resources、控制 UI
 ```
 
@@ -593,7 +591,7 @@ Band 9 当前使用 tracked MPU region ownership 和 normal non-cacheable dynami
 
 ```text
 LVGL v9-compatible → manager/target/lvgl_v9
-LVGL v8/BES ABI    → manager/target/lvgl_v8
+LVGL v8/BES ABI    → 已随 Band 9 冻结移除（git tag band9-frozen）
 其他 UI family     → 新 backend，不能硬套现有布局
 ```
 

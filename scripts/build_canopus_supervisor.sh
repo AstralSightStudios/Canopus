@@ -12,7 +12,6 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 TARGET_ID=${CANOPUS_TARGET:-xiaomi-band-10-pro-3.101.036}
 LOADER_SRCS=""
 LOADER_OBJECTS=""
-LOADER_PROFILE=""
 TARGET_DEFINES=""
 case "$TARGET_ID" in
     xiaomi-band-11-4.100.139|xiaomi-band-11-4.100.155|xiaomi-band-11-4.100.177)
@@ -26,14 +25,6 @@ case "$TARGET_ID" in
         MANAGER_BACKEND="manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
         PROD_FAMILY=xiaomi-band-10-pro
         MAX_SIZE=73728
-        ;;
-    xiaomi-band-9-3.1.32)
-        MANAGER_BACKEND="manager/target/lvgl_v8/canopus_manager_target_lvgl_v8.c"
-        LOADER_SRCS="runtime/loader/canopus_arm_reloc.c runtime/loader/canopus_elf32_loader.c"
-        LOADER_PROFILE="targets/$TARGET_ID/loader/bootstrap.toml"
-        TARGET_DEFINES="-DCANOPUS_SUP_BAND9_BOOTSTRAP=1"
-        PROD_FAMILY=xiaomi-band-9
-        MAX_SIZE=98304
         ;;
     *)
         echo "error: unsupported supervisor target: $TARGET_ID" >&2
@@ -49,7 +40,7 @@ OUT="$ROOT/watchfaces/canopus-installer/build/$TARGET_ID"
 if [ -n "$LOADER_SRCS" ]; then
     LOADER_OBJECTS="$OUT/canopus_arm_reloc.o $OUT/canopus_elf32_loader.o"
 fi
-# Stock modlib has no fixed insertion ceiling. Band 9 also carries the portable
+# Stock modlib has no fixed insertion ceiling. Band 11 carries the portable
 # child-module loader because its firmware has no approved insmod command.
 CC=${CC:-clang}
 
@@ -63,19 +54,10 @@ CC=${CC:-clang}
 }
 if [ "$PROD_FAMILY" != xiaomi-band-11 ] && ! grep -q '^#define CANOPUS_SUP_PLATFORM_COMPLETE 1$' "$TARGET_CONFIG"; then
     echo "error: supervisor platform ABI is not production-complete for $TARGET_ID" >&2
-    if [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
-        echo "       recover and approve the missing exact-target identity, LVGL v8," >&2
-        echo "       driver, allocator, and MPU veneers before staging prod resources" >&2
-    fi
     exit 2
 fi
 
 mkdir -p "$OUT"
-if [ -n "$LOADER_PROFILE" ]; then
-    python3 "$ROOT/scripts/generate_band9_loader_config.py" \
-        --profile "$ROOT/$LOADER_PROFILE" --target-toml "$PACK_DIR/target.toml" \
-        --header "$OUT/canopus_band9_loader_config.h"
-fi
 cd "$ROOT"
 if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
     python3 scripts/generate_band11_native_config.py --target "$TARGET_ID"
@@ -216,12 +198,6 @@ if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
     python3 "$ROOT/scripts/build_band11_installer.py" --target "$TARGET_ID" --supervisor "$OUT/canopus_supervisor.elf" \
         --output-dir "${CANOPUS_BAND11_OUTPUT_DIR:-$PROD_FAMILY_STAGE}" \
         --firmware "${CANOPUS_BAND11_FIRMWARE:-$ROOT/fwbins/$TARGET_ID/vela_ap.bin}"
-elif [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
-    CANOPUS_INSTALLER_STAGE_ROOT="$ROOT/watchfaces/canopus-installer" \
-        "$ROOT/scripts/build_band9_bootstrap.sh" "$TARGET_ID" "$OUT"
-    CANOPUS_INSTALLER_STAGE_ROOT="$PROD_FAMILY_STAGE" \
-        "$ROOT/scripts/build_band9_bootstrap.sh" "$TARGET_ID" "$OUT"
-    echo "staged flat canopus-installer-prod/$PROD_FAMILY resources for $TARGET_ID"
 else
     mkdir -p "$PROD_FAMILY_STAGE"
     PROD_TARGET_STAGE="$PROD_FAMILY_STAGE/canopus_supervisor-$TARGET_ID.bin"
@@ -229,8 +205,4 @@ else
     echo "staged canopus-installer-prod/$PROD_FAMILY/$(basename "$PROD_TARGET_STAGE")"
 fi
 rm -f "$ROOT/watchfaces/canopus-installer/canopus_supervisor.bin" \
-      "$ROOT/watchfaces/canopus-installer-prod/canopus_supervisor.bin" \
-      "$ROOT/watchfaces/canopus-installer/canopus_supervisor-band9.bin" \
-      "$ROOT/watchfaces/canopus-installer/canopus_supervisor-band9.elf" \
-      "$ROOT/watchfaces/canopus-installer/canopus_stage2-band9.bin" \
-      "$ROOT/watchfaces/canopus-installer/canopus_stage1_band9.lua"
+      "$ROOT/watchfaces/canopus-installer-prod/canopus_supervisor.bin"

@@ -2,6 +2,7 @@
 # New exact-IDB static pack generated from the 036->9132 ensemble.
 schema = 1
 target_id = "xiaomi-band-9-3.1.32"
+status = "frozen"  # K8: frozen, tag band9-frozen
 device_family = "xiaomi-smart-band"
 device_model = "Xiaomi Band 9"
 board_revision = "n66nfc"

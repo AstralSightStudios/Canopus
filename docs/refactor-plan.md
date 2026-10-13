@@ -166,7 +166,7 @@
 - [ ] P1.6 保持证据门槛：FORBIDDEN / CANDIDATE / restricted 状态与 evidence 链迁移后语义不变（测试覆盖）。
 - [ ] P1.7 固件定位（K6）：需要固件的测试和工具经统一定位器查找（`CANOPUS_FW_DIR` 或 Mirage 固件库），缺失时显式跳过；
   evidence URI 改为 `fw://<target_id>/<file>` 相对形式。
-- [ ] P1.8 冻结 Band 9 / 9 Pro（K8）
+- [x] P1.8 冻结 Band 9 / 9 Pro（K8；tag `band9-frozen`；target.toml `status = "frozen"`；同时清理了 Rust 互斥 cfg 矩阵，改由 build.rs 校验）
   - target 标记为 frozen；退出 `build_prod_all`、CI 和 Rust feature。
   - 仅 Band 9 使用的代码（lvgl_v8 后端、stage1/2、NSH bootstrap 脚本）移出构建；默认删除，并打 tag `band9-frozen` 以便找回。
   - 共享的 `runtime/loader` 保留。
@@ -297,3 +297,4 @@
 | 2026-10-14 | O2 → K11（不迁移，要求重装）；O6 → K12（保留 .139 提升，改写过时测试） |
 | 2026-10-14 | P0.5 完成：ci.sh keep-going 模式、036 生成物重新生成、K12 测试改写、Band 11 测试对无种子克隆的处理 |
 | 2026-10-14 | P1.1 完成：P65 全部移除；P0.6/P0.7 完成 |
+| 2026-10-14 | P1.8 完成：Band 9 冻结 |

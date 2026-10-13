@@ -83,10 +83,6 @@ fn additional_target_artifacts_regenerate_identically() {
             "sdk/rust/canopus-target-generated/src/generated_1043.rs",
         ),
         (
-            "xiaomi-band-9-pro-3.1.175",
-            "sdk/rust/canopus-target-generated/src/generated_9175.rs",
-        ),
-        (
             "xiaomi-band-11-4.100.139",
             "sdk/rust/canopus-target-generated/src/generated_1139.rs",
         ),
@@ -97,10 +93,6 @@ fn additional_target_artifacts_regenerate_identically() {
         (
             "xiaomi-band-11-4.100.177",
             "sdk/rust/canopus-target-generated/src/generated_1177.rs",
-        ),
-        (
-            "xiaomi-band-9-3.1.32",
-            "sdk/rust/canopus-target-generated/src/generated_9132.rs",
         ),
     ];
 
@@ -144,16 +136,7 @@ fn additional_target_artifacts_regenerate_identically() {
             committed_config, config,
             "generated target config header is stale for {target}"
         );
-        if target == "xiaomi-band-9-3.1.32" {
-            assert!(
-                config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 1"),
-                "Band 9 exact Supervisor ABI must remain production-complete"
-            );
-        }
-        if matches!(
-            target,
-            "xiaomi-band-11-4.100.139" | "xiaomi-band-9-pro-3.1.175"
-        ) {
+        if target == "xiaomi-band-11-4.100.139" {
             assert!(config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 0"));
             assert!(
                 !config.contains("#define FW_"),
@@ -264,47 +247,6 @@ fn stock_modlib_supervisor_platform_remains_complete() {
     .generate();
 
     assert!(config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 1"));
-}
-
-#[test]
-fn band9_supervisor_platform_remains_complete() {
-    let dir = repo_root().join("targets/xiaomi-band-9-3.1.32");
-    let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
-    let (symbols, types) = load_records(&dir).unwrap();
-    let config = TargetConfigGen {
-        pack: &pack,
-        symbols: &symbols,
-    }
-    .generate();
-    let veneer = VeneerGen {
-        pack: &pack,
-        symbols: &symbols,
-        types: &types,
-    }
-    .generate();
-    let rust = RustGen {
-        pack: &pack,
-        symbols: &symbols,
-        types: &types,
-    }
-    .generate();
-
-    assert!(config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 1"));
-    assert_eq!(
-        config,
-        std::fs::read_to_string(dir.join("generated/canopus_target_config.h")).unwrap()
-    );
-    assert_eq!(
-        veneer,
-        std::fs::read_to_string(dir.join("generated/canopus_veneer.h")).unwrap()
-    );
-    assert_eq!(
-        rust,
-        std::fs::read_to_string(
-            repo_root().join("sdk/rust/canopus-target-generated/src/generated_9132.rs")
-        )
-        .unwrap()
-    );
 }
 
 #[test]
@@ -479,9 +421,7 @@ fn private_abi_records_have_exact_thumb_callables() {
     for target in [
         "xiaomi-band-10-pro-3.101.036",
         "xiaomi-band-10-pro-3.101.043",
-        "xiaomi-band-9-pro-3.1.175",
         "xiaomi-band-11-4.100.139",
-        "xiaomi-band-9-3.1.32",
     ] {
         let dir = repo_root().join("targets").join(target);
         let (symbols, types) = load_records(&dir).unwrap();

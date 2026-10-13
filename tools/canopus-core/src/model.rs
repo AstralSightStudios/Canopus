@@ -14,6 +14,8 @@ pub struct TargetPack {
     #[serde(rename = "schema")]
     pub schema: u32,
     pub target_id: String,
+    /// `active` (default) or `frozen` (data kept, out of CI/prod/Rust matrix).
+    pub status: Option<String>,
     pub device_family: String,
     pub device_model: String,
     pub board_revision: Option<String>,

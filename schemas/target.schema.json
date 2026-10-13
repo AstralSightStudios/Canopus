@@ -33,6 +33,12 @@
       "pattern": "^[a-z0-9][a-z0-9.-]*$",
       "description": "Human-readable identifier carrying device AND firmware version, e.g. xiaomi-band-10-pro-3.101.030. One target_id maps to exactly one firmware; firmware_sha256 remains the authoritative security identity."
     },
+    "status": {
+      "type": "string",
+      "enum": ["active", "frozen"],
+      "default": "active",
+      "description": "frozen targets keep their data but are excluded from CI, prod builds and the Rust feature matrix."
+    },
     "device_family": {
       "type": "string"
     },

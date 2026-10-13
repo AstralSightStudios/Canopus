@@ -41,11 +41,9 @@ gate_1() {
     rm -f "$private_generated"
     (cd sdk/rust && cargo test --workspace)
     for feature in \
-        target-xiaomi-band-9-pro-3-1-175 \
         target-xiaomi-band-11-4-100-139 \
         target-xiaomi-band-11-4-100-155 \
-        target-xiaomi-band-11-4-100-177 \
-        target-xiaomi-band-9-3-1-32; do
+        target-xiaomi-band-11-4-100-177; do
         (cd sdk/rust && cargo check -p canopus-target-generated --no-default-features --features "$feature")
     done
     # Private firmware calls must never compile without one exact target backend.
@@ -76,7 +74,7 @@ gate_4() {
     # Load that module through the portable ELF loader with distinct code and data
     # bases, so a regression in the per-region base arithmetic shows up as a failed
     # constructor-pointer check rather than only on a device.
-    (cd tests/host && make real-elf-loader BAND9_ELF=../../modules/examples/hello/build/hello_module.elf)
+    (cd tests/host && make real-elf-loader MODULE_ELF=../../modules/examples/hello/build/hello_module.elf)
 }
 
 gate_5() {
