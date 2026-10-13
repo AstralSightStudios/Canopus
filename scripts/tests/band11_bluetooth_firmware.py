@@ -4,6 +4,10 @@
 These tests establish selected ABI facts, not radio or complete audio support.
 The exact-target private backend is additionally tested by band11_private_backend.py.
 """
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import fwlocate
 import hashlib
 import struct
 import unittest
@@ -16,7 +20,7 @@ from unicorn.arm_const import UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3
 class BluetoothFirmwareTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        firmware = (ROOT / 'fwbins' / TARGET / 'vela_ap.bin').read_bytes()
+        firmware = (fwlocate.locate(TARGET) or ROOT / 'fwbins' / TARGET / 'vela_ap.bin').read_bytes()
         assert hashlib.sha256(firmware).hexdigest() == '31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74'
 
     def setUp(self):

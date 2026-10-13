@@ -167,7 +167,7 @@ cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
 if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
     python3 "$ROOT/scripts/build_band11_installer.py" --target "$TARGET_ID" --supervisor "$OUT/canopus_supervisor.elf" \
         --output-dir "${CANOPUS_BAND11_OUTPUT_DIR:-$PROD_FAMILY_STAGE}" \
-        --firmware "${CANOPUS_BAND11_FIRMWARE:-$ROOT/fwbins/$TARGET_ID/vela_ap.bin}"
+        --firmware "${CANOPUS_BAND11_FIRMWARE:-${CANOPUS_FW_DIR:-$ROOT/fwbins}/$TARGET_ID/vela_ap.bin}"
 else
     mkdir -p "$PROD_FAMILY_STAGE"
     PROD_TARGET_STAGE="$PROD_FAMILY_STAGE/canopus_supervisor-$TARGET_ID.bin"

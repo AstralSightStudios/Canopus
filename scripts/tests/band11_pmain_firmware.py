@@ -3,6 +3,10 @@
 This checks native loads/stores and control flow, separately from the real
 Lua 5.4 C-frame regression. It does not emulate the Lua VM or a device.
 """
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import fwlocate
 from pathlib import Path
 import hashlib
 import struct
@@ -15,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class FirmwareLua:
     def __init__(self):
-        image = (ROOT / 'fwbins/xiaomi-band-11-4.100.139/vela_ap.bin').read_bytes()
+        image = (fwlocate.locate('xiaomi-band-11-4.100.139') or ROOT / 'fwbins/xiaomi-band-11-4.100.139/vela_ap.bin').read_bytes()
         assert hashlib.sha256(image).hexdigest() == '31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74'
         self.u = u = Uc(UC_ARCH_ARM, UC_MODE_THUMB | UC_MODE_MCLASS)
         u.ctl_set_cpu_model(UC_CPU_ARM_CORTEX_M33)

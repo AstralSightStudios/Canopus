@@ -15,14 +15,14 @@
     "pool": 128,
     "rounds": 4,
     "failure_feedback_paths": [
-      "/Volumes/EXT0/Canopus/targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1105-003.json",
-      "/Volumes/EXT0/Canopus/targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1107-001.json",
-      "/Volumes/EXT0/Canopus/targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1113-002.json"
+      "targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1105-003.json",
+      "targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1107-001.json",
+      "targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1113-002.json"
     ]
   },
   "failure_feedback": [
     {
-      "path": "/Volumes/EXT0/Canopus/targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1105-003.json",
+      "path": "targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1105-003.json",
       "failure_id": "FAIL-BT-1043-BOND-1105-003",
       "stage": "bluetooth.l2cap-avdtp.after-bond",
       "observed_error": {
@@ -49,7 +49,7 @@
       "corrective_evidence_id": "EVID-BT-1043-MHDT-002"
     },
     {
-      "path": "/Volumes/EXT0/Canopus/targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1107-001.json",
+      "path": "targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1107-001.json",
       "failure_id": "FAIL-BT-1043-BOND-1107-001",
       "stage": "bluetooth.bond.submit_bond.install_core_pair_filter",
       "observed_error": {
@@ -80,7 +80,7 @@
       "corrective_evidence_id": "EVID-BT-1043-PAIR-FILTER-003"
     },
     {
-      "path": "/Volumes/EXT0/Canopus/targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1113-002.json",
+      "path": "targets/xiaomi-band-10-pro-3.101.043/evidence/failure-feedback/FAIL-BT-1043-BOND-1113-002.json",
       "failure_id": "FAIL-BT-1043-BOND-1113-002",
       "stage": "bluetooth.bond.submit_bond.install_core_pair_filter",
       "observed_error": {

@@ -6,6 +6,10 @@ are modeled; path canonicalization, filtering, driver selection, prefix
 removal, mode parsing, and POSIX path formatting run from the firmware image.
 Run: build/band11-tests/bin/python scripts/tests/band11_no_debug_fs.py -v
 """
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import fwlocate
 import hashlib
 from pathlib import Path
 import struct
@@ -32,7 +36,7 @@ class PathMachine:
     STOP, STACK = 0x200d0000, 0x2015d000
 
     def __init__(self, version, colon_component_exists=False):
-        data = (ROOT / "fwbins" / f"xiaomi-band-11-{version}" / "vela_ap.bin").read_bytes()
+        data = (fwlocate.locate(f"xiaomi-band-11-{version}") or ROOT / "fwbins" / f"xiaomi-band-11-{version}" / "vela_ap.bin").read_bytes()
         assert hashlib.sha256(data).hexdigest() == IMAGES[version]
         self.delta = 0 if version == "4.100.139" else -16
         self.u = u = Uc(UC_ARCH_ARM, UC_MODE_THUMB | UC_MODE_MCLASS)

@@ -6,6 +6,10 @@ PIC rebasing, relocation, AAPCS return paths, ctor mailbox and /dev registration
 it cannot validate physical BES cache/alias behavior or a real display.
 Run with build/band11-tests/bin/python scripts/tests/band11_arm_bootstrap.py.
 """
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import fwlocate
 import ctypes
 import json
 from pathlib import Path
@@ -22,7 +26,7 @@ RES = ROOT / 'watchfaces/canopus-installer-prod/xiaomi-band-11'
 class Machine:
     def __init__(self, fault=None, code=0x1c400020, kernel_base=0x20110000, target=TARGET):
         self.target = target
-        self.firmware_path = ROOT / "fwbins" / target / "vela_ap.bin"
+        self.firmware_path = fwlocate.locate(target) or ROOT / "fwbins" / target / "vela_ap.bin"
         self.mpu_bitmap = 0x200f4080 if target == "xiaomi-band-11-4.100.177" else 0x200f5190
         self.res = RES
         self.firmware_map = {}

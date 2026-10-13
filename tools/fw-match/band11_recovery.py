@@ -10,6 +10,9 @@ import struct
 import capstone
 
 ROOT = Path(__file__).resolve().parents[2]
+import sys
+sys.path.insert(0, str(ROOT / "scripts"))
+import fwlocate
 BASE = 0x0C0C0000
 TARGET = "xiaomi-band-11-4.100.139"
 
@@ -17,7 +20,7 @@ TARGET = "xiaomi-band-11-4.100.139"
 class Firmware:
     def __init__(self, target=TARGET):
         self.target = target
-        self.data = (ROOT / "fwbins" / target / "vela_ap.bin").read_bytes()
+        self.data = (fwlocate.locate(target) or ROOT / "fwbins" / target / "vela_ap.bin").read_bytes()
         self.functions = json.loads((ROOT / "targets/fw-corpus" / (target + ".json")).read_text())["functions"]
         self.by_addr = {int(f["addr"], 16): f for f in self.functions}
         self.maps = [(BASE, len(self.data), 0), (BASE + 0x20000000, len(self.data), 0)]

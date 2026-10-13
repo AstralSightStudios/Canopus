@@ -31,11 +31,11 @@
   "created": "2026-08-24T00:00:00Z",
   "artifacts": [
     {
-      "uri": "ida:///Volumes/EXT0/Canopus/fwbins/xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64 sub_C588BF8,sub_C4C8038,sub_C543748",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64 sub_C588BF8,sub_C4C8038,sub_C543748",
       "role": "exact-target long-mode veneer, circular-mode caller and long-label constructor"
     },
     {
-      "uri": "ida:///Volumes/EXT0/Canopus/fwbins/xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 sub_C588BC0,sub_C522460",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 sub_C588BC0,sub_C522460",
       "role": "working-target structurally corresponding veneer and constructor"
     },
     {

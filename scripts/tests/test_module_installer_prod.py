@@ -1,4 +1,8 @@
 """Exercise per-device module installers using only ordinary Lua IO."""
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import fwlocate
 import importlib.util
 import os
 from pathlib import Path
@@ -76,7 +80,7 @@ class ModuleInstallerTests(unittest.TestCase):
         # read the ROMFS build.prop of each exact firmware image.
         checked = 0
         for target in builder.SUPPORTED:
-            image = ROOT / 'fwbins' / target / 'vela_ap.bin'
+            image = fwlocate.locate(target) or ROOT / 'fwbins' / target / 'vela_ap.bin'
             if not image.is_file():
                 continue
             device = target.rsplit('-', 1)[0]

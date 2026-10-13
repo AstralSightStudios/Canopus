@@ -31,7 +31,7 @@
   "verdict": "STATIC_RECOVERED",
   "created": "2026-08-11T00:00:00Z",
   "artifacts": [
-    {"uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C6E3038", "role": "companion adapter initialization"},
-    {"uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C6E1ECC", "role": "companion Pair Request rejection callback"}
+    {"uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64#sub_C6E3038", "role": "companion adapter initialization"},
+    {"uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64#sub_C6E1ECC", "role": "companion Pair Request rejection callback"}
   ]
 }

@@ -4,6 +4,10 @@
 Allocation, hash tables, notifications and peripheral effects remain modeled.
 The command/cache loops and app/page/Launcher field accesses are real ARM.
 """
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import fwlocate
 import hashlib
 import struct
 import unittest
@@ -15,7 +19,7 @@ from unicorn.arm_const import UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_AR
 class FirmwareIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.firmware = (ROOT / 'fwbins' / TARGET / 'vela_ap.bin').read_bytes()
+        cls.firmware = (fwlocate.locate(TARGET) or ROOT / 'fwbins' / TARGET / 'vela_ap.bin').read_bytes()
         assert hashlib.sha256(cls.firmware).hexdigest() == '31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74'
 
     def hook(self, m, address, fn):

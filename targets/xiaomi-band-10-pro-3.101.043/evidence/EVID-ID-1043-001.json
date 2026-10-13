@@ -27,7 +27,7 @@
   "created": "2026-08-19T00:00:00Z",
   "artifacts": [
     {
-      "uri": "/Volumes/EXT0/miwear.watch.p67cn_v3.101.043_full_a4ce8564/vela_ap.bin.i64",
+      "uri": "fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64",
       "role": "exact-idb"
     }
   ]

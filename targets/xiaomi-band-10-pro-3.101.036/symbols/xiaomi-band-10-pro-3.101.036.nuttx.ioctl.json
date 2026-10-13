@@ -37,7 +37,7 @@
     "evidence_ids": [
       "EVID-NUTTX-IOCTL-001"
     ],
-    "source": "IDA exact-target VFS wrapper analysis: /Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64"
+    "source": "IDA exact-target VFS wrapper analysis: fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64"
   },
   "notes": "POSIX fd-level ioctl wrapper, distinct from file-pointer driver dispatcher. Used only by target-private.",
   "approval_state": "PENDING"

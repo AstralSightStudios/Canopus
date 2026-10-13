@@ -4,6 +4,10 @@
 Firmware PCs/classes are translated only by the independently recovered target
 emulation-addresses.json. Missing mappings fail closed; no .155 PC fallback.
 """
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import fwlocate
 import unittest
 import band11_notification_firmware as notifications
 import band11_155_firmware as baseline
@@ -23,7 +27,7 @@ class Bootstrap177(baseline.Bootstrap155):
         import tomllib
         from band11_arm_bootstrap import Machine, ROOT
         pack = tomllib.loads((ROOT / 'targets' / self.target / 'target.toml').read_text())
-        image = ROOT / 'fwbins' / self.target / 'vela_ap.bin'
+        image = fwlocate.locate(self.target) or ROOT / 'fwbins' / self.target / 'vela_ap.bin'
         self.assertEqual(hashlib.sha256(image.read_bytes()).hexdigest(), pack['firmware_sha256'])
         self.assertEqual(pack['firmware_build'], 'user-4.100.177-cn-202609241530')
         m = Machine(target=self.target)

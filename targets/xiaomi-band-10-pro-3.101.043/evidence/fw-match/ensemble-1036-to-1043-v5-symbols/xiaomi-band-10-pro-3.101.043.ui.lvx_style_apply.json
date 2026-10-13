@@ -20,7 +20,7 @@
     "evidence_ids": [
       "EVID-FW-MATCH-ENSEMBLE-1036-1043"
     ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=/Volumes/EXT0/Canopus/targets/xiaomi-band-10-pro-3.101.043/evidence/fw-match/ensemble-1036-to-1043-v5.json"
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-10-pro-3.101.043/evidence/fw-match/ensemble-1036-to-1043-v5.json"
   },
   "entry_address": "0xc4bf898",
   "callable_address": "0xc4bf899",

@@ -4,7 +4,7 @@
   "target_id": "xiaomi-band-9-3.1.32",
   "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
   "question": "Which exact 3.1.32 ABI entries are required by the Band 9 production Supervisor and native Manager?",
-  "source": "ida:///Volumes/EXT0/Canopus/fwbins/xiaomi-band-9-3.1.32/vela_ap.bin.i64",
+  "source": "ida://fw://xiaomi-band-9-3.1.32/vela_ap.bin.i64",
   "method": [
     "exact-IDB decompilation and Thumb disassembly",
     "NuttX source-path/assertion correlation",

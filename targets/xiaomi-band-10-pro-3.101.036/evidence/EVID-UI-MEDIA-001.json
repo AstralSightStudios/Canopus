@@ -34,23 +34,23 @@
   "created": "2026-08-13T00:00:00Z",
   "artifacts": [
     {
-      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64 lv_image_create@0x0C179BDC",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 lv_image_create@0x0C179BDC",
       "role": "decompile-and-xref"
     },
     {
-      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64 lv_image_set_src@0x0C179FD0",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 lv_image_set_src@0x0C179FD0",
       "role": "decompile-and-xref"
     },
     {
-      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64 lv_bar_create@0x0C588320",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 lv_bar_create@0x0C588320",
       "role": "decompile-and-xref"
     },
     {
-      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64 lv_bar_set_range@0x0C588A78",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 lv_bar_set_range@0x0C588A78",
       "role": "decompile-and-xref"
     },
     {
-      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64 lv_bar_set_value@0x0C588778",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 lv_bar_set_value@0x0C588778",
       "role": "decompile-and-xref"
     }
   ]

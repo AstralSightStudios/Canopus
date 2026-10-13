@@ -38,7 +38,7 @@
     "evidence_ids": [
       "EVID-UI-LAYER-001"
     ],
-    "source": "IDA exact-target analysis: /Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64"
+    "source": "IDA exact-target analysis: fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64"
   },
   "notes": "Exact-target LVGL v9 UI-owner primitive. Device probe remains required.",
   "approval_state": "PENDING"

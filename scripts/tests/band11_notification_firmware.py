@@ -6,6 +6,10 @@ Message normalization, string cloning, list insertion and reminder branching
 execute the exact firmware instructions, including the event consumer that
 faulted in crash3. This does not verify a real display.
 """
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import fwlocate
 import hashlib
 import struct
 import unittest
@@ -129,7 +133,7 @@ class NotificationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import tomllib
-        firmware = (ROOT / 'fwbins' / cls.target / 'vela_ap.bin').read_bytes()
+        firmware = (fwlocate.locate(cls.target) or ROOT / 'fwbins' / cls.target / 'vela_ap.bin').read_bytes()
         pack = tomllib.loads((ROOT / 'targets' / cls.target / 'target.toml').read_text())
         assert hashlib.sha256(firmware).hexdigest() == pack['firmware_sha256']
 

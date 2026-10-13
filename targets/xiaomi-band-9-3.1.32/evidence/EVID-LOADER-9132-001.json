@@ -4,7 +4,7 @@
   "target_id": "xiaomi-band-9-3.1.32",
   "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
   "question": "Does the exact 3.1.32 release expose the same NSH mw/exec loader family, and which primitives are firmware-specific?",
-  "source": "ida:///Volumes/EXT0/miwear.watch.n66nfc_v3.1.32_full_489f2050/vela_ap.bin.i64",
+  "source": "ida://fw://xiaomi-band-9-3.1.32/vela_ap.bin.i64",
   "static_findings": {
     "nsh_exec": {
       "entry_address": "0x0c1c9528",

@@ -31,11 +31,11 @@
   "created": "2026-08-24T00:00:00Z",
   "artifacts": [
     {
-      "uri": "ida:///Volumes/EXT0/Canopus/fwbins/xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 loc_C107464,sub_C107D7C,sub_C108048",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 loc_C107464,sub_C107D7C,sub_C108048",
       "role": "trusted working dispatcher, generic wrapper and BG_OPA forwarding reference"
     },
     {
-      "uri": "ida:///Volumes/EXT0/Canopus/fwbins/xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64 loc_C107790,sub_C1080A8,sub_C108374",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64 loc_C107790,sub_C1080A8,sub_C108374",
       "role": "exact-target dispatcher and structurally corresponding stock wrappers"
     },
     {

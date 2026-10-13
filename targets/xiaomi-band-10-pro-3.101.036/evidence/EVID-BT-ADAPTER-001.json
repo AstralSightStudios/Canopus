@@ -18,7 +18,7 @@
     "sub_C398DF0 queries adapter event 27 and returns the state byte."
   ],
   "control_flow_evidence": [
-    "The four functions are independently defined Thumb function entries in /Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64.",
+    "The four functions are independently defined Thumb function entries in fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64.",
     "The previously copied 3.101.030 getter address 0x0CA286C8 is a literal-pool word inside the 3.101.036 on_adapter_state_changed callback, not executable code; calling it caused the observed CFSR 0x01000000 unaligned-access reset at PC 0x0CA2867E."
   ],
   "ownership_analysis": "The getter returns a firmware-owned shared adapter instance. The callback table must remain resident until its registration handle is unregistered. The registration handle is firmware-owned and borrowed by the caller as an integer token.",
@@ -34,7 +34,7 @@
   "created": "2026-08-11T00:00:00Z",
   "artifacts": [
     {
-      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64#sub_C5421B8",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64#sub_C5421B8",
       "role": "stock headset adapter initialization call chain"
     },
     {

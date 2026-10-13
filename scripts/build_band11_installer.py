@@ -9,6 +9,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import protect_lua
+import fwlocate
 import struct
 import subprocess
 import tempfile
@@ -265,7 +266,7 @@ def main():
     unexpected = [p.name for p in out.iterdir() if p.is_file() and p.name != "main.lua" and p.suffix != ".bin"]
     if unexpected:
         parser.error("non-watchface files in output root: " + ", ".join(sorted(unexpected)))
-    firmware_path = args.firmware or ROOT / "fwbins" / args.target / "vela_ap.bin"
+    firmware_path = args.firmware or fwlocate.require(args.target)
     firmware = firmware_path.read_bytes()
     if hashlib.sha256(firmware).hexdigest() != profile["firmware_sha256"]:
         parser.error("firmware hash differs from target pack")

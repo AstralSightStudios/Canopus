@@ -6,7 +6,7 @@
   "candidate_symbols": ["ensemble_candidate_set_123_of_126"],
   "prototype_hypothesis": "No target prototype is device-approved by this experiment; source prototypes remain static candidates until exact callsite and ABI verification.",
   "callsite_evidence": [
-    "The exact 3.1.32 corpus was freshly extracted from /Volumes/EXT0/miwear.watch.n66nfc_v3.1.32_full_489f2050/vela_ap.bin.i64.",
+    "The exact 3.1.32 corpus was freshly extracted from fw://xiaomi-band-9-3.1.32/vela_ap.bin.i64.",
     "The matcher used bytes, CFG, data, context and caller-neighborhood graph families with pool 128 and four propagation rounds.",
     "123 of 126 source function records received target candidates; three source records were not matched."
   ],

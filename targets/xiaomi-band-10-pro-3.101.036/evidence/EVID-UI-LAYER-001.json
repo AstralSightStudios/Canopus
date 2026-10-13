@@ -31,15 +31,15 @@
   "created": "2026-08-15T00:00:00Z",
   "artifacts": [
     {
-      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64 lv_obj_move_to_index@0x0C5891F8",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 lv_obj_move_to_index@0x0C5891F8",
       "role": "decompile-disasm-xref"
     },
     {
-      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64 lv_obj_set_local_style_prop@0x0C107464",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 lv_obj_set_local_style_prop@0x0C107464",
       "role": "disasm-callsite"
     },
     {
-      "uri": "ida:///Volumes/EXT0/miwear.watch.p67cn_v3.101.036_full_17a1ea48/vela_ap.bin.i64 lv_obj_set_style_bg_opa@0x0C108048",
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 lv_obj_set_style_bg_opa@0x0C108048",
       "role": "disasm-forwarding-proof"
     }
   ]
