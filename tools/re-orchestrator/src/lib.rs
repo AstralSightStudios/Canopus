@@ -9,10 +9,8 @@
 //!     generation (CAN-RE-003/004/005). Candidates only — never executed.
 //!   - [`verify`]  — independent verifier stage + human promotion gate
 //!     (CAN-RE-006/007).
-//!   - [`revision`]— signed immutable target-pack revisions (CAN-RE-009).
 
 pub mod ida;
-pub mod revision;
 pub mod store;
 pub mod verify;
 pub mod workflow;

@@ -188,7 +188,7 @@
 - [ ] P2.6 C/Rust 同源
   - ABI 类型由一份清单生成两侧代码。
   - `canopus-runtime` / `host-fake` / `ui-core` 二选一：改为绑定 C 实现，或保留双实现并加一致性测试。
-- [ ] P2.7 移除签名（K9）
+- [x] P2.7 移除签名（K9；回执改为无签名 CMI2/176B/version 2，旧 CMI1 被拒绝；`package verify` 改为结构+哈希校验；`re revision-sign/verify` 与 `key` 子命令整体删除；monocypher 删除，Band 10 Pro Supervisor 52 KiB）
   - 设备端：删除 monocypher、`s_installer_public_key` 与回执验签；回执改为无签名格式，继续校验 target/固件、
     artifact SHA-256、module_id 与 module_version。
   - 工具：删除 `package sign/verify/keygen`、`key` 子命令、`re revision-sign/verify`、`keyroles.rs`、
@@ -298,3 +298,4 @@
 | 2026-10-14 | P0.5 完成：ci.sh keep-going 模式、036 生成物重新生成、K12 测试改写、Band 11 测试对无种子克隆的处理 |
 | 2026-10-14 | P1.1 完成：P65 全部移除；P0.6/P0.7 完成 |
 | 2026-10-14 | P1.8 完成：Band 9 冻结 |
+| 2026-10-14 | P2.7 完成：移除全部签名/验签 |

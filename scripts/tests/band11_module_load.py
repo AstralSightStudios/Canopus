@@ -32,7 +32,6 @@ RESTORE_AFTER_BOOT = 0x4351000A
 CMD_MAGIC = 0x43504331
 STATUS_MAGIC = 0x43505331
 INTENT_ENABLED = 1
-SIGNATURE_OK = 1
 
 
 def staged():
@@ -41,7 +40,7 @@ def staged():
     if not receipt_path.is_file():
         return None
     receipt = receipt_path.read_bytes()
-    if len(receipt) != 256 or struct.unpack_from('<I', receipt)[0] != 0x31494D43:
+    if len(receipt) != 176 or struct.unpack_from('<I', receipt)[0] != 0x32494D43:
         return None
     lifecycle, version, artifact_size = struct.unpack_from('<3I', receipt, 16)
     module_id = receipt[32:64].split(b'\0')[0].decode()
@@ -57,7 +56,7 @@ def registry(module_id, lifecycle, version):
     struct.pack_into('<3I', buf, 0, 0x31524443, 1, 1)  # CRD1, version, count
     name = module_id.encode()
     buf[16:16 + len(name)] = name
-    struct.pack_into('<4I', buf, 16 + 32, lifecycle, version, SIGNATURE_OK,
+    struct.pack_into('<4I', buf, 16 + 32, lifecycle, version, 0,
                      INTENT_ENABLED)
     return bytes(buf)
 

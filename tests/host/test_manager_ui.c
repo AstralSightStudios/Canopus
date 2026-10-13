@@ -42,7 +42,6 @@ static void add_removable(struct canopus_manager_model_v1 *m, const char *id)
     mod.lifecycle_class = CANOPUS_LIFECYCLE_REMOVABLE;
     mod.state = CANOPUS_STATE_ACTIVE;
     mod.version = 1;
-    mod.signature_ok = 1;
     mod.has_previous = 1;
     mod.risk = CANOPUS_MANAGER_RISK_MODERATE;
     CHECK(canopus_manager_upsert_module(m, &mod) >= 0);
@@ -56,7 +55,6 @@ static void add_resident(struct canopus_manager_model_v1 *m, const char *id)
     mod.lifecycle_class = CANOPUS_LIFECYCLE_ALWAYS_RESIDENT;
     mod.state = CANOPUS_STATE_BOOT_RESIDENT;
     mod.version = 3;
-    mod.signature_ok = 1;
     mod.has_previous = 0;
     mod.risk = CANOPUS_MANAGER_RISK_RESIDENT_CRITICAL;
     CHECK(canopus_manager_upsert_module(m, &mod) >= 0);

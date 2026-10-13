@@ -78,7 +78,7 @@ INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/manager/service -I$ROOT/manager/protocol -I$ROOT/manager/client \
   -I$ROOT/manager/ui -I$ROOT/manager/package -I$ROOT/manager/target \
   -I$ROOT/manager/native-app -I$ROOT/app-sdk/ui \
-  -I$ROOT/third_party/monocypher -I$ROOT/third_party/sha256 \
+  -I$ROOT/third_party/sha256 \
   -I$PACK_DIR/generated"
 
 # The v2 transport (CAN-P0-008) pulls the protocol codec and the snapshot
@@ -104,25 +104,6 @@ for s in \
     $CC $TARGET_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
 done
 
-# Monocypher is a general-purpose library, but the supervisor only needs its
-# Ed25519 verifier. Compile it with per-function sections and retain the single
-# public verification root so unrelated Argon2/X25519 code cannot introduce
-# unused ARM runtime helpers or consume device flash.
-$CC $TARGET_FLAGS -ffunction-sections $INC \
-    -c "$ROOT/third_party/monocypher/monocypher.c" \
-    -o "$OUT/monocypher-fs.o"
-$CC $TARGET_FLAGS -ffunction-sections $INC \
-    -c "$ROOT/third_party/monocypher/monocypher-ed25519.c" \
-    -o "$OUT/monocypher-ed25519-fs.o"
-$CC $TARGET_FLAGS $INC \
-    -c "$ROOT/third_party/monocypher/canopus_monocypher_compat.c" \
-    -o "$OUT/canopus_monocypher_compat.o"
-ld.lld -r --gc-sections -u crypto_ed25519_check \
-    -o "$OUT/monocypher-ed25519-min.o" \
-    "$OUT/monocypher-fs.o" \
-    "$OUT/monocypher-ed25519-fs.o" \
-    "$OUT/canopus_monocypher_compat.o"
-
 echo "[2/3] relocatable link (ld.lld -r)"
 ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     -o "$OUT/canopus_supervisor.elf" \
@@ -135,7 +116,6 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_manager.o" \
     "$OUT/canopus_manager_native.o" \
     "$OUT/canopus_ui.o" \
-    "$OUT/monocypher-ed25519-min.o" \
     "$OUT/sha256.o" \
     "$OUT/$BACKEND_OBJECT" \
     "$OUT/canopus_control.o" \

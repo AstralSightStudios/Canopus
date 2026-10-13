@@ -25,7 +25,6 @@
 #define UI_KEY_DETAIL_SECTION    200u
 #define UI_KEY_DETAIL_STATE      201u
 #define UI_KEY_DETAIL_CLASS      202u
-#define UI_KEY_DETAIL_SIGN       203u
 #define UI_KEY_DETAIL_ERROR      204u
 #define UI_KEY_DETAIL_UPDATE     210u
 #define UI_KEY_DETAIL_ROLLBACK   211u
@@ -444,10 +443,6 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
     if (rc != CANOPUS_UI_OK) return rc;
     rc = append_status(tree, UI_KEY_DETAIL_CLASS, "生命周期", sizeof("生命周期") - 1u,
                        lifecycle_name(module->lifecycle_class), 32u);
-    if (rc != CANOPUS_UI_OK) return rc;
-    rc = append_status(tree, UI_KEY_DETAIL_SIGN, "签名", sizeof("签名") - 1u,
-                       module->signature_ok ? "已验证" : "未签名 / 开发版",
-                       21u);
     if (rc != CANOPUS_UI_OK) return rc;
     if (module->activation_error != 0) {
         char error[48];

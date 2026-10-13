@@ -316,7 +316,6 @@ pub struct PackageManifest {
     pub remove_semantics: Option<String>,
     pub reboot_required: Option<bool>,
     pub target_pack_revision: u64,
-    pub signature: PackageSignature,
     pub min_manager_version: String,
     pub sbom: Option<String>,
     pub reproducibility: Option<Reproducibility>,
@@ -353,12 +352,6 @@ pub struct PackageResource {
     pub sha256: String,
     pub media_type: String,
     pub target_backend: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PackageSignature {
-    pub key_id: String,
-    pub algorithm: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -287,7 +287,7 @@ TEST(supervisor_descriptor_registration_is_load_scoped)
     struct canopus_supervisor_v1 sup;
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
-                                        1, 1, "mod.hello") == 0);
+                                        1, "mod.hello") == 0);
     CHECK(canopus_supervisor_register_descriptor(
               &sup, "mod.hello", &fake_descriptor) == -1);
     sup.loading_slot = 0;
@@ -304,7 +304,7 @@ TEST(supervisor_explicit_activate_targets_ready_slot)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(&sup,
               CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-              1, 1, "mod.hello") == 0);
+              1, "mod.hello") == 0);
     sup.loading_slot = 0;
     CHECK(canopus_supervisor_register_descriptor(
               &sup, "mod.hello", &fake_descriptor) == 0);
@@ -329,7 +329,7 @@ TEST(supervisor_explicit_activation_reports_callback_failure)
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
-                                        1, 1, "mod.hello") == 0);
+                                        1, "mod.hello") == 0);
     sup.loading_slot = 0;
     CHECK(canopus_supervisor_register_descriptor(
               &sup, "mod.hello", &fake_descriptor) == 0);
@@ -352,7 +352,7 @@ TEST(supervisor_explicit_activation_loads_enabled_installed_slot)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(&sup,
                                         CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-                                        1, 1, "mod.hello") == 0);
+                                        1, "mod.hello") == 0);
     sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
     sup.modules[0].state = CANOPUS_STATE_INSTALLED;
     g_loads = 0;
@@ -377,10 +377,10 @@ TEST(supervisor_restore_after_boot_command_loads_enabled_slots_once)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(
               &sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-              1, 1, "mod.hello") == 0);
+              1, "mod.hello") == 0);
     CHECK(canopus_supervisor_add_module(
               &sup, CANOPUS_LIFECYCLE_REMOVABLE,
-              1, 1, "mod.disabled") == 1);
+              1, "mod.disabled") == 1);
     sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
     sup.modules[0].state = CANOPUS_STATE_INSTALLED;
     sup.modules[1].intent = CANOPUS_SUP_INTENT_DISABLED;
@@ -420,7 +420,7 @@ TEST(supervisor_restore_after_boot_command_reports_load_failure)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(
               &sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-              1, 1, "mod.hello") == 0);
+              1, "mod.hello") == 0);
     sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
     sup.modules[0].state = CANOPUS_STATE_INSTALLED;
     g_loads = 0;
@@ -444,7 +444,7 @@ TEST(supervisor_enable_is_next_boot)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.hello") == 0);
     CHECK(sup.modules[0].state == CANOPUS_STATE_INSTALLED);
     CHECK(sup.modules[0].intent == CANOPUS_SUP_INTENT_DISABLED);
     g_loads = 0;
@@ -462,7 +462,7 @@ TEST(supervisor_disable_loaded_module_is_next_boot)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_ACTIVE;
     g_persists = 0;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
@@ -478,7 +478,7 @@ TEST(supervisor_disable_installed_module_is_next_boot)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.hello") == 0);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
     CHECK(sup.modules[0].state == CANOPUS_STATE_DISABLED);
@@ -489,7 +489,7 @@ TEST(supervisor_remove_is_next_boot)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_ACTIVE;
     g_artifact_removals = 0;
     g_persists = 0;
@@ -507,8 +507,8 @@ TEST(supervisor_remove_pending_slot_not_reclaimed_by_command)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.one") == 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.two") == 1);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.one") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.two") == 1);
     CHECK(sup.module_count == 2);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
@@ -525,7 +525,7 @@ TEST(supervisor_persist_failure_rolls_back_enable)
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
-                                        1, 1, "mod.hello") == 0);
+                                        1, "mod.hello") == 0);
     g_persist_result = CANOPUS_SUP_ERR_REGISTRY_RENAME;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
@@ -541,7 +541,7 @@ TEST(supervisor_persist_failure_rolls_back_install)
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
-                                        1, 1, "existing") == 0);
+                                        1, "existing") == 0);
     g_persist_result = CANOPUS_SUP_ERR_REGISTRY_WRITE;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_FAILED);
@@ -562,7 +562,7 @@ TEST(supervisor_install_persists_disabled_module)
     g_persists = 0;
     /* a freshly staged, disabled module sits in the table when INSTALL
      * completes (stage_package registers it before returning COMPLETED) */
-    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.hello") == 0);
     CHECK(a.modules[0].intent == CANOPUS_SUP_INTENT_DISABLED);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
     CHECK(canopus_supervisor_handle_command(&a, cmd) == CANOPUS_RESULT_COMPLETED);
@@ -584,7 +584,7 @@ TEST(supervisor_registry_survives_reload)
     canopus_supervisor_init(&a, 7, &fake_platform, 0);
     canopus_supervisor_init(&b, 7, &fake_platform, 0);
     g_registry_present = 0;
-    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_REMOVABLE, 3, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_REMOVABLE, 3, "mod.hello") == 0);
     a.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
     a.modules[0].state = CANOPUS_STATE_ENABLED;
     g_persists = 0;
@@ -609,7 +609,7 @@ TEST(supervisor_registry_restore_auto_activates_ready_module)
     g_registry_present = 0;
     CHECK(canopus_supervisor_add_module(&a,
                                         CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-                                        3, 1, "mod.hello") == 0);
+                                        3, "mod.hello") == 0);
     a.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
     a.modules[0].state = CANOPUS_STATE_ENABLED;
     CHECK(canopus_supervisor_save_registry(&a) == 0);
@@ -637,7 +637,7 @@ TEST(supervisor_registry_metadata_restore_defers_enabled_module_load)
     g_registry_present = 0;
     CHECK(canopus_supervisor_add_module(&a,
                                         CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-                                        3, 1, "mod.hello") == 0);
+                                        3, "mod.hello") == 0);
     a.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
     a.modules[0].state = CANOPUS_STATE_ENABLED;
     CHECK(canopus_supervisor_save_registry(&a) == 0);
@@ -670,7 +670,7 @@ TEST(supervisor_reactivates_opted_in_resident_module_after_second_restore)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     descriptor.flags = CANOPUS_FLAG_REACTIVATE_AFTER_UI_RESTART;
     CHECK(canopus_supervisor_add_module(&sup,
-        CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION, 1, 1, "mod.hello") == 0);
+        CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION, 1, "mod.hello") == 0);
     sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     sup.modules[0].descriptor = &descriptor;
@@ -695,7 +695,7 @@ TEST(supervisor_reactivates_opted_in_resident_module_after_second_restore)
     CHECK(canopus_supervisor_activate_restored_modules(&sup) == 0);
     CHECK(sup.modules[0].activation_error == 0);
     CHECK(canopus_supervisor_add_module(&sup,
-        CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION, 1, 1, "mod.two") == 1);
+        CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION, 1, "mod.two") == 1);
     sup.modules[1].state = CANOPUS_STATE_INSTALLED;
     sup.modules[1].intent = CANOPUS_SUP_INTENT_ENABLED;
     g_loading_supervisor = &sup;
@@ -720,13 +720,13 @@ TEST(supervisor_registry_restores_multiple_pending_intents)
     g_persists = 0;
     CHECK(canopus_supervisor_add_module(
               &a, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-              1, 1, "mod.one") == 0);
+              1, "mod.one") == 0);
     CHECK(canopus_supervisor_add_module(
               &a, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-              1, 1, "mod.two") == 1);
+              1, "mod.two") == 1);
     CHECK(canopus_supervisor_add_module(
               &a, CANOPUS_LIFECYCLE_REMOVABLE,
-              1, 1, "mod.disabled") == 2);
+              1, "mod.disabled") == 2);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&a, cmd) ==
           CANOPUS_RESULT_REBOOT_REQUIRED);
@@ -763,7 +763,7 @@ TEST(supervisor_registry_retains_boot_activation_error)
     g_registry_present = 0;
     CHECK(canopus_supervisor_add_module(&a,
                                         CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-                                        3, 1, "mod.hello") == 0);
+                                        3, "mod.hello") == 0);
     a.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
     a.modules[0].state = CANOPUS_STATE_ENABLED;
     CHECK(canopus_supervisor_save_registry(&a) == 0);
@@ -781,7 +781,7 @@ TEST(supervisor_registry_retains_boot_activation_error)
     g_load_result = CANOPUS_STATE_ACTIVE;
     CHECK(canopus_supervisor_restore_registry(&c) == 0);
     CHECK((int32_t)c.modules[0].activation_error == -1102);
-    CHECK(c.modules[0].flags == CANOPUS_SUP_FLAG_SIGNATURE_OK);
+    CHECK(c.modules[0].flags == 0u);
     g_activation_result = 0;
 }
 
@@ -792,7 +792,7 @@ TEST(supervisor_native_app_publication_is_version_gated)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(
               &sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-              1, 1, "mod.hello") == 0);
+              1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     sup.modules[0].descriptor = &descriptor;
     descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
@@ -812,7 +812,7 @@ TEST(supervisor_legacy_native_app_publishes_only_in_stage_one)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(
               &sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-              1, 1, "mod.hello") == 0);
+              1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     sup.modules[0].descriptor = &descriptor;
     descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
@@ -834,7 +834,7 @@ TEST(supervisor_staged_native_app_receives_each_stage)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(
               &sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-              1, 1, "mod.hello") == 0);
+              1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     sup.modules[0].descriptor = &descriptor;
     descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
@@ -864,7 +864,7 @@ TEST(supervisor_publication_save_failure_retains_registry_diagnostic)
     platform.stage_package = publication_install_stage;
     CHECK(canopus_supervisor_init(&sup, 7, &platform, &sup) == 0);
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-                                       1, 1, "mod.hello") == 0);
+                                       1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     sup.modules[0].descriptor = &descriptor;
     descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
@@ -889,7 +889,7 @@ TEST(supervisor_native_app_publication_persists_error)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(
               &sup, CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION,
-              1, 1, "mod.hello") == 0);
+              1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     sup.modules[0].descriptor = &descriptor;
     descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
@@ -911,7 +911,7 @@ TEST(supervisor_registry_restore_keeps_disabled_modules_unloaded)
     canopus_supervisor_init(&a, 7, &fake_platform, 0);
     canopus_supervisor_init(&b, 7, &fake_platform, 0);
     g_registry_present = 0;
-    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1, "mod.bt") == 0);
+    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, "mod.bt") == 0);
     CHECK(a.modules[0].intent == CANOPUS_SUP_INTENT_DISABLED);
     CHECK(canopus_supervisor_save_registry(&a) == 0);
     g_loads = 0;
@@ -927,7 +927,7 @@ TEST(supervisor_registry_remove_intent_clears_at_boot)
     canopus_supervisor_init(&a, 7, &fake_platform, 0);
     canopus_supervisor_init(&b, 7, &fake_platform, 0);
     g_registry_present = 0;
-    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1, "mod.bt") == 0);
+    CHECK(canopus_supervisor_add_module(&a, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, "mod.bt") == 0);
     a.modules[0].intent = CANOPUS_SUP_INTENT_REMOVE;
     a.modules[0].state = CANOPUS_STATE_REMOVE_PENDING;
     CHECK(canopus_supervisor_save_registry(&a) == 0);
@@ -954,7 +954,7 @@ TEST(supervisor_resident_disable_is_reboot_required)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1, "mod.bt") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, "mod.bt") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_DISABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
@@ -967,7 +967,7 @@ TEST(supervisor_resident_remove_is_remove_pending)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1, "mod.bt") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, "mod.bt") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_REMOVE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
@@ -1007,7 +1007,7 @@ TEST(supervisor_safe_mode_rejects_activation)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1,
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1,
                                         "mod.hello") == 0);
     /* enter safe mode */
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0, 0);
@@ -1035,7 +1035,7 @@ TEST(supervisor_safe_mode_allows_next_boot_disable_remove)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1,
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1,
                                         "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_ACTIVE;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0, 0);
@@ -1056,7 +1056,7 @@ TEST(supervisor_safe_mode_allows_resident_next_boot)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3, 1,
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_ALWAYS_RESIDENT, 3,
                                         "mod.bt") == 0);
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0, 0);
@@ -1170,7 +1170,7 @@ TEST(supervisor_read_staging_never_torn)
     uint8_t status[CANOPUS_SUP_STATUS_SIZE];
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.hello") == 0);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
     /* the read returns a fully consistent record: slot state present, no
@@ -1358,7 +1358,7 @@ TEST(v2_enable_by_module_id)
     uint8_t rbuf[128];
     uint8_t payload[CANOPUS_SUP_MODULE_ID_MAX];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1,
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1,
                                         "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_INSTALLED;
 
@@ -1563,7 +1563,7 @@ TEST(supervisor_enable_never_loads_so_no_load_error)
     struct canopus_supervisor_v1 sup;
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.hello") == 0);
     sup.modules[0].state = CANOPUS_STATE_INSTALLED;
     /* even a platform whose load would fail is never touched: enable only
      * records the boot intent */
@@ -1593,8 +1593,8 @@ TEST(supervisor_status_reflects_remove_pending)
     uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
     uint8_t status[CANOPUS_SUP_STATUS_SIZE];
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") == 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.two") == 1);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.hello") == 0);
+    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.two") == 1);
     CHECK(sup.module_count == 2);
     /* remove slot 0: the enumerated count and slot stay consistent; the
      * pending removal is visible in the ABI */
@@ -1615,13 +1615,13 @@ TEST(supervisor_add_module_rejects_full_table)
     int added = 0;
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     for (i = 0; i < CANOPUS_SUP_MODULE_SLOTS + 2; i++) {
-        if (canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, 1, "mod.hello") >= 0) {
+        if (canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.hello") >= 0) {
             added++;
         }
     }
     CHECK(added == CANOPUS_SUP_MODULE_SLOTS);
     CHECK(sup.module_count == CANOPUS_SUP_MODULE_SLOTS);
-    CHECK(canopus_supervisor_add_module(&sup, 99, 1, 1, "mod.bad") == -1); /* bad class */
+    CHECK(canopus_supervisor_add_module(&sup, 99, 1, "mod.bad") == -1); /* bad class */
 }
 
 static const struct test_registry supervisor_device_tests[] = {

@@ -90,7 +90,6 @@ static void add_native_module(struct canopus_manager_model_v1 *model,
     module.state = lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ?
         CANOPUS_STATE_ACTIVE : CANOPUS_STATE_BOOT_RESIDENT;
     module.version = 7;
-    module.signature_ok = 1;
     module.has_previous = 1;
     CHECK(canopus_manager_upsert_module(model, &module) == 0);
 }
@@ -257,7 +256,6 @@ TEST(manager_native_ready_module_requires_manual_activation_confirmation)
     canopus_buf_copy(module.module_id, sizeof(module.module_id), "mod.ready");
     module.lifecycle_class = CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION;
     module.state = CANOPUS_STATE_READY;
-    module.signature_ok = 1u;
     CHECK(canopus_manager_upsert_module(&model, &module) == 0);
     model.view = CANOPUS_MANAGER_VIEW_MODULE_DETAIL;
     CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
@@ -285,9 +283,6 @@ TEST(manager_native_ready_module_requires_manual_activation_confirmation)
     CHECK(!canopus_manager_can_activate(&model, 0));
     CHECK(canopus_manager_op_activate(&model, 0) == CANOPUS_RESULT_DISALLOWED);
     model.safe_mode = 0;
-    model.modules[0].signature_ok = 0;
-    CHECK(!canopus_manager_can_activate(&model, 0));
-    model.modules[0].signature_ok = 1;
     model.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     CHECK(!canopus_manager_can_activate(&model, 0));
     model.modules[0].state = CANOPUS_STATE_ENABLED;
@@ -387,7 +382,6 @@ TEST(manager_native_enable_is_confirmable_and_dispatches)
     module.lifecycle_class = CANOPUS_LIFECYCLE_REMOVABLE;
     module.state = CANOPUS_STATE_INSTALLED; /* disabled by default */
     module.version = 7;
-    module.signature_ok = 1;
     CHECK(canopus_manager_upsert_module(&model, &module) == 0);
     model.view = CANOPUS_MANAGER_VIEW_MODULE_DETAIL;
     model.selected = 0;
@@ -443,7 +437,6 @@ TEST(manager_native_refreshes_model_after_operation)
     module.lifecycle_class = CANOPUS_LIFECYCLE_REMOVABLE;
     module.state = CANOPUS_STATE_ACTIVE;
     module.version = 7;
-    module.signature_ok = 1;
     CHECK(canopus_manager_upsert_module(&model, &module) == 0);
     model.view = CANOPUS_MANAGER_VIEW_MODULE_DETAIL;
     model.selected = 0;
@@ -553,7 +546,6 @@ TEST(manager_native_router_preserves_second_module_selection)
     module.lifecycle_class = CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION;
     module.state = CANOPUS_STATE_BOOT_RESIDENT;
     module.version = 9u;
-    module.signature_ok = 1u;
     CHECK(canopus_manager_upsert_module(&model, &module) == 1);
     model.view = CANOPUS_MANAGER_VIEW_MODULE_LIST;
 

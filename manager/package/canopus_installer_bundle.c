@@ -1,14 +1,10 @@
-/* Signed receipt validation shared by host tests and the exact-target platform. */
+/* Receipt validation shared by host tests and the exact-target platform. */
 #include "canopus_installer_bundle.h"
 #include "canopus_runtime.h"
-#include "monocypher-ed25519.h"
 
 _Static_assert(sizeof(struct canopus_install_receipt_v1) ==
                    CANOPUS_INSTALL_RECEIPT_SIZE,
                "install receipt wire size");
-_Static_assert(__builtin_offsetof(struct canopus_install_receipt_v1, signature) ==
-                   CANOPUS_INSTALL_SIGNED_SIZE,
-               "install receipt signed prefix");
 
 static int bytes_equal(const uint8_t *left, const uint8_t *right, uint32_t size)
 {
@@ -62,10 +58,9 @@ int canopus_install_module_id_valid(
 int canopus_install_receipt_validate(
     const struct canopus_install_receipt_v1 *receipt,
     const char *target_id,
-    const uint8_t firmware_sha256[CANOPUS_INSTALL_DIGEST_SIZE],
-    const uint8_t public_key[32])
+    const uint8_t firmware_sha256[CANOPUS_INSTALL_DIGEST_SIZE])
 {
-    if (receipt == 0 || firmware_sha256 == 0 || public_key == 0 ||
+    if (receipt == 0 || firmware_sha256 == 0 ||
         receipt->magic != CANOPUS_INSTALL_RECEIPT_MAGIC ||
         receipt->version != CANOPUS_INSTALL_RECEIPT_VERSION ||
         receipt->header_size != CANOPUS_INSTALL_RECEIPT_SIZE ||
@@ -78,11 +73,6 @@ int canopus_install_receipt_validate(
                             CANOPUS_INSTALL_TARGET_ID_SIZE, target_id) ||
         !bytes_equal(receipt->firmware_sha256, firmware_sha256,
                      CANOPUS_INSTALL_DIGEST_SIZE)) {
-        return -1;
-    }
-    if (crypto_ed25519_check(receipt->signature, public_key,
-                             (const uint8_t *)receipt,
-                             CANOPUS_INSTALL_SIGNED_SIZE) != 0) {
         return -1;
     }
     return 0;

@@ -265,7 +265,6 @@ pub fn package(cmd: PackageCmd) -> anyhow::Result<()> {
             artifact,
             resource,
             output,
-            key,
         } => {
             let value = load_json(&manifest)?;
             validate(SchemaKind::Package, &value)?;
@@ -290,12 +289,8 @@ pub fn package(cmd: PackageCmd) -> anyhow::Result<()> {
 
             let pkg = canopus_package::manifest_with_real_hashes(&pkg, &files, &resource_files)?;
             let archive = canopus_package::build_archive(&pkg, &files, &resource_files)?;
-            let signed = match key {
-                Some(k) => canopus_package::sign_archive(&archive, &k)?,
-                None => archive,
-            };
-            let len = signed.len();
-            std::fs::write(&output, &signed)?;
+            let len = archive.len();
+            std::fs::write(&output, &archive)?;
             println!(
                 "wrote {} ({} bytes, {} artifact(s))",
                 output.display(),
@@ -304,33 +299,15 @@ pub fn package(cmd: PackageCmd) -> anyhow::Result<()> {
             );
             Ok(())
         }
-        PackageCmd::Sign { pkg, key, output } => {
+        PackageCmd::Verify { pkg } => {
             let archive = std::fs::read(&pkg)?;
-            let signed = canopus_package::sign_archive(&archive, &key)?;
-            let out = output.unwrap_or(pkg);
-            std::fs::write(&out, signed)?;
-            println!("signed {} ({}-byte signature appended)", out.display(), 64);
-            Ok(())
-        }
-        PackageCmd::Verify { pkg, pubkey } => {
-            let archive = std::fs::read(&pkg)?;
-            match canopus_package::verify_archive(&archive, &pubkey) {
-                Ok(()) => {
-                    println!("signature OK");
-                    Ok(())
-                }
-                Err(e) => Err(anyhow::anyhow!("{e}")),
-            }
-        }
-        PackageCmd::Keygen { output } => {
-            let (secret, public) = canopus_package::keygen()?;
-            if let Some(out) = output {
-                std::fs::write(&out, format!("{secret}\n{public}\n"))?;
-                println!("wrote key pair to {}", out.display());
-            } else {
-                println!("secret: {secret}");
-                println!("public: {public}");
-            }
+            let manifest = canopus_package::verify_archive(&archive)?;
+            println!(
+                "package OK: {} v{} ({} artifact(s))",
+                manifest.package_id,
+                manifest.version,
+                manifest.artifacts.len()
+            );
             Ok(())
         }
     }
@@ -592,29 +569,6 @@ pub fn re(cmd: ReCmd) -> anyhow::Result<()> {
             println!("gate for {id}: {d:?}");
             Ok(())
         }
-        ReCmd::RevisionSign {
-            target,
-            revision,
-            key,
-            output,
-            targets_dir,
-        } => re_revision_sign(&target, revision, &key, &output, &targets_dir),
-        ReCmd::RevisionVerify { manifest, pubkey } => {
-            let data = std::fs::read(&manifest)?;
-            let signed: serde_json::Value = serde_json::from_slice(&data)?;
-            let m: canopus_re::revision::RevisionManifest =
-                serde_json::from_value(signed["manifest"].clone())?;
-            let sig = signed["signature"]
-                .as_str()
-                .ok_or_else(|| anyhow::anyhow!("no signature in manifest"))?;
-            m.verify(&pubkey, sig)
-                .map_err(|e| anyhow::anyhow!("verify failed: {e}"))?;
-            println!(
-                "revision {} of {}: signature VALID",
-                m.revision, m.target_id
-            );
-            Ok(())
-        }
         ReCmd::Probe {
             target,
             symbol,
@@ -622,80 +576,6 @@ pub fn re(cmd: ReCmd) -> anyhow::Result<()> {
             output,
         } => re_probe(&target, &symbol, &targets_dir, &output),
     }
-}
-
-/// Signs a target-pack revision manifest (CAN-RE-009).
-fn re_revision_sign(
-    target: &str,
-    revision: u32,
-    key: &str,
-    output: &Option<PathBuf>,
-    targets_dir: &Path,
-) -> anyhow::Result<()> {
-    let pack = find_target(targets_dir, target)?;
-    let root = targets_dir.join(target);
-    let (symbols, types) = canopus_core::veneer::load_records(&root)?;
-    let evidence_dir = root.join("evidence");
-
-    // content digest over symbols + types (sorted, stable).
-    let mut entries: Vec<Vec<u8>> = Vec::new();
-    for sub in ["symbols", "types"] {
-        let d = root.join(sub);
-        if !d.is_dir() {
-            continue;
-        }
-        let mut files: Vec<_> = std::fs::read_dir(&d)?
-            .filter_map(|e| e.ok())
-            .map(|e| e.path())
-            .filter(|p| p.extension().and_then(|e| e.to_str()) == Some("json"))
-            .collect();
-        files.sort();
-        for f in files {
-            entries.push(std::fs::read(&f)?);
-        }
-    }
-    let content_sha256 = {
-        use sha2::{Digest, Sha256};
-        let mut h = Sha256::new();
-        for e in &entries {
-            h.update(e);
-        }
-        hex::encode(h.finalize())
-    };
-    let evidence_count = if evidence_dir.is_dir() {
-        std::fs::read_dir(&evidence_dir)?.count() as u32
-    } else {
-        0
-    };
-
-    let m = canopus_re::revision::RevisionManifest {
-        target_id: pack.target_id.clone(),
-        revision,
-        firmware_sha256: pack.firmware_sha256.clone(),
-        content_sha256,
-        symbol_count: symbols.len() as u32,
-        type_count: types.len() as u32,
-        evidence_count,
-        schema_version: 1,
-    };
-    let signature = m
-        .sign(key)
-        .map_err(|e| anyhow::anyhow!("sign failed: {e}"))?;
-    let doc = serde_json::json!({ "manifest": m, "signature": signature });
-    let out = output.clone().unwrap_or_else(|| {
-        root.join("generated")
-            .join(format!("revision-v{revision}.json"))
-    });
-    if let Some(p) = out.parent() {
-        std::fs::create_dir_all(p)?;
-    }
-    std::fs::write(&out, serde_json::to_vec_pretty(&doc)?)?;
-    println!(
-        "signed revision {revision} of {target} (digest {}) -> {}",
-        m.canonical_digest(),
-        out.display()
-    );
-    Ok(())
 }
 
 /// Emits a minimal, safe C probe module for a callable symbol (RE-008).
@@ -750,75 +630,4 @@ int probe_{name}_run(void)
     std::fs::write(&out, text)?;
     println!("wrote probe {}", out.display());
     Ok(())
-}
-
-// ---------------------------------------------------------------- key
-
-use crate::KeyCmd;
-use canopus_package::keyroles::{KeyCert, KeyRole, RevocationList, certify, check_cert_revoked};
-
-fn parse_role(s: &str) -> anyhow::Result<KeyRole> {
-    Ok(match s {
-        "dev" => KeyRole::Dev,
-        "production" => KeyRole::Production,
-        other => anyhow::bail!("unknown key role '{other}' (expected dev or production)"),
-    })
-}
-
-pub fn key(cmd: KeyCmd) -> anyhow::Result<()> {
-    match cmd {
-        KeyCmd::RoleCert { role, public, note } => {
-            let role = parse_role(&role)?;
-            let cert = certify(role, &public, note.as_deref().unwrap_or(""));
-            let text = serde_json::to_string_pretty(&cert)?;
-            println!("{text}");
-            Ok(())
-        }
-        KeyCmd::Revoke {
-            fingerprint,
-            role,
-            key,
-            list,
-        } => {
-            let role = parse_role(&role)?;
-            let path = std::path::Path::new(&list);
-            let mut rl = if path.exists() {
-                RevocationList::load(path).map_err(|e| anyhow::anyhow!(e))?
-            } else {
-                RevocationList::new_empty(role)
-            };
-            rl.add(&fingerprint);
-            rl.sign(&key).map_err(|e| anyhow::anyhow!("sign: {e}"))?;
-            rl.save(path).map_err(|e| anyhow::anyhow!(e))?;
-            println!(
-                "revoked {} (list now has {} entries, signer={})",
-                fingerprint,
-                rl.revoked.len(),
-                rl.signer_role.as_str()
-            );
-            Ok(())
-        }
-        KeyCmd::Check { cert, list } => {
-            let path = std::path::Path::new(&list);
-            if !path.exists() {
-                anyhow::bail!("revocation list not found: {list}");
-            }
-            let rl = RevocationList::load(path).map_err(|e| anyhow::anyhow!(e))?;
-            let cdata = std::fs::read_to_string(&cert)?;
-            let c: KeyCert = serde_json::from_str(&cdata)?;
-            rl.verify(&c).map_err(|e| anyhow::anyhow!(e))?;
-            match check_cert_revoked(&c, &rl) {
-                Ok(()) => println!(
-                    "cert {} ({}): NOT revoked",
-                    c.role.as_str(),
-                    &c.fingerprint[..16.min(c.fingerprint.len())]
-                ),
-                Err(e) => {
-                    println!("{}", e);
-                    std::process::exit(2);
-                }
-            }
-            Ok(())
-        }
-    }
 }

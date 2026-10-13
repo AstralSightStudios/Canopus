@@ -1,7 +1,7 @@
-//! End-to-end package build / sign / verify tests.
+//! End-to-end package build / verify tests.
 
 use canopus_core::model::PackageManifest;
-use canopus_package::{build_archive, keygen, sign_archive, validate_entry, verify_archive};
+use canopus_package::{build_archive, validate_entry, verify_archive};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tar::{Builder, EntryType, Header};
@@ -24,7 +24,6 @@ fn test_manifest() -> PackageManifest {
                 "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
             }],
             "target_pack_revision": 1,
-            "signature": { "key_id": "test", "algorithm": "ed25519" },
             "min_manager_version": "0.1.0"
         }"#,
     )
@@ -55,45 +54,24 @@ fn no_resources() -> HashMap<String, PathBuf> {
 }
 
 #[test]
-fn sign_then_verify_roundtrip() {
+fn build_then_verify_roundtrip() {
     let dir = tempfile::tempdir().unwrap();
     let (manifest, files) = real_manifest(dir.path(), "roundtrip");
-    let (secret, public) = keygen().unwrap();
     let archive = build_archive(&manifest, &files, &no_resources()).unwrap();
-    let signed = sign_archive(&archive, &secret).unwrap();
-    assert!(signed.len() > archive.len());
-
-    // correct key verifies
-    verify_archive(&signed, &public).expect("signature must verify");
-
-    // wrong key fails
-    let (_, wrong_public) = keygen().unwrap();
-    assert!(verify_archive(&signed, &wrong_public).is_err());
-}
-
-#[test]
-fn unsigned_package_fails_verify() {
-    let dir = tempfile::tempdir().unwrap();
-    let (secret, public) = keygen().unwrap();
-    let (manifest, files) = real_manifest(dir.path(), "unsigned");
-    let archive = build_archive(&manifest, &files, &no_resources()).unwrap();
-    let _ = secret;
-    assert!(verify_archive(&archive, &public).is_err());
+    verify_archive(&archive).expect("freshly built package must verify");
 }
 
 #[test]
 fn tampered_archive_fails_verify() {
     let dir = tempfile::tempdir().unwrap();
-    let (secret, public) = keygen().unwrap();
     let (manifest, files) = real_manifest(dir.path(), "tamper");
-    let archive = build_archive(&manifest, &files, &no_resources()).unwrap();
-    let mut signed = sign_archive(&archive, &secret).unwrap();
+    let mut archive = build_archive(&manifest, &files, &no_resources()).unwrap();
 
     // flip a byte in the artifact payload region
-    let mid = signed.len() / 2;
-    signed[mid] ^= 0xFF;
+    let mid = archive.len() / 2;
+    archive[mid] ^= 0xFF;
 
-    assert!(verify_archive(&signed, &public).is_err());
+    assert!(verify_archive(&archive).is_err());
 }
 
 #[test]
@@ -173,22 +151,21 @@ fn make_tar_dir(path: &str) -> Vec<u8> {
 
 #[test]
 fn malicious_archives_fail_verify() {
-    let (_, public) = keygen().unwrap();
     // The tar crate refuses to even WRITE `..`/absolute paths (defense in
     // depth), so those cases are exercised via validate_entry above. Here we
     // cover what a real attacker can produce with the format:
     // symlink escape is rejected
     let sym = make_tar_symlink("link", "/etc/passwd");
-    assert!(verify_archive(&sym, &public).is_err());
+    assert!(verify_archive(&sym).is_err());
     // duplicate entries are rejected (one path verified, another unpacked)
     let dup = make_tar(&[
         ("manifest.json".to_string(), b"a".to_vec()),
         ("manifest.json".to_string(), b"b".to_vec()),
     ]);
-    assert!(verify_archive(&dup, &public).is_err());
+    assert!(verify_archive(&dup).is_err());
     // a directory entry is rejected (packages contain regular files only)
     let dir = make_tar_dir("subdir");
-    assert!(verify_archive(&dir, &public).is_err());
+    assert!(verify_archive(&dir).is_err());
 }
 
 #[test]
@@ -226,7 +203,6 @@ fn manifest_with_resource(path: &str) -> PackageManifest {
                 "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
             }}],
             "target_pack_revision": 1,
-            "signature": {{ "key_id": "test", "algorithm": "ed25519" }},
             "min_manager_version": "0.1.0",
             "native_app": {{
                 "app_id": "com.canopus.manager",
@@ -350,9 +326,7 @@ fn tampered_resource_fails_verify() {
     );
     let manifest =
         canopus_package::manifest_with_real_hashes(&manifest, &files, &resource_files).unwrap();
-    let (secret, public) = keygen().unwrap();
-    let archive = build_archive(&manifest, &files, &resource_files).unwrap();
-    let mut signed = sign_archive(&archive, &secret).unwrap();
+    let mut signed = build_archive(&manifest, &files, &resource_files).unwrap();
     // tamper the resource content bytes (the resource's payload string)
     let marker = b"res-tamper";
     let idx = signed
@@ -360,5 +334,5 @@ fn tampered_resource_fails_verify() {
         .position(|w| w == marker)
         .expect("resource payload present");
     signed[idx] ^= 0xFF;
-    assert!(verify_archive(&signed, &public).is_err());
+    assert!(verify_archive(&signed).is_err());
 }

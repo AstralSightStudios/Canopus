@@ -15,9 +15,5 @@
     }
   ],
   "target_pack_revision": 1,
-  "signature": {
-    "key_id": "dev-key-001",
-    "algorithm": "ed25519"
-  },
   "min_manager_version": "0.1.0"
 }

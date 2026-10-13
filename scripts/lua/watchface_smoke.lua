@@ -63,7 +63,7 @@ local original_os_execute = os.execute
 
 local function module_installer_io(fault)
     local files = {
-        ["/fake/receipt.bin"] = "CMI1" .. string.rep("\0", 252),
+        ["/fake/receipt.bin"] = "CMI2" .. string.rep("\0", 172),
         ["/fake/module.bin"] = "\127ELF" .. string.rep("\0", 508),
     }
     local device_request

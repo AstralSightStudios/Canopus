@@ -14,7 +14,6 @@
     "canopus_abi",
     "lifecycle",
     "artifacts",
-    "signature",
     "min_manager_version"
   ],
   "properties": {
@@ -183,23 +182,6 @@
     "target_pack_revision": {
       "type": "integer",
       "minimum": 1
-    },
-    "signature": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "key_id",
-        "algorithm"
-      ],
-      "properties": {
-        "key_id": {
-          "type": "string"
-        },
-        "algorithm": {
-          "type": "string",
-          "const": "ed25519"
-        }
-      }
     },
     "min_manager_version": {
       "type": "string"

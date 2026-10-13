@@ -968,7 +968,6 @@ int32_t canopus_supervisor_installer_read(struct canopus_supervisor_v1 *sup,
 int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
                                   uint32_t lifecycle_class,
                                   uint32_t version,
-                                  uint32_t signature_ok,
                                   const char *module_id)
 {
     uint32_t i;
@@ -994,7 +993,7 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
             sup->modules[i].state = CANOPUS_STATE_INSTALLED;
             sup->modules[i].lifecycle_class = lifecycle_class;
             sup->modules[i].version = version;
-            sup->modules[i].flags = signature_ok ? 1u : 0u;
+            sup->modules[i].flags = 0u;
             /* Disabled by default: nothing is ever loaded at install. */
             sup->modules[i].intent = CANOPUS_SUP_INTENT_DISABLED;
             canopus_memset(sup->modules[i].module_id, 0,
@@ -1084,9 +1083,8 @@ int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup)
             put_wire_u32(buf, o + 32u, m->lifecycle_class);
             put_wire_u32(buf, o + 36u, m->version);
             put_wire_u32(buf, o + 40u,
-                         (m->flags & CANOPUS_SUP_FLAG_PUBLIC_MASK) |
-                         (sup_registry_error_encode(m->activation_error) <<
-                          CANOPUS_SUP_REGISTRY_ERROR_SHIFT));
+                         sup_registry_error_encode(m->activation_error) <<
+                             CANOPUS_SUP_REGISTRY_ERROR_SHIFT);
             put_wire_u32(buf, o + 44u, m->intent);
         }
     }
@@ -1134,7 +1132,7 @@ static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
             /* commit the removal: register briefly so the platform hook can
              * resolve the module id, delete the artifacts, then reclaim */
             slot = canopus_supervisor_add_module(
-                sup, lifecycle_class, version, 1u, (const char *)id);
+                sup, lifecycle_class, version, (const char *)id);
             if (slot >= 0) {
                 if (sup->platform->remove_artifact != 0) {
                     (void)sup->platform->remove_artifact(
@@ -1145,9 +1143,7 @@ static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
             continue;
         }
         slot = canopus_supervisor_add_module(
-            sup, lifecycle_class, version,
-            (flags & CANOPUS_SUP_FLAG_SIGNATURE_OK) != 0u,
-            (const char *)id);
+            sup, lifecycle_class, version, (const char *)id);
         if (slot < 0) {
             continue;
         }
@@ -1156,7 +1152,6 @@ static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
                 ? CANOPUS_SUP_INTENT_ENABLED : CANOPUS_SUP_INTENT_DISABLED;
         sup->modules[slot].activation_error =
             sup_registry_error_decode(flags);
-        sup->modules[slot].flags &= CANOPUS_SUP_FLAG_PUBLIC_MASK;
         /* Full restore is deliberately two-phase: import every slot before
          * loading code, so an intermediate save can never truncate trailing
          * metadata. The production constructor uses the metadata-only phase

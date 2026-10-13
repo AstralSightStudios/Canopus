@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""Build a fixed CMI1 receipt for a one-shot module installer watchface."""
+"""Build a fixed unsigned CMI2 receipt for a one-shot module installer watchface."""
 import argparse
 import hashlib
 import pathlib
 import struct
-import subprocess
-import tempfile
 
-MAGIC = 0x31494D43
-RECEIPT_SIZE = 256
-SIGNED_SIZE = 192
+MAGIC = 0x32494D43
+RECEIPT_SIZE = 176
 ARTIFACT_MAX = 384 * 1024
 
 
@@ -27,7 +24,6 @@ def main() -> None:
     parser.add_argument("--lifecycle", required=True, type=int, choices=range(4))
     parser.add_argument("--target-id", required=True)
     parser.add_argument("--firmware-sha256", required=True)
-    parser.add_argument("--private-key", required=True, type=pathlib.Path)
     parser.add_argument("--output", required=True, type=pathlib.Path)
     args = parser.parse_args()
 
@@ -46,31 +42,18 @@ def main() -> None:
     if not artifact.startswith(b"\x7fELF") or not (0 < len(artifact) <= ARTIFACT_MAX):
         raise ValueError("artifact must be a non-empty bounded ELF")
 
-    prefix = b"".join([
-        struct.pack("<8I", MAGIC, 1, RECEIPT_SIZE, 0, args.lifecycle,
+    receipt = b"".join([
+        struct.pack("<8I", MAGIC, 2, RECEIPT_SIZE, 0, args.lifecycle,
                     args.version, len(artifact), 0),
         fixed(module_id, 32),
         fixed(target_id, 48),
         firmware_sha256,
         hashlib.sha256(artifact).digest(),
-        fixed(b"canopus-release", 16),
     ])
-    assert len(prefix) == SIGNED_SIZE
-    with tempfile.TemporaryDirectory() as temp:
-        message = pathlib.Path(temp) / "receipt-prefix.bin"
-        signature = pathlib.Path(temp) / "receipt.sig"
-        message.write_bytes(prefix)
-        subprocess.run([
-            "openssl", "pkeyutl", "-sign", "-rawin",
-            "-inkey", str(args.private_key), "-in", str(message),
-            "-out", str(signature),
-        ], check=True)
-        sig = signature.read_bytes()
-    if len(sig) != 64:
-        raise ValueError("Ed25519 signature is not 64 bytes")
+    assert len(receipt) == RECEIPT_SIZE
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_bytes(prefix + sig)
-    print(f"wrote {args.output} ({len(prefix + sig)} bytes)")
+    args.output.write_bytes(receipt)
+    print(f"wrote {args.output} ({len(receipt)} bytes)")
     print(f"artifact sha256 {hashlib.sha256(artifact).hexdigest()}")
 
 

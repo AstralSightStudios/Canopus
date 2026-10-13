@@ -62,8 +62,8 @@ local function run_case(version, fault)
     package.loaded.lvgl=lvgl
     local module = '\127ELF\1\1\1' .. string.rep('\0',9) .. string.pack('<I2I2',1,40) .. string.rep('\0',492)
     if target then
-        local receipt=string.pack('<I4I4I4I4I4I4I4I4',0x31494d43,1,256,0,1,1,#module,0)
-            .. padded(token,32) .. padded(target[1],48) .. rawhex(target[2]) .. string.rep('\0',112)
+        local receipt=string.pack('<I4I4I4I4I4I4I4I4',0x32494d43,2,176,0,1,1,#module,0)
+            .. padded(token,32) .. padded(target[1],48) .. rawhex(target[2]) .. string.rep('\0',32)
         if fault=='wrong_receipt' then receipt=receipt:sub(1,64)..padded('other-target',48)..receipt:sub(113) end
         if fault=='wrong_firmware' then receipt=receipt:sub(1,112)..string.rep('\0',32)..receipt:sub(145) end
         files['/fake/'..product..'-'..target[1]..'.bin']=module

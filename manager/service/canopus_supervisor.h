@@ -109,7 +109,7 @@ enum canopus_sup_error {
      * so a constrained watchface can surface a deterministic failing stage. */
     CANOPUS_SUP_ERR_STAGE_PATH = -101,
     CANOPUS_SUP_ERR_STAGE_RECEIPT = -102,
-    CANOPUS_SUP_ERR_STAGE_SIGNATURE = -103,
+    CANOPUS_SUP_ERR_STAGE_RECEIPT_INVALID = -103,
     CANOPUS_SUP_ERR_STAGE_ARTIFACT = -104,
     CANOPUS_SUP_ERR_STAGE_DUPLICATE = -105,
     CANOPUS_SUP_ERR_STAGE_REGISTER = -106,
@@ -150,12 +150,9 @@ enum canopus_boot_state {
 
 #define CANOPUS_SUP_MODULE_ID_MAX 32u
 
-/* Slot flag bits. bit0 is the legacy signature_ok bit (also rendered in the
- * 384-byte CPS1 status). The registry uses the otherwise-unused upper 31 bits
- * to retain a zigzag-encoded activation error without changing the version-1
- * 784-byte file shape. In-memory flags never contain the encoded error. */
-#define CANOPUS_SUP_FLAG_SIGNATURE_OK  (1u << 0)
-#define CANOPUS_SUP_FLAG_PUBLIC_MASK   CANOPUS_SUP_FLAG_SIGNATURE_OK
+/* Slot flag bits. The in-memory/CPS1 flags are currently always zero. The
+ * registry uses bits 1..31 to retain a zigzag-encoded activation error without
+ * changing the version-1 784-byte file shape; bit0 is unused. */
 #define CANOPUS_SUP_REGISTRY_ERROR_SHIFT 1u
 
 /* CAN-P0-005 revision (next-boot lifecycle): enable/disable/remove are never
@@ -174,7 +171,7 @@ enum canopus_sup_intent {
  *   header (16): u32 magic "CRD1", u32 version, u32 module_count, u32 rsvd
  *   16 slots x 48: module_id[32] + u32 class + u32 version + u32 flags/error +
  *                  u32 intent
- * Registry flags bit 0 is signature_ok; bits 1..31 retain a zigzag-encoded
+ * Registry flags bit 0 is unused; bits 1..31 retain a zigzag-encoded
  * activation error. Old files used zero in those bits and remain valid.
  * The slot table is the in-memory source of truth; the registry is the
  * boot-time restore source. */
@@ -306,7 +303,6 @@ int canopus_supervisor_restore_after_boot(void);
 int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
                                   uint32_t lifecycle_class,
                                   uint32_t version,
-                                  uint32_t signature_ok,
                                   const char *module_id);
 
 /* CAN-P0-005 revision (next-boot): persist the whole slot table (module id,

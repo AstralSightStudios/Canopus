@@ -36,9 +36,6 @@ enum Command {
     /// Package manifest commands.
     #[command(subcommand)]
     Package(PackageCmd),
-    /// Key roles and revocation commands (CAN-REL-001).
-    #[command(subcommand)]
-    Key(KeyCmd),
     /// RE orchestrator commands (Phase 9).
     #[command(subcommand)]
     Re(ReCmd),
@@ -65,42 +62,6 @@ enum Command {
         targets_dir: PathBuf,
         #[arg(long)]
         json: bool,
-    },
-}
-
-#[derive(Subcommand)]
-enum KeyCmd {
-    /// Print a key certificate binding a public key to a role.
-    RoleCert {
-        /// dev or production.
-        role: String,
-        /// Public key hex (32 bytes).
-        #[arg(long)]
-        public: String,
-        #[arg(long)]
-        note: Option<String>,
-    },
-    /// Append a revocation entry to a revocation list and sign it.
-    Revoke {
-        /// Fingerprint to revoke.
-        fingerprint: String,
-        /// Signer role of the list: dev or production.
-        #[arg(long, default_value = "dev")]
-        role: String,
-        /// Secret key hex (32 bytes) of the list signer.
-        #[arg(long)]
-        key: String,
-        /// Revocation list path (created if missing).
-        #[arg(long, default_value = "revocations.json")]
-        list: String,
-    },
-    /// Check a certificate against the revocation list.
-    Check {
-        /// Path to a key certificate JSON.
-        cert: String,
-        /// Revocation list path.
-        #[arg(long, default_value = "revocations.json")]
-        list: String,
     },
 }
 
@@ -140,25 +101,6 @@ enum ReCmd {
         id: String,
         #[arg(long, default_value_t = 1)]
         needed: usize,
-    },
-    /// Sign a target-pack revision manifest (CAN-RE-009).
-    RevisionSign {
-        target: String,
-        revision: u32,
-        /// Secret key hex (32 bytes).
-        #[arg(long)]
-        key: String,
-        #[arg(long)]
-        output: Option<PathBuf>,
-        #[arg(long, default_value = "targets")]
-        targets_dir: PathBuf,
-    },
-    /// Verify a signed revision manifest.
-    RevisionVerify {
-        manifest: PathBuf,
-        /// Public key hex (32 bytes).
-        #[arg(long)]
-        pubkey: String,
     },
     /// Emit a minimal, safe C probe module for a callable symbol (RE-008).
     Probe {
@@ -264,32 +206,9 @@ enum PackageCmd {
         /// Output .canopus file.
         #[arg(long)]
         output: PathBuf,
-        /// Sign with this secret key (32 bytes hex).
-        #[arg(long)]
-        key: Option<String>,
     },
-    /// Append an Ed25519 signature entry to a package.
-    Sign {
-        pkg: PathBuf,
-        /// Secret key hex (32 bytes).
-        #[arg(long)]
-        key: String,
-        #[arg(long)]
-        output: Option<PathBuf>,
-    },
-    /// Verify a package's Ed25519 signature over its payload.
-    Verify {
-        pkg: PathBuf,
-        /// Public key hex (32 bytes).
-        #[arg(long)]
-        pubkey: String,
-    },
-    /// Generate a fresh Ed25519 key pair.
-    Keygen {
-        /// Optional output file (writes secret\\npublic). Otherwise prints.
-        #[arg(long)]
-        output: Option<PathBuf>,
-    },
+    /// Verify a package's structure and artifact SHA-256 hashes.
+    Verify { pkg: PathBuf },
 }
 
 fn main() {
@@ -308,7 +227,6 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         Command::Evidence(cmd) => commands::evidence(cmd),
         Command::Module(cmd) => commands::module(cmd),
         Command::Package(cmd) => commands::package(cmd),
-        Command::Key(cmd) => commands::key(cmd),
         Command::Re(cmd) => commands::re(cmd),
         Command::BuildPlan {
             manifest,

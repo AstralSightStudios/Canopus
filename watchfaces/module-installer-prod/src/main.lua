@@ -98,13 +98,13 @@ local function install()
     local f = io.open(ENDPOINT, "rb")
     check(f, SUPERVISOR_MISSING)
     f:close()
-    checkpoint("读取目标模块与签名")
+    checkpoint("读取目标模块与回执")
     local stem = SCRIPT_PATH .. CONFIG.stem .. "-" .. target.id
     local receipt, module = read_all(stem .. ".cmi.bin"), read_all(stem .. ".bin")
-    checkpoint("校验固件、模块和签名配对")
-    check(type(receipt) == "string" and #receipt == 256
-        and u32(receipt, 0) == 0x31494D43 and u32(receipt, 4) == 1
-        and u32(receipt, 8) == 256 and fixed(receipt, 32, 32) == CONFIG.token
+    checkpoint("校验固件和模块配对")
+    check(type(receipt) == "string" and #receipt == 176
+        and u32(receipt, 0) == 0x32494D43 and u32(receipt, 4) == 2
+        and u32(receipt, 8) == 176 and fixed(receipt, 32, 32) == CONFIG.token
         and fixed(receipt, 64, 48) == target.id
         and hex(receipt:sub(113, 144)) == target.firmware,
         "Missing or invalid target receipt")

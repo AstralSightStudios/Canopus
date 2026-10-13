@@ -199,9 +199,6 @@ int canopus_manager_render_module_detail(const struct canopus_manager_model_v1 *
             mod->lifecycle_class == CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION ? "激活后常驻" :
             mod->lifecycle_class == CANOPUS_LIFECYCLE_ALWAYS_RESIDENT ? "始终常驻" :
             "需补丁/重启");
-    canopus_text_writer_append(&w, "\n签名     : ");
-    canopus_text_writer_append(&w,
-                               mod->signature_ok ? "已验证" : "未签名/开发版");
     canopus_text_writer_append(&w, "\n风险     : ");
     writer_append_u32(&w, mod->risk);
     canopus_text_writer_append(&w, "\n");
@@ -238,9 +235,8 @@ int canopus_manager_can_activate(const struct canopus_manager_model_v1 *m,
     if (m == 0 || index >= m->module_count || m->safe_mode) return 0;
     mod = &m->modules[index];
     /* Explicit activation is separate from next-boot enable. Never offer an
-     * immediate launch of unsigned or reboot-only modules, or reload a resident. */
-    return mod->signature_ok &&
-           mod->lifecycle_class < CANOPUS_LIFECYCLE_PATCH_REBOOT_REQUIRED &&
+     * immediate launch of reboot-only modules, or reload a resident. */
+    return mod->lifecycle_class < CANOPUS_LIFECYCLE_PATCH_REBOOT_REQUIRED &&
            (mod->state == CANOPUS_STATE_READY || mod->state == CANOPUS_STATE_ENABLED);
 }
 

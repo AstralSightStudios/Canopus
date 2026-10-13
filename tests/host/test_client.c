@@ -189,7 +189,7 @@ TEST(client_queries_authoritative_device_and_module_snapshots)
     device.supervisor.safe_mode = 1u;
     device.supervisor.safe_mode_reason = CANOPUS_SAFE_MODE_USER_REQUESTED;
     CHECK(canopus_supervisor_add_module(
-              &device.supervisor, CANOPUS_LIFECYCLE_REMOVABLE, 7, 1,
+              &device.supervisor, CANOPUS_LIFECYCLE_REMOVABLE, 7,
               "mod.hello") == 0);
     CHECK(canopus_client_init(&client, &device_io, &device) ==
           CANOPUS_CLIENT_OK);
@@ -210,7 +210,7 @@ TEST(client_queries_authoritative_device_and_module_snapshots)
     CHECK(module.state == CANOPUS_STATE_INSTALLED);
     CHECK(module.lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE);
     CHECK(module.version == 7u);
-    CHECK((module.flags & CANOPUS_SUP_FLAG_SIGNATURE_OK) != 0u);
+    CHECK(module.flags == 0u);
     CHECK(strcmp(module.module_id, "mod.hello") == 0);
     CHECK(module.activation_error == -77);
     CHECK(canopus_pending_find(&device.supervisor.pending, 101u) == 0);

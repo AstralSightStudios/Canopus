@@ -95,12 +95,6 @@ class ModuleInstallerTests(unittest.TestCase):
         if not checked:
             self.skipTest('firmware images required')
 
-    def test_unsigned_receipt_is_rejected(self):
-        if not shutil.which('openssl'):
-            self.skipTest('OpenSSL required')
-        with self.assertRaises(subprocess.CalledProcessError):
-            builder.verify_signature(bytes(256))
-
 
 if __name__ == '__main__':
     unittest.main()

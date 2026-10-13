@@ -61,7 +61,6 @@ fn manifest(name: &str, target_id: &str) -> String {
   ],
   "capabilities": {{ "required": [] }},
   "target_pack_revision": 1,
-  "signature": {{ "key_id": "dev-key-001", "algorithm": "ed25519" }},
   "min_manager_version": "0.1.0",
   "reboot_required": false
 }}

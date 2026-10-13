@@ -28,7 +28,6 @@
 #define CANOPUS_TARGET_UI_MAX_LABELS 6u
 #define CANOPUS_TARGET_UI_MAX_IMAGES 2u
 #define CANOPUS_TARGET_UI_MAX_PROGRESS 4u
-#define CANOPUS_TARGET_MODULE_FLAG_SIGNATURE_OK (1u << 0)
 #define CANOPUS_TARGET_ROW_STATUS 1u
 #define CANOPUS_TARGET_ROW_ACTION 2u
 #define CANOPUS_TARGET_ROW_SWITCH 3u
@@ -374,8 +373,6 @@ static int target_refresh_model(void)
         module.flags = source.flags;
         module.version = source.version;
         module.activation_error = source.activation_error;
-        module.signature_ok =
-            (source.flags & CANOPUS_TARGET_MODULE_FLAG_SIGNATURE_OK) != 0u;
         module.risk = source.lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ?
             CANOPUS_MANAGER_RISK_MODERATE :
             CANOPUS_MANAGER_RISK_RESIDENT_CRITICAL;

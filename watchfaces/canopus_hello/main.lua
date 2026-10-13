@@ -85,9 +85,9 @@ end
 local function stage_files()
     local receipt = read_all(RECEIPT_RESOURCE)
     local module = read_all(MODULE_RESOURCE)
-    if type(receipt) ~= "string" or #receipt ~= 256
-        or u32(receipt, 0) ~= 0x31494D43 then
-        return false, "Missing or invalid signed receipt"
+    if type(receipt) ~= "string" or #receipt ~= 176
+        or u32(receipt, 0) ~= 0x32494D43 then
+        return false, "Missing or invalid receipt"
     end
     if type(module) ~= "string" or #module < 512 or #module > 262144
         or module:sub(1, 4) ~= "\127ELF" then

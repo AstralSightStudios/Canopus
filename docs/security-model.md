@@ -1,8 +1,8 @@
 # Canopus 安全与信任模型
 
 > 本文档描述 Canopus 设备控制面的安全模型。它回答"谁可以做什么、信任从哪里来、
-> 失败后怎么办"。与 `architecture.md` §19 冲突时，以更严格的 default-deny、签名、
-> exact-target 和生命周期规则为准。
+> 失败后怎么办"。与 `architecture.md` §19 冲突时，以更严格的 default-deny、
+> exact-target 和生命周期规则为准。2026-10-14（K9）起已移除全部签名与验签，见 §3。
 
 ## 1. 威胁参与者
 
@@ -11,7 +11,7 @@
 | 恶意/受损第三方模块 | 携带任意代码、资源、回调；可被 loader 执行 | 伪造身份、越权 capability、驻留绕过 unload、持久化恶意 active slot |
 | 本机同地址空间调用者 | 与 supervisor 共享进程/地址空间，可 open/read/write `/dev/canopus` | 注入命令、读取状态、绕过 UI 确认 |
 | 物理/串口操作者 | 重启设备、断电、操作 bootloader/恢复界面 | 断电打断事务、回滚、伪造更新 |
-| 供应链/分发方 | 构建并签署 `.canopus` 包 | 注入恶意包、错误 key role、回滚到有漏洞版本 |
+| 供应链/分发方 | 构建并分发 `.canopus` 包 | 注入恶意包、回滚到有漏洞版本 |
 | 逆向/研究方（LLM/MCP） | 可读取固件、静态恢复符号、写证据 | 猜测 ABI、把未证明符号提升为 callable |
 
 ## 2. 事实边界（不承诺不存在的东西）
@@ -20,40 +20,36 @@
   supervisor 在同一地址空间内运行。因此：
   - 节点 mode、uid/gid 不是安全边界；调用者身份即使可区分也不构成隔离。
   - 本地同地址空间调用者 = 未隔离控制面，可读取和驱动一切。
-- **签名是信任主根，不是唯一防线**：即使包签名通过，也必须通过 exact-target、
-  hash、ELF verifier、capability 和生命周期 policy 检查。
+- **没有来源认证**：包与回执不再签名（K9），任何能写入 inbox 的调用者都可以提交
+  模块。防线是 exact-target、artifact SHA-256、模块 ID、版本单调、ELF verifier、
+  capability 和生命周期 policy 检查。
 - **host 测试 ≠ device 证明**：host fake、静态恢复、golden vector 均不证明
   真机 ABI。只有带 firmware hash 的 device probe 才算 device gate。
 
-## 3. 信任根与 key role
+## 3. 完整性与版本（无签名）
 
-- **信任根**：生产 Ed25519 签名 key 的公开部分，以及与之绑定的 key role。
-  key role 决定该 key 可以签署什么：
-  - `release`：可签署生产包、进行 anti-rollback 更新。
-  - `stage`：仅开发/预发布，不得覆盖 release 的 anti-rollback 下限。
-  - `test`：仅供 host/harness，不得进入设备生产路径。
-- 每个签名必须绑定 key ID + role；`keyroles` 模块维护 role 与权限矩阵。
-- **吊销**：签名内嵌 key ID；supervisor 保存吊销列表，已吊销的 key 立即拒绝，
-  不因包内声明而豁免。
-- **anti-rollback**：版本号 + 单调计数器；新版本签名必须 >= 已接受下限，
-  回滚包即使签名有效也拒绝。
+- 无信任根、key role 或吊销：2026-10-14 起移除（K9）。
+- 回执（CMI2，176 字节）只绑定 module_id、target_id、固件 SHA-256、artifact 大小与
+  SHA-256、生命周期类别和 `module_version`，不含签名；supervisor 逐项校验。
+- **anti-rollback**：同 module_id 的 `module_version` 必须单调递增，回滚包被拒绝。
+- 可选的非加密缓解：首次安装或升级时在手环 Manager 上弹确认（见 refactor-plan R6）。
 
 ## 4. 本地攻击者模型（无沙箱含义）
 
 由于调用者与 supervisor 同地址空间：
 
-- 任何 mutating 操作都必须独立通过：签名验证、target identity、safe-mode
+- 任何 mutating 操作都必须独立通过：回执与 artifact 哈希校验、target identity、safe-mode
   policy、physical-confirm（如果启用）。
-- UI 拒绝不够：supervisor 必须自己拒绝 unsigned / wrong-target / revoked /
+- UI 拒绝不够：supervisor 必须自己拒绝 wrong-target / hash-mismatch /
   rollback / verifier-failed 包。
-- 第三方 app 绝不获得：签名信任管理、safe-mode 退出、保留 app ID 或
+- 第三方 app 绝不获得：safe-mode 退出、保留 app ID 或
   unrestricted debug 操作。
 
 ## 5. 包与存储
 
 - 包路径：supervisor 只接受 bounded token（basename），绝不接受任意路径。
 - 归档 entry：canonical path 规则（拒绝绝对/`..`/`.`/反斜杠/NUL/重复 entry/
-  symlink/hardlink/device/FIFO），签名覆盖 path+content。
+  symlink/hardlink/device/FIFO），manifest 为每个 artifact 记录 SHA-256。
 - 存储事务：journal + fsync 目录 + 原子 rename，任何一步失败都不能留下可加载的
   partial active slot。
 

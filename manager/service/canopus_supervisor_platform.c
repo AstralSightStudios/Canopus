@@ -218,13 +218,6 @@ static int sup_unregister_device(void *cookie)
 #endif
 }
 
-static const uint8_t s_installer_public_key[32] = {
-    0x85, 0xcb, 0x6b, 0x0d, 0xf8, 0x42, 0xa7, 0xaf,
-    0xf0, 0xb8, 0x1a, 0xa9, 0xd4, 0x8a, 0x5c, 0x25,
-    0x2a, 0x8a, 0x11, 0xa0, 0x61, 0x88, 0xd2, 0xa4,
-    0x28, 0xe9, 0x2a, 0x77, 0x72, 0x5d, 0xa5, 0x55,
-};
-
 static const uint8_t s_firmware_sha256[32] =
     CANOPUS_SUP_FIRMWARE_SHA256_BYTES;
 
@@ -515,10 +508,9 @@ static int sup_verify_package_at(
         return -1;
     }
     if (canopus_install_receipt_validate(receipt, CANOPUS_SUP_TARGET_ID,
-                                         s_firmware_sha256,
-                                         s_installer_public_key) != 0 ||
+                                         s_firmware_sha256) != 0 ||
         !sup_module_id_equal(receipt->module_id, token)) {
-        *diagnostic = CANOPUS_SUP_ERR_STAGE_SIGNATURE;
+        *diagnostic = CANOPUS_SUP_ERR_STAGE_RECEIPT_INVALID;
         return -1;
     }
     if (sup_hash_artifact(module_path, receipt->artifact_size, digest) != 0 ||
@@ -954,7 +946,7 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
             return -1;
         }
     }
-    /* Copy succeeds only after the signature and artifact are verified. Keep
+    /* Copy succeeds only after the receipt and artifact are verified. Keep
      * the inbox files in place: Lua is the writer and later ENABLE resolves the
      * verified artifact through this stable path. */
     if (sup_make_path(module_path, token, CANOPUS_SUP_MODULE_SUFFIX) != 0) {
@@ -966,7 +958,7 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
         return -1;
     }
     slot = canopus_supervisor_add_module(
-        sup, receipt.lifecycle_class, receipt.module_version, 1u,
+        sup, receipt.lifecycle_class, receipt.module_version,
         (const char *)receipt.module_id);
     if (slot < 0) {
         if (sup->error_code == CANOPUS_SUP_ERR_NONE) {

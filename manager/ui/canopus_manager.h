@@ -4,7 +4,7 @@
  * Host-testable view/controller layer for the device Manager:
  *   - device page   (identity / target / framework / firmware metadata)
  *   - module list   (id + lifecycle state, one line each)
- *   - module detail (lifecycle, class, capability, signature, risk, the
+ *   - module detail (lifecycle, class, capability, risk, the
  *                    operations that are ACTUALLY available for that class)
  *
  * Operations go through the versioned supervisor protocol (canopus_protocol)
@@ -47,7 +47,6 @@ struct canopus_manager_module_v1 {
     uint32_t state;           /* CANOPUS_STATE_* */
     uint32_t flags;           /* CANOPUS_FLAG_* */
     uint32_t version;
-    uint32_t signature_ok;    /* 1 = signature verified, 0 = unsigned/dev */
     uint32_t risk;
     uint32_t has_previous;    /* rollback target exists */
     int32_t activation_error;
