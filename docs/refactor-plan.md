@@ -100,7 +100,7 @@
 
 | 阶段 | 内容 | 状态 | 依赖 |
 |---|---|---|---|
-| P0 | 基线、ADR、AGENTS.md、CI 恢复 | [~] | — |
+| P0 | 基线、ADR、AGENTS.md、CI 恢复 | [~]（仅剩 P0.3，依赖 O1） | — |
 | P1 | Target/地址单一来源；移除 P65；冻结 Band 9 | [~] | P0 |
 | P2 | ABI/SDK：服务表、协议收敛、移除签名、Rust 整理 | [ ] | P0.1–P0.4；P2.4 起依赖 P1.3 |
 | P3 | 统一打包 + 文档 | [ ] | P1、P2.1 |
@@ -117,18 +117,18 @@
 ## 5. 任务清单
 
 ### P0 边界与基线
-- [ ] P0.1 ADR-CAN-003：模块身份、版本与包格式
+- [x] P0.1 ADR-CAN-003：模块身份、版本与包格式
   - module_id 取各方语法的交集，默认 `^[a-z][a-z0-9_]{0,15}$`，同时用作商店 id、回执 module_id、insmod 名和 inbox token。
     取 ≤16 字节，是因为它在 Mass 16 路径上也是表盘 ID，而 AstroBox 会随机化超过 16 字节的 ID；若不再走 Mass 16，可放宽到 31。
   - 版本：`versionCode`（u32，单调递增）= 回执 `module_version` = 商店 `versionCode`；`version` 字符串仅用于展示。
   - `.canopus` 内容：manifest、portable 产物（`artifacts/abi-<major>-thumbv8m/`）或 per-target 产物（`artifacts/<target_id>/`），
     每个产物附一份无签名的安装回执；安装器表盘和商店条目都是它的派生物。
-- [ ] P0.2 ADR-CAN-004：设备协议
+- [x] P0.2 ADR-CAN-004：设备协议
   - 单一线格式（CPC2 升版本）+ 统一的命令枚举。
   - 逐项写明所有 magic 的去留：CPC1/CPS1 删除；CMI1 改为无签名回执；CMR1 保留；CQD1/CQM1 并入查询 payload；CAP1 并入服务表。
 - [ ] P0.3 ADR-CAN-005：手机端管理协议边界。由常驻的 Supervisor 服务层应答（不是 Manager UI），与 P0.2 使用同一套 opcode；
   O1 只决定 transport。依赖 O1。
-- [ ] P0.4 ADR-CAN-006：Supervisor 服务表（K7）
+- [x] P0.4 ADR-CAN-006：Supervisor 服务表（K7）
   - `canopus_context_v1` 的定义：struct_size、abi、services 指针。
   - 服务分组与各组版本；能力缺失时的语义。
   - portable 模块的 verifier 规则：不允许出现任何固件地址。
