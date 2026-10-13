@@ -2,18 +2,12 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-TARGETS=${CANOPUS_PROD_TARGETS:-"
-  xiaomi-band-10-pro-3.101.036
-  xiaomi-band-10-pro-3.101.043
-  xiaomi-band-11-4.100.139
-  xiaomi-band-11-4.100.155
-  xiaomi-band-11-4.100.177
-"}
-BUILD_SCRIPT="$ROOT/scripts/build_canopus_supervisor.sh"
-
 cd "$ROOT"
 echo "Preparing exact-target verifier..."
-cargo build -p canopus-cli
+cargo build -q -p canopus-cli
+TARGETS=${CANOPUS_PROD_TARGETS:-$("$ROOT/target/debug/canopus" target list --active --names)}
+BUILD_SCRIPT="$ROOT/scripts/build_canopus_supervisor.sh"
+
 
 BAND11_REQUESTED=false
 for target in $TARGETS; do
@@ -22,7 +16,7 @@ for target in $TARGETS; do
     echo "=========================================="
 
     case "$target" in
-        xiaomi-band-11-4.100.139|xiaomi-band-11-4.100.155|xiaomi-band-11-4.100.177)
+        xiaomi-band-11-*)
             BAND11_REQUESTED=true
             ;;
     esac

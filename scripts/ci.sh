@@ -24,10 +24,8 @@ gate_1() {
     # and native address headers must match their generators.
     cargo run -q -p canopus-cli -- target generate --all --check
     (cd sdk/rust && cargo test --workspace)
-    for feature in \
-        target-xiaomi-band-11-4-100-139 \
-        target-xiaomi-band-11-4-100-155 \
-        target-xiaomi-band-11-4-100-177; do
+    for target in $(cargo run -q -p canopus-cli -- target list --active --names); do
+        feature="target-$(printf '%s' "$target" | tr . -)"
         (cd sdk/rust && cargo check -p canopus-target-generated --no-default-features --features "$feature")
     done
     # Private firmware calls must never compile without one exact target backend.

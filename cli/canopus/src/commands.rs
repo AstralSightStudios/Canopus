@@ -22,8 +22,21 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
             println!("target OK: {}", canopus_core::registry::describe(&pack));
             Ok(())
         }
-        TargetCmd::List { targets_dir } => {
-            let packs = list_target_packs(&targets_dir)?;
+        TargetCmd::List {
+            targets_dir,
+            active,
+            names,
+        } => {
+            let mut packs = list_target_packs(&targets_dir)?;
+            if active {
+                packs.retain(|p| p.status.as_deref() != Some("frozen"));
+            }
+            if names {
+                for p in &packs {
+                    println!("{}", p.target_id);
+                }
+                return Ok(());
+            }
             if packs.is_empty() {
                 println!("no target packs found under {}", targets_dir.display());
                 return Ok(());

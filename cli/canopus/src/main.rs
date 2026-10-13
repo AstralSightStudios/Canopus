@@ -121,6 +121,12 @@ enum TargetCmd {
     List {
         #[arg(long, default_value = "targets")]
         targets_dir: PathBuf,
+        /// Only active (non-frozen) targets.
+        #[arg(long)]
+        active: bool,
+        /// Print bare target ids, one per line.
+        #[arg(long)]
+        names: bool,
     },
     /// Generate every artifact derived from a target pack: C veneer + config
     /// header, Rust bindings, SDK private-symbol metadata, native address header.

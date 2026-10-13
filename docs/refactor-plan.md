@@ -162,7 +162,7 @@
 - [x] P1.3 `canopus target generate <id|--all> [--check]`（Rust）统一产出 C 头、target config、Rust 绑定、SDK private-symbol 元数据、Band 11 native 地址头（Lua/loader 配置待 P1.2 一并并入）。另有 `canopus target info <id> --shell|--json`。
 - [x] P1.4 迁移并删除 Python 生成脚本（`generate_band9_loader_config.py` 随 Band 9 删除；其余两个已移植到 Rust 并删除；CI 只跑 `target generate --all --check`；pre-commit 钩子未做）（`generate_target_private_symbols.py`、`generate_band11_native_config.py`、
   `generate_band9_loader_config.py`）；CI 与可选的 pre-commit 钩子只做"生成物未过期"检查，防止再次出现 `4f87d57` 式的过期。
-- [ ] P1.5 target 注册表：CLI / CI / 打包脚本从 `targets/` 发现 active target，删除硬编码清单。
+- [x] P1.5 target 注册表（`target list --active --names`；ci.sh 与 build_prod_all.sh 不再硬编码清单）：CLI / CI / 打包脚本从 `targets/` 发现 active target，删除硬编码清单。
 - [ ] P1.6 保持证据门槛：FORBIDDEN / CANDIDATE / restricted 状态与 evidence 链迁移后语义不变（测试覆盖）。
 - [ ] P1.7 固件定位（K6）：需要固件的测试和工具经统一定位器查找（`CANOPUS_FW_DIR` 或 Mirage 固件库），缺失时显式跳过；
   evidence URI 改为 `fw://<target_id>/<file>` 相对形式。
