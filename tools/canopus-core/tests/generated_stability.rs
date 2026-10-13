@@ -399,6 +399,39 @@ fn band11_177_calendar_approval_is_exact_and_private_only() {
     assert_eq!(rust.matches("pub const CANOPUS_FW_BACKGROUND_OBJECT_EVENT_ADD_CALLABLE:").count(), 1);
 }
 
+const APPROVED_139_PRIVATE: [&str; 30] = [
+    "app_watchface_take_snapshot",
+    "hal_cache_invalidate_rom_thunk",
+    "hal_cache_sync",
+    "lv_display_remove_event_cb_with_user_data",
+    "lv_event_add",
+    "vg_lite_finish",
+    "lv_obj_update_layout",
+    "background_object_event_add",
+    "lv_obj_remove_event_cb",
+    "lv_draw_rect",
+    "lv_draw_rect_dsc_init",
+    "lv_obj_area_is_visible",
+    "calendar_draw_buf_invalidate",
+    "calendar_font_create",
+    "calendar_font_destroy",
+    "calendar_font_resolve",
+    "calendar_localtime",
+    "calendar_object_delete",
+    "calendar_premultiply",
+    "calendar_realtime",
+    "calendar_root_style",
+    "calendar_snapshot",
+    "calendar_snapshot_free",
+    "calendar_text_align",
+    "calendar_text_color",
+    "calendar_text_font",
+    "calendar_weekday",
+    "image_snapshot_release",
+    "lv_draw_buf_create_ex",
+    "lv_obj_set_local_style_prop",
+];
+
 #[test]
 fn private_abi_records_have_exact_thumb_callables() {
     for target in [
@@ -428,12 +461,23 @@ fn private_abi_records_have_exact_thumb_callables() {
                 "{} escaped private policy",
                 symbol.name
             );
-            assert_ne!(
-                symbol.approval_state.as_deref(),
-                Some("APPROVED"),
-                "{} was unexpectedly promoted",
-                symbol.name
-            );
+            if symbol.approval_state.as_deref() == Some("APPROVED") {
+                // Only the user-authorized .139 restricted blur/calendar port
+                // (background-calendar-port-approval.md) may be APPROVED.
+                assert!(
+                    target == "xiaomi-band-11-4.100.139"
+                        && APPROVED_139_PRIVATE.contains(&symbol.name.as_str()),
+                    "{} was unexpectedly promoted",
+                    symbol.name
+                );
+                assert_eq!(symbol.status, "STATIC_RECOVERED", "{}", symbol.name);
+                assert_eq!(symbol.proof.device.as_deref(), Some("not_probed"));
+                assert_eq!(symbol.provenance.firmware_sha256, pack.firmware_sha256);
+                assert_eq!(
+                    symbol.promotion.as_ref().unwrap().firmware_sha256,
+                    pack.firmware_sha256
+                );
+            }
             let entry = parse_address(symbol.entry_address.as_deref().unwrap());
             if symbol.kind == "function" {
                 let callable = parse_address(symbol.callable_address.as_deref().unwrap());
