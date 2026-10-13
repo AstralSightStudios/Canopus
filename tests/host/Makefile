@@ -63,6 +63,7 @@ TEST_SRCS = \
 	test_ui.c \
 	test_client.c \
 	test_supervisor_device.c \
+	test_supervisor_update.c \
 	test_installer_receipt.c \
 	test_arm_reloc.c
 

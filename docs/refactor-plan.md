@@ -104,7 +104,7 @@
 | P1 | Target/地址单一来源；移除 P65；冻结 Band 9 | [~] | P0 |
 | P2 | ABI/SDK：服务表、协议收敛、移除签名、Rust 整理 | [ ] | P0.1–P0.4；P2.4 起依赖 P1.3 |
 | P3 | 统一打包 + 文档 | [ ] | P1、P2.1 |
-| P4 | 设备端更新语义 + 开机自启调查 | [ ] | P0.1、P0.2（不依赖 P5） |
+| P4 | 设备端更新语义 + 开机自启调查 | [~] | P0.1、P0.2（不依赖 P5） |
 | P5 | 手机端管理（AstroBox-NG） | [ ] | P5.0（O1）、P2.5、P3.3 |
 | P6 | Mirage 模拟器调试 | [ ] | P6.0 可立即开始；P6.2 依赖 P3 |
 
@@ -218,17 +218,17 @@
   - 在固件中寻找开机时可挂接的入口：启动脚本或服务、当前表盘 Lua 的自动执行、其他自启机制。
   - 优先在 Mirage 043 上反复冷启动验证。
   - 若无可行方案，则维持手动 Run，由手机端检测"Supervisor 未加载"并提示用户。
-- [ ] P4.1 INSTALL 支持升级
+- [x] P4.1 INSTALL 支持升级（实现为 A/B 双代而非 `.next`→current 搬移：更新写入非活动代，registry 位切换；设计见 module-installer-io.md）
   - 同 module_id 且 `module_version` 更高：写入 `<token>.next.*`，保留原启用状态，返回 REBOOT_REQUIRED。
   - 同版本或更低版本：拒绝（防回滚）。
-- [ ] P4.2 开机切换
+- [x] P4.2 开机切换
   - Supervisor 加载时原子地把 next 切为 current，旧版保留为 `<token>.prev.*`。
   - 加载失败时自动退回 prev，并进入可诊断状态。
-- [ ] P4.3 Manager 按钮
+- [x] P4.3 Manager 按钮
   - 删除无意义的"更新"按钮；"回滚"只在存在 prev 时显示，作用是切回 prev。
   - `CANOPUS_CMD_UPDATE` / `ROLLBACK` 按 P4.1/P4.2 重新定义或删除。
-- [ ] P4.4 现有外部安装表盘路径（Lua → inbox → `/canopus/install`）即可投递新版本，无需等待 P5。
-- [ ] P4.5 host 测试：升级成功、同版本/降级被拒、哈希/target 不匹配、写入中断后恢复、加载失败退回 prev。
+- [x] P4.4 现有外部安装表盘路径（Lua → inbox → `/canopus/install`）即可投递新版本，无需等待 P5。
+- [x] P4.5 host 测试：升级成功、同版本/降级被拒、哈希/target 不匹配、写入中断后恢复、加载失败退回 prev。
 
 ### P5 手机端管理（AstroBox-NG，K4）
 - [ ] P5.0 解决 O1/O5：静态证据（miwear-server 路由、fingerprint 与安装检查）+ Mirage 043 验证
@@ -299,3 +299,4 @@
 | 2026-10-14 | P1.1 完成：P65 全部移除；P0.6/P0.7 完成 |
 | 2026-10-14 | P1.8 完成：Band 9 冻结 |
 | 2026-10-14 | P2.7 完成：移除全部签名/验签 |
+| 2026-10-14 | P4.1–P4.5 完成（A/B 双代更新、回滚、加载失败回退；P4.0 开机自启调查未开始） |

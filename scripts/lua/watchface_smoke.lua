@@ -139,8 +139,8 @@ local function check(path, installer_fault, installer_firmware)
         if type(request) ~= "string" or request:sub(1, 4) ~= "2CPC"
             or request:byte(17) ~= 2
             or request:sub(-14) ~= "canopus_hello\0"
-            or files["/data/canopus/inbox/canopus_hello.cmi"] == nil
-            or files["/data/canopus/inbox/canopus_hello.ko"] == nil then
+            or files["/data/canopus/inbox/canopus_hello.cmi.next"] == nil
+            or files["/data/canopus/inbox/canopus_hello.ko.next"] == nil then
             print("INSTALL FLOW FAIL:", path)
             return false
         end

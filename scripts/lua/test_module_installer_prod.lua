@@ -162,7 +162,7 @@ local function run_case(version, fault)
         for path in pairs(files) do assert(not path:find('%.tmp$'),path) end
         assert(objects[4].text:find('安装完成',1,true),objects[4].text)
         assert(objects[4].text:find('查看和启用模块',1,true))
-        assert(files['/data/canopus/inbox/'..token..'.ko']==module)
+        assert(files['/data/canopus/inbox/'..token..'.ko.next']==module)
         for _,name in ipairs(assets) do assert(files['/data/canopus/'..name]==files['/fake/'..name]) end
     elseif fault=='cancel' then assert(request==nil and #commands==0)
     else

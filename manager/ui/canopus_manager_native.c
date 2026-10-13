@@ -26,7 +26,6 @@
 #define UI_KEY_DETAIL_STATE      201u
 #define UI_KEY_DETAIL_CLASS      202u
 #define UI_KEY_DETAIL_ERROR      204u
-#define UI_KEY_DETAIL_UPDATE     210u
 #define UI_KEY_DETAIL_ROLLBACK   211u
 #define UI_KEY_DETAIL_ENABLE     212u
 #define UI_KEY_DETAIL_DISABLE    213u
@@ -464,15 +463,9 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
                            CANOPUS_MANAGER_EVENT_ENABLE, 1);
         if (rc != CANOPUS_UI_OK) return rc;
     }
-    if (canopus_manager_can_update(model, model->selected)) {
-        rc = append_action(tree, UI_KEY_DETAIL_UPDATE, "更新", sizeof("更新") - 1u,
-                           "安装已验证的替代版本", sizeof("安装已验证的替代版本") - 1u,
-                           CANOPUS_MANAGER_EVENT_UPDATE, 1);
-        if (rc != CANOPUS_UI_OK) return rc;
-    }
     if (canopus_manager_can_rollback(model, model->selected)) {
         rc = append_action(tree, UI_KEY_DETAIL_ROLLBACK, "回滚", sizeof("回滚") - 1u,
-                           "恢复上一版本", sizeof("恢复上一版本") - 1u,
+                           "重启后恢复上一版本", sizeof("重启后恢复上一版本") - 1u,
                            CANOPUS_MANAGER_EVENT_ROLLBACK, 1);
         if (rc != CANOPUS_UI_OK) return rc;
     }
@@ -613,8 +606,6 @@ static uint32_t execute_event(struct canopus_manager_native_v1 *native,
         return canopus_manager_op_enable(model, model->selected);
     case CANOPUS_MANAGER_EVENT_DISABLE:
         return canopus_manager_op_disable(model, model->selected);
-    case CANOPUS_MANAGER_EVENT_UPDATE:
-        return canopus_manager_op_update(model, model->selected);
     case CANOPUS_MANAGER_EVENT_ROLLBACK:
         return canopus_manager_op_rollback(model, model->selected);
     case CANOPUS_MANAGER_EVENT_REMOVE:
@@ -717,10 +708,6 @@ static int32_t manager_event(void *cookie, uint32_t generation,
     case CANOPUS_MANAGER_EVENT_REMOVE:
         native->confirm_return_view = model->view;
         native->confirm_event = event_id;
-        return canopus_manager_native_render(native);
-    case CANOPUS_MANAGER_EVENT_UPDATE:
-        (void)execute_event(native, event_id);
-        (void)refresh_model(native);
         return canopus_manager_native_render(native);
     default:
         if (!event_needs_confirmation(event_id)) {

@@ -205,9 +205,6 @@ int canopus_manager_render_module_detail(const struct canopus_manager_model_v1 *
 
     /* available operations for THIS class — never a fake unload. */
     canopus_text_writer_append(&w, "操作: ");
-    if (canopus_manager_can_update(m, m->selected)) {
-        canopus_text_writer_append(&w, "[更新] ");
-    }
     if (canopus_manager_can_rollback(m, m->selected)) {
         canopus_text_writer_append(&w, "[回滚] ");
     }
@@ -295,21 +292,6 @@ int canopus_manager_can_remove(const struct canopus_manager_model_v1 *m,
     mod = &m->modules[index];
     return mod->state != CANOPUS_STATE_UNLOADED &&
            mod->state != CANOPUS_STATE_REMOVE_PENDING;
-}
-
-int canopus_manager_can_update(const struct canopus_manager_model_v1 *m,
-                               uint32_t index)
-{
-    const struct canopus_manager_module_v1 *mod;
-    if (index >= m->module_count) {
-        return 0;
-    }
-    mod = &m->modules[index];
-    /* CAN-P2-006: activation is never offered in safe mode. */
-    if (m->safe_mode) {
-        return 0;
-    }
-    return mod->state != CANOPUS_STATE_UNLOADED;
 }
 
 int canopus_manager_can_rollback(const struct canopus_manager_model_v1 *m,
@@ -414,16 +396,6 @@ uint32_t canopus_manager_op_remove(struct canopus_manager_model_v1 *m,
         return CANOPUS_RESULT_DISALLOWED;
     }
     return send_command(m, CANOPUS_CMD_REMOVE, m->modules[index].module_id,
-                        CANOPUS_MANAGER_MODULE_ID_MAX);
-}
-
-uint32_t canopus_manager_op_update(struct canopus_manager_model_v1 *m,
-                                   uint32_t index)
-{
-    if (!canopus_manager_can_update(m, index)) {
-        return CANOPUS_RESULT_DISALLOWED;
-    }
-    return send_command(m, CANOPUS_CMD_UPDATE, m->modules[index].module_id,
                         CANOPUS_MANAGER_MODULE_ID_MAX);
 }
 

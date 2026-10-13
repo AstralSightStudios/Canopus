@@ -69,3 +69,17 @@ Band 11 两个音频模块已接入独立私有后端，可安装启用；无线
 `manager/service/canopus_supervisor_platform.c`、
 `scripts/build_module_installer_prod.py`、`watchfaces/module-installer-prod/src/main.lua`、
 `watchfaces/module-installer-prod/src/device-*.lua`。
+
+## 更新与回滚（P4，2026-10-14）
+
+- 外部安装器只写暂存区：`/data/canopus/inbox/<token>.cmi.next` 与 `<token>.ko.next`，再提交 CPC2 INSTALL。
+  Supervisor 逐项校验（CMI2 回执、target/固件、artifact SHA-256），通过后把包移入模块的 A/B 两代之一
+  （A=`<token>.cmi/.ko`，B=`<token>.cmi.b/.ko.b`），**不会改动正在使用的那一代**。
+- token 无槽位：装入 A、注册为禁用，返回 `COMPLETED`。
+- token 已有槽位：`module_version` 必须严格更高（相同 → `STAGE_DUPLICATE`，更低 → `STAGE_DOWNGRADE`）；
+  装入非活动代并置 pending，返回 `REBOOT_REQUIRED`（重启并重新运行安装表盘后切换）。
+- 切换发生在下一次加载前：新一代校验失败则放弃切换（`UPDATE_ABANDONED`）；切换后加载失败自动退回上一代
+  （`UPDATE_FALLBACK`）。
+- `ROLLBACK`：仅当另一代存在且校验通过时置 pending（重启后切回）；已有 pending 时再次 `ROLLBACK` 取消。
+  CPS1/v2 模块 `flags` 位：bit0 `HAS_PREV`、bit1 `UPDATE_PENDING`。
+- `UPDATE` 命令已移除（操作码保留）。Registry 版本升至 2，旧版 registry 被拒绝并提示重装（K11）。

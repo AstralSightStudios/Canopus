@@ -176,8 +176,6 @@ TEST(safe_mode_blocks_activation_ops)
     m.safe_mode = 1;
     /* activation is never offered in safe mode */
     CHECK(canopus_manager_op_install(&m, "org.example.pkg") == CANOPUS_RESULT_DISALLOWED);
-    CHECK(canopus_manager_can_update(&m, 0) == 0);
-    CHECK(canopus_manager_can_update(&m, 1) == 0);
     CHECK(canopus_manager_can_enable(&m, 0) == 0);
     /* every disable/remove is next-boot (never runs third-party code), so
      * safe mode keeps them for all lifecycle classes as recovery paths */
@@ -236,16 +234,6 @@ TEST(rollback_needs_previous_slot)
 
     CHECK(canopus_manager_can_rollback(&m, 1) == 0);
     CHECK(canopus_manager_op_rollback(&m, 1) == CANOPUS_RESULT_DISALLOWED);
-}
-
-TEST(update_available_for_active)
-{
-    struct canopus_manager_model_v1 m;
-    reset_transport();
-    canopus_manager_init(&m, fake_transport, 0);
-    add_removable(&m, "mod.hello");
-    CHECK(canopus_manager_op_update(&m, 0) == CANOPUS_RESULT_ACCEPTED);
-    CHECK(g_last_command == CANOPUS_CMD_UPDATE);
 }
 
 TEST(safe_mode_sets_flag_on_accepted)
@@ -326,7 +314,6 @@ static const struct test_registry manager_tests[] = {
     { "safe_mode_blocks_activation_ops", safe_mode_blocks_activation_ops_wrapper },
     { "remove_resident_returns_disallowed_until_reboot_semantics", remove_resident_returns_disallowed_until_reboot_semantics_wrapper },
     { "rollback_needs_previous_slot", rollback_needs_previous_slot_wrapper },
-    { "update_available_for_active", update_available_for_active_wrapper },
     { "safe_mode_sets_flag_on_accepted", safe_mode_sets_flag_on_accepted_wrapper },
     { "transport_failure_returns_rejected", transport_failure_returns_rejected_wrapper },
     { "goto_rejects_bad_view_and_index", goto_rejects_bad_view_and_index_wrapper },

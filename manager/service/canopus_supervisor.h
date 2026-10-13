@@ -69,8 +69,8 @@ enum canopus_sup_command {
     CANOPUS_SUP_CMD_ENABLE,
     CANOPUS_SUP_CMD_DISABLE,
     CANOPUS_SUP_CMD_REMOVE,
-    CANOPUS_SUP_CMD_UPDATE,
-    CANOPUS_SUP_CMD_ROLLBACK,
+    CANOPUS_SUP_CMD_UPDATE, /* removed: updates are INSTALL of a newer version; opcode reserved */
+    CANOPUS_SUP_CMD_ROLLBACK, /* switch back to the previous generation at next load */
     CANOPUS_SUP_CMD_ENTER_SAFE_MODE,
     CANOPUS_SUP_CMD_ACTIVATE,
     /* Apply enabled boot intents after the supervisor's own insmod has returned.
@@ -105,6 +105,9 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_DESCRIPTOR_INVALID = -19,
     CANOPUS_SUP_ERR_ACTIVATE = -20,
     CANOPUS_SUP_ERR_NOMEM = -21,       /* no heap domain could hold the image */
+    CANOPUS_SUP_ERR_UPDATE_FALLBACK = -22, /* new generation failed to load; previous one restored */
+    CANOPUS_SUP_ERR_NO_PREV = -23,     /* rollback requested but no other generation exists */
+    CANOPUS_SUP_ERR_UPDATE_ABANDONED = -24, /* pending generation failed verification at switch */
     /* Exact-target installer diagnostics. These stay in the CPS1 status record
      * so a constrained watchface can surface a deterministic failing stage. */
     CANOPUS_SUP_ERR_STAGE_PATH = -101,
@@ -115,6 +118,8 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_STAGE_REGISTER = -106,
     CANOPUS_SUP_ERR_STAGE_RECEIPT_OPEN = -107,
     CANOPUS_SUP_ERR_STAGE_RECEIPT_READ = -108,
+    CANOPUS_SUP_ERR_STAGE_DOWNGRADE = -109, /* receipt version is lower than the installed one */
+    CANOPUS_SUP_ERR_STAGE_MOVE = -110,      /* moving the staged package into its generation failed */
     /* Read-return diagnostics: -1100 is EOF, -1101 is the NuttX read
      * wrapper's generic -1 failure. */
     CANOPUS_SUP_ERR_STAGE_RECEIPT_READ_BASE = -1100,
@@ -150,10 +155,17 @@ enum canopus_boot_state {
 
 #define CANOPUS_SUP_MODULE_ID_MAX 32u
 
-/* Slot flag bits. The in-memory/CPS1 flags are currently always zero. The
- * registry uses bits 1..31 to retain a zigzag-encoded activation error without
- * changing the version-1 784-byte file shape; bit0 is unused. */
-#define CANOPUS_SUP_REGISTRY_ERROR_SHIFT 1u
+/* Public slot flag bits (CPS1 / v2 query). */
+#define CANOPUS_SUP_FLAG_HAS_PREV       (1u << 0) /* the other generation holds a package */
+#define CANOPUS_SUP_FLAG_UPDATE_PENDING (1u << 1) /* generation switch applies at next load */
+/* Registry slot flags (version 2, same 784-byte shape): bit0 = active
+ * generation (0 = A, 1 = B), bit1 = pending generation switch, bits 2..31 =
+ * zigzag-encoded activation error. Each module keeps two package generations
+ * (A/B); an update is written to the inactive one and activated by flipping
+ * the registry bit, so the running generation is never modified in place. */
+#define CANOPUS_SUP_REG_FLAG_ACTIVE_B   (1u << 0)
+#define CANOPUS_SUP_REG_FLAG_PENDING    (1u << 1)
+#define CANOPUS_SUP_REGISTRY_ERROR_SHIFT 2u
 
 /* CAN-P0-005 revision (next-boot lifecycle): enable/disable/remove are never
  * hot operations. Each slot carries a persisted *boot intent* — what the
@@ -171,12 +183,12 @@ enum canopus_sup_intent {
  *   header (16): u32 magic "CRD1", u32 version, u32 module_count, u32 rsvd
  *   16 slots x 48: module_id[32] + u32 class + u32 version + u32 flags/error +
  *                  u32 intent
- * Registry flags bit 0 is unused; bits 1..31 retain a zigzag-encoded
+ * Registry flags: see CANOPUS_SUP_REG_FLAG_*; bits 2..31 retain a zigzag-encoded
  * activation error. Old files used zero in those bits and remain valid.
  * The slot table is the in-memory source of truth; the registry is the
  * boot-time restore source. */
 #define CANOPUS_SUP_REGISTRY_MAGIC   0x31524443u /* "CRD1" */
-#define CANOPUS_SUP_REGISTRY_VERSION 1u
+#define CANOPUS_SUP_REGISTRY_VERSION 2u
 #define CANOPUS_SUP_REGISTRY_HEADER  16u
 #define CANOPUS_SUP_REGISTRY_SLOT_SIZE 48u
 #define CANOPUS_SUP_REGISTRY_SIZE \
@@ -196,6 +208,12 @@ struct canopus_sup_module_v1 {
     uint8_t module_id[CANOPUS_SUP_MODULE_ID_MAX];
     const struct canopus_module_descriptor_v1 *descriptor;
     uint32_t activation_error;
+    /* Package generation state (persisted in the registry flags). */
+    uint8_t active_gen;
+    uint8_t pending_switch;
+    /* Set for one boot after a generation switch; load failure then falls
+     * back to the previous generation. */
+    uint8_t just_switched;
 };
 
 /* Supervisor model. */
@@ -304,6 +322,15 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
                                   uint32_t lifecycle_class,
                                   uint32_t version,
                                   const char *module_id);
+
+/* Stages the package a miwear client wrote to the inbox for `token`
+ * (<token>.cmi.next / <token>.ko.next). A token without a slot is installed
+ * (disabled) into generation A and registered: returns 0. A token with a slot
+ * and a strictly higher module version is moved into the inactive generation
+ * and marked pending: returns 1 (reboot required). Same or lower versions are
+ * rejected. Returns -1 with error_code set on failure. The caller persists. */
+int canopus_supervisor_stage_token(struct canopus_supervisor_v1 *sup,
+                                   const char *token);
 
 /* CAN-P0-005 revision (next-boot): persist the whole slot table (module id,
  * class, version, flags, boot intent) through the platform `persist` hook.

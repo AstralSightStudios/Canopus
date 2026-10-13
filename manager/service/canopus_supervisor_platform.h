@@ -51,6 +51,22 @@ struct canopus_sup_platform_v1 {
     int (*persist)(void *cookie, const uint8_t *data, uint32_t len);
     /* Read the registry bytes. Returns 0 (present), 1 (absent) or -1. */
     int (*restore)(void *cookie, uint8_t *data, uint32_t len);
+    /* Package generations (A=0, B=1) and the client-written staging area.
+     * stage_verify: verify <token>'s staged receipt + artifact; on success
+     *   fills the receipt's version/lifecycle and returns 0, else sets
+     *   sup->error_code to the failing stage and returns -1.
+     * stage_commit: move the verified staged package into generation `gen`
+     *   of <token> (replacing whatever was there). Returns 0.
+     * gen_exists: a receipt file is present for (token, gen).
+     * gen_verify: full receipt + artifact verification of (token, gen);
+     *   fills version/lifecycle; 0 on success.
+     * Optional: platforms without them cannot update or roll back. */
+    int (*stage_verify)(void *cookie, const char *token, uint32_t *version,
+                        uint32_t *lifecycle);
+    int (*stage_commit)(void *cookie, const char *token, uint32_t gen);
+    int (*gen_exists)(void *cookie, const char *token, uint32_t gen);
+    int (*gen_verify)(void *cookie, const char *token, uint32_t gen,
+                      uint32_t *version, uint32_t *lifecycle);
 };
 
 #ifdef __cplusplus

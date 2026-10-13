@@ -36,8 +36,13 @@
  * Keep this outside /data, which is a mounted filesystem. */
 #define CANOPUS_SUP_INSTALLER_PATH "/canopus/install"
 #define CANOPUS_SUP_INBOX_ROOT "/data/canopus/inbox/"
-#define CANOPUS_SUP_RECEIPT_SUFFIX ".cmi"
-#define CANOPUS_SUP_MODULE_SUFFIX ".ko"
+/* Package kinds: generation A, generation B, and the staging area the
+ * miwear client writes to. The client only ever writes the NEXT pair. */
+enum { SUP_KIND_A = 0, SUP_KIND_B = 1, SUP_KIND_NEXT = 2, SUP_KIND_COUNT = 3 };
+static const char *const s_receipt_suffix[SUP_KIND_COUNT] = {
+    ".cmi", ".cmi.b", ".cmi.next"};
+static const char *const s_module_suffix[SUP_KIND_COUNT] = {
+    ".ko", ".ko.b", ".ko.next"};
 #define CANOPUS_SUP_PATH_MAX 224u
 #define CANOPUS_SUP_READ_CHUNK 512u
 #define CANOPUS_SUP_NUTTX_O_RDONLY 1
@@ -492,15 +497,17 @@ static int sup_module_id_equal(const uint8_t fixed[CANOPUS_INSTALL_MODULE_ID_SIZ
     return 0;
 }
 
-static int sup_verify_package_at(
-    const char *token, struct canopus_install_receipt_v1 *receipt,
-    const char *module_path, uint32_t *diagnostic)
+static int sup_verify_kind(
+    const char *token, uint32_t kind, struct canopus_install_receipt_v1 *receipt,
+    uint32_t *diagnostic)
 {
     uint8_t digest[CANOPUS_INSTALL_DIGEST_SIZE];
     char receipt_path[CANOPUS_SUP_PATH_MAX];
+    char module_path[CANOPUS_SUP_PATH_MAX];
 
-    if (diagnostic == 0 || receipt == 0 || module_path == 0 ||
-        sup_make_path(receipt_path, token, CANOPUS_SUP_RECEIPT_SUFFIX) != 0) {
+    if (diagnostic == 0 || receipt == 0 || kind >= SUP_KIND_COUNT ||
+        sup_make_path(receipt_path, token, s_receipt_suffix[kind]) != 0 ||
+        sup_make_path(module_path, token, s_module_suffix[kind]) != 0) {
         if (diagnostic != 0) *diagnostic = CANOPUS_SUP_ERR_STAGE_PATH;
         return -1;
     }
@@ -519,6 +526,70 @@ static int sup_verify_package_at(
         return -1;
     }
     *diagnostic = CANOPUS_SUP_ERR_NONE;
+    return 0;
+}
+
+static int sup_stage_verify(void *cookie, const char *token, uint32_t *version,
+                            uint32_t *lifecycle)
+{
+    struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
+    struct canopus_install_receipt_v1 receipt;
+    uint32_t diagnostic;
+    (void)cookie;
+    if (sup_verify_kind(token, SUP_KIND_NEXT, &receipt, &diagnostic) != 0) {
+        sup->error_code = diagnostic;
+        return -1;
+    }
+    *version = receipt.module_version;
+    *lifecycle = receipt.lifecycle_class;
+    return 0;
+}
+
+static int sup_gen_exists(void *cookie, const char *token, uint32_t gen)
+{
+    char path[CANOPUS_SUP_PATH_MAX];
+    uint32_t magic;
+    (void)cookie;
+    if (gen > 1u || sup_make_path(path, token, s_receipt_suffix[gen]) != 0) return 0;
+    return sup_read_exact(path, &magic, sizeof(magic), 0) == 0;
+}
+
+static int sup_gen_verify(void *cookie, const char *token, uint32_t gen,
+                          uint32_t *version, uint32_t *lifecycle)
+{
+    struct canopus_install_receipt_v1 receipt;
+    uint32_t diagnostic;
+    (void)cookie;
+    if (gen > 1u ||
+        sup_verify_kind(token, gen, &receipt, &diagnostic) != 0) {
+        return -1;
+    }
+    *version = receipt.module_version;
+    *lifecycle = receipt.lifecycle_class;
+    return 0;
+}
+
+/* Replaces generation `gen` with the staged pair. The receipt is the commit
+ * record: it is removed first and renamed in last, so a partial move leaves a
+ * generation that fails verification instead of one that verifies wrongly. */
+static int sup_stage_commit(void *cookie, const char *token, uint32_t gen)
+{
+    char from_receipt[CANOPUS_SUP_PATH_MAX];
+    char from_module[CANOPUS_SUP_PATH_MAX];
+    char to_receipt[CANOPUS_SUP_PATH_MAX];
+    char to_module[CANOPUS_SUP_PATH_MAX];
+    (void)cookie;
+    if (gen > 1u ||
+        sup_make_path(from_receipt, token, s_receipt_suffix[SUP_KIND_NEXT]) != 0 ||
+        sup_make_path(from_module, token, s_module_suffix[SUP_KIND_NEXT]) != 0 ||
+        sup_make_path(to_receipt, token, s_receipt_suffix[gen]) != 0 ||
+        sup_make_path(to_module, token, s_module_suffix[gen]) != 0) {
+        return -1;
+    }
+    (void)sup_unlink_path(to_receipt);
+    (void)sup_unlink_path(to_module);
+    if (sup_rename_path(from_module, to_module) != 0) return -1;
+    if (sup_rename_path(from_receipt, to_receipt) != 0) return -1;
     return 0;
 }
 
@@ -768,9 +839,10 @@ static int sup_load_module(void *cookie, uint32_t index,
      * subsequent target pack may promote this to a proven atomic fd loader;
      * this firmware's verified public modlib API accepts paths only. */
     if (!sup_module_id_equal(sup->modules[index].module_id, module_name) ||
-        sup_make_path(path, module_name, CANOPUS_SUP_MODULE_SUFFIX) != 0 ||
-        sup_verify_package_at(module_name, &receipt, path,
-                              &sup->error_code) != 0 ||
+        sup_make_path(path, module_name,
+                      s_module_suffix[sup->modules[index].active_gen & 1u]) != 0 ||
+        sup_verify_kind(module_name, sup->modules[index].active_gen & 1u,
+                        &receipt, &sup->error_code) != 0 ||
         receipt.lifecycle_class != sup->modules[index].lifecycle_class ||
         receipt.lifecycle_class != lifecycle_class ||
         receipt.module_version != sup->modules[index].version) {
@@ -814,9 +886,9 @@ static int sup_load_module(void *cookie, uint32_t index,
 static int sup_remove_artifact(void *cookie, uint32_t index)
 {
     struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
-    char receipt_path[CANOPUS_SUP_PATH_MAX];
-    char module_path[CANOPUS_SUP_PATH_MAX];
+    char path[CANOPUS_SUP_PATH_MAX];
     const char *module_id;
+    uint32_t kind;
 
     (void)cookie;
     if (sup == 0 || index >= CANOPUS_SUP_MODULE_SLOTS ||
@@ -824,14 +896,12 @@ static int sup_remove_artifact(void *cookie, uint32_t index)
         return -1;
     }
     module_id = (const char *)sup->modules[index].module_id;
-    if (sup_make_path(receipt_path, module_id, CANOPUS_SUP_RECEIPT_SUFFIX) != 0) {
-        return -1;
+    for (kind = 0u; kind < SUP_KIND_COUNT; kind++) {
+        if (sup_make_path(path, module_id, s_receipt_suffix[kind]) != 0) return -1;
+        (void)sup_unlink_path(path);
+        if (sup_make_path(path, module_id, s_module_suffix[kind]) != 0) return -1;
+        (void)sup_unlink_path(path);
     }
-    if (sup_make_path(module_path, module_id, CANOPUS_SUP_MODULE_SUFFIX) != 0) {
-        return -1;
-    }
-    (void)sup_unlink_path(receipt_path);
-    (void)sup_unlink_path(module_path);
     return 0;
 }
 
@@ -917,11 +987,7 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
         (watchface_reset_fn)(uintptr_t)CANOPUS_SUP_WATCHFACE_RESET;
 #endif
     struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
-    struct canopus_install_receipt_v1 receipt;
-    char module_path[CANOPUS_SUP_PATH_MAX];
-    uint32_t i;
-    uint32_t diagnostic;
-    int slot;
+    int staged;
 
     (void)cookie;
     /* Payload-free INSTALL is split across separate miwear callbacks so each
@@ -938,40 +1004,17 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
     }
     if (stage != 0u) return -1;
     if (sup == 0) return -1;
-    /* Reject a duplicate before registering a second slot. */
-    for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
-        if (sup->modules[i].state != 0u &&
-            sup_module_id_equal(sup->modules[i].module_id, token)) {
-            sup->error_code = CANOPUS_SUP_ERR_STAGE_DUPLICATE;
-            return -1;
-        }
-    }
-    /* Copy succeeds only after the receipt and artifact are verified. Keep
-     * the inbox files in place: Lua is the writer and later ENABLE resolves the
-     * verified artifact through this stable path. */
-    if (sup_make_path(module_path, token, CANOPUS_SUP_MODULE_SUFFIX) != 0) {
-        sup->error_code = CANOPUS_SUP_ERR_STAGE_PATH;
-        return -1;
-    }
-    if (sup_verify_package_at(token, &receipt, module_path, &diagnostic) != 0) {
-        sup->error_code = diagnostic;
-        return -1;
-    }
-    slot = canopus_supervisor_add_module(
-        sup, receipt.lifecycle_class, receipt.module_version,
-        (const char *)receipt.module_id);
-    if (slot < 0) {
-        if (sup->error_code == CANOPUS_SUP_ERR_NONE) {
-            sup->error_code = CANOPUS_SUP_ERR_STAGE_REGISTER;
-        }
-        return -1;
-    }
+    /* Fresh install: verified package becomes generation A and the module is
+     * registered disabled. Existing module: a strictly newer version goes to
+     * the inactive generation and takes effect at the next load (staged = 1). */
+    staged = canopus_supervisor_stage_token(sup, token);
+    if (staged < 0) return -1;
     if (canopus_manager_native_notify_module_installed() < 0) {
         /* Registration has already committed a verified, disabled module.
          * Notification is a delivery side effect: preserve the installer page
          * for manual cleanup, but never roll back a valid installation merely
          * because the stock notification service rejects this message. */
-        return 0;
+        return staged;
     }
     /* The firmware watchface manager switches away before deleting an active
      * non-last watchface. Failure is non-fatal: installation remains complete
@@ -983,7 +1026,7 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
     /* Keeps the stock watchface layout consistent after the deletion. */
     (void)watchface_reset(0);
 #endif
-    return 0;
+    return staged;
 }
 
 const struct canopus_sup_platform_v1 canopus_sup_platform = {
@@ -995,4 +1038,8 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_remove_artifact,
     sup_registry_persist,
     sup_registry_restore,
+    sup_stage_verify,
+    sup_stage_commit,
+    sup_gen_exists,
+    sup_gen_verify,
 };

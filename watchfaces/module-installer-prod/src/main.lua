@@ -125,8 +125,8 @@ local function install()
     end
     prepare_inbox(checkpoint)
     local payloads = {
-        {"inbox/" .. CONFIG.token .. ".cmi", receipt},
-        {"inbox/" .. CONFIG.token .. ".ko", module},
+        {"inbox/" .. CONFIG.token .. ".cmi.next", receipt},
+        {"inbox/" .. CONFIG.token .. ".ko.next", module},
     }
     for _, asset in ipairs(assets) do payloads[#payloads + 1] = asset end
     for _, item in ipairs(payloads) do
@@ -146,10 +146,14 @@ local function install()
         and u32(response, 12) == REPLY_SIZE and u32(response, 16) == 2
         and u32(response, 20) == 1 and u32(response, 24) == 0
         and u32(response, 32) == REPLY_SIZE - 36, "Invalid supervisor response")
-    if u32(response, 28) ~= 5 then
-        local detail = "Supervisor result " .. u32(response, 28)
+    local result = u32(response, 28)
+    if result ~= 5 and result ~= 8 then
+        local detail = "Supervisor result " .. result
             .. failure_detail(response, device_exchange)
         error(detail, 0)
+    end
+    if result == 8 then
+        return "更新已提交，重启后生效。\n\n重启手环并重新运行 Canopus 安装表盘，新版本将自动切换；加载失败会自动回退到旧版本。"
     end
     return target.runtime_pending and
         "安装完成，模块保持禁用。\n\n本固件的音频运行适配尚未完成。\n\n可在管理器查看安装记录。" or

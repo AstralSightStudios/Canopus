@@ -131,6 +131,7 @@ static const struct canopus_sup_platform_v1 fake_platform = {
     "xiaomi-band-10-pro-3.101.030",
     fake_register, fake_unregister, fake_load, fake_stage,
     fake_remove_artifact, fake_persist, fake_restore,
+    0, 0, 0, 0,
 };
 
 /* ---- command/status builders --------------------------------------- */
@@ -1012,13 +1013,11 @@ TEST(supervisor_safe_mode_rejects_activation)
     /* enter safe mode */
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
-    /* INSTALL / ENABLE / UPDATE are rejected by policy, not just shown */
+    /* INSTALL / ENABLE are rejected by policy, not just shown */
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
     CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_SAFE_MODE);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
-    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_UPDATE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC,
                  CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT, 0, 0);

@@ -135,8 +135,6 @@ uint32_t canopus_manager_op_disable(struct canopus_manager_model_v1 *m,
                                     uint32_t index);
 uint32_t canopus_manager_op_remove(struct canopus_manager_model_v1 *m,
                                    uint32_t index);
-uint32_t canopus_manager_op_update(struct canopus_manager_model_v1 *m,
-                                   uint32_t index);
 uint32_t canopus_manager_op_rollback(struct canopus_manager_model_v1 *m,
                                      uint32_t index);
 uint32_t canopus_manager_op_safe_mode(struct canopus_manager_model_v1 *m);
@@ -150,8 +148,6 @@ int canopus_manager_can_enable(const struct canopus_manager_model_v1 *m,
 int canopus_manager_can_disable(const struct canopus_manager_model_v1 *m,
                                 uint32_t index);
 int canopus_manager_can_remove(const struct canopus_manager_model_v1 *m,
-                               uint32_t index);
-int canopus_manager_can_update(const struct canopus_manager_model_v1 *m,
                                uint32_t index);
 int canopus_manager_can_rollback(const struct canopus_manager_model_v1 *m,
                                  uint32_t index);

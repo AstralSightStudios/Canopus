@@ -7,7 +7,8 @@ action required.
 The runtime flow is intentionally fail-closed:
 
 1. Validate the packaged receipt shape and ELF bounds.
-2. Copy `receipt.bin` and `module.bin` to `/data/canopus/inbox/`.
+2. Copy `receipt.bin` and `module.bin` to `/data/canopus/inbox/` as `<token>.cmi.next` and
+   `<token>.ko.next` (the staging area; the supervisor owns the installed generations).
 3. Send a bounded CPC2 `INSTALL` request containing only the
    `canopus_hello` token.
 4. The supervisor verifies the CMI2 receipt, exact target and

@@ -26,7 +26,7 @@ enum canopus_command {
     CANOPUS_CMD_ENABLE,
     CANOPUS_CMD_DISABLE,
     CANOPUS_CMD_REMOVE,
-    CANOPUS_CMD_UPDATE,
+    CANOPUS_CMD_UPDATE, /* removed: updates are INSTALL of a newer version; opcode reserved */
     CANOPUS_CMD_ROLLBACK,
     CANOPUS_CMD_QUERY_MODULE,
     CANOPUS_CMD_QUERY_DEVICE,

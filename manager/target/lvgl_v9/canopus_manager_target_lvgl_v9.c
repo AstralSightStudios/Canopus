@@ -432,6 +432,7 @@ static int target_refresh_model(void)
         module.lifecycle_class = source.lifecycle_class;
         module.state = source.state;
         module.flags = source.flags;
+        module.has_previous = (source.flags & CANOPUS_SUP_FLAG_HAS_PREV) != 0u;
         module.version = source.version;
         module.activation_error = source.activation_error;
         module.risk = source.lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ?

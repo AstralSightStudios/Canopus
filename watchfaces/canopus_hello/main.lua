@@ -9,8 +9,8 @@ local DEVICE_PATH = "/dev/canopus"
 local RECEIPT_RESOURCE = SCRIPT_PATH .. "receipt.bin"
 local MODULE_RESOURCE = SCRIPT_PATH .. "module.bin"
 local INBOX = "/data/canopus/inbox/"
-local RECEIPT_PATH = INBOX .. TOKEN .. ".cmi"
-local MODULE_PATH = INBOX .. TOKEN .. ".ko"
+local RECEIPT_PATH = INBOX .. TOKEN .. ".cmi.next"
+local MODULE_PATH = INBOX .. TOKEN .. ".ko.next"
 local CPC2_MAGIC = 0x43504332
 local CPC1_MAGIC = 0x43504331
 local CPS1_MAGIC = 0x43505331
@@ -183,7 +183,7 @@ local function install()
         fail("Invalid supervisor response") return
     end
     local result = u32(response, 28)
-    if result ~= RESULT_COMPLETED then
+    if result ~= RESULT_COMPLETED and result ~= 8 then
         local error = supervisor_error()
         local detail = error and " (error " .. tostring(error) .. ")" or ""
         fail("Supervisor result " .. tostring(result) .. detail)
