@@ -15,7 +15,6 @@ target-xiaomi-band-11-4-100-139 = []
 target-xiaomi-band-11-4-100-155 = []
 target-xiaomi-band-11-4-100-177 = []
 target-xiaomi-band-9-3-1-32 = []
-target-xiaomi-p65-3-100-043 = []
 
 [dependencies]
 canopus-abi = { workspace = true }

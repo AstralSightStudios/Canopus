@@ -204,19 +204,8 @@ pub fn module(cmd: ModuleCmd) -> anyhow::Result<()> {
                 "rust" => canopus_core::template::ModuleLang::Rust,
                 other => anyhow::bail!("unknown language '{other}' (expected c or rust)"),
             };
-            let target_pack = find_target(&targets_dir, &target)?;
-            let constructor_discovery = target_pack
-                .loader_profile
-                .as_ref()
-                .map(|profile| profile.constructor_discovery.as_str())
-                .unwrap_or("init_array");
-            let files = canopus_core::template::render_with_constructor_discovery(
-                &name,
-                &target,
-                lang,
-                constructor_discovery,
-            )
-            .map_err(anyhow::Error::msg)?;
+            find_target(&targets_dir, &target)?;
+            let files = canopus_core::template::render(&name, &target, lang);
             let dir = out_dir.join(&name);
             std::fs::create_dir_all(&dir)?;
             let mut n = 0;

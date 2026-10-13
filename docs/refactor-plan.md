@@ -101,7 +101,7 @@
 | 阶段 | 内容 | 状态 | 依赖 |
 |---|---|---|---|
 | P0 | 基线、ADR、AGENTS.md、CI 恢复 | [~] | — |
-| P1 | Target/地址单一来源；移除 P65；冻结 Band 9 | [ ] | P0 |
+| P1 | Target/地址单一来源；移除 P65；冻结 Band 9 | [~] | P0 |
 | P2 | ABI/SDK：服务表、协议收敛、移除签名、Rust 整理 | [ ] | P0.1–P0.4；P2.4 起依赖 P1.3 |
 | P3 | 统一打包 + 文档 | [ ] | P1、P2.1 |
 | P4 | 设备端更新语义 + 开机自启调查 | [ ] | P0.1、P0.2（不依赖 P5） |
@@ -145,7 +145,7 @@
 - [x] P0.7 `AGENTS.md`（原 P3.6，前移）：目录结构、常用命令、不可触碰项、证据门槛、"改 symbols 后必须重新生成"。
 
 ### P1 Target / 地址单一来源
-- [ ] P1.1 移除 P65（K3）。删除范围：
+- [x] P1.1 移除 P65（K3；ADR-CAN-007；同时移除仅 P65 使用的 `module_initialize` 入口风格、模板与 verifier 检查）。删除范围：
   - 目录：`targets/xiaomi-p65-*`、`manager/target/p65`、`watchfaces/canopus-installer-prod/xiaomi-p65`。
   - 脚本与测试：`scripts/*p65*`、`scripts/lua/test_p65_installer.lua`、`scripts/tests/test_p65_*`、`tests/host/test_p65_*`。
   - Rust：`target-xiaomi-p65-*` feature、`generated_p65.rs`、`canopus-target-private/build.rs` 的 P65 分支。
@@ -296,3 +296,4 @@
 | 2026-10-14 | 第 2 版：事实核查（CI 基线为红、协议与回执、模块身份、U3 等）；K4 更正为 `core`；新增 K7–K10、O5–O6、R6–R9；P4 不再依赖 P5；任务重新编号 |
 | 2026-10-14 | O2 → K11（不迁移，要求重装）；O6 → K12（保留 .139 提升，改写过时测试） |
 | 2026-10-14 | P0.5 完成：ci.sh keep-going 模式、036 生成物重新生成、K12 测试改写、Band 11 测试对无种子克隆的处理 |
+| 2026-10-14 | P1.1 完成：P65 全部移除；P0.6/P0.7 完成 |

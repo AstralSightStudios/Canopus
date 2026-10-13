@@ -14,41 +14,10 @@ pub enum ModuleLang {
 }
 
 pub fn render(name: &str, target_id: &str, lang: ModuleLang) -> BTreeMap<String, String> {
-    render_with_constructor_discovery(name, target_id, lang, "init_array")
-        .expect("init_array templates are supported")
-}
-
-/// Renders a module skeleton for the target loader's constructor-discovery ABI.
-/// Unknown profiles fail closed rather than emitting an ELF with the wrong entry contract.
-pub fn render_with_constructor_discovery(
-    name: &str,
-    target_id: &str,
-    lang: ModuleLang,
-    constructor_discovery: &str,
-) -> Result<BTreeMap<String, String>, String> {
-    let entry_style = match constructor_discovery {
-        "init_array" => EntryStyle::InitArray,
-        "module_initialize" => EntryStyle::ModuleInitialize,
-        other => {
-            return Err(format!(
-                "unsupported constructor discovery profile '{other}'"
-            ));
-        }
-    };
-
-    match (lang, entry_style) {
-        (ModuleLang::C, style) => Ok(c_module(name, target_id, style)),
-        (ModuleLang::Rust, EntryStyle::InitArray) => Ok(rust_module(name, target_id)),
-        (ModuleLang::Rust, EntryStyle::ModuleInitialize) => {
-            Err("Rust module template does not yet provide a module_initialize C shim".into())
-        }
+    match lang {
+        ModuleLang::C => c_module(name, target_id),
+        ModuleLang::Rust => rust_module(name, target_id),
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum EntryStyle {
-    InitArray,
-    ModuleInitialize,
 }
 
 fn safe_name(name: &str) -> String {
@@ -101,40 +70,10 @@ fn manifest(name: &str, target_id: &str) -> String {
     )
 }
 
-fn c_source(name: &str, target_id: &str, entry_style: EntryStyle) -> String {
+fn c_source(name: &str, target_id: &str) -> String {
     let n = safe_name(name);
-    let p65 = target_id == "xiaomi-p65-3.100.043"
-        && entry_style == EntryStyle::ModuleInitialize;
-    let registration_glue = if p65 {
-        r#"#include "canopus_module_registration.h"
-#include "canopus_p65_abi.h"
-static uint8_t s_registered;
-static int s_registration_close_error;
-static int register_with_supervisor(void)
-{
-    const struct canopus_module_registration_io_v1 io = {
-        (int (*)(const char *, int, ...))(uintptr_t)CANOPUS_SUP_NUTTX_OPEN,
-        (int32_t (*)(int, const void *, uint32_t))(uintptr_t)CANOPUS_SUP_NUTTX_WRITE,
-        (int (*)(int))(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE,
-        2 /* P65 O_WRONLY; open existing endpoint, never create. */
-    };
-    int rc = canopus_module_register_fd(&io, (uint32_t)(uintptr_t)&g_descriptor,
-                                       (const char *)g_descriptor.module_id,
-                                       &s_registration_close_error);
-    if (rc == 0) s_registered = 1u;
-    return rc;
-}
-"#
-    } else { "" };
-    let unload_guard = if p65 {
-        "    if (s_registered) return -16; /* Supervisor owns descriptor pointers. */\n"
-    } else { "" };
-    let register_entry = if p65 {
-        format!("    if (register_with_supervisor() != 0) {{\n        (void){n}_stop(0);\n        return -1;\n    }}\n")
-    } else { String::new() };
-    let lifecycle_glue = match entry_style {
-        EntryStyle::InitArray => format!(
-            r#"__attribute__((constructor)) static void {n}_ctor(void)
+    let lifecycle_glue = format!(
+        r#"__attribute__((constructor)) static void {n}_ctor(void)
 {{
     /* Fail closed on a firmware mismatch BEFORE any use. The identity guard
      * reads firmware addresses, which also keeps this constructor
@@ -150,51 +89,8 @@ __attribute__((destructor)) static void {n}_dtor(void)
     (void){n}_stop(0);
 }}
 "#,
-            n = n
-        ),
-        EntryStyle::ModuleInitialize => format!(
-            r#"struct canopus_modlib_unload_pair_v1 {{
-    int32_t (*callback)(void *context);
-    void *context;
-}};
-
-_Static_assert(sizeof(struct canopus_modlib_unload_pair_v1) == 8u,
-               "P65 modlib unload pair must contain two 32-bit words");
-
-static int32_t {n}_modlib_unload(void *context)
-{{
-    (void)context;
-{unload_guard}    return {n}_stop(0);
-}}
-
-/* P65 ET_REL modlib calls e_entry with module-record words +104/+108.
- * It does not discover this module through .init_array/.fini_array. */
-__attribute__((used, section(".text.canopus_module_entry")))
-int32_t canopus_module_initialize(
-    struct canopus_modlib_unload_pair_v1 *unload_pair)
-{{
-    if (unload_pair == 0) {{
-        return -1;
-    }}
-    unload_pair->callback = 0;
-    unload_pair->context = 0;
-
-    if (canopus_identity_guard() != 0) {{
-        return -1;
-    }}
-    if ({n}_prepare(0) != 0) {{
-        (void){n}_stop(0);
-        return -1;
-    }}
-
-{register_entry}    unload_pair->callback = {n}_modlib_unload;
-    unload_pair->context = 0;
-    return 0;
-}}
-"#,
-            n = n
-        ),
-    };
+        n = n
+    );
     format!(
         r#"/* {n}.c — Canopus removable module. Generated by `canopus module new`. */
 #include "canopus_abi.h"
@@ -271,7 +167,6 @@ const struct canopus_module_descriptor_v1 *{n}_descriptor(void)
     return &g_descriptor;
 }}
 
-{registration_glue}
 {lifecycle_glue}
 "#,
         n = n,
@@ -281,21 +176,8 @@ const struct canopus_module_descriptor_v1 *{n}_descriptor(void)
     )
 }
 
-fn c_build_sh(dir_name: &str, safe: &str, target_id: &str, entry_style: EntryStyle) -> String {
+fn c_build_sh(dir_name: &str, safe: &str, target_id: &str) -> String {
     let n = safe.to_string();
-    let p65 = target_id == "xiaomi-p65-3.100.043"
-        && entry_style == EntryStyle::ModuleInitialize;
-    let extra_flags = if p65 { "-DCANOPUS_SUP_P65_RESIDENT=1" } else { "" };
-    let extra_include = if p65 { "-I$ROOT/manager/target/p65" } else { "" };
-    let verifier_setup = if p65 {
-        "python3 \"$ROOT/scripts/generate_p65_experimental_pack.py\" --output \"$OUT/targets\"\nVERIFY_TARGETS=\"$OUT/targets\""
-    } else { "VERIFY_TARGETS=\"$ROOT/targets\"" };
-    let entry_link_flags = match entry_style {
-        EntryStyle::InitArray => String::new(),
-        EntryStyle::ModuleInitialize => {
-            "-e canopus_module_initialize -T \"$ROOT/scripts/canopus_module_sections.ld\"".into()
-        }
-    };
     format!(
         r#"#!/bin/sh
 # Builds the {n} module for {target_id}.
@@ -317,11 +199,11 @@ cd "$ROOT"
 TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
   -ffreestanding -fno-common -fno-builtin -fno-stack-protector \
   -fno-unwind-tables -fno-asynchronous-unwind-tables -fdata-sections \
-  -ffunction-sections -Os -Wall -Wextra -Werror -DCANOPUS_TARGET=1 {extra_flags}"
+  -ffunction-sections -Os -Wall -Wextra -Werror -DCANOPUS_TARGET=1"
 
 INC="-I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \
-  -I$PACK_DIR/generated -Imodules/{dir} {extra_include}"
+  -I$PACK_DIR/generated -Imodules/{dir}"
 
 SRCS="runtime/control/canopus_control.c runtime/lifecycle/canopus_lifecycle.c \
   runtime/resources/canopus_resource.c runtime/diagnostics/canopus_diagnostics.c \
@@ -332,30 +214,26 @@ for s in $SRCS; do
 done
 
 LD=${{LD:-ld.lld}}
-$LD -r {entry_link_flags} -o "$OUT/{n}_module.elf" "$OUT"/canopus_control.o \
+$LD -r -o "$OUT/{n}_module.elf" "$OUT"/canopus_control.o \
     "$OUT"/canopus_lifecycle.o "$OUT"/canopus_resource.o \
     "$OUT"/canopus_diagnostics.o "$OUT"/canopus_module.o "$OUT"/{n}.o
 
-{verifier_setup}
+VERIFY_TARGETS="$ROOT/targets"
 "$ROOT/target/debug/canopus" verify "$OUT/{n}_module.elf" \
     --target "$TARGET_ID" --targets-dir "$VERIFY_TARGETS"
 "#,
         n = n,
         dir = dir_name,
-        target_id = target_id,
-        entry_link_flags = entry_link_flags
+        target_id = target_id
     )
 }
 
-fn c_module(name: &str, target_id: &str, entry_style: EntryStyle) -> BTreeMap<String, String> {
+fn c_module(name: &str, target_id: &str) -> BTreeMap<String, String> {
     let n = safe_name(name);
     let mut files = BTreeMap::new();
-    files.insert(format!("{n}.c"), c_source(&n, target_id, entry_style));
+    files.insert(format!("{n}.c"), c_source(&n, target_id));
     files.insert("package.json".into(), manifest(&n, target_id));
-    files.insert(
-        "build.sh".into(),
-        c_build_sh(name, &n, target_id, entry_style),
-    );
+    files.insert("build.sh".into(), c_build_sh(name, &n, target_id));
     files
 }
 
@@ -502,55 +380,6 @@ mod tests {
         let m: serde_json::Value = serde_json::from_str(&files["package.json"]).unwrap();
         assert_eq!(m["module_id"], "org.canopus.my_fn");
         assert_eq!(m["lifecycle"], "removable");
-    }
-
-    #[test]
-    fn module_initialize_c_template_emits_entry_and_unload_pair() {
-        let files = render_with_constructor_discovery(
-            "p65-probe",
-            "xiaomi-p65-3.100.043",
-            ModuleLang::C,
-            "module_initialize",
-        )
-        .unwrap();
-        let src = &files["p65_probe.c"];
-        assert!(src.contains("canopus_module_initialize"));
-        assert!(src.contains(".text.canopus_module_entry"));
-        assert!(src.contains("unload_pair->callback = p65_probe_modlib_unload"));
-        assert!(src.contains("int32_t (*callback)(void *context)"));
-        assert!(src.contains("static int32_t p65_probe_modlib_unload"));
-        assert!(src.contains("return p65_probe_stop(0);"));
-        assert!(!src.contains("__attribute__((constructor))"));
-        assert!(!src.contains("__attribute__((destructor))"));
-
-        let build = &files["build.sh"];
-        assert!(build.contains("-e canopus_module_initialize"));
-        assert!(build.contains("canopus_module_sections.ld"));
-        assert!(src.contains("register_with_supervisor()"));
-        assert!(src.contains("if (s_registered) return -16;"));
-        assert!(build.contains("generate_p65_experimental_pack.py"));
-    }
-
-    #[test]
-    fn module_initialize_rust_template_fails_closed_until_shim_exists() {
-        let result = render_with_constructor_discovery(
-            "p65-probe",
-            "xiaomi-p65-3.100.043",
-            ModuleLang::Rust,
-            "module_initialize",
-        );
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn unknown_constructor_discovery_fails_closed() {
-        let result = render_with_constructor_discovery(
-            "probe",
-            "xiaomi-p65-3.100.043",
-            ModuleLang::C,
-            "unknown",
-        );
-        assert!(result.is_err());
     }
 
     #[test]

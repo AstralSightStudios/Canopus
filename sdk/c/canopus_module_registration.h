@@ -37,7 +37,7 @@ struct canopus_module_registration_io_v1 {
  * Close failure cannot revoke that publication: return success and report
  * it separately, so modlib does not free a now-referenced module image.
  * Registered modules must retain their image until the Supervisor releases
- * all descriptor references (the P65 experimental path uses reboot). */
+ * all descriptor references. */
 static inline int canopus_module_register_fd(
     const struct canopus_module_registration_io_v1 *io,
     uint32_t descriptor, const char *module_id, int *close_error)

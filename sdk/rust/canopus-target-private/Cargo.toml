@@ -16,8 +16,6 @@ target-xiaomi-band-11-4-100-155 = ["dep:canopus-target-generated", "canopus-targ
 target-xiaomi-band-11-4-100-177 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-11-4-100-177"]
 target-xiaomi-band-9-3-1-32 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-band-9-3-1-32"]
 
-# Exact-P65 experimental facade; unsafe call boundaries are not production approval.
-target-xiaomi-p65-3-100-043 = ["dep:canopus-target-generated", "canopus-target-generated/target-xiaomi-p65-3-100-043"]
 
 [dependencies]
 canopus-target-generated = { path = "../canopus-target-generated", optional = true, default-features = false }

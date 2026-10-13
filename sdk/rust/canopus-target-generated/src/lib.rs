@@ -1,8 +1,7 @@
 //! canopus-target-generated — per-target Rust bindings (CAN-RUST-002 / TGT-006).
 //!
 //! `generated_1036.rs`, `generated_1043.rs`, `generated_9175.rs`,
-//! `generated_1139.rs`, `generated_1155.rs`, `generated_1177.rs`, `generated_9132.rs` and
-//! `generated_p65.rs` are produced by
+//! `generated_1139.rs`, `generated_1155.rs`, `generated_1177.rs` and `generated_9132.rs` are produced by
 //! `canopus target generate-rust-bindings <target>` and committed so the crate
 //! always has an exact-target source artifact. A regression test in
 //! `canopus-core` fails when a supported generated pack changes without regenerating it.
@@ -19,9 +18,8 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 
-// Exactly one target feature must be selected. P65 exposes only exact static
-// identity strings; its loader and all firmware callables remain unapproved.
-// Other candidate packs likewise retain their per-target promotion gates.
+// Exactly one target feature must be selected. Candidate packs retain their
+// per-target promotion gates.
 #[cfg(all(
     not(feature = "target-xiaomi-band-10-pro-3-101-036"),
     not(feature = "target-xiaomi-band-10-pro-3-101-043"),
@@ -29,8 +27,7 @@
     not(feature = "target-xiaomi-band-11-4-100-139"),
     not(feature = "target-xiaomi-band-11-4-100-155"),
     not(feature = "target-xiaomi-band-11-4-100-177"),
-    not(feature = "target-xiaomi-band-9-3-1-32"),
-    not(feature = "target-xiaomi-p65-3-100-043")
+    not(feature = "target-xiaomi-band-9-3-1-32")
 ))]
 compile_error!("canopus-target-generated requires exactly one registered target feature");
 #[cfg(any(
@@ -61,17 +58,6 @@ compile_error!("canopus-target-generated requires exactly one registered target 
     all(
         feature = "target-xiaomi-band-11-4-100-139",
         feature = "target-xiaomi-band-9-3-1-32"
-    ),
-    all(
-        feature = "target-xiaomi-p65-3-100-043",
-        any(
-            feature = "target-xiaomi-band-10-pro-3-101-036",
-            feature = "target-xiaomi-band-10-pro-3-101-043",
-            feature = "target-xiaomi-band-9-pro-3-1-175",
-            feature = "target-xiaomi-band-11-4-100-139",
-            feature = "target-xiaomi-band-11-4-100-155",
-            feature = "target-xiaomi-band-9-3-1-32"
-        )
     )
 ))]
 compile_error!("canopus-target-generated requires exactly one target feature");
@@ -92,8 +78,7 @@ include!("generated_9175.rs");
         feature = "target-xiaomi-band-10-pro-3-101-043",
         feature = "target-xiaomi-band-9-pro-3-1-175",
         feature = "target-xiaomi-band-11-4-100-139",
-        feature = "target-xiaomi-band-9-3-1-32",
-        feature = "target-xiaomi-p65-3-100-043"
+        feature = "target-xiaomi-band-9-3-1-32"
     )
 ))]
 compile_error!("canopus-target-generated requires exactly one target feature");
@@ -106,9 +91,6 @@ include!("generated_1139.rs");
 
 #[cfg(feature = "target-xiaomi-band-9-3-1-32")]
 include!("generated_9132.rs");
-
-#[cfg(feature = "target-xiaomi-p65-3-100-043")]
-include!("generated_p65.rs");
 
 #[cfg(all(
     test,
@@ -280,7 +262,6 @@ mod layout_tests {
         feature = "target-xiaomi-band-11-4-100-139",
         feature = "target-xiaomi-band-11-4-100-155",
         feature = "target-xiaomi-band-9-3-1-32",
-        feature = "target-xiaomi-p65-3-100-043",
     )
 ))]
 compile_error!("canopus-target-generated requires exactly one target feature");
