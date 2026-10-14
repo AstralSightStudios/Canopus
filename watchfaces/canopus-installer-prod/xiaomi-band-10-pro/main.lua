@@ -18,12 +18,13 @@ local MANAGER_ICON_PATH = "/data/canopus/manager_icon.bin"
 local DEVICE_PATH = "/dev/canopus"
 local MODULE_MIN_SIZE = 512
 local MODULE_MAX_SIZE = 262144
-local STATUS_SIZE = 384
-local EXPECTED_MAGIC = 0x43505331 -- "CPS1"
-local EXPECTED_CMD_MAGIC = 0x43504331 -- "CPC1"
-local CMD_INSTALL = 0x43510002
-local CMD_RESTORE_AFTER_BOOT = 0x4351000A
+local CPC2_MAGIC = 0x43504332
+local CPC2_HEADER = 36
+local CMD_QUERY_DEVICE = 9
+local CMD_INSTALL = 13           -- NATIVE_STAGE: payload-free INSTALL stages 0..2
+local CMD_RESTORE_AFTER_BOOT = 14
 local RESULT_COMPLETED = 5
+local request_id = 0
 
 local status
 local run_timer
@@ -142,72 +143,53 @@ local function stage_manager_icon()
     return true
 end
 
-local function bytes_to_words(content)
-    if type(content) ~= "string" or #content ~= STATUS_SIZE then return nil end
-    local words = {}
-    for offset = 1, STATUS_SIZE, 4 do
-        local a, b, c, d = content:byte(offset, offset + 3)
-        words[#words + 1] = a + b * 0x100 + c * 0x10000 + d * 0x1000000
-    end
-    return words
-end
-
 local function signed32(value)
     if value >= 0x80000000 then return value - 0x100000000 end
     return value
 end
 
-local function read_status()
-    local file = io.open(DEVICE_PATH, "rb")
-    if not file then return nil, "cannot open /dev/canopus" end
-    local raw = file:read(STATUS_SIZE)
-    file:close()
-    local words = bytes_to_words(raw)
-    if not words or words[1] ~= EXPECTED_MAGIC then
-        return nil, "supervisor status ABI mismatch"
-    end
-    if words[2] ~= 1 then return nil, "supervisor ABI is not version 1" end
-    if words[10] ~= words[11] or words[10] % 2 ~= 0 then
-        return nil, "supervisor status snapshot is inconsistent"
-    end
-    return {
-        pending_op = words[6],
-        pending_state = words[7],
-        error_code = signed32(words[9]),
-    }
+local function u32le(raw, offset)
+    return (string.unpack("<I4", raw, offset + 1))
 end
 
-local function word(value)
-    value = math.floor(value)
-    return string.char(value % 0x100, math.floor(value / 0x100) % 0x100,
-        math.floor(value / 0x10000) % 0x100,
-        math.floor(value / 0x1000000) % 0x100)
-end
-
-local function write_command(command, arg0)
-    local payload = word(EXPECTED_CMD_MAGIC) .. word(command)
-        .. word(arg0 or 0) .. word(0)
+-- One CPC2 request and its reply, kept together: /dev/canopus has a shared
+-- result mailbox, so nothing may yield between the write and the read.
+local function exchange(command, payload, reply_size)
+    payload = payload or ""
+    request_id = request_id + 1
+    local request = string.pack("<I4I2I2I2I2I4I4I4I4I4I4", CPC2_MAGIC, CPC2_HEADER,
+        1, 1, 0, CPC2_HEADER + #payload, command, request_id, 0, 0, #payload) .. payload
     local file = io.open(DEVICE_PATH, "wb")
-    if not file then return false, "cannot open /dev/canopus" end
-    local write_ok, write_result, write_error = pcall(file.write, file, payload)
-    local close_ok, close_result, close_error = pcall(file.close, file)
-    if not write_ok or write_result == nil then
-        return false, tostring(write_error or write_result or "write failed")
+    if not file then return nil, "cannot open /dev/canopus" end
+    local write_ok, write_result, write_error = pcall(file.write, file, request)
+    local close_ok, close_result = pcall(file.close, file)
+    if not write_ok or write_result == nil or not close_ok or close_result == nil then
+        return nil, tostring(write_error or write_result or "write failed")
     end
-    if not close_ok or close_result == nil then
-        return false, tostring(close_error or close_result or "close failed")
+    file = io.open(DEVICE_PATH, "rb")
+    if not file then return nil, "cannot open /dev/canopus" end
+    local reply = file:read(reply_size)
+    file:close()
+    if type(reply) ~= "string" or #reply ~= reply_size
+        or u32le(reply, 0) ~= CPC2_MAGIC or u32le(reply, 16) ~= command
+        or u32le(reply, 20) ~= request_id then
+        return nil, "supervisor reply ABI mismatch"
     end
-    return true
+    return reply
+end
+
+local function device_error()
+    local reply = exchange(CMD_QUERY_DEVICE, nil, CPC2_HEADER + 36)
+    return reply and signed32(u32le(reply, CPC2_HEADER + 24)) or 0
 end
 
 local function execute_step(command, arg0)
-    local ok, message = write_command(command, arg0)
-    if not ok then return false, message end
-    local current, status_error = read_status()
-    if not current then return false, status_error end
-    if current.pending_op ~= command or current.pending_state ~= RESULT_COMPLETED then
-        return false, string.format("result=%d error=%d",
-            current.pending_state, current.error_code)
+    local reply, message = exchange(command,
+        command == CMD_INSTALL and string.pack("<I4", arg0 or 0) or nil, CPC2_HEADER)
+    if not reply then return false, message end
+    local result = u32le(reply, 28)
+    if result ~= RESULT_COMPLETED then
+        return false, string.format("result=%d error=%d", result, device_error())
     end
     return true
 end

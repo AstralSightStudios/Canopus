@@ -233,7 +233,7 @@ int canopus_supervisor_init(struct canopus_supervisor_v1 *sup,
     sup->platform_cookie = cookie;
     sup->selected = -1;
     sup->loading_slot = -1;
-    sup->last_kind = 0; /* default: legacy CPS1 status read */
+    sup->last_kind = 0; /* no CPC2 response pending */
     canopus_pending_init(&sup->pending);
     canopus_supervisor_services_bind(sup);
     return 0;
@@ -639,6 +639,10 @@ static uint32_t v2_to_sup_cmd(uint32_t cmd)
         return CANOPUS_SUP_CMD_ACTIVATE;
     case CANOPUS_CMD_SCAN:
         return CANOPUS_SUP_CMD_SCAN;
+    case CANOPUS_CMD_NATIVE_STAGE:
+        return CANOPUS_SUP_CMD_INSTALL;
+    case CANOPUS_CMD_RESTORE_AFTER_BOOT:
+        return CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT;
     default:
         return 0; /* unknown command */
     }
@@ -759,6 +763,14 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         canopus_proto_response_init(resp, req->request_id, CANOPUS_RESULT_DISALLOWED, 0);
         return 0;
     }
+    if (req->command == CANOPUS_CMD_NATIVE_STAGE) {
+        if (payload == 0 || req->payload_size != 4u ||
+            wire_u32((const uint8_t *)payload) > 2u) {
+            canopus_proto_response_init(resp, req->request_id,
+                                        CANOPUS_RESULT_DISALLOWED, 0);
+            return 0;
+        }
+    }
     if (req->command == CANOPUS_CMD_QUERY_MODULE) {
         if (payload == 0 || req->payload_size != 4u) {
             canopus_proto_response_init(resp, req->request_id,
@@ -807,7 +819,11 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         sup->error_code = CANOPUS_SUP_ERR_NONE;
     }
     rc = sup_dispatch(sup, op,
-                      req->command == CANOPUS_CMD_INSTALL ? 0u : slot_arg, 0,
+                      req->command == CANOPUS_CMD_INSTALL ? 0u
+                      : req->command == CANOPUS_CMD_NATIVE_STAGE
+                            ? wire_u32((const uint8_t *)payload)
+                            : slot_arg,
+                      0,
                       req->command == CANOPUS_CMD_INSTALL
                           ? (const char *)payload : 0);
     sup->pending_state = rc;
@@ -874,6 +890,7 @@ static uint32_t render_v2_query_payload(
         put_wire_u32(out, 20u, sup->safe_mode_reason);
         put_wire_u32(out, 24u, (uint32_t)sup->error_code);
         put_wire_u32(out, 28u, sup->flags);
+        put_wire_u32(out, 32u, sup->scan_summary);
         return CANOPUS_QUERY_DEVICE_SIZE;
     }
     if (req->command == CANOPUS_CMD_QUERY_MODULE &&
@@ -895,12 +912,6 @@ static uint32_t render_v2_query_payload(
         return CANOPUS_QUERY_MODULE_SIZE;
     }
     return 0u;
-}
-
-static uint32_t status_word(const uint8_t *b, unsigned int o)
-{
-    return (uint32_t)b[o] | ((uint32_t)b[o + 1] << 8) |
-           ((uint32_t)b[o + 2] << 16) | ((uint32_t)b[o + 3] << 24);
 }
 
 int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
@@ -958,39 +969,16 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
 int32_t canopus_supervisor_device_read(struct canopus_supervisor_v1 *sup,
                                        void *buffer, uint32_t count)
 {
-    uint8_t staging[CANOPUS_SUP_STATUS_SIZE];
-    uint32_t attempt, begin, end;
     if (sup == 0 || buffer == 0) {
         return -1;
     }
-    /* CAN-P0-008: after a v2 write, the read returns the v2 response record
-     * (echoing request id / result); otherwise the legacy 384-byte CPS1
-     * status. The two are never length-guessed. */
-    if (sup->last_kind == 1) {
-        if (count < sup->v2_response_len || sup->v2_response_len == 0) {
-            return -1;
-        }
-        canopus_memcpy(buffer, sup->v2_response_buf, sup->v2_response_len);
-        return (int32_t)sup->v2_response_len;
-    }
-    if (count < CANOPUS_SUP_STATUS_SIZE) {
+    /* CPC2 only: the read returns the response of the last v2 write. */
+    if (sup->last_kind != 1 || count < sup->v2_response_len ||
+        sup->v2_response_len == 0) {
         return -1;
     }
-    /* CAN-P1-003: interrupt-safe copy via a staging buffer. Accept the
-     * record only when begin == end and even; retry a bounded number of
-     * times and otherwise report an error — never publish a torn record. */
-    for (attempt = 0; attempt < CANOPUS_SUP_STATUS_RETRIES; attempt++) {
-        if (canopus_supervisor_render_status(sup, staging) != 0) {
-            return -1;
-        }
-        begin = status_word(staging, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF);
-        end = status_word(staging, CANOPUS_SUP_STATUS_SEQ_END_OFF);
-        if ((begin & 1u) == 0u && begin == end) {
-            canopus_memcpy(buffer, staging, CANOPUS_SUP_STATUS_SIZE);
-            return (int32_t)CANOPUS_SUP_STATUS_SIZE;
-        }
-    }
-    return -1; /* still torn: report retry/error, never a partial record */
+    canopus_memcpy(buffer, sup->v2_response_buf, sup->v2_response_len);
+    return (int32_t)sup->v2_response_len;
 }
 
 int32_t canopus_supervisor_device_write(struct canopus_supervisor_v1 *sup,
@@ -1002,18 +990,8 @@ int32_t canopus_supervisor_device_write(struct canopus_supervisor_v1 *sup,
         return -1;
     }
     b = (const uint8_t *)buffer;
-    /* CAN-P0-008: dispatch by magic. Exactly 16 bytes with "CPC1" is the
-     * legacy command; a self-describing "CPC2" record is v2. Unknown magic
-     * or a wrong-size frame is a negative error and never consumed. */
-    if (count == CANOPUS_SUP_COMMAND_SIZE &&
-        b[0] == (uint8_t)CANOPUS_SUP_CMD_MAGIC &&
-        b[1] == (uint8_t)(CANOPUS_SUP_CMD_MAGIC >> 8) &&
-        b[2] == (uint8_t)(CANOPUS_SUP_CMD_MAGIC >> 16) &&
-        b[3] == (uint8_t)(CANOPUS_SUP_CMD_MAGIC >> 24)) {
-        sup->last_kind = 0;
-        (void)canopus_supervisor_handle_command(sup, b);
-        return (int32_t)count;
-    }
+    /* CPC2 is the only wire format (ADR-CAN-004). Unknown magic or a
+     * wrong-size frame is a negative error and never consumed. */
     if (count >= CANOPUS_TRANSPORT_V2_HEADER_SIZE) {
         struct canopus_proto_request_v1 req;
         struct canopus_proto_response_v1 resp;

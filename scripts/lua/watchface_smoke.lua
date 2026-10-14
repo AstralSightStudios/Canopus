@@ -119,11 +119,7 @@ local function check(path, installer_fault, installer_firmware)
     horizontal_resolution = 336
     vertical_resolution = 480
     local installer_state
-    if path:match("canopus%-installer/main%.lua$") then
-        -- Dev installer: no supervisor and no readable firmware version.
-        io.open = function() return nil end
-        os.execute = function() return false end
-    elseif path:match("canopus_hello/main%.lua$") then
+    if path:match("canopus_hello/main%.lua$") then
         io.open, installer_state = module_installer_io(installer_fault)
         os.execute = function() return true end
     end
@@ -191,7 +187,6 @@ end
 local args = { ... }
 if #args == 0 then
     args = {
-        "watchfaces/canopus-installer/main.lua",
         "watchfaces/canopus_hello/main.lua",
     }
 end

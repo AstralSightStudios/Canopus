@@ -12,11 +12,7 @@ local INBOX = "/data/canopus/inbox/"
 local RECEIPT_PATH = INBOX .. TOKEN .. ".cmi.next"
 local MODULE_PATH = INBOX .. TOKEN .. ".ko.next"
 local CPC2_MAGIC = 0x43504332
-local CPC1_MAGIC = 0x43504331
-local CPS1_MAGIC = 0x43505331
 local CMD_INSTALL = 2
-local SUP_CMD_QUERY = 0x43510001
-local DIAG_QUERY_MAGIC = 0x43514431
 local HEADER_SIZE = 36
 local RESULT_COMPLETED = 5
 
@@ -115,8 +111,9 @@ local function stage_files()
 end
 
 local function supervisor_error()
-    local query = word(CPC1_MAGIC) .. word(SUP_CMD_QUERY)
-        .. word(DIAG_QUERY_MAGIC) .. word(0)
+    -- CPC2 QUERY_DEVICE (9): 36-byte header + 36-byte payload, error at payload+24.
+    local query = word(CPC2_MAGIC) .. half(HEADER_SIZE) .. half(1) .. half(1) .. half(0)
+        .. word(HEADER_SIZE) .. word(9) .. word(0x7FFF) .. word(0) .. word(0) .. word(0)
     local device = io.open(DEVICE_PATH, "wb")
     if not device then return nil end
     local ok, result = pcall(device.write, device, query)
@@ -127,13 +124,13 @@ local function supervisor_error()
     end
     device = io.open(DEVICE_PATH, "rb")
     if not device then return nil end
-    local status_record = device:read(384)
+    local record = device:read(HEADER_SIZE + 36)
     pcall(device.close, device)
-    if type(status_record) ~= "string" or #status_record ~= 384
-        or u32(status_record, 0) ~= CPS1_MAGIC then
+    if type(record) ~= "string" or #record ~= HEADER_SIZE + 36
+        or u32(record, 0) ~= CPC2_MAGIC then
         return nil
     end
-    local error = u32(status_record, 32)
+    local error = u32(record, HEADER_SIZE + 24)
     if error >= 0x80000000 then error = error - 0x100000000 end
     return error
 end

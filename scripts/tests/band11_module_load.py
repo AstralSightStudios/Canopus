@@ -15,6 +15,9 @@ it is absent.
     build/band11-tests/bin/python scripts/tests/band11_module_load.py
 """
 import os
+import sys as _s, pathlib as _p
+_s.path.insert(0, str(_p.Path(__file__).resolve().parent))
+import cpc2
 import pathlib
 import struct
 import sys
@@ -114,10 +117,11 @@ class ModuleLoadTests(unittest.TestCase):
         self.alias_blocks.clear()
 
         frame = 0x200d0000
-        m.uc.mem_write(frame, struct.pack('<4I', CMD_MAGIC, RESTORE_AFTER_BOOT, 0, 0))
+        _req = cpc2.legacy(RESTORE_AFTER_BOOT, 0)
+        m.uc.mem_write(frame, _req)
         m.uc.reg_write(UC_ARM_REG_R1, frame)
-        m.uc.reg_write(UC_ARM_REG_R2, 16)
-        self.assertEqual(m.call(m.word(m.fops + 12)), 16)
+        m.uc.reg_write(UC_ARM_REG_R2, len(_req))
+        self.assertEqual(m.call(m.word(m.fops + 12)), len(_req))
 
         buf = self.status()
         self.assertEqual(m.word(buf + 20), RESTORE_AFTER_BOOT)
@@ -163,10 +167,11 @@ class ModuleLoadTests(unittest.TestCase):
         m.finish_access_monitor()
         m.kernel_largest = 4096
         frame = 0x200d0000
-        m.uc.mem_write(frame, struct.pack('<4I', CMD_MAGIC, RESTORE_AFTER_BOOT, 0, 0))
+        _req = cpc2.legacy(RESTORE_AFTER_BOOT, 0)
+        m.uc.mem_write(frame, _req)
         m.uc.reg_write(UC_ARM_REG_R1, frame)
-        m.uc.reg_write(UC_ARM_REG_R2, 16)
-        self.assertEqual(m.call(m.word(m.fops + 12)), 16)
+        m.uc.reg_write(UC_ARM_REG_R2, len(_req))
+        self.assertEqual(m.call(m.word(m.fops + 12)), len(_req))
         buf = self.status()
         self.assertNotEqual(m.word(buf + 128), 0, 'slot is empty')
         live = {p: n for p, n in m.allocations.items()

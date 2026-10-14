@@ -33,6 +33,10 @@ enum canopus_command {
     CANOPUS_CMD_ENTER_SAFE_MODE,
     CANOPUS_CMD_ACTIVATE,
     CANOPUS_CMD_SCAN,
+    /* Framework installer: payload-free INSTALL stages (payload: u32 stage 0..2). */
+    CANOPUS_CMD_NATIVE_STAGE,
+    /* Apply enabled boot intents after the Supervisor's own load. */
+    CANOPUS_CMD_RESTORE_AFTER_BOOT,
 };
 
 struct canopus_proto_request_v1 {
@@ -66,7 +70,7 @@ struct canopus_proto_response_v1 {
 /* Read-only Manager query payloads carried inside CPC2 responses. They are
  * byte-encoded little-endian records, never cast to packed C structs. */
 #define CANOPUS_QUERY_DEVICE_MAGIC 0x43514431u /* "CQD1" */
-#define CANOPUS_QUERY_DEVICE_SIZE  32u
+#define CANOPUS_QUERY_DEVICE_SIZE  36u
 #define CANOPUS_QUERY_MODULE_MAGIC 0x43514D31u /* "CQM1" */
 #define CANOPUS_QUERY_MODULE_SIZE  64u
 

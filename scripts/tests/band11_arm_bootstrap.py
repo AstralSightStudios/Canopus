@@ -7,6 +7,9 @@ it cannot validate physical BES cache/alias behavior or a real display.
 Run with build/band11-tests/bin/python scripts/tests/band11_arm_bootstrap.py.
 """
 import sys as _sys
+import sys as _s, pathlib as _p
+_s.path.insert(0, str(_p.Path(__file__).resolve().parent))
+import cpc2
 from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 import fwlocate
@@ -414,9 +417,10 @@ class BootstrapTests(unittest.TestCase):
         ui = NativeUI(m)
         frame=0x200d0000
         for command,arg0 in [(0x4351000a,0),(0x43510002,0),(0x43510002,1),(0x43510002,2)]:
-            m.uc.mem_write(frame,struct.pack('<4I',0x43504331,command,arg0,0))
-            m.uc.reg_write(UC_ARM_REG_R1,frame);m.uc.reg_write(UC_ARM_REG_R2,16)
-            self.assertEqual(m.call(m.word(m.fops+12)),16)
+            _req = cpc2.legacy(command, arg0)
+            m.uc.mem_write(frame, _req)
+            m.uc.reg_write(UC_ARM_REG_R1,frame);m.uc.reg_write(UC_ARM_REG_R2,len(_req))
+            self.assertEqual(m.call(m.word(m.fops+12)), len(_req))
         self.assertEqual(m.launcher,[0xca])
         self.assertEqual(len(m.notifications), 1)
         self.assertEqual(m.notifications[0]['body'], 'Canopus 已加载！尽情享受吧～')

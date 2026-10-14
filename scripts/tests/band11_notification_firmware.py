@@ -7,6 +7,9 @@ execute the exact firmware instructions, including the event consumer that
 faulted in crash3. This does not verify a real display.
 """
 import sys as _sys
+import sys as _s, pathlib as _p
+_s.path.insert(0, str(_p.Path(__file__).resolve().parent))
+import cpc2
 from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 import fwlocate
@@ -146,10 +149,11 @@ class NotificationTests(unittest.TestCase):
 
     def install_manager(self, m):
         frame = 0x200d0000
-        m.uc.mem_write(frame, struct.pack('<4I', 0x43504331, 0x43510002, 0, 0))
+        _req = cpc2.legacy(0x43510002, 0)
+        m.uc.mem_write(frame, _req)
         m.uc.reg_write(UC_ARM_REG_R1, frame)
-        m.uc.reg_write(UC_ARM_REG_R2, 16)
-        self.assertEqual(m.call(m.word(m.fops + 12)), 16)
+        m.uc.reg_write(UC_ARM_REG_R2, len(_req))
+        self.assertEqual(m.call(m.word(m.fops + 12)), len(_req))
 
     def test_native_success_paths_and_void_return(self):
         m, _ = self.machine()

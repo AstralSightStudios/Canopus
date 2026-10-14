@@ -1,7 +1,7 @@
 -- Band 10 Pro Lua keeps os.execute and /dev access, so this keeps the
 -- device-proven flow of the earlier installers: /dev/canopus (registered by
 -- every Supervisor, including those without the ordinary-IO installer node),
--- a 36-byte reply and a CPS1 status query for the diagnostic. Its build.prop
+-- a 36-byte reply and a CPC2 QUERY_DEVICE for the diagnostic. Its build.prop
 -- carries ro.build.id without the build date; the exact build string is
 -- ro.build.customer_version.
 local ENDPOINT, REPLY_SIZE = "/dev/canopus", 36
@@ -29,8 +29,12 @@ local function prepare_inbox(checkpoint)
     execute("mkdir /data/canopus/inbox")
 end
 local function failure_detail(_, exchange)
+    -- CANOPUS_CMD_QUERY_DEVICE (9): 36-byte reply header + 36-byte payload;
+    -- the Supervisor's last error code is the payload word at offset 24.
     local ok, record = pcall(exchange,
-        string.pack("<I4I4I4I4", 0x43504331, 0x43510001, 0x43514431, 0), 384)
-    if not ok or u32(record, 0) ~= 0x43505331 then return "" end
-    return " error " .. string.unpack("<i4", record, 33)
+        string.pack("<I4I2I2I2I2I4I4I4I4I4I4", 0x43504332, 36, 1, 1, 0, 36, 9, 0x7FFF, 0, 0, 0), 72)
+    if not ok or type(record) ~= "string" or #record ~= 72 or u32(record, 0) ~= 0x43504332 then
+        return ""
+    end
+    return " error " .. string.unpack("<i4", record, 36 + 24 + 1)
 end

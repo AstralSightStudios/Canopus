@@ -12,8 +12,8 @@ CPC2 在不兼容改动时升 `abi_major`；旧 Supervisor 须重装（K1/K11）
 | magic | 含义 | 去留 |
 |---|---|---|
 | CPC2 | v2 请求/响应信封 | 保留，唯一线格式 |
-| CPC1 | 16 字节旧命令 | 删除（P2.5） |
-| CPS1 | 384 字节旧状态 | 删除（P2.5）；状态改由 QUERY 响应承载 |
+| CPC1 | 16 字节旧命令 | 已删除：设备端不再接受（P2.5）；仅留进程内 host 测试接口 |
+| CPS1 | 384 字节旧状态 | 已删除：状态由 QUERY_DEVICE（36 字节载荷，含 scan 摘要）/ QUERY_MODULE 承载 |
 | CPRT | 内存中的 envelope（不是线协议） | 保留为内部名，与线格式无关 |
 | CMI1 | 带签名的 256 字节回执 | 已删除，被 CMI2 取代（P2.7） |
 | CMI2 | 无签名的 176 字节回执 | 保留 |
@@ -21,6 +21,8 @@ CPC2 在不兼容改动时升 `abi_major`；旧 Supervisor 须重装（K1/K11）
 | CQD1 / CQM1 | 设备/模块查询 payload | 并入统一的查询 payload（P2.5） |
 | CAP1 | capability 描述 | 并入服务表（ADR-CAN-006） |
 | CRD1 | registry 文件 | 保留；version 2（A/B 代标志位） |
+
+新增操作码：`SCAN`(12)、`NATIVE_STAGE`(13，载荷 u32 阶段 0..2)、`RESTORE_AFTER_BOOT`(14)。
 
 命令枚举：`CANOPUS_SUP_CMD_*`（0x4351xxxx）并入 `CANOPUS_CMD_*`；已删除的 `UPDATE` 操作码保留不复用。
 

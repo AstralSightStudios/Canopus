@@ -215,28 +215,6 @@ TEST(module_registration_frame_requires_magic_not_only_size)
               &registration, sizeof(registration) - 1u));
 }
 
-TEST(supervisor_device_transfers_report_bytes)
-{
-    struct canopus_supervisor_v1 sup;
-    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
-    uint8_t status[CANOPUS_SUP_STATUS_SIZE];
-    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
-
-    g_stages = 0;
-    CHECK(canopus_supervisor_device_write(&sup, cmd, sizeof(cmd)) ==
-          CANOPUS_SUP_COMMAND_SIZE);
-    CHECK(g_stages == 1);
-    CHECK(sup.pending_state == CANOPUS_RESULT_COMPLETED);
-    CHECK(canopus_supervisor_device_write(&sup, cmd, sizeof(cmd) - 1) == -1);
-    CHECK(canopus_supervisor_device_write(&sup, cmd, sizeof(cmd) + 1) == -1);
-
-    CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status)) ==
-          CANOPUS_SUP_STATUS_SIZE);
-    CHECK(r32(status, 24) == CANOPUS_RESULT_COMPLETED);
-    CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status) - 1) == -1);
-}
-
 TEST(supervisor_query_returns_completed)
 {
     struct canopus_supervisor_v1 sup;
@@ -974,6 +952,40 @@ TEST(supervisor_old_format_registry_is_refused_not_loaded)
     g_registry_present = 0;
 }
 
+static void make_v2_request(uint8_t *buf, uint32_t cap, uint32_t opcode,
+                            uint32_t request_id, const void *payload,
+                            uint32_t payload_len);
+static uint32_t v2_word(const uint8_t *b, uint32_t o);
+
+TEST(v2_native_stage_and_restore_commands_replace_cpc1_framework_ops)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t wbuf[64], rbuf[64];
+    uint8_t stage[4] = { 2, 0, 0, 0 };
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    g_stage_result = 0;
+    g_stages = 0;
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_NATIVE_STAGE, 1, stage, 4);
+    CHECK_EQ(canopus_supervisor_device_write(&sup, wbuf,
+             CANOPUS_TRANSPORT_V2_HEADER_SIZE + 4), (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 4));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK_EQ(v2_word(rbuf, 28), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(g_stages, 1);
+    CHECK_EQ(g_last_stage, 2u);
+    stage[0] = 3; /* out of range */
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_NATIVE_STAGE, 2, stage, 4);
+    CHECK_EQ(canopus_supervisor_device_write(&sup, wbuf,
+             CANOPUS_TRANSPORT_V2_HEADER_SIZE + 4), (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + 4));
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK_EQ(v2_word(rbuf, 28), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(g_stages, 1);
+    make_v2_request(wbuf, sizeof(wbuf), CANOPUS_CMD_RESTORE_AFTER_BOOT, 3, 0, 0);
+    CHECK_EQ(canopus_supervisor_device_write(&sup, wbuf,
+             CANOPUS_TRANSPORT_V2_HEADER_SIZE), (int32_t)CANOPUS_TRANSPORT_V2_HEADER_SIZE);
+    CHECK(canopus_supervisor_device_read(&sup, rbuf, sizeof(rbuf)) > 0);
+    CHECK_EQ(v2_word(rbuf, 28), CANOPUS_RESULT_COMPLETED);
+}
+
 TEST(supervisor_resident_disable_is_reboot_required)
 {
     struct canopus_supervisor_v1 sup;
@@ -1168,42 +1180,6 @@ TEST(supervisor_command_advances_sequence)
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
     canopus_supervisor_render_status(&sup, status);
     CHECK_EQ(r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF), 4u);
-}
-
-TEST(supervisor_read_rejects_torn_snapshot)
-{
-    struct canopus_supervisor_v1 sup;
-    uint8_t status[CANOPUS_SUP_STATUS_SIZE];
-    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    /* simulate a mid-write (odd sequence): the reader must not publish it */
-    sup.snap.sequence = sup.snap.sequence | 1u;
-    CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status)) == -1);
-    /* after the mutation commits, the same read succeeds and is consistent */
-    canopus_snapshot_commit(&sup.snap);
-    CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status)) ==
-          CANOPUS_SUP_STATUS_SIZE);
-    CHECK_EQ(r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF),
-             r32(status, CANOPUS_SUP_STATUS_SEQ_END_OFF));
-    CHECK((r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF) & 1u) == 0u);
-}
-
-TEST(supervisor_read_staging_never_torn)
-{
-    struct canopus_supervisor_v1 sup;
-    uint8_t status[CANOPUS_SUP_STATUS_SIZE];
-    uint8_t cmd[CANOPUS_SUP_COMMAND_SIZE];
-    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
-    CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.hello") == 0);
-    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_REBOOT_REQUIRED);
-    /* the read returns a fully consistent record: slot state present, no
-     * torn mix of module states */
-    CHECK(canopus_supervisor_device_read(&sup, status, sizeof(status)) ==
-          CANOPUS_SUP_STATUS_SIZE);
-    CHECK_EQ(r32(status, 128 + 0 * CANOPUS_SUP_MODULE_SLOT_STRIDE + 0),
-             CANOPUS_STATE_ENABLED);
-    CHECK_EQ(r32(status, CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF),
-             r32(status, CANOPUS_SUP_STATUS_SEQ_END_OFF));
 }
 
 /* ---- CAN-P0-008: v2 transport -------------------------------------- */
@@ -1653,7 +1629,6 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_status_abi_layout", supervisor_status_abi_layout_wrapper },
     { "supervisor_command_abi_validates", supervisor_command_abi_validates_wrapper },
     { "module_registration_frame_requires_magic_not_only_size", module_registration_frame_requires_magic_not_only_size_wrapper },
-    { "supervisor_device_transfers_report_bytes", supervisor_device_transfers_report_bytes_wrapper },
     { "supervisor_query_returns_completed", supervisor_query_returns_completed_wrapper },
     { "supervisor_install_stages_package", supervisor_install_stages_package_wrapper },
     { "supervisor_install_passes_legacy_publication_stages", supervisor_install_passes_legacy_publication_stages_wrapper },
@@ -1685,6 +1660,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_registry_restore_keeps_disabled_modules_unloaded", supervisor_registry_restore_keeps_disabled_modules_unloaded_wrapper },
     { "supervisor_registry_remove_intent_clears_at_boot", supervisor_registry_remove_intent_clears_at_boot_wrapper },
     { "supervisor_registry_corrupt_magic_is_ignored", supervisor_registry_corrupt_magic_is_ignored_wrapper },
+    { "v2_native_stage_and_restore_commands_replace_cpc1_framework_ops", v2_native_stage_and_restore_commands_replace_cpc1_framework_ops_wrapper },
     { "supervisor_old_format_registry_is_refused_not_loaded", supervisor_old_format_registry_is_refused_not_loaded_wrapper },
     { "supervisor_resident_disable_is_reboot_required", supervisor_resident_disable_is_reboot_required_wrapper },
     { "supervisor_resident_remove_is_remove_pending", supervisor_resident_remove_is_remove_pending_wrapper },
@@ -1701,8 +1677,6 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_status_reflects_remove_pending", supervisor_status_reflects_remove_pending_wrapper },
     { "supervisor_status_sequence_embedded_and_even", supervisor_status_sequence_embedded_and_even_wrapper },
     { "supervisor_command_advances_sequence", supervisor_command_advances_sequence_wrapper },
-    { "supervisor_read_rejects_torn_snapshot", supervisor_read_rejects_torn_snapshot_wrapper },
-    { "supervisor_read_staging_never_torn", supervisor_read_staging_never_torn_wrapper },
     { "supervisor_error_persists_until_next_command", supervisor_error_persists_until_next_command_wrapper },
     { "supervisor_bad_slot_sets_error", supervisor_bad_slot_sets_error_wrapper },
     { "supervisor_enable_never_loads_so_no_load_error", supervisor_enable_never_loads_so_no_load_error_wrapper },
