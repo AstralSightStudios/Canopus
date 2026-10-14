@@ -40,6 +40,7 @@
   `watchfaces` 里能看到它，`setWatchface` 能切为当前表盘。
 - 但屏幕上只显示预览图（纯色），Lua 界面没有出现；换成只有一个 Label 的最小 Lua 表盘结果相同。因此不是安装器的问题，
   而是这条"facetory 打包 + 模拟器里的 Band 11 表盘引擎"组合下 Lua 不执行/不绘制（可能需要不同的协议字或 Band 11 专用的表盘结构），
-  待在 Facetory / qemu-miwear 一侧确认。Band 11 的 Supervisor/SCAN 因此仍不能端到端验证。
+  同一个最小 Lua 表盘装进 043 模拟器也一样（只显示预览图，重启后屏幕全黑），所以这不是 Band 11 特有的问题：在 Mirage 里，
+Facetory 打包的 Lua 表盘界面都不出现（Lua 入口如何被固件启动取决于设备的表盘运行时约定，见 Facetory 的 docs/LUA_WATCHFACE_PACKAGING.md）。待在 Facetory / qemu-miwear 一侧确认。Band 11 的 Supervisor/SCAN 因此仍不能端到端验证。
   已验证手机投递这一半：经桥把 hello-portable 的 .rpk 装进模拟的 Band 11，数据分区里出现 `/data/quickapp/app/com.canopus.pkg.hello_portable/canopus/{portable.ko, 五个 target 的 .cmi}`；
   由此发现并修正了 Supervisor 的包根目录（Band 11 是 `/data/quickapp/app/`，不是 Band 10 Pro 的 `/data/app/`）。
