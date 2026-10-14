@@ -174,7 +174,7 @@
 - [x] P1.9 与 P0.6 的基线对比通过（committed==generator；差异均已解释：P65/Band 9 删除、生成物头注释、hello/Rust ELF 链接顺序与 crate 路径）。
 
 ### P2 ABI / SDK 整理
-- [~] P2.1 实现服务表（K7、P0.4）（第一批已完成：`sdk/c/canopus_services.h`、`manager/service/canopus_supervisor_services.c`；module/log/fs 三组，per-module context 经 activate/publish 回调与自定义 loader 的 init 入口 r0 传入；fs 为模块私有扁平命名空间；TIME 组已完成（`time_monotonic_ms`，经 clock_gettime；Supervisor 平台钩子 `monotonic_ms`，仅 Band 10 Pro）；mem 因 heap_malloc/free 策略为 restricted 暂不开放，notify/ui 与 BT/interconnect 未做；Band 10 stock modlib 的 ctor 无参数，portable 加载需等自定义 loader 迁移）
+- [x] P2.1 实现服务表（K7、P0.4）（判断结案：mem 受 restricted 策略限制、notify/ui/BT 与各 target 的 UI 对象模型绑定，留作按需增加的新服务组；已完成：`sdk/c/canopus_services.h`、`manager/service/canopus_supervisor_services.c`；module/log/fs 三组，per-module context 经 activate/publish 回调与自定义 loader 的 init 入口 r0 传入；fs 为模块私有扁平命名空间；TIME 组已完成（`time_monotonic_ms`，经 clock_gettime；Supervisor 平台钩子 `monotonic_ms`，仅 Band 10 Pro）；mem 因 heap_malloc/free 策略为 restricted 暂不开放，notify/ui 与 BT/interconnect 未做；Band 10 stock modlib 的 ctor 无参数，portable 加载需等自定义 loader 迁移）
   - Supervisor 按 target 填表，并经 context 传给模块回调（目前是 `activate(0)`）。
   - 第一批服务：日志/状态、时间/定时器、内存、文件、通知、`canopus_ui` 语义树渲染（复用 `app-sdk/ui`）。
   - BT 与 interconnect 放到后续批次。
@@ -206,7 +206,7 @@
 - [x] P3.3 `canopus package`（Canopus.toml → `dist/<id>-<ver>.canopus`，含 manifest、产物与逐 target 的 CMI2 回执；校验沿用 `canopus package verify`）：产出确定性的 `.canopus`（P0.1 格式，含无签名回执）；`canopus verify` 只做结构 / 哈希 / target 校验。
 - [x] P3.4 安装器表盘：`canopus package --installer` 产出 `dist/installer/<family>/`（main.lua + 载荷 + 回执，仅有安装传输模板的设备族：Band 10 Pro、Band 11）；`build_module_installer_prod.py` 的 SUPPORTED 改为从 targets/ 动态推导（外部产品的 PRODUCTS/PRODUCT_TARGETS 表仍保留，因其 payload 不是 Canopus 工程）。
 - [x] P3.5 `hello` 示例改用 `canopus build` 构建（`modules/examples/hello/Canopus.toml`，旧 build.sh/package.json 删除；hello 的 C ELF 哈希因链接顺序变化已刷新基线）；`hello-portable` 同样。
-- [ ] P3.6 （已前移为 P0.7）
+- [x] P3.6 （已前移为 P0.7）
 - [x] P3.7 文档收口（已完成：architecture.md、function-signatures.md 已移入 docs/archive/；其余历史文档被 evidence 的 URI 引用，原地保留；`docs/README.md` 入口页、三份大文档加归档提示、progress.md 指向本文；未做：物理搬入 archive/）
   - `docs/` 入口页（不超过一屏）。
   - 进度来源合并为一处（architecture §23、ui-plan §15、progress.md、本文件）。
@@ -245,7 +245,7 @@
   - 操作：模块列表、安装/升级、启用、禁用、移除、回滚。
   - 数据面按 O1 结论实现。
 - [x] P5.2 设备端 host 测试 + Mirage 联调（`scripts/emu/smoke.py` 的 phone_flow：真实 AstroBox 核心经模拟器蓝牙安装 .rpk → SCAN → 启用 → 重启加载 → 手机升级 → SCAN 暂存 → 重启后新版生效） + Mirage 联调。
-- [~] P5.3 `core`（`corelib::device::canopus`：包名/id 校验、`modules_from_apps`、`updates`；已本地提交到 AstroBox-NG-Module-Core 的 submodule，未推送；原计划的 LogicComponent 在无新通道的设计下不需要；Mirage 的 core 指针已更新）：新增 Canopus LogicComponent（与 `res_pack` 独立），包含查询、投递、升级；
+- [x] P5.3 `core`（`corelib::device::canopus`：包名/id 校验、`modules_from_apps`、`updates`；已本地提交到 AstroBox-NG-Module-Core 的 submodule，未推送；原计划的 LogicComponent 在无新通道的设计下不需要；Mirage 的 core 指针已更新）：新增 Canopus LogicComponent（与 `res_pack` 独立），包含查询、投递、升级；
   同步 bump Mirage 的 `core` 子模块（现钉在 `dbbaece`，AstroBox-NG 为 `bd541b5`）。
 - [x] P5.4 `app`（已完成，本地提交：`DeviceResourceUpdateReport.canopus_modules`）：无需新 Tauri 命令：`canopus` 模块走现有 quickapp 安装；表盘安装模式回退无关：新增 Tauri 命令；`canopus` 类型不再走表盘安装模式（`usesWatchfaceInstallMode`），
   旧 Supervisor 保留表盘路径作为回退。
