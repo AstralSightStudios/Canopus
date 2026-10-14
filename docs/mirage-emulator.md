@@ -23,3 +23,6 @@
 导入 4.100.177 OTA 并创建 q66 设备可以启动 QEMU，但 3 分钟以上 AP 控制台（console.log/uart0.log）无任何输出、屏幕全黑，
 `miragectl sh` 超时；仅 uart1 有 bootloader 横幅。当前 Mirage 构建上 Band 11 没有跑起来，因此 Band 11 的安装器/SCAN
 只有 unicorn 固件仿真（`scripts/tests/band11_*.py`）级别的证据。需要先在 Mirage/qemu-miwear 侧排查 q66 启动。
+用 qemu-miwear 的 HEAD 构建直接启动同一镜像（`-M miwear,profile=q66`，`-d guest_errors,unimp`）也一样：uart1 只有 bootloader 横幅，
+AP 串口无输出；`-d unimp` 显示在轮询 `bes.periph` 的未实现寄存器（偏移 0x86004/0x86008/0x8600c）并反复读写 `bes.cmu`/`aoncmu`，
+CPU 占用很低，即卡在早期时钟/外设初始化。qemu-miwear 的 PROGRESS.md 称 q66 约 4 秒进"设置语言"，与此不符，需 qemu-miwear 侧确认。
