@@ -63,7 +63,7 @@
 | K5 | 手环端入口不走快应用壳/Corona 方案，另开通道（见 O1、O5） | 2026-10-14 |
 | K6 | Mirage 固件来源使用其固件仓（`miragectl firmware archive/download`），不在 Canopus 内保存固件 | 2026-10-14 |
 | K7 | 引入 Supervisor 服务表 `canopus_services_v1`（经 `canopus_context_v1` 传入）：通用能力每个固件只在 Supervisor 内实现一次，模块只依赖 Canopus ABI 版本；`target-private` 保留为 full-trust 逃生口 | 2026-10-14 |
-| K8 | Band 9 / 9 Pro 冻结：保留 `targets/` 数据并标记 frozen，退出 CI / prod / Rust feature 矩阵 | 2026-10-14 |
+| K8 | Band 9 / 9 Pro 冻结，随后（用户决定：除 Band 10 Pro 与 Band 11 外的固件地址一律不可信、需走自定义 loader 推翻重来）已从 `targets/` 删除，数据可由 tag `band9-frozen` 找回 | 2026-10-14 |
 | K9 | 移除全部签名与验签：Ed25519/monocypher、密钥与角色、吊销、`.canopus` 签名、回执签名、target-pack revision 签名。保留非签名的安全检查：artifact SHA-256 完整性、target/固件绑定、模块 ID 合法性、版本单调（保留项为本文解读，如需一并删除请修改） | 2026-10-14 |
 | K10 | 开机自动加载 Supervisor 纳入调查，作为 P4/P5 的前置（P4.0） | 2026-10-14 |
 | K11 | 旧 Supervisor 不做迁移，要求用户重装（原 O2）：不迁移 `registry.bin`；新 Supervisor 遇到旧格式 registry 或旧 inbox 文件时须安全忽略并提示重装，不得崩溃或误加载 | 2026-10-14 |
@@ -314,3 +314,4 @@
 | 2026-10-14 | P5.3–P5.6 完成：AstroBox-NG 的 core/app/web 在 ~/Documents/GitHub/ab/AstroBox-NG 改动（本地提交，未推送） |
 | 2026-10-14 | P2.1 TIME 服务组完成（mem 受 restricted 策略限制未开放） |
 | 2026-10-14 | P3.4 完成（package --installer；安装器目标列表动态化） |
+| 2026-10-14 | Band 9 / 9 Pro target 包删除（地址不可信，重来须走自定义 loader）；仅 Band 10 Pro 与 Band 11 为受支持设备 |

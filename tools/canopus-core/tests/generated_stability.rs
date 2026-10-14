@@ -637,7 +637,7 @@ fn c_veneer_have_exact_recovered_layout() {
 
 #[test]
 fn line_terminated_identity_guard_uses_a_bounded_token() {
-    let dir = repo_root().join("targets/xiaomi-band-9-3.1.32");
+    let dir = repo_root().join("targets/xiaomi-band-11-4.100.139");
     let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
     let (symbols, types) = load_records(&dir).unwrap();
     let text = VeneerGen {
