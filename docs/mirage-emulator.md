@@ -33,7 +33,13 @@
 - 已绑定的 q66 设备屏幕是正常的，之前"全黑"和"配对被拒"是我用错了坐标：Band 11 屏幕 212×520，配对确认键在 (106, 478)，不是 043 的 (250, 435)。
   按此点击后 AstroBox 桥对 Band 11 认证成功（`authenticated with Xiaomi Smart Band 11`，固件 4.100.177），即 Band 11 的手机侧链路在模拟器里可用。
   （未绑定设备能显示开机向导并完成蓝牙配对，但缺少绑定数据，认证返回 account error 4。）
-- Band 11 是 user 构建，没有 NSH，Canopus 在它上面只能经安装器表盘（Lua）启动；表盘需要用外部打包工具（facetory）生成可安装的 .bin/.mwz，
-  本机该工具的 MCP 服务连接失败，所以安装器表盘无法装进模拟器，Band 11 的 Supervisor/SCAN 仍不能端到端验证。
+- Band 11 是 user 构建，没有 NSH，Canopus 在它上面只能经安装器表盘（Lua）启动。打包工具其实有：Facetory 仓库
+  （`/Volumes/EXT0/GitHub/facetory/rust`）的 `cargo build --example package_lua_watchface`，用法
+  `package_lua_watchface <源目录: main.lua + .bin + preview.png> --name N --package-id 12位字母数字 --width 212 --height 520 -o out.bin`
+  （没有 preview.png 会警告"可能无法选中"）。用它把 177 的安装器资源打成 `.bin`，经 AstroBox 桥 `install kind=watchface` 装进模拟的 Band 11 成功，
+  `watchfaces` 里能看到它，`setWatchface` 能切为当前表盘。
+- 但屏幕上只显示预览图（纯色），Lua 界面没有出现；换成只有一个 Label 的最小 Lua 表盘结果相同。因此不是安装器的问题，
+  而是这条"facetory 打包 + 模拟器里的 Band 11 表盘引擎"组合下 Lua 不执行/不绘制（可能需要不同的协议字或 Band 11 专用的表盘结构），
+  待在 Facetory / qemu-miwear 一侧确认。Band 11 的 Supervisor/SCAN 因此仍不能端到端验证。
   已验证手机投递这一半：经桥把 hello-portable 的 .rpk 装进模拟的 Band 11，数据分区里出现 `/data/quickapp/app/com.canopus.pkg.hello_portable/canopus/{portable.ko, 五个 target 的 .cmi}`；
   由此发现并修正了 Supervisor 的包根目录（Band 11 是 `/data/quickapp/app/`，不是 Band 10 Pro 的 `/data/app/`）。
