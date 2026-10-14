@@ -29,6 +29,10 @@
 因此 Band 11 的验证路径不能沿用 043 的 NSH + Lua 驱动，需要经手机侧（AstroBox 桥）安装安装器表盘并看屏幕；
 屏幕为何全黑要在 qemu-miwear 一侧查（q66 的 TE/面板初始化）。
 
-补充（Band 11，2026-10-14）：用 QMP `screendump` 对照——`create --unbound` 的 q66 设备屏幕有内容（约 18 万个非零字节，开机向导），
-而默认的已绑定设备全黑。已绑定设备经 AstroBox 桥连接时，配对需要在手环屏幕上确认，屏幕全黑导致 `pairing was declined on the band`，
-因此无法经手机侧给 Band 11 装包。可能的出路：在未绑定设备上点过向导后走真实配对；或修 qemu-miwear 中已绑定 q66 启动后不亮屏的问题。
+补充（Band 11，2026-10-14，更正前文）：
+- 已绑定的 q66 设备屏幕是正常的，之前"全黑"和"配对被拒"是我用错了坐标：Band 11 屏幕 212×520，配对确认键在 (106, 478)，不是 043 的 (250, 435)。
+  按此点击后 AstroBox 桥对 Band 11 认证成功（`authenticated with Xiaomi Smart Band 11`，固件 4.100.177），即 Band 11 的手机侧链路在模拟器里可用。
+  （未绑定设备能显示开机向导并完成蓝牙配对，但缺少绑定数据，认证返回 account error 4。）
+- Band 11 是 user 构建，没有 NSH，Canopus 在它上面只能经安装器表盘（Lua）启动；表盘需要用外部打包工具（facetory）生成可安装的 .bin/.mwz，
+  本机该工具的 MCP 服务连接失败，所以安装器表盘无法装进模拟器，Band 11 的 Supervisor/SCAN 仍不能端到端验证。
+  可以做、但与 Canopus 无关的部分：经桥安装 .rpk 到 Band 11 并从数据分区读出文件，用来验证手机投递这一半。
