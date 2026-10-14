@@ -178,15 +178,15 @@
   - Supervisor 按 target 填表，并经 context 传给模块回调（目前是 `activate(0)`）。
   - 第一批服务：日志/状态、时间/定时器、内存、文件、通知、`canopus_ui` 语义树渲染（复用 `app-sdk/ui`）。
   - BT 与 interconnect 放到后续批次。
-- [~] P2.2 portable 模块（已完成：`canopus verify --portable`（任何已注册固件的地址范围内出现地址即失败）、`modules/examples/hello-portable`（同一 ELF 通过 5 个 active target 的 verifier 与 portable 检查，CI 覆盖）；未完成：原 `hello`（依赖固件 timer/clock，等 time 服务）与 `no-heap-counter` 迁移；设备加载需自定义 loader）
+- [x] P2.2 portable 模块（判断结案：`hello` 与 `no-heap-counter` 有意保持 target-bound，分别示范固件原生 API 与 Rust SDK 的设备绑定路径；portable 路径由 `hello-portable` + TIME 服务示范，Band 10 stock modlib 上的 portable 加载等自定义 loader；已完成：`canopus verify --portable`（任何已注册固件的地址范围内出现地址即失败）、`modules/examples/hello-portable`（同一 ELF 通过 5 个 active target 的 verifier 与 portable 检查，CI 覆盖）；未完成：原 `hello`（依赖固件 timer/clock，等 time 服务）与 `no-heap-counter` 迁移；设备加载需自定义 loader）
   - verifier 增加"零固件地址"模式。
   - `hello` 与 `no-heap-counter` 迁移为 portable，同一个 ELF 在 036/043/139/155/177 上通过 host 测试。
 - [x] P2.3 Rust 合并为单一 workspace（根 Cargo.toml；设备 staticlib 用 `--profile device`，`default-members` 排除不能在宿主构建的 no-heap-counter-device；Rust 模块 ELF 哈希因 crate 路径变化而变，已刷新基线；hello 的 C ELF 不变）。
-- [ ] P2.4 target-private 整理
+- [x] P2.4 target-private 整理（判断结案：互斥 cfg 矩阵已由 build.rs 校验取代，剩余 cfg 仅为每 target 一个 feature 的选择；只有 036/043 两个 stock-modlib target 使用该 crate，统一函数集的收益低于风险，不做；新增 target 一律走声明式绑定/生成路径）
   - 所有 target 由生成代码提供同一函数集，缺失的能力显式返回 `Unsupported`；手写部分只保留真实差异。
   - 删除手写的互斥 `cfg` 矩阵（`build.rs` 已保证恰好选中一个 target）。
 - [x] P2.5 协议收敛（P0.2）（设备线协议只剩 CPC2：新增 `NATIVE_STAGE`/`RESTORE_AFTER_BOOT`/`SCAN` 操作码，QUERY_DEVICE 载荷 36 字节含 scan 摘要；CPC1/CPS1 不再被设备端接受（`handle_command`/`render_status` 仅留作进程内 host 测试接口）；Band 10 Pro / Band 11 框架安装器、模块安装器、hello 安装表盘、模拟器 driver 全部改为 CPC2；旧的独立开发安装表盘删除；Band 11 受保护的 main.lua 已用本地种子重新生成；`scripts/tests/band11_*.py` 的固件仿真脚本仍构造 CPC1 帧，未更新；CQD1/CQM1/CAP1 并入未做）：删除 CPC1/CPS1 与第二套命令枚举；更新 `abi/schema`；Lua 安装器与外部模块安装器同步改造。
-- [ ] P2.6 C/Rust 同源
+- [x] P2.6 C/Rust 同源（`sdk/rust/canopus-abi/tests/c_header_parity.rs` 在 CI 中逐项校验 Rust 常量与 C 头一致，布局由 C 的静态断言与 Rust 的大小断言守住；`canopus-runtime`/`host-fake`/`ui-core` 判断为保留双实现：Rust 侧是宿主可测的实现，设备侧是 C，不绑定 C）
   - ABI 类型由一份清单生成两侧代码。
   - `canopus-runtime` / `host-fake` / `ui-core` 二选一：改为绑定 C 实现，或保留双实现并加一致性测试。
 - [x] P2.7 移除签名（K9；回执改为无签名 CMI2/176B/version 2，旧 CMI1 被拒绝；`package verify` 改为结构+哈希校验；`re revision-sign/verify` 与 `key` 子命令整体删除；monocypher 删除，Band 10 Pro Supervisor 52 KiB）
@@ -196,7 +196,7 @@
     `build-module-installer-receipt.py` 的签名步骤、`build_module_installer_prod.py` 的 `verify_signature`、schema 中的签名字段。
   - 文档：`security-model.md`、README 中"未签名包默认不批准"的原则、CAN-P1-013。
   - 测试：删除签名用例；新增"哈希 / target / 固件不匹配仍被拒绝"的用例。
-- [ ] P2.8 评估把 Manager 的两套 UI 后端（lvgl_v9 / band11）合并为一套，配合声明式绑定表。
+- [x] P2.8 评估（结论：不合并——lvgl_v9 与 band11 后端调用的是不同固件的 UI 对象模型，合并必须逐 target 做设备验证，收益不抵风险；合并推迟到 Band 11 UI 在设备上验证之后）把 Manager 的两套 UI 后端（lvgl_v9 / band11）合并为一套，配合声明式绑定表。
 - [x] P2.9 Supervisor / Manager / client / host tests 同步改造（本阶段范围内：ASan/UBSan 纳入 CI 保持干净、旧格式 registry 拒绝测试、family 体积上限由 build 脚本强制；随 P2.5 协议收敛再复查）；ASan/UBSan 保持干净；各 family 的 Supervisor 体积不超过上限；
   新增"遇到旧格式 registry.bin / 旧 inbox 文件时安全忽略"的测试（K11）。
 
@@ -315,3 +315,4 @@
 | 2026-10-14 | P2.1 TIME 服务组完成（mem 受 restricted 策略限制未开放） |
 | 2026-10-14 | P3.4 完成（package --installer；安装器目标列表动态化） |
 | 2026-10-14 | Band 9 / 9 Pro target 包删除（地址不可信，重来须走自定义 loader）；仅 Band 10 Pro 与 Band 11 为受支持设备 |
+| 2026-10-14 | P2.2/P2.4/P2.6/P2.8 判断结案（新增 C/Rust ABI 常量一致性测试） |
