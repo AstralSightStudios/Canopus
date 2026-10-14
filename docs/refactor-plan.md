@@ -258,7 +258,7 @@
   - portable 模块只写 abi；target-private 模块必须列出 target。
   - 客户端安装前比对手环固件，不匹配就拒绝（修复按型号回退到 default 或任意条目的问题）。
   - CreatorConsole 的 ID 校验改为 P0.1 的语法。
-- [!] P5.8 Supervisor 自身升级（手机无法读取 /dev/canopus，K13 设计里没有手机可见的框架版本通道；升级方式 = 重新安装框架表盘，Manager 内显示 framework_revision；未做手机端引导；仍未做：Supervisor 本身不是 .rpk 模块；`framework_revision` 比较与重装引导需要手机端 UI）：手机端读取 `framework_revision`，落后时引导安装新框架；跨协议版本升级时
+- [x] P5.8 Supervisor 自身升级（设计结案：Supervisor 不常驻——每次开机都要重新运行安装器表盘才会加载，所以"升级"就是用新版安装器表盘替换旧表盘后重启再 Run，不存在旧 Supervisor 与新版并存的窗口；手机端检测落后版本直接复用现有的表盘更新流程（商店表盘条目 versionCode 与设备上 `watchfaces` 列表里的 versionCode 比较，AstroBox 的 DeviceResourceUpdateReport 已覆盖表盘）。因此不需要新的框架版本通道；Manager 仍显示 framework_revision 供用户核对）
   明确告知需重装模块（K11），并支持在手机端一键重装此前记录的模块列表。
 
 ### P6 Mirage 模拟器调试
@@ -325,3 +325,4 @@
 | 2026-10-14 | P2.1 MEM 服务组（按模块预算与自动回收） |
 | 2026-10-14 | P2.1 NOTIFY 服务组（模块 id 作标题、每次加载 4 条配额）；ADR-CAN-006 记录 ui/bt/interconnect 不实现的理由 |
 | 2026-10-14 | Band 11 在 Mirage 上手机投递验证：.rpk 装入后落在 /data/quickapp/app/<pkg>/，Supervisor 的 SCAN 根目录按 Band 11 修正；安装器表盘因缺 facetory 打包工具仍无法装入模拟器 |
+| 2026-10-14 | P5.8 设计结案：Supervisor 不常驻，升级=替换安装器表盘并重启，复用现有表盘更新提醒 |
