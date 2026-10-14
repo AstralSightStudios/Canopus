@@ -201,8 +201,8 @@
   新增"遇到旧格式 registry.bin / 旧 inbox 文件时安全忽略"的测试（K11）。
 
 ### P3 统一打包流程
-- [x] P3.1 `canopus new <id> [--target T]...`（C；Rust 工程仍用旧的 `module new`，待 `canopus build` 支持 Rust）：生成含 `Canopus.toml`、构建配置、示例源码的模块工程（默认 portable）。
-- [x] P3.2 `canopus build [--target X]`（C；portable 构建一次，target 模块按 `[targets].include` 逐个构建，产物过 verifier；Rust 未做）：portable 模块只构建一次，target-private 模块按矩阵构建；产物均须过 verifier。
+- [x] P3.1 `canopus new <id> [--target T]...`（C；Rust 工程用 `module new`，构建走 sdk/rust/examples/no-heap-counter 的 build.sh 路径；`canopus build` 判断只支持 C：Rust 模块需要 staticlib + 链接 shim 的多 crate 流水线，依赖 Canopus 工作区路径，不适合作为外部工程的通用命令）：生成含 `Canopus.toml`、构建配置、示例源码的模块工程（默认 portable）。
+- [x] P3.2 `canopus build [--target X]`（C；portable 构建一次，target 模块按 `[targets].include` 逐个构建，产物过 verifier；Rust 按上述判断不做）：portable 模块只构建一次，target-private 模块按矩阵构建；产物均须过 verifier。
 - [x] P3.3 `canopus package`（Canopus.toml → `dist/<id>-<ver>.canopus`，含 manifest、产物与逐 target 的 CMI2 回执；校验沿用 `canopus package verify`）：产出确定性的 `.canopus`（P0.1 格式，含无签名回执）；`canopus verify` 只做结构 / 哈希 / target 校验。
 - [x] P3.4 安装器表盘：`canopus package --installer` 产出 `dist/installer/<family>/`（main.lua + 载荷 + 回执，仅有安装传输模板的设备族：Band 10 Pro、Band 11）；`build_module_installer_prod.py` 的 SUPPORTED 改为从 targets/ 动态推导（外部产品的 PRODUCTS/PRODUCT_TARGETS 表仍保留，因其 payload 不是 Canopus 工程）。
 - [x] P3.5 `hello` 示例改用 `canopus build` 构建（`modules/examples/hello/Canopus.toml`，旧 build.sh/package.json 删除；hello 的 C ELF 哈希因链接顺序变化已刷新基线）；`hello-portable` 同样。
@@ -319,3 +319,4 @@
 | 2026-10-14 | P1.2 结案：Band 11 指纹预生成，安装器构建不再需要固件镜像 |
 | 2026-10-14 | P6.1 `canopus emu smoke`；P6.4 需求清单；P6.3 因无 gdb 未验证 |
 | 2026-10-14 | Band 11 固件仿真脚本全部通过（unicorn）；Band 11 SCAN 的 opendir/readdir/closedir 经 043→Band 11 集成匹配核对为错误候选（置信 0.55–0.58，反编译不符），需专门 RE，未做；P4.0/P5.8 记为受限 |
+| 2026-10-14 | `canopus build` 不支持 Rust 为判断结案 |
