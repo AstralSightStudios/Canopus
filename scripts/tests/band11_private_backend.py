@@ -22,10 +22,10 @@ def build_backend():
     out.mkdir(parents=True, exist_ok=True)
     sdk = ROOT / 'sdk/rust'
     triple = 'thumbv8m.main-none-eabi'
-    subprocess.run(['cargo', 'build', '--manifest-path', str(sdk / 'Cargo.toml'),
+    subprocess.run(['cargo', 'build', '--manifest-path', str(ROOT / 'Cargo.toml'),
                     '--release', '--target', triple, '-p', 'canopus-target-private',
                     '--no-default-features', '--features', 'target-xiaomi-band-11-4-100-139'], check=True)
-    deps = sdk / 'target' / triple / 'release'
+    deps = ROOT / 'target' / triple / 'release'
     source = ROOT / 'scripts/tests/band11_private_backend.rs'
     archive = out / 'backend.a'
     subprocess.run(['rustc', str(source), '--edition', '2024', '--crate-type', 'staticlib',

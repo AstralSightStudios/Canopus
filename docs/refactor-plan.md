@@ -185,7 +185,7 @@
 - [x] P2.4 target-private 整理（判断结案：互斥 cfg 矩阵已由 build.rs 校验取代，剩余 cfg 仅为每 target 一个 feature 的选择；只有 036/043 两个 stock-modlib target 使用该 crate，统一函数集的收益低于风险，不做；新增 target 一律走声明式绑定/生成路径）
   - 所有 target 由生成代码提供同一函数集，缺失的能力显式返回 `Unsupported`；手写部分只保留真实差异。
   - 删除手写的互斥 `cfg` 矩阵（`build.rs` 已保证恰好选中一个 target）。
-- [x] P2.5 协议收敛（P0.2）（设备线协议只剩 CPC2：新增 `NATIVE_STAGE`/`RESTORE_AFTER_BOOT`/`SCAN` 操作码，QUERY_DEVICE 载荷 36 字节含 scan 摘要；CPC1/CPS1 不再被设备端接受（`handle_command`/`render_status` 仅留作进程内 host 测试接口）；Band 10 Pro / Band 11 框架安装器、模块安装器、hello 安装表盘、模拟器 driver 全部改为 CPC2；旧的独立开发安装表盘删除；Band 11 受保护的 main.lua 已用本地种子重新生成；`scripts/tests/band11_*.py` 的固件仿真脚本仍构造 CPC1 帧，未更新；CQD1/CQM1/CAP1 并入未做）：删除 CPC1/CPS1 与第二套命令枚举；更新 `abi/schema`；Lua 安装器与外部模块安装器同步改造。
+- [x] P2.5 协议收敛（P0.2）（设备线协议只剩 CPC2：新增 `NATIVE_STAGE`/`RESTORE_AFTER_BOOT`/`SCAN` 操作码，QUERY_DEVICE 载荷 36 字节含 scan 摘要；CPC1/CPS1 不再被设备端接受（`handle_command`/`render_status` 仅留作进程内 host 测试接口）；Band 10 Pro / Band 11 框架安装器、模块安装器、hello 安装表盘、模拟器 driver 全部改为 CPC2；旧的独立开发安装表盘删除；Band 11 受保护的 main.lua 已用本地种子重新生成；`scripts/tests/band11_*.py` 的固件仿真脚本已全部用 unicorn（venv）跑通（重建 155/177 的暂存资源后；private_backend 的 workspace 路径已修）；CQD1/CQM1/CAP1 并入未做）：删除 CPC1/CPS1 与第二套命令枚举；更新 `abi/schema`；Lua 安装器与外部模块安装器同步改造。
 - [x] P2.6 C/Rust 同源（`sdk/rust/canopus-abi/tests/c_header_parity.rs` 在 CI 中逐项校验 Rust 常量与 C 头一致，布局由 C 的静态断言与 Rust 的大小断言守住；`canopus-runtime`/`host-fake`/`ui-core` 判断为保留双实现：Rust 侧是宿主可测的实现，设备侧是 C，不绑定 C）
   - ABI 类型由一份清单生成两侧代码。
   - `canopus-runtime` / `host-fake` / `ui-core` 二选一：改为绑定 C 实现，或保留双实现并加一致性测试。
@@ -215,7 +215,7 @@
   去签名、新回执、协议变更，以及能否转为 portable。
 
 ### P4 设备端更新语义
-- [~] P4.0 开机自动加载调查（K10）。**静态结论（043 IDB，2026-10-14）**：
+- [!] P4.0 开机自动加载调查（K10；结论：维持手动 Run + 手机端提示。方向(1)需要表盘页面 Lua 的前台生命周期，模拟器冒烟靠 NSH `lua` 驱动，无法代表，留待真机）。**静态结论（043 IDB，2026-10-14）**：
   - 启动脚本固化在固件 romfs（`/etc/init.d/rc.sysinit` 挂载 /data 等，`/etc/init.d/rcS` 启动 miwear 等服务，仅在存在 `/data/nobusiness` 目录时跳过业务服务），
     没有任何读取 `/data` 下脚本的钩子，因此无法通过写文件让 Supervisor 随开机加载。
   - 剩余可行方向（均未验证）：(1) 安装表盘 Lua 在页面初始化时自动执行 Run（需该表盘是开机后的当前表盘，且要防止重复加载/崩溃循环——可用"上次加载是否完成"标记）；
@@ -258,7 +258,7 @@
   - portable 模块只写 abi；target-private 模块必须列出 target。
   - 客户端安装前比对手环固件，不匹配就拒绝（修复按型号回退到 default 或任意条目的问题）。
   - CreatorConsole 的 ID 校验改为 P0.1 的语法。
-- [ ] P5.8 Supervisor 自身升级（仍未做：Supervisor 本身不是 .rpk 模块；`framework_revision` 比较与重装引导需要手机端 UI）：手机端读取 `framework_revision`，落后时引导安装新框架；跨协议版本升级时
+- [!] P5.8 Supervisor 自身升级（手机无法读取 /dev/canopus，K13 设计里没有手机可见的框架版本通道；升级方式 = 重新安装框架表盘，Manager 内显示 framework_revision；未做手机端引导；仍未做：Supervisor 本身不是 .rpk 模块；`framework_revision` 比较与重装引导需要手机端 UI）：手机端读取 `framework_revision`，落后时引导安装新框架；跨协议版本升级时
   明确告知需重装模块（K11），并支持在手机端一键重装此前记录的模块列表。
 
 ### P6 Mirage 模拟器调试
@@ -318,3 +318,4 @@
 | 2026-10-14 | P2.2/P2.4/P2.6/P2.8 判断结案（新增 C/Rust ABI 常量一致性测试） |
 | 2026-10-14 | P1.2 结案：Band 11 指纹预生成，安装器构建不再需要固件镜像 |
 | 2026-10-14 | P6.1 `canopus emu smoke`；P6.4 需求清单；P6.3 因无 gdb 未验证 |
+| 2026-10-14 | Band 11 固件仿真脚本全部通过（unicorn）；Band 11 SCAN 的 opendir/readdir/closedir 经 043→Band 11 集成匹配核对为错误候选（置信 0.55–0.58，反编译不符），需专门 RE，未做；P4.0/P5.8 记为受限 |
