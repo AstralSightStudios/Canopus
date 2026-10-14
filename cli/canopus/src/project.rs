@@ -191,7 +191,13 @@ pub fn build(manifest: &Path, target: Option<&str>) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn package(manifest: &Path, output: Option<&Path>, rpk: bool, key_dir: Option<&Path>) -> anyhow::Result<()> {
+pub fn package(
+    manifest: &Path,
+    output: Option<&Path>,
+    rpk: bool,
+    key_dir: Option<&Path>,
+    installer: bool,
+) -> anyhow::Result<()> {
     let project = Project::load(manifest)?;
     let root = canopus_root()?;
     let m = &project.manifest;
@@ -272,6 +278,13 @@ pub fn package(manifest: &Path, output: Option<&Path>, rpk: bool, key_dir: Optio
         packs.len(),
         m.module.version_code
     );
+    if installer {
+        let elfs: Vec<(&TargetPack, PathBuf)> = packs
+            .iter()
+            .map(|p| (p, project.elf_path(if portable { None } else { Some(&p.target_id) })))
+            .collect();
+        write_installers(&project, &root, &elfs, &receipts, &out)?;
+    }
     if rpk {
         // Quick-app container for the phone's stock install path: every
         // target's receipt and the matching ELF(s) under canopus/.
@@ -384,4 +397,104 @@ fn source_template(id: &str, kind: &str) -> String {
             "/* {id} — portable module: uses only the Supervisor service table. */\n#include \"canopus_services.h\"\n\nstatic const struct canopus_context_v1 *s_ctx;\n\nstatic int32_t on_prepare(const struct canopus_context_v1 *ctx) {{ s_ctx = ctx; return 0; }}\n\nstatic int32_t on_activate(const struct canopus_context_v1 *ctx)\n{{\n    if (canopus_services_has(ctx, CANOPUS_SVC_LOG, 1)) {{\n        ctx->services->log_write(ctx, CANOPUS_LOG_INFO, \"{id} active\");\n    }}\n    return 0;\n}}\n\nstatic int32_t on_deactivate(const struct canopus_context_v1 *ctx) {{ (void)ctx; return 0; }}\n\nstatic int32_t on_stop(const struct canopus_context_v1 *ctx) {{ (void)ctx; s_ctx = 0; return 0; }}\n\nstatic int32_t on_query(struct canopus_status_writer_v1 *writer) {{ (void)writer; return 0; }}\n\nstatic const struct canopus_module_descriptor_v1 s_descriptor = {{\n    sizeof(struct canopus_module_descriptor_v1), CANOPUS_ABI_MAJOR, CANOPUS_ABI_MINOR, 0u,\n    \"{id}\", \"0.1.0\", \"\", \"portable-thumbv8m\",\n    on_prepare, on_activate, on_deactivate, on_stop, on_query, 0, 0,\n}};\n\n__attribute__((constructor)) static void init(const struct canopus_context_v1 *ctx)\n{{\n    if (!canopus_services_has(ctx, CANOPUS_SVC_MODULE, 1)) return;\n    s_ctx = ctx;\n    (void)ctx->services->module_register(ctx, &s_descriptor);\n}}\n"
         )
     }
+}
+
+const INSTALLER_MAX_SIZE: usize = 393_216;
+
+fn lua_value(v: &serde_json::Value) -> String {
+    use serde_json::Value::*;
+    match v {
+        Null => "nil".into(),
+        Bool(b) => b.to_string(),
+        Number(n) => n.to_string(),
+        String(s) => serde_json::to_string(s).unwrap(),
+        Array(a) => format!("{{{}}}", a.iter().map(lua_value).collect::<Vec<_>>().join(",")),
+        Object(o) => format!(
+            "{{{}}}",
+            o.iter()
+                .map(|(k, v)| format!("[{}] = {}", serde_json::to_string(k).unwrap(), lua_value(v)))
+                .collect::<Vec<_>>()
+                .join(",\n")
+        ),
+    }
+}
+
+/// Installer watchface folders, one per device family, next to the package:
+/// `<out dir>/installer/<family>/{main.lua, <id>-<target>.bin, <id>-<target>.cmi.bin}`.
+fn write_installers(
+    project: &Project,
+    root: &Path,
+    elfs: &[(&TargetPack, PathBuf)],
+    receipts: &HashMap<String, Vec<u8>>,
+    package_out: &Path,
+) -> anyhow::Result<()> {
+    let template = root.join("watchfaces/module-installer-prod/src");
+    let progress = std::fs::read_to_string(
+        root.join("watchfaces/canopus-installer-prod/xiaomi-band-11/src/progress.lua"),
+    )?;
+    let base = package_out.parent().unwrap_or(Path::new(".")).join("installer");
+    let mut families: std::collections::BTreeMap<String, Vec<(&TargetPack, &PathBuf)>> =
+        Default::default();
+    for (pack, elf) in elfs {
+        let family = pack.target_id.rsplit_once('-').map(|x| x.0).unwrap_or("").to_string();
+        families.entry(family).or_default().push((pack, elf));
+    }
+    for (family, members) in families {
+        let device_file = template.join(format!("device-{family}.lua"));
+        if !device_file.is_file() {
+            println!("installer: skipped {family} (no installer transport)");
+            continue;
+        }
+        let dir = base.join(&family);
+        std::fs::create_dir_all(&dir)?;
+        let mut targets = serde_json::Map::new();
+        for (pack, elf) in &members {
+            let bytes = std::fs::read(elf)?;
+            if bytes.len() > INSTALLER_MAX_SIZE {
+                bail!("{} exceeds the installer size limit", elf.display());
+            }
+            let stem = format!("{}-{}", project.id(), pack.target_id);
+            std::fs::write(dir.join(format!("{stem}.bin")), &bytes)?;
+            std::fs::write(dir.join(format!("{stem}.cmi.bin")), &receipts[&pack.target_id])?;
+            let version = pack.firmware_version.clone();
+            targets.insert(
+                version,
+                serde_json::json!({
+                    "id": pack.target_id,
+                    "firmware": pack.firmware_sha256,
+                    "runtime_pending": false,
+                    "build": pack.firmware_build,
+                }),
+            );
+        }
+        let config = serde_json::json!({
+            "token": project.id(),
+            "title": project.id(),
+            "max_size": INSTALLER_MAX_SIZE,
+            "stem": project.id(),
+            "assets": [],
+            "targets": targets,
+        });
+        let mut source = std::fs::read_to_string(template.join("main.lua"))?;
+        let replacements = [
+            ("-- @CONFIG@", format!("local CONFIG = {}", lua_value(&config))),
+            (
+                "-- @PROGRESS@",
+                format!("local progress = (function()\n{progress}\nend)()"),
+            ),
+            ("-- @DEVICE@", std::fs::read_to_string(&device_file)?.trim_end_matches('\n').to_string()),
+        ];
+        for (marker, text) in replacements {
+            if source.matches(marker).count() != 1 {
+                bail!("installer template is missing marker {marker}");
+            }
+            source = source.replace(marker, &text);
+        }
+        std::fs::write(
+            dir.join("main.lua"),
+            format!("-- Generated by `canopus package --installer`.\n{source}"),
+        )?;
+        println!("wrote installer {}", dir.display());
+    }
+    Ok(())
 }

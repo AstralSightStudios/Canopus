@@ -52,6 +52,10 @@ enum Command {
         /// Directory holding the rpk signing key (default ~/.canopus/rpk).
         #[arg(long)]
         rpk_key_dir: Option<PathBuf>,
+        /// Also write installer watchface folders (one per device family) to
+        /// dist/installer/ for the legacy /dev/canopus or ordinary-IO flow.
+        #[arg(long)]
+        installer: bool,
     },
     /// Create a module project: Canopus.toml + a C source (portable by default).
     New {
@@ -282,7 +286,8 @@ fn run(cli: Cli) -> anyhow::Result<()> {
             output,
             rpk,
             rpk_key_dir,
-        } => project::package(&manifest, output.as_deref(), rpk, rpk_key_dir.as_deref()),
+            installer,
+        } => project::package(&manifest, output.as_deref(), rpk, rpk_key_dir.as_deref(), installer),
         Command::Re(cmd) => commands::re(cmd),
         Command::BuildPlan {
             manifest,

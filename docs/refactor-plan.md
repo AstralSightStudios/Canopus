@@ -204,7 +204,7 @@
 - [x] P3.1 `canopus new <id> [--target T]...`（C；Rust 工程仍用旧的 `module new`，待 `canopus build` 支持 Rust）：生成含 `Canopus.toml`、构建配置、示例源码的模块工程（默认 portable）。
 - [x] P3.2 `canopus build [--target X]`（C；portable 构建一次，target 模块按 `[targets].include` 逐个构建，产物过 verifier；Rust 未做）：portable 模块只构建一次，target-private 模块按矩阵构建；产物均须过 verifier。
 - [x] P3.3 `canopus package`（Canopus.toml → `dist/<id>-<ver>.canopus`，含 manifest、产物与逐 target 的 CMI2 回执；校验沿用 `canopus package verify`）：产出确定性的 `.canopus`（P0.1 格式，含无签名回执）；`canopus verify` 只做结构 / 哈希 / target 校验。
-- [ ] P3.4 安装器表盘改为 `canopus package --installer` 的输出，替换 `build_module_installer_prod.py` / `build_band11_installer.py` 中的硬编码。
+- [x] P3.4 安装器表盘：`canopus package --installer` 产出 `dist/installer/<family>/`（main.lua + 载荷 + 回执，仅有安装传输模板的设备族：Band 10 Pro、Band 11）；`build_module_installer_prod.py` 的 SUPPORTED 改为从 targets/ 动态推导（外部产品的 PRODUCTS/PRODUCT_TARGETS 表仍保留，因其 payload 不是 Canopus 工程）。
 - [x] P3.5 `hello` 示例改用 `canopus build` 构建（`modules/examples/hello/Canopus.toml`，旧 build.sh/package.json 删除；hello 的 C ELF 哈希因链接顺序变化已刷新基线）；`hello-portable` 同样。
 - [ ] P3.6 （已前移为 P0.7）
 - [~] P3.7 文档收口（已完成：`docs/README.md` 入口页、三份大文档加归档提示、progress.md 指向本文；未做：物理搬入 archive/）
@@ -313,3 +313,4 @@
 | 2026-10-14 | K13：O1/O5 结案（.rpk 快应用容器）；P5.0–P5.2、P5.7 完成，P5.3/P5.5 部分，P5.4/P5.6 因私有仓库阻塞；P6.5 端到端用真实 AstroBox 核心在 Mirage 043 上跑通 |
 | 2026-10-14 | P5.3–P5.6 完成：AstroBox-NG 的 core/app/web 在 ~/Documents/GitHub/ab/AstroBox-NG 改动（本地提交，未推送） |
 | 2026-10-14 | P2.1 TIME 服务组完成（mem 受 restricted 策略限制未开放） |
+| 2026-10-14 | P3.4 完成（package --installer；安装器目标列表动态化） |

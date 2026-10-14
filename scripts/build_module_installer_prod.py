@@ -26,9 +26,19 @@ PRODUCTS = {
     'data-quota-lift': ('data_quota_lift', 'Data Quota Lift', 65536, []),
     'refetch': ('refetch', 'ReFetch', 262144, []),
 }
-SUPPORTED = ['xiaomi-band-10-pro-3.101.036', 'xiaomi-band-10-pro-3.101.043',
-             'xiaomi-band-11-4.100.139', 'xiaomi-band-11-4.100.155',
-             'xiaomi-band-11-4.100.177']
+def _supported():
+    """Active targets whose device family has an installer transport."""
+    template = ROOT / 'watchfaces/module-installer-prod/src'
+    found = []
+    for pack in sorted((ROOT / 'targets').glob('*/target.toml')):
+        data = tomllib.loads(pack.read_text())
+        family = pack.parent.name.rsplit('-', 1)[0]
+        if data.get('status') != 'frozen' and (template / ('device-' + family + '.lua')).is_file():
+            found.append(pack.parent.name)
+    return found
+
+
+SUPPORTED = _supported()
 # Products whose payload is valid only for a subset of SUPPORTED; anything not
 # listed accepts every supported target.
 PRODUCT_TARGETS = {
