@@ -90,6 +90,9 @@ struct canopus_sup_platform_v1 {
     /* Raw heap. Both or neither; without them the MEM service group is absent. */
     void *(*heap_alloc)(void *cookie, uint32_t size);
     void (*heap_release)(void *cookie, void *ptr);
+    /* Post a user-visible notification. Returns 0 on success. Optional:
+     * without it the NOTIFY service group is absent. */
+    int (*notify)(void *cookie, const char *title, const char *body);
 };
 
 #ifdef __cplusplus

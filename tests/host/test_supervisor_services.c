@@ -5,6 +5,7 @@
 #include "canopus_services.h"
 #include "canopus_memory.h"
 #include "canopus_runtime.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -104,6 +105,15 @@ static int p_persist(void *c, const uint8_t *d, uint32_t n) { (void)c; (void)d; 
 static int p_restore(void *c, uint8_t *d, uint32_t n) { (void)c; (void)d; (void)n; return 1; }
 
 static uint32_t p_ms(void *c) { (void)c; return 1234u; }
+static int g_notified;
+static char g_notice[160];
+static int p_notify(void *c, const char *title, const char *body)
+{
+    (void)c;
+    g_notified++;
+    snprintf(g_notice, sizeof(g_notice), "%s|%s", title, body);
+    return 0;
+}
 static int g_heap_live;
 static void *p_heap_alloc(void *c, uint32_t n) { (void)c; g_heap_live++; return malloc(n); }
 static void p_heap_release(void *c, void *p) { (void)c; g_heap_live--; free(p); }
@@ -112,12 +122,12 @@ static const struct canopus_sup_platform_v1 platform_with_fs = {
     "xiaomi-band-10-pro-3.101.030", p_noop, p_noop, p_load, p_stage, p_remove,
     p_persist, p_restore, 0, 0, 0, 0,
     f_open, f_read, f_write, f_close, f_remove, 0, 0, p_ms,
-    p_heap_alloc, p_heap_release,
+    p_heap_alloc, p_heap_release, p_notify,
 };
 static const struct canopus_sup_platform_v1 platform_without_fs = {
     "xiaomi-band-10-pro-3.101.030", p_noop, p_noop, p_load, p_stage, p_remove,
     p_persist, p_restore, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
 static int g_activated_with_ctx;
@@ -149,6 +159,26 @@ static void setup(struct canopus_supervisor_v1 *sup,
     s_sup = sup;
     CHECK(canopus_supervisor_add_module(sup, CANOPUS_LIFECYCLE_REMOVABLE, 1,
                                         "mod.portable") == 0);
+}
+
+TEST(notify_is_titled_by_module_and_rate_limited)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    uint32_t i;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0);
+    g_notified = 0;
+    CHECK_EQ(ctx->services->notify_post(ctx, 0), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->services->notify_post(ctx, "hi"), CANOPUS_SVC_OK);
+    CHECK(strcmp(g_notice, "mod.portable|hi") == 0);
+    for (i = 1u; i < CANOPUS_NOTIFY_MAX_POSTS; i++) {
+        CHECK_EQ(ctx->services->notify_post(ctx, "x"), CANOPUS_SVC_OK);
+    }
+    CHECK_EQ(ctx->services->notify_post(ctx, "x"), CANOPUS_SVC_ERR_STATE);
+    CHECK_EQ(g_notified, (int)CANOPUS_NOTIFY_MAX_POSTS);
+    canopus_supervisor_release_services(&sup, 0u);
+    CHECK_EQ(ctx->services->notify_post(ctx, "again"), CANOPUS_SVC_OK);
 }
 
 TEST(mem_is_budgeted_owned_and_released)
@@ -190,6 +220,7 @@ TEST(context_exposes_groups_by_platform_capability)
     CHECK(canopus_services_has(ctx, CANOPUS_SVC_TIME, 1));
     CHECK_EQ(ctx->services->time_monotonic_ms(ctx), 1234u);
     CHECK(canopus_services_has(ctx, CANOPUS_SVC_MEM, 1));
+    CHECK(canopus_services_has(ctx, CANOPUS_SVC_NOTIFY, 1));
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_GROUP_COUNT, 1));
     CHECK(!canopus_services_has(0, CANOPUS_SVC_LOG, 1));
     setup(&sup, &platform_without_fs);
@@ -197,6 +228,7 @@ TEST(context_exposes_groups_by_platform_capability)
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_FS, 1));
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_TIME, 1));
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_MEM, 1));
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_NOTIFY, 1));
     CHECK_EQ(ctx->abi, (CANOPUS_ABI_MAJOR << 16) | CANOPUS_ABI_MINOR);
 }
 
@@ -335,6 +367,8 @@ TEST(register_is_rejected_outside_the_loading_window)
 static struct test_registry supervisor_services_tests[] = {
     { "context_exposes_groups_by_platform_capability",
       context_exposes_groups_by_platform_capability_wrapper },
+    { "notify_is_titled_by_module_and_rate_limited",
+      notify_is_titled_by_module_and_rate_limited_wrapper },
     { "mem_is_budgeted_owned_and_released",
       mem_is_budgeted_owned_and_released_wrapper },
     { "fs_roundtrip_is_private_to_the_module_namespace",

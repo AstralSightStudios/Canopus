@@ -111,7 +111,7 @@ static const struct canopus_sup_platform_v1 update_platform = {
     "xiaomi-band-10-pro-3.101.030",
     u_register, u_register, u_load, u_stage, u_remove, u_persist, u_restore,
     u_stage_verify, u_stage_commit, u_gen_exists, u_gen_verify,
-    0, 0, 0, 0, 0, u_list, u_import, 0, 0, 0,
+    0, 0, 0, 0, 0, u_list, u_import, 0, 0, 0, 0,
 };
 
 static void reset(struct canopus_supervisor_v1 *sup)

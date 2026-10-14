@@ -242,6 +242,29 @@ static void svc_mem_free(const struct canopus_context_v1 *ctx, void *ptr)
     }
 }
 
+/* ---- NOTIFY ---------------------------------------------------------- */
+
+static uint32_t s_notify_posts[CANOPUS_SUP_MODULE_SLOTS];
+
+static int32_t svc_notify_post(const struct canopus_context_v1 *ctx, const char *body)
+{
+    char text[CANOPUS_NOTIFY_BODY_MAX + 1u];
+    uint32_t n = 0u;
+    if (!svc_slot_valid(ctx) || body == 0) return CANOPUS_SVC_ERR_ARGUMENT;
+    if (s_notify_posts[ctx->slot] >= CANOPUS_NOTIFY_MAX_POSTS) return CANOPUS_SVC_ERR_STATE;
+    while (n < CANOPUS_NOTIFY_BODY_MAX && body[n] != '\0') {
+        text[n] = body[n];
+        n++;
+    }
+    text[n] = '\0';
+    s_notify_posts[ctx->slot]++;
+    return s_sup->platform->notify(s_sup->platform_cookie,
+                                   (const char *)s_sup->modules[ctx->slot].module_id,
+                                   text) == 0
+               ? CANOPUS_SVC_OK
+               : CANOPUS_SVC_ERR_IO;
+}
+
 /* ---- table / contexts ------------------------------------------------ */
 
 void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
@@ -251,6 +274,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_log_total = 0u;
     canopus_memset(s_fd, 0, sizeof(s_fd));
     canopus_memset(s_mem, 0, sizeof(s_mem));
+    canopus_memset(s_notify_posts, 0, sizeof(s_notify_posts));
     canopus_memset(&s_services, 0, sizeof(s_services));
     s_services.struct_size = sizeof(s_services);
     s_services.group_version[CANOPUS_SVC_MODULE] = 1u;
@@ -276,6 +300,10 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_services.group_version[CANOPUS_SVC_MEM] = 1u;
         s_services.mem_alloc = svc_mem_alloc;
         s_services.mem_free = svc_mem_free;
+    }
+    if (sup != 0 && sup->platform != 0 && sup->platform->notify != 0) {
+        s_services.group_version[CANOPUS_SVC_NOTIFY] = 1u;
+        s_services.notify_post = svc_notify_post;
     }
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         s_contexts[i].struct_size = sizeof(struct canopus_context_v1);
@@ -309,6 +337,7 @@ void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,
             }
         }
     }
+    s_notify_posts[slot] = 0u;
     if (sup->platform->heap_release != 0) {
         for (i = 0u; i < CANOPUS_MEM_MAX_BLOCKS; i++) {
             if (s_mem[slot][i].ptr != 0) {

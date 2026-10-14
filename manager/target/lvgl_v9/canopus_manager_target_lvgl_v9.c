@@ -1372,6 +1372,29 @@ int canopus_manager_native_notify_module_installed(void)
     return notification_insert(&module_notification);
 }
 
+int canopus_manager_native_notify(const char *title, const char *body)
+{
+    typedef int (*notification_insert_fn)(
+        const struct firmware_notification_message *);
+    notification_insert_fn notification_insert =
+        (notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT;
+    static uint32_t counter;
+    struct firmware_notification_message message;
+
+    if (identity_guard() != 0) {
+        return -1;
+    }
+    canopus_memset(&message, 0, sizeof(message));
+    message.small_icon_path = (void *)notification_icon;
+    message.large_icon_path = (void *)notification_icon;
+    message.start_reminder = 1u;
+    message.message_id = UINT64_C(0x43414E4F50555310) + (counter++ & 0xffu);
+    message.title = (void *)title;
+    message.source = (void *)title;
+    message.body = (void *)body;
+    return notification_insert(&message) < 0 ? -1 : 0;
+}
+
 static void __attribute__((constructor, used)) canopus_manager_target_init(void)
 {
     canopus_manager_target_record.magic = CANOPUS_MANAGER_TARGET_MAGIC;

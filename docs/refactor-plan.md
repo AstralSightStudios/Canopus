@@ -174,7 +174,7 @@
 - [x] P1.9 与 P0.6 的基线对比通过（committed==generator；差异均已解释：P65/Band 9 删除、生成物头注释、hello/Rust ELF 链接顺序与 crate 路径）。
 
 ### P2 ABI / SDK 整理
-- [x] P2.1 实现服务表（K7、P0.4）（判断结案：mem 受 restricted 策略限制、notify/ui/BT 与各 target 的 UI 对象模型绑定，留作按需增加的新服务组；已完成：`sdk/c/canopus_services.h`、`manager/service/canopus_supervisor_services.c`；module/log/fs 三组，per-module context 经 activate/publish 回调与自定义 loader 的 init 入口 r0 传入；fs 为模块私有扁平命名空间；TIME 组已完成（`time_monotonic_ms`，经 clock_gettime；Supervisor 平台钩子 `monotonic_ms`，仅 Band 10 Pro）；MEM 组已完成（`mem_alloc`/`mem_free`，按模块 16 块/16 KiB 预算，卸载时 Supervisor 回收；经 heap_malloc/free，只由 Supervisor 调用，不向模块暴露地址，策略 restricted 不变；Band 11 为 STATIC_RECOVERED 未验证），notify/ui 与 BT/interconnect 未做；Band 10 stock modlib 的 ctor 无参数，portable 加载需等自定义 loader 迁移）
+- [x] P2.1 实现服务表（K7、P0.4）（判断结案：mem 受 restricted 策略限制、NOTIFY 组已完成（Band 11 经 unicorn 加真实固件验证 `canopus_manager_native_notify`，Band 10 Pro 仅 host 测试，模拟器冒烟为 headless 不走通知）；ui/bt/interconnect 按 ADR-CAN-006「实现状态」不实现，待有具体模块需求再立项；已完成：`sdk/c/canopus_services.h`、`manager/service/canopus_supervisor_services.c`；module/log/fs 三组，per-module context 经 activate/publish 回调与自定义 loader 的 init 入口 r0 传入；fs 为模块私有扁平命名空间；TIME 组已完成（`time_monotonic_ms`，经 clock_gettime；Supervisor 平台钩子 `monotonic_ms`，仅 Band 10 Pro）；MEM 组已完成（`mem_alloc`/`mem_free`，按模块 16 块/16 KiB 预算，卸载时 Supervisor 回收；经 heap_malloc/free，只由 Supervisor 调用，不向模块暴露地址，策略 restricted 不变；Band 11 为 STATIC_RECOVERED 未验证），notify/ui 与 BT/interconnect 未做；Band 10 stock modlib 的 ctor 无参数，portable 加载需等自定义 loader 迁移）
   - Supervisor 按 target 填表，并经 context 传给模块回调（目前是 `activate(0)`）。
   - 第一批服务：日志/状态、时间/定时器、内存、文件、通知、`canopus_ui` 语义树渲染（复用 `app-sdk/ui`）。
   - BT 与 interconnect 放到后续批次。
@@ -323,3 +323,4 @@
 | 2026-10-14 | Band 11 139/155/177 的 opendir/readdir/closedir 由 scandir 调用关系与 104/0xC01/98 常量恢复（177 为 155 函数体的唯一前缀匹配），Supervisor 的 SCAN 钩子在 Band 11 上编译启用（STATIC_RECOVERED，未在运行的 Band 11 上验证） |
 | 2026-10-14 | P6.3：scripts/emu/lldb.sh（lldb 经 gdb stub 连 Mirage 设备，已验证） |
 | 2026-10-14 | P2.1 MEM 服务组（按模块预算与自动回收） |
+| 2026-10-14 | P2.1 NOTIFY 服务组（模块 id 作标题、每次加载 4 条配额）；ADR-CAN-006 记录 ui/bt/interconnect 不实现的理由 |

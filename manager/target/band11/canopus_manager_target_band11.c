@@ -1227,6 +1227,31 @@ int canopus_manager_native_notify_module_installed(void)
     return target_notify(&module_notification);
 }
 
+/* Each posted notice borrows its own zeroed context (see above); a small ring
+ * keeps the most recent ones alive for the reminder UI. */
+#define BAND11_NOTIFY_RING 4u
+static struct band11_notification_context notify_contexts[BAND11_NOTIFY_RING];
+static uint32_t notify_counter;
+
+int canopus_manager_native_notify(const char *title, const char *body)
+{
+    struct firmware_notification_message message;
+    uint32_t slot = notify_counter % BAND11_NOTIFY_RING;
+
+    canopus_memset(&message, 0, sizeof(message));
+    message.small_icon_path = (void *)launcher_icon;
+    message.large_icon_path = (void *)launcher_icon;
+    message.start_reminder = 1u;
+
+    canopus_memset(&notify_contexts[slot], 0, sizeof(notify_contexts[slot]));
+    message.message_id = UINT64_C(0x43414E4F50555310) + (notify_counter++ & 0xffu);
+    message.title = (void *)title;
+    message.source = (void *)title;
+    message.body = (void *)body;
+    message.callback_data = &notify_contexts[slot];
+    return target_notify(&message);
+}
+
 static void __attribute__((constructor, used)) canopus_manager_target_init(void)
 {
     canopus_manager_target_record.magic = CANOPUS_MANAGER_TARGET_MAGIC;

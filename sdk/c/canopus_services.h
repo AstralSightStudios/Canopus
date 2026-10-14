@@ -29,6 +29,7 @@ enum canopus_service_group {
     CANOPUS_SVC_FS     = 2, /* module-private files */
     CANOPUS_SVC_TIME   = 3, /* monotonic clock */
     CANOPUS_SVC_MEM    = 4, /* budgeted heap */
+    CANOPUS_SVC_NOTIFY = 5, /* user notifications */
     CANOPUS_SVC_GROUP_COUNT
 };
 
@@ -89,7 +90,17 @@ struct canopus_services_v1 {
      * pointers that this module does not own. */
     void *(*mem_alloc)(const struct canopus_context_v1 *ctx, uint32_t size);
     void (*mem_free)(const struct canopus_context_v1 *ctx, void *ptr);
+
+    /* NOTIFY v1: show a notification titled with the module's id. `body` is
+     * NUL-terminated and truncated to CANOPUS_NOTIFY_BODY_MAX bytes. A module
+     * may post at most CANOPUS_NOTIFY_MAX_POSTS notices per load. Returns 0,
+     * CANOPUS_SVC_ERR_STATE when the quota is used up, or CANOPUS_SVC_ERR_IO
+     * when the firmware rejects the message. */
+    int32_t (*notify_post)(const struct canopus_context_v1 *ctx, const char *body);
 };
+
+#define CANOPUS_NOTIFY_BODY_MAX 120u
+#define CANOPUS_NOTIFY_MAX_POSTS 4u
 
 #define CANOPUS_MEM_MAX_BLOCKS 16u
 #define CANOPUS_MEM_BUDGET 16384u

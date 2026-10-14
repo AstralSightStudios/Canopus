@@ -1297,6 +1297,17 @@ static void sup_heap_release(void *cookie, void *ptr)
 #define SUP_HEAP_RELEASE 0
 #endif
 
+#ifdef CANOPUS_SUP_HEADLESS
+#define SUP_NOTIFY 0 /* UI calls block when driven from an NSH task */
+#else
+static int sup_notify(void *cookie, const char *title, const char *body)
+{
+    (void)cookie;
+    return canopus_manager_native_notify(title, body);
+}
+#define SUP_NOTIFY sup_notify
+#endif
+
 const struct canopus_sup_platform_v1 canopus_sup_platform = {
     CANOPUS_SUP_TARGET_ID,
     sup_register_device,
@@ -1320,4 +1331,5 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     SUP_MONOTONIC_MS,
     SUP_HEAP_ALLOC,
     SUP_HEAP_RELEASE,
+    SUP_NOTIFY,
 };

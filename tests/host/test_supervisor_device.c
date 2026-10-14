@@ -131,7 +131,7 @@ static const struct canopus_sup_platform_v1 fake_platform = {
     "xiaomi-band-10-pro-3.101.030",
     fake_register, fake_unregister, fake_load, fake_stage,
     fake_remove_artifact, fake_persist, fake_restore,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
 /* ---- command/status builders --------------------------------------- */
