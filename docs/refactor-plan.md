@@ -327,3 +327,4 @@
 | 2026-10-14 | Band 11 在 Mirage 上手机投递验证：.rpk 装入后落在 /data/quickapp/app/<pkg>/，Supervisor 的 SCAN 根目录按 Band 11 修正；安装器表盘因缺 facetory 打包工具仍无法装入模拟器 |
 | 2026-10-14 | P5.8 设计结案：Supervisor 不常驻，升级=替换安装器表盘并重启，复用现有表盘更新提醒 |
 \n| 2026-10-14 | Band 11 模拟器端到端跑通（155）：生产安装器 → Supervisor 加载 → 手机投递 .rpk → SCAN 导入；需 qemu-miwear 与 Facetory 两个补丁（scripts/emu/band11/） |\n
+| 2026-10-14 | Band 11 端到端在 177 上同样通过；打补丁后的 qemu 下 043 冒烟 22 项仍全过 |
