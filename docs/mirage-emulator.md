@@ -23,6 +23,8 @@
 导入 4.100.177 OTA 并创建 q66 设备可以启动 QEMU，但 3 分钟以上 AP 控制台（console.log/uart0.log）无任何输出、屏幕全黑，
 `miragectl sh` 超时；仅 uart1 有 bootloader 横幅。当前 Mirage 构建上 Band 11 没有跑起来，因此 Band 11 的安装器/SCAN
 只有 unicorn 固件仿真（`scripts/tests/band11_*.py`）级别的证据。需要先在 Mirage/qemu-miwear 侧排查 q66 启动。
-用 qemu-miwear 的 HEAD 构建直接启动同一镜像（`-M miwear,profile=q66`，`-d guest_errors,unimp`）也一样：uart1 只有 bootloader 横幅，
-AP 串口无输出；`-d unimp` 显示在轮询 `bes.periph` 的未实现寄存器（偏移 0x86004/0x86008/0x8600c）并反复读写 `bes.cmu`/`aoncmu`，
-CPU 占用很低，即卡在早期时钟/外设初始化。qemu-miwear 的 PROGRESS.md 称 q66 约 4 秒进"设置语言"，与此不符，需 qemu-miwear 侧确认。
+更正（后续用 `-d in_asm` 复核）：AP 并没有卡在早期初始化——运行 15 秒后 CPU 在 0x0c6c6a6c 一带的 OS 定时器/等待代码里循环，
+说明固件已启动进入系统。真正的现象是：4.100.177 是 user 构建，没有 NSH 控制台（`miragectl sh` 必然超时），
+且设备已绑定（跳过向导）后截图仍是全黑（所有像素为 0），点击无反应。早先"卡在 bes.periph 轮询"的判断只是日志前段，不成立。
+因此 Band 11 的验证路径不能沿用 043 的 NSH + Lua 驱动，需要经手机侧（AstroBox 桥）安装安装器表盘并看屏幕；
+屏幕为何全黑要在 qemu-miwear 一侧查（q66 的 TE/面板初始化）。
