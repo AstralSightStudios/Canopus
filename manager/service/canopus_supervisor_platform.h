@@ -103,6 +103,18 @@ struct canopus_sup_platform_v1 {
      * without it the NOTIFY service group is absent. */
     int (*notify)(void *cookie, const char *title, const char *body);
     int (*reboot)(void *cookie);
+    /* Haptics & Vibration. Optional: returns 0 on success. */
+    int (*vibrate)(void *cookie, uint32_t duration_ms);
+    /* Display control. Optional. */
+    int (*set_brightness)(void *cookie, uint32_t percent);
+    uint32_t (*get_brightness)(void *cookie);
+    int (*wake_screen)(void *cookie);
+    int (*is_screen_on)(void *cookie);
+    /* Battery & Power. Optional. */
+    uint32_t (*battery_level)(void *cookie);
+    int (*is_charging)(void *cookie);
+    /* System properties. Optional. */
+    int (*get_property)(void *cookie, const char *key, char *buf, uint32_t max_len);
 };
 
 #ifdef __cplusplus

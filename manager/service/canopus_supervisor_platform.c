@@ -1421,6 +1421,59 @@ static int sup_notify(void *cookie, const char *title, const char *body)
 #define SUP_NOTIFY sup_notify
 #endif
 
+static int sup_vibrate(void *cookie, uint32_t duration_ms)
+{
+    (void)cookie;
+    (void)duration_ms;
+    return 0;
+}
+
+static int sup_set_brightness(void *cookie, uint32_t percent)
+{
+    (void)cookie;
+    (void)percent;
+    return 0;
+}
+
+static uint32_t sup_get_brightness(void *cookie)
+{
+    (void)cookie;
+    return 100u;
+}
+
+static int sup_wake_screen(void *cookie)
+{
+    (void)cookie;
+    return 0;
+}
+
+static int sup_is_screen_on(void *cookie)
+{
+    (void)cookie;
+    return 1;
+}
+
+static uint32_t sup_battery_level(void *cookie)
+{
+    (void)cookie;
+    return 85u;
+}
+
+static int sup_is_charging(void *cookie)
+{
+    (void)cookie;
+    return 0;
+}
+
+static int sup_get_property(void *cookie, const char *key, char *buf, uint32_t max_len)
+{
+    (void)cookie;
+    (void)key;
+    (void)buf;
+    (void)max_len;
+    return CANOPUS_SVC_ERR_NOTFOUND;
+}
+
 const struct canopus_sup_platform_v1 canopus_sup_platform = {
     CANOPUS_SUP_TARGET_ID,
     sup_register_device,
@@ -1455,4 +1508,12 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     SUP_HEAP_RELEASE,
     SUP_NOTIFY,
     sup_reboot,
+    sup_vibrate,
+    sup_set_brightness,
+    sup_get_brightness,
+    sup_wake_screen,
+    sup_is_screen_on,
+    sup_battery_level,
+    sup_is_charging,
+    sup_get_property,
 };

@@ -115,6 +115,19 @@ pub enum HookType {
     Pointer = 3,
 }
 
+pub const HAPTIC_CLICK: u32 = 1;
+pub const HAPTIC_DOUBLE_CLICK: u32 = 2;
+pub const HAPTIC_HEAVY: u32 = 3;
+pub const HAPTIC_ALERT: u32 = 4;
+pub const HAPTIC_TICK: u32 = 5;
+
+pub const WAKELOCK_SCREEN: u32 = 1;
+pub const WAKELOCK_CPU: u32 = 2;
+
+pub type CbTimer = unsafe extern "C" fn(ctx: *const ContextV1, timer_id: i32, user_data: *mut c_void);
+pub type CbBus = unsafe extern "C" fn(ctx: *const ContextV1, topic: *const c_char, payload: *const c_void, len: u32, user_data: *mut c_void);
+pub type CbL2Rx = unsafe extern "C" fn(ctx: *const ContextV1, channel: u8, payload: *const c_void, len: u16, user_data: *mut c_void);
+
 #[repr(C)]
 pub struct CanopusFsObj {
     pub open: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char, flags: u32) -> i32,
@@ -133,11 +146,26 @@ pub struct CanopusFsObj {
     pub opendir: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char) -> *mut c_void,
     pub readdir: unsafe extern "C" fn(ctx: *const ContextV1, dir: *mut c_void, out_entry: *mut CanopusFsDirent) -> i32,
     pub closedir: unsafe extern "C" fn(ctx: *const ContextV1, dir: *mut c_void) -> i32,
+    pub read_all: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char, buffer: *mut c_void, max_size: u32) -> i32,
+    pub write_all: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char, buffer: *const c_void, size: u32) -> i32,
+}
+
+#[repr(C)]
+pub struct CanopusKvObj {
+    pub get_int: unsafe extern "C" fn(ctx: *const ContextV1, key: *const c_char, default_val: i32) -> i32,
+    pub set_int: unsafe extern "C" fn(ctx: *const ContextV1, key: *const c_char, val: i32) -> i32,
+    pub get_string: unsafe extern "C" fn(ctx: *const ContextV1, key: *const c_char, buf: *mut c_char, buf_size: u32) -> i32,
+    pub set_string: unsafe extern "C" fn(ctx: *const ContextV1, key: *const c_char, val: *const c_char) -> i32,
+    pub get_bool: unsafe extern "C" fn(ctx: *const ContextV1, key: *const c_char, default_val: i32) -> i32,
+    pub set_bool: unsafe extern "C" fn(ctx: *const ContextV1, key: *const c_char, val: i32) -> i32,
+    pub remove: unsafe extern "C" fn(ctx: *const ContextV1, key: *const c_char) -> i32,
+    pub clear: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
 }
 
 #[repr(C)]
 pub struct CanopusMemObj {
     pub alloc: unsafe extern "C" fn(ctx: *const ContextV1, size: u32) -> *mut c_void,
+    pub calloc: unsafe extern "C" fn(ctx: *const ContextV1, num: u32, size: u32) -> *mut c_void,
     pub realloc: unsafe extern "C" fn(ctx: *const ContextV1, ptr: *mut c_void, new_size: u32) -> *mut c_void,
     pub free: unsafe extern "C" fn(ctx: *const ContextV1, ptr: *mut c_void),
     pub available: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
@@ -149,12 +177,43 @@ pub struct CanopusTimeObj {
     pub monotonic_ms: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
     pub realtime_ms: unsafe extern "C" fn(ctx: *const ContextV1) -> u64,
     pub sleep_ms: unsafe extern "C" fn(ctx: *const ContextV1, ms: u32),
+    pub timer_create: unsafe extern "C" fn(ctx: *const ContextV1, interval_ms: u32, periodic: i32, cb: CbTimer, user_data: *mut c_void) -> i32,
+    pub timer_start: unsafe extern "C" fn(ctx: *const ContextV1, timer_id: i32) -> i32,
+    pub timer_stop: unsafe extern "C" fn(ctx: *const ContextV1, timer_id: i32) -> i32,
+    pub timer_destroy: unsafe extern "C" fn(ctx: *const ContextV1, timer_id: i32) -> i32,
 }
 
 #[repr(C)]
 pub struct CanopusHookObj {
     pub install: unsafe extern "C" fn(ctx: *const ContextV1, target_fn: usize, hook_fn: usize, orig_fn: *mut usize, hook_type: u32) -> i32,
     pub uninstall: unsafe extern "C" fn(ctx: *const ContextV1, hook_id: i32) -> i32,
+    pub is_hooked: unsafe extern "C" fn(ctx: *const ContextV1, target_fn: usize) -> i32,
+}
+
+#[repr(C)]
+pub struct CanopusHapticsObj {
+    pub vibrate: unsafe extern "C" fn(ctx: *const ContextV1, duration_ms: u32) -> i32,
+    pub vibrate_pattern: unsafe extern "C" fn(ctx: *const ContextV1, pattern_ms: *const u16, count: u32) -> i32,
+    pub vibrate_preset: unsafe extern "C" fn(ctx: *const ContextV1, preset: u32) -> i32,
+    pub cancel: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+}
+
+#[repr(C)]
+pub struct CanopusDisplayObj {
+    pub get_brightness: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
+    pub set_brightness: unsafe extern "C" fn(ctx: *const ContextV1, percent: u32) -> i32,
+    pub is_screen_on: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+    pub wake_screen: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+    pub acquire_wake_lock: unsafe extern "C" fn(ctx: *const ContextV1, lock_flags: u32) -> i32,
+    pub release_wake_lock: unsafe extern "C" fn(ctx: *const ContextV1, lock_id: i32) -> i32,
+    pub get_resolution: unsafe extern "C" fn(ctx: *const ContextV1, width: *mut u32, height: *mut u32),
+}
+
+#[repr(C)]
+pub struct CanopusBusObj {
+    pub publish: unsafe extern "C" fn(ctx: *const ContextV1, topic: *const c_char, payload: *const c_void, len: u32) -> i32,
+    pub subscribe: unsafe extern "C" fn(ctx: *const ContextV1, topic: *const c_char, cb: CbBus, user_data: *mut c_void) -> i32,
+    pub unsubscribe: unsafe extern "C" fn(ctx: *const ContextV1, sub_id: i32) -> i32,
 }
 
 #[repr(C)]
@@ -169,19 +228,30 @@ pub struct CanopusLogObj {
 #[repr(C)]
 pub struct CanopusNotifyObj {
     pub post: unsafe extern "C" fn(ctx: *const ContextV1, title: *const c_char, body: *const c_char) -> i32,
+    pub post_with_icon: unsafe extern "C" fn(ctx: *const ContextV1, title: *const c_char, body: *const c_char, icon_id: u32, vibrate: i32) -> i32,
 }
 
 #[repr(C)]
 pub struct CanopusSystemObj {
     pub target_id: unsafe extern "C" fn(ctx: *const ContextV1) -> *const c_char,
+    pub module_id: unsafe extern "C" fn(ctx: *const ContextV1) -> *const c_char,
+    pub device_model: unsafe extern "C" fn(ctx: *const ContextV1) -> *const c_char,
+    pub firmware_version: unsafe extern "C" fn(ctx: *const ContextV1) -> *const c_char,
     pub framework_revision: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
     pub is_safe_mode: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+    pub uptime_ms: unsafe extern "C" fn(ctx: *const ContextV1) -> u64,
+    pub battery_level: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
+    pub is_charging: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
     pub reboot: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+    pub get_property: unsafe extern "C" fn(ctx: *const ContextV1, key: *const c_char, buf: *mut c_char, max_len: u32) -> i32,
 }
 
 #[repr(C)]
 pub struct CanopusBluetoothObj {
     pub l2_send: unsafe extern "C" fn(ctx: *const ContextV1, channel: u8, payload: *const c_void, len: u16) -> i32,
+    pub l2_register_rx: unsafe extern "C" fn(ctx: *const ContextV1, channel: u8, cb: CbL2Rx, user_data: *mut c_void) -> i32,
+    pub is_connected: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+    pub get_rssi: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
     pub adapter_state: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
 }
 
@@ -194,6 +264,7 @@ pub struct CanopusContext {
     pub target_id: *const c_char,
     pub module_id: *const c_char,
     pub fs: *const CanopusFsObj,
+    pub kv: *const CanopusKvObj,
     pub mem: *const CanopusMemObj,
     pub time: *const CanopusTimeObj,
     pub hook: *const CanopusHookObj,
@@ -201,6 +272,9 @@ pub struct CanopusContext {
     pub notify: *const CanopusNotifyObj,
     pub system: *const CanopusSystemObj,
     pub bt: *const CanopusBluetoothObj,
+    pub haptics: *const CanopusHapticsObj,
+    pub display: *const CanopusDisplayObj,
+    pub bus: *const CanopusBusObj,
 }
 
 // ---------------------------------------------------------------------------

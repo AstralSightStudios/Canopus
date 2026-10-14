@@ -188,3 +188,39 @@ pub fn rename(ctx: *const CanopusContext, old_path: &str, new_path: &str) -> Res
         Ok(())
     }
 }
+
+pub fn read_all(ctx: *const CanopusContext, path: &str, buffer: &mut [u8]) -> Result<usize, i32> {
+    if ctx.is_null() { return Err(-22); }
+    let fs = unsafe { (*ctx).fs };
+    if fs.is_null() { return Err(-38); }
+    let mut pb = [0u8; 128];
+    if path.len() >= pb.len() { return Err(-22); }
+    pb[..path.len()].copy_from_slice(path.as_bytes());
+    let rc = unsafe {
+        ((*fs).read_all)(
+            ctx as *const ContextV1,
+            pb.as_ptr() as *const c_char,
+            buffer.as_mut_ptr() as *mut core::ffi::c_void,
+            buffer.len() as u32,
+        )
+    };
+    if rc < 0 { Err(rc) } else { Ok(rc as usize) }
+}
+
+pub fn write_all(ctx: *const CanopusContext, path: &str, data: &[u8]) -> Result<usize, i32> {
+    if ctx.is_null() { return Err(-22); }
+    let fs = unsafe { (*ctx).fs };
+    if fs.is_null() { return Err(-38); }
+    let mut pb = [0u8; 128];
+    if path.len() >= pb.len() { return Err(-22); }
+    pb[..path.len()].copy_from_slice(path.as_bytes());
+    let rc = unsafe {
+        ((*fs).write_all)(
+            ctx as *const ContextV1,
+            pb.as_ptr() as *const c_char,
+            data.as_ptr() as *const core::ffi::c_void,
+            data.len() as u32,
+        )
+    };
+    if rc < 0 { Err(rc) } else { Ok(rc as usize) }
+}

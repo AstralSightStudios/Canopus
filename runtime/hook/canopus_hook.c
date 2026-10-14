@@ -268,3 +268,15 @@ int canopus_hook_is_active(int32_t hook_id)
     }
     return s_hooks[hook_id].used;
 }
+
+int canopus_hook_is_hooked(uintptr_t target_fn)
+{
+    uint32_t i;
+    uintptr_t even = target_fn & ~1u;
+    for (i = 0u; i < CANOPUS_HOOK_MAX_SLOTS; i++) {
+        if (s_hooks[i].used && (s_hooks[i].target_fn & ~1u) == even) {
+            return 1;
+        }
+    }
+    return 0;
+}

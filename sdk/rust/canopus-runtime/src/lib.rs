@@ -14,8 +14,12 @@
 pub use canopus_abi::*;
 
 pub mod allocator;
+pub mod bus;
+pub mod display;
 pub mod fs;
+pub mod haptics;
 pub mod hook;
+pub mod kv;
 pub mod mem;
 pub mod system;
 

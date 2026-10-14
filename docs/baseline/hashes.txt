@@ -43,9 +43,9 @@ c8a90046eb23b9ddfbfbcb060887953a12b44deb625e1664b6779fb3d99e6350  targets/xiaomi
 ## elf
 SKIP  supervisor xiaomi-band-10-pro-3.101.036 (build failed or needs firmware)
 SKIP  supervisor xiaomi-band-10-pro-3.101.043 (build failed or needs firmware)
-19a8f710a117c4ffb63a98a38ff4e257139eddb932fbd8fab2146e9ffdf91cf4  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.139/canopus_supervisor.elf
-724e91d8eb551a71d636fcd8a5d40caa797ed45b1ef0d8855944fee735fffd56  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.155/canopus_supervisor.elf
-b4d965563fe04ec77c6bb6920214ca8281b402251d0357c902370d22e25baf85  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.177/canopus_supervisor.elf
+b30b753c42fbf4f434c13e6383e2f437303474ef74c03b6815fe11a7776c5ca4  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.139/canopus_supervisor.elf
+44d4ebb78fb59c74b8deeba9ee3056ce1a555d657b5d07783452e9df2f3fb4a1  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.155/canopus_supervisor.elf
+d5c42a46f9b31f2466e06eda75265660cf6df12db9f8623f56ea46e6ff51ba56  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.177/canopus_supervisor.elf
 78bf3702217ebd482bac2c8d572855b11ac61e613e1c1dec9bbd1ec004885330  modules/examples/hello/build/xiaomi-band-10-pro-3.101.036/hello.elf
-98b892f2176cc0c1ed645272c24799414a9db299880b364380ee43c8ac799d14  modules/examples/hello-portable/build/hello_portable.elf
-c0c0b135a2c3e2844cd633f1e17ee0826bff4db2aa9f3c34b17de419f678cfee  sdk/rust/examples/no-heap-counter/build/no_heap_counter.elf
+f2539f280cd840cf12b0c9fda6c07269bde1bca9b217cbea920e3cce3584837c  modules/examples/hello-portable/build/hello_portable.elf
+f7a45f6bb5f46c7cf18ccd05c08789f442757d6dccc2625c609f805bb0db377d  sdk/rust/examples/no-heap-counter/build/no_heap_counter.elf

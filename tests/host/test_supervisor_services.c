@@ -455,6 +455,16 @@ TEST(register_is_rejected_outside_the_loading_window)
 
 static int s_dummy_target(int x) { return x + 1; }
 static int s_dummy_hook(int x) { return x + 10; }
+static int s_bus_received = 0;
+static void on_test_bus(const struct canopus_context_v1 *ctx, const char *topic, const void *payload, uint32_t len, void *user_data)
+{
+    (void)ctx; (void)topic; (void)payload; (void)len; (void)user_data;
+    s_bus_received++;
+}
+static void on_test_timer(const struct canopus_context_v1 *ctx, int32_t timer_id, void *user_data)
+{
+    (void)ctx; (void)timer_id; (void)user_data;
+}
 
 TEST(service_objects_are_exposed_and_functional)
 {
@@ -465,12 +475,18 @@ TEST(service_objects_are_exposed_and_functional)
     struct canopus_fs_stat st;
     uintptr_t orig = 0;
     int32_t hook_id;
+    char kbuf[32] = {0};
+    uint32_t res_w = 0, res_h = 0;
+    int32_t lock_id, sub_id, tmr_id;
+    char r_buf[16] = {0};
+
     setup(&sup, &platform_with_fs);
     ctx = canopus_supervisor_context(&sup, 0);
 
     /* Verify all Service Objects are present */
     CHECK(ctx != 0);
     CHECK(ctx->fs != 0);
+    CHECK(ctx->kv != 0);
     CHECK(ctx->mem != 0);
     CHECK(ctx->time != 0);
     CHECK(ctx->hook != 0);
@@ -478,8 +494,11 @@ TEST(service_objects_are_exposed_and_functional)
     CHECK(ctx->notify != 0);
     CHECK(ctx->system != 0);
     CHECK(ctx->bt != 0);
+    CHECK(ctx->haptics != 0);
+    CHECK(ctx->display != 0);
+    CHECK(ctx->bus != 0);
 
-    /* 1. FS Object */
+    /* 1. FS Object (detailed operations & read_all/write_all) */
     fd = ctx->fs->open(ctx, "app_data.bin", CANOPUS_FS_WRITE);
     CHECK(fd >= 0);
     CHECK_EQ(ctx->fs->write(ctx, fd, "abcdefgh", 8), 8);
@@ -499,7 +518,22 @@ TEST(service_objects_are_exposed_and_functional)
     CHECK_EQ(ctx->fs->remove(ctx, "renamed.bin"), 0);
     CHECK_EQ(ctx->fs->exists(ctx, "renamed.bin"), 0);
 
-    /* 2. Memory Object (128 KiB budget) */
+    CHECK_EQ(ctx->fs->write_all(ctx, "batch.txt", "12345", 5), 5);
+    CHECK_EQ(ctx->fs->read_all(ctx, "batch.txt", r_buf, sizeof(r_buf)), 5);
+    CHECK(memcmp(r_buf, "12345", 5) == 0);
+
+    /* 2. KV Preferences Object */
+    CHECK_EQ(ctx->kv->set_int(ctx, "volume", 75), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->kv->get_int(ctx, "volume", 0), 75);
+    CHECK_EQ(ctx->kv->set_string(ctx, "token", "abc123xyz"), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->kv->get_string(ctx, "token", kbuf, sizeof(kbuf)), 9);
+    CHECK(strcmp(kbuf, "abc123xyz") == 0);
+    CHECK_EQ(ctx->kv->set_bool(ctx, "enabled", 1), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->kv->get_bool(ctx, "enabled", 0), 1);
+    CHECK_EQ(ctx->kv->remove(ctx, "volume"), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->kv->get_int(ctx, "volume", 10), 10);
+
+    /* 3. Memory Object (128 KiB budget & calloc) */
     CHECK_EQ(ctx->mem->available(ctx), CANOPUS_MEM_BUDGET);
     CHECK_EQ(ctx->mem->used(ctx), 0u);
     ptr = ctx->mem->alloc(ctx, 65536u); /* 64 KiB */
@@ -514,23 +548,56 @@ TEST(service_objects_are_exposed_and_functional)
     ctx->mem->free(ctx, ptr);
     CHECK_EQ(ctx->mem->used(ctx), 0u);
 
-    /* 3. Hook Object */
+    ptr = ctx->mem->calloc(ctx, 16, 4);
+    CHECK(ptr != 0);
+    ctx->mem->free(ctx, ptr);
+
+    /* 4. Hook Object */
     hook_id = ctx->hook->install(ctx, (uintptr_t)&s_dummy_target, (uintptr_t)&s_dummy_hook, &orig, CANOPUS_HOOK_AUTO);
     CHECK(hook_id >= 0);
     CHECK(orig != 0);
+    CHECK_EQ(ctx->hook->is_hooked(ctx, (uintptr_t)&s_dummy_target), 1);
     CHECK_EQ(ctx->hook->uninstall(ctx, hook_id), 0);
+    CHECK_EQ(ctx->hook->is_hooked(ctx, (uintptr_t)&s_dummy_target), 0);
 
-    /* 4. Log Object */
+    /* 5. Haptics Object */
+    CHECK_EQ(ctx->haptics->vibrate(ctx, 50), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->haptics->vibrate_preset(ctx, CANOPUS_HAPTIC_CLICK), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->haptics->cancel(ctx), CANOPUS_SVC_OK);
+
+    /* 6. Display Object */
+    ctx->display->get_resolution(ctx, &res_w, &res_h);
+    CHECK(res_w > 0 && res_h > 0);
+    CHECK_EQ(ctx->display->is_screen_on(ctx), 1);
+    CHECK_EQ(ctx->display->get_brightness(ctx), 100u);
+    lock_id = ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_SCREEN);
+    CHECK(lock_id > 0);
+    CHECK_EQ(ctx->display->release_wake_lock(ctx, lock_id), CANOPUS_SVC_OK);
+
+    /* 7. Bus Object */
+    s_bus_received = 0;
+    sub_id = ctx->bus->subscribe(ctx, "canopus/test", on_test_bus, 0);
+    CHECK(sub_id >= 0);
+    CHECK_EQ(ctx->bus->publish(ctx, "canopus/test", "ping", 4), 1);
+    CHECK_EQ(s_bus_received, 1);
+    CHECK_EQ(ctx->bus->unsubscribe(ctx, sub_id), CANOPUS_SVC_OK);
+
+    /* 8. Timers Object */
+    tmr_id = ctx->time->timer_create(ctx, 1000, 1, on_test_timer, 0);
+    CHECK(tmr_id >= 0);
+    CHECK_EQ(ctx->time->timer_start(ctx, tmr_id), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->time->timer_stop(ctx, tmr_id), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->time->timer_destroy(ctx, tmr_id), CANOPUS_SVC_OK);
+
+    /* 9. Log Object */
     ctx->log->info(ctx, "hello object log");
     ctx->log->warn(ctx, "warning log");
     ctx->log->error(ctx, "error log");
 
-    /* 5. Time Object */
-    CHECK_EQ(ctx->time->monotonic_ms(ctx), 1234u);
-
-    /* 6. System Object */
+    /* 10. System Object */
     CHECK(strcmp(ctx->system->target_id(ctx), "xiaomi-band-10-pro-3.101.030") == 0);
     CHECK_EQ(ctx->system->is_safe_mode(ctx), 0);
+    CHECK_EQ(ctx->system->battery_level(ctx), 85u);
 }
 
 static struct test_registry supervisor_services_tests[] = {

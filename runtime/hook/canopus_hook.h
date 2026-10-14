@@ -44,6 +44,9 @@ void canopus_hook_release_slot(uint32_t slot);
 /* Query whether a hook is currently active. */
 int canopus_hook_is_active(int32_t hook_id);
 
+/* Query whether a target function is currently hooked. */
+int canopus_hook_is_hooked(uintptr_t target_fn);
+
 #ifdef __cplusplus
 }
 #endif
