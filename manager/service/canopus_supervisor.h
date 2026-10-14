@@ -39,6 +39,9 @@ extern "C" {
 #define CANOPUS_SUP_STATUS_SEQ_BEGIN_OFF 36u
 #define CANOPUS_SUP_STATUS_SEQ_END_OFF   40u
 #define CANOPUS_SUP_STATUS_MODULE_ERROR_OFF 44u
+/* Result of the last SCAN: new | updated << 8 | failed << 16 | scanned << 24
+ * (each saturating at 255). */
+#define CANOPUS_SUP_STATUS_SCAN_OFF      88u
 #define CANOPUS_SUP_STATUS_RETRIES       4u
 
 /* `flags` persistence diagnostic layout, also returned by QUERY_DEVICE:
@@ -78,6 +81,9 @@ enum canopus_sup_command {
      * The installer watchface invokes this from a Lua/LVGL event turn before
      * staged native-app publication. */
     CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT,
+    /* Import packages the phone installed as quick apps
+     * (/data/app/com.canopus.pkg.<id>/) and stage them like an INSTALL. */
+    CANOPUS_SUP_CMD_SCAN,
 };
 
 /* Stable supervisor error codes (CAN-P1-008). `error_code` holds the
@@ -121,6 +127,7 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_STAGE_RECEIPT_READ = -108,
     CANOPUS_SUP_ERR_STAGE_DOWNGRADE = -109, /* receipt version is lower than the installed one */
     CANOPUS_SUP_ERR_STAGE_MOVE = -110,      /* moving the staged package into its generation failed */
+    CANOPUS_SUP_ERR_STAGE_NO_TARGET = -111, /* package carries nothing for this firmware */
     /* Read-return diagnostics: -1100 is EOF, -1101 is the NuttX read
      * wrapper's generic -1 failure. */
     CANOPUS_SUP_ERR_STAGE_RECEIPT_READ_BASE = -1100,
@@ -227,6 +234,7 @@ struct canopus_supervisor_v1 {
     uint32_t pending_state;    /* CANOPUS_RESULT_* */
     uint32_t flags;
     uint32_t error_code;
+    uint32_t scan_summary;     /* see CANOPUS_SUP_STATUS_SCAN_OFF */
     struct canopus_sup_module_v1 modules[CANOPUS_SUP_MODULE_SLOTS];
     int32_t  selected;         /* arg0 from the last command */
     int32_t  loading_slot;     /* slot allowed to self-register during insmod */
@@ -351,6 +359,13 @@ const char *canopus_supervisor_log_entry(uint32_t index, uint32_t *level,
  * rejected. Returns -1 with error_code set on failure. The caller persists. */
 int canopus_supervisor_stage_token(struct canopus_supervisor_v1 *sup,
                                    const char *token);
+
+/* Imports every phone-installed Canopus quick-app package through the
+ * platform's list/import hooks and stages each (fresh install or update).
+ * Same-or-older versions are already current and are not failures. Returns the
+ * result state (COMPLETED, REBOOT_REQUIRED when an update was staged, FAILED
+ * when nothing could be imported and something was rejected). */
+uint32_t canopus_supervisor_scan_packages(struct canopus_supervisor_v1 *sup);
 
 /* CAN-P0-005 revision (next-boot): persist the whole slot table (module id,
  * class, version, flags, boot intent) through the platform `persist` hook.

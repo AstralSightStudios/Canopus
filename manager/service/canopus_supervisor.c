@@ -284,6 +284,7 @@ static int sup_safe_mode_allows(const struct canopus_supervisor_v1 *sup,
     case CANOPUS_SUP_CMD_INSTALL:
     case CANOPUS_SUP_CMD_ENABLE:
     case CANOPUS_SUP_CMD_UPDATE:
+    case CANOPUS_SUP_CMD_SCAN:
     case CANOPUS_SUP_CMD_ACTIVATE:
     case CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT:
         return 0; /* activation is never allowed in safe mode */
@@ -505,6 +506,10 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
         }
         break;
 
+    case CANOPUS_SUP_CMD_SCAN:
+        rc = canopus_supervisor_scan_packages(sup);
+        break;
+
     case CANOPUS_SUP_CMD_ENTER_SAFE_MODE:
         sup->safe_mode = 1u;
         sup->safe_mode_reason = CANOPUS_SAFE_MODE_USER_REQUESTED;
@@ -632,6 +637,8 @@ static uint32_t v2_to_sup_cmd(uint32_t cmd)
         return CANOPUS_SUP_CMD_ENTER_SAFE_MODE;
     case CANOPUS_CMD_ACTIVATE:
         return CANOPUS_SUP_CMD_ACTIVATE;
+    case CANOPUS_CMD_SCAN:
+        return CANOPUS_SUP_CMD_SCAN;
     default:
         return 0; /* unknown command */
     }
@@ -923,6 +930,7 @@ int canopus_supervisor_render_status(const struct canopus_supervisor_v1 *sup,
     PUT32(24, sup->pending_state);
     PUT32(28, sup->flags);
     PUT32(32, sup->error_code);
+    PUT32(CANOPUS_SUP_STATUS_SCAN_OFF, sup->scan_summary);
     /* CAN-P1-003: snapshot begin read once; the end is re-read after the
      * payload so a concurrent mutation leaves begin != end (or odd). */
     seq_begin = sup->snap.sequence;
@@ -1250,6 +1258,61 @@ int canopus_supervisor_stage_token(struct canopus_supervisor_v1 *sup,
     sup->modules[slot].pending_switch = 1u;
     sup_refresh_flags(sup, (uint32_t)slot);
     return 1;
+}
+
+uint32_t canopus_supervisor_scan_packages(struct canopus_supervisor_v1 *sup)
+{
+    const struct canopus_sup_platform_v1 *pf;
+    uint32_t scanned = 0u, added = 0u, updated = 0u, failed = 0u;
+    uint32_t index;
+    uint32_t rc;
+    uint32_t last_error = CANOPUS_SUP_ERR_NONE;
+    char id[CANOPUS_SUP_MODULE_ID_MAX];
+
+    if (sup == 0 || sup->platform == 0) return CANOPUS_RESULT_FAILED;
+    pf = sup->platform;
+    if (pf->list_packages == 0 || pf->import_package == 0) {
+        sup->error_code = CANOPUS_SUP_ERR_STAGE;
+        return CANOPUS_RESULT_FAILED;
+    }
+    for (index = 0u; index < 64u; index++) {
+        int staged;
+        if (pf->list_packages(sup->platform_cookie, index, id) != 0) break;
+        scanned++;
+        sup->error_code = CANOPUS_SUP_ERR_NONE;
+        if (pf->import_package(sup->platform_cookie, id) != 0) {
+            failed++;
+            last_error = sup->error_code != 0u ? sup->error_code
+                                               : (uint32_t)CANOPUS_SUP_ERR_STAGE;
+            continue;
+        }
+        staged = canopus_supervisor_stage_token(sup, id);
+        if (staged == 0) {
+            added++;
+        } else if (staged == 1) {
+            updated++;
+        } else if ((int32_t)sup->error_code != CANOPUS_SUP_ERR_STAGE_DUPLICATE &&
+                   (int32_t)sup->error_code != CANOPUS_SUP_ERR_STAGE_DOWNGRADE) {
+            failed++;
+            last_error = sup->error_code;
+        }
+    }
+    sup->error_code = last_error;
+#define SAT(v) ((v) > 255u ? 255u : (v))
+    sup->scan_summary = SAT(added) | (SAT(updated) << 8) | (SAT(failed) << 16) |
+                        (SAT(scanned) << 24);
+#undef SAT
+    rc = failed != 0u && added == 0u && updated == 0u ? CANOPUS_RESULT_FAILED
+         : updated != 0u ? CANOPUS_RESULT_REBOOT_REQUIRED
+                         : CANOPUS_RESULT_COMPLETED;
+    if (added != 0u || updated != 0u) {
+        int persist_rc = canopus_supervisor_save_registry(sup);
+        if (persist_rc != 0) {
+            sup->error_code = (uint32_t)persist_rc;
+            return CANOPUS_RESULT_FAILED;
+        }
+    }
+    return rc;
 }
 
 /* ---- CAN-P0-005 revision: next-boot registry persistence ------------ */

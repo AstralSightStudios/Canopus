@@ -7,6 +7,7 @@
 local CMD_MAGIC, OPS = 0x43504331, {
     query = 0x43510001, enable = 0x43510003, disable = 0x43510004,
     remove = 0x43510005, rollback = 0x43510007, restore = 0x4351000A,
+    scan = 0x4351000B,
 }
 
 local function u32(s, o) return (string.unpack("<I4", s, o + 1)) end
@@ -32,6 +33,7 @@ local function show(st)
                 i, u32(st, o), u32(st, o + 4), u32(st, o + 8), u32(st, o + 12))
         end
     end
+    out[#out + 1] = string.format("scan=%08x", u32(st, 88))
     print("@@ " .. table.concat(out, " "))
 end
 

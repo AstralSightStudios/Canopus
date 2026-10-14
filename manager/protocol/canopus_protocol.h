@@ -32,6 +32,7 @@ enum canopus_command {
     CANOPUS_CMD_QUERY_DEVICE,
     CANOPUS_CMD_ENTER_SAFE_MODE,
     CANOPUS_CMD_ACTIVATE,
+    CANOPUS_CMD_SCAN,
 };
 
 struct canopus_proto_request_v1 {

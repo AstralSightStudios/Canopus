@@ -76,6 +76,14 @@ struct canopus_sup_platform_v1 {
     int32_t (*file_write)(void *cookie, int fd, const void *buffer, uint32_t size);
     int (*file_close)(void *cookie, int fd);
     int (*file_remove)(void *cookie, const char *path);
+    /* Phone-installed Canopus packages (quick apps named
+     * com.canopus.pkg.<id> under /data/app). list_packages writes the module
+     * id of the index-th package into `id` (capacity CANOPUS_SUP_MODULE_ID_MAX)
+     * and returns 0; 1 past the last; negative on error. import_package copies
+     * the payload for this firmware into the staging area (<id>.cmi.next /
+     * <id>.ko.next); 0 on success, else sets sup->error_code. */
+    int (*list_packages)(void *cookie, uint32_t index, char *id);
+    int (*import_package)(void *cookie, const char *id);
 };
 
 #ifdef __cplusplus

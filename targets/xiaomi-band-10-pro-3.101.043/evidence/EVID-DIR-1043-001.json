@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-DIR-1043-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact-target functions implement opendir/readdir/closedir?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.opendir",
+    "xiaomi-band-10-pro-3.101.043.readdir",
+    "xiaomi-band-10-pro-3.101.043.closedir"
+  ],
+  "prototype_hypothesis": "opendir(path)->DIR*|NULL, readdir(DIR*)->dirent*|NULL, closedir(DIR*)->int, NuttX libc semantics",
+  "callsite_evidence": [
+    "NSH nsh_foreach_direntry (sub_C23E1A8) calls sub_C1E4528(path); loops sub_C1E4590(dir) until NULL passing each entry to a callback; then sub_C1E4564(dir); on NULL open it prints 'Could not open %s (is procfs mounted?)'"
+  ],
+  "control_flow_evidence": [
+    "same helper walks /proc for `top`, so the three calls are the libc directory API"
+  ],
+  "ownership_analysis": "DIR handle is owned by the caller between opendir and closedir; the dirent returned by readdir is valid until the next readdir/closedir.",
+  "unsafe_assumptions": [
+    "STATIC_RECOVERED; d_name offset (+1) is verified only in the emulator"
+  ],
+  "recommended_probe": "List /data/app from the Supervisor on Mirage 043 and compare with NSH ls.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-14T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C23E1A8",
+      "role": "nsh_foreach_direntry"
+    }
+  ]
+}

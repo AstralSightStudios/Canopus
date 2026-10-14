@@ -501,6 +501,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(int)",
     },
     TargetPrivateSymbolRecord {
+        name: "closedir",
+        kind: "function",
+        entry: 0xc1e4564usize,
+        callable: 0xc1e4565usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *)",
+    },
+    TargetPrivateSymbolRecord {
         name: "devif_poll",
         kind: "function",
         entry: 0xc1f9688usize,
@@ -663,6 +672,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(const char *, int, ...)",
     },
     TargetPrivateSymbolRecord {
+        name: "opendir",
+        kind: "function",
+        entry: 0xc1e4528usize,
+        callable: 0xc1e4529usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(const char *)",
+    },
+    TargetPrivateSymbolRecord {
         name: "poll_notify",
         kind: "function",
         entry: 0xc1d0b44usize,
@@ -679,6 +697,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "native-full-trust",
         prototype: "int32(int, void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "readdir",
+        kind: "function",
+        entry: 0xc1e4590usize,
+        callable: 0xc1e4591usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(void *)",
     },
     TargetPrivateSymbolRecord {
         name: "recvfrom",
@@ -2188,6 +2215,8 @@ pub const CLOCK_GETTIME_ENTRY: usize = 0xc201fe0usize;
 pub const CLOCK_GETTIME_CALLABLE: usize = 0xc201fe1usize;
 pub const CLOSE_ENTRY: usize = 0xc1b9d80usize;
 pub const CLOSE_CALLABLE: usize = 0xc1b9d81usize;
+pub const CLOSEDIR_ENTRY: usize = 0xc1e4564usize;
+pub const CLOSEDIR_CALLABLE: usize = 0xc1e4565usize;
 pub const DEVIF_POLL_ENTRY: usize = 0xc1f9688usize;
 pub const DEVIF_POLL_CALLABLE: usize = 0xc1f9689usize;
 pub const DRIVER_CLOSE_DISPATCH_ENTRY: usize = 0xc1cec08usize;
@@ -2224,10 +2253,14 @@ pub const NETDEV_REGISTER_ENTRY: usize = 0xc1fc214usize;
 pub const NETDEV_REGISTER_CALLABLE: usize = 0xc1fc215usize;
 pub const OPEN_ENTRY: usize = 0xc1d0a28usize;
 pub const OPEN_CALLABLE: usize = 0xc1d0a29usize;
+pub const OPENDIR_ENTRY: usize = 0xc1e4528usize;
+pub const OPENDIR_CALLABLE: usize = 0xc1e4529usize;
 pub const POLL_NOTIFY_ENTRY: usize = 0xc1d0b44usize;
 pub const POLL_NOTIFY_CALLABLE: usize = 0xc1d0b45usize;
 pub const READ_ENTRY: usize = 0xc1d129cusize;
 pub const READ_CALLABLE: usize = 0xc1d129dusize;
+pub const READDIR_ENTRY: usize = 0xc1e4590usize;
+pub const READDIR_CALLABLE: usize = 0xc1e4591usize;
 pub const RECVFROM_ENTRY: usize = 0xc1fd570usize;
 pub const RECVFROM_CALLABLE: usize = 0xc1fd571usize;
 pub const REGISTER_BLOCKDRIVER_ENTRY: usize = 0xc1affd8usize;
@@ -2750,6 +2783,13 @@ pub unsafe fn raw_close(a0: i32) -> i32 {
     unsafe { f(a0) }
 }
 
+pub unsafe fn raw_closedir(a0: *mut core::ffi::c_void) -> i32 {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void) -> i32;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_CLOSEDIR_CALLABLE) };
+    unsafe { f(a0) }
+}
+
 pub unsafe fn raw_devif_poll(a0: *mut core::ffi::c_void, a1: *mut core::ffi::c_void) -> i32 {
     type F = unsafe extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void) -> i32;
     let f: F =
@@ -2860,6 +2900,20 @@ pub unsafe fn raw_netdev_register(a0: *mut core::ffi::c_void, a1: i32) -> i32 {
         core::mem::transmute(canopus_target_generated::CANOPUS_FW_NETDEV_REGISTER_CALLABLE)
     };
     unsafe { f(a0, a1) }
+}
+
+pub unsafe fn raw_opendir(a0: *const u8) -> *mut core::ffi::c_void {
+    type F = unsafe extern "C" fn(*const u8) -> *mut core::ffi::c_void;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_OPENDIR_CALLABLE) };
+    unsafe { f(a0) }
+}
+
+pub unsafe fn raw_readdir(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void;
+    let f: F =
+        unsafe { core::mem::transmute(canopus_target_generated::CANOPUS_FW_READDIR_CALLABLE) };
+    unsafe { f(a0) }
 }
 
 pub unsafe fn raw_recvfrom(
@@ -3498,4 +3552,4 @@ pub unsafe fn raw_watchface_reset_watchface(a0: i32) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 96
+// generated target-private raw wrapper count: 99

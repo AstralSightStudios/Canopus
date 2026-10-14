@@ -1053,6 +1053,169 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
     return staged;
 }
 
+
+/* ---- phone-installed packages (com.canopus.pkg.<id> quick apps) ----------
+ * The phone installs a signed .rpk through the stock quick-app path; the band
+ * extracts it to /data/app/<package>/. We only read from there: the payload
+ * for this firmware is copied into the staging area and staged as an INSTALL.
+ * The directory iteration calls are optional per target. */
+#define CANOPUS_SUP_APP_ROOT "/data/app/"
+#define CANOPUS_SUP_PKG_PREFIX "com.canopus.pkg."
+
+#ifdef CANOPUS_SUP_NUTTX_OPENDIR
+static int sup_list_packages(void *cookie, uint32_t index, char *id)
+{
+    typedef void *(*opendir_fn)(const char *);
+    typedef const uint8_t *(*readdir_fn)(void *);
+    typedef int (*closedir_fn)(void *);
+    opendir_fn open_dir = (opendir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPENDIR;
+    readdir_fn read_dir = (readdir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_READDIR;
+    closedir_fn close_dir = (closedir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSEDIR;
+    uint32_t seen = 0u;
+    const uint8_t *entry;
+    void *dir;
+
+    (void)cookie;
+    dir = open_dir(CANOPUS_SUP_APP_ROOT);
+    if (dir == 0) return -1;
+    while ((entry = read_dir(dir)) != 0) {
+        const char *name = (const char *)(entry + 1); /* NuttX dirent: d_type, d_name[] */
+        const char *prefix = CANOPUS_SUP_PKG_PREFIX;
+        uint32_t i = 0u;
+        uint32_t n = 0u;
+        while (prefix[i] != '\0' && name[i] == prefix[i]) i++;
+        if (prefix[i] != '\0') continue;
+        name += i;
+        while (name[n] != '\0' && n < 17u) {
+            if (!sup_token_char((uint8_t)name[n])) break;
+            n++;
+        }
+        /* ADR-CAN-003 ids: 1..16 bytes, fully consumed */
+        if (n == 0u || n > 16u || name[n] != '\0') continue;
+        if (seen++ == index) {
+            for (i = 0u; i < n; i++) id[i] = name[i];
+            id[n] = '\0';
+            (void)close_dir(dir);
+            return 0;
+        }
+    }
+    (void)close_dir(dir);
+    return 1;
+}
+#else
+static int sup_list_packages(void *cookie, uint32_t index, char *id)
+{
+    (void)cookie; (void)index; (void)id;
+    return -1;
+}
+#endif
+
+static int sup_copy_file(const char *from, const char *to)
+{
+    typedef int (*open_fn)(const char *, int, ...);
+    typedef int (*close_fn)(int);
+    typedef int32_t (*read_fn)(int, void *, uint32_t);
+    typedef int32_t (*write_fn)(int, const void *, uint32_t);
+    open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
+    close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
+    read_fn read_file = (read_fn)(uintptr_t)CANOPUS_SUP_NUTTX_READ;
+    write_fn write_file = (write_fn)(uintptr_t)CANOPUS_SUP_NUTTX_WRITE;
+    uint8_t chunk[CANOPUS_SUP_READ_CHUNK];
+    int in = open_file(from, CANOPUS_SUP_NUTTX_O_RDONLY);
+    int out;
+    int rc = 0;
+
+    if (in < 0) return -1;
+    (void)sup_unlink_path(to);
+    out = open_file(to, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT,
+                    CANOPUS_SUP_DEVICE_MODE);
+    if (out < 0) {
+        (void)close_file(in);
+        return -1;
+    }
+    for (;;) {
+        int32_t got = read_file(in, chunk, sizeof(chunk));
+        int32_t done = 0;
+        if (got < 0) { rc = -1; break; }
+        if (got == 0) break;
+        while (done < got) {
+            int32_t put = write_file(out, chunk + done, (uint32_t)(got - done));
+            if (put <= 0) { rc = -1; break; }
+            done += put;
+        }
+        if (rc != 0) break;
+    }
+    (void)close_file(in);
+    if (close_file(out) < 0) rc = -1;
+    if (rc != 0) (void)sup_unlink_path(to);
+    return rc;
+}
+
+static int sup_pkg_path(char out[CANOPUS_SUP_PATH_MAX], const char *id,
+                        const char *leaf)
+{
+    const char *parts[4] = { CANOPUS_SUP_APP_ROOT CANOPUS_SUP_PKG_PREFIX, id,
+                             "/canopus/", leaf };
+    uint32_t used = 0u;
+    uint32_t p, i;
+    for (p = 0u; p < 4u; p++) {
+        for (i = 0u; parts[p][i] != '\0'; i++) {
+            if (used + 1u >= CANOPUS_SUP_PATH_MAX) return -1;
+            out[used++] = parts[p][i];
+        }
+    }
+    out[used] = '\0';
+    return 0;
+}
+
+static int sup_import_package(void *cookie, const char *id)
+{
+    struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
+    char src[CANOPUS_SUP_PATH_MAX];
+    char dst[CANOPUS_SUP_PATH_MAX];
+    char leaf[64];
+    uint32_t i = 0u;
+    const char *target = CANOPUS_SUP_TARGET_ID;
+
+    (void)cookie;
+    /* receipt for exactly this firmware: canopus/<target_id>.cmi */
+    for (; target[i] != '\0' && i + 5u < sizeof(leaf); i++) leaf[i] = target[i];
+    leaf[i] = '\0';
+    {
+        char cmi_leaf[64];
+        char ko_leaf[64];
+        uint32_t j;
+        for (j = 0u; j <= i; j++) { cmi_leaf[j] = leaf[j]; ko_leaf[j] = leaf[j]; }
+        cmi_leaf[i] = '.'; cmi_leaf[i + 1u] = 'c'; cmi_leaf[i + 2u] = 'm';
+        cmi_leaf[i + 3u] = 'i'; cmi_leaf[i + 4u] = '\0';
+        ko_leaf[i] = '.'; ko_leaf[i + 1u] = 'k'; ko_leaf[i + 2u] = 'o';
+        ko_leaf[i + 3u] = '\0';
+        if (sup_pkg_path(src, id, cmi_leaf) != 0 ||
+            sup_make_path(dst, id, s_receipt_suffix[SUP_KIND_NEXT]) != 0) {
+            sup->error_code = CANOPUS_SUP_ERR_STAGE_PATH;
+            return -1;
+        }
+        if (sup_copy_file(src, dst) != 0) {
+            sup->error_code = CANOPUS_SUP_ERR_STAGE_NO_TARGET;
+            return -1;
+        }
+        /* artifact: per-target ELF, else the portable one */
+        if (sup_pkg_path(src, id, ko_leaf) != 0 ||
+            sup_make_path(dst, id, s_module_suffix[SUP_KIND_NEXT]) != 0) {
+            sup->error_code = CANOPUS_SUP_ERR_STAGE_PATH;
+            return -1;
+        }
+        if (sup_copy_file(src, dst) != 0) {
+            if (sup_pkg_path(src, id, "portable.ko") != 0 ||
+                sup_copy_file(src, dst) != 0) {
+                sup->error_code = CANOPUS_SUP_ERR_STAGE_NO_TARGET;
+                return -1;
+            }
+        }
+    }
+    return 0;
+}
+
 /* FS service hooks: plain NuttX file calls through the proven pointers. */
 static int sup_file_open(void *cookie, const char *path, uint32_t flags)
 {
@@ -1115,4 +1278,6 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_file_write,
     sup_file_close,
     sup_file_remove,
+    sup_list_packages,
+    sup_import_package,
 };

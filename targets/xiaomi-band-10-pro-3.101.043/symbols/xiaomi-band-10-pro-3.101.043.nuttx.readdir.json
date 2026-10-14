@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.readdir",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "readdir",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void *(void *)",
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-DIR-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; NSH nsh_foreach_direntry (sub_C23E1A8) opendir/readdir/closedir sequence",
+    "evidence_ids": [
+      "EVID-DIR-1043-001"
+    ]
+  },
+  "entry_address": "0xc1e4590",
+  "callable_address": "0xc1e4591",
+  "notes": "NuttX libc directory iteration; used only by the Supervisor to find com.canopus.pkg.* quick-app packages under /data/app."
+}

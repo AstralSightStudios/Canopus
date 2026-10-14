@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 7
-// input_digest: 14739a6f0306c1cf
+// input_digest: c2846ee2df304a31
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -674,6 +674,9 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc7e
 /// Recovered `p67_battery_child_get` at 0x0c5886e0. Thumb callable address 0x0c5886e1.
 pub const CANOPUS_FW_P67_BATTERY_CHILD_GET_CALLABLE: usize = canopus_thumb_callable(0x0c5886e1usize);
 
+/// Recovered `closedir` at 0xc1e4564. Thumb callable address 0xc1e4565.
+pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc1e4565usize);
+
 /// Recovered `bt_adapter_get_state` at 0xc3af4f4. Thumb callable address 0xc3af4f5.
 pub const CANOPUS_FW_BT_ADAPTER_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0xc3af4f5usize);
 #[allow(non_snake_case)]
@@ -883,6 +886,9 @@ pub unsafe fn canopus_fw_read(a0: i32, a1: *mut core::ffi::c_void, a2: u32) -> i
     let f: extern "C" fn(i32, *mut core::ffi::c_void, u32) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_READ_CALLABLE) };
     f(a0, a1, a2)
 }
+
+/// Recovered `readdir` at 0xc1e4590. Thumb callable address 0xc1e4591.
+pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc1e4591usize);
 
 /// Recovered `lv_bar_create` at 0xc0c21d8. Thumb callable address 0xc0c21d9.
 pub const CANOPUS_FW_LV_BAR_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc0c21d9usize);
@@ -1241,6 +1247,9 @@ pub const canopus_fw_font_reload_freetype_context_slot: usize = 0x20103374usize;
 /// Recovered `sdp_commit` at 0xc808648. Thumb callable address 0xc808649.
 pub const CANOPUS_FW_SDP_COMMIT_CALLABLE: usize = canopus_thumb_callable(0xc808649usize);
 
+/// Recovered `opendir` at 0xc1e4528. Thumb callable address 0xc1e4529.
+pub const CANOPUS_FW_OPENDIR_CALLABLE: usize = canopus_thumb_callable(0xc1e4529usize);
+
 /// Recovered `lvx_page_title_create` at 0xc4ca6c4. Thumb callable address 0xc4ca6c5.
 pub const CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc4ca6c5usize);
 #[allow(non_snake_case)]
@@ -1336,6 +1345,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // calendar_localtime: restricted - not exported until context/ownership approved
 // calendar_snapshot: restricted - not exported until context/ownership approved
 // calendar_text_color: restricted - not exported until context/ownership approved
+// closedir: restricted - not exported until context/ownership approved
 // control_center_scroll: restricted - not exported until context/ownership approved
 // controller_crash_dump: FORBIDDEN - no binding may ever be generated
 // driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -1416,6 +1426,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // modhandle: restricted - not exported until context/ownership approved
 // notifications_scroll: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
+// opendir: restricted - not exported until context/ownership approved
 // p67_battery_child_count: restricted - not exported until context/ownership approved
 // p67_battery_child_get: restricted - not exported until context/ownership approved
 // p67_battery_extra_draw_size: restricted - not exported until context/ownership approved
@@ -1440,6 +1451,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
 // pthread_create_internal: FORBIDDEN - no binding may ever be generated
 // public_work_queue: FORBIDDEN - no binding may ever be generated
+// readdir: restricted - not exported until context/ownership approved
 // register_blockdriver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
 // rmmod: restricted - not exported until context/ownership approved

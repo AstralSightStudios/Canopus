@@ -394,6 +394,22 @@ const SUP_10: &[Mapping] = &[
         symbol_name: "watchface_manager_delete_watchface",
         address: Address::Callable,
     },
+    // Optional: directory iteration for the phone-installed package scan.
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_OPENDIR",
+        symbol_name: "opendir",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_READDIR",
+        symbol_name: "readdir",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_CLOSEDIR",
+        symbol_name: "closedir",
+        address: Address::Callable,
+    },
     // Optional: only packs that recovered the post-delete watchface refresh
     // emit this macro, so Supervisor code must guard on it.
     Mapping {

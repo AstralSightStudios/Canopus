@@ -78,11 +78,40 @@ static int u_gen_verify(void *c, const char *t, uint32_t gen, uint32_t *v, uint3
     return 0;
 }
 
+/* phone-installed packages: "ids" the platform reports, and what importing
+ * one stages (version) */
+static const char *g_pkg_ids[4];
+static uint32_t g_pkg_versions[4];
+static int g_pkg_import_fail[4];
+static int u_list(void *c, uint32_t i, char *id)
+{
+    (void)c;
+    if (i >= 4u || g_pkg_ids[i] == 0) return 1;
+    strcpy(id, g_pkg_ids[i]);
+    return 0;
+}
+static int u_import(void *c, const char *id)
+{
+    uint32_t i;
+    (void)c;
+    for (i = 0; i < 4u && g_pkg_ids[i] != 0; i++) {
+        if (strcmp(g_pkg_ids[i], id) != 0) continue;
+        if (g_pkg_import_fail[i]) {
+            g_sup->error_code = (uint32_t)CANOPUS_SUP_ERR_STAGE_NO_TARGET;
+            return -1;
+        }
+        g_next.present = 1; g_next.valid = 1; g_next.version = g_pkg_versions[i];
+        g_next.lifecycle = CANOPUS_LIFECYCLE_REMOVABLE;
+        return 0;
+    }
+    return -1;
+}
+
 static const struct canopus_sup_platform_v1 update_platform = {
     "xiaomi-band-10-pro-3.101.030",
     u_register, u_register, u_load, u_stage, u_remove, u_persist, u_restore,
     u_stage_verify, u_stage_commit, u_gen_exists, u_gen_verify,
-    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, u_list, u_import,
 };
 
 static void reset(struct canopus_supervisor_v1 *sup)
@@ -282,7 +311,49 @@ TEST(rollback_requires_previous_generation_and_switches_at_next_load)
     CHECK_EQ(sup.modules[0].active_gen, 0u);
 }
 
+TEST(scan_installs_new_packages_and_stages_updates)
+{
+    struct canopus_supervisor_v1 sup;
+    reset(&sup);
+    memset(g_pkg_ids, 0, sizeof(g_pkg_ids));
+    g_pkg_ids[0] = "mod.hello"; g_pkg_versions[0] = 1;
+    CHECK_EQ(command(&sup, CANOPUS_SUP_CMD_SCAN, 0), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(sup.module_count, 1u);
+    CHECK_EQ(sup.modules[0].version, 1u);
+    CHECK_EQ(sup.scan_summary & 0xffu, 1u);          /* new */
+    CHECK_EQ(sup.scan_summary >> 24, 1u);            /* scanned */
+
+    /* same version again: already current, not a failure */
+    CHECK_EQ(command(&sup, CANOPUS_SUP_CMD_SCAN, 0), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(sup.scan_summary & 0xffffffu, 0u);
+    CHECK_EQ(sup.error_code, 0u);
+
+    /* a newer package: staged as an update (reboot required) */
+    g_pkg_versions[0] = 2;
+    CHECK_EQ(command(&sup, CANOPUS_SUP_CMD_SCAN, 0), CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK_EQ((sup.scan_summary >> 8) & 0xffu, 1u);
+    CHECK(sup.modules[0].pending_switch);
+}
+
+TEST(scan_reports_packages_without_a_payload_for_this_firmware)
+{
+    struct canopus_supervisor_v1 sup;
+    reset(&sup);
+    memset(g_pkg_ids, 0, sizeof(g_pkg_ids));
+    memset(g_pkg_import_fail, 0, sizeof(g_pkg_import_fail));
+    g_pkg_ids[0] = "mod.other"; g_pkg_import_fail[0] = 1;
+    CHECK_EQ(command(&sup, CANOPUS_SUP_CMD_SCAN, 0), CANOPUS_RESULT_FAILED);
+    CHECK_EQ((sup.scan_summary >> 16) & 0xffu, 1u);
+    CHECK_EQ((int32_t)sup.error_code, CANOPUS_SUP_ERR_STAGE_NO_TARGET);
+    CHECK_EQ(sup.module_count, 0u);
+    memset(g_pkg_import_fail, 0, sizeof(g_pkg_import_fail));
+}
+
 static struct test_registry supervisor_update_tests[] = {
+    { "scan_installs_new_packages_and_stages_updates",
+      scan_installs_new_packages_and_stages_updates_wrapper },
+    { "scan_reports_packages_without_a_payload_for_this_firmware",
+      scan_reports_packages_without_a_payload_for_this_firmware_wrapper },
     { "update_newer_version_is_staged_into_inactive_generation",
       update_newer_version_is_staged_into_inactive_generation_wrapper },
     { "update_same_or_lower_version_is_rejected",

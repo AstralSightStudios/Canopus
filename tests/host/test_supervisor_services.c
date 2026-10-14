@@ -105,12 +105,12 @@ static int p_restore(void *c, uint8_t *d, uint32_t n) { (void)c; (void)d; (void)
 static const struct canopus_sup_platform_v1 platform_with_fs = {
     "xiaomi-band-10-pro-3.101.030", p_noop, p_noop, p_load, p_stage, p_remove,
     p_persist, p_restore, 0, 0, 0, 0,
-    f_open, f_read, f_write, f_close, f_remove,
+    f_open, f_read, f_write, f_close, f_remove, 0, 0,
 };
 static const struct canopus_sup_platform_v1 platform_without_fs = {
     "xiaomi-band-10-pro-3.101.030", p_noop, p_noop, p_load, p_stage, p_remove,
     p_persist, p_restore, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0,
 };
 
 static int g_activated_with_ctx;

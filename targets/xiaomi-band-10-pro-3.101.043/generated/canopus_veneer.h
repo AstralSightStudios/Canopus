@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 7
- * input_digest: 14739a6f0306c1cf
+ * input_digest: c2846ee2df304a31
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -524,6 +524,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * calendar_localtime: restricted - not exported until context/ownership approved
  * calendar_snapshot: restricted - not exported until context/ownership approved
  * calendar_text_color: restricted - not exported until context/ownership approved
+ * closedir: restricted - not exported until context/ownership approved
  * control_center_scroll: restricted - not exported until context/ownership approved
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -604,6 +605,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * modhandle: restricted - not exported until context/ownership approved
  * notifications_scroll: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
+ * opendir: restricted - not exported until context/ownership approved
  * p67_battery_child_count: restricted - not exported until context/ownership approved
  * p67_battery_child_get: restricted - not exported until context/ownership approved
  * p67_battery_extra_draw_size: restricted - not exported until context/ownership approved
@@ -628,6 +630,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
+ * readdir: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved
