@@ -24,9 +24,9 @@
 #include "canopus_module_registration.h"
 #include "canopus_runtime.h"
 #include "canopus_veneer.h" /* canopus_fw_register_driver / canopus_fw_unregister_driver */
+#include "canopus_memory.h"
 #ifdef CANOPUS_SUP_CUSTOM_LOADER
 #include "canopus_elf32_loader.h"
-#include "canopus_memory.h"
 #endif
 #include "sha256.h"
 

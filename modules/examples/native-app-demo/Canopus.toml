@@ -1,0 +1,17 @@
+schema = 1
+
+[module]
+id = "native_demo"
+version = "1.0.0"
+version_code = 1
+kind = "target"
+language = "c"
+lifecycle = "removable"
+canopus_abi = "1"
+description = "Canopus native application demo with UI, Service Objects, and haptics"
+
+[build]
+sources = ["src/native_demo.c"]
+
+[targets]
+include = ["xiaomi-band-10-pro-3.101.043"]

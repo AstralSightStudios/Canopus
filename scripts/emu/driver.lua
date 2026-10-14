@@ -73,6 +73,8 @@ elseif op == "cmd" then
     local payload
     if a == "enable" or a == "disable" or a == "remove" or a == "rollback" or a == "activate" then
         payload = slot_id(tonumber(b or 0))
+    elseif a == "native_stage" then
+        payload = string.pack("<I4", tonumber(b or 0))
     end
     local reply = exchange("/dev/canopus", code, payload, 36)
     show(u32(reply, 28))
