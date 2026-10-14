@@ -182,7 +182,7 @@
   - verifier 增加"零固件地址"模式。
   - `hello` 与 `no-heap-counter` 迁移为 portable，同一个 ELF 在 036/043/139/155/177 上通过 host 测试。
 - [x] P2.3 Rust 合并为单一 workspace（根 Cargo.toml；设备 staticlib 用 `--profile device`，`default-members` 排除不能在宿主构建的 no-heap-counter-device；Rust 模块 ELF 哈希因 crate 路径变化而变，已刷新基线；hello 的 C ELF 不变）。
-- [x] P2.4 target-private 整理（判断结案：互斥 cfg 矩阵已由 build.rs 校验取代，剩余 cfg 仅为每 target 一个 feature 的选择；只有 036/043 两个 stock-modlib target 使用该 crate，统一函数集的收益低于风险，不做；新增 target 一律走声明式绑定/生成路径）
+- [x] P2.4 target-private 整理（三个后端现在函数集一致：缺的能力是返回 `ERR_UNSUPPORTED`(-38) 的桩（036/043 补了 `lvx_object_clear_flag`、`capabilities()`、`ERR_UNSUPPORTED`、`SELECTED_TARGET_ID`），`tests/api_parity.rs` 在 CI 里强制三者函数集相等；互斥 cfg 矩阵由 build.rs 校验取代）
   - 所有 target 由生成代码提供同一函数集，缺失的能力显式返回 `Unsupported`；手写部分只保留真实差异。
   - 删除手写的互斥 `cfg` 矩阵（`build.rs` 已保证恰好选中一个 target）。
 - [x] P2.5 协议收敛（P0.2）（设备线协议只剩 CPC2：新增 `NATIVE_STAGE`/`RESTORE_AFTER_BOOT`/`SCAN` 操作码，QUERY_DEVICE 载荷 36 字节含 scan 摘要；CPC1/CPS1 不再被设备端接受（`handle_command`/`render_status` 仅留作进程内 host 测试接口）；Band 10 Pro / Band 11 框架安装器、模块安装器、hello 安装表盘、模拟器 driver 全部改为 CPC2；旧的独立开发安装表盘删除；Band 11 受保护的 main.lua 已用本地种子重新生成；`scripts/tests/band11_*.py` 的固件仿真脚本已全部用 unicorn（venv）跑通（重建 155/177 的暂存资源后；private_backend 的 workspace 路径已修）；CQD1/CQM1/CAP1 并入未做）：删除 CPC1/CPS1 与第二套命令枚举；更新 `abi/schema`；Lua 安装器与外部模块安装器同步改造。
@@ -196,13 +196,13 @@
     `build-module-installer-receipt.py` 的签名步骤、`build_module_installer_prod.py` 的 `verify_signature`、schema 中的签名字段。
   - 文档：`security-model.md`、README 中"未签名包默认不批准"的原则、CAN-P1-013。
   - 测试：删除签名用例；新增"哈希 / target / 固件不匹配仍被拒绝"的用例。
-- [x] P2.8 评估（结论：不合并——lvgl_v9 与 band11 后端调用的是不同固件的 UI 对象模型，合并必须逐 target 做设备验证，收益不抵风险；合并推迟到 Band 11 UI 在设备上验证之后）把 Manager 的两套 UI 后端（lvgl_v9 / band11）合并为一套，配合声明式绑定表。
+- [x] P2.8 Manager 的 UI 后端合并（`manager/target/canopus_manager_target.c` 单文件，Band 11 由 family 的 `-DCANOPUS_MGR_BAND11=1` 选择；用 `diff -D` 机械合并并手工修了一处被注释截断的分支。验证：036/043 的 Supervisor ELF 字节完全一致，Band 11 的 139/177 所有加载段内容一致（仅符号表里的源文件名不同），unicorn 的 Band 11 固件测试与 CI 全绿。仍有约 100 处 `#ifdef` 分支（页面/应用/通知描述符布局、身份校验、少量 UI 常量），后续可再逐步收敛成按目标的头文件）
 - [x] P2.9 Supervisor / Manager / client / host tests 同步改造（本阶段范围内：ASan/UBSan 纳入 CI 保持干净、旧格式 registry 拒绝测试、family 体积上限由 build 脚本强制；随 P2.5 协议收敛再复查）；ASan/UBSan 保持干净；各 family 的 Supervisor 体积不超过上限；
   新增"遇到旧格式 registry.bin / 旧 inbox 文件时安全忽略"的测试（K11）。
 
 ### P3 统一打包流程
 - [x] P3.1 `canopus new <id> [--target T]...`（C；Rust 工程用 `module new`，构建走 sdk/rust/examples/no-heap-counter 的 build.sh 路径；`canopus build` 已支持 Rust：`canopus new --lang rust --target <id>` 脚手架，`[build] sources = ["Cargo.toml"]`，cargo（thumbv8m、panic=abort、按目标选 canopus-target-generated 特性）→ C ctor shim → `ld.lld -r`（不用 --whole-archive，避免把 compiler_builtins 整个拉进来）→ verifier；仅 stock modlib 目标（Band 10 Pro），Band 11 需要 Rust 侧的服务表入口，portable Rust 同理未支持；CI gate_5 覆盖）：生成含 `Canopus.toml`、构建配置、示例源码的模块工程（默认 portable）。
-- [x] P3.2 `canopus build [--target X]`（C；portable 构建一次，target 模块按 `[targets].include` 逐个构建，产物过 verifier；Rust 按上述判断不做）：portable 模块只构建一次，target-private 模块按矩阵构建；产物均须过 verifier。
+- [x] P3.2 `canopus build [--target X]`（C；portable 构建一次，target 模块按 `[targets].include` 逐个构建，产物过 verifier；Rust 见 P3.1）：portable 模块只构建一次，target-private 模块按矩阵构建；产物均须过 verifier。
 - [x] P3.3 `canopus package`（Canopus.toml → `dist/<id>-<ver>.canopus`，含 manifest、产物与逐 target 的 CMI2 回执；校验沿用 `canopus package verify`）：产出确定性的 `.canopus`（P0.1 格式，含无签名回执）；`canopus verify` 只做结构 / 哈希 / target 校验。
 - [x] P3.4 安装器表盘：`canopus package --installer` 产出 `dist/installer/<family>/`（main.lua + 载荷 + 回执，仅有安装传输模板的设备族：Band 10 Pro、Band 11）；`build_module_installer_prod.py` 的 SUPPORTED 改为从 targets/ 动态推导（外部产品的 PRODUCTS/PRODUCT_TARGETS 表仍保留，因其 payload 不是 Canopus 工程）。
 - [x] P3.5 `hello` 示例改用 `canopus build` 构建（`modules/examples/hello/Canopus.toml`，旧 build.sh/package.json 删除；hello 的 C ELF 哈希因链接顺序变化已刷新基线）；`hello-portable` 同样。
@@ -329,3 +329,4 @@
 \n| 2026-10-14 | Band 11 模拟器端到端跑通（155）：生产安装器 → Supervisor 加载 → 手机投递 .rpk → SCAN 导入；需 qemu-miwear 与 Facetory 两个补丁（scripts/emu/band11/） |\n
 | 2026-10-14 | Band 11 端到端在 177 上同样通过；打补丁后的 qemu 下 043 冒烟 22 项仍全过 |
 | 2026-10-14 | `canopus build` 支持 Rust 目标模块；qemu-miwear 补丁改为直接提交（3e05ca7）并推送，补丁文件删除 |
+| 2026-10-14 | P2.4 函数集一致（api_parity 测试）；P2.8 两套 Manager UI 后端合并为一个源文件（产物验证一致） |

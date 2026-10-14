@@ -1,5 +1,8 @@
 /*
- * Shared Band 10 LVGL v9 Manager target backend.
+ * LVGL v9 Manager target backend: Band 10 Pro by default, Band 11 with
+ * -DCANOPUS_MGR_BAND11=1 (set by the family's `defines`). The two firmwares
+ * differ in page/app/notification descriptor layouts, identity guard and a few
+ * UI constants; everything else is shared.
  *
  * Target identity and firmware addresses are supplied by the selected target config. It is
  * resident-first: its constructor only records target identity. The supervisor
@@ -13,7 +16,12 @@
 #include <stdint.h>
 
 #include "canopus_manager_target.h"
+#ifndef CANOPUS_MGR_BAND11
 #include "canopus_target_config.h"
+#else /* CANOPUS_MGR_BAND11 */
+#include "band11/canopus_band11_abi.h"
+#include "canopus_veneer.h"
+#endif /* CANOPUS_MGR_BAND11 */
 #include "canopus_client.h"
 #include "canopus_manager_native.h"
 #include "canopus_memory.h"
@@ -35,25 +43,32 @@
 #define CANOPUS_TARGET_TRAILING_FORWARD 3u
 #define CANOPUS_TARGET_ALIGN_TOP_MID 2u
 #define CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID 14u
+#ifndef CANOPUS_MGR_BAND11
 #define CANOPUS_TARGET_CONTENT_TOP_OFFSET 56
 #define CANOPUS_TARGET_CONTENT_WIDTH 336
 #define CANOPUS_TARGET_CONTENT_HEIGHT 424
+#else /* CANOPUS_MGR_BAND11 */
+#define CANOPUS_TARGET_CONTENT_TOP_OFFSET 68
+#define CANOPUS_TARGET_CONTENT_WIDTH 212
+#define CANOPUS_TARGET_CONTENT_HEIGHT 444
+#define CANOPUS_TARGET_ROW_WIDTH 204
+#endif /* CANOPUS_MGR_BAND11 */
 #define CANOPUS_TARGET_ROW_GAP 8
 #define CANOPUS_TARGET_EVENT_ALL 0u
 #define CANOPUS_TARGET_EVENT_CLICKED 7u
 #define CANOPUS_TARGET_EVENT_VALUE_CHANGED 30u
 
-struct firmware_page_descriptor;
+struct canopus_target_page;
 
-typedef int (*page_signal_fn)(struct firmware_page_descriptor *, uint32_t,
+typedef int (*page_signal_fn)(struct canopus_target_page *, uint32_t,
                               void *);
-typedef int (*page_create_fn)(struct firmware_page_descriptor *, void *,
+typedef int (*page_create_fn)(struct canopus_target_page *, void *,
                               void *);
-typedef int (*page_lifecycle_fn)(struct firmware_page_descriptor *);
-typedef int (*page_foreground_data_fn)(struct firmware_page_descriptor *,
+typedef int (*page_lifecycle_fn)(struct canopus_target_page *);
+typedef int (*page_foreground_data_fn)(struct canopus_target_page *,
                                        void *);
 
-struct firmware_page_descriptor {
+struct canopus_target_page {
     void *parent_descriptor;                 /* +0x00 */
     uint8_t _pad_04[12];                     /* +0x04 */
     const char *page_name;                    /* +0x10 */
@@ -79,8 +94,9 @@ struct firmware_page_descriptor {
     page_create_fn on_create;                 /* +0x4c */
     page_lifecycle_fn on_resume;              /* +0x50 */
     page_foreground_data_fn on_foreground_data; /* +0x54 */
+#ifndef CANOPUS_MGR_BAND11
     /* Slot order below follows the recovered type record
-     * (targets/<id>/types/firmware_page_descriptor.json) and the exact
+     * (targets/<id>/types/canopus_target_page.json) and the exact
      * 3.101.043 IDB: on_destroy_wrapped dispatches descriptor word 23
      * (+0x5c) and on_resume_wrapped dispatches word 22 (+0x58). */
     page_lifecycle_fn on_pause;               /* +0x58 */
@@ -90,9 +106,20 @@ struct firmware_page_descriptor {
     void *extension_callback_104;             /* +0x68 */
     void *extension_callback_108;             /* +0x6c */
     void *get_scroll_obj;                     /* +0x70, not in the type record */
+#else /* CANOPUS_MGR_BAND11 */
+    void *on_intermediate;                  /* +0x58 */
+    page_lifecycle_fn on_pause;              /* +0x5c, 0xc693a0e */
+    page_lifecycle_fn on_stop;               /* +0x60, 0xc693a5c */
+    page_lifecycle_fn on_ui_destroy;            /* +0x64, 0xc696aa4 (UI destruction) */
+    void *extension_callback_104;            /* +0x68 */
+    void *extension_callback_108;            /* +0x6c */
+    void *extension_callback_112;            /* +0x70 */
+    void *extension_callback_116;            /* +0x74 */
+#endif /* CANOPUS_MGR_BAND11 */
 };
 
 struct firmware_app_descriptor {
+#ifndef CANOPUS_MGR_BAND11
     uint32_t registry_prev;                   /* +0x00 */
     uint32_t registry_next;                   /* +0x04 */
     const char *package_name;                  /* +0x08 */
@@ -108,8 +135,26 @@ struct firmware_app_descriptor {
     uint8_t _pad_34[8];                      /* +0x34 */
     uint8_t hidden_flags;                     /* +0x3c */
     uint8_t _tail_3d[3];                     /* +0x3d */
+#else /* CANOPUS_MGR_BAND11 */
+    void *prev;                              /* +0x00 */
+    void *next;                              /* +0x04 */
+    void *vtable;                            /* +0x08, defaulted by app_install */
+    const char *package_name;                /* +0x0c */
+    const char *launcher_icon_resource;      /* +0x10 */
+    uint16_t app_id;                         /* +0x14 */
+    uint8_t flags[6];                        /* +0x16, defaults +0x17/+0x18 */
+    const char *string_1c;                   /* +0x1c */
+    const char *string_20;                   /* +0x20 */
+    const char *(*launcher_metadata_callback)(void); /* +0x24 */
+    uint8_t pad_28[16];                      /* +0x28 */
+    void *page_registry;                     /* +0x38 */
+    uint8_t pad_3c[12];                      /* +0x3c */
+    uint8_t hidden_flags;                    /* +0x48 */
+    uint8_t tail[7];
+#endif /* CANOPUS_MGR_BAND11 */
 };
 
+#ifndef CANOPUS_MGR_BAND11
 struct firmware_notification_message {
     uint64_t message_id;                      /* +0x00 */
     uint32_t repeat_count;                    /* +0x08 */
@@ -136,6 +181,7 @@ struct firmware_notification_message {
     void *callback_data;                      /* +0x54 */
 };
 
+#endif /* CANOPUS_MGR_BAND11 */
 struct canopus_target_ui_binding {
     uint32_t generation;
     canopus_ui_node_id key;
@@ -170,6 +216,9 @@ struct canopus_target_ui_backend {
     void *page_title;
     void *content_root;
     void *rows[CANOPUS_TARGET_UI_MAX_ROWS];
+#ifdef CANOPUS_MGR_BAND11
+    void *row_event_objects[CANOPUS_TARGET_UI_MAX_ROWS];
+#endif /* CANOPUS_MGR_BAND11 */
     void *labels[CANOPUS_TARGET_UI_MAX_LABELS];
     void *images[CANOPUS_TARGET_UI_MAX_IMAGES];
     void *progress[CANOPUS_TARGET_UI_MAX_PROGRESS];
@@ -178,8 +227,11 @@ struct canopus_target_ui_backend {
     int32_t progress_maximum[CANOPUS_TARGET_UI_MAX_PROGRESS];
     int32_t progress_value[CANOPUS_TARGET_UI_MAX_PROGRESS];
     uint8_t row_kinds[CANOPUS_TARGET_UI_MAX_ROWS];
+#ifdef CANOPUS_MGR_BAND11
+    canopus_ui_node_id row_keys[CANOPUS_TARGET_UI_MAX_ROWS];
+#endif /* CANOPUS_MGR_BAND11 */
     struct canopus_target_ui_binding bindings[CANOPUS_TARGET_UI_MAX_ROWS];
-    struct firmware_page_descriptor *firmware_page;
+    struct canopus_target_page *firmware_page;
     struct canopus_target_dialog dialog;
     uint32_t row_count;
     uint32_t label_count;
@@ -198,12 +250,13 @@ static struct canopus_manager_model_v1 manager_model;
 static struct canopus_client_v1 manager_client;
 static struct canopus_target_page_context
     manager_pages[CANOPUS_TARGET_PAGE_COUNT];
-static struct firmware_page_descriptor
+static struct canopus_target_page
     manager_pages_desc[CANOPUS_TARGET_PAGE_COUNT];
 static uint32_t manager_active_pages;
 static uint32_t manager_pending_detail;
 static uint8_t manager_session_ready;
 
+#ifndef CANOPUS_MGR_BAND11
 static void target_page_title_back(void *event)
 {
     typedef uintptr_t (*get_user_data_fn)(void *);
@@ -223,34 +276,63 @@ static void target_page_title_back(void *event)
     (void)page_finish(&manager_pages_desc[context->backend.page_index]);
 }
 
+#endif /* CANOPUS_MGR_BAND11 */
 _Static_assert(CANOPUS_MANAGER_TARGET_APP_ID <= UINT16_C(0x00FF),
                "system launch animation requires an 8-bit app id");
-_Static_assert(sizeof(struct firmware_page_descriptor) == 116,
+#ifndef CANOPUS_MGR_BAND11
+_Static_assert(sizeof(struct canopus_target_page) == 116,
+#else /* CANOPUS_MGR_BAND11 */
+_Static_assert(sizeof(struct canopus_target_page) == 120,
+#endif /* CANOPUS_MGR_BAND11 */
                "firmware page descriptor size");
-_Static_assert(offsetof(struct firmware_page_descriptor, page_name) == 16,
+_Static_assert(offsetof(struct canopus_target_page, page_name) == 16,
                "page name offset");
-_Static_assert(offsetof(struct firmware_page_descriptor, root_object) == 48,
+_Static_assert(offsetof(struct canopus_target_page, root_object) == 48,
                "page root offset");
-_Static_assert(offsetof(struct firmware_page_descriptor, on_create) == 76,
+_Static_assert(offsetof(struct canopus_target_page, on_create) == 76,
                "page create offset");
-_Static_assert(offsetof(struct firmware_page_descriptor, on_destroy) == 92,
+#ifndef CANOPUS_MGR_BAND11
+_Static_assert(offsetof(struct canopus_target_page, on_destroy) == 92,
+#else /* CANOPUS_MGR_BAND11 */
+_Static_assert(offsetof(struct canopus_target_page, on_ui_destroy) == 100,
+#endif /* CANOPUS_MGR_BAND11 */
                "page destroy offset");
+#ifndef CANOPUS_MGR_BAND11
 _Static_assert(sizeof(struct firmware_app_descriptor) == 64,
+#else /* CANOPUS_MGR_BAND11 */
+_Static_assert(sizeof(struct firmware_app_descriptor) == 80,
+#endif /* CANOPUS_MGR_BAND11 */
                "firmware app descriptor size");
+#ifndef CANOPUS_MGR_BAND11
 _Static_assert(sizeof(struct firmware_notification_message) == 88,
                "firmware notification message size");
+#else /* CANOPUS_MGR_BAND11 */
+_Static_assert(sizeof(struct firmware_notification_message) == 96,
+               "firmware notification size");
+#endif /* CANOPUS_MGR_BAND11 */
 _Static_assert(offsetof(struct firmware_notification_message, title) == 12,
                "notification title offset");
+#ifndef CANOPUS_MGR_BAND11
 _Static_assert(offsetof(struct firmware_notification_message, small_icon_path) == 28,
                "notification icon offset");
 _Static_assert(offsetof(struct firmware_notification_message, start_reminder) == 80,
+#else /* CANOPUS_MGR_BAND11 */
+_Static_assert(offsetof(struct firmware_notification_message, timestamp) == 48,
+               "notification timestamp offset");
+_Static_assert(offsetof(struct firmware_notification_message, start_reminder) == 88,
+#endif /* CANOPUS_MGR_BAND11 */
                "notification reminder offset");
+#ifdef CANOPUS_MGR_BAND11
+_Static_assert(offsetof(struct firmware_notification_message, callback_data) == 92,
+               "notification callback data offset");
+#endif /* CANOPUS_MGR_BAND11 */
 
 static const char package_name[] = "com.canopus.manager";
 static const char page_name_overview[] = "main";
 static const char page_name_modules[] = "modules";
 static const char page_name_detail[] = "module_detail";
 static const char display_name[] = "Canopus 管理器";
+#ifndef CANOPUS_MGR_BAND11
 static const char empty_detail[] = "";
 static const char notification_title[] = "Canopus";
 static const char notification_body[] = "Canopus 已加载！尽情享受吧～";
@@ -259,6 +341,7 @@ static const char module_notification_body[] =
 /* The watchface bootstrap stages the LVGL v9 ARGB8888 bin (alpha preserved)
  * at this stable path; used for both the notification icons and the app icon. */
 static const char notification_icon[] = "/data/canopus/manager_icon.bin";
+#endif /* CANOPUS_MGR_BAND11 */
 static const char launcher_icon[] = "/data/canopus/manager_icon.bin";
 
 __attribute__((used, visibility("default"), section(".data.canopus_manager_target")))
@@ -270,9 +353,13 @@ void canopus_manager_target_render_diagnostics(uint8_t out[36])
         &canopus_manager_target_record.build_id;
     uint32_t i;
 
+#ifndef CANOPUS_MGR_BAND11
     if (out == NULL) {
         return;
     }
+#else /* CANOPUS_MGR_BAND11 */
+    if (out == NULL) return;
+#endif /* CANOPUS_MGR_BAND11 */
     for (i = 0u; i < 9u; i++) {
         uint32_t value = source[i];
         out[i * 4u] = (uint8_t)value;
@@ -296,6 +383,7 @@ static int strings_differ(const char *left, const char *right)
 
 static int identity_guard(void)
 {
+#ifndef CANOPUS_MGR_BAND11
     const char *version = (const char *)(uintptr_t)FW_VERSION_ADDRESS;
     const char *build = (const char *)(uintptr_t)FW_BUILD_ADDRESS;
 
@@ -306,6 +394,9 @@ static int identity_guard(void)
         return -2;
     }
     return 0;
+#else /* CANOPUS_MGR_BAND11 */
+    return canopus_identity_guard();
+#endif /* CANOPUS_MGR_BAND11 */
 }
 
 static const char *manager_display_name(void)
@@ -313,7 +404,7 @@ static const char *manager_display_name(void)
     return display_name;
 }
 
-static int manager_on_signal(struct firmware_page_descriptor *page,
+static int manager_on_signal(struct canopus_target_page *page,
                              uint32_t event, void *payload)
 {
     (void)page;
@@ -460,22 +551,30 @@ static int target_refresh_model(void)
 
 static void target_dispatch_row(uint32_t row_index, void *event)
 {
+#ifndef CANOPUS_MGR_BAND11
     typedef uint32_t (*get_event_code_fn)(void *);
     get_event_code_fn get_code =
         (get_event_code_fn)(uintptr_t)FW_LVX_EVENT_GET_CODE;
+#endif /* CANOPUS_MGR_BAND11 */
     uint32_t page_index;
     uint32_t code;
 
+#ifndef CANOPUS_MGR_BAND11
     if (event == NULL || row_index >= CANOPUS_TARGET_UI_MAX_ROWS) {
         return;
     }
     code = get_code(event);
+#else /* CANOPUS_MGR_BAND11 */
+    if (event == NULL || row_index >= CANOPUS_TARGET_UI_MAX_ROWS) return;
+    code = *(const uint16_t *)((const uint8_t *)event + 8u) & UINT16_C(0x7fff);
+#endif /* CANOPUS_MGR_BAND11 */
     for (page_index = 0; page_index < CANOPUS_TARGET_PAGE_COUNT; page_index++) {
         struct canopus_target_page_context *context = &manager_pages[page_index];
         struct canopus_target_ui_binding *binding;
         int32_t rc;
 
         if (!context->active || !context->interactive ||
+#ifndef CANOPUS_MGR_BAND11
             context->backend.rows[row_index] == NULL) {
             continue;
         }
@@ -484,12 +583,25 @@ static void target_dispatch_row(uint32_t row_index, void *event)
                 return;
             }
         } else if (code != CANOPUS_TARGET_EVENT_CLICKED) {
+#else /* CANOPUS_MGR_BAND11 */
+            context->backend.rows[row_index] == NULL ||
+            *(void *const *)((const uint8_t *)event + 4u) !=
+                context->backend.row_event_objects[row_index]) continue;
+        if (code != (context->backend.row_kinds[row_index] ==
+                     CANOPUS_TARGET_ROW_SWITCH ?
+                     CANOPUS_TARGET_EVENT_VALUE_CHANGED :
+                     CANOPUS_TARGET_EVENT_CLICKED)) {
+#endif /* CANOPUS_MGR_BAND11 */
             return;
         }
         binding = &context->backend.bindings[row_index];
+#ifndef CANOPUS_MGR_BAND11
         if (binding->event_id == 0u) {
             return;
         }
+#else /* CANOPUS_MGR_BAND11 */
+        if (binding->event_id == 0u) return;
+#endif /* CANOPUS_MGR_BAND11 */
         canopus_manager_target_record.click_count += 1u;
         canopus_manager_target_record.clicked_row = row_index;
         canopus_manager_target_record.clicked_generation = binding->generation;
@@ -530,6 +642,17 @@ CANOPUS_TARGET_ROW_CALLBACK(12)
 CANOPUS_TARGET_ROW_CALLBACK(13)
 CANOPUS_TARGET_ROW_CALLBACK(14)
 CANOPUS_TARGET_ROW_CALLBACK(15)
+#ifdef CANOPUS_MGR_BAND11
+CANOPUS_TARGET_ROW_CALLBACK(16)
+CANOPUS_TARGET_ROW_CALLBACK(17)
+CANOPUS_TARGET_ROW_CALLBACK(18)
+CANOPUS_TARGET_ROW_CALLBACK(19)
+CANOPUS_TARGET_ROW_CALLBACK(20)
+CANOPUS_TARGET_ROW_CALLBACK(21)
+CANOPUS_TARGET_ROW_CALLBACK(22)
+CANOPUS_TARGET_ROW_CALLBACK(23)
+CANOPUS_TARGET_ROW_CALLBACK(24)
+#endif /* CANOPUS_MGR_BAND11 */
 
 static void (*const target_row_events[CANOPUS_TARGET_UI_MAX_ROWS])(void *) = {
     target_row_event_0, target_row_event_1, target_row_event_2,
@@ -538,6 +661,17 @@ static void (*const target_row_events[CANOPUS_TARGET_UI_MAX_ROWS])(void *) = {
     target_row_event_9, target_row_event_10, target_row_event_11,
     target_row_event_12, target_row_event_13, target_row_event_14,
     target_row_event_15,
+#ifdef CANOPUS_MGR_BAND11
+    target_row_event_16,
+    target_row_event_17,
+    target_row_event_18,
+    target_row_event_19,
+    target_row_event_20,
+    target_row_event_21,
+    target_row_event_22,
+    target_row_event_23,
+    target_row_event_24,
+#endif /* CANOPUS_MGR_BAND11 */
 };
 
 #undef CANOPUS_TARGET_ROW_CALLBACK
@@ -554,31 +688,80 @@ static uint8_t target_row_kind(uint16_t node_type)
     return CANOPUS_TARGET_ROW_STATUS;
 }
 
+#ifdef CANOPUS_MGR_BAND11
+static int target_snapshot_uses_row(
+    const struct canopus_ui_snapshot_v1 *snapshot, uint8_t kind,
+    canopus_ui_node_id key)
+{
+    uint16_t i;
+    for (i = 0u; i < snapshot->node_count; i++) {
+        if (snapshot->nodes[i].key == key &&
+            target_row_kind(snapshot->nodes[i].type) == kind &&
+            snapshot->nodes[i].type != CANOPUS_UI_NODE_SECTION &&
+            snapshot->nodes[i].type != CANOPUS_UI_NODE_NAVIGATION_PAGE &&
+            snapshot->nodes[i].type != CANOPUS_UI_NODE_TEXT) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+#endif /* CANOPUS_MGR_BAND11 */
 static int target_find_row(struct canopus_target_ui_backend *backend,
+#ifndef CANOPUS_MGR_BAND11
                            uint8_t kind, uint32_t used_mask)
+#else /* CANOPUS_MGR_BAND11 */
+                           const struct canopus_ui_snapshot_v1 *snapshot,
+                           uint8_t kind, canopus_ui_node_id key,
+                           uint32_t used_mask)
+#endif /* CANOPUS_MGR_BAND11 */
 {
     uint32_t i;
+#ifdef CANOPUS_MGR_BAND11
+    int reusable = -1;
+#endif /* CANOPUS_MGR_BAND11 */
     int empty = -1;
 
     for (i = 0; i < CANOPUS_TARGET_UI_MAX_ROWS; i++) {
         if (backend->rows[i] == NULL) {
+#ifndef CANOPUS_MGR_BAND11
             if (empty < 0) {
                 empty = (int)i;
             }
+#else /* CANOPUS_MGR_BAND11 */
+            if (empty < 0) empty = (int)i;
+#endif /* CANOPUS_MGR_BAND11 */
         } else if (backend->row_kinds[i] == kind &&
                    (used_mask & (UINT32_C(1) << i)) == 0u) {
+#ifndef CANOPUS_MGR_BAND11
             return (int)i;
+#else /* CANOPUS_MGR_BAND11 */
+            if (backend->row_keys[i] == key) return (int)i;
+            if (reusable < 0 && !target_snapshot_uses_row(
+                    snapshot, kind, backend->row_keys[i])) {
+                reusable = (int)i;
+            }
+#endif /* CANOPUS_MGR_BAND11 */
         }
     }
+#ifndef CANOPUS_MGR_BAND11
     return empty;
+#else /* CANOPUS_MGR_BAND11 */
+    return reusable >= 0 ? reusable : empty;
+#endif /* CANOPUS_MGR_BAND11 */
 }
 
+#ifndef CANOPUS_MGR_BAND11
 static int target_find_confirmation(
     const struct canopus_ui_snapshot_v1 *snapshot,
     const struct canopus_ui_node_v1 **message,
     const struct canopus_ui_node_v1 **confirm,
     const struct canopus_ui_node_v1 **cancel)
+#else /* CANOPUS_MGR_BAND11 */
+static void target_set_hidden(void *object, uint32_t hidden)
+#endif /* CANOPUS_MGR_BAND11 */
 {
+#ifndef CANOPUS_MGR_BAND11
     uint16_t i;
     *message = NULL;
     *confirm = NULL;
@@ -594,8 +777,15 @@ static int target_find_confirmation(
         }
     }
     return *message != NULL && *confirm != NULL && *cancel != NULL;
+#else /* CANOPUS_MGR_BAND11 */
+    typedef void (*flag_fn)(void *, uint32_t);
+    flag_fn set_flag = (flag_fn)(uintptr_t)(hidden != 0u
+        ? FW_LV_OBJECT_ADD_FLAG : FW_LV_OBJECT_CLEAR_FLAG);
+    if (object != NULL) set_flag(object, UINT32_C(1));
+#endif /* CANOPUS_MGR_BAND11 */
 }
 
+#ifndef CANOPUS_MGR_BAND11
 static void target_dialog_dismiss(struct canopus_target_ui_backend *backend)
 {
     typedef void (*delete_fn)(void *);
@@ -690,43 +880,77 @@ static int target_show_confirmation(
     return 0;
 }
 
+#endif /* CANOPUS_MGR_BAND11 */
 static int32_t target_ui_apply(
     void *cookie, const struct canopus_ui_snapshot_v1 *snapshot)
 {
+#ifndef CANOPUS_MGR_BAND11
     typedef void *(*create_row_fn)(void *, const char *, const char *, uint8_t);
     typedef int (*update_row_fn)(void *, const char *, const char *,
                                  const char *, int32_t, uint8_t);
     typedef void *(*get_trailing_fn)(void *);
+#else /* CANOPUS_MGR_BAND11 */
+    typedef void *(*object_create_fn)(void *);
+#endif /* CANOPUS_MGR_BAND11 */
     typedef void *(*create_label_fn)(void *);
     typedef void (*set_label_text_fn)(void *, const char *);
+#ifndef CANOPUS_MGR_BAND11
     typedef void *(*create_content_fn)(void *);
     typedef void (*set_size_fn)(void *, int32_t, int32_t);
 #ifdef FW_LVX_CONTENT_PAD_BOTTOM
     typedef void (*set_content_pad_bottom_fn)(void *, int32_t, uint32_t);
 #endif
     typedef void (*align_fn)(void *, uint32_t, int32_t, int32_t);
+#endif /* CANOPUS_MGR_BAND11 */
     typedef void *(*create_page_title_fn)(void *, const char *, uint32_t,
+#ifndef CANOPUS_MGR_BAND11
                                           void (*)(void *), void *);
     typedef int (*apply_style_fn)(void *, const void *, uint32_t, uint32_t);
+#else /* CANOPUS_MGR_BAND11 */
+                                          void (*)(void *));
+#endif /* CANOPUS_MGR_BAND11 */
     typedef void (*add_event_fn)(void *, void (*)(void *), uint32_t, void *);
+#ifndef CANOPUS_MGR_BAND11
     typedef void (*set_hidden_fn)(void *, uint32_t);
+#endif /* CANOPUS_MGR_BAND11 */
     typedef void (*align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
+#ifdef CANOPUS_MGR_BAND11
+    typedef void (*set_size_fn)(void *, int32_t, int32_t);
+#endif /* CANOPUS_MGR_BAND11 */
     typedef void *(*image_create_fn)(void *);
     typedef void (*image_set_src_fn)(void *, const void *);
     typedef void *(*bar_create_fn)(void *);
     typedef void (*bar_set_range_fn)(void *, int32_t, int32_t);
     typedef void (*bar_set_value_fn)(void *, int32_t, uint32_t);
+#ifdef CANOPUS_MGR_BAND11
+    typedef void *(*row_add_content_fn)(void *, const void *, const char *,
+                                        const char *, int32_t, uint8_t, uint8_t);
+    typedef void (*row_update_fn)(void *, const void *, const char *,
+                                  const char *, int32_t, uint8_t);
+    typedef void (*style_apply_fn)(void *, const void *, uint32_t, uint32_t);
+    typedef void (*style_value_fn)(void *, int32_t, uint32_t);
+#endif /* CANOPUS_MGR_BAND11 */
     struct canopus_target_ui_backend *backend =
         (struct canopus_target_ui_backend *)cookie;
+#ifndef CANOPUS_MGR_BAND11
     create_row_fn create_row =
         (create_row_fn)(uintptr_t)FW_LVX_LIST_ROW_CREATE;
     update_row_fn update_row =
         (update_row_fn)(uintptr_t)FW_LVX_LIST_ROW_UPDATE;
     get_trailing_fn get_trailing =
         (get_trailing_fn)(uintptr_t)FW_LVX_LIST_ROW_TRAILING;
+#else /* CANOPUS_MGR_BAND11 */
+    object_create_fn object_create =
+        (object_create_fn)(uintptr_t)FW_LV_OBJECT_CREATE;
+#endif /* CANOPUS_MGR_BAND11 */
     create_label_fn create_label =
+#ifndef CANOPUS_MGR_BAND11
         (create_label_fn)(uintptr_t)FW_LVX_LABEL_CREATE;
+#else /* CANOPUS_MGR_BAND11 */
+        (create_label_fn)(uintptr_t)FW_LV_LABEL_CREATE;
+#endif /* CANOPUS_MGR_BAND11 */
     set_label_text_fn set_label_text =
+#ifndef CANOPUS_MGR_BAND11
         (set_label_text_fn)(uintptr_t)FW_LVX_LABEL_SET_TEXT;
     create_content_fn create_content =
         (create_content_fn)(uintptr_t)FW_LVX_CONTENT_CREATE;
@@ -736,7 +960,11 @@ static int32_t target_ui_apply(
         (set_content_pad_bottom_fn)(uintptr_t)FW_LVX_CONTENT_PAD_BOTTOM;
 #endif
     align_fn align = (align_fn)(uintptr_t)FW_LVX_OBJECT_ALIGN;
+#else /* CANOPUS_MGR_BAND11 */
+        (set_label_text_fn)(uintptr_t)FW_LV_LABEL_SET_TEXT;
+#endif /* CANOPUS_MGR_BAND11 */
     create_page_title_fn create_page_title =
+#ifndef CANOPUS_MGR_BAND11
         (create_page_title_fn)(uintptr_t)FW_LVX_PAGE_TITLE_CREATE;
     apply_style_fn apply_style =
         (apply_style_fn)(uintptr_t)FW_LVX_STYLE_APPLY;
@@ -746,15 +974,46 @@ static int32_t target_ui_apply(
     add_event_fn add_event = (add_event_fn)(uintptr_t)FW_LVX_EVENT_ADD;
     set_hidden_fn set_hidden = (set_hidden_fn)(uintptr_t)FW_LVX_SET_HIDDEN;
     align_to_fn align_to = (align_to_fn)(uintptr_t)FW_LVX_ALIGN_TO;
+#else /* CANOPUS_MGR_BAND11 */
+        (create_page_title_fn)(uintptr_t)FW_LV_PAGE_TITLE_CREATE;
+    add_event_fn add_event = (add_event_fn)(uintptr_t)FW_LV_EVENT_ADD;
+    align_to_fn align_to = (align_to_fn)(uintptr_t)FW_LV_ALIGN_TO;
+    set_size_fn set_size = (set_size_fn)(uintptr_t)FW_LV_OBJECT_SET_SIZE;
+#endif /* CANOPUS_MGR_BAND11 */
     image_create_fn image_create =
+#ifndef CANOPUS_MGR_BAND11
         (image_create_fn)(uintptr_t)FW_LVX_IMAGE_CREATE;
+#else /* CANOPUS_MGR_BAND11 */
+        (image_create_fn)(uintptr_t)FW_LV_IMAGE_CREATE;
+#endif /* CANOPUS_MGR_BAND11 */
     image_set_src_fn image_set_src =
+#ifndef CANOPUS_MGR_BAND11
         (image_set_src_fn)(uintptr_t)FW_LVX_IMAGE_SET_SRC;
     bar_create_fn bar_create = (bar_create_fn)(uintptr_t)FW_LVX_BAR_CREATE;
+#else /* CANOPUS_MGR_BAND11 */
+        (image_set_src_fn)(uintptr_t)FW_LV_IMAGE_SET_SRC;
+    bar_create_fn bar_create = (bar_create_fn)(uintptr_t)FW_LV_BAR_CREATE;
+#endif /* CANOPUS_MGR_BAND11 */
     bar_set_range_fn bar_set_range =
+#ifndef CANOPUS_MGR_BAND11
         (bar_set_range_fn)(uintptr_t)FW_LVX_BAR_SET_RANGE;
+#else /* CANOPUS_MGR_BAND11 */
+        (bar_set_range_fn)(uintptr_t)FW_LV_BAR_SET_RANGE;
+#endif /* CANOPUS_MGR_BAND11 */
     bar_set_value_fn bar_set_value =
+#ifndef CANOPUS_MGR_BAND11
         (bar_set_value_fn)(uintptr_t)FW_LVX_BAR_SET_VALUE;
+#else /* CANOPUS_MGR_BAND11 */
+        (bar_set_value_fn)(uintptr_t)FW_LV_BAR_SET_VALUE;
+    object_create_fn create_row =
+        (object_create_fn)(uintptr_t)FW_LVX_LIST_ITEM_CREATE;
+    row_add_content_fn add_row_content =
+        (row_add_content_fn)(uintptr_t)FW_LVX_LIST_ITEM_ADD_CONTENT;
+    row_update_fn update_row =
+        (row_update_fn)(uintptr_t)FW_LVX_LIST_ITEM_UPDATE;
+    style_apply_fn apply_style =
+        (style_apply_fn)(uintptr_t)FW_LVX_STYLE_APPLY;
+#endif /* CANOPUS_MGR_BAND11 */
     uint16_t i;
     uint32_t visible_rows = 0u;
     uint32_t visible_labels = 0u;
@@ -772,6 +1031,7 @@ static int32_t target_ui_apply(
         backend->page_index >= CANOPUS_TARGET_PAGE_COUNT) {
         return -1;
     }
+#ifndef CANOPUS_MGR_BAND11
     {
         const struct canopus_ui_node_v1 *message;
         const struct canopus_ui_node_v1 *confirm;
@@ -783,7 +1043,9 @@ static int32_t target_ui_apply(
         }
     }
     target_dialog_dismiss(backend);
+#endif /* CANOPUS_MGR_BAND11 */
     if (backend->content_root == NULL) {
+#ifndef CANOPUS_MGR_BAND11
         backend->content_root = create_content(backend->root);
         if (backend->content_root == NULL) {
             return -1;
@@ -795,6 +1057,17 @@ static int32_t target_ui_apply(
 #ifdef FW_LVX_CONTENT_PAD_BOTTOM
         set_content_pad_bottom(backend->content_root, 32, 0u);
 #endif
+#else /* CANOPUS_MGR_BAND11 */
+        backend->content_root = object_create(backend->root);
+        if (!backend->content_root) return -1;
+        /* A transparent scrolling viewport. 0x0C693F78 is an activity root
+         * with its own lifetime timer, not the 10 Pro content-container ABI. */
+        ((void (*)(void *))(uintptr_t)FW_LV_OBJECT_REMOVE_STYLES)(backend->content_root);
+        ((style_value_fn)(uintptr_t)FW_LV_OBJECT_PAD_TOP)(backend->content_root, 4, 0u);
+        ((style_value_fn)(uintptr_t)FW_LV_OBJECT_PAD_BOTTOM)(backend->content_root, 32, 0u);
+        set_size(backend->content_root, CANOPUS_TARGET_CONTENT_WIDTH, CANOPUS_TARGET_CONTENT_HEIGHT);
+        align_to(backend->content_root, backend->root, CANOPUS_TARGET_ALIGN_TOP_MID, 0, CANOPUS_TARGET_CONTENT_TOP_OFFSET);
+#endif /* CANOPUS_MGR_BAND11 */
     }
     for (i = 0; i < snapshot->node_count; i++) {
         uint16_t type = snapshot->nodes[i].type;
@@ -834,9 +1107,13 @@ static int32_t target_ui_apply(
     for (i = 0; i < snapshot->node_count; i++) {
         const struct canopus_ui_node_v1 *node = &snapshot->nodes[i];
         const char *primary;
+#ifndef CANOPUS_MGR_BAND11
         const char *secondary = empty_detail;
+#endif /* CANOPUS_MGR_BAND11 */
         uint8_t kind;
+#ifndef CANOPUS_MGR_BAND11
         uint8_t trailing;
+#endif /* CANOPUS_MGR_BAND11 */
         int slot;
         void *object;
         int32_t gap = CANOPUS_TARGET_ROW_GAP;
@@ -851,20 +1128,33 @@ static int32_t target_ui_apply(
 
             if (backend->page_title == NULL) {
                 backend->page_title = create_page_title(
+#ifndef CANOPUS_MGR_BAND11
                     backend->root, primary, title_mode,
                     title_mode != 0u ? target_page_title_back : NULL,
                     title_mode != 0u ? (void *)&manager_pages[
                         backend->page_index] : NULL);
+#else /* CANOPUS_MGR_BAND11 */
+                    backend->root, primary, title_mode, NULL);
+#endif /* CANOPUS_MGR_BAND11 */
                 if (backend->page_title == NULL) {
                     return -1;
                 }
+#ifdef CANOPUS_MGR_BAND11
+                apply_style(backend->page_title,
+                            (const void *)(uintptr_t)FW_STYLE_MISANS_MEDIUM_24,
+                            255u, 0u);
+#endif /* CANOPUS_MGR_BAND11 */
             }
             /* lvx_page_title_create owns the stock left title, right-side time,
              * optional back affordance, and its standard content inset. It is
              * intentionally created once per firmware page: updating its title
              * contract is not yet recovered. */
+#ifndef CANOPUS_MGR_BAND11
             set_hidden(backend->page_title, 0u);
             previous = backend->page_title;
+#else /* CANOPUS_MGR_BAND11 */
+            target_set_hidden(backend->page_title, 0u);
+#endif /* CANOPUS_MGR_BAND11 */
             first = backend->page_title;
             continue;
         }
@@ -878,7 +1168,16 @@ static int32_t target_ui_apply(
                 backend->labels[label_used] = object;
                 backend->label_count++;
             }
+#ifdef CANOPUS_MGR_BAND11
+            apply_style(object, (const void *)(uintptr_t)(
+                            snapshot->styles[i].text_style == CANOPUS_UI_TEXT_TITLE ?
+                            FW_STYLE_MISANS_MEDIUM_28 : FW_STYLE_MISANS_MEDIUM_24),
+                        255u, 0u);
+            ((void (*)(void *, int32_t))(uintptr_t)FW_LV_OBJECT_WIDTH)(object, CANOPUS_TARGET_ROW_WIDTH);
+            ((void (*)(void *, uint32_t))(uintptr_t)FW_LV_LABEL_LONG_MODE)(object, 0u);
+#endif /* CANOPUS_MGR_BAND11 */
             set_label_text(object, primary);
+#ifndef CANOPUS_MGR_BAND11
             if (snapshot->styles[i].text_style == CANOPUS_UI_TEXT_TITLE) {
 #ifdef FW_STYLE_MISANS_DEMIBOLD_32
                 /* lvx_theme_default_init maps this exact-target style object to
@@ -891,6 +1190,9 @@ static int32_t target_ui_apply(
 #endif
             }
             set_hidden(object, 0u);
+#else /* CANOPUS_MGR_BAND11 */
+            target_set_hidden(object, 0u);
+#endif /* CANOPUS_MGR_BAND11 */
             if (previous == NULL) {
                 align_to(object, backend->content_root,
                          CANOPUS_TARGET_ALIGN_TOP_MID, 0, 0);
@@ -918,7 +1220,11 @@ static int32_t target_ui_apply(
             image_set_src(object, primary);
             backend->image_resources[image_used] = resource;
             set_size(object, layout->width, layout->height);
+#ifndef CANOPUS_MGR_BAND11
             set_hidden(object, 0u);
+#else /* CANOPUS_MGR_BAND11 */
+            target_set_hidden(object, 0u);
+#endif /* CANOPUS_MGR_BAND11 */
             if (previous == NULL) {
                 align_to(object, backend->content_root,
                          CANOPUS_TARGET_ALIGN_TOP_MID, 0, 0);
@@ -959,7 +1265,11 @@ static int32_t target_ui_apply(
                 }
             }
             set_size(object, layout->width, layout->height);
+#ifndef CANOPUS_MGR_BAND11
             set_hidden(object, 0u);
+#else /* CANOPUS_MGR_BAND11 */
+            target_set_hidden(object, 0u);
+#endif /* CANOPUS_MGR_BAND11 */
             if (previous == NULL) {
                 align_to(object, backend->content_root,
                          CANOPUS_TARGET_ALIGN_TOP_MID, 0, 0);
@@ -972,10 +1282,13 @@ static int32_t target_ui_apply(
             progress_used++;
             continue;
         }
+#ifndef CANOPUS_MGR_BAND11
         if (node->secondary_len != 0u) {
             secondary = snapshot->strings + node->secondary_off;
         }
+#endif /* CANOPUS_MGR_BAND11 */
         kind = target_row_kind(node->type);
+#ifndef CANOPUS_MGR_BAND11
         if (kind == CANOPUS_TARGET_ROW_ACTION) {
             trailing = CANOPUS_TARGET_TRAILING_FORWARD;
         } else if (kind == CANOPUS_TARGET_ROW_SWITCH) {
@@ -984,20 +1297,44 @@ static int32_t target_ui_apply(
             trailing = CANOPUS_TARGET_TRAILING_NONE;
         }
         slot = target_find_row(backend, kind, used_mask);
+#else /* CANOPUS_MGR_BAND11 */
+        slot = target_find_row(backend, snapshot, kind, node->key,
+                               used_mask);
+#endif /* CANOPUS_MGR_BAND11 */
         if (slot < 0) {
             return -1;
         }
         object = backend->rows[slot];
         if (object == NULL) {
+#ifdef CANOPUS_MGR_BAND11
+            uint8_t trailing = kind == CANOPUS_TARGET_ROW_SWITCH ?
+                CANOPUS_TARGET_TRAILING_SWITCH : kind == CANOPUS_TARGET_ROW_ACTION ?
+                CANOPUS_TARGET_TRAILING_FORWARD : CANOPUS_TARGET_TRAILING_NONE;
+#endif /* CANOPUS_MGR_BAND11 */
             void *event_object;
+#ifndef CANOPUS_MGR_BAND11
             uint32_t event_code;
             object = create_row(backend->content_root, primary, secondary, trailing);
+#else /* CANOPUS_MGR_BAND11 */
+            object = create_row(backend->content_root);
+#endif /* CANOPUS_MGR_BAND11 */
             if (object == NULL) {
                 return -1;
             }
+#ifdef CANOPUS_MGR_BAND11
+            /* The native class applies the settings theme: 204x96, radius 24,
+             * #222 background, MiSans Medium 28/24 and grey secondary text.
+             * Populate only once: repeating it would allocate duplicate children. */
+            ((void (*)(void *, uint32_t))(uintptr_t)FW_LV_OBJECT_CLEAR_FLAG)(object, 16u);
+            add_row_content(object, NULL, primary,
+                            node->secondary_len ? snapshot->strings + node->secondary_off : NULL,
+                            0, (node->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u,
+                            trailing);
+#endif /* CANOPUS_MGR_BAND11 */
             backend->rows[slot] = object;
             backend->row_kinds[slot] = kind;
             event_object = kind == CANOPUS_TARGET_ROW_SWITCH ?
+#ifndef CANOPUS_MGR_BAND11
                 get_trailing(object) : object;
             if (event_object == NULL) {
                 return -1;
@@ -1008,15 +1345,36 @@ static int32_t target_ui_apply(
             event_code = kind == CANOPUS_TARGET_ROW_SWITCH ?
                 CANOPUS_TARGET_EVENT_ALL : CANOPUS_TARGET_EVENT_CLICKED;
             add_event(event_object, target_row_events[slot], event_code, NULL);
+#else /* CANOPUS_MGR_BAND11 */
+                *(void **)((uint8_t *)object + FW_LVX_LIST_TRAILING_OFFSET) : object;
+            if (event_object == NULL) return -1;
+            backend->row_event_objects[slot] = event_object;
+            add_event(event_object, target_row_events[slot],
+                      kind == CANOPUS_TARGET_ROW_SWITCH ?
+                      CANOPUS_TARGET_EVENT_VALUE_CHANGED : CANOPUS_TARGET_EVENT_CLICKED,
+                      NULL);
+#endif /* CANOPUS_MGR_BAND11 */
             backend->row_count++;
         }
         {
+#ifndef CANOPUS_MGR_BAND11
             uint8_t selected = kind == CANOPUS_TARGET_ROW_SWITCH ?
                 ((node->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u ? 1u : 0u) :
                 1u;
             (void)update_row(object, NULL, primary, secondary, 0, selected);
+#else /* CANOPUS_MGR_BAND11 */
+            uint8_t selected = kind != CANOPUS_TARGET_ROW_SWITCH ||
+                (node->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u;
+            update_row(object, NULL, primary,
+                       node->secondary_len ? snapshot->strings + node->secondary_off : NULL,
+                       0, selected);
+#endif /* CANOPUS_MGR_BAND11 */
         }
+#ifndef CANOPUS_MGR_BAND11
         set_hidden(object, 0u);
+#else /* CANOPUS_MGR_BAND11 */
+        target_set_hidden(object, 0u);
+#endif /* CANOPUS_MGR_BAND11 */
         if (previous == NULL) {
             align_to(object, backend->content_root,
                      CANOPUS_TARGET_ALIGN_TOP_MID, 0, 0);
@@ -1026,6 +1384,9 @@ static int32_t target_ui_apply(
                      gap);
         }
         previous = object;
+#ifdef CANOPUS_MGR_BAND11
+        backend->row_keys[slot] = node->key;
+#endif /* CANOPUS_MGR_BAND11 */
         backend->bindings[slot].generation = snapshot->generation;
         backend->bindings[slot].key = node->key;
         backend->bindings[slot].event_id = node->event_id;
@@ -1034,19 +1395,35 @@ static int32_t target_ui_apply(
     for (i = 0; i < CANOPUS_TARGET_UI_MAX_ROWS; i++) {
         if (backend->rows[i] != NULL &&
             (used_mask & (UINT32_C(1) << i)) == 0u) {
+#ifndef CANOPUS_MGR_BAND11
             set_hidden(backend->rows[i], 1u);
+#else /* CANOPUS_MGR_BAND11 */
+            target_set_hidden(backend->rows[i], 1u);
+#endif /* CANOPUS_MGR_BAND11 */
             canopus_memset(&backend->bindings[i], 0,
                            sizeof(backend->bindings[i]));
         }
     }
     for (i = (uint16_t)label_used; i < CANOPUS_TARGET_UI_MAX_LABELS; i++) {
+#ifndef CANOPUS_MGR_BAND11
         if (backend->labels[i] != NULL) set_hidden(backend->labels[i], 1u);
+#else /* CANOPUS_MGR_BAND11 */
+        if (backend->labels[i] != NULL) target_set_hidden(backend->labels[i], 1u);
+#endif /* CANOPUS_MGR_BAND11 */
     }
     for (i = (uint16_t)image_used; i < CANOPUS_TARGET_UI_MAX_IMAGES; i++) {
+#ifndef CANOPUS_MGR_BAND11
         if (backend->images[i] != NULL) set_hidden(backend->images[i], 1u);
+#else /* CANOPUS_MGR_BAND11 */
+        if (backend->images[i] != NULL) target_set_hidden(backend->images[i], 1u);
+#endif /* CANOPUS_MGR_BAND11 */
     }
     for (i = (uint16_t)progress_used; i < CANOPUS_TARGET_UI_MAX_PROGRESS; i++) {
+#ifndef CANOPUS_MGR_BAND11
         if (backend->progress[i] != NULL) set_hidden(backend->progress[i], 1u);
+#else /* CANOPUS_MGR_BAND11 */
+        if (backend->progress[i] != NULL) target_set_hidden(backend->progress[i], 1u);
+#endif /* CANOPUS_MGR_BAND11 */
     }
     backend->rendered_generation = snapshot->generation;
     canopus_manager_target_record.list_row = (uintptr_t)first;
@@ -1077,7 +1454,7 @@ static struct canopus_target_page_context *context_for_native(
 }
 
 static struct canopus_target_page_context *context_for_page(
-    const struct firmware_page_descriptor *page)
+    const struct canopus_target_page *page)
 {
     uint32_t i;
 
@@ -1149,7 +1526,11 @@ static int32_t target_route(void *cookie,
                             uint32_t route)
 {
     typedef int32_t (*page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+#ifndef CANOPUS_MGR_BAND11
     typedef int32_t (*page_finish_fn)(void *);
+#else /* CANOPUS_MGR_BAND11 */
+    typedef void (*page_finish_fn)(uint32_t);
+#endif /* CANOPUS_MGR_BAND11 */
     struct canopus_target_page_context *source;
     page_goto_fn page_goto = (page_goto_fn)(uintptr_t)FW_ACTIVITY_NAVIGATE;
     page_finish_fn page_finish =
@@ -1182,7 +1563,11 @@ static int32_t target_route(void *cookie,
     }
     source->interactive = 0u;
     if (target_page < source_page) {
+#ifndef CANOPUS_MGR_BAND11
         (void)page_finish(&manager_pages_desc[source_page]);
+#else /* CANOPUS_MGR_BAND11 */
+        (void)page_finish(target_page_key(source_page));
+#endif /* CANOPUS_MGR_BAND11 */
         return CANOPUS_UI_OK;
     }
     (void)page_goto(target_page_key(target_page),
@@ -1194,7 +1579,7 @@ static int32_t target_route(void *cookie,
     return CANOPUS_UI_OK;
 }
 
-static int manager_page_on_create(struct firmware_page_descriptor *page,
+static int manager_page_on_create(struct canopus_target_page *page,
                                   void *root, void *start_data)
 {
     struct canopus_target_page_context *context;
@@ -1217,9 +1602,14 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
     context->backend.root = root;
     context->backend.firmware_page = page;
     context->backend.page_index = (uint8_t)page->page_id;
+#ifndef CANOPUS_MGR_BAND11
     /* This runs on the regular page-owner task, after the supervisor's own
      * `insmod` constructor has returned. Ignore a restore error here so the
      * Manager remains available to display and repair a failed module slot. */
+#else /* CANOPUS_MGR_BAND11 */
+    /* Restore only after the staged Supervisor constructor returns;
+     * nested module loads need the regular page-owner task's stack. */
+#endif /* CANOPUS_MGR_BAND11 */
     (void)canopus_supervisor_restore_after_boot();
     if (!manager_session_ready) {
         rc = canopus_client_init(&manager_client, &target_device_io, NULL);
@@ -1270,7 +1660,7 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
     return 0;
 }
 
-static int manager_page_on_resume(struct firmware_page_descriptor *page)
+static int manager_page_on_resume(struct canopus_target_page *page)
 {
     struct canopus_target_page_context *context;
 
@@ -1287,7 +1677,7 @@ static int manager_page_on_resume(struct firmware_page_descriptor *page)
     return 0;
 }
 
-static int manager_page_on_pause(struct firmware_page_descriptor *page)
+static int manager_page_on_pause(struct canopus_target_page *page)
 {
     struct canopus_target_page_context *context;
 
@@ -1300,7 +1690,11 @@ static int manager_page_on_pause(struct firmware_page_descriptor *page)
     return 0;
 }
 
-static int manager_page_on_destroy(struct firmware_page_descriptor *page)
+#ifndef CANOPUS_MGR_BAND11
+static int manager_page_on_destroy(struct canopus_target_page *page)
+#else /* CANOPUS_MGR_BAND11 */
+static int manager_page_on_ui_destroy(struct canopus_target_page *page)
+#endif /* CANOPUS_MGR_BAND11 */
 {
     struct canopus_target_page_context *context;
 
@@ -1312,7 +1706,9 @@ static int manager_page_on_destroy(struct firmware_page_descriptor *page)
     canopus_manager_target_record.list_row = 0u;
     canopus_manager_target_record.root_object = 0u;
     if (context->active) {
+#ifndef CANOPUS_MGR_BAND11
         target_dialog_dismiss(&context->backend);
+#endif /* CANOPUS_MGR_BAND11 */
         context->active = 0u;
         if (manager_active_pages > 0u) {
             manager_active_pages--;
@@ -1332,36 +1728,92 @@ static int manager_page_on_destroy(struct firmware_page_descriptor *page)
     return 0;
 }
 
+#ifndef CANOPUS_MGR_BAND11
 static const struct firmware_app_descriptor manager_app = {
+#else /* CANOPUS_MGR_BAND11 */
+static struct firmware_app_descriptor manager_app = {
+#endif /* CANOPUS_MGR_BAND11 */
     .package_name = package_name,
     .launcher_icon_resource = launcher_icon,
     .app_id = CANOPUS_MANAGER_TARGET_APP_ID,
     .launcher_metadata_callback = manager_display_name,
 };
 
+#ifdef CANOPUS_MGR_BAND11
+/* The reminder UI reads user_data->focus_version even for ordinary messages.
+ * Stock notify_set_user_data allocates this 16-byte object (not just a callback
+ * cookie). The list/reminder clones borrow it. Keep a separate writable,
+ * boot-resident context for each notice; no stock phone/focus callbacks own it.
+ * Evidence: EVID-NOTIFICATION-4139-002, crash3 PC 0x0c55fe06. */
+struct band11_notification_context {
+    void *phone_data;
+    void *focus_v1;
+    void *focus_v2;
+    uint8_t phone_active;
+    uint8_t focus_version;
+    uint8_t reserved[2];
+};
+_Static_assert(sizeof(struct band11_notification_context) == 16,
+               "notification context size");
+_Static_assert(offsetof(struct band11_notification_context, focus_version) == 13,
+               "notification focus version offset");
+static struct band11_notification_context loaded_notification_context;
+static struct band11_notification_context module_notification_context;
+
+#endif /* CANOPUS_MGR_BAND11 */
 static const struct firmware_notification_message loaded_notification = {
     .message_id = UINT64_C(0x43414E4F50555301),
+#ifndef CANOPUS_MGR_BAND11
     .title = notification_title,
     .source = notification_title,
     .body = notification_body,
     .small_icon_path = notification_icon,
     .large_icon_path = notification_icon,
+#else /* CANOPUS_MGR_BAND11 */
+    .title = "Canopus",
+    .source = "Canopus",
+    .body = "Canopus 已加载！尽情享受吧～",
+    .small_icon_path = (void *)launcher_icon,
+    .large_icon_path = (void *)launcher_icon,
+#endif /* CANOPUS_MGR_BAND11 */
     .start_reminder = 1u,
+#ifdef CANOPUS_MGR_BAND11
+    .callback_data = &loaded_notification_context,
+#endif /* CANOPUS_MGR_BAND11 */
 };
 
 static const struct firmware_notification_message module_notification = {
     .message_id = UINT64_C(0x43414E4F50555302),
+#ifndef CANOPUS_MGR_BAND11
     .title = notification_title,
     .source = notification_title,
     .body = module_notification_body,
     .small_icon_path = notification_icon,
     .large_icon_path = notification_icon,
+#else /* CANOPUS_MGR_BAND11 */
+    .title = "Canopus",
+    .source = "Canopus",
+    .body = "新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。",
+    .small_icon_path = (void *)launcher_icon,
+    .large_icon_path = (void *)launcher_icon,
+#endif /* CANOPUS_MGR_BAND11 */
     .start_reminder = 1u,
+#ifdef CANOPUS_MGR_BAND11
+    .callback_data = &module_notification_context,
+#endif /* CANOPUS_MGR_BAND11 */
 };
 
+#ifndef CANOPUS_MGR_BAND11
 int canopus_manager_native_notify_module_installed(void)
+#else /* CANOPUS_MGR_BAND11 */
+static int target_notify(const struct firmware_notification_message *message)
+#endif /* CANOPUS_MGR_BAND11 */
 {
+#ifndef CANOPUS_MGR_BAND11
     typedef int (*notification_insert_fn)(
+#else /* CANOPUS_MGR_BAND11 */
+    typedef void (*notification_insert_fn)(
+#endif /* CANOPUS_MGR_BAND11 */
         const struct firmware_notification_message *);
     notification_insert_fn notification_insert =
         (notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT;
@@ -1369,30 +1821,72 @@ int canopus_manager_native_notify_module_installed(void)
     if (identity_guard() != 0) {
         return -1;
     }
+#ifndef CANOPUS_MGR_BAND11
     return notification_insert(&module_notification);
+#else /* CANOPUS_MGR_BAND11 */
+    /* The stock entry returns free() residue, not a delivery result. */
+    notification_insert(message);
+    return 0;
+#endif /* CANOPUS_MGR_BAND11 */
 }
 
+#ifdef CANOPUS_MGR_BAND11
+int canopus_manager_native_notify_module_installed(void)
+{
+    return target_notify(&module_notification);
+}
+
+/* Each posted notice borrows its own zeroed context (see above); a small ring
+ * keeps the most recent ones alive for the reminder UI. */
+#define BAND11_NOTIFY_RING 4u
+static struct band11_notification_context notify_contexts[BAND11_NOTIFY_RING];
+static uint32_t notify_counter;
+
+#endif /* CANOPUS_MGR_BAND11 */
 int canopus_manager_native_notify(const char *title, const char *body)
 {
+#ifndef CANOPUS_MGR_BAND11
     typedef int (*notification_insert_fn)(
         const struct firmware_notification_message *);
     notification_insert_fn notification_insert =
         (notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT;
     static uint32_t counter;
+#endif /* CANOPUS_MGR_BAND11 */
     struct firmware_notification_message message;
+#ifdef CANOPUS_MGR_BAND11
+    uint32_t slot = notify_counter % BAND11_NOTIFY_RING;
+#endif /* CANOPUS_MGR_BAND11 */
 
+#ifndef CANOPUS_MGR_BAND11
     if (identity_guard() != 0) {
         return -1;
     }
+#endif /* CANOPUS_MGR_BAND11 */
     canopus_memset(&message, 0, sizeof(message));
+#ifndef CANOPUS_MGR_BAND11
     message.small_icon_path = (void *)notification_icon;
     message.large_icon_path = (void *)notification_icon;
+#else /* CANOPUS_MGR_BAND11 */
+    message.small_icon_path = (void *)launcher_icon;
+    message.large_icon_path = (void *)launcher_icon;
+#endif /* CANOPUS_MGR_BAND11 */
     message.start_reminder = 1u;
+#ifndef CANOPUS_MGR_BAND11
     message.message_id = UINT64_C(0x43414E4F50555310) + (counter++ & 0xffu);
+#else /* CANOPUS_MGR_BAND11 */
+
+    canopus_memset(&notify_contexts[slot], 0, sizeof(notify_contexts[slot]));
+    message.message_id = UINT64_C(0x43414E4F50555310) + (notify_counter++ & 0xffu);
+#endif /* CANOPUS_MGR_BAND11 */
     message.title = (void *)title;
     message.source = (void *)title;
     message.body = (void *)body;
+#ifndef CANOPUS_MGR_BAND11
     return notification_insert(&message) < 0 ? -1 : 0;
+#else /* CANOPUS_MGR_BAND11 */
+    message.callback_data = &notify_contexts[slot];
+    return target_notify(&message);
+#endif /* CANOPUS_MGR_BAND11 */
 }
 
 static void __attribute__((constructor, used)) canopus_manager_target_init(void)
@@ -1417,25 +1911,41 @@ static void target_descriptor_init(uint32_t page_index, const char *name,
     manager_pages_desc[page_index].on_create = manager_page_on_create;
     manager_pages_desc[page_index].on_resume = manager_page_on_resume;
     manager_pages_desc[page_index].on_pause = manager_page_on_pause;
+#ifndef CANOPUS_MGR_BAND11
     manager_pages_desc[page_index].on_destroy = manager_page_on_destroy;
+#else /* CANOPUS_MGR_BAND11 */
+    manager_pages_desc[page_index].on_ui_destroy = manager_page_on_ui_destroy;
+#endif /* CANOPUS_MGR_BAND11 */
 }
 
 int canopus_manager_native_install(void)
 {
+#ifndef CANOPUS_MGR_BAND11
     typedef int (*app_install_fn)(const struct firmware_app_descriptor *,
-                                  struct firmware_page_descriptor *const *,
+#else /* CANOPUS_MGR_BAND11 */
+    typedef int (*app_install_fn)(struct firmware_app_descriptor *,
+#endif /* CANOPUS_MGR_BAND11 */
+                                  struct canopus_target_page *const *,
                                   uint32_t);
     typedef void *(*app_lookup_fn)(uint16_t);
+#ifndef CANOPUS_MGR_BAND11
     typedef int (*launcher_add_fn)(uint16_t);
     typedef int (*notification_insert_fn)(
         const struct firmware_notification_message *);
-    struct firmware_page_descriptor *pages[CANOPUS_TARGET_PAGE_COUNT];
+#else /* CANOPUS_MGR_BAND11 */
+    typedef void (*launcher_add_fn)(uint16_t);
+#endif /* CANOPUS_MGR_BAND11 */
+    struct canopus_target_page *pages[CANOPUS_TARGET_PAGE_COUNT];
     app_install_fn app_install = (app_install_fn)(uintptr_t)FW_APP_INSTALL;
     app_lookup_fn app_lookup = (app_lookup_fn)(uintptr_t)FW_APP_LOOKUP;
+#ifndef CANOPUS_MGR_BAND11
     launcher_add_fn launcher_add =
         (launcher_add_fn)(uintptr_t)FW_LAUNCHER_ADD;
     notification_insert_fn notification_insert =
         (notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT;
+#else /* CANOPUS_MGR_BAND11 */
+    launcher_add_fn launcher_add = (launcher_add_fn)(uintptr_t)FW_APP_LAUNCHER_ADD;
+#endif /* CANOPUS_MGR_BAND11 */
     void *installed_app;
 
     if (canopus_manager_target_record.identity_result != 0) {
@@ -1444,7 +1954,11 @@ int canopus_manager_native_install(void)
     installed_app = app_lookup(CANOPUS_MANAGER_TARGET_APP_ID);
     if (installed_app != NULL) {
         const char *installed_package =
+#ifndef CANOPUS_MGR_BAND11
             *(const char **)((uint8_t *)installed_app + 8u);
+#else /* CANOPUS_MGR_BAND11 */
+            *(const char **)((uint8_t *)installed_app + 12u);
+#endif /* CANOPUS_MGR_BAND11 */
         return installed_package != NULL &&
                        strings_differ(installed_package, package_name) == 0
                    ? 0
@@ -1460,13 +1974,27 @@ int canopus_manager_native_install(void)
     pages[2] = &manager_pages_desc[2];
     canopus_manager_target_record.app_install_result =
         app_install(&manager_app, pages, CANOPUS_TARGET_PAGE_COUNT);
+#ifndef CANOPUS_MGR_BAND11
     if (app_lookup(CANOPUS_MANAGER_TARGET_APP_ID) == NULL) {
+#else /* CANOPUS_MGR_BAND11 */
+    installed_app = app_lookup(CANOPUS_MANAGER_TARGET_APP_ID);
+    if (installed_app == NULL) {
+#endif /* CANOPUS_MGR_BAND11 */
         canopus_manager_target_record.app_install_result = -100;
         return -100;
     }
+#ifndef CANOPUS_MGR_BAND11
     canopus_manager_target_record.launcher_add_result =
         launcher_add(CANOPUS_MANAGER_TARGET_APP_ID);
+#else /* CANOPUS_MGR_BAND11 */
+    launcher_add(CANOPUS_MANAGER_TARGET_APP_ID);
+    canopus_manager_target_record.launcher_add_result = 0;
+#endif /* CANOPUS_MGR_BAND11 */
     canopus_manager_target_record.notification_result =
+#ifndef CANOPUS_MGR_BAND11
         notification_insert(&loaded_notification);
+#else /* CANOPUS_MGR_BAND11 */
+        target_notify(&loaded_notification);
+#endif /* CANOPUS_MGR_BAND11 */
     return 0;
 }

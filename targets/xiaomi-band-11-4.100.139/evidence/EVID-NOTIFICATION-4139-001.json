@@ -37,7 +37,7 @@
       "role": "firmware-emulation-test"
     },
     {
-      "uri": "manager/target/band11/canopus_manager_target_band11.c",
+      "uri": "manager/target/canopus_manager_target.c",
       "role": "native-adapter"
     }
   ]

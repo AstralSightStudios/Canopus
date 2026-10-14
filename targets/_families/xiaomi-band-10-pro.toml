@@ -1,5 +1,5 @@
 # Shared build and generation data for Xiaomi Band 10 Pro targets.
-manager_backend = "manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c"
+manager_backend = "manager/target/canopus_manager_target.c"
 supervisor_max_size = 73728
 loader_sources = []
 defines = []

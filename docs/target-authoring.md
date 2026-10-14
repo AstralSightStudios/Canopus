@@ -581,7 +581,7 @@ Band 9 当前使用 tracked MPU region ownership 和 normal non-cacheable dynami
 先识别 UI ABI family：
 
 ```text
-LVGL v9-compatible → manager/target/lvgl_v9
+LVGL v9-compatible → manager/target/canopus_manager_target.c
 LVGL v8/BES ABI    → 已随 Band 9 冻结移除（git tag band9-frozen）
 其他 UI family     → 新 backend，不能硬套现有布局
 ```

@@ -44,7 +44,7 @@
       "role": "complete activity notification builder callsite"
     },
     {
-      "uri": "manager/target/lvgl_v9/canopus_manager_target_lvgl_v9.c",
+      "uri": "manager/target/canopus_manager_target.c",
       "role": "zero-import resident target backend"
     }
   ]

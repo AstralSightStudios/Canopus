@@ -21,6 +21,20 @@ pub use canopus_target_generated::{
     firmware_page_descriptor, launcher_app_descriptor, stock_timespec_t,
 };
 
+/// Returned by functions a target does not implement (same value on every target).
+pub const ERR_UNSUPPORTED: i32 = -38;
+pub const SELECTED_TARGET_ID: &str = TARGET_ID;
+pub fn capabilities() -> &'static [&'static str] {
+    &[
+        "identity-guard",
+        "l2cap",
+        "sdp",
+        "native-ui",
+        "vfs",
+        "interconnect",
+    ]
+}
+
 // ---------------------------------------------------------------------------
 // Adapter / discovery / bond
 // ---------------------------------------------------------------------------
@@ -1570,3 +1584,6 @@ mod tests {
 }
 
 pub const APP_PACKAGE_OFFSET: usize = 8;
+
+/// Not recovered on this target.
+pub unsafe fn lvx_object_clear_flag(_object: *mut core::ffi::c_void, _flags: u32) {}
