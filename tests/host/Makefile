@@ -9,7 +9,7 @@ CFLAGS ?= -std=c11 -Wall -Wextra -Werror -g -O0
 
 INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../runtime/diagnostics -I../../runtime/control -I../../runtime/module \
-      -I../../runtime/loader \
+      -I../../runtime/loader -I../../runtime/hook \
       -I../../modules/examples/hello -I../../manager/protocol -I../../manager/storage \
       -I../../manager/ui -I../../manager/service -I../../manager/client \
       -I../../manager/native-app -I../../manager/package \
@@ -27,6 +27,7 @@ PORTABLE_SRCS = \
 	../../runtime/module/canopus_module.c \
 	../../runtime/loader/canopus_arm_reloc.c \
 	../../runtime/loader/canopus_elf32_loader.c \
+	../../runtime/hook/canopus_hook.c \
 	../../manager/protocol/canopus_protocol.c \
 	../../manager/client/canopus_client.c \
 	../../manager/service/canopus_supervisor.c \

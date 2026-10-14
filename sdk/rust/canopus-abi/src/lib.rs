@@ -72,6 +72,138 @@ pub const CAP_MAGIC: u32 = 0x4341_5031; // "CAP1"
 pub enum ContextV1 {}
 
 // ---------------------------------------------------------------------------
+// Service Objects & Context v2
+// ---------------------------------------------------------------------------
+
+pub const FS_READ: u32 = 0x0001;
+pub const FS_WRITE: u32 = 0x0002;
+pub const FS_APPEND: u32 = 0x0004;
+pub const FS_CREATE: u32 = 0x0008;
+pub const FS_TRUNC: u32 = 0x0010;
+pub const FS_RDWR: u32 = FS_READ | FS_WRITE;
+
+pub const FS_SEEK_SET: i32 = 0;
+pub const FS_SEEK_CUR: i32 = 1;
+pub const FS_SEEK_END: i32 = 2;
+
+pub const MEM_BUDGET: u32 = 131072; // 128 KiB
+pub const MEM_MAX_BLOCKS: u32 = 64;
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct CanopusFsStat {
+    pub size: u32,
+    pub is_dir: u8,
+    pub _pad: [u8; 3],
+    pub mtime: u32,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct CanopusFsDirent {
+    pub name: [u8; 64],
+    pub is_dir: u8,
+    pub _pad: [u8; 3],
+}
+
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum HookType {
+    Auto = 0,
+    Fpb = 1,
+    Inline = 2,
+    Pointer = 3,
+}
+
+#[repr(C)]
+pub struct CanopusFsObj {
+    pub open: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char, flags: u32) -> i32,
+    pub read: unsafe extern "C" fn(ctx: *const ContextV1, fd: i32, buf: *mut c_void, size: u32) -> i32,
+    pub write: unsafe extern "C" fn(ctx: *const ContextV1, fd: i32, buf: *const c_void, size: u32) -> i32,
+    pub seek: unsafe extern "C" fn(ctx: *const ContextV1, fd: i32, offset: i64, whence: i32) -> i64,
+    pub tell: unsafe extern "C" fn(ctx: *const ContextV1, fd: i32) -> i64,
+    pub size: unsafe extern "C" fn(ctx: *const ContextV1, fd: i32) -> i64,
+    pub sync: unsafe extern "C" fn(ctx: *const ContextV1, fd: i32) -> i32,
+    pub close: unsafe extern "C" fn(ctx: *const ContextV1, fd: i32) -> i32,
+    pub remove: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char) -> i32,
+    pub rename: unsafe extern "C" fn(ctx: *const ContextV1, old_path: *const c_char, new_path: *const c_char) -> i32,
+    pub stat: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char, out_stat: *mut CanopusFsStat) -> i32,
+    pub exists: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char) -> i32,
+    pub mkdir: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char) -> i32,
+    pub opendir: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char) -> *mut c_void,
+    pub readdir: unsafe extern "C" fn(ctx: *const ContextV1, dir: *mut c_void, out_entry: *mut CanopusFsDirent) -> i32,
+    pub closedir: unsafe extern "C" fn(ctx: *const ContextV1, dir: *mut c_void) -> i32,
+}
+
+#[repr(C)]
+pub struct CanopusMemObj {
+    pub alloc: unsafe extern "C" fn(ctx: *const ContextV1, size: u32) -> *mut c_void,
+    pub realloc: unsafe extern "C" fn(ctx: *const ContextV1, ptr: *mut c_void, new_size: u32) -> *mut c_void,
+    pub free: unsafe extern "C" fn(ctx: *const ContextV1, ptr: *mut c_void),
+    pub available: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
+    pub used: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
+}
+
+#[repr(C)]
+pub struct CanopusTimeObj {
+    pub monotonic_ms: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
+    pub realtime_ms: unsafe extern "C" fn(ctx: *const ContextV1) -> u64,
+    pub sleep_ms: unsafe extern "C" fn(ctx: *const ContextV1, ms: u32),
+}
+
+#[repr(C)]
+pub struct CanopusHookObj {
+    pub install: unsafe extern "C" fn(ctx: *const ContextV1, target_fn: usize, hook_fn: usize, orig_fn: *mut usize, hook_type: u32) -> i32,
+    pub uninstall: unsafe extern "C" fn(ctx: *const ContextV1, hook_id: i32) -> i32,
+}
+
+#[repr(C)]
+pub struct CanopusLogObj {
+    pub write: unsafe extern "C" fn(ctx: *const ContextV1, level: u32, message: *const c_char),
+    pub info: unsafe extern "C" fn(ctx: *const ContextV1, message: *const c_char),
+    pub warn: unsafe extern "C" fn(ctx: *const ContextV1, message: *const c_char),
+    pub error: unsafe extern "C" fn(ctx: *const ContextV1, message: *const c_char),
+    pub debug: unsafe extern "C" fn(ctx: *const ContextV1, message: *const c_char),
+}
+
+#[repr(C)]
+pub struct CanopusNotifyObj {
+    pub post: unsafe extern "C" fn(ctx: *const ContextV1, title: *const c_char, body: *const c_char) -> i32,
+}
+
+#[repr(C)]
+pub struct CanopusSystemObj {
+    pub target_id: unsafe extern "C" fn(ctx: *const ContextV1) -> *const c_char,
+    pub framework_revision: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
+    pub is_safe_mode: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+    pub reboot: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+}
+
+#[repr(C)]
+pub struct CanopusBluetoothObj {
+    pub l2_send: unsafe extern "C" fn(ctx: *const ContextV1, channel: u8, payload: *const c_void, len: u16) -> i32,
+    pub adapter_state: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
+}
+
+#[repr(C)]
+pub struct CanopusContext {
+    pub struct_size: u32,
+    pub abi: u32,
+    pub services: *const c_void,
+    pub slot: u32,
+    pub target_id: *const c_char,
+    pub module_id: *const c_char,
+    pub fs: *const CanopusFsObj,
+    pub mem: *const CanopusMemObj,
+    pub time: *const CanopusTimeObj,
+    pub hook: *const CanopusHookObj,
+    pub log: *const CanopusLogObj,
+    pub notify: *const CanopusNotifyObj,
+    pub system: *const CanopusSystemObj,
+    pub bt: *const CanopusBluetoothObj,
+}
+
+// ---------------------------------------------------------------------------
 // Snapshot (sequence protocol, architecture §16)
 // ---------------------------------------------------------------------------
 

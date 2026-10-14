@@ -74,8 +74,16 @@ struct canopus_sup_platform_v1 {
     int (*file_open)(void *cookie, const char *path, uint32_t flags);
     int32_t (*file_read)(void *cookie, int fd, void *buffer, uint32_t size);
     int32_t (*file_write)(void *cookie, int fd, const void *buffer, uint32_t size);
+    int64_t (*file_seek)(void *cookie, int fd, int64_t offset, int32_t whence);
+    int (*file_sync)(void *cookie, int fd);
     int (*file_close)(void *cookie, int fd);
     int (*file_remove)(void *cookie, const char *path);
+    int (*file_rename)(void *cookie, const char *old_path, const char *new_path);
+    int (*file_stat)(void *cookie, const char *path, void *out_stat);
+    int (*dir_mkdir)(void *cookie, const char *path);
+    void *(*dir_open)(void *cookie, const char *path);
+    int (*dir_read)(void *cookie, void *dir, void *out_entry);
+    int (*dir_close)(void *cookie, void *dir);
     /* Phone-installed Canopus packages (quick apps named
      * com.canopus.pkg.<id> under /data/app). list_packages writes the module
      * id of the index-th package into `id` (capacity CANOPUS_SUP_MODULE_ID_MAX)
@@ -89,10 +97,12 @@ struct canopus_sup_platform_v1 {
     uint32_t (*monotonic_ms)(void *cookie);
     /* Raw heap. Both or neither; without them the MEM service group is absent. */
     void *(*heap_alloc)(void *cookie, uint32_t size);
+    void *(*heap_realloc)(void *cookie, void *ptr, uint32_t size);
     void (*heap_release)(void *cookie, void *ptr);
     /* Post a user-visible notification. Returns 0 on success. Optional:
      * without it the NOTIFY service group is absent. */
     int (*notify)(void *cookie, const char *title, const char *body);
+    int (*reboot)(void *cookie);
 };
 
 #ifdef __cplusplus

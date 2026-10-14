@@ -88,6 +88,7 @@ for s in \
     runtime/lifecycle/canopus_lifecycle.c \
     runtime/module/canopus_module.c \
     runtime/resources/canopus_resource.c \
+    runtime/hook/canopus_hook.c \
     $LOADER_SRCS; do
     base=$(basename "$s")
     $CC $TARGET_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
@@ -112,6 +113,7 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_lifecycle.o" \
     "$OUT/canopus_module.o" \
     "$OUT/canopus_resource.o" \
+    "$OUT/canopus_hook.o" \
     $LOADER_OBJECTS
 
 # Drop unreferenced debug/local symbol metadata on stock-modlib targets. Keep

@@ -128,10 +128,14 @@ static int fake_restore(void *c, uint8_t *d, uint32_t n)
 }
 
 static const struct canopus_sup_platform_v1 fake_platform = {
-    "xiaomi-band-10-pro-3.101.030",
-    fake_register, fake_unregister, fake_load, fake_stage,
-    fake_remove_artifact, fake_persist, fake_restore,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    .target_id = "xiaomi-band-10-pro-3.101.030",
+    .register_device = fake_register,
+    .unregister_device = fake_unregister,
+    .load_module = fake_load,
+    .stage_package = fake_stage,
+    .remove_artifact = fake_remove_artifact,
+    .persist = fake_persist,
+    .restore = fake_restore,
 };
 
 /* ---- command/status builders --------------------------------------- */

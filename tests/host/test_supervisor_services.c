@@ -11,8 +11,8 @@
 
 /* ---- in-memory file store ------------------------------------------ */
 
-#define MAX_FILES 8
-#define MAX_FDS 8
+#define MAX_FILES 32
+#define MAX_FDS 32
 struct mem_file {
     char path[96];
     uint8_t data[64];
@@ -78,6 +78,69 @@ static int f_remove(void *c, const char *path)
     return -2;
 }
 
+static int64_t f_seek(void *c, int fd, int64_t offset, int32_t whence)
+{
+    struct mem_file *f;
+    int64_t target = 0;
+    (void)c;
+    if (fd < 0 || fd >= MAX_FDS || !g_fds[fd].open) return -1;
+    f = &g_files[g_fds[fd].file];
+    if (whence == CANOPUS_FS_SEEK_SET) target = offset;
+    else if (whence == CANOPUS_FS_SEEK_CUR) target = (int64_t)g_fds[fd].pos + offset;
+    else if (whence == CANOPUS_FS_SEEK_END) target = (int64_t)f->size + offset;
+    else return -1;
+    if (target < 0) return -1;
+    g_fds[fd].pos = (uint32_t)target;
+    return target;
+}
+static int f_sync(void *c, int fd) { (void)c; (void)fd; return 0; }
+static int f_rename(void *c, const char *old_p, const char *new_p)
+{
+    int i;
+    (void)c;
+    for (i = 0; i < MAX_FILES; i++) {
+        if (g_files[i].used && strcmp(g_files[i].path, old_p) == 0) {
+            strncpy(g_files[i].path, new_p, sizeof(g_files[i].path) - 1);
+            return 0;
+        }
+    }
+    return -2;
+}
+static int f_stat(void *c, const char *p, void *out_st)
+{
+    struct canopus_fs_stat *st = (struct canopus_fs_stat *)out_st;
+    int i;
+    (void)c;
+    for (i = 0; i < MAX_FILES; i++) {
+        if (g_files[i].used && strcmp(g_files[i].path, p) == 0) {
+            st->size = g_files[i].size;
+            st->is_dir = 0;
+            return 0;
+        }
+    }
+    return -2;
+}
+static int f_mkdir(void *c, const char *p) { (void)c; (void)p; return 0; }
+static void *f_dir_open(void *c, const char *p) { (void)c; (void)p; return (void *)1; }
+static int f_dir_read(void *c, void *d, void *entry)
+{
+    struct canopus_fs_dirent *de = (struct canopus_fs_dirent *)entry;
+    static int idx = 0;
+    (void)c; (void)d;
+    while (idx < MAX_FILES) {
+        if (g_files[idx].used) {
+            strncpy(de->name, g_files[idx].path, sizeof(de->name) - 1);
+            de->is_dir = 0;
+            idx++;
+            return 0;
+        }
+        idx++;
+    }
+    idx = 0;
+    return 1;
+}
+static int f_dir_close(void *c, void *d) { (void)c; (void)d; return 0; }
+
 static int s_load_calls;
 static int s_load_hook_registers;
 static const struct canopus_module_descriptor_v1 *s_descriptor;
@@ -119,15 +182,41 @@ static void *p_heap_alloc(void *c, uint32_t n) { (void)c; g_heap_live++; return 
 static void p_heap_release(void *c, void *p) { (void)c; g_heap_live--; free(p); }
 
 static const struct canopus_sup_platform_v1 platform_with_fs = {
-    "xiaomi-band-10-pro-3.101.030", p_noop, p_noop, p_load, p_stage, p_remove,
-    p_persist, p_restore, 0, 0, 0, 0,
-    f_open, f_read, f_write, f_close, f_remove, 0, 0, p_ms,
-    p_heap_alloc, p_heap_release, p_notify,
+    .target_id = "xiaomi-band-10-pro-3.101.030",
+    .register_device = p_noop,
+    .unregister_device = p_noop,
+    .load_module = p_load,
+    .stage_package = p_stage,
+    .remove_artifact = p_remove,
+    .persist = p_persist,
+    .restore = p_restore,
+    .file_open = f_open,
+    .file_read = f_read,
+    .file_write = f_write,
+    .file_seek = f_seek,
+    .file_sync = f_sync,
+    .file_close = f_close,
+    .file_remove = f_remove,
+    .file_rename = f_rename,
+    .file_stat = f_stat,
+    .dir_mkdir = f_mkdir,
+    .dir_open = f_dir_open,
+    .dir_read = f_dir_read,
+    .dir_close = f_dir_close,
+    .monotonic_ms = p_ms,
+    .heap_alloc = p_heap_alloc,
+    .heap_release = p_heap_release,
+    .notify = p_notify,
 };
 static const struct canopus_sup_platform_v1 platform_without_fs = {
-    "xiaomi-band-10-pro-3.101.030", p_noop, p_noop, p_load, p_stage, p_remove,
-    p_persist, p_restore, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    .target_id = "xiaomi-band-10-pro-3.101.030",
+    .register_device = p_noop,
+    .unregister_device = p_noop,
+    .load_module = p_load,
+    .stage_package = p_stage,
+    .remove_artifact = p_remove,
+    .persist = p_persist,
+    .restore = p_restore,
 };
 
 static int g_activated_with_ctx;
@@ -276,8 +365,8 @@ TEST(fs_rejects_escaping_names_bad_handles_and_exhaustion)
     CHECK_EQ(ctx->services->fs_read(ctx, 0, g_files, 1), CANOPUS_SVC_ERR_STATE);
     CHECK_EQ(ctx->services->fs_close(ctx, 99), CANOPUS_SVC_ERR_STATE);
     for (i = 0; i < CANOPUS_FS_MAX_OPEN; i++) {
-        char name[8] = "f0";
-        name[1] = (char)('0' + i);
+        char name[16];
+        snprintf(name, sizeof(name), "f%u", (unsigned int)i);
         h[i] = ctx->services->fs_open(ctx, name, CANOPUS_FS_WRITE);
         CHECK(h[i] >= 0);
     }
@@ -364,7 +453,89 @@ TEST(register_is_rejected_outside_the_loading_window)
     }
 }
 
+static int s_dummy_target(int x) { return x + 1; }
+static int s_dummy_hook(int x) { return x + 10; }
+
+TEST(service_objects_are_exposed_and_functional)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    int32_t fd;
+    void *ptr;
+    struct canopus_fs_stat st;
+    uintptr_t orig = 0;
+    int32_t hook_id;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0);
+
+    /* Verify all Service Objects are present */
+    CHECK(ctx != 0);
+    CHECK(ctx->fs != 0);
+    CHECK(ctx->mem != 0);
+    CHECK(ctx->time != 0);
+    CHECK(ctx->hook != 0);
+    CHECK(ctx->log != 0);
+    CHECK(ctx->notify != 0);
+    CHECK(ctx->system != 0);
+    CHECK(ctx->bt != 0);
+
+    /* 1. FS Object */
+    fd = ctx->fs->open(ctx, "app_data.bin", CANOPUS_FS_WRITE);
+    CHECK(fd >= 0);
+    CHECK_EQ(ctx->fs->write(ctx, fd, "abcdefgh", 8), 8);
+    CHECK_EQ(ctx->fs->tell(ctx, fd), 8);
+    CHECK_EQ(ctx->fs->seek(ctx, fd, 2, CANOPUS_FS_SEEK_SET), 2);
+    CHECK_EQ(ctx->fs->tell(ctx, fd), 2);
+    CHECK_EQ(ctx->fs->close(ctx, fd), 0);
+
+    CHECK_EQ(ctx->fs->exists(ctx, "app_data.bin"), 1);
+    CHECK_EQ(ctx->fs->stat(ctx, "app_data.bin", &st), 0);
+    CHECK_EQ(st.size, 8u);
+
+    CHECK_EQ(ctx->fs->rename(ctx, "app_data.bin", "renamed.bin"), 0);
+    CHECK_EQ(ctx->fs->exists(ctx, "app_data.bin"), 0);
+    CHECK_EQ(ctx->fs->exists(ctx, "renamed.bin"), 1);
+
+    CHECK_EQ(ctx->fs->remove(ctx, "renamed.bin"), 0);
+    CHECK_EQ(ctx->fs->exists(ctx, "renamed.bin"), 0);
+
+    /* 2. Memory Object (128 KiB budget) */
+    CHECK_EQ(ctx->mem->available(ctx), CANOPUS_MEM_BUDGET);
+    CHECK_EQ(ctx->mem->used(ctx), 0u);
+    ptr = ctx->mem->alloc(ctx, 65536u); /* 64 KiB */
+    CHECK(ptr != 0);
+    CHECK_EQ(ctx->mem->used(ctx), 65536u);
+    CHECK_EQ(ctx->mem->available(ctx), 131072u - 65536u);
+
+    /* Realloc up to 100 KiB */
+    ptr = ctx->mem->realloc(ctx, ptr, 102400u);
+    CHECK(ptr != 0);
+    CHECK_EQ(ctx->mem->used(ctx), 102400u);
+    ctx->mem->free(ctx, ptr);
+    CHECK_EQ(ctx->mem->used(ctx), 0u);
+
+    /* 3. Hook Object */
+    hook_id = ctx->hook->install(ctx, (uintptr_t)&s_dummy_target, (uintptr_t)&s_dummy_hook, &orig, CANOPUS_HOOK_AUTO);
+    CHECK(hook_id >= 0);
+    CHECK(orig != 0);
+    CHECK_EQ(ctx->hook->uninstall(ctx, hook_id), 0);
+
+    /* 4. Log Object */
+    ctx->log->info(ctx, "hello object log");
+    ctx->log->warn(ctx, "warning log");
+    ctx->log->error(ctx, "error log");
+
+    /* 5. Time Object */
+    CHECK_EQ(ctx->time->monotonic_ms(ctx), 1234u);
+
+    /* 6. System Object */
+    CHECK(strcmp(ctx->system->target_id(ctx), "xiaomi-band-10-pro-3.101.030") == 0);
+    CHECK_EQ(ctx->system->is_safe_mode(ctx), 0);
+}
+
 static struct test_registry supervisor_services_tests[] = {
+    { "service_objects_are_exposed_and_functional",
+      service_objects_are_exposed_and_functional_wrapper },
     { "context_exposes_groups_by_platform_capability",
       context_exposes_groups_by_platform_capability_wrapper },
     { "notify_is_titled_by_module_and_rate_limited",

@@ -40,6 +40,7 @@
     "FW_NUTTX_CLOSE": "close",
     "FW_NUTTX_READ": "read",
     "FW_NUTTX_WRITE": "write",
+    "FW_NUTTX_LSEEK": "lseek",
     "FW_ACTIVITY_NAVIGATE": "page_goto",
     "FW_ACTIVITY_FINISH": "page_finish",
     "CANOPUS_SUP_NUTTX_ERRNO_LOCATION": "errno_location",

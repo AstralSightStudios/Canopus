@@ -14,6 +14,10 @@
 pub use canopus_abi::*;
 
 pub mod allocator;
+pub mod fs;
+pub mod hook;
+pub mod mem;
+pub mod system;
 
 use core::ptr::{read_volatile, write_volatile};
 

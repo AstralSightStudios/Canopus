@@ -108,10 +108,20 @@ static int u_import(void *c, const char *id)
 }
 
 static const struct canopus_sup_platform_v1 update_platform = {
-    "xiaomi-band-10-pro-3.101.030",
-    u_register, u_register, u_load, u_stage, u_remove, u_persist, u_restore,
-    u_stage_verify, u_stage_commit, u_gen_exists, u_gen_verify,
-    0, 0, 0, 0, 0, u_list, u_import, 0, 0, 0, 0,
+    .target_id = "xiaomi-band-10-pro-3.101.030",
+    .register_device = u_register,
+    .unregister_device = u_register,
+    .load_module = u_load,
+    .stage_package = u_stage,
+    .remove_artifact = u_remove,
+    .persist = u_persist,
+    .restore = u_restore,
+    .stage_verify = u_stage_verify,
+    .stage_commit = u_stage_commit,
+    .gen_exists = u_gen_exists,
+    .gen_verify = u_gen_verify,
+    .list_packages = u_list,
+    .import_package = u_import,
 };
 
 static void reset(struct canopus_supervisor_v1 *sup)

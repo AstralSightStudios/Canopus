@@ -13,6 +13,7 @@
 #define CANOPUS_SUP_NUTTX_CLOSE FW_NUTTX_CLOSE
 #define CANOPUS_SUP_NUTTX_READ FW_NUTTX_READ
 #define CANOPUS_SUP_NUTTX_WRITE FW_NUTTX_WRITE
+#define CANOPUS_SUP_NUTTX_LSEEK FW_NUTTX_LSEEK
 #define CANOPUS_SUP_REGISTER_DRIVER(path, fops, mode, priv) \
     ((void)(mode), ((int (*)(const char *, const void *, void *))(uintptr_t)B11_REGISTER_DRIVER)((path), (fops), (priv)))
 #define canopus_fw_mm_memalign_default b11_alloc

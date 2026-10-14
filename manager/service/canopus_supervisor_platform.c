@@ -1264,6 +1264,115 @@ static int sup_file_remove(void *cookie, const char *path)
     return sup_unlink_path(path);
 }
 
+static int64_t sup_file_seek(void *cookie, int fd, int64_t offset, int32_t whence)
+{
+#ifdef CANOPUS_SUP_NUTTX_LSEEK
+    typedef int64_t (*lseek_fn)(int, int64_t, int);
+    (void)cookie;
+    return ((lseek_fn)(uintptr_t)CANOPUS_SUP_NUTTX_LSEEK)(fd, offset, whence);
+#else
+    (void)cookie; (void)fd; (void)offset; (void)whence;
+    return -1;
+#endif
+}
+
+static int sup_file_sync(void *cookie, int fd)
+{
+    (void)cookie;
+    (void)fd;
+    return 0;
+}
+
+static int sup_file_rename_hook(void *cookie, const char *from, const char *to)
+{
+    (void)cookie;
+    return sup_rename_path(from, to);
+}
+
+static int sup_file_stat_hook(void *cookie, const char *path, void *out_stat)
+{
+    struct canopus_fs_stat *st = (struct canopus_fs_stat *)out_stat;
+    typedef int (*open_fn)(const char *, int, ...);
+    typedef int (*close_fn)(int);
+    open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
+    close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
+    int fd;
+    (void)cookie;
+    if (st == 0) return -1;
+    canopus_memset(st, 0, sizeof(*st));
+    fd = open_file(path, CANOPUS_SUP_NUTTX_O_RDONLY);
+    if (fd < 0) return -1;
+#ifdef CANOPUS_SUP_NUTTX_LSEEK
+    {
+        typedef int64_t (*lseek_fn)(int, int64_t, int);
+        int64_t sz = ((lseek_fn)(uintptr_t)CANOPUS_SUP_NUTTX_LSEEK)(fd, 0, CANOPUS_FS_SEEK_END);
+        st->size = sz >= 0 ? (uint32_t)sz : 0u;
+    }
+#endif
+    (void)close_file(fd);
+    return 0;
+}
+
+static int sup_dir_mkdir(void *cookie, const char *path)
+{
+    (void)cookie;
+    (void)path;
+    return 0;
+}
+
+#ifdef CANOPUS_SUP_NUTTX_OPENDIR
+static void *sup_dir_open(void *cookie, const char *path)
+{
+    typedef void *(*opendir_fn)(const char *);
+    (void)cookie;
+    return ((opendir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPENDIR)(path);
+}
+
+static int sup_dir_read(void *cookie, void *dir, void *entry)
+{
+    typedef const uint8_t *(*readdir_fn)(void *);
+    struct canopus_fs_dirent *de = (struct canopus_fs_dirent *)entry;
+    const uint8_t *raw;
+    (void)cookie;
+    if (dir == 0 || de == 0) return -1;
+    raw = ((readdir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_READDIR)(dir);
+    if (raw == 0) return 1; /* EOF */
+    canopus_memset(de, 0, sizeof(*de));
+    canopus_memcpy(de->name, (const char *)raw + 2, 63);
+    de->is_dir = (raw[0] == 2);
+    return 0;
+}
+
+static int sup_dir_close(void *cookie, void *dir)
+{
+    typedef int (*closedir_fn)(void *);
+    (void)cookie;
+    if (dir == 0) return -1;
+    return ((closedir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSEDIR)(dir);
+}
+#define SUP_DIR_OPEN sup_dir_open
+#define SUP_DIR_READ sup_dir_read
+#define SUP_DIR_CLOSE sup_dir_close
+#else
+#define SUP_DIR_OPEN 0
+#define SUP_DIR_READ 0
+#define SUP_DIR_CLOSE 0
+#endif
+
+static void *sup_heap_realloc(void *cookie, void *ptr, uint32_t size)
+{
+    (void)cookie;
+    (void)ptr;
+    (void)size;
+    return 0;
+}
+
+static int sup_reboot(void *cookie)
+{
+    (void)cookie;
+    return CANOPUS_SVC_ERR_UNSUPPORTED;
+}
+
 #ifdef CANOPUS_SUP_CLOCK_GETTIME
 static uint32_t sup_monotonic_ms(void *cookie)
 {
@@ -1328,12 +1437,22 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_file_open,
     sup_file_read,
     sup_file_write,
+    sup_file_seek,
+    sup_file_sync,
     sup_file_close,
     sup_file_remove,
+    sup_file_rename_hook,
+    sup_file_stat_hook,
+    sup_dir_mkdir,
+    SUP_DIR_OPEN,
+    SUP_DIR_READ,
+    SUP_DIR_CLOSE,
     sup_list_packages,
     sup_import_package,
     SUP_MONOTONIC_MS,
     SUP_HEAP_ALLOC,
+    sup_heap_realloc,
     SUP_HEAP_RELEASE,
     SUP_NOTIFY,
+    sup_reboot,
 };
