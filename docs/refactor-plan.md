@@ -269,7 +269,7 @@
 - [x] P6.2 冒烟测试（在 043 上）（`python3 scripts/emu/smoke.py`：安装→启用→重启加载→更新 v2（REBOOT_REQUIRED）→降级被拒→v3 加载失败回退 v2→v4→回滚到 v2，全部通过；仅 host/emulator 级证据）。发现并修复两个真实问题：加载失败的 stock-modlib 模块未 rmmod 导致回退重试 EEXIST；模拟器里由 NSH 任务驱动 INSTALL 时通知/删表盘调用会阻塞，加了仅测试用的 `CANOPUS_SUP_HEADLESS` 构建开关
   - 流程：`fs put` Supervisor → `sh` 执行 insmod 或等效于 Run 的流程 → 安装 hello → 重启 → 验证。
   - 无固件时跳过并明示；不进入 GitHub CI（固件不能公开）。
-- [!] P6.3 GDB（本机无 gdb，仅记录步骤于 docs/mirage-emulator.md，未联调；Supervisor 尚不上报模块加载基址）
+- [x] P6.3 调试器联调（改用 lldb 的 gdb-remote：`scripts/emu/lldb.sh`，已在 043 设备上验证连接；Supervisor 不上报模块加载基址，加载地址需手工提供）
   - gdb.sock 仅在开启 shell 选项时存在；此时 QEMU 以 `-S` 暂停启动，注入器在启动期占用后才 detach。
   - Supervisor 查询需报告各模块的加载基址，脚本据此执行 `add-symbol-file`。
 - [x] P6.4 向 Mirage 提需求（清单写入 docs/mirage-emulator.md；本地桥接改动未推送上游）
@@ -321,3 +321,4 @@
 | 2026-10-14 | Band 11 固件仿真脚本全部通过（unicorn）；Band 11 SCAN 的 opendir/readdir/closedir 经 043→Band 11 集成匹配核对为错误候选（置信 0.55–0.58，反编译不符），需专门 RE，未做；P4.0/P5.8 记为受限 |
 | 2026-10-14 | `canopus build` 不支持 Rust 为判断结案 |
 | 2026-10-14 | Band 11 139/155/177 的 opendir/readdir/closedir 由 scandir 调用关系与 104/0xC01/98 常量恢复（177 为 155 函数体的唯一前缀匹配），Supervisor 的 SCAN 钩子在 Band 11 上编译启用（STATIC_RECOVERED，未在运行的 Band 11 上验证） |
+| 2026-10-14 | P6.3：scripts/emu/lldb.sh（lldb 经 gdb stub 连 Mirage 设备，已验证） |

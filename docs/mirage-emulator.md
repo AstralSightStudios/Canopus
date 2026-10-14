@@ -5,10 +5,10 @@
 - 环境变量：`MIRAGECTL`、`CANOPUS_FW_OTA_DIR`、`MAB_SMOKE`（AstroBox 桥）。结果只算 host/emulator 级证据。
 - 日志在设备目录 `Logs/` 下（console.log、uart*.log、qemu.log）；`miragectl sh` 与 GUI 互斥。
 
-## GDB 联调（P6.3，未验证）
-- 设备以 shell 选项启动时才有 `gdb.sock`，此时 QEMU 以 `-S` 暂停，注入器占用后 detach。
-- 本机没有 gdb / arm-none-eabi-gdb（只有 lldb），故未实际联调。步骤预期：`target remote <gdb.sock>`，
-  模块符号用 `add-symbol-file module.elf <load base>`；Supervisor 还不上报各模块加载基址，需先在 QUERY 载荷里补充后才能自动化。
+## 调试器联调（P6.3）
+- 本机没有 gdb，用 lldb 的 gdb-remote：`scripts/emu/lldb.sh <设备 id 前缀> [module.elf <.text 加载地址>]`。
+  已在 043 冒烟设备上验证能连上并停在固件代码（Cortex-M 线程，`register read pc` 可用），退出后设备继续运行。
+- gdb.sock 只在设备运行时存在；模块的加载地址要自己给（Supervisor 尚不上报各模块基址，没有做自动化）。
 
 ## 向 Mirage 提出的需求（P6.4，本地已改的桥接见 Mirage 仓库提交 `ab23d33`）
 1. `miragectl hmp`（库内已有 `hmp()`）暴露为命令。
