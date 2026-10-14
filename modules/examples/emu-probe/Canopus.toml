@@ -1,0 +1,18 @@
+schema = 1
+
+[module]
+id = "emu_probe"
+version = "1.0.0"
+version_code = 1
+kind = "target"
+language = "c"
+lifecycle = "removable"
+canopus_abi = "1"
+description = "emulator end-to-end probe (Band 10 Pro 3.101.043)"
+
+[build]
+sources = ["src/emu_probe.c"]
+defines = ["PROBE_VERSION=1"]
+
+[targets]
+include = ["xiaomi-band-10-pro-3.101.043"]

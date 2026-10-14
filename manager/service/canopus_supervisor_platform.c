@@ -880,6 +880,14 @@ static int sup_load_module(void *cookie, uint32_t index,
         sup->error_code = CANOPUS_SUP_ERR_DESCRIPTOR_MISSING;
 #ifdef CANOPUS_SUP_CUSTOM_LOADER
         sup_unload_custom(index);
+#else
+        /* Nothing references the image (no descriptor was published), so it
+         * can be released; otherwise a retry under the same module name, such
+         * as a fallback to the previous generation, fails with EEXIST. */
+        {
+            typedef int (*rmmod_fn)(void *);
+            (void)((rmmod_fn)(uintptr_t)CANOPUS_SUP_RMMOD)(handle);
+        }
 #endif
         return -1;
     }
@@ -1014,6 +1022,17 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
      * the inactive generation and takes effect at the next load (staged = 1). */
     staged = canopus_supervisor_stage_token(sup, token);
     if (staged < 0) return -1;
+#ifdef CANOPUS_SUP_HEADLESS
+    /* Emulator test builds drive INSTALL from an NSH task, where the UI-side
+     * notification and watchface calls below block; skip them. */
+#ifdef CANOPUS_SUP_WATCHFACE_DELETE
+    (void)delete_watchface;
+#endif
+#ifdef CANOPUS_SUP_WATCHFACE_RESET
+    (void)watchface_reset;
+#endif
+    return staged;
+#endif
     if (canopus_manager_native_notify_module_installed() < 0) {
         /* Registration has already committed a verified, disabled module.
          * Notification is a delivery side effect: preserve the installer page

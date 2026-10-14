@@ -15,6 +15,7 @@ device verified / production approved）以 `docs/progress.md` 与 `docs/native-
 - 构建 Supervisor：`CANOPUS_TARGET=<id> sh scripts/build_canopus_supervisor.sh`
 - 重新生成 target 产物：`canopus target generate <id>|--all`（`--check` 只检查是否过期）
 - 模块工程：`canopus new <id>`、`canopus build`、`canopus package`（见 `modules/examples/hello-portable`）
+- 模拟器端到端（需 Mirage + 固件包，约 5 分钟）：`python3 scripts/emu/smoke.py`（缺环境时退出码 77）
 - 基线哈希：`scripts/baseline-hashes.sh`（输出对比 `docs/baseline/hashes.txt`）
 
 ## 规则

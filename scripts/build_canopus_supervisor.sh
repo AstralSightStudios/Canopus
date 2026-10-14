@@ -58,7 +58,7 @@ TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
   -ffreestanding -fno-common -fno-builtin -fno-jump-tables \
   -fno-stack-protector -fno-unwind-tables -fno-asynchronous-unwind-tables \
   -fdata-sections -fno-function-sections -Os -Wall -Wextra -Werror \
-  $TARGET_DEFINES"
+  $TARGET_DEFINES ${CANOPUS_SUP_EXTRA_DEFINES:-}"
 
 INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \

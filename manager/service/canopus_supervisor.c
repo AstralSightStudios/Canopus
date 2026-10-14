@@ -78,9 +78,10 @@ static int sup_load_slot(struct canopus_supervisor_v1 *sup, uint32_t slot)
     m->pending_switch = 0u;
     m->version = version;
     m->lifecycle_class = lifecycle;
-    sup->error_code = CANOPUS_SUP_ERR_UPDATE_FALLBACK;
     st = pf->load_module(sup->platform_cookie, slot,
                          (const char *)m->module_id, m->lifecycle_class);
+    /* Set after the retry: loading clears the platform's last diagnostic. */
+    if (st >= 0) sup->error_code = CANOPUS_SUP_ERR_UPDATE_FALLBACK;
     return st;
 }
 
