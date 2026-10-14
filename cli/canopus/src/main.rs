@@ -45,6 +45,13 @@ enum Command {
         /// Output file (default: dist/<id>-<version>.canopus).
         #[arg(long)]
         output: Option<PathBuf>,
+        /// Also write a signed quick-app container (.rpk) next to it, for
+        /// installing through the phone's stock quick-app flow.
+        #[arg(long)]
+        rpk: bool,
+        /// Directory holding the rpk signing key (default ~/.canopus/rpk).
+        #[arg(long)]
+        rpk_key_dir: Option<PathBuf>,
     },
     /// Create a module project: Canopus.toml + a C source (portable by default).
     New {
@@ -273,7 +280,9 @@ fn run(cli: Cli) -> anyhow::Result<()> {
             cmd: None,
             manifest,
             output,
-        } => project::package(&manifest, output.as_deref()),
+            rpk,
+            rpk_key_dir,
+        } => project::package(&manifest, output.as_deref(), rpk, rpk_key_dir.as_deref()),
         Command::Re(cmd) => commands::re(cmd),
         Command::BuildPlan {
             manifest,

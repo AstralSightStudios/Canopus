@@ -191,7 +191,7 @@ pub fn build(manifest: &Path, target: Option<&str>) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn package(manifest: &Path, output: Option<&Path>) -> anyhow::Result<()> {
+pub fn package(manifest: &Path, output: Option<&Path>, rpk: bool, key_dir: Option<&Path>) -> anyhow::Result<()> {
     let project = Project::load(manifest)?;
     let root = canopus_root()?;
     let m = &project.manifest;
@@ -272,7 +272,76 @@ pub fn package(manifest: &Path, output: Option<&Path>) -> anyhow::Result<()> {
         packs.len(),
         m.module.version_code
     );
+    if rpk {
+        // Quick-app container for the phone's stock install path: every
+        // target's receipt and the matching ELF(s) under canopus/.
+        let mut payload: Vec<(String, Vec<u8>)> = Vec::new();
+        for pack in &packs {
+            payload.push((
+                format!("canopus/{}.cmi", pack.target_id),
+                receipts[&pack.target_id].clone(),
+            ));
+            let elf = project.elf_path(if portable { None } else { Some(&pack.target_id) });
+            let name = if portable {
+                "canopus/portable.ko".to_string()
+            } else {
+                format!("canopus/{}.ko", pack.target_id)
+            };
+            if !payload.iter().any(|(n, _)| *n == name) {
+                payload.push((name, std::fs::read(&elf)?));
+            }
+        }
+        let (key_pem, cert_der) = rpk_key(key_dir)?;
+        let rpk_bytes = canopus_package::rpk::build_rpk(
+            &canopus_package::rpk::RpkInput {
+                module_id: project.id(),
+                version_name: &m.module.version,
+                version_code: m.module.version_code,
+                files: &payload,
+            },
+            &key_pem,
+            &cert_der,
+        )?;
+        let rpk_out = out.with_extension("rpk");
+        std::fs::write(&rpk_out, &rpk_bytes)?;
+        println!(
+            "wrote {} ({} bytes, package {})",
+            rpk_out.display(),
+            rpk_bytes.len(),
+            canopus_package::rpk::package_name(project.id())
+        );
+    }
     Ok(())
+}
+
+/// Publisher signing key for .rpk files: `<dir>/key.pem` + `cert.der`
+/// (default `~/.canopus/rpk`), created once with the openssl CLI. The app
+/// fingerprint derives from the certificate, so keep the same key per publisher.
+fn rpk_key(dir: Option<&Path>) -> anyhow::Result<(String, Vec<u8>)> {
+    let dir = match dir {
+        Some(d) => d.to_path_buf(),
+        None => PathBuf::from(std::env::var_os("HOME").context("HOME is not set")?)
+            .join(".canopus/rpk"),
+    };
+    let (key, cert) = (dir.join("key.pem"), dir.join("cert.der"));
+    if !key.is_file() || !cert.is_file() {
+        std::fs::create_dir_all(&dir)?;
+        let raw = dir.join("key.raw.pem");
+        run(Command::new("openssl").args(["genrsa", "-out"]).arg(&raw).arg("2048"))?;
+        run(Command::new("openssl")
+            .args(["pkcs8", "-topk8", "-nocrypt", "-in"])
+            .arg(&raw)
+            .arg("-out")
+            .arg(&key))?;
+        run(Command::new("openssl")
+            .args(["req", "-new", "-x509", "-days", "36500", "-subj", "/CN=Canopus publisher", "-key"])
+            .arg(&key)
+            .args(["-outform", "DER", "-out"])
+            .arg(&cert))?;
+        let _ = std::fs::remove_file(raw);
+        println!("created rpk signing key in {}", dir.display());
+    }
+    Ok((std::fs::read_to_string(key)?, std::fs::read(cert)?))
 }
 
 pub fn new(id: &str, dir: &Path, targets: &[String]) -> anyhow::Result<()> {
