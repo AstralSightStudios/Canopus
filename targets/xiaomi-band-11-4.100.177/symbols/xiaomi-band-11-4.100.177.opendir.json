@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.177.opendir",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "name": "opendir",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc351510",
+  "prototype": "void *(const char *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-DIR-4177-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
+    "evidence_ids": [
+      "EVID-DIR-4177-001"
+    ],
+    "source": "no IDB: unique prologue match of the 155 bodies in the exact 177 image (1-5 bytes differ per function, BL displacements only)"
+  },
+  "approval_state": "PENDING",
+  "notes": "NuttX libc directory iteration; used only by the Supervisor to find com.canopus.pkg.* quick-app packages under /data/app. No public callable approval.",
+  "calling_convention": "arm-aapcs",
+  "callable_address": "0xc351511"
+}

@@ -320,3 +320,4 @@
 | 2026-10-14 | P6.1 `canopus emu smoke`；P6.4 需求清单；P6.3 因无 gdb 未验证 |
 | 2026-10-14 | Band 11 固件仿真脚本全部通过（unicorn）；Band 11 SCAN 的 opendir/readdir/closedir 经 043→Band 11 集成匹配核对为错误候选（置信 0.55–0.58，反编译不符），需专门 RE，未做；P4.0/P5.8 记为受限 |
 | 2026-10-14 | `canopus build` 不支持 Rust 为判断结案 |
+| 2026-10-14 | Band 11 139/155/177 的 opendir/readdir/closedir 由 scandir 调用关系与 104/0xC01/98 常量恢复（177 为 155 函数体的唯一前缀匹配），Supervisor 的 SCAN 钩子在 Band 11 上编译启用（STATIC_RECOVERED，未在运行的 Band 11 上验证） |

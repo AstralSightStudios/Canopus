@@ -3,7 +3,8 @@
   "target_id": "xiaomi-band-11-4.100.177",
   "firmware_sha256": "ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b",
   "evidence_ids": [
-    "EVID-PORT-4177-001"
+    "EVID-PORT-4177-001",
+    "EVID-DIR-4177-001"
   ],
   "bindings": {
     "FW_APP_LOOKUP": "app_lookup",
@@ -55,7 +56,10 @@
     "B11_UMEM_FREE": "heap_free",
     "B11_CACHE_D_CLEAN": "cache_d_clean_all",
     "B11_CACHE_BARRIER": "cache_barrier",
-    "B11_CACHE_I_INVALIDATE": "cache_i_clean_invalidate_all"
+    "B11_CACHE_I_INVALIDATE": "cache_i_clean_invalidate_all",
+    "CANOPUS_SUP_NUTTX_OPENDIR": "opendir",
+    "CANOPUS_SUP_NUTTX_READDIR": "readdir",
+    "CANOPUS_SUP_NUTTX_CLOSEDIR": "closedir"
   },
   "fingerprints": [
     "0xc91c920",

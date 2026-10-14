@@ -4,7 +4,7 @@
  * firmware : 4.100.139 (user-4.100.139-cn-202608280000)
  * sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
  * revision : 2
- * input_digest: f7d7875a1108382f
+ * input_digest: a506b59e43e742d3
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
@@ -273,6 +273,7 @@ static inline int * canopus_fw_errno_location(void) {
  * calendar_weekday: restricted - not exported until context/ownership approved
  * clock_gettime: restricted - not exported until context/ownership approved
  * close: restricted - not exported until context/ownership approved
+ * closedir: restricted - not exported until context/ownership approved
  * controller_crash_dump: restricted - not exported until context/ownership approved
  * core_bt_pair_request_callback: restricted - not exported until context/ownership approved
  * driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -395,6 +396,7 @@ static inline int * canopus_fw_errno_location(void) {
  * offload_property_apply: restricted - not exported until context/ownership approved
  * on_resume_wrapped: restricted - not exported until context/ownership approved
  * open: restricted - not exported until context/ownership approved
+ * opendir: restricted - not exported until context/ownership approved
  * page_finish: restricted - not exported until context/ownership approved
  * page_goto: restricted - not exported until context/ownership approved
  * page_navigator_open_page: restricted - not exported until context/ownership approved
@@ -403,6 +405,7 @@ static inline int * canopus_fw_errno_location(void) {
  * pthread_create_internal: restricted - not exported until context/ownership approved
  * quickapp_register_app: restricted - not exported until context/ownership approved
  * read: restricted - not exported until context/ownership approved
+ * readdir: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
  * register_driver: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved

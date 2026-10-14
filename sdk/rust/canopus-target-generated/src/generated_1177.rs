@@ -4,7 +4,7 @@
 // firmware : 4.100.177 (user-4.100.177-cn-202609241530)
 // sha256   : ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b
 // revision : 2
-// input_digest: 7c1839fbd1ce5e0c
+// input_digest: c228ec6e5c38508c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -609,6 +609,9 @@ pub const CANOPUS_FW_CALENDAR_ICON_PUBLISH_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `lv_obj_get_style_prop` at 0xc380164. Thumb callable address 0xc380165.
 pub const CANOPUS_FW_LV_OBJ_GET_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc380165usize);
 
+/// Recovered `readdir` at 0xc3494ba. Thumb callable address 0xc3494bb.
+pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc3494bbusize);
+
 /// Recovered `lvgl_posix_open` at 0xc3a60bc. Thumb callable address 0xc3a60bd.
 pub const CANOPUS_FW_LVGL_POSIX_OPEN_CALLABLE: usize = canopus_thumb_callable(0xc3a60bdusize);
 
@@ -632,6 +635,9 @@ pub const canopus_fw_font_reload_size_cache_class: usize = 0x2ca14980usize;
 
 /// Recovered `_lv_inv_area` at 0xc382080. Thumb callable address 0xc382081.
 pub const CANOPUS_FW__LV_INV_AREA_CALLABLE: usize = canopus_thumb_callable(0xc382081usize);
+
+/// Recovered `opendir` at 0xc351510. Thumb callable address 0xc351511.
+pub const CANOPUS_FW_OPENDIR_CALLABLE: usize = canopus_thumb_callable(0xc351511usize);
 
 /// Recovered `lvx_content_pad_bottom` at 0xc383798. Thumb callable address 0xc383799.
 pub const CANOPUS_FW_LVX_CONTENT_PAD_BOTTOM_CALLABLE: usize = canopus_thumb_callable(0xc383799usize);
@@ -677,6 +683,9 @@ pub unsafe fn canopus_fw_errno_location() -> *const i32 {
 
 /// Recovered `bt_l2cap_connect` at 0xc86d388. Thumb callable address 0xc86d389.
 pub const CANOPUS_FW_BT_L2CAP_CONNECT_CALLABLE: usize = canopus_thumb_callable(0xc86d389usize);
+
+/// Recovered `closedir` at 0xc34cc90. Thumb callable address 0xc34cc91.
+pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc34cc91usize);
 
 /// Recovered `calendar_root_style` at 0xc502de0. Thumb callable address 0xc502de1.
 pub const CANOPUS_FW_CALENDAR_ROOT_STYLE_CALLABLE: usize = canopus_thumb_callable(0xc502de1usize);
@@ -865,6 +874,7 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // calendar_weekday: restricted - not exported until context/ownership approved
 // clock_gettime: restricted - not exported until context/ownership approved
 // close: restricted - not exported until context/ownership approved
+// closedir: restricted - not exported until context/ownership approved
 // controller_crash_dump: restricted - not exported until context/ownership approved
 // core_bt_pair_request_callback: restricted - not exported until context/ownership approved
 // driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -985,6 +995,7 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // offload_property_apply: restricted - not exported until context/ownership approved
 // on_resume_wrapped: restricted - not exported until context/ownership approved
 // open: restricted - not exported until context/ownership approved
+// opendir: restricted - not exported until context/ownership approved
 // page_finish: restricted - not exported until context/ownership approved
 // page_goto: restricted - not exported until context/ownership approved
 // page_navigator_open_page: restricted - not exported until context/ownership approved
@@ -993,6 +1004,7 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // pthread_create_internal: restricted - not exported until context/ownership approved
 // quickapp_register_app: restricted - not exported until context/ownership approved
 // read: restricted - not exported until context/ownership approved
+// readdir: restricted - not exported until context/ownership approved
 // register_blockdriver: restricted - not exported until context/ownership approved
 // register_driver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved

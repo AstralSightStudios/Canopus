@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-DIR-4177-001",
+  "target_id": "xiaomi-band-11-4.100.177",
+  "question": "Which exact-target functions implement opendir/readdir/closedir?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.177.opendir",
+    "xiaomi-band-11-4.100.177.readdir",
+    "xiaomi-band-11-4.100.177.closedir"
+  ],
+  "prototype_hypothesis": "opendir(path)->DIR*|NULL (malloc 104 + open(path, O_DIRECTORY flags 0xC01) storing fd), readdir(DIR*)->dirent*|NULL (read(fd, dir+4, 98); name at +1 of the entry), closedir(DIR*)->int",
+  "callsite_evidence": [
+    "no IDB: unique prologue match of the 155 bodies in the exact 177 image (1-5 bytes differ per function, BL displacements only)"
+  ],
+  "control_flow_evidence": [
+    "same three-function shape and constants (104, 3073, 98) as the proven 3.101.043 libc directory API"
+  ],
+  "ownership_analysis": "DIR handle owned by the caller between opendir and closedir; the dirent is valid until the next readdir/closedir.",
+  "unsafe_assumptions": [
+    "STATIC_RECOVERED; Band 11 is not emulated, so the Supervisor SCAN path is unverified on a running Band 11"
+  ],
+  "recommended_probe": "List /data/app from the Supervisor on a Band 11 and compare with the app manager.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-14T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "fw://xiaomi-band-11-4.100.177/vela_ap.bin",
+      "role": "directory API"
+    }
+  ]
+}

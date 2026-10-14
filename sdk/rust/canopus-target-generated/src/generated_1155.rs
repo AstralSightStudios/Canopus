@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 2f78a4d90456bfdd
+// input_digest: 2e4b175ccd9e93ac
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -450,6 +450,9 @@ pub const CANOPUS_FW_BACKGROUND_OBJECT_EVENT_ADD_CALLABLE: usize = canopus_thumb
 /// Recovered `bt_timer_cancel` at 0xc863000. Thumb callable address 0xc863001.
 pub const CANOPUS_FW_BT_TIMER_CANCEL_CALLABLE: usize = canopus_thumb_callable(0xc863001usize);
 
+/// Recovered `closedir` at 0xc34cd40. Thumb callable address 0xc34cd41.
+pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc34cd41usize);
+
 /// Recovered `bt_l2cap_disconnect` at 0xc86f094. Thumb callable address 0xc86f095.
 pub const CANOPUS_FW_BT_L2CAP_DISCONNECT_CALLABLE: usize = canopus_thumb_callable(0xc86f095usize);
 
@@ -518,6 +521,9 @@ pub const CANOPUS_FW_FONT_RELOAD_FACE_DESTROY_CALLABLE: usize = canopus_thumb_ca
 
 /// Recovered `lv_event_add` at 0xc3a3f5c. Thumb callable address 0xc3a3f5d.
 pub const CANOPUS_FW_LV_EVENT_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3a3f5dusize);
+
+/// Recovered `readdir` at 0xc34956a. Thumb callable address 0xc34956b.
+pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc34956busize);
 
 /// Recovered `lvx_object_add_flag` at 0xc38404c. Thumb callable address 0xc38404d.
 pub const CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc38404dusize);
@@ -789,6 +795,9 @@ pub const CANOPUS_FW_FONT_RELOAD_IMAGE_PENDING_RELEASE_CALLABLE: usize = canopus
 /// Recovered `hal_cache_invalidate_rom_thunk` at 0xc721180. Thumb callable address 0xc721181.
 pub const CANOPUS_FW_HAL_CACHE_INVALIDATE_ROM_THUNK_CALLABLE: usize = canopus_thumb_callable(0xc721181usize);
 
+/// Recovered `opendir` at 0xc351748. Thumb callable address 0xc351749.
+pub const CANOPUS_FW_OPENDIR_CALLABLE: usize = canopus_thumb_callable(0xc351749usize);
+
 /// Recovered `image_snapshot_release` at 0xc8f43b8. Thumb callable address 0xc8f43b9.
 pub const CANOPUS_FW_IMAGE_SNAPSHOT_RELEASE_CALLABLE: usize = canopus_thumb_callable(0xc8f43b9usize);
 
@@ -865,6 +874,7 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // calendar_weekday: restricted - not exported until context/ownership approved
 // clock_gettime: restricted - not exported until context/ownership approved
 // close: restricted - not exported until context/ownership approved
+// closedir: restricted - not exported until context/ownership approved
 // controller_crash_dump: restricted - not exported until context/ownership approved
 // core_bt_pair_request_callback: restricted - not exported until context/ownership approved
 // driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -985,6 +995,7 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // offload_property_apply: restricted - not exported until context/ownership approved
 // on_resume_wrapped: restricted - not exported until context/ownership approved
 // open: restricted - not exported until context/ownership approved
+// opendir: restricted - not exported until context/ownership approved
 // page_finish: restricted - not exported until context/ownership approved
 // page_goto: restricted - not exported until context/ownership approved
 // page_navigator_open_page: restricted - not exported until context/ownership approved
@@ -993,6 +1004,7 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // pthread_create_internal: restricted - not exported until context/ownership approved
 // quickapp_register_app: restricted - not exported until context/ownership approved
 // read: restricted - not exported until context/ownership approved
+// readdir: restricted - not exported until context/ownership approved
 // register_blockdriver: restricted - not exported until context/ownership approved
 // register_driver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
