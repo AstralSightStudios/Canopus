@@ -57,7 +57,7 @@ cargo run -p canopus-cli -- target generate xiaomi-band-10-pro-3.101.036
 - status、policy 和 prototype metadata；
 - 可由 prototype records 解析出的 target-private raw wrappers；
 
-036 backend 已经通过 `generated_symbols::TARGET_ID` 使用生成的 generated identity；043 backend 也使用独立的 `generated_symbols_1043.rs` 和 043 firmware SHA-256。`scripts/ci.sh` 会在 SDK 测试前重新生成 036/043 两份 metadata 并进行 byte-for-byte 比较，防止 generated metadata 被手工修改后漂移。
+036 backend 已经通过 `generated_symbols::TARGET_ID` 使用生成的 generated identity；043 backend 也使用独立的 `generated_symbols_xiaomi_band_10_pro_3_101_043.rs` 和 043 firmware SHA-256。`scripts/ci.sh` 会在 SDK 测试前重新生成 036/043 两份 metadata 并进行 byte-for-byte 比较，防止 generated metadata 被手工修改后漂移。
 
 ## 下一阶段
 

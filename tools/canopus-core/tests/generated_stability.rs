@@ -43,7 +43,7 @@ fn rust_bindings_regenerate_identically() {
     };
     let regenerated = r#gen.generate();
     let committed = std::fs::read_to_string(
-        repo_root().join("sdk/rust/canopus-target-generated/src/generated_1036.rs"),
+        repo_root().join("sdk/rust/canopus-target-generated/src/generated_xiaomi_band_10_pro_3_101_036.rs"),
     )
     .unwrap();
     assert_eq!(
@@ -74,23 +74,23 @@ fn additional_target_artifacts_regenerate_identically() {
     let cases = [
         (
             "xiaomi-band-10-pro-3.101.036",
-            "sdk/rust/canopus-target-generated/src/generated_1036.rs",
+            "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_10_pro_3_101_036.rs",
         ),
         (
             "xiaomi-band-10-pro-3.101.043",
-            "sdk/rust/canopus-target-generated/src/generated_1043.rs",
+            "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_10_pro_3_101_043.rs",
         ),
         (
             "xiaomi-band-11-4.100.139",
-            "sdk/rust/canopus-target-generated/src/generated_1139.rs",
+            "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_11_4_100_139.rs",
         ),
         (
             "xiaomi-band-11-4.100.155",
-            "sdk/rust/canopus-target-generated/src/generated_1155.rs",
+            "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_11_4_100_155.rs",
         ),
         (
             "xiaomi-band-11-4.100.177",
-            "sdk/rust/canopus-target-generated/src/generated_1177.rs",
+            "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_11_4_100_177.rs",
         ),
     ];
 
@@ -192,7 +192,7 @@ fn additional_target_artifacts_regenerate_identically() {
 #[test]
 fn band11_177_artifacts_regenerate_identically() {
     let target = "xiaomi-band-11-4.100.177";
-    let rust_path = "sdk/rust/canopus-target-generated/src/generated_1177.rs";
+    let rust_path = "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_11_4_100_177.rs";
     let dir = repo_root().join("targets").join(target);
     let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
     let (symbols, types) = load_records(&dir).unwrap();

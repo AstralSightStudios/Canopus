@@ -10,7 +10,7 @@ cd "$ROOT"
 sum() { shasum -a 256 "$@" | sed 's#  \./#  #'; }
 
 echo "## committed"
-git ls-files | grep -E '^targets/[^/]+/generated/|/generated_[0-9]+\.rs$|/generated_symbols_[0-9]+\.rs$' | LC_ALL=C sort | while read -r f; do sum "$f"; done
+git ls-files | grep -E '^targets/[^/]+/generated/|/generated_xiaomi_[^/]+\.rs$|/generated_symbols_xiaomi_[^/]+\.rs$' | LC_ALL=C sort | while read -r f; do sum "$f"; done
 
 echo "## generator"
 tmp=$(mktemp -d)
@@ -18,7 +18,7 @@ cp -R targets "$tmp/targets"
 mkdir -p "$tmp/sdk"
 cp -R sdk/rust "$tmp/sdk/rust"
 cargo run -q -p canopus-cli -- target generate --all --targets-dir "$tmp/targets" >/dev/null
-(cd "$tmp" && git -C "$ROOT" ls-files | grep -E '^targets/[^/]+/generated/|/generated_[0-9]+\.rs$|/generated_symbols_[0-9]+\.rs$' | LC_ALL=C sort | while read -r f; do [ -f "$f" ] && sum "$f"; done)
+(cd "$tmp" && git -C "$ROOT" ls-files | grep -E '^targets/[^/]+/generated/|/generated_xiaomi_[^/]+\.rs$|/generated_symbols_xiaomi_[^/]+\.rs$' | LC_ALL=C sort | while read -r f; do [ -f "$f" ] && sum "$f"; done)
 rm -rf "$tmp"
 
 echo "## elf"

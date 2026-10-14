@@ -42,7 +42,9 @@ fn all_targets_expose_the_same_functions() {
     let targets = [
         ("036", include_str!("../src/targets/xiaomi_band_10_pro_3_101_036.rs")),
         ("043", include_str!("../src/targets/xiaomi_band_10_pro_3_101_043.rs")),
-        ("band11", include_str!("../src/targets/xiaomi_band_11_4_100_139.rs")),
+        ("band11-139", include_str!("../src/targets/xiaomi_band_11_4_100_139.rs")),
+        ("band11-155", include_str!("../src/targets/xiaomi_band_11_4_100_155.rs")),
+        ("band11-177", include_str!("../src/targets/xiaomi_band_11_4_100_177.rs")),
     ];
     let sets: Vec<_> = targets.iter().map(|(n, s)| (*n, api(s))).collect();
     let union: BTreeSet<_> = sets.iter().flat_map(|(_, s)| s.iter().cloned()).collect();

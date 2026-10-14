@@ -1,7 +1,13 @@
 //! canopus-target-generated — per-target Rust bindings (CAN-RUST-002 / TGT-006).
 //!
-//! `generated_1036.rs`, `generated_1043.rs`, `generated_1139.rs`, `generated_1155.rs`, `generated_1177.rs` are produced by
-//! `canopus target generate-rust-bindings <target>` and committed so the crate
+//! Generated bindings for each supported firmware target:
+//! - Xiaomi Band 10 Pro (3.101.036): `generated_xiaomi_band_10_pro_3_101_036.rs`
+//! - Xiaomi Band 10 Pro (3.101.043): `generated_xiaomi_band_10_pro_3_101_043.rs`
+//! - Xiaomi Band 11 (4.100.139): `generated_xiaomi_band_11_4_100_139.rs`
+//! - Xiaomi Band 11 (4.100.155): `generated_xiaomi_band_11_4_100_155.rs`
+//! - Xiaomi Band 11 (4.100.177): `generated_xiaomi_band_11_4_100_177.rs`
+//!
+//! Produced by `canopus target generate-rust-bindings <target>` and committed so the crate
 //! always has an exact-target source artifact. A regression test in
 //! `canopus-core` fails when a supported generated pack changes without regenerating it.
 //!
@@ -17,19 +23,21 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 
-// Exactly one target feature must be selected. Candidate packs retain their
-// per-target promotion gates.
+// Exactly one target feature must be selected.
 #[cfg(feature = "target-xiaomi-band-10-pro-3-101-036")]
-include!("generated_1036.rs");
+include!("generated_xiaomi_band_10_pro_3_101_036.rs");
 
 #[cfg(feature = "target-xiaomi-band-10-pro-3-101-043")]
-include!("generated_1043.rs");
-
-#[cfg(feature = "target-xiaomi-band-11-4-100-155")]
-include!("generated_1155.rs");
+include!("generated_xiaomi_band_10_pro_3_101_043.rs");
 
 #[cfg(feature = "target-xiaomi-band-11-4-100-139")]
-include!("generated_1139.rs");
+include!("generated_xiaomi_band_11_4_100_139.rs");
+
+#[cfg(feature = "target-xiaomi-band-11-4-100-155")]
+include!("generated_xiaomi_band_11_4_100_155.rs");
+
+#[cfg(feature = "target-xiaomi-band-11-4-100-177")]
+include!("generated_xiaomi_band_11_4_100_177.rs");
 
 #[cfg(all(
     test,
@@ -191,6 +199,3 @@ mod layout_tests {
         let _ = (concat!(module_path!(), " for the record"),);
     }
 }
-
-#[cfg(feature = "target-xiaomi-band-11-4-100-177")]
-include!("generated_1177.rs");

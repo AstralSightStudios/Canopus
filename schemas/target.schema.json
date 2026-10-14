@@ -46,7 +46,7 @@
     },
     "rust_module": {
       "type": "string",
-      "pattern": "^[a-z0-9]+$",
+      "pattern": "^[a-z0-9_]+$",
       "description": "Suffix of sdk/rust/canopus-target-generated/src/generated_<rust_module>.rs."
     },
     "device_family": {

@@ -3,7 +3,7 @@
 schema = 1
 target_id = "xiaomi-band-10-pro-3.101.043"
 family = "xiaomi-band-10-pro"
-rust_module = "1043"
+rust_module = "xiaomi_band_10_pro_3_101_043"
 device_family = "xiaomi-smart-band"
 device_model = "Xiaomi Band 10 Pro"
 board_revision = "unknown"

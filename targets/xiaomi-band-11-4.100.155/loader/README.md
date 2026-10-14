@@ -15,7 +15,7 @@ register_driver、通知插入/复制/消费者、缓存 leaf 和 Bluetooth 关�
 
 `.155` 通知消费者的 `message+92 → user_data+13` 无条件读取与 `.139` 一致，
 因此使用同一份修复后的普通通知上下文实现。C native 地址从本 target 的
-symbol records 与 `native-bindings.json` 生成，Rust 地址来自 `generated_1155.rs`。
+symbol records 与 `native-bindings.json` 生成，Rust 地址来自 `generated_xiaomi_band_11_4_100_155.rs`。
 仅共享不含固件地址的 C/Rust 语义实现。Lua 的 native profile 也绑定本版本。
 
 ```sh
