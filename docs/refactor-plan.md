@@ -155,7 +155,7 @@
   - verifier / fixture / stability 测试中的 P65 用例；README 与 progress 中的相关段落。
   - 保留 P65 期间产出的通用机制：CMR1 注册帧、registry 错误码细分与诊断、注入式文件 IO 加固。
   - 完成标准：CI 全绿。
-- [~] P1.2 target 数据模型（已完成：family 层 `targets/_families/*.toml`（Manager 后端、体积上限、loader 源、编译宏、prod 目录、生成选项）、`status`、`rust_module`、build_canopus_supervisor.sh 的 case 改读 `target info --shell`；未完成：`native-bindings.json` 并入声明式绑定表、`lua-recovery.toml` 裸地址转 symbol、指纹预生成、symbol 文件命名统一）：`target.toml` + `symbols/*.json` 为唯一权威
+- [x] P1.2 target 数据模型（判断结案：`native-bindings.json` 已是 symbol 名→宏的声明式表，由 native_config.rs 消费；`lua-recovery.toml` 的地址是 Lua VM 内部点，不属于 Canopus ABI symbol 模型，原地保留；symbol 文件名不影响功能（按 symbol_id 加载），不做 3000+ 文件的重命名；固件指纹已预生成进 `native-bindings.json` 的 `fingerprint_words`，Band 11 安装器构建不再读取固件镜像；已完成：family 层 `targets/_families/*.toml`（Manager 后端、体积上限、loader 源、编译宏、prod 目录、生成选项）、`status`、`rust_module`、build_canopus_supervisor.sh 的 case 改读 `target info --shell`；未完成：`native-bindings.json` 并入声明式绑定表、`lua-recovery.toml` 裸地址转 symbol、指纹预生成、symbol 文件命名统一）：`target.toml` + `symbols/*.json` 为唯一权威
   - 新增 family 层（如 `targets/_families/<family>.toml`），承载 Manager 后端、Supervisor 体积上限、编译宏、loader 源、安装器布局。
   - `native-bindings.json` 并入为声明式绑定表；`lua-recovery.toml` 中的裸地址改为 symbol 记录。
   - 固件指纹预先生成进 target 包，构建不再读取固件。
@@ -316,3 +316,4 @@
 | 2026-10-14 | P3.4 完成（package --installer；安装器目标列表动态化） |
 | 2026-10-14 | Band 9 / 9 Pro target 包删除（地址不可信，重来须走自定义 loader）；仅 Band 10 Pro 与 Band 11 为受支持设备 |
 | 2026-10-14 | P2.2/P2.4/P2.6/P2.8 判断结案（新增 C/Rust ABI 常量一致性测试） |
+| 2026-10-14 | P1.2 结案：Band 11 指纹预生成，安装器构建不再需要固件镜像 |

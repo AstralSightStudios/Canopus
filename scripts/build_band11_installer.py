@@ -9,7 +9,6 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import protect_lua
-import fwlocate
 import struct
 import subprocess
 import tempfile
@@ -236,7 +235,6 @@ def main():
     parser.add_argument("--target", choices=TARGETS, help="rebuild one payload set; default builds both firmwares")
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--supervisor", type=Path, help="exact target verified ET_REL; otherwise build it")
-    parser.add_argument("--firmware", type=Path)
     parser.add_argument("--check", action="store_true", help="check generated Lua without writes")
     args = parser.parse_args()
     source, profile = render(args.target or TARGET)
@@ -247,13 +245,9 @@ def main():
         print("Band 11 production Lua bytecode wrapper is current; device validation pending")
         return
     if args.supervisor is None:
-        if args.firmware and not args.target:
-            parser.error("--firmware requires --target")
         env = dict(os.environ)
         if args.output_dir:
             env["CANOPUS_BAND11_OUTPUT_DIR"] = str(args.output_dir.resolve())
-        if args.firmware:
-            env["CANOPUS_BAND11_FIRMWARE"] = str(args.firmware.resolve())
         for target in (args.target,) if args.target else TARGETS:
             env['CANOPUS_TARGET'] = target
             subprocess.run([str(ROOT / "scripts/build_canopus_supervisor.sh")], cwd=ROOT, env=env, check=True)
@@ -266,17 +260,13 @@ def main():
     unexpected = [p.name for p in out.iterdir() if p.is_file() and p.name != "main.lua" and p.suffix != ".bin"]
     if unexpected:
         parser.error("non-watchface files in output root: " + ", ".join(sorted(unexpected)))
-    firmware_path = args.firmware or fwlocate.require(args.target)
-    firmware = firmware_path.read_bytes()
-    if hashlib.sha256(firmware).hexdigest() != profile["firmware_sha256"]:
-        parser.error("firmware hash differs from target pack")
     run(ROOT / "target/debug/canopus", "verify", args.supervisor, "--target", args.target, "--targets-dir", ROOT / "targets")
     supervisor = args.supervisor.read_bytes()
     _, bindings, addresses = native_metadata(args.target)
     run(ROOT / "target/debug/canopus", "target", "generate", args.target, "--check",
         "--targets-dir", ROOT / "targets")
     stage1, stage2 = build_stages(work, supervisor, args.target)
-    fingerprints = [int(a, 16) for a in bindings["fingerprints"]]
+    fingerprints = [(int(a, 16), int(w, 16)) for a, w in bindings["fingerprint_words"].items()]
     native_profile = dict(target_id=args.target, loader_family="lua-owned-stage1-stage2",
                           status="STATIC_RECOVERED", device_status="NOT_PROBED")
     native_profile.update({key: addresses[macro] for key, macro in {
@@ -287,7 +277,7 @@ def main():
     native_profile.update({f"{name}_{key}": value for name, data in (("stage1",stage1),("stage2",stage2),("supervisor",supervisor))
                            for key,value in (("size",len(data)),("crc",zlib.crc32(data)))})
     profile_lua = "return {\n" + "".join(f"  {k} = {json.dumps(v)},\n" for k,v in native_profile.items())
-    profile_lua += "  fingerprints = {\n" + "".join(f"    {{0x{a:08x}, 0x{struct.unpack_from('<I', firmware, a - 0x0c0c0000)[0]:08x}}},\n" for a in fingerprints) + "  },\n}\n"
+    profile_lua += "  fingerprints = {\n" + "".join(f"    {{0x{a:08x}, 0x{w:08x}}},\n" for a, w in fingerprints) + "  },\n}\n"
     main_resource = text_bytecode_wrapper(lua_bytecode_entry(source))
     resources = {"main.lua": main_resource, "manager_icon.bin": (ROOT / "watchfaces/canopus-installer/manager_icon.bin").read_bytes(),
                  f"canopus_loader_profile-{args.target}.bin": profile_lua.encode(),
