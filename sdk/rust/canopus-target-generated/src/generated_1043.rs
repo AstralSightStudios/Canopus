@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 7
-// input_digest: c2846ee2df304a31
+// input_digest: e61fc16beed8cd3d
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -470,6 +470,9 @@ pub unsafe fn canopus_fw_interconnect_connect(a0: *mut core::ffi::c_void, a1: *m
 /// Recovered `sem_wait` at 0xc206944. Thumb callable address 0xc206945.
 pub const CANOPUS_FW_SEM_WAIT_CALLABLE: usize = canopus_thumb_callable(0xc206945usize);
 
+/// Recovered `miwear_transport_l2_rx` at 0xc7d6e6c. Thumb callable address 0xc7d6e6d.
+pub const CANOPUS_FW_MIWEAR_TRANSPORT_L2_RX_CALLABLE: usize = canopus_thumb_callable(0xc7d6e6dusize);
+
 /// Recovered `font_reload_gradient_pending_release` at 0x1c0493bc. Thumb callable address 0x1c0493bd.
 pub const CANOPUS_FW_FONT_RELOAD_GRADIENT_PENDING_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x1c0493bdusize);
 
@@ -550,6 +553,9 @@ pub unsafe fn canopus_fw_app_launcher_add(a0: u16) -> i32 {
 
 /// Recovered `font_reload_vector_drop` at 0x0ca65c24. Thumb callable address 0x0ca65c25.
 pub const CANOPUS_FW_FONT_RELOAD_VECTOR_DROP_CALLABLE: usize = canopus_thumb_callable(0x0ca65c25usize);
+
+/// Recovered `miwear_transport_send` at 0xc7d719c. Thumb callable address 0xc7d719d.
+pub const CANOPUS_FW_MIWEAR_TRANSPORT_SEND_CALLABLE: usize = canopus_thumb_callable(0xc7d719dusize);
 
 /// Recovered `font_reload_list_remove` at 0x0c169ce8. Thumb callable address 0x0c169ce9.
 pub const CANOPUS_FW_FONT_RELOAD_LIST_REMOVE_CALLABLE: usize = canopus_thumb_callable(0x0c169ce9usize);
@@ -1423,6 +1429,8 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // lvx_image_set_scale: restricted - not exported until context/ownership approved
 // lvx_label_set_long_mode: restricted - not exported until context/ownership approved
 // lvx_object_add_flag: restricted - not exported until context/ownership approved
+// miwear_transport_l2_rx: restricted - not exported until context/ownership approved
+// miwear_transport_send: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // notifications_scroll: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated

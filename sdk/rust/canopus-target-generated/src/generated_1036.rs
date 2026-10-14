@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: 4df022a12b7e756a
+// input_digest: 692e4c6973abe05d
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -362,6 +362,9 @@ pub unsafe fn canopus_fw_app_lookup(a0: u16) -> *mut core::ffi::c_void {
 /// Recovered `lvx_image_set_scale` at 0x0C179A8C. Thumb callable address 0x0C179A8D.
 pub const CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE: usize = canopus_thumb_callable(0x0C179A8Dusize);
 
+/// Recovered `miwear_transport_l2_rx` at 0xc7be110. Thumb callable address 0xc7be111.
+pub const CANOPUS_FW_MIWEAR_TRANSPORT_L2_RX_CALLABLE: usize = canopus_thumb_callable(0xc7be111usize);
+
 /// Recovered `write` at 0xc1c31c8. Thumb callable address 0xc1c31c9.
 pub const CANOPUS_FW_WRITE_CALLABLE: usize = canopus_thumb_callable(0xc1c31c9usize);
 #[allow(non_snake_case)]
@@ -433,6 +436,9 @@ pub const CANOPUS_FW_LVX_LABEL_SET_LONG_MODE_CALLABLE: usize = canopus_thumb_cal
 
 /// Recovered `insmod` at 0xc1ee090. Thumb callable address 0xc1ee091.
 pub const CANOPUS_FW_INSMOD_CALLABLE: usize = canopus_thumb_callable(0xc1ee091usize);
+
+/// Recovered `miwear_transport_send` at 0xc7be440. Thumb callable address 0xc7be441.
+pub const CANOPUS_FW_MIWEAR_TRANSPORT_SEND_CALLABLE: usize = canopus_thumb_callable(0xc7be441usize);
 
 /// Recovered `bt_alloc` at 0x0C8284FC. Thumb callable address 0x0C8284FD.
 pub const CANOPUS_FW_BT_ALLOC_CALLABLE: usize = canopus_thumb_callable(0x0C8284FDusize);
@@ -1008,6 +1014,8 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // lvx_image_set_scale: restricted - not exported until context/ownership approved
 // lvx_label_set_long_mode: restricted - not exported until context/ownership approved
 // lvx_object_add_flag: restricted - not exported until context/ownership approved
+// miwear_transport_l2_rx: restricted - not exported until context/ownership approved
+// miwear_transport_send: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
 // page_navigator_open_page: FORBIDDEN - no binding may ever be generated

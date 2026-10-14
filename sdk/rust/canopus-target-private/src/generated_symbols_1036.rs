@@ -789,6 +789,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *, uint8_t *, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "miwear_transport_l2_rx",
+        kind: "function",
+        entry: 0xc7be110usize,
+        callable: 0xc7be111usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, uint8_t, uint8_t, const uint8_t *, uint16_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "miwear_transport_send",
+        kind: "function",
+        entry: 0xc7be440usize,
+        callable: 0xc7be441usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *, const void *)",
+    },
+    TargetPrivateSymbolRecord {
         name: "sdp_builder_create",
         kind: "function",
         entry: 0xc7f20bcusize,
@@ -1339,6 +1357,10 @@ pub const BT_TIMER_CANCEL_CALLABLE: usize = 0xc7d2d75usize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x20137e94usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7d3eb4usize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7d3eb5usize;
+pub const MIWEAR_TRANSPORT_L2_RX_ENTRY: usize = 0xc7be110usize;
+pub const MIWEAR_TRANSPORT_L2_RX_CALLABLE: usize = 0xc7be111usize;
+pub const MIWEAR_TRANSPORT_SEND_ENTRY: usize = 0xc7be440usize;
+pub const MIWEAR_TRANSPORT_SEND_CALLABLE: usize = 0xc7be441usize;
 pub const SDP_BUILDER_CREATE_ENTRY: usize = 0xc7f20bcusize;
 pub const SDP_BUILDER_CREATE_CALLABLE: usize = 0xc7f20bdusize;
 pub const SDP_COMMIT_ENTRY: usize = 0xc7f0080usize;
@@ -1973,6 +1995,31 @@ pub unsafe fn raw_gap_host_stock_receive(a0: *mut core::ffi::c_void, a1: *mut u8
     unsafe { f(a0, a1, a2) }
 }
 
+pub unsafe fn raw_miwear_transport_l2_rx(
+    a0: *mut core::ffi::c_void,
+    a1: u8,
+    a2: u8,
+    a3: *const u8,
+    a4: u16,
+) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u8, u8, *const u8, u16) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_MIWEAR_TRANSPORT_L2_RX_CALLABLE)
+    };
+    unsafe { f(a0, a1, a2, a3, a4) }
+}
+
+pub unsafe fn raw_miwear_transport_send(
+    a0: *mut core::ffi::c_void,
+    a1: *const core::ffi::c_void,
+) -> i32 {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, *const core::ffi::c_void) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_MIWEAR_TRANSPORT_SEND_CALLABLE)
+    };
+    unsafe { f(a0, a1) }
+}
+
 pub unsafe fn raw_sdp_builder_create(
     a0: u32,
     a1: u16,
@@ -2289,4 +2336,4 @@ pub unsafe fn raw_watchface_manager_delete_watchface(a0: *const u8) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 84
+// generated target-private raw wrapper count: 86

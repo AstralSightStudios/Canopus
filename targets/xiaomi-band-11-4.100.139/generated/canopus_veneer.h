@@ -4,7 +4,7 @@
  * firmware : 4.100.139 (user-4.100.139-cn-202608280000)
  * sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
  * revision : 2
- * input_digest: a506b59e43e742d3
+ * input_digest: a5a38e4049023ccf
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
@@ -390,6 +390,8 @@ static inline int * canopus_fw_errno_location(void) {
  * lvx_page_content_create: restricted - not exported until context/ownership approved
  * lvx_page_title_create: restricted - not exported until context/ownership approved
  * lvx_style_apply: restricted - not exported until context/ownership approved
+ * miwear_transport_l2_rx: restricted - not exported until context/ownership approved
+ * miwear_transport_send: restricted - not exported until context/ownership approved
  * mm_mallinfo: restricted - not exported until context/ownership approved
  * mm_memalign: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved

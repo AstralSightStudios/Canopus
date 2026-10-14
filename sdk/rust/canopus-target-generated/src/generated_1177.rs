@@ -4,7 +4,7 @@
 // firmware : 4.100.177 (user-4.100.177-cn-202609241530)
 // sha256   : ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b
 // revision : 2
-// input_digest: c228ec6e5c38508c
+// input_digest: 0c71d3bfd454b1cc
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -381,6 +381,9 @@ pub const CANOPUS_FW_LVX_LABEL_CREATE_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `bt_alloc` at 0xc3514ec. Thumb callable address 0xc3514ed.
 pub const CANOPUS_FW_BT_ALLOC_CALLABLE: usize = canopus_thumb_callable(0xc3514edusize);
 
+/// Recovered `miwear_transport_l2_rx` at 0xc98d3e0. Thumb callable address 0xc98d3e1.
+pub const CANOPUS_FW_MIWEAR_TRANSPORT_L2_RX_CALLABLE: usize = canopus_thumb_callable(0xc98d3e1usize);
+
 /// Recovered `app_launcher_add` at 0xc546c20. Thumb callable address 0xc546c21.
 pub const CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc546c21usize);
 
@@ -693,6 +696,9 @@ pub const CANOPUS_FW_CALENDAR_ROOT_STYLE_CALLABLE: usize = canopus_thumb_callabl
 /// Recovered `cache_i_clean_invalidate_all` at 0xc0c181e. Thumb callable address 0xc0c181f.
 pub const CANOPUS_FW_CACHE_I_CLEAN_INVALIDATE_ALL_CALLABLE: usize = canopus_thumb_callable(0xc0c181fusize);
 
+/// Recovered `miwear_transport_send` at 0xc98d710. Thumb callable address 0xc98d711.
+pub const CANOPUS_FW_MIWEAR_TRANSPORT_SEND_CALLABLE: usize = canopus_thumb_callable(0xc98d711usize);
+
 /// Recovered `font_reload_image_pending_release` at 0xc395b48. Thumb callable address 0xc395b49.
 pub const CANOPUS_FW_FONT_RELOAD_IMAGE_PENDING_RELEASE_CALLABLE: usize = canopus_thumb_callable(0xc395b49usize);
 
@@ -989,6 +995,8 @@ pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thu
 // lvx_page_content_create: restricted - not exported until context/ownership approved
 // lvx_page_title_create: restricted - not exported until context/ownership approved
 // lvx_style_apply: restricted - not exported until context/ownership approved
+// miwear_transport_l2_rx: restricted - not exported until context/ownership approved
+// miwear_transport_send: restricted - not exported until context/ownership approved
 // mm_mallinfo: restricted - not exported until context/ownership approved
 // mm_memalign: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved

@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.miwear_transport_l2_rx",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "miwear_transport_l2_rx",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc98f158",
+  "callable_address": "0xc98f159",
+  "prototype": "void(void *, uint8_t, uint8_t, const uint8_t *, uint16_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": []
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [],
+    "source": "exact xiaomi-band-11-4.100.139 IDB vela_ap.bin; L2 RX callback"
+  },
+  "approval_state": "PENDING",
+  "notes": "MiWear L2 transport receive dispatch callback"
+}

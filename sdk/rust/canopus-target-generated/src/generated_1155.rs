@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 2e4b175ccd9e93ac
+// input_digest: e13fb679794ff719
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -296,6 +296,9 @@ pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc351
 
 /// Recovered `lv_cache_drop` at 0xc8b8c9e. Thumb callable address 0xc8b8c9f.
 pub const CANOPUS_FW_LV_CACHE_DROP_CALLABLE: usize = canopus_thumb_callable(0xc8b8c9fusize);
+
+/// Recovered `miwear_transport_send` at 0xc98f478. Thumb callable address 0xc98f479.
+pub const CANOPUS_FW_MIWEAR_TRANSPORT_SEND_CALLABLE: usize = canopus_thumb_callable(0xc98f479usize);
 
 /// Recovered `lv_display_get_horizontal_resolution` at 0x0c380694. Thumb callable address 0x0c380695.
 pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = canopus_thumb_callable(0x0c380695usize);
@@ -617,6 +620,9 @@ pub const canopus_fw_font_reload_draw_unit_slot: usize = 0x200bd318usize;
 
 /// Recovered `lvx_content_pad_bottom` at 0xc387c6e. Thumb callable address 0xc387c6f.
 pub const CANOPUS_FW_LVX_CONTENT_PAD_BOTTOM_CALLABLE: usize = canopus_thumb_callable(0xc387c6fusize);
+
+/// Recovered `miwear_transport_l2_rx` at 0xc98f148. Thumb callable address 0xc98f149.
+pub const CANOPUS_FW_MIWEAR_TRANSPORT_L2_RX_CALLABLE: usize = canopus_thumb_callable(0xc98f149usize);
 
 /// Recovered `font_manager_remove_path` at 0x0c904cec. Thumb callable address 0x0c904ced.
 pub const CANOPUS_FW_FONT_MANAGER_REMOVE_PATH_CALLABLE: usize = canopus_thumb_callable(0x0c904cedusize);
@@ -989,6 +995,8 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // lvx_page_content_create: restricted - not exported until context/ownership approved
 // lvx_page_title_create: restricted - not exported until context/ownership approved
 // lvx_style_apply: restricted - not exported until context/ownership approved
+// miwear_transport_l2_rx: restricted - not exported until context/ownership approved
+// miwear_transport_send: restricted - not exported until context/ownership approved
 // mm_mallinfo: restricted - not exported until context/ownership approved
 // mm_memalign: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved

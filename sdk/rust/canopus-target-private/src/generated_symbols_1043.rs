@@ -1464,6 +1464,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void(void *list, int mode, int enabled)",
     },
     TargetPrivateSymbolRecord {
+        name: "miwear_transport_l2_rx",
+        kind: "function",
+        entry: 0xc7d6e6cusize,
+        callable: 0xc7d6e6dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, uint8_t, uint8_t, const uint8_t *, uint16_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "miwear_transport_send",
+        kind: "function",
+        entry: 0xc7d719cusize,
+        callable: 0xc7d719dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *, const void *)",
+    },
+    TargetPrivateSymbolRecord {
         name: "notifications_scroll",
         kind: "function",
         entry: 0xc527bbcusize,
@@ -2419,6 +2437,10 @@ pub const LAUNCHER_SCROLL_ENTRY: usize = 0xc517d9cusize;
 pub const LAUNCHER_SCROLL_CALLABLE: usize = 0xc517d9dusize;
 pub const LAUNCHER_SCROLL_PREPARE_ENTRY: usize = 0xc5166f0usize;
 pub const LAUNCHER_SCROLL_PREPARE_CALLABLE: usize = 0xc5166f1usize;
+pub const MIWEAR_TRANSPORT_L2_RX_ENTRY: usize = 0xc7d6e6cusize;
+pub const MIWEAR_TRANSPORT_L2_RX_CALLABLE: usize = 0xc7d6e6dusize;
+pub const MIWEAR_TRANSPORT_SEND_ENTRY: usize = 0xc7d719cusize;
+pub const MIWEAR_TRANSPORT_SEND_CALLABLE: usize = 0xc7d719dusize;
 pub const NOTIFICATIONS_SCROLL_ENTRY: usize = 0xc527bbcusize;
 pub const NOTIFICATIONS_SCROLL_CALLABLE: usize = 0xc527bbdusize;
 pub const P67_BATTERY_CHILD_COUNT_ENTRY: usize = 0xc5881d8usize;
@@ -3218,6 +3240,31 @@ pub unsafe fn raw_gap_host_stock_receive(a0: *mut core::ffi::c_void, a1: *mut u8
     unsafe { f(a0, a1, a2) }
 }
 
+pub unsafe fn raw_miwear_transport_l2_rx(
+    a0: *mut core::ffi::c_void,
+    a1: u8,
+    a2: u8,
+    a3: *const u8,
+    a4: u16,
+) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u8, u8, *const u8, u16) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_MIWEAR_TRANSPORT_L2_RX_CALLABLE)
+    };
+    unsafe { f(a0, a1, a2, a3, a4) }
+}
+
+pub unsafe fn raw_miwear_transport_send(
+    a0: *mut core::ffi::c_void,
+    a1: *const core::ffi::c_void,
+) -> i32 {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, *const core::ffi::c_void) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_MIWEAR_TRANSPORT_SEND_CALLABLE)
+    };
+    unsafe { f(a0, a1) }
+}
+
 pub unsafe fn raw_p67_blur_gpu_finish() -> i32 {
     type F = unsafe extern "C" fn() -> i32;
     let f: F = unsafe {
@@ -3552,4 +3599,4 @@ pub unsafe fn raw_watchface_reset_watchface(a0: i32) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 99
+// generated target-private raw wrapper count: 101

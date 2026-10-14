@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.miwear_transport_send",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "miwear_transport_send",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc7be440",
+  "callable_address": "0xc7be441",
+  "prototype": "int(void *, const void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": []
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [],
+    "source": "exact xiaomi-band-10-pro-3.101.036 IDB vela_ap.bin; miwear_transport_send"
+  },
+  "approval_state": "PENDING",
+  "notes": "MiWear L2 transport transmit function"
+}
