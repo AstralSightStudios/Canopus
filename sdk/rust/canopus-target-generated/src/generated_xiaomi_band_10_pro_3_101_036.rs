@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: 692e4c6973abe05d
+// input_digest: 962e4c4073b886f2
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -689,6 +689,9 @@ pub unsafe fn canopus_fw_lv_event_get_code(a0: *mut core::ffi::c_void) -> u32 {
     f(a0)
 }
 
+/// Recovered `opendir` at 0xc1d50b0. Thumb callable address 0xc1d50b1.
+pub const CANOPUS_FW_OPENDIR_CALLABLE: usize = canopus_thumb_callable(0xc1d50b1usize);
+
 /// Recovered `lv_image_create` at 0x0C179BDC. Thumb callable address 0x0C179BDD.
 pub const CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0C179BDDusize);
 
@@ -902,6 +905,12 @@ pub const CANOPUS_FW_DRIVER_CLOSE_DISPATCH_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `bt_l2cap_submit_cid` at 0x0C7ED620. Thumb callable address 0x0C7ED621.
 pub const CANOPUS_FW_BT_L2CAP_SUBMIT_CID_CALLABLE: usize = canopus_thumb_callable(0x0C7ED621usize);
 
+/// Recovered `readdir` at 0xc1d5118. Thumb callable address 0xc1d5119.
+pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc1d5119usize);
+
+/// Recovered `closedir` at 0xc1d50ec. Thumb callable address 0xc1d50ed.
+pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc1d50edusize);
+
 /// Recovered `clock_gettime` at 0xc1ec8b4. Thumb callable address 0xc1ec8b5.
 pub const CANOPUS_FW_CLOCK_GETTIME_CALLABLE: usize = canopus_thumb_callable(0xc1ec8b5usize);
 #[allow(non_snake_case)]
@@ -984,6 +993,7 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // bt_timer_add: restricted - not exported until context/ownership approved
 // bt_timer_cancel: restricted - not exported until context/ownership approved
 // btsnoop_avdtp_recognizer: FORBIDDEN - no binding may ever be generated
+// closedir: restricted - not exported until context/ownership approved
 // controller_crash_dump: FORBIDDEN - no binding may ever be generated
 // driver_close_dispatch: restricted - not exported until context/ownership approved
 // driver_ioctl_dispatch: restricted - not exported until context/ownership approved
@@ -1018,10 +1028,12 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // miwear_transport_send: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
+// opendir: restricted - not exported until context/ownership approved
 // page_navigator_open_page: FORBIDDEN - no binding may ever be generated
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
 // pthread_create_internal: FORBIDDEN - no binding may ever be generated
 // public_work_queue: FORBIDDEN - no binding may ever be generated
+// readdir: restricted - not exported until context/ownership approved
 // register_blockdriver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
 // rmmod: restricted - not exported until context/ownership approved

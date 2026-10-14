@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-DIR-1036-001",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Which exact-target functions implement opendir/readdir/closedir?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.036.opendir",
+    "xiaomi-band-10-pro-3.101.036.readdir",
+    "xiaomi-band-10-pro-3.101.036.closedir"
+  ],
+  "prototype_hypothesis": "opendir(path)->DIR*|NULL, readdir(DIR*)->dirent*|NULL, closedir(DIR*)->int, NuttX libc semantics",
+  "callsite_evidence": [
+    "NSH procfs walker sub_C22848C calls sub_C1D50B0(path) to open /proc; loops sub_C1D5118(dir) until NULL to read dirent; calls sub_C1D50EC(dir) to close."
+  ],
+  "control_flow_evidence": [
+    "sub_C1D50B0 allocates 104-byte struct containing file descriptor and calls open(/proc, 3073); sub_C1D50EC closes the descriptor and frees the struct; sub_C1D5118 reads 98-byte dirent buffer."
+  ],
+  "ownership_analysis": "DIR handle is owned by caller between opendir and closedir; dirent returned by readdir is valid until next readdir/closedir.",
+  "unsafe_assumptions": [
+    "STATIC_RECOVERED; d_name offset (+1) is verified only in the emulator"
+  ],
+  "recommended_probe": "List /data/app from Supervisor on Mirage and compare with NSH ls.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-15T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://vela_ap.bin.i64 sub_C22848C",
+      "role": "nsh_procfs_walker"
+    }
+  ]
+}

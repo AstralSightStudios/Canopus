@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.closedir",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "closedir",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(void *)",
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-DIR-1036-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "exact 3.101.036 IDB vela_ap.bin.i64; sub_C1D50EC closedir",
+    "evidence_ids": [
+      "EVID-DIR-1036-001"
+    ]
+  },
+  "entry_address": "0xc1d50ec",
+  "callable_address": "0xc1d50ed",
+  "notes": "NuttX libc directory iteration; used by Supervisor and modules for directory enumeration."
+}
