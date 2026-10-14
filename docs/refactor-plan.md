@@ -68,7 +68,7 @@
 | K10 | 开机自动加载 Supervisor 纳入调查，作为 P4/P5 的前置（P4.0） | 2026-10-14 |
 | K11 | 旧 Supervisor 不做迁移，要求用户重装（原 O2）：不迁移 `registry.bin`；新 Supervisor 遇到旧格式 registry 或旧 inbox 文件时须安全忽略并提示重装，不得崩溃或误加载 | 2026-10-14 |
 | K12 | `calendar_text_color` 保留提升（原 O6）：被提升的是 .139 记录（.043 记录仍为 PENDING），依据为 2026-10-08 的用户授权与 `targets/xiaomi-band-11-4.100.139/background-calendar-port-approval.md`。失败的 `private_abi_records_have_exact_thumb_callables` 早于该授权，改为仿照 `band11_177_calendar_approval_is_exact_and_private_only`：`private_abi` 记录必须保持 restricted；APPROVED 仅限钉死的授权清单，且须满足 STATIC_RECOVERED、not_probed、promotion 固件 SHA 匹配 | 2026-10-14 |
-| K13 | 手机端投递用已签名 `.rpk` 快应用容器（`com.canopus.pkg.<id>`），设备端 Supervisor `SCAN` 导入；不新增控制通道，O1/O5 以此结案（ADR-CAN-005）。AstroBox-NG 的 app/web 是私有仓库，仅改了公开的 core 与 Mirage 桥接 | 2026-10-14 |
+| K13 | 手机端投递用已签名 `.rpk` 快应用容器（`com.canopus.pkg.<id>`），设备端 Supervisor `SCAN` 导入；不新增控制通道，O1/O5 以此结案（ADR-CAN-005）。AstroBox-NG 的 core/app/web 均已在 ~/Documents/GitHub/ab/AstroBox-NG 改动（仅本地提交，未推送），Mirage 桥接同步更新 | 2026-10-14 |
 
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
 
@@ -247,11 +247,11 @@
 - [x] P5.2 设备端 host 测试 + Mirage 联调（`scripts/emu/smoke.py` 的 phone_flow：真实 AstroBox 核心经模拟器蓝牙安装 .rpk → SCAN → 启用 → 重启加载 → 手机升级 → SCAN 暂存 → 重启后新版生效） + Mirage 联调。
 - [~] P5.3 `core`（`corelib::device::canopus`：包名/id 校验、`modules_from_apps`、`updates`；已本地提交到 AstroBox-NG-Module-Core 的 submodule，未推送；原计划的 LogicComponent 在无新通道的设计下不需要；Mirage 的 core 指针已更新）：新增 Canopus LogicComponent（与 `res_pack` 独立），包含查询、投递、升级；
   同步 bump Mirage 的 `core` 子模块（现钉在 `dbbaece`，AstroBox-NG 为 `bd541b5`）。
-- [!] P5.4 `app`：AstroBox-NG 的 app 模块是私有仓库，无法修改。无需新 Tauri 命令：`canopus` 模块走现有 quickapp 安装；表盘安装模式回退无关：新增 Tauri 命令；`canopus` 类型不再走表盘安装模式（`usesWatchfaceInstallMode`），
+- [x] P5.4 `app`（已完成，本地提交：`DeviceResourceUpdateReport.canopus_modules`）：无需新 Tauri 命令：`canopus` 模块走现有 quickapp 安装；表盘安装模式回退无关：新增 Tauri 命令；`canopus` 类型不再走表盘安装模式（`usesWatchfaceInstallMode`），
   旧 Supervisor 保留表盘路径作为回退。
-- [~] P5.5 更新提醒：商店 quickapp 条目的 `versionCode` 与已装快应用比较即可（现有逻辑）；`canopus` 专用版本比较在 core 的 `updates()`；ABI/target 兼容由设备端 SCAN 拒绝（R9） 增加 Canopus 模块列表（来自 Supervisor 查询，而不是按表盘 ID 匹配）；
+- [x] P5.5 更新提醒（已完成）：商店 quickapp 条目的 `versionCode` 与已装快应用比较即可（现有逻辑）；`canopus` 专用版本比较在 core 的 `updates()`；ABI/target 兼容由设备端 SCAN 拒绝（R9） 增加 Canopus 模块列表（来自 Supervisor 查询，而不是按表盘 ID 匹配）；
   比较 `versionCode`，并检查 ABI 与 target 是否兼容。
-- [!] P5.6 前端：AstroBox-NG-WebUI 为私有仓库，未改动（AstroBox-NG-WebUI）：模块列表、更新提醒、"全部更新"（复用安装队列的 `groupId`）、
+- [x] P5.6 前端（已完成，本地提交：web 的 canopus 安装模式/更新对话框/设备页/i18n）：模块列表、更新提醒、"全部更新"（复用安装队列的 `groupId`）、
   Supervisor 未加载或需要升级的提示。
 - [x] P5.7 商店清单：无需 `canopus` 扩展字段——条目就是 quickapp 下载项，包名 `com.canopus.pkg.<id>`，`.rpk` 内含所有固件的载荷，设备端按固件取用并拒绝不匹配；AstroBoxCreatorConsole 的 ID 校验已改为 ADR-CAN-003 语法（本地提交）（O3）默认提案
   - `downloads[deviceId]` 下增加 `canopus: { abi, targets?: [target_id], minFramework? }`。
@@ -275,7 +275,7 @@
 - [ ] P6.4 向 Mirage 提需求/PR
   - `miragectl hmp`（库里已有 `hmp()`）、`--json` 输出、快照、`log` 子命令、控制台多路复用。
   - AstroBoxBridge 增加 Canopus 方法（已做：`canopusModules`；另加按地址添加 band、等待进行中的 inquiry，已在本地 Mirage 仓库提交，未推送）。
-- [x] P6.5 P5 端到端（AstroBoxBridge 路径：`scripts/emu/smoke.py` 的 phone_flow，需要在模拟器上点击一次配对确认，脚本自动点；AstroBox-NG 的 emu bridge 路径因 app 私有未做）。原两条路径：
+- [x] P6.5 P5 端到端（AstroBoxBridge 路径：`scripts/emu/smoke.py` 的 phone_flow，需要在模拟器上点击一次配对确认，脚本自动点；AstroBox-NG 的 emu bridge 路径未跑）。原两条路径：
   - AstroBoxBridge（进程内 JSON-RPC）；
   - AstroBox-NG 的 emu bridge（HCI over TCP 连 qemu-miwear 的 BT 控制器；端口按设备配置，不是固定的 5566）。
   - QEMU 可能只接受单个客户端，两条路径不能同时连接（待验证）。
@@ -311,3 +311,4 @@
 | 2026-10-14 | P2.3 完成：Rust 单一 workspace |
 | 2026-10-14 | P3.1/P3.2/P3.3/P3.5 完成（C 模块工程：new/build/package；P3.4 安装器表盘仍由旧 Python 脚本生成） |
 | 2026-10-14 | K13：O1/O5 结案（.rpk 快应用容器）；P5.0–P5.2、P5.7 完成，P5.3/P5.5 部分，P5.4/P5.6 因私有仓库阻塞；P6.5 端到端用真实 AstroBox 核心在 Mirage 043 上跑通 |
+| 2026-10-14 | P5.3–P5.6 完成：AstroBox-NG 的 core/app/web 在 ~/Documents/GitHub/ab/AstroBox-NG 改动（本地提交，未推送） |
