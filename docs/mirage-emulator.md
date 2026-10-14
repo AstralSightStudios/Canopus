@@ -44,3 +44,7 @@
 Facetory 打包的 Lua 表盘界面都不出现（Lua 入口如何被固件启动取决于设备的表盘运行时约定，见 Facetory 的 docs/LUA_WATCHFACE_PACKAGING.md）。待在 Facetory / qemu-miwear 一侧确认。Band 11 的 Supervisor/SCAN 因此仍不能端到端验证。
   已验证手机投递这一半：经桥把 hello-portable 的 .rpk 装进模拟的 Band 11，数据分区里出现 `/data/quickapp/app/com.canopus.pkg.hello_portable/canopus/{portable.ko, 五个 target 的 .cmi}`；
   由此发现并修正了 Supervisor 的包根目录（Band 11 是 `/data/quickapp/app/`，不是 Band 10 Pro 的 `/data/app/`）。
+
+补充（Lua 启动点，043 IDB）：固件里的 Lua 运行入口是 `sub_CAB2D20`（pmain：取脚本路径、设置 `SCRIPT_PATH`/`package.path`、`luaL_loadfile`、`pcall`，
+并打印 `[lua] pmain: script path: …`）。把 Facetory 打包的 Lua 表盘设为当前表盘后，模拟器控制台里没有出现这条日志，说明 pmain 根本没被启动——
+Lua 页面的触发条件（不是"设为当前表盘"这么简单）还没弄清，需要从调用 pmain 的上层（表盘/页面管理）继续追，或向 Facetory 作者确认。
