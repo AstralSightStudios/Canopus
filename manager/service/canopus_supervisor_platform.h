@@ -84,6 +84,9 @@ struct canopus_sup_platform_v1 {
      * <id>.ko.next); 0 on success, else sets sup->error_code. */
     int (*list_packages)(void *cookie, uint32_t index, char *id);
     int (*import_package)(void *cookie, const char *id);
+    /* Monotonic milliseconds (wraps at 2^32). Optional: without it the TIME
+     * service group is absent. */
+    uint32_t (*monotonic_ms)(void *cookie);
 };
 
 #ifdef __cplusplus

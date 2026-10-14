@@ -197,6 +197,14 @@ static int32_t svc_fs_remove(const struct canopus_context_v1 *ctx,
                ? CANOPUS_SVC_ERR_IO : CANOPUS_SVC_OK;
 }
 
+/* ---- TIME ------------------------------------------------------------ */
+
+static uint32_t svc_time_monotonic_ms(const struct canopus_context_v1 *ctx)
+{
+    (void)ctx;
+    return s_sup->platform->monotonic_ms(s_sup->platform_cookie);
+}
+
 /* ---- table / contexts ------------------------------------------------ */
 
 void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
@@ -220,6 +228,10 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_services.fs_write = svc_fs_write;
         s_services.fs_close = svc_fs_close;
         s_services.fs_remove = svc_fs_remove;
+    }
+    if (sup != 0 && sup->platform != 0 && sup->platform->monotonic_ms != 0) {
+        s_services.group_version[CANOPUS_SVC_TIME] = 1u;
+        s_services.time_monotonic_ms = svc_time_monotonic_ms;
     }
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         s_contexts[i].struct_size = sizeof(struct canopus_context_v1);

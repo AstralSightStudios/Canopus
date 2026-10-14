@@ -410,6 +410,12 @@ const SUP_10: &[Mapping] = &[
         symbol_name: "closedir",
         address: Address::Callable,
     },
+    // Optional: backs the TIME service (monotonic milliseconds).
+    Mapping {
+        macro_name: "CANOPUS_SUP_CLOCK_GETTIME",
+        symbol_name: "clock_gettime",
+        address: Address::Callable,
+    },
     // Optional: only packs that recovered the post-delete watchface refresh
     // emit this macro, so Supervisor code must guard on it.
     Mapping {

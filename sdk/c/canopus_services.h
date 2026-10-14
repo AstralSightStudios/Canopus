@@ -27,6 +27,7 @@ enum canopus_service_group {
     CANOPUS_SVC_MODULE = 0, /* descriptor registration */
     CANOPUS_SVC_LOG    = 1,
     CANOPUS_SVC_FS     = 2, /* module-private files */
+    CANOPUS_SVC_TIME   = 3, /* monotonic clock */
     CANOPUS_SVC_GROUP_COUNT
 };
 
@@ -75,6 +76,10 @@ struct canopus_services_v1 {
                         const void *buffer, uint32_t size);
     int32_t (*fs_close)(const struct canopus_context_v1 *ctx, int32_t handle);
     int32_t (*fs_remove)(const struct canopus_context_v1 *ctx, const char *name);
+
+    /* TIME v1: milliseconds since an arbitrary fixed point (monotonic;
+     * wraps at 2^32). Never fails. */
+    uint32_t (*time_monotonic_ms)(const struct canopus_context_v1 *ctx);
 };
 
 #define CANOPUS_FS_MAX_OPEN 4u

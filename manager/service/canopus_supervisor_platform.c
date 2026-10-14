@@ -1260,6 +1260,21 @@ static int sup_file_remove(void *cookie, const char *path)
     return sup_unlink_path(path);
 }
 
+#ifdef CANOPUS_SUP_CLOCK_GETTIME
+static uint32_t sup_monotonic_ms(void *cookie)
+{
+    struct { int64_t sec; int32_t nsec; } ts = {0, 0};
+    typedef int (*clock_fn)(uint32_t, void *);
+    (void)cookie;
+    /* CLOCK_MONOTONIC = 1; stock_timespec_t is {int64 sec, int32 nsec}. */
+    (void)((clock_fn)(uintptr_t)CANOPUS_SUP_CLOCK_GETTIME)(1u, &ts);
+    return (uint32_t)ts.sec * 1000u + (uint32_t)ts.nsec / 1000000u;
+}
+#define SUP_MONOTONIC_MS sup_monotonic_ms
+#else
+#define SUP_MONOTONIC_MS 0
+#endif
+
 const struct canopus_sup_platform_v1 canopus_sup_platform = {
     CANOPUS_SUP_TARGET_ID,
     sup_register_device,
@@ -1280,4 +1295,5 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_file_remove,
     sup_list_packages,
     sup_import_package,
+    SUP_MONOTONIC_MS,
 };

@@ -102,15 +102,17 @@ static int p_remove(void *c, uint32_t i) { (void)c; (void)i; return 0; }
 static int p_persist(void *c, const uint8_t *d, uint32_t n) { (void)c; (void)d; (void)n; return 0; }
 static int p_restore(void *c, uint8_t *d, uint32_t n) { (void)c; (void)d; (void)n; return 1; }
 
+static uint32_t p_ms(void *c) { (void)c; return 1234u; }
+
 static const struct canopus_sup_platform_v1 platform_with_fs = {
     "xiaomi-band-10-pro-3.101.030", p_noop, p_noop, p_load, p_stage, p_remove,
     p_persist, p_restore, 0, 0, 0, 0,
-    f_open, f_read, f_write, f_close, f_remove, 0, 0,
+    f_open, f_read, f_write, f_close, f_remove, 0, 0, p_ms,
 };
 static const struct canopus_sup_platform_v1 platform_without_fs = {
     "xiaomi-band-10-pro-3.101.030", p_noop, p_noop, p_load, p_stage, p_remove,
     p_persist, p_restore, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
 };
 
 static int g_activated_with_ctx;
@@ -155,11 +157,14 @@ TEST(context_exposes_groups_by_platform_capability)
     CHECK(canopus_services_has(ctx, CANOPUS_SVC_LOG, 1));
     CHECK(canopus_services_has(ctx, CANOPUS_SVC_FS, 1));
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_FS, 2));
+    CHECK(canopus_services_has(ctx, CANOPUS_SVC_TIME, 1));
+    CHECK_EQ(ctx->services->time_monotonic_ms(ctx), 1234u);
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_GROUP_COUNT, 1));
     CHECK(!canopus_services_has(0, CANOPUS_SVC_LOG, 1));
     setup(&sup, &platform_without_fs);
     ctx = canopus_supervisor_context(&sup, 0);
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_FS, 1));
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_TIME, 1));
     CHECK_EQ(ctx->abi, (CANOPUS_ABI_MAJOR << 16) | CANOPUS_ABI_MINOR);
 }
 
