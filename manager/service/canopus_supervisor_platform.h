@@ -87,6 +87,9 @@ struct canopus_sup_platform_v1 {
     /* Monotonic milliseconds (wraps at 2^32). Optional: without it the TIME
      * service group is absent. */
     uint32_t (*monotonic_ms)(void *cookie);
+    /* Raw heap. Both or neither; without them the MEM service group is absent. */
+    void *(*heap_alloc)(void *cookie, uint32_t size);
+    void (*heap_release)(void *cookie, void *ptr);
 };
 
 #ifdef __cplusplus

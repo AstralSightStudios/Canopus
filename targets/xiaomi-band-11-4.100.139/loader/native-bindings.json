@@ -59,7 +59,10 @@
     "B11_CACHE_I_INVALIDATE": "cache_i_clean_invalidate_all",
     "CANOPUS_SUP_NUTTX_OPENDIR": "opendir",
     "CANOPUS_SUP_NUTTX_READDIR": "readdir",
-    "CANOPUS_SUP_NUTTX_CLOSEDIR": "closedir"
+    "CANOPUS_SUP_NUTTX_CLOSEDIR": "closedir",
+    "CANOPUS_SUP_HEAP_MALLOC": "heap_malloc",
+    "CANOPUS_SUP_HEAP_FREE": "heap_free",
+    "CANOPUS_SUP_CLOCK_GETTIME": "clock_gettime"
   },
   "fingerprints": [
     "0xc91e540",

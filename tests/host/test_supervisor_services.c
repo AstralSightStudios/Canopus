@@ -5,6 +5,7 @@
 #include "canopus_services.h"
 #include "canopus_memory.h"
 #include "canopus_runtime.h"
+#include <stdlib.h>
 #include <string.h>
 
 /* ---- in-memory file store ------------------------------------------ */
@@ -103,16 +104,20 @@ static int p_persist(void *c, const uint8_t *d, uint32_t n) { (void)c; (void)d; 
 static int p_restore(void *c, uint8_t *d, uint32_t n) { (void)c; (void)d; (void)n; return 1; }
 
 static uint32_t p_ms(void *c) { (void)c; return 1234u; }
+static int g_heap_live;
+static void *p_heap_alloc(void *c, uint32_t n) { (void)c; g_heap_live++; return malloc(n); }
+static void p_heap_release(void *c, void *p) { (void)c; g_heap_live--; free(p); }
 
 static const struct canopus_sup_platform_v1 platform_with_fs = {
     "xiaomi-band-10-pro-3.101.030", p_noop, p_noop, p_load, p_stage, p_remove,
     p_persist, p_restore, 0, 0, 0, 0,
     f_open, f_read, f_write, f_close, f_remove, 0, 0, p_ms,
+    p_heap_alloc, p_heap_release,
 };
 static const struct canopus_sup_platform_v1 platform_without_fs = {
     "xiaomi-band-10-pro-3.101.030", p_noop, p_noop, p_load, p_stage, p_remove,
     p_persist, p_restore, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
 static int g_activated_with_ctx;
@@ -146,6 +151,31 @@ static void setup(struct canopus_supervisor_v1 *sup,
                                         "mod.portable") == 0);
 }
 
+TEST(mem_is_budgeted_owned_and_released)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    void *a, *b;
+    uint32_t i;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0);
+    g_heap_live = 0;
+    CHECK(ctx->services->mem_alloc(ctx, 0u) == 0);
+    CHECK(ctx->services->mem_alloc(ctx, CANOPUS_MEM_BUDGET + 1u) == 0);
+    a = ctx->services->mem_alloc(ctx, CANOPUS_MEM_BUDGET - 64u);
+    CHECK(a != 0);
+    CHECK(ctx->services->mem_alloc(ctx, 128u) == 0); /* over budget */
+    b = ctx->services->mem_alloc(ctx, 64u);
+    CHECK(b != 0);
+    ctx->services->mem_free(ctx, (void *)&i); /* not owned: ignored */
+    CHECK_EQ(g_heap_live, 2);
+    ctx->services->mem_free(ctx, a);
+    CHECK_EQ(g_heap_live, 1);
+    CHECK(ctx->services->mem_alloc(ctx, 128u) != 0); /* budget freed up */
+    canopus_supervisor_release_services(&sup, 0u);
+    CHECK_EQ(g_heap_live, 0);
+}
+
 TEST(context_exposes_groups_by_platform_capability)
 {
     struct canopus_supervisor_v1 sup;
@@ -159,12 +189,14 @@ TEST(context_exposes_groups_by_platform_capability)
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_FS, 2));
     CHECK(canopus_services_has(ctx, CANOPUS_SVC_TIME, 1));
     CHECK_EQ(ctx->services->time_monotonic_ms(ctx), 1234u);
+    CHECK(canopus_services_has(ctx, CANOPUS_SVC_MEM, 1));
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_GROUP_COUNT, 1));
     CHECK(!canopus_services_has(0, CANOPUS_SVC_LOG, 1));
     setup(&sup, &platform_without_fs);
     ctx = canopus_supervisor_context(&sup, 0);
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_FS, 1));
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_TIME, 1));
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_MEM, 1));
     CHECK_EQ(ctx->abi, (CANOPUS_ABI_MAJOR << 16) | CANOPUS_ABI_MINOR);
 }
 
@@ -303,6 +335,8 @@ TEST(register_is_rejected_outside_the_loading_window)
 static struct test_registry supervisor_services_tests[] = {
     { "context_exposes_groups_by_platform_capability",
       context_exposes_groups_by_platform_capability_wrapper },
+    { "mem_is_budgeted_owned_and_released",
+      mem_is_budgeted_owned_and_released_wrapper },
     { "fs_roundtrip_is_private_to_the_module_namespace",
       fs_roundtrip_is_private_to_the_module_namespace_wrapper },
     { "fs_rejects_escaping_names_bad_handles_and_exhaustion",

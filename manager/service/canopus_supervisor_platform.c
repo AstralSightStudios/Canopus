@@ -1275,6 +1275,28 @@ static uint32_t sup_monotonic_ms(void *cookie)
 #define SUP_MONOTONIC_MS 0
 #endif
 
+#if defined(CANOPUS_SUP_HEAP_MALLOC) && defined(CANOPUS_SUP_HEAP_FREE)
+static void *sup_heap_alloc(void *cookie, uint32_t size)
+{
+    typedef void *(*malloc_fn)(uint32_t);
+    (void)cookie;
+    return ((malloc_fn)(uintptr_t)CANOPUS_SUP_HEAP_MALLOC)(size);
+}
+
+static void sup_heap_release(void *cookie, void *ptr)
+{
+    /* 036/043 return int, Band 11 returns void; the result is unused. */
+    typedef void (*free_fn)(void *);
+    (void)cookie;
+    ((free_fn)(uintptr_t)CANOPUS_SUP_HEAP_FREE)(ptr);
+}
+#define SUP_HEAP_ALLOC sup_heap_alloc
+#define SUP_HEAP_RELEASE sup_heap_release
+#else
+#define SUP_HEAP_ALLOC 0
+#define SUP_HEAP_RELEASE 0
+#endif
+
 const struct canopus_sup_platform_v1 canopus_sup_platform = {
     CANOPUS_SUP_TARGET_ID,
     sup_register_device,
@@ -1296,4 +1318,6 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_list_packages,
     sup_import_package,
     SUP_MONOTONIC_MS,
+    SUP_HEAP_ALLOC,
+    SUP_HEAP_RELEASE,
 };

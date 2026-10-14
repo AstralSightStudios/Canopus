@@ -410,6 +410,17 @@ const SUP_10: &[Mapping] = &[
         symbol_name: "closedir",
         address: Address::Callable,
     },
+    // Optional: back the MEM service (Supervisor-owned allocations only).
+    Mapping {
+        macro_name: "CANOPUS_SUP_HEAP_MALLOC",
+        symbol_name: "heap_malloc",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_HEAP_FREE",
+        symbol_name: "heap_free",
+        address: Address::Callable,
+    },
     // Optional: backs the TIME service (monotonic milliseconds).
     Mapping {
         macro_name: "CANOPUS_SUP_CLOCK_GETTIME",

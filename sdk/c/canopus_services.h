@@ -28,6 +28,7 @@ enum canopus_service_group {
     CANOPUS_SVC_LOG    = 1,
     CANOPUS_SVC_FS     = 2, /* module-private files */
     CANOPUS_SVC_TIME   = 3, /* monotonic clock */
+    CANOPUS_SVC_MEM    = 4, /* budgeted heap */
     CANOPUS_SVC_GROUP_COUNT
 };
 
@@ -80,7 +81,18 @@ struct canopus_services_v1 {
     /* TIME v1: milliseconds since an arbitrary fixed point (monotonic;
      * wraps at 2^32). Never fails. */
     uint32_t (*time_monotonic_ms)(const struct canopus_context_v1 *ctx);
+
+    /* MEM v1: heap blocks charged to the calling module. At most
+     * CANOPUS_MEM_MAX_BLOCKS live blocks and CANOPUS_MEM_BUDGET bytes per
+     * module; whatever is still allocated when the module unloads is freed by
+     * the Supervisor. mem_alloc returns NULL on failure; mem_free ignores
+     * pointers that this module does not own. */
+    void *(*mem_alloc)(const struct canopus_context_v1 *ctx, uint32_t size);
+    void (*mem_free)(const struct canopus_context_v1 *ctx, void *ptr);
 };
+
+#define CANOPUS_MEM_MAX_BLOCKS 16u
+#define CANOPUS_MEM_BUDGET 16384u
 
 #define CANOPUS_FS_MAX_OPEN 4u
 
