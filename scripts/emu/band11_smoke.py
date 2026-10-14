@@ -5,8 +5,8 @@ Real AstroBox core (bridge) installs the production Canopus installer watchface;
 the installer's native loader loads the Supervisor; a phone-delivered .rpk is
 then imported by SCAN. Needs, besides Mirage and the firmware (exit 77 if
 missing):
-  * a qemu-miwear built with scripts/emu/band11/qemu-miwear-band11.patch
-    (BES cache-controller words, 8 MPU regions),
+  * a qemu-miwear that includes commit 3e05ca7 (BES cache-controller words,
+    8 MPU regions; the one Mirage pins),
   * Facetory's package_lua_watchface example built with
     scripts/emu/band11/facetory-lua-layer.patch (FACETORY_PACKAGER=<binary>),
   * the AstroBox bridge (MAB_SMOKE).

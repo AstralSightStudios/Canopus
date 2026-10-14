@@ -47,8 +47,8 @@ impl Project {
         let value = serde_json::to_value(toml::from_str::<toml::Value>(&text)?)?;
         canopus_core::schema::validate(canopus_core::schema::SchemaKind::Module, &value)?;
         let manifest: ModuleManifest = serde_json::from_value(value)?;
-        if manifest.module.language != "c" {
-            bail!("`canopus build` supports language = \"c\" only");
+        if manifest.module.language == "rust" && manifest.is_portable() {
+            bail!("Rust modules are target-bound: there are no Rust bindings for the Supervisor service table yet");
         }
         let dir = manifest_path
             .parent()
@@ -90,8 +90,97 @@ fn run(cmd: &mut Command) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Constructor/destructor glue for the stock modlib loader (see
+/// sdk/rust/examples/no-heap-counter/c_shim): the Rust crate exports
+/// `canopus_mod_prepare`, `canopus_mod_stop` and `canopus_module_descriptor_ptr`.
+const RUST_CTOR_SHIM: &str = r#"__attribute__((constructor)) static void canopus_mod_ctor(void)
+{
+    extern int canopus_mod_prepare(const void *ctx);
+    extern const void *canopus_module_descriptor_ptr(void);
+    (void)canopus_module_descriptor_ptr();
+    (void)canopus_mod_prepare(0);
+}
+
+__attribute__((destructor)) static void canopus_mod_dtor(void)
+{
+    extern int canopus_mod_stop(const void *ctx);
+    (void)canopus_mod_stop(0);
+}
+"#;
+
+const RUST_TRIPLE: &str = "thumbv8m.main-none-eabi";
+
+/// Rust modules: `[build] sources = ["Cargo.toml"]` names the crate (a
+/// `staticlib`, `#![no_std]`, panic=abort). Pipeline: cargo build for the
+/// device triple with the exact target's bindings feature -> C ctor shim ->
+/// `ld.lld -r --whole-archive` -> zero-import ELF.
+fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::Result<PathBuf> {
+    if target.loader != "nuttx-modlib-elf32-rel" {
+        bail!(
+            "{}: Rust modules use the stock modlib constructor glue; custom-loader targets (Band 11) need the service-table entry, which the Rust SDK does not have yet",
+            target.target_id
+        );
+    }
+    let out = project.elf_path(Some(&target.target_id));
+    let out_dir = out.parent().unwrap().to_path_buf();
+    std::fs::create_dir_all(&out_dir)?;
+    let manifest = project
+        .manifest
+        .build
+        .sources
+        .first()
+        .map(|s| project.dir.join(expand(s, root)))
+        .filter(|p| p.file_name().is_some_and(|n| n == "Cargo.toml"))
+        .context("a Rust module's [build] sources must be [\"Cargo.toml\"]")?;
+    let cargo_target = project.build_dir().join("cargo");
+    let feature = format!("target-{}", target.target_id.replace('.', "-"));
+    run(Command::new(tool("CARGO", "cargo"))
+        .args(["build", "--release", "--target", RUST_TRIPLE, "--no-default-features"])
+        .arg("--features")
+        .arg(format!("device,canopus-target-generated/{feature}"))
+        .arg("--manifest-path")
+        .arg(&manifest)
+        .arg("--target-dir")
+        .arg(&cargo_target)
+        .env("CANOPUS_TARGET_ID", &target.target_id)
+        // Same policy as the workspace's `device` profile.
+        .env("CARGO_PROFILE_RELEASE_PANIC", "abort")
+        .env("CARGO_PROFILE_RELEASE_OPT_LEVEL", "z")
+        .env("CARGO_PROFILE_RELEASE_LTO", "thin")
+        .env("CARGO_PROFILE_RELEASE_CODEGEN_UNITS", "1"))?;
+    let release = cargo_target.join(RUST_TRIPLE).join("release");
+    let archives: Vec<PathBuf> = std::fs::read_dir(&release)?
+        .filter_map(|e| e.ok().map(|e| e.path()))
+        .filter(|p| p.extension().is_some_and(|x| x == "a"))
+        .collect();
+    let [archive] = archives.as_slice() else {
+        bail!("expected exactly one staticlib in {} (crate-type = [\"staticlib\"]), found {}", release.display(), archives.len());
+    };
+    let shim_c = out_dir.join("canopus_ctor.c");
+    let shim_o = out_dir.join("canopus_ctor.o");
+    std::fs::write(&shim_c, RUST_CTOR_SHIM)?;
+    run(Command::new(tool("CC", "clang"))
+        .args(["--target=arm-none-eabi", "-mcpu=cortex-m33", "-mthumb", "-mfloat-abi=soft", "-ffreestanding",
+               "-fno-common", "-fno-builtin", "-fno-stack-protector", "-fno-unwind-tables",
+               "-fno-asynchronous-unwind-tables", "-fdata-sections", "-ffunction-sections", "-Os", "-Wall",
+               "-Wextra", "-Werror", "-c"])
+        .arg(&shim_c)
+        .arg("-o")
+        .arg(&shim_o))?;
+    run(Command::new(tool("LD", "ld.lld"))
+        .args(["-r"])
+        .arg(&shim_o)
+        .arg(archive)
+        .arg("-o")
+        .arg(&out))?;
+    Ok(out)
+}
+
 /// Compiles the sources and links one relocatable ELF.
 fn compile(project: &Project, root: &Path, target: Option<&TargetPack>) -> anyhow::Result<PathBuf> {
+    if project.manifest.module.language == "rust" {
+        return compile_rust(project, root, target.context("a Rust module needs an exact target")?);
+    }
     let out = project.elf_path(target.map(|t| t.target_id.as_str()));
     let obj_dir = out.parent().unwrap().join(format!("{}.obj", project.id()));
     std::fs::create_dir_all(&obj_dir)?;
@@ -357,13 +446,19 @@ fn rpk_key(dir: Option<&Path>) -> anyhow::Result<(String, Vec<u8>)> {
     Ok((std::fs::read_to_string(key)?, std::fs::read(cert)?))
 }
 
-pub fn new(id: &str, dir: &Path, targets: &[String]) -> anyhow::Result<()> {
+pub fn new(id: &str, dir: &Path, targets: &[String], lang: &str) -> anyhow::Result<()> {
     if !canopus_core::receipt::module_id_valid(id) {
         bail!("module id '{id}' must match ^[a-z][a-z0-9_]{{0,15}}$ (ADR-CAN-003)");
     }
     let project = dir.join(id);
     if project.exists() {
         bail!("{} already exists", project.display());
+    }
+    if lang == "rust" {
+        return new_rust(id, &project, targets);
+    }
+    if lang != "c" {
+        bail!("--lang must be c or rust");
     }
     std::fs::create_dir_all(project.join("src"))?;
     let kind = if targets.is_empty() { "portable" } else { "target" };
@@ -497,4 +592,122 @@ fn write_installers(
         println!("wrote installer {}", dir.display());
     }
     Ok(())
+}
+
+fn new_rust(id: &str, project: &Path, targets: &[String]) -> anyhow::Result<()> {
+    if targets.is_empty() {
+        bail!("Rust modules are target-bound: pass at least one --target");
+    }
+    let root = canopus_root()?;
+    std::fs::create_dir_all(project.join("src"))?;
+    std::fs::write(
+        project.join("Canopus.toml"),
+        format!(
+            "schema = 1\n\n[module]\nid = \"{id}\"\nversion = \"0.1.0\"\nversion_code = 1\nkind = \"target\"\nlanguage = \"rust\"\nlifecycle = \"removable\"\ncanopus_abi = \"1\"\n\n[build]\nsources = [\"Cargo.toml\"]\n\n[targets]\ninclude = [{}]\n",
+            targets.iter().map(|t| format!("\"{t}\"")).collect::<Vec<_>>().join(", ")
+        ),
+    )?;
+    let sdk = root.join("sdk/rust");
+    std::fs::write(
+        project.join("Cargo.toml"),
+        format!(
+            "[package]\nname = \"{id}\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[lib]\ncrate-type = [\"staticlib\"]\n\n[features]\ndefault = []\ndevice = [\"dep:canopus-target-generated\"]\n\n[dependencies]\ncanopus-abi = {{ path = \"{sdk}/canopus-abi\" }}\ncanopus-runtime = {{ path = \"{sdk}/canopus-runtime\" }}\ncanopus-target-generated = {{ path = \"{sdk}/canopus-target-generated\", optional = true, default-features = false }}\n",
+            sdk = sdk.display()
+        ),
+    )?;
+    std::fs::write(project.join("src/lib.rs"), rust_lib_template(id))?;
+    std::fs::write(project.join(".gitignore"), "build/\nCargo.lock\n")?;
+    println!("created {} (Rust target module)", project.display());
+    println!("next: cd {} && canopus build && canopus package", project.display());
+    Ok(())
+}
+
+fn rust_lib_template(id: &str) -> String {
+    format!(
+        r#"//! {id} - Canopus no_std Rust module. The `canopus build` shim calls
+//! `canopus_mod_prepare` / `canopus_mod_stop` from the stock loader's
+//! constructor/destructor and reads the descriptor from `canopus_module_descriptor_ptr`.
+#![no_std]
+
+use canopus_abi::*;
+use canopus_runtime::*;
+
+const MAGIC: u32 = 0x4D4F4455; // "MODU"
+
+#[no_mangle]
+pub extern "C" fn canopus_mod_prepare(_ctx: *const ContextV1) -> i32 {{
+    0
+}}
+
+#[no_mangle]
+pub extern "C" fn canopus_mod_stop(_ctx: *const ContextV1) -> i32 {{
+    0
+}}
+
+extern "C" fn activate(_ctx: *const ContextV1) -> i32 {{
+    // Fail closed on the wrong firmware before touching anything.
+    if canopus_target_generated::canopus_identity_guard() != 0 {{
+        return -1;
+    }}
+    0
+}}
+
+extern "C" fn deactivate(_ctx: *const ContextV1) -> i32 {{
+    0
+}}
+
+extern "C" fn query(w: *mut StatusWriterV1) -> i32 {{
+    if w.is_null() {{
+        return -1;
+    }}
+    let w = unsafe {{ &mut *w }};
+    unsafe {{
+        if !status_put_u32(w, MAGIC) {{
+            return -1;
+        }}
+    }}
+    status_writer_publish(w);
+    0
+}}
+
+const fn pack<const N: usize>(s: &[u8]) -> [u8; N] {{
+    let mut out = [0u8; N];
+    let mut i = 0;
+    while i < s.len() && i < N {{
+        out[i] = s[i];
+        i += 1;
+    }}
+    out
+}}
+
+#[no_mangle]
+pub static canopus_module_descriptor: ModuleDescriptorV1 = ModuleDescriptorV1 {{
+    struct_size: core::mem::size_of::<ModuleDescriptorV1>() as u32,
+    abi_major: ABI_MAJOR,
+    abi_minor: ABI_MINOR,
+    flags: 0,
+    module_id: pack(b"{id}"),
+    module_version: pack(b"0.1.0"),
+    build_id: pack(b"{id}-0.1.0"),
+    target_id: pack(env!("CANOPUS_TARGET_ID").as_bytes()), // set by `canopus build`
+    prepare: Some(canopus_mod_prepare),
+    activate: Some(activate),
+    deactivate: Some(deactivate),
+    stop: Some(canopus_mod_stop),
+    query: Some(query),
+    publish_native_app: None,
+    publish_native_app_stage: None,
+}};
+
+#[no_mangle]
+pub extern "C" fn canopus_module_descriptor_ptr() -> *const ModuleDescriptorV1 {{
+    &canopus_module_descriptor
+}}
+
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {{
+    loop {{}}
+}}
+"#
+    )
 }

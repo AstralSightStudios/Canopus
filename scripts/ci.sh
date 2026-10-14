@@ -70,6 +70,13 @@ gate_4() {
 gate_5() {
     step "6/6 Rust module cross-build + verifier (no-heap-counter)"
     ./sdk/rust/examples/no-heap-counter/build.sh
+    # A scaffolded external Rust module through `canopus new --lang rust` / `canopus build`.
+    canopus="$PWD/target/debug/canopus"
+    rust_tmp=$(mktemp -d)
+    (cd "$rust_tmp" && "$canopus" new rmod --lang rust \
+        --target xiaomi-band-10-pro-3.101.036 --target xiaomi-band-10-pro-3.101.043 \
+        && cd rmod && "$canopus" build && "$canopus" package)
+    rm -rf "$rust_tmp"
 }
 
 gate_6() {

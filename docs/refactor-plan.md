@@ -201,7 +201,7 @@
   新增"遇到旧格式 registry.bin / 旧 inbox 文件时安全忽略"的测试（K11）。
 
 ### P3 统一打包流程
-- [x] P3.1 `canopus new <id> [--target T]...`（C；Rust 工程用 `module new`，构建走 sdk/rust/examples/no-heap-counter 的 build.sh 路径；`canopus build` 判断只支持 C：Rust 模块需要 staticlib + 链接 shim 的多 crate 流水线，依赖 Canopus 工作区路径，不适合作为外部工程的通用命令）：生成含 `Canopus.toml`、构建配置、示例源码的模块工程（默认 portable）。
+- [x] P3.1 `canopus new <id> [--target T]...`（C；Rust 工程用 `module new`，构建走 sdk/rust/examples/no-heap-counter 的 build.sh 路径；`canopus build` 已支持 Rust：`canopus new --lang rust --target <id>` 脚手架，`[build] sources = ["Cargo.toml"]`，cargo（thumbv8m、panic=abort、按目标选 canopus-target-generated 特性）→ C ctor shim → `ld.lld -r`（不用 --whole-archive，避免把 compiler_builtins 整个拉进来）→ verifier；仅 stock modlib 目标（Band 10 Pro），Band 11 需要 Rust 侧的服务表入口，portable Rust 同理未支持；CI gate_5 覆盖）：生成含 `Canopus.toml`、构建配置、示例源码的模块工程（默认 portable）。
 - [x] P3.2 `canopus build [--target X]`（C；portable 构建一次，target 模块按 `[targets].include` 逐个构建，产物过 verifier；Rust 按上述判断不做）：portable 模块只构建一次，target-private 模块按矩阵构建；产物均须过 verifier。
 - [x] P3.3 `canopus package`（Canopus.toml → `dist/<id>-<ver>.canopus`，含 manifest、产物与逐 target 的 CMI2 回执；校验沿用 `canopus package verify`）：产出确定性的 `.canopus`（P0.1 格式，含无签名回执）；`canopus verify` 只做结构 / 哈希 / target 校验。
 - [x] P3.4 安装器表盘：`canopus package --installer` 产出 `dist/installer/<family>/`（main.lua + 载荷 + 回执，仅有安装传输模板的设备族：Band 10 Pro、Band 11）；`build_module_installer_prod.py` 的 SUPPORTED 改为从 targets/ 动态推导（外部产品的 PRODUCTS/PRODUCT_TARGETS 表仍保留，因其 payload 不是 Canopus 工程）。
@@ -328,3 +328,4 @@
 | 2026-10-14 | P5.8 设计结案：Supervisor 不常驻，升级=替换安装器表盘并重启，复用现有表盘更新提醒 |
 \n| 2026-10-14 | Band 11 模拟器端到端跑通（155）：生产安装器 → Supervisor 加载 → 手机投递 .rpk → SCAN 导入；需 qemu-miwear 与 Facetory 两个补丁（scripts/emu/band11/） |\n
 | 2026-10-14 | Band 11 端到端在 177 上同样通过；打补丁后的 qemu 下 043 冒烟 22 项仍全过 |
+| 2026-10-14 | `canopus build` 支持 Rust 目标模块；qemu-miwear 补丁改为直接提交（3e05ca7）并推送，补丁文件删除 |

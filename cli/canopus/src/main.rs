@@ -70,6 +70,9 @@ enum Command {
         /// Make a target-bound module for these exact target ids (repeatable).
         #[arg(long = "target", action = clap::ArgAction::Append)]
         targets: Vec<String>,
+        /// Source language: `c` (default) or `rust` (target-bound only).
+        #[arg(long, default_value = "c")]
+        lang: String,
     },
     /// Build a module project (portable: once; target: per exact target) and verify it.
     Build {
@@ -282,7 +285,7 @@ fn main() {
 fn run(cli: Cli) -> anyhow::Result<()> {
     match cli.command {
         Command::Target(cmd) => commands::target(cmd),
-        Command::New { id, dir, targets } => project::new(&id, &dir, &targets),
+        Command::New { id, dir, targets, lang } => project::new(&id, &dir, &targets, &lang),
         Command::Build { manifest, target } => project::build(&manifest, target.as_deref()),
         Command::Symbol(cmd) => commands::symbol(cmd),
         Command::Type(cmd) => commands::type_cmd(cmd),

@@ -62,7 +62,7 @@ Facetory 的编辑器导出路径里有对应概念（`facetory.editor.file` 的
 原生加载器加载 Supervisor（`bootstrap-result.txt: result=0`）→ 经桥投递 hello-portable 的 `.rpk` → 第二个表盘（`scripts/emu/band11/e2e_scan.lua`）
 通过 `/dev/canopus` 发 SCAN（结果 5=COMPLETED），`count=1`、模块进入 slot0（state 3），inbox 里出现 `hello_portable.cmi/.ko`。仅模拟器级证据。
 为此需要两处外部改动，补丁放在 `scripts/emu/band11/`：
-- `qemu-miwear-band11.patch`：BES 缓存控制器字（0x07ffa000/0x07ffc000，bit0=1）和 8 个 MPU region（真机如此，QEMU 默认 16；
-  安装器与原生加载器都会校验，否则分别报 `unexpected BES cache state` / rc=-302、-307）。已应用到 Mirage 的 External/qemu-miwear 工作区并重编（未提交）。
+- qemu-miwear 提交 `3e05ca7`（`dp-1700-exp`，已推送；Mirage 已指向它）：BES 缓存控制器字（0x07ffa000/0x07ffc000，bit0=1）和 8 个 MPU region（真机如此，QEMU 默认 16；
+  安装器与原生加载器都会校验，否则分别报 `unexpected BES cache state` / rc=-302、-307）。
 - `facetory-lua-layer.patch`：Facetory 的 `package_lua_watchface` 示例没有给入口 .lua 生成布局元素，固件的 `render_file_create` 就不会启动 Lua；
   补丁给入口资源加一个 layout 层。（用户平时用 /Users/searchstars/Downloads/小米表盘工具.app 打包 Lua 表盘，这个官方工具是 GUI，脚本里没有用它。）
