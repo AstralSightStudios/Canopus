@@ -7,6 +7,7 @@
 #include "canopus_supervisor_platform.h"
 #include "canopus_memory.h"
 #include "../../runtime/hook/canopus_hook.h"
+#include "canopus_ui.h"
 
 #define SVC_LOG_ENTRIES 8u
 #define SVC_FS_PATH_MAX CANOPUS_FS_PATH_MAX
@@ -35,6 +36,7 @@ static struct canopus_bluetooth_obj s_bt_obj;
 static struct canopus_haptics_obj s_haptics_obj;
 static struct canopus_display_obj s_display_obj;
 static struct canopus_bus_obj s_bus_obj;
+static struct canopus_ui_obj s_ui_obj;
 
 static struct svc_log_entry s_log[SVC_LOG_ENTRIES];
 static uint32_t s_log_total;
@@ -1261,6 +1263,22 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_bus_obj.subscribe = svc_bus_subscribe;
     s_bus_obj.unsubscribe = svc_bus_unsubscribe;
 
+    /* UI Object */
+    s_ui_obj.capabilities = canopus_ui_context_capabilities;
+    s_ui_obj.tree_begin = canopus_ui_tree_begin;
+    s_ui_obj.tree_commit = canopus_ui_tree_commit;
+    s_ui_obj.tree_abort = canopus_ui_tree_abort;
+    s_ui_obj.end = canopus_ui_end;
+    s_ui_obj.navigation_page = canopus_ui_navigation_page;
+    s_ui_obj.section = canopus_ui_section;
+    s_ui_obj.text = canopus_ui_text;
+    s_ui_obj.status_row = canopus_ui_status_row;
+    s_ui_obj.button = canopus_ui_button;
+    s_ui_obj.action_row = canopus_ui_action_row;
+    s_ui_obj.switch_row = canopus_ui_switch_row;
+    s_ui_obj.navigation_header = canopus_ui_navigation_header;
+    s_ui_obj.component = canopus_ui_component;
+
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         s_contexts[i].struct_size = sizeof(struct canopus_context_v1);
         s_contexts[i].abi = (CANOPUS_ABI_MAJOR << 16) | CANOPUS_ABI_MINOR;
@@ -1281,6 +1299,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_contexts[i].haptics = &s_haptics_obj;
         s_contexts[i].display = &s_display_obj;
         s_contexts[i].bus = &s_bus_obj;
+        s_contexts[i].ui = &s_ui_obj;
     }
 }
 

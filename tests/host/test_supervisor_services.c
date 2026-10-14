@@ -497,6 +497,7 @@ TEST(service_objects_are_exposed_and_functional)
     CHECK(ctx->haptics != 0);
     CHECK(ctx->display != 0);
     CHECK(ctx->bus != 0);
+    CHECK(ctx->ui != 0);
 
     /* 1. FS Object (detailed operations & read_all/write_all) */
     fd = ctx->fs->open(ctx, "app_data.bin", CANOPUS_FS_WRITE);

@@ -276,6 +276,35 @@ struct canopus_bluetooth_obj {
     uint32_t (*adapter_state)(const struct canopus_context_v1 *ctx);
 };
 
+struct canopus_ui_context_v1;
+struct canopus_ui_tree_v1;
+struct canopus_ui_navigation_page_props_v1;
+struct canopus_ui_section_props_v1;
+struct canopus_ui_text_props_v1;
+struct canopus_ui_status_row_props_v1;
+struct canopus_ui_button_props_v1;
+struct canopus_ui_action_row_props_v1;
+struct canopus_ui_switch_row_props_v1;
+struct canopus_ui_navigation_header_props_v1;
+struct canopus_ui_component_props_v1;
+
+struct canopus_ui_obj {
+    uint32_t (*capabilities)(const struct canopus_ui_context_v1 *context);
+    int32_t  (*tree_begin)(struct canopus_ui_context_v1 *context, struct canopus_ui_tree_v1 **out_tree);
+    int32_t  (*tree_commit)(struct canopus_ui_tree_v1 *tree);
+    void     (*tree_abort)(struct canopus_ui_tree_v1 *tree);
+    int32_t  (*end)(struct canopus_ui_tree_v1 *tree);
+    int32_t  (*navigation_page)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_navigation_page_props_v1 *props);
+    int32_t  (*section)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_section_props_v1 *props);
+    int32_t  (*text)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_text_props_v1 *props);
+    int32_t  (*status_row)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_status_row_props_v1 *props);
+    int32_t  (*button)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_button_props_v1 *props);
+    int32_t  (*action_row)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_action_row_props_v1 *props);
+    int32_t  (*switch_row)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_switch_row_props_v1 *props);
+    int32_t  (*navigation_header)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_navigation_header_props_v1 *props);
+    int32_t  (*component)(struct canopus_ui_tree_v1 *tree, uint32_t key, uint16_t type, const struct canopus_ui_component_props_v1 *props);
+};
+
 /* -------------------------------------------------------------------------- */
 /* Legacy Services v1 Table (Maintained for Backward Compatibility)           */
 /* -------------------------------------------------------------------------- */
@@ -327,6 +356,7 @@ struct canopus_context_v1 {
     const struct canopus_haptics_obj   *haptics;
     const struct canopus_display_obj   *display;
     const struct canopus_bus_obj       *bus;
+    const struct canopus_ui_obj        *ui;
 };
 
 /* Non-zero when the group is available at least at `min_version`. */

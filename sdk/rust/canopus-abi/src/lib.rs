@@ -256,6 +256,24 @@ pub struct CanopusBluetoothObj {
 }
 
 #[repr(C)]
+pub struct CanopusUiObj {
+    pub capabilities: unsafe extern "C" fn(ctx: *const c_void) -> u32,
+    pub tree_begin: unsafe extern "C" fn(ctx: *mut c_void, out_tree: *mut *mut c_void) -> i32,
+    pub tree_commit: unsafe extern "C" fn(tree: *mut c_void) -> i32,
+    pub tree_abort: unsafe extern "C" fn(tree: *mut c_void),
+    pub end: unsafe extern "C" fn(tree: *mut c_void) -> i32,
+    pub navigation_page: unsafe extern "C" fn(tree: *mut c_void, key: u32, props: *const c_void) -> i32,
+    pub section: unsafe extern "C" fn(tree: *mut c_void, key: u32, props: *const c_void) -> i32,
+    pub text: unsafe extern "C" fn(tree: *mut c_void, key: u32, props: *const c_void) -> i32,
+    pub status_row: unsafe extern "C" fn(tree: *mut c_void, key: u32, props: *const c_void) -> i32,
+    pub button: unsafe extern "C" fn(tree: *mut c_void, key: u32, props: *const c_void) -> i32,
+    pub action_row: unsafe extern "C" fn(tree: *mut c_void, key: u32, props: *const c_void) -> i32,
+    pub switch_row: unsafe extern "C" fn(tree: *mut c_void, key: u32, props: *const c_void) -> i32,
+    pub navigation_header: unsafe extern "C" fn(tree: *mut c_void, key: u32, props: *const c_void) -> i32,
+    pub component: unsafe extern "C" fn(tree: *mut c_void, key: u32, type_: u16, props: *const c_void) -> i32,
+}
+
+#[repr(C)]
 pub struct CanopusContext {
     pub struct_size: u32,
     pub abi: u32,
@@ -275,6 +293,7 @@ pub struct CanopusContext {
     pub haptics: *const CanopusHapticsObj,
     pub display: *const CanopusDisplayObj,
     pub bus: *const CanopusBusObj,
+    pub ui: *const CanopusUiObj,
 }
 
 // ---------------------------------------------------------------------------

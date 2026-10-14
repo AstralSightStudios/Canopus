@@ -678,11 +678,13 @@ static void (*const target_row_events[CANOPUS_TARGET_UI_MAX_ROWS])(void *) = {
 
 static uint8_t target_row_kind(uint16_t node_type)
 {
-    if (node_type == CANOPUS_UI_NODE_SWITCH_ROW) {
+    if (node_type == CANOPUS_UI_NODE_SWITCH_ROW ||
+        node_type == CANOPUS_UI_NODE_CHECKBOX) {
         return CANOPUS_TARGET_ROW_SWITCH;
     }
     if (node_type == CANOPUS_UI_NODE_BUTTON ||
-        node_type == CANOPUS_UI_NODE_ACTION_ROW) {
+        node_type == CANOPUS_UI_NODE_ACTION_ROW ||
+        node_type == CANOPUS_UI_NODE_RADIO_ROW) {
         return CANOPUS_TARGET_ROW_ACTION;
     }
     return CANOPUS_TARGET_ROW_STATUS;
@@ -1071,10 +1073,11 @@ static int32_t target_ui_apply(
     }
     for (i = 0; i < snapshot->node_count; i++) {
         uint16_t type = snapshot->nodes[i].type;
-        if (type == CANOPUS_UI_NODE_SECTION) {
-            continue;
-        }
-        if (type == CANOPUS_UI_NODE_NAVIGATION_PAGE) {
+        if (type == CANOPUS_UI_NODE_SECTION ||
+            type == CANOPUS_UI_NODE_NAVIGATION_PAGE ||
+            type == CANOPUS_UI_NODE_NAVIGATION_HEADER ||
+            type == CANOPUS_UI_NODE_DIVIDER ||
+            type == CANOPUS_UI_NODE_SPACER) {
             continue;
         }
         if (type == CANOPUS_UI_NODE_TEXT) {
@@ -1085,14 +1088,17 @@ static int32_t target_ui_apply(
             visible_images++;
             continue;
         }
-        if (type == CANOPUS_UI_NODE_PROGRESS) {
+        if (type == CANOPUS_UI_NODE_PROGRESS ||
+            type == CANOPUS_UI_NODE_SLIDER) {
             visible_progress++;
             continue;
         }
         if (type != CANOPUS_UI_NODE_STATUS_ROW &&
             type != CANOPUS_UI_NODE_BUTTON &&
             type != CANOPUS_UI_NODE_ACTION_ROW &&
-            type != CANOPUS_UI_NODE_SWITCH_ROW) {
+            type != CANOPUS_UI_NODE_SWITCH_ROW &&
+            type != CANOPUS_UI_NODE_CHECKBOX &&
+            type != CANOPUS_UI_NODE_RADIO_ROW) {
             return -1;
         }
         visible_rows++;
@@ -1118,11 +1124,14 @@ static int32_t target_ui_apply(
         void *object;
         int32_t gap = CANOPUS_TARGET_ROW_GAP;
 
-        if (node->type == CANOPUS_UI_NODE_SECTION) {
+        if (node->type == CANOPUS_UI_NODE_SECTION ||
+            node->type == CANOPUS_UI_NODE_DIVIDER ||
+            node->type == CANOPUS_UI_NODE_SPACER) {
             continue;
         }
         primary = snapshot->strings + node->primary_off;
-        if (node->type == CANOPUS_UI_NODE_NAVIGATION_PAGE) {
+        if (node->type == CANOPUS_UI_NODE_NAVIGATION_PAGE ||
+            node->type == CANOPUS_UI_NODE_NAVIGATION_HEADER) {
             uint32_t title_mode = backend->page_index ==
                 CANOPUS_TARGET_PAGE_OVERVIEW ? 0u : 1u;
 
@@ -1237,7 +1246,8 @@ static int32_t target_ui_apply(
             image_used++;
             continue;
         }
-        if (node->type == CANOPUS_UI_NODE_PROGRESS) {
+        if (node->type == CANOPUS_UI_NODE_PROGRESS ||
+            node->type == CANOPUS_UI_NODE_SLIDER) {
             const struct canopus_ui_layout_v1 *layout = &snapshot->layouts[i];
             const struct canopus_ui_value_v1 *value = &snapshot->values[i];
             if (layout->width <= 0 || layout->height <= 0 ||
@@ -1359,12 +1369,12 @@ static int32_t target_ui_apply(
         {
 #ifndef CANOPUS_MGR_BAND11
             uint8_t selected = kind == CANOPUS_TARGET_ROW_SWITCH ?
-                ((node->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u ? 1u : 0u) :
+                ((node->flags & (CANOPUS_UI_NODE_FLAG_CHECKED | CANOPUS_UI_NODE_FLAG_SELECTED)) != 0u ? 1u : 0u) :
                 1u;
             (void)update_row(object, NULL, primary, secondary, 0, selected);
 #else /* CANOPUS_MGR_BAND11 */
             uint8_t selected = kind != CANOPUS_TARGET_ROW_SWITCH ||
-                (node->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u;
+                (node->flags & (CANOPUS_UI_NODE_FLAG_CHECKED | CANOPUS_UI_NODE_FLAG_SELECTED)) != 0u;
             update_row(object, NULL, primary,
                        node->secondary_len ? snapshot->strings + node->secondary_off : NULL,
                        0, selected);
