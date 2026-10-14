@@ -82,7 +82,7 @@ enum canopus_sup_command {
      * staged native-app publication. */
     CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT,
     /* Import packages the phone installed as quick apps
-     * (/data/app/com.canopus.pkg.<id>/) and stage them like an INSTALL. */
+     * (<app root>/com.canopus.pkg.<id>/; /data/app on Band 10 Pro, /data/quickapp/app on Band 11) and stage them like an INSTALL. */
     CANOPUS_SUP_CMD_SCAN,
 };
 

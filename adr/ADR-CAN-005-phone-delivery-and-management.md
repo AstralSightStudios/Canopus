@@ -10,7 +10,7 @@
 - 命名 interconnect 的服务端要求目标包在设备的 AIOTJS 包管理器里已安装（`quickapp_get_appinfo` 门槛），
   原生模块没有注册入口；`interconnect_connect` 还需要事件循环指针（`interconnect_loop` 已 WITHDRAWN）。
 - 但设备**已经**支持手机通过 Mass(ThirdPartyApp) 投递已签名的快应用 `.rpk`，并把它展开到
-  `/data/app/<package>/`，随后在快应用列表里返回 `package / versionCode / fingerprint`。
+  `<package>` 目录（Band 10 Pro 为 `/data/app/`，Band 11 为 `/data/quickapp/app/`，后者已在 Mirage 的 q66 数据分区里核对），随后在快应用列表里返回 `package / versionCode / fingerprint`。
   `.rpk` 是带 APK Signature Scheme v2 签名块的 zip，**任何发布者自己的密钥都被接受**（043 上实测）。
 
 ## 决定

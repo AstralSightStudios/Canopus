@@ -1056,10 +1056,14 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
 
 /* ---- phone-installed packages (com.canopus.pkg.<id> quick apps) ----------
  * The phone installs a signed .rpk through the stock quick-app path; the band
- * extracts it to /data/app/<package>/. We only read from there: the payload
+ * extracts it to <app root>/<package>/ (/data/app on Band 10 Pro, /data/quickapp/app on Band 11). We only read from there: the payload
  * for this firmware is copied into the staging area and staged as an INSTALL.
  * The directory iteration calls are optional per target. */
+#ifdef CANOPUS_SUP_CUSTOM_LOADER
+#define CANOPUS_SUP_APP_ROOT "/data/quickapp/app/" /* Band 11 (checked in the Mirage data partition) */
+#else
 #define CANOPUS_SUP_APP_ROOT "/data/app/"
+#endif
 #define CANOPUS_SUP_PKG_PREFIX "com.canopus.pkg."
 
 #ifdef CANOPUS_SUP_NUTTX_OPENDIR

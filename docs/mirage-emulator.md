@@ -35,4 +35,5 @@
   （未绑定设备能显示开机向导并完成蓝牙配对，但缺少绑定数据，认证返回 account error 4。）
 - Band 11 是 user 构建，没有 NSH，Canopus 在它上面只能经安装器表盘（Lua）启动；表盘需要用外部打包工具（facetory）生成可安装的 .bin/.mwz，
   本机该工具的 MCP 服务连接失败，所以安装器表盘无法装进模拟器，Band 11 的 Supervisor/SCAN 仍不能端到端验证。
-  可以做、但与 Canopus 无关的部分：经桥安装 .rpk 到 Band 11 并从数据分区读出文件，用来验证手机投递这一半。
+  已验证手机投递这一半：经桥把 hello-portable 的 .rpk 装进模拟的 Band 11，数据分区里出现 `/data/quickapp/app/com.canopus.pkg.hello_portable/canopus/{portable.ko, 五个 target 的 .cmi}`；
+  由此发现并修正了 Supervisor 的包根目录（Band 11 是 `/data/quickapp/app/`，不是 Band 10 Pro 的 `/data/app/`）。
