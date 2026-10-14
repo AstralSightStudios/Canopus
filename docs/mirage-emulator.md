@@ -18,3 +18,8 @@
 5. 控制台多路复用（`sh` 与 GUI/console 并存）。
 6. `fs put live` 支持大文件（现在走 NSH printf，50 KB 以上不可用）。
 7. AstroBox 桥：按手环地址连接（已绑定设备不响应 inquiry）已在本地实现，希望合入上游。
+
+## Band 11（q66）验证尝试（2026-10-14）
+导入 4.100.177 OTA 并创建 q66 设备可以启动 QEMU，但 3 分钟以上 AP 控制台（console.log/uart0.log）无任何输出、屏幕全黑，
+`miragectl sh` 超时；仅 uart1 有 bootloader 横幅。当前 Mirage 构建上 Band 11 没有跑起来，因此 Band 11 的安装器/SCAN
+只有 unicorn 固件仿真（`scripts/tests/band11_*.py`）级别的证据。需要先在 Mirage/qemu-miwear 侧排查 q66 启动。
