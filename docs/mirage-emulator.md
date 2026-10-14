@@ -48,3 +48,10 @@ Facetory 打包的 Lua 表盘界面都不出现（Lua 入口如何被固件启�
 补充（Lua 启动点，043 IDB）：固件里的 Lua 运行入口是 `sub_CAB2D20`（pmain：取脚本路径、设置 `SCRIPT_PATH`/`package.path`、`luaL_loadfile`、`pcall`，
 并打印 `[lua] pmain: script path: …`）。把 Facetory 打包的 Lua 表盘设为当前表盘后，模拟器控制台里没有出现这条日志，说明 pmain 根本没被启动——
 Lua 页面的触发条件（不是"设为当前表盘"这么简单）还没弄清，需要从调用 pmain 的上层（表盘/页面管理）继续追，或向 Facetory 作者确认。
+
+再补充（Lua 触发点，续）：调用 `miwear_lua_run`（0xcab2fc0）的是表盘渲染器里的 `render_file_create`（0xca886a0，日志标签 `wf`）：
+它从资源管理器取一个 **File 元素**，扩展名为 `lua` 才会启动 Lua（`riv` 会报 not support rive）。也就是说，表盘**布局里必须有一个指向该 .lua 的
+File 元素**，仅仅把 main.lua 作为 File 资源放进包里（Facetory 的 `package_lua_watchface` 示例就是这样）不会启动 Lua。
+Facetory 的编辑器导出路径里有对应概念（`facetory.editor.file` 的 `fileRef = layout` 生成 `JsFile` 元素，`widget` 则生成跳转 `luaApplication` 的 Widget），
+我在一份拷贝里给示例的入口资源加了 `fileRef=layout` 再打包安装，屏幕仍只显示预览图——`.bin` 导出路径看来没有把它转成布局元素。
+要让 Lua 表盘在模拟器里跑起来，需要 Facetory 一侧提供带布局元素的 Lua 表盘导出，或手工构造包含 File 元素的布局。运行期日志在启动后不再写入 console.log，无法旁证。
