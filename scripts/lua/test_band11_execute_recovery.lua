@@ -264,20 +264,6 @@ source, count = source:gsub('(%["' .. firmware_version:gsub('%.', '%%.') .. '"%]
     return head .. body .. tail
 end)
 assert(count == 1, 'fixture must replace only the selected recovery profile')
-if arg[5] then
-    -- Offline fixture generation only: no shell operation belongs to production.
-    local f=assert(native_io.open(arg[5], "wb")); f:write(source); f:close()
-    assert(host_execute("python3 scripts/tests/encrypt_fixture.py " .. arg[5]) == true)
-    f=assert(native_io.open(arg[5], "rb")); source=f:read("*a"); f:close()
-elseif arg[4] then
-    -- Patch firmware pointers above, then strip debug data and run through the
-    -- exact production wrapper. Compiling here keeps the fixture host ABI.
-    local f = assert(native_io.open(arg[4], "rb"))
-    local template = f:read("*a"); f:close()
-    local binary = string.dump(assert(load(source, "@fixture", "t")), true)
-    local hex = binary:gsub(".", function(c) return string.format("%02x", c:byte()) end)
-    source = template:gsub("%-%- @PAYLOAD@", function() return '"' .. hex .. '"' end)
-end
 enter(function() assert(load(source, "band11-generated-entry", "t"))() end)
 assert(#clicks == 2 and #objects == 8, "Run/Clear Env production UI missing")
 assert(objects[1].w == 212 and objects[1].h == 520)

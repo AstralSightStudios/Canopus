@@ -79,7 +79,6 @@ def main():
     subprocess.run(["sh", str(ROOT / "scripts/build_canopus_supervisor.sh")], cwd=ROOT, check=True, capture_output=True,
                    env=dict(os.environ, CANOPUS_TARGET=tid, CANOPUS_BAND11_OUTPUT_DIR=str(out_dir)))
     subprocess.run(["git", "checkout", "watchfaces"], cwd=ROOT, check=False, capture_output=True)
-    (ROOT / "build/lua-protection.seed").unlink(missing_ok=True)
     src = work / "face"
     src.mkdir()
     for f in [out_dir / "main.lua", *out_dir.glob("*.bin")]:

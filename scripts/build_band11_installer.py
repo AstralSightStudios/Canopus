@@ -8,7 +8,6 @@ import os
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import protect_lua
 import struct
 import subprocess
 import tempfile
@@ -155,44 +154,6 @@ def build_stages(out, supervisor, target_id=TARGET):
     return stage1, stage2
 
 
-def lua_bytecode_entry(source):
-    # No system luac fallback: the production chunk must use exactly 5.4.0.
-    compiler = Path(os.environ.get("CANOPUS_LUAC54", str(
-        FAMILY / "build/host-lua54/lua-5.4.0/src/luac")))
-    version = subprocess.run([str(compiler), "-v"], check=True,
-                             capture_output=True, text=True)
-    if "Lua 5.4.0 " not in version.stdout + version.stderr:
-        raise ValueError("CANOPUS_LUAC54 must be Lua 5.4.0")
-    with tempfile.TemporaryDirectory(prefix="canopus-lua-") as temp:
-        src, out = Path(temp) / "main.lua", Path(temp) / "main.luac"
-        src.write_text(source, encoding="utf-8")
-        run(compiler, "-s", "-o", out, src)
-        data = out.read_bytes()
-    if data[:15] != bytes.fromhex("1b4c7561540019930d0a1a0a040808"):
-        raise ValueError("expected Lua 5.4 little-endian int64/double bytecode")
-    if data[15:31] != struct.pack("<qd", 0x5678, 370.5):
-        raise ValueError("unexpected Lua numeric format")
-    return data
-
-
-def text_bytecode_wrapper(data):
-    seed_path = ROOT / "build/lua-protection.seed"
-    if not seed_path.exists():
-        seed_path.parent.mkdir(parents=True, exist_ok=True)
-        with seed_path.open("xb") as f:
-            os.chmod(seed_path, 0o600)
-            f.write(os.urandom(32))
-    seed = seed_path.read_bytes()
-    if len(seed) != 32: raise ValueError("invalid protection seed")
-    data = lua_bytecode_entry(protect_lua.wrap(data, seed))
-    # Hex is reversible encoding, not encryption. Decode per chunk to avoid
-    # allocating a Lua table entry for every byte of the implementation.
-    chunks = [data[i:i + 96].hex() for i in range(0, len(data), 96)]
-    template = (ROOT / "scripts/templates/band11_bytecode_entry.lua").read_text()
-    return template.replace("-- @PAYLOAD@", "\n".join(
-        f"    '{chunk}'," for chunk in chunks)).encode()
-
-
 def resource_names(target):
     return tuple(f"canopus_{kind}-{target}.bin" for kind in
                  ("loader_profile", "stage1", "stage2", "supervisor"))
@@ -238,11 +199,11 @@ def main():
     parser.add_argument("--check", action="store_true", help="check generated Lua without writes")
     args = parser.parse_args()
     source, profile = render(args.target or TARGET)
+    main_resource = source.encode("utf-8")
     if args.check:
-        expected = text_bytecode_wrapper(lua_bytecode_entry(source))
-        if ((args.output_dir or FAMILY) / "main.lua").read_bytes() != expected:
-            parser.error("Band 11 production Lua bytecode wrapper is stale")
-        print("Band 11 production Lua bytecode wrapper is current; device validation pending")
+        if ((args.output_dir or FAMILY) / "main.lua").read_bytes() != main_resource:
+            parser.error("Band 11 production Lua is stale")
+        print("Band 11 production Lua is current; device validation pending")
         return
     if args.supervisor is None:
         env = dict(os.environ)
@@ -278,7 +239,7 @@ def main():
                            for key,value in (("size",len(data)),("crc",zlib.crc32(data)))})
     profile_lua = "return {\n" + "".join(f"  {k} = {json.dumps(v)},\n" for k,v in native_profile.items())
     profile_lua += "  fingerprints = {\n" + "".join(f"    {{0x{a:08x}, 0x{w:08x}}},\n" for a, w in fingerprints) + "  },\n}\n"
-    main_resource = text_bytecode_wrapper(lua_bytecode_entry(source))
+    main_resource = source.encode("utf-8")
     resources = {"main.lua": main_resource, "manager_icon.bin": (ROOT / "watchfaces/canopus-installer/manager_icon.bin").read_bytes(),
                  f"canopus_loader_profile-{args.target}.bin": profile_lua.encode(),
                  f"canopus_stage1-{args.target}.bin": stage1, f"canopus_stage2-{args.target}.bin": stage2,
@@ -286,7 +247,7 @@ def main():
     manifest = dict(target_id=args.target, firmware_sha256=profile["firmware_sha256"],
                     artifact_kind="exact-target-native-resources", native_loader_status="STATIC_TEST_CANDIDATE",
                     device_status="NOT_PROBED", supervisor_included=True,
-                    lua_protection="chacha20-hmac-sha256/shuffled-shares/dual-stripped-lua-5.4.0",
+                    lua_protection="none",
                     reentry_unwind_leaks_path=profile["reentry_unwind_leaks_path"],
                     resources={name:dict(size=len(resources[name]),sha256=hashlib.sha256(resources[name]).hexdigest())
                                for name in resource_names(args.target)})
