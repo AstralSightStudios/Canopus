@@ -19,6 +19,6 @@
 
 ## 历史文档（只读参考，可能与现状不符）
 
-[`architecture.md`](architecture.md)（原始设计）、[`native-manager-ui-plan.md`](native-manager-ui-plan.md)、
-[`firmware-symbol-porting-plan.md`](firmware-symbol-porting-plan.md)、[`function-signatures.md`](function-signatures.md)、
+[`architecture.md`](archive/architecture.md)（原始设计）、[`native-manager-ui-plan.md`](native-manager-ui-plan.md)、
+[`firmware-symbol-porting-plan.md`](firmware-symbol-porting-plan.md)、[`function-signatures.md`](archive/function-signatures.md)、
 [`band11-bluetooth-139.md`](band11-bluetooth-139.md)。其中签名、CPC1/CPS1、P65、Band 9 的内容已被重构取代。

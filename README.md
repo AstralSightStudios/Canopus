@@ -20,7 +20,7 @@ Canopus 允许开发者：
 - **默认拒绝**：未登记地址、未知原型、未验证重定位、哈希或 target 不匹配的包默认不批准。
 - **共享 SDK 不泄漏目标私有 ABI**：固件私有结构只存在于 target pack 或生成代码。
 
-完整设计见 [`docs/architecture.md`](docs/architecture.md)。
+完整设计见 [`docs/archive/architecture.md`](docs/archive/architecture.md)。
 
 ## 当前 registered target packs
 

@@ -5,7 +5,7 @@
 > 文档状态：Proposed v1  
 > 日期：2026-08-05  
 > 初始目标：`xiaomi-band-10-pro-3.101.030`  
-> 依赖：[architecture.md](architecture.md) §10、§14–17、§19–20  
+> 依赖：[architecture.md](archive/architecture.md) §10、§14–17、§19–20  
 > 目标：把当前 bootstrap 原型推进为可从 launcher 启动、可真实管理外部模块的原生 Manager，并提供面向 C 与 Rust 的人类可读原生 UI SDK。
 
 ---

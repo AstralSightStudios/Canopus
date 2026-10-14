@@ -4,7 +4,7 @@
 
 权威进度追踪位于两份文档：
 
-- 任务进度追踪区：[`architecture.md`](architecture.md) §23。
+- 任务进度追踪区：[`architecture.md`](archive/architecture.md) §23。
 - P0/P1/P2 强制整改状态（每个 CAN-P?-??? ID 的 OPEN / BLOCKED-EVIDENCE /
   HOST-FIXED / CLOSED-GATED / CLOSED）：[`native-manager-ui-plan.md`](native-manager-ui-plan.md) §15。
 

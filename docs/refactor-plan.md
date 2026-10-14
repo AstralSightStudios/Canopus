@@ -207,7 +207,7 @@
 - [x] P3.4 安装器表盘：`canopus package --installer` 产出 `dist/installer/<family>/`（main.lua + 载荷 + 回执，仅有安装传输模板的设备族：Band 10 Pro、Band 11）；`build_module_installer_prod.py` 的 SUPPORTED 改为从 targets/ 动态推导（外部产品的 PRODUCTS/PRODUCT_TARGETS 表仍保留，因其 payload 不是 Canopus 工程）。
 - [x] P3.5 `hello` 示例改用 `canopus build` 构建（`modules/examples/hello/Canopus.toml`，旧 build.sh/package.json 删除；hello 的 C ELF 哈希因链接顺序变化已刷新基线）；`hello-portable` 同样。
 - [ ] P3.6 （已前移为 P0.7）
-- [~] P3.7 文档收口（已完成：`docs/README.md` 入口页、三份大文档加归档提示、progress.md 指向本文；未做：物理搬入 archive/）
+- [x] P3.7 文档收口（已完成：architecture.md、function-signatures.md 已移入 docs/archive/；其余历史文档被 evidence 的 URI 引用，原地保留；`docs/README.md` 入口页、三份大文档加归档提示、progress.md 指向本文；未做：物理搬入 archive/）
   - `docs/` 入口页（不超过一屏）。
   - 进度来源合并为一处（architecture §23、ui-plan §15、progress.md、本文件）。
   - 过时的大文档归档。
