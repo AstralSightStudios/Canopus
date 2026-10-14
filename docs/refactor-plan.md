@@ -330,3 +330,4 @@
 | 2026-10-14 | Band 11 端到端在 177 上同样通过；打补丁后的 qemu 下 043 冒烟 22 项仍全过 |
 | 2026-10-14 | `canopus build` 支持 Rust 目标模块；qemu-miwear 补丁改为直接提交（3e05ca7）并推送，补丁文件删除 |
 | 2026-10-14 | P2.4 函数集一致（api_parity 测试）；P2.8 两套 Manager UI 后端合并为一个源文件（产物验证一致） |
+| 2026-10-14 | 评估 Canopus 专用 L2CAP 通道：手环侧入站 PSM 监听无现成 API，手机侧经典 L2CAP 在 Android/iOS 不可用，建议 RFCOMM 专用 channel（docs/canopus-channel-feasibility.md，未实测） |
