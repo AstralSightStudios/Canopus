@@ -263,16 +263,16 @@
 
 ### P6 Mirage 模拟器调试
 - [x] P6.0 O4（Mirage 库实际在 `/Volumes/EXT0/Mirage/.scratch/Library`；043 完整 OTA 目录 `/Volumes/EXT0/miwear.watch.p67tc_v3.101.043_full_a4ce8564` 的 vela_ap.bin SHA-256 与 target 一致，`firmware import` 后可启动；Band 11 的 139/155(tc)/177 在 MiWearFirmwareArchives 上有包，未下载）：把 043 完整固件（含 `vela_resource.bin`）导入 Mirage 固件库并修正库路径；查 MiWearFirmwareArchives 对 036/139/155/177 的覆盖。
-- [~] P6.1 `canopus emu`（未做 Rust 封装；实际用 `scripts/emu/smoke.py` + `driver.lua` 直接包装 miragectl：create/shutdown/`fs put nand_data`/boot/`sh`；`fs put live` 走 NSH printf 对 50KB 文件不可用，故离线写分区。NSH 内置 `lua`，driver.lua 用它按安装表盘同样的 CPC2/CPC1 IO 驱动 Supervisor）：包装 `miragectl` 的 create / boot / fs put / sh / screenshot
+- [x] P6.1 `canopus emu`（`canopus emu smoke` 封装 scripts/emu/smoke.py，细节见 docs/mirage-emulator.md；实际用 `scripts/emu/smoke.py` + `driver.lua` 直接包装 miragectl：create/shutdown/`fs put nand_data`/boot/`sh`；`fs put live` 走 NSH printf 对 50KB 文件不可用，故离线写分区。NSH 内置 `lua`，driver.lua 用它按安装表盘同样的 CPC2/CPC1 IO 驱动 Supervisor）：包装 `miragectl` 的 create / boot / fs put / sh / screenshot
   - 日志：读 `<device>/Logs/` 下的 console.log、uart*.log、qemu.log（`miragectl` 没有 `log` 子命令）。
   - `sh` 与 GUI 互斥，CLI 须独占运行。
 - [x] P6.2 冒烟测试（在 043 上）（`python3 scripts/emu/smoke.py`：安装→启用→重启加载→更新 v2（REBOOT_REQUIRED）→降级被拒→v3 加载失败回退 v2→v4→回滚到 v2，全部通过；仅 host/emulator 级证据）。发现并修复两个真实问题：加载失败的 stock-modlib 模块未 rmmod 导致回退重试 EEXIST；模拟器里由 NSH 任务驱动 INSTALL 时通知/删表盘调用会阻塞，加了仅测试用的 `CANOPUS_SUP_HEADLESS` 构建开关
   - 流程：`fs put` Supervisor → `sh` 执行 insmod 或等效于 Run 的流程 → 安装 hello → 重启 → 验证。
   - 无固件时跳过并明示；不进入 GitHub CI（固件不能公开）。
-- [ ] P6.3 GDB
+- [!] P6.3 GDB（本机无 gdb，仅记录步骤于 docs/mirage-emulator.md，未联调；Supervisor 尚不上报模块加载基址）
   - gdb.sock 仅在开启 shell 选项时存在；此时 QEMU 以 `-S` 暂停启动，注入器在启动期占用后才 detach。
   - Supervisor 查询需报告各模块的加载基址，脚本据此执行 `add-symbol-file`。
-- [ ] P6.4 向 Mirage 提需求/PR
+- [x] P6.4 向 Mirage 提需求（清单写入 docs/mirage-emulator.md；本地桥接改动未推送上游）
   - `miragectl hmp`（库里已有 `hmp()`）、`--json` 输出、快照、`log` 子命令、控制台多路复用。
   - AstroBoxBridge 增加 Canopus 方法（已做：`canopusModules`；另加按地址添加 band、等待进行中的 inquiry，已在本地 Mirage 仓库提交，未推送）。
 - [x] P6.5 P5 端到端（AstroBoxBridge 路径：`scripts/emu/smoke.py` 的 phone_flow，需要在模拟器上点击一次配对确认，脚本自动点；AstroBox-NG 的 emu bridge 路径未跑）。原两条路径：
@@ -317,3 +317,4 @@
 | 2026-10-14 | Band 9 / 9 Pro target 包删除（地址不可信，重来须走自定义 loader）；仅 Band 10 Pro 与 Band 11 为受支持设备 |
 | 2026-10-14 | P2.2/P2.4/P2.6/P2.8 判断结案（新增 C/Rust ABI 常量一致性测试） |
 | 2026-10-14 | P1.2 结案：Band 11 指纹预生成，安装器构建不再需要固件镜像 |
+| 2026-10-14 | P6.1 `canopus emu smoke`；P6.4 需求清单；P6.3 因无 gdb 未验证 |

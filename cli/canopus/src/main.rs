@@ -57,6 +57,9 @@ enum Command {
         #[arg(long)]
         installer: bool,
     },
+    /// Mirage emulator workflows (end-to-end install/update/rollback smoke).
+    #[command(subcommand)]
+    Emu(EmuCmd),
     /// Create a module project: Canopus.toml + a C source (portable by default).
     New {
         /// Module id (ADR-CAN-003: ^[a-z][a-z0-9_]{0,15}$).
@@ -262,6 +265,12 @@ enum PackageCmd {
     Verify { pkg: PathBuf },
 }
 
+#[derive(Subcommand)]
+enum EmuCmd {
+    /// Run scripts/emu/smoke.py (exit 77 when Mirage or the firmware is missing).
+    Smoke,
+}
+
 fn main() {
     let cli = Cli::parse();
     if let Err(e) = run(cli) {
@@ -288,6 +297,14 @@ fn run(cli: Cli) -> anyhow::Result<()> {
             rpk_key_dir,
             installer,
         } => project::package(&manifest, output.as_deref(), rpk, rpk_key_dir.as_deref(), installer),
+        Command::Emu(EmuCmd::Smoke) => {
+            let root = project::canopus_root()?;
+            let status = std::process::Command::new("python3")
+                .args(["-u", "scripts/emu/smoke.py"])
+                .current_dir(&root)
+                .status()?;
+            std::process::exit(status.code().unwrap_or(1));
+        }
         Command::Re(cmd) => commands::re(cmd),
         Command::BuildPlan {
             manifest,
