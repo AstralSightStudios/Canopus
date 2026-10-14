@@ -68,10 +68,11 @@
 | K10 | 开机自动加载 Supervisor 纳入调查，作为 P4/P5 的前置（P4.0） | 2026-10-14 |
 | K11 | 旧 Supervisor 不做迁移，要求用户重装（原 O2）：不迁移 `registry.bin`；新 Supervisor 遇到旧格式 registry 或旧 inbox 文件时须安全忽略并提示重装，不得崩溃或误加载 | 2026-10-14 |
 | K12 | `calendar_text_color` 保留提升（原 O6）：被提升的是 .139 记录（.043 记录仍为 PENDING），依据为 2026-10-08 的用户授权与 `targets/xiaomi-band-11-4.100.139/background-calendar-port-approval.md`。失败的 `private_abi_records_have_exact_thumb_callables` 早于该授权，改为仿照 `band11_177_calendar_approval_is_exact_and_private_only`：`private_abi` 记录必须保持 restricted；APPROVED 仅限钉死的授权清单，且须满足 STATIC_RECOVERED、not_probed、promotion 固件 SHA 匹配 | 2026-10-14 |
+| K13 | 手机端投递用已签名 `.rpk` 快应用容器（`com.canopus.pkg.<id>`），设备端 Supervisor `SCAN` 导入；不新增控制通道，O1/O5 以此结案（ADR-CAN-005）。AstroBox-NG 的 app/web 是私有仓库，仅改了公开的 core 与 Mirage 桥接 | 2026-10-14 |
 
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
 
-- O1 手机↔设备端控制通道（阻塞 P5.1 及之后）。
+- O1（已结案 → K13/ADR-CAN-005）手机↔设备端控制通道（原阻塞 P5.1 及之后）。
   - 前提更正：AstroBox 的 `transport.send` 只存在于 WASM 插件 host API，只接受 Xiaomi `WearPacket` protobuf，
     且只走 Pb 通道（`pluginsystem/src/api/host/transport.rs:21-50`），不能发原始字节。无论选哪种方案，都要在 `core` 中新写代码。
   - 候选（按现有证据强弱排序）：
@@ -92,7 +93,7 @@
   - Mirage 当前固件库为空，配置的库路径不存在。
   - `fwbins/` 只有 `vela_ap.bin`，p67 还需要 `vela_resource.bin`。
   - 待查：MiWearFirmwareArchives 是否有 036/043/139/155/177 的完整包。
-- O5（新）如果 O1-a 证实需要已安装的快应用，是否接受一个无 UI 的"路由锚点"快应用（与 K5 的边界）？P5.0 出证据后再定。
+- O5（已结案 → K13，无需锚点快应用）如果 O1-a 证实需要已安装的快应用，是否接受一个无 UI 的"路由锚点"快应用（与 K5 的边界）？P5.0 出证据后再定。
 
 （O2 → K11，O6 → K12，已结案。）
 
@@ -105,7 +106,7 @@
 | P2 | ABI/SDK：服务表、协议收敛、移除签名、Rust 整理 | [ ] | P0.1–P0.4；P2.4 起依赖 P1.3 |
 | P3 | 统一打包 + 文档 | [ ] | P1、P2.1 |
 | P4 | 设备端更新语义 + 开机自启调查 | [~] | P0.1、P0.2（不依赖 P5） |
-| P5 | 手机端管理（AstroBox-NG） | [ ] | P5.0（O1）、P2.5、P3.3 |
+| P5 | 手机端管理（AstroBox-NG） | [~] | P5.0（O1）、P2.5、P3.3 |
 | P6 | Mirage 模拟器调试 | [ ] | P6.0 可立即开始；P6.2 依赖 P3 |
 
 建议里程碑：
@@ -126,7 +127,7 @@
 - [x] P0.2 ADR-CAN-004：设备协议
   - 单一线格式（CPC2 升版本）+ 统一的命令枚举。
   - 逐项写明所有 magic 的去留：CPC1/CPS1 删除；CMI1 改为无签名回执；CMR1 保留；CQD1/CQM1 并入查询 payload；CAP1 并入服务表。
-- [ ] P0.3 ADR-CAN-005：手机端管理协议边界。由常驻的 Supervisor 服务层应答（不是 Manager UI），与 P0.2 使用同一套 opcode；
+- [x] P0.3 ADR-CAN-005（见 `adr/ADR-CAN-005-phone-delivery-and-management.md`）：手机端管理协议边界。由常驻的 Supervisor 服务层应答（不是 Manager UI），与 P0.2 使用同一套 opcode；
   O1 只决定 transport。依赖 O1。
 - [x] P0.4 ADR-CAN-006：Supervisor 服务表（K7）
   - `canopus_context_v1` 的定义：struct_size、abi、services 指针。
@@ -237,27 +238,27 @@
 - [x] P4.5 host 测试：升级成功、同版本/降级被拒、哈希/target 不匹配、写入中断后恢复、加载失败退回 prev。
 
 ### P5 手机端管理（AstroBox-NG，K4）
-- [ ] P5.0 解决 O1/O5：静态证据（miwear-server 路由、fingerprint 与安装检查）+ Mirage 043 验证
+- [x] P5.0 解决 O1/O5（K13：用已签名 .rpk 快应用容器，043 模拟器实测可装、可列、可升级；interconnect 的 AIOTJS 注册门槛与 loop 问题未解，作为日后即时触发的备选）：静态证据（miwear-server 路由、fingerprint 与安装检查）+ Mirage 043 验证
   （Mirage 的快应用环境尚未验证，见 R7）。
-- [ ] P5.1 设备端：Supervisor 服务层实现 P0.3 协议的 transport 适配
+- [x] P5.1 设备端（`SCAN` 命令 + `list_packages/import_package` 平台钩子，复用 INSTALL 的校验与 A/B 暂存；Manager 增加"导入手机推送的模块"；握手/框架版本 `framework_revision` 仍由现有 QUERY 提供）：Supervisor 服务层实现 P0.3 协议的 transport 适配
   - 握手：框架版本（`framework_revision`）、ABI、target。
   - 操作：模块列表、安装/升级、启用、禁用、移除、回滚。
   - 数据面按 O1 结论实现。
-- [ ] P5.2 设备端 host 测试 + Mirage 联调。
-- [ ] P5.3 `core`：新增 Canopus LogicComponent（与 `res_pack` 独立），包含查询、投递、升级；
+- [x] P5.2 设备端 host 测试 + Mirage 联调（`scripts/emu/smoke.py` 的 phone_flow：真实 AstroBox 核心经模拟器蓝牙安装 .rpk → SCAN → 启用 → 重启加载 → 手机升级 → SCAN 暂存 → 重启后新版生效） + Mirage 联调。
+- [~] P5.3 `core`（`corelib::device::canopus`：包名/id 校验、`modules_from_apps`、`updates`；已本地提交到 AstroBox-NG-Module-Core 的 submodule，未推送；原计划的 LogicComponent 在无新通道的设计下不需要；Mirage 的 core 指针已更新）：新增 Canopus LogicComponent（与 `res_pack` 独立），包含查询、投递、升级；
   同步 bump Mirage 的 `core` 子模块（现钉在 `dbbaece`，AstroBox-NG 为 `bd541b5`）。
-- [ ] P5.4 `app`：新增 Tauri 命令；`canopus` 类型不再走表盘安装模式（`usesWatchfaceInstallMode`），
+- [!] P5.4 `app`：AstroBox-NG 的 app 模块是私有仓库，无法修改。无需新 Tauri 命令：`canopus` 模块走现有 quickapp 安装；表盘安装模式回退无关：新增 Tauri 命令；`canopus` 类型不再走表盘安装模式（`usesWatchfaceInstallMode`），
   旧 Supervisor 保留表盘路径作为回退。
-- [ ] P5.5 `device_check_resource_updates` 增加 Canopus 模块列表（来自 Supervisor 查询，而不是按表盘 ID 匹配）；
+- [~] P5.5 更新提醒：商店 quickapp 条目的 `versionCode` 与已装快应用比较即可（现有逻辑）；`canopus` 专用版本比较在 core 的 `updates()`；ABI/target 兼容由设备端 SCAN 拒绝（R9） 增加 Canopus 模块列表（来自 Supervisor 查询，而不是按表盘 ID 匹配）；
   比较 `versionCode`，并检查 ABI 与 target 是否兼容。
-- [ ] P5.6 前端（AstroBox-NG-WebUI）：模块列表、更新提醒、"全部更新"（复用安装队列的 `groupId`）、
+- [!] P5.6 前端：AstroBox-NG-WebUI 为私有仓库，未改动（AstroBox-NG-WebUI）：模块列表、更新提醒、"全部更新"（复用安装队列的 `groupId`）、
   Supervisor 未加载或需要升级的提示。
-- [ ] P5.7 商店清单（O3）默认提案
+- [x] P5.7 商店清单：无需 `canopus` 扩展字段——条目就是 quickapp 下载项，包名 `com.canopus.pkg.<id>`，`.rpk` 内含所有固件的载荷，设备端按固件取用并拒绝不匹配；AstroBoxCreatorConsole 的 ID 校验已改为 ADR-CAN-003 语法（本地提交）（O3）默认提案
   - `downloads[deviceId]` 下增加 `canopus: { abi, targets?: [target_id], minFramework? }`。
   - portable 模块只写 abi；target-private 模块必须列出 target。
   - 客户端安装前比对手环固件，不匹配就拒绝（修复按型号回退到 default 或任意条目的问题）。
   - CreatorConsole 的 ID 校验改为 P0.1 的语法。
-- [ ] P5.8 Supervisor 自身升级：手机端读取 `framework_revision`，落后时引导安装新框架；跨协议版本升级时
+- [ ] P5.8 Supervisor 自身升级（仍未做：Supervisor 本身不是 .rpk 模块；`framework_revision` 比较与重装引导需要手机端 UI）：手机端读取 `framework_revision`，落后时引导安装新框架；跨协议版本升级时
   明确告知需重装模块（K11），并支持在手机端一键重装此前记录的模块列表。
 
 ### P6 Mirage 模拟器调试
@@ -273,12 +274,12 @@
   - Supervisor 查询需报告各模块的加载基址，脚本据此执行 `add-symbol-file`。
 - [ ] P6.4 向 Mirage 提需求/PR
   - `miragectl hmp`（库里已有 `hmp()`）、`--json` 输出、快照、`log` 子命令、控制台多路复用。
-  - AstroBoxBridge 增加 Canopus 方法（它嵌入了 `core`，随 P5.3 一起做）。
-- [ ] P6.5 P5 端到端，两条路径：
+  - AstroBoxBridge 增加 Canopus 方法（已做：`canopusModules`；另加按地址添加 band、等待进行中的 inquiry，已在本地 Mirage 仓库提交，未推送）。
+- [x] P6.5 P5 端到端（AstroBoxBridge 路径：`scripts/emu/smoke.py` 的 phone_flow，需要在模拟器上点击一次配对确认，脚本自动点；AstroBox-NG 的 emu bridge 路径因 app 私有未做）。原两条路径：
   - AstroBoxBridge（进程内 JSON-RPC）；
   - AstroBox-NG 的 emu bridge（HCI over TCP 连 qemu-miwear 的 BT 控制器；端口按设备配置，不是固定的 5566）。
   - QEMU 可能只接受单个客户端，两条路径不能同时连接（待验证）。
-- [ ] P6.6 文档：模拟器结果只算 host/emulator 级证据，不得写成 device verified。
+- [x] P6.6 文档（本文与 ADR-CAN-005 明确：模拟器结果只算 host/emulator 级证据，不得写成 device verified）：模拟器结果只算 host/emulator 级证据，不得写成 device verified。
 
 ## 6. 风险
 
@@ -309,3 +310,4 @@
 | 2026-10-14 | P1.3/P1.4 完成，P1.2 部分完成（family 层）；基线 hashes 刷新（committed==generator；差异仅为 P65/Band 9 删除与生成物头注释） |
 | 2026-10-14 | P2.3 完成：Rust 单一 workspace |
 | 2026-10-14 | P3.1/P3.2/P3.3/P3.5 完成（C 模块工程：new/build/package；P3.4 安装器表盘仍由旧 Python 脚本生成） |
+| 2026-10-14 | K13：O1/O5 结案（.rpk 快应用容器）；P5.0–P5.2、P5.7 完成，P5.3/P5.5 部分，P5.4/P5.6 因私有仓库阻塞；P6.5 端到端用真实 AstroBox 核心在 Mirage 043 上跑通 |

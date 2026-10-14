@@ -27,6 +27,7 @@
 #define UI_KEY_DETAIL_CLASS      202u
 #define UI_KEY_DETAIL_ERROR      204u
 #define UI_KEY_DETAIL_ROLLBACK   211u
+#define UI_KEY_SCAN              212u
 #define UI_KEY_DETAIL_ENABLE     212u
 #define UI_KEY_DETAIL_DISABLE    213u
 #define UI_KEY_DETAIL_REMOVE     214u
@@ -391,6 +392,11 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
                        sizeof("已验证待安装包") - 1u, CANOPUS_MANAGER_EVENT_INSTALL,
                        native->stage_token[0] != '\0' && !model->safe_mode);
     if (rc != CANOPUS_UI_OK) return rc;
+    rc = append_action(tree, UI_KEY_SCAN, "导入手机推送的模块",
+                       sizeof("导入手机推送的模块") - 1u,
+                       "新模块默认禁用，需手动启用", sizeof("新模块默认禁用，需手动启用") - 1u,
+                       CANOPUS_MANAGER_EVENT_SCAN, !model->safe_mode);
+    if (rc != CANOPUS_UI_OK) return rc;
     return CANOPUS_UI_END(tree);
 }
 
@@ -492,6 +498,8 @@ static const char *confirmation_message(uint32_t event_id)
         return "立即运行模块？常驻模块需重启才能停用。";
     case CANOPUS_MANAGER_EVENT_INSTALL:
         return "Install the verified staged package?";
+    case CANOPUS_MANAGER_EVENT_SCAN:
+        return "Import modules pushed from the phone? They stay disabled until you enable them.";
     case CANOPUS_MANAGER_EVENT_ENABLE:
         return "Enable this module on next boot?";
     case CANOPUS_MANAGER_EVENT_DISABLE:
@@ -602,6 +610,8 @@ static uint32_t execute_event(struct canopus_manager_native_v1 *native,
     case CANOPUS_MANAGER_EVENT_INSTALL:
         if (native->stage_token[0] == '\0') return CANOPUS_RESULT_DISALLOWED;
         return canopus_manager_op_install(model, native->stage_token);
+    case CANOPUS_MANAGER_EVENT_SCAN:
+        return canopus_manager_op_scan(model);
     case CANOPUS_MANAGER_EVENT_ENABLE:
         return canopus_manager_op_enable(model, model->selected);
     case CANOPUS_MANAGER_EVENT_DISABLE:
@@ -619,6 +629,7 @@ static int event_needs_confirmation(uint32_t event_id)
 {
     return event_id == CANOPUS_MANAGER_EVENT_ACTIVATE ||
            event_id == CANOPUS_MANAGER_EVENT_INSTALL ||
+           event_id == CANOPUS_MANAGER_EVENT_SCAN ||
            event_id == CANOPUS_MANAGER_EVENT_ENABLE ||
            event_id == CANOPUS_MANAGER_EVENT_DISABLE ||
            event_id == CANOPUS_MANAGER_EVENT_ROLLBACK ||
@@ -702,6 +713,7 @@ static int32_t manager_event(void *cookie, uint32_t generation,
         if (native->stage_token[0] == '\0') return CANOPUS_UI_ERR_DISABLED;
         /* fall through */
     case CANOPUS_MANAGER_EVENT_ACTIVATE:
+    case CANOPUS_MANAGER_EVENT_SCAN:
     case CANOPUS_MANAGER_EVENT_ENABLE:
     case CANOPUS_MANAGER_EVENT_DISABLE:
     case CANOPUS_MANAGER_EVENT_ROLLBACK:

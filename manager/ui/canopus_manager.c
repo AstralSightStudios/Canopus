@@ -357,6 +357,15 @@ uint32_t canopus_manager_op_install(struct canopus_manager_model_v1 *m,
                         (uint32_t)(package_ref ? canopus_strlen(package_ref) + 1 : 0));
 }
 
+uint32_t canopus_manager_op_scan(struct canopus_manager_model_v1 *m)
+{
+    /* Importing stages code for the next boot; not offered in safe mode. */
+    if (m->safe_mode) {
+        return CANOPUS_RESULT_DISALLOWED;
+    }
+    return send_command(m, CANOPUS_CMD_SCAN, 0, 0);
+}
+
 uint32_t canopus_manager_op_activate(struct canopus_manager_model_v1 *m,
                                      uint32_t index)
 {
