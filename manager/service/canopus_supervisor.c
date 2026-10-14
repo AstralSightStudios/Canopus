@@ -1067,6 +1067,55 @@ int32_t canopus_supervisor_installer_read(struct canopus_supervisor_v1 *sup,
     return (int32_t)sup->installer_response_len;
 }
 
+/* WearPacket L2 packet handler (ADR-CAN-008).
+ * Processes an incoming CPC2 request from L2Channel::Canopus (0x43) and
+ * writes the resulting CPC2 response directly into resp_buf. */
+int32_t canopus_supervisor_handle_l2_packet(struct canopus_supervisor_v1 *sup,
+                                            const uint8_t *l2_payload,
+                                            uint32_t l2_payload_len,
+                                            uint8_t *resp_buf,
+                                            uint32_t resp_cap)
+{
+    struct canopus_proto_request_v1 req;
+    struct canopus_proto_response_v1 resp;
+    uint8_t response_payload[CANOPUS_PROTO_MAX_PAYLOAD];
+    uint32_t response_payload_len;
+    uint32_t poff = 0u;
+    uint32_t opcode = 0u;
+    int rc;
+    int enc_len;
+
+    if (sup == 0 || l2_payload == 0 || resp_buf == 0 ||
+        l2_payload_len < CANOPUS_TRANSPORT_V2_HEADER_SIZE) {
+        return -1;
+    }
+
+    if (canopus_transport_v2_decode_request(l2_payload, l2_payload_len, &req, &poff) != 0) {
+        return -1;
+    }
+
+    sup->last_kind = 1;
+    rc = canopus_supervisor_handle_v2_request(sup, &req, l2_payload + poff,
+                                              &resp, &opcode);
+    if (rc != 0) {
+        return -1;
+    }
+
+    response_payload_len = render_v2_query_payload(sup, &req, &resp, response_payload);
+    resp.payload_size = response_payload_len;
+
+    enc_len = canopus_transport_v2_encode_response(
+        &resp, opcode,
+        response_payload_len != 0u ? response_payload : 0,
+        response_payload_len, resp_buf, resp_cap);
+
+    if (enc_len < 0) {
+        return -1;
+    }
+
+    return (int32_t)enc_len;
+}
+
 /* Host convenience: record a newly installed module into a slot.
  * `module_id` becomes the stable identity for v2 per-module commands. */
 int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,

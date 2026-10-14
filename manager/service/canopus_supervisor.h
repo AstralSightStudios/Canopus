@@ -313,6 +313,19 @@ int canopus_supervisor_local_transport(
     const struct canopus_proto_request_v1 *req, const void *payload,
     struct canopus_proto_response_v1 *resp, void *cookie);
 
+/* Handles an incoming WearPacket L2 packet payload on CANOPUS_L2_CHANNEL (0x43).
+ * `l2_payload` points to the CPC2 request wire bytes (after L2 decryption if
+ * WriteEnc was used).
+ * Processes the request through the supervisor state machine and encodes the
+ * complete CPC2 response into `resp_buf`.
+ * Returns the number of bytes written to `resp_buf` (>= 0), or -1 if the frame
+ * is malformed, unrecognized, or the output buffer is insufficient. */
+int32_t canopus_supervisor_handle_l2_packet(struct canopus_supervisor_v1 *sup,
+                                            const uint8_t *l2_payload,
+                                            uint32_t l2_payload_len,
+                                            uint8_t *resp_buf,
+                                            uint32_t resp_cap);
+
 /* The module glue owns the singleton; the platform's read/write handlers use
  * it to render status / dispatch commands. */
 struct canopus_supervisor_v1 *canopus_supervisor_get(void);

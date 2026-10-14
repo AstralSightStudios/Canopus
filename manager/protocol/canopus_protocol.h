@@ -133,6 +133,22 @@ int canopus_transport_v2_encode_response(const struct canopus_proto_response_v1 
                                          uint32_t payload_len,
                                          uint8_t *out, uint32_t cap);
 
+/* ------------------------------------------------------------------ */
+/* MiWear Layer 2 Transport Channel (ADR-CAN-008)                     */
+/*                                                                     */
+/* Canopus dedicated channel multiplexed inside Xiaomi WearPacket L2.  */
+/* Peer to TRANSPORT_CHANNEL_PB (0x01). Payload carries CPC2 wire     */
+/* envelopes. Supported opcodes match Xiaomi L2:                      */
+/*   1 = Write (plaintext)                                            */
+/*   2 = WriteEnc (AES-128-CTR session encrypted)                     */
+/*   3 = Read                                                         */
+/* ------------------------------------------------------------------ */
+
+#define CANOPUS_L2_CHANNEL          0x43u /* 'C' */
+#define CANOPUS_L2_OPCODE_WRITE     1u
+#define CANOPUS_L2_OPCODE_WRITE_ENC 2u
+#define CANOPUS_L2_OPCODE_READ      3u
+
 /* ---- pending-request state machine (CAN-P1-002) -------------------- */
 /* A request_id is tracked so the manager can report real async state.
  * Legal edges (see canopus_pending.c): ACCEPTED -> QUEUED/RUNNING/terminal,

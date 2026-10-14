@@ -1471,6 +1471,39 @@ TEST(v2_install_accepts_only_bounded_token)
     CHECK(v2_word(rbuf, 28) == CANOPUS_RESULT_DISALLOWED);
 }
 
+TEST(v2_l2_packet_handle_roundtrip)
+{
+    struct canopus_supervisor_v1 sup;
+    uint8_t req_buf[CANOPUS_TRANSPORT_V2_HEADER_SIZE];
+    uint8_t resp_buf[256];
+    int32_t resp_len;
+    struct canopus_proto_response_v1 resp;
+    uint32_t opcode = 0, poff = 0;
+
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+
+    /* 1. NULL / invalid arguments fail */
+    CHECK(canopus_supervisor_handle_l2_packet(0, req_buf, sizeof(req_buf), resp_buf, sizeof(resp_buf)) == -1);
+    CHECK(canopus_supervisor_handle_l2_packet(&sup, 0, sizeof(req_buf), resp_buf, sizeof(resp_buf)) == -1);
+    CHECK(canopus_supervisor_handle_l2_packet(&sup, req_buf, sizeof(req_buf), 0, sizeof(resp_buf)) == -1);
+    CHECK(canopus_supervisor_handle_l2_packet(&sup, req_buf, 10, resp_buf, sizeof(resp_buf)) == -1);
+
+    /* 2. Valid CPC2 QUERY_DEVICE over L2 */
+    make_v2_request(req_buf, sizeof(req_buf), CANOPUS_CMD_QUERY_DEVICE, 0x4301, 0, 0);
+    resp_len = canopus_supervisor_handle_l2_packet(&sup, req_buf, sizeof(req_buf), resp_buf, sizeof(resp_buf));
+    CHECK_EQ(resp_len, (int32_t)(CANOPUS_TRANSPORT_V2_HEADER_SIZE + CANOPUS_QUERY_DEVICE_SIZE));
+
+    CHECK(canopus_transport_v2_decode_response(resp_buf, (uint32_t)resp_len, &resp, &opcode, &poff) == 0);
+    CHECK_EQ(opcode, (uint32_t)CANOPUS_CMD_QUERY_DEVICE);
+    CHECK_EQ(resp.request_id, 0x4301u);
+    CHECK_EQ(resp.result_state, (uint32_t)CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(resp.payload_size, (uint32_t)CANOPUS_QUERY_DEVICE_SIZE);
+    CHECK_EQ(v2_word(resp_buf, poff), CANOPUS_QUERY_DEVICE_MAGIC);
+
+    /* 3. Output buffer too small returns -1 */
+    CHECK(canopus_supervisor_handle_l2_packet(&sup, req_buf, sizeof(req_buf), resp_buf, 20) == -1);
+}
+
 TEST(installer_endpoint_accepts_signed_package_flow_only)
 {
     struct canopus_supervisor_v1 sup;
@@ -1689,6 +1722,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "v2_enable_by_module_id", v2_enable_by_module_id_wrapper },
     { "v2_unknown_magic_rejected", v2_unknown_magic_rejected_wrapper },
     { "v2_install_accepts_only_bounded_token", v2_install_accepts_only_bounded_token_wrapper },
+    { "v2_l2_packet_handle_roundtrip", v2_l2_packet_handle_roundtrip_wrapper },
 };
 #define SUPERVISOR_DEVICE_TESTS_LEN \
     (sizeof(supervisor_device_tests) / sizeof(supervisor_device_tests[0]))

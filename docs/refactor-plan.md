@@ -69,6 +69,7 @@
 | K11 | 旧 Supervisor 不做迁移，要求用户重装（原 O2）：不迁移 `registry.bin`；新 Supervisor 遇到旧格式 registry 或旧 inbox 文件时须安全忽略并提示重装，不得崩溃或误加载 | 2026-10-14 |
 | K12 | `calendar_text_color` 保留提升（原 O6）：被提升的是 .139 记录（.043 记录仍为 PENDING），依据为 2026-10-08 的用户授权与 `targets/xiaomi-band-11-4.100.139/background-calendar-port-approval.md`。失败的 `private_abi_records_have_exact_thumb_callables` 早于该授权，改为仿照 `band11_177_calendar_approval_is_exact_and_private_only`：`private_abi` 记录必须保持 restricted；APPROVED 仅限钉死的授权清单，且须满足 STATIC_RECOVERED、not_probed、promotion 固件 SHA 匹配 | 2026-10-14 |
 | K13 | 手机端投递用已签名 `.rpk` 快应用容器（`com.canopus.pkg.<id>`），设备端 Supervisor `SCAN` 导入；不新增控制通道，O1/O5 以此结案（ADR-CAN-005）。AstroBox-NG 的 core/app/web 均已在 ~/Documents/GitHub/ab/AstroBox-NG 改动（仅本地提交，未推送），Mirage 桥接同步更新 | 2026-10-14 |
+| K14 | 确立 WearPacket Layer 2 通信通道（ADR-CAN-008，0x43/'C'）：纠正此前将 L2 误判为蓝牙 L2CAP 的偏差。与 Pb 同级，承载 CPC2 实时双向 RPC；文件投递走统一安装队列（支持 `.canopus`/`.rpk`），AstroBox 增设设备主页卡片与 `/device/canopus` 管理页 | 2026-10-14 |
 
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
 
@@ -245,14 +246,11 @@
   - 操作：模块列表、安装/升级、启用、禁用、移除、回滚。
   - 数据面按 O1 结论实现。
 - [x] P5.2 设备端 host 测试 + Mirage 联调（`scripts/emu/smoke.py` 的 phone_flow：真实 AstroBox 核心经模拟器蓝牙安装 .rpk → SCAN → 启用 → 重启加载 → 手机升级 → SCAN 暂存 → 重启后新版生效） + Mirage 联调。
-- [x] P5.3 `core`（`corelib::device::canopus`：包名/id 校验、`modules_from_apps`、`updates`；已本地提交到 AstroBox-NG-Module-Core 的 submodule，未推送；原计划的 LogicComponent 在无新通道的设计下不需要；Mirage 的 core 指针已更新）：新增 Canopus LogicComponent（与 `res_pack` 独立），包含查询、投递、升级；
-  同步 bump Mirage 的 `core` 子模块（现钉在 `dbbaece`，AstroBox-NG 为 `bd541b5`）。
-- [x] P5.4 `app`（已完成，本地提交：`DeviceResourceUpdateReport.canopus_modules`）：无需新 Tauri 命令：`canopus` 模块走现有 quickapp 安装；表盘安装模式回退无关：新增 Tauri 命令；`canopus` 类型不再走表盘安装模式（`usesWatchfaceInstallMode`），
-  旧 Supervisor 保留表盘路径作为回退。
+- [x] P5.3 `core`（`corelib::device::canopus`：包名/id 校验、`modules_from_apps`、`updates`；已扩展 L2Channel::Canopus(0x43)、CPC2 编解码、CanopusSystem ECS 监听与 `send_cpc2_request`/`query_device`/`trigger_scan`）：新增 Canopus 通信与逻辑支持，Mirage 同步更新。
+- [x] P5.4 `app`（已完成：`DeviceResourceUpdateReport.canopus_modules`，新增 `canopus_send_request`、`canopus_query_device`、`canopus_trigger_scan`、`canopus_set_module_enabled`、`canopus_remove_module` 等 Tauri 命令，直通 L2 通道）。
 - [x] P5.5 更新提醒（已完成）：商店 quickapp 条目的 `versionCode` 与已装快应用比较即可（现有逻辑）；`canopus` 专用版本比较在 core 的 `updates()`；ABI/target 兼容由设备端 SCAN 拒绝（R9） 增加 Canopus 模块列表（来自 Supervisor 查询，而不是按表盘 ID 匹配）；
   比较 `versionCode`，并检查 ABI 与 target 是否兼容。
-- [x] P5.6 前端（已完成，本地提交：web 的 canopus 安装模式/更新对话框/设备页/i18n）：模块列表、更新提醒、"全部更新"（复用安装队列的 `groupId`）、
-  Supervisor 未加载或需要升级的提示。
+- [x] P5.6 前端（已完成，本地提交）：设备信息页「Canopus 模块」专属卡片（与表盘/快应用并列）、`/device/canopus` 专属管理页、统一安装队列支持（白名单 `.canopus`/`.rpk`）、中英双语国际化。
 - [x] P5.7 商店清单：无需 `canopus` 扩展字段——条目就是 quickapp 下载项，包名 `com.canopus.pkg.<id>`，`.rpk` 内含所有固件的载荷，设备端按固件取用并拒绝不匹配；AstroBoxCreatorConsole 的 ID 校验已改为 ADR-CAN-003 语法（本地提交）（O3）默认提案
   - `downloads[deviceId]` 下增加 `canopus: { abi, targets?: [target_id], minFramework? }`。
   - portable 模块只写 abi；target-private 模块必须列出 target。
