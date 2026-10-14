@@ -181,7 +181,7 @@ TEST(notify_is_titled_by_module_and_rate_limited)
     CHECK_EQ(ctx->services->notify_post(ctx, "again"), CANOPUS_SVC_OK);
 }
 
-TEST(mem_is_budgeted_owned_and_released)
+TEST(mem_is_uncapped_owned_and_released)
 {
     struct canopus_supervisor_v1 sup;
     const struct canopus_context_v1 *ctx;
@@ -191,17 +191,17 @@ TEST(mem_is_budgeted_owned_and_released)
     ctx = canopus_supervisor_context(&sup, 0);
     g_heap_live = 0;
     CHECK(ctx->services->mem_alloc(ctx, 0u) == 0);
-    CHECK(ctx->services->mem_alloc(ctx, CANOPUS_MEM_BUDGET + 1u) == 0);
-    a = ctx->services->mem_alloc(ctx, CANOPUS_MEM_BUDGET - 64u);
+    /* No per-module block/byte cap: allocations past the retired 16 KiB
+     * budget succeed; the firmware heap is the only bound. */
+    a = ctx->services->mem_alloc(ctx, 32u * 1024u);
     CHECK(a != 0);
-    CHECK(ctx->services->mem_alloc(ctx, 128u) == 0); /* over budget */
     b = ctx->services->mem_alloc(ctx, 64u);
     CHECK(b != 0);
     ctx->services->mem_free(ctx, (void *)&i); /* not owned: ignored */
     CHECK_EQ(g_heap_live, 2);
     ctx->services->mem_free(ctx, a);
     CHECK_EQ(g_heap_live, 1);
-    CHECK(ctx->services->mem_alloc(ctx, 128u) != 0); /* budget freed up */
+    CHECK(ctx->services->mem_alloc(ctx, 128u) != 0);
     canopus_supervisor_release_services(&sup, 0u);
     CHECK_EQ(g_heap_live, 0);
 }
@@ -369,8 +369,8 @@ static struct test_registry supervisor_services_tests[] = {
       context_exposes_groups_by_platform_capability_wrapper },
     { "notify_is_titled_by_module_and_rate_limited",
       notify_is_titled_by_module_and_rate_limited_wrapper },
-    { "mem_is_budgeted_owned_and_released",
-      mem_is_budgeted_owned_and_released_wrapper },
+    { "mem_is_uncapped_owned_and_released",
+      mem_is_uncapped_owned_and_released_wrapper },
     { "fs_roundtrip_is_private_to_the_module_namespace",
       fs_roundtrip_is_private_to_the_module_namespace_wrapper },
     { "fs_rejects_escaping_names_bad_handles_and_exhaustion",

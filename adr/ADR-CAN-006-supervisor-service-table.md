@@ -46,7 +46,7 @@ portable 模块不允许出现任何固件地址：verifier 的地址扫描对 p
 
 已实现：`module`(0)、`log`(1)、`fs`(2)、`time`(3)、`mem`(4)、`notify`(5)。组编号以 `sdk/c/canopus_services.h` 为准（上文列表仅表示分类）。
 
-- `mem`：每模块 16 块 / 16 KiB 预算，卸载时由 Supervisor 回收；经固件 `heap_malloc/heap_free`，只由 Supervisor 调用。
+- `mem`：无固定块数/字节上限，固件堆是唯一约束（每块内联小头部记账，供归属校验与卸载回收），卸载时由 Supervisor 回收；经固件 `heap_malloc/heap_free`，只由 Supervisor 调用。
 - `notify`：标题为模块 id，正文截断 120 字节，每次加载最多 4 条；Band 10 Pro 与 Band 11 各自经 Manager 目标的 `canopus_manager_native_notify`（Band 11 每条通知借用独立的零化 16 字节上下文，见 EVID-NOTIFICATION-4139-002）。
 - `ui`、`bt`、`interconnect`：**不实现，等到有具体模块需求时单独立项**。理由：它们落在各固件互不相同的对象模型上
   （lvgl_v9 页面/Band 11 页面描述符、蓝牙栈、互联通道），语义树渲染还需要先定出模块可用的最小 UI 词汇；

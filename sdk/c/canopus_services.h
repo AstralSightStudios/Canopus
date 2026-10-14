@@ -83,10 +83,10 @@ struct canopus_services_v1 {
      * wraps at 2^32). Never fails. */
     uint32_t (*time_monotonic_ms)(const struct canopus_context_v1 *ctx);
 
-    /* MEM v1: heap blocks charged to the calling module. At most
-     * CANOPUS_MEM_MAX_BLOCKS live blocks and CANOPUS_MEM_BUDGET bytes per
-     * module; whatever is still allocated when the module unloads is freed by
-     * the Supervisor. mem_alloc returns NULL on failure; mem_free ignores
+    /* MEM v1: heap blocks charged to the calling module. There is no
+     * per-module block or byte cap; the firmware heap is the only bound, and
+     * whatever is still allocated when the module unloads is freed by the
+     * Supervisor. mem_alloc returns NULL on failure; mem_free ignores
      * pointers that this module does not own. */
     void *(*mem_alloc)(const struct canopus_context_v1 *ctx, uint32_t size);
     void (*mem_free)(const struct canopus_context_v1 *ctx, void *ptr);
@@ -102,8 +102,6 @@ struct canopus_services_v1 {
 #define CANOPUS_NOTIFY_BODY_MAX 120u
 #define CANOPUS_NOTIFY_MAX_POSTS 4u
 
-#define CANOPUS_MEM_MAX_BLOCKS 16u
-#define CANOPUS_MEM_BUDGET 16384u
 
 #define CANOPUS_FS_MAX_OPEN 4u
 
