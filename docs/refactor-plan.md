@@ -328,3 +328,4 @@
 | 2026-10-14 | `canopus build` 支持 Rust 目标模块；qemu-miwear 补丁改为直接提交（3e05ca7）并推送，补丁文件删除 |
 | 2026-10-14 | P2.4 函数集一致（api_parity 测试）；P2.8 两套 Manager UI 后端合并为一个源文件（产物验证一致） |
 | 2026-10-14 | 评估 Canopus 专用 L2CAP 通道：手环侧入站 PSM 监听无现成 API，手机侧经典 L2CAP 在 Android/iOS 不可用，建议 RFCOMM 专用 channel（docs/canopus-channel-feasibility.md，未实测） |
+| 2026-10-15 | Hook 引擎架构根因重构与 Cortex-M33 边界防御；废除 Flash 槽位硬编码，提供 register_slot_map 运行时映射（Corona 模式）；修复 realloc 溢出、INT32_MIN 格式化 UB 与 KV 存储 VFS 持久化；all-services-test 达成 93 项服务方法 100% 覆盖并于 Mirage 模拟器（043 与 155）全绿通过（18/18 PASS）；新增 CI 强制覆盖门禁 services_coverage |

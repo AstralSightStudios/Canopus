@@ -216,6 +216,9 @@ struct canopus_hook_obj {
                        canopus_hook_type_t hook_type);
     int32_t (*uninstall)(const struct canopus_context_v1 *ctx, int32_t hook_id);
     int     (*is_hooked)(const struct canopus_context_v1 *ctx, uintptr_t target_fn);
+    int32_t (*register_slot_map)(const struct canopus_context_v1 *ctx,
+                                 uintptr_t flash_fn,
+                                 uintptr_t ram_slot);
 };
 
 struct canopus_haptics_obj {

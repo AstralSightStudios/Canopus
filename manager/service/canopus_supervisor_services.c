@@ -9,6 +9,13 @@
 #include "../../runtime/hook/canopus_hook.h"
 #include "canopus_ui.h"
 
+#if defined(CANOPUS_HOST) && (!defined(__STDC_HOSTED__) || __STDC_HOSTED__ != 0)
+#include <time.h>
+#define CANOPUS_HAS_NANOSLEEP 1
+#endif
+
+static void svc_kv_load(uint32_t slot);
+
 #define SVC_LOG_ENTRIES 8u
 #define SVC_FS_PATH_MAX CANOPUS_FS_PATH_MAX
 #define SVC_FS_ROOT "/data/canopus/m."
@@ -106,6 +113,7 @@ static int32_t svc_module_register(
         (int32_t)ctx->slot != s_sup->loading_slot) {
         return CANOPUS_SVC_ERR_STATE;
     }
+    svc_kv_load(ctx->slot);
     return canopus_supervisor_register_descriptor(
                s_sup, (const char *)s_sup->modules[ctx->slot].module_id,
                descriptor) == 0
@@ -453,16 +461,19 @@ static int32_t svc_fs_write_all(const struct canopus_context_v1 *ctx, const char
 static int32_t parse_int32(const char *s, int32_t default_val)
 {
     int neg = 0;
-    int32_t val = 0;
+    uint32_t uval = 0u;
     if (s == 0 || *s == '\0') return default_val;
     if (*s == '-') { neg = 1; s++; }
     else if (*s == '+') { s++; }
     if (*s < '0' || *s > '9') return default_val;
     while (*s >= '0' && *s <= '9') {
-        val = val * 10 + (*s - '0');
+        uval = uval * 10u + (uint32_t)(*s - '0');
         s++;
     }
-    return neg ? -val : val;
+    if (neg) {
+        return (int32_t)(0u - uval);
+    }
+    return (int32_t)uval;
 }
 
 static void format_int32(char buf[24], int32_t val)
@@ -472,7 +483,7 @@ static void format_int32(char buf[24], int32_t val)
     uint32_t uval;
     if (val < 0) {
         buf[j++] = '-';
-        uval = (uint32_t)-val;
+        uval = 0u - (uint32_t)val;
     } else {
         uval = (uint32_t)val;
     }
@@ -489,6 +500,108 @@ static void format_int32(char buf[24], int32_t val)
         buf[j++] = tmp[--i];
     }
     buf[j] = '\0';
+}
+
+#define CANOPUS_KV_FILE_MAGIC 0x43504B56u /* 'CPKV' */
+
+struct kv_disk_header {
+    uint32_t magic;
+    uint32_t count;
+};
+
+struct kv_disk_entry {
+    char key[32];
+    char val[64];
+};
+
+static int svc_kv_path(uint32_t slot, char out[SVC_FS_PATH_MAX])
+{
+    const char *id;
+    const char *prefix = "/data/canopus/kv_";
+    uint32_t used = 0u, i;
+    if (s_sup == 0 || slot >= CANOPUS_SUP_MODULE_SLOTS) return -1;
+    id = (const char *)s_sup->modules[slot].module_id;
+    if (id == 0 || id[0] == '\0') return -1;
+    for (i = 0u; prefix[i] != '\0'; i++) out[used++] = prefix[i];
+    for (i = 0u; i < CANOPUS_SUP_MODULE_ID_MAX && id[i] != '\0'; i++) {
+        if (used + 5u >= SVC_FS_PATH_MAX) return -1;
+        out[used++] = id[i];
+    }
+    out[used++] = '.';
+    out[used++] = 'b';
+    out[used++] = 'i';
+    out[used++] = 'n';
+    out[used] = '\0';
+    return 0;
+}
+
+static void svc_kv_save(uint32_t slot)
+{
+    char path[SVC_FS_PATH_MAX];
+    struct kv_disk_header hdr;
+    uint32_t i, count = 0u;
+    int fd;
+    const struct canopus_sup_platform_v1 *pf;
+
+    if (s_sup == 0 || s_sup->platform == 0 || slot >= CANOPUS_SUP_MODULE_SLOTS) return;
+    pf = s_sup->platform;
+    if (pf->file_open == 0 || pf->file_write == 0 || pf->file_close == 0) return;
+    if (svc_kv_path(slot, path) != 0) return;
+
+    for (i = 0u; i < CANOPUS_KV_MAX_PAIRS; i++) {
+        if (s_kv[slot][i].used) count++;
+    }
+
+    hdr.magic = CANOPUS_KV_FILE_MAGIC;
+    hdr.count = count;
+
+    fd = pf->file_open(s_sup->platform_cookie, path, CANOPUS_FS_WRITE);
+    if (fd < 0) return;
+
+    (void)pf->file_write(s_sup->platform_cookie, fd, &hdr, (uint32_t)sizeof(hdr));
+    for (i = 0u; i < CANOPUS_KV_MAX_PAIRS; i++) {
+        if (s_kv[slot][i].used) {
+            struct kv_disk_entry ent;
+            canopus_memset(&ent, 0, sizeof(ent));
+            canopus_strncpy(ent.key, s_kv[slot][i].key, sizeof(ent.key) - 1u);
+            canopus_strncpy(ent.val, s_kv[slot][i].val, sizeof(ent.val) - 1u);
+            (void)pf->file_write(s_sup->platform_cookie, fd, &ent, (uint32_t)sizeof(ent));
+        }
+    }
+    pf->file_close(s_sup->platform_cookie, fd);
+}
+
+static void svc_kv_load(uint32_t slot)
+{
+    char path[SVC_FS_PATH_MAX];
+    struct kv_disk_header hdr;
+    uint32_t i;
+    int fd;
+    const struct canopus_sup_platform_v1 *pf;
+
+    if (s_sup == 0 || s_sup->platform == 0 || slot >= CANOPUS_SUP_MODULE_SLOTS) return;
+    pf = s_sup->platform;
+    if (pf->file_open == 0 || pf->file_read == 0 || pf->file_close == 0) return;
+    if (svc_kv_path(slot, path) != 0) return;
+
+    fd = pf->file_open(s_sup->platform_cookie, path, CANOPUS_FS_READ);
+    if (fd < 0) return;
+
+    if (pf->file_read(s_sup->platform_cookie, fd, &hdr, (uint32_t)sizeof(hdr)) == (int32_t)sizeof(hdr) &&
+        hdr.magic == CANOPUS_KV_FILE_MAGIC) {
+        canopus_memset(s_kv[slot], 0, sizeof(s_kv[slot]));
+        for (i = 0u; i < hdr.count && i < CANOPUS_KV_MAX_PAIRS; i++) {
+            struct kv_disk_entry ent;
+            if (pf->file_read(s_sup->platform_cookie, fd, &ent, (uint32_t)sizeof(ent)) == (int32_t)sizeof(ent)) {
+                s_kv[slot][i].used = 1u;
+                canopus_strncpy(s_kv[slot][i].key, ent.key, sizeof(s_kv[slot][i].key) - 1u);
+                s_kv[slot][i].key[sizeof(s_kv[slot][i].key) - 1u] = '\0';
+                canopus_strncpy(s_kv[slot][i].val, ent.val, sizeof(s_kv[slot][i].val) - 1u);
+                s_kv[slot][i].val[sizeof(s_kv[slot][i].val) - 1u] = '\0';
+            }
+        }
+    }
+    pf->file_close(s_sup->platform_cookie, fd);
 }
 
 static int32_t svc_kv_get_string(const struct canopus_context_v1 *ctx, const char *key,
@@ -523,6 +636,7 @@ static int32_t svc_kv_set_string(const struct canopus_context_v1 *ctx, const cha
             if (canopus_strcmp(s_kv[ctx->slot][i].key, key) == 0) {
                 canopus_strncpy(s_kv[ctx->slot][i].val, val, sizeof(s_kv[ctx->slot][i].val) - 1);
                 s_kv[ctx->slot][i].val[sizeof(s_kv[ctx->slot][i].val) - 1] = '\0';
+                svc_kv_save(ctx->slot);
                 return CANOPUS_SVC_OK;
             }
         } else if (free_idx == CANOPUS_KV_MAX_PAIRS) {
@@ -535,6 +649,7 @@ static int32_t svc_kv_set_string(const struct canopus_context_v1 *ctx, const cha
     s_kv[ctx->slot][free_idx].key[sizeof(s_kv[ctx->slot][free_idx].key) - 1] = '\0';
     canopus_strncpy(s_kv[ctx->slot][free_idx].val, val, sizeof(s_kv[ctx->slot][free_idx].val) - 1);
     s_kv[ctx->slot][free_idx].val[sizeof(s_kv[ctx->slot][free_idx].val) - 1] = '\0';
+    svc_kv_save(ctx->slot);
     return CANOPUS_SVC_OK;
 }
 
@@ -579,6 +694,7 @@ static int32_t svc_kv_remove(const struct canopus_context_v1 *ctx, const char *k
     for (i = 0u; i < CANOPUS_KV_MAX_PAIRS; i++) {
         if (s_kv[ctx->slot][i].used && canopus_strcmp(s_kv[ctx->slot][i].key, key) == 0) {
             canopus_memset(&s_kv[ctx->slot][i], 0, sizeof(s_kv[ctx->slot][i]));
+            svc_kv_save(ctx->slot);
             return CANOPUS_SVC_OK;
         }
     }
@@ -589,6 +705,7 @@ static int32_t svc_kv_clear(const struct canopus_context_v1 *ctx)
 {
     if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_ARGUMENT;
     canopus_memset(s_kv[ctx->slot], 0, sizeof(s_kv[ctx->slot]));
+    svc_kv_save(ctx->slot);
     return CANOPUS_SVC_OK;
 }
 
@@ -642,6 +759,7 @@ static void *svc_mem_realloc(const struct canopus_context_v1 *ctx, void *ptr, ui
     void *new_raw;
     struct svc_mem_block *new_block;
     if (!svc_slot_valid(ctx)) return 0;
+    if (new_size > UINT32_MAX - (uint32_t)sizeof(struct svc_mem_block)) return 0;
     if (ptr == 0) return svc_mem_alloc(ctx, new_size);
     if (new_size == 0u) {
         svc_mem_free(ctx, ptr);
@@ -695,10 +813,53 @@ static uint64_t svc_time_realtime_ms(const struct canopus_context_v1 *ctx)
     return (uint64_t)svc_time_monotonic_ms(ctx);
 }
 
+void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup)
+{
+    uint32_t i;
+    uint32_t now;
+    if (s_sup == 0 && sup != 0) s_sup = sup;
+    if (s_sup == 0) return;
+    now = (s_sup->platform != 0 && s_sup->platform->monotonic_ms != 0)
+              ? s_sup->platform->monotonic_ms(s_sup->platform_cookie) : 0u;
+
+    for (i = 0u; i < CANOPUS_MAX_TIMERS; i++) {
+        struct module_timer *t = &s_timers[i];
+        if (t->used && t->running && t->cb != 0) {
+            if ((int32_t)(now - t->next_fire_ms) >= 0) {
+                canopus_timer_callback_t cb = t->cb;
+                void *cookie = t->user_data;
+                if (t->periodic) {
+                    t->next_fire_ms = now + t->interval_ms;
+                } else {
+                    t->running = 0;
+                }
+                cb(&s_contexts[t->slot], (int32_t)i, cookie);
+            }
+        }
+    }
+}
+
 static void svc_time_sleep_ms(const struct canopus_context_v1 *ctx, uint32_t ms)
 {
     (void)ctx;
-    (void)ms;
+    if (ms == 0u) return;
+#if defined(CANOPUS_HAS_NANOSLEEP)
+    struct timespec req;
+    req.tv_sec = (time_t)(ms / 1000u);
+    req.tv_nsec = (long)((ms % 1000u) * 1000000u);
+    nanosleep(&req, 0);
+#else
+    uint32_t start = svc_time_monotonic_ms(ctx);
+    uint32_t target = start + ms;
+    uint32_t guard = 500000u;
+    while ((int32_t)(target - svc_time_monotonic_ms(ctx)) > 0 && --guard > 0) {
+        canopus_supervisor_timers_poll(s_sup);
+#ifndef CANOPUS_HOST
+        __asm__ volatile("yield" ::: "memory");
+#endif
+    }
+#endif
+    canopus_supervisor_timers_poll(s_sup);
 }
 
 static int32_t svc_time_timer_create(const struct canopus_context_v1 *ctx,
@@ -779,6 +940,13 @@ static int svc_hook_is_hooked(const struct canopus_context_v1 *ctx, uintptr_t ta
     return canopus_hook_is_hooked(target_fn);
 }
 
+static int32_t svc_hook_register_slot_map(const struct canopus_context_v1 *ctx,
+                                         uintptr_t flash_fn, uintptr_t ram_slot)
+{
+    (void)ctx;
+    return canopus_hook_register_slot_map(flash_fn, ram_slot);
+}
+
 /* ---- HAPTICS (Vibration & Tactile Presets) --------------------------- */
 
 static int32_t svc_haptics_vibrate(const struct canopus_context_v1 *ctx, uint32_t duration_ms)
@@ -788,7 +956,7 @@ static int32_t svc_haptics_vibrate(const struct canopus_context_v1 *ctx, uint32_
         return s_sup->platform->vibrate(s_sup->platform_cookie, duration_ms) == 0
                    ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_IO;
     }
-    return CANOPUS_SVC_OK;
+    return duration_ms == 0u ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_UNSUPPORTED;
 }
 
 static int32_t svc_haptics_vibrate_pattern(const struct canopus_context_v1 *ctx,
@@ -835,7 +1003,7 @@ static int32_t svc_display_set_brightness(const struct canopus_context_v1 *ctx, 
         return s_sup->platform->set_brightness(s_sup->platform_cookie, percent) == 0
                    ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_IO;
     }
-    return CANOPUS_SVC_OK;
+    return CANOPUS_SVC_ERR_UNSUPPORTED;
 }
 
 static int svc_display_is_screen_on(const struct canopus_context_v1 *ctx)
@@ -854,7 +1022,7 @@ static int32_t svc_display_wake_screen(const struct canopus_context_v1 *ctx)
         return s_sup->platform->wake_screen(s_sup->platform_cookie) == 0
                    ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_IO;
     }
-    return CANOPUS_SVC_OK;
+    return CANOPUS_SVC_ERR_UNSUPPORTED;
 }
 
 static int32_t svc_display_acquire_wake_lock(const struct canopus_context_v1 *ctx, uint32_t lock_flags)
@@ -1002,10 +1170,15 @@ static const char *svc_system_device_model(const struct canopus_context_v1 *ctx)
 static const char *svc_system_firmware_version(const struct canopus_context_v1 *ctx)
 {
     const char *target = svc_system_target_id(ctx);
-    /* Find version portion */
-    const char *p = target;
-    while (*p != '\0' && !(*p >= '0' && *p <= '9')) p++;
-    return p;
+    uint32_t len = 0u;
+    while (target[len] != '\0') len++;
+    while (len > 0u) {
+        len--;
+        if (target[len] == '-' && target[len + 1u] >= '0' && target[len + 1u] <= '9') {
+            return &target[len + 1u];
+        }
+    }
+    return target;
 }
 
 static uint32_t svc_system_framework_revision(const struct canopus_context_v1 *ctx)
@@ -1075,7 +1248,7 @@ static int32_t svc_bt_l2_send(const struct canopus_context_v1 *ctx, uint8_t chan
     (void)channel;
     (void)payload;
     (void)len;
-    return CANOPUS_SVC_OK;
+    return CANOPUS_SVC_ERR_UNSUPPORTED;
 }
 
 static int32_t svc_bt_l2_register_rx(const struct canopus_context_v1 *ctx, uint8_t channel,
@@ -1228,6 +1401,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_hook_obj.install = svc_hook_install;
     s_hook_obj.uninstall = svc_hook_uninstall;
     s_hook_obj.is_hooked = svc_hook_is_hooked;
+    s_hook_obj.register_slot_map = svc_hook_register_slot_map;
 
     /* Log Object */
     s_log_obj.write = svc_log_write;
@@ -1313,6 +1487,12 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_contexts[i].display = &s_display_obj;
         s_contexts[i].bus = &s_bus_obj;
         s_contexts[i].ui = &s_ui_obj;
+    }
+
+    for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+        if (sup != 0 && sup->modules[i].state != 0u) {
+            svc_kv_load(i);
+        }
     }
 }
 

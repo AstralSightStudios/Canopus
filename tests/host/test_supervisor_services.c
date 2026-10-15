@@ -180,6 +180,9 @@ static int p_notify(void *c, const char *title, const char *body)
 static int g_heap_live;
 static void *p_heap_alloc(void *c, uint32_t n) { (void)c; g_heap_live++; return malloc(n); }
 static void p_heap_release(void *c, void *p) { (void)c; g_heap_live--; free(p); }
+static int p_vibrate(void *c, uint32_t ms) { (void)c; (void)ms; return 0; }
+static int p_set_brightness(void *c, uint32_t p) { (void)c; (void)p; return 0; }
+static int p_wake_screen(void *c) { (void)c; return 0; }
 
 static const struct canopus_sup_platform_v1 platform_with_fs = {
     .target_id = "xiaomi-band-10-pro-3.101.030",
@@ -207,6 +210,9 @@ static const struct canopus_sup_platform_v1 platform_with_fs = {
     .heap_alloc = p_heap_alloc,
     .heap_release = p_heap_release,
     .notify = p_notify,
+    .vibrate = p_vibrate,
+    .set_brightness = p_set_brightness,
+    .wake_screen = p_wake_screen,
 };
 static const struct canopus_sup_platform_v1 platform_without_fs = {
     .target_id = "xiaomi-band-10-pro-3.101.030",
@@ -456,6 +462,7 @@ TEST(register_is_rejected_outside_the_loading_window)
 static int s_dummy_target(int x) { return x + 1; }
 static int s_dummy_hook(int x) { return x + 10; }
 static int s_bus_received = 0;
+static int s_timer_fired = 0;
 static void on_test_bus(const struct canopus_context_v1 *ctx, const char *topic, const void *payload, uint32_t len, void *user_data)
 {
     (void)ctx; (void)topic; (void)payload; (void)len; (void)user_data;
@@ -464,6 +471,7 @@ static void on_test_bus(const struct canopus_context_v1 *ctx, const char *topic,
 static void on_test_timer(const struct canopus_context_v1 *ctx, int32_t timer_id, void *user_data)
 {
     (void)ctx; (void)timer_id; (void)user_data;
+    s_timer_fired++;
 }
 
 TEST(service_objects_are_exposed_and_functional)
@@ -533,6 +541,9 @@ TEST(service_objects_are_exposed_and_functional)
     CHECK_EQ(ctx->kv->get_bool(ctx, "enabled", 0), 1);
     CHECK_EQ(ctx->kv->remove(ctx, "volume"), CANOPUS_SVC_OK);
     CHECK_EQ(ctx->kv->get_int(ctx, "volume", 10), 10);
+    /* Test INT32_MIN formatting without UB */
+    CHECK_EQ(ctx->kv->set_int(ctx, "min_int", (int32_t)0x80000000u), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->kv->get_int(ctx, "min_int", 0), (int32_t)0x80000000u);
 
     /* 3. Memory Object (128 KiB budget & calloc) */
     CHECK_EQ(ctx->mem->available(ctx), CANOPUS_MEM_BUDGET);
@@ -541,6 +552,9 @@ TEST(service_objects_are_exposed_and_functional)
     CHECK(ptr != 0);
     CHECK_EQ(ctx->mem->used(ctx), 65536u);
     CHECK_EQ(ctx->mem->available(ctx), 131072u - 65536u);
+
+    /* Realloc with integer overflow size must be rejected without crashing */
+    CHECK(ctx->mem->realloc(ctx, ptr, UINT32_MAX) == 0);
 
     /* Realloc up to 100 KiB */
     ptr = ctx->mem->realloc(ctx, ptr, 102400u);
@@ -584,9 +598,12 @@ TEST(service_objects_are_exposed_and_functional)
     CHECK_EQ(ctx->bus->unsubscribe(ctx, sub_id), CANOPUS_SVC_OK);
 
     /* 8. Timers Object */
+    s_timer_fired = 0;
     tmr_id = ctx->time->timer_create(ctx, 1000, 1, on_test_timer, 0);
     CHECK(tmr_id >= 0);
     CHECK_EQ(ctx->time->timer_start(ctx, tmr_id), CANOPUS_SVC_OK);
+    canopus_supervisor_timers_poll(&sup);
+    CHECK_EQ(s_timer_fired, 0);
     CHECK_EQ(ctx->time->timer_stop(ctx, tmr_id), CANOPUS_SVC_OK);
     CHECK_EQ(ctx->time->timer_destroy(ctx, tmr_id), CANOPUS_SVC_OK);
 
@@ -597,6 +614,7 @@ TEST(service_objects_are_exposed_and_functional)
 
     /* 10. System Object */
     CHECK(strcmp(ctx->system->target_id(ctx), "xiaomi-band-10-pro-3.101.030") == 0);
+    CHECK(strcmp(ctx->system->firmware_version(ctx), "3.101.030") == 0);
     CHECK_EQ(ctx->system->is_safe_mode(ctx), 0);
     CHECK_EQ(ctx->system->battery_level(ctx), 85u);
 }

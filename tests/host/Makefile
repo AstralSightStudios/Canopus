@@ -15,7 +15,7 @@ INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../manager/native-app -I../../manager/package \
       -I../../tests/host \
       -I../../app-sdk/c -I../../app-sdk/launcher -I../../app-sdk/ui
-CFLAGS += -DCANOPUS_HOST=1
+override CFLAGS += -DCANOPUS_HOST=1
 
 # Bare-metal portable sources (freestanding, no libc) — the cross-thumb
 # sanity build checks exactly these.

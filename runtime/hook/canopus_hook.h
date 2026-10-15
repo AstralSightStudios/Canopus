@@ -1,12 +1,13 @@
 /*
  * canopus_hook.h — Universal dynamic function hooking for Canopus on Cortex-M33.
  *
- * Supports three hooking mechanisms:
- *   1. CANOPUS_HOOK_FPB    : Cortex-M33 Flash Patch and Breakpoint unit (0xE0002000).
- *                            Hardware-remaps Flash instruction fetches to an SRAM
- *                            trampoline without modifying Flash memory.
+ * Supports hooking mechanisms:
+ *   1. CANOPUS_HOOK_POINTER: Atomic replacement of function pointers in RAM tables (preferred & safe).
  *   2. CANOPUS_HOOK_INLINE : Thumb-2 8-byte LDR.W PC trampoline for SRAM functions.
- *   3. CANOPUS_HOOK_POINTER: Atomic replacement of function pointers in RAM tables.
+ *   3. CANOPUS_HOOK_FPB    : Direct instruction patch fallback (for emulators where Flash memory is writable).
+ *                            Note: On real Cortex-M33 silicon, the BPU does not support Flash patching
+ *                            (FP_REMAP is RAZ/WI per Arm Cortex-M33 TRM §13.1); requests on non-writable
+ *                            Flash fail-closed with CANOPUS_SVC_ERR_UNSUPPORTED.
  *
  * CANOPUS_HOOK_AUTO automatically selects the safest mechanism based on target address.
  */
@@ -46,6 +47,10 @@ int canopus_hook_is_active(int32_t hook_id);
 
 /* Query whether a target function is currently hooked. */
 int canopus_hook_is_hooked(uintptr_t target_fn);
+
+/* Register a Flash function -> RAM dispatch slot mapping.
+ * Used for Corona-style Flash function hooking via RAM dispatch tables. */
+int32_t canopus_hook_register_slot_map(uintptr_t flash_fn, uintptr_t ram_slot);
 
 #ifdef __cplusplus
 }
