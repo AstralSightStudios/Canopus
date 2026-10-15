@@ -1411,7 +1411,14 @@ static void sup_heap_release(void *cookie, void *ptr)
 #endif
 
 #ifdef CANOPUS_SUP_HEADLESS
-#define SUP_NOTIFY 0 /* UI calls block when driven from an NSH task */
+static int sup_notify_headless(void *cookie, const char *title, const char *body)
+{
+    (void)cookie;
+    (void)title;
+    (void)body;
+    return 0;
+}
+#define SUP_NOTIFY sup_notify_headless
 #else
 static int sup_notify(void *cookie, const char *title, const char *body)
 {

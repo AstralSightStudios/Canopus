@@ -205,6 +205,19 @@ static int svc_fs_path(const struct canopus_context_v1 *ctx, const char *name,
     return 0;
 }
 
+static int svc_fs_dir_path(const struct canopus_context_v1 *ctx, const char *name,
+                           char out[SVC_FS_PATH_MAX])
+{
+    uint32_t i, used = 0u;
+    if (name == 0 || name[0] == '\0' || (name[0] == '.' && name[1] == '\0')) {
+        const char *base = "/data/canopus";
+        for (i = 0u; base[i] != '\0'; i++) out[used++] = base[i];
+        out[used] = '\0';
+        return 0;
+    }
+    return svc_fs_path(ctx, name, out);
+}
+
 static int svc_fs_ready(const struct canopus_context_v1 *ctx)
 {
     const struct canopus_sup_platform_v1 *pf;
@@ -392,7 +405,7 @@ static void *svc_fs_opendir(const struct canopus_context_v1 *ctx, const char *pa
 {
     char full_path[SVC_FS_PATH_MAX];
     if (!svc_fs_ready(ctx) || s_sup->platform->dir_open == 0) return 0;
-    if (svc_fs_path(ctx, path, full_path) != 0) return 0;
+    if (svc_fs_dir_path(ctx, path, full_path) != 0) return 0;
     return s_sup->platform->dir_open(s_sup->platform_cookie, full_path);
 }
 

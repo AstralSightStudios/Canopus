@@ -35,13 +35,13 @@ static uint32_t s_fpb_remap_table[CANOPUS_FPB_MAX_COMPS];
 static uint8_t s_fpb_comp_used[CANOPUS_FPB_MAX_COMPS];
 
 __attribute__((aligned(4)))
-static uint8_t s_trampolines[CANOPUS_HOOK_MAX_SLOTS][24];
+static uint8_t s_trampolines[CANOPUS_HOOK_MAX_SLOTS][32];
 
 static inline void sync_cache(const void *addr, size_t len)
 {
     (void)addr;
     (void)len;
-    /* Cortex-M33 Memory barrier */
+    /* Cortex-M33 Memory barrier: DSB ensures all writes complete; ISB flushes processor pipeline */
     __asm__ volatile("dsb\n\tisb" ::: "memory");
 }
 
@@ -192,28 +192,58 @@ int32_t canopus_hook_install(uint32_t slot,
     if (hook_type == CANOPUS_HOOK_INLINE) {
         uint8_t *code = (uint8_t *)target_even;
         uint8_t *orig_buf = &s_trampolines[id][0];
+        const uint16_t *insns = (const uint16_t *)target_even;
+        uint32_t copy_len = 0u;
+        uint32_t orig_pos;
+        uint8_t imm;
+        uint32_t p;
 
-        canopus_memcpy(h->orig_bytes, code, 8);
-        h->orig_len = 8;
+        /* Decode Thumb instructions so we never split a 32-bit instruction */
+        while (copy_len < 8u) {
+            uint16_t w = insns[copy_len / 2u];
+            uint32_t ilen = ((w & 0xF800u) == 0xE800u || (w & 0xF000u) == 0xF000u) ? 4u : 2u;
+            copy_len += ilen;
+        }
 
-        /* Trampoline executes original 8 bytes then jumps back to target_even + 8 */
-        canopus_memcpy(orig_buf, code, 8);
-        orig_buf[8] = 0xDF;
-        orig_buf[9] = 0xF8;
-        orig_buf[10] = 0x00;
-        orig_buf[11] = 0xF0;
-        *(uint32_t *)&orig_buf[12] = (uint32_t)((target_even + 8u) | 1u);
-        sync_cache(orig_buf, 16);
+        if (copy_len > sizeof(h->orig_bytes)) {
+            h->used = 0;
+            return CANOPUS_SVC_ERR_UNSUPPORTED;
+        }
+
+        canopus_memcpy(h->orig_bytes, code, copy_len);
+        h->orig_len = (uint8_t)copy_len;
+
+        /* Trampoline executes original instructions then jumps back to target_even + copy_len */
+        canopus_memcpy(orig_buf, code, copy_len);
+        orig_pos = copy_len;
+        if ((orig_pos & 2u) != 0u) {
+            /* Align to 4 bytes using NOP (0xBF00) */
+            orig_buf[orig_pos] = 0x00;
+            orig_buf[orig_pos + 1] = 0xBF;
+            orig_pos += 2u;
+        }
+        orig_buf[orig_pos + 0] = 0xDF;
+        orig_buf[orig_pos + 1] = 0xF8;
+        orig_buf[orig_pos + 2] = 0x00;
+        orig_buf[orig_pos + 3] = 0xF0;
+        *(uint32_t *)&orig_buf[orig_pos + 4] = (uint32_t)((target_even + copy_len) | 1u);
+        sync_cache(orig_buf, orig_pos + 8u);
         *orig_fn = (uintptr_t)orig_buf | 1u;
         h->orig_fn = *orig_fn;
 
-        /* Overwrite target with LDR.W PC, [PC, #0] -> hook_fn */
+        /* Overwrite target with LDR.W PC, [PC, #imm] -> hook_fn */
+        imm = (target_even & 2u) ? 0x02 : 0x00;
         code[0] = 0xDF;
         code[1] = 0xF8;
-        code[2] = 0x00;
+        code[2] = imm;
         code[3] = 0xF0;
         *(uint32_t *)&code[4] = (uint32_t)(hook_fn | 1u);
-        sync_cache(code, 8);
+        /* Fill remaining overwritten bytes with NOP (0xBF00) */
+        for (p = 8u; p < copy_len; p += 2u) {
+            code[p] = 0x00;
+            code[p + 1] = 0xBF;
+        }
+        sync_cache(code, copy_len);
         return id;
     }
 

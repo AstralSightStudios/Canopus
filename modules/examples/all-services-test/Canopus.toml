@@ -1,0 +1,23 @@
+schema = 1
+
+[module]
+id = "services_test"
+version = "1.0.0"
+version_code = 1
+kind = "target"
+language = "c"
+lifecycle = "removable"
+canopus_abi = "1"
+description = "Comprehensive verification test suite for all Canopus Service Objects and Hook Engine"
+
+[build]
+sources = [
+  "src/all_services_test.c",
+  "${CANOPUS_ROOT}/app-sdk/ui/canopus_ui.c",
+]
+include_dirs = [
+  "${CANOPUS_ROOT}/app-sdk/ui",
+]
+
+[targets]
+include = ["xiaomi-band-10-pro-3.101.043"]
