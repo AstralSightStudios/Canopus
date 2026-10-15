@@ -54,10 +54,12 @@ gate_3() {
 }
 
 gate_4() {
-    step "5/6 C module projects: canopus build + package (hello, hello-portable)"
+    step "5/6 C module projects: canopus build + package (hello, hello-portable, native-app-demo, all-services-test)"
     (cd modules/examples/hello && ../../../target/debug/canopus build && ../../../target/debug/canopus package)
     # The portable example is built once and must verify against every target.
     (cd modules/examples/hello-portable && ../../../target/debug/canopus build && ../../../target/debug/canopus package)
+    (cd modules/examples/native-app-demo && ../../../target/debug/canopus build && ../../../target/debug/canopus package)
+    (cd modules/examples/all-services-test && ../../../target/debug/canopus build && ../../../target/debug/canopus package)
     for target in $(target/debug/canopus target list --active --names); do
         target/debug/canopus verify modules/examples/hello-portable/build/hello_portable.elf --target "$target" >/dev/null
     done

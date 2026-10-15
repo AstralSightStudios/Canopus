@@ -20,4 +20,10 @@ include_dirs = [
 ]
 
 [targets]
-include = ["xiaomi-band-10-pro-3.101.043"]
+include = [
+  "xiaomi-band-10-pro-3.101.043",
+  "xiaomi-band-10-pro-3.101.036",
+  "xiaomi-band-11-4.100.139",
+  "xiaomi-band-11-4.100.155",
+  "xiaomi-band-11-4.100.177",
+]

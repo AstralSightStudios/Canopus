@@ -22,6 +22,11 @@
 #include "canopus_memory.h"
 #include "canopus_module_registration.h"
 #include "canopus_target_config.h"
+#if defined(__has_include)
+#if __has_include("canopus_band11_addresses.h")
+#include "canopus_band11_addresses.h"
+#endif
+#endif
 #include "canopus_veneer.h"
 #include "canopus_ui.h"
 
@@ -116,15 +121,15 @@ static int hook_square(int x)
     return orig + 500;
 }
 
-typedef int32_t (*scan_mode_fn_t)(void);
-static scan_mode_fn_t s_orig_scan_mode = 0;
+typedef int (*clock_gt_fn_t)(uint32_t, void *);
+static clock_gt_fn_t s_orig_clock_gt = 0;
 static volatile int s_hook_fpb_called = 0;
 
-static int32_t hook_scan_mode(void)
+static __attribute__((unused)) int hook_clock_gt(uint32_t clk_id, void *ts)
 {
     s_hook_fpb_called++;
-    int32_t orig = s_orig_scan_mode();
-    return orig + 777;
+    int orig = s_orig_clock_gt(clk_id, ts);
+    return orig == 0 ? 999 : -999;
 }
 
 static void run_hook_tests(const struct canopus_context_v1 *ctx)
@@ -182,25 +187,27 @@ static void run_hook_tests(const struct canopus_context_v1 *ctx)
 
     /* 1.3 Flash function FPB hooking */
     ok = 1;
-    volatile scan_mode_fn_t fn_scan = canopus_fw_bt_adapter_get_scan_mode;
-    int32_t before_mode = fn_scan();
+#ifdef CANOPUS_SUP_CLOCK_GETTIME
+    volatile clock_gt_fn_t fn_clock = (clock_gt_fn_t)(uintptr_t)CANOPUS_SUP_CLOCK_GETTIME;
+    struct { int64_t sec; int32_t nsec; } ts = {0, 0};
+    int before_res = fn_clock(1u, &ts);
 
-    hook_id = ctx->hook->install(ctx, (uintptr_t)canopus_fw_bt_adapter_get_scan_mode,
-                                 (uintptr_t)hook_scan_mode, (uintptr_t *)&s_orig_scan_mode,
+    hook_id = ctx->hook->install(ctx, (uintptr_t)CANOPUS_SUP_CLOCK_GETTIME,
+                                 (uintptr_t)hook_clock_gt, (uintptr_t *)&s_orig_clock_gt,
                                  CANOPUS_HOOK_FPB);
     if (hook_id < 0) ok = 0;
-    if (ctx->hook->is_hooked(ctx, (uintptr_t)canopus_fw_bt_adapter_get_scan_mode) != 1) ok = 0;
+    if (ctx->hook->is_hooked(ctx, (uintptr_t)CANOPUS_SUP_CLOCK_GETTIME) != 1) ok = 0;
 
-    int32_t hooked_mode = fn_scan();
-    if (hooked_mode != before_mode + 777 || s_hook_fpb_called != 1) ok = 0;
+    int hooked_res = fn_clock(1u, &ts);
+    if (hooked_res != 999 || s_hook_fpb_called != 1) ok = 0;
 
     un_rc = ctx->hook->uninstall(ctx, hook_id);
     if (un_rc != CANOPUS_SVC_OK) ok = 0;
-    if (ctx->hook->is_hooked(ctx, (uintptr_t)canopus_fw_bt_adapter_get_scan_mode) != 0) ok = 0;
+    if (ctx->hook->is_hooked(ctx, (uintptr_t)CANOPUS_SUP_CLOCK_GETTIME) != 0) ok = 0;
 
-    int32_t after_mode = fn_scan();
-    if (after_mode != before_mode) ok = 0;
-
+    int after_res = fn_clock(1u, &ts);
+    if (after_res != before_res) ok = 0;
+#endif
     log_test("Hook: Flash function FPB hook & trampoline call", ok);
 }
 
@@ -368,7 +375,12 @@ static void run_system_and_time_tests(const struct canopus_context_v1 *ctx)
     uint32_t batt = ctx->system->battery_level(ctx);
 
     if (!target || !model || !ver) ok = 0;
-    if (canopus_strcmp(model, "Xiaomi Band 10 Pro") != 0) ok = 0;
+    int is_b11 = (target && target[12] == '1' && target[13] == '1');
+    if (is_b11) {
+        if (canopus_strcmp(model, "Xiaomi Band 11") != 0) ok = 0;
+    } else {
+        if (canopus_strcmp(model, "Xiaomi Band 10 Pro") != 0) ok = 0;
+    }
     if (batt > 100u) ok = 0;
     if (ctx->system->is_safe_mode(ctx) != 0) ok = 0;
     if (ctx->system->framework_revision(ctx) == 0) ok = 0;
@@ -417,7 +429,13 @@ static void run_haptics_and_display_tests(const struct canopus_context_v1 *ctx)
     if (ctx->display->is_screen_on(ctx) != 1) ok = 0;
     uint32_t w = 0, h = 0;
     ctx->display->get_resolution(ctx, &w, &h);
-    if (w != 336u || h != 480u) ok = 0;
+    const char *tgt = ctx->system ? ctx->system->target_id(ctx) : "";
+    int is_b11 = (tgt && tgt[12] == '1' && tgt[13] == '1');
+    if (is_b11) {
+        if (w != 212u || h != 520u) ok = 0;
+    } else {
+        if (w != 336u || h != 480u) ok = 0;
+    }
 
     int32_t lock = ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_SCREEN);
     if (lock < 0) ok = 0;
@@ -640,38 +658,57 @@ static int32_t test_activate(const struct canopus_context_v1 *ctx)
     report_append(num_buf);
     report_append("\n========================================\n");
 
-    /* Write report to /data/canopus/test_report.txt */
+    /* Write report via microkernel VFS (works everywhere on both Band 10 Pro and Band 11) */
+    if (ctx->fs && ctx->fs->write_all) {
+        ctx->fs->write_all(ctx, "test_report.txt", s_report_buf, s_report_len);
+    }
+#if defined(CANOPUS_SUP_NUTTX_OPEN) && defined(CANOPUS_SUP_NUTTX_WRITE) && defined(CANOPUS_SUP_NUTTX_CLOSE)
     {
         typedef int (*open_fn)(const char *, int, ...);
+        typedef int32_t (*write_fn)(int, const void *, uint32_t);
+        typedef int (*close_fn)(int);
         open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
+        write_fn write_file = (write_fn)(uintptr_t)CANOPUS_SUP_NUTTX_WRITE;
+        close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
         int fd = open_file("/data/canopus/test_report.txt", 2 | 4 | 0x200, 0666);
         if (fd >= 0) {
-            (void)canopus_fw_write(fd, s_report_buf, s_report_len);
-            (void)canopus_fw_close(fd);
+            (void)write_file(fd, s_report_buf, s_report_len);
+            (void)close_file(fd);
         }
     }
+#endif
 
-    /* Write summary into /data/canopus/probe.txt */
+    /* Write summary into probe.txt */
+    char summary[64];
+    char *sp = summary;
+    const char *tag = s_fail_count == 0 ? "ALL_TESTS_PASS:" : "TESTS_FAILED:";
+    while (*tag) *sp++ = *tag++;
+    char n1[16], n2[16];
+    format_u32(n1, s_pass_count);
+    format_u32(n2, s_pass_count + s_fail_count);
+    for (int k = 0; n1[k]; k++) *sp++ = n1[k];
+    *sp++ = '/';
+    for (int k = 0; n2[k]; k++) *sp++ = n2[k];
+    *sp++ = '\n';
+
+    if (ctx->fs && ctx->fs->write_all) {
+        ctx->fs->write_all(ctx, "probe.txt", summary, (uint32_t)(sp - summary));
+    }
+#if defined(CANOPUS_SUP_NUTTX_OPEN) && defined(CANOPUS_SUP_NUTTX_WRITE) && defined(CANOPUS_SUP_NUTTX_CLOSE)
     {
         typedef int (*open_fn)(const char *, int, ...);
+        typedef int32_t (*write_fn)(int, const void *, uint32_t);
+        typedef int (*close_fn)(int);
         open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
+        write_fn write_file = (write_fn)(uintptr_t)CANOPUS_SUP_NUTTX_WRITE;
+        close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
         int fd = open_file("/data/canopus/probe.txt", 2 | 4 | 0x200, 0666);
         if (fd >= 0) {
-            char summary[64];
-            char *p = summary;
-            const char *tag = s_fail_count == 0 ? "ALL_TESTS_PASS:" : "TESTS_FAILED:";
-            while (*tag) *p++ = *tag++;
-            char n1[16], n2[16];
-            format_u32(n1, s_pass_count);
-            format_u32(n2, s_pass_count + s_fail_count);
-            for (int k = 0; n1[k]; k++) *p++ = n1[k];
-            *p++ = '/';
-            for (int k = 0; n2[k]; k++) *p++ = n2[k];
-            *p++ = '\n';
-            (void)canopus_fw_write(fd, summary, (uint32_t)(p - summary));
-            (void)canopus_fw_close(fd);
+            (void)write_file(fd, summary, (uint32_t)(sp - summary));
+            (void)close_file(fd);
         }
     }
+#endif
 
     return 0;
 }
@@ -713,16 +750,27 @@ static const struct canopus_module_descriptor_v1 s_descriptor = {
     0,
 };
 
-__attribute__((constructor)) static void test_ctor(void)
+__attribute__((constructor)) static void test_ctor(const struct canopus_context_v1 *ctx)
 {
+    /* If loaded by custom loader (Band 11 / portable), r0 contains ctx */
+    if (ctx != 0 && ctx->services != 0 && ctx->services->module_register != 0) {
+        s_ctx = ctx;
+        (void)ctx->services->module_register(ctx, &s_descriptor);
+        return;
+    }
+#if defined(CANOPUS_SUP_NUTTX_OPEN) && defined(CANOPUS_SUP_NUTTX_WRITE) && defined(CANOPUS_SUP_NUTTX_CLOSE)
+    /* If loaded by kernel modlib (Band 10 Pro / target), register via /dev/canopus CMR1 */
     typedef int (*open_fn)(const char *, int, ...);
+    typedef int32_t (*write_fn)(int, const void *, uint32_t);
+    typedef int (*close_fn)(int);
     struct canopus_module_registration_io_v1 io;
     int close_error = 0;
     if (canopus_identity_guard() != 0) return;
     io.open = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
-    io.write = canopus_fw_write;
-    io.close = canopus_fw_close;
+    io.write = (write_fn)(uintptr_t)CANOPUS_SUP_NUTTX_WRITE;
+    io.close = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
     io.write_flags = 2;
     (void)canopus_module_register_fd(&io, (uint32_t)(uintptr_t)&s_descriptor,
                                      TEST_MODULE_ID, &close_error);
+#endif
 }

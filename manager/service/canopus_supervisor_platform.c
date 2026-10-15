@@ -1370,7 +1370,13 @@ static void *sup_heap_realloc(void *cookie, void *ptr, uint32_t size)
 static int sup_reboot(void *cookie)
 {
     (void)cookie;
-    return CANOPUS_SVC_ERR_UNSUPPORTED;
+    /* Cortex-M33 Application Interrupt and Reset Control Register (AIRCR)
+     * VECTKEY (0x05FA0000) | SYSRESETREQ (1 << 2) triggers CPU/system reset */
+    __asm__ volatile("dsb" ::: "memory");
+    *(volatile uint32_t *)0xE000ED0Cu = 0x05FA0004u;
+    __asm__ volatile("dsb\n\tisb" ::: "memory");
+    while (1) { __asm__ volatile("wfi"); }
+    return 0;
 }
 
 #ifdef CANOPUS_SUP_CLOCK_GETTIME
