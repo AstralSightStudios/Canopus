@@ -116,6 +116,17 @@ static int hook_square(int x)
     return orig + 500;
 }
 
+typedef int32_t (*scan_mode_fn_t)(void);
+static scan_mode_fn_t s_orig_scan_mode = 0;
+static volatile int s_hook_fpb_called = 0;
+
+static int32_t hook_scan_mode(void)
+{
+    s_hook_fpb_called++;
+    int32_t orig = s_orig_scan_mode();
+    return orig + 777;
+}
+
 static void run_hook_tests(const struct canopus_context_v1 *ctx)
 {
     int ok = 1;
@@ -168,6 +179,29 @@ static void run_hook_tests(const struct canopus_context_v1 *ctx)
     if (s_ptr_target(5) != 25) ok = 0;
 
     log_test("Hook: Pointer slot hook & restore", ok);
+
+    /* 1.3 Flash function FPB hooking */
+    ok = 1;
+    volatile scan_mode_fn_t fn_scan = canopus_fw_bt_adapter_get_scan_mode;
+    int32_t before_mode = fn_scan();
+
+    hook_id = ctx->hook->install(ctx, (uintptr_t)canopus_fw_bt_adapter_get_scan_mode,
+                                 (uintptr_t)hook_scan_mode, (uintptr_t *)&s_orig_scan_mode,
+                                 CANOPUS_HOOK_FPB);
+    if (hook_id < 0) ok = 0;
+    if (ctx->hook->is_hooked(ctx, (uintptr_t)canopus_fw_bt_adapter_get_scan_mode) != 1) ok = 0;
+
+    int32_t hooked_mode = fn_scan();
+    if (hooked_mode != before_mode + 777 || s_hook_fpb_called != 1) ok = 0;
+
+    un_rc = ctx->hook->uninstall(ctx, hook_id);
+    if (un_rc != CANOPUS_SVC_OK) ok = 0;
+    if (ctx->hook->is_hooked(ctx, (uintptr_t)canopus_fw_bt_adapter_get_scan_mode) != 0) ok = 0;
+
+    int32_t after_mode = fn_scan();
+    if (after_mode != before_mode) ok = 0;
+
+    log_test("Hook: Flash function FPB hook & trampoline call", ok);
 }
 
 /* ========================================================================= */
