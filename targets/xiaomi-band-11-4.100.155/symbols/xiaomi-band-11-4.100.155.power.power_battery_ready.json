@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.power.power_battery_ready",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "power_battery_ready",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c6ac988",
+  "callable_address": "0x0c6ac989",
+  "prototype": "int(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-4155-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-4155-001"
+    ],
+    "source": "exact 4.100.155 IDB vela_ap.bin.i64 (PowerManager, MiWearScreen, miwear_vibrator library and property library review)"
+  },
+  "notes": "PowerManager getter: both the charging-state and level flags have been received. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+}

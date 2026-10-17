@@ -26,6 +26,7 @@ _Static_assert(sizeof(struct l2_packet) == 28u, "MiWear packet ABI");
 static struct {
     volatile uint32_t state;
     uint16_t handle, len;
+    uint8_t channel;
     void *session;
     uint8_t data[L2_FRAME_MAX];
 } s_requests[L2_QUEUE_SIZE];
@@ -66,13 +67,16 @@ static void l2_rx(uint16_t handle, uint8_t channel, uint8_t opcode,
 {
     uint32_t slot, mask;
     void *session;
-    if (channel != CANOPUS_L2_CHANNEL) {
+    /* A channel a module registered through ctx->bt->l2_register_rx is
+     * consumed here, decrypted the same way as the control channel; every
+     * other channel keeps going to the stock handler. */
+    if (channel != CANOPUS_L2_CHANNEL && !canopus_supervisor_l2_rx_registered(channel)) {
         ((l2_rx_fn)(uintptr_t)L2_PROBE_RX)(handle, channel, opcode, payload, len);
         return;
     }
     /* Control mutations require the paired session's encrypted transport. */
-    if (opcode != CANOPUS_L2_OPCODE_WRITE_ENC || len > L2_FRAME_MAX ||
-        len < CANOPUS_TRANSPORT_V2_HEADER_SIZE) return;
+    if (opcode != CANOPUS_L2_OPCODE_WRITE_ENC || len > L2_FRAME_MAX || len == 0u ||
+        (channel == CANOPUS_L2_CHANNEL && len < CANOPUS_TRANSPORT_V2_HEADER_SIZE)) return;
     session = ((session_fn)(uintptr_t)L2_PROBE_SESSION)(handle);
     if (session == 0 || l2_bt_start() != 0) return;
     mask = l2_lock();
@@ -90,6 +94,7 @@ static void l2_rx(uint16_t handle, uint8_t channel, uint8_t opcode,
     }
     s_requests[slot].session = session;
     s_requests[slot].handle = handle;
+    s_requests[slot].channel = channel;
     __asm__ volatile("dmb" ::: "memory");
     s_requests[slot].state = 2u;
 }
@@ -200,11 +205,16 @@ void canopus_sup_l2_poll(void)
         s_last_handle = s_requests[slot].handle;
         s_last_session = s_requests[slot].session;
         s_connected = 1;
-        len = canopus_supervisor_handle_l2_packet(canopus_supervisor_get(),
-            s_requests[slot].data, s_requests[slot].len,
-            s_requests[slot].data, L2_FRAME_MAX);
-        if (len > 0) (void)l2_queue_send(s_last_handle, s_last_session,
-            CANOPUS_L2_CHANNEL, s_requests[slot].data, (uint16_t)len);
+        if (s_requests[slot].channel != CANOPUS_L2_CHANNEL) {
+            (void)canopus_supervisor_l2_rx_dispatch(canopus_supervisor_get(),
+                s_requests[slot].channel, s_requests[slot].data, s_requests[slot].len);
+        } else {
+            len = canopus_supervisor_handle_l2_packet(canopus_supervisor_get(),
+                s_requests[slot].data, s_requests[slot].len,
+                s_requests[slot].data, L2_FRAME_MAX);
+            if (len > 0) (void)l2_queue_send(s_last_handle, s_last_session,
+                CANOPUS_L2_CHANNEL, s_requests[slot].data, (uint16_t)len);
+        }
     }
     __asm__ volatile("dmb" ::: "memory");
     s_requests[slot].state = 0u;
@@ -241,6 +251,18 @@ int canopus_sup_l2_start(void)
     return s_timer != 0 ? 0 : CANOPUS_SVC_ERR_NOMEM;
 }
 
+/* A MiWear companion link exists while the SAR connection list is non-empty. */
+int sup_l2_connected(void *cookie)
+{
+    volatile uint32_t *head = (volatile uint32_t *)(uintptr_t)L2_PROBE_CONNECTIONS;
+    uint32_t mask = l2_lock();
+    volatile uint32_t *first = (volatile uint32_t *)(uintptr_t)head[1];
+    int up = first != 0 && first != head;
+    (void)cookie;
+    l2_unlock(mask);
+    return up;
+}
+
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len)
 {
     (void)cookie;
@@ -255,6 +277,11 @@ void canopus_sup_l2_poll(void) {}
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len)
 {
     (void)cookie; (void)channel; (void)payload; (void)len;
+    return CANOPUS_SVC_ERR_UNSUPPORTED;
+}
+int sup_l2_connected(void *cookie)
+{
+    (void)cookie;
     return CANOPUS_SVC_ERR_UNSUPPORTED;
 }
 #endif

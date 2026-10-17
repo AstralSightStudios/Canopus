@@ -341,7 +341,11 @@ static void run_fs_tests(const struct canopus_context_v1 *ctx)
     fd = ctx->fs->open(ctx, "fstest.bin", CANOPUS_FS_WRITE | CANOPUS_FS_CREATE | CANOPUS_FS_TRUNC);
     if (fd < 0) ok = 0;
     if (ctx->fs->write(ctx, fd, "HELLOWORLD", 10) != 10) ok = 0;
-    if (ctx->fs->sync(ctx, fd) != CANOPUS_SVC_OK) ok = 0;
+    {
+        /* No fsync entry point is recovered yet; the service must say so. */
+        int32_t sync_rc = ctx->fs->sync(ctx, fd);
+        if (sync_rc != CANOPUS_SVC_OK && sync_rc != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+    }
     if (ctx->fs->size(ctx, fd) != 10) ok = 0;
     if (ctx->fs->tell(ctx, fd) != 10) ok = 0;
     if (ctx->fs->seek(ctx, fd, 5, CANOPUS_FS_SEEK_SET) != 5) ok = 0;
@@ -375,18 +379,37 @@ static void run_fs_tests(const struct canopus_context_v1 *ctx)
     if (ctx->fs->remove(ctx, "renamed.bin") != 0) ok = 0;
     if (ctx->fs->exists(ctx, "renamed.bin") != 0) ok = 0;
 
-    /* mkdir */
+    /* mkdir: a flat name is a directory below the module's private root */
     int32_t mk_rc = ctx->fs->mkdir(ctx, "testsub");
-    if (mk_rc != CANOPUS_SVC_OK && mk_rc != CANOPUS_SVC_ERR_STATE) ok = 0;
+    if (mk_rc != CANOPUS_SVC_OK && mk_rc != CANOPUS_SVC_ERR_EXIST) ok = 0;
+    canopus_memset(&st, 0, sizeof(st));
+    if (ctx->fs->stat(ctx, "testsub", &st) != 0 || st.is_dir != 1u) ok = 0;
+    if (ctx->fs->write_all(ctx, "testsub/inner.bin", "IN", 2) != 2) ok = 0;
+    if (ctx->fs->remove(ctx, "testsub/inner.bin") != 0) ok = 0;
 
     log_test("FS: write_all, read_all, stat, exists, rename, mkdir, remove", ok);
+
+    /* Shared roots, append mode and the missing-file error code */
+    ok = 1;
+    if (ctx->fs->open(ctx, "absent.cfg", CANOPUS_FS_READ) != CANOPUS_SVC_ERR_NOTFOUND) ok = 0;
+    if (ctx->fs->open(ctx, "/data/app/canopus.probe", CANOPUS_FS_WRITE) != CANOPUS_SVC_ERR_ACCESS) ok = 0;
+    if (ctx->fs->write_all(ctx, "/data/canopus/shared/probe.txt", "ab", 2) != 2) ok = 0;
+    fd = ctx->fs->open(ctx, "/data/canopus/shared/probe.txt", CANOPUS_FS_WRITE | CANOPUS_FS_APPEND);
+    if (fd < 0 || ctx->fs->write(ctx, fd, "cd", 2) != 2) ok = 0;
+    if (fd >= 0) ctx->fs->close(ctx, fd);
+    canopus_memset(buf, 0, sizeof(buf));
+    if (ctx->fs->read_all(ctx, "/data/canopus/shared/probe.txt", buf, sizeof(buf)) != 4 ||
+        canopus_strcmp(buf, "abcd") != 0) ok = 0;
+    if (ctx->fs->remove(ctx, "/data/canopus/shared/probe.txt") != 0) ok = 0;
+    log_test("FS: shared root, append, read-only root & NOTFOUND code", ok);
 
     /* Directory iteration */
     ok = 1;
     void *dir = ctx->fs->opendir(ctx, ".");
     if (dir != 0) {
         struct canopus_fs_dirent de;
-        if (ctx->fs->readdir(ctx, dir, &de) != 0) ok = 0;
+        int32_t dir_rc = ctx->fs->readdir(ctx, dir, &de);
+        if (dir_rc != 0 && dir_rc != 1) ok = 0; /* entry or end of directory */
         ctx->fs->closedir(ctx, dir);
     } else {
         ok = 0;
@@ -478,20 +501,23 @@ static void run_system_and_time_tests(const struct canopus_context_v1 *ctx)
     } else {
         if (canopus_strcmp(model, "Xiaomi Band 10 Pro") != 0) ok = 0;
     }
-    if (batt > 100u) ok = 0;
-    if (is_chg != 0 && is_chg != 1) ok = 0;
+    /* Battery is real or unknown; never a placeholder. */
+    if (batt > 100u && batt != CANOPUS_SYSTEM_BATTERY_UNKNOWN) ok = 0;
+    if (is_chg != 0 && is_chg != 1 && is_chg >= 0) ok = 0;
     if (uptime == 0u) ok = 0;
     if (ctx->system->is_safe_mode(ctx) != 0) ok = 0;
     if (ctx->system->framework_revision(ctx) == 0) ok = 0;
     /* Verify reboot function pointer is non-null */
     if (ctx->system->reboot == 0) ok = 0;
 
-    /* Verify get_property callable */
+    /* Verify get_property against the stock property store */
     char prop_buf[32];
-    int32_t prc = ctx->system->get_property(ctx, "system.target", prop_buf, sizeof(prop_buf));
-    if (prc != CANOPUS_SVC_OK && prc != CANOPUS_SVC_ERR_NOTFOUND &&
+    int32_t prc = ctx->system->get_property(ctx, "persist.screen.brightness_value",
+                                           prop_buf, sizeof(prop_buf));
+    if (prc != CANOPUS_SVC_ERR_NOTFOUND && prc != CANOPUS_SVC_ERR_UNSUPPORTED && prc < 1) ok = 0;
+    if (ctx->system->get_property(ctx, "canopus.no.such.key", prop_buf, sizeof(prop_buf)) !=
+            CANOPUS_SVC_ERR_NOTFOUND &&
         prc != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
-    if (prc == CANOPUS_SVC_OK && canopus_strcmp(prop_buf, target) != 0) ok = 0;
 
     log_test("System: target, module, model, version, uptime, battery, property & reboot ptr", ok);
 
@@ -531,22 +557,51 @@ static void run_system_and_time_tests(const struct canopus_context_v1 *ctx)
 static void run_haptics_and_display_tests(const struct canopus_context_v1 *ctx)
 {
     int ok = 1;
+    int32_t rc;
     if (!ctx->haptics) { log_test("Haptics: object missing", 0); return; }
 
-    if (ctx->haptics->vibrate(ctx, 20) != CANOPUS_SVC_OK) ok = 0;
-    uint16_t pat[] = {20, 20, 20};
-    if (ctx->haptics->vibrate_pattern(ctx, pat, 3) != CANOPUS_SVC_OK) ok = 0;
-    if (ctx->haptics->vibrate_preset(ctx, CANOPUS_HAPTIC_CLICK) != CANOPUS_SVC_OK) ok = 0;
-    if (ctx->haptics->cancel(ctx) != CANOPUS_SVC_OK) ok = 0;
-
-    log_test("Haptics: vibrate, pattern, preset click & cancel", ok);
+    rc = ctx->haptics->vibrate(ctx, 20);
+    if (rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
+        log_skip("Haptics: no vibrator entry point on this target");
+    } else {
+        uint16_t pat[] = {20, 30, 20};
+        if (rc != CANOPUS_SVC_OK && rc != CANOPUS_SVC_ERR_STATE) ok = 0; /* STATE: vibration disabled by the user */
+        if (rc == CANOPUS_SVC_OK) {
+            if (ctx->haptics->vibrate_pattern(ctx, pat, 3) != CANOPUS_SVC_OK) ok = 0;
+            if (ctx->haptics->vibrate_preset(ctx, CANOPUS_HAPTIC_CLICK) != CANOPUS_SVC_OK) ok = 0;
+        }
+        if (ctx->haptics->cancel(ctx) != CANOPUS_SVC_OK) ok = 0;
+        if (ctx->haptics->vibrate(ctx, 0) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+        log_test("Haptics: vibrate, pattern, preset click & cancel", ok);
+    }
 
     ok = 1;
     if (!ctx->display) { log_test("Display: object missing", 0); return; }
 
-    if (ctx->display->get_brightness(ctx) != 100u) ok = 0;
-    if (ctx->display->set_brightness(ctx, 80u) != CANOPUS_SVC_OK) ok = 0;
-    if (ctx->display->is_screen_on(ctx) != 1) ok = 0;
+    {
+        int screen = ctx->display->is_screen_on(ctx);
+        if (screen == CANOPUS_SVC_ERR_UNSUPPORTED) {
+            log_skip("Display: no screen state source on this target");
+        } else {
+            log_test("Display: screen state is 0 or 1", screen == 0 || screen == 1);
+        }
+    }
+
+    {
+        uint32_t before = ctx->display->get_brightness(ctx);
+        rc = ctx->display->set_brightness(ctx, 80u);
+        if (rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
+            log_skip("Display: no brightness session entry point on this target");
+        } else {
+            ok = (rc == CANOPUS_SVC_OK && ctx->display->get_brightness(ctx) == 80u &&
+                  ctx->display->set_brightness(ctx, 101u) == CANOPUS_SVC_ERR_ARGUMENT);
+            /* give the user's setting back; the override also ends with the module */
+            if (before <= 100u) (void)ctx->display->set_brightness(ctx, before);
+            log_test("Display: brightness override & readback", ok);
+        }
+    }
+
+    ok = 1;
     uint32_t w = 0, h = 0;
     ctx->display->get_resolution(ctx, &w, &h);
     const char *tgt = ctx->system ? ctx->system->target_id(ctx) : "";
@@ -556,13 +611,24 @@ static void run_haptics_and_display_tests(const struct canopus_context_v1 *ctx)
     } else {
         if (w != 336u || h != 480u) ok = 0;
     }
+    log_test("Display: resolution", ok);
 
     int32_t lock = ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_SCREEN);
-    if (lock < 0) ok = 0;
-    if (ctx->display->release_wake_lock(ctx, lock) != CANOPUS_SVC_OK) ok = 0;
-    if (ctx->display->wake_screen(ctx) != CANOPUS_SVC_OK) ok = 0;
+    if (lock == CANOPUS_SVC_ERR_UNSUPPORTED) {
+        log_skip("Display: no wake lock entry point on this target");
+    } else {
+        ok = lock > 0 && ctx->display->release_wake_lock(ctx, lock) == CANOPUS_SVC_OK &&
+             ctx->display->release_wake_lock(ctx, lock) == CANOPUS_SVC_ERR_ARGUMENT &&
+             ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_CPU) == CANOPUS_SVC_ERR_UNSUPPORTED;
+        log_test("Display: owned wake lock acquire/release", ok);
+    }
 
-    log_test("Display: brightness, resolution (336x480) & wake lock", ok);
+    rc = ctx->display->wake_screen(ctx);
+    if (rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
+        log_skip("Display: no screen-on entry point on this target");
+    } else {
+        log_test("Display: wake screen", rc == CANOPUS_SVC_OK);
+    }
 }
 
 /* ========================================================================= */
@@ -609,10 +675,19 @@ static void run_bus_bt_log_notify_tests(const struct canopus_context_v1 *ctx)
     /* Bluetooth */
     ok = 1;
     if (ctx->bt) {
-        if (ctx->bt->is_connected(ctx) != 1) ok = 0;
-        if (ctx->bt->get_rssi(ctx) >= 0) ok = 0;
-        if (ctx->bt->adapter_state(ctx) == 0) ok = 0;
-        if (ctx->bt->l2_register_rx(ctx, 0x43, dummy_l2_cb, 0) != CANOPUS_SVC_OK) ok = 0;
+        /* Each value is the stack's own or explicitly unknown. */
+        int link = ctx->bt->is_connected(ctx);
+        if (link != 0 && link != 1 && link != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+        int32_t rssi = ctx->bt->get_rssi(ctx);
+        if (rssi != CANOPUS_BT_RSSI_UNKNOWN && rssi >= 0) ok = 0;
+        uint32_t adapter = ctx->bt->adapter_state(ctx);
+        if (adapter != CANOPUS_BT_ADAPTER_UNKNOWN && adapter > 8u) ok = 0;
+        /* 0x43 is the control channel; module channels are 0x40..0x4F. */
+        if (ctx->bt->l2_register_rx(ctx, 0x43, dummy_l2_cb, 0) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+        int32_t reg_rc = ctx->bt->l2_register_rx(ctx, 0x44, dummy_l2_cb, 0);
+        if (reg_rc != CANOPUS_SVC_OK && reg_rc != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+        if (reg_rc == CANOPUS_SVC_OK &&
+            ctx->bt->l2_register_rx(ctx, 0x44, 0, 0) != CANOPUS_SVC_OK) ok = 0;
         int32_t l2_rc = ctx->bt->l2_send(ctx, 0x43, "ping", 4);
         if (l2_rc != CANOPUS_SVC_OK && l2_rc != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
     } else {
@@ -634,11 +709,15 @@ static void run_bus_bt_log_notify_tests(const struct canopus_context_v1 *ctx)
     log_test("Log: multi-level logger API calls", ok);
     if (ctx->notify) {
         int32_t post_rc = ctx->notify->post(ctx, "Title", "Body");
-        int32_t icon_rc = ctx->notify->post_with_icon(ctx, "Title", "Body", 1, 1);
+        /* No stock icon table: only icon 0 is accepted. */
+        int32_t icon_rc = ctx->notify->post_with_icon(ctx, "Title", "Body", 1, 0);
+        int32_t haptic_rc = ctx->notify->post_with_icon(ctx, "Title", "Body", 0, 1);
         if (post_rc == CANOPUS_SVC_ERR_UNSUPPORTED && icon_rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
             log_skip("Notify: platform notifications unavailable");
         } else {
-            log_test("Notify: platform API acceptance", post_rc == CANOPUS_SVC_OK && icon_rc == CANOPUS_SVC_OK);
+            log_test("Notify: title, icon refusal & haptic result",
+                     post_rc == CANOPUS_SVC_OK && icon_rc == CANOPUS_SVC_ERR_UNSUPPORTED &&
+                     (haptic_rc == CANOPUS_SVC_OK || haptic_rc == CANOPUS_NOTIFY_HAPTIC_SKIPPED));
         }
     } else {
         log_skip("Notify: service absent");

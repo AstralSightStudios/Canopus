@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.power.power_battery_charging",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "power_battery_charging",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0ca55dd8",
+  "callable_address": "0x0ca55dd9",
+  "prototype": "int(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1036-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1036-001"
+    ],
+    "source": "exact 3.101.036 IDB vela_ap.bin.i64; body shape identical to the reviewed 3.101.043 function and unique in this image; __func__ string cross-references agree for the MiWearScreen and PowerManager entries"
+  },
+  "notes": "PowerManager getter: last charging flag (0/1) from the battery_state topic. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+}

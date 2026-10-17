@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.screen.screen_session_create",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "screen_session_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c6cd6a8",
+  "callable_address": "0x0c6cd6a9",
+  "prototype": "void *(const char *tag)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-4139-001"
+    ],
+    "source": "exact 4.100.139 IDB vela_ap.bin.i64; body shape identical to the reviewed 4.100.155 function and unique in this image"
+  },
+  "notes": "MiWearScreen screen_session_create; tag must outlive the session. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+}

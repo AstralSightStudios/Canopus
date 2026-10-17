@@ -86,7 +86,20 @@ struct canopus_fs_obj {
     int32_t (*write_all)(const struct canopus_context_v1 *ctx, const char *path, const void *buffer, uint32_t size);
 };
 ```
-- **沙箱隔离**：路径映射到 `/data/canopus/m.<module_id>/`，自动拦截 `..` 目录穿越。
+- **路径形式**（其余一律 `CANOPUS_SVC_ERR_ARGUMENT`）：
+  - `name`：模块私有扁平文件，`/data/canopus/m.<id>.<name>`（旧行为）；
+  - `dir/sub/name`：模块私有子树，`/data/canopus/m.<id>/dir/sub/name`；私有根在首次写入时创建，更深层目录用 `mkdir` 逐级创建；
+  - `/data/...` 绝对路径，只接受下列共享根：`/data/offlinelog/`（读写）、`/data/canopus/shared/`（读写，模块间共享）、
+    `/data/app/`（只读，Band 10 Pro 包目录）、`/data/quickapp/`（只读，Band 11 包目录）；根之外为 `ERR_ACCESS`，写只读根也是 `ERR_ACCESS`。
+  - 路径段限 `[A-Za-z0-9_.-]`、不以 `.` 开头，所以 `..`、`//`、末尾 `/` 都被拒绝。
+  这是接口约定，不是安全边界：本设备没有进程隔离（见 `security-model.md`）。
+- **错误码**：固件返回的 errno 如实映射——文件或父目录不存在是 `ERR_NOTFOUND(-2)`（可据此识别"配置文件尚未创建"），
+  另有 `ERR_EXIST`、`ERR_ACCESS`、`ERR_NOTDIR`、`ERR_ISDIR`、`ERR_NOSPACE`、`ERR_BUSY`，其余为 `ERR_IO`。
+- **打开标志**：`READ` 只读已有文件；`WRITE` 创建或截断；`WRITE|APPEND` 保留内容并在文件尾写入（`APPEND`/`TRUNC`/`CREATE` 必须与 `WRITE` 同用）；
+  `READ|WRITE` 保留内容读写。其余位为 `ERR_ARGUMENT`。固件的 `O_TRUNC` 未证实，截断经 `unlink` 后新建实现。
+- **目录**：`mkdir` 调用固件 `mkdir`（单层，已存在为 `ERR_EXIST`）；`opendir("")`/`opendir(".")` 是模块私有目录，不再列出 `/data/canopus` 里别的模块的文件；
+  `stat` 用 `opendir` 判断目录，`mtime` 恒为 0（固件无已恢复的时间来源）。
+- **`sync`**：目前没有已恢复的 `fsync` 入口，返回 `ERR_UNSUPPORTED`；KV 事务的"写入后同步"在平台提供 `file_sync` 时才执行。
 
 ---
 
@@ -163,7 +176,7 @@ struct canopus_time_obj {
 
 ```c
 #define CANOPUS_HAPTIC_CLICK        1u  /* 短促点击反馈 (20ms) */
-#define CANOPUS_HAPTIC_DOUBLE_CLICK 2u  /* 双击震感 (40ms) */
+#define CANOPUS_HAPTIC_DOUBLE_CLICK 2u  /* 双击震感 (20ms + 60ms 间隔 + 20ms) */
 #define CANOPUS_HAPTIC_HEAVY        3u  /* 强震动反馈 (100ms) */
 #define CANOPUS_HAPTIC_ALERT        4u  /* 警报长震动 (250ms) */
 #define CANOPUS_HAPTIC_TICK         5u  /* 微弱滴答 (10ms) */
@@ -175,6 +188,11 @@ struct canopus_haptics_obj {
     int32_t (*cancel)(const struct canopus_context_v1 *ctx);
 };
 ```
+- `vibrate` 取 1..5000 ms；`vibrate_pattern` 从 **ON** 开始交替"振/停"（`pattern_ms[0]` 是第一次振动），最多 16 项，零项跳过；
+  第二步起由 Supervisor 的定时器泵按 10 ms 精度推进（没有泵的目标，多步序列返回 `ERR_UNSUPPORTED`，单次振动不需要泵）。
+  序列按计划时间推进，泵迟到时缩短当前脉冲而不累积漂移。`DOUBLE_CLICK` 是 20 ms / 60 ms 间隔 / 20 ms。
+- 同一时刻只有一次振动：任何模块的新请求替换正在播放的；`cancel` 只停止调用者自己的振动；模块卸载时其振动被停止。
+- 固件返回的拒绝如实传回（用户关闭振动为 `ERR_STATE`，独占振动占用为 `ERR_BUSY`），目标没有马达入口时全部为 `ERR_UNSUPPORTED`，不再"假装成功"。
 
 ---
 
@@ -194,6 +212,16 @@ struct canopus_display_obj {
     void     (*get_resolution)(const struct canopus_context_v1 *ctx, uint32_t *width, uint32_t *height);
 };
 ```
+- `is_screen_on`：1 仅表示亮屏（息屏显示 AOD 与熄屏都是 0）；目标没有状态来源时返回 `ERR_UNSUPPORTED`（负值），不再恒为 1。
+- `set_brightness(percent 0..100)` 经 Canopus 自己的屏幕会话覆盖用户亮度（关闭自动亮度并设定手动值）；百分比映射到固件手动范围 31..255，
+  0% 对应固件最低值而不是黑屏。覆盖归最后设置的模块所有，该模块卸载时撤销。
+  `get_brightness` 返回当前覆盖值，否则返回用户手动设定（`persist.screen.brightness_value`）；自动亮度开启或目标不可读时返回
+  `CANOPUS_DISPLAY_BRIGHTNESS_UNKNOWN(0xFFFFFFFF)`。
+- `wake_screen` 以固件 wake-lock 路径使用的来源 26 调用固件的 `screen_turn_on`，是"请求亮屏"，不保证返回时已亮。
+- 唤醒锁由固件 PowerManager 的 wakelock（level 6，保持亮屏）实现，Supervisor 为每把锁保留一个原生对象并复用：
+  `acquire_wake_lock` 返回正的锁 ID（带代数，旧 ID 失效后不会误释放新锁）；只能释放自己的锁（否则 `ERR_ARGUMENT`）；
+  每个模块最多 4 把、全局最多 8 把（超出 `ERR_BUSY`）；模块卸载时全部释放。`WAKELOCK_SCREEN` 才有固件机制，
+  单独的 `WAKELOCK_CPU` 返回 `ERR_UNSUPPORTED`，`CPU|SCREEN` 被接受（亮屏时 CPU 本就保持唤醒）。该锁不会主动点亮已熄灭的屏幕，需要时先调用 `wake_screen`。
 
 ---
 
@@ -214,10 +242,12 @@ struct canopus_bus_obj {
     int32_t (*unsubscribe)(const struct canopus_context_v1 *ctx, int32_t sub_id);
 };
 ```
-- **系统内置广播主题**：
-  - `"canopus/screen/state"`：屏幕点亮/熄灭广播
-  - `"canopus/battery/level"`：手环电量更新
-  - `"canopus/bt/state"`：手机连接断开与恢复
+- **系统内置广播主题**（只由 Supervisor 发布，模块向这三个主题 `publish` 返回 `ERR_ACCESS`，不能伪造）：
+  - `"canopus/screen/state"`：负载 1 字节 `CANOPUS_SCREEN_*`（0 熄屏、1 AOD、2 亮屏）
+  - `"canopus/battery/level"`：负载 2 字节，电量百分比与充电标志
+  - `"canopus/bt/state"`：负载 2 字节，蓝牙适配器状态与手机连接（1 连接、0 断开、0xFF 未知）
+  订阅这些主题会启动 Supervisor 的采样：每 500 ms 从定时器泵读一次设备，值变化时发布，新订阅者在下一次采样时收到一次当前值。
+  没有定时器泵的目标订阅系统主题返回 `ERR_UNSUPPORTED`，不会得到一个永远不触发的订阅。
 
 ---
 
@@ -262,12 +292,47 @@ struct canopus_hook_obj {
 
 - **`ctx->system`**：
   - `target_id`、`module_id`、`device_model`（"Xiaomi Band 10 Pro" 或 "Xiaomi Band 11"）、`firmware_version`
-  - `battery_level`（0..100%）、`is_charging`（0 或 1）
-  - `uptime_ms`、`is_safe_mode`、`reboot`、`get_property`
+  - `battery_level`：0..100，固件尚未上报或目标不可读时为 `CANOPUS_SYSTEM_BATTERY_UNKNOWN(0xFFFFFFFF)`；
+    `is_charging`：0 或 1，负值是错误（`ERR_STATE` 表示尚未上报，`ERR_UNSUPPORTED` 表示目标没有电池来源）
+  - `uptime_ms`、`is_safe_mode`、`reboot`
+  - `get_property(key, buf, max_len)`：读固件系统属性（`property_get`），key 限 `[A-Za-z0-9._-]` 且不超过 63 字符，
+    返回复制的长度（超出 `max_len - 1` 被截断），不存在为 `ERR_NOTFOUND`，目标没有读取入口为 `ERR_UNSUPPORTED`
 - **`ctx->bt`**：
   - `l2_send(ctx, channel, payload, len)`：经 WearPacket Layer 2（如 0x43 Channel）向手机配套 App 发送数据
-  - `l2_register_rx(ctx, channel, cb, user_data)`：注册监听手机发往手环的特定 L2 Channel 报文
-  - `is_connected`、`get_rssi`、`adapter_state`
+  - `l2_register_rx(ctx, channel, cb, user_data)`：只接受模块通道 `0x40..0x4F`（`0x43` 是 Supervisor 控制通道，其余通道属于固件原有处理器，
+    返回 `ERR_ARGUMENT`）。已注册通道的加密帧经 SRAM L2 后端解密后，在模块/UI 任务上交给回调，不再转给固件处理器；
+    同一通道只能一个模块持有（他人 `ERR_BUSY`），传 NULL 回调撤销，模块卸载时自动撤销。没有 L2 后端的目标返回 `ERR_UNSUPPORTED`。
+    它与 Supervisor 的 CPC2 管理通信是两条独立路径。
+  - `adapter_state`：固件蓝牙栈的适配器状态（0 关闭、4 开启，其余为过渡态），读不到为 `CANOPUS_BT_ADAPTER_UNKNOWN`
+  - `is_connected`：存在 MiWear 配套链路时为 1，否则 0，目标无法判断时为负值（仅有 L2 后端的目标能判断）
+  - `get_rssi`：目前没有固件来源，恒为 `CANOPUS_BT_RSSI_UNKNOWN(INT32_MIN)`，不再返回固定的 −55 dBm
+
+### 2.10 硬件服务的固件来源与验证状态
+
+haptics / display / 唤醒锁 / 电量 / 属性 / 蓝牙状态不再有占位实现。每一项都调用该 target 自己的固件入口，
+入口地址只来自 `targets/<id>/symbols/` 的记录，经 `canopus target generate` 生成到 `canopus_target_config.h`
+（Band 10 Pro）或 `canopus_band11_addresses.h`（Band 11）。没有记录的 target，对应钩子为空，服务返回
+`ERR_UNSUPPORTED` 或文档化的"未知"值。
+
+| 能力 | 固件入口（Band 10 Pro .036/.043） | 固件入口（Band 11 .139/.155） |
+|---|---|---|
+| 电量/充电 | PowerManager getter：`power_battery_ready/level/charging` | `power_battery_ready` + `power_battery_snapshot` |
+| 唤醒锁 | `wakelock_create/acquire/release` | 同 |
+| 屏幕状态 | `screen_get_state()` | 全局 `screen_state`（0 熄屏 / 1 AOD / 2 亮屏） |
+| 亮屏 | `screen_turn_on(tag, source)` | 同 |
+| 手动亮度 | `screen_session_create/start/stop/set_auto_brightness/set_brightness_value/restore_default`；读取用 `property_get_int32` | 同 |
+| 振动 | `vibrator_hal_transact`（vibratord HAL 消息 4 起振、5 停止） | `vibrator_run`（波形参数块）+ `vibrator_cancel(id)` |
+| 属性 | `property_get`、`property_get_int32` | 同 |
+| 目录创建 | `mkdir` | 同 |
+| 蓝牙适配器状态 | `bt_adapter_get_instance` + `bt_adapter_get_state` | `bt_shared_adapter` + `bt_adapter_get_state`（.177 也有） |
+
+- **Band 11 .177**：本仓库没有其固件镜像，无法对新增入口做静态核对，所以除蓝牙适配器状态（该记录原本就是 STATIC_RECOVERED）外
+  全部保持空钩子（`ERR_UNSUPPORTED`）。取得 exact 镜像后再按 `EVID-PLATFORM-HW-*` 的方法补充。
+- **证据等级**：全部为 `STATIC_RECOVERED` / `restricted` / `approval_state: PENDING`，`device: not_probed`；
+  .036 与 .139 的地址由 .043 与 .155 的已审阅函数体做"屏蔽分支与 PC 相对指令后的整体指令匹配"得到（镜像内唯一），
+  MiWearScreen/PowerManager 的 `__func__` 字符串交叉引用互相印证。证据见各 target 的 `evidence/EVID-PLATFORM-HW-<ver>-001.json`。
+  这些入口随普通构建默认包含（K16），默认包含不等于设备已验证或生产批准。
+- **未覆盖**：`get_rssi`（无固件来源）、`fsync`、CPU 唤醒锁、通知图标表、`mtime`。它们明确返回不支持或未知，而不是成功。
 
 ---
 

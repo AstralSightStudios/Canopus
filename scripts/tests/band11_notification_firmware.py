@@ -222,20 +222,23 @@ class NotificationTests(unittest.TestCase):
         # The borrowed context survives normalization cleanup and later reads.
         self.assertEqual(m.word(fw.events[1] + 92), m.word(fw.events[2] + 92))
 
-    def test_service_notification_carries_module_title_and_body(self):
+    def test_service_notification_carries_module_source_title_and_body(self):
         m, fw = self.machine(real=True)
-        title, body = 0x200d9100, 0x200d9140
-        m.uc.mem_write(title, b'mod.portable\0')
+        source, title, body = 0x200d9100, 0x200d9120, 0x200d9140
+        m.uc.mem_write(source, b'mod.portable\0')
+        m.uc.mem_write(title, b'Custom title\0')
         m.uc.mem_write(body, '来自模块的通知'.encode() + b'\0')
         for _ in range(2):
-            m.uc.reg_write(UC_ARM_REG_R1, body)
-            self.assertEqual(m.call(native_symbol(m, 'canopus_manager_native_notify'), title), 0)
+            m.uc.reg_write(UC_ARM_REG_R1, title)
+            m.uc.reg_write(UC_ARM_REG_R2, body)
+            self.assertEqual(m.call(native_symbol(m, 'canopus_manager_native_notify'), source), 0)
         self.assertEqual(len(fw.events), 2)
         self.assertEqual(len(fw.reminders), 2)
         uids = [struct.unpack('<Q', m.uc.mem_read(e, 8))[0] for e in fw.events]
         self.assertEqual(uids, [0x43414E4F50555310, 0x43414E4F50555311])
         for pointer in fw.events:
-            self.assertEqual(m.string(m.word(pointer + 12)), 'mod.portable')
+            self.assertEqual(m.string(m.word(pointer + 12)), 'Custom title')
+            self.assertEqual(m.string(m.word(pointer + 16)), 'mod.portable')
             self.assertEqual(m.string(m.word(pointer + 20)), '来自模块的通知')
             self.assertEqual(bytes(m.uc.mem_read(m.word(pointer + 92), 16)), bytes(16))
         self.assertNotEqual(m.word(fw.events[0] + 92), m.word(fw.events[1] + 92))

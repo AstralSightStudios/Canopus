@@ -439,6 +439,110 @@ const SUP_10: &[Mapping] = &[
         symbol_name: "watchface_reset_watchface",
         address: Address::Callable,
     },
+    // Optional: stock hardware services behind the Supervisor platform hooks
+    // (battery, wake locks, screen/brightness, vibration, properties, Bluetooth
+    // adapter state). Each is guarded in Supervisor code; a missing symbol leaves
+    // the matching service group reporting UNSUPPORTED.
+    Mapping {
+        macro_name: "CANOPUS_SUP_PM_BATTERY_READY",
+        symbol_name: "power_battery_ready",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_PM_BATTERY_CHARGING",
+        symbol_name: "power_battery_charging",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_PM_BATTERY_LEVEL",
+        symbol_name: "power_battery_level",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_WAKELOCK_CREATE",
+        symbol_name: "wakelock_create",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_WAKELOCK_ACQUIRE",
+        symbol_name: "wakelock_acquire",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_WAKELOCK_RELEASE",
+        symbol_name: "wakelock_release",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_SCREEN_GET_STATE",
+        symbol_name: "screen_get_state",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_SCREEN_TURN_ON",
+        symbol_name: "screen_turn_on",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_SCREEN_SESSION_CREATE",
+        symbol_name: "screen_session_create",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_SCREEN_SESSION_START",
+        symbol_name: "screen_session_start",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_SCREEN_SESSION_STOP",
+        symbol_name: "screen_session_stop",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_SCREEN_SESSION_SET_AUTO_BRIGHTNESS",
+        symbol_name: "screen_session_set_auto_brightness",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_SCREEN_SESSION_SET_BRIGHTNESS_VALUE",
+        symbol_name: "screen_session_set_brightness_value",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_SCREEN_SESSION_RESTORE_DEFAULT",
+        symbol_name: "screen_session_restore_default",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_VIBRATOR_HAL_TRANSACT",
+        symbol_name: "vibrator_hal_transact",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_PROPERTY_GET",
+        symbol_name: "property_get",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_PROPERTY_GET_INT32",
+        symbol_name: "property_get_int32",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_BT_ADAPTER_GET_INSTANCE",
+        symbol_name: "bt_adapter_get_instance",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_BT_ADAPTER_GET_STATE",
+        symbol_name: "bt_adapter_get_state",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_MKDIR",
+        symbol_name: "mkdir",
+        address: Address::Callable,
+    },
 ];
 const SUP_9: &[Mapping] = &[
     Mapping {

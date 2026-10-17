@@ -128,6 +128,18 @@ pub const HAPTIC_TICK: u32 = 5;
 pub const WAKELOCK_SCREEN: u32 = 1;
 pub const WAKELOCK_CPU: u32 = 2;
 
+pub const SCREEN_OFF: u32 = 0;
+pub const SCREEN_AOD: u32 = 1;
+pub const SCREEN_ON: u32 = 2;
+
+/// "Unknown" sentinels of the plain-integer getters (see `canopus_services.h`).
+pub const DISPLAY_BRIGHTNESS_UNKNOWN: u32 = 0xFFFF_FFFF;
+pub const SYSTEM_BATTERY_UNKNOWN: u32 = 0xFFFF_FFFF;
+pub const BT_ADAPTER_UNKNOWN: u32 = 0xFFFF_FFFF;
+pub const BT_RSSI_UNKNOWN: i32 = i32::MIN;
+pub const BT_ADAPTER_OFF: u32 = 0;
+pub const BT_ADAPTER_ON: u32 = 4;
+
 pub type CbTimer = unsafe extern "C" fn(ctx: *const ContextV1, timer_id: i32, user_data: *mut c_void);
 pub type CbBus = unsafe extern "C" fn(ctx: *const ContextV1, topic: *const c_char, payload: *const c_void, len: u32, user_data: *mut c_void);
 pub type CbL2Rx = unsafe extern "C" fn(ctx: *const ContextV1, channel: u8, payload: *const c_void, len: u16, user_data: *mut c_void);

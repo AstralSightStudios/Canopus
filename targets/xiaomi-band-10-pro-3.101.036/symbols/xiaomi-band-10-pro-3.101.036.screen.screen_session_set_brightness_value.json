@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.screen.screen_session_set_brightness_value",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "screen_session_set_brightness_value",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0ca5a564",
+  "callable_address": "0x0ca5a565",
+  "prototype": "void(void *session, int value)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1036-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1036-001"
+    ],
+    "source": "exact 3.101.036 IDB vela_ap.bin.i64; body shape identical to the reviewed 3.101.043 function and unique in this image; __func__ string cross-references agree for the MiWearScreen and PowerManager entries"
+  },
+  "notes": "Session brightness level on the stock 0..255 scale; stock user setting is clamped to 31..255. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+}

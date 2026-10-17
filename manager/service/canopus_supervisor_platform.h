@@ -13,7 +13,10 @@
  *                       survive reboot and canopus reinstall.
  *
  * Host tests provide a fake platform; the device build provides the real
- * implementation once the APIs are proven.
+ * implementation once the APIs are proven. Hardware hooks (haptics, display,
+ * wake locks, battery, properties, Bluetooth state) come from recovered
+ * firmware entry points and are present per target; see canopus_target_config.h
+ * and canopus_band11_addresses.h.
  */
 #ifndef CANOPUS_SUPERVISOR_PLATFORM_H
 #define CANOPUS_SUPERVISOR_PLATFORM_H
@@ -80,6 +83,7 @@ struct canopus_sup_platform_v1 {
     int (*file_remove)(void *cookie, const char *path);
     int (*file_rename)(void *cookie, const char *old_path, const char *new_path);
     int (*file_stat)(void *cookie, const char *path, void *out_stat);
+    /* mkdir creates one directory; an existing one is EEXIST. Optional. */
     int (*dir_mkdir)(void *cookie, const char *path);
     void *(*dir_open)(void *cookie, const char *path);
     int (*dir_read)(void *cookie, void *dir, void *out_entry);
@@ -94,22 +98,45 @@ struct canopus_sup_platform_v1 {
     void *(*heap_alloc)(void *cookie, uint32_t size);
     void *(*heap_realloc)(void *cookie, void *ptr, uint32_t size);
     void (*heap_release)(void *cookie, void *ptr);
-    /* Post a user-visible notification. Returns 0 on success. Optional:
+    /* Post a user-visible notification attributed to `source` (the posting
+     * module's id) with the caller's `title`. Returns 0 on success. Optional:
      * without it the NOTIFY service group is absent. */
-    int (*notify)(void *cookie, const char *title, const char *body);
+    int (*notify)(void *cookie, const char *source, const char *title,
+                  const char *body);
     int (*reboot)(void *cookie);
-    /* Haptics & Vibration. Optional: returns 0 on success. */
+    /* Every hardware hook below is optional. A target without a recovered
+     * firmware entry point leaves it NULL and the service answers UNSUPPORTED
+     * (or its documented "unknown" value); none may fake a result. Failures
+     * are negative errno values, 0 is success.
+     *
+     * Haptics: vibrate runs the motor for duration_ms (> 0), vibrate_cancel
+     * stops whatever the Supervisor started. */
     int (*vibrate)(void *cookie, uint32_t duration_ms);
-    /* Display control. Optional. */
+    int (*vibrate_cancel)(void *cookie);
+    /* Display. Percent is 0..100 of the manual range; restore_brightness drops
+     * the Supervisor's override. get_brightness reports the manual setting
+     * and returns STATE while auto-brightness decides. */
     int (*set_brightness)(void *cookie, uint32_t percent);
-    uint32_t (*get_brightness)(void *cookie);
+    int (*get_brightness)(void *cookie, uint32_t *percent);
+    int (*restore_brightness)(void *cookie);
     int (*wake_screen)(void *cookie);
-    int (*is_screen_on)(void *cookie);
-    /* Battery & Power. Optional. */
-    uint32_t (*battery_level)(void *cookie);
-    int (*is_charging)(void *cookie);
-    /* System properties. Optional. */
+    /* 0 off, 1 always-on display, 2 on. */
+    int (*screen_state)(void *cookie);
+    /* Wake locks: `index` names one of CANOPUS_WAKELOCK_MAX Supervisor slots
+     * (the platform keeps one native lock object per index and reuses it);
+     * `flags` are CANOPUS_WAKELOCK_*. release undoes exactly one acquire. */
+    int (*wakelock_acquire)(void *cookie, uint32_t index, uint32_t flags);
+    int (*wakelock_release)(void *cookie, uint32_t index);
+    /* Battery: STATE until the firmware has reported both values. */
+    int (*battery_state)(void *cookie, uint32_t *percent, int *charging);
+    /* System property read. Copies at most max_len - 1 bytes plus NUL and
+     * returns the copied length, or NOTFOUND when the key is absent. */
     int (*get_property)(void *cookie, const char *key, char *buf, uint32_t max_len);
+    /* Bluetooth: stock adapter state, whether a MiWear companion link exists
+     * (0/1) and the link RSSI. */
+    int (*bt_adapter_state)(void *cookie, uint32_t *state);
+    int (*bt_is_connected)(void *cookie);
+    int (*bt_rssi)(void *cookie, int32_t *dbm);
     /* Start a boot-resident event source on the serialized module/UI task.
      * It must keep calling poll after module activation returns. No source
      * means timer_create returns UNSUPPORTED; no worker may invoke UI callbacks. */
@@ -122,6 +149,7 @@ struct canopus_sup_platform_v1 {
 int canopus_sup_l2_start(void);
 void canopus_sup_l2_poll(void);
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len);
+int sup_l2_connected(void *cookie);
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PLATFORM-HW-4139-001",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Which stock entry points back battery state, wake locks, screen state/wake, manual brightness, vibration and system properties for the Supervisor platform services?",
+  "candidate_symbols": [
+    "mkdir",
+    "power_battery_ready",
+    "power_battery_snapshot",
+    "property_get",
+    "property_get_int32",
+    "screen_session_create",
+    "screen_session_restore_default",
+    "screen_session_set_auto_brightness",
+    "screen_session_set_brightness_value",
+    "screen_session_start",
+    "screen_session_stop",
+    "screen_state",
+    "screen_turn_on",
+    "vibrator_cancel",
+    "vibrator_run",
+    "wakelock_acquire",
+    "wakelock_create",
+    "wakelock_release"
+  ],
+  "prototype_hypothesis": "Stock PowerManager/MiWearScreen/vibrator/property APIs are called as ordinary AAPCS functions from the UI owner thread; none is ISR-safe.",
+  "callsite_evidence": [
+    "PowerManager wakelock_create accepts only level 6 and 26 (invalid levelAndFlags log); the stock alarm and sport apps use it as a screen keep-on lock.",
+    "MiWearScreen __func__ strings screen_turn_on, screen_session_{create,start,stop,set_brightness_value,set_auto_brightness,restore_default} each map to one function through string cross-references.",
+    "Stock brightness: apply_brightness_settings arbitrates active sessions; the user setting clamps to 31..255 and persists as persist.screen.brightness_value.",
+    "Bluetooth adapter state compares against 0 (off) and 4 (on) in stock code; bt_adapter_get_state is already a recovered symbol."
+  ],
+  "control_flow_evidence": [
+    "exact 4.100.139 IDB vela_ap.bin.i64; body shape identical to the reviewed 4.100.155 function and unique in this image"
+  ],
+  "ownership_analysis": "wakelock and screen session objects are heap objects owned by the creator; the Supervisor creates a bounded set once and never destroys them, so no free path is called. Tag strings passed to create calls must outlive the objects (static storage in the Supervisor).",
+  "unsafe_assumptions": [
+    "No device probe: argument registers, blocking behavior and thread affinity are inferred from decompilation only.",
+    "Brightness override relies on session arbitration; stock UI may overwrite it when the user changes brightness."
+  ],
+  "recommended_probe": "Mirage or device: query battery, toggle a Canopus wakelock with the screen idle, set brightness to 20% and 100%, vibrate 50 ms and cancel.",
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-18T00:00:00Z"
+}

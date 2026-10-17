@@ -4,7 +4,7 @@
  * firmware : 4.100.155 (user-4.100.155-cn-202609041500)
  * sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
  * revision : 1
- * input_digest: 6943713511604b0e
+ * input_digest: 447035d11110e6f3
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
@@ -394,6 +394,7 @@ static inline int * canopus_fw_errno_location(void) {
  * miwear_session_lookup: restricted - not exported until context/ownership approved
  * miwear_transport_l2_rx: restricted - not exported until context/ownership approved
  * miwear_transport_send: restricted - not exported until context/ownership approved
+ * mkdir: restricted - not exported until context/ownership approved
  * mm_mallinfo: restricted - not exported until context/ownership approved
  * mm_memalign: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
@@ -405,6 +406,10 @@ static inline int * canopus_fw_errno_location(void) {
  * page_goto: restricted - not exported until context/ownership approved
  * page_navigator_open_page: restricted - not exported until context/ownership approved
  * page_stack_get: restricted - not exported until context/ownership approved
+ * power_battery_ready: restricted - not exported until context/ownership approved
+ * power_battery_snapshot: restricted - not exported until context/ownership approved
+ * property_get: restricted - not exported until context/ownership approved
+ * property_get_int32: restricted - not exported until context/ownership approved
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: restricted - not exported until context/ownership approved
  * quickapp_register_app: restricted - not exported until context/ownership approved
@@ -414,6 +419,13 @@ static inline int * canopus_fw_errno_location(void) {
  * register_driver: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved
+ * screen_session_create: restricted - not exported until context/ownership approved
+ * screen_session_restore_default: restricted - not exported until context/ownership approved
+ * screen_session_set_auto_brightness: restricted - not exported until context/ownership approved
+ * screen_session_set_brightness_value: restricted - not exported until context/ownership approved
+ * screen_session_start: restricted - not exported until context/ownership approved
+ * screen_session_stop: restricted - not exported until context/ownership approved
+ * screen_turn_on: restricted - not exported until context/ownership approved
  * sdp_builder_create: restricted - not exported until context/ownership approved
  * sdp_commit: restricted - not exported until context/ownership approved
  * sdp_set_raw_attribute: restricted - not exported until context/ownership approved
@@ -435,6 +447,11 @@ static inline int * canopus_fw_errno_location(void) {
  * unregister_driver: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: restricted - not exported until context/ownership approved
  * vg_lite_finish: restricted - not exported until context/ownership approved
+ * vibrator_cancel: restricted - not exported until context/ownership approved
+ * vibrator_run: restricted - not exported until context/ownership approved
+ * wakelock_acquire: restricted - not exported until context/ownership approved
+ * wakelock_create: restricted - not exported until context/ownership approved
+ * wakelock_release: restricted - not exported until context/ownership approved
  * watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
  * watchface_reset_watchface: restricted - not exported until context/ownership approved
  * write: restricted - not exported until context/ownership approved

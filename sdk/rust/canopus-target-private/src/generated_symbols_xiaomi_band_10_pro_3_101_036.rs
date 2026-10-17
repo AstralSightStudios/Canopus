@@ -465,6 +465,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int64_t(int, int64_t, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "mkdir",
+        kind: "function",
+        entry: 0xc1c1170usize,
+        callable: 0xc1c1171usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(const char *path, uint32_t mode)",
+    },
+    TargetPrivateSymbolRecord {
         name: "net_lock",
         kind: "function",
         entry: 0xc1ec59cusize,
@@ -652,6 +661,60 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "native-full-trust",
         prototype: "int32(int, const void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "power_battery_charging",
+        kind: "function",
+        entry: 0xca55dd8usize,
+        callable: 0xca55dd9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "power_battery_level",
+        kind: "function",
+        entry: 0xca55df0usize,
+        callable: 0xca55df1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "power_battery_ready",
+        kind: "function",
+        entry: 0xca55da0usize,
+        callable: 0xca55da1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "wakelock_acquire",
+        kind: "function",
+        entry: 0xca56124usize,
+        callable: 0xca56125usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *wakelock)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "wakelock_create",
+        kind: "function",
+        entry: 0xca55f1cusize,
+        callable: 0xca55f1dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(uint32_t level_and_flags, const char *tag)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "wakelock_release",
+        kind: "function",
+        entry: 0xca561e0usize,
+        callable: 0xca561e1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *wakelock)",
     },
     TargetPrivateSymbolRecord {
         name: "bt_adapter_set_scan_mode",
@@ -978,6 +1041,96 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void *",
     },
     TargetPrivateSymbolRecord {
+        name: "property_get",
+        kind: "function",
+        entry: 0xc3bbbdcusize,
+        callable: 0xc3bbbddusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(const char *key, char *value, const char *default_value)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "property_get_int32",
+        kind: "function",
+        entry: 0xc3bbe0cusize,
+        callable: 0xc3bbe0dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(const char *key, int default_value)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "screen_get_state",
+        kind: "function",
+        entry: 0xca5a684usize,
+        callable: 0xca5a685usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "screen_session_create",
+        kind: "function",
+        entry: 0xca5a19cusize,
+        callable: 0xca5a19dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(const char *tag)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "screen_session_restore_default",
+        kind: "function",
+        entry: 0xca5a610usize,
+        callable: 0xca5a611usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *session)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "screen_session_set_auto_brightness",
+        kind: "function",
+        entry: 0xca5a500usize,
+        callable: 0xca5a501usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *session, int status)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "screen_session_set_brightness_value",
+        kind: "function",
+        entry: 0xca5a564usize,
+        callable: 0xca5a565usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *session, int value)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "screen_session_start",
+        kind: "function",
+        entry: 0xca5a2b4usize,
+        callable: 0xca5a2b5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *session, int auto_stop)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "screen_session_stop",
+        kind: "function",
+        entry: 0xca5a344usize,
+        callable: 0xca5a345usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *session)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "screen_turn_on",
+        kind: "function",
+        entry: 0xca5a984usize,
+        callable: 0xca5a985usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(const char *tag, int source)",
+    },
+    TargetPrivateSymbolRecord {
         name: "service_manager_get_profile",
         kind: "function",
         entry: 0xc3a77f4usize,
@@ -1212,6 +1365,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *, const void *, uint32_t, uint32_t)",
     },
     TargetPrivateSymbolRecord {
+        name: "vibrator_hal_transact",
+        kind: "function",
+        entry: 0xc3bc658usize,
+        callable: 0xc3bc659usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *message)",
+    },
+    TargetPrivateSymbolRecord {
         name: "watchface_manager_delete_watchface",
         kind: "function",
         entry: 0xca7d388usize,
@@ -1314,6 +1476,8 @@ pub const IOCTL_ENTRY: usize = 0xc1c0d2cusize;
 pub const IOCTL_CALLABLE: usize = 0xc1c0d2dusize;
 pub const LSEEK_ENTRY: usize = 0xc1c10acusize;
 pub const LSEEK_CALLABLE: usize = 0xc1c10adusize;
+pub const MKDIR_ENTRY: usize = 0xc1c1170usize;
+pub const MKDIR_CALLABLE: usize = 0xc1c1171usize;
 pub const NET_LOCK_ENTRY: usize = 0xc1ec59cusize;
 pub const NET_LOCK_CALLABLE: usize = 0xc1ec59dusize;
 pub const NET_UNLOCK_ENTRY: usize = 0xc1ec5acusize;
@@ -1356,6 +1520,18 @@ pub const UNREGISTER_DRIVER_ENTRY: usize = 0xc1a0e1cusize;
 pub const UNREGISTER_DRIVER_CALLABLE: usize = 0xc1a0e1dusize;
 pub const WRITE_ENTRY: usize = 0xc1c31c8usize;
 pub const WRITE_CALLABLE: usize = 0xc1c31c9usize;
+pub const POWER_BATTERY_CHARGING_ENTRY: usize = 0xca55dd8usize;
+pub const POWER_BATTERY_CHARGING_CALLABLE: usize = 0xca55dd9usize;
+pub const POWER_BATTERY_LEVEL_ENTRY: usize = 0xca55df0usize;
+pub const POWER_BATTERY_LEVEL_CALLABLE: usize = 0xca55df1usize;
+pub const POWER_BATTERY_READY_ENTRY: usize = 0xca55da0usize;
+pub const POWER_BATTERY_READY_CALLABLE: usize = 0xca55da1usize;
+pub const WAKELOCK_ACQUIRE_ENTRY: usize = 0xca56124usize;
+pub const WAKELOCK_ACQUIRE_CALLABLE: usize = 0xca56125usize;
+pub const WAKELOCK_CREATE_ENTRY: usize = 0xca55f1cusize;
+pub const WAKELOCK_CREATE_CALLABLE: usize = 0xca55f1dusize;
+pub const WAKELOCK_RELEASE_ENTRY: usize = 0xca561e0usize;
+pub const WAKELOCK_RELEASE_CALLABLE: usize = 0xca561e1usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_ENTRY: usize = 0xc39f078usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_CALLABLE: usize = 0xc39f079usize;
 pub const BT_ALLOC_ENTRY: usize = 0xc8284fcusize;
@@ -1424,6 +1600,26 @@ pub const LVX_OBJECT_DELETE_CALLABLE: usize = 0xc588ed9usize;
 pub const LVX_OBJECT_SET_SIZE_ENTRY: usize = 0xc588e78usize;
 pub const LVX_OBJECT_SET_SIZE_CALLABLE: usize = 0xc588e79usize;
 pub const STYLE_MISANS_DEMIBOLD_32_ENTRY: usize = 0x2010a02cusize;
+pub const PROPERTY_GET_ENTRY: usize = 0xc3bbbdcusize;
+pub const PROPERTY_GET_CALLABLE: usize = 0xc3bbbddusize;
+pub const PROPERTY_GET_INT32_ENTRY: usize = 0xc3bbe0cusize;
+pub const PROPERTY_GET_INT32_CALLABLE: usize = 0xc3bbe0dusize;
+pub const SCREEN_GET_STATE_ENTRY: usize = 0xca5a684usize;
+pub const SCREEN_GET_STATE_CALLABLE: usize = 0xca5a685usize;
+pub const SCREEN_SESSION_CREATE_ENTRY: usize = 0xca5a19cusize;
+pub const SCREEN_SESSION_CREATE_CALLABLE: usize = 0xca5a19dusize;
+pub const SCREEN_SESSION_RESTORE_DEFAULT_ENTRY: usize = 0xca5a610usize;
+pub const SCREEN_SESSION_RESTORE_DEFAULT_CALLABLE: usize = 0xca5a611usize;
+pub const SCREEN_SESSION_SET_AUTO_BRIGHTNESS_ENTRY: usize = 0xca5a500usize;
+pub const SCREEN_SESSION_SET_AUTO_BRIGHTNESS_CALLABLE: usize = 0xca5a501usize;
+pub const SCREEN_SESSION_SET_BRIGHTNESS_VALUE_ENTRY: usize = 0xca5a564usize;
+pub const SCREEN_SESSION_SET_BRIGHTNESS_VALUE_CALLABLE: usize = 0xca5a565usize;
+pub const SCREEN_SESSION_START_ENTRY: usize = 0xca5a2b4usize;
+pub const SCREEN_SESSION_START_CALLABLE: usize = 0xca5a2b5usize;
+pub const SCREEN_SESSION_STOP_ENTRY: usize = 0xca5a344usize;
+pub const SCREEN_SESSION_STOP_CALLABLE: usize = 0xca5a345usize;
+pub const SCREEN_TURN_ON_ENTRY: usize = 0xca5a984usize;
+pub const SCREEN_TURN_ON_CALLABLE: usize = 0xca5a985usize;
 pub const SERVICE_MANAGER_GET_PROFILE_ENTRY: usize = 0xc3a77f4usize;
 pub const SERVICE_MANAGER_GET_PROFILE_CALLABLE: usize = 0xc3a77f5usize;
 pub const SERVICE_MANAGER_REGISTER_ENTRY: usize = 0xc3a7618usize;
@@ -1476,6 +1672,8 @@ pub const LVX_PAGE_TITLE_CREATE_ENTRY: usize = 0xc4a99acusize;
 pub const LVX_PAGE_TITLE_CREATE_CALLABLE: usize = 0xc4a99adusize;
 pub const LVX_STYLE_APPLY_ENTRY: usize = 0xc49eb80usize;
 pub const LVX_STYLE_APPLY_CALLABLE: usize = 0xc49eb81usize;
+pub const VIBRATOR_HAL_TRANSACT_ENTRY: usize = 0xc3bc658usize;
+pub const VIBRATOR_HAL_TRANSACT_CALLABLE: usize = 0xc3bc659usize;
 pub const WATCHFACE_MANAGER_DELETE_WATCHFACE_ENTRY: usize = 0xca7d388usize;
 pub const WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = 0xca7d389usize;
 
@@ -1896,6 +2094,30 @@ pub unsafe fn raw_unregister_driver(a0: *const u8) -> i32 {
     unsafe { f(a0) }
 }
 
+pub unsafe fn raw_power_battery_charging() -> i32 {
+    type F = unsafe extern "C" fn() -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_POWER_BATTERY_CHARGING_CALLABLE)
+    };
+    unsafe { f() }
+}
+
+pub unsafe fn raw_power_battery_level() -> i32 {
+    type F = unsafe extern "C" fn() -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_POWER_BATTERY_LEVEL_CALLABLE)
+    };
+    unsafe { f() }
+}
+
+pub unsafe fn raw_power_battery_ready() -> i32 {
+    type F = unsafe extern "C" fn() -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_POWER_BATTERY_READY_CALLABLE)
+    };
+    unsafe { f() }
+}
+
 pub unsafe fn raw_bt_adapter_set_scan_mode(a0: i32, a1: i32) -> i32 {
     type F = unsafe extern "C" fn(i32, i32) -> i32;
     let f: F = unsafe {
@@ -2121,6 +2343,14 @@ pub unsafe fn raw_sdp_unregister(a0: u32) -> i32 {
         core::mem::transmute(canopus_target_generated::CANOPUS_FW_SDP_UNREGISTER_CALLABLE)
     };
     unsafe { f(a0) }
+}
+
+pub unsafe fn raw_screen_get_state() -> i32 {
+    type F = unsafe extern "C" fn() -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_SCREEN_GET_STATE_CALLABLE)
+    };
+    unsafe { f() }
 }
 
 pub unsafe fn raw_service_manager_get_profile(a0: u32) -> *mut core::ffi::c_void {
@@ -2390,4 +2620,4 @@ pub unsafe fn raw_watchface_manager_delete_watchface(a0: *const u8) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 89
+// generated target-private raw wrapper count: 93

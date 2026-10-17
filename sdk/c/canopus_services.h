@@ -49,7 +49,11 @@ enum canopus_service_group {
     CANOPUS_SVC_GROUP_COUNT
 };
 
-/* Return values: 0 or a non-negative count on success, negative on failure. */
+/* Return values: 0 or a non-negative count on success, negative on failure.
+ * The codes are negated POSIX errno values; a group answers UNSUPPORTED when
+ * this target has no recovered firmware entry point for the operation, never a
+ * made-up success. Getters that return a plain integer report "unknown" through
+ * the sentinels documented next to them. */
 #define CANOPUS_SVC_OK              0
 #define CANOPUS_SVC_ERR_ARGUMENT    (-22)
 #define CANOPUS_SVC_ERR_UNSUPPORTED (-38)
@@ -58,6 +62,11 @@ enum canopus_service_group {
 #define CANOPUS_SVC_ERR_NOMEM       (-12)
 #define CANOPUS_SVC_ERR_NOTFOUND    (-2)
 #define CANOPUS_SVC_ERR_BUSY        (-16)
+#define CANOPUS_SVC_ERR_ACCESS      (-13) /* path or operation not permitted */
+#define CANOPUS_SVC_ERR_EXIST       (-17) /* already exists */
+#define CANOPUS_SVC_ERR_NOTDIR      (-20)
+#define CANOPUS_SVC_ERR_ISDIR       (-21)
+#define CANOPUS_SVC_ERR_NOSPACE     (-28)
 
 /* -------------------------------------------------------------------------- */
 /* LOG                                                                        */
@@ -88,6 +97,21 @@ enum canopus_service_group {
 #define CANOPUS_FS_NAME_MAX 63u
 #define CANOPUS_FS_PATH_MAX 128u
 
+/* Path forms accepted by ctx->fs (every other form is ARGUMENT):
+ *   "name"            module-private flat file       /data/canopus/m.<id>.<name>
+ *   "dir/sub/name"    module-private sub-path        /data/canopus/m.<id>/dir/sub/name
+ *   "/data/..."       an absolute path below one of the shared roots:
+ *       /data/offlinelog/       read-write
+ *       /data/canopus/shared/   read-write, shared between modules
+ *       /data/app/              read-only (Band 10 Pro package area)
+ *       /data/quickapp/         read-only (Band 11 package area)
+ * Segments are [A-Za-z0-9_.-] and never start with '.', so "..", "//" and
+ * trailing "." are rejected. Writing below a read-only root is ACCESS.
+ * Failures carry the filesystem's reason: a missing file or parent is
+ * NOTFOUND (the open that finds no config file is distinguishable from an I/O
+ * fault), EXIST, ACCESS, NOTDIR, ISDIR, NOSPACE and BUSY map to their codes,
+ * anything else is IO. */
+
 struct canopus_fs_stat {
     uint32_t size;
     uint8_t is_dir;
@@ -113,7 +137,15 @@ struct canopus_fs_dirent {
 /* -------------------------------------------------------------------------- */
 
 #define CANOPUS_NOTIFY_BODY_MAX 120u
+#define CANOPUS_NOTIFY_TITLE_MAX 40u
 #define CANOPUS_NOTIFY_MAX_POSTS 8u
+/* The notification shows the caller's title (the module id when it is NULL or
+ * empty) and always names the posting module as its source. The stock
+ * notification path has no icon table: icon_id must be 0 (the Canopus icon),
+ * any other value is UNSUPPORTED. post_with_icon returns
+ * CANOPUS_NOTIFY_HAPTIC_SKIPPED when the notification was posted but the
+ * requested vibration could not be performed. */
+#define CANOPUS_NOTIFY_HAPTIC_SKIPPED 1
 
 /* -------------------------------------------------------------------------- */
 /* HOOK (Universal Dynamic Function Hook Engine)                              */
@@ -132,11 +164,22 @@ typedef enum canopus_hook_type {
 /* HAPTICS (Vibration & Tactile Presets)                                      */
 /* -------------------------------------------------------------------------- */
 
-#define CANOPUS_HAPTIC_CLICK        1u
-#define CANOPUS_HAPTIC_DOUBLE_CLICK 2u
-#define CANOPUS_HAPTIC_HEAVY        3u
-#define CANOPUS_HAPTIC_ALERT        4u
-#define CANOPUS_HAPTIC_TICK         5u
+#define CANOPUS_HAPTIC_CLICK        1u /* one 20 ms pulse */
+#define CANOPUS_HAPTIC_DOUBLE_CLICK 2u /* 20 ms, 60 ms gap, 20 ms */
+#define CANOPUS_HAPTIC_HEAVY        3u /* one 100 ms pulse */
+#define CANOPUS_HAPTIC_ALERT        4u /* one 250 ms pulse */
+#define CANOPUS_HAPTIC_TICK         5u /* one 10 ms pulse */
+
+/* vibrate: 1..CANOPUS_HAPTIC_MAX_MS. vibrate_pattern alternates on/off
+ * durations starting with ON (pattern_ms[0] is the first pulse, [1] the gap
+ * after it, ...); a zero entry is skipped and at most
+ * CANOPUS_HAPTIC_PATTERN_MAX entries are accepted. Steps after the first are
+ * played from the Supervisor's timer pump (10 ms resolution). One vibration
+ * plays at a time: a new request from any module replaces the running one, and
+ * cancel only stops the caller's own. The user's "vibration disabled" setting
+ * is honored by the firmware and surfaces as STATE. */
+#define CANOPUS_HAPTIC_MAX_MS       5000u
+#define CANOPUS_HAPTIC_PATTERN_MAX  16u
 
 /* -------------------------------------------------------------------------- */
 /* DISPLAY & WAKE LOCKS                                                       */
@@ -145,8 +188,59 @@ typedef enum canopus_hook_type {
 #define CANOPUS_WAKELOCK_SCREEN 1u
 #define CANOPUS_WAKELOCK_CPU    2u
 
+/* Wake locks are owned by the acquiring module: release_wake_lock accepts only
+ * the module's own ids, an unloading module loses its locks and the screen
+ * lock is reference counted by the firmware. SCREEN keeps the screen on (and
+ * therefore the CPU); CPU on its own has no stock mechanism and is
+ * UNSUPPORTED, CPU|SCREEN is accepted. At most CANOPUS_WAKELOCK_MAX locks
+ * exist, CANOPUS_WAKELOCK_PER_MODULE per module (BUSY beyond that). */
+#define CANOPUS_WAKELOCK_MAX        8u
+#define CANOPUS_WAKELOCK_PER_MODULE 4u
+
+/* Screen states (is_screen_on is 1 only for ON; the always-on display is 0). */
+#define CANOPUS_SCREEN_OFF 0u
+#define CANOPUS_SCREEN_AOD 1u
+#define CANOPUS_SCREEN_ON  2u
+
+/* Brightness is a percentage of the firmware's manual range. set_brightness
+ * overrides the system setting (the lowest value is the stock minimum, never a
+ * black screen) until the same module sets it again, the module unloads, or
+ * another module overrides it; the override is dropped on unload.
+ * get_brightness returns the active override, else the stored manual setting,
+ * and CANOPUS_DISPLAY_BRIGHTNESS_UNKNOWN while auto-brightness controls it or
+ * this target cannot read it. */
+#define CANOPUS_DISPLAY_BRIGHTNESS_UNKNOWN UINT32_C(0xFFFFFFFF)
+
 /* Forward declaration */
 struct canopus_context_v1;
+
+/* System events on ctx->bus. Payloads are packed bytes; each is delivered when
+ * the value changes, and once to a new subscriber after it subscribes (the
+ * Supervisor samples the device every 500 ms from its timer pump, so delivery
+ * needs a target with a timer pump). */
+#define CANOPUS_BUS_TOPIC_SCREEN  "canopus/screen/state"  /* u8 CANOPUS_SCREEN_* */
+#define CANOPUS_BUS_TOPIC_BATTERY "canopus/battery/level" /* u8 percent, u8 charging */
+#define CANOPUS_BUS_TOPIC_BT      "canopus/bt/state"      /* u8 adapter state, u8 link: 1 up, 0 down, 0xFF unknown */
+
+/* system: battery_level is 0..100, or CANOPUS_SYSTEM_BATTERY_UNKNOWN before the
+ * firmware has reported it / when this target cannot read it. is_charging is
+ * 0 or 1; a negative value is an error (STATE: not reported yet, UNSUPPORTED). */
+#define CANOPUS_SYSTEM_BATTERY_UNKNOWN UINT32_C(0xFFFFFFFF)
+
+/* bt: adapter_state is the stock Bluetooth stack's state (0 off, 4 on, others
+ * are transitions) or CANOPUS_BT_ADAPTER_UNKNOWN. is_connected is 1 while a
+ * MiWear companion link exists, 0 when none, negative when this target cannot
+ * tell. get_rssi is in dBm or CANOPUS_BT_RSSI_UNKNOWN (no stock source yet).
+ * l2_register_rx accepts channels CANOPUS_BT_MODULE_CHANNEL_FIRST..LAST except
+ * the Supervisor's control channel 0x43; a registered channel's encrypted
+ * frames are delivered to the callback on the module/UI task instead of the
+ * stock handler. A NULL callback removes the caller's registration. */
+#define CANOPUS_BT_ADAPTER_OFF     0u
+#define CANOPUS_BT_ADAPTER_ON      4u
+#define CANOPUS_BT_ADAPTER_UNKNOWN UINT32_C(0xFFFFFFFF)
+#define CANOPUS_BT_RSSI_UNKNOWN    INT32_MIN
+#define CANOPUS_BT_MODULE_CHANNEL_FIRST 0x40u
+#define CANOPUS_BT_MODULE_CHANNEL_LAST  0x4Fu
 
 /* Callbacks */
 typedef void (*canopus_timer_callback_t)(const struct canopus_context_v1 *ctx, int32_t timer_id, void *user_data);

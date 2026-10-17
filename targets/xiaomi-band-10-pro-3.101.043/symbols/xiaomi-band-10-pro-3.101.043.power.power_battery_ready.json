@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.power.power_battery_ready",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "power_battery_ready",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0ca6e658",
+  "callable_address": "0x0ca6e659",
+  "prototype": "int(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1043-001"
+    ],
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64 (PowerManager, MiWearScreen, vibrator HAL client and property library review)"
+  },
+  "notes": "PowerManager getter: both the charging-state and level flags have been received from the battery_state topic. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+}

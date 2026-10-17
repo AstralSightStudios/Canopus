@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 7
- * input_digest: 4213d2af6c0d368a
+ * input_digest: 37f329388d8b977e
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -608,6 +608,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * miwear_session_lookup: restricted - not exported until context/ownership approved
  * miwear_transport_l2_rx: restricted - not exported until context/ownership approved
  * miwear_transport_send: restricted - not exported until context/ownership approved
+ * mkdir: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * notifications_scroll: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
@@ -633,6 +634,11 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * p67_blur_snapshot_to_buffer: restricted - not exported until context/ownership approved
  * p67_blur_style_get: restricted - not exported until context/ownership approved
  * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated
+ * power_battery_charging: restricted - not exported until context/ownership approved
+ * power_battery_level: restricted - not exported until context/ownership approved
+ * power_battery_ready: restricted - not exported until context/ownership approved
+ * property_get: restricted - not exported until context/ownership approved
+ * property_get_int32: restricted - not exported until context/ownership approved
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
@@ -640,6 +646,14 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * register_blockdriver: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved
+ * screen_get_state: restricted - not exported until context/ownership approved
+ * screen_session_create: restricted - not exported until context/ownership approved
+ * screen_session_restore_default: restricted - not exported until context/ownership approved
+ * screen_session_set_auto_brightness: restricted - not exported until context/ownership approved
+ * screen_session_set_brightness_value: restricted - not exported until context/ownership approved
+ * screen_session_start: restricted - not exported until context/ownership approved
+ * screen_session_stop: restricted - not exported until context/ownership approved
+ * screen_turn_on: restricted - not exported until context/ownership approved
  * sdp_builder_create: restricted - not exported until context/ownership approved
  * sdp_commit: restricted - not exported until context/ownership approved
  * sdp_set_raw_attribute: restricted - not exported until context/ownership approved
@@ -660,6 +674,10 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * unlink: restricted - not exported until context/ownership approved
  * unregister_blockdriver: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
+ * vibrator_hal_transact: restricted - not exported until context/ownership approved
+ * wakelock_acquire: restricted - not exported until context/ownership approved
+ * wakelock_create: restricted - not exported until context/ownership approved
+ * wakelock_release: restricted - not exported until context/ownership approved
  * watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
  * watchface_reset_watchface: restricted - not exported until context/ownership approved
  * widgets_scroll: restricted - not exported until context/ownership approved

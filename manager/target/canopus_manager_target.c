@@ -1853,7 +1853,7 @@ static struct band11_notification_context notify_contexts[BAND11_NOTIFY_RING];
 static uint32_t notify_counter;
 
 #endif /* CANOPUS_MGR_BAND11 */
-int canopus_manager_native_notify(const char *title, const char *body)
+int canopus_manager_native_notify(const char *source, const char *title, const char *body)
 {
 #ifndef CANOPUS_MGR_BAND11
     typedef int (*notification_insert_fn)(
@@ -1889,7 +1889,7 @@ int canopus_manager_native_notify(const char *title, const char *body)
     message.message_id = UINT64_C(0x43414E4F50555310) + (notify_counter++ & 0xffu);
 #endif /* CANOPUS_MGR_BAND11 */
     message.title = (void *)title;
-    message.source = (void *)title;
+    message.source = (void *)source;
     message.body = (void *)body;
 #ifndef CANOPUS_MGR_BAND11
     return notification_insert(&message) < 0 ? -1 : 0;

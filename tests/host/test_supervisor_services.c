@@ -27,28 +27,62 @@ static uint32_t g_now;
 static void (*g_timer_poll)(void *);
 static void *g_timer_data;
 
+/* Directories that exist: the stock ones plus whatever mkdir created. */
+#define MAX_DIRS 16
+static char g_dirs[MAX_DIRS][96];
+static int g_dir_count;
+static int g_mkdir_calls;
+static uint32_t g_last_open_flags;
+
+static int dir_exists(const char *path)
+{
+    static const char *const stock[] = {"/data/canopus", "/data/offlinelog", "/data/app"};
+    int i;
+    for (i = 0; i < 3; i++) if (strcmp(path, stock[i]) == 0) return 1;
+    for (i = 0; i < g_dir_count; i++) if (strcmp(path, g_dirs[i]) == 0) return 1;
+    return 0;
+}
+
+/* The parent of `path` must exist; flat module files live in /data/canopus. */
+static int parent_exists(const char *path)
+{
+    char parent[96];
+    const char *slash = strrchr(path, '/');
+    if (slash == 0 || slash == path) return 1;
+    memcpy(parent, path, (size_t)(slash - path));
+    parent[slash - path] = '\0';
+    return dir_exists(parent);
+}
+
 static int f_open(void *c, const char *path, uint32_t flags)
 {
     int i, fd;
+    int writes = (flags & CANOPUS_FS_WRITE) != 0u;
     (void)c;
+    g_last_open_flags = flags;
     if (g_fail_open) return -28;
     for (i = 0; i < MAX_FILES; i++) {
         if (g_files[i].used && strcmp(g_files[i].path, path) == 0) break;
     }
-    if (flags == CANOPUS_FS_READ) {
+    if (!writes) {
         if (i == MAX_FILES) return -2;
     } else {
         if (i == MAX_FILES) {
+            if (!parent_exists(path)) return -2;
             for (i = 0; i < MAX_FILES && g_files[i].used; i++) {}
             if (i == MAX_FILES) return -28;
             g_files[i].used = 1;
             strcpy(g_files[i].path, path);
+            g_files[i].size = 0;
+        } else if ((flags & (CANOPUS_FS_APPEND | CANOPUS_FS_READ)) == 0u ||
+                   (flags & CANOPUS_FS_TRUNC) != 0u) {
+            g_files[i].size = 0;
         }
-        g_files[i].size = 0;
     }
     for (fd = 0; fd < MAX_FDS && g_fds[fd].open; fd++) {}
     if (fd == MAX_FDS) return -24;
-    g_fds[fd].file = i; g_fds[fd].pos = 0; g_fds[fd].open = 1;
+    g_fds[fd].file = i; g_fds[fd].open = 1;
+    g_fds[fd].pos = (flags & CANOPUS_FS_APPEND) != 0u ? g_files[i].size : 0u;
     return fd;
 }
 static int32_t f_read(void *c, int fd, void *b, uint32_t n)
@@ -130,9 +164,22 @@ static int f_stat(void *c, const char *p, void *out_st)
             return 0;
         }
     }
+    if (dir_exists(p)) {
+        st->size = 0;
+        st->is_dir = 1;
+        return 0;
+    }
     return -2;
 }
-static int f_mkdir(void *c, const char *p) { (void)c; (void)p; return 0; }
+static int f_mkdir(void *c, const char *p)
+{
+    (void)c;
+    g_mkdir_calls++;
+    if (dir_exists(p)) return -17;
+    if (!parent_exists(p) || g_dir_count == MAX_DIRS) return -2;
+    strcpy(g_dirs[g_dir_count++], p);
+    return 0;
+}
 static void *f_dir_open(void *c, const char *p) { (void)c; (void)p; return (void *)1; }
 static int f_dir_read(void *c, void *d, void *entry)
 {
@@ -198,19 +245,92 @@ static void advance_time(uint32_t ms)
 }
 static int g_notified;
 static char g_notice[160];
-static int p_notify(void *c, const char *title, const char *body)
+static int p_notify(void *c, const char *source, const char *title, const char *body)
 {
     (void)c;
     g_notified++;
-    snprintf(g_notice, sizeof(g_notice), "%s|%s", title, body);
+    snprintf(g_notice, sizeof(g_notice), "%s|%s|%s", source, title, body);
     return 0;
 }
 static int g_heap_live;
 static void *p_heap_alloc(void *c, uint32_t n) { (void)c; g_heap_live++; return malloc(n); }
 static void p_heap_release(void *c, void *p) { (void)c; g_heap_live--; free(p); }
-static int p_vibrate(void *c, uint32_t ms) { (void)c; (void)ms; return 0; }
-static int p_set_brightness(void *c, uint32_t p) { (void)c; (void)p; return 0; }
-static int p_wake_screen(void *c) { (void)c; return 0; }
+
+/* Hardware fakes: a vibrator, a screen with wake locks, a battery, properties,
+ * a Bluetooth stack and an L2 transport. */
+static uint32_t g_vib_ms[16];
+static uint32_t g_vib_at[16];
+static int g_vib_count, g_vib_cancels, g_vib_rc;
+static int p_vibrate(void *c, uint32_t ms)
+{
+    (void)c;
+    if (g_vib_rc != 0) return g_vib_rc;
+    if (g_vib_count < 16) { g_vib_ms[g_vib_count] = ms; g_vib_at[g_vib_count] = g_now; }
+    g_vib_count++;
+    return 0;
+}
+static int p_vibrate_cancel(void *c) { (void)c; g_vib_cancels++; return 0; }
+
+static int g_screen = 2;
+static int g_wake_calls;
+static int p_screen_state(void *c) { (void)c; return g_screen; }
+static int p_wake_screen(void *c) { (void)c; g_wake_calls++; g_screen = 2; return 0; }
+
+static int g_brightness_set = -1, g_brightness_restores;
+static int p_set_brightness(void *c, uint32_t pct) { (void)c; g_brightness_set = (int)pct; return 0; }
+static int p_restore_brightness(void *c) { (void)c; g_brightness_set = -1; g_brightness_restores++; return 0; }
+static int p_get_brightness(void *c, uint32_t *pct) { (void)c; *pct = 40u; return 0; }
+
+static uint32_t g_lock_depth[CANOPUS_WAKELOCK_MAX];
+static int p_wakelock_acquire(void *c, uint32_t index, uint32_t flags)
+{
+    (void)c;
+    if ((flags & CANOPUS_WAKELOCK_SCREEN) == 0u) return -38;
+    g_lock_depth[index]++;
+    return 0;
+}
+static int p_wakelock_release(void *c, uint32_t index)
+{
+    (void)c;
+    if (g_lock_depth[index] == 0u) return -22;
+    g_lock_depth[index]--;
+    return 0;
+}
+
+static uint32_t g_battery_percent;
+static int g_battery_charging, g_battery_rc = -16;
+static int p_battery_state(void *c, uint32_t *percent, int *charging)
+{
+    (void)c;
+    if (g_battery_rc != 0) return g_battery_rc;
+    *percent = g_battery_percent;
+    *charging = g_battery_charging;
+    return 0;
+}
+
+static int p_get_property(void *c, const char *key, char *buf, uint32_t max)
+{
+    const char *value;
+    size_t n;
+    (void)c;
+    if (strcmp(key, "persist.test") != 0) return -2;
+    value = "on";
+    n = strlen(value);
+    if (n > max - 1u) n = max - 1u;
+    memcpy(buf, value, n);
+    buf[n] = '\0';
+    return (int)n;
+}
+
+static uint32_t g_bt_state = 4u;
+static int g_bt_link = 1;
+static int p_bt_adapter_state(void *c, uint32_t *s) { (void)c; *s = g_bt_state; return 0; }
+static int p_bt_is_connected(void *c) { (void)c; return g_bt_link; }
+static int p_l2_send(void *c, uint8_t ch, const void *p, uint16_t n)
+{
+    (void)c; (void)ch; (void)p; (void)n;
+    return 0;
+}
 
 static const struct canopus_sup_platform_v1 platform_with_fs = {
     .target_id = "xiaomi-band-10-pro-3.101.030",
@@ -238,9 +358,6 @@ static const struct canopus_sup_platform_v1 platform_with_fs = {
     .heap_alloc = p_heap_alloc,
     .heap_release = p_heap_release,
     .notify = p_notify,
-    .vibrate = p_vibrate,
-    .set_brightness = p_set_brightness,
-    .wake_screen = p_wake_screen,
     .start_timer_pump = p_start_timer_pump,
 };
 static const struct canopus_sup_platform_v1 platform_without_fs = {
@@ -253,6 +370,34 @@ static const struct canopus_sup_platform_v1 platform_without_fs = {
     .persist = p_persist,
     .restore = p_restore,
 };
+
+static struct canopus_sup_platform_v1 platform_with_hw;
+static void init_hw_platform(void)
+{
+    platform_with_hw = platform_with_fs;
+    platform_with_hw.vibrate = p_vibrate;
+    platform_with_hw.vibrate_cancel = p_vibrate_cancel;
+    platform_with_hw.set_brightness = p_set_brightness;
+    platform_with_hw.get_brightness = p_get_brightness;
+    platform_with_hw.restore_brightness = p_restore_brightness;
+    platform_with_hw.wake_screen = p_wake_screen;
+    platform_with_hw.screen_state = p_screen_state;
+    platform_with_hw.wakelock_acquire = p_wakelock_acquire;
+    platform_with_hw.wakelock_release = p_wakelock_release;
+    platform_with_hw.battery_state = p_battery_state;
+    platform_with_hw.get_property = p_get_property;
+    platform_with_hw.bt_adapter_state = p_bt_adapter_state;
+    platform_with_hw.bt_is_connected = p_bt_is_connected;
+    platform_with_hw.l2_send = p_l2_send;
+    g_vib_count = g_vib_cancels = g_vib_rc = 0;
+    g_screen = 2;
+    g_wake_calls = g_brightness_restores = 0;
+    g_brightness_set = -1;
+    memset(g_lock_depth, 0, sizeof(g_lock_depth));
+    g_battery_rc = -16;
+    g_bt_state = 4u;
+    g_bt_link = 1;
+}
 
 static int g_activated_with_ctx;
 static const struct canopus_context_v1 *g_seen_ctx;
@@ -276,6 +421,8 @@ static void setup(struct canopus_supervisor_v1 *sup,
 {
     memset(g_files, 0, sizeof(g_files));
     memset(g_fds, 0, sizeof(g_fds));
+    g_dir_count = g_mkdir_calls = 0;
+    g_last_open_flags = 0u;
     g_fail_open = g_fail_write = g_fail_close = g_fail_sync = g_fail_rename = 0;
     g_transfer_chunk = 0u;
     g_now = 1234u;
@@ -300,7 +447,7 @@ TEST(notify_is_titled_by_module_and_rate_limited)
     g_notified = 0;
     CHECK_EQ(ctx->services->notify_post(ctx, 0), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->services->notify_post(ctx, "hi"), CANOPUS_SVC_OK);
-    CHECK(strcmp(g_notice, "mod.portable|hi") == 0);
+    CHECK(strcmp(g_notice, "mod.portable|mod.portable|hi") == 0);
     for (i = 1u; i < CANOPUS_NOTIFY_MAX_POSTS; i++) {
         CHECK_EQ(ctx->services->notify_post(ctx, "x"), CANOPUS_SVC_OK);
     }
@@ -383,8 +530,13 @@ TEST(fs_roundtrip_is_private_to_the_module_namespace)
     CHECK_EQ(ctx->services->fs_close(ctx, h), 0);
 
     CHECK_EQ(ctx->services->fs_remove(ctx, "state.bin"), 0);
+    /* A missing file is NOTFOUND, distinguishable from an I/O fault. */
     CHECK_EQ(ctx->services->fs_open(ctx, "state.bin", CANOPUS_FS_READ),
-             CANOPUS_SVC_ERR_IO);
+             CANOPUS_SVC_ERR_NOTFOUND);
+    g_fail_open = 1;
+    CHECK_EQ(ctx->services->fs_open(ctx, "state.bin", CANOPUS_FS_WRITE),
+             CANOPUS_SVC_ERR_NOSPACE);
+    g_fail_open = 0;
 }
 
 TEST(fs_rejects_escaping_names_bad_handles_and_exhaustion)
@@ -397,11 +549,17 @@ TEST(fs_rejects_escaping_names_bad_handles_and_exhaustion)
     ctx = canopus_supervisor_context(&sup, 0);
     CHECK_EQ(ctx->services->fs_open(ctx, "../registry.bin", CANOPUS_FS_WRITE),
              CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK_EQ(ctx->services->fs_open(ctx, "a/b", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->services->fs_open(ctx, "a/../b", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->services->fs_open(ctx, "a//b", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->services->fs_open(ctx, "a/", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->services->fs_open(ctx, "a b", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->services->fs_open(ctx, ".hidden", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->services->fs_open(ctx, "", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK_EQ(ctx->services->fs_open(ctx, "UPPER", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->services->fs_open(ctx, "a", 3u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->fs->open(ctx, "a", 0x40u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->fs->open(ctx, "a", CANOPUS_FS_APPEND), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->fs->open(ctx, "/data/canopus/registry.bin", CANOPUS_FS_READ), CANOPUS_SVC_ERR_ACCESS);
+    CHECK_EQ(ctx->fs->open(ctx, "/data/offlinelog/../x", CANOPUS_FS_READ), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->services->fs_read(ctx, 0, g_files, 1), CANOPUS_SVC_ERR_STATE);
     CHECK_EQ(ctx->services->fs_close(ctx, 99), CANOPUS_SVC_ERR_STATE);
     for (i = 0; i < CANOPUS_FS_MAX_OPEN; i++) {
@@ -612,19 +770,20 @@ TEST(service_objects_are_exposed_and_functional)
     CHECK_EQ(pointer_slot(1), 2);
     CHECK_EQ(ctx->hook->is_hooked(ctx, (uintptr_t)&pointer_slot), 0);
 
-    /* 5. Haptics Object */
-    CHECK_EQ(ctx->haptics->vibrate(ctx, 50), CANOPUS_SVC_OK);
-    CHECK_EQ(ctx->haptics->vibrate_preset(ctx, CANOPUS_HAPTIC_CLICK), CANOPUS_SVC_OK);
-    CHECK_EQ(ctx->haptics->cancel(ctx), CANOPUS_SVC_OK);
+    /* 5. Haptics Object: this platform has no vibrator entry point. */
+    CHECK_EQ(ctx->haptics->vibrate(ctx, 50), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->haptics->vibrate_preset(ctx, CANOPUS_HAPTIC_CLICK), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->haptics->cancel(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
 
-    /* 6. Display Object */
+    /* 6. Display Object: nothing to read, nothing faked. */
     ctx->display->get_resolution(ctx, &res_w, &res_h);
     CHECK(res_w > 0 && res_h > 0);
-    CHECK_EQ(ctx->display->is_screen_on(ctx), 1);
-    CHECK_EQ(ctx->display->get_brightness(ctx), 100u);
+    CHECK_EQ(ctx->display->is_screen_on(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->display->get_brightness(ctx), CANOPUS_DISPLAY_BRIGHTNESS_UNKNOWN);
+    CHECK_EQ(ctx->display->set_brightness(ctx, 50u), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->display->wake_screen(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
     lock_id = ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_SCREEN);
-    CHECK(lock_id > 0);
-    CHECK_EQ(ctx->display->release_wake_lock(ctx, lock_id), CANOPUS_SVC_OK);
+    CHECK_EQ(lock_id, CANOPUS_SVC_ERR_UNSUPPORTED);
 
     /* 7. Bus Object */
     s_bus_received = 0;
@@ -653,7 +812,17 @@ TEST(service_objects_are_exposed_and_functional)
     CHECK(strcmp(ctx->system->target_id(ctx), "xiaomi-band-10-pro-3.101.030") == 0);
     CHECK(strcmp(ctx->system->firmware_version(ctx), "3.101.030") == 0);
     CHECK_EQ(ctx->system->is_safe_mode(ctx), 0);
-    CHECK_EQ(ctx->system->battery_level(ctx), 85u);
+    CHECK_EQ(ctx->system->battery_level(ctx), CANOPUS_SYSTEM_BATTERY_UNKNOWN);
+    CHECK_EQ(ctx->system->is_charging(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
+    {
+        char prop[8];
+        CHECK_EQ(ctx->system->get_property(ctx, "persist.test", prop, sizeof(prop)),
+                 CANOPUS_SVC_ERR_UNSUPPORTED);
+    }
+    CHECK_EQ(ctx->bt->is_connected(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->bt->get_rssi(ctx), CANOPUS_BT_RSSI_UNKNOWN);
+    CHECK_EQ(ctx->bt->adapter_state(ctx), CANOPUS_BT_ADAPTER_UNKNOWN);
+    CHECK_EQ(ctx->bt->l2_register_rx(ctx, 0x44u, 0, 0), CANOPUS_SVC_ERR_UNSUPPORTED);
 }
 
 static const struct canopus_context_v1 *reboot_services(struct canopus_supervisor_v1 *sup)
@@ -810,6 +979,457 @@ TEST(failed_load_and_activation_release_module_resources)
     }
 }
 
+
+static void setup_hw(struct canopus_supervisor_v1 *sup)
+{
+    init_hw_platform();
+    setup(sup, &platform_with_hw);
+}
+
+static const struct canopus_context_v1 *add_second_module(struct canopus_supervisor_v1 *sup)
+{
+    CHECK_EQ(canopus_supervisor_add_module(sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.other"), 1);
+    return canopus_supervisor_context(sup, 1u);
+}
+
+TEST(fs_paths_cover_private_subtrees_shared_roots_append_and_error_codes)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    struct canopus_fs_stat st;
+    struct canopus_sup_platform_v1 no_sync = platform_with_fs;
+    char buf[16] = {0};
+    int32_t h;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0);
+
+    /* module-private sub-tree: the private root is created on demand, deeper
+     * directories are explicit, and a missing parent is NOTFOUND */
+    CHECK_EQ(ctx->fs->open(ctx, "cache/a.txt", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_NOTFOUND);
+    CHECK_EQ(ctx->fs->mkdir(ctx, "cache"), CANOPUS_SVC_OK);
+    CHECK(dir_exists("/data/canopus/m.mod.portable/cache"));
+    CHECK_EQ(ctx->fs->mkdir(ctx, "cache"), CANOPUS_SVC_ERR_EXIST);
+    CHECK_EQ(ctx->fs->write_all(ctx, "cache/a.txt", "xyz", 3), 3);
+    CHECK(strcmp(g_files[0].path, "/data/canopus/m.mod.portable/cache/a.txt") == 0);
+    CHECK_EQ(ctx->fs->stat(ctx, "cache", &st), CANOPUS_SVC_OK);
+    CHECK_EQ(st.is_dir, 1u);
+    CHECK_EQ(ctx->fs->stat(ctx, "cache/a.txt", &st), CANOPUS_SVC_OK);
+    CHECK_EQ(st.size, 3u);
+    CHECK_EQ(ctx->fs->stat(ctx, "cache/none", &st), CANOPUS_SVC_ERR_NOTFOUND);
+
+    /* shared roots: writable ones create their directory, read-only ones refuse writes */
+    CHECK_EQ(ctx->fs->write_all(ctx, "/data/offlinelog/run.log", "L1\n", 3), 3);
+    CHECK(strcmp(g_files[1].path, "/data/offlinelog/run.log") == 0);
+    CHECK_EQ(ctx->fs->write_all(ctx, "/data/canopus/shared/note.txt", "n", 1), 1);
+    CHECK(dir_exists("/data/canopus/shared"));
+    CHECK_EQ(ctx->fs->open(ctx, "/data/app/theme/dark.json", CANOPUS_FS_READ), CANOPUS_SVC_ERR_NOTFOUND);
+    CHECK_EQ(ctx->fs->open(ctx, "/data/app/theme/dark.json", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ACCESS);
+    CHECK_EQ(ctx->fs->mkdir(ctx, "/data/quickapp/x"), CANOPUS_SVC_ERR_ACCESS);
+    CHECK_EQ(ctx->fs->remove(ctx, "/data/app/theme/dark.json"), CANOPUS_SVC_ERR_ACCESS);
+    CHECK_EQ(ctx->fs->open(ctx, "/data/offlinelog/", CANOPUS_FS_READ), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->fs->open(ctx, "/etc/passwd", CANOPUS_FS_READ), CANOPUS_SVC_ERR_ACCESS);
+
+    /* append keeps the contents, WRITE truncates, READ|WRITE keeps them */
+    CHECK_EQ(ctx->fs->write_all(ctx, "log.txt", "ab", 2), 2);
+    h = ctx->fs->open(ctx, "log.txt", CANOPUS_FS_WRITE | CANOPUS_FS_APPEND | CANOPUS_FS_CREATE);
+    CHECK(h >= 0);
+    CHECK_EQ(g_last_open_flags, (uint32_t)(CANOPUS_FS_WRITE | CANOPUS_FS_APPEND | CANOPUS_FS_CREATE));
+    CHECK_EQ(ctx->fs->write(ctx, h, "cd", 2), 2);
+    CHECK_EQ(ctx->fs->close(ctx, h), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->fs->read_all(ctx, "log.txt", buf, sizeof(buf)), 4);
+    CHECK(memcmp(buf, "abcd", 4) == 0);
+    h = ctx->fs->open(ctx, "log.txt", CANOPUS_FS_RDWR);
+    CHECK(h >= 0);
+    CHECK_EQ(ctx->fs->size(ctx, h), 4);
+    CHECK_EQ(ctx->fs->close(ctx, h), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->fs->write_all(ctx, "log.txt", "z", 1), 1);
+    CHECK_EQ(ctx->fs->read_all(ctx, "log.txt", buf, sizeof(buf)), 1);
+
+    /* a platform without an fsync entry point says so instead of pretending */
+    h = ctx->fs->open(ctx, "log.txt", CANOPUS_FS_READ);
+    CHECK_EQ(ctx->fs->sync(ctx, h), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->fs->close(ctx, h), CANOPUS_SVC_OK);
+    no_sync.file_sync = 0;
+    setup(&sup, &no_sync);
+    ctx = canopus_supervisor_context(&sup, 0);
+    CHECK_EQ(ctx->fs->write_all(ctx, "log.txt", "z", 1), 1);
+    h = ctx->fs->open(ctx, "log.txt", CANOPUS_FS_READ);
+    CHECK_EQ(ctx->fs->sync(ctx, h), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->fs->close(ctx, h), CANOPUS_SVC_OK);
+}
+
+TEST(notify_carries_the_caller_title_and_never_fakes_icons_or_haptics)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    char longtitle[80];
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+    g_notified = 0;
+    CHECK_EQ(ctx->notify->post(ctx, "Custom title", "body"), CANOPUS_SVC_OK);
+    CHECK(strcmp(g_notice, "mod.portable|Custom title|body") == 0);
+    CHECK_EQ(ctx->notify->post(ctx, "", "empty title"), CANOPUS_SVC_OK);
+    CHECK(strcmp(g_notice, "mod.portable|mod.portable|empty title") == 0);
+    CHECK_EQ(ctx->notify->post(ctx, 0, "no title"), CANOPUS_SVC_OK);
+    CHECK(strcmp(g_notice, "mod.portable|mod.portable|no title") == 0);
+    memset(longtitle, 'T', sizeof(longtitle) - 1u);
+    longtitle[sizeof(longtitle) - 1u] = '\0';
+    CHECK_EQ(ctx->notify->post(ctx, longtitle, "b"), CANOPUS_SVC_OK);
+    CHECK_EQ(strlen(g_notice), strlen("mod.portable|") + CANOPUS_NOTIFY_TITLE_MAX + strlen("|b"));
+    canopus_supervisor_release_services(&sup, 0u);
+
+    /* icons have no stock table: refused before anything is posted or shaken */
+    g_notified = 0;
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", 7u, 1), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(g_notified, 0);
+    CHECK_EQ(g_vib_count, 0);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", 0u, 1), CANOPUS_SVC_OK);
+    CHECK_EQ(g_notified, 1);
+    CHECK_EQ(g_vib_count, 1);
+    CHECK_EQ(g_vib_ms[0], 100u);
+    /* a refused vibration is reported, the notification still went out */
+    g_vib_rc = -16;
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", 0u, 1), CANOPUS_NOTIFY_HAPTIC_SKIPPED);
+    CHECK_EQ(g_notified, 2);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", 0u, 0), CANOPUS_SVC_OK);
+}
+
+TEST(haptics_play_one_vibration_at_a_time_and_report_the_motor_result)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 no_pump;
+    const struct canopus_context_v1 *ctx, *other;
+    uint16_t pattern[] = {10u, 20u, 30u};
+    uint16_t too_long[CANOPUS_HAPTIC_PATTERN_MAX + 1u] = {1u};
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+    other = add_second_module(&sup);
+
+    CHECK_EQ(ctx->haptics->vibrate(ctx, 0u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->haptics->vibrate(ctx, CANOPUS_HAPTIC_MAX_MS + 1u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->haptics->vibrate_preset(ctx, 99u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->haptics->vibrate_pattern(ctx, 0, 1u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->haptics->vibrate_pattern(ctx, too_long, CANOPUS_HAPTIC_PATTERN_MAX + 1u),
+             CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(g_vib_count, 0);
+
+    CHECK_EQ(ctx->haptics->vibrate(ctx, 50u), CANOPUS_SVC_OK);
+    CHECK_EQ(g_vib_count, 1);
+    CHECK_EQ(g_vib_ms[0], 50u);
+
+    /* on/off pattern: pulses come from the timer pump at their offsets */
+    g_vib_count = 0;
+    g_now = 1000u;
+    CHECK_EQ(ctx->haptics->vibrate_pattern(ctx, pattern, 3u), CANOPUS_SVC_OK);
+    CHECK_EQ(g_vib_count, 1);
+    CHECK_EQ(g_vib_ms[0], 10u);
+    advance_time(10u);
+    CHECK_EQ(g_vib_count, 1); /* the 20 ms gap */
+    advance_time(19u);
+    CHECK_EQ(g_vib_count, 1);
+    advance_time(1u);
+    CHECK_EQ(g_vib_count, 2);
+    CHECK_EQ(g_vib_ms[1], 30u);
+    CHECK_EQ(g_vib_at[1], 1030u);
+    advance_time(50u);
+    CHECK_EQ(g_vib_count, 2);
+
+    /* a double click is two pulses */
+    g_vib_count = 0;
+    g_now = 2000u;
+    CHECK_EQ(ctx->haptics->vibrate_preset(ctx, CANOPUS_HAPTIC_DOUBLE_CLICK), CANOPUS_SVC_OK);
+    advance_time(80u);
+    CHECK_EQ(g_vib_count, 2);
+    CHECK_EQ(g_vib_at[1] - g_vib_at[0], 80u);
+
+    /* cancel stops only the caller's own vibration; a new request replaces it */
+    g_vib_cancels = 0;
+    CHECK_EQ(ctx->haptics->vibrate(ctx, 500u), CANOPUS_SVC_OK);
+    CHECK_EQ(other->haptics->cancel(other), CANOPUS_SVC_OK);
+    CHECK_EQ(g_vib_cancels, 1); /* replaced by the vibrate above (its own cancel) */
+    g_vib_cancels = 0;
+    CHECK_EQ(other->haptics->cancel(other), CANOPUS_SVC_OK);
+    CHECK_EQ(g_vib_cancels, 0);
+    CHECK_EQ(other->haptics->vibrate(other, 40u), CANOPUS_SVC_OK);
+    CHECK_EQ(g_vib_cancels, 1);
+    CHECK_EQ(ctx->haptics->cancel(ctx), CANOPUS_SVC_OK);
+    CHECK_EQ(g_vib_cancels, 1);
+    CHECK_EQ(other->haptics->cancel(other), CANOPUS_SVC_OK);
+    CHECK_EQ(g_vib_cancels, 2);
+    CHECK_EQ(other->haptics->vibrate(other, 400u), CANOPUS_SVC_OK);
+    canopus_supervisor_release_services(&sup, 1u);
+    CHECK_EQ(g_vib_cancels, 3); /* unloading stops its vibration */
+
+    /* the motor's refusal comes back and leaves nothing running */
+    g_vib_rc = -16;
+    CHECK_EQ(ctx->haptics->vibrate(ctx, 50u), CANOPUS_SVC_ERR_BUSY);
+    g_vib_rc = -5;
+    CHECK_EQ(ctx->haptics->vibrate(ctx, 50u), CANOPUS_SVC_ERR_IO);
+    g_vib_rc = 0;
+
+    /* multi-step patterns need the pump; a single pulse does not */
+    no_pump = platform_with_hw;
+    no_pump.start_timer_pump = 0;
+    setup(&sup, &no_pump);
+    ctx = canopus_supervisor_context(&sup, 0);
+    CHECK_EQ(ctx->haptics->vibrate_pattern(ctx, pattern, 3u), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->haptics->vibrate(ctx, 20u), CANOPUS_SVC_OK);
+}
+
+TEST(display_reports_screen_state_holds_owned_wake_locks_and_restores_brightness)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx, *other;
+    int32_t ids[CANOPUS_WAKELOCK_PER_MODULE], extra, stale;
+    uint32_t i;
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+    other = add_second_module(&sup);
+
+    g_screen = 2;
+    CHECK_EQ(ctx->display->is_screen_on(ctx), 1);
+    g_screen = 1; /* always-on display is not "on" */
+    CHECK_EQ(ctx->display->is_screen_on(ctx), 0);
+    g_screen = 0;
+    CHECK_EQ(ctx->display->is_screen_on(ctx), 0);
+    CHECK_EQ(ctx->display->wake_screen(ctx), CANOPUS_SVC_OK);
+    CHECK_EQ(g_wake_calls, 1);
+    CHECK_EQ(ctx->display->is_screen_on(ctx), 1);
+
+    /* wake locks: ids are owner-checked, bounded, and die with the module */
+    CHECK_EQ(ctx->display->acquire_wake_lock(ctx, 0u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->display->acquire_wake_lock(ctx, 8u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_CPU), CANOPUS_SVC_ERR_UNSUPPORTED);
+    for (i = 0u; i < CANOPUS_WAKELOCK_PER_MODULE; i++) {
+        ids[i] = ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_SCREEN | CANOPUS_WAKELOCK_CPU);
+        CHECK(ids[i] > 0);
+    }
+    CHECK_EQ(ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_SCREEN), CANOPUS_SVC_ERR_BUSY);
+    extra = other->display->acquire_wake_lock(other, CANOPUS_WAKELOCK_SCREEN);
+    CHECK(extra > 0);
+    CHECK_EQ(other->display->release_wake_lock(other, ids[0]), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->display->release_wake_lock(ctx, 0), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->display->release_wake_lock(ctx, ids[1]), CANOPUS_SVC_OK);
+    stale = ids[1];
+    CHECK_EQ(ctx->display->release_wake_lock(ctx, stale), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->display->release_wake_lock(ctx, ids[0] + 1000), CANOPUS_SVC_ERR_ARGUMENT);
+    {
+        int32_t again = ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_SCREEN);
+        CHECK(again > 0 && again != stale); /* the slot is reused under a new id */
+        CHECK_EQ(ctx->display->release_wake_lock(ctx, stale), CANOPUS_SVC_ERR_ARGUMENT);
+    }
+    {
+        uint32_t held = 0u;
+        for (i = 0u; i < CANOPUS_WAKELOCK_MAX; i++) held += g_lock_depth[i];
+        CHECK_EQ(held, CANOPUS_WAKELOCK_PER_MODULE + 1u);
+        canopus_supervisor_release_services(&sup, 0u);
+        held = 0u;
+        for (i = 0u; i < CANOPUS_WAKELOCK_MAX; i++) held += g_lock_depth[i];
+        CHECK_EQ(held, 1u); /* only the other module's lock remains */
+    }
+    CHECK_EQ(other->display->release_wake_lock(other, extra), CANOPUS_SVC_OK);
+
+    /* brightness: an override belongs to the last module that set it */
+    CHECK_EQ(ctx->display->set_brightness(ctx, 101u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->display->get_brightness(ctx), 40u); /* the stored manual setting */
+    CHECK_EQ(ctx->display->set_brightness(ctx, 25u), CANOPUS_SVC_OK);
+    CHECK_EQ(g_brightness_set, 25);
+    CHECK_EQ(ctx->display->get_brightness(ctx), 25u);
+    CHECK_EQ(other->display->set_brightness(other, 80u), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->display->get_brightness(ctx), 80u);
+    canopus_supervisor_release_services(&sup, 0u);
+    CHECK_EQ(g_brightness_restores, 0); /* not the owner any more */
+    CHECK_EQ(g_brightness_set, 80);
+    canopus_supervisor_release_services(&sup, 1u);
+    CHECK_EQ(g_brightness_restores, 1);
+    CHECK_EQ(ctx->display->get_brightness(ctx), 40u);
+}
+
+TEST(system_and_bluetooth_report_platform_values_or_unknown)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    char value[8];
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+
+    g_battery_rc = -16; /* the firmware has not reported yet */
+    CHECK_EQ(ctx->system->battery_level(ctx), CANOPUS_SYSTEM_BATTERY_UNKNOWN);
+    CHECK_EQ(ctx->system->is_charging(ctx), CANOPUS_SVC_ERR_STATE);
+    g_battery_rc = 0;
+    g_battery_percent = 77u;
+    g_battery_charging = 1;
+    CHECK_EQ(ctx->system->battery_level(ctx), 77u);
+    CHECK_EQ(ctx->system->is_charging(ctx), 1);
+    g_battery_charging = 0;
+    CHECK_EQ(ctx->system->is_charging(ctx), 0);
+    g_battery_percent = 120u;
+    CHECK_EQ(ctx->system->battery_level(ctx), CANOPUS_SYSTEM_BATTERY_UNKNOWN);
+
+    CHECK_EQ(ctx->system->get_property(ctx, "persist.test", value, sizeof(value)), 2);
+    CHECK(strcmp(value, "on") == 0);
+    CHECK_EQ(ctx->system->get_property(ctx, "persist.test", value, 2u), 1);
+    CHECK(strcmp(value, "o") == 0);
+    CHECK_EQ(ctx->system->get_property(ctx, "persist.none", value, sizeof(value)), CANOPUS_SVC_ERR_NOTFOUND);
+    CHECK_EQ(ctx->system->get_property(ctx, "bad key", value, sizeof(value)), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->system->get_property(ctx, "persist.test", value, 0u), CANOPUS_SVC_ERR_ARGUMENT);
+
+    g_bt_state = CANOPUS_BT_ADAPTER_ON;
+    CHECK_EQ(ctx->bt->adapter_state(ctx), CANOPUS_BT_ADAPTER_ON);
+    g_bt_state = CANOPUS_BT_ADAPTER_OFF;
+    CHECK_EQ(ctx->bt->adapter_state(ctx), CANOPUS_BT_ADAPTER_OFF);
+    g_bt_link = 1;
+    CHECK_EQ(ctx->bt->is_connected(ctx), 1);
+    g_bt_link = 0;
+    CHECK_EQ(ctx->bt->is_connected(ctx), 0);
+    g_bt_link = -38;
+    CHECK_EQ(ctx->bt->is_connected(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->bt->get_rssi(ctx), CANOPUS_BT_RSSI_UNKNOWN); /* no stock source */
+}
+
+static int g_l2_rx_calls;
+static uint8_t g_l2_rx_channel;
+static uint16_t g_l2_rx_len;
+static char g_l2_rx_data[8];
+static void on_l2_rx(const struct canopus_context_v1 *ctx, uint8_t channel,
+                     const void *payload, uint16_t len, void *user)
+{
+    (void)ctx; (void)user;
+    g_l2_rx_calls++;
+    g_l2_rx_channel = channel;
+    g_l2_rx_len = len;
+    memcpy(g_l2_rx_data, payload, len < sizeof(g_l2_rx_data) ? len : sizeof(g_l2_rx_data));
+}
+
+TEST(l2_receive_registration_is_validated_delivered_and_released)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx, *other;
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+    other = add_second_module(&sup);
+    g_l2_rx_calls = 0;
+
+    /* stock channels and the control channel are not for modules */
+    CHECK_EQ(ctx->bt->l2_register_rx(ctx, 0x01u, on_l2_rx, 0), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->bt->l2_register_rx(ctx, 0x43u, on_l2_rx, 0), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->bt->l2_register_rx(ctx, 0x50u, on_l2_rx, 0), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK(!canopus_supervisor_l2_rx_registered(0x44u));
+    CHECK_EQ(canopus_supervisor_l2_rx_dispatch(&sup, 0x44u, "hi", 2u), 0);
+
+    CHECK_EQ(ctx->bt->l2_register_rx(ctx, 0x44u, on_l2_rx, 0), CANOPUS_SVC_OK);
+    CHECK(canopus_supervisor_l2_rx_registered(0x44u));
+    CHECK_EQ(other->bt->l2_register_rx(other, 0x44u, on_l2_rx, 0), CANOPUS_SVC_ERR_BUSY);
+    CHECK_EQ(other->bt->l2_register_rx(other, 0x44u, 0, 0), CANOPUS_SVC_ERR_BUSY); /* not theirs */
+    CHECK(canopus_supervisor_l2_rx_registered(0x44u));
+    CHECK_EQ(canopus_supervisor_l2_rx_dispatch(&sup, 0x44u, "hi", 2u), 1);
+    CHECK_EQ(g_l2_rx_calls, 1);
+    CHECK_EQ(g_l2_rx_channel, 0x44u);
+    CHECK_EQ(g_l2_rx_len, 2u);
+    CHECK(memcmp(g_l2_rx_data, "hi", 2) == 0);
+    CHECK_EQ(canopus_supervisor_l2_rx_dispatch(&sup, 0x45u, "hi", 2u), 0);
+
+    CHECK_EQ(ctx->bt->l2_register_rx(ctx, 0x44u, 0, 0), CANOPUS_SVC_OK);
+    CHECK(!canopus_supervisor_l2_rx_registered(0x44u));
+    CHECK_EQ(canopus_supervisor_l2_rx_dispatch(&sup, 0x44u, "hi", 2u), 0);
+
+    /* an unloading module leaves no callback behind */
+    CHECK_EQ(other->bt->l2_register_rx(other, 0x4Fu, on_l2_rx, 0), CANOPUS_SVC_OK);
+    canopus_supervisor_release_services(&sup, 1u);
+    CHECK(!canopus_supervisor_l2_rx_registered(0x4Fu));
+    CHECK_EQ(g_l2_rx_calls, 1);
+}
+
+static int g_event_calls;
+static uint8_t g_event_payload[2];
+static uint32_t g_event_len;
+static char g_event_topic[32];
+static void on_event(const struct canopus_context_v1 *ctx, const char *topic,
+                     const void *payload, uint32_t len, void *user)
+{
+    (void)ctx; (void)user;
+    g_event_calls++;
+    g_event_len = len;
+    memcpy(g_event_payload, payload, len > 2u ? 2u : len);
+    snprintf(g_event_topic, sizeof(g_event_topic), "%s", topic);
+}
+
+TEST(system_events_are_published_on_change_and_cannot_be_forged)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 no_pump;
+    const struct canopus_context_v1 *ctx, *other;
+    int32_t sub;
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+    other = add_second_module(&sup);
+    g_event_calls = 0;
+
+    CHECK_EQ(other->bus->publish(other, CANOPUS_BUS_TOPIC_SCREEN, "\x02", 1u), CANOPUS_SVC_ERR_ACCESS);
+    CHECK_EQ(other->bus->publish(other, CANOPUS_BUS_TOPIC_BATTERY, "\x01\x00", 2u), CANOPUS_SVC_ERR_ACCESS);
+    CHECK_EQ(other->bus->publish(other, CANOPUS_BUS_TOPIC_BT, "\x04\x01", 2u), CANOPUS_SVC_ERR_ACCESS);
+
+    g_screen = 2;
+    sub = ctx->bus->subscribe(ctx, CANOPUS_BUS_TOPIC_SCREEN, on_event, 0);
+    CHECK(sub >= 0);
+    CHECK_EQ(g_event_calls, 0);
+    advance_time(10u); /* first sample: the current state goes to the new subscriber */
+    CHECK_EQ(g_event_calls, 1);
+    CHECK(strcmp(g_event_topic, CANOPUS_BUS_TOPIC_SCREEN) == 0);
+    CHECK_EQ(g_event_len, 1u);
+    CHECK_EQ(g_event_payload[0], 2u);
+    advance_time(600u); /* unchanged: silent */
+    CHECK_EQ(g_event_calls, 1);
+    g_screen = 0;
+    advance_time(100u); /* sampled every 500 ms */
+    CHECK_EQ(g_event_calls, 1);
+    advance_time(500u);
+    CHECK_EQ(g_event_calls, 2);
+    CHECK_EQ(g_event_payload[0], 0u);
+
+    /* battery and Bluetooth topics carry two bytes; an unsubscribed topic is not sampled */
+    g_event_calls = 0;
+    g_battery_rc = 0;
+    g_battery_percent = 64u;
+    g_battery_charging = 1;
+    CHECK(ctx->bus->subscribe(ctx, CANOPUS_BUS_TOPIC_BATTERY, on_event, 0) >= 0);
+    advance_time(500u);
+    CHECK(strcmp(g_event_topic, CANOPUS_BUS_TOPIC_BATTERY) == 0);
+    CHECK_EQ(g_event_len, 2u);
+    CHECK_EQ(g_event_payload[0], 64u);
+    CHECK_EQ(g_event_payload[1], 1u);
+    g_event_calls = 0;
+    g_battery_percent = 63u;
+    advance_time(500u);
+    CHECK_EQ(g_event_calls, 1);
+    CHECK_EQ(g_event_payload[0], 63u);
+    g_event_calls = 0;
+    g_bt_link = 0;
+    advance_time(500u);
+    CHECK_EQ(g_event_calls, 0);
+    CHECK(ctx->bus->subscribe(ctx, CANOPUS_BUS_TOPIC_BT, on_event, 0) >= 0);
+    advance_time(500u);
+    CHECK(strcmp(g_event_topic, CANOPUS_BUS_TOPIC_BT) == 0);
+    CHECK_EQ(g_event_payload[0], CANOPUS_BT_ADAPTER_ON);
+    CHECK_EQ(g_event_payload[1], 0u);
+
+    /* unsubscribing stops the sampling; a module's end drops its subscriptions */
+    CHECK_EQ(ctx->bus->unsubscribe(ctx, sub), CANOPUS_SVC_OK);
+    canopus_supervisor_release_services(&sup, 0u);
+    g_event_calls = 0;
+    g_screen = 1;
+    advance_time(500u);
+    CHECK_EQ(g_event_calls, 0);
+
+    /* a system topic needs the pump; refusing beats a subscription that never fires */
+    no_pump = platform_with_hw;
+    no_pump.start_timer_pump = 0;
+    setup(&sup, &no_pump);
+    ctx = canopus_supervisor_context(&sup, 0);
+    CHECK_EQ(ctx->bus->subscribe(ctx, CANOPUS_BUS_TOPIC_SCREEN, on_event, 0), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK(ctx->bus->subscribe(ctx, "my/topic", on_event, 0) >= 0);
+}
+
 static struct test_registry supervisor_services_tests[] = {
     { "kv_reloads_through_native_and_service_registration",
       kv_reloads_through_native_and_service_registration_wrapper },
@@ -839,6 +1459,20 @@ static struct test_registry supervisor_services_tests[] = {
       portable_module_registers_through_the_service_and_gets_a_context_wrapper },
     { "register_is_rejected_outside_the_loading_window",
       register_is_rejected_outside_the_loading_window_wrapper },
+    { "fs_paths_cover_private_subtrees_shared_roots_append_and_error_codes",
+      fs_paths_cover_private_subtrees_shared_roots_append_and_error_codes_wrapper },
+    { "notify_carries_the_caller_title_and_never_fakes_icons_or_haptics",
+      notify_carries_the_caller_title_and_never_fakes_icons_or_haptics_wrapper },
+    { "haptics_play_one_vibration_at_a_time_and_report_the_motor_result",
+      haptics_play_one_vibration_at_a_time_and_report_the_motor_result_wrapper },
+    { "display_reports_screen_state_holds_owned_wake_locks_and_restores_brightness",
+      display_reports_screen_state_holds_owned_wake_locks_and_restores_brightness_wrapper },
+    { "system_and_bluetooth_report_platform_values_or_unknown",
+      system_and_bluetooth_report_platform_values_or_unknown_wrapper },
+    { "l2_receive_registration_is_validated_delivered_and_released",
+      l2_receive_registration_is_validated_delivered_and_released_wrapper },
+    { "system_events_are_published_on_change_and_cannot_be_forged",
+      system_events_are_published_on_change_and_cannot_be_forged_wrapper },
 };
 
 int run_supervisor_services_tests(void)

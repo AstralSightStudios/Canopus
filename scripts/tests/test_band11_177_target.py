@@ -10,6 +10,17 @@ import build_band11_installer as installer
 
 TARGET = 'xiaomi-band-11-4.100.177'
 SHA = 'ff74c6f467529963b6afd40669437d8ec39a02e48c10d0893739847b3ba3dc2b'
+# No .177 image is available, so these stay unported (the platform hooks they
+# back remain empty on .177 and answer UNSUPPORTED).
+EXACT_155_ONLY = {
+    'miwear_session_lookup', 'miwear_session_crypto_ctr',
+    'power_battery_ready', 'power_battery_snapshot', 'wakelock_create',
+    'wakelock_acquire', 'wakelock_release', 'screen_state', 'screen_turn_on',
+    'screen_session_create', 'screen_session_start', 'screen_session_stop',
+    'screen_session_set_auto_brightness', 'screen_session_set_brightness_value',
+    'screen_session_restore_default', 'vibrator_run', 'vibrator_cancel',
+    'property_get', 'property_get_int32', 'mkdir',
+}
 
 
 class Band11Target177Tests(unittest.TestCase):
@@ -33,7 +44,7 @@ class Band11Target177Tests(unittest.TestCase):
         approved = []
         for path in source.glob('*.json'):
             baseline = json.loads(path.read_text())
-            if baseline['name'] in {'miwear_session_lookup', 'miwear_session_crypto_ctr'}:
+            if baseline['name'] in EXACT_155_ONLY:
                 # These are new exact-.155 recoveries, not part of the .177 port.
                 self.assertEqual(baseline['policy'], 'restricted')
                 self.assertEqual(baseline['approval_state'], 'PENDING')

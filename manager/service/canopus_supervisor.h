@@ -373,9 +373,17 @@ void canopus_supervisor_prepare_services(struct canopus_supervisor_v1 *sup,
                                          uint32_t slot);
 /* Dispatches pending module timers whose intervals have elapsed. */
 void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup);
-/* Closes the slot's open files; called when its artifacts are removed. */
+/* Closes the slot's open files, wake locks, vibration, brightness override and
+ * L2 receive registrations; called when its artifacts are removed. */
 void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,
                                          uint32_t slot);
+/* ctx->bt->l2_register_rx support for the L2 backend. registered reports whether
+ * a live module claimed the channel (so the backend keeps the frame instead of
+ * handing it to the stock handler); dispatch delivers one decrypted frame on
+ * the module/UI task and returns 1 when a module took it. */
+int canopus_supervisor_l2_rx_registered(uint8_t channel);
+int canopus_supervisor_l2_rx_dispatch(struct canopus_supervisor_v1 *sup, uint8_t channel,
+                                      const void *payload, uint16_t len);
 /* Log ring (newest last). Returns the message or 0 past the end. */
 uint32_t canopus_supervisor_log_count(void);
 const char *canopus_supervisor_log_entry(uint32_t index, uint32_t *level,

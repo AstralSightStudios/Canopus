@@ -46,6 +46,7 @@ static const char *const s_module_suffix[SUP_KIND_COUNT] = {
 #define CANOPUS_SUP_NUTTX_O_RDONLY 1
 #define CANOPUS_SUP_NUTTX_O_WRONLY 2u
 #define CANOPUS_SUP_NUTTX_O_CREAT 0x4u
+#define CANOPUS_SUP_NUTTX_O_RDWR (CANOPUS_SUP_NUTTX_O_RDONLY | CANOPUS_SUP_NUTTX_O_WRONLY)
 #define CANOPUS_SUP_DEVICE_MODE 438u /* 0666 */
 #define CANOPUS_SUP_FOPS_WORDS 12u   /* matches the stock file_operations table */
 /* Next-boot registry persistence (see canopus_supervisor.h for the format). */
@@ -316,6 +317,16 @@ static int sup_registry_errno(void)
         (errno_location_fn)(uintptr_t)CANOPUS_SUP_NUTTX_ERRNO_LOCATION;
     int *value = errno_location();
     return value != 0 && *value > 0 ? *value : 0;
+}
+
+/* A NuttX call result as a service result: success keeps its value, failure
+ * becomes the negated errno (a bare -1 when none was set). */
+static int sup_negated_errno(int rc)
+{
+    int error;
+    if (rc >= 0) return rc;
+    error = sup_registry_errno();
+    return error != 0 ? -error : CANOPUS_SVC_ERR_IO;
 }
 
 static void sup_registry_diag(uint32_t stage, int error)
@@ -1105,23 +1116,34 @@ static int sup_validate_receipt(void *cookie, const void *receipt)
 }
 
 /* FS service hooks: plain NuttX file calls through the proven pointers. */
+static int64_t sup_file_seek(void *cookie, int fd, int64_t offset, int32_t whence);
+static int sup_file_close(void *cookie, int fd);
+
+/* Maps the service flags onto the proven NuttX primitives. READ opens an
+ * existing file; WRITE creates or truncates (O_TRUNC is not proven on these
+ * firmwares, so the file is unlinked first); WRITE|READ keeps the contents;
+ * APPEND keeps the contents and seeks to the end. */
 static int sup_file_open(void *cookie, const char *path, uint32_t flags)
 {
     typedef int (*open_fn)(const char *, int, ...);
     open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
     int fd;
-    (void)cookie;
-    if (flags == CANOPUS_FS_READ) {
+    int access;
+    if ((flags & CANOPUS_FS_WRITE) == 0u) {
         fd = open_file(path, CANOPUS_SUP_NUTTX_O_RDONLY);
-    } else {
-        /* O_TRUNC is not proven on these firmwares. */
-        (void)sup_unlink_path(path);
-        fd = open_file(path, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT,
-                       CANOPUS_SUP_DEVICE_MODE);
+        return sup_negated_errno(fd);
     }
-    if (fd < 0) {
-        int error = sup_registry_errno();
-        return error != 0 ? -error : CANOPUS_SVC_ERR_IO;
+    access = (flags & CANOPUS_FS_READ) != 0u ? CANOPUS_SUP_NUTTX_O_RDWR
+                                              : CANOPUS_SUP_NUTTX_O_WRONLY;
+    if ((flags & CANOPUS_FS_APPEND) == 0u &&
+        ((flags & CANOPUS_FS_READ) == 0u || (flags & CANOPUS_FS_TRUNC) != 0u)) {
+        (void)sup_unlink_path(path);
+    }
+    fd = open_file(path, access | CANOPUS_SUP_NUTTX_O_CREAT, CANOPUS_SUP_DEVICE_MODE);
+    if (fd < 0) return sup_negated_errno(fd);
+    if ((flags & CANOPUS_FS_APPEND) != 0u && sup_file_seek(cookie, fd, 0, CANOPUS_FS_SEEK_END) < 0) {
+        (void)sup_file_close(cookie, fd);
+        return CANOPUS_SVC_ERR_IO;
     }
     return fd;
 }
@@ -1151,7 +1173,7 @@ static int sup_file_close(void *cookie, int fd)
 static int sup_file_remove(void *cookie, const char *path)
 {
     (void)cookie;
-    return sup_unlink_path(path);
+    return sup_negated_errno(sup_unlink_path(path));
 }
 
 static int64_t sup_file_seek(void *cookie, int fd, int64_t offset, int32_t whence)
@@ -1166,19 +1188,14 @@ static int64_t sup_file_seek(void *cookie, int fd, int64_t offset, int32_t whenc
 #endif
 }
 
-static int sup_file_sync(void *cookie, int fd)
-{
-    (void)cookie;
-    (void)fd;
-    return 0;
-}
-
 static int sup_file_rename_hook(void *cookie, const char *from, const char *to)
 {
     (void)cookie;
-    return sup_rename_path(from, to);
+    return sup_negated_errno(sup_rename_path(from, to));
 }
 
+/* A directory is anything opendir accepts; a file reports its size through
+ * lseek. The firmware has no recovered mtime source, so mtime stays 0. */
 static int sup_file_stat_hook(void *cookie, const char *path, void *out_stat)
 {
     struct canopus_fs_stat *st = (struct canopus_fs_stat *)out_stat;
@@ -1188,10 +1205,22 @@ static int sup_file_stat_hook(void *cookie, const char *path, void *out_stat)
     close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
     int fd;
     (void)cookie;
-    if (st == 0) return -1;
+    if (st == 0) return CANOPUS_SVC_ERR_ARGUMENT;
     canopus_memset(st, 0, sizeof(*st));
+#ifdef CANOPUS_SUP_NUTTX_OPENDIR
+    {
+        typedef void *(*opendir_fn)(const char *);
+        typedef int (*closedir_fn)(void *);
+        void *dir = ((opendir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPENDIR)(path);
+        if (dir != 0) {
+            (void)((closedir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSEDIR)(dir);
+            st->is_dir = 1u;
+            return 0;
+        }
+    }
+#endif
     fd = open_file(path, CANOPUS_SUP_NUTTX_O_RDONLY);
-    if (fd < 0) return -1;
+    if (fd < 0) return sup_negated_errno(fd);
 #ifdef CANOPUS_SUP_NUTTX_LSEEK
     {
         typedef int64_t (*lseek_fn)(int, int64_t, int);
@@ -1203,12 +1232,18 @@ static int sup_file_stat_hook(void *cookie, const char *path, void *out_stat)
     return 0;
 }
 
+#ifdef CANOPUS_SUP_NUTTX_MKDIR
 static int sup_dir_mkdir(void *cookie, const char *path)
 {
+    typedef int (*mkdir_fn)(const char *, uint32_t);
     (void)cookie;
-    (void)path;
-    return 0;
+    /* The stock Bluetooth service creates /data/misc with mode 0777. */
+    return sup_negated_errno(((mkdir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_MKDIR)(path, 0777u));
 }
+#define SUP_DIR_MKDIR sup_dir_mkdir
+#else
+#define SUP_DIR_MKDIR 0
+#endif
 
 #ifdef CANOPUS_SUP_NUTTX_OPENDIR
 static void *sup_dir_open(void *cookie, const char *path)
@@ -1307,75 +1342,376 @@ static void sup_heap_release(void *cookie, void *ptr)
 #endif
 
 #ifdef CANOPUS_SUP_HEADLESS
-static int sup_notify_headless(void *cookie, const char *title, const char *body)
-{
-    (void)cookie;
-    (void)title;
-    (void)body;
-    return CANOPUS_SVC_ERR_UNSUPPORTED;
-}
-#define SUP_NOTIFY sup_notify_headless
+#define SUP_NOTIFY 0
 #else
-static int sup_notify(void *cookie, const char *title, const char *body)
+static int sup_notify(void *cookie, const char *source, const char *title, const char *body)
 {
     (void)cookie;
-    return canopus_manager_native_notify(title, body);
+    return canopus_manager_native_notify(source, title, body);
 }
 #define SUP_NOTIFY sup_notify
 #endif
 
-static int sup_vibrate(void *cookie, uint32_t duration_ms)
+/* ---- stock hardware services ------------------------------------------
+ *
+ * Every hook below calls an exact-target firmware entry point generated into
+ * canopus_target_config.h / canopus_band11_addresses.h. A target without the
+ * macros gets a NULL hook and the service answers UNSUPPORTED; nothing here
+ * returns a made-up value. All calls run on the module/UI task. The entry
+ * points are static-recovered and restricted, not device probed. */
+
+#define SUP_EBUSY (-16)
+#define SUP_ENOENT (-2)
+#define SUP_EINVAL (-22)
+#define SUP_ENOMEM (-12)
+#define SUP_ENOSYS (-38)
+
+/* Battery: Band 10 Pro exposes three getters, Band 11 one snapshot copy. */
+#if defined(CANOPUS_SUP_PM_BATTERY_READY) && defined(CANOPUS_SUP_PM_BATTERY_LEVEL) && \
+    defined(CANOPUS_SUP_PM_BATTERY_CHARGING)
+static int sup_battery_state(void *cookie, uint32_t *percent, int *charging)
 {
+    typedef int (*getter_fn)(void);
     (void)cookie;
-    (void)duration_ms;
+    if (!((getter_fn)(uintptr_t)CANOPUS_SUP_PM_BATTERY_READY)()) return SUP_EBUSY;
+    *percent = (uint32_t)((getter_fn)(uintptr_t)CANOPUS_SUP_PM_BATTERY_LEVEL)();
+    *charging = ((getter_fn)(uintptr_t)CANOPUS_SUP_PM_BATTERY_CHARGING)() != 0;
     return 0;
 }
-
-static int sup_set_brightness(void *cookie, uint32_t percent)
+#define SUP_BATTERY_STATE sup_battery_state
+#elif defined(CANOPUS_SUP_PM_BATTERY_READY) && defined(CANOPUS_SUP_PM_BATTERY_SNAPSHOT)
+static int sup_battery_state(void *cookie, uint32_t *percent, int *charging)
 {
+    typedef int (*ready_fn)(void);
+    typedef uint32_t (*snapshot_fn)(uint32_t out[4]);
+    uint32_t snapshot[4];
     (void)cookie;
-    (void)percent;
+    if (!((ready_fn)(uintptr_t)CANOPUS_SUP_PM_BATTERY_READY)()) return SUP_EBUSY;
+    (void)((snapshot_fn)(uintptr_t)CANOPUS_SUP_PM_BATTERY_SNAPSHOT)(snapshot);
+    *charging = (snapshot[0] & 0xFFu) != 0u;
+    *percent = snapshot[1];
     return 0;
 }
+#define SUP_BATTERY_STATE sup_battery_state
+#else
+#define SUP_BATTERY_STATE 0
+#endif
 
-static uint32_t sup_get_brightness(void *cookie)
+/* Screen state: 0 off, 1 always-on display, 2 on. */
+#if defined(CANOPUS_SUP_SCREEN_GET_STATE) || defined(CANOPUS_SUP_SCREEN_STATE)
+static int sup_screen_state(void *cookie)
 {
+    int state;
     (void)cookie;
-    return 100u;
+#if defined(CANOPUS_SUP_SCREEN_GET_STATE)
+    state = ((int (*)(void))(uintptr_t)CANOPUS_SUP_SCREEN_GET_STATE)();
+#else
+    state = *(volatile uint8_t *)(uintptr_t)CANOPUS_SUP_SCREEN_STATE;
+#endif
+    return state >= 0 && state <= 2 ? state : CANOPUS_SVC_ERR_IO;
 }
+#define SUP_SCREEN_STATE sup_screen_state
+#else
+#define SUP_SCREEN_STATE 0
+#endif
+
+#ifdef CANOPUS_SUP_SCREEN_TURN_ON
+/* The stock wake-lock path turns the screen on with source 26. */
+#define SUP_SCREEN_SOURCE_WAKELOCK 26
+static const char s_screen_tag[] = "canopus";
 
 static int sup_wake_screen(void *cookie)
 {
+    typedef int (*turn_on_fn)(const char *tag, int source);
     (void)cookie;
+    (void)((turn_on_fn)(uintptr_t)CANOPUS_SUP_SCREEN_TURN_ON)(s_screen_tag,
+                                                           SUP_SCREEN_SOURCE_WAKELOCK);
+    return 0;
+}
+#define SUP_WAKE_SCREEN sup_wake_screen
+#else
+#define SUP_WAKE_SCREEN 0
+#endif
+
+/* Wake locks: stock PowerManager wakelock at level 6 keeps the screen on while
+ * held. One native object per Supervisor slot, created on first use and kept
+ * for the life of the Supervisor (the stock destroy path is not called). */
+#if defined(CANOPUS_SUP_WAKELOCK_CREATE) && defined(CANOPUS_SUP_WAKELOCK_ACQUIRE) && \
+    defined(CANOPUS_SUP_WAKELOCK_RELEASE)
+#define SUP_WAKELOCK_LEVEL_KEEP_ON 6u
+static void *s_wakelock_object[CANOPUS_WAKELOCK_MAX];
+static const char s_wakelock_tag[] = "canopus";
+
+static int sup_wakelock_acquire(void *cookie, uint32_t index, uint32_t flags)
+{
+    typedef void *(*create_fn)(uint32_t level_and_flags, const char *tag);
+    typedef void (*lock_fn)(void *wakelock);
+    (void)cookie;
+    if (index >= CANOPUS_WAKELOCK_MAX) return SUP_EINVAL;
+    /* A CPU-only hold has no stock mechanism; the screen lock keeps the CPU up. */
+    if ((flags & CANOPUS_WAKELOCK_SCREEN) == 0u) return SUP_ENOSYS;
+    if (s_wakelock_object[index] == 0) {
+        s_wakelock_object[index] = ((create_fn)(uintptr_t)CANOPUS_SUP_WAKELOCK_CREATE)(
+            SUP_WAKELOCK_LEVEL_KEEP_ON, s_wakelock_tag);
+        if (s_wakelock_object[index] == 0) return SUP_ENOMEM;
+    }
+    ((lock_fn)(uintptr_t)CANOPUS_SUP_WAKELOCK_ACQUIRE)(s_wakelock_object[index]);
     return 0;
 }
 
-static int sup_is_screen_on(void *cookie)
+static int sup_wakelock_release(void *cookie, uint32_t index)
 {
+    typedef void (*lock_fn)(void *wakelock);
     (void)cookie;
-    return 1;
-}
-
-static uint32_t sup_battery_level(void *cookie)
-{
-    (void)cookie;
-    return 85u;
-}
-
-static int sup_is_charging(void *cookie)
-{
-    (void)cookie;
+    if (index >= CANOPUS_WAKELOCK_MAX || s_wakelock_object[index] == 0) return SUP_EINVAL;
+    ((lock_fn)(uintptr_t)CANOPUS_SUP_WAKELOCK_RELEASE)(s_wakelock_object[index]);
     return 0;
+}
+#define SUP_WAKELOCK_ACQUIRE sup_wakelock_acquire
+#define SUP_WAKELOCK_RELEASE sup_wakelock_release
+#else
+#define SUP_WAKELOCK_ACQUIRE 0
+#define SUP_WAKELOCK_RELEASE 0
+#endif
+
+/* Stock system properties. property_get with a NULL default answers -22 for a
+ * key that does not exist; it writes up to 255 bytes plus NUL. */
+#if defined(CANOPUS_SUP_PROPERTY_GET)
+static int sup_property_get(const char *key, char value[256])
+{
+    typedef int (*get_fn)(const char *key, char *value, const char *default_value);
+    return ((get_fn)(uintptr_t)CANOPUS_SUP_PROPERTY_GET)(key, value, 0);
 }
 
 static int sup_get_property(void *cookie, const char *key, char *buf, uint32_t max_len)
 {
+    char value[256];
+    int length, i;
     (void)cookie;
-    (void)key;
-    (void)buf;
-    (void)max_len;
-    return CANOPUS_SVC_ERR_NOTFOUND;
+    length = sup_property_get(key, value);
+    if (length < 0) return length == SUP_EINVAL ? SUP_ENOENT : length;
+    if ((uint32_t)length > max_len - 1u) length = (int)(max_len - 1u);
+    for (i = 0; i < length; i++) buf[i] = value[i];
+    buf[length] = '\0';
+    return length;
 }
+#define SUP_GET_PROPERTY sup_get_property
+#else
+#define SUP_GET_PROPERTY 0
+#endif
+
+/* Manual brightness through a Canopus MiWearScreen session: while the session
+ * is started its auto-brightness/brightness-value override the user's. The
+ * stock manual range is 31..255 (the settings clamp is 31), so 0% maps to the
+ * stock minimum rather than a black screen. */
+#if defined(CANOPUS_SUP_SCREEN_SESSION_CREATE) && defined(CANOPUS_SUP_SCREEN_SESSION_START) && \
+    defined(CANOPUS_SUP_SCREEN_SESSION_STOP) && \
+    defined(CANOPUS_SUP_SCREEN_SESSION_SET_AUTO_BRIGHTNESS) && \
+    defined(CANOPUS_SUP_SCREEN_SESSION_SET_BRIGHTNESS_VALUE) && \
+    defined(CANOPUS_SUP_SCREEN_SESSION_RESTORE_DEFAULT)
+#define SUP_BRIGHTNESS_MIN 31u
+#define SUP_BRIGHTNESS_MAX 255u
+#define SUP_AUTO_BRIGHTNESS_DISABLED 2
+static void *s_brightness_session;
+static const char s_brightness_tag[] = "canopus.display";
+
+static int sup_set_brightness(void *cookie, uint32_t percent)
+{
+    typedef void *(*create_fn)(const char *tag);
+    typedef void (*start_fn)(void *session, int auto_stop);
+    typedef void (*value_fn)(void *session, int value);
+    (void)cookie;
+    if (percent > 100u) return SUP_EINVAL;
+    if (s_brightness_session == 0) {
+        s_brightness_session = ((create_fn)(uintptr_t)CANOPUS_SUP_SCREEN_SESSION_CREATE)(
+            s_brightness_tag);
+        if (s_brightness_session == 0) return SUP_ENOMEM;
+    }
+    ((value_fn)(uintptr_t)CANOPUS_SUP_SCREEN_SESSION_SET_AUTO_BRIGHTNESS)(
+        s_brightness_session, SUP_AUTO_BRIGHTNESS_DISABLED);
+    ((value_fn)(uintptr_t)CANOPUS_SUP_SCREEN_SESSION_SET_BRIGHTNESS_VALUE)(
+        s_brightness_session,
+        (int)(SUP_BRIGHTNESS_MIN +
+              (percent * (SUP_BRIGHTNESS_MAX - SUP_BRIGHTNESS_MIN) + 50u) / 100u));
+    ((start_fn)(uintptr_t)CANOPUS_SUP_SCREEN_SESSION_START)(s_brightness_session, 0);
+    return 0;
+}
+
+static int sup_restore_brightness(void *cookie)
+{
+    typedef void (*session_fn)(void *session);
+    (void)cookie;
+    if (s_brightness_session == 0) return 0;
+    ((session_fn)(uintptr_t)CANOPUS_SUP_SCREEN_SESSION_RESTORE_DEFAULT)(s_brightness_session);
+    ((session_fn)(uintptr_t)CANOPUS_SUP_SCREEN_SESSION_STOP)(s_brightness_session);
+    return 0;
+}
+#define SUP_SET_BRIGHTNESS sup_set_brightness
+#define SUP_RESTORE_BRIGHTNESS sup_restore_brightness
+#else
+#define SUP_SET_BRIGHTNESS 0
+#define SUP_RESTORE_BRIGHTNESS 0
+#endif
+
+#if defined(CANOPUS_SUP_PROPERTY_GET_INT32)
+/* The manual setting is stored as persist.screen.brightness_value (31..255);
+ * while auto-brightness is on it does not describe what is displayed. */
+static int sup_get_brightness(void *cookie, uint32_t *percent)
+{
+    typedef int (*get_int_fn)(const char *key, int default_value);
+    get_int_fn get_int = (get_int_fn)(uintptr_t)CANOPUS_SUP_PROPERTY_GET_INT32;
+    int value;
+    (void)cookie;
+    if (get_int("persist.screen.auto_brightness", 0) != 0) return SUP_EBUSY;
+    value = get_int("persist.screen.brightness_value", -1);
+    if (value < 0) return SUP_ENOENT;
+    if (value < 31) value = 31;
+    if (value > 255) value = 255;
+    *percent = ((uint32_t)(value - 31) * 100u + 112u) / 224u;
+    return 0;
+}
+#define SUP_GET_BRIGHTNESS sup_get_brightness
+#else
+#define SUP_GET_BRIGHTNESS 0
+#endif
+
+/* Haptics. Band 10 Pro talks to the vibratord service through the stock HAL
+ * client: a 132-byte message with the type at +4 and the argument at +8
+ * (type 4 starts for duration_ms, type 5 stops). */
+#if defined(CANOPUS_SUP_VIBRATOR_HAL_TRANSACT)
+#define SUP_VIB_MSG_SIZE 132u
+#define SUP_VIB_MSG_START 4u
+#define SUP_VIB_MSG_STOP 5u
+#define SUP_VIB_DISABLED (-138) /* the service's "vibration disabled" result */
+
+static int sup_vib_transact(uint32_t type, uint32_t argument)
+{
+    typedef int (*transact_fn)(void *message);
+    uint32_t message[SUP_VIB_MSG_SIZE / 4u];
+    int rc;
+    canopus_memset(message, 0, sizeof(message));
+    ((uint8_t *)message)[4] = (uint8_t)type;
+    message[2] = argument;
+    rc = ((transact_fn)(uintptr_t)CANOPUS_SUP_VIBRATOR_HAL_TRANSACT)(message);
+    return rc == SUP_VIB_DISABLED ? SUP_EBUSY : rc;
+}
+
+/* The service answers with the FF_GAIN write result (8 bytes) on success. */
+static int sup_vibrate(void *cookie, uint32_t duration_ms)
+{
+    int rc;
+    (void)cookie;
+    rc = sup_vib_transact(SUP_VIB_MSG_START, duration_ms);
+    return rc >= 0 ? 0 : rc;
+}
+
+static int sup_vibrate_cancel(void *cookie)
+{
+    int rc;
+    (void)cookie;
+    rc = sup_vib_transact(SUP_VIB_MSG_STOP, 0u);
+    return rc >= 0 ? 0 : rc;
+}
+#define SUP_VIBRATE sup_vibrate
+#define SUP_VIBRATE_CANCEL sup_vibrate_cancel
+#elif defined(CANOPUS_SUP_VIBRATOR_RUN) && defined(CANOPUS_SUP_VIBRATOR_CANCEL)
+/* Band 11 plays through miwear_vibrator_run: a 20-byte parameter block whose
+ * kind byte (+9) 2 selects a waveform; +16 points at {count, segments}, each
+ * 6-byte segment carrying its duration (u16 at +2) and amplitude (u8 at +5).
+ * Priority 0 never preempts an exclusive stock vibration and plays once.
+ * run returns a positive vibration id; cancel stops only that id. */
+struct sup_vib_segment {
+    uint16_t offset;
+    uint16_t duration_ms;
+    uint8_t flags;
+    uint8_t amplitude;
+};
+struct sup_vib_waveform {
+    int32_t count;
+    const struct sup_vib_segment *segments;
+};
+struct sup_vib_params {
+    uint8_t type;
+    uint8_t reserved0[7];
+    uint8_t priority;
+    uint8_t kind;
+    uint8_t reserved1[2];
+    const char *key;
+    const void *data;
+};
+CANOPUS_STATIC_ASSERT(sizeof(struct sup_vib_segment) == 6u, "stock waveform segment is 6 bytes");
+CANOPUS_STATIC_ASSERT(sizeof(struct sup_vib_params) == 20u, "stock vibration parameters are 20 bytes");
+
+#define SUP_VIB_KIND_WAVEFORM 2u
+#define SUP_VIB_AMPLITUDE_MAX 255u
+#define SUP_VIB_BUSY (-3) /* an exclusive stock vibration is playing */
+static int s_vibration_id;
+
+static int sup_vibrate(void *cookie, uint32_t duration_ms)
+{
+    typedef int (*run_fn)(const struct sup_vib_params *params);
+    struct sup_vib_segment segment;
+    struct sup_vib_waveform waveform;
+    struct sup_vib_params params;
+    int id;
+    (void)cookie;
+    if (duration_ms == 0u || duration_ms > 0xFFFFu) return SUP_EINVAL;
+    canopus_memset(&segment, 0, sizeof(segment));
+    segment.duration_ms = (uint16_t)duration_ms;
+    segment.amplitude = SUP_VIB_AMPLITUDE_MAX;
+    waveform.count = 1;
+    waveform.segments = &segment;
+    canopus_memset(&params, 0, sizeof(params));
+    params.kind = SUP_VIB_KIND_WAVEFORM;
+    params.data = &waveform;
+    id = ((run_fn)(uintptr_t)CANOPUS_SUP_VIBRATOR_RUN)(&params);
+    if (id <= 0) return id == SUP_VIB_BUSY ? SUP_EBUSY : (id < 0 ? id : CANOPUS_SVC_ERR_IO);
+    s_vibration_id = id;
+    return 0;
+}
+
+static int sup_vibrate_cancel(void *cookie)
+{
+    typedef void (*cancel_fn)(int id);
+    (void)cookie;
+    if (s_vibration_id > 0) {
+        ((cancel_fn)(uintptr_t)CANOPUS_SUP_VIBRATOR_CANCEL)(s_vibration_id);
+        s_vibration_id = 0;
+    }
+    return 0;
+}
+#define SUP_VIBRATE sup_vibrate
+#define SUP_VIBRATE_CANCEL sup_vibrate_cancel
+#else
+#define SUP_VIBRATE 0
+#define SUP_VIBRATE_CANCEL 0
+#endif
+
+/* Bluetooth adapter state: the stock stack's bt_adapter_get_state on its
+ * adapter instance (0 off, 4 on). */
+#if defined(CANOPUS_SUP_BT_ADAPTER_GET_STATE) && \
+    (defined(CANOPUS_SUP_BT_ADAPTER_GET_INSTANCE) || defined(CANOPUS_SUP_BT_SHARED_ADAPTER))
+static int sup_bt_adapter_state(void *cookie, uint32_t *state)
+{
+    typedef int (*state_fn)(void *adapter);
+    void *adapter;
+    int value;
+    (void)cookie;
+#if defined(CANOPUS_SUP_BT_ADAPTER_GET_INSTANCE)
+    adapter = ((void *(*)(void))(uintptr_t)CANOPUS_SUP_BT_ADAPTER_GET_INSTANCE)();
+#else
+    adapter = *(void *volatile *)(uintptr_t)CANOPUS_SUP_BT_SHARED_ADAPTER;
+#endif
+    if (adapter == 0) return SUP_EBUSY;
+    value = ((state_fn)(uintptr_t)CANOPUS_SUP_BT_ADAPTER_GET_STATE)(adapter);
+    if (value < 0) return CANOPUS_SVC_ERR_IO;
+    *state = (uint32_t)value;
+    return 0;
+}
+#define SUP_BT_ADAPTER_STATE sup_bt_adapter_state
+#else
+#define SUP_BT_ADAPTER_STATE 0
+#endif
 
 #if !defined(CANOPUS_SUP_CUSTOM_LOADER) && !defined(CANOPUS_SUP_HEADLESS)
 static void *s_service_timer;
@@ -1423,12 +1759,12 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_file_read,
     sup_file_write,
     sup_file_seek,
-    sup_file_sync,
+    0, /* file_sync: no recovered fsync entry point */
     sup_file_close,
     sup_file_remove,
     sup_file_rename_hook,
     sup_file_stat_hook,
-    sup_dir_mkdir,
+    SUP_DIR_MKDIR,
     SUP_DIR_OPEN,
     SUP_DIR_READ,
     SUP_DIR_CLOSE,
@@ -1439,14 +1775,20 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     SUP_HEAP_RELEASE,
     SUP_NOTIFY,
     sup_reboot,
-    sup_vibrate,
-    sup_set_brightness,
-    sup_get_brightness,
-    sup_wake_screen,
-    sup_is_screen_on,
-    sup_battery_level,
-    sup_is_charging,
-    sup_get_property,
+    SUP_VIBRATE,
+    SUP_VIBRATE_CANCEL,
+    SUP_SET_BRIGHTNESS,
+    SUP_GET_BRIGHTNESS,
+    SUP_RESTORE_BRIGHTNESS,
+    SUP_WAKE_SCREEN,
+    SUP_SCREEN_STATE,
+    SUP_WAKELOCK_ACQUIRE,
+    SUP_WAKELOCK_RELEASE,
+    SUP_BATTERY_STATE,
+    SUP_GET_PROPERTY,
+    SUP_BT_ADAPTER_STATE,
+    sup_l2_connected,
+    0, /* bt_rssi: no recovered stock source */
     SUP_TIMER_PUMP,
     sup_l2_send,
     sup_validate_receipt,
