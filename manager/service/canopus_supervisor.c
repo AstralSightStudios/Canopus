@@ -1119,6 +1119,17 @@ int32_t canopus_supervisor_handle_l2_packet(struct canopus_supervisor_v1 *sup,
         return -1;
     }
 
+    /* CanopusConnect shares the stream but not the Manager's state: no pending
+     * slot, status snapshot, error code or last_kind is touched. */
+    if (req.command == CANOPUS_CMD_CONNECT_SEND || req.command == CANOPUS_CMD_CONNECT_LISTEN) {
+        uint8_t status;
+        canopus_proto_response_init(&resp, req.request_id,
+            canopus_supervisor_connect_request(&req, l2_payload + poff, &status), 1u);
+        enc_len = canopus_transport_v2_encode_response(&resp, req.command, &status, 1u,
+                                                       resp_buf, resp_cap);
+        return enc_len < 0 ? -1 : (int32_t)enc_len;
+    }
+
     sup->last_kind = 1;
     rc = canopus_supervisor_handle_v2_request(sup, &req, l2_payload + poff,
                                               &resp, &opcode);

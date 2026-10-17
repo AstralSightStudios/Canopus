@@ -143,12 +143,22 @@ struct canopus_sup_platform_v1 {
     int (*start_timer_pump)(void *cookie, void (*poll)(void *), void *data);
     /* WearPacket Layer 2 communication (ADR-CAN-008). Optional. */
     int (*l2_send)(void *cookie, uint8_t channel, const void *payload, uint16_t len);
+    /* CanopusConnect (ADR-CAN-009), both or neither. l2_event queues one
+     * complete CPC2 EVENT frame for the phone on the Canopus channel, behind
+     * Manager responses and on a queue of its own: 0 when queued, BUSY when
+     * that queue is full, STATE without a phone session. l2_peer identifies the
+     * current phone session (0 without one) and changes when the phone
+     * reconnects, which is when remote listeners lapse. */
+    int (*l2_event)(void *cookie, const void *frame, uint16_t len);
+    uint32_t (*l2_peer)(void *cookie);
     int (*validate_receipt)(void *cookie, const void *receipt);
 };
 
 int canopus_sup_l2_start(void);
 void canopus_sup_l2_poll(void);
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len);
+int sup_l2_event(void *cookie, const void *frame, uint16_t len);
+uint32_t sup_l2_peer(void *cookie);
 
 #ifdef __cplusplus
 }

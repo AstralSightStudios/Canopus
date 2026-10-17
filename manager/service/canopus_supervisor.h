@@ -384,6 +384,15 @@ void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,
 int canopus_supervisor_l2_rx_registered(uint8_t channel);
 int canopus_supervisor_l2_rx_dispatch(struct canopus_supervisor_v1 *sup, uint8_t channel,
                                       const void *payload, uint16_t len);
+/* CanopusConnect (ADR-CAN-009). bind resets the listener state and returns the
+ * module-facing object, or 0 when the platform has no L2 event hooks. request
+ * handles one CONNECT_SEND/CONNECT_LISTEN L2 request on the module/UI task:
+ * it returns the CANOPUS_RESULT_* and the CANOPUS_CONNECT_STATUS_* byte, and
+ * touches none of the Manager's state. release drops a slot's receiver. */
+const struct canopus_connect_obj *canopus_supervisor_connect_bind(struct canopus_supervisor_v1 *sup);
+uint32_t canopus_supervisor_connect_request(const struct canopus_proto_request_v1 *req,
+                                            const uint8_t *payload, uint8_t *status);
+void canopus_supervisor_connect_release(uint32_t slot);
 /* Log ring (newest last). Returns the message or 0 past the end. */
 uint32_t canopus_supervisor_log_count(void);
 const char *canopus_supervisor_log_entry(uint32_t index, uint32_t *level,

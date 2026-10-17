@@ -23,6 +23,7 @@
 #include "canopus_runtime.h"
 #include "canopus_veneer.h" /* canopus_fw_register_driver / canopus_fw_unregister_driver */
 #include "canopus_memory.h"
+#include "canopus_l2_probe_config.h"
 #ifdef CANOPUS_SUP_CUSTOM_LOADER
 #include "canopus_elf32_loader.h"
 #endif
@@ -1855,5 +1856,12 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     SUP_BT_IS_CONNECTED,
     SUP_TIMER_PUMP,
     sup_l2_send,
+#if CANOPUS_SUP_HAS_L2
+    sup_l2_event,
+    sup_l2_peer,
+#else
+    0, /* l2_event: no L2 backend, so no CanopusConnect */
+    0, /* l2_peer */
+#endif
     sup_validate_receipt,
 };

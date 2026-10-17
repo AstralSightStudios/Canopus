@@ -333,6 +333,20 @@ static int p_l2_send(void *c, uint8_t ch, const void *p, uint16_t n)
     (void)c; (void)ch; (void)p; (void)n;
     return 0;
 }
+static uint32_t g_peer;
+static int g_event_frames, g_event_rc;
+static uint8_t g_event_frame[CANOPUS_TRANSPORT_V2_HEADER_SIZE + CANOPUS_PROTO_MAX_PAYLOAD];
+static uint16_t g_event_frame_len;
+static int p_l2_event(void *c, const void *frame, uint16_t n)
+{
+    (void)c;
+    if (g_event_rc != 0) return g_event_rc;
+    g_event_frames++;
+    g_event_frame_len = n;
+    memcpy(g_event_frame, frame, n);
+    return 0;
+}
+static uint32_t p_l2_peer(void *c) { (void)c; return g_peer; }
 
 static const struct canopus_sup_platform_v1 platform_with_fs = {
     .target_id = "xiaomi-band-10-pro-3.101.030",
@@ -391,6 +405,10 @@ static void init_hw_platform(void)
     platform_with_hw.bt_adapter_state = p_bt_adapter_state;
     platform_with_hw.bt_is_connected = p_bt_is_connected;
     platform_with_hw.l2_send = p_l2_send;
+    platform_with_hw.l2_event = p_l2_event;
+    platform_with_hw.l2_peer = p_l2_peer;
+    g_peer = 1u;
+    g_event_frames = g_event_rc = 0;
     g_vib_count = g_vib_cancels = g_vib_rc = 0;
     g_screen = 2;
     g_wake_calls = g_brightness_restores = 0;
@@ -507,6 +525,8 @@ TEST(context_exposes_groups_by_platform_capability)
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_TIME, 1));
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_MEM, 1));
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_NOTIFY, 1));
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_CONNECT, 1));
+    CHECK(ctx->connect == 0);
     CHECK_EQ(ctx->abi, (CANOPUS_ABI_MAJOR << 16) | CANOPUS_ABI_MINOR);
 }
 
@@ -1369,6 +1389,8 @@ TEST(l2_receive_registration_is_validated_delivered_and_released)
     /* stock channels and the control channel are not for modules */
     CHECK_EQ(ctx->bt->l2_register_rx(ctx, 0x01u, on_l2_rx, 0), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->bt->l2_register_rx(ctx, 0x43u, on_l2_rx, 0), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->bt->l2_send(ctx, 0x43u, "x", 1u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->bt->l2_send(ctx, 0x44u, "x", 1u), CANOPUS_SVC_OK);
     CHECK_EQ(ctx->bt->l2_register_rx(ctx, 0x50u, on_l2_rx, 0), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK(!canopus_supervisor_l2_rx_registered(0x44u));
     CHECK_EQ(canopus_supervisor_l2_rx_dispatch(&sup, 0x44u, "hi", 2u), 0);
@@ -1394,6 +1416,276 @@ TEST(l2_receive_registration_is_validated_delivered_and_released)
     canopus_supervisor_release_services(&sup, 1u);
     CHECK(!canopus_supervisor_l2_rx_registered(0x4Fu));
     CHECK_EQ(g_l2_rx_calls, 1);
+}
+
+/* ---- CanopusConnect (ADR-CAN-009) ----------------------------------- */
+
+static int g_connect_calls;
+static uint32_t g_connect_kind, g_connect_len;
+static uint8_t g_connect_data[CANOPUS_CONNECT_DATA_MAX + 1u];
+static int g_connect_text_terminated;
+static const struct canopus_context_v1 *g_connect_ctx;
+static void *g_connect_user;
+static void on_connect(const struct canopus_context_v1 *ctx, uint32_t kind, const void *data,
+                       uint32_t len, void *user)
+{
+    g_connect_calls++;
+    g_connect_ctx = ctx;
+    g_connect_kind = kind;
+    g_connect_len = len;
+    g_connect_user = user;
+    memcpy(g_connect_data, data, len);
+    g_connect_text_terminated = kind == CANOPUS_CONNECT_TEXT && ((const char *)data)[len] == '\0';
+}
+
+/* One L2 round trip: the CPC2 request in, the single status byte out. */
+static uint32_t connect_raw(struct canopus_supervisor_v1 *sup, uint32_t command,
+                            const uint8_t *payload, uint32_t len, uint8_t *status)
+{
+    uint8_t request[CANOPUS_TRANSPORT_V2_HEADER_SIZE + CANOPUS_PROTO_MAX_PAYLOAD];
+    uint8_t response[CANOPUS_TRANSPORT_V2_HEADER_SIZE + CANOPUS_PROTO_MAX_PAYLOAD];
+    struct canopus_proto_request_v1 req = { CANOPUS_PROTO_MAGIC, CANOPUS_PROTO_REQUEST_SIZE,
+        CANOPUS_ABI_MAJOR, CANOPUS_ABI_MINOR, 0, 77u, 0, 0 };
+    struct canopus_proto_response_v1 resp;
+    uint32_t opcode, offset;
+    int n;
+    req.command = command;
+    req.payload_size = len;
+    n = canopus_transport_v2_encode_request(&req, payload, request, sizeof(request));
+    CHECK(n > 0);
+    n = canopus_supervisor_handle_l2_packet(sup, request, (uint32_t)n, response, sizeof(response));
+    CHECK(n > 0);
+    CHECK_EQ(canopus_transport_v2_decode_response(response, (uint32_t)n, &resp, &opcode, &offset), 0);
+    CHECK_EQ(opcode, command);
+    CHECK_EQ(resp.request_id, 77u);
+    CHECK_EQ(resp.payload_size, 1u);
+    *status = response[offset];
+    return resp.result_state;
+}
+
+static uint32_t connect_rpc(struct canopus_supervisor_v1 *sup, uint32_t command, uint8_t first,
+                            const char *id, const void *data, uint32_t len, uint8_t *status)
+{
+    uint8_t payload[CANOPUS_PROTO_MAX_PAYLOAD];
+    uint32_t id_len = (uint32_t)strlen(id);
+    payload[0] = first;
+    payload[1] = (uint8_t)id_len;
+    memcpy(payload + 2, id, id_len);
+    if (len != 0u) memcpy(payload + 2 + id_len, data, len);
+    return connect_raw(sup, command, payload, 2u + id_len + len, status);
+}
+
+static uint32_t phone_sends(struct canopus_supervisor_v1 *sup, uint8_t kind, const char *id,
+                            const void *data, uint32_t len, uint8_t *status)
+{
+    return connect_rpc(sup, CANOPUS_CMD_CONNECT_SEND, kind, id, data, len, status);
+}
+
+static uint32_t phone_listens(struct canopus_supervisor_v1 *sup, int enable, const char *id,
+                              uint8_t *status)
+{
+    return connect_rpc(sup, CANOPUS_CMD_CONNECT_LISTEN, (uint8_t)enable, id, 0, 0u, status);
+}
+
+TEST(connect_delivers_phone_messages_to_the_module_and_refuses_what_it_cannot_deliver)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    uint8_t status, big[CANOPUS_CONNECT_DATA_MAX + 1u], bad[4] = {1u, 0u, 'a', 'b'};
+    int token = 0;
+    uint32_t i;
+    setup_hw(&sup);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "echo"), 1);
+    ctx = canopus_supervisor_context(&sup, 1u);
+    CHECK(canopus_services_has(ctx, CANOPUS_SVC_CONNECT, 1));
+    CHECK(ctx->connect != 0);
+    g_connect_calls = 0;
+
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_TEXT, "ghost", "x", 1u, &status), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(status, CANOPUS_CONNECT_STATUS_MODULE);
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_TEXT, "echo", "x", 1u, &status), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(status, CANOPUS_CONNECT_STATUS_NOT_LISTENING);
+
+    CHECK_EQ(ctx->connect->listen(ctx, on_connect, &token), CANOPUS_SVC_OK);
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_TEXT, "echo", "hello", 5u, &status), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(status, CANOPUS_CONNECT_STATUS_OK);
+    CHECK_EQ(g_connect_calls, 1);
+    CHECK(g_connect_ctx == ctx);
+    CHECK(g_connect_user == &token);
+    CHECK_EQ(g_connect_kind, CANOPUS_CONNECT_TEXT);
+    CHECK_EQ(g_connect_len, 5u);
+    CHECK(memcmp(g_connect_data, "hello", 5) == 0);
+    CHECK(g_connect_text_terminated);
+
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_TEXT, "echo", 0, 0u, &status), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(g_connect_len, 0u);
+    CHECK(g_connect_text_terminated);
+
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_BINARY, "echo", "\0\1\2\377", 4u, &status), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(g_connect_kind, CANOPUS_CONNECT_BINARY);
+    CHECK_EQ(g_connect_len, 4u);
+    CHECK(memcmp(g_connect_data, "\0\1\2\377", 4) == 0);
+
+    for (i = 0u; i < sizeof(big); i++) big[i] = (uint8_t)i;
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_BINARY, "echo", big, CANOPUS_CONNECT_DATA_MAX, &status), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(g_connect_len, CANOPUS_CONNECT_DATA_MAX);
+    CHECK(memcmp(g_connect_data, big, CANOPUS_CONNECT_DATA_MAX) == 0);
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_BINARY, "echo", big, CANOPUS_CONNECT_DATA_MAX + 1u, &status), CANOPUS_RESULT_REJECTED);
+    CHECK_EQ(status, CANOPUS_CONNECT_STATUS_FORMAT);
+
+    /* malformed frames never reach the module */
+    g_connect_calls = 0;
+    CHECK_EQ(phone_sends(&sup, 3u, "echo", "x", 1u, &status), CANOPUS_RESULT_REJECTED);
+    CHECK_EQ(phone_sends(&sup, 0u, "echo", "x", 1u, &status), CANOPUS_RESULT_REJECTED);
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_TEXT, "Echo", "x", 1u, &status), CANOPUS_RESULT_REJECTED);
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_TEXT, "a_very_long_module_id", "x", 1u, &status), CANOPUS_RESULT_REJECTED);
+    CHECK_EQ(connect_raw(&sup, CANOPUS_CMD_CONNECT_SEND, bad, 4u, &status), CANOPUS_RESULT_REJECTED); /* id length 0 */
+    bad[1] = 9u;
+    CHECK_EQ(connect_raw(&sup, CANOPUS_CMD_CONNECT_SEND, bad, 4u, &status), CANOPUS_RESULT_REJECTED); /* id cut short */
+    CHECK_EQ(connect_raw(&sup, CANOPUS_CMD_CONNECT_SEND, bad, 1u, &status), CANOPUS_RESULT_REJECTED);
+    CHECK_EQ(g_connect_calls, 0);
+
+    /* the receiver is the module's: it can drop it, and unloading drops it too */
+    CHECK_EQ(ctx->connect->listen(ctx, 0, 0), CANOPUS_SVC_OK);
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_TEXT, "echo", "x", 1u, &status), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(status, CANOPUS_CONNECT_STATUS_NOT_LISTENING);
+    CHECK_EQ(ctx->connect->listen(ctx, on_connect, 0), CANOPUS_SVC_OK);
+    canopus_supervisor_release_services(&sup, 1u);
+    CHECK_EQ(phone_sends(&sup, CANOPUS_CONNECT_TEXT, "echo", "x", 1u, &status), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(g_connect_calls, 0);
+}
+
+TEST(connect_never_touches_the_manager_state)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    uint8_t status, bad[2] = {1u, 0u};
+    uint32_t i, error_code, pending_op, pending_state;
+    uint8_t last_kind;
+    setup_hw(&sup);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "echo"), 1);
+    ctx = canopus_supervisor_context(&sup, 1u);
+    CHECK_EQ(ctx->connect->listen(ctx, on_connect, 0), CANOPUS_SVC_OK);
+    error_code = sup.error_code;
+    pending_op = sup.pending_op;
+    pending_state = sup.pending_state;
+    last_kind = sup.last_kind;
+
+    (void)phone_listens(&sup, 1, "echo", &status);
+    (void)phone_sends(&sup, CANOPUS_CONNECT_TEXT, "echo", "x", 1u, &status);
+    (void)phone_sends(&sup, CANOPUS_CONNECT_TEXT, "ghost", "x", 1u, &status);
+    (void)connect_raw(&sup, CANOPUS_CMD_CONNECT_SEND, bad, 2u, &status);
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, "y", 1u), CANOPUS_SVC_OK);
+
+    CHECK_EQ(sup.error_code, error_code);
+    CHECK_EQ(sup.pending_op, pending_op);
+    CHECK_EQ(sup.pending_state, pending_state);
+    CHECK_EQ(sup.last_kind, last_kind);
+    for (i = 0u; i < CANOPUS_PENDING_MAX; i++) CHECK_EQ(sup.pending.slots[i].active, 0u);
+}
+
+TEST(connect_publishes_module_messages_only_to_the_listening_phone_session)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx, *meter;
+    uint8_t status, big[CANOPUS_CONNECT_DATA_MAX + 1u];
+    char id[8];
+    uint32_t i;
+    setup_hw(&sup);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "echo"), 1);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "meter"), 2);
+    ctx = canopus_supervisor_context(&sup, 1u);
+    meter = canopus_supervisor_context(&sup, 2u);
+    memset(big, 0x5a, sizeof(big));
+
+    /* nobody listens yet: nothing is queued */
+    CHECK_EQ(ctx->connect->remote_listening(ctx), 0);
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, "ping", 4u), CANOPUS_CONNECT_NOT_LISTENING);
+    CHECK_EQ(g_event_frames, 0);
+
+    CHECK_EQ(phone_listens(&sup, 1, "echo", &status), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(status, CANOPUS_CONNECT_STATUS_OK);
+    CHECK_EQ(ctx->connect->remote_listening(ctx), 1);
+    CHECK_EQ(meter->connect->remote_listening(meter), 0); /* the id is what is listened to */
+    CHECK_EQ(meter->connect->send(meter, CANOPUS_CONNECT_TEXT, "ping", 4u), CANOPUS_CONNECT_NOT_LISTENING);
+
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, "ping", 4u), CANOPUS_SVC_OK);
+    CHECK_EQ(g_event_frames, 1);
+    CHECK_EQ(g_event_frame_len, CANOPUS_TRANSPORT_V2_HEADER_SIZE + 2u + 4u + 4u);
+    CHECK(memcmp(g_event_frame, "2CPC", 4) == 0);                       /* "CPC2", little endian */
+    CHECK_EQ(g_event_frame[6], CANOPUS_TRANSPORT_V2_EVENT);
+    CHECK_EQ(g_event_frame[16], CANOPUS_CMD_CONNECT_MESSAGE);
+    CHECK_EQ(g_event_frame[20] | g_event_frame[21] | g_event_frame[22] | g_event_frame[23], 0u); /* request id 0 */
+    CHECK_EQ(g_event_frame[32], 10u);
+    CHECK_EQ(g_event_frame[36], CANOPUS_CONNECT_TEXT);
+    CHECK_EQ(g_event_frame[37], 4u);
+    CHECK(memcmp(g_event_frame + 38, "echoping", 8) == 0);
+
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_BINARY, "\0\377", 2u), CANOPUS_SVC_OK);
+    CHECK_EQ(g_event_frame[36], CANOPUS_CONNECT_BINARY);
+    CHECK(memcmp(g_event_frame + 42, "\0\377", 2) == 0);
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_BINARY, big, CANOPUS_CONNECT_DATA_MAX), CANOPUS_SVC_OK);
+    CHECK(g_event_frame_len <= sizeof(g_event_frame));
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_BINARY, big, CANOPUS_CONNECT_DATA_MAX + 1u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->connect->send(ctx, 0u, "x", 1u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, 0, 1u), CANOPUS_SVC_ERR_ARGUMENT);
+
+    /* a full outgoing event queue is reported, not hidden */
+    g_event_rc = -16;
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, "ping", 4u), CANOPUS_SVC_ERR_BUSY);
+    g_event_rc = 0;
+
+    /* the phone stops listening */
+    CHECK_EQ(phone_listens(&sup, 0, "echo", &status), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(ctx->connect->remote_listening(ctx), 0);
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, "ping", 4u), CANOPUS_CONNECT_NOT_LISTENING);
+    CHECK_EQ(phone_listens(&sup, 0, "echo", &status), CANOPUS_RESULT_COMPLETED); /* idempotent */
+
+    /* a listener lapses with the phone session that registered it */
+    CHECK_EQ(phone_listens(&sup, 1, "echo", &status), CANOPUS_RESULT_COMPLETED);
+    g_peer = 2u;
+    CHECK_EQ(ctx->connect->remote_listening(ctx), 0);
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, "ping", 4u), CANOPUS_CONNECT_NOT_LISTENING);
+    CHECK_EQ(phone_listens(&sup, 1, "echo", &status), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, "ping", 4u), CANOPUS_SVC_OK);
+    g_peer = 0u; /* no phone session at all */
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, "ping", 4u), CANOPUS_CONNECT_NOT_LISTENING);
+    g_peer = 2u;
+
+    /* malformed listen requests */
+    CHECK_EQ(connect_rpc(&sup, CANOPUS_CMD_CONNECT_LISTEN, 2u, "echo", 0, 0u, &status), CANOPUS_RESULT_REJECTED);
+    CHECK_EQ(connect_rpc(&sup, CANOPUS_CMD_CONNECT_LISTEN, 1u, "echo", "x", 1u, &status), CANOPUS_RESULT_REJECTED);
+    CHECK_EQ(phone_listens(&sup, 1, "Echo", &status), CANOPUS_RESULT_REJECTED);
+
+    /* the table is bounded, and listeners of an older session make room */
+    for (i = 0u; i < 7u; i++) {
+        snprintf(id, sizeof(id), "m%u", i);
+        CHECK_EQ(phone_listens(&sup, 1, id, &status), CANOPUS_RESULT_COMPLETED);
+    }
+    CHECK_EQ(phone_listens(&sup, 1, "overflow", &status), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(status, CANOPUS_CONNECT_STATUS_FULL);
+    CHECK_EQ(phone_listens(&sup, 1, "m3", &status), CANOPUS_RESULT_COMPLETED); /* already there */
+    g_peer = 3u;
+    CHECK_EQ(phone_listens(&sup, 1, "overflow", &status), CANOPUS_RESULT_COMPLETED);
+
+    /* an unloaded module has no remote listener to push to */
+    canopus_supervisor_release_services(&sup, 1u);
+    sup.modules[1].state = 0u;
+    CHECK_EQ(ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, "ping", 4u), CANOPUS_SVC_ERR_STATE);
+}
+
+TEST(connect_is_absent_without_the_l2_event_hooks)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 no_events;
+    const struct canopus_context_v1 *ctx;
+    init_hw_platform();
+    no_events = platform_with_hw;
+    no_events.l2_event = 0;
+    setup(&sup, &no_events);
+    ctx = canopus_supervisor_context(&sup, 0);
+    CHECK(ctx->connect == 0);
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_CONNECT, 1));
 }
 
 static int g_event_calls;
@@ -1529,6 +1821,14 @@ static struct test_registry supervisor_services_tests[] = {
       l2_receive_registration_is_validated_delivered_and_released_wrapper },
     { "system_events_are_published_on_change_and_cannot_be_forged",
       system_events_are_published_on_change_and_cannot_be_forged_wrapper },
+    { "connect_delivers_phone_messages_to_the_module_and_refuses_what_it_cannot_deliver",
+      connect_delivers_phone_messages_to_the_module_and_refuses_what_it_cannot_deliver_wrapper },
+    { "connect_never_touches_the_manager_state",
+      connect_never_touches_the_manager_state_wrapper },
+    { "connect_publishes_module_messages_only_to_the_listening_phone_session",
+      connect_publishes_module_messages_only_to_the_listening_phone_session_wrapper },
+    { "connect_is_absent_without_the_l2_event_hooks",
+      connect_is_absent_without_the_l2_event_hooks_wrapper },
 };
 
 int run_supervisor_services_tests(void)

@@ -287,6 +287,34 @@ int canopus_transport_v2_encode_response(const struct canopus_proto_response_v1 
     return (int)total;
 }
 
+int canopus_transport_v2_encode_event(uint32_t opcode, const void *payload,
+                                      uint32_t payload_len,
+                                      uint8_t *out, uint32_t cap)
+{
+    uint32_t total;
+    if (out == 0 || payload_len > CANOPUS_PROTO_MAX_PAYLOAD ||
+        (payload_len > 0 && payload == 0)) {
+        return -1;
+    }
+    total = CANOPUS_TRANSPORT_V2_HEADER_SIZE + payload_len;
+    if (cap < total) {
+        return -1;
+    }
+    canopus_memset(out, 0, total);
+    v2_put_u32(out, 0, CANOPUS_TRANSPORT_V2_MAGIC);
+    out[4] = (uint8_t)CANOPUS_TRANSPORT_V2_HEADER_SIZE;
+    out[6] = (uint8_t)CANOPUS_TRANSPORT_V2_EVENT;
+    out[8] = (uint8_t)CANOPUS_ABI_MAJOR;
+    out[10] = (uint8_t)CANOPUS_ABI_MINOR;
+    v2_put_u32(out, 12, total);
+    v2_put_u32(out, 16, opcode);
+    v2_put_u32(out, 32, payload_len);
+    if (payload_len > 0) {
+        canopus_memcpy(out + CANOPUS_TRANSPORT_V2_HEADER_SIZE, payload, payload_len);
+    }
+    return (int)total;
+}
+
 /* ------------------------------------------------------------------ */
 /* Pending-request table (CAN-P1-002)                                  */
 /* ------------------------------------------------------------------ */

@@ -1,12 +1,17 @@
 //! Every Rust ABI constant that has a `CANOPUS_<NAME>` define in
-//! `sdk/c/canopus_abi.h` must carry the same value.
+//! `sdk/c/canopus_abi.h` or `sdk/c/canopus_services.h` must carry the same value.
 use canopus_abi::*;
 
+const HEADERS: [&str; 2] = [
+    include_str!("../../../c/canopus_abi.h"),
+    include_str!("../../../c/canopus_services.h"),
+];
+
 fn c_define(name: &str) -> u64 {
-    let header = include_str!("../../../c/canopus_abi.h");
     let key = format!("#define CANOPUS_{name} ");
-    let line = header
-        .lines()
+    let line = HEADERS
+        .iter()
+        .flat_map(|header| header.lines())
         .find(|l| l.trim_start().starts_with(&key))
         .unwrap_or_else(|| panic!("CANOPUS_{name} missing in header"));
     let value = line.trim_start()[key.len()..]
@@ -45,6 +50,10 @@ fn constants_match_the_c_header() {
         ("LIFECYCLE_PATCH_REBOOT_REQUIRED", LIFECYCLE_PATCH_REBOOT_REQUIRED as u64),
         ("STATUS_RECORD_MAX", STATUS_RECORD_MAX as u64),
         ("CAP_MAGIC", CAP_MAGIC as u64),
+        ("CONNECT_TEXT", CONNECT_TEXT as u64),
+        ("CONNECT_BINARY", CONNECT_BINARY as u64),
+        ("CONNECT_DATA_MAX", CONNECT_DATA_MAX as u64),
+        ("CONNECT_NOT_LISTENING", CONNECT_NOT_LISTENING as u64),
     ];
     for (name, rust) in table {
         assert_eq!(c_define(name), *rust, "CANOPUS_{name}");

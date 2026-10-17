@@ -47,5 +47,5 @@ b735526c3ed42451cc9a739e5041da42f2cf41dabed08f0faaa253792c7a332c  targets/xiaomi
 eb3f5bc2baa9679e84a10ca99f05efa658d0cc48e4c531ef93c00948553de304  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.155/canopus_supervisor.elf
 96efd5fbcbcf64e36674ba8e6e3922fb4a21332771fd071bf82a928d17ae4444  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.177/canopus_supervisor.elf
 78bf3702217ebd482bac2c8d572855b11ac61e613e1c1dec9bbd1ec004885330  modules/examples/hello/build/xiaomi-band-10-pro-3.101.036/hello.elf
-0691349d7c615ef983b9fe51a58e2cab4d69421bfa1e2415c60f916fd0db1477  modules/examples/hello-portable/build/hello_portable.elf
-9aa05d42d40420f7cbc5bfa0ad463854f4945e7fa0ea4c7211e6fdf23c0641d7  sdk/rust/examples/no-heap-counter/build/no_heap_counter.elf
+6d79ef0aedcc33948141a0ccc900057c39f31ea250eb0273c5af4a1f072b55c8  modules/examples/hello-portable/build/hello_portable.elf
+5fb6af864e65776a4c9d186f09156775d149263295eb4f686d4c2448c0ce9569  sdk/rust/examples/no-heap-counter/build/no_heap_counter.elf

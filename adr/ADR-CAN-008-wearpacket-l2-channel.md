@@ -33,6 +33,10 @@ Canopus 原计划在设备端与手机端之间建立一条直接受控的通信
 - 彻底移除快应用容器、快应用列表与目录依赖，实现 AstroBox 与手环端 Canopus 模块/Supervisor 的实时双向 RPC。
 - 零额外物理连接开销，不侵入系统 Protobuf（`WearPacket.proto`）业务逻辑。
 
+## 后续
+
+模块与 AstroBox 插件之间的消息通道（CanopusConnect）复用本通道，见 ADR-CAN-009。
+
 ## 原生包投递（2026-10-17）
 
 CPC2 每帧载荷上限保持 512 字节。数字均为 little-endian：

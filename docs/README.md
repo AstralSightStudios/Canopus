@@ -29,6 +29,7 @@
 - [`ADR-CAN-006: Supervisor 服务表微内核设计`](../adr/ADR-CAN-006-supervisor-service-table.md)
 - [`ADR-CAN-007: 移除 P65 Target 事故记录`](../adr/ADR-CAN-007-remove-p65.md)
 - [`ADR-CAN-008: WearPacket Layer 2 通道 (0x43) 架构`](../adr/ADR-CAN-008-wearpacket-l2-channel.md)
+- [`ADR-CAN-009: CanopusConnect 模块与 AstroBox 插件消息通道`](../adr/ADR-CAN-009-canopus-connect.md)
 
 ---
 

@@ -11,10 +11,11 @@
  *   7.  HAPTICS (vibrate, vibrate_pattern, vibrate_preset, cancel)
  *   8.  DISPLAY (get_brightness, set_brightness, is_screen_on, get_resolution, acquire_wake_lock, release_wake_lock, wake_screen)
  *   9.  BUS (subscribe, publish with synchronous event dispatch, unsubscribe)
- *   10. BLUETOOTH (is_connected, adapter_state, l2_register_rx, l2_send)
+ *   10. BLUETOOTH (is_connected, adapter_state, l2_register_rx, l2_send; the control channel 0x43 is refused)
  *   11. LOG (info, warn, error, debug, write)
  *   12. NOTIFY (post, post_with_icon)
- *   13. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Slider, Checkbox, Divider)
+ *   13. CONNECT (CanopusConnect: listen, send text/binary, remote_listening)
+ *   14. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Slider, Checkbox, Divider)
  */
 
 #include "canopus_abi.h"
@@ -656,6 +657,41 @@ static void dummy_l2_cb(const struct canopus_context_v1 *ctx, uint8_t ch, const 
     (void)ctx; (void)ch; (void)p; (void)l; (void)ud;
 }
 
+static void dummy_connect_cb(const struct canopus_context_v1 *ctx, uint32_t kind,
+                             const void *data, uint32_t len, void *user_data)
+{
+    (void)ctx; (void)kind; (void)data; (void)len; (void)user_data;
+}
+
+/* Nobody on the phone listens during a device test run, so send answers
+ * NOT_LISTENING; with a listening plugin it answers OK. Neither fakes anything. */
+static void run_connect_tests(const struct canopus_context_v1 *ctx)
+{
+    int ok = 1;
+    int32_t text, binary;
+    int listening;
+    if (ctx->connect == 0) {
+        log_skip("Connect: no L2 event backend on this target");
+        return;
+    }
+    if (ctx->connect->listen(ctx, dummy_connect_cb, 0) != CANOPUS_SVC_OK) ok = 0;
+    listening = ctx->connect->remote_listening(ctx);
+    if (listening != 0 && listening != 1) ok = 0;
+    text = ctx->connect->send(ctx, CANOPUS_CONNECT_TEXT, "all_services_test", 17u);
+    binary = ctx->connect->send(ctx, CANOPUS_CONNECT_BINARY, "\x01\x02", 2u);
+    if (listening) {
+        if ((text != CANOPUS_SVC_OK && text != CANOPUS_SVC_ERR_BUSY) ||
+            (binary != CANOPUS_SVC_OK && binary != CANOPUS_SVC_ERR_BUSY)) ok = 0;
+    } else if (text != CANOPUS_CONNECT_NOT_LISTENING || binary != CANOPUS_CONNECT_NOT_LISTENING) {
+        ok = 0;
+    }
+    if (ctx->connect->send(ctx, 0u, "x", 1u) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+    if (ctx->connect->send(ctx, CANOPUS_CONNECT_BINARY, "x", CANOPUS_CONNECT_DATA_MAX + 1u) !=
+        CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+    if (ctx->connect->listen(ctx, 0, 0) != CANOPUS_SVC_OK) ok = 0;
+    log_test("Connect: listen, send & remote listening", ok);
+}
+
 static void run_bus_bt_log_notify_tests(const struct canopus_context_v1 *ctx)
 {
     int ok = 1;
@@ -688,8 +724,11 @@ static void run_bus_bt_log_notify_tests(const struct canopus_context_v1 *ctx)
         if (reg_rc != CANOPUS_SVC_OK && reg_rc != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
         if (reg_rc == CANOPUS_SVC_OK &&
             ctx->bt->l2_register_rx(ctx, 0x44, 0, 0) != CANOPUS_SVC_OK) ok = 0;
-        int32_t l2_rc = ctx->bt->l2_send(ctx, 0x43, "ping", 4);
-        if (l2_rc != CANOPUS_SVC_OK && l2_rc != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+        /* A raw frame on 0x43 would corrupt the Manager's stream. */
+        if (ctx->bt->l2_send(ctx, 0x43, "ping", 4) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+        int32_t l2_rc = ctx->bt->l2_send(ctx, 0x44, "ping", 4);
+        if (l2_rc != CANOPUS_SVC_OK && l2_rc != CANOPUS_SVC_ERR_UNSUPPORTED &&
+            l2_rc != CANOPUS_SVC_ERR_STATE) ok = 0;
     } else {
         ok = 0;
     }
@@ -886,6 +925,7 @@ static int32_t test_activate(const struct canopus_context_v1 *ctx)
     run_haptics_and_display_tests(ctx);
     write_breadcrumb("RUN_BUS_BT\n");
     run_bus_bt_log_notify_tests(ctx);
+    run_connect_tests(ctx);
     write_breadcrumb("RUN_UI\n");
     run_ui_builder_tests(ctx);
     write_breadcrumb("ALL_RUN_DONE\n");

@@ -17,6 +17,7 @@
  *   ctx->bus     : Inter-module & system pub/sub event bus
  *   ctx->system  : Device model, firmware identity, battery, and reboot
  *   ctx->bt      : WearPacket Layer 2 transport, companion app connectivity
+ *   ctx->connect : CanopusConnect text/binary messages with AstroBox plugins
  *   ctx->log     : Categorized structured logging
  *   ctx->notify  : User-visible notification popups & alerts
  */
@@ -46,6 +47,7 @@ enum canopus_service_group {
     CANOPUS_SVC_HAPTICS   = 10, /* vibration & haptic feedback */
     CANOPUS_SVC_DISPLAY   = 11, /* brightness, screen & wake locks */
     CANOPUS_SVC_BUS       = 12, /* inter-module pub/sub event bus */
+    CANOPUS_SVC_CONNECT   = 13, /* CanopusConnect messages (ADR-CAN-009) */
     CANOPUS_SVC_GROUP_COUNT
 };
 
@@ -249,11 +251,35 @@ struct canopus_context_v1;
 #define CANOPUS_BT_ADAPTER_UNKNOWN UINT32_C(0xFFFFFFFF)
 #define CANOPUS_BT_MODULE_CHANNEL_FIRST 0x40u
 #define CANOPUS_BT_MODULE_CHANNEL_LAST  0x4Fu
+/* l2_send refuses the Supervisor's control channel 0x43 (ARGUMENT): a raw frame
+ * there would corrupt the Manager's stream. Module messages use ctx->connect. */
+
+/* connect: CanopusConnect is a message channel between one module and the
+ * remote plugins (AstroBox) that listen to its module id, carried inside the
+ * Supervisor's L2 0x43 stream without touching the Manager's state. A message
+ * is either text (UTF-8) or binary; one message is one frame, at most
+ * CANOPUS_CONNECT_DATA_MAX bytes of data.
+ *  - listen(cb) receives the messages remote plugins send to this module id.
+ *    cb runs on the module/UI task and must return promptly; for text, data
+ *    is NUL-terminated and len excludes the NUL. A NULL cb removes it.
+ *  - send queues a message to the remote plugins listening to this module id.
+ *    It returns CANOPUS_CONNECT_NOT_LISTENING (positive, nothing queued) when
+ *    no plugin listens in the current phone session, BUSY when the outgoing
+ *    event queue is full, UNSUPPORTED on a target without an L2 backend.
+ *  - remote_listening is 1 while a plugin listens to this module's id in the
+ *    current phone session, 0 otherwise, negative when unsupported.
+ * Remote listening is per phone session: a reconnect starts without listeners
+ * until the phone subscribes again. */
+#define CANOPUS_CONNECT_TEXT          1u
+#define CANOPUS_CONNECT_BINARY        2u
+#define CANOPUS_CONNECT_DATA_MAX      480u
+#define CANOPUS_CONNECT_NOT_LISTENING 1
 
 /* Callbacks */
 typedef void (*canopus_timer_callback_t)(const struct canopus_context_v1 *ctx, int32_t timer_id, void *user_data);
 typedef void (*canopus_bus_callback_t)(const struct canopus_context_v1 *ctx, const char *topic, const void *payload, uint32_t len, void *user_data);
 typedef void (*canopus_l2_rx_callback_t)(const struct canopus_context_v1 *ctx, uint8_t channel, const void *payload, uint16_t len, void *user_data);
+typedef void (*canopus_connect_callback_t)(const struct canopus_context_v1 *ctx, uint32_t kind, const void *data, uint32_t len, void *user_data);
 
 /* -------------------------------------------------------------------------- */
 /* Service Objects                                                            */
@@ -382,6 +408,12 @@ struct canopus_bluetooth_obj {
     uint32_t (*adapter_state)(const struct canopus_context_v1 *ctx);
 };
 
+struct canopus_connect_obj {
+    int32_t (*send)(const struct canopus_context_v1 *ctx, uint32_t kind, const void *data, uint32_t len);
+    int32_t (*listen)(const struct canopus_context_v1 *ctx, canopus_connect_callback_t cb, void *user_data);
+    int     (*remote_listening)(const struct canopus_context_v1 *ctx);
+};
+
 struct canopus_ui_context_v1;
 struct canopus_ui_tree_v1;
 struct canopus_ui_navigation_page_props_v1;
@@ -463,6 +495,7 @@ struct canopus_context_v1 {
     const struct canopus_display_obj   *display;
     const struct canopus_bus_obj       *bus;
     const struct canopus_ui_obj        *ui;
+    const struct canopus_connect_obj   *connect;
 };
 
 /* Non-zero when the group is available at least at `min_version`. */

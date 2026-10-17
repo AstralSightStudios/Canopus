@@ -127,6 +127,12 @@ pub const HAPTIC_TICK: u32 = 5;
 
 pub const WAKELOCK_SCREEN: u32 = 1;
 
+pub const CONNECT_TEXT: u32 = 1;
+pub const CONNECT_BINARY: u32 = 2;
+pub const CONNECT_DATA_MAX: u32 = 480;
+/// `connect.send` returns this (positive, nothing queued) when no remote plugin listens.
+pub const CONNECT_NOT_LISTENING: i32 = 1;
+
 pub const SCREEN_OFF: u32 = 0;
 pub const SCREEN_AOD: u32 = 1;
 pub const SCREEN_ON: u32 = 2;
@@ -141,6 +147,7 @@ pub const BT_ADAPTER_ON: u32 = 4;
 pub type CbTimer = unsafe extern "C" fn(ctx: *const ContextV1, timer_id: i32, user_data: *mut c_void);
 pub type CbBus = unsafe extern "C" fn(ctx: *const ContextV1, topic: *const c_char, payload: *const c_void, len: u32, user_data: *mut c_void);
 pub type CbL2Rx = unsafe extern "C" fn(ctx: *const ContextV1, channel: u8, payload: *const c_void, len: u16, user_data: *mut c_void);
+pub type CbConnect = unsafe extern "C" fn(ctx: *const ContextV1, kind: u32, data: *const c_void, len: u32, user_data: *mut c_void);
 
 #[repr(C)]
 pub struct CanopusFsObj {
@@ -222,6 +229,13 @@ pub struct CanopusDisplayObj {
     pub acquire_wake_lock: unsafe extern "C" fn(ctx: *const ContextV1, lock_flags: u32) -> i32,
     pub release_wake_lock: unsafe extern "C" fn(ctx: *const ContextV1, lock_id: i32) -> i32,
     pub get_resolution: unsafe extern "C" fn(ctx: *const ContextV1, width: *mut u32, height: *mut u32),
+}
+
+#[repr(C)]
+pub struct CanopusConnectObj {
+    pub send: unsafe extern "C" fn(ctx: *const ContextV1, kind: u32, data: *const c_void, len: u32) -> i32,
+    pub listen: unsafe extern "C" fn(ctx: *const ContextV1, cb: Option<CbConnect>, user_data: *mut c_void) -> i32,
+    pub remote_listening: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
 }
 
 #[repr(C)]
@@ -308,6 +322,7 @@ pub struct CanopusContext {
     pub display: *const CanopusDisplayObj,
     pub bus: *const CanopusBusObj,
     pub ui: *const CanopusUiObj,
+    pub connect: *const CanopusConnectObj,
 }
 
 // ---------------------------------------------------------------------------

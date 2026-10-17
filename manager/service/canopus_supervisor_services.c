@@ -41,6 +41,7 @@ static struct canopus_log_obj s_log_obj;
 static struct canopus_notify_obj s_notify_obj;
 static struct canopus_system_obj s_system_obj;
 static struct canopus_bluetooth_obj s_bt_obj;
+static const struct canopus_connect_obj *s_connect_obj;
 static struct canopus_haptics_obj s_haptics_obj;
 static struct canopus_display_obj s_display_obj;
 static struct canopus_bus_obj s_bus_obj;
@@ -1803,6 +1804,7 @@ static int32_t svc_bt_l2_send(const struct canopus_context_v1 *ctx, uint8_t chan
                               const void *payload, uint16_t len)
 {
     (void)ctx;
+    if (channel == CANOPUS_L2_CHANNEL) return CANOPUS_SVC_ERR_ARGUMENT;
     if (s_sup != 0 && s_sup->platform != 0 && s_sup->platform->l2_send != 0) {
         return s_sup->platform->l2_send(s_sup->platform_cookie, channel, payload, len);
     }
@@ -1898,6 +1900,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     canopus_memset(&s_haptic, 0, sizeof(s_haptic));
     canopus_memset(&s_events, 0, sizeof(s_events));
     canopus_memset(s_l2_rx, 0, sizeof(s_l2_rx));
+    s_connect_obj = canopus_supervisor_connect_bind(sup);
 
     canopus_hook_engine_init();
 
@@ -1926,6 +1929,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_services.group_version[CANOPUS_SVC_HAPTICS] = 1u;
     s_services.group_version[CANOPUS_SVC_DISPLAY] = 1u;
     s_services.group_version[CANOPUS_SVC_BUS] = 1u;
+    s_services.group_version[CANOPUS_SVC_CONNECT] = s_connect_obj != 0 ? 1u : 0u;
 
     s_services.module_register = svc_module_register;
     s_services.log_write = svc_log_write;
@@ -2091,6 +2095,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_contexts[i].display = &s_display_obj;
         s_contexts[i].bus = &s_bus_obj;
         s_contexts[i].ui = &s_ui_obj;
+        s_contexts[i].connect = s_connect_obj;
     }
 
 }
@@ -2138,7 +2143,8 @@ void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,
     s_events.wanted = svc_events_wanted();
 
     /* Hardware the module still holds: vibration, wake locks, brightness,
-     * L2 receive registrations. */
+     * L2 receive registrations and its CanopusConnect receiver. */
+    canopus_supervisor_connect_release(slot);
     if (s_haptic.active && s_haptic.slot == slot) svc_haptic_stop();
     svc_wakelocks_release(slot);
     svc_brightness_release(slot);

@@ -42,6 +42,11 @@ enum canopus_command {
     CANOPUS_CMD_STAGE_WRITE,
     CANOPUS_CMD_STAGE_FINISH,
     CANOPUS_CMD_STAGE_ABORT,
+    /* CanopusConnect (ADR-CAN-009): module <-> remote messages over L2 0x43.
+     * They are handled before the Manager dispatch and never touch its state. */
+    CANOPUS_CMD_CONNECT_SEND,    /* phone -> module: kind, id, data */
+    CANOPUS_CMD_CONNECT_LISTEN,  /* phone -> device: start/stop module pushes */
+    CANOPUS_CMD_CONNECT_MESSAGE, /* device -> phone EVENT: kind, id, data */
 };
 
 struct canopus_proto_request_v1 {
@@ -123,6 +128,11 @@ int canopus_transport_v2_decode_request(const uint8_t *buf, uint32_t len,
 int canopus_transport_v2_encode_request(const struct canopus_proto_request_v1 *req,
                                         const void *payload,
                                         uint8_t *out, uint32_t cap);
+/* Encodes an unsolicited v2 EVENT record (message kind 3, request id 0).
+ * Returns the number of bytes written, or -1. */
+int canopus_transport_v2_encode_event(uint32_t opcode, const void *payload,
+                                      uint32_t payload_len,
+                                      uint8_t *out, uint32_t cap);
 /* Decodes a complete v2 RESPONSE record. Returns its echoed opcode and payload
  * offset without exposing packed wire structs. */
 int canopus_transport_v2_decode_response(const uint8_t *buf, uint32_t len,
@@ -153,6 +163,24 @@ int canopus_transport_v2_encode_response(const struct canopus_proto_response_v1 
 #define CANOPUS_L2_OPCODE_WRITE     1u
 #define CANOPUS_L2_OPCODE_WRITE_ENC 2u
 #define CANOPUS_L2_OPCODE_READ      3u
+
+/* ------------------------------------------------------------------ */
+/* CanopusConnect wire format (ADR-CAN-009)                           */
+/*                                                                     */
+/* CONNECT_SEND, CONNECT_LISTEN and CONNECT_MESSAGE carry:             */
+/*   u8 kind-or-enable | u8 id length (1..16) | id bytes | data        */
+/* kind is CANOPUS_CONNECT_TEXT/BINARY; enable is 1 (listen) or 0.     */
+/* LISTEN carries no data. The SEND/LISTEN response payload is one      */
+/* CANOPUS_CONNECT_STATUS_* byte; COMPLETED means OK, DISALLOWED means  */
+/* a refusal status, REJECTED a malformed request.                      */
+/* ------------------------------------------------------------------ */
+
+#define CANOPUS_CONNECT_ID_MAX 16u
+#define CANOPUS_CONNECT_STATUS_OK            0u
+#define CANOPUS_CONNECT_STATUS_MODULE        1u /* no installed module has this id */
+#define CANOPUS_CONNECT_STATUS_NOT_LISTENING 2u /* the module registered no listener */
+#define CANOPUS_CONNECT_STATUS_FULL          3u /* the Supervisor's listener table is full */
+#define CANOPUS_CONNECT_STATUS_FORMAT        4u
 
 /* ---- pending-request state machine (CAN-P1-002) -------------------- */
 /* A request_id is tracked so the manager can report real async state.

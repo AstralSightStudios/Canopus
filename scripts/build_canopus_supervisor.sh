@@ -77,6 +77,7 @@ for s in \
     manager/service/canopus_supervisor.c \
     manager/service/canopus_supervisor_services.c \
     manager/service/canopus_supervisor_upload.c \
+    manager/service/canopus_supervisor_connect.c \
     manager/service/canopus_supervisor_l2.c \
     manager/service/canopus_supervisor_module.c \
     manager/service/canopus_supervisor_platform.c \
@@ -104,6 +105,7 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_supervisor.o" \
     "$OUT/canopus_supervisor_services.o" \
     "$OUT/canopus_supervisor_upload.o" \
+    "$OUT/canopus_supervisor_connect.o" \
     "$OUT/canopus_supervisor_l2.o" \
     "$OUT/canopus_supervisor_module.o" \
     "$OUT/canopus_supervisor_platform.o" \

@@ -35,6 +35,15 @@
 - `get_rssi` 与仅 CPU 的唤醒锁已从 ABI 移除；`is_connected` 改读固件 `system_all_state` 的 MiWear 链路状态（.036/.043/.139/.155，
   .177 无镜像为 `UNSUPPORTED`）；通知图标改为调用方传入的绝对路径（`post_with_icon` 的 `icon_path`）。
 
+## CanopusConnect（2026-10-18）
+
+- 模块与 AstroBox 插件按模块 id 互发文本/二进制消息（`ctx->connect`，ADR-CAN-009）：CPC2 新增 opcode 19/20/21，走 L2 0x43，
+  先于管理器分发处理、不碰管理器状态，发出的事件用独立的 2 槽队列并排在管理器响应之后；`ctx->bt->l2_send` 现在拒绝 0x43。
+- host implemented：设备端交付/拒绝/监听按会话失效/与管理器状态隔离（C host 测试，含 ASan/UBSan）；Rust ABI 与 `canopus-runtime::connect`；
+  AstroBox core 的线格式与事件、pluginsystem（API Level 4）的 `canopusconnect` 宿主接口与可选的 `on-message` 导出、插件权限提示（zh_CN / en_US）。
+- 仅 .043 / .155 提供（需要 L2 后端），其它 target 的 `ctx->connect` 为空。发送队列、`l2_peer` 与 owner 上的发送顺序是 ARM 代码，
+  没有 Mirage 或真机运行；未提升任何符号或能力状态。
+
 ## 阶段状态
 
 | Phase | 状态 | 备注 |

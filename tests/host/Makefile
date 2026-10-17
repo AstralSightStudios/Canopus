@@ -32,6 +32,7 @@ PORTABLE_SRCS = \
 	../../manager/client/canopus_client.c \
 	../../manager/service/canopus_supervisor.c \
 	../../manager/service/canopus_supervisor_upload.c \
+	../../manager/service/canopus_supervisor_connect.c \
 	../../manager/service/canopus_supervisor_services.c \
 	../../manager/package/canopus_installer_bundle.c \
 	../../manager/ui/canopus_manager.c \

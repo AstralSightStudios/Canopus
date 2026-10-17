@@ -9,6 +9,7 @@
 
 #define L2_FRAME_MAX (CANOPUS_TRANSPORT_V2_HEADER_SIZE + CANOPUS_PROTO_MAX_PAYLOAD)
 #define L2_QUEUE_SIZE 4u
+#define L2_EVENT_QUEUE_SIZE 2u
 
 typedef void (*l2_rx_fn)(uint16_t, uint8_t, uint8_t, void *, uint16_t);
 typedef void *(*session_fn)(uint16_t);
@@ -31,14 +32,21 @@ static struct {
     uint8_t data[L2_FRAME_MAX];
 } s_requests[L2_QUEUE_SIZE];
 static uint32_t s_read, s_write;
-static struct {
+struct l2_tx {
     volatile uint32_t state;
     uint16_t handle, len;
     void *session;
     uint32_t channel;
     uint8_t data[L2_FRAME_MAX];
-} s_responses[L2_QUEUE_SIZE];
+};
+/* Manager responses and CanopusConnect events never share a queue, so a chatty
+ * module cannot delay or starve a Manager reply; events go out only when no
+ * response is waiting. */
+static struct l2_tx s_responses[L2_QUEUE_SIZE];
 static uint32_t s_tx_read, s_tx_write;
+static struct l2_tx s_events[L2_EVENT_QUEUE_SIZE];
+static uint32_t s_ev_read, s_ev_write;
+static uint32_t s_peer_epoch;
 static void *s_timer;
 static uint64_t s_owner_timer[L2_PROBE_OWNER_TIMER_SIZE / sizeof(uint64_t)];
 static uint64_t s_bt_timer[L2_PROBE_OWNER_TIMER_SIZE / sizeof(uint64_t)];
@@ -129,40 +137,55 @@ static int l2_send(uint16_t handle, uint8_t channel, void *payload, uint16_t len
     return ((send_fn)(uintptr_t)L2_PROBE_SEND)(session, &packet);
 }
 
+static int l2_enqueue(struct l2_tx *queue, uint32_t size, uint32_t *write, uint16_t handle,
+                      void *session, uint8_t channel, const void *payload, uint16_t len)
+{
+    uint32_t mask = l2_lock(), slot = *write;
+    if (queue[slot].state != 0u) {
+        l2_unlock(mask);
+        return -1;
+    }
+    queue[slot].state = 1u;
+    *write = (slot + 1u) % size;
+    l2_unlock(mask);
+    queue[slot].handle = handle;
+    queue[slot].session = session;
+    queue[slot].channel = channel;
+    queue[slot].len = len;
+    canopus_memcpy(queue[slot].data, payload, len);
+    __asm__ volatile("dmb" ::: "memory");
+    queue[slot].state = 2u;
+    return 0;
+}
+
 static int l2_queue_send(uint16_t handle, void *session, uint8_t channel,
                          const void *payload, uint16_t len)
 {
-    uint32_t mask = l2_lock(), slot = s_tx_write;
-    if (s_responses[slot].state != 0u) {
-        l2_unlock(mask);
-        return CANOPUS_SVC_ERR_NOMEM;
-    }
-    s_responses[slot].state = 1u;
-    s_tx_write = (slot + 1u) % L2_QUEUE_SIZE;
-    l2_unlock(mask);
-    s_responses[slot].handle = handle;
-    s_responses[slot].session = session;
-    s_responses[slot].channel = channel;
-    s_responses[slot].len = len;
-    canopus_memcpy(s_responses[slot].data, payload, len);
+    return l2_enqueue(s_responses, L2_QUEUE_SIZE, &s_tx_write, handle, session, channel,
+                      payload, len) == 0 ? 0 : CANOPUS_SVC_ERR_NOMEM;
+}
+
+/* Sends the oldest queued frame of `queue` if there is one. */
+static int l2_drain(struct l2_tx *queue, uint32_t size, uint32_t *read)
+{
+    uint32_t slot = *read;
+    if (queue[slot].state != 2u) return 0;
     __asm__ volatile("dmb" ::: "memory");
-    s_responses[slot].state = 2u;
-    return 0;
+    if (((session_fn)(uintptr_t)L2_PROBE_SESSION)(queue[slot].handle) == queue[slot].session)
+        (void)l2_send(queue[slot].handle, (uint8_t)queue[slot].channel, queue[slot].data,
+                      queue[slot].len);
+    __asm__ volatile("dmb" ::: "memory");
+    queue[slot].state = 0u;
+    *read = (slot + 1u) % size;
+    return 1;
 }
 
 static void l2_bt_tick(void *timer)
 {
-    uint32_t slot = s_tx_read;
     (void)timer;
-    if (s_responses[slot].state != 2u) return;
-    __asm__ volatile("dmb" ::: "memory");
-    if (((session_fn)(uintptr_t)L2_PROBE_SESSION)(s_responses[slot].handle) ==
-            s_responses[slot].session)
-        (void)l2_send(s_responses[slot].handle, (uint8_t)s_responses[slot].channel,
-                      s_responses[slot].data, s_responses[slot].len);
-    __asm__ volatile("dmb" ::: "memory");
-    s_responses[slot].state = 0u;
-    s_tx_read = (slot + 1u) % L2_QUEUE_SIZE;
+    if (!l2_drain(s_responses, L2_QUEUE_SIZE, &s_tx_read)) {
+        (void)l2_drain(s_events, L2_EVENT_QUEUE_SIZE, &s_ev_read);
+    }
 }
 
 static int l2_native_timer_start(uintptr_t loop_addr, void *timer,
@@ -202,6 +225,10 @@ void canopus_sup_l2_poll(void)
     if (s_requests[slot].len != 0u &&
         ((session_fn)(uintptr_t)L2_PROBE_SESSION)(s_requests[slot].handle) ==
             s_requests[slot].session) {
+        if (!s_connected || s_requests[slot].handle != s_last_handle ||
+            s_requests[slot].session != s_last_session) {
+            s_peer_epoch++;
+        }
         s_last_handle = s_requests[slot].handle;
         s_last_session = s_requests[slot].session;
         s_connected = 1;
@@ -257,6 +284,23 @@ int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len
     if (!s_connected) return CANOPUS_SVC_ERR_STATE;
     if (payload == 0 || len == 0u || len > L2_FRAME_MAX) return CANOPUS_SVC_ERR_IO;
     return l2_queue_send(s_last_handle, s_last_session, channel, payload, len);
+}
+
+int sup_l2_event(void *cookie, const void *frame, uint16_t len)
+{
+    (void)cookie;
+    if (!s_connected) return CANOPUS_SVC_ERR_STATE;
+    if (frame == 0 || len == 0u || len > L2_FRAME_MAX) return CANOPUS_SVC_ERR_IO;
+    /* The bluetooth timer is started by the first encrypted request, which also
+     * makes s_connected true, so it is already running here. */
+    return l2_enqueue(s_events, L2_EVENT_QUEUE_SIZE, &s_ev_write, s_last_handle, s_last_session,
+                      CANOPUS_L2_CHANNEL, frame, len) == 0 ? 0 : CANOPUS_SVC_ERR_BUSY;
+}
+
+uint32_t sup_l2_peer(void *cookie)
+{
+    (void)cookie;
+    return s_connected ? s_peer_epoch : 0u;
 }
 
 #else

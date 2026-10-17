@@ -24,8 +24,8 @@ Canopus 采用**微内核服务对象（Service Objects）**架构。穿戴设�
 │   ctx->fs   │   ctx->kv   │  ctx->mem   │  ctx->time  │  ctx->hook  │ ctx->haptics│ctx->disp│
 │  (文件系统) │  (键值存储) │  (动态堆)   │ (时钟/定时) │ (通用 Hook) │ (振动马达)  │(屏幕控制│
 ├─────────────┼─────────────┼─────────────┼─────────────┼─────────────┼─────────────┼─────────┤
-│  ctx->bus   │   ctx->bt   │  ctx->log   │ ctx->notify │ ctx->system │             │         │
-│  (事件总线) │  (L2 蓝牙)  │ (结构化日志)│ (通知弹窗)  │ (硬件/电量) │             │         │
+│  ctx->bus   │   ctx->bt   │  ctx->log   │ ctx->notify │ ctx->system │ctx->connect │         │
+│  (事件总线) │  (L2 蓝牙)  │ (结构化日志)│ (通知弹窗)  │ (硬件/电量) │(与插件消息) │         │
 └──────┬──────┴──────┬──────┴──────┬──────┴──────┬──────┴──────┬──────┴─────────────┴────┬────┘
        │             │             │             │             │                         │
        ▼             ▼             ▼             ▼             ▼                         ▼
@@ -300,7 +300,8 @@ struct canopus_hook_obj {
   - `get_property(key, buf, max_len)`：读固件系统属性（`property_get`），key 限 `[A-Za-z0-9._-]` 且不超过 63 字符，
     返回复制的长度（超出 `max_len - 1` 被截断），不存在为 `ERR_NOTFOUND`，目标没有读取入口为 `ERR_UNSUPPORTED`
 - **`ctx->bt`**：
-  - `l2_send(ctx, channel, payload, len)`：经 WearPacket Layer 2（如 0x43 Channel）向手机配套 App 发送数据
+  - `l2_send(ctx, channel, payload, len)`：经 WearPacket Layer 2 向手机配套 App 发送数据。`0x43` 是 Supervisor 的管理通道，
+    模块写入会破坏管理器的流，所以返回 `ERR_ARGUMENT`；模块与 AstroBox 插件之间的消息请用 `ctx->connect`（见 2.11）
   - `l2_register_rx(ctx, channel, cb, user_data)`：只接受模块通道 `0x40..0x4F`（`0x43` 是 Supervisor 控制通道，其余通道属于固件原有处理器，
     返回 `ERR_ARGUMENT`）。已注册通道的加密帧经 SRAM L2 后端解密后，在模块/UI 任务上交给回调，不再转给固件处理器；
     同一通道只能一个模块持有（他人 `ERR_BUSY`），传 NULL 回调撤销，模块卸载时自动撤销。没有 L2 后端的目标返回 `ERR_UNSUPPORTED`。
@@ -345,6 +346,39 @@ haptics / display / 唤醒锁 / 电量 / 属性 / 蓝牙状态不再有占位实
   MiWearScreen/PowerManager 的 `__func__` 字符串交叉引用互相印证。证据见各 target 的 `evidence/EVID-PLATFORM-HW-<ver>-001.json`。
   这些入口随普通构建默认包含（K16），默认包含不等于设备已验证或生产批准。
 - **已移除**：`get_rssi`（没有稳定的固件来源）与仅 CPU 的唤醒锁，不再出现在 ABI 里。
+
+
+### 2.11 `ctx->connect` — CanopusConnect：与 AstroBox 插件互发消息
+
+模块与 AstroBox 插件按**模块 id** 互发文本或二进制消息（ADR-CAN-009）。走 Supervisor 的 L2 0x43 流，但有自己的 CPC2 opcode、
+自己的发送队列，不占管理器的 pending 槽位，也不改管理器状态。只在有 L2 后端的 target 提供（目前 .043 / .155），
+其它 target 的 `ctx->connect` 为空，用 `canopus_services_has(ctx, CANOPUS_SVC_CONNECT, 1)` 探测。
+
+```c
+#define CANOPUS_CONNECT_TEXT          1u   /* UTF-8 */
+#define CANOPUS_CONNECT_BINARY        2u
+#define CANOPUS_CONNECT_DATA_MAX      480u /* 一条消息一帧 */
+#define CANOPUS_CONNECT_NOT_LISTENING 1    /* send 的返回值：没有插件在听，什么也没发 */
+
+typedef void (*canopus_connect_callback_t)(const struct canopus_context_v1 *ctx, uint32_t kind,
+                                           const void *data, uint32_t len, void *user_data);
+struct canopus_connect_obj {
+    int32_t (*send)(const struct canopus_context_v1 *ctx, uint32_t kind, const void *data, uint32_t len);
+    int32_t (*listen)(const struct canopus_context_v1 *ctx, canopus_connect_callback_t cb, void *user_data);
+    int     (*remote_listening)(const struct canopus_context_v1 *ctx);
+};
+```
+- `listen(cb)`：接收插件发给本模块 id 的消息，`NULL` 撤销；回调在模块/UI 任务上执行，必须尽快返回。文本以 NUL 结尾，`len` 不含 NUL。
+  模块卸载时自动撤销。
+- `send(kind, data, len)`：发给正在监听本模块 id 的插件。返回 0 表示已排队；`CANOPUS_CONNECT_NOT_LISTENING`（正值）表示当前手机会话里没有插件在听，
+  什么也没排队，不算错误；`ERR_BUSY` 表示发出队列（2 槽）已满；`ERR_ARGUMENT` 表示 kind 非法或超过 480 字节。
+  `send` 的数据在返回前已复制，缓冲区可立即复用。
+- `remote_listening()`：当前手机会话里有插件监听本模块时为 1，否则 0。监听随手机会话失效，重连后由 AstroBox 补发。
+- 模块 id 须符合 ADR-CAN-003（`[a-z][a-z0-9_]{0,15}`），超过 16 字符的 id 无法被远端寻址。
+- Rust：`canopus_runtime::connect::{send_text, send_binary, listen, unlisten, remote_listening}`，`send_*` 返回 `Delivery::{Queued, NotListening}`。
+
+AstroBox 一侧见 `astrobox:psys-host-v4/canopusconnect`（`send` / `listen` / `unlisten`，需要插件权限 `canopusconnect.send` 与 `canopusconnect.listen`），
+消息经插件导出的 `astrobox:psys-plugin-v4/canopusconnect.on-message` 送达。
 
 ---
 
