@@ -14,6 +14,7 @@ local function u16(data, off) return string.unpack("<I2", data, off + 1) end
 local function u32(data, off) return string.unpack("<I4", data, off + 1) end
 -- Device family: ENDPOINT, REPLY_SIZE, SUPERVISOR_MISSING, BUILD_PROPERTY,
 -- fallback_identity(), prepare_inbox(checkpoint), failure_detail(response, exchange).
+local installation_outcome -- Optional explanation of a device terminal result.
 -- @DEVICE@
 local properties = {}
 local identity = read_all("/etc/build.prop")
@@ -147,13 +148,17 @@ local function install()
         and u32(response, 20) == 1 and u32(response, 24) == 0
         and u32(response, 32) == REPLY_SIZE - 36, "Invalid supervisor response")
     if u32(response, 28) ~= 5 then
+        -- Device adapters can explain a benign terminal result, e.g. RW6's
+        -- existing-install record. All other errors retain their diagnostics.
+        local outcome = installation_outcome and installation_outcome(response)
+        if outcome then return outcome end
         local detail = "Supervisor result " .. u32(response, 28)
             .. failure_detail(response, device_exchange)
         error(detail, 0)
     end
     return target.runtime_pending and
         "安装完成，模块保持禁用。\n\n本固件的音频运行适配尚未完成。\n\n可在管理器查看安装记录。" or
-        "安装完成，默认禁用。\n\n请在 Canopus 管理器中查看和启用模块。"
+        "安装完成，默认禁用。\n\n请在 Canopus 管理器中启用模块，再选择立即激活。"
 end
 local sequence = 0
 runner = progress.new(lvgl, function(text)

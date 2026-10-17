@@ -13,7 +13,11 @@ typedef int *(*errno_fn)(void);
 #define FW(address, type) ((type)(uintptr_t)(address))
 #endif
 static const char *const paths[2] = {
+#ifdef CANOPUS_P65_RECOVERED_RUNTIME
+    "/data/canopus/p65-runtime-registry0.bin", "/data/canopus/p65-runtime-registry1.bin",
+#else
     "/data/canopus/registry0.bin", "/data/canopus/registry1.bin",
+#endif
 };
 static struct canopus_manager_p65_registry_store_v1 store;
 static uint8_t initialized;

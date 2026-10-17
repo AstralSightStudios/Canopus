@@ -89,7 +89,6 @@ static struct canopus_p65_ui_event_binding_v1 *p65_binding_for_object(
             return binding;
         }
     }
-    adapter->callback_error = CANOPUS_UI_ERR_STATE;
     return 0;
 }
 
@@ -144,7 +143,13 @@ static void p65_row_update(void *list, void *row, uint32_t index,
     }
     binding = p65_binding_for_object(adapter, row);
     if (binding == 0) {
-        return;
+        /* A structural rebuild can reuse a firmware cache object whose old
+         * callback was removed before the rebuild. Give it a fresh binding. */
+        binding = p65_binding_allocate(adapter, &view);
+        if (binding == 0) {
+            return;
+        }
+        binding->row_object = row;
     }
     adapter->ops->remove_row_event(adapter->ops_cookie, list, row);
     p65_binding_set(adapter, binding, &view);
@@ -224,18 +229,64 @@ int32_t canopus_manager_p65_lvx_list_apply(
     const struct canopus_ui_snapshot_v1 *snapshot)
 {
     int32_t rc;
+    uint8_t old_classes[CANOPUS_P65_UI_MAX_ROWS];
+    uint16_t old_count;
+    uint16_t i;
+    int rebuild = 0;
 
     if (adapter == 0 || snapshot == 0 || !adapter->configured ||
         adapter->list == 0) {
         return CANOPUS_UI_ERR_STATE;
     }
+    old_count = adapter->rows.count;
+    for (i = 0u; i < old_count; i++) {
+        struct canopus_p65_ui_row_view_v1 view;
+        rc = canopus_p65_ui_rows_get(&adapter->rows, i, &view);
+        if (rc != CANOPUS_UI_OK) {
+            return rc;
+        }
+        old_classes[i] = view.cache_key;
+    }
     rc = canopus_p65_ui_rows_build(&adapter->rows, snapshot);
     if (rc != CANOPUS_UI_OK) {
         return rc;
     }
-    adapter->snapshot_ready = 1u;
     adapter->callback_error = 0;
-    adapter->ops->refresh_list(adapter->ops_cookie, adapter->list);
+    if (adapter->snapshot_ready) {
+        rebuild = old_count != adapter->rows.count;
+        for (i = 0u; !rebuild && i < old_count; i++) {
+            struct canopus_p65_ui_row_view_v1 view;
+            (void)canopus_p65_ui_rows_get(&adapter->rows, i, &view);
+            rebuild = old_classes[i] != view.cache_key;
+        }
+    }
+    adapter->snapshot_ready = 1u;
+    if (rebuild) {
+        /* Mode-0 refresh updates rows by index without checking their class.
+         * A label must never be passed to a settings-card updater (or vice
+         * versa). Use the stock rebuild path when the shape changes.
+         * Detach old callbacks before firmware deletes/recycles the objects;
+         * otherwise dead rows consume the bounded binding pool forever. */
+        for (i = 0u; i < CANOPUS_P65_UI_MAX_ROWS; i++) {
+            adapter->bindings[i].magic = 0u;
+        }
+        for (i = 0u; i < CANOPUS_P65_UI_MAX_ROWS; i++) {
+            struct canopus_p65_ui_event_binding_v1 *binding =
+                &adapter->bindings[i];
+            if (binding->used && binding->row_object != 0) {
+                adapter->ops->remove_row_event(adapter->ops_cookie,
+                                               adapter->list,
+                                               binding->row_object);
+            }
+        }
+        canopus_memset(adapter->bindings, 0, sizeof(adapter->bindings));
+        rc = adapter->ops->finalize_list(adapter->ops_cookie, adapter->list);
+        if (rc != 0) {
+            return CANOPUS_UI_ERR_BACKEND;
+        }
+    } else {
+        adapter->ops->refresh_list(adapter->ops_cookie, adapter->list);
+    }
     return adapter->callback_error == 0
                ? CANOPUS_UI_OK
                : CANOPUS_UI_ERR_BACKEND;

@@ -80,6 +80,7 @@ venv/
 *.ed25519
 keys/
 secrets/
+/manager/target/p65/generated/p65_runtime_public_key.h
 
 # Recovered artifacts that are too large or binary and belong outside VCS
 captures/
