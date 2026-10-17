@@ -14,7 +14,7 @@
 python3 scripts/build_band11_installer.py
 ```
 
-## 加密通信后端（4.100.155，实验构建）
+## 加密通信后端（4.100.155，默认内置）
 
 Band 11 `.155` 的通信后端复用 `manager/service/canopus_supervisor_l2.c`，
 在 MiWear L2 `0x43` 通道仅受理 `WriteEnc`，按配对会话解密 CPC2。
@@ -23,11 +23,10 @@ Bluetooth owner 收包入队，UI owner 处理 Supervisor 命令和文件操作�
 两条循环的地址及 `.155` 专属的 88 字节定时器布局来自
 `targets/xiaomi-band-11-4.100.155/evidence/l2-sram-probe.json`。
 
-打包前须明确构建带通信后端的 `.155` 资源，而不是只重新打包旧 `.bin`：
+打包前正常构建 `.155` 资源即可，无需额外启用通信后端：
 
 ```sh
-CANOPUS_TARGET=xiaomi-band-11-4.100.155 CANOPUS_EXPERIMENTAL_L2=1 \
-  sh scripts/build_canopus_supervisor.sh
+CANOPUS_TARGET=xiaomi-band-11-4.100.155 sh scripts/build_canopus_supervisor.sh
 ```
 
 此命令同步更新本目录的 `.155` Supervisor、stage1/stage2、CRC profile 及资源 ZIP。
@@ -35,10 +34,10 @@ CANOPUS_TARGET=xiaomi-band-11-4.100.155 CANOPUS_EXPERIMENTAL_L2=1 \
 直至显示 `Run completed`。仅设为当前表盘不会自动加载 Supervisor；重启后也须重新 Run。
 已驻留的旧 Supervisor 不会被新资源热替换，更新安装器后先重启再 Run。
 
-不设置实验开关的默认构建仍不包含 L2 后端，启动接口返回 `UNSUPPORTED`，
-即使本地管理器注册成功也不能与 AstroBox 通信。`.139` / `.177` 没有本次已审计的
-L2 配置，不能复用 `.155` 地址。相关符号保持 `restricted / PENDING / not_probed`；
-此开关不是生产批准，模拟器验证也不等同真机验证。
+普通构建会自动包含所选固件已实现的 L2 后端，不再区分“本地管理器版”和“通信版”。
+`.139` / `.177` 没有本次已审计的 L2 配置，构建时会明确提示，不能复用 `.155` 地址。
+相关符号保持 `restricted / PENDING / not_probed`；默认内置不改变批准状态，
+模拟器验证也不等同真机验证。
 
 根层资源：
 

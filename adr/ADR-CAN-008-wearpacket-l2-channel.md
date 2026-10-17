@@ -59,8 +59,9 @@ COMPLETED=5、FAILED=6、DISALLOWED=7、REBOOT_REQUIRED=8。
 - 每个请求保留 session 身份，断连后旧请求不投递给新 session；不在 Bluetooth worker 执行模块/UI 回调。
 - 原厂 send 会原地加密，因此传入独立可写缓冲；SAR submit 在返回前复制数据，不持有调用方栈地址。
 - .043 / .155 的 exact-target 静态证据在各自 `evidence/l2-sram-probe.json`。
-  `CANOPUS_EXPERIMENTAL_L2=1` 才包含这些地址，其他 target 显式拒绝实验构建。
-  所有相关符号仍是 restricted / PENDING，未真机探测；默认构建返回 UNSUPPORTED，不宣称生产可用。
+  普通构建自动包含已实现的后端，不要求启用参数；未实现后端的 target 会在构建时明确提示，
+  运行时返回 UNSUPPORTED，不套用其他固件的地址。
+  所有相关符号仍是 restricted / PENDING，未真机探测；构建默认值不等于生产批准。
 
 ## 初次联调记录（2026-10-17，后续修正见下文）
 
@@ -77,14 +78,25 @@ COMPLETED=5、FAILED=6、DISALLOWED=7、REBOOT_REQUIRED=8。
 - 因此 LVGL timer 不满足持续监听要求。实验后端改为：LVGL 只引导一次，在原 UI owner 上初始化/启动一个独立的 resident libuv timer，随后删除引导 timer；BT 仍只解密/入队，不执行模块/UI 回调。
 - .043 的 timer 存储为 136 字节（含 backtrace），.155 为 88 字节；`uv_timer_start` 使用 AAPCS 的两个 `uint64_t` timeout/repeat 参数。exact-target 地址、布局与上下文审核写在各自 `evidence/l2-sram-probe.json` 的 `owner_source`。init/start 只允许在现有 UI loop 上执行，不使用线程/工作队列入口。
 - NSH 在熄屏后加载 Supervisor 时，须双击唤醒使引导回调至少运行一次；这不是“熄屏冷加载已解决”。ARM 模型回归和实验 ELF verifier 已通过，但新的真实蓝牙查询仍在排查，不能据此宣称端到端通过。
-- 新私有符号保持 `restricted / STATIC_RECOVERED / PENDING`，默认构建仍为 UNSUPPORTED，未批准任何新能力，未作真机验证。
+- 新私有符号保持 `restricted / STATIC_RECOVERED / PENDING`，未批准任何新能力，未作真机验证。当时默认构建仍为 UNSUPPORTED；该构建开关已由下文默认内置策略取代。
 
 ### 双 owner 通信闭环与 Band 11 接入（2026-10-17，仅 emulator 证据）
 
 - 独立 UI 定时器只解决持续接收和命令处理。原先 UI 直接回复时，NuttX 的 task-group fd 隔离使原厂 send 对 Bluetooth 任务持有的 SPP fd 返回 `EBADF`。后端新增有界响应队列，由加密 RX 在 Bluetooth owner 上引导第二个独立原生定时器，执行会话复核、加密和原厂发送。UI 与 Bluetooth 不互相执行对方的文件/模块回调；没有新建线程或工作队列。
 - Band 11 `.155` 使用 `BT_LOOP=0x200da540`，两个 resident timer 各为该固件的 88 字节布局；不套用 `.043` 的 136 字节布局。
 - 用户打包目录里的旧 `.155` ELF 是默认无 L2 的构建。原样打包对照确认 bootstrap `result=0`，但 AstroBox 查询超时；反汇编的 `canopus_sup_l2_start` 直接返回 `UNSUPPORTED`。这不是“加载器没安装成功”。
-- 已通过 `CANOPUS_TARGET=xiaomi-band-11-4.100.155 CANOPUS_EXPERIMENTAL_L2=1 sh scripts/build_canopus_supervisor.sh` 将后端编入该目录，并一起更新 Supervisor、CRC profile、stage1/stage2 与资源 ZIP。新 ELF 为 95196 字节，SHA-256 `6fe0e3f12744fae2ba384222eb3c380d50c346c47c87a50672d41b16bef98dd2`。
+- 普通构建命令 `CANOPUS_TARGET=xiaomi-band-11-4.100.155 sh scripts/build_canopus_supervisor.sh` 即包含该后端，并一起更新 Supervisor、CRC profile、stage1/stage2 与资源 ZIP。新 ELF 为 95196 字节，SHA-256 `6fe0e3f12744fae2ba384222eb3c380d50c346c47c87a50672d41b16bef98dd2`。
 - `scripts/emu/band11_smoke.py 155 --keep-device` 在新建 Mirage 设备上通过：真实 AstroBox core 安装生产表盘 → 显式 Run → bootstrap `result=0` → 加密 `.canopus` 原生安装约 453 ms → 列表返回 `hello_portable`、slot0/state3/version1/activationError0 → 本地 SCAN `result=5/count=1`。安装后的模块处于已安装未启用状态，不能据此宣称模块已运行。
 - `.043` 的独立原生安装已通过，但完整 fresh-device smoke 的 phone flow 尚未闭环；本次 Band 11 结果不替代它。`.139` / `.177` 未获得本次 L2 后端支持。
-- 默认构建仍不含实验 L2 后端。全部相关符号和真机/生产批准状态保持不变，具体证据见 `.155` 的 `evidence/l2-sram-probe.json`。
+- 全部相关符号和真机/生产批准状态保持不变，具体证据见 `.155` 的 `evidence/l2-sram-probe.json`。
+
+### 默认内置后端（2026-10-17）
+
+用户要求取消额外的通信启用参数。现由构建时生成的 exact-target 配置决定是否存在实现，
+普通构建自动包含 `.043` / `.155` 的 L2 后端；生产构建、安装器和 smoke 使用同一默认路径。
+移除环境变量与 C 侧的实验启用宏，不再保留一套默认无通信的同目标构建。
+其他 target 未实现 L2 时明确提示，不借用别版地址，也不更改符号批准状态。
+
+实际执行 `sh scripts/build_prod_all.sh`：5 个 target 构建与严格 ELF verifier 均通过。
+`.043` 默认含 Manager UI 和通信后端的 ELF 为 86400 字节；`.155` 为 95196 字节，
+哈希与上述已验证通信版本完全相同。默认选择回归和双 owner ARM 行为回归均通过。

@@ -71,6 +71,7 @@
 | K13 | **已撤销（2026-10-17）**：旧快应用容器投递方案由 K15 / ADR-CAN-008 原生投递替代；旧模拟器结果仅保留为历史 | 2026-10-14 |
 | K14 | 确立 WearPacket Layer 2 0x43 通道，与 Pb 同级承载 CPC2；模块仅用 `.canopus`，不映射为快应用（K15） | 2026-10-14 |
 | K15 | 用户要求彻底移除 RPK 包装与快应用列表依赖，只保留 `.canopus`；通过加密 L2 CPC2 原生分块投递，固件私有 API 仍遵守批准门槛 | 2026-10-17 |
+| K16 | 所选 target 已实现的功能随普通构建默认包含，不再要求额外实验启用参数；L2 后端由 exact-target 配置自动选择，构建默认值不提升符号或真机能力状态 | 2026-10-17 |
 
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
 
@@ -108,7 +109,7 @@
 | P2 | ABI/SDK：服务表、协议收敛、移除签名、Rust 整理 | [x] | P0.1–P0.4；P2.4 起依赖 P1.3 |
 | P3 | 统一打包 + 文档 | [x] | P1、P2.1 |
 | P4 | 设备端更新语义 + 开机自启调查 | [x]（P4.0 明确结论：维持手动 Run） | P0.1、P0.2（不依赖 P5） |
-| P5 | 手机端管理（AstroBox-NG） | [~]（原生数据面已实现；固件接入实验门控，原生商店元数据待适配） | P5.0（O1）、P2.5、P3.3 |
+| P5 | 手机端管理（AstroBox-NG） | [~]（.043/.155 后端已默认内置；真机验证与原生商店元数据待完成） | P5.0（O1）、P2.5、P3.3 |
 | P6 | Mirage 模拟器调试 | [x]（043 冒烟 + Band 11 155/177 端到端全通） | P6.0、P6.2、P3 |
 
 里程碑达成情况：
@@ -239,12 +240,12 @@
 - [x] P4.5 host 测试：升级成功、同版本/降级被拒、哈希/target 不匹配、写入中断后恢复、加载失败退回 prev。
 
 ### P5 手机端管理（AstroBox-NG，K4）
-- [x] P5.0 通道设计：WearPacket L2 0x43 / CPC2（ADR-CAN-008），旧快应用方案撤销。固件实验后端只在显式开关下启用，不提升符号状态。
+- [x] P5.0 通道设计：WearPacket L2 0x43 / CPC2（ADR-CAN-008），旧快应用方案撤销。普通构建按 exact-target 配置自动包含已实现的后端，不要求额外启用参数，也不提升符号状态。
 - [x] P5.1 设备端原生 staging RPC（15..18）、INSTALL、目录快照式 SCAN；不再有 import_package 或快应用目录。
   - 握手：框架版本（`framework_revision`）、ABI、target。
   - 操作：模块列表、安装/升级、启用、禁用、移除、回滚。
   - 数据面按 O1 结论实现。
-- [~] P5.2 原生数据面重验：host 上传顺序/短写/中断/错误 target 与 ARM shim 测试通过；043 收件箱升级/回滚全流程通过。双 owner 后端分离 UI 命令处理与 Bluetooth 响应发送，解决跨 NuttX task-group 写 fd 的 EBADF。2026-10-17 Band 11 `.155` 新建 Mirage 设备经生产安装器 Run，真实 AstroBox core 加密 L2 原生安装/列表查询、本地 SCAN 全部通过；实验 `.155` 资源已同步到待打包目录。043 独立原生安装已通过，完整 fresh-device smoke 的 phone flow 仍待闭环。仅 emulator 证据，符号保持 restricted/PENDING/not_probed；不使用 FORBIDDEN 的线程/工作队列。证据：各 target 的 evidence/l2-sram-probe.json。旧 RPK 冒烟结果不能替代。
+- [~] P5.2 原生数据面重验：host 上传顺序/短写/中断/错误 target 与 ARM shim 测试通过；043 收件箱升级/回滚全流程通过。双 owner 后端分离 UI 命令处理与 Bluetooth 响应发送，解决跨 NuttX task-group 写 fd 的 EBADF。2026-10-17 Band 11 `.155` 新建 Mirage 设备经生产安装器 Run，真实 AstroBox core 加密 L2 原生安装/列表查询、本地 SCAN 全部通过；实验 `.155` 资源已同步到待打包目录，普通构建也默认包含该后端。043 独立原生安装已通过，完整 fresh-device smoke 的 phone flow 仍待闭环。仅 emulator 证据，符号保持 restricted/PENDING/not_probed；不使用 FORBIDDEN 的线程/工作队列。证据：各 target 的 evidence/l2-sram-probe.json。旧 RPK 冒烟结果不能替代。
 - [x] P5.3 core：CPC2 RPC 查询列表/版本，原生 tar/manifest/receipt 校验、按精确 target 选择、逐块应答上传；移除 modules_from_apps 与包名映射。
 - [x] P5.4 `app`（已完成：`DeviceResourceUpdateReport.canopus_modules`，新增 `canopus_send_request`、`canopus_query_device`、`canopus_trigger_scan`、`canopus_set_module_enabled`、`canopus_remove_module` 等 Tauri 命令，直通 L2 通道）。
 - [~] P5.5 更新提醒：模块列表和已装版本只来自 Supervisor；原生商店清单/版本比较需独立适配，不借用 quickapp 项。

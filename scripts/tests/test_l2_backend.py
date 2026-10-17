@@ -2,6 +2,7 @@
 import shutil
 import struct
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,6 +16,25 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[2]
 
 
+class L2ConfigTests(unittest.TestCase):
+    def test_default_backend_follows_exact_target(self):
+        with tempfile.TemporaryDirectory(prefix="canopus-l2-config-") as tmp:
+            header = Path(tmp) / "canopus_l2_probe_config.h"
+            for target, available in [
+                ("xiaomi-band-10-pro-3.101.043", True),
+                ("xiaomi-band-11-4.100.155", True),
+                ("xiaomi-band-10-pro-3.101.036", False),
+                ("xiaomi-band-11-4.100.139", False),
+                ("xiaomi-band-11-4.100.177", False),
+            ]:
+                with self.subTest(target=target):
+                    subprocess.run([sys.executable, str(ROOT / "scripts/generate_l2_probe_config.py"),
+                                    target, str(header)], check=True, capture_output=True)
+                    config = header.read_text()
+                    self.assertIn(f"#define CANOPUS_SUP_HAS_L2 {int(available)}", config)
+                    self.assertEqual("L2_PROBE_BT_LOOP" in config, available)
+
+
 @unittest.skipIf(Uc is None, "unicorn not installed; ARM L2 execution skipped")
 class L2BackendTests(unittest.TestCase):
     def test_sram_hook_encrypted_queue_and_session_boundary(self):
@@ -25,7 +45,7 @@ class L2BackendTests(unittest.TestCase):
             includes = ["tests/l2", "sdk/c", "manager/service", "manager/protocol", "manager/package"]
             flags = ["--target=arm-none-eabi", "-mcpu=cortex-m33", "-mthumb", "-Os",
                      "-ffreestanding", "-fno-builtin", "-fno-unwind-tables",
-                     "-fno-asynchronous-unwind-tables", "-DCANOPUS_SUP_EXPERIMENTAL_L2=1"]
+                     "-fno-asynchronous-unwind-tables"]
             flags += ["-I" + str(ROOT / p) for p in includes]
             objects = []
             for source in ["manager/service/canopus_supervisor_l2.c", "tests/l2/harness.c"]:

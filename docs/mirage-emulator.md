@@ -6,7 +6,7 @@
 `install kind=canopus` 使用与 AstroBox 相同的 core 客户端发送加密 CPC2 请求。
 旧快应用模拟器结果只是历史，不是新数据面通过的证据。
 
-脚本仅在实验构建中设置 `CANOPUS_EXPERIMENTAL_L2=1`（.043 / .155）。
+普通构建自动包含已实现的 target L2 后端（.043 / .155），smoke 不再单独启用通信功能。
 这不批准任何私有符号，也不升级真机能力状态。脚本默认使用独立设备名，
 可用 `CANOPUS_SMOKE_DEVICE` 指定专用测试实例；该实例会被重建，请勿指定个人设备。
 
@@ -17,7 +17,7 @@
 - 155 加密 L2 原生 `.canopus` 安装与模块列表查询：**通过**。真实 AstroBox core 在约 453 ms 内完成 `hello_portable` 安装，列表返回 slot0/state3/version1/activationError0；本地 SCAN result=5/count=1。
 - 043 独立加密 L2 原生安装已通过；完整 fresh-device smoke 的 phone flow 仍存在超时，尚未全部闭环。
 - 旧 LVGL heartbeat 在熄屏后停止，现只用于引导独立 UI libuv timer；回复通过第二个 Bluetooth libuv timer 发送，避免 UI task-group 写蓝牙任务 fd 的 EBADF。
-- `.155` 待打包目录此前是默认无 L2 后端的构建：本地 bootstrap result=0，但 AstroBox 超时。现已用 `CANOPUS_EXPERIMENTAL_L2=1` 同步重建 Supervisor、CRC profile 和 stage1/stage2；默认构建仍不含实验后端。
+- `.155` 待打包目录此前曾是无 L2 后端的构建：本地 bootstrap result=0，但 AstroBox 超时。现在普通构建已自动包含后端，并同步重建 Supervisor、CRC profile 和 stage1/stage2；不再需要单独开启通信。
 - 编译后的 ARM SRAM shim 在 Unicorn 模型中通过；它不覆盖真实持续调度行为。
 
 ## 工作流（P6.1/P6.2/P6.5）

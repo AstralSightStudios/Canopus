@@ -35,16 +35,15 @@ by Git. Run the build above before packaging a fresh checkout. The source icon
 is tracked at `watchfaces/canopus-installer/manager_icon.bin`; loader resources
 are regenerated from the target profiles and source code.
 
-Encrypted Canopus L2 communication is currently an explicit experimental build
-for Band 10 Pro `.043` and Band 11 `.155`. The default build does not include
-this backend. For the Band 11 `.155` installer, build before packaging:
+Encrypted Canopus L2 communication is included automatically for Band 10 Pro
+`.043` and Band 11 `.155`. No separate enable flag is needed. For example, build
+the Band 11 `.155` installer before packaging:
 
 ```sh
-CANOPUS_TARGET=xiaomi-band-11-4.100.155 CANOPUS_EXPERIMENTAL_L2=1 \
-  sh scripts/build_canopus_supervisor.sh
+CANOPUS_TARGET=xiaomi-band-11-4.100.155 sh scripts/build_canopus_supervisor.sh
 ```
 
 Then package the matching family directory, reboot the band and click **Run**.
-See the [Band 11 backend and activation notes](xiaomi-band-11/docs/README.md#加密通信后端4100155实验构建).
-This opt-in does not promote private symbols or constitute physical-device or
-production approval.
+See the [Band 11 backend and activation notes](xiaomi-band-11/docs/README.md).
+Other firmware targets without an implemented L2 backend report that limitation
+at build time. Build defaults do not change private-symbol or device-approval status.

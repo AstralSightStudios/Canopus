@@ -102,7 +102,7 @@ def main():
 
     target = args.target
     if not (ROOT / f"targets/xiaomi-band-11-4.100.{target}/evidence/l2-sram-probe.json").exists():
-        print(f"No audited experimental L2 backend for Band 11 .{target}; skipping")
+        print(f"No L2 backend configuration for Band 11 .{target}; skipping")
         sys.exit(77)
     fw = FIRMWARE[target]
     if not MIRAGECTL.exists() or not PACKAGER.exists() or not BRIDGE.exists() or fw not in ctl("firmware", "list"):
@@ -114,7 +114,7 @@ def main():
     out_dir = work / "installer"
     out_dir.mkdir()
     subprocess.run(["sh", str(ROOT / "scripts/build_canopus_supervisor.sh")], cwd=ROOT, check=True, capture_output=True,
-                   env=dict(os.environ, CANOPUS_TARGET=tid, CANOPUS_BAND11_OUTPUT_DIR=str(out_dir), CANOPUS_EXPERIMENTAL_L2="1"))
+                   env=dict(os.environ, CANOPUS_TARGET=tid, CANOPUS_BAND11_OUTPUT_DIR=str(out_dir)))
     src = work / "face"
     src.mkdir()
     for f in [out_dir / "main.lua", *out_dir.glob("*.bin")]:

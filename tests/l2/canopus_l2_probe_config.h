@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#define CANOPUS_SUP_HAS_L2 1
+
 void test_l2_rx(uint16_t, uint8_t, uint8_t, void *, uint16_t);
 void *test_l2_session(uint16_t);
 int test_l2_crypto(void *, int, uint16_t, const void *, void *);

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate an explicitly experimental MiWear L2 backend; no symbol promotion."""
+"""Generate the target's default MiWear L2 backend config; no symbol promotion."""
 import argparse
 import json
 from pathlib import Path
@@ -13,12 +13,16 @@ def main():
     parser.add_argument("output", type=Path)
     args = parser.parse_args()
     evidence = ROOT / "targets" / args.target / "evidence" / "l2-sram-probe.json"
-    if not evidence.is_file():
-        parser.error("no audited experimental L2 configuration for this exact target")
-    data = json.loads(evidence.read_text())
-    lines = ["/* Experimental static recovery only; not production approval. */"]
-    for macro, value in data["addresses"].items():
-        lines.append(f"#define L2_PROBE_{macro} {value}u")
+    lines = ["/* Exact-target L2 configuration; not production approval. */"]
+    if evidence.is_file():
+        data = json.loads(evidence.read_text())
+        lines.append("#define CANOPUS_SUP_HAS_L2 1")
+        for macro, value in data["addresses"].items():
+            lines.append(f"#define L2_PROBE_{macro} {value}u")
+        print(f"      encrypted L2 0x43: dual-owner backend ({args.target})")
+    else:
+        lines.append("#define CANOPUS_SUP_HAS_L2 0")
+        print(f"      encrypted L2 0x43: no backend for {args.target}")
     args.output.write_text("\n".join(lines) + "\n")
 
 

@@ -19,8 +19,8 @@ Supervisor 不再读取任何快应用目录，手机端模块列表、版本与
 
 ## 证据与限制
 
-符号的 restricted / PENDING、not_probed 状态不变。当前固件 L2 后端必须显式以
-`CANOPUS_EXPERIMENTAL_L2=1` 构建，仅对有 exact-target 证据的 .043 / .155 开放。
-默认构建不连接这些尚未批准的私有符号。模拟器验证不等于真机验证或生产批准。
+符号的 restricted / PENDING、not_probed 状态不变。.043 / .155 的普通构建自动包含
+各自的 exact-target L2 后端，不要求额外启用参数；未实现后端的其他 target 仍返回
+UNSUPPORTED，不套用别版固件的地址。模拟器验证不等于真机验证或生产批准。
 
 原生投递暂不支持包内资源文件，客户端明确拒绝含资源的包，不静默丢弃。

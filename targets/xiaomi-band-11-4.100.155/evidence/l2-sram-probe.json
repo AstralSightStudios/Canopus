@@ -34,7 +34,7 @@
     "An LVGL bootstrap initializes a resident libuv timer on the same UI owner loop; Bluetooth RX only decrypts/enqueues. The exact .155 native timer layout is 88 bytes, not .043's 136 bytes."
   ],
   "constraints": [
-    "Only CANOPUS_EXPERIMENTAL_L2=1 builds include these addresses. No generated veneer or symbol approval is changed.",
+    "Normal builds automatically include this exact target's L2 backend. No extra enable flag is required; generated veneer and symbol approval states are unchanged.",
     "SRAM callback replacement only; Cortex-M33 Flash patching is not used.",
     "Only encrypted requests on 0x43 are accepted. No physical-device validation.",
     "The owner-source replacement is experimental and remains PENDING. UI/LVGL must run once to bootstrap it; do not use forbidden thread/work-queue symbols as a workaround. No physical-device or production approval."
@@ -59,7 +59,7 @@
       "Production watchface installed through the real AstroBox core; explicit Run completed the native bootstrap with result=0 and exec_ok=true.",
       "Encrypted native hello_portable .canopus install completed in approximately 453 ms; inventory returned slot=0, version=1, state=3, activationError=0.",
       "Local CPC2 SCAN returned result=5 with err=0/count=1; inbox contained the 176-byte receipt and 3816-byte ELF.",
-      "Control run using the previously staged default build loaded the Supervisor successfully (result=0), but inventory timed out: that ELF's L2 entry returned UNSUPPORTED. The family staging directory and CRC-bound loader resources were rebuilt together with CANOPUS_EXPERIMENTAL_L2=1."
+      "Control run using the previously staged default build loaded the Supervisor successfully (result=0), but inventory timed out: that ELF's L2 entry returned UNSUPPORTED. The family staging directory and CRC-bound loader resources were rebuilt together with the L2 backend included. A subsequent normal build, without any enable flag, produced the same verified Supervisor SHA-256."
     ],
     "physical_device": "not_probed"
   }

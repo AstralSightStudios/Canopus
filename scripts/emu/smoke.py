@@ -176,7 +176,7 @@ def main():
         skip(f"firmware package not found at {OTA}")
     subprocess.run(["cargo", "build", "-q", "-p", "canopus-cli"], cwd=ROOT, check=True)
     subprocess.run(["sh", str(ROOT / "scripts/build_canopus_supervisor.sh")], cwd=ROOT, check=True,
-                   env=dict(os.environ, CANOPUS_TARGET=TARGET, CANOPUS_SUP_EXTRA_DEFINES="-DCANOPUS_SUP_HEADLESS=1", CANOPUS_EXPERIMENTAL_L2="1"), capture_output=True)
+                   env=dict(os.environ, CANOPUS_TARGET=TARGET, CANOPUS_SUP_EXTRA_DEFINES="-DCANOPUS_SUP_HEADLESS=1"), capture_output=True)
     supervisor = ROOT / f"watchfaces/canopus-installer/build/{TARGET}/canopus_supervisor.elf"
 
     if DEVICE in ctl("list"):

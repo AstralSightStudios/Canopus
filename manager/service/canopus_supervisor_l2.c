@@ -3,8 +3,9 @@
 #include "canopus_memory.h"
 #include "canopus_services.h"
 
-#ifdef CANOPUS_SUP_EXPERIMENTAL_L2
 #include "canopus_l2_probe_config.h"
+
+#if CANOPUS_SUP_HAS_L2
 
 #define L2_FRAME_MAX (CANOPUS_TRANSPORT_V2_HEADER_SIZE + CANOPUS_PROTO_MAX_PAYLOAD)
 #define L2_QUEUE_SIZE 4u

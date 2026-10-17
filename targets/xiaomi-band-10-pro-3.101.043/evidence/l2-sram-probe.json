@@ -34,7 +34,7 @@
     "An LVGL bootstrap initializes a resident libuv timer on the same UI owner loop; Bluetooth RX only decrypts/enqueues. Native owner timer ABI/context are separately recovered below, not production-approved."
   ],
   "constraints": [
-    "Only CANOPUS_EXPERIMENTAL_L2=1 builds include these addresses. No generated veneer or symbol approval is changed.",
+    "Normal builds automatically include this exact target's L2 backend. No extra enable flag is required; generated veneer and symbol approval states are unchanged.",
     "SRAM callback replacement only; Cortex-M33 Flash patching is not used.",
     "Only encrypted requests on 0x43 are accepted. No physical-device validation.",
     "The owner-source replacement is experimental and remains PENDING. UI/LVGL must run once to bootstrap it; do not use forbidden thread/work-queue symbols as a workaround. No physical-device or production approval."
@@ -62,7 +62,7 @@
       "Full inbox install/update/downgrade refusal/load-failure fallback/rollback smoke passed.",
       "Live memory inspection: SAR connection RX still points at original 0x0C7D6E6D after reconnect; the LVGL heartbeat last_run did not advance.",
       "Compiled ARM shim passed modeled callback substitution, plaintext rejection, decryption failure, deferred dispatch and live-session checks; this does not verify the event source.",
-      "2026-10-17 re-run (CANOPUS_EXPERIMENTAL_L2=1 smoke): inbox lifecycle PASS; native phone install fails with 'Canopus request timed out' (reproduced).",
+      "2026-10-17 re-run (before the default-backend change): inbox lifecycle PASS; native phone install fails with 'Canopus request timed out' (reproduced).",
       "2026-10-17 live, encrypted session connected: SAR connection RX is 0x0C7D6E6D (vendor callback); l2_attach had not re-hooked the new connection.",
       "2026-10-17 live: the Supervisor L2 timer is present in the LVGL list (period 10 ms, repeat -1, not paused). Its callback is a BL to canopus_sup_l2_poll with base 0x3C350968. Its last_run and every other LVGL timer's last_run stayed unchanged across samples several seconds apart, while NuttX uptime advanced and the NSH shell answered.",
       "2026-10-17 control: a stock 3.101.043 device with no Supervisor loaded shows the same LVGL timer stall (last_run values 5.7-12.9 s after boot; the 8 ms timer shows last_run 0). The stall is not caused by the L2 backend.",
