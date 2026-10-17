@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2_owner_timer_init",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2_owner_timer_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c2e3994",
+  "callable_address": "0x0c2e3995",
+  "prototype": "int(void *loop, void *timer)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {"allowed": ["target-private-ui-owner"], "blocking": false},
+  "proof": {"static": "confirmed", "device": "not_probed", "evidence_ids": []},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [],
+    "source": "Exact IDB uv_timer_init and native caller sub_C4B88C0; evidence/l2-sram-probe.json owner_source"
+  },
+  "approval_state": "PENDING",
+  "notes": "Experimental L2 only. Mutates the owner loop handle list; call only from the LVGL bootstrap on that same UI task. Resident 136-byte, 8-byte-aligned timer. No thread creation/work queue, no production approval."
+}

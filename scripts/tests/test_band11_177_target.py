@@ -33,6 +33,13 @@ class Band11Target177Tests(unittest.TestCase):
         approved = []
         for path in source.glob('*.json'):
             baseline = json.loads(path.read_text())
+            if baseline['name'] in {'miwear_session_lookup', 'miwear_session_crypto_ctr'}:
+                # These are new exact-.155 recoveries, not part of the .177 port.
+                self.assertEqual(baseline['policy'], 'restricted')
+                self.assertEqual(baseline['approval_state'], 'PENDING')
+                self.assertEqual(baseline['proof']['device'], 'not_probed')
+                self.assertFalse((target / path.name.replace('4.100.155', '4.100.177')).exists())
+                continue
             record = json.loads((target / path.name.replace('4.100.155', '4.100.177')).read_text())
             with self.subTest(symbol=record['name']):
                 self.assertEqual(record['policy'], baseline['policy'])

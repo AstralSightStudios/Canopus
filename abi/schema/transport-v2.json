@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://canopus.dev/schemas/transport-v2.json",
   "title": "Canopus /dev/canopus transport v2 envelope (CAN-P0-008)",
-  "description": "Decision record for the single versioned wire format on /dev/canopus. Legacy CPC1 (16-byte command) and CPS1 (384-byte status) remain only as the compatibility path; new operations are v2. The layout is fixed little-endian; a wire buffer is never dereferenced as a packed C struct.",
+  "description": "Single versioned wire format on /dev/canopus and WearPacket L2 0x43. CPC1/CPS1 are not accepted on the device. Native staging opcodes: 15=BEGIN (176-byte CMI2), 16=WRITE (u32 offset + up to 508 bytes), 17=FINISH, 18=ABORT. QUERY_DEVICE payload is 84 bytes with target_id at +36. The layout is fixed little-endian; a wire buffer is never dereferenced as a packed C struct.",
   "type": "object",
   "required": ["magic", "header_size", "message_kind", "abi_major", "abi_minor", "total_size", "opcode", "request_id", "flags", "result", "payload_size"],
   "properties": {

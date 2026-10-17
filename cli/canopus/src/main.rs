@@ -45,13 +45,6 @@ enum Command {
         /// Output file (default: dist/<id>-<version>.canopus).
         #[arg(long)]
         output: Option<PathBuf>,
-        /// Also write a signed quick-app container (.rpk) next to it, for
-        /// installing through the phone's stock quick-app flow.
-        #[arg(long)]
-        rpk: bool,
-        /// Directory holding the rpk signing key (default ~/.canopus/rpk).
-        #[arg(long)]
-        rpk_key_dir: Option<PathBuf>,
         /// Also write installer watchface folders (one per device family) to
         /// dist/installer/ for the legacy /dev/canopus or ordinary-IO flow.
         #[arg(long)]
@@ -296,10 +289,8 @@ fn run(cli: Cli) -> anyhow::Result<()> {
             cmd: None,
             manifest,
             output,
-            rpk,
-            rpk_key_dir,
             installer,
-        } => project::package(&manifest, output.as_deref(), rpk, rpk_key_dir.as_deref(), installer),
+        } => project::package(&manifest, output.as_deref(), installer),
         Command::Emu(EmuCmd::Smoke) => {
             let root = project::canopus_root()?;
             let status = std::process::Command::new("python3")

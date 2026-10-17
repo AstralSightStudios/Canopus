@@ -48,9 +48,13 @@ static int u_restore(void *c, uint8_t *d, uint32_t n)
     canopus_memcpy(d, g_registry, n);
     return 0;
 }
+static int u_import(void *c, const char *id);
+static const char *g_pkg_ids[4];
+
 static int u_stage_verify(void *c, const char *t, uint32_t *v, uint32_t *l)
 {
-    (void)c; (void)t;
+    (void)c;
+    if (g_pkg_ids[0] != 0 && u_import(c, t) != 0) return -1;
     if (!g_next.present || !g_next.valid) {
         g_sup->error_code = (uint32_t)CANOPUS_SUP_ERR_STAGE_ARTIFACT;
         return -1;
@@ -78,9 +82,7 @@ static int u_gen_verify(void *c, const char *t, uint32_t gen, uint32_t *v, uint3
     return 0;
 }
 
-/* phone-installed packages: "ids" the platform reports, and what importing
- * one stages (version) */
-static const char *g_pkg_ids[4];
+/* Completed native staging pairs reported by the platform. */
 static uint32_t g_pkg_versions[4];
 static int g_pkg_import_fail[4];
 static int u_list(void *c, uint32_t i, char *id)
@@ -121,11 +123,11 @@ static const struct canopus_sup_platform_v1 update_platform = {
     .gen_exists = u_gen_exists,
     .gen_verify = u_gen_verify,
     .list_packages = u_list,
-    .import_package = u_import,
 };
 
 static void reset(struct canopus_supervisor_v1 *sup)
 {
+    memset(g_pkg_ids, 0, sizeof(g_pkg_ids));
     memset(g_gen, 0, sizeof(g_gen));
     memset(&g_next, 0, sizeof(g_next));
     memset(g_load_fail, 0, sizeof(g_load_fail));

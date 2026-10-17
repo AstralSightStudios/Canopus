@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 7
- * input_digest: e61fc16beed8cd3d
+ * input_digest: 4213d2af6c0d368a
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -576,6 +576,8 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
  * insmod: restricted - not exported until context/ownership approved
  * ioctl: restricted - not exported until context/ownership approved
+ * l2_owner_timer_init: restricted - not exported until context/ownership approved
+ * l2_owner_timer_start: restricted - not exported until context/ownership approved
  * launcher_parent: restricted - not exported until context/ownership approved
  * launcher_rect_init: restricted - not exported until context/ownership approved
  * launcher_scroll: restricted - not exported until context/ownership approved
@@ -602,6 +604,8 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * lvx_image_set_scale: restricted - not exported until context/ownership approved
  * lvx_label_set_long_mode: restricted - not exported until context/ownership approved
  * lvx_object_add_flag: restricted - not exported until context/ownership approved
+ * miwear_session_crypto_ctr: restricted - not exported until context/ownership approved
+ * miwear_session_lookup: restricted - not exported until context/ownership approved
  * miwear_transport_l2_rx: restricted - not exported until context/ownership approved
  * miwear_transport_send: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved

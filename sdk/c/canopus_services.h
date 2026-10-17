@@ -122,8 +122,8 @@ struct canopus_fs_dirent {
 #define CANOPUS_HOOK_MAX 16u
 
 typedef enum canopus_hook_type {
-    CANOPUS_HOOK_AUTO    = 0, /* Auto-detect: FPB for Flash, Trampoline for RAM, Slot for pointer */
-    CANOPUS_HOOK_FPB     = 1, /* Cortex-M33 Flash Patch and Breakpoint hardware remap */
+    CANOPUS_HOOK_AUTO    = 0, /* Registered RAM slot for Flash, inline for Thumb RAM code */
+    CANOPUS_HOOK_FPB     = 1, /* Legacy selector: requires a registered RAM dispatch slot */
     CANOPUS_HOOK_INLINE  = 2, /* Thumb-2 Trampoline jump */
     CANOPUS_HOOK_POINTER = 3, /* Global function pointer table replacement */
 } canopus_hook_type_t;
@@ -197,6 +197,8 @@ struct canopus_mem_obj {
     uint32_t (*available)(const struct canopus_context_v1 *ctx);
     uint32_t (*used)(const struct canopus_context_v1 *ctx);
 };
+
+#define CANOPUS_TIMER_MAX_INTERVAL_MS UINT32_C(0x7fffffff)
 
 struct canopus_time_obj {
     uint32_t (*monotonic_ms)(const struct canopus_context_v1 *ctx);

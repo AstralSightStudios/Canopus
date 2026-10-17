@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.l2_owner_timer_start",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "l2_owner_timer_start",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c3f0a6e",
+  "callable_address": "0x0c3f0a6f",
+  "prototype": "int(void *timer, void (*callback)(void *), uint64_t timeout, uint64_t repeat)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {"allowed": ["target-private-ui-owner"], "blocking": false},
+  "proof": {"static": "confirmed", "device": "not_probed", "evidence_ids": []},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [],
+    "source": "Exact IDB uv_timer_start and native UI caller sub_C4FB31C; evidence/l2-sram-probe.json owner_source"
+  },
+  "approval_state": "PENDING",
+  "notes": "Experimental L2 only. AAPCS: timer r0, callback r1, timeout r2/r3, repeat stack +0/+4. Owner-only timer heap mutation; flags +44, callback +48, timeout +64, repeat +72, id +80. No production approval."
+}

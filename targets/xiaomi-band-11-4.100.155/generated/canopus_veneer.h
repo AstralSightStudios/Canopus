@@ -4,7 +4,7 @@
  * firmware : 4.100.155 (user-4.100.155-cn-202609041500)
  * sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
  * revision : 1
- * input_digest: e13fb679794ff719
+ * input_digest: 6943713511604b0e
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
@@ -330,6 +330,8 @@ static inline int * canopus_fw_errno_location(void) {
  * interconnect_send: restricted - not exported until context/ownership approved
  * ioctl: restricted - not exported until context/ownership approved
  * kmem_free: restricted - not exported until context/ownership approved
+ * l2_owner_timer_init: restricted - not exported until context/ownership approved
+ * l2_owner_timer_start: restricted - not exported until context/ownership approved
  * lseek: restricted - not exported until context/ownership approved
  * lv_bar_create: restricted - not exported until context/ownership approved
  * lv_bar_set_range: restricted - not exported until context/ownership approved
@@ -388,6 +390,8 @@ static inline int * canopus_fw_errno_location(void) {
  * lvx_page_content_create: restricted - not exported until context/ownership approved
  * lvx_page_title_create: restricted - not exported until context/ownership approved
  * lvx_style_apply: restricted - not exported until context/ownership approved
+ * miwear_session_crypto_ctr: restricted - not exported until context/ownership approved
+ * miwear_session_lookup: restricted - not exported until context/ownership approved
  * miwear_transport_l2_rx: restricted - not exported until context/ownership approved
  * miwear_transport_send: restricted - not exported until context/ownership approved
  * mm_mallinfo: restricted - not exported until context/ownership approved

@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "status": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "approval_state": "PENDING",
+  "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+  "addresses": {
+    "RX": "0x0C7D6E6D",
+    "SEND": "0x0C7D719D",
+    "SESSION": "0x0C7D7E95",
+    "CRYPTO": "0x0C7D46A5",
+    "CONNECTIONS": "0x200E16B8",
+    "TIMER": "0xc587ed1",
+    "TIMER_DELETE": "0xc588129",
+    "OWNER_LOOP": "0x20125700",
+    "BT_LOOP": "0x201259e4",
+    "OWNER_TIMER_INIT": "0x0c2e3995",
+    "OWNER_TIMER_START": "0x0c2e3b85",
+    "OWNER_TIMER_SIZE": "0x88"
+  },
+  "abi": {
+    "rx": "void(uint16_t handle, uint8_t channel, uint8_t opcode, void *payload, uint16_t len)",
+    "session": "void *(uint16_t handle)",
+    "crypto": "int(void *session, int encrypt, uint16_t len, const void *in, void *out)",
+    "send": "int(void *session, const struct l2_packet *)",
+    "list": "head+4 -> prev link; node+12 -> connection; connection+12 -> rx callback",
+    "packet": "channel +0, opcode +1, payload +4, len +8, callbacks/cookies +12/+16/+20/+24 (28 bytes)"
+  },
+  "evidence": [
+    "Exact firmware IDB: SAR open allocates a 16-byte list node and 224-byte connection; RX callback is connection+12, not list-node+12.",
+    "Encrypted receive uses crypto(session, 0, len, input, output); nonzero return must not dispatch a command.",
+    "Transport send encrypts payload in place, then SAR submit copies into an owned queue allocation before returning. Band 11 .155 sub_C98E6B8 confirms the synchronous copy.",
+    "An LVGL bootstrap initializes a resident libuv timer on the same UI owner loop; Bluetooth RX only decrypts/enqueues. Native owner timer ABI/context are separately recovered below, not production-approved."
+  ],
+  "constraints": [
+    "Only CANOPUS_EXPERIMENTAL_L2=1 builds include these addresses. No generated veneer or symbol approval is changed.",
+    "SRAM callback replacement only; Cortex-M33 Flash patching is not used.",
+    "Only encrypted requests on 0x43 are accepted. No physical-device validation.",
+    "The owner-source replacement is experimental and remains PENDING. UI/LVGL must run once to bootstrap it; do not use forbidden thread/work-queue symbols as a workaround. No physical-device or production approval."
+  ],
+  "owner_source": {
+    "status": "STATIC_RECOVERED",
+    "approval_state": "PENDING",
+    "init": "sub_C2E3994: int(void *loop, void *timer); native sub_C4B88C0 calls it with *0x20125700 and timer 0x2010C0B8.",
+    "start": "sub_C2E3B84: int(void *timer, void (*callback)(void *), uint64_t timeout, uint64_t repeat). AAPCS r0/r1/r2-r3/stack+0,+4; timeout/repeat are milliseconds.",
+    "storage": "136 bytes, 8-byte alignment. flags+92, cb+96, heap node+100, timeout+112, repeat+120, id+128; includes 48-byte libuv backtrace storage.",
+    "context": "Both init and start mutate owner lists/heaps and are not cross-thread APIs. Only the existing UI/LVGL bootstrap callback may initialize/start this resident handle; subsequent callbacks run on that same native loop. No new threads or work queues.",
+    "stock_control": "Mirage stock .043: PID49 miwear TCB 0x3C3B6AB8, saved PC 0x0C206A26 (nxsem wait), waitsem 0x3C3D3260 inside timed epoll_pwait (0x0C1CF9F8) -> uv poll (return 0x0C2DDC49). Not a stuck LVGL callback; guard=0.",
+    "screen_off": "Native refresh uv_timer at 0x2010C0B8 is inactive (flags+92=8), deliberately stopped by sub_C4B8450(0,...) registered via sub_CA72FF8. The executing LVGL handler is ROM 0x1C05FE20 through 0x0C587CA8, not the unused AP copy 0x0C16D260.",
+    "wake_control": "Stock double tap, no firmware/model patch: Zinitix gesture1, DCS SLPOUT/DISPON, refresh uv_timer flags=12. Timeview timer last_run 575324->575592 ms and 8ms timer 575520->575737 ms. Earlier home/power stimuli cannot wake p67: this board has no physical keys; a single touch is not a double tap.",
+    "runtime_validation": "pending"
+  },
+  "emulator_validation": {
+    "date": "2026-10-17",
+    "result": "FAILED",
+    "backend": "historical LVGL-only baseline; blocked-wait interpretation superseded by owner_source",
+    "scope": "Mirage plus real AstroBox core over encrypted WearPacket L2",
+    "observations": [
+      "Supervisor loaded; local CPC2 query succeeds.",
+      "Native L2 install and module inventory queries time out after forcing authenticated cipher setup.",
+      "Full inbox install/update/downgrade refusal/load-failure fallback/rollback smoke passed.",
+      "Live memory inspection: SAR connection RX still points at original 0x0C7D6E6D after reconnect; the LVGL heartbeat last_run did not advance.",
+      "Compiled ARM shim passed modeled callback substitution, plaintext rejection, decryption failure, deferred dispatch and live-session checks; this does not verify the event source.",
+      "2026-10-17 re-run (CANOPUS_EXPERIMENTAL_L2=1 smoke): inbox lifecycle PASS; native phone install fails with 'Canopus request timed out' (reproduced).",
+      "2026-10-17 live, encrypted session connected: SAR connection RX is 0x0C7D6E6D (vendor callback); l2_attach had not re-hooked the new connection.",
+      "2026-10-17 live: the Supervisor L2 timer is present in the LVGL list (period 10 ms, repeat -1, not paused). Its callback is a BL to canopus_sup_l2_poll with base 0x3C350968. Its last_run and every other LVGL timer's last_run stayed unchanged across samples several seconds apart, while NuttX uptime advanced and the NSH shell answered.",
+      "2026-10-17 control: a stock 3.101.043 device with no Supervisor loaded shows the same LVGL timer stall (last_run values 5.7-12.9 s after boot; the 8 ms timer shows last_run 0). The stall is not caused by the L2 backend.",
+      "2026-10-17 corrected conclusion: LVGL nonprogress is normal screen-off gating, not proof of an emulator owner-loop deadlock; see owner_source stock task and double-tap wake controls.",
+      "2026-10-17 kernel check: NSH sleep/usleep return and IRQ46 fires. The AP lv_timer_handler breakpoint was not the executing ROM handler; its lack of hits cannot establish a blocked task.",
+      "2026-10-17 stall timing: the LVGL timer last_run values stop near 13 s of LVGL time on stock devices and devices with the Supervisor loaded. Panel frame starts stop at the same point. Home key, a 3 s power key hold and screen taps did not restart LCDC output or LVGL timers.",
+      "2026-10-17 stack scan (device PSRAM 0x3D400000 window): a return address into sub_CA647F0 (0x0CA64EA1, the timeview refresh_clock path under the 250 ms LVGL timer callback sub_CA64F38) and frames in sub_C1EA83C and the DMA/SPI driver (sub_C221460 -> sub_C22E0C4, hal_dma_sg_2d_start). The blocking primitive is not yet identified."
+    ],
+    "physical_device": "not_probed"
+  }
+}

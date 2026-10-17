@@ -39,6 +39,7 @@ dist/
 *.lst
 *.dSYM/
 tests/host/canopus_host_tests
+tests/host/canopus_sleep_test
 tests/host/elf_loader_harness
 
 # Generated module-installer device bundles and their generated overview.

@@ -4,8 +4,8 @@
  * A native module (boot-resident, like btpatch_phase5) that registers the
  * /dev/canopus char device and implements the installer control ABI that the
  * Lua installer watchface drives. This is the concrete Phase 5 supervisor:
- *   - a fixed 384-byte status ABI (read from /dev/canopus);
- *   - a fixed 16-byte command ABI (written to /dev/canopus);
+ *   - CPC2 requests/responses over /dev/canopus and WearPacket L2;
+ *   - fixed-width internal status/command records for host callers;
  *   - module slots tracked through the portable lifecycle semantics.
  *
  * The device-gated actions (registering the char device, actually loading /
@@ -20,6 +20,7 @@
 #include "canopus_abi.h"
 #include "canopus_protocol.h"
 #include "canopus_services.h"
+#include "canopus_installer_bundle.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -81,8 +82,7 @@ enum canopus_sup_command {
      * The installer watchface invokes this from a Lua/LVGL event turn before
      * staged native-app publication. */
     CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT,
-    /* Import packages the phone installed as quick apps
-     * (<app root>/com.canopus.pkg.<id>/; /data/app on Band 10 Pro, /data/quickapp/app on Band 11) and stage them like an INSTALL. */
+    /* Discover native receipt/artifact pairs completed in the Canopus inbox. */
     CANOPUS_SUP_CMD_SCAN,
 };
 
@@ -264,10 +264,22 @@ struct canopus_supervisor_v1 {
     uint32_t installer_response_len;
     /* v2 pending-request tracking (CAN-P1-002) */
     struct canopus_pending_table_v1 pending;
+    struct {
+        uint32_t active;
+        int fd;
+        uint32_t size;
+        uint32_t written;
+        char id[CANOPUS_SUP_MODULE_ID_MAX];
+        uint8_t receipt[CANOPUS_INSTALL_RECEIPT_SIZE];
+    } upload;
     /* platform hooks (see canopus_supervisor_platform.h) */
     const struct canopus_sup_platform_v1 *platform;
     void *platform_cookie;
 };
+
+uint32_t canopus_supervisor_upload(struct canopus_supervisor_v1 *sup,
+                                  uint32_t command, const uint8_t *payload,
+                                  uint32_t len);
 
 /* Lifecycle helpers reused from the portable runtime. */
 int canopus_supervisor_init(struct canopus_supervisor_v1 *sup,
@@ -356,6 +368,9 @@ const struct canopus_context_v1 *canopus_supervisor_context(
     struct canopus_supervisor_v1 *sup, uint32_t slot);
 /* Binds the service table to the Supervisor (called by init). */
 void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup);
+/* Load module preferences before constructors or descriptor callbacks run. */
+void canopus_supervisor_prepare_services(struct canopus_supervisor_v1 *sup,
+                                         uint32_t slot);
 /* Dispatches pending module timers whose intervals have elapsed. */
 void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup);
 /* Closes the slot's open files; called when its artifacts are removed. */
@@ -375,7 +390,7 @@ const char *canopus_supervisor_log_entry(uint32_t index, uint32_t *level,
 int canopus_supervisor_stage_token(struct canopus_supervisor_v1 *sup,
                                    const char *token);
 
-/* Imports every phone-installed Canopus quick-app package through the
+/* Imports every completed native Canopus staging pair through the
  * platform's list/import hooks and stages each (fresh install or update).
  * Same-or-older versions are already current and are not failures. Returns the
  * result state (COMPLETED, REBOOT_REQUIRED when an update was staged, FAILED

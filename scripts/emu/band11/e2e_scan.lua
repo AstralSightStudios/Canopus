@@ -28,7 +28,7 @@ local function exchange(op, payload, reply_size)
     return reply
 end
 local function status(tag)
-    local d, e = exchange(9, nil, 72)
+    local d, e = exchange(9, nil, 120)
     if not d then log(tag .. " ERR " .. tostring(e)); return end
     local out = { string.format("err=%d count=%d scan=%08x", s32(u32(d, 36 + 24)), u32(d, 36 + 16), u32(d, 36 + 32)) }
     for slot = 0, 15 do

@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: e13fb679794ff719
+// input_digest: 6943713511604b0e
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -306,6 +306,9 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 /// Recovered `lv_obj_area_is_visible` at 0xc383eec. Thumb callable address 0xc383eed.
 pub const CANOPUS_FW_LV_OBJ_AREA_IS_VISIBLE_CALLABLE: usize = canopus_thumb_callable(0xc383eedusize);
 
+/// Recovered `l2_owner_timer_start` at 0x0c3f0a6e. Thumb callable address 0x0c3f0a6f.
+pub const CANOPUS_FW_L2_OWNER_TIMER_START_CALLABLE: usize = canopus_thumb_callable(0x0c3f0a6fusize);
+
 /// Recovered `vg_lite_finish` at 0xc92019c. Thumb callable address 0xc92019d.
 pub const CANOPUS_FW_VG_LITE_FINISH_CALLABLE: usize = canopus_thumb_callable(0xc92019dusize);
 
@@ -504,6 +507,9 @@ pub unsafe fn canopus_fw_errno_location() -> *const i32 {
     f()
 }
 
+/// Recovered `l2_owner_timer_init` at 0x0c3f0934. Thumb callable address 0x0c3f0935.
+pub const CANOPUS_FW_L2_OWNER_TIMER_INIT_CALLABLE: usize = canopus_thumb_callable(0x0c3f0935usize);
+
 /// Recovered `lvx_list_item_create` at 0xc50f4e4. Thumb callable address 0xc50f4e5.
 pub const CANOPUS_FW_LVX_LIST_ITEM_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc50f4e5usize);
 
@@ -585,6 +591,9 @@ pub const canopus_fw_bt_shared_adapter: usize = 0x200c3148usize;
 /// Recovered `font_reload_gradient_pending_release` at 0x0c395bd0. Thumb callable address 0x0c395bd1.
 pub const CANOPUS_FW_FONT_RELOAD_GRADIENT_PENDING_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c395bd1usize);
 
+/// Recovered `miwear_session_crypto_ctr` at 0xc98c9bc. Thumb callable address 0x0C98C9BD.
+pub const CANOPUS_FW_MIWEAR_SESSION_CRYPTO_CTR_CALLABLE: usize = canopus_thumb_callable(0x0C98C9BDusize);
+
 /// Recovered `rename` at 0xc33d79c. Thumb callable address 0xc33d79d.
 pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0xc33d79dusize);
 
@@ -608,6 +617,9 @@ pub const canopus_fw_font_reload_vector_label_class: usize = 0x2ca6ee48usize;
 
 /// Recovered `lv_obj_set_width` at 0xc387b2e. Thumb callable address 0xc387b2f.
 pub const CANOPUS_FW_LV_OBJ_SET_WIDTH_CALLABLE: usize = canopus_thumb_callable(0xc387b2fusize);
+
+/// Recovered `miwear_session_lookup` at 0xc98ffb8. Thumb callable address 0x0C98FFB9.
+pub const CANOPUS_FW_MIWEAR_SESSION_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0x0C98FFB9usize);
 
 /// Recovered `calendar_font_destroy` at 0xc49258c. Thumb callable address 0xc49258d.
 pub const CANOPUS_FW_CALENDAR_FONT_DESTROY_CALLABLE: usize = canopus_thumb_callable(0xc49258dusize);
@@ -937,6 +949,8 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // interconnect_send: restricted - not exported until context/ownership approved
 // ioctl: restricted - not exported until context/ownership approved
 // kmem_free: restricted - not exported until context/ownership approved
+// l2_owner_timer_init: restricted - not exported until context/ownership approved
+// l2_owner_timer_start: restricted - not exported until context/ownership approved
 // lseek: restricted - not exported until context/ownership approved
 // lv_bar_create: restricted - not exported until context/ownership approved
 // lv_bar_set_range: restricted - not exported until context/ownership approved
@@ -995,6 +1009,8 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // lvx_page_content_create: restricted - not exported until context/ownership approved
 // lvx_page_title_create: restricted - not exported until context/ownership approved
 // lvx_style_apply: restricted - not exported until context/ownership approved
+// miwear_session_crypto_ctr: restricted - not exported until context/ownership approved
+// miwear_session_lookup: restricted - not exported until context/ownership approved
 // miwear_transport_l2_rx: restricted - not exported until context/ownership approved
 // miwear_transport_send: restricted - not exported until context/ownership approved
 // mm_mallinfo: restricted - not exported until context/ownership approved

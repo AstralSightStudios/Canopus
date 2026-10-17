@@ -37,6 +37,11 @@ enum canopus_command {
     CANOPUS_CMD_NATIVE_STAGE,
     /* Apply enabled boot intents after the Supervisor's own load. */
     CANOPUS_CMD_RESTORE_AFTER_BOOT,
+    /* Native .canopus delivery: CMI2 receipt, ordered ELF chunks, verify, cancel. */
+    CANOPUS_CMD_STAGE_BEGIN,
+    CANOPUS_CMD_STAGE_WRITE,
+    CANOPUS_CMD_STAGE_FINISH,
+    CANOPUS_CMD_STAGE_ABORT,
 };
 
 struct canopus_proto_request_v1 {
@@ -64,13 +69,13 @@ struct canopus_proto_response_v1 {
 #define CANOPUS_PROTO_REQUEST_SIZE  sizeof(struct canopus_proto_request_v1)
 #define CANOPUS_PROTO_RESPONSE_SIZE sizeof(struct canopus_proto_response_v1)
 
-/* Fixed max control payload; bulk data must use a separate stream. */
+/* Fixed frame payload bound; native ELF uploads use ordered STAGE_WRITE chunks. */
 #define CANOPUS_PROTO_MAX_PAYLOAD 512u
 
 /* Read-only Manager query payloads carried inside CPC2 responses. They are
  * byte-encoded little-endian records, never cast to packed C structs. */
 #define CANOPUS_QUERY_DEVICE_MAGIC 0x43514431u /* "CQD1" */
-#define CANOPUS_QUERY_DEVICE_SIZE  36u
+#define CANOPUS_QUERY_DEVICE_SIZE  84u
 #define CANOPUS_QUERY_MODULE_MAGIC 0x43514D31u /* "CQM1" */
 #define CANOPUS_QUERY_MODULE_SIZE  64u
 

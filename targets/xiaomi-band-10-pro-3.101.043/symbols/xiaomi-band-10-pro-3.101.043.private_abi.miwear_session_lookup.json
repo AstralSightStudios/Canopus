@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.miwear_session_lookup",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "miwear_session_lookup",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc7d7e94",
+  "callable_address": "0x0C7D7E95",
+  "prototype": "void *(uint16_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": []
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [],
+    "source": "Exact firmware IDB; transport RX/TX caller analysis; evidence/l2-sram-probe.json"
+  },
+  "approval_state": "PENDING",
+  "notes": "Experimental Canopus L2 backend only; no production approval. ABI and caller evidence: evidence/l2-sram-probe.json."
+}

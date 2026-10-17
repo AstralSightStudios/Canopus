@@ -54,6 +54,13 @@ fi
 echo "[1/3] compile supervisor (Cortex-M33 Thumb soft-float)"
 # Flags mirror native/scripts/build_btpatch_phase5.sh; -fno-function-sections
 # is btpatch's proven configuration for a boot-resident constructor module.
+if [ "${CANOPUS_EXPERIMENTAL_L2:-0}" = 1 ]; then
+    python3 "$ROOT/scripts/generate_l2_probe_config.py" "$TARGET_ID" "$OUT/canopus_l2_probe_config.h"
+    TARGET_DEFINES="$TARGET_DEFINES -DCANOPUS_SUP_EXPERIMENTAL_L2=1"
+    echo "      encrypted L2 0x43: experimental dual-owner backend ($TARGET_ID)"
+else
+    echo "      encrypted L2 0x43: disabled (CANOPUS_EXPERIMENTAL_L2=1 to opt in)"
+fi
 TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
   -ffreestanding -fno-common -fno-builtin -fno-jump-tables \
   -fno-stack-protector -fno-unwind-tables -fno-asynchronous-unwind-tables \
@@ -74,6 +81,8 @@ INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
 for s in \
     manager/service/canopus_supervisor.c \
     manager/service/canopus_supervisor_services.c \
+    manager/service/canopus_supervisor_upload.c \
+    manager/service/canopus_supervisor_l2.c \
     manager/service/canopus_supervisor_module.c \
     manager/service/canopus_supervisor_platform.c \
     manager/protocol/canopus_protocol.c \
@@ -99,6 +108,8 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     -o "$OUT/canopus_supervisor.elf" \
     "$OUT/canopus_supervisor.o" \
     "$OUT/canopus_supervisor_services.o" \
+    "$OUT/canopus_supervisor_upload.o" \
+    "$OUT/canopus_supervisor_l2.o" \
     "$OUT/canopus_supervisor_module.o" \
     "$OUT/canopus_supervisor_platform.o" \
     "$OUT/canopus_protocol.o" \

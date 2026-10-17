@@ -1428,6 +1428,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *, uint8_t *, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "l2_owner_timer_init",
+        kind: "function",
+        entry: 0xc2e3994usize,
+        callable: 0xc2e3995usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *loop, void *timer)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2_owner_timer_start",
+        kind: "function",
+        entry: 0xc2e3b84usize,
+        callable: 0xc2e3b85usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *timer, void (*callback)(void *), uint64_t timeout, uint64_t repeat)",
+    },
+    TargetPrivateSymbolRecord {
         name: "launcher_parent",
         kind: "function",
         entry: 0xc589578usize,
@@ -1464,13 +1482,31 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void(void *list, int mode, int enabled)",
     },
     TargetPrivateSymbolRecord {
+        name: "miwear_session_crypto_ctr",
+        kind: "function",
+        entry: 0xc7d46a4usize,
+        callable: 0xc7d46a5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *, int, uint16_t, const void *, void *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "miwear_session_lookup",
+        kind: "function",
+        entry: 0xc7d7e94usize,
+        callable: 0xc7d7e95usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(uint16_t)",
+    },
+    TargetPrivateSymbolRecord {
         name: "miwear_transport_l2_rx",
         kind: "function",
         entry: 0xc7d6e6cusize,
         callable: 0xc7d6e6dusize,
         status: "STATIC_RECOVERED",
         policy: "restricted",
-        prototype: "void(void *, uint8_t, uint8_t, const uint8_t *, uint16_t)",
+        prototype: "void(uint16_t, uint8_t, uint8_t, void *, uint16_t)",
     },
     TargetPrivateSymbolRecord {
         name: "miwear_transport_send",
@@ -2429,6 +2465,10 @@ pub const FONT_RELOAD_VG_DISPATCH_CALLABLE: usize = 0x1c045361usize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x2013c144usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7ec47cusize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7ec47dusize;
+pub const L2_OWNER_TIMER_INIT_ENTRY: usize = 0xc2e3994usize;
+pub const L2_OWNER_TIMER_INIT_CALLABLE: usize = 0xc2e3995usize;
+pub const L2_OWNER_TIMER_START_ENTRY: usize = 0xc2e3b84usize;
+pub const L2_OWNER_TIMER_START_CALLABLE: usize = 0xc2e3b85usize;
 pub const LAUNCHER_PARENT_ENTRY: usize = 0xc589578usize;
 pub const LAUNCHER_PARENT_CALLABLE: usize = 0xc589579usize;
 pub const LAUNCHER_RECT_INIT_ENTRY: usize = 0xc588268usize;
@@ -2437,6 +2477,10 @@ pub const LAUNCHER_SCROLL_ENTRY: usize = 0xc517d9cusize;
 pub const LAUNCHER_SCROLL_CALLABLE: usize = 0xc517d9dusize;
 pub const LAUNCHER_SCROLL_PREPARE_ENTRY: usize = 0xc5166f0usize;
 pub const LAUNCHER_SCROLL_PREPARE_CALLABLE: usize = 0xc5166f1usize;
+pub const MIWEAR_SESSION_CRYPTO_CTR_ENTRY: usize = 0xc7d46a4usize;
+pub const MIWEAR_SESSION_CRYPTO_CTR_CALLABLE: usize = 0xc7d46a5usize;
+pub const MIWEAR_SESSION_LOOKUP_ENTRY: usize = 0xc7d7e94usize;
+pub const MIWEAR_SESSION_LOOKUP_CALLABLE: usize = 0xc7d7e95usize;
 pub const MIWEAR_TRANSPORT_L2_RX_ENTRY: usize = 0xc7d6e6cusize;
 pub const MIWEAR_TRANSPORT_L2_RX_CALLABLE: usize = 0xc7d6e6dusize;
 pub const MIWEAR_TRANSPORT_SEND_ENTRY: usize = 0xc7d719cusize;
@@ -3240,14 +3284,44 @@ pub unsafe fn raw_gap_host_stock_receive(a0: *mut core::ffi::c_void, a1: *mut u8
     unsafe { f(a0, a1, a2) }
 }
 
-pub unsafe fn raw_miwear_transport_l2_rx(
+pub unsafe fn raw_miwear_session_crypto_ctr(
     a0: *mut core::ffi::c_void,
+    a1: i32,
+    a2: u16,
+    a3: *const core::ffi::c_void,
+    a4: *mut core::ffi::c_void,
+) -> i32 {
+    type F = unsafe extern "C" fn(
+        *mut core::ffi::c_void,
+        i32,
+        u16,
+        *const core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(
+            canopus_target_generated::CANOPUS_FW_MIWEAR_SESSION_CRYPTO_CTR_CALLABLE,
+        )
+    };
+    unsafe { f(a0, a1, a2, a3, a4) }
+}
+
+pub unsafe fn raw_miwear_session_lookup(a0: u16) -> *mut core::ffi::c_void {
+    type F = unsafe extern "C" fn(u16) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_MIWEAR_SESSION_LOOKUP_CALLABLE)
+    };
+    unsafe { f(a0) }
+}
+
+pub unsafe fn raw_miwear_transport_l2_rx(
+    a0: u16,
     a1: u8,
     a2: u8,
-    a3: *const u8,
+    a3: *mut core::ffi::c_void,
     a4: u16,
 ) -> () {
-    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u8, u8, *const u8, u16) -> ();
+    type F = unsafe extern "C" fn(u16, u8, u8, *mut core::ffi::c_void, u16) -> ();
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::CANOPUS_FW_MIWEAR_TRANSPORT_L2_RX_CALLABLE)
     };
@@ -3599,4 +3673,4 @@ pub unsafe fn raw_watchface_reset_watchface(a0: i32) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 101
+// generated target-private raw wrapper count: 103

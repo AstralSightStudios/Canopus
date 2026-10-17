@@ -89,6 +89,10 @@ pub const FS_SEEK_END: i32 = 2;
 pub const MEM_BUDGET: u32 = 131072; // 128 KiB
 pub const MEM_MAX_BLOCKS: u32 = 64;
 
+/// Maximum timer interval compatible with wrap-safe 32-bit clock comparisons.
+/// Mirrors `CANOPUS_TIMER_MAX_INTERVAL_MS` in `canopus_services.h`.
+pub const TIMER_MAX_INTERVAL_MS: u32 = 0x7fff_ffff;
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub struct CanopusFsStat {
@@ -188,6 +192,7 @@ pub struct CanopusHookObj {
     pub install: unsafe extern "C" fn(ctx: *const ContextV1, target_fn: usize, hook_fn: usize, orig_fn: *mut usize, hook_type: u32) -> i32,
     pub uninstall: unsafe extern "C" fn(ctx: *const ContextV1, hook_id: i32) -> i32,
     pub is_hooked: unsafe extern "C" fn(ctx: *const ContextV1, target_fn: usize) -> i32,
+    pub register_slot_map: unsafe extern "C" fn(ctx: *const ContextV1, flash_fn: usize, ram_slot: usize) -> i32,
 }
 
 #[repr(C)]
@@ -500,8 +505,19 @@ mod layout {
     }
 
     #[test]
+    fn hook_object_append_only_layout() {
+        let pointer = size_of::<usize>();
+        assert_eq!(offset_of!(CanopusHookObj, install), 0);
+        assert_eq!(offset_of!(CanopusHookObj, uninstall), pointer);
+        assert_eq!(offset_of!(CanopusHookObj, is_hooked), 2 * pointer);
+        assert_eq!(offset_of!(CanopusHookObj, register_slot_map), 3 * pointer);
+        assert_eq!(size_of::<CanopusHookObj>(), 4 * pointer);
+    }
+
+    #[test]
     fn abi_version_constants() {
         assert_eq!(ABI_MAJOR, 1);
         assert_eq!(ABI_MINOR, 2);
+        assert_eq!(TIMER_MAX_INTERVAL_MS, i32::MAX as u32);
     }
 }

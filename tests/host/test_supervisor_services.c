@@ -15,17 +15,23 @@
 #define MAX_FDS 32
 struct mem_file {
     char path[96];
-    uint8_t data[64];
+    uint8_t data[4096];
     uint32_t size;
     int used;
 };
 static struct mem_file g_files[MAX_FILES];
 static struct { int file; uint32_t pos; int open; } g_fds[MAX_FDS];
+static int g_fail_open, g_fail_write, g_fail_close, g_fail_sync, g_fail_rename;
+static uint32_t g_transfer_chunk;
+static uint32_t g_now;
+static void (*g_timer_poll)(void *);
+static void *g_timer_data;
 
 static int f_open(void *c, const char *path, uint32_t flags)
 {
     int i, fd;
     (void)c;
+    if (g_fail_open) return -28;
     for (i = 0; i < MAX_FILES; i++) {
         if (g_files[i].used && strcmp(g_files[i].path, path) == 0) break;
     }
@@ -50,6 +56,7 @@ static int32_t f_read(void *c, int fd, void *b, uint32_t n)
     struct mem_file *f = &g_files[g_fds[fd].file];
     (void)c;
     if (n > f->size - g_fds[fd].pos) n = f->size - g_fds[fd].pos;
+    if (g_transfer_chunk != 0u && n > g_transfer_chunk) n = g_transfer_chunk;
     memcpy(b, f->data + g_fds[fd].pos, n);
     g_fds[fd].pos += n;
     return (int32_t)n;
@@ -58,13 +65,15 @@ static int32_t f_write(void *c, int fd, const void *b, uint32_t n)
 {
     struct mem_file *f = &g_files[g_fds[fd].file];
     (void)c;
+    if (g_fail_write && g_fds[fd].pos >= 8u) return -28;
+    if (g_transfer_chunk != 0u && n > g_transfer_chunk) n = g_transfer_chunk;
     if (g_fds[fd].pos + n > sizeof(f->data)) return -27;
     memcpy(f->data + g_fds[fd].pos, b, n);
     g_fds[fd].pos += n;
     f->size = g_fds[fd].pos;
     return (int32_t)n;
 }
-static int f_close(void *c, int fd) { (void)c; g_fds[fd].open = 0; return 0; }
+static int f_close(void *c, int fd) { (void)c; g_fds[fd].open = 0; return g_fail_close ? -5 : 0; }
 static int f_remove(void *c, const char *path)
 {
     int i;
@@ -93,18 +102,21 @@ static int64_t f_seek(void *c, int fd, int64_t offset, int32_t whence)
     g_fds[fd].pos = (uint32_t)target;
     return target;
 }
-static int f_sync(void *c, int fd) { (void)c; (void)fd; return 0; }
+static int f_sync(void *c, int fd) { (void)c; (void)fd; return g_fail_sync ? -5 : 0; }
 static int f_rename(void *c, const char *old_p, const char *new_p)
 {
-    int i;
+    int i, from = -1, to = -1;
     (void)c;
+    if (g_fail_rename) return -5;
     for (i = 0; i < MAX_FILES; i++) {
-        if (g_files[i].used && strcmp(g_files[i].path, old_p) == 0) {
-            strncpy(g_files[i].path, new_p, sizeof(g_files[i].path) - 1);
-            return 0;
-        }
+        if (!g_files[i].used) continue;
+        if (strcmp(g_files[i].path, old_p) == 0) from = i;
+        if (strcmp(g_files[i].path, new_p) == 0) to = i;
     }
-    return -2;
+    if (from < 0) return -2;
+    if (to >= 0 && to != from) g_files[to].used = 0;
+    strncpy(g_files[from].path, new_p, sizeof(g_files[from].path) - 1);
+    return 0;
 }
 static int f_stat(void *c, const char *p, void *out_st)
 {
@@ -145,6 +157,7 @@ static int s_load_calls;
 static int s_load_hook_registers;
 static const struct canopus_module_descriptor_v1 *s_descriptor;
 static struct canopus_supervisor_v1 *s_sup;
+static int32_t allocate_failed_module_resources(const struct canopus_context_v1 *ctx);
 
 static int p_noop(void *c) { (void)c; return 0; }
 static int p_load(void *c, uint32_t i, const char *n, uint32_t cls)
@@ -152,6 +165,9 @@ static int p_load(void *c, uint32_t i, const char *n, uint32_t cls)
     const struct canopus_context_v1 *ctx;
     (void)c; (void)n; (void)cls;
     s_load_calls++;
+    if (s_load_hook_registers == 2) {
+        return allocate_failed_module_resources(canopus_supervisor_context(s_sup, i));
+    }
     if (s_load_hook_registers) {
         /* what a portable module's init entry does with its r0 */
         ctx = canopus_supervisor_context(s_sup, i);
@@ -167,7 +183,19 @@ static int p_remove(void *c, uint32_t i) { (void)c; (void)i; return 0; }
 static int p_persist(void *c, const uint8_t *d, uint32_t n) { (void)c; (void)d; (void)n; return 0; }
 static int p_restore(void *c, uint8_t *d, uint32_t n) { (void)c; (void)d; (void)n; return 1; }
 
-static uint32_t p_ms(void *c) { (void)c; return 1234u; }
+static uint32_t p_ms(void *c) { (void)c; return g_now; }
+static int p_start_timer_pump(void *c, void (*poll)(void *), void *data)
+{
+    (void)c;
+    g_timer_poll = poll;
+    g_timer_data = data;
+    return 0;
+}
+static void advance_time(uint32_t ms)
+{
+    g_now += ms;
+    if (g_timer_poll != 0) g_timer_poll(g_timer_data);
+}
 static int g_notified;
 static char g_notice[160];
 static int p_notify(void *c, const char *title, const char *body)
@@ -213,6 +241,7 @@ static const struct canopus_sup_platform_v1 platform_with_fs = {
     .vibrate = p_vibrate,
     .set_brightness = p_set_brightness,
     .wake_screen = p_wake_screen,
+    .start_timer_pump = p_start_timer_pump,
 };
 static const struct canopus_sup_platform_v1 platform_without_fs = {
     .target_id = "xiaomi-band-10-pro-3.101.030",
@@ -247,6 +276,11 @@ static void setup(struct canopus_supervisor_v1 *sup,
 {
     memset(g_files, 0, sizeof(g_files));
     memset(g_fds, 0, sizeof(g_fds));
+    g_fail_open = g_fail_write = g_fail_close = g_fail_sync = g_fail_rename = 0;
+    g_transfer_chunk = 0u;
+    g_now = 1234u;
+    g_timer_poll = 0;
+    g_timer_data = 0;
     s_load_calls = 0;
     s_load_hook_registers = 0;
     s_descriptor = &portable_descriptor;
@@ -568,12 +602,15 @@ TEST(service_objects_are_exposed_and_functional)
     ctx->mem->free(ctx, ptr);
 
     /* 4. Hook Object */
-    hook_id = ctx->hook->install(ctx, (uintptr_t)&s_dummy_target, (uintptr_t)&s_dummy_hook, &orig, CANOPUS_HOOK_AUTO);
+    int (*pointer_slot)(int) = s_dummy_target;
+    hook_id = ctx->hook->install(ctx, (uintptr_t)&pointer_slot, (uintptr_t)&s_dummy_hook, &orig, CANOPUS_HOOK_POINTER);
     CHECK(hook_id >= 0);
-    CHECK(orig != 0);
-    CHECK_EQ(ctx->hook->is_hooked(ctx, (uintptr_t)&s_dummy_target), 1);
+    CHECK(orig == (uintptr_t)s_dummy_target);
+    CHECK_EQ(pointer_slot(1), 11);
+    CHECK_EQ(ctx->hook->is_hooked(ctx, (uintptr_t)&pointer_slot), 1);
     CHECK_EQ(ctx->hook->uninstall(ctx, hook_id), 0);
-    CHECK_EQ(ctx->hook->is_hooked(ctx, (uintptr_t)&s_dummy_target), 0);
+    CHECK_EQ(pointer_slot(1), 2);
+    CHECK_EQ(ctx->hook->is_hooked(ctx, (uintptr_t)&pointer_slot), 0);
 
     /* 5. Haptics Object */
     CHECK_EQ(ctx->haptics->vibrate(ctx, 50), CANOPUS_SVC_OK);
@@ -619,7 +656,169 @@ TEST(service_objects_are_exposed_and_functional)
     CHECK_EQ(ctx->system->battery_level(ctx), 85u);
 }
 
+static const struct canopus_context_v1 *reboot_services(struct canopus_supervisor_v1 *sup)
+{
+    g_timer_poll = 0;
+    CHECK_EQ(canopus_supervisor_init(sup, 7u, &platform_with_fs, 0), 0);
+    CHECK_EQ(canopus_supervisor_add_module(sup, CANOPUS_LIFECYCLE_REMOVABLE, 1u,
+                                          "mod.portable"), 0);
+    sup->loading_slot = 0;
+    return canopus_supervisor_context(sup, 0u);
+}
+
+TEST(kv_reloads_through_native_and_service_registration)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    g_transfer_chunk = 7u;
+    CHECK_EQ(ctx->kv->set_int(ctx, "saved", 42), 0);
+    ctx = reboot_services(&sup);
+    CHECK_EQ(canopus_supervisor_register_descriptor(&sup, "mod.portable", &portable_descriptor), 0);
+    CHECK_EQ(ctx->kv->get_int(ctx, "saved", -999), 42);
+    CHECK_EQ(ctx->kv->set_int(ctx, "saved", 43), 0);
+    ctx = reboot_services(&sup);
+    CHECK_EQ(ctx->services->module_register(ctx, &portable_descriptor), 0);
+    CHECK_EQ(ctx->kv->get_int(ctx, "saved", -999), 43);
+    ctx = reboot_services(&sup);
+    CHECK_EQ(ctx->kv->get_int(ctx, "saved", -999), 43);
+}
+
+TEST(kv_failed_transactions_preserve_cache_and_disk)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    int *failures[] = { &g_fail_open, &g_fail_write, &g_fail_sync, &g_fail_close, &g_fail_rename };
+    uint32_t i;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    CHECK_EQ(ctx->kv->set_int(ctx, "saved", 42), 0);
+    for (i = 0u; i < sizeof(failures) / sizeof(failures[0]); i++) {
+        *failures[i] = 1;
+        CHECK_EQ(ctx->kv->set_int(ctx, "saved", 99), CANOPUS_SVC_ERR_IO);
+        *failures[i] = 0;
+        CHECK_EQ(ctx->kv->get_int(ctx, "saved", -999), 42);
+        ctx = reboot_services(&sup);
+        CHECK_EQ(ctx->kv->get_int(ctx, "saved", -999), 42);
+    }
+    g_fail_rename = 1;
+    CHECK_EQ(ctx->kv->remove(ctx, "saved"), CANOPUS_SVC_ERR_IO);
+    CHECK_EQ(ctx->kv->clear(ctx), CANOPUS_SVC_ERR_IO);
+    g_fail_rename = 0;
+    CHECK_EQ(ctx->kv->get_int(ctx, "saved", -999), 42);
+    ctx = reboot_services(&sup);
+    CHECK_EQ(ctx->kv->get_int(ctx, "saved", -999), 42);
+    CHECK_EQ(ctx->kv->clear(ctx), 0);
+    ctx = reboot_services(&sup);
+    CHECK_EQ(ctx->kv->get_int(ctx, "saved", -999), -999);
+    for (i = 0u; i < MAX_FDS; i++) CHECK(!g_fds[i].open);
+}
+
+static int s_timer_depth, s_timer_max_depth;
+static void on_sleeping_timer(const struct canopus_context_v1 *ctx, int32_t timer_id, void *data)
+{
+    (void)data;
+    s_timer_depth++;
+    if (s_timer_depth > s_timer_max_depth) s_timer_max_depth = s_timer_depth;
+    s_timer_fired++;
+    if (s_timer_depth >= 5) ctx->time->timer_stop(ctx, timer_id);
+    g_now += 10u;
+    ctx->time->sleep_ms(ctx, 1u);
+    s_timer_depth--;
+}
+
+TEST(timers_use_platform_events_without_recursive_dispatch)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 no_pump = platform_with_fs;
+    const struct canopus_context_v1 *ctx;
+    int32_t id;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    CHECK_EQ(ctx->time->timer_create(ctx, UINT32_MAX, 1, on_test_timer, 0), CANOPUS_SVC_ERR_ARGUMENT);
+    s_timer_fired = 0;
+    id = ctx->time->timer_create(ctx, 5u, 0, on_test_timer, 0);
+    CHECK(id >= 0);
+    g_now = UINT32_MAX - 2u;
+    CHECK_EQ(ctx->time->timer_start(ctx, id), 0);
+    advance_time(4u);
+    CHECK_EQ(s_timer_fired, 0);
+    advance_time(1u);
+    CHECK_EQ(s_timer_fired, 1);
+    advance_time(5u);
+    CHECK_EQ(s_timer_fired, 1);
+    CHECK_EQ(ctx->time->timer_destroy(ctx, id), 0);
+    s_timer_fired = s_timer_depth = s_timer_max_depth = 0;
+    id = ctx->time->timer_create(ctx, 5u, 1, on_sleeping_timer, 0);
+    CHECK(id >= 0);
+    CHECK_EQ(ctx->time->timer_start(ctx, id), 0);
+    advance_time(5u);
+    CHECK_EQ(s_timer_fired, 1);
+    CHECK_EQ(s_timer_max_depth, 1);
+    advance_time(5u);
+    CHECK_EQ(s_timer_fired, 2);
+    CHECK_EQ(s_timer_max_depth, 1);
+    CHECK_EQ(ctx->time->timer_destroy(ctx, id), 0);
+    no_pump.start_timer_pump = 0;
+    setup(&sup, &no_pump);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    CHECK_EQ(ctx->time->timer_create(ctx, 5u, 1, on_test_timer, 0), CANOPUS_SVC_ERR_UNSUPPORTED);
+}
+
+static uintptr_t s_failed_module_pointer;
+static int32_t allocate_failed_module_resources(const struct canopus_context_v1 *ctx)
+{
+    int32_t timer;
+    uintptr_t original;
+    CHECK(ctx->mem->alloc(ctx, 32u) != 0);
+    timer = ctx->time->timer_create(ctx, 5u, 1, on_test_timer, 0);
+    CHECK(timer >= 0);
+    CHECK_EQ(ctx->time->timer_start(ctx, timer), 0);
+    CHECK(ctx->bus->subscribe(ctx, "failed/module", on_test_bus, 0) >= 0);
+    s_failed_module_pointer = 0x20000101u;
+    CHECK(ctx->hook->install(ctx, (uintptr_t)&s_failed_module_pointer, 0x20000201u,
+                            &original, CANOPUS_HOOK_POINTER) >= 0);
+    return -1;
+}
+
+TEST(failed_load_and_activation_release_module_resources)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_module_descriptor_v1 descriptor = portable_descriptor;
+    const struct canopus_context_v1 *ctx;
+    uint32_t cmd[4] = { CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ACTIVATE, 0u, 0u };
+    uint32_t mode;
+    for (mode = 1u; mode <= 2u; mode++) {
+        setup(&sup, &platform_with_fs);
+        ctx = canopus_supervisor_context(&sup, 0u);
+        s_descriptor = &descriptor;
+        descriptor.activate = allocate_failed_module_resources;
+        s_load_hook_registers = (int)mode;
+        g_heap_live = s_timer_fired = s_bus_received = 0;
+        sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+        sup.loading_slot = 0;
+        CHECK_EQ(canopus_supervisor_handle_command(&sup, (const uint8_t *)cmd), CANOPUS_RESULT_FAILED);
+        CHECK_EQ(sup.modules[0].state, CANOPUS_STATE_FAILED);
+        CHECK_EQ(g_heap_live, 0);
+        CHECK_EQ(ctx->mem->used(ctx), 0u);
+        CHECK_EQ(s_failed_module_pointer, 0x20000101u);
+        advance_time(100u);
+        CHECK_EQ(s_timer_fired, 0);
+        CHECK_EQ(ctx->bus->publish(ctx, "failed/module", "x", 1u), 0);
+        CHECK_EQ(s_bus_received, 0);
+    }
+}
+
 static struct test_registry supervisor_services_tests[] = {
+    { "kv_reloads_through_native_and_service_registration",
+      kv_reloads_through_native_and_service_registration_wrapper },
+    { "kv_failed_transactions_preserve_cache_and_disk",
+      kv_failed_transactions_preserve_cache_and_disk_wrapper },
+    { "timers_use_platform_events_without_recursive_dispatch",
+      timers_use_platform_events_without_recursive_dispatch_wrapper },
+    { "failed_load_and_activation_release_module_resources",
+      failed_load_and_activation_release_module_resources_wrapper },
     { "service_objects_are_exposed_and_functional",
       service_objects_are_exposed_and_functional_wrapper },
     { "context_exposes_groups_by_platform_capability",

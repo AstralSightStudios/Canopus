@@ -1,6 +1,6 @@
 # ADR-CAN-008：WearPacket Layer 2 通信通道
 
-状态：已采纳（2026-10-14）
+状态：设计已采纳（2026-10-14）；2026-10-17 原生 host 实现完成，Band 11 `.155` 实验后端已完成 Mirage 加密通信闭环；真机与生产批准仍未完成。
 
 ## 背景
 
@@ -17,8 +17,8 @@ Canopus 原计划在设备端与手机端之间建立一条直接受控的通信
 
 1. **采用 MiWear Layer 2 专用 Channel**：
    - 通道号：`CANOPUS_L2_CHANNEL = 0x43`（ASCII `'C'`，对应枚举 `L2Channel::Canopus`）。
-   - 报文头：`[Channel: 0x43] [OpCode: 0x01/0x02] [Payload: CPC2 Envelope]`。
-   - 加密模式：默认采用 `OpCode = 0x02 (WriteEnc)`，复用配对协商的 AES-128-CTR 密钥。
+   - 报文头：`[Channel: 0x43] [OpCode: 0x02] [Payload: CPC2 Envelope]`。
+   - 加密模式：设备只接受 `OpCode = 0x02 (WriteEnc)`，复用配对协商的 AES-128-CTR 密钥。
 
 2. **单一线格式**：
    - 沿用 ADR-CAN-004 决定的 CPC2 信封（`abi/schema/transport-v2.json`），36 字节 Header + 业务载荷。
@@ -26,9 +26,65 @@ Canopus 原计划在设备端与手机端之间建立一条直接受控的通信
 
 3. **宿主与设备两端职责**：
    - **手机/AstroBox 端**：在 `layer2.rs` 注册 `L2Channel::Canopus`，通过 `XiaomiSystemExt` 监听与收发 L2Packet，向上层暴露异步 CPC2 RPC 接口。
-   - **手环端（Supervisor）**：拦截 L2 RX 数据流，遇到 `channel == 0x43` 时直接喂给 Supervisor 的 L2 处理器，响应报文通过原厂 `miwear_transport_send`（043 为 `sub_C7D719C`）送回。
+   - **手环端（Supervisor）**：拦截 L2 RX 数据流，遇到 `channel == 0x43` 时校验加密 opcode、解密并复制进有界队列，由独立 UI owner 定时器调用 Supervisor 的 L2 处理器。响应再次入队，由 Bluetooth owner 的独立定时器调用原厂 `miwear_transport_send`（043 为 `sub_C7D719C`）送回；不能从 UI 任务直接写 Bluetooth 任务持有的 fd。
 
 ## 影响
 
-- 彻底解除对快应用轮询 SCAN 的唯一依赖，实现 AstroBox 与手环端 Canopus 模块/Supervisor 的实时双向 RPC。
+- 彻底移除快应用容器、快应用列表与目录依赖，实现 AstroBox 与手环端 Canopus 模块/Supervisor 的实时双向 RPC。
 - 零额外物理连接开销，不侵入系统 Protobuf（`WearPacket.proto`）业务逻辑。
+
+## 原生包投递（2026-10-17）
+
+CPC2 每帧载荷上限保持 512 字节。数字均为 little-endian：
+
+| opcode | 请求载荷 | 成功语义 |
+|---|---|---|
+| 15 STAGE_BEGIN | 176 字节 CMI2 回执 | 校验 target/固件绑定，开启 `.ko.upload` 临时文件；替换未完成的旧上传 |
+| 16 STAGE_WRITE | u32 offset + 1..508 字节 ELF | 必须等于当前写入位置，不得超过回执长度；每块应答后再发送下一块 |
+| 17 STAGE_FINISH | 空 | 长度完整，生成 next 暂存对并验证 artifact SHA-256；不安装、不加载 |
+| 18 STAGE_ABORT | 空 | 关闭并删除未完成的临时上传 |
+| 2 INSTALL | module_id + NUL | 按已有 A/B 状态机提交；COMPLETED=5 或 REBOOT_REQUIRED=8 |
+
+QUERY_DEVICE 的 CQD1 载荷由 36 扩展至 84 字节：原字段不变，+36 是 48 字节零填充 target_id。
+旧 Supervisor/安装器须重新部署；CPC2 信封仍为 36 字节，ABI 为 1.2。
+响应值以 `sdk/c/canopus_abi.h` 为准：REJECTED=1、ACCEPTED=2、QUEUED=3、RUNNING=4、
+COMPLETED=5、FAILED=6、DISALLOWED=7、REBOOT_REQUIRED=8。
+
+## SRAM 接入与批准边界
+
+- 不使用 Cortex-M33 不支持的 Flash patch/remap。只替换 SAR 连接对象 +12 的 RAM RX 指针，
+  保留其他通道的原厂回调。连接链表节点 +12 是连接对象指针，不是 RX 回调。
+- 禁止“先调用原回调，不管解密是否成功就解析 payload”。Canopus 通道直接调用原厂 crypto，
+  只有成功时才入队。明文控制请求不受理。
+- 每个请求保留 session 身份，断连后旧请求不投递给新 session；不在 Bluetooth worker 执行模块/UI 回调。
+- 原厂 send 会原地加密，因此传入独立可写缓冲；SAR submit 在返回前复制数据，不持有调用方栈地址。
+- .043 / .155 的 exact-target 静态证据在各自 `evidence/l2-sram-probe.json`。
+  `CANOPUS_EXPERIMENTAL_L2=1` 才包含这些地址，其他 target 显式拒绝实验构建。
+  所有相关符号仍是 restricted / PENDING，未真机探测；默认构建返回 UNSUPPORTED，不宣称生产可用。
+
+## 初次联调记录（2026-10-17，后续修正见下文）
+
+043 / 155 的真实 Mirage 蓝牙查询和安装仍超时。043 实时 RAM 检查确认新连接的 RX
+仍是原厂回调，LVGL heartbeat 不持续推进；155 bootstrap 和本地 CPC2 正常。
+因此该实验后端尚不能满足持续监听要求。不得用 host 或 ARM shim 模型测试冒充蓝牙端到端通过。
+持续 owner 事件源仍需独立 ABI/上下文审核和授权，不能启用 FORBIDDEN 的工作队列或线程入口来绕过。
+
+### 事件源根因与修正（同日，仅 host/emulator 证据，不改变批准状态）
+
+- 原先“Mirage LVGL owner 死锁”的判断已被实际任务上下文和唤醒对照否定。043 的 PID49 `miwear` 在正常的带超时 `epoll_pwait` 中等待，LVGL guard=0；旧栈扫描不能证明刷新/DMA 阻塞。
+- 实际刷新入口是 `sub_C4B8388` → `sub_C587CA8` → ROM `0x1C05FE20`，不是未执行的 AP 副本 `0x0C16D260`。原厂 `sub_C4B8450(0,...)` 在熄屏时主动停止 `0x2010C0B8` 的 libuv refresh timer（flags=8）。
+- 不改固件或 Mirage，双击唤醒得到 Zinitix gesture=1、面板 SLPOUT/DISPON，refresh timer 恢复 active（flags=12）；250 ms timer 的 `last_run` 为 575324→575592 ms，8 ms timer 为 575520→575737 ms。p67 没有实体按键，之前 home/power 的刺激不构成唤醒对照；单击也不等同双击。
+- 因此 LVGL timer 不满足持续监听要求。实验后端改为：LVGL 只引导一次，在原 UI owner 上初始化/启动一个独立的 resident libuv timer，随后删除引导 timer；BT 仍只解密/入队，不执行模块/UI 回调。
+- .043 的 timer 存储为 136 字节（含 backtrace），.155 为 88 字节；`uv_timer_start` 使用 AAPCS 的两个 `uint64_t` timeout/repeat 参数。exact-target 地址、布局与上下文审核写在各自 `evidence/l2-sram-probe.json` 的 `owner_source`。init/start 只允许在现有 UI loop 上执行，不使用线程/工作队列入口。
+- NSH 在熄屏后加载 Supervisor 时，须双击唤醒使引导回调至少运行一次；这不是“熄屏冷加载已解决”。ARM 模型回归和实验 ELF verifier 已通过，但新的真实蓝牙查询仍在排查，不能据此宣称端到端通过。
+- 新私有符号保持 `restricted / STATIC_RECOVERED / PENDING`，默认构建仍为 UNSUPPORTED，未批准任何新能力，未作真机验证。
+
+### 双 owner 通信闭环与 Band 11 接入（2026-10-17，仅 emulator 证据）
+
+- 独立 UI 定时器只解决持续接收和命令处理。原先 UI 直接回复时，NuttX 的 task-group fd 隔离使原厂 send 对 Bluetooth 任务持有的 SPP fd 返回 `EBADF`。后端新增有界响应队列，由加密 RX 在 Bluetooth owner 上引导第二个独立原生定时器，执行会话复核、加密和原厂发送。UI 与 Bluetooth 不互相执行对方的文件/模块回调；没有新建线程或工作队列。
+- Band 11 `.155` 使用 `BT_LOOP=0x200da540`，两个 resident timer 各为该固件的 88 字节布局；不套用 `.043` 的 136 字节布局。
+- 用户打包目录里的旧 `.155` ELF 是默认无 L2 的构建。原样打包对照确认 bootstrap `result=0`，但 AstroBox 查询超时；反汇编的 `canopus_sup_l2_start` 直接返回 `UNSUPPORTED`。这不是“加载器没安装成功”。
+- 已通过 `CANOPUS_TARGET=xiaomi-band-11-4.100.155 CANOPUS_EXPERIMENTAL_L2=1 sh scripts/build_canopus_supervisor.sh` 将后端编入该目录，并一起更新 Supervisor、CRC profile、stage1/stage2 与资源 ZIP。新 ELF 为 95196 字节，SHA-256 `6fe0e3f12744fae2ba384222eb3c380d50c346c47c87a50672d41b16bef98dd2`。
+- `scripts/emu/band11_smoke.py 155 --keep-device` 在新建 Mirage 设备上通过：真实 AstroBox core 安装生产表盘 → 显式 Run → bootstrap `result=0` → 加密 `.canopus` 原生安装约 453 ms → 列表返回 `hello_portable`、slot0/state3/version1/activationError0 → 本地 SCAN `result=5/count=1`。安装后的模块处于已安装未启用状态，不能据此宣称模块已运行。
+- `.043` 的独立原生安装已通过，但完整 fresh-device smoke 的 phone flow 尚未闭环；本次 Band 11 结果不替代它。`.139` / `.177` 未获得本次 L2 后端支持。
+- 默认构建仍不含实验 L2 后端。全部相关符号和真机/生产批准状态保持不变，具体证据见 `.155` 的 `evidence/l2-sram-probe.json`。

@@ -57,6 +57,20 @@ static void sup_refresh_flags(struct canopus_supervisor_v1 *sup, uint32_t slot)
     if (m->pending_switch) m->flags |= CANOPUS_SUP_FLAG_UPDATE_PENDING;
 }
 
+static int sup_try_load_slot(struct canopus_supervisor_v1 *sup, uint32_t slot)
+{
+    struct canopus_sup_module_v1 *m = &sup->modules[slot];
+    int st;
+    canopus_supervisor_prepare_services(sup, slot);
+    st = sup->platform->load_module(sup->platform_cookie, slot,
+                                    (const char *)m->module_id, m->lifecycle_class);
+    if (st < 0) {
+        canopus_supervisor_release_services(sup, slot);
+        m->descriptor = 0;
+    }
+    return st;
+}
+
 /* Loads a slot; a freshly switched generation that fails to load falls back
  * to the previous generation once. */
 static int sup_load_slot(struct canopus_supervisor_v1 *sup, uint32_t slot)
@@ -66,8 +80,7 @@ static int sup_load_slot(struct canopus_supervisor_v1 *sup, uint32_t slot)
     uint32_t version;
     uint32_t lifecycle;
     uint32_t switched = m->just_switched;
-    int st = pf->load_module(sup->platform_cookie, slot,
-                             (const char *)m->module_id, m->lifecycle_class);
+    int st = sup_try_load_slot(sup, slot);
     m->just_switched = 0u;
     if (st >= 0 || !switched || pf->gen_verify == 0) return st;
     if (pf->gen_verify(sup->platform_cookie, (const char *)m->module_id,
@@ -78,8 +91,7 @@ static int sup_load_slot(struct canopus_supervisor_v1 *sup, uint32_t slot)
     m->pending_switch = 0u;
     m->version = version;
     m->lifecycle_class = lifecycle;
-    st = pf->load_module(sup->platform_cookie, slot,
-                         (const char *)m->module_id, m->lifecycle_class);
+    st = sup_try_load_slot(sup, slot);
     /* Set after the retry: loading clears the platform's last diagnostic. */
     if (st >= 0) sup->error_code = CANOPUS_SUP_ERR_UPDATE_FALLBACK;
     return st;
@@ -165,6 +177,7 @@ static uint32_t sup_activate_module(struct canopus_supervisor_v1 *sup,
         return CANOPUS_RESULT_DISALLOWED;
     }
     if (module->descriptor == 0 || module->descriptor->activate == 0) {
+        canopus_supervisor_release_services(sup, (uint32_t)(module - sup->modules));
         module->state = CANOPUS_STATE_FAILED;
         module->activation_error =
             (uint32_t)CANOPUS_SUP_ERR_DESCRIPTOR_MISSING;
@@ -174,6 +187,7 @@ static uint32_t sup_activate_module(struct canopus_supervisor_v1 *sup,
     activate_rc = module->descriptor->activate(
         canopus_supervisor_context(sup, (uint32_t)(module - sup->modules)));
     if (activate_rc != 0) {
+        canopus_supervisor_release_services(sup, (uint32_t)(module - sup->modules));
         module->state = CANOPUS_STATE_FAILED;
         module->activation_error = (uint32_t)activate_rc;
         sup->error_code = CANOPUS_SUP_ERR_ACTIVATE;
@@ -211,6 +225,7 @@ int canopus_supervisor_register_descriptor(
                                    sizeof(module->module_id), module_id) &&
             sup_fixed_string_equal(descriptor->module_id,
                                    sizeof(descriptor->module_id), module_id)) {
+            canopus_supervisor_prepare_services(sup, i);
             module->descriptor = descriptor;
             return 0;
         }
@@ -752,6 +767,12 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         return -1;
     }
     *opcode = req->command;
+    if (req->command >= CANOPUS_CMD_STAGE_BEGIN &&
+        req->command <= CANOPUS_CMD_STAGE_ABORT) {
+        rc = canopus_supervisor_upload(sup, req->command, payload, req->payload_size);
+        canopus_proto_response_init(resp, req->request_id, rc, 0u);
+        return 0;
+    }
     op = v2_to_sup_cmd(req->command);
     if (op == 0) {
         canopus_proto_response_init(resp, req->request_id, CANOPUS_RESULT_REJECTED, 0);
@@ -891,6 +912,10 @@ static uint32_t render_v2_query_payload(
         put_wire_u32(out, 24u, (uint32_t)sup->error_code);
         put_wire_u32(out, 28u, sup->flags);
         put_wire_u32(out, 32u, sup->scan_summary);
+        if (sup->platform != 0 && sup->platform->target_id != 0) {
+            canopus_memcpy(out + 36u, sup->platform->target_id,
+                canopus_strnlen(sup->platform->target_id, 47u));
+        }
         return CANOPUS_QUERY_DEVICE_SIZE;
     }
     if (req->command == CANOPUS_CMD_QUERY_MODULE &&
@@ -1294,25 +1319,26 @@ uint32_t canopus_supervisor_scan_packages(struct canopus_supervisor_v1 *sup)
     uint32_t index;
     uint32_t rc;
     uint32_t last_error = CANOPUS_SUP_ERR_NONE;
-    char id[CANOPUS_SUP_MODULE_ID_MAX];
+    char ids[CANOPUS_SUP_MODULE_SLOTS][CANOPUS_SUP_MODULE_ID_MAX];
+    uint32_t count = 0u;
 
     if (sup == 0 || sup->platform == 0) return CANOPUS_RESULT_FAILED;
     pf = sup->platform;
-    if (pf->list_packages == 0 || pf->import_package == 0) {
+    if (pf->list_packages == 0) {
         sup->error_code = CANOPUS_SUP_ERR_STAGE;
         return CANOPUS_RESULT_FAILED;
     }
-    for (index = 0u; index < 64u; index++) {
+    while (count < CANOPUS_SUP_MODULE_SLOTS) {
+        int listed = pf->list_packages(sup->platform_cookie, count, ids[count]);
+        if (listed < 0) { sup->error_code = CANOPUS_SUP_ERR_STAGE; return CANOPUS_RESULT_FAILED; }
+        if (listed != 0) break;
+        count++;
+    }
+    for (index = 0u; index < count; index++) {
+        const char *id = ids[index];
         int staged;
-        if (pf->list_packages(sup->platform_cookie, index, id) != 0) break;
         scanned++;
         sup->error_code = CANOPUS_SUP_ERR_NONE;
-        if (pf->import_package(sup->platform_cookie, id) != 0) {
-            failed++;
-            last_error = sup->error_code != 0u ? sup->error_code
-                                               : (uint32_t)CANOPUS_SUP_ERR_STAGE;
-            continue;
-        }
         staged = canopus_supervisor_stage_token(sup, id);
         if (staged == 0) {
             added++;

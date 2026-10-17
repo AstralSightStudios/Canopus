@@ -38,7 +38,7 @@ struct canopus_sup_platform_v1 {
      * (CANOPUS_STATE_ACTIVE / BOOT_RESIDENT) or -1 on failure. */
     int (*load_module)(void *cookie, uint32_t index,
                        const char *module_name, uint32_t lifecycle_class);
-    /* Stage a signed package when package_path is non-null. A payload-free
+    /* Stage a native package when package_path is non-null. A payload-free
      * legacy INSTALL uses stage 0 for Manager registration, stage 1 for loaded
      * modules' app/page registration, and stage 2 for Launcher publication.
      * Returns 0 on success. */
@@ -84,14 +84,9 @@ struct canopus_sup_platform_v1 {
     void *(*dir_open)(void *cookie, const char *path);
     int (*dir_read)(void *cookie, void *dir, void *out_entry);
     int (*dir_close)(void *cookie, void *dir);
-    /* Phone-installed Canopus packages (quick apps named
-     * com.canopus.pkg.<id> under /data/app). list_packages writes the module
-     * id of the index-th package into `id` (capacity CANOPUS_SUP_MODULE_ID_MAX)
-     * and returns 0; 1 past the last; negative on error. import_package copies
-     * the payload for this firmware into the staging area (<id>.cmi.next /
-     * <id>.ko.next); 0 on success, else sets sup->error_code. */
+    /* Enumerate completed native staging pairs in the Canopus inbox.
+     * Returns 0 for an id, 1 at EOF, negative on error. */
     int (*list_packages)(void *cookie, uint32_t index, char *id);
-    int (*import_package)(void *cookie, const char *id);
     /* Monotonic milliseconds (wraps at 2^32). Optional: without it the TIME
      * service group is absent. */
     uint32_t (*monotonic_ms)(void *cookie);
@@ -115,7 +110,18 @@ struct canopus_sup_platform_v1 {
     int (*is_charging)(void *cookie);
     /* System properties. Optional. */
     int (*get_property)(void *cookie, const char *key, char *buf, uint32_t max_len);
+    /* Start a boot-resident event source on the serialized module/UI task.
+     * It must keep calling poll after module activation returns. No source
+     * means timer_create returns UNSUPPORTED; no worker may invoke UI callbacks. */
+    int (*start_timer_pump)(void *cookie, void (*poll)(void *), void *data);
+    /* WearPacket Layer 2 communication (ADR-CAN-008). Optional. */
+    int (*l2_send)(void *cookie, uint8_t channel, const void *payload, uint16_t len);
+    int (*validate_receipt)(void *cookie, const void *receipt);
 };
+
+int canopus_sup_l2_start(void);
+void canopus_sup_l2_poll(void);
+int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len);
 
 #ifdef __cplusplus
 }

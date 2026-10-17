@@ -127,7 +127,7 @@ int canopus_manager_render_module_detail(const struct canopus_manager_model_v1 *
 
 uint32_t canopus_manager_op_install(struct canopus_manager_model_v1 *m,
                                     const char *package_ref);
-/* Import modules the phone installed as quick apps (com.canopus.pkg.<id>). */
+/* Discover completed native staging pairs in the Canopus inbox. */
 uint32_t canopus_manager_op_scan(struct canopus_manager_model_v1 *m);
 uint32_t canopus_manager_op_activate(struct canopus_manager_model_v1 *m,
                                      uint32_t index);

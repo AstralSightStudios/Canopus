@@ -7,8 +7,6 @@
 //!   artifacts/<target_id>/module.elf   per-target payload
 //!   reports/elf-verifier.json          verifier output (if provided)
 
-pub mod rpk;
-
 use canopus_core::error::{Error, Result};
 use canopus_core::model::PackageManifest;
 use sha2::{Digest, Sha256};

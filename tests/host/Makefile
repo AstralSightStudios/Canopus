@@ -31,6 +31,7 @@ PORTABLE_SRCS = \
 	../../manager/protocol/canopus_protocol.c \
 	../../manager/client/canopus_client.c \
 	../../manager/service/canopus_supervisor.c \
+	../../manager/service/canopus_supervisor_upload.c \
 	../../manager/service/canopus_supervisor_services.c \
 	../../manager/package/canopus_installer_bundle.c \
 	../../manager/ui/canopus_manager.c \
@@ -66,23 +67,30 @@ TEST_SRCS = \
 	test_client.c \
 	test_supervisor_device.c \
 	test_supervisor_update.c \
+	test_supervisor_upload.c \
 	test_supervisor_services.c \
+	test_hook.c \
 	test_installer_receipt.c \
 	test_arm_reloc.c
 
 BIN = canopus_host_tests
+SLEEP_BIN = canopus_sleep_test
 ELF_LOADER_HARNESS = elf_loader_harness
 MODULE_ELF ?= ../../../Canopus-Module-BluetoothAudio/build/xiaomi-band-10-pro-3.101.036/bluetooth-audio.elf
 
 .PHONY: all run clean cross-arm64 cross-thumb real-elf-loader
 
-all: $(BIN)
+all: $(BIN) $(SLEEP_BIN)
 
 $(BIN): $(RUNTIME_SRCS) $(TEST_SRCS) ../../sdk/c/canopus_abi.h ../../sdk/c/canopus_runtime.h
 	$(CC) $(CFLAGS) $(INC) $(RUNTIME_SRCS) $(TEST_SRCS) -o $(BIN)
 
-run: $(BIN)
-	./$(BIN)
+run: $(BIN) $(SLEEP_BIN)
+	$(abspath $(BIN))
+	$(abspath $(SLEEP_BIN))
+
+$(SLEEP_BIN): $(PORTABLE_SRCS) test_service_sleep.c
+	$(CC) $(CFLAGS) -ffreestanding $(INC) $^ -o $@
 
 $(ELF_LOADER_HARNESS): ../../runtime/loader/canopus_arm_reloc.c \
 		../../runtime/loader/canopus_elf32_loader.c elf_loader_harness.c
@@ -103,4 +111,4 @@ cross-thumb:
 		-DCANOPUS_HOST=1 $(INC) -c $(PORTABLE_SRCS)
 
 clean:
-	rm -f $(BIN) $(ELF_LOADER_HARNESS) *.o
+	rm -f $(BIN) $(SLEEP_BIN) $(ELF_LOADER_HARNESS) *.o

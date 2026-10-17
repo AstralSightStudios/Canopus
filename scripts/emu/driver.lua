@@ -31,7 +31,7 @@ local function exchange(path, op, payload, reply_size)
 end
 
 local function query_device()
-    return exchange("/dev/canopus", OPS.query_device, nil, 72)
+    return exchange("/dev/canopus", OPS.query_device, nil, 120)
 end
 
 local function query_module(slot)

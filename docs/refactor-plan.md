@@ -68,12 +68,13 @@
 | K10 | 开机自动加载 Supervisor 纳入调查，作为 P4/P5 的前置（P4.0） | 2026-10-14 |
 | K11 | 旧 Supervisor 不做迁移，要求用户重装（原 O2）：不迁移 `registry.bin`；新 Supervisor 遇到旧格式 registry 或旧 inbox 文件时须安全忽略并提示重装，不得崩溃或误加载 | 2026-10-14 |
 | K12 | `calendar_text_color` 保留提升（原 O6）：被提升的是 .139 记录（.043 记录仍为 PENDING），依据为 2026-10-08 的用户授权与 `targets/xiaomi-band-11-4.100.139/background-calendar-port-approval.md`。失败的 `private_abi_records_have_exact_thumb_callables` 早于该授权，改为仿照 `band11_177_calendar_approval_is_exact_and_private_only`：`private_abi` 记录必须保持 restricted；APPROVED 仅限钉死的授权清单，且须满足 STATIC_RECOVERED、not_probed、promotion 固件 SHA 匹配 | 2026-10-14 |
-| K13 | 手机端投递用已签名 `.rpk` 快应用容器（`com.canopus.pkg.<id>`），设备端 Supervisor `SCAN` 导入；不新增控制通道，O1/O5 以此结案（ADR-CAN-005）。AstroBox-NG 的 core/app/web 均已在 ~/Documents/GitHub/ab/AstroBox-NG 改动（仅本地提交，未推送），Mirage 桥接同步更新 | 2026-10-14 |
-| K14 | 确立 WearPacket Layer 2 通信通道（ADR-CAN-008，0x43/'C'）：纠正此前将 L2 误判为蓝牙 L2CAP 的偏差。与 Pb 同级，承载 CPC2 实时双向 RPC；文件投递走统一安装队列（支持 `.canopus`/`.rpk`），AstroBox 增设设备主页卡片与 `/device/canopus` 管理页 | 2026-10-14 |
+| K13 | **已撤销（2026-10-17）**：旧快应用容器投递方案由 K15 / ADR-CAN-008 原生投递替代；旧模拟器结果仅保留为历史 | 2026-10-14 |
+| K14 | 确立 WearPacket Layer 2 0x43 通道，与 Pb 同级承载 CPC2；模块仅用 `.canopus`，不映射为快应用（K15） | 2026-10-14 |
+| K15 | 用户要求彻底移除 RPK 包装与快应用列表依赖，只保留 `.canopus`；通过加密 L2 CPC2 原生分块投递，固件私有 API 仍遵守批准门槛 | 2026-10-17 |
 
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
 
-- O1（已结案 → K13/ADR-CAN-005）手机↔设备端控制通道（原阻塞 P5.1 及之后）。
+- O1（现由 K15/ADR-CAN-008 替代旧 K13）手机↔设备端控制通道（原阻塞 P5.1 及之后）。
   - 前提更正：AstroBox 的 `transport.send` 只存在于 WASM 插件 host API，只接受 Xiaomi `WearPacket` protobuf，
     且只走 Pb 通道（`pluginsystem/src/api/host/transport.rs:21-50`），不能发原始字节。无论选哪种方案，都要在 `core` 中新写代码。
   - 候选（按现有证据强弱排序）：
@@ -107,13 +108,13 @@
 | P2 | ABI/SDK：服务表、协议收敛、移除签名、Rust 整理 | [x] | P0.1–P0.4；P2.4 起依赖 P1.3 |
 | P3 | 统一打包 + 文档 | [x] | P1、P2.1 |
 | P4 | 设备端更新语义 + 开机自启调查 | [x]（P4.0 明确结论：维持手动 Run） | P0.1、P0.2（不依赖 P5） |
-| P5 | 手机端管理（AstroBox-NG） | [x]（WearPacket L2 0x43 通道 + 全栈闭环） | P5.0（O1）、P2.5、P3.3 |
+| P5 | 手机端管理（AstroBox-NG） | [~]（原生数据面已实现；固件接入实验门控，原生商店元数据待适配） | P5.0（O1）、P2.5、P3.3 |
 | P6 | Mirage 模拟器调试 | [x]（043 冒烟 + Band 11 155/177 端到端全通） | P6.0、P6.2、P3 |
 
 里程碑达成情况：
 - M1（让用户尽快受益）：P0 → P1.1 移除 P65、P1.8 冻结 Band 9 → P2.7 移除签名 → P4.1–P4.5（同 ID 新版本一步更新）。已达成。
 - M2（开发体验）：P1 单一来源、P2 服务表与统一协议、P3 统一打包与构建工具链。已达成。
-- M3（手机端与模拟器）：P5 手机端与 WearPacket L2 通道全栈打通、P6 模拟器全量冒烟通过。已达成。
+- M3（手机端与模拟器）：按 K15 重验原生 `.canopus` / L2 数据面；旧快应用闭环不计入此项，固件私有 API 的生产批准另行处理。
 
 ## 5. 任务清单
 
@@ -238,19 +239,18 @@
 - [x] P4.5 host 测试：升级成功、同版本/降级被拒、哈希/target 不匹配、写入中断后恢复、加载失败退回 prev。
 
 ### P5 手机端管理（AstroBox-NG，K4）
-- [x] P5.0 解决 O1/O5（K13：用已签名 .rpk 快应用容器，043 模拟器实测可装、可列、可升级；interconnect 的 AIOTJS 注册门槛与 loop 问题未解，作为日后即时触发的备选）：静态证据（miwear-server 路由、fingerprint 与安装检查）+ Mirage 043 验证
-  （Mirage 的快应用环境尚未验证，见 R7）。
-- [x] P5.1 设备端（`SCAN` 命令 + `list_packages/import_package` 平台钩子，复用 INSTALL 的校验与 A/B 暂存；Manager 增加"导入手机推送的模块"；握手/框架版本 `framework_revision` 仍由现有 QUERY 提供）：Supervisor 服务层实现 P0.3 协议的 transport 适配
+- [x] P5.0 通道设计：WearPacket L2 0x43 / CPC2（ADR-CAN-008），旧快应用方案撤销。固件实验后端只在显式开关下启用，不提升符号状态。
+- [x] P5.1 设备端原生 staging RPC（15..18）、INSTALL、目录快照式 SCAN；不再有 import_package 或快应用目录。
   - 握手：框架版本（`framework_revision`）、ABI、target。
   - 操作：模块列表、安装/升级、启用、禁用、移除、回滚。
   - 数据面按 O1 结论实现。
-- [x] P5.2 设备端 host 测试 + Mirage 联调（`scripts/emu/smoke.py` 的 phone_flow：真实 AstroBox 核心经模拟器蓝牙安装 .rpk → SCAN → 启用 → 重启加载 → 手机升级 → SCAN 暂存 → 重启后新版生效） + Mirage 联调。
-- [x] P5.3 `core`（`corelib::device::canopus`：包名/id 校验、`modules_from_apps`、`updates`；已扩展 L2Channel::Canopus(0x43)、CPC2 编解码、CanopusSystem ECS 监听与 `send_cpc2_request`/`query_device`/`trigger_scan`）：新增 Canopus 通信与逻辑支持，Mirage 同步更新。
+- [~] P5.2 原生数据面重验：host 上传顺序/短写/中断/错误 target 与 ARM shim 测试通过；043 收件箱升级/回滚全流程通过。双 owner 后端分离 UI 命令处理与 Bluetooth 响应发送，解决跨 NuttX task-group 写 fd 的 EBADF。2026-10-17 Band 11 `.155` 新建 Mirage 设备经生产安装器 Run，真实 AstroBox core 加密 L2 原生安装/列表查询、本地 SCAN 全部通过；实验 `.155` 资源已同步到待打包目录。043 独立原生安装已通过，完整 fresh-device smoke 的 phone flow 仍待闭环。仅 emulator 证据，符号保持 restricted/PENDING/not_probed；不使用 FORBIDDEN 的线程/工作队列。证据：各 target 的 evidence/l2-sram-probe.json。旧 RPK 冒烟结果不能替代。
+- [x] P5.3 core：CPC2 RPC 查询列表/版本，原生 tar/manifest/receipt 校验、按精确 target 选择、逐块应答上传；移除 modules_from_apps 与包名映射。
 - [x] P5.4 `app`（已完成：`DeviceResourceUpdateReport.canopus_modules`，新增 `canopus_send_request`、`canopus_query_device`、`canopus_trigger_scan`、`canopus_set_module_enabled`、`canopus_remove_module` 等 Tauri 命令，直通 L2 通道）。
-- [x] P5.5 更新提醒（已完成）：商店 quickapp 条目的 `versionCode` 与已装快应用比较即可（现有逻辑）；`canopus` 专用版本比较在 core 的 `updates()`；ABI/target 兼容由设备端 SCAN 拒绝（R9） 增加 Canopus 模块列表（来自 Supervisor 查询，而不是按表盘 ID 匹配）；
+- [~] P5.5 更新提醒：模块列表和已装版本只来自 Supervisor；原生商店清单/版本比较需独立适配，不借用 quickapp 项。
   比较 `versionCode`，并检查 ABI 与 target 是否兼容。
-- [x] P5.6 前端（已完成，本地提交）：设备信息页「Canopus 模块」专属卡片（与表盘/快应用并列）、`/device/canopus` 专属管理页、统一安装队列支持（白名单 `.canopus`/`.rpk`）、中英双语国际化。
-- [x] P5.7 商店清单：无需 `canopus` 扩展字段——条目就是 quickapp 下载项，包名 `com.canopus.pkg.<id>`，`.rpk` 内含所有固件的载荷，设备端按固件取用并拒绝不匹配；AstroBoxCreatorConsole 的 ID 校验已改为 ADR-CAN-003 语法（本地提交）（O3）默认提案
+- [x] P5.6 前端：Canopus 专属卡片与管理页；原生安装队列独立调用 canopus_install_module，不再用 Mass 64/快应用安装。
+- [ ] P5.7 商店清单：旧 quickapp 下载项设计撤销，原生 Canopus 条目需独立类型与 target/ABI 元数据。
   - `downloads[deviceId]` 下增加 `canopus: { abi, targets?: [target_id], minFramework? }`。
   - portable 模块只写 abi；target-private 模块必须列出 target。
   - 客户端安装前比对手环固件，不匹配就拒绝（修复按型号回退到 default 或任意条目的问题）。
@@ -329,3 +329,5 @@
 | 2026-10-14 | P2.4 函数集一致（api_parity 测试）；P2.8 两套 Manager UI 后端合并为一个源文件（产物验证一致） |
 | 2026-10-14 | 评估 Canopus 专用 L2CAP 通道：手环侧入站 PSM 监听无现成 API，手机侧经典 L2CAP 在 Android/iOS 不可用，建议 RFCOMM 专用 channel（docs/canopus-channel-feasibility.md，未实测） |
 | 2026-10-15 | Hook 引擎架构根因重构与 Cortex-M33 边界防御；废除 Flash 槽位硬编码，提供 register_slot_map 运行时映射（Corona 模式）；修复 realloc 溢出、INT32_MIN 格式化 UB 与 KV 存储 VFS 持久化；all-services-test 达成 93 项服务方法 100% 覆盖并于 Mirage 模拟器（043 与 155）全绿通过（18/18 PASS）；新增 CI 强制覆盖门禁 services_coverage |
+
+| 2026-10-17 | K15：移除 RPK 包装、快应用目录与列表依赖；新增原生 CPC2 分块暂存、精确 target 查询与 AstroBox 独立安装命令。全量 CI 9 个 gates 全绿；新增 ARM L2 shim 的 SRAM 替换、明文拒绝、解密失败、队列分发和 session 边界仿真通过（仅 host/emulator 级证据）。.043/.155 实际 Mirage 蓝牙联调失败与持续调度入口阻塞见 P5.2；不能宣称端到端完成。 |

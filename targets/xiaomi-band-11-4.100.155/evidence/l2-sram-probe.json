@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "target_id": "xiaomi-band-11-4.100.155",
+  "status": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "approval_state": "PENDING",
+  "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+  "addresses": {
+    "RX": "0x0C98F149",
+    "SEND": "0x0C98F479",
+    "SESSION": "0x0C98FFB9",
+    "CRYPTO": "0x0C98C9BD",
+    "CONNECTIONS": "0x200A5158",
+    "TIMER": "0xc3abd21",
+    "TIMER_DELETE": "0xc3abe71",
+    "OWNER_LOOP": "0x200c36b8",
+    "BT_LOOP": "0x200da540",
+    "OWNER_TIMER_INIT": "0x0c3f0935",
+    "OWNER_TIMER_START": "0x0c3f0a6f",
+    "OWNER_TIMER_SIZE": "0x58"
+  },
+  "abi": {
+    "rx": "void(uint16_t handle, uint8_t channel, uint8_t opcode, void *payload, uint16_t len)",
+    "session": "void *(uint16_t handle)",
+    "crypto": "int(void *session, int encrypt, uint16_t len, const void *in, void *out)",
+    "send": "int(void *session, const struct l2_packet *)",
+    "list": "head+4 -> prev link; node+12 -> connection; connection+12 -> rx callback",
+    "packet": "channel +0, opcode +1, payload +4, len +8, callbacks/cookies +12/+16/+20/+24 (28 bytes)"
+  },
+  "evidence": [
+    "Exact firmware IDB: SAR open allocates a 16-byte list node and 224-byte connection; RX callback is connection+12, not list-node+12.",
+    "Encrypted receive uses crypto(session, 0, len, input, output); nonzero return must not dispatch a command.",
+    "Transport send encrypts payload in place, then SAR submit copies into an owned queue allocation before returning. Band 11 .155 sub_C98E6B8 confirms the synchronous copy.",
+    "An LVGL bootstrap initializes a resident libuv timer on the same UI owner loop; Bluetooth RX only decrypts/enqueues. The exact .155 native timer layout is 88 bytes, not .043's 136 bytes."
+  ],
+  "constraints": [
+    "Only CANOPUS_EXPERIMENTAL_L2=1 builds include these addresses. No generated veneer or symbol approval is changed.",
+    "SRAM callback replacement only; Cortex-M33 Flash patching is not used.",
+    "Only encrypted requests on 0x43 are accepted. No physical-device validation.",
+    "The owner-source replacement is experimental and remains PENDING. UI/LVGL must run once to bootstrap it; do not use forbidden thread/work-queue symbols as a workaround. No physical-device or production approval."
+  ],
+  "owner_source": {
+    "status": "STATIC_RECOVERED",
+    "approval_state": "PENDING",
+    "init": "sub_C3F0934: int(void *loop, void *timer). Native init at 0x0C7E9C8C-0x0C7E9C90 passes *0x200C36B8 and timer 0x200C19B8.",
+    "start": "sub_C3F0A6E: int(void *timer, void (*callback)(void *), uint64_t timeout, uint64_t repeat); native UI caller sub_C4FB31C. AAPCS r0/r1/r2-r3/stack+0,+4; milliseconds.",
+    "storage": "88 bytes, 8-byte alignment. flags+44, cb+48, heap node+52, timeout+64, repeat+72, id+80. This build has no 48-byte libuv backtrace field; do not reuse .043 offsets.",
+    "context": "Owner-only list/heap mutation. The LVGL bootstrap initializes the UI timer on *0x200C36B8; encrypted RX initializes the response timer on the Bluetooth loop *0x200DA540. UI dispatches Supervisor commands and queues replies; Bluetooth drains replies and calls transport send within its own task-group fd table. No threads/work queues and no symbol promotion.",
+    "runtime_validation": "2026-10-17: dual-owner encrypted native install and inventory query passed on Mirage with the real AstroBox core; physical device not probed"
+  },
+  "emulator_validation": {
+    "date": "2026-10-17",
+    "result": "PASSED",
+    "scope": "Mirage plus real AstroBox core over encrypted WearPacket L2; emulator-level evidence only",
+    "supervisor_size": 95196,
+    "supervisor_sha256": "6fe0e3f12744fae2ba384222eb3c380d50c346c47c87a50672d41b16bef98dd2",
+    "command": "CANOPUS_SMOKE_DEVICE=canopus-b11-l2-20261017 python3 -u scripts/emu/band11_smoke.py 155 --keep-device",
+    "observations": [
+      "Production watchface installed through the real AstroBox core; explicit Run completed the native bootstrap with result=0 and exec_ok=true.",
+      "Encrypted native hello_portable .canopus install completed in approximately 453 ms; inventory returned slot=0, version=1, state=3, activationError=0.",
+      "Local CPC2 SCAN returned result=5 with err=0/count=1; inbox contained the 176-byte receipt and 3816-byte ELF.",
+      "Control run using the previously staged default build loaded the Supervisor successfully (result=0), but inventory timed out: that ELF's L2 entry returned UNSUPPORTED. The family staging directory and CRC-bound loader resources were rebuilt together with CANOPUS_EXPERIMENTAL_L2=1."
+    ],
+    "physical_device": "not_probed"
+  }
+}

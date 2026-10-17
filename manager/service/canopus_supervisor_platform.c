@@ -2,13 +2,11 @@
  *
  * Registers /dev/canopus exactly the way btpatch registers /dev/btpatch:
  * stock `register_driver` selected by the target veneer, with a 12-word file_operations array
- * whose read side renders the 384-byte status ABI and whose write side
- * dispatches the 16-byte command ABI. This is the same managed symbol the
- * target pack exposes via the generated veneer (`canopus_fw_register_driver`).
+ * whose read/write sides exchange CPC2 requests and responses. The generated
+ * veneer selects the exact firmware entry points.
  *
- * Loading/unloading Canopus modules and package staging remain fail-closed
- * until the stock modlib path for arbitrary ET_REL modules is proven (G0 for
- * target modules); the installer control surface works now.
+ * Package staging verifies target-bound receipts and artifact digests before
+ * committing a generation. Private L2 integration remains experimental.
  */
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
@@ -111,6 +109,7 @@ static int sup_control_close(void *filep)
 static int32_t sup_control_read(void *filep, void *buffer, uint32_t count)
 {
     (void)filep;
+    (void)canopus_sup_l2_start();
     return canopus_supervisor_device_read(canopus_supervisor_get(), buffer, count);
 }
 
@@ -121,6 +120,7 @@ static int32_t sup_control_write(void *filep, const void *buffer, uint32_t count
     int rc;
 
     (void)filep;
+    (void)canopus_sup_l2_start();
     if (canopus_module_registration_is_frame(buffer, count)) {
         registration = (const struct canopus_module_registration_v1 *)buffer;
         if (registration->descriptor == 0u ||
@@ -140,12 +140,14 @@ static int32_t sup_control_write(void *filep, const void *buffer, uint32_t count
 static int32_t sup_installer_read(void *filep, void *buffer, uint32_t count)
 {
     (void)filep;
+    (void)canopus_sup_l2_start();
     return canopus_supervisor_installer_read(canopus_supervisor_get(), buffer, count);
 }
 
 static int32_t sup_installer_write(void *filep, const void *buffer, uint32_t count)
 {
     (void)filep;
+    (void)canopus_sup_l2_start();
     return canopus_supervisor_installer_write(canopus_supervisor_get(), buffer, count);
 }
 
@@ -209,6 +211,7 @@ static int sup_register_device(void *cookie)
     fd = open_file(CANOPUS_SUP_INSTALLER_PATH, CANOPUS_SUP_NUTTX_O_RDONLY);
     if (fd < 0) return -(CANOPUS_SUP_REGISTER_VERIFY_ERRNO_BASE + 2);
     (void)close_file(fd);
+    (void)canopus_sup_l2_start();
     return 0;
 }
 
@@ -635,7 +638,11 @@ static void *sup_loader_allocate(void *cookie, uint32_t size,
 static void sup_loader_release(void *cookie, void *allocation, uint32_t size)
 {
     struct sup_loaded_module *loaded = cookie;
+    struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
+    uint32_t slot = (uint32_t)(loaded - s_loaded_modules);
     (void)size;
+    canopus_supervisor_release_services(sup, slot);
+    sup->modules[slot].descriptor = 0;
 
 #ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
     if (loaded->aliased) {
@@ -878,6 +885,7 @@ static int sup_load_module(void *cookie, uint32_t index,
     sup->loading_slot = -1;
     if (sup->modules[index].descriptor == 0) {
         sup->error_code = CANOPUS_SUP_ERR_DESCRIPTOR_MISSING;
+        canopus_supervisor_release_services(sup, index);
 #ifdef CANOPUS_SUP_CUSTOM_LOADER
         sup_unload_custom(index);
 #else
@@ -1054,170 +1062,46 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
 }
 
 
-/* ---- phone-installed packages (com.canopus.pkg.<id> quick apps) ----------
- * The phone installs a signed .rpk through the stock quick-app path; the band
- * extracts it to <app root>/<package>/ (/data/app on Band 10 Pro, /data/quickapp/app on Band 11). We only read from there: the payload
- * for this firmware is copied into the staging area and staged as an INSTALL.
- * The directory iteration calls are optional per target. */
-#ifdef CANOPUS_SUP_CUSTOM_LOADER
-#define CANOPUS_SUP_APP_ROOT "/data/quickapp/app/" /* Band 11 (checked in the Mirage data partition) */
-#else
-#define CANOPUS_SUP_APP_ROOT "/data/app/"
-#endif
-#define CANOPUS_SUP_PKG_PREFIX "com.canopus.pkg."
-
+/* ---- native staging inbox ------------------------------------------- */
 #ifdef CANOPUS_SUP_NUTTX_OPENDIR
 static int sup_list_packages(void *cookie, uint32_t index, char *id)
 {
     typedef void *(*opendir_fn)(const char *);
     typedef const uint8_t *(*readdir_fn)(void *);
     typedef int (*closedir_fn)(void *);
-    opendir_fn open_dir = (opendir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPENDIR;
-    readdir_fn read_dir = (readdir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_READDIR;
-    closedir_fn close_dir = (closedir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSEDIR;
     uint32_t seen = 0u;
     const uint8_t *entry;
     void *dir;
-
     (void)cookie;
-    dir = open_dir(CANOPUS_SUP_APP_ROOT);
-    if (dir == 0) return -1;
-    while ((entry = read_dir(dir)) != 0) {
-        const char *name = (const char *)(entry + 1); /* NuttX dirent: d_type, d_name[] */
-        const char *prefix = CANOPUS_SUP_PKG_PREFIX;
-        uint32_t i = 0u;
-        uint32_t n = 0u;
-        while (prefix[i] != '\0' && name[i] == prefix[i]) i++;
-        if (prefix[i] != '\0') continue;
-        name += i;
-        while (name[n] != '\0' && n < 17u) {
-            if (!sup_token_char((uint8_t)name[n])) break;
-            n++;
-        }
-        /* ADR-CAN-003 ids: 1..16 bytes, fully consumed */
-        if (n == 0u || n > 16u || name[n] != '\0') continue;
+    dir = ((opendir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPENDIR)(CANOPUS_SUP_INBOX_ROOT);
+    if (dir == 0) return 1;
+    while ((entry = ((readdir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_READDIR)(dir)) != 0) {
+        const char *name = (const char *)(entry + 1);
+        uint32_t n = (uint32_t)canopus_strnlen(name, 48u);
+        uint32_t i;
+        if (n <= 9u || n > 25u || canopus_strcmp(name + n - 9u, ".cmi.next") != 0)
+            continue;
+        canopus_memset(id, 0, CANOPUS_SUP_MODULE_ID_MAX);
+        for (i = 0u; i < n - 9u; i++) id[i] = name[i];
+        id[i] = '\0';
+        if (!canopus_install_module_id_valid((const uint8_t *)id)) continue;
         if (seen++ == index) {
-            for (i = 0u; i < n; i++) id[i] = name[i];
-            id[n] = '\0';
-            (void)close_dir(dir);
+            (void)((closedir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSEDIR)(dir);
             return 0;
         }
     }
-    (void)close_dir(dir);
+    (void)((closedir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSEDIR)(dir);
     return 1;
 }
 #else
-static int sup_list_packages(void *cookie, uint32_t index, char *id)
-{
-    (void)cookie; (void)index; (void)id;
-    return -1;
-}
+#define sup_list_packages 0
 #endif
 
-static int sup_copy_file(const char *from, const char *to)
+static int sup_validate_receipt(void *cookie, const void *receipt)
 {
-    typedef int (*open_fn)(const char *, int, ...);
-    typedef int (*close_fn)(int);
-    typedef int32_t (*read_fn)(int, void *, uint32_t);
-    typedef int32_t (*write_fn)(int, const void *, uint32_t);
-    open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
-    close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
-    read_fn read_file = (read_fn)(uintptr_t)CANOPUS_SUP_NUTTX_READ;
-    write_fn write_file = (write_fn)(uintptr_t)CANOPUS_SUP_NUTTX_WRITE;
-    uint8_t chunk[CANOPUS_SUP_READ_CHUNK];
-    int in = open_file(from, CANOPUS_SUP_NUTTX_O_RDONLY);
-    int out;
-    int rc = 0;
-
-    if (in < 0) return -1;
-    (void)sup_unlink_path(to);
-    out = open_file(to, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT,
-                    CANOPUS_SUP_DEVICE_MODE);
-    if (out < 0) {
-        (void)close_file(in);
-        return -1;
-    }
-    for (;;) {
-        int32_t got = read_file(in, chunk, sizeof(chunk));
-        int32_t done = 0;
-        if (got < 0) { rc = -1; break; }
-        if (got == 0) break;
-        while (done < got) {
-            int32_t put = write_file(out, chunk + done, (uint32_t)(got - done));
-            if (put <= 0) { rc = -1; break; }
-            done += put;
-        }
-        if (rc != 0) break;
-    }
-    (void)close_file(in);
-    if (close_file(out) < 0) rc = -1;
-    if (rc != 0) (void)sup_unlink_path(to);
-    return rc;
-}
-
-static int sup_pkg_path(char out[CANOPUS_SUP_PATH_MAX], const char *id,
-                        const char *leaf)
-{
-    const char *parts[4] = { CANOPUS_SUP_APP_ROOT CANOPUS_SUP_PKG_PREFIX, id,
-                             "/canopus/", leaf };
-    uint32_t used = 0u;
-    uint32_t p, i;
-    for (p = 0u; p < 4u; p++) {
-        for (i = 0u; parts[p][i] != '\0'; i++) {
-            if (used + 1u >= CANOPUS_SUP_PATH_MAX) return -1;
-            out[used++] = parts[p][i];
-        }
-    }
-    out[used] = '\0';
-    return 0;
-}
-
-static int sup_import_package(void *cookie, const char *id)
-{
-    struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
-    char src[CANOPUS_SUP_PATH_MAX];
-    char dst[CANOPUS_SUP_PATH_MAX];
-    char leaf[64];
-    uint32_t i = 0u;
-    const char *target = CANOPUS_SUP_TARGET_ID;
-
     (void)cookie;
-    /* receipt for exactly this firmware: canopus/<target_id>.cmi */
-    for (; target[i] != '\0' && i + 5u < sizeof(leaf); i++) leaf[i] = target[i];
-    leaf[i] = '\0';
-    {
-        char cmi_leaf[64];
-        char ko_leaf[64];
-        uint32_t j;
-        for (j = 0u; j <= i; j++) { cmi_leaf[j] = leaf[j]; ko_leaf[j] = leaf[j]; }
-        cmi_leaf[i] = '.'; cmi_leaf[i + 1u] = 'c'; cmi_leaf[i + 2u] = 'm';
-        cmi_leaf[i + 3u] = 'i'; cmi_leaf[i + 4u] = '\0';
-        ko_leaf[i] = '.'; ko_leaf[i + 1u] = 'k'; ko_leaf[i + 2u] = 'o';
-        ko_leaf[i + 3u] = '\0';
-        if (sup_pkg_path(src, id, cmi_leaf) != 0 ||
-            sup_make_path(dst, id, s_receipt_suffix[SUP_KIND_NEXT]) != 0) {
-            sup->error_code = CANOPUS_SUP_ERR_STAGE_PATH;
-            return -1;
-        }
-        if (sup_copy_file(src, dst) != 0) {
-            sup->error_code = CANOPUS_SUP_ERR_STAGE_NO_TARGET;
-            return -1;
-        }
-        /* artifact: per-target ELF, else the portable one */
-        if (sup_pkg_path(src, id, ko_leaf) != 0 ||
-            sup_make_path(dst, id, s_module_suffix[SUP_KIND_NEXT]) != 0) {
-            sup->error_code = CANOPUS_SUP_ERR_STAGE_PATH;
-            return -1;
-        }
-        if (sup_copy_file(src, dst) != 0) {
-            if (sup_pkg_path(src, id, "portable.ko") != 0 ||
-                sup_copy_file(src, dst) != 0) {
-                sup->error_code = CANOPUS_SUP_ERR_STAGE_NO_TARGET;
-                return -1;
-            }
-        }
-    }
-    return 0;
+    return canopus_install_receipt_validate(receipt, CANOPUS_SUP_TARGET_ID,
+                                            s_firmware_sha256);
 }
 
 /* FS service hooks: plain NuttX file calls through the proven pointers. */
@@ -1225,15 +1109,21 @@ static int sup_file_open(void *cookie, const char *path, uint32_t flags)
 {
     typedef int (*open_fn)(const char *, int, ...);
     open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
+    int fd;
     (void)cookie;
     if (flags == CANOPUS_FS_READ) {
-        return open_file(path, CANOPUS_SUP_NUTTX_O_RDONLY);
+        fd = open_file(path, CANOPUS_SUP_NUTTX_O_RDONLY);
+    } else {
+        /* O_TRUNC is not proven on these firmwares. */
+        (void)sup_unlink_path(path);
+        fd = open_file(path, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT,
+                       CANOPUS_SUP_DEVICE_MODE);
     }
-    /* Create/truncate: unlink first, as the registry writer does (no O_TRUNC
-     * is proven on this firmware). */
-    (void)sup_unlink_path(path);
-    return open_file(path, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT,
-                     CANOPUS_SUP_DEVICE_MODE);
+    if (fd < 0) {
+        int error = sup_registry_errno();
+        return error != 0 ? -error : CANOPUS_SVC_ERR_IO;
+    }
+    return fd;
 }
 
 static int32_t sup_file_read(void *cookie, int fd, void *buffer, uint32_t size)
@@ -1422,7 +1312,7 @@ static int sup_notify_headless(void *cookie, const char *title, const char *body
     (void)cookie;
     (void)title;
     (void)body;
-    return 0;
+    return CANOPUS_SVC_ERR_UNSUPPORTED;
 }
 #define SUP_NOTIFY sup_notify_headless
 #else
@@ -1487,6 +1377,35 @@ static int sup_get_property(void *cookie, const char *key, char *buf, uint32_t m
     return CANOPUS_SVC_ERR_NOTFOUND;
 }
 
+#if !defined(CANOPUS_SUP_CUSTOM_LOADER) && !defined(CANOPUS_SUP_HEADLESS)
+static void *s_service_timer;
+static void (*s_service_timer_poll)(void *);
+static void *s_service_timer_data;
+
+static void sup_service_timer_tick(void *timer)
+{
+    (void)timer;
+    s_service_timer_poll(s_service_timer_data);
+}
+
+static int sup_start_timer_pump(void *cookie, void (*poll)(void *), void *data)
+{
+    (void)cookie;
+    if (s_service_timer != 0) {
+        return s_service_timer_poll == poll && s_service_timer_data == data
+                   ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_STATE;
+    }
+    s_service_timer_poll = poll;
+    s_service_timer_data = data;
+    /* The Supervisor and its heartbeat are boot-resident; neither may be hot-unloaded. */
+    s_service_timer = canopus_fw_lv_timer_create(sup_service_timer_tick, 10u, 0);
+    return s_service_timer != 0 ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_NOMEM;
+}
+#define SUP_TIMER_PUMP sup_start_timer_pump
+#else
+#define SUP_TIMER_PUMP 0
+#endif
+
 const struct canopus_sup_platform_v1 canopus_sup_platform = {
     CANOPUS_SUP_TARGET_ID,
     sup_register_device,
@@ -1514,7 +1433,6 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     SUP_DIR_READ,
     SUP_DIR_CLOSE,
     sup_list_packages,
-    sup_import_package,
     SUP_MONOTONIC_MS,
     SUP_HEAP_ALLOC,
     sup_heap_realloc,
@@ -1529,4 +1447,7 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_battery_level,
     sup_is_charging,
     sup_get_property,
+    SUP_TIMER_PUMP,
+    sup_l2_send,
+    sup_validate_receipt,
 };

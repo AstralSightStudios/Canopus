@@ -92,7 +92,10 @@ struct canopus_fs_obj {
 
 ### 2.2 `ctx->kv` — 模块轻量持久化键值存储 (KeyValue Store)
 
-专为配置、偏好设置、状态快照设计的高性能键值存储。内存带缓存加速，自动安全同步至磁盘。
+配置、偏好设置与状态快照按模块保存到 `/data/canopus/kv_<module_id>.bin`。
+首次访问以及两种 descriptor 注册入口共用恢复路径；构造函数里写入的值不会被后续注册覆盖。
+变更先完整写入临时文件、检查 write/sync（平台提供时）/close，再 rename 替换正式文件；
+失败返回负值，并保留原内存值和上一份有效文件。该事务保证不等于已验证掉电刷盘，底层 VFS 的物理持久性仍需设备证据。
 
 ```c
 struct canopus_kv_obj {
@@ -128,7 +131,17 @@ struct canopus_mem_obj {
 
 ---
 
-### 2.4 `ctx->time` — 单调时钟、UTC 与模块定时器 (Time & Timers)
+### 2.4 `ctx->time` — 时钟与模块定时器 (Time & Timers)
+
+- `sleep_ms` 等待完整请求时长。host 使用可重试的 nanosleep；设备在单调时钟上等待，
+  无已批准 OS sleep 原语时是忙等，ARM `yield` 提示不等于调度器休眠。
+- timer 周期范围为 `1..CANOPUS_TIMER_MAX_INTERVAL_MS`（`0x7fffffff` 毫秒），使用环绕安全的截止时间比较。
+- 分发串行执行，回调内 sleep 不会递归进入另一轮 timer 分发。漏掉的周期合并，不追补无限次回调。
+- Band 10 Pro 普通 UI 构建使用已批准的 `lv_timer_create`，Supervisor 的心跳与其同为 boot-resident，
+  不支持热卸载。启动 timer 必须在模块/UI 所属线程执行，不能从中断或任意 worker 调用。
+- Band 11 原生 timer 地址仍为 restricted，NSH headless 构建也没有 UI 事件源；这些配置的
+  `timer_create` 明确返回 `CANOPUS_SVC_ERR_UNSUPPORTED`，不会注册一个永远不触发的 timer。
+- 当前 `realtime_ms` 仍返回单调时间的扩展值，不应作为已验证的 UTC 时钟使用。
 
 ```c
 typedef void (*canopus_timer_callback_t)(const struct canopus_context_v1 *ctx, int32_t timer_id, void *user_data);
@@ -214,8 +227,8 @@ struct canopus_bus_obj {
 
 ```c
 typedef enum canopus_hook_type {
-    CANOPUS_HOOK_AUTO    = 0,  /* 智能检测：Flash 走 FPB，RAM 走 Trampoline，指针走 Slot */
-    CANOPUS_HOOK_FPB     = 1,  /* 强制硬件 FPB 指令重映射 (0xE0002000) */
+    CANOPUS_HOOK_AUTO    = 0,  /* Flash 用已注册 RAM 槽位，RAM Thumb 函数用跳板 */
+    CANOPUS_HOOK_FPB     = 1,  /* 兼容枚举：仅接受已注册 RAM 槽位，不操作 FPB */
     CANOPUS_HOOK_INLINE  = 2,  /* 强制 Thumb-2 8字节代码跳板 */
     CANOPUS_HOOK_POINTER = 3,  /* 强制 RAM 指针变量原子置换 */
 } canopus_hook_type_t;
@@ -228,9 +241,20 @@ struct canopus_hook_obj {
                        canopus_hook_type_t hook_type);
     int32_t (*uninstall)(const struct canopus_context_v1 *ctx, int32_t hook_id);
     int     (*is_hooked)(const struct canopus_context_v1 *ctx, uintptr_t target_fn);
+    int32_t (*register_slot_map)(const struct canopus_context_v1 *ctx,
+                                 uintptr_t flash_fn, uintptr_t ram_slot);
 };
 ```
-- **Flash 固件拦截**：针对 XIP NOR Flash（`0x0C000000..0x0D000000`）的只读原生函数，通过 **Cortex-M33 FPB 硬件重映射** 实现零 Flash 擦写拦截，零 HardFault 风险。
+- **Flash 固件拦截**：Cortex-M33 不提供 FP_REMAP 指令重映射。引擎不写 Flash，也不配置断点硬件。
+  开发者自行确认当前设备/固件的函数与 RAM dispatch/vtable 槽位，运行时调用
+  `ctx->hook->register_slot_map(ctx, flash_fn, ram_slot)`，再安装 Hook；或直接对 RAM 槽位使用 POINTER。
+  这只拦截经过该槽位的调用，不拦截其他直接调用。未提供映射的 Flash 请求返回 UNSUPPORTED；不内置固件地址表。
+- **所有权与恢复**：映射绑定注册模块，槽位存储必须存活至模块清理；不能注册一个随后自行 free 的槽位。
+  多个函数名解析到同一活动槽位时拒绝重复安装；原值包括 NULL 均精确恢复。释放模块先恢复 Hook，再清除映射，最后释放内存。
+- **RAM Inline**：仅搬移明确可复制的 Thumb 指令；PC 相关、分支/返回、IT 块和未实现的编码返回 UNSUPPORTED。
+  安装和卸载需要目标函数处于静止状态，不得与执行该函数的任务/中断并发修补代码。
+- **Host**：原生 host 不模拟 Inline 成功；无映射的 AUTO 没有 Thumb 标签可供推导，也返回 UNSUPPORTED。
+  原生 host 测试使用显式 POINTER；实际 Thumb 跳板另由 `tests/hook/test_thumb.py` 验证。
 
 ---
 

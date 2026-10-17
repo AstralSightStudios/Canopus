@@ -35,6 +35,7 @@
 static const struct canopus_context_v1 *s_ctx;
 static uint32_t s_pass_count;
 static uint32_t s_fail_count;
+static uint32_t s_skip_count;
 static char s_report_buf[2048];
 static uint32_t s_report_len;
 
@@ -87,6 +88,14 @@ static void log_test(const char *name, int passed)
     }
 }
 
+static void log_skip(const char *name)
+{
+    s_skip_count++;
+    report_append("[SKIP] ");
+    report_append(name);
+    report_append("\n");
+}
+
 static void write_breadcrumb(const char *msg)
 {
 #if defined(CANOPUS_SUP_NUTTX_OPEN) && defined(CANOPUS_SUP_NUTTX_WRITE) && defined(CANOPUS_SUP_NUTTX_CLOSE)
@@ -114,11 +123,14 @@ static volatile int s_hook_inline_called = 0;
 typedef int (*math_fn_t)(int, int);
 static math_fn_t s_orig_math_add = 0;
 
-__attribute__((noinline, aligned(4))) static int test_math_add(int a, int b)
+__attribute__((naked, noinline, aligned(4))) static int test_math_add(
+    int a __attribute__((unused)), int b __attribute__((unused)))
 {
-    int val = (a * 7) + (b * 11) + 13;
-    val = val ^ 0x3C;
-    return val + 1;
+    __asm__ volatile("adds r0, r0, r1\n\t"
+                     "adds r0, #7\n\t"
+                     "lsls r0, r0, #1\n\t"
+                     "subs r0, #23\n\t"
+                     "bx lr");
 }
 
 static int hook_math_add(int a, int b)
@@ -152,30 +164,6 @@ static int hook_auto_square(int x)
     return orig + 1000;
 }
 
-typedef int (*open_fn_t)(const char *, int, ...);
-static open_fn_t s_orig_flash_open = 0;
-static volatile int s_hook_flash_open_called = 0;
-
-static __attribute__((unused)) int hook_flash_open(const char *path, int flags, ...)
-{
-    s_hook_flash_open_called++;
-    if (s_orig_flash_open) {
-        return s_orig_flash_open(path, flags);
-    }
-    return -1;
-}
-
-typedef int (*clock_gt_fn_t)(uint32_t, void *);
-static clock_gt_fn_t s_orig_clock_gt = 0;
-static volatile int s_hook_fpb_called = 0;
-
-static __attribute__((unused)) int hook_clock_gt(uint32_t clk_id, void *ts)
-{
-    s_hook_fpb_called++;
-    int orig = s_orig_clock_gt(clk_id, ts);
-    return orig == 0 ? 999 : -999;
-}
-
 static void run_hook_tests(const struct canopus_context_v1 *ctx)
 {
     int ok = 1;
@@ -192,7 +180,7 @@ static void run_hook_tests(const struct canopus_context_v1 *ctx)
     volatile int arg_a = 2;
     volatile int arg_b = 3;
 
-    int before_val = fn_math(arg_a, arg_b); /* 60 ^ 60 + 1 = 1 */
+    int before_val = fn_math(arg_a, arg_b);
     if (before_val != 1) ok = 0;
 
     hook_id = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
@@ -269,29 +257,29 @@ static void run_hook_tests(const struct canopus_context_v1 *ctx)
     }
     log_test("Hook: boundary check & duplicate hook defense", ok);
 
-    /* 1.5 Flash function hooking via Corona-style RAM slot redirection */
+    /* 1.5 Owner-registered dispatch mapping using module-owned code and RAM. */
     ok = 1;
-    static uintptr_t s_mock_driver_slot = 0x1C057C51u;
-    uintptr_t mock_flash_fn = 0x0C1651B0u; /* Flash ROM function address */
+    static uintptr_t s_mock_driver_slot = (uintptr_t)test_square;
+    uintptr_t mock_fn = (uintptr_t)test_square;
 
-    if (ctx->hook->register_slot_map) {
-        if (ctx->hook->register_slot_map(ctx, mock_flash_fn, (uintptr_t)&s_mock_driver_slot) != CANOPUS_SVC_OK) ok = 0;
-    }
+    if (!ctx->hook->register_slot_map ||
+        ctx->hook->register_slot_map(ctx, mock_fn, (uintptr_t)&s_mock_driver_slot) != CANOPUS_SVC_OK) ok = 0;
 
-    hook_id = ctx->hook->install(ctx, mock_flash_fn,
-                                 (uintptr_t)hook_flash_open, (uintptr_t *)&s_orig_flash_open,
+    hook_id = ctx->hook->install(ctx, mock_fn,
+                                 (uintptr_t)hook_square, (uintptr_t *)&s_orig_ptr_target,
                                  CANOPUS_HOOK_AUTO);
     if (hook_id < 0) ok = 0;
-    if (ctx->hook->is_hooked(ctx, mock_flash_fn) != 1) ok = 0;
-    if (s_mock_driver_slot != (uintptr_t)hook_flash_open) ok = 0;
-    if ((uintptr_t)s_orig_flash_open != 0x1C057C51u) ok = 0;
+    if (ctx->hook->is_hooked(ctx, mock_fn) != 1) ok = 0;
+    if (s_mock_driver_slot != (uintptr_t)hook_square) ok = 0;
+    if ((uintptr_t)s_orig_ptr_target != (uintptr_t)test_square) ok = 0;
+    if (((int (*)(int))s_mock_driver_slot)(5) != 525) ok = 0;
 
     un_rc = ctx->hook->uninstall(ctx, hook_id);
     if (un_rc != CANOPUS_SVC_OK) ok = 0;
-    if (ctx->hook->is_hooked(ctx, mock_flash_fn) != 0) ok = 0;
-    if (s_mock_driver_slot != 0x1C057C51u) ok = 0;
+    if (ctx->hook->is_hooked(ctx, mock_fn) != 0) ok = 0;
+    if (s_mock_driver_slot != (uintptr_t)test_square) ok = 0;
 
-    log_test("Hook: Corona Flash hook via RAM slot redirection", ok);
+    log_test("Hook: registered function redirects mock RAM slot", ok);
 }
 
 /* ========================================================================= */
@@ -304,6 +292,10 @@ static void run_kv_tests(const struct canopus_context_v1 *ctx)
     char sbuf[32];
 
     if (!ctx->kv) { log_test("KV: object missing", 0); return; }
+    int32_t previous_boot = ctx->kv->get_int(ctx, "boot_probe", 0);
+    if (previous_boot != 0 && previous_boot != 1) ok = 0;
+    if (previous_boot == 1 && ctx->fs &&
+        ctx->fs->write_all(ctx, "kv_reboot.txt", "KV_REBOOT_PASS\n", 15u) != 15) ok = 0;
 
     /* Integer */
     if (ctx->kv->set_int(ctx, "k_int", 987654) != CANOPUS_SVC_OK) ok = 0;
@@ -327,8 +319,9 @@ static void run_kv_tests(const struct canopus_context_v1 *ctx)
     if (ctx->kv->clear(ctx) != CANOPUS_SVC_OK) ok = 0;
     canopus_memset(sbuf, 0, sizeof(sbuf));
     if (ctx->kv->get_string(ctx, "k_str", sbuf, sizeof(sbuf)) >= 0) ok = 0;
+    if (ctx->kv->set_int(ctx, "boot_probe", 1) != CANOPUS_SVC_OK) ok = 0;
 
-    log_test("KV: set/get/fallback for int, string, bool & clear", ok);
+    log_test("KV: roundtrip, clear & persistent reboot probe", ok);
 }
 
 /* ========================================================================= */
@@ -496,7 +489,9 @@ static void run_system_and_time_tests(const struct canopus_context_v1 *ctx)
     /* Verify get_property callable */
     char prop_buf[32];
     int32_t prc = ctx->system->get_property(ctx, "system.target", prop_buf, sizeof(prop_buf));
-    (void)prc;
+    if (prc != CANOPUS_SVC_OK && prc != CANOPUS_SVC_ERR_NOTFOUND &&
+        prc != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+    if (prc == CANOPUS_SVC_OK && canopus_strcmp(prop_buf, target) != 0) ok = 0;
 
     log_test("System: target, module, model, version, uptime, battery, property & reboot ptr", ok);
 
@@ -509,11 +504,16 @@ static void run_system_and_time_tests(const struct canopus_context_v1 *ctx)
 
     ctx->time->sleep_ms(ctx, 10);
     uint32_t t2 = ctx->time->monotonic_ms(ctx);
-    if (t2 < t1) ok = 0;
+    if ((uint32_t)(t2 - t1) < 10u) ok = 0;
+    log_test("Time: clocks & sleep duration", ok);
+    ok = 1;
 
-    /* Real timer scheduling verification */
     s_timer_test_fired = 0;
     int32_t tid = ctx->time->timer_create(ctx, 2, 1, test_timer_cb, 0);
+    if (tid == CANOPUS_SVC_ERR_UNSUPPORTED) {
+        log_skip("Timers: no approved platform event source");
+        return;
+    }
     if (tid < 0) ok = 0;
     if (ctx->time->timer_start(ctx, tid) != CANOPUS_SVC_OK) ok = 0;
     ctx->time->sleep_ms(ctx, 15);
@@ -521,7 +521,7 @@ static void run_system_and_time_tests(const struct canopus_context_v1 *ctx)
     if (ctx->time->timer_stop(ctx, tid) != CANOPUS_SVC_OK) ok = 0;
     if (ctx->time->timer_destroy(ctx, tid) != CANOPUS_SVC_OK) ok = 0;
 
-    log_test("Time: monotonic clock, realtime, sleep_ms & active timer dispatch", ok);
+    log_test("Timers: callback dispatch, stop & destroy", ok);
 }
 
 /* ========================================================================= */
@@ -631,13 +631,18 @@ static void run_bus_bt_log_notify_tests(const struct canopus_context_v1 *ctx)
     } else {
         ok = 0;
     }
+    log_test("Log: multi-level logger API calls", ok);
     if (ctx->notify) {
-        if (ctx->notify->post(ctx, "Title", "Body") != CANOPUS_SVC_OK) ok = 0;
-        if (ctx->notify->post_with_icon(ctx, "Title", "Body", 1, 1) != CANOPUS_SVC_OK) ok = 0;
+        int32_t post_rc = ctx->notify->post(ctx, "Title", "Body");
+        int32_t icon_rc = ctx->notify->post_with_icon(ctx, "Title", "Body", 1, 1);
+        if (post_rc == CANOPUS_SVC_ERR_UNSUPPORTED && icon_rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
+            log_skip("Notify: platform notifications unavailable");
+        } else {
+            log_test("Notify: platform API acceptance", post_rc == CANOPUS_SVC_OK && icon_rc == CANOPUS_SVC_OK);
+        }
     } else {
-        ok = 0;
+        log_skip("Notify: service absent");
     }
-    log_test("Log & Notify: multi-level logger and popup notification", ok);
 }
 
 /* ========================================================================= */
@@ -675,7 +680,8 @@ static void run_ui_builder_tests(const struct canopus_context_v1 *ctx)
     if (rc != CANOPUS_UI_OK) ok = 0;
 
     uint32_t caps = ctx->ui->capabilities(&ui_ctx);
-    (void)caps;
+    if ((caps & (CANOPUS_UI_CAP_EXTENDED_COMPONENTS | CANOPUS_UI_CAP_VALUES)) !=
+        (CANOPUS_UI_CAP_EXTENDED_COMPONENTS | CANOPUS_UI_CAP_VALUES)) ok = 0;
 
     /* Test tree abort */
     struct canopus_ui_tree_v1 *abort_tree = 0;
@@ -755,7 +761,7 @@ static void run_ui_builder_tests(const struct canopus_context_v1 *ctx)
         if (s_test_snapshot.generation != 1) ok = 0;
     }
 
-    log_test("UI: declarative tree builder with extended widget catalog", ok);
+    log_test("UI: declarative builder using snapshot test backend", ok);
 }
 
 /* ========================================================================= */
@@ -775,6 +781,7 @@ static int32_t test_activate(const struct canopus_context_v1 *ctx)
     s_ctx = ctx;
     s_pass_count = 0;
     s_fail_count = 0;
+    s_skip_count = 0;
     s_report_len = 0;
     s_report_buf[0] = '\0';
 
@@ -807,10 +814,13 @@ static int32_t test_activate(const struct canopus_context_v1 *ctx)
     format_u32(num_buf, s_pass_count);
     report_append(num_buf);
     report_append("/");
-    format_u32(num_buf, s_pass_count + s_fail_count);
+    format_u32(num_buf, s_pass_count + s_fail_count + s_skip_count);
     report_append(num_buf);
     report_append(" PASSED, FAILS=");
     format_u32(num_buf, s_fail_count);
+    report_append(num_buf);
+    report_append(", SKIPS=");
+    format_u32(num_buf, s_skip_count);
     report_append(num_buf);
     report_append("\n========================================\n");
 
@@ -837,14 +847,18 @@ static int32_t test_activate(const struct canopus_context_v1 *ctx)
     /* Write summary into probe.txt */
     char summary[64];
     char *sp = summary;
-    const char *tag = s_fail_count == 0 ? "ALL_TESTS_PASS:" : "TESTS_FAILED:";
+    const char *tag = s_fail_count == 0 ? "TESTS_COMPLETE:" : "TESTS_FAILED:";
     while (*tag) *sp++ = *tag++;
     char n1[16], n2[16];
     format_u32(n1, s_pass_count);
-    format_u32(n2, s_pass_count + s_fail_count);
+    format_u32(n2, s_pass_count + s_fail_count + s_skip_count);
     for (int k = 0; n1[k]; k++) *sp++ = n1[k];
     *sp++ = '/';
     for (int k = 0; n2[k]; k++) *sp++ = n2[k];
+    tag = " SKIPS=";
+    while (*tag) *sp++ = *tag++;
+    format_u32(n1, s_skip_count);
+    for (int k = 0; n1[k]; k++) *sp++ = n1[k];
     *sp++ = '\n';
 
     if (ctx->fs && ctx->fs->write_all) {

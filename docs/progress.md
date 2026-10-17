@@ -10,6 +10,14 @@
 
 本文档是轻量索引，不与上述权威表重复。任何"预计通过"不得写成"已通过"。
 
+## 原生投递能力边界（2026-10-17）
+
+- 原生 `.canopus` CPC2 分块暂存、回执校验与 host 测试：host implemented。
+- .043 / .155 SRAM L2 回调与加密 ABI：static recovered；`CANOPUS_EXPERIMENTAL_L2=1` 才启用。双 owner 后端将 UI 命令处理与 Bluetooth 任务的响应发送分开，避免跨 NuttX task-group 写蓝牙 fd。
+- Band 11 `.155`：生产安装器 bootstrap、真实 AstroBox core 加密 L2 原生 `.canopus` 安装与模块列表查询已在 Mirage 通过（2026-10-17，仅 emulator 证据）。待打包目录已同步实验后端；默认构建仍为 UNSUPPORTED。`.043` 的独立原生安装已通过，但完整 fresh-device smoke 的 phone flow 尚未闭环。
+- 相关符号保持 restricted / PENDING / not_probed；没有提升为 device verified 或 production approved。
+- 快应用容器、快应用目录和列表管理方案已撤销；历史验证记录不作为新数据面证据。
+
 ## 阶段状态
 
 | Phase | 状态 | 备注 |

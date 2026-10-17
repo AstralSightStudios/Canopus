@@ -1,7 +1,27 @@
 # Mirage 模拟器工作流与需求清单
 
-## 现状（P6.1/P6.2/P6.5）
-- `canopus emu smoke`（= `python3 -u scripts/emu/smoke.py`）：Band 10 Pro 3.101.043 上的安装→启用→重启→更新→降级被拒→加载失败回退→回滚，以及手机端 `.rpk` 流程（真实 AstroBox 核心经模拟器蓝牙）。缺 Mirage/固件时退出码 77。
+## 当前原生投递边界（2026-10-17）
+
+模块不再使用 RPK 或快应用安装。当前 smoke 脚本以 `.canopus` 打包，通过桥的
+`install kind=canopus` 使用与 AstroBox 相同的 core 客户端发送加密 CPC2 请求。
+旧快应用模拟器结果只是历史，不是新数据面通过的证据。
+
+脚本仅在实验构建中设置 `CANOPUS_EXPERIMENTAL_L2=1`（.043 / .155）。
+这不批准任何私有符号，也不升级真机能力状态。脚本默认使用独立设备名，
+可用 `CANOPUS_SMOKE_DEVICE` 指定专用测试实例；该实例会被重建，请勿指定个人设备。
+
+### 本轮实际结果
+
+- 043 收件箱安装、升级、降级拒绝、坏版本回退与回滚：通过。
+- 155 生产安装器原生 bootstrap：`result=0`；本地 `/dev/canopus` 查询与 SCAN：通过。
+- 155 加密 L2 原生 `.canopus` 安装与模块列表查询：**通过**。真实 AstroBox core 在约 453 ms 内完成 `hello_portable` 安装，列表返回 slot0/state3/version1/activationError0；本地 SCAN result=5/count=1。
+- 043 独立加密 L2 原生安装已通过；完整 fresh-device smoke 的 phone flow 仍存在超时，尚未全部闭环。
+- 旧 LVGL heartbeat 在熄屏后停止，现只用于引导独立 UI libuv timer；回复通过第二个 Bluetooth libuv timer 发送，避免 UI task-group 写蓝牙任务 fd 的 EBADF。
+- `.155` 待打包目录此前是默认无 L2 后端的构建：本地 bootstrap result=0，但 AstroBox 超时。现已用 `CANOPUS_EXPERIMENTAL_L2=1` 同步重建 Supervisor、CRC profile 和 stage1/stage2；默认构建仍不含实验后端。
+- 编译后的 ARM SRAM shim 在 Unicorn 模型中通过；它不覆盖真实持续调度行为。
+
+## 工作流（P6.1/P6.2/P6.5）
+- `canopus emu smoke`（= `python3 -u scripts/emu/smoke.py`）：Band 10 Pro 3.101.043 上的安装→启用→重启→更新→降级被拒→加载失败回退→回滚，以及手机端原生 `.canopus` / 加密 CPC2 流程（真实 AstroBox 核心经模拟器蓝牙）。缺 Mirage/固件时退出码 77。
 - 环境变量：`MIRAGECTL`、`CANOPUS_FW_OTA_DIR`、`MAB_SMOKE`（AstroBox 桥）。结果只算 host/emulator 级证据。
 - 日志在设备目录 `Logs/` 下（console.log、uart*.log、qemu.log）；`miragectl sh` 与 GUI 互斥。
 
@@ -57,7 +77,7 @@ Facetory 的编辑器导出路径里有对应概念（`facetory.editor.file` 的
 要让 Lua 表盘在模拟器里跑起来，需要 Facetory 一侧提供带布局元素的 Lua 表盘导出，或手工构造包含 File 元素的布局。运行期日志在启动后不再写入 console.log，无法旁证。
 
 
-## Band 11 端到端（2026-10-14，已跑通 155）
+## 历史 Band 11 端到端（2026-10-14，旧投递方案已撤销）
 `python3 scripts/emu/band11_smoke.py 155`（`177` 同理）：真实 AstroBox 核心经模拟器蓝牙装入**未改动的生产安装器表盘** → 点 Run →
 原生加载器加载 Supervisor（`bootstrap-result.txt: result=0`）→ 经桥投递 hello-portable 的 `.rpk` → 第二个表盘（`scripts/emu/band11/e2e_scan.lua`）
 通过 `/dev/canopus` 发 SCAN（结果 5=COMPLETED），`count=1`、模块进入 slot0（state 3），inbox 里出现 `hello_portable.cmi/.ko`。仅模拟器级证据。

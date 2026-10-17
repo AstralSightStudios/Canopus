@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.l2_owner_timer_init",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "l2_owner_timer_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c3f0934",
+  "callable_address": "0x0c3f0935",
+  "prototype": "int(void *loop, void *timer)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {"allowed": ["target-private-ui-owner"], "blocking": false},
+  "proof": {"static": "confirmed", "device": "not_probed", "evidence_ids": []},
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [],
+    "source": "Exact IDB uv_timer_init; native init caller 0xc7e9c8c-0xc7e9c90 uses loop *0x200c36b8; evidence/l2-sram-probe.json owner_source"
+  },
+  "approval_state": "PENDING",
+  "notes": "Experimental L2 only. Owner-only mutation of handle list. Resident 88-byte, 8-byte-aligned timer; unlike .043 this build has no 48-byte libuv backtrace field. No thread creation/work queue, no production approval."
+}
