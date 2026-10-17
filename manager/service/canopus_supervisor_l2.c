@@ -251,18 +251,6 @@ int canopus_sup_l2_start(void)
     return s_timer != 0 ? 0 : CANOPUS_SVC_ERR_NOMEM;
 }
 
-/* A MiWear companion link exists while the SAR connection list is non-empty. */
-int sup_l2_connected(void *cookie)
-{
-    volatile uint32_t *head = (volatile uint32_t *)(uintptr_t)L2_PROBE_CONNECTIONS;
-    uint32_t mask = l2_lock();
-    volatile uint32_t *first = (volatile uint32_t *)(uintptr_t)head[1];
-    int up = first != 0 && first != head;
-    (void)cookie;
-    l2_unlock(mask);
-    return up;
-}
-
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len)
 {
     (void)cookie;
@@ -277,11 +265,6 @@ void canopus_sup_l2_poll(void) {}
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len)
 {
     (void)cookie; (void)channel; (void)payload; (void)len;
-    return CANOPUS_SVC_ERR_UNSUPPORTED;
-}
-int sup_l2_connected(void *cookie)
-{
-    (void)cookie;
     return CANOPUS_SVC_ERR_UNSUPPORTED;
 }
 #endif

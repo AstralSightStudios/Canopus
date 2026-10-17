@@ -4,7 +4,7 @@
  * firmware : 4.100.155 (user-4.100.155-cn-202609041500)
  * sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
  * revision : 1
- * input_digest: 2f3e14eebaecf61b
+ * input_digest: 8f3b0f3e4d7a70b2
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
@@ -441,6 +441,7 @@ static inline int * canopus_fw_errno_location(void) {
  * service_manager_startup: restricted - not exported until context/ownership approved
  * sport_titlebar_dispatch: restricted - not exported until context/ownership approved
  * stat: restricted - not exported until context/ownership approved
+ * system_get_state: restricted - not exported until context/ownership approved
  * system_router_app_wrapper: restricted - not exported until context/ownership approved
  * system_router_get_pages_wrapper: restricted - not exported until context/ownership approved
  * thirdparty_submit_message_content: restricted - not exported until context/ownership approved

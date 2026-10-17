@@ -37,8 +37,10 @@ void canopus_manager_target_render_diagnostics(uint8_t out[36]);
 int canopus_manager_native_install(void);
 int canopus_manager_native_notify_module_installed(void);
 /* Post a notification attributed to `source` with a caller-supplied title and
- * body (copied by the firmware synchronously). Returns 0 on success, negative
- * on failure. */
-int canopus_manager_native_notify(const char *source, const char *title, const char *body);
+ * body (copied by the firmware synchronously). `icon` is the absolute path of
+ * the small/large icon image, or NULL for the Canopus icon. Returns 0 on
+ * success, negative on failure. */
+int canopus_manager_native_notify(const char *source, const char *title, const char *body,
+                                  const char *icon);
 
 #endif

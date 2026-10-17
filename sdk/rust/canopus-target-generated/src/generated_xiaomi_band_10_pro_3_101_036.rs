@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: 3990b7d59cb839d7
+// input_digest: 79f413ca52260358
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -265,6 +265,9 @@ pub const CANOPUS_FW_SERVICE_MANAGER_STARTUP_CALLABLE: usize = canopus_thumb_cal
 
 /// Recovered `bt_buffer_new` at 0x0C7D29F4. Thumb callable address 0x0C7D29F5.
 pub const CANOPUS_FW_BT_BUFFER_NEW_CALLABLE: usize = canopus_thumb_callable(0x0C7D29F5usize);
+
+/// Recovered global `system_state` at 0x20109c30.
+pub const canopus_fw_system_state: usize = 0x20109c30usize;
 
 /// Recovered `bt_free` at 0x0C828508. Thumb callable address 0x0C828509.
 pub const CANOPUS_FW_BT_FREE_CALLABLE: usize = canopus_thumb_callable(0x0C828509usize);
@@ -1022,6 +1025,9 @@ pub const CANOPUS_FW_WAKELOCK_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered global `style_misans_regular_24` at 0x20109E1C.
 pub const canopus_fw_style_misans_regular_24: usize = 0x20109E1Cusize;
 
+/// Recovered `system_get_state` at 0x0c49e050. Thumb callable address 0x0c49e051.
+pub const CANOPUS_FW_SYSTEM_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0c49e051usize);
+
 /// Recovered `interconnect_send` at 0x0C2D2184. Thumb callable address 0x0C2D2185.
 pub const CANOPUS_FW_INTERCONNECT_SEND_CALLABLE: usize = canopus_thumb_callable(0x0C2D2185usize);
 #[allow(non_snake_case)]
@@ -1127,6 +1133,7 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // sport_titlebar_dispatch: FORBIDDEN - no binding may ever be generated
 // sport_titlebar_lifecycle_reset: FORBIDDEN - no binding may ever be generated
 // stat: restricted - not exported until context/ownership approved
+// system_get_state: restricted - not exported until context/ownership approved
 // system_router_app_wrapper: FORBIDDEN - no binding may ever be generated
 // system_router_get_pages_wrapper: FORBIDDEN - no binding may ever be generated
 // system_router_page_record_wrapper: FORBIDDEN - no binding may ever be generated

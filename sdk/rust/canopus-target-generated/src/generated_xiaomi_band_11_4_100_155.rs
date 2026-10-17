@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 2f3e14eebaecf61b
+// input_digest: 8f3b0f3e4d7a70b2
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -696,6 +696,9 @@ pub const CANOPUS_FW_WRITE_CALLABLE: usize = canopus_thumb_callable(0xc33dc4fusi
 /// Recovered `read` at 0xc33d784. Thumb callable address 0xc33d785.
 pub const CANOPUS_FW_READ_CALLABLE: usize = canopus_thumb_callable(0xc33d785usize);
 
+/// Recovered `system_get_state` at 0x0c4fd818. Thumb callable address 0x0c4fd819.
+pub const CANOPUS_FW_SYSTEM_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0c4fd819usize);
+
 /// Recovered global `font_reload_freetype_context_slot` at 0x200bd3ec.
 pub const canopus_fw_font_reload_freetype_context_slot: usize = 0x200bd3ecusize;
 
@@ -854,6 +857,9 @@ pub const CANOPUS_FW_BT_ADAPTER_UNREGISTER_CALLABLE: usize = canopus_thumb_calla
 
 /// Recovered `lvx_style_apply` at 0xc4fbe54. Thumb callable address 0xc4fbe55.
 pub const CANOPUS_FW_LVX_STYLE_APPLY_CALLABLE: usize = canopus_thumb_callable(0xc4fbe55usize);
+
+/// Recovered global `system_state` at 0x200c1d0c.
+pub const canopus_fw_system_state: usize = 0x200c1d0cusize;
 
 /// Recovered `sdp_set_raw_attribute` at 0xc86f130. Thumb callable address 0xc86f131.
 pub const CANOPUS_FW_SDP_SET_RAW_ATTRIBUTE_CALLABLE: usize = canopus_thumb_callable(0xc86f131usize);
@@ -1120,6 +1126,7 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // service_manager_startup: restricted - not exported until context/ownership approved
 // sport_titlebar_dispatch: restricted - not exported until context/ownership approved
 // stat: restricted - not exported until context/ownership approved
+// system_get_state: restricted - not exported until context/ownership approved
 // system_router_app_wrapper: restricted - not exported until context/ownership approved
 // system_router_get_pages_wrapper: restricted - not exported until context/ownership approved
 // thirdparty_submit_message_content: restricted - not exported until context/ownership approved

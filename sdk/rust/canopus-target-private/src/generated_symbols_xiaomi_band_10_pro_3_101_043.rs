@@ -2112,6 +2112,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(int)",
     },
     TargetPrivateSymbolRecord {
+        name: "system_get_state",
+        kind: "function",
+        entry: 0xc4bed68usize,
+        callable: 0xc4bed69usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint32_t *(uint32_t out[2], int state_id)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "system_state",
+        kind: "global",
+        entry: 0x2010cc58usize,
+        callable: 0x2010cc58usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint8_t *",
+    },
+    TargetPrivateSymbolRecord {
         name: "lv_bar_create",
         kind: "function",
         entry: 0xc0c21d8usize,
@@ -2790,6 +2808,9 @@ pub const SERVICE_MANAGER_SHUTDOWN_ENTRY: usize = 0xc3bdce8usize;
 pub const SERVICE_MANAGER_SHUTDOWN_CALLABLE: usize = 0xc3bdce9usize;
 pub const SERVICE_MANAGER_STARTUP_ENTRY: usize = 0xc3bdc24usize;
 pub const SERVICE_MANAGER_STARTUP_CALLABLE: usize = 0xc3bdc25usize;
+pub const SYSTEM_GET_STATE_ENTRY: usize = 0xc4bed68usize;
+pub const SYSTEM_GET_STATE_CALLABLE: usize = 0xc4bed69usize;
+pub const SYSTEM_STATE_ENTRY: usize = 0x2010cc58usize;
 pub const LV_BAR_CREATE_ENTRY: usize = 0xc0c21d8usize;
 pub const LV_BAR_CREATE_CALLABLE: usize = 0xc0c21d9usize;
 pub const LV_BAR_SET_RANGE_ENTRY: usize = 0xc5883d8usize;

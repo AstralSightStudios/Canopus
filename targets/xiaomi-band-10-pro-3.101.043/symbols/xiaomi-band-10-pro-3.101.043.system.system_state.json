@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.system.system_state",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "system_state",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2010cc58",
+  "prototype": "uint8_t *",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1043-001"
+    ],
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64 (PowerManager, MiWearScreen, vibrator HAL client and property library review)"
+  },
+  "notes": "Pointer to the system_all_state struct, NULL until system_init_state runs. Byte +1 is the MiWear connection state and byte +2 the Bluetooth ACL state (update_from_bt_state), 1 down / 2 up. Read-only. Static evidence only, device NOT_PROBED."
+}

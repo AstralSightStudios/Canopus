@@ -245,11 +245,14 @@ static void advance_time(uint32_t ms)
 }
 static int g_notified;
 static char g_notice[160];
-static int p_notify(void *c, const char *source, const char *title, const char *body)
+static char g_notice_icon[96];
+static int p_notify(void *c, const char *source, const char *title, const char *body,
+                    const char *icon)
 {
     (void)c;
     g_notified++;
     snprintf(g_notice, sizeof(g_notice), "%s|%s|%s", source, title, body);
+    snprintf(g_notice_icon, sizeof(g_notice_icon), "%s", icon != 0 ? icon : "");
     return 0;
 }
 static int g_heap_live;
@@ -282,10 +285,9 @@ static int p_restore_brightness(void *c) { (void)c; g_brightness_set = -1; g_bri
 static int p_get_brightness(void *c, uint32_t *pct) { (void)c; *pct = 40u; return 0; }
 
 static uint32_t g_lock_depth[CANOPUS_WAKELOCK_MAX];
-static int p_wakelock_acquire(void *c, uint32_t index, uint32_t flags)
+static int p_wakelock_acquire(void *c, uint32_t index)
 {
     (void)c;
-    if ((flags & CANOPUS_WAKELOCK_SCREEN) == 0u) return -38;
     g_lock_depth[index]++;
     return 0;
 }
@@ -819,7 +821,6 @@ TEST(service_objects_are_exposed_and_functional)
                  CANOPUS_SVC_ERR_UNSUPPORTED);
     }
     CHECK_EQ(ctx->bt->is_connected(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
-    CHECK_EQ(ctx->bt->get_rssi(ctx), CANOPUS_BT_RSSI_UNKNOWN);
     CHECK_EQ(ctx->bt->adapter_state(ctx), CANOPUS_BT_ADAPTER_UNKNOWN);
     CHECK_EQ(ctx->bt->l2_register_rx(ctx, 0x44u, 0, 0), CANOPUS_SVC_ERR_UNSUPPORTED);
 }
@@ -1102,7 +1103,7 @@ TEST(fs_reaches_any_path_but_canopus_state_and_keeps_modules_apart)
     CHECK_EQ(ctx->fs->close(ctx, h), CANOPUS_SVC_OK);
 }
 
-TEST(notify_carries_the_caller_title_and_never_fakes_icons_or_haptics)
+TEST(notify_carries_the_caller_title_and_icon_path_and_never_fakes_haptics)
 {
     struct canopus_supervisor_v1 sup;
     const struct canopus_context_v1 *ctx;
@@ -1122,20 +1123,29 @@ TEST(notify_carries_the_caller_title_and_never_fakes_icons_or_haptics)
     CHECK_EQ(strlen(g_notice), strlen("mod.portable|") + CANOPUS_NOTIFY_TITLE_MAX + strlen("|b"));
     canopus_supervisor_release_services(&sup, 0u);
 
-    /* icons have no stock table: refused before anything is posted or shaken */
+    /* the icon is an absolute image path read under the filesystem rules;
+     * every refusal happens before anything is posted or shaken */
     g_notified = 0;
-    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", 7u, 1), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->fs->write_all(ctx, "/data/app/./icon.bin", "img", 3), 3);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", "icon.bin", 1), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", "/data/app/none.bin", 1), CANOPUS_SVC_ERR_NOTFOUND);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", "/data/app", 1), CANOPUS_SVC_ERR_ISDIR);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", "/data/canopus/manager_icon.bin", 1), CANOPUS_SVC_ERR_ACCESS);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", "/data/x/../../..", 1), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(g_notified, 0);
     CHECK_EQ(g_vib_count, 0);
-    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", 0u, 1), CANOPUS_SVC_OK);
-    CHECK_EQ(g_notified, 1);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", "/data/app//icon.bin", 0), CANOPUS_SVC_OK);
+    CHECK(strcmp(g_notice_icon, "/data/app/icon.bin") == 0);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", 0, 1), CANOPUS_SVC_OK);
+    CHECK(strcmp(g_notice_icon, "") == 0);
+    CHECK_EQ(g_notified, 2);
     CHECK_EQ(g_vib_count, 1);
     CHECK_EQ(g_vib_ms[0], 100u);
     /* a refused vibration is reported, the notification still went out */
     g_vib_rc = -16;
-    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", 0u, 1), CANOPUS_NOTIFY_HAPTIC_SKIPPED);
-    CHECK_EQ(g_notified, 2);
-    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", 0u, 0), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", "", 1), CANOPUS_NOTIFY_HAPTIC_SKIPPED);
+    CHECK_EQ(g_notified, 3);
+    CHECK_EQ(ctx->notify->post_with_icon(ctx, "t", "b", 0, 0), CANOPUS_SVC_OK);
 }
 
 TEST(haptics_play_one_vibration_at_a_time_and_report_the_motor_result)
@@ -1243,9 +1253,10 @@ TEST(display_reports_screen_state_holds_owned_wake_locks_and_restores_brightness
     /* wake locks: ids are owner-checked, bounded, and die with the module */
     CHECK_EQ(ctx->display->acquire_wake_lock(ctx, 0u), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->display->acquire_wake_lock(ctx, 8u), CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK_EQ(ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_CPU), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->display->acquire_wake_lock(ctx, 2u), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->display->acquire_wake_lock(ctx, 3u), CANOPUS_SVC_ERR_ARGUMENT);
     for (i = 0u; i < CANOPUS_WAKELOCK_PER_MODULE; i++) {
-        ids[i] = ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_SCREEN | CANOPUS_WAKELOCK_CPU);
+        ids[i] = ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_SCREEN);
         CHECK(ids[i] > 0);
     }
     CHECK_EQ(ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_SCREEN), CANOPUS_SVC_ERR_BUSY);
@@ -1326,9 +1337,10 @@ TEST(system_and_bluetooth_report_platform_values_or_unknown)
     CHECK_EQ(ctx->bt->is_connected(ctx), 1);
     g_bt_link = 0;
     CHECK_EQ(ctx->bt->is_connected(ctx), 0);
+    g_bt_link = -16; /* the firmware has not reported the link yet */
+    CHECK_EQ(ctx->bt->is_connected(ctx), CANOPUS_SVC_ERR_STATE);
     g_bt_link = -38;
     CHECK_EQ(ctx->bt->is_connected(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
-    CHECK_EQ(ctx->bt->get_rssi(ctx), CANOPUS_BT_RSSI_UNKNOWN); /* no stock source */
 }
 
 static int g_l2_rx_calls;
@@ -1505,8 +1517,8 @@ static struct test_registry supervisor_services_tests[] = {
       register_is_rejected_outside_the_loading_window_wrapper },
     { "fs_reaches_any_path_but_canopus_state_and_keeps_modules_apart",
       fs_reaches_any_path_but_canopus_state_and_keeps_modules_apart_wrapper },
-    { "notify_carries_the_caller_title_and_never_fakes_icons_or_haptics",
-      notify_carries_the_caller_title_and_never_fakes_icons_or_haptics_wrapper },
+    { "notify_carries_the_caller_title_and_icon_path_and_never_fakes_haptics",
+      notify_carries_the_caller_title_and_icon_path_and_never_fakes_haptics_wrapper },
     { "haptics_play_one_vibration_at_a_time_and_report_the_motor_result",
       haptics_play_one_vibration_at_a_time_and_report_the_motor_result_wrapper },
     { "display_reports_screen_state_holds_owned_wake_locks_and_restores_brightness",

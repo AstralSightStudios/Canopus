@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 7
-// input_digest: d345f92e88f3cf2f
+// input_digest: fdc9e724be29399d
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -590,6 +590,9 @@ pub unsafe fn canopus_fw_lvx_object_set_size(a0: *mut core::ffi::c_void, a1: i32
 /// Recovered `lv_display_get_vertical_resolution` at 0x0c13cd74. Thumb callable address 0x0c13cd75.
 pub const CANOPUS_FW_LV_DISPLAY_GET_VERTICAL_RESOLUTION_CALLABLE: usize = canopus_thumb_callable(0x0c13cd75usize);
 
+/// Recovered global `system_state` at 0x2010cc58.
+pub const canopus_fw_system_state: usize = 0x2010cc58usize;
+
 /// Recovered `devif_poll` at 0xc1f9688. Thumb callable address 0xc1f9689.
 pub const CANOPUS_FW_DEVIF_POLL_CALLABLE: usize = canopus_thumb_callable(0xc1f9689usize);
 #[allow(non_snake_case)]
@@ -865,6 +868,9 @@ pub const CANOPUS_FW_MODHANDLE_CALLABLE: usize = canopus_thumb_callable(0xc203a6
 
 /// Recovered `lv_image_decoder_get_info` at 0x0c143798. Thumb callable address 0x0c143799.
 pub const CANOPUS_FW_LV_IMAGE_DECODER_GET_INFO_CALLABLE: usize = canopus_thumb_callable(0x0c143799usize);
+
+/// Recovered `system_get_state` at 0x0c4bed68. Thumb callable address 0x0c4bed69.
+pub const CANOPUS_FW_SYSTEM_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0c4bed69usize);
 
 /// Recovered `launcher_scroll` at 0x0c517d9c. Thumb callable address 0x0c517d9d.
 pub const CANOPUS_FW_LAUNCHER_SCROLL_CALLABLE: usize = canopus_thumb_callable(0x0c517d9dusize);
@@ -1569,6 +1575,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // sport_titlebar_dispatch: FORBIDDEN - no binding may ever be generated
 // sport_titlebar_lifecycle_reset: FORBIDDEN - no binding may ever be generated
 // stat: restricted - not exported until context/ownership approved
+// system_get_state: restricted - not exported until context/ownership approved
 // system_router_app_wrapper: FORBIDDEN - no binding may ever be generated
 // system_router_get_pages_wrapper: FORBIDDEN - no binding may ever be generated
 // system_router_page_record_wrapper: FORBIDDEN - no binding may ever be generated

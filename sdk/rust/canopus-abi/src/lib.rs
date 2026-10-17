@@ -126,7 +126,6 @@ pub const HAPTIC_ALERT: u32 = 4;
 pub const HAPTIC_TICK: u32 = 5;
 
 pub const WAKELOCK_SCREEN: u32 = 1;
-pub const WAKELOCK_CPU: u32 = 2;
 
 pub const SCREEN_OFF: u32 = 0;
 pub const SCREEN_AOD: u32 = 1;
@@ -136,7 +135,6 @@ pub const SCREEN_ON: u32 = 2;
 pub const DISPLAY_BRIGHTNESS_UNKNOWN: u32 = 0xFFFF_FFFF;
 pub const SYSTEM_BATTERY_UNKNOWN: u32 = 0xFFFF_FFFF;
 pub const BT_ADAPTER_UNKNOWN: u32 = 0xFFFF_FFFF;
-pub const BT_RSSI_UNKNOWN: i32 = i32::MIN;
 pub const BT_ADAPTER_OFF: u32 = 0;
 pub const BT_ADAPTER_ON: u32 = 4;
 
@@ -245,7 +243,7 @@ pub struct CanopusLogObj {
 #[repr(C)]
 pub struct CanopusNotifyObj {
     pub post: unsafe extern "C" fn(ctx: *const ContextV1, title: *const c_char, body: *const c_char) -> i32,
-    pub post_with_icon: unsafe extern "C" fn(ctx: *const ContextV1, title: *const c_char, body: *const c_char, icon_id: u32, vibrate: i32) -> i32,
+    pub post_with_icon: unsafe extern "C" fn(ctx: *const ContextV1, title: *const c_char, body: *const c_char, icon_path: *const c_char, vibrate: i32) -> i32,
 }
 
 #[repr(C)]
@@ -268,7 +266,6 @@ pub struct CanopusBluetoothObj {
     pub l2_send: unsafe extern "C" fn(ctx: *const ContextV1, channel: u8, payload: *const c_void, len: u16) -> i32,
     pub l2_register_rx: unsafe extern "C" fn(ctx: *const ContextV1, channel: u8, cb: CbL2Rx, user_data: *mut c_void) -> i32,
     pub is_connected: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
-    pub get_rssi: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
     pub adapter_state: unsafe extern "C" fn(ctx: *const ContextV1) -> u32,
 }
 

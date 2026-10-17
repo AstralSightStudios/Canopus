@@ -20,7 +20,7 @@
 
 ## 平台硬件服务边界（2026-10-18）
 
-- 原先的占位实现已移除：亮度恒 100、息屏状态恒亮、振动忽略时长、电量恒 85、蓝牙恒已连接且 RSSI −55、唤醒锁无归属、
+- 原先的占位实现已移除：亮度恒 100、息屏状态恒亮、振动忽略时长、电量恒 85、蓝牙恒已连接、唤醒锁无归属、
   `l2_register_rx` 只保存不派发、通知忽略标题。现在每个钩子要么调用 exact-target 的固件入口，要么为空并返回
   `UNSUPPORTED` / 文档化的"未知"值。
 - 文件服务补全：绝对路径任意读写，只保护 Canopus 自己的状态（`/data/canopus`、`/dev/canopus`、`/canopus`，不区分大小写、先规整再判断）；
@@ -32,7 +32,8 @@
   MiWearScreen、vibrator、property、`mkdir` 入口，证据 `EVID-PLATFORM-HW-*`。.036/.139 由 .043/.155 的函数体匹配得到。
   Band 11 .177 无镜像，新增入口全部为空钩子。
 - 未提升任何能力状态：没有 device verified，也没有 production approved；本机没有 Mirage 与 OTA 包，未做模拟器运行。
-- `get_rssi` 无固件来源，`is_connected` 只有带 L2 后端的 .043/.155 能回答；仅 CPU 的唤醒锁和通知图标表未做。
+- `get_rssi` 与仅 CPU 的唤醒锁已从 ABI 移除；`is_connected` 改读固件 `system_all_state` 的 MiWear 链路状态（.036/.043/.139/.155，
+  .177 无镜像为 `UNSUPPORTED`）；通知图标改为调用方传入的绝对路径（`post_with_icon` 的 `icon_path`）。
 
 ## 阶段状态
 

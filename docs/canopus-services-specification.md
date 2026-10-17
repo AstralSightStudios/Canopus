@@ -202,8 +202,7 @@ struct canopus_haptics_obj {
 ### 2.6 `ctx->display` — 屏幕背光、防息屏 WakeLock 与分辨率 (Display)
 
 ```c
-#define CANOPUS_WAKELOCK_SCREEN 1u   /* 保持手环屏幕常亮 */
-#define CANOPUS_WAKELOCK_CPU    2u   /* 保持 CPU 处于高频工作状态 */
+#define CANOPUS_WAKELOCK_SCREEN 1u   /* 保持手环屏幕常亮（唯一的锁类型） */
 
 struct canopus_display_obj {
     uint32_t (*get_brightness)(const struct canopus_context_v1 *ctx);
@@ -223,8 +222,8 @@ struct canopus_display_obj {
 - `wake_screen` 以固件 wake-lock 路径使用的来源 26 调用固件的 `screen_turn_on`，是"请求亮屏"，不保证返回时已亮。
 - 唤醒锁由固件 PowerManager 的 wakelock（level 6，保持亮屏）实现，Supervisor 为每把锁保留一个原生对象并复用：
   `acquire_wake_lock` 返回正的锁 ID（带代数，旧 ID 失效后不会误释放新锁）；只能释放自己的锁（否则 `ERR_ARGUMENT`）；
-  每个模块最多 4 把、全局最多 8 把（超出 `ERR_BUSY`）；模块卸载时全部释放。`WAKELOCK_SCREEN` 才有固件机制，
-  单独的 `WAKELOCK_CPU` 返回 `ERR_UNSUPPORTED`，`CPU|SCREEN` 被接受（亮屏时 CPU 本就保持唤醒）。该锁不会主动点亮已熄灭的屏幕，需要时先调用 `wake_screen`。
+  每个模块最多 4 把、全局最多 8 把（超出 `ERR_BUSY`）；模块卸载时全部释放。`lock_flags` 只能是 `WAKELOCK_SCREEN`，
+  其余取值（含 0）返回 `ERR_ARGUMENT`。该锁不会主动点亮已熄灭的屏幕，需要时先调用 `wake_screen`。
 
 ---
 
@@ -307,8 +306,8 @@ struct canopus_hook_obj {
     同一通道只能一个模块持有（他人 `ERR_BUSY`），传 NULL 回调撤销，模块卸载时自动撤销。没有 L2 后端的目标返回 `ERR_UNSUPPORTED`。
     它与 Supervisor 的 CPC2 管理通信是两条独立路径。
   - `adapter_state`：固件蓝牙栈的适配器状态（0 关闭、4 开启，其余为过渡态），读不到为 `CANOPUS_BT_ADAPTER_UNKNOWN`
-  - `is_connected`：存在 MiWear 配套链路时为 1，否则 0，目标无法判断时为负值（仅有 L2 后端的目标能判断）
-  - `get_rssi`：目前没有固件来源，恒为 `CANOPUS_BT_RSSI_UNKNOWN(INT32_MIN)`，不再返回固定的 −55 dBm
+  - `is_connected`：读固件 `system_all_state` 的 MiWear 链路状态——手机配套链路在线为 1，断开为 0；固件还没上报时为
+    `ERR_STATE`，目标没有该入口（Band 11 .177）为 `ERR_UNSUPPORTED`。`bt` 状态事件的 `link` 字节同源
 
 ### 2.10 硬件服务的固件来源与验证状态
 
@@ -328,14 +327,24 @@ haptics / display / 唤醒锁 / 电量 / 属性 / 蓝牙状态不再有占位实
 | 属性 | `property_get`、`property_get_int32` | 同 |
 | 目录创建/同步/状态 | `mkdir`、`fsync`、`stat` | 同 |
 | 蓝牙适配器状态 | `bt_adapter_get_instance` + `bt_adapter_get_state` | `bt_shared_adapter` + `bt_adapter_get_state`（.177 也有） |
+| MiWear 链路 | `system_get_state(out, 1)` + 全局 `system_state` | 同 |
+| 通知图标 | `lvx_notification_insert_message` 的 `small/large_icon_path` | 同一消息结构（`lvx_notification_insert_message`） |
 
+- **MiWear 链路**：`system_all_state` 的指针全局在 `system_init_state` 之前为 NULL，此时固件的 getter 在 Band 10 Pro 上死循环、
+  在 Band 11 上 panic，所以 Supervisor 先读指针，为空就返回 `ERR_STATE`，不调用 getter。getter 的状态 id 1 读结构体偏移 +1
+  （`update_from_bt_state` 写入：2 在线、1 断开、0 未上报；偏移 +2 是 bt_acl，另一路）。
+- **通知图标**：`post_with_icon(ctx, title, body, icon_path, vibrate)` 的 `icon_path` 是图片文件的绝对路径（`NULL`/`""` 为 Canopus 图标）；
+  格式必须是固件能解码的 LVGL v9 ARGB8888 `.bin`（与 `/data/canopus/manager_icon.bin` 相同）。读取规则同文件服务：相对路径 `ERR_ARGUMENT`、
+  Canopus 自己的状态 `ERR_ACCESS`、不存在 `ERR_NOTFOUND`、目录 `ERR_ISDIR`，任何拒绝都发生在发布通知与振动之前。
+  Band 10 Pro .043 的消息复制函数（`0xCA9A254`）经静态审阅会逐字符串复制标题、来源、正文与两个图标路径（超过 512 字节截断），
+  所以调用方的缓冲区无需长期有效；Band 11 以 unicorn 加真实固件验证过默认图标路径被写入消息节点，自定义路径没有单独运行验证。图片内容本身不做校验。
 - **Band 11 .177**：本仓库没有其固件镜像，无法对新增入口做静态核对，所以除蓝牙适配器状态（该记录原本就是 STATIC_RECOVERED）外
-  全部保持空钩子（`ERR_UNSUPPORTED`）。取得 exact 镜像后再按 `EVID-PLATFORM-HW-*` 的方法补充。
+  全部保持空钩子（`ERR_UNSUPPORTED`，`is_connected` 也一样）。取得 exact 镜像后再按 `EVID-PLATFORM-HW-*` 的方法补充。
 - **证据等级**：全部为 `STATIC_RECOVERED` / `restricted` / `approval_state: PENDING`，`device: not_probed`；
   .036 与 .139 的地址由 .043 与 .155 的已审阅函数体做"屏蔽分支与 PC 相对指令后的整体指令匹配"得到（镜像内唯一），
   MiWearScreen/PowerManager 的 `__func__` 字符串交叉引用互相印证。证据见各 target 的 `evidence/EVID-PLATFORM-HW-<ver>-001.json`。
   这些入口随普通构建默认包含（K16），默认包含不等于设备已验证或生产批准。
-- **未覆盖**：`get_rssi`、非 L2 后端目标上的 `is_connected`、仅 CPU 的唤醒锁、通知图标表。它们明确返回不支持或未知，而不是成功。
+- **已移除**：`get_rssi`（没有稳定的固件来源）与仅 CPU 的唤醒锁，不再出现在 ABI 里。
 
 ---
 

@@ -99,10 +99,11 @@ struct canopus_sup_platform_v1 {
     void *(*heap_realloc)(void *cookie, void *ptr, uint32_t size);
     void (*heap_release)(void *cookie, void *ptr);
     /* Post a user-visible notification attributed to `source` (the posting
-     * module's id) with the caller's `title`. Returns 0 on success. Optional:
-     * without it the NOTIFY service group is absent. */
+     * module's id) with the caller's `title`. `icon` is the absolute path of
+     * the icon image, or NULL for the Canopus icon. Returns 0 on success.
+     * Optional: without it the NOTIFY service group is absent. */
     int (*notify)(void *cookie, const char *source, const char *title,
-                  const char *body);
+                  const char *body, const char *icon);
     int (*reboot)(void *cookie);
     /* Every hardware hook below is optional. A target without a recovered
      * firmware entry point leaves it NULL and the service answers UNSUPPORTED
@@ -123,20 +124,19 @@ struct canopus_sup_platform_v1 {
     /* 0 off, 1 always-on display, 2 on. */
     int (*screen_state)(void *cookie);
     /* Wake locks: `index` names one of CANOPUS_WAKELOCK_MAX Supervisor slots
-     * (the platform keeps one native lock object per index and reuses it);
-     * `flags` are CANOPUS_WAKELOCK_*. release undoes exactly one acquire. */
-    int (*wakelock_acquire)(void *cookie, uint32_t index, uint32_t flags);
+     * (the platform keeps one native lock object per index and reuses it).
+     * release undoes exactly one acquire. */
+    int (*wakelock_acquire)(void *cookie, uint32_t index);
     int (*wakelock_release)(void *cookie, uint32_t index);
     /* Battery: STATE until the firmware has reported both values. */
     int (*battery_state)(void *cookie, uint32_t *percent, int *charging);
     /* System property read. Copies at most max_len - 1 bytes plus NUL and
      * returns the copied length, or NOTFOUND when the key is absent. */
     int (*get_property)(void *cookie, const char *key, char *buf, uint32_t max_len);
-    /* Bluetooth: stock adapter state, whether a MiWear companion link exists
-     * (0/1) and the link RSSI. */
+    /* Bluetooth: stock adapter state and whether a MiWear companion link
+     * exists (0/1; BUSY until the firmware has reported it). */
     int (*bt_adapter_state)(void *cookie, uint32_t *state);
     int (*bt_is_connected)(void *cookie);
-    int (*bt_rssi)(void *cookie, int32_t *dbm);
     /* Start a boot-resident event source on the serialized module/UI task.
      * It must keep calling poll after module activation returns. No source
      * means timer_create returns UNSUPPORTED; no worker may invoke UI callbacks. */
@@ -149,7 +149,6 @@ struct canopus_sup_platform_v1 {
 int canopus_sup_l2_start(void);
 void canopus_sup_l2_poll(void);
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len);
-int sup_l2_connected(void *cookie);
 
 #ifdef __cplusplus
 }

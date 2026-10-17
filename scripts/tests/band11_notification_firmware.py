@@ -19,7 +19,7 @@ import unittest
 
 from band11_arm_bootstrap import Machine, ROOT, RES, TARGET
 from unicorn import UC_HOOK_CODE, UcError
-from unicorn.arm_const import UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_PC
+from unicorn.arm_const import UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3, UC_ARM_REG_PC
 
 INSERT = 0x0c8f2bb0
 
@@ -231,6 +231,7 @@ class NotificationTests(unittest.TestCase):
         for _ in range(2):
             m.uc.reg_write(UC_ARM_REG_R1, title)
             m.uc.reg_write(UC_ARM_REG_R2, body)
+            m.uc.reg_write(UC_ARM_REG_R3, 0)
             self.assertEqual(m.call(native_symbol(m, 'canopus_manager_native_notify'), source), 0)
         self.assertEqual(len(fw.events), 2)
         self.assertEqual(len(fw.reminders), 2)

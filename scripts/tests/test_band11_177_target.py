@@ -20,6 +20,7 @@ EXACT_155_ONLY = {
     'screen_session_set_auto_brightness', 'screen_session_set_brightness_value',
     'screen_session_restore_default', 'vibrator_run', 'vibrator_cancel',
     'property_get', 'property_get_int32', 'mkdir', 'fsync', 'stat',
+    'system_get_state', 'system_state',
 }
 
 

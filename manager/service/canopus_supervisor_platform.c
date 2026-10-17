@@ -1386,10 +1386,11 @@ static void sup_heap_release(void *cookie, void *ptr)
 #ifdef CANOPUS_SUP_HEADLESS
 #define SUP_NOTIFY 0
 #else
-static int sup_notify(void *cookie, const char *source, const char *title, const char *body)
+static int sup_notify(void *cookie, const char *source, const char *title, const char *body,
+                      const char *icon)
 {
     (void)cookie;
-    return canopus_manager_native_notify(source, title, body);
+    return canopus_manager_native_notify(source, title, body, icon);
 }
 #define SUP_NOTIFY sup_notify
 #endif
@@ -1484,14 +1485,12 @@ static int sup_wake_screen(void *cookie)
 static void *s_wakelock_object[CANOPUS_WAKELOCK_MAX];
 static const char s_wakelock_tag[] = "canopus";
 
-static int sup_wakelock_acquire(void *cookie, uint32_t index, uint32_t flags)
+static int sup_wakelock_acquire(void *cookie, uint32_t index)
 {
     typedef void *(*create_fn)(uint32_t level_and_flags, const char *tag);
     typedef void (*lock_fn)(void *wakelock);
     (void)cookie;
     if (index >= CANOPUS_WAKELOCK_MAX) return SUP_EINVAL;
-    /* A CPU-only hold has no stock mechanism; the screen lock keeps the CPU up. */
-    if ((flags & CANOPUS_WAKELOCK_SCREEN) == 0u) return SUP_ENOSYS;
     if (s_wakelock_object[index] == 0) {
         s_wakelock_object[index] = ((create_fn)(uintptr_t)CANOPUS_SUP_WAKELOCK_CREATE)(
             SUP_WAKELOCK_LEVEL_KEEP_ON, s_wakelock_tag);
@@ -1755,6 +1754,30 @@ static int sup_bt_adapter_state(void *cookie, uint32_t *state)
 #define SUP_BT_ADAPTER_STATE 0
 #endif
 
+/* MiWear companion link: the stock system_all_state keeps it at byte +1 (0 not
+ * reported yet, 1 down, 2 up). The getter spins forever (Band 10 Pro) or
+ * panics (Band 11) before system_init_state sets the state pointer, so the
+ * pointer is checked first. */
+#if defined(CANOPUS_SUP_SYSTEM_GET_STATE) && defined(CANOPUS_SUP_SYSTEM_STATE)
+#define SUP_SYSTEM_STATE_MIWEAR_LINK 1
+static int sup_bt_is_connected(void *cookie)
+{
+    typedef uint32_t *(*get_state_fn)(uint32_t out[2], int state_id);
+    uint32_t out[2];
+    (void)cookie;
+    if (*(void *volatile *)(uintptr_t)CANOPUS_SUP_SYSTEM_STATE == 0) return SUP_EBUSY;
+    (void)((get_state_fn)(uintptr_t)CANOPUS_SUP_SYSTEM_GET_STATE)(out, SUP_SYSTEM_STATE_MIWEAR_LINK);
+    switch (out[0] & 0xFFu) {
+    case 1u: return 0;
+    case 2u: return 1;
+    default: return SUP_EBUSY;
+    }
+}
+#define SUP_BT_IS_CONNECTED sup_bt_is_connected
+#else
+#define SUP_BT_IS_CONNECTED 0
+#endif
+
 #if !defined(CANOPUS_SUP_CUSTOM_LOADER) && !defined(CANOPUS_SUP_HEADLESS)
 static void *s_service_timer;
 static void (*s_service_timer_poll)(void *);
@@ -1829,8 +1852,7 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     SUP_BATTERY_STATE,
     SUP_GET_PROPERTY,
     SUP_BT_ADAPTER_STATE,
-    sup_l2_connected,
-    0, /* bt_rssi: no recovered stock source */
+    SUP_BT_IS_CONNECTED,
     SUP_TIMER_PUMP,
     sup_l2_send,
     sup_validate_receipt,

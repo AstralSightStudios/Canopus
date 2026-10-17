@@ -4,7 +4,7 @@
 // firmware : 4.100.139 (user-4.100.139-cn-202608280000)
 // sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
 // revision : 2
-// input_digest: a4d9947aaf8af14a
+// input_digest: 7a9fb10c2aa5ee77
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -429,6 +429,9 @@ pub const CANOPUS_FW_WAKELOCK_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `bt_free` at 0xc34cd2c. Thumb callable address 0xc34cd2d.
 pub const CANOPUS_FW_BT_FREE_CALLABLE: usize = canopus_thumb_callable(0xc34cd2dusize);
 
+/// Recovered global `system_state` at 0x200c1d0c.
+pub const canopus_fw_system_state: usize = 0x200c1d0cusize;
+
 /// Recovered `lv_obj_set_hidden` at 0xc721318. Thumb callable address 0xc721319.
 pub const CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE: usize = canopus_thumb_callable(0xc721319usize);
 
@@ -593,6 +596,9 @@ pub const CANOPUS_FW_HAL_CACHE_SYNC_CALLABLE: usize = canopus_thumb_callable(0xc
 
 /// Recovered `lv_obj_update_layout` at 0xc384c4c. Thumb callable address 0xc384c4d.
 pub const CANOPUS_FW_LV_OBJ_UPDATE_LAYOUT_CALLABLE: usize = canopus_thumb_callable(0xc384c4dusize);
+
+/// Recovered `system_get_state` at 0x0c4fd818. Thumb callable address 0x0c4fd819.
+pub const CANOPUS_FW_SYSTEM_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0c4fd819usize);
 
 /// Recovered `modhandle` at 0xc36dd44. Thumb callable address 0xc36dd45.
 pub const CANOPUS_FW_MODHANDLE_CALLABLE: usize = canopus_thumb_callable(0xc36dd45usize);
@@ -1259,6 +1265,7 @@ pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_CALLABLE: usize = canop
 // service_manager_startup: restricted - not exported until context/ownership approved
 // sport_titlebar_dispatch: restricted - not exported until context/ownership approved
 // stat: restricted - not exported until context/ownership approved
+// system_get_state: restricted - not exported until context/ownership approved
 // system_router_app_wrapper: restricted - not exported until context/ownership approved
 // system_router_get_pages_wrapper: restricted - not exported until context/ownership approved
 // thirdparty_submit_message_content: restricted - not exported until context/ownership approved

@@ -19,6 +19,8 @@
     "screen_state",
     "screen_turn_on",
     "stat",
+    "system_get_state",
+    "system_state",
     "vibrator_cancel",
     "vibrator_run",
     "wakelock_acquire",
@@ -30,7 +32,8 @@
     "PowerManager wakelock_create accepts only level 6 and 26 (invalid levelAndFlags log); the stock alarm and sport apps use it as a screen keep-on lock.",
     "MiWearScreen __func__ strings screen_turn_on, screen_session_{create,start,stop,set_brightness_value,set_auto_brightness,restore_default} each map to one function through string cross-references.",
     "Stock brightness: apply_brightness_settings arbitrates active sessions; the user setting clamps to 31..255 and persists as persist.screen.brightness_value.",
-    "Bluetooth adapter state compares against 0 (off) and 4 (on) in stock code; bt_adapter_get_state is already a recovered symbol."
+    "Bluetooth adapter state compares against 0 (off) and 4 (on) in stock code; bt_adapter_get_state is already a recovered symbol.",
+    "system_state.c update_from_bt_state writes state[1] = 2 when the MiWear connection is up (else 1) and state[2] = 2 when the Bluetooth ACL is up (else 1); the control-center status bar shows phone_conn.bin for 2 and phone_disconn.bin for 0, so 0 means not yet reported."
   ],
   "control_flow_evidence": [
     "exact 4.100.155 IDB vela_ap.bin.i64 (PowerManager, MiWearScreen, miwear_vibrator library and property library review)"

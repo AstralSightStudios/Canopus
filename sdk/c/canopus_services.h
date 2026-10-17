@@ -16,7 +16,7 @@
  *   ctx->display : Brightness control, wake locks, screen on/off & metrics
  *   ctx->bus     : Inter-module & system pub/sub event bus
  *   ctx->system  : Device model, firmware identity, battery, and reboot
- *   ctx->bt      : WearPacket Layer 2 transport, companion app connectivity & RSSI
+ *   ctx->bt      : WearPacket Layer 2 transport, companion app connectivity
  *   ctx->log     : Categorized structured logging
  *   ctx->notify  : User-visible notification popups & alerts
  */
@@ -148,10 +148,12 @@ struct canopus_fs_dirent {
 #define CANOPUS_NOTIFY_MAX_POSTS 8u
 /* The notification shows the caller's title (the module id when it is NULL or
  * empty) and always names the posting module as its source. The stock
- * notification path has no icon table: icon_id must be 0 (the Canopus icon),
- * any other value is UNSUPPORTED. post_with_icon returns
- * CANOPUS_NOTIFY_HAPTIC_SKIPPED when the notification was posted but the
- * requested vibration could not be performed. */
+ * icon of post_with_icon is the absolute path of an image file (NULL or "" is
+ * the Canopus icon): the stock LVGL v9 ARGB8888 .bin format, readable under
+ * the same rules as ctx->fs (ACCESS for Canopus state, NOTFOUND when missing,
+ * ISDIR for a directory, ARGUMENT for a relative path). post_with_icon
+ * returns CANOPUS_NOTIFY_HAPTIC_SKIPPED when the notification was posted but
+ * the requested vibration could not be performed. */
 #define CANOPUS_NOTIFY_HAPTIC_SKIPPED 1
 
 /* -------------------------------------------------------------------------- */
@@ -193,14 +195,13 @@ typedef enum canopus_hook_type {
 /* -------------------------------------------------------------------------- */
 
 #define CANOPUS_WAKELOCK_SCREEN 1u
-#define CANOPUS_WAKELOCK_CPU    2u
 
 /* Wake locks are owned by the acquiring module: release_wake_lock accepts only
  * the module's own ids, an unloading module loses its locks and the screen
- * lock is reference counted by the firmware. SCREEN keeps the screen on (and
- * therefore the CPU); CPU on its own has no stock mechanism and is
- * UNSUPPORTED, CPU|SCREEN is accepted. At most CANOPUS_WAKELOCK_MAX locks
- * exist, CANOPUS_WAKELOCK_PER_MODULE per module (BUSY beyond that). */
+ * lock is reference counted by the firmware. SCREEN is the only lock type and
+ * keeps the screen on (and therefore the CPU); any other flags are ARGUMENT.
+ * At most CANOPUS_WAKELOCK_MAX locks exist, CANOPUS_WAKELOCK_PER_MODULE per
+ * module (BUSY beyond that). */
 #define CANOPUS_WAKELOCK_MAX        8u
 #define CANOPUS_WAKELOCK_PER_MODULE 4u
 
@@ -236,8 +237,9 @@ struct canopus_context_v1;
 
 /* bt: adapter_state is the stock Bluetooth stack's state (0 off, 4 on, others
  * are transitions) or CANOPUS_BT_ADAPTER_UNKNOWN. is_connected is 1 while a
- * MiWear companion link exists, 0 when none, negative when this target cannot
- * tell. get_rssi is in dBm or CANOPUS_BT_RSSI_UNKNOWN (no stock source yet).
+ * MiWear companion link is up and 0 when it is down (the stock system state);
+ * negative when the firmware has not reported it yet (STATE) or this target
+ * cannot tell (UNSUPPORTED).
  * l2_register_rx accepts channels CANOPUS_BT_MODULE_CHANNEL_FIRST..LAST except
  * the Supervisor's control channel 0x43; a registered channel's encrypted
  * frames are delivered to the callback on the module/UI task instead of the
@@ -245,7 +247,6 @@ struct canopus_context_v1;
 #define CANOPUS_BT_ADAPTER_OFF     0u
 #define CANOPUS_BT_ADAPTER_ON      4u
 #define CANOPUS_BT_ADAPTER_UNKNOWN UINT32_C(0xFFFFFFFF)
-#define CANOPUS_BT_RSSI_UNKNOWN    INT32_MIN
 #define CANOPUS_BT_MODULE_CHANNEL_FIRST 0x40u
 #define CANOPUS_BT_MODULE_CHANNEL_LAST  0x4Fu
 
@@ -357,7 +358,7 @@ struct canopus_log_obj {
 
 struct canopus_notify_obj {
     int32_t (*post)(const struct canopus_context_v1 *ctx, const char *title, const char *body);
-    int32_t (*post_with_icon)(const struct canopus_context_v1 *ctx, const char *title, const char *body, uint32_t icon_id, int vibrate);
+    int32_t (*post_with_icon)(const struct canopus_context_v1 *ctx, const char *title, const char *body, const char *icon_path, int vibrate);
 };
 
 struct canopus_system_obj {
@@ -378,7 +379,6 @@ struct canopus_bluetooth_obj {
     int32_t  (*l2_send)(const struct canopus_context_v1 *ctx, uint8_t channel, const void *payload, uint16_t len);
     int32_t  (*l2_register_rx)(const struct canopus_context_v1 *ctx, uint8_t channel, canopus_l2_rx_callback_t cb, void *user_data);
     int      (*is_connected)(const struct canopus_context_v1 *ctx);
-    int32_t  (*get_rssi)(const struct canopus_context_v1 *ctx);
     uint32_t (*adapter_state)(const struct canopus_context_v1 *ctx);
 };
 

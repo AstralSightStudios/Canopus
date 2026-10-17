@@ -1382,9 +1382,7 @@ static int32_t svc_display_acquire_wake_lock(const struct canopus_context_v1 *ct
     uint32_t i, owned = 0u, free_index = CANOPUS_WAKELOCK_MAX;
     int32_t rc;
     if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
-    if (lock_flags == 0u || (lock_flags & ~(CANOPUS_WAKELOCK_SCREEN | CANOPUS_WAKELOCK_CPU)) != 0u) {
-        return CANOPUS_SVC_ERR_ARGUMENT;
-    }
+    if (lock_flags != CANOPUS_WAKELOCK_SCREEN) return CANOPUS_SVC_ERR_ARGUMENT;
     if (s_sup->platform == 0 || s_sup->platform->wakelock_acquire == 0 ||
         s_sup->platform->wakelock_release == 0) {
         return CANOPUS_SVC_ERR_UNSUPPORTED;
@@ -1399,7 +1397,7 @@ static int32_t svc_display_acquire_wake_lock(const struct canopus_context_v1 *ct
     if (owned >= CANOPUS_WAKELOCK_PER_MODULE || free_index == CANOPUS_WAKELOCK_MAX) {
         return CANOPUS_SVC_ERR_BUSY;
     }
-    rc = svc_errno(s_sup->platform->wakelock_acquire(s_sup->platform_cookie, free_index, lock_flags));
+    rc = svc_errno(s_sup->platform->wakelock_acquire(s_sup->platform_cookie, free_index));
     if (rc < 0) return rc;
     s_wakelocks[free_index].used = 1u;
     s_wakelocks[free_index].slot = (uint8_t)ctx->slot;
@@ -1618,9 +1616,9 @@ static void svc_copy_bounded(char *out, uint32_t cap, const char *text)
 }
 
 /* The module id is always the notification's source; a missing or empty title
- * shows the id as well. */
+ * shows the id as well. `icon` is a resolved absolute path or NULL. */
 static int32_t svc_notify_send(const struct canopus_context_v1 *ctx, const char *title,
-                               const char *body)
+                               const char *body, const char *icon)
 {
     char text[CANOPUS_NOTIFY_BODY_MAX + 1u];
     char head[CANOPUS_NOTIFY_TITLE_MAX + 1u];
@@ -1635,7 +1633,7 @@ static int32_t svc_notify_send(const struct canopus_context_v1 *ctx, const char 
     svc_copy_bounded(text, CANOPUS_NOTIFY_BODY_MAX, body);
     svc_copy_bounded(head, CANOPUS_NOTIFY_TITLE_MAX,
                      title != 0 && title[0] != '\0' ? title : source);
-    rc = s_sup->platform->notify(s_sup->platform_cookie, source, head, text);
+    rc = s_sup->platform->notify(s_sup->platform_cookie, source, head, text, icon);
     if (rc != 0) return svc_errno(rc < 0 ? rc : CANOPUS_SVC_ERR_IO);
     s_notify_posts[ctx->slot]++;
     return CANOPUS_SVC_OK;
@@ -1643,24 +1641,33 @@ static int32_t svc_notify_send(const struct canopus_context_v1 *ctx, const char 
 
 static int32_t svc_notify_post(const struct canopus_context_v1 *ctx, const char *body)
 {
-    return svc_notify_send(ctx, 0, body);
+    return svc_notify_send(ctx, 0, body, 0);
 }
 
 static int32_t svc_notify_post_obj(const struct canopus_context_v1 *ctx,
                                    const char *title, const char *body)
 {
-    return svc_notify_send(ctx, title, body);
+    return svc_notify_send(ctx, title, body, 0);
 }
 
 static int32_t svc_notify_post_with_icon(const struct canopus_context_v1 *ctx,
                                         const char *title, const char *body,
-                                        uint32_t icon_id, int vibrate)
+                                        const char *icon_path, int vibrate)
 {
+    struct svc_fs_path icon;
+    struct canopus_fs_stat st;
     int32_t rc;
-    if (icon_id != 0u) {
-        return svc_slot_valid(ctx) ? CANOPUS_SVC_ERR_UNSUPPORTED : CANOPUS_SVC_ERR_STATE;
+    if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
+    if (icon_path != 0 && icon_path[0] != '\0') {
+        if (icon_path[0] != '/') return CANOPUS_SVC_ERR_ARGUMENT;
+        rc = svc_fs_stat(ctx, icon_path, &st);
+        if (rc != CANOPUS_SVC_OK) return rc;
+        if (st.is_dir) return CANOPUS_SVC_ERR_ISDIR;
+        (void)svc_fs_resolve(ctx, icon_path, &icon);
+    } else {
+        icon.path[0] = '\0';
     }
-    rc = svc_notify_send(ctx, title, body);
+    rc = svc_notify_send(ctx, title, body, icon.path[0] != '\0' ? icon.path : 0);
     if (rc != CANOPUS_SVC_OK || !vibrate) return rc;
     return svc_haptics_vibrate(ctx, 100u) == CANOPUS_SVC_OK ? CANOPUS_SVC_OK
                                                             : CANOPUS_NOTIFY_HAPTIC_SKIPPED;
@@ -1857,17 +1864,6 @@ static int svc_bt_is_connected(const struct canopus_context_v1 *ctx)
     return rc < 0 ? (int)svc_errno(rc) : (rc != 0 ? 1 : 0);
 }
 
-static int32_t svc_bt_get_rssi(const struct canopus_context_v1 *ctx)
-{
-    int32_t dbm;
-    (void)ctx;
-    if (s_sup == 0 || s_sup->platform == 0 || s_sup->platform->bt_rssi == 0 ||
-        s_sup->platform->bt_rssi(s_sup->platform_cookie, &dbm) != 0) {
-        return CANOPUS_BT_RSSI_UNKNOWN;
-    }
-    return dbm;
-}
-
 static uint32_t svc_bt_adapter_state(const struct canopus_context_v1 *ctx)
 {
     uint32_t state;
@@ -2036,7 +2032,6 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_bt_obj.l2_send = svc_bt_l2_send;
     s_bt_obj.l2_register_rx = svc_bt_l2_register_rx;
     s_bt_obj.is_connected = svc_bt_is_connected;
-    s_bt_obj.get_rssi = svc_bt_get_rssi;
     s_bt_obj.adapter_state = svc_bt_adapter_state;
 
     /* Haptics Object */

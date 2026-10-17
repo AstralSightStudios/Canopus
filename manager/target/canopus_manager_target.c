@@ -1853,7 +1853,8 @@ static struct band11_notification_context notify_contexts[BAND11_NOTIFY_RING];
 static uint32_t notify_counter;
 
 #endif /* CANOPUS_MGR_BAND11 */
-int canopus_manager_native_notify(const char *source, const char *title, const char *body)
+int canopus_manager_native_notify(const char *source, const char *title, const char *body,
+                                  const char *icon)
 {
 #ifndef CANOPUS_MGR_BAND11
     typedef int (*notification_insert_fn)(
@@ -1874,11 +1875,11 @@ int canopus_manager_native_notify(const char *source, const char *title, const c
 #endif /* CANOPUS_MGR_BAND11 */
     canopus_memset(&message, 0, sizeof(message));
 #ifndef CANOPUS_MGR_BAND11
-    message.small_icon_path = (void *)notification_icon;
-    message.large_icon_path = (void *)notification_icon;
+    message.small_icon_path = (void *)(icon != 0 ? icon : notification_icon);
+    message.large_icon_path = (void *)(icon != 0 ? icon : notification_icon);
 #else /* CANOPUS_MGR_BAND11 */
-    message.small_icon_path = (void *)launcher_icon;
-    message.large_icon_path = (void *)launcher_icon;
+    message.small_icon_path = (void *)(icon != 0 ? icon : launcher_icon);
+    message.large_icon_path = (void *)(icon != 0 ? icon : launcher_icon);
 #endif /* CANOPUS_MGR_BAND11 */
     message.start_reminder = 1u;
 #ifndef CANOPUS_MGR_BAND11

@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.system.system_get_state",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "system_get_state",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c4bed68",
+  "callable_address": "0x0c4bed69",
+  "prototype": "uint32_t *(uint32_t out[2], int state_id)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1043-001"
+    ],
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64 (PowerManager, MiWearScreen, vibrator HAL client and property library review)"
+  },
+  "notes": "system_all_state getter (get_connect_state/get_switch_state/...): zeroes out[0..1] then stores the state byte. id 1 is the MiWear connection (0 not reported, 1 down, 2 up). Spins forever (Band 10 Pro) or panics (Band 11) when system_init_state has not run, so the state pointer must be checked first. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+}

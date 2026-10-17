@@ -11,7 +11,7 @@
  *   7.  HAPTICS (vibrate, vibrate_pattern, vibrate_preset, cancel)
  *   8.  DISPLAY (get_brightness, set_brightness, is_screen_on, get_resolution, acquire_wake_lock, release_wake_lock, wake_screen)
  *   9.  BUS (subscribe, publish with synchronous event dispatch, unsubscribe)
- *   10. BLUETOOTH (is_connected, get_rssi, adapter_state, l2_register_rx, l2_send)
+ *   10. BLUETOOTH (is_connected, adapter_state, l2_register_rx, l2_send)
  *   11. LOG (info, warn, error, debug, write)
  *   12. NOTIFY (post, post_with_icon)
  *   13. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Slider, Checkbox, Divider)
@@ -620,7 +620,7 @@ static void run_haptics_and_display_tests(const struct canopus_context_v1 *ctx)
     } else {
         ok = lock > 0 && ctx->display->release_wake_lock(ctx, lock) == CANOPUS_SVC_OK &&
              ctx->display->release_wake_lock(ctx, lock) == CANOPUS_SVC_ERR_ARGUMENT &&
-             ctx->display->acquire_wake_lock(ctx, CANOPUS_WAKELOCK_CPU) == CANOPUS_SVC_ERR_UNSUPPORTED;
+             ctx->display->acquire_wake_lock(ctx, 2u) == CANOPUS_SVC_ERR_ARGUMENT;
         log_test("Display: owned wake lock acquire/release", ok);
     }
 
@@ -678,9 +678,8 @@ static void run_bus_bt_log_notify_tests(const struct canopus_context_v1 *ctx)
     if (ctx->bt) {
         /* Each value is the stack's own or explicitly unknown. */
         int link = ctx->bt->is_connected(ctx);
-        if (link != 0 && link != 1 && link != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
-        int32_t rssi = ctx->bt->get_rssi(ctx);
-        if (rssi != CANOPUS_BT_RSSI_UNKNOWN && rssi >= 0) ok = 0;
+        if (link != 0 && link != 1 && link != CANOPUS_SVC_ERR_STATE &&
+            link != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
         uint32_t adapter = ctx->bt->adapter_state(ctx);
         if (adapter != CANOPUS_BT_ADAPTER_UNKNOWN && adapter > 8u) ok = 0;
         /* 0x43 is the control channel; module channels are 0x40..0x4F. */
@@ -694,7 +693,7 @@ static void run_bus_bt_log_notify_tests(const struct canopus_context_v1 *ctx)
     } else {
         ok = 0;
     }
-    log_test("Bluetooth: status, RSSI, adapter state & L2 registration", ok);
+    log_test("Bluetooth: link, adapter state & L2 registration", ok);
 
     /* Log & Notify */
     ok = 1;
@@ -710,14 +709,17 @@ static void run_bus_bt_log_notify_tests(const struct canopus_context_v1 *ctx)
     log_test("Log: multi-level logger API calls", ok);
     if (ctx->notify) {
         int32_t post_rc = ctx->notify->post(ctx, "Title", "Body");
-        /* No stock icon table: only icon 0 is accepted. */
-        int32_t icon_rc = ctx->notify->post_with_icon(ctx, "Title", "Body", 1, 0);
+        /* The icon is an absolute image path read under the filesystem rules. */
+        int32_t rel_rc = ctx->notify->post_with_icon(ctx, "Title", "Body", "icon.bin", 0);
+        int32_t gone_rc = ctx->notify->post_with_icon(ctx, "Title", "Body", "/data/none/icon.bin", 0);
+        int32_t state_rc = ctx->notify->post_with_icon(ctx, "Title", "Body", "/data/canopus/manager_icon.bin", 0);
         int32_t haptic_rc = ctx->notify->post_with_icon(ctx, "Title", "Body", 0, 1);
-        if (post_rc == CANOPUS_SVC_ERR_UNSUPPORTED && icon_rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
+        if (post_rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
             log_skip("Notify: platform notifications unavailable");
         } else {
-            log_test("Notify: title, icon refusal & haptic result",
-                     post_rc == CANOPUS_SVC_OK && icon_rc == CANOPUS_SVC_ERR_UNSUPPORTED &&
+            log_test("Notify: title, icon path refusals & haptic result",
+                     post_rc == CANOPUS_SVC_OK && rel_rc == CANOPUS_SVC_ERR_ARGUMENT &&
+                     gone_rc == CANOPUS_SVC_ERR_NOTFOUND && state_rc == CANOPUS_SVC_ERR_ACCESS &&
                      (haptic_rc == CANOPUS_SVC_OK || haptic_rc == CANOPUS_NOTIFY_HAPTIC_SKIPPED));
         }
     } else {

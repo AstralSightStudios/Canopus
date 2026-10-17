@@ -4,7 +4,7 @@
  * firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
  * sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
  * revision : 5
- * input_digest: 3990b7d59cb839d7
+ * input_digest: 79f413ca52260358
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
@@ -562,6 +562,7 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * sport_titlebar_dispatch: FORBIDDEN - no veneer may ever be generated
  * sport_titlebar_lifecycle_reset: FORBIDDEN - no veneer may ever be generated
  * stat: restricted - not exported until context/ownership approved
+ * system_get_state: restricted - not exported until context/ownership approved
  * system_router_app_wrapper: FORBIDDEN - no veneer may ever be generated
  * system_router_get_pages_wrapper: FORBIDDEN - no veneer may ever be generated
  * system_router_page_record_wrapper: FORBIDDEN - no veneer may ever be generated

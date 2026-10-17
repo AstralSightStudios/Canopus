@@ -553,6 +553,16 @@ const SUP_10: &[Mapping] = &[
         symbol_name: "stat",
         address: Address::Callable,
     },
+    Mapping {
+        macro_name: "CANOPUS_SUP_SYSTEM_GET_STATE",
+        symbol_name: "system_get_state",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_SYSTEM_STATE",
+        symbol_name: "system_state",
+        address: Address::Entry,
+    },
 ];
 const SUP_9: &[Mapping] = &[
     Mapping {
