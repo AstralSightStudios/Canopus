@@ -543,6 +543,16 @@ const SUP_10: &[Mapping] = &[
         symbol_name: "mkdir",
         address: Address::Callable,
     },
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_FSYNC",
+        symbol_name: "fsync",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_STAT",
+        symbol_name: "stat",
+        address: Address::Callable,
+    },
 ];
 const SUP_9: &[Mapping] = &[
     Mapping {

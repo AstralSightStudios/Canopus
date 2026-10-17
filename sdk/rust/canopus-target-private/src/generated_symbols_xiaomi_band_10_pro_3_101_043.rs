@@ -555,6 +555,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(int, const char *, ...)",
     },
     TargetPrivateSymbolRecord {
+        name: "fsync",
+        kind: "function",
+        entry: 0xc1d2a7cusize,
+        callable: 0xc1d2a7dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(int fd)",
+    },
+    TargetPrivateSymbolRecord {
         name: "gethostbyname_r",
         kind: "function",
         entry: 0xc1e8e64usize,
@@ -805,6 +814,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "native-full-trust",
         prototype: "int(int, int, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "stat",
+        kind: "function",
+        entry: 0xc1d1e9cusize,
+        callable: 0xc1d1e9dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(const char *path, void *stat_buffer)",
     },
     TargetPrivateSymbolRecord {
         name: "unlink",
@@ -2443,6 +2461,8 @@ pub const ERRNO_LOCATION_ENTRY: usize = 0xc1e45bcusize;
 pub const ERRNO_LOCATION_CALLABLE: usize = 0xc1e45bdusize;
 pub const FIRMWARE_LOG_ENTRY: usize = 0xc1f0d20usize;
 pub const FIRMWARE_LOG_CALLABLE: usize = 0xc1f0d21usize;
+pub const FSYNC_ENTRY: usize = 0xc1d2a7cusize;
+pub const FSYNC_CALLABLE: usize = 0xc1d2a7dusize;
 pub const GETHOSTBYNAME_R_ENTRY: usize = 0xc1e8e64usize;
 pub const GETHOSTBYNAME_R_CALLABLE: usize = 0xc1e8e65usize;
 pub const HEAP_FREE_ENTRY: usize = 0xc1f8ff8usize;
@@ -2499,6 +2519,8 @@ pub const SETSOCKOPT_ENTRY: usize = 0xc1fdab4usize;
 pub const SETSOCKOPT_CALLABLE: usize = 0xc1fdab5usize;
 pub const SOCKET_ENTRY: usize = 0xc1cad34usize;
 pub const SOCKET_CALLABLE: usize = 0xc1cad35usize;
+pub const STAT_ENTRY: usize = 0xc1d1e9cusize;
+pub const STAT_CALLABLE: usize = 0xc1d1e9dusize;
 pub const UNLINK_ENTRY: usize = 0xc1d2354usize;
 pub const UNLINK_CALLABLE: usize = 0xc1d2355usize;
 pub const UNREGISTER_BLOCKDRIVER_ENTRY: usize = 0xc1b009cusize;

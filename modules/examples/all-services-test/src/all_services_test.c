@@ -389,19 +389,20 @@ static void run_fs_tests(const struct canopus_context_v1 *ctx)
 
     log_test("FS: write_all, read_all, stat, exists, rename, mkdir, remove", ok);
 
-    /* Shared roots, append mode and the missing-file error code */
+    /* Absolute paths, append mode, the missing-file code and protected state */
     ok = 1;
     if (ctx->fs->open(ctx, "absent.cfg", CANOPUS_FS_READ) != CANOPUS_SVC_ERR_NOTFOUND) ok = 0;
-    if (ctx->fs->open(ctx, "/data/app/canopus.probe", CANOPUS_FS_WRITE) != CANOPUS_SVC_ERR_ACCESS) ok = 0;
-    if (ctx->fs->write_all(ctx, "/data/canopus/shared/probe.txt", "ab", 2) != 2) ok = 0;
-    fd = ctx->fs->open(ctx, "/data/canopus/shared/probe.txt", CANOPUS_FS_WRITE | CANOPUS_FS_APPEND);
+    if (ctx->fs->open(ctx, "/data/canopus/registry.bin", CANOPUS_FS_READ) != CANOPUS_SVC_ERR_ACCESS) ok = 0;
+    if (ctx->fs->open(ctx, "/data/x/../canopus/registry.bin", CANOPUS_FS_WRITE) != CANOPUS_SVC_ERR_ACCESS) ok = 0;
+    if (ctx->fs->write_all(ctx, "/data/offlinelog/canopus_services_probe.txt", "ab", 2) != 2) ok = 0;
+    fd = ctx->fs->open(ctx, "/data/offlinelog/canopus_services_probe.txt", CANOPUS_FS_WRITE | CANOPUS_FS_APPEND);
     if (fd < 0 || ctx->fs->write(ctx, fd, "cd", 2) != 2) ok = 0;
     if (fd >= 0) ctx->fs->close(ctx, fd);
     canopus_memset(buf, 0, sizeof(buf));
-    if (ctx->fs->read_all(ctx, "/data/canopus/shared/probe.txt", buf, sizeof(buf)) != 4 ||
+    if (ctx->fs->read_all(ctx, "/data/offlinelog/canopus_services_probe.txt", buf, sizeof(buf)) != 4 ||
         canopus_strcmp(buf, "abcd") != 0) ok = 0;
-    if (ctx->fs->remove(ctx, "/data/canopus/shared/probe.txt") != 0) ok = 0;
-    log_test("FS: shared root, append, read-only root & NOTFOUND code", ok);
+    if (ctx->fs->remove(ctx, "/data/offlinelog/canopus_services_probe.txt") != 0) ok = 0;
+    log_test("FS: absolute path, append, protected Canopus state & NOTFOUND code", ok);
 
     /* Directory iteration */
     ok = 1;

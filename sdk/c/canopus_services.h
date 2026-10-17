@@ -97,20 +97,27 @@ enum canopus_service_group {
 #define CANOPUS_FS_NAME_MAX 63u
 #define CANOPUS_FS_PATH_MAX 128u
 
-/* Path forms accepted by ctx->fs (every other form is ARGUMENT):
- *   "name"            module-private flat file       /data/canopus/m.<id>.<name>
- *   "dir/sub/name"    module-private sub-path        /data/canopus/m.<id>/dir/sub/name
- *   "/data/..."       an absolute path below one of the shared roots:
- *       /data/offlinelog/       read-write
- *       /data/canopus/shared/   read-write, shared between modules
- *       /data/app/              read-only (Band 10 Pro package area)
- *       /data/quickapp/         read-only (Band 11 package area)
- * Segments are [A-Za-z0-9_.-] and never start with '.', so "..", "//" and
- * trailing "." are rejected. Writing below a read-only root is ACCESS.
+/* Path forms accepted by ctx->fs:
+ *   "name", "dir/sub/name"   module-private, below /data/canopus/m.<id>/
+ *   "/any/absolute/path"     any path on the device
+ * Paths are resolved lexically first ("." and ".." segments, "//" and a
+ * trailing "/"), so a spelling never changes which file is meant. A relative
+ * path may not climb out of the private directory. The one exception to "any
+ * path" is Canopus's own state: /data/canopus (registry, inbox, KV files and
+ * every other module's private directory), /dev/canopus and /canopus are
+ * refused with ACCESS for every operation, read included, whatever the
+ * spelling or letter case. A module keeps its own private directory, also by
+ * its absolute path, and cannot reach another module's. Nothing else is
+ * guarded: an absolute path can damage the firmware's own files.
+ * Control bytes and a ".." above the root or the private directory are
+ * ARGUMENT.
  * Failures carry the filesystem's reason: a missing file or parent is
  * NOTFOUND (the open that finds no config file is distinguishable from an I/O
- * fault), EXIST, ACCESS, NOTDIR, ISDIR, NOSPACE and BUSY map to their codes,
- * anything else is IO. */
+ * fault), EXIST, NOTDIR, ISDIR, NOSPACE and BUSY map to their codes, anything
+ * else is IO. Parent directories are not created implicitly (use mkdir); only
+ * the private directory is created on the first write.
+ * stat reports type, size and mtime (seconds, 0 when the filesystem keeps no
+ * time); sync is the firmware's fsync, UNSUPPORTED where none is recovered. */
 
 struct canopus_fs_stat {
     uint32_t size;

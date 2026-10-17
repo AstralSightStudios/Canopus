@@ -1188,14 +1188,55 @@ static int64_t sup_file_seek(void *cookie, int fd, int64_t offset, int32_t whenc
 #endif
 }
 
+#ifdef CANOPUS_SUP_NUTTX_FSYNC
+static int sup_file_sync(void *cookie, int fd)
+{
+    typedef int (*fsync_fn)(int fd);
+    (void)cookie;
+    return sup_negated_errno(((fsync_fn)(uintptr_t)CANOPUS_SUP_NUTTX_FSYNC)(fd));
+}
+#define SUP_FILE_SYNC sup_file_sync
+#else
+#define SUP_FILE_SYNC 0
+#endif
+
 static int sup_file_rename_hook(void *cookie, const char *from, const char *to)
 {
     (void)cookie;
     return sup_negated_errno(sup_rename_path(from, to));
 }
 
-/* A directory is anything opendir accepts; a file reports its size through
- * lseek. The firmware has no recovered mtime source, so mtime stays 0. */
+#ifdef CANOPUS_SUP_NUTTX_STAT
+/* The stock struct stat is 104 bytes: st_mode at +8, st_size (int64) at +32
+ * and the access/modify/change times as 16-byte timespecs from +56, so
+ * st_mtim.tv_sec (int64) is at +72. A filesystem that does not keep times
+ * leaves them 0, which the service reports as "unknown". */
+#define SUP_STAT_SIZE 104u
+#define SUP_STAT_MODE_WORD 2u
+#define SUP_STAT_SIZE_WORD 8u
+#define SUP_STAT_MTIME_WORD 18u
+#define SUP_S_IFMT 0xF000u
+#define SUP_S_IFDIR 0x4000u
+
+static int sup_file_stat_hook(void *cookie, const char *path, void *out_stat)
+{
+    typedef int (*stat_fn)(const char *path, void *buffer);
+    struct canopus_fs_stat *st = (struct canopus_fs_stat *)out_stat;
+    uint32_t words[SUP_STAT_SIZE / 4u];
+    int rc;
+    (void)cookie;
+    if (st == 0) return CANOPUS_SVC_ERR_ARGUMENT;
+    canopus_memset(st, 0, sizeof(*st));
+    rc = ((stat_fn)(uintptr_t)CANOPUS_SUP_NUTTX_STAT)(path, words);
+    if (rc < 0) return sup_negated_errno(rc);
+    st->is_dir = (words[SUP_STAT_MODE_WORD] & SUP_S_IFMT) == SUP_S_IFDIR;
+    st->size = words[SUP_STAT_SIZE_WORD + 1u] != 0u ? 0xFFFFFFFFu : words[SUP_STAT_SIZE_WORD];
+    st->mtime = words[SUP_STAT_MTIME_WORD + 1u] == 0u ? words[SUP_STAT_MTIME_WORD] : 0u;
+    return 0;
+}
+#else
+/* Without a recovered stat: a directory is anything opendir accepts, a file
+ * reports its size through lseek, and mtime stays 0 (unknown). */
 static int sup_file_stat_hook(void *cookie, const char *path, void *out_stat)
 {
     struct canopus_fs_stat *st = (struct canopus_fs_stat *)out_stat;
@@ -1231,6 +1272,7 @@ static int sup_file_stat_hook(void *cookie, const char *path, void *out_stat)
     (void)close_file(fd);
     return 0;
 }
+#endif
 
 #ifdef CANOPUS_SUP_NUTTX_MKDIR
 static int sup_dir_mkdir(void *cookie, const char *path)
@@ -1759,7 +1801,7 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_file_read,
     sup_file_write,
     sup_file_seek,
-    0, /* file_sync: no recovered fsync entry point */
+    SUP_FILE_SYNC,
     sup_file_close,
     sup_file_remove,
     sup_file_rename_hook,

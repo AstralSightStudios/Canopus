@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: f5da48ac861edcb7
+// input_digest: 3990b7d59cb839d7
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -689,6 +689,9 @@ pub const CANOPUS_FW_SDP_BUILDER_CREATE_CALLABLE: usize = canopus_thumb_callable
 /// Recovered `heap_free` at 0xc1e8bc4. Thumb callable address 0xc1e8bc5.
 pub const CANOPUS_FW_HEAP_FREE_CALLABLE: usize = canopus_thumb_callable(0xc1e8bc5usize);
 
+/// Recovered `fsync` at 0x0c1c3604. Thumb callable address 0x0c1c3605.
+pub const CANOPUS_FW_FSYNC_CALLABLE: usize = canopus_thumb_callable(0x0c1c3605usize);
+
 /// Recovered `wakelock_release` at 0x0ca561e0. Thumb callable address 0x0ca561e1.
 pub const CANOPUS_FW_WAKELOCK_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0ca561e1usize);
 
@@ -953,6 +956,9 @@ pub const CANOPUS_FW_DRIVER_CLOSE_DISPATCH_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `bt_l2cap_submit_cid` at 0x0C7ED620. Thumb callable address 0x0C7ED621.
 pub const CANOPUS_FW_BT_L2CAP_SUBMIT_CID_CALLABLE: usize = canopus_thumb_callable(0x0C7ED621usize);
 
+/// Recovered `stat` at 0x0c1c2a24. Thumb callable address 0x0c1c2a25.
+pub const CANOPUS_FW_STAT_CALLABLE: usize = canopus_thumb_callable(0x0c1c2a25usize);
+
 /// Recovered `readdir` at 0xc1d5118. Thumb callable address 0xc1d5119.
 pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc1d5119usize);
 
@@ -1056,6 +1062,7 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // driver_write_dispatch: FORBIDDEN - no binding may ever be generated
 // errno_location: restricted - not exported until context/ownership approved
 // firmware_log: restricted - not exported until context/ownership approved
+// fsync: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved
 // heap_free: restricted - not exported until context/ownership approved
 // heap_mallinfo: restricted - not exported until context/ownership approved
@@ -1119,6 +1126,7 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // service_manager_startup: restricted - not exported until context/ownership approved
 // sport_titlebar_dispatch: FORBIDDEN - no binding may ever be generated
 // sport_titlebar_lifecycle_reset: FORBIDDEN - no binding may ever be generated
+// stat: restricted - not exported until context/ownership approved
 // system_router_app_wrapper: FORBIDDEN - no binding may ever be generated
 // system_router_get_pages_wrapper: FORBIDDEN - no binding may ever be generated
 // system_router_page_record_wrapper: FORBIDDEN - no binding may ever be generated

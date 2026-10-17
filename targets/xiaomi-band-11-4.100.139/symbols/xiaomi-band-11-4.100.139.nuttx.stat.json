@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.nuttx.stat",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "stat",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c33e92c",
+  "callable_address": "0x0c33e92d",
+  "prototype": "int(const char *path, void *stat_buffer)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-4139-001"
+    ],
+    "source": "exact 4.100.139 IDB vela_ap.bin.i64; body shape identical to the reviewed 4.100.155 function and unique in this image"
+  },
+  "notes": "NuttX stat into a 104-byte struct stat: st_mode at +8, st_size (int64) at +32, st_atim/st_mtim/st_ctim as 16-byte timespecs from +56. The filesystem's own stat operation fills the times; returns -1 and sets errno on failure. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+}

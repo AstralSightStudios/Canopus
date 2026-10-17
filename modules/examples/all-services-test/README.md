@@ -68,9 +68,9 @@ python3 scripts/emu/band11_smoke.py 155 --services
 
 服务私有命名空间中的文件为：
 
-- `/data/canopus/m.services_test.test_report.txt`
-- `/data/canopus/m.services_test.probe.txt`
-- `/data/canopus/m.services_test.kv_reboot.txt`
+- `/data/canopus/m.services_test/test_report.txt`
+- `/data/canopus/m.services_test/probe.txt`
+- `/data/canopus/m.services_test/kv_reboot.txt`
 
 报告格式：`SUMMARY: <passed>/<total> PASSED, FAILS=<n>, SKIPS=<n>`。
 成功 probe 为 `TESTS_COMPLETE:<passed>/<total> SKIPS=<n>`，不再使用暗示全部行为通过的 `ALL_TESTS_PASS`。

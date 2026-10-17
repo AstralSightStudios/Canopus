@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 7
-// input_digest: 37f329388d8b977e
+// input_digest: d345f92e88f3cf2f
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -1010,6 +1010,9 @@ pub const CANOPUS_FW_SDP_SET_RAW_ATTRIBUTE_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `background_object_hide` at 0x0c588960. Thumb callable address 0x0c588961.
 pub const CANOPUS_FW_BACKGROUND_OBJECT_HIDE_CALLABLE: usize = canopus_thumb_callable(0x0c588961usize);
 
+/// Recovered `fsync` at 0x0c1d2a7c. Thumb callable address 0x0c1d2a7d.
+pub const CANOPUS_FW_FSYNC_CALLABLE: usize = canopus_thumb_callable(0x0c1d2a7dusize);
+
 /// Recovered `core_bt_pair_request_callback` at 0xc709e90. Thumb callable address 0xc709e91.
 pub const CANOPUS_FW_CORE_BT_PAIR_REQUEST_CALLBACK_CALLABLE: usize = canopus_thumb_callable(0xc709e91usize);
 #[allow(non_snake_case)]
@@ -1355,6 +1358,9 @@ pub unsafe fn canopus_fw_app_lookup(a0: u16) -> *mut core::ffi::c_void {
     f(a0)
 }
 
+/// Recovered `stat` at 0x0c1d1e9c. Thumb callable address 0x0c1d1e9d.
+pub const CANOPUS_FW_STAT_CALLABLE: usize = canopus_thumb_callable(0x0c1d1e9dusize);
+
 /// Recovered `lv_display_invalidate_area` at 0x0c105164. Thumb callable address 0x0c105165.
 pub const CANOPUS_FW_LV_DISPLAY_INVALIDATE_AREA_CALLABLE: usize = canopus_thumb_callable(0x0c105165usize);
 
@@ -1459,6 +1465,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // font_reload_vector_destroy: restricted - not exported until context/ownership approved
 // font_reload_vector_drop: restricted - not exported until context/ownership approved
 // font_reload_vg_dispatch: restricted - not exported until context/ownership approved
+// fsync: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved
 // heap_free: restricted - not exported until context/ownership approved
 // heap_mallinfo: restricted - not exported until context/ownership approved
@@ -1561,6 +1568,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // service_manager_startup: restricted - not exported until context/ownership approved
 // sport_titlebar_dispatch: FORBIDDEN - no binding may ever be generated
 // sport_titlebar_lifecycle_reset: FORBIDDEN - no binding may ever be generated
+// stat: restricted - not exported until context/ownership approved
 // system_router_app_wrapper: FORBIDDEN - no binding may ever be generated
 // system_router_get_pages_wrapper: FORBIDDEN - no binding may ever be generated
 // system_router_page_record_wrapper: FORBIDDEN - no binding may ever be generated

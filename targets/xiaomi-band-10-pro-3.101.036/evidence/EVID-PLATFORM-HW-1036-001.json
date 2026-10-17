@@ -4,6 +4,7 @@
   "target_id": "xiaomi-band-10-pro-3.101.036",
   "question": "Which stock entry points back battery state, wake locks, screen state/wake, manual brightness, vibration and system properties for the Supervisor platform services?",
   "candidate_symbols": [
+    "fsync",
     "mkdir",
     "power_battery_charging",
     "power_battery_level",
@@ -18,6 +19,7 @@
     "screen_session_start",
     "screen_session_stop",
     "screen_turn_on",
+    "stat",
     "vibrator_hal_transact",
     "wakelock_acquire",
     "wakelock_create",

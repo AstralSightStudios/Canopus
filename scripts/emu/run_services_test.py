@@ -93,8 +93,8 @@ def validate_report(report, probe, expected_skips=EXPECTED_SKIPS):
 
 
 def read_results():
-    report = sh("cat /data/canopus/m.services_test.test_report.txt").replace("\r", "")
-    probe = sh("cat /data/canopus/m.services_test.probe.txt").replace("\r", "")
+    report = sh("cat /data/canopus/m.services_test/test_report.txt").replace("\r", "")
+    probe = sh("cat /data/canopus/m.services_test/probe.txt").replace("\r", "")
     print(report)
     print(probe)
     return validate_report(report, probe)
@@ -148,7 +148,7 @@ def main():
                 restored = drv("cmd", "restore")
                 passed, total, skipped = read_results()
                 require_driver(restored, r"err=0\b.*slot0=state:9,")
-            marker = sh("cat /data/canopus/m.services_test.kv_reboot.txt").replace("\r", "")
+            marker = sh("cat /data/canopus/m.services_test/kv_reboot.txt").replace("\r", "")
             if re.search(r"^KV_REBOOT_PASS\s*$", marker, re.MULTILINE) is None:
                 raise RuntimeError("KV value did not survive a real emulator reboot")
             print(f"PASS .043 emulator: {passed}/{total} suites passed, {skipped} explicit skips; KV survived reboot")

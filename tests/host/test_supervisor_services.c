@@ -521,7 +521,7 @@ TEST(fs_roundtrip_is_private_to_the_module_namespace)
     CHECK(h >= 0);
     CHECK_EQ(ctx->services->fs_write(ctx, h, "hello", 5), 5);
     CHECK_EQ(ctx->services->fs_close(ctx, h), 0);
-    CHECK(strcmp(g_files[0].path, "/data/canopus/m.mod.portable.state.bin") == 0);
+    CHECK(strcmp(g_files[0].path, "/data/canopus/m.mod.portable/state.bin") == 0);
 
     h = ctx->services->fs_open(ctx, "state.bin", CANOPUS_FS_READ);
     CHECK(h >= 0);
@@ -549,17 +549,16 @@ TEST(fs_rejects_escaping_names_bad_handles_and_exhaustion)
     ctx = canopus_supervisor_context(&sup, 0);
     CHECK_EQ(ctx->services->fs_open(ctx, "../registry.bin", CANOPUS_FS_WRITE),
              CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK_EQ(ctx->services->fs_open(ctx, "a/../b", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK_EQ(ctx->services->fs_open(ctx, "a//b", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK_EQ(ctx->services->fs_open(ctx, "a/", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK_EQ(ctx->services->fs_open(ctx, "a b", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK_EQ(ctx->services->fs_open(ctx, ".hidden", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->services->fs_open(ctx, "", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->services->fs_open(ctx, "..", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->services->fs_open(ctx, "a/../../b", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->services->fs_open(ctx, "a/..", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->services->fs_open(ctx, "bad\nname", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->services->fs_open(ctx, "/", CANOPUS_FS_READ), CANOPUS_SVC_ERR_NOTFOUND); /* the root exists to the filesystem, not as a file */
+    CHECK_EQ(ctx->services->fs_open(ctx, "/..", CANOPUS_FS_READ), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->services->fs_open(ctx, "a", 3u), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->fs->open(ctx, "a", 0x40u), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->fs->open(ctx, "a", CANOPUS_FS_APPEND), CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK_EQ(ctx->fs->open(ctx, "/data/canopus/registry.bin", CANOPUS_FS_READ), CANOPUS_SVC_ERR_ACCESS);
-    CHECK_EQ(ctx->fs->open(ctx, "/data/offlinelog/../x", CANOPUS_FS_READ), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(ctx->services->fs_read(ctx, 0, g_files, 1), CANOPUS_SVC_ERR_STATE);
     CHECK_EQ(ctx->services->fs_close(ctx, 99), CANOPUS_SVC_ERR_STATE);
     for (i = 0; i < CANOPUS_FS_MAX_OPEN; i++) {
@@ -992,19 +991,31 @@ static const struct canopus_context_v1 *add_second_module(struct canopus_supervi
     return canopus_supervisor_context(sup, 1u);
 }
 
-TEST(fs_paths_cover_private_subtrees_shared_roots_append_and_error_codes)
+TEST(fs_reaches_any_path_but_canopus_state_and_keeps_modules_apart)
 {
     struct canopus_supervisor_v1 sup;
-    const struct canopus_context_v1 *ctx;
+    const struct canopus_context_v1 *ctx, *other;
     struct canopus_fs_stat st;
     struct canopus_sup_platform_v1 no_sync = platform_with_fs;
+    static const char *const protected_paths[] = {
+        "/data/canopus", "/data/canopus/", "/data/canopus/registry.bin",
+        "/data/canopus/inbox/x.ko.next", "/data/canopus/kv_mod.portable.bin",
+        "/data/canopus/m.mod.other/secret.txt", "/data/canopus/m.mod.portable.x/file",
+        "/data/canopus/m.mod.portablex", "/data/CANOPUS/registry.bin",
+        "/data/Canopus/M.mod.portable/file", "/data/x/../canopus/registry.bin",
+        "/data/canopus/./registry.bin", "/data//canopus//registry.bin",
+        "/dev/canopus", "/canopus/install",
+    };
     char buf[16] = {0};
     int32_t h;
+    uint32_t i;
     setup(&sup, &platform_with_fs);
     ctx = canopus_supervisor_context(&sup, 0);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1, "mod.portable.x"), 1);
+    other = canopus_supervisor_context(&sup, 1u);
 
-    /* module-private sub-tree: the private root is created on demand, deeper
-     * directories are explicit, and a missing parent is NOTFOUND */
+    /* private tree: the root is created on demand, deeper directories are
+     * explicit, a missing parent is NOTFOUND */
     CHECK_EQ(ctx->fs->open(ctx, "cache/a.txt", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_NOTFOUND);
     CHECK_EQ(ctx->fs->mkdir(ctx, "cache"), CANOPUS_SVC_OK);
     CHECK(dir_exists("/data/canopus/m.mod.portable/cache"));
@@ -1016,18 +1027,51 @@ TEST(fs_paths_cover_private_subtrees_shared_roots_append_and_error_codes)
     CHECK_EQ(ctx->fs->stat(ctx, "cache/a.txt", &st), CANOPUS_SVC_OK);
     CHECK_EQ(st.size, 3u);
     CHECK_EQ(ctx->fs->stat(ctx, "cache/none", &st), CANOPUS_SVC_ERR_NOTFOUND);
+    CHECK_EQ(ctx->fs->write_all(ctx, "cache//./b.txt", "q", 1), 1);
+    CHECK(strcmp(g_files[1].path, "/data/canopus/m.mod.portable/cache/b.txt") == 0);
 
-    /* shared roots: writable ones create their directory, read-only ones refuse writes */
-    CHECK_EQ(ctx->fs->write_all(ctx, "/data/offlinelog/run.log", "L1\n", 3), 3);
-    CHECK(strcmp(g_files[1].path, "/data/offlinelog/run.log") == 0);
-    CHECK_EQ(ctx->fs->write_all(ctx, "/data/canopus/shared/note.txt", "n", 1), 1);
-    CHECK(dir_exists("/data/canopus/shared"));
-    CHECK_EQ(ctx->fs->open(ctx, "/data/app/theme/dark.json", CANOPUS_FS_READ), CANOPUS_SVC_ERR_NOTFOUND);
-    CHECK_EQ(ctx->fs->open(ctx, "/data/app/theme/dark.json", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ACCESS);
-    CHECK_EQ(ctx->fs->mkdir(ctx, "/data/quickapp/x"), CANOPUS_SVC_ERR_ACCESS);
-    CHECK_EQ(ctx->fs->remove(ctx, "/data/app/theme/dark.json"), CANOPUS_SVC_ERR_ACCESS);
-    CHECK_EQ(ctx->fs->open(ctx, "/data/offlinelog/", CANOPUS_FS_READ), CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK_EQ(ctx->fs->open(ctx, "/etc/passwd", CANOPUS_FS_READ), CANOPUS_SVC_ERR_ACCESS);
+    /* ids that extend one another never share files: module "mod.portable"
+     * writing "x.state" and module "mod.portable.x" writing "state" differ */
+    CHECK_EQ(ctx->fs->write_all(ctx, "x.state", "A", 1), 1);
+    CHECK_EQ(other->fs->write_all(other, "state", "B", 1), 1);
+    CHECK(strcmp(g_files[2].path, "/data/canopus/m.mod.portable/x.state") == 0);
+    CHECK(strcmp(g_files[3].path, "/data/canopus/m.mod.portable.x/state") == 0);
+    CHECK_EQ(ctx->fs->read_all(ctx, "x.state", buf, sizeof(buf)), 1);
+    CHECK_EQ(buf[0], 'A');
+
+    /* any other absolute path is reachable, read or write, and normalized */
+    CHECK_EQ(ctx->fs->write_all(ctx, "/data/offlinelog//run.log", "L1\n", 3), 3);
+    CHECK(strcmp(g_files[4].path, "/data/offlinelog/run.log") == 0);
+    CHECK_EQ(ctx->fs->open(ctx, "/data/app/theme/dark.json", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_NOTFOUND);
+    CHECK_EQ(ctx->fs->open(ctx, "/etc/none.conf", CANOPUS_FS_READ), CANOPUS_SVC_ERR_NOTFOUND);
+    CHECK_EQ(ctx->fs->mkdir(ctx, "/data/app/theme"), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->fs->write_all(ctx, "/data/app/theme/./x/../dark.json", "{}", 2), 2);
+    CHECK(strcmp(g_files[5].path, "/data/app/theme/dark.json") == 0);
+    CHECK_EQ(ctx->fs->exists(ctx, "/data/app/theme/dark.json"), 1);
+    CHECK_EQ(ctx->fs->rename(ctx, "/data/app/theme/dark.json", "/data/app/theme/light.json"), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->fs->remove(ctx, "/data/app/theme/light.json"), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->fs->stat(ctx, "/data/app/theme", &st), CANOPUS_SVC_OK);
+    CHECK_EQ(st.is_dir, 1u);
+    h = ctx->fs->open(ctx, "/data/canopus/m.mod.portable/cache/a.txt", CANOPUS_FS_READ);
+    CHECK(h >= 0); /* its own private directory by absolute path */
+    CHECK_EQ(ctx->fs->close(ctx, h), CANOPUS_SVC_OK);
+
+    /* Canopus's own state is out of reach for every operation and spelling */
+    for (i = 0u; i < sizeof(protected_paths) / sizeof(protected_paths[0]); i++) {
+        const char *path = protected_paths[i];
+        CHECK_EQ(ctx->fs->open(ctx, path, CANOPUS_FS_READ), CANOPUS_SVC_ERR_ACCESS);
+        CHECK_EQ(ctx->fs->open(ctx, path, CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_ACCESS);
+        CHECK_EQ(ctx->fs->remove(ctx, path), CANOPUS_SVC_ERR_ACCESS);
+        CHECK_EQ(ctx->fs->mkdir(ctx, path), CANOPUS_SVC_ERR_ACCESS);
+        CHECK_EQ(ctx->fs->stat(ctx, path, &st), CANOPUS_SVC_ERR_ACCESS);
+        CHECK_EQ(ctx->fs->rename(ctx, path, "moved.bin"), CANOPUS_SVC_ERR_ACCESS);
+        CHECK_EQ(ctx->fs->rename(ctx, "cache/a.txt", path), CANOPUS_SVC_ERR_ACCESS);
+        CHECK(ctx->fs->opendir(ctx, path) == 0);
+    }
+    CHECK_EQ(other->fs->open(other, "/data/canopus/m.mod.portable/cache/a.txt", CANOPUS_FS_READ),
+             CANOPUS_SVC_ERR_ACCESS);
+    CHECK_EQ(other->fs->open(other, "/data/canopus/m.mod.portable/cache/a.txt", CANOPUS_FS_WRITE),
+             CANOPUS_SVC_ERR_ACCESS);
 
     /* append keeps the contents, WRITE truncates, READ|WRITE keeps them */
     CHECK_EQ(ctx->fs->write_all(ctx, "log.txt", "ab", 2), 2);
@@ -1459,8 +1503,8 @@ static struct test_registry supervisor_services_tests[] = {
       portable_module_registers_through_the_service_and_gets_a_context_wrapper },
     { "register_is_rejected_outside_the_loading_window",
       register_is_rejected_outside_the_loading_window_wrapper },
-    { "fs_paths_cover_private_subtrees_shared_roots_append_and_error_codes",
-      fs_paths_cover_private_subtrees_shared_roots_append_and_error_codes_wrapper },
+    { "fs_reaches_any_path_but_canopus_state_and_keeps_modules_apart",
+      fs_reaches_any_path_but_canopus_state_and_keeps_modules_apart_wrapper },
     { "notify_carries_the_caller_title_and_never_fakes_icons_or_haptics",
       notify_carries_the_caller_title_and_never_fakes_icons_or_haptics_wrapper },
     { "haptics_play_one_vibration_at_a_time_and_report_the_motor_result",

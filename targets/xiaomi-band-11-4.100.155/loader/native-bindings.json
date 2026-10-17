@@ -83,7 +83,9 @@
     "CANOPUS_SUP_PROPERTY_GET_INT32": "property_get_int32",
     "CANOPUS_SUP_BT_ADAPTER_GET_STATE": "bt_adapter_get_state",
     "CANOPUS_SUP_BT_SHARED_ADAPTER": "bt_shared_adapter",
-    "CANOPUS_SUP_NUTTX_MKDIR": "mkdir"
+    "CANOPUS_SUP_NUTTX_MKDIR": "mkdir",
+    "CANOPUS_SUP_NUTTX_FSYNC": "fsync",
+    "CANOPUS_SUP_NUTTX_STAT": "stat"
   },
   "fingerprints": [
     "0xc91e530",

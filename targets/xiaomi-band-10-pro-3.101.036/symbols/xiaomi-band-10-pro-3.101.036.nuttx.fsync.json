@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.nuttx.fsync",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "fsync",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c1c3604",
+  "callable_address": "0x0c1c3605",
+  "prototype": "int(int fd)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1036-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1036-001"
+    ],
+    "source": "exact 3.101.036 IDB vela_ap.bin.i64; body shape identical to the reviewed 3.101.043 function and unique in this image; __func__ string cross-references agree for the MiWearScreen and PowerManager entries"
+  },
+  "notes": "NuttX fsync: resolves the descriptor, calls the inode's sync operation, returns -1 and sets errno on failure. The stock algorithm services call it after writing and log FsyncE on a negative result. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+}

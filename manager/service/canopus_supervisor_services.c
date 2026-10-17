@@ -217,55 +217,17 @@ const char *canopus_supervisor_log_entry(uint32_t index, uint32_t *level,
 
 /* ---- FS (Complete File System) --------------------------------------- */
 
-/* Absolute paths are accepted only below these roots (see canopus_services.h
- * for the contract). The private root of a module is /data/canopus/m.<id>/. */
-struct svc_fs_root {
-    const char *prefix;
-    uint8_t writable;
-};
-
-static const struct svc_fs_root s_fs_roots[] = {
-    {"/data/offlinelog/", 1u},
-    {"/data/canopus/shared/", 1u},
-    {"/data/app/", 0u},
-    {"/data/quickapp/", 0u},
-};
-#define SVC_FS_ROOT_COUNT (sizeof(s_fs_roots) / sizeof(s_fs_roots[0]))
-
+/* A module reaches any absolute path on the device except Canopus's own
+ * state; a relative name lives in the module's private directory
+ * /data/canopus/m.<id>/. Absolute paths are canonicalized (".", ".." and "//"
+ * resolved) BEFORE the protection check, so "/data/x/../canopus/registry.bin"
+ * is refused like "/data/canopus/registry.bin". See canopus_services.h. */
 struct svc_fs_path {
     char path[SVC_FS_PATH_MAX];
     /* Directory that must exist before a write below `path` ("" = nothing to
      * create). Created best-effort, one level, when the write is attempted. */
     char ensure[SVC_FS_PATH_MAX];
 };
-
-static int svc_segment_ok(const char *seg, uint32_t len)
-{
-    uint32_t i;
-    if (len == 0u || len > CANOPUS_FS_NAME_MAX || seg[0] == '.') return 0;
-    for (i = 0u; i < len; i++) {
-        char c = seg[i];
-        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-              (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.')) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-/* "a/b/c": non-empty segments only; no leading, trailing or doubled '/'. */
-static int svc_subpath_ok(const char *p, uint32_t len)
-{
-    uint32_t start = 0u, i;
-    if (len == 0u) return 0;
-    for (i = 0u; i <= len; i++) {
-        if (i == len || p[i] == '/') {
-            if (!svc_segment_ok(p + start, i - start)) return 0;
-            start = i + 1u;
-        }
-    }
-    return 1;
-}
 
 static uint32_t svc_append(char *out, uint32_t used, const char *text)
 {
@@ -294,52 +256,97 @@ static uint32_t svc_private_dir(const struct canopus_context_v1 *ctx,
     return used;
 }
 
-/* Resolves a module-supplied name. `as_dir` makes a flat name a sub-directory
- * of the private root instead of a flat private file. Returns OK, ARGUMENT for
- * a malformed path, ACCESS for a path outside the roots or a write to a
- * read-only root. */
-static int32_t svc_fs_resolve(const struct canopus_context_v1 *ctx, const char *name,
-                              int write, int as_dir, struct svc_fs_path *out)
+/* Lexically resolves `src` into `out`: empty and "." segments vanish, ".."
+ * removes the previous segment and is refused above the start, control bytes
+ * are refused. An absolute result starts with '/' ("/" alone is the root); a
+ * relative result has no leading '/' and must not be empty. */
+static int svc_canonical(const char *src, int absolute, char out[SVC_FS_PATH_MAX])
 {
-    uint32_t len, used, i;
-    out->ensure[0] = '\0';
-    if (name == 0) return CANOPUS_SVC_ERR_ARGUMENT;
-    len = svc_str_len(name);
-    if (len == 0u || len >= SVC_FS_PATH_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
-    if (name[0] == '/') {
-        for (i = 0u; i < SVC_FS_ROOT_COUNT; i++) {
-            const char *prefix = s_fs_roots[i].prefix;
-            uint32_t plen = svc_str_len(prefix), j;
-            for (j = 0u; j < plen && name[j] == prefix[j]; j++) {}
-            if (j != plen) continue;
-            if (len == plen) return CANOPUS_SVC_ERR_ARGUMENT; /* the root itself */
-            if (!svc_subpath_ok(name + plen, len - plen)) return CANOPUS_SVC_ERR_ARGUMENT;
-            if (write && !s_fs_roots[i].writable) return CANOPUS_SVC_ERR_ACCESS;
-            used = svc_append(out->path, 0u, name);
-            out->path[used] = '\0';
-            used = svc_append(out->ensure, 0u, prefix);
-            out->ensure[used - 1u] = '\0'; /* drop the trailing '/' */
-            return CANOPUS_SVC_OK;
+    uint32_t used = 0u, i = absolute ? 1u : 0u;
+    while (src[i] != '\0') {
+        uint32_t start = i, len;
+        while (src[i] != '\0' && src[i] != '/') {
+            unsigned char c = (unsigned char)src[i];
+            if (c < 0x20u || c == 0x7Fu) return 0;
+            i++;
         }
-        return CANOPUS_SVC_ERR_ACCESS;
+        len = i - start;
+        if (src[i] == '/') i++;
+        if (len == 0u || (len == 1u && src[start] == '.')) continue;
+        if (len == 2u && src[start] == '.' && src[start + 1u] == '.') {
+            if (used == 0u) return 0;
+            while (used > 0u && out[used - 1u] != '/') used--;
+            if (used > 0u) used--; /* the '/' before the removed segment */
+            continue;
+        }
+        if (used + len + 1u >= SVC_FS_PATH_MAX) return 0;
+        if (absolute || used > 0u) out[used++] = '/';
+        for (; len > 0u; len--) out[used++] = src[start++];
     }
-    if (!svc_subpath_ok(name, len)) return CANOPUS_SVC_ERR_ARGUMENT;
+    if (absolute && used == 0u) out[used++] = '/';
+    out[used] = '\0';
+    return used > 0u;
+}
+
+static char svc_lower(char c)
+{
+    return c >= 'A' && c <= 'Z' ? (char)(c - 'A' + 'a') : c;
+}
+
+/* `prefix` is lowercase; the match ends at a path-segment boundary. The case
+ * fold covers a case-insensitive filesystem aliasing the same directory. */
+static int svc_path_under(const char *path, const char *prefix)
+{
+    uint32_t i;
+    for (i = 0u; prefix[i] != '\0'; i++) {
+        if (svc_lower(path[i]) != prefix[i]) return 0;
+    }
+    return path[i] == '\0' || path[i] == '/';
+}
+
+/* Canopus's own state: the module registry and inbox, KV files and every
+ * module's private directory, the control nodes. A module keeps its own
+ * private directory (exact case) and nothing else of it. */
+static int svc_fs_protected(const struct canopus_context_v1 *ctx, const char *path)
+{
+    static const char *const owned[] = {"/data/canopus", "/dev/canopus", "/canopus"};
+    char own[SVC_FS_PATH_MAX];
+    uint32_t i, n;
+    n = svc_private_dir(ctx, own);
+    for (i = 0u; i < n && path[i] == own[i]; i++) {}
+    if (i == n && (path[i] == '\0' || path[i] == '/')) return 0;
+    for (i = 0u; i < sizeof(owned) / sizeof(owned[0]); i++) {
+        if (svc_path_under(path, owned[i])) return 1;
+    }
+    return 0;
+}
+
+/* Resolves a module-supplied name to a platform path. Returns OK, ARGUMENT
+ * for a malformed path, ACCESS for Canopus-owned state. */
+static int32_t svc_fs_resolve(const struct canopus_context_v1 *ctx, const char *name,
+                              struct svc_fs_path *out)
+{
+    char canonical[SVC_FS_PATH_MAX];
+    uint32_t used;
+    out->ensure[0] = '\0';
+    if (name == 0 || name[0] == '\0' || svc_str_len(name) >= SVC_FS_PATH_MAX) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    if (name[0] == '/') {
+        if (!svc_canonical(name, 1, canonical)) return CANOPUS_SVC_ERR_ARGUMENT;
+        if (svc_fs_protected(ctx, canonical)) return CANOPUS_SVC_ERR_ACCESS;
+        used = svc_append(out->path, 0u, canonical);
+        if (used >= SVC_FS_PATH_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
+        out->path[used] = '\0';
+        return CANOPUS_SVC_OK;
+    }
+    if (!svc_canonical(name, 0, canonical)) return CANOPUS_SVC_ERR_ARGUMENT;
     used = svc_private_dir(ctx, out->path);
     if (used >= SVC_FS_PATH_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
-    {
-        int nested = as_dir;
-        for (i = 0u; i < len; i++) {
-            if (name[i] == '/') nested = 1;
-        }
-        if (nested) {
-            uint32_t n = svc_append(out->ensure, 0u, out->path);
-            out->ensure[n] = '\0';
-            used = svc_append(out->path, used, "/");
-        } else {
-            used = svc_append(out->path, used, ".");
-        }
-    }
-    used = svc_append(out->path, used, name);
+    (void)svc_append(out->ensure, 0u, out->path);
+    out->ensure[used] = '\0';
+    used = svc_append(out->path, used, "/");
+    used = svc_append(out->path, used, canonical);
     if (used >= SVC_FS_PATH_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
     out->path[used] = '\0';
     return CANOPUS_SVC_OK;
@@ -404,7 +411,7 @@ static int32_t svc_fs_open_flags(const struct canopus_context_v1 *ctx,
         (!write && (flags & (CANOPUS_FS_APPEND | CANOPUS_FS_CREATE | CANOPUS_FS_TRUNC)) != 0u)) {
         return CANOPUS_SVC_ERR_ARGUMENT;
     }
-    rc = svc_fs_resolve(ctx, name, write, 0, &p);
+    rc = svc_fs_resolve(ctx, name, &p);
     if (rc != CANOPUS_SVC_OK) return rc;
     for (i = 0u; i < CANOPUS_FS_MAX_OPEN; i++) {
         if (s_fd[ctx->slot][i] == 0) break;
@@ -503,7 +510,7 @@ static int32_t svc_fs_remove(const struct canopus_context_v1 *ctx, const char *n
     struct svc_fs_path p;
     int32_t rc;
     if (!svc_fs_ready(ctx)) return CANOPUS_SVC_ERR_UNSUPPORTED;
-    rc = svc_fs_resolve(ctx, name, 1, 0, &p);
+    rc = svc_fs_resolve(ctx, name, &p);
     if (rc != CANOPUS_SVC_OK) return rc;
     rc = s_sup->platform->file_remove(s_sup->platform_cookie, p.path);
     return rc < 0 ? svc_errno(rc) : CANOPUS_SVC_OK;
@@ -517,9 +524,9 @@ static int32_t svc_fs_rename(const struct canopus_context_v1 *ctx,
     if (!svc_fs_ready(ctx) || s_sup->platform->file_rename == 0) {
         return CANOPUS_SVC_ERR_UNSUPPORTED;
     }
-    rc = svc_fs_resolve(ctx, old_path, 1, 0, &from);
+    rc = svc_fs_resolve(ctx, old_path, &from);
     if (rc != CANOPUS_SVC_OK) return rc;
-    rc = svc_fs_resolve(ctx, new_path, 1, 0, &to);
+    rc = svc_fs_resolve(ctx, new_path, &to);
     if (rc != CANOPUS_SVC_OK) return rc;
     svc_fs_ensure(&to);
     rc = s_sup->platform->file_rename(s_sup->platform_cookie, from.path, to.path);
@@ -532,14 +539,10 @@ static int32_t svc_fs_stat(const struct canopus_context_v1 *ctx, const char *pat
     struct svc_fs_path p;
     int32_t rc;
     if (!svc_fs_ready(ctx) || out_stat == 0) return CANOPUS_SVC_ERR_ARGUMENT;
-    rc = svc_fs_resolve(ctx, path, 0, 0, &p);
+    rc = svc_fs_resolve(ctx, path, &p);
     if (rc != CANOPUS_SVC_OK) return rc;
     if (s_sup->platform->file_stat != 0) {
         rc = s_sup->platform->file_stat(s_sup->platform_cookie, p.path, out_stat);
-        if (rc == -2 && path[0] != '/' && svc_fs_resolve(ctx, path, 0, 1, &p) == CANOPUS_SVC_OK) {
-            /* a flat name that is no file may be a private directory (mkdir) */
-            rc = s_sup->platform->file_stat(s_sup->platform_cookie, p.path, out_stat);
-        }
         return rc < 0 ? svc_errno(rc) : CANOPUS_SVC_OK;
     }
     {
@@ -566,7 +569,7 @@ static int32_t svc_fs_mkdir(const struct canopus_context_v1 *ctx, const char *pa
     struct svc_fs_path p;
     int32_t rc;
     if (!svc_fs_ready(ctx) || s_sup->platform->dir_mkdir == 0) return CANOPUS_SVC_ERR_UNSUPPORTED;
-    rc = svc_fs_resolve(ctx, path, 1, 1, &p);
+    rc = svc_fs_resolve(ctx, path, &p);
     if (rc != CANOPUS_SVC_OK) return rc;
     svc_fs_ensure(&p);
     rc = s_sup->platform->dir_mkdir(s_sup->platform_cookie, p.path);
@@ -580,7 +583,7 @@ static void *svc_fs_opendir(const struct canopus_context_v1 *ctx, const char *pa
     if (!svc_fs_ready(ctx) || s_sup->platform->dir_open == 0 || path == 0) return 0;
     if (path[0] == '\0' || (path[0] == '.' && path[1] == '\0')) {
         (void)svc_private_dir(ctx, p.path);
-    } else if (svc_fs_resolve(ctx, path, 0, 1, &p) != CANOPUS_SVC_OK) {
+    } else if (svc_fs_resolve(ctx, path, &p) != CANOPUS_SVC_OK) {
         return 0;
     }
     return s_sup->platform->dir_open(s_sup->platform_cookie, p.path);

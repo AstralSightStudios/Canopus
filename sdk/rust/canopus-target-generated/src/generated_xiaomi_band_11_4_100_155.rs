@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 447035d11110e6f3
+// input_digest: 2f3e14eebaecf61b
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -360,6 +360,9 @@ pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc8ed77
 /// Recovered global `font_reload_display_list` at 0x200bd1f0.
 pub const canopus_fw_font_reload_display_list: usize = 0x200bd1f0usize;
 
+/// Recovered `stat` at 0x0c33e92c. Thumb callable address 0x0c33e92d.
+pub const CANOPUS_FW_STAT_CALLABLE: usize = canopus_thumb_callable(0x0c33e92dusize);
+
 /// Recovered `clock_gettime` at 0xc34d58c. Thumb callable address 0xc34d58d.
 pub const CANOPUS_FW_CLOCK_GETTIME_CALLABLE: usize = canopus_thumb_callable(0xc34d58dusize);
 
@@ -617,6 +620,9 @@ pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_CALLABLE: usize = canopus_thumb_c
 
 /// Recovered `font_reload_glyph_pending_release` at 0x0c399b62. Thumb callable address 0x0c399b63.
 pub const CANOPUS_FW_FONT_RELOAD_GLYPH_PENDING_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c399b63usize);
+
+/// Recovered `fsync` at 0x0c33dc66. Thumb callable address 0x0c33dc67.
+pub const CANOPUS_FW_FSYNC_CALLABLE: usize = canopus_thumb_callable(0x0c33dc67usize);
 
 /// Recovered `font_reload_vg_dispatch` at 0x0c3913ec. Thumb callable address 0x0c3913ed.
 pub const CANOPUS_FW_FONT_RELOAD_VG_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0x0c3913edusize);
@@ -986,6 +992,7 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // font_reload_vector_destroy: restricted - not exported until context/ownership approved
 // font_reload_vector_drop: restricted - not exported until context/ownership approved
 // font_reload_vg_dispatch: restricted - not exported until context/ownership approved
+// fsync: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved
 // hal_cache_invalidate_rom_thunk: restricted - not exported until context/ownership approved
 // hal_cache_sync: restricted - not exported until context/ownership approved
@@ -1112,6 +1119,7 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // service_manager_shutdown: restricted - not exported until context/ownership approved
 // service_manager_startup: restricted - not exported until context/ownership approved
 // sport_titlebar_dispatch: restricted - not exported until context/ownership approved
+// stat: restricted - not exported until context/ownership approved
 // system_router_app_wrapper: restricted - not exported until context/ownership approved
 // system_router_get_pages_wrapper: restricted - not exported until context/ownership approved
 // thirdparty_submit_message_content: restricted - not exported until context/ownership approved

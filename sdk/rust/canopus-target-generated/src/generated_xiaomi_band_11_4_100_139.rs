@@ -4,7 +4,7 @@
 // firmware : 4.100.139 (user-4.100.139-cn-202608280000)
 // sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
 // revision : 2
-// input_digest: f761b3e7be5b2670
+// input_digest: a4d9947aaf8af14a
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -336,6 +336,9 @@ pub const CANOPUS_FW_REGISTER_BLOCKDRIVER_CALLABLE: usize = canopus_thumb_callab
 /// Recovered `font_reload_sw_dispatch` at 0x0c3948ac. Thumb callable address 0x0c3948ad.
 pub const CANOPUS_FW_FONT_RELOAD_SW_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0x0c3948adusize);
 
+/// Recovered `fsync` at 0x0c33dc66. Thumb callable address 0x0c33dc67.
+pub const CANOPUS_FW_FSYNC_CALLABLE: usize = canopus_thumb_callable(0x0c33dc67usize);
+
 /// Recovered `font_reload_vector_drop` at 0x0c6a1314. Thumb callable address 0x0c6a1315.
 pub const CANOPUS_FW_FONT_RELOAD_VECTOR_DROP_CALLABLE: usize = canopus_thumb_callable(0x0c6a1315usize);
 
@@ -386,6 +389,9 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 
 /// Recovered `app_lookup_package` at 0xc6a16a2. Thumb callable address 0xc6a16a3.
 pub const CANOPUS_FW_APP_LOOKUP_PACKAGE_CALLABLE: usize = canopus_thumb_callable(0xc6a16a3usize);
+
+/// Recovered `stat` at 0x0c33e92c. Thumb callable address 0x0c33e92d.
+pub const CANOPUS_FW_STAT_CALLABLE: usize = canopus_thumb_callable(0x0c33e92dusize);
 
 /// Recovered `calendar_weekday` at 0xc5464f0. Thumb callable address 0xc5464f1.
 pub const CANOPUS_FW_CALENDAR_WEEKDAY_CALLABLE: usize = canopus_thumb_callable(0xc5464f1usize);
@@ -1128,6 +1134,7 @@ pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_CALLABLE: usize = canop
 // font_reload_vector_destroy: restricted - not exported until context/ownership approved
 // font_reload_vector_drop: restricted - not exported until context/ownership approved
 // font_reload_vg_dispatch: restricted - not exported until context/ownership approved
+// fsync: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved
 // hal_cache_invalidate_rom_thunk: restricted - not exported until context/ownership approved
 // hal_cache_sync: restricted - not exported until context/ownership approved
@@ -1251,6 +1258,7 @@ pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_CALLABLE: usize = canop
 // service_manager_shutdown: restricted - not exported until context/ownership approved
 // service_manager_startup: restricted - not exported until context/ownership approved
 // sport_titlebar_dispatch: restricted - not exported until context/ownership approved
+// stat: restricted - not exported until context/ownership approved
 // system_router_app_wrapper: restricted - not exported until context/ownership approved
 // system_router_get_pages_wrapper: restricted - not exported until context/ownership approved
 // thirdparty_submit_message_content: restricted - not exported until context/ownership approved

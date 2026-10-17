@@ -86,20 +86,23 @@ struct canopus_fs_obj {
     int32_t (*write_all)(const struct canopus_context_v1 *ctx, const char *path, const void *buffer, uint32_t size);
 };
 ```
-- **路径形式**（其余一律 `CANOPUS_SVC_ERR_ARGUMENT`）：
-  - `name`：模块私有扁平文件，`/data/canopus/m.<id>.<name>`（旧行为）；
-  - `dir/sub/name`：模块私有子树，`/data/canopus/m.<id>/dir/sub/name`；私有根在首次写入时创建，更深层目录用 `mkdir` 逐级创建；
-  - `/data/...` 绝对路径，只接受下列共享根：`/data/offlinelog/`（读写）、`/data/canopus/shared/`（读写，模块间共享）、
-    `/data/app/`（只读，Band 10 Pro 包目录）、`/data/quickapp/`（只读，Band 11 包目录）；根之外为 `ERR_ACCESS`，写只读根也是 `ERR_ACCESS`。
-  - 路径段限 `[A-Za-z0-9_.-]`、不以 `.` 开头，所以 `..`、`//`、末尾 `/` 都被拒绝。
-  这是接口约定，不是安全边界：本设备没有进程隔离（见 `security-model.md`）。
+- **路径形式**：
+  - 相对路径（`name`、`dir/sub/name`）：模块私有，位于 `/data/canopus/m.<id>/`，首次写入时创建私有目录，更深层目录用 `mkdir` 逐级创建；
+    不能用 `..` 爬出私有目录。每个模块是独立目录，所以 id 互为前缀的模块（`mod.a` 与 `mod.a.b`）不会重名。
+  - 绝对路径：设备上的任意路径都可读写。路径先做词法规整（`.`、`..`、`//`、末尾 `/`）再判断，所以换写法不能绕过保护。
+  - **唯一的例外是 Canopus 自己的状态**：`/data/canopus`（模块注册表、inbox、KV 文件和所有模块的私有目录）、`/dev/canopus`、`/canopus`，
+    读写、删除、重命名、`mkdir`、`stat`、`opendir` 一律返回 `ERR_ACCESS`，不区分大小写。模块能访问自己的私有目录（包括用绝对路径），碰不到别的模块的。
+  - 除此以外不设防：绝对路径可以破坏固件自己的文件，由调用方负责。控制字符以及越过根或私有目录的 `..` 返回 `ERR_ARGUMENT`。
+  - 这不是安全边界：本设备没有进程隔离（见 `security-model.md`），模块本来就能直接调用固件。
 - **错误码**：固件返回的 errno 如实映射——文件或父目录不存在是 `ERR_NOTFOUND(-2)`（可据此识别"配置文件尚未创建"），
   另有 `ERR_EXIST`、`ERR_ACCESS`、`ERR_NOTDIR`、`ERR_ISDIR`、`ERR_NOSPACE`、`ERR_BUSY`，其余为 `ERR_IO`。
 - **打开标志**：`READ` 只读已有文件；`WRITE` 创建或截断；`WRITE|APPEND` 保留内容并在文件尾写入（`APPEND`/`TRUNC`/`CREATE` 必须与 `WRITE` 同用）；
   `READ|WRITE` 保留内容读写。其余位为 `ERR_ARGUMENT`。固件的 `O_TRUNC` 未证实，截断经 `unlink` 后新建实现。
-- **目录**：`mkdir` 调用固件 `mkdir`（单层，已存在为 `ERR_EXIST`）；`opendir("")`/`opendir(".")` 是模块私有目录，不再列出 `/data/canopus` 里别的模块的文件；
-  `stat` 用 `opendir` 判断目录，`mtime` 恒为 0（固件无已恢复的时间来源）。
-- **`sync`**：目前没有已恢复的 `fsync` 入口，返回 `ERR_UNSUPPORTED`；KV 事务的"写入后同步"在平台提供 `file_sync` 时才执行。
+- **目录**：`mkdir` 调用固件 `mkdir`（单层，已存在为 `ERR_EXIST`）；`opendir("")`/`opendir(".")` 是模块私有目录，不再列出 `/data/canopus` 里别的模块的文件。
+- **`stat` 与 `mtime`**：调用固件 `stat`，从 104 字节 `struct stat` 取类型（目录/文件）、大小（+32）和修改时间（`st_mtim.tv_sec`，+72，秒）。
+  `mtime` 的偏移来自 NuttX 标准布局与该结构体的已知字段（总长 104、`st_size`@32、三个 16 字节 timespec 从 +56 起），不是某个固件读取 mtime 的调用点；
+  文件系统不记录时间时为 0，表示未知。大于 4 GiB 的文件 `size` 饱和为 `0xFFFFFFFF`。
+- **`sync`**：调用固件 `fsync`；没有该入口的目标返回 `ERR_UNSUPPORTED`。KV 事务的"写入后同步"同样走它。
 
 ---
 
@@ -323,7 +326,7 @@ haptics / display / 唤醒锁 / 电量 / 属性 / 蓝牙状态不再有占位实
 | 手动亮度 | `screen_session_create/start/stop/set_auto_brightness/set_brightness_value/restore_default`；读取用 `property_get_int32` | 同 |
 | 振动 | `vibrator_hal_transact`（vibratord HAL 消息 4 起振、5 停止） | `vibrator_run`（波形参数块）+ `vibrator_cancel(id)` |
 | 属性 | `property_get`、`property_get_int32` | 同 |
-| 目录创建 | `mkdir` | 同 |
+| 目录创建/同步/状态 | `mkdir`、`fsync`、`stat` | 同 |
 | 蓝牙适配器状态 | `bt_adapter_get_instance` + `bt_adapter_get_state` | `bt_shared_adapter` + `bt_adapter_get_state`（.177 也有） |
 
 - **Band 11 .177**：本仓库没有其固件镜像，无法对新增入口做静态核对，所以除蓝牙适配器状态（该记录原本就是 STATIC_RECOVERED）外
@@ -332,7 +335,7 @@ haptics / display / 唤醒锁 / 电量 / 属性 / 蓝牙状态不再有占位实
   .036 与 .139 的地址由 .043 与 .155 的已审阅函数体做"屏蔽分支与 PC 相对指令后的整体指令匹配"得到（镜像内唯一），
   MiWearScreen/PowerManager 的 `__func__` 字符串交叉引用互相印证。证据见各 target 的 `evidence/EVID-PLATFORM-HW-<ver>-001.json`。
   这些入口随普通构建默认包含（K16），默认包含不等于设备已验证或生产批准。
-- **未覆盖**：`get_rssi`（无固件来源）、`fsync`、CPU 唤醒锁、通知图标表、`mtime`。它们明确返回不支持或未知，而不是成功。
+- **未覆盖**：`get_rssi`、非 L2 后端目标上的 `is_connected`、仅 CPU 的唤醒锁、通知图标表。它们明确返回不支持或未知，而不是成功。
 
 ---
 

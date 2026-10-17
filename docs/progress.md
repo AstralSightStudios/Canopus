@@ -23,15 +23,16 @@
 - 原先的占位实现已移除：亮度恒 100、息屏状态恒亮、振动忽略时长、电量恒 85、蓝牙恒已连接且 RSSI −55、唤醒锁无归属、
   `l2_register_rx` 只保存不派发、通知忽略标题。现在每个钩子要么调用 exact-target 的固件入口，要么为空并返回
   `UNSUPPORTED` / 文档化的"未知"值。
-- 文件服务补全：共享根（`/data/offlinelog/`、`/data/canopus/shared/` 读写，`/data/app/`、`/data/quickapp/` 只读）、模块私有子树、
-  `mkdir`、`APPEND`/`READ|WRITE`、固件 errno 的如实映射（缺失文件为 `NOTFOUND`）。`fsync`、`mtime` 仍无入口。
+- 文件服务补全：绝对路径任意读写，只保护 Canopus 自己的状态（`/data/canopus`、`/dev/canopus`、`/canopus`，不区分大小写、先规整再判断）；
+  相对路径落在 `/data/canopus/m.<id>/`（原先的 `m.<id>.<name>` 扁平命名会让 `mod.a`/`b.x` 与 `mod.a.b`/`x` 撞名，已改为每模块一个目录）；
+  `mkdir`、`fsync`、`stat`（含 mtime）、`APPEND`/`READ|WRITE`、固件 errno 的如实映射（缺失文件为 `NOTFOUND`）。
 - 系统事件广播（亮灭屏、电量、蓝牙状态）由定时器泵每 500 ms 采样发布，模块无法伪造这三个主题。
 - host implemented：上述服务逻辑与 C host 测试（含 ASan/UBSan）。
 - static recovered（`restricted` / `PENDING`，`device: not_probed`）：Band 10 Pro .036/.043 与 Band 11 .139/.155 的 PowerManager、
   MiWearScreen、vibrator、property、`mkdir` 入口，证据 `EVID-PLATFORM-HW-*`。.036/.139 由 .043/.155 的函数体匹配得到。
   Band 11 .177 无镜像，新增入口全部为空钩子。
 - 未提升任何能力状态：没有 device verified，也没有 production approved；本机没有 Mirage 与 OTA 包，未做模拟器运行。
-- `get_rssi` 无固件来源，`is_connected` 只有带 L2 后端的 .043/.155 能回答。
+- `get_rssi` 无固件来源，`is_connected` 只有带 L2 后端的 .043/.155 能回答；仅 CPU 的唤醒锁和通知图标表未做。
 
 ## 阶段状态
 
