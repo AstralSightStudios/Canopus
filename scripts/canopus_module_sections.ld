@@ -7,6 +7,8 @@ SECTIONS
     .rodata : { *(.rodata .rodata.*) }
     .data : { *(.data .data.*) }
     .bss : { *(.bss .bss.* COMMON) }
+    .ARM.exidx : { *(.ARM.exidx .ARM.exidx.*) }
+    .ARM.extab : { *(.ARM.extab .ARM.extab.*) }
     .init_array : { *(.init_array .init_array.*) }
     .fini_array : { *(.fini_array .fini_array.*) }
 }

@@ -43,10 +43,10 @@ struct canopus_p65_lvx_list_ops_v1 {
                            const void *opaque_descriptor, void **out_list);
     int32_t (*configure_list)(void *cookie, void *list,
                               const struct canopus_p65_lvx_callback_table_v1 *table);
+    /* Stock initialization/rebuild: also reconstructs incompatible row types
+     * and resets the viewport when the semantic list shape changes. */
     int32_t (*finalize_list)(void *cookie, void *list);
-    /* Trigger row callbacks after a new snapshot has been copied. The P65
-     * firmware binding remains a candidate until its exact refresh API is
-     * established. */
+    /* Stock in-place update for a snapshot with the same row count/classes. */
     void (*refresh_list)(void *cookie, void *list);
     void (*remove_row_event)(void *cookie, void *list, void *row);
     void *(*create_row)(void *cookie, void *list,

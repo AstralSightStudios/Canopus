@@ -201,8 +201,10 @@ int32_t canopus_p65_ui_rows_get(
             ? node->event_id
             : 0u;
     out->source_index = row->source_index;
-    /* P65 +96 uses an 8-bit key to reuse one row object per semantic class. */
-    out->cache_key = (uint8_t)node->type;
+    /* Trailing affordances are constructed once. Do not recycle a disabled
+     * action without an arrow as an enabled action with an arrow. */
+    out->cache_key = (uint8_t)(node->type |
+                              (out->event_id != 0u ? 0x40u : 0u));
     return CANOPUS_UI_OK;
 }
 

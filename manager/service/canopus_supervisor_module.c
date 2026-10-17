@@ -106,6 +106,7 @@ static void canopus_sup_ctor(void)
      * enabled third-party modules here. Stock `insmod` executes constructors on
      * a 7.9 KiB stack; nested Rust modules belong on the first Manager page's
      * regular UI task. */
+    /* Restores metadata only: no nested module loading under insmod mutex. */
     if (canopus_supervisor_restore_registry_metadata(&g_sup) != 0) {
         g_sup.error_code = CANOPUS_SUP_ERR_REGISTRY;
     }
@@ -176,7 +177,7 @@ int32_t canopus_supervisor_module_initialize(
 
     /* Deny before constructor, file I/O or any callback can escape.
      * Rejecting after partial registration would permit modlib to free it. */
-    if (!CANOPUS_P65_DEPLOYMENT_ENABLED) {
+    if (!CANOPUS_P65_SESSION_ENABLED) {
         return CANOPUS_P65_ERR_DEPLOYMENT_BLOCKED;
     }
     if (canopus_sup_platform.register_device == 0) return -1;
@@ -187,14 +188,18 @@ int32_t canopus_supervisor_module_initialize(
 
     /* Reject a wrong firmware before any registered callback can escape. */
     if (canopus_identity_guard() != 0) return -1;
+    /* Publish retention BEFORE the first fops pointer escapes. */
+#ifdef CANOPUS_SUP_P65_RESIDENT
+    unload_pair->callback = canopus_sup_p65_unload;
+#endif
     canopus_sup_ctor();
 #ifndef CANOPUS_SUP_P65_RESIDENT
     if (!g_device_registered) return -1;
 #endif
     /* Resident registration can fail after publishing the first fops table.
      * Keep this image alive even then: modlib must not free escaped callbacks.
-     * This historical retention path is not a recovery guarantee; current
-     * P65 deployment is denied before the constructor above. */
+     * The recovered profile permits this candidate; the historical profile
+     * is denied before the constructor above. */
     unload_pair->callback = canopus_sup_p65_unload;
     unload_pair->context = 0;
     return 0;

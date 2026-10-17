@@ -250,12 +250,18 @@ static int sup_unregister_device(void *cookie)
 #endif
 }
 
+#ifdef CANOPUS_P65_RECOVERED_RUNTIME
+#include "p65_runtime_public_key.h"
+static const uint8_t s_installer_public_key[32] = P65_RUNTIME_PUBLIC_KEY;
+#else
 static const uint8_t s_installer_public_key[32] = {
     0x85, 0xcb, 0x6b, 0x0d, 0xf8, 0x42, 0xa7, 0xaf,
     0xf0, 0xb8, 0x1a, 0xa9, 0xd4, 0x8a, 0x5c, 0x25,
     0x2a, 0x8a, 0x11, 0xa0, 0x61, 0x88, 0xd2, 0xa4,
     0x28, 0xe9, 0x2a, 0x77, 0x72, 0x5d, 0xa5, 0x55,
 };
+
+#endif
 
 static const uint8_t s_firmware_sha256[32] =
     CANOPUS_SUP_FIRMWARE_SHA256_BYTES;
@@ -976,7 +982,7 @@ static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
 #ifdef CANOPUS_SUP_P65_RESIDENT
     /* Defence in depth for in-process callers; do not mutate stock app state
      * or the registry while cold-boot safety remains unresolved. */
-    if (!CANOPUS_P65_DEPLOYMENT_ENABLED) {
+    if (!CANOPUS_P65_SESSION_ENABLED) {
         sup->error_code = CANOPUS_P65_ERR_DEPLOYMENT_BLOCKED;
         return CANOPUS_P65_ERR_DEPLOYMENT_BLOCKED;
     }
