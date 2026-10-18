@@ -10,9 +10,9 @@ missing):
   * Facetory's package_lua_watchface example built with
     scripts/emu/band11/facetory-lua-layer.patch (FACETORY_PACKAGER=<binary>),
   * the AstroBox bridge (MAB_SMOKE).
-Usage: band11_smoke.py [155|177]
+Usage: band11_smoke.py [155|177] [--services | --module PROJECT_DIR [--activate]]
 """
-import argparse, os, re, subprocess, sys, tempfile, time, zlib, struct, shutil
+import argparse, os, re, subprocess, sys, tempfile, time, tomllib, zlib, struct, shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,8 +27,13 @@ W, H = 212, 520
 PAIR_CONFIRM = (106, 478)   # check mark on the pairing dialog
 RUN_BUTTON = (106, 383)     # installer page
 
+# Modules run through a read-only instruction alias here, so the engine refuses to
+# hook their own code; the emulator has no reachable vibrator.
 EXPECTED_SERVICES_SKIPS = {
+    "Hook: inline hooking needs writable module code on this target",
+    "Hook: boundary check & duplicate hook defense need inline hooking",
     "Timers: no approved platform event source",
+    "Haptics: the vibrator service is not reachable",
 }
 
 
@@ -96,6 +101,12 @@ def main():
                         help="Target firmware version (default: 155)")
     parser.add_argument("--services", action="store_true",
                         help="Run full microkernel services test suite instead of hello-portable SCAN")
+    parser.add_argument("--module", type=Path,
+                        help="module project to deliver and scan instead of hello-portable "
+                             "(it must list this target)")
+    parser.add_argument("--activate", action="store_true",
+                        help="with --module: also enable and activate the module and require it "
+                             "to reach the active state (its descriptor registered and prepared)")
     parser.add_argument("--keep-device", action="store_true",
                         help="Keep the test device for inspection")
     args = parser.parse_args()
@@ -131,11 +142,14 @@ def main():
         package = ROOT / "modules/examples/all-services-test/dist/services_test-1.0.0.canopus"
         shutil.copy(ROOT / "scripts/emu/band11/e2e_services.lua", e2e / "main.lua")
     else:
-        hello = ROOT / "modules/examples/hello-portable"
-        subprocess.run([str(canopus), "build"], cwd=hello, check=True, capture_output=True)
-        subprocess.run([str(canopus), "package"], cwd=hello, check=True, capture_output=True)
-        package = hello / "dist/hello_portable-1.0.0.canopus"
-        shutil.copy(ROOT / "scripts/emu/band11/e2e_scan.lua", e2e / "main.lua")
+        project = (args.module or ROOT / "modules/examples/hello-portable").resolve()
+        manifest = tomllib.loads((project / "Canopus.toml").read_text())["module"]
+        module_id = manifest["id"]
+        subprocess.run([str(canopus), "build"], cwd=project, check=True, capture_output=True)
+        subprocess.run([str(canopus), "package"], cwd=project, check=True, capture_output=True)
+        package = project / f"dist/{module_id}-{manifest['version']}.canopus"
+        driver = "e2e_services.lua" if args.activate else "e2e_scan.lua"
+        shutil.copy(ROOT / "scripts/emu/band11" / driver, e2e / "main.lua")
     package_face(e2e, "000000000032", work / "e2e.bin")
     # 3. fresh device, pair, install and run the installer
     ctl("shutdown", DEVICE, check=False)
@@ -160,7 +174,7 @@ def main():
     bridge(port, key, addr, state, 'install={"path":"%s","kind":"canopus"}' % package,
            'install={"path":"%s","kind":"watchface"}' % (work / "e2e.bin"),
            'setWatchface={"id":"000000000032"}', "canopusModules")
-    time.sleep(40 if args.services else 25)
+    time.sleep(40 if args.services or args.activate else 25)
     ctl("shutdown", DEVICE)
     try:
         result = ctl("fs", "get", DEVICE, "nand_data", "/canopus/bootstrap-result.txt").replace("\r", "")
@@ -168,8 +182,8 @@ def main():
         print(result.strip())
         print(log.strip())
         if args.services:
-            report = ctl("fs", "get", DEVICE, "nand_data", "/canopus/m.services_test.test_report.txt").replace("\r", "")
-            probe = ctl("fs", "get", DEVICE, "nand_data", "/canopus/m.services_test.probe.txt").replace("\r", "")
+            report = ctl("fs", "get", DEVICE, "nand_data", "/canopus/m.services_test/test_report.txt").replace("\r", "")
+            probe = ctl("fs", "get", DEVICE, "nand_data", "/canopus/m.services_test/probe.txt").replace("\r", "")
             print(report.strip())
             print(probe.strip())
             passed, total, skipped = validate_report(report, probe)
@@ -179,9 +193,11 @@ def main():
         else:
             inbox = ctl("fs", "ls", DEVICE, "nand_data", "/canopus/inbox")
             ok = ("result=0" in result and "scan result=5" in log and "after-scan err=0 count=1" in log
-                  and "hello_portable.cmi" in inbox)
+                  and f"{module_id}.cmi" in inbox)
+            if args.activate:
+                ok = ok and "activate result=5" in log and re.search(r"after-activate .*slot0=state:9,", log) is not None
             print(inbox.strip())
-            print(("PASS" if ok else "FAIL") + f" band 11 {target}: installer loaded the Supervisor, encrypted CPC2 installed the native module")
+            print(("PASS" if ok else "FAIL") + f" band 11 {target}: installer loaded the Supervisor, encrypted CPC2 installed {module_id}")
             if not ok:
                 sys.exit(1)
     finally:

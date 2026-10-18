@@ -90,24 +90,6 @@ fn run(cmd: &mut Command) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Constructor/destructor glue for the stock modlib loader (see
-/// sdk/rust/examples/no-heap-counter/c_shim): the Rust crate exports
-/// `canopus_mod_prepare`, `canopus_mod_stop` and `canopus_module_descriptor_ptr`.
-const RUST_CTOR_SHIM: &str = r#"__attribute__((constructor)) static void canopus_mod_ctor(void)
-{
-    extern int canopus_mod_prepare(const void *ctx);
-    extern const void *canopus_module_descriptor_ptr(void);
-    (void)canopus_module_descriptor_ptr();
-    (void)canopus_mod_prepare(0);
-}
-
-__attribute__((destructor)) static void canopus_mod_dtor(void)
-{
-    extern int canopus_mod_stop(const void *ctx);
-    (void)canopus_mod_stop(0);
-}
-"#;
-
 const RUST_TRIPLE: &str = "thumbv8m.main-none-eabi";
 
 /// Rust modules: `[build] sources = ["Cargo.toml"]` names the crate (a
@@ -115,12 +97,6 @@ const RUST_TRIPLE: &str = "thumbv8m.main-none-eabi";
 /// device triple with the exact target's bindings feature -> C ctor shim ->
 /// `ld.lld -r --whole-archive` -> zero-import ELF.
 fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::Result<PathBuf> {
-    if target.loader != "nuttx-modlib-elf32-rel" {
-        bail!(
-            "{}: Rust modules use the stock modlib constructor glue; custom-loader targets (Band 11) need the service-table entry, which the Rust SDK does not have yet",
-            target.target_id
-        );
-    }
     let out = project.elf_path(Some(&target.target_id));
     let out_dir = out.parent().unwrap().to_path_buf();
     std::fs::create_dir_all(&out_dir)?;
@@ -156,19 +132,25 @@ fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::
     let [archive] = archives.as_slice() else {
         bail!("expected exactly one staticlib in {} (crate-type = [\"staticlib\"]), found {}", release.display(), archives.len());
     };
-    let shim_c = out_dir.join("canopus_ctor.c");
+    // The constructor is the shared C shim: it registers the crate's descriptor
+    // through sdk/c/canopus_module_entry.h, which picks the path the target's
+    // loader gives constructors.
+    let shim_c = root.join("sdk/rust/c_shim/canopus_ctor.c");
     let shim_o = out_dir.join("canopus_ctor.o");
-    std::fs::write(&shim_c, RUST_CTOR_SHIM)?;
     run(Command::new(tool("CC", "clang"))
         .args(["--target=arm-none-eabi", "-mcpu=cortex-m33", "-mthumb", "-mfloat-abi=soft", "-ffreestanding",
                "-fno-common", "-fno-builtin", "-fno-stack-protector", "-fno-unwind-tables",
                "-fno-asynchronous-unwind-tables", "-fdata-sections", "-ffunction-sections", "-Os", "-Wall",
-               "-Wextra", "-Werror", "-c"])
+               "-Wextra", "-Werror", "-DCANOPUS_TARGET=1"])
+        .arg(format!("-I{}", root.join("sdk/c").display()))
+        .arg(format!("-I{}", root.join("targets").join(&target.target_id).join("generated").display()))
+        .arg("-c")
         .arg(&shim_c)
         .arg("-o")
         .arg(&shim_o))?;
     run(Command::new(tool("LD", "ld.lld"))
-        .args(["-r"])
+        .args(["-r", "-T"])
+        .arg(root.join("sdk/rust/c_shim/module.ld"))
         .arg(&shim_o)
         .arg(archive)
         .arg("-o")
@@ -411,16 +393,42 @@ pub fn new(id: &str, dir: &Path, targets: &[String], lang: &str) -> anyhow::Resu
     Ok(())
 }
 
+/// One C skeleton for both kinds (sdk/c/canopus_module_entry.h registers it on
+/// whichever path the target's loader gives constructors); only the descriptor's
+/// target differs.
 fn source_template(id: &str, kind: &str) -> String {
-    if kind == "target" {
-        format!(
-            "/* {id} — target module. Include the exact target's generated veneer. */\n#include \"canopus_abi.h\"\n#include \"canopus_veneer.h\"\n\n/* TODO: descriptor, lifecycle callbacks and a constructor that checks\n * canopus_identity_guard() before touching firmware state. */\n"
-        )
-    } else {
-        format!(
-            "/* {id} — portable module: uses only the Supervisor service table. */\n#include \"canopus_services.h\"\n\nstatic const struct canopus_context_v1 *s_ctx;\n\nstatic int32_t on_prepare(const struct canopus_context_v1 *ctx) {{ s_ctx = ctx; return 0; }}\n\nstatic int32_t on_activate(const struct canopus_context_v1 *ctx)\n{{\n    if (canopus_services_has(ctx, CANOPUS_SVC_LOG, 1)) {{\n        ctx->services->log_write(ctx, CANOPUS_LOG_INFO, \"{id} active\");\n    }}\n    return 0;\n}}\n\nstatic int32_t on_deactivate(const struct canopus_context_v1 *ctx) {{ (void)ctx; return 0; }}\n\nstatic int32_t on_stop(const struct canopus_context_v1 *ctx) {{ (void)ctx; s_ctx = 0; return 0; }}\n\nstatic int32_t on_query(struct canopus_status_writer_v1 *writer) {{ (void)writer; return 0; }}\n\nstatic const struct canopus_module_descriptor_v1 s_descriptor = {{\n    sizeof(struct canopus_module_descriptor_v1), CANOPUS_ABI_MAJOR, CANOPUS_ABI_MINOR, 0u,\n    \"{id}\", \"0.1.0\", \"\", \"portable-thumbv8m\",\n    on_prepare, on_activate, on_deactivate, on_stop, on_query, 0, 0,\n}};\n\n__attribute__((constructor)) static void init(const struct canopus_context_v1 *ctx)\n{{\n    if (!canopus_services_has(ctx, CANOPUS_SVC_MODULE, 1)) return;\n    s_ctx = ctx;\n    (void)ctx->services->module_register(ctx, &s_descriptor);\n}}\n"
-        )
+    let target_id = if kind == "target" { "CANOPUS_TARGET_ID" } else { "\"portable-thumbv8m\"" };
+    r#"/* {id} - Canopus module. */
+#include "canopus_module_entry.h"
+
+static const struct canopus_context_v1 *s_ctx;
+
+static int32_t on_prepare(const struct canopus_context_v1 *ctx) { s_ctx = ctx; return 0; }
+
+static int32_t on_activate(const struct canopus_context_v1 *ctx)
+{
+    if (canopus_services_has(ctx, CANOPUS_SVC_LOG, 1)) {
+        ctx->services->log_write(ctx, CANOPUS_LOG_INFO, "{id} active");
     }
+    return 0;
+}
+
+static int32_t on_deactivate(const struct canopus_context_v1 *ctx) { (void)ctx; return 0; }
+
+static int32_t on_stop(const struct canopus_context_v1 *ctx) { (void)ctx; s_ctx = 0; return 0; }
+
+static int32_t on_query(struct canopus_status_writer_v1 *writer) { (void)writer; return 0; }
+
+static const struct canopus_module_descriptor_v1 s_descriptor = {
+    sizeof(struct canopus_module_descriptor_v1), CANOPUS_ABI_MAJOR, CANOPUS_ABI_MINOR, 0u,
+    "{id}", "0.1.0", "", {target_id},
+    on_prepare, on_activate, on_deactivate, on_stop, on_query, 0, 0,
+};
+
+CANOPUS_MODULE_ENTRY(s_descriptor)
+"#
+    .replace("{id}", id)
+    .replace("{target_id}", target_id)
 }
 
 const INSTALLER_MAX_SIZE: usize = 393_216;
@@ -553,9 +561,9 @@ fn new_rust(id: &str, project: &Path, targets: &[String]) -> anyhow::Result<()> 
 
 fn rust_lib_template(id: &str) -> String {
     format!(
-        r#"//! {id} - Canopus no_std Rust module. The `canopus build` shim calls
-//! `canopus_mod_prepare` / `canopus_mod_stop` from the stock loader's
-//! constructor/destructor and reads the descriptor from `canopus_module_descriptor_ptr`.
+        r#"//! {id} - Canopus no_std Rust module. The `canopus build` C shim registers
+//! `canopus_module_descriptor` with the Supervisor (sdk/c/canopus_module_entry.h)
+//! from the loader's constructor and calls `canopus_mod_stop` from the destructor.
 #![no_std]
 
 use canopus_abi::*;
@@ -627,11 +635,6 @@ pub static canopus_module_descriptor: ModuleDescriptorV1 = ModuleDescriptorV1 {{
     publish_native_app: None,
     publish_native_app_stage: None,
 }};
-
-#[no_mangle]
-pub extern "C" fn canopus_module_descriptor_ptr() -> *const ModuleDescriptorV1 {{
-    &canopus_module_descriptor
-}}
 
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {{

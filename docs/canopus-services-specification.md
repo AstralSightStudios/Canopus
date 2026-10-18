@@ -386,6 +386,28 @@ AstroBox 一侧见 `astrobox:psys-host-v4/canopusconnect`（`send` / `listen` / 
 
 ## 3. 编程范例
 
+### 模块入口：注册 descriptor
+
+两种 loader 给构造函数的东西不同，模块只用 `sdk/c/canopus_module_entry.h` 这一个入口，不自己写注册代码：
+
+| loader | 构造函数拿到什么 | 注册方式 |
+|---|---|---|
+| Band 10 Pro 原厂 modlib（`nuttx-modlib-elf32-rel`） | 没有 ctx（r0 无意义） | 经目标自己的 NuttX 入口向 `/dev/canopus` 写一帧 CMR1，先过 `canopus_identity_guard()` |
+| Canopus 自己的 loader（Band 11；portable 模块） | r0 = ctx | `ctx->services->module_register(ctx, &descriptor)` |
+
+```c
+#include "canopus_module_entry.h"   /* 目标模块还需把该目标的 generated 目录放进 -I */
+
+static const struct canopus_module_descriptor_v1 s_descriptor = { /* ... */ };
+CANOPUS_MODULE_ENTRY(s_descriptor)  /* 或在自己的构造函数里调 canopus_module_register(ctx, &s_descriptor) */
+```
+
+编译期按目标的生成配置选路径（有 `CANOPUS_TARGET_ID` 且没有 `CANOPUS_SUP_CUSTOM_LOADER` 的是 CMR1，其余走服务表），所以同一份源码在两个系列上都能用。
+portable 模块不带目标配置，只有服务表一条路，因此只能在 Canopus loader 的目标上加载。Rust 模块的构造函数是 `sdk/rust/c_shim/canopus_ctor.c`，同样经该入口注册 crate 导出的 `canopus_module_descriptor`。
+
+两条路最后都进 `canopus_supervisor_register_descriptor`，它要求：descriptor 的 `module_id` 等于正在加载的槽位的 module id，`target_id` 是当前目标或 `portable-thumbv8m`。
+不满足时注册被拒绝；脚手架和示例的 descriptor 因此必须写清单里的 id。
+
 ### C 模块开发示例
 ```c
 #include "canopus_services.h"

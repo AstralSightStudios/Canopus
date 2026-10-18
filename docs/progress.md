@@ -44,6 +44,16 @@
 - 仅 .043 / .155 提供（需要 L2 后端），其它 target 的 `ctx->connect` 为空。发送队列、`l2_peer` 与 owner 上的发送顺序是 ARM 代码，
   没有 Mirage 或真机运行；未提升任何符号或能力状态。
 
+## 模块注册入口统一（2026-10-18）
+
+- Band 10 Pro 原厂 modlib 的构造函数没有 ctx，只能向 `/dev/canopus` 写 CMR1；Band 11 / portable 的构造函数在 r0 拿到 ctx，走 `ctx->services->module_register`。
+  现在两条路只有一个 SDK 入口 `sdk/c/canopus_module_entry.h`（`CANOPUS_MODULE_ENTRY` / `canopus_module_register`），按目标生成配置在编译期选路径；见 ADR-CAN-006 与服务规范 §3。
+- 顺带查出并修正：`canopus new` 的 target 模板只有 TODO 桩、`canopus module new` 与 Rust 构造函数 shim、`hello.c` 从来没有注册 descriptor（没有任何 loader 读 `canopus_module_descriptor` 符号）；
+  `hello.c`、no-heap-counter 与旧脚手架的 `module_id` 与清单 id 不符，Supervisor 会拒绝注册；Rust 模块此前被限制在 stock-modlib 目标，现在 Band 11 也能构建、通过 verifier，并在 Mirage `.155` 上激活（`canopus new --lang rust` 的模块）。Rust 产物原先带着 debug 段和内嵌 bitcode，其 `.rel.debug_*` 指向未装载的段，Canopus 自己的 ELF loader 判为无效；链接时用 `sdk/rust/c_shim/module.ld` 丢弃它们（51 KB → 12 KB），no-heap-counter 的 `--whole-archive`（2871 个段，超过 loader 的 256 上限）也已去掉，CI 现在用 host loader 检查 Rust 与 C 产物；
+  services 测试里仅 Band 10 Pro 才有的原始固件写文件（与 `ctx->fs` 重复）已删。
+- CI gate 5 现在对全部 active target 脚手架并构建 Rust、target C 与 portable C 模块。
+- 证据级别：host 构建/verifier 与 host 测试；设备侧运行见各 emulator 记录，均不提升能力状态。
+
 ## 阶段状态
 
 | Phase | 状态 | 备注 |

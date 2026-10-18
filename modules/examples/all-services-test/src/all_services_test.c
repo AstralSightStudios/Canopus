@@ -18,17 +18,8 @@
  *   14. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Slider, Checkbox, Divider)
  */
 
-#include "canopus_abi.h"
-#include "canopus_services.h"
+#include "canopus_module_entry.h"
 #include "canopus_memory.h"
-#include "canopus_module_registration.h"
-#include "canopus_target_config.h"
-#if defined(__has_include)
-#if __has_include("canopus_band11_addresses.h")
-#include "canopus_band11_addresses.h"
-#endif
-#endif
-#include "canopus_veneer.h"
 #include "canopus_ui.h"
 
 #define TEST_MODULE_ID "services_test"
@@ -97,25 +88,6 @@ static void log_skip(const char *name)
     report_append("\n");
 }
 
-static void write_breadcrumb(const char *msg)
-{
-#if defined(CANOPUS_SUP_NUTTX_OPEN) && defined(CANOPUS_SUP_NUTTX_WRITE) && defined(CANOPUS_SUP_NUTTX_CLOSE)
-    typedef int (*open_fn)(const char *, int, ...);
-    typedef int32_t (*write_fn)(int, const void *, uint32_t);
-    typedef int (*close_fn)(int);
-    open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
-    write_fn write_file = (write_fn)(uintptr_t)CANOPUS_SUP_NUTTX_WRITE;
-    close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
-    int fd = open_file("/data/canopus/breadcrumb.txt", 2 | 4 | 0x200, 0666);
-    if (fd >= 0) {
-        (void)write_file(fd, msg, canopus_strlen(msg));
-        (void)close_file(fd);
-    }
-#else
-    (void)msg;
-#endif
-}
-
 /* ========================================================================= */
 /* 1. HOOK ENGINE TESTS                                                      */
 /* ========================================================================= */
@@ -170,6 +142,7 @@ static void run_hook_tests(const struct canopus_context_v1 *ctx)
     int ok = 1;
     int32_t hook_id;
     int32_t un_rc;
+    int inline_supported;
 
     if (!ctx->hook || !ctx->hook->install || !ctx->hook->uninstall || !ctx->hook->is_hooked) {
         log_test("Hook: service object missing", 0);
@@ -186,20 +159,27 @@ static void run_hook_tests(const struct canopus_context_v1 *ctx)
 
     hook_id = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
                                  (uintptr_t *)&s_orig_math_add, CANOPUS_HOOK_INLINE);
-    if (hook_id < 0) ok = 0;
-    if (ctx->hook->is_hooked(ctx, (uintptr_t)test_math_add) != 1) ok = 0;
+    /* The engine patches SRAM only: where modules run through a read-only
+     * instruction alias (Band 11) it refuses to hook the module's own code. */
+    inline_supported = hook_id != CANOPUS_SVC_ERR_UNSUPPORTED;
+    if (!inline_supported) {
+        log_skip("Hook: inline hooking needs writable module code on this target");
+    } else {
+        if (hook_id < 0) ok = 0;
+        if (ctx->hook->is_hooked(ctx, (uintptr_t)test_math_add) != 1) ok = 0;
 
-    int hooked_val = fn_math(arg_a, arg_b);
-    if (hooked_val != 2 || s_hook_inline_called != 1) ok = 0;
+        int hooked_val = fn_math(arg_a, arg_b);
+        if (hooked_val != 2 || s_hook_inline_called != 1) ok = 0;
 
-    un_rc = ctx->hook->uninstall(ctx, hook_id);
-    if (un_rc != CANOPUS_SVC_OK) ok = 0;
-    if (ctx->hook->is_hooked(ctx, (uintptr_t)test_math_add) != 0) ok = 0;
+        un_rc = ctx->hook->uninstall(ctx, hook_id);
+        if (un_rc != CANOPUS_SVC_OK) ok = 0;
+        if (ctx->hook->is_hooked(ctx, (uintptr_t)test_math_add) != 0) ok = 0;
 
-    int after_val = fn_math(arg_a, arg_b);
-    if (after_val != 1) ok = 0;
+        int after_val = fn_math(arg_a, arg_b);
+        if (after_val != 1) ok = 0;
 
-    log_test("Hook: Inline function hook & trampoline call", ok);
+        log_test("Hook: Inline function hook & trampoline call", ok);
+    }
 
     /* 1.2 Pointer slot hooking */
     ok = 1;
@@ -238,25 +218,29 @@ static void run_hook_tests(const struct canopus_context_v1 *ctx)
     log_test("Hook: Auto-deduced pointer hook & unhook slot cleanup", ok);
 
     /* 1.4 Negative defense tests: short function boundary check & duplicate hook */
-    ok = 1;
-    uintptr_t dummy_orig = 0;
-    /* test_square is < 8 bytes leaf function (return x * x): inline hook must fail-closed */
-    int32_t bad_hook = ctx->hook->install(ctx, (uintptr_t)test_square, (uintptr_t)hook_square,
-                                         &dummy_orig, CANOPUS_HOOK_INLINE);
-    if (bad_hook != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
-
-    /* Duplicate hook defense */
-    int32_t h1 = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
-                                   (uintptr_t *)&s_orig_math_add, CANOPUS_HOOK_INLINE);
-    if (h1 >= 0) {
-        int32_t dup_h = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
-                                           (uintptr_t *)&s_orig_math_add, CANOPUS_HOOK_INLINE);
-        if (dup_h != CANOPUS_SVC_ERR_STATE) ok = 0;
-        ctx->hook->uninstall(ctx, h1);
+    if (!inline_supported) {
+        log_skip("Hook: boundary check & duplicate hook defense need inline hooking");
     } else {
-        ok = 0;
+        ok = 1;
+        uintptr_t dummy_orig = 0;
+        /* test_square is < 8 bytes leaf function (return x * x): inline hook must fail-closed */
+        int32_t bad_hook = ctx->hook->install(ctx, (uintptr_t)test_square, (uintptr_t)hook_square,
+                                             &dummy_orig, CANOPUS_HOOK_INLINE);
+        if (bad_hook != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+
+        /* Duplicate hook defense */
+        int32_t h1 = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
+                                       (uintptr_t *)&s_orig_math_add, CANOPUS_HOOK_INLINE);
+        if (h1 >= 0) {
+            int32_t dup_h = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
+                                               (uintptr_t *)&s_orig_math_add, CANOPUS_HOOK_INLINE);
+            if (dup_h != CANOPUS_SVC_ERR_STATE) ok = 0;
+            ctx->hook->uninstall(ctx, h1);
+        } else {
+            ok = 0;
+        }
+        log_test("Hook: boundary check & duplicate hook defense", ok);
     }
-    log_test("Hook: boundary check & duplicate hook defense", ok);
 
     /* 1.5 Owner-registered dispatch mapping using module-owned code and RAM. */
     ok = 1;
@@ -395,14 +379,14 @@ static void run_fs_tests(const struct canopus_context_v1 *ctx)
     if (ctx->fs->open(ctx, "absent.cfg", CANOPUS_FS_READ) != CANOPUS_SVC_ERR_NOTFOUND) ok = 0;
     if (ctx->fs->open(ctx, "/data/canopus/registry.bin", CANOPUS_FS_READ) != CANOPUS_SVC_ERR_ACCESS) ok = 0;
     if (ctx->fs->open(ctx, "/data/x/../canopus/registry.bin", CANOPUS_FS_WRITE) != CANOPUS_SVC_ERR_ACCESS) ok = 0;
-    if (ctx->fs->write_all(ctx, "/data/offlinelog/canopus_services_probe.txt", "ab", 2) != 2) ok = 0;
-    fd = ctx->fs->open(ctx, "/data/offlinelog/canopus_services_probe.txt", CANOPUS_FS_WRITE | CANOPUS_FS_APPEND);
+    if (ctx->fs->write_all(ctx, "/data/canopus_services_probe.txt", "ab", 2) != 2) ok = 0;
+    fd = ctx->fs->open(ctx, "/data/canopus_services_probe.txt", CANOPUS_FS_WRITE | CANOPUS_FS_APPEND);
     if (fd < 0 || ctx->fs->write(ctx, fd, "cd", 2) != 2) ok = 0;
     if (fd >= 0) ctx->fs->close(ctx, fd);
     canopus_memset(buf, 0, sizeof(buf));
-    if (ctx->fs->read_all(ctx, "/data/offlinelog/canopus_services_probe.txt", buf, sizeof(buf)) != 4 ||
+    if (ctx->fs->read_all(ctx, "/data/canopus_services_probe.txt", buf, sizeof(buf)) != 4 ||
         canopus_strcmp(buf, "abcd") != 0) ok = 0;
-    if (ctx->fs->remove(ctx, "/data/offlinelog/canopus_services_probe.txt") != 0) ok = 0;
+    if (ctx->fs->remove(ctx, "/data/canopus_services_probe.txt") != 0) ok = 0;
     log_test("FS: absolute path, append, protected Canopus state & NOTFOUND code", ok);
 
     /* Directory iteration */
@@ -897,14 +881,12 @@ static void run_ui_builder_tests(const struct canopus_context_v1 *ctx)
 
 static int32_t test_prepare(const struct canopus_context_v1 *ctx)
 {
-    write_breadcrumb("PREPARE_ENTER\n");
     s_ctx = ctx;
     return 0;
 }
 
 static int32_t test_activate(const struct canopus_context_v1 *ctx)
 {
-    write_breadcrumb("ACTIVATE_ENTER\n");
     s_ctx = ctx;
     s_pass_count = 0;
     s_fail_count = 0;
@@ -917,24 +899,15 @@ static int32_t test_activate(const struct canopus_context_v1 *ctx)
     report_append("========================================\n");
 
     /* Execute all test suites */
-    write_breadcrumb("RUN_HOOK\n");
     run_hook_tests(ctx);
-    write_breadcrumb("RUN_KV\n");
     run_kv_tests(ctx);
-    write_breadcrumb("RUN_FS\n");
     run_fs_tests(ctx);
-    write_breadcrumb("RUN_MEM\n");
     run_mem_tests(ctx);
-    write_breadcrumb("RUN_SYS_TIME\n");
     run_system_and_time_tests(ctx);
-    write_breadcrumb("RUN_HAPTICS_DISP\n");
     run_haptics_and_display_tests(ctx);
-    write_breadcrumb("RUN_BUS_BT\n");
     run_bus_bt_log_notify_tests(ctx);
     run_connect_tests(ctx);
-    write_breadcrumb("RUN_UI\n");
     run_ui_builder_tests(ctx);
-    write_breadcrumb("ALL_RUN_DONE\n");
 
     report_append("========================================\n");
     report_append("SUMMARY: ");
@@ -956,21 +929,6 @@ static int32_t test_activate(const struct canopus_context_v1 *ctx)
     if (ctx->fs && ctx->fs->write_all) {
         ctx->fs->write_all(ctx, "test_report.txt", s_report_buf, s_report_len);
     }
-#if defined(CANOPUS_SUP_NUTTX_OPEN) && defined(CANOPUS_SUP_NUTTX_WRITE) && defined(CANOPUS_SUP_NUTTX_CLOSE)
-    {
-        typedef int (*open_fn)(const char *, int, ...);
-        typedef int32_t (*write_fn)(int, const void *, uint32_t);
-        typedef int (*close_fn)(int);
-        open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
-        write_fn write_file = (write_fn)(uintptr_t)CANOPUS_SUP_NUTTX_WRITE;
-        close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
-        int fd = open_file("/data/canopus/test_report.txt", 2 | 4 | 0x200, 0666);
-        if (fd >= 0) {
-            (void)write_file(fd, s_report_buf, s_report_len);
-            (void)close_file(fd);
-        }
-    }
-#endif
 
     /* Write summary into probe.txt */
     char summary[64];
@@ -992,21 +950,6 @@ static int32_t test_activate(const struct canopus_context_v1 *ctx)
     if (ctx->fs && ctx->fs->write_all) {
         ctx->fs->write_all(ctx, "probe.txt", summary, (uint32_t)(sp - summary));
     }
-#if defined(CANOPUS_SUP_NUTTX_OPEN) && defined(CANOPUS_SUP_NUTTX_WRITE) && defined(CANOPUS_SUP_NUTTX_CLOSE)
-    {
-        typedef int (*open_fn)(const char *, int, ...);
-        typedef int32_t (*write_fn)(int, const void *, uint32_t);
-        typedef int (*close_fn)(int);
-        open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
-        write_fn write_file = (write_fn)(uintptr_t)CANOPUS_SUP_NUTTX_WRITE;
-        close_fn close_file = (close_fn)(uintptr_t)CANOPUS_SUP_NUTTX_CLOSE;
-        int fd = open_file("/data/canopus/probe.txt", 2 | 4 | 0x200, 0666);
-        if (fd >= 0) {
-            (void)write_file(fd, summary, (uint32_t)(sp - summary));
-            (void)close_file(fd);
-        }
-    }
-#endif
 
     if (s_fail_count > 0) {
         return -1;
@@ -1051,27 +994,4 @@ static const struct canopus_module_descriptor_v1 s_descriptor = {
     0,
 };
 
-__attribute__((constructor)) static void test_ctor(const struct canopus_context_v1 *ctx)
-{
-#if defined(CANOPUS_SUP_NUTTX_OPEN)
-    /* If loaded by kernel modlib (Band 10 Pro / target), register via /dev/canopus CMR1 */
-    typedef int (*open_fn)(const char *, int, ...);
-    struct canopus_module_registration_io_v1 io;
-    int close_error = 0;
-    (void)ctx;
-    if (canopus_identity_guard() != 0) return;
-    write_breadcrumb("CTOR_ENTER\n");
-    io.open = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
-    io.write = canopus_fw_write;
-    io.close = canopus_fw_close;
-    io.write_flags = 2;
-    (void)canopus_module_register_fd(&io, (uint32_t)(uintptr_t)&s_descriptor,
-                                     TEST_MODULE_ID, &close_error);
-#else
-    /* If loaded by custom loader (Band 11 / portable), r0 contains ctx */
-    if (ctx != 0 && ctx->services != 0 && ctx->services->module_register != 0) {
-        s_ctx = ctx;
-        (void)ctx->services->module_register(ctx, &s_descriptor);
-    }
-#endif
-}
+CANOPUS_MODULE_ENTRY(s_descriptor)

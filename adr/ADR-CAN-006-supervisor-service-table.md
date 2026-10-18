@@ -51,3 +51,10 @@ portable 模块不允许出现任何固件地址：verifier 的地址扫描对 p
 - `ui`、`bt`、`interconnect`：**不实现，等到有具体模块需求时单独立项**。理由：它们落在各固件互不相同的对象模型上
   （lvgl_v9 页面/Band 11 页面描述符、蓝牙栈、互联通道），语义树渲染还需要先定出模块可用的最小 UI 词汇；
   在没有消费方时设计这些接口只会固化错误的抽象。需要这些能力的模块继续走 target-private（full-trust）路径。
+
+## 模块注册入口（2026-10-18 统一）
+
+构造函数拿到的东西因 loader 而异：Band 10 Pro 的原厂 modlib 不传 ctx，模块只能向 `/dev/canopus` 写 CMR1；Canopus 自己的 loader（Band 11、portable）把 ctx 放在 r0，模块走 `ctx->services->module_register`。
+此前这两条路各处手写，且脚手架、Rust shim、`hello.c` 根本没有注册 descriptor（`canopus_module_descriptor` 符号没有任何 loader 读取）。
+现在只有 `sdk/c/canopus_module_entry.h` 一个入口（`CANOPUS_MODULE_ENTRY` / `canopus_module_register`），按目标的生成配置在编译期选路径；示例、`canopus new` 与 `canopus module new` 模板、Rust 构造函数 shim（`sdk/rust/c_shim/canopus_ctor.c`）都用它。
+两条路汇合到 `canopus_supervisor_register_descriptor`，该函数要求 descriptor 的 `module_id` 与槽位 id 相同、`target_id` 为当前目标或 `portable-thumbv8m`。

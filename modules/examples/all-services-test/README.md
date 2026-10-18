@@ -1,12 +1,13 @@
 # Service Objects 与 Hook 冒烟测试
 
 `services_test` 是设备/模拟器中的服务 API 冒烟模块，不是所有方法的行为覆盖证明。
-当前有 20 个报告组。每组输出 `[PASS]`、`[FAIL]` 或 `[SKIP]`；不支持的能力不得伪装成通过。
+当前有 26 个报告项。每项输出 `[PASS]`、`[FAIL]` 或 `[SKIP]`；不支持的能力不得伪装成通过。
 任一失败会使模块 activate 返回负值。
 
 ## 验证范围
 
 - Hook：固定的可复制 Thumb 算术入口、trampoline 调用和恢复、显式 POINTER、设备 AUTO 指针槽位、短函数/重复请求拒绝，以及模块自有 RAM dispatch 映射。
+  引擎只改写 SRAM；Band 11 的模块经只读的指令别名执行，引擎对模块自己的代码返回 `UNSUPPORTED`，此时两个 inline 项显式 SKIP（不算通过）。
   映射测试不修改真实固件 vtable，不证明某个固件 Flash 函数已被拦截。
 - KV：int/string/bool、fallback、remove/clear，并留存跨重启 probe。
 - FS：读写、seek/tell/size/sync、rename、stat、目录接口调用。
@@ -62,7 +63,14 @@ python3 scripts/emu/band11_smoke.py 155 --services
 ```
 
 与默认的 hello-portable SCAN 冒烟不同，services 模式必须真正启用并激活本模块，读取报告与 probe。
-生产通知可用时仅 timer 组跳过。结果与缺失前提必须如实记录，不能把 SCAN 成功当作服务测试通过。
+模拟器上预期 4 项显式跳过：两个 inline Hook、timer、振动马达（模拟器里没有可达的 vibrator）。
+结果与缺失前提必须如实记录，不能把 SCAN 成功当作服务测试通过。
+
+```bash
+python3 scripts/emu/band11_smoke.py 155 --module <项目目录> --activate
+```
+
+`--module` 换成别的模块工程（须列出该 target），`--activate` 额外 enable + activate 并要求槽位到达 ACTIVE（descriptor 已注册并 prepare）。
 
 ## 报告路径与证据边界
 

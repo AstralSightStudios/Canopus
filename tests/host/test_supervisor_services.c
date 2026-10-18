@@ -2,7 +2,7 @@
 #include "canopus_test.h"
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
-#include "canopus_services.h"
+#include "canopus_module_entry.h"
 #include "canopus_memory.h"
 #include "canopus_runtime.h"
 #include <stdio.h>
@@ -209,17 +209,15 @@ static int32_t allocate_failed_module_resources(const struct canopus_context_v1 
 static int p_noop(void *c) { (void)c; return 0; }
 static int p_load(void *c, uint32_t i, const char *n, uint32_t cls)
 {
-    const struct canopus_context_v1 *ctx;
     (void)c; (void)n; (void)cls;
     s_load_calls++;
     if (s_load_hook_registers == 2) {
         return allocate_failed_module_resources(canopus_supervisor_context(s_sup, i));
     }
     if (s_load_hook_registers) {
-        /* what a portable module's init entry does with its r0 */
-        ctx = canopus_supervisor_context(s_sup, i);
-        if (!canopus_services_has(ctx, CANOPUS_SVC_MODULE, 1) ||
-            ctx->services->module_register(ctx, s_descriptor) != 0) {
+        /* a module's init entry given its r0 (the SDK's service-table path) */
+        if (canopus_module_register(canopus_supervisor_context(s_sup, i),
+                                    s_descriptor) != 0) {
             return -1;
         }
     }

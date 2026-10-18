@@ -28,12 +28,14 @@ $CC --target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
     -ffreestanding -fno-common -fno-builtin -fno-stack-protector \
     -fno-unwind-tables -fno-asynchronous-unwind-tables \
     -fdata-sections -ffunction-sections -Os -Wall -Wextra -Werror \
-    -c "$SELF_DIR/c_shim/canopus_ctor.c" -o "$OUT/canopus_ctor.o"
+    -DCANOPUS_TARGET=1 -I "$ROOT/sdk/c" -I "$ROOT/targets/$TARGET_ID/generated" \
+    -c "$ROOT/sdk/rust/c_shim/canopus_ctor.c" -o "$OUT/canopus_ctor.o"
 
 echo "[3/4] relocatable link (ld.lld -r)"
-# --whole-archive pulls every member of the Rust staticlib so the descriptor
-# and its callbacks are present even if only the ctor references one symbol.
-ld.lld -r --whole-archive \
+# The shim references the descriptor and canopus_mod_stop, which pull in the
+# members they need; module.ld drops debug info and embedded bitcode, which
+# are not loaded and would make the Canopus ELF loader reject the image.
+ld.lld -r -T "$ROOT/sdk/rust/c_shim/module.ld" \
     "$OUT/canopus_ctor.o" \
     "$ROOT/target/$TRIPLE/device/libno_heap_counter_device.a" \
     -o "$OUT/no_heap_counter.elf"
