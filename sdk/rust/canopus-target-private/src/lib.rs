@@ -24,6 +24,19 @@ pub mod generated_symbols;
 #[path = "generated_symbols_xiaomi_band_10_pro_3_101_043.rs"]
 pub mod generated_symbols;
 
+#[cfg(any(
+    feature = "target-xiaomi-band-10-pro-3-101-036",
+    feature = "target-xiaomi-band-10-pro-3-101-043"
+))]
+pub mod band10_pro;
+
+#[cfg(any(
+    feature = "target-xiaomi-band-11-4-100-139",
+    feature = "target-xiaomi-band-11-4-100-155",
+    feature = "target-xiaomi-band-11-4-100-177"
+))]
+pub mod band11;
+
 #[cfg(feature = "target-xiaomi-band-10-pro-3-101-036")]
 #[path = "targets/xiaomi_band_10_pro_3_101_036.rs"]
 mod selected;
@@ -45,4 +58,3 @@ mod selected;
 mod selected;
 
 pub use selected::*;
-

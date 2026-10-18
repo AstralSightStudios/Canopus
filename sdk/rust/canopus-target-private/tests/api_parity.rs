@@ -9,7 +9,10 @@ fn api(source: &str) -> BTreeSet<String> {
     let mut in_use = false;
     for line in source.lines() {
         let t = line.trim_start();
-        if let Some(rest) = t.strip_prefix("pub unsafe fn ").or_else(|| t.strip_prefix("pub fn ")) {
+        if let Some(rest) = t
+            .strip_prefix("pub unsafe fn ")
+            .or_else(|| t.strip_prefix("pub fn "))
+        {
             if !line.starts_with(' ') {
                 names.insert(rest.split(['(', '<']).next().unwrap().to_string());
             }
@@ -39,22 +42,53 @@ fn api(source: &str) -> BTreeSet<String> {
 
 #[test]
 fn all_targets_expose_the_same_functions() {
-    let targets = [
-        ("036", include_str!("../src/targets/xiaomi_band_10_pro_3_101_036.rs")),
-        ("043", include_str!("../src/targets/xiaomi_band_10_pro_3_101_043.rs")),
-        ("band11-139", include_str!("../src/targets/xiaomi_band_11_4_100_139.rs")),
-        ("band11-155", include_str!("../src/targets/xiaomi_band_11_4_100_155.rs")),
-        ("band11-177", include_str!("../src/targets/xiaomi_band_11_4_100_177.rs")),
+    let families = [
+        ("band10_pro", include_str!("../src/band10_pro.rs")),
+        ("band11", include_str!("../src/band11.rs")),
     ];
-    let sets: Vec<_> = targets.iter().map(|(n, s)| (*n, api(s))).collect();
+    let sets: Vec<_> = families.iter().map(|(n, s)| (*n, api(s))).collect();
     let union: BTreeSet<_> = sets.iter().flat_map(|(_, s)| s.iter().cloned()).collect();
     for (name, set) in &sets {
         let missing: Vec<_> = union.difference(set).collect();
-        assert!(missing.is_empty(), "{name} lacks {missing:?}; add an ERR_UNSUPPORTED stub");
+        assert!(
+            missing.is_empty(),
+            "{name} lacks {missing:?}; add an ERR_UNSUPPORTED stub"
+        );
     }
+
+    for (name, source) in families {
+        assert!(
+            source.contains("pub const ERR_UNSUPPORTED: i32 = -38;"),
+            "{name} lacks `ERR_UNSUPPORTED`"
+        );
+    }
+
+    let targets = [
+        (
+            "036",
+            include_str!("../src/targets/xiaomi_band_10_pro_3_101_036.rs"),
+        ),
+        (
+            "043",
+            include_str!("../src/targets/xiaomi_band_10_pro_3_101_043.rs"),
+        ),
+        (
+            "band11-139",
+            include_str!("../src/targets/xiaomi_band_11_4_100_139.rs"),
+        ),
+        (
+            "band11-155",
+            include_str!("../src/targets/xiaomi_band_11_4_100_155.rs"),
+        ),
+        (
+            "band11-177",
+            include_str!("../src/targets/xiaomi_band_11_4_100_177.rs"),
+        ),
+    ];
     for (name, source) in targets {
-        for item in ["pub const ERR_UNSUPPORTED: i32 = -38;", "pub const SELECTED_TARGET_ID"] {
-            assert!(source.contains(item), "{name} lacks `{item}`");
-        }
+        assert!(
+            source.contains("pub const SELECTED_TARGET_ID"),
+            "{name} lacks `SELECTED_TARGET_ID`"
+        );
     }
 }
