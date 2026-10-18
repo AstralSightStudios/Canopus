@@ -1459,8 +1459,11 @@ static int sup_screen_state(void *cookie)
 #define SUP_SCREEN_STATE 0
 #endif
 
-#ifdef CANOPUS_SUP_SCREEN_TURN_ON
-/* The stock wake-lock path turns the screen on with source 26. */
+#if defined(CANOPUS_SUP_SCREEN_TURN_ON) && !defined(CANOPUS_SUP_HEADLESS)
+/* The stock wake-lock path turns the screen on with source 26. screen_turn_on
+ * hands the request to the display owner and waits for it, so it belongs on the
+ * UI task; a headless (NSH-driven) build, which runs modules on the NSH task,
+ * hangs in it and leaves the call out. */
 #define SUP_SCREEN_SOURCE_WAKELOCK 26
 static const char s_screen_tag[] = "canopus";
 
@@ -1635,7 +1638,9 @@ static int sup_vib_transact(uint32_t type, uint32_t argument)
     ((uint8_t *)message)[4] = (uint8_t)type;
     message[2] = argument;
     rc = ((transact_fn)(uintptr_t)CANOPUS_SUP_VIBRATOR_HAL_TRANSACT)(message);
-    return rc == SUP_VIB_DISABLED ? SUP_EBUSY : rc;
+    if (rc == SUP_VIB_DISABLED) return SUP_EBUSY;
+    /* Any other failure means the service could not be reached or refused. */
+    return rc < 0 ? CANOPUS_SVC_ERR_IO : rc;
 }
 
 /* The service answers with the FF_GAIN write result (8 bytes) on success. */

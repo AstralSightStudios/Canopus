@@ -191,6 +191,7 @@ struct canopus_haptics_obj {
     int32_t (*cancel)(const struct canopus_context_v1 *ctx);
 };
 ```
+- 用户在系统里关闭了振动时返回 `ERR_STATE`；振动服务没有应答（例如没有马达服务的模拟器）返回 `ERR_IO`。
 - `vibrate` 取 1..5000 ms；`vibrate_pattern` 从 **ON** 开始交替"振/停"（`pattern_ms[0]` 是第一次振动），最多 16 项，零项跳过；
   第二步起由 Supervisor 的定时器泵按 10 ms 精度推进（没有泵的目标，多步序列返回 `ERR_UNSUPPORTED`，单次振动不需要泵）。
   序列按计划时间推进，泵迟到时缩短当前脉冲而不累积漂移。`DOUBLE_CLICK` 是 20 ms / 60 ms 间隔 / 20 ms。
@@ -220,6 +221,7 @@ struct canopus_display_obj {
   `get_brightness` 返回当前覆盖值，否则返回用户手动设定（`persist.screen.brightness_value`）；自动亮度开启或目标不可读时返回
   `CANOPUS_DISPLAY_BRIGHTNESS_UNKNOWN(0xFFFFFFFF)`。
 - `wake_screen` 以固件 wake-lock 路径使用的来源 26 调用固件的 `screen_turn_on`，是"请求亮屏"，不保证返回时已亮。
+  `screen_turn_on` 要等显示所有者处理，必须在 UI 任务上调用；无头（NSH 驱动）的构建把模块跑在 NSH 任务上，会卡死在里面，所以无头构建不提供它（`ERR_UNSUPPORTED`）。
 - 唤醒锁由固件 PowerManager 的 wakelock（level 6，保持亮屏）实现，Supervisor 为每把锁保留一个原生对象并复用：
   `acquire_wake_lock` 返回正的锁 ID（带代数，旧 ID 失效后不会误释放新锁）；只能释放自己的锁（否则 `ERR_ARGUMENT`）；
   每个模块最多 4 把、全局最多 8 把（超出 `ERR_BUSY`）；模块卸载时全部释放。`lock_flags` 只能是 `WAKELOCK_SCREEN`，

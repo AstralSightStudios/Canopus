@@ -24,7 +24,9 @@ DEVICE = "canopus-services-043"
 BOOT_WAIT = 70
 EXPECTED_SKIPS = {
     "Timers: no approved platform event source",
-    "Notify: platform notifications unavailable",
+    "Notify: service absent",
+    "Display: no screen-on entry point on this target",
+    "Haptics: the vibrator service is not reachable",
 }
 
 
