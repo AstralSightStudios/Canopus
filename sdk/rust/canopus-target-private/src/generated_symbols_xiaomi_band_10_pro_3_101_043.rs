@@ -1482,6 +1482,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void(void *list, int mode, int enabled)",
     },
     TargetPrivateSymbolRecord {
+        name: "lv_image_create_xip_thunk",
+        kind: "function",
+        entry: 0xc588d58usize,
+        callable: 0xc588d59usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_set_style_bg_opa_xip_thunk",
+        kind: "function",
+        entry: 0xc5883f8usize,
+        callable: 0xc5883f9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
         name: "miwear_session_crypto_ctr",
         kind: "function",
         entry: 0xc7d46a4usize,
@@ -2477,6 +2495,10 @@ pub const LAUNCHER_SCROLL_ENTRY: usize = 0xc517d9cusize;
 pub const LAUNCHER_SCROLL_CALLABLE: usize = 0xc517d9dusize;
 pub const LAUNCHER_SCROLL_PREPARE_ENTRY: usize = 0xc5166f0usize;
 pub const LAUNCHER_SCROLL_PREPARE_CALLABLE: usize = 0xc5166f1usize;
+pub const LV_IMAGE_CREATE_XIP_THUNK_ENTRY: usize = 0xc588d58usize;
+pub const LV_IMAGE_CREATE_XIP_THUNK_CALLABLE: usize = 0xc588d59usize;
+pub const LV_OBJ_SET_STYLE_BG_OPA_XIP_THUNK_ENTRY: usize = 0xc5883f8usize;
+pub const LV_OBJ_SET_STYLE_BG_OPA_XIP_THUNK_CALLABLE: usize = 0xc5883f9usize;
 pub const MIWEAR_SESSION_CRYPTO_CTR_ENTRY: usize = 0xc7d46a4usize;
 pub const MIWEAR_SESSION_CRYPTO_CTR_CALLABLE: usize = 0xc7d46a5usize;
 pub const MIWEAR_SESSION_LOOKUP_ENTRY: usize = 0xc7d7e94usize;

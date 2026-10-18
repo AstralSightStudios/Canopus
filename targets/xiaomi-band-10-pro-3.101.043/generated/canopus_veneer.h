@@ -3,8 +3,8 @@
  * target_id: xiaomi-band-10-pro-3.101.043
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
- * revision : 7
- * input_digest: 4213d2af6c0d368a
+ * revision : 8
+ * input_digest: 253ea1b1a51b6cb8
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -591,6 +591,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * lv_display_get_vertical_resolution: restricted - not exported until context/ownership approved
  * lv_display_invalidate_area: restricted - not exported until context/ownership approved
  * lv_image_create: restricted - not exported until context/ownership approved
+ * lv_image_create_xip_thunk: restricted - not exported until context/ownership approved
  * lv_image_decoder_get_info: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
  * lv_obj_get_style_prop: restricted - not exported until context/ownership approved
@@ -598,6 +599,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * lv_obj_refresh_style: restricted - not exported until context/ownership approved
  * lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
+ * lv_obj_set_style_bg_opa_xip_thunk: restricted - not exported until context/ownership approved
  * lv_obj_tree_walk: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
  * lvgl_posix_open: restricted - not exported until context/ownership approved

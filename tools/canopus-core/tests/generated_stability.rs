@@ -381,6 +381,72 @@ fn band11_177_calendar_approval_is_exact_and_private_only() {
     );
 }
 
+#[test]
+fn band10_pro_043_resource_thunks_remain_exact_and_private() {
+    let target = "xiaomi-band-10-pro-3.101.043";
+    let evidence_id = "EVID-RESOURCE-XIP-THUNKS-1043-001";
+    let dir = repo_root().join("targets").join(target);
+    let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+    let (symbols, types) = load_records(&dir).unwrap();
+    let header = VeneerGen {
+        pack: &pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
+    let rust = RustGen {
+        pack: &pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
+    let evidence: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(dir.join(format!("evidence/{evidence_id}.json"))).unwrap(),
+    )
+    .unwrap();
+    canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence).unwrap();
+    assert_eq!(evidence["candidate_symbols"].as_array().unwrap().len(), 2);
+    for (name, entry) in [
+        ("lv_image_create_xip_thunk", 0x0c588d58),
+        ("lv_obj_set_style_bg_opa_xip_thunk", 0x0c5883f8),
+    ] {
+        let id = format!("{target}.private_abi.{name}");
+        let symbol = symbols.iter().find(|s| s.symbol_id == id).unwrap();
+        assert_eq!(symbol.policy, "restricted");
+        assert_eq!(symbol.status, "STATIC_RECOVERED");
+        assert_eq!(symbol.approval_state.as_deref(), Some("PENDING"));
+        assert_eq!(symbol.proof.device.as_deref(), Some("not_probed"));
+        assert_eq!(symbol.provenance.firmware_sha256, pack.firmware_sha256);
+        assert_eq!(
+            parse_address(symbol.entry_address.as_deref().unwrap()),
+            entry
+        );
+        assert_eq!(
+            parse_address(symbol.callable_address.as_deref().unwrap()),
+            entry | 1
+        );
+        assert!(
+            symbol
+                .proof
+                .evidence_ids
+                .as_ref()
+                .unwrap()
+                .contains(&evidence_id.into())
+        );
+        assert!(
+            evidence["candidate_symbols"]
+                .as_array()
+                .unwrap()
+                .contains(&id.into())
+        );
+        // Identity metadata must not add public or target-private raw wrappers.
+        assert!(symbol.prototype.is_none());
+        assert!(!header.contains(&format!("canopus_fw_{name}(")));
+        assert!(!rust.contains(&format!("pub unsafe fn canopus_fw_{name}(")));
+        assert!(rust.contains(&format!("CANOPUS_FW_{}_CALLABLE", name.to_uppercase())));
+    }
+}
+
 const APPROVED_139_PRIVATE: [&str; 30] = [
     "app_watchface_take_snapshot",
     "hal_cache_invalidate_rom_thunk",
