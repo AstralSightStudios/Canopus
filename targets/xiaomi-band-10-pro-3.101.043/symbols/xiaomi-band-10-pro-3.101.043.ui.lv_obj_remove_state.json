@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lv_obj_remove_state",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_obj_remove_state",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *, uint32_t)",
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-MATCH-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043",
+      "EVID-UI-1043-HOST-001"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review; renamed from lv_obj_set_hidden by EVID-UI-1043-HOST-001 (identity corrected from stock call sites)",
+    "evidence_ids": [
+      "EVID-MATCH-001",
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043",
+      "EVID-UI-1043-HOST-001"
+    ]
+  },
+  "entry_address": "0xc588518",
+  "callable_address": "0xc588519",
+  "notes": "Renamed from lv_obj_set_hidden: this entry is LVGL lv_obj_remove_state(obj, state), not a visibility setter. It was APPROVED / native-full-trust under the wrong name; it is now restricted / PENDING and no public wrapper is generated. Hiding uses lvx_object_add_flag / lv_obj_clear_flag with LV_OBJ_FLAG_HIDDEN.",
+  "approval_state": "PENDING"
+}

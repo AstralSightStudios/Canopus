@@ -2265,12 +2265,12 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void (void *, int32_t)",
     },
     TargetPrivateSymbolRecord {
-        name: "lv_obj_set_hidden",
+        name: "lv_obj_remove_state",
         kind: "function",
         entry: 0xc588518usize,
         callable: 0xc588519usize,
         status: "STATIC_RECOVERED",
-        policy: "native-full-trust",
+        policy: "restricted",
         prototype: "void(void *, uint32_t)",
     },
     TargetPrivateSymbolRecord {
@@ -2884,8 +2884,8 @@ pub const LV_OBJ_CLEAR_FLAG_ENTRY: usize = 0xc5891b0usize;
 pub const LV_OBJ_CLEAR_FLAG_CALLABLE: usize = 0xc5891b1usize;
 pub const LV_OBJ_MOVE_TO_INDEX_ENTRY: usize = 0xc589550usize;
 pub const LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = 0xc589551usize;
-pub const LV_OBJ_SET_HIDDEN_ENTRY: usize = 0xc588518usize;
-pub const LV_OBJ_SET_HIDDEN_CALLABLE: usize = 0xc588519usize;
+pub const LV_OBJ_REMOVE_STATE_ENTRY: usize = 0xc588518usize;
+pub const LV_OBJ_REMOVE_STATE_CALLABLE: usize = 0xc588519usize;
 pub const LV_OBJ_SET_LOCAL_STYLE_PROP_ENTRY: usize = 0xc107790usize;
 pub const LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = 0xc107791usize;
 pub const LV_OBJ_SET_STYLE_BG_OPA_ENTRY: usize = 0xc108374usize;
@@ -3853,10 +3853,10 @@ pub unsafe fn raw_lv_obj_move_to_index(a0: *mut core::ffi::c_void, a1: i32) -> (
     unsafe { f(a0, a1) }
 }
 
-pub unsafe fn raw_lv_obj_set_hidden(a0: *mut core::ffi::c_void, a1: u32) -> () {
+pub unsafe fn raw_lv_obj_remove_state(a0: *mut core::ffi::c_void, a1: u32) -> () {
     type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32) -> ();
     let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE)
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_REMOVE_STATE_CALLABLE)
     };
     unsafe { f(a0, a1) }
 }

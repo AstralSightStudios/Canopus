@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 6174e09a234ece44
+// input_digest: dd1e82e1db548568
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -322,15 +322,6 @@ pub unsafe fn canopus_fw_sendto(a0: i32, a1: *const core::ffi::c_void, a2: u32, 
 
 /// Recovered `lv_cache_drop` at 0x0c1667dc. Thumb callable address 0x0c1667dd.
 pub const CANOPUS_FW_LV_CACHE_DROP_CALLABLE: usize = canopus_thumb_callable(0x0c1667ddusize);
-
-/// Recovered `lv_obj_set_hidden` at 0xc588518. Thumb callable address 0xc588519.
-pub const CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE: usize = canopus_thumb_callable(0xc588519usize);
-#[allow(non_snake_case)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn canopus_fw_lv_obj_set_hidden(a0: *mut core::ffi::c_void, a1: u32) -> () {
-    let f: extern "C" fn(*mut core::ffi::c_void, u32) -> () = unsafe { core::mem::transmute(CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE) };
-    f(a0, a1);
-}
 
 /// Recovered `wakelock_release` at 0x0ca6ea98. Thumb callable address 0x0ca6ea99.
 pub const CANOPUS_FW_WAKELOCK_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0ca6ea99usize);
@@ -1001,6 +992,9 @@ pub const CANOPUS_FW_FONT_RELOAD_FACE_DESTROY_CALLABLE: usize = canopus_thumb_ca
 /// Recovered global `font_reload_lv_initialized` at 0x20103178.
 pub const canopus_fw_font_reload_lv_initialized: usize = 0x20103178usize;
 
+/// Recovered `lv_obj_remove_state` at 0xc588518. Thumb callable address 0xc588519.
+pub const CANOPUS_FW_LV_OBJ_REMOVE_STATE_CALLABLE: usize = canopus_thumb_callable(0xc588519usize);
+
 /// Recovered `quickapp_register_app` at 0xc549678. Thumb callable address 0xc549679.
 pub const CANOPUS_FW_QUICKAPP_REGISTER_APP_CALLABLE: usize = canopus_thumb_callable(0xc549679usize);
 #[allow(non_snake_case)]
@@ -1519,6 +1513,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // lv_obj_get_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
 // lv_obj_refresh_style: restricted - not exported until context/ownership approved
+// lv_obj_remove_state: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa_xip_thunk: restricted - not exported until context/ownership approved

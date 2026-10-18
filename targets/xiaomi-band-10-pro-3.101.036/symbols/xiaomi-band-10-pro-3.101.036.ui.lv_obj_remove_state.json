@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.ui.lv_obj_remove_state",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "lv_obj_remove_state",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *, uint32_t)",
+  "proof": {
+    "static": "recovered",
+    "evidence_ids": [
+      "EVID-UI-001",
+      "EVID-UI-1036-HOST-001"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "source": "EVID-UI-002 (3.101.036 pattern-matched) (3.101.036 IDA-confirmed); renamed from lv_obj_set_hidden by EVID-UI-1036-HOST-001 (identity corrected from stock call sites)",
+    "evidence_ids": [
+      "EVID-UI-1036-HOST-001"
+    ]
+  },
+  "entry_address": "0xc5879b8",
+  "callable_address": "0xc5879b9",
+  "notes": "Renamed from lv_obj_set_hidden: this entry is LVGL lv_obj_remove_state(obj, state), not a visibility setter. It was APPROVED / native-full-trust under the wrong name; it is now restricted / PENDING and no public wrapper is generated. Hiding uses lvx_object_add_flag / lv_obj_clear_flag with LV_OBJ_FLAG_HIDDEN.",
+  "approval_state": "PENDING"
+}

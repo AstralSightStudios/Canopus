@@ -134,7 +134,6 @@ static int demo_on_create(struct firmware_page_descriptor *page, void *root, voi
     header = content ? canopus_fw_lvx_label_create(content) : 0;
     if (header != 0) {
         canopus_fw_lvx_label_set_text(header, "Native Extension App");
-        canopus_fw_lv_obj_set_hidden(header, 0u);
         canopus_fw_lv_obj_align_to(header, content, CANOPUS_TARGET_ALIGN_TOP_MID, 0, 4);
     }
     prev = header ? header : content;
@@ -142,7 +141,6 @@ static int demo_on_create(struct firmware_page_descriptor *page, void *root, voi
     /* 4. Row 1: Device Information */
     row_dev = content ? canopus_fw_lvx_list_row_create(content, "Device", "Xiaomi Band 10 Pro", 0u) : 0;
     if (row_dev != 0) {
-        canopus_fw_lv_obj_set_hidden(row_dev, 0u);
         if (prev) canopus_fw_lv_obj_align_to(row_dev, prev, CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID, 0, 10);
         prev = row_dev;
     }
@@ -151,7 +149,6 @@ static int demo_on_create(struct firmware_page_descriptor *page, void *root, voi
     format_u32(runs_buf, s_run_count);
     row_runs = content ? canopus_fw_lvx_list_row_create(content, "Run Count", runs_buf, 0u) : 0;
     if (row_runs != 0) {
-        canopus_fw_lv_obj_set_hidden(row_runs, 0u);
         if (prev) canopus_fw_lv_obj_align_to(row_runs, prev, CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID, 0, CANOPUS_TARGET_ROW_GAP);
         prev = row_runs;
     }
@@ -165,7 +162,6 @@ static int demo_on_create(struct firmware_page_descriptor *page, void *root, voi
     batt_display[bi] = '\0';
     row_batt = content ? canopus_fw_lvx_list_row_create(content, "Battery", batt_display, 0u) : 0;
     if (row_batt != 0) {
-        canopus_fw_lv_obj_set_hidden(row_batt, 0u);
         if (prev) canopus_fw_lv_obj_align_to(row_batt, prev, CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID, 0, CANOPUS_TARGET_ROW_GAP);
         prev = row_batt;
     }
@@ -173,7 +169,6 @@ static int demo_on_create(struct firmware_page_descriptor *page, void *root, voi
     /* 7. Row 4: Interactive Haptic Feedback Action Row */
     row_act = content ? canopus_fw_lvx_list_row_create(content, "Haptic Feedback", "Tap to test vibrate", CANOPUS_TARGET_TRAILING_FORWARD) : 0;
     if (row_act != 0) {
-        canopus_fw_lv_obj_set_hidden(row_act, 0u);
         if (prev) canopus_fw_lv_obj_align_to(row_act, prev, CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID, 0, CANOPUS_TARGET_ROW_GAP);
         canopus_fw_lv_obj_add_event_cb(row_act, on_vibrate_click, CANOPUS_TARGET_EVENT_CLICKED, 0);
     }

@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 6174e09a234ece44
+ * input_digest: dd1e82e1db548568
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -226,11 +226,6 @@ static inline int canopus_fw_lvx_list_item_update(void * a0, const char * a1, co
 typedef int32_t (*canopus_fw_sendto_fn)(int, const void *, uint32_t, int, const void *, uint32_t);
 static inline int32_t canopus_fw_sendto(int a0, const void * a1, uint32_t a2, int a3, const void * a4, uint32_t a5) {
     return ((canopus_fw_sendto_fn)(uintptr_t)0xc1fd665)(a0, a1, a2, a3, a4, a5);
-}
-
-typedef void (*canopus_fw_lv_obj_set_hidden_fn)(void *, uint32_t);
-static inline void canopus_fw_lv_obj_set_hidden(void * a0, uint32_t a1) {
-    return ((canopus_fw_lv_obj_set_hidden_fn)(uintptr_t)0xc588519)(a0, a1);
 }
 
 typedef void * (*canopus_fw_lv_timer_create_fn)(canopus_lvx_event_cb, uint32_t, void *);
@@ -599,6 +594,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * lv_obj_get_style_prop: restricted - not exported until context/ownership approved
  * lv_obj_move_to_index: restricted - not exported until context/ownership approved
  * lv_obj_refresh_style: restricted - not exported until context/ownership approved
+ * lv_obj_remove_state: restricted - not exported until context/ownership approved
  * lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa_xip_thunk: restricted - not exported until context/ownership approved

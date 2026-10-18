@@ -1190,18 +1190,24 @@ pub unsafe fn lvx_event_get_code(event: *mut core::ffi::c_void) -> u32 {
     unsafe { canopus_target_generated::canopus_fw_lv_event_get_code(event) }
 }
 
-pub unsafe fn lvx_object_add_flag(_object: *mut core::ffi::c_void, _flags: u32) {
-    // 043 has no exact-target recovered flag setter; fail closed.
+pub unsafe fn lvx_object_add_flag(object: *mut core::ffi::c_void, flags: u32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE)
+    };
+    f(object, flags);
 }
 
 pub unsafe fn lvx_set_hidden(object: *mut core::ffi::c_void, hidden: u32) {
-    type F = extern "C" fn(*mut core::ffi::c_void, u32);
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE,
-        ))
-    };
-    f(object, hidden);
+    if hidden != 0 {
+        unsafe { lvx_object_add_flag(object, 1) };
+    } else {
+        type F = extern "C" fn(*mut core::ffi::c_void, u32);
+        let f: F = unsafe {
+            core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE)
+        };
+        f(object, 1);
+    }
 }
 
 pub unsafe fn lvx_align_to(

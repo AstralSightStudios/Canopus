@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: 367f1f41f8e505cd
+// input_digest: fbd6d5aa56ccbbf3
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -440,6 +440,9 @@ pub unsafe fn canopus_fw_lvx_page_title_create(a0: *mut core::ffi::c_void, a1: *
     f(a0, a1, a2, a3, a4)
 }
 
+/// Recovered `lv_obj_remove_state` at 0xc5879b8. Thumb callable address 0xc5879b9.
+pub const CANOPUS_FW_LV_OBJ_REMOVE_STATE_CALLABLE: usize = canopus_thumb_callable(0xc5879b9usize);
+
 /// Recovered `app_launcher_add` at 0xc4f2c4c. Thumb callable address 0xc4f2c4d.
 pub const CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc4f2c4dusize);
 #[allow(non_snake_case)]
@@ -550,15 +553,6 @@ pub const canopus_fw_gap_host_receive_slot: usize = 0x20137E94usize;
 
 /// Recovered global `style_misans_medium_24` at 0x20109EB8.
 pub const canopus_fw_style_misans_medium_24: usize = 0x20109EB8usize;
-
-/// Recovered `lv_obj_set_hidden` at 0xc5879b8. Thumb callable address 0xc5879b9.
-pub const CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE: usize = canopus_thumb_callable(0xc5879b9usize);
-#[allow(non_snake_case)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn canopus_fw_lv_obj_set_hidden(a0: *mut core::ffi::c_void, a1: u32) -> () {
-    let f: extern "C" fn(*mut core::ffi::c_void, u32) -> () = unsafe { core::mem::transmute(CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE) };
-    f(a0, a1);
-}
 
 /// Recovered `mkdir` at 0x0c1c1170. Thumb callable address 0x0c1c1171.
 pub const CANOPUS_FW_MKDIR_CALLABLE: usize = canopus_thumb_callable(0x0c1c1171usize);
@@ -1095,6 +1089,7 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // lv_image_set_src: restricted - not exported until context/ownership approved
 // lv_obj_clear_flag: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
+// lv_obj_remove_state: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved

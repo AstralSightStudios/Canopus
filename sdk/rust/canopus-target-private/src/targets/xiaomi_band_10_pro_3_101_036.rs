@@ -1114,13 +1114,15 @@ pub unsafe fn lvx_object_add_flag(object: *mut core::ffi::c_void, flags: u32) {
 }
 
 pub unsafe fn lvx_set_hidden(object: *mut core::ffi::c_void, hidden: u32) {
-    type F = extern "C" fn(*mut core::ffi::c_void, u32);
-    let f: F = unsafe {
-        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE,
-        ))
-    };
-    f(object, hidden);
+    if hidden != 0 {
+        unsafe { lvx_object_add_flag(object, 1) };
+    } else {
+        type F = extern "C" fn(*mut core::ffi::c_void, u32);
+        let f: F = unsafe {
+            core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE)
+        };
+        f(object, 1);
+    }
 }
 
 pub unsafe fn lvx_align_to(
