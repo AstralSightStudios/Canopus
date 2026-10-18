@@ -27,9 +27,12 @@ W, H = 212, 520
 PAIR_CONFIRM = (106, 478)   # check mark on the pairing dialog
 RUN_BUTTON = (106, 383)     # installer page
 
-# Modules run through a read-only instruction alias here, so the engine refuses to
-# hook their own code; the emulator has no reachable vibrator.
-EXPECTED_SERVICES_SKIPS = {
+EXPECTED_SERVICES_SKIPS = set()
+
+# What the Mirage run skips: modules run through a read-only instruction alias, so
+# the hook engine refuses to patch their own code, and the emulator has no
+# reachable vibrator.
+EMULATOR_SERVICES_SKIPS = {
     "Hook: inline hooking needs writable module code on this target",
     "Hook: boundary check & duplicate hook defense need inline hooking",
     "Haptics: the vibrator service is not reachable",
@@ -185,7 +188,7 @@ def main():
             probe = ctl("fs", "get", DEVICE, "nand_data", "/canopus/m.services_test/probe.txt").replace("\r", "")
             print(report.strip())
             print(probe.strip())
-            passed, total, skipped = validate_report(report, probe)
+            passed, total, skipped = validate_report(report, probe, EMULATOR_SERVICES_SKIPS)
             if "activate result=5" not in log and "err=0" not in log:
                 raise RuntimeError("Services test module activation failed according to e2e log: " + log)
             print(f"PASS band 11 {target}: {passed}/{total} suites passed, {skipped} explicit skips; services verified")
