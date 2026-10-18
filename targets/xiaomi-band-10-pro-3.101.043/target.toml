@@ -19,7 +19,7 @@ firmware_version = "3.101.043"
 firmware_build = "CONBINE_LTALM078_T3.101.043_08041658"
 module_abi = 1
 relocation_profile = "best1503-v1"
-revision = 7
+revision = 8
 
 # Ranges identify addresses the strict verifier scans, NOT address allowlists.
 # Keep the recovered XIP window; additionally scan only the reviewed startup-
@@ -108,6 +108,7 @@ source_findings = [
   "Pair-filter failure feedback corrected the 036-style 16-word global assumption: 043 stock bts state is dword_20126738/dword_20126734 with a 17-word descriptor at 0x2CD4A744 and live client pointer offsets +120/+72",
   "Exact 3.101.043 IDA comparison identified 0x0C3B60A0/0x0C3B60A1 as the transport-specific pairing-state accessor returning record + 0xAC; 0x0C3B5F78 returns record[0xAB] > 3 and is not the state byte",
   "EVID-FONT-1043-001: individually audited experimental font leaves/PSRAM callback identities and layout; 41 missing restricted STATIC_RECOVERED/PENDING font records plus the exact related existing POSIX-open callback identity, existing cache release reused, exact startup-copy PSRAM execution extent scanned without weakening verifier; device not probed",
+  "EVID-RESOURCE-XIP-THUNKS-1043-001: exact image-create and background-opacity XIP thunks required by Resource Hook, independently audited against AP bytes, startup-copy aliases and native call sites; restricted STATIC_RECOVERED/PENDING, existing canonical records and address ranges unchanged, device not probed",
 ]
 import_date = "2026-08-19"
 maintainer = "canopus-maintainer"

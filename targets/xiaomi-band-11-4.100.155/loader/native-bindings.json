@@ -64,6 +64,7 @@
     "CANOPUS_SUP_HEAP_MALLOC": "heap_malloc",
     "CANOPUS_SUP_HEAP_FREE": "heap_free",
     "CANOPUS_SUP_CLOCK_GETTIME": "clock_gettime",
+    "CANOPUS_SUP_LV_TIMER_CREATE": "lv_timer_create",
     "CANOPUS_SUP_PM_BATTERY_READY": "power_battery_ready",
     "CANOPUS_SUP_PM_BATTERY_SNAPSHOT": "power_battery_snapshot",
     "CANOPUS_SUP_WAKELOCK_CREATE": "wakelock_create",

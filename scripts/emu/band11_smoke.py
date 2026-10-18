@@ -32,7 +32,6 @@ RUN_BUTTON = (106, 383)     # installer page
 EXPECTED_SERVICES_SKIPS = {
     "Hook: inline hooking needs writable module code on this target",
     "Hook: boundary check & duplicate hook defense need inline hooking",
-    "Timers: no approved platform event source",
     "Haptics: the vibrator service is not reachable",
 }
 

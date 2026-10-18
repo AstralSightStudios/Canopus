@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RESOURCE-XIP-THUNKS-1043-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which two exact XIP thunk identities are missing from the Resource Hook .043 verifier allowlist, and do the existing module calls match their native ABI?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.lv_image_create_xip_thunk",
+    "xiaomi-band-10-pro-3.101.043.private_abi.lv_obj_set_style_bg_opa_xip_thunk"
+  ],
+  "prototype_hypothesis": "ARM AAPCS: image_create(parent r0, optional init_options byte pointer r1) returns native image pointer; bg_opa(obj r0, opacity r1, selector r2) has no success-code return. These ABIs were checked against exact target bodies and native call sites; no generalized callable prototype is exported.",
+  "callsite_evidence": [
+    "Exact AP input: 13795728 bytes, SHA256 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec. Direct raw-byte reading and existing exact .043 IDB inspection, not cross-version address inference.",
+    "Image XIP thunk entry0x0c588d58, callable0x0c588d59, AP offset0x4c8d58, eight bytes 5ff800f0c1ca061c, SHA256 c36686c23c7981848410d11306402cfd7980f8fb0251367a20d0ef5d8e3e889b. Absolute jump to Thumb target0x1c06cac1.",
+    "Opacity XIP thunk entry0x0c5883f8, callable0x0c5883f9, AP offset0x4c83f8, eight bytes 5ff800f009e52b00, SHA256 5ddfee58a2b961fe294228e0cec3f8a04668720e39bbe29c7246dc4b4ca48810. Absolute jump to Thumb target0x002be509.",
+    "Native calendar:0x0c4efe52 clears r1,0x0c4efe56 calls image thunk. Window0x0c4efe4e/AP offset0x42fe4e length16 SHA256 82bd3ed637940deebc3068064fcbb62098c831dd75114e30bebe70a57faa2cda.",
+    "Native CC creation:0x0c504d02 calls opacity thunk with value0/selector0. Window0x0c504cfc/AP offset0x444cfc length10 SHA256 71a748c51b7803d4abcd8afe5c58223e07e344d09b49661eeaef866c6457e0b9. Additional CC image call0x0c504f6a and opacity call0x0c504dd8.",
+    "Resource Hook battery passes the address of static no_theme byte0 as r1; calendar passes zero r1 (extra r2/r3 unused). CC setter passes object/0/0 and later object/255/0. All match the inspected register contracts.",
+    "User explicitly requested completing the whitelist gap in this session: '你把白名单缺口补一下'. Scope is these exact two existing module dependencies; no production/device approval is inferred. Evidence windows are NOT address allowlist ranges."
+  ],
+  "control_flow_evidence": [
+    "Startup copy instructions0x0c0c0a60/62/64 select storage0x2c0fc6cc..0x2c10d438 and destination0x200b2860; SRAM execution alias0x002b2860. Instructions0x0c0c0ac8/ca/cc select storage0x2c10d440..0x2c18d940 and destination0x3c000000; PSRAM execution alias0x1c000000. Literal loads were independently decoded from AP bytes.",
+    "Image target0x1c06cac0 comes from AP offset0x0b9f00, complete32-byte wrapper including trailing literal, SHA256 b754483ed0f35ce24274a677b7b2b969aaa0b473d4261e3873503190a9aa2b5d. Calls class allocator0x1c028f80 with class0x2cce61ec and parent, then class initializer0x1c029074 with saved options; returns allocated image. NULL parent registers a screen; non-NULL parent appends a native child.",
+    "Class initializer0x1c029074/AP offset0x0764b4 length32 SHA256 54bc23ee9d9d3cfed7119bbc48f8e7add97d3473177f3cfe18ef5dda95e12ec9. NULL options select default0x200c97bc, otherwise read options first byte to control native theme initialization; inspected path does not retain the options pointer.",
+    "Opacity target0x002be508/AP offset0x048374 complete24-byte wrapper SHA256 c5bcd30b077be28a776fd35854add29b98c361443e15a5b1a4a883b3ab65bcfb. Moves opacity r1 to r12, selector r2 to r3, property29 to r1, opacity to r2, then calls native local-style setter0x002bd924. Style setter may allocate local style and refresh through0x002bd240 when enabled.",
+    "Existing canonical records lv_image_create entry0x0c179f00 and lv_obj_set_style_bg_opa entry0x0c108374 contain the same stored wrapper bytes. They are retained unchanged: byte equality does not prove both storage-XIP and execution-alias locations are callable, because relative branches resolve differently. Only the two native-call-site-proven XIP thunks are added; no new alias target or transitive callee is added to symbol records or firmware_address_ranges."
+  ],
+  "ownership_analysis": "Serialized UI-owner calls with live validated objects. Native parent/display owns the created image and its lifecycle; the initialization-options pointer is borrowed synchronously. Opacity setter borrows the object and may allocate/mutate/refresh its local style. No module memory or native snapshot buffer ownership is transferred by adding identity metadata.",
+  "unsafe_assumptions": [
+    "No physical-device probe or new device verification was performed.",
+    "Image wrapper does not check native allocator failure before initialization; a safe NULL-return guarantee is not established.",
+    "No GPU recovery, framework restart safety, unknown owner/layout or broader native operation is approved.",
+    "Canonical record ABIs and callability are not changed by this exact-thunk audit."
+  ],
+  "recommended_probe": "Run target schema/codegen stability tests, exact .043 host model suites and strict module verifier, then package all four targets with CMI2 receipts. Before claiming device acceptance, test battery/calendar object lifecycle and CC opacity restore on exact .043 hardware.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-18T02:08:00Z",
+  "artifacts": [
+    {
+      "uri": "/Users/lesetong/develop/mifw/analysis-p67-043/vela_ap.bin",
+      "sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "role": "Exact AP input; not distributed"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/src/p67_battery.inc",
+      "role": "Existing two-register image-creation call contract"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/src/p67_calendar_native.inc",
+      "role": "Existing calendar native image-creation calls"
+    },
+    {
+      "uri": "../Canopus-Module-Resource-Hook/src/p67_backgrounds.inc",
+      "role": "Existing CC opacity mutation and restore calls"
+    }
+  ]
+}

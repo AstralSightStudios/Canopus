@@ -153,10 +153,13 @@ struct canopus_mem_obj {
   无已批准 OS sleep 原语时是忙等，ARM `yield` 提示不等于调度器休眠。
 - timer 周期范围为 `1..CANOPUS_TIMER_MAX_INTERVAL_MS`（`0x7fffffff` 毫秒），使用环绕安全的截止时间比较。
 - 分发串行执行，回调内 sleep 不会递归进入另一轮 timer 分发。漏掉的周期合并，不追补无限次回调。
-- Band 10 Pro 普通 UI 构建使用已批准的 `lv_timer_create`，Supervisor 的心跳与其同为 boot-resident，
-  不支持热卸载。启动 timer 必须在模块/UI 所属线程执行，不能从中断或任意 worker 调用。
-- Band 11 原生 timer 地址仍为 restricted，NSH headless 构建也没有 UI 事件源；这些配置的
-  `timer_create` 明确返回 `CANOPUS_SVC_ERR_UNSUPPORTED`，不会注册一个永远不触发的 timer。
+- Band 10 Pro `.036/.043` 与 Band 11 `.139/.155/.177` 的普通 UI 构建使用 10 ms 的 boot-resident LVGL 心跳。
+  Band 11 从 exact-target 私有符号配置取入口，原有 `restricted / STATIC_RECOVERED / PENDING` 状态不变。
+  创建/启动 timer 必须在模块/UI 所属线程执行，回调也在该线程串行运行，不能从中断或任意 worker 调用。
+- LVGL 在息屏等暂停期间不保证心跳继续推进；恢复后合并漏掉的周期，不保证后台准时触发。
+  心跳不支持热卸载，也不支持 UI 重建后的自动恢复；此实现独立于 L2 的 libuv owner timer。
+- NSH headless 构建以及缺少 timer/单调时钟入口的 target 没有 UI 事件源；`timer_create` 明确返回
+  `CANOPUS_SVC_ERR_UNSUPPORTED`，不会注册一个永远不触发的 timer。
 - 当前 `realtime_ms` 仍返回单调时间的扩展值，不应作为已验证的 UTC 时钟使用。
 
 ```c
