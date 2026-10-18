@@ -417,8 +417,10 @@ struct canopus_ui_ext_obj {
   `on_close`：用户或 `close_page` 关闭页面时调用，卸载时不调用。`close_page` 结束调用者自己已打开的页面，没有则 `ERR_STATE`。
 - 同一时刻只开一个模块页面；回调要尽快返回；页面标题只在页面创建时设置。Rust：`canopus_abi::{CanopusUiExtObj, UiEntryV1}`。
 - 渲染后端（Band 10 Pro 与 Band 11 共用 `manager/target/canopus_ui_host.c`，Manager 自己的页面也走它）支持：导航页/导航头（页面标题）、
-  分区/列表/滚动/分隔/间距（展平）、文本/富文本、各类行与按钮、图片、进度条与滑块（只读；自动尺寸为整行宽的条）、对话框
-  （Band 10 Pro 为固件 msgbox，Band 11 内联）。其它节点类型提交失败并保留上一版内容。
+  分区/列表/滚动/分隔/间距（展平）、文本/富文本、各类行与按钮、对话框（Band 10 Pro 为固件 msgbox，Band 11 内联）；
+  Band 11 另有图片、进度条与滑块（只读；自动尺寸为整行宽的条）。Band 10 Pro 把文本画成状态行，并拒绝图片、进度条、滑块——
+  这些固件控件在 Mirage `.043` 上没有跑通。被拒绝的和其它不支持的节点类型提交失败，并保留上一版内容。
+- 页面里不再出现的行：Band 10 Pro 删除，Band 11 隐藏。端到端见 `scripts/emu/ui_pages.py`（仅 emulator 证据）。
 
 ---
 

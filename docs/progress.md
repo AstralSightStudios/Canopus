@@ -63,7 +63,11 @@
 - 通用后端 `manager/target/canopus_ui_host.c`（Band 10 Pro / Band 11 共用，ADR-CAN-010）：Manager 自己的三个页面改走它；`ctx->ui_ext`
   让模块登记页面入口，Manager 详情页提供「打开界面」，由 Manager 应用的第 4 个固件页面承载。Manager 的确认框改为语义 `DIALOG`。
 - host implemented：入口登记/校验/释放、详情页行与路由、对话框节点顺序（C host 测试，含 ASan/UBSan）；Band 11 固件仿真下 Manager 渲染全部通过。
-- Band 10 Pro 的 `supervisor_max_size` 98,304 → 114,688（构建预算，不是实测的固件上限，未在真机验证）。未提升任何符号或能力状态。
+- Band 10 Pro 的 `supervisor_max_size` 98,304 → 114,688（构建预算，不是实测的固件上限，未在真机验证）。
+- Mirage 模拟器端到端（`scripts/emu/ui_pages.py 043|155`，仅 emulator 证据）：真实 AstroBox core 装生产安装器表盘 → Run → 手机装 `ui-demo` →
+  触摸走完启动器 > Manager > 模块 > 启用 > 立即激活 > 打开界面 > 页面（开关、点击、第二层、返回、退出），`.043` 与 `.155` 均通过
+  （断言模块探针序列、运行状态与每步截图）。运行中查出并修掉 Band 10 Pro `.043` 上三处错误假设（标签、进度条、隐藏行），见 ADR-CAN-010；
+  图片/进度条/滑块在 Band 10 Pro 上因此被拒绝。未提升任何符号或能力状态。
 
 ## 阶段状态
 
