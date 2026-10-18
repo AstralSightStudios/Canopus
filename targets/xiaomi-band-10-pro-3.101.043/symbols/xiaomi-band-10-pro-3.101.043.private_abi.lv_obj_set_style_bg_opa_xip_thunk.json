@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.lv_obj_set_style_bg_opa_xip_thunk",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_obj_set_style_bg_opa_xip_thunk",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c5883f8",
+  "callable_address": "0x0c5883f9",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": ["target-private-ui-owner"],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed live LVGL object in r0, opacity in r1 and style selector in r2. Resource Hook changes only the validated control-center container with selector zero.",
+    "return_value": "No ownership transfer and no success-code ABI. Setter may allocate a native local style and synchronously refresh layout/style."
+  },
+  "side_effects": [
+    "mutates_local_widget_style",
+    "may_allocate_native_style",
+    "may_refresh_widget_style_and_layout"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": ["EVID-RESOURCE-XIP-THUNKS-1043-001"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": ["EVID-RESOURCE-XIP-THUNKS-1043-001"],
+    "source": "Exact .043 AP bytes, startup-copy map, IDA target body and native CC creation call sites. Eight-byte XIP thunk jumps to 0x002be508, which forwards property 29 to the native local-style setter."
+  },
+  "notes": "Exact Resource Hook control-center identity only. Audited ABI: void(void *obj, uint32_t opacity, uint32_t selector). No prototype field or new callable wrapper is exported. Existing lv_obj_set_style_bg_opa canonical record is retained. Restricted STATIC_RECOVERED/PENDING, device not_probed. No additional target, address range or transitive callee is authorized."
+}

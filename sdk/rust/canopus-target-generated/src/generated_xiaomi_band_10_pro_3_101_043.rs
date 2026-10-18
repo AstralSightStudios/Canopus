@@ -3,8 +3,8 @@
 // target_id: xiaomi-band-10-pro-3.101.043
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
-// revision : 7
-// input_digest: fdc9e724be29399d
+// revision : 8
+// input_digest: baee870c73f9f186
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -607,6 +607,9 @@ pub const CANOPUS_FW_BT_FREE_CALLABLE: usize = canopus_thumb_callable(0xc840c61u
 
 /// Recovered `heap_malloc` at 0xc1f903c. Thumb callable address 0xc1f903d.
 pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc1f903dusize);
+
+/// Recovered `lv_image_create_xip_thunk` at 0x0c588d58. Thumb callable address 0x0c588d59.
+pub const CANOPUS_FW_LV_IMAGE_CREATE_XIP_THUNK_CALLABLE: usize = canopus_thumb_callable(0x0c588d59usize);
 
 /// Recovered `screen_session_create` at 0x0ca72a54. Thumb callable address 0x0ca72a55.
 pub const CANOPUS_FW_SCREEN_SESSION_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0ca72a55usize);
@@ -1343,6 +1346,9 @@ pub unsafe fn canopus_fw_lvx_page_title_create(a0: *mut core::ffi::c_void, a1: *
 /// Recovered `bt_queue_free` at 0xc6b9cf0. Thumb callable address 0xc6b9cf1.
 pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc6b9cf1usize);
 
+/// Recovered `lv_obj_set_style_bg_opa_xip_thunk` at 0x0c5883f8. Thumb callable address 0x0c5883f9.
+pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_XIP_THUNK_CALLABLE: usize = canopus_thumb_callable(0x0c5883f9usize);
+
 /// Recovered `gethostbyname_r` at 0xc1e8e64. Thumb callable address 0xc1e8e65.
 pub const CANOPUS_FW_GETHOSTBYNAME_R_CALLABLE: usize = canopus_thumb_callable(0xc1e8e65usize);
 #[allow(non_snake_case)]
@@ -1497,6 +1503,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // lv_display_get_vertical_resolution: restricted - not exported until context/ownership approved
 // lv_display_invalidate_area: restricted - not exported until context/ownership approved
 // lv_image_create: restricted - not exported until context/ownership approved
+// lv_image_create_xip_thunk: restricted - not exported until context/ownership approved
 // lv_image_decoder_get_info: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
 // lv_obj_get_style_prop: restricted - not exported until context/ownership approved
@@ -1504,6 +1511,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // lv_obj_refresh_style: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
+// lv_obj_set_style_bg_opa_xip_thunk: restricted - not exported until context/ownership approved
 // lv_obj_tree_walk: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // lvgl_posix_open: restricted - not exported until context/ownership approved
