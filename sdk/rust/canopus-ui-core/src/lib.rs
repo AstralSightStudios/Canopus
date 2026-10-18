@@ -70,7 +70,7 @@ pub enum NodeKind {
     RichText = 14,
     Checkbox = 15,
     RadioRow = 16,
-    Slider = 17,
+    // 17 was the slider; it was removed and the number stays unused.
     Progress = 18,
     Divider = 19,
     Spacer = 20,
@@ -96,7 +96,6 @@ impl NodeKind {
             14 => Some(NodeKind::RichText),
             15 => Some(NodeKind::Checkbox),
             16 => Some(NodeKind::RadioRow),
-            17 => Some(NodeKind::Slider),
             18 => Some(NodeKind::Progress),
             19 => Some(NodeKind::Divider),
             20 => Some(NodeKind::Spacer),
@@ -321,7 +320,6 @@ impl Node {
                     | NodeKind::SwitchRow
                     | NodeKind::Checkbox
                     | NodeKind::RadioRow
-                    | NodeKind::Slider
                     | NodeKind::Icon
                     | NodeKind::NavigationHeader
             )
@@ -781,7 +779,6 @@ impl Tree {
                 | NodeKind::RichText
                 | NodeKind::Checkbox
                 | NodeKind::RadioRow
-                | NodeKind::Slider
                 | NodeKind::Progress
                 | NodeKind::Divider
                 | NodeKind::Spacer
@@ -792,7 +789,7 @@ impl Tree {
         }
         let interactive = matches!(
             kind,
-            NodeKind::Checkbox | NodeKind::RadioRow | NodeKind::Slider
+            NodeKind::Checkbox | NodeKind::RadioRow
         );
         if interactive && spec.event_id == 0 {
             return Err(UiError::Argument);
@@ -800,12 +797,11 @@ impl Tree {
         if kind == NodeKind::Image && spec.value.resource_id == 0 {
             return Err(UiError::Argument);
         }
-        if matches!(kind, NodeKind::Slider | NodeKind::Progress)
-            && (spec.value.minimum > spec.value.maximum
+        if kind == NodeKind::Progress
+            && (spec.value.minimum >= spec.value.maximum
                 || spec.value.value < spec.value.minimum
                 || spec.value.value > spec.value.maximum
-                || spec.value.step < 0
-                || (kind == NodeKind::Progress && spec.value.minimum == spec.value.maximum))
+                || spec.value.step < 0)
         {
             return Err(UiError::Argument);
         }
@@ -2115,7 +2111,7 @@ mod tests {
 
     #[test]
     fn declarative_catalog_exposes_style_layout_and_values() {
-        let slider_style = Style {
+        let bar_style = Style {
             variant: ComponentVariant::Tonal as u16,
             foreground: ColorRole::TextPrimary as u16,
             background: ColorRole::SurfaceAlt as u16,
@@ -2124,7 +2120,7 @@ mod tests {
             opacity: 900,
             ..Style::default()
         };
-        let slider_layout = Layout {
+        let bar_layout = Layout {
             width: 240,
             min_height: 44,
             padding_left: 12,
@@ -2151,11 +2147,11 @@ mod tests {
                 children: (
                     SystemComponent {
                         key: 3,
-                        kind: NodeKind::Slider,
+                        kind: NodeKind::Progress,
                         primary: "Brightness",
                         secondary: "65%",
-                        event: Some(ManagerEvent::SafeMode),
-                        flags: FLAG_VISIBLE | FLAG_ENABLED,
+                        event: None::<ManagerEvent>,
+                        flags: FLAG_VISIBLE,
                         value: Value {
                             value: 65,
                             minimum: 0,
@@ -2163,8 +2159,8 @@ mod tests {
                             step: 5,
                             resource_id: 0,
                         },
-                        style: slider_style,
-                        layout: slider_layout,
+                        style: bar_style,
+                        layout: bar_layout,
                         children: (),
                     },
                     SystemComponent {
@@ -2191,7 +2187,7 @@ mod tests {
         let snapshot = tree.commit().unwrap();
         assert_eq!(
             snapshot.find_by_key(3).unwrap().kind(),
-            Some(NodeKind::Slider)
+            Some(NodeKind::Progress)
         );
         assert_eq!(snapshot.value(2).unwrap().value, 65);
         assert_eq!(
@@ -2277,9 +2273,8 @@ mod tests {
         assert_eq!(
             tree.component(
                 2,
-                NodeKind::Slider,
+                NodeKind::Progress,
                 ComponentSpec {
-                    event_id: 1,
                     value: Value {
                         value: 101,
                         minimum: 0,

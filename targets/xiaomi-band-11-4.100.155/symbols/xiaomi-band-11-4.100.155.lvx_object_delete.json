@@ -5,7 +5,7 @@
   "name": "lvx_object_delete",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc720e98",
+  "entry_address": "0xc380404",
   "prototype": "void(void *object)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -15,21 +15,22 @@
     "blocking": false
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-4155-001"
+      "EVID-UI-4155-MSGBOX-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
     "evidence_ids": [
-      "EVID-PORT-4155-001"
+      "EVID-UI-4155-MSGBOX-001"
     ],
-    "source": "Exact .155 image/IDB, compared with targets/xiaomi-band-11-4.100.139/symbols/xiaomi-band-11-4.100.139.lvx_object_delete.json: matching full instruction body; unique identity or ordered reference corroboration."
+    "source": "Exact xiaomi-band-11-4.100.155 IDB: lv_obj_delete: sets the deleting flag (+51 & 0x10), sends LV_EVENT_DELETE (36), deletes the children recursively, unlinks the object from its parent or screen list and frees it. lv_obj_clean (0xc384db4) calls it per child."
   },
   "approval_state": "PENDING",
-  "notes": "matching full instruction body; unique identity or ordered reference corroboration. Source semantic status was CANDIDATE; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the baseline record only within the audited port scope. Physical device validation pending."
+  "notes": "Address corrected by EVID-UI-4155-MSGBOX-001; the earlier CANDIDATE address was a different function. Target-private UI host use only; device probe pending.",
+  "callable_address": "0xc380405"
 }

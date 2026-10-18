@@ -4,7 +4,8 @@
   "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
   "evidence_ids": [
     "EVID-PORT-4155-001",
-    "EVID-DIR-4155-001"
+    "EVID-DIR-4155-001",
+    "EVID-UI-4155-MSGBOX-001"
   ],
   "bindings": {
     "FW_APP_LOOKUP": "app_lookup",
@@ -88,7 +89,10 @@
     "CANOPUS_SUP_NUTTX_FSYNC": "fsync",
     "CANOPUS_SUP_NUTTX_STAT": "stat",
     "CANOPUS_SUP_SYSTEM_GET_STATE": "system_get_state",
-    "CANOPUS_SUP_SYSTEM_STATE": "system_state"
+    "CANOPUS_SUP_SYSTEM_STATE": "system_state",
+    "FW_LVX_MSGBOX_CREATE": "lvx_msgbox_create",
+    "FW_LVX_MSGBOX_SET_CONTENT": "lvx_msgbox_set_content",
+    "FW_LV_OBJECT_DELETE": "lvx_object_delete"
   },
   "fingerprints": [
     "0xc91e530",

@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-4155-MSGBOX-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "Which exact firmware functions are the stock message box constructor and content setter and the object delete of this Band 11 build? The earlier ensemble candidates (0xc43e7d0 a font metrics routine, 0xc566b9c the alarm clock back handler, 0xc720e98 memset) were not them.",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.155.lvx_msgbox_create",
+    "xiaomi-band-11-4.100.155.lvx_msgbox_set_content",
+    "xiaomi-band-11-4.100.155.lvx_object_delete"
+  ],
+  "callsite_evidence": [
+    "The strings page_msgbox, lvx_page_msgbox_destructor, add_event_to_page and the lvx_page_msgbox.c path lead to sub_C508070 (add_event_to_page) and sub_C508104 (destructor); the destructor is the class destructor of the class table at 0x2ca3eba8-0x2ca3ebb8, whose only constructor users are sub_C50FD30 (msgbox object creation with the 0x74-byte instance setup) and the one-line wrappers sub_C50FDB0 / sub_C50FDBC.",
+    "Stock alarmclock pages call sub_C50FDBC(parent, 0) then sub_C50EDD4(box, 5, ...) to build their message boxes (render_reconnect_view, jump reminder).",
+    "sub_C50EDD4 has the same structure as the Band 10 Pro 3.101.043 set_content sub_C4CA130 (mode 5 icon pair cancel.bin/confirm.bin, mode switch, text/button helpers), with the button record widened to 28 bytes.",
+    "sub_C380404 is called by lv_obj_clean (sub_C384DB4) for each child and sets the deleting flag, sends event 36 and frees the object: lv_obj_delete.",
+    "The same bytes sit at the same addresses in 4.100.139 and 4.100.155."
+  ],
+  "ownership_analysis": "The message box is a page-owned object; the host deletes it from its own button callback, as the stock Band 10 Pro callers do.",
+  "unsafe_assumptions": [
+    "Static recovery only; the Mirage run is emulator evidence, not device verification.",
+    "UI owner thread only."
+  ],
+  "recommended_probe": "Open a module dialog on Mirage 4.100.155 and compare it with the stock alarm message box.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-18T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://xiaomi-band-11-4.100.155/vela_ap.bin.i64 sub_C50FD30,sub_C50FDBC,sub_C50EDD4,sub_C380404",
+      "role": "message box and delete functions"
+    }
+  ]
+}

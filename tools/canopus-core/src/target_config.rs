@@ -100,6 +100,16 @@ const FW_10: &[Mapping] = &[
         address: Address::Entry,
     },
     Mapping {
+        macro_name: "FW_STYLE_MISANS_MEDIUM_24",
+        symbol_name: "style_misans_medium_24",
+        address: Address::Entry,
+    },
+    Mapping {
+        macro_name: "FW_STYLE_MISANS_MEDIUM_28",
+        symbol_name: "style_misans_medium_28",
+        address: Address::Entry,
+    },
+    Mapping {
         macro_name: "FW_LVX_EVENT_ADD",
         symbol_name: "lv_obj_add_event_cb",
         address: Address::Callable,
@@ -115,8 +125,13 @@ const FW_10: &[Mapping] = &[
         address: Address::Callable,
     },
     Mapping {
-        macro_name: "FW_LVX_SET_HIDDEN",
-        symbol_name: "lv_obj_set_hidden",
+        macro_name: "FW_LVX_OBJECT_ADD_FLAG",
+        symbol_name: "lvx_object_add_flag",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LVX_OBJECT_CLEAR_FLAG",
+        symbol_name: "lv_obj_clear_flag",
         address: Address::Callable,
     },
     Mapping {

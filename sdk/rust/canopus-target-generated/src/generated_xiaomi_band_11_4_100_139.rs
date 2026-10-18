@@ -4,7 +4,7 @@
 // firmware : 4.100.139 (user-4.100.139-cn-202608280000)
 // sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
 // revision : 2
-// input_digest: 7a9fb10c2aa5ee77
+// input_digest: 67d2746c2c3a2300
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -501,8 +501,8 @@ pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_CALLABLE: usize = canopus_thumb_c
 /// Recovered `screen_session_create` at 0x0c6cd6a8. Thumb callable address 0x0c6cd6a9.
 pub const CANOPUS_FW_SCREEN_SESSION_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c6cd6a9usize);
 
-/// Recovered `lvx_object_delete` at 0xc720ea8. Thumb callable address 0xc720ea9.
-pub const CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE: usize = canopus_thumb_callable(0xc720ea9usize);
+/// Recovered `lvx_object_delete` at 0xc380404. Thumb callable address 0xc380405.
+pub const CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE: usize = canopus_thumb_callable(0xc380405usize);
 
 /// Recovered `sem_post` at 0xc359150. Thumb callable address 0xc359151.
 pub const CANOPUS_FW_SEM_POST_CALLABLE: usize = canopus_thumb_callable(0xc359151usize);
@@ -687,8 +687,8 @@ pub const CANOPUS_FW_WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = canopu
 /// Recovered `screen_session_start` at 0x0c6cf254. Thumb callable address 0x0c6cf255.
 pub const CANOPUS_FW_SCREEN_SESSION_START_CALLABLE: usize = canopus_thumb_callable(0x0c6cf255usize);
 
-/// Recovered `lvx_msgbox_set_content` at 0xc566b9c. Thumb callable address 0xc566b9d.
-pub const CANOPUS_FW_LVX_MSGBOX_SET_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xc566b9dusize);
+/// Recovered `lvx_msgbox_set_content` at 0xc50edd4. Thumb callable address 0xc50edd5.
+pub const CANOPUS_FW_LVX_MSGBOX_SET_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xc50edd5usize);
 
 /// Recovered `opendir` at 0xc351748. Thumb callable address 0xc351749.
 pub const CANOPUS_FW_OPENDIR_CALLABLE: usize = canopus_thumb_callable(0xc351749usize);
@@ -969,8 +969,8 @@ pub const CANOPUS_FW_LV_IMAGE_DECODER_GET_INFO_CALLABLE: usize = canopus_thumb_c
 /// Recovered `_lv_inv_area` at 0x0c382428. Thumb callable address 0x0c382429.
 pub const CANOPUS_FW__LV_INV_AREA_CALLABLE: usize = canopus_thumb_callable(0x0c382429usize);
 
-/// Recovered `lvx_msgbox_create` at 0xc43e7d0. Thumb callable address 0xc43e7d1.
-pub const CANOPUS_FW_LVX_MSGBOX_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc43e7d1usize);
+/// Recovered `lvx_msgbox_create` at 0xc50fdbc. Thumb callable address 0xc50fdbd.
+pub const CANOPUS_FW_LVX_MSGBOX_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc50fdbdusize);
 
 /// Recovered global `font_reload_vector_draw_unit_slot` at 0x200d327c.
 pub const canopus_fw_font_reload_vector_draw_unit_slot: usize = 0x200d327cusize;

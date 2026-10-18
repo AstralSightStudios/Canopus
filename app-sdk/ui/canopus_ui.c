@@ -413,14 +413,14 @@ int32_t canopus_ui_navigation_header(
 static int ui_component_type_valid(uint16_t type)
 {
     return type >= CANOPUS_UI_NODE_LIST &&
-           type <= CANOPUS_UI_NODE_NAVIGATION_HEADER;
+           type <= CANOPUS_UI_NODE_NAVIGATION_HEADER &&
+           type != CANOPUS_UI_NODE_RETIRED_SLIDER;
 }
 
 static int ui_component_interactive(uint16_t type)
 {
     return type == CANOPUS_UI_NODE_CHECKBOX ||
-           type == CANOPUS_UI_NODE_RADIO_ROW ||
-           type == CANOPUS_UI_NODE_SLIDER;
+           type == CANOPUS_UI_NODE_RADIO_ROW;
 }
 
 static int ui_component_container(uint16_t type)
@@ -474,11 +474,9 @@ int32_t canopus_ui_component(
          props->primary_len == 0u)) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
-    if ((type == CANOPUS_UI_NODE_SLIDER || type == CANOPUS_UI_NODE_PROGRESS) &&
-        (props->minimum > props->maximum || props->value < props->minimum ||
-         props->value > props->maximum || props->step < 0 ||
-         (type == CANOPUS_UI_NODE_PROGRESS &&
-          props->minimum == props->maximum))) {
+    if (type == CANOPUS_UI_NODE_PROGRESS &&
+        (props->minimum >= props->maximum || props->value < props->minimum ||
+         props->value > props->maximum || props->step < 0)) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
     rc = ui_append_node(tree, key, type, props->primary, props->primary_len,
@@ -597,6 +595,14 @@ void canopus_ui_tree_abort(struct canopus_ui_tree_v1 *tree)
     }
 }
 
+void canopus_ui_context_abort_pending(struct canopus_ui_context_v1 *context)
+{
+    if (context != 0) {
+        context->staging._active = 0u;
+        context->building = 0u;
+    }
+}
+
 const struct canopus_ui_snapshot_v1 *canopus_ui_current(
     const struct canopus_ui_context_v1 *context)
 {
@@ -633,7 +639,6 @@ int32_t canopus_ui_dispatch_event(
          node->type != CANOPUS_UI_NODE_SWITCH_ROW &&
          node->type != CANOPUS_UI_NODE_CHECKBOX &&
          node->type != CANOPUS_UI_NODE_RADIO_ROW &&
-         node->type != CANOPUS_UI_NODE_SLIDER &&
          node->type != CANOPUS_UI_NODE_ICON &&
          node->type != CANOPUS_UI_NODE_NAVIGATION_HEADER) ||
         node->event_id != event_id) {

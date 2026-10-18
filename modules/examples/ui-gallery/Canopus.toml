@@ -1,0 +1,26 @@
+schema = 1
+
+[module]
+id = "ui_gallery"
+version = "1.0.0"
+version_code = 1
+kind = "target"
+language = "c"
+lifecycle = "removable"
+canopus_abi = "1"
+description = "example: one sub-page per widget kind of ctx->ui, hosted by the Manager"
+
+[build]
+sources = ["ui_gallery.c"]
+include_dirs = [
+  "${CANOPUS_ROOT}/app-sdk/ui",
+]
+
+[targets]
+include = [
+  "xiaomi-band-10-pro-3.101.043",
+  "xiaomi-band-10-pro-3.101.036",
+  "xiaomi-band-11-4.100.139",
+  "xiaomi-band-11-4.100.155",
+  "xiaomi-band-11-4.100.177",
+]

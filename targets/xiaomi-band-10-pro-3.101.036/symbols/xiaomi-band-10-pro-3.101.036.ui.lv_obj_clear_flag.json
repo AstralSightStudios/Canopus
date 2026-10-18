@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.ui.lv_obj_clear_flag",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "lv_obj_clear_flag",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc587988",
+  "callable_address": "0xc587989",
+  "prototype": "void(void *, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument_0": "borrowed LVGL object"
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-UI-1036-HOST-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-UI-1036-HOST-001"
+    ],
+    "source": "Veneer (LDR.W PC,[PC]) into the version-stable LVGL library entry 0x1C028C85; the veneer target is identical in 3.101.036 and 3.101.043. The msgbox constructor and the stock list-class constructors call it with flag masks 2 (CLICKABLE), 8 and 16 (SCROLLABLE) in the position where Band 11 calls its lv_obj_clear_flag (FW_LV_OBJECT_CLEAR_FLAG). Second argument is the LV_OBJ_FLAG mask (HIDDEN = 1)."
+  },
+  "approval_state": "PENDING",
+  "notes": "Target-private UI host use only (hide/show, scroll lock). Device probe pending."
+}

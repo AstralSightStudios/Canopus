@@ -5,8 +5,8 @@
   "name": "lvx_object_delete",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc720ea8",
-  "callable_address": "0xc720ea9",
+  "entry_address": "0xc380404",
+  "callable_address": "0xc380405",
   "prototype": "void(void *object)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -16,21 +16,21 @@
     "blocking": false
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1043-4139"
+      "EVID-UI-4139-MSGBOX-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1043-4139"
+      "EVID-UI-4139-MSGBOX-001"
     ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.043 report=targets/xiaomi-band-11-4.100.139/evidence/fw-match/ensemble-1043-to-4139-v2.json"
+    "source": "Exact xiaomi-band-11-4.100.139 IDB: lv_obj_delete: sets the deleting flag (+51 & 0x10), sends LV_EVENT_DELETE (36), deletes the children recursively, unlinks the object from its parent or screen list and frees it. lv_obj_clean (0xc384db4) calls it per child."
   },
   "approval_state": "PENDING",
-  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=CANDIDATE confidence=0.6198 margin=0.0110"
+  "notes": "Address corrected by EVID-UI-4139-MSGBOX-001; the earlier CANDIDATE address was a different function. Target-private UI host use only; device probe pending."
 }

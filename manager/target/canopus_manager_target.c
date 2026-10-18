@@ -615,12 +615,15 @@ static int32_t target_route(void *cookie,
     return CANOPUS_UI_OK;
 }
 
-#ifndef CANOPUS_MGR_BAND11
-/* The stock back affordance of a non-root Manager page: finish it so the
- * paused page below resumes. */
+/* The back affordance of a non-root Manager page: finish it so the paused page
+ * below resumes. */
 static void manager_view_back(struct canopus_ui_host_view *view)
 {
+#ifndef CANOPUS_MGR_BAND11
     typedef int32_t (*page_finish_fn)(void *);
+#else /* CANOPUS_MGR_BAND11 */
+    typedef void (*page_finish_fn)(uint32_t);
+#endif /* CANOPUS_MGR_BAND11 */
     struct canopus_target_page_context *context =
         (struct canopus_target_page_context *)view;
 
@@ -628,10 +631,14 @@ static void manager_view_back(struct canopus_ui_host_view *view)
         return;
     }
     canopus_ui_host_set_interactive(view, 0);
+#ifndef CANOPUS_MGR_BAND11
     (void)((page_finish_fn)(uintptr_t)FW_ACTIVITY_FINISH)(
         &manager_pages_desc[context->page_index]);
-}
+#else /* CANOPUS_MGR_BAND11 */
+    ((page_finish_fn)(uintptr_t)FW_ACTIVITY_FINISH)(
+        target_page_key(context->page_index));
 #endif /* CANOPUS_MGR_BAND11 */
+}
 
 static void manager_view_before_event(
     struct canopus_ui_host_view *view, uint32_t row,
@@ -664,11 +671,7 @@ static void manager_view_rendered(struct canopus_ui_host_view *view, void *first
 }
 
 static const struct canopus_ui_host_hooks manager_view_hooks = {
-#ifndef CANOPUS_MGR_BAND11
     manager_view_back,
-#else /* CANOPUS_MGR_BAND11 */
-    NULL,
-#endif /* CANOPUS_MGR_BAND11 */
     manager_view_before_event,
     manager_view_after_event,
     manager_view_rendered,
@@ -859,38 +862,43 @@ static int32_t module_page_event(void *cookie, uint32_t generation,
 {
     struct canopus_ui_entry_v1 entry;
     const struct canopus_context_v1 *ctx;
+    struct canopus_target_module_page *page = module_page;
+    int32_t rc;
 
     (void)cookie;
     (void)generation;
     if (module_page_entry(&entry, &ctx) != 0 || entry.on_event == NULL) {
         return CANOPUS_UI_ERR_STATE;
     }
-    return entry.on_event(ctx, &module_page->ui, key, event_id, entry.user_data);
+    rc = entry.on_event(ctx, &page->ui, key, event_id, entry.user_data);
+    if (module_page == page) { /* the event may have closed its own page */
+        canopus_ui_context_abort_pending(&page->ui);
+    }
+    return rc;
 }
 
-#ifndef CANOPUS_MGR_BAND11
-/* Band 10 Pro's title back reaches the module first (it may pop its own route);
- * Band 11's stock title finishes the page by itself. */
+/* The title's back reaches the module first (it may pop its own route). */
 static void module_page_back(struct canopus_ui_host_view *view)
 {
     struct canopus_ui_entry_v1 entry;
     const struct canopus_context_v1 *ctx;
 
     (void)view;
-    if (module_page_entry(&entry, &ctx) == 0 && entry.on_back != NULL &&
-        entry.on_back(ctx, &module_page->ui, entry.user_data) == 0) {
-        return;
+    if (module_page_entry(&entry, &ctx) == 0 && entry.on_back != NULL) {
+        struct canopus_target_module_page *page = module_page;
+        int32_t handled = entry.on_back(ctx, &page->ui, entry.user_data);
+        if (module_page == page) {
+            canopus_ui_context_abort_pending(&page->ui);
+        }
+        if (handled == 0) {
+            return;
+        }
     }
     module_page_finish();
 }
-#endif /* CANOPUS_MGR_BAND11 */
 
 static const struct canopus_ui_host_hooks module_view_hooks = {
-#ifndef CANOPUS_MGR_BAND11
     module_page_back,
-#else /* CANOPUS_MGR_BAND11 */
-    NULL,
-#endif /* CANOPUS_MGR_BAND11 */
     NULL,
     NULL,
     NULL,
@@ -944,8 +952,15 @@ static int module_page_on_create(struct canopus_target_page *page, void *root,
     canopus_ui_host_bind(&module_page->view, &module_page->ui);
     canopus_ui_host_set_interactive(&module_page->view, 1);
     ctx = canopus_supervisor_context(sup, slot);
-    if (ctx == NULL || entry.on_open(ctx, &module_page->ui, entry.user_data) != 0 ||
-        canopus_ui_current(&module_page->ui) == NULL) {
+    if (ctx == NULL || entry.on_open(ctx, &module_page->ui, entry.user_data) != 0) {
+        module_page_release();
+        return -1;
+    }
+    if (module_page == NULL) {
+        return -1;
+    }
+    canopus_ui_context_abort_pending(&module_page->ui);
+    if (canopus_ui_current(&module_page->ui) == NULL) {
         module_page_release();
         return -1;
     }

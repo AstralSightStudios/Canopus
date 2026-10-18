@@ -140,6 +140,20 @@ TEST(ui_rejects_invalid_shape_and_duplicate_keys)
     CHECK(canopus_ui_tree_commit(tree) == CANOPUS_UI_OK);
 }
 
+TEST(ui_context_drops_a_tree_its_owner_left_open)
+{
+    struct canopus_ui_context_v1 context;
+    struct fake_ui_backend backend;
+    struct canopus_ui_tree_v1 *tree = 0;
+
+    init_context(&context, &backend, 0);
+    tree = begin_page(&context, "left open");
+    CHECK(canopus_ui_tree_commit(tree) == CANOPUS_UI_ERR_STATE);
+    CHECK(canopus_ui_tree_begin(&context, &tree) == CANOPUS_UI_ERR_STATE);
+    canopus_ui_context_abort_pending(&context);
+    CHECK(canopus_ui_tree_begin(&context, &tree) == CANOPUS_UI_OK);
+}
+
 TEST(ui_enforces_node_and_depth_capacity)
 {
     struct canopus_ui_context_v1 context;
@@ -298,9 +312,9 @@ TEST(ui_extended_catalog_supports_style_layout_and_values)
     struct fake_ui_backend backend;
     struct fake_event_sink sink;
     struct canopus_ui_tree_v1 *tree;
-    struct canopus_ui_component_props_v1 slider = {
-        sizeof(slider), "Brightness", 10, "65%", 3, 201,
-        CANOPUS_UI_NODE_FLAG_ENABLED | CANOPUS_UI_NODE_FLAG_VISIBLE,
+    struct canopus_ui_component_props_v1 bar = {
+        sizeof(bar), "Brightness", 10, "65%", 3, 0,
+        CANOPUS_UI_NODE_FLAG_VISIBLE,
         65, 0, 100, 5, 0
     };
     struct canopus_ui_component_props_v1 image = {
@@ -321,7 +335,7 @@ TEST(ui_extended_catalog_supports_style_layout_and_values)
     CHECK(CANOPUS_UI_LIST(tree, 3, "Controls") == CANOPUS_UI_OK);
     CHECK(CANOPUS_UI_CHECKBOX(tree, 4, "Telemetry", 200, 1, 1) ==
           CANOPUS_UI_OK);
-    CHECK(canopus_ui_component(tree, 5, CANOPUS_UI_NODE_SLIDER, &slider) ==
+    CHECK(canopus_ui_component(tree, 5, CANOPUS_UI_NODE_PROGRESS, &bar) ==
           CANOPUS_UI_OK);
     CHECK(canopus_ui_component(tree, 6, CANOPUS_UI_NODE_IMAGE, &image) ==
           CANOPUS_UI_OK);
@@ -354,7 +368,7 @@ TEST(ui_extended_catalog_supports_style_layout_and_values)
 
     snapshot = canopus_ui_current(&context);
     CHECK(snapshot != 0);
-    CHECK(snapshot->nodes[4].type == CANOPUS_UI_NODE_SLIDER);
+    CHECK(snapshot->nodes[4].type == CANOPUS_UI_NODE_PROGRESS);
     CHECK(snapshot->values[4].value == 65);
     CHECK(snapshot->values[4].maximum == 100);
     CHECK(snapshot->styles[4].variant == CANOPUS_UI_VARIANT_TONAL);
@@ -366,8 +380,9 @@ TEST(ui_extended_catalog_supports_style_layout_and_values)
     CHECK(snapshot->values[6].value == 250);
     CHECK(snapshot->values[6].maximum == 1000);
     CHECK(canopus_ui_dispatch_event(&context, snapshot->generation, 4, 200) == 0);
-    CHECK(canopus_ui_dispatch_event(&context, snapshot->generation, 5, 201) == 0);
-    CHECK(sink.call_count == 2);
+    CHECK(canopus_ui_dispatch_event(&context, snapshot->generation, 5, 201) ==
+          CANOPUS_UI_ERR_ARGUMENT); /* a progress bar has no events */
+    CHECK(sink.call_count == 1);
 }
 
 TEST(ui_extended_catalog_rejects_invalid_metadata)
@@ -375,20 +390,22 @@ TEST(ui_extended_catalog_rejects_invalid_metadata)
     struct canopus_ui_context_v1 context;
     struct fake_ui_backend backend;
     struct canopus_ui_tree_v1 *tree;
-    struct canopus_ui_component_props_v1 slider = {
-        sizeof(slider), "x", 1, "", 0, 1,
-        CANOPUS_UI_NODE_FLAG_ENABLED, 101, 0, 100, 1, 0
+    struct canopus_ui_component_props_v1 bar = {
+        sizeof(bar), "x", 1, "", 0, 0,
+        CANOPUS_UI_NODE_FLAG_VISIBLE, 101, 0, 100, 1, 0
     };
     struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
     struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
 
     init_context(&context, &backend, 0);
     tree = begin_page(&context, "Invalid");
-    CHECK(canopus_ui_component(tree, 2, CANOPUS_UI_NODE_SLIDER, &slider) ==
+    CHECK(canopus_ui_component(tree, 2, CANOPUS_UI_NODE_PROGRESS, &bar) ==
           CANOPUS_UI_ERR_ARGUMENT);
-    slider.value = 50;
-    CHECK(canopus_ui_component(tree, 2, CANOPUS_UI_NODE_SLIDER, &slider) ==
+    bar.value = 50;
+    CHECK(canopus_ui_component(tree, 2, CANOPUS_UI_NODE_PROGRESS, &bar) ==
           CANOPUS_UI_OK);
+    CHECK(canopus_ui_component(tree, 3, CANOPUS_UI_NODE_RETIRED_SLIDER, &bar) ==
+          CANOPUS_UI_ERR_ARGUMENT);
     style.opacity = 1001;
     CHECK(canopus_ui_node_set_style(tree, 2, &style) == CANOPUS_UI_ERR_ARGUMENT);
     layout.width = -2;
@@ -538,6 +555,8 @@ static const struct test_registry ui_tests[] = {
       ui_builds_linked_tree_and_copies_strings_wrapper },
     { "ui_rejects_invalid_shape_and_duplicate_keys",
       ui_rejects_invalid_shape_and_duplicate_keys_wrapper },
+    { "ui_context_drops_a_tree_its_owner_left_open",
+      ui_context_drops_a_tree_its_owner_left_open_wrapper },
     { "ui_enforces_node_and_depth_capacity",
       ui_enforces_node_and_depth_capacity_wrapper },
     { "ui_string_failure_rolls_back_entire_node",

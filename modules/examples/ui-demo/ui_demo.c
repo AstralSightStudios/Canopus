@@ -5,9 +5,8 @@
  * Manager offers "打开界面"; opening it calls on_open, which builds the first
  * tree into the `ui` context the Supervisor hands over. The Supervisor's native
  * backend draws the tree and turns row activations into on_event calls. A second
- * level ("详情页") is a different tree in the same page; on Band 10 Pro the title's
- * back reaches on_back first, so it can pop to the first level instead of closing.
- * Band 11's stock title finishes the page by itself.
+ * level ("详情页") is a different tree in the same page; the title's back reaches
+ * on_back first, so it can pop to the first level instead of closing.
  */
 #include "canopus_module_entry.h"
 #include "canopus_ui.h"

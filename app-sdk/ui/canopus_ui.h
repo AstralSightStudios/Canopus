@@ -61,7 +61,7 @@ enum canopus_ui_node_type {
     CANOPUS_UI_NODE_RICH_TEXT,
     CANOPUS_UI_NODE_CHECKBOX,
     CANOPUS_UI_NODE_RADIO_ROW,
-    CANOPUS_UI_NODE_SLIDER,
+    CANOPUS_UI_NODE_RETIRED_SLIDER, /* 17: removed (it could only be drawn read-only); the number stays unused */
     CANOPUS_UI_NODE_PROGRESS,
     CANOPUS_UI_NODE_DIVIDER,
     CANOPUS_UI_NODE_SPACER,
@@ -417,6 +417,10 @@ int32_t canopus_ui_node_set_layout(
 int32_t canopus_ui_end(struct canopus_ui_tree_v1 *tree);
 int32_t canopus_ui_tree_commit(struct canopus_ui_tree_v1 *tree);
 void canopus_ui_tree_abort(struct canopus_ui_tree_v1 *tree);
+/* Drops a tree its owner returned without committing or aborting (an unbalanced
+ * tree makes tree_commit fail and leaves the context building forever). The host
+ * calls it after every callback it hands the context to. */
+void canopus_ui_context_abort_pending(struct canopus_ui_context_v1 *context);
 
 const struct canopus_ui_snapshot_v1 *canopus_ui_current(
     const struct canopus_ui_context_v1 *context);

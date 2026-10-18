@@ -1887,6 +1887,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "const uint32_t[17]",
     },
     TargetPrivateSymbolRecord {
+        name: "style_misans_medium_24",
+        kind: "global",
+        entry: 0x2010cee0usize,
+        callable: 0x2010cee0usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *",
+    },
+    TargetPrivateSymbolRecord {
+        name: "style_misans_medium_28",
+        kind: "global",
+        entry: 0x2010cef8usize,
+        callable: 0x2010cef8usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *",
+    },
+    TargetPrivateSymbolRecord {
         name: "widgets_scroll",
         kind: "function",
         entry: 0xc50abb4usize,
@@ -2150,8 +2168,8 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
     TargetPrivateSymbolRecord {
         name: "lv_bar_create",
         kind: "function",
-        entry: 0xc0c21d8usize,
-        callable: 0xc0c21d9usize,
+        entry: 0xc588b90usize,
+        callable: 0xc588b91usize,
         status: "STATIC_CONFIRMED",
         policy: "restricted",
         prototype: "void *(void *)",
@@ -2227,6 +2245,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "native-full-trust",
         prototype: "void(void *, void *, uint32_t, int32_t, int32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_clear_flag",
+        kind: "function",
+        entry: 0xc5891b0usize,
+        callable: 0xc5891b1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, uint32_t)",
     },
     TargetPrivateSymbolRecord {
         name: "lv_obj_move_to_index",
@@ -2778,6 +2805,8 @@ pub const SDP_SET_RAW_ATTRIBUTE_CALLABLE: usize = 0xc808245usize;
 pub const SDP_UNREGISTER_ENTRY: usize = 0xc80a734usize;
 pub const SDP_UNREGISTER_CALLABLE: usize = 0xc80a735usize;
 pub const STOCK_BT_CALLBACK_DESCRIPTOR_ENTRY: usize = 0x2cd4a744usize;
+pub const STYLE_MISANS_MEDIUM_24_ENTRY: usize = 0x2010cee0usize;
+pub const STYLE_MISANS_MEDIUM_28_ENTRY: usize = 0x2010cef8usize;
 pub const WIDGETS_SCROLL_ENTRY: usize = 0xc50abb4usize;
 pub const WIDGETS_SCROLL_CALLABLE: usize = 0xc50abb5usize;
 pub const APP_LOOKUP_ENTRY: usize = 0xca69934usize;
@@ -2833,8 +2862,8 @@ pub const SERVICE_MANAGER_STARTUP_CALLABLE: usize = 0xc3bdc25usize;
 pub const SYSTEM_GET_STATE_ENTRY: usize = 0xc4bed68usize;
 pub const SYSTEM_GET_STATE_CALLABLE: usize = 0xc4bed69usize;
 pub const SYSTEM_STATE_ENTRY: usize = 0x2010cc58usize;
-pub const LV_BAR_CREATE_ENTRY: usize = 0xc0c21d8usize;
-pub const LV_BAR_CREATE_CALLABLE: usize = 0xc0c21d9usize;
+pub const LV_BAR_CREATE_ENTRY: usize = 0xc588b90usize;
+pub const LV_BAR_CREATE_CALLABLE: usize = 0xc588b91usize;
 pub const LV_BAR_SET_RANGE_ENTRY: usize = 0xc5883d8usize;
 pub const LV_BAR_SET_RANGE_CALLABLE: usize = 0xc5883d9usize;
 pub const LV_BAR_SET_VALUE_ENTRY: usize = 0xc5890a8usize;
@@ -2851,6 +2880,8 @@ pub const LV_OBJ_ADD_EVENT_CB_ENTRY: usize = 0xc5883f0usize;
 pub const LV_OBJ_ADD_EVENT_CB_CALLABLE: usize = 0xc5883f1usize;
 pub const LV_OBJ_ALIGN_TO_ENTRY: usize = 0xc588ef0usize;
 pub const LV_OBJ_ALIGN_TO_CALLABLE: usize = 0xc588ef1usize;
+pub const LV_OBJ_CLEAR_FLAG_ENTRY: usize = 0xc5891b0usize;
+pub const LV_OBJ_CLEAR_FLAG_CALLABLE: usize = 0xc5891b1usize;
 pub const LV_OBJ_MOVE_TO_INDEX_ENTRY: usize = 0xc589550usize;
 pub const LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = 0xc589551usize;
 pub const LV_OBJ_SET_HIDDEN_ENTRY: usize = 0xc588518usize;
@@ -3806,6 +3837,14 @@ pub unsafe fn raw_lv_obj_align_to(
     unsafe { f(a0, a1, a2, a3, a4) }
 }
 
+pub unsafe fn raw_lv_obj_clear_flag(a0: *mut core::ffi::c_void, a1: u32) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE)
+    };
+    unsafe { f(a0, a1) }
+}
+
 pub unsafe fn raw_lv_obj_move_to_index(a0: *mut core::ffi::c_void, a1: i32) -> () {
     type F = unsafe extern "C" fn(*mut core::ffi::c_void, i32) -> ();
     let f: F = unsafe {
@@ -3968,4 +4007,4 @@ pub unsafe fn raw_watchface_reset_watchface(a0: i32) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 107
+// generated target-private raw wrapper count: 108

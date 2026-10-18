@@ -105,18 +105,25 @@ class Band11:
     first_module = (106, 115)
     scroll_top = None
     third_row = (106, 310)
-    dialog_confirm = (106, 335)       # no message box: the confirm row of the inline dialog
+    dialog_confirm = (106, 460)       # message box (mode 4): cancel above, confirm below
     activate_wait = 5
     page_switch = (170, 215)
     page_click = (106, 310)
     page_details = (106, 415)
-    level2_back = (106, 255)          # the stock title closes the page itself: a Back row
+    level2_back = (106, 50)           # the title's back reaches the module first
     close_page = ("swipe", (4, 260, 190, 260))
     reboot_before_pages = False
     expected_probe = ["open 0/0/0", "toggle 0/0/1", "add 0/1/1", "add 0/2/1", "add 0/3/1",
-                      "detail 1/3/1", "back 0/3/1", "close 0/3/1"]
+                      "detail 1/3/1", "pop 0/3/1", "close 0/3/1"]
 
 
+MODULES = {
+    "ui-demo": {"id": "ui_demo", "manifest": "modules/examples/ui-demo/Canopus.toml",
+                "package": "modules/examples/ui-demo/dist/ui_demo-1.0.0.canopus"},
+    "ui-gallery": {"id": "ui_gallery", "manifest": "modules/examples/ui-gallery/Canopus.toml",
+                   "package": "modules/examples/ui-gallery/dist/ui_gallery-1.0.0.canopus"},
+}
+M = MODULES["ui-demo"]
 P = Band10Pro
 
 
@@ -172,8 +179,8 @@ class Shots:
         return path
 
 
-def pixel(path, x, y):
-    """RGB of one pixel of a Mirage screenshot (8-bit RGB or RGBA PNG)."""
+def png_rows(path):
+    """The decoded rows of a Mirage screenshot (8-bit RGB or RGBA PNG) and its bytes per pixel."""
     data = Path(path).read_bytes()
     pos, idat, width, height, depth, ctype = 8, b"", 0, 0, 0, 0
     while pos < len(data):
@@ -207,6 +214,12 @@ def pixel(path, x, y):
                 line[i] = (line[i] + near) & 255
         rows.append(line)
         previous = line
+    return rows, bpp
+
+
+def pixel(path, x, y):
+    """RGB of one pixel of a Mirage screenshot."""
+    rows, bpp = png_rows(path)
     return tuple(rows[y][x * bpp:x * bpp + 3])
 
 
@@ -329,9 +342,26 @@ def scroll_detail_to_top():
             swipe(gesture)
 
 
+def screen_body():
+    """The screen below the status bar, whose clock would otherwise count as a change."""
+    probe = Path(tempfile.gettempdir()) / f"canopus-ui-{P.device}-moved.png"
+    ctl("screenshot", P.device, probe)
+    rows, _ = png_rows(probe)
+    return b"".join(bytes(row) for row in rows[70:])
+
+
 def module_detail_at_top():
     count, gesture = P.home_scroll
-    for _ in range(count):
+    # Mirage sometimes leaves the freshly opened overview deaf to touch for a minute or two
+    # (seen before the host changes too), so the first swipe repeats until the page moves.
+    before = screen_body()
+    for _ in range(40):
+        swipe(gesture)
+        if screen_body() != before:
+            break
+    else:
+        raise RuntimeError("the Manager overview never reacted to touch")
+    for _ in range(count - 1):
         swipe(gesture)
     tap(P.modules_row, 3.5)
     tap(P.first_module, 3.5)
@@ -358,7 +388,7 @@ def prepare(work, installer, package, shots):
         skip_launcher_tutorial()
     installed = modules(phone(work, 'install={"path":"%s","kind":"canopus"}' % package, "canopusModules"))
     if [m["state"] for m in installed] != [3]:
-        raise RuntimeError(f"ui_demo should be installed and disabled: {installed}")
+        raise RuntimeError(f"{M['id']} should be installed and disabled: {installed}")
     if P.reboot_before_pages:
         reboot()
         run_installer(shots)
@@ -366,7 +396,8 @@ def prepare(work, installer, package, shots):
         wake()
 
 
-def use_pages(work, shots):
+def open_module_page(shots):
+    """Launcher > Manager > modules > the module > enable > activate now > 打开界面."""
     open_manager(shots)
     shots.take("manager-home")
     module_detail_at_top()
@@ -377,6 +408,9 @@ def use_pages(work, shots):
     shots.take("detail-running")
     tap(P.third_row, 3.5)
     shots.take("page-level1")
+
+
+def demo_scenario(shots):
     tap(P.page_switch, 1.2)
     for _ in range(3):
         tap(P.page_click, 1.2)
@@ -391,31 +425,209 @@ def use_pages(work, shots):
     else:
         tap(where, 3.5)
     shots.take("manager-detail-again")
+    return P.expected_probe
 
+
+def blue(rgb):
+    return rgb[2] > 200 and rgb[0] < 110
+
+
+def gallery_scenario(shots):
+    """Every widget kind of ctx->ui on its own sub-page of the gallery module."""
+    return gallery_band10(shots) if P is Band10Pro else gallery_band11(shots)
+
+
+def gallery_band10(shots):
+    top = [(168, 120), (168, 240), (168, 360), (168, 455)]   # form, progress, text, image
+    scrolled = [(168, 150), (168, 270), (168, 390)]          # dialog, style, close
+    scroll = (168, 420, 168, 120)
+    back = (30, 28)                                          # the title's back reaches on_back
+
+    # Form controls: switch, two checkboxes, three exclusive radios, a button.
+    tap(top[0], 3.5)
+    tap((280, 240), 1.2)
+    tap((280, 360), 1.2)
+    tap((280, 455), 1.2)
+    shots.take("form-toggled")
+    swipe(scroll)
+    swipe(scroll)
+    tap((280, 150), 1.5)    # radio 2, the last one
+    shot = shots.take("form-radio-2")
+    if not blue(pixel(shot, 255, 150)):   # the switch's track, left of the knob
+        raise RuntimeError("radio 2 should be the selected row")
+    tap((168, 270), 1.2)    # the button
+    tap(back, 3.5)
+
+    # Progress bar.
+    tap(top[1], 3.5)
+    for _ in range(3):
+        tap((168, 300), 0.8)
+    shot = shots.take("progress-3")
+    fill, empty = pixel(shot, 40, 190), pixel(shot, 300, 190)
+    if not (blue(fill) and not blue(empty)):
+        raise RuntimeError(f"the progress bar should be filled to about a third: {fill} / {empty}")
+    tap(back, 3.5)
+
+    # Text, divider, spacer.
+    tap(top[2], 3.5)
+    shots.take("text")
+    tap(back, 3.5)
+
+    # Image.
+    tap(top[3], 3.5)
+    shot = shots.take("image")
+    if min(pixel(shot, 132, 112)) < 200:   # the icon's white ground
+        raise RuntimeError("the image should show the Manager's icon")
+    tap(back, 3.5)
+
+    # A dialog: the stock message box. Cancel, then confirm.
+    swipe(scroll)
+    tap(scrolled[0], 3.5)
+    tap((168, 120), 3)
+    shots.take("dialog")
+    tap((168, 308), 3)
+    tap((168, 120), 3)
+    tap((168, 410), 3)
+    tap(back, 3.5)
+
+    # Style and layout.
+    swipe(scroll)
+    tap(scrolled[1], 3.5)
+    shots.take("style")
+    tap((168, 120), 1.5)
+    tap((168, 240), 1.5)
+    tap(back, 3.5)
+
+    # The module closes its own page.
+    swipe(scroll)
+    tap(scrolled[2], 3.5)
+    shots.take("self-closed")
+    return ["open 0/0",
+            "route 1/1", "switch 1/1", "checkA 1/1", "checkB 1/1", "radio 1/2", "button 1/0", "back 1/0",
+            "route 2/2", "progress 2/1", "progress 2/2", "progress 2/3", "back 2/0",
+            "route 3/3", "back 3/0",
+            "route 4/4", "back 4/0",
+            "route 5/5", "dialogopen 5/0", "dialogcancel 5/0", "dialogopen 5/0", "dialogok 5/0", "back 5/0",
+            "route 6/6", "styletap 6/0", "styletap 6/0", "back 6/0",
+            "selfclose 0/0", "close 0/0"]
+
+
+def gallery_band11(shots):
+    scroll = (106, 450, 106, 100)
+    row = [(106, 115), (106, 220), (106, 325), (106, 430)]
+
+    def enter(point, scrolled=False):
+        if scrolled:
+            swipe(scroll)
+        tap(point, 3.5)
+
+    # Form controls: switch, two checkboxes, three exclusive radios, a button.
+    enter(row[0])
+    tap((170, 215), 1.2)
+    tap((106, 310), 1.2)
+    tap((106, 415), 1.2)
+    shots.take("form-toggled")
+    swipe(scroll)
+    swipe(scroll)
+    shots.take("form-scrolled")
+    tap((106, 115), 1.5)
+    tap((106, 215), 1.5)
+    shot = shots.take("form-radio-2")
+    if not (blue(pixel(shot, 160, 215)) and not blue(pixel(shot, 160, 115))):   # the switch's track
+        raise RuntimeError("radio 2 should be the selected row, at the scrolled position")
+    tap((106, 310), 1.2)
+    tap((106, 415), 3.5)
+
+    # Progress bar.
+    enter(row[1])
+    for _ in range(3):
+        tap((106, 255), 0.8)
+    shot = shots.take("progress-3")
+    fill, empty = pixel(shot, 30, 182), pixel(shot, 190, 182)
+    if not (blue(fill) and not blue(empty)):
+        raise RuntimeError(f"the progress bar should be filled to about a third: {fill} / {empty}")
+    tap((106, 460), 3.5)
+
+    # Text, divider, spacer; the title's back returns to the list.
+    enter(row[2])
+    shots.take("text")
+    tap((106, 50), 3.5)
+
+    # Image.
+    enter(row[3])
+    shot = shots.take("image")
+    if min(pixel(shot, 66, 100)) < 200:
+        raise RuntimeError("the image should show the Manager's icon")
+    tap((106, 330), 3.5)
+
+    # A dialog: the stock message box. Cancel, then confirm; the title's back leaves the sub-page.
+    enter(row[1], scrolled=True)
+    shot = shots.take("dialog-entered", lit=False)   # opened from a scrolled page: its rows must be in view
+    if max(pixel(shot, 106, 100)) < 20:
+        raise RuntimeError("a page opened from a scrolled one drew its rows out of view")
+    swipe((106, 300, 106, 150))   # a page that fits must not move when dragged
+    shot = shots.take("dialog-dragged", lit=False)   # a sparse page is small, check its pixels instead
+    if max(pixel(shot, 106, 100)) < 20:
+        raise RuntimeError("a short page was dragged away from the top")
+    tap((106, 115), 3.5)
+    shots.take("dialog")
+    tap((106, 368), 3.5)
+    tap((106, 115), 3.5)
+    tap((106, 460), 3.5)
+    tap((106, 50), 3.5)
+
+    # Style and layout.
+    enter(row[2], scrolled=True)
+    shots.take("style")
+    tap((60, 115), 1.5)
+    tap((106, 220), 1.5)
+    tap((106, 325), 3.5)
+
+    # The module closes its own page.
+    enter(row[3], scrolled=True)
+    shots.take("self-closed")
+    return ["open 0/0",
+            "route 1/1", "switch 1/1", "checkA 1/1", "checkB 1/1", "radio 1/1", "radio 1/2", "button 1/0",
+            "route 0/0",
+            "route 2/2", "progress 2/1", "progress 2/2", "progress 2/3", "route 0/0",
+            "route 3/3", "back 3/0",
+            "route 4/4", "route 0/0",
+            "route 5/5", "dialogopen 5/0", "dialogcancel 5/0", "dialogopen 5/0", "dialogok 5/0", "back 5/0",
+            "route 6/6", "styletap 6/0", "styletap 6/0", "route 0/0",
+            "selfclose 0/0", "close 0/0"]
+
+
+def finish(work, expected):
     time.sleep(8)   # let the screen go off before the stack is inspected
     final = modules(phone(work, "canopusModules"))
     ctl("shutdown", P.device)
-    probe = ctl("fs", "get", P.device, "nand_data", "/canopus/m.ui_demo/ui_probe.txt").replace("\r", "")
+    probe = ctl("fs", "get", P.device, "nand_data", f"/canopus/m.{M['id']}/ui_probe.txt").replace("\r", "")
     got = [line for line in probe.splitlines() if line.strip()]
     print("probe:", got)
-    if got != P.expected_probe:
-        raise RuntimeError(f"the module saw {got}, expected {P.expected_probe}")
+    if got != expected:
+        raise RuntimeError(f"the module saw {got}, expected {expected}")
     if [m["state"] for m in final] != [9]:
-        raise RuntimeError(f"ui_demo should be active: {final}")
-    print(f"PASS {P.name} ui pages: Manager > ui_demo > activate > page (switch, clicks, level 2, back, close)")
+        raise RuntimeError(f"{M['id']} should be active: {final}")
+    print(f"PASS {P.name} {M['id']}")
 
 
 def main():
-    global P
+    global P, M
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("target", nargs="?", default="043", choices=["043", "155"])
+    parser.add_argument("--module", default="ui-demo", choices=list(MODULES))
+    parser.add_argument("--stop-at-page", action="store_true",
+                        help="stop with the module's page open (use with --keep-device)")
     parser.add_argument("--keep-device", action="store_true")
+    parser.add_argument("--steps", nargs="+", default=None, metavar="STEP",
+                        help='explore instead of the scenario: "tap X Y", "swipe X1 Y1 X2 Y2", "wait S", "shot NAME"')
     parser.add_argument("--shots", default=None)
     parser.add_argument("--work", default=None, help="keep the bridge state and packages here")
     parser.add_argument("--skip-prepare", action="store_true",
                         help="reuse the device and --work of an earlier --keep-device run, only drive the pages")
     args = parser.parse_args()
     P = Band10Pro if args.target == "043" else Band11
+    M = MODULES[args.module]
     sys.stdout.reconfigure(line_buffering=True)
     missing = [p for p in (MIRAGECTL, CANOPUS, BRIDGE, PACKAGER) if not p.is_file()]
     if missing:
@@ -425,10 +637,9 @@ def main():
         print(f"Required .{P.name} firmware missing; skipping")
         return 77
     shots = Shots(args.shots or tempfile.mkdtemp(prefix="canopus-ui-shots-"))
-    manifest = "modules/examples/ui-demo/Canopus.toml"
     for verb in ("build", "package"):
-        subprocess.run([str(CANOPUS), verb, "--manifest", manifest], cwd=ROOT, check=True, capture_output=True)
-    package = ROOT / "modules/examples/ui-demo/dist/ui_demo-1.0.0.canopus"
+        subprocess.run([str(CANOPUS), verb, "--manifest", M["manifest"]], cwd=ROOT, check=True, capture_output=True)
+    package = ROOT / M["package"]
     if args.work:
         work = Path(args.work)
         work.mkdir(parents=True, exist_ok=True)
@@ -445,7 +656,23 @@ def main():
             shutil.rmtree(work / "face", ignore_errors=True)
             shutil.rmtree(work / "installer", ignore_errors=True)
             prepare(work, package_installer(work), package, shots)
-        use_pages(work, shots)
+        open_module_page(shots)
+        if args.stop_at_page:
+            return 0
+        if args.steps:
+            for step in args.steps:
+                word = step.split()
+                if word[0] == "tap":
+                    tap((int(word[1]), int(word[2])), 0.3)
+                elif word[0] == "swipe":
+                    swipe(tuple(int(v) for v in word[1:5]), 0.3)
+                elif word[0] == "wait":
+                    time.sleep(float(word[1]))
+                elif word[0] == "shot":
+                    shots.take(word[1], lit=False)
+            return 0
+        expected = demo_scenario(shots) if args.module == "ui-demo" else gallery_scenario(shots)
+        finish(work, expected)
     finally:
         if not args.keep_device:
             ctl("shutdown", P.device, check=False)

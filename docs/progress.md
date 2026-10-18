@@ -65,9 +65,15 @@
 - host implemented：入口登记/校验/释放、详情页行与路由、对话框节点顺序（C host 测试，含 ASan/UBSan）；Band 11 固件仿真下 Manager 渲染全部通过。
 - Band 10 Pro 的 `supervisor_max_size` 98,304 → 114,688（构建预算，不是实测的固件上限，未在真机验证）。
 - Mirage 模拟器端到端（`scripts/emu/ui_pages.py 043|155`，仅 emulator 证据）：真实 AstroBox core 装生产安装器表盘 → Run → 手机装 `ui-demo` →
-  触摸走完启动器 > Manager > 模块 > 启用 > 立即激活 > 打开界面 > 页面（开关、点击、第二层、返回、退出），`.043` 与 `.155` 均通过
-  （断言模块探针序列、运行状态与每步截图）。运行中查出并修掉 Band 10 Pro `.043` 上三处错误假设（标签、进度条、隐藏行），见 ADR-CAN-010；
-  图片/进度条/滑块在 Band 10 Pro 上因此被拒绝。未提升任何符号或能力状态。
+  触摸走完启动器 > Manager > 模块 > 启用 > 立即激活 > 打开界面 > 页面（开关、点击、第二层、标题返回、退出），`.043` 与 `.155` 均通过
+  （断言模块探针序列、运行状态与每步截图）。
+- 两个家族的控件、渲染与操作方式对齐：Band 10 Pro 现在也画真正的文本标签（MiSans-Medium）、图片、进度条，隐藏而不是删除不用的行，内容放得下时锁住滚动；
+  标题返回在两个家族都先交给模块的 `on_back`；对话框两边都用固件 msgbox（Band 10 Pro mode 2，Band 11 mode 4；`.177` 没有恢复入口，仍内联）。滑块已移除。
+  Band 10 Pro 的三处根因：标签缺 CJK 字体样式、`.043` 的 `lv_bar_create` 记录指错、隐藏用错了库入口（`lv_obj_set_hidden` 记录实为别的函数，另行复核）。
+- Mirage 控件演示 `ui-gallery`（表单、进度条、文本、图片、对话框、样式、自关页、标题返回）在 `.043` 与 `.155` 上端到端通过（仅 emulator 证据）；
+  Band 11 上还修掉单选不显示选中、重绘丢滚动位置、短页面被拖到底、提交失败后页面永久卡死（框架现在回收没完成的树）。
+- 新静态证据（restricted / PENDING / not_probed）：`EVID-UI-1036-HOST-001`、`EVID-UI-1043-HOST-001`、`EVID-UI-4139-MSGBOX-001`、`EVID-UI-4155-MSGBOX-001`；
+  更正了 `.043` `lv_bar_create`（批准状态重置为 PENDING）与 Band 11 `.139/.155` 的 msgbox / object_delete 候选（原先指向别的函数）。未提升任何批准状态或能力状态。
 
 ## 阶段状态
 

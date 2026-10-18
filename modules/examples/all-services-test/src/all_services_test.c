@@ -16,7 +16,7 @@
  *   12. NOTIFY (post, post_with_icon)
  *   13. CONNECT (CanopusConnect: listen, send text/binary, remote_listening)
  *   14. UI pages (set_entry, close_page, node_set_style/layout through ctx->ui_ext)
- *   15. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Slider, Checkbox, Divider)
+ *   15. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Progress, Checkbox, Divider)
  */
 
 #include "canopus_module_entry.h"
@@ -831,14 +831,13 @@ static void run_ui_builder_tests(const struct canopus_context_v1 *ctx)
         struct canopus_ui_component_props_v1 p_comp;
         canopus_memset(&p_comp, 0, sizeof(p_comp));
         p_comp.struct_size = sizeof(p_comp);
-        p_comp.primary = "Slider";
-        p_comp.primary_len = 6;
-        p_comp.event_id = 201;
+        p_comp.primary = "Progress";
+        p_comp.primary_len = 8;
         p_comp.minimum = 0;
         p_comp.maximum = 100;
         p_comp.value = 50;
 
-        if (ctx->ui->component(tree, 9, CANOPUS_UI_NODE_SLIDER, &p_comp) != CANOPUS_UI_OK) ok = 0;
+        if (ctx->ui->component(tree, 9, CANOPUS_UI_NODE_PROGRESS, &p_comp) != CANOPUS_UI_OK) ok = 0;
 
         p_comp.primary = "Checkbox";
         p_comp.primary_len = 8;

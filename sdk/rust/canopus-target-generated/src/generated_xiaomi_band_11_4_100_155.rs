@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 8f3b0f3e4d7a70b2
+// input_digest: cf3a867e14f1946c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -489,6 +489,9 @@ pub const CANOPUS_FW_SCREEN_SESSION_CREATE_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `closedir` at 0xc34cd40. Thumb callable address 0xc34cd41.
 pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc34cd41usize);
 
+/// Recovered `lvx_msgbox_create` at 0xc50fdbc. Thumb callable address 0xc50fdbd.
+pub const CANOPUS_FW_LVX_MSGBOX_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc50fdbdusize);
+
 /// Recovered `bt_l2cap_disconnect` at 0xc86f094. Thumb callable address 0xc86f095.
 pub const CANOPUS_FW_BT_L2CAP_DISCONNECT_CALLABLE: usize = canopus_thumb_callable(0xc86f095usize);
 
@@ -729,6 +732,9 @@ pub const CANOPUS_FW_CACHE_BARRIER_CALLABLE: usize = canopus_thumb_callable(0xc9
 /// Recovered global `umem_heap_descriptor` at 0x3c356b40.
 pub const canopus_fw_umem_heap_descriptor: usize = 0x3c356b40usize;
 
+/// Recovered `lvx_object_delete` at 0xc380404. Thumb callable address 0xc380405.
+pub const CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE: usize = canopus_thumb_callable(0xc380405usize);
+
 /// Recovered `lv_obj_get_style_prop` at 0x0c382620. Thumb callable address 0x0c382621.
 pub const CANOPUS_FW_LV_OBJ_GET_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x0c382621usize);
 
@@ -770,6 +776,9 @@ pub const CANOPUS_FW_LV_OBJ_REFRESH_STYLE_CALLABLE: usize = canopus_thumb_callab
 
 /// Recovered `app_watchface_take_snapshot` at 0xc5f2b3c. Thumb callable address 0xc5f2b3d.
 pub const CANOPUS_FW_APP_WATCHFACE_TAKE_SNAPSHOT_CALLABLE: usize = canopus_thumb_callable(0xc5f2b3dusize);
+
+/// Recovered `lvx_msgbox_set_content` at 0xc50edd4. Thumb callable address 0xc50edd5.
+pub const CANOPUS_FW_LVX_MSGBOX_SET_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xc50edd5usize);
 
 /// Recovered global `style_misans_medium_28` at 0x200c1574.
 pub const canopus_fw_style_misans_medium_28: usize = 0x200c1574usize;

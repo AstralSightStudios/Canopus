@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: 79f413ca52260358
+// input_digest: 367f1f41f8e505cd
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -479,6 +479,9 @@ pub unsafe fn canopus_fw_open(a0: *const u8, a1: i32) -> i32 {
     f(a0, a1)
 }
 
+/// Recovered global `style_misans_medium_28` at 0x20109ED0.
+pub const canopus_fw_style_misans_medium_28: usize = 0x20109ED0usize;
+
 /// Recovered `lvx_msgbox_set_content` at 0xc4a9418. Thumb callable address 0xc4a9419.
 pub const CANOPUS_FW_LVX_MSGBOX_SET_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xc4a9419usize);
 #[allow(non_snake_case)]
@@ -545,6 +548,9 @@ pub unsafe fn canopus_fw_bt_pair_display_reply(a0: *mut core::ffi::c_void, a1: *
 /// Recovered global `gap_host_receive_slot` at 0x20137E94.
 pub const canopus_fw_gap_host_receive_slot: usize = 0x20137E94usize;
 
+/// Recovered global `style_misans_medium_24` at 0x20109EB8.
+pub const canopus_fw_style_misans_medium_24: usize = 0x20109EB8usize;
+
 /// Recovered `lv_obj_set_hidden` at 0xc5879b8. Thumb callable address 0xc5879b9.
 pub const CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE: usize = canopus_thumb_callable(0xc5879b9usize);
 #[allow(non_snake_case)]
@@ -607,6 +613,9 @@ pub unsafe fn canopus_fw_thirdparty_submit_message_content(a0: *const core::ffi:
 
 /// Recovered `wakelock_create` at 0x0ca55f1c. Thumb callable address 0x0ca55f1d.
 pub const CANOPUS_FW_WAKELOCK_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0ca55f1dusize);
+
+/// Recovered `lv_obj_clear_flag` at 0xc587988. Thumb callable address 0xc587989.
+pub const CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc587989usize);
 
 /// Recovered `errno_location` at 0xc1d5144. Thumb callable address 0xc1d5145.
 pub const CANOPUS_FW_ERRNO_LOCATION_CALLABLE: usize = canopus_thumb_callable(0xc1d5145usize);
@@ -1084,6 +1093,7 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // lv_bar_set_value: restricted - not exported until context/ownership approved
 // lv_image_create: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
+// lv_obj_clear_flag: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved

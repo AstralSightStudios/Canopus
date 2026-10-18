@@ -442,8 +442,7 @@ struct canopus_ui_layout_v1;
  *            commits it before returning; failing, or not committing, cancels
  *            the page. `ui` stays valid until on_close returns.
  *   on_event a node's event id was activated; build the next tree into `ui`.
- *   on_back  (optional, Band 10 Pro only: Band 11's stock title finishes the
- *            page itself) the title's back was used; return 0 when handled,
+ *   on_back  (optional) the title's back was used; return 0 when handled,
  *            e.g. after popping a route, otherwise the page closes.
  *   on_close the page was closed by the user or by close_page (not on unload).
  * One module page is open at a time; callbacks must return promptly. A tree is

@@ -1,8 +1,9 @@
 /*
  * Generic native UI backend (see canopus_ui_host.h): Band 10 Pro by default,
  * Band 11 with -DCANOPUS_MGR_BAND11=1. The two firmwares differ in how the
- * page content root, title, rows and text styles are built; everything else
- * (slot reuse, ordering, events, dialogs' semantics) is shared.
+ * page content root, title, rows and event objects are built; everything else
+ * (labels, images, bars, slot reuse, placement, scroll locking, hiding,
+ * ordering, events) is shared and renders the same.
  *
  * Every firmware entry point comes from the selected target's generated
  * configuration; no address lives here.
@@ -19,6 +20,20 @@
 #endif /* CANOPUS_MGR_BAND11 */
 #include "canopus_memory.h"
 
+/* The stock message box is used for dialogs where its entry points are
+ * recovered; otherwise the dialog's children are shown inline. */
+#if !defined(CANOPUS_MGR_BAND11) || defined(FW_LVX_MSGBOX_CREATE)
+#define HOST_MSGBOX 1
+#endif
+
+/* The message box layouts are picked by a mode: 2 is two wide text buttons
+ * (Band 10 Pro), 4 stacks two narrower ones, which fit Band 11's panel. */
+#ifndef CANOPUS_MGR_BAND11
+#define HOST_MSGBOX_MODE 2u
+#else
+#define HOST_MSGBOX_MODE 4u
+#endif
+
 #define HOST_ROW_STATUS 1u
 #define HOST_ROW_ACTION 2u
 #define HOST_ROW_SWITCH 3u
@@ -31,14 +46,23 @@
 #define HOST_CONTENT_TOP_OFFSET 56
 #define HOST_CONTENT_WIDTH 336
 #define HOST_CONTENT_HEIGHT 424
+#define HOST_ROW_WIDTH 336
 #define HOST_BAR_WIDTH 336
+#define HOST_CONTENT_PAD_TOP 0
+#define HOST_CONTENT_PAD_BOTTOM 32
+#define HOST_LABEL_LINE_CHARS 28u
 #else /* CANOPUS_MGR_BAND11 */
 #define HOST_CONTENT_TOP_OFFSET 68
 #define HOST_CONTENT_WIDTH 212
 #define HOST_CONTENT_HEIGHT 444
 #define HOST_ROW_WIDTH 204
 #define HOST_BAR_WIDTH 204
+#define HOST_CONTENT_PAD_TOP 4
+#define HOST_CONTENT_PAD_BOTTOM 32
+#define HOST_LABEL_LINE_CHARS 18u
 #endif /* CANOPUS_MGR_BAND11 */
+#define HOST_ROW_HEIGHT 96
+#define HOST_SIZE_CONTENT UINT32_C(0x200007D1) /* LV_SIZE_CONTENT */
 #define HOST_ROW_GAP 8
 #define HOST_BAR_HEIGHT 12
 #define HOST_TEXT_GAP 4
@@ -50,18 +74,35 @@ static struct canopus_ui_host_view *s_views[CANOPUS_UI_HOST_MAX_VIEWS];
 
 /* ---- firmware widget primitives ------------------------------------- */
 
+static void host_object_flag(void *object, uint32_t flag, int add)
+{
+#ifndef CANOPUS_MGR_BAND11
+    ((void (*)(void *, uint32_t))(uintptr_t)(add ? FW_LVX_OBJECT_ADD_FLAG
+                                                  : FW_LVX_OBJECT_CLEAR_FLAG))(object, flag);
+#else /* CANOPUS_MGR_BAND11 */
+    ((void (*)(void *, uint32_t))(uintptr_t)(add ? FW_LV_OBJECT_ADD_FLAG
+                                                  : FW_LV_OBJECT_CLEAR_FLAG))(object, flag);
+#endif /* CANOPUS_MGR_BAND11 */
+}
+
 static void host_set_hidden(void *object, uint32_t hidden)
 {
     if (object == NULL) {
         return;
     }
+    host_object_flag(object, UINT32_C(1), hidden != 0u);
+}
+
+#ifdef HOST_MSGBOX
+static void host_object_delete(void *object)
+{
 #ifndef CANOPUS_MGR_BAND11
-    ((void (*)(void *, uint32_t))(uintptr_t)FW_LVX_SET_HIDDEN)(object, hidden);
+    ((void (*)(void *))(uintptr_t)FW_LVX_OBJECT_DELETE)(object);
 #else /* CANOPUS_MGR_BAND11 */
-    ((void (*)(void *, uint32_t))(uintptr_t)(hidden != 0u
-        ? FW_LV_OBJECT_ADD_FLAG : FW_LV_OBJECT_CLEAR_FLAG))(object, UINT32_C(1));
+    ((void (*)(void *))(uintptr_t)FW_LV_OBJECT_DELETE)(object);
 #endif /* CANOPUS_MGR_BAND11 */
 }
+#endif /* HOST_MSGBOX */
 
 static void host_set_size(void *object, int32_t width, int32_t height)
 {
@@ -112,7 +153,7 @@ static void *host_content_create(void *root)
         content, HOST_ALIGN_TOP_MID, 0, HOST_CONTENT_TOP_OFFSET);
 #ifdef FW_LVX_CONTENT_PAD_BOTTOM
     ((void (*)(void *, int32_t, uint32_t))(uintptr_t)FW_LVX_CONTENT_PAD_BOTTOM)(
-        content, 32, 0u);
+        content, HOST_CONTENT_PAD_BOTTOM, 0u);
 #endif
 #else /* CANOPUS_MGR_BAND11 */
     content = ((void *(*)(void *))(uintptr_t)FW_LV_OBJECT_CREATE)(root);
@@ -122,8 +163,8 @@ static void *host_content_create(void *root)
     /* A transparent scrolling viewport. 0x0C693F78 is an activity root with its
      * own lifetime timer, not the 10 Pro content-container ABI. */
     ((void (*)(void *))(uintptr_t)FW_LV_OBJECT_REMOVE_STYLES)(content);
-    ((void (*)(void *, int32_t, uint32_t))(uintptr_t)FW_LV_OBJECT_PAD_TOP)(content, 4, 0u);
-    ((void (*)(void *, int32_t, uint32_t))(uintptr_t)FW_LV_OBJECT_PAD_BOTTOM)(content, 32, 0u);
+    ((void (*)(void *, int32_t, uint32_t))(uintptr_t)FW_LV_OBJECT_PAD_TOP)(content, HOST_CONTENT_PAD_TOP, 0u);
+    ((void (*)(void *, int32_t, uint32_t))(uintptr_t)FW_LV_OBJECT_PAD_BOTTOM)(content, HOST_CONTENT_PAD_BOTTOM, 0u);
     host_set_size(content, HOST_CONTENT_WIDTH, HOST_CONTENT_HEIGHT);
     host_align_to(content, root, HOST_ALIGN_TOP_MID, 0, HOST_CONTENT_TOP_OFFSET);
 #endif /* CANOPUS_MGR_BAND11 */
@@ -148,29 +189,19 @@ static void host_label_set_text(void *label, const char *text)
 #endif /* CANOPUS_MGR_BAND11 */
 }
 
-/* Applies the semantic text role to a freshly created label. */
+/* Applies the semantic text role to a label: the settings theme's MiSans
+ * Medium (28 px for titles, 24 px otherwise, which has the CJK glyphs the stock
+ * label font lacks) and the row width with wrapping text. */
 static void host_label_style(void *label, uint16_t text_style)
 {
-#ifndef CANOPUS_MGR_BAND11
-#ifdef FW_STYLE_MISANS_DEMIBOLD_32
-    if (text_style == CANOPUS_UI_TEXT_TITLE) {
-        /* lvx_theme_default_init maps this exact-target style object to
-         * MiSans-Demibold at 32 px; sub_C49EA98 is the stock helper firmware
-         * labels use to replace the inherited text style. */
-        (void)((int (*)(void *, const void *, uint32_t, uint32_t))(uintptr_t)
-                   FW_LVX_STYLE_APPLY)(
-            label, (const void *)(uintptr_t)FW_STYLE_MISANS_DEMIBOLD_32, 255u, 0u);
-    }
-#else
-    (void)label;
-    (void)text_style;
-#endif
-#else /* CANOPUS_MGR_BAND11 */
     ((void (*)(void *, const void *, uint32_t, uint32_t))(uintptr_t)FW_LVX_STYLE_APPLY)(
         label,
         (const void *)(uintptr_t)(text_style == CANOPUS_UI_TEXT_TITLE
             ? FW_STYLE_MISANS_MEDIUM_28 : FW_STYLE_MISANS_MEDIUM_24),
         255u, 0u);
+#ifndef CANOPUS_MGR_BAND11
+    host_set_size(label, HOST_ROW_WIDTH, (int32_t)HOST_SIZE_CONTENT);
+#else /* CANOPUS_MGR_BAND11 */
     ((void (*)(void *, int32_t))(uintptr_t)FW_LV_OBJECT_WIDTH)(label, HOST_ROW_WIDTH);
     ((void (*)(void *, uint32_t))(uintptr_t)FW_LV_LABEL_LONG_MODE)(label, 0u);
 #endif /* CANOPUS_MGR_BAND11 */
@@ -227,13 +258,15 @@ static void host_bar_set_value(void *bar, int32_t value)
 
 static uint8_t host_row_kind(uint16_t node_type)
 {
+    /* A radio row is drawn with the switch of a checkbox so its selection shows;
+     * the module keeps the choice exclusive. */
     if (node_type == CANOPUS_UI_NODE_SWITCH_ROW ||
-        node_type == CANOPUS_UI_NODE_CHECKBOX) {
+        node_type == CANOPUS_UI_NODE_CHECKBOX ||
+        node_type == CANOPUS_UI_NODE_RADIO_ROW) {
         return HOST_ROW_SWITCH;
     }
     if (node_type == CANOPUS_UI_NODE_BUTTON ||
-        node_type == CANOPUS_UI_NODE_ACTION_ROW ||
-        node_type == CANOPUS_UI_NODE_RADIO_ROW) {
+        node_type == CANOPUS_UI_NODE_ACTION_ROW) {
         return HOST_ROW_ACTION;
     }
     return HOST_ROW_STATUS;
@@ -364,7 +397,6 @@ static void (*const host_row_events[CANOPUS_UI_HOST_MAX_ROWS])(void *) = {
 
 #undef HOST_ROW_CALLBACK
 
-#ifdef CANOPUS_MGR_BAND11
 static int host_snapshot_uses_row(const struct canopus_ui_snapshot_v1 *snapshot,
                                   uint8_t kind, canopus_ui_node_id key)
 {
@@ -380,11 +412,9 @@ static int host_snapshot_uses_row(const struct canopus_ui_snapshot_v1 *snapshot,
     }
     return 0;
 }
-#endif /* CANOPUS_MGR_BAND11 */
 
-/* Picks the widget slot for a row. Band 10 Pro reuses any unused slot of the
- * same kind; Band 11 reuses the slot that showed the same key, then one whose
- * key left the page, so a row keeps its native object across renders. */
+/* Picks the widget slot for a row: the slot that showed the same key, then one
+ * whose key left the page, so a row keeps its native object across renders. */
 static int host_find_row(struct canopus_ui_host_view *view,
                          const struct canopus_ui_snapshot_v1 *snapshot,
                          uint8_t kind, canopus_ui_node_id key,
@@ -392,12 +422,7 @@ static int host_find_row(struct canopus_ui_host_view *view,
 {
     uint32_t i;
     int empty = -1;
-#ifdef CANOPUS_MGR_BAND11
     int reusable = -1;
-#else /* CANOPUS_MGR_BAND11 */
-    (void)snapshot;
-    (void)key;
-#endif /* CANOPUS_MGR_BAND11 */
 
     for (i = 0; i < CANOPUS_UI_HOST_MAX_ROWS; i++) {
         if (view->rows[i] == NULL) {
@@ -406,9 +431,6 @@ static int host_find_row(struct canopus_ui_host_view *view,
             }
         } else if (view->row_kinds[i] == kind &&
                    (used_mask & (UINT32_C(1) << i)) == 0u) {
-#ifndef CANOPUS_MGR_BAND11
-            return (int)i;
-#else /* CANOPUS_MGR_BAND11 */
             if (view->row_keys[i] == key) {
                 return (int)i;
             }
@@ -416,24 +438,19 @@ static int host_find_row(struct canopus_ui_host_view *view,
                 !host_snapshot_uses_row(snapshot, kind, view->row_keys[i])) {
                 reusable = (int)i;
             }
-#endif /* CANOPUS_MGR_BAND11 */
         }
     }
-#ifndef CANOPUS_MGR_BAND11
-    return empty;
-#else /* CANOPUS_MGR_BAND11 */
     return reusable >= 0 ? reusable : empty;
-#endif /* CANOPUS_MGR_BAND11 */
 }
 
 /* ---- title ----------------------------------------------------------- */
 
-#ifndef CANOPUS_MGR_BAND11
-static void host_title_back(void *event)
+/* The title's back affordance reaches the view's back hook. Band 11's title
+ * would otherwise send the stock back key to the page itself. The callbacks
+ * carry no user data, so each view slot has its own. */
+static void host_title_dispatch(uint32_t slot)
 {
-    struct canopus_ui_host_view *view =
-        (struct canopus_ui_host_view *)((uintptr_t (*)(void *))(uintptr_t)
-            FW_LVX_EVENT_GET_USER_DATA)(event);
+    struct canopus_ui_host_view *view = s_views[slot];
 
     if (view == NULL || !view->active || !view->interactive ||
         view->hooks == NULL || view->hooks->back == NULL) {
@@ -441,21 +458,51 @@ static void host_title_back(void *event)
     }
     view->hooks->back(view);
 }
-#endif /* CANOPUS_MGR_BAND11 */
+
+#define HOST_TITLE_CALLBACK(index) \
+    static void host_title_event_##index(void *event) \
+    { \
+        (void)event; \
+        host_title_dispatch(index); \
+    }
+
+HOST_TITLE_CALLBACK(0)
+HOST_TITLE_CALLBACK(1)
+HOST_TITLE_CALLBACK(2)
+HOST_TITLE_CALLBACK(3)
+HOST_TITLE_CALLBACK(4)
+HOST_TITLE_CALLBACK(5)
+HOST_TITLE_CALLBACK(6)
+HOST_TITLE_CALLBACK(7)
+
+static void (*const host_title_events[CANOPUS_UI_HOST_MAX_VIEWS])(void *) = {
+    host_title_event_0, host_title_event_1, host_title_event_2, host_title_event_3,
+    host_title_event_4, host_title_event_5, host_title_event_6, host_title_event_7,
+};
+
+#undef HOST_TITLE_CALLBACK
 
 static void *host_title_create(struct canopus_ui_host_view *view,
                                const char *text)
 {
     uint32_t mode = (view->flags & CANOPUS_UI_HOST_ROOT_PAGE) != 0u ? 0u : 1u;
+    void (*back)(void *) = NULL;
     void *title;
+    uint32_t i;
+
+    for (i = 0; mode != 0u && view->hooks != NULL && view->hooks->back != NULL &&
+                i < CANOPUS_UI_HOST_MAX_VIEWS; i++) {
+        if (s_views[i] == view) {
+            back = host_title_events[i];
+        }
+    }
 #ifndef CANOPUS_MGR_BAND11
     title = ((void *(*)(void *, const char *, uint32_t, void (*)(void *), void *))
                  (uintptr_t)FW_LVX_PAGE_TITLE_CREATE)(
-        view->root, text, mode, mode != 0u ? host_title_back : NULL,
-        mode != 0u ? (void *)view : NULL);
+        view->root, text, mode, back, NULL);
 #else /* CANOPUS_MGR_BAND11 */
     title = ((void *(*)(void *, const char *, uint32_t, void (*)(void *)))
-                 (uintptr_t)FW_LV_PAGE_TITLE_CREATE)(view->root, text, mode, NULL);
+                 (uintptr_t)FW_LV_PAGE_TITLE_CREATE)(view->root, text, mode, back);
     if (title != NULL) {
         ((void (*)(void *, const void *, uint32_t, uint32_t))(uintptr_t)
              FW_LVX_STYLE_APPLY)(
@@ -467,7 +514,7 @@ static void *host_title_create(struct canopus_ui_host_view *view,
 
 /* ---- dialog ---------------------------------------------------------- */
 
-#ifndef CANOPUS_MGR_BAND11
+#ifdef HOST_MSGBOX
 static void copy_text(char *out, uint32_t cap, const char *text)
 {
     uint32_t n = 0u;
@@ -488,34 +535,47 @@ static void host_dialog_dismiss(struct canopus_ui_host_view *view)
     view->dialog.active = 0u;
     view->dialog.native_box = NULL;
     if (box != NULL) {
-        ((void (*)(void *))(uintptr_t)FW_LVX_OBJECT_DELETE)(box);
+        host_object_delete(box);
     }
 }
 
-static void host_dialog_event(void *event)
+/* A message box button was pressed: the page that is on top owns the dialog. */
+static void host_dialog_dispatch(uint32_t button)
 {
-    struct canopus_ui_host_dialog_binding *dialog_binding =
-        (struct canopus_ui_host_dialog_binding *)((uintptr_t (*)(void *))(uintptr_t)
-            FW_LVX_EVENT_GET_USER_DATA)(event);
-    struct canopus_ui_host_view *view;
+    uint32_t i;
 
-    if (dialog_binding == NULL || dialog_binding->view == NULL) {
+    for (i = 0; i < CANOPUS_UI_HOST_MAX_VIEWS; i++) {
+        struct canopus_ui_host_view *view = s_views[i];
+        struct canopus_ui_host_binding binding;
+
+        if (view == NULL || !view->active || !view->interactive ||
+            !view->dialog.active || view->dialog.dispatching) {
+            continue;
+        }
+        binding = view->dialog.bindings[button];
+        view->dialog.dispatching = 1u;
+        host_dialog_dismiss(view);
+        if (view->ui != NULL) {
+            (void)canopus_ui_dispatch_event(view->ui, binding.generation, binding.key,
+                                            binding.event_id);
+        }
+        if (host_view_alive(view)) {
+            view->dialog.dispatching = 0u;
+        }
         return;
     }
-    view = dialog_binding->view;
-    if (!view->active || !view->interactive || view->dialog.dispatching) {
-        return;
-    }
-    view->dialog.dispatching = 1u;
-    host_dialog_dismiss(view);
-    if (view->ui != NULL) {
-        (void)canopus_ui_dispatch_event(view->ui, dialog_binding->binding.generation,
-                                        dialog_binding->binding.key,
-                                        dialog_binding->binding.event_id);
-    }
-    if (host_view_alive(view)) {
-        view->dialog.dispatching = 0u;
-    }
+}
+
+static void host_dialog_button_0(void *event)
+{
+    (void)event;
+    host_dialog_dispatch(0u);
+}
+
+static void host_dialog_button_1(void *event)
+{
+    (void)event;
+    host_dialog_dispatch(1u);
 }
 
 /* The first dialog node, with its message (first text) and up to two buttons
@@ -555,27 +615,31 @@ static int host_dialog_show(struct canopus_ui_host_view *view,
     if (view->dialog.active) {
         return 0;
     }
-    if (view->root == NULL || view->firmware_page == NULL) {
+    if (view->root == NULL) {
         return -1;
     }
     canopus_memset(&view->dialog, 0, sizeof(view->dialog));
     for (i = 0; i < 2u; i++) {
-        view->dialog.bindings[i].binding.generation = snapshot->generation;
-        view->dialog.bindings[i].binding.key = buttons[i]->key;
-        view->dialog.bindings[i].binding.event_id = buttons[i]->event_id;
-        view->dialog.bindings[i].view = view;
-        view->dialog.buttons[i].callback = host_dialog_event;
+        view->dialog.bindings[i].generation = snapshot->generation;
+        view->dialog.bindings[i].key = buttons[i]->key;
+        view->dialog.bindings[i].event_id = buttons[i]->event_id;
+        view->dialog.buttons[i].callback = i == 0u ? host_dialog_button_0 : host_dialog_button_1;
         copy_text(view->dialog.button_text[i], sizeof(view->dialog.button_text[i]),
                   snapshot->strings + buttons[i]->primary_off);
         view->dialog.buttons[i].text = view->dialog.button_text[i];
-        view->dialog.buttons[i].user_data = &view->dialog.bindings[i];
     }
     /* The stock prefab sizes its modal scrim from its parent. Parenting it to
      * the content root would confine it to the scrollable page body, so it is
      * parented to the page root: the dialog stays full screen and frontmost
-     * over the existing title and content children. */
+     * over the existing title and content children. Band 10 Pro also hands it
+     * the firmware page so the page's back is routed to the box. */
+#ifndef CANOPUS_MGR_BAND11
     view->dialog.native_box = ((void *(*)(void *, void *))(uintptr_t)
         FW_LVX_MSGBOX_CREATE)(view->root, view->firmware_page);
+#else /* CANOPUS_MGR_BAND11 */
+    view->dialog.native_box = ((void *(*)(void *, void *))(uintptr_t)
+        FW_LVX_MSGBOX_CREATE)(view->root, NULL);
+#endif /* CANOPUS_MGR_BAND11 */
     if (view->dialog.native_box == NULL) {
         return -1;
     }
@@ -583,11 +647,11 @@ static int host_dialog_show(struct canopus_ui_host_view *view,
     ((void (*)(void *, uint32_t, const char *, const char *, const char *,
                const struct canopus_ui_host_msgbox_button *, uint32_t))(uintptr_t)
          FW_LVX_MSGBOX_SET_CONTENT)(
-        view->dialog.native_box, 2u, NULL, snapshot->strings + message->primary_off,
+        view->dialog.native_box, HOST_MSGBOX_MODE, NULL, snapshot->strings + message->primary_off,
         NULL, view->dialog.buttons, 2u);
     return 0;
 }
-#endif /* CANOPUS_MGR_BAND11 */
+#endif /* HOST_MSGBOX */
 
 /* ---- apply ----------------------------------------------------------- */
 
@@ -606,66 +670,84 @@ static int host_is_title(uint16_t type)
            type == CANOPUS_UI_NODE_NAVIGATION_HEADER;
 }
 
-#ifndef CANOPUS_MGR_BAND11
-/* On Mirage 3.101.043 the row widgets, the page title and the message box were
- * exercised; a page with a stock label showed missing glyphs and then a blank
- * screen, and a page with a progress bar stopped drawing at the bar. Band 10 Pro
- * therefore draws text as a status row and rejects images, bars and sliders
- * (before any widget is touched), until those entry points are verified. */
-static int host_is_label(uint16_t type)
-{
-    (void)type;
-    return 0;
-}
-
-static int host_is_unverified_widget(uint16_t type)
-{
-    return type == CANOPUS_UI_NODE_IMAGE || type == CANOPUS_UI_NODE_PROGRESS ||
-           type == CANOPUS_UI_NODE_SLIDER;
-}
-
-static int host_is_text(uint16_t type)
-{
-    return type == CANOPUS_UI_NODE_TEXT || type == CANOPUS_UI_NODE_RICH_TEXT;
-}
-#else /* CANOPUS_MGR_BAND11 */
 static int host_is_label(uint16_t type)
 {
     return type == CANOPUS_UI_NODE_TEXT || type == CANOPUS_UI_NODE_RICH_TEXT;
 }
-
-static int host_is_unverified_widget(uint16_t type)
-{
-    (void)type;
-    return 0;
-}
-
-static int host_is_text(uint16_t type)
-{
-    (void)type;
-    return 0;
-}
-#endif /* CANOPUS_MGR_BAND11 */
 
 static int host_is_row(uint16_t type)
 {
     return type == CANOPUS_UI_NODE_STATUS_ROW || type == CANOPUS_UI_NODE_BUTTON ||
            type == CANOPUS_UI_NODE_ACTION_ROW || type == CANOPUS_UI_NODE_SWITCH_ROW ||
-           type == CANOPUS_UI_NODE_CHECKBOX || type == CANOPUS_UI_NODE_RADIO_ROW ||
-           host_is_text(type);
+           type == CANOPUS_UI_NODE_CHECKBOX || type == CANOPUS_UI_NODE_RADIO_ROW;
 }
 
-/* Places `object` under the previous widget (or at the top of the body). */
-static void host_place(struct canopus_ui_host_view *view, void *object,
-                       void **previous, void **first, int32_t gap)
+struct host_chain {
+    struct canopus_ui_host_view *view;
+    void *previous;
+    void *first;
+    uint32_t old_count;   /* the placed chain of the previous apply */
+    uint32_t total;       /* objects this apply places */
+    uint32_t height;      /* estimated extent of the placed chain */
+    uint32_t count;
+    uint8_t diverged;
+    uint16_t id[CANOPUS_UI_HOST_MAX_PLACED];
+    uint32_t sig[CANOPUS_UI_HOST_MAX_PLACED];
+};
+
+#define HOST_PLACE_LABEL(n) ((uint16_t)(0x100u | (n)))
+#define HOST_PLACE_IMAGE(n) ((uint16_t)(0x200u | (n)))
+#define HOST_PLACE_BAR(n) ((uint16_t)(0x300u | (n)))
+#define HOST_PLACE_ROW(n) ((uint16_t)(0x400u | (n)))
+
+/* A label wraps; a generous line count keeps a page scrollable when unsure. */
+static uint32_t host_label_height(const char *text)
 {
-    if (*previous == NULL) {
-        host_align_to(object, view->content_root, HOST_ALIGN_TOP_MID, 0, 0);
-        *first = object;
-    } else {
-        host_align_to(object, *previous, HOST_ALIGN_OUT_BOTTOM_MID, 0, gap);
+    uint32_t length = 0u;
+    while (text[length] != '\0') {
+        length++;
     }
-    *previous = object;
+    return 36u * (1u + (length > HOST_LABEL_LINE_CHARS) + (length > 2u * HOST_LABEL_LINE_CHARS));
+}
+
+static uint32_t host_hash(const char *text)
+{
+    uint32_t hash = UINT32_C(2166136261);
+    while (*text != '\0') {
+        hash = (hash ^ (uint8_t)*text++) * UINT32_C(16777619);
+    }
+    return hash;
+}
+
+/* Places `object` under the previous widget (or at the top of the body).
+ * Aligning moves an object back to its anchor, which also drops the page's
+ * scroll offset, so while the whole chain is the same as in the last render
+ * (same objects in the same order, the same inputs to their sizes) nothing is
+ * aligned again. Any other change aligns the whole chain: objects the user
+ * scrolled and a new route's rows must not keep each other's positions. */
+static void host_place(struct host_chain *chain, void *object, uint16_t id,
+                       uint32_t sig, int32_t gap, uint32_t height)
+{
+    struct canopus_ui_host_view *view = chain->view;
+    uint32_t i = chain->count++;
+    int unchanged = !chain->diverged && chain->total == chain->old_count &&
+                    view->placed[i] == id && view->placed_sig[i] == sig;
+
+    chain->id[i] = id;
+    chain->sig[i] = sig;
+    chain->height += (i != 0u ? (uint32_t)gap : 0u) + height;
+    if (!unchanged) {
+        chain->diverged = 1u;
+        if (chain->previous == NULL) {
+            host_align_to(object, view->content_root, HOST_ALIGN_TOP_MID, 0, 0);
+        } else {
+            host_align_to(object, chain->previous, HOST_ALIGN_OUT_BOTTOM_MID, 0, gap);
+        }
+    }
+    if (chain->previous == NULL) {
+        chain->first = object;
+    }
+    chain->previous = object;
 }
 
 static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *snapshot)
@@ -675,14 +757,13 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     uint32_t visible_rows = 0u, visible_labels = 0u, visible_images = 0u;
     uint32_t visible_progress = 0u;
     uint32_t used_mask = 0u, label_used = 0u, image_used = 0u, progress_used = 0u;
-    void *previous = NULL;
-    void *first = NULL;
+    struct host_chain chain;
 
     if (view == NULL || view->root == NULL || snapshot == NULL ||
         snapshot->node_count == 0u) {
         return -1;
     }
-#ifndef CANOPUS_MGR_BAND11
+#ifdef HOST_MSGBOX
     {
         const struct canopus_ui_node_v1 *message;
         const struct canopus_ui_node_v1 *buttons[2];
@@ -692,7 +773,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         }
     }
     host_dialog_dismiss(view);
-#endif /* CANOPUS_MGR_BAND11 */
+#endif /* HOST_MSGBOX */
     if (view->content_root == NULL) {
         view->content_root = host_content_create(view->root);
         if (view->content_root == NULL) {
@@ -704,14 +785,11 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         if (host_is_container(type) || host_is_title(type)) {
             continue;
         }
-        if (host_is_unverified_widget(type)) {
-            return -1;
-        }
         if (host_is_label(type)) {
             visible_labels++;
         } else if (type == CANOPUS_UI_NODE_IMAGE) {
             visible_images++;
-        } else if (type == CANOPUS_UI_NODE_PROGRESS || type == CANOPUS_UI_NODE_SLIDER) {
+        } else if (type == CANOPUS_UI_NODE_PROGRESS) {
             visible_progress++;
         } else if (host_is_row(type)) {
             visible_rows++;
@@ -726,6 +804,16 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         return -1;
     }
 
+    /* A failure below leaves the chain unknown: the next render aligns everything. */
+    chain.view = view;
+    chain.previous = NULL;
+    chain.first = NULL;
+    chain.old_count = view->placed_count;
+    chain.total = visible_rows + visible_labels + visible_images + visible_progress;
+    chain.height = HOST_CONTENT_PAD_TOP;
+    chain.count = 0u;
+    chain.diverged = 0u;
+    view->placed_count = 0u;
     for (i = 0; i < snapshot->node_count; i++) {
         const struct canopus_ui_node_v1 *node = &snapshot->nodes[i];
         const char *primary;
@@ -753,9 +841,9 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             }
             host_set_hidden(view->page_title, 0u);
 #ifndef CANOPUS_MGR_BAND11
-            previous = view->page_title;
+            chain.previous = view->page_title;
 #endif /* CANOPUS_MGR_BAND11 */
-            first = view->page_title;
+            chain.first = view->page_title;
             continue;
         }
         if (host_is_label(node->type)) {
@@ -767,15 +855,12 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                 }
                 view->labels[label_used] = object;
             }
-#ifdef CANOPUS_MGR_BAND11
             host_label_style(object, snapshot->styles[i].text_style);
             host_label_set_text(object, primary);
-#else /* CANOPUS_MGR_BAND11 */
-            host_label_set_text(object, primary);
-            host_label_style(object, snapshot->styles[i].text_style);
-#endif /* CANOPUS_MGR_BAND11 */
             host_set_hidden(object, 0u);
-            host_place(view, object, &previous, &first, HOST_TEXT_GAP);
+            host_place(&chain, object, HOST_PLACE_LABEL(label_used),
+                       host_hash(primary) ^ snapshot->styles[i].text_style, HOST_TEXT_GAP,
+                       host_label_height(primary));
             label_used++;
             continue;
         }
@@ -796,12 +881,13 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             host_image_set_src(object, primary);
             host_set_size(object, layout->width, layout->height);
             host_set_hidden(object, 0u);
-            host_place(view, object, &previous, &first, HOST_ROW_GAP);
+            host_place(&chain, object, HOST_PLACE_IMAGE(image_used),
+                       host_hash(primary) ^ ((uint32_t)layout->width << 16) ^ (uint32_t)layout->height,
+                       HOST_ROW_GAP, (uint32_t)layout->height);
             image_used++;
             continue;
         }
-        if (node->type == CANOPUS_UI_NODE_PROGRESS ||
-            node->type == CANOPUS_UI_NODE_SLIDER) {
+        if (node->type == CANOPUS_UI_NODE_PROGRESS) {
             const struct canopus_ui_layout_v1 *layout = &snapshot->layouts[i];
             const struct canopus_ui_value_v1 *value = &snapshot->values[i];
             if (value->minimum >= value->maximum) {
@@ -835,7 +921,11 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             host_set_size(object, layout->width > 0 ? layout->width : HOST_BAR_WIDTH,
                           layout->height > 0 ? layout->height : HOST_BAR_HEIGHT);
             host_set_hidden(object, 0u);
-            host_place(view, object, &previous, &first, HOST_ROW_GAP);
+            host_place(&chain, object, HOST_PLACE_BAR(progress_used),
+                       ((uint32_t)(layout->width > 0 ? layout->width : HOST_BAR_WIDTH) << 16) ^
+                           (uint32_t)(layout->height > 0 ? layout->height : HOST_BAR_HEIGHT),
+                       HOST_ROW_GAP,
+                       (uint32_t)(layout->height > 0 ? layout->height : HOST_BAR_HEIGHT));
             progress_used++;
             continue;
         }
@@ -884,7 +974,8 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             ((void *(*)(void *, const void *, const char *, const char *, int32_t,
                         uint8_t, uint8_t))(uintptr_t)FW_LVX_LIST_ITEM_ADD_CONTENT)(
                 object, NULL, primary, secondary, 0,
-                (node->flags & CANOPUS_UI_NODE_FLAG_CHECKED) != 0u, trailing);
+                (node->flags & (CANOPUS_UI_NODE_FLAG_CHECKED |
+                                CANOPUS_UI_NODE_FLAG_SELECTED)) != 0u, trailing);
             event_object = kind == HOST_ROW_SWITCH
                 ? *(void **)((uint8_t *)object + FW_LVX_LIST_TRAILING_OFFSET)
                 : object;
@@ -915,10 +1006,9 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
 #endif /* CANOPUS_MGR_BAND11 */
         }
         host_set_hidden(object, 0u);
-        host_place(view, object, &previous, &first, HOST_ROW_GAP);
-#ifdef CANOPUS_MGR_BAND11
+        host_place(&chain, object, HOST_PLACE_ROW((uint32_t)slot), 0u, HOST_ROW_GAP,
+                   HOST_ROW_HEIGHT);
         view->row_keys[slot] = node->key;
-#endif /* CANOPUS_MGR_BAND11 */
         view->bindings[slot].generation = snapshot->generation;
         view->bindings[slot].key = node->key;
         view->bindings[slot].event_id = node->event_id;
@@ -926,16 +1016,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     }
     for (i = 0; i < CANOPUS_UI_HOST_MAX_ROWS; i++) {
         if (view->rows[i] != NULL && (used_mask & (UINT32_C(1) << i)) == 0u) {
-#ifndef CANOPUS_MGR_BAND11
-            /* lvx_set_hidden left a row that had left the page drawn on Mirage
-             * 3.101.043, so Band 10 Pro deletes it (a message box is deleted from
-             * its own button callback the same way). */
-            ((void (*)(void *))(uintptr_t)FW_LVX_OBJECT_DELETE)(view->rows[i]);
-            view->rows[i] = NULL;
-            view->row_kinds[i] = 0u;
-#else /* CANOPUS_MGR_BAND11 */
             host_set_hidden(view->rows[i], 1u);
-#endif /* CANOPUS_MGR_BAND11 */
             canopus_memset(&view->bindings[i], 0, sizeof(view->bindings[i]));
         }
     }
@@ -948,9 +1029,23 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     for (i = (uint16_t)progress_used; i < CANOPUS_UI_HOST_MAX_PROGRESS; i++) {
         host_set_hidden(view->progress[i], 1u);
     }
+    /* Dragging content that already fits threw it to the page bottom, where it
+     * stayed (Mirage 4.100.155), so a page that fits is not scrollable. */
+    {
+        uint8_t fits = chain.height + HOST_CONTENT_PAD_BOTTOM <= HOST_CONTENT_HEIGHT;
+        if (fits != view->scroll_locked) {
+            host_object_flag(view->content_root, UINT32_C(16), !fits);
+            view->scroll_locked = fits;
+        }
+    }
+    for (i = 0; i < chain.count; i++) {
+        view->placed[i] = chain.id[i];
+        view->placed_sig[i] = chain.sig[i];
+    }
+    view->placed_count = (uint8_t)chain.count;
     view->rendered_generation = snapshot->generation;
     if (view->hooks != NULL && view->hooks->rendered != NULL) {
-        view->hooks->rendered(view, first);
+        view->hooks->rendered(view, chain.first);
     }
     return 0;
 }
@@ -1010,9 +1105,9 @@ void canopus_ui_host_detach(struct canopus_ui_host_view *view)
     if (view == NULL) {
         return;
     }
-#ifndef CANOPUS_MGR_BAND11
+#ifdef HOST_MSGBOX
     host_dialog_dismiss(view);
-#endif /* CANOPUS_MGR_BAND11 */
+#endif /* HOST_MSGBOX */
     for (i = 0; i < CANOPUS_UI_HOST_MAX_VIEWS; i++) {
         if (s_views[i] == view) {
             s_views[i] = NULL;

@@ -10,9 +10,9 @@
  * Supported snapshot content: navigation page/header (the page title), sections,
  * lists, scrolls and dividers/spacers (flattened into the page's scrolling
  * body), text and rich text, status/action/switch/checkbox/radio rows, buttons,
- * images, progress bars and sliders (shown read-only), and dialogs. A dialog is
- * a stock message box on Band 10 Pro; Band 11 has no recovered message box, so
- * its children are shown inline. Anything else makes apply fail and leaves the
+ * images, progress bars, and dialogs. A dialog with a message and two buttons is a
+ * stock message box where the target has one recovered; otherwise (and for any
+ * other dialog shape) its children are shown inline. Anything else makes apply fail and leaves the
  * previous content intact, as the backend contract requires.
  */
 #ifndef CANOPUS_UI_HOST_H
@@ -31,6 +31,7 @@ extern "C" {
 #define CANOPUS_UI_HOST_MAX_IMAGES    4u
 #define CANOPUS_UI_HOST_MAX_PROGRESS  8u
 #define CANOPUS_UI_HOST_MAX_VIEWS     8u
+#define CANOPUS_UI_HOST_MAX_PLACED   64u
 
 /* View flags. */
 #define CANOPUS_UI_HOST_ROOT_PAGE (1u << 0) /* no back affordance in the title */
@@ -45,8 +46,8 @@ struct canopus_ui_host_binding {
 };
 
 struct canopus_ui_host_hooks {
-    /* The page title's back affordance was used (non-root pages, Band 10 Pro;
-     * Band 11's stock title handles back itself). Optional. */
+    /* The page title's back affordance was used (non-root pages). Optional; the
+     * stock title handles back itself when it is NULL. */
     void (*back)(struct canopus_ui_host_view *view);
     /* Around the delivery of a row's semantic event; `result` is the
      * canopus_ui_dispatch_event result. Optional. */
@@ -59,24 +60,23 @@ struct canopus_ui_host_hooks {
     void (*rendered)(struct canopus_ui_host_view *view, void *first);
 };
 
+/* A message box button record as the firmware reads it. Band 11's is wider; the
+ * fields past `visual` stay zero. */
 struct canopus_ui_host_msgbox_button {
     void (*callback)(void *event);
     const char *text;
     void *user_data;
     const void *visual;
     uint32_t reserved;
-};
-
-/* A message box button's user data: the callback finds its view through it. */
-struct canopus_ui_host_dialog_binding {
-    struct canopus_ui_host_binding binding;
-    struct canopus_ui_host_view *view;
+#ifdef CANOPUS_MGR_BAND11
+    uint32_t reserved2[2];
+#endif
 };
 
 struct canopus_ui_host_dialog {
     void *native_box;
     struct canopus_ui_host_msgbox_button buttons[2];
-    struct canopus_ui_host_dialog_binding bindings[2];
+    struct canopus_ui_host_binding bindings[2];
     char button_text[2][32]; /* the message box keeps these pointers */
     uint8_t active;
     uint8_t dispatching;
@@ -105,12 +105,14 @@ struct canopus_ui_host_view {
     int32_t progress_maximum[CANOPUS_UI_HOST_MAX_PROGRESS];
     int32_t progress_value[CANOPUS_UI_HOST_MAX_PROGRESS];
     uint8_t row_kinds[CANOPUS_UI_HOST_MAX_ROWS];
-#ifdef CANOPUS_MGR_BAND11
     canopus_ui_node_id row_keys[CANOPUS_UI_HOST_MAX_ROWS];
-#endif
     struct canopus_ui_host_binding bindings[CANOPUS_UI_HOST_MAX_ROWS];
     struct canopus_ui_host_dialog dialog;
     uint32_t rendered_generation;
+    uint16_t placed[CANOPUS_UI_HOST_MAX_PLACED];       /* the last render's placement chain */
+    uint32_t placed_sig[CANOPUS_UI_HOST_MAX_PLACED];
+    uint8_t placed_count;
+    uint8_t scroll_locked; /* the content fits: its scrolling is off */
 };
 
 /* The backend to pass to canopus_ui_context_init with the view as its cookie. */

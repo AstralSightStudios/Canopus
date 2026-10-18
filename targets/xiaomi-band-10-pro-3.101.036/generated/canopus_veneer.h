@@ -4,7 +4,7 @@
  * firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
  * sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
  * revision : 5
- * input_digest: 79f413ca52260358
+ * input_digest: 367f1f41f8e505cd
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
@@ -513,6 +513,7 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * lv_bar_set_value: restricted - not exported until context/ownership approved
  * lv_image_create: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
+ * lv_obj_clear_flag: restricted - not exported until context/ownership approved
  * lv_obj_move_to_index: restricted - not exported until context/ownership approved
  * lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved

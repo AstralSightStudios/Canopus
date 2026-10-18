@@ -396,7 +396,7 @@ AstroBox 一侧见 `astrobox:psys-host-v4/canopusconnect`（`send` / `listen` / 
 
 ### 2.12 `ctx->ui` / `ctx->ui_ext` — 语义 UI 树与模块页面
 
-`ctx->ui` 是 `app-sdk/ui` 的语义 UI 树构造器（页面、分区、文本、状态/操作/开关行、按钮、复选/单选、滑块、进度、图片、导航头、
+`ctx->ui` 是 `app-sdk/ui` 的语义 UI 树构造器（页面、分区、文本、状态/操作/开关行、按钮、复选/单选、进度、图片、导航头、
 列表/滚动/对话框等容器，ABI 1.4，最多 32 个节点）。`ctx->ui_ext` 补充 `node_set_style`、`node_set_layout`，
 并让模块在 Manager 里提供自己的页面（ADR-CAN-010）：
 
@@ -413,14 +413,14 @@ struct canopus_ui_ext_obj {
   没有 Manager UI 的构建（无头）返回 `ERR_UNSUPPORTED`；入口随模块卸载一起清除，并先关闭它已打开的页面。
 - 用户打开时在 UI 任务上调用 `on_open(ctx, ui, user)`：用 `ctx->ui->tree_begin(ui, &tree)` 等构树并 `tree_commit`，返回前必须已提交，
   否则页面不显示。`ui` 一直有效到 `on_close` 返回。之后点击某行 → `on_event(ctx, ui, key, event_id, user)`，在里面构建下一棵树。
-- `on_back`（可选，仅 Band 10 Pro：Band 11 的原生标题自己结束页面）：返回 0 表示已处理（例如弹出自己的路由），否则页面关闭。
+- `on_back`（可选，两个家族都有）：标题的返回被使用；返回 0 表示已处理（例如弹出自己的路由），否则页面关闭。右滑返回是系统手势，不经过它。
   `on_close`：用户或 `close_page` 关闭页面时调用，卸载时不调用。`close_page` 结束调用者自己已打开的页面，没有则 `ERR_STATE`。
 - 同一时刻只开一个模块页面；回调要尽快返回；页面标题只在页面创建时设置。Rust：`canopus_abi::{CanopusUiExtObj, UiEntryV1}`。
-- 渲染后端（Band 10 Pro 与 Band 11 共用 `manager/target/canopus_ui_host.c`，Manager 自己的页面也走它）支持：导航页/导航头（页面标题）、
-  分区/列表/滚动/分隔/间距（展平）、文本/富文本、各类行与按钮、对话框（Band 10 Pro 为固件 msgbox，Band 11 内联）；
-  Band 11 另有图片、进度条与滑块（只读；自动尺寸为整行宽的条）。Band 10 Pro 把文本画成状态行，并拒绝图片、进度条、滑块——
-  这些固件控件在 Mirage `.043` 上没有跑通。被拒绝的和其它不支持的节点类型提交失败，并保留上一版内容。
-- 页面里不再出现的行：Band 10 Pro 删除，Band 11 隐藏。端到端见 `scripts/emu/ui_pages.py`（仅 emulator 证据）。
+- 渲染后端（Band 10 Pro 与 Band 11 共用 `manager/target/canopus_ui_host.c`，Manager 自己的页面也走它）两个家族画同样的内容：导航页/导航头（页面标题）、
+  分区/列表/滚动/分隔/间距（展平）、文本/富文本（标签，MiSans-Medium 24 px，TITLE 28 px）、各类行与按钮、图片、进度条（自动尺寸为整行宽的条），
+  以及对话框——一条消息加两个按钮时是固件 msgbox，其它形状和没有恢复 msgbox 入口的目标（`.177`）按普通行内联。滑块已移除。
+  不支持的节点类型提交失败，并保留上一版内容。
+- 页面里不再出现的行、标签、图片、进度条被隐藏，再出现时按 key 复用同一个控件；内容放得下时页面不能拖动。端到端见 `scripts/emu/ui_pages.py`（仅 emulator 证据）。
 
 ---
 

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.style_misans_medium_24",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "style_misans_medium_24",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x20109EB8",
+  "prototype": "void *",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-UI-1036-HOST-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-UI-1036-HOST-001"
+    ],
+    "source": "Exact xiaomi-band-10-pro-3.101.036 lvx_theme_default_init (sub_C49F944) constructs this style object with family selector 1 (MiSans-Medium) and size 24; the constructor sequence and 12-byte stride match the other family/size objects of the same table."
+  },
+  "approval_state": "PENDING",
+  "notes": "Read-only firmware-owned style object for target-private UI host labels (same role as the Band 11 MiSans-Medium 24/28 objects). Device probe pending."
+}

@@ -951,6 +951,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(uint32_t)",
     },
     TargetPrivateSymbolRecord {
+        name: "style_misans_medium_24",
+        kind: "global",
+        entry: 0x20109eb8usize,
+        callable: 0x20109eb8usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *",
+    },
+    TargetPrivateSymbolRecord {
+        name: "style_misans_medium_28",
+        kind: "global",
+        entry: 0x20109ed0usize,
+        callable: 0x20109ed0usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *",
+    },
+    TargetPrivateSymbolRecord {
         name: "style_misans_regular_24",
         kind: "global",
         entry: 0x20109e1cusize,
@@ -1282,6 +1300,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "native-full-trust",
         prototype: "void(void *, void *, uint32_t, int32_t, int32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_clear_flag",
+        kind: "function",
+        entry: 0xc587988usize,
+        callable: 0xc587989usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, uint32_t)",
     },
     TargetPrivateSymbolRecord {
         name: "lv_obj_move_to_index",
@@ -1618,6 +1645,8 @@ pub const SDP_SET_RAW_ATTRIBUTE_ENTRY: usize = 0xc7efc7cusize;
 pub const SDP_SET_RAW_ATTRIBUTE_CALLABLE: usize = 0xc7efc7dusize;
 pub const SDP_UNREGISTER_ENTRY: usize = 0xc7f216cusize;
 pub const SDP_UNREGISTER_CALLABLE: usize = 0xc7f216dusize;
+pub const STYLE_MISANS_MEDIUM_24_ENTRY: usize = 0x20109eb8usize;
+pub const STYLE_MISANS_MEDIUM_28_ENTRY: usize = 0x20109ed0usize;
 pub const STYLE_MISANS_REGULAR_24_ENTRY: usize = 0x20109e1cusize;
 pub const APP_LOOKUP_ENTRY: usize = 0xca5107cusize;
 pub const APP_LOOKUP_CALLABLE: usize = 0xca5107dusize;
@@ -1689,6 +1718,8 @@ pub const LV_OBJ_ADD_EVENT_CB_ENTRY: usize = 0xc5881a8usize;
 pub const LV_OBJ_ADD_EVENT_CB_CALLABLE: usize = 0xc5881a9usize;
 pub const LV_OBJ_ALIGN_TO_ENTRY: usize = 0xc588500usize;
 pub const LV_OBJ_ALIGN_TO_CALLABLE: usize = 0xc588501usize;
+pub const LV_OBJ_CLEAR_FLAG_ENTRY: usize = 0xc587988usize;
+pub const LV_OBJ_CLEAR_FLAG_CALLABLE: usize = 0xc587989usize;
 pub const LV_OBJ_MOVE_TO_INDEX_ENTRY: usize = 0xc5891f8usize;
 pub const LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = 0xc5891f9usize;
 pub const LV_OBJ_SET_HIDDEN_ENTRY: usize = 0xc5879b8usize;
@@ -2511,6 +2542,14 @@ pub unsafe fn raw_lv_obj_align_to(
     unsafe { f(a0, a1, a2, a3, a4) }
 }
 
+pub unsafe fn raw_lv_obj_clear_flag(a0: *mut core::ffi::c_void, a1: u32) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE)
+    };
+    unsafe { f(a0, a1) }
+}
+
 pub unsafe fn raw_lv_obj_move_to_index(a0: *mut core::ffi::c_void, a1: i32) -> () {
     type F = unsafe extern "C" fn(*mut core::ffi::c_void, i32) -> ();
     let f: F = unsafe {
@@ -2663,4 +2702,4 @@ pub unsafe fn raw_watchface_manager_delete_watchface(a0: *const u8) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 93
+// generated target-private raw wrapper count: 94

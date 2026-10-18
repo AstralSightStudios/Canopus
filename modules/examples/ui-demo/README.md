@@ -18,8 +18,8 @@ hands over and commits it. The page has two levels:
 | 1 | status row (clicks), switch row, "点击" (adds one), "详情页" |
 | 2 | a text, the click count, "返回" |
 
-On Band 10 Pro the title's back reaches `on_back` first, which pops from level 2 to level 1 and only
-closes the page from level 1. Band 11's stock title finishes the page itself. The module writes
+The title's back reaches `on_back` first (on both Band 10 Pro and Band 11), which pops from level 2 to
+level 1 and only closes the page from level 1. The module writes
 `ui_probe.txt` (appending `<what> <route>/<clicks>/<switch>` lines: open, toggle, add, detail, back, pop, close) into its private directory for the emulator harness.
 
 ```bash

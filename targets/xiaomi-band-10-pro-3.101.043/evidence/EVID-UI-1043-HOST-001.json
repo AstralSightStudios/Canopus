@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-1043-HOST-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact firmware addresses give the UI host MiSans-Medium 24/28 label styles, object flag add/clear and a correct lv_bar_create?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.style_misans_medium_24",
+    "xiaomi-band-10-pro-3.101.043.private_abi.style_misans_medium_28",
+    "xiaomi-band-10-pro-3.101.043.ui.lv_obj_clear_flag",
+    "xiaomi-band-10-pro-3.101.043.ui.lv_bar_create",
+    "xiaomi-band-10-pro-3.101.043.ui.lvx_object_add_flag"
+  ],
+  "callsite_evidence": [
+    "sub_C4C065C (lvx_theme_default_init) initialises 0x2010CEE0 with constructor arguments (1, 0x18, 0) and 0x2010CEF8 with (1, 0x1C, 0); the same position in the other 10 Pro firmware holds the 12-byte-stride neighbour objects.",
+    "Object flag veneers (LDR.W PC,[PC], literal targets equal in 3.101.036 and 3.101.043): library 0x1C028BD9 = add_flag at 0xc588960 / 0xcac00c0 (the second table is the existing lvx_object_add_flag record), library 0x1C028C85 = clear_flag at 0xc5891b0 / 0xcac0540. Identification: lvx_page_title_create makes the back icon clickable with the 0x1C028BD9 veneer(icon, 2) where Band 11's matches call FW_LV_OBJECT_ADD_FLAG (sub_C38404C), and lvx_page_msgbox set-up calls the 0x1C028C85 veneer with 2 and 16 where Band 11 calls FW_LV_OBJECT_CLEAR_FLAG (sub_C3840D8).",
+    "The previous lv_bar_create record (0xc0c21d8) is not a lvgl veneer; the veneer with the same library target 0x1C073859 as 3.101.036 0x0C588320 is at 0xc588b90.",
+    "The old lv_obj_set_hidden record (0xc588518, library 0x1C028D39) is neither of them: calling it as set_hidden(obj, 1) left rows drawn on Mirage 3.101.043, and calling the clear veneer by mistake for hiding did the same. It is not used by the UI host."
+  ],
+  "ownership_analysis": "Style objects are firmware-owned, borrowed read-only through lvx_style_apply. Flag veneers take a borrowed LVGL object.",
+  "unsafe_assumptions": [
+    "Static recovery only; Mirage results are emulator evidence, not device verification.",
+    "UI owner thread only."
+  ],
+  "recommended_probe": "Run the ui-gallery module on a Band 10 Pro and compare label typography, hide/show and bar rendering with Band 11.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-18T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64 sub_C4C065C",
+      "role": "theme initializer and style globals"
+    }
+  ]
+}
