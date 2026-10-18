@@ -153,10 +153,13 @@ struct canopus_mem_obj {
   无已批准 OS sleep 原语时是忙等，ARM `yield` 提示不等于调度器休眠。
 - timer 周期范围为 `1..CANOPUS_TIMER_MAX_INTERVAL_MS`（`0x7fffffff` 毫秒），使用环绕安全的截止时间比较。
 - 分发串行执行，回调内 sleep 不会递归进入另一轮 timer 分发。漏掉的周期合并，不追补无限次回调。
-- Band 10 Pro 普通 UI 构建使用已批准的 `lv_timer_create`，Supervisor 的心跳与其同为 boot-resident，
-  不支持热卸载。启动 timer 必须在模块/UI 所属线程执行，不能从中断或任意 worker 调用。
-- Band 11 原生 timer 地址仍为 restricted，NSH headless 构建也没有 UI 事件源；这些配置的
-  `timer_create` 明确返回 `CANOPUS_SVC_ERR_UNSUPPORTED`，不会注册一个永远不触发的 timer。
+- Band 10 Pro `.036/.043` 与 Band 11 `.139/.155/.177` 的普通 UI 构建使用 10 ms 的 boot-resident LVGL 心跳。
+  Band 11 从 exact-target 私有符号配置取入口，原有 `restricted / STATIC_RECOVERED / PENDING` 状态不变。
+  创建/启动 timer 必须在模块/UI 所属线程执行，回调也在该线程串行运行，不能从中断或任意 worker 调用。
+- LVGL 在息屏等暂停期间不保证心跳继续推进；恢复后合并漏掉的周期，不保证后台准时触发。
+  心跳不支持热卸载，也不支持 UI 重建后的自动恢复；此实现独立于 L2 的 libuv owner timer。
+- NSH headless 构建以及缺少 timer/单调时钟入口的 target 没有 UI 事件源；`timer_create` 明确返回
+  `CANOPUS_SVC_ERR_UNSUPPORTED`，不会注册一个永远不触发的 timer。
 - 当前 `realtime_ms` 仍返回单调时间的扩展值，不应作为已验证的 UTC 时钟使用。
 
 ```c
@@ -191,6 +194,7 @@ struct canopus_haptics_obj {
     int32_t (*cancel)(const struct canopus_context_v1 *ctx);
 };
 ```
+- 用户在系统里关闭了振动时返回 `ERR_STATE`；振动服务没有应答（例如没有马达服务的模拟器）返回 `ERR_IO`。
 - `vibrate` 取 1..5000 ms；`vibrate_pattern` 从 **ON** 开始交替"振/停"（`pattern_ms[0]` 是第一次振动），最多 16 项，零项跳过；
   第二步起由 Supervisor 的定时器泵按 10 ms 精度推进（没有泵的目标，多步序列返回 `ERR_UNSUPPORTED`，单次振动不需要泵）。
   序列按计划时间推进，泵迟到时缩短当前脉冲而不累积漂移。`DOUBLE_CLICK` 是 20 ms / 60 ms 间隔 / 20 ms。
@@ -220,6 +224,7 @@ struct canopus_display_obj {
   `get_brightness` 返回当前覆盖值，否则返回用户手动设定（`persist.screen.brightness_value`）；自动亮度开启或目标不可读时返回
   `CANOPUS_DISPLAY_BRIGHTNESS_UNKNOWN(0xFFFFFFFF)`。
 - `wake_screen` 以固件 wake-lock 路径使用的来源 26 调用固件的 `screen_turn_on`，是"请求亮屏"，不保证返回时已亮。
+  `screen_turn_on` 要等显示所有者处理，必须在 UI 任务上调用；无头（NSH 驱动）的构建把模块跑在 NSH 任务上，会卡死在里面，所以无头构建不提供它（`ERR_UNSUPPORTED`）。
 - 唤醒锁由固件 PowerManager 的 wakelock（level 6，保持亮屏）实现，Supervisor 为每把锁保留一个原生对象并复用：
   `acquire_wake_lock` 返回正的锁 ID（带代数，旧 ID 失效后不会误释放新锁）；只能释放自己的锁（否则 `ERR_ARGUMENT`）；
   每个模块最多 4 把、全局最多 8 把（超出 `ERR_BUSY`）；模块卸载时全部释放。`lock_flags` 只能是 `WAKELOCK_SCREEN`，
@@ -285,6 +290,14 @@ struct canopus_hook_obj {
   多个函数名解析到同一活动槽位时拒绝重复安装；原值包括 NULL 均精确恢复。释放模块先恢复 Hook，再清除映射，最后释放内存。
 - **RAM Inline**：仅搬移明确可复制的 Thumb 指令；PC 相关、分支/返回、IT 块和未实现的编码返回 UNSUPPORTED。
   安装和卸载需要目标函数处于静止状态，不得与执行该函数的任务/中断并发修补代码。
+- **Band 11 的 Inline（代码视图）**：Umem 里的模块镜像在 PSRAM 指令别名（`0x1C…`）上执行，却要经数据视图（`+0x20000000`，`0x3C…`）写入，
+  别名本身不可写。平台注册 `canopus_hook_code_view` 后由它独自决定能补丁什么：只有调用模块自己的可执行区域，
+  补丁和 trampoline 都经数据视图写入，trampoline 放在同一块 Umem（首次 Inline 时分配，随 Supervisor 常驻，经别名执行），
+  写完后做一次 D-cache clean + I-cache invalidate（`b11_publish_code`）；发布失败则还原并返回 UNSUPPORTED。
+  不经 Umem 别名执行的镜像（默认堆的 MPU 回退）不在视图内，Inline 返回 UNSUPPORTED。
+  没有代码视图的目标（Band 10 Pro）仍只在 SRAM 原地补丁。引擎不再把 `0x1C…` 当只读 Flash 一概拒绝；固件 Flash 仍然不可补丁。
+  Unicorn 测试（`tests/hook/test_thumb.py`）用"代码视图只读、数据视图不可执行"的两段映射验证；Band 11 Mirage 上 `.155` 的 services 测试执行 Inline 用例。
+  模拟器没有 cache 行为，D/I-cache 维护序列未经真机验证。
 - **Host**：原生 host 不模拟 Inline 成功；无映射的 AUTO 没有 Thumb 标签可供推导，也返回 UNSUPPORTED。
   原生 host 测试使用显式 POINTER；实际 Thumb 跳板另由 `tests/hook/test_thumb.py` 验证。
 
@@ -410,6 +423,28 @@ struct canopus_ui_ext_obj {
 ---
 
 ## 3. 编程范例
+
+### 模块入口：注册 descriptor
+
+两种 loader 给构造函数的东西不同，模块只用 `sdk/c/canopus_module_entry.h` 这一个入口，不自己写注册代码：
+
+| loader | 构造函数拿到什么 | 注册方式 |
+|---|---|---|
+| Band 10 Pro 原厂 modlib（`nuttx-modlib-elf32-rel`） | 没有 ctx（r0 无意义） | 经目标自己的 NuttX 入口向 `/dev/canopus` 写一帧 CMR1，先过 `canopus_identity_guard()` |
+| Canopus 自己的 loader（Band 11；portable 模块） | r0 = ctx | `ctx->services->module_register(ctx, &descriptor)` |
+
+```c
+#include "canopus_module_entry.h"   /* 目标模块还需把该目标的 generated 目录放进 -I */
+
+static const struct canopus_module_descriptor_v1 s_descriptor = { /* ... */ };
+CANOPUS_MODULE_ENTRY(s_descriptor)  /* 或在自己的构造函数里调 canopus_module_register(ctx, &s_descriptor) */
+```
+
+编译期按目标的生成配置选路径（有 `CANOPUS_TARGET_ID` 且没有 `CANOPUS_SUP_CUSTOM_LOADER` 的是 CMR1，其余走服务表），所以同一份源码在两个系列上都能用。
+portable 模块不带目标配置，只有服务表一条路，因此只能在 Canopus loader 的目标上加载。Rust 模块的构造函数是 `sdk/rust/c_shim/canopus_ctor.c`，同样经该入口注册 crate 导出的 `canopus_module_descriptor`。
+
+两条路最后都进 `canopus_supervisor_register_descriptor`，它要求：descriptor 的 `module_id` 等于正在加载的槽位的 module id，`target_id` 是当前目标或 `portable-thumbv8m`。
+不满足时注册被拒绝；脚手架和示例的 descriptor 因此必须写清单里的 id。
 
 ### C 模块开发示例
 ```c

@@ -115,7 +115,7 @@ pub static canopus_module_descriptor: ModuleDescriptorV1 = ModuleDescriptorV1 {
     abi_major: ABI_MAJOR,
     abi_minor: ABI_MINOR,
     flags: 0,
-    module_id: pack(b"org.canopus.no-heap-counter"),
+    module_id: pack(b"no_heap_counter"),
     module_version: pack(b"0.1.0"),
     build_id: pack(b"no-heap-counter-0.1.0"),
     target_id: pack(b"xiaomi-band-10-pro-3.101.036"),
@@ -128,7 +128,8 @@ pub static canopus_module_descriptor: ModuleDescriptorV1 = ModuleDescriptorV1 {
     publish_native_app_stage: None,
 };
 
-/// The C constructor shim calls this to let the loader discover the descriptor.
+/// Host tests read the descriptor through this; the C constructor shim registers
+/// the `canopus_module_descriptor` symbol itself.
 #[unsafe(no_mangle)]
 pub extern "C" fn canopus_module_descriptor_ptr() -> *const ModuleDescriptorV1 {
     &canopus_module_descriptor

@@ -3,10 +3,10 @@
  *
  * Uses only the Supervisor service table: no firmware address, so the same
  * ELF loads on every firmware whose Supervisor implements the MODULE, LOG and
- * FS groups. The Supervisor passes the module's context to the init entry in
- * r0 (custom-loader targets).
+ * FS groups. It registers through the service-table path of
+ * canopus_module_entry.h, so it loads only where Canopus' loader runs.
  */
-#include "canopus_services.h"
+#include "canopus_module_entry.h"
 
 #define HP_MODULE_ID "hello_portable"
 
@@ -79,9 +79,4 @@ static const struct canopus_module_descriptor_v1 s_descriptor = {
     0,
 };
 
-__attribute__((constructor)) static void hp_init(const struct canopus_context_v1 *ctx)
-{
-    if (!canopus_services_has(ctx, CANOPUS_SVC_MODULE, 1)) return;
-    s_ctx = ctx;
-    (void)ctx->services->module_register(ctx, &s_descriptor);
-}
+CANOPUS_MODULE_ENTRY(s_descriptor)

@@ -8,12 +8,8 @@
  *   - Interactive touch event handling with haptic feedback
  */
 
-#include "canopus_abi.h"
-#include "canopus_services.h"
+#include "canopus_module_entry.h"
 #include "canopus_memory.h"
-#include "canopus_module_registration.h"
-#include "canopus_target_config.h"
-#include "canopus_veneer.h"
 
 #define DEMO_MODULE_ID "native_demo"
 #define DEMO_APP_ID UINT16_C(0x00CB)
@@ -419,16 +415,4 @@ static const struct canopus_module_descriptor_v1 s_descriptor = {
     demo_publish_native_app_stage,
 };
 
-__attribute__((constructor)) static void demo_ctor(void)
-{
-    typedef int (*open_fn)(const char *, int, ...);
-    struct canopus_module_registration_io_v1 io;
-    int close_error = 0;
-    if (canopus_identity_guard() != 0) return;
-    io.open = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
-    io.write = canopus_fw_write;
-    io.close = canopus_fw_close;
-    io.write_flags = 2;
-    (void)canopus_module_register_fd(&io, (uint32_t)(uintptr_t)&s_descriptor,
-                                     DEMO_MODULE_ID, &close_error);
-}
+CANOPUS_MODULE_ENTRY(s_descriptor)

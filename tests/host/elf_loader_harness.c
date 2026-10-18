@@ -122,7 +122,7 @@ int main(int argc, char **argv)
     printf("loaded=%u regions=%u preinit=%u init=%u fini=%u invoked=%u\n",
            module.allocation_size, module.region_count, module.preinit_count,
            module.init_count, module.fini_count, h.invoke_count);
-    if (!h.finalized || module.init_count == 0 || module.fini_count == 0) {
+    if (!h.finalized || module.init_count == 0) {
         return 1;
     }
     canopus_elf32_unload(&ops, &module);

@@ -9,6 +9,9 @@
 #include "canopus_abi.h"
 #include "canopus_runtime.h"
 #include "hello_platform.h"
+#if defined(CANOPUS_TARGET)
+#include "canopus_module_entry.h"
+#endif
 #include <stddef.h>
 
 #define HELLO_MAGIC 0x48454C4Fu /* "HELO" */
@@ -146,7 +149,7 @@ static const struct canopus_module_descriptor_v1 g_descriptor = {
     .abi_major = CANOPUS_ABI_MAJOR,
     .abi_minor = CANOPUS_ABI_MINOR,
     .flags = 0u,
-    .module_id = "org.example.hello",
+    .module_id = "hello",
     .module_version = "0.1.0",
     .build_id = "hello-0.1.0",
     .target_id = "xiaomi-band-10-pro-3.101.036",
@@ -165,17 +168,11 @@ const struct canopus_module_descriptor_v1 *hello_descriptor(void)
 #if defined(CANOPUS_TARGET)
 /*
  * Constructor/destructor glue for the stock modlib loader, which runs
- * .init_array then retains .fini_array for rmmod. The identity guard runs
- * before any firmware call and must fail closed.
+ * .init_array then retains .fini_array for rmmod. The entry checks the
+ * identity guard before any firmware call, fails closed and hands the
+ * descriptor to the Supervisor; prepare runs when the Supervisor activates it.
  */
-__attribute__((constructor)) static void hello_ctor(void)
-{
-    if (canopus_identity_guard() != 0) {
-        /* wrong firmware: refuse to go any further */
-        return;
-    }
-    (void)hello_prepare(0);
-}
+CANOPUS_MODULE_ENTRY(g_descriptor)
 
 __attribute__((destructor)) static void hello_dtor(void)
 {

@@ -1,14 +1,11 @@
 /*
  * emu_probe.c — target module for emulator end-to-end tests (Band 10 Pro 043).
  *
- * Registers its descriptor through CMR1 and, when activated, writes its
+ * Registers its descriptor (canopus_module_entry.h) and, when activated, writes its
  * version code to /data/canopus/probe.txt so a test can observe which
  * generation the Supervisor actually loaded.
  */
-#include "canopus_abi.h"
-#include "canopus_module_registration.h"
-#include "canopus_target_config.h"
-#include "canopus_veneer.h"
+#include "canopus_module_entry.h"
 
 #ifndef PROBE_VERSION
 #define PROBE_VERSION 1
@@ -42,16 +39,7 @@ static const struct canopus_module_descriptor_v1 s_descriptor = {
     probe_ok, probe_activate, probe_ok, probe_ok, probe_query, 0, 0,
 };
 
-__attribute__((constructor)) static void probe_ctor(void)
+__attribute__((constructor)) static void probe_ctor(const struct canopus_context_v1 *ctx)
 {
-    typedef int (*open_fn)(const char *, int, ...);
-    struct canopus_module_registration_io_v1 io;
-    int close_error = 0;
-    if (PROBE_FAIL_LOAD || canopus_identity_guard() != 0) return;
-    io.open = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
-    io.write = canopus_fw_write;
-    io.close = canopus_fw_close;
-    io.write_flags = 2;
-    (void)canopus_module_register_fd(&io, (uint32_t)(uintptr_t)&s_descriptor,
-                                     "emu_probe", &close_error);
+    if (!PROBE_FAIL_LOAD) (void)canopus_module_register(ctx, &s_descriptor);
 }

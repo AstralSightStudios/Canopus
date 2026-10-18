@@ -70,15 +70,27 @@ gate_4() {
 }
 
 gate_5() {
-    step "6/6 Rust module cross-build + verifier (no-heap-counter)"
+    step "6/6 Rust module cross-build + verifier (no-heap-counter) and scaffolded modules"
     ./sdk/rust/examples/no-heap-counter/build.sh
-    # A scaffolded external Rust module through `canopus new --lang rust` / `canopus build`.
+    # Rust output must also be loadable by Canopus' own ELF loader (Band 11), not only pass the verifier.
+    (cd tests/host && make real-elf-loader MODULE_ELF=../../sdk/rust/examples/no-heap-counter/build/no_heap_counter.elf)
+    # Scaffolded external modules (Rust, target-bound C, portable C) through
+    # `canopus new` / `canopus build`, on every active target: each family's
+    # constructor path (CMR1 write or the service table) must build and verify.
     canopus="$PWD/target/debug/canopus"
-    rust_tmp=$(mktemp -d)
-    (cd "$rust_tmp" && "$canopus" new rmod --lang rust \
-        --target xiaomi-band-10-pro-3.101.036 --target xiaomi-band-10-pro-3.101.043 \
-        && cd rmod && "$canopus" build && "$canopus" package)
-    rm -rf "$rust_tmp"
+    target_args=""
+    for target in $("$canopus" target list --active --names); do
+        target_args="$target_args --target $target"
+    done
+    scaffold_tmp=$(mktemp -d)
+    (cd "$scaffold_tmp" \
+        && "$canopus" new rmod --lang rust $target_args && (cd rmod && "$canopus" build && "$canopus" package) \
+        && "$canopus" new cmod $target_args && (cd cmod && "$canopus" build && "$canopus" package) \
+        && "$canopus" new pmod && (cd pmod && "$canopus" build && "$canopus" package))
+    for elf in "$scaffold_tmp"/rmod/build/*/rmod.elf "$scaffold_tmp"/cmod/build/*/cmod.elf "$scaffold_tmp"/pmod/build/pmod.elf; do
+        (cd tests/host && make -s real-elf-loader MODULE_ELF="$elf")
+    done
+    rm -rf "$scaffold_tmp"
 }
 
 gate_6() {

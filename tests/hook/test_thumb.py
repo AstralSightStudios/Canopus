@@ -9,6 +9,7 @@ folder; missing tools/dependencies explicitly skip with exit status 77.
 This is host/emulator evidence only, not physical-device verification.
 """
 import argparse
+import ctypes
 from pathlib import Path
 import shutil
 import struct
@@ -23,6 +24,9 @@ ORIG = 0x203F1000
 SLOT = 0x203F2000
 FLASH_A = 0x0C001001
 FLASH_B = 0x1C002001
+ALIAS = 0x1C100000        # where aliased code runs
+ALIAS_DELTA = 0x20000000  # the data view it is written through
+ALIAS_TRAMPOLINES = ALIAS + 0x800
 AUTO, FPB, INLINE, POINTER = range(4)
 UNSUPPORTED, STATE = -38, -16
 
@@ -56,6 +60,7 @@ def build(root, out, cc, linker):
              "-fno-asynchronous-unwind-tables", "-Os", "-Wall", "-Wextra", "-Werror"]
     hook_obj = out / "hook.o"
     fixture_obj = out / "fixtures.o"
+    view_obj = out / "alias_view.o"
     subprocess.run([cc, *flags, "-std=c11", "-I" + str(root / "sdk/c"),
                     "-I" + str(root / "runtime/hook"), "-c",
                     str(root / "runtime/hook/canopus_hook.c"), "-o", str(hook_obj)],
@@ -63,11 +68,15 @@ def build(root, out, cc, linker):
     subprocess.run([cc, *flags[:4], "-Wall", "-Wextra", "-Werror", "-c",
                     str(root / "tests/hook/thumb_fixtures.s"), "-o", str(fixture_obj)],
                    check=True)
+    subprocess.run([cc, *flags, "-std=c11", "-I" + str(root / "sdk/c"),
+                    "-I" + str(root / "runtime/hook"), "-c",
+                    str(root / "tests/hook/alias_view.c"), "-o", str(view_obj)],
+                   check=True)
     elf = out / "hook-thumb.elf"
     subprocess.run([linker, "--image-base=0x20000000", "-Ttext=0x20010000",
                     "-Tbss=0x20020000",
                     "--entry=canopus_hook_engine_init", str(hook_obj),
-                    str(fixture_obj), "-o", str(elf)], check=True)
+                    str(fixture_obj), str(view_obj), "-o", str(elf)], check=True)
     return load_elf(elf)
 
 
@@ -220,8 +229,84 @@ def run_tests(image, uc, regs):
         result, _ = install(u, 0, target, AUTO)
         check(result == UNSUPPORTED, "released mapping must not access freed storage")
     print("PASS released active and unused mappings never access freed SRAM")
+
+    # A platform code view: the code runs at an alias and is written through
+    # another address, as on Band 11. One host buffer is mapped at both.
+    window = (ctypes.c_ubyte * 0x1000)()
+
+    def alias_machine(owner=1):
+        u = machine()
+        pointer = ctypes.addressof(window)
+        ctypes.memset(pointer, 0, 0x1000)
+        # The code view cannot be written and the data view cannot be executed.
+        u.mem_map_ptr(ALIAS, 0x1000, uc.UC_PROT_READ | uc.UC_PROT_EXEC, pointer)
+        u.mem_map_ptr(ALIAS + ALIAS_DELTA, 0x1000,
+                      uc.UC_PROT_READ | uc.UC_PROT_WRITE, pointer)
+        for offset, name in ((0x000, "fixture_aligned"), (0x100, "fixture_unaligned")):
+            start = symbols[name] & ~1
+            u.mem_write(ALIAS + ALIAS_DELTA + offset, bytes(u.mem_read(start, 0x40)))
+        put(u, symbols["view_owner"], owner)
+        call(u, "canopus_hook_set_code_view", symbols["fixture_view"])
+        return u
+
+    def alias_install(u, owner, target):
+        put(u, ORIG, 0x12345678)
+        result = call(u, "canopus_hook_install", owner, target,
+                      symbols["fixture_replacement"], ORIG, INLINE)
+        u.ctl_remove_cache(ALIAS, ALIAS + 0x1000)
+        return result, get(u, ORIG)
+
+    for offset, expected in ((0x000, 14), (0x100, 10)):
+        u = alias_machine()
+        target = ALIAS + offset + 1
+        before = bytes(u.mem_read(ALIAS + offset, 0x40))
+        check(call(u, target, 4) == expected, "aliased baseline")
+        hook_id, orig = alias_install(u, 1, target)
+        check(hook_id >= 0, "inline hook installs on aliased module code")
+        check(ALIAS_TRAMPOLINES <= orig < ALIAS_TRAMPOLINES + 0x200 and orig & 1,
+              "trampoline runs at the executable alias, not the write address")
+        check(bytes(u.mem_read(ALIAS + offset, 0x40)) != before, "code was patched")
+        check(call(u, target, 4) == 104, "aliased target redirects to the replacement")
+        check(call(u, orig, 4) == expected, "trampoline preserves aliased execution")
+        check(get(u, symbols["view_publish_count"]) == 1, "install publishes once")
+        check(get(u, symbols["view_trampoline_calls"]) == 1, "trampoline block requested once")
+        check(call(u, "canopus_hook_uninstall", 1, hook_id) == 0, "aliased uninstall")
+        u.ctl_remove_cache(ALIAS, ALIAS + 0x1000)
+        check(bytes(u.mem_read(ALIAS + offset, 0x40)) == before, "exact byte restoration")
+        check(call(u, target, 4) == expected, "restored aliased execution")
+        check(get(u, symbols["view_publish_count"]) == 2, "uninstall publishes")
+        hook_id, _ = alias_install(u, 1, target)
+        check(hook_id >= 0 and get(u, symbols["view_trampoline_calls"]) == 1,
+              "the trampoline block is reused")
+    print("PASS aliased code: write view, executable trampolines, publish, restore")
+
+    u = alias_machine()
+    before = bytes(u.mem_read(ALIAS, 0x40))
+    result, orig = alias_install(u, 2, ALIAS + 1)
+    check(result == UNSUPPORTED and orig == 0x12345678, "another module's code is refused")
+    result, _ = alias_install(u, 1, ALIAS + 0x7F8 + 1)
+    check(result == UNSUPPORTED, "a patch that leaves the owner's region is refused")
+    result, _ = install(u, 1, symbols["fixture_aligned"], INLINE)
+    check(result == UNSUPPORTED, "with a view, SRAM is not patched in place")
+    put(u, symbols["view_publish_result"], 0xFFFFFFFF)
+    result, orig = alias_install(u, 1, ALIAS + 1)
+    check(result == UNSUPPORTED and orig == 0x12345678, "failed publish fails the install")
+    check(bytes(u.mem_read(ALIAS, 0x40)) == before, "failed publish restores the code")
+    check(call(u, "canopus_hook_is_hooked", ALIAS + 1) == 0, "failed publish leaves no hook")
+    put(u, symbols["view_publish_result"], 0)
+    check(alias_install(u, 1, ALIAS + 1)[0] >= 0, "the slot is reusable after a failed publish")
+    call(u, "canopus_hook_release_slot", 1)
+    u.ctl_remove_cache(ALIAS, ALIAS + 0x1000)
+    check(bytes(u.mem_read(ALIAS, 0x40)) == before, "release restores aliased code")
+    call(u, "canopus_hook_set_code_view", 0)
+    result, _ = alias_install(u, 1, ALIAS + 1)
+    check(result == UNSUPPORTED, "without a view the alias is read-only again")
+    check(install(u, 0, symbols["fixture_aligned"], INLINE)[0] >= 0,
+          "without a view SRAM is patched in place again")
+    print("PASS code view limits: owner only, region bound, publish failure, no view")
+
     print(f"PASS {checks} checks: 3 Thumb executions, 8 rejected prefixes, "
-          "read-only Flash and mapping lifecycle regressions")
+          "read-only Flash, mapping lifecycle and aliased-code regressions")
 
 
 def main():

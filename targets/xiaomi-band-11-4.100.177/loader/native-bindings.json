@@ -64,6 +64,7 @@
     "CANOPUS_SUP_HEAP_MALLOC": "heap_malloc",
     "CANOPUS_SUP_HEAP_FREE": "heap_free",
     "CANOPUS_SUP_CLOCK_GETTIME": "clock_gettime",
+    "CANOPUS_SUP_LV_TIMER_CREATE": "lv_timer_create",
     "CANOPUS_SUP_BT_ADAPTER_GET_STATE": "bt_adapter_get_state",
     "CANOPUS_SUP_BT_SHARED_ADAPTER": "bt_shared_adapter"
   },

@@ -27,11 +27,14 @@
   相对路径落在 `/data/canopus/m.<id>/`（原先的 `m.<id>.<name>` 扁平命名会让 `mod.a`/`b.x` 与 `mod.a.b`/`x` 撞名，已改为每模块一个目录）；
   `mkdir`、`fsync`、`stat`（含 mtime）、`APPEND`/`READ|WRITE`、固件 errno 的如实映射（缺失文件为 `NOTFOUND`）。
 - 系统事件广播（亮灭屏、电量、蓝牙状态）由定时器泵每 500 ms 采样发布，模块无法伪造这三个主题。
+- Band 11 `.139/.155/.177` 普通 UI 构建补齐 10 ms LVGL timer pump，入口来自已有精确 target 私有符号，
+  沿用现有软件 timer 调度；headless 不支持。LVGL 暂停时不保证后台触发，UI 重建后的自动恢复仍不支持；
+  这些 timer 入口保持 `restricted / STATIC_RECOVERED / PENDING / not_probed`，不属于上述新硬件入口的缺失项。
 - host implemented：上述服务逻辑与 C host 测试（含 ASan/UBSan）。
 - static recovered（`restricted` / `PENDING`，`device: not_probed`）：Band 10 Pro .036/.043 与 Band 11 .139/.155 的 PowerManager、
   MiWearScreen、vibrator、property、`mkdir` 入口，证据 `EVID-PLATFORM-HW-*`。.036/.139 由 .043/.155 的函数体匹配得到。
   Band 11 .177 无镜像，新增入口全部为空钩子。
-- 未提升任何能力状态：没有 device verified，也没有 production approved；本机没有 Mirage 与 OTA 包，未做模拟器运行。
+- 未提升任何能力状态：没有 device verified，也没有 production approved。services 测试已在 Mirage 运行（仅 emulator 证据）：Band 10 Pro `.043` 22/26（4 项显式跳过：timer、振动、screen-on、通知）、Band 11 `.155` 25/26（仅振动跳过，模拟器里没有可达的 vibrator）；.036/.139/.177 没有模拟器运行。
 - `get_rssi` 与仅 CPU 的唤醒锁已从 ABI 移除；`is_connected` 改读固件 `system_all_state` 的 MiWear 链路状态（.036/.043/.139/.155，
   .177 无镜像为 `UNSUPPORTED`）；通知图标改为调用方传入的绝对路径（`post_with_icon` 的 `icon_path`）。
 
@@ -42,7 +45,18 @@
 - host implemented：设备端交付/拒绝/监听按会话失效/与管理器状态隔离（C host 测试，含 ASan/UBSan）；Rust ABI 与 `canopus-runtime::connect`；
   AstroBox core 的线格式与事件、pluginsystem（API Level 4）的 `canopusconnect` 宿主接口与可选的 `on-message` 导出、插件权限提示（zh_CN / en_US）。
 - 仅 .043 / .155 提供（需要 L2 后端），其它 target 的 `ctx->connect` 为空。发送队列、`l2_peer` 与 owner 上的发送顺序是 ARM 代码，
-  没有 Mirage 或真机运行；未提升任何符号或能力状态。
+  Mirage `.043` / `.155` 的 services 测试已执行 listen/send/remote listening（仅 emulator 证据）；没有 AstroBox 端到端收发，也没有真机运行；未提升任何符号或能力状态。
+
+## 模块注册入口统一（2026-10-18）
+
+- Band 10 Pro 原厂 modlib 的构造函数没有 ctx，只能向 `/dev/canopus` 写 CMR1；Band 11 / portable 的构造函数在 r0 拿到 ctx，走 `ctx->services->module_register`。
+  现在两条路只有一个 SDK 入口 `sdk/c/canopus_module_entry.h`（`CANOPUS_MODULE_ENTRY` / `canopus_module_register`），按目标生成配置在编译期选路径；见 ADR-CAN-006 与服务规范 §3。
+- 顺带查出并修正：`canopus new` 的 target 模板只有 TODO 桩、`canopus module new` 与 Rust 构造函数 shim、`hello.c` 从来没有注册 descriptor（没有任何 loader 读 `canopus_module_descriptor` 符号）；
+  `hello.c`、no-heap-counter 与旧脚手架的 `module_id` 与清单 id 不符，Supervisor 会拒绝注册；Rust 模块此前被限制在 stock-modlib 目标，现在 Band 11 也能构建、通过 verifier，并在 Mirage `.155` 上激活（`canopus new --lang rust` 的模块）。Rust 产物原先带着 debug 段和内嵌 bitcode，其 `.rel.debug_*` 指向未装载的段，Canopus 自己的 ELF loader 判为无效；链接时用 `sdk/rust/c_shim/module.ld` 丢弃它们（51 KB → 12 KB），no-heap-counter 的 `--whole-archive`（2871 个段，超过 loader 的 256 上限）也已去掉，CI 现在用 host loader 检查 Rust 与 C 产物；
+  services 测试里仅 Band 10 Pro 才有的原始固件写文件（与 `ctx->fs` 重复）已删。
+- Band 11 的 Inline Hook：引擎把 `0x1C…` 指令别名当只读 Flash 一概拒绝，模块自己的代码因此无法 Inline Hook（`.155` services 测试里两项失败，HEAD 上本来就有）。现在平台注册代码视图，经数据视图写入补丁与 trampoline 并做 cache 发布（规范 §2.8）；Unicorn 与 Mirage `.155` 通过，真机 cache 维护未验证。
+- CI gate 5 现在对全部 active target 脚手架并构建 Rust、target C 与 portable C 模块。
+- 证据级别：host 构建/verifier 与 host 测试；设备侧运行见各 emulator 记录，均不提升能力状态。
 
 ## 原生 UI 宿主后端与模块页面（2026-10-18）
 
