@@ -27,6 +27,9 @@
   相对路径落在 `/data/canopus/m.<id>/`（原先的 `m.<id>.<name>` 扁平命名会让 `mod.a`/`b.x` 与 `mod.a.b`/`x` 撞名，已改为每模块一个目录）；
   `mkdir`、`fsync`、`stat`（含 mtime）、`APPEND`/`READ|WRITE`、固件 errno 的如实映射（缺失文件为 `NOTFOUND`）。
 - 系统事件广播（亮灭屏、电量、蓝牙状态）由定时器泵每 500 ms 采样发布，模块无法伪造这三个主题。
+- Band 11 `.139/.155/.177` 普通 UI 构建补齐 10 ms LVGL timer pump，入口来自已有精确 target 私有符号，
+  沿用现有软件 timer 调度；headless 不支持。LVGL 暂停时不保证后台触发，UI 重建后的自动恢复仍不支持；
+  这些 timer 入口保持 `restricted / STATIC_RECOVERED / PENDING / not_probed`，不属于上述新硬件入口的缺失项。
 - host implemented：上述服务逻辑与 C host 测试（含 ASan/UBSan）。
 - static recovered（`restricted` / `PENDING`，`device: not_probed`）：Band 10 Pro .036/.043 与 Band 11 .139/.155 的 PowerManager、
   MiWearScreen、vibrator、property、`mkdir` 入口，证据 `EVID-PLATFORM-HW-*`。.036/.139 由 .043/.155 的函数体匹配得到。

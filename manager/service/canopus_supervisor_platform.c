@@ -1778,7 +1778,8 @@ static int sup_bt_is_connected(void *cookie)
 #define SUP_BT_IS_CONNECTED 0
 #endif
 
-#if !defined(CANOPUS_SUP_CUSTOM_LOADER) && !defined(CANOPUS_SUP_HEADLESS)
+#if defined(CANOPUS_SUP_LV_TIMER_CREATE) && defined(CANOPUS_SUP_CLOCK_GETTIME) && \
+    !defined(CANOPUS_SUP_HEADLESS)
 static void *s_service_timer;
 static void (*s_service_timer_poll)(void *);
 static void *s_service_timer_data;
@@ -1791,6 +1792,7 @@ static void sup_service_timer_tick(void *timer)
 
 static int sup_start_timer_pump(void *cookie, void (*poll)(void *), void *data)
 {
+    typedef void *(*timer_create_fn)(void (*)(void *), uint32_t, void *);
     (void)cookie;
     if (s_service_timer != 0) {
         return s_service_timer_poll == poll && s_service_timer_data == data
@@ -1798,8 +1800,10 @@ static int sup_start_timer_pump(void *cookie, void (*poll)(void *), void *data)
     }
     s_service_timer_poll = poll;
     s_service_timer_data = data;
-    /* The Supervisor and its heartbeat are boot-resident; neither may be hot-unloaded. */
-    s_service_timer = canopus_fw_lv_timer_create(sup_service_timer_tick, 10u, 0);
+    /* Called on the UI owner. The heartbeat is boot-resident and follows
+     * LVGL suspend/resume on screen-off; UI reconstruction is unsupported. */
+    s_service_timer = ((timer_create_fn)(uintptr_t)CANOPUS_SUP_LV_TIMER_CREATE)
+        (sup_service_timer_tick, 10u, 0);
     return s_service_timer != 0 ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_NOMEM;
 }
 #define SUP_TIMER_PUMP sup_start_timer_pump

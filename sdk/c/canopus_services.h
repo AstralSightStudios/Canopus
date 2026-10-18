@@ -302,6 +302,11 @@ struct canopus_mem_obj {
 
 #define CANOPUS_TIMER_MAX_INTERVAL_MS UINT32_C(0x7fffffff)
 
+/* Timer creation/start and callbacks belong to the serialized module/UI task.
+ * Normal UI builds use a boot-resident 10 ms LVGL heartbeat. Delivery pauses
+ * while LVGL is suspended (including screen-off); missed periods are coalesced
+ * on resume. Headless builds have no event source and return UNSUPPORTED.
+ * Hot unload of the heartbeat and recovery after UI reconstruction are unsupported. */
 struct canopus_time_obj {
     uint32_t (*monotonic_ms)(const struct canopus_context_v1 *ctx);
     uint64_t (*realtime_ms)(const struct canopus_context_v1 *ctx);

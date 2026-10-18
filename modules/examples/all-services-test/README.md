@@ -53,7 +53,8 @@ python3 scripts/emu/run_services_test.py
 `--keep-device` 可保留关闭后的设备用于检查。
 
 此 NSH headless 配置没有 UI timer 事件源，通知也不可用，预期明确跳过这两组，不写“20/20 全绿”。
-普通 Band 10 Pro UI 构建使用已批准的 boot-resident LVGL 心跳；Band 11 原生 timer 仍受 restricted 策略限制。
+普通 Band 10 Pro 与 Band 11 UI 构建均使用 10 ms 的 boot-resident LVGL 心跳；Band 11 通过 exact-target
+私有适配接入，符号仍为 restricted/PENDING。息屏暂停期间不保证触发，UI 重建后的自动恢复不在支持范围内。
 
 ## Band 11 `.155` Mirage 流程
 
@@ -62,7 +63,8 @@ python3 scripts/emu/band11_smoke.py 155 --services
 ```
 
 与默认的 hello-portable SCAN 冒烟不同，services 模式必须真正启用并激活本模块，读取报告与 probe。
-生产通知可用时仅 timer 组跳过。结果与缺失前提必须如实记录，不能把 SCAN 成功当作服务测试通过。
+普通 UI 构建要求 timer 组执行，报告不接受跳过任何组。结果与缺失前提必须如实记录，
+不能把 SCAN 成功当作服务测试通过。
 
 ## 报告路径与证据边界
 

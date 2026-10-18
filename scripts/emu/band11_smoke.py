@@ -27,9 +27,7 @@ W, H = 212, 520
 PAIR_CONFIRM = (106, 478)   # check mark on the pairing dialog
 RUN_BUTTON = (106, 383)     # installer page
 
-EXPECTED_SERVICES_SKIPS = {
-    "Timers: no approved platform event source",
-}
+EXPECTED_SERVICES_SKIPS = set()
 
 
 def validate_report(report, probe, expected_skips=EXPECTED_SERVICES_SKIPS):

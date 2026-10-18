@@ -426,6 +426,12 @@ const SUP_10: &[Mapping] = &[
         symbol_name: "heap_free",
         address: Address::Callable,
     },
+    // Optional: the UI-owner heartbeat for service timers.
+    Mapping {
+        macro_name: "CANOPUS_SUP_LV_TIMER_CREATE",
+        symbol_name: "lv_timer_create",
+        address: Address::Callable,
+    },
     // Optional: backs the TIME service (monotonic milliseconds).
     Mapping {
         macro_name: "CANOPUS_SUP_CLOCK_GETTIME",
