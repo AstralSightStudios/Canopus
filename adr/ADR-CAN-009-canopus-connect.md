@@ -49,6 +49,8 @@ ADR-CAN-008 的 L2 0x43 通道只承载 CPC2 管理 RPC：手机发请求、Supe
 ## 证据与限制
 
 - 设备端：host 测试（含 ASan/UBSan）覆盖交付、拒绝、与管理器状态隔离、监听按会话失效、监听表上限；5 个 target 的 Supervisor 交叉构建与 ELF verifier 通过。
-- L2 后端的事件队列、`l2_peer` 和蓝牙 owner 上的发送顺序是 ARM 代码，**没有** Mirage 或真机运行；这条路径沿用 ADR-CAN-008 已有的发送机制，但新队列未经运行验证。
+- L2 后端的事件队列、`l2_peer` 和发送顺序是真实编译的 Cortex-M33 代码，在 Unicorn 模型里执行过（`scripts/tests/test_l2_backend.py` + `tests/l2/harness.c`）：
+  管理器响应先于事件离开、事件队列满即拒绝、`l2_peer` 随会话变化而不随同会话请求变化、会话失效的事件被丢弃而不发送。
+  这是固件边界被建模的 host/emulator 级证据，不覆盖真实蓝牙 owner 的持续调度；Mirage 与真机运行见 `docs/progress.md`。
 - AstroBox 侧：线格式、事件解码、状态解释、计数表和类型转换有单元测试；未用真实插件组件做端到端运行。
 - .043 的 Supervisor 因此增大约 3 KB（96,372 / 98,304 字节自设预算）。

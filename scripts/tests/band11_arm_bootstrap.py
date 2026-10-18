@@ -122,6 +122,13 @@ class Machine:
         for addr,fn in hooks.items():
             actual = self.fw(addr)
             self.firmware_hooks[addr] = u.hook_add(UC_HOOK_CODE,self.firmware_call,fn,actual,actual)
+        # A target with an L2 backend creates its bootstrap timer in the ctor. The
+        # firmware timer list is not initialised in this model, so only the
+        # creation call is answered with a handle (it is a real-firmware address).
+        l2_probe = ROOT / 'targets' / target / 'evidence/l2-sram-probe.json'
+        if l2_probe.exists():
+            timer = int(json.loads(l2_probe.read_text())['addresses']['TIMER'], 16) & ~1
+            self.firmware_hooks[timer] = u.hook_add(UC_HOOK_CODE,self.firmware_call,lambda:0x20009000,timer,timer)
         u.hook_add(UC_HOOK_CODE,lambda uc,a,s,d:uc.emu_stop(),None,self.stop,self.stop)
         u.hook_add(UC_HOOK_MEM_WRITE,self.mpu_write,None,0xe000ed98,0xe000eda3)
         u.hook_add(UC_HOOK_MEM_READ,self.mpu_read,None,0xe000ed9c,0xe000eda3)
@@ -405,9 +412,19 @@ class BootstrapTests(unittest.TestCase):
             self.assertEqual(m.peak_kernel,0,'the bootstrap drew on Kmem')
             self.assertEqual(sum(p not in m.frees for p in m.allocations),1)
             buffer=0x200d0000
-            m.uc.reg_write(UC_ARM_REG_R1,buffer);m.uc.reg_write(UC_ARM_REG_R2,384)
-            self.assertEqual(m.call(m.word(m.fops+8)),384)
-            self.assertEqual(m.word(buffer),0x43505331)
+            # CPC2 is the only device protocol: nothing can be read before a
+            # request was written, and an INSTALL request for an unknown token
+            # is answered by one header-only CPC2 response (result FAILED).
+            m.uc.reg_write(UC_ARM_REG_R1,buffer);m.uc.reg_write(UC_ARM_REG_R2,64)
+            self.assertEqual(m.call(m.word(m.fops+8)),0xffffffff)
+            request=cpc2.frame(2,b'nosuch\0')
+            m.uc.mem_write(buffer,request)
+            m.uc.reg_write(UC_ARM_REG_R1,buffer);m.uc.reg_write(UC_ARM_REG_R2,len(request))
+            self.assertEqual(m.call(m.word(m.fops+12)),len(request))
+            m.uc.reg_write(UC_ARM_REG_R1,buffer);m.uc.reg_write(UC_ARM_REG_R2,64)
+            self.assertEqual(m.call(m.word(m.fops+8)),36)
+            self.assertEqual(m.word(buffer),0x43504332)
+            self.assertEqual(m.word(buffer+28),6)
     def test_install_registers_launcher_and_renders_manager(self):
         m=Machine();self.assertEqual(m.boot(),0)
         # ITT-NE in client_exchange triggers a Unicorn 2.1.4 memory-hook defect.

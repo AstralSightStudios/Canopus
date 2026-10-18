@@ -6,6 +6,7 @@
 uint32_t test_l2_head[2];
 static uint32_t node[4], connection[4];
 static uint32_t originals, dispatched, sent;
+static uint8_t sent_head[8][2]; /* first two payload bytes of each frame sent */
 static int decrypt_error;
 static uintptr_t session = 0x20008000u;
 void *test_l2_loop = (void *)0x2000a000u;
@@ -29,7 +30,13 @@ int test_l2_crypto(void *s, int encrypt, uint16_t len, const void *in, void *out
 }
 int test_l2_send(void *s, const void *p)
 {
-    (void)s; (void)p;
+    /* struct l2_packet: channel, opcode, reserved, then the payload pointer. */
+    const uint8_t *payload = *(const uint8_t *const *)((const uint8_t *)p + 4);
+    (void)s;
+    if (sent < 8u) {
+        sent_head[sent][0] = payload[0];
+        sent_head[sent][1] = payload[1];
+    }
     sent++;
     return 0;
 }
@@ -61,6 +68,13 @@ void test_l2_timer_delete(void *timer)
     if (timer == (void *)0x20009000u) bootstrap_deleted++;
 }
 struct canopus_supervisor_v1 *canopus_supervisor_get(void) { return 0; }
+int canopus_supervisor_l2_rx_registered(uint8_t channel) { (void)channel; return 0; }
+int canopus_supervisor_l2_rx_dispatch(struct canopus_supervisor_v1 *sup, uint8_t channel,
+                                      const void *payload, uint16_t len)
+{
+    (void)sup; (void)channel; (void)payload; (void)len;
+    return 0;
+}
 int32_t canopus_supervisor_handle_l2_packet(struct canopus_supervisor_v1 *sup,
     const uint8_t *in, uint32_t len, uint8_t *out, uint32_t cap)
 {
@@ -110,5 +124,40 @@ int exercise(void)
     owner_tick(owner_handle);
     if (bt_tick) bt_tick(bt_handle);
     if (dispatched != 1u || sent != 1u) return 7;
+
+    /* CanopusConnect: the peer epoch follows the phone session, and events leave
+     * on their own queue, after Manager responses. */
+    {
+        uint8_t frame[2] = {0xe7, 1};
+        uint32_t epoch_old = sup_l2_peer(0), epoch_new, first = sent;
+        if (epoch_old == 0u) return 70;
+        rx(7u, 0x43u, 2u, request, sizeof(request)); /* the new session's first request */
+        owner_tick(owner_handle);
+        epoch_new = sup_l2_peer(0);
+        if (dispatched != 2u || epoch_new == epoch_old) return 71;
+        rx(7u, 0x43u, 2u, request, sizeof(request)); /* same session again */
+        owner_tick(owner_handle);
+        if (dispatched != 3u || sup_l2_peer(0) != epoch_new) return 72;
+        if (sup_l2_event(0, frame, 2u) != 0) return 73;
+        frame[1] = 2;
+        if (sup_l2_event(0, frame, 2u) != 0) return 74;
+        frame[1] = 3;
+        if (sup_l2_event(0, frame, 2u) == 0) return 75; /* two event slots, both taken */
+        if (sup_l2_event(0, frame, 0u) == 0 || sup_l2_event(0, 0, 2u) == 0) return 76;
+        /* Two responses wait, then the two events, in queue order. */
+        for (int i = 0; i < 4; i++) bt_tick(bt_handle);
+        if (sent != first + 4u || sent_head[first][0] != 0x42 || sent_head[first + 1u][0] != 0x42 ||
+            sent_head[first + 2u][0] != 0xe7 || sent_head[first + 2u][1] != 1 ||
+            sent_head[first + 3u][0] != 0xe7 || sent_head[first + 3u][1] != 2) return 77;
+        bt_tick(bt_handle);
+        if (sent != first + 4u) return 78;
+        /* An event queued for a session that is gone is dropped, not sent. */
+        frame[1] = 4;
+        if (sup_l2_event(0, frame, 2u) != 0) return 79;
+        session += 4u;
+        bt_tick(bt_handle);
+        if (sent != first + 4u) return 80;
+        if (sup_l2_event(0, frame, 2u) != 0) return 81; /* the slot was freed */
+    }
     return 0;
 }

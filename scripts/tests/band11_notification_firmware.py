@@ -224,20 +224,24 @@ class NotificationTests(unittest.TestCase):
 
     def test_service_notification_carries_module_source_title_and_body(self):
         m, fw = self.machine(real=True)
-        source, title, body = 0x200d9100, 0x200d9120, 0x200d9140
+        source, title, body, icon = 0x200d9100, 0x200d9120, 0x200d9140, 0x200d9180
         m.uc.mem_write(source, b'mod.portable\0')
         m.uc.mem_write(title, b'Custom title\0')
         m.uc.mem_write(body, '来自模块的通知'.encode() + b'\0')
-        for _ in range(2):
+        m.uc.mem_write(icon, b'/data/app/custom.bin\0')
+        # The first notice keeps the Canopus icon (no path), the second names one.
+        for pointer_to_icon in (0, icon):
             m.uc.reg_write(UC_ARM_REG_R1, title)
             m.uc.reg_write(UC_ARM_REG_R2, body)
-            m.uc.reg_write(UC_ARM_REG_R3, 0)
+            m.uc.reg_write(UC_ARM_REG_R3, pointer_to_icon)
             self.assertEqual(m.call(native_symbol(m, 'canopus_manager_native_notify'), source), 0)
         self.assertEqual(len(fw.events), 2)
         self.assertEqual(len(fw.reminders), 2)
         uids = [struct.unpack('<Q', m.uc.mem_read(e, 8))[0] for e in fw.events]
         self.assertEqual(uids, [0x43414E4F50555310, 0x43414E4F50555311])
-        for pointer in fw.events:
+        for pointer, icon_path in zip(fw.events, ('/data/canopus/manager_icon.bin', '/data/app/custom.bin')):
+            self.assertEqual(m.string(m.word(pointer + 28)), icon_path)
+            self.assertEqual(m.string(m.word(pointer + 32)), icon_path)
             self.assertEqual(m.string(m.word(pointer + 12)), 'Custom title')
             self.assertEqual(m.string(m.word(pointer + 16)), 'mod.portable')
             self.assertEqual(m.string(m.word(pointer + 20)), '来自模块的通知')
