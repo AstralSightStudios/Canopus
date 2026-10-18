@@ -23,6 +23,7 @@ pub mod hook;
 pub mod kv;
 pub mod mem;
 pub mod system;
+pub mod ui;
 
 use core::ptr::{read_volatile, write_volatile};
 

@@ -88,6 +88,7 @@ for s in \
     manager/ui/canopus_manager_native.c \
     app-sdk/ui/canopus_ui.c \
     third_party/sha256/sha256.c \
+    manager/target/canopus_ui_host.c \
     "$MANAGER_BACKEND" \
     runtime/control/canopus_control.c \
     runtime/lifecycle/canopus_lifecycle.c \
@@ -116,6 +117,7 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_manager_native.o" \
     "$OUT/canopus_ui.o" \
     "$OUT/sha256.o" \
+    "$OUT/canopus_ui_host.o" \
     "$OUT/$BACKEND_OBJECT" \
     "$OUT/canopus_control.o" \
     "$OUT/canopus_lifecycle.o" \

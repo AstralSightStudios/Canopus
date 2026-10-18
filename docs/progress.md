@@ -44,6 +44,13 @@
 - 仅 .043 / .155 提供（需要 L2 后端），其它 target 的 `ctx->connect` 为空。发送队列、`l2_peer` 与 owner 上的发送顺序是 ARM 代码，
   没有 Mirage 或真机运行；未提升任何符号或能力状态。
 
+## 原生 UI 宿主后端与模块页面（2026-10-18）
+
+- 通用后端 `manager/target/canopus_ui_host.c`（Band 10 Pro / Band 11 共用，ADR-CAN-010）：Manager 自己的三个页面改走它；`ctx->ui_ext`
+  让模块登记页面入口，Manager 详情页提供「打开界面」，由 Manager 应用的第 4 个固件页面承载。Manager 的确认框改为语义 `DIALOG`。
+- host implemented：入口登记/校验/释放、详情页行与路由、对话框节点顺序（C host 测试，含 ASan/UBSan）；Band 11 固件仿真下 Manager 渲染全部通过。
+- Band 10 Pro 的 `supervisor_max_size` 98,304 → 114,688（构建预算，不是实测的固件上限，未在真机验证）。未提升任何符号或能力状态。
+
 ## 阶段状态
 
 | Phase | 状态 | 备注 |

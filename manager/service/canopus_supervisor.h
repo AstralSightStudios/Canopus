@@ -393,6 +393,11 @@ const struct canopus_connect_obj *canopus_supervisor_connect_bind(struct canopus
 uint32_t canopus_supervisor_connect_request(const struct canopus_proto_request_v1 *req,
                                             const uint8_t *payload, uint8_t *status);
 void canopus_supervisor_connect_release(uint32_t slot);
+/* Copies the page entry module `slot` registered through ctx->ui->set_entry; its
+ * label points to storage that outlives the call. Returns 0, or -1 when the slot
+ * has no entry or no loaded module. */
+int canopus_supervisor_ui_entry(struct canopus_supervisor_v1 *sup, uint32_t slot,
+                                struct canopus_ui_entry_v1 *out);
 /* Log ring (newest last). Returns the message or 0 past the end. */
 uint32_t canopus_supervisor_log_count(void);
 const char *canopus_supervisor_log_entry(uint32_t index, uint32_t *level,

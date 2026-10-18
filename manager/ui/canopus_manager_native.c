@@ -32,6 +32,7 @@
 #define UI_KEY_DETAIL_DISABLE    213u
 #define UI_KEY_DETAIL_REMOVE     214u
 #define UI_KEY_DETAIL_ACTIVATE   215u
+#define UI_KEY_DETAIL_OPEN_UI    216u
 #define UI_KEY_CONFIRM_SECTION   300u
 #define UI_KEY_CONFIRM_MESSAGE   301u
 #define UI_KEY_CONFIRM_ACCEPT    302u
@@ -457,6 +458,14 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
         if (rc != CANOPUS_UI_OK) return rc;
     }
 
+    if (module->has_ui && module_is_active(module)) {
+        rc = append_action(tree, UI_KEY_DETAIL_OPEN_UI, "打开界面", sizeof("打开界面") - 1u,
+                           module->ui_label[0] != '\0' ? module->ui_label : "模块提供的页面",
+                           module->ui_label[0] != '\0' ? sizeof(module->ui_label)
+                                                        : sizeof("模块提供的页面") - 1u,
+                           CANOPUS_MANAGER_EVENT_OPEN_UI, 1);
+        if (rc != CANOPUS_UI_OK) return rc;
+    }
     if (canopus_manager_can_activate(model, model->selected)) {
         rc = append_action(tree, UI_KEY_DETAIL_ACTIVATE, "立即激活", sizeof("立即激活") - 1u,
                            "本次运行加载，需确认", sizeof("本次运行加载，需确认") - 1u,
@@ -518,17 +527,20 @@ static int32_t render_confirmation(struct canopus_manager_native_v1 *native,
 {
     const char *message = confirmation_message(native->confirm_event);
     int32_t rc;
-    rc = CANOPUS_UI_SECTION(tree, UI_KEY_CONFIRM_SECTION, "确认操作");
+    /* A dialog: the message, then the buttons in message-box order (cancel,
+     * confirm). Where the backend has no message box they are ordinary rows. */
+    rc = CANOPUS_UI_COMPONENT(tree, UI_KEY_CONFIRM_SECTION, CANOPUS_UI_NODE_DIALOG,
+                              "确认操作", "", 0u, CANOPUS_UI_NODE_FLAG_VISIBLE);
     if (rc != CANOPUS_UI_OK) return rc;
     rc = append_text(tree, UI_KEY_CONFIRM_MESSAGE, message, 64u, 2u);
-    if (rc != CANOPUS_UI_OK) return rc;
-    rc = append_action(tree, UI_KEY_CONFIRM_ACCEPT, "确认", sizeof("确认") - 1u,
-                       "应用此操作", sizeof("应用此操作") - 1u,
-                       CANOPUS_MANAGER_EVENT_CONFIRM, 1);
     if (rc != CANOPUS_UI_OK) return rc;
     rc = append_action(tree, UI_KEY_CONFIRM_CANCEL, "取消", sizeof("取消") - 1u,
                        "返回且不更改", sizeof("返回且不更改") - 1u,
                        CANOPUS_MANAGER_EVENT_CANCEL, 1);
+    if (rc != CANOPUS_UI_OK) return rc;
+    rc = append_action(tree, UI_KEY_CONFIRM_ACCEPT, "确认", sizeof("确认") - 1u,
+                       "应用此操作", sizeof("应用此操作") - 1u,
+                       CANOPUS_MANAGER_EVENT_CONFIRM, 1);
     if (rc != CANOPUS_UI_OK) return rc;
     return CANOPUS_UI_END(tree);
 }
@@ -690,6 +702,12 @@ static int32_t manager_event(void *cookie, uint32_t generation,
         if (canopus_manager_goto(model, CANOPUS_MANAGER_VIEW_MODULE_LIST, 0) != 0)
             return CANOPUS_UI_ERR_STATE;
         return route_or_render(native, CANOPUS_MANAGER_ROUTE_MODULES);
+    case CANOPUS_MANAGER_EVENT_OPEN_UI:
+        if (model->selected >= model->module_count ||
+            !model->modules[model->selected].has_ui) {
+            return CANOPUS_UI_ERR_STATE;
+        }
+        return route_or_render(native, CANOPUS_MANAGER_ROUTE_MODULE_UI);
     case CANOPUS_MANAGER_EVENT_CANCEL:
         if (native->confirm_event == 0u) return CANOPUS_UI_ERR_STATE;
         native->confirm_event = 0u;

@@ -25,6 +25,7 @@ BOOT_WAIT = 70
 EXPECTED_SKIPS = {
     "Timers: no approved platform event source",
     "Notify: platform notifications unavailable",
+    "UI pages: no Manager UI in this build",
 }
 
 

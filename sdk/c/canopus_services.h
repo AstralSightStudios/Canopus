@@ -425,6 +425,40 @@ struct canopus_ui_action_row_props_v1;
 struct canopus_ui_switch_row_props_v1;
 struct canopus_ui_navigation_header_props_v1;
 struct canopus_ui_component_props_v1;
+struct canopus_ui_style_v1;
+struct canopus_ui_layout_v1;
+
+/* ui pages: a module can show its own page, hosted by the Manager and drawn by
+ * the Supervisor's native backend (ADR-CAN-010), through ctx->ui_ext. set_entry registers the entry
+ * (NULL removes it); while the module runs, its Manager detail page offers
+ * "open interface" with `label` (at most 23 bytes, may be NULL) as the detail.
+ * Opening runs on the UI task:
+ *   on_open  builds the first tree into `ui` with the builder calls above and
+ *            commits it before returning; failing, or not committing, cancels
+ *            the page. `ui` stays valid until on_close returns.
+ *   on_event a node's event id was activated; build the next tree into `ui`.
+ *   on_back  (optional, Band 10 Pro only: Band 11's stock title finishes the
+ *            page itself) the title's back was used; return 0 when handled,
+ *            e.g. after popping a route, otherwise the page closes.
+ *   on_close the page was closed by the user or by close_page (not on unload).
+ * One module page is open at a time; callbacks must return promptly. A tree is
+ * at most CANOPUS_UI_MAX_NODES nodes. close_page finishes the caller's open
+ * page (STATE when it has none). UNSUPPORTED on a build without the Manager UI. */
+#define CANOPUS_UI_ENTRY_LABEL_MAX 24u
+
+struct canopus_ui_entry_v1 {
+    uint32_t struct_size;
+    const char *label;
+    int32_t (*on_open)(const struct canopus_context_v1 *ctx,
+                       struct canopus_ui_context_v1 *ui, void *user_data);
+    int32_t (*on_event)(const struct canopus_context_v1 *ctx,
+                        struct canopus_ui_context_v1 *ui, uint32_t key,
+                        uint32_t event_id, void *user_data);
+    int32_t (*on_back)(const struct canopus_context_v1 *ctx,
+                       struct canopus_ui_context_v1 *ui, void *user_data);
+    void (*on_close)(const struct canopus_context_v1 *ctx, void *user_data);
+    void *user_data;
+};
 
 struct canopus_ui_obj {
     uint32_t (*capabilities)(const struct canopus_ui_context_v1 *context);
@@ -441,6 +475,16 @@ struct canopus_ui_obj {
     int32_t  (*switch_row)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_switch_row_props_v1 *props);
     int32_t  (*navigation_header)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_navigation_header_props_v1 *props);
     int32_t  (*component)(struct canopus_ui_tree_v1 *tree, uint32_t key, uint16_t type, const struct canopus_ui_component_props_v1 *props);
+};
+
+/* ctx->ui_ext extends ctx->ui: per-node style and layout for the tree being built,
+ * and the module's page entry. Its own object so a Supervisor that predates it
+ * is detected through the context's struct_size, like ctx->connect. */
+struct canopus_ui_ext_obj {
+    int32_t (*node_set_style)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_style_v1 *style);
+    int32_t (*node_set_layout)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_layout_v1 *layout);
+    int32_t (*set_entry)(const struct canopus_context_v1 *ctx, const struct canopus_ui_entry_v1 *entry);
+    int32_t (*close_page)(const struct canopus_context_v1 *ctx);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -496,6 +540,7 @@ struct canopus_context_v1 {
     const struct canopus_bus_obj       *bus;
     const struct canopus_ui_obj        *ui;
     const struct canopus_connect_obj   *connect;
+    const struct canopus_ui_ext_obj    *ui_ext;
 };
 
 /* Non-zero when the group is available at least at `min_version`. */

@@ -151,6 +151,10 @@ struct canopus_sup_platform_v1 {
      * reconnects, which is when remote listeners lapse. */
     int (*l2_event)(void *cookie, const void *frame, uint16_t len);
     uint32_t (*l2_peer)(void *cookie);
+    /* Module UI pages (ADR-CAN-010): finish the page the module in `slot` has
+     * open, if any (1 when one was closed). Present only where the Manager UI
+     * is; without it ctx->ui->set_entry answers UNSUPPORTED. */
+    int (*ui_page_close)(void *cookie, uint32_t slot);
     int (*validate_receipt)(void *cookie, const void *receipt);
 };
 

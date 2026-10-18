@@ -42,6 +42,12 @@ static struct canopus_notify_obj s_notify_obj;
 static struct canopus_system_obj s_system_obj;
 static struct canopus_bluetooth_obj s_bt_obj;
 static const struct canopus_connect_obj *s_connect_obj;
+static struct canopus_ui_ext_obj s_ui_ext_obj;
+static struct {
+    struct canopus_ui_entry_v1 entry;
+    char label[CANOPUS_UI_ENTRY_LABEL_MAX];
+    uint8_t used;
+} s_ui_entries[CANOPUS_SUP_MODULE_SLOTS];
 static struct canopus_haptics_obj s_haptics_obj;
 static struct canopus_display_obj s_display_obj;
 static struct canopus_bus_obj s_bus_obj;
@@ -1877,6 +1883,57 @@ static uint32_t svc_bt_adapter_state(const struct canopus_context_v1 *ctx)
     return state;
 }
 
+/* ---- UI page entries (ADR-CAN-010) ------------------------------------ */
+
+static int32_t svc_ui_set_entry(const struct canopus_context_v1 *ctx,
+                                const struct canopus_ui_entry_v1 *entry)
+{
+    uint32_t len = 0u;
+    if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
+    if (s_sup->platform == 0 || s_sup->platform->ui_page_close == 0) {
+        return CANOPUS_SVC_ERR_UNSUPPORTED;
+    }
+    if (entry == 0) {
+        canopus_memset(&s_ui_entries[ctx->slot], 0, sizeof(s_ui_entries[ctx->slot]));
+        (void)s_sup->platform->ui_page_close(s_sup->platform_cookie, ctx->slot);
+        return CANOPUS_SVC_OK;
+    }
+    if (entry->struct_size != sizeof(*entry) || entry->on_open == 0) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    if (entry->label != 0) {
+        len = (uint32_t)canopus_strnlen(entry->label, CANOPUS_UI_ENTRY_LABEL_MAX);
+        if (len >= CANOPUS_UI_ENTRY_LABEL_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    canopus_memset(&s_ui_entries[ctx->slot], 0, sizeof(s_ui_entries[ctx->slot]));
+    s_ui_entries[ctx->slot].entry = *entry;
+    if (len != 0u) canopus_memcpy(s_ui_entries[ctx->slot].label, entry->label, len);
+    s_ui_entries[ctx->slot].entry.label = s_ui_entries[ctx->slot].label;
+    s_ui_entries[ctx->slot].used = 1u;
+    return CANOPUS_SVC_OK;
+}
+
+static int32_t svc_ui_close_page(const struct canopus_context_v1 *ctx)
+{
+    if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
+    if (s_sup->platform == 0 || s_sup->platform->ui_page_close == 0) {
+        return CANOPUS_SVC_ERR_UNSUPPORTED;
+    }
+    return s_sup->platform->ui_page_close(s_sup->platform_cookie, ctx->slot)
+               ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_STATE;
+}
+
+int canopus_supervisor_ui_entry(struct canopus_supervisor_v1 *sup, uint32_t slot,
+                                struct canopus_ui_entry_v1 *out)
+{
+    if (sup == 0 || sup != s_sup || out == 0 || slot >= CANOPUS_SUP_MODULE_SLOTS ||
+        !s_ui_entries[slot].used || sup->modules[slot].state == 0u) {
+        return -1;
+    }
+    *out = s_ui_entries[slot].entry;
+    return 0;
+}
+
 /* ---- table / contexts ------------------------------------------------ */
 
 void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
@@ -1900,6 +1957,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     canopus_memset(&s_haptic, 0, sizeof(s_haptic));
     canopus_memset(&s_events, 0, sizeof(s_events));
     canopus_memset(s_l2_rx, 0, sizeof(s_l2_rx));
+    canopus_memset(s_ui_entries, 0, sizeof(s_ui_entries));
     s_connect_obj = canopus_supervisor_connect_bind(sup);
 
     canopus_hook_engine_init();
@@ -2073,6 +2131,10 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_ui_obj.switch_row = canopus_ui_switch_row;
     s_ui_obj.navigation_header = canopus_ui_navigation_header;
     s_ui_obj.component = canopus_ui_component;
+    s_ui_ext_obj.node_set_style = canopus_ui_node_set_style;
+    s_ui_ext_obj.node_set_layout = canopus_ui_node_set_layout;
+    s_ui_ext_obj.set_entry = svc_ui_set_entry;
+    s_ui_ext_obj.close_page = svc_ui_close_page;
 
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         s_contexts[i].struct_size = sizeof(struct canopus_context_v1);
@@ -2096,6 +2158,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_contexts[i].bus = &s_bus_obj;
         s_contexts[i].ui = &s_ui_obj;
         s_contexts[i].connect = s_connect_obj;
+        s_contexts[i].ui_ext = &s_ui_ext_obj;
     }
 
 }
@@ -2141,6 +2204,15 @@ void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,
         }
     }
     s_events.wanted = svc_events_wanted();
+
+    /* Its UI page entry goes first, so the page being closed does not call a
+     * module that is no longer there. */
+    if (s_ui_entries[slot].used) {
+        canopus_memset(&s_ui_entries[slot], 0, sizeof(s_ui_entries[slot]));
+        if (sup->platform != 0 && sup->platform->ui_page_close != 0) {
+            (void)sup->platform->ui_page_close(sup->platform_cookie, slot);
+        }
+    }
 
     /* Hardware the module still holds: vibration, wake locks, brightness,
      * L2 receive registrations and its CanopusConnect receiver. */

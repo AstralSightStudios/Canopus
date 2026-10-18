@@ -246,8 +246,8 @@ class FirmwareIntegrationTests(unittest.TestCase):
         self.assertEqual(m.string(m.word(app + 12)), 'com.canopus.manager')
         self.assertEqual(m.word(app + 0x48) & 1, 0)
         pages = m.word(app + 0x38)
-        self.assertEqual(m.word(pages) & 0xffff, 3)
-        for i in range(3):
+        self.assertEqual(m.word(pages) & 0xffff, 4)
+        for i in range(4):
             page = m.word(pages + 8 + 4 * i)
             self.assertEqual(m.word(page + 0x14), 0xca0000 + i)
             self.assertEqual(m.call(0x0c695a44, 0xca0000 + i), page)

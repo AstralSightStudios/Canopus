@@ -20,6 +20,7 @@ enum canopus_manager_native_route {
     CANOPUS_MANAGER_ROUTE_OVERVIEW = 1,
     CANOPUS_MANAGER_ROUTE_MODULES,
     CANOPUS_MANAGER_ROUTE_MODULE_DETAIL,
+    CANOPUS_MANAGER_ROUTE_MODULE_UI, /* the page the selected module registered */
 };
 
 typedef int32_t (*canopus_manager_native_route_v1)(
@@ -44,6 +45,7 @@ enum canopus_manager_native_event {
     CANOPUS_MANAGER_EVENT_CANCEL,
     CANOPUS_MANAGER_EVENT_ACTIVATE,
     CANOPUS_MANAGER_EVENT_SCAN,
+    CANOPUS_MANAGER_EVENT_OPEN_UI,
     CANOPUS_MANAGER_EVENT_OPEN_MODULE_BASE = 0x100u,
 };
 

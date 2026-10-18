@@ -35,6 +35,9 @@ extern volatile struct canopus_manager_target_record canopus_manager_target_reco
 
 void canopus_manager_target_render_diagnostics(uint8_t out[36]);
 int canopus_manager_native_install(void);
+/* Finishes the page a module opened through ctx->ui when it belongs to `slot`
+ * (the module closed it or was unloaded). Returns 1 when a page was closed. */
+int canopus_manager_target_module_page_close(uint32_t slot);
 int canopus_manager_native_notify_module_installed(void);
 /* Post a notification attributed to `source` with a caller-supplied title and
  * body (copied by the firmware synchronously). `icon` is the absolute path of

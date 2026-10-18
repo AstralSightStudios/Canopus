@@ -24,8 +24,8 @@ Canopus 采用**微内核服务对象（Service Objects）**架构。穿戴设�
 │   ctx->fs   │   ctx->kv   │  ctx->mem   │  ctx->time  │  ctx->hook  │ ctx->haptics│ctx->disp│
 │  (文件系统) │  (键值存储) │  (动态堆)   │ (时钟/定时) │ (通用 Hook) │ (振动马达)  │(屏幕控制│
 ├─────────────┼─────────────┼─────────────┼─────────────┼─────────────┼─────────────┼─────────┤
-│  ctx->bus   │   ctx->bt   │  ctx->log   │ ctx->notify │ ctx->system │ctx->connect │         │
-│  (事件总线) │  (L2 蓝牙)  │ (结构化日志)│ (通知弹窗)  │ (硬件/电量) │(与插件消息) │         │
+│  ctx->bus   │   ctx->bt   │  ctx->log   │ ctx->notify │ ctx->system │ctx->connect │ctx->ui  │
+│  (事件总线) │  (L2 蓝牙)  │ (结构化日志)│ (通知弹窗)  │ (硬件/电量) │(与插件消息) │(UI/页面)│
 └──────┬──────┴──────┬──────┴──────┬──────┴──────┬──────┴──────┬──────┴─────────────┴────┬────┘
        │             │             │             │             │                         │
        ▼             ▼             ▼             ▼             ▼                         ▼
@@ -379,6 +379,33 @@ struct canopus_connect_obj {
 
 AstroBox 一侧见 `astrobox:psys-host-v4/canopusconnect`（`send` / `listen` / `unlisten`，需要插件权限 `canopusconnect.send` 与 `canopusconnect.listen`），
 消息经插件导出的 `astrobox:psys-plugin-v4/canopusconnect.on-message` 送达。
+
+
+### 2.12 `ctx->ui` / `ctx->ui_ext` — 语义 UI 树与模块页面
+
+`ctx->ui` 是 `app-sdk/ui` 的语义 UI 树构造器（页面、分区、文本、状态/操作/开关行、按钮、复选/单选、滑块、进度、图片、导航头、
+列表/滚动/对话框等容器，ABI 1.4，最多 32 个节点）。`ctx->ui_ext` 补充 `node_set_style`、`node_set_layout`，
+并让模块在 Manager 里提供自己的页面（ADR-CAN-010）：
+
+```c
+struct canopus_ui_ext_obj {
+    int32_t (*node_set_style)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_style_v1 *style);
+    int32_t (*node_set_layout)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_layout_v1 *layout);
+    int32_t (*set_entry)(const struct canopus_context_v1 *ctx, const struct canopus_ui_entry_v1 *entry); /* NULL 移除 */
+    int32_t (*close_page)(const struct canopus_context_v1 *ctx);
+};
+```
+- 旧 Supervisor 没有 `ui_ext`：先查 `ctx->struct_size >= sizeof(struct canopus_context_v1)` 且 `ctx->ui_ext != 0`。
+- `set_entry` 登记页面入口（`label` 最长 23 字节，可为 NULL；`on_open` 必填）。模块运行期间，它在 Manager 的详情页多一行「打开界面」。
+  没有 Manager UI 的构建（无头）返回 `ERR_UNSUPPORTED`；入口随模块卸载一起清除，并先关闭它已打开的页面。
+- 用户打开时在 UI 任务上调用 `on_open(ctx, ui, user)`：用 `ctx->ui->tree_begin(ui, &tree)` 等构树并 `tree_commit`，返回前必须已提交，
+  否则页面不显示。`ui` 一直有效到 `on_close` 返回。之后点击某行 → `on_event(ctx, ui, key, event_id, user)`，在里面构建下一棵树。
+- `on_back`（可选，仅 Band 10 Pro：Band 11 的原生标题自己结束页面）：返回 0 表示已处理（例如弹出自己的路由），否则页面关闭。
+  `on_close`：用户或 `close_page` 关闭页面时调用，卸载时不调用。`close_page` 结束调用者自己已打开的页面，没有则 `ERR_STATE`。
+- 同一时刻只开一个模块页面；回调要尽快返回；页面标题只在页面创建时设置。Rust：`canopus_abi::{CanopusUiExtObj, UiEntryV1}`。
+- 渲染后端（Band 10 Pro 与 Band 11 共用 `manager/target/canopus_ui_host.c`，Manager 自己的页面也走它）支持：导航页/导航头（页面标题）、
+  分区/列表/滚动/分隔/间距（展平）、文本/富文本、各类行与按钮、图片、进度条与滑块（只读；自动尺寸为整行宽的条）、对话框
+  （Band 10 Pro 为固件 msgbox，Band 11 内联）。其它节点类型提交失败并保留上一版内容。
 
 ---
 

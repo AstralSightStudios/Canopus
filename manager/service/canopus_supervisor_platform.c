@@ -1109,6 +1109,17 @@ static int sup_list_packages(void *cookie, uint32_t index, char *id)
 #define sup_list_packages 0
 #endif
 
+#ifdef CANOPUS_SUP_HEADLESS
+#define SUP_UI_PAGE_CLOSE 0
+#else
+static int sup_ui_page_close(void *cookie, uint32_t slot)
+{
+    (void)cookie;
+    return canopus_manager_target_module_page_close(slot);
+}
+#define SUP_UI_PAGE_CLOSE sup_ui_page_close
+#endif
+
 static int sup_validate_receipt(void *cookie, const void *receipt)
 {
     (void)cookie;
@@ -1863,5 +1874,6 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     0, /* l2_event: no L2 backend, so no CanopusConnect */
     0, /* l2_peer */
 #endif
+    SUP_UI_PAGE_CLOSE,
     sup_validate_receipt,
 };

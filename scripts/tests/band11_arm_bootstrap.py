@@ -289,7 +289,7 @@ class Machine:
         return 0xdeadc0de
     def app_install(self):
         ptr,pages,count=self.reg(0),self.reg(1),self.reg(2)
-        assert count==3 and self.string(self.word(ptr+12))=='com.canopus.manager'
+        assert count==4 and self.string(self.word(ptr+12))=='com.canopus.manager'
         assert self.string(self.word(ptr+16))=='/data/canopus/manager_icon.bin'
         assert self.word(ptr+20)&0xffff==0xca and self.word(ptr+36)&1
         self.pages=[self.word(pages+4*i) for i in range(count)]

@@ -15,7 +15,8 @@
  *   11. LOG (info, warn, error, debug, write)
  *   12. NOTIFY (post, post_with_icon)
  *   13. CONNECT (CanopusConnect: listen, send text/binary, remote_listening)
- *   14. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Slider, Checkbox, Divider)
+ *   14. UI pages (set_entry, close_page, node_set_style/layout through ctx->ui_ext)
+ *   15. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Slider, Checkbox, Divider)
  */
 
 #include "canopus_abi.h"
@@ -871,6 +872,18 @@ static void run_ui_builder_tests(const struct canopus_context_v1 *ctx)
         p_comp.event_id = 0;
         if (ctx->ui->component(tree, 11, CANOPUS_UI_NODE_DIVIDER, &p_comp) != CANOPUS_UI_OK) ok = 0;
 
+        /* Per-node style and layout (ctx->ui_ext). */
+        if (ctx->ui_ext != 0) {
+            struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
+            struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
+            style.variant = CANOPUS_UI_VARIANT_FILLED;
+            layout.width = 120;
+            if (ctx->ui_ext->node_set_style(tree, 6, &style) != CANOPUS_UI_OK) ok = 0;
+            if (ctx->ui_ext->node_set_layout(tree, 6, &layout) != CANOPUS_UI_OK) ok = 0;
+        } else {
+            ok = 0;
+        }
+
         if (ctx->ui->end(tree) != CANOPUS_UI_OK) ok = 0;
         if (ctx->ui->end(tree) != CANOPUS_UI_OK) ok = 0;
 
@@ -883,6 +896,44 @@ static void run_ui_builder_tests(const struct canopus_context_v1 *ctx)
     }
 
     log_test("UI: declarative builder using snapshot test backend", ok);
+}
+
+static int32_t page_entry_open(const struct canopus_context_v1 *ctx,
+                               struct canopus_ui_context_v1 *ui, void *user_data)
+{
+    (void)ctx; (void)ui; (void)user_data;
+    return 0;
+}
+
+/* The page entry is registered and removed again; opening needs a person at the
+ * Manager, so it is not driven here. A build without the Manager UI says so. */
+static void run_ui_page_tests(const struct canopus_context_v1 *ctx)
+{
+    struct canopus_ui_entry_v1 entry;
+    int32_t rc;
+    int ok = 1;
+
+    if (ctx->struct_size < sizeof(struct canopus_context_v1) || ctx->ui_ext == 0) {
+        log_skip("UI pages: Supervisor predates module pages");
+        return;
+    }
+    canopus_memset(&entry, 0, sizeof(entry));
+    entry.struct_size = sizeof(entry);
+    entry.label = "services_test";
+    entry.on_open = page_entry_open;
+    rc = ctx->ui_ext->set_entry(ctx, &entry);
+    if (rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
+        if (ctx->ui_ext->close_page(ctx) != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+        if (ok) log_skip("UI pages: no Manager UI in this build");
+        else log_test("UI pages: unsupported build answers consistently", 0);
+        return;
+    }
+    if (rc != CANOPUS_SVC_OK) ok = 0;
+    entry.struct_size = 1u;
+    if (ctx->ui_ext->set_entry(ctx, &entry) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+    if (ctx->ui_ext->close_page(ctx) != CANOPUS_SVC_ERR_STATE) ok = 0; /* nothing open */
+    if (ctx->ui_ext->set_entry(ctx, 0) != CANOPUS_SVC_OK) ok = 0;
+    log_test("UI pages: entry registered, validated and removed", ok);
 }
 
 /* ========================================================================= */
@@ -928,6 +979,7 @@ static int32_t test_activate(const struct canopus_context_v1 *ctx)
     run_connect_tests(ctx);
     write_breadcrumb("RUN_UI\n");
     run_ui_builder_tests(ctx);
+    run_ui_page_tests(ctx);
     write_breadcrumb("ALL_RUN_DONE\n");
 
     report_append("========================================\n");

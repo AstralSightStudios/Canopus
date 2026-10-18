@@ -26,6 +26,7 @@ extern "C" {
 
 #define CANOPUS_MANAGER_MAX_MODULES 16u
 #define CANOPUS_MANAGER_MODULE_ID_MAX 32u
+#define CANOPUS_MANAGER_UI_LABEL_MAX 24u
 
 /* Views. */
 enum canopus_manager_view {
@@ -50,6 +51,9 @@ struct canopus_manager_module_v1 {
     uint32_t risk;
     uint32_t has_previous;    /* rollback target exists */
     int32_t activation_error;
+    uint32_t slot;            /* Supervisor slot, for the module's own UI page */
+    uint32_t has_ui;          /* the module registered a UI page entry */
+    char ui_label[CANOPUS_MANAGER_UI_LABEL_MAX];
 };
 
 struct canopus_manager_model_v1 {

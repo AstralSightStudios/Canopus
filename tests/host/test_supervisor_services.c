@@ -347,6 +347,15 @@ static int p_l2_event(void *c, const void *frame, uint16_t n)
     return 0;
 }
 static uint32_t p_l2_peer(void *c) { (void)c; return g_peer; }
+static int g_ui_closes, g_ui_close_result;
+static uint32_t g_ui_close_slot;
+static int p_ui_page_close(void *c, uint32_t slot)
+{
+    (void)c;
+    g_ui_closes++;
+    g_ui_close_slot = slot;
+    return g_ui_close_result;
+}
 
 static const struct canopus_sup_platform_v1 platform_with_fs = {
     .target_id = "xiaomi-band-10-pro-3.101.030",
@@ -407,8 +416,11 @@ static void init_hw_platform(void)
     platform_with_hw.l2_send = p_l2_send;
     platform_with_hw.l2_event = p_l2_event;
     platform_with_hw.l2_peer = p_l2_peer;
+    platform_with_hw.ui_page_close = p_ui_page_close;
     g_peer = 1u;
     g_event_frames = g_event_rc = 0;
+    g_ui_closes = g_ui_close_result = 0;
+    g_ui_close_slot = 99u;
     g_vib_count = g_vib_cancels = g_vib_rc = 0;
     g_screen = 2;
     g_wake_calls = g_brightness_restores = 0;
@@ -1688,6 +1700,109 @@ TEST(connect_is_absent_without_the_l2_event_hooks)
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_CONNECT, 1));
 }
 
+/* ---- module UI page entries (ADR-CAN-010) --------------------------- */
+
+static int32_t entry_open(const struct canopus_context_v1 *ctx,
+                          struct canopus_ui_context_v1 *ui, void *user)
+{
+    (void)ctx; (void)ui; (void)user;
+    return 0;
+}
+
+TEST(ui_entry_is_validated_copied_listed_and_dropped_with_the_module)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    struct canopus_ui_entry_v1 entry, out;
+    char label[8] = "设置";
+    char long_label[CANOPUS_UI_ENTRY_LABEL_MAX + 1u];
+    int token = 0;
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+    memset(&entry, 0, sizeof(entry));
+    entry.struct_size = sizeof(entry);
+    entry.label = label;
+    entry.on_open = entry_open;
+    entry.user_data = &token;
+
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), -1);
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    memset(label, 'x', sizeof(label) - 1u); /* the Supervisor kept its own copy */
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), 0);
+    CHECK(strcmp(out.label, "设置") == 0);
+    CHECK(out.on_open == entry_open && out.user_data == &token);
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 1u, &out), -1); /* no module there */
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, CANOPUS_SUP_MODULE_SLOTS, &out), -1);
+
+    /* a refused replacement leaves the registered entry alone */
+    entry.struct_size = 1u;
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    entry.struct_size = sizeof(entry);
+    entry.on_open = 0;
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    entry.on_open = entry_open;
+    memset(long_label, 'l', sizeof(long_label) - 1u);
+    long_label[sizeof(long_label) - 1u] = '\0';
+    entry.label = long_label;
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), 0);
+    CHECK(strcmp(out.label, "设置") == 0);
+    entry.label = 0; /* a label is optional */
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), 0);
+    CHECK(out.label[0] == '\0');
+
+    /* removing the entry also closes a page of that module that is open */
+    g_ui_closes = 0;
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, 0), CANOPUS_SVC_OK);
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), -1);
+    CHECK_EQ(g_ui_closes, 1);
+    CHECK_EQ(g_ui_close_slot, 0u);
+
+    /* an unloading module loses its entry, and its open page is closed first */
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    g_ui_closes = 0;
+    canopus_supervisor_release_services(&sup, 0u);
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), -1);
+    CHECK_EQ(g_ui_closes, 1);
+    canopus_supervisor_release_services(&sup, 0u); /* nothing left to close */
+    CHECK_EQ(g_ui_closes, 1);
+}
+
+TEST(ui_close_page_finishes_only_the_callers_open_page)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx, *other;
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+    other = add_second_module(&sup);
+    g_ui_close_result = 0; /* the Manager has no page of this module open */
+    CHECK_EQ(ctx->ui_ext->close_page(ctx), CANOPUS_SVC_ERR_STATE);
+    CHECK_EQ(g_ui_close_slot, 0u);
+    g_ui_close_result = 1;
+    CHECK_EQ(other->ui_ext->close_page(other), CANOPUS_SVC_OK);
+    CHECK_EQ(g_ui_close_slot, 1u);
+}
+
+TEST(ui_pages_are_unsupported_without_the_manager_ui_hook)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 headless;
+    const struct canopus_context_v1 *ctx;
+    struct canopus_ui_entry_v1 entry;
+    init_hw_platform();
+    headless = platform_with_hw;
+    headless.ui_page_close = 0;
+    setup(&sup, &headless);
+    ctx = canopus_supervisor_context(&sup, 0);
+    memset(&entry, 0, sizeof(entry));
+    entry.struct_size = sizeof(entry);
+    entry.on_open = entry_open;
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, 0), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->ui_ext->close_page(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
+}
+
 static int g_event_calls;
 static uint8_t g_event_payload[2];
 static uint32_t g_event_len;
@@ -1829,6 +1944,12 @@ static struct test_registry supervisor_services_tests[] = {
       connect_publishes_module_messages_only_to_the_listening_phone_session_wrapper },
     { "connect_is_absent_without_the_l2_event_hooks",
       connect_is_absent_without_the_l2_event_hooks_wrapper },
+    { "ui_entry_is_validated_copied_listed_and_dropped_with_the_module",
+      ui_entry_is_validated_copied_listed_and_dropped_with_the_module_wrapper },
+    { "ui_close_page_finishes_only_the_callers_open_page",
+      ui_close_page_finishes_only_the_callers_open_page_wrapper },
+    { "ui_pages_are_unsupported_without_the_manager_ui_hook",
+      ui_pages_are_unsupported_without_the_manager_ui_hook_wrapper },
 };
 
 int run_supervisor_services_tests(void)

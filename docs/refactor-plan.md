@@ -332,5 +332,6 @@
 | 2026-10-15 | Hook 引擎架构根因重构与 Cortex-M33 边界防御；废除 Flash 槽位硬编码，提供 register_slot_map 运行时映射（Corona 模式）；修复 realloc 溢出、INT32_MIN 格式化 UB 与 KV 存储 VFS 持久化；all-services-test 达成 93 项服务方法 100% 覆盖并于 Mirage 模拟器（043 与 155）全绿通过（18/18 PASS）；新增 CI 强制覆盖门禁 services_coverage |
 
 | 2026-10-17 | K15：移除 RPK 包装、快应用目录与列表依赖；新增原生 CPC2 分块暂存、精确 target 查询与 AstroBox 独立安装命令。全量 CI 9 个 gates 全绿；新增 ARM L2 shim 的 SRAM 替换、明文拒绝、解密失败、队列分发和 session 边界仿真通过（仅 host/emulator 级证据）。.043/.155 实际 Mirage 蓝牙联调失败与持续调度入口阻塞见 P5.2；不能宣称端到端完成。 |
+| 2026-10-18 | 原生 UI 宿主后端与模块页面（ADR-CAN-010）：`canopus_ui_host` 为 Band 10 Pro / Band 11 通用后端，Manager 页面接入，`ctx->ui_ext` 与 Manager 承载的模块页面，示例 `ui-demo`；host 测试与 Band 11 固件仿真通过，模拟器见 progress，未做真机验证 |
 | 2026-10-18 | CanopusConnect（ADR-CAN-009）：`ctx->connect` 与 CPC2 opcode 19/20/21，模块 ↔ AstroBox 插件按模块 id 互发文本/二进制消息；管理器状态不受影响，仅 .043/.155；host 测试与 5 个 Supervisor 交叉构建通过，AstroBox 侧见各仓库单元测试，未做 Mirage/真机验证 |
 | 2026-10-18 | 服务组去占位：亮度/屏幕状态/唤醒锁/振动/电量/属性/蓝牙状态改为 exact-target 固件入口（.036/.043/.139/.155 STATIC_RECOVERED，.177 无镜像保持空钩子），文件服务放开任意绝对路径（仅保护 Canopus 自己的状态）、每模块私有目录、mkdir/APPEND/errno，L2 接收派发，通知标题，系统事件广播；host 测试与 5 个 Supervisor 交叉构建通过，未做设备或模拟器验证 |

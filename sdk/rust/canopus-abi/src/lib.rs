@@ -301,6 +301,30 @@ pub struct CanopusUiObj {
     pub component: unsafe extern "C" fn(tree: *mut c_void, key: u32, type_: u16, props: *const c_void) -> i32,
 }
 
+/// `struct canopus_ui_ext_obj`: per-node style/layout and the module's page entry.
+#[repr(C)]
+pub struct CanopusUiExtObj {
+    pub node_set_style: unsafe extern "C" fn(tree: *mut c_void, key: u32, style: *const c_void) -> i32,
+    pub node_set_layout: unsafe extern "C" fn(tree: *mut c_void, key: u32, layout: *const c_void) -> i32,
+    pub set_entry: unsafe extern "C" fn(ctx: *const ContextV1, entry: *const UiEntryV1) -> i32,
+    pub close_page: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+}
+
+/// The page a module offers through the Manager (`struct canopus_ui_entry_v1`).
+/// `ui` is the `canopus_ui_context_v1` the Supervisor hands to the callbacks.
+#[repr(C)]
+pub struct UiEntryV1 {
+    pub struct_size: u32,
+    pub label: *const c_char,
+    pub on_open: Option<unsafe extern "C" fn(ctx: *const ContextV1, ui: *mut c_void, user_data: *mut c_void) -> i32>,
+    pub on_event: Option<unsafe extern "C" fn(ctx: *const ContextV1, ui: *mut c_void, key: u32, event_id: u32, user_data: *mut c_void) -> i32>,
+    pub on_back: Option<unsafe extern "C" fn(ctx: *const ContextV1, ui: *mut c_void, user_data: *mut c_void) -> i32>,
+    pub on_close: Option<unsafe extern "C" fn(ctx: *const ContextV1, user_data: *mut c_void)>,
+    pub user_data: *mut c_void,
+}
+
+pub const UI_ENTRY_LABEL_MAX: u32 = 24;
+
 #[repr(C)]
 pub struct CanopusContext {
     pub struct_size: u32,
@@ -323,6 +347,7 @@ pub struct CanopusContext {
     pub bus: *const CanopusBusObj,
     pub ui: *const CanopusUiObj,
     pub connect: *const CanopusConnectObj,
+    pub ui_ext: *const CanopusUiExtObj,
 }
 
 // ---------------------------------------------------------------------------
