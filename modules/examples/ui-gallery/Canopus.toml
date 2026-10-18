@@ -12,9 +12,6 @@ description = "example: one sub-page per widget kind of ctx->ui, hosted by the M
 
 [build]
 sources = ["ui_gallery.c"]
-include_dirs = [
-  "${CANOPUS_ROOT}/app-sdk/ui",
-]
 
 [targets]
 include = [

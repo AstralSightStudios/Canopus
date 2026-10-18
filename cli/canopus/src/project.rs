@@ -171,6 +171,22 @@ fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::
     Ok(out)
 }
 
+/// `app-sdk/` was merged into `sdk/c` and `runtime/`; a manifest that still names
+/// one of its sources is pointed at the new place (with a warning).
+fn moved_from_app_sdk(src: PathBuf, root: &Path) -> PathBuf {
+    const MOVED: [(&str, &str); 2] = [
+        ("app-sdk/ui/canopus_ui.c", "runtime/ui/canopus_ui.c"),
+        ("app-sdk/c/canopus_app.c", "runtime/app/canopus_app.c"),
+    ];
+    for (old, new) in MOVED {
+        if src == root.join(old) {
+            eprintln!("warning: {old} moved to {new}; update [build] sources");
+            return root.join(new);
+        }
+    }
+    src
+}
+
 /// Compiles the sources and links one relocatable ELF.
 fn compile(project: &Project, root: &Path, target: Option<&TargetPack>) -> anyhow::Result<PathBuf> {
     if project.manifest.module.language == "rust" {
@@ -185,8 +201,22 @@ fn compile(project: &Project, root: &Path, target: Option<&TargetPack>) -> anyho
     std::fs::create_dir_all(&obj_dir)?;
     let build = &project.manifest.build;
     let mut objects = Vec::new();
+    let mut include_dirs: Vec<PathBuf> = Vec::new();
+    for dir in build.include_dirs.iter().flatten() {
+        let dir = PathBuf::from(expand(dir, root));
+        if dir.starts_with(root.join("app-sdk")) && !dir.exists() {
+            eprintln!(
+                "warning: {} is gone: app-sdk was merged into sdk/c, which is always on the include path; remove it from [build] include_dirs",
+                dir.display()
+            );
+        } else if dir.is_absolute() {
+            include_dirs.push(dir);
+        } else {
+            include_dirs.push(project.dir.join(dir));
+        }
+    }
     for (i, source) in build.sources.iter().enumerate() {
-        let src = PathBuf::from(expand(source, root));
+        let src = moved_from_app_sdk(PathBuf::from(expand(source, root)), root);
         let src = if src.is_absolute() {
             src
         } else {
@@ -223,17 +253,8 @@ fn compile(project: &Project, root: &Path, target: Option<&TargetPack>) -> anyho
                     .display()
             ));
         }
-        for dir in build.include_dirs.iter().flatten() {
-            let dir = PathBuf::from(expand(dir, root));
-            cc.arg(format!(
-                "-I{}",
-                if dir.is_absolute() {
-                    dir
-                } else {
-                    project.dir.join(dir)
-                }
-                .display()
-            ));
+        for dir in &include_dirs {
+            cc.arg(format!("-I{}", dir.display()));
         }
         for define in build.defines.iter().flatten() {
             cc.arg(format!("-D{define}"));
@@ -560,18 +581,15 @@ fn write_project(
                 .join(", ")
         )
     };
-    let (sources, include_dirs) = match (lang, ui) {
-        ("rust", _) => ("\"Cargo.toml\"".to_string(), String::new()),
-        (_, true) => (
-            format!("\"src/{id}.c\""),
-            "include_dirs = [\"${CANOPUS_ROOT}/app-sdk/ui\"]\n".to_string(),
-        ),
-        _ => (format!("\"src/{id}.c\""), String::new()),
+    let sources = if lang == "rust" {
+        "\"Cargo.toml\"".to_string()
+    } else {
+        format!("\"src/{id}.c\"")
     };
     std::fs::write(
         project.join("Canopus.toml"),
         format!(
-            "schema = 1\n\n[module]\nid = \"{id}\"\nversion = \"0.1.0\"\nversion_code = 1\nkind = \"{kind}\"\nlanguage = \"{lang}\"\nlifecycle = \"removable\"\ncanopus_abi = \"1\"\n\n[build]\nsources = [{sources}]\n{include_dirs}{target_section}"
+            "schema = 1\n\n[module]\nid = \"{id}\"\nversion = \"0.1.0\"\nversion_code = 1\nkind = \"{kind}\"\nlanguage = \"{lang}\"\nlifecycle = \"removable\"\ncanopus_abi = \"1\"\n\n[build]\nsources = [{sources}]\n{target_section}"
         ),
     )?;
     std::fs::write(project.join(".gitignore"), "build/\ndist/\nCargo.lock\n")?;

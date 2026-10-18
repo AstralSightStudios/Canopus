@@ -79,7 +79,7 @@ def build_image(out, target, defines, cc, linker, load_elf):
     includes = (
         "sdk/c", "runtime/loader", "manager/service", "manager/target",
         "manager/ui", "manager/native-app", "manager/client", "manager/package",
-        "manager/protocol", "app-sdk/ui", "third_party/sha256",
+        "manager/protocol", "third_party/sha256",
     )
     command = [cc, "--target=arm-none-eabi", "-mcpu=cortex-m33", "-mthumb",
                "-mfloat-abi=soft", "-std=c11", "-ffreestanding", "-fno-builtin",

@@ -5,16 +5,15 @@
 //! firmware-specific names, absolute addresses, or recovered structs
 //! (architecture §3.5).
 //!
-//! `app-sdk/launcher` is deliberately EXCLUDED: it is the per-target launcher
-//! ADAPTER layer, whose whole job is to speak this firmware's launcher ABI
-//! (e.g. the ordered app list wire format recovered in EVID-APP-003). The
-//! audit forces such adapter code to live there and nowhere public.
+//! The per-target launcher adapter (`manager/target/canopus_ordered_list.*`, whose
+//! whole job is to speak this firmware's launcher ABI, e.g. the ordered app list
+//! wire format recovered in EVID-APP-003) is not part of the SDK and is not
+//! scanned. The audit forces such adapter code to live outside the public dirs.
 
 const PUBLIC_SDK_DIRS: &[&str] = &[
     "sdk/c",
     "sdk/rust/canopus-abi/src",
     "sdk/rust/canopus-runtime/src",
-    "app-sdk/c",
 ];
 
 /// Anything that would couple the public SDK to one firmware.

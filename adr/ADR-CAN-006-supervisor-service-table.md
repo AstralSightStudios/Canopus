@@ -29,7 +29,7 @@ struct canopus_context_v1 {
 3. `mem`：内存
 4. `fs`：文件
 5. `notify`：通知
-6. `ui`：`canopus_ui` 语义树渲染（复用 `app-sdk/ui`）
+6. `ui`：`canopus_ui` 语义树渲染（复用 `sdk/c/canopus_ui.h` 与 `runtime/ui`）
 7. 后续批次：`bt`、`interconnect`
 
 ### 能力缺失

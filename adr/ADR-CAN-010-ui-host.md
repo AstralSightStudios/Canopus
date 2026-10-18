@@ -4,7 +4,7 @@
 
 ## 背景
 
-`ctx->ui` 与 `app-sdk/ui` 提供语义 UI 树（页面、分区、各类行、文本、图片、进度、对话框……），但 Supervisor 没有给模块的
+`ctx->ui` 与 `sdk/c/canopus_ui.h` 提供语义 UI 树（页面、分区、各类行、文本、图片、进度、对话框……），但 Supervisor 没有给模块的
 渲染后端：唯一接到固件控件上的后端是 Manager 自己的 `target_ui_apply`，它焊在 Manager 的三个页面上（页面下标、确认对话框
 靠 Manager 专有的事件号识别、返回键靠页面下标）。第三方模块要在屏幕上画东西，只能自己调各 target 的固件控件
 （如 `native-app-demo` 的 `FW_LVX_*`）或自带后端。

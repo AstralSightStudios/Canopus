@@ -12,9 +12,6 @@ description = "example: a two-level page hosted by the Manager through ctx->ui"
 
 [build]
 sources = ["ui_demo.c"]
-include_dirs = [
-  "${CANOPUS_ROOT}/app-sdk/ui",
-]
 
 [targets]
 include = [

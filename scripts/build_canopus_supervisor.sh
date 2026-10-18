@@ -67,7 +67,7 @@ INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/loader \
   -I$ROOT/manager/service -I$ROOT/manager/protocol -I$ROOT/manager/client \
   -I$ROOT/manager/ui -I$ROOT/manager/package -I$ROOT/manager/target \
-  -I$ROOT/manager/native-app -I$ROOT/app-sdk/ui \
+  -I$ROOT/manager/native-app \
   -I$ROOT/third_party/sha256 \
   -I$PACK_DIR/generated"
 
@@ -86,7 +86,7 @@ for s in \
     manager/package/canopus_installer_bundle.c \
     manager/ui/canopus_manager.c \
     manager/ui/canopus_manager_native.c \
-    app-sdk/ui/canopus_ui.c \
+    runtime/ui/canopus_ui.c \
     third_party/sha256/sha256.c \
     manager/target/canopus_ui_host.c \
     "$MANAGER_BACKEND" \

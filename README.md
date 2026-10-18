@@ -49,10 +49,9 @@ The Band 11 resource root contains only `main.lua` and `.bin` files.
 ```
 cli/            canopus CLI（Rust）
 schemas/        target/symbol/type/evidence/module/package JSON Schema
-sdk/            C / Rust / ABI 定义
-runtime/        portable C runtime（module/lifecycle/resources/diagnostics/control）
-manager/        device-side supervisor / protocol / storage
-app-sdk/        native app SDK（C/Rust/UI/launcher/resources）
+sdk/            公开 SDK：C 头文件（ABI、服务表、模块入口、UI 树 `canopus_ui.h`、原生 App 描述符）与 Rust crate
+runtime/        portable C runtime 实现（module/lifecycle/resources/diagnostics/control/ui/app）
+manager/        device-side supervisor / protocol / storage / target UI 宿主
 targets/        target packs (036/043 build support; static candidates)
 modules/        示例与参考模块
 tools/          RE orchestrator / symbol-generator / elf-verifier / package-builder

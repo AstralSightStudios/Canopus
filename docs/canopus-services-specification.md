@@ -396,7 +396,7 @@ AstroBox 一侧见 `astrobox:psys-host-v4/canopusconnect`（`send` / `listen` / 
 
 ### 2.12 `ctx->ui` / `ctx->ui_ext` — 语义 UI 树与模块页面
 
-`ctx->ui` 是 `app-sdk/ui` 的语义 UI 树构造器（页面、分区、文本、状态/操作/开关行、按钮、复选/单选、进度、图片、导航头、
+`ctx->ui` 是 `sdk/c/canopus_ui.h`（实现在 `runtime/ui`）的语义 UI 树构造器（页面、分区、文本、状态/操作/开关行、按钮、复选/单选、进度、图片、导航头、
 列表/滚动/对话框等容器，ABI 1.4，最多 32 个节点）。`ctx->ui_ext` 补充 `node_set_style`、`node_set_layout`，
 并让模块在 Manager 里提供自己的页面（ADR-CAN-010）：
 

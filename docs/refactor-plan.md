@@ -178,7 +178,7 @@
 ### P2 ABI / SDK 整理
 - [x] P2.1 实现服务表（K7、P0.4）（判断结案：mem 受 restricted 策略限制、NOTIFY 组已完成（Band 11 经 unicorn 加真实固件验证 `canopus_manager_native_notify`，Band 10 Pro 仅 host 测试，模拟器冒烟为 headless 不走通知）；ui/bt/interconnect 按 ADR-CAN-006「实现状态」不实现，待有具体模块需求再立项；已完成：`sdk/c/canopus_services.h`、`manager/service/canopus_supervisor_services.c`；module/log/fs 三组，per-module context 经 activate/publish 回调与自定义 loader 的 init 入口 r0 传入；fs 为模块私有扁平命名空间；TIME 组已完成（`time_monotonic_ms`，经 clock_gettime；Supervisor 平台钩子 `monotonic_ms`，仅 Band 10 Pro）；MEM 组已完成（`mem_alloc`/`mem_free`，无固定块数/字节上限，固件堆为唯一约束，卸载时 Supervisor 回收；经 heap_malloc/free，只由 Supervisor 调用，不向模块暴露地址，策略 restricted 不变；Band 11 为 STATIC_RECOVERED 未验证），notify/ui 与 BT/interconnect 未做；Band 10 stock modlib 的 ctor 无参数，portable 加载需等自定义 loader 迁移）
   - Supervisor 按 target 填表，并经 context 传给模块回调（目前是 `activate(0)`）。
-  - 第一批服务：日志/状态、时间/定时器、内存、文件、通知、`canopus_ui` 语义树渲染（复用 `app-sdk/ui`）。
+  - 第一批服务：日志/状态、时间/定时器、内存、文件、通知、`canopus_ui` 语义树渲染（复用 `sdk/c/canopus_ui.h`（原 `app-sdk/ui`））。
   - 2026-10-18：Band 11 `.139/.155/.177` 普通 UI 构建接入 exact-target 私有 LVGL timer pump，复用现有服务调度；headless 仍不支持，息屏暂停与 UI 重建恢复边界见服务规范，不提升符号或设备验证状态。
   - BT 与 interconnect 放到后续批次。
 - [x] P2.2 portable 模块（判断结案：`hello` 与 `no-heap-counter` 有意保持 target-bound，分别示范固件原生 API 与 Rust SDK 的设备绑定路径；portable 路径由 `hello-portable` + TIME 服务示范，Band 10 stock modlib 上的 portable 加载等自定义 loader；已完成：`canopus verify --portable`（任何已注册固件的地址范围内出现地址即失败）、`modules/examples/hello-portable`（同一 ELF 通过 5 个 active target 的 verifier 与 portable 检查，CI 覆盖）；未完成：原 `hello`（依赖固件 timer/clock，等 time 服务）与 `no-heap-counter` 迁移；设备加载需自定义 loader）

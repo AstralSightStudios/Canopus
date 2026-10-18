@@ -14,7 +14,7 @@ INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../manager/ui -I../../manager/service -I../../manager/client \
       -I../../manager/native-app -I../../manager/package \
       -I../../tests/host \
-      -I../../app-sdk/c -I../../app-sdk/launcher -I../../app-sdk/ui
+      -I../../runtime/ui -I../../runtime/app -I../../manager/target
 override CFLAGS += -DCANOPUS_HOST=1
 
 # Bare-metal portable sources (freestanding, no libc) — the cross-thumb
@@ -38,9 +38,9 @@ PORTABLE_SRCS = \
 	../../manager/ui/canopus_manager.c \
 	../../manager/ui/canopus_manager_native.c \
 	../../manager/native-app/canopus_manager_app.c \
-	../../app-sdk/c/canopus_app.c \
-	../../app-sdk/ui/canopus_ui.c \
-	../../app-sdk/launcher/canopus_ordered_list.c
+	../../runtime/app/canopus_app.c \
+	../../runtime/ui/canopus_ui.c \
+	../../manager/target/canopus_ordered_list.c
 
 # Host test build additionally links the libc-dependent layers
 # (storage, POSIX client adapter, fake target, hello module).

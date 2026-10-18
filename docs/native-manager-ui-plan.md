@@ -935,7 +935,7 @@ Gate：所有 security/device gates 通过后，才能将 native app/UI SDK 标�
 | CAN-P1-006 | P1 | HOST-FIXED/DEVICE-PENDING | package slot rename 事务不可恢复、previous/.old 堵塞、目录持久化不足 | `manager/storage/canopus_store.c:64-260` |
 | CAN-P1-007 | P1 | HOST-FIXED/DEVICE-PENDING | remove 后 supervisor slot 不回收，`module_count` 最终与实际不一致 | `manager/service/canopus_supervisor.c:127-137,236-259` |
 | CAN-P1-008 | P1 | HOST-FIXED/DEVICE-PENDING | command 末尾无条件清零 `error_code`，失败原因丢失 | `manager/service/canopus_supervisor.c:171-173` |
-| CAN-P1-009 | P1 | HOST-FIXED/DEVICE-PENDING | ordered-list parser/serializer 缺少 out/apps NULL 与 bounded-name 完整检查 | `app-sdk/launcher/canopus_ordered_list.c:25-107` |
+| CAN-P1-009 | P1 | HOST-FIXED/DEVICE-PENDING | ordered-list parser/serializer 缺少 out/apps NULL 与 bounded-name 完整检查 | `manager/target/canopus_ordered_list.c:25-107`（原 `app-sdk/launcher`） |
 | CAN-P1-010 | P1 | HOST-FIXED/DEVICE-PENDING | module descriptor validation 只检查 size/major，未检查 flags、identity、callbacks | `runtime/module/canopus_module.c:28-42` |
 | CAN-P1-011 | P1 | HOST-FIXED/DEVICE-PENDING | ELF verifier 只检查 relocation 指向的 SHN_ABS，未覆盖代码/数据中的直接绝对地址 | `tools/elf-verifier/src/verifier.rs:155-195` |
 | CAN-P1-012 | P1 | HOST-FIXED/DEVICE-PENDING | target veneer 的 evidence/promotion 状态没有成为 codegen 强制 gate | `targets/xiaomi-band-10-pro-3.101.030/generated/canopus_veneer.h:107-153` |
@@ -955,7 +955,7 @@ Gate：所有 security/device gates 通过后，才能将 native app/UI SDK 标�
 | CAN-P2-011 | P2 | CLOSED | target-generated Rust binding 存在两份提交副本，单一来源和同步边界不清晰 | `targets/xiaomi-band-10-pro-3.101.030/generated/canopus_bindings.rs`、`sdk/rust/canopus-target-generated/src/generated.rs` |
 | CAN-P2-012 | P2 | OPEN | 32-bit firmware packed pointer layout 可在 64-bit host 被误用，缺 compile-time usage barrier | `sdk/rust/canopus-target-generated/src/lib.rs:46-131` |
 | CAN-P2-013 | P2 | OPEN | public error 仍混用 `-1`、字符串和 target errno，Manager 无稳定可本地化错误模型 | manager/runtime/store 多处 |
-| CAN-P2-014 | P2 | HOST-FIXED/DEVICE-PENDING | C UI ABI 1.4、21 种 semantic components（含 `NavigationHeader`）、backend capability negotiation、generation-safe bounded Router、host fake、Rust `canopus-ui-core`、compile-fail checks 与 bounded typed app runtime 已实现；仍缺 exact-target native prefab backend/device lifecycle proof，以及完整 C-Rust catalog byte-equivalence tests | `app-sdk/ui/`、`sdk/rust/canopus-ui-core/`、`tests/host/test_ui.c` |
+| CAN-P2-014 | P2 | HOST-FIXED/DEVICE-PENDING | C UI ABI 1.4、21 种 semantic components（含 `NavigationHeader`）、backend capability negotiation、generation-safe bounded Router、host fake、Rust `canopus-ui-core`、compile-fail checks 与 bounded typed app runtime 已实现；仍缺 exact-target native prefab backend/device lifecycle proof，以及完整 C-Rust catalog byte-equivalence tests | `sdk/c/canopus_ui.h`、`runtime/ui/`（原 `app-sdk/ui/`）、`sdk/rust/canopus-ui-core/`、`tests/host/test_ui.c` |
 | CAN-P2-015 | P2 | CLOSED | CI 缺 protocol schema drift、evidence completeness、文档状态和 device-evidence metadata gate | `scripts/ci.sh`、`tools/canopus-core/tests/generated_stability.rs` |
 | CAN-P2-016 | P2 | CLOSED | 固定容量表/计数器的 overflow、saturation、pagination 和 boot wrap policy 未统一 | supervisor/protocol/diagnostics/UI bounded tables |
 | CAN-P2-017 | P2 | CLOSED | store API 通过 cast 修改 `const` 对象，错误状态与并发所有权不清晰 | `manager/storage/canopus_store.c:42-60,153-231` |

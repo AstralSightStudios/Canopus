@@ -35,11 +35,11 @@ canopus clean                  # 删除 build/ 与 dist/
 - `new` 先校验再创建：模块 id、语言、target 有误时不会留下任何目录。模块 id 需匹配 `^[a-z][a-z0-9_]{0,15}$`（ADR-CAN-003）。
   工程里有 `Canopus.toml`、`src/<id>.c`（Rust 为 `Cargo.toml` 与 `src/lib.rs`）和 `.gitignore`。
   Rust 工程建在仓库内时 SDK 依赖写相对路径，建在别处时写绝对路径。
-- `--ui` 模板注册一个页面入口（计数与开关），在 Manager 的模块详情页以「打开界面」出现；它在 `[build]` 里加了
-  `include_dirs = ["${CANOPUS_ROOT}/app-sdk/ui"]`。页面 API 见 `canopus-services-specification.md` §2.12，完整示例在
+- `--ui` 模板注册一个页面入口（计数与开关），在 Manager 的模块详情页以「打开界面」出现；UI 头文件 `canopus_ui.h` 在 `sdk/c`，不需要额外的 include 目录。页面 API 见 `canopus-services-specification.md` §2.12，完整示例在
   `modules/examples/ui-demo` 与 `ui-gallery`。
 - `package` 会拒绝比源码旧的 ELF（工程里任何 `.c/.h/.rs/.toml/.ld/.s` 比 ELF 新就报错），避免改了代码忘了 `build` 而打出旧包。
   工程目录之外的头文件（`include_dirs` 指向别处）不在检查范围内。
+- 旧的 `Canopus.toml` 若还写着 `${CANOPUS_ROOT}/app-sdk/...`（该目录已并入 `sdk/c` 与 `runtime/`），`build` 会忽略不存在的 include 目录、把 `canopus_ui.c` / `canopus_app.c` 的旧路径指向新位置，并打印警告，请尽快改掉。
 - 构建用的工具来自环境变量：`CC`（默认 `clang`）、`LD`（默认 `ld.lld`）、`CARGO`（默认 `cargo`）。缺工具时报错会说明是哪一步、缺哪个；
   编译器自己的输出原样保留，`-v` 在前面打印完整命令行。
 

@@ -7,7 +7,7 @@ device verified / production approved）以 `docs/progress.md` 与 `docs/native-
 ## 目录
 - `cli/`、`tools/canopus-core/`：Rust CLI 与核心库（target 生成器、verifier、package、re）
 - `targets/<target_id>/`：每个固件一个目录（`target.toml`、`symbols/*.json`、`evidence/`、`generated/`）
-- `sdk/rust/`：独立的 Rust SDK workspace；`runtime/`、`manager/`：C 运行时与设备端 Supervisor/Manager
+- `sdk/`：公开 SDK（`sdk/c` 头文件是模块作者的唯一 include 目录；`sdk/rust/` 是独立的 Rust SDK workspace）；`runtime/`、`manager/`：C 运行时实现与设备端 Supervisor/Manager（原 `app-sdk/` 已并入 `sdk/c` 与 `runtime/`）
 - `modules/`、`watchfaces/`、`scripts/`、`tests/host/`：示例模块、安装器表盘、构建脚本、C host 测试
 
 ## 常用命令

@@ -1,6 +1,6 @@
 //! canopus-ui-core — no_std declarative semantic UI tree.
 //!
-//! This crate mirrors the public C semantic UI ABI in `app-sdk/ui/canopus_ui.h`
+//! This crate mirrors the public C semantic UI ABI in `sdk/c/canopus_ui.h`
 //! (see `docs/native-manager-ui-plan.md` §6.3 and Phase G). Applications
 //! describe what a page *is* — navigation page, sections, rows, switches — in a
 //! bounded, allocation-free tree. A target backend maps the committed snapshot
@@ -1913,7 +1913,7 @@ mod layout {
 }
 
 // ---------------------------------------------------------------------------
-// Tests: mirror app-sdk/ui tests + C manager overview equivalence
+// Tests: mirror runtime/ui tests + C manager overview equivalence
 // ---------------------------------------------------------------------------
 
 #[cfg(test)]

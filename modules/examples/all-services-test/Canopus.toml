@@ -13,10 +13,7 @@ description = "Comprehensive verification test suite for all Canopus Service Obj
 [build]
 sources = [
   "src/all_services_test.c",
-  "${CANOPUS_ROOT}/app-sdk/ui/canopus_ui.c",
-]
-include_dirs = [
-  "${CANOPUS_ROOT}/app-sdk/ui",
+  "${CANOPUS_ROOT}/runtime/ui/canopus_ui.c",
 ]
 
 [targets]
