@@ -11,6 +11,7 @@
 |---|---|---|
 | **服务对象与 API 规范** | **[`canopus-services-specification.md`](canopus-services-specification.md)** | **微内核服务对象架构（FS 完备文件系统、128K 动态堆内存、通用动态 Hook 引擎、时钟/定时、结构化日志、通知、硬件状态与 L2 蓝牙）** |
 | **Rust SDK 架构与指引** | **[`../sdk/rust/README.md`](../sdk/rust/README.md)** | **Rust 核心 Crate 分工、设备型号对应表、Portable vs Target 模块开发流** |
+| **命令行工具** | **[`cli.md`](cli.md)** | **`canopus` 的 new / build / package / clean / doctor、target 短名与仓库定位、退出码** |
 | **仓库协作规范** | **[`../AGENTS.md`](../AGENTS.md)** | 目录拓扑、不可触碰底线、证据链门槛、常用命令与重构红线 |
 | **新增与维护 Target** | [`target-authoring.md`](target-authoring.md) | Target 目录结构、符号表 JSON 规范、生成器使用指引 |
 | **安装器与更新 IO** | [`module-installer-io.md`](module-installer-io.md) | A/B 世代原子步进切换、防回滚语义、设备持久化 |

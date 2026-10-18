@@ -75,6 +75,12 @@
 - 新静态证据（restricted / PENDING / not_probed）：`EVID-UI-1036-HOST-001`、`EVID-UI-1043-HOST-001`、`EVID-UI-4139-MSGBOX-001`、`EVID-UI-4155-MSGBOX-001`；
   更正了 `.043` `lv_bar_create`（批准状态重置为 PENDING）与 Band 11 `.139/.155` 的 msgbox / object_delete 候选（原先指向别的函数）。未提升任何批准状态或能力状态。
 
+## Host CLI（2026-10-19）
+
+- `canopus` 命令行体验修整，见 [`cli.md`](cli.md)：仓库与 targets 目录统一定位（任意目录可用，包括装到别处的二进制）、target 版本后缀（`--target 155`）、
+  `new` 先校验再创建并带 `--ui` 模板、`package` 拒绝过期 ELF、新增 `clean` / `doctor` / `-v`、可操作的错误信息；`cli/canopus/tests/cli.rs` 3 项集成测试。
+  `--ui` 模板在 C 工程里按 5 个 target 的 `-Wall -Wextra -Werror` 编译并过 verifier，但没有在 Mirage 里跑过页面。
+
 ## 阶段状态
 
 | Phase | 状态 | 备注 |

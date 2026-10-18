@@ -3,6 +3,7 @@
 //! Portable modules (the default) are built once; target modules once per
 //! exact target. Packages carry an unsigned CMI2 receipt per target.
 
+use crate::env::{canopus_root, display_rel, newest_input, read_text, resolve_in, run, tool};
 use anyhow::{Context, bail};
 use canopus_core::model::{ModuleManifest, PackageArtifact, PackageManifest, TargetPack};
 use canopus_core::registry::list_target_packs;
@@ -12,29 +13,6 @@ use std::process::Command;
 
 const PORTABLE_DIR: &str = "abi-1-thumbv8m";
 
-/// The Canopus checkout providing `sdk/c` and `targets/`: `$CANOPUS_ROOT`,
-/// else the nearest ancestor of the working directory or the executable.
-pub fn canopus_root() -> anyhow::Result<PathBuf> {
-    if let Some(root) = std::env::var_os("CANOPUS_ROOT") {
-        return Ok(PathBuf::from(root));
-    }
-    let mut starts: Vec<PathBuf> = Vec::new();
-    if let Ok(cwd) = std::env::current_dir() {
-        starts.push(cwd);
-    }
-    if let Ok(exe) = std::env::current_exe() {
-        starts.push(exe);
-    }
-    for start in starts {
-        for dir in start.ancestors() {
-            if dir.join("sdk/c/canopus_abi.h").is_file() {
-                return Ok(dir.to_path_buf());
-            }
-        }
-    }
-    bail!("cannot find the Canopus checkout (sdk/c/canopus_abi.h); set CANOPUS_ROOT")
-}
-
 struct Project {
     dir: PathBuf,
     manifest: ModuleManifest,
@@ -42,13 +20,20 @@ struct Project {
 
 impl Project {
     fn load(manifest_path: &Path) -> anyhow::Result<Self> {
-        let text = std::fs::read_to_string(manifest_path)
-            .with_context(|| format!("cannot read {}", manifest_path.display()))?;
-        let value = serde_json::to_value(toml::from_str::<toml::Value>(&text)?)?;
-        canopus_core::schema::validate(canopus_core::schema::SchemaKind::Module, &value)?;
-        let manifest: ModuleManifest = serde_json::from_value(value)?;
+        let text = read_text(
+            manifest_path,
+            "run this in a module project (create one with `canopus new <id>`) or pass --manifest",
+        )?;
+        let invalid = || format!("{} is not a valid module manifest", manifest_path.display());
+        let value =
+            serde_json::to_value(toml::from_str::<toml::Value>(&text).with_context(invalid)?)?;
+        canopus_core::schema::validate(canopus_core::schema::SchemaKind::Module, &value)
+            .with_context(invalid)?;
+        let manifest: ModuleManifest = serde_json::from_value(value).with_context(invalid)?;
         if manifest.module.language == "rust" && manifest.is_portable() {
-            bail!("Rust modules are target-bound: there are no Rust bindings for the Supervisor service table yet");
+            bail!(
+                "Rust modules are target-bound: there are no Rust bindings for the Supervisor service table yet"
+            );
         }
         let dir = manifest_path
             .parent()
@@ -78,18 +63,6 @@ fn expand(s: &str, root: &Path) -> String {
     s.replace("${CANOPUS_ROOT}", &root.to_string_lossy())
 }
 
-fn tool(var: &str, default: &str) -> String {
-    std::env::var(var).unwrap_or_else(|_| default.to_string())
-}
-
-fn run(cmd: &mut Command) -> anyhow::Result<()> {
-    let status = cmd.status().with_context(|| format!("cannot run {cmd:?}"))?;
-    if !status.success() {
-        bail!("{cmd:?} failed with {status}");
-    }
-    Ok(())
-}
-
 const RUST_TRIPLE: &str = "thumbv8m.main-none-eabi";
 
 /// Rust modules: `[build] sources = ["Cargo.toml"]` names the crate (a
@@ -110,58 +83,102 @@ fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::
         .context("a Rust module's [build] sources must be [\"Cargo.toml\"]")?;
     let cargo_target = project.build_dir().join("cargo");
     let feature = format!("target-{}", target.target_id.replace('.', "-"));
-    run(Command::new(tool("CARGO", "cargo"))
-        .args(["build", "--release", "--target", RUST_TRIPLE, "--no-default-features"])
-        .arg("--features")
-        .arg(format!("device,canopus-target-generated/{feature}"))
-        .arg("--manifest-path")
-        .arg(&manifest)
-        .arg("--target-dir")
-        .arg(&cargo_target)
-        .env("CANOPUS_TARGET_ID", &target.target_id)
-        // Same policy as the workspace's `device` profile.
-        .env("CARGO_PROFILE_RELEASE_PANIC", "abort")
-        .env("CARGO_PROFILE_RELEASE_OPT_LEVEL", "z")
-        .env("CARGO_PROFILE_RELEASE_LTO", "thin")
-        .env("CARGO_PROFILE_RELEASE_CODEGEN_UNITS", "1"))?;
+    run(
+        Command::new(tool("CARGO", "cargo"))
+            .args([
+                "build",
+                "--release",
+                "--target",
+                RUST_TRIPLE,
+                "--no-default-features",
+            ])
+            .arg("--features")
+            .arg(format!("device,canopus-target-generated/{feature}"))
+            .arg("--manifest-path")
+            .arg(&manifest)
+            .arg("--target-dir")
+            .arg(&cargo_target)
+            .env("CANOPUS_TARGET_ID", &target.target_id)
+            // Same policy as the workspace's `device` profile.
+            .env("CARGO_PROFILE_RELEASE_PANIC", "abort")
+            .env("CARGO_PROFILE_RELEASE_OPT_LEVEL", "z")
+            .env("CARGO_PROFILE_RELEASE_LTO", "thin")
+            .env("CARGO_PROFILE_RELEASE_CODEGEN_UNITS", "1"),
+        "building the Rust crate",
+    )?;
     let release = cargo_target.join(RUST_TRIPLE).join("release");
     let archives: Vec<PathBuf> = std::fs::read_dir(&release)?
         .filter_map(|e| e.ok().map(|e| e.path()))
         .filter(|p| p.extension().is_some_and(|x| x == "a"))
         .collect();
     let [archive] = archives.as_slice() else {
-        bail!("expected exactly one staticlib in {} (crate-type = [\"staticlib\"]), found {}", release.display(), archives.len());
+        bail!(
+            "expected exactly one staticlib in {} (crate-type = [\"staticlib\"]), found {}",
+            release.display(),
+            archives.len()
+        );
     };
     // The constructor is the shared C shim: it registers the crate's descriptor
     // through sdk/c/canopus_module_entry.h, which picks the path the target's
     // loader gives constructors.
     let shim_c = root.join("sdk/rust/c_shim/canopus_ctor.c");
     let shim_o = out_dir.join("canopus_ctor.o");
-    run(Command::new(tool("CC", "clang"))
-        .args(["--target=arm-none-eabi", "-mcpu=cortex-m33", "-mthumb", "-mfloat-abi=soft", "-ffreestanding",
-               "-fno-common", "-fno-builtin", "-fno-stack-protector", "-fno-unwind-tables",
-               "-fno-asynchronous-unwind-tables", "-fdata-sections", "-ffunction-sections", "-Os", "-Wall",
-               "-Wextra", "-Werror", "-DCANOPUS_TARGET=1"])
-        .arg(format!("-I{}", root.join("sdk/c").display()))
-        .arg(format!("-I{}", root.join("targets").join(&target.target_id).join("generated").display()))
-        .arg("-c")
-        .arg(&shim_c)
-        .arg("-o")
-        .arg(&shim_o))?;
-    run(Command::new(tool("LD", "ld.lld"))
-        .args(["-r", "-T"])
-        .arg(root.join("sdk/rust/c_shim/module.ld"))
-        .arg(&shim_o)
-        .arg(archive)
-        .arg("-o")
-        .arg(&out))?;
+    run(
+        Command::new(tool("CC", "clang"))
+            .args([
+                "--target=arm-none-eabi",
+                "-mcpu=cortex-m33",
+                "-mthumb",
+                "-mfloat-abi=soft",
+                "-ffreestanding",
+                "-fno-common",
+                "-fno-builtin",
+                "-fno-stack-protector",
+                "-fno-unwind-tables",
+                "-fno-asynchronous-unwind-tables",
+                "-fdata-sections",
+                "-ffunction-sections",
+                "-Os",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "-DCANOPUS_TARGET=1",
+            ])
+            .arg(format!("-I{}", root.join("sdk/c").display()))
+            .arg(format!(
+                "-I{}",
+                root.join("targets")
+                    .join(&target.target_id)
+                    .join("generated")
+                    .display()
+            ))
+            .arg("-c")
+            .arg(&shim_c)
+            .arg("-o")
+            .arg(&shim_o),
+        "compiling the constructor shim",
+    )?;
+    run(
+        Command::new(tool("LD", "ld.lld"))
+            .args(["-r", "-T"])
+            .arg(root.join("sdk/rust/c_shim/module.ld"))
+            .arg(&shim_o)
+            .arg(archive)
+            .arg("-o")
+            .arg(&out),
+        "linking the module",
+    )?;
     Ok(out)
 }
 
 /// Compiles the sources and links one relocatable ELF.
 fn compile(project: &Project, root: &Path, target: Option<&TargetPack>) -> anyhow::Result<PathBuf> {
     if project.manifest.module.language == "rust" {
-        return compile_rust(project, root, target.context("a Rust module needs an exact target")?);
+        return compile_rust(
+            project,
+            root,
+            target.context("a Rust module needs an exact target")?,
+        );
     }
     let out = project.elf_path(target.map(|t| t.target_id.as_str()));
     let obj_dir = out.parent().unwrap().join(format!("{}.obj", project.id()));
@@ -170,7 +187,11 @@ fn compile(project: &Project, root: &Path, target: Option<&TargetPack>) -> anyho
     let mut objects = Vec::new();
     for (i, source) in build.sources.iter().enumerate() {
         let src = PathBuf::from(expand(source, root));
-        let src = if src.is_absolute() { src } else { project.dir.join(src) };
+        let src = if src.is_absolute() {
+            src
+        } else {
+            project.dir.join(src)
+        };
         let obj = obj_dir.join(format!("{i}.o"));
         let mut cc = Command::new(tool("CC", "clang"));
         cc.args([
@@ -196,24 +217,42 @@ fn compile(project: &Project, root: &Path, target: Option<&TargetPack>) -> anyho
             cc.arg("-DCANOPUS_TARGET=1");
             cc.arg(format!(
                 "-I{}",
-                root.join("targets").join(&t.target_id).join("generated").display()
+                root.join("targets")
+                    .join(&t.target_id)
+                    .join("generated")
+                    .display()
             ));
         }
         for dir in build.include_dirs.iter().flatten() {
             let dir = PathBuf::from(expand(dir, root));
             cc.arg(format!(
                 "-I{}",
-                if dir.is_absolute() { dir } else { project.dir.join(dir) }.display()
+                if dir.is_absolute() {
+                    dir
+                } else {
+                    project.dir.join(dir)
+                }
+                .display()
             ));
         }
         for define in build.defines.iter().flatten() {
             cc.arg(format!("-D{define}"));
         }
         cc.arg("-c").arg(&src).arg("-o").arg(&obj);
-        run(&mut cc)?;
+        run(
+            &mut cc,
+            &format!("compiling {}", display_rel(&src, &project.dir)),
+        )?;
         objects.push(obj);
     }
-    run(Command::new(tool("LD", "ld.lld")).arg("-r").arg("-o").arg(&out).args(&objects))?;
+    run(
+        Command::new(tool("LD", "ld.lld"))
+            .arg("-r")
+            .arg("-o")
+            .arg(&out)
+            .args(&objects),
+        "linking the module",
+    )?;
     Ok(out)
 }
 
@@ -222,9 +261,11 @@ fn selected_targets(
     root: &Path,
     only: Option<&str>,
 ) -> anyhow::Result<Vec<TargetPack>> {
-    let active: Vec<TargetPack> = list_target_packs(&root.join("targets"))?
-        .into_iter()
+    let all = list_target_packs(&root.join("targets"))?;
+    let active: Vec<TargetPack> = all
+        .iter()
         .filter(|p| p.status.as_deref() != Some("frozen"))
+        .cloned()
         .collect();
     let rows = canopus_core::planner::expand(&project.manifest, &active)
         .map_err(|e| anyhow::anyhow!("{e}"))?;
@@ -233,9 +274,16 @@ fn selected_targets(
         .filter_map(|r| active.iter().find(|p| p.target_id == r.target_id).cloned())
         .collect();
     if let Some(only) = only {
-        packs.retain(|p| p.target_id == only);
+        let id = resolve_in(&all, only)?;
+        packs.retain(|p| p.target_id == id);
         if packs.is_empty() {
-            bail!("target '{only}' is not part of this module's plan");
+            bail!(
+                "target '{id}' is not part of this module's plan ({})",
+                rows.iter()
+                    .map(|r| r.target_id.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
         }
     }
     Ok(packs)
@@ -252,12 +300,41 @@ pub fn build(manifest: &Path, target: Option<&str>) -> anyhow::Result<()> {
         let elf = compile(&project, &root, None)?;
         println!("built {}", elf.display());
         crate::commands::verify(&elf, None, true, &targets_dir, false)?;
+        println!("ok: {} (portable) built and verified", project.id());
     } else {
-        for pack in selected_targets(&project, &root, target)? {
-            let elf = compile(&project, &root, Some(&pack))?;
+        let packs = selected_targets(&project, &root, target)?;
+        for pack in &packs {
+            let elf = compile(&project, &root, Some(pack))?;
             println!("built {}", elf.display());
             crate::commands::verify(&elf, Some(&pack.target_id), false, &targets_dir, false)?;
         }
+        println!(
+            "ok: {} built and verified for {} target(s)",
+            project.id(),
+            packs.len()
+        );
+    }
+    Ok(())
+}
+
+/// An ELF older than the project's sources would silently package stale code.
+fn ensure_fresh(project: &Project, elf: &Path) -> anyhow::Result<()> {
+    let built = match std::fs::metadata(elf) {
+        Ok(m) => m.modified()?,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => bail!(
+            "{} is missing; run `canopus build` first (or `canopus package --build`)",
+            elf.display()
+        ),
+        Err(e) => return Err(e).with_context(|| format!("cannot read {}", elf.display())),
+    };
+    if let Some((path, changed)) = newest_input(&project.dir)?
+        && changed > built
+    {
+        bail!(
+            "{} is older than {}; run `canopus build` again (or `canopus package --build`)",
+            elf.display(),
+            display_rel(&path, &project.dir)
+        );
     }
     Ok(())
 }
@@ -266,7 +343,11 @@ pub fn package(
     manifest: &Path,
     output: Option<&Path>,
     installer: bool,
+    build_first: bool,
 ) -> anyhow::Result<()> {
+    if build_first {
+        build(manifest, None)?;
+    }
     let project = Project::load(manifest)?;
     let root = canopus_root()?;
     let m = &project.manifest;
@@ -278,9 +359,14 @@ pub fn package(
     let mut files: HashMap<String, PathBuf> = HashMap::new();
     let mut receipts: HashMap<String, Vec<u8>> = HashMap::new();
     for pack in &packs {
-        let elf = project.elf_path(if portable { None } else { Some(&pack.target_id) });
-        let bytes = std::fs::read(&elf)
-            .with_context(|| format!("{} is missing; run `canopus build` first", elf.display()))?;
+        let elf = project.elf_path(if portable {
+            None
+        } else {
+            Some(&pack.target_id)
+        });
+        ensure_fresh(&project, &elf)?;
+        let bytes =
+            std::fs::read(&elf).with_context(|| format!("cannot read {}", elf.display()))?;
         let receipt = canopus_core::receipt::build(
             project.id(),
             m.module.version_code,
@@ -289,7 +375,11 @@ pub fn package(
             &pack.firmware_sha256,
             &bytes,
         )?;
-        let dir = if portable { PORTABLE_DIR } else { pack.target_id.as_str() };
+        let dir = if portable {
+            PORTABLE_DIR
+        } else {
+            pack.target_id.as_str()
+        };
         artifacts.push(PackageArtifact {
             target_id: pack.target_id.clone(),
             target_pack_revision: u64::from(pack.revision),
@@ -318,7 +408,11 @@ pub fn package(
         update_semantics: Some("staged next generation; switch at next load".into()),
         remove_semantics: None,
         reboot_required: Some(true),
-        target_pack_revision: packs.iter().map(|p| u64::from(p.revision)).max().unwrap_or(1),
+        target_pack_revision: packs
+            .iter()
+            .map(|p| u64::from(p.revision))
+            .max()
+            .unwrap_or(1),
         min_manager_version: "0.1.0".into(),
         sbom: None,
         reproducibility: None,
@@ -331,10 +425,12 @@ pub fn package(
     )?;
     let out = match output {
         Some(p) => p.to_path_buf(),
-        None => project
-            .dir
-            .join("dist")
-            .join(format!("{}-{}.canopus", project.id(), m.module.version)),
+        None => {
+            project
+                .dir
+                .join("dist")
+                .join(format!("{}-{}.canopus", project.id(), m.module.version))
+        }
     };
     if let Some(parent) = out.parent() {
         std::fs::create_dir_all(parent)?;
@@ -350,46 +446,188 @@ pub fn package(
     if installer {
         let elfs: Vec<(&TargetPack, PathBuf)> = packs
             .iter()
-            .map(|p| (p, project.elf_path(if portable { None } else { Some(&p.target_id) })))
+            .map(|p| {
+                (
+                    p,
+                    project.elf_path(if portable { None } else { Some(&p.target_id) }),
+                )
+            })
             .collect();
         write_installers(&project, &root, &elfs, &receipts, &out)?;
     }
     Ok(())
 }
 
-pub fn new(id: &str, dir: &Path, targets: &[String], lang: &str) -> anyhow::Result<()> {
+pub struct NewOptions<'a> {
+    pub id: &'a str,
+    pub dir: &'a Path,
+    pub targets: &'a [String],
+    pub lang: &'a str,
+    pub ui: bool,
+}
+
+/// Creates a module project. Everything is validated first, so a bad id,
+/// language or target leaves nothing behind; a failure while writing removes
+/// the half-made directory.
+pub fn new(opts: &NewOptions) -> anyhow::Result<()> {
+    let NewOptions {
+        id,
+        dir,
+        targets,
+        lang,
+        ui,
+    } = *opts;
     if !canopus_core::receipt::module_id_valid(id) {
         bail!("module id '{id}' must match ^[a-z][a-z0-9_]{{0,15}}$ (ADR-CAN-003)");
+    }
+    if lang != "c" && lang != "rust" {
+        bail!("--lang must be c or rust");
+    }
+    if lang == "rust" && ui {
+        bail!("--ui is a C template; there are no Rust bindings for the UI tree yet");
+    }
+    if lang == "rust" && targets.is_empty() {
+        bail!("Rust modules are target-bound: pass at least one --target (e.g. --target 155)");
+    }
+    let root = canopus_root()?;
+    let registered = list_target_packs(&root.join("targets"))?;
+    let mut resolved: Vec<String> = Vec::new();
+    for name in targets {
+        let id = resolve_in(&registered, name)?;
+        if !resolved.contains(&id) {
+            resolved.push(id);
+        }
     }
     let project = dir.join(id);
     if project.exists() {
         bail!("{} already exists", project.display());
     }
-    if lang == "rust" {
-        return new_rust(id, &project, targets);
+
+    let result = write_project(id, &project, &root, &resolved, lang, ui);
+    if let Err(e) = result {
+        let _ = std::fs::remove_dir_all(&project);
+        return Err(e);
     }
-    if lang != "c" {
-        bail!("--lang must be c or rust");
+    let kind = if resolved.is_empty() {
+        "portable"
+    } else {
+        "target"
+    };
+    println!(
+        "created {} ({kind} {}module{})",
+        project.display(),
+        if lang == "rust" { "Rust " } else { "" },
+        if ui { ", UI page" } else { "" }
+    );
+    if !resolved.is_empty() {
+        println!("targets: {}", resolved.join(", "));
     }
+    println!(
+        "next:   cd {} && canopus build && canopus package",
+        project.display()
+    );
+    if resolved.is_empty() {
+        println!(
+            "        (portable: built once for every target; add --target <id> to bind exact firmware)"
+        );
+    }
+    Ok(())
+}
+
+fn write_project(
+    id: &str,
+    project: &Path,
+    root: &Path,
+    targets: &[String],
+    lang: &str,
+    ui: bool,
+) -> anyhow::Result<()> {
     std::fs::create_dir_all(project.join("src"))?;
-    let kind = if targets.is_empty() { "portable" } else { "target" };
+    let kind = if targets.is_empty() {
+        "portable"
+    } else {
+        "target"
+    };
     let target_section = if targets.is_empty() {
         String::new()
     } else {
         format!(
             "\n[targets]\ninclude = [{}]\n",
-            targets.iter().map(|t| format!("\"{t}\"")).collect::<Vec<_>>().join(", ")
+            targets
+                .iter()
+                .map(|t| format!("\"{t}\""))
+                .collect::<Vec<_>>()
+                .join(", ")
         )
+    };
+    let (sources, include_dirs) = match (lang, ui) {
+        ("rust", _) => ("\"Cargo.toml\"".to_string(), String::new()),
+        (_, true) => (
+            format!("\"src/{id}.c\""),
+            "include_dirs = [\"${CANOPUS_ROOT}/app-sdk/ui\"]\n".to_string(),
+        ),
+        _ => (format!("\"src/{id}.c\""), String::new()),
     };
     std::fs::write(
         project.join("Canopus.toml"),
         format!(
-            "schema = 1\n\n[module]\nid = \"{id}\"\nversion = \"0.1.0\"\nversion_code = 1\nkind = \"{kind}\"\nlanguage = \"c\"\nlifecycle = \"removable\"\ncanopus_abi = \"1\"\n\n[build]\nsources = [\"src/{id}.c\"]\n{target_section}"
+            "schema = 1\n\n[module]\nid = \"{id}\"\nversion = \"0.1.0\"\nversion_code = 1\nkind = \"{kind}\"\nlanguage = \"{lang}\"\nlifecycle = \"removable\"\ncanopus_abi = \"1\"\n\n[build]\nsources = [{sources}]\n{include_dirs}{target_section}"
         ),
     )?;
-    std::fs::write(project.join("src").join(format!("{id}.c")), source_template(id, kind))?;
-    println!("created {} ({kind} module)", project.display());
-    println!("next: cd {} && canopus build && canopus package", project.display());
+    std::fs::write(project.join(".gitignore"), "build/\ndist/\nCargo.lock\n")?;
+    if lang == "rust" {
+        let sdk = sdk_path(project, root)?;
+        std::fs::write(
+            project.join("Cargo.toml"),
+            format!(
+                "[package]\nname = \"{id}\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[lib]\ncrate-type = [\"staticlib\"]\n\n[features]\ndefault = []\ndevice = [\"dep:canopus-target-generated\"]\n\n[dependencies]\ncanopus-abi = {{ path = \"{sdk}/canopus-abi\" }}\ncanopus-runtime = {{ path = \"{sdk}/canopus-runtime\" }}\ncanopus-target-generated = {{ path = \"{sdk}/canopus-target-generated\", optional = true, default-features = false }}\n"
+            ),
+        )?;
+        std::fs::write(project.join("src/lib.rs"), rust_lib_template(id))?;
+    } else {
+        let source = if ui {
+            ui_source_template(id, kind)
+        } else {
+            source_template(id, kind)
+        };
+        std::fs::write(project.join("src").join(format!("{id}.c")), source)?;
+    }
+    Ok(())
+}
+
+/// `<checkout>/sdk/rust` as a Cargo path: relative when the project lives inside
+/// the checkout (so the project can move with it), else absolute.
+fn sdk_path(project: &Path, root: &Path) -> anyhow::Result<String> {
+    let project = std::path::absolute(project)?;
+    let sdk = std::path::absolute(root)?.join("sdk/rust");
+    if !project.starts_with(std::path::absolute(root)?) {
+        return Ok(sdk.display().to_string());
+    }
+    let common = project
+        .ancestors()
+        .find(|a| sdk.starts_with(a))
+        .context("no common ancestor")?;
+    let mut rel = PathBuf::new();
+    for _ in project.strip_prefix(common)?.components() {
+        rel.push("..");
+    }
+    Ok(rel.join(sdk.strip_prefix(common)?).display().to_string())
+}
+
+/// Removes `build/` and `dist/`.
+pub fn clean(manifest: &Path) -> anyhow::Result<()> {
+    let project = Project::load(manifest)?;
+    let mut removed = 0;
+    for dir in [project.build_dir(), project.dir.join("dist")] {
+        if dir.is_dir() {
+            std::fs::remove_dir_all(&dir)?;
+            println!("removed {}", dir.display());
+            removed += 1;
+        }
+    }
+    if removed == 0 {
+        println!("nothing to clean in {}", project.dir.display());
+    }
     Ok(())
 }
 
@@ -397,7 +635,11 @@ pub fn new(id: &str, dir: &Path, targets: &[String], lang: &str) -> anyhow::Resu
 /// whichever path the target's loader gives constructors); only the descriptor's
 /// target differs.
 fn source_template(id: &str, kind: &str) -> String {
-    let target_id = if kind == "target" { "CANOPUS_TARGET_ID" } else { "\"portable-thumbv8m\"" };
+    let target_id = if kind == "target" {
+        "CANOPUS_TARGET_ID"
+    } else {
+        "\"portable-thumbv8m\""
+    };
     r#"/* {id} - Canopus module. */
 #include "canopus_module_entry.h"
 
@@ -431,6 +673,124 @@ CANOPUS_MODULE_ENTRY(s_descriptor)
     .replace("{target_id}", target_id)
 }
 
+/// A module with one UI page: a counter and a switch. The Manager lists it as
+/// "打开界面" on the module's detail page (ADR-CAN-010).
+fn ui_source_template(id: &str, kind: &str) -> String {
+    let target_id = if kind == "target" {
+        "CANOPUS_TARGET_ID"
+    } else {
+        "\"portable-thumbv8m\""
+    };
+    r#"/* {id} - Canopus module with one UI page: the Manager's "打开界面" opens it. */
+#include "canopus_module_entry.h"
+#include "canopus_ui.h"
+
+enum { EV_ADD = 1, EV_TOGGLE };
+
+static struct { uint32_t clicks, checked; } s_state;
+
+static uint32_t text_len(const char *text)
+{
+    uint32_t n = 0u;
+    while (text[n] != '\0') n++;
+    return n;
+}
+
+static void format_u32(char *out, uint32_t value)
+{
+    char digits[12];
+    uint32_t n = 0u, i;
+    do {
+        digits[n++] = (char)('0' + value % 10u);
+        value /= 10u;
+    } while (value != 0u);
+    for (i = 0u; i < n; i++) out[i] = digits[n - 1u - i];
+    out[n] = '\0';
+}
+
+/* Builds the whole page again and commits it; the host redraws only what changed. */
+static int32_t render(const struct canopus_context_v1 *ctx, struct canopus_ui_context_v1 *ui)
+{
+    struct canopus_ui_tree_v1 *tree = 0;
+    struct canopus_ui_navigation_page_props_v1 page = { sizeof(page), "{id}", text_len("{id}") };
+    struct canopus_ui_action_row_props_v1 add = {
+        sizeof(add), "点击", text_len("点击"), "点击一次加一", text_len("点击一次加一"), EV_ADD, 1u };
+    struct canopus_ui_switch_row_props_v1 toggle = {
+        sizeof(toggle), "开关", text_len("开关"), "", 0u, EV_TOGGLE, s_state.checked, 1u };
+    char count[12];
+    struct canopus_ui_status_row_props_v1 status = { sizeof(status), "点击次数", text_len("点击次数"), count, 0u };
+    int32_t rc = ctx->ui->tree_begin(ui, &tree);
+
+    if (rc != CANOPUS_UI_OK) return rc;
+    format_u32(count, s_state.clicks);
+    status.value_len = text_len(count);
+    rc = ctx->ui->navigation_page(tree, 1u, &page);
+    if (rc == CANOPUS_UI_OK) rc = ctx->ui->status_row(tree, 2u, &status);
+    if (rc == CANOPUS_UI_OK) rc = ctx->ui->action_row(tree, 3u, &add);
+    if (rc == CANOPUS_UI_OK) rc = ctx->ui->switch_row(tree, 4u, &toggle);
+    if (rc == CANOPUS_UI_OK) rc = ctx->ui->end(tree);   /* page */
+    if (rc == CANOPUS_UI_OK) return ctx->ui->tree_commit(tree);
+    ctx->ui->tree_abort(tree);
+    return rc;
+}
+
+/* Runs on the UI task: the first tree must be committed before it returns. */
+static int32_t on_open(const struct canopus_context_v1 *ctx, struct canopus_ui_context_v1 *ui,
+                       void *user_data)
+{
+    (void)user_data;
+    return render(ctx, ui);
+}
+
+static int32_t on_event(const struct canopus_context_v1 *ctx, struct canopus_ui_context_v1 *ui,
+                        uint32_t key, uint32_t event_id, void *user_data)
+{
+    (void)key;
+    (void)user_data;
+    if (event_id == EV_ADD) s_state.clicks++;
+    else if (event_id == EV_TOGGLE) s_state.checked = !s_state.checked;
+    else return CANOPUS_UI_ERR_ARGUMENT;
+    return render(ctx, ui);
+}
+
+/* No on_back: the title's back closes the page. Return 0 from one to handle it
+ * yourself, e.g. to pop a sub-page. */
+static const struct canopus_ui_entry_v1 s_entry = {
+    sizeof(struct canopus_ui_entry_v1), "{id}", on_open, on_event, 0, 0, 0,
+};
+
+static int32_t on_prepare(const struct canopus_context_v1 *ctx) { (void)ctx; return 0; }
+
+static int32_t on_activate(const struct canopus_context_v1 *ctx)
+{
+    if (ctx->struct_size < sizeof(struct canopus_context_v1) || ctx->ui_ext == 0) return -1;
+    return ctx->ui_ext->set_entry(ctx, &s_entry);
+}
+
+static int32_t on_deactivate(const struct canopus_context_v1 *ctx)
+{
+    if (ctx->struct_size >= sizeof(struct canopus_context_v1) && ctx->ui_ext != 0) {
+        (void)ctx->ui_ext->set_entry(ctx, 0);
+    }
+    return 0;
+}
+
+static int32_t on_stop(const struct canopus_context_v1 *ctx) { return on_deactivate(ctx); }
+
+static int32_t on_query(struct canopus_status_writer_v1 *writer) { (void)writer; return 0; }
+
+static const struct canopus_module_descriptor_v1 s_descriptor = {
+    sizeof(struct canopus_module_descriptor_v1), CANOPUS_ABI_MAJOR, CANOPUS_ABI_MINOR, 0u,
+    "{id}", "0.1.0", "", {target_id},
+    on_prepare, on_activate, on_deactivate, on_stop, on_query, 0, 0,
+};
+
+CANOPUS_MODULE_ENTRY(s_descriptor)
+"#
+    .replace("{id}", id)
+    .replace("{target_id}", target_id)
+}
+
 const INSTALLER_MAX_SIZE: usize = 393_216;
 
 fn lua_value(v: &serde_json::Value) -> String {
@@ -440,7 +800,10 @@ fn lua_value(v: &serde_json::Value) -> String {
         Bool(b) => b.to_string(),
         Number(n) => n.to_string(),
         String(s) => serde_json::to_string(s).unwrap(),
-        Array(a) => format!("{{{}}}", a.iter().map(lua_value).collect::<Vec<_>>().join(",")),
+        Array(a) => format!(
+            "{{{}}}",
+            a.iter().map(lua_value).collect::<Vec<_>>().join(",")
+        ),
         Object(o) => format!(
             "{{{}}}",
             o.iter()
@@ -464,11 +827,19 @@ fn write_installers(
     let progress = std::fs::read_to_string(
         root.join("watchfaces/canopus-installer-prod/xiaomi-band-11/src/progress.lua"),
     )?;
-    let base = package_out.parent().unwrap_or(Path::new(".")).join("installer");
+    let base = package_out
+        .parent()
+        .unwrap_or(Path::new("."))
+        .join("installer");
     let mut families: std::collections::BTreeMap<String, Vec<(&TargetPack, &PathBuf)>> =
         Default::default();
     for (pack, elf) in elfs {
-        let family = pack.target_id.rsplit_once('-').map(|x| x.0).unwrap_or("").to_string();
+        let family = pack
+            .target_id
+            .rsplit_once('-')
+            .map(|x| x.0)
+            .unwrap_or("")
+            .to_string();
         families.entry(family).or_default().push((pack, elf));
     }
     for (family, members) in families {
@@ -487,7 +858,10 @@ fn write_installers(
             }
             let stem = format!("{}-{}", project.id(), pack.target_id);
             std::fs::write(dir.join(format!("{stem}.bin")), &bytes)?;
-            std::fs::write(dir.join(format!("{stem}.cmi.bin")), &receipts[&pack.target_id])?;
+            std::fs::write(
+                dir.join(format!("{stem}.cmi.bin")),
+                &receipts[&pack.target_id],
+            )?;
             let version = pack.firmware_version.clone();
             targets.insert(
                 version,
@@ -509,12 +883,20 @@ fn write_installers(
         });
         let mut source = std::fs::read_to_string(template.join("main.lua"))?;
         let replacements = [
-            ("-- @CONFIG@", format!("local CONFIG = {}", lua_value(&config))),
+            (
+                "-- @CONFIG@",
+                format!("local CONFIG = {}", lua_value(&config)),
+            ),
             (
                 "-- @PROGRESS@",
                 format!("local progress = (function()\n{progress}\nend)()"),
             ),
-            ("-- @DEVICE@", std::fs::read_to_string(&device_file)?.trim_end_matches('\n').to_string()),
+            (
+                "-- @DEVICE@",
+                std::fs::read_to_string(&device_file)?
+                    .trim_end_matches('\n')
+                    .to_string(),
+            ),
         ];
         for (marker, text) in replacements {
             if source.matches(marker).count() != 1 {
@@ -528,34 +910,6 @@ fn write_installers(
         )?;
         println!("wrote installer {}", dir.display());
     }
-    Ok(())
-}
-
-fn new_rust(id: &str, project: &Path, targets: &[String]) -> anyhow::Result<()> {
-    if targets.is_empty() {
-        bail!("Rust modules are target-bound: pass at least one --target");
-    }
-    let root = canopus_root()?;
-    std::fs::create_dir_all(project.join("src"))?;
-    std::fs::write(
-        project.join("Canopus.toml"),
-        format!(
-            "schema = 1\n\n[module]\nid = \"{id}\"\nversion = \"0.1.0\"\nversion_code = 1\nkind = \"target\"\nlanguage = \"rust\"\nlifecycle = \"removable\"\ncanopus_abi = \"1\"\n\n[build]\nsources = [\"Cargo.toml\"]\n\n[targets]\ninclude = [{}]\n",
-            targets.iter().map(|t| format!("\"{t}\"")).collect::<Vec<_>>().join(", ")
-        ),
-    )?;
-    let sdk = root.join("sdk/rust");
-    std::fs::write(
-        project.join("Cargo.toml"),
-        format!(
-            "[package]\nname = \"{id}\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[lib]\ncrate-type = [\"staticlib\"]\n\n[features]\ndefault = []\ndevice = [\"dep:canopus-target-generated\"]\n\n[dependencies]\ncanopus-abi = {{ path = \"{sdk}/canopus-abi\" }}\ncanopus-runtime = {{ path = \"{sdk}/canopus-runtime\" }}\ncanopus-target-generated = {{ path = \"{sdk}/canopus-target-generated\", optional = true, default-features = false }}\n",
-            sdk = sdk.display()
-        ),
-    )?;
-    std::fs::write(project.join("src/lib.rs"), rust_lib_template(id))?;
-    std::fs::write(project.join(".gitignore"), "build/\nCargo.lock\n")?;
-    println!("created {} (Rust target module)", project.display());
-    println!("next: cd {} && canopus build && canopus package", project.display());
     Ok(())
 }
 

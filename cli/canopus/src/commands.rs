@@ -27,6 +27,7 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
             active,
             names,
         } => {
+            let targets_dir = crate::env::targets_dir(targets_dir)?;
             let mut packs = list_target_packs(&targets_dir)?;
             if active {
                 packs.retain(|p| p.status.as_deref() != Some("frozen"));
@@ -57,8 +58,12 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
             check,
             targets_dir,
         } => {
+            let targets_dir = crate::env::targets_dir(targets_dir)?;
             let packs = match (target, all) {
-                (Some(id), false) => vec![canopus_core::generate::pack_by_id(&targets_dir, &id)?],
+                (Some(id), false) => {
+                    let id = crate::env::resolve_target(&targets_dir, &id)?;
+                    vec![canopus_core::generate::pack_by_id(&targets_dir, &id)?]
+                }
                 (None, true) => canopus_core::generate::active_targets(&targets_dir)?,
                 _ => anyhow::bail!("specify either a target id or --all"),
             };
@@ -93,6 +98,8 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
             shell,
             json,
         } => {
+            let targets_dir = crate::env::targets_dir(targets_dir)?;
+            let target = crate::env::resolve_target(&targets_dir, &target)?;
             let pack = canopus_core::generate::pack_by_id(&targets_dir, &target)?;
             let family = pack
                 .family
@@ -203,6 +210,8 @@ pub fn module(cmd: ModuleCmd) -> anyhow::Result<()> {
                 "rust" => canopus_core::template::ModuleLang::Rust,
                 other => anyhow::bail!("unknown language '{other}' (expected c or rust)"),
             };
+            let targets_dir = crate::env::targets_dir(targets_dir)?;
+            let target = crate::env::resolve_target(&targets_dir, &target)?;
             find_target(&targets_dir, &target)?;
             let files = canopus_core::template::render(&name, &target, lang);
             let dir = out_dir.join(&name);
@@ -381,7 +390,10 @@ pub fn verify(
         (base, Vec::new())
     } else {
         let id = target_id.ok_or_else(|| anyhow::anyhow!("--target is required"))?;
-        (find_target(targets_dir, id)?, build_allowed_addresses(targets_dir, id))
+        (
+            find_target(targets_dir, id)?,
+            build_allowed_addresses(targets_dir, id),
+        )
     };
     let data = std::fs::read(elf_path)
         .map_err(|e| anyhow::anyhow!("cannot read {}: {e}", elf_path.display()))?;
@@ -594,7 +606,11 @@ pub fn re(cmd: ReCmd) -> anyhow::Result<()> {
             symbol,
             targets_dir,
             output,
-        } => re_probe(&target, &symbol, &targets_dir, &output),
+        } => {
+            let targets_dir = crate::env::targets_dir(targets_dir)?;
+            let target = crate::env::resolve_target(&targets_dir, &target)?;
+            re_probe(&target, &symbol, &targets_dir, &output)
+        }
     }
 }
 
