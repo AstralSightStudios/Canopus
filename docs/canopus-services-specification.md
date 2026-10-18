@@ -290,6 +290,14 @@ struct canopus_hook_obj {
   多个函数名解析到同一活动槽位时拒绝重复安装；原值包括 NULL 均精确恢复。释放模块先恢复 Hook，再清除映射，最后释放内存。
 - **RAM Inline**：仅搬移明确可复制的 Thumb 指令；PC 相关、分支/返回、IT 块和未实现的编码返回 UNSUPPORTED。
   安装和卸载需要目标函数处于静止状态，不得与执行该函数的任务/中断并发修补代码。
+- **Band 11 的 Inline（代码视图）**：Umem 里的模块镜像在 PSRAM 指令别名（`0x1C…`）上执行，却要经数据视图（`+0x20000000`，`0x3C…`）写入，
+  别名本身不可写。平台注册 `canopus_hook_code_view` 后由它独自决定能补丁什么：只有调用模块自己的可执行区域，
+  补丁和 trampoline 都经数据视图写入，trampoline 放在同一块 Umem（首次 Inline 时分配，随 Supervisor 常驻，经别名执行），
+  写完后做一次 D-cache clean + I-cache invalidate（`b11_publish_code`）；发布失败则还原并返回 UNSUPPORTED。
+  不经 Umem 别名执行的镜像（默认堆的 MPU 回退）不在视图内，Inline 返回 UNSUPPORTED。
+  没有代码视图的目标（Band 10 Pro）仍只在 SRAM 原地补丁。引擎不再把 `0x1C…` 当只读 Flash 一概拒绝；固件 Flash 仍然不可补丁。
+  Unicorn 测试（`tests/hook/test_thumb.py`）用"代码视图只读、数据视图不可执行"的两段映射验证；Band 11 Mirage 上 `.155` 的 services 测试执行 Inline 用例。
+  模拟器没有 cache 行为，D/I-cache 维护序列未经真机验证。
 - **Host**：原生 host 不模拟 Inline 成功；无映射的 AUTO 没有 Thumb 标签可供推导，也返回 UNSUPPORTED。
   原生 host 测试使用显式 POINTER；实际 Thumb 跳板另由 `tests/hook/test_thumb.py` 验证。
 

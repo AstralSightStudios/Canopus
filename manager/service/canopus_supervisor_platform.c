@@ -18,6 +18,7 @@
 #if defined(CANOPUS_SUP_BAND11_BOOTSTRAP)
 #define CANOPUS_SUP_RESIDENT_DRIVER 1
 #endif
+#include "../../runtime/hook/canopus_hook.h"
 #include "canopus_installer_bundle.h"
 #include "canopus_module_registration.h"
 #include "canopus_runtime.h"
@@ -73,7 +74,61 @@ struct sup_loaded_module {
 };
 
 static struct sup_loaded_module s_loaded_modules[CANOPUS_SUP_MODULE_SLOTS];
-#endif
+
+#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+/* Inline hooks on Band 11. A module image in Umem runs at its PSRAM alias and
+ * is written through the data view, so the hook engine asks for both: only the
+ * calling module's own executable region may be patched, and the trampolines
+ * sit in one Umem block that is executed through its alias too. */
+static uintptr_t sup_hook_write_address(uint32_t slot, uintptr_t code,
+                                        uint32_t length)
+{
+    const struct sup_loaded_module *loaded;
+    const struct canopus_elf_module *image;
+    uintptr_t offset;
+    if (slot >= CANOPUS_SUP_MODULE_SLOTS) return 0u;
+    loaded = &s_loaded_modules[slot];
+    image = &loaded->image;
+    if (!loaded->aliased || image->allocation == 0 || image->region_count == 0u ||
+        image->regions[0].kind != CANOPUS_ELF_REGION_EXEC ||
+        code < image->code_base) {
+        return 0u;
+    }
+    offset = code - image->code_base;
+    if (offset < image->regions[0].offset || length > image->regions[0].size ||
+        offset - image->regions[0].offset > image->regions[0].size - length) {
+        return 0u;
+    }
+    return (uintptr_t)image->target_base + offset;
+}
+
+/* Allocated on the first inline hook and kept: the Supervisor is never unloaded. */
+static int sup_hook_trampoline_memory(uint32_t size, uintptr_t *exec,
+                                      uintptr_t *write)
+{
+    void *block = canopus_fw_mm_memalign_scratch(32u, size);
+    uint32_t alias;
+    if (block == 0) return -1;
+    alias = b11_exec_alias((uintptr_t)block, size);
+    if (alias == 0u) {
+        canopus_fw_mm_free_scratch(block);
+        return -1;
+    }
+    *exec = alias;
+    *write = (uintptr_t)block;
+    return 0;
+}
+
+static int sup_hook_publish(void)
+{
+    return b11_publish_code();
+}
+
+static const struct canopus_hook_code_view s_hook_code_view = {
+    sup_hook_write_address, sup_hook_trampoline_memory, sup_hook_publish,
+};
+#endif /* CANOPUS_SUP_BAND11_BOOTSTRAP */
+#endif /* CANOPUS_SUP_CUSTOM_LOADER */
 
 /* CAN-P2-002: the fops table is typed from the recovered layout instead of a
  * bare uint32_t[12]. The veneer's `file_operations` carries the exact device
@@ -168,6 +223,9 @@ static int sup_register_device(void *cookie)
     int rc;
 
     (void)cookie;
+#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+    canopus_hook_set_code_view(&s_hook_code_view);
+#endif
     s_fops.open = (void *)(uintptr_t)&sup_control_open;
     s_fops.close = (void *)(uintptr_t)&sup_control_close;
     s_fops.read = (void *)(uintptr_t)&sup_control_read;

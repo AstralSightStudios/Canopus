@@ -5,7 +5,9 @@
  * Unknown Flash targets return CANOPUS_SVC_ERR_UNSUPPORTED without patching code.
  * No firmware-specific mapping table, Flash writes or patch hardware is used.
  * CANOPUS_HOOK_FPB is a legacy request value: only a registered RAM mapping can
- * satisfy it. POINTER replaces a RAM slot; INLINE patches SRAM Thumb code only.
+ * satisfy it. POINTER replaces a RAM slot; INLINE patches SRAM Thumb code, or,
+ * where the platform registers a code view, the calling module's own executable
+ * image that runs through an instruction-side alias of the RAM it is written to.
  * AUTO selects a registered mapping, an aligned pointer slot, or a Thumb inline
  * hook. Callers must distinguish code from data correctly (prefer explicit types).
  */
@@ -24,6 +26,29 @@ extern "C" {
 
 /* Initialize software state once at startup, before installing any hooks. */
 void canopus_hook_engine_init(void);
+
+/* How inline hooks reach code that is executed through one address and written
+ * through another (Band 11 Umem images run at their PSRAM alias, delta
+ * 0x20000000, and are written through the data view). Without a view only SRAM
+ * addresses are patched in place; with one, the view alone decides what may be
+ * patched and where its trampolines live. */
+struct canopus_hook_code_view {
+    /* The address `length` bytes of module `slot`'s executable code at `code`
+     * are written through, or 0 when the range is not that module's code. */
+    uintptr_t (*write_address)(uint32_t slot, uintptr_t code, uint32_t length);
+    /* One block of executable memory for every trampoline, reached through
+     * *exec and written through *write. Called at most once; retained for
+     * the life of the Supervisor. Returns 0 on success. */
+    int (*trampoline_memory)(uint32_t size, uintptr_t *exec, uintptr_t *write);
+    /* Makes bytes written through the write address fetchable through the code
+     * address (data-cache clean, instruction-cache invalidate). Returns 0 on
+     * success. */
+    int (*publish)(void);
+};
+
+/* Registers (or with NULL clears) the platform's code view. The pointer must
+ * stay valid while hooks may be installed. */
+void canopus_hook_set_code_view(const struct canopus_hook_code_view *view);
 
 /* Install a hook owned by module `slot`. Returns a hook id or a negative error.
  * Pointer originals are exact slot values, including NULL. An active physical

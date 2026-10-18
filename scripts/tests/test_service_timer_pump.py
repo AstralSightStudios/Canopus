@@ -71,6 +71,10 @@ def build_image(out, target, defines, cc, linker, load_elf):
                            (metadata["family"] + ".toml")).read_text())
     wrapper = out / "pump.c"
     wrapper.write_text(WRAPPER)
+    # The Supervisor build generates the target's L2 configuration next to the object.
+    subprocess.run(["python3", str(ROOT / "scripts/generate_l2_probe_config.py"), target,
+                    str(out / "canopus_l2_probe_config.h")],
+                   check=True, capture_output=True, text=True)
     obj, elf = out / "pump.o", out / "pump.elf"
     includes = (
         "sdk/c", "runtime/loader", "manager/service", "manager/target",
@@ -82,7 +86,7 @@ def build_image(out, target, defines, cc, linker, load_elf):
                "-fno-common", "-fno-stack-protector", "-fno-unwind-tables",
                "-fno-asynchronous-unwind-tables", "-ffunction-sections",
                "-fdata-sections", "-Os", "-Wall", "-Wextra", "-Werror",
-               *family["defines"], *defines, "-I" + str(pack / "generated"),
+               *family["defines"], *defines, "-I" + str(out), "-I" + str(pack / "generated"),
                *["-I" + str(ROOT / path) for path in includes],
                "-c", str(wrapper), "-o", str(obj)]
     subprocess.run(command, check=True, capture_output=True, text=True)

@@ -7,7 +7,7 @@
 ## 验证范围
 
 - Hook：固定的可复制 Thumb 算术入口、trampoline 调用和恢复、显式 POINTER、设备 AUTO 指针槽位、短函数/重复请求拒绝，以及模块自有 RAM dispatch 映射。
-  引擎只改写 SRAM；Band 11 的模块经只读的指令别名执行，引擎对模块自己的代码返回 `UNSUPPORTED`，此时两个 inline 项显式 SKIP（不算通过）。
+  Band 10 Pro 在 SRAM 原地补丁；Band 11 的模块经只读的指令别名执行，由平台的代码视图经数据视图写入补丁和 trampoline（见规范 §2.8）。
   映射测试不修改真实固件 vtable，不证明某个固件 Flash 函数已被拦截。
 - KV：int/string/bool、fallback、remove/clear，并留存跨重启 probe。
 - FS：读写、seek/tell/size/sync、rename、stat、目录接口调用。
@@ -64,7 +64,7 @@ python3 scripts/emu/band11_smoke.py 155 --services
 ```
 
 与默认的 hello-portable SCAN 冒烟不同，services 模式必须真正启用并激活本模块，读取报告与 probe。
-普通 UI 构建要求 timer 组执行。模拟器上预期 3 项显式跳过：两个 inline Hook（见上）和振动马达（模拟器里没有可达的 vibrator）。
+普通 UI 构建要求 timer 组与全部 Hook 组执行。模拟器上预期 1 项显式跳过：振动马达（模拟器里没有可达的 vibrator）。
 结果与缺失前提必须如实记录，不能把 SCAN 成功当作服务测试通过。
 
 ```bash

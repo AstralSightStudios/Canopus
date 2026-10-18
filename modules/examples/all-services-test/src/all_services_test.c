@@ -142,7 +142,6 @@ static void run_hook_tests(const struct canopus_context_v1 *ctx)
     int ok = 1;
     int32_t hook_id;
     int32_t un_rc;
-    int inline_supported;
 
     if (!ctx->hook || !ctx->hook->install || !ctx->hook->uninstall || !ctx->hook->is_hooked) {
         log_test("Hook: service object missing", 0);
@@ -159,27 +158,20 @@ static void run_hook_tests(const struct canopus_context_v1 *ctx)
 
     hook_id = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
                                  (uintptr_t *)&s_orig_math_add, CANOPUS_HOOK_INLINE);
-    /* The engine patches SRAM only: where modules run through a read-only
-     * instruction alias (Band 11) it refuses to hook the module's own code. */
-    inline_supported = hook_id != CANOPUS_SVC_ERR_UNSUPPORTED;
-    if (!inline_supported) {
-        log_skip("Hook: inline hooking needs writable module code on this target");
-    } else {
-        if (hook_id < 0) ok = 0;
-        if (ctx->hook->is_hooked(ctx, (uintptr_t)test_math_add) != 1) ok = 0;
+    if (hook_id < 0) ok = 0;
+    if (ctx->hook->is_hooked(ctx, (uintptr_t)test_math_add) != 1) ok = 0;
 
-        int hooked_val = fn_math(arg_a, arg_b);
-        if (hooked_val != 2 || s_hook_inline_called != 1) ok = 0;
+    int hooked_val = fn_math(arg_a, arg_b);
+    if (hooked_val != 2 || s_hook_inline_called != 1) ok = 0;
 
-        un_rc = ctx->hook->uninstall(ctx, hook_id);
-        if (un_rc != CANOPUS_SVC_OK) ok = 0;
-        if (ctx->hook->is_hooked(ctx, (uintptr_t)test_math_add) != 0) ok = 0;
+    un_rc = ctx->hook->uninstall(ctx, hook_id);
+    if (un_rc != CANOPUS_SVC_OK) ok = 0;
+    if (ctx->hook->is_hooked(ctx, (uintptr_t)test_math_add) != 0) ok = 0;
 
-        int after_val = fn_math(arg_a, arg_b);
-        if (after_val != 1) ok = 0;
+    int after_val = fn_math(arg_a, arg_b);
+    if (after_val != 1) ok = 0;
 
-        log_test("Hook: Inline function hook & trampoline call", ok);
-    }
+    log_test("Hook: Inline function hook & trampoline call", ok);
 
     /* 1.2 Pointer slot hooking */
     ok = 1;
@@ -218,29 +210,25 @@ static void run_hook_tests(const struct canopus_context_v1 *ctx)
     log_test("Hook: Auto-deduced pointer hook & unhook slot cleanup", ok);
 
     /* 1.4 Negative defense tests: short function boundary check & duplicate hook */
-    if (!inline_supported) {
-        log_skip("Hook: boundary check & duplicate hook defense need inline hooking");
-    } else {
-        ok = 1;
-        uintptr_t dummy_orig = 0;
-        /* test_square is < 8 bytes leaf function (return x * x): inline hook must fail-closed */
-        int32_t bad_hook = ctx->hook->install(ctx, (uintptr_t)test_square, (uintptr_t)hook_square,
-                                             &dummy_orig, CANOPUS_HOOK_INLINE);
-        if (bad_hook != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+    ok = 1;
+    uintptr_t dummy_orig = 0;
+    /* test_square is < 8 bytes leaf function (return x * x): inline hook must fail-closed */
+    int32_t bad_hook = ctx->hook->install(ctx, (uintptr_t)test_square, (uintptr_t)hook_square,
+                                         &dummy_orig, CANOPUS_HOOK_INLINE);
+    if (bad_hook != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
 
-        /* Duplicate hook defense */
-        int32_t h1 = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
-                                       (uintptr_t *)&s_orig_math_add, CANOPUS_HOOK_INLINE);
-        if (h1 >= 0) {
-            int32_t dup_h = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
-                                               (uintptr_t *)&s_orig_math_add, CANOPUS_HOOK_INLINE);
-            if (dup_h != CANOPUS_SVC_ERR_STATE) ok = 0;
-            ctx->hook->uninstall(ctx, h1);
-        } else {
-            ok = 0;
-        }
-        log_test("Hook: boundary check & duplicate hook defense", ok);
+    /* Duplicate hook defense */
+    int32_t h1 = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
+                                   (uintptr_t *)&s_orig_math_add, CANOPUS_HOOK_INLINE);
+    if (h1 >= 0) {
+        int32_t dup_h = ctx->hook->install(ctx, (uintptr_t)test_math_add, (uintptr_t)hook_math_add,
+                                           (uintptr_t *)&s_orig_math_add, CANOPUS_HOOK_INLINE);
+        if (dup_h != CANOPUS_SVC_ERR_STATE) ok = 0;
+        ctx->hook->uninstall(ctx, h1);
+    } else {
+        ok = 0;
     }
+    log_test("Hook: boundary check & duplicate hook defense", ok);
 
     /* 1.5 Owner-registered dispatch mapping using module-owned code and RAM. */
     ok = 1;

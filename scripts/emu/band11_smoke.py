@@ -29,12 +29,8 @@ RUN_BUTTON = (106, 383)     # installer page
 
 EXPECTED_SERVICES_SKIPS = set()
 
-# What the Mirage run skips: modules run through a read-only instruction alias, so
-# the hook engine refuses to patch their own code, and the emulator has no
-# reachable vibrator.
+# What the Mirage run skips: the emulator has no reachable vibrator.
 EMULATOR_SERVICES_SKIPS = {
-    "Hook: inline hooking needs writable module code on this target",
-    "Hook: boundary check & duplicate hook defense need inline hooking",
     "Haptics: the vibrator service is not reachable",
 }
 

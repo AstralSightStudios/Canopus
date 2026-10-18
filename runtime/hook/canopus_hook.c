@@ -6,18 +6,35 @@
 #include "canopus_hook.h"
 #include "canopus_memory.h"
 
+#define HOOK_PATCH_SPAN 16u
+
 struct hook_entry {
     int used;
     uint32_t slot;
     uintptr_t target_fn;
     uintptr_t hook_slot_addr; /* Physical RAM slot, for both direct and mapped hooks. */
+    uintptr_t patch_addr;     /* Where an inline hook's bytes were written. */
     uintptr_t orig_fn;
     canopus_hook_type_t type;
-    uint8_t orig_bytes[16];
+    uint8_t orig_bytes[HOOK_PATCH_SPAN];
     uint8_t orig_len;
 };
 
 static struct hook_entry s_hooks[CANOPUS_HOOK_MAX_SLOTS];
+
+static const struct canopus_hook_code_view *s_code_view;
+
+void canopus_hook_set_code_view(const struct canopus_hook_code_view *view)
+{
+    s_code_view = view;
+}
+
+/* Whether the registered view lets module `slot` patch the code at `code`. */
+static int view_patchable(uint32_t slot, uintptr_t code)
+{
+    return s_code_view != 0 &&
+           s_code_view->write_address(slot, code, HOOK_PATCH_SPAN) != 0u;
+}
 
 struct canopus_flash_slot_map {
     uint32_t slot; /* Owning module; only that module may use this mapping. */
@@ -104,11 +121,34 @@ int32_t canopus_hook_register_slot_map(uint32_t slot, uintptr_t flash_fn,
 __attribute__((aligned(4)))
 static uint8_t s_trampolines[CANOPUS_HOOK_MAX_SLOTS][32];
 
-static void sync_cache(const void *addr, size_t len)
+static uintptr_t s_trampoline_exec;
+static uintptr_t s_trampoline_write;
+
+/* Makes the bytes just written fetchable; 0 on success. */
+static int publish_code(void)
 {
-    (void)addr;
-    (void)len;
+    if (s_code_view != 0) return s_code_view->publish();
     __asm__ volatile("dsb\n\tisb" ::: "memory");
+    return 0;
+}
+
+/* Trampoline `id`: the address it is written through and the one it runs at. */
+static int trampoline_for(int id, uint8_t **write, uintptr_t *exec)
+{
+    if (s_code_view == 0) {
+        *write = s_trampolines[id];
+        *exec = (uintptr_t)s_trampolines[id];
+        return 0;
+    }
+    if (s_trampoline_write == 0u &&
+        s_code_view->trampoline_memory(sizeof(s_trampolines), &s_trampoline_exec,
+                                       &s_trampoline_write) != 0) {
+        s_trampoline_write = 0u;
+        return -1;
+    }
+    *write = (uint8_t *)(s_trampoline_write + (uintptr_t)id * sizeof(s_trampolines[0]));
+    *exec = s_trampoline_exec + (uintptr_t)id * sizeof(s_trampolines[0]);
+    return 0;
 }
 
 static uint32_t thumb_insn_len(uint16_t w)
@@ -158,6 +198,7 @@ static int thumb_insn_copy_safe(uint16_t w1, uint16_t w2)
     return 0;
 }
 
+/* `target` is read through the address the patch is written through. */
 static uint32_t thumb_copy_len(uintptr_t target, uint32_t min_len)
 {
     const uint16_t *insns = (const uint16_t *)target;
@@ -209,7 +250,9 @@ int32_t canopus_hook_install(uint32_t slot,
 
     ram_slot = find_ram_slot_for_flash(slot, target_fn);
     if (ram_slot == 0) {
-        if (is_flash_address(target_even)) return CANOPUS_SVC_ERR_UNSUPPORTED;
+        if (is_flash_address(target_even) && !view_patchable(slot, target_even)) {
+            return CANOPUS_SVC_ERR_UNSUPPORTED;
+        }
         if (hook_type == CANOPUS_HOOK_AUTO) {
 #ifdef CANOPUS_HOST
             /* Native function and data pointers have no Thumb tag to distinguish them. */
@@ -244,23 +287,33 @@ int32_t canopus_hook_install(uint32_t slot,
         /* A native host cannot execute Thumb trampolines. Do not fake success. */
         return CANOPUS_SVC_ERR_UNSUPPORTED;
 #else
-        uint8_t *code = (uint8_t *)target_even;
-        uint8_t *orig_buf = s_trampolines[id];
+        uint8_t *code;
+        uint8_t *orig_buf;
+        uintptr_t orig_exec;
         uint32_t jmp_offset = (target_even & 2u) ? 2u : 0u;
         uint32_t copy_len;
         uint32_t orig_pos;
         uint32_t resume_target;
         uint32_t hook_target;
         uint32_t p;
-        if (target_even < 0x20000000u || target_even >= 0x40000000u) {
-            return CANOPUS_SVC_ERR_UNSUPPORTED;
+        if (s_code_view != 0) {
+            uintptr_t write = s_code_view->write_address(slot, target_even, HOOK_PATCH_SPAN);
+            if (write == 0u) return CANOPUS_SVC_ERR_UNSUPPORTED;
+            code = (uint8_t *)write;
+        } else {
+            if (target_even < 0x20000000u || target_even >= 0x40000000u) {
+                return CANOPUS_SVC_ERR_UNSUPPORTED;
+            }
+            code = (uint8_t *)target_even;
         }
-        copy_len = thumb_copy_len(target_even, jmp_offset + 8u);
+        copy_len = thumb_copy_len((uintptr_t)code, jmp_offset + 8u);
         if (copy_len == 0u || copy_len > sizeof(h->orig_bytes)) {
             return CANOPUS_SVC_ERR_UNSUPPORTED;
         }
+        if (trampoline_for(id, &orig_buf, &orig_exec) != 0) return CANOPUS_SVC_ERR_NOMEM;
         canopus_memcpy(h->orig_bytes, code, copy_len);
         h->orig_len = (uint8_t)copy_len;
+        h->patch_addr = (uintptr_t)code;
         canopus_memcpy(orig_buf, code, copy_len);
         orig_pos = copy_len;
         if ((orig_pos & 2u) != 0u) {
@@ -273,8 +326,7 @@ int32_t canopus_hook_install(uint32_t slot,
         orig_buf[orig_pos + 3u] = 0xF0;
         resume_target = (uint32_t)((target_even + copy_len) | 1u);
         canopus_memcpy(&orig_buf[orig_pos + 4u], &resume_target, 4u);
-        sync_cache(orig_buf, orig_pos + 8u);
-        h->orig_fn = (uintptr_t)orig_buf | 1u;
+        h->orig_fn = orig_exec | 1u;
         h->type = CANOPUS_HOOK_INLINE;
 
         if (jmp_offset != 0u) {
@@ -291,7 +343,11 @@ int32_t canopus_hook_install(uint32_t slot,
             code[p] = 0x00;
             code[p + 1u] = 0xBF;
         }
-        sync_cache(code, copy_len);
+        if (publish_code() != 0) {
+            canopus_memcpy(code, h->orig_bytes, copy_len);
+            (void)publish_code();
+            return CANOPUS_SVC_ERR_UNSUPPORTED;
+        }
         *orig_fn = h->orig_fn;
 #endif
     }
@@ -314,9 +370,8 @@ int32_t canopus_hook_uninstall(uint32_t slot, int32_t hook_id)
     }
 #ifndef CANOPUS_HOST
     else if (h->type == CANOPUS_HOOK_INLINE) {
-        uint8_t *code = (uint8_t *)function_address(h->target_fn);
-        canopus_memcpy(code, h->orig_bytes, h->orig_len);
-        sync_cache(code, h->orig_len);
+        canopus_memcpy((uint8_t *)h->patch_addr, h->orig_bytes, h->orig_len);
+        (void)publish_code();
     }
 #endif
     canopus_memset(h, 0, sizeof(*h));
