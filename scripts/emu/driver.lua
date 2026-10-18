@@ -3,6 +3,7 @@
 --   lua /data/canopus/driver.lua install <token>
 --   lua /data/canopus/driver.lua cmd <opname> [slot]
 --   lua /data/canopus/driver.lua cat <path>
+--   lua /data/canopus/driver.lua diag   (the Manager target's click record)
 -- Speaks CPC2 (the only device protocol) to /dev/canopus and /canopus/install.
 -- Output is line oriented ("@@ key=value ..."); tests parse it on the host.
 local OPS = {
@@ -78,6 +79,12 @@ elseif op == "cmd" then
     end
     local reply = exchange("/dev/canopus", code, payload, 36)
     show(u32(reply, 28))
+elseif op == "diag" then
+    local d = query_device()
+    local names = {"build", "clicks", "row", "generation", "key", "event", "sel_before", "sel_after", "detail"}
+    local out = {}
+    for i, name in ipairs(names) do out[#out + 1] = string.format("%s=%d", name, u32(d, 36 + 48 + (i - 1) * 4)) end
+    print("@@ diag " .. table.concat(out, " "))
 elseif op == "cat" then
     local f = io.open(a, "rb")
     print("@@ " .. (f and ("content=" .. (f:read("a"):gsub("%s+$", ""))) or "content=<missing>"))

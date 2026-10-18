@@ -606,16 +606,53 @@ static int host_is_title(uint16_t type)
            type == CANOPUS_UI_NODE_NAVIGATION_HEADER;
 }
 
+#ifndef CANOPUS_MGR_BAND11
+/* On Mirage 3.101.043 the row widgets, the page title and the message box were
+ * exercised; a page with a stock label showed missing glyphs and then a blank
+ * screen, and a page with a progress bar stopped drawing at the bar. Band 10 Pro
+ * therefore draws text as a status row and rejects images, bars and sliders
+ * (before any widget is touched), until those entry points are verified. */
+static int host_is_label(uint16_t type)
+{
+    (void)type;
+    return 0;
+}
+
+static int host_is_unverified_widget(uint16_t type)
+{
+    return type == CANOPUS_UI_NODE_IMAGE || type == CANOPUS_UI_NODE_PROGRESS ||
+           type == CANOPUS_UI_NODE_SLIDER;
+}
+
+static int host_is_text(uint16_t type)
+{
+    return type == CANOPUS_UI_NODE_TEXT || type == CANOPUS_UI_NODE_RICH_TEXT;
+}
+#else /* CANOPUS_MGR_BAND11 */
 static int host_is_label(uint16_t type)
 {
     return type == CANOPUS_UI_NODE_TEXT || type == CANOPUS_UI_NODE_RICH_TEXT;
 }
 
+static int host_is_unverified_widget(uint16_t type)
+{
+    (void)type;
+    return 0;
+}
+
+static int host_is_text(uint16_t type)
+{
+    (void)type;
+    return 0;
+}
+#endif /* CANOPUS_MGR_BAND11 */
+
 static int host_is_row(uint16_t type)
 {
     return type == CANOPUS_UI_NODE_STATUS_ROW || type == CANOPUS_UI_NODE_BUTTON ||
            type == CANOPUS_UI_NODE_ACTION_ROW || type == CANOPUS_UI_NODE_SWITCH_ROW ||
-           type == CANOPUS_UI_NODE_CHECKBOX || type == CANOPUS_UI_NODE_RADIO_ROW;
+           type == CANOPUS_UI_NODE_CHECKBOX || type == CANOPUS_UI_NODE_RADIO_ROW ||
+           host_is_text(type);
 }
 
 /* Places `object` under the previous widget (or at the top of the body). */
@@ -666,6 +703,9 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         uint16_t type = snapshot->nodes[i].type;
         if (host_is_container(type) || host_is_title(type)) {
             continue;
+        }
+        if (host_is_unverified_widget(type)) {
+            return -1;
         }
         if (host_is_label(type)) {
             visible_labels++;
@@ -886,7 +926,16 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     }
     for (i = 0; i < CANOPUS_UI_HOST_MAX_ROWS; i++) {
         if (view->rows[i] != NULL && (used_mask & (UINT32_C(1) << i)) == 0u) {
+#ifndef CANOPUS_MGR_BAND11
+            /* lvx_set_hidden left a row that had left the page drawn on Mirage
+             * 3.101.043, so Band 10 Pro deletes it (a message box is deleted from
+             * its own button callback the same way). */
+            ((void (*)(void *))(uintptr_t)FW_LVX_OBJECT_DELETE)(view->rows[i]);
+            view->rows[i] = NULL;
+            view->row_kinds[i] = 0u;
+#else /* CANOPUS_MGR_BAND11 */
             host_set_hidden(view->rows[i], 1u);
+#endif /* CANOPUS_MGR_BAND11 */
             canopus_memset(&view->bindings[i], 0, sizeof(view->bindings[i]));
         }
     }

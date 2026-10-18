@@ -1,5 +1,5 @@
 /*
- * ui_demo.c — portable UI page example (ADR-CAN-010).
+ * ui_demo.c — UI page example (ADR-CAN-010).
  *
  * The module registers one page entry. While it runs, its detail page in the
  * Manager offers "打开界面"; opening it calls on_open, which builds the first
@@ -9,7 +9,7 @@
  * back reaches on_back first, so it can pop to the first level instead of closing.
  * Band 11's stock title finishes the page by itself.
  */
-#include "canopus_services.h"
+#include "canopus_module_entry.h"
 #include "canopus_ui.h"
 
 #define UI_MODULE_ID "ui_demo"
@@ -44,12 +44,13 @@ static void format_u32(char *out, uint32_t value)
     out[n] = '\0';
 }
 
-/* Leaves a line the emulator harness can read back. */
+/* Appends a line the emulator harness reads back. */
 static void probe(const struct canopus_context_v1 *ctx, const char *what)
 {
     char line[64];
     uint32_t n = 0u, i;
     char number[12];
+    int32_t fd;
     if (ctx->fs == 0) return;
     for (i = 0u; what[i] != '\0' && n < 40u; i++) line[n++] = what[i];
     line[n++] = ' ';
@@ -61,7 +62,10 @@ static void probe(const struct canopus_context_v1 *ctx, const char *what)
     line[n++] = '/';
     line[n++] = s_state.checked ? '1' : '0';
     line[n++] = '\n';
-    (void)ctx->fs->write_all(ctx, "ui_probe.txt", line, n);
+    fd = ctx->fs->open(ctx, "ui_probe.txt", CANOPUS_FS_WRITE | CANOPUS_FS_APPEND | CANOPUS_FS_CREATE);
+    if (fd < 0) return;
+    (void)ctx->fs->write(ctx, fd, line, n);
+    (void)ctx->fs->close(ctx, fd);
 }
 
 static int32_t add_status(const struct canopus_context_v1 *ctx, struct canopus_ui_tree_v1 *tree,
@@ -103,12 +107,8 @@ static int32_t render(const struct canopus_context_v1 *ctx, struct canopus_ui_co
         struct canopus_ui_switch_row_props_v1 toggle = {
             sizeof(toggle), "开关", text_len("开关"), "演示开关", text_len("演示开关"),
             EV_TOGGLE, s_state.checked, 1u };
-        struct canopus_ui_component_props_v1 bar = {
-            sizeof(bar), "", 0u, "", 0u, 0u, CANOPUS_UI_NODE_FLAG_VISIBLE,
-            (int32_t)(s_state.clicks % 11u), 0, 10, 1, 0u };
         rc = add_status(ctx, tree, 3u, "点击次数", count);
         if (rc == CANOPUS_UI_OK) rc = ctx->ui->switch_row(tree, 4u, &toggle);
-        if (rc == CANOPUS_UI_OK) rc = ctx->ui->component(tree, 5u, CANOPUS_UI_NODE_PROGRESS, &bar);
         if (rc == CANOPUS_UI_OK) rc = add_action(ctx, tree, 6u, "点击", "点击一次加一", EV_ADD);
         if (rc == CANOPUS_UI_OK) rc = add_action(ctx, tree, 7u, "详情页", "进入第二层", EV_DETAIL);
     } else if (rc == CANOPUS_UI_OK) {
@@ -212,8 +212,8 @@ static const struct canopus_module_descriptor_v1 s_descriptor = {
     0u,
     UI_MODULE_ID,
     "1.0.0",
-    "portable-example",
-    "portable-thumbv8m",
+    "ui-demo",
+    CANOPUS_TARGET_ID,
     demo_prepare,
     demo_activate,
     demo_deactivate,
@@ -223,8 +223,4 @@ static const struct canopus_module_descriptor_v1 s_descriptor = {
     0,
 };
 
-__attribute__((constructor)) static void demo_init(const struct canopus_context_v1 *ctx)
-{
-    if (!canopus_services_has(ctx, CANOPUS_SVC_MODULE, 1)) return;
-    (void)ctx->services->module_register(ctx, &s_descriptor);
-}
+CANOPUS_MODULE_ENTRY(s_descriptor)
