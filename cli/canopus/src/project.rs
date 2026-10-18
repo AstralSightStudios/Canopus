@@ -83,6 +83,20 @@ fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::
         .context("a Rust module's [build] sources must be [\"Cargo.toml\"]")?;
     let cargo_target = project.build_dir().join("cargo");
     let feature = format!("target-{}", target.target_id.replace('.', "-"));
+    let cargo_toml = std::fs::read_to_string(&manifest)?;
+    let mut feat_list = vec!["device".to_string()];
+    if cargo_toml.contains("canopus-target-generated") {
+        feat_list.push(format!("canopus-target-generated/{feature}"));
+    }
+    if cargo_toml.contains("canopus-target-private") {
+        feat_list.push(format!("canopus-target-private/{feature}"));
+    }
+    if cargo_toml.contains(&format!("{feature} ="))
+        || cargo_toml.contains(&format!("\"{feature}\""))
+    {
+        feat_list.push(feature.clone());
+    }
+    let features_arg = feat_list.join(",");
     run(
         Command::new(tool("CARGO", "cargo"))
             .args([
@@ -93,7 +107,7 @@ fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::
                 "--no-default-features",
             ])
             .arg("--features")
-            .arg(format!("device,canopus-target-generated/{feature}"))
+            .arg(features_arg)
             .arg("--manifest-path")
             .arg(&manifest)
             .arg("--target-dir")
