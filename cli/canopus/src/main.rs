@@ -380,7 +380,7 @@ fn run(cli: Cli) -> anyhow::Result<()> {
             let target = target
                 .map(|t| env::resolve_target(&targets_dir, &t))
                 .transpose()?;
-            commands::verify(&elf, target.as_deref(), portable, &targets_dir, json)
+            commands::verify(&elf, target.as_deref(), portable, &targets_dir, json, &[])
         }
     }
 }

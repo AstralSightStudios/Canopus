@@ -369,6 +369,7 @@ pub fn verify(
     portable: bool,
     targets_dir: &Path,
     json: bool,
+    extra_allowed: &[u64],
 ) -> anyhow::Result<()> {
     let (pack, allowed) = if portable {
         // A portable module must not embed an address that is meaningful on
@@ -390,9 +391,13 @@ pub fn verify(
         (base, Vec::new())
     } else {
         let id = target_id.ok_or_else(|| anyhow::anyhow!("--target is required"))?;
+        let mut allowed = build_allowed_addresses(targets_dir, id);
+        allowed.extend_from_slice(extra_allowed);
+        allowed.sort_unstable();
+        allowed.dedup();
         (
             find_target(targets_dir, id)?,
-            build_allowed_addresses(targets_dir, id),
+            allowed,
         )
     };
     let data = std::fs::read(elf_path)

@@ -288,6 +288,7 @@ pub struct ModuleBuild {
     pub sources: Vec<String>,
     pub include_dirs: Option<Vec<String>>,
     pub defines: Option<Vec<String>>,
+    pub allowed_constants: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

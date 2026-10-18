@@ -8,7 +8,7 @@ use sha2::{Digest, Sha256};
 pub const MAGIC: u32 = 0x3249_4D43; // "CMI2"
 pub const VERSION: u32 = 2;
 pub const SIZE: usize = 176;
-pub const ARTIFACT_MAX: usize = 384 * 1024;
+pub const ARTIFACT_MAX: usize = 1024 * 1024;
 
 pub fn lifecycle_code(name: &str) -> Result<u32> {
     Ok(match name {

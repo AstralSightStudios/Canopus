@@ -103,7 +103,21 @@ fn ids(packs: &[TargetPack]) -> String {
 
 /// A tool path from `var` (`CC`, `LD`, `CARGO`) or its default name.
 pub fn tool(var: &str, default: &str) -> String {
-    std::env::var(var).unwrap_or_else(|_| default.to_string())
+    if let Ok(v) = std::env::var(var) {
+        return v;
+    }
+    for candidate in [
+        "/opt/homebrew/opt/llvm/bin",
+        "/opt/homebrew/bin",
+        "/usr/local/opt/llvm/bin",
+        "/usr/local/bin",
+    ] {
+        let p = std::path::Path::new(candidate).join(default);
+        if p.is_file() {
+            return p.to_string_lossy().into_owned();
+        }
+    }
+    default.to_string()
 }
 
 /// Runs a build tool. Its own output stays visible; a failure names the step

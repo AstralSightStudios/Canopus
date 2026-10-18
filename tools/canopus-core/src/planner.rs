@@ -118,6 +118,7 @@ mod tests {
                 sources: vec!["src/test.c".into()],
                 include_dirs: None,
                 defines: None,
+                allowed_constants: None,
             },
             targets: Some(ModuleTargets {
                 include: Some(include.iter().map(|s| s.to_string()).collect()),

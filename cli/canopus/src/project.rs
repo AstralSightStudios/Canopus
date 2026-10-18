@@ -114,6 +114,13 @@ fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::
             .arg(&cargo_target)
             .env("CANOPUS_TARGET_ID", &target.target_id)
             // Same policy as the workspace's `device` profile.
+            .env("CC_thumbv8m_main_none_eabi", tool("CC", "clang"))
+            .env("AR_thumbv8m_main_none_eabi", tool("AR", "llvm-ar"))
+            .env("CFLAGS_thumbv8m_main_none_eabi", "--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft")
+            .env("RUSTFLAGS", match std::env::var("RUSTFLAGS") {
+                Ok(f) if !f.is_empty() => format!("{f} -C target-cpu=cortex-m33"),
+                _ => "-C target-cpu=cortex-m33".to_string(),
+            })
             .env("CARGO_PROFILE_RELEASE_PANIC", "abort")
             .env("CARGO_PROFILE_RELEASE_OPT_LEVEL", "z")
             .env("CARGO_PROFILE_RELEASE_LTO", "thin")
@@ -172,16 +179,30 @@ fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::
             .arg(&shim_o),
         "compiling the constructor shim",
     )?;
-    run(
-        Command::new(tool("LD", "ld.lld"))
-            .args(["-r", "-T"])
-            .arg(root.join("sdk/rust/c_shim/module.ld"))
-            .arg(&shim_o)
-            .arg(archive)
-            .arg("-o")
-            .arg(&out),
-        "linking the module",
-    )?;
+    let build_dir = release.join("build");
+    let mut extra_archives = Vec::new();
+    if build_dir.is_dir() {
+        for entry in std::fs::read_dir(&build_dir)?.flatten() {
+            let out_dir = entry.path().join("out");
+            if out_dir.is_dir() {
+                for f in std::fs::read_dir(&out_dir)?.flatten() {
+                    if f.path().extension().is_some_and(|x| x == "a") {
+                        extra_archives.push(f.path());
+                    }
+                }
+            }
+        }
+    }
+    let mut ld_cmd = Command::new(tool("LD", "ld.lld"));
+    ld_cmd.args(["-r", "-T"])
+        .arg(root.join("sdk/rust/c_shim/module.ld"))
+        .arg(&shim_o)
+        .arg(archive);
+    for a in &extra_archives {
+        ld_cmd.arg(a);
+    }
+    ld_cmd.arg("-o").arg(&out);
+    run(&mut ld_cmd, "linking the module")?;
     Ok(out)
 }
 
@@ -328,20 +349,32 @@ pub fn build(manifest: &Path, target: Option<&str>) -> anyhow::Result<()> {
     let project = Project::load(manifest)?;
     let root = canopus_root()?;
     let targets_dir = root.join("targets");
+    let extra_allowed: Vec<u64> = project
+        .manifest
+        .build
+        .allowed_constants
+        .as_deref()
+        .unwrap_or(&[])
+        .iter()
+        .filter_map(|c| {
+            let s = c.trim().to_ascii_lowercase();
+            u64::from_str_radix(s.strip_prefix("0x").unwrap_or(&s), 16).ok()
+        })
+        .collect();
     if project.manifest.is_portable() {
         if target.is_some() {
             bail!("a portable module is built once; omit --target");
         }
         let elf = compile(&project, &root, None)?;
         println!("built {}", elf.display());
-        crate::commands::verify(&elf, None, true, &targets_dir, false)?;
+        crate::commands::verify(&elf, None, true, &targets_dir, false, &extra_allowed)?;
         println!("ok: {} (portable) built and verified", project.id());
     } else {
         let packs = selected_targets(&project, &root, target)?;
         for pack in &packs {
             let elf = compile(&project, &root, Some(pack))?;
             println!("built {}", elf.display());
-            crate::commands::verify(&elf, Some(&pack.target_id), false, &targets_dir, false)?;
+            crate::commands::verify(&elf, Some(&pack.target_id), false, &targets_dir, false, &extra_allowed)?;
         }
         println!(
             "ok: {} built and verified for {} target(s)",

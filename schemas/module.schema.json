@@ -185,6 +185,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "allowed_constants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Benign data constants (e.g. third-party lookup tables) permitted by the verifier."
         }
       }
     }
