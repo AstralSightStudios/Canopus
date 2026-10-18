@@ -16,7 +16,7 @@
     "blocking": false
   },
   "ownership": {
-    "argument_0": "borrowed LVGL object"
+    "argument": "borrowed LVGL object"
   },
   "proof": {
     "static": "recovered",

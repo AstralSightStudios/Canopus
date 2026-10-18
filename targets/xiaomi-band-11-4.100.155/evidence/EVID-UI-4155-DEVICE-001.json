@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-4155-DEVICE-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "Does the common UI host (manager/target/canopus_ui_host.c, ADR-CAN-010) work on a real Xiaomi Band 11, firmware 4.100.155: Manager pages, module pages, controls, dialogs and title back?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.155.page_goto",
+    "xiaomi-band-11-4.100.155.page_finish",
+    "xiaomi-band-11-4.100.155.lvx_list_item_add_content",
+    "xiaomi-band-11-4.100.155.lvx_list_item_create",
+    "xiaomi-band-11-4.100.155.lvx_list_item_update",
+    "xiaomi-band-11-4.100.155.lvx_msgbox_create",
+    "xiaomi-band-11-4.100.155.lvx_msgbox_set_content",
+    "xiaomi-band-11-4.100.155.lvx_style_apply",
+    "xiaomi-band-11-4.100.155.lv_obj_align_to",
+    "xiaomi-band-11-4.100.155.lv_bar_create",
+    "xiaomi-band-11-4.100.155.lv_bar_set_range",
+    "xiaomi-band-11-4.100.155.lv_bar_set_value",
+    "xiaomi-band-11-4.100.155.lv_obj_add_event_cb",
+    "xiaomi-band-11-4.100.155.lv_image_create",
+    "xiaomi-band-11-4.100.155.lv_image_set_src",
+    "xiaomi-band-11-4.100.155.lvx_label_create",
+    "xiaomi-band-11-4.100.155.lvx_label_set_long_mode",
+    "xiaomi-band-11-4.100.155.lvx_label_set_text",
+    "xiaomi-band-11-4.100.155.ui.lvx_object_add_flag",
+    "xiaomi-band-11-4.100.155.lv_obj_clear_flag",
+    "xiaomi-band-11-4.100.155.lvx_object_create",
+    "xiaomi-band-11-4.100.155.lvx_object_delete",
+    "xiaomi-band-11-4.100.155.lv_obj_set_style_pad_bottom",
+    "xiaomi-band-11-4.100.155.lv_obj_set_style_pad_top",
+    "xiaomi-band-11-4.100.155.lv_obj_remove_style_all",
+    "xiaomi-band-11-4.100.155.lvx_object_set_size",
+    "xiaomi-band-11-4.100.155.lv_obj_set_width",
+    "xiaomi-band-11-4.100.155.lvx_page_title_create",
+    "xiaomi-band-11-4.100.155.private_abi.style_misans_medium_24",
+    "xiaomi-band-11-4.100.155.private_abi.style_misans_medium_28"
+  ],
+  "callsite_evidence": [
+    "The maintainer ran the build with the common UI host on a real Xiaomi Band 11, firmware 4.100.155 and reported on 2026-10-19 that it works as it did in the Mirage runs (scripts/emu/ui_pages.py): Manager overview, modules, module detail, module pages from ui-demo and ui-gallery with their form controls, progress bar, text, image, dialog and title back.",
+    "The symbols listed are exactly the firmware entry points manager/target/canopus_ui_host.c and the page routing of manager/target/canopus_manager_target.c call on this target."
+  ],
+  "ownership_analysis": "Unchanged from the static records: firmware widgets are page-owned and used only from the page owner (UI) task by the Supervisor's Manager; no module can reach these entries (policy stays restricted).",
+  "unsafe_assumptions": [
+    "This is the maintainer's report of an on-device run. No log, probe output or screenshot is stored in the repository, so it is a report, not a reproducible capture.",
+    "It covers the UI host paths named above on this exact firmware only; other targets, the Supervisor install path and unregistration lifetime are not covered."
+  ],
+  "recommended_probe": "Keep a device log or screen recording of the Manager and ui-gallery run with the next device test, and attach its hash here.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "DEVICE_PROVEN",
+  "created": "2026-10-19T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "repo://Canopus/scripts/emu/ui_pages.py",
+      "role": "the emulator scenario the device run repeated"
+    }
+  ]
+}

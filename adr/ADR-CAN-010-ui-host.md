@@ -1,6 +1,6 @@
 # ADR-CAN-010：原生 UI 宿主后端与模块页面
 
-状态：host 实现完成，Mirage 模拟器上 Band 10 Pro `.043` 与 Band 11 `.155` 的 Manager 与模块页面端到端通过，两个家族的控件、渲染与操作方式对齐（2026-10-18，仅 emulator 证据）。未提升任何符号或能力状态。
+状态：host 实现完成；Mirage 上 Band 10 Pro `.043` 与 Band 11 `.155` 的 Manager 与模块页面端到端通过，两个家族的控件、渲染与操作方式对齐（2026-10-18）。**2026-10-19 起：`.043` 与 `.155` 真机验证通过（维护者反馈）并批准为生产可用**，见「证据与限制」末条；其它 target 保持原状态。
 
 ## 背景
 
@@ -63,4 +63,10 @@
   （现在带开关显示）；页面重绘把滚动位置重置到顶部；页面里内容放得下时拖动会把内容甩到底部且不回弹；模块提交失败或树没配平会让页面永久卡死
   （Manager 在每个模块回调返回后回收没提交也没取消的树）。文本的 DESCRIPTION / WARNING 样式在两个家族上与 BODY 看起来相同（只有 TITLE 换字体），
   分隔线与间距不画，`node_set_style` / `node_set_layout` 的样式变体与窄宽度也还没有落到控件上。
-- 真机未验证。所有相关符号仍是 restricted / PENDING / not_probed，没有提升任何批准状态。
+- **真机验证与批准（2026-10-19）**：维护者在真机 `.043`（Band 10 Pro 3.101.043）与 `.155`（Band 11 4.100.155）上运行了本后端，反馈 Manager 与模块页面（表单、进度条、文本、图片、对话框、标题返回）都正常，
+  并授权把相关符号与能力状态提升为生产可用。落实为：UI 宿主在这两个 target 上调用的固件入口（`.043` 28 个、`.155` 30 个，清单钉死在
+  `tools/canopus-core/tests/generated_stability.rs` 的 `DEVICE_VERIFIED_UI`）改为 `DEVICE_PROVEN` / `APPROVED`，`proof.device = proven`，附 promotion 记录，
+  证据为 `EVID-UI-1043-DEVICE-001`、`EVID-UI-4155-DEVICE-001`；Band 11 原生地址头生成器随之接受 `DEVICE_PROVEN`。
+  **策略不变**：这些符号保持 `restricted`（目标私有，Supervisor 的 Manager 使用），没有给模块开放新的公开固件调用；生成物只有输入摘要变化。
+  限制：证据是维护者的口头反馈，仓库里没有设备日志或录屏；仅覆盖本后端的这些调用路径，不含 Supervisor 安装路径与注销生命周期；`.036`、`.139`、`.177` 没有真机验证，状态不变。
+  `.043` 的 `lv_obj_set_hidden`（APPROVED、native-full-trust）记录名不副实（库入口 `0x1C028D39` 既不是 add_flag 也不是 clear_flag），宿主不使用它，本次没有提升也没有改动，建议另行复核。

@@ -16,21 +16,32 @@
   },
   "proof": {
     "static": "recovered",
-    "device": "not_probed",
+    "device": "proven",
     "evidence_ids": [
-      "EVID-UI-4155-MSGBOX-001"
+      "EVID-UI-4155-MSGBOX-001",
+      "EVID-UI-4155-DEVICE-001"
     ]
   },
   "policy": "restricted",
-  "status": "STATIC_RECOVERED",
+  "status": "DEVICE_PROVEN",
   "provenance": {
     "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
     "evidence_ids": [
-      "EVID-UI-4155-MSGBOX-001"
+      "EVID-UI-4155-MSGBOX-001",
+      "EVID-UI-4155-DEVICE-001"
     ],
     "source": "Exact xiaomi-band-11-4.100.155 IDB: lvx_page_msgbox.c set_content: mode 5 uses the cancel/confirm icon pair, modes 2/3/4 lay the message and up to three text buttons out for the 212x520 panel; sub_C8FF7DC sets the texts and sub_C50ECA4 builds the buttons from 28-byte records {callback, text, user_data, visual, ..., flags@19/20, fn@24} and registers them for LV_EVENT_CLICKED (7)."
   },
-  "approval_state": "PENDING",
-  "notes": "Address corrected by EVID-UI-4155-MSGBOX-001; the earlier CANDIDATE address was a different function. Target-private UI host use only; device probe pending.",
-  "callable_address": "0xc50edd5"
+  "approval_state": "APPROVED",
+  "notes": "Address corrected by EVID-UI-4155-MSGBOX-001; the earlier CANDIDATE address was a different function. Target-private UI host use only; device probe pending. Device verified for the UI host (EVID-UI-4155-DEVICE-001); policy stays restricted.",
+  "callable_address": "0xc50edd5",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-10-19",
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "prototype": "void(void *box, uint32_t mode, const char *title, const char *body, const char *aux, const void *buttons, uint32_t count)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "Maintainer-reported on-device run of the UI host on a real Xiaomi Band 11, firmware 4.100.155 (EVID-UI-4155-DEVICE-001, 2026-10-19)"
+  }
 }

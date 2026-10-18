@@ -25,21 +25,32 @@
   ],
   "proof": {
     "static": "confirmed",
-    "device": "not_probed",
+    "device": "proven",
     "host_tested": false,
     "evidence_ids": [
-      "EVID-UI-WIDGET-001"
+      "EVID-UI-WIDGET-001",
+      "EVID-UI-1043-DEVICE-001"
     ]
   },
   "policy": "native-full-trust",
-  "status": "STATIC_RECOVERED",
+  "status": "DEVICE_PROVEN",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-UI-WIDGET-001"
+      "EVID-UI-WIDGET-001",
+      "EVID-UI-1043-DEVICE-001"
     ],
     "source": "exact 3.101.043 IDB stock page constructor sub_C56D5B0"
   },
   "approval_state": "APPROVED",
-  "notes": "At 0x0C56D5F8-0x0C56D5FE stock code sets R0=content, R1=32, and R2=0 before calling sub_C5893C0. No fourth argument is established."
+  "notes": "At 0x0C56D5F8-0x0C56D5FE stock code sets R0=content, R1=32, and R2=0 before calling sub_C5893C0. No fourth argument is established. Device verified for the UI host (EVID-UI-1043-DEVICE-001); policy stays native-full-trust.",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-10-19",
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "prototype": "void(void *object, int32_t value, uint32_t selector)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "Maintainer-reported on-device run of the UI host on a real Xiaomi Band 10 Pro, firmware 3.101.043 (EVID-UI-1043-DEVICE-001, 2026-10-19)"
+  }
 }

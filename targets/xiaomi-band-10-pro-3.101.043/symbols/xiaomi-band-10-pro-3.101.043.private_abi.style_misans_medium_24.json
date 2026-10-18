@@ -9,20 +9,31 @@
   "prototype": "void *",
   "proof": {
     "static": "recovered",
-    "device": "not_probed",
+    "device": "proven",
     "evidence_ids": [
-      "EVID-UI-1043-HOST-001"
+      "EVID-UI-1043-HOST-001",
+      "EVID-UI-1043-DEVICE-001"
     ]
   },
   "policy": "restricted",
-  "status": "STATIC_RECOVERED",
+  "status": "DEVICE_PROVEN",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-UI-1043-HOST-001"
+      "EVID-UI-1043-HOST-001",
+      "EVID-UI-1043-DEVICE-001"
     ],
     "source": "Exact xiaomi-band-10-pro-3.101.043 lvx_theme_default_init (sub_C4C065C) constructs this style object with family selector 1 (MiSans-Medium) and size 24; the constructor sequence and 12-byte stride match the other family/size objects of the same table."
   },
-  "approval_state": "PENDING",
-  "notes": "Read-only firmware-owned style object for target-private UI host labels (same role as the Band 11 MiSans-Medium 24/28 objects). Device probe pending."
+  "approval_state": "APPROVED",
+  "notes": "Read-only firmware-owned style object for target-private UI host labels (same role as the Band 11 MiSans-Medium 24/28 objects). Device probe pending. Device verified for the UI host (EVID-UI-1043-DEVICE-001); policy stays restricted.",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-10-19",
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "prototype": "void *",
+    "ownership": "read-only borrow of a firmware-owned style object",
+    "thread": "UI owner thread",
+    "device_probe": "Maintainer-reported on-device run of the UI host on a real Xiaomi Band 10 Pro, firmware 3.101.043 (EVID-UI-1043-DEVICE-001, 2026-10-19)"
+  }
 }

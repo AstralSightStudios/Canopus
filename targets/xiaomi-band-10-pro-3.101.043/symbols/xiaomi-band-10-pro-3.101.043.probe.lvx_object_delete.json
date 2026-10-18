@@ -17,22 +17,33 @@
   },
   "proof": {
     "static": "confirmed",
-    "device": "not_probed",
+    "device": "proven",
     "evidence_ids": [
       "EVID-UI-DIALOG-001",
-      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043",
+      "EVID-UI-1043-DEVICE-001"
     ]
   },
   "policy": "native-full-trust",
-  "status": "STATIC_RECOVERED",
+  "status": "DEVICE_PROVEN",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
       "EVID-UI-DIALOG-001",
-      "EVID-FW-MATCH-ENSEMBLE-1036-1043"
+      "EVID-FW-MATCH-ENSEMBLE-1036-1043",
+      "EVID-UI-1043-DEVICE-001"
     ],
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; exact stock destroy paths and cross-version wrapper anchors"
   },
   "approval_state": "APPROVED",
-  "notes": "Exact 3.101.043 recovery: sub_C588DE8 is the object-delete veneer. Stock destroy callers pass one live UI object in R0, then clear the owning global. Two 036 wrapper anchors map to sub_C4C70C8 and sub_C4C934C, both of which call this veneer. The former 0xc5879e0 candidate is an event-object accessor and is rejected by exact event callsites. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record."
+  "notes": "Exact 3.101.043 recovery: sub_C588DE8 is the object-delete veneer. Stock destroy callers pass one live UI object in R0, then clear the owning global. Two 036 wrapper anchors map to sub_C4C70C8 and sub_C4C934C, both of which call this veneer. The former 0xc5879e0 candidate is an event-object accessor and is rejected by exact event callsites. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Device verified for the UI host (EVID-UI-1043-DEVICE-001); policy stays native-full-trust.",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-10-19",
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "prototype": "void(void *object)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "Maintainer-reported on-device run of the UI host on a real Xiaomi Band 10 Pro, firmware 3.101.043 (EVID-UI-1043-DEVICE-001, 2026-10-19)"
+  }
 }

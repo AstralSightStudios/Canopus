@@ -73,7 +73,11 @@
 - Mirage 控件演示 `ui-gallery`（表单、进度条、文本、图片、对话框、样式、自关页、标题返回）在 `.043` 与 `.155` 上端到端通过（仅 emulator 证据）；
   Band 11 上还修掉单选不显示选中、重绘丢滚动位置、短页面被拖到底、提交失败后页面永久卡死（框架现在回收没完成的树）。
 - 新静态证据（restricted / PENDING / not_probed）：`EVID-UI-1036-HOST-001`、`EVID-UI-1043-HOST-001`、`EVID-UI-4139-MSGBOX-001`、`EVID-UI-4155-MSGBOX-001`；
-  更正了 `.043` `lv_bar_create`（批准状态重置为 PENDING）与 Band 11 `.139/.155` 的 msgbox / object_delete 候选（原先指向别的函数）。未提升任何批准状态或能力状态。
+  更正了 `.043` `lv_bar_create` 与 Band 11 `.139/.155` 的 msgbox / object_delete 候选（原先指向别的函数）。
+- **真机验证与批准（2026-10-19）**：维护者在 `.043`（Band 10 Pro）与 `.155`（Band 11）真机上运行 UI 宿主，反馈正常，并授权提升为生产可用：
+  UI 宿主调用的固件入口（`.043` 28 个、`.155` 30 个）改为 `DEVICE_PROVEN` / `APPROVED`（证据 `EVID-UI-1043-DEVICE-001`、`EVID-UI-4155-DEVICE-001`，清单钉死在 `generated_stability.rs`），
+  策略仍是 `restricted`（目标私有，不对模块开放）。UI 宿主在这两个 target 上的能力状态：**device verified / production approved**；证据是维护者反馈，没有设备日志；
+  不含 Supervisor 安装路径与注销生命周期，§15 的 CAN-P0-007 等条目未改；`.036/.139/.177` 状态不变。
 
 ## Host CLI（2026-10-19）
 

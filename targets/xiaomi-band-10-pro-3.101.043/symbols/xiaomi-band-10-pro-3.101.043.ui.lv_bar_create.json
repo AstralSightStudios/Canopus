@@ -25,21 +25,32 @@
   ],
   "proof": {
     "static": "confirmed",
-    "device": "not_probed",
+    "device": "proven",
     "host_tested": false,
     "evidence_ids": [
-      "EVID-UI-1043-HOST-001"
+      "EVID-UI-1043-HOST-001",
+      "EVID-UI-1043-DEVICE-001"
     ]
   },
   "policy": "restricted",
-  "status": "STATIC_CONFIRMED",
+  "status": "DEVICE_PROVEN",
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-UI-1043-HOST-001"
+      "EVID-UI-1043-HOST-001",
+      "EVID-UI-1043-DEVICE-001"
     ],
     "source": "exact 3.101.043 IDB vela_ap.bin.i64; veneer at 0xc588b90 jumps to the same library entry 0x1C073859 as 3.101.036 0x0C588320. The earlier address 0xc0c21d8 was a mis-mapped literal, not a veneer."
   },
-  "notes": "Address corrected by EVID-UI-1043-HOST-001 (previously 0xc0c21d8, which is not an lvgl veneer). Approval reset until the corrected address is probed.",
-  "approval_state": "PENDING"
+  "notes": "Address corrected by EVID-UI-1043-HOST-001 (previously 0xc0c21d8, which is not an lvgl veneer). Approval reset until the corrected address is probed. Device verified for the UI host (EVID-UI-1043-DEVICE-001); policy stays restricted.",
+  "approval_state": "APPROVED",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-10-19",
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "prototype": "void *(void *)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "Maintainer-reported on-device run of the UI host on a real Xiaomi Band 10 Pro, firmware 3.101.043 (EVID-UI-1043-DEVICE-001, 2026-10-19)"
+  }
 }

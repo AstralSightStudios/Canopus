@@ -24,21 +24,32 @@
   ],
   "proof": {
     "static": "recovered",
-    "device": "not_probed",
+    "device": "proven",
     "evidence_ids": [
-      "EVID-PORT-4155-001"
+      "EVID-PORT-4155-001",
+      "EVID-UI-4155-DEVICE-001"
     ]
   },
   "policy": "restricted",
-  "status": "STATIC_RECOVERED",
+  "status": "DEVICE_PROVEN",
   "provenance": {
     "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
     "evidence_ids": [
-      "EVID-PORT-4155-001"
+      "EVID-PORT-4155-001",
+      "EVID-UI-4155-DEVICE-001"
     ],
     "source": "Exact .155 image/IDB, compared with targets/xiaomi-band-11-4.100.139/symbols/xiaomi-band-11-4.100.139.lv_obj_remove_style_all.json: matching full instruction body; unique identity or ordered reference corroboration."
   },
-  "notes": "matching full instruction body; unique identity or ordered reference corroboration. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the baseline record only within the audited port scope. Physical device validation pending.",
-  "approval_state": "PENDING",
-  "callable_address": "0xc38583d"
+  "notes": "matching full instruction body; unique identity or ordered reference corroboration. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the baseline record only within the audited port scope. Physical device validation pending. Device verified for the UI host (EVID-UI-4155-DEVICE-001); policy stays restricted.",
+  "approval_state": "APPROVED",
+  "callable_address": "0xc38583d",
+  "promotion": {
+    "reviewer": "canopus-maintainer",
+    "date": "2026-10-19",
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "prototype": "void(void *)",
+    "ownership": "caller-owned pointers / borrowed for call",
+    "thread": "UI owner thread",
+    "device_probe": "Maintainer-reported on-device run of the UI host on a real Xiaomi Band 11, firmware 4.100.155 (EVID-UI-4155-DEVICE-001, 2026-10-19)"
+  }
 }

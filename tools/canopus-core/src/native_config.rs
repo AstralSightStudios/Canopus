@@ -66,7 +66,11 @@ pub fn load(root: &Path, pack: &TargetPack) -> Result<NativeConfig> {
             return Err(Error::other(format!("wrong firmware provenance: {name}")));
         }
         let policy = record["policy"].as_str().unwrap_or_default();
-        if record["status"] != "STATIC_RECOVERED" || !matches!(policy, "restricted" | "managed") {
+        let reviewed = matches!(
+            record["status"].as_str(),
+            Some("STATIC_RECOVERED" | "DEVICE_PROBED" | "DEVICE_PROVEN")
+        );
+        if !reviewed || !matches!(policy, "restricted" | "managed") {
             return Err(Error::other(format!(
                 "native test ABI requires reviewed static evidence: {name}"
             )));

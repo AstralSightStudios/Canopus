@@ -480,6 +480,139 @@ const APPROVED_139_PRIVATE: [&str; 30] = [
     "lv_obj_set_local_style_prop",
 ];
 
+/// Firmware entry points the maintainer verified on a real device (the UI host:
+/// Manager and module pages, 2026-10-19). Authorized by the maintainer; each target
+/// has its own evidence record. They stay `restricted` (target-private).
+const DEVICE_VERIFIED_UI: [(&str, &str, &[&str]); 2] = [
+    (
+        "xiaomi-band-10-pro-3.101.043",
+        "EVID-UI-1043-DEVICE-001",
+        &[
+            "lv_obj_align_to",
+            "lv_bar_create",
+            "lv_bar_set_range",
+            "lv_bar_set_value",
+            "lvx_page_content_create",
+            "lvx_content_pad_bottom",
+            "lv_obj_add_event_cb",
+            "lv_event_get_code",
+            "lv_image_create",
+            "lv_image_set_src",
+            "lvx_label_create",
+            "lvx_label_set_text",
+            "lvx_list_row_create",
+            "lvx_list_row_trailing",
+            "lvx_list_item_update",
+            "lvx_msgbox_create",
+            "lvx_msgbox_set_content",
+            "lvx_object_add_flag",
+            "lvx_object_align",
+            "lv_obj_clear_flag",
+            "lvx_object_delete",
+            "lvx_object_set_size",
+            "lvx_page_title_create",
+            "lvx_style_apply",
+            "style_misans_medium_24",
+            "style_misans_medium_28",
+            "page_goto",
+            "page_finish",
+        ],
+    ),
+    (
+        "xiaomi-band-11-4.100.155",
+        "EVID-UI-4155-DEVICE-001",
+        &[
+            "page_goto",
+            "page_finish",
+            "lvx_list_item_add_content",
+            "lvx_list_item_create",
+            "lvx_list_item_update",
+            "lvx_msgbox_create",
+            "lvx_msgbox_set_content",
+            "lvx_style_apply",
+            "lv_obj_align_to",
+            "lv_bar_create",
+            "lv_bar_set_range",
+            "lv_bar_set_value",
+            "lv_obj_add_event_cb",
+            "lv_image_create",
+            "lv_image_set_src",
+            "lvx_label_create",
+            "lvx_label_set_long_mode",
+            "lvx_label_set_text",
+            "lvx_object_add_flag",
+            "lv_obj_clear_flag",
+            "lvx_object_create",
+            "lvx_object_delete",
+            "lv_obj_set_style_pad_bottom",
+            "lv_obj_set_style_pad_top",
+            "lv_obj_remove_style_all",
+            "lvx_object_set_size",
+            "lv_obj_set_width",
+            "lvx_page_title_create",
+            "style_misans_medium_24",
+            "style_misans_medium_28",
+        ],
+    ),
+];
+
+fn device_verified(target: &str, name: &str) -> bool {
+    DEVICE_VERIFIED_UI
+        .iter()
+        .any(|(t, _, names)| *t == target && names.contains(&name))
+}
+
+#[test]
+fn device_verified_ui_symbols_are_exactly_the_pinned_list() {
+    for (target, evidence_id, names) in DEVICE_VERIFIED_UI {
+        let dir = repo_root().join("targets").join(target);
+        let (symbols, types) = load_records(&dir).unwrap();
+        let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+        let rust = RustGen {
+            pack: &pack,
+            symbols: &symbols,
+            types: &types,
+        }
+        .generate();
+
+        let proven: std::collections::BTreeSet<&str> = symbols
+            .iter()
+            .filter(|s| s.status == "DEVICE_PROVEN")
+            .map(|s| s.name.as_str())
+            .collect();
+        let pinned: std::collections::BTreeSet<&str> = names.iter().copied().collect();
+        assert_eq!(proven, pinned, "{target}: DEVICE_PROVEN differs from the pinned list");
+
+        for symbol in symbols.iter().filter(|s| s.status == "DEVICE_PROVEN") {
+            assert_eq!(symbol.proof.device.as_deref(), Some("proven"), "{}", symbol.name);
+            assert_eq!(symbol.approval_state.as_deref(), Some("APPROVED"), "{}", symbol.name);
+            assert!(
+                symbol.proof.evidence_ids.as_ref().unwrap().contains(&evidence_id.to_string()),
+                "{} lacks {evidence_id}",
+                symbol.name
+            );
+            let promotion = symbol.promotion.as_ref().expect("promotion record");
+            assert_eq!(promotion.firmware_sha256, pack.firmware_sha256, "{}", symbol.name);
+            assert_eq!(symbol.provenance.firmware_sha256, pack.firmware_sha256);
+            if symbol.policy == "restricted" {
+                assert!(
+                    !rust.contains(&format!("pub unsafe fn canopus_fw_{}(", symbol.name)),
+                    "restricted {} emitted a public wrapper",
+                    symbol.name
+                );
+            }
+        }
+
+        let evidence: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(dir.join("evidence").join(format!("{evidence_id}.json")))
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(evidence["verdict"], "DEVICE_PROVEN");
+        assert_eq!(evidence["target_id"], target);
+    }
+}
+
 #[test]
 fn private_abi_records_have_exact_thumb_callables() {
     for target in [
@@ -509,15 +642,21 @@ fn private_abi_records_have_exact_thumb_callables() {
             );
             if symbol.approval_state.as_deref() == Some("APPROVED") {
                 // Only the user-authorized .139 restricted blur/calendar port
-                // (background-calendar-port-approval.md) may be APPROVED.
-                assert!(
-                    target == "xiaomi-band-11-4.100.139"
-                        && APPROVED_139_PRIVATE.contains(&symbol.name.as_str()),
-                    "{} was unexpectedly promoted",
-                    symbol.name
-                );
-                assert_eq!(symbol.status, "STATIC_RECOVERED", "{}", symbol.name);
-                assert_eq!(symbol.proof.device.as_deref(), Some("not_probed"));
+                // (background-calendar-port-approval.md) and the device-verified UI
+                // entry points (DEVICE_VERIFIED_UI) may be APPROVED.
+                if device_verified(target, &symbol.name) {
+                    assert_eq!(symbol.status, "DEVICE_PROVEN", "{}", symbol.name);
+                    assert_eq!(symbol.proof.device.as_deref(), Some("proven"));
+                } else {
+                    assert!(
+                        target == "xiaomi-band-11-4.100.139"
+                            && APPROVED_139_PRIVATE.contains(&symbol.name.as_str()),
+                        "{} was unexpectedly promoted",
+                        symbol.name
+                    );
+                    assert_eq!(symbol.status, "STATIC_RECOVERED", "{}", symbol.name);
+                    assert_eq!(symbol.proof.device.as_deref(), Some("not_probed"));
+                }
                 assert_eq!(symbol.provenance.firmware_sha256, pack.firmware_sha256);
                 assert_eq!(
                     symbol.promotion.as_ref().unwrap().firmware_sha256,
