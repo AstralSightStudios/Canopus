@@ -38,6 +38,12 @@ int canopus_manager_native_install(void);
 /* Finishes the page a module opened through ctx->ui when it belongs to `slot`
  * (the module closed it or was unloaded). Returns 1 when a page was closed. */
 int canopus_manager_target_module_page_close(uint32_t slot);
+/* Module launcher entries (ADR-CAN-011). publish queues an entry that opens the
+ * ui page of the module in `slot`; the firmware calls follow one per step, each on
+ * its own UI event turn (step returns 1 after one, 0 when idle, negative on failure). */
+int canopus_manager_target_launcher_publish(uint32_t slot, const char *label,
+                                            const char *icon);
+int canopus_manager_target_launcher_step(void);
 int canopus_manager_native_notify_module_installed(void);
 /* Post a notification attributed to `source` with a caller-supplied title and
  * body (copied by the firmware synchronously). `icon` is the absolute path of

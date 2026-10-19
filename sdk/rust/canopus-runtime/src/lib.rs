@@ -21,6 +21,7 @@ pub mod fs;
 pub mod haptics;
 pub mod hook;
 pub mod kv;
+pub mod launcher;
 pub mod mem;
 pub mod system;
 pub mod ui;

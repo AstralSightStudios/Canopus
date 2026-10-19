@@ -355,6 +355,31 @@ static int p_ui_page_close(void *c, uint32_t slot)
     return g_ui_close_result;
 }
 
+/* Launcher entries: queued by publish, then taken one step per heartbeat. */
+static int g_launcher_publishes, g_launcher_publish_rc, g_launcher_steps_left, g_launcher_steps;
+static int g_launcher_step_rc;
+static uint32_t g_launcher_slot;
+static char g_launcher_label[CANOPUS_LAUNCHER_LABEL_MAX];
+static char g_launcher_icon[CANOPUS_LAUNCHER_ICON_MAX];
+static int p_launcher_publish(void *c, uint32_t slot, const char *label, const char *icon)
+{
+    (void)c;
+    if (g_launcher_publish_rc != 0) return g_launcher_publish_rc;
+    g_launcher_publishes++;
+    g_launcher_slot = slot;
+    snprintf(g_launcher_label, sizeof(g_launcher_label), "%s", label);
+    snprintf(g_launcher_icon, sizeof(g_launcher_icon), "%s", icon != 0 ? icon : "");
+    g_launcher_steps_left = 2; /* install the app, then add it to the launcher */
+    return 0;
+}
+static int p_launcher_step(void *c)
+{
+    (void)c;
+    g_launcher_steps++;
+    if (g_launcher_step_rc != 0) return g_launcher_step_rc;
+    return g_launcher_steps_left > 0 ? (--g_launcher_steps_left, 1) : 0;
+}
+
 static const struct canopus_sup_platform_v1 platform_with_fs = {
     .target_id = "xiaomi-band-10-pro-3.101.030",
     .register_device = p_noop,
@@ -415,6 +440,10 @@ static void init_hw_platform(void)
     platform_with_hw.l2_event = p_l2_event;
     platform_with_hw.l2_peer = p_l2_peer;
     platform_with_hw.ui_page_close = p_ui_page_close;
+    platform_with_hw.launcher_publish = p_launcher_publish;
+    platform_with_hw.launcher_step = p_launcher_step;
+    g_launcher_publishes = g_launcher_publish_rc = g_launcher_steps_left = g_launcher_steps = 0;
+    g_launcher_step_rc = 0;
     g_peer = 1u;
     g_event_frames = g_event_rc = 0;
     g_ui_closes = g_ui_close_result = 0;
@@ -1824,6 +1853,116 @@ TEST(ui_entry_is_validated_copied_listed_and_dropped_with_the_module)
     CHECK_EQ(g_ui_closes, 1);
 }
 
+/* ---- module launcher entries (ADR-CAN-011) -------------------------- */
+
+TEST(launcher_entry_needs_a_ui_entry_and_is_published_once)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    struct canopus_ui_entry_v1 ui;
+    struct canopus_launcher_entry_v1 entry;
+    char long_label[CANOPUS_LAUNCHER_LABEL_MAX + 1u];
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+    CHECK(canopus_services_has(ctx, CANOPUS_SVC_LAUNCHER, 1));
+    memset(&ui, 0, sizeof(ui));
+    ui.struct_size = sizeof(ui);
+    ui.on_open = entry_open;
+    memset(&entry, 0, sizeof(entry));
+    entry.struct_size = sizeof(entry);
+    entry.label = "Notes";
+    entry.icon = "/data/notes/icon.bin";
+
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_STATE); /* nothing to open */
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &ui), CANOPUS_SVC_OK);
+    entry.struct_size = 1u;
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    entry.struct_size = sizeof(entry);
+    entry.label = "";
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    memset(long_label, 'l', sizeof(long_label) - 1u);
+    long_label[sizeof(long_label) - 1u] = '\0';
+    entry.label = long_label;
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    entry.label = "Notes";
+    g_launcher_publish_rc = -12;
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_NOMEM);
+    g_launcher_publish_rc = 0;
+    CHECK_EQ(g_launcher_publishes, 0);
+
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(g_launcher_publishes, 1);
+    CHECK_EQ(g_launcher_slot, 0u);
+    CHECK(strcmp(g_launcher_label, "Notes") == 0);
+    CHECK(strcmp(g_launcher_icon, "/data/notes/icon.bin") == 0);
+    CHECK_EQ(g_launcher_steps, 0); /* nothing runs inside the call */
+
+    /* the same entry again is accepted without publishing twice; another one is refused */
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    entry.label = "Other";
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_BUSY);
+    entry.label = "Notes";
+    entry.icon = 0;
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_BUSY);
+    CHECK_EQ(g_launcher_publishes, 1);
+
+    /* each firmware call gets its own heartbeat tick, and then the ticks go idle */
+    advance_time(10u);
+    CHECK_EQ(g_launcher_steps, 1);
+    advance_time(10u);
+    CHECK_EQ(g_launcher_steps, 2);
+    advance_time(10u);
+    CHECK_EQ(g_launcher_steps, 3);
+    advance_time(10u);
+    CHECK_EQ(g_launcher_steps, 3);
+
+    /* the firmware cannot take the entry back: it outlives the module's release */
+    canopus_supervisor_release_services(&sup, 0u);
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_STATE);
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &ui), CANOPUS_SVC_OK);
+    entry.icon = "/data/notes/icon.bin";
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(g_launcher_publishes, 1);
+}
+
+TEST(launcher_step_failure_is_reported_in_the_supervisor_error)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    struct canopus_ui_entry_v1 ui;
+    struct canopus_launcher_entry_v1 entry;
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+    memset(&ui, 0, sizeof(ui));
+    ui.struct_size = sizeof(ui);
+    ui.on_open = entry_open;
+    memset(&entry, 0, sizeof(entry));
+    entry.struct_size = sizeof(entry);
+    entry.label = "Notes";
+    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &ui), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    g_launcher_step_rc = -5;
+    advance_time(10u);
+    CHECK_EQ((int32_t)sup.error_code, CANOPUS_SUP_ERR_LAUNCHER);
+    advance_time(10u);
+    CHECK_EQ(g_launcher_steps, 1); /* a failed registration is not retried */
+}
+
+TEST(launcher_is_absent_without_the_platform_hooks)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 headless;
+    const struct canopus_context_v1 *ctx;
+    init_hw_platform();
+    headless = platform_with_hw;
+    headless.launcher_publish = 0;
+    headless.launcher_step = 0;
+    setup(&sup, &headless);
+    ctx = canopus_supervisor_context(&sup, 0);
+    CHECK(ctx->launcher == 0);
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_LAUNCHER, 1));
+}
+
 TEST(ui_close_page_finishes_only_the_callers_open_page)
 {
     struct canopus_supervisor_v1 sup;
@@ -2005,6 +2144,12 @@ static struct test_registry supervisor_services_tests[] = {
       connect_is_absent_without_the_l2_event_hooks_wrapper },
     { "ui_entry_is_validated_copied_listed_and_dropped_with_the_module",
       ui_entry_is_validated_copied_listed_and_dropped_with_the_module_wrapper },
+    { "launcher_entry_needs_a_ui_entry_and_is_published_once",
+      launcher_entry_needs_a_ui_entry_and_is_published_once_wrapper },
+    { "launcher_step_failure_is_reported_in_the_supervisor_error",
+      launcher_step_failure_is_reported_in_the_supervisor_error_wrapper },
+    { "launcher_is_absent_without_the_platform_hooks",
+      launcher_is_absent_without_the_platform_hooks_wrapper },
     { "ui_close_page_finishes_only_the_callers_open_page",
       ui_close_page_finishes_only_the_callers_open_page_wrapper },
     { "ui_pages_are_unsupported_without_the_manager_ui_hook",

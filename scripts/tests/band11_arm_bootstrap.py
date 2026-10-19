@@ -106,14 +106,14 @@ class Machine:
         self.word(0x3c356b40+0x20,0x3cfefdf8)
         self.word(0x200e0000,2)
         self.register_calls = 0
-        self.app = 0; self.pages = []; self.launcher = []; self.widgets = {}; self.next_widget = 0x200a0000
+        self.app = 0; self.pages = []; self.launcher = []; self.module_apps = {}; self.widgets = {}; self.next_widget = 0x200a0000
         self.notifications = []
         hooks = {0x0c8f2bb0:self.notification_insert,
                  0x0c3507e8:self.allocate,0x0c34ccb8:self.free,
                  0x0c34cd2c:self.free,0x0c34f0a0:self.mallinfo,
                  0x0c342c54:self.open,0x0c33818c:self.close,0x0c33d784:self.read,
                  0x0c914f64:self.register,0x0c349538:lambda:0x200e0000,
-                 0x0c33dc4e:self.write,0x0c33dbec:self.unlink,0x0c33d79c:self.rename,0x0c6ac54c:lambda:self.app,
+                 0x0c33dc4e:self.write,0x0c33dbec:self.unlink,0x0c33d79c:self.rename,0x0c6ac54c:self.app_lookup,
                  0x0c6ab350:self.app_install,0x0c547b54:self.launcher_add}
         for addr in [0xc380686,0xc3ab300,0xc89e7dc,0xc3ae1d0,0xc3ad7f4]:hooks[addr]=self.widget_create
         for addr in [0xc387ba8,0xc387b2e,0xc3b3f5c,0xc38404c,0xc3840d8,0xc3877b0,0xc37fc1c,0xc3b2c28,0xc3ad920,0xc3ad8b4]:hooks[addr]=lambda:0
@@ -289,9 +289,21 @@ class Machine:
         return 0xdeadc0de
     def app_install(self):
         ptr,pages,count=self.reg(0),self.reg(1),self.reg(2)
-        assert count==4 and self.string(self.word(ptr+12))=='com.canopus.manager'
+        package=self.string(self.word(ptr+12))
+        app_id=self.word(ptr+20)&0xffff
+        if package!='com.canopus.manager':
+            # a module's launcher entry: one page that opens the module's ui page
+            assert count==1 and package.startswith('com.canopus.module.') and app_id>=0xcc
+            page=self.word(pages)
+            assert self.word(page+20)==(app_id<<16) and self.word(ptr+36)&1
+            for off in (0x34,0x4c,0x50,0x5c,0x64):assert self.word(page+off)&1
+            self.module_apps[app_id]={'package':package,'icon':self.string(self.word(ptr+16)),
+                                      'label_callback':self.word(ptr+36),'page':page}
+            self.uc.mem_write(ptr+23,b'\x01\x01')
+            return 0
+        assert count==4
         assert self.string(self.word(ptr+16))=='/data/canopus/manager_icon.bin'
-        assert self.word(ptr+20)&0xffff==0xca and self.word(ptr+36)&1
+        assert app_id==0xca and self.word(ptr+36)&1
         self.pages=[self.word(pages+4*i) for i in range(count)]
         for i,page in enumerate(self.pages):
             assert self.word(page+20)==0x00ca0000+i
@@ -300,9 +312,13 @@ class Machine:
         self.app=0x200c0000;self.uc.mem_write(self.app,bytes(self.uc.mem_read(ptr,80)))
         self.uc.mem_write(ptr+23,b'\x01\x01') # firmware defaults mutate input
         return 0
+    def app_lookup(self):
+        app_id=self.reg(0)
+        return self.app if app_id==0xca else (0x200c1000+app_id if app_id in self.module_apps else 0)
     def launcher_add(self):
-        assert self.reg(0)==0xca and self.app
-        self.launcher.append(0xca);return 0
+        app_id=self.reg(0)
+        assert (app_id==0xca and self.app) or app_id in self.module_apps
+        self.launcher.append(app_id);return 0
     def widget_create(self):
         p=self.next_widget;self.next_widget+=0x80;self.widgets[p]={'parent':self.reg(0)};return p
     def widget_text(self):

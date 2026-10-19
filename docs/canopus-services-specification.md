@@ -422,6 +422,29 @@ struct canopus_ui_ext_obj {
   不支持的节点类型提交失败，并保留上一版内容。
 - 页面里不再出现的行、标签、图片、进度条被隐藏，再出现时按 key 复用同一个控件；内容放得下时页面不能拖动。端到端见 `scripts/emu/ui_pages.py`（Mirage）；`.043` 与 `.155` 已在真机验证（ADR-CAN-010）。
 
+### 2.13 `ctx->launcher` — 模块自己的启动器入口
+
+让模块像普通应用一样出现在系统启动器里，选中后打开它用 `ctx->ui_ext->set_entry` 登记的页面（ADR-CAN-011）：
+
+```c
+struct canopus_launcher_entry_v1 {
+    uint32_t struct_size;
+    const char *label;   /* 图标下的名字：UTF-8，1~23 字节 */
+    const char *icon;    /* 固件能读的 LVGL 图片文件的绝对路径（至多 95 字节），NULL 为 Canopus 图标 */
+};
+struct canopus_launcher_obj {
+    int32_t (*set_entry)(const struct canopus_context_v1 *ctx, const struct canopus_launcher_entry_v1 *entry);
+};
+```
+- 旧 Supervisor 没有 `launcher`：先查 `ctx->struct_size >= sizeof(struct canopus_context_v1)` 且 `ctx->launcher != 0`；服务组为 `CANOPUS_SVC_LAUNCHER`。
+- 还没登记页面入口返回 `ERR_STATE`；参数不合法 `ERR_ARGUMENT`；8 个入口（`CANOPUS_LAUNCHER_ENTRIES`）用完 `ERR_NOMEM`；
+  没有 Manager UI 的构建不提供该对象。
+- 返回时固件还没有注册：Supervisor 在 UI 心跳里分两个 tick 各调一次固件（先 `app_install`，再 `launcher_add`）。注册失败不会回报给已经返回的模块，
+  只记入 Supervisor 的 `error_code`（`CANOPUS_SUP_ERR_LAUNCHER`）。
+- **没有注销**：固件的 `app_launcher_del` 没有证据，所以入口留到下次重启；模块停止后选中它什么也不打开。同一模块再次调用，标签与图标相同返回 OK，
+  不同返回 `ERR_BUSY`（直到重启）。入口不跨重启保存，模块每次被激活时再登记。
+- Rust：`canopus_runtime::launcher::set_entry`、`canopus_abi::{CanopusLauncherObj, LauncherEntryV1}`。
+
 ---
 
 ## 3. 编程范例

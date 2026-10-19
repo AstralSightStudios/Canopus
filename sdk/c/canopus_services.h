@@ -48,6 +48,7 @@ enum canopus_service_group {
     CANOPUS_SVC_DISPLAY   = 11, /* brightness, screen & wake locks */
     CANOPUS_SVC_BUS       = 12, /* inter-module pub/sub event bus */
     CANOPUS_SVC_CONNECT   = 13, /* CanopusConnect messages (ADR-CAN-009) */
+    CANOPUS_SVC_LAUNCHER  = 14, /* the module's own launcher entry (ADR-CAN-011) */
     CANOPUS_SVC_GROUP_COUNT
 };
 
@@ -501,6 +502,34 @@ struct canopus_ui_ext_obj {
     int32_t (*close_page)(const struct canopus_context_v1 *ctx);
 };
 
+/* launcher: a module's own entry in the system launcher (ADR-CAN-011). Choosing
+ * it opens the module's ui page, the entry registered through
+ * ctx->ui_ext->set_entry, exactly as "open interface" does in the Manager. The
+ * firmware cannot take a launcher entry back, so an entry lasts until the next
+ * reboot even after the module stops; choosing a stopped module's entry opens
+ * nothing. Its own object so a Supervisor that predates it is detected through
+ * the context's struct_size, like ctx->ui_ext. */
+#define CANOPUS_LAUNCHER_ENTRIES 8u
+#define CANOPUS_LAUNCHER_LABEL_MAX 24u
+#define CANOPUS_LAUNCHER_ICON_MAX 96u
+
+struct canopus_launcher_entry_v1 {
+    uint32_t struct_size;
+    const char *label; /* the name under the icon: UTF-8, 1 to 23 bytes */
+    const char *icon;  /* absolute path of an LVGL image file the firmware can read
+                        * (at most 95 bytes), or NULL for the Canopus icon */
+};
+
+struct canopus_launcher_obj {
+    /* Publishes the entry; the firmware takes it on the UI task shortly after
+     * this returns. STATE without a registered ui page entry, BUSY when the
+     * module already published a different label or icon (the same ones return
+     * OK), NOMEM when all CANOPUS_LAUNCHER_ENTRIES are taken, UNSUPPORTED on a
+     * build without the Manager UI. */
+    int32_t (*set_entry)(const struct canopus_context_v1 *ctx,
+                         const struct canopus_launcher_entry_v1 *entry);
+};
+
 /* -------------------------------------------------------------------------- */
 /* Legacy Services v1 Table (Maintained for Backward Compatibility)           */
 /* -------------------------------------------------------------------------- */
@@ -555,6 +584,7 @@ struct canopus_context_v1 {
     const struct canopus_ui_obj        *ui;
     const struct canopus_connect_obj   *connect;
     const struct canopus_ui_ext_obj    *ui_ext;
+    const struct canopus_launcher_obj  *launcher;
 };
 
 static inline const char *canopus_fs_data_path(const struct canopus_context_v1 *ctx, char *buffer, uint32_t max_size)

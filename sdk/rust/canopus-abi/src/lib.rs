@@ -455,6 +455,26 @@ pub struct UiEntryV1 {
 
 pub const UI_ENTRY_LABEL_MAX: u32 = 24;
 
+/// A module's launcher entry (`struct canopus_launcher_entry_v1`).
+#[repr(C)]
+pub struct LauncherEntryV1 {
+    pub struct_size: u32,
+    /// UTF-8, 1 to `LAUNCHER_LABEL_MAX - 1` bytes, NUL-terminated.
+    pub label: *const c_char,
+    /// NUL-terminated absolute path of an LVGL image file, or null for the Canopus icon.
+    pub icon: *const c_char,
+}
+
+/// `struct canopus_launcher_obj`.
+#[repr(C)]
+pub struct CanopusLauncherObj {
+    pub set_entry: unsafe extern "C" fn(ctx: *const ContextV1, entry: *const LauncherEntryV1) -> i32,
+}
+
+pub const LAUNCHER_ENTRIES: u32 = 8;
+pub const LAUNCHER_LABEL_MAX: u32 = 24;
+pub const LAUNCHER_ICON_MAX: u32 = 96;
+
 #[repr(C)]
 pub struct CanopusContext {
     pub struct_size: u32,
@@ -478,6 +498,7 @@ pub struct CanopusContext {
     pub ui: *const CanopusUiObj,
     pub connect: *const CanopusConnectObj,
     pub ui_ext: *const CanopusUiExtObj,
+    pub launcher: *const CanopusLauncherObj,
 }
 
 // ---------------------------------------------------------------------------

@@ -47,6 +47,15 @@ static struct {
     char label[CANOPUS_UI_ENTRY_LABEL_MAX];
     uint8_t used;
 } s_ui_entries[CANOPUS_SUP_MODULE_SLOTS];
+static struct canopus_launcher_obj s_launcher_obj;
+/* The launcher entry a module published. The firmware cannot take it back, so
+ * it stays until reboot and is not cleared when the module is released. */
+static struct {
+    char label[CANOPUS_LAUNCHER_LABEL_MAX];
+    char icon[CANOPUS_LAUNCHER_ICON_MAX];
+    uint8_t used;
+} s_launcher[CANOPUS_SUP_MODULE_SLOTS];
+static uint8_t s_launcher_pending; /* entries are queued in the platform */
 static struct canopus_haptics_obj s_haptics_obj;
 static struct canopus_display_obj s_display_obj;
 static struct canopus_bus_obj s_bus_obj;
@@ -1063,6 +1072,7 @@ static uint64_t svc_time_realtime_ms(const struct canopus_context_v1 *ctx)
 
 static void svc_haptic_poll(uint32_t now);
 static void svc_events_poll(uint32_t now);
+static void svc_launcher_poll(void);
 
 void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup)
 {
@@ -1074,6 +1084,7 @@ void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup)
               ? sup->platform->monotonic_ms(sup->platform_cookie) : 0u;
 
     canopus_supervisor_stability_poll(sup, now);
+    svc_launcher_poll();
     svc_haptic_poll(now);
     svc_events_poll(now);
     for (i = 0u; i < CANOPUS_MAX_TIMERS; i++) {
@@ -1963,6 +1974,52 @@ int canopus_supervisor_ui_entry(struct canopus_supervisor_v1 *sup, uint32_t slot
     return 0;
 }
 
+/* ---- launcher entries (ADR-CAN-011) ---------------------------------- */
+
+static int32_t svc_launcher_set_entry(const struct canopus_context_v1 *ctx,
+                                      const struct canopus_launcher_entry_v1 *entry)
+{
+    const struct canopus_sup_platform_v1 *pf = s_sup->platform;
+    uint32_t label_len, icon_len = 0u;
+    int32_t rc;
+    if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
+    if (entry == 0 || entry->struct_size != sizeof(*entry) || entry->label == 0) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    label_len = (uint32_t)canopus_strnlen(entry->label, CANOPUS_LAUNCHER_LABEL_MAX);
+    if (label_len == 0u || label_len >= CANOPUS_LAUNCHER_LABEL_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
+    if (entry->icon != 0) {
+        icon_len = (uint32_t)canopus_strnlen(entry->icon, CANOPUS_LAUNCHER_ICON_MAX);
+        if (icon_len == 0u || icon_len >= CANOPUS_LAUNCHER_ICON_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    if (!s_ui_entries[ctx->slot].used) return CANOPUS_SVC_ERR_STATE;
+    if (s_launcher[ctx->slot].used) {
+        return canopus_strcmp(s_launcher[ctx->slot].label, entry->label) == 0 &&
+               canopus_strcmp(s_launcher[ctx->slot].icon, entry->icon != 0 ? entry->icon : "") == 0
+                   ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_BUSY;
+    }
+    if (pf->launcher_publish == 0) return CANOPUS_SVC_ERR_UNSUPPORTED;
+    rc = svc_pump_ensure();
+    if (rc != CANOPUS_SVC_OK) return rc;
+    rc = svc_errno(pf->launcher_publish(s_sup->platform_cookie, ctx->slot, entry->label, entry->icon));
+    if (rc != CANOPUS_SVC_OK) return rc;
+    canopus_memcpy(s_launcher[ctx->slot].label, entry->label, label_len);
+    if (icon_len != 0u) canopus_memcpy(s_launcher[ctx->slot].icon, entry->icon, icon_len);
+    s_launcher[ctx->slot].used = 1u;
+    s_launcher_pending = 1u;
+    return CANOPUS_SVC_OK;
+}
+
+/* One firmware call per heartbeat tick, so each runs on its own UI event turn. */
+static void svc_launcher_poll(void)
+{
+    int rc;
+    if (!s_launcher_pending) return;
+    rc = s_sup->platform->launcher_step(s_sup->platform_cookie);
+    if (rc <= 0) s_launcher_pending = 0u;
+    if (rc < 0) s_sup->error_code = (uint32_t)CANOPUS_SUP_ERR_LAUNCHER;
+}
+
 /* ---- table / contexts ------------------------------------------------ */
 
 void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
@@ -1985,6 +2042,8 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     canopus_memset(&s_events, 0, sizeof(s_events));
     canopus_memset(s_l2_rx, 0, sizeof(s_l2_rx));
     canopus_memset(s_ui_entries, 0, sizeof(s_ui_entries));
+    canopus_memset(s_launcher, 0, sizeof(s_launcher));
+    s_launcher_pending = 0u;
     s_connect_obj = canopus_supervisor_connect_bind(sup);
 
     canopus_hook_engine_init();
@@ -2015,6 +2074,8 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_services.group_version[CANOPUS_SVC_DISPLAY] = 1u;
     s_services.group_version[CANOPUS_SVC_BUS] = 1u;
     s_services.group_version[CANOPUS_SVC_CONNECT] = s_connect_obj != 0 ? 1u : 0u;
+    s_services.group_version[CANOPUS_SVC_LAUNCHER] =
+        (sup->platform != 0 && sup->platform->launcher_publish != 0) ? 1u : 0u;
 
     s_services.module_register = svc_module_register;
     s_services.log_write = svc_log_write;
@@ -2163,6 +2224,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_ui_ext_obj.node_set_layout = canopus_ui_node_set_layout;
     s_ui_ext_obj.set_entry = svc_ui_set_entry;
     s_ui_ext_obj.close_page = svc_ui_close_page;
+    s_launcher_obj.set_entry = svc_launcher_set_entry;
 
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         s_contexts[i].struct_size = sizeof(struct canopus_context_v1);
@@ -2187,6 +2249,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_contexts[i].ui = &s_ui_obj;
         s_contexts[i].connect = s_connect_obj;
         s_contexts[i].ui_ext = &s_ui_ext_obj;
+        s_contexts[i].launcher = (s_services.group_version[CANOPUS_SVC_LAUNCHER] != 0u) ? &s_launcher_obj : 0;
     }
 
 }

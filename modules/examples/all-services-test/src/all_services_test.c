@@ -913,6 +913,17 @@ static void run_ui_page_tests(const struct canopus_context_v1 *ctx)
     if (ctx->ui_ext->set_entry(ctx, &entry) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
     if (ctx->ui_ext->close_page(ctx) != CANOPUS_SVC_ERR_STATE) ok = 0; /* nothing open */
     if (ctx->ui_ext->set_entry(ctx, 0) != CANOPUS_SVC_OK) ok = 0;
+    if (ctx->launcher != 0) {
+        /* Publishing is permanent until reboot, so only the refusals run here:
+         * with the page entry removed there is nothing a launcher entry could open. */
+        struct canopus_launcher_entry_v1 launcher;
+        canopus_memset(&launcher, 0, sizeof(launcher));
+        launcher.struct_size = sizeof(launcher);
+        launcher.label = "services_test";
+        if (ctx->launcher->set_entry(ctx, &launcher) != CANOPUS_SVC_ERR_STATE) ok = 0;
+        launcher.struct_size = 1u;
+        if (ctx->launcher->set_entry(ctx, &launcher) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+    }
     log_test("UI pages: entry registered, validated and removed", ok);
 }
 

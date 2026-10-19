@@ -155,6 +155,15 @@ struct canopus_sup_platform_v1 {
      * open, if any (1 when one was closed). Present only where the Manager UI
      * is; without it ctx->ui->set_entry answers UNSUPPORTED. */
     int (*ui_page_close)(void *cookie, uint32_t slot);
+    /* Module launcher entries (ADR-CAN-011), both or neither, and only where
+     * ui_page_close is. launcher_publish queues an entry for `slot` (the strings
+     * are copied; icon may be NULL) and returns 0, or a negative errno
+     * (NOMEM when every entry is taken). The firmware calls run later, one per
+     * launcher_step, each on its own UI event turn: step returns 1 after doing
+     * one and 0 when nothing is left, negative when a call failed. */
+    int (*launcher_publish)(void *cookie, uint32_t slot, const char *label,
+                            const char *icon);
+    int (*launcher_step)(void *cookie);
     int (*validate_receipt)(void *cookie, const void *receipt);
 };
 

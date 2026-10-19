@@ -116,6 +116,7 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_NO_PREV = -23,     /* rollback requested but no other generation exists */
     CANOPUS_SUP_ERR_UPDATE_ABANDONED = -24, /* pending generation failed verification at switch */
     CANOPUS_SUP_ERR_UNSTABLE = -25,    /* module never stayed up through consecutive boots; disabled */
+    CANOPUS_SUP_ERR_LAUNCHER = -26,    /* a launcher entry could not be registered with the firmware */
     /* Exact-target installer diagnostics. These stay in the CPS1 status record
      * so a constrained watchface can surface a deterministic failing stage. */
     CANOPUS_SUP_ERR_STAGE_PATH = -101,

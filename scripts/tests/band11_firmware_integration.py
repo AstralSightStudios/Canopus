@@ -15,6 +15,7 @@ import hashlib
 import struct
 import unittest
 from band11_arm_bootstrap import Machine, ROOT, TARGET
+from band11_notification_firmware import native_symbol
 from unicorn import UC_HOOK_CODE, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UC_MEM_READ
 from unicorn.arm_const import UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3
 
@@ -27,6 +28,56 @@ class FirmwareIntegrationTests(unittest.TestCase):
 
     def hook(self, m, address, fn):
         return m.uc.hook_add(UC_HOOK_CODE, m.firmware_call, fn, address, address)
+
+    def test_module_launcher_entries_register_one_firmware_call_per_step(self):
+        m = Machine()
+        self.assertEqual(m.boot(), 0)
+        m.finish_access_monitor()
+        frame = 0x200d0000
+        for command, arg0 in [(0x4351000a, 0), (0x43510002, 0), (0x43510002, 1), (0x43510002, 2)]:
+            request = cpc2.legacy(command, arg0)
+            m.uc.mem_write(frame, request)
+            m.uc.reg_write(UC_ARM_REG_R1, frame)
+            m.uc.reg_write(UC_ARM_REG_R2, len(request))
+            self.assertEqual(m.call(m.word(m.fops + 12)), len(request))
+        self.assertEqual(m.launcher, [0xca])
+        publish = native_symbol(m, 'canopus_manager_target_launcher_publish')
+        step = native_symbol(m, 'canopus_manager_target_launcher_step')
+        label, icon = 0x200d3000, 0x200d3040
+        m.uc.mem_write(label, 'Notes'.encode() + b'\0')
+        m.uc.mem_write(icon, b'/data/notes/icon.bin\0')
+
+        def publish_entry(slot, icon_ptr):
+            m.uc.reg_write(UC_ARM_REG_R1, label)
+            m.uc.reg_write(UC_ARM_REG_R2, icon_ptr)
+            return m.call(publish, slot)
+
+        self.assertEqual(publish_entry(3, icon), 0)
+        self.assertEqual(m.module_apps, {}, 'publish must not call the firmware')
+        self.assertEqual(m.call(step), 1)
+        self.assertEqual(sorted(m.module_apps), [0xcc])
+        self.assertEqual(m.launcher, [0xca], 'the launcher is added on its own step')
+        app = m.module_apps[0xcc]
+        self.assertEqual(app['package'], 'com.canopus.module.0')
+        self.assertEqual(app['icon'], '/data/notes/icon.bin')
+        self.assertEqual(m.string(m.call(app['label_callback'])), 'Notes')
+        self.assertEqual(m.call(step), 1)
+        self.assertEqual(m.launcher, [0xca, 0xcc])
+        self.assertEqual(m.call(step), 0)
+
+        # choosing the entry of a module that is not running opens nothing
+        m.uc.reg_write(UC_ARM_REG_R1, 0x200b0000)
+        m.uc.reg_write(UC_ARM_REG_R2, 0)
+        self.assertEqual(m.call(m.word(app['page'] + 0x4c), app['page']), 0xffffffff)
+
+        # a second entry without an icon gets the Canopus one, and the pool is finite
+        self.assertEqual(publish_entry(4, 0), 0)
+        self.assertEqual(m.call(step), 1)
+        self.assertEqual(m.module_apps[0xcd]['icon'], '/data/canopus/manager_icon.bin')
+        self.assertEqual(m.call(step), 1)
+        for slot in range(5, 11):
+            self.assertEqual(publish_entry(slot, 0), 0)
+        self.assertEqual(publish_entry(11, 0), 0xfffffff4)
 
     def test_real_lua_io_policy_allows_public_installer_path(self):
         m = Machine()
