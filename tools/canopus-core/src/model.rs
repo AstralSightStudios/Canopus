@@ -267,6 +267,13 @@ pub struct ModuleManifest {
     pub features: Option<Vec<String>>,
     pub capabilities: Option<ModuleCapabilities>,
     pub native_app: Option<NativeApp>,
+    pub resources: Option<ModuleResources>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModuleResources {
+    pub files: Option<Vec<String>>,
+    pub targets: Option<std::collections::HashMap<String, Vec<String>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -335,6 +342,7 @@ pub struct PackageManifest {
     pub artifacts: Vec<PackageArtifact>,
     pub capabilities: Option<ModuleCapabilities>,
     pub native_app: Option<PackageNativeApp>,
+    pub resources: Option<Vec<PackageResource>>,
     pub update_semantics: Option<String>,
     pub remove_semantics: Option<String>,
     pub reboot_required: Option<bool>,

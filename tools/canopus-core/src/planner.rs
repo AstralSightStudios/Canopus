@@ -134,6 +134,7 @@ mod tests {
                 })
             },
             native_app: None,
+            resources: None,
         }
     }
 

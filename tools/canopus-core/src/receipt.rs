@@ -8,7 +8,7 @@ use sha2::{Digest, Sha256};
 pub const MAGIC: u32 = 0x3249_4D43; // "CMI2"
 pub const VERSION: u32 = 2;
 pub const SIZE: usize = 176;
-pub const ARTIFACT_MAX: usize = 1024 * 1024;
+pub const ARTIFACT_MAX: usize = 4 * 1024 * 1024;
 
 pub fn lifecycle_code(name: &str) -> Result<u32> {
     Ok(match name {
@@ -26,7 +26,8 @@ pub fn module_id_valid(id: &str) -> bool {
     !b.is_empty()
         && b.len() <= 16
         && b[0].is_ascii_lowercase()
-        && b.iter().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || *c == b'_')
+        && b.iter()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || *c == b'_')
 }
 
 fn put_fixed(out: &mut Vec<u8>, value: &[u8], size: usize) -> Result<()> {
@@ -97,7 +98,10 @@ mod tests {
         assert_eq!(u32::from_le_bytes(r[4..8].try_into().unwrap()), 2);
         assert_eq!(u32::from_le_bytes(r[8..12].try_into().unwrap()), 176);
         assert_eq!(u32::from_le_bytes(r[20..24].try_into().unwrap()), 3); // module_version
-        assert_eq!(u32::from_le_bytes(r[24..28].try_into().unwrap()), elf.len() as u32);
+        assert_eq!(
+            u32::from_le_bytes(r[24..28].try_into().unwrap()),
+            elf.len() as u32
+        );
         assert_eq!(&r[32..37], b"hello");
         assert_eq!(&r[64..64 + 28], b"xiaomi-band-10-pro-3.101.030");
         assert_eq!(hex::encode(&r[112..144]), FW);

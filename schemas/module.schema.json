@@ -97,6 +97,29 @@
       },
       "required": []
     },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Common resource files to embed in package and extract to module data dir."
+        },
+        "targets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": "Per-target resource files."
+        }
+      }
+    },
     "features": {
       "type": "array",
       "items": {

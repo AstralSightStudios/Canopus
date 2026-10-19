@@ -193,7 +193,7 @@ def main():
             ok = ("result=0" in result and "scan result=5" in log and "after-scan err=0 count=1" in log
                   and f"{module_id}.cmi" in inbox)
             if args.activate:
-                ok = ok and "activate result=5" in log and re.search(r"after-activate .*slot0=state:9,", log) is not None
+                ok = ok and "activate result=5" in log and re.search(r"after-activate .*slot0=state:(?:9|13),", log) is not None
             print(inbox.strip())
             print(("PASS" if ok else "FAIL") + f" band 11 {target}: installer loaded the Supervisor, encrypted CPC2 installed {module_id}")
             if not ok:

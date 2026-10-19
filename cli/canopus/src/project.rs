@@ -116,11 +116,17 @@ fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::
             // Same policy as the workspace's `device` profile.
             .env("CC_thumbv8m_main_none_eabi", tool("CC", "clang"))
             .env("AR_thumbv8m_main_none_eabi", tool("AR", "llvm-ar"))
-            .env("CFLAGS_thumbv8m_main_none_eabi", "--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft")
-            .env("RUSTFLAGS", match std::env::var("RUSTFLAGS") {
-                Ok(f) if !f.is_empty() => format!("{f} -C target-cpu=cortex-m33"),
-                _ => "-C target-cpu=cortex-m33".to_string(),
-            })
+            .env(
+                "CFLAGS_thumbv8m_main_none_eabi",
+                "--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft",
+            )
+            .env(
+                "RUSTFLAGS",
+                match std::env::var("RUSTFLAGS") {
+                    Ok(f) if !f.is_empty() => format!("{f} -C target-cpu=cortex-m33"),
+                    _ => "-C target-cpu=cortex-m33".to_string(),
+                },
+            )
             .env("CARGO_PROFILE_RELEASE_PANIC", "abort")
             .env("CARGO_PROFILE_RELEASE_OPT_LEVEL", "z")
             .env("CARGO_PROFILE_RELEASE_LTO", "thin")
@@ -194,7 +200,8 @@ fn compile_rust(project: &Project, root: &Path, target: &TargetPack) -> anyhow::
         }
     }
     let mut ld_cmd = Command::new(tool("LD", "ld.lld"));
-    ld_cmd.args(["-r", "-T"])
+    ld_cmd
+        .args(["-r", "-T"])
         .arg(root.join("sdk/rust/c_shim/module.ld"))
         .arg(&shim_o)
         .arg(archive);
@@ -374,7 +381,14 @@ pub fn build(manifest: &Path, target: Option<&str>) -> anyhow::Result<()> {
         for pack in &packs {
             let elf = compile(&project, &root, Some(pack))?;
             println!("built {}", elf.display());
-            crate::commands::verify(&elf, Some(&pack.target_id), false, &targets_dir, false, &extra_allowed)?;
+            crate::commands::verify(
+                &elf,
+                Some(&pack.target_id),
+                false,
+                &targets_dir,
+                false,
+                &extra_allowed,
+            )?;
         }
         println!(
             "ok: {} built and verified for {} target(s)",
@@ -461,6 +475,44 @@ pub fn package(
         files.insert(pack.target_id.clone(), elf);
         receipts.insert(pack.target_id.clone(), receipt);
     }
+    let mut package_resources = Vec::new();
+    let mut resource_files: HashMap<String, PathBuf> = HashMap::new();
+    if let Some(res) = &m.resources {
+        if let Some(files) = &res.files {
+            for rel in files {
+                let full = project.dir.join(rel);
+                let bytes = std::fs::read(&full)
+                    .with_context(|| format!("cannot read resource {}", full.display()))?;
+                let filename = Path::new(rel).file_name().unwrap().to_str().unwrap();
+                let archive_path = format!("resources/common/{filename}");
+                package_resources.push(canopus_core::model::PackageResource {
+                    path: archive_path.clone(),
+                    sha256: canopus_package::hex_sha256(&bytes),
+                    media_type: "application/octet-stream".into(),
+                    target_backend: None,
+                });
+                resource_files.insert(archive_path, full);
+            }
+        }
+        if let Some(target_map) = &res.targets {
+            for (target_id, files) in target_map {
+                for rel in files {
+                    let full = project.dir.join(rel);
+                    let bytes = std::fs::read(&full)
+                        .with_context(|| format!("cannot read resource {}", full.display()))?;
+                    let filename = Path::new(rel).file_name().unwrap().to_str().unwrap();
+                    let archive_path = format!("resources/{target_id}/{filename}");
+                    package_resources.push(canopus_core::model::PackageResource {
+                        path: archive_path.clone(),
+                        sha256: canopus_package::hex_sha256(&bytes),
+                        media_type: "application/octet-stream".into(),
+                        target_backend: Some(target_id.clone()),
+                    });
+                    resource_files.insert(archive_path, full);
+                }
+            }
+        }
+    }
     let package_manifest = PackageManifest {
         schema: 1,
         package_id: project.id().to_string(),
@@ -473,6 +525,11 @@ pub fn package(
         artifacts,
         capabilities: m.capabilities.clone(),
         native_app: None,
+        resources: if package_resources.is_empty() {
+            None
+        } else {
+            Some(package_resources)
+        },
         update_semantics: Some("staged next generation; switch at next load".into()),
         remove_semantics: None,
         reboot_required: Some(true),
@@ -488,7 +545,7 @@ pub fn package(
     let archive = canopus_package::build_archive_with_receipts(
         &package_manifest,
         &files,
-        &HashMap::new(),
+        &resource_files,
         &receipts,
     )?;
     let out = match output {

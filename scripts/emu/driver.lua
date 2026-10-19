@@ -48,8 +48,8 @@ local function show(result)
     for slot = 0, 15 do
         local m = query_module(slot)
         if m then
-            out[#out + 1] = string.format("slot%d=state:%d,class:%d,version:%d,flags:%d",
-                slot, u32(m, 36 + 12), u32(m, 36 + 16), u32(m, 36 + 20), u32(m, 36 + 24))
+            out[#out + 1] = string.format("slot%d=state:%d,class:%d,version:%d,flags:%d,act_err:%d",
+                slot, u32(m, 36 + 12), u32(m, 36 + 16), u32(m, 36 + 20), u32(m, 36 + 24), s32(u32(m, 36 + 60)))
         end
     end
     out[#out + 1] = string.format("scan=%08x", u32(d, 36 + 32))

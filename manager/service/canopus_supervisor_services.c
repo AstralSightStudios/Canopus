@@ -635,6 +635,22 @@ static int32_t svc_fs_write_all(const struct canopus_context_v1 *ctx, const char
     return wr;
 }
 
+static int32_t svc_fs_get_data_path(const struct canopus_context_v1 *ctx,
+                                    char *buffer, uint32_t max_size)
+{
+    char own[SVC_FS_PATH_MAX];
+    uint32_t len;
+    if (!svc_slot_valid(ctx) || buffer == 0 || max_size == 0u) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    len = svc_private_dir(ctx, own);
+    if (len + 1u > max_size) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    canopus_memcpy(buffer, own, len + 1u);
+    return (int32_t)len;
+}
+
 /* ---- KV (Persistent Key-Value Store) --------------------------------- */
 
 static int32_t parse_int32(const char *s, int32_t default_val)
@@ -2020,6 +2036,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_fs_obj.closedir = svc_fs_closedir;
         s_fs_obj.read_all = svc_fs_read_all;
         s_fs_obj.write_all = svc_fs_write_all;
+        s_fs_obj.get_data_path = svc_fs_get_data_path;
     }
 
     if (sup != 0 && sup->platform != 0 && sup->platform->monotonic_ms != 0) {

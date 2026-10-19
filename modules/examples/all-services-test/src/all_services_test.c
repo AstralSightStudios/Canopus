@@ -357,6 +357,9 @@ static void run_fs_tests(const struct canopus_context_v1 *ctx)
     int32_t mk_rc = ctx->fs->mkdir(ctx, "testsub");
     if (mk_rc != CANOPUS_SVC_OK && mk_rc != CANOPUS_SVC_ERR_EXIST) ok = 0;
     canopus_memset(&st, 0, sizeof(st));
+    char my_data_path[96];
+    int32_t dp_len = ctx->fs->get_data_path(ctx, my_data_path, sizeof(my_data_path));
+    if (dp_len <= 0 || my_data_path[0] != '/') ok = 0;
     if (ctx->fs->stat(ctx, "testsub", &st) != 0 || st.is_dir != 1u) ok = 0;
     if (ctx->fs->write_all(ctx, "testsub/inner.bin", "IN", 2) != 2) ok = 0;
     if (ctx->fs->remove(ctx, "testsub/inner.bin") != 0) ok = 0;

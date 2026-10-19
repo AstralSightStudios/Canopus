@@ -11,7 +11,7 @@
 #define CANOPUS_INSTALL_TARGET_ID_SIZE 48u
 #define CANOPUS_INSTALL_DIGEST_SIZE 32u
 /* Installer transport sanity bound, not a firmware modlib load limit. */
-#define CANOPUS_INSTALL_ARTIFACT_MAX 393216u
+#define CANOPUS_INSTALL_ARTIFACT_MAX (4u * 1024u * 1024u)
 
 struct canopus_install_receipt_v1 {
     uint32_t magic;

@@ -8,7 +8,7 @@
 //!   reports/elf-verifier.json          verifier output (if provided)
 
 use canopus_core::error::{Error, Result};
-use canopus_core::model::PackageManifest;
+use canopus_core::model::{PackageManifest, PackageResource};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -166,41 +166,47 @@ pub fn build_archive_with_receipts(
         }
     }
 
-    // CAN-P1-013: declared native-app resources (hash-verified, canonical
+    // CAN-P1-013: declared module & native-app resources (hash-verified, canonical
     // path). A supplied file that is not declared is rejected so nothing
     // unverified can ride along in the package.
-    if let Some(resources) = manifest
-        .native_app
-        .as_ref()
-        .and_then(|a| a.resources.as_ref())
-    {
-        for r in resources {
-            validate_entry(&r.path, &EntryType::Regular)?;
-            let src = resource_files.get(&r.path).ok_or_else(|| {
-                Error::other(format!(
-                    "package build: no resource file supplied for declared '{}'",
-                    r.path
-                ))
-            })?;
-            let bytes = std::fs::read(src)
-                .map_err(|e| Error::other(format!("cannot read {}: {e}", src.display())))?;
-            let actual = hex_sha256(&bytes);
-            if !actual.eq_ignore_ascii_case(&r.sha256) {
-                return Err(Error::other(format!(
-                    "package build: resource {} sha256 mismatch (expected {}, got {})",
-                    r.path, r.sha256, actual
-                )));
-            }
-            entries.push((r.path.clone(), bytes));
+    let empty_resources = Vec::new();
+    let all_resources: Vec<&PackageResource> = manifest
+        .resources
+        .as_deref()
+        .unwrap_or(&empty_resources)
+        .iter()
+        .chain(
+            manifest
+                .native_app
+                .as_ref()
+                .and_then(|a| a.resources.as_deref())
+                .unwrap_or(&empty_resources)
+                .iter(),
+        )
+        .collect();
+
+    for r in &all_resources {
+        validate_entry(&r.path, &EntryType::Regular)?;
+        let src = resource_files.get(&r.path).ok_or_else(|| {
+            Error::other(format!(
+                "package build: no resource file supplied for declared '{}'",
+                r.path
+            ))
+        })?;
+        let bytes = std::fs::read(src)
+            .map_err(|e| Error::other(format!("cannot read {}: {e}", src.display())))?;
+        let actual = hex_sha256(&bytes);
+        if !actual.eq_ignore_ascii_case(&r.sha256) {
+            return Err(Error::other(format!(
+                "package build: resource {} sha256 mismatch (expected {}, got {})",
+                r.path, r.sha256, actual
+            )));
         }
+        entries.push((r.path.clone(), bytes));
     }
     // a supplied resource that the manifest does not declare is a reject
     for path in resource_files.keys() {
-        let declared = manifest
-            .native_app
-            .as_ref()
-            .and_then(|a| a.resources.as_ref())
-            .is_some_and(|rs| rs.iter().any(|r| &r.path == path));
+        let declared = all_resources.iter().any(|r| &r.path == path);
         if !declared {
             return Err(Error::other(format!(
                 "package build: resource file '{path}' not declared in the manifest"
@@ -225,6 +231,14 @@ pub fn manifest_with_real_hashes(
         if let Some(src) = files.get(&art.target_id) {
             let bytes = std::fs::read(src)?;
             art.sha256 = hex_sha256(&bytes);
+        }
+    }
+    if let Some(resources) = m.resources.as_mut() {
+        for r in resources {
+            if let Some(src) = resource_files.get(&r.path) {
+                let bytes = std::fs::read(src)?;
+                r.sha256 = hex_sha256(&bytes);
+            }
         }
     }
     if let Some(resources) = m.native_app.as_mut().and_then(|a| a.resources.as_mut()) {
@@ -258,6 +272,13 @@ pub fn verify_archive(archive: &[u8]) -> Result<PackageManifest> {
                 .artifacts
                 .iter()
                 .filter_map(|a| a.receipt_path.as_ref().zip(a.receipt_sha256.as_ref())),
+        )
+        .chain(
+            manifest
+                .resources
+                .iter()
+                .flatten()
+                .map(|r| (&r.path, &r.sha256)),
         )
         .chain(
             manifest

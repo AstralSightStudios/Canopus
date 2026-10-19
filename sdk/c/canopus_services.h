@@ -304,7 +304,10 @@ struct canopus_fs_obj {
     int32_t (*closedir)(const struct canopus_context_v1 *ctx, void *dir);
     int32_t (*read_all)(const struct canopus_context_v1 *ctx, const char *path, void *buffer, uint32_t max_size);
     int32_t (*write_all)(const struct canopus_context_v1 *ctx, const char *path, const void *buffer, uint32_t size);
+    int32_t (*get_data_path)(const struct canopus_context_v1 *ctx, char *buffer, uint32_t max_size);
 };
+
+
 
 struct canopus_kv_obj {
     int32_t (*get_int)(const struct canopus_context_v1 *ctx, const char *key, int32_t default_val);
@@ -546,6 +549,15 @@ struct canopus_context_v1 {
     const struct canopus_connect_obj   *connect;
     const struct canopus_ui_ext_obj    *ui_ext;
 };
+
+static inline const char *canopus_fs_data_path(const struct canopus_context_v1 *ctx, char *buffer, uint32_t max_size)
+{
+    if (ctx != 0 && ctx->fs != 0 && ctx->fs->get_data_path != 0) {
+        int32_t rc = ctx->fs->get_data_path(ctx, buffer, max_size);
+        if (rc >= 0) return buffer;
+    }
+    return 0;
+}
 
 /* Non-zero when the group is available at least at `min_version`. */
 static inline int canopus_services_has(const struct canopus_context_v1 *ctx,

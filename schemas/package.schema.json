@@ -114,6 +114,34 @@
         }
       }
     },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256",
+          "media_type"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "media_type": {
+            "type": "string"
+          },
+          "target_backend": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Module resources (common and per-target). Extracted into module data directory."
+    },
     "native_app": {
       "type": "object",
       "additionalProperties": false,

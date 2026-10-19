@@ -24,7 +24,13 @@ impl File {
         path_buf[..path.len()].copy_from_slice(path.as_bytes());
         path_buf[path.len()] = 0;
 
-        let fd = unsafe { ((*fs).open)(ctx as *const ContextV1, path_buf.as_ptr() as *const c_char, flags) };
+        let fd = unsafe {
+            ((*fs).open)(
+                ctx as *const ContextV1,
+                path_buf.as_ptr() as *const c_char,
+                flags,
+            )
+        };
         if fd < 0 {
             Err(fd)
         } else {
@@ -42,11 +48,7 @@ impl File {
                 buf.len() as u32,
             )
         };
-        if rc < 0 {
-            Err(rc)
-        } else {
-            Ok(rc as usize)
-        }
+        if rc < 0 { Err(rc) } else { Ok(rc as usize) }
     }
 
     pub fn write(&mut self, buf: &[u8]) -> Result<usize, i32> {
@@ -59,41 +61,25 @@ impl File {
                 buf.len() as u32,
             )
         };
-        if rc < 0 {
-            Err(rc)
-        } else {
-            Ok(rc as usize)
-        }
+        if rc < 0 { Err(rc) } else { Ok(rc as usize) }
     }
 
     pub fn seek(&mut self, offset: i64, whence: i32) -> Result<i64, i32> {
         let fs = unsafe { (*self.ctx).fs };
         let rc = unsafe { ((*fs).seek)(self.ctx as *const ContextV1, self.fd, offset, whence) };
-        if rc < 0 {
-            Err(rc as i32)
-        } else {
-            Ok(rc)
-        }
+        if rc < 0 { Err(rc as i32) } else { Ok(rc) }
     }
 
     pub fn size(&self) -> Result<i64, i32> {
         let fs = unsafe { (*self.ctx).fs };
         let rc = unsafe { ((*fs).size)(self.ctx as *const ContextV1, self.fd) };
-        if rc < 0 {
-            Err(rc as i32)
-        } else {
-            Ok(rc)
-        }
+        if rc < 0 { Err(rc as i32) } else { Ok(rc) }
     }
 
     pub fn sync(&self) -> Result<(), i32> {
         let fs = unsafe { (*self.ctx).fs };
         let rc = unsafe { ((*fs).sync)(self.ctx as *const ContextV1, self.fd) };
-        if rc < 0 {
-            Err(rc)
-        } else {
-            Ok(())
-        }
+        if rc < 0 { Err(rc) } else { Ok(()) }
     }
 }
 
@@ -124,12 +110,14 @@ pub fn stat(ctx: *const CanopusContext, path: &str) -> Result<CanopusFsStat, i32
     path_buf[path.len()] = 0;
 
     let mut st = CanopusFsStat::default();
-    let rc = unsafe { ((*fs).stat)(ctx as *const ContextV1, path_buf.as_ptr() as *const c_char, &mut st) };
-    if rc < 0 {
-        Err(rc)
-    } else {
-        Ok(st)
-    }
+    let rc = unsafe {
+        ((*fs).stat)(
+            ctx as *const ContextV1,
+            path_buf.as_ptr() as *const c_char,
+            &mut st,
+        )
+    };
+    if rc < 0 { Err(rc) } else { Ok(st) }
 }
 
 pub fn exists(ctx: *const CanopusContext, path: &str) -> bool {
@@ -152,11 +140,7 @@ pub fn remove(ctx: *const CanopusContext, path: &str) -> Result<(), i32> {
     path_buf[path.len()] = 0;
 
     let rc = unsafe { ((*fs).remove)(ctx as *const ContextV1, path_buf.as_ptr() as *const c_char) };
-    if rc < 0 {
-        Err(rc)
-    } else {
-        Ok(())
-    }
+    if rc < 0 { Err(rc) } else { Ok(()) }
 }
 
 pub fn rename(ctx: *const CanopusContext, old_path: &str, new_path: &str) -> Result<(), i32> {
@@ -182,19 +166,21 @@ pub fn rename(ctx: *const CanopusContext, old_path: &str, new_path: &str) -> Res
             nb.as_ptr() as *const c_char,
         )
     };
-    if rc < 0 {
-        Err(rc)
-    } else {
-        Ok(())
-    }
+    if rc < 0 { Err(rc) } else { Ok(()) }
 }
 
 pub fn read_all(ctx: *const CanopusContext, path: &str, buffer: &mut [u8]) -> Result<usize, i32> {
-    if ctx.is_null() { return Err(-22); }
+    if ctx.is_null() {
+        return Err(-22);
+    }
     let fs = unsafe { (*ctx).fs };
-    if fs.is_null() { return Err(-38); }
+    if fs.is_null() {
+        return Err(-38);
+    }
     let mut pb = [0u8; 128];
-    if path.len() >= pb.len() { return Err(-22); }
+    if path.len() >= pb.len() {
+        return Err(-22);
+    }
     pb[..path.len()].copy_from_slice(path.as_bytes());
     let rc = unsafe {
         ((*fs).read_all)(
@@ -208,11 +194,17 @@ pub fn read_all(ctx: *const CanopusContext, path: &str, buffer: &mut [u8]) -> Re
 }
 
 pub fn write_all(ctx: *const CanopusContext, path: &str, data: &[u8]) -> Result<usize, i32> {
-    if ctx.is_null() { return Err(-22); }
+    if ctx.is_null() {
+        return Err(-22);
+    }
     let fs = unsafe { (*ctx).fs };
-    if fs.is_null() { return Err(-38); }
+    if fs.is_null() {
+        return Err(-38);
+    }
     let mut pb = [0u8; 128];
-    if path.len() >= pb.len() { return Err(-22); }
+    if path.len() >= pb.len() {
+        return Err(-22);
+    }
     pb[..path.len()].copy_from_slice(path.as_bytes());
     let rc = unsafe {
         ((*fs).write_all)(
@@ -223,4 +215,46 @@ pub fn write_all(ctx: *const CanopusContext, path: &str, data: &[u8]) -> Result<
         )
     };
     if rc < 0 { Err(rc) } else { Ok(rc as usize) }
+}
+
+pub fn data_path(ctx: *const CanopusContext, buf: &mut [u8]) -> Result<&str, i32> {
+    if ctx.is_null() {
+        return Err(-22);
+    }
+    let fs = unsafe { (*ctx).fs };
+    if fs.is_null() {
+        return Err(-38);
+    }
+    if buf.is_empty() {
+        return Err(-22);
+    }
+    let rc = unsafe {
+        ((*fs).get_data_path)(
+            ctx as *const ContextV1,
+            buf.as_mut_ptr() as *mut c_char,
+            buf.len() as u32,
+        )
+    };
+    if rc < 0 {
+        Err(rc)
+    } else {
+        core::str::from_utf8(&buf[..rc as usize]).map_err(|_| -5)
+    }
+}
+
+pub fn resolve_data_path<'a>(
+    ctx: *const CanopusContext,
+    relative: &str,
+    out: &'a mut [u8],
+) -> Result<&'a str, i32> {
+    let mut dir_buf = [0u8; 96];
+    let dir = data_path(ctx, &mut dir_buf)?;
+    let needed = dir.len() + 1 + relative.len();
+    if out.len() < needed {
+        return Err(-22);
+    }
+    out[..dir.len()].copy_from_slice(dir.as_bytes());
+    out[dir.len()] = b'/';
+    out[dir.len() + 1..needed].copy_from_slice(relative.as_bytes());
+    core::str::from_utf8(&out[..needed]).map_err(|_| -5)
 }
