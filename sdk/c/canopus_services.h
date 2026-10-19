@@ -308,6 +308,13 @@ struct canopus_fs_obj {
 };
 
 
+/* A module's pairs live in its own file. Keys are at most CANOPUS_KV_KEY_MAX - 1
+ * bytes and string values at most CANOPUS_KV_VAL_MAX - 1; longer ones are
+ * rejected with CANOPUS_SVC_ERR_ARGUMENT, and a new key beyond
+ * CANOPUS_KV_MAX_PAIRS pairs with CANOPUS_SVC_ERR_NOMEM. */
+#define CANOPUS_KV_MAX_PAIRS 64u
+#define CANOPUS_KV_KEY_MAX 32u
+#define CANOPUS_KV_VAL_MAX 512u
 
 struct canopus_kv_obj {
     int32_t (*get_int)(const struct canopus_context_v1 *ctx, const char *key, int32_t default_val);

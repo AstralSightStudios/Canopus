@@ -164,7 +164,7 @@ echo "      module size: $actual_size / $MAX_SIZE bytes"
 
 echo "[3/3] Canopus ELF verifier"
 "$ROOT/target/debug/canopus" verify "$OUT/canopus_supervisor.elf" \
-    --target "$TARGET_ID" --targets-dir "$ROOT/targets"
+    --target "$TARGET_ID" --targets-dir "$ROOT/targets" --max-resident "$MAX_RESIDENT"
 
 TARGET_STAGE="$ROOT/watchfaces/canopus-installer/canopus_supervisor-$TARGET_ID.bin"
 PROD_FAMILY_STAGE="$ROOT/watchfaces/canopus-installer-prod/$PROD_FAMILY"

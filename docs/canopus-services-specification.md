@@ -109,9 +109,11 @@ struct canopus_fs_obj {
 ### 2.2 `ctx->kv` — 模块轻量持久化键值存储 (KeyValue Store)
 
 配置、偏好设置与状态快照按模块保存到 `/data/canopus/kv_<module_id>.bin`。
-首次访问以及两种 descriptor 注册入口共用恢复路径；构造函数里写入的值不会被后续注册覆盖。
-变更先完整写入临时文件、检查 write/sync（平台提供时）/close，再 rename 替换正式文件；
-失败返回负值，并保留原内存值和上一份有效文件。该事务保证不等于已验证掉电刷盘，底层 VFS 的物理持久性仍需设备证据。
+值只存在于该文件里，Supervisor 不在内存中缓存：每次读取逐条扫描文件，常驻内存与模块数量无关。
+每个模块最多 `CANOPUS_KV_MAX_PAIRS`（64）对；键不超过 31 字节、字符串值不超过 511 字节，超长返回 `ERR_ARGUMENT`（不截断），
+第 65 个新键返回 `ERR_NOMEM`。
+变更先把完整的新内容写入临时文件、检查 write/sync（平台提供时）/close，再 rename 替换正式文件；
+失败返回负值，上一份有效文件保持不变。该事务保证不等于已验证掉电刷盘，底层 VFS 的物理持久性仍需设备证据。
 
 ```c
 struct canopus_kv_obj {

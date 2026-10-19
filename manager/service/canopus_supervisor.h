@@ -368,9 +368,6 @@ const struct canopus_context_v1 *canopus_supervisor_context(
     struct canopus_supervisor_v1 *sup, uint32_t slot);
 /* Binds the service table to the Supervisor (called by init). */
 void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup);
-/* Load module preferences before constructors or descriptor callbacks run. */
-void canopus_supervisor_prepare_services(struct canopus_supervisor_v1 *sup,
-                                         uint32_t slot);
 /* Dispatches pending module timers whose intervals have elapsed. */
 void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup);
 /* Closes the slot's open files, wake locks, vibration, brightness override and

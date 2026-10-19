@@ -61,7 +61,6 @@ static int sup_try_load_slot(struct canopus_supervisor_v1 *sup, uint32_t slot)
 {
     struct canopus_sup_module_v1 *m = &sup->modules[slot];
     int st;
-    canopus_supervisor_prepare_services(sup, slot);
     st = sup->platform->load_module(sup->platform_cookie, slot,
                                     (const char *)m->module_id, m->lifecycle_class);
     if (st < 0) {
@@ -225,7 +224,6 @@ int canopus_supervisor_register_descriptor(
                                    sizeof(module->module_id), module_id) &&
             sup_fixed_string_equal(descriptor->module_id,
                                    sizeof(descriptor->module_id), module_id)) {
-            canopus_supervisor_prepare_services(sup, i);
             module->descriptor = descriptor;
             return 0;
         }

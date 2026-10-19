@@ -33,6 +33,8 @@ pub struct Summary {
     pub constructor_count: usize,
     pub destructor_count: usize,
     pub absolute_address_hits: usize,
+    /// Bytes the loader allocates: the sizes of all SHF_ALLOC sections, .bss included.
+    pub resident_bytes: u64,
 }
 
 /// Sections that are never allowed in a Canopus module.
@@ -128,6 +130,10 @@ impl<'a> Verifier<'a> {
             if let SectionFlags::Elf { sh_flags } = flags {
                 sh_exec = sh_flags & 0x4 != 0; // SHF_EXECINSTR
                 sh_write = sh_flags & 0x1 != 0; // SHF_WRITE
+                if sh_flags & 0x2 != 0 {
+                    // SHF_ALLOC
+                    report.summary.resident_bytes += sec.size();
+                }
             }
             let kind = sec.kind();
             let is_exec = sh_exec || matches!(kind, SectionKind::Text);

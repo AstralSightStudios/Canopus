@@ -113,6 +113,7 @@ pub fn target(cmd: TargetCmd) -> anyhow::Result<()> {
                 let q = |s: &str| format!("'{}'", s.replace('\'', "'\\''"));
                 println!("MANAGER_BACKEND={}", q(&family.manager_backend));
                 println!("MAX_SIZE={}", family.supervisor_max_size);
+                println!("MAX_RESIDENT={}", family.supervisor_max_resident);
                 println!("LOADER_SRCS={}", q(&family.loader_sources.join(" ")));
                 println!("TARGET_DEFINES={}", q(&family.defines.join(" ")));
                 println!("PROD_FAMILY={}", q(&family.prod_family));
@@ -370,6 +371,7 @@ pub fn verify(
     targets_dir: &Path,
     json: bool,
     extra_allowed: &[u64],
+    max_resident: Option<u64>,
 ) -> anyhow::Result<()> {
     let (pack, allowed) = if portable {
         // A portable module must not embed an address that is meaningful on
@@ -410,7 +412,16 @@ pub fn verify(
         target: &pack,
         allowed_addresses: &allowed,
     };
-    let report = verifier.verify(&data);
+    let mut report = verifier.verify(&data);
+    if let Some(max) = max_resident {
+        if report.summary.resident_bytes > max {
+            report.ok = false;
+            report.errors.push(format!(
+                "resident size {} bytes exceeds the {max} byte budget",
+                report.summary.resident_bytes
+            ));
+        }
+    }
 
     if json {
         println!("{}", serde_json::to_string_pretty(&report)?);
@@ -424,9 +435,10 @@ pub fn verify(
         }
         let s = &report.summary;
         println!(
-            "summary: {} ({} sections, {} undefined, {} relocs, {} ctors, {} dtors)",
+            "summary: {} ({} sections, {} resident bytes, {} undefined, {} relocs, {} ctors, {} dtors)",
             if report.ok { "PASS" } else { "FAIL" },
             s.section_count,
+            s.resident_bytes,
             s.undefined_symbols,
             s.relocation_count,
             s.constructor_count,

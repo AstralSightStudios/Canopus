@@ -12,6 +12,9 @@ pub struct Family {
     pub manager_backend: String,
     /// Upper bound of the Supervisor ELF in bytes.
     pub supervisor_max_size: u32,
+    /// Upper bound of what the loader allocates for the Supervisor: all
+    /// SHF_ALLOC sections, .bss included.
+    pub supervisor_max_resident: u32,
     #[serde(default)]
     pub loader_sources: Vec<String>,
     #[serde(default)]

@@ -105,6 +105,9 @@ enum Command {
         targets_dir: Option<PathBuf>,
         #[arg(long)]
         json: bool,
+        /// Fail when the sections the loader allocates (.bss included) exceed this many bytes.
+        #[arg(long)]
+        max_resident: Option<u64>,
     },
     /// Expand a module across its target matrix.
     BuildPlan {
@@ -375,12 +378,21 @@ fn run(cli: Cli) -> anyhow::Result<()> {
             portable,
             targets_dir,
             json,
+            max_resident,
         } => {
             let targets_dir = env::targets_dir(targets_dir)?;
             let target = target
                 .map(|t| env::resolve_target(&targets_dir, &t))
                 .transpose()?;
-            commands::verify(&elf, target.as_deref(), portable, &targets_dir, json, &[])
+            commands::verify(
+                &elf,
+                target.as_deref(),
+                portable,
+                &targets_dir,
+                json,
+                &[],
+                max_resident,
+            )
         }
     }
 }

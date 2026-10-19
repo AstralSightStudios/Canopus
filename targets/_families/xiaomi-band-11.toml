@@ -1,6 +1,7 @@
 # Shared build and generation data for Xiaomi Band 11 targets.
 manager_backend = "manager/target/canopus_manager_target.c"
 supervisor_max_size = 131072
+supervisor_max_resident = 184320
 loader_sources = [
   "runtime/loader/canopus_arm_reloc.c",
   "runtime/loader/canopus_elf32_loader.c",

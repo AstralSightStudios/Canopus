@@ -374,7 +374,7 @@ pub fn build(manifest: &Path, target: Option<&str>) -> anyhow::Result<()> {
         }
         let elf = compile(&project, &root, None)?;
         println!("built {}", elf.display());
-        crate::commands::verify(&elf, None, true, &targets_dir, false, &extra_allowed)?;
+        crate::commands::verify(&elf, None, true, &targets_dir, false, &extra_allowed, None)?;
         println!("ok: {} (portable) built and verified", project.id());
     } else {
         let packs = selected_targets(&project, &root, target)?;
@@ -388,6 +388,7 @@ pub fn build(manifest: &Path, target: Option<&str>) -> anyhow::Result<()> {
                 &targets_dir,
                 false,
                 &extra_allowed,
+                None,
             )?;
         }
         println!(

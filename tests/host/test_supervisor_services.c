@@ -15,7 +15,7 @@
 #define MAX_FDS 32
 struct mem_file {
     char path[96];
-    uint8_t data[4096];
+    uint8_t data[36864]; /* a full KV file: header + 64 entries of 544 bytes */
     uint32_t size;
     int used;
 };
@@ -885,7 +885,7 @@ TEST(kv_reloads_through_native_and_service_registration)
     CHECK_EQ(ctx->kv->get_int(ctx, "saved", -999), 43);
 }
 
-TEST(kv_failed_transactions_preserve_cache_and_disk)
+TEST(kv_failed_transactions_preserve_disk)
 {
     struct canopus_supervisor_v1 sup;
     const struct canopus_context_v1 *ctx;
@@ -934,6 +934,41 @@ TEST(kv_long_string_storage_and_reload)
     ctx = reboot_services(&sup);
     CHECK_EQ(ctx->kv->get_string(ctx, "token", out_buf, sizeof(out_buf)), (int32_t)strlen(long_val));
     CHECK(strcmp(out_buf, long_val) == 0);
+}
+
+TEST(kv_capacity_limits_and_removal)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    char key[16], big[CANOPUS_KV_VAL_MAX + 1u], out[8];
+    uint32_t i;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    for (i = 0u; i < CANOPUS_KV_MAX_PAIRS; i++) {
+        snprintf(key, sizeof(key), "k%u", i);
+        CHECK_EQ(ctx->kv->set_int(ctx, key, (int32_t)i), 0);
+    }
+    CHECK_EQ(ctx->kv->set_int(ctx, "extra", 1), CANOPUS_SVC_ERR_NOMEM);
+    CHECK_EQ(ctx->kv->set_int(ctx, "k5", 500), 0);
+    CHECK_EQ(ctx->kv->remove(ctx, "k10"), 0);
+    CHECK_EQ(ctx->kv->remove(ctx, "k10"), CANOPUS_SVC_ERR_NOTFOUND);
+    CHECK_EQ(ctx->kv->set_int(ctx, "extra", 1), 0);
+    ctx = reboot_services(&sup);
+    CHECK_EQ(ctx->kv->get_int(ctx, "k5", -1), 500);
+    CHECK_EQ(ctx->kv->get_int(ctx, "k10", -1), -1);
+    CHECK_EQ(ctx->kv->get_int(ctx, "k63", -1), 63);
+    CHECK_EQ(ctx->kv->get_int(ctx, "extra", -1), 1);
+    memset(big, 'x', CANOPUS_KV_VAL_MAX);
+    big[CANOPUS_KV_VAL_MAX] = '\0';
+    CHECK_EQ(ctx->kv->set_string(ctx, "k0", big), CANOPUS_SVC_ERR_ARGUMENT);
+    big[CANOPUS_KV_VAL_MAX - 1u] = '\0';
+    CHECK_EQ(ctx->kv->set_string(ctx, "k0", big), 0);
+    memset(big, 'k', 32u);
+    big[32] = '\0';
+    CHECK_EQ(ctx->kv->set_int(ctx, big, 1), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->kv->get_string(ctx, "k0", out, sizeof(out)), 7);
+    CHECK_EQ(ctx->kv->clear(ctx), 0);
+    CHECK_EQ(ctx->kv->get_int(ctx, "k63", -1), -1);
 }
 
 static int s_timer_depth, s_timer_max_depth;
@@ -1916,8 +1951,10 @@ TEST(system_events_are_published_on_change_and_cannot_be_forged)
 static struct test_registry supervisor_services_tests[] = {
     { "kv_reloads_through_native_and_service_registration",
       kv_reloads_through_native_and_service_registration_wrapper },
-    { "kv_failed_transactions_preserve_cache_and_disk",
-      kv_failed_transactions_preserve_cache_and_disk_wrapper },
+    { "kv_failed_transactions_preserve_disk",
+      kv_failed_transactions_preserve_disk_wrapper },
+    { "kv_capacity_limits_and_removal",
+      kv_capacity_limits_and_removal_wrapper },
     { "kv_long_string_storage_and_reload",
       kv_long_string_storage_and_reload_wrapper },
     { "timers_use_platform_events_without_recursive_dispatch",
