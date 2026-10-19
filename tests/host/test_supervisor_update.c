@@ -20,14 +20,19 @@ static uint8_t g_registry[CANOPUS_SUP_REGISTRY_SIZE];
 static int g_registry_present;
 static int g_persist_fail;
 static struct canopus_supervisor_v1 *g_sup;
+static uint32_t g_now;
+static int g_loads;
 
 static int u_register(void *c) { (void)c; return 0; }
 static int u_load(void *c, uint32_t i, const char *n, uint32_t cls)
 {
     (void)c; (void)n; (void)cls;
+    g_loads++;
     return g_load_fail[g_sup->modules[i].active_gen] ? -77 : CANOPUS_STATE_ACTIVE;
 }
 static int u_remove(void *c, uint32_t i) { (void)c; (void)i; return 0; }
+static uint32_t u_now(void *c) { (void)c; return g_now; }
+static int u_pump(void *c, void (*poll)(void *), void *data) { (void)c; (void)poll; (void)data; return 0; }
 static int u_stage(void *c, const char *token, uint32_t stage)
 {
     (void)c; (void)stage;
@@ -123,6 +128,8 @@ static const struct canopus_sup_platform_v1 update_platform = {
     .gen_exists = u_gen_exists,
     .gen_verify = u_gen_verify,
     .list_packages = u_list,
+    .monotonic_ms = u_now,
+    .start_timer_pump = u_pump,
 };
 
 static void reset(struct canopus_supervisor_v1 *sup)
@@ -133,6 +140,8 @@ static void reset(struct canopus_supervisor_v1 *sup)
     memset(g_load_fail, 0, sizeof(g_load_fail));
     g_registry_present = 0;
     g_persist_fail = 0;
+    g_now = 1000u;
+    g_loads = 0;
     canopus_supervisor_init(sup, 7, &update_platform, 0);
     g_sup = sup;
 }
@@ -279,6 +288,76 @@ TEST(failed_load_after_update_falls_back_to_previous_generation)
     CHECK_EQ((int32_t)boot.error_code, CANOPUS_SUP_ERR_UPDATE_FALLBACK);
 }
 
+/* A device reset keeps nothing but the registry file. */
+static void power_cycle(struct canopus_supervisor_v1 *boot)
+{
+    canopus_supervisor_init(boot, 7, &update_platform, 0);
+    g_sup = boot;
+    CHECK_EQ(canopus_supervisor_restore_registry(boot), 0);
+}
+
+static void install_enabled_v1(struct canopus_supervisor_v1 *sup)
+{
+    install_v1(sup);
+    sup->modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    CHECK_EQ(canopus_supervisor_save_registry(sup), 0);
+}
+
+TEST(module_that_never_stays_up_is_disabled_on_the_third_boot)
+{
+    struct canopus_supervisor_v1 sup, boot;
+    install_enabled_v1(&sup);
+    g_loads = 0;
+    power_cycle(&boot);
+    power_cycle(&boot);
+    CHECK_EQ(g_loads, 2); /* both starts ran the module and ended in a reset */
+    power_cycle(&boot);
+    CHECK_EQ(g_loads, 2);
+    CHECK_EQ(boot.modules[0].intent, (uint32_t)CANOPUS_SUP_INTENT_DISABLED);
+    CHECK_EQ((int32_t)boot.modules[0].activation_error, CANOPUS_SUP_ERR_UNSTABLE);
+    CHECK_EQ(boot.crash_counter, 1u);
+    CHECK_EQ(boot.failing_module_id, 1u);
+    power_cycle(&boot);
+    CHECK_EQ(g_loads, 2); /* the quarantine is persisted */
+}
+
+TEST(module_that_stays_up_keeps_loading)
+{
+    struct canopus_supervisor_v1 sup, boot;
+    uint32_t i;
+    install_enabled_v1(&sup);
+    g_loads = 0;
+    for (i = 0; i < 4u; i++) {
+        power_cycle(&boot);
+        g_now += CANOPUS_SUP_STABLE_MS - 1u;
+        canopus_supervisor_stability_poll(&boot, g_now);
+        CHECK_EQ(boot.modules[0].starts, 1u);
+        g_now += 1u;
+        canopus_supervisor_stability_poll(&boot, g_now);
+        CHECK_EQ(boot.modules[0].starts, 0u);
+    }
+    CHECK_EQ(g_loads, 4);
+    CHECK_EQ(boot.modules[0].intent, (uint32_t)CANOPUS_SUP_INTENT_ENABLED);
+    CHECK_EQ(boot.crash_counter, 0u);
+}
+
+TEST(unstable_update_rolls_back_to_the_older_generation)
+{
+    struct canopus_supervisor_v1 sup, boot;
+    install_enabled_v1(&sup);
+    put_next(2, 1);
+    CHECK_EQ(install(&sup, "mod.hello"), CANOPUS_RESULT_REBOOT_REQUIRED);
+    power_cycle(&boot);
+    CHECK_EQ(boot.modules[0].version, 2u);
+    power_cycle(&boot);
+    power_cycle(&boot);
+    CHECK_EQ(boot.modules[0].version, 1u);
+    CHECK_EQ(boot.modules[0].active_gen, 0u);
+    CHECK_EQ(boot.modules[0].intent, (uint32_t)CANOPUS_SUP_INTENT_ENABLED);
+    CHECK_EQ(boot.modules[0].state, (uint32_t)CANOPUS_STATE_ACTIVE);
+    CHECK_EQ((int32_t)boot.error_code, CANOPUS_SUP_ERR_UPDATE_FALLBACK);
+}
+
 TEST(pending_switch_to_invalid_generation_is_abandoned)
 {
     struct canopus_supervisor_v1 boot;
@@ -378,6 +457,12 @@ static struct test_registry supervisor_update_tests[] = {
       pending_update_activates_at_next_load_wrapper },
     { "failed_load_after_update_falls_back_to_previous_generation",
       failed_load_after_update_falls_back_to_previous_generation_wrapper },
+    { "module_that_never_stays_up_is_disabled_on_the_third_boot",
+      module_that_never_stays_up_is_disabled_on_the_third_boot_wrapper },
+    { "module_that_stays_up_keeps_loading",
+      module_that_stays_up_keeps_loading_wrapper },
+    { "unstable_update_rolls_back_to_the_older_generation",
+      unstable_update_rolls_back_to_the_older_generation_wrapper },
     { "pending_switch_to_invalid_generation_is_abandoned",
       pending_switch_to_invalid_generation_is_abandoned_wrapper },
     { "rollback_requires_previous_generation_and_switches_at_next_load",

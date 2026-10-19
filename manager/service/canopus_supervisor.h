@@ -115,6 +115,7 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_UPDATE_FALLBACK = -22, /* new generation failed to load; previous one restored */
     CANOPUS_SUP_ERR_NO_PREV = -23,     /* rollback requested but no other generation exists */
     CANOPUS_SUP_ERR_UPDATE_ABANDONED = -24, /* pending generation failed verification at switch */
+    CANOPUS_SUP_ERR_UNSTABLE = -25,    /* module never stayed up through consecutive boots; disabled */
     /* Exact-target installer diagnostics. These stay in the CPS1 status record
      * so a constrained watchface can surface a deterministic failing stage. */
     CANOPUS_SUP_ERR_STAGE_PATH = -101,
@@ -154,6 +155,15 @@ enum canopus_boot_state {
 /* Consecutive crash threshold that forces the next boot into safe mode. */
 #define CANOPUS_SUP_CRASH_THRESHOLD 3u
 
+/* Boot-time crash-loop guard. Every start of an enabled module at boot is
+ * written to the registry before its code runs and cleared once the module has
+ * stayed up for CANOPUS_SUP_STABLE_MS. A fault takes the device down with the
+ * count still on disk; after CANOPUS_SUP_START_LIMIT such starts in a row the
+ * module is rolled back to its older generation when one exists, otherwise
+ * disabled with CANOPUS_SUP_ERR_UNSTABLE. */
+#define CANOPUS_SUP_START_LIMIT 2u
+#define CANOPUS_SUP_STABLE_MS   60000u
+
 /* CAN-P0-003: maximum length of a staged-object token. INSTALL never
  * accepts an arbitrary path; only a bounded basename token is allowed. */
 #define CANOPUS_SUP_STAGE_TOKEN_MAX 128u
@@ -190,7 +200,7 @@ enum canopus_sup_intent {
  * mutation, read back at supervisor load. Format:
  *   header (16): u32 magic "CRD1", u32 version, u32 module_count, u32 rsvd
  *   16 slots x 48: module_id[32] + u32 class + u32 version + u32 flags/error +
- *                  u32 intent
+ *                  u32 intent (bits 0..7) | starts << 8
  * Registry flags: see CANOPUS_SUP_REG_FLAG_*; bits 2..31 retain a zigzag-encoded
  * activation error. Old files used zero in those bits and remain valid.
  * The slot table is the in-memory source of truth; the registry is the
@@ -222,6 +232,12 @@ struct canopus_sup_module_v1 {
     /* Set for one boot after a generation switch; load failure then falls
      * back to the previous generation. */
     uint8_t just_switched;
+    /* Consecutive boot starts that did not reach CANOPUS_SUP_STABLE_MS
+     * (persisted in bits 8..15 of the registry intent word). */
+    uint8_t starts;
+    /* Started this boot and not yet proven stable; started_ms is its start. */
+    uint8_t watching;
+    uint32_t started_ms;
 };
 
 /* Supervisor model. */
@@ -251,6 +267,7 @@ struct canopus_supervisor_v1 {
     uint32_t failing_module_id;
     uint32_t crash_counter;
     uint32_t boot_state;
+    uint32_t unstable_modules; /* slots with `watching` set */
     /* CAN-P0-008: v2 transport state. `last_kind` is 0 for a legacy CPC1
      * command, 1 for a v2 CPC2 request; a read returns the stored v2
      * response when the last write was v2, else the legacy CPS1 status. */
@@ -370,6 +387,10 @@ const struct canopus_context_v1 *canopus_supervisor_context(
 void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup);
 /* Dispatches pending module timers whose intervals have elapsed. */
 void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup);
+/* Starts the heartbeat that runs canopus_supervisor_stability_poll. Non-zero
+ * when the platform has no event source, in which case a module counts as
+ * stable once it is up. */
+int canopus_supervisor_watch_stability(struct canopus_supervisor_v1 *sup);
 /* Closes the slot's open files, wake locks, vibration, brightness override and
  * L2 receive registrations; called when its artifacts are removed. */
 void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,
@@ -447,6 +468,10 @@ int canopus_supervisor_register_descriptor(
 void canopus_supervisor_boot_begin(struct canopus_supervisor_v1 *sup,
                                    uint32_t boot_id);
 void canopus_supervisor_boot_ok(struct canopus_supervisor_v1 *sup);
+/* Clears the start count of every watched module that has now run for
+ * CANOPUS_SUP_STABLE_MS. Called from the service heartbeat. */
+void canopus_supervisor_stability_poll(struct canopus_supervisor_v1 *sup,
+                                       uint32_t now_ms);
 /* CAN-P2-016: saturating increment of the crash counter. */
 void canopus_supervisor_record_crash(struct canopus_supervisor_v1 *sup);
 /* Returns non-zero when the supervisor should start this boot in safe mode

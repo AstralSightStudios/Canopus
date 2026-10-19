@@ -1073,6 +1073,7 @@ void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup)
     now = (sup->platform != 0 && sup->platform->monotonic_ms != 0)
               ? sup->platform->monotonic_ms(sup->platform_cookie) : 0u;
 
+    canopus_supervisor_stability_poll(sup, now);
     svc_haptic_poll(now);
     svc_events_poll(now);
     for (i = 0u; i < CANOPUS_MAX_TIMERS; i++) {
@@ -1224,6 +1225,11 @@ static int32_t svc_pump_ensure(void)
     if (rc != 0) return svc_errno(rc);
     s_timer_pump_started = 1;
     return CANOPUS_SVC_OK;
+}
+
+int canopus_supervisor_watch_stability(struct canopus_supervisor_v1 *sup)
+{
+    return sup == s_sup ? svc_pump_ensure() : CANOPUS_SVC_ERR_STATE;
 }
 
 static int svc_haptics_ready(const struct canopus_context_v1 *ctx)

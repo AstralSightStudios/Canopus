@@ -382,7 +382,7 @@ TEST(supervisor_restore_after_boot_command_loads_enabled_slots_once)
           CANOPUS_RESULT_COMPLETED);
     CHECK(g_loads == 1);
     CHECK(g_activations == 1);
-    CHECK(g_persists == 1);
+    CHECK(g_persists == 2); /* the start marker, then the final registry */
     CHECK(sup.modules[0].state == CANOPUS_STATE_BOOT_RESIDENT);
     CHECK(sup.modules[1].state == CANOPUS_STATE_INSTALLED);
     CHECK(sup.pending_op == CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT);
@@ -391,7 +391,7 @@ TEST(supervisor_restore_after_boot_command_loads_enabled_slots_once)
           CANOPUS_RESULT_COMPLETED);
     CHECK(g_loads == 1);
     CHECK(g_activations == 1);
-    CHECK(g_persists == 1);
+    CHECK(g_persists == 2);
     g_loading_supervisor = 0;
     g_load_descriptor = 0;
 }
