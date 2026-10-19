@@ -10,7 +10,6 @@
 - `generated_xiaomi_band_10_pro_3_101_043.rs`: **Xiaomi Band 10 Pro**（固件 `3.101.043`）
 - `generated_xiaomi_band_11_4_100_139.rs`: **Xiaomi Band 11**（固件 `4.100.139`）
 - `generated_xiaomi_band_11_4_100_155.rs`: **Xiaomi Band 11**（固件 `4.100.155`）
-- `generated_xiaomi_band_11_4_100_177.rs`: **Xiaomi Band 11**（固件 `4.100.177`）
 
 ## 使用规则
 

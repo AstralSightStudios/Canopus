@@ -27,16 +27,14 @@
   相对路径落在 `/data/canopus/m.<id>/`（原先的 `m.<id>.<name>` 扁平命名会让 `mod.a`/`b.x` 与 `mod.a.b`/`x` 撞名，已改为每模块一个目录）；
   `mkdir`、`fsync`、`stat`（含 mtime）、`APPEND`/`READ|WRITE`、固件 errno 的如实映射（缺失文件为 `NOTFOUND`）。
 - 系统事件广播（亮灭屏、电量、蓝牙状态）由定时器泵每 500 ms 采样发布，模块无法伪造这三个主题。
-- Band 11 `.139/.155/.177` 普通 UI 构建补齐 10 ms LVGL timer pump，入口来自已有精确 target 私有符号，
+- Band 11 `.139/.155` 普通 UI 构建补齐 10 ms LVGL timer pump，入口来自已有精确 target 私有符号，
   沿用现有软件 timer 调度；headless 不支持。LVGL 暂停时不保证后台触发，UI 重建后的自动恢复仍不支持；
   这些 timer 入口保持 `restricted / STATIC_RECOVERED / PENDING / not_probed`，不属于上述新硬件入口的缺失项。
 - host implemented：上述服务逻辑与 C host 测试（含 ASan/UBSan）。
 - static recovered（`restricted` / `PENDING`，`device: not_probed`）：Band 10 Pro .036/.043 与 Band 11 .139/.155 的 PowerManager、
   MiWearScreen、vibrator、property、`mkdir` 入口，证据 `EVID-PLATFORM-HW-*`。.036/.139 由 .043/.155 的函数体匹配得到。
-  Band 11 .177 无镜像，新增入口全部为空钩子。
-- 未提升任何能力状态：没有 device verified，也没有 production approved。services 测试已在 Mirage 运行（仅 emulator 证据）：Band 10 Pro `.043` 22/26（4 项显式跳过：timer、振动、screen-on、通知）、Band 11 `.155` 25/26（仅振动跳过，模拟器里没有可达的 vibrator）；.036/.139/.177 没有模拟器运行。
-- `get_rssi` 与仅 CPU 的唤醒锁已从 ABI 移除；`is_connected` 改读固件 `system_all_state` 的 MiWear 链路状态（.036/.043/.139/.155，
-  .177 无镜像为 `UNSUPPORTED`）；通知图标改为调用方传入的绝对路径（`post_with_icon` 的 `icon_path`）。
+- 未提升任何能力状态：没有 device verified，也没有 production approved。services 测试已在 Mirage 运行（仅 emulator 证据）：Band 10 Pro `.043` 22/26（4 项显式跳过：timer、振动、screen-on、通知）、Band 11 `.155` 25/26（仅振动跳过，模拟器里没有可达的 vibrator）；.036/.139 没有模拟器运行。
+- `get_rssi` 与仅 CPU 的唤醒锁已从 ABI 移除；`is_connected` 改读固件 `system_all_state` 的 MiWear 链路状态（.036/.043/.139/.155）；通知图标改为调用方传入的绝对路径（`post_with_icon` 的 `icon_path`）。
 
 ## CanopusConnect（2026-10-18）
 
@@ -68,7 +66,7 @@
   触摸走完启动器 > Manager > 模块 > 启用 > 立即激活 > 打开界面 > 页面（开关、点击、第二层、标题返回、退出），`.043` 与 `.155` 均通过
   （断言模块探针序列、运行状态与每步截图）。
 - 两个家族的控件、渲染与操作方式对齐：Band 10 Pro 现在也画真正的文本标签（MiSans-Medium）、图片、进度条，隐藏而不是删除不用的行，内容放得下时锁住滚动；
-  标题返回在两个家族都先交给模块的 `on_back`；对话框两边都用固件 msgbox（Band 10 Pro mode 2，Band 11 mode 4；`.177` 没有恢复入口，仍内联）。滑块已移除。
+  标题返回在两个家族都先交给模块的 `on_back`；对话框两边都用固件 msgbox（Band 10 Pro mode 2，Band 11 mode 4）。滑块已移除。
   Band 10 Pro 的三处根因：标签缺 CJK 字体样式、`.043` 的 `lv_bar_create` 记录指错、隐藏用错了库入口（`lv_obj_set_hidden` 记录实为 `lv_obj_remove_state`，已在 `.036/.043` 改名并降为 restricted/PENDING，见 ADR-CAN-010）。
 - Mirage 控件演示 `ui-gallery`（表单、进度条、文本、图片、对话框、样式、自关页、标题返回）在 `.043` 与 `.155` 上端到端通过（仅 emulator 证据）；
   Band 11 上还修掉单选不显示选中、重绘丢滚动位置、短页面被拖到底、提交失败后页面永久卡死（框架现在回收没完成的树）。
@@ -77,7 +75,7 @@
 - **真机验证与批准（2026-10-19）**：维护者在 `.043`（Band 10 Pro）与 `.155`（Band 11）真机上运行 UI 宿主，反馈正常，并授权提升为生产可用：
   UI 宿主调用的固件入口（`.043` 28 个、`.155` 30 个）改为 `DEVICE_PROVEN` / `APPROVED`（证据 `EVID-UI-1043-DEVICE-001`、`EVID-UI-4155-DEVICE-001`，清单钉死在 `generated_stability.rs`），
   策略仍是 `restricted`（目标私有，不对模块开放）。UI 宿主在这两个 target 上的能力状态：**device verified / production approved**；证据是维护者反馈，没有设备日志；
-  不含 Supervisor 安装路径与注销生命周期，§15 的 CAN-P0-007 等条目未改；`.036/.139/.177` 状态不变。
+  不含 Supervisor 安装路径与注销生命周期，§15 的 CAN-P0-007 等条目未改；`.036/.139` 状态不变。
 
 ## Host CLI（2026-10-19）
 

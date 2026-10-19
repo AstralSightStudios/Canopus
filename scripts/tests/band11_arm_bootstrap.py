@@ -30,7 +30,7 @@ class Machine:
     def __init__(self, fault=None, code=0x1c400020, kernel_base=0x20110000, target=TARGET):
         self.target = target
         self.firmware_path = fwlocate.locate(target) or ROOT / "fwbins" / target / "vela_ap.bin"
-        self.mpu_bitmap = 0x200f4080 if target == "xiaomi-band-11-4.100.177" else 0x200f5190
+        self.mpu_bitmap = 0x200f5190
         self.res = RES
         self.firmware_map = {}
         self.firmware_data_map = {}
@@ -164,7 +164,7 @@ class Machine:
         """
         if self.target == TARGET:
             return address
-        if self.target == 'xiaomi-band-11-4.100.177' or self.firmware_data_map:
+        if self.firmware_data_map:
             return self.firmware_data_map[address]
         return address
     def hurt(self,name): return name in self.faults

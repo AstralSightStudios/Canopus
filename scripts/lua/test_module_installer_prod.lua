@@ -25,9 +25,6 @@ local targets = {
     ['4.100.139'] = {'xiaomi-band-11-4.100.139', '31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74'},
     ['4.100.155'] = {'xiaomi-band-11-4.100.155', 'ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f'},
 }
-local pack = assert(io.open('targets/xiaomi-band-11-4.100.177/target.toml', 'r'))
-local metadata = pack:read('*a'); pack:close()
-targets['4.100.177'] = {'xiaomi-band-11-4.100.177', assert(metadata:match('firmware_sha256%s*=%s*"([^"]+)"'))}
 local function padded(s, n) return s .. string.rep('\0', n - #s) end
 local function rawhex(s) return (s:gsub('..', function(v) return string.char(tonumber(v,16)) end)) end
 local function run_case(version, fault)

@@ -78,7 +78,7 @@ Facetory 的编辑器导出路径里有对应概念（`facetory.editor.file` 的
 
 
 ## 历史 Band 11 端到端（2026-10-14，旧投递方案已撤销）
-`python3 scripts/emu/band11_smoke.py 155`（`177` 同理）：真实 AstroBox 核心经模拟器蓝牙装入**未改动的生产安装器表盘** → 点 Run →
+`python3 scripts/emu/band11_smoke.py 155`：真实 AstroBox 核心经模拟器蓝牙装入**未改动的生产安装器表盘** → 点 Run →
 原生加载器加载 Supervisor（`bootstrap-result.txt: result=0`）→ 经桥投递 hello-portable 的 `.rpk` → 第二个表盘（`scripts/emu/band11/e2e_scan.lua`）
 通过 `/dev/canopus` 发 SCAN（结果 5=COMPLETED），`count=1`、模块进入 slot0（state 3），inbox 里出现 `hello_portable.cmi/.ko`。仅模拟器级证据。
 为此需要两处外部改动，补丁放在 `scripts/emu/band11/`：

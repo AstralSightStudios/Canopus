@@ -55,7 +55,6 @@ SDK 严格标明具体的**设备型号**与**固件构建版本**，所有固�
 | **Xiaomi Band 10 Pro** | `3.101.043` | Cortex-M33 (NuttX) | `generated_xiaomi_band_10_pro_3_101_043.rs` | `targets/xiaomi_band_10_pro_3_101_043.rs` |
 | **Xiaomi Band 11** | `4.100.139` | Cortex-M33 (Vela) | `generated_xiaomi_band_11_4_100_139.rs` | `targets/xiaomi_band_11_4_100_139.rs` |
 | **Xiaomi Band 11** | `4.100.155` | Cortex-M33 (Vela) | `generated_xiaomi_band_11_4_100_155.rs` | `targets/xiaomi_band_11_4_100_155.rs` |
-| **Xiaomi Band 11** | `4.100.177` | Cortex-M33 (Vela) | `generated_xiaomi_band_11_4_100_177.rs` | `targets/xiaomi_band_11_4_100_177.rs` |
 
 ---
 

@@ -91,7 +91,7 @@ COMPLETED=5、FAILED=6、DISALLOWED=7、REBOOT_REQUIRED=8。
 - 用户打包目录里的旧 `.155` ELF 是默认无 L2 的构建。原样打包对照确认 bootstrap `result=0`，但 AstroBox 查询超时；反汇编的 `canopus_sup_l2_start` 直接返回 `UNSUPPORTED`。这不是“加载器没安装成功”。
 - 普通构建命令 `CANOPUS_TARGET=xiaomi-band-11-4.100.155 sh scripts/build_canopus_supervisor.sh` 即包含该后端，并一起更新 Supervisor、CRC profile、stage1/stage2 与资源 ZIP。新 ELF 为 95196 字节，SHA-256 `6fe0e3f12744fae2ba384222eb3c380d50c346c47c87a50672d41b16bef98dd2`。
 - `scripts/emu/band11_smoke.py 155 --keep-device` 在新建 Mirage 设备上通过：真实 AstroBox core 安装生产表盘 → 显式 Run → bootstrap `result=0` → 加密 `.canopus` 原生安装约 453 ms → 列表返回 `hello_portable`、slot0/state3/version1/activationError0 → 本地 SCAN `result=5/count=1`。安装后的模块处于已安装未启用状态，不能据此宣称模块已运行。
-- `.043` 的独立原生安装已通过，但完整 fresh-device smoke 的 phone flow 尚未闭环；本次 Band 11 结果不替代它。`.139` / `.177` 未获得本次 L2 后端支持。
+- `.043` 的独立原生安装已通过，但完整 fresh-device smoke 的 phone flow 尚未闭环；本次 Band 11 结果不替代它。`.139` 未获得本次 L2 后端支持。
 - 全部相关符号和真机/生产批准状态保持不变，具体证据见 `.155` 的 `evidence/l2-sram-probe.json`。
 
 ### 默认内置后端（2026-10-17）

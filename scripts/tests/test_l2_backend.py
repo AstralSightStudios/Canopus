@@ -25,7 +25,6 @@ class L2ConfigTests(unittest.TestCase):
                 ("xiaomi-band-11-4.100.155", True),
                 ("xiaomi-band-10-pro-3.101.036", False),
                 ("xiaomi-band-11-4.100.139", False),
-                ("xiaomi-band-11-4.100.177", False),
             ]:
                 with self.subTest(target=target):
                     subprocess.run([sys.executable, str(ROOT / "scripts/generate_l2_probe_config.py"),

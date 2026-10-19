@@ -1,4 +1,4 @@
-//! Shared Xiaomi Band 11 target backend (used by .139, .155, .177).
+//! Shared Xiaomi Band 11 target backend (used by .139, .155).
 
 //! Call only after the identity guard; published callbacks require boot residency.
 //! Interconnect and notifications are not provided by this backend.

@@ -4,7 +4,6 @@
 Tests the module on:
   - Band 10 Pro 3.101.043 (nand_data staging + insmod + CPC2 install/activate)
   - Band 11 4.100.155 (real AstroBox core CPC2 Layer 2 delivery + activation)
-  - Band 11 4.100.177 (attempted; failures allowed/ignored per policy)
 
 Exits 77 if Mirage or firmware OTA is missing.
 """
@@ -204,7 +203,7 @@ def test_b11(module_dir, target_code, allow_failure=False):
 def main():
     parser = argparse.ArgumentParser(description="Mirage smoke test for Canopus modules")
     parser.add_argument("--module", type=Path, default=Path.cwd(), help="Path to module project directory")
-    parser.add_argument("target", nargs="?", default="all", choices=["all", "043", "155", "177"])
+    parser.add_argument("target", nargs="?", default="all", choices=["all", "043", "155"])
     args = parser.parse_args()
 
     module_dir = args.module.resolve()
@@ -230,8 +229,6 @@ def main():
         results.append(("043", test_043(module_dir, package_path, module_id, MIRAGECTL)))
     if args.target in ("all", "155"):
         results.append(("155", test_b11(module_dir, "155", allow_failure=False)))
-    if args.target in ("all", "177"):
-        results.append(("177", test_b11(module_dir, "177", allow_failure=True)))
 
     print("\n================== SUMMARY ==================")
     all_ok = True

@@ -11,7 +11,6 @@ local state_key = "canopus.band11.execute_recovery.v1"
 local firmware_version = native_os.getenv('CANOPUS_TEST_BAND11_VERSION') or '4.100.139'
 local target_id = 'xiaomi-band-11-' .. firmware_version
 local builds = {['4.100.139']='user-4.100.139-cn-202608280000', ['4.100.155']='user-4.100.155-cn-202609041500'}
-builds['4.100.177'] = 'user-4.100.177-cn-202609241530'
 local build = assert(builds[firmware_version])
 local identity = "ro.build.version=" .. firmware_version .. "\nro.build.id=" .. build .. "\n"
 local profile

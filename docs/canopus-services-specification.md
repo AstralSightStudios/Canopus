@@ -153,7 +153,7 @@ struct canopus_mem_obj {
   无已批准 OS sleep 原语时是忙等，ARM `yield` 提示不等于调度器休眠。
 - timer 周期范围为 `1..CANOPUS_TIMER_MAX_INTERVAL_MS`（`0x7fffffff` 毫秒），使用环绕安全的截止时间比较。
 - 分发串行执行，回调内 sleep 不会递归进入另一轮 timer 分发。漏掉的周期合并，不追补无限次回调。
-- Band 10 Pro `.036/.043` 与 Band 11 `.139/.155/.177` 的普通 UI 构建使用 10 ms 的 boot-resident LVGL 心跳。
+- Band 10 Pro `.036/.043` 与 Band 11 `.139/.155` 的普通 UI 构建使用 10 ms 的 boot-resident LVGL 心跳。
   Band 11 从 exact-target 私有符号配置取入口，原有 `restricted / STATIC_RECOVERED / PENDING` 状态不变。
   创建/启动 timer 必须在模块/UI 所属线程执行，回调也在该线程串行运行，不能从中断或任意 worker 调用。
 - LVGL 在息屏等暂停期间不保证心跳继续推进；恢复后合并漏掉的周期，不保证后台准时触发。
@@ -321,7 +321,7 @@ struct canopus_hook_obj {
     它与 Supervisor 的 CPC2 管理通信是两条独立路径。
   - `adapter_state`：固件蓝牙栈的适配器状态（0 关闭、4 开启，其余为过渡态），读不到为 `CANOPUS_BT_ADAPTER_UNKNOWN`
   - `is_connected`：读固件 `system_all_state` 的 MiWear 链路状态——手机配套链路在线为 1，断开为 0；固件还没上报时为
-    `ERR_STATE`，目标没有该入口（Band 11 .177）为 `ERR_UNSUPPORTED`。`bt` 状态事件的 `link` 字节同源
+    `ERR_STATE`，目标没有该入口为 `ERR_UNSUPPORTED`。`bt` 状态事件的 `link` 字节同源
 
 ### 2.10 硬件服务的固件来源与验证状态
 
@@ -340,7 +340,7 @@ haptics / display / 唤醒锁 / 电量 / 属性 / 蓝牙状态不再有占位实
 | 振动 | `vibrator_hal_transact`（vibratord HAL 消息 4 起振、5 停止） | `vibrator_run`（波形参数块）+ `vibrator_cancel(id)` |
 | 属性 | `property_get`、`property_get_int32` | 同 |
 | 目录创建/同步/状态 | `mkdir`、`fsync`、`stat` | 同 |
-| 蓝牙适配器状态 | `bt_adapter_get_instance` + `bt_adapter_get_state` | `bt_shared_adapter` + `bt_adapter_get_state`（.177 也有） |
+| 蓝牙适配器状态 | `bt_adapter_get_instance` + `bt_adapter_get_state` | `bt_shared_adapter` + `bt_adapter_get_state` |
 | MiWear 链路 | `system_get_state(out, 1)` + 全局 `system_state` | 同 |
 | 通知图标 | `lvx_notification_insert_message` 的 `small/large_icon_path` | 同一消息结构（`lvx_notification_insert_message`） |
 
@@ -352,8 +352,6 @@ haptics / display / 唤醒锁 / 电量 / 属性 / 蓝牙状态不再有占位实
   Canopus 自己的状态 `ERR_ACCESS`、不存在 `ERR_NOTFOUND`、目录 `ERR_ISDIR`，任何拒绝都发生在发布通知与振动之前。
   Band 10 Pro .043 的消息复制函数（`0xCA9A254`）经静态审阅会逐字符串复制标题、来源、正文与两个图标路径（超过 512 字节截断），
   所以调用方的缓冲区无需长期有效；Band 11 以 unicorn 加真实固件验证过默认图标路径被写入消息节点，自定义路径没有单独运行验证。图片内容本身不做校验。
-- **Band 11 .177**：本仓库没有其固件镜像，无法对新增入口做静态核对，所以除蓝牙适配器状态（该记录原本就是 STATIC_RECOVERED）外
-  全部保持空钩子（`ERR_UNSUPPORTED`，`is_connected` 也一样）。取得 exact 镜像后再按 `EVID-PLATFORM-HW-*` 的方法补充。
 - **证据等级**：全部为 `STATIC_RECOVERED` / `restricted` / `approval_state: PENDING`，`device: not_probed`；
   .036 与 .139 的地址由 .043 与 .155 的已审阅函数体做"屏蔽分支与 PC 相对指令后的整体指令匹配"得到（镜像内唯一），
   MiWearScreen/PowerManager 的 `__func__` 字符串交叉引用互相印证。证据见各 target 的 `evidence/EVID-PLATFORM-HW-<ver>-001.json`。
@@ -418,7 +416,7 @@ struct canopus_ui_ext_obj {
 - 同一时刻只开一个模块页面；回调要尽快返回；页面标题只在页面创建时设置。Rust：`canopus_abi::{CanopusUiExtObj, UiEntryV1}`。
 - 渲染后端（Band 10 Pro 与 Band 11 共用 `manager/target/canopus_ui_host.c`，Manager 自己的页面也走它）两个家族画同样的内容：导航页/导航头（页面标题）、
   分区/列表/滚动/分隔/间距（展平）、文本/富文本（标签，MiSans-Medium 24 px，TITLE 28 px）、各类行与按钮、图片、进度条（自动尺寸为整行宽的条），
-  以及对话框——一条消息加两个按钮时是固件 msgbox，其它形状和没有恢复 msgbox 入口的目标（`.177`）按普通行内联。滑块已移除。
+  以及对话框——一条消息加两个按钮时是固件 msgbox，其它形状和没有恢复 msgbox 入口的目标按普通行内联。滑块已移除。
   不支持的节点类型提交失败，并保留上一版内容。
 - 页面里不再出现的行、标签、图片、进度条被隐藏，再出现时按 key 复用同一个控件；内容放得下时页面不能拖动。端到端见 `scripts/emu/ui_pages.py`（Mirage）；`.043` 与 `.155` 已在真机验证（ADR-CAN-010）。
 

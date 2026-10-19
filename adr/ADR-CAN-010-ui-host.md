@@ -18,7 +18,7 @@
    - 滑块已移除（`CANOPUS_UI_NODE_RETIRED_SLIDER`，17 号保留不再使用）：它只能画成只读的条，不如不提供。
    - 对话框：消息加两个按钮的对话框用固件 msgbox（文字取第一个文本，按钮取前两个按钮/操作行，按树序即从左到右）：
      Band 10 Pro 用 mode 2（两个宽文字按钮），Band 11 用 mode 4（上下两个窄按钮，放得进 212 px 的屏幕）。
-     没有恢复 msgbox 入口的目标（目前 `.177`）和其它形状的对话框，子节点按普通行内联显示。
+     没有恢复 msgbox 入口的目标和其它形状的对话框，子节点按普通行内联显示。
    - 不支持的节点返回失败并保留上一版内容（后端契约）；节点数受 `CANOPUS_UI_MAX_NODES`=32 约束。
    - 不再出现在页面里的行、标签、图片、进度条：隐藏（`lv_obj_add_flag` HIDDEN），再出现时显示；行按 key 复用控件槽，
      所以重绘不会重建行，也保持滚动位置（整条放置链不变就不重新对齐）。内容放得下时关掉内容容器的滚动（`SCROLLABLE`），避免拖动把内容甩到底部。
@@ -68,8 +68,8 @@
   `tools/canopus-core/tests/generated_stability.rs` 的 `DEVICE_VERIFIED_UI`）改为 `DEVICE_PROVEN` / `APPROVED`，`proof.device = proven`，附 promotion 记录，
   证据为 `EVID-UI-1043-DEVICE-001`、`EVID-UI-4155-DEVICE-001`；Band 11 原生地址头生成器随之接受 `DEVICE_PROVEN`。
   **策略不变**：这些符号保持 `restricted`（目标私有，Supervisor 的 Manager 使用），没有给模块开放新的公开固件调用；生成物只有输入摘要变化。
-  限制：证据是维护者的口头反馈，仓库里没有设备日志或录屏；仅覆盖本后端的这些调用路径，不含 Supervisor 安装路径与注销生命周期；`.036`、`.139`、`.177` 没有真机验证，状态不变。
+  限制：证据是维护者的口头反馈，仓库里没有设备日志或录屏；仅覆盖本后端的这些调用路径，不含 Supervisor 安装路径与注销生命周期；`.036`、`.139` 没有真机验证，状态不变。
   **纠正 `lv_obj_set_hidden`（2026-10-19）**：`.036`/`.043` 的这条记录（APPROVED、native-full-trust，库入口 `0x1C028D39`）实际是 LVGL 的 `lv_obj_remove_state(obj, state)`，不是可见性开关；
   桩代码的调用点（禁用项用 `0x80` = `LV_STATE_DISABLED` 成对调用 `0x1C028D09`/`0x1C028D39`）证明了这一点，`set_hidden(obj, 1)` 只是清 `CHECKED` 位。LVGL 9 没有 set_hidden，隐藏就是对 HIDDEN 标志的 `add_flag` / `clear_flag`，UI 宿主用的正是这对。
   两个 target 的记录已改名为 `lv_obj_remove_state`，降为 `restricted` / `PENDING`（旧名下的批准不适用于新身份），不再生成公开封装；唯一的调用方是 Rust 门面 `canopus-target-private` 的 `lvx_set_hidden`（`.036/.043` 一直接在这条记录上，所以没有隐藏效果），现已改成与 Band 11 相同的 add_flag / clear_flag 实现，`.043` 的 `lvx_object_add_flag` 也由「fail closed」空桩改为真实调用；证据见 `EVID-UI-1036-HOST-001`、`EVID-UI-1043-HOST-001`。
-  Band 11 `.139/.155/.177` 上同名的记录是从 `.043` 按函数体匹配出来的低置信度 CANDIDATE（restricted / PENDING，无人使用），沿用了错误的名字，没有改动；Band 11 的隐藏用的是 `lvx_object_add_flag` / `lv_obj_clear_flag`。
+  Band 11 `.139/.155` 上同名的记录是从 `.043` 按函数体匹配出来的低置信度 CANDIDATE（restricted / PENDING，无人使用），沿用了错误的名字，没有改动；Band 11 的隐藏用的是 `lvx_object_add_flag` / `lv_obj_clear_flag`。

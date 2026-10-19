@@ -35,7 +35,7 @@ CANOPUS_TARGET=xiaomi-band-11-4.100.155 sh scripts/build_canopus_supervisor.sh
 已驻留的旧 Supervisor 不会被新资源热替换，更新安装器后先重启再 Run。
 
 普通构建会自动包含所选固件已实现的 L2 后端，不再区分“本地管理器版”和“通信版”。
-`.139` / `.177` 没有本次已审计的 L2 配置，构建时会明确提示，不能复用 `.155` 地址。
+`.139` 没有本次已审计的 L2 配置，构建时会明确提示，不能复用 `.155` 地址。
 相关符号保持 `restricted / PENDING / not_probed`；默认内置不改变批准状态，
 模拟器验证也不等同真机验证。
 

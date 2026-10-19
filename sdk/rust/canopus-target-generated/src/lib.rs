@@ -5,7 +5,6 @@
 //! - Xiaomi Band 10 Pro (3.101.043): `generated_xiaomi_band_10_pro_3_101_043.rs`
 //! - Xiaomi Band 11 (4.100.139): `generated_xiaomi_band_11_4_100_139.rs`
 //! - Xiaomi Band 11 (4.100.155): `generated_xiaomi_band_11_4_100_155.rs`
-//! - Xiaomi Band 11 (4.100.177): `generated_xiaomi_band_11_4_100_177.rs`
 //!
 //! Produced by `canopus target generate-rust-bindings <target>` and committed so the crate
 //! always has an exact-target source artifact. A regression test in
@@ -36,8 +35,6 @@ include!("generated_xiaomi_band_11_4_100_139.rs");
 #[cfg(feature = "target-xiaomi-band-11-4-100-155")]
 include!("generated_xiaomi_band_11_4_100_155.rs");
 
-#[cfg(feature = "target-xiaomi-band-11-4-100-177")]
-include!("generated_xiaomi_band_11_4_100_177.rs");
 
 #[cfg(all(
     test,
