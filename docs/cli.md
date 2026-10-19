@@ -18,7 +18,7 @@ canopus doctor                      # 检查工具链、仓库与 target
 ## 模块工程
 
 ```bash
-canopus new hello                          # portable C 模块：只编译一次，对所有 target 通用
+canopus new hello                          # portable C 模块：只编译一次，对所有 Band 11 固件通用（Band 10 Pro 须用 --target 绑定）
 canopus new hello --target 155             # 绑定精确固件；--target 可重复
 canopus new hello --target 036 --target 043 --ui       # 带一个 UI 页面的模板（C）
 canopus new hello --lang rust --target 155             # Rust 模块（必须绑定 target）

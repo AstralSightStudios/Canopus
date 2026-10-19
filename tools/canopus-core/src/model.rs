@@ -9,6 +9,9 @@ use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------- target
 
+/// The stock NuttX module loader, used on Band 10 Pro.
+pub const STOCK_MODLIB_LOADER: &str = "nuttx-modlib-elf32-rel";
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TargetPack {
     #[serde(rename = "schema")]
@@ -44,6 +47,15 @@ pub struct TargetPack {
      * scans module instructions and data for 32-bit values inside these
      * ranges; every hit must be in the allowed-address allowlist. */
     pub firmware_address_ranges: Option<Vec<AddressRange>>,
+}
+
+impl TargetPack {
+    /// A portable module reaches the services only through the context its
+    /// constructor receives. The stock modlib calls constructors without
+    /// arguments, so such a module cannot start on it.
+    pub fn loads_portable(&self) -> bool {
+        self.loader != STOCK_MODLIB_LOADER
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

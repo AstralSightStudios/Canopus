@@ -1,7 +1,7 @@
 //! Module projects: `canopus new`, `canopus build`, `canopus package`
 //! (refactor-plan P3.1–P3.3). A project is a `Canopus.toml` plus C sources.
-//! Portable modules (the default) are built once; target modules once per
-//! exact target. Packages carry an unsigned CMI2 receipt per target.
+//! Portable modules (the default) are built once and packaged for every target
+//! whose loader can host them; target modules are built once per exact target. Packages carry an unsigned CMI2 receipt per target.
 
 use crate::env::{canopus_root, display_rel, newest_input, read_text, resolve_in, run, tool};
 use anyhow::{Context, bail};
@@ -654,7 +654,7 @@ pub fn new(opts: &NewOptions) -> anyhow::Result<()> {
     );
     if resolved.is_empty() {
         println!(
-            "        (portable: built once for every target; add --target <id> to bind exact firmware)"
+            "        (portable: built once for every Band 11 firmware; Band 10 Pro needs --target <id> to bind exact firmware)"
         );
     }
     Ok(())

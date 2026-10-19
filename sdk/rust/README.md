@@ -61,7 +61,7 @@ SDK 严格标明具体的**设备型号**与**固件构建版本**，所有固�
 ## 3. 开发指引
 
 ### 3.1 便携式模块 (Portable Module, 推荐)
-便携式模块不绑定任何具体固件地址，构建单一 ELF 即可在所有支持 Canopus 的设备上直接运行：
+便携式模块不绑定任何具体固件地址，构建单一 ELF 即可在所有 Band 11 固件上直接运行。Band 10 Pro 的原厂 modlib 调用构造函数时不传服务上下文，portable 模块在其上无法启动，所以 `canopus build` / `canopus package` 不会为 Band 10 Pro 生成 portable 产物；要支持 Band 10 Pro 请用 `--target` 绑定固件：
 
 ```toml
 [dependencies]
