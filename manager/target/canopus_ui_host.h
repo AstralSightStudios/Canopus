@@ -26,12 +26,12 @@
 extern "C" {
 #endif
 
-#define CANOPUS_UI_HOST_MAX_ROWS     32u
-#define CANOPUS_UI_HOST_MAX_LABELS   16u
-#define CANOPUS_UI_HOST_MAX_IMAGES    4u
-#define CANOPUS_UI_HOST_MAX_PROGRESS  8u
-#define CANOPUS_UI_HOST_MAX_VIEWS     8u
-#define CANOPUS_UI_HOST_MAX_PLACED   64u
+#define CANOPUS_UI_HOST_MAX_ROWS     64u
+#define CANOPUS_UI_HOST_MAX_LABELS   64u
+#define CANOPUS_UI_HOST_MAX_IMAGES   16u
+#define CANOPUS_UI_HOST_MAX_PROGRESS 32u
+#define CANOPUS_UI_HOST_MAX_VIEWS    16u
+#define CANOPUS_UI_HOST_MAX_PLACED  256u
 
 /* View flags. */
 #define CANOPUS_UI_HOST_ROOT_PAGE (1u << 0) /* no back affordance in the title */

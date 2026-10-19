@@ -21,6 +21,7 @@ EXACT_155_ONLY = {
     'screen_session_restore_default', 'vibrator_run', 'vibrator_cancel',
     'property_get', 'property_get_int32', 'mkdir', 'fsync', 'stat',
     'system_get_state', 'system_state',
+    'l2_owner_timer_init', 'l2_owner_timer_start',
 }
 
 
@@ -55,9 +56,11 @@ class Band11Target177Tests(unittest.TestCase):
             record = json.loads((target / path.name.replace('4.100.155', '4.100.177')).read_text())
             with self.subTest(symbol=record['name']):
                 self.assertEqual(record['policy'], baseline['policy'])
-                # .155 restricted private_abi approvals are exact-firmware grants
-                # and are not inherited by .177 (see the calendar approval test).
-                if 'private_abi' in record['symbol_id'] and baseline.get('approval_state') == 'APPROVED':
+                # .155 approvals are exact-firmware grants (such as calendar approval
+                # or UI host promotion EVID-UI-4155-DEVICE-001) and are not inherited by .177.
+                if baseline.get('approval_state') == 'APPROVED' and record.get('approval_state') != 'APPROVED':
+                    self.assertIn(record['status'], ('STATIC_RECOVERED', 'CANDIDATE'))
+                    self.assertEqual(record['approval_state'], 'PENDING')
                     continue
                 self.assertEqual(record['status'], baseline['status'])
                 self.assertEqual(record.get('approval_state'), baseline.get('approval_state'))

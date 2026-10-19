@@ -14,6 +14,12 @@ import band11_155_firmware as baseline
 
 TARGET = 'xiaomi-band-11-4.100.177'
 
+_firmware_file = fwlocate.locate(TARGET) or (_Path(__file__).resolve().parents[2] / 'fwbins' / TARGET / 'vela_ap.bin')
+if not (_firmware_file and _firmware_file.is_file()):
+    def setUpModule():
+        raise unittest.SkipTest(f"no firmware image for {TARGET}")
+
+
 
 class Notifications177(notifications.NotificationTests):
     target = TARGET

@@ -17,7 +17,7 @@
 
 static int32_t svc_kv_ensure_loaded(uint32_t slot);
 
-#define SVC_LOG_ENTRIES 8u
+#define SVC_LOG_ENTRIES 64u
 #define SVC_FS_PATH_MAX CANOPUS_FS_PATH_MAX
 #define SVC_FS_ROOT "/data/canopus/m."
 
@@ -66,17 +66,18 @@ static struct svc_mem_block *s_mem_head[CANOPUS_SUP_MODULE_SLOTS];
 static uint32_t s_notify_posts[CANOPUS_SUP_MODULE_SLOTS];
 
 /* KV State */
-#define CANOPUS_KV_MAX_PAIRS 32u
+#define CANOPUS_KV_MAX_PAIRS 64u
+#define CANOPUS_KV_VAL_MAX 512u
 struct kv_pair {
     char key[32];
-    char val[64];
+    char val[CANOPUS_KV_VAL_MAX];
     uint8_t used;
 };
 static struct kv_pair s_kv[CANOPUS_SUP_MODULE_SLOTS][CANOPUS_KV_MAX_PAIRS];
 static uint8_t s_kv_loaded[CANOPUS_SUP_MODULE_SLOTS];
 
 /* Timer State */
-#define CANOPUS_MAX_TIMERS 16u
+#define CANOPUS_MAX_TIMERS 64u
 struct module_timer {
     uint32_t slot;
     uint32_t interval_ms;
@@ -92,7 +93,7 @@ static int s_timer_dispatching;
 static int s_timer_pump_started;
 
 /* Bus State */
-#define CANOPUS_BUS_MAX_SUBS 32u
+#define CANOPUS_BUS_MAX_SUBS 64u
 struct bus_subscription {
     uint32_t slot;
     char topic[32];
@@ -706,7 +707,7 @@ struct kv_disk_header {
 
 struct kv_disk_entry {
     char key[32];
-    char val[64];
+    char val[CANOPUS_KV_VAL_MAX];
 };
 
 static int svc_kv_path(uint32_t slot, char out[SVC_FS_PATH_MAX])

@@ -621,25 +621,26 @@ TEST(log_ring_keeps_the_newest_attributed_messages)
     uint32_t level, slot, i;
     setup(&sup, &platform_with_fs);
     ctx = canopus_supervisor_context(&sup, 0);
-    for (i = 0; i < 10; i++) {
-        char m[8] = "m0";
-        m[1] = (char)('0' + i);
+    for (i = 0; i < 70; i++) {
+        char m[8] = "m00";
+        m[1] = (char)('0' + (i / 10));
+        m[2] = (char)('0' + (i % 10));
         ctx->services->log_write(ctx, CANOPUS_LOG_INFO, m);
     }
-    CHECK_EQ(canopus_supervisor_log_count(), 8u);
-    CHECK(strcmp(canopus_supervisor_log_entry(0, &level, &slot), "m2") == 0);
-    CHECK(strcmp(canopus_supervisor_log_entry(7, &level, &slot), "m9") == 0);
+    CHECK_EQ(canopus_supervisor_log_count(), 64u);
+    CHECK(strcmp(canopus_supervisor_log_entry(0, &level, &slot), "m06") == 0);
+    CHECK(strcmp(canopus_supervisor_log_entry(63, &level, &slot), "m69") == 0);
     CHECK_EQ(level, (uint32_t)CANOPUS_LOG_INFO);
     CHECK_EQ(slot, 0u);
-    CHECK(canopus_supervisor_log_entry(8, 0, 0) == 0);
+    CHECK(canopus_supervisor_log_entry(64, 0, 0) == 0);
     memset(longmsg, 'x', sizeof(longmsg) - 1);
     longmsg[sizeof(longmsg) - 1] = '\0';
     ctx->services->log_write(ctx, CANOPUS_LOG_WARN, longmsg);
-    CHECK_EQ(strlen(canopus_supervisor_log_entry(7, 0, 0)),
+    CHECK_EQ(strlen(canopus_supervisor_log_entry(63, 0, 0)),
              (size_t)CANOPUS_LOG_MESSAGE_MAX);
     ctx->services->log_write(ctx, 9u, "bad level"); /* ignored */
-    CHECK(strcmp(canopus_supervisor_log_entry(7, 0, 0), longmsg) != 0 ||
-          strlen(canopus_supervisor_log_entry(7, 0, 0)) == CANOPUS_LOG_MESSAGE_MAX);
+    CHECK(strcmp(canopus_supervisor_log_entry(63, 0, 0), longmsg) != 0 ||
+          strlen(canopus_supervisor_log_entry(63, 0, 0)) == CANOPUS_LOG_MESSAGE_MAX);
 }
 
 TEST(portable_module_registers_through_the_service_and_gets_a_context)
@@ -768,13 +769,13 @@ TEST(service_objects_are_exposed_and_functional)
     CHECK_EQ(ctx->kv->set_int(ctx, "min_int", (int32_t)0x80000000u), CANOPUS_SVC_OK);
     CHECK_EQ(ctx->kv->get_int(ctx, "min_int", 0), (int32_t)0x80000000u);
 
-    /* 3. Memory Object (128 KiB budget & calloc) */
+    /* 3. Memory Object (256 KiB budget & calloc) */
     CHECK_EQ(ctx->mem->available(ctx), CANOPUS_MEM_BUDGET);
     CHECK_EQ(ctx->mem->used(ctx), 0u);
     ptr = ctx->mem->alloc(ctx, 65536u); /* 64 KiB */
     CHECK(ptr != 0);
     CHECK_EQ(ctx->mem->used(ctx), 65536u);
-    CHECK_EQ(ctx->mem->available(ctx), 131072u - 65536u);
+    CHECK_EQ(ctx->mem->available(ctx), CANOPUS_MEM_BUDGET - 65536u);
 
     /* Realloc with integer overflow size must be rejected without crashing */
     CHECK(ctx->mem->realloc(ctx, ptr, UINT32_MAX) == 0);
@@ -912,6 +913,27 @@ TEST(kv_failed_transactions_preserve_cache_and_disk)
     ctx = reboot_services(&sup);
     CHECK_EQ(ctx->kv->get_int(ctx, "saved", -999), -999);
     for (i = 0u; i < MAX_FDS; i++) CHECK(!g_fds[i].open);
+}
+
+TEST(kv_long_string_storage_and_reload)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    char long_val[220];
+    char out_buf[256];
+    uint32_t i;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    for (i = 0; i < sizeof(long_val) - 1; i++) {
+        long_val[i] = (char)('a' + (i % 26));
+    }
+    long_val[sizeof(long_val) - 1] = '\0';
+    CHECK_EQ(ctx->kv->set_string(ctx, "token", long_val), 0);
+    CHECK_EQ(ctx->kv->get_string(ctx, "token", out_buf, sizeof(out_buf)), (int32_t)strlen(long_val));
+    CHECK(strcmp(out_buf, long_val) == 0);
+    ctx = reboot_services(&sup);
+    CHECK_EQ(ctx->kv->get_string(ctx, "token", out_buf, sizeof(out_buf)), (int32_t)strlen(long_val));
+    CHECK(strcmp(out_buf, long_val) == 0);
 }
 
 static int s_timer_depth, s_timer_max_depth;
@@ -1896,6 +1918,8 @@ static struct test_registry supervisor_services_tests[] = {
       kv_reloads_through_native_and_service_registration_wrapper },
     { "kv_failed_transactions_preserve_cache_and_disk",
       kv_failed_transactions_preserve_cache_and_disk_wrapper },
+    { "kv_long_string_storage_and_reload",
+      kv_long_string_storage_and_reload_wrapper },
     { "timers_use_platform_events_without_recursive_dispatch",
       timers_use_platform_events_without_recursive_dispatch_wrapper },
     { "failed_load_and_activation_release_module_resources",

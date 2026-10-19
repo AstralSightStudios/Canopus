@@ -78,7 +78,7 @@ enum canopus_service_group {
 #define CANOPUS_LOG_WARN  1u
 #define CANOPUS_LOG_INFO  2u
 #define CANOPUS_LOG_DEBUG 3u
-#define CANOPUS_LOG_MESSAGE_MAX 80u
+#define CANOPUS_LOG_MESSAGE_MAX 128u
 
 /* -------------------------------------------------------------------------- */
 /* FS (File System & Directories)                                             */
@@ -95,9 +95,9 @@ enum canopus_service_group {
 #define CANOPUS_FS_SEEK_CUR 1
 #define CANOPUS_FS_SEEK_END 2
 
-#define CANOPUS_FS_MAX_OPEN 16u
+#define CANOPUS_FS_MAX_OPEN 32u
 #define CANOPUS_FS_NAME_MAX 63u
-#define CANOPUS_FS_PATH_MAX 128u
+#define CANOPUS_FS_PATH_MAX 256u
 
 /* Path forms accepted by ctx->fs:
  *   "name", "dir/sub/name"   module-private, below /data/canopus/m.<id>/
@@ -138,16 +138,16 @@ struct canopus_fs_dirent {
 /* MEM (Heap Allocation & Quotas)                                             */
 /* -------------------------------------------------------------------------- */
 
-#define CANOPUS_MEM_MAX_BLOCKS 64u
-#define CANOPUS_MEM_BUDGET     131072u /* 128 KiB baseline */
+#define CANOPUS_MEM_MAX_BLOCKS 128u
+#define CANOPUS_MEM_BUDGET     262144u /* 256 KiB baseline */
 
 /* -------------------------------------------------------------------------- */
 /* NOTIFY                                                                     */
 /* -------------------------------------------------------------------------- */
 
-#define CANOPUS_NOTIFY_BODY_MAX 120u
-#define CANOPUS_NOTIFY_TITLE_MAX 40u
-#define CANOPUS_NOTIFY_MAX_POSTS 8u
+#define CANOPUS_NOTIFY_BODY_MAX 256u
+#define CANOPUS_NOTIFY_TITLE_MAX 64u
+#define CANOPUS_NOTIFY_MAX_POSTS 16u
 /* The notification shows the caller's title (the module id when it is NULL or
  * empty) and always names the posting module as its source. The stock
  * icon of post_with_icon is the absolute path of an image file (NULL or "" is

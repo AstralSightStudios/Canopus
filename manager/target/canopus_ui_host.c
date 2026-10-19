@@ -383,6 +383,38 @@ HOST_ROW_CALLBACK(28)
 HOST_ROW_CALLBACK(29)
 HOST_ROW_CALLBACK(30)
 HOST_ROW_CALLBACK(31)
+HOST_ROW_CALLBACK(32)
+HOST_ROW_CALLBACK(33)
+HOST_ROW_CALLBACK(34)
+HOST_ROW_CALLBACK(35)
+HOST_ROW_CALLBACK(36)
+HOST_ROW_CALLBACK(37)
+HOST_ROW_CALLBACK(38)
+HOST_ROW_CALLBACK(39)
+HOST_ROW_CALLBACK(40)
+HOST_ROW_CALLBACK(41)
+HOST_ROW_CALLBACK(42)
+HOST_ROW_CALLBACK(43)
+HOST_ROW_CALLBACK(44)
+HOST_ROW_CALLBACK(45)
+HOST_ROW_CALLBACK(46)
+HOST_ROW_CALLBACK(47)
+HOST_ROW_CALLBACK(48)
+HOST_ROW_CALLBACK(49)
+HOST_ROW_CALLBACK(50)
+HOST_ROW_CALLBACK(51)
+HOST_ROW_CALLBACK(52)
+HOST_ROW_CALLBACK(53)
+HOST_ROW_CALLBACK(54)
+HOST_ROW_CALLBACK(55)
+HOST_ROW_CALLBACK(56)
+HOST_ROW_CALLBACK(57)
+HOST_ROW_CALLBACK(58)
+HOST_ROW_CALLBACK(59)
+HOST_ROW_CALLBACK(60)
+HOST_ROW_CALLBACK(61)
+HOST_ROW_CALLBACK(62)
+HOST_ROW_CALLBACK(63)
 
 static void (*const host_row_events[CANOPUS_UI_HOST_MAX_ROWS])(void *) = {
     host_row_event_0, host_row_event_1, host_row_event_2, host_row_event_3,
@@ -393,6 +425,14 @@ static void (*const host_row_events[CANOPUS_UI_HOST_MAX_ROWS])(void *) = {
     host_row_event_20, host_row_event_21, host_row_event_22, host_row_event_23,
     host_row_event_24, host_row_event_25, host_row_event_26, host_row_event_27,
     host_row_event_28, host_row_event_29, host_row_event_30, host_row_event_31,
+    host_row_event_32, host_row_event_33, host_row_event_34, host_row_event_35,
+    host_row_event_36, host_row_event_37, host_row_event_38, host_row_event_39,
+    host_row_event_40, host_row_event_41, host_row_event_42, host_row_event_43,
+    host_row_event_44, host_row_event_45, host_row_event_46, host_row_event_47,
+    host_row_event_48, host_row_event_49, host_row_event_50, host_row_event_51,
+    host_row_event_52, host_row_event_53, host_row_event_54, host_row_event_55,
+    host_row_event_56, host_row_event_57, host_row_event_58, host_row_event_59,
+    host_row_event_60, host_row_event_61, host_row_event_62, host_row_event_63,
 };
 
 #undef HOST_ROW_CALLBACK
@@ -418,7 +458,7 @@ static int host_snapshot_uses_row(const struct canopus_ui_snapshot_v1 *snapshot,
 static int host_find_row(struct canopus_ui_host_view *view,
                          const struct canopus_ui_snapshot_v1 *snapshot,
                          uint8_t kind, canopus_ui_node_id key,
-                         uint32_t used_mask)
+                         uint64_t used_mask)
 {
     uint32_t i;
     int empty = -1;
@@ -430,7 +470,7 @@ static int host_find_row(struct canopus_ui_host_view *view,
                 empty = (int)i;
             }
         } else if (view->row_kinds[i] == kind &&
-                   (used_mask & (UINT32_C(1) << i)) == 0u) {
+                   (used_mask & (UINT64_C(1) << i)) == 0u) {
             if (view->row_keys[i] == key) {
                 return (int)i;
             }
@@ -474,10 +514,20 @@ HOST_TITLE_CALLBACK(4)
 HOST_TITLE_CALLBACK(5)
 HOST_TITLE_CALLBACK(6)
 HOST_TITLE_CALLBACK(7)
+HOST_TITLE_CALLBACK(8)
+HOST_TITLE_CALLBACK(9)
+HOST_TITLE_CALLBACK(10)
+HOST_TITLE_CALLBACK(11)
+HOST_TITLE_CALLBACK(12)
+HOST_TITLE_CALLBACK(13)
+HOST_TITLE_CALLBACK(14)
+HOST_TITLE_CALLBACK(15)
 
 static void (*const host_title_events[CANOPUS_UI_HOST_MAX_VIEWS])(void *) = {
     host_title_event_0, host_title_event_1, host_title_event_2, host_title_event_3,
     host_title_event_4, host_title_event_5, host_title_event_6, host_title_event_7,
+    host_title_event_8, host_title_event_9, host_title_event_10, host_title_event_11,
+    host_title_event_12, host_title_event_13, host_title_event_14, host_title_event_15,
 };
 
 #undef HOST_TITLE_CALLBACK
@@ -756,7 +806,8 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     uint16_t i;
     uint32_t visible_rows = 0u, visible_labels = 0u, visible_images = 0u;
     uint32_t visible_progress = 0u;
-    uint32_t used_mask = 0u, label_used = 0u, image_used = 0u, progress_used = 0u;
+    uint64_t used_mask = 0u;
+    uint32_t label_used = 0u, image_used = 0u, progress_used = 0u;
     struct host_chain chain;
 
     if (view == NULL || view->root == NULL || snapshot == NULL ||
@@ -1012,10 +1063,10 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         view->bindings[slot].generation = snapshot->generation;
         view->bindings[slot].key = node->key;
         view->bindings[slot].event_id = node->event_id;
-        used_mask |= UINT32_C(1) << (uint32_t)slot;
+        used_mask |= UINT64_C(1) << (uint32_t)slot;
     }
     for (i = 0; i < CANOPUS_UI_HOST_MAX_ROWS; i++) {
-        if (view->rows[i] != NULL && (used_mask & (UINT32_C(1) << i)) == 0u) {
+        if (view->rows[i] != NULL && (used_mask & (UINT64_C(1) << i)) == 0u) {
             host_set_hidden(view->rows[i], 1u);
             canopus_memset(&view->bindings[i], 0, sizeof(view->bindings[i]));
         }
