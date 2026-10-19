@@ -1903,6 +1903,17 @@ static int sup_start_timer_pump(void *cookie, void (*poll)(void *), void *data)
 #define SUP_TIMER_PUMP 0
 #endif
 
+#if CANOPUS_SUP_HAS_L2
+static int sup_start_background_pump(void *cookie, void (*poll)(void *), void *data)
+{
+    (void)cookie;
+    return canopus_sup_l2_background(poll, data);
+}
+#define SUP_BACKGROUND_PUMP sup_start_background_pump
+#else
+#define SUP_BACKGROUND_PUMP 0
+#endif
+
 const struct canopus_sup_platform_v1 canopus_sup_platform = {
     CANOPUS_SUP_TARGET_ID,
     sup_register_device,
@@ -1950,6 +1961,7 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     SUP_BT_ADAPTER_STATE,
     SUP_BT_IS_CONNECTED,
     SUP_TIMER_PUMP,
+    SUP_BACKGROUND_PUMP,
     sup_l2_send,
 #if CANOPUS_SUP_HAS_L2
     sup_l2_event,

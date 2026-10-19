@@ -159,7 +159,13 @@ struct canopus_mem_obj {
   Band 11 从 exact-target 私有符号配置取入口，原有 `restricted / STATIC_RECOVERED / PENDING` 状态不变。
   创建/启动 timer 必须在模块/UI 所属线程执行，回调也在该线程串行运行，不能从中断或任意 worker 调用。
 - LVGL 在息屏等暂停期间不保证心跳继续推进；恢复后合并漏掉的周期，不保证后台准时触发。
-  心跳不支持热卸载，也不支持 UI 重建后的自动恢复；此实现独立于 L2 的 libuv owner timer。
+  心跳不支持热卸载，也不支持 UI 重建后的自动恢复。
+- **后台 timer**（time 组版本 2）：`timer_set_background(ctx, id, 1)` 让这个 timer 在息屏期间继续触发。事件源是 L2 后端的 libuv owner timer
+  （和 LVGL 心跳在同一个 UI 所属任务上，供应商在息屏时停掉 miwear-refresh/LVGL，它仍然运行），所以只有有 L2 后端的 `.043` / `.155` 提供，
+  其余 target 的 time 组仍是版本 1，调用返回 `ERR_UNSUPPORTED`。息屏时只派发后台 timer，回调里**不能碰 UI**（LVGL 已暂停）；屏幕亮着时两个事件源都在跑，
+  到期的 timer 只触发一次。息屏后 CPU 仍可能睡眠，需要持续运行就持有显示服务的唤醒锁。该事件源在 owner timer 启动前（L2 引导尚未完成）返回 `ERR_STATE`。
+  这条路径只有静态与仿真依据，没有真机验证。线程和工作队列仍是 FORBIDDEN，不提供。
+  模块代码已经会在这个 owner timer 的上下文里运行（手机经 L2 发来的命令在那里执行），所以没有引入新的任务。
 - NSH headless 构建以及缺少 timer/单调时钟入口的 target 没有 UI 事件源；`timer_create` 明确返回
   `CANOPUS_SVC_ERR_UNSUPPORTED`，不会注册一个永远不触发的 timer。
 - 当前 `realtime_ms` 仍返回单调时间的扩展值，不应作为已验证的 UTC 时钟使用。
@@ -175,6 +181,7 @@ struct canopus_time_obj {
     int32_t  (*timer_start)(const struct canopus_context_v1 *ctx, int32_t timer_id);
     int32_t  (*timer_stop)(const struct canopus_context_v1 *ctx, int32_t timer_id);
     int32_t  (*timer_destroy)(const struct canopus_context_v1 *ctx, int32_t timer_id);
+    int32_t  (*timer_set_background)(const struct canopus_context_v1 *ctx, int32_t timer_id, int background); /* time 组版本 2 */
 };
 ```
 

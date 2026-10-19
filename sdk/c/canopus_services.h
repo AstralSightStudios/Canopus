@@ -341,8 +341,9 @@ struct canopus_mem_obj {
 
 /* Timer creation/start and callbacks belong to the serialized module/UI task.
  * Normal UI builds use a boot-resident 10 ms LVGL heartbeat. Delivery pauses
- * while LVGL is suspended (including screen-off); missed periods are coalesced
- * on resume. Headless builds have no event source and return UNSUPPORTED.
+ * while LVGL is suspended (including screen-off) unless the timer was made a
+ * background timer; missed periods are coalesced on resume. Headless builds have no
+ * event source and return UNSUPPORTED.
  * Hot unload of the heartbeat and recovery after UI reconstruction are unsupported. */
 struct canopus_time_obj {
     uint32_t (*monotonic_ms)(const struct canopus_context_v1 *ctx);
@@ -352,6 +353,13 @@ struct canopus_time_obj {
     int32_t  (*timer_start)(const struct canopus_context_v1 *ctx, int32_t timer_id);
     int32_t  (*timer_stop)(const struct canopus_context_v1 *ctx, int32_t timer_id);
     int32_t  (*timer_destroy)(const struct canopus_context_v1 *ctx, int32_t timer_id);
+    /* Time group version 2. A background timer keeps firing while the screen is
+     * off, from an event source that survives it, on the same serialized task.
+     * Its callback must not touch the UI: LVGL is suspended then. Check
+     * canopus_services_has(ctx, CANOPUS_SVC_TIME, 2) before calling; UNSUPPORTED
+     * where the target has no such source. The CPU may still sleep with the screen
+     * off; hold a display wake lock to keep it running. */
+    int32_t  (*timer_set_background)(const struct canopus_context_v1 *ctx, int32_t timer_id, int background);
 };
 
 struct canopus_hook_obj {

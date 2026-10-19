@@ -90,12 +90,14 @@ struct module_timer {
     int periodic;
     int running;
     int used;
+    int background; /* also dispatched while the screen is off */
     canopus_timer_callback_t cb;
     void *user_data;
 };
 static struct module_timer s_timers[CANOPUS_MAX_TIMERS];
 static int s_timer_dispatching;
 static int s_timer_pump_started;
+static int s_background_pump_started;
 
 /* Bus State */
 #define CANOPUS_BUS_MAX_SUBS 64u
@@ -1074,22 +1076,14 @@ static void svc_haptic_poll(uint32_t now);
 static void svc_events_poll(uint32_t now);
 static void svc_launcher_poll(void);
 
-void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup)
+/* Fires the timers that are due; a background poll leaves the others alone,
+ * because LVGL is suspended while it runs. */
+static void svc_timers_dispatch(uint32_t now, int background_only)
 {
     uint32_t i;
-    uint32_t now;
-    if (sup == 0 || sup != s_sup || s_timer_dispatching) return;
-    s_timer_dispatching = 1;
-    now = (sup->platform != 0 && sup->platform->monotonic_ms != 0)
-              ? sup->platform->monotonic_ms(sup->platform_cookie) : 0u;
-
-    canopus_supervisor_stability_poll(sup, now);
-    svc_launcher_poll();
-    svc_haptic_poll(now);
-    svc_events_poll(now);
     for (i = 0u; i < CANOPUS_MAX_TIMERS; i++) {
         struct module_timer *t = &s_timers[i];
-        if (t->used && t->running && t->cb != 0) {
+        if (t->used && t->running && t->cb != 0 && (t->background || !background_only)) {
             if ((int32_t)(now - t->next_fire_ms) >= 0) {
                 canopus_timer_callback_t cb = t->cb;
                 void *cookie = t->user_data;
@@ -1102,6 +1096,34 @@ void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup)
             }
         }
     }
+}
+
+static uint32_t svc_now(const struct canopus_supervisor_v1 *sup)
+{
+    return (sup->platform != 0 && sup->platform->monotonic_ms != 0)
+               ? sup->platform->monotonic_ms(sup->platform_cookie) : 0u;
+}
+
+void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup)
+{
+    uint32_t now;
+    if (sup == 0 || sup != s_sup || s_timer_dispatching) return;
+    s_timer_dispatching = 1;
+    now = svc_now(sup);
+
+    canopus_supervisor_stability_poll(sup, now);
+    svc_launcher_poll();
+    svc_haptic_poll(now);
+    svc_events_poll(now);
+    svc_timers_dispatch(now, 0);
+    s_timer_dispatching = 0;
+}
+
+static void svc_background_pump(void *sup)
+{
+    if ((struct canopus_supervisor_v1 *)sup != s_sup || s_timer_dispatching) return;
+    s_timer_dispatching = 1;
+    svc_timers_dispatch(svc_now(s_sup), 1);
     s_timer_dispatching = 0;
 }
 
@@ -1191,6 +1213,25 @@ static int32_t svc_time_timer_destroy(const struct canopus_context_v1 *ctx, int3
         return CANOPUS_SVC_ERR_ARGUMENT;
     }
     canopus_memset(&s_timers[timer_id], 0, sizeof(s_timers[timer_id]));
+    return CANOPUS_SVC_OK;
+}
+
+static int32_t svc_time_timer_set_background(const struct canopus_context_v1 *ctx,
+                                            int32_t timer_id, int background)
+{
+    const struct canopus_sup_platform_v1 *pf = s_sup->platform;
+    if (!svc_slot_valid(ctx) || timer_id < 0 || timer_id >= (int32_t)CANOPUS_MAX_TIMERS ||
+        !s_timers[timer_id].used || s_timers[timer_id].slot != ctx->slot) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    if (background && !s_background_pump_started) {
+        int32_t rc;
+        if (pf->start_background_pump == 0) return CANOPUS_SVC_ERR_UNSUPPORTED;
+        rc = svc_errno(pf->start_background_pump(s_sup->platform_cookie, svc_background_pump, s_sup));
+        if (rc != CANOPUS_SVC_OK) return rc;
+        s_background_pump_started = 1;
+    }
+    s_timers[timer_id].background = background != 0;
     return CANOPUS_SVC_OK;
 }
 
@@ -2033,6 +2074,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     canopus_memset(s_timers, 0, sizeof(s_timers));
     s_timer_dispatching = 0;
     s_timer_pump_started = 0;
+    s_background_pump_started = 0;
     canopus_memset(s_bus_subs, 0, sizeof(s_bus_subs));
     canopus_memset(s_wakelocks, 0, sizeof(s_wakelocks));
     s_wakelock_generation = 0u;
@@ -2121,6 +2163,8 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_time_obj.timer_start = svc_time_timer_start;
         s_time_obj.timer_stop = svc_time_timer_stop;
         s_time_obj.timer_destroy = svc_time_timer_destroy;
+        s_time_obj.timer_set_background = svc_time_timer_set_background;
+        if (sup->platform->start_background_pump != 0) s_services.group_version[CANOPUS_SVC_TIME] = 2u;
     }
 
     if (sup != 0 && sup->platform != 0 && sup->platform->heap_alloc != 0 &&

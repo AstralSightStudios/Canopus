@@ -141,6 +141,11 @@ struct canopus_sup_platform_v1 {
      * It must keep calling poll after module activation returns. No source
      * means timer_create returns UNSUPPORTED; no worker may invoke UI callbacks. */
     int (*start_timer_pump)(void *cookie, void (*poll)(void *), void *data);
+    /* Like start_timer_pump, but the source keeps ticking while the screen is
+     * off (LVGL suspended), on the same task. Only timers marked background are
+     * dispatched from it. Optional: without it timer_set_background answers
+     * UNSUPPORTED. */
+    int (*start_background_pump)(void *cookie, void (*poll)(void *), void *data);
     /* WearPacket Layer 2 communication (ADR-CAN-008). Optional. */
     int (*l2_send)(void *cookie, uint8_t channel, const void *payload, uint16_t len);
     /* CanopusConnect (ADR-CAN-009), both or neither. l2_event queues one
@@ -169,6 +174,9 @@ struct canopus_sup_platform_v1 {
 
 int canopus_sup_l2_start(void);
 void canopus_sup_l2_poll(void);
+/* Runs `poll` on every tick of the L2 owner timer, which keeps going while the
+ * screen is off. STATE until that timer is running, UNSUPPORTED without L2. */
+int canopus_sup_l2_background(void (*poll)(void *), void *data);
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len);
 int sup_l2_event(void *cookie, const void *frame, uint16_t len);
 uint32_t sup_l2_peer(void *cookie);

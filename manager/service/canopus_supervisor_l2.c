@@ -55,6 +55,8 @@ static int s_bt_initialized, s_bt_running;
 static uint16_t s_last_handle;
 static void *s_last_session;
 static int s_connected;
+static void (*s_background_poll)(void *);
+static void *s_background_data;
 
 static int l2_bt_start(void);
 
@@ -252,6 +254,15 @@ static void l2_owner_tick(void *timer)
 {
     (void)timer;
     canopus_sup_l2_poll();
+    if (s_background_poll != 0) s_background_poll(s_background_data);
+}
+
+int canopus_sup_l2_background(void (*poll)(void *), void *data)
+{
+    if (!s_owner_running) return CANOPUS_SVC_ERR_STATE;
+    s_background_data = data;
+    s_background_poll = poll;
+    return 0;
 }
 
 static void l2_tick(void *timer)
@@ -306,6 +317,11 @@ uint32_t sup_l2_peer(void *cookie)
 #else
 int canopus_sup_l2_start(void) { return CANOPUS_SVC_ERR_UNSUPPORTED; }
 void canopus_sup_l2_poll(void) {}
+int canopus_sup_l2_background(void (*poll)(void *), void *data)
+{
+    (void)poll; (void)data;
+    return CANOPUS_SVC_ERR_UNSUPPORTED;
+}
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len)
 {
     (void)cookie; (void)channel; (void)payload; (void)len;

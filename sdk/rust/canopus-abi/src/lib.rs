@@ -262,6 +262,9 @@ pub struct CanopusTimeObj {
     pub timer_start: unsafe extern "C" fn(ctx: *const ContextV1, timer_id: i32) -> i32,
     pub timer_stop: unsafe extern "C" fn(ctx: *const ContextV1, timer_id: i32) -> i32,
     pub timer_destroy: unsafe extern "C" fn(ctx: *const ContextV1, timer_id: i32) -> i32,
+    /// Time group version 2: keep firing while the screen is off.
+    pub timer_set_background:
+        unsafe extern "C" fn(ctx: *const ContextV1, timer_id: i32, background: i32) -> i32,
 }
 
 #[repr(C)]

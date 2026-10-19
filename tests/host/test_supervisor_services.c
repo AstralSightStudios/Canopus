@@ -236,10 +236,25 @@ static int p_start_timer_pump(void *c, void (*poll)(void *), void *data)
     g_timer_data = data;
     return 0;
 }
+static void (*g_background_poll)(void *);
+static void *g_background_data;
+static int p_start_background_pump(void *c, void (*poll)(void *), void *data)
+{
+    (void)c;
+    g_background_poll = poll;
+    g_background_data = data;
+    return 0;
+}
 static void advance_time(uint32_t ms)
 {
     g_now += ms;
     if (g_timer_poll != 0) g_timer_poll(g_timer_data);
+}
+/* The screen is off: only the background source ticks. */
+static void advance_time_screen_off(uint32_t ms)
+{
+    g_now += ms;
+    if (g_background_poll != 0) g_background_poll(g_background_data);
 }
 static int g_notified;
 static char g_notice[160];
@@ -1049,6 +1064,65 @@ TEST(timers_use_platform_events_without_recursive_dispatch)
     setup(&sup, &no_pump);
     ctx = canopus_supervisor_context(&sup, 0u);
     CHECK_EQ(ctx->time->timer_create(ctx, 5u, 1, on_test_timer, 0), CANOPUS_SVC_ERR_UNSUPPORTED);
+}
+
+static int s_background_fired, s_foreground_fired;
+static void on_background_timer(const struct canopus_context_v1 *ctx, int32_t timer_id, void *data)
+{
+    (void)ctx; (void)timer_id; (void)data;
+    s_background_fired++;
+}
+static void on_foreground_timer(const struct canopus_context_v1 *ctx, int32_t timer_id, void *data)
+{
+    (void)ctx; (void)timer_id; (void)data;
+    s_foreground_fired++;
+}
+
+TEST(background_timers_keep_firing_while_the_screen_is_off)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 with_background = platform_with_fs;
+    const struct canopus_context_v1 *ctx;
+    int32_t background, foreground;
+    with_background.start_background_pump = p_start_background_pump;
+    g_background_poll = 0;
+    setup(&sup, &with_background);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    CHECK(canopus_services_has(ctx, CANOPUS_SVC_TIME, 2));
+    background = ctx->time->timer_create(ctx, 10u, 1, on_background_timer, 0);
+    foreground = ctx->time->timer_create(ctx, 10u, 1, on_foreground_timer, 0);
+    CHECK(background >= 0 && foreground >= 0);
+    CHECK_EQ(ctx->time->timer_set_background(ctx, 99, 1), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK(g_background_poll == 0); /* no source is started for nothing */
+    CHECK_EQ(ctx->time->timer_set_background(ctx, background, 1), 0);
+    CHECK(g_background_poll != 0);
+    CHECK_EQ(ctx->time->timer_start(ctx, background), 0);
+    CHECK_EQ(ctx->time->timer_start(ctx, foreground), 0);
+    s_background_fired = s_foreground_fired = 0;
+
+    advance_time_screen_off(10u);
+    advance_time_screen_off(10u);
+    CHECK_EQ(s_background_fired, 2);
+    CHECK_EQ(s_foreground_fired, 0); /* LVGL is suspended: UI timers wait */
+    advance_time(10u); /* the screen is on again: both are served, none twice */
+    CHECK_EQ(s_background_fired, 3);
+    CHECK_EQ(s_foreground_fired, 1);
+    CHECK_EQ(ctx->time->timer_set_background(ctx, background, 0), 0);
+    advance_time_screen_off(10u);
+    CHECK_EQ(s_background_fired, 3);
+}
+
+TEST(background_timers_are_unsupported_without_a_background_source)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    int32_t id;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_TIME, 2));
+    id = ctx->time->timer_create(ctx, 10u, 1, on_background_timer, 0);
+    CHECK(id >= 0);
+    CHECK_EQ(ctx->time->timer_set_background(ctx, id, 1), CANOPUS_SVC_ERR_UNSUPPORTED);
 }
 
 static uintptr_t s_failed_module_pointer;
@@ -2098,6 +2172,10 @@ static struct test_registry supervisor_services_tests[] = {
       kv_long_string_storage_and_reload_wrapper },
     { "timers_use_platform_events_without_recursive_dispatch",
       timers_use_platform_events_without_recursive_dispatch_wrapper },
+    { "background_timers_keep_firing_while_the_screen_is_off",
+      background_timers_keep_firing_while_the_screen_is_off_wrapper },
+    { "background_timers_are_unsupported_without_a_background_source",
+      background_timers_are_unsupported_without_a_background_source_wrapper },
     { "failed_load_and_activation_release_module_resources",
       failed_load_and_activation_release_module_resources_wrapper },
     { "service_objects_are_exposed_and_functional",

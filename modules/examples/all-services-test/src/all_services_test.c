@@ -7,7 +7,7 @@
  *   3.  FS (open, write, read, seek, tell, stat, size, exists, remove, write_all, read_all, mkdir, opendir, readdir, closedir)
  *   4.  MEM (alloc aligned, realloc preserving data, calloc zero-filled, used tracking, available 128K budget, free)
  *   5.  SYSTEM (target_id, device_model, firmware_version, battery_level, is_charging, is_safe_mode, uptime, revision)
- *   6.  TIME (monotonic_ms increasing, sleep_ms, timer_create, timer_start, timer_stop, timer_destroy)
+ *   6.  TIME (monotonic_ms increasing, sleep_ms, timer_create, timer_start, timer_stop, timer_set_background, timer_destroy)
  *   7.  HAPTICS (vibrate, vibrate_pattern, vibrate_preset, cancel)
  *   8.  DISPLAY (get_brightness, set_brightness, is_screen_on, get_resolution, acquire_wake_lock, release_wake_lock, wake_screen)
  *   9.  BUS (subscribe, publish with synchronous event dispatch, unsubscribe)
@@ -523,6 +523,12 @@ static void run_system_and_time_tests(const struct canopus_context_v1 *ctx)
     ctx->time->sleep_ms(ctx, 15);
     if (s_timer_test_fired == 0) ok = 0;
     if (ctx->time->timer_stop(ctx, tid) != CANOPUS_SVC_OK) ok = 0;
+    /* Only targets with a screen-off event source are version 2; whether it
+     * fires with the screen off needs a person, so it is just set and cleared. */
+    if (canopus_services_has(ctx, CANOPUS_SVC_TIME, 2)) {
+        if (ctx->time->timer_set_background(ctx, tid, 1) != CANOPUS_SVC_OK) ok = 0;
+        if (ctx->time->timer_set_background(ctx, tid, 0) != CANOPUS_SVC_OK) ok = 0;
+    }
     if (ctx->time->timer_destroy(ctx, tid) != CANOPUS_SVC_OK) ok = 0;
 
     log_test("Timers: callback dispatch, stop & destroy", ok);
