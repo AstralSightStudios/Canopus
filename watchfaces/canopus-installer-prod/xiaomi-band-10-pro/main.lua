@@ -5,6 +5,12 @@
 --   -> apply restored boot intents (third-party modules) -> INSTALL 1 -> INSTALL 2.
 -- Prioritizing Manager ensures the Canopus Manager UI is always accessible,
 -- even if an individual third-party module encounters an activation error.
+--
+-- Auto-run (opt-in, off by default) performs the same Run by itself a few seconds
+-- after this watchface starts. /data/canopus/autorun enables it;
+-- /data/canopus/autorun.pending exists while an automatic Run is in progress, so
+-- a Run that never finished (the device reset in the middle of it) is found at
+-- the next start and turns Auto-run off instead of repeating.
 
 local lvgl = require("lvgl")
 
@@ -32,6 +38,12 @@ local run_phase = 1
 local run_attempted = false
 local clear_armed = false
 local module_warning = nil
+local AUTORUN_FLAG = "/data/canopus/autorun"
+local AUTORUN_PENDING = "/data/canopus/autorun.pending"
+local AUTORUN_DELAY_MS = 10000
+local autorun_active = false  -- the Run in progress was started by Auto-run
+local autorun_timer
+local refresh_autorun_button
 
 local function shell_quote(value)
     return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
@@ -45,6 +57,38 @@ end
 
 local function set_status(text, color)
     status:set { text = tostring(text), text_color = color or 0xBFD9FF }
+end
+
+local function path_exists(path)
+    local file = io.open(path, "rb")
+    if not file then return false end
+    file:close()
+    return true
+end
+
+local function remove_file(path)
+    pcall(os.remove, path)
+end
+
+local function write_marker(path)
+    run("mkdir /data/canopus")
+    local file = io.open(path, "wb")
+    if not file then return false end
+    local ok, written = pcall(file.write, file, "1")
+    file:close()
+    return ok and written ~= nil
+end
+
+-- An automatic Run that ended, however it ended, is no longer pending. One that
+-- failed also switches Auto-run off so it cannot repeat at every boot.
+local function settle_autorun(success)
+    if not autorun_active then return end
+    autorun_active = false
+    remove_file(AUTORUN_PENDING)
+    if not success then
+        remove_file(AUTORUN_FLAG)
+        refresh_autorun_button()
+    end
 end
 
 local function read_all(path, mode)
@@ -215,6 +259,7 @@ local function finish_run(timer, success, message)
     timer:delete()
     if run_timer == timer then run_timer = nil end
     set_status(message, success and 0x8FF0A4 or 0xFF9A9A)
+    settle_autorun(success)
 end
 
 local function run_next_step(timer)
@@ -294,14 +339,14 @@ local function make_button(text, y, color, on_clicked)
     })
     button:clear_flag(lvgl.FLAG.SCROLLABLE)
     button:add_flag(lvgl.FLAG.CLICKABLE)
-    lvgl.Label(button, {
+    local label = lvgl.Label(button, {
         text = text, text_color = 0xFFFFFF, align = lvgl.ALIGN.CENTER,
     })
     button:onClicked(function()
         local ok, message = pcall(on_clicked)
         if not ok then set_status("Error: " .. tostring(message), 0xFF9A9A) end
     end)
-    return button
+    return button, label
 end
 
 local firmware_version = detect_firmware_version()
@@ -319,7 +364,12 @@ if not module_supported then
 end
 
 local run_button
-run_button = make_button("Run", -36, 0x14508A, function()
+local function abort_run(message)
+    set_status(message, 0xFF9A9A)
+    settle_autorun(false)
+end
+
+local function do_run()
     clear_armed = false
     if run_attempted then
         set_status("Run can only be used once; reboot before retrying")
@@ -329,8 +379,8 @@ run_button = make_button("Run", -36, 0x14508A, function()
     run_button:clear_flag(lvgl.FLAG.CLICKABLE)
     local valid, validation_error = verify_module_file()
     if not valid then
-        set_status("LOAD failed: " .. tostring(validation_error)
-            .. "\nEnsure the firmware version matches this installer.", 0xFF9A9A)
+        abort_run("LOAD failed: " .. tostring(validation_error)
+            .. "\nEnsure the firmware version matches this installer.")
         return
     end
     if not supervisor_present() then
@@ -338,25 +388,46 @@ run_button = make_button("Run", -36, 0x14508A, function()
         local inserted = run(string.format("insmod %s %s",
             shell_quote(MODULE_PATH), MODULE_NAME))
         if not inserted or not supervisor_present() then
-            set_status("LOAD failed. Ensure the firmware version matches this installer."
-                .. "\nReboot before retrying.", 0xFF9A9A)
+            abort_run("LOAD failed. Ensure the firmware version matches this installer."
+                .. "\nReboot before retrying.")
             return
         end
     end
     local icon_ok, icon_error = stage_manager_icon()
     if not icon_ok then
-        set_status("Run failed: " .. tostring(icon_error), 0xFF9A9A)
+        abort_run("Run failed: " .. tostring(icon_error))
         return
     end
     local started, timer_error = start_run_timer()
     if not started then
-        set_status("Run failed: " .. tostring(timer_error), 0xFF9A9A)
+        abort_run("Run failed: " .. tostring(timer_error))
     else
         set_status("Supervisor loaded; scheduling Manager registration...")
     end
+end
+
+run_button = make_button("Run", -72, 0x14508A, do_run)
+
+local autorun_button, autorun_label
+autorun_button, autorun_label = make_button("Auto-run", 0, 0x2B5D3A, function()
+    clear_armed = false
+    if path_exists(AUTORUN_FLAG) then
+        remove_file(AUTORUN_FLAG)
+        set_status("Auto-run off")
+    elseif write_marker(AUTORUN_FLAG) then
+        set_status("Auto-run on: Canopus loads itself after the next boot.\n"
+            .. "It turns itself off if a run does not finish.", 0x8FF0A4)
+    else
+        set_status("Cannot enable Auto-run", 0xFF9A9A)
+    end
+    refresh_autorun_button()
 end)
 
-make_button("Clear Env", 36, 0x8A1F14, function()
+refresh_autorun_button = function()
+    autorun_label:set { text = path_exists(AUTORUN_FLAG) and "Auto-run: ON" or "Auto-run: OFF" }
+end
+
+make_button("Clear Env", 72, 0x8A1F14, function()
     if run_timer then
         clear_armed = false
         set_status("Run is in progress; reboot before clearing")
@@ -373,10 +444,57 @@ make_button("Clear Env", 36, 0x8A1F14, function()
     else
         set_status("Clear Env failed", 0xFF9A9A)
     end
+    refresh_autorun_button()
 end)
 
 status = lvgl.Label(root, {
     text = "Ready\nFirmware " .. firmware_version,
     text_color = 0xBFD9FF, width = 300, height = 96,
-    align = { type = lvgl.ALIGN.CENTER, x_ofs = 0, y_ofs = 132 },
+    align = { type = lvgl.ALIGN.CENTER, x_ofs = 0, y_ofs = 170 },
 })
+
+local function start_autorun(timer)
+    timer:delete()
+    autorun_timer = nil
+    if run_attempted or supervisor_present() then return end
+    if not write_marker(AUTORUN_PENDING) then
+        set_status("Auto-run skipped: cannot write its marker", 0xFF9A9A)
+        return
+    end
+    autorun_active = true
+    set_status("Auto-run: starting...")
+    local ok, message = pcall(do_run)
+    if not ok then abort_run("Auto-run failed: " .. tostring(message)) end
+end
+
+-- A pending marker at start means the automatic Run of the last boot never
+-- finished: leave Auto-run off until it is switched on again.
+local autorun_unfinished = path_exists(AUTORUN_PENDING)
+if autorun_unfinished then
+    remove_file(AUTORUN_PENDING)
+    remove_file(AUTORUN_FLAG)
+end
+refresh_autorun_button()
+if autorun_unfinished then
+    set_status("Auto-run turned off: the last automatic run did not finish", 0xFFD27A)
+elseif path_exists(AUTORUN_FLAG) and not supervisor_present() then
+    set_status("Auto-run: starting in " .. tostring(AUTORUN_DELAY_MS // 1000) .. " s")
+    autorun_timer = lvgl.Timer {
+        period = AUTORUN_DELAY_MS,
+        repeat_count = -1,
+        cb = function(timer)
+            local ok, message = pcall(start_autorun, timer)
+            if not ok then set_status("Auto-run failed: " .. tostring(message), 0xFF9A9A) end
+        end,
+    }
+end
+
+-- The timer must not outlive the page it would report to.
+if lvgl.EVENT and lvgl.EVENT.DELETE then
+    rootbase:onevent(lvgl.EVENT.DELETE, function()
+        if autorun_timer then
+            autorun_timer:delete()
+            autorun_timer = nil
+        end
+    end)
+end

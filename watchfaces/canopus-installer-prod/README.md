@@ -20,6 +20,15 @@ All three variants use this workflow:
 4. **Clear Env** requires two clicks and removes `/data/canopus` only after the
    explicit confirmation.
 
+The Band 10 Pro and Band 11 installers also have an **Auto-run** switch (off by
+default) that performs Run by itself about ten seconds after the watchface starts,
+so Canopus no longer needs a click after every reboot. It only helps when this
+watchface is the one shown after boot. `/data/canopus/autorun` holds the switch and
+`/data/canopus/autorun.pending` exists while an automatic Run is in progress: if
+the device resets before the Run finishes, the next start finds the marker and
+turns Auto-run off instead of repeating, and a Run that fails cleanly turns it off
+too. Switch it on again to retry. It has not been run on a device.
+
 Build all packaged targets with:
 
 ```sh

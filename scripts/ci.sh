@@ -98,6 +98,7 @@ gate_6() {
     if command -v lua >/dev/null 2>&1; then
         lua scripts/lua/watchface_smoke.lua
         lua scripts/lua/test_installer_firmware_selection.lua
+        lua scripts/lua/test_installer_autorun.lua
     else
         echo "  (no lua interpreter; skipping)"
     fi

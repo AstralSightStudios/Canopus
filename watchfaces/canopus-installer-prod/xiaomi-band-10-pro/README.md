@@ -1,6 +1,6 @@
 # Canopus Installer Prod — Xiaomi Band 10 Pro
 
-A streamlined 336×480 Xiaomi Band 10 Pro installer watchface with two controls:
+A streamlined 336×480 Xiaomi Band 10 Pro installer watchface with three controls:
 
 - **Run** loads the exact-target Supervisor, applies enabled boot intents after
   `insmod` has returned, then executes native registration stages 0, 1, and 2.
@@ -8,6 +8,12 @@ A streamlined 336×480 Xiaomi Band 10 Pro installer watchface with two controls:
   locks the action immediately, including while it is running or after any
   failure. Reboot before retrying so native registration stages cannot be
   replayed in the same session.
+- **Auto-run** (off by default) switches `/data/canopus/autorun`. When it is on, the
+  watchface performs Run by itself ten seconds after it starts (and not when the
+  Supervisor is already loaded). `/data/canopus/autorun.pending` is written before
+  the load and removed when the Run ends; a marker still there at the next start
+  means the device reset mid-Run, and Auto-run is turned off instead of repeating.
+  A Run that fails cleanly turns it off as well. Not run on a device yet.
 - **Clear Env** requires two consecutive clicks. The first displays
   `Click again to clear`; only the second executes `rm -rf /data/canopus` and
   asks for a reboot.
