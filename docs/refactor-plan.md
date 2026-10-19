@@ -72,6 +72,7 @@
 | K14 | 确立 WearPacket Layer 2 0x43 通道，与 Pb 同级承载 CPC2；模块仅用 `.canopus`，不映射为快应用（K15） | 2026-10-14 |
 | K15 | 用户要求彻底移除 RPK 包装与快应用列表依赖，只保留 `.canopus`；通过加密 L2 CPC2 原生分块投递，固件私有 API 仍遵守批准门槛 | 2026-10-17 |
 | K16 | 所选 target 已实现的功能随普通构建默认包含，不再要求额外实验启用参数；L2 后端由 exact-target 配置自动选择，构建默认值不提升符号或真机能力状态 | 2026-10-17 |
+| K18 | 生产就绪整改（2026-10-20，真机验证除外）：Supervisor 常驻内存由 KV 缓存（545 KiB）改为按文件流式并加常驻体积门槛；模块开机启动计数与崩溃循环隔离；portable 按 loader 能力打包；模块启动器入口（ADR-CAN-011）；安装器 Auto-run（默认关闭）；后台 timer（time 组版本 2）；商店清单 `canopus` 兼容元数据（P5.7 客户端）。均只算 host/emulator 级证据，不提升任何能力状态 | 2026-10-20 |
 | K17 | 放弃 Band 11 `4.100.177`（缺固件镜像、适配不完整），整体移除其 target、Rust 绑定、测试与脚本；Band 11 改为适配 `4.100.179`（q66tc 完整包）。177 上的授权清单（calendar alpha 等）随目录删除，179 须重新取得用户授权，不继承；历史行与证据出处文字保留，可由 git 历史找回 | 2026-10-20 |
 
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
@@ -109,7 +110,7 @@
 | P1 | Target/地址单一来源；移除 P65；冻结 Band 9 | [x] | P0 |
 | P2 | ABI/SDK：服务表、协议收敛、移除签名、Rust 整理 | [x] | P0.1–P0.4；P2.4 起依赖 P1.3 |
 | P3 | 统一打包 + 文档 | [x] | P1、P2.1 |
-| P4 | 设备端更新语义 + 开机自启调查 | [x]（P4.0 明确结论：维持手动 Run） | P0.1、P0.2（不依赖 P5） |
+| P4 | 设备端更新语义 + 开机自启调查 | [x]（P4.0：Auto-run 已实现为可选开关，默认关闭，待真机验证） | P0.1、P0.2（不依赖 P5） |
 | P5 | 手机端管理（AstroBox-NG） | [~]（.043/.155 后端已默认内置；真机验证与原生商店元数据待完成） | P5.0（O1）、P2.5、P3.3 |
 | P6 | Mirage 模拟器调试 | [x]（043 冒烟 + Band 11 155/177 端到端全通） | P6.0、P6.2、P3 |
 
@@ -219,7 +220,7 @@
   去签名、新回执、协议变更，以及能否转为 portable。
 
 ### P4 设备端更新语义
-- [!] P4.0 开机自动加载调查（K10；结论：维持手动 Run + 手机端提示。方向(1)需要表盘页面 Lua 的前台生命周期，模拟器冒烟靠 NSH `lua` 驱动，无法代表，留待真机）。**静态结论（043 IDB，2026-10-14）**：
+- [~] P4.0 开机自动加载调查（K10；2026-10-20 按方向(1)实现为安装器的 Auto-run 开关，默认关闭，带"上次自动运行是否完成"标记，Lua 测试覆盖；没有真机证据，表盘必须是开机后显示的表盘才有用，所以默认仍是手动 Run + 手机端提示）。**静态结论（043 IDB，2026-10-14）**：
   - 启动脚本固化在固件 romfs（`/etc/init.d/rc.sysinit` 挂载 /data 等，`/etc/init.d/rcS` 启动 miwear 等服务，仅在存在 `/data/nobusiness` 目录时跳过业务服务），
     没有任何读取 `/data` 下脚本的钩子，因此无法通过写文件让 Supervisor 随开机加载。
   - 剩余可行方向（均未验证）：(1) 安装表盘 Lua 在页面初始化时自动执行 Run（需该表盘是开机后的当前表盘，且要防止重复加载/崩溃循环——可用"上次加载是否完成"标记）；
@@ -250,10 +251,11 @@
 - [~] P5.2 原生数据面重验：host 上传顺序/短写/中断/错误 target 与 ARM shim 测试通过；043 收件箱升级/回滚全流程通过。双 owner 后端分离 UI 命令处理与 Bluetooth 响应发送，解决跨 NuttX task-group 写 fd 的 EBADF。2026-10-17 Band 11 `.155` 新建 Mirage 设备经生产安装器 Run，真实 AstroBox core 加密 L2 原生安装/列表查询、本地 SCAN 全部通过；实验 `.155` 资源已同步到待打包目录，普通构建也默认包含该后端。043 独立原生安装已通过，完整 fresh-device smoke 的 phone flow 仍待闭环。仅 emulator 证据，符号保持 restricted/PENDING/not_probed；不使用 FORBIDDEN 的线程/工作队列。证据：各 target 的 evidence/l2-sram-probe.json。旧 RPK 冒烟结果不能替代。
 - [x] P5.3 core：CPC2 RPC 查询列表/版本，原生 tar/manifest/receipt 校验、按精确 target 选择、逐块应答上传；移除 modules_from_apps 与包名映射。
 - [x] P5.4 `app`（已完成：`DeviceResourceUpdateReport.canopus_modules`，新增 `canopus_send_request`、`canopus_query_device`、`canopus_trigger_scan`、`canopus_set_module_enabled`、`canopus_remove_module` 等 Tauri 命令，直通 L2 通道）。
-- [~] P5.5 更新提醒：模块列表和已装版本只来自 Supervisor；原生商店清单/版本比较需独立适配，不借用 quickapp 项。
-  比较 `versionCode`，并检查 ABI 与 target 是否兼容。
+- [x] P5.5 更新提醒：模块列表和已装版本只来自 Supervisor；原生商店清单/版本比较独立适配，不借用 quickapp 项。
+  比较 `versionCode`，并按下载项的 `canopus` 元数据检查 ABI、框架版本与固件 target（2026-10-20，AstroBox-NG `provider`/`app`/`privprovider` 本地提交，未推送）。
 - [x] P5.6 前端：Canopus 专属卡片与管理页；原生安装队列独立调用 canopus_install_module，不再用 Mass 64/快应用安装。
-- [ ] P5.7 商店清单：旧 quickapp 下载项设计撤销，原生 Canopus 条目需独立类型与 target/ABI 元数据。
+- [~] P5.7 商店清单：旧 quickapp 下载项设计撤销，原生 Canopus 条目需独立类型与 target/ABI 元数据。**客户端已完成**（`ManifestCanopusV2`、更新检查按手环上报拒绝不兼容下载项、单元测试）；
+    **未完成**：AstroBoxCreatorConsole 的发布校验（本机没有该仓库）与 web 前端的商店安装选择（仍按设备型号取 `downloads[deviceId]`，设备端回执校验仍是最终防线）。
   - `downloads[deviceId]` 下增加 `canopus: { abi, targets?: [target_id], minFramework? }`。
   - portable 模块只写 abi；target-private 模块必须列出 target。
   - 客户端安装前比对手环固件，不匹配就拒绝（修复按型号回退到 default 或任意条目的问题）。
@@ -280,6 +282,17 @@
   - AstroBox-NG 的 emu bridge（HCI over TCP 连 qemu-miwear 的 BT 控制器；端口按设备配置，不是固定的 5566）。
   - QEMU 可能只接受单个客户端，两条路径不能同时连接（待验证）。
 - [x] P6.6 文档（本文与 ADR-CAN-005 明确：模拟器结果只算 host/emulator 级证据，不得写成 device verified）：模拟器结果只算 host/emulator 级证据，不得写成 device verified。
+
+### P7 生产就绪整改（2026-10-20）
+- [x] P7.1 Supervisor 常驻内存：`s_kv` 由 545 KiB 静态表改为按模块文件逐条流式读写（`.bss` 627–647 KB → 69–90 KB）；`canopus verify` 报告常驻大小并接受 `--max-resident`，各家族 `supervisor_max_resident` 成为构建门槛；KV 键值超长改为拒绝而不是截断。Band 11 Unicorn 引导测试不再 NOMEM。
+- [x] P7.2 模块崩溃循环防护：开机启动前把启动计数写入注册表，稳定 60 s 后清零；连续两次未稳定则退回更老的一代或禁用（`CANOPUS_SUP_ERR_UNSTABLE`）。全局 safe mode 的自动升级与退出路径仍未实现（docs/security-model.md §7）。
+- [x] P7.3 portable 按 loader 能力打包：规划器只把 portable 模块展开到向构造函数传服务上下文的 loader（Band 11），Band 10 Pro 须绑定 target。
+- [x] P7.4 模块启动器入口（ADR-CAN-011，CAN-P0-007 状态不变）：`ctx->launcher`，两步注册，无注销；host 测试与 Band 11 固件仿真。
+- [x] P7.5 安装器 Auto-run（P4.0）。
+- [x] P7.6 后台 timer：time 组版本 2，复用 L2 owner timer；仅 `.043`/`.155`；线程与工作队列仍 FORBIDDEN。
+- [x] P7.7 文档与状态表对齐（限额、链接、README 的能力状态说法、§15 的 CAN-P0-004/006、外部模块迁移说明）。
+- [ ] P7.8 仍需真机：上述各项以及 G0–G13 都没有归档过一次设备运行；`tests/hardware/gates.md` 列出新增的待验证项。
+- [ ] P7.9 `.043` Supervisor 文件体积 110,596 / 114,688（96%），再加功能需要重新评估预算；`.043` Mirage 冒烟的手机流程超时（P5.2）本机没有 Mirage，未能复现。
 
 ## 6. 风险
 
@@ -342,3 +355,4 @@
 | 2026-10-18 | 服务组去占位：亮度/屏幕状态/唤醒锁/振动/电量/属性/蓝牙状态改为 exact-target 固件入口（.036/.043/.139/.155 STATIC_RECOVERED，.177 无镜像保持空钩子），文件服务放开任意绝对路径（仅保护 Canopus 自己的状态）、每模块私有目录、mkdir/APPEND/errno，L2 接收派发，通知标题，系统事件广播；host 测试与 5 个 Supervisor 交叉构建通过，未做设备或模拟器验证 |
 | 2026-10-19 | CI 恢复与生产级配额全线扩容：修复 `.177` 缺镜像与 `.155` 特批符号比对导致的 CI 阻塞，全量 CI 9 个 gates 恢复全绿；服务层与 SDK 配额全线拉满：KV 单值由 64 扩至 512 字节（支持 JSON 与长 Token）、键值对由 32 扩至 64，循环日志由 8 扩至 64 条、单条长度由 80 扩至 128 字节，定时器由 16 扩至 64 个，总线订阅由 32 扩至 64 个，文件路径由 128 扩至 256 字节、打开句柄由 16 扩至 32 个，堆内存基线预算由 128 扩至 256 KiB、分配块由 64 扩至 128，通知标题由 40 扩至 64 字节、正文由 120 扩至 256 字节、配额由 8 扩至 16；UI 宿主放置节点由 64 扩至 256、行数由 32 扩至 64（升级 uint64_t 行掩码）、标签由 16 扩至 64、图片由 4 扩至 16、进度条由 8 扩至 32、视图由 8 扩至 16；Supervisor 尺寸仍在各 target 上限内（.043 106768/114688, .155 117880/131072），host 测试（含 ASan/UBSan）与长值持久化测试全部通过 |
 | 2026-10-20 | K17：移除 Band 11 `4.100.177`（target 包、Rust 绑定、脚本与测试、安装器 profile、基线哈希）；此前各行对 177 的记述仅为历史。179 适配尚未开始 |
+| 2026-10-20 | K18：生产就绪整改（P7.1–P7.7）：KV 流式化与常驻体积门槛、模块崩溃循环防护、portable 按 loader 打包、模块启动器入口（ADR-CAN-011）、安装器 Auto-run、后台 timer、商店清单 `canopus` 兼容元数据（客户端）、文档对齐。全量 CI 全绿；仅 host/emulator 证据，未做真机验证 |

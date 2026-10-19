@@ -77,6 +77,16 @@
   策略仍是 `restricted`（目标私有，不对模块开放）。UI 宿主在这两个 target 上的能力状态：**device verified / production approved**；证据是维护者反馈，没有设备日志；
   不含 Supervisor 安装路径与注销生命周期，§15 的 CAN-P0-007 等条目未改；`.036/.139` 状态不变。
 
+## 生产就绪整改（2026-10-20，仅 host/emulator 证据）
+
+- **常驻内存**：KV 不再缓存（原 `s_kv` 545 KiB 静态表），Supervisor `.bss` 由 627–647 KB 降到 69–90 KB；`canopus verify --max-resident` 与家族 `supervisor_max_resident`
+  是新的构建门槛（`.043` 上限 163,840，`.155` 上限 184,320）。这是构建预算，不是实测的固件上限。
+- **崩溃循环防护**：开机启动计数持久化，稳定 60 s 才清零；连续两次未稳定则回退旧代或禁用。global safe mode 自动升级与退出路径仍未实现。
+- **portable 打包**：只给能传服务上下文的 loader（Band 11）生成 portable 产物。
+- **模块启动器入口**（ADR-CAN-011）：`ctx->launcher`，两步注册、无注销；Band 11 固件仿真覆盖；CAN-P0-007 仍为 BLOCKED-EVIDENCE。
+- **Auto-run**（默认关闭）、**后台 timer**（`.043`/`.155`，time 组版本 2）、**商店清单 `canopus` 兼容元数据**（AstroBox 客户端，本地提交）。
+- 以上均无真机运行；`tests/hardware/gates.md` 新增了待验证的设备项。
+
 ## Host CLI（2026-10-19）
 
 - `canopus` 命令行体验修整，见 [`cli.md`](cli.md)：仓库与 targets 目录统一定位（任意目录可用，包括装到别处的二进制）、target 版本后缀（`--target 155`）、
@@ -130,6 +140,7 @@
 | 日期 | 变更 | 证据/备注 |
 |---|---|---|
 | 2026-08-05 | 建立独立仓库 /Volumes/EXT0/Canopus | AGPL-3.0；CLI 采用 Rust；target id 重命名见 ADR-CAN-001 |
+| 2026-10-20 | 生产就绪整改（见上）：KV 流式化与常驻体积门槛、崩溃循环防护、portable 打包、启动器入口、Auto-run、后台 timer、商店清单兼容元数据 | 全量 CI 全绿；host/emulator 证据，无真机 |
 | 2026-08-05 | P0/P1 host 整改批次（见上） | 每项一个 commit、测试先行、`./scripts/ci.sh` 全绿 |
 | 2026-08-23 | 043 BluetoothAudio Bond `-1107` 第一轮静态纠错 | 撤销错误的 036 16-word/global ABI，恢复 043 stock bts globals 与 17-word descriptor；中间提出的 adapter+120/client+72 布局随后被 `-1113` 真机反馈推翻，不是闭环 |
 | 2026-08-23 | 043 BluetoothAudio Bond `-1113` host 修复，device retest pending | exact IDB 证明 adapter+120 是仅 0x24-byte 的 callbacks_list manager，registration handle 才是 `{cookie, descriptor}` 8-byte node；移除 manager+72 越界访问，改为 register mirror → unregister original → 更新 stock handle；新增 `-1114..-1117` 分支诊断与 failure evidence；无真机通过结论 |

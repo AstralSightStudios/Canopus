@@ -20,6 +20,8 @@
   supervisor 在同一地址空间内运行。因此：
   - 节点 mode、uid/gid 不是安全边界；调用者身份即使可区分也不构成隔离。
   - 本地同地址空间调用者 = 未隔离控制面，可读取和驱动一切。
+- **`/dev/canopus` 为 `0666`（CAN-P1-001，保持 OPEN）**：任何能打开设备节点的进程都能提交命令。设备上没有可信的 uid 边界，
+  所以收紧 mode 只是形式；这个风险是 K9 之后接受的取舍，对外说明里应当写明。
 - **没有来源认证**：包与回执不再签名（K9），任何能写入 inbox 的调用者都可以提交
   模块。防线是 exact-target、artifact SHA-256、模块 ID、版本单调、ELF verifier、
   capability 和生命周期 policy 检查。
@@ -63,8 +65,14 @@
 
 ## 7. 恢复与 safe mode
 
-- 每次 boot：identity guard → journal recovery → boot marker（BOOTING/BOOT_OK）。
-- 未完成 BOOTING、重复 crash 或 store corruption → 自动 safe mode。
+- 每次 boot：identity guard → journal recovery。
+- **已实现：按模块的崩溃循环防护。** 开机时每个已启用模块的启动先写入注册表（启动计数，registry intent 字的 8..15 位），模块连续运行
+  `CANOPUS_SUP_STABLE_MS`（60 s）后才清零。设备在此之前复位，计数就留在磁盘上；连续 `CANOPUS_SUP_START_LIMIT`（2）次没有稳定，
+  下一次开机不再加载它：存在更老的一代就退回那一代（`UPDATE_FALLBACK`），否则禁用并记 `CANOPUS_SUP_ERR_UNSTABLE`；crash counter 与失败模块一并记录。
+  重新「启用」会重新计数。它抓得到构造函数、`activate` 和稳定窗口内的崩溃，抓不到窗口之后才触发的崩溃。
+- 安装器的 Auto-run（默认关闭）有同样性质的保护：自动 Run 开始前写 `autorun.pending`，下次启动发现它还在就关闭 Auto-run。
+- **尚未实现：** 全局 BOOTING/BOOT_OK 标记、重复崩溃或 store corruption 自动进入 safe mode、safe mode 的退出路径。safe mode 目前只能由用户命令进入，
+  Supervisor 重启即回到普通状态；`canopus_supervisor_boot_begin/boot_ok/boot_should_safe_mode` 只有 host 测试在调用。
 - safe mode 只允许 query/diagnostics/next-boot/rollback/remove-pending；
   install/enable/load/update activation 一律 DISALLOWED。
 - 退出 safe mode = 先选 recovery action，写 next-boot trial，成功 READY 后才清除；
