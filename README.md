@@ -70,8 +70,9 @@ adr/            决策记录（ADR-CAN-001 ...）
 - **production approved**：host + artifact + device gate 全部通过，且
   `approval_state == APPROVED` 且有 evidence。
 
-当前没有任何能力标记为 production approved。supervisor/transport/lifecycle 等
-处于 host implemented / device pending；launcher/native-app ABI 仍为
+production approved 的只有 UI 宿主在 `.043` / `.155` 上调用的固件入口：维护者在真机验证后授权，清单钉死在
+`tools/canopus-core/tests/generated_stability.rs`，策略仍是 `restricted`（只由 Supervisor 使用，不对模块开放；见 ADR-CAN-010）。
+supervisor/transport/lifecycle 等处于 host implemented / device pending；launcher/native-app ABI（含模块自己的启动器入口，ADR-CAN-011）仍为
 static recovered / BLOCKED-EVIDENCE。
 
 ## License

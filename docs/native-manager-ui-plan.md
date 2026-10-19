@@ -922,9 +922,9 @@ Gate：所有 security/device gates 通过后，才能将 native app/UI SDK 标�
 | CAN-P0-001 | P0 | CLOSED-GATED | `/dev/canopus` write 返回 0 导致 Lua/stdio 无进展重试和 watchdog reboot | `manager/service/canopus_supervisor_platform.c:41-45` |
 | CAN-P0-002 | P0 | HOST-FIXED/DEVICE-PENDING | Manager bounded text renderer 在截断后发生整数/指针下溢，可写到 buffer 前方 | `manager/ui/canopus_manager.c:89-174` |
 | CAN-P0-003 | P0 | HOST-FIXED/DEVICE-PENDING | device INSTALL 未接验签、target/hash/verifier，包路径与归档 entry 未形成安全边界 | `manager/service/canopus_supervisor.c:86-97`、`tools/package-builder/src/lib.rs:28-186` |
-| CAN-P0-004 | P0 | OPEN | device stage/load/unload 全为 stub，无法真实管理模块 | `manager/service/canopus_supervisor_platform.c:66-82` |
+| CAN-P0-004 | P0 | HOST-FIXED/DEVICE-PENDING | stage/load 已接真实 adapter（Band 10 Pro 经原厂 insmod，Band 11 经自定义 loader）；卸载一律 next-boot，不热卸载；真机 gate 待验证 | `manager/service/canopus_supervisor_platform.c`（`sup_load_module`、`sup_stage_*`） |
 | CAN-P0-005 | P0 | HOST-FIXED/DEVICE-PENDING | removable disable 没有 stop/drain/unload，可能在 callback 活跃时谎报 disabled | `manager/service/canopus_supervisor.c:99-159` |
-| CAN-P0-006 | P0 | HOST-FIXED/DEVICE-PENDING | safe mode 只置位，不阻止 install/enable/load，启动恢复也未持久化 | `manager/service/canopus_supervisor.c:86-164` |
+| CAN-P0-006 | P0 | HOST-FIXED/DEVICE-PENDING | safe mode 只置位，不阻止 install/enable/load；启动恢复：每个模块的启动计数写入注册表，连续两次未稳定即回退旧代或禁用（crash counter 与 failing module 已记录），尚无全局 safe mode 自动升级与退出路径 | `manager/service/canopus_supervisor.c:86-164` |
 | CAN-P0-007 | P0 | BLOCKED-EVIDENCE | native app 注册、页面工厂、UI dispatcher、callback 和注销 lifetime 未实机证明 | `targets/xiaomi-band-10-pro-3.101.030/evidence/EVID-APP-004.json` |
 | CAN-P0-008 | P0 | HOST-FIXED/DEVICE-PENDING | CPRT Manager protocol 与 CPC1/CPS1 设备 protocol 未连接，Manager 无正式 transport | `manager/protocol/canopus_protocol.h:19-61`、`manager/service/canopus_supervisor.h:25-32` |
 | CAN-P1-001 | P1 | OPEN | `/dev/canopus` mode 为 `0666`，mutating control surface 无调用者边界 | `manager/service/canopus_supervisor_platform.c:17-19` |

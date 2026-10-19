@@ -58,8 +58,8 @@ Canopus 采用**微内核服务对象（Service Objects）**架构。穿戴设�
 #define CANOPUS_SEEK_CUR    1         /* 从当前偏移定位 */
 #define CANOPUS_SEEK_END    2         /* 从文件末尾定位 */
 
-#define CANOPUS_FS_MAX_OPEN 16u       /* 单模块最大并发打开 16 个句柄 */
-#define CANOPUS_FS_PATH_MAX 128u      /* 支持多级安全子路径 */
+#define CANOPUS_FS_MAX_OPEN 32u       /* 单模块最大并发打开 32 个句柄 */
+#define CANOPUS_FS_PATH_MAX 256u      /* 支持多级安全子路径 */
 ```
 
 #### 方法列表

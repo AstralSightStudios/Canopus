@@ -80,5 +80,5 @@
 
 - [progress.md](progress.md)：进度状态（本表 ID 的权威状态见
   `native-manager-ui-plan.md` §15）。
-- [module-lifecycle.md](module-lifecycle.md)：生命周期类别与操作语义。
+- [archive/architecture.md](archive/architecture.md)：生命周期类别与操作语义。
 - [target-authoring.md](target-authoring.md)：target pack 与证据等级。

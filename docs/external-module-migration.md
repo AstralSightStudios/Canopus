@@ -27,11 +27,13 @@
 
 ## 4. 能否转为 portable
 
-portable 模块不含任何固件地址，只依赖 Supervisor 服务表（ADR-CAN-006），一个 ELF 可装在所有实现所需服务组的固件上。
-当前可用的服务组只有 `module`（注册）、`log`、`fs`（模块私有文件）。凡是用到蓝牙、interconnect、UI、定时器、内存分配、
-时钟的模块（上述五个外部模块都是）暂时**不能**转为 portable，继续作为 target 模块，用
-`canopus new <id> --target <exact-target-id>` 生成工程，或把现有构建接入 `Canopus.toml` 的 `[build]`。
-另外，portable 模块目前只能由自定义 loader 的 target（Band 11）加载。
+portable 模块不含任何固件地址，只依赖 Supervisor 服务表（ADR-CAN-006、`docs/canopus-services-specification.md`），一个 ELF 可装在所有实现所需服务组的固件上。
+服务表现有 `module`、`log`、`fs`、`time`（含定时器）、`mem`、`notify`、`hook`、`system`、`kv`、`haptics`、`display`、`bus`、`connect`、`ui`/`ui_ext`、
+`launcher`，以及（经 `system` 的蓝牙状态）`bt`；这些服务够用的模块可以转为 portable。
+上述五个外部模块（蓝牙音频、Lyra 等）还用到服务表之外的东西——经典蓝牙 A2DP/SDP 注册、字体/资源 hook、驱动注册等固件私有入口——
+所以继续作为 target 模块，用 `canopus new <id> --target <exact-target-id>` 生成工程，或把现有构建接入 `Canopus.toml` 的 `[build]`。
+portable 模块只能由向构造函数传服务上下文的 loader 加载，即 Band 11（自定义 loader）；Band 10 Pro 的原厂 modlib 不传，所以
+`canopus build` / `canopus package` 不会为 Band 10 Pro 生成 portable 产物，要支持它请绑定 target。
 
 ## 5. 其他
 
