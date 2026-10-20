@@ -2,6 +2,7 @@
 #include "canopus_test.h"
 #include "canopus_manager_app.h"
 #include "canopus_supervisor.h"
+#include "canopus_supervisor_platform.h"
 #include "canopus_memory.h"
 #include <string.h>
 
@@ -110,6 +111,8 @@ TEST(manager_app_runs_native_end_to_end_path)
 
     snapshot = canopus_ui_current(&app.native.ui);
     CHECK(app_find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE) == 0);
+    CHECK(app_find_event(snapshot, CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP) == 0);
+    CHECK(app_find_event(snapshot, CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE) == 0);
     modules = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_SHOW_MODULES);
     CHECK(modules != 0);
     CHECK(canopus_ui_dispatch_event(&app.native.ui, snapshot->generation,
@@ -128,9 +131,65 @@ TEST(manager_app_runs_native_end_to_end_path)
     CHECK(fixture.closes == 1);
 }
 
+static int safe_persist(void *cookie, const uint8_t *data, uint32_t size)
+{
+    (void)cookie; (void)data; (void)size;
+    return 0;
+}
+
+static const struct canopus_sup_platform_v1 safe_platform = {
+    .target_id = "xiaomi-band-10-pro-3.101.030",
+    .persist = safe_persist,
+};
+
+TEST(manager_app_offers_the_way_out_of_safe_mode)
+{
+    struct manager_app_fixture fixture;
+    struct canopus_manager_app_v1 app;
+    const struct canopus_app_descriptor_v1 *descriptor;
+    const struct canopus_ui_snapshot_v1 *snapshot;
+    const struct canopus_ui_node_v1 *leave;
+    const struct canopus_ui_node_v1 *confirm;
+
+    canopus_memset(&fixture, 0, sizeof(fixture));
+    CHECK(canopus_supervisor_init(&fixture.supervisor, 12, &safe_platform, 0) == 0);
+    fixture.supervisor.safe_mode = 1u;
+    fixture.supervisor.safe_mode_reason = CANOPUS_SAFE_MODE_UNFINISHED_BOOT;
+    descriptor = canopus_manager_app_descriptor();
+    CHECK(canopus_manager_app_configure(&app, &app_device_io, &fixture,
+                                        &app_ui_backend, &fixture) == 0);
+    canopus_manager_app_set_identity(&app, "xiaomi-band-10-pro-3.101.030",
+                                     "3.101.030", "CONBINE_LTALM078", 12);
+    app.model.safe_mode = 1u; /* the target backend copies it from QUERY_DEVICE */
+    CHECK(descriptor->on_create(0) == 0);
+    CHECK(descriptor->on_resume(0) == 0);
+
+    snapshot = canopus_ui_current(&app.native.ui);
+    CHECK(app_find_event(snapshot, CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP) != 0);
+    leave = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE);
+    CHECK(leave != 0);
+    /* installing is not offered while the device is in safe mode */
+    CHECK(canopus_manager_op_install(&app.model, "x") == CANOPUS_RESULT_DISALLOWED);
+
+    /* choosing the action asks first, and only the confirmation sends it */
+    CHECK(canopus_ui_dispatch_event(&app.native.ui, snapshot->generation,
+                                    leave->key, leave->event_id) == 0);
+    CHECK(fixture.supervisor.exit_pending == 0u);
+    snapshot = canopus_ui_current(&app.native.ui);
+    confirm = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
+    CHECK(confirm != 0);
+    CHECK(canopus_ui_dispatch_event(&app.native.ui, snapshot->generation,
+                                    confirm->key, confirm->event_id) == 0);
+    CHECK(fixture.supervisor.exit_pending == 1u);
+    CHECK(fixture.supervisor.safe_mode == 1u); /* this run stays safe */
+    CHECK(descriptor->on_destroy(0) == 0);
+}
+
 static const struct test_registry manager_app_tests[] = {
     { "manager_app_runs_native_end_to_end_path",
       manager_app_runs_native_end_to_end_path_wrapper },
+    { "manager_app_offers_the_way_out_of_safe_mode",
+      manager_app_offers_the_way_out_of_safe_mode_wrapper },
 };
 
 int run_manager_app_tests(void)

@@ -71,8 +71,21 @@
   下一次开机不再加载它：存在更老的一代就退回那一代（`UPDATE_FALLBACK`），否则禁用并记 `CANOPUS_SUP_ERR_UNSTABLE`；crash counter 与失败模块一并记录。
   重新「启用」会重新计数。它抓得到构造函数、`activate` 和稳定窗口内的崩溃，抓不到窗口之后才触发的崩溃。
 - 安装器的 Auto-run（默认关闭）有同样性质的保护：自动 Run 开始前写 `autorun.pending`，下次启动发现它还在就关闭 Auto-run。
-- **尚未实现：** 全局 BOOTING/BOOT_OK 标记、重复崩溃或 store corruption 自动进入 safe mode、safe mode 的退出路径。safe mode 目前只能由用户命令进入，
-  Supervisor 重启即回到普通状态；`canopus_supervisor_boot_begin/boot_ok/boot_should_safe_mode` 只有 host 测试在调用。
+- **已实现：全局 safe mode（host 测试，未上真机）。** 注册表头（偏移 12，原为保留字）保存全局启动标记：未完成启动次数、
+  safe 位与原因、trial 位、BOOTING 位、模块隔离计数。有模块要在开机时启动时先写 BOOTING，所有被监视的模块稳定运行
+  `CANOPUS_SUP_STABLE_MS` 后写回 OK。下次 Supervisor 加载时：
+  - safe 位还在 → 继续 safe mode（重启保持，直到用户退出）；
+  - 上次是 BOOTING：未完成计数 +1，达到 `CANOPUS_SUP_UNFINISHED_LIMIT`（3）→ safe mode（`UNFINISHED_BOOT`）；若上次是退出后的试运行（trial），一次就够；
+  - 模块隔离计数达到 `CANOPUS_SUP_CRASH_THRESHOLD`（3）而中间没有一次好启动 → safe mode（`CRASH`）；这一次启动里发生的隔离不会被它自己的 OK 抹掉；
+  - 注册表魔数不对（根本不是 Canopus 的注册表）→ safe mode（`STORE_CORRUPT`，同时 `restore` 返回失败）；版本号是旧格式则按 K11 忽略并提示重装，不进 safe mode。
+  判定只取决于磁盘上的标记，所以不需要自己的写入：下一次启动会得出同样的结论，直到 `EXIT_SAFE_MODE` 重写标记（构造函数也没有多余的栈去放一个注册表缓冲）。
+  safe mode 里不加载任何模块（`RESTORE_AFTER_BOOT` 只应答 COMPLETED），也不 stage 软件包；仍放行 Manager 与启动器入口的三个无负载 stage，
+  这样用户能从 Manager 退出。
+- **退出路径：** `EXIT_SAFE_MODE`（CPC2 `CANOPUS_CMD_EXIT_SAFE_MODE`，负载 u32 动作）：`KEEP` 清各模块启动计数；`DISABLE_ALL` 关闭所有模块；
+  `ROLLBACK_ALL` 对每个模块请求回退。它写下 trial 标记并返回 REBOOT_REQUIRED，本次运行仍是 safe mode。下一次启动正常加载；
+  如果这次启动没能到 OK（重置、断电），直接回到 safe mode。Manager 在 safe mode 里显示状态行，并提供「退出安全模式」与「退出并停用全部模块」，
+  都先确认。`ENTER_SAFE_MODE` 现在同样落盘。
+- **限制：** 这条链依赖 Supervisor 已被加载：Supervisor 本身在加载前就崩溃的情形（stage 1/2 或构造函数），标记还没机会写，这由安装器 Auto-run 的 `autorun.pending` 保护。
 - safe mode 只允许 query/diagnostics/next-boot/rollback/remove-pending；
   install/enable/load/update activation 一律 DISALLOWED。
 - 退出 safe mode = 先选 recovery action，写 next-boot trial，成功 READY 后才清除；

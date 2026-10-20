@@ -144,6 +144,11 @@ uint32_t canopus_manager_op_remove(struct canopus_manager_model_v1 *m,
 uint32_t canopus_manager_op_rollback(struct canopus_manager_model_v1 *m,
                                      uint32_t index);
 uint32_t canopus_manager_op_safe_mode(struct canopus_manager_model_v1 *m);
+/* Leaves safe mode at the next boot. `action` is a canopus_safe_exit_action
+ * (0 keep the modules, 1 disable them all, 2 roll them all back). The model
+ * stays in safe mode: nothing changes until the device restarts. */
+uint32_t canopus_manager_op_exit_safe_mode(struct canopus_manager_model_v1 *m,
+                                           uint32_t action);
 
 /* ---- availability helpers (for the detail page) ------------------ */
 /* Returns non-zero when the operation is available for the module. */

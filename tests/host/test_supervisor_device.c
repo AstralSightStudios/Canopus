@@ -1050,20 +1050,22 @@ TEST(supervisor_safe_mode_rejects_activation)
     canopus_supervisor_init(&sup, 7, &fake_platform, 0);
     CHECK(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1,
                                         "mod.hello") == 0);
+    uint32_t state_before = sup.modules[0].state;
     /* enter safe mode */
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
-    /* INSTALL / ENABLE are rejected by policy, not just shown */
-    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 0, 0);
+    /* A package install (INSTALL beyond the three payload-free stages) and ENABLE
+     * are rejected by policy, not just shown */
+    make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, 3, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
     CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_SAFE_MODE);
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_ENABLE, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_DISALLOWED);
+    /* RESTORE_AFTER_BOOT answers, but loads nothing */
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC,
                  CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT, 0, 0);
-    CHECK(canopus_supervisor_handle_command(&sup, cmd) ==
-          CANOPUS_RESULT_DISALLOWED);
-    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_SAFE_MODE);
+    CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(sup.modules[0].state, state_before);
     /* QUERY stays read-only and allowed */
     make_command(cmd, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_QUERY, 0, 0);
     CHECK(canopus_supervisor_handle_command(&sup, cmd) == CANOPUS_RESULT_COMPLETED);

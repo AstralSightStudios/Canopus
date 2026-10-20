@@ -28,6 +28,9 @@
 #define UI_KEY_DETAIL_ERROR      204u
 #define UI_KEY_DETAIL_ROLLBACK   211u
 #define UI_KEY_SCAN              212u
+#define UI_KEY_SAFE_MODE          34u
+#define UI_KEY_EXIT_SAFE_KEEP     35u
+#define UI_KEY_EXIT_SAFE_DISABLE  36u
 #define UI_KEY_DETAIL_ENABLE     212u
 #define UI_KEY_DETAIL_DISABLE    213u
 #define UI_KEY_DETAIL_REMOVE     214u
@@ -327,6 +330,11 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
     rc = append_status(tree, UI_KEY_TARGET, "目标设备", sizeof("目标设备") - 1u,
                        model->target_id, sizeof(model->target_id));
     if (rc != CANOPUS_UI_OK) return rc;
+    if (model->safe_mode) {
+        rc = append_status(tree, UI_KEY_SAFE_MODE, "安全模式", sizeof("安全模式") - 1u,
+                           "已开启，不运行任何模块", sizeof("已开启，不运行任何模块") - 1u);
+        if (rc != CANOPUS_UI_OK) return rc;
+    }
     if (model->error_code != 0 || model->supervisor_flags != 0u) {
         char errtext[48];
         char errno_text[16];
@@ -387,6 +395,18 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
                        modules, sizeof(modules),
                        CANOPUS_MANAGER_EVENT_SHOW_MODULES, 1);
     if (rc != CANOPUS_UI_OK) return rc;
+    if (model->safe_mode) {
+        rc = append_action(tree, UI_KEY_EXIT_SAFE_KEEP, "退出安全模式",
+                           sizeof("退出安全模式") - 1u,
+                           "重启后保持模块原状态试运行", sizeof("重启后保持模块原状态试运行") - 1u,
+                           CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP, 1);
+        if (rc != CANOPUS_UI_OK) return rc;
+        rc = append_action(tree, UI_KEY_EXIT_SAFE_DISABLE, "退出并停用全部模块",
+                           sizeof("退出并停用全部模块") - 1u,
+                           "重启后不加载任何模块", sizeof("重启后不加载任何模块") - 1u,
+                           CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE, 1);
+        if (rc != CANOPUS_UI_OK) return rc;
+    }
     rc = append_action(tree, UI_KEY_INSTALL, "安装软件包", sizeof("安装软件包") - 1u,
                        native->stage_token[0] != '\0' ?
                            "已验证待安装包" : "没有待安装包",
@@ -517,6 +537,10 @@ static const char *confirmation_message(uint32_t event_id)
         return "Restore the previous verified module version?";
     case CANOPUS_MANAGER_EVENT_REMOVE:
         return "Remove this module after reboot? Cannot be undone.";
+    case CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP:
+        return "Leave safe mode at the next restart and try the modules again? If that start fails, safe mode comes back.";
+    case CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE:
+        return "Leave safe mode at the next restart with every module turned off?";
     default:
         return "Continue with this operation?";
     }
@@ -632,6 +656,10 @@ static uint32_t execute_event(struct canopus_manager_native_v1 *native,
         return canopus_manager_op_rollback(model, model->selected);
     case CANOPUS_MANAGER_EVENT_REMOVE:
         return canopus_manager_op_remove(model, model->selected);
+    case CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP:
+        return canopus_manager_op_exit_safe_mode(model, 0u);
+    case CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE:
+        return canopus_manager_op_exit_safe_mode(model, 1u);
     default:
         return CANOPUS_RESULT_FAILED;
     }
@@ -645,7 +673,9 @@ static int event_needs_confirmation(uint32_t event_id)
            event_id == CANOPUS_MANAGER_EVENT_ENABLE ||
            event_id == CANOPUS_MANAGER_EVENT_DISABLE ||
            event_id == CANOPUS_MANAGER_EVENT_ROLLBACK ||
-           event_id == CANOPUS_MANAGER_EVENT_REMOVE;
+           event_id == CANOPUS_MANAGER_EVENT_REMOVE ||
+           event_id == CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP ||
+           event_id == CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE;
 }
 
 static int32_t refresh_model(struct canopus_manager_native_v1 *native)
@@ -736,6 +766,8 @@ static int32_t manager_event(void *cookie, uint32_t generation,
     case CANOPUS_MANAGER_EVENT_DISABLE:
     case CANOPUS_MANAGER_EVENT_ROLLBACK:
     case CANOPUS_MANAGER_EVENT_REMOVE:
+    case CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP:
+    case CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE:
         native->confirm_return_view = model->view;
         native->confirm_event = event_id;
         return canopus_manager_native_render(native);

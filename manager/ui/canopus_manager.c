@@ -418,6 +418,18 @@ uint32_t canopus_manager_op_rollback(struct canopus_manager_model_v1 *m,
                         CANOPUS_MANAGER_MODULE_ID_MAX);
 }
 
+uint32_t canopus_manager_op_exit_safe_mode(struct canopus_manager_model_v1 *m,
+                                           uint32_t action)
+{
+    uint8_t payload[4];
+    if (!m->safe_mode || action > 2u) {
+        return CANOPUS_RESULT_DISALLOWED;
+    }
+    payload[0] = (uint8_t)action;
+    payload[1] = payload[2] = payload[3] = 0u;
+    return send_command(m, CANOPUS_CMD_EXIT_SAFE_MODE, payload, sizeof(payload));
+}
+
 uint32_t canopus_manager_op_safe_mode(struct canopus_manager_model_v1 *m)
 {
     uint32_t rc = send_command(m, CANOPUS_CMD_ENTER_SAFE_MODE, 0, 0);

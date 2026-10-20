@@ -476,7 +476,7 @@ static int32_t native_route_sink_fn(void *cookie,
     return CANOPUS_UI_OK;
 }
 
-TEST(manager_native_hides_safe_mode_and_enforces_it)
+TEST(manager_native_shows_safe_mode_state_without_a_way_in_and_enforces_it)
 {
     struct canopus_manager_model_v1 model;
     struct canopus_manager_native_v1 native;
@@ -495,7 +495,11 @@ TEST(manager_native_hides_safe_mode_and_enforces_it)
 
     snapshot = canopus_ui_current(&native.ui);
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_SAFE_MODE) == 0);
-    CHECK(find_primary(snapshot, "安全模式") == 0);
+    /* The state is shown (the device may have entered it on its own) with the
+     * ways out, never a control to enter it. */
+    CHECK(find_primary(snapshot, "安全模式") != 0);
+    CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP) != 0);
+    CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE) != 0);
     install = find_event(snapshot, CANOPUS_MANAGER_EVENT_INSTALL);
     CHECK(install != 0);
     CHECK((install->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);
@@ -695,8 +699,8 @@ static const struct test_registry manager_native_tests[] = {
       manager_native_refreshes_model_after_operation_wrapper },
     { "manager_native_stage_token_is_bounded_and_installable",
       manager_native_stage_token_is_bounded_and_installable_wrapper },
-    { "manager_native_hides_safe_mode_and_enforces_it",
-      manager_native_hides_safe_mode_and_enforces_it_wrapper },
+    { "manager_native_shows_safe_mode_state_without_a_way_in_and_enforces_it",
+      manager_native_shows_safe_mode_state_without_a_way_in_and_enforces_it_wrapper },
     { "manager_native_router_receives_navigation_routes",
       manager_native_router_receives_navigation_routes_wrapper },
     { "manager_native_router_preserves_second_module_selection",

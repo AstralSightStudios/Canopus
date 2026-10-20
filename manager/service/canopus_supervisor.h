@@ -84,6 +84,8 @@ enum canopus_sup_command {
     CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT,
     /* Discover native receipt/artifact pairs completed in the Canopus inbox. */
     CANOPUS_SUP_CMD_SCAN,
+    /* Leave safe mode at the next boot; arg0 is a canopus_safe_exit_action. */
+    CANOPUS_SUP_CMD_EXIT_SAFE_MODE,
 };
 
 /* Stable supervisor error codes (CAN-P1-008). `error_code` holds the
@@ -117,6 +119,7 @@ enum canopus_sup_error {
     CANOPUS_SUP_ERR_UPDATE_ABANDONED = -24, /* pending generation failed verification at switch */
     CANOPUS_SUP_ERR_UNSTABLE = -25,    /* module never stayed up through consecutive boots; disabled */
     CANOPUS_SUP_ERR_LAUNCHER = -26,    /* a launcher entry could not be registered with the firmware */
+    CANOPUS_SUP_ERR_NOT_SAFE_MODE = -27, /* EXIT_SAFE_MODE outside safe mode */
     /* Exact-target installer diagnostics. These stay in the CPS1 status record
      * so a constrained watchface can surface a deterministic failing stage. */
     CANOPUS_SUP_ERR_STAGE_PATH = -101,
@@ -153,8 +156,37 @@ enum canopus_boot_state {
     CANOPUS_BOOT_OK = 2,
 };
 
+/* What to do with the installed modules when safe mode is left. Applied as
+ * next-boot intents, never as a load: KEEP clears the start counters only,
+ * DISABLE_ALL turns every module off, ROLLBACK_ALL asks every module that has an
+ * older generation to go back to it. */
+enum canopus_safe_exit_action {
+    CANOPUS_SAFE_EXIT_KEEP = 0,
+    CANOPUS_SAFE_EXIT_DISABLE_ALL,
+    CANOPUS_SAFE_EXIT_ROLLBACK_ALL,
+};
+
 /* Consecutive crash threshold that forces the next boot into safe mode. */
 #define CANOPUS_SUP_CRASH_THRESHOLD 3u
+/* Boots in a row that started modules and never proved stable before the
+ * Supervisor puts the device in safe mode on its own. */
+#define CANOPUS_SUP_UNFINISHED_LIMIT 3u
+
+/* Global boot marker, kept in bytes 12..15 of the registry file (they were
+ * reserved, so older registries read as a healthy first boot):
+ *   bits 0..7   unfinished boots counted so far
+ *   bit  8      safe mode (stays until EXIT_SAFE_MODE)
+ *   bits 9..11  canopus_safe_mode_reason
+ *   bit  12     trial: safe mode was left, the next boot must reach OK
+ *   bit  13     booting: a boot started modules and has not reached OK
+ *   bits 16..23 module quarantines since the last boot that reached OK */
+#define CANOPUS_SUP_BOOT_UNFINISHED_MASK 0xffu
+#define CANOPUS_SUP_BOOT_SAFE            (1u << 8)
+#define CANOPUS_SUP_BOOT_REASON_SHIFT    9u
+#define CANOPUS_SUP_BOOT_REASON_MASK     (7u << 9)
+#define CANOPUS_SUP_BOOT_TRIAL           (1u << 12)
+#define CANOPUS_SUP_BOOT_BOOTING         (1u << 13)
+#define CANOPUS_SUP_BOOT_CRASH_SHIFT     16u
 
 /* Boot-time crash-loop guard. Every start of an enabled module at boot is
  * written to the registry before its code runs and cleared once the module has
@@ -268,6 +300,10 @@ struct canopus_supervisor_v1 {
     uint32_t failing_module_id;
     uint32_t crash_counter;
     uint32_t boot_state;
+    uint32_t boot_unfinished;  /* unfinished boots in a row, persisted */
+    uint32_t boot_trial;       /* this boot follows an EXIT_SAFE_MODE */
+    uint32_t exit_pending;     /* EXIT_SAFE_MODE accepted; takes effect at reboot */
+    uint32_t boot_saved;       /* the boot word last read from or written to the registry */
     uint32_t unstable_modules; /* slots with `watching` set */
     /* CAN-P0-008: v2 transport state. `last_kind` is 0 for a legacy CPC1
      * command, 1 for a v2 CPC2 request; a read returns the stored v2
@@ -463,9 +499,13 @@ int canopus_supervisor_register_descriptor(
     const char *module_id,
     const struct canopus_module_descriptor_v1 *descriptor);
 
-/* CAN-P0-006: boot markers. boot_begin records BOOTING (before loading any
- * third-party module); boot_ok commits BOOT_OK once READY. A boot that never
- * commits BOOT_OK is the signal for the next boot to auto-enter safe mode. */
+/* CAN-P0-006: boot markers, persisted in the registry file. boot_begin records
+ * BOOTING (before any third-party module runs); boot_ok commits OK once every
+ * module started this boot has stayed up for CANOPUS_SUP_STABLE_MS. A boot that
+ * never commits OK counts as unfinished; CANOPUS_SUP_UNFINISHED_LIMIT of them in
+ * a row (one, right after EXIT_SAFE_MODE), or CANOPUS_SUP_CRASH_THRESHOLD module
+ * quarantines without a good boot in between, put the next start in safe mode.
+ * Safe mode is sticky: it survives reboots until EXIT_SAFE_MODE. */
 void canopus_supervisor_boot_begin(struct canopus_supervisor_v1 *sup,
                                    uint32_t boot_id);
 void canopus_supervisor_boot_ok(struct canopus_supervisor_v1 *sup);
