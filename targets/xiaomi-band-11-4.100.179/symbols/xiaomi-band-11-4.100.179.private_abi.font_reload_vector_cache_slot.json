@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.179.private_abi.font_reload_vector_cache_slot",
+  "target_id": "xiaomi-band-11-4.100.179",
+  "name": "font_reload_vector_cache_slot",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x200d2170",
+  "type": "void *",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed firmware-owned identity/storage; no direct free. Vector-label copied-path cache root, created by 0x0c6a1260 with 16-byte payload and size-cache class. Constructor literal at 0x0c6a12bc. Adapter reads only and calls per-object drop at safe boundary.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4179-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b",
+    "evidence_ids": [
+      "EVID-PORT-4179-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.179 image/IDB compared with xiaomi-band-11-4.100.155: global ownership by access: the same accessor functions reference it (5 matched owners)."
+  },
+  "notes": "global ownership by access: the same accessor functions reference it (5 matched owners). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target."
+}

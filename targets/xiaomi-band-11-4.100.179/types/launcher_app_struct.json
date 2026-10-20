@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.155.type.launcher_app_struct.v1",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "kind": "struct",
+  "name": "launcher_app_struct",
+  "size": 132,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "name",
+      "offset": 0,
+      "width": 128,
+      "signedness": "array",
+      "array_length": 128,
+      "ownership": "launcher_owns",
+      "provenance": "Baseline .139 field audit: runtime list 0x200D090C; name copied from storage record +0"
+    },
+    {
+      "name": "flags",
+      "offset": 128,
+      "width": 1,
+      "signedness": "unsigned",
+      "provenance": "Baseline .139 field audit: bit0 = show(0)/hidden(1), bit1 = add-state; set from storage +132 and +20 in reset path"
+    }
+  ],
+  "layout_diffs": [],
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Same-model baseline shape. App/page/launcher, file operations and notification consumer offsets checked through complete .155 body equality and critical-path IDB audit. Unresolved baseline fields remain unresolved; no device proof."
+  }
+}

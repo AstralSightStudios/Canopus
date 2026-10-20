@@ -80,6 +80,10 @@ fn all_targets_expose_the_same_functions() {
             "band11-155",
             include_str!("../src/targets/xiaomi_band_11_4_100_155.rs"),
         ),
+        (
+            "band11-179",
+            include_str!("../src/targets/xiaomi_band_11_4_100_179.rs"),
+        ),
     ];
     for (name, source) in targets {
         assert!(

@@ -7,13 +7,17 @@ import cpc2
 import unittest
 import band11_notification_firmware as notifications
 from band11_arm_bootstrap import Machine
-from band11_native_ui_firmware import NativeUI
+from band11_native_ui_firmware import NativeUI, NativeUITests
 from unicorn.arm_const import UC_ARM_REG_R1, UC_ARM_REG_R2
 
 TARGET = 'xiaomi-band-11-4.100.155'
 
 
 class Notifications155(notifications.NotificationTests):
+    target = TARGET
+
+
+class NativeUI155(NativeUITests):
     target = TARGET
 
 

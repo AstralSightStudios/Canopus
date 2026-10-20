@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.179.private_abi.calendar_snapshot",
+  "target_id": "xiaomi-band-11-4.100.179",
+  "name": "calendar_snapshot",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc6a2a48",
+  "callable_address": "0xc6a2a49",
+  "prototype": "void *(void *object, uint32_t color_format)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed live image child, raw color format16 for ARGB8888. Serialized UI owner, no concurrent/reentrant snapshots.",
+    "return_value": "Owned draw buffer or NULL. Non-NULL does NOT prove GPU completion."
+  },
+  "side_effects": [
+    "Power-management acquire/release and temporary global/display draw state. Must finish GPU and synchronize pixel caches before CPU read/release; one bounded pending generation after fence failure."
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4179-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b",
+    "evidence_ids": [
+      "EVID-PORT-4179-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.179 image/IDB compared with xiaomi-band-11-4.100.155: mutually unique full-body anchor; known callees consistent."
+  },
+  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Restricted port approved by user on 2026-10-08 (date only; promotion timestamp normalized to midnight, not approval time). Source .177 ABI constraints retained. Device/GPU/restart/storage behavior unproven. Power-management acquire/release and temporary global/display draw state. Must finish GPU and synchronize pixel caches before CPU read/release; one bounded pending generation after fence failure. "
+}

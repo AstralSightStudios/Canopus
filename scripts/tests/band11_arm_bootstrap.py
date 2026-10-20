@@ -30,7 +30,6 @@ class Machine:
     def __init__(self, fault=None, code=0x1c400020, kernel_base=0x20110000, target=TARGET):
         self.target = target
         self.firmware_path = fwlocate.locate(target) or ROOT / "fwbins" / target / "vela_ap.bin"
-        self.mpu_bitmap = 0x200f5190
         self.res = RES
         self.firmware_map = {}
         self.firmware_data_map = {}
@@ -39,6 +38,8 @@ class Machine:
             self.firmware_map = {int(a, 16): int(b, 16) for a, b in audit['addresses'].items()}
             self.firmware_data_map = {int(a, 16): int(b, 16)
                                       for a, b in audit.get('data_addresses', {}).items()}
+        # The .139/.155 harness numbers are the identity map; a later build lists its moves.
+        self.mpu_bitmap = self.fw_data(0x200f5190)
         # Comma-separated so a matrix can combine, e.g. an unavailable alias
         # with an MPU rejection that only the Kmem fallback can hit.
         self.fault = fault

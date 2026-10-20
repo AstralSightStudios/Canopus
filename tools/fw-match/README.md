@@ -63,3 +63,29 @@ allocation failure or callback lifetime. Those require independent consumer/ABI
 review. The `.139` notification crash is a concrete example: the insert function
 and 96-byte message layout were right, but the reminder's mandatory borrowed
 16-byte context was missed by an insertion-only test.
+
+## Porting a reviewed pack to another build
+
+`ensemble_match.py` only proposes. Three more tools turn its output into a pack
+that a maintainer can audit (used for Band 11 `.155` → `.179`, see that target's
+`loader/README.md`):
+
+```sh
+# decompile both sides (ida-pro-mcp venv python) and compare normalized pseudocode
+python tools/fw-match/port_review.py dump --idb A.i64 --addrs-file src.json --output a.json
+python tools/fw-match/port_review.py dump --idb B.i64 --addrs-file dst.json --output b.json
+python tools/fw-match/port_review.py compare --source a.json --target b.json --pairs pairs.json --output review.json
+
+# accept or reject each function match, write the ported symbol records
+python tools/fw-match/port_pack.py --source-dir targets/<src> --target-id <dst> --target-sha256 <sha> \
+    --source-corpus ... --target-corpus ... --ensemble ensemble.json --review review.json \
+    --overrides manual-overrides.json --evidence-id EVID-PORT-... --out-dir out/symbols --report port.json
+
+# data objects, re-derived from who accesses them rather than from the matcher
+python tools/fw-match/map_data.py --source-corpus ... --target-corpus ... --function-map map.json 0x200b2590 ...
+```
+
+A match is accepted only with equal body (or identical pseudocode), consistent
+anchored callees and caller/positional support; everything else goes to the
+overrides file with a written reason or stays `CANDIDATE`. Ported records never
+carry an approval, a promotion or device proof from the source.

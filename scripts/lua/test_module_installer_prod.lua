@@ -24,6 +24,7 @@ local targets = {
     ['3.101.043'] = {'xiaomi-band-10-pro-3.101.043', '519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec'},
     ['4.100.139'] = {'xiaomi-band-11-4.100.139', '31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74'},
     ['4.100.155'] = {'xiaomi-band-11-4.100.155', 'ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f'},
+    ['4.100.179'] = {'xiaomi-band-11-4.100.179', '307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b'},
 }
 local function padded(s, n) return s .. string.rep('\0', n - #s) end
 local function rawhex(s) return (s:gsub('..', function(v) return string.char(tonumber(v,16)) end)) end

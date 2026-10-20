@@ -30,10 +30,11 @@ Canopus 允许开发者：
 | `xiaomi-band-10-pro-3.101.043` | `3.101.043` | `519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec` | static pack/build target; device gate pending |
 | `xiaomi-band-11-4.100.139` | `4.100.139` | `31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74` | complete native installer test candidate; Lua recovery, owned staged loader and Manager host-tested; general SDK/device gates pending |
 | `xiaomi-band-11-4.100.155` | `4.100.155` | `ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f` | independent target and Rust bindings; shared 139/155 installer; corrected notification context, ARM/Lua/verifier passed; device gates pending |
+| `xiaomi-band-11-4.100.179` | `4.100.179` | `307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b` | ported from the reviewed `.155` pack (2026-10-20); every record restricted/PENDING and no approval or device proof carried over; shared 139/155/179 installer; the real image runs the staged loader, Manager and notification paths in Unicorn; Mirage emulator only, device gates pending |
 
 2026-09-15：修复 `.139` 注册 Manager 时的通知空上下文崩溃，详见
 [crash3 审计](targets/xiaomi-band-11-4.100.139/loader/notification-crash3.md)。
-`.155` 独立构建及测试说明见 [新 target](targets/xiaomi-band-11-4.100.155/loader/README.md)。
+`.155` 独立构建及测试说明见 [新 target](targets/xiaomi-band-11-4.100.155/loader/README.md)，`.179` 的移植依据见 [loader/README](targets/xiaomi-band-11-4.100.179/loader/README.md)。
 
 036/043 are Xiaomi Band 10 Pro Cortex-M33 / Thumb-2 / soft-float targets using the
 NuttX `modlib` ELF32 `ET_REL` zero-import loader. Band 9 / 9 Pro packs were **removed** (their addresses are untrusted and any revival would need a custom loader and a fresh start; the old data is recoverable from git tag `band9-frozen`). The Band 11 packs are

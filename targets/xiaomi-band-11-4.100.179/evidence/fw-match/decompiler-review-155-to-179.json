@@ -1,0 +1,1938 @@
+{
+ "app_install": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9727,
+  "source_entry": "0xc6ab340",
+  "target_entry": "0xc6a9798",
+  "source_size": 406,
+  "target_size": 406
+ },
+ "app_launcher_add": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc547b54",
+  "target_entry": "0xc546ca0",
+  "source_size": 94,
+  "target_size": 94
+ },
+ "app_launcher_data_init": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9914,
+  "source_entry": "0xc344108",
+  "target_entry": "0xc3440d0",
+  "source_size": 704,
+  "target_size": 704
+ },
+ "app_launcher_del": {
+  "verdict": "SIMILAR",
+  "similarity": 0.979,
+  "source_entry": "0xc572cf4",
+  "target_entry": "0xc56fd18",
+  "source_size": 116,
+  "target_size": 116
+ },
+ "app_lookup": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6ac53c",
+  "target_entry": "0xc6aa994",
+  "source_size": 30,
+  "target_size": 30
+ },
+ "app_lookup_package": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6a1692",
+  "target_entry": "0xc69faea",
+  "source_size": 10,
+  "target_size": 10
+ },
+ "bt_adapter_get_instance": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc56f644",
+  "target_entry": "0xc56bc78",
+  "source_size": 14,
+  "target_size": 14
+ },
+ "bt_adapter_get_scan_mode": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc66b0b0",
+  "target_entry": "0xc669514",
+  "source_size": 12,
+  "target_size": 12
+ },
+ "bt_adapter_get_state": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc46a44c",
+  "target_entry": "0xc46a3c0",
+  "source_size": 38,
+  "target_size": 38
+ },
+ "bt_adapter_register": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc46a38e",
+  "target_entry": "0xc46a302",
+  "source_size": 104,
+  "target_size": 104
+ },
+ "bt_adapter_register_a2dp_callbacks": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9901,
+  "source_entry": "0xc8ac178",
+  "target_entry": "0xc8aa600",
+  "source_size": 112,
+  "target_size": 112
+ },
+ "bt_adapter_register_hfp_ag_callbacks": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9901,
+  "source_entry": "0xc8abf54",
+  "target_entry": "0xc8aa3dc",
+  "source_size": 112,
+  "target_size": 112
+ },
+ "bt_adapter_unregister": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc46a3f8",
+  "target_entry": "0xc46a36c",
+  "source_size": 78,
+  "target_size": 78
+ },
+ "bt_get_pairing_state": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc43e73a",
+  "target_entry": "0xc43e6aa",
+  "source_size": 150,
+  "target_size": 150
+ },
+ "bt_l2cap_connect": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc86f010",
+  "target_entry": "0xc86d468",
+  "source_size": 28,
+  "target_size": 28
+ },
+ "bt_pair_display_reply": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc46a9fe",
+  "target_entry": "0xc46a972",
+  "source_size": 64,
+  "target_size": 64
+ },
+ "bt_pair_request_reply": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc46a9c4",
+  "target_entry": "0xc46a938",
+  "source_size": 58,
+  "target_size": 58
+ },
+ "bt_socket_server_receive": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9816,
+  "source_entry": "0xc4b3218",
+  "target_entry": "0xc4b30a0",
+  "source_size": 670,
+  "target_size": 670
+ },
+ "calendar_icon_generate": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9946,
+  "source_entry": "0xc5487a4",
+  "target_entry": "0xc5478f0",
+  "source_size": 414,
+  "target_size": 414
+ },
+ "calendar_icon_publish": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc5486d0",
+  "target_entry": "0xc54781c",
+  "source_size": 170,
+  "target_size": 170
+ },
+ "clock_gettime": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9608,
+  "source_entry": "0xc34d58c",
+  "target_entry": "0xc34d4dc",
+  "source_size": 32,
+  "target_size": 32
+ },
+ "close": {
+  "verdict": "SIMILAR",
+  "similarity": 0.92,
+  "source_entry": "0xc33818c",
+  "target_entry": "0xc33818c",
+  "source_size": 28,
+  "target_size": 28
+ },
+ "closedir": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9273,
+  "source_entry": "0xc34cd40",
+  "target_entry": "0xc34cc90",
+  "source_size": 40,
+  "target_size": 40
+ },
+ "controller_crash_dump": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9893,
+  "source_entry": "0xc92c378",
+  "target_entry": "0xc92a848",
+  "source_size": 734,
+  "target_size": 734
+ },
+ "core_bt_pair_request_callback": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9741,
+  "source_entry": "0xc4f438c",
+  "target_entry": "0xc4fa744",
+  "source_size": 126,
+  "target_size": 126
+ },
+ "driver_close_dispatch": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9684,
+  "source_entry": "0xc53e2bc",
+  "target_entry": "0xc53bf74",
+  "source_size": 72,
+  "target_size": 72
+ },
+ "driver_ioctl_dispatch": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9843,
+  "source_entry": "0xc7d48d0",
+  "target_entry": "0xc7d2ca8",
+  "source_size": 526,
+  "target_size": 526
+ },
+ "errno_location": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9231,
+  "source_entry": "0xc349538",
+  "target_entry": "0xc349488",
+  "source_size": 18,
+  "target_size": 18
+ },
+ "firmware_log": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc36c71c",
+  "target_entry": "0xc36c510",
+  "source_size": 38,
+  "target_size": 38
+ },
+ "font_manager_add_path": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9084,
+  "source_entry": "0xc4924e0",
+  "target_entry": "0xc492458",
+  "source_size": 152,
+  "target_size": 152
+ },
+ "font_manager_generate_def_path": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9871,
+  "source_entry": "0xc490edc",
+  "target_entry": "0xc490e54",
+  "source_size": 90,
+  "target_size": 90
+ },
+ "font_manager_remove_path": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc904cec",
+  "target_entry": "0xc9031bc",
+  "source_size": 106,
+  "target_size": 106
+ },
+ "heap_free": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.8276,
+  "source_entry": "0xc34cd2c",
+  "target_entry": "0xc34cc7c",
+  "source_size": 16,
+  "target_size": 16
+ },
+ "heap_mallinfo": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3608b8",
+  "target_entry": "0xc3600bc",
+  "source_size": 18,
+  "target_size": 18
+ },
+ "heap_malloc": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9383,
+  "source_entry": "0xc3513e8",
+  "target_entry": "0xc3511b0",
+  "source_size": 30,
+  "target_size": 30
+ },
+ "heap_zalloc": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9868,
+  "source_entry": "0xc484430",
+  "target_entry": "0xc4843a4",
+  "source_size": 38,
+  "target_size": 38
+ },
+ "hfp_ag_connect": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc46bdd8",
+  "target_entry": "0xc46bd4c",
+  "source_size": 98,
+  "target_size": 98
+ },
+ "hfp_ag_disconnect": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc531644",
+  "target_entry": "0xc537254",
+  "source_size": 50,
+  "target_size": 50
+ },
+ "hidden_and_show_app_cb": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc547988",
+  "target_entry": "0xc546ad4",
+  "source_size": 140,
+  "target_size": 140
+ },
+ "interconnect_close": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc908348",
+  "target_entry": "0xc906818",
+  "source_size": 24,
+  "target_size": 24
+ },
+ "interconnect_connect": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9381,
+  "source_entry": "0xc3ccef4",
+  "target_entry": "0xc3cce5c",
+  "source_size": 136,
+  "target_size": 136
+ },
+ "interconnect_send": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9744,
+  "source_entry": "0xc3605bc",
+  "target_entry": "0xc369760",
+  "source_size": 146,
+  "target_size": 146
+ },
+ "ioctl": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc341e38",
+  "target_entry": "0xc341e00",
+  "source_size": 72,
+  "target_size": 72
+ },
+ "kmem_free": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.8844,
+  "source_entry": "0xc34ccb8",
+  "target_entry": "0xc34cc08",
+  "source_size": 40,
+  "target_size": 40
+ },
+ "lseek": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.895,
+  "source_entry": "0xc33d510",
+  "target_entry": "0xc33d4d8",
+  "source_size": 82,
+  "target_size": 82
+ },
+ "lv_bar_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3ad7f4",
+  "target_entry": "0xc3ad75c",
+  "source_size": 24,
+  "target_size": 24
+ },
+ "lv_bar_set_range": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3ad920",
+  "target_entry": "0xc3ad888",
+  "source_size": 104,
+  "target_size": 104
+ },
+ "lv_bar_set_value": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3ad8b4",
+  "target_entry": "0xc3ad81c",
+  "source_size": 108,
+  "target_size": 108
+ },
+ "lv_cache_drop": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc8b8c9e",
+  "target_entry": "0xc8b716a",
+  "source_size": 70,
+  "target_size": 70
+ },
+ "lv_display_get_horizontal_resolution": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc380694",
+  "target_entry": "0xc381630",
+  "source_size": 26,
+  "target_size": 26
+ },
+ "lv_event_get_code": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc0f7728",
+  "target_entry": "0xc0f77c0",
+  "source_size": 8,
+  "target_size": 8
+ },
+ "lv_event_get_user_data": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.7333,
+  "source_entry": "0xc720f10",
+  "target_entry": "0xc721490",
+  "source_size": 8,
+  "target_size": 8
+ },
+ "lv_image_cache_drop": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a3888",
+  "target_entry": "0xc3a37f0",
+  "source_size": 96,
+  "target_size": 96
+ },
+ "lv_image_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3ae1d0",
+  "target_entry": "0xc3ae138",
+  "source_size": 12,
+  "target_size": 12
+ },
+ "lv_image_decoder_get_info": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc38e4e4",
+  "target_entry": "0xc38e44c",
+  "source_size": 48,
+  "target_size": 48
+ },
+ "lv_image_set_src": {
+  "verdict": "SIMILAR",
+  "similarity": 0.998,
+  "source_entry": "0xc3b2c28",
+  "target_entry": "0xc3b2b90",
+  "source_size": 384,
+  "target_size": 384
+ },
+ "_lv_inv_area": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9717,
+  "source_entry": "0xc382428",
+  "target_entry": "0xc382080",
+  "source_size": 254,
+  "target_size": 254
+ },
+ "lv_obj_add_event_cb": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc37fc1c",
+  "target_entry": "0xc37fbec",
+  "source_size": 38,
+  "target_size": 38
+ },
+ "lv_obj_align_to": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3877b0",
+  "target_entry": "0xc383f3c",
+  "source_size": 870,
+  "target_size": 870
+ },
+ "lv_obj_clear_flag": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3840d8",
+  "target_entry": "0xc3822a6",
+  "source_size": 116,
+  "target_size": 116
+ },
+ "lv_obj_get_style_prop": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9908,
+  "source_entry": "0xc382620",
+  "target_entry": "0xc380164",
+  "source_size": 324,
+  "target_size": 324
+ },
+ "lv_obj_move_to_index": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9957,
+  "source_entry": "0xc3846ac",
+  "target_entry": "0xc383a78",
+  "source_size": 172,
+  "target_size": 172
+ },
+ "lv_obj_refresh_style": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9943,
+  "source_entry": "0xc38525c",
+  "target_entry": "0xc382878",
+  "source_size": 230,
+  "target_size": 230
+ },
+ "lv_obj_remove_style_all": {
+  "verdict": "SIMILAR",
+  "similarity": 0.939,
+  "source_entry": "0xc38583c",
+  "target_entry": "0xc383318",
+  "source_size": 150,
+  "target_size": 150
+ },
+ "lv_obj_set_hidden": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc721308",
+  "target_entry": "0xc721270",
+  "source_size": 8,
+  "target_size": 8
+ },
+ "lv_obj_set_style_bg_opa": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6c7dbc",
+  "target_entry": "0xc6c6194",
+  "source_size": 24,
+  "target_size": 24
+ },
+ "lv_obj_set_style_pad_bottom": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc387c6e",
+  "target_entry": "0xc383798",
+  "source_size": 22,
+  "target_size": 22
+ },
+ "lv_obj_set_style_pad_top": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc387c58",
+  "target_entry": "0xc383782",
+  "source_size": 22,
+  "target_size": 22
+ },
+ "lv_obj_set_width": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc387b2e",
+  "target_entry": "0xc383658",
+  "source_size": 50,
+  "target_size": 50
+ },
+ "lv_obj_tree_walk": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc380574",
+  "target_entry": "0xc38151c",
+  "source_size": 128,
+  "target_size": 128
+ },
+ "lv_timer_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3abd20",
+  "target_entry": "0xc3abc88",
+  "source_size": 76,
+  "target_size": 76
+ },
+ "lv_timer_del": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.8824,
+  "source_entry": "0xc3abe70",
+  "target_entry": "0xc3abdd8",
+  "source_size": 28,
+  "target_size": 28
+ },
+ "lvgl_posix_open": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9949,
+  "source_entry": "0xc3a6194",
+  "target_entry": "0xc3a60c0",
+  "source_size": 102,
+  "target_size": 102
+ },
+ "lvx_content_pad_bottom": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc387c6e",
+  "target_entry": "0xc383798",
+  "source_size": 22,
+  "target_size": 22
+ },
+ "lvx_label_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3ab300",
+  "target_entry": "0xc3ab22c",
+  "source_size": 24,
+  "target_size": 24
+ },
+ "lvx_label_set_long_mode": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3b3f5c",
+  "target_entry": "0xc3b3ec4",
+  "source_size": 90,
+  "target_size": 90
+ },
+ "lvx_label_set_text": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3b3948",
+  "target_entry": "0xc3b38b0",
+  "source_size": 114,
+  "target_size": 114
+ },
+ "lvx_list_item_add_content": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc50fad0",
+  "target_entry": "0xc50d248",
+  "source_size": 54,
+  "target_size": 54
+ },
+ "lvx_list_item_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc50f4e4",
+  "target_entry": "0xc50cc5c",
+  "source_size": 54,
+  "target_size": 54
+ },
+ "lvx_list_item_update": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc50ec5c",
+  "target_entry": "0xc50c3d4",
+  "source_size": 66,
+  "target_size": 66
+ },
+ "lvx_list_row_create": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9673,
+  "source_entry": "0xc78aa58",
+  "target_entry": "0xc788e30",
+  "source_size": 52,
+  "target_size": 52
+ },
+ "lvx_list_row_trailing": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a06c4",
+  "target_entry": "0xc3a062c",
+  "source_size": 12,
+  "target_size": 12
+ },
+ "lvx_msgbox_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc50fdbc",
+  "target_entry": "0xc50d534",
+  "source_size": 12,
+  "target_size": 12
+ },
+ "lvx_msgbox_set_content": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9504,
+  "source_entry": "0xc50edd4",
+  "target_entry": "0xc50c54c",
+  "source_size": 890,
+  "target_size": 890
+ },
+ "lvx_notification_insert_message": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9961,
+  "source_entry": "0xc8f2ba0",
+  "target_entry": "0xc8f12b4",
+  "source_size": 224,
+  "target_size": 224
+ },
+ "lvx_object_align": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc387788",
+  "target_entry": "0xc38361c",
+  "source_size": 38,
+  "target_size": 38
+ },
+ "lvx_object_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc380686",
+  "target_entry": "0xc382ff0",
+  "source_size": 12,
+  "target_size": 12
+ },
+ "lvx_object_delete": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9974,
+  "source_entry": "0xc380404",
+  "target_entry": "0xc3813ac",
+  "source_size": 358,
+  "target_size": 358
+ },
+ "lvx_object_set_size": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc387ba8",
+  "target_entry": "0xc3836d2",
+  "source_size": 22,
+  "target_size": 22
+ },
+ "lvx_page_content_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3ab258",
+  "target_entry": "0xc3ab184",
+  "source_size": 24,
+  "target_size": 24
+ },
+ "lvx_page_title_create": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9908,
+  "source_entry": "0xc89e7cc",
+  "target_entry": "0xc89cc1c",
+  "source_size": 604,
+  "target_size": 604
+ },
+ "lvx_style_apply": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.8984,
+  "source_entry": "0xc4fbe54",
+  "target_entry": "0xc502ed8",
+  "source_size": 254,
+  "target_size": 254
+ },
+ "mm_mallinfo": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc34f0a0",
+  "target_entry": "0xc34ef94",
+  "source_size": 96,
+  "target_size": 96
+ },
+ "mm_memalign": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9843,
+  "source_entry": "0xc3507e8",
+  "target_entry": "0xc3506d8",
+  "source_size": 446,
+  "target_size": 446
+ },
+ "modhandle": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc36dd44",
+  "target_entry": "0xc36db38",
+  "source_size": 10,
+  "target_size": 10
+ },
+ "fsync": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc33dc66",
+  "target_entry": "0xc33dc2e",
+  "source_size": 56,
+  "target_size": 56
+ },
+ "mkdir": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9987,
+  "source_entry": "0xc33d564",
+  "target_entry": "0xc33d52c",
+  "source_size": 192,
+  "target_size": 192
+ },
+ "stat": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc33e92c",
+  "target_entry": "0xc33e8f4",
+  "source_size": 74,
+  "target_size": 74
+ },
+ "offload_property_apply": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9786,
+  "source_entry": "0xc468674",
+  "target_entry": "0xc4685e8",
+  "source_size": 108,
+  "target_size": 108
+ },
+ "on_resume_wrapped": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc696c08",
+  "target_entry": "0xc695060",
+  "source_size": 210,
+  "target_size": 210
+ },
+ "open": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc342c54",
+  "target_entry": "0xc342c1c",
+  "source_size": 58,
+  "target_size": 58
+ },
+ "opendir": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9677,
+  "source_entry": "0xc351748",
+  "target_entry": "0xc351510",
+  "source_size": 56,
+  "target_size": 56
+ },
+ "page_finish": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc69b59c",
+  "target_entry": "0xc6999f4",
+  "source_size": 98,
+  "target_size": 98
+ },
+ "page_goto": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc8ed770",
+  "target_entry": "0xc8ebba8",
+  "source_size": 244,
+  "target_size": 244
+ },
+ "page_navigator_open_page": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9185,
+  "source_entry": "0xc4eec84",
+  "target_entry": "0xc4f2950",
+  "source_size": 868,
+  "target_size": 868
+ },
+ "page_stack_get": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc697440",
+  "target_entry": "0xc695898",
+  "source_size": 20,
+  "target_size": 20
+ },
+ "power_battery_ready": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6ac988",
+  "target_entry": "0xc6aade0",
+  "source_size": 22,
+  "target_size": 22
+ },
+ "power_battery_snapshot": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6ac9a4",
+  "target_entry": "0xc6aadfc",
+  "source_size": 16,
+  "target_size": 16
+ },
+ "wakelock_acquire": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6ac828",
+  "target_entry": "0xc6aac80",
+  "source_size": 40,
+  "target_size": 40
+ },
+ "wakelock_create": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9874,
+  "source_entry": "0xc6adb00",
+  "target_entry": "0xc6abf58",
+  "source_size": 224,
+  "target_size": 224
+ },
+ "wakelock_release": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6ac854",
+  "target_entry": "0xc6aacac",
+  "source_size": 50,
+  "target_size": 50
+ },
+ "app_watchface_take_snapshot": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9888,
+  "source_entry": "0xc5f2b3c",
+  "target_entry": "0xc5f12ec",
+  "source_size": 78,
+  "target_size": 78
+ },
+ "hal_cache_invalidate_rom_thunk": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc721180",
+  "target_entry": "0xc7211e8",
+  "source_size": 8,
+  "target_size": 8
+ },
+ "hal_cache_sync": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc930204",
+  "target_entry": "0xc92e6d4",
+  "source_size": 20,
+  "target_size": 20
+ },
+ "lv_display_remove_event_cb_with_user_data": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc38095c",
+  "target_entry": "0xc381e66",
+  "source_size": 72,
+  "target_size": 72
+ },
+ "lv_event_add": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a3f5c",
+  "target_entry": "0xc3a3ec4",
+  "source_size": 68,
+  "target_size": 68
+ },
+ "vg_lite_finish": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.8652,
+  "source_entry": "0xc92019c",
+  "target_entry": "0xc91e66c",
+  "source_size": 94,
+  "target_size": 94
+ },
+ "lv_obj_update_layout": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc384c4c",
+  "target_entry": "0xc383f00",
+  "source_size": 56,
+  "target_size": 56
+ },
+ "background_object_event_add": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc37fc1c",
+  "target_entry": "0xc37fbec",
+  "source_size": 38,
+  "target_size": 38
+ },
+ "lv_obj_remove_event_cb": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc37fc62",
+  "target_entry": "0xc37fc32",
+  "source_size": 62,
+  "target_size": 62
+ },
+ "lv_draw_rect": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9918,
+  "source_entry": "0xc38e514",
+  "target_entry": "0xc38e47c",
+  "source_size": 1246,
+  "target_size": 1246
+ },
+ "lv_draw_rect_dsc_init": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc38e0d4",
+  "target_entry": "0xc38e03c",
+  "source_size": 186,
+  "target_size": 186
+ },
+ "lv_obj_area_is_visible": {
+  "verdict": "SIMILAR",
+  "similarity": 0.975,
+  "source_entry": "0xc383eec",
+  "target_entry": "0xc381d4c",
+  "source_size": 222,
+  "target_size": 218
+ },
+ "bt_adapter_set_scan_mode": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc789ce8",
+  "target_entry": "0xc7880c0",
+  "source_size": 80,
+  "target_size": 80
+ },
+ "bt_alloc": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9383,
+  "source_entry": "0xc351724",
+  "target_entry": "0xc3514ec",
+  "source_size": 30,
+  "target_size": 30
+ },
+ "bt_buffer_new": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc862ec2",
+  "target_entry": "0xc86131a",
+  "source_size": 56,
+  "target_size": 56
+ },
+ "bt_create_bond_private": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9651,
+  "source_entry": "0xc342412",
+  "target_entry": "0xc3423da",
+  "source_size": 218,
+  "target_size": 218
+ },
+ "bt_discovery_start": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc46a472",
+  "target_entry": "0xc46a3e6",
+  "source_size": 40,
+  "target_size": 40
+ },
+ "bt_discovery_stop": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc46a49a",
+  "target_entry": "0xc46a40e",
+  "source_size": 38,
+  "target_size": 38
+ },
+ "bt_free": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.8276,
+  "source_entry": "0xc34cd2c",
+  "target_entry": "0xc34cc7c",
+  "source_size": 16,
+  "target_size": 16
+ },
+ "bt_get_bond_state": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc46a884",
+  "target_entry": "0xc46a7f8",
+  "source_size": 32,
+  "target_size": 32
+ },
+ "bt_l2cap_disconnect": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc86f094",
+  "target_entry": "0xc86d4ec",
+  "source_size": 28,
+  "target_size": 28
+ },
+ "bt_l2cap_submit_cid": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc86f0bc",
+  "target_entry": "0xc86d514",
+  "source_size": 30,
+  "target_size": 30
+ },
+ "bt_queue_external": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc863bb4",
+  "target_entry": "0xc86200c",
+  "source_size": 200,
+  "target_size": 200
+ },
+ "bt_queue_free": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.6875,
+  "source_entry": "0xc858988",
+  "target_entry": "0xc856de0",
+  "source_size": 12,
+  "target_size": 12
+ },
+ "bt_remove_bond_private": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3d5280",
+  "target_entry": "0xc3d51e8",
+  "source_size": 142,
+  "target_size": 142
+ },
+ "bt_socket_client_sendrecv": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9755,
+  "source_entry": "0xc46a218",
+  "target_entry": "0xc46a18c",
+  "source_size": 150,
+  "target_size": 150
+ },
+ "bt_timer_add": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc8c7fe0",
+  "target_entry": "0xc8c63d8",
+  "source_size": 80,
+  "target_size": 80
+ },
+ "bt_timer_cancel": {
+  "verdict": "SIMILAR",
+  "similarity": 0.986,
+  "source_entry": "0xc863000",
+  "target_entry": "0xc861458",
+  "source_size": 64,
+  "target_size": 64
+ },
+ "bt_timer_cancel_owned": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9375,
+  "source_entry": "0xc863048",
+  "target_entry": "0xc8614a0",
+  "source_size": 24,
+  "target_size": 24
+ },
+ "calendar_draw_buf_invalidate": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc8b9334",
+  "target_entry": "0xc8b7800",
+  "source_size": 42,
+  "target_size": 42
+ },
+ "calendar_font_create": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9852,
+  "source_entry": "0xc4950b0",
+  "target_entry": "0xc495010",
+  "source_size": 266,
+  "target_size": 266
+ },
+ "calendar_font_destroy": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc49258c",
+  "target_entry": "0xc492504",
+  "source_size": 80,
+  "target_size": 80
+ },
+ "calendar_font_resolve": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc5047b8",
+  "target_entry": "0xc509354",
+  "source_size": 28,
+  "target_size": 28
+ },
+ "calendar_localtime": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9811,
+  "source_entry": "0xc34fdfc",
+  "target_entry": "0xc34fcec",
+  "source_size": 24,
+  "target_size": 24
+ },
+ "calendar_object_delete": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9414,
+  "source_entry": "0xc384e6c",
+  "target_entry": "0xc384488",
+  "source_size": 136,
+  "target_size": 136
+ },
+ "calendar_premultiply": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9913,
+  "source_entry": "0xc909528",
+  "target_entry": "0xc9079f8",
+  "source_size": 352,
+  "target_size": 352
+ },
+ "calendar_realtime": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc34d50c",
+  "target_entry": "0xc34d45c",
+  "source_size": 88,
+  "target_size": 88
+ },
+ "calendar_root_style": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9025,
+  "source_entry": "0xc4fbd64",
+  "target_entry": "0xc502de8",
+  "source_size": 116,
+  "target_size": 116
+ },
+ "calendar_snapshot": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6a45f0",
+  "target_entry": "0xc6a2a48",
+  "source_size": 36,
+  "target_size": 36
+ },
+ "calendar_snapshot_free": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6a464c",
+  "target_entry": "0xc6a2aa4",
+  "source_size": 20,
+  "target_size": 20
+ },
+ "calendar_text_align": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc387ee6",
+  "target_entry": "0xc383a10",
+  "source_size": 22,
+  "target_size": 22
+ },
+ "calendar_text_color": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc387e84",
+  "target_entry": "0xc3839ae",
+  "source_size": 32,
+  "target_size": 32
+ },
+ "calendar_text_font": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc387eba",
+  "target_entry": "0xc3839e4",
+  "source_size": 22,
+  "target_size": 22
+ },
+ "calendar_weekday": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc5464f0",
+  "target_entry": "0xc542d5c",
+  "source_size": 66,
+  "target_size": 66
+ },
+ "font_reload_cache_acquire": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a3860",
+  "target_entry": "0xc3a37c8",
+  "source_size": 26,
+  "target_size": 26
+ },
+ "font_reload_cache_acquire_or_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a7b78",
+  "target_entry": "0xc3a7aa4",
+  "source_size": 96,
+  "target_size": 96
+ },
+ "font_reload_cache_release": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc8b9780",
+  "target_entry": "0xc8b7c4c",
+  "source_size": 90,
+  "target_size": 90
+ },
+ "font_reload_count_cache_init": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a9e48",
+  "target_entry": "0xc3a9d74",
+  "source_size": 82,
+  "target_size": 82
+ },
+ "font_reload_drop_face_id": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc39a424",
+  "target_entry": "0xc39a38c",
+  "source_size": 88,
+  "target_size": 88
+ },
+ "font_reload_face_compare": {
+  "verdict": "SIMILAR",
+  "similarity": 0.995,
+  "source_entry": "0xc396784",
+  "target_entry": "0xc3966ec",
+  "source_size": 46,
+  "target_size": 46
+ },
+ "font_reload_face_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3967b4",
+  "target_entry": "0xc39671c",
+  "source_size": 866,
+  "target_size": 866
+ },
+ "font_reload_face_destroy": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc396b24",
+  "target_entry": "0xc396a8c",
+  "source_size": 56,
+  "target_size": 56
+ },
+ "font_reload_ft_mul_fix": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc424304",
+  "target_entry": "0xc424274",
+  "source_size": 32,
+  "target_size": 32
+ },
+ "font_reload_ft_set_pixel_size": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc8b8a54",
+  "target_entry": "0xc8b6f20",
+  "source_size": 136,
+  "target_size": 136
+ },
+ "font_reload_glyph_metrics": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc396b5c",
+  "target_entry": "0xc396ac4",
+  "source_size": 384,
+  "target_size": 384
+ },
+ "font_reload_glyph_pending_release": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc399b62",
+  "target_entry": "0xc399aca",
+  "source_size": 10,
+  "target_size": 10
+ },
+ "font_reload_gradient_pending_release": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc395bd0",
+  "target_entry": "0xc395b38",
+  "source_size": 16,
+  "target_size": 16
+ },
+ "font_reload_image_pending_release": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc395be0",
+  "target_entry": "0xc395b48",
+  "source_size": 10,
+  "target_size": 10
+ },
+ "font_reload_list_remove": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a46dc",
+  "target_entry": "0xc3a4644",
+  "source_size": 80,
+  "target_size": 80
+ },
+ "font_reload_lv_free": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9867,
+  "source_entry": "0xc3abe58",
+  "target_entry": "0xc3abdc0",
+  "source_size": 18,
+  "target_size": 18
+ },
+ "font_reload_lv_malloc": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3abe20",
+  "target_entry": "0xc3abd88",
+  "source_size": 16,
+  "target_size": 16
+ },
+ "font_reload_metrics_compare": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc39fd9a",
+  "target_entry": "0xc39fd02",
+  "source_size": 36,
+  "target_size": 36
+ },
+ "font_reload_metrics_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a5ef0",
+  "target_entry": "0xc3a5e1c",
+  "source_size": 222,
+  "target_size": 222
+ },
+ "font_reload_metrics_destroy": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc39fd94",
+  "target_entry": "0xc326e0e",
+  "source_size": 6,
+  "target_size": 6
+ },
+ "font_reload_outline_acquire": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a7c44",
+  "target_entry": "0xc3a7b70",
+  "source_size": 102,
+  "target_size": 102
+ },
+ "font_reload_outline_compare": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc39fdcc",
+  "target_entry": "0xc39fd34",
+  "source_size": 28,
+  "target_size": 28
+ },
+ "font_reload_outline_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a8bb8",
+  "target_entry": "0xc3a8ae4",
+  "source_size": 1060,
+  "target_size": 1060
+ },
+ "font_reload_outline_destroy": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a09f4",
+  "target_entry": "0xc3a095c",
+  "source_size": 18,
+  "target_size": 18
+ },
+ "font_reload_outline_event": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3981d0",
+  "target_entry": "0xc398138",
+  "source_size": 504,
+  "target_size": 504
+ },
+ "font_reload_outline_release": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3a0992",
+  "target_entry": "0xc3a08fa",
+  "source_size": 26,
+  "target_size": 26
+ },
+ "font_reload_sw_dispatch": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3948ac",
+  "target_entry": "0xc394814",
+  "source_size": 94,
+  "target_size": 94
+ },
+ "font_reload_vector_compare": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc69feb0",
+  "target_entry": "0xc69e308",
+  "source_size": 28,
+  "target_size": 28
+ },
+ "font_reload_vector_destroy": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6a12d4",
+  "target_entry": "0xc69f72c",
+  "source_size": 46,
+  "target_size": 46
+ },
+ "font_reload_vector_drop": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6a1304",
+  "target_entry": "0xc69f75c",
+  "source_size": 36,
+  "target_size": 36
+ },
+ "font_reload_vg_dispatch": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3913ec",
+  "target_entry": "0xc391354",
+  "source_size": 120,
+  "target_size": 120
+ },
+ "gap_host_stock_receive": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9808,
+  "source_entry": "0xc863c88",
+  "target_entry": "0xc8620e0",
+  "source_size": 182,
+  "target_size": 182
+ },
+ "image_snapshot_release": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc8f43b8",
+  "target_entry": "0xc8f2acc",
+  "source_size": 58,
+  "target_size": 58
+ },
+ "l2_owner_timer_init": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3f0934",
+  "target_entry": "0xc3f089c",
+  "source_size": 52,
+  "target_size": 52
+ },
+ "l2_owner_timer_start": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9992,
+  "source_entry": "0xc3f0a6e",
+  "target_entry": "0xc3f09d6",
+  "source_size": 240,
+  "target_size": 240
+ },
+ "lv_draw_buf_create_ex": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9949,
+  "source_entry": "0xc3812b4",
+  "target_entry": "0xc386c14",
+  "source_size": 178,
+  "target_size": 178
+ },
+ "lv_obj_set_local_style_prop": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3872b4",
+  "target_entry": "0xc383434",
+  "source_size": 304,
+  "target_size": 304
+ },
+ "miwear_session_crypto_ctr": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc98c9bc",
+  "target_entry": "0xc98ad34",
+  "source_size": 98,
+  "target_size": 98
+ },
+ "miwear_session_lookup": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc98ffb8",
+  "target_entry": "0xc98e330",
+  "source_size": 32,
+  "target_size": 32
+ },
+ "miwear_transport_l2_rx": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc98f148",
+  "target_entry": "0xc98d4c0",
+  "source_size": 514,
+  "target_size": 514
+ },
+ "miwear_transport_send": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9806,
+  "source_entry": "0xc98f478",
+  "target_entry": "0xc98d7f0",
+  "source_size": 360,
+  "target_size": 360
+ },
+ "sdp_builder_create": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9716,
+  "source_entry": "0xc88554c",
+  "target_entry": "0xc8839a4",
+  "source_size": 130,
+  "target_size": 130
+ },
+ "sdp_commit": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9852,
+  "source_entry": "0xc86f2bc",
+  "target_entry": "0xc86d714",
+  "source_size": 268,
+  "target_size": 268
+ },
+ "sdp_set_raw_attribute": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9877,
+  "source_entry": "0xc86f130",
+  "target_entry": "0xc86d588",
+  "source_size": 164,
+  "target_size": 164
+ },
+ "sdp_unregister": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9814,
+  "source_entry": "0xc86f3d0",
+  "target_entry": "0xc86d828",
+  "source_size": 62,
+  "target_size": 62
+ },
+ "property_get": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc4af610",
+  "target_entry": "0xc4af450",
+  "source_size": 106,
+  "target_size": 106
+ },
+ "property_get_int32": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.8844,
+  "source_entry": "0xc4af714",
+  "target_entry": "0xc4af554",
+  "source_size": 78,
+  "target_size": 78
+ },
+ "protobuf_set_ordered_app_list": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc54cb6c",
+  "target_entry": "0xc549f68",
+  "source_size": 386,
+  "target_size": 386
+ },
+ "pthread_create_internal": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9585,
+  "source_entry": "0xc91bf24",
+  "target_entry": "0xc91a3f4",
+  "source_size": 328,
+  "target_size": 328
+ },
+ "quickapp_register_app": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9758,
+  "source_entry": "0xc5239c4",
+  "target_entry": "0xc529630",
+  "source_size": 494,
+  "target_size": 494
+ },
+ "read": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc33d784",
+  "target_entry": "0xc33d74c",
+  "source_size": 24,
+  "target_size": 24
+ },
+ "readdir": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.8806,
+  "source_entry": "0xc34956a",
+  "target_entry": "0xc3494ba",
+  "source_size": 38,
+  "target_size": 38
+ },
+ "register_blockdriver": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc46c25a",
+  "target_entry": "0xc46c1ce",
+  "source_size": 88,
+  "target_size": 88
+ },
+ "register_driver": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9758,
+  "source_entry": "0xc914f54",
+  "target_entry": "0xc913424",
+  "source_size": 66,
+  "target_size": 66
+ },
+ "rename": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9983,
+  "source_entry": "0xc33d79c",
+  "target_entry": "0xc33d764",
+  "source_size": 728,
+  "target_size": 728
+ },
+ "rmmod": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.8462,
+  "source_entry": "0xc32a690",
+  "target_entry": "0xc32a690",
+  "source_size": 10,
+  "target_size": 10
+ },
+ "screen_session_create": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6cd698",
+  "target_entry": "0xc6cba84",
+  "source_size": 90,
+  "target_size": 90
+ },
+ "screen_session_restore_default": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9882,
+  "source_entry": "0xc6cf3a0",
+  "target_entry": "0xc6cd78c",
+  "source_size": 74,
+  "target_size": 74
+ },
+ "screen_session_set_auto_brightness": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9419,
+  "source_entry": "0xc6cd754",
+  "target_entry": "0xc6cbb40",
+  "source_size": 58,
+  "target_size": 58
+ },
+ "screen_session_set_brightness_value": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9392,
+  "source_entry": "0xc6cd7e4",
+  "target_entry": "0xc6cbbd0",
+  "source_size": 52,
+  "target_size": 52
+ },
+ "screen_session_start": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.837,
+  "source_entry": "0xc6cf244",
+  "target_entry": "0xc6cd630",
+  "source_size": 92,
+  "target_size": 92
+ },
+ "screen_session_stop": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.7885,
+  "source_entry": "0xc6cf2cc",
+  "target_entry": "0xc6cd6b8",
+  "source_size": 80,
+  "target_size": 80
+ },
+ "screen_turn_on": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9691,
+  "source_entry": "0xc6d0e68",
+  "target_entry": "0xc6cf254",
+  "source_size": 248,
+  "target_size": 248
+ },
+ "sem_post": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc359150",
+  "target_entry": "0xc359a90",
+  "source_size": 194,
+  "target_size": 194
+ },
+ "sem_trywait": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc358c40",
+  "target_entry": "0xc359580",
+  "source_size": 148,
+  "target_size": 148
+ },
+ "sem_wait": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc358ce0",
+  "target_entry": "0xc359620",
+  "source_size": 288,
+  "target_size": 288
+ },
+ "service_manager_cleanup": {
+  "verdict": "SIMILAR",
+  "similarity": 0.988,
+  "source_entry": "0xc5ab3b8",
+  "target_entry": "0xc5b4c98",
+  "source_size": 72,
+  "target_size": 72
+ },
+ "service_manager_get_profile": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc54a06c",
+  "target_entry": "0xc54c81c",
+  "source_size": 74,
+  "target_size": 74
+ },
+ "service_manager_register": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc573ba8",
+  "target_entry": "0xc570454",
+  "source_size": 72,
+  "target_size": 72
+ },
+ "service_manager_shutdown": {
+  "verdict": "SIMILAR",
+  "similarity": 0.976,
+  "source_entry": "0xc90d83c",
+  "target_entry": "0xc90bd0c",
+  "source_size": 78,
+  "target_size": 78
+ },
+ "service_manager_startup": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9786,
+  "source_entry": "0xc90d89c",
+  "target_entry": "0xc90bd6c",
+  "source_size": 94,
+  "target_size": 94
+ },
+ "sport_titlebar_dispatch": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc341178",
+  "target_entry": "0xc341140",
+  "source_size": 310,
+  "target_size": 310
+ },
+ "system_get_state": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9921,
+  "source_entry": "0xc4fd818",
+  "target_entry": "0xc50441c",
+  "source_size": 494,
+  "target_size": 494
+ },
+ "system_router_app_wrapper": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc45be22",
+  "target_entry": "0xc45ba4a",
+  "source_size": 52,
+  "target_size": 52
+ },
+ "system_router_get_pages_wrapper": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc8e21ac",
+  "target_entry": "0xc8e05e4",
+  "source_size": 264,
+  "target_size": 264
+ },
+ "thirdparty_submit_message_content": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc9427e0",
+  "target_entry": "0xc940ce0",
+  "source_size": 56,
+  "target_size": 56
+ },
+ "lvx_image_set_scale": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc3ae46e",
+  "target_entry": "0xc3ae3d6",
+  "source_size": 262,
+  "target_size": 262
+ },
+ "lvx_object_add_flag": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc38404c",
+  "target_entry": "0xc38221a",
+  "source_size": 140,
+  "target_size": 140
+ },
+ "unlink": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc33dbec",
+  "target_entry": "0xc33dbb4",
+  "source_size": 30,
+  "target_size": 30
+ },
+ "unregister_blockdriver": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc7b954e",
+  "target_entry": "0xc7b7926",
+  "source_size": 26,
+  "target_size": 26
+ },
+ "unregister_driver": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6678b4",
+  "target_entry": "0xc665d60",
+  "source_size": 26,
+  "target_size": 26
+ },
+ "vendor_hci_transport_register": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc6c921c",
+  "target_entry": "0xc6c7608",
+  "source_size": 104,
+  "target_size": 104
+ },
+ "vibrator_cancel": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9297,
+  "source_entry": "0xc6d5cb0",
+  "target_entry": "0xc6d4098",
+  "source_size": 52,
+  "target_size": 52
+ },
+ "vibrator_run": {
+  "verdict": "SIMILAR",
+  "similarity": 0.9948,
+  "source_entry": "0xc6d5948",
+  "target_entry": "0xc6d3d30",
+  "source_size": 596,
+  "target_size": 596
+ },
+ "watchface_manager_delete_watchface": {
+  "verdict": "DIFFERENT",
+  "similarity": 0.5517,
+  "source_entry": "0xc6c6640",
+  "target_entry": "0xc6c4a18",
+  "source_size": 32,
+  "target_size": 32
+ },
+ "watchface_reset_watchface": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc5f3474",
+  "target_entry": "0xc5f1c24",
+  "source_size": 66,
+  "target_size": 66
+ },
+ "write": {
+  "verdict": "IDENTICAL",
+  "similarity": 1.0,
+  "source_entry": "0xc33dc4e",
+  "target_entry": "0xc33dc16",
+  "source_size": 24,
+  "target_size": 24
+ }
+}

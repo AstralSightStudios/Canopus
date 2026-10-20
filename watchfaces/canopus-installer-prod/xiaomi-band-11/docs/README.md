@@ -1,20 +1,20 @@
-# Xiaomi Band 11 4.100.139 / 4.100.155 统一实机测试包
+# Xiaomi Band 11 4.100.139 / 4.100.155 / 4.100.179 统一实机测试包
 
 2026-09-15：已修复“注册管理器”后的通知崩溃。`message+92` 不再为空，
 两条通知分别持有驻留的普通通知上下文；新增真实消费者回归能重现旧故障 PC，
 并验证修复路径。见 [crash3 审计](../../../../targets/xiaomi-band-11-4.100.139/loader/notification-crash3.md)。
-替换前重启；修复后的真实屏幕效果仍需复测。139 和 155 共用本目录的一个
+替换前重启；修复后的真实屏幕效果仍需复测。139、155 和 179 共用本目录的一个
 `main.lua`，入口读取 `/etc/build.prop`，按 version + build 精确选择恢复参数和资源。
 
 打包目录为 `watchfaces/canopus-installer-prod/xiaomi-band-11/`。根层严格只有
-`main.lua` 和九个 `.bin` 文件；`src/`、`docs/`、`build/` 都不加入 watchface。
+`main.lua` 和十三个 `.bin` 文件（`manager_icon.bin` 加每个固件四个）；`src/`、`docs/`、`build/` 都不加入 watchface。
 沿用 Band 9 的打包/安装方式，**不要把资源 ZIP 当作已封装的 watchface 固件刷入**。
 
 ```sh
 python3 scripts/build_band11_installer.py
 ```
 
-## 加密通信后端（4.100.155，默认内置）
+## 加密通信后端（4.100.155 / 4.100.179，默认内置）
 
 Band 11 `.155` 的通信后端复用 `manager/service/canopus_supervisor_l2.c`，
 在 MiWear L2 `0x43` 通道仅受理 `WriteEnc`，按配对会话解密 CPC2。
@@ -35,6 +35,7 @@ CANOPUS_TARGET=xiaomi-band-11-4.100.155 sh scripts/build_canopus_supervisor.sh
 已驻留的旧 Supervisor 不会被新资源热替换，更新安装器后先重启再 Run。
 
 普通构建会自动包含所选固件已实现的 L2 后端，不再区分“本地管理器版”和“通信版”。
+`.179` 的 L2 地址来自 `targets/xiaomi-band-11-4.100.179/evidence/l2-sram-probe.json`（由 `.155` 按函数内偏移平移并逐项核对）。
 `.139` 没有本次已审计的 L2 配置，构建时会明确提示，不能复用 `.155` 地址。
 相关符号保持 `restricted / PENDING / not_probed`；默认内置不改变批准状态，
 模拟器验证也不等同真机验证。
@@ -79,7 +80,7 @@ Lua5.4实C帧测试、延迟绘制/忙碌点击/错误停止/页面销毁测试�
 实际屏幕刷新时序待设备复测；模拟器验证的是事件循环调度和文字更新先于操作。
 
 首次测试先重启。若有旧的 `/data/canopus/registry.bin`，可先双击 Clear Env 再重启，
-避免旧模块的启动意图中断此次安装。只接受 `.139` / `.155` 各自匹配的版本和 build；其他身份不给 Run。
+避免旧模块的启动意图中断此次安装。只接受 `.139` / `.155` / `.179` 各自匹配的版本和 build；其他身份不给 Run。
 成功路径显示 Run completed，然后退出表盘，在应用列表中打开 Canopus 管理器。
 
 失败时保存页面上的错误码，并获取 `/data/canopus/bootstrap-result.txt`、

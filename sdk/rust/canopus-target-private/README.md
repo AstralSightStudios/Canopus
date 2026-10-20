@@ -14,6 +14,7 @@
    - `targets/xiaomi_band_10_pro_3_101_043.rs`: **Xiaomi Band 10 Pro**（固件 `3.101.043`）
    - `targets/xiaomi_band_11_4_100_139.rs`: **Xiaomi Band 11**（固件 `4.100.139`）
    - `targets/xiaomi_band_11_4_100_155.rs`: **Xiaomi Band 11**（固件 `4.100.155`）
+   - `targets/xiaomi_band_11_4_100_179.rs`: **Xiaomi Band 11**（固件 `4.100.179`）
 
 3. **生成的符号元数据**：
    `generated_symbols_xiaomi_band_10_pro_3_101_036.rs` 和 `generated_symbols_xiaomi_band_10_pro_3_101_043.rs` 由代码生成器输出，包含固件 SHA-256 及符号元数据表。

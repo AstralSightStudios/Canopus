@@ -220,9 +220,11 @@ class NativeUI:
 
 
 class NativeUITests(unittest.TestCase):
+    target = None  # the base (.139) image unless a subclass names another
+
     def setUp(self):
         from band11_arm_bootstrap import Machine
-        self.m = Machine()
+        self.m = Machine() if self.target is None else Machine(target=self.target)
         self.m.finish_access_monitor()
         self.ui = NativeUI(self.m)
         self.parent = self.ui.new(0, width=212, height=520)
@@ -233,7 +235,7 @@ class NativeUITests(unittest.TestCase):
             m.uc.reg_write((UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3)[i], value)
         for i, value in enumerate(args[4:]):
             m.word(m.stack_top + i * 4, value)
-        return m.call(addr, args[0] if args else 0)
+        return m.call(m.fw(addr), args[0] if args else 0)
 
     def row(self, trailing, secondary=True):
         m = self.m
@@ -258,8 +260,8 @@ class NativeUITests(unittest.TestCase):
         self.assertEqual(m.widgets[primary]['text'], '模块管理')
         self.assertEqual(m.widgets[secondary]['text'], '已启用')
         self.assertGreater(m.word(row + 0x48), 0)
-        self.assertEqual(ui.calls[0xc506af8], 1)
-        self.assertEqual(ui.calls[0xc5048d8], 1)
+        self.assertEqual(ui.calls[m.fw(0xc506af8)], 1)
+        self.assertEqual(ui.calls[m.fw(0xc5048d8)], 1)
 
     def test_real_font_initialization_and_style_apply(self):
         m, ui = self.m, self.ui
@@ -272,12 +274,12 @@ class NativeUITests(unittest.TestCase):
             return {28: ui.FONT28, 26: 0x200e8080, 24: ui.FONT24}[m.reg(1)]
 
         factory = m.uc.hook_add(UC_HOOK_CODE, m.firmware_call, font_factory,
-                                0xc4950b0, 0xc4950b0)
+                                m.fw(0xc4950b0), m.fw(0xc4950b0))
         # Execute the stock 28/26/24 font-style initializers. Stop before
         # the next unrelated global style, without replacing either body.
         end = m.uc.hook_add(UC_HOOK_CODE,
                            lambda u, a, s, d: u.reg_write(UC_ARM_REG_PC, m.stop | 1),
-                           None, 0xc7e92ee, 0xc7e92ee)
+                           None, m.fw(0xc7e92ee), m.fw(0xc7e92ee))
         self.call(0xc7e92ac)
         m.uc.hook_del(end)
         m.uc.hook_del(factory)
@@ -305,7 +307,7 @@ class NativeUITests(unittest.TestCase):
             self.assertEqual(m.word(switch + 0x30) & 0xffff, 2 | selected)
             self.assertEqual(len(m.widgets), count)
             self.assertTrue(m.widgets[secondary]['flags'] & 1)
-        self.assertEqual(ui.calls[0xc50fad0], 1)
+        self.assertEqual(ui.calls[m.fw(0xc50fad0)], 1)
 
     def test_forward_icon_and_real_row_event_routing(self):
         m, ui = self.m, self.ui

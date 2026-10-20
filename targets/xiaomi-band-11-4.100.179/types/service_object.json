@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.155.type.service_object.v1",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "kind": "struct",
+  "name": "service_object",
+  "size": 64,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "enabled_state",
+      "offset": 0,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "name",
+      "offset": 4,
+      "width": 4,
+      "signedness": "pointer",
+      "ownership": "borrowed"
+    },
+    {
+      "name": "service_id",
+      "offset": 8,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "profile_group",
+      "offset": 9,
+      "width": 1,
+      "signedness": "unsigned"
+    },
+    {
+      "name": "startup_cb",
+      "offset": 36,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "startup_eligibility_cb",
+      "offset": 48,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "get_profile_cb",
+      "offset": 52,
+      "width": 4,
+      "signedness": "pointer"
+    },
+    {
+      "name": "cleanup_cb",
+      "offset": 56,
+      "width": 4,
+      "signedness": "pointer"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Same-model baseline shape. App/page/launcher, file operations and notification consumer offsets checked through complete .155 body equality and critical-path IDB audit. Unresolved baseline fields remain unresolved; no device proof."
+  }
+}

@@ -39,7 +39,8 @@ Run them after G0–G13 pass.
 | G17 | update rollback by crash | install a newer generation that faults at start | two resets later the older generation runs (`UPDATE_FALLBACK`) |
 | G18 | Auto-run | switch Auto-run on, reboot with the installer watchface shown | Canopus loads by itself; reset the device mid-Run once: the next start turns Auto-run off |
 | G19 | background timer | create a background timer, turn the screen off, hold a wake lock | the callback keeps firing at its period; without the lock note how far the CPU sleep stretches it |
-| G20 | resident size | load the Supervisor on each target | loads without `-403` (NOMEM) on `.043` and `.155`; record the free heap before and after |
+| G20 | resident size | load the Supervisor on each target | loads without `-403` (NOMEM) on `.043`, `.155` and `.179`; record the free heap before and after |
+| G21 | `.179` identity and port | on Band 11 4.100.179 run the installer, then the Manager and one notification | the installer accepts only `4.100.179` + `user-4.100.179-cn-202609302100`; Run registers the Manager; no fault on notification insert/dismiss (the `.179` pack is a static port of `.155`) |
 
 ## Host-side gate harness
 

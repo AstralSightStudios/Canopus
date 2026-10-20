@@ -1,0 +1,92 @@
+{
+ "font_reload_metrics_destroy": {
+  "entry": "0xc39fcfc",
+  "accepted": true,
+  "basis": "empty function (push {r7, lr}; add r7, sp, #0; pop {r7, pc}) sitting directly before font_reload_metrics_compare, exactly as in the source image; the matcher's pick 0xc326e0e is one of many identical empty bodies and is rejected"
+ },
+ "pthread_create_internal": {
+  "entry": "0xc91a3f4",
+  "accepted": true,
+  "basis": "instruction stream equal except the line-number constant of one assertion (0x8a3 -> 0x8a8); both known callees map; policy stays restricted and thread creation stays FORBIDDEN for modules"
+ },
+ "heap_free": {
+  "entry": "0xc34cc7c",
+  "accepted": true,
+  "basis": "four-instruction wrapper that loads the Umem heap slot (matched global 0x200b2330) and tail-calls the heap implementation (matched callee); 54 of 54 anchored callers call it"
+ },
+ "bt_free": {
+  "entry": "0xc34cc7c",
+  "accepted": true,
+  "basis": "alias of heap_free in the source image as well; 54 of 54 anchored callers call it"
+ },
+ "bt_queue_free": {
+  "entry": "0xc856de0",
+  "accepted": true,
+  "basis": "three-argument callback that tail-calls heap_free; disassembly equals the source except the call target, which is the matched heap_free; neighbouring anchors keep their distance"
+ },
+ "rmmod": {
+  "entry": "0xc32a690",
+  "accepted": true,
+  "basis": "disassembly equal and located at the same address as in the source image; its callee maps to the matched callee"
+ },
+ "lv_event_get_user_data": {
+  "entry": "0xc721490",
+  "accepted": true,
+  "basis": "ROM thunk with identical bytes and the same ROM jump target; 53 of 53 anchored callers call it"
+ },
+ "hal_cache_invalidate_rom_thunk": {
+  "entry": "0xc7211e8",
+  "accepted": true,
+  "basis": "ROM thunk with identical bytes and the same ROM jump target; its only anchored caller calls the target"
+ },
+ "heap_mallinfo": {
+  "entry": "0xc3600bc",
+  "accepted": true,
+  "basis": "eight-instruction wrapper; disassembly equals the source except the literal slot and call target, which are the matched heap object and callee"
+ },
+ "cache_barrier": {
+  "entry": "0xc91ca02",
+  "accepted": true,
+  "basis": "same instruction offset (+0x12) inside the matching complete 28-byte function body; bytes equal (interior leaf)"
+ },
+ "cache_d_clean_all": {
+  "entry": "0xc92e6da",
+  "accepted": true,
+  "basis": "same instruction offset (+0x6) inside the matching complete 20-byte function body; bytes equal (interior leaf)"
+ },
+ "cache_i_clean_invalidate_all": {
+  "entry": "0xc0c181e",
+  "accepted": true,
+  "basis": "same instruction offset (+0x1e) inside the matching complete 34-byte function body at the same address; bytes equal (interior leaf)"
+ },
+ "firmware_version_string": {
+  "entry": "0xca0a7be",
+  "accepted": true,
+  "basis": "exact 4.100.179 identity bytes: LF-terminated build.prop token '4.100.179'"
+ },
+ "firmware_build_string": {
+  "entry": "0xca0a836",
+  "accepted": true,
+  "basis": "exact 4.100.179 identity bytes: LF-terminated build.prop token 'user-4.100.179-cn-202609302100'"
+ },
+ "font_reload_count_cache_class": {
+  "entry": "0x2ca14b08",
+  "accepted": true,
+  "basis": "read-only class object read by the images of the same two functions at the same instruction offsets as in the source"
+ },
+ "font_reload_size_cache_class": {
+  "entry": "0x2ca14a88",
+  "accepted": true,
+  "basis": "read-only class object read by the images of the same two functions at the same instruction offsets as in the source"
+ },
+ "font_reload_vector_label_class": {
+  "entry": "0x2ca6cca8",
+  "accepted": true,
+  "basis": "read-only class object read at the same two instruction offsets (6 and 58) by the image of the source reader pair; its pointer field targets the image of the source pointee"
+ },
+ "umem_heap_descriptor": {
+  "entry": "0x3c356b40",
+  "accepted": true,
+  "basis": "constant passed to the Umem heap initialisation in the 179 boot task (Umem, 0x3c356b40, 13210304), identical to the source constant"
+ }
+}

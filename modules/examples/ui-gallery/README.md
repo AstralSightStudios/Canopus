@@ -1,7 +1,7 @@
 # ui_gallery
 
 One sub-page per widget kind of `ctx->ui`, shown through the Manager's "打开界面" (ADR-CAN-010). It runs
-on Band 10 Pro (`.036`, `.043`) and Band 11 (`.139`, `.155`), which draw the same controls. The title's
+on Band 10 Pro (`.036`, `.043`) and Band 11 (`.139`, `.155`, `.179`), which draw the same controls. The title's
 back reaches the module's `on_back`: on a sub-page it returns to the list, from the list the page closes.
 
 | Page | Nodes |

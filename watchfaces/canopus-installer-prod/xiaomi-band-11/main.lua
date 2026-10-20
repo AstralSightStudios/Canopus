@@ -197,6 +197,18 @@ local PROFILES = {
     os_execute = 0xc717d60,
     io_open = 0xc717988,
   },
+  ["4.100.179"] = {
+    target_id = "xiaomi-band-11-4.100.179",
+    firmware_sha256 = "307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b",
+    firmware_version = "4.100.179",
+    firmware_build = "user-4.100.179-cn-202609302100",
+    lua_version = "Lua 5.4",
+    identity_path = "/etc/build.prop",
+    pmain = 0xc6d178c,
+    pmain_error_handler = 0xc6cd0ac,
+    os_execute = 0xc716140,
+    io_open = 0xc715d68,
+  },
 }
 local native_loader = (function()
 -- Exact q66cn .139 bootstrap. No firmware cave and no global MPU disable.

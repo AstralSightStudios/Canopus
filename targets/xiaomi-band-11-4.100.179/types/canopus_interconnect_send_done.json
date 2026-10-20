@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-11-4.100.155.type.canopus_interconnect_send_done.v1",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "kind": "typedef",
+  "name": "canopus_interconnect_send_done",
+  "size": 4,
+  "alignment": 4,
+  "prototype": "void(void *, int32_t, const canopus_interconnect_message *, void *)",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-001"
+    ],
+    "source": "Same-model baseline shape. App/page/launcher, file operations and notification consumer offsets checked through complete .155 body equality and critical-path IDB audit. Unresolved baseline fields remain unresolved; no device proof."
+  }
+}

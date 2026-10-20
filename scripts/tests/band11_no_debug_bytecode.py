@@ -39,7 +39,7 @@ class BinaryParserMachine(PathMachine):
             0x0c709e78: self.increment_top,
             0x0c710c9c: self.reject,
         }.items():
-            self.hook(address + self.delta, fn)
+            self.hook(self.at(address + self.delta), fn)
 
     def allocate(self):
         size = self.reg(1)
@@ -76,7 +76,7 @@ class BinaryParserMachine(PathMachine):
         self.u.reg_write(UC_ARM_REG_R1, self.PARSER)
         self.u.reg_write(UC_ARM_REG_SP, self.STACK)
         self.u.reg_write(UC_ARM_REG_LR, self.STOP | 1)
-        self.u.emu_start((0x0c7111c0 + self.delta) | 1, self.STOP, count=100000)
+        self.u.emu_start(self.at(0x0c7111c0 + self.delta) | 1, self.STOP, count=100000)
         assert self.u.reg_read(UC_ARM_REG_PC) == self.STOP
         assert self.word(self.ZIO) == 0
         assert self.word(self.CLOSURE + 12) == self.PROTO

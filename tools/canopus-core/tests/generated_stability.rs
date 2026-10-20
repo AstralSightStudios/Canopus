@@ -88,6 +88,10 @@ fn additional_target_artifacts_regenerate_identically() {
             "xiaomi-band-11-4.100.155",
             "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_11_4_100_155.rs",
         ),
+        (
+            "xiaomi-band-11-4.100.179",
+            "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_11_4_100_179.rs",
+        ),
     ];
 
     for (target, rust_path) in cases {
@@ -197,6 +201,29 @@ fn stock_modlib_supervisor_platform_remains_complete() {
     .generate();
 
     assert!(config.contains("#define CANOPUS_SUP_PLATFORM_COMPLETE 1"));
+}
+
+/// A port never inherits trust: .179 was matched against the reviewed .155 pack, so
+/// every record must start over as restricted, PENDING, not probed and without a
+/// promotion record, whatever the .155 source had earned.
+#[test]
+fn band11_179_carries_no_approval_from_155() {
+    let dir = repo_root().join("targets/xiaomi-band-11-4.100.179");
+    let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+    let (symbols, _) = load_records(&dir).unwrap();
+    assert!(symbols.len() > 250, "the port lost records");
+    for symbol in &symbols {
+        assert!(!symbol.approved_for_codegen(), "{} is approved", symbol.name);
+        assert_ne!(symbol.status, "DEVICE_PROVEN", "{}", symbol.name);
+        assert_ne!(symbol.policy, "managed", "{} is managed", symbol.name);
+        assert!(symbol.promotion.is_none(), "{} carries a promotion", symbol.name);
+        assert_ne!(symbol.proof.device.as_deref(), Some("proven"), "{}", symbol.name);
+        assert_eq!(symbol.target_id, pack.target_id);
+        assert_eq!(symbol.provenance.firmware_sha256, pack.firmware_sha256, "{}", symbol.name);
+        if symbol.status == "CANDIDATE" {
+            assert!(symbol.callable_address.is_none(), "{} is a callable candidate", symbol.name);
+        }
+    }
 }
 
 #[test]

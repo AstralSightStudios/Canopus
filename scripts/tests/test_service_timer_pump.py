@@ -22,6 +22,7 @@ TARGETS = (
     "xiaomi-band-10-pro-3.101.043",
     "xiaomi-band-11-4.100.139",
     "xiaomi-band-11-4.100.155",
+    "xiaomi-band-11-4.100.179",
 )
 SRAM, SRAM_SIZE = 0x20000000, 0x400000
 STACK, STOP, TIMER = 0x203F0000, 0x203FF000, 0x203F1000

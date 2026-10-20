@@ -17,7 +17,7 @@ import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = "xiaomi-band-11-4.100.139"
-TARGETS = (TARGET, "xiaomi-band-11-4.100.155")
+TARGETS = (TARGET, "xiaomi-band-11-4.100.155", "xiaomi-band-11-4.100.179")
 FAMILY = ROOT / "watchfaces/canopus-installer-prod/xiaomi-band-11"
 
 
