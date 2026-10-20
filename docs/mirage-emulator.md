@@ -10,6 +10,17 @@
 这不批准任何私有符号，也不升级真机能力状态。脚本默认使用独立设备名，
 可用 `CANOPUS_SMOKE_DEVICE` 指定专用测试实例；该实例会被重建，请勿指定个人设备。
 
+## 2026-10-20 重跑
+
+`miragectl` 在 `/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl`（脚本默认值已改到这里）。资料库在 `Mirage/.scratch/Library`，
+`.179` 固件用 `miragectl firmware import ~/Downloads/miwear.watch.q66tc_v4.100.179_full_a93678a9` 导入。
+
+- 安装器页面加了 Auto-run 之后「Run」按钮上移：Band 11 `(106, 355)`，Band 10 Pro `(168, 168)`，`band11_smoke.py` / `ui_pages.py` 已更新（旧坐标会点到状态栏，Supervisor 不加载，L2 报 `refused L2CAP channel for PSM 0x0011`）。
+- `scripts/emu/smoke.py`（043）：收件箱流程与手机端 phone flow 全部通过，P5.2 的超时没有复现。
+- `scripts/emu/run_services_test.py`（043）：22/27，KV 在重启后保留（流式 KV）。
+- `scripts/emu/band11_smoke.py 155|179`：通过；`--services`：`.179` 26/27（仅振动跳过）。
+- `scripts/emu/ui_pages.py 043`：通过。
+
 ### 本轮实际结果
 
 - 043 收件箱安装、升级、降级拒绝、坏版本回退与回滚：通过。

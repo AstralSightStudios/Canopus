@@ -10,21 +10,22 @@ missing):
   * Facetory's package_lua_watchface example built with
     scripts/emu/band11/facetory-lua-layer.patch (FACETORY_PACKAGER=<binary>),
   * the AstroBox bridge (MAB_SMOKE).
-Usage: band11_smoke.py [155] [--services | --module PROJECT_DIR [--activate]]
+Usage: band11_smoke.py [155|179] [--services | --module PROJECT_DIR [--activate]]
 """
 import argparse, os, re, subprocess, sys, tempfile, time, tomllib, zlib, struct, shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/Packages/MirageKit/.build/debug/miragectl"))
+MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl"))
 BRIDGE = Path(os.environ.get("MAB_SMOKE", "/Volumes/EXT0/Mirage/AstroBoxBridge/target/smoke"))
 PACKAGER = Path(os.environ.get("FACETORY_PACKAGER",
                                "/Volumes/EXT0/GitHub/facetory/rust/target/debug/examples/package_lua_watchface"))
-FIRMWARE = {"155": "miwear.watch.q66tc_v4.100.155_full_f1c824fe"}
+FIRMWARE = {"155": "miwear.watch.q66tc_v4.100.155_full_f1c824fe",
+            "179": "miwear.watch.q66tc_v4.100.179_full_a93678a9"}
 DEVICE = os.environ.get("CANOPUS_SMOKE_DEVICE", f"canopus-native-b11-{os.getpid()}")
 W, H = 212, 520
 PAIR_CONFIRM = (106, 478)   # check mark on the pairing dialog
-RUN_BUTTON = (106, 383)     # installer page
+RUN_BUTTON = (106, 355)     # installer page: title, status, then Run / Auto-run / Clear Env
 
 EXPECTED_SERVICES_SKIPS = set()
 
@@ -94,7 +95,7 @@ def bridge(port, key, addr, state, *methods):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("target", nargs="?", default="155", choices=["155"],
+    parser.add_argument("target", nargs="?", default="155", choices=["155", "179"],
                         help="Target firmware version (default: 155)")
     parser.add_argument("--services", action="store_true",
                         help="Run full microkernel services test suite instead of hello-portable SCAN")

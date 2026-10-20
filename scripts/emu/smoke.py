@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TARGET = "xiaomi-band-10-pro-3.101.043"
-MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/Packages/MirageKit/.build/debug/miragectl"))
+MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl"))
 OTA = Path(os.environ.get("CANOPUS_FW_OTA_DIR", "/Volumes/EXT0/miwear.watch.p67tc_v3.101.043_full_a4ce8564"))
 CANOPUS = ROOT / "target/debug/canopus"
 DEVICE = os.environ.get("CANOPUS_SMOKE_DEVICE", f"canopus-native-043-{os.getpid()}")

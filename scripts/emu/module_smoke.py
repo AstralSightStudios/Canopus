@@ -3,7 +3,7 @@
 
 Tests the module on:
   - Band 10 Pro 3.101.043 (nand_data staging + insmod + CPC2 install/activate)
-  - Band 11 4.100.155 (real AstroBox core CPC2 Layer 2 delivery + activation)
+  - Band 11 4.100.155 and 4.100.179 (real AstroBox core CPC2 Layer 2 delivery + activation)
 
 Exits 77 if Mirage or firmware OTA is missing.
 """
@@ -20,7 +20,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/Packages/MirageKit/.build/debug/miragectl"))
+MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl"))
 OTA_043 = Path(os.environ.get("CANOPUS_FW_OTA_DIR", "/Volumes/EXT0/miwear.watch.p67tc_v3.101.043_full_a4ce8564"))
 CANOPUS_BIN = ROOT / "target/debug/canopus"
 BOOT_WAIT_043 = 40
@@ -203,7 +203,7 @@ def test_b11(module_dir, target_code, allow_failure=False):
 def main():
     parser = argparse.ArgumentParser(description="Mirage smoke test for Canopus modules")
     parser.add_argument("--module", type=Path, default=Path.cwd(), help="Path to module project directory")
-    parser.add_argument("target", nargs="?", default="all", choices=["all", "043", "155"])
+    parser.add_argument("target", nargs="?", default="all", choices=["all", "043", "155", "179"])
     args = parser.parse_args()
 
     module_dir = args.module.resolve()
@@ -229,6 +229,8 @@ def main():
         results.append(("043", test_043(module_dir, package_path, module_id, MIRAGECTL)))
     if args.target in ("all", "155"):
         results.append(("155", test_b11(module_dir, "155", allow_failure=False)))
+    if args.target in ("all", "179"):
+        results.append(("179", test_b11(module_dir, "179", allow_failure=False)))
 
     print("\n================== SUMMARY ==================")
     all_ok = True

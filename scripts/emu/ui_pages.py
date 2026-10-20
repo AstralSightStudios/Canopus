@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Band 10 Pro .043 or Band 11 .155 on Mirage: the Manager and a module page, drawn by
+"""Band 10 Pro .043 or Band 11 .155 / .179 on Mirage: the Manager and a module page, drawn by
 the native UI host (ADR-CAN-010). Emulator evidence only.
 
 The production way in: the real AstroBox core installs the production installer
@@ -37,7 +37,7 @@ import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/Packages/MirageKit/.build/debug/miragectl"))
+MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl"))
 BRIDGE = Path(os.environ.get("MAB_SMOKE", "/Volumes/EXT0/Mirage/AstroBoxBridge/target/smoke"))
 PACKAGER = Path(os.environ.get("FACETORY_PACKAGER",
                                "/Volumes/EXT0/GitHub/facetory/rust/target/debug/examples/package_lua_watchface"))
@@ -55,7 +55,7 @@ class Band10Pro:
     wake_taps = [(168, 240), (168, 240)]
     pair_wake = [(168, 240), (168, 240)]
     pair_confirm = (250, 435)
-    run = (168, 203)
+    run = (168, 168)                  # Run / Auto-run / Clear Env, 72 px apart around the centre
     idle = (168, 440)                 # inert on the installer face
     run_taps = (16, 2.2)
     dot = (168, 22)                   # the notification dot the loaded Supervisor posts
@@ -91,7 +91,7 @@ class Band11:
     wake_taps = [(106, 20)]
     pair_wake = [(106, 260)]
     pair_confirm = (106, 478)
-    run = (106, 383)
+    run = (106, 355)                  # title, status, then Run / Auto-run / Clear Env
     idle = (106, 300)
     run_taps = (15, 3.0)
     dot = None
@@ -116,6 +116,14 @@ class Band11:
     expected_probe = ["open 0/0/0", "toggle 0/0/1", "add 0/1/1", "add 0/2/1", "add 0/3/1",
                       "detail 1/3/1", "pop 0/3/1", "close 0/3/1"]
 
+
+
+class Band11_179(Band11):
+    """Same panel and launcher as .155; only the firmware differs."""
+    name = "179"
+    target = "xiaomi-band-11-4.100.179"
+    firmware = "miwear.watch.q66tc_v4.100.179_full_a93678a9"
+    device = os.environ.get("CANOPUS_UI_DEVICE", "canopus-ui-b11-179")
 
 MODULES = {
     "ui-demo": {"id": "ui_demo", "manifest": "modules/examples/ui-demo/Canopus.toml",
@@ -614,7 +622,7 @@ def finish(work, expected):
 def main():
     global P, M
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("target", nargs="?", default="043", choices=["043", "155"])
+    parser.add_argument("target", nargs="?", default="043", choices=["043", "155", "179"])
     parser.add_argument("--module", default="ui-demo", choices=list(MODULES))
     parser.add_argument("--stop-at-page", action="store_true",
                         help="stop with the module's page open (use with --keep-device)")
@@ -626,7 +634,7 @@ def main():
     parser.add_argument("--skip-prepare", action="store_true",
                         help="reuse the device and --work of an earlier --keep-device run, only drive the pages")
     args = parser.parse_args()
-    P = Band10Pro if args.target == "043" else Band11
+    P = {"043": Band10Pro, "155": Band11, "179": Band11_179}[args.target]
     M = MODULES[args.module]
     sys.stdout.reconfigure(line_buffering=True)
     missing = [p for p in (MIRAGECTL, CANOPUS, BRIDGE, PACKAGER) if not p.is_file()]
