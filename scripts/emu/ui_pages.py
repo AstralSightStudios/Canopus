@@ -163,12 +163,12 @@ def wake():
     acts on the UI when it is already lit, so call it with the screen off or on a page whose
     center is inert. Band 11: the home key puts a lit screen off first, which also resets
     the UI to the watchface."""
-    if P is Band11 and screen_lit():
+    if issubclass(P, Band11) and screen_lit():
         ctl("button", P.device, "home")
         time.sleep(1.5)
     for point in P.wake_taps:
         ctl("tap", P.device, *point)
-    time.sleep(1.5 if P is Band11 else 1)
+    time.sleep(1.5 if issubclass(P, Band11) else 1)
 
 
 class Shots:
@@ -248,12 +248,12 @@ def package_installer(work):
     face.mkdir()
     env = dict(os.environ, CANOPUS_TARGET=P.target)
     built = work / "installer"
-    if P is Band11:
+    if issubclass(P, Band11):
         built.mkdir()
         env["CANOPUS_BAND11_OUTPUT_DIR"] = str(built)
     subprocess.run(["sh", "scripts/build_canopus_supervisor.sh"], cwd=ROOT, check=True, env=env,
                    capture_output=True)
-    if P is Band11:
+    if issubclass(P, Band11):
         sources = [built / "main.lua", *built.glob("*.bin")]
     else:
         production = ROOT / "watchfaces/canopus-installer-prod/xiaomi-band-10-pro"

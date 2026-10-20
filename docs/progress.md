@@ -18,6 +18,17 @@
 - 相关符号保持 restricted / PENDING / not_probed；没有提升为 device verified 或 production approved。
 - 快应用容器、快应用目录和列表管理方案已撤销；历史验证记录不作为新数据面证据。
 
+## Band 11 `4.100.179` 与全局 safe mode（2026-10-20）
+
+- `.179`（q66tc，build `user-4.100.179-cn-202609302100`）由已审核的 `.155` 包移植：270 条符号记录全部 `restricted` / `PENDING` / `not_probed`，
+  没有任何批准、真机证明或能力状态从 `.155` 带过来（`generated_stability.rs` 的 `band11_179_carries_no_approval_from_155` 钉住）。
+  不同于函数体相同的 219 条 `STATIC_RECOVERED`，50 条保持 `CANDIDATE`（含 `.155` 里本就是候选的，和 `lv_obj_area_is_visible` 这种函数体已变的）。
+- host / emulator 证据：Unicorn 里真实 `.179` 镜像执行 stage1 → stage2 → Supervisor（两种重定位基址）、Manager 注册、原生 UI 指令与通知路径；
+  Mirage 里真实 `.179` 固件经生产安装器 Run → 加密 L2 `.canopus` 安装 → SCAN，services 测试 26/27（仅振动跳过）。
+- 全局 safe mode：自动进入（连续 3 次未完成的启动、3 次模块隔离而没有一次好启动、注册表不可读）、重启保持、`EXIT_SAFE_MODE`（保持 / 全部停用 / 全部回滚）退出并试运行一次、
+  试运行没有稳定就回到 safe mode；Manager 在 safe mode 里提供退出入口。host 测试，未上真机。
+- `.043` Supervisor 112,304 / 114,688 字节（97.9%），已接近文件预算。
+
 ## 平台硬件服务边界（2026-10-18）
 
 - 原先的占位实现已移除：亮度恒 100、息屏状态恒亮、振动忽略时长、电量恒 85、蓝牙恒已连接、唤醒锁无归属、

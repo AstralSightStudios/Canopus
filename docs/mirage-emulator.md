@@ -19,7 +19,10 @@
 - `scripts/emu/smoke.py`（043）：收件箱流程与手机端 phone flow 全部通过，P5.2 的超时没有复现。
 - `scripts/emu/run_services_test.py`（043）：22/27，KV 在重启后保留（流式 KV）。
 - `scripts/emu/band11_smoke.py 155|179`：通过；`--services`：`.179` 26/27（仅振动跳过）。
-- `scripts/emu/ui_pages.py 043`：通过。
+- `scripts/emu/ui_pages.py 043|155|179`：通过（启动器 > Manager > 模块页面 > 返回）。
+- `scripts/emu/module_smoke.py --module modules/examples/hello-portable 155|179`：通过。
+- Auto-run（G18）在 Mirage 里测不了：设备重启后 Mirage 不会再次启动 Lua 表盘；手机安装并设为当前时，表盘看起来启动了两次，后一次读到了 `autorun.pending` 而把 Auto-run 关掉（观察所得，原因未查）；
+  熄屏后 LVGL 定时器不走，模拟器里熄屏约 8 秒，所以延迟从 10 秒缩到 4 秒（两个安装器）。Auto-run 只有 host Lua 测试（真实 C 栈帧）证据。
 
 ### 本轮实际结果
 
