@@ -21,7 +21,7 @@ All three variants use this workflow:
    explicit confirmation.
 
 The Band 10 Pro and Band 11 installers also have an **Auto-run** switch (off by
-default) that performs Run by itself about ten seconds after the watchface starts,
+default) that performs Run by itself about four seconds after the watchface starts (shorter than the screen-off timeout, because LVGL timers stop with the screen off),
 so Canopus no longer needs a click after every reboot. It only helps when this
 watchface is the one shown after boot. `/data/canopus/autorun` holds the switch and
 `/data/canopus/autorun.pending` exists while an automatic Run is in progress: if

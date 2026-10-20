@@ -150,7 +150,7 @@ end
 -- a finished Run leaves Auto-run on and clears the marker.
 do
     local page = fake_run(with_files({ [FLAG] = "1" }), {})
-    assert(#page.timers == 1 and page.timers[1].period == 10000)
+    assert(#page.timers == 1 and page.timers[1].period == 4000)
     fire(page.timers[1])
     assert(page.timers[1].deleted)
     assert(page.files["at insmod: pending"] == "1", "marker must precede insmod")

@@ -179,9 +179,9 @@ local function object(parent, props)
 end
 lvgl.Object, lvgl.Label = object, object
 lvgl.Timer = function(props)
-    -- The progress runner starts paused; the Auto-run delay (10 s) runs at once.
+    -- The progress runner starts paused; the Auto-run delay (4 s) runs at once.
     assert(props.period >= 100 and props.repeat_count == -1
-        and (props.paused or props.period == 10000))
+        and (props.paused or props.period == 4000))
     function props:resume() self.paused = false end
     function props:delete() self.deleted = true end
     function props:ready() error("must allow the UI to paint between steps") end
@@ -398,7 +398,7 @@ absent_checks = 1
 fresh_page({[FLAG] = "1"})
 local pending_timer
 for _ = 1, 20 do
-    for _, timer in ipairs(timers) do if timer.period == 10000 then pending_timer = timer end end
+    for _, timer in ipairs(timers) do if timer.period == 4000 then pending_timer = timer end end
     if pending_timer then break end
     tick()
 end

@@ -40,7 +40,7 @@ local clear_armed = false
 local module_warning = nil
 local AUTORUN_FLAG = "/data/canopus/autorun"
 local AUTORUN_PENDING = "/data/canopus/autorun.pending"
-local AUTORUN_DELAY_MS = 10000
+local AUTORUN_DELAY_MS = 4000
 local autorun_active = false  -- the Run in progress was started by Auto-run
 local autorun_timer
 local refresh_autorun_button

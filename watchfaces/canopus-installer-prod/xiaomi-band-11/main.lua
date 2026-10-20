@@ -447,7 +447,7 @@ local run_button, clear_button, autorun_button, autorun_label
 local resources_available = false
 local AUTORUN_FLAG = "/data/canopus/autorun"
 local AUTORUN_PENDING = "/data/canopus/autorun.pending"
-local AUTORUN_DELAY_MS = 10000
+local AUTORUN_DELAY_MS = 4000
 local autorun_active = false  -- the Run in progress was started by Auto-run
 local autorun_timer
 local autorun_notice
