@@ -232,19 +232,19 @@ static void format_diag_u32(uint32_t value, char out[16])
 static void format_operation_result(const struct canopus_manager_model_v1 *model,
                                     char out[48])
 {
-    const char *name = "unknown";
+    const char *name = "未知结果";
     uint32_t used = 0u;
     switch (model->pending_state) {
-    case CANOPUS_RESULT_REJECTED: name = "rejected"; break;
-    case CANOPUS_RESULT_FAILED: name = "failed"; break;
-    case CANOPUS_RESULT_DISALLOWED: name = "disallowed"; break;
+    case CANOPUS_RESULT_REJECTED: name = "操作被拒绝"; break;
+    case CANOPUS_RESULT_FAILED: name = "操作失败"; break;
+    case CANOPUS_RESULT_DISALLOWED: name = "操作未允许"; break;
     default: break;
     }
     out[0] = '\0';
-    used = append_string(out, used, 48u, name, 16u);
-    used = append_string(out, used, 48u, " (result ", 9u);
+    used = append_string(out, used, 48u, name, 24u);
+    used = append_string(out, used, 48u, " (状态码 ", sizeof(" (状态码 ") - 1u);
     used = append_u32(out, used, 48u, model->pending_state);
-    used = append_string(out, used, 48u, ")", 1u);
+    (void)append_string(out, used, 48u, ")", 1u);
 }
 
 static const char *safe_mode_reason_name(uint32_t reason)
@@ -551,23 +551,23 @@ static const char *confirmation_message(uint32_t event_id)
     case CANOPUS_MANAGER_EVENT_ACTIVATE:
         return "立即运行模块？常驻模块需重启才能停用。";
     case CANOPUS_MANAGER_EVENT_INSTALL:
-        return "Install the verified staged package?";
+        return "确认安装已就绪的待安装包？";
     case CANOPUS_MANAGER_EVENT_SCAN:
-        return "Import modules pushed from the phone? They stay disabled until you enable them.";
+        return "导入手机推送的新模块？导入后需手动启用。";
     case CANOPUS_MANAGER_EVENT_ENABLE:
-        return "Enable this module on next boot?";
+        return "在下次手环启动时启用该模块？";
     case CANOPUS_MANAGER_EVENT_DISABLE:
-        return "Disable this module after next reboot?";
+        return "在下次手环重启后停用该模块？";
     case CANOPUS_MANAGER_EVENT_ROLLBACK:
-        return "Restore the previous verified module version?";
+        return "恢复至该模块上一已验证版本？";
     case CANOPUS_MANAGER_EVENT_REMOVE:
-        return "Remove this module after reboot? Cannot be undone.";
+        return "重启后彻底删除此模块？此操作不可撤销。";
     case CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP:
-        return "Leave safe mode at the next restart and try the modules again? If that start fails, safe mode comes back.";
+        return "重启后退出安全模式，并尝试恢复运行？";
     case CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE:
-        return "Leave safe mode at the next restart with every module turned off?";
+        return "重启后退出安全模式，并停用所有模块？";
     default:
-        return "Continue with this operation?";
+        return "确认继续执行此操作？";
     }
 }
 
@@ -581,7 +581,7 @@ static int32_t render_confirmation(struct canopus_manager_native_v1 *native,
     rc = CANOPUS_UI_COMPONENT(tree, UI_KEY_CONFIRM_SECTION, CANOPUS_UI_NODE_DIALOG,
                               "确认操作", "", 0u, CANOPUS_UI_NODE_FLAG_VISIBLE);
     if (rc != CANOPUS_UI_OK) return rc;
-    rc = append_text(tree, UI_KEY_CONFIRM_MESSAGE, message, 64u, 2u);
+    rc = append_text(tree, UI_KEY_CONFIRM_MESSAGE, message, 128u, 2u);
     if (rc != CANOPUS_UI_OK) return rc;
     rc = append_action(tree, UI_KEY_CONFIRM_CANCEL, "取消", sizeof("取消") - 1u,
                        "返回且不更改", sizeof("返回且不更改") - 1u,

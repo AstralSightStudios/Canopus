@@ -281,10 +281,13 @@ local function device_error()
     return reply and signed32(u32le(reply, CPC2_HEADER + 24)) or 0
 end
 
--- Supervisor error codes worth explaining in place. -21 is the one an
--- operator can act on: no heap domain could hold the module image.
+-- Supervisor error codes worth explaining in place.
 local ERROR_HINTS = {
     [-21] = "内存不足：模块镜像放不进内核堆，请缩小模块",
+    [-22] = "模块启动失败，已自动回退到上一版本",
+    [-25] = "模块连续崩溃，已被安全隔离并停用",
+    [-11] = "注册表数据异常，已自动保护",
+    [-6]  = "模块加载失败，请检查模块与设备固件是否兼容",
 }
 
 local function execute_step(command, arg0, description)
@@ -303,12 +306,10 @@ local function execute_step(command, arg0, description)
 end
 
 local steps = {
-    { command = CMD_INSTALL, arg0 = 0,
-      progress = "注册管理器" },
-    { command = CMD_INSTALL, arg0 = 2,
-      progress = "发布管理器入口" },
     { command = CMD_RESTORE_AFTER_BOOT, arg0 = 0,
       progress = "恢复已启用模块" },
+    { command = CMD_INSTALL, arg0 = 0,
+      progress = "注册管理器" },
     { command = CMD_INSTALL, arg0 = 1,
       progress = "注册模块应用" },
     { command = CMD_INSTALL, arg0 = 2,
@@ -333,7 +334,7 @@ local function run_all_steps()
     for _, step in ipairs(steps) do
         check(execute_step(step.command, step.arg0, step.progress))
     end
-    return "Run completed\n安装完成，请从应用列表打开管理器"
+    return "Run completed\n已就绪，请在应用列表中打开「Canopus 管理器」"
 end
 
 local rootbase = lvgl.Object(nil, {
@@ -468,7 +469,7 @@ local function click_run()
         return false
     end
     if run_attempted then
-        set_status("Run can only be used once; reboot before retrying")
+        set_status("单次开机仅可运行一次\n如需重新安装请先重启手环")
         return false
     end
     run_attempted = true
@@ -494,14 +495,14 @@ clear_button = make_button("Clear Env", '#8a1f14', function()
     if operation or not resources_available then return end
     if not clear_armed then
         clear_armed = true
-        set_status("Click again to clear", '#ffd27a')
+        set_status("再次点击以确认清理环境", '#ffd27a')
         return
     end
     clear_armed = false
     start_operation("clear", function()
         checkpoint("清理安装环境")
         check(run("rm -rf /data/canopus"), "Clear Env failed")
-        return "Environment cleared; reboot before Run"
+        return "环境已清理，请重启手环后再点击 Run"
     end)
 end)
 

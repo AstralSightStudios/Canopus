@@ -212,13 +212,23 @@ local function device_error()
     return reply and signed32(u32le(reply, CPC2_HEADER + 24)) or 0
 end
 
+local ERROR_HINTS = {
+    [-21] = "内存不足：模块镜像过大，请缩小模块体积",
+    [-22] = "模块启动失败，已自动回退到上一版本",
+    [-25] = "模块连续崩溃，已被安全隔离并停用",
+    [-11] = "注册表数据异常，已自动保护",
+    [-6]  = "模块加载失败，请检查模块与设备固件是否兼容",
+}
+
 local function execute_step(command, arg0)
     local reply, message = exchange(command,
         command == CMD_INSTALL and string.pack("<I4", arg0 or 0) or nil, CPC2_HEADER)
     if not reply then return false, message end
     local result = u32le(reply, 28)
     if result ~= RESULT_COMPLETED then
-        return false, string.format("result=%d error=%d", result, device_error())
+        local err = device_error()
+        local hint = ERROR_HINTS[err]
+        return false, string.format("result=%d error=%d%s", result, err, hint and ("\n" .. hint) or "")
     end
     return true
 end
@@ -229,15 +239,15 @@ end
 -- 3. 最后刷新各模块的原生应用页面与桌面图标
 local steps = {
     { command = CMD_INSTALL, arg0 = 0,
-      progress = "Registering Manager...", critical = true },
+      progress = "正在注册管理器...", critical = true },
     { command = CMD_INSTALL, arg0 = 2,
-      progress = "Publishing Launcher entries...", critical = true },
+      progress = "正在发布桌面图标...", critical = true },
     { command = CMD_RESTORE_AFTER_BOOT, arg0 = 0,
-      progress = "Loading enabled modules...", critical = false },
+      progress = "正在加载已启用模块...", critical = false },
     { command = CMD_INSTALL, arg0 = 1,
-      progress = "Registering module apps...", critical = false },
+      progress = "正在注册模块页面...", critical = false },
     { command = CMD_INSTALL, arg0 = 2,
-      progress = "Updating Launcher entries...", critical = false },
+      progress = "正在更新应用列表...", critical = false },
 }
 
 local function finish_run(timer, success, message)
@@ -250,10 +260,10 @@ local function run_next_step(timer)
     local step = steps[run_phase]
     if not step then
         if module_warning then
-            finish_run(timer, true, "Manager registered!\nWarning: " .. tostring(module_warning)
-                .. "\nCheck Manager app to fix module.")
+            finish_run(timer, true, "安装完成！\n提示：" .. tostring(module_warning)
+                .. "\n请在应用列表中打开「Canopus 管理器」")
         else
-            finish_run(timer, true, "Run completed")
+            finish_run(timer, true, "安装完成！\n请从应用列表打开「Canopus 管理器」")
         end
         return
     end
@@ -261,8 +271,8 @@ local function run_next_step(timer)
     local ok, message = execute_step(step.command, step.arg0)
     if not ok then
         if step.critical then
-            finish_run(timer, false, "Run failed: " .. tostring(message)
-                .. "\nReboot before retrying.")
+            finish_run(timer, false, "安装失败：" .. tostring(message)
+                .. "\n请重启手环后再试。")
             return
         else
             print("[canopus-installer-prod] non-critical step failed: " .. tostring(message))
@@ -272,10 +282,10 @@ local function run_next_step(timer)
     run_phase = run_phase + 1
     if run_phase > #steps then
         if module_warning then
-            finish_run(timer, true, "Manager registered!\nWarning: " .. tostring(module_warning)
-                .. "\nCheck Manager app to fix module.")
+            finish_run(timer, true, "安装完成！\n提示：" .. tostring(module_warning)
+                .. "\n请在应用列表中打开「Canopus 管理器」")
         else
-            finish_run(timer, true, "Run completed")
+            finish_run(timer, true, "安装完成！\n请从应用列表打开「Canopus 管理器」")
         end
     else
         timer:ready()
@@ -292,8 +302,8 @@ local function start_run_timer()
         cb = function(timer)
             local ok, message = pcall(run_next_step, timer)
             if not ok then
-                finish_run(timer, false, "Run failed: " .. tostring(message)
-                    .. "\nReboot before retrying.")
+                finish_run(timer, false, "运行失败：" .. tostring(message)
+                    .. "\n请重启手环后再试。")
             end
         end,
     }
@@ -355,42 +365,41 @@ end
 local function do_run()
     clear_armed = false
     if run_attempted then
-        set_status("Run can only be used once; reboot before retrying")
+        set_status("单次开机仅可运行一次\n如需重新安装请先重启手环")
         return
     end
     run_attempted = true
     run_button:clear_flag(lvgl.FLAG.CLICKABLE)
     local valid, validation_error = verify_module_file()
     if not valid then
-        abort_run("LOAD failed: " .. tostring(validation_error)
-            .. "\nEnsure the firmware version matches this installer.")
+        abort_run("校验失败：" .. tostring(validation_error)
+            .. "\n请确认固件版本与安装器相符。")
         return
     end
     if not supervisor_present() then
-        set_status("Loading supervisor...")
+        set_status("正在载入运行环境...")
         local inserted = run(string.format("insmod %s %s",
             shell_quote(MODULE_PATH), MODULE_NAME))
         if not inserted or not supervisor_present() then
-            abort_run("LOAD failed. Ensure the firmware version matches this installer."
-                .. "\nReboot before retrying.")
+            abort_run("载入失败！请确认固件版本与安装器匹配\n请重启手环后再试。")
             return
         end
     end
     local icon_ok, icon_error = stage_manager_icon()
     if not icon_ok then
-        abort_run("Run failed: " .. tostring(icon_error))
+        abort_run("准备管理器图标失败：" .. tostring(icon_error))
         return
     end
     local boot_ok, boot_error = stage_boot_files(TARGET_ID_PREFIX .. firmware_version)
     if not boot_ok then
-        abort_run("Run failed: " .. tostring(boot_error))
+        abort_run("准备自启文件失败：" .. tostring(boot_error))
         return
     end
     local started, timer_error = start_run_timer()
     if not started then
-        abort_run("Run failed: " .. tostring(timer_error))
+        abort_run("启动安装流程失败：" .. tostring(timer_error))
     else
-        set_status("Supervisor loaded; scheduling Manager registration...")
+        set_status("环境已就绪，正在注册管理器...")
     end
 end
 
@@ -399,24 +408,24 @@ run_button = make_button("Run", -72, 0x14508A, do_run)
 make_button("Clear Env", 72, 0x8A1F14, function()
     if run_timer then
         clear_armed = false
-        set_status("Run is in progress; reboot before clearing")
+        set_status("正在安装中，请勿操作")
         return
     end
     if not clear_armed then
         clear_armed = true
-        set_status("Click again to clear", 0xFFD27A)
+        set_status("再次点击以确认清理环境", 0xFFD27A)
         return
     end
     clear_armed = false
     if run("rm -rf /data/canopus") then
-        set_status("Environment cleared; reboot before Run", 0x8FF0A4)
+        set_status("环境已清理，请重启手环后再试", 0x8FF0A4)
     else
-        set_status("Clear Env failed", 0xFF9A9A)
+        set_status("环境清理失败", 0xFF9A9A)
     end
 end)
 
 status = lvgl.Label(root, {
-    text = "Ready\nFirmware " .. firmware_version,
+    text = "环境就绪\n固件版本：" .. firmware_version .. "\n点击「Run」开始安装",
     text_color = 0xBFD9FF, width = 300, height = 96,
     align = { type = lvgl.ALIGN.CENTER, x_ofs = 0, y_ofs = 170 },
 })
