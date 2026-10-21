@@ -31,10 +31,10 @@
 
 ## 固化启动与可见的故障恢复（2026-10-21，host / 模拟器证据）
 
-- **固化启动**（ADR-CAN-012，仅 Band 10 Pro `.043`）：默认不固化；AstroBox 的 Canopus 页面确认后，Supervisor 经 `/dev/bes_flash` 把 `rc.sysinit` 的一段等长差异尾段改成
-  `sh /data/canopus/b &`，重启后不依赖当前表盘自动加载 Supervisor 并注册 Manager；解除固化写回原内容。Mirage：A 段闪存读写/解除通过；B 段用离线打补丁的 AP 镜像冷启动，
+- **固化启动**（ADR-CAN-012，Band 10 Pro `.043` 与 Band 11 `.155` / `.179`）：默认不固化；AstroBox 的 Canopus 页面确认后，Supervisor 经 `/dev/bes_flash` 把 `rc.sysinit` 的一段等长差异尾段改成
+  `sh /data/canopus/b &`，重启后不依赖当前表盘自动加载 Supervisor 并注册 Manager；解除固化写回原内容。Mirage：Band 10 Pro `.043` A 段闪存读写/解除通过；B 段用离线打补丁的 AP 镜像冷启动，
   不手动加载，Supervisor 自己起来，点亮屏幕一次、熄屏后序列走完。亮屏注册 Manager 会使模拟设备复位，所以状态机只在熄屏时推进。**没有真机运行，物理启动验收未做。**
-  Band 11：`.155` 的原生加载器在没有表盘时自己跑通，但 Manager 注册序列没走完，未启用；`.139` 没有后台泵，也不支持。安装器页面的延时 Auto-run 已删除。
+  Band 11：为 `.155` 和 `.179` 实现独立原生引导载荷（`boot.lua` 内嵌 target 原生 loader 及 profile，加载 stage1 → stage2 → supervisor 至 Umem 并发 `START_BOOT`，由熄屏状态机推进完成 Manager 注册并清除 `boot.pending`）；Mirage 冷启动冒烟测试（`scripts/emu/boot_smoke.py 155` / `179`）全通。`.139` 无后台泵，不支持。安装器页面的延时 Auto-run 已删除。
 - **故障恢复可见**：Manager 首页写明安全模式原因与“模块仍已安装，本次暂不加载”；被自动停用/回退的模块留在列表里并说明原因；启动后一条通知（安全模式含原因，或哪个模块被自动处理；正常则“Canopus 已加载，管理器可用”）。
   AstroBox 同步显示，且退出安全模式改为先确认。
 - **退出安全模式的真实缺陷**：触发阈值的崩溃计数不清零，退出后下次启动立刻又进 safe mode；批量回退逐模块写盘并吞错误。已修，host 测试覆盖真实阈值路径。

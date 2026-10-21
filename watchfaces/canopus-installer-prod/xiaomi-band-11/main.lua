@@ -497,6 +497,7 @@ local function select_target()
     stage1_resource = SCRIPT_PATH .. "canopus_stage1-" .. target_id .. ".bin"
     stage2_resource = SCRIPT_PATH .. "canopus_stage2-" .. target_id .. ".bin"
     supervisor_resource = SCRIPT_PATH .. "canopus_supervisor-" .. target_id .. ".bin"
+    boot_resource = SCRIPT_PATH .. "canopus_boot-" .. target_id .. ".bin"
     return true
 end
 
@@ -589,6 +590,35 @@ local function stage_manager_icon()
     end
     checkpoint("准备外部模块安装目录")
     run("mkdir /data/canopus/inbox")
+    return true
+end
+
+local function stage_boot_files(target)
+    local boot_bin = read_all(boot_resource, "rb")
+    if not boot_bin then
+        return true
+    end
+    checkpoint("准备固化启动载荷")
+    local files = {
+        { "/data/canopus/stage1.bin", read_all(stage1_resource, "rb") },
+        { "/data/canopus/stage2.bin", read_all(stage2_resource, "rb") },
+        { "/data/canopus/supervisor.elf", read_all(supervisor_resource, "rb") },
+        { "/data/canopus/boot.lua", boot_bin },
+        { "/data/canopus/boot.target", target },
+        { "/data/canopus/b", "sleep 30\nlua /data/canopus/boot.lua\n" },
+    }
+    for _, item in ipairs(files) do
+        if type(item[2]) ~= "string" then return false, "missing boot payload: " .. item[1] end
+        local output = io.open(item[1], "wb")
+        if not output then return false, "cannot stage " .. item[1] end
+        local write_ok, write_result = pcall(output.write, output, item[2])
+        local close_ok, close_result = pcall(output.close, output)
+        if not write_ok or write_result == nil or not close_ok or close_result == nil
+            or read_all(item[1], "rb") ~= item[2] then
+            return false, "cannot write " .. item[1]
+        end
+    end
+    pcall(os.remove, "/data/canopus/boot.pending")
     return true
 end
 
@@ -831,6 +861,7 @@ local function click_run()
             check(supervisor_present(), "no /dev/canopus")
         end
         check(stage_manager_icon())
+        check(stage_boot_files(target_id))
         return run_all_steps()
     end)
     return operation == "run"

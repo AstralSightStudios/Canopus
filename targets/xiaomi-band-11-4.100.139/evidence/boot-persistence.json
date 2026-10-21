@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BOOT-PERSIST-001",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+  "verdict": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "flash_offset": 10532898,
+  "romfs_image_offset": 9739045,
+  "script_header_offset": 7200,
+  "original": "echo \"mount /misc\"\nmount -t littlefs -o ro /dev/facmode /misc\necho \"mount /nv\"\nmount -t littlefs -o autoformat /dev/nv /nv\noffline_log start -w &\nkvdbd &\nloadfactoryinfo\nmiwear_rtc_checker\nhealthd &\nlowbat_charge\nset +e\n",
+  "patched": "mount -t littlefs -o ro /dev/facmode /misc\nmount -t littlefs -o autoformat /dev/nv /nv\noffline_log start -w &\nkvdbd &\nloadfactoryinfo\nmiwear_rtc_checker\nhealthd &\nlowbat_charge\nset +e\nsh /data/canopus/b &\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+  "findings": [
+    "Equal-length rc.sysinit data replacement: drops the last two mount echo lines and appends a background Lua start after every mount; only the differing tail is stored.",
+    "The ROMFS inode checksum covers the unchanged 32-byte header/name and the filesystem checksum covers its unchanged first 512 bytes.",
+    "Physical boot acceptance is NOT verified.",
+    "/dev/bes_flash is registered as an MTD driver (erase/bread/bwrite/read/ioctl, 8 KiB sectors); a VFS open goes through mtd_proxy and an FTL read-modify-write, flushed on close. Not exercised on hardware."
+  ]
+}

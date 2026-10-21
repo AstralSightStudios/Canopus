@@ -1,6 +1,6 @@
 # ADR-CAN-012: 固化启动（pinned start）
 
-状态：已实现于 Band 10 Pro `.043`（host / 模拟器证据），未上真机。Band 11 未启用。
+状态：已实现于 Band 10 Pro `.043` 与 Band 11 `.155` / `.179`（host / 模拟器证据），未上真机。`.139` 因无后台泵不支持。
 
 ## 背景
 
@@ -32,8 +32,11 @@ Supervisor 不随开机加载：每次重启后都要打开安装器表盘点一
 
 ## Band 11
 
-`.155` 上 `boot.lua` 的原生加载器在没有安装器表盘的情况下跑通（`result=0`），但 Manager 注册序列在模拟器里没有走完，原因未查明，所以 Band 11 没有写入
-`boot-persistence.json`，设备报告不支持。
+- Band 11 NuttX 内核无 `insmod`，开机由 `/data/canopus/b` 延时调用 `boot.lua`。
+- `boot.lua` 内嵌 target 专用原生加载器（`native_loader.lua`）与 loader profile，独立加载 `/data/canopus/stage1.bin`、`stage2.bin`、`supervisor.elf` 到 Umem 执行重定位与初始化构造函数。
+- 加载完成后，`boot.lua` 向 `/dev/canopus` 发送 `CANOPUS_CMD_START_BOOT`（25）。
+- Supervisor 的后台定时器（`canopus_sup_l2_background`）在开机后首次点亮屏幕时引导，并在屏幕熄灭时依次推进 5 个启动阶段，完成 Manager 注册、启动器入口发布、清除 `boot.pending`、恢复已启用模块及模块应用发布。
+- Mirage 冷启动冒烟测试（`scripts/emu/boot_smoke.py 155` 与 `179`）验证通过：`result=0`、`exec_ok=true`，`boot.pending` 成功清除，生成 `registry.bin`。`.139` 无后台定时器泵，不支持固化启动。
 
 ## 风险与边界
 

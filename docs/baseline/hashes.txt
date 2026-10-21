@@ -43,9 +43,9 @@ a4bd48523a18aa2c43a3e4aec2fa1a31522b9ff3caa18ce945e57dc194a9cede  targets/xiaomi
 ## elf
 537c77fccc0365eec69501d5c4f81ed82a71dc6c18e12ef761d20a21baa91483  watchfaces/canopus-installer/build/xiaomi-band-10-pro-3.101.036/canopus_supervisor.elf
 5a076f0f962003fc445a85995ca70dedb93d3485d2417a61c6918d95c529642d  watchfaces/canopus-installer/build/xiaomi-band-10-pro-3.101.043/canopus_supervisor.elf
-2f69bada1176a68cb222eb116bdb5943df4a56a50bad69d1250875138f0a4f4e  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.139/canopus_supervisor.elf
-4d33068fb16ae6b5f3914c0bd100bb2694f6372865302fedde0839920f32a902  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.155/canopus_supervisor.elf
-ef3309d45b5a472bbec045b6db720566b0bbdaf6ceb25c1d210edb3bef9e5551  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.179/canopus_supervisor.elf
+5def94b46fd151d70aa686aba271c52be747da8f9f54a6f188c4930c4bd6960b  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.139/canopus_supervisor.elf
+fc214f996eae1950345e3d99d8c6e3fd5f2494cc9eb0ed1180381a4fd3c1fadd  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.155/canopus_supervisor.elf
+349a94a86e47f90956c2114b8556ab8f40cdf0f505d93914a94317c025b256f3  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.179/canopus_supervisor.elf
 c82f7716b6101354885848957cbaee5814f3438e9fe944b1fc06c565a7513c3a  modules/examples/hello/build/xiaomi-band-10-pro-3.101.036/hello.elf
 5009b6c9370cb8684c83ed7056798b357b21a20334d166434e792477605ebf54  modules/examples/hello-portable/build/hello_portable.elf
 318a63137ee2f4c4d5f102b3f91d8b913b7662634c1446a5e264e224ef63b664  sdk/rust/examples/no-heap-counter/build/no_heap_counter.elf

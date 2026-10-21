@@ -156,7 +156,7 @@ def build_stages(out, supervisor, target_id=TARGET):
 
 def resource_names(target):
     return tuple(f"canopus_{kind}-{target}.bin" for kind in
-                 ("loader_profile", "stage1", "stage2", "supervisor"))
+                 ("loader_profile", "stage1", "stage2", "supervisor", "boot"))
 
 
 def bundle_family(out):
@@ -239,11 +239,15 @@ def main():
                            for key,value in (("size",len(data)),("crc",zlib.crc32(data)))})
     profile_lua = "return {\n" + "".join(f"  {k} = {json.dumps(v)},\n" for k,v in native_profile.items())
     profile_lua += "  fingerprints = {\n" + "".join(f"    {{0x{a:08x}, 0x{w:08x}}},\n" for a, w in fingerprints) + "  },\n}\n"
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import generate_boot_config
+    boot_lua = generate_boot_config.boot_payload(args.target, profile_lua)
     main_resource = source.encode("utf-8")
     resources = {"main.lua": main_resource, "manager_icon.bin": (ROOT / "watchfaces/canopus-installer/manager_icon.bin").read_bytes(),
                  f"canopus_loader_profile-{args.target}.bin": profile_lua.encode(),
                  f"canopus_stage1-{args.target}.bin": stage1, f"canopus_stage2-{args.target}.bin": stage2,
-                 f"canopus_supervisor-{args.target}.bin": supervisor}
+                 f"canopus_supervisor-{args.target}.bin": supervisor,
+                 f"canopus_boot-{args.target}.bin": boot_lua.encode("utf-8")}
     manifest = dict(target_id=args.target, firmware_sha256=profile["firmware_sha256"],
                     artifact_kind="exact-target-native-resources", native_loader_status="STATIC_TEST_CANDIDATE",
                     device_status="NOT_PROBED", supervisor_included=True,

@@ -77,9 +77,35 @@ def recover(target):
     print(f"{target}: Flash offset {result['flash_offset']:#x}, {len(patched)} byte tail")
 
 
-def boot_payload():
+def boot_payload(target=None, profile_lua=None):
     source = (ROOT / "watchfaces/canopus-installer-prod/boot.lua").read_text()
-    load = 'assert(run("insmod /data/canopus/supervisor.elf canopus_supervisor"), "insmod failed")'
+    if target and target.startswith("xiaomi-band-11-"):
+        loader = (ROOT / "watchfaces/canopus-installer-prod/xiaomi-band-11/src/native_loader.lua").read_text()
+        if profile_lua is None:
+            profile_path = ROOT / "watchfaces/canopus-installer-prod/xiaomi-band-11" / f"canopus_loader_profile-{target}.bin"
+            if profile_path.exists():
+                profile_lua = profile_path.read_text()
+            else:
+                profile_lua = "return {}\n"
+        load = (
+            "    log(\"boot: invoking native loader for Band 11\")\n"
+            "    local native_loader = (function()\n"
+            f"{loader}\n"
+            "    end)()\n"
+            "    local profile = (function()\n"
+            f"{profile_lua}\n"
+            "    end)()\n"
+            "    local ok, err = native_loader.load(\n"
+            "        profile,\n"
+            "        \"/data/canopus/stage1.bin\",\n"
+            "        \"/data/canopus/stage2.bin\",\n"
+            "        \"/data/canopus/supervisor.elf\",\n"
+            "        run, read_all, write_all, log)\n"
+            "    log(\"boot: native loader finished: ok=\" .. tostring(ok) .. \", err=\" .. tostring(err))\n"
+            "    assert(ok, \"native loader failed: \" .. tostring(err))"
+        )
+    else:
+        load = 'assert(run("insmod /data/canopus/supervisor.elf canopus_supervisor"), "insmod failed")'
     return source.replace("-- @CANOPUS_BOOT_LOAD@", load)
 
 
@@ -106,6 +132,6 @@ if __name__ == "__main__":
     if args.recover:
         recover(args.target)
     elif args.payload:
-        args.output.write_text(boot_payload())
+        args.output.write_text(boot_payload(args.target))
     else:
         generate(args.target, args.output)
