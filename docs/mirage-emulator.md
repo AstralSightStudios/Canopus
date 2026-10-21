@@ -21,8 +21,10 @@
 - `scripts/emu/band11_smoke.py 155|179`：通过；`--services`：`.179` 26/27（仅振动跳过）。
 - `scripts/emu/ui_pages.py 043|155|179`：通过（启动器 > Manager > 模块页面 > 返回）。
 - `scripts/emu/module_smoke.py --module modules/examples/hello-portable 155|179`：通过。
-- Auto-run（G18）在 Mirage 里测不了：设备重启后 Mirage 不会再次启动 Lua 表盘；手机安装并设为当前时，表盘看起来启动了两次，后一次读到了 `autorun.pending` 而把 Auto-run 关掉（观察所得，原因未查）；
-  熄屏后 LVGL 定时器不走，模拟器里熄屏约 8 秒，所以延迟从 10 秒缩到 4 秒（两个安装器）。Auto-run 只有 host Lua 测试（真实 C 栈帧）证据。
+- `scripts/emu/boot_smoke.py`（043，G18）：A 段在原版固件上经 `/dev/bes_flash` 查询、固化、读回脚本、解除；B 段用离线改好启动脚本的 AP 镜像副本冷启动
+  （Mirage 每次启动都从固件包重装 AP 镜像，运行时写入跨重启保不住），不手动加载，Supervisor 自己起来、点亮一次屏幕熄灭后序列走完、`boot.pending` 被清除。
+  导入补丁包时必须用硬链接或复制：Mirage 不跟随符号链接，会把链接本身当成镜像。亮屏时注册 Manager 会使模拟设备复位，熄屏时没问题（ADR-CAN-012）。
+  Band 11 `.155`：`boot.lua` 的原生加载器自己跑通，但 Manager 注册序列没走完，未启用。
 
 ### 本轮实际结果
 

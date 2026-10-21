@@ -4,12 +4,7 @@
 -- Run performs, in order:
 --   NSH mw/exec stage-1 -> stage-2 -> Supervisor constructor
 --   -> apply restored boot intents -> INSTALL 0 -> 1 -> 2.
--- Loading happens only after the explicit Run click, or, when the user switched
--- Auto-run on (off by default), by itself a few seconds after this page starts.
--- /data/canopus/autorun enables it and /data/canopus/autorun.pending exists
--- while an automatic Run is in progress: a Run that never finished (the device
--- reset in the middle of it) is found at the next start and turns Auto-run off
--- instead of repeating. After the Supervisor is
+-- Loading happens only after the explicit Run click. After the Supervisor is
 -- available, registration runs on the same UI thread through LuaLVGL timers.
 -- Each checkpoint paints before the next operation. The native cache/exec
 -- sequence remains synchronous and has no yield inside it.
@@ -443,14 +438,8 @@ local run_attempted = false
 local clear_armed = false
 local runner, operation, current_step
 local progress_count = 0
-local run_button, clear_button, autorun_button, autorun_label
+local run_button, clear_button
 local resources_available = false
-local AUTORUN_FLAG = "/data/canopus/autorun"
-local AUTORUN_PENDING = "/data/canopus/autorun.pending"
-local AUTORUN_DELAY_MS = 4000
-local autorun_active = false  -- the Run in progress was started by Auto-run
-local autorun_timer
-local autorun_notice
 
 local function checkpoint(text) runner.checkpoint(text) end
 local function check(ok, message) if not ok then error(message, 0) end end
@@ -477,38 +466,6 @@ local function write_all(path, content)
     local write_ok, write_result = pcall(file.write, file, content)
     local close_ok, close_result = pcall(file.close, file)
     return write_ok and write_result ~= nil and close_ok and close_result ~= nil
-end
-
-local function path_exists(path)
-    local file = io.open(path, "rb")
-    if not file then return false end
-    file:close()
-    return true
-end
-
-local function remove_file(path)
-    return run("rm " .. path)
-end
-
-local function write_marker(path)
-    run("mkdir /data/canopus")
-    return write_all(path, "1")
-end
-
-local function refresh_autorun_button()
-    autorun_label:set { text = path_exists(AUTORUN_FLAG) and "Auto-run: ON" or "Auto-run: OFF" }
-end
-
--- An automatic Run that ended, however it ended, is no longer pending. One that
--- failed also switches Auto-run off so it cannot repeat at every boot.
-local function settle_autorun(success)
-    if not autorun_active then return end
-    autorun_active = false
-    remove_file(AUTORUN_PENDING)
-    if not success then
-        remove_file(AUTORUN_FLAG)
-        refresh_autorun_button()
-    end
 end
 
 local function load_profile(selected_target)
@@ -712,7 +669,7 @@ local function set_status(text, color)
 end
 
 local function update_buttons()
-    for _, button in ipairs({run_button, autorun_button, clear_button}) do
+    for _, button in ipairs({run_button, clear_button}) do
         if operation or not resources_available or (button == run_button and run_attempted) then
             button:clear_flag(lvgl.FLAG.CLICKABLE)
         else
@@ -796,8 +753,6 @@ end, function(success, message)
     local completed = operation
     operation = nil
     if completed == "startup" then resources_available = success end
-    if completed == "run" then settle_autorun(success) end
-    if completed == "clear" then refresh_autorun_button() end
     if success then
         set_status(message, '#8ff0a4')
     else
@@ -823,10 +778,6 @@ end
 -- Timers must not retain a task after its owning page is destroyed.
 if lvgl.EVENT.DELETE then
     rootbase:onevent(lvgl.EVENT.DELETE, function()
-        if autorun_timer then
-            autorun_timer:delete()
-            autorun_timer = nil
-        end
         runner.cancel()
         native_loader.release()
         operation = nil
@@ -887,22 +838,6 @@ end
 
 run_button = make_button("Run", '#14508a', click_run)
 
-autorun_button, autorun_label = make_button("Auto-run", '#2b5d3a', function()
-    if operation or not resources_available then return end
-    clear_armed = false
-    if path_exists(AUTORUN_FLAG) then
-        remove_file(AUTORUN_FLAG)
-        set_status("Auto-run off")
-    elseif write_marker(AUTORUN_FLAG) then
-        set_status("Auto-run on: Canopus loads itself after the next boot.\n"
-            .. "It turns itself off if a run does not finish.", '#8ff0a4')
-    else
-        set_status("Cannot enable Auto-run", '#ff9a9a')
-    end
-    refresh_autorun_button()
-end)
-refresh_autorun_button()
-
 clear_button = make_button("Clear Env", '#8a1f14', function()
     if operation or not resources_available then return end
     if not clear_armed then
@@ -918,43 +853,11 @@ clear_button = make_button("Clear Env", '#8a1f14', function()
     end)
 end)
 
-local function start_autorun(timer)
-    timer:delete()
-    autorun_timer = nil
-    if operation or run_attempted or not resources_available or supervisor_present() then return end
-    if not write_marker(AUTORUN_PENDING) then
-        set_status("Auto-run skipped: cannot write its marker", '#ff9a9a')
-        return
-    end
-    autorun_active = true
-    if not click_run() then settle_autorun(false) end
-end
-
--- A pending marker at start means the automatic Run of the last boot never
--- finished: leave Auto-run off until it is switched on again.
-if path_exists(AUTORUN_PENDING) then
-    remove_file(AUTORUN_PENDING)
-    remove_file(AUTORUN_FLAG)
-    refresh_autorun_button()
-    autorun_notice = "Auto-run 已关闭：上次自动运行没有完成"
-end
-
 start_operation("startup", function()
     -- os.execute recovery must finish synchronously while initial pmain is
     -- live. Everything below may yield after the entry script returns.
     checkpoint("读取设备安装配置")
     check(select_target(), "Installer profile unavailable")
     check(resources_ready(), "Installer resources unavailable")
-    if not autorun_notice and path_exists(AUTORUN_FLAG) and not supervisor_present() then
-        autorun_timer = lvgl.Timer {
-            period = AUTORUN_DELAY_MS,
-            repeat_count = -1,
-            cb = function(timer)
-                local ok, message = pcall(start_autorun, timer)
-                if not ok then set_status("Auto-run failed: " .. tostring(message), '#ff9a9a') end
-            end,
-        }
-        return "Ready\n" .. tostring(AUTORUN_DELAY_MS // 1000) .. " 秒后自动运行"
-    end
-    return "Ready\n启动校验完成，点击 Run 开始" .. (autorun_notice and ("\n" .. autorun_notice) or "")
+    return "Ready\n启动校验完成，点击 Run 开始"
 end)

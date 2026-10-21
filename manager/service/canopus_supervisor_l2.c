@@ -259,10 +259,9 @@ static void l2_owner_tick(void *timer)
 
 int canopus_sup_l2_background(void (*poll)(void *), void *data)
 {
-    if (!s_owner_running) return CANOPUS_SVC_ERR_STATE;
     s_background_data = data;
     s_background_poll = poll;
-    return 0;
+    return canopus_sup_l2_start();
 }
 
 static void l2_tick(void *timer)

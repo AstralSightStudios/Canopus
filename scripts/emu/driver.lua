@@ -3,6 +3,7 @@
 --   lua /data/canopus/driver.lua install <token>
 --   lua /data/canopus/driver.lua cmd <opname> [slot]
 --   lua /data/canopus/driver.lua cat <path>
+--   lua /data/canopus/driver.lua boot query|set <0|1>
 --   lua /data/canopus/driver.lua diag   (the Manager target's click record)
 -- Speaks CPC2 (the only device protocol) to /dev/canopus and /canopus/install.
 -- Output is line oriented ("@@ key=value ..."); tests parse it on the host.
@@ -79,6 +80,15 @@ elseif op == "cmd" then
     end
     local reply = exchange("/dev/canopus", code, payload, 36)
     show(u32(reply, 28))
+elseif op == "boot" then
+    -- boot query | boot start | boot set 0|1: the pinned-start state kept in the firmware's startup script
+    local reply
+    if a == "query" then reply = exchange("/dev/canopus", 23, nil, 40)
+    elseif a == "start" then reply = exchange("/dev/canopus", 25, nil, 36)
+    else reply = exchange("/dev/canopus", 24, string.pack("<I4", tonumber(b)), 36) end
+    local d = query_device()
+    print(string.format("@@ boot result=%d flags=%d err=%d", u32(reply, 28),
+        #reply >= 40 and u32(reply, 36) or -1, s32(u32(d, 36 + 24))))
 elseif op == "diag" then
     local d = query_device()
     local names = {"build", "clicks", "row", "generation", "key", "event", "sel_before", "sel_after", "detail"}

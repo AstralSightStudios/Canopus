@@ -55,7 +55,7 @@ class Band10Pro:
     wake_taps = [(168, 240), (168, 240)]
     pair_wake = [(168, 240), (168, 240)]
     pair_confirm = (250, 435)
-    run = (168, 168)                  # Run / Auto-run / Clear Env, 72 px apart around the centre
+    run = (168, 168)                  # Run above Clear Env, around the centre
     idle = (168, 440)                 # inert on the installer face
     run_taps = (16, 2.2)
     dot = (168, 22)                   # the notification dot the loaded Supervisor posts
@@ -91,7 +91,7 @@ class Band11:
     wake_taps = [(106, 20)]
     pair_wake = [(106, 260)]
     pair_confirm = (106, 478)
-    run = (106, 355)                  # title, status, then Run / Auto-run / Clear Env
+    run = (106, 383)                  # title, status, then Run / Clear Env
     idle = (106, 300)
     run_taps = (15, 3.0)
     dot = None
@@ -259,6 +259,9 @@ def package_installer(work):
         production = ROOT / "watchfaces/canopus-installer-prod/xiaomi-band-10-pro"
         sources = [production / name for name in
                    ("main.lua", "manager_icon.bin", f"canopus_supervisor-{P.target}.bin")]
+        boot_bin = production / f"canopus_boot-{P.target}.bin"
+        if boot_bin.exists():
+            sources.append(boot_bin)
     for source in sources:
         shutil.copy(source, face / source.name)
     preview_png(face / "preview.png")

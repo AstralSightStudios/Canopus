@@ -22,6 +22,8 @@ static int g_persist_fail;
 static struct canopus_supervisor_v1 *g_sup;
 static uint32_t g_now;
 static int g_loads;
+static int g_removes;
+static int g_persists;
 
 static int u_register(void *c) { (void)c; return 0; }
 static int u_load(void *c, uint32_t i, const char *n, uint32_t cls)
@@ -30,7 +32,7 @@ static int u_load(void *c, uint32_t i, const char *n, uint32_t cls)
     g_loads++;
     return g_load_fail[g_sup->modules[i].active_gen] ? -77 : CANOPUS_STATE_ACTIVE;
 }
-static int u_remove(void *c, uint32_t i) { (void)c; (void)i; return 0; }
+static int u_remove(void *c, uint32_t i) { (void)c; (void)i; g_removes++; return 0; }
 static uint32_t u_now(void *c) { (void)c; return g_now; }
 static int u_pump(void *c, void (*poll)(void *), void *data) { (void)c; (void)poll; (void)data; return 0; }
 static int u_stage(void *c, const char *token, uint32_t stage)
@@ -42,6 +44,7 @@ static int u_persist(void *c, const uint8_t *d, uint32_t n)
 {
     (void)c;
     if (g_persist_fail) return -1;
+    g_persists++;
     canopus_memcpy(g_registry, d, n);
     g_registry_present = 1;
     return 0;
@@ -141,7 +144,7 @@ static void reset(struct canopus_supervisor_v1 *sup)
     g_registry_present = 0;
     g_persist_fail = 0;
     g_now = 1000u;
-    g_loads = 0;
+    g_loads = g_removes = g_persists = 0;
     canopus_supervisor_init(sup, 7, &update_platform, 0);
     g_sup = sup;
 }
@@ -286,6 +289,7 @@ TEST(failed_load_after_update_falls_back_to_previous_generation)
     CHECK_EQ(boot.modules[0].active_gen, 0u);
     CHECK_EQ(boot.modules[0].state, (uint32_t)CANOPUS_STATE_ACTIVE);
     CHECK_EQ((int32_t)boot.error_code, CANOPUS_SUP_ERR_UPDATE_FALLBACK);
+    CHECK_EQ((int32_t)boot.modules[0].activation_error, CANOPUS_SUP_ERR_UPDATE_FALLBACK);
 }
 
 /* A device reset keeps nothing but the registry file. */
@@ -317,8 +321,12 @@ TEST(module_that_never_stays_up_is_disabled_on_the_third_boot)
     CHECK_EQ((int32_t)boot.modules[0].activation_error, CANOPUS_SUP_ERR_UNSTABLE);
     CHECK_EQ(boot.crash_counter, 1u);
     CHECK_EQ(boot.failing_module_id, 1u);
+    CHECK_EQ(boot.module_count, 1u);
+    CHECK_EQ(g_removes, 0);
     power_cycle(&boot);
     CHECK_EQ(g_loads, 2); /* the quarantine is persisted */
+    CHECK_EQ(boot.module_count, 1u);
+    CHECK_EQ(g_removes, 0);
 }
 
 TEST(module_that_stays_up_keeps_loading)
@@ -356,6 +364,7 @@ TEST(unstable_update_rolls_back_to_the_older_generation)
     CHECK_EQ(boot.modules[0].intent, (uint32_t)CANOPUS_SUP_INTENT_ENABLED);
     CHECK_EQ(boot.modules[0].state, (uint32_t)CANOPUS_STATE_ACTIVE);
     CHECK_EQ((int32_t)boot.error_code, CANOPUS_SUP_ERR_UPDATE_FALLBACK);
+    CHECK_EQ((int32_t)boot.modules[0].activation_error, CANOPUS_SUP_ERR_UPDATE_FALLBACK);
 }
 
 TEST(pending_switch_to_invalid_generation_is_abandoned)
@@ -619,11 +628,18 @@ TEST(a_trial_boot_that_does_not_finish_returns_to_safe_mode)
 {
     struct canopus_supervisor_v1 sup, boot;
     install_enabled_v1(&sup);
-    set_registry_boot_word(CANOPUS_SUP_BOOT_SAFE |
-                           (CANOPUS_SAFE_MODE_CRASH << CANOPUS_SUP_BOOT_REASON_SHIFT));
+    set_registry_boot_word(CANOPUS_SUP_CRASH_THRESHOLD << CANOPUS_SUP_BOOT_CRASH_SHIFT);
     power_cycle(&boot);
+    CHECK_EQ(boot.safe_mode_reason, (uint32_t)CANOPUS_SAFE_MODE_CRASH);
+    g_persist_fail = 1;
+    CHECK_EQ(command(&boot, CANOPUS_SUP_CMD_EXIT_SAFE_MODE, CANOPUS_SAFE_EXIT_KEEP),
+             CANOPUS_RESULT_FAILED);
+    CHECK_EQ(boot.crash_counter, CANOPUS_SUP_CRASH_THRESHOLD);
+    CHECK(!boot.exit_pending);
+    g_persist_fail = 0;
     CHECK_EQ(command(&boot, CANOPUS_SUP_CMD_EXIT_SAFE_MODE, CANOPUS_SAFE_EXIT_KEEP),
              CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK_EQ(boot.crash_counter, 0u);
     power_cycle(&boot);   /* the trial: the module runs again */
     CHECK(!boot.safe_mode);
     CHECK(boot.boot_trial);
@@ -657,15 +673,20 @@ TEST(a_trial_boot_that_stays_up_clears_the_trial)
 TEST(rollback_all_asks_modules_with_an_older_generation_to_go_back)
 {
     struct canopus_supervisor_v1 sup, boot;
+    int persists;
     install_enabled_v1(&sup);
     put_next(2, 1);
     CHECK_EQ(install(&sup, "mod.hello"), CANOPUS_RESULT_REBOOT_REQUIRED);
+    sup.crash_counter = CANOPUS_SUP_CRASH_THRESHOLD;
     CHECK_EQ(command(&sup, CANOPUS_SUP_CMD_ENTER_SAFE_MODE, 0), CANOPUS_RESULT_COMPLETED);
     power_cycle(&boot);
     CHECK(boot.safe_mode);
     CHECK(boot.modules[0].pending_switch); /* the staged update, not yet applied */
+    persists = g_persists;
     CHECK_EQ(command(&boot, CANOPUS_SUP_CMD_EXIT_SAFE_MODE, CANOPUS_SAFE_EXIT_ROLLBACK_ALL),
              CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK_EQ(g_persists, persists + 1);
+    CHECK_EQ(boot.crash_counter, 0u);
     CHECK(!boot.modules[0].pending_switch); /* cancelled: the running generation stays */
     power_cycle(&boot);
     CHECK_EQ(boot.modules[0].version, 1u);

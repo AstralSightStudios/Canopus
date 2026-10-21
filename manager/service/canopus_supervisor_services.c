@@ -5,6 +5,7 @@
  */
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
+#include "canopus_supervisor_boot.h"
 #include "canopus_memory.h"
 #include "../../runtime/hook/canopus_hook.h"
 #include "canopus_ui.h"
@@ -1123,6 +1124,8 @@ static void svc_background_pump(void *sup)
 {
     if ((struct canopus_supervisor_v1 *)sup != s_sup || s_timer_dispatching) return;
     s_timer_dispatching = 1;
+    canopus_supervisor_boot_poll(s_sup);
+    canopus_supervisor_stability_poll(s_sup, svc_now(s_sup));
     svc_timers_dispatch(svc_now(s_sup), 1);
     s_timer_dispatching = 0;
 }
@@ -1216,20 +1219,27 @@ static int32_t svc_time_timer_destroy(const struct canopus_context_v1 *ctx, int3
     return CANOPUS_SVC_OK;
 }
 
+static int32_t svc_background_ensure(void)
+{
+    const struct canopus_sup_platform_v1 *pf = s_sup->platform;
+    int32_t rc;
+    if (s_background_pump_started) return CANOPUS_SVC_OK;
+    if (pf->start_background_pump == 0) return CANOPUS_SVC_ERR_UNSUPPORTED;
+    rc = svc_errno(pf->start_background_pump(s_sup->platform_cookie, svc_background_pump, s_sup));
+    if (rc == CANOPUS_SVC_OK) s_background_pump_started = 1;
+    return rc;
+}
+
 static int32_t svc_time_timer_set_background(const struct canopus_context_v1 *ctx,
                                             int32_t timer_id, int background)
 {
-    const struct canopus_sup_platform_v1 *pf = s_sup->platform;
     if (!svc_slot_valid(ctx) || timer_id < 0 || timer_id >= (int32_t)CANOPUS_MAX_TIMERS ||
         !s_timers[timer_id].used || s_timers[timer_id].slot != ctx->slot) {
         return CANOPUS_SVC_ERR_ARGUMENT;
     }
-    if (background && !s_background_pump_started) {
-        int32_t rc;
-        if (pf->start_background_pump == 0) return CANOPUS_SVC_ERR_UNSUPPORTED;
-        rc = svc_errno(pf->start_background_pump(s_sup->platform_cookie, svc_background_pump, s_sup));
+    if (background) {
+        int32_t rc = svc_background_ensure();
         if (rc != CANOPUS_SVC_OK) return rc;
-        s_background_pump_started = 1;
     }
     s_timers[timer_id].background = background != 0;
     return CANOPUS_SVC_OK;
@@ -1279,9 +1289,27 @@ static int32_t svc_pump_ensure(void)
     return CANOPUS_SVC_OK;
 }
 
+int canopus_supervisor_start_background(struct canopus_supervisor_v1 *sup)
+{
+    return sup == s_sup ? svc_background_ensure() : CANOPUS_SVC_ERR_STATE;
+}
+
 int canopus_supervisor_watch_stability(struct canopus_supervisor_v1 *sup)
 {
-    return sup == s_sup ? svc_pump_ensure() : CANOPUS_SVC_ERR_STATE;
+    int32_t rc = CANOPUS_SVC_OK;
+    int started = 0;
+    if (sup != s_sup) return CANOPUS_SVC_ERR_STATE;
+    if (sup->platform->start_background_pump != 0) {
+        rc = svc_background_ensure();
+        if (rc != CANOPUS_SVC_OK) return rc;
+        started = 1;
+    }
+    if (sup->platform->start_timer_pump != 0) {
+        rc = svc_pump_ensure();
+        if (rc != CANOPUS_SVC_OK) return rc;
+        started = 1;
+    }
+    return started ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_UNSUPPORTED;
 }
 
 static int svc_haptics_ready(const struct canopus_context_v1 *ctx)

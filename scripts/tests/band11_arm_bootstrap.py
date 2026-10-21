@@ -457,7 +457,7 @@ class BootstrapTests(unittest.TestCase):
             self.assertEqual(m.call(m.word(m.fops+12)), len(_req))
         self.assertEqual(m.launcher,[0xca])
         self.assertEqual(len(m.notifications), 1)
-        self.assertEqual(m.notifications[0]['body'], 'Canopus 已加载！尽情享受吧～')
+        self.assertEqual(m.notifications[0]['body'], 'Canopus 已加载，管理器可用。')
         self.assertEqual(m.notifications[0]['reminder'], 1)
         page=m.pages[0]
         m.uc.reg_write(UC_ARM_REG_R1,0x200b0000);m.uc.reg_write(UC_ARM_REG_R2,0)

@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-BOOT-PERSIST-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+  "verdict": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "flash_offset": 13394966,
+  "romfs_image_offset": 12586628,
+  "script_header_offset": 21664,
+  "original": "echo \"mount /nv\"\nmount -t littlefs -o autoformat /dev/nv /misc\necho \"mount /mode\"\nmount -t littlefs -o autoformat /dev/mode /mode\noffline_log start -w &\nkvdbd &\nsystem_trace\nmiwear_rtc_checker\n",
+  "patched": "mount -t littlefs -o autoformat /dev/nv /misc\nmount -t littlefs -o autoformat /dev/mode /mode\noffline_log start -w &\nkvdbd &\nsystem_trace\nmiwear_rtc_checker\nsh /data/canopus/b &\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+  "findings": [
+    "Equal-length rc.sysinit data replacement: drops the last two mount echo lines and appends a background Lua start after every mount; only the differing tail is stored.",
+    "The ROMFS inode checksum covers the unchanged 32-byte header/name and the filesystem checksum covers its unchanged first 512 bytes.",
+    "The AP header is version 0x00050000 with no signature block, and no AP-image integrity check was found in vela_bl2.bin strings. Physical boot acceptance is NOT verified.",
+    "/dev/bes_flash is registered as an MTD driver (erase/bread/bwrite/read/ioctl, 8 KiB sectors); a VFS open goes through mtd_proxy and an FTL read-modify-write, flushed on close. Not exercised on hardware."
+  ]
+}

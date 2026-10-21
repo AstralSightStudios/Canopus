@@ -511,6 +511,35 @@ static void setup(struct canopus_supervisor_v1 *sup,
                                         "mod.portable") == 0);
 }
 
+TEST(boot_recovery_notifies_once_after_restore_and_manager_are_ready)
+{
+    struct canopus_supervisor_v1 sup;
+    uint32_t order;
+    for (order = 0u; order < 2u; order++) {
+        setup(&sup, &platform_with_fs);
+        sup.safe_mode = 1u;
+        sup.safe_mode_reason = CANOPUS_SAFE_MODE_CRASH;
+        g_notified = 0;
+        if (order == 0u) canopus_supervisor_boot_ready(&sup);
+        else CHECK_EQ(canopus_supervisor_activate_restored_modules(&sup), 0);
+        advance_time(10u);
+        CHECK_EQ(g_notified, 0);
+        if (order == 0u) CHECK_EQ(canopus_supervisor_activate_restored_modules(&sup), 0);
+        else canopus_supervisor_boot_ready(&sup);
+        advance_time(10u);
+        CHECK_EQ(g_notified, 1);
+        CHECK(strstr(g_notice, "Canopus 安全模式") != 0);
+        CHECK(strstr(g_notice, "模块连续启动失败") != 0);
+        CHECK(strstr(g_notice, "模块仍已安装") != 0);
+        CHECK_EQ(sup.module_count, 1u);
+        CHECK_EQ(s_load_calls, 0);
+        canopus_supervisor_boot_ready(&sup);
+        CHECK_EQ(canopus_supervisor_activate_restored_modules(&sup), 0);
+        advance_time(10u);
+        CHECK_EQ(g_notified, 1);
+    }
+}
+
 TEST(notify_is_titled_by_module_and_rate_limited)
 {
     struct canopus_supervisor_v1 sup;
@@ -695,6 +724,7 @@ TEST(portable_module_registers_through_the_service_and_gets_a_context)
     const struct canopus_context_v1 *ctx;
     setup(&sup, &platform_with_fs);
     sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    sup.modules[0].activation_error = (uint32_t)CANOPUS_SUP_ERR_UPDATE_FALLBACK;
     s_load_hook_registers = 1;
     g_activated_with_ctx = 0;
     words[0] = CANOPUS_SUP_CMD_MAGIC; words[1] = CANOPUS_SUP_CMD_ACTIVATE;
@@ -706,6 +736,7 @@ TEST(portable_module_registers_through_the_service_and_gets_a_context)
     ctx = canopus_supervisor_context(&sup, 0);
     CHECK(g_seen_ctx == ctx);
     CHECK(sup.modules[0].descriptor == &portable_descriptor);
+    CHECK_EQ((int32_t)sup.modules[0].activation_error, CANOPUS_SUP_ERR_UPDATE_FALLBACK);
 }
 
 TEST(register_is_rejected_outside_the_loading_window)
@@ -1087,13 +1118,20 @@ TEST(background_timers_keep_firing_while_the_screen_is_off)
     with_background.start_background_pump = p_start_background_pump;
     g_background_poll = 0;
     setup(&sup, &with_background);
+    sup.boot_state = CANOPUS_BOOT_BOOTING;
+    sup.unstable_modules = 1u;
+    sup.modules[0].watching = 1u;
+    sup.modules[0].started_ms = g_now;
+    sup.modules[0].starts = 1u;
+    CHECK(g_background_poll == 0);
+    CHECK_EQ(canopus_supervisor_watch_stability(&sup), 0);
+    CHECK(g_background_poll != 0);
     ctx = canopus_supervisor_context(&sup, 0u);
     CHECK(canopus_services_has(ctx, CANOPUS_SVC_TIME, 2));
     background = ctx->time->timer_create(ctx, 10u, 1, on_background_timer, 0);
     foreground = ctx->time->timer_create(ctx, 10u, 1, on_foreground_timer, 0);
     CHECK(background >= 0 && foreground >= 0);
     CHECK_EQ(ctx->time->timer_set_background(ctx, 99, 1), CANOPUS_SVC_ERR_ARGUMENT);
-    CHECK(g_background_poll == 0); /* no source is started for nothing */
     CHECK_EQ(ctx->time->timer_set_background(ctx, background, 1), 0);
     CHECK(g_background_poll != 0);
     CHECK_EQ(ctx->time->timer_start(ctx, background), 0);
@@ -1110,6 +1148,10 @@ TEST(background_timers_keep_firing_while_the_screen_is_off)
     CHECK_EQ(ctx->time->timer_set_background(ctx, background, 0), 0);
     advance_time_screen_off(10u);
     CHECK_EQ(s_background_fired, 3);
+    advance_time_screen_off(CANOPUS_SUP_STABLE_MS);
+    CHECK_EQ(sup.unstable_modules, 0u);
+    CHECK_EQ(sup.boot_state, (uint32_t)CANOPUS_BOOT_OK);
+    CHECK_EQ(sup.modules[0].starts, 0u);
 }
 
 TEST(background_timers_are_unsupported_without_a_background_source)
@@ -2182,6 +2224,8 @@ static struct test_registry supervisor_services_tests[] = {
       service_objects_are_exposed_and_functional_wrapper },
     { "context_exposes_groups_by_platform_capability",
       context_exposes_groups_by_platform_capability_wrapper },
+    { "boot_recovery_notifies_once_after_restore_and_manager_are_ready",
+      boot_recovery_notifies_once_after_restore_and_manager_are_ready_wrapper },
     { "notify_is_titled_by_module_and_rate_limited",
       notify_is_titled_by_module_and_rate_limited_wrapper },
     { "mem_is_uncapped_owned_and_released",

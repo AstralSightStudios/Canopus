@@ -20,14 +20,10 @@ All three variants use this workflow:
 4. **Clear Env** requires two clicks and removes `/data/canopus` only after the
    explicit confirmation.
 
-The Band 10 Pro and Band 11 installers also have an **Auto-run** switch (off by
-default) that performs Run by itself about four seconds after the watchface starts (shorter than the screen-off timeout, because LVGL timers stop with the screen off),
-so Canopus no longer needs a click after every reboot. It only helps when this
-watchface is the one shown after boot. `/data/canopus/autorun` holds the switch and
-`/data/canopus/autorun.pending` exists while an automatic Run is in progress: if
-the device resets before the Run finishes, the next start finds the marker and
-turns Auto-run off instead of repeating, and a Run that fails cleanly turns it off
-too. Switch it on again to retry. It has not been run on a device.
+On the Band 10 Pro, Run also leaves what a pinned start reads in `/data/canopus/`
+(`supervisor.elf`, `boot.lua`, `b`, `boot.target`). Pinning itself is done from the
+AstroBox Canopus page (ADR-CAN-012), never from the watchface; the watchface has no
+Auto-run switch any more.
 
 Build all packaged targets with:
 

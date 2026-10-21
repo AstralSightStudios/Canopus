@@ -56,6 +56,7 @@ echo "[1/3] compile supervisor (Cortex-M33 Thumb soft-float)"
 # is btpatch's proven configuration for a boot-resident constructor module.
 # Backend selection follows the exact target configuration, not a user opt-in.
 python3 "$ROOT/scripts/generate_l2_probe_config.py" "$TARGET_ID" "$OUT/canopus_l2_probe_config.h"
+python3 "$ROOT/scripts/generate_boot_config.py" "$TARGET_ID" "$OUT/canopus_boot_config.h"
 TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
   -ffreestanding -fno-common -fno-builtin -fno-jump-tables \
   -fno-stack-protector -fno-unwind-tables -fno-asynchronous-unwind-tables \
@@ -75,6 +76,7 @@ INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
 # helpers into the module; both are freestanding (no libc).
 for s in \
     manager/service/canopus_supervisor.c \
+    manager/service/canopus_supervisor_boot.c \
     manager/service/canopus_supervisor_services.c \
     manager/service/canopus_supervisor_upload.c \
     manager/service/canopus_supervisor_connect.c \
@@ -104,6 +106,7 @@ echo "[2/3] relocatable link (ld.lld -r)"
 ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     -o "$OUT/canopus_supervisor.elf" \
     "$OUT/canopus_supervisor.o" \
+    "$OUT/canopus_supervisor_boot.o" \
     "$OUT/canopus_supervisor_services.o" \
     "$OUT/canopus_supervisor_upload.o" \
     "$OUT/canopus_supervisor_connect.o" \
@@ -127,8 +130,9 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     $LOADER_OBJECTS
 
 # Drop unreferenced debug/local symbol metadata on stock-modlib targets. Keep
-# all relocation targets, global exports and constructors; runtime sections
-# remain byte-identical. This keeps the additional installer endpoint within
+# all relocation targets, global exports and constructors. The per-function
+# "cannot unwind" table (.ARM.exidx) is dead weight in a C module: about 8 KiB
+# between the table and its relocations. This keeps the additional installer endpoint within
 # the existing 72 KiB package budget without increasing that budget.
 if [ "$PROD_FAMILY" = xiaomi-band-10-pro ]; then
     OBJCOPY=${OBJCOPY:-${RUST_OBJCOPY:-}}
@@ -150,7 +154,9 @@ if [ "$PROD_FAMILY" = xiaomi-band-10-pro ]; then
     RUST_SYSROOT=$(rustc --print sysroot 2>/dev/null || true)
     env DYLD_FALLBACK_LIBRARY_PATH="${RUST_SYSROOT}/lib${DYLD_FALLBACK_LIBRARY_PATH:+:$DYLD_FALLBACK_LIBRARY_PATH}" \
         LD_LIBRARY_PATH="${RUST_SYSROOT}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-        "$OBJCOPY" --strip-debug --strip-unneeded "$OUT/canopus_supervisor.elf" \
+        "$OBJCOPY" --strip-debug --strip-unneeded \
+            --remove-section=.ARM.exidx --remove-section=.rel.ARM.exidx \
+            "$OUT/canopus_supervisor.elf" \
             "$OUT/canopus_supervisor.stripped.elf"
     mv "$OUT/canopus_supervisor.stripped.elf" "$OUT/canopus_supervisor.elf"
 fi
@@ -183,6 +189,7 @@ else
     mkdir -p "$PROD_FAMILY_STAGE"
     PROD_TARGET_STAGE="$PROD_FAMILY_STAGE/canopus_supervisor-$TARGET_ID.bin"
     cp "$OUT/canopus_supervisor.elf" "$PROD_TARGET_STAGE"
+    python3 "$ROOT/scripts/generate_boot_config.py" "$TARGET_ID" "$PROD_FAMILY_STAGE/canopus_boot-$TARGET_ID.bin" --payload
     echo "staged canopus-installer-prod/$PROD_FAMILY/$(basename "$PROD_TARGET_STAGE")"
 fi
 rm -f "$ROOT/watchfaces/canopus-installer/canopus_supervisor.bin" \

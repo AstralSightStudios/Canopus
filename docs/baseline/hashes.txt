@@ -41,11 +41,11 @@ a4bd48523a18aa2c43a3e4aec2fa1a31522b9ff3caa18ce945e57dc194a9cede  targets/xiaomi
 2a2a6b97e7cd9aadc2408a034aecd463a7f0c30ffe2c2a33dfd60bc28b13b89e  targets/xiaomi-band-11-4.100.179/generated/canopus_target_config.h
 54758b1d2d5fb6045799696297b555f49736a65d294664ecad6f861f9da6b263  targets/xiaomi-band-11-4.100.179/generated/canopus_veneer.h
 ## elf
-e3917fadad4c2437b836bb9d6efccef160617428082ffb69fbe1294f1a8f07ab  watchfaces/canopus-installer/build/xiaomi-band-10-pro-3.101.036/canopus_supervisor.elf
-8f53965ed30be0ee136fdd91f1bdf8331685db9790af0fe3fd5568e3fa418b7e  watchfaces/canopus-installer/build/xiaomi-band-10-pro-3.101.043/canopus_supervisor.elf
-8f036782968c0ae91ca4fada3c93b104f09fdbad37301a9a6cdf8bdf5d1b0e6e  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.139/canopus_supervisor.elf
-d7c3b91c8137b53f4df2e37b2d1f211fbea0bae6551a1a072d52a83b2cb5da21  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.155/canopus_supervisor.elf
-7ec98439090acfffcec39130b58435589b1e183ed91b3a0416d119ff6eab4cc6  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.179/canopus_supervisor.elf
+537c77fccc0365eec69501d5c4f81ed82a71dc6c18e12ef761d20a21baa91483  watchfaces/canopus-installer/build/xiaomi-band-10-pro-3.101.036/canopus_supervisor.elf
+5a076f0f962003fc445a85995ca70dedb93d3485d2417a61c6918d95c529642d  watchfaces/canopus-installer/build/xiaomi-band-10-pro-3.101.043/canopus_supervisor.elf
+2f69bada1176a68cb222eb116bdb5943df4a56a50bad69d1250875138f0a4f4e  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.139/canopus_supervisor.elf
+4d33068fb16ae6b5f3914c0bd100bb2694f6372865302fedde0839920f32a902  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.155/canopus_supervisor.elf
+ef3309d45b5a472bbec045b6db720566b0bbdaf6ceb25c1d210edb3bef9e5551  watchfaces/canopus-installer/build/xiaomi-band-11-4.100.179/canopus_supervisor.elf
 c82f7716b6101354885848957cbaee5814f3438e9fe944b1fc06c565a7513c3a  modules/examples/hello/build/xiaomi-band-10-pro-3.101.036/hello.elf
 5009b6c9370cb8684c83ed7056798b357b21a20334d166434e792477605ebf54  modules/examples/hello-portable/build/hello_portable.elf
 318a63137ee2f4c4d5f102b3f91d8b913b7662634c1446a5e264e224ef63b664  sdk/rust/examples/no-heap-counter/build/no_heap_counter.elf

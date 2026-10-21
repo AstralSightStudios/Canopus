@@ -174,8 +174,7 @@ struct canopus_sup_platform_v1 {
 
 int canopus_sup_l2_start(void);
 void canopus_sup_l2_poll(void);
-/* Runs `poll` on every tick of the L2 owner timer, which keeps going while the
- * screen is off. STATE until that timer is running, UNSUPPORTED without L2. */
+/* Registers `poll` on the L2 owner timer, bootstrapping that timer if needed. */
 int canopus_sup_l2_background(void (*poll)(void *), void *data);
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len);
 int sup_l2_event(void *cookie, const void *frame, uint16_t len);

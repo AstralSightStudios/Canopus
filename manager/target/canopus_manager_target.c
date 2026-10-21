@@ -273,7 +273,6 @@ static const char page_name_module_ui[] = "module_ui";
 static const char display_name[] = "Canopus 管理器";
 #ifndef CANOPUS_MGR_BAND11
 static const char notification_title[] = "Canopus";
-static const char notification_body[] = "Canopus 已加载！尽情享受吧～";
 static const char module_notification_body[] =
     "新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。";
 /* The watchface bootstrap stages the LVGL v9 ARGB8888 bin (alpha preserved)
@@ -431,6 +430,7 @@ static int target_refresh_model(void)
     }
     manager_model.framework_revision = device.framework_revision;
     manager_model.safe_mode = device.safe_mode;
+    manager_model.safe_mode_reason = device.safe_mode_reason;
     manager_model.error_code = device.error_code;
     manager_model.supervisor_flags = device.flags;
     manager_model.reported_module_count = device.module_count;
@@ -1227,30 +1227,9 @@ _Static_assert(sizeof(struct band11_notification_context) == 16,
                "notification context size");
 _Static_assert(offsetof(struct band11_notification_context, focus_version) == 13,
                "notification focus version offset");
-static struct band11_notification_context loaded_notification_context;
 static struct band11_notification_context module_notification_context;
 
 #endif /* CANOPUS_MGR_BAND11 */
-static const struct firmware_notification_message loaded_notification = {
-    .message_id = UINT64_C(0x43414E4F50555301),
-#ifndef CANOPUS_MGR_BAND11
-    .title = notification_title,
-    .source = notification_title,
-    .body = notification_body,
-    .small_icon_path = notification_icon,
-    .large_icon_path = notification_icon,
-#else /* CANOPUS_MGR_BAND11 */
-    .title = "Canopus",
-    .source = "Canopus",
-    .body = "Canopus 已加载！尽情享受吧～",
-    .small_icon_path = (void *)launcher_icon,
-    .large_icon_path = (void *)launcher_icon,
-#endif /* CANOPUS_MGR_BAND11 */
-    .start_reminder = 1u,
-#ifdef CANOPUS_MGR_BAND11
-    .callback_data = &loaded_notification_context,
-#endif /* CANOPUS_MGR_BAND11 */
-};
 
 static const struct firmware_notification_message module_notification = {
     .message_id = UINT64_C(0x43414E4F50555302),
@@ -1412,8 +1391,6 @@ int canopus_manager_native_install(void)
     typedef void *(*app_lookup_fn)(uint16_t);
 #ifndef CANOPUS_MGR_BAND11
     typedef int (*launcher_add_fn)(uint16_t);
-    typedef int (*notification_insert_fn)(
-        const struct firmware_notification_message *);
 #else /* CANOPUS_MGR_BAND11 */
     typedef void (*launcher_add_fn)(uint16_t);
 #endif /* CANOPUS_MGR_BAND11 */
@@ -1423,8 +1400,6 @@ int canopus_manager_native_install(void)
 #ifndef CANOPUS_MGR_BAND11
     launcher_add_fn launcher_add =
         (launcher_add_fn)(uintptr_t)FW_LAUNCHER_ADD;
-    notification_insert_fn notification_insert =
-        (notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT;
 #else /* CANOPUS_MGR_BAND11 */
     launcher_add_fn launcher_add = (launcher_add_fn)(uintptr_t)FW_APP_LAUNCHER_ADD;
 #endif /* CANOPUS_MGR_BAND11 */
@@ -1441,10 +1416,10 @@ int canopus_manager_native_install(void)
 #else /* CANOPUS_MGR_BAND11 */
             *(const char **)((uint8_t *)installed_app + 12u);
 #endif /* CANOPUS_MGR_BAND11 */
-        return installed_package != NULL &&
-                       strings_differ(installed_package, package_name) == 0
-                   ? 0
-                   : -101;
+        if (installed_package == NULL ||
+            strings_differ(installed_package, package_name) != 0) return -101;
+        canopus_supervisor_boot_ready(canopus_supervisor_get());
+        return 0;
     }
 
     target_descriptor_init(CANOPUS_TARGET_PAGE_OVERVIEW, page_name_overview,
@@ -1474,11 +1449,6 @@ int canopus_manager_native_install(void)
     launcher_add(CANOPUS_MANAGER_TARGET_APP_ID);
     canopus_manager_target_record.launcher_add_result = 0;
 #endif /* CANOPUS_MGR_BAND11 */
-    canopus_manager_target_record.notification_result =
-#ifndef CANOPUS_MGR_BAND11
-        notification_insert(&loaded_notification);
-#else /* CANOPUS_MGR_BAND11 */
-        target_notify(&loaded_notification);
-#endif /* CANOPUS_MGR_BAND11 */
+    canopus_supervisor_boot_ready(canopus_supervisor_get());
     return 0;
 }

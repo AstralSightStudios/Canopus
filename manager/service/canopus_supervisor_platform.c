@@ -1903,7 +1903,7 @@ static int sup_start_timer_pump(void *cookie, void (*poll)(void *), void *data)
 #define SUP_TIMER_PUMP 0
 #endif
 
-#if CANOPUS_SUP_HAS_L2
+#if CANOPUS_SUP_HAS_L2 && !defined(CANOPUS_SUP_HEADLESS)
 static int sup_start_background_pump(void *cookie, void (*poll)(void *), void *data)
 {
     (void)cookie;

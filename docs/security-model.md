@@ -70,7 +70,8 @@
   `CANOPUS_SUP_STABLE_MS`（60 s）后才清零。设备在此之前复位，计数就留在磁盘上；连续 `CANOPUS_SUP_START_LIMIT`（2）次没有稳定，
   下一次开机不再加载它：存在更老的一代就退回那一代（`UPDATE_FALLBACK`），否则禁用并记 `CANOPUS_SUP_ERR_UNSTABLE`；crash counter 与失败模块一并记录。
   重新「启用」会重新计数。它抓得到构造函数、`activate` 和稳定窗口内的崩溃，抓不到窗口之后才触发的崩溃。
-- 安装器的 Auto-run（默认关闭）有同样性质的保护：自动 Run 开始前写 `autorun.pending`，下次启动发现它还在就关闭 Auto-run。
+- 固化启动（ADR-CAN-012，默认不固化）有同样性质的保护：`boot.lua` 每次尝试前把计数写进 `boot.pending`，Manager 注册成功后才由 Supervisor 清除；连续 3 次没走到这一步就不再自动尝试。
+- **用户看得见：** 自动停用（`UNSTABLE`）和自动回退（`UPDATE_FALLBACK`）的模块仍保留在列表里，管理器与 AstroBox 在模块旁写明原因；启动后发一条通知说明进入了安全模式（含原因）或哪个模块被自动处理。
 - **已实现：全局 safe mode（host 测试，未上真机）。** 注册表头（偏移 12，原为保留字）保存全局启动标记：未完成启动次数、
   safe 位与原因、trial 位、BOOTING 位、模块隔离计数。有模块要在开机时启动时先写 BOOTING，所有被监视的模块稳定运行
   `CANOPUS_SUP_STABLE_MS` 后写回 OK。下次 Supervisor 加载时：
@@ -84,8 +85,9 @@
 - **退出路径：** `EXIT_SAFE_MODE`（CPC2 `CANOPUS_CMD_EXIT_SAFE_MODE`，负载 u32 动作）：`KEEP` 清各模块启动计数；`DISABLE_ALL` 关闭所有模块；
   `ROLLBACK_ALL` 对每个模块请求回退。它写下 trial 标记并返回 REBOOT_REQUIRED，本次运行仍是 safe mode。下一次启动正常加载；
   如果这次启动没能到 OK（重置、断电），直接回到 safe mode。Manager 在 safe mode 里显示状态行，并提供「退出安全模式」与「退出并停用全部模块」，
-  都先确认。`ENTER_SAFE_MODE` 现在同样落盘。
-- **限制：** 这条链依赖 Supervisor 已被加载：Supervisor 本身在加载前就崩溃的情形（stage 1/2 或构造函数），标记还没机会写，这由安装器 Auto-run 的 `autorun.pending` 保护。
+  都先确认。`ENTER_SAFE_MODE` 现在同样落盘。退出时同时清零触发阈值的崩溃计数（否则下次启动会立刻再进 safe mode），"全部回滚"只对有旧版本的模块生效并与其余动作一次写盘，
+  写盘失败时恢复内存状态并返回失败，不声称已安排退出。
+- **限制：** 这条链依赖 Supervisor 已被加载：Supervisor 本身在加载前就崩溃的情形（stage 1/2 或构造函数），标记还没机会写，这由固化启动的 `boot.pending` 计数保护。
 - safe mode 只允许 query/diagnostics/next-boot/rollback/remove-pending；
   install/enable/load/update activation 一律 DISALLOWED。
 - 退出 safe mode = 先选 recovery action，写 next-boot trial，成功 READY 后才清除；

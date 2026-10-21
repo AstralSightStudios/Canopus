@@ -31,6 +31,8 @@
 #define UI_KEY_SAFE_MODE          34u
 #define UI_KEY_EXIT_SAFE_KEEP     35u
 #define UI_KEY_EXIT_SAFE_DISABLE  36u
+#define UI_KEY_SAFE_SECTION       37u
+#define UI_KEY_SAFE_EXPLANATION   38u
 #define UI_KEY_DETAIL_ENABLE     212u
 #define UI_KEY_DETAIL_DISABLE    213u
 #define UI_KEY_DETAIL_REMOVE     214u
@@ -245,18 +247,34 @@ static void format_operation_result(const struct canopus_manager_model_v1 *model
     used = append_string(out, used, 48u, ")", 1u);
 }
 
-static void format_module_detail(const struct canopus_manager_module_v1 *module,
+static const char *safe_mode_reason_name(uint32_t reason)
+{
+    switch (reason) {
+    case 1u: return "用户主动进入";
+    case 2u: return "模块连续启动失败";
+    case 3u: return "上次启动未完成";
+    case 4u: return "模块注册表损坏";
+    case 5u: return "框架协议不匹配";
+    default: return "原因未知";
+    }
+}
+
+static void format_module_detail(const struct canopus_manager_model_v1 *model,
+                                 const struct canopus_manager_module_v1 *module,
                                  char out[64])
 {
     uint32_t used = 0;
-    /* INSTALLED is the disabled-by-default state; say so explicitly so a
-     * freshly installed module is never mistaken for an enabled one. */
-    const char *state = module->state == CANOPUS_STATE_INSTALLED
-                            ? "已安装（已禁用）"
-                            : manager_state_name(module->state);
+    const char *state = model->safe_mode ? "安全模式，暂不加载" :
+        module->activation_error == -25 ? "因连续启动失败已停用" :
+        module->state == CANOPUS_STATE_INSTALLED ? "已安装（已禁用）" :
+        manager_state_name(module->state);
     out[0] = '\0';
-    used = append_string(out, used, 64u, state, 32u);
-    used = append_string(out, used, 64u, " / 版本 ", sizeof(" / 版本 ") - 1u);
+    if (module->activation_error == -22) {
+        used = append_string(out, used, 64u, "已自动回退到版本 ", sizeof("已自动回退到版本 ") - 1u);
+    } else {
+        used = append_string(out, used, 64u, state, 32u);
+        used = append_string(out, used, 64u, " / 版本 ", sizeof(" / 版本 ") - 1u);
+    }
     (void)append_u32(out, used, 64u, module->version);
 }
 
@@ -313,6 +331,29 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
     format_framework(model->framework_revision, framework);
     format_overview(model, modules);
 
+    if (model->safe_mode) {
+        rc = CANOPUS_UI_SECTION(tree, UI_KEY_SAFE_SECTION, "安全模式");
+        if (rc != CANOPUS_UI_OK) return rc;
+        rc = append_status(tree, UI_KEY_SAFE_MODE, "原因", sizeof("原因") - 1u,
+                           safe_mode_reason_name(model->safe_mode_reason), 32u);
+        if (rc != CANOPUS_UI_OK) return rc;
+        rc = append_text(tree, UI_KEY_SAFE_EXPLANATION,
+                         "模块仍已安装，本次暂不加载。",
+                         sizeof("模块仍已安装，本次暂不加载。") - 1u, 0u);
+        if (rc != CANOPUS_UI_OK) return rc;
+        rc = append_action(tree, UI_KEY_EXIT_SAFE_KEEP, "退出安全模式",
+                           sizeof("退出安全模式") - 1u,
+                           "重启后保持模块原状态试运行", sizeof("重启后保持模块原状态试运行") - 1u,
+                           CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP, 1);
+        if (rc != CANOPUS_UI_OK) return rc;
+        rc = append_action(tree, UI_KEY_EXIT_SAFE_DISABLE, "退出并停用全部模块",
+                           sizeof("退出并停用全部模块") - 1u,
+                           "重启后不加载任何模块", sizeof("重启后不加载任何模块") - 1u,
+                           CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE, 1);
+        if (rc != CANOPUS_UI_OK) return rc;
+        rc = CANOPUS_UI_END(tree);
+        if (rc != CANOPUS_UI_OK) return rc;
+    }
     rc = CANOPUS_UI_SECTION(tree, UI_KEY_SYSTEM_SECTION, "系统信息");
     if (rc != CANOPUS_UI_OK) return rc;
     rc = append_status(tree, UI_KEY_FRAMEWORK, "框架", sizeof("框架") - 1u,
@@ -330,11 +371,6 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
     rc = append_status(tree, UI_KEY_TARGET, "目标设备", sizeof("目标设备") - 1u,
                        model->target_id, sizeof(model->target_id));
     if (rc != CANOPUS_UI_OK) return rc;
-    if (model->safe_mode) {
-        rc = append_status(tree, UI_KEY_SAFE_MODE, "安全模式", sizeof("安全模式") - 1u,
-                           "已开启，不运行任何模块", sizeof("已开启，不运行任何模块") - 1u);
-        if (rc != CANOPUS_UI_OK) return rc;
-    }
     if (model->error_code != 0 || model->supervisor_flags != 0u) {
         char errtext[48];
         char errno_text[16];
@@ -395,18 +431,6 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
                        modules, sizeof(modules),
                        CANOPUS_MANAGER_EVENT_SHOW_MODULES, 1);
     if (rc != CANOPUS_UI_OK) return rc;
-    if (model->safe_mode) {
-        rc = append_action(tree, UI_KEY_EXIT_SAFE_KEEP, "退出安全模式",
-                           sizeof("退出安全模式") - 1u,
-                           "重启后保持模块原状态试运行", sizeof("重启后保持模块原状态试运行") - 1u,
-                           CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP, 1);
-        if (rc != CANOPUS_UI_OK) return rc;
-        rc = append_action(tree, UI_KEY_EXIT_SAFE_DISABLE, "退出并停用全部模块",
-                           sizeof("退出并停用全部模块") - 1u,
-                           "重启后不加载任何模块", sizeof("重启后不加载任何模块") - 1u,
-                           CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE, 1);
-        if (rc != CANOPUS_UI_OK) return rc;
-    }
     rc = append_action(tree, UI_KEY_INSTALL, "安装软件包", sizeof("安装软件包") - 1u,
                        native->stage_token[0] != '\0' ?
                            "已验证待安装包" : "没有待安装包",
@@ -440,7 +464,7 @@ static int32_t render_module_list(struct canopus_manager_native_v1 *native,
         const char *label = module->module_id[0] ? module->module_id : "未命名模块";
         uint32_t label_cap = module->module_id[0] ? sizeof(module->module_id) : sizeof("未命名模块") - 1u;
         char detail[64];
-        format_module_detail(module, detail);
+        format_module_detail(model, module, detail);
         rc = append_action(tree, UI_KEY_MODULE_BASE + i, label, label_cap,
                            detail, sizeof(detail),
                            CANOPUS_MANAGER_EVENT_OPEN_MODULE_BASE + i, 1);
@@ -460,7 +484,7 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
         return CANOPUS_UI_ERR_STATE;
     }
     module = &model->modules[model->selected];
-    format_module_detail(module, state);
+    format_module_detail(model, module, state);
 
     rc = CANOPUS_UI_SECTION(tree, UI_KEY_DETAIL_SECTION, "模块状态");
     if (rc != CANOPUS_UI_OK) return rc;
@@ -470,7 +494,8 @@ static int32_t render_module_detail(struct canopus_manager_native_v1 *native,
     rc = append_status(tree, UI_KEY_DETAIL_CLASS, "生命周期", sizeof("生命周期") - 1u,
                        lifecycle_name(module->lifecycle_class), 32u);
     if (rc != CANOPUS_UI_OK) return rc;
-    if (module->activation_error != 0) {
+    if (module->activation_error != 0 && module->activation_error != -22 &&
+        module->activation_error != -25) {
         char error[48];
         format_error(module->activation_error, error);
         rc = append_status(tree, UI_KEY_DETAIL_ERROR, "模块错误", sizeof("模块错误") - 1u,

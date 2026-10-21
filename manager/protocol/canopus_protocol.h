@@ -49,6 +49,9 @@ enum canopus_command {
     CANOPUS_CMD_CONNECT_MESSAGE, /* device -> phone EVENT: kind, id, data */
     /* Leave safe mode at the next boot (payload: u32 canopus_safe_exit_action). */
     CANOPUS_CMD_EXIT_SAFE_MODE,
+    CANOPUS_CMD_QUERY_BOOT,
+    CANOPUS_CMD_SET_BOOT,
+    CANOPUS_CMD_START_BOOT,
 };
 
 struct canopus_proto_request_v1 {

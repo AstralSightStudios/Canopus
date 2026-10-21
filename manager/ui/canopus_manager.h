@@ -68,6 +68,7 @@ struct canopus_manager_model_v1 {
     uint32_t selected;        /* index into modules */
     uint32_t view;            /* canopus_manager_view */
     uint32_t safe_mode;       /* 1 = safe mode requested/active */
+    uint32_t safe_mode_reason;
     /* Last supervisor error_code (CANOPUS_SUP_ERR_*), negative on failure.
      * A non-zero value is surfaced on the overview so a silently-failed
      * registry save/restore or package stage is visible, not just a returned

@@ -487,6 +487,10 @@ TEST(manager_native_shows_safe_mode_state_without_a_way_in_and_enforces_it)
     canopus_memset(&backend, 0, sizeof(backend));
     canopus_manager_init(&model, native_transport, 0);
     model.safe_mode = 1u;
+    model.safe_mode_reason = 2u;
+    add_native_module(&model, CANOPUS_LIFECYCLE_REMOVABLE);
+    model.modules[0].state = CANOPUS_STATE_INSTALLED;
+    model.modules[0].activation_error = -25;
     CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
                                       &backend) == CANOPUS_UI_OK);
     CHECK(canopus_manager_native_set_stage_token(&native, "pkg-001") ==
@@ -498,11 +502,26 @@ TEST(manager_native_shows_safe_mode_state_without_a_way_in_and_enforces_it)
     /* The state is shown (the device may have entered it on its own) with the
      * ways out, never a control to enter it. */
     CHECK(find_primary(snapshot, "安全模式") != 0);
+    CHECK(find_primary(snapshot, "模块仍已安装，本次暂不加载。") != 0);
+    {
+        const struct canopus_ui_node_v1 *reason = find_primary(snapshot, "原因");
+        CHECK(reason != 0);
+        CHECK(strcmp(snapshot->strings + reason->secondary_off, "模块连续启动失败") == 0);
+    }
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP) != 0);
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE) != 0);
     install = find_event(snapshot, CANOPUS_MANAGER_EVENT_INSTALL);
     CHECK(install != 0);
     CHECK((install->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u);
+    CHECK(canopus_manager_goto(&model, CANOPUS_MANAGER_VIEW_MODULE_LIST, 0u) == 0);
+    CHECK(canopus_manager_native_render(&native) == CANOPUS_UI_OK);
+    snapshot = canopus_ui_current(&native.ui);
+    CHECK(find_primary(snapshot, "mod.hello") != 0);
+    model.safe_mode = 0u;
+    CHECK(canopus_manager_native_render(&native) == CANOPUS_UI_OK);
+    snapshot = canopus_ui_current(&native.ui);
+    CHECK(strstr(snapshot->strings + find_primary(snapshot, "mod.hello")->secondary_off,
+                  "因连续启动失败已停用") != 0);
 }
 
 TEST(manager_native_router_receives_navigation_routes)

@@ -74,6 +74,7 @@
 | K16 | 所选 target 已实现的功能随普通构建默认包含，不再要求额外实验启用参数；L2 后端由 exact-target 配置自动选择，构建默认值不提升符号或真机能力状态 | 2026-10-17 |
 | K18 | 生产就绪整改（2026-10-20，真机验证除外）：Supervisor 常驻内存由 KV 缓存（545 KiB）改为按文件流式并加常驻体积门槛；模块开机启动计数与崩溃循环隔离；portable 按 loader 能力打包；模块启动器入口（ADR-CAN-011）；安装器 Auto-run（默认关闭）；后台 timer（time 组版本 2）；商店清单 `canopus` 兼容元数据（P5.7 客户端）。均只算 host/emulator 级证据，不提升任何能力状态 | 2026-10-20 |
 | K19 | 收尾整改（2026-10-20，真机验证除外）：适配 Band 11 `4.100.179`（以已审核的 `.155` 包为基线，匹配器 + 反编译复核 + 调用关系/位置核对，人工纠正 1 处误匹配；全部记录 restricted/PENDING，不继承任何批准或真机证明，见 `targets/xiaomi-band-11-4.100.179/loader/README.md`）；全局 safe mode（启动标记写进注册表头，自动进入、重启保持、`EXIT_SAFE_MODE` 退出与 trial 试运行，Manager 提供退出入口）；CreatorConsole 与 AstroBox-NG 的商店 `canopus` 元数据（P5.7）；043 冒烟完整通过（含手机端 phone flow，P5.2 的超时不再复现）。均只算 host/emulator 级证据 | 2026-10-20 |
+| K20 | 固化启动取代页面延时 Auto-run（ADR-CAN-012）：默认不固化，AstroBox Canopus 页确认后 Supervisor 经 `/dev/bes_flash` 改写 `rc.sysinit` 的一段等长差异尾段，仅 Band 10 Pro `.043`（Mirage 冷启动验证，无真机）；安全模式与自动停用/回退对用户可见（管理器、启动通知、AstroBox）；修复退出安全模式不清崩溃计数；Band 10 构建去掉 `.ARM.exidx`；线程/工作队列的评估结论见 progress.md | 2026-10-21 |
 | K17 | 放弃 Band 11 `4.100.177`（缺固件镜像、适配不完整），整体移除其 target、Rust 绑定、测试与脚本；Band 11 改为适配 `4.100.179`（q66tc 完整包）。177 上的授权清单（calendar alpha 等）随目录删除，179 须重新取得用户授权，不继承；历史行与证据出处文字保留，可由 git 历史找回 | 2026-10-20 |
 
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
@@ -111,7 +112,7 @@
 | P1 | Target/地址单一来源；移除 P65；冻结 Band 9 | [x] | P0 |
 | P2 | ABI/SDK：服务表、协议收敛、移除签名、Rust 整理 | [x] | P0.1–P0.4；P2.4 起依赖 P1.3 |
 | P3 | 统一打包 + 文档 | [x] | P1、P2.1 |
-| P4 | 设备端更新语义 + 开机自启调查 | [x]（P4.0：Auto-run 已实现为可选开关，默认关闭，待真机验证） | P0.1、P0.2（不依赖 P5） |
+| P4 | 设备端更新语义 + 开机自启调查 | [x]（P4.0：固化启动（`.043`，用户确认才写闪存），待真机验证） | P0.1、P0.2（不依赖 P5） |
 | P5 | 手机端管理（AstroBox-NG） | [x]（.043/.155/.179 后端已默认内置；商店元数据与发布校验已完成；真机验证待做） | P5.0（O1）、P2.5、P3.3 |
 | P6 | Mirage 模拟器调试 | [x]（043 冒烟 + Band 11 155/179 端到端全通） | P6.0、P6.2、P3 |
 
@@ -221,7 +222,7 @@
   去签名、新回执、协议变更，以及能否转为 portable。
 
 ### P4 设备端更新语义
-- [~] P4.0 开机自动加载调查（K10；2026-10-20 按方向(1)实现为安装器的 Auto-run 开关，默认关闭，带"上次自动运行是否完成"标记，Lua 测试覆盖；没有真机证据，表盘必须是开机后显示的表盘才有用，所以默认仍是手动 Run + 手机端提示）。**静态结论（043 IDB，2026-10-14）**：
+- [~] P4.0 开机自动加载（K10；2026-10-21 的 Auto-run 页面延时方案已删除，换成**固化启动**，ADR-CAN-012：Band 10 Pro `.043`，用户在 AstroBox 确认后才改写启动脚本，Mirage 冷启动验证，无真机证据；Band 11 未启用）。**静态结论（043 IDB，2026-10-14）**：
   - 启动脚本固化在固件 romfs（`/etc/init.d/rc.sysinit` 挂载 /data 等，`/etc/init.d/rcS` 启动 miwear 等服务，仅在存在 `/data/nobusiness` 目录时跳过业务服务），
     没有任何读取 `/data` 下脚本的钩子，因此无法通过写文件让 Supervisor 随开机加载。
   - 剩余可行方向（均未验证）：(1) 安装表盘 Lua 在页面初始化时自动执行 Run（需该表盘是开机后的当前表盘，且要防止重复加载/崩溃循环——可用"上次加载是否完成"标记）；
@@ -290,11 +291,11 @@
 - [x] P7.2 模块崩溃循环防护：开机启动前把启动计数写入注册表，稳定 60 s 后清零；连续两次未稳定则退回更老的一代或禁用（`CANOPUS_SUP_ERR_UNSTABLE`）。全局 safe mode 的自动升级、重启保持与 `EXIT_SAFE_MODE` 退出路径随 K19 补齐（docs/security-model.md §7）。
 - [x] P7.3 portable 按 loader 能力打包：规划器只把 portable 模块展开到向构造函数传服务上下文的 loader（Band 11），Band 10 Pro 须绑定 target。
 - [x] P7.4 模块启动器入口（ADR-CAN-011，CAN-P0-007 状态不变）：`ctx->launcher`，两步注册，无注销；host 测试与 Band 11 固件仿真。
-- [x] P7.5 安装器 Auto-run（P4.0）。
+- [x] P7.5 安装器 Auto-run（P4.0）——已由固化启动取代并删除（K20）。
 - [x] P7.6 后台 timer：time 组版本 2，复用 L2 owner timer；仅 `.043`/`.155`；线程与工作队列仍 FORBIDDEN。
 - [x] P7.7 文档与状态表对齐（限额、链接、README 的能力状态说法、§15 的 CAN-P0-004/006、外部模块迁移说明）。
 - [ ] P7.8 仍需真机：上述各项以及 G0–G13 都没有归档过一次设备运行；`tests/hardware/gates.md` 列出新增的待验证项。
-- [ ] P7.9 `.043` Supervisor 文件体积 112,304 / 114,688（97.9%；全局 safe mode 增加 1,708 字节），再加功能需要重新评估预算。P5.2 的 phone flow 超时在本机 Mirage 重跑时没有复现。
+- [ ] P7.9 `.043` Supervisor 文件体积 109,180 / 114,688（去掉 `.ARM.exidx` 后；固化启动与可见恢复增加约 4 KiB），再加功能需要重新评估预算；`.155` 127,940 / 131,072。P5.2 的 phone flow 超时在本机 Mirage 重跑时没有复现。
 - [x] P7.10 `.179` 适配与全局 safe mode（K19）。
 
 ## 6. 风险
@@ -360,3 +361,4 @@
 | 2026-10-20 | K17：移除 Band 11 `4.100.177`（target 包、Rust 绑定、脚本与测试、安装器 profile、基线哈希）；此前各行对 177 的记述仅为历史。179 适配尚未开始 |
 | 2026-10-20 | K18：生产就绪整改（P7.1–P7.7）：KV 流式化与常驻体积门槛、模块崩溃循环防护、portable 按 loader 打包、模块启动器入口（ADR-CAN-011）、安装器 Auto-run、后台 timer、商店清单 `canopus` 兼容元数据（客户端）、文档对齐。全量 CI 全绿；仅 host/emulator 证据，未做真机验证 |
 | 2026-10-20 | K19：适配 Band 11 `4.100.179`（新增 `tools/fw-match/port_pack.py`、`port_review.py`、`map_data.py`；270 条记录全部 restricted/PENDING，无批准继承；Unicorn 里真实 179 镜像跑通 stage1/stage2/Supervisor、Manager 与通知路径；Mirage 里真实 179 固件经生产安装器 Run → 加密 L2 安装 → SCAN 与 services 26/27 通过）；全局 safe mode 与退出路径（host 测试）；CreatorConsole 与 AstroBox-NG 的 `canopus` 元数据发布/安装校验；043 冒烟完整通过。仅 host/emulator 证据，未做真机验证 |
+| 2026-10-21 | K20：固化启动（`.043`，Mirage 冷启动通过，无真机）、可见的故障恢复、退出安全模式修复、AstroBox 固化入口与确认（已推送）；删除页面 Auto-run；`.043` Supervisor 109,180 / 114,688。仅 host/emulator 证据 |

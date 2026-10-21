@@ -149,11 +149,12 @@ class NotificationTests(unittest.TestCase):
 
     def install_manager(self, m):
         frame = 0x200d0000
-        _req = cpc2.legacy(0x43510002, 0)
-        m.uc.mem_write(frame, _req)
-        m.uc.reg_write(UC_ARM_REG_R1, frame)
-        m.uc.reg_write(UC_ARM_REG_R2, len(_req))
-        self.assertEqual(m.call(m.word(m.fops + 12)), len(_req))
+        for command in (0x4351000A, 0x43510002):  # restore, then register the Manager
+            _req = cpc2.legacy(command, 0)
+            m.uc.mem_write(frame, _req)
+            m.uc.reg_write(UC_ARM_REG_R1, frame)
+            m.uc.reg_write(UC_ARM_REG_R2, len(_req))
+            self.assertEqual(m.call(m.word(m.fops + 12)), len(_req))
 
     def test_native_success_paths_and_void_return(self):
         m, _ = self.machine()
@@ -161,8 +162,8 @@ class NotificationTests(unittest.TestCase):
         self.install_manager(m)
         self.assertEqual(len(m.notifications), 1, 'idempotent install must not notify twice')
         self.assertEqual(m.call(native_symbol(m, 'canopus_manager_native_notify_module_installed')), 0)
-        self.assertEqual([n['id'] for n in m.notifications], [0x43414E4F50555301, 0x43414E4F50555302])
-        self.assertEqual(m.notifications[0]['body'], 'Canopus 已加载！尽情享受吧～')
+        self.assertEqual([n['id'] for n in m.notifications], [0x43414E4F50555310, 0x43414E4F50555302])
+        self.assertEqual(m.notifications[0]['body'], 'Canopus 已加载，管理器可用。')
         self.assertEqual(m.notifications[1]['body'], '新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。')
         for message in m.notifications:
             self.assertEqual(message['title'], 'Canopus')
@@ -206,7 +207,7 @@ class NotificationTests(unittest.TestCase):
         stored = fw.stored()
         self.assertEqual(len(stored), 2)
         for index, (uid, body) in enumerate([
-            (0x43414E4F50555301, 'Canopus 已加载！尽情享受吧～'),
+            (0x43414E4F50555310, 'Canopus 已加载，管理器可用。'),
             (0x43414E4F50555302, '新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。'),
         ]):
             self.assert_firmware_message(m, fw.events[index], uid, body)

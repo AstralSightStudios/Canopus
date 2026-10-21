@@ -25,7 +25,7 @@ FIRMWARE = {"155": "miwear.watch.q66tc_v4.100.155_full_f1c824fe",
 DEVICE = os.environ.get("CANOPUS_SMOKE_DEVICE", f"canopus-native-b11-{os.getpid()}")
 W, H = 212, 520
 PAIR_CONFIRM = (106, 478)   # check mark on the pairing dialog
-RUN_BUTTON = (106, 355)     # installer page: title, status, then Run / Auto-run / Clear Env
+RUN_BUTTON = (106, 383)     # installer page: title, status, then Run / Clear Env
 
 EXPECTED_SERVICES_SKIPS = set()
 

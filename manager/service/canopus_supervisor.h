@@ -305,6 +305,10 @@ struct canopus_supervisor_v1 {
     uint32_t exit_pending;     /* EXIT_SAFE_MODE accepted; takes effect at reboot */
     uint32_t boot_saved;       /* the boot word last read from or written to the registry */
     uint32_t unstable_modules; /* slots with `watching` set */
+    uint32_t boot_persistence;
+    uint8_t boot_restored;
+    uint8_t boot_notice_ready;
+    uint8_t boot_notice_sent;
     /* CAN-P0-008: v2 transport state. `last_kind` is 0 for a legacy CPC1
      * command, 1 for a v2 CPC2 request; a read returns the stored v2
      * response when the last write was v2, else the legacy CPS1 status. */
@@ -428,6 +432,11 @@ void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup);
  * when the platform has no event source, in which case a module counts as
  * stable once it is up. */
 int canopus_supervisor_watch_stability(struct canopus_supervisor_v1 *sup);
+/* Registers the Supervisor's work on the owner timer that keeps ticking while
+ * the screen is off; safe to call from any task. */
+int canopus_supervisor_start_background(struct canopus_supervisor_v1 *sup);
+void canopus_supervisor_boot_ready(struct canopus_supervisor_v1 *sup);
+void canopus_supervisor_boot_notify(struct canopus_supervisor_v1 *sup);
 /* Closes the slot's open files, wake locks, vibration, brightness override and
  * L2 receive registrations; called when its artifacts are removed. */
 void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,

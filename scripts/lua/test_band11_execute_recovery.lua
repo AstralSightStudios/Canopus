@@ -158,8 +158,6 @@ setup()
 local objects, clicks, device_commands, files = {}, {}, {}, {}
 local timers, deletions, painted, history = {}, {}, nil, {}
 local reject_command = false
-local marker_at_command = false -- Auto-run's pending marker existed at a device command
-local absent_checks = 0 -- /dev/canopus reads as missing this many times (Supervisor not loaded yet)
 local lvgl = {
     HOR_RES = function() return 212 end, VER_RES = function() return 520 end,
     OPA = function(n) return n end, ALIGN = {CENTER = 0}, EVENT = {CLICKED = 7, DELETE = 33},
@@ -179,9 +177,7 @@ local function object(parent, props)
 end
 lvgl.Object, lvgl.Label = object, object
 lvgl.Timer = function(props)
-    -- The progress runner starts paused; the Auto-run delay (4 s) runs at once.
-    assert(props.period >= 100 and props.repeat_count == -1
-        and (props.paused or props.period == 4000))
+    assert(props.period >= 100 and props.repeat_count == -1 and props.paused)
     function props:resume() self.paused = false end
     function props:delete() self.deleted = true end
     function props:ready() error("must allow the UI to paint between steps") end
@@ -214,10 +210,6 @@ __band11_fixture_open = function(path, mode)
         return {read = function() return identity end, close = function() return true end}
     end
     if path == "/dev/canopus" then
-        if mode == "rb" and absent_checks > 0 then
-            absent_checks = absent_checks - 1
-            return nil
-        end
         return {
             write = function(self, payload)
                 assert(painted == objects[4].text, "command ran before its status could paint")
@@ -226,7 +218,6 @@ __band11_fixture_open = function(path, mode)
                 local arg0 = size == 4 and string.unpack("<I4", payload, 37) or 0
                 if reject_command then return nil, "fixture command rejected" end
                 device_commands[#device_commands + 1] = {op, arg0, id}
-                marker_at_command = marker_at_command or files["/data/canopus/autorun.pending"] ~= nil
                 return self
             end,
             read = function()
@@ -236,7 +227,7 @@ __band11_fixture_open = function(path, mode)
             close = function() return true end,
         }
     end
-    if path == "/data/canopus/autorun" or path == "/data/canopus/autorun.pending" then
+    if path:match("^/data/canopus/[%w%.]+$") and path ~= "/data/canopus/manager_icon.bin" then
         if mode == "wb" then
             return {write = function(self, data) files[path] = data; return self end,
                     close = function() return true end}
@@ -263,18 +254,15 @@ __band11_fixture_open = function(path, mode)
         data="\127ELF" .. string.char(1,1,1) .. string.rep("\0",9) .. string.pack("<I2I2",1,40) .. string.rep("\0",492)
     elseif path:match('manager_icon.bin$') then
         data=string.char(0x19,0,0,0) .. string.pack("<I2I2I4I4",1,1,0,0)
-    elseif path:match('canopus_stage[12]%-') then data=string.rep('x',64) end
+    elseif path:match('canopus_stage[12]%-') then data=string.rep('x',64)
+    end
     if data then return {read=function(_,n) return type(n)=='number' and data:sub(1,n) or data end,
         seek=function() return #data end, close=function() return true end} end
 end
 local original = fixture.open
 io.open = function(...) return original(...) end
 -- NSH commands the installer issues for its own state files.
-__band11_test_execute = function(command)
-    local path = command:match("^rm (/data/canopus/autorun[%.%w]*)$")
-    if path then files[path] = nil end
-    return true
-end
+__band11_test_execute = function() return true end
 local file = assert(native_io.open(assert(arg[3]), "rb"))
 local source = file:read("*a"); file:close()
 local count
@@ -287,12 +275,12 @@ source, count = source:gsub('(%["' .. firmware_version:gsub('%.', '%%.') .. '"%]
 end)
 assert(count == 1, 'fixture must replace only the selected recovery profile')
 enter(function() assert(load(source, "band11-generated-entry", "t"))() end)
-assert(#clicks == 3 and #objects == 10, "Run/Auto-run/Clear Env production UI missing")
+assert(#clicks == 2 and #objects == 8, "Run/Clear Env production UI missing")
 assert(objects[1].w == 212 and objects[1].h == 520)
 assert(objects[3].text == "Canopus Installer" and objects[3].h == 40)
 assert(objects[4].text:match("读取设备安装配置") and objects[4].h == 246)
 assert(objects[5].w == 164 and objects[5].h == 48 and objects[6].text == "Run")
-assert(objects[8].text == "Auto-run: OFF" and objects[10].text == "Clear Env")
+assert(objects[8].text == "Clear Env")
 local _, commands = fixture.counts(); assert(commands == 0 and #device_commands == 0)
 clicks[1]()
 assert(#device_commands == 0, "Run started during startup validation")
@@ -301,7 +289,7 @@ assert(objects[4].text:match("^Ready"))
 clicks[1]()
 assert(#device_commands == 0, "Run must publish progress before executing")
 local in_progress = objects[4].text
-clicks[1](); clicks[2](); clicks[3]()
+clicks[1](); clicks[2]()
 assert(objects[4].text == in_progress, "busy clicks obscured the current step")
 drain()
 assert(#device_commands == 4 and device_commands[1][1] == 14)
@@ -316,13 +304,13 @@ for _, step in ipairs({"复核 Supervisor", "检查运行环境", "读取并校�
 end
 clicks[1](); assert(#device_commands == 4, "Run must be one-shot")
 local _, before_clear = fixture.counts()
-clicks[3](); _,commands=fixture.counts(); assert(commands==before_clear, "clear needs second click")
-clicks[3](); _,commands=fixture.counts(); assert(commands==before_clear, "clear ran before painting progress")
+clicks[2](); _,commands=fixture.counts(); assert(commands==before_clear, "clear needs second click")
+clicks[2](); _,commands=fixture.counts(); assert(commands==before_clear, "clear ran before painting progress")
 assert(objects[4].text:match("清理安装环境"))
 drain(); _,commands=fixture.counts(); assert(commands==before_clear+1)
 
 -- Destroying the owning page cancels queued work before another write.
-clicks[3](); clicks[3]()
+clicks[2](); clicks[2]()
 local before = #device_commands
 deletions[1]()
 drain()
@@ -343,68 +331,6 @@ assert(#device_commands == 0)
 local failed = objects[4].text
 tick(); assert(objects[4].text == failed, "failed operation kept running")
 reject_command = false
-
--- Auto-run (opt-in). Each case starts a fresh page over fresh marker files.
-local FLAG, PENDING = "/data/canopus/autorun", "/data/canopus/autorun.pending"
-local function fresh_page(markers)
-    setup()
-    io.open = function(...) return original(...) end
-    for key in pairs(files) do files[key] = nil end
-    for key, value in pairs(markers) do files[key] = value end
-    objects, clicks, timers, deletions, history = {}, {}, {}, {}, {}
-    device_commands = {}
-    enter(function() assert(load(source, "band11-autorun", "t"))() end)
-end
-
--- Off by default: nothing is scheduled, and the switch writes and removes the flag.
-fresh_page({})
-drain()
-assert(objects[4].text:match("^Ready") and objects[4].text:find("点击 Run", 1, true))
-assert(#device_commands == 0 and objects[8].text == "Auto-run: OFF")
-clicks[2]()
-assert(files[FLAG] == "1" and objects[8].text == "Auto-run: ON")
-clicks[2]()
-assert(files[FLAG] == nil and objects[8].text == "Auto-run: OFF")
-
--- Enabled: the Run starts by itself after the delay, the pending marker is on
--- disk before the first device command, and a finished Run leaves Auto-run on.
-fresh_page({[FLAG] = "1"})
-marker_at_command = false
-absent_checks = 2 -- the schedule check and the check when the timer fires
-drain()
-assert(marker_at_command, "pending marker must exist before Run touches the device")
-assert(#device_commands == 4 and device_commands[1][1] == 14)
-assert(objects[4].text:match("^Run completed"))
-assert(files[PENDING] == nil and files[FLAG] == "1")
-
--- A Run that fails cleanly switches Auto-run off.
-absent_checks = 2
-fresh_page({[FLAG] = "1"})
-reject_command = true
-drain()
-assert(objects[4].text:find("失败步骤", 1, true) and #device_commands == 0)
-assert(files[PENDING] == nil and files[FLAG] == nil and objects[8].text == "Auto-run: OFF")
-reject_command = false
-
--- A pending marker at start is an automatic Run that never finished.
-fresh_page({[FLAG] = "1", [PENDING] = "1"})
-drain()
-assert(files[FLAG] == nil and files[PENDING] == nil and #device_commands == 0)
-assert(objects[4].text:find("上次自动运行没有完成", 1, true))
-assert(objects[8].text == "Auto-run: OFF")
-
--- Destroying the page cancels the delayed start.
-absent_checks = 1
-fresh_page({[FLAG] = "1"})
-local pending_timer
-for _ = 1, 20 do
-    for _, timer in ipairs(timers) do if timer.period == 4000 then pending_timer = timer end end
-    if pending_timer then break end
-    tick()
-end
-assert(pending_timer and not pending_timer.deleted)
-deletions[1]()
-assert(pending_timer.deleted)
 
 -- Missing timer support fails before touching the device, rather than
 -- silently reverting to a synchronous flow with invisible progress.
