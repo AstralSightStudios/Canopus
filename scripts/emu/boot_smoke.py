@@ -183,10 +183,11 @@ def cold_start(files, record, cfg, ota):
                 print("PASS pinned start: /dev/canopus appeared without a manual load")
                 ctl("tap", DEVICE, *wake)
                 ctl("tap", DEVICE, *wake)
+                time.sleep(20)
                 for _ in range(12):
-                    time.sleep(5)
                     if "boot.pending" not in sh("ls /data/canopus"):
                         break
+                    time.sleep(5)
                 if "boot.pending" in sh("ls /data/canopus"):
                     print("FAIL pinned start: boot.pending is still there\n" + sh("ls /data/canopus"))
                     sys.exit(1)

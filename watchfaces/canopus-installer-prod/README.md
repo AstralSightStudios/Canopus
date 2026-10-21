@@ -20,10 +20,10 @@ All three variants use this workflow:
 4. **Clear Env** requires two clicks and removes `/data/canopus` only after the
    explicit confirmation.
 
-On the Band 10 Pro, Run also leaves what a pinned start reads in `/data/canopus/`
-(`supervisor.elf`, `boot.lua`, `b`, `boot.target`). Pinning itself is done from the
-AstroBox Canopus page (ADR-CAN-012), never from the watchface; the watchface has no
-Auto-run switch any more.
+On Band 10 Pro and Band 11, Run also leaves what a pinned start reads in `/data/canopus/`
+(including `stage1.bin`, `stage2.bin`, `supervisor.elf`, `boot.lua`, `b`, `boot.target`).
+Pinning itself is done from the AstroBox Canopus page (ADR-CAN-012), never from the watchface;
+the watchface has no Auto-run switch any more.
 
 Build all packaged targets with:
 

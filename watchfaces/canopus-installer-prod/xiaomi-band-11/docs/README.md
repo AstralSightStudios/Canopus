@@ -61,7 +61,7 @@ UI 与 Band 9 一致：同样的页面结构、标题、状态区和 Run / Clear
 点击 Run 后按步骤显示进度、加载 Supervisor，并通过 /dev/canopus 执行 RESTORE、INSTALL 0/1/2，
 注册 Canopus 管理器及其三个原生页面，再发布应用列表入口。Clear Env 需要两次点击。
 
-2026-10-21：页面延时执行 Run 的 Auto-run 开关已删除（换了表盘就失效）。固化启动（ADR-CAN-012）目前只在 Band 10 Pro 上启用，Band 11 不支持。
+2026-10-21：页面延时执行 Run 的 Auto-run 开关已删除（换了表盘就失效）。固化启动（ADR-CAN-012）支持 Band 10 Pro（.043）与 Band 11（.155/.179），由 AstroBox 用户确认后经 `/dev/bes_flash` 改写开机脚本，Band 11 通过独立原生载荷在冷启动下加载 Supervisor 并由后台状态机完成注册。
 
 2026-09-11：进度区显示步骤序号、当前操作和上一项已完成操作；错误会保留失败步骤。
 每个步骤先更新文字，经过120ms的LuaLVGL定时器回调后才继续执行，让界面循环有机会刷新。

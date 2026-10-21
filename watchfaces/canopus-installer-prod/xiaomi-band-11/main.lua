@@ -684,10 +684,12 @@ local function execute_step(command, arg0, description)
 end
 
 local steps = {
-    { command = CMD_RESTORE_AFTER_BOOT, arg0 = 0,
-      progress = "恢复已启用模块" },
     { command = CMD_INSTALL, arg0 = 0,
       progress = "注册管理器" },
+    { command = CMD_INSTALL, arg0 = 2,
+      progress = "发布管理器入口" },
+    { command = CMD_RESTORE_AFTER_BOOT, arg0 = 0,
+      progress = "恢复已启用模块" },
     { command = CMD_INSTALL, arg0 = 1,
       progress = "注册模块应用" },
     { command = CMD_INSTALL, arg0 = 2,
