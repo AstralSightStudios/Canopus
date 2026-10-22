@@ -37,6 +37,37 @@
    该值本来就是构建期预算而不是实测的固件上限（stock modlib 没有固定的插入上限，Band 11 用 131,072）。
    这个预算没有在真机上验证过。
 
+## Incremental snapshot application
+
+The backend compares rendered properties with the context's existing committed
+snapshot; it does not keep another snapshot per view. Identical body commits
+refresh event bindings without repeating native row, label, image, progress or
+visibility setters. Text and row comparisons use exact string contents, so
+changes to string-arena offsets do not count as content changes. Image source
+updates also consider `resource_id`; change it to refresh an image whose file
+was replaced at the same path.
+
+Placement still uses the existing placement chain. A row-content-only update or
+an image-source-only update at the same explicit dimensions does not realign
+controls. Changing order, count or layout inputs can still realign controls and
+affect the scroll offset. This optimization does not add transforms, touch
+capture, virtualization or drag rendering.
+
+Native switches mark their row dirty before event dispatch, so submitting the
+unchanged model restores a rejected toggle. A failed backend apply invalidates
+property comparisons until a successful retry; this repairs partial native
+updates but does not introduce transactional native rollback. Visibility tracks
+actual writes independently. Unchanged dialogs retain their native box and
+refresh button bindings to the new generation; changed message or button text
+recreates the box.
+
+Host regression: `python3 -m unittest discover -s scripts/tests -p 'test_ui_backend.py'`
+executes the real backend and UI runtime with counted firmware substitutes for
+both families. Set `CANOPUS_UI_BACKEND_SANITIZE=1` to enable ASan/UBSan; CI runs
+that variant in its C host gate. These counts measure avoided native API calls,
+not device frame rate or physical rendering.
+The optimization itself has no new device validation or capability promotion.
+
 ## 证据与限制
 
 - host 测试（含 ASan/UBSan）覆盖入口登记/校验/随模块释放、`close_page`、无 Manager UI 的构建返回 UNSUPPORTED、

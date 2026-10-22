@@ -46,6 +46,7 @@ gate_2() {
     (cd tests/host && make clean >/dev/null && \
         make CFLAGS="-std=c11 -Wall -Wextra -Werror -g -O1 -fsanitize=address,undefined -fno-sanitize-recover=undefined -DCANOPUS_HOST=1" >/dev/null && \
         ./canopus_host_tests && ./canopus_sleep_test && make clean >/dev/null)
+    CANOPUS_UI_BACKEND_SANITIZE=1 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_ui_backend.py'
 }
 
 gate_3() {
