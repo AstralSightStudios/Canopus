@@ -6,14 +6,15 @@
   "kind": "function",
   "instruction_set": "thumb",
   "prototype": "int(const void *src, void *header)",
-  "entry_address": "0x0c143798",
-  "callable_address": "0x0c143799",
+  "entry_address": "0x1c036358",
+  "callable_address": "0x1c036359",
   "calling_convention": "arm-aapcs",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-RESOURCE-1043-001"
+      "EVID-RESOURCE-1043-001",
+      "EVID-UI-1043-IMAGE-FIT-001"
     ]
   },
   "policy": "restricted",
@@ -22,9 +23,10 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-RESOURCE-1043-001"
+      "EVID-RESOURCE-1043-001",
+      "EVID-UI-1043-IMAGE-FIT-001"
     ],
-    "source": "Exact 3.101.043 AP firmware and IDB verification; byte-for-byte disassembly match."
+    "source": "Exact 3.101.043 AP firmware and IDB verification; byte-for-byte disassembly match. Exact runtime VMA correction (EVID-UI-1043-IMAGE-FIT-001): startup0x0c0c0ac8 copies flash[0x2c10d440,0x2c18d940) to PSRAM0x3c000000/executable alias0x1c000000; load source0x0c143798 maps to runtime0x1c036358, Thumb callable0x1c036359. IDA load/runtime byte equality and runtime call graph checked. Existing proof/status/policy/approval/promotion retained."
   },
   "notes": "LVGL image decoder get-info entry. Queries header information without decoding full bitmap payload."
 }

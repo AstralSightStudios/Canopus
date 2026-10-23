@@ -29,6 +29,22 @@ const FW_UI_INPUT: &[Mapping] = &[
     Mapping { macro_name: "FW_UI_UPDATE_LAYOUT", symbol_name: "lv_obj_update_layout", address: Address::Callable },
 ];
 
+const FW_UI_IMAGE_FIT: &[Mapping] = &[
+    Mapping { macro_name: "FW_UI_IMAGE_SCALE", symbol_name: "lvx_image_set_scale", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_IMAGE_INFO", symbol_name: "lv_image_decoder_get_info", address: Address::Callable },
+];
+
+const FW_UI_FONT: &[Mapping] = &[
+    Mapping { macro_name: "FW_UI_FONT_CREATE", symbol_name: "native_font_create", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_FONT_RELEASE", symbol_name: "native_font_release", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_FONT_WAIT", symbol_name: "native_font_wait", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_FONT_MANAGER_SLOT", symbol_name: "font_reload_uikit_slot", address: Address::Entry },
+    Mapping { macro_name: "FW_UI_FONT_DRAW_UNITS", symbol_name: "font_reload_draw_unit_slot", address: Address::Entry },
+    Mapping { macro_name: "FW_UI_FONT_DISPLAY_LIST", symbol_name: "font_reload_display_list", address: Address::Entry },
+    Mapping { macro_name: "FW_UI_FONT_VG_DISPATCH", symbol_name: "font_reload_vg_dispatch", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_FONT_SW_DISPATCH", symbol_name: "font_reload_sw_dispatch", address: Address::Callable },
+];
+
 const FW_10: &[Mapping] = &[
     Mapping {
         macro_name: "FW_VERSION_ADDRESS",
@@ -748,6 +764,10 @@ impl<'a> TargetConfigGen<'a> {
             self.emit(&mut out, if custom { FW_9 } else { FW_10 }, false);
             self.emit(&mut out, FW_UI_INPUT, false);
             if self.pack.target_id == "xiaomi-band-10-pro-3.101.043" {
+                // Exact private image ABI: EVID-UI-1043-IMAGE-FIT-001.
+                self.emit(&mut out, FW_UI_IMAGE_FIT, false);
+                self.emit(&mut out, FW_UI_FONT, false);
+                out.push_str("#define FW_UI_FONT_EVENT_DELETE 36u\n");
                 // Exact private properties: EVID-UI-1043-LAYOUT-INPUT-001.
                 out.push_str("#define FW_UI_COORD_TYPE int32_t\n#define FW_UI_EVENT_PRESSED 1u\n#define FW_UI_EVENT_PRESSING 2u\n#define FW_UI_EVENT_PRESS_LOST 3u\n#define FW_UI_EVENT_LONG_PRESSED 5u\n#define FW_UI_EVENT_RELEASED 8u\n#define FW_UI_EVENT_SCROLL 12u\n#define FW_UI_STYLE_RADIUS 12u\n#define FW_UI_STYLE_CLIP_CORNER 45u\n#define FW_UI_IMAGE_CREATE_THEME_ARG 1\n");
             }

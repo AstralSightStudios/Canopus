@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 25439289e5a1d902
+// input_digest: 798194c64c3dfc71
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -477,6 +477,9 @@ pub const CANOPUS_FW_BT_ADAPTER_GET_STATE_CALLABLE: usize = canopus_thumb_callab
 /// Recovered `wakelock_create` at 0x0c6adb00. Thumb callable address 0x0c6adb01.
 pub const CANOPUS_FW_WAKELOCK_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c6adb01usize);
 
+/// Recovered `native_font_release` at 0xc917384. Thumb callable address 0xc917385.
+pub const CANOPUS_FW_NATIVE_FONT_RELEASE_CALLABLE: usize = canopus_thumb_callable(0xc917385usize);
+
 /// Recovered `calendar_snapshot` at 0xc6a45f0. Thumb callable address 0xc6a45f1.
 pub const CANOPUS_FW_CALENDAR_SNAPSHOT_CALLABLE: usize = canopus_thumb_callable(0xc6a45f1usize);
 
@@ -684,6 +687,9 @@ pub const CANOPUS_FW_SCREEN_SESSION_START_CALLABLE: usize = canopus_thumb_callab
 /// Recovered `lv_obj_set_width` at 0xc387b2e. Thumb callable address 0xc387b2f.
 pub const CANOPUS_FW_LV_OBJ_SET_WIDTH_CALLABLE: usize = canopus_thumb_callable(0xc387b2fusize);
 
+/// Recovered `native_font_create` at 0xc494380. Thumb callable address 0xc494381.
+pub const CANOPUS_FW_NATIVE_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc494381usize);
+
 /// Recovered `miwear_session_lookup` at 0xc98ffb8. Thumb callable address 0x0C98FFB9.
 pub const CANOPUS_FW_MIWEAR_SESSION_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0x0C98FFB9usize);
 
@@ -857,6 +863,9 @@ pub const canopus_fw_bt_l2cap_owner: usize = 0x200be890usize;
 
 /// Recovered `bt_discovery_stop` at 0xc46a49a. Thumb callable address 0xc46a49b.
 pub const CANOPUS_FW_BT_DISCOVERY_STOP_CALLABLE: usize = canopus_thumb_callable(0xc46a49busize);
+
+/// Recovered `native_font_wait` at 0xc399940. Thumb callable address 0xc399941.
+pub const CANOPUS_FW_NATIVE_FONT_WAIT_CALLABLE: usize = canopus_thumb_callable(0xc399941usize);
 
 /// Recovered `offload_property_apply` at 0xc468674. Thumb callable address 0xc468675.
 pub const CANOPUS_FW_OFFLOAD_PROPERTY_APPLY_CALLABLE: usize = canopus_thumb_callable(0xc468675usize);
@@ -1133,6 +1142,9 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // mm_mallinfo: restricted - not exported until context/ownership approved
 // mm_memalign: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
+// native_font_create: restricted - not exported until context/ownership approved
+// native_font_release: restricted - not exported until context/ownership approved
+// native_font_wait: restricted - not exported until context/ownership approved
 // offload_property_apply: restricted - not exported until context/ownership approved
 // on_resume_wrapped: restricted - not exported until context/ownership approved
 // open: restricted - not exported until context/ownership approved

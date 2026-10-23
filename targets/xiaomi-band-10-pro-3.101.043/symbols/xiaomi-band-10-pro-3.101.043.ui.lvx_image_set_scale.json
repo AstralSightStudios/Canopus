@@ -5,8 +5,8 @@
   "name": "lvx_image_set_scale",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc179db0",
-  "callable_address": "0xc179db1",
+  "entry_address": "0x1c06c970",
+  "callable_address": "0x1c06c971",
   "prototype": "void(void *, int32_t, int32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -21,7 +21,8 @@
     "device": "not_probed",
     "evidence_ids": [
       "EVID-FW-MATCH-ENSEMBLE-1036-1043",
-      "EVID-UI-1043-CONTROL-001"
+      "EVID-UI-1043-CONTROL-001",
+      "EVID-UI-1043-IMAGE-FIT-001"
     ]
   },
   "policy": "restricted",
@@ -30,9 +31,10 @@
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
       "EVID-FW-MATCH-ENSEMBLE-1036-1043",
-      "EVID-UI-1043-CONTROL-001"
+      "EVID-UI-1043-CONTROL-001",
+      "EVID-UI-1043-IMAGE-FIT-001"
     ],
-    "source": "Exact 3.101.043 IDB confirmation: sub_C179DB0 is a 0x14C-byte, seven-block structural match for working 3.101.036 sub_C179A8C and stores AAPCS arguments 1/2 at image-object offsets +0x50/+0x54; candidate retrieval originated in ensemble v2."
+    "source": "Exact 3.101.043 IDB confirmation: sub_C179DB0 is a 0x14C-byte, seven-block structural match for working 3.101.036 sub_C179A8C and stores AAPCS arguments 1/2 at image-object offsets +0x50/+0x54; candidate retrieval originated in ensemble v2. Exact runtime VMA correction (EVID-UI-1043-IMAGE-FIT-001): startup0x0c0c0ac8 copies flash[0x2c10d440,0x2c18d940) to PSRAM0x3c000000/executable alias0x1c000000; load source0x0c179db0 maps to runtime0x1c06c970, Thumb callable0x1c06c971. IDA load/runtime byte equality and runtime call graph checked. Existing proof/status/policy/approval/promotion retained."
   },
   "approval_state": "APPROVED",
   "promotion": {

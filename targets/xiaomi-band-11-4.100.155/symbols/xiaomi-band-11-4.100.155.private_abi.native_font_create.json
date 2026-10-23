@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.native_font_create",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "native_font_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc494380",
+  "callable_address": "0xc494381",
+  "prototype": "void *(void *manager, const void *key)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed initialized native manager and packed8-byte key: family pointer+0, uint16 pixel_size+4, uint16 style+6. UI owner only, nonzero pixel size.",
+    "return_value": "Owned managed40-byte native font wrapper with backing record at+36. NULL on checked ordinary failure; no high-level static-default return and no fallback-chain creation. Native internal allocations include unchecked paths; comprehensive OOM safety is not established."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-UI-4155-FONT-LIFECYCLE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-UI-4155-FONT-LIFECYCLE-001"
+    ],
+    "source": "Exact-target IDA/Hex-Rays inspection and independently rehashed full raw AP function body; docs/native-ui-font-lifecycle-abi.md. Privileged host raw-address binding authorized by updated task B; no public veneer promotion."
+  },
+  "notes": "New native UI font integration identity only. Existing calendar/font-reload approvals and statuses remain unchanged. No device verification. Owned managed40-byte native font wrapper with backing record at+36. NULL on checked ordinary failure; no high-level static-default return and no fallback-chain creation. Native internal allocations include unchecked paths; comprehensive OOM safety is not established."
+}

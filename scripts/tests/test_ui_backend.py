@@ -32,15 +32,17 @@ class UIBackendTests(unittest.TestCase):
             backend = tmp / "canopus_ui_host.c"
             shutil.copyfile(source, backend)
             shutil.copyfile(header, tmp / "canopus_ui_host.h")
-            for include in ("canopus_ui_input.inc", "canopus_ui_feedback.inc"):
+            for include in ("canopus_ui_input.inc", "canopus_ui_feedback.inc", "canopus_ui_font.inc"):
                 shutil.copyfile(source.parent / include, tmp / include)
             (tmp / "band11").mkdir()
             for name in ("canopus_target_config.h", "canopus_veneer.h",
                          "band11/canopus_band11_abi.h"):
                 (tmp / name).write_text("/* Firmware calls are supplied by the host harness. */\n")
-            for family in ("band10", "band11"):
-                with self.subTest(family=family):
-                    binary = tmp / (family + "_tests")
+            for family, image_fit in (("band10", True), ("band11", True),
+                                      ("band10", False), ("band11", False)):
+                variant = family + ("" if image_fit else "-no-image-fit")
+                with self.subTest(family=family, image_fit=image_fit):
+                    binary = tmp / (variant + "_tests")
                     command = [compiler, "-std=c11", "-Wall", "-Wextra", "-Werror", "-g",
                                f'-DCANOPUS_UI_HOST_SOURCE="{backend}"',
                                "-I" + str(tmp),
@@ -50,6 +52,8 @@ class UIBackendTests(unittest.TestCase):
                                str(ROOT / "runtime/ui/canopus_ui.c"), "-o", str(binary)]
                     if family == "band11":
                         command.append("-DCANOPUS_MGR_BAND11=1")
+                    if not image_fit:
+                        command += ["-DCANOPUS_TEST_NO_IMAGE_FIT=1", "-DCANOPUS_TEST_NO_FONT=1"]
                     if os.environ.get("CANOPUS_UI_BACKEND_SANITIZE") == "1":
                         # Firmware event/object fields are only 4-byte aligned;
                         # the harness adapts their opaque pointers for a 64-bit
@@ -62,7 +66,7 @@ class UIBackendTests(unittest.TestCase):
                     result = subprocess.run(run, capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0,
                                      f"{family}:\n{result.stdout}\n{result.stderr}")
-                    print(f"{family}:\n{result.stdout}", end="", flush=True)
+                    print(f"{variant}:\n{result.stdout}", end="", flush=True)
 
 
 if __name__ == "__main__":

@@ -176,6 +176,10 @@ static void host_feedback_finish(struct canopus_ui_host_view *view,
 void canopus_ui_host_poll(uint32_t now)
 {
     uint32_t i;
+#ifdef HOST_FONT
+    /* Native label DELETE callbacks outlive detached/reset view storage. */
+    host_font_collect();
+#endif
     for (i = 0u; i < CANOPUS_UI_HOST_MAX_VIEWS; i++) {
         struct canopus_ui_host_view *view = s_views[i];
         if (view == NULL || !view->active) continue;

@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.native_font_release",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "native_font_release",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc917384",
+  "callable_address": "0xc917385",
+  "prototype": "void(void *manager, void *font)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Consumes exactly one managed wrapper returned by native_font_create, after all label and native queued CPU glyph references have retired. Matching live manager required.",
+    "return_value": "Return value is incidental and discarded. Frees wrapper and updates backing refcount; final ordinary backing font may move into native bounded idle cache, not be destroyed immediately. Does not release separately created fallback chains."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-UI-4155-FONT-LIFECYCLE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-UI-4155-FONT-LIFECYCLE-001"
+    ],
+    "source": "Exact-target IDA/Hex-Rays inspection and independently rehashed full raw AP function body; docs/native-ui-font-lifecycle-abi.md. Privileged host raw-address binding authorized by updated task B; no public veneer promotion."
+  },
+  "notes": "New native UI font integration identity only. Existing calendar/font-reload approvals and statuses remain unchanged. No device verification. Return value is incidental and discarded. Frees wrapper and updates backing refcount; final ordinary backing font may move into native bounded idle cache, not be destroyed immediately. Does not release separately created fallback chains."
+}

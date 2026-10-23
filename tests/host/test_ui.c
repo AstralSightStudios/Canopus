@@ -72,7 +72,7 @@ static int32_t fake_control(void *cookie, uint32_t generation,
     CANOPUS_UI_CAP_TRANSLATE | CANOPUS_UI_CAP_CAPTURE | \
     CANOPUS_UI_CAP_POINTER_EVENTS | CANOPUS_UI_CAP_IMAGE_FIT_CONTAIN | \
     CANOPUS_UI_CAP_IMAGE_FIT_COVER | CANOPUS_UI_CAP_IMAGE_FIT_STRETCH | \
-    CANOPUS_UI_CAP_VIRTUAL_CONTENT | CANOPUS_UI_CAP_TOAST)
+    CANOPUS_UI_CAP_VIRTUAL_CONTENT | CANOPUS_UI_CAP_TOAST | CANOPUS_UI_CAP_FONT)
 
 static const struct canopus_ui_backend_v1 fake_backend = {
     sizeof(struct canopus_ui_backend_v1),
@@ -684,6 +684,61 @@ TEST(ui_visual_metadata_is_transactional_and_capability_checked)
     canopus_ui_tree_abort(tree);
 }
 
+TEST(ui_font_sizes_require_the_advertised_capability)
+{
+    static const uint16_t fixed_sizes[] = {0, 24, 28};
+    static const uint16_t arbitrary_sizes[] = {1, 21, 26, 32, UINT16_MAX};
+    struct canopus_ui_context_v1 context;
+    struct fake_ui_backend state;
+    struct canopus_ui_backend_v1 backend = fake_backend;
+    struct canopus_ui_tree_v1 *tree;
+    struct canopus_ui_visual_v1 visual = CANOPUS_UI_VISUAL_DEFAULT;
+    uint32_t i;
+
+    backend.capabilities &= ~CANOPUS_UI_CAP_FONT;
+    CHECK(canopus_ui_context_init(&context, &backend, &state, 0, 0) == CANOPUS_UI_OK);
+    memset(&state, 0, sizeof(state));
+    CHECK((canopus_ui_context_capabilities(&context) & CANOPUS_UI_CAP_FONT) == 0u);
+    tree = begin_page(&context, "Fixed fonts");
+    CHECK(CANOPUS_UI_TEXT(tree, 2, "Label", CANOPUS_UI_TEXT_BODY) == CANOPUS_UI_OK);
+    for (i = 0; i < sizeof(fixed_sizes) / sizeof(fixed_sizes[0]); i++) {
+        visual.font_px = fixed_sizes[i];
+        CHECK(canopus_ui_node_set_visual(tree, 2, &visual) == CANOPUS_UI_OK);
+        CHECK(tree->_snapshot.visuals[1].font_px == fixed_sizes[i]);
+    }
+    CHECK(canopus_ui_end(tree) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_tree_commit(tree) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_current(&context)->visuals[1].font_px == 28u);
+
+    tree = begin_page(&context, "Rejected fonts");
+    CHECK(CANOPUS_UI_TEXT(tree, 2, "Label", CANOPUS_UI_TEXT_BODY) == CANOPUS_UI_OK);
+    visual.font_px = 24;
+    CHECK(canopus_ui_node_set_visual(tree, 2, &visual) == CANOPUS_UI_OK);
+    for (i = 0; i < sizeof(arbitrary_sizes) / sizeof(arbitrary_sizes[0]); i++) {
+        visual.font_px = arbitrary_sizes[i];
+        CHECK(canopus_ui_node_set_visual(tree, 2, &visual) == CANOPUS_UI_ERR_UNSUPPORTED);
+        CHECK(tree->_snapshot.visuals[1].font_px == 24u);
+        CHECK(canopus_ui_current(&context)->visuals[1].font_px == 28u);
+        CHECK(state.apply_count == 1u);
+    }
+    canopus_ui_tree_abort(tree);
+
+    backend.capabilities |= CANOPUS_UI_CAP_FONT;
+    CHECK((canopus_ui_context_capabilities(&context) & CANOPUS_UI_CAP_FONT) != 0u);
+    tree = begin_page(&context, "Arbitrary fonts");
+    CHECK(CANOPUS_UI_TEXT(tree, 2, "Label", CANOPUS_UI_TEXT_BODY) == CANOPUS_UI_OK);
+    for (i = 0; i < sizeof(arbitrary_sizes) / sizeof(arbitrary_sizes[0]); i++) {
+        visual.font_px = arbitrary_sizes[i];
+        CHECK(canopus_ui_node_set_visual(tree, 2, &visual) == CANOPUS_UI_OK);
+        CHECK(tree->_snapshot.visuals[1].font_px == arbitrary_sizes[i]);
+    }
+    CHECK(canopus_ui_end(tree) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_tree_commit(tree) == CANOPUS_UI_OK);
+    CHECK(canopus_ui_current(&context)->visuals[1].font_px == UINT16_MAX);
+    CHECK(state.applied.visuals[1].font_px == UINT16_MAX);
+    CHECK(state.apply_count == 2u);
+}
+
 TEST(ui_pointer_scroll_events_and_controls_use_committed_generation)
 {
     struct canopus_ui_context_v1 context;
@@ -780,6 +835,8 @@ static const struct test_registry ui_tests[] = {
       ui_abi_2_metadata_layout_wrapper },
     { "ui_visual_metadata_is_transactional_and_capability_checked",
       ui_visual_metadata_is_transactional_and_capability_checked_wrapper },
+    { "ui_font_sizes_require_the_advertised_capability",
+      ui_font_sizes_require_the_advertised_capability_wrapper },
     { "ui_pointer_scroll_events_and_controls_use_committed_generation",
       ui_pointer_scroll_events_and_controls_use_committed_generation_wrapper },
 };

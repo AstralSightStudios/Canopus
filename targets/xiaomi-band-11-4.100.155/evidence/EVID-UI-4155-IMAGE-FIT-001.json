@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "control_flow_evidence": ["Exact-target IDA disassembly/decompilation, code xrefs, constructor and image-event dataflow; no new execution or device probe."],
+  "prototype_hypothesis": "UI-owner AAPCS void scale(void *image,int32_t scale_x,int32_t scale_y); int lv_image_decoder_get_info(const void *source,void *header_out). Scale uses independent Q8 factors (256 identity); get-info returns 1/0 and writes a 12-byte header, uint16 width at +4 and height at +6.",
+  "ownership_analysis": "Scale borrows a live page-owned native image on the UI owner thread; parent/inner image follow native tree ownership. Header query borrows source and caller-owned aligned 12-byte output synchronously, may open files/use cache/invoke decoder callbacks, and must execute on the UI owner outside IRQ locks. No native address is exposed through the module ABI.",
+  "unsafe_assumptions": [
+    "No new device validation, fit capability approval, or public-callable promotion.",
+    "Representable positive scales and fixed-point rounding must be validated by the implementation; native transformed-area helper consumes unsigned16 factors.",
+    "COVER requires a clipped parent viewport; clip_corner on the scaled image alone does not crop its own image event.",
+    "Only exact .043 and .155 reviewed; no inferred sibling-target support."
+  ],
+  "recommended_probe": "Count native scale/query calls on both backend families; verify nonintegral contain/cover/stretch geometry, crop edges, explicit size changes, source/resource refresh, native reset to 256, decoder failure before mutation, hidden/reused wrappers and native parent deletion. Physical display validation remains separate.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-23T00:00:00Z",
+  "evidence_id": "EVID-UI-4155-IMAGE-FIT-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "Recover exact private native image scale/dimension ABI and bounded viewport crop; reject guessed fit enum shortcuts.",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.155.ui.lvx_image_set_scale",
+    "xiaomi-band-11-4.100.155.lv_image_decoder_get_info"
+  ],
+  "callsite_evidence": [
+    "Scale core0x0c3ae46e/callable0x0c3ae46f saves R1/R2 and writes independent scale fields at image+0x50/+0x54, invalidates old/new transformed bounds and refreshes ext-draw state. Bounds helper0x0c381704 special-cases angle0/scale256/256 identity; point-transform0x0c3a4d66->0x0c3a4bc4 multiplies X/Y independently then shifts8. Uniform/X/Y wrappers0x0c3ae574/0x0c3ae5a0/0x0c3ae5c4 further corroborate independent factors and clamp zero to1.",
+    "Get-info0x0c38e4e4/callable0x0c38e4e5 initializes76-byte decoder descriptor and calls0x0c38e394, normalizing its decoder-pointer result to1/0. Source setter0x0c3b2c28 calls get-info at0x0c3b2c64..0x0c3b2c6e, reads unsigned16 header+4/+6 and writes native width/height at image+0x44/+0x48. Decoder core zeroes/copies12-byte header. Existing EVID-RESOURCE-4155-002 documents exact cache/decoder side effects and previous Unicorn modeling boundaries.",
+    "Image class constructor0x0c3ab59c initializes scales256/256, pivots0x20000032/0x20000032 and center inner-mode9. Inner recomputation0x0c3ae5ea handles exactly mode11(stretch:ceil(box_width*256/native_width),ceil(box_height*256/native_height),rotation/pivot0) and12(tile:256/256,rotation/pivot0). No contain/cover branch is present.",
+    "All code xrefs to inner recomputation are source setter0x0c3b2c28,image event0x0c3b2de4,C++ property handler0x0c79263c; no datarefs. Property handler inlines low-nibble mode write then calls recomputation/invalidation. No standalone inner-align setter recovered. Strings contain/cover instead lead to higher C++ CSS background-size parser0x0c79b948/getter0x0c796220 with component state at+620 and string/vector/allocator machinery, not a usable native LVGL image-mode setter.",
+    "Image event0x0c3b2de4 constructs full source rectangle and scale/pivot draw descriptor, aligns modes0..9, skips ordinary alignment for larger modes, and intersects own object rectangle only for mode12 tile. Center scaling alone cannot enforce COVER crop.",
+    "Renderer0x0c388fc4 draws own events23/24/25 then tests object flags+44 bit0x00100000. It intersects descendant clip with object+28 rectangle when absent, or expanded ext-draw area when present, via0x0c3a39b4. It then optionally queries clip_corner45 and radius12 to mask rounded descendants. Existing native object flag primitive can clear0x00100000 on the viewport; existing host unstyled generic-object wrapper constructor/removal of styles and explicit size/scroll controls are sufficient native primitives."
+  ],
+  "artifacts": [
+    {
+      "uri": "ida://fw://xiaomi-band-11-4.100.155/q66-ap.i64",
+      "role": "exact-target-disassembly-and-xrefs"
+    },
+    {
+      "uri": "fw://xiaomi-band-11-4.100.155/vela_ap.bin",
+      "sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+      "role": "Pinned exact firmware input"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-11-4.100.155/vela_ap.bin#0x0c3ae46e+0x106",
+      "sha256": "4bea9f85d4e6ede7de019ce9c29799e57b9f06ef0896b55152d4bda86a0403c7",
+      "role": "Exact byte window at 0x0c3ae46e, length 0x106"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-11-4.100.155/vela_ap.bin#0x0c3ae5ea+0x6c",
+      "sha256": "4fb49d4f4c37bf8fa45f23b1d1f6119b47490fece5617f53a6b64f91f820cf99",
+      "role": "Exact byte window at 0x0c3ae5ea, length 0x6c"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-11-4.100.155/vela_ap.bin#0x0c38e4e4+0x30",
+      "sha256": "ce42cb7396cc6656763a85f8097374ee1125db31eb861f7231f20f3c1c3d8f67",
+      "role": "Exact byte window at 0x0c38e4e4, length 0x30"
+    }
+  ]
+}

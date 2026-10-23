@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-4155-FONT-LIFECYCLE-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "What exact managed factory/release ABI and native queued-glyph retirement operation may the privileged native UI font cache use without calendar approval or veneer promotion?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.155.private_abi.native_font_create",
+    "xiaomi-band-11-4.100.155.private_abi.native_font_release",
+    "xiaomi-band-11-4.100.155.private_abi.native_font_wait"
+  ],
+  "prototype_hypothesis": "native_font_create:void*(manager,key8*); native_font_release:void(manager,font); native_font_wait:void(vg_unit), all ARM AAPCS. Returned wrapper has native font payload at offset0.",
+  "callsite_evidence": [
+    "native_font_create: instruction extent [0xc494380,0xc49484c), 1228 bytes, AP offset 4014976, full-body SHA256 3584f9c33ad48433721be42db9ac3a8726f495014f65194ad4e7a0226d1f20fa; exact Thumb callable 0xc494381. Extents are evidence, not allowlist ranges.",
+    "native_font_release: instruction extent [0xc917384,0xc917468), 228 bytes, AP offset 8745860, full-body SHA256 a33e5be90d8b9998d7b1e39c37eb5b52321773339ae2a73754c1e2c3d646b0e4; exact Thumb callable 0xc917385. Extents are evidence, not allowlist ranges.",
+    "native_font_wait: instruction extent [0xc399940,0xc399986), 70 bytes, AP offset 2988352, full-body SHA256 068c4a56fe4a0906fb7981afa09b87ffec97cd68e0d51ff4772a3fcaf5dc0050; exact Thumb callable 0xc399941. Extents are evidence, not allowlist ranges."
+  ],
+  "control_flow_evidence": [
+    "Exact AP SHA256 ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f recomputed; all three full function bodies independently rehashed from raw file and matched IDA bytes. XIP offset=VA-0x0c0c0000.",
+    "UIKit root slot 0x200bd1e8; font manager is *(root+28), not root+20. Existing font_reload_uikit_slot identity is reused without changing its policy/status.",
+    "Managed factory is (manager,key*), not the higher-level (family,pixel_size,style) ABI. Key offsets family0,size4,style6. Active records payload48 contain font0, name4, packed size/style8, inline name12, references44. Wrapper payload40 copies native font36 bytes then stores backing record at36.",
+    "Native label font property90 accepts the returned wrapper directly: glyph callbacks0/4/8 and descriptor24 retain the native font payload layout. Setter borrows the pointer without retain/copy. Host64 counted substitutes must pass pointer values using uintptr_t; ARM firmware property value remains one32-bit AAPCS register.",
+    "Draw-unit list slot 0x200bd318; next0, dispatch16, active task32. Audited VG and software dispatchers execute rendering synchronously and clear active task on return. This is local inspected code evidence, not proof that arbitrary custom owners/threads serialize.",
+    "Native wait is void(vg_unit); calls raw GPU finish then releases both pending arrays through stored callbacks. Return r0 is incidental. Normal native CPU glyph references retire before return; a native GPU error still drains. No successful-GPU/recovery certificate is provided.",
+    "DELETE event36 occurs before native class destruction/free. DELETE is synchronous and does not itself invoke wait. Event code uint16 at8 mask0x7fff; callback userdata pointer at12. A heap callback binding can outlive view memory. Event callback cancellation and reentrant deletion remain implementation responsibilities.",
+    "Native event-registration allocates descriptor storage then dereferences it without NULL check; no reliable graceful-OOM guarantee can be inferred from pointer return. Native font wrapper/list/descriptor allocation also includes unchecked paths. Host allocations still must be checked.",
+    "Retirement requires no current/future native label references and no active or unexecuted CPU draw tasks under serialized UI ownership, then native wait before manager release. No in-place font descriptor mutation is required. A failed optional raw GPU status check should retain zero-reference cache entries and retry; empty arrays do not prove physical GPU safety.",
+    "High-level vg_font_create0x0c4950b0 and destroy0x0c49258c are distinct; both identify static failure font0x2ca14888, contrary to inherited calendar_font_create ownership text0x2ca12930. These records are unchanged; managed helpers have no static fallback return.",
+    "Native delete0x0c380404 sends event36 through0x0c37fbc8 before child/class destruction. Event callback dispatcher0x0c3a3ea4 stores callback userdata at event+12, reads event code at+8, and synchronously calls handler. Event add0x0c37fc1c delegates0x0c3a3f5c and returns descriptor pointer without checking internal allocation.",
+    "Font setter0x0c387eba delegates0x0c3872b4 with property90. VG dispatcher0x0c3913ec and SW0x0c3948ac use active task+32 synchronously; VG no-task branch calls native wait0x0c399940. Lower raw finish0x0c92019c may return zero after reset recovery; native wait discards its status after logging and drains anyway.",
+    "Legacy candidate lv_event_get_code0x0c0f7728 and recorded userdata0x0c720f10 have identical thunk bytes targeting0x00275341. Their names do not establish distinct getters; use dispatcher-proven event offsets for this feature unless aliases are separately audited. Existing symbols/statuses are not changed.",
+    "Safe CPU-boundary check: existing font_reload_display_list header (.0430x2010317c/.1550x200bd1f0), payload792/head+4; display rendering byte58 bit1, rootlayer+680; layer taskhead+100,next+108. Defer while rendering, queued tasks, active draw units or unknown owners exist. Active-unit test alone is insufficient during task-building callbacks.",
+    "Exact .043 runtime refresh-area0x002bb4ec instructions0x002bb5c8..0x002bb5dc loop on rootlayer taskhead+100 before display flush; refresh timer0x002bb854 sets display rendering bit1 at0x002bba10..0x002bba2a and clears at0x002bbc36..0x002bbc42. Exact .155 refresh-area0x0c389328 similarly dispatches until rootlayer taskhead empty before native flush; task dispatcher0x0c381484 retires task/nested-layer nodes. Runtime code decoded read-only in existing IDA mapping."
+  ],
+  "ownership_analysis": "Actual native labels hold host cache references independently of view/snapshot storage. Retain returned managed wrapper while any label or pending native glyph description can use it. At serialized inactive/no-queued-CPU-work boundary call native wait, discard incidental return, then consume managed ownership with matching release(manager,font). Retiring wrapper does not forcibly flush manager idle cache. GPU error/recovery is outside successful-render claims.",
+  "unsafe_assumptions": [
+    "STATIC_RECOVERED, restricted/PENDING, device not_probed only; no public veneer, calendar approval reuse, status promotion, address-range or verifier change.",
+    "Native wait retires CPU callbacks even after lower GPU error; do not infer physical GPU completion, recovery safety or global concurrency safety from this.",
+    "Normal serialized standard UI only; unknown drawing units, active/queued CPU work, framework restart and asynchronous custom owners require deferral or separate audit.",
+    "Native internal OOM handling is not made comprehensive by this evidence."
+  ],
+  "recommended_probe": "Host counted dual-backend lifecycle tests must cover size changes, native DELETE after view memory disappears, rollback, bounded cache pending retirement and wait-before-release ordering. Exact-device GPU/TTF/rendering acceptance remains NOT_PROBED.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-23T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "fw://xiaomi-band-11-4.100.155/vela_ap.bin",
+      "sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+      "role": "exact-local-AP-hashed-not-distributed"
+    },
+    {
+      "uri": "docs/native-ui-font-lifecycle-abi.md",
+      "role": "native-font-ABI-and-lifecycle-handoff"
+    }
+  ]
+}

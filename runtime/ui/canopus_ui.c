@@ -604,6 +604,9 @@ int32_t canopus_ui_node_set_visual(
             visual->image_fit == CANOPUS_UI_IMAGE_FIT_COVER ?
             CANOPUS_UI_CAP_IMAGE_FIT_COVER : CANOPUS_UI_CAP_IMAGE_FIT_STRETCH;
     }
+    if (visual->font_px != 0u && visual->font_px != 24u && visual->font_px != 28u) {
+        required |= CANOPUS_UI_CAP_FONT;
+    }
     if (visual->translate_x != 0 || visual->translate_y != 0) {
         required |= CANOPUS_UI_CAP_TRANSLATE;
     }

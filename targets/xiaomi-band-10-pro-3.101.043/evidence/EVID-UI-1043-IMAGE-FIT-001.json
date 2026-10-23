@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "control_flow_evidence": ["Exact-target IDA disassembly/decompilation, code xrefs, constructor and image-event dataflow; no new execution or device probe."],
+  "prototype_hypothesis": "UI-owner AAPCS void scale(void *image,int32_t scale_x,int32_t scale_y); int lv_image_decoder_get_info(const void *source,void *header_out). Scale uses independent Q8 factors (256 identity); get-info returns 1/0 and writes a 12-byte header, uint16 width at +4 and height at +6.",
+  "ownership_analysis": "Scale borrows a live page-owned native image on the UI owner thread; parent/inner image follow native tree ownership. Header query borrows source and caller-owned aligned 12-byte output synchronously, may open files/use cache/invoke decoder callbacks, and must execute on the UI owner outside IRQ locks. No native address is exposed through the module ABI.",
+  "unsafe_assumptions": [
+    "No new device validation, fit capability approval, or public-callable promotion.",
+    "Representable positive scales and fixed-point rounding must be validated by the implementation; native transformed-area helper consumes unsigned16 factors.",
+    "COVER requires a clipped parent viewport; clip_corner on the scaled image alone does not crop its own image event.",
+    "Only exact .043 and .155 reviewed; no inferred sibling-target support."
+  ],
+  "recommended_probe": "Count native scale/query calls on both backend families; verify nonintegral contain/cover/stretch geometry, crop edges, explicit size changes, source/resource refresh, native reset to 256, decoder failure before mutation, hidden/reused wrappers and native parent deletion. Physical display validation remains separate.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-23T00:00:00Z",
+  "evidence_id": "EVID-UI-1043-IMAGE-FIT-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Recover exact private native image scale/dimension ABI and bounded viewport crop; reject guessed fit enum shortcuts.",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.ui.lvx_image_set_scale",
+    "xiaomi-band-10-pro-3.101.043.lv_image_decoder_get_info"
+  ],
+  "callsite_evidence": [
+    "Startup 0x0c0c0ac8 copies [0x2c10d440,0x2c18d940) to PSRAM 0x3c000000, executable alias 0x1c000000. Scale load-source 0x0c179db0 maps to runtime 0x1c06c970/callable 0x1c06c971; get-info load-source 0x0c143798 maps to runtime 0x1c036358/callable 0x1c036359. Whole scale window and first 0x30 query bytes compare equal between IDA load/runtime copies. Existing EVID-UI-1043-LAYOUT-INPUT-001 independently establishes this same copy for image-create/source and coordinates.",
+    "Scale core saves R1/R2 and at runtime 0x1c06c9fe stores R6/R9 to image+0x50/+0x54. It invalidates old/new transformed bounds through 0x1c032988 and refreshes native ext-draw state. Bounds helper load-source 0x0c13fdc8 special-cases angle0 and scale256/256 as identity; point-transform load-source 0x0c167ec4 computes independent pivot+((coordinate-pivot)*scale >>8).",
+    "Get-info runtime 0x1c036358 initializes a 76-byte decoder descriptor, saves source/type and calls 0x1c03616c, returning normalized1/0. Image-source setter runtime0x1c06ceb4 calls it, reads uint16 header+4/+6 and stores native dimensions at image+0x44/+0x48. Header output is12 bytes, corroborated by get-info decoder core copying3 DWORDs.",
+    "Image constructor runtime0x1c06c8d8 sets scales256/256, pivots0x20000032/0x20000032 (native50%) and inner-mode9(center). Inner recomputation runtime0x1c06ce3c handles only mode11(stretch:ceil(box*256/native) independently per axis, rotation/pivot0) and mode12(tile:256/256). Its only runtime code callers are source setter and image event; no datarefs or callable inner-mode setter recovered.",
+    "Image event runtime0x1c06d0c4 draws modes0..9 aligned within object, skips ordinary alignment for larger modes, intersects own rectangle only for mode12(tile), and otherwise forwards full image source+scale+pivot. Scaling alone therefore does not establish COVER crop.",
+    "Renderer runtime0x002ba788 draws own events23/24/25, then tests flag0x00100000 via0x002c2fd0. Flag absent intersects descendant clip with object+28 four-coordinate rectangle; flag present uses expanded ext-draw bounds. Property45(clip_corner) and radius12 add rounded descendant masking after this rectangular clip. Clear overflow-visible0x00100000 for an image wrapper.",
+    "Page-content create0x0ca67244 allocates class0x2cdba8b4 and initializes via0x0cac00b8->0x1c029074 with NULL default options, which can apply theme0x1c063c3c. Custom constructor0x0ca667ec sets internal fields and size but does not establish transparent/zero-pad/zero-border styles. Existing dispatcher0x002bd924 can normalize main styles: exact wrappers0x002be3ec/404/41c/434 forward padding16/17/18/19;0x002be508 forwards background-opacity29;0x002be634 forwards border-width48. Radius12 already recovered. No new remove-style callable is required solely to set these values0.",
+    "Content class event0x0ca66b78 has no own image/background drawing on event24. Post-draw scrollbar path(event28) is gated by content+72 bit0, initially cleared by constructor and enabled on scroll-begin event9; disable scrolling on the fixed viewport. Do not infer general equivalence to removing every style."
+  ],
+  "artifacts": [
+    {
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64",
+      "role": "exact-target-disassembly-and-xrefs"
+    },
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin",
+      "sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "role": "Pinned exact firmware input"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin#0x1c06c970+0x14c",
+      "sha256": "36558c6211cb9d3d3c35cddb50430d0ae87eee48b2147f7bcb2d1a6ae3264d13",
+      "role": "Exact byte window at 0x1c06c970, length 0x14c"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin#0x1c036358+0x30",
+      "sha256": "8ae228fbe8dd78e451267ff9641a6072fe0cb3497b7e15c0b7253b8778421618",
+      "role": "Exact byte window at 0x1c036358, length 0x30"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin#0x1c06ce3c+0x78",
+      "sha256": "baa33a47e790f5bfff8b2a54df1a84682fdd2fa5f922d805b48773fe4067b78b",
+      "role": "Exact byte window at 0x1c06ce3c, length 0x78"
+    }
+  ]
+}

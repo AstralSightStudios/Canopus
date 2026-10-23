@@ -51,6 +51,7 @@ extern "C" {
 #define CANOPUS_UI_CAP_IMAGE_FIT_STRETCH   (1u << 14)
 #define CANOPUS_UI_CAP_VIRTUAL_CONTENT     (1u << 15)
 #define CANOPUS_UI_CAP_TOAST               (1u << 16)
+#define CANOPUS_UI_CAP_FONT                (1u << 17)
 
 typedef uint32_t canopus_ui_node_id;
 
@@ -236,7 +237,7 @@ struct canopus_ui_visual_v1 {
     int16_t y;
     int16_t translate_x;
     int16_t translate_y;
-    uint16_t font_px; /* 0 inherits. */
+    uint16_t font_px; /* 0 inherits; beyond 24/28 requires CAP_FONT. */
     uint16_t image_fit;
     uint32_t content_height;
     int32_t scroll_y;

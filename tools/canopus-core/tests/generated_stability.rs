@@ -307,6 +307,8 @@ fn band10_pro_043_ui_calls_use_audited_runtime_addresses() {
         ("lv_tick_get", "FW_UI_TICK_GET", 0x1c063d0c),
         ("lv_image_create", "FW_LVX_IMAGE_CREATE", 0x1c06cac0),
         ("lv_image_set_src", "FW_LVX_IMAGE_SET_SRC", 0x1c06ceb4),
+        ("lvx_image_set_scale", "FW_UI_IMAGE_SCALE", 0x1c06c970),
+        ("lv_image_decoder_get_info", "FW_UI_IMAGE_INFO", 0x1c036358),
     ] {
         let symbol = symbols.iter().find(|symbol| symbol.name == name).unwrap();
         assert_eq!(
@@ -322,6 +324,81 @@ fn band10_pro_043_ui_calls_use_audited_runtime_addresses() {
         let define = format!("#define {macro_name} UINT32_C(0x{:08X})", entry | 1);
         assert!(generated.contains(&define), "generated {macro_name}");
         assert!(committed.contains(&define), "committed {macro_name}");
+    }
+}
+
+#[test]
+fn native_image_fit_is_bound_only_to_independently_reviewed_targets() {
+    for suffix in ["3.101.036", "3.101.043", "4.100.139", "4.100.155", "4.100.179"] {
+        let band10 = suffix.starts_with('3');
+        let target = format!("xiaomi-band-{}-{suffix}", if band10 { "10-pro" } else { "11" });
+        let dir = repo_root().join("targets").join(&target);
+        let reviewed = suffix == "3.101.043" || suffix == "4.100.155";
+        let header = std::fs::read_to_string(dir.join("generated").join(if band10 {
+            "canopus_target_config.h"
+        } else {
+            "canopus_band11_addresses.h"
+        })).unwrap();
+        for macro_name in ["FW_UI_IMAGE_SCALE", "FW_UI_IMAGE_INFO"] {
+            assert_eq!(header.contains(&format!("#define {macro_name} ")), reviewed, "{target}: {macro_name}");
+        }
+        if !reviewed { continue; }
+        let (symbols, _) = load_records(&dir).unwrap();
+        for name in ["lvx_image_set_scale", "lv_image_decoder_get_info"] {
+            let symbol = symbols.iter().find(|symbol| symbol.name == name).unwrap();
+            assert_eq!(symbol.policy, "restricted");
+            assert_eq!(symbol.status, "STATIC_RECOVERED");
+            assert_eq!(symbol.proof.device.as_deref(), Some("not_probed"));
+            assert_eq!(symbol.approval_state.as_deref(), Some(if band10 { "APPROVED" } else { "PENDING" }));
+        }
+        let evidence_id = if band10 { "EVID-UI-1043-IMAGE-FIT-001" } else { "EVID-UI-4155-IMAGE-FIT-001" };
+        let evidence: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
+            dir.join(format!("evidence/{evidence_id}.json"))).unwrap()).unwrap();
+        canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence).unwrap();
+        if !band10 {
+            assert!(header.contains("#define FW_UI_IMAGE_SCALE 0x0C3AE46Fu"));
+            assert!(header.contains("#define FW_UI_IMAGE_INFO 0x0C38E4E5u"));
+        }
+    }
+}
+
+#[test]
+fn native_font_bindings_are_private_and_target_gated() {
+    for suffix in ["3.101.036", "3.101.043", "4.100.139", "4.100.155", "4.100.179"] {
+        let band10 = suffix.starts_with('3');
+        let target = format!("xiaomi-band-{}-{suffix}", if band10 { "10-pro" } else { "11" });
+        let dir = repo_root().join("targets").join(&target);
+        let reviewed = suffix == "3.101.043" || suffix == "4.100.155";
+        let header = std::fs::read_to_string(dir.join("generated").join(if band10 {
+            "canopus_target_config.h"
+        } else {
+            "canopus_band11_addresses.h"
+        })).unwrap();
+        for name in ["FW_UI_FONT_CREATE", "FW_UI_FONT_RELEASE", "FW_UI_FONT_WAIT",
+                     "FW_UI_FONT_MANAGER_SLOT", "FW_UI_FONT_DRAW_UNITS", "FW_UI_FONT_DISPLAY_LIST",
+                     "FW_UI_FONT_VG_DISPATCH", "FW_UI_FONT_SW_DISPATCH", "FW_UI_FONT_EVENT_DELETE"] {
+            assert_eq!(header.contains(&format!("#define {name} ")), reviewed, "{target}: {name}");
+        }
+        if !reviewed { continue; }
+        let (symbols, _) = load_records(&dir).unwrap();
+        let veneer = std::fs::read_to_string(dir.join("generated/canopus_veneer.h")).unwrap();
+        for (name, address) in [
+            ("native_font_create", if band10 { 0x0c85f6cd } else { 0x0c494381 }),
+            ("native_font_release", if band10 { 0x0c85f8fd } else { 0x0c917385 }),
+            ("native_font_wait", if band10 { 0x0c15c061 } else { 0x0c399941 }),
+        ] {
+            let symbol = symbols.iter().find(|symbol| symbol.name == name).unwrap();
+            assert_eq!(symbol.policy, "restricted");
+            assert_eq!(symbol.status, "STATIC_RECOVERED");
+            assert_eq!(symbol.approval_state.as_deref(), Some("PENDING"));
+            assert_eq!(symbol.proof.device.as_deref(), Some("not_probed"));
+            assert_eq!(parse_address(symbol.callable_address.as_deref().unwrap()), address);
+            assert!(!veneer.contains(&format!("canopus_fw_{name}(")));
+        }
+        let id = if band10 { "EVID-UI-1043-FONT-LIFECYCLE-001" } else { "EVID-UI-4155-FONT-LIFECYCLE-001" };
+        let evidence: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
+            dir.join(format!("evidence/{id}.json"))).unwrap()).unwrap();
+        canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence).unwrap();
     }
 }
 

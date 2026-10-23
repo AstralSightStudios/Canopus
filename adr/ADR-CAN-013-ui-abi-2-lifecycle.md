@@ -43,7 +43,8 @@ Canopus 尚未发版，公共 API/ABI 可以直接演进，不必保留旧版本
 | `VIRTUAL_CONTENT` | `content_height` 虚拟内容窗口 | 已实现 |
 | `TOAST` | Toast | 已实现 |
 | `NAVIGATION_HEADER` / `IMAGE` / `PROGRESS` | 导航头、图片、进度条 | 已实现 |
-| `IMAGE_FIT_CONTAIN` / `COVER` / `STRETCH` | 图片适配模式 | **未实现**，只有 `NATIVE` |
+| `IMAGE_FIT_CONTAIN` / `COVER` / `STRETCH` | 图片适配模式 | `.043` / `.155` **host 已实现**，Q8 原生缩放 + 尺寸查询 + 父容器裁剪；其它目标仅 `NATIVE`，见 ADR-CAN-010 / P7.13 |
+| `FONT` (`font_px`) | 任意字号（`CANOPUS_UI_CAP_FONT`） | `0/24/28` 全目标支持；`.043` / `.155` **host 已实现**任意非零 16-bit `font_px`（按字号缓存 managed wrapper + 原生标签 `DELETE` 绑定 + 渲染队列/VG wait 退役），stock 行/标题/msgbox 与其余目标返回 `UNSUPPORTED`，见 ADR-CAN-010 / P7.13 |
 | `EXTENDED_COMPONENTS` | 扩展组件 | 目标相关 |
 
 未审计到对应固件原语的 target **不开放**这些能力位，调用返回 `ERR_UNSUPPORTED`。
@@ -177,8 +178,8 @@ volatile 存储避免自递归），SDK 的 props 结构体初始化习惯用法
 - **能力状态未提升**：本 ADR 不改动 `docs/progress.md`、`docs/native-manager-ui-plan.md` §15 里的任何能力状态，
   新增符号保持 `STATIC_RECOVERED` / `PENDING` / `restricted`。
 - **残余限制（交给 Corona 工作区）**：
-  - 图片只有 `IMAGE_FIT_NATIVE`；静态调查已找到 `.043`/`.155` 独立 X/Y 缩放与固有尺寸查询，但适配模式的量化、裁剪、状态重置、解码失败回滚与像素验证尚未实现，`CONTAIN`/`COVER`/`STRETCH` 能力位仍关闭。`.043` 未使用的缩放/查询记录仍需纠正加载地址与运行地址。
-  - 公共后端只绑定 MiSans-Medium 24/28 两档，没有字重/斜体/自定义字体；固件中虽有 17/24/26/30/32 的 stock 样式线索，尚未审计接入，21 px 与数值字重 600 均未落实。通用字体分配、缓存与排队渲染引用的销毁边界未闭环，不能复用 calendar 专项批准。
+  - 图片适配由 P7.13 在 `.043`/`.155` 接入 `CONTAIN/COVER/STRETCH`（静态证据 + 双后端 host 回归）；`.043` 缩放/查询记录的加载地址已纠正为运行地址。其它目标仍只有 `NATIVE`，不得从同家族外推能力。Q8 量化、裁剪与验证边界见 ADR-CAN-010 及 `docs/native-ui-image-font-verification.md`；尚无新 fit 路径的真机像素验证。
+  - 公共后端只绑定 MiSans-Medium 24/28 两档，没有字重/斜体/自定义字体；固件中虽有 17/24/26/30/32 的 stock 样式线索，尚未审计接入，21 px 与数值字重 600 均未落实。通用字体分配、缓存与排队渲染引用的销毁边界未闭环，不能复用 calendar 专项批准。P7.13 的 [font feasibility](../docs/native-ui-font-sizing-feasibility.md) 记录精确工厂/销毁入口、`.155` failure-font 地址不一致与预算；任意字号保持显式 `UNSUPPORTED`。
   - 样式属性 ID 按 target 审计：`.155` 有圆角/边框色/边框宽/透明度/圆角裁剪，`.043` 只有圆角与圆角裁剪，`.036`/`.139`/`.179` 只有样式 setter（颜色）。携带未审计属性（含 `FLAG_CLIP` 对应的圆角裁剪）的快照整次提交 `ERR_UNSUPPORTED`；示例 Lab 的扩展样式卡片仅在 `.155` 完整呈现，`.043`/`.179` 以 `stylefallback` 降级并在运行记录中 gate `style-card`。
   - 原生按钮、action/status/switch row 非零内边距返回 `ERR_UNSUPPORTED`；复选/单选行支持自定义内边距。显式样式变回继承通过替换原生子树恢复固件默认主题。
   - 布局只支持 `grow == 0`、`shrink == 1`，不是通用 CSS。

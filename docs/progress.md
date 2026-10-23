@@ -34,7 +34,8 @@
 
 - 公共 ABI 直接演进到 2.0：`ctx->ui_ext` 并入 `ctx->ui` 并删除，事件改为 `canopus_ui_event_v1`，新增显式能力协商、
   `node_set_visual`、`control`（滚动/位移/捕获）、`post`。**host implemented**，见 ADR-CAN-013。
-- 能力按 target 判定，不支持显式返回 `ERR_UNSUPPORTED`；图片适配只有 `NATIVE`，字体只有 MiSans-Medium 24/28。
+- 能力按 target 判定，不支持显式返回 `ERR_UNSUPPORTED`；`.043` / `.155` 图片适配（`NATIVE/CONTAIN/COVER/STRETCH`）与任意非零 16-bit 字号（`CANOPUS_UI_CAP_FONT`，按字号缓存 managed wrapper + 原生标签 `DELETE` 绑定 + 渲染队列/VG wait 退役）现已在 host 接入，其它目标仅 `NATIVE` 与 `0/24/28`。
+  能力矩阵、生命周期证明、防御性代码消融、五目标预算（`supervisor_max_size` 构建阈值 `131072 -> 133120`，非已证硬件上限，常驻上限未改）、静态证据与双后端四变体回归见 [verification](native-ui-image-font-verification.md)、[font lifecycle ABI](native-ui-font-lifecycle-abi.md)、[ablation](native-ui-defensive-ablation.md)、ADR-CAN-010 / refactor-plan P7.13；只新增 host/static 证据，无新增真机验证或生产批准。
 - 模块生命周期走既有 bus（`"canopus/module/state"` + `query_module`），UI 更新经 `ctx->ui->post`，无线程无轮询。
 - host 回归（含双后端 ASan/UBSan）、Rust 215 项、生成物检查、五个 active target 构建与 ELF 校验通过。
   隔离 Mirage 中 `.043` / `.155` 完整 Lab 通过（选中第 40 / 46 项并返回恢复），`.179` 支持路径通过，显式 gated 虚拟滚动/指针拖动/捕获。

@@ -70,6 +70,66 @@ that variant in its C host gate. These counts measure avoided native API calls,
 not device frame rate or physical rendering.
 The optimization itself has no new device validation or capability promotion.
 
+## Native image fit and font size capability matrix (2026-10-23)
+
+UI ABI remains 2.0. Exact `.043` and `.155` firmware analysis confirms independent
+Q8 image scales (256 is identity), a 12-byte native source-header query, center
+alignment and native parent clipping. `lvx_image_set_scale` is bound privately as
+`FW_UI_IMAGE_SCALE`, and `lv_image_decoder_get_info` as `FW_UI_IMAGE_INFO`.
+`.043` uses corrected runtime callables `0x1c06c971` / `0x1c036359`; `.155` uses
+`0x0c3ae46f` / `0x0c38e4e5`. Arbitrary `font_px` (`CANOPUS_UI_CAP_FONT`, bit 17)
+is bound privately on `.043` / `.155` via managed factory `native_font_create`
+(`0x0c85f6cd` / `0x0c494381`), `native_font_release` (`0x0c85f8fd` / `0x0c917385`),
+and `native_font_wait` (`0x0c15c061` / `0x0c399941`), with UIKit root-slot manager
+`*(root + 28)` and local style property 90 (`0x5a`). Evidence:
+`EVID-UI-1043-IMAGE-FIT-001`, `EVID-UI-4155-IMAGE-FIT-001`,
+`EVID-UI-1043-FONT-LIFECYCLE-001`, `EVID-UI-4155-FONT-LIFECYCLE-001`,
+`EVID-UI-DEFENSIVE-ABLATION-001`, and `EVID-UI-FIT-FONT-HOST-001`.
+
+| Native capability | Firmware primitive / binding | `.043` / `.155` | Other active targets |
+|---|---|---|---|
+| `IMAGE_FIT_NATIVE` | Existing native image source and box | Existing behavior | Existing behavior |
+| `IMAGE_FIT_CONTAIN` | Scale + decoder query; native center | Host implemented; uniform minimum ratio, rounded down | `UNSUPPORTED`, bit off |
+| `IMAGE_FIT_COVER` | Scale + query + clipped parent viewport | Host implemented; uniform maximum ratio, rounded up, center crop | `UNSUPPORTED`, bit off |
+| `IMAGE_FIT_STRETCH` | Independent native X/Y scale + query + clipped viewport | Host implemented; per-axis ratio, rounded up | `UNSUPPORTED`, bit off |
+| `font_px = 0/24/28` | `FW_LVX_STYLE_APPLY`, borrowed MiSans-Medium styles | Fixed styles, counted regression coverage | Same existing contract |
+| Arbitrary `font_px` (`CAP_FONT`) | `FW_UI_FONT_CREATE` (`manager, &key`), property 90 setter, `DELETE` event 36 + `FW_UI_FONT_WAIT` + `FW_UI_FONT_RELEASE` | Host implemented for labels, section headings, checkbox primary text and Toast owner; stock rows/titles/msgbox return `UNSUPPORTED` | `UNSUPPORTED`, bit off |
+
+Fit uses the resolved semantic box, preflights decoding and scale range before
+publication, and preserves unchanged setters. Q8 quantization cannot represent
+every exact ratio; cover/stretch clip the rounded-up excess. Fitted images use a
+page-owned viewport and child, reusing an otherwise unused slot pointer without
+adding persistent view state. Returning to NATIVE stages a new image with
+identity scales. This preserves native ownership on failures and subtree deletion.
+
+Arbitrary `font_px` caches one managed wrapper per distinct `(manager, font_px)`
+and binds reference ownership to each actual native label via an independent heap
+record registered on native `DELETE` (event 36, userdata at `event + 12`), plus
+per-apply preflight pins before input cancellation. Zero-reference cache entries
+are released only after checking that no display has rendering bit `byte 58 & 2`,
+no linked layer has queued draw tasks (`layer + 100`), and no draw unit has an
+active CPU task (`unit + 32`), then invoking `native_font_wait(vg_unit)` to drain
+pending CPU glyph references before `native_font_release(manager, font)`.
+
+Before implementation, `.155` measured 130,696 file / 182,014 resident bytes.
+With `-Oz` on `canopus_ui_host.c`, image fit measured 129,736 / 180,646 bytes.
+Adding arbitrary font sizing brought `.155` to 131,440 / 182,062 bytes before
+trimming (+1,704 / +1,416 bytes over image fit, 368 bytes above the 131,072 file
+threshold). Empirical defensive-code ablation ([ablation report](../docs/native-ui-defensive-ablation.md))
+and minimal font-integration trimming removed 428 file and 420 resident bytes on
+`.155`, finishing at **131,012 file / 181,642 resident bytes** (`.043` **124,740 /
+162,546 bytes**). `supervisor_max_size` in both family TOMLs is raised `131072 ->
+133120` (+2,048 B small build margin; **build threshold, not a proven hardware
+loader limit, and device loading remains unproven / `not_probed`**);
+`supervisor_max_resident` (`163840` / `184320`) is unchanged.
+
+See [verification and per-target budgets](../docs/native-ui-image-font-verification.md),
+[managed-font ABI and retirement](../docs/native-ui-font-lifecycle-abi.md), and
+[defensive-code ablation](../docs/native-ui-defensive-ablation.md).
+The implementation adds **host/static evidence only**. No symbol or capability
+is promoted to device verified or production approved; restricted records retain
+their existing approval state (`PENDING`), and no new firmware callable is public.
+
 ## 证据与限制
 
 - host 测试（含 ASan/UBSan）覆盖入口登记/校验/随模块释放、`close_page`、无 Manager UI 的构建返回 UNSUPPORTED、

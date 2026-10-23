@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 96ae822ede8f7997
+ * input_digest: d5ef7a735ab714af
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -625,6 +625,9 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * miwear_transport_send: restricted - not exported until context/ownership approved
  * mkdir: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
+ * native_font_create: restricted - not exported until context/ownership approved
+ * native_font_release: restricted - not exported until context/ownership approved
+ * native_font_wait: restricted - not exported until context/ownership approved
  * notifications_scroll: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
  * opendir: restricted - not exported until context/ownership approved

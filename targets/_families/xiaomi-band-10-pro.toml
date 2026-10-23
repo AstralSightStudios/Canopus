@@ -2,8 +2,11 @@
 manager_backend = "manager/target/canopus_manager_target.c"
 # Build thresholds, not proven loader hard limits. Raised 114688 -> 131072 on
 # 2026-10-22 for the native UI framework (measured 119224 B after stripping),
-# matching the Band 11 file budget. Resident remains a real RAM-slot bound.
-supervisor_max_size = 131072
+# and 131072 -> 133120 (+2048 B) on 2026-10-23 for arbitrary UI font sizing +
+# image fit (Band 11 .155 measured 131440 B before defensive ablation and
+# 131012 B after trimming; device loading remains unproven / NOT_PROBED).
+# Resident remains a real RAM-slot bound and is unchanged.
+supervisor_max_size = 133120
 supervisor_max_resident = 163840
 loader_sources = []
 defines = []

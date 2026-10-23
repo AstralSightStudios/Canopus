@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 96ae822ede8f7997
+// input_digest: d5ef7a735ab714af
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -899,8 +899,8 @@ pub unsafe fn canopus_fw_recvfrom(a0: i32, a1: *mut core::ffi::c_void, a2: u32, 
 /// Recovered `modhandle` at 0xc203a68. Thumb callable address 0xc203a69.
 pub const CANOPUS_FW_MODHANDLE_CALLABLE: usize = canopus_thumb_callable(0xc203a69usize);
 
-/// Recovered `lv_image_decoder_get_info` at 0x0c143798. Thumb callable address 0x0c143799.
-pub const CANOPUS_FW_LV_IMAGE_DECODER_GET_INFO_CALLABLE: usize = canopus_thumb_callable(0x0c143799usize);
+/// Recovered `lv_image_decoder_get_info` at 0x1c036358. Thumb callable address 0x1c036359.
+pub const CANOPUS_FW_LV_IMAGE_DECODER_GET_INFO_CALLABLE: usize = canopus_thumb_callable(0x1c036359usize);
 
 /// Recovered `system_get_state` at 0x0c4bed68. Thumb callable address 0x0c4bed69.
 pub const CANOPUS_FW_SYSTEM_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0c4bed69usize);
@@ -1082,6 +1082,9 @@ pub unsafe fn canopus_fw_bt_pair_display_reply(a0: *mut core::ffi::c_void, a1: *
 /// Recovered `property_get` at 0x0c3dadb0. Thumb callable address 0x0c3dadb1.
 pub const CANOPUS_FW_PROPERTY_GET_CALLABLE: usize = canopus_thumb_callable(0x0c3dadb1usize);
 
+/// Recovered `native_font_create` at 0xc85f6cc. Thumb callable address 0xc85f6cd.
+pub const CANOPUS_FW_NATIVE_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc85f6cdusize);
+
 /// Recovered `p67_blur_gpu_finish` at 0x0c187bb0. Thumb callable address 0x0c187bb1.
 pub const CANOPUS_FW_P67_BLUR_GPU_FINISH_CALLABLE: usize = canopus_thumb_callable(0x0c187bb1usize);
 
@@ -1094,8 +1097,8 @@ pub const CANOPUS_FW_SCREEN_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered global `font_reload_vector_label_class` at 0x2cdba868.
 pub const canopus_fw_font_reload_vector_label_class: usize = 0x2cdba868usize;
 
-/// Recovered `lvx_image_set_scale` at 0xc179db0. Thumb callable address 0xc179db1.
-pub const CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE: usize = canopus_thumb_callable(0xc179db1usize);
+/// Recovered `lvx_image_set_scale` at 0x1c06c970. Thumb callable address 0x1c06c971.
+pub const CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE: usize = canopus_thumb_callable(0x1c06c971usize);
 
 /// Recovered `clock_gettime` at 0xc201fe0. Thumb callable address 0xc201fe1.
 pub const CANOPUS_FW_CLOCK_GETTIME_CALLABLE: usize = canopus_thumb_callable(0xc201fe1usize);
@@ -1349,6 +1352,9 @@ pub const CANOPUS_FW_MIWEAR_SESSION_LOOKUP_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `font_reload_outline_acquire` at 0x1c0572a4. Thumb callable address 0x1c0572a5.
 pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0x1c0572a5usize);
 
+/// Recovered `native_font_wait` at 0xc15c060. Thumb callable address 0xc15c061.
+pub const CANOPUS_FW_NATIVE_FONT_WAIT_CALLABLE: usize = canopus_thumb_callable(0xc15c061usize);
+
 /// Recovered `font_reload_outline_compare` at 0x1c057258. Thumb callable address 0x1c057259.
 pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_COMPARE_CALLABLE: usize = canopus_thumb_callable(0x1c057259usize);
 
@@ -1387,6 +1393,9 @@ pub unsafe fn canopus_fw_lvx_page_title_create(a0: *mut core::ffi::c_void, a1: *
     let f: extern "C" fn(*mut core::ffi::c_void, *const u8, u32, canopus_lvx_event_cb, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE) };
     f(a0, a1, a2, a3, a4)
 }
+
+/// Recovered `native_font_release` at 0xc85f8fc. Thumb callable address 0xc85f8fd.
+pub const CANOPUS_FW_NATIVE_FONT_RELEASE_CALLABLE: usize = canopus_thumb_callable(0xc85f8fdusize);
 
 /// Recovered `bt_queue_free` at 0xc6b9cf0. Thumb callable address 0xc6b9cf1.
 pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc6b9cf1usize);
@@ -1589,6 +1598,9 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // miwear_transport_send: restricted - not exported until context/ownership approved
 // mkdir: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
+// native_font_create: restricted - not exported until context/ownership approved
+// native_font_release: restricted - not exported until context/ownership approved
+// native_font_wait: restricted - not exported until context/ownership approved
 // notifications_scroll: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
 // opendir: restricted - not exported until context/ownership approved

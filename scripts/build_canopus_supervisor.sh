@@ -100,7 +100,11 @@ for s in \
     runtime/hook/canopus_hook.c \
     $LOADER_SRCS; do
     base=$(basename "$s")
-    $CC $TARGET_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
+    # This backend owns layout and native fit arithmetic; prefer minimum code
+    # size within the unchanged Supervisor file/resident budgets.
+    SOURCE_FLAGS=""
+    [ "$s" != manager/target/canopus_ui_host.c ] || SOURCE_FLAGS="-Oz"
+    $CC $TARGET_FLAGS $SOURCE_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
 done
 
 echo "[2/3] relocatable link (ld.lld -r)"

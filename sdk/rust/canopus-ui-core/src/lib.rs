@@ -61,6 +61,7 @@ pub const CAP_IMAGE_FIT_COVER: u32 = 1 << 13;
 pub const CAP_IMAGE_FIT_STRETCH: u32 = 1 << 14;
 pub const CAP_VIRTUAL_CONTENT: u32 = 1 << 15;
 pub const CAP_TOAST: u32 = 1 << 16;
+pub const CAP_FONT: u32 = 1 << 17;
 
 pub const VISUAL_FLAG_FOREGROUND_RGB: u32 = 1 << 0;
 pub const VISUAL_FLAG_BACKGROUND_RGB: u32 = 1 << 1;
@@ -1981,6 +1982,18 @@ impl<A: Application, B: SnapshotBackend, const COMMANDS: usize> ApplicationRunti
 mod layout {
     use super::*;
     use core::mem::{align_of, offset_of, size_of};
+
+    #[test]
+    fn font_capability_matches_c_header() {
+        let header = include_str!("../../../c/canopus_ui.h");
+        let definition = header.lines().find(|line| {
+            line.split_whitespace().nth(1) == Some("CANOPUS_UI_CAP_FONT")
+        }).unwrap();
+        let bit = definition.split("<<").nth(1).unwrap()
+            .trim().trim_end_matches(')').parse::<u32>().unwrap();
+        assert_eq!(CAP_FONT, 1 << bit);
+        assert_eq!(CAP_FONT, 1 << 17);
+    }
 
     #[test]
     fn node_layout() {

@@ -359,8 +359,8 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
     TargetPrivateSymbolRecord {
         name: "lv_image_decoder_get_info",
         kind: "function",
-        entry: 0xc143798usize,
-        callable: 0xc143799usize,
+        entry: 0x1c036358usize,
+        callable: 0x1c036359usize,
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int(const void *src, void *header)",
@@ -1680,6 +1680,33 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *, const void *)",
     },
     TargetPrivateSymbolRecord {
+        name: "native_font_create",
+        kind: "function",
+        entry: 0xc85f6ccusize,
+        callable: 0xc85f6cdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(void *manager, const void *key)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "native_font_release",
+        kind: "function",
+        entry: 0xc85f8fcusize,
+        callable: 0xc85f8fdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *manager, void *font)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "native_font_wait",
+        kind: "function",
+        entry: 0xc15c060usize,
+        callable: 0xc15c061usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *vg_unit)",
+    },
+    TargetPrivateSymbolRecord {
         name: "notifications_scroll",
         kind: "function",
         entry: 0xc527bbcusize,
@@ -2456,8 +2483,8 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
     TargetPrivateSymbolRecord {
         name: "lvx_image_set_scale",
         kind: "function",
-        entry: 0xc179db0usize,
-        callable: 0xc179db1usize,
+        entry: 0x1c06c970usize,
+        callable: 0x1c06c971usize,
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "void(void *, int32_t, int32_t)",
@@ -2615,8 +2642,8 @@ pub const LV_DISPLAY_GET_VERTICAL_RESOLUTION_ENTRY: usize = 0xc13cd74usize;
 pub const LV_DISPLAY_GET_VERTICAL_RESOLUTION_CALLABLE: usize = 0xc13cd75usize;
 pub const LV_DISPLAY_INVALIDATE_AREA_ENTRY: usize = 0xc105164usize;
 pub const LV_DISPLAY_INVALIDATE_AREA_CALLABLE: usize = 0xc105165usize;
-pub const LV_IMAGE_DECODER_GET_INFO_ENTRY: usize = 0xc143798usize;
-pub const LV_IMAGE_DECODER_GET_INFO_CALLABLE: usize = 0xc143799usize;
+pub const LV_IMAGE_DECODER_GET_INFO_ENTRY: usize = 0x1c036358usize;
+pub const LV_IMAGE_DECODER_GET_INFO_CALLABLE: usize = 0x1c036359usize;
 pub const LV_OBJ_GET_STYLE_PROP_ENTRY: usize = 0xc1068a8usize;
 pub const LV_OBJ_GET_STYLE_PROP_CALLABLE: usize = 0xc1068a9usize;
 pub const LV_OBJ_REFRESH_STYLE_ENTRY: usize = 0xc1070acusize;
@@ -2899,6 +2926,12 @@ pub const MIWEAR_TRANSPORT_L2_RX_ENTRY: usize = 0xc7d6e6cusize;
 pub const MIWEAR_TRANSPORT_L2_RX_CALLABLE: usize = 0xc7d6e6dusize;
 pub const MIWEAR_TRANSPORT_SEND_ENTRY: usize = 0xc7d719cusize;
 pub const MIWEAR_TRANSPORT_SEND_CALLABLE: usize = 0xc7d719dusize;
+pub const NATIVE_FONT_CREATE_ENTRY: usize = 0xc85f6ccusize;
+pub const NATIVE_FONT_CREATE_CALLABLE: usize = 0xc85f6cdusize;
+pub const NATIVE_FONT_RELEASE_ENTRY: usize = 0xc85f8fcusize;
+pub const NATIVE_FONT_RELEASE_CALLABLE: usize = 0xc85f8fdusize;
+pub const NATIVE_FONT_WAIT_ENTRY: usize = 0xc15c060usize;
+pub const NATIVE_FONT_WAIT_CALLABLE: usize = 0xc15c061usize;
 pub const NOTIFICATIONS_SCROLL_ENTRY: usize = 0xc527bbcusize;
 pub const NOTIFICATIONS_SCROLL_CALLABLE: usize = 0xc527bbdusize;
 pub const P67_BATTERY_CHILD_COUNT_ENTRY: usize = 0xc5881d8usize;
@@ -3061,8 +3094,8 @@ pub const LV_TIMER_DEL_ENTRY: usize = 0xc588128usize;
 pub const LV_TIMER_DEL_CALLABLE: usize = 0xc588129usize;
 pub const LVX_CONTENT_PAD_BOTTOM_ENTRY: usize = 0xc5893c0usize;
 pub const LVX_CONTENT_PAD_BOTTOM_CALLABLE: usize = 0xc5893c1usize;
-pub const LVX_IMAGE_SET_SCALE_ENTRY: usize = 0xc179db0usize;
-pub const LVX_IMAGE_SET_SCALE_CALLABLE: usize = 0xc179db1usize;
+pub const LVX_IMAGE_SET_SCALE_ENTRY: usize = 0x1c06c970usize;
+pub const LVX_IMAGE_SET_SCALE_CALLABLE: usize = 0x1c06c971usize;
 pub const LVX_LABEL_SET_LONG_MODE_ENTRY: usize = 0xc588bf8usize;
 pub const LVX_LABEL_SET_LONG_MODE_CALLABLE: usize = 0xc588bf9usize;
 pub const LVX_LIST_ITEM_UPDATE_ENTRY: usize = 0xc4c8904usize;

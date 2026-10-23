@@ -5,7 +5,9 @@
   "evidence_ids": [
     "EVID-PORT-4155-001",
     "EVID-DIR-4155-001",
-    "EVID-UI-4155-MSGBOX-001"
+    "EVID-UI-4155-MSGBOX-001",
+    "EVID-UI-4155-IMAGE-FIT-001",
+    "EVID-UI-4155-FONT-LIFECYCLE-001"
   ],
   "bindings": {
     "FW_APP_LOOKUP": "app_lookup",
@@ -40,6 +42,16 @@
     "FW_LV_OBJECT_CLEAR_FLAG": "lv_obj_clear_flag",
     "FW_LV_IMAGE_CREATE": "lv_image_create",
     "FW_LV_IMAGE_SET_SRC": "lv_image_set_src",
+    "FW_UI_IMAGE_SCALE": "lvx_image_set_scale",
+    "FW_UI_IMAGE_INFO": "lv_image_decoder_get_info",
+    "FW_UI_FONT_CREATE": "native_font_create",
+    "FW_UI_FONT_RELEASE": "native_font_release",
+    "FW_UI_FONT_WAIT": "native_font_wait",
+    "FW_UI_FONT_MANAGER_SLOT": "font_reload_uikit_slot",
+    "FW_UI_FONT_DRAW_UNITS": "font_reload_draw_unit_slot",
+    "FW_UI_FONT_DISPLAY_LIST": "font_reload_display_list",
+    "FW_UI_FONT_VG_DISPATCH": "font_reload_vg_dispatch",
+    "FW_UI_FONT_SW_DISPATCH": "font_reload_sw_dispatch",
     "FW_LV_BAR_CREATE": "lv_bar_create",
     "FW_LV_BAR_SET_RANGE": "lv_bar_set_range",
     "FW_LV_BAR_SET_VALUE": "lv_bar_set_value",

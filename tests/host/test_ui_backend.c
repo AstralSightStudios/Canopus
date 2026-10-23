@@ -10,7 +10,7 @@
 
 struct counts {
     unsigned create, row, text, style, source, size, flags, align, range, value;
-    unsigned events, destroy, dialog;
+    unsigned events, destroy, dialog, scale, info, font_create, font_release, font_set, font_wait;
 };
 static struct counts calls;
 struct widget {
@@ -20,15 +20,92 @@ struct widget {
     uint32_t props[128];
     unsigned flags, checked;
     int width, height, minimum, maximum, value, scroll_y;
-    unsigned deleted;
+    unsigned deleted, font_px, scale_x, scale_y, source_width, source_height;
     char text[256], secondary[256], source[256];
     void (*callback)(void *);
     void *event_user;
+    void (*delete_callback)(void *);
+    void *delete_user;
+    void *font;
 };
 static struct widget widgets[256];
 static unsigned allocated;
 static int fail_next_create;
 static unsigned fail_create_at;
+static unsigned image_width = 200, image_height = 100;
+static int image_decode_failure;
+struct mock_font { struct mock_font *next; uint16_t pixels; unsigned pending; };
+static unsigned native_fonts, font_bindings_allocated;
+static int fail_font_create, fail_font_alloc, fail_font_event, font_cpu_active;
+static void *font_root_slot;
+static unsigned char font_root_storage[48];
+static int font_manager_identity;
+#ifndef CANOPUS_TEST_NO_FONT
+static struct mock_font *mock_fonts;
+static void *font_draw_units;
+static unsigned char font_vg_unit[48], font_sw_unit[48], font_display_list[16];
+static unsigned char font_display[808], font_layer[120];
+static void font_native_pointer(void *base, uint32_t offset, void *value)
+{ memcpy((uint8_t *)base + offset,&value,sizeof(value)); }
+static void font_set_cpu_active(int active)
+{
+    font_cpu_active = active;
+    font_native_pointer(font_vg_unit,32,active ? &font_manager_identity : NULL);
+}
+static void *font_alloc(uint32_t size)
+{
+    void *memory;
+    if (fail_font_alloc) { fail_font_alloc = 0; return NULL; }
+    memory = malloc(size); assert(memory != NULL); font_bindings_allocated++;
+    return memory;
+}
+static void font_free(void *memory)
+{ assert(memory != NULL && font_bindings_allocated != 0); font_bindings_allocated--; free(memory); }
+static void *font_create(void *manager, const void *key_data)
+{
+    const struct { const char *family; uint16_t pixels, style; } *key = key_data;
+    struct mock_font *font;
+    assert(manager == &font_manager_identity && strcmp(key->family,"MiSans-Medium") == 0 && key->pixels != 0 && key->style == 0);
+    calls.font_create++;
+    if (fail_font_create) { fail_font_create = 0; return NULL; }
+    font = malloc(sizeof(*font)); assert(font != NULL);
+    font->pixels = key->pixels; font->pending = 0; native_fonts++;
+    font->next = mock_fonts; mock_fonts = font;
+    return font;
+}
+static void font_release(void *manager, void *native)
+{
+    struct mock_font *font = native;
+    unsigned i;
+    assert(manager == &font_manager_identity && native_fonts != 0 && font->pending == 0);
+    for (i = 0; i < allocated; i++) assert(widgets[i].deleted || widgets[i].font != font);
+    {
+        struct mock_font **link = &mock_fonts;
+        while (*link != font) link = &(*link)->next;
+        *link = font->next;
+    }
+    calls.font_release++; native_fonts--; free(font);
+}
+static void font_wait(void *unit)
+{
+    struct mock_font *font;
+    assert(unit == font_vg_unit && !font_cpu_active); calls.font_wait++;
+    for (font = mock_fonts; font != NULL; font = font->next) font->pending = 0;
+}
+static void *font_event_user(void *event) { return *(void **)event; }
+#define FW_UI_FONT_CREATE font_create
+#define FW_UI_FONT_RELEASE font_release
+#define FW_UI_FONT_WAIT font_wait
+#define FW_UI_FONT_MANAGER_SLOT (&font_root_slot)
+#define FW_UI_FONT_DRAW_UNITS (&font_draw_units)
+#define FW_UI_FONT_DISPLAY_LIST font_display_list
+#define FW_UI_FONT_VG_DISPATCH 1u
+#define FW_UI_FONT_SW_DISPATCH 2u
+#define FW_UI_FONT_EVENT_USER_DATA font_event_user
+#define FW_UI_FONT_EVENT_DELETE 36u
+#define CANOPUS_SUP_HEAP_MALLOC font_alloc
+#define CANOPUS_SUP_HEAP_FREE font_free
+#endif
 
 static void text_copy(char *out, const char *text)
 {
@@ -42,6 +119,10 @@ static void *new_widget(void *parent)
     assert(allocated < sizeof(widgets) / sizeof(widgets[0]));
     calls.create++;
     widgets[allocated].parent = parent;
+    widgets[allocated].flags = 0x100000u;
+    widgets[allocated].scale_x = widgets[allocated].scale_y = 256;
+    widgets[allocated].props[16] = widgets[allocated].props[17] = 7;
+    widgets[allocated].props[18] = widgets[allocated].props[19] = 7;
     return &widgets[allocated++];
 }
 static void *create_label(void *parent)
@@ -72,19 +153,51 @@ static void align_to(void *object, void *base, uint32_t align, int32_t x, int32_
 static void align_object(void *object, uint32_t align, int32_t x, int32_t y)
 { align_to(object, NULL, align, x, y); }
 #endif
-static void add_event(void *object, void (*callback)(void *), uint32_t code, void *user)
+static void *add_event(void *object, void (*callback)(void *), uint32_t code, void *user)
 {
-    (void)code;
+    struct widget *widget = object;
     calls.events++;
-    ((struct widget *)object)->callback = callback;
-    ((struct widget *)object)->event_user = user;
+    if (code == 36u) {
+        if (fail_font_event) { fail_font_event = 0; return NULL; }
+        widget->delete_callback = callback; widget->delete_user = user;
+    }
+    else { widget->callback = callback; widget->event_user = user; }
+    return object;
 }
 static void set_text(void *object, const char *text)
 { calls.text++; text_copy(((struct widget *)object)->text, text); }
 static void set_style(void *object, const void *style, uint32_t opacity, uint32_t selector)
-{ (void)object; (void)style; (void)opacity; (void)selector; calls.style++; }
+{
+    (void)opacity; (void)selector; calls.style++;
+    ((struct widget *)object)->font_px = (unsigned)(uintptr_t)style;
+}
 static void set_source(void *object, const void *source)
-{ calls.source++; text_copy(((struct widget *)object)->source, source); }
+{
+    struct widget *image = object;
+    calls.source++; text_copy(image->source, source);
+    image->source_width = image_width; image->source_height = image_height;
+}
+#ifndef CANOPUS_TEST_NO_IMAGE_FIT
+static int image_info(const void *source, void *out)
+{
+    uint32_t header[3] = {0};
+    uint16_t width = (uint16_t)image_width, height = (uint16_t)image_height;
+    assert(source != NULL); calls.info++;
+    if (image_decode_failure) return 0;
+    memcpy((unsigned char *)header + 4, &width, sizeof(width));
+    memcpy((unsigned char *)header + 6, &height, sizeof(height));
+    memcpy(out,header,sizeof(header));
+    return 1;
+}
+static void image_scale(void *object, int32_t x, int32_t y)
+{
+    struct widget *image = object;
+    assert(x > 0 && x <= UINT16_MAX && y > 0 && y <= UINT16_MAX);
+    calls.scale++; image->scale_x = (unsigned)x; image->scale_y = (unsigned)y;
+}
+#define FW_UI_IMAGE_INFO image_info
+#define FW_UI_IMAGE_SCALE image_scale
+#endif
 static void set_range(void *object, int32_t minimum, int32_t maximum)
 {
     calls.range++;
@@ -98,6 +211,11 @@ static void delete_object(void *object)
     struct widget *w = object;
     unsigned i;
     assert(!w->deleted);
+    if (w->delete_callback != NULL) {
+        void *user = w->delete_user;
+        w->delete_callback(&user);
+        w->delete_callback = NULL;
+    }
     for (i = 0; i < allocated; i++)
         if (!widgets[i].deleted && widgets[i].parent == w) delete_object(&widgets[i]);
     w->deleted = 1;
@@ -231,7 +349,8 @@ static void update_row(void *object, const void *icon, const char *primary,
 {
     (void)icon; (void)value; calls.row++; row_content(object, primary, secondary, selected);
 }
-static void remove_styles(void *object) { (void)object; calls.style++; }
+static void remove_styles(void *object)
+{ memset(((struct widget *)object)->props,0,sizeof(((struct widget *)object)->props)); calls.style++; }
 static void set_padding(void *object, int32_t padding, uint32_t selector)
 { (void)object; (void)padding; (void)selector; calls.style++; }
 static void set_long_mode(void *object, uint32_t mode)
@@ -260,8 +379,17 @@ static void set_long_mode(void *object, uint32_t mode)
 #define FW_LV_BAR_SET_RANGE set_range
 #define FW_LV_BAR_SET_VALUE set_value
 #endif
-static void set_property(void *object, uint32_t prop, uint32_t value, uint32_t selector)
-{ (void)selector; assert(prop < 128); calls.style++; ((struct widget *)object)->props[prop]=value; }
+static void set_property(void *object, uint32_t prop, uintptr_t value, uint32_t selector)
+{
+    struct widget *widget = object;
+    (void)selector; assert(prop < 128);
+    if (prop == 90u) {
+        assert(value != 0);
+        widget->font = (void *)value;
+        widget->font_px = ((struct mock_font *)widget->font)->pixels;
+        calls.font_set++;
+    } else { calls.style++; widget->props[prop] = (uint32_t)value; }
+}
 #define FW_UI_STYLE_SET set_property
 #define FW_UI_STYLE_RADIUS 12u
 #define FW_UI_STYLE_CLIP_CORNER 45u
@@ -300,9 +428,31 @@ static int32_t receive_event(void *cookie, const struct canopus_ui_event_v1 *eve
 }
 static void reset(void)
 {
+    unsigned i;
     canopus_ui_host_detach(&view);
+    for (i = 0; i < allocated; i++)
+        if (!widgets[i].deleted && widgets[i].parent == NULL) delete_object(&widgets[i]);
+    font_cpu_active = 0;
+    canopus_ui_host_poll(0);
+    assert(native_fonts == 0 && font_bindings_allocated == 0);
+    font_root_slot = font_root_storage;
+    {
+        void *manager = &font_manager_identity;
+        memcpy(font_root_storage + 28,&manager,sizeof(manager));
+    }
+    fail_font_create = fail_font_alloc = fail_font_event = 0;
+#ifndef CANOPUS_TEST_NO_FONT
+    memset(font_vg_unit,0,sizeof(font_vg_unit)); memset(font_sw_unit,0,sizeof(font_sw_unit));
+    memset(font_display_list,0,sizeof(font_display_list)); memset(font_display,0,sizeof(font_display)); memset(font_layer,0,sizeof(font_layer));
+    font_draw_units = font_vg_unit;
+    font_native_pointer(font_vg_unit,0,font_sw_unit);
+    { uintptr_t vg = 1, sw = 2; memcpy(font_vg_unit + 16,&vg,sizeof(vg)); memcpy(font_sw_unit + 16,&sw,sizeof(sw)); }
+    font_native_pointer(font_display_list,4,font_display);
+    font_native_pointer(font_display,680,font_layer);
+#endif
     memset(widgets, 0, sizeof(widgets)); allocated = 0; fail_next_create = 0; fail_create_at = 0;
     event_calls = 0; last_key = last_event = 0;
+    image_width = 200; image_height = 100; image_decode_failure = 0;
     capture_on_press = detach_on_cancel = destroy_root_on_cancel = destroy_root_before_detach = 0;
     memset(&last_input,0,sizeof(last_input));
     canopus_ui_host_attach(&view, new_widget(NULL), NULL, NULL, 0);
@@ -315,7 +465,8 @@ static void reset(void)
 static unsigned mutations(void)
 {
     return calls.create + calls.row + calls.text + calls.style + calls.source + calls.size +
-           calls.flags + calls.align + calls.range + calls.value + calls.events + calls.destroy + calls.dialog;
+           calls.flags + calls.align + calls.range + calls.value + calls.events + calls.destroy + calls.dialog + calls.scale +
+           calls.font_set;
 }
 static void clear_counts(void) { memset(&calls, 0, sizeof(calls)); }
 static void print_counts(const char *label)
@@ -1220,7 +1371,10 @@ static int label_bounds_page(uint16_t foreground, uint16_t font)
     assert(canopus_ui_text(tree,10,&text) == 0);
     assert(canopus_ui_node_set_layout(tree,10,&layout) == 0);
     assert(canopus_ui_node_set_style(tree,10,&style) == 0);
-    assert(canopus_ui_node_set_visual(tree,10,&visual) == 0);
+    {
+        int32_t result = canopus_ui_node_set_visual(tree,10,&visual);
+        if (result != 0) { canopus_ui_tree_abort(tree); return result; }
+    }
     return finish(tree);
 }
 static void test_label_style_preserves_bounds(void)
@@ -1246,6 +1400,284 @@ static void test_label_style_preserves_bounds(void)
     clear_counts(); assert(label_bounds_page(CANOPUS_UI_COLOR_INHERIT,24) == 0);
     assert(mutations() == 0);
 }
+static void test_font_size_contract(void)
+{
+    static const uint16_t unsupported[] = {1,17,21,26,30,32,48,UINT16_MAX};
+    struct widget *label;
+    uint32_t generation;
+    unsigned i;
+    (void)generation;
+    reset(); assert(label_bounds_page(CANOPUS_UI_COLOR_INHERIT,0) == 0);
+    label = host_node(&view,10)->object;
+    assert(label->font_px == 24);
+    assert(label_bounds_page(CANOPUS_UI_COLOR_INHERIT,28) == 0);
+    assert(label->font_px == 28);
+    assert(label_bounds_page(CANOPUS_UI_COLOR_INHERIT,24) == 0);
+    assert(label->font_px == 24);
+    generation = context.committed.generation;
+    for (i = 0; i < sizeof(unsupported)/sizeof(unsupported[0]); i++) {
+        clear_counts();
+#ifdef CANOPUS_TEST_NO_FONT
+        assert(label_bounds_page(CANOPUS_UI_COLOR_INHERIT,unsupported[i]) == CANOPUS_UI_ERR_UNSUPPORTED);
+        assert(mutations() == 0 && context.committed.generation == generation);
+        assert(host_node(&view,10)->object == label && label->font_px == 24);
+#else
+        assert(label_bounds_page(CANOPUS_UI_COLOR_INHERIT,unsupported[i]) == 0);
+        label = host_node(&view,10)->object;
+        assert(label->font_px == unsupported[i] && calls.font_set == 1 && calls.font_create == 1);
+        clear_counts(); assert(label_bounds_page(CANOPUS_UI_COLOR_INHERIT,unsupported[i]) == 0);
+        assert(mutations() == 0 && calls.font_create == 0 && calls.font_release == 0);
+#endif
+    }
+    clear_counts(); assert(label_bounds_page(CANOPUS_UI_COLOR_INHERIT,0) == 0);
+    label = host_node(&view,10)->object;
+    assert(calls.style != 0 && label->font_px == 24);
+    clear_counts(); assert(label_bounds_page(CANOPUS_UI_COLOR_INHERIT,0) == 0);
+    assert(mutations() == 0);
+}
+#ifndef CANOPUS_TEST_NO_FONT
+static void font_text(struct canopus_ui_tree_v1 *tree, uint32_t key, uint16_t pixels, int visible)
+{
+    struct canopus_ui_component_props_v1 text = {
+        sizeof(text),"Sized text",10,"",0,0,visible ? CANOPUS_UI_NODE_FLAG_VISIBLE : 0,0,0,0,0,0
+    };
+    struct canopus_ui_visual_v1 visual = CANOPUS_UI_VISUAL_DEFAULT;
+    assert(canopus_ui_component(tree,key,CANOPUS_UI_NODE_RICH_TEXT,&text) == 0);
+    visual.font_px = pixels;
+    assert(canopus_ui_node_set_visual(tree,key,&visual) == 0);
+}
+static int font_page(uint16_t first, uint16_t second, int visible, unsigned count, uint32_t route)
+{
+    struct canopus_ui_tree_v1 *tree;
+    assert(canopus_ui_tree_begin(&context,&tree) == 0);
+    assert(CANOPUS_UI_NAVIGATION_PAGE(tree,route,"Fonts") == 0);
+    if (count > 0) font_text(tree,10,first,visible);
+    if (count > 1) font_text(tree,11,second,visible);
+    return finish(tree);
+}
+static void test_font_cache_and_visibility(void)
+{
+    struct widget *first, *second;
+    struct mock_font *font;
+    reset(); assert(font_page(21,21,1,2,1) == 0);
+    first = host_node(&view,10)->object; second = host_node(&view,11)->object;
+    font = first->font;
+    assert(font == second->font && calls.font_create == 1 && calls.font_set == 2 && native_fonts == 1);
+    clear_counts(); assert(font_page(21,21,1,2,1) == 0);
+    assert(mutations() == 0 && calls.font_create == 0 && calls.font_release == 0);
+    clear_counts(); assert(font_page(21,21,0,2,1) == 0);
+    assert((first->flags & 1u) && (second->flags & 1u));
+    assert(native_fonts == 1 && calls.font_create == 0 && calls.font_release == 0);
+    clear_counts(); assert(font_page(21,21,1,2,1) == 0);
+    assert(!(first->flags & 1u) && first->font == font && second->font == font);
+    assert(calls.font_create == 0 && calls.font_release == 0);
+    clear_counts(); assert(font_page(21,21,1,1,1) == 0);
+    assert(second->deleted && !first->deleted && native_fonts == 1 && calls.font_release == 0);
+    font->pending = 1;
+    clear_counts(); assert(font_page(21,21,1,0,1) == 0);
+    assert(first->deleted && native_fonts == 0 && calls.font_release == 1 && calls.font_wait != 0);
+    assert(s_font_labels == NULL && s_fonts == NULL && font_bindings_allocated == 0);
+}
+static void test_font_dialog_retains_live_body(void)
+{
+    struct widget *label;
+    struct mock_font *font;
+    reset(); assert(font_page(21,28,1,1,1) == 0);
+    label = host_node(&view,10)->object; font = label->font;
+    clear_counts(); assert(dialog_page("Keep body",301) == 0);
+    assert(!label->deleted && label->font == font && native_fonts == 1);
+    assert(calls.font_release == 0 && calls.font_create == 0);
+    clear_counts(); assert(dialog_page("Keep body",301) == 0);
+    assert(mutations() == 0 && calls.font_create == 0);
+    assert(font_page(21,28,1,1,1) == 0);
+    assert(host_node(&view,10)->object == label && label->font == font && native_fonts == 1);
+    clear_counts(); assert(font_page(24,28,1,1,1) == 0);
+    assert(label->deleted && native_fonts == 0 && calls.font_release == 1);
+    label = host_node(&view,10)->object;
+    assert(label->font == NULL && label->font_px == 24);
+}
+static void test_font_page_reload_and_view_reset(void)
+{
+    unsigned ordering;
+    for (ordering = 0; ordering < 2; ordering++) {
+        struct widget *root, *label;
+        struct mock_font *font;
+        reset(); assert(font_page(17,32,1,2,1) == 0);
+        label = host_node(&view,10)->object; font = label->font;
+        clear_counts(); assert(font_page(17,32,1,2,2) == 0);
+        assert(label->deleted && native_fonts == 2 && calls.font_create == 0 && calls.font_release == 0);
+        label = host_node(&view,10)->object;
+        assert(label->font == font);
+        root = view.root;
+        ((struct mock_font *)label->font)->pending = 1;
+        clear_counts();
+        if (ordering == 0) { delete_object(root); canopus_ui_host_detach(&view); }
+        else { canopus_ui_host_detach(&view); memset(&view,0xa5,sizeof(view)); delete_object(root); memset(&view,0,sizeof(view)); }
+        assert(native_fonts == 2); /* DELETE retires; it does not free in the destructor. */
+        font_set_cpu_active(1); canopus_ui_host_poll(1);
+        assert(native_fonts == 2 && calls.font_release == 0);
+        font_set_cpu_active(0); canopus_ui_host_poll(2);
+        assert(native_fonts == 0 && s_font_labels == NULL && s_fonts == NULL && font_bindings_allocated == 0);
+    }
+    reset(); assert(font_page(26,28,1,1,1) == 0);
+    {
+        struct widget *root = view.root;
+        canopus_ui_host_attach(&view,new_widget(NULL),NULL,NULL,0);
+        assert(native_fonts == 1); /* New view storage must not free the old native label's font. */
+        delete_object(root); canopus_ui_host_poll(3);
+        assert(native_fonts == 0 && s_font_labels == NULL);
+    }
+}
+static int font_surface_page(uint16_t section_px, uint16_t check_px, unsigned unsupported_kind)
+{
+    struct canopus_ui_tree_v1 *tree = begin();
+    struct canopus_ui_visual_v1 visual = CANOPUS_UI_VISUAL_DEFAULT;
+    struct canopus_ui_component_props_v1 check = {
+        sizeof(check),"Check",5,"Sub",3,801,CANOPUS_UI_NODE_FLAG_ENABLED|CANOPUS_UI_NODE_FLAG_VISIBLE,0,0,0,0,0
+    };
+    if (unsupported_kind == 1) { visual.font_px = 21; assert(canopus_ui_node_set_visual(tree,1,&visual) == 0); }
+    else if (unsupported_kind == 2) {
+        row(tree,12,"Action",802); visual.font_px = 21; assert(canopus_ui_node_set_visual(tree,12,&visual) == 0);
+    } else if (unsupported_kind == 3) {
+        assert(CANOPUS_UI_SECTION(tree,13,"") == 0);
+        visual.font_px = 21; assert(canopus_ui_node_set_visual(tree,13,&visual) == 0);
+        assert(canopus_ui_end(tree) == 0);
+    } else if (unsupported_kind == 4) {
+        struct canopus_ui_component_props_v1 dialog = {sizeof(dialog),"",0,"",0,0,CANOPUS_UI_NODE_FLAG_VISIBLE,0,0,0,0,0};
+        struct canopus_ui_text_props_v1 msg = {sizeof(msg),"Ask",3,CANOPUS_UI_TEXT_BODY};
+        assert(canopus_ui_component(tree,20,CANOPUS_UI_NODE_DIALOG,&dialog) == 0);
+        assert(canopus_ui_text(tree,21,&msg) == 0);
+        visual.font_px = 21; assert(canopus_ui_node_set_visual(tree,21,&visual) == 0);
+        row(tree,22,"Yes",803); row(tree,23,"No",804);
+        assert(canopus_ui_end(tree) == 0);
+    } else {
+        assert(CANOPUS_UI_SECTION(tree,10,"Heading") == 0);
+        visual.font_px = section_px; assert(canopus_ui_node_set_visual(tree,10,&visual) == 0);
+        assert(canopus_ui_component(tree,11,CANOPUS_UI_NODE_CHECKBOX,&check) == 0);
+        visual.font_px = check_px; assert(canopus_ui_node_set_visual(tree,11,&visual) == 0);
+        assert(canopus_ui_end(tree) == 0);
+    }
+    return finish(tree);
+}
+static void test_font_surfaces_and_unsupported_nodes(void)
+{
+    unsigned kind;
+    uint32_t generation;
+    reset(); assert(font_surface_page(21,26,0) == 0);
+    assert(((struct widget *)host_node(&view,10)->primary)->font_px == 21);
+    assert(((struct widget *)host_node(&view,11)->primary)->font_px == 26);
+    assert(((struct widget *)host_node(&view,11)->secondary)->font_px == 24);
+    assert(native_fonts == 2);
+    generation = context.committed.generation;
+    for (kind = 1; kind <= 4; kind++) {
+        clear_counts(); assert(font_surface_page(21,26,kind) == CANOPUS_UI_ERR_UNSUPPORTED);
+        assert(mutations() == 0 && context.committed.generation == generation && native_fonts == 2);
+    }
+    assert(font_surface_page(28,24,0) == 0);
+    assert(((struct widget *)host_node(&view,10)->primary)->font_px == 28);
+    assert(((struct widget *)host_node(&view,11)->primary)->font_px == 24);
+    assert(native_fonts == 0);
+}
+static void test_font_many_sizes_do_not_accumulate(void)
+{
+    uint16_t pixels;
+    reset();
+    for (pixels = 1; pixels <= 600; pixels++) {
+        assert(font_page(pixels,pixels,1,1,1) == 0);
+        assert(native_fonts == (pixels == 24 || pixels == 28 ? 0u : 1u));
+        assert(s_font_count == native_fonts);
+    }
+    assert(font_page(0,0,1,0,1) == 0);
+    assert(native_fonts == 0 && font_bindings_allocated == 0 && s_font_labels == NULL);
+}
+static void test_font_retirement_boundaries(void)
+{
+    unsigned boundary;
+    for (boundary = 0; boundary < 4; boundary++) {
+        struct widget *root;
+        struct mock_font *font;
+        uintptr_t dispatch;
+        reset(); assert(font_page(21,21,1,1,1) == 0);
+        root = view.root; font = ((struct widget *)host_node(&view,10)->object)->font;
+        font->pending = 1;
+        delete_object(root); canopus_ui_host_detach(&view);
+        if (boundary == 0) font_display[58] = 2;
+        if (boundary == 1) font_native_pointer(font_layer,100,&font_manager_identity);
+        if (boundary == 2) font_set_cpu_active(1);
+        if (boundary == 3) { dispatch = 3; memcpy(font_sw_unit + 16,&dispatch,sizeof(dispatch)); }
+        clear_counts(); canopus_ui_host_poll(1);
+        assert(native_fonts == 1 && font->pending == 1 && calls.font_release == 0 && calls.font_wait == 0);
+        font_display[58] = 0; font_native_pointer(font_layer,100,NULL); font_set_cpu_active(0);
+        dispatch = 2; memcpy(font_sw_unit + 16,&dispatch,sizeof(dispatch));
+        canopus_ui_host_poll(2);
+        assert(native_fonts == 0 && font_bindings_allocated == 0 && calls.font_release == 1 && calls.font_wait == 1);
+    }
+}
+static int font_toasts(uint16_t first, uint16_t second, int second_visible)
+{
+    struct canopus_ui_tree_v1 *tree = begin();
+    struct canopus_ui_visual_v1 visual = CANOPUS_UI_VISUAL_DEFAULT;
+    struct canopus_ui_component_props_v1 toast = {
+        sizeof(toast),"First",5,"",0,0,CANOPUS_UI_NODE_FLAG_VISIBLE,1000,0,0,0,0
+    };
+    assert(canopus_ui_component(tree,15,CANOPUS_UI_NODE_TOAST,&toast) == 0);
+    visual.font_px = first; assert(canopus_ui_node_set_visual(tree,15,&visual) == 0);
+    toast.primary = "Second"; toast.primary_len = 6;
+    if (!second_visible) toast.flags = 0;
+    assert(canopus_ui_component(tree,16,CANOPUS_UI_NODE_TOAST,&toast) == 0);
+    visual.font_px = second; assert(canopus_ui_node_set_visual(tree,16,&visual) == 0);
+    return finish(tree);
+}
+static void test_font_toast_owner(void)
+{
+    struct widget *owner;
+    reset(); assert(font_toasts(21,32,1) == 0);
+    owner = view.toast_object;
+    assert(owner->font_px == 32 && native_fonts == 1 && calls.font_create == 1);
+    clear_counts(); assert(font_toasts(21,32,1) == 0);
+    assert(mutations() == 0 && calls.font_create == 0);
+    clear_counts(); assert(font_toasts(17,32,1) == 0);
+    assert(view.toast_object == owner && owner->font_px == 32 && calls.font_set == 0 && calls.font_create == 0);
+    clear_counts(); assert(font_toasts(21,32,0) == 0);
+    assert(owner->deleted && view.toast_object != owner && view.toast_object != NULL);
+    owner = view.toast_object;
+    assert(owner->font_px == 21 && native_fonts == 1 && calls.font_create == 1 && calls.font_release == 1);
+    assert(finish(begin()) == 0);
+    assert(!view.toast_visible && !owner->deleted && native_fonts == 1);
+    clear_counts(); assert(font_toasts(21,32,0) == 0);
+    assert(owner->font_px == 21 && calls.font_create == 0);
+    canopus_ui_host_poll(view.toast_deadline);
+    assert(!view.toast_visible && native_fonts == 1);
+    clear_counts(); assert(font_toasts(24,32,0) == 0);
+    assert(owner->deleted && native_fonts == 0 && calls.font_release == 1);
+    assert(((struct widget *)view.toast_object)->font_px == 24);
+}
+static void test_font_preparation_failures(void)
+{
+    struct widget *label;
+    uint32_t generation;
+    unsigned allocations;
+    reset(); assert(font_page(21,21,1,1,1) == 0);
+    label = host_node(&view,10)->object; generation = context.committed.generation;
+    allocations = font_bindings_allocated;
+    fail_font_create = 1;
+    clear_counts(); assert(font_page(26,21,1,1,1) == CANOPUS_UI_ERR_BACKEND);
+    assert(context.committed.generation == generation && !label->deleted && label->font_px == 21);
+    assert(calls.font_set == 0 && calls.font_release == 0 && native_fonts == 1 && font_bindings_allocated == allocations);
+    fail_font_alloc = 1;
+    clear_counts(); assert(font_page(21,21,1,2,1) == CANOPUS_UI_ERR_BACKEND);
+    assert(context.committed.generation == generation && !label->deleted && calls.font_set == 0);
+    assert(native_fonts == 1 && font_bindings_allocated == allocations);
+    fail_font_event = 1;
+    clear_counts(); assert(font_page(21,21,1,2,1) == CANOPUS_UI_ERR_BACKEND);
+    assert(context.committed.generation == generation && !label->deleted && calls.font_set == 0);
+    assert(native_fonts == 1 && font_bindings_allocated == allocations);
+    fail_next_create = 1;
+    clear_counts(); assert(font_page(26,21,1,2,1) == CANOPUS_UI_ERR_BACKEND);
+    assert(context.committed.generation == generation && !label->deleted && calls.font_set == 0);
+    assert(calls.font_create == 1 && calls.font_release == 1 && native_fonts == 1 && font_bindings_allocated == allocations);
+}
+#endif
 static int styled_section_page(const struct canopus_ui_style_v1 *style,
                                const struct canopus_ui_visual_v1 *visual,
                                const char *heading)
@@ -1507,7 +1939,7 @@ static int gesture_candidate_page(unsigned proposal)
         sizeof(toast),"Saved",5,"",0,0,CANOPUS_UI_NODE_FLAG_VISIBLE,2000,0,0,0,0
     };
     assert(canopus_ui_tree_begin(&context,&tree) == 0);
-    assert(CANOPUS_UI_NAVIGATION_PAGE(tree,proposal == 1 ? 3 : 1,"Manager") == 0);
+    assert(CANOPUS_UI_NAVIGATION_PAGE(tree,proposal == 1 || proposal == 10 ? 3 : 1,"Manager") == 0);
     if (proposal == 8) scroll.flags = 0;
     assert(canopus_ui_component(tree,10,CANOPUS_UI_NODE_SCROLL,&scroll) == 0);
     layout.height = 100; visual.flags = CANOPUS_UI_VISUAL_FLAG_VIRTUAL_CONTENT; visual.content_height = 900;
@@ -1529,8 +1961,29 @@ static int gesture_candidate_page(unsigned proposal)
         assert(canopus_ui_end(tree) == 0);
     } else if (proposal == 5) assert(canopus_ui_component(tree,15,CANOPUS_UI_NODE_TOAST,&toast) == 0);
     if (proposal == 1) row(tree,40,"Candidate",703);
+#ifndef CANOPUS_TEST_NO_FONT
+    if (proposal == 9 || proposal == 10) font_text(tree,50,proposal == 9 ? 21 : 26,1);
+#endif
     return finish(tree);
 }
+#ifndef CANOPUS_TEST_NO_FONT
+static void test_font_cancel_destroying_root(void)
+{
+    unsigned ordering;
+    for (ordering = 0; ordering < 2; ordering++) {
+        struct canopus_ui_host_binding binding;
+        reset(); assert(gesture_candidate_page(9) == 0);
+        assert(native_fonts == 1);
+        binding = host_node(&view,20)->binding; capture_on_press = 1;
+        assert(host_input_route(&view,&binding,CANOPUS_UI_EVENT_PRESS,100,5,8) == 0);
+        detach_on_cancel = destroy_root_on_cancel = 1;
+        destroy_root_before_detach = ordering;
+        assert(gesture_candidate_page(10) == CANOPUS_UI_ERR_BACKEND);
+        assert(!host_view_alive(&view) && native_fonts == 0 && font_bindings_allocated == 0);
+        assert(s_fonts == NULL && s_font_labels == NULL);
+    }
+}
+#endif
 static void test_failed_candidates_preserve_captured_gesture(void)
 {
     const unsigned old_proposals[] = {0,2,0,0,0,6};
@@ -1675,11 +2128,231 @@ static void test_cancel_destroying_root_reclaims_staged_candidates(void)
     assert(!host_view_alive(&view) && context.committed.generation == generation);
     for (i = before; i < allocated; i++) assert(widgets[i].deleted);
 }
+static int image_fit_page(uint16_t fit, int width, int height,
+                          const char *path, uint32_t resource_id)
+{
+    struct canopus_ui_tree_v1 *tree = begin();
+    struct canopus_ui_component_props_v1 image = {
+        sizeof(image),path,(uint32_t)strlen(path),"",0,0,
+        CANOPUS_UI_NODE_FLAG_VISIBLE,0,0,0,0,resource_id
+    };
+    struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
+    struct canopus_ui_visual_v1 visual = CANOPUS_UI_VISUAL_DEFAULT;
+    int32_t result;
+    assert(canopus_ui_component(tree,10,CANOPUS_UI_NODE_IMAGE,&image) == 0);
+    layout.width = (int16_t)width; layout.height = (int16_t)height;
+    assert(canopus_ui_node_set_layout(tree,10,&layout) == 0);
+    visual.image_fit = fit;
+    result = canopus_ui_node_set_visual(tree,10,&visual);
+    if (result != 0) { canopus_ui_tree_abort(tree); return result; }
+    return finish(tree);
+}
+static void test_image_fit_contract(void)
+{
+    struct widget *image;
+#ifdef CANOPUS_TEST_NO_IMAGE_FIT
+    uint32_t generation;
+    uint16_t fit;
+#endif
+    reset(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_NATIVE,100,80,"/image.bin",1) == 0);
+    image = host_node(&view,10)->object;
+    assert(image->width == 100 && image->height == 80 && strcmp(image->source,"/image.bin") == 0);
+#ifdef CANOPUS_TEST_NO_IMAGE_FIT
+    generation = context.committed.generation;
+    for (fit = CANOPUS_UI_IMAGE_FIT_CONTAIN; fit <= CANOPUS_UI_IMAGE_FIT_STRETCH; fit++) {
+        clear_counts();
+        assert(image_fit_page(fit,100,80,"/image.bin",1) == CANOPUS_UI_ERR_UNSUPPORTED);
+        assert(mutations() == 0 && context.committed.generation == generation);
+        assert(host_node(&view,10)->object == image && !image->deleted);
+    }
+#else
+    {
+        struct widget *viewport;
+        clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_CONTAIN,100,80,"/image.bin",1) == 0);
+        assert(image->deleted);
+        viewport = host_node(&view,10)->object;
+        image = host_node(&view,10)->secondary;
+        assert(image->parent == viewport && viewport->width == 100 && viewport->height == 80);
+        assert(!(viewport->flags & (16u | 0x100000u)));
+        assert(viewport->props[16] == 0 && viewport->props[17] == 0 && viewport->props[18] == 0 && viewport->props[19] == 0);
+        assert(viewport->props[29] == 0 && viewport->props[48] == 0 && viewport->props[12] == 0);
+        assert(image->width == 100 && image->height == 80 && image->x == 0 && image->y == 0);
+        assert(calls.source == 1 && calls.scale == 1 && calls.info == 1);
+        assert(image->scale_x == 128 && image->scale_y == 128);
+        /* Native mode 9 centers the scaled source: 100x50 inside 100x80. */
+        assert(image->source_width * image->scale_x == 100u * 256u);
+        assert((80u * 256u - image->source_height * image->scale_y) / 512u == 15u);
+        clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_CONTAIN,100,80,"/image.bin",1) == 0);
+        assert(mutations() == 0 && calls.info == 0);
+        clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_COVER,100,80,"/image.bin",1) == 0);
+        assert(calls.scale == 1 && calls.source == 0 && calls.create == 0);
+        assert(image->scale_x == 205 && image->scale_y == 205);
+        assert(image->source_width * image->scale_x > 100u * 256u);
+        assert(image->source_height * image->scale_y >= 80u * 256u);
+        assert(!(viewport->flags & 0x100000u)); /* Enlarged source is clipped by its parent. */
+        clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_STRETCH,100,80,"/image.bin",1) == 0);
+        assert(calls.scale == 1 && calls.source == 0 && calls.create == 0);
+        assert(image->scale_x == 128 && image->scale_y == 205);
+        clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_STRETCH,50,25,"/image.bin",1) == 0);
+        assert(calls.scale == 1 && calls.source == 0 && image->scale_x == 64 && image->scale_y == 64);
+        image_width = 100; image_height = 200;
+        clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_STRETCH,50,25,"/image.bin",2) == 0);
+        assert(calls.source == 1 && calls.scale == 1 && image->scale_x == 128 && image->scale_y == 32);
+        clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_CONTAIN,50,25,"/other.bin",3) == 0);
+        assert(calls.source == 1 && calls.scale == 1 && image->scale_x == 32 && image->scale_y == 32);
+        clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_NATIVE,50,25,"/other.bin",3) == 0);
+        assert(viewport->deleted && image->deleted);
+        image = host_node(&view,10)->object;
+        assert(host_node(&view,10)->secondary == NULL && image->scale_x == 256 && image->scale_y == 256);
+        clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_NATIVE,50,25,"/other.bin",3) == 0);
+        assert(mutations() == 0);
+    }
+#endif
+}
+#ifndef CANOPUS_TEST_NO_IMAGE_FIT
+static int image_fit_subtree_page(uint16_t fit, uint16_t foreground,
+                                  uint32_t parent_key, int visible, int omit)
+{
+    struct canopus_ui_tree_v1 *tree = begin();
+    struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
+    struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
+    struct canopus_ui_visual_v1 visual = CANOPUS_UI_VISUAL_DEFAULT;
+    struct canopus_ui_component_props_v1 image = {
+        sizeof(image),"/image.bin",10,"",0,0,
+        visible ? CANOPUS_UI_NODE_FLAG_VISIBLE : 0,0,0,0,0,1
+    };
+    assert(CANOPUS_UI_SECTION(tree,parent_key,"") == 0);
+    style.foreground = foreground;
+    assert(canopus_ui_node_set_style(tree,parent_key,&style) == 0);
+    if (!omit) {
+        assert(canopus_ui_component(tree,10,CANOPUS_UI_NODE_IMAGE,&image) == 0);
+        layout.width = 100; layout.height = 80; visual.image_fit = fit;
+        assert(canopus_ui_node_set_layout(tree,10,&layout) == 0);
+        assert(canopus_ui_node_set_visual(tree,10,&visual) == 0);
+    }
+    assert(canopus_ui_end(tree) == 0);
+    return finish(tree);
+}
+static void test_image_fit_rebuild_and_lifetime(void)
+{
+    struct widget *viewport, *image, *parent;
+    uint32_t generation;
+    unsigned before;
+    reset(); assert(image_fit_subtree_page(CANOPUS_UI_IMAGE_FIT_COVER,CANOPUS_UI_COLOR_DANGER,20,1,0) == 0);
+    parent = host_node(&view,20)->object;
+    viewport = host_node(&view,10)->object; image = host_node(&view,10)->secondary;
+    /* Removing a local ancestor style rebuilds every descendant. The new image
+     * needs scaling even though its own model bytes have not changed. */
+    clear_counts(); assert(image_fit_subtree_page(CANOPUS_UI_IMAGE_FIT_COVER,CANOPUS_UI_COLOR_INHERIT,20,1,0) == 0);
+    assert(parent->deleted && viewport->deleted && image->deleted && calls.scale == 1);
+    viewport = host_node(&view,10)->object; image = host_node(&view,10)->secondary;
+    assert(image->parent == viewport && image->scale_x == 205 && image->scale_y == 205);
+    clear_counts(); assert(image_fit_subtree_page(CANOPUS_UI_IMAGE_FIT_COVER,CANOPUS_UI_COLOR_INHERIT,20,0,0) == 0);
+    assert(viewport->flags & 1u); assert(calls.scale == 0 && calls.source == 0);
+    clear_counts(); assert(image_fit_subtree_page(CANOPUS_UI_IMAGE_FIT_COVER,CANOPUS_UI_COLOR_INHERIT,20,1,0) == 0);
+    assert(!(viewport->flags & 1u) && calls.scale == 0 && calls.source == 0);
+    generation = context.committed.generation; before = allocated;
+    /* Reparenting stages parent + viewport + image. Fail the last allocation. */
+    fail_create_at = before + 2;
+    assert(image_fit_subtree_page(CANOPUS_UI_IMAGE_FIT_COVER,CANOPUS_UI_COLOR_INHERIT,21,1,0) == CANOPUS_UI_ERR_BACKEND);
+    assert(context.committed.generation == generation && !viewport->deleted && !image->deleted);
+    assert(widgets[before].deleted && widgets[before + 1].deleted);
+    clear_counts(); assert(image_fit_subtree_page(CANOPUS_UI_IMAGE_FIT_COVER,CANOPUS_UI_COLOR_INHERIT,21,1,0) == 0);
+    assert(viewport->deleted && image->deleted && calls.scale == 1);
+    viewport = host_node(&view,10)->object; image = host_node(&view,10)->secondary;
+    assert(image->scale_x == 205 && image->scale_y == 205);
+    assert(image_fit_subtree_page(CANOPUS_UI_IMAGE_FIT_COVER,CANOPUS_UI_COLOR_INHERIT,21,1,1) == 0);
+    assert(viewport->deleted && image->deleted && host_node(&view,10) == NULL);
+    assert(image_fit_subtree_page(CANOPUS_UI_IMAGE_FIT_CONTAIN,CANOPUS_UI_COLOR_INHERIT,21,1,0) == 0);
+    image = host_node(&view,10)->secondary;
+    assert(image->scale_x == 128 && image->scale_y == 128);
+}
+static void test_image_fit_across_native_dialog(void)
+{
+    unsigned from, to;
+    for (from = 0; from < 2; from++) for (to = 0; to < 2; to++) {
+        uint16_t old_fit = from ? CANOPUS_UI_IMAGE_FIT_COVER : CANOPUS_UI_IMAGE_FIT_NATIVE;
+        uint16_t new_fit = to ? CANOPUS_UI_IMAGE_FIT_COVER : CANOPUS_UI_IMAGE_FIT_NATIVE;
+        struct widget *old_object, *old_image, *object, *image;
+        reset(); assert(image_fit_page(old_fit,100,80,"/image.bin",1) == 0);
+        old_object = host_node(&view,10)->object;
+        old_image = from ? host_node(&view,10)->secondary : old_object;
+        assert(dialog_page("Confirm",301) == 0);
+        /* Native dialogs retain the live body while committing a different
+         * snapshot, including a button that reuses the image's key. */
+        assert(host_node(&view,10)->object == old_object && !old_image->deleted);
+        clear_counts(); assert(image_fit_page(new_fit,100,80,"/image.bin",1) == 0);
+        object = host_node(&view,10)->object;
+        image = to ? host_node(&view,10)->secondary : object;
+        assert(image != NULL && strcmp(image->source,"/image.bin") == 0);
+        assert((host_node(&view,10)->secondary != NULL) == (to != 0));
+        if (from != to) assert(old_object->deleted && old_image->deleted && object != old_object);
+        else assert(object == old_object && image == old_image && !old_object->deleted);
+        assert(image->scale_x == (to ? 205u : 256u) && image->scale_y == (to ? 205u : 256u));
+        assert(calls.source == 1 && calls.scale == to);
+        clear_counts(); assert(image_fit_page(new_fit,100,80,"/image.bin",1) == 0);
+        assert(mutations() == 0);
+    }
+}
+static void test_image_fit_quantization(void)
+{
+    struct widget *image;
+    reset(); image_width = 300; image_height = 200;
+    assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_CONTAIN,100,80,"/fraction.bin",1) == 0);
+    image = host_node(&view,10)->secondary;
+    assert(image->scale_x == 85 && image->scale_y == 85);
+    assert(image->source_width * image->scale_x <= 100u * 256u);
+    assert(image->source_height * image->scale_y <= 80u * 256u);
+    assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_COVER,100,80,"/fraction.bin",1) == 0);
+    assert(image->scale_x == 103 && image->scale_y == 103);
+    assert(image->source_width * image->scale_x >= 100u * 256u);
+    assert(image->source_height * image->scale_y >= 80u * 256u);
+    assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_STRETCH,100,80,"/fraction.bin",1) == 0);
+    assert(image->scale_x == 86 && image->scale_y == 103);
+    /* Ceil matches native stretch. Any sub-Q8 overshoot is cropped by the
+     * viewport; no integer scale can express these exact nonintegral ratios. */
+    assert(image->source_width * image->scale_x >= 100u * 256u);
+    assert(image->source_height * image->scale_y >= 80u * 256u);
+}
+static void test_image_fit_preflight(void)
+{
+    struct widget *viewport, *image;
+    uint32_t generation;
+    unsigned allocated_before;
+    reset(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_COVER,100,80,"/image.bin",1) == 0);
+    viewport = host_node(&view,10)->object; image = host_node(&view,10)->secondary;
+    generation = context.committed.generation; allocated_before = allocated;
+    image_decode_failure = 1;
+    clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_COVER,100,80,"/missing.bin",2) == CANOPUS_UI_ERR_BACKEND);
+    assert(mutations() == 0 && allocated == allocated_before && context.committed.generation == generation);
+    assert(!viewport->deleted && !image->deleted && strcmp(image->source,"/image.bin") == 0);
+    image_decode_failure = 0; image_width = 0;
+    clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_COVER,100,80,"/empty.bin",2) == CANOPUS_UI_ERR_BACKEND);
+    assert(mutations() == 0 && context.committed.generation == generation);
+    image_width = image_height = 1;
+    clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_STRETCH,32767,32767,"/huge.bin",2) == CANOPUS_UI_ERR_UNSUPPORTED);
+    assert(mutations() == 0 && context.committed.generation == generation);
+    image_width = image_height = UINT16_MAX;
+    clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_CONTAIN,1,1,"/tiny.bin",2) == CANOPUS_UI_ERR_UNSUPPORTED);
+    assert(mutations() == 0 && context.committed.generation == generation);
+    image_width = 200; image_height = 100;
+    fail_next_create = 1;
+    clear_counts(); assert(image_fit_page(CANOPUS_UI_IMAGE_FIT_NATIVE,100,80,"/image.bin",2) == CANOPUS_UI_ERR_BACKEND);
+    assert(mutations() == 0 && !viewport->deleted && !image->deleted);
+    assert(context.committed.generation == generation);
+}
+#endif
 static void test_advertised_capabilities(void)
 {
     uint32_t caps;
     reset();
     caps = canopus_ui_context_capabilities(&context);
+#ifdef CANOPUS_TEST_NO_IMAGE_FIT
+    assert((caps & (CANOPUS_UI_CAP_IMAGE_FIT_CONTAIN | CANOPUS_UI_CAP_IMAGE_FIT_COVER | CANOPUS_UI_CAP_IMAGE_FIT_STRETCH)) == 0);
+#else
+    assert((caps & (CANOPUS_UI_CAP_IMAGE_FIT_CONTAIN | CANOPUS_UI_CAP_IMAGE_FIT_COVER | CANOPUS_UI_CAP_IMAGE_FIT_STRETCH)) ==
+           (CANOPUS_UI_CAP_IMAGE_FIT_CONTAIN | CANOPUS_UI_CAP_IMAGE_FIT_COVER | CANOPUS_UI_CAP_IMAGE_FIT_STRETCH));
+#endif
     /* Virtual content uses the same native container primitives as layout. */
     assert((caps & CANOPUS_UI_CAP_VIRTUAL_CONTENT) != 0);
     assert((caps & (CANOPUS_UI_CAP_STYLE | CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VALUES |
@@ -1691,7 +2364,11 @@ int main(int argc, char **argv)
 {
     int baseline = argc > 1 && strcmp(argv[1], "--baseline") == 0;
     (void)host_input_route;
-    test_advertised_capabilities();
+    test_advertised_capabilities(); test_image_fit_contract();
+#ifndef CANOPUS_TEST_NO_IMAGE_FIT
+    test_image_fit_across_native_dialog();
+    test_image_fit_preflight(); test_image_fit_quantization(); test_image_fit_rebuild_and_lifetime();
+#endif
     test_identical_and_binding(baseline);
     if (baseline) return 0;
     test_property_updates(); test_clip_toggle(); test_reorder_and_reappearance(); test_failure_retry();
@@ -1708,7 +2385,14 @@ int main(int argc, char **argv)
     test_driver_switch_repaints_shared_owner();
     test_hidden_period_style_replay_repaints(); test_hidden_driver_style_write_does_not_linger();
     test_first_header_drives_shared_title();
-    test_label_style_preserves_bounds();
+    test_label_style_preserves_bounds(); test_font_size_contract();
+#ifndef CANOPUS_TEST_NO_FONT
+    test_font_cache_and_visibility(); test_font_dialog_retains_live_body();
+    test_font_page_reload_and_view_reset(); test_font_preparation_failures(); test_font_toast_owner();
+    test_font_retirement_boundaries(); test_font_many_sizes_do_not_accumulate();
+    test_font_surfaces_and_unsupported_nodes();
+    test_font_cancel_destroying_root();
+#endif
     test_inherited_style_rebuilds_subtree(); test_section_heading_allocation_is_atomic();
     test_stretch_relayouts_descendants(); test_nested_stretch_constraints();
     test_generic_row_padding_and_stock_rejection();
@@ -1716,6 +2400,7 @@ int main(int argc, char **argv)
     test_failed_candidates_preserve_captured_gesture(); test_host_capture_invalidation_and_detach();
     test_cancel_destroying_root_reclaims_staged_candidates();
     test_removed_subtree_with_inverted_slots_deletes_once();
+    reset();
     canopus_ui_host_detach(&view);
     puts("native UI backend regression tests passed");
     return 0;

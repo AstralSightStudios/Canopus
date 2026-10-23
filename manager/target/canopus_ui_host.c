@@ -70,6 +70,15 @@
 #define HOST_EVENT_CLICKED 7u
 #define HOST_EVENT_VALUE_CHANGED 30u
 
+/* Reviewed image-fit primitives are available only on exact targets. No fit
+ * capability is inferred from another firmware's addresses. */
+#if defined(FW_UI_IMAGE_SCALE) && defined(FW_UI_IMAGE_INFO)
+#define HOST_IMAGE_FIT 1
+#define HOST_IMAGE_FIT_CAPS (CANOPUS_UI_CAP_IMAGE_FIT_CONTAIN | CANOPUS_UI_CAP_IMAGE_FIT_COVER | CANOPUS_UI_CAP_IMAGE_FIT_STRETCH)
+#else
+#define HOST_IMAGE_FIT_CAPS 0u
+#endif
+
 static struct canopus_ui_host_view *s_views[CANOPUS_UI_HOST_MAX_VIEWS];
 
 /* ---- firmware widget primitives ------------------------------------- */
@@ -87,9 +96,6 @@ static void host_object_flag(void *object, uint32_t flag, int add)
 
 static void host_set_hidden(void *object, uint32_t hidden)
 {
-    if (object == NULL) {
-        return;
-    }
     host_object_flag(object, UINT32_C(1), hidden != 0u);
 }
 
@@ -181,13 +187,20 @@ static void *host_content_create(void *root)
     return content;
 }
 
+#include "canopus_ui_font.inc"
+
 static void *host_label_create(void *parent)
 {
+    void *label;
 #ifndef CANOPUS_MGR_BAND11
-    return ((void *(*)(void *))(uintptr_t)FW_LVX_LABEL_CREATE)(parent);
+    label = ((void *(*)(void *))(uintptr_t)FW_LVX_LABEL_CREATE)(parent);
 #else /* CANOPUS_MGR_BAND11 */
-    return ((void *(*)(void *))(uintptr_t)FW_LV_LABEL_CREATE)(parent);
+    label = ((void *(*)(void *))(uintptr_t)FW_LV_LABEL_CREATE)(parent);
 #endif /* CANOPUS_MGR_BAND11 */
+#ifdef HOST_FONT
+    if (label != NULL && !host_font_track(label)) { host_object_delete(label); return NULL; }
+#endif
+    return label;
 }
 
 static void host_label_set_text(void *label, const char *text)
@@ -783,7 +796,8 @@ static int32_t host_bound(int32_t value, int16_t minimum, int16_t maximum)
 }
 static uint32_t host_label_height(const char *text, int32_t width, uint32_t font)
 {
-    uint32_t lines = 1u, column = 0u, columns = width > 0 ? (uint32_t)width / (font / 2u) : 1u;
+    uint32_t advance = font > 1u ? font / 2u : 1u;
+    uint32_t lines = 1u, column = 0u, columns = width > 0 ? (uint32_t)width / advance : 1u;
     const uint8_t *p = (const uint8_t *)text;
     if (columns == 0u) columns = 1u;
     while (*p != 0u) {
@@ -820,7 +834,7 @@ static void host_layout(const struct canopus_ui_snapshot_v1 *s, uint16_t index,
     else if (node->type == CANOPUS_UI_NODE_IMAGE) box->height = l->height;
     else if (node->type == CANOPUS_UI_NODE_DIVIDER) box->height = 1;
     if (node->type == CANOPUS_UI_NODE_SECTION && node->primary_len != 0u)
-        main = (int32_t)host_label_height(s->strings + node->primary_off, inner, 28u) + HOST_TEXT_GAP;
+        main = (int32_t)host_label_height(s->strings + node->primary_off, inner, v->font_px != 0u ? v->font_px : 28u) + HOST_TEXT_GAP;
     for (child = node->first_child; child != CANOPUS_UI_NO_NODE; child = s->nodes[child].next_sibling) {
         const struct canopus_ui_layout_v1 *cl = &s->layouts[child];
         struct host_geometry *cb = &g[child];
@@ -864,7 +878,7 @@ static void host_layout(const struct canopus_ui_snapshot_v1 *s, uint16_t index,
             else if (l->justify == CANOPUS_UI_JUSTIFY_SPACE_EVENLY && count > 0) { extra_gap = space / (count + 1); cursor += extra_gap; }
         }
         if (node->type == CANOPUS_UI_NODE_SECTION && node->primary_len != 0u)
-            cursor += (int32_t)host_label_height(s->strings + node->primary_off, inner, 28u) + HOST_TEXT_GAP;
+            cursor += (int32_t)host_label_height(s->strings + node->primary_off, inner, v->font_px != 0u ? v->font_px : 28u) + HOST_TEXT_GAP;
         count = 0;
         for (child = node->first_child; child != CANOPUS_UI_NO_NODE; child = s->nodes[child].next_sibling) {
             const struct canopus_ui_layout_v1 *cl = &s->layouts[child];
@@ -977,14 +991,22 @@ static int32_t host_validate(const struct canopus_ui_snapshot_v1 *s)
         const struct canopus_ui_style_v1 *st = &s->styles[i];
         (void)st;
         if (!host_is_title(n->type) && !host_is_container(n->type) && !host_is_row(n->type) && !host_is_label(n->type) && n->type != CANOPUS_UI_NODE_IMAGE && n->type != CANOPUS_UI_NODE_PROGRESS && n->type != CANOPUS_UI_NODE_TOAST) return CANOPUS_UI_ERR_UNSUPPORTED;
-        if (n->type == CANOPUS_UI_NODE_IMAGE && (n->primary_len == 0 || s->values[i].resource_id == 0 || s->layouts[i].width <= 0 || s->layouts[i].height <= 0)) return CANOPUS_UI_ERR_ARGUMENT;
-        if (n->type == CANOPUS_UI_NODE_PROGRESS && s->values[i].minimum >= s->values[i].maximum) return CANOPUS_UI_ERR_ARGUMENT;
+        if (n->type == CANOPUS_UI_NODE_IMAGE && (s->layouts[i].width <= 0 || s->layouts[i].height <= 0)) return CANOPUS_UI_ERR_ARGUMENT;
         /* Toast geometry is owned by the feedback label and header handles are
          * viewport chrome: neither publishes a virtual extent marker. */
         if ((n->type == CANOPUS_UI_NODE_NAVIGATION_HEADER || n->type == CANOPUS_UI_NODE_TOAST) &&
             (v->flags & CANOPUS_UI_VISUAL_FLAG_VIRTUAL_CONTENT)) return CANOPUS_UI_ERR_UNSUPPORTED;
+#ifdef HOST_FONT
+        if (v->font_px != 0u && v->font_px != 24u && v->font_px != 28u &&
+            !(host_is_label(n->type) || n->type == CANOPUS_UI_NODE_TOAST ||
+              (n->type == CANOPUS_UI_NODE_SECTION && n->primary_len != 0u) ||
+              host_row_kind(n->type) == 4u)) return CANOPUS_UI_ERR_UNSUPPORTED;
+#else
         if (v->font_px != 0u && v->font_px != 24u && v->font_px != 28u) return CANOPUS_UI_ERR_UNSUPPORTED;
+#endif
+#ifndef HOST_IMAGE_FIT
         if (v->image_fit != CANOPUS_UI_IMAGE_FIT_NATIVE) return CANOPUS_UI_ERR_UNSUPPORTED;
+#endif
 #ifndef FW_UI_STYLE_SET
         { const struct canopus_ui_style_v1 defaults = CANOPUS_UI_STYLE_DEFAULT;
           struct canopus_ui_style_v1 copy = *st; copy.text_style = defaults.text_style;
@@ -1026,7 +1048,32 @@ static int32_t host_create_node(struct canopus_ui_host_node *slot, void *parent,
     void *object;
     uint8_t kind = host_row_kind(node->type);
     if (host_is_label(node->type)) object = host_label_create(parent);
-    else if (node->type == CANOPUS_UI_NODE_IMAGE) object = host_image_create(parent);
+    else if (node->type == CANOPUS_UI_NODE_IMAGE) {
+#ifdef HOST_IMAGE_FIT
+        if (s->visuals[i].image_fit != CANOPUS_UI_IMAGE_FIT_NATIVE) {
+            object = host_container_create(parent);
+            if (object != NULL) {
+                /* The viewport owns its image child; the slot's unused
+                 * secondary pointer borrows it, adding no resident state. */
+                host_object_flag(object, UINT32_C(0x100000), 0);
+#ifndef CANOPUS_MGR_BAND11
+                /* The content class can inherit a theme. Normalize its exact
+                 * main-part padding, background, border and radius before use. */
+                {
+                    uint32_t prop;
+                    for (prop = 16u; prop < 20u; prop++) host_style_property(object,prop,0u);
+                    host_style_property(object,29u,0u);
+                    host_style_property(object,48u,0u);
+                    host_style_property(object,12u,0u);
+                }
+#endif
+                slot->secondary = host_image_create(object);
+                if (slot->secondary == NULL) { host_object_delete(object); return CANOPUS_UI_ERR_BACKEND; }
+            }
+        } else
+#endif
+        object = host_image_create(parent);
+    }
     else if (node->type == CANOPUS_UI_NODE_PROGRESS) object = host_bar_create(parent);
     else if (host_is_row(node->type) && kind != 4u) {
         uint8_t trailing = kind == HOST_ROW_SWITCH ? HOST_TRAILING_SWITCH : kind == HOST_ROW_ACTION ? HOST_TRAILING_FORWARD : HOST_TRAILING_NONE;
@@ -1072,11 +1119,37 @@ static void *host_extent_create(void *parent)
     return object;
 }
 
+#ifdef HOST_IMAGE_FIT
+/* Exact 12-byte decoder header; Q8 factors are consumed as uint16_t by the
+ * native transformed-area helper. Reject unrepresentable requests up front. */
+static int32_t host_image_scales(const void *source, const struct host_geometry *box,
+                                 uint16_t fit, uint16_t scales[2])
+{
+    struct { uint32_t magic; uint16_t width, height; uint32_t stride; } header;
+    uint32_t x, y, round = fit != CANOPUS_UI_IMAGE_FIT_CONTAIN;
+    if (!((int (*)(const void *, void *))(uintptr_t)FW_UI_IMAGE_INFO)(source, &header) ||
+        header.width == 0 || header.height == 0) return CANOPUS_UI_ERR_BACKEND;
+    x = ((uint32_t)box->width * 256u + (round ? header.width - 1u : 0u)) / header.width;
+    y = ((uint32_t)box->height * 256u + (round ? header.height - 1u : 0u)) / header.height;
+    if (fit == CANOPUS_UI_IMAGE_FIT_CONTAIN) x = y = x < y ? x : y;
+    if (fit == CANOPUS_UI_IMAGE_FIT_COVER) x = y = x > y ? x : y;
+    if (x == 0 || y == 0 || x > UINT16_MAX || y > UINT16_MAX) return CANOPUS_UI_ERR_UNSUPPORTED;
+    scales[0] = (uint16_t)x; scales[1] = (uint16_t)y;
+    return 0;
+}
+#endif
+
 static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *snapshot)
 {
     struct canopus_ui_host_view *view = cookie;
     const struct canopus_ui_snapshot_v1 *previous;
     struct host_geometry geometry[CANOPUS_UI_MAX_NODES];
+#ifdef HOST_IMAGE_FIT
+    uint16_t image_scales[CANOPUS_UI_MAX_NODES][2] = {{0}};
+#endif
+#ifdef HOST_FONT
+    struct host_font *fonts[CANOPUS_UI_MAX_NODES] = {0};
+#endif
     uint8_t map[CANOPUS_UI_MAX_NODES], fresh[CANOPUS_UI_MAX_NODES] = {0};
     struct canopus_ui_host_node candidates[CANOPUS_UI_MAX_NODES];
     void *extent_candidates[CANOPUS_UI_MAX_NODES] = {0};
@@ -1092,6 +1165,18 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     unchanged_capture = host_snapshot_unchanged(view,previous,snapshot);
     canopus_memset(geometry, 0, sizeof(geometry));
     host_layout(snapshot, 0u, HOST_CONTENT_WIDTH, -1, geometry);
+#ifdef HOST_IMAGE_FIT
+    /* Decoder failures must precede native allocations, cancellation and writes.
+     * Revalidate changed snapshots, including images rebuilt with an ancestor. */
+    for (i = 0; !unchanged_capture && i < snapshot->node_count; i++) {
+        const struct canopus_ui_node_v1 *n = &snapshot->nodes[i];
+        if (n->type == CANOPUS_UI_NODE_IMAGE && snapshot->visuals[i].image_fit != CANOPUS_UI_IMAGE_FIT_NATIVE) {
+            result = host_image_scales(snapshot->strings + n->primary_off, &geometry[i],
+                                       snapshot->visuals[i].image_fit, image_scales[i]);
+            if (result != 0) return result;
+        }
+    }
+#endif
     /* Keep all existing keyed slots reserved before allocating new keys. */
     for (i = 0; i < snapshot->node_count; i++) {
         map[i] = UINT8_MAX;
@@ -1106,6 +1191,14 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     {
         const struct canopus_ui_node_v1 *message, *buttons[2];
         if (host_find_dialog(snapshot, &message, buttons)) {
+#ifdef HOST_FONT
+            /* Stock msgbox owns its inaccessible labels; explicit sizing is
+             * rejected rather than claiming to style those internal objects. */
+            {
+                uint16_t pixels = snapshot->visuals[message - snapshot->nodes].font_px;
+                if (pixels != 0u && pixels != 24u && pixels != 28u) return CANOPUS_UI_ERR_UNSUPPORTED;
+            }
+#endif
             result = host_dialog_show(view, snapshot, message, buttons);
             if (result != 0) return result;
             view->rendered_generation = snapshot->generation; view->render_valid = 1;
@@ -1113,9 +1206,21 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         }
     }
 #endif
+#ifdef HOST_FONT
+    /* Hold preparation references across staging and reentrant CANCEL. Actual
+     * label references survive dialog snapshots, hiding and detached views. */
+    for (i = 0; i < snapshot->node_count; i++) {
+        uint16_t pixels = snapshot->visuals[i].font_px;
+        if (pixels == 0u || pixels == 24u || pixels == 28u) continue;
+        if (snapshot->nodes[i].type == CANOPUS_UI_NODE_TOAST &&
+            (!host_feedback_toast_driver(snapshot,i) || !(snapshot->nodes[i].flags & CANOPUS_UI_NODE_FLAG_VISIBLE))) continue;
+        fonts[i] = host_font_get(pixels);
+        if (fonts[i] == NULL) { result = CANOPUS_UI_ERR_BACKEND; goto fonts_finished; }
+    }
+#endif
     if (view->content_root == NULL) {
         view->content_root = host_content_create(view->root);
-        if (view->content_root == NULL) return CANOPUS_UI_ERR_BACKEND;
+        if (view->content_root == NULL) { result = CANOPUS_UI_ERR_BACKEND; goto fonts_finished; }
         host_add_event(view->content_root,host_content_event,HOST_EVENT_ALL,view);
     }
     /* Replacements include descendants so no retained pointer belongs to a
@@ -1127,6 +1232,20 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         uint32_t oi = old != NULL ? (uint32_t)(old - previous->nodes) : 0;
         uint32_t parent_key = n->parent == CANOPUS_UI_NO_NODE ? 0u : snapshot->nodes[n->parent].key;
         fresh[i] = slot->object == NULL || slot->key != n->key || slot->type != n->type || slot->parent_key != parent_key ||
+#ifdef HOST_IMAGE_FIT
+            /* A native dialog commits its own snapshot while retaining the
+             * body: representation must come from the live image slot. */
+            (n->type == CANOPUS_UI_NODE_IMAGE &&
+             ((snapshot->visuals[i].image_fit != CANOPUS_UI_IMAGE_FIT_NATIVE) !=
+              (slot->secondary != NULL))) ||
+#endif
+#ifdef HOST_FONT
+            /* Removing a local FONT property needs a fresh native label:
+             * applying a theme style does not remove the local pointer. */
+            ((snapshot->visuals[i].font_px == 0u || snapshot->visuals[i].font_px == 24u || snapshot->visuals[i].font_px == 28u) &&
+             n->type != CANOPUS_UI_NODE_TOAST &&
+             host_font_owned(slot->primary != NULL ? slot->primary : slot->object)) ||
+#endif
             (old != NULL && (host_local_style(&previous->styles[oi],&previous->visuals[oi]) &
                              ~host_local_style(&snapshot->styles[i],&snapshot->visuals[i]))) ||
             (n->parent != CANOPUS_UI_NO_NODE && fresh[n->parent]);
@@ -1165,7 +1284,13 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                  /* A hidden node never owns displayed content, so it must not
                   * replace the owner either (its style would ride along). */
                  ((n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE) && fresh[i] &&
-                  view->toast_object != NULL))) {
+                  view->toast_object != NULL)
+#ifdef HOST_FONT
+                 || ((n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE) &&
+                     (snapshot->visuals[i].font_px == 0u || snapshot->visuals[i].font_px == 24u || snapshot->visuals[i].font_px == 28u) &&
+                     host_font_owned(view->toast_object))
+#endif
+                 )) {
                 candidates[i].object = host_label_create(view->root);
                 if (candidates[i].object == NULL) { result = CANOPUS_UI_ERR_BACKEND; goto allocation_failed; }
                 host_set_hidden(candidates[i].object,1u);
@@ -1193,7 +1318,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         /* A CANCEL callback may close the page and let firmware destroy the
          * native root, which already reclaimed every staged candidate under
          * it. Never delete staged objects again once the view is gone. */
-        if (!host_view_alive(view)) return CANOPUS_UI_ERR_STATE;
+        if (!host_view_alive(view)) { result = CANOPUS_UI_ERR_STATE; goto fonts_finished; }
     }
     if (!unchanged_capture) host_input_before_replace(view);
     view->render_valid = 0;
@@ -1275,7 +1400,13 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             }
             if (host_is_label(n->type) || slot->primary != NULL) {
                 void *label = host_is_label(n->type) ? slot->object : slot->primary;
-                if (style_changed) host_label_style(label,v->font_px == 28 || snapshot->styles[i].text_style == CANOPUS_UI_TEXT_TITLE ? CANOPUS_UI_TEXT_TITLE : CANOPUS_UI_TEXT_BODY);
+                if (style_changed) {
+                    host_label_style(label,v->font_px == 24 ? CANOPUS_UI_TEXT_BODY :
+                        v->font_px == 28 || snapshot->styles[i].text_style == CANOPUS_UI_TEXT_TITLE ? CANOPUS_UI_TEXT_TITLE : CANOPUS_UI_TEXT_BODY);
+#ifdef HOST_FONT
+                    host_font_set(label,fonts[i]);
+#endif
+                }
                 if (text_changed) host_label_set_text(label,primary);
                 if (style_changed) host_style(label,&snapshot->styles[i],v);
                 if (slot->kind == 4u && (fresh[i] || style_changed || old == NULL || old->flags != n->flags || slot->dirty)) {
@@ -1295,7 +1426,24 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
 #endif
                 }
             } else if (n->type == CANOPUS_UI_NODE_IMAGE) {
-                if (text_changed || old == NULL || snapshot->values[i].resource_id != previous->values[oi].resource_id) host_image_set_src(slot->object,primary);
+                void *image = slot->object;
+#ifdef HOST_IMAGE_FIT
+                if (v->image_fit != CANOPUS_UI_IMAGE_FIT_NATIVE) image = slot->secondary;
+#endif
+                if (text_changed || old == NULL || snapshot->values[i].resource_id != previous->values[oi].resource_id) host_image_set_src(image,primary);
+#ifdef HOST_IMAGE_FIT
+                if (v->image_fit != CANOPUS_UI_IMAGE_FIT_NATIVE) {
+                    if (fresh[i] || slot->width != geometry[i].width || slot->height != geometry[i].height) {
+                        host_set_size(image,geometry[i].width,geometry[i].height);
+                        host_align_to(image,slot->object,0u,0,0);
+                    }
+                    if (image_scales[i][0] != 0 && (old == NULL || text_changed ||
+                        snapshot->values[i].resource_id != previous->values[oi].resource_id ||
+                        slot->width != geometry[i].width || slot->height != geometry[i].height ||
+                        v->image_fit != previous->visuals[oi].image_fit))
+                        ((void (*)(void *, int32_t, int32_t))(uintptr_t)FW_UI_IMAGE_SCALE)(image,image_scales[i][0],image_scales[i][1]);
+                }
+#endif
             } else if (n->type == CANOPUS_UI_NODE_PROGRESS) {
                 if (old == NULL || snapshot->values[i].minimum != previous->values[oi].minimum || snapshot->values[i].maximum != previous->values[oi].maximum) host_bar_set_range(slot->object,snapshot->values[i].minimum,snapshot->values[i].maximum);
                 if (old == NULL || snapshot->values[i].value != previous->values[oi].value) host_bar_set_value(slot->object,snapshot->values[i].value);
@@ -1313,7 +1461,16 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
              (host_feedback_toast_driver(snapshot,i) &&
               (n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE))))
             host_style(slot->object,&snapshot->styles[i],v);
-        if (n->type == CANOPUS_UI_NODE_TOAST) goto publish_node;
+        if (n->type == CANOPUS_UI_NODE_TOAST) {
+#ifdef HOST_FONT
+            if (style_changed && slot->object != NULL && host_feedback_toast_driver(snapshot,i) &&
+                (n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE)) {
+                host_label_style(slot->object,v->font_px == 28 ? CANOPUS_UI_TEXT_TITLE : CANOPUS_UI_TEXT_BODY);
+                host_font_set(slot->object,fonts[i]);
+            }
+#endif
+            goto publish_node;
+        }
         if (fresh[i] || slot->width != geometry[i].width || slot->height != geometry[i].height)
             host_set_size(slot->object,geometry[i].width,geometry[i].height);
         if (slot->primary != NULL && (fresh[i] || candidates[i].primary != NULL || padding_changed || slot->width != geometry[i].width || slot->height != geometry[i].height)) {
@@ -1328,7 +1485,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                 host_align_to(slot->indicator,slot->object,0u,l->padding_left,l->padding_top);
             }
         }
-        if (!host_is_title(n->type) && n->type != CANOPUS_UI_NODE_TOAST && (fresh[i] || slot->x != geometry[i].x || slot->y != geometry[i].y || (old != NULL && (v->translate_x != previous->visuals[oi].translate_x || v->translate_y != previous->visuals[oi].translate_y))))
+        if (!host_is_title(n->type) && (fresh[i] || slot->x != geometry[i].x || slot->y != geometry[i].y || (old != NULL && (v->translate_x != previous->visuals[oi].translate_x || v->translate_y != previous->visuals[oi].translate_y))))
             host_align_to(slot->object,parent,0u,geometry[i].x + v->translate_x,geometry[i].y + v->translate_y);
         if (fresh[i] || slot->visible != show) host_set_hidden(slot->object,!show);
         if (extent_candidates[i] != NULL) slot->extent_object = extent_candidates[i];
@@ -1377,7 +1534,8 @@ publish_node:
     view->rendered_generation = snapshot->generation; view->render_valid = 1;
     host_input_publish(view,snapshot,geometry[0].extent,unchanged_capture);
     if (view->hooks != NULL && view->hooks->rendered != NULL) view->hooks->rendered(view,view->page_title);
-    return 0;
+    result = 0;
+    goto fonts_finished;
 allocation_failed:
     for (j = snapshot->node_count; j-- != 0;) {
         if (extent_candidates[j] != NULL) host_object_delete(extent_candidates[j]);
@@ -1387,13 +1545,18 @@ allocation_failed:
     }
     if (content_candidate != NULL) host_object_delete(content_candidate);
     /* Allocation failures leave the previous tree and input state published. */
+fonts_finished:
+#ifdef HOST_FONT
+    for (i = 0; i < snapshot->node_count; i++) host_font_put(fonts[i]);
+    host_font_collect();
+#endif
     return result;
 }
 const struct canopus_ui_backend_v1 canopus_ui_host_backend = {
     sizeof(struct canopus_ui_backend_v1),CANOPUS_UI_ABI_MAJOR,CANOPUS_UI_ABI_MINOR,
     CANOPUS_UI_CAP_EXTENDED_COMPONENTS|CANOPUS_UI_CAP_STYLE|CANOPUS_UI_CAP_LAYOUT|CANOPUS_UI_CAP_VALUES|
     CANOPUS_UI_CAP_NAVIGATION_HEADER|CANOPUS_UI_CAP_IMAGE|CANOPUS_UI_CAP_PROGRESS|CANOPUS_UI_CAP_VISUAL|
-    CANOPUS_UI_CAP_TOAST|CANOPUS_UI_CAP_VIRTUAL_CONTENT|HOST_INPUT_CAPS,host_apply,host_control
+    CANOPUS_UI_CAP_TOAST|CANOPUS_UI_CAP_VIRTUAL_CONTENT|HOST_INPUT_CAPS|HOST_IMAGE_FIT_CAPS|HOST_FONT_CAPS,host_apply,host_control
 };
 void canopus_ui_host_attach(struct canopus_ui_host_view *view, void *root, void *page,
                             const struct canopus_ui_host_hooks *hooks, uint32_t flags)
