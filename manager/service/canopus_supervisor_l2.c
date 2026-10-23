@@ -10,6 +10,10 @@
 #define L2_FRAME_MAX (CANOPUS_TRANSPORT_V2_HEADER_SIZE + CANOPUS_PROTO_MAX_PAYLOAD)
 #define L2_QUEUE_SIZE 4u
 #define L2_EVENT_QUEUE_SIZE 2u
+/* Requests one owner tick may serve. The ring holds four; a phone that keeps several
+ * CanopusConnect messages in flight has them all answered in one 10 ms tick instead of one
+ * per tick, so the tick period stops being the throughput ceiling. */
+#define L2_POLL_BATCH L2_QUEUE_SIZE
 
 typedef void (*l2_rx_fn)(uint16_t, uint8_t, uint8_t, void *, uint16_t);
 typedef void *(*session_fn)(uint16_t);
@@ -223,12 +227,15 @@ static int l2_bt_start(uint32_t period)
     return err;
 }
 
-void canopus_sup_l2_poll(void)
+/* Serves the oldest queued request. Returns 0 when there is nothing to serve, or when the
+ * response queue is full: the request then stays queued for a later tick instead of losing its
+ * answer, and the Bluetooth timer's draining makes room. */
+static int l2_serve_one(void)
 {
     uint32_t slot = s_read;
     int32_t len;
-    l2_attach();
-    if (s_requests[slot].state != 2u) return;
+    if (s_requests[slot].state != 2u) return 0;
+    if (s_responses[s_tx_write].state != 0u) return 0;
     __asm__ volatile("dmb" ::: "memory");
     if (s_requests[slot].len != 0u &&
         ((session_fn)(uintptr_t)L2_PROBE_SESSION)(s_requests[slot].handle) ==
@@ -254,6 +261,16 @@ void canopus_sup_l2_poll(void)
     __asm__ volatile("dmb" ::: "memory");
     s_requests[slot].state = 0u;
     s_read = (slot + 1u) % L2_QUEUE_SIZE;
+    return 1;
+}
+
+void canopus_sup_l2_poll(void)
+{
+    uint32_t served;
+    l2_attach();
+    for (served = 0u; served < L2_POLL_BATCH; served++) {
+        if (!l2_serve_one()) break;
+    }
 }
 
 static void l2_owner_tick(void *timer)

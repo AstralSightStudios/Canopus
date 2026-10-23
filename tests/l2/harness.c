@@ -170,6 +170,31 @@ int exercise(void)
         bt_tick(bt_handle);
         if (sent != first + 4u) return 80;
         if (sup_l2_event(0, frame, 2u) != 0) return 81; /* the slot was freed */
+        bt_tick(bt_handle);                              /* drop that event's turn */
+        bt_tick(bt_handle);
+    }
+
+    /* A burst: the ring's four requests are all served by one owner tick, in order, and the
+     * answers wait on the response queue. A fifth request is not served while that queue is full
+     * (its answer would be lost); it is served after the Bluetooth timer made room. */
+    {
+        uint32_t before = dispatched, first = sent;
+        int i;
+        for (i = 0; i < 4; i++) {
+            request[0] = 0x32;
+            rx(7u, 0x43u, 2u, request, sizeof(request));
+        }
+        owner_tick(owner_handle);
+        if (dispatched != before + 4u) return 90;
+        rx(7u, 0x43u, 2u, request, sizeof(request));
+        owner_tick(owner_handle);
+        if (dispatched != before + 4u) return 91; /* waits: no room for its answer */
+        bt_tick(bt_handle);
+        if (sent != first + 1u) return 92;
+        owner_tick(owner_handle);
+        if (dispatched != before + 5u) return 93;
+        for (i = 0; i < 5; i++) bt_tick(bt_handle);
+        if (sent != first + 5u) return 94;
     }
     return 0;
 }

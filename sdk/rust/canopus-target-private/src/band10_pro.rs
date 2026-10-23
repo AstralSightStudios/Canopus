@@ -258,6 +258,19 @@ pub struct PairRequestFilter {
     pub registration: u32,
 }
 
+/// The stock core client's own adapter instance. Every client allocates a
+/// separate instance with its own callback list, so this is not the instance
+/// [`bt_adapter_get_instance`] returns; the core registration handle can only
+/// be replaced on the instance it was registered on.
+unsafe fn core_bt_adapter() -> *mut core::ffi::c_void {
+    unsafe {
+        core::ptr::read_volatile(
+            canopus_target_generated::canopus_fw_core_bt_adapter_instance
+                as *const *mut core::ffi::c_void,
+        )
+    }
+}
+
 /// Replaces the stock 3.101.043 Pair Request registration with a resident
 /// 17-word mirror. The stock handle is the callback-list node allocated by
 /// `sub_C3A96EC`; word 1 owns the descriptor pointer. Registration and removal
@@ -267,7 +280,7 @@ pub struct PairRequestFilter {
 pub unsafe fn bt_install_pair_request_filter(
     replacement: PairRequestCallback,
 ) -> Result<Option<PairRequestFilter>, PairRequestFilterError> {
-    let adapter = unsafe { bt_adapter_get_instance() };
+    let adapter = unsafe { core_bt_adapter() };
     let handle_ptr = canopus_target_generated::canopus_fw_core_bt_registration_handle as *mut u32;
     let original_handle = unsafe { core::ptr::read_volatile(handle_ptr) };
     if adapter.is_null() || original_handle == 0 {
@@ -313,6 +326,9 @@ pub unsafe fn bt_install_pair_request_filter(
         }
         return Err(PairRequestFilterError::Registration);
     }
+    // The core client's teardown unregisters whatever this word names, so it
+    // must follow the mirror rather than keep the freed stock node.
+    unsafe { core::ptr::write_volatile(handle_ptr, mirror_handle) };
     Ok(Some(PairRequestFilter {
         allocation: mirror as usize,
         registration: mirror_handle,
@@ -324,7 +340,7 @@ pub unsafe fn bt_install_pair_request_filter(
     replacement: PairRequestCallback,
 ) -> Result<Option<PairRequestFilter>, PairRequestFilterError> {
     const CORE_BT_PAIR_REQUEST_SLOT: usize = 5;
-    let adapter = unsafe { canopus_target_generated::canopus_fw_bt_adapter_get_instance() };
+    let adapter = unsafe { core_bt_adapter() };
     let handle_ptr = canopus_target_generated::canopus_fw_core_bt_registration_handle as *mut u32;
     let original_handle = unsafe { core::ptr::read_volatile(handle_ptr) };
     let stock = canopus_target_generated::canopus_fw_core_bt_callback_table as *const u32;
@@ -356,6 +372,7 @@ pub unsafe fn bt_install_pair_request_filter(
         }
         return Err(PairRequestFilterError::Registration);
     }
+    unsafe { core::ptr::write_volatile(handle_ptr, mirror_handle) };
     Ok(Some(PairRequestFilter {
         allocation: mirror as usize,
         registration: mirror_handle,
