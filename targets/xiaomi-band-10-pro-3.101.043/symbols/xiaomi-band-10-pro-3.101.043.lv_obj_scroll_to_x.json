@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lv_obj_scroll_to_x",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_obj_scroll_to_x",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c02dfec",
+  "prototype": "void(void *, int32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrows a live LVGL object; absolute horizontal scroll",
+    "return_value": "none"
+  },
+  "side_effects": [
+    "scrolls_page_owned_widget"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-LYRA-UI-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-LYRA-UI-1043-001"
+    ],
+    "source": "Exact xiaomi-band-10-pro-3.101.043 image/IDB: Deletes the running scroll-x animation, reads lv_obj_get_scroll_x and calls the bounded scroll_by with the difference. Located by its field layout in the LVGL v9.0 lv_obj_spec_attr_t and by the firmware's own Lua binding of the same method."
+  },
+  "notes": "Static recovery only; Mirage is emulator evidence. UI owner thread only. The object must be a live LVGL object created on this page.",
+  "approval_state": "PENDING",
+  "callable_address": "0x1c02dfed"
+}

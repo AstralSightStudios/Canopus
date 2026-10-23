@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: fbd6d5aa56ccbbf3
+// input_digest: b019e40846d156da
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -242,6 +242,9 @@ fn c_str_eq(addr: usize, expected: &[u8]) -> bool {
 }
 
 // ---- typed firmware bindings (unsafe) ----
+/// Recovered `lv_obj_scroll_to_x` at 0x1c02dfec. Thumb callable address 0x1c02dfed.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_X_CALLABLE: usize = canopus_thumb_callable(0x1c02dfedusize);
+
 /// Recovered `recvfrom` at 0xc1ebd18. Thumb callable address 0xc1ebd19.
 pub const CANOPUS_FW_RECVFROM_CALLABLE: usize = canopus_thumb_callable(0xc1ebd19usize);
 #[allow(non_snake_case)]
@@ -536,6 +539,9 @@ pub unsafe fn canopus_fw_quickapp_register_app(a0: u16, a1: *const canopus_inter
     f(a0, a1)
 }
 
+/// Recovered `lv_obj_set_local_style_prop_xip_thunk` at 0xcaa7238. Thumb callable address 0xcaa7239.
+pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_XIP_THUNK_CALLABLE: usize = canopus_thumb_callable(0xcaa7239usize);
+
 /// Recovered `modhandle` at 0xc1ee0a8. Thumb callable address 0xc1ee0a9.
 pub const CANOPUS_FW_MODHANDLE_CALLABLE: usize = canopus_thumb_callable(0xc1ee0a9usize);
 
@@ -773,6 +779,9 @@ pub unsafe fn canopus_fw_sendto(a0: i32, a1: *const core::ffi::c_void, a2: u32, 
 /// Recovered `protobuf_set_ordered_app_list` at 0xc4f2730. Thumb callable address 0xc4f2731.
 pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thumb_callable(0xc4f2731usize);
 
+/// Recovered `lv_obj_set_scroll_snap_x` at 0x1c02cc08. Thumb callable address 0x1c02cc09.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_X_CALLABLE: usize = canopus_thumb_callable(0x1c02cc09usize);
+
 /// Recovered `heap_mallinfo` at 0xc1e8bd8. Thumb callable address 0xc1e8bd9.
 pub const CANOPUS_FW_HEAP_MALLINFO_CALLABLE: usize = canopus_thumb_callable(0xc1e8bd9usize);
 
@@ -787,6 +796,9 @@ pub unsafe fn canopus_fw_unregister_driver(a0: *const u8) -> i32 {
 
 /// Recovered `lv_image_set_src` at 0x0C179FD0. Thumb callable address 0x0C179FD1.
 pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0x0C179FD1usize);
+
+/// Recovered `lv_obj_set_scroll_snap_y` at 0x1c02cc24. Thumb callable address 0x1c02cc25.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_Y_CALLABLE: usize = canopus_thumb_callable(0x1c02cc25usize);
 
 /// Recovered `lvx_notification_insert_message` at 0xca81fb8. Thumb callable address 0xca81fb9.
 pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_thumb_callable(0xca81fb9usize);
@@ -808,6 +820,9 @@ pub unsafe fn canopus_fw_lvx_object_delete(a0: *mut core::ffi::c_void) -> () {
 
 /// Recovered `screen_session_create` at 0x0ca5a19c. Thumb callable address 0x0ca5a19d.
 pub const CANOPUS_FW_SCREEN_SESSION_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0ca5a19dusize);
+
+/// Recovered `lv_obj_scroll_by` at 0x1c02d708. Thumb callable address 0x1c02d709.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_BY_CALLABLE: usize = canopus_thumb_callable(0x1c02d709usize);
 
 /// Recovered `bt_adapter_get_instance` at 0x0CA28770. Thumb callable address 0x0CA28771.
 pub const CANOPUS_FW_BT_ADAPTER_GET_INSTANCE_CALLABLE: usize = canopus_thumb_callable(0x0CA28771usize);
@@ -923,6 +938,9 @@ pub const CANOPUS_FW_HEAP_ZALLOC_CALLABLE: usize = canopus_thumb_callable(0xc1e8
 /// Recovered `sdp_set_raw_attribute` at 0x0C7EFC7C. Thumb callable address 0x0C7EFC7D.
 pub const CANOPUS_FW_SDP_SET_RAW_ATTRIBUTE_CALLABLE: usize = canopus_thumb_callable(0x0C7EFC7Dusize);
 
+/// Recovered `lv_obj_set_scrollbar_mode` at 0x1c02cbbc. Thumb callable address 0x1c02cbbd.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLLBAR_MODE_CALLABLE: usize = canopus_thumb_callable(0x1c02cbbdusize);
+
 /// Recovered `bt_remove_bond_private` at 0x0C3A034C. Thumb callable address 0x0C3A034D.
 pub const CANOPUS_FW_BT_REMOVE_BOND_PRIVATE_CALLABLE: usize = canopus_thumb_callable(0x0C3A034Dusize);
 
@@ -961,6 +979,9 @@ pub const CANOPUS_FW_DRIVER_CLOSE_DISPATCH_CALLABLE: usize = canopus_thumb_calla
 
 /// Recovered `bt_l2cap_submit_cid` at 0x0C7ED620. Thumb callable address 0x0C7ED621.
 pub const CANOPUS_FW_BT_L2CAP_SUBMIT_CID_CALLABLE: usize = canopus_thumb_callable(0x0C7ED621usize);
+
+/// Recovered `lv_obj_set_scroll_dir` at 0x1c02cbe8. Thumb callable address 0x1c02cbe9.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_DIR_CALLABLE: usize = canopus_thumb_callable(0x1c02cbe9usize);
 
 /// Recovered `stat` at 0x0c1c2a24. Thumb callable address 0x0c1c2a25.
 pub const CANOPUS_FW_STAT_CALLABLE: usize = canopus_thumb_callable(0x0c1c2a25usize);
@@ -1090,7 +1111,14 @@ pub unsafe fn canopus_fw_interconnect_send(a0: *mut core::ffi::c_void, a1: *cons
 // lv_obj_clear_flag: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
 // lv_obj_remove_state: restricted - not exported until context/ownership approved
+// lv_obj_scroll_by: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to_x: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
+// lv_obj_set_local_style_prop_xip_thunk: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_dir: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_snap_x: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_snap_y: restricted - not exported until context/ownership approved
+// lv_obj_set_scrollbar_mode: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // lvx_image_set_scale: restricted - not exported until context/ownership approved

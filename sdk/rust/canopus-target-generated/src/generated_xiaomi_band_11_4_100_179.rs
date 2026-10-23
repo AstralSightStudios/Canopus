@@ -4,7 +4,7 @@
 // firmware : 4.100.179 (user-4.100.179-cn-202609302100)
 // sha256   : 307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b
 // revision : 1
-// input_digest: 2dc20dd358e2eb73
+// input_digest: 2461d8f3067dc5f7
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -249,6 +249,9 @@ fn identity_token_eq(addr: usize, expected: &[u8]) -> bool {
 /// Recovered `protobuf_set_ordered_app_list` at 0xc549f68. Thumb callable address 0xc549f69.
 pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thumb_callable(0xc549f69usize);
 
+/// Recovered `lv_obj_scroll_to_x` at 0xc384364. Thumb callable address 0xc384365.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_X_CALLABLE: usize = canopus_thumb_callable(0xc384365usize);
+
 /// Recovered `font_reload_vector_destroy` at 0xc69f72c. Thumb callable address 0xc69f72d.
 pub const CANOPUS_FW_FONT_RELOAD_VECTOR_DESTROY_CALLABLE: usize = canopus_thumb_callable(0xc69f72dusize);
 
@@ -257,6 +260,9 @@ pub const CANOPUS_FW_LV_DRAW_RECT_CALLABLE: usize = canopus_thumb_callable(0xc38
 
 /// Recovered `lv_display_remove_event_cb_with_user_data` at 0xc381e66. Thumb callable address 0xc381e67.
 pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize = canopus_thumb_callable(0xc381e67usize);
+
+/// Recovered `lv_obj_set_scrollbar_mode` at 0xc382364. Thumb callable address 0xc382365.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLLBAR_MODE_CALLABLE: usize = canopus_thumb_callable(0xc382365usize);
 
 /// Recovered `lvx_label_set_long_mode` at 0xc3b3ec4. Thumb callable address 0xc3b3ec5.
 pub const CANOPUS_FW_LVX_LABEL_SET_LONG_MODE_CALLABLE: usize = canopus_thumb_callable(0xc3b3ec5usize);
@@ -399,6 +405,9 @@ pub const canopus_fw_font_reload_uikit_slot: usize = 0x200bd08cusize;
 /// Recovered `app_launcher_add` at 0xc546ca0. Thumb callable address 0xc546ca1.
 pub const CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc546ca1usize);
 
+/// Recovered `lv_obj_scroll_to_y` at 0xc38438c. Thumb callable address 0xc38438d.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_Y_CALLABLE: usize = canopus_thumb_callable(0xc38438dusize);
+
 /// Recovered `ioctl` at 0xc341e00. Thumb callable address 0xc341e01.
 pub const CANOPUS_FW_IOCTL_CALLABLE: usize = canopus_thumb_callable(0xc341e01usize);
 
@@ -531,6 +540,9 @@ pub const canopus_fw_bt_shared_adapter: usize = 0x200c2ae0usize;
 /// Recovered `calendar_localtime` at 0xc34fcec. Thumb callable address 0xc34fced.
 pub const CANOPUS_FW_CALENDAR_LOCALTIME_CALLABLE: usize = canopus_thumb_callable(0xc34fcedusize);
 
+/// Recovered `lv_obj_set_scroll_dir` at 0xc37f8be. Thumb callable address 0xc37f8bf.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_DIR_CALLABLE: usize = canopus_thumb_callable(0xc37f8bfusize);
+
 /// Recovered `hal_cache_sync` at 0xc92e6d4. Thumb callable address 0xc92e6d5.
 pub const CANOPUS_FW_HAL_CACHE_SYNC_CALLABLE: usize = canopus_thumb_callable(0xc92e6d5usize);
 
@@ -569,6 +581,9 @@ pub const canopus_fw_mpu_region_bitmap: usize = 0x200f4080usize;
 
 /// Recovered `calendar_snapshot` at 0xc6a2a48. Thumb callable address 0xc6a2a49.
 pub const CANOPUS_FW_CALENDAR_SNAPSHOT_CALLABLE: usize = canopus_thumb_callable(0xc6a2a49usize);
+
+/// Recovered `lv_obj_set_scroll_snap_y` at 0xc37f8fa. Thumb callable address 0xc37f8fb.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_Y_CALLABLE: usize = canopus_thumb_callable(0xc37f8fbusize);
 
 /// Recovered `lvx_list_item_add_content` at 0xc50d248. Thumb callable address 0xc50d249.
 pub const CANOPUS_FW_LVX_LIST_ITEM_ADD_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xc50d249usize);
@@ -686,6 +701,9 @@ pub const CANOPUS_FW_SYSTEM_ROUTER_APP_WRAPPER_CALLABLE: usize = canopus_thumb_c
 
 /// Recovered `lv_obj_set_style_pad_top` at 0xc383782. Thumb callable address 0xc383783.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_PAD_TOP_CALLABLE: usize = canopus_thumb_callable(0xc383783usize);
+
+/// Recovered `lv_obj_set_scroll_snap_x` at 0xc37f8de. Thumb callable address 0xc37f8df.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_X_CALLABLE: usize = canopus_thumb_callable(0xc37f8dfusize);
 
 /// Recovered `calendar_premultiply` at 0xc9079f8. Thumb callable address 0xc9079f9.
 pub const CANOPUS_FW_CALENDAR_PREMULTIPLY_CALLABLE: usize = canopus_thumb_callable(0xc9079f9usize);
@@ -848,6 +866,9 @@ pub const CANOPUS_FW_LV_OBJ_REMOVE_EVENT_CB_CALLABLE: usize = canopus_thumb_call
 
 /// Recovered `font_reload_cache_release` at 0xc8b7c4c. Thumb callable address 0xc8b7c4d.
 pub const CANOPUS_FW_FONT_RELOAD_CACHE_RELEASE_CALLABLE: usize = canopus_thumb_callable(0xc8b7c4dusize);
+
+/// Recovered `lv_obj_scroll_by` at 0xc382408. Thumb callable address 0xc382409.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_BY_CALLABLE: usize = canopus_thumb_callable(0xc382409usize);
 
 /// Recovered `font_reload_metrics_create` at 0xc3a5e1c. Thumb callable address 0xc3a5e1d.
 pub const CANOPUS_FW_FONT_RELOAD_METRICS_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc3a5e1dusize);
@@ -1045,8 +1066,15 @@ pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_t
 // lv_obj_refresh_style: restricted - not exported until context/ownership approved
 // lv_obj_remove_event_cb: restricted - not exported until context/ownership approved
 // lv_obj_remove_style_all: restricted - not exported until context/ownership approved
+// lv_obj_scroll_by: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to_x: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to_y: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_dir: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_snap_x: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_snap_y: restricted - not exported until context/ownership approved
+// lv_obj_set_scrollbar_mode: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_obj_set_style_pad_bottom: restricted - not exported until context/ownership approved
 // lv_obj_set_style_pad_top: restricted - not exported until context/ownership approved

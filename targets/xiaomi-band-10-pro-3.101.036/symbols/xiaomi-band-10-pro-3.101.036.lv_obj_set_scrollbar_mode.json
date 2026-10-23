@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.lv_obj_set_scrollbar_mode",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "lv_obj_set_scrollbar_mode",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c02cbbc",
+  "prototype": "void(void *, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrows a live LVGL object; scrollbar visibility mode",
+    "return_value": "none"
+  },
+  "side_effects": [
+    "changes_page_owned_widget_scroll_attributes"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-LYRA-UI-1036-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-LYRA-UI-1036-001"
+    ],
+    "source": "Exact xiaomi-band-10-pro-3.101.036 image/IDB: Sets the 2-bit scrollbar_mode field of spec_attr and invalidates the scrollbar. Located by its field layout in the LVGL v9.0 lv_obj_spec_attr_t and by the firmware's own Lua binding of the same method."
+  },
+  "notes": "Static recovery only; Mirage is emulator evidence. UI owner thread only. The object must be a live LVGL object created on this page.",
+  "approval_state": "PENDING",
+  "callable_address": "0x1c02cbbd"
+}

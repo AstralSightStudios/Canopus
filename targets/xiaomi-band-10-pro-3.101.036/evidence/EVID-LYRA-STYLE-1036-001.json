@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-LYRA-STYLE-1036-001",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Which entry runs the SRAM copy of lv_obj_set_local_style_prop, whose style-set path can add a property to a widget that already has local properties?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.036.private_abi.lv_obj_set_local_style_prop_xip_thunk"
+  ],
+  "callsite_evidence": [
+    "The ROM and flash veneers used by every stock lv_obj_set_style_* wrapper (for example set_style_width, whose veneer literal is 0x2be2cd) forward to the SRAM setter at 0x2bd5fc; the same bytes sit in flash at 0xc107464 as the startup copy's load image.",
+    "The SRAM setter calls the SRAM lv_style_set_prop, whose add path moves the property array with the SRAM libc memmove. The load image's add path (lv_style_set_prop at 0xc108b24 on 3.101.043) calls 0xc0c0684, which is zero-filled in vela_ap.bin of 3.101.036 and 3.101.043; on Mirage a breakpoint at the call site (0xc108b90) steps through zeros there and the UI thread spins at 0xc0c0900 while the first object with two local properties is built.",
+    "Entering through the veneer therefore runs the code the stock UI runs."
+  ],
+  "ownership_analysis": "The widget is page-owned and the call runs on the UI owner thread, like the other UI host entries.",
+  "unsafe_assumptions": [
+    "Static recovery only.",
+    "UI owner thread only.",
+    "Property ids and values follow the firmware's LVGL v9.0 numbering."
+  ],
+  "recommended_probe": "Build a widget with several local properties through this entry on Mirage and a device.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-23T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64 0xcaa7238,0xc107464",
+      "role": "XIP veneer and flash load image"
+    }
+  ]
+}

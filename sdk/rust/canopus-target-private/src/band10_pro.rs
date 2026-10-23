@@ -1154,6 +1154,11 @@ pub unsafe fn lvx_object_move_to_index(object: *mut core::ffi::c_void, index: i3
 
 /// Sets one local LVGL style property for the requested selector. Property and
 /// value encoding follow this exact target's LVGL v9 ABI.
+///
+/// Enters the setter through its XIP veneer, which runs the SRAM-resident copy the stock
+/// `lv_obj_set_style_*` wrappers run. The flash image of the same function is only the
+/// startup copy's load image: its add-property path calls a memmove at 0xc0c0684 that is
+/// zero-filled in `vela_ap.bin`, so a second property on one widget would never return.
 pub unsafe fn lvx_object_set_local_style_u32(
     object: *mut core::ffi::c_void,
     property: u32,
@@ -1163,7 +1168,7 @@ pub unsafe fn lvx_object_set_local_style_u32(
     type F = extern "C" fn(*mut core::ffi::c_void, u32, u32, u32);
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
-            canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE,
+            canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_XIP_THUNK_CALLABLE,
         ))
     };
     f(object, property, value, selector);
@@ -1772,5 +1777,126 @@ pub const APP_PACKAGE_OFFSET: usize = 8;
 #[cfg(not(feature = "target-xiaomi-band-10-pro-3-101-043"))]
 pub const APP_PACKAGE_OFFSET: usize = 12;
 
-/// Not recovered on this target.
-pub unsafe fn lvx_object_clear_flag(_object: *mut core::ffi::c_void, _flags: u32) {}
+/// `lv_obj_clear_flag` (`ui.lv_obj_clear_flag`).
+pub unsafe fn lvx_object_clear_flag(object: *mut core::ffi::c_void, flags: u32) {
+    type F = extern "C" fn(*mut core::ffi::c_void, u32);
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+            canopus_target_generated::CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE,
+        ))
+    };
+    f(object, flags);
+}
+
+// ---------------------------------------------------------------------------
+// LVGL scrolling. Band 10 Pro keeps this part of LVGL in the boot ROM (the same
+// addresses in .036 and .043); see EVID-LYRA-UI-*. `lv_obj_scroll_to_y` has no
+// recovered entry, so vertical absolute scrolling goes through `scroll_by` with the
+// difference to the current offset.
+// ---------------------------------------------------------------------------
+
+macro_rules! rom_call {
+    ($symbol:ident, $ty:ty $(, $arg:expr)*) => {{
+        let f: $ty = unsafe {
+            core::mem::transmute(canopus_target_generated::canopus_thumb_callable(
+                canopus_target_generated::$symbol,
+            ))
+        };
+        f($($arg),*)
+    }};
+}
+
+pub unsafe fn lvx_object_set_scroll_dir(object: *mut core::ffi::c_void, dir: u32) {
+    rom_call!(
+        CANOPUS_FW_LV_OBJ_SET_SCROLL_DIR_CALLABLE,
+        extern "C" fn(*mut core::ffi::c_void, u32),
+        object,
+        dir
+    );
+}
+pub unsafe fn lvx_object_set_scroll_snap_x(object: *mut core::ffi::c_void, snap: u32) {
+    rom_call!(
+        CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_X_CALLABLE,
+        extern "C" fn(*mut core::ffi::c_void, u32),
+        object,
+        snap
+    );
+}
+pub unsafe fn lvx_object_set_scroll_snap_y(object: *mut core::ffi::c_void, snap: u32) {
+    rom_call!(
+        CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_Y_CALLABLE,
+        extern "C" fn(*mut core::ffi::c_void, u32),
+        object,
+        snap
+    );
+}
+pub unsafe fn lvx_object_set_scrollbar_mode(object: *mut core::ffi::c_void, mode: u32) {
+    rom_call!(
+        CANOPUS_FW_LV_OBJ_SET_SCROLLBAR_MODE_CALLABLE,
+        extern "C" fn(*mut core::ffi::c_void, u32),
+        object,
+        mode
+    );
+}
+pub unsafe fn lvx_object_scroll_by(object: *mut core::ffi::c_void, dx: i32, dy: i32, anim: u32) {
+    rom_call!(
+        CANOPUS_FW_LV_OBJ_SCROLL_BY_CALLABLE,
+        extern "C" fn(*mut core::ffi::c_void, i32, i32, u32),
+        object,
+        dx,
+        dy,
+        anim
+    );
+}
+pub unsafe fn lvx_object_scroll_to_x(object: *mut core::ffi::c_void, x: i32, anim: u32) {
+    rom_call!(
+        CANOPUS_FW_LV_OBJ_SCROLL_TO_X_CALLABLE,
+        extern "C" fn(*mut core::ffi::c_void, i32, u32),
+        object,
+        x,
+        anim
+    );
+}
+pub unsafe fn lvx_object_scroll_to_y(object: *mut core::ffi::c_void, y: i32, anim: u32) {
+    let current = unsafe { lvx_object_scroll_y(object) };
+    if current != y {
+        unsafe { lvx_object_scroll_by(object, 0, current - y, anim) };
+    }
+}
+/// `lv_obj_get_scroll_x` / `_y` read `-spec_attr->scroll` (spec_attr at +8, scroll at
+/// +32 / +36), as on Band 11; a widget without spec_attr has not scrolled.
+pub unsafe fn lvx_object_scroll_x(object: *mut core::ffi::c_void) -> i32 {
+    let spec = unsafe { object.cast::<u8>().add(8).cast::<*const u8>().read() };
+    if spec.is_null() {
+        return 0;
+    }
+    -unsafe { spec.add(32).cast::<i32>().read() }
+}
+pub unsafe fn lvx_object_scroll_y(object: *mut core::ffi::c_void) -> i32 {
+    let spec = unsafe { object.cast::<u8>().add(8).cast::<*const u8>().read() };
+    if spec.is_null() {
+        return 0;
+    }
+    -unsafe { spec.add(36).cast::<i32>().read() }
+}
+
+/// Plain page-owned container. Band 10 Pro has no recovered `lv_obj_create`; the stock
+/// page-content widget is a container of the same class family (it scrolls and holds
+/// children) and is what the player uses instead.
+pub unsafe fn lvx_object_create(parent: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
+    unsafe { lvx_content_create(parent) }
+}
+/// Not recovered on this target; containers keep their stock style.
+pub unsafe fn lvx_object_remove_style_all(_object: *mut core::ffi::c_void) {}
+pub unsafe fn lvx_object_delete(object: *mut core::ffi::c_void) {
+    rom_call!(
+        CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE,
+        extern "C" fn(*mut core::ffi::c_void),
+        object
+    );
+}
+/// `lv_obj_t.coords` (x1, y1, x2, y2) at +28, as on Band 11; valid after the next layout pass.
+pub unsafe fn lvx_object_coords(object: *mut core::ffi::c_void) -> [i32; 4] {
+    let area = unsafe { object.cast::<u8>().add(28).cast::<i32>() };
+    unsafe { [area.read(), area.add(1).read(), area.add(2).read(), area.add(3).read()] }
+}

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lv_obj_set_scroll_snap_y",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_obj_set_scroll_snap_y",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c02cc24",
+  "prototype": "void(void *, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrows a live LVGL object; vertical scroll snap mode",
+    "return_value": "none"
+  },
+  "side_effects": [
+    "changes_page_owned_widget_scroll_attributes"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-LYRA-UI-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-LYRA-UI-1043-001"
+    ],
+    "source": "Exact xiaomi-band-10-pro-3.101.043 image/IDB: Sets the 2-bit scroll_snap_y field of spec_attr. Located by its field layout in the LVGL v9.0 lv_obj_spec_attr_t and by the firmware's own Lua binding of the same method."
+  },
+  "notes": "Static recovery only; Mirage is emulator evidence. UI owner thread only. The object must be a live LVGL object created on this page.",
+  "approval_state": "PENDING",
+  "callable_address": "0x1c02cc25"
+}

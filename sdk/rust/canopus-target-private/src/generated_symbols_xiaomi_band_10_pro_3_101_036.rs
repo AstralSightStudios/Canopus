@@ -213,6 +213,60 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(ordered_app_list_t *)",
     },
     TargetPrivateSymbolRecord {
+        name: "lv_obj_scroll_by",
+        kind: "function",
+        entry: 0x1c02d708usize,
+        callable: 0x1c02d709usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, int32_t, int32_t, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_scroll_to_x",
+        kind: "function",
+        entry: 0x1c02dfecusize,
+        callable: 0x1c02dfedusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, int32_t, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_set_scroll_dir",
+        kind: "function",
+        entry: 0x1c02cbe8usize,
+        callable: 0x1c02cbe9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_set_scroll_snap_x",
+        kind: "function",
+        entry: 0x1c02cc08usize,
+        callable: 0x1c02cc09usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_set_scroll_snap_y",
+        kind: "function",
+        entry: 0x1c02cc24usize,
+        callable: 0x1c02cc25usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "lv_obj_set_scrollbar_mode",
+        kind: "function",
+        entry: 0x1c02cbbcusize,
+        callable: 0x1c02cbbdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void(void *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
         name: "interconnect_close",
         kind: "function",
         entry: 0xc2d2258usize,
@@ -897,6 +951,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *, uint8_t *, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "lv_obj_set_local_style_prop_xip_thunk",
+        kind: "function",
+        entry: 0xcaa7238usize,
+        callable: 0xcaa7239usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "",
+    },
+    TargetPrivateSymbolRecord {
         name: "miwear_transport_l2_rx",
         kind: "function",
         entry: 0xc7be110usize,
@@ -1486,6 +1549,18 @@ pub const HIDDEN_AND_SHOW_APP_CB_ENTRY: usize = 0xc4f33f8usize;
 pub const HIDDEN_AND_SHOW_APP_CB_CALLABLE: usize = 0xc4f33f9usize;
 pub const PROTOBUF_SET_ORDERED_APP_LIST_ENTRY: usize = 0xc4f2730usize;
 pub const PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = 0xc4f2731usize;
+pub const LV_OBJ_SCROLL_BY_ENTRY: usize = 0x1c02d708usize;
+pub const LV_OBJ_SCROLL_BY_CALLABLE: usize = 0x1c02d709usize;
+pub const LV_OBJ_SCROLL_TO_X_ENTRY: usize = 0x1c02dfecusize;
+pub const LV_OBJ_SCROLL_TO_X_CALLABLE: usize = 0x1c02dfedusize;
+pub const LV_OBJ_SET_SCROLL_DIR_ENTRY: usize = 0x1c02cbe8usize;
+pub const LV_OBJ_SET_SCROLL_DIR_CALLABLE: usize = 0x1c02cbe9usize;
+pub const LV_OBJ_SET_SCROLL_SNAP_X_ENTRY: usize = 0x1c02cc08usize;
+pub const LV_OBJ_SET_SCROLL_SNAP_X_CALLABLE: usize = 0x1c02cc09usize;
+pub const LV_OBJ_SET_SCROLL_SNAP_Y_ENTRY: usize = 0x1c02cc24usize;
+pub const LV_OBJ_SET_SCROLL_SNAP_Y_CALLABLE: usize = 0x1c02cc25usize;
+pub const LV_OBJ_SET_SCROLLBAR_MODE_ENTRY: usize = 0x1c02cbbcusize;
+pub const LV_OBJ_SET_SCROLLBAR_MODE_CALLABLE: usize = 0x1c02cbbdusize;
 pub const INTERCONNECT_CLOSE_ENTRY: usize = 0xc2d2258usize;
 pub const INTERCONNECT_CLOSE_CALLABLE: usize = 0xc2d2259usize;
 pub const INTERCONNECT_CONNECT_ENTRY: usize = 0xc2d20f4usize;
@@ -1633,6 +1708,8 @@ pub const BT_TIMER_CANCEL_CALLABLE: usize = 0xc7d2d75usize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x20137e94usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7d3eb4usize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7d3eb5usize;
+pub const LV_OBJ_SET_LOCAL_STYLE_PROP_XIP_THUNK_ENTRY: usize = 0xcaa7238usize;
+pub const LV_OBJ_SET_LOCAL_STYLE_PROP_XIP_THUNK_CALLABLE: usize = 0xcaa7239usize;
 pub const MIWEAR_TRANSPORT_L2_RX_ENTRY: usize = 0xc7be110usize;
 pub const MIWEAR_TRANSPORT_L2_RX_CALLABLE: usize = 0xc7be111usize;
 pub const MIWEAR_TRANSPORT_SEND_ENTRY: usize = 0xc7be440usize;
@@ -1794,6 +1871,56 @@ pub unsafe fn raw_app_launcher_del(a0: u16) -> i32 {
         core::mem::transmute(canopus_target_generated::CANOPUS_FW_APP_LAUNCHER_DEL_CALLABLE)
     };
     unsafe { f(a0) }
+}
+
+pub unsafe fn raw_lv_obj_scroll_by(a0: *mut core::ffi::c_void, a1: i32, a2: i32, a3: u32) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, i32, i32, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_SCROLL_BY_CALLABLE)
+    };
+    unsafe { f(a0, a1, a2, a3) }
+}
+
+pub unsafe fn raw_lv_obj_scroll_to_x(a0: *mut core::ffi::c_void, a1: i32, a2: u32) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, i32, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_SCROLL_TO_X_CALLABLE)
+    };
+    unsafe { f(a0, a1, a2) }
+}
+
+pub unsafe fn raw_lv_obj_set_scroll_dir(a0: *mut core::ffi::c_void, a1: u32) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_SCROLL_DIR_CALLABLE)
+    };
+    unsafe { f(a0, a1) }
+}
+
+pub unsafe fn raw_lv_obj_set_scroll_snap_x(a0: *mut core::ffi::c_void, a1: u32) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_X_CALLABLE)
+    };
+    unsafe { f(a0, a1) }
+}
+
+pub unsafe fn raw_lv_obj_set_scroll_snap_y(a0: *mut core::ffi::c_void, a1: u32) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_Y_CALLABLE)
+    };
+    unsafe { f(a0, a1) }
+}
+
+pub unsafe fn raw_lv_obj_set_scrollbar_mode(a0: *mut core::ffi::c_void, a1: u32) -> () {
+    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u32) -> ();
+    let f: F = unsafe {
+        core::mem::transmute(
+            canopus_target_generated::CANOPUS_FW_LV_OBJ_SET_SCROLLBAR_MODE_CALLABLE,
+        )
+    };
+    unsafe { f(a0, a1) }
 }
 
 pub unsafe fn raw_interconnect_close(a0: *mut core::ffi::c_void) -> i32 {
@@ -2702,4 +2829,4 @@ pub unsafe fn raw_watchface_manager_delete_watchface(a0: *const u8) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 94
+// generated target-private raw wrapper count: 100

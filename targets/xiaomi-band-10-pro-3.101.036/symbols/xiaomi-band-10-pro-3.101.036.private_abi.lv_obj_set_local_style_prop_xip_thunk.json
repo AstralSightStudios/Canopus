@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.lv_obj_set_local_style_prop_xip_thunk",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "lv_obj_set_local_style_prop_xip_thunk",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xcaa7238",
+  "callable_address": "0xcaa7239",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed live LVGL object in r0, style property id in r1, 32-bit property value in r2, style selector in r3.",
+    "return_value": "No ownership transfer. The setter may allocate the widget's native local style and synchronously refresh the widget."
+  },
+  "side_effects": [
+    "mutates_local_widget_style",
+    "may_allocate_native_style",
+    "may_refresh_widget_style_and_layout"
+  ],
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-LYRA-STYLE-1036-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-LYRA-STYLE-1036-001"
+    ],
+    "source": "Exact xiaomi-band-10-pro-3.101.036 AP bytes: eight-byte XIP veneer (`ldr pc, [pc, #-0]`) whose literal is 0x2bd5fd, the startup-copied SRAM image of lv_obj_set_local_style_prop (flash load image at 0xc107464)."
+  },
+  "notes": "Audited ABI: void(void *obj, uint32_t property, uint32_t value, uint32_t selector). Reaches the SRAM copy of lv_style_set_prop and its memmove; the flash load image of the same function calls a memmove at 0xc0c0684 that is zero-filled in vela_ap.bin. Restricted STATIC_RECOVERED/PENDING, device not probed."
+}

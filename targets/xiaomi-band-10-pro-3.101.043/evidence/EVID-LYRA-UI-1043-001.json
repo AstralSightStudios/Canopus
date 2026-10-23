@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-LYRA-UI-1043-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact firmware functions set the scroll direction, snap and scrollbar attributes of an LVGL object and scroll it (relative, absolute x, absolute y)?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.lv_obj_set_scrollbar_mode",
+    "xiaomi-band-10-pro-3.101.043.lv_obj_set_scroll_dir",
+    "xiaomi-band-10-pro-3.101.043.lv_obj_set_scroll_snap_x",
+    "xiaomi-band-10-pro-3.101.043.lv_obj_set_scroll_snap_y",
+    "xiaomi-band-10-pro-3.101.043.lv_obj_scroll_by",
+    "xiaomi-band-10-pro-3.101.043.lv_obj_scroll_to_x"
+  ],
+  "callsite_evidence": [
+    "The firmware's Lua `lvgl` object binding (method table next to the Lua obj methods) names scrollbar_mode, scroll_dir, scroll_snap_x, scroll_snap_y and scroll_by; each name leads to a short setter that writes one bit-field of lv_obj_spec_attr_t (scrollbar_mode bits 0-1, scroll_snap_x bits 2-3, scroll_snap_y bits 4-5, scroll_dir bits 6-9) after the spec_attr allocation helper.",
+    "scroll_by is the large function that creates the scroll-x and scroll-y lv_anim records (200..400 ms by viewport size), sends event 9 (SCROLL_BEGIN) and, without animation, forwards to the bounded variant. scroll_to_x / scroll_to_y are the two 0x24-byte wrappers that delete the running animation, read the current scroll (-spec_attr->scroll.x / y) and call the bounded scroll with the difference.",
+    "Scroll offsets are read from spec_attr (+32 x, +36 y, negated) by the same getters the lv_obj_scroll_* functions use."
+  ],
+  "ownership_analysis": "The widget is page-owned and the calls run on the UI owner thread, like the other UI host entries.",
+  "unsafe_assumptions": [
+    "Static recovery only.",
+    "UI owner thread only.",
+    "The anim argument is lv_anim_enable_t (0 off, 1 on)."
+  ],
+  "recommended_probe": "Scroll a module-created container on Mirage and compare with the stock launcher.",
+  "reviewers": [
+    "canopus-maintainer"
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-23T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64 0x1c02cbbc,0x1c02cbe8,0x1c02cc08,0x1c02cc24,0x1c02d708,0x1c02dfec",
+      "role": "LVGL scroll attribute and scroll functions"
+    }
+  ]
+}

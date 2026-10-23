@@ -4,7 +4,7 @@
 // firmware : 4.100.139 (user-4.100.139-cn-202608280000)
 // sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
 // revision : 2
-// input_digest: 67d2746c2c3a2300
+// input_digest: e949efb6038cfa02
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -267,6 +267,9 @@ pub const CANOPUS_FW_UNREGISTER_BLOCKDRIVER_CALLABLE: usize = canopus_thumb_call
 /// Recovered `lv_obj_area_is_visible` at 0xc383eec. Thumb callable address 0xc383eed.
 pub const CANOPUS_FW_LV_OBJ_AREA_IS_VISIBLE_CALLABLE: usize = canopus_thumb_callable(0xc383eedusize);
 
+/// Recovered `lv_obj_scroll_to_x` at 0xc384d48. Thumb callable address 0xc384d49.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_X_CALLABLE: usize = canopus_thumb_callable(0xc384d49usize);
+
 /// Recovered `image_snapshot_release` at 0xc8f43c8. Thumb callable address 0xc8f43c9.
 pub const CANOPUS_FW_IMAGE_SNAPSHOT_RELEASE_CALLABLE: usize = canopus_thumb_callable(0xc8f43c9usize);
 
@@ -287,6 +290,9 @@ pub const CANOPUS_FW_VG_LITE_FINISH_CALLABLE: usize = canopus_thumb_callable(0xc
 
 /// Recovered global `font_reload_lv_initialized` at 0x200bd1ec.
 pub const canopus_fw_font_reload_lv_initialized: usize = 0x200bd1ecusize;
+
+/// Recovered `lv_obj_set_scroll_snap_y` at 0xc37f92c. Thumb callable address 0xc37f92d.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_Y_CALLABLE: usize = canopus_thumb_callable(0xc37f92dusize);
 
 /// Recovered `font_manager_add_path` at 0x0c4924e0. Thumb callable address 0x0c4924e1.
 pub const CANOPUS_FW_FONT_MANAGER_ADD_PATH_CALLABLE: usize = canopus_thumb_callable(0x0c4924e1usize);
@@ -444,6 +450,9 @@ pub const CANOPUS_FW_LV_OBJ_SET_STYLE_PAD_TOP_CALLABLE: usize = canopus_thumb_ca
 /// Recovered global `style_misans_medium_28` at 0x200c1574.
 pub const canopus_fw_style_misans_medium_28: usize = 0x200c1574usize;
 
+/// Recovered `lv_obj_set_scroll_snap_x` at 0xc37f910. Thumb callable address 0xc37f911.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_X_CALLABLE: usize = canopus_thumb_callable(0xc37f911usize);
+
 /// Recovered `lv_obj_set_style_pad_bottom` at 0xc387c6e. Thumb callable address 0xc387c6f.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_PAD_BOTTOM_CALLABLE: usize = canopus_thumb_callable(0xc387c6fusize);
 
@@ -452,6 +461,9 @@ pub const canopus_fw_font_reload_size_cache_class: usize = 0x2ca168c4usize;
 
 /// Recovered `miwear_transport_send` at 0xc98f488. Thumb callable address 0xc98f489.
 pub const CANOPUS_FW_MIWEAR_TRANSPORT_SEND_CALLABLE: usize = canopus_thumb_callable(0xc98f489usize);
+
+/// Recovered `lv_obj_scroll_to_y` at 0xc384d70. Thumb callable address 0xc384d71.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_Y_CALLABLE: usize = canopus_thumb_callable(0xc384d71usize);
 
 /// Recovered `property_get` at 0x0c4af610. Thumb callable address 0x0c4af611.
 pub const CANOPUS_FW_PROPERTY_GET_CALLABLE: usize = canopus_thumb_callable(0x0c4af611usize);
@@ -488,6 +500,9 @@ pub const CANOPUS_FW_FONT_RELOAD_METRICS_CREATE_CALLABLE: usize = canopus_thumb_
 
 /// Recovered global `style_misans_medium_24` at 0x200c1568.
 pub const canopus_fw_style_misans_medium_24: usize = 0x200c1568usize;
+
+/// Recovered `lv_obj_set_scroll_dir` at 0xc37f8f0. Thumb callable address 0xc37f8f1.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_DIR_CALLABLE: usize = canopus_thumb_callable(0xc37f8f1usize);
 
 /// Recovered `heap_free` at 0xc34cd2c. Thumb callable address 0xc34cd2d.
 pub const CANOPUS_FW_HEAP_FREE_CALLABLE: usize = canopus_thumb_callable(0xc34cd2dusize);
@@ -819,11 +834,17 @@ pub const CANOPUS_FW_SYSTEM_ROUTER_GET_PAGES_WRAPPER_CALLABLE: usize = canopus_t
 /// Recovered `wakelock_create` at 0x0c6adb10. Thumb callable address 0x0c6adb11.
 pub const CANOPUS_FW_WAKELOCK_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c6adb11usize);
 
+/// Recovered `lv_obj_set_scrollbar_mode` at 0xc384196. Thumb callable address 0xc384197.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLLBAR_MODE_CALLABLE: usize = canopus_thumb_callable(0xc384197usize);
+
 /// Recovered `lv_obj_remove_event_cb` at 0xc37fc62. Thumb callable address 0xc37fc63.
 pub const CANOPUS_FW_LV_OBJ_REMOVE_EVENT_CB_CALLABLE: usize = canopus_thumb_callable(0xc37fc63usize);
 
 /// Recovered global `screen_state` at 0x200c2a28.
 pub const canopus_fw_screen_state: usize = 0x200c2a28usize;
+
+/// Recovered `lv_obj_scroll_by` at 0xc38423c. Thumb callable address 0xc38423d.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_BY_CALLABLE: usize = canopus_thumb_callable(0xc38423dusize);
 
 /// Recovered `lv_obj_set_local_style_prop` at 0xc3872b4. Thumb callable address 0xc3872b5.
 pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc3872b5usize);
@@ -1185,8 +1206,15 @@ pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_CALLABLE: usize = canop
 // lv_obj_refresh_style: restricted - not exported until context/ownership approved
 // lv_obj_remove_event_cb: restricted - not exported until context/ownership approved
 // lv_obj_remove_style_all: restricted - not exported until context/ownership approved
+// lv_obj_scroll_by: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to_x: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to_y: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_dir: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_snap_x: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_snap_y: restricted - not exported until context/ownership approved
+// lv_obj_set_scrollbar_mode: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_obj_set_style_pad_bottom: restricted - not exported until context/ownership approved
 // lv_obj_set_style_pad_top: restricted - not exported until context/ownership approved

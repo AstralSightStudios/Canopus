@@ -4,7 +4,7 @@
  * firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
  * sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
  * revision : 5
- * input_digest: fbd6d5aa56ccbbf3
+ * input_digest: b019e40846d156da
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
@@ -511,7 +511,14 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * lv_obj_clear_flag: restricted - not exported until context/ownership approved
  * lv_obj_move_to_index: restricted - not exported until context/ownership approved
  * lv_obj_remove_state: restricted - not exported until context/ownership approved
+ * lv_obj_scroll_by: restricted - not exported until context/ownership approved
+ * lv_obj_scroll_to_x: restricted - not exported until context/ownership approved
  * lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
+ * lv_obj_set_local_style_prop_xip_thunk: restricted - not exported until context/ownership approved
+ * lv_obj_set_scroll_dir: restricted - not exported until context/ownership approved
+ * lv_obj_set_scroll_snap_x: restricted - not exported until context/ownership approved
+ * lv_obj_set_scroll_snap_y: restricted - not exported until context/ownership approved
+ * lv_obj_set_scrollbar_mode: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
  * lvx_image_set_scale: restricted - not exported until context/ownership approved

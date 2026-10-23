@@ -4,7 +4,7 @@
  * firmware : 4.100.139 (user-4.100.139-cn-202608280000)
  * sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
  * revision : 2
- * input_digest: 67d2746c2c3a2300
+ * input_digest: e949efb6038cfa02
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
@@ -359,8 +359,15 @@ static inline int * canopus_fw_errno_location(void) {
  * lv_obj_refresh_style: restricted - not exported until context/ownership approved
  * lv_obj_remove_event_cb: restricted - not exported until context/ownership approved
  * lv_obj_remove_style_all: restricted - not exported until context/ownership approved
+ * lv_obj_scroll_by: restricted - not exported until context/ownership approved
+ * lv_obj_scroll_to_x: restricted - not exported until context/ownership approved
+ * lv_obj_scroll_to_y: restricted - not exported until context/ownership approved
  * lv_obj_set_hidden: restricted - not exported until context/ownership approved
  * lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
+ * lv_obj_set_scroll_dir: restricted - not exported until context/ownership approved
+ * lv_obj_set_scroll_snap_x: restricted - not exported until context/ownership approved
+ * lv_obj_set_scroll_snap_y: restricted - not exported until context/ownership approved
+ * lv_obj_set_scrollbar_mode: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
  * lv_obj_set_style_pad_bottom: restricted - not exported until context/ownership approved
  * lv_obj_set_style_pad_top: restricted - not exported until context/ownership approved

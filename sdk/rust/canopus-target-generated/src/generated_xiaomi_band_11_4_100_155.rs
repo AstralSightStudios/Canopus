@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 22eda38aa3a80a7d
+// input_digest: 92d5d43176502bd9
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -633,8 +633,17 @@ pub const CANOPUS_FW_FONT_RELOAD_VG_DISPATCH_CALLABLE: usize = canopus_thumb_cal
 /// Recovered `hal_cache_sync` at 0xc930204. Thumb callable address 0xc930205.
 pub const CANOPUS_FW_HAL_CACHE_SYNC_CALLABLE: usize = canopus_thumb_callable(0xc930205usize);
 
+/// Recovered `lv_obj_scroll_to_y` at 0xc384d70. Thumb callable address 0xc384d71.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_Y_CALLABLE: usize = canopus_thumb_callable(0xc384d71usize);
+
 /// Recovered global `bt_shared_adapter` at 0x200c3148.
 pub const canopus_fw_bt_shared_adapter: usize = 0x200c3148usize;
+
+/// Recovered `lv_obj_scroll_to_x` at 0xc384d48. Thumb callable address 0xc384d49.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_X_CALLABLE: usize = canopus_thumb_callable(0xc384d49usize);
+
+/// Recovered `lv_obj_set_scrollbar_mode` at 0xc384196. Thumb callable address 0xc384197.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLLBAR_MODE_CALLABLE: usize = canopus_thumb_callable(0xc384197usize);
 
 /// Recovered `font_reload_gradient_pending_release` at 0x0c395bd0. Thumb callable address 0x0c395bd1.
 pub const CANOPUS_FW_FONT_RELOAD_GRADIENT_PENDING_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c395bd1usize);
@@ -756,6 +765,9 @@ pub const CANOPUS_FW_CALENDAR_PREMULTIPLY_CALLABLE: usize = canopus_thumb_callab
 /// Recovered `property_get` at 0x0c4af610. Thumb callable address 0x0c4af611.
 pub const CANOPUS_FW_PROPERTY_GET_CALLABLE: usize = canopus_thumb_callable(0x0c4af611usize);
 
+/// Recovered `lv_obj_set_scroll_snap_x` at 0xc37f910. Thumb callable address 0xc37f911.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_X_CALLABLE: usize = canopus_thumb_callable(0xc37f911usize);
+
 /// Recovered `protobuf_set_ordered_app_list` at 0xc54cb6c. Thumb callable address 0xc54cb6d.
 pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thumb_callable(0xc54cb6dusize);
 
@@ -767,6 +779,9 @@ pub const CANOPUS_FW_LV_OBJ_SET_STYLE_PAD_TOP_CALLABLE: usize = canopus_thumb_ca
 
 /// Recovered `service_manager_startup` at 0xc90d89c. Thumb callable address 0xc90d89d.
 pub const CANOPUS_FW_SERVICE_MANAGER_STARTUP_CALLABLE: usize = canopus_thumb_callable(0xc90d89dusize);
+
+/// Recovered `lv_obj_set_scroll_dir` at 0xc37f8f0. Thumb callable address 0xc37f8f1.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_DIR_CALLABLE: usize = canopus_thumb_callable(0xc37f8f1usize);
 
 /// Recovered `register_driver` at 0xc914f54. Thumb callable address 0xc914f55.
 pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc914f55usize);
@@ -795,6 +810,9 @@ pub const CANOPUS_FW_LV_OBJ_SET_STYLE_PAD_BOTTOM_CALLABLE: usize = canopus_thumb
 /// Recovered global `font_reload_lv_initialized` at 0x200bd1ec.
 pub const canopus_fw_font_reload_lv_initialized: usize = 0x200bd1ecusize;
 
+/// Recovered `lv_obj_scroll_by` at 0xc38423c. Thumb callable address 0xc38423d.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_BY_CALLABLE: usize = canopus_thumb_callable(0xc38423dusize);
+
 /// Recovered `lv_obj_add_event_cb` at 0xc37fc1c. Thumb callable address 0xc37fc1d.
 pub const CANOPUS_FW_LV_OBJ_ADD_EVENT_CB_CALLABLE: usize = canopus_thumb_callable(0xc37fc1dusize);
 
@@ -815,6 +833,9 @@ pub const CANOPUS_FW_SCREEN_SESSION_RESTORE_DEFAULT_CALLABLE: usize = canopus_th
 
 /// Recovered `font_reload_cache_release` at 0x0c8b9780. Thumb callable address 0x0c8b9781.
 pub const CANOPUS_FW_FONT_RELOAD_CACHE_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c8b9781usize);
+
+/// Recovered `lv_obj_set_scroll_snap_y` at 0xc37f92c. Thumb callable address 0xc37f92d.
+pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_Y_CALLABLE: usize = canopus_thumb_callable(0xc37f92dusize);
 
 /// Recovered `calendar_icon_generate` at 0xc5487a4. Thumb callable address 0xc5487a5.
 pub const CANOPUS_FW_CALENDAR_ICON_GENERATE_CALLABLE: usize = canopus_thumb_callable(0xc5487a5usize);
@@ -1053,8 +1074,15 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // lv_obj_refresh_style: restricted - not exported until context/ownership approved
 // lv_obj_remove_event_cb: restricted - not exported until context/ownership approved
 // lv_obj_remove_style_all: restricted - not exported until context/ownership approved
+// lv_obj_scroll_by: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to_x: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to_y: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_dir: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_snap_x: restricted - not exported until context/ownership approved
+// lv_obj_set_scroll_snap_y: restricted - not exported until context/ownership approved
+// lv_obj_set_scrollbar_mode: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_obj_set_style_pad_bottom: restricted - not exported until context/ownership approved
 // lv_obj_set_style_pad_top: restricted - not exported until context/ownership approved

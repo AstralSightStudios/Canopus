@@ -1197,3 +1197,127 @@ pub unsafe fn lvx_object_clear_flag(object: *mut c_void, flags: u32) {
         flags
     );
 }
+
+// ---------------------------------------------------------------------------
+// LVGL scrolling (static recovery only, see EVID-LYRA-UI-*): direction, snap and
+// scrollbar attributes plus animated scrolling of a page-owned object. `anim`
+// is `lv_anim_enable_t` (0 off, 1 on).
+// ---------------------------------------------------------------------------
+
+/// Sets the scroll direction mask (`LV_DIR_*`) of a page-owned object.
+pub unsafe fn lvx_object_set_scroll_dir(object: *mut c_void, dir: u32) {
+    call!(
+        CANOPUS_FW_LV_OBJ_SET_SCROLL_DIR_CALLABLE,
+        unsafe extern "C" fn(*mut c_void, u32),
+        object,
+        dir
+    );
+}
+/// Sets the horizontal scroll snap (`LV_SCROLL_SNAP_*`).
+pub unsafe fn lvx_object_set_scroll_snap_x(object: *mut c_void, snap: u32) {
+    call!(
+        CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_X_CALLABLE,
+        unsafe extern "C" fn(*mut c_void, u32),
+        object,
+        snap
+    );
+}
+/// Sets the vertical scroll snap (`LV_SCROLL_SNAP_*`).
+pub unsafe fn lvx_object_set_scroll_snap_y(object: *mut c_void, snap: u32) {
+    call!(
+        CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_Y_CALLABLE,
+        unsafe extern "C" fn(*mut c_void, u32),
+        object,
+        snap
+    );
+}
+/// Sets the scrollbar mode (`LV_SCROLLBAR_MODE_*`).
+pub unsafe fn lvx_object_set_scrollbar_mode(object: *mut c_void, mode: u32) {
+    call!(
+        CANOPUS_FW_LV_OBJ_SET_SCROLLBAR_MODE_CALLABLE,
+        unsafe extern "C" fn(*mut c_void, u32),
+        object,
+        mode
+    );
+}
+/// Scrolls by a relative offset; the content moves by `(dx, dy)`.
+pub unsafe fn lvx_object_scroll_by(object: *mut c_void, dx: i32, dy: i32, anim: u32) {
+    call!(
+        CANOPUS_FW_LV_OBJ_SCROLL_BY_CALLABLE,
+        unsafe extern "C" fn(*mut c_void, i32, i32, u32),
+        object,
+        dx,
+        dy,
+        anim
+    );
+}
+/// Scrolls so that the object's horizontal scroll offset becomes `x`.
+pub unsafe fn lvx_object_scroll_to_x(object: *mut c_void, x: i32, anim: u32) {
+    call!(
+        CANOPUS_FW_LV_OBJ_SCROLL_TO_X_CALLABLE,
+        unsafe extern "C" fn(*mut c_void, i32, u32),
+        object,
+        x,
+        anim
+    );
+}
+/// Scrolls so that the object's vertical scroll offset becomes `y`.
+pub unsafe fn lvx_object_scroll_to_y(object: *mut c_void, y: i32, anim: u32) {
+    call!(
+        CANOPUS_FW_LV_OBJ_SCROLL_TO_Y_CALLABLE,
+        unsafe extern "C" fn(*mut c_void, i32, u32),
+        object,
+        y,
+        anim
+    );
+}
+/// `lv_obj_get_scroll_x` / `_y` read `-spec_attr->scroll` (spec_attr at +8,
+/// scroll at +32 / +36); they are two-instruction getters, so the read is
+/// done in place. A widget without spec_attr has not scrolled.
+pub unsafe fn lvx_object_scroll_x(object: *mut c_void) -> i32 {
+    let spec = unsafe { object.cast::<u8>().add(8).cast::<*const u8>().read() };
+    if spec.is_null() {
+        return 0;
+    }
+    -unsafe { spec.add(32).cast::<i32>().read() }
+}
+pub unsafe fn lvx_object_scroll_y(object: *mut c_void) -> i32 {
+    let spec = unsafe { object.cast::<u8>().add(8).cast::<*const u8>().read() };
+    if spec.is_null() {
+        return 0;
+    }
+    -unsafe { spec.add(36).cast::<i32>().read() }
+}
+
+/// Plain page-owned container (`lv_obj_create`), with its theme styling still
+/// attached; see `lvx_object_remove_style_all`.
+pub unsafe fn lvx_object_create(parent: *mut c_void) -> *mut c_void {
+    call!(
+        CANOPUS_FW_LVX_OBJECT_CREATE_CALLABLE,
+        unsafe extern "C" fn(*mut c_void) -> *mut c_void,
+        parent
+    )
+}
+/// Drops every style of the object, theme ones included.
+pub unsafe fn lvx_object_remove_style_all(object: *mut c_void) {
+    call!(
+        CANOPUS_FW_LV_OBJ_REMOVE_STYLE_ALL_CALLABLE,
+        unsafe extern "C" fn(*mut c_void),
+        object
+    );
+}
+/// Deletes a page-owned object and its children (`lv_obj_delete`).
+pub unsafe fn lvx_object_delete(object: *mut c_void) {
+    call!(
+        CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE,
+        unsafe extern "C" fn(*mut c_void),
+        object
+    );
+}
+/// `lv_obj_t.coords` (x1, y1, x2, y2 as absolute display coordinates) at +28
+/// (after class, parent, spec_attr, styles and the two style-cache words);
+/// valid after the next layout pass.
+pub unsafe fn lvx_object_coords(object: *mut c_void) -> [i32; 4] {
+    let area = unsafe { object.cast::<u8>().add(28).cast::<i32>() };
+    unsafe { [area.read(), area.add(1).read(), area.add(2).read(), area.add(3).read()] }
+}
