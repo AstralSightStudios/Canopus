@@ -13,10 +13,10 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCTS = {
-    'resource-hook': ('resource_hook', 'Resource Hook', 393216, []),
+    'resource-hook': ('resource_hook', 'Resource Hook', 4194304, []),
     'bluetooth-audio': ('bluetooth_audio', 'Bluetooth Audio', 262144,
                         ['appicon_headphones.bin']),
-    'lyra-player': ('lyra_player', 'Lyra Player', 393216,
+    'lyra-player': ('lyra_player', 'Lyra Player', 4194304,
                     ['appicon_lyra.bin', 'lyra-previous.bin', 'lyra-play.bin',
                      'lyra-pause.bin', 'lyra-next.bin']),
     # Clears the 128 MiB YAFFS byte cap .155 installs on /data. The recovered
