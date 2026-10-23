@@ -1,4 +1,4 @@
-//! canopus-abi — Rust port of the public Canopus module ABI v1.
+//! canopus-abi — Rust port of the public Canopus module ABI v2.
 //!
 //! The layout here MUST match `sdk/c/canopus_abi.h` field-for-field:
 //! fixed-width fields, natural alignment, no `#[repr(packed)]`. Every struct
@@ -18,8 +18,8 @@ use core::ffi::{c_char, c_void};
 // Version
 // ---------------------------------------------------------------------------
 
-pub const ABI_MAJOR: u16 = 1;
-pub const ABI_MINOR: u16 = 2;
+pub const ABI_MAJOR: u16 = 2;
+pub const ABI_MINOR: u16 = 0;
 
 // ---------------------------------------------------------------------------
 // Module descriptor flags
@@ -319,6 +319,26 @@ pub struct CanopusConnectObj {
     pub remote_listening: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
 }
 
+pub const BUS_TOPIC_MODULE: &[u8] = b"canopus/module/state\0";
+pub const MODULE_ID_MAX: usize = 32;
+pub const MODULE_INTENT_DISABLED: u32 = 0;
+pub const MODULE_INTENT_ENABLED: u32 = 1;
+pub const MODULE_INTENT_REMOVE: u32 = 2;
+
+/// Borrowed bus lifecycle payload, also returned by `bus.query_module`.
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct ModuleStateV1 {
+    pub module_id: [u8; MODULE_ID_MAX],
+    pub state: u32,
+    pub intent: u32,
+    pub version: u32,
+    pub lifecycle_class: u32,
+    pub flags: u32,
+    pub activation_error: i32,
+    pub active_generation: u32,
+}
+
 #[repr(C)]
 pub struct CanopusBusObj {
     pub publish: unsafe extern "C" fn(
@@ -334,6 +354,11 @@ pub struct CanopusBusObj {
         user_data: *mut c_void,
     ) -> i32,
     pub unsubscribe: unsafe extern "C" fn(ctx: *const ContextV1, sub_id: i32) -> i32,
+    pub query_module: unsafe extern "C" fn(
+        ctx: *const ContextV1,
+        module_id: *const c_char,
+        out: *mut ModuleStateV1,
+    ) -> i32,
 }
 
 #[repr(C)]
@@ -418,17 +443,94 @@ pub struct CanopusUiObj {
         unsafe extern "C" fn(tree: *mut c_void, key: u32, props: *const c_void) -> i32,
     pub component:
         unsafe extern "C" fn(tree: *mut c_void, key: u32, type_: u16, props: *const c_void) -> i32,
-}
-
-/// `struct canopus_ui_ext_obj`: per-node style/layout and the module's page entry.
-#[repr(C)]
-pub struct CanopusUiExtObj {
     pub node_set_style:
         unsafe extern "C" fn(tree: *mut c_void, key: u32, style: *const c_void) -> i32,
     pub node_set_layout:
         unsafe extern "C" fn(tree: *mut c_void, key: u32, layout: *const c_void) -> i32,
     pub set_entry: unsafe extern "C" fn(ctx: *const ContextV1, entry: *const UiEntryV1) -> i32,
     pub close_page: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+    pub node_set_visual:
+        unsafe extern "C" fn(tree: *mut c_void, key: u32, visual: *const UiVisualV1) -> i32,
+    pub control: unsafe extern "C" fn(
+        ui: *mut c_void, generation: u32, key: u32, op: u32, a: i32, b: i32, out: *mut c_void,
+    ) -> i32,
+    pub post: unsafe extern "C" fn(
+        ctx: *const ContextV1, callback: CbUiTask, user_data: *mut c_void,
+    ) -> i32,
+}
+
+pub type CbUiTask = unsafe extern "C" fn(ctx: *const ContextV1, user_data: *mut c_void);
+pub type UiEventHandlerV1 = unsafe extern "C" fn(cookie: *mut c_void, event: *const UiEventV1) -> i32;
+
+pub const UI_EVENT_ACTIVATE: u32 = 1;
+pub const UI_EVENT_VALUE_CHANGED: u32 = 2;
+pub const UI_EVENT_PRESS: u32 = 3;
+pub const UI_EVENT_LONG_PRESS: u32 = 4;
+pub const UI_EVENT_MOVE: u32 = 5;
+pub const UI_EVENT_RELEASE: u32 = 6;
+pub const UI_EVENT_CANCEL: u32 = 7;
+pub const UI_EVENT_SCROLL: u32 = 8;
+pub const UI_CONTROL_SCROLL_QUERY: u32 = 1;
+pub const UI_CONTROL_SCROLL_TO: u32 = 2;
+pub const UI_CONTROL_TRANSLATE: u32 = 3;
+pub const UI_CONTROL_CAPTURE: u32 = 4;
+pub const UI_CONTROL_RELEASE_CAPTURE: u32 = 5;
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct UiEventV1 {
+    pub struct_size: u32,
+    pub generation: u32,
+    pub key: u32,
+    pub event_id: u32,
+    pub type_: u32,
+    pub time_ms: u32,
+    pub x: i32,
+    pub y: i32,
+    pub delta_x: i32,
+    pub delta_y: i32,
+    pub scroll_y: i32,
+    pub viewport_height: i32,
+    pub content_height: i32,
+}
+
+impl UiEventV1 {
+    /// Builds an activation record with no pointer or scrolling metrics.
+    pub fn activate(generation: u32, key: u32, event_id: u32) -> Self {
+        Self {
+            struct_size: core::mem::size_of::<Self>() as u32,
+            generation,
+            key,
+            event_id,
+            type_: UI_EVENT_ACTIVATE,
+            ..Self::default()
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct UiVisualV1 {
+    pub flags: u32,
+    pub foreground_rgb: u32,
+    pub background_rgb: u32,
+    pub border_rgb: u32,
+    pub x: i16,
+    pub y: i16,
+    pub translate_x: i16,
+    pub translate_y: i16,
+    pub font_px: u16,
+    pub image_fit: u16,
+    pub content_height: u32,
+    pub scroll_y: i32,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct UiScrollMetricsV1 {
+    pub y: i32,
+    pub viewport_height: i32,
+    pub content_height: i32,
 }
 
 /// The page a module offers through the Manager (`struct canopus_ui_entry_v1`).
@@ -444,8 +546,7 @@ pub struct UiEntryV1 {
         unsafe extern "C" fn(
             ctx: *const ContextV1,
             ui: *mut c_void,
-            key: u32,
-            event_id: u32,
+            event: *const UiEventV1,
             user_data: *mut c_void,
         ) -> i32,
     >,
@@ -500,7 +601,6 @@ pub struct CanopusContext {
     pub bus: *const CanopusBusObj,
     pub ui: *const CanopusUiObj,
     pub connect: *const CanopusConnectObj,
-    pub ui_ext: *const CanopusUiExtObj,
     pub launcher: *const CanopusLauncherObj,
 }
 
@@ -562,9 +662,9 @@ pub struct ModuleDescriptorV1 {
     pub deactivate: Option<CbDeactivate>,
     pub stop: Option<CbStop>,
     pub query: Option<CbQuery>,
-    /// ABI 1.1 append-only callback. Called only from a UI-process bootstrap.
+    /// Called only from a UI-process bootstrap.
     pub publish_native_app: Option<CbPublishNativeApp>,
-    /// ABI 1.2 append-only callback. Stage 1 registers app/pages; stage 2 adds
+    /// Stage 1 registers app/pages; stage 2 adds
     /// the Launcher entry in a later UI event turn.
     pub publish_native_app_stage: Option<CbPublishNativeAppStage>,
 }
@@ -719,8 +819,8 @@ mod layout {
 
     #[test]
     fn abi_version_constants() {
-        assert_eq!(ABI_MAJOR, 1);
-        assert_eq!(ABI_MINOR, 2);
+        assert_eq!(ABI_MAJOR, 2);
+        assert_eq!(ABI_MINOR, 0);
         assert_eq!(TIMER_MAX_INTERVAL_MS, i32::MAX as u32);
     }
 }

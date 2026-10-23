@@ -295,9 +295,34 @@
 - [x] P7.6 后台 timer：time 组版本 2，复用 L2 owner timer；仅 `.043`/`.155`；线程与工作队列仍 FORBIDDEN。
 - [x] P7.7 文档与状态表对齐（限额、链接、README 的能力状态说法、§15 的 CAN-P0-004/006、外部模块迁移说明）。
 - [ ] P7.8 仍需真机：上述各项以及 G0–G13 都没有归档过一次设备运行；`tests/hardware/gates.md` 列出新增的待验证项。
-- [ ] P7.9 Supervisor 文件预算（2026-10-23）：`.043` 110,760 / 114,688，`.155` 117,244 / 131,072，`.179` 117,228 / 131,072；Band 11 也裁掉无用符号和 C unwind 表，保留重定位、导出和构造函数。未裁剪的 `.155` 曾超出上限 4 字节，上限未放宽。再加功能仍需重新评估预算；P5.2 的 phone flow 超时在本机 Mirage 重跑时没有复现。
+- [ ] P7.9 Supervisor 文件预算（2026-10-23，UI ABI 2.0 + Lyra 符号合并收尾，5 个 active target 全部构建 + ELF 校验通过，0 未定义符号）：
+  `supervisor_max_size`（Band 10 Pro）由 114,688 提到 131,072，与 Band 11 对齐——这是构建期预算，不是实测固件上限；
+  Band 11 与 Band 10 Pro 都裁掉无用符号和 C unwind 表，保留重定位、导出和构造函数（`--strip-all` 会移除 ELF loader 需要的符号表）。
+  常驻上限（真正的 RAM 槽约束）未放宽；再加功能需重新评估预算。合并构建的精确字节/常驻见 `targets/*/evidence` 与构建日志。
+  P5.2 的 phone flow 超时在本机 Mirage 重跑时没有复现。
 - [x] P7.10 `.179` 适配与全局 safe mode（K19）。
 - [x] P7.11 Native UI incremental snapshot application (2026-10-22): compare committed content before native setters, preserve unchanged placement, refresh event bindings, repair dirty switches and retry after partial apply failures. `scripts/tests/test_ui_backend.py` runs both real backend variants with counted firmware substitutes; identical sample commits decrease from 14/15 native mutations to 0/0 (Band 10/Band 11). Host ASan/UBSan, cross-thumb and all five target Supervisor builds/verifiers pass. No new device validation or capability promotion; see ADR-CAN-010.
+- [x] P7.12 UI ABI 2.0 与模块生命周期通知 (2026-10-23, host implemented + review fixes): 公共 ABI 直接演进到 2.0（`ctx->ui_ext` 并入 `ctx->ui` 并删除，旧 major descriptor 不再发布）；
+  显式能力协商（不支持显式 `ERR_UNSUPPORTED`，不静默忽略；样式属性 ID 按 target 审计，未审计属性整包拒绝，`FLAG_CLIP` 缺裁剪 ID 同样显式拒绝）；真实布局/样式/视觉（含受控 RGB、圆角、裁剪、位移）；
+  完整输入事件（按下/长按/移动/松开/取消、视口坐标与时间、捕获与滚动锁定、跨虚拟窗口迁移）；
+  滚动查询/定位/通知与 `content_height` 虚拟列表（数据留在模块模型，树只放可见窗口，可超 32 项）；
+  Toast（最近替换、超时、同内容不重启、隐藏→显示重显、到期不重播、关页/卸载不悬空）；导航标题随路由更新且过期标题事件被丢弃；
+  模块生命周期 `"canopus/module/state"` + `query_module`（首订阅语义）与 `ctx->ui->post` 最小 UI 调度（仅前台心跳排空）。
+  证据：全量 CI 9 gate（含双后端 ASan/UBSan、Rust 215 项）、`canopus target generate --all --check`、五个 active target Supervisor 构建与 ELF 校验（0 未定义符号）。
+  隔离 Mirage `.043` / `.155` 完整 Lab 通过（窗口分别到 37 / 44，选中第 40 / 46 项并返回恢复）；`.179` 支持路径通过（虚拟滚动/指针/捕获明确 gated）。`.043` 已修正 UI 入口的加载地址/运行地址误用、图片 ABI 与绝对滚动入口，驱动滑动起点改到真实列表视口内。
+  构建哈希、截图、事件记录、CI 日志及修复前失败现场归档于 [`evidence/native-ui-abi2-2026-10-23`](evidence/native-ui-abi2-2026-10-23/README.md)。
+  **host/emulator 证据，未做真机验证，能力状态未提升**。详见 ADR-CAN-013。
+  2026-10-23 复审（1 high + 13 medium，R1–R14）已全部修复并纳入正式回归（隐藏 Toast 空指针、显式样式残留、标签几何、stretch 后代、section 标题、checkbox padding、stock row padding、Toast 重显、捕获失效 CANCEL、失败提交原子性、捕获转移 RELEASE、post 调度、SCAN/publish 漏通知），另修复活动捕获相同快照零写入与 `FLAG_CLIP` 静默忽略两项自查发现。
+  重新验收：CI 9 gate 全绿、五目标构建、隔离 Mirage review7（`.155` 无 gate，`.043` gate `style-card`，`.179` gate 三项输入 + `style-card`；Toast 四态截图像素 872/0/872/0 量测，隐藏为提前消失）。证据归档 [`evidence/native-ui-abi2-review-fixes-2026-10-23`](evidence/native-ui-abi2-review-fixes-2026-10-23/README.md)。
+  2026-10-23 二次复审发现整改引入两个 high 回归（N1 多 Toast 批次 staged 所有权错乱、N2 CANCEL 销毁父节点后二次删除 staged 候选），已修复并补正式回归（`test_two_toasts_removal_keeps_shared_owner`、`test_cancel_destroying_root_reclaims_staged_candidates`，双 family + ASan/UBSan，红现场归档）；
+  所有权/清理审计按节点类型/所有权收口（F1/F3/F4/F7 修复含 F3 独立红绿，F2/F5/F6 报告项）。Toast 语义补多节点规则（最近可见 Toast 驱动共享 owner，尾随隐藏占位不压掉可见 Toast）。
+  重新验收：CI 9 gate 全绿（Rust 215 项）、五目标构建（`.155` 文件余量 648 B）、隔离 Mirage review7 复跑含成对 Toast 移除形态；捕获取消销毁由 host ASan/UBSan 覆盖（模拟器无法可靠驱动该时序）。证据归档 [`evidence/native-ui-n1n2-fixes-2026-10-23`](evidence/native-ui-n1n2-fixes-2026-10-23/README.md)。
+  三次复审发现 N1 修复引入 M1（medium，别名 Toast 样式写共享 owner）与 L1（low，尾随隐藏 Toast 压掉可见 Toast 契约缺口），已修复并补正式回归（`test_alias_toast_style_stays_off_shared_owner`、`test_mixed_toast_visibility_pair`，双 family + ASan/UBSan，含复审 repro 红转绿）；
+  Toast 驱动规则收口为"最近可见 Toast 驱动、无可见时隐藏"（`host_feedback_toast_driver`），别名写入面扫描确认共享 owner 的唯一通用写入点（样式）已按驱动归属收口。CI 全绿、五目标构建、隔离 Mirage review7 复跑无回归。证据归档 [`evidence/native-ui-m1l1-fixes-2026-10-23`](evidence/native-ui-m1l1-fixes-2026-10-23/README.md)。
+  四次复审发现 M2（medium，驱动切换时共享 owner 样式不重绘——自 diff 门控漏写新驱动、残留旧驱动），已修复（驱动身份变化走替换路径全量重绘）并补正式回归 `test_driver_switch_repaints_shared_owner`（双方向 + keep-alive，双 family + ASan/UBSan，复审 repro 红转绿）；
+  Toast 共享 owner 写入面矩阵与"自 diff 写共享对象"审计定稿（无残留缺口，见 evidence 目录 `write-surface-matrix.md`）。CI 全绿、五目标构建、隔离 Mirage review7 复跑无回归。证据归档 [`evidence/native-ui-m2-fixes-2026-10-23`](evidence/native-ui-m2-fixes-2026-10-23/README.md)。
+  四次复审 P1/P2（medium，Toast owner 样式重绘三处与文本重绘脱钩——隐藏期 hide-driver 自 diff 样式写残留、隐藏 fresh 节点替换 owner 带入隐藏样式）按根因修复：不变量「owner 文本被重写 ⇒ 样式同步重绘」（`host_feedback_toast` 返回重绘标志强制 `style_changed`）+ 隐藏节点不写不替换（VISIBLE 门槛）；T1（low，双 NAVIGATION_HEADER 争夺共享 page_title/binding）改为 first-HEADER 驱动单写者；D1 补矩阵 hidden 触发源（`set_interactive(0)`）。补正式回归 p1/p2/t1（双 family + ASan/UBSan，复审 gap-repro 双家族红转绿）；写入面矩阵定稿更新。CI 全绿、五目标构建、隔离 Mirage review7 复跑四态像素同口径无回归。证据归档 [`evidence/native-ui-p1p2-fixes-2026-10-23`](evidence/native-ui-p1p2-fixes-2026-10-23/README.md)。
+  字体仍仅 24/28、图片仅 NATIVE、样式属性 ID 仅 `.155` 全量、`.179` 三项输入能力 gated，精确卡片与任意资源缩放迁移仍有缺口；新增能力按精确固件证据与预算评估。
 
 ## 6. 风险
 

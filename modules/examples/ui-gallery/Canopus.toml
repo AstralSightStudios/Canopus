@@ -7,7 +7,7 @@ version_code = 1
 kind = "target"
 language = "c"
 lifecycle = "removable"
-canopus_abi = "1"
+canopus_abi = "2"
 description = "example: one sub-page per widget kind of ctx->ui, hosted by the Manager"
 
 [build]

@@ -68,8 +68,25 @@ static const struct canopus_ui_backend_v1 app_ui_backend = {
     sizeof(struct canopus_ui_backend_v1),
     CANOPUS_UI_ABI_MAJOR,
     CANOPUS_UI_ABI_MINOR,
+    CANOPUS_UI_CAP_EXTENDED_COMPONENTS | CANOPUS_UI_CAP_STYLE |
+        CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VALUES |
+        CANOPUS_UI_CAP_NAVIGATION_HEADER,
     app_ui_apply,
+    0,
 };
+
+static int32_t dispatch_activation(struct canopus_ui_context_v1 *ui,
+                                   uint32_t generation, uint32_t key,
+                                   uint32_t event_id)
+{
+    struct canopus_ui_event_v1 event = {0};
+    event.struct_size = sizeof(event);
+    event.generation = generation;
+    event.key = key;
+    event.event_id = event_id;
+    event.type = CANOPUS_UI_EVENT_ACTIVATE;
+    return canopus_ui_dispatch_event(ui, &event);
+}
 
 static const struct canopus_ui_node_v1 *app_find_event(
     const struct canopus_ui_snapshot_v1 *snapshot, uint32_t event_id)
@@ -115,7 +132,7 @@ TEST(manager_app_runs_native_end_to_end_path)
     CHECK(app_find_event(snapshot, CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE) == 0);
     modules = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_SHOW_MODULES);
     CHECK(modules != 0);
-    CHECK(canopus_ui_dispatch_event(&app.native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&app.native.ui, snapshot->generation,
                                     modules->key, modules->event_id) == 0);
     CHECK(app.model.view == CANOPUS_MANAGER_VIEW_MODULE_LIST);
     snapshot = canopus_ui_current(&app.native.ui);
@@ -172,13 +189,13 @@ TEST(manager_app_offers_the_way_out_of_safe_mode)
     CHECK(canopus_manager_op_install(&app.model, "x") == CANOPUS_RESULT_DISALLOWED);
 
     /* choosing the action asks first, and only the confirmation sends it */
-    CHECK(canopus_ui_dispatch_event(&app.native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&app.native.ui, snapshot->generation,
                                     leave->key, leave->event_id) == 0);
     CHECK(fixture.supervisor.exit_pending == 0u);
     snapshot = canopus_ui_current(&app.native.ui);
     confirm = app_find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
     CHECK(confirm != 0);
-    CHECK(canopus_ui_dispatch_event(&app.native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&app.native.ui, snapshot->generation,
                                     confirm->key, confirm->event_id) == 0);
     CHECK(fixture.supervisor.exit_pending == 1u);
     CHECK(fixture.supervisor.safe_mode == 1u); /* this run stays safe */

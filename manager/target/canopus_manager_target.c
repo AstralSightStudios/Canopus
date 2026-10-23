@@ -699,11 +699,20 @@ static void manager_view_rendered(struct canopus_ui_host_view *view, void *first
     canopus_manager_target_record.list_row = (uintptr_t)first;
 }
 
+static uint32_t target_ui_time_ms(struct canopus_ui_host_view *view)
+{
+    struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
+    (void)view;
+    return sup != NULL && sup->platform != NULL && sup->platform->monotonic_ms != NULL
+        ? sup->platform->monotonic_ms(sup->platform_cookie) : 0u;
+}
+
 static const struct canopus_ui_host_hooks manager_view_hooks = {
     manager_view_back,
     manager_view_before_event,
     manager_view_after_event,
     manager_view_rendered,
+    target_ui_time_ms,
 };
 
 static int manager_page_on_create(struct canopus_target_page *page,
@@ -725,6 +734,7 @@ static int manager_page_on_create(struct canopus_target_page *page,
     }
     canopus_manager_target_record.create_count += 1u;
     canopus_manager_target_record.root_object = (uintptr_t)root;
+    (void)canopus_supervisor_ui_pump_ensure(canopus_supervisor_get());
     canopus_ui_host_attach(&context->view, root, page, &manager_view_hooks,
                            (uint32_t)page->page_id == CANOPUS_TARGET_PAGE_OVERVIEW
                                ? CANOPUS_UI_HOST_ROOT_PAGE : 0u);
@@ -885,8 +895,8 @@ static int module_page_entry(struct canopus_ui_entry_v1 *entry,
     return *ctx != NULL ? 0 : -1;
 }
 
-static int32_t module_page_event(void *cookie, uint32_t generation,
-                                 canopus_ui_node_id key, uint32_t event_id)
+static int32_t module_page_event(void *cookie,
+                                 const struct canopus_ui_event_v1 *event)
 {
     struct canopus_ui_entry_v1 entry;
     const struct canopus_context_v1 *ctx;
@@ -894,11 +904,10 @@ static int32_t module_page_event(void *cookie, uint32_t generation,
     int32_t rc;
 
     (void)cookie;
-    (void)generation;
     if (module_page_entry(&entry, &ctx) != 0 || entry.on_event == NULL) {
         return CANOPUS_UI_ERR_STATE;
     }
-    rc = entry.on_event(ctx, &page->ui, key, event_id, entry.user_data);
+    rc = entry.on_event(ctx, &page->ui, event, entry.user_data);
     if (module_page == page) { /* the event may have closed its own page */
         canopus_ui_context_abort_pending(&page->ui);
     }
@@ -930,6 +939,7 @@ static const struct canopus_ui_host_hooks module_view_hooks = {
     NULL,
     NULL,
     NULL,
+    target_ui_time_ms,
 };
 
 static void module_page_release(void)
@@ -988,6 +998,7 @@ static int module_page_on_create(struct canopus_target_page *page, void *root,
         return -1;
     }
     canopus_memset(module_page, 0, sizeof(*module_page));
+    (void)canopus_supervisor_ui_pump_ensure(sup);
     canopus_ui_host_attach(&module_page->view, root, page, &module_view_hooks, 0u);
     module_page->page = page;
     module_page->slot = slot;

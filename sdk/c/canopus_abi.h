@@ -23,8 +23,8 @@ extern "C" {
 /* Fixed-width ABI types                                               */
 /* ------------------------------------------------------------------ */
 
-#define CANOPUS_ABI_MAJOR 1u
-#define CANOPUS_ABI_MINOR 2u
+#define CANOPUS_ABI_MAJOR 2u
+#define CANOPUS_ABI_MINOR 0u
 
 /* Module descriptor flags. */
 #define CANOPUS_FLAG_HAS_NATIVE_APP        (1u << 0)

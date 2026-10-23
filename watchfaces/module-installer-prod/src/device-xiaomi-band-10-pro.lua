@@ -32,7 +32,7 @@ local function failure_detail(_, exchange)
     -- CANOPUS_CMD_QUERY_DEVICE (9): 36-byte reply header + 84-byte payload;
     -- the Supervisor's last error code is the payload word at offset 24.
     local ok, record = pcall(exchange,
-        string.pack("<I4I2I2I2I2I4I4I4I4I4I4", 0x43504332, 36, 1, 1, 0, 36, 9, 0x7FFF, 0, 0, 0), 120)
+        string.pack("<I4I2I2I2I2I4I4I4I4I4I4", 0x43504332, 36, 1, 2, 0, 36, 9, 0x7FFF, 0, 0, 0), 120)
     if not ok or type(record) ~= "string" or #record ~= 120 or u32(record, 0) ~= 0x43504332 then
         return ""
     end

@@ -4,7 +4,7 @@
  * firmware : 4.100.179 (user-4.100.179-cn-202609302100)
  * sha256   : 307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b
  * revision : 1
- * input_digest: 2461d8f3067dc5f7
+ * input_digest: ef0e0ac69a8d8aa4
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_179_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_179_H
@@ -341,15 +341,18 @@ static inline int canopus_identity_guard(void)
  * lv_draw_rect_dsc_init: restricted - not exported until context/ownership approved
  * lv_event_add: restricted - not exported until context/ownership approved
  * lv_event_get_code: restricted - not exported until context/ownership approved
+ * lv_event_get_indev: restricted - not exported until context/ownership approved
  * lv_event_get_user_data: restricted - not exported until context/ownership approved
  * lv_image_cache_drop: restricted - not exported until context/ownership approved
  * lv_image_create: restricted - not exported until context/ownership approved
  * lv_image_decoder_get_info: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
+ * lv_indev_get_point: restricted - not exported until context/ownership approved
  * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
  * lv_obj_align_to: restricted - not exported until context/ownership approved
  * lv_obj_area_is_visible: restricted - not exported until context/ownership approved
  * lv_obj_clear_flag: restricted - not exported until context/ownership approved
+ * lv_obj_get_scroll_y: restricted - not exported until context/ownership approved
  * lv_obj_get_style_prop: restricted - not exported until context/ownership approved
  * lv_obj_move_to_index: restricted - not exported until context/ownership approved
  * lv_obj_refresh_style: restricted - not exported until context/ownership approved

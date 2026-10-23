@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-const PORTABLE_DIR: &str = "abi-1-thumbv8m";
+const PORTABLE_DIR: &str = "abi-2-thumbv8m";
 
 struct Project {
     dir: PathBuf,
@@ -229,6 +229,52 @@ fn moved_from_app_sdk(src: PathBuf, root: &Path) -> PathBuf {
     src
 }
 
+/// Shared `clang` invocation for one module translation unit.
+fn module_cc(
+    root: &Path,
+    target: Option<&TargetPack>,
+    include_dirs: &[PathBuf],
+    defines: &Option<Vec<String>>,
+) -> Command {
+    let mut cc = Command::new(tool("CC", "clang"));
+    cc.args([
+        "--target=arm-none-eabi",
+        "-mcpu=cortex-m33",
+        "-mthumb",
+        "-mfloat-abi=soft",
+        "-ffreestanding",
+        "-fno-common",
+        "-fno-builtin",
+        "-fno-stack-protector",
+        "-fno-unwind-tables",
+        "-fno-asynchronous-unwind-tables",
+        "-fdata-sections",
+        "-ffunction-sections",
+        "-Os",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ]);
+    cc.arg(format!("-I{}", root.join("sdk/c").display()));
+    if let Some(t) = target {
+        cc.arg("-DCANOPUS_TARGET=1");
+        cc.arg(format!(
+            "-I{}",
+            root.join("targets")
+                .join(&t.target_id)
+                .join("generated")
+                .display()
+        ));
+    }
+    for dir in include_dirs {
+        cc.arg(format!("-I{}", dir.display()));
+    }
+    for define in defines.iter().flatten() {
+        cc.arg(format!("-D{define}"));
+    }
+    cc
+}
+
 /// Compiles the sources and links one relocatable ELF.
 fn compile(project: &Project, root: &Path, target: Option<&TargetPack>) -> anyhow::Result<PathBuf> {
     if project.manifest.module.language == "rust" {
@@ -265,47 +311,22 @@ fn compile(project: &Project, root: &Path, target: Option<&TargetPack>) -> anyho
             project.dir.join(src)
         };
         let obj = obj_dir.join(format!("{i}.o"));
-        let mut cc = Command::new(tool("CC", "clang"));
-        cc.args([
-            "--target=arm-none-eabi",
-            "-mcpu=cortex-m33",
-            "-mthumb",
-            "-mfloat-abi=soft",
-            "-ffreestanding",
-            "-fno-common",
-            "-fno-builtin",
-            "-fno-stack-protector",
-            "-fno-unwind-tables",
-            "-fno-asynchronous-unwind-tables",
-            "-fdata-sections",
-            "-ffunction-sections",
-            "-Os",
-            "-Wall",
-            "-Wextra",
-            "-Werror",
-        ]);
-        cc.arg(format!("-I{}", root.join("sdk/c").display()));
-        if let Some(t) = target {
-            cc.arg("-DCANOPUS_TARGET=1");
-            cc.arg(format!(
-                "-I{}",
-                root.join("targets")
-                    .join(&t.target_id)
-                    .join("generated")
-                    .display()
-            ));
-        }
-        for dir in &include_dirs {
-            cc.arg(format!("-I{}", dir.display()));
-        }
-        for define in build.defines.iter().flatten() {
-            cc.arg(format!("-D{define}"));
-        }
+        let mut cc = module_cc(root, target, &include_dirs, &build.defines);
         cc.arg("-c").arg(&src).arg("-o").arg(&obj);
         run(
             &mut cc,
             &format!("compiling {}", display_rel(&src, &project.dir)),
         )?;
+        objects.push(obj);
+    }
+    // Aggregate initialization and struct assignment lower to __aeabi_mem*
+    // calls; without this definition the zero-import verifier rejects the ELF.
+    {
+        let src = root.join("sdk/c/canopus_aeabi_mem.c");
+        let obj = obj_dir.join("canopus_aeabi_mem.o");
+        let mut cc = module_cc(root, target, &include_dirs, &build.defines);
+        cc.arg("-c").arg(&src).arg("-o").arg(&obj);
+        run(&mut cc, "compiling sdk/c/canopus_aeabi_mem.c")?;
         objects.push(obj);
     }
     run(
@@ -694,7 +715,7 @@ fn write_project(
     std::fs::write(
         project.join("Canopus.toml"),
         format!(
-            "schema = 1\n\n[module]\nid = \"{id}\"\nversion = \"0.1.0\"\nversion_code = 1\nkind = \"{kind}\"\nlanguage = \"{lang}\"\nlifecycle = \"removable\"\ncanopus_abi = \"1\"\n\n[build]\nsources = [{sources}]\n{target_section}"
+            "schema = 1\n\n[module]\nid = \"{id}\"\nversion = \"0.1.0\"\nversion_code = 1\nkind = \"{kind}\"\nlanguage = \"{lang}\"\nlifecycle = \"removable\"\ncanopus_abi = \"2\"\n\n[build]\nsources = [{sources}]\n{target_section}"
         ),
     )?;
     std::fs::write(project.join(".gitignore"), "build/\ndist/\nCargo.lock\n")?;
@@ -866,12 +887,13 @@ static int32_t on_open(const struct canopus_context_v1 *ctx, struct canopus_ui_c
 }
 
 static int32_t on_event(const struct canopus_context_v1 *ctx, struct canopus_ui_context_v1 *ui,
-                        uint32_t key, uint32_t event_id, void *user_data)
+                        const struct canopus_ui_event_v1 *event, void *user_data)
 {
-    (void)key;
     (void)user_data;
-    if (event_id == EV_ADD) s_state.clicks++;
-    else if (event_id == EV_TOGGLE) s_state.checked = !s_state.checked;
+    if (event->type != CANOPUS_UI_EVENT_ACTIVATE &&
+        event->type != CANOPUS_UI_EVENT_VALUE_CHANGED) return CANOPUS_UI_OK;
+    if (event->event_id == EV_ADD) s_state.clicks++;
+    else if (event->event_id == EV_TOGGLE) s_state.checked = !s_state.checked;
     else return CANOPUS_UI_ERR_ARGUMENT;
     return render(ctx, ui);
 }
@@ -886,14 +908,14 @@ static int32_t on_prepare(const struct canopus_context_v1 *ctx) { (void)ctx; ret
 
 static int32_t on_activate(const struct canopus_context_v1 *ctx)
 {
-    if (ctx->struct_size < sizeof(struct canopus_context_v1) || ctx->ui_ext == 0) return -1;
-    return ctx->ui_ext->set_entry(ctx, &s_entry);
+    if (ctx->ui == 0) return -1;
+    return ctx->ui->set_entry(ctx, &s_entry);
 }
 
 static int32_t on_deactivate(const struct canopus_context_v1 *ctx)
 {
-    if (ctx->struct_size >= sizeof(struct canopus_context_v1) && ctx->ui_ext != 0) {
-        (void)ctx->ui_ext->set_entry(ctx, 0);
+    if (ctx->ui != 0) {
+        (void)ctx->ui->set_entry(ctx, 0);
     }
     return 0;
 }

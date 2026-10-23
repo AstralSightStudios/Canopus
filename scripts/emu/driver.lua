@@ -20,7 +20,7 @@ local function s32(v) if v >= 0x80000000 then return v - 0x100000000 end return 
 local function exchange(path, op, payload, reply_size)
     payload = payload or ""
     request_id = request_id + 1
-    local request = string.pack("<I4I2I2I2I2I4I4I4I4I4I4", 0x43504332, 36, 1, 1, 0,
+    local request = string.pack("<I4I2I2I2I2I4I4I4I4I4I4", 0x43504332, 36, 1, 2, 0,
         36 + #payload, op, request_id, 0, 0, #payload) .. payload
     local f = assert(io.open(path, "wb"))
     f:write(request)

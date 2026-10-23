@@ -15,7 +15,7 @@
  *   11. LOG (info, warn, error, debug, write)
  *   12. NOTIFY (post, post_with_icon)
  *   13. CONNECT (CanopusConnect: listen, send text/binary, remote_listening)
- *   14. UI pages (set_entry, close_page, node_set_style/layout through ctx->ui_ext)
+ *   14. UI pages (set_entry, close_page, node_set_style/layout through ctx->ui)
  *   15. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Progress, Checkbox, Divider)
  */
 
@@ -692,6 +692,11 @@ static void run_bus_bt_log_notify_tests(const struct canopus_context_v1 *ctx)
         if (ctx->bus->publish(ctx, "test/topic", &payload, sizeof(payload)) != 1) ok = 0;
         if (s_bus_received != 0x12345678) ok = 0;
         if (ctx->bus->unsubscribe(ctx, sub) != CANOPUS_SVC_OK) ok = 0;
+        {
+            struct canopus_module_state_v1 state;
+            if (ctx->bus->query_module(ctx, ctx->module_id, &state) != CANOPUS_SVC_OK) ok = 0;
+            if (ctx->bus->query_module(ctx, "", &state) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+        }
     } else {
         ok = 0;
     }
@@ -772,7 +777,12 @@ static const struct canopus_ui_backend_v1 s_test_backend = {
     sizeof(struct canopus_ui_backend_v1),
     CANOPUS_UI_ABI_MAJOR,
     CANOPUS_UI_ABI_MINOR,
+    CANOPUS_UI_CAP_EXTENDED_COMPONENTS | CANOPUS_UI_CAP_STYLE |
+        CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VALUES |
+        CANOPUS_UI_CAP_NAVIGATION_HEADER | CANOPUS_UI_CAP_PROGRESS |
+        CANOPUS_UI_CAP_VISUAL,
     test_ui_backend_apply,
+    0,
 };
 
 static void run_ui_builder_tests(const struct canopus_context_v1 *ctx)
@@ -858,16 +868,18 @@ static void run_ui_builder_tests(const struct canopus_context_v1 *ctx)
         p_comp.event_id = 0;
         if (ctx->ui->component(tree, 11, CANOPUS_UI_NODE_DIVIDER, &p_comp) != CANOPUS_UI_OK) ok = 0;
 
-        /* Per-node style and layout (ctx->ui_ext). */
-        if (ctx->ui_ext != 0) {
+        /* Per-node style, layout and visual metadata. */
+        {
             struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
             struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
+            struct canopus_ui_visual_v1 visual = CANOPUS_UI_VISUAL_DEFAULT;
             style.variant = CANOPUS_UI_VARIANT_FILLED;
             layout.width = 120;
-            if (ctx->ui_ext->node_set_style(tree, 6, &style) != CANOPUS_UI_OK) ok = 0;
-            if (ctx->ui_ext->node_set_layout(tree, 6, &layout) != CANOPUS_UI_OK) ok = 0;
-        } else {
-            ok = 0;
+            visual.flags = CANOPUS_UI_VISUAL_FLAG_FOREGROUND_RGB;
+            visual.foreground_rgb = 0xFFFFFFu;
+            if (ctx->ui->node_set_style(tree, 6, &style) != CANOPUS_UI_OK) ok = 0;
+            if (ctx->ui->node_set_layout(tree, 6, &layout) != CANOPUS_UI_OK) ok = 0;
+            if (ctx->ui->node_set_visual(tree, 6, &visual) != CANOPUS_UI_OK) ok = 0;
         }
 
         if (ctx->ui->end(tree) != CANOPUS_UI_OK) ok = 0;
@@ -879,6 +891,12 @@ static void run_ui_builder_tests(const struct canopus_context_v1 *ctx)
         /* Verify applied snapshot */
         if (s_test_snapshot.node_count != 11) ok = 0;
         if (s_test_snapshot.generation != 1) ok = 0;
+        /* Snapshot-only backends explicitly decline native control operations. */
+        {
+            struct canopus_ui_scroll_metrics_v1 metrics;
+            if (ctx->ui->control(&ui_ctx, 1u, 1u, CANOPUS_UI_CONTROL_SCROLL_QUERY,
+                                 0, 0, &metrics) != CANOPUS_UI_ERR_UNSUPPORTED) ok = 0;
+        }
     }
 
     log_test("UI: declarative builder using snapshot test backend", ok);
@@ -899,26 +917,29 @@ static void run_ui_page_tests(const struct canopus_context_v1 *ctx)
     int32_t rc;
     int ok = 1;
 
-    if (ctx->struct_size < sizeof(struct canopus_context_v1) || ctx->ui_ext == 0) {
-        log_skip("UI pages: Supervisor predates module pages");
+    if (ctx->ui == 0) {
+        log_skip("UI pages: service absent");
         return;
     }
+    /* Invalid tasks are rejected without enqueuing UI work from this test. */
+    rc = ctx->ui->post(ctx, 0, 0);
+    if (rc != CANOPUS_SVC_ERR_ARGUMENT && rc != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
     canopus_memset(&entry, 0, sizeof(entry));
     entry.struct_size = sizeof(entry);
     entry.label = "services_test";
     entry.on_open = page_entry_open;
-    rc = ctx->ui_ext->set_entry(ctx, &entry);
+    rc = ctx->ui->set_entry(ctx, &entry);
     if (rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
-        if (ctx->ui_ext->close_page(ctx) != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+        if (ctx->ui->close_page(ctx) != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
         if (ok) log_skip("UI pages: no Manager UI in this build");
         else log_test("UI pages: unsupported build answers consistently", 0);
         return;
     }
     if (rc != CANOPUS_SVC_OK) ok = 0;
     entry.struct_size = 1u;
-    if (ctx->ui_ext->set_entry(ctx, &entry) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
-    if (ctx->ui_ext->close_page(ctx) != CANOPUS_SVC_ERR_STATE) ok = 0; /* nothing open */
-    if (ctx->ui_ext->set_entry(ctx, 0) != CANOPUS_SVC_OK) ok = 0;
+    if (ctx->ui->set_entry(ctx, &entry) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+    if (ctx->ui->close_page(ctx) != CANOPUS_SVC_ERR_STATE) ok = 0; /* nothing open */
+    if (ctx->ui->set_entry(ctx, 0) != CANOPUS_SVC_OK) ok = 0;
     if (ctx->launcher != 0) {
         /* Publishing is permanent until reboot, so only the refusals run here:
          * with the page entry removed there is nothing a launcher entry could open. */

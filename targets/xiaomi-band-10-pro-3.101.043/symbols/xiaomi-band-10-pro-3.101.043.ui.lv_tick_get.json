@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.ui.lv_tick_get",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_tick_get",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c063d0c",
+  "callable_address": "0x1c063d0d",
+  "prototype": "uint32_t(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed live page-owned LVGL object/event/input device; output coordinate buffer borrowed for call; no retention."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "pending",
+    "evidence_ids": [
+      "EVID-UI-1043-LAYOUT-INPUT-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-UI-1043-LAYOUT-INPUT-001"
+    ],
+    "source": "Returns configured tick callback or firmware tick counter; same tick_get called by native pointer timers. Startup 0xc0c0ac8 copies [0x2c10d440,0x2c18d940) to PSRAM 0x3c000000, executable alias 0x1c000000; load address 0xc17114c maps to runtime 0x1c063d0c, callable 0x1c063d0d. Exact XIP veneer 0xc588dc0 independently targets 0x1c063d0d."
+  },
+  "approval_state": "PENDING",
+  "notes": "Target-private native UI host only. Static recovery does not grant public callable approval or device verification."
+}

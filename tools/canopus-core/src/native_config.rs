@@ -104,6 +104,17 @@ pub fn render(pack: &TargetPack, config: &NativeConfig) -> String {
     for (name, value) in &config.addresses {
         out.push_str(&format!("#define {name} 0x{value:08X}u\n"));
     }
+    if pack.target_id == "xiaomi-band-11-4.100.155" {
+        // Exact .155 IDA review: EVID-UI-4155-LAYOUT-INPUT-001. These private
+        // numeric properties/layouts are never part of the module ABI.
+        out.push_str("#define FW_UI_COORD_TYPE int32_t\n#define FW_UI_OBJECT_COORDS_OFFSET 28u\n\
+#define FW_UI_EVENT_PRESSED 1u\n#define FW_UI_EVENT_PRESSING 2u\n\
+#define FW_UI_EVENT_PRESS_LOST 3u\n#define FW_UI_EVENT_LONG_PRESSED 5u\n\
+#define FW_UI_EVENT_RELEASED 8u\n#define FW_UI_EVENT_SCROLL 12u\n\
+#define FW_UI_STYLE_RADIUS 12u\n#define FW_UI_STYLE_BORDER_COLOR 49u\n\
+#define FW_UI_STYLE_BORDER_WIDTH 48u\n#define FW_UI_STYLE_OPA 95u\n\
+#define FW_UI_STYLE_CLIP_CORNER 45u\n");
+    }
     out.push_str("#endif\n");
     out
 }

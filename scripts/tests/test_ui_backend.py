@@ -32,6 +32,8 @@ class UIBackendTests(unittest.TestCase):
             backend = tmp / "canopus_ui_host.c"
             shutil.copyfile(source, backend)
             shutil.copyfile(header, tmp / "canopus_ui_host.h")
+            for include in ("canopus_ui_input.inc", "canopus_ui_feedback.inc"):
+                shutil.copyfile(source.parent / include, tmp / include)
             (tmp / "band11").mkdir()
             for name in ("canopus_target_config.h", "canopus_veneer.h",
                          "band11/canopus_band11_abi.h"):

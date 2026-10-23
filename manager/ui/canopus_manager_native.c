@@ -360,7 +360,7 @@ static int32_t render_device(struct canopus_manager_native_v1 *native,
                        framework, sizeof(framework));
     if (rc != CANOPUS_UI_OK) return rc;
     rc = append_status(tree, UI_KEY_MANAGER, "管理器", sizeof("管理器") - 1u,
-                       "原生 UI ABI 1.4", sizeof("原生 UI ABI 1.4") - 1u);
+                       "原生 UI ABI 2.0", sizeof("原生 UI ABI 2.0") - 1u);
     if (rc != CANOPUS_UI_OK) return rc;
     rc = append_status(tree, UI_KEY_FIRMWARE, "固件", sizeof("固件") - 1u,
                        model->firmware_version, sizeof(model->firmware_version));
@@ -723,15 +723,18 @@ static int32_t route_or_render(struct canopus_manager_native_v1 *native,
     return canopus_manager_native_render(native);
 }
 
-static int32_t manager_event(void *cookie, uint32_t generation,
-                             canopus_ui_node_id key, uint32_t event_id)
+static int32_t manager_event(void *cookie,
+                             const struct canopus_ui_event_v1 *event)
 {
     struct canopus_manager_native_v1 *native =
         (struct canopus_manager_native_v1 *)cookie;
     struct canopus_manager_model_v1 *model;
     uint32_t index;
-    (void)generation;
-    (void)key;
+    uint32_t event_id;
+    if (event == 0) return CANOPUS_UI_ERR_ARGUMENT;
+    if (event->type != CANOPUS_UI_EVENT_ACTIVATE &&
+        event->type != CANOPUS_UI_EVENT_VALUE_CHANGED) return CANOPUS_UI_OK;
+    event_id = event->event_id;
     if (native == 0 || native->model == 0) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }

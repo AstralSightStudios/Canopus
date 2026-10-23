@@ -3,19 +3,16 @@
 //! back, so it stays until the next reboot.
 
 use canopus_abi::*;
-use core::mem::{offset_of, size_of};
 
 /// Publishes the entry. Errors are the C service codes: `-38` where this
-/// Supervisor predates launcher entries or the build has no Manager UI, `-22`
+/// build has no Manager UI or launcher service, `-22`
 /// for a malformed entry, `-16` when the module has registered no page entry or
 /// already published a different entry, `-12` when all `LAUNCHER_ENTRIES` are taken.
 pub fn set_entry(ctx: *const CanopusContext, entry: &LauncherEntryV1) -> Result<(), i32> {
     if ctx.is_null() {
         return Err(-22);
     }
-    let covered = unsafe { (*ctx).struct_size } as usize
-        >= offset_of!(CanopusContext, launcher) + size_of::<*const CanopusLauncherObj>();
-    let object = if covered { unsafe { (*ctx).launcher } } else { core::ptr::null() };
+    let object = unsafe { (*ctx).launcher };
     if object.is_null() {
         return Err(-38);
     }

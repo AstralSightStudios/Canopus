@@ -10,6 +10,105 @@
 这不批准任何私有符号，也不升级真机能力状态。脚本默认使用独立设备名，
 可用 `CANOPUS_SMOKE_DEVICE` 指定专用测试实例；该实例会被重建，请勿指定个人设备。
 
+## 工具链前置条件（2026-10-22 复核）
+
+端到端跑通前有四处**树外**工具链要求，缺任一处都会在很后面才失败，且报错离根因很远：
+
+1. **Facetory 打包器必须打 `scripts/emu/band11/facetory-lua-layer.patch`。**
+   未打补丁的 `package_lua_watchface` 只把入口 `main.lua` 当 File 资源塞进包，
+   没有布局层指向它，固件的 `render_file_create` 就不会调用 `miwear_lua_run`。
+   表现是 `setWatchface` 成功、`watchfaces` 里能看到表盘，但屏幕只显示 `preview.png`
+   （`ui_pages.preview_png` 的纯色底图），Lua 界面完全不出现，触摸也点不亮屏幕。
+   打补丁后重新 `cargo build --example package_lua_watchface`。
+2. **`MAB_SMOKE` 必须用 Mirage 分支 `feat/canopus-native-l2-20261017`（提交 `19b74e8`）构建。**
+   `main` 上的 `AstroBoxBridge/src/ops.rs` 只有 `InstallKind::{Watchface,Quickapp}`，
+   `install kind=canopus` 会报 `invalid params: unknown variant 'canopus'`。
+   建议用该分支的 git worktree 构建，不动日常 checkout：
+   `git worktree add <dir> origin/feat/canopus-native-l2-20261017` →
+   `git submodule update --init --recursive External/AstroBox` →
+   `AstroBoxBridge/examples/build-smoke.sh`，然后把 `MAB_SMOKE` 指到该 worktree 的
+   `AstroBoxBridge/target/smoke`。
+3. **QEMU 必须由含 `3e05ca7` 的 qemu-miwear 构建。** 该提交补上 BES I/D 缓存控制器使能字
+   （0x07ffa000 / 0x07ffc000，bit0 复位为 1）和 8 个 MPU region。`Mirage.app` 里预编译的
+   `Helpers/qemu/bin/qemu-system-arm` 可能早于该提交；缺了它安装器在「同步缓存并启动原生
+   加载器」一步报 `unexpected BES cache state`，Supervisor 不加载，随后 `install kind=canopus`
+   报 `refused L2CAP channel for PSM 0x0011`。用 `Mirage/Scripts/build-qemu.sh` 重建，
+   产物在 `External/qemu-miwear/build/qemu-system-arm`，再让它顶掉实际被加载的那份二进制。
+4. **AstroBox 的 `canopus.rs` / `package.rs` 自带一份 ABI 版本号，必须跟上 `sdk/c/canopus_abi.h`。**
+   `External/AstroBox/modules/core/src/device/canopus.rs` 的 `CANOPUS_ABI_MAJOR`/`CANOPUS_ABI_MINOR` 和
+   `canopus/package.rs` 的 `manifest.canopus_abi != "<n>"` 都是硬编码副本，与本仓库的头文件没有共享。
+   不一致时 Supervisor 的 `canopus_transport_v2_decode_request` fail-closed 拒收，表现是桥侧
+   `Canopus request timed out`（不是报错码），同时日志里混着一条无关的
+   `refused L2CAP channel for PSM 0x0011` —— 后者是 AstroBox 模拟 L2CAP 只放行 `PSM_SDP` 的正常结果，
+   Canopus 流量其实走 SAR 通道的 `L2Packet::canopus_write`，与 L2CAP PSM 无关，不要照着它查。
+   改完 `AstroBoxBridge/examples/build-smoke.sh` 重编 `MAB_SMOKE`。
+
+## UI ABI 2.0 隔离验收（2026-10-23）
+
+通用入口 `scripts/emu/native_ui_v2.py` 使用已构建的生产安装器和 `native-ui-lab`，经加密 CPC2 投递后用触摸驱动卡片、100 项虚拟列表、拖动、选择、Toast、标题与关页。
+先为目标构建 Supervisor，再运行：
+
+```sh
+CANOPUS_TARGET=xiaomi-band-11-4.100.155 sh scripts/build_canopus_supervisor.sh
+python3 -u scripts/emu/native_ui_v2.py 155 \
+  --library "$CANOPUS_UI_TEST_LIBRARY" \
+  --installer-dir watchfaces/canopus-installer-prod/xiaomi-band-11 \
+  --work "$CANOPUS_UI_EVIDENCE_DIR"
+```
+
+`CANOPUS_UI_TEST_LIBRARY` 必须是独立的测试目录；脚本拒绝日常资料库，以及未带 `.canopus-native-ui-v2` 标记的既有非空目录。
+每次创建新设备，默认完成后删除；`--keep-device` 保留实例用于调试。Band 10 Pro 用 `043` 和 `watchfaces/canopus-installer-prod/xiaomi-band-10-pro`。
+设置 `MIRAGECTL`、`MAB_SMOKE`、`FACETORY_PACKAGER`，工具链要求见上节。`run.json` 保存固件、能力掩码、gated 项、Supervisor/模块 SHA-256 和截图哈希。
+Band 11 没有 NSH，驱动完成后先关机，再从 `nand_data` 离线提取模块测试记录；记录不承担应用状态存储。
+
+`.155` 最终构建已通过完整场景：虚拟窗口移动到 44，选中第 46 项，返回后恢复相同位置与选中态；捕获拖动、Toast 显示/到期、标题返回态与关页通过。
+`.179` 的导航、选择、Toast、标题和关页通过，缺少独立恢复的输入/滚动原语，明确 gated `virtual-list` / `pointer-drag` / `pointer-capture`。
+`.043` 完整场景通过：窗口到 37、选中第 40 项并返回恢复，卡片/图片、捕获拖动、选择、Toast、标题与关页通过。
+首次失败定位到私有 UI 入口的加载地址/运行地址混淆；运行地址、图片 ABI 与绝对滚动入口修正后，滑动起点还需位于列表视口内。
+驱动按面板高度减 80 选起点（`.043` y=400，Band 11 y=440），避免点在列表下方。
+构建/运行哈希、截图、事件与完整 CI 日志见 [`evidence/native-ui-abi2-2026-10-23`](evidence/native-ui-abi2-2026-10-23/README.md)。
+所有结果只算 host/emulator 证据，不表示真机性能或 production approval。
+
+### 复审修复后的重新验收（2026-10-23，review7）
+
+R1–R14 修复后重跑隔离实例（包 `f2869e65…`，每目标新设备）。Lab 的卡片更新拆成两步：
+通用部分（标题/几何/颜色）先提交，扩展样式（圆角/边框/透明度/圆角裁剪）单独尝试，目标缺少对应
+样式属性 ID 时以 `stylefallback 1/8` 降级并在 `run.json` 里 gate `style-card`——`.155` 属性齐全
+无降级，`.043`/`.179` 各恰好一次，三者都没有 `renderfail`。
+Toast 演示时长加到 10 秒，让显示/隐藏/重显/到期四帧落在无歧义窗口；面板靠已选 radio 的重复点击
+保持点亮（重渲染不重启计时、到期后不重播）。四态按截图像素验收：显示/重显有“Selection saved”
+文本像素（.155/.179 872、.043 1613），隐藏/到期为 0，且隐藏帧出现在原 Toast 仍在期内的时刻
+（提前消失而非等到期）。
+结果：`.155` passed 无 gate；`.043` partial（`style-card`）；`.179` partial（`virtual-list` /
+`pointer-drag` / `pointer-capture` / `style-card`）。`.043` 窗口到 37、选中第 40 项，`.155` 到 44、
+第 46 项，返回恢复一致；虚拟列表/拖动的缺失在 `.179` 显示为“unavailable”占位页而不是假成功。
+证据见 [`evidence/native-ui-abi2-review-fixes-2026-10-23`](evidence/native-ui-abi2-review-fixes-2026-10-23/README.md)。
+
+### N1/N2 整改后的复跑（2026-10-23，包 `7347d369…`）
+
+Lab 的 shown 提交改成携带成对 TOAST 节点（可见文本仍为 "Selection saved"，由最近可见的后节点驱动），
+hide 提交移除其中一个（N1 移除形态）；`toastpair` probe 三目标各 2 次。重跑结果与 review7 逐项一致：
+`.155` passed 无 gate，`.043` 仅 gate `style-card`（`stylefallback 1/8` 恰一次），`.179` gate 三项输入 +
+`style-card`，均无 `renderfail`，窗口/选中 37/40（`.043`）与 44/46（`.155`）与 review7 相同。
+四态近白文本像素 `.155`/`.179` 872/0/872/0，`.043` 862/0/862/0（同口径对 review7 批次量测结果相同，
+无回归）。N2 的捕获取消销毁时序无法用顺序点击可靠驱动，由 host ASan/UBSan 回归覆盖。
+证据见 [`evidence/native-ui-n1n2-fixes-2026-10-23`](evidence/native-ui-n1n2-fixes-2026-10-23/README.md)。
+
+M1/L1 整改（别名样式守卫 + "最近可见 Toast 驱动"规则）后再复跑一轮：三目标结果、四态像素与
+toastpair/stylefallback 计数与前两批完全一致（`.155` 无 gate，`.043`/`.179` 各一次 `stylefallback`）。
+证据见 [`evidence/native-ui-m1l1-fixes-2026-10-23`](evidence/native-ui-m1l1-fixes-2026-10-23/README.md)。
+
+M2 整改（驱动切换走替换路径重绘样式）后再复跑一轮：三目标结果、四态像素与计数仍与前三批完全一致。
+证据见 [`evidence/native-ui-m2-fixes-2026-10-23`](evidence/native-ui-m2-fixes-2026-10-23/README.md)。
+
+P1/P2 整改（不变量「owner 文本被重写 ⇒ 样式同步重绘」+ 隐藏节点不写不替换、T1 first-HEADER 标题驱动）后再复跑：
+三目标 gates、toastpair 计数与四态像素与前四批同口径一致（.155/.179 = 872/0/872/0；.043 同法 866/2/866/2，含 418 行静态 chrome 2px）。
+证据见 [`evidence/native-ui-p1p2-fixes-2026-10-23`](evidence/native-ui-p1p2-fixes-2026-10-23/README.md)。
+
+调试 `.043` 时发现：启动代码把部分 flash LMA 拷贝到 SRAM/PSRAM，必须调用对应 RAMX/PSRAMX 的 VMA。
+例如样式 dispatcher 的加载地址 `0x0c107790` 对应执行地址 `0x002bd924`；从加载地址执行会让相对调用跳进 AP 头部空白区。
+这无需给 Mirage 增加 ROM helper 或修改固件镜像，详见 target 的 `EVID-UI-1043-LAYOUT-INPUT-001`。
+
 ## 2026-10-20 重跑
 
 `miragectl` 在 `/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl`（脚本默认值已改到这里）。资料库在 `Mirage/.scratch/Library`，

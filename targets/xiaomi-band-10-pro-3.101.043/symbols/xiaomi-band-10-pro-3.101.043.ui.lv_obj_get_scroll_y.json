@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.ui.lv_obj_get_scroll_y",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_obj_get_scroll_y",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c02ccfc",
+  "callable_address": "0x1c02ccfd",
+  "prototype": "int32_t(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed live page-owned LVGL object/event/input device; output coordinate buffer borrowed for call; no retention."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "pending",
+    "evidence_ids": [
+      "EVID-UI-1043-LAYOUT-INPUT-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-UI-1043-LAYOUT-INPUT-001"
+    ],
+    "source": "Returns negative signed spec_attr+36 from object+8, or zero without spec_attr. Startup 0xc0c0ac8 copies [0x2c10d440,0x2c18d940) to PSRAM 0x3c000000, executable alias 0x1c000000; load address 0xc13a13c maps to runtime 0x1c02ccfc, callable 0x1c02ccfd. Exact runtime relative-coordinate helper 0x1c02a64c calls it at 0x1c02a662."
+  },
+  "approval_state": "PENDING",
+  "notes": "Target-private native UI host only. Static recovery does not grant public callable approval or device verification."
+}

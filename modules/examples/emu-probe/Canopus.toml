@@ -7,7 +7,7 @@ version_code = 1
 kind = "target"
 language = "c"
 lifecycle = "removable"
-canopus_abi = "1"
+canopus_abi = "2"
 description = "emulator end-to-end probe (Band 10 Pro 3.101.043)"
 
 [build]

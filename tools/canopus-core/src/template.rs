@@ -48,7 +48,7 @@ fn manifest(name: &str, target_id: &str) -> String {
   "module_id": "{name}",
   "version": "0.1.0",
   "build_generation": 1,
-  "canopus_abi": "1",
+  "canopus_abi": "2",
   "lifecycle": "removable",
   "artifacts": [
     {{

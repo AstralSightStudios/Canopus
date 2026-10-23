@@ -1926,7 +1926,7 @@ TEST(ui_entry_is_validated_copied_listed_and_dropped_with_the_module)
     entry.user_data = &token;
 
     CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), -1);
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_OK);
     memset(label, 'x', sizeof(label) - 1u); /* the Supervisor kept its own copy */
     CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), 0);
     CHECK(strcmp(out.label, "设置") == 0);
@@ -1936,31 +1936,31 @@ TEST(ui_entry_is_validated_copied_listed_and_dropped_with_the_module)
 
     /* a refused replacement leaves the registered entry alone */
     entry.struct_size = 1u;
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
     entry.struct_size = sizeof(entry);
     entry.on_open = 0;
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
     entry.on_open = entry_open;
     memset(long_label, 'l', sizeof(long_label) - 1u);
     long_label[sizeof(long_label) - 1u] = '\0';
     entry.label = long_label;
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
     CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), 0);
     CHECK(strcmp(out.label, "设置") == 0);
     entry.label = 0; /* a label is optional */
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_OK);
     CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), 0);
     CHECK(out.label[0] == '\0');
 
     /* removing the entry also closes a page of that module that is open */
     g_ui_closes = 0;
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, 0), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->ui->set_entry(ctx, 0), CANOPUS_SVC_OK);
     CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), -1);
     CHECK_EQ(g_ui_closes, 1);
     CHECK_EQ(g_ui_close_slot, 0u);
 
     /* an unloading module loses its entry, and its open page is closed first */
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_OK);
     g_ui_closes = 0;
     canopus_supervisor_release_services(&sup, 0u);
     CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), -1);
@@ -1990,7 +1990,7 @@ TEST(launcher_entry_needs_a_ui_entry_and_is_published_once)
     entry.icon = "/data/notes/icon.bin";
 
     CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_STATE); /* nothing to open */
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &ui), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->ui->set_entry(ctx, &ui), CANOPUS_SVC_OK);
     entry.struct_size = 1u;
     CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
     entry.struct_size = sizeof(entry);
@@ -2035,7 +2035,7 @@ TEST(launcher_entry_needs_a_ui_entry_and_is_published_once)
     /* the firmware cannot take the entry back: it outlives the module's release */
     canopus_supervisor_release_services(&sup, 0u);
     CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_STATE);
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &ui), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->ui->set_entry(ctx, &ui), CANOPUS_SVC_OK);
     entry.icon = "/data/notes/icon.bin";
     CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_OK);
     CHECK_EQ(g_launcher_publishes, 1);
@@ -2055,7 +2055,7 @@ TEST(launcher_step_failure_is_reported_in_the_supervisor_error)
     memset(&entry, 0, sizeof(entry));
     entry.struct_size = sizeof(entry);
     entry.label = "Notes";
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &ui), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->ui->set_entry(ctx, &ui), CANOPUS_SVC_OK);
     CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_OK);
     g_launcher_step_rc = -5;
     advance_time(10u);
@@ -2087,10 +2087,10 @@ TEST(ui_close_page_finishes_only_the_callers_open_page)
     ctx = canopus_supervisor_context(&sup, 0);
     other = add_second_module(&sup);
     g_ui_close_result = 0; /* the Manager has no page of this module open */
-    CHECK_EQ(ctx->ui_ext->close_page(ctx), CANOPUS_SVC_ERR_STATE);
+    CHECK_EQ(ctx->ui->close_page(ctx), CANOPUS_SVC_ERR_STATE);
     CHECK_EQ(g_ui_close_slot, 0u);
     g_ui_close_result = 1;
-    CHECK_EQ(other->ui_ext->close_page(other), CANOPUS_SVC_OK);
+    CHECK_EQ(other->ui->close_page(other), CANOPUS_SVC_OK);
     CHECK_EQ(g_ui_close_slot, 1u);
 }
 
@@ -2108,9 +2108,9 @@ TEST(ui_pages_are_unsupported_without_the_manager_ui_hook)
     memset(&entry, 0, sizeof(entry));
     entry.struct_size = sizeof(entry);
     entry.on_open = entry_open;
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, &entry), CANOPUS_SVC_ERR_UNSUPPORTED);
-    CHECK_EQ(ctx->ui_ext->set_entry(ctx, 0), CANOPUS_SVC_ERR_UNSUPPORTED);
-    CHECK_EQ(ctx->ui_ext->close_page(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->ui->set_entry(ctx, 0), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(ctx->ui->close_page(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
 }
 
 static int g_event_calls;
@@ -2203,7 +2203,318 @@ TEST(system_events_are_published_on_change_and_cannot_be_forged)
     CHECK(ctx->bus->subscribe(ctx, "my/topic", on_event, 0) >= 0);
 }
 
+static int s_lifecycle_count;
+static struct canopus_module_state_v1 s_lifecycle_last;
+static int32_t s_lifecycle_sub;
+static uint32_t lifecycle_command(struct canopus_supervisor_v1 *sup, uint32_t op, uint32_t slot)
+{
+    uint32_t words[4] = { CANOPUS_SUP_CMD_MAGIC, op, slot, 0u };
+    return canopus_supervisor_handle_command(sup, (const uint8_t *)words);
+}
+
+static void on_lifecycle(const struct canopus_context_v1 *ctx, const char *topic,
+                         const void *payload, uint32_t len, void *user)
+{
+    struct canopus_module_state_v1 queried;
+    (void)user;
+    CHECK(strcmp(topic, CANOPUS_BUS_TOPIC_MODULE) == 0);
+    CHECK_EQ(len, sizeof(s_lifecycle_last));
+    memcpy(&s_lifecycle_last, payload, sizeof(s_lifecycle_last));
+    s_lifecycle_count++;
+    CHECK(CANOPUS_SNAPSHOT_READY(&s_sup->snap));
+    CHECK_EQ(ctx->bus->query_module(ctx, s_lifecycle_last.module_id, &queried), 0);
+    CHECK(memcmp(&queried, &s_lifecycle_last, sizeof(queried)) == 0);
+    CHECK_EQ(ctx->bus->publish(ctx, "test/reentrant", 0, 0), CANOPUS_SVC_ERR_BUSY);
+    CHECK_EQ(ctx->bus->subscribe(ctx, "test/reentrant", on_lifecycle, 0), CANOPUS_SVC_ERR_BUSY);
+    CHECK_EQ(lifecycle_command(s_sup, CANOPUS_SUP_CMD_DISABLE, 0u), CANOPUS_RESULT_DISALLOWED);
+}
+
+static int lifecycle_persist_fail(void *cookie, const uint8_t *data, uint32_t len)
+{
+    (void)cookie; (void)data; (void)len;
+    return -1;
+}
+
+TEST(module_lifecycle_query_and_committed_events)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform = platform_without_fs;
+    struct canopus_module_state_v1 initial;
+    const struct canopus_context_v1 *ctx;
+    setup(&sup, &platform);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    CHECK(canopus_services_has(ctx, CANOPUS_SVC_BUS, 2));
+    s_lifecycle_count = 0;
+    s_lifecycle_sub = ctx->bus->subscribe(ctx, CANOPUS_BUS_TOPIC_MODULE, on_lifecycle, 0);
+    CHECK(s_lifecycle_sub >= 0);
+    CHECK_EQ(s_lifecycle_count, 0); /* subscribe, then query without yielding */
+    CHECK_EQ(ctx->bus->query_module(ctx, "mod.portable", &initial), 0);
+    CHECK_EQ(initial.state, CANOPUS_STATE_INSTALLED);
+    CHECK_EQ(initial.intent, CANOPUS_MODULE_INTENT_DISABLED);
+    CHECK_EQ(initial.version, 1u);
+    CHECK_EQ(initial.active_generation, 0u);
+    CHECK_EQ(ctx->bus->query_module(ctx, "missing", &initial), CANOPUS_SVC_ERR_NOTFOUND);
+    CHECK_EQ(ctx->bus->query_module(ctx, "", &initial), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->bus->query_module(ctx, "mod.portable", 0), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->bus->publish(ctx, CANOPUS_BUS_TOPIC_MODULE, &initial, sizeof(initial)),
+             CANOPUS_SVC_ERR_ACCESS);
+    CHECK_EQ(lifecycle_command(&sup, CANOPUS_SUP_CMD_ENABLE, 0u), CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK_EQ(s_lifecycle_count, 1);
+    CHECK_EQ(s_lifecycle_last.state, CANOPUS_STATE_ENABLED);
+    CHECK_EQ(s_lifecycle_last.intent, CANOPUS_MODULE_INTENT_ENABLED);
+    CHECK_EQ(initial.state, CANOPUS_STATE_INSTALLED); /* query owns its copy */
+    CHECK_EQ(lifecycle_command(&sup, CANOPUS_SUP_CMD_ENABLE, 0u), CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK_EQ(s_lifecycle_count, 1); /* no changed fields */
+    platform.persist = lifecycle_persist_fail;
+    CHECK_EQ(lifecycle_command(&sup, CANOPUS_SUP_CMD_DISABLE, 0u), CANOPUS_RESULT_FAILED);
+    CHECK_EQ(s_lifecycle_count, 1); /* persistence rollback is silent */
+    CHECK_EQ(ctx->bus->query_module(ctx, "mod.portable", &initial), 0);
+    CHECK_EQ(initial.state, CANOPUS_STATE_ENABLED);
+    platform.persist = p_persist;
+    CHECK_EQ(lifecycle_command(&sup, CANOPUS_SUP_CMD_DISABLE, 0u), CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK_EQ(s_lifecycle_count, 2);
+    CHECK_EQ(s_lifecycle_last.state, CANOPUS_STATE_DISABLED);
+    CHECK_EQ(lifecycle_command(&sup, CANOPUS_SUP_CMD_REMOVE, 0u), CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK_EQ(s_lifecycle_count, 3);
+    CHECK_EQ(s_lifecycle_last.state, CANOPUS_STATE_REMOVE_PENDING);
+    CHECK_EQ(s_lifecycle_last.intent, CANOPUS_MODULE_INTENT_REMOVE);
+    canopus_supervisor_release_services(&sup, 0u);
+    CHECK_EQ(ctx->bus->unsubscribe(ctx, s_lifecycle_sub), CANOPUS_SVC_ERR_ARGUMENT);
+}
+
+TEST(module_lifecycle_boot_activation_and_failure)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *observer;
+    int fail;
+    for (fail = 0; fail < 2; fail++) {
+        setup(&sup, &platform_with_fs);
+        CHECK_EQ(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 2u, "observer"), 1);
+        observer = canopus_supervisor_context(&sup, 1u);
+        CHECK(observer->bus->subscribe(observer, CANOPUS_BUS_TOPIC_MODULE, on_lifecycle, 0) >= 0);
+        s_lifecycle_count = 0;
+        sup.modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+        sup.loading_slot = 0;
+        s_load_hook_registers = fail ? 0 : 1;
+        CHECK_EQ(canopus_supervisor_activate_restored_modules(&sup), fail ? -1 : 0);
+        CHECK_EQ(s_lifecycle_count, 1);
+        CHECK_EQ(s_lifecycle_last.state, fail ? CANOPUS_STATE_FAILED : CANOPUS_STATE_ACTIVE);
+        CHECK_EQ(s_lifecycle_last.activation_error, fail ? CANOPUS_SUP_ERR_DESCRIPTOR_MISSING : 0);
+        CHECK(strcmp(s_lifecycle_last.module_id, "mod.portable") == 0);
+    }
+}
+
+static int s_post_calls, s_post_depth;
+static int s_post_timer_calls;
+static void ui_post_counter(const struct canopus_context_v1 *ctx, void *user)
+{
+    (void)ctx;
+    CHECK_EQ(s_post_depth, 0);
+    (*(int *)user)++;
+}
+static int32_t ui_post_sleeping_open(const struct canopus_context_v1 *ctx,
+                                     struct canopus_ui_context_v1 *ui, void *user)
+{
+    int calls = s_post_calls;
+    (void)ui;
+    s_post_depth++;
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_counter, user), 0);
+    g_now += 10u; /* ordinary timers must still be serviced by sleep_ms */
+    ctx->time->sleep_ms(ctx, 1u);
+    CHECK_EQ(s_post_calls, calls);
+    CHECK_EQ(s_post_timer_calls, 1);
+    canopus_supervisor_timers_poll(s_sup);
+    CHECK_EQ(s_post_calls, calls);
+    s_post_depth--;
+    return 0;
+}
+
+static int32_t ui_post_sleeping_event(const struct canopus_context_v1 *ctx,
+                                      struct canopus_ui_context_v1 *ui,
+                                      const struct canopus_ui_event_v1 *event, void *user)
+{
+    (void)event;
+    return ui_post_sleeping_open(ctx, ui, user);
+}
+
+static void on_post_timer(const struct canopus_context_v1 *ctx, int32_t id, void *user)
+{
+    int calls = s_post_calls;
+    (void)id;
+    s_post_timer_calls++;
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_counter, user), 0);
+    canopus_supervisor_timers_poll(s_sup);
+    CHECK_EQ(s_post_calls, calls);
+}
+
+static int ui_post_pump_fails(void *cookie, void (*poll)(void *), void *data)
+{
+    (void)cookie; (void)poll; (void)data;
+    return CANOPUS_SVC_ERR_NOMEM;
+}
+
+TEST(ui_posts_from_page_callbacks_wait_through_sleep_and_generic_poll)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    struct canopus_ui_entry_v1 entry = {0}, registered;
+    int32_t timer;
+    int callback;
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    sup.modules[0].state = CANOPUS_STATE_ACTIVE;
+    entry.struct_size = sizeof(entry);
+    entry.on_open = ui_post_sleeping_open;
+    entry.on_event = ui_post_sleeping_event;
+    entry.user_data = &s_post_calls;
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), 0);
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &registered), 0);
+    s_post_calls = s_post_depth = 0;
+    timer = ctx->time->timer_create(ctx, 1u, 0, on_post_timer, &s_post_calls);
+    CHECK(timer >= 0);
+    for (callback = 0; callback < 2; callback++) {
+        s_post_timer_calls = 0;
+        CHECK_EQ(ctx->time->timer_start(ctx, timer), 0);
+        if (callback == 0) CHECK_EQ(registered.on_open(ctx, 0, registered.user_data), 0);
+        else CHECK_EQ(registered.on_event(ctx, 0, 0, registered.user_data), 0);
+        CHECK_EQ(s_post_calls, callback); /* on_open/on_event has returned */
+        canopus_supervisor_timers_poll(&sup);
+        CHECK_EQ(s_post_calls, callback); /* a generic poll is not a UI turn */
+        advance_time(10u);
+        CHECK_EQ(s_post_calls, callback + 1);
+    }
+    CHECK_EQ(ctx->time->timer_destroy(ctx, timer), 0);
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_counter, &s_post_calls), 0);
+    ctx->time->sleep_ms(ctx, 1u);
+    CHECK_EQ(s_post_calls, 2); /* same boundary outside a UI callback */
+    canopus_supervisor_release_services(&sup, 0u);
+    advance_time(10u);
+    CHECK_EQ(s_post_calls, 2);
+}
+
+TEST(ui_posts_from_timers_wait_for_following_foreground_heartbeat)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx;
+    int32_t timer;
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    s_post_calls = s_post_depth = s_post_timer_calls = 0;
+    timer = ctx->time->timer_create(ctx, 1u, 0, on_post_timer, &s_post_calls);
+    CHECK(timer >= 0);
+    CHECK_EQ(ctx->time->timer_start(ctx, timer), 0);
+    advance_time(10u);
+    CHECK_EQ(s_post_timer_calls, 1);
+    CHECK_EQ(s_post_calls, 0); /* this heartbeat posted work for the next one */
+    canopus_supervisor_timers_poll(&sup);
+    CHECK_EQ(s_post_calls, 0);
+    advance_time(10u);
+    CHECK_EQ(s_post_calls, 1);
+}
+
+TEST(ui_post_failure_returns_leave_queue_empty)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform = platform_with_fs;
+    const struct canopus_context_v1 *ctx;
+    setup(&sup, &platform);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    s_post_calls = s_post_depth = 0;
+    CHECK_EQ(ctx->ui->post(0, ui_post_counter, &s_post_calls), CANOPUS_SVC_ERR_STATE);
+    CHECK_EQ(ctx->ui->post(ctx, 0, &s_post_calls), CANOPUS_SVC_ERR_ARGUMENT);
+    platform.start_timer_pump = ui_post_pump_fails;
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_counter, &s_post_calls), CANOPUS_SVC_ERR_NOMEM);
+    platform.start_timer_pump = p_start_timer_pump;
+    CHECK_EQ(canopus_supervisor_ui_pump_ensure(&sup), 0);
+    advance_time(10u);
+    CHECK_EQ(s_post_calls, 0); /* a refused post was never queued */
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_counter, &s_post_calls), 0);
+    advance_time(10u);
+    CHECK_EQ(s_post_calls, 1);
+}
+
+static void on_bus_post(const struct canopus_context_v1 *ctx, const char *topic,
+                        const void *payload, uint32_t len, void *user)
+{
+    (void)topic; (void)payload; (void)len;
+    s_post_depth++;
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_counter, user), 0);
+    canopus_supervisor_timers_poll(s_sup); /* cannot drain inside publish */
+    g_timer_poll(g_timer_data);
+    ctx->time->sleep_ms(ctx, 1u);
+    CHECK_EQ(s_post_calls, 0);
+    s_post_depth--;
+}
+static void ui_post_reposts(const struct canopus_context_v1 *ctx, void *user)
+{
+    int calls;
+    s_post_depth++;
+    CHECK_EQ(s_post_depth, 1);
+    calls = ++(*(int *)user);
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_reposts, user), 0);
+    canopus_supervisor_timers_poll(s_sup);
+    g_timer_poll(g_timer_data);
+    ctx->time->sleep_ms(ctx, 1u);
+    CHECK_EQ(*(int *)user, calls);
+    s_post_depth--;
+}
+static void ui_post_releases_other(const struct canopus_context_v1 *ctx, void *user)
+{
+    const struct canopus_context_v1 *other = canopus_supervisor_context(s_sup, 1u);
+    (void)ctx;
+    canopus_supervisor_release_services(s_sup, 1u);
+    CHECK_EQ(other->ui->post(other, ui_post_counter, user), 0);
+}
+
+TEST(ui_posts_wait_for_owner_heartbeat_and_cancel_on_release)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform = platform_with_fs;
+    const struct canopus_context_v1 *ctx, *other;
+    platform.start_background_pump = p_start_background_pump;
+    setup(&sup, &platform);
+    CHECK_EQ(canopus_supervisor_start_background(&sup), 0);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    s_post_calls = s_post_depth = 0;
+    CHECK(ctx->bus->subscribe(ctx, "post/test", on_bus_post, &s_post_calls) >= 0);
+    CHECK_EQ(ctx->bus->publish(ctx, "post/test", 0, 0), 1);
+    CHECK_EQ(s_post_calls, 0);
+    g_background_poll(g_background_data);
+    CHECK_EQ(s_post_calls, 0); /* screen-off/background owner must not touch UI */
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_counter, &s_post_calls), 0); /* coalesce */
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_counter, &s_post_depth), CANOPUS_SVC_ERR_BUSY);
+    advance_time(10u);
+    CHECK_EQ(s_post_calls, 1);
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_reposts, &s_post_calls), 0);
+    advance_time(10u);
+    CHECK_EQ(s_post_calls, 2); /* repost waits for the following heartbeat */
+    advance_time(10u);
+    CHECK_EQ(s_post_calls, 3);
+    canopus_supervisor_release_services(&sup, 0u);
+    advance_time(10u);
+    CHECK_EQ(s_post_calls, 3);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE, 1u, "other"), 1);
+    other = canopus_supervisor_context(&sup, 1u);
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_releases_other, &s_post_calls), 0);
+    CHECK_EQ(other->ui->post(other, ui_post_counter, &s_post_depth), 0);
+    advance_time(10u);
+    CHECK_EQ(s_post_depth, 0); /* release cancels old slot job during drain */
+    CHECK_EQ(s_post_calls, 3); /* replacement also waits for the next tick */
+    advance_time(10u);
+    CHECK_EQ(s_post_calls, 4);
+    platform.start_timer_pump = 0;
+    setup(&sup, &platform);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    CHECK_EQ(ctx->ui->post(ctx, ui_post_counter, &s_post_calls), CANOPUS_SVC_ERR_UNSUPPORTED);
+}
+
 static struct test_registry supervisor_services_tests[] = {
+    { "module_lifecycle_query_and_committed_events", module_lifecycle_query_and_committed_events_wrapper },
+    { "module_lifecycle_boot_activation_and_failure", module_lifecycle_boot_activation_and_failure_wrapper },
+    { "ui_posts_wait_for_owner_heartbeat_and_cancel_on_release", ui_posts_wait_for_owner_heartbeat_and_cancel_on_release_wrapper },
+    { "ui_posts_from_page_callbacks_wait_through_sleep_and_generic_poll", ui_posts_from_page_callbacks_wait_through_sleep_and_generic_poll_wrapper },
+    { "ui_posts_from_timers_wait_for_following_foreground_heartbeat", ui_posts_from_timers_wait_for_following_foreground_heartbeat_wrapper },
+    { "ui_post_failure_returns_leave_queue_empty", ui_post_failure_returns_leave_queue_empty_wrapper },
     { "kv_reloads_through_native_and_service_registration",
       kv_reloads_through_native_and_service_registration_wrapper },
     { "kv_failed_transactions_preserve_disk",

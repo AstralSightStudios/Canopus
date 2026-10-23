@@ -28,8 +28,16 @@
 // ABI version and capacity (must match canopus_ui.h)
 // ---------------------------------------------------------------------------
 
-pub const ABI_MAJOR: u16 = 1;
-pub const ABI_MINOR: u16 = 4;
+pub const ABI_MAJOR: u16 = 2;
+pub const ABI_MINOR: u16 = 0;
+
+pub use canopus_abi::{UiEventV1 as Event, UiVisualV1 as Visual, UiScrollMetricsV1 as ScrollMetrics};
+pub use canopus_abi::{
+    UI_EVENT_ACTIVATE as EVENT_ACTIVATE, UI_EVENT_VALUE_CHANGED as EVENT_VALUE_CHANGED,
+    UI_EVENT_PRESS as EVENT_PRESS, UI_EVENT_LONG_PRESS as EVENT_LONG_PRESS,
+    UI_EVENT_MOVE as EVENT_MOVE, UI_EVENT_RELEASE as EVENT_RELEASE,
+    UI_EVENT_CANCEL as EVENT_CANCEL, UI_EVENT_SCROLL as EVENT_SCROLL,
+};
 
 pub const MAX_NODES: usize = 32;
 pub const MAX_DEPTH: usize = 8;
@@ -43,6 +51,28 @@ pub const CAP_VALUES: u32 = 1 << 3;
 pub const CAP_NAVIGATION_HEADER: u32 = 1 << 4;
 pub const CAP_IMAGE: u32 = 1 << 5;
 pub const CAP_PROGRESS: u32 = 1 << 6;
+pub const CAP_VISUAL: u32 = 1 << 7;
+pub const CAP_SCROLL: u32 = 1 << 8;
+pub const CAP_TRANSLATE: u32 = 1 << 9;
+pub const CAP_CAPTURE: u32 = 1 << 10;
+pub const CAP_POINTER_EVENTS: u32 = 1 << 11;
+pub const CAP_IMAGE_FIT_CONTAIN: u32 = 1 << 12;
+pub const CAP_IMAGE_FIT_COVER: u32 = 1 << 13;
+pub const CAP_IMAGE_FIT_STRETCH: u32 = 1 << 14;
+pub const CAP_VIRTUAL_CONTENT: u32 = 1 << 15;
+pub const CAP_TOAST: u32 = 1 << 16;
+
+pub const VISUAL_FLAG_FOREGROUND_RGB: u32 = 1 << 0;
+pub const VISUAL_FLAG_BACKGROUND_RGB: u32 = 1 << 1;
+pub const VISUAL_FLAG_BORDER_RGB: u32 = 1 << 2;
+pub const VISUAL_FLAG_ABSOLUTE: u32 = 1 << 3;
+pub const VISUAL_FLAG_CLIP: u32 = 1 << 4;
+pub const VISUAL_FLAG_OPACITY: u32 = 1 << 5;
+pub const VISUAL_FLAG_VIRTUAL_CONTENT: u32 = 1 << 6;
+pub const IMAGE_FIT_NATIVE: u16 = 0;
+pub const IMAGE_FIT_CONTAIN: u16 = 1;
+pub const IMAGE_FIT_COVER: u16 = 2;
+pub const IMAGE_FIT_STRETCH: u16 = 3;
 
 pub type NodeId = u32;
 
@@ -320,10 +350,9 @@ impl Node {
                     | NodeKind::SwitchRow
                     | NodeKind::Checkbox
                     | NodeKind::RadioRow
-                    | NodeKind::Icon
-                    | NodeKind::NavigationHeader
             )
-        )
+        ) || (self.event_id != 0
+            && matches!(self.kind(), Some(NodeKind::Icon | NodeKind::NavigationHeader)))
     }
 
     pub fn enabled(&self) -> bool {
@@ -346,10 +375,10 @@ pub struct Snapshot {
     pub string_used: u16,
     pub nodes: [Node; MAX_NODES],
     pub strings: [u8; STRING_CAPACITY],
-    /// ABI 1.3 append-only metadata; the ABI 1.2 prefix remains unchanged.
     pub styles: [Style; MAX_NODES],
     pub layouts: [Layout; MAX_NODES],
     pub values: [Value; MAX_NODES],
+    pub visuals: [Visual; MAX_NODES],
 }
 
 impl Snapshot {
@@ -383,6 +412,7 @@ impl Snapshot {
                 step: 0,
                 resource_id: 0,
             }; MAX_NODES],
+            visuals: [Visual::default(); MAX_NODES],
         }
     }
 
@@ -412,6 +442,10 @@ impl Snapshot {
 
     pub fn value(&self, index: usize) -> Option<&Value> {
         (index < self.node_count as usize).then(|| &self.values[index])
+    }
+
+    pub fn visual(&self, index: usize) -> Option<&Visual> {
+        (index < self.node_count as usize).then(|| &self.visuals[index])
     }
 
     fn slice(&self, off: u16, len: u16) -> &str {
@@ -445,6 +479,7 @@ pub enum UiError {
     Backend,
     StaleGeneration,
     Disabled,
+    Unsupported,
 }
 
 /// Properties shared by the extended semantic prefab catalog.
@@ -791,7 +826,9 @@ impl Tree {
             kind,
             NodeKind::Checkbox | NodeKind::RadioRow
         );
-        if interactive && spec.event_id == 0 {
+        if (interactive || (kind == NodeKind::NavigationHeader && spec.flags & FLAG_HEADER_BACK != 0))
+            && spec.event_id == 0
+        {
             return Err(UiError::Argument);
         }
         if kind == NodeKind::Image && spec.value.resource_id == 0 {
@@ -803,6 +840,9 @@ impl Tree {
                 || spec.value.value > spec.value.maximum
                 || spec.value.step < 0)
         {
+            return Err(UiError::Argument);
+        }
+        if kind == NodeKind::Toast && !(0..=60_000).contains(&spec.value.value) {
             return Err(UiError::Argument);
         }
         let container = matches!(
@@ -865,6 +905,36 @@ impl Tree {
             .position(|node| node.key == key)
             .ok_or(UiError::Argument)?;
         self.snapshot.layouts[index] = layout;
+        Ok(())
+    }
+
+    pub fn set_visual(&mut self, key: NodeId, visual: Visual) -> Result<(), UiError> {
+        let known_flags = (1 << 7) - 1;
+        if visual.flags & !known_flags != 0
+            || visual.foreground_rgb > 0xFFFFFF
+            || visual.background_rgb > 0xFFFFFF
+            || visual.border_rgb > 0xFFFFFF
+            || visual.image_fit > IMAGE_FIT_STRETCH
+            || (visual.flags & VISUAL_FLAG_ABSOLUTE == 0 && (visual.x != 0 || visual.y != 0))
+            || (visual.flags & VISUAL_FLAG_VIRTUAL_CONTENT == 0
+                && (visual.content_height != 0 || visual.scroll_y != 0))
+            || visual.content_height > i32::MAX as u32
+            || visual.scroll_y < 0
+        {
+            return Err(UiError::Argument);
+        }
+        let index = self.snapshot.nodes[..self.snapshot.node_count as usize]
+            .iter()
+            .position(|node| node.key == key)
+            .ok_or(UiError::Argument)?;
+        let kind = self.snapshot.nodes[index].kind();
+        if (visual.flags & VISUAL_FLAG_VIRTUAL_CONTENT != 0
+            && !matches!(kind, Some(NodeKind::NavigationPage | NodeKind::List | NodeKind::Scroll)))
+            || (visual.image_fit != IMAGE_FIT_NATIVE && kind != Some(NodeKind::Image))
+        {
+            return Err(UiError::Argument);
+        }
+        self.snapshot.visuals[index] = visual;
         Ok(())
     }
 
@@ -1192,9 +1262,13 @@ pub trait Application {
     type Model;
     type Message: Copy + Into<u32>;
 
-    /// Converts a semantic event id back into the application's typed message.
-    /// Unknown ids must return `None`; the runtime never guesses enum layouts.
-    fn decode_message(event_id: u32) -> Option<Self::Message>;
+    /// Converts a checked UI event into a typed message, including any pointer
+    /// coordinates, timing or scroll metrics the application needs. Return
+    /// `None` for unhandled pointer/scroll events; they leave the model and view
+    /// unchanged. An unrecognized activation or value change is an argument
+    /// error. Applications that only handle clicks should check `event.type_`
+    /// before decoding `event.event_id`.
+    fn decode_event(event: &Event) -> Option<Self::Message>;
 
     fn update(
         &mut self,
@@ -1375,7 +1449,10 @@ pub struct NavigationHeader<'a, Message, Children = ()> {
     pub key: NodeId,
     pub title: &'a str,
     pub subtitle: &'a str,
+    /// Reserved activation message, retained even while the back is hidden.
     pub back: Option<Message>,
+    /// A visible back requires `back` to encode a nonzero event id.
+    pub show_back: bool,
     pub centered: bool,
     pub elevated: bool,
     pub style: Style,
@@ -1386,7 +1463,7 @@ pub struct NavigationHeader<'a, Message, Children = ()> {
 impl<M: Copy + Into<u32>, C: View<M>> View<M> for NavigationHeader<'_, M, C> {
     fn render(&self, tree: &mut Tree) -> Result<(), UiError> {
         let mut flags = FLAG_VISIBLE;
-        if self.back.is_some() {
+        if self.show_back {
             flags |= FLAG_ENABLED | FLAG_HEADER_BACK;
         }
         if self.centered {
@@ -1696,23 +1773,43 @@ impl Runtime {
     /// nodes and non-interactive nodes before calling the sink.
     pub fn dispatch(
         &mut self,
-        generation: u32,
-        key: NodeId,
-        event_id: u32,
-        sink: &mut impl FnMut(u32, NodeId, u32) -> Result<i32, UiError>,
+        event: &Event,
+        sink: &mut impl FnMut(&Event) -> Result<i32, UiError>,
     ) -> Result<i32, UiError> {
-        if generation != self.committed.generation {
+        if event.struct_size != core::mem::size_of::<Event>() as u32
+            || event.key == 0
+            || !(EVENT_ACTIVATE..=EVENT_SCROLL).contains(&event.type_)
+        {
+            return Err(UiError::Argument);
+        }
+        if !self.has_committed || event.generation != self.committed.generation {
             self.dropped_events = self.dropped_events.saturating_add(1);
             return Err(UiError::StaleGeneration);
         }
-        let node = self.committed.find_by_key(key).ok_or(UiError::Argument)?;
-        if !node.is_interactive() || node.event_id != event_id {
+        let node = self.committed.find_by_key(event.key).ok_or(UiError::Argument)?;
+        if node.event_id != event.event_id {
             return Err(UiError::Argument);
         }
-        if !node.enabled() {
+        if event.type_ == EVENT_ACTIVATE || event.type_ == EVENT_VALUE_CHANGED {
+            if !node.is_interactive() || node.event_id == 0 {
+                return Err(UiError::Argument);
+            }
+            if event.type_ == EVENT_VALUE_CHANGED
+                && !matches!(node.kind(), Some(NodeKind::SwitchRow | NodeKind::Checkbox | NodeKind::RadioRow))
+            {
+                return Err(UiError::Argument);
+            }
+        } else if event.type_ == EVENT_SCROLL {
+            if !matches!(node.kind(), Some(NodeKind::NavigationPage | NodeKind::List | NodeKind::Scroll))
+                || event.scroll_y < 0 || event.viewport_height < 0 || event.content_height < 0
+            {
+                return Err(UiError::Argument);
+            }
+        }
+        if node.flags & FLAG_VISIBLE == 0 || (node.is_interactive() && !node.enabled()) {
             return Err(UiError::Disabled);
         }
-        sink(generation, key, event_id)
+        sink(event)
     }
 }
 
@@ -1757,10 +1854,10 @@ impl SnapshotBackend for CAbiBackend {
         // SAFETY: upheld by `CAbiBackend::new`; `snapshot` remains valid for the
         // complete synchronous callback and is not retained.
         let result = unsafe { (self.apply)(self.cookie, snapshot) };
-        if result == 0 {
-            Ok(())
-        } else {
-            Err(UiError::Backend)
+        match result {
+            0 => Ok(()),
+            -8 => Err(UiError::Unsupported),
+            _ => Err(UiError::Backend),
         }
     }
 }
@@ -1829,17 +1926,23 @@ impl<A: Application, B: SnapshotBackend, const COMMANDS: usize> ApplicationRunti
 
     /// Processes one checked UI event and publishes the resulting model view.
     /// At most `COMMANDS` queued commands are executed per event, preventing an
-    /// `Emit` cycle from becoming an unbounded UI-thread loop.
+    /// `Emit` cycle from becoming an unbounded UI-thread loop. Activation and
+    /// value changes rebuild automatically. Rich input updates rebuild only on
+    /// `Command::Rebuild`, so immediate native controls are not overwritten by
+    /// an unsolicited snapshot and capture can keep its committed generation.
     pub fn dispatch_event(
         &mut self,
-        generation: u32,
-        key: NodeId,
-        event_id: u32,
+        event: &Event,
         render: impl FnOnce(&A::Model, &mut Tree) -> Result<(), UiError>,
     ) -> Result<(), UiError> {
-        self.runtime
-            .dispatch(generation, key, event_id, &mut |_, _, _| Ok(0))?;
-        let message = A::decode_message(event_id).ok_or(UiError::Argument)?;
+        self.runtime.dispatch(event, &mut |_| Ok(0))?;
+        let message = match A::decode_event(event) {
+            Some(message) => message,
+            None if event.type_ == EVENT_ACTIVATE || event.type_ == EVENT_VALUE_CHANGED => {
+                return Err(UiError::Argument);
+            }
+            None => return Ok(()),
+        };
         if !self.commands.is_empty() {
             self.commands.clear();
             return Err(UiError::State);
@@ -1847,6 +1950,7 @@ impl<A: Application, B: SnapshotBackend, const COMMANDS: usize> ApplicationRunti
 
         self.app
             .update(&mut self.model, message, &mut self.commands);
+        let mut rebuild = event.type_ == EVENT_ACTIVATE || event.type_ == EVENT_VALUE_CHANGED;
         let mut processed = 0usize;
         while !self.commands.is_empty() {
             if processed == COMMANDS {
@@ -1861,11 +1965,11 @@ impl<A: Application, B: SnapshotBackend, const COMMANDS: usize> ApplicationRunti
                 Command::Emit(next) => {
                     self.app.update(&mut self.model, next, &mut self.commands);
                 }
-                Command::Rebuild => {}
+                Command::Rebuild => rebuild = true,
             }
             processed += 1;
         }
-        self.rebuild(render)
+        if rebuild { self.rebuild(render) } else { Ok(()) }
     }
 }
 
@@ -1904,10 +2008,14 @@ mod layout {
         assert_eq!(size_of::<Style>(), 20);
         assert_eq!(size_of::<Layout>(), 38);
         assert_eq!(size_of::<Value>(), 20);
-        assert_eq!(size_of::<Snapshot>(), 4940);
+        assert_eq!(size_of::<Visual>(), 36);
+        assert_eq!(size_of::<Event>(), 52);
+        assert_eq!(size_of::<ScrollMetrics>(), 12);
+        assert_eq!(offset_of!(Snapshot, visuals), 4940);
+        assert_eq!(size_of::<Snapshot>(), 6092);
         assert_eq!(
             size_of::<Snapshot>(),
-            prefix + MAX_NODES * (size_of::<Style>() + size_of::<Layout>() + size_of::<Value>())
+            prefix + MAX_NODES * (size_of::<Style>() + size_of::<Layout>() + size_of::<Value>() + size_of::<Visual>())
         );
     }
 }
@@ -2005,25 +2113,25 @@ mod tests {
         runtime.commit(snapshot);
 
         assert_eq!(
-            runtime.dispatch(0, 2, 77, &mut |_, _, _| Ok(0)),
+            runtime.dispatch(&Event::activate(0, 2, 77), &mut |_| Ok(0)),
             Err(UiError::StaleGeneration)
         );
         assert_eq!(runtime.dropped_events, 1);
         assert_eq!(
-            runtime.dispatch(1, 3, 88, &mut |_, _, _| Ok(0)),
+            runtime.dispatch(&Event::activate(1, 3, 88), &mut |_| Ok(0)),
             Err(UiError::Disabled)
         );
         assert_eq!(
-            runtime.dispatch(1, 4, 77, &mut |_, _, _| Ok(0)),
+            runtime.dispatch(&Event::activate(1, 4, 77), &mut |_| Ok(0)),
             Err(UiError::Argument)
         );
         assert_eq!(
-            runtime.dispatch(1, 2, 78, &mut |_, _, _| Ok(0)),
+            runtime.dispatch(&Event::activate(1, 2, 78), &mut |_| Ok(0)),
             Err(UiError::Argument)
         );
         // Checked switch node is interactive and enabled.
-        assert_eq!(runtime.dispatch(1, 5, 99, &mut |_, _, _| Ok(19)), Ok(19));
-        assert_eq!(runtime.dispatch(1, 2, 77, &mut |_, _, _| Ok(19)), Ok(19));
+        assert_eq!(runtime.dispatch(&Event::activate(1, 5, 99), &mut |_| Ok(19)), Ok(19));
+        assert_eq!(runtime.dispatch(&Event::activate(1, 2, 77), &mut |_| Ok(19)), Ok(19));
     }
 
     /// Declarative `View` composition mirroring the C Manager Overview.
@@ -2297,6 +2405,17 @@ mod tests {
             ..Layout::default()
         };
         assert_eq!(tree.set_layout(1, layout), Err(UiError::Argument));
+        let visual = Visual {
+            flags: VISUAL_FLAG_FOREGROUND_RGB | VISUAL_FLAG_VIRTUAL_CONTENT,
+            foreground_rgb: 0x123456,
+            content_height: 800,
+            scroll_y: 50,
+            ..Visual::default()
+        };
+        tree.set_visual(1, visual).unwrap();
+        assert_eq!(tree.snapshot.visual(0), Some(&visual));
+        assert_eq!(tree.set_visual(99, visual), Err(UiError::Argument));
+        assert_eq!(tree.set_visual(1, Visual { foreground_rgb: 0x1000000, ..visual }), Err(UiError::Argument));
     }
 
     #[test]
@@ -2366,7 +2485,12 @@ mod tests {
     }
 
     #[test]
-    fn c_abi_backend_forwards_snapshot_synchronously() {
+    fn c_abi_backend_forwards_snapshot_and_preserves_unsupported() {
+        struct ResultRecord {
+            generation: u32,
+            status: core::cell::Cell<i32>,
+        }
+
         unsafe extern "C" fn apply(
             cookie: *mut core::ffi::c_void,
             snapshot: *const Snapshot,
@@ -2377,12 +2501,13 @@ mod tests {
             // SAFETY: the test creates both pointers from live, aligned values
             // and the callback does not retain either pointer.
             unsafe {
-                *cookie.cast::<u32>() = (*snapshot).generation;
+                let record = &mut *cookie.cast::<ResultRecord>();
+                record.generation = (*snapshot).generation;
+                record.status.get()
             }
-            0
         }
 
-        let mut observed = 0u32;
+        let mut observed = ResultRecord { generation: 0, status: core::cell::Cell::new(0) };
         // SAFETY: `observed` outlives the adapter and `apply` obeys the
         // synchronous callback contract.
         let mut backend = unsafe {
@@ -2393,7 +2518,11 @@ mod tests {
         };
         let snapshot = Snapshot::empty();
         backend.apply(&snapshot).unwrap();
-        assert_eq!(observed, 1);
+        assert_eq!(observed.generation, 1);
+        observed.status.set(-8); // CANOPUS_UI_ERR_UNSUPPORTED
+        assert_eq!(backend.apply(&snapshot), Err(UiError::Unsupported));
+        observed.status.set(-5); // CANOPUS_UI_ERR_BACKEND
+        assert_eq!(backend.apply(&snapshot), Err(UiError::Backend));
     }
 
     #[test]
@@ -2421,8 +2550,11 @@ mod tests {
             type Model = u32;
             type Message = Message;
 
-            fn decode_message(event_id: u32) -> Option<Self::Message> {
-                match event_id {
+            fn decode_event(event: &Event) -> Option<Self::Message> {
+                if event.type_ != EVENT_ACTIVATE && event.type_ != EVENT_VALUE_CHANGED {
+                    return None;
+                }
+                match event.event_id {
                     41 => Some(Message::Increment),
                     42 => Some(Message::AddTen),
                     43 => Some(Message::Cycle),
@@ -2484,21 +2616,31 @@ mod tests {
         runtime.rebuild(render).unwrap();
         assert_eq!(runtime.current().generation, 1);
 
-        runtime.dispatch_event(1, 2, 41, render).unwrap();
+        let mut pointer = Event::activate(1, 2, 41);
+        pointer.type_ = EVENT_PRESS;
+        runtime.dispatch_event(&pointer, render).unwrap();
+        assert_eq!(*runtime.model(), 0);
+        assert_eq!(runtime.backend().apply_count, 1);
+        pointer.type_ = EVENT_MOVE;
+        runtime.dispatch_event(&pointer, render).unwrap();
+        assert_eq!(*runtime.model(), 0);
+        assert_eq!(runtime.current().generation, 1);
+
+        runtime.dispatch_event(&Event::activate(1, 2, 41), render).unwrap();
         assert_eq!(*runtime.model(), 11);
         assert_eq!(runtime.current().generation, 2);
         assert_eq!(runtime.backend().applied.generation, 2);
         assert_eq!(runtime.backend().apply_count, 2);
 
         assert_eq!(
-            runtime.dispatch_event(1, 2, 41, render),
+            runtime.dispatch_event(&Event::activate(1, 2, 41), render),
             Err(UiError::StaleGeneration)
         );
         assert_eq!(runtime.dropped_events(), 1);
 
         runtime.backend_mut().fail = true;
         assert_eq!(
-            runtime.dispatch_event(2, 2, 41, render),
+            runtime.dispatch_event(&Event::activate(2, 2, 41), render),
             Err(UiError::Backend)
         );
         assert_eq!(runtime.current().generation, 2);
@@ -2506,11 +2648,149 @@ mod tests {
 
         runtime.backend_mut().fail = false;
         assert_eq!(
-            runtime.dispatch_event(2, 3, 43, render),
+            runtime.dispatch_event(&Event::activate(2, 3, 43), render),
             Err(UiError::Capacity)
         );
         assert!(runtime.commands.is_empty());
         assert_eq!(runtime.current().generation, 2);
+    }
+
+    #[test]
+    fn application_runtime_delivers_rich_events_and_keeps_clicks_distinct() {
+        #[derive(Copy, Clone)]
+        enum Message {
+            Click,
+            Toggle,
+            Input(Event),
+        }
+
+        impl From<Message> for u32 {
+            fn from(message: Message) -> Self {
+                match message {
+                    Message::Click => 41,
+                    Message::Toggle => 42,
+                    Message::Input(event) => event.event_id,
+                }
+            }
+        }
+
+        #[derive(Default)]
+        struct Model {
+            clicks: u32,
+            toggles: u32,
+            inputs: u32,
+            last: Option<Event>,
+        }
+
+        struct App;
+        impl Application for App {
+            type Model = Model;
+            type Message = Message;
+
+            fn decode_event(event: &Event) -> Option<Self::Message> {
+                match (event.type_, event.event_id) {
+                    (EVENT_ACTIVATE, 41) => Some(Message::Click),
+                    (EVENT_VALUE_CHANGED, 42) => Some(Message::Toggle),
+                    (EVENT_PRESS..=EVENT_SCROLL, _) => Some(Message::Input(*event)),
+                    _ => None,
+                }
+            }
+
+            fn update(
+                &mut self,
+                model: &mut Model,
+                message: Message,
+                commands: &mut impl CommandSink<Message>,
+            ) {
+                match message {
+                    Message::Click => model.clicks += 1,
+                    Message::Toggle => model.toggles += 1,
+                    Message::Input(event) => {
+                        model.inputs += 1;
+                        model.last = Some(event);
+                        if event.type_ == EVENT_SCROLL {
+                            commands.submit(Command::Rebuild).unwrap();
+                        }
+                    }
+                }
+            }
+        }
+
+        struct Backend(u32);
+        impl SnapshotBackend for Backend {
+            fn apply(&mut self, _snapshot: &Snapshot) -> Result<(), UiError> {
+                self.0 += 1;
+                Ok(())
+            }
+        }
+
+        fn render(model: &Model, tree: &mut Tree) -> Result<(), UiError> {
+            tree.navigation_page(1, "Input")?;
+            tree.button(2, "Click", 41, true)?;
+            tree.component(3, NodeKind::Checkbox, ComponentSpec {
+                event_id: 42,
+                flags: FLAG_VISIBLE | FLAG_ENABLED,
+                ..ComponentSpec::default()
+            })?;
+            tree.component(4, NodeKind::Scroll, ComponentSpec::default())?;
+            tree.set_visual(4, Visual {
+                flags: VISUAL_FLAG_VIRTUAL_CONTENT,
+                content_height: 7_200,
+                scroll_y: model.last.filter(|event| event.type_ == EVENT_SCROLL)
+                    .map_or(0, |event| event.scroll_y),
+                ..Visual::default()
+            })?;
+            tree.end()?;
+            tree.end()
+        }
+
+        let mut runtime: ApplicationRuntime<App, Backend, 1> =
+            ApplicationRuntime::new(App, Model::default(), Backend(0));
+        runtime.rebuild(render).unwrap();
+        for type_ in EVENT_PRESS..=EVENT_CANCEL {
+            let event = Event {
+                type_,
+                time_ms: 1_000 + type_,
+                x: 80,
+                y: 120,
+                delta_x: -4,
+                delta_y: 9,
+                ..Event::activate(runtime.current().generation, 2, 41)
+            };
+            runtime.dispatch_event(&event, render).unwrap();
+            assert_eq!(runtime.model().last, Some(event));
+            assert_eq!(runtime.model().clicks, 0);
+            assert_eq!(runtime.backend().0, 1); // capture/direct controls keep the live snapshot
+            assert_eq!(runtime.current().generation, 1);
+        }
+        let scroll = Event {
+            type_: EVENT_SCROLL,
+            time_ms: 2_000,
+            scroll_y: 900,
+            viewport_height: 400,
+            content_height: 7_200,
+            ..Event::activate(runtime.current().generation, 4, 0)
+        };
+        runtime.dispatch_event(&scroll, render).unwrap();
+        assert_eq!(runtime.model().last, Some(scroll));
+        assert_eq!(runtime.model().inputs, 6);
+        assert_eq!(runtime.backend().0, 2);
+        assert_eq!(runtime.current().generation, 2);
+        assert_eq!(runtime.current().visual(3).unwrap().scroll_y, 900);
+        assert_eq!(runtime.dispatch_event(&scroll, render), Err(UiError::StaleGeneration));
+        assert_eq!(runtime.model().inputs, 6);
+        assert_eq!(runtime.backend().0, 2);
+
+        let click = Event::activate(runtime.current().generation, 2, 41);
+        runtime.dispatch_event(&click, render).unwrap();
+        let toggle = Event {
+            type_: EVENT_VALUE_CHANGED,
+            ..Event::activate(runtime.current().generation, 3, 42)
+        };
+        runtime.dispatch_event(&toggle, render).unwrap();
+        assert_eq!(runtime.model().clicks, 1);
+        assert_eq!(runtime.model().toggles, 1);
+        assert_eq!(runtime.model().inputs, 6);
     }
 
     #[test]
@@ -2545,6 +2825,7 @@ mod tests {
             title: "Modules",
             subtitle: "2 installed",
             back: Some(ManagerEvent::SafeMode),
+            show_back: true,
             centered: true,
             elevated: false,
             style: Style::default(),
@@ -2566,6 +2847,56 @@ mod tests {
         assert_ne!(node.flags & FLAG_HEADER_BACK, 0);
         assert_ne!(node.flags & FLAG_HEADER_CENTERED, 0);
         assert!(node.enabled());
+    }
+
+    #[test]
+    fn navigation_header_preserves_hidden_back_and_requires_visible_activation() {
+        let mut header = NavigationHeader {
+            key: 2,
+            title: "Route",
+            subtitle: "",
+            back: Some(0u32),
+            show_back: true,
+            centered: false,
+            elevated: false,
+            style: Style::default(),
+            layout: Layout::default(),
+            children: (),
+        };
+        let mut tree = Tree::begin();
+        tree.navigation_page(1, "Route").unwrap();
+        assert_eq!(header.render(&mut tree), Err(UiError::Argument));
+        assert_eq!(tree.snapshot.node_count, 1);
+        header.back = None;
+        assert_eq!(header.render(&mut tree), Err(UiError::Argument));
+        header.back = Some(77);
+        header.show_back = false;
+        header.render(&mut tree).unwrap();
+        tree.end().unwrap();
+        let snapshot = tree.commit().unwrap();
+        let node = snapshot.find_by_key(2).unwrap();
+        assert_eq!(node.event_id, 77);
+        assert_eq!(node.flags & FLAG_HEADER_BACK, 0);
+        assert!(!node.enabled());
+        let mut runtime = Runtime::new();
+        runtime.commit(snapshot);
+        assert_eq!(runtime.dispatch(&Event::activate(1, 2, 77), &mut |_| Ok(1)), Err(UiError::Disabled));
+
+        header.show_back = true;
+        let mut tree = Tree::begin();
+        tree.navigation_page(1, "Route").unwrap();
+        header.render(&mut tree).unwrap();
+        tree.end().unwrap();
+        let mut snapshot = tree.commit().unwrap();
+        snapshot.generation = 2;
+        runtime.commit(snapshot);
+        let event = Event::activate(2, 2, 77);
+        assert_eq!(runtime.dispatch(&event, &mut |received| {
+            assert_eq!(received.type_, EVENT_ACTIVATE);
+            Ok(1)
+        }), Ok(1));
+        assert_eq!(runtime.dispatch(&Event { type_: EVENT_VALUE_CHANGED, ..event }, &mut |_| Ok(1)), Err(UiError::Argument));
+        assert_eq!(runtime.dispatch(&Event::activate(1, 2, 77), &mut |_| Ok(1)), Err(UiError::StaleGeneration));
     }
 
     #[test]

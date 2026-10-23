@@ -9,10 +9,10 @@ back reaches the module's `on_back`: on a sub-page it returns to the list, from 
 | 表单控件 | status row, switch row, two checkboxes, three radio rows (the module keeps them exclusive), button |
 | 进度条 | progress bar, action rows that change its value |
 | 文本 | text in the four styles, rich text, divider, spacer |
-| 图片 | an image (`/data/canopus/manager_icon.bin`) sized through `ctx->ui_ext->node_set_layout` |
+| 图片 | an image (`/data/canopus/manager_icon.bin`) sized through `ctx->ui->node_set_layout` |
 | 对话框 | a dialog container with a message and two buttons (the firmware message box; inline where a target has none) |
 | 样式与布局 | `node_set_style` / `node_set_layout` |
-| 关闭本页 | the module closes its own page with `ctx->ui_ext->close_page` |
+| 关闭本页 | the module closes its own page with `ctx->ui->close_page` |
 
 Every event appends one line (`<what> <route>/<value>`) to `ui_probe.txt` in the module's private
 directory, which the emulator harness reads back:

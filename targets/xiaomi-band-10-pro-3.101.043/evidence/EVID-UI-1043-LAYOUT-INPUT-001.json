@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-1043-LAYOUT-INPUT-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Recover exact native input, coordinates, timestamps, scroll controls and rounded descendant clipping without guessed LVGL enum or coordinate ABI.",
+  "style_properties": {
+    "radius": 12,
+    "clip_corner": 45
+  },
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.ui.lv_event_get_indev",
+    "xiaomi-band-10-pro-3.101.043.ui.lv_indev_get_point",
+    "xiaomi-band-10-pro-3.101.043.ui.lv_obj_get_coords",
+    "xiaomi-band-10-pro-3.101.043.ui.lv_obj_get_scroll_y",
+    "xiaomi-band-10-pro-3.101.043.ui.lv_obj_get_scroll_x",
+    "xiaomi-band-10-pro-3.101.043.ui.lv_obj_scroll_to",
+    "xiaomi-band-10-pro-3.101.043.ui.lv_tick_get",
+    "xiaomi-band-10-pro-3.101.043.ui.lv_obj_update_layout"
+  ],
+  "callsite_evidence": [
+    "Exact diagnostic lv_event_get_indev in lv_obj_event.c:202; validates code range and returns event param at +16.",
+    "Copies two signed DWORD coordinates from indev+56,+60 for pointer/button input. Null input writes zero; wrong type writes -1.",
+    "Copies four DWORD coordinates from object+28,+32,+36,+40.",
+    "Returns negative signed spec_attr+36 from object+8, or zero without spec_attr.",
+    "Returns negative signed spec_attr+32 from object+8, or zero without spec_attr.",
+    "Absolute scroll_to is runtime 0x1c02ddb0 (load source 0xc13b1f0), with r0=obj,r1=absolute x,r2=absolute y,r3=anim; XIP veneer 0xc588800 targets callable 0x1c02ddb1. It computes current_x-requested_x at 0x1c02ddce and calls bounded relative-scroll 0x1c02d860 at 0x1c02ddd6; 0x1c02ddea similarly computes current_y-requested_y. Native callers 0x1c02ed84,0x1c078388,0x1c0783b0 explicitly call (obj,0,0,0) to restore zero offsets. The former entry 0xc13aca0 is the load source of relative-scroll 0x1c02d860, whose zero-delta early return cannot implement absolute zero restoration.",
+    "Returns configured tick callback or firmware tick counter; same tick_get called by native pointer timers.",
+    "Walks screen layout dirty flags and recomputes native geometry; exact helper called by native scroll_to.",
+    "Pointer processor sub_C15E310 sends event1 on acquisition, event2 for pressing, event3 when prior pressed object loses pointer, event5 after long-press threshold. Release processor sub_C15D80C sends event8. Scroll mutations sub_C13AB48/sub_C13B850 send event12; 17 is not scroll.",
+    "Native pointer read core sub_C15E920 stores point as two DWORD at indev+56,+60 and uses signed32 screen arithmetic. Native event code is uint16 at event+8.",
+    "Call graph ties getter sub_C13A13C to object y relative-coordinate helper sub_C137A8C, while x counterpart sub_C13A128 is called by sub_C1379C0. Native scroll implementation spec_attr+32/+36 offsets match getters."
+  ],
+  "control_flow_evidence": [
+    "Function prefixes audited directly in exact-target IDA database; callable addresses include the Thumb bit and use runtime VMAs rather than flash load addresses.",
+    "Startup 0xc0c0a60 copies flash [0x2c0fc6cc,0x2c10d438) to SRAM 0x200b2860, executable alias 0x002b2860. Therefore lv_event_get_indev source 0xc109740 maps to runtime 0x002bf8d4/callable 0x002bf8d5; native veneers 0xc588928 and 0x1c07aa90 independently target it.",
+    "Startup 0xc0c0ac8 copies flash [0x2c10d440,0x2c18d940) to PSRAM 0x3c000000, executable alias 0x1c000000. The exact input/layout/scroll mappings are indev_get_point 0xc15e050 -> 0x1c050c10, obj_get_coords 0xc1379a4 -> 0x1c02a564, scroll_x 0xc13a128 -> 0x1c02cce8, scroll_y 0xc13a13c -> 0x1c02ccfc, absolute scroll_to 0xc13b1f0 -> 0x1c02ddb0, update_layout 0xc139ba0 -> 0x1c02c760 and tick_get 0xc17114c -> 0x1c063d0c. Each source/runtime first 32 bytes matches exactly. Runtime call graphs and absolute veneers confirm the mappings; source copies must not be executed as callable entries.",
+    "Independent stock XIP veneers target the same runtime functions: coords 0xc588768 -> 0x1c02a565, scroll_x 0xc588630 -> 0x1c02cce9, absolute scroll_to 0xc588800 -> 0x1c02ddb1, layout 0xc588090 -> 0x1c02c761 and tick 0xc588dc0 -> 0x1c063d0d.",
+    "The UI host image functions are in the same PSRAM copy: image_create source 0xc179f00 -> runtime 0x1c06cac0/callable 0x1c06cac1 and image_set_src source 0xc17a2f4 -> runtime 0x1c06ceb4/callable 0x1c06ceb5. Stock veneers 0xc588d58 and 0xc587fa0 independently target these runtime bodies. These address corrections retain the records' existing proof, policy, approval and device metadata; no capability status is promoted.",
+    "Image constructor 0x1c06cac0 saves incoming R1 and forwards it to class initializer 0x1c029074 after allocating image class 0x2cce61ec with parent R0. Class initializer selects incoming R1 when non-NULL, otherwise default byte pointer 0x200c97bc; LDRB at 0x1c02908c gates theme helper 0x1c063c3c and later style/event initialization. The options pointer is borrowed synchronously. Exact stock callers 0xc4c8284,0xc4ca0fc,0x1c0703f4 explicitly pass R1=0. The required prototype is void *(void *, const void *); FW_UI_IMAGE_CREATE_THEME_ARG=1 selects the host (parent,NULL) call. This agrees with the existing exact-thunk ABI in EVID-RESOURCE-XIP-THUNKS-1043-001 and does not promote any capability status.",
+    "Coordinates four signed32 values occupy obj+28..40; indev point two signed32 occupy indev+56..60.",
+    "Scroll-to invokes native layout update before clamping and native event12 after translating child coordinates.",
+    "align_to veneer0x0c588ef0 delegates to0x1c02c160, which adds parent scroll offsets before writing x/y style properties8/9. The host subtracts the recovered scroll getters for parent-relative content placement. Alignment5 is bottom-middle; alignment8 is right-middle.",
+    "Exact .043 stock setter sources 0x0c108830 and 0x0c108848 preserve object/value/selector in r0/r2/r3 and load radius property12 or clip_corner property45 into r1. Their runtime SRAM copies 0x002be9c4 and 0x002be9dc call the local-style dispatcher runtime 0x002bd924 (source 0x0c107790). The corrected callable is 0x002bd925; EVID-UI-1043-LOCAL-STYLE-001 records why the flash source is not a callable address.",
+    "The exact .043 renderer queries property45 at0x0c1046c4 through style getter0x0c1068a8. Zero follows the normal rectangular child-drawing path at0x0c1046d4; nonzero queries radius12 at0x0c104724 and, when nonzero, draws descendants through bounded layers and rounded mask helper0x0c10cbdc. This establishes rounded descendant clipping independently of default rectangular viewport clipping. Enabling and clearing the native property are both required when reusing an object."
+  ],
+  "ownership_analysis": "All access remains on UI owner with borrowed live firmware objects and native events. No native pointer is exposed in public ABI. Tick getter retains no arguments.",
+  "unsafe_assumptions": [
+    "No device input/scroll/capture gate was run in this recovery.",
+    "Only exact3.101.043 recovered; sibling firmware addresses must be independently recovered."
+  ],
+  "recommended_probe": "Device press/long/move/release/cancel, captured scroll restoration, virtual list scroll_to and generation-safe window replacement.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-22T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64",
+      "role": "Exact firmware decompilation and native pointer/scroll call graph"
+    }
+  ]
+}

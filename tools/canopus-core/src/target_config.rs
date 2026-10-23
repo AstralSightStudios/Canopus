@@ -18,6 +18,17 @@ struct Mapping {
     address: Address,
 }
 
+const FW_UI_INPUT: &[Mapping] = &[
+    Mapping { macro_name: "FW_UI_EVENT_GET_INDEV", symbol_name: "lv_event_get_indev", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_INDEV_GET_POINT", symbol_name: "lv_indev_get_point", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_OBJECT_GET_COORDS", symbol_name: "lv_obj_get_coords", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_OBJECT_GET_SCROLL_Y", symbol_name: "lv_obj_get_scroll_y", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_OBJECT_GET_SCROLL_X", symbol_name: "lv_obj_get_scroll_x", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_OBJECT_SCROLL_TO", symbol_name: "lv_obj_scroll_to", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_TICK_GET", symbol_name: "lv_tick_get", address: Address::Callable },
+    Mapping { macro_name: "FW_UI_UPDATE_LAYOUT", symbol_name: "lv_obj_update_layout", address: Address::Callable },
+];
+
 const FW_10: &[Mapping] = &[
     Mapping {
         macro_name: "FW_VERSION_ADDRESS",
@@ -87,6 +98,11 @@ const FW_10: &[Mapping] = &[
     Mapping {
         macro_name: "FW_LVX_PAGE_TITLE_CREATE",
         symbol_name: "lvx_page_title_create",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_STYLE_SET",
+        symbol_name: "lv_obj_set_local_style_prop",
         address: Address::Callable,
     },
     Mapping {
@@ -730,6 +746,11 @@ impl<'a> TargetConfigGen<'a> {
         // include this header. Incomplete custom targets expose identity only.
         if complete {
             self.emit(&mut out, if custom { FW_9 } else { FW_10 }, false);
+            self.emit(&mut out, FW_UI_INPUT, false);
+            if self.pack.target_id == "xiaomi-band-10-pro-3.101.043" {
+                // Exact private properties: EVID-UI-1043-LAYOUT-INPUT-001.
+                out.push_str("#define FW_UI_COORD_TYPE int32_t\n#define FW_UI_EVENT_PRESSED 1u\n#define FW_UI_EVENT_PRESSING 2u\n#define FW_UI_EVENT_PRESS_LOST 3u\n#define FW_UI_EVENT_LONG_PRESSED 5u\n#define FW_UI_EVENT_RELEASED 8u\n#define FW_UI_EVENT_SCROLL 12u\n#define FW_UI_STYLE_RADIUS 12u\n#define FW_UI_STYLE_CLIP_CORNER 45u\n#define FW_UI_IMAGE_CREATE_THEME_ARG 1\n");
+            }
             out.push('\n');
             self.emit(&mut out, if custom { SUP_9 } else { SUP_10 }, custom);
         } else {

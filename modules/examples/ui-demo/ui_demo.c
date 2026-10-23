@@ -136,11 +136,12 @@ static int32_t on_open(const struct canopus_context_v1 *ctx, struct canopus_ui_c
 }
 
 static int32_t on_event(const struct canopus_context_v1 *ctx, struct canopus_ui_context_v1 *ui,
-                        uint32_t key, uint32_t event_id, void *user_data)
+                        const struct canopus_ui_event_v1 *event, void *user_data)
 {
-    (void)key;
     (void)user_data;
-    switch (event_id) {
+    if (event->type != CANOPUS_UI_EVENT_ACTIVATE &&
+        event->type != CANOPUS_UI_EVENT_VALUE_CHANGED) return CANOPUS_UI_OK;
+    switch (event->event_id) {
     case EV_TOGGLE: s_state.checked = !s_state.checked; probe(ctx, "toggle"); break;
     case EV_ADD: s_state.clicks++; probe(ctx, "add"); break;
     case EV_DETAIL: s_state.route = ROUTE_DETAIL; probe(ctx, "detail"); break;
@@ -181,14 +182,14 @@ static int32_t demo_prepare(const struct canopus_context_v1 *ctx)
 
 static int32_t demo_activate(const struct canopus_context_v1 *ctx)
 {
-    if (ctx->struct_size < sizeof(struct canopus_context_v1) || ctx->ui_ext == 0) return -1;
-    return ctx->ui_ext->set_entry(ctx, &s_entry);
+    if (ctx->ui == 0) return -1;
+    return ctx->ui->set_entry(ctx, &s_entry);
 }
 
 static int32_t demo_deactivate(const struct canopus_context_v1 *ctx)
 {
-    if (ctx->struct_size >= sizeof(struct canopus_context_v1) && ctx->ui_ext != 0) {
-        (void)ctx->ui_ext->set_entry(ctx, 0);
+    if (ctx->ui != 0) {
+        (void)ctx->ui->set_entry(ctx, 0);
     }
     return 0;
 }

@@ -97,16 +97,16 @@ local function run_case(version, fault)
                     after_paint()
                     if #data==36 then
                         -- CPC2 QUERY_DEVICE diagnostic (Band 10 Pro only)
-                        assert(not is_band11 and data==string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,1,1,0,36,9,0x7FFF,0,0,0))
-                        reply=string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,1,0,120,9,0x7FFF,0,5,84)..string.rep('\0',24)..string.pack('<i4',-7)..string.rep('\0',56)
+                        assert(not is_band11 and data==string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,1,2,0,36,9,0x7FFF,0,0,0))
+                        reply=string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,2,0,120,9,0x7FFF,0,5,84)..string.rep('\0',24)..string.pack('<i4',-7)..string.rep('\0',56)
                         return self
                     end
                     request=data
                     local id=fault=='stale_response' and 9 or 1
                     local result=fault=='rejected' and 3 or 5
                     reply=is_band11 and
-                        string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,1,0,40,2,id,0,result,4)..string.pack('<I4',7) or
-                        string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,1,0,36,2,id,0,result,0)
+                        string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,2,0,40,2,id,0,result,4)..string.pack('<I4',7) or
+                        string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,2,0,36,2,id,0,result,0)
                     if fault=='short_write' then return #data-1 end
                     return self
                 end,

@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 92d5d43176502bd9
+// input_digest: 25439289e5a1d902
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -297,6 +297,9 @@ pub const CANOPUS_FW_FONT_RELOAD_SW_DISPATCH_CALLABLE: usize = canopus_thumb_cal
 /// Recovered `font_reload_vector_drop` at 0x0c6a1304. Thumb callable address 0x0c6a1305.
 pub const CANOPUS_FW_FONT_RELOAD_VECTOR_DROP_CALLABLE: usize = canopus_thumb_callable(0x0c6a1305usize);
 
+/// Recovered `lv_obj_get_scroll_y` at 0x0c37ff5a. Thumb callable address 0x0c37ff5b.
+pub const CANOPUS_FW_LV_OBJ_GET_SCROLL_Y_CALLABLE: usize = canopus_thumb_callable(0x0c37ff5busize);
+
 /// Recovered `heap_malloc` at 0xc3513e8. Thumb callable address 0xc3513e9.
 pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc3513e9usize);
 
@@ -455,6 +458,9 @@ pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_DESTROY_CALLABLE: usize = canopus_thumb
 
 /// Recovered `bt_queue_external` at 0xc863bb4. Thumb callable address 0xc863bb5.
 pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(0xc863bb5usize);
+
+/// Recovered `lv_indev_get_point` at 0x0c399c28. Thumb callable address 0x0c399c29.
+pub const CANOPUS_FW_LV_INDEV_GET_POINT_CALLABLE: usize = canopus_thumb_callable(0x0c399c29usize);
 
 /// Recovered `font_manager_generate_def_path` at 0x0c490edc. Thumb callable address 0x0c490edd.
 pub const CANOPUS_FW_FONT_MANAGER_GENERATE_DEF_PATH_CALLABLE: usize = canopus_thumb_callable(0x0c490eddusize);
@@ -704,6 +710,9 @@ pub const canopus_fw_font_reload_style_refresh_enabled: usize = 0x200bd210usize;
 
 /// Recovered `write` at 0xc33dc4e. Thumb callable address 0xc33dc4f.
 pub const CANOPUS_FW_WRITE_CALLABLE: usize = canopus_thumb_callable(0xc33dc4fusize);
+
+/// Recovered `lv_event_get_indev` at 0x0c37fca0. Thumb callable address 0x0c37fca1.
+pub const CANOPUS_FW_LV_EVENT_GET_INDEV_CALLABLE: usize = canopus_thumb_callable(0x0c37fca1usize);
 
 /// Recovered `read` at 0xc33d784. Thumb callable address 0xc33d785.
 pub const CANOPUS_FW_READ_CALLABLE: usize = canopus_thumb_callable(0xc33d785usize);
@@ -1060,15 +1069,18 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // lv_draw_rect_dsc_init: restricted - not exported until context/ownership approved
 // lv_event_add: restricted - not exported until context/ownership approved
 // lv_event_get_code: restricted - not exported until context/ownership approved
+// lv_event_get_indev: restricted - not exported until context/ownership approved
 // lv_event_get_user_data: restricted - not exported until context/ownership approved
 // lv_image_cache_drop: restricted - not exported until context/ownership approved
 // lv_image_create: restricted - not exported until context/ownership approved
 // lv_image_decoder_get_info: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
+// lv_indev_get_point: restricted - not exported until context/ownership approved
 // lv_obj_add_event_cb: restricted - not exported until context/ownership approved
 // lv_obj_align_to: restricted - not exported until context/ownership approved
 // lv_obj_area_is_visible: restricted - not exported until context/ownership approved
 // lv_obj_clear_flag: restricted - not exported until context/ownership approved
+// lv_obj_get_scroll_y: restricted - not exported until context/ownership approved
 // lv_obj_get_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
 // lv_obj_refresh_style: restricted - not exported until context/ownership approved

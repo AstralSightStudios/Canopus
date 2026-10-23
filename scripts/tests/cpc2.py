@@ -4,10 +4,11 @@ import struct
 NATIVE_STAGE = 13
 RESTORE_AFTER_BOOT = 14
 HEADER = 36
+ABI_MAJOR = 2
 
 
 def frame(op, payload=b"", request_id=1):
-    return struct.pack("<IHHHHIIIIII", 0x43504332, HEADER, 1, 1, 0, HEADER + len(payload),
+    return struct.pack("<IHHHHIIIIII", 0x43504332, HEADER, 1, ABI_MAJOR, 0, HEADER + len(payload),
                        op, request_id, 0, 0, len(payload)) + payload
 
 

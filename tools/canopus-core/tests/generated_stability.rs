@@ -274,6 +274,58 @@ fn parse_address(value: &str) -> usize {
 }
 
 #[test]
+fn band10_pro_043_ui_calls_use_audited_runtime_addresses() {
+    let dir = repo_root().join("targets/xiaomi-band-10-pro-3.101.043");
+    let pack = canopus_core::registry::load_target_pack(&dir.join("target.toml")).unwrap();
+    let (symbols, _) = load_records(&dir).unwrap();
+    let generated = TargetConfigGen {
+        pack: &pack,
+        symbols: &symbols,
+    }
+    .generate();
+    let committed = std::fs::read_to_string(dir.join("generated/canopus_target_config.h")).unwrap();
+    let image_create = symbols.iter().find(|symbol| symbol.name == "lv_image_create").unwrap();
+    assert_eq!(image_create.prototype.as_deref(), Some("void *(void *, const void *)"));
+    let image_abi = "#define FW_UI_IMAGE_CREATE_THEME_ARG 1\n";
+    assert!(generated.contains(image_abi));
+    assert!(committed.contains(image_abi));
+
+    // EVID-UI-1043-LOCAL-STYLE-001 and EVID-UI-1043-LAYOUT-INPUT-001
+    // pin startup-copy runtime VMAs. Executing the style LMA makes its
+    // cross-section memmove BL land in the zero-filled AP header.
+    for (name, macro_name, entry) in [
+        ("lv_obj_set_local_style_prop", "FW_UI_STYLE_SET", 0x002bd924),
+        ("lv_event_get_indev", "FW_UI_EVENT_GET_INDEV", 0x002bf8d4),
+        ("lv_indev_get_point", "FW_UI_INDEV_GET_POINT", 0x1c050c10),
+        ("lv_obj_get_coords", "FW_UI_OBJECT_GET_COORDS", 0x1c02a564),
+        ("lv_obj_get_scroll_x", "FW_UI_OBJECT_GET_SCROLL_X", 0x1c02cce8),
+        ("lv_obj_get_scroll_y", "FW_UI_OBJECT_GET_SCROLL_Y", 0x1c02ccfc),
+        // Absolute scrolling, including restoration to (0, 0), uses this
+        // primitive; 0x1c02d860 is bounded relative scrolling.
+        ("lv_obj_scroll_to", "FW_UI_OBJECT_SCROLL_TO", 0x1c02ddb0),
+        ("lv_obj_update_layout", "FW_UI_UPDATE_LAYOUT", 0x1c02c760),
+        ("lv_tick_get", "FW_UI_TICK_GET", 0x1c063d0c),
+        ("lv_image_create", "FW_LVX_IMAGE_CREATE", 0x1c06cac0),
+        ("lv_image_set_src", "FW_LVX_IMAGE_SET_SRC", 0x1c06ceb4),
+    ] {
+        let symbol = symbols.iter().find(|symbol| symbol.name == name).unwrap();
+        assert_eq!(
+            parse_address(symbol.entry_address.as_deref().unwrap()),
+            entry,
+            "{name} must use its audited runtime entry"
+        );
+        assert_eq!(
+            parse_address(symbol.callable_address.as_deref().unwrap()),
+            entry | 1,
+            "{name} must use its audited Thumb callable"
+        );
+        let define = format!("#define {macro_name} UINT32_C(0x{:08X})", entry | 1);
+        assert!(generated.contains(&define), "generated {macro_name}");
+        assert!(committed.contains(&define), "committed {macro_name}");
+    }
+}
+
+#[test]
 fn band10_pro_043_resource_thunks_remain_exact_and_private() {
     let target = "xiaomi-band-10-pro-3.101.043";
     let evidence_id = "EVID-RESOURCE-XIP-THUNKS-1043-001";

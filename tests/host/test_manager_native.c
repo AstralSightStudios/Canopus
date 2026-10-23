@@ -29,8 +29,25 @@ static const struct canopus_ui_backend_v1 native_backend_api = {
     sizeof(struct canopus_ui_backend_v1),
     CANOPUS_UI_ABI_MAJOR,
     CANOPUS_UI_ABI_MINOR,
+    CANOPUS_UI_CAP_EXTENDED_COMPONENTS | CANOPUS_UI_CAP_STYLE |
+        CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VALUES |
+        CANOPUS_UI_CAP_NAVIGATION_HEADER,
     native_apply,
+    0,
 };
+
+static int32_t dispatch_activation(struct canopus_ui_context_v1 *ui,
+                                   uint32_t generation, uint32_t key,
+                                   uint32_t event_id)
+{
+    struct canopus_ui_event_v1 event = {0};
+    event.struct_size = sizeof(event);
+    event.generation = generation;
+    event.key = key;
+    event.event_id = event_id;
+    event.type = CANOPUS_UI_EVENT_ACTIVATE;
+    return canopus_ui_dispatch_event(ui, &event);
+}
 
 static int native_transport(const struct canopus_proto_request_v1 *request,
                             const void *payload,
@@ -119,7 +136,7 @@ TEST(manager_native_renders_device_prefabs)
     manager = find_primary(snapshot, "管理器");
     CHECK(manager != 0);
     CHECK(strcmp(snapshot->strings + manager->secondary_off,
-                 "原生 UI ABI 1.4") == 0);
+                 "原生 UI ABI 2.0") == 0);
     CHECK(find_primary(snapshot, "固件") != 0);
     CHECK(find_primary(snapshot, "构建") != 0);
     CHECK(find_primary(snapshot, "目标设备") != 0);
@@ -220,7 +237,7 @@ TEST(manager_native_navigates_list_and_detail)
     snapshot = canopus_ui_current(&native.ui);
     node = find_event(snapshot, CANOPUS_MANAGER_EVENT_SHOW_MODULES);
     CHECK(node != 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(model.view == CANOPUS_MANAGER_VIEW_MODULE_LIST);
 
@@ -229,7 +246,7 @@ TEST(manager_native_navigates_list_and_detail)
     node = find_event(snapshot, CANOPUS_MANAGER_EVENT_OPEN_MODULE_BASE);
     CHECK(node != 0);
     CHECK(strcmp(snapshot->strings + node->primary_off, "mod.hello") == 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(model.view == CANOPUS_MANAGER_VIEW_MODULE_DETAIL);
 
@@ -266,13 +283,13 @@ TEST(manager_native_ready_module_requires_manual_activation_confirmation)
     {
         const struct canopus_ui_node_v1 *node =
             find_event(snapshot, CANOPUS_MANAGER_EVENT_ACTIVATE);
-        CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+        CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                         node->key, node->event_id) == CANOPUS_UI_OK);
         CHECK(native_transport_calls == 0);
         snapshot = canopus_ui_current(&native.ui);
         node = find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
         CHECK(node != 0);
-        CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+        CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                         node->key, node->event_id) == CANOPUS_UI_OK);
         CHECK(native_transport_calls == 1);
         CHECK(native_transport_command == CANOPUS_CMD_ACTIVATE);
@@ -311,13 +328,13 @@ TEST(manager_native_dispatches_real_model_operations)
     snapshot = canopus_ui_current(&native.ui);
     node = find_event(snapshot, CANOPUS_MANAGER_EVENT_DISABLE);
     CHECK(node != 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(native_transport_calls == 0);
     snapshot = canopus_ui_current(&native.ui);
     node = find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
     CHECK(node != 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(native_transport_calls == 1);
     CHECK(native_transport_command == CANOPUS_CMD_DISABLE);
@@ -351,13 +368,13 @@ TEST(manager_native_stage_token_is_bounded_and_installable)
     node = find_event(snapshot, CANOPUS_MANAGER_EVENT_INSTALL);
     CHECK(node != 0);
     CHECK((node->flags & CANOPUS_UI_NODE_FLAG_ENABLED) != 0u);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(native_transport_calls == 0);
     snapshot = canopus_ui_current(&native.ui);
     node = find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
     CHECK(node != 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(native_transport_calls == 1);
     CHECK(native_transport_command == CANOPUS_CMD_INSTALL);
@@ -395,13 +412,13 @@ TEST(manager_native_enable_is_confirmable_and_dispatches)
     CHECK(find_event(snapshot, CANOPUS_MANAGER_EVENT_DISABLE) == 0);
 
     /* Enable is next-boot: it goes through confirmation, then dispatches */
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(native_transport_calls == 0);
     snapshot = canopus_ui_current(&native.ui);
     node = find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
     CHECK(node != 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(native_transport_calls == 1);
     CHECK(native_transport_command == CANOPUS_CMD_ENABLE);
@@ -449,12 +466,12 @@ TEST(manager_native_refreshes_model_after_operation)
     snapshot = canopus_ui_current(&native.ui);
     node = find_event(snapshot, CANOPUS_MANAGER_EVENT_DISABLE);
     CHECK(node != 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
     snapshot = canopus_ui_current(&native.ui);
     node = find_event(snapshot, CANOPUS_MANAGER_EVENT_CONFIRM);
     CHECK(node != 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     node->key, node->event_id) == CANOPUS_UI_OK);
     CHECK(native_transport_command == CANOPUS_CMD_DISABLE);
     CHECK(sink.calls == 1); /* refresh ran after the committed operation */
@@ -542,7 +559,7 @@ TEST(manager_native_router_receives_navigation_routes)
     snapshot = canopus_ui_current(&native.ui);
     modules = find_event(snapshot, CANOPUS_MANAGER_EVENT_SHOW_MODULES);
     CHECK(modules != 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     modules->key, modules->event_id) ==
           CANOPUS_UI_OK);
     CHECK(sink.calls == 1);
@@ -579,7 +596,7 @@ TEST(manager_native_router_preserves_second_module_selection)
     second = find_event(snapshot, CANOPUS_MANAGER_EVENT_OPEN_MODULE_BASE + 1u);
     CHECK(second != 0);
     CHECK(strcmp(snapshot->strings + second->primary_off, "mod.second") == 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation,
                                     second->key, second->event_id) ==
           CANOPUS_UI_OK);
     CHECK(model.view == CANOPUS_MANAGER_VIEW_MODULE_DETAIL);
@@ -607,7 +624,7 @@ TEST(manager_native_detail_offers_the_module_page_only_when_it_has_one_and_runs)
     CHECK(canopus_manager_native_init(&native, &model, &native_backend_api,
                                       &backend) == CANOPUS_UI_OK);
     CHECK(find_event(canopus_ui_current(&native.ui), CANOPUS_MANAGER_EVENT_OPEN_UI) == 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, 1u, 1u, CANOPUS_MANAGER_EVENT_OPEN_UI) ==
+    CHECK(dispatch_activation(&native.ui, 1u, 1u, CANOPUS_MANAGER_EVENT_OPEN_UI) ==
           CANOPUS_UI_ERR_ARGUMENT);
 
     /* with an entry the row shows the module's label as its detail */
@@ -622,7 +639,7 @@ TEST(manager_native_detail_offers_the_module_page_only_when_it_has_one_and_runs)
 
     /* choosing it routes to the module page of the selected module */
     canopus_manager_native_set_router(&native, native_route_sink_fn, &sink);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation, node->key,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation, node->key,
                                     node->event_id) == CANOPUS_UI_OK);
     CHECK(sink.calls == 1);
     CHECK(sink.last_route == CANOPUS_MANAGER_ROUTE_MODULE_UI);
@@ -652,7 +669,7 @@ TEST(manager_native_confirmation_is_a_dialog_in_message_box_order)
     snapshot = canopus_ui_current(&native.ui);
     remove = find_event(snapshot, CANOPUS_MANAGER_EVENT_REMOVE);
     CHECK(remove != 0);
-    CHECK(canopus_ui_dispatch_event(&native.ui, snapshot->generation, remove->key,
+    CHECK(dispatch_activation(&native.ui, snapshot->generation, remove->key,
                                     remove->event_id) == CANOPUS_UI_OK);
     snapshot = canopus_ui_current(&native.ui);
     for (i = 0; i < snapshot->node_count; i++) {

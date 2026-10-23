@@ -213,8 +213,11 @@ __band11_fixture_open = function(path, mode)
         return {
             write = function(self, payload)
                 assert(painted == objects[4].text, "command ran before its status could paint")
-                local magic, _, _, _, _, total, op, id, _, _, size = string.unpack("<I4I2I2I2I2I4I4I4I4I4I4", payload)
-                assert(magic == 0x43504332 and total == #payload and total == 36 + size)
+                local magic, _, kind, major, _, total, op, id, _, _, size = string.unpack("<I4I2I2I2I2I4I4I4I4I4I4", payload)
+                -- Mirror decode_request: a stale abi_major is rejected before
+                -- the command is dispatched, so assert it here too.
+                assert(magic == 0x43504332 and kind == 1 and major == 2
+                    and total == #payload and total == 36 + size)
                 local arg0 = size == 4 and string.unpack("<I4", payload, 37) or 0
                 if reject_command then return nil, "fixture command rejected" end
                 device_commands[#device_commands + 1] = {op, arg0, id}
@@ -224,7 +227,9 @@ __band11_fixture_open = function(path, mode)
                 local last = device_commands[#device_commands]
                 return string.pack("<I4I2I2I2I2I4I4I4I4I4I4", 0x43504332, 36, 2, 1, 0, 36, last[1], last[3], 0, 5, 0)
             end,
-            close = function() return true end,
+            -- The device handle reports no close status, as Mirage .155 does;
+            -- a close result must never be mistaken for a failed request.
+            close = function() return nil end,
         }
     end
     if path:match("^/data/canopus/[%w%.]+$") and path ~= "/data/canopus/manager_icon.bin" then

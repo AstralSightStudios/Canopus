@@ -41,6 +41,7 @@ local MODULE_MIN_SIZE = 512
 local MODULE_MAX_SIZE = 262144
 local CPC2_MAGIC = 0x43504332
 local CPC2_HEADER = 36
+local CPC2_ABI_MAJOR = 2
 local CMD_QUERY_DEVICE = 9
 local CMD_INSTALL = 13           -- NATIVE_STAGE: payload-free INSTALL stages 0..2
 local CMD_RESTORE_AFTER_BOOT = 14
@@ -256,13 +257,17 @@ local function exchange(command, payload, reply_size)
     payload = payload or ""
     request_id = request_id + 1
     local request = string.pack("<I4I2I2I2I2I4I4I4I4I4I4", CPC2_MAGIC, CPC2_HEADER,
-        1, 1, 0, CPC2_HEADER + #payload, command, request_id, 0, 0, #payload) .. payload
+        1, CPC2_ABI_MAJOR, 0, CPC2_HEADER + #payload, command, request_id, 0, 0, #payload) .. payload
     local file = control_open(DEVICE_PATH, "wb")
     if not file then return nil, "cannot open /dev/canopus" end
     local write_ok, write_result, write_error = pcall(file.write, file, request)
-    local close_ok, close_result = pcall(file.close, file)
-    if not write_ok or write_result == nil or not close_ok or close_result == nil then
-        return nil, tostring(write_error or write_result or "write failed")
+    -- Closing a character device only reports libc's close status and returns
+    -- no value here, so it carries no protocol meaning. The reply check below
+    -- is what decides whether the request landed.
+    pcall(file.close, file)
+    if not write_ok then return nil, "write: " .. tostring(write_error) end
+    if write_result == nil then
+        return nil, "write: " .. tostring(write_error or "rejected")
     end
     file = control_open(DEVICE_PATH, "rb")
     if not file then return nil, "cannot open /dev/canopus" end
@@ -271,7 +276,8 @@ local function exchange(command, payload, reply_size)
     if type(reply) ~= "string" or #reply ~= reply_size
         or u32le(reply, 0) ~= CPC2_MAGIC or u32le(reply, 16) ~= command
         or u32le(reply, 20) ~= request_id then
-        return nil, "supervisor reply ABI mismatch"
+        return nil, string.format("supervisor reply ABI mismatch (want %d, got %s)",
+            reply_size, type(reply) == "string" and #reply or type(reply))
     end
     return reply
 end

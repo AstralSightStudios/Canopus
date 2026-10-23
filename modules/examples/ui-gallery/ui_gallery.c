@@ -165,7 +165,7 @@ static int32_t build_image(const struct canopus_context_v1 *ctx, struct canopus_
                            0u, CANOPUS_UI_NODE_FLAG_VISIBLE, 0, 0, 0, 1u);
     layout.width = 96;
     layout.height = 96;
-    if (rc == OK && ctx->ui_ext != 0) rc = ctx->ui_ext->node_set_layout(tree, 10u, &layout);
+    if (rc == OK) rc = ctx->ui->node_set_layout(tree, 10u, &layout);
     if (rc == OK) rc = status(ctx, tree, 11u, "图片", "Manager 图标");
     return rc;
 }
@@ -194,10 +194,10 @@ static int32_t build_style(const struct canopus_context_v1 *ctx, struct canopus_
     filled.variant = CANOPUS_UI_VARIANT_FILLED;
     danger.variant = CANOPUS_UI_VARIANT_DESTRUCTIVE;
     narrow.width = 120;
-    if (rc == OK && ctx->ui_ext != 0) rc = ctx->ui_ext->node_set_style(tree, 10u, &filled);
-    if (rc == OK && ctx->ui_ext != 0) rc = ctx->ui_ext->node_set_layout(tree, 10u, &narrow);
+    if (rc == OK) rc = ctx->ui->node_set_style(tree, 10u, &filled);
+    if (rc == OK) rc = ctx->ui->node_set_layout(tree, 10u, &narrow);
     if (rc == OK) rc = action(ctx, tree, 11u, "危险样式", "DESTRUCTIVE", EV_STYLE_TAP);
-    if (rc == OK && ctx->ui_ext != 0) rc = ctx->ui_ext->node_set_style(tree, 11u, &danger);
+    if (rc == OK) rc = ctx->ui->node_set_style(tree, 11u, &danger);
     return rc;
 }
 
@@ -271,10 +271,12 @@ static int32_t on_open(const struct canopus_context_v1 *ctx, struct canopus_ui_c
 }
 
 static int32_t on_event(const struct canopus_context_v1 *ctx, struct canopus_ui_context_v1 *ui,
-                        uint32_t key, uint32_t event_id, void *user_data)
+                        const struct canopus_ui_event_v1 *event, void *user_data)
 {
-    (void)key;
+    uint32_t event_id = event->event_id;
     (void)user_data;
+    if (event->type != CANOPUS_UI_EVENT_ACTIVATE &&
+        event->type != CANOPUS_UI_EVENT_VALUE_CHANGED) return CANOPUS_UI_OK;
     switch (event_id) {
     case EV_GO_FORM: s_state.route = R_FORM; break;
     case EV_GO_PROGRESS: s_state.route = R_PROGRESS; break;
@@ -285,7 +287,7 @@ static int32_t on_event(const struct canopus_context_v1 *ctx, struct canopus_ui_
     case EV_BACK: s_state.route = R_MAIN; break;
     case EV_SELF_CLOSE:
         probe(ctx, "selfclose", 0u);
-        return ctx->ui_ext->close_page(ctx);
+        return ctx->ui->close_page(ctx);
     case EV_CHECK_A: s_state.check_a = !s_state.check_a; probe(ctx, "checkA", s_state.check_a); break;
     case EV_CHECK_B: s_state.check_b = !s_state.check_b; probe(ctx, "checkB", s_state.check_b); break;
     case EV_RADIO_0: case EV_RADIO_1: case EV_RADIO_2:
@@ -343,14 +345,14 @@ static int32_t gallery_prepare(const struct canopus_context_v1 *ctx)
 
 static int32_t gallery_activate(const struct canopus_context_v1 *ctx)
 {
-    if (ctx->struct_size < sizeof(struct canopus_context_v1) || ctx->ui_ext == 0) return -1;
-    return ctx->ui_ext->set_entry(ctx, &s_entry);
+    if (ctx->ui == 0) return -1;
+    return ctx->ui->set_entry(ctx, &s_entry);
 }
 
 static int32_t gallery_deactivate(const struct canopus_context_v1 *ctx)
 {
-    if (ctx->struct_size >= sizeof(struct canopus_context_v1) && ctx->ui_ext != 0) {
-        (void)ctx->ui_ext->set_entry(ctx, 0);
+    if (ctx->ui != 0) {
+        (void)ctx->ui->set_entry(ctx, 0);
     }
     return 0;
 }

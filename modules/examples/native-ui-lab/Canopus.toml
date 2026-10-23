@@ -1,0 +1,23 @@
+schema = 1
+
+[module]
+id = "native_ui_lab"
+version = "1.0.0"
+version_code = 1
+kind = "target"
+language = "c"
+lifecycle = "removable"
+canopus_abi = "2"
+description = "Native UI lab: layout, media, virtual scrolling and pointer input"
+
+[build]
+sources = ["native_ui_lab.c"]
+
+[targets]
+include = [
+  "xiaomi-band-10-pro-3.101.043",
+  "xiaomi-band-10-pro-3.101.036",
+  "xiaomi-band-11-4.100.139",
+  "xiaomi-band-11-4.100.155",
+  "xiaomi-band-11-4.100.179",
+]

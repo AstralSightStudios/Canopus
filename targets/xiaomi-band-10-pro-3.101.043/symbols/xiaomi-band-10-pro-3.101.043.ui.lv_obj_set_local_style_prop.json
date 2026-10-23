@@ -5,8 +5,8 @@
   "name": "lv_obj_set_local_style_prop",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc107790",
-  "callable_address": "0xc107791",
+  "entry_address": "0x002bd924",
+  "callable_address": "0x002bd925",
   "prototype": "void (void *, uint32_t, uint32_t, uint32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -40,7 +40,7 @@
       "EVID-MATCH-001",
       "EVID-UI-1043-LOCAL-STYLE-001"
     ],
-    "source": "Exact 3.101.043 IDB confirmation at loc_C107790: byte-identical 32-byte dispatcher prefix, an exactly corresponding family of 94 stock style wrappers, and independent BG_OPA wrapper argument-flow confirmation against working 3.101.036 loc_C107464. The prior matcher-only candidate was withdrawn until this exact-target evidence was established."
+    "source": "Exact 3.101.043 IDB: startup 0xc0c0a60 copies flash [0x2c0fc6cc,0x2c10d438) to SRAM 0x200b2860, executable alias 0x002b2860. Dispatcher load address 0xc107790 therefore executes at 0x002bd924, Thumb callable 0x002bd925. The 94 stock wrappers and BG_OPA wrapper at runtime 0x002be508 call this dispatcher with the same four-register AAPCS. Runtime style setter 0x002becb8 calls populated memmove 0x00276818 at 0x002bed24; executing its load-address copy incorrectly branches from 0xc108b90 to zero-filled 0xc0c0684. Exact IDA and isolated emulator memory confirm these copies; existing proof and approval metadata are retained."
   },
   "notes": "Exact 3.101.043 LVGL v9 local-style dispatcher. Restricted to freshly created live UI objects on the owner thread; exact-device centered-label rendering probe remains pending.",
   "approval_state": "APPROVED",

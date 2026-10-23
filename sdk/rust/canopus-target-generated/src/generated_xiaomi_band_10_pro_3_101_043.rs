@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 6718e34a152a02aa
+// input_digest: 96ae822ede8f7997
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -326,6 +326,9 @@ pub unsafe fn canopus_fw_sendto(a0: i32, a1: *const core::ffi::c_void, a2: u32, 
 /// Recovered `lv_cache_drop` at 0x0c1667dc. Thumb callable address 0x0c1667dd.
 pub const CANOPUS_FW_LV_CACHE_DROP_CALLABLE: usize = canopus_thumb_callable(0x0c1667ddusize);
 
+/// Recovered `lv_obj_update_layout` at 0x1c02c760. Thumb callable address 0x1c02c761.
+pub const CANOPUS_FW_LV_OBJ_UPDATE_LAYOUT_CALLABLE: usize = canopus_thumb_callable(0x1c02c761usize);
+
 /// Recovered `wakelock_release` at 0x0ca6ea98. Thumb callable address 0x0ca6ea99.
 pub const CANOPUS_FW_WAKELOCK_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0ca6ea99usize);
 
@@ -373,6 +376,9 @@ pub unsafe fn canopus_fw_lvx_label_create(a0: *mut core::ffi::c_void) -> *mut co
 
 /// Recovered global `gap_host_receive_slot` at 0x2013C144.
 pub const canopus_fw_gap_host_receive_slot: usize = 0x2013C144usize;
+
+/// Recovered `lv_obj_get_coords` at 0x1c02a564. Thumb callable address 0x1c02a565.
+pub const CANOPUS_FW_LV_OBJ_GET_COORDS_CALLABLE: usize = canopus_thumb_callable(0x1c02a565usize);
 
 /// Recovered `register_blockdriver` at 0xc1affd8. Thumb callable address 0xc1affd9.
 pub const CANOPUS_FW_REGISTER_BLOCKDRIVER_CALLABLE: usize = canopus_thumb_callable(0xc1affd9usize);
@@ -436,6 +442,9 @@ pub const canopus_fw_p67_battery_status_slot: usize = 0x2010fe60usize;
 
 /// Recovered `control_center_scroll` at 0x0c5036c4. Thumb callable address 0x0c5036c5.
 pub const CANOPUS_FW_CONTROL_CENTER_SCROLL_CALLABLE: usize = canopus_thumb_callable(0x0c5036c5usize);
+
+/// Recovered `lv_indev_get_point` at 0x1c050c10. Thumb callable address 0x1c050c11.
+pub const CANOPUS_FW_LV_INDEV_GET_POINT_CALLABLE: usize = canopus_thumb_callable(0x1c050c11usize);
 
 /// Recovered `font_reload_cache_acquire` at 0x0c1666d0. Thumb callable address 0x0c1666d1.
 pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0x0c1666d1usize);
@@ -583,6 +592,9 @@ pub const CANOPUS_FW_MIWEAR_TRANSPORT_SEND_CALLABLE: usize = canopus_thumb_calla
 
 /// Recovered `font_reload_list_remove` at 0x0c169ce8. Thumb callable address 0x0c169ce9.
 pub const CANOPUS_FW_FONT_RELOAD_LIST_REMOVE_CALLABLE: usize = canopus_thumb_callable(0x0c169ce9usize);
+
+/// Recovered `lv_obj_scroll_to` at 0x1c02ddb0. Thumb callable address 0x1c02ddb1.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_CALLABLE: usize = canopus_thumb_callable(0x1c02ddb1usize);
 
 /// Recovered `lvx_object_set_size` at 0xc588628. Thumb callable address 0xc588629.
 pub const CANOPUS_FW_LVX_OBJECT_SET_SIZE_CALLABLE: usize = canopus_thumb_callable(0xc588629usize);
@@ -751,6 +763,9 @@ pub const canopus_fw_stock_bt_callback_descriptor: usize = 0x2CD4A744usize;
 
 /// Recovered global `font_reload_vector_cache_slot` at 0x2013eae0.
 pub const canopus_fw_font_reload_vector_cache_slot: usize = 0x2013eae0usize;
+
+/// Recovered `lv_tick_get` at 0x1c063d0c. Thumb callable address 0x1c063d0d.
+pub const CANOPUS_FW_LV_TICK_GET_CALLABLE: usize = canopus_thumb_callable(0x1c063d0dusize);
 
 /// Recovered `wakelock_acquire` at 0x0ca6e9dc. Thumb callable address 0x0ca6e9dd.
 pub const CANOPUS_FW_WAKELOCK_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0x0ca6e9ddusize);
@@ -938,8 +953,8 @@ pub unsafe fn canopus_fw_app_net_connect_state_update(a0: i32, a1: i32) -> i32 {
 /// Recovered `p67_blur_snapshot_to_buffer` at 0x0cac0878. Thumb callable address 0x0cac0879.
 pub const CANOPUS_FW_P67_BLUR_SNAPSHOT_TO_BUFFER_CALLABLE: usize = canopus_thumb_callable(0x0cac0879usize);
 
-/// Recovered `lv_obj_set_local_style_prop` at 0xc107790. Thumb callable address 0xc107791.
-pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc107791usize);
+/// Recovered `lv_obj_set_local_style_prop` at 0x002bd924. Thumb callable address 0x002bd925.
+pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x002bd925usize);
 
 /// Recovered `screen_session_set_brightness_value` at 0x0ca72e1c. Thumb callable address 0x0ca72e1d.
 pub const CANOPUS_FW_SCREEN_SESSION_SET_BRIGHTNESS_VALUE_CALLABLE: usize = canopus_thumb_callable(0x0ca72e1dusize);
@@ -1121,8 +1136,11 @@ pub const CANOPUS_FW_FONT_RELOAD_FT_MUL_FIX_CALLABLE: usize = canopus_thumb_call
 /// Recovered `power_battery_charging` at 0x0ca6e690. Thumb callable address 0x0ca6e691.
 pub const CANOPUS_FW_POWER_BATTERY_CHARGING_CALLABLE: usize = canopus_thumb_callable(0x0ca6e691usize);
 
-/// Recovered `lv_image_create` at 0xc179f00. Thumb callable address 0xc179f01.
-pub const CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc179f01usize);
+/// Recovered `lv_event_get_indev` at 0x002bf8d4. Thumb callable address 0x002bf8d5.
+pub const CANOPUS_FW_LV_EVENT_GET_INDEV_CALLABLE: usize = canopus_thumb_callable(0x002bf8d5usize);
+
+/// Recovered `lv_image_create` at 0x1c06cac0. Thumb callable address 0x1c06cac1.
+pub const CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE: usize = canopus_thumb_callable(0x1c06cac1usize);
 
 /// Recovered `lv_bar_set_value` at 0xc5890a8. Thumb callable address 0xc5890a9.
 pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0xc5890a9usize);
@@ -1174,6 +1192,9 @@ pub unsafe fn canopus_fw_bt_adapter_get_instance() -> *mut core::ffi::c_void {
 
 /// Recovered `bt_l2cap_disconnect` at 0xc805b38. Thumb callable address 0xc805b39.
 pub const CANOPUS_FW_BT_L2CAP_DISCONNECT_CALLABLE: usize = canopus_thumb_callable(0xc805b39usize);
+
+/// Recovered `lv_obj_get_scroll_x` at 0x1c02cce8. Thumb callable address 0x1c02cce9.
+pub const CANOPUS_FW_LV_OBJ_GET_SCROLL_X_CALLABLE: usize = canopus_thumb_callable(0x1c02cce9usize);
 
 /// Recovered `service_manager_shutdown` at 0xc3bdce8. Thumb callable address 0xc3bdce9.
 pub const CANOPUS_FW_SERVICE_MANAGER_SHUTDOWN_CALLABLE: usize = canopus_thumb_callable(0xc3bdce9usize);
@@ -1373,6 +1394,9 @@ pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc6
 /// Recovered `lv_obj_set_style_bg_opa_xip_thunk` at 0x0c5883f8. Thumb callable address 0x0c5883f9.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_XIP_THUNK_CALLABLE: usize = canopus_thumb_callable(0x0c5883f9usize);
 
+/// Recovered `lv_obj_get_scroll_y` at 0x1c02ccfc. Thumb callable address 0x1c02ccfd.
+pub const CANOPUS_FW_LV_OBJ_GET_SCROLL_Y_CALLABLE: usize = canopus_thumb_callable(0x1c02ccfdusize);
+
 /// Recovered `gethostbyname_r` at 0xc1e8e64. Thumb callable address 0xc1e8e65.
 pub const CANOPUS_FW_GETHOSTBYNAME_R_CALLABLE: usize = canopus_thumb_callable(0xc1e8e65usize);
 #[allow(non_snake_case)]
@@ -1400,8 +1424,8 @@ pub const CANOPUS_FW_STAT_CALLABLE: usize = canopus_thumb_callable(0x0c1d1e9dusi
 /// Recovered `lv_display_invalidate_area` at 0x0c105164. Thumb callable address 0x0c105165.
 pub const CANOPUS_FW_LV_DISPLAY_INVALIDATE_AREA_CALLABLE: usize = canopus_thumb_callable(0x0c105165usize);
 
-/// Recovered `lv_image_set_src` at 0xc17a2f4. Thumb callable address 0xc17a2f5.
-pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0xc17a2f5usize);
+/// Recovered `lv_image_set_src` at 0x1c06ceb4. Thumb callable address 0x1c06ceb5.
+pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0x1c06ceb5usize);
 
 /// Recovered `font_reload_metrics_compare` at 0x1c056f04. Thumb callable address 0x1c056f05.
 pub const CANOPUS_FW_FONT_RELOAD_METRICS_COMPARE_CALLABLE: usize = canopus_thumb_callable(0x1c056f05usize);
@@ -1526,16 +1550,22 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // lv_display_get_horizontal_resolution: restricted - not exported until context/ownership approved
 // lv_display_get_vertical_resolution: restricted - not exported until context/ownership approved
 // lv_display_invalidate_area: restricted - not exported until context/ownership approved
+// lv_event_get_indev: restricted - not exported until context/ownership approved
 // lv_image_create: restricted - not exported until context/ownership approved
 // lv_image_create_xip_thunk: restricted - not exported until context/ownership approved
 // lv_image_decoder_get_info: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
+// lv_indev_get_point: restricted - not exported until context/ownership approved
 // lv_obj_clear_flag: restricted - not exported until context/ownership approved
+// lv_obj_get_coords: restricted - not exported until context/ownership approved
+// lv_obj_get_scroll_x: restricted - not exported until context/ownership approved
+// lv_obj_get_scroll_y: restricted - not exported until context/ownership approved
 // lv_obj_get_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
 // lv_obj_refresh_style: restricted - not exported until context/ownership approved
 // lv_obj_remove_state: restricted - not exported until context/ownership approved
 // lv_obj_scroll_by: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to: restricted - not exported until context/ownership approved
 // lv_obj_scroll_to_x: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop_xip_thunk: restricted - not exported until context/ownership approved
@@ -1546,6 +1576,8 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa_xip_thunk: restricted - not exported until context/ownership approved
 // lv_obj_tree_walk: restricted - not exported until context/ownership approved
+// lv_obj_update_layout: restricted - not exported until context/ownership approved
+// lv_tick_get: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
 // lvgl_posix_open: restricted - not exported until context/ownership approved
 // lvx_image_set_scale: restricted - not exported until context/ownership approved

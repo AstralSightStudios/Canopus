@@ -89,6 +89,7 @@ for s in \
     manager/ui/canopus_manager.c \
     manager/ui/canopus_manager_native.c \
     runtime/ui/canopus_ui.c \
+    sdk/c/canopus_aeabi_mem.c \
     third_party/sha256/sha256.c \
     manager/target/canopus_ui_host.c \
     "$MANAGER_BACKEND" \
@@ -119,6 +120,7 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_manager.o" \
     "$OUT/canopus_manager_native.o" \
     "$OUT/canopus_ui.o" \
+    "$OUT/canopus_aeabi_mem.o" \
     "$OUT/sha256.o" \
     "$OUT/canopus_ui_host.o" \
     "$OUT/$BACKEND_OBJECT" \
@@ -129,7 +131,9 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_hook.o" \
     $LOADER_OBJECTS
 
-# Strip unused symbols and unwind tables, retaining relocations and exports to fit the loader budget.
+# Both loaders retain relocation targets, global exports and constructors, but
+# do not consume debug/local metadata or C unwind tables. Strip only unreferenced
+# symbols; --strip-all would remove symbol tables the ELF loaders require.
 if [ "$PROD_FAMILY" = xiaomi-band-10-pro ] || [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
     OBJCOPY=${OBJCOPY:-${RUST_OBJCOPY:-}}
     if [ -z "$OBJCOPY" ]; then
@@ -159,7 +163,7 @@ fi
 
 actual_size=$(wc -c < "$OUT/canopus_supervisor.elf")
 [ "$actual_size" -le "$MAX_SIZE" ] || {
-    echo "error: supervisor is $actual_size bytes; target loader limit is $MAX_SIZE"
+    echo "error: supervisor is $actual_size bytes; target build budget is $MAX_SIZE"
     exit 1
 }
 echo "      module size: $actual_size / $MAX_SIZE bytes"

@@ -16,7 +16,11 @@
     "The first 32 bytes at 3.101.036 0x0C107464 and exact 3.101.043 0x0C107790 are byte-for-byte identical, beginning 2D E9 F0 43 85 B0 98 46 43 8E 02 AF 13 F4 7C 7F.",
     "Corresponding 0x18-byte wrappers retain identical instruction and argument-shuffle sequences; for example 3.101.036 sub_C107D7C maps to exact 3.101.043 sub_C1080A8 and both set property 1 before calling the dispatcher.",
     "The independently promoted exact 3.101.043 background-opacity helper at 0x0C108374 calls 0x0C107790, tying the candidate to an already identified LVGL style operation rather than only to a corpus score.",
-    "The generated Thumb callable is 0x0C107791 and remains restricted to the UI owner thread."
+    "The former generated Thumb callable 0x0C107791 used the flash load address. Exact startup 0x0C0C0A60 copies flash [0x2C0FC6CC,0x2C10D438) to SRAM 0x200B2860, whose executable alias is 0x002B2860. Thus dispatcher load 0x0C107790 maps to runtime 0x002BD924 and corrected Thumb callable 0x002BD925; it remains restricted to the UI owner thread.",
+    "The same copy maps style-setter load 0x0C108B24 to runtime 0x002BECB8. At runtime 0x002BED24, bytes B7 F7 78 FD decode as BL 0x00276818, the populated overlap-aware memmove. Executing identical bytes at load address 0x0C108B90 instead decodes BL 0x0C0C0684, a zero-filled AP-header address that falls through to the NOP/branch loop at 0x0C0C0900. This call path does not establish an assertion failure.",
+    "Startup 0x0C0C0A1C copies flash [0x2C0C23A4,0x2C0FC6CC) to SRAM 0x200765C0, executable alias 0x002765C0. Memmove runtime 0x00276818 is copied from flash execution alias 0x0C0C25FC; PSRAM veneer 0x1C07A458 loads Thumb target 0x00276819. No missing boot-ROM helper or firmware patch is required.",
+    "The exact BG_OPA wrapper source 0x0C108374 maps to runtime 0x002BE508; XIP veneer 0x0C5883F8 and PSRAM veneer 0x1C07A5D0 target 0x002BE509, and its call at 0x002BE516 reaches dispatcher 0x002BD924. The corresponding 94 stock style wrappers execute in the same relocated SRAM segment.",
+    "Read-only isolated Mirage QMP memory inspection confirms populated runtime copies at 0x002BD924,0x002BECB8,0x00276818, the branch bytes at 0x002BED24 and zero bytes at 0x0C0C0684. Original OTA AP, exact IDA input and isolated Mirage AP all have SHA256 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec. This is static/emulator evidence only and does not promote device, policy or approval status."
   ],
   "ownership_analysis": "The dispatcher borrows a live page-owned LVGL object and mutates its local style storage. It neither retains nor frees the object; calls remain on the page owner thread before object teardown.",
   "unsafe_assumptions": [
@@ -35,8 +39,8 @@
       "role": "trusted working dispatcher, generic wrapper and BG_OPA forwarding reference"
     },
     {
-      "uri": "ida://fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64 loc_C107790,sub_C1080A8,sub_C108374",
-      "role": "exact-target dispatcher and structurally corresponding stock wrappers"
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64 loc_2BD924,loc_2BECB8,sub_276818,sub_2BE508,sub_C0C0A1C,sub_C0C0A60",
+      "role": "exact-target runtime dispatcher, style setter, memmove, stock BG_OPA wrapper and startup load-to-runtime mapping; former loc_C107790 is the flash source copy"
     },
     {
       "uri": "repo://Canopus/docs/firmware-symbol-porting-plan.md",

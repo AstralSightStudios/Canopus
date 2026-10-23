@@ -119,7 +119,7 @@ mod tests {
                 kind: Some("target".into()),
                 language: "c".into(),
                 lifecycle: "removable".into(),
-                canopus_abi: "1".into(),
+                canopus_abi: "2".into(),
                 description: None,
                 author: None,
             },

@@ -16,7 +16,7 @@ local request_id = 0
 local function exchange(op, payload, reply_size)
     payload = payload or ""
     request_id = request_id + 1
-    local request = string.pack("<I4I2I2I2I2I4I4I4I4I4I4", 0x43504332, 36, 1, 1, 0,
+    local request = string.pack("<I4I2I2I2I2I4I4I4I4I4I4", 0x43504332, 36, 1, 2, 0,
         36 + #payload, op, request_id, 0, 0, #payload) .. payload
     local f = (control_open or io.open)("/dev/canopus", "wb")
     if not f then return nil, "open w failed" end

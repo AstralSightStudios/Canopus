@@ -24,6 +24,7 @@
 #include "canopus_runtime.h"
 #include "canopus_veneer.h" /* canopus_fw_register_driver / canopus_fw_unregister_driver */
 #include "canopus_memory.h"
+#include "canopus_ui_host.h"
 #include "canopus_l2_probe_config.h"
 #ifdef CANOPUS_SUP_CUSTOM_LOADER
 #include "canopus_elf32_loader.h"
@@ -1880,6 +1881,7 @@ static void sup_service_timer_tick(void *timer)
 {
     (void)timer;
     s_service_timer_poll(s_service_timer_data);
+    canopus_ui_host_poll(sup_monotonic_ms(0));
 }
 
 static int sup_start_timer_pump(void *cookie, void (*poll)(void *), void *data)

@@ -7,7 +7,7 @@ version_code = 1
 kind = "portable"
 language = "c"
 lifecycle = "removable"
-canopus_abi = "1"
+canopus_abi = "2"
 description = "portable example: Supervisor services only, no firmware address"
 
 [build]

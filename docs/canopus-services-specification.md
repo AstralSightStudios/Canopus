@@ -256,14 +256,29 @@ struct canopus_bus_obj {
     int32_t (*publish)(const struct canopus_context_v1 *ctx, const char *topic, const void *payload, uint32_t len);
     int32_t (*subscribe)(const struct canopus_context_v1 *ctx, const char *topic, canopus_bus_callback_t cb, void *user_data);
     int32_t (*unsubscribe)(const struct canopus_context_v1 *ctx, int32_t sub_id);
+    int32_t (*query_module)(const struct canopus_context_v1 *ctx, const char *module_id,
+                            struct canopus_module_state_v1 *out);
 };
 ```
+
+`CANOPUS_SVC_BUS` 版本为 2。`query_module` 按稳定模块 ID 复制当前注册表快照，包含 `module_id`、`state`、`intent`、`version`、
+`lifecycle_class`、`flags`、`activation_error`、`active_generation`；不存在返回 `ERR_NOTFOUND`，参数错误返回 `ERR_ARGUMENT`。
+Bus 调用使用串行 owner 任务，`publish` 在返回前同步调用订阅者。回调可以查询或取消订阅；递归 `publish` / `subscribe` 返回
+`ERR_BUSY`，回调内修改注册表的命令返回 `DISALLOWED`。
+
 - **系统内置广播主题**（只由 Supervisor 发布，模块向这三个主题 `publish` 返回 `ERR_ACCESS`，不能伪造）：
   - `"canopus/screen/state"`：负载 1 字节 `CANOPUS_SCREEN_*`（0 熄屏、1 AOD、2 亮屏）
   - `"canopus/battery/level"`：负载 2 字节，电量百分比与充电标志
   - `"canopus/bt/state"`：负载 2 字节，蓝牙适配器状态与手机连接（1 连接、0 断开、0xFF 未知）
   订阅这些主题会启动 Supervisor 的采样：每 500 ms 从定时器泵读一次设备，值变化时发布，新订阅者在下一次采样时收到一次当前值。
   没有定时器泵的目标订阅系统主题返回 `ERR_UNSUPPORTED`，不会得到一个永远不触发的订阅。
+- **模块生命周期主题** `"canopus/module/state"`（只由 Supervisor 发布）：负载是原生 C 的 `struct canopus_module_state_v1`
+  （**返回前请自行拷贝**，不是打包的线上格式）。它描述注册表里已完成的激活/停止/失败等变更，包括失败；`ENABLE`/`DISABLE`/`REMOVE`
+  只记录下次启动意图，不代表热卸载。**没有初始事件、没有历史重放**：启动时的移除发生在订阅之前，缺席模块用 `query_module` 报 `NOTFOUND`。
+  在 owner 任务上先 `subscribe` 再 `query_module`（中间不让出）就不会漏掉任何转换。生命周期订阅/查询**不需要定时器泵**。
+  回调在执行该转换的任务上**同步**调用（启动、Manager 或传输 owner）；回调里不要直接改 UI，用 `ctx->ui->post` 派发到 UI 调度。
+  持久化失败但仍保留在内存、可被 `query_module` 观察的变化也会通知，包括 SCAN 安装/更新和 native app 发布错误的设置/清除；不变的重试不重复发布。通知描述当前内存状态，不表示持久化成功。
+  Rust：`canopus_runtime::bus::query_module`、`canopus_abi::ModuleStateV1`。
 
 ---
 
@@ -401,37 +416,106 @@ AstroBox 一侧见 `astrobox:psys-host-v4/canopusconnect`（`send` / `listen` / 
 消息经插件导出的 `astrobox:psys-plugin-v4/canopusconnect.on-message` 送达。
 
 
-### 2.12 `ctx->ui` / `ctx->ui_ext` — 语义 UI 树与模块页面
+### 2.12 `ctx->ui` — 语义 UI 树、事件与模块页面
 
-`ctx->ui` 是 `sdk/c/canopus_ui.h`（实现在 `runtime/ui`）的语义 UI 树构造器（页面、分区、文本、状态/操作/开关行、按钮、复选/单选、进度、图片、导航头、
-列表/滚动/对话框等容器，ABI 1.4，最多 32 个节点）。`ctx->ui_ext` 补充 `node_set_style`、`node_set_layout`，
-并让模块在 Manager 里提供自己的页面（ADR-CAN-010）：
+`ctx->ui` 是 `sdk/c/canopus_ui.h`（实现在 `runtime/ui`）的语义 UI 构造器与页面宿主，**ABI 2.0**（`CANOPUS_UI_ABI_MAJOR`/`MINOR`，
+全局模块 ABI 也是 2.0；旧 major 的 descriptor 不再发布）。一棵树最多 `CANOPUS_UI_MAX_NODES`（32）个节点。渲染后端见 ADR-CAN-010，
+ABI 2.0 与生命周期通知见 ADR-CAN-013。树构造器、样式/布局/视觉、页面入口、控制与 UI 调度都在同一个服务对象里：
 
 ```c
-struct canopus_ui_ext_obj {
-    int32_t (*node_set_style)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_style_v1 *style);
-    int32_t (*node_set_layout)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_layout_v1 *layout);
-    int32_t (*set_entry)(const struct canopus_context_v1 *ctx, const struct canopus_ui_entry_v1 *entry); /* NULL 移除 */
-    int32_t (*close_page)(const struct canopus_context_v1 *ctx);
+struct canopus_ui_obj {
+    uint32_t (*capabilities)(const struct canopus_ui_context_v1 *context);
+    int32_t (*tree_begin)(...);  int32_t (*tree_commit)(...);  void (*tree_abort)(...);  int32_t (*end)(...);
+    int32_t (*navigation_page)(...); (*section)(); (*text)(); (*status_row)(); (*button)();
+    (*action_row)(); (*switch_row)(); (*navigation_header)(); (*component)();
+    int32_t (*node_set_style)(struct canopus_ui_tree_v1 *, uint32_t key, const struct canopus_ui_style_v1 *);
+    int32_t (*node_set_layout)(struct canopus_ui_tree_v1 *, uint32_t key, const struct canopus_ui_layout_v1 *);
+    int32_t (*set_entry)(const struct canopus_context_v1 *, const struct canopus_ui_entry_v1 *); /* NULL 移除 */
+    int32_t (*close_page)(const struct canopus_context_v1 *);
+    int32_t (*node_set_visual)(struct canopus_ui_tree_v1 *, uint32_t key, const struct canopus_ui_visual_v1 *);
+    int32_t (*control)(struct canopus_ui_context_v1 *, uint32_t generation, uint32_t key,
+                       uint32_t operation, int32_t a, int32_t b, void *out);
+    int32_t (*post)(const struct canopus_context_v1 *, canopus_ui_task_fn, void *);
 };
 ```
-- 旧 Supervisor 没有 `ui_ext`：先查 `ctx->struct_size >= sizeof(struct canopus_context_v1)` 且 `ctx->ui_ext != 0`。
-- `set_entry` 登记页面入口（`label` 最长 23 字节，可为 NULL；`on_open` 必填）。模块运行期间，它在 Manager 的详情页多一行「打开界面」。
-  没有 Manager UI 的构建（无头）返回 `ERR_UNSUPPORTED`；入口随模块卸载一起清除，并先关闭它已打开的页面。
-- 用户打开时在 UI 任务上调用 `on_open(ctx, ui, user)`：用 `ctx->ui->tree_begin(ui, &tree)` 等构树并 `tree_commit`，返回前必须已提交，
-  否则页面不显示。`ui` 一直有效到 `on_close` 返回。之后点击某行 → `on_event(ctx, ui, key, event_id, user)`，在里面构建下一棵树。
-- `on_back`（可选，两个家族都有）：标题的返回被使用；返回 0 表示已处理（例如弹出自己的路由），否则页面关闭。右滑返回是系统手势，不经过它。
-  `on_close`：用户或 `close_page` 关闭页面时调用，卸载时不调用。`close_page` 结束调用者自己已打开的页面，没有则 `ERR_STATE`。
-- 同一时刻只开一个模块页面；回调要尽快返回；页面标题只在页面创建时设置。Rust：`canopus_abi::{CanopusUiExtObj, UiEntryV1}`。
-- 渲染后端（Band 10 Pro 与 Band 11 共用 `manager/target/canopus_ui_host.c`，Manager 自己的页面也走它）两个家族画同样的内容：导航页/导航头（页面标题）、
-  分区/列表/滚动/分隔/间距（展平）、文本/富文本（标签，MiSans-Medium 24 px，TITLE 28 px）、各类行与按钮、图片、进度条（自动尺寸为整行宽的条），
-  以及对话框——一条消息加两个按钮时是固件 msgbox，其它形状和没有恢复 msgbox 入口的目标按普通行内联。滑块已移除。
-  不支持的节点类型提交失败，并保留上一版内容。
-- 页面里不再出现的行、标签、图片、进度条被隐藏，再出现时按 key 复用同一个控件；内容放得下时页面不能拖动。端到端见 `scripts/emu/ui_pages.py`（Mirage）；`.043` 与 `.155` 已在真机验证（ADR-CAN-010）。
+
+**能力协商**：`capabilities(context)` 返回后端实际支持的 `CANOPUS_UI_CAP_*` 位（STYLE / LAYOUT / VALUES / NAVIGATION_HEADER /
+IMAGE / PROGRESS / VISUAL / SCROLL / TRANSLATE / CAPTURE / POINTER_EVENTS / IMAGE_FIT_CONTAIN|COVER|STRETCH /
+VIRTUAL_CONTENT / TOAST / EXTENDED_COMPONENTS）。不支持的请求**显式返回 `ERR_UNSUPPORTED`**，绝不静默忽略。
+能力是每个 target 实测出来的，不是按家族一刀切。
+
+**页面入口**：`set_entry` 登记页面入口（`label` 最长 23 字节，可为 NULL；`on_open` 必填）。模块运行期间，它在 Manager 的详情页多一行「打开界面」。
+没有 Manager UI 的构建（无头）返回 `ERR_UNSUPPORTED`；入口随模块卸载一起清除，并先关闭它已打开的页面。
+- 用户打开时在 UI 任务上调用 `on_open(ctx, ui, user)`：用 `tree_begin` 等构树并 `tree_commit`，返回前必须已提交，否则页面不显示。
+  `ui` 一直有效到 `on_close` 返回。
+- `on_event(ctx, ui, event, user)`：`event` 是 `struct canopus_ui_event_v1`，带 `generation`/`key`/`event_id`、事件 `type`、
+  `time_ms`、**视口坐标** `x`/`y`、位移 `delta_x`/`delta_y`、以及 `scroll_y`/`viewport_height`/`content_height`。
+  事件类型：`ACTIVATE`、`VALUE_CHANGED`、`PRESS`、`LONG_PRESS`、`MOVE`、`RELEASE`、`CANCEL`、`SCROLL`。
+- `on_back`（可选）：普通导航页标题的返回被使用；返回 0 表示已处理（例如弹出自己的路由），否则页面关闭。
+  显式 `navigation_header` 把返回作为 `ACTIVATE` 交给 `on_event`（header 的 key / `back_event_id`），根路由的处理器可调用 `close_page`。
+  `show_back` 为 0 时不派发事件，可以保留待后续重绘启用的事件 ID。header 是容器，正文之前须用 `end()` 关闭。右滑返回是系统手势，不经过 `on_back`。
+- `on_close`：用户或 `close_page` 关闭页面时调用，卸载时不调用。`close_page` 结束调用者自己已打开的页面，没有则 `ERR_STATE`。
+- 同一时刻只开一个模块页面；回调要尽快返回。Rust：`canopus_abi::{CanopusUiObj, UiEntryV1, UiEventV1}`、`canopus_runtime::ui`。
+  `canopus_ui_core::Application::decode_event(&Event)` 接收经过代数和节点校验的完整事件，可以把坐标、时间与滚动指标复制进 typed Message；
+  只处理点击的应用应先检查 `ACTIVATE` / `VALUE_CHANGED`。返回 `None` 会忽略未处理的指针/滚动事件，未知点击或值变更返回 `UiError::Argument`。
+  `CAbiBackend` 保留原生 `ERR_UNSUPPORTED` 为 `UiError::Unsupported`，供模块判断目标能力。typed `NavigationHeader` 用独立的 `show_back` 控制显示，
+  `back` 可保留隐藏的消息。`ACTIVATE` / `VALUE_CHANGED` 更新后自动重建；指针/滚动更新仅在应用发出 `Command::Rebuild` 时重建，
+  以免覆盖 `control()` 的即时位移或滚动状态。
+
+`post(ctx, fn, user)` 从串行 owner 任务投递到当前回调结束后的下一次前台 UI 心跳；相同回调与 `user` 合并，不同待处理工作返回
+`ERR_BUSY`。只有注册的前台 UI 心跳排空队列；`sleep_ms` 内部或普通 `timers_poll` 不会提前执行。心跳先处理上一轮的 UI 工作再分发普通定时器，定时器中新投递的工作留到下一次心跳。
+息屏期间保留到前台恢复，模块释放会取消待处理工作；没有前台定时器泵返回 `ERR_UNSUPPORTED`。
+
+**路由身份与 stable key**：根 `NAVIGATION_PAGE` 的 key 标识当前语义路由。同一页的模型更新、虚拟列表窗口替换、标题与返回按钮显示变化都保持根 key；
+切换到不同路由时必须使用不同根 key。根 key 改变会重置宿主共用的内容视口，并替换旧路由的原生状态、取消旧的指针/捕获绑定。
+标题文字或 `show_back` 改变只更新标题对象，保留当前正文滚动位置。若返回某路由时需要恢复原位置，模块应保存该路由的滚动指标，
+再用 `SCROLL_TO` 或虚拟内容的 `visual.scroll_y` 恢复。示例 `native-ui-lab` 用 `1u + route * 10000u` 分配根 key；
+同一页的行 key 按逻辑项保持稳定，header key 不承担路由身份。
+
+**样式 / 布局 / 视觉**（`node_set_style` / `node_set_layout` / `node_set_visual`）：
+- `style` 覆盖变体、文本语义色、圆角半径、边框颜色/宽度、整体透明度。语义色之外的受控 RGB 扩展走 `visual_v1` 的
+  `foreground_rgb` / `background_rgb` / `border_rgb`（`*_RGB` 标志位），只在目标恢复了对应样式属性 ID 时可用。
+  **属性 ID 按 target 审计**：`.155` 有圆角/边框色/边框宽/透明度/圆角裁剪；`.043` 只有圆角与圆角裁剪；
+  `.036`/`.139`/`.179` 只有样式 setter（颜色可用）。快照里出现目标未审计的属性（含 `FLAG_CLIP` 对应的圆角裁剪）
+  时，**整次提交**返回 `ERR_UNSUPPORTED`，不做部分应用也不静默忽略；模块应自行降级或按能力位规避。
+- `layout` 覆盖宽高（`-1` 表示自动/继承）、上下左右外边距与内边距、对齐/分布、行列轴、间距、`grow`/`shrink`。
+  复选/单选行支持自定义内边距；其余原生行（按钮、action/status/switch row）的非零内边距返回 `ERR_UNSUPPORTED`，不静默忽略。
+  目前只支持 `grow == 0`、`shrink == 1`（提交失败 `ERR_UNSUPPORTED`），不是通用 CSS。样式从显式值变回继承会恢复固件默认主题；
+  当前通过原生子树替换实现，同路由正文替换保留滚动位置，分配失败保留旧页面与手势。颜色更新不会修改标签的固定宽高。
+- `visual` 另有 `x`/`y` 绝对坐标（`FLAG_ABSOLUTE`）、`translate_x`/`translate_y` 拖动位移、`font_px`（0 / 24 / 28）、
+  `image_fit`（`NATIVE` 可用；`CONTAIN`/`COVER`/`STRETCH` 需要 `IMAGE_FIT_*` 能力位）、`content_height` 与 `scroll_y`（虚拟内容）。
+  圆角裁剪走 `FLAG_CLIP`（需目标有圆角裁剪属性 ID，否则与上同规则拒绝）。不暴露任何固件指针或地址给模块。
+
+**字体限制**：当前公共 UI 后端只绑定 MiSans-Medium 24 px 与 28 px 两档（TITLE 用 28，其余 24）。没有开放其他字号、字重、斜体或自定义字体；
+`font_px` 只接受 0（继承）/ 24 / 28，其它值提交失败。文本按控件宽度自动换行，长文截断/换行由行类型决定。
+
+**滚动与虚拟列表**：`control()` 支持 `SCROLL_QUERY`（写 `scroll_metrics_v1`）、`SCROLL_TO`（`a` 为目标 `scroll_y`，自动夹到
+`[0, content_height - viewport_height]`）、`TRANSLATE`（拖动时实时位移）、`CAPTURE` / `RELEASE_CAPTURE`（按住/解锁原生滚动）。
+`CANOPUS_UI_CAP_VIRTUAL_CONTENT` 表示后端支持 `visual.content_height`：**完整数据留在模块自己的模型里，树里只放可见窗口**，
+所以列表可以超过 32 行。同一根 `NAVIGATION_PAGE` key 下，滑动跨窗口时相同可见、启用的节点 key 与事件绑定可迁移捕获；
+节点禁用、自身或祖先隐藏、节点消失、事件绑定改变、根 page key 改变或生命周期变化会用旧绑定发送一次 `CANCEL` 并解除滚动锁。转移捕获时保留原始 press 目标，释放捕获后后续 MOVE/RELEASE 回到该目标；成功提交会更新保留绑定的代数。
+原生候选分配失败时保留旧快照、页面及有效手势，不提前发送取消事件。
+
+**Toast 与标题**：`CANOPUS_UI_NODE_TOAST` 是页面持有的原生反馈：同一时刻只显示最近一条（新的替换旧的），
+`values[i].value` 是毫秒时长（0 表示 2000 ms；显式时长为 1..60000，负数或超范围返回 `ERR_ARGUMENT`）；上一快照也可见且内容与参数完全相同的提交不会重启计时，到期后未变化的可见节点不重播。隐藏→显示会重新显示并计时，允许初始隐藏节点。同一快照携带多个 Toast 节点时只有最近一个可见节点驱动共享反馈对象（尾随隐藏占位不压掉前面的可见 Toast；无可见 Toast 时由最后一个 Toast 节点驱动隐藏），其余节点是别名，不写共享对象；隐藏的 Toast 节点（含 fresh）从不替换也不写共享对象的样式；驱动身份变化时以新标签替换共享对象并重绘文本与样式（样式/文本状态不跨节点混合）；共享对象的文本被重写时其样式必同步重绘，两者不分离；Toast 对象的删除只归反馈路径，通用清理按节点类型跳过。页面分离/暂停时清除（含交互被关闭时的隐藏清除），
+模块卸载时随页面一起销毁，没有悬空回调。`NAVIGATION_HEADER` / 导航页的标题文本或返回显示状态变化会替换标题对象；
+同一快照多个 `NAVIGATION_HEADER` 时仅第一个驱动共享标题对象（含事件绑定），其余不写，无 header 时由导航页驱动，
+根 page key 不变时保留正文滚动，不以标题变化推断路由。过期的标题事件按事件目标/令牌校验后丢弃，不会驱动新页面。
+
+**渲染后端**（Band 10 Pro 与 Band 11 共用 `manager/target/canopus_ui_host.c`，Manager 自己的页面也走它）两个家族画同样的内容：
+导航页/导航头（页面标题）、分区/列表/滚动/分隔/间距（真实布局求解：轴、对齐、分布、间距、内边距、最小/最大尺寸、外边距）、
+文本/富文本（标签）、各类行与按钮（复选/单选带选中标记）、图片、进度条，以及对话框——一条消息加两个按钮时是固件 msgbox，
+其它形状和没有恢复 msgbox 入口的目标按普通行内联。滑块已移除（`CANOPUS_UI_NODE_RETIRED_SLIDER`）。
+不支持的节点类型提交失败，并保留上一版内容。相同内容的提交不会重写原生控件（增量更新，见 ADR-CAN-010），
+包括活动捕获期间的重复提交：原生滚动锁保持原状态，只迁移事件绑定的 generation；脏控件仍会先修复再保持捕获。
+
+端到端见 `scripts/emu/ui_pages.py` 与 `scripts/emu/native_ui_v2.py`（Mirage）。`.043` 与 `.155` 的后端本体已在真机验证（ADR-CAN-010）；
+**本次 ABI 2.0 新增的能力（输入/滚动/虚拟内容/Toast/标题更新/生命周期通知）的证据范围以 ADR-CAN-013「证据与限制」为准，没有新的真机验证**，
+能力状态未提升。
 
 ### 2.13 `ctx->launcher` — 模块自己的启动器入口
 
-让模块像普通应用一样出现在系统启动器里，选中后打开它用 `ctx->ui_ext->set_entry` 登记的页面（ADR-CAN-011）：
+让模块像普通应用一样出现在系统启动器里，选中后打开它用 `ctx->ui->set_entry` 登记的页面（ADR-CAN-011）：
 
 ```c
 struct canopus_launcher_entry_v1 {

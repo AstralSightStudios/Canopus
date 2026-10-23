@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.lv_event_get_indev",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "lv_event_get_indev",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c37fca0",
+  "callable_address": "0x0c37fca1",
+  "prototype": "void *(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": { "allowed": ["target-private"], "blocking": false },
+  "proof": { "static": "recovered", "device": "not_probed", "evidence_ids": ["EVID-UI-4155-LAYOUT-INPUT-001"] },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": { "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f", "evidence_ids": ["EVID-UI-4155-LAYOUT-INPUT-001"], "source": "Exact firmware IDA: event-code whitelist and borrowed event parameter at offset 16; no inferred address delta." },
+  "notes": "UI owner callback only; returned input device is borrowed and must not escape the callback. Static evidence only."
+}

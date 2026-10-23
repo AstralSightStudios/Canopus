@@ -24,14 +24,15 @@
      所以重绘不会重建行，也保持滚动位置（整条放置链不变就不重新对齐）。内容放得下时关掉内容容器的滚动（`SCROLLABLE`），避免拖动把内容甩到底部。
    - 事件沿用原有机制（每槽一个静态回调，`interactive` 的 view 接收），回调数统一为 32；标题返回与对话框按钮同样是静态回调。
    - Manager 专有的部分变成可选钩子（返回键、事件前后、渲染完成）；确认对话框改为语义 `DIALOG`（取消、确认的顺序即 msgbox 的左右顺序）。
-2. **模块页面**：新对象 `ctx->ui_ext`（`node_set_style`、`node_set_layout`、`set_entry`、`close_page`），独立成对象是为了让
-   旧 Supervisor 靠 `ctx->struct_size` 被识别，与 `ctx->connect` 同理，ABI minor 不变。
+2. **模块页面**：`ctx->ui` 直接提供 `set_entry`、`close_page`、`node_set_style`、`node_set_layout`、`node_set_visual`、`control`、`post`。
+   早期的 `ctx->ui_ext` 已并入 `ctx->ui` 并删除（Canopus 未发版，公共 ABI 直接演进到 2.0，不保留旧对象、旧前缀或适配层）。
    - 模块 `set_entry` 登记页面入口（标签、`on_open`/`on_event`/`on_back`/`on_close`）；模块运行期间，Manager 的模块详情页多一行「打开界面」。
    - 页面由 Manager 应用的第 4 个固件页面（`module_ui`）承载：打开时在固件堆上分配 view 与 UI 上下文，调用 `on_open` 构树并提交；
      提交失败或没有提交则取消页面。同一时刻只开一个模块页面；模块卸载时入口先被清除，再关闭其页面，回调不再被调用。
    - 标题返回（两个家族）先交给 `on_back`（返回 0 表示已处理，例如弹出自己的路由），否则关闭页面。Band 11 的原生标题点一下本来就会发返回键；
      宿主把标题的点击回调换成自己的，所以 Manager 与模块页面的返回走同一条路。右滑返回仍是系统手势，不经过 `on_back`。
-   - 页面内容不能自行更新标题（固件的页面标题只在创建时设置，更新契约尚未恢复）。
+   - 页面标题可随路由更新（ADR-CAN-013）：标题文本或返回状态变化时重建标题对象，过期的标题事件按事件目标（Band 11）
+     或注册令牌（Band 10 Pro）校验后丢弃，不会驱动新页面。
 3. **启动器入口**：模块自己的启动器图标见 ADR-CAN-011；它复用这里的模块页面。
 4. **Supervisor 构建预算**：Band 10 Pro 的 `supervisor_max_size` 由 98,304 提到 114,688。新增代码和 4 个视图使 .043 达到约 104 KB。
    该值本来就是构建期预算而不是实测的固件上限（stock modlib 没有固定的插入上限，Band 11 用 131,072）。
@@ -50,8 +51,9 @@ was replaced at the same path.
 Placement still uses the existing placement chain. A row-content-only update or
 an image-source-only update at the same explicit dimensions does not realign
 controls. Changing order, count or layout inputs can still realign controls and
-affect the scroll offset. This optimization does not add transforms, touch
-capture, virtualization or drag rendering.
+affect the scroll offset. Transforms, touch capture and virtual content are
+separate ABI 2.0 features (ADR-CAN-013); they reuse this incremental apply and
+do not change its comparison rules.
 
 Native switches mark their row dirty before event dispatch, so submitting the
 unchanged model restores a rejected toggle. A failed backend apply invalidates

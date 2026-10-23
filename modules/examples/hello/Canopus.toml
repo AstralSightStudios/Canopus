@@ -7,7 +7,7 @@ version_code = 1
 kind = "target"
 language = "c"
 lifecycle = "removable"
-canopus_abi = "1"
+canopus_abi = "2"
 description = "zero-import removable hello module (target-bound: uses the firmware clock)"
 
 [capabilities]

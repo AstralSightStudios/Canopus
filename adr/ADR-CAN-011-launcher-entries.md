@@ -11,9 +11,9 @@ Band 10 Pro 只做了构建。**没有真机验证，没有提升任何能力状
 
 ## 决定
 
-1. **新服务组 `CANOPUS_SVC_LAUNCHER`（14）与对象 `ctx->launcher`**（`canopus_services.h`），追加在 context 末尾，旧 Supervisor 靠 `ctx->struct_size` 识别，
-   ABI minor 不变。唯一的调用是 `set_entry(ctx, &canopus_launcher_entry_v1{label, icon})`。
-   选中入口就打开模块用 `ctx->ui_ext->set_entry` 登记的页面（与「打开界面」同一条路径、同一个单页限制），所以没有先登记页面入口就返回 `STATE`。
+1. **服务组 `CANOPUS_SVC_LAUNCHER`（14）与对象 `ctx->launcher`**（`canopus_services.h`），位于 context 末尾。
+   当前公共 ABI 为 2.0（ADR-CAN-013），不保留旧 major 的兼容布局。唯一的调用是 `set_entry(ctx, &canopus_launcher_entry_v1{label, icon})`。
+   选中入口就打开模块用 `ctx->ui->set_entry` 登记的页面（与「打开界面」同一条路径、同一个单页限制），所以没有先登记页面入口就返回 `STATE`。
 2. **实现只用 Manager 已经在用的三个固件入口**：`app_install`、`app_lookup`、`app_launcher_add`（Band 10 Pro 与 Band 11 各自的记录），
    描述符布局与 Manager 自己的应用相同，每个入口一个应用、一个页面（`page_id` 0）。这三个符号仍是 `restricted`，只由 Supervisor 调用，
    不对模块开放；没有改动任何 symbol JSON。

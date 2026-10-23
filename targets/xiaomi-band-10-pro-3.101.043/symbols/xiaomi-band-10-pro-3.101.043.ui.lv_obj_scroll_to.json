@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.ui.lv_obj_scroll_to",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_obj_scroll_to",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c02ddb0",
+  "callable_address": "0x1c02ddb1",
+  "prototype": "void(void *, int32_t, int32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed live page-owned LVGL object/event/input device; output coordinate buffer borrowed for call; no retention."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "pending",
+    "evidence_ids": [
+      "EVID-UI-1043-LAYOUT-INPUT-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-UI-1043-LAYOUT-INPUT-001"
+    ],
+    "source": "Exact absolute-scroll primitive runtime 0x1c02ddb0, Thumb callable 0x1c02ddb1; XIP veneer 0xc588800 targets it. Startup 0xc0c0ac8 copies [0x2c10d440,0x2c18d940) to PSRAM 0x3c000000, executable alias 0x1c000000, mapping load 0xc13b1f0 to runtime 0x1c02ddb0. Registers r0=obj,r1=absolute x,r2=absolute y,r3=anim. At 0x1c02ddce it computes current_x-requested_x and calls bounded relative-scroll 0x1c02d860 at 0x1c02ddd6; 0x1c02ddea similarly computes current_y-requested_y. Stock callers 0x1c02ed84,0x1c078388,0x1c0783b0 explicitly pass (obj,0,0,0) to restore zero offsets. The former load address 0xc13aca0 maps to relative-scroll 0x1c02d860, which returns immediately for zero deltas and is not this absolute operation."
+  },
+  "approval_state": "PENDING",
+  "notes": "Target-private native UI host only. Static recovery does not grant public callable approval or device verification."
+}

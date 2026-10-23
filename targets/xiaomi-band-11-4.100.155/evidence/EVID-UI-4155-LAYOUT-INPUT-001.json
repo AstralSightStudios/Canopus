@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-4155-LAYOUT-INPUT-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+  "date": "2026-10-22",
+  "method": "Exact firmware IDA disassembly and decompilation, checked against native UI call sites; no device execution.",
+  "style_properties": {
+    "background_rgb": 28,
+    "background_opacity": 29,
+    "radius": 12,
+    "border_rgb": 49,
+    "border_width": 48,
+    "border_opacity": 50,
+    "text_rgb": 88,
+    "text_opacity": 89,
+    "text_align": 94,
+    "opacity": 95,
+    "clip_corner": 45
+  },
+  "observations": [
+    "Style wrapper 0x0c3a89a8 forwards radius as property 12, superseding the unverified Rust constant 44. Background RGB wrapper 0x0c3a8818 uses property 28, opacity 0x0c3a8836 property 29; text RGB 0x0c3a894e property 88. RGB values have the 0xRRGGBB packed representation.",
+    "Border wrappers 0x0c3a885e, 0x0c3a8890 and 0x0c3a887c forward color 49, width 48 and opacity 50 respectively. Text opacity 0x0c3a896c uses 89, alignment 0x0c3a8994 uses 94.",
+    "lv_event_get_indev at 0x0c37fca0 checks event codes 1..18 with mask 0x3bdff before reading the event parameter at +16.",
+    "lv_indev_get_point at 0x0c399c28 copies two signed 32-bit coordinates from indev+56/+60; NULL reports 0,0 and a non-pointer input reports -1,-1.",
+    "lv_obj_get_scroll_y at 0x0c37ff5a returns the negation of the signed vertical scroll value in the object's special attributes at +36, or zero without those attributes.",
+    "lv_obj_scroll_to_y at 0x0c384d70 accepts object, y and animation flag. Disassembly saves r2 and forwards it as the fourth scroll_by argument; decompiler omission of this argument is incorrect.",
+    "lv_obj_update_layout at 0x0c384c4c refreshes the root layout; native object screen rectangles are four signed 32-bit fields at +28,+32,+36,+40, corroborated by 0x0c54023c and align_to. These private offsets are never exposed to modules.",
+    "lvx_page_title_create at 0x0c89e7cc binds click code 7 to the back icon at title+52 and text label at title+56, never the title root. The host accepts only those current child identities when rejecting stale title events. The .139/.179 reviewed constructor ports retain the same private layout.",
+    "The existing lvx_object_delete binding at 0x0c380404 is the recursive internal deletion body; it does not invalidate the object rectangle first. The public wrapper at 0x0c384e6c invalidates via 0x0c38400c, deletes, then notifies the parent. The host hides old objects before invoking its existing internal binding so removed widgets leave no stale pixels; no additional callable is exposed.",
+    "align_to at 0x0c3877b0 adds the parent scroll_y from 0x0c37ff5a before setting style coordinates via 0x0c387466 (x property8, y property9). Parent-relative content coordinates must subtract that scroll_y before calling align_to; otherwise new virtual-window rows are placed below the viewport by the current scroll distance. Alignment5 is bottom-middle, while8 is right-middle; the page-owned Toast uses5."
+  ],
+  "ownership": "All native UI calls and borrowed event/indev/object reads execute synchronously on the firmware UI owner task. Input pointers are valid only during the native callback.",
+  "limitations": "Static evidence only. No new device verification or production approval. Other firmware addresses must be established independently."
+}

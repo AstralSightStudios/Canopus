@@ -21,6 +21,7 @@
     "FW_LVX_LIST_ITEM_ADD_CONTENT": "lvx_list_item_add_content",
     "FW_LVX_LIST_ITEM_UPDATE": "lvx_list_item_update",
     "FW_LVX_STYLE_APPLY": "lvx_style_apply",
+    "FW_UI_STYLE_SET": "lv_obj_set_local_style_prop",
     "FW_LV_OBJECT_REMOVE_STYLES": "lv_obj_remove_style_all",
     "FW_LV_OBJECT_PAD_TOP": "lv_obj_set_style_pad_top",
     "FW_LV_OBJECT_PAD_BOTTOM": "lv_obj_set_style_pad_bottom",

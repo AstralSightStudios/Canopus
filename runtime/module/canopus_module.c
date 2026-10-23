@@ -72,16 +72,10 @@ int canopus_text_writer_append(struct canopus_text_writer_v1 *w,
 int canopus_module_descriptor_check(const struct canopus_module_descriptor_v1 *d)
 {
     uint32_t i;
-    uint32_t min_size;
     if (d == 0) {
         return -1;
     }
-    /* append-only minor: struct_size must span the v1 callbacks and stay
-     * within the bounded descriptor size; unknown trailing fields are
-     * ignored, but an absurd size is a different layout and fails closed. */
-    min_size = (uint32_t)offsetof(struct canopus_module_descriptor_v1, query) + 4u;
-    if (d->struct_size < min_size ||
-        d->struct_size > CANOPUS_MODULE_DESCRIPTOR_MAX_SIZE) {
+    if (d->struct_size != sizeof(*d)) {
         return -1;
     }
     if (d->abi_major != CANOPUS_ABI_MAJOR) {

@@ -15,8 +15,8 @@
 extern "C" {
 #endif
 
-#define CANOPUS_UI_ABI_MAJOR 1u
-#define CANOPUS_UI_ABI_MINOR 4u
+#define CANOPUS_UI_ABI_MAJOR 2u
+#define CANOPUS_UI_ABI_MINOR 0u
 
 #define CANOPUS_UI_MAX_NODES        32u
 #define CANOPUS_UI_MAX_DEPTH         8u
@@ -41,6 +41,16 @@ extern "C" {
 #define CANOPUS_UI_CAP_NAVIGATION_HEADER   (1u << 4)
 #define CANOPUS_UI_CAP_IMAGE               (1u << 5)
 #define CANOPUS_UI_CAP_PROGRESS            (1u << 6)
+#define CANOPUS_UI_CAP_VISUAL              (1u << 7)
+#define CANOPUS_UI_CAP_SCROLL              (1u << 8)
+#define CANOPUS_UI_CAP_TRANSLATE           (1u << 9)
+#define CANOPUS_UI_CAP_CAPTURE             (1u << 10)
+#define CANOPUS_UI_CAP_POINTER_EVENTS      (1u << 11)
+#define CANOPUS_UI_CAP_IMAGE_FIT_CONTAIN   (1u << 12)
+#define CANOPUS_UI_CAP_IMAGE_FIT_COVER     (1u << 13)
+#define CANOPUS_UI_CAP_IMAGE_FIT_STRETCH   (1u << 14)
+#define CANOPUS_UI_CAP_VIRTUAL_CONTENT     (1u << 15)
+#define CANOPUS_UI_CAP_TOAST               (1u << 16)
 
 typedef uint32_t canopus_ui_node_id;
 
@@ -65,7 +75,7 @@ enum canopus_ui_node_type {
     CANOPUS_UI_NODE_PROGRESS,
     CANOPUS_UI_NODE_DIVIDER,
     CANOPUS_UI_NODE_SPACER,
-    /* ABI 1.4 semantic extension; requires CAP_NAVIGATION_HEADER. */
+    /* Requires CAP_NAVIGATION_HEADER. */
     CANOPUS_UI_NODE_NAVIGATION_HEADER,
 };
 
@@ -161,7 +171,7 @@ struct canopus_ui_style_v1 {
     uint16_t border_color;
     int16_t corner_radius;
     int16_t border_width;
-    uint16_t opacity; /* 0..1000; 0 means inherit. */
+    uint16_t opacity; /* 0..1000; 0 inherits unless VISUAL_FLAG_OPACITY is set. */
     uint16_t reserved;
 };
 
@@ -190,12 +200,50 @@ struct canopus_ui_layout_v1 {
 };
 
 struct canopus_ui_value_v1 {
-    int32_t value;
+    int32_t value; /* Toast duration ms: 0=2000 default, otherwise 1..60000. */
     int32_t minimum;
     int32_t maximum;
     int32_t step;
     uint32_t resource_id;
 };
+
+/* RGB values are 0x00RRGGBB. Explicit RGB overrides the corresponding role.
+ * ABSOLUTE positions relative to the parent content origin; translate offsets
+ * follow layout. CLIP clips descendants to this node's viewport. OPACITY makes
+ * style.opacity explicit, including zero. VIRTUAL_CONTENT uses content_height
+ * and scroll_y for a bounded visible subset inside a larger scroll surface. */
+#define CANOPUS_UI_VISUAL_FLAG_FOREGROUND_RGB (1u << 0)
+#define CANOPUS_UI_VISUAL_FLAG_BACKGROUND_RGB (1u << 1)
+#define CANOPUS_UI_VISUAL_FLAG_BORDER_RGB     (1u << 2)
+#define CANOPUS_UI_VISUAL_FLAG_ABSOLUTE       (1u << 3)
+#define CANOPUS_UI_VISUAL_FLAG_CLIP           (1u << 4)
+#define CANOPUS_UI_VISUAL_FLAG_OPACITY        (1u << 5)
+#define CANOPUS_UI_VISUAL_FLAG_VIRTUAL_CONTENT (1u << 6)
+
+enum canopus_ui_image_fit {
+    CANOPUS_UI_IMAGE_FIT_NATIVE = 0,
+    CANOPUS_UI_IMAGE_FIT_CONTAIN,
+    CANOPUS_UI_IMAGE_FIT_COVER,
+    CANOPUS_UI_IMAGE_FIT_STRETCH,
+};
+
+struct canopus_ui_visual_v1 {
+    uint32_t flags;
+    uint32_t foreground_rgb;
+    uint32_t background_rgb;
+    uint32_t border_rgb;
+    int16_t x;
+    int16_t y;
+    int16_t translate_x;
+    int16_t translate_y;
+    uint16_t font_px; /* 0 inherits. */
+    uint16_t image_fit;
+    uint32_t content_height;
+    int32_t scroll_y;
+};
+
+#define CANOPUS_UI_VISUAL_DEFAULT \
+    { 0u, 0u, 0u, 0u, 0, 0, 0, 0, 0u, CANOPUS_UI_IMAGE_FIT_NATIVE, 0u, 0 }
 
 #define CANOPUS_UI_STYLE_DEFAULT \
     { CANOPUS_UI_VARIANT_DEFAULT, CANOPUS_UI_TEXT_BODY, \
@@ -215,11 +263,10 @@ struct canopus_ui_snapshot_v1 {
     uint16_t string_used;
     struct canopus_ui_node_v1 nodes[CANOPUS_UI_MAX_NODES];
     char strings[CANOPUS_UI_STRING_CAPACITY];
-    /* ABI 1.3 append-only metadata. The prefix through strings is identical to
-     * ABI 1.2, so older backends can safely ignore this tail. */
     struct canopus_ui_style_v1 styles[CANOPUS_UI_MAX_NODES];
     struct canopus_ui_layout_v1 layouts[CANOPUS_UI_MAX_NODES];
     struct canopus_ui_value_v1 values[CANOPUS_UI_MAX_NODES];
+    struct canopus_ui_visual_v1 visuals[CANOPUS_UI_MAX_NODES];
 };
 
 struct canopus_ui_context_v1;
@@ -230,15 +277,66 @@ struct canopus_ui_tree_v1;
 typedef int32_t (*canopus_ui_backend_apply_v1)(
     void *cookie, const struct canopus_ui_snapshot_v1 *snapshot);
 
-typedef int32_t (*canopus_ui_event_handler_v1)(
-    void *cookie, uint32_t generation, canopus_ui_node_id key,
-    uint32_t event_id);
+enum canopus_ui_event_type {
+    CANOPUS_UI_EVENT_ACTIVATE = 1,
+    CANOPUS_UI_EVENT_VALUE_CHANGED,
+    CANOPUS_UI_EVENT_PRESS,
+    CANOPUS_UI_EVENT_LONG_PRESS,
+    CANOPUS_UI_EVENT_MOVE,
+    CANOPUS_UI_EVENT_RELEASE,
+    CANOPUS_UI_EVENT_CANCEL,
+    CANOPUS_UI_EVENT_SCROLL,
+};
 
+/* Coordinates and deltas are pixels in the page viewport. SCROLL carries the
+ * scroll surface's current metrics. The event is borrowed for the callback. */
+struct canopus_ui_event_v1 {
+    uint32_t struct_size;
+    uint32_t generation;
+    uint32_t key;
+    uint32_t event_id;
+    uint32_t type;
+    uint32_t time_ms;
+    int32_t x;
+    int32_t y;
+    int32_t delta_x;
+    int32_t delta_y;
+    int32_t scroll_y;
+    int32_t viewport_height;
+    int32_t content_height;
+};
+
+typedef int32_t (*canopus_ui_event_handler_v1)(
+    void *cookie, const struct canopus_ui_event_v1 *event);
+
+enum canopus_ui_control_op {
+    CANOPUS_UI_CONTROL_SCROLL_QUERY = 1,
+    CANOPUS_UI_CONTROL_SCROLL_TO,
+    CANOPUS_UI_CONTROL_TRANSLATE,
+    CANOPUS_UI_CONTROL_CAPTURE,
+    CANOPUS_UI_CONTROL_RELEASE_CAPTURE,
+};
+
+struct canopus_ui_scroll_metrics_v1 {
+    int32_t y;
+    int32_t viewport_height;
+    int32_t content_height;
+};
+
+typedef int32_t (*canopus_ui_backend_control_v1)(
+    void *cookie, uint32_t generation, canopus_ui_node_id key,
+    uint32_t op, int32_t a, int32_t b, void *out);
+
+/* Capabilities are explicit, never inferred from the ABI minor. A backend must
+ * reject unsupported field values with ERR_UNSUPPORTED rather than ignore them.
+ * Layout capability covers every layout field the backend accepts. */
 struct canopus_ui_backend_v1 {
     uint32_t struct_size;
     uint16_t abi_major;
     uint16_t abi_minor;
+    uint32_t capabilities;
     canopus_ui_backend_apply_v1 apply;
+    canopus_ui_backend_control_v1 control;
 };
 
 /* Concrete storage is public so freestanding callers can allocate it without
@@ -365,10 +463,7 @@ int32_t canopus_ui_context_init(
     canopus_ui_event_handler_v1 event_handler,
     void *event_cookie);
 
-/* Returns semantic features supported by the negotiated backend minor. A v1.2
- * backend can consume the stable snapshot prefix but cannot silently accept
- * v1.3 components or metadata that it would ignore; NavigationHeader is gated
- * separately at v1.4. */
+/* Returns the capabilities explicitly declared by the backend. */
 uint32_t canopus_ui_context_capabilities(
     const struct canopus_ui_context_v1 *context);
 
@@ -376,6 +471,14 @@ int32_t canopus_ui_tree_begin(
     struct canopus_ui_context_v1 *context,
     struct canopus_ui_tree_v1 **out_tree);
 
+/* The root NAVIGATION_PAGE key identifies the semantic route. Keep it stable
+ * for updates to the same page, including title/back changes and virtual-list
+ * windows; give different routes different page keys. Changing this key resets
+ * the host's shared content viewport and replaces the previous route's native
+ * state, cancelling its pointer/capture binding. Title text and header back
+ * visibility alone do not change route identity or reset content scroll.
+ * To restore a route's scroll position after returning, retain its metrics in
+ * the module model and restore with SCROLL_TO or virtual visual.scroll_y. */
 int32_t canopus_ui_navigation_page(
     struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
     const struct canopus_ui_navigation_page_props_v1 *props);
@@ -397,6 +500,11 @@ int32_t canopus_ui_action_row(
 int32_t canopus_ui_switch_row(
     struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
     const struct canopus_ui_switch_row_props_v1 *props);
+/* The header owns the native titlebar. A visible back dispatches ACTIVATE with
+ * this key and back_event_id; it requires a non-zero id. A hidden back may keep
+ * a reserved id for a later render. Updating the title or back visibility keeps
+ * the current page's content scroll; only the root NAVIGATION_PAGE key identifies
+ * a route change. Close the header container with end(). */
 int32_t canopus_ui_navigation_header(
     struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
     const struct canopus_ui_navigation_header_props_v1 *props);
@@ -412,6 +520,9 @@ int32_t canopus_ui_node_set_style(
 int32_t canopus_ui_node_set_layout(
     struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
     const struct canopus_ui_layout_v1 *layout);
+int32_t canopus_ui_node_set_visual(
+    struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
+    const struct canopus_ui_visual_v1 *visual);
 
 /* Ends the current navigation-page or section container. */
 int32_t canopus_ui_end(struct canopus_ui_tree_v1 *tree);
@@ -426,8 +537,20 @@ const struct canopus_ui_snapshot_v1 *canopus_ui_current(
     const struct canopus_ui_context_v1 *context);
 
 int32_t canopus_ui_dispatch_event(
+    struct canopus_ui_context_v1 *context,
+    const struct canopus_ui_event_v1 *event);
+
+/* Controls target a node in the committed generation. SCROLL_QUERY writes a
+ * scroll_metrics_v1 to out (a=b=0); SCROLL_TO uses a=y,b=0; TRANSLATE uses
+ * a=x,b=y. Other commands require a=b=0. Non-query commands require out=NULL.
+ * CAPTURE routes pointer events to key until release, cancel or explicit release.
+ * A commit rebinds capture to its new generation when the same visible enabled
+ * key, event binding and root NAVIGATION_PAGE key remain; otherwise it cancels
+ * capture. Title/back updates with a stable page key preserve route identity.
+ * Commands never modify the snapshot. */
+int32_t canopus_ui_control(
     struct canopus_ui_context_v1 *context, uint32_t generation,
-    canopus_ui_node_id key, uint32_t event_id);
+    canopus_ui_node_id key, uint32_t op, int32_t a, int32_t b, void *out);
 
 int32_t canopus_ui_router_init(
     struct canopus_ui_router_v1 *router, uint32_t root_route);

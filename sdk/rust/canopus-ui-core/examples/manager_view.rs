@@ -41,8 +41,13 @@ impl Application for ManagerApp {
     type Model = Model;
     type Message = Message;
 
-    fn decode_message(event_id: u32) -> Option<Self::Message> {
-        match event_id {
+    fn decode_event(event: &canopus_ui_core::Event) -> Option<Self::Message> {
+        if event.type_ != canopus_ui_core::EVENT_ACTIVATE
+            && event.type_ != canopus_ui_core::EVENT_VALUE_CHANGED
+        {
+            return None;
+        }
+        match event.event_id {
             1 => Some(Message::Refresh),
             2 => Some(Message::ToggleSafeMode),
             3 => Some(Message::OpenModules),
@@ -101,7 +106,8 @@ fn render(model: &Model, tree: &mut Tree) -> Result<(), UiError> {
                     key: 2,
                     title: "Canopus 管理器",
                     subtitle: "原生框架",
-                    back: None,
+                    back: Some(Message::Back),
+                    show_back: false,
                     centered: true,
                     elevated: false,
                     style: Style::default(),
@@ -139,7 +145,7 @@ fn render(model: &Model, tree: &mut Tree) -> Result<(), UiError> {
         })
         .render(tree),
         Route::Modules => view!(NavigationPage {
-            key: 1,
+            key: 10,
             title: "Canopus 管理器",
             children: (
                 NavigationHeader {
@@ -147,6 +153,7 @@ fn render(model: &Model, tree: &mut Tree) -> Result<(), UiError> {
                     title: "模块",
                     subtitle: "已安装组件",
                     back: Some(Message::Back),
+                    show_back: true,
                     centered: true,
                     elevated: false,
                     style: Style::default(),
@@ -176,6 +183,6 @@ fn main() {
     runtime.rebuild(render).unwrap();
     let generation = runtime.current().generation;
     runtime
-        .dispatch_event(generation, 4, Message::ToggleSafeMode.into(), render)
+        .dispatch_event(&canopus_ui_core::Event::activate(generation, 4, Message::ToggleSafeMode.into()), render)
         .unwrap();
 }

@@ -1,6 +1,9 @@
 # Shared build and generation data for Xiaomi Band 10 Pro targets.
 manager_backend = "manager/target/canopus_manager_target.c"
-supervisor_max_size = 114688
+# Build thresholds, not proven loader hard limits. Raised 114688 -> 131072 on
+# 2026-10-22 for the native UI framework (measured 119224 B after stripping),
+# matching the Band 11 file budget. Resident remains a real RAM-slot bound.
+supervisor_max_size = 131072
 supervisor_max_resident = 163840
 loader_sources = []
 defines = []

@@ -426,7 +426,8 @@ const struct canopus_context_v1 *canopus_supervisor_context(
     struct canopus_supervisor_v1 *sup, uint32_t slot);
 /* Binds the service table to the Supervisor (called by init). */
 void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup);
-/* Dispatches pending module timers whose intervals have elapsed. */
+/* Dispatches due module timers, including during sleep_ms. UI posts wait for
+ * the platform's separate foreground heartbeat callback. */
 void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup);
 /* Starts the heartbeat that runs canopus_supervisor_stability_poll. Non-zero
  * when the platform has no event source, in which case a module counts as
@@ -462,6 +463,15 @@ void canopus_supervisor_connect_release(uint32_t slot);
  * has no entry or no loaded module. */
 int canopus_supervisor_ui_entry(struct canopus_supervisor_v1 *sup, uint32_t slot,
                                 struct canopus_ui_entry_v1 *out);
+/* Owner-task services: posts run only on the next foreground UI heartbeat,
+ * after synchronous bus callbacks unwind. Release cancels pending work. */
+int32_t canopus_supervisor_ui_post(const struct canopus_context_v1 *ctx,
+                                  canopus_ui_task_fn callback, void *user_data);
+int32_t canopus_supervisor_ui_pump_ensure(struct canopus_supervisor_v1 *sup);
+int canopus_supervisor_bus_dispatching(void);
+void canopus_supervisor_module_changed(struct canopus_supervisor_v1 *sup, uint32_t slot);
+void canopus_supervisor_module_events_flush(struct canopus_supervisor_v1 *sup);
+
 /* Log ring (newest last). Returns the message or 0 past the end. */
 uint32_t canopus_supervisor_log_count(void);
 const char *canopus_supervisor_log_entry(uint32_t index, uint32_t *level,

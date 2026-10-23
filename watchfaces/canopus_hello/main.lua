@@ -112,7 +112,7 @@ end
 
 local function supervisor_error()
     -- CPC2 QUERY_DEVICE (9): 36-byte header + 36-byte payload, error at payload+24.
-    local query = word(CPC2_MAGIC) .. half(HEADER_SIZE) .. half(1) .. half(1) .. half(0)
+    local query = word(CPC2_MAGIC) .. half(HEADER_SIZE) .. half(1) .. half(2) .. half(0)
         .. word(HEADER_SIZE) .. word(9) .. word(0x7FFF) .. word(0) .. word(0) .. word(0)
     local device = io.open(DEVICE_PATH, "wb")
     if not device then return nil end
@@ -141,18 +141,18 @@ local function install()
     local payload = TOKEN .. "\0"
     local total = HEADER_SIZE + #payload
     local request = word(CPC2_MAGIC) .. half(HEADER_SIZE) .. half(1)
-        .. half(1) .. half(0) .. word(total) .. word(CMD_INSTALL)
+        .. half(2) .. half(0) .. word(total) .. word(CMD_INSTALL)
         .. word(1) .. word(0) .. word(0) .. word(#payload) .. payload
     local device = io.open(DEVICE_PATH, "wb")
     if not device then fail("Canopus Manager is not installed") return end
     local write_ok, write_result, write_error = pcall(device.write, device, request)
-    local close_ok, close_result = pcall(device.close, device)
     -- Firmware bindings may return a byte count; stock Lua returns the file
     -- handle on a complete write and nil on an I/O failure. Enforce exactness
     -- whenever the binding exposes a count without rejecting stock semantics.
+    -- A character device reports no close status, so close carries no signal.
+    pcall(device.close, device)
     local short_write = type(write_result) == "number" and write_result ~= #request
-    if not write_ok or write_result == nil or short_write
-        or not close_ok or close_result == nil then
+    if not write_ok or write_result == nil or short_write then
         fail(write_error or "Supervisor write failed") return
     end
 
@@ -170,7 +170,7 @@ local function install()
         or u32(response, 0) ~= CPC2_MAGIC
         or u16(response, 4) ~= HEADER_SIZE
         or u16(response, 6) ~= 2
-        or u16(response, 8) ~= 1
+        or u16(response, 8) ~= 2
         or u16(response, 10) ~= 0
         or u32(response, 12) ~= HEADER_SIZE
         or u32(response, 16) ~= CMD_INSTALL

@@ -52,7 +52,7 @@
           ]
         },
         "canopus_abi": {
-          "type": "string"
+          "const": "2"
         },
         "description": {
           "type": "string"

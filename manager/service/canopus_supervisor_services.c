@@ -42,7 +42,6 @@ static struct canopus_notify_obj s_notify_obj;
 static struct canopus_system_obj s_system_obj;
 static struct canopus_bluetooth_obj s_bt_obj;
 static const struct canopus_connect_obj *s_connect_obj;
-static struct canopus_ui_ext_obj s_ui_ext_obj;
 static struct {
     struct canopus_ui_entry_v1 entry;
     char label[CANOPUS_UI_ENTRY_LABEL_MAX];
@@ -110,6 +109,16 @@ struct bus_subscription {
     int used;
 };
 static struct bus_subscription s_bus_subs[CANOPUS_BUS_MAX_SUBS];
+static int s_bus_dispatching;
+static uint32_t s_module_events;
+
+/* One coalesced owner-task UI job per module; release cancels it. The ready
+ * mask is frozen before draining, so reposts wait for the next heartbeat. */
+static struct {
+    canopus_ui_task_fn callback;
+    void *user_data;
+} s_ui_jobs[CANOPUS_SUP_MODULE_SLOTS];
+static uint32_t s_ui_jobs_ready;
 
 /* Display State */
 struct svc_wakelock {
@@ -1077,6 +1086,47 @@ static void svc_haptic_poll(uint32_t now);
 static void svc_events_poll(uint32_t now);
 static void svc_launcher_poll(void);
 
+int32_t canopus_supervisor_ui_pump_ensure(struct canopus_supervisor_v1 *sup)
+{
+    return sup == s_sup ? svc_pump_ensure() : CANOPUS_SVC_ERR_STATE;
+}
+
+int32_t canopus_supervisor_ui_post(const struct canopus_context_v1 *ctx,
+                                  canopus_ui_task_fn callback, void *user_data)
+{
+    int32_t rc;
+    if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
+    if (callback == 0) return CANOPUS_SVC_ERR_ARGUMENT;
+    if (s_ui_jobs[ctx->slot].callback != 0) {
+        return s_ui_jobs[ctx->slot].callback == callback &&
+               s_ui_jobs[ctx->slot].user_data == user_data
+                   ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_BUSY;
+    }
+    rc = svc_pump_ensure();
+    if (rc != CANOPUS_SVC_OK) return rc;
+    s_ui_jobs[ctx->slot].callback = callback;
+    s_ui_jobs[ctx->slot].user_data = user_data;
+    return CANOPUS_SVC_OK;
+}
+
+static void svc_ui_jobs_poll(void)
+{
+    uint32_t i;
+    s_ui_jobs_ready = 0u;
+    for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+        if (s_ui_jobs[i].callback != 0) s_ui_jobs_ready |= 1u << i;
+    }
+    for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+        if ((s_ui_jobs_ready & (1u << i)) != 0u && s_ui_jobs[i].callback != 0) {
+            canopus_ui_task_fn callback = s_ui_jobs[i].callback;
+            void *user_data = s_ui_jobs[i].user_data;
+            s_ui_jobs_ready &= ~(1u << i);
+            s_ui_jobs[i].callback = 0;
+            if (svc_slot_valid(&s_contexts[i])) callback(&s_contexts[i], user_data);
+        }
+    }
+}
+
 /* Fires the timers that are due; a background poll leaves the others alone,
  * because LVGL is suspended while it runs. */
 static void svc_timers_dispatch(uint32_t now, int background_only)
@@ -1105,11 +1155,14 @@ static uint32_t svc_now(const struct canopus_supervisor_v1 *sup)
                ? sup->platform->monotonic_ms(sup->platform_cookie) : 0u;
 }
 
-void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup)
+static void svc_timers_poll(struct canopus_supervisor_v1 *sup, int foreground)
 {
     uint32_t now;
-    if (sup == 0 || sup != s_sup || s_timer_dispatching) return;
+    if (sup == 0 || sup != s_sup || s_timer_dispatching || s_bus_dispatching) return;
     s_timer_dispatching = 1;
+    /* Only the platform's foreground heartbeat starts a new UI turn. Jobs run
+     * before timers, so work posted by those callbacks waits for the next one. */
+    if (foreground) svc_ui_jobs_poll();
     now = svc_now(sup);
 
     canopus_supervisor_stability_poll(sup, now);
@@ -1120,9 +1173,14 @@ void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup)
     s_timer_dispatching = 0;
 }
 
+void canopus_supervisor_timers_poll(struct canopus_supervisor_v1 *sup)
+{
+    svc_timers_poll(sup, 0);
+}
+
 static void svc_background_pump(void *sup)
 {
-    if ((struct canopus_supervisor_v1 *)sup != s_sup || s_timer_dispatching) return;
+    if ((struct canopus_supervisor_v1 *)sup != s_sup || s_timer_dispatching || s_bus_dispatching) return;
     s_timer_dispatching = 1;
     canopus_supervisor_boot_poll(s_sup);
     canopus_supervisor_stability_poll(s_sup, svc_now(s_sup));
@@ -1132,7 +1190,7 @@ static void svc_background_pump(void *sup)
 
 static void svc_timer_pump(void *sup)
 {
-    canopus_supervisor_timers_poll((struct canopus_supervisor_v1 *)sup);
+    svc_timers_poll((struct canopus_supervisor_v1 *)sup, 1);
 }
 
 static void svc_time_sleep_ms(const struct canopus_context_v1 *ctx, uint32_t ms)
@@ -1571,7 +1629,7 @@ static void svc_display_get_resolution(const struct canopus_context_v1 *ctx, uin
 
 /* ---- BUS (Inter-Module Event Bus) ------------------------------------ */
 
-static int svc_bus_is_system_topic(const char *topic)
+static int svc_bus_is_sampled_topic(const char *topic)
 {
     return canopus_strcmp(topic, CANOPUS_BUS_TOPIC_SCREEN) == 0 ||
            canopus_strcmp(topic, CANOPUS_BUS_TOPIC_BATTERY) == 0 ||
@@ -1582,6 +1640,8 @@ static int32_t svc_bus_dispatch(const char *topic, const void *payload, uint32_t
 {
     uint32_t i;
     int32_t dispatched = 0;
+    if (s_bus_dispatching) return CANOPUS_SVC_ERR_BUSY;
+    s_bus_dispatching = 1;
     for (i = 0u; i < CANOPUS_BUS_MAX_SUBS; i++) {
         if (s_bus_subs[i].used && s_bus_subs[i].cb != 0) {
             if (s_bus_subs[i].topic[0] == '*' || canopus_strcmp(s_bus_subs[i].topic, topic) == 0) {
@@ -1591,16 +1651,72 @@ static int32_t svc_bus_dispatch(const char *topic, const void *payload, uint32_t
             }
         }
     }
+    s_bus_dispatching = 0;
     return dispatched;
 }
 
-/* The three system topics are written only by the Supervisor, so a module
- * cannot forge a screen, battery or Bluetooth event for the others. */
+static int32_t svc_bus_query_module(const struct canopus_context_v1 *ctx,
+                                    const char *id, struct canopus_module_state_v1 *out)
+{
+    uint32_t i;
+    if (!svc_slot_valid(ctx) || id == 0 || out == 0 || id[0] == '\0' ||
+        canopus_strnlen(id, CANOPUS_MODULE_ID_MAX) == CANOPUS_MODULE_ID_MAX) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+        const struct canopus_sup_module_v1 *m = &s_sup->modules[i];
+        if (m->state != 0u && canopus_strcmp((const char *)m->module_id, id) == 0) {
+            canopus_memcpy(out->module_id, m->module_id, sizeof(out->module_id));
+            out->state = m->state;
+            out->intent = m->intent;
+            out->version = m->version;
+            out->lifecycle_class = m->lifecycle_class;
+            out->flags = m->flags;
+            out->activation_error = (int32_t)m->activation_error;
+            out->active_generation = m->active_gen;
+            return CANOPUS_SVC_OK;
+        }
+    }
+    return CANOPUS_SVC_ERR_NOTFOUND;
+}
+
+int canopus_supervisor_bus_dispatching(void)
+{
+    return s_bus_dispatching;
+}
+
+void canopus_supervisor_module_changed(struct canopus_supervisor_v1 *sup, uint32_t slot)
+{
+    if (sup == s_sup && slot < CANOPUS_SUP_MODULE_SLOTS) s_module_events |= 1u << slot;
+}
+
+void canopus_supervisor_module_events_flush(struct canopus_supervisor_v1 *sup)
+{
+    uint32_t i, pending;
+    struct canopus_module_state_v1 event;
+    if (sup != s_sup || s_bus_dispatching || !CANOPUS_SNAPSHOT_READY(&sup->snap)) return;
+    pending = s_module_events;
+    s_module_events = 0u;
+    for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+        if ((pending & (1u << i)) == 0u || sup->modules[i].state == 0u) continue;
+        if (svc_bus_query_module(&s_contexts[i], (const char *)sup->modules[i].module_id,
+                                 &event) == 0) {
+            (void)svc_bus_dispatch(CANOPUS_BUS_TOPIC_MODULE, &event, sizeof(event));
+        }
+    }
+}
+
+/* Reserved system topics cannot be forged by a module. */
 static int32_t svc_bus_publish(const struct canopus_context_v1 *ctx, const char *topic,
                                const void *payload, uint32_t len)
 {
-    if (!svc_slot_valid(ctx) || topic == 0) return CANOPUS_SVC_ERR_ARGUMENT;
-    if (svc_bus_is_system_topic(topic)) return CANOPUS_SVC_ERR_ACCESS;
+    if (!svc_slot_valid(ctx) || topic == 0 || topic[0] == '\0' ||
+        (len != 0u && payload == 0) || canopus_strnlen(topic, 32u) >= 32u) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    if (svc_bus_is_sampled_topic(topic) || canopus_strcmp(topic, CANOPUS_BUS_TOPIC_MODULE) == 0) {
+        return CANOPUS_SVC_ERR_ACCESS;
+    }
     return svc_bus_dispatch(topic, payload, len);
 }
 
@@ -1684,7 +1800,11 @@ static int32_t svc_bus_subscribe(const struct canopus_context_v1 *ctx, const cha
                                  canopus_bus_callback_t cb, void *user_data)
 {
     uint32_t i;
-    if (!svc_slot_valid(ctx) || topic == 0 || cb == 0) return CANOPUS_SVC_ERR_ARGUMENT;
+    if (!svc_slot_valid(ctx) || topic == 0 || cb == 0 || topic[0] == '\0' ||
+        canopus_strnlen(topic, 32u) >= 32u || (topic[0] == '*' && topic[1] != '\0')) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    if (s_bus_dispatching) return CANOPUS_SVC_ERR_BUSY;
     for (i = 0u; i < CANOPUS_BUS_MAX_SUBS; i++) {
         if (!s_bus_subs[i].used) {
             s_bus_subs[i].used = 1;
@@ -1693,7 +1813,7 @@ static int32_t svc_bus_subscribe(const struct canopus_context_v1 *ctx, const cha
             s_bus_subs[i].user_data = user_data;
             canopus_strncpy(s_bus_subs[i].topic, topic, sizeof(s_bus_subs[i].topic) - 1);
             s_bus_subs[i].topic[sizeof(s_bus_subs[i].topic) - 1] = '\0';
-            if (svc_bus_is_system_topic(s_bus_subs[i].topic) &&
+            if (svc_bus_is_sampled_topic(s_bus_subs[i].topic) &&
                 svc_pump_ensure() != CANOPUS_SVC_OK) {
                 /* System events come from the timer pump; without one the
                  * subscription would silently never fire. */
@@ -2104,6 +2224,10 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_timer_pump_started = 0;
     s_background_pump_started = 0;
     canopus_memset(s_bus_subs, 0, sizeof(s_bus_subs));
+    s_bus_dispatching = 0;
+    s_module_events = 0u;
+    canopus_memset(s_ui_jobs, 0, sizeof(s_ui_jobs));
+    s_ui_jobs_ready = 0u;
     canopus_memset(s_wakelocks, 0, sizeof(s_wakelocks));
     s_wakelock_generation = 0u;
     s_brightness_slot = -1;
@@ -2142,7 +2266,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_services.group_version[CANOPUS_SVC_KV] = 1u;
     s_services.group_version[CANOPUS_SVC_HAPTICS] = 1u;
     s_services.group_version[CANOPUS_SVC_DISPLAY] = 1u;
-    s_services.group_version[CANOPUS_SVC_BUS] = 1u;
+    s_services.group_version[CANOPUS_SVC_BUS] = 2u;
     s_services.group_version[CANOPUS_SVC_CONNECT] = s_connect_obj != 0 ? 1u : 0u;
     s_services.group_version[CANOPUS_SVC_LAUNCHER] =
         (sup->platform != 0 && sup->platform->launcher_publish != 0) ? 1u : 0u;
@@ -2276,6 +2400,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_bus_obj.publish = svc_bus_publish;
     s_bus_obj.subscribe = svc_bus_subscribe;
     s_bus_obj.unsubscribe = svc_bus_unsubscribe;
+    s_bus_obj.query_module = svc_bus_query_module;
 
     /* UI Object */
     s_ui_obj.capabilities = canopus_ui_context_capabilities;
@@ -2292,10 +2417,13 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_ui_obj.switch_row = canopus_ui_switch_row;
     s_ui_obj.navigation_header = canopus_ui_navigation_header;
     s_ui_obj.component = canopus_ui_component;
-    s_ui_ext_obj.node_set_style = canopus_ui_node_set_style;
-    s_ui_ext_obj.node_set_layout = canopus_ui_node_set_layout;
-    s_ui_ext_obj.set_entry = svc_ui_set_entry;
-    s_ui_ext_obj.close_page = svc_ui_close_page;
+    s_ui_obj.node_set_style = canopus_ui_node_set_style;
+    s_ui_obj.node_set_layout = canopus_ui_node_set_layout;
+    s_ui_obj.set_entry = svc_ui_set_entry;
+    s_ui_obj.close_page = svc_ui_close_page;
+    s_ui_obj.node_set_visual = canopus_ui_node_set_visual;
+    s_ui_obj.control = canopus_ui_control;
+    s_ui_obj.post = canopus_supervisor_ui_post;
     s_launcher_obj.set_entry = svc_launcher_set_entry;
 
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
@@ -2320,7 +2448,6 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_contexts[i].bus = &s_bus_obj;
         s_contexts[i].ui = &s_ui_obj;
         s_contexts[i].connect = s_connect_obj;
-        s_contexts[i].ui_ext = &s_ui_ext_obj;
         s_contexts[i].launcher = (s_services.group_version[CANOPUS_SVC_LAUNCHER] != 0u) ? &s_launcher_obj : 0;
     }
 
@@ -2340,6 +2467,10 @@ void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,
     if (sup == 0 || sup != s_sup || slot >= CANOPUS_SUP_MODULE_SLOTS) {
         return;
     }
+
+    s_ui_jobs[slot].callback = 0;
+    s_ui_jobs[slot].user_data = 0;
+    s_ui_jobs_ready &= ~(1u << slot);
 
     /* Release all active hooks owned by this module */
     canopus_hook_release_slot(slot);

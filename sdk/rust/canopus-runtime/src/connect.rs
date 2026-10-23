@@ -4,7 +4,6 @@
 
 use canopus_abi::*;
 use core::ffi::c_void;
-use core::mem::{offset_of, size_of};
 
 /// Outcome of a `send_*` that did not fail.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -17,14 +16,12 @@ pub enum Delivery {
 }
 
 /// The `connect` object, or `-22` for a null context and `-38` when this
-/// Supervisor predates CanopusConnect or the target has no L2 backend.
+/// target has no L2 backend.
 fn object(ctx: *const CanopusContext) -> Result<*const CanopusConnectObj, i32> {
     if ctx.is_null() {
         return Err(-22);
     }
-    let covered = unsafe { (*ctx).struct_size } as usize
-        >= offset_of!(CanopusContext, connect) + size_of::<*const CanopusConnectObj>();
-    let object = if covered { unsafe { (*ctx).connect } } else { core::ptr::null() };
+    let object = unsafe { (*ctx).connect };
     if object.is_null() { Err(-38) } else { Ok(object) }
 }
 

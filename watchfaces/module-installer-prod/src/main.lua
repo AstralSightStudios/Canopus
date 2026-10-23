@@ -82,15 +82,17 @@ local function device_exchange(request, size)
     local f = io.open(ENDPOINT, "wb")
     check(f, SUPERVISOR_MISSING)
     local ok, result, message = pcall(f.write, f, request)
-    local closed, close_result = pcall(f.close, f)
-    check(ok and result and (type(result) ~= "number" or result == #request)
-        and closed and close_result, message or "Supervisor write failed")
+    -- A character device reports no close status; only the reply decides
+    -- whether the request landed.
+    pcall(f.close, f)
+    check(ok and result and (type(result) ~= "number" or result == #request),
+        message or "Supervisor write failed")
     f = io.open(ENDPOINT, "rb")
     check(f, "Cannot read supervisor response")
     local read_ok, response = pcall(f.read, f, size)
-    closed, close_result = pcall(f.close, f)
-    check(read_ok and type(response) == "string" and #response == size
-        and closed and close_result, "Invalid supervisor response")
+    pcall(f.close, f)
+    check(read_ok and type(response) == "string" and #response == size,
+        "Invalid supervisor response")
     return response
 end
 local function install()
@@ -139,10 +141,10 @@ local function install()
     checkpoint("提交签名验证与安装请求")
     local payload = CONFIG.token .. "\0"
     local request = string.pack("<I4I2I2I2I2I4I4I4I4I4I4",
-        0x43504332, 36, 1, 1, 0, 36 + #payload, 2, 1, 0, 0, #payload) .. payload
+        0x43504332, 36, 1, 2, 0, 36 + #payload, 2, 1, 0, 0, #payload) .. payload
     local response = device_exchange(request, REPLY_SIZE)
     check(u32(response, 0) == 0x43504332 and u16(response, 4) == 36
-        and u16(response, 6) == 2 and u16(response, 8) == 1
+        and u16(response, 6) == 2 and u16(response, 8) == 2
         and u32(response, 12) == REPLY_SIZE and u32(response, 16) == 2
         and u32(response, 20) == 1 and u32(response, 24) == 0
         and u32(response, 32) == REPLY_SIZE - 36, "Invalid supervisor response")

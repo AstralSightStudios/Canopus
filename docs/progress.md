@@ -27,7 +27,26 @@
   Mirage 里真实 `.179` 固件经生产安装器 Run → 加密 L2 `.canopus` 安装 → SCAN，services 测试 26/27（仅振动跳过）。
 - 全局 safe mode：自动进入（连续 3 次未完成的启动、3 次模块隔离而没有一次好启动、注册表不可读）、重启保持、`EXIT_SAFE_MODE`（保持 / 全部停用 / 全部回滚）退出并试运行一次、
   试运行没有稳定就回到 safe mode；Manager 在 safe mode 里提供退出入口。host 测试，未上真机。
-- `.043` Supervisor 112,304 / 114,688 字节（97.9%），已接近文件预算。
+- `.043` Supervisor 123,348 / 131,072 字节（2026-10-23 复审修复版构建）；`supervisor_max_size` 已由 114,688 提到 131,072（构建期预算，非常驻 RAM 上限，
+  常驻 161,958 / 163,840 未放宽）。
+
+## 原生 UI ABI 2.0 与模块生命周期（2026-10-23）
+
+- 公共 ABI 直接演进到 2.0：`ctx->ui_ext` 并入 `ctx->ui` 并删除，事件改为 `canopus_ui_event_v1`，新增显式能力协商、
+  `node_set_visual`、`control`（滚动/位移/捕获）、`post`。**host implemented**，见 ADR-CAN-013。
+- 能力按 target 判定，不支持显式返回 `ERR_UNSUPPORTED`；图片适配只有 `NATIVE`，字体只有 MiSans-Medium 24/28。
+- 模块生命周期走既有 bus（`"canopus/module/state"` + `query_module`），UI 更新经 `ctx->ui->post`，无线程无轮询。
+- host 回归（含双后端 ASan/UBSan）、Rust 215 项、生成物检查、五个 active target 构建与 ELF 校验通过。
+  隔离 Mirage 中 `.043` / `.155` 完整 Lab 通过（选中第 40 / 46 项并返回恢复），`.179` 支持路径通过，显式 gated 虚拟滚动/指针拖动/捕获。
+  证据与构建哈希见 [`evidence/native-ui-abi2-2026-10-23`](evidence/native-ui-abi2-2026-10-23/README.md)。
+  2026-10-23 复审 R1–R14（1 high + 13 medium）已修复并重新验收：正式回归进 CI，隔离 Mirage review7 复跑显示/隐藏/重显/到期 Toast 四态、
+  标题/重置卡片与超 32 项列表恢复；`.043`/`.179` 因样式属性 ID 未审计 gate `style-card`（`stylefallback` 显式降级），`.179` 另 gate 三项输入能力。
+  逐项结果与红绿日志见 [`evidence/native-ui-abi2-review-fixes-2026-10-23`](evidence/native-ui-abi2-review-fixes-2026-10-23/README.md)。
+  二次复审回归 N1/N2（多 Toast staged 所有权、CANCEL 销毁后二次删除）已修复并补正式回归（含 ASan/UBSan 与红现场）；staging 所有权/清理按节点类型收口（audit-findings F1–F7）。重新验收见 [`evidence/native-ui-n1n2-fixes-2026-10-23`](evidence/native-ui-n1n2-fixes-2026-10-23/README.md)。
+  三次复审 M1（别名 Toast 样式写共享 owner）/L1（尾随隐藏 Toast 压掉可见 Toast）已修复并补正式回归；Toast 驱动规则收口为"最近可见 Toast 驱动、无可见时隐藏"。重新验收见 [`evidence/native-ui-m1l1-fixes-2026-10-23`](evidence/native-ui-m1l1-fixes-2026-10-23/README.md)。
+  四次复审 M2（驱动切换不重绘共享 owner 样式）已修复（切换走替换路径全量重绘）并补正式回归；写入面矩阵定稿无残留缺口。重新验收见 [`evidence/native-ui-m2-fixes-2026-10-23`](evidence/native-ui-m2-fixes-2026-10-23/README.md)。
+  四次复审 P1/P2（隐藏期样式写残留/隐藏 fresh 节点替换 owner——样式重绘与文本重绘脱钩）按根因修复（不变量：owner 文本被重写 ⇒ 样式同步重绘，隐藏节点不写不替换）、T1（双 header 争 title 改 first-HEADER 驱动）、D1（矩阵补 hidden 触发源）已完成并补正式回归；重新验收见 [`evidence/native-ui-p1p2-fixes-2026-10-23`](evidence/native-ui-p1p2-fixes-2026-10-23/README.md)。能力状态未提升。
+- **能力状态未提升**：新增能力仍为 **host implemented**，模拟器只增加 host/emulator 证据；没有新的真机验证或 production approval。
 
 ## 固化启动与可见的故障恢复（2026-10-21，host / 模拟器证据）
 

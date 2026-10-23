@@ -128,6 +128,7 @@ static int sup_apply_pending_switches(struct canopus_supervisor_v1 *sup)
             sup->error_code = CANOPUS_SUP_ERR_UPDATE_ABANDONED;
         }
         sup_refresh_flags(sup, i);
+        canopus_supervisor_module_changed(sup, i);
     }
     return changed;
 }
@@ -436,7 +437,7 @@ int canopus_supervisor_register_descriptor(
 {
     uint32_t i;
     if (sup == 0 || module_id == 0 || descriptor == 0 ||
-        sup->loading_slot < 0 ||
+        canopus_supervisor_bus_dispatching() || sup->loading_slot < 0 ||
         (uint32_t)sup->loading_slot >= CANOPUS_SUP_MODULE_SLOTS ||
         canopus_module_descriptor_check(descriptor) != 0 ||
         sup->platform == 0 || sup->platform->target_id == 0 ||
@@ -643,6 +644,14 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
             sup->error_code == CANOPUS_SUP_ERR_NONE) {
             sup->error_code = CANOPUS_SUP_ERR_STAGE;
         }
+        if (rc == CANOPUS_RESULT_COMPLETED || rc == CANOPUS_RESULT_REBOOT_REQUIRED) {
+            for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+                if (((previous_occupied & (1u << i)) == 0u && sup->modules[i].state != 0u) ||
+                    (staged == 1 && (int32_t)i == update_slot)) {
+                    canopus_supervisor_module_changed(sup, i);
+                }
+            }
+        }
         break;
     }
 
@@ -704,6 +713,11 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
                 canopus_memcpy(&sup->modules[slot], &previous, sizeof(previous));
                 sup->error_code = persist_rc;
                 rc = CANOPUS_RESULT_FAILED;
+            } else if (previous.state != sup->modules[slot].state ||
+                       previous.intent != sup->modules[slot].intent ||
+                       previous.flags != sup->modules[slot].flags ||
+                       previous.activation_error != sup->modules[slot].activation_error) {
+                canopus_supervisor_module_changed(sup, (uint32_t)slot);
             }
         }
         break;
@@ -745,6 +759,7 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
         }
         if (rc == CANOPUS_RESULT_COMPLETED ||
             rc == CANOPUS_RESULT_FAILED) {
+            canopus_supervisor_module_changed(sup, (uint32_t)slot);
             int persist_rc = canopus_supervisor_save_registry(sup);
             if (persist_rc != 0) {
                 sup->error_code = persist_rc;
@@ -834,6 +849,13 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
         sup->boot_state = CANOPUS_BOOT_OK;
         persist_rc = canopus_supervisor_save_registry(sup);
         if (persist_rc == 0) {
+            for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+                if (previous[i].state != sup->modules[i].state ||
+                    previous[i].intent != sup->modules[i].intent ||
+                    previous[i].flags != sup->modules[i].flags) {
+                    canopus_supervisor_module_changed(sup, i);
+                }
+            }
             rc = CANOPUS_RESULT_REBOOT_REQUIRED;
             break;
         }
@@ -922,6 +944,7 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
     if (sup == 0) {
         return CANOPUS_RESULT_REJECTED;
     }
+    if (canopus_supervisor_bus_dispatching()) return CANOPUS_RESULT_DISALLOWED;
     if (canopus_supervisor_validate_command(command) != 0) {
         canopus_snapshot_begin(&sup->snap);
         sup->pending_op = 0;
@@ -951,6 +974,7 @@ uint32_t canopus_supervisor_handle_command(struct canopus_supervisor_v1 *sup,
     rc = sup_dispatch(sup, op, arg0, arg1, 0);
     sup->pending_state = rc;
     canopus_snapshot_commit(&sup->snap);
+    canopus_supervisor_module_events_flush(sup);
     return rc;
 }
 
@@ -1096,6 +1120,10 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         return -1;
     }
     *opcode = req->command;
+    if (canopus_supervisor_bus_dispatching()) {
+        canopus_proto_response_init(resp, req->request_id, CANOPUS_RESULT_DISALLOWED, 0u);
+        return 0;
+    }
     if (req->command >= CANOPUS_CMD_QUERY_BOOT && req->command <= CANOPUS_CMD_START_BOOT) {
         int status;
         if ((req->command == CANOPUS_CMD_SET_BOOT &&
@@ -1221,6 +1249,7 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         (void)canopus_pending_ack(&sup->pending, req->request_id);
     }
     canopus_proto_response_init(resp, req->request_id, rc, 0);
+    canopus_supervisor_module_events_flush(sup);
     return 0;
 }
 
@@ -1526,7 +1555,7 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
 {
     uint32_t i;
     uint32_t n;
-    if (sup == 0) {
+    if (sup == 0 || canopus_supervisor_bus_dispatching()) {
         return -1;
     }
     if (!module_lifecycle_ok(lifecycle_class)) {
@@ -1567,13 +1596,16 @@ int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
 {
     uint32_t i;
     int failed = 0;
-    if (sup == 0 || (stage != 1u && stage != 2u)) return -1;
+    if (sup == 0 || (stage != 1u && stage != 2u) ||
+        canopus_supervisor_bus_dispatching()) return -1;
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         struct canopus_sup_module_v1 *module = &sup->modules[i];
         uint32_t legacy_end;
         uint32_t staged_end;
+        uint32_t previous_error = module->activation_error;
         int rc;
         if (!sup_module_loaded(module->state) || module->descriptor == 0 ||
+            module->descriptor->abi_major != CANOPUS_ABI_MAJOR ||
             (module->descriptor->flags & CANOPUS_FLAG_HAS_NATIVE_APP) == 0u) {
             continue;
         }
@@ -1585,12 +1617,11 @@ int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
             (uint32_t)offsetof(struct canopus_module_descriptor_v1,
                                publish_native_app_stage) +
             (uint32_t)sizeof(module->descriptor->publish_native_app_stage);
-        if (module->descriptor->abi_minor >= 2u &&
-            module->descriptor->struct_size >= staged_end &&
+        if (module->descriptor->struct_size >= staged_end &&
             module->descriptor->publish_native_app_stage != 0) {
             rc = module->descriptor->publish_native_app_stage(
                 canopus_supervisor_context(sup, i), stage);
-        } else if (stage == 1u && module->descriptor->abi_minor >= 1u &&
+        } else if (stage == 1u &&
                    module->descriptor->struct_size >= legacy_end &&
                    module->descriptor->publish_native_app != 0) {
             rc = module->descriptor->publish_native_app(
@@ -1604,16 +1635,20 @@ int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
         } else {
             module->activation_error = 0u;
         }
+        if (module->activation_error != previous_error) {
+            canopus_supervisor_module_changed(sup, i);
+        }
     }
     {
         int persist_result = canopus_supervisor_save_registry(sup);
         if (persist_result != 0) {
             /* App callbacks may already have committed; retain the specific
-             * storage error rather than reporting a generic stage failure. */
+             * storage error and notify the state kept in memory. */
             sup->error_code = (uint32_t)persist_result;
-            return -1;
+            failed = -1;
         }
     }
+    canopus_supervisor_module_events_flush(sup);
     return failed;
 }
 
@@ -1639,7 +1674,7 @@ int canopus_supervisor_stage_token(struct canopus_supervisor_v1 *sup,
     uint32_t lifecycle;
     int slot;
 
-    if (sup == 0 || token == 0 || sup->platform == 0) return -1;
+    if (sup == 0 || token == 0 || sup->platform == 0 || canopus_supervisor_bus_dispatching()) return -1;
     pf = sup->platform;
     if (pf->stage_verify == 0 || pf->stage_commit == 0) {
         sup->error_code = CANOPUS_SUP_ERR_STAGE;
@@ -1695,10 +1730,11 @@ uint32_t canopus_supervisor_scan_packages(struct canopus_supervisor_v1 *sup)
     uint32_t index;
     uint32_t rc;
     uint32_t last_error = CANOPUS_SUP_ERR_NONE;
+    uint32_t changed_slots = 0u;
     char ids[CANOPUS_SUP_MODULE_SLOTS][CANOPUS_SUP_MODULE_ID_MAX];
     uint32_t count = 0u;
 
-    if (sup == 0 || sup->platform == 0) return CANOPUS_RESULT_FAILED;
+    if (sup == 0 || sup->platform == 0 || canopus_supervisor_bus_dispatching()) return CANOPUS_RESULT_FAILED;
     pf = sup->platform;
     if (pf->list_packages == 0) {
         sup->error_code = CANOPUS_SUP_ERR_STAGE;
@@ -1712,10 +1748,20 @@ uint32_t canopus_supervisor_scan_packages(struct canopus_supervisor_v1 *sup)
     }
     for (index = 0u; index < count; index++) {
         const char *id = ids[index];
+        int previous_slot = sup_find_slot_by_id(sup, id);
+        uint32_t previous_flags = previous_slot >= 0
+                                      ? sup->modules[previous_slot].flags : 0u;
         int staged;
         scanned++;
         sup->error_code = CANOPUS_SUP_ERR_NONE;
         staged = canopus_supervisor_stage_token(sup, id);
+        if (staged == 0 || staged == 1) {
+            int changed_slot = sup_find_slot_by_id(sup, id);
+            if (changed_slot >= 0 && (staged == 0 ||
+                sup->modules[changed_slot].flags != previous_flags)) {
+                changed_slots |= 1u << (uint32_t)changed_slot;
+            }
+        }
         if (staged == 0) {
             added++;
         } else if (staged == 1) {
@@ -1738,9 +1784,13 @@ uint32_t canopus_supervisor_scan_packages(struct canopus_supervisor_v1 *sup)
         int persist_rc = canopus_supervisor_save_registry(sup);
         if (persist_rc != 0) {
             sup->error_code = (uint32_t)persist_rc;
-            return CANOPUS_RESULT_FAILED;
+            rc = CANOPUS_RESULT_FAILED;
         }
     }
+    for (index = 0u; index < CANOPUS_SUP_MODULE_SLOTS; index++) {
+        if ((changed_slots & (1u << index)) != 0u) canopus_supervisor_module_changed(sup, index);
+    }
+    canopus_supervisor_module_events_flush(sup);
     return rc;
 }
 
@@ -1882,7 +1932,8 @@ int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *s
     int changed;
     int failed = 0;
 
-    if (sup == 0 || sup->platform == 0 || sup->platform->load_module == 0) {
+    if (sup == 0 || sup->platform == 0 || sup->platform->load_module == 0 ||
+        canopus_supervisor_bus_dispatching()) {
         return -1;
     }
     if (sup->safe_mode) {
@@ -1917,6 +1968,8 @@ int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *s
                 failed = -1;
                 sup->error_code = CANOPUS_SUP_ERR_ACTIVATE;
             }
+            canopus_supervisor_module_changed(sup, i);
+            canopus_supervisor_module_events_flush(sup);
             continue;
         }
         if (module->intent != CANOPUS_SUP_INTENT_ENABLED ||
@@ -1927,6 +1980,8 @@ int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *s
         if (sup_start_module(sup, i) < 0) {
             failed = -1;
         }
+        canopus_supervisor_module_changed(sup, i);
+        canopus_supervisor_module_events_flush(sup);
     }
     if (sup->unstable_modules != 0u && canopus_supervisor_watch_stability(sup) != 0) {
         for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
@@ -1941,7 +1996,9 @@ int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *s
     canopus_supervisor_boot_notify(sup);
     if ((changed || sup_boot_word(sup) != sup->boot_saved) &&
         canopus_supervisor_save_registry(sup) != 0) {
+        canopus_supervisor_module_events_flush(sup);
         return -1;
     }
+    canopus_supervisor_module_events_flush(sup);
     return failed;
 }

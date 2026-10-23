@@ -5,8 +5,8 @@
   "name": "lv_image_set_src",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc17a2f4",
-  "callable_address": "0xc17a2f5",
+  "entry_address": "0x1c06ceb4",
+  "callable_address": "0x1c06ceb5",
   "prototype": "void(void *, const void *)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -42,7 +42,7 @@
       "EVID-FW-MATCH-ENSEMBLE-1036-1043",
       "EVID-UI-1043-DEVICE-001"
     ],
-    "source": "exact 3.101.043 IDB vela_ap.bin.i64; cross-version corpus match + exact-function shape review"
+    "source": "Exact 3.101.043 IDB: startup 0xc0c0ac8 copies [0x2c10d440,0x2c18d940) to PSRAM 0x3c000000, executable alias 0x1c000000. Load address 0xc17a2f4 maps to runtime 0x1c06ceb4, callable 0x1c06ceb5; stock launcher setter veneer 0xc587fa0 independently targets 0x1c06ceb5, as also documented in EVID-RESOURCE-QUICKAPP-ICON-001. Runtime calls source classifier 0x1c032814 and decoder-info 0x1c036358. Cross-version corpus match and prior exact-function review identify the same body; existing proof, policy, approval and device metadata are retained."
   },
   "notes": "exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lv_image_set_src) Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Device verified for the UI host (EVID-UI-1043-DEVICE-001); policy stays restricted.",
   "approval_state": "APPROVED",

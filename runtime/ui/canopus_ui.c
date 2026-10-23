@@ -10,8 +10,11 @@ static int ui_backend_ok(const struct canopus_ui_backend_v1 *backend)
     return backend != 0 &&
            backend->struct_size == sizeof(struct canopus_ui_backend_v1) &&
            backend->abi_major == CANOPUS_UI_ABI_MAJOR &&
-           backend->abi_minor <= CANOPUS_UI_ABI_MINOR &&
-           backend->apply != 0;
+           backend->abi_minor == CANOPUS_UI_ABI_MINOR &&
+           backend->apply != 0 &&
+           ((backend->capabilities & (CANOPUS_UI_CAP_SCROLL |
+               CANOPUS_UI_CAP_TRANSLATE | CANOPUS_UI_CAP_CAPTURE)) == 0u ||
+            backend->control != 0);
 }
 
 int32_t canopus_ui_context_init(
@@ -37,21 +40,10 @@ int32_t canopus_ui_context_init(
 uint32_t canopus_ui_context_capabilities(
     const struct canopus_ui_context_v1 *context)
 {
-    uint32_t capabilities;
-    if (context == 0 || !ui_backend_ok(context->backend) ||
-        context->backend->abi_minor < 3u) {
+    if (context == 0 || !ui_backend_ok(context->backend)) {
         return 0u;
     }
-    capabilities = CANOPUS_UI_CAP_EXTENDED_COMPONENTS |
-                   CANOPUS_UI_CAP_STYLE |
-                   CANOPUS_UI_CAP_LAYOUT |
-                   CANOPUS_UI_CAP_VALUES;
-    if (context->backend->abi_minor >= 4u) {
-        capabilities |= CANOPUS_UI_CAP_NAVIGATION_HEADER |
-                        CANOPUS_UI_CAP_IMAGE |
-                        CANOPUS_UI_CAP_PROGRESS;
-    }
-    return capabilities;
+    return context->backend->capabilities;
 }
 
 int32_t canopus_ui_tree_begin(
@@ -87,9 +79,11 @@ static int ui_tree_active(const struct canopus_ui_tree_v1 *tree)
            tree->_context->building && &tree->_context->staging == tree;
 }
 
-static int ui_metadata_supported(const struct canopus_ui_tree_v1 *tree)
+static int ui_tree_supports(const struct canopus_ui_tree_v1 *tree,
+                             uint32_t capabilities)
 {
-    return ui_tree_active(tree) && tree->_context->backend->abi_minor >= 3u;
+    return ui_tree_active(tree) &&
+           (tree->_context->backend->capabilities & capabilities) == capabilities;
 }
 
 static int ui_style_is_default(const struct canopus_ui_style_v1 *style)
@@ -297,7 +291,7 @@ int32_t canopus_ui_text(
         return CANOPUS_UI_ERR_ARGUMENT;
     }
     if (props->style != CANOPUS_UI_TEXT_BODY &&
-        !ui_metadata_supported(tree)) {
+        !ui_tree_supports(tree, CANOPUS_UI_CAP_STYLE)) {
         return CANOPUS_UI_ERR_UNSUPPORTED;
     }
     rc = ui_append_node(tree, key, CANOPUS_UI_NODE_TEXT,
@@ -382,16 +376,17 @@ int32_t canopus_ui_navigation_header(
     const struct canopus_ui_navigation_header_props_v1 *props)
 {
     uint32_t flags = CANOPUS_UI_NODE_FLAG_VISIBLE;
+    /* A visible back needs a handler. A hidden one may keep a reserved id: it is
+     * unreachable while hidden and becomes live when show_back is set on a later
+     * render, so the pair is deliberately not forced to agree. */
     if (props == 0 || props->struct_size != sizeof(*props) ||
-        (props->show_back && props->back_event_id == 0u) ||
-        (!props->show_back && props->back_event_id != 0u)) {
+        (props->show_back && props->back_event_id == 0u)) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
     if (!ui_tree_active(tree)) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
-    if (!ui_metadata_supported(tree) ||
-        tree->_context->backend->abi_minor < 4u) {
+    if (!ui_tree_supports(tree, CANOPUS_UI_CAP_NAVIGATION_HEADER)) {
         return CANOPUS_UI_ERR_UNSUPPORTED;
     }
     if (props->show_back) {
@@ -459,11 +454,18 @@ int32_t canopus_ui_component(
     if (!ui_tree_active(tree)) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
-    if (!ui_metadata_supported(tree)) {
-        return CANOPUS_UI_ERR_UNSUPPORTED;
-    }
-    if (type == CANOPUS_UI_NODE_NAVIGATION_HEADER &&
-        tree->_context->backend->abi_minor < 4u) {
+    if (!ui_tree_supports(tree, CANOPUS_UI_CAP_EXTENDED_COMPONENTS) ||
+        (type == CANOPUS_UI_NODE_NAVIGATION_HEADER &&
+         !ui_tree_supports(tree, CANOPUS_UI_CAP_NAVIGATION_HEADER)) ||
+        (type == CANOPUS_UI_NODE_IMAGE &&
+         !ui_tree_supports(tree, CANOPUS_UI_CAP_IMAGE)) ||
+        (type == CANOPUS_UI_NODE_PROGRESS &&
+         !ui_tree_supports(tree, CANOPUS_UI_CAP_PROGRESS)) ||
+        (type == CANOPUS_UI_NODE_TOAST &&
+         !ui_tree_supports(tree, CANOPUS_UI_CAP_TOAST)) ||
+        ((props->value != 0 || props->minimum != 0 || props->maximum != 0 ||
+          props->step != 0 || props->resource_id != 0u) &&
+         !ui_tree_supports(tree, CANOPUS_UI_CAP_VALUES))) {
         return CANOPUS_UI_ERR_UNSUPPORTED;
     }
     if (ui_component_interactive(type) && props->event_id == 0u) {
@@ -472,6 +474,10 @@ int32_t canopus_ui_component(
     if (type == CANOPUS_UI_NODE_IMAGE &&
         (props->resource_id == 0u || props->primary == 0 ||
          props->primary_len == 0u)) {
+        return CANOPUS_UI_ERR_ARGUMENT;
+    }
+    if (type == CANOPUS_UI_NODE_TOAST &&
+        (props->value < 0 || props->value > 60000)) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
     if (type == CANOPUS_UI_NODE_PROGRESS &&
@@ -515,9 +521,9 @@ int32_t canopus_ui_node_set_style(
     if (rc != CANOPUS_UI_OK) {
         return rc;
     }
-    if (!ui_metadata_supported(tree)) {
-        return ui_style_is_default(style) ? CANOPUS_UI_OK :
-                                            CANOPUS_UI_ERR_UNSUPPORTED;
+    if (!ui_style_is_default(style) &&
+        !ui_tree_supports(tree, CANOPUS_UI_CAP_STYLE)) {
+        return CANOPUS_UI_ERR_UNSUPPORTED;
     }
     canopus_memcpy(&tree->_snapshot.styles[index], style, sizeof(*style));
     return CANOPUS_UI_OK;
@@ -543,11 +549,73 @@ int32_t canopus_ui_node_set_layout(
     if (rc != CANOPUS_UI_OK) {
         return rc;
     }
-    if (!ui_metadata_supported(tree)) {
-        return ui_layout_is_default(layout) ? CANOPUS_UI_OK :
-                                              CANOPUS_UI_ERR_UNSUPPORTED;
+    if (!ui_layout_is_default(layout) &&
+        !ui_tree_supports(tree, CANOPUS_UI_CAP_LAYOUT)) {
+        return CANOPUS_UI_ERR_UNSUPPORTED;
     }
     canopus_memcpy(&tree->_snapshot.layouts[index], layout, sizeof(*layout));
+    return CANOPUS_UI_OK;
+}
+
+static int ui_scroll_type(uint16_t type)
+{
+    return type == CANOPUS_UI_NODE_NAVIGATION_PAGE ||
+           type == CANOPUS_UI_NODE_SCROLL || type == CANOPUS_UI_NODE_LIST;
+}
+
+int32_t canopus_ui_node_set_visual(
+    struct canopus_ui_tree_v1 *tree, canopus_ui_node_id key,
+    const struct canopus_ui_visual_v1 *visual)
+{
+    const uint32_t known_flags = CANOPUS_UI_VISUAL_FLAG_FOREGROUND_RGB |
+        CANOPUS_UI_VISUAL_FLAG_BACKGROUND_RGB | CANOPUS_UI_VISUAL_FLAG_BORDER_RGB |
+        CANOPUS_UI_VISUAL_FLAG_ABSOLUTE | CANOPUS_UI_VISUAL_FLAG_CLIP |
+        CANOPUS_UI_VISUAL_FLAG_OPACITY | CANOPUS_UI_VISUAL_FLAG_VIRTUAL_CONTENT;
+    uint32_t required = 0u;
+    uint16_t index;
+    int32_t rc;
+    if (visual == 0 || (visual->flags & ~known_flags) != 0u ||
+        visual->foreground_rgb > 0xFFFFFFu ||
+        visual->background_rgb > 0xFFFFFFu || visual->border_rgb > 0xFFFFFFu ||
+        visual->image_fit > CANOPUS_UI_IMAGE_FIT_STRETCH ||
+        ((visual->flags & CANOPUS_UI_VISUAL_FLAG_ABSOLUTE) == 0u &&
+         (visual->x != 0 || visual->y != 0)) ||
+        ((visual->flags & CANOPUS_UI_VISUAL_FLAG_VIRTUAL_CONTENT) == 0u &&
+         (visual->content_height != 0u || visual->scroll_y != 0)) ||
+        visual->content_height > 0x7FFFFFFFu || visual->scroll_y < 0) {
+        return CANOPUS_UI_ERR_ARGUMENT;
+    }
+    rc = ui_find_node_index(tree, key, &index);
+    if (rc != CANOPUS_UI_OK) {
+        return rc;
+    }
+    if ((visual->flags & CANOPUS_UI_VISUAL_FLAG_VIRTUAL_CONTENT) != 0u) {
+        if (!ui_scroll_type(tree->_snapshot.nodes[index].type)) {
+            return CANOPUS_UI_ERR_ARGUMENT;
+        }
+        required |= CANOPUS_UI_CAP_VIRTUAL_CONTENT | CANOPUS_UI_CAP_SCROLL;
+    }
+    if (visual->image_fit != CANOPUS_UI_IMAGE_FIT_NATIVE) {
+        if (tree->_snapshot.nodes[index].type != CANOPUS_UI_NODE_IMAGE) {
+            return CANOPUS_UI_ERR_ARGUMENT;
+        }
+        required |= visual->image_fit == CANOPUS_UI_IMAGE_FIT_CONTAIN ?
+            CANOPUS_UI_CAP_IMAGE_FIT_CONTAIN :
+            visual->image_fit == CANOPUS_UI_IMAGE_FIT_COVER ?
+            CANOPUS_UI_CAP_IMAGE_FIT_COVER : CANOPUS_UI_CAP_IMAGE_FIT_STRETCH;
+    }
+    if (visual->translate_x != 0 || visual->translate_y != 0) {
+        required |= CANOPUS_UI_CAP_TRANSLATE;
+    }
+    if (visual->flags != 0u || visual->foreground_rgb != 0u ||
+        visual->background_rgb != 0u || visual->border_rgb != 0u ||
+        visual->font_px != 0u || required != 0u) {
+        required |= CANOPUS_UI_CAP_VISUAL;
+    }
+    if (!ui_tree_supports(tree, required)) {
+        return CANOPUS_UI_ERR_UNSUPPORTED;
+    }
+    canopus_memcpy(&tree->_snapshot.visuals[index], visual, sizeof(*visual));
     return CANOPUS_UI_OK;
 }
 
@@ -579,7 +647,7 @@ int32_t canopus_ui_tree_commit(struct canopus_ui_tree_v1 *tree)
     tree->_active = 0u;
     context->building = 0u;
     if (rc != 0) {
-        return CANOPUS_UI_ERR_BACKEND;
+        return rc == CANOPUS_UI_ERR_UNSUPPORTED ? rc : CANOPUS_UI_ERR_BACKEND;
     }
     canopus_memcpy(&context->committed, &tree->_snapshot,
                    sizeof(context->committed));
@@ -612,46 +680,142 @@ const struct canopus_ui_snapshot_v1 *canopus_ui_current(
     return &context->committed;
 }
 
-int32_t canopus_ui_dispatch_event(
-    struct canopus_ui_context_v1 *context, uint32_t generation,
-    canopus_ui_node_id key, uint32_t event_id)
+static const struct canopus_ui_node_v1 *ui_committed_node(
+    const struct canopus_ui_context_v1 *context, canopus_ui_node_id key)
 {
     uint16_t i;
-    const struct canopus_ui_node_v1 *node = 0;
-    if (context == 0 || key == 0u || event_id == 0u) {
+    for (i = 0; i < context->committed.node_count; i++) {
+        if (context->committed.nodes[i].key == key) {
+            return &context->committed.nodes[i];
+        }
+    }
+    return 0;
+}
+
+static int ui_node_interactive(const struct canopus_ui_node_v1 *node)
+{
+    return node->type == CANOPUS_UI_NODE_BUTTON ||
+           node->type == CANOPUS_UI_NODE_ACTION_ROW ||
+           node->type == CANOPUS_UI_NODE_SWITCH_ROW ||
+           node->type == CANOPUS_UI_NODE_CHECKBOX ||
+           node->type == CANOPUS_UI_NODE_RADIO_ROW ||
+           ((node->type == CANOPUS_UI_NODE_ICON ||
+             node->type == CANOPUS_UI_NODE_NAVIGATION_HEADER) &&
+            node->event_id != 0u);
+}
+
+int32_t canopus_ui_dispatch_event(
+    struct canopus_ui_context_v1 *context,
+    const struct canopus_ui_event_v1 *event)
+{
+    const struct canopus_ui_node_v1 *node;
+    uint32_t capabilities;
+    if (context == 0 || event == 0 || event->struct_size != sizeof(*event) ||
+        event->key == 0u || event->type < CANOPUS_UI_EVENT_ACTIVATE ||
+        event->type > CANOPUS_UI_EVENT_SCROLL) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
-    if (!context->has_committed || generation != context->committed.generation) {
+    if (!context->has_committed ||
+        event->generation != context->committed.generation) {
         if (context->dropped_events != 0xFFFFFFFFu) {
             context->dropped_events++;
         }
         return CANOPUS_UI_ERR_STALE;
     }
-    for (i = 0; i < context->committed.node_count; i++) {
-        if (context->committed.nodes[i].key == key) {
-            node = &context->committed.nodes[i];
-            break;
-        }
-    }
-    if (node == 0 ||
-        (node->type != CANOPUS_UI_NODE_BUTTON &&
-         node->type != CANOPUS_UI_NODE_ACTION_ROW &&
-         node->type != CANOPUS_UI_NODE_SWITCH_ROW &&
-         node->type != CANOPUS_UI_NODE_CHECKBOX &&
-         node->type != CANOPUS_UI_NODE_RADIO_ROW &&
-         node->type != CANOPUS_UI_NODE_ICON &&
-         node->type != CANOPUS_UI_NODE_NAVIGATION_HEADER) ||
-        node->event_id != event_id) {
+    node = ui_committed_node(context, event->key);
+    if (node == 0 || node->event_id != event->event_id) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
-    if ((node->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u) {
+    capabilities = canopus_ui_context_capabilities(context);
+    if (event->type == CANOPUS_UI_EVENT_SCROLL) {
+        if (!ui_scroll_type(node->type) || event->scroll_y < 0 ||
+            event->viewport_height < 0 || event->content_height < 0) {
+            return CANOPUS_UI_ERR_ARGUMENT;
+        }
+        if ((capabilities & CANOPUS_UI_CAP_SCROLL) == 0u) {
+            return CANOPUS_UI_ERR_UNSUPPORTED;
+        }
+    } else if (event->type >= CANOPUS_UI_EVENT_PRESS) {
+        if ((capabilities & CANOPUS_UI_CAP_POINTER_EVENTS) == 0u) {
+            return CANOPUS_UI_ERR_UNSUPPORTED;
+        }
+    } else if (!ui_node_interactive(node) || event->event_id == 0u ||
+               (event->type == CANOPUS_UI_EVENT_VALUE_CHANGED &&
+                node->type != CANOPUS_UI_NODE_SWITCH_ROW &&
+                node->type != CANOPUS_UI_NODE_CHECKBOX &&
+                node->type != CANOPUS_UI_NODE_RADIO_ROW)) {
+        return CANOPUS_UI_ERR_ARGUMENT;
+    }
+    if ((node->flags & CANOPUS_UI_NODE_FLAG_VISIBLE) == 0u ||
+        (ui_node_interactive(node) &&
+         (node->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u)) {
         return CANOPUS_UI_ERR_DISABLED;
     }
     if (context->event_handler == 0) {
         return CANOPUS_UI_OK;
     }
-    return context->event_handler(context->event_cookie, generation, key,
-                                  event_id);
+    return context->event_handler(context->event_cookie, event);
+}
+
+int32_t canopus_ui_control(
+    struct canopus_ui_context_v1 *context, uint32_t generation,
+    canopus_ui_node_id key, uint32_t op, int32_t a, int32_t b, void *out)
+{
+    const struct canopus_ui_node_v1 *node;
+    uint32_t capability;
+    int32_t rc;
+    if (context == 0 || key == 0u || op < CANOPUS_UI_CONTROL_SCROLL_QUERY ||
+        op > CANOPUS_UI_CONTROL_RELEASE_CAPTURE) {
+        return CANOPUS_UI_ERR_ARGUMENT;
+    }
+    if (!context->has_committed || generation != context->committed.generation) {
+        return CANOPUS_UI_ERR_STALE;
+    }
+    node = ui_committed_node(context, key);
+    if (node == 0) {
+        return CANOPUS_UI_ERR_ARGUMENT;
+    }
+    if (op == CANOPUS_UI_CONTROL_SCROLL_QUERY) {
+        if (!ui_scroll_type(node->type) || a != 0 || b != 0 || out == 0) {
+            return CANOPUS_UI_ERR_ARGUMENT;
+        }
+        capability = CANOPUS_UI_CAP_SCROLL;
+    } else {
+        if (out != 0) {
+            return CANOPUS_UI_ERR_ARGUMENT;
+        }
+        if (op == CANOPUS_UI_CONTROL_SCROLL_TO) {
+            if (!ui_scroll_type(node->type) || a < 0 || b != 0) {
+                return CANOPUS_UI_ERR_ARGUMENT;
+            }
+            capability = CANOPUS_UI_CAP_SCROLL;
+        } else if (op == CANOPUS_UI_CONTROL_TRANSLATE) {
+            capability = CANOPUS_UI_CAP_TRANSLATE;
+        } else {
+            if (a != 0 || b != 0) {
+                return CANOPUS_UI_ERR_ARGUMENT;
+            }
+            if (op == CANOPUS_UI_CONTROL_CAPTURE &&
+                ((node->flags & CANOPUS_UI_NODE_FLAG_VISIBLE) == 0u ||
+                 (ui_node_interactive(node) &&
+                  (node->flags & CANOPUS_UI_NODE_FLAG_ENABLED) == 0u))) {
+                return CANOPUS_UI_ERR_DISABLED;
+            }
+            capability = CANOPUS_UI_CAP_CAPTURE;
+        }
+    }
+    if ((canopus_ui_context_capabilities(context) & capability) == 0u ||
+        context->backend->control == 0) {
+        return CANOPUS_UI_ERR_UNSUPPORTED;
+    }
+    rc = context->backend->control(context->backend_cookie, generation, key,
+                                    op, a, b, out);
+    if (rc == CANOPUS_UI_OK || rc == CANOPUS_UI_ERR_UNSUPPORTED ||
+        rc == CANOPUS_UI_ERR_ARGUMENT || rc == CANOPUS_UI_ERR_STATE ||
+        rc == CANOPUS_UI_ERR_STALE || rc == CANOPUS_UI_ERR_DISABLED) {
+        return rc;
+    }
+    return CANOPUS_UI_ERR_BACKEND;
 }
 
 static int ui_router_valid(const struct canopus_ui_router_v1 *router)

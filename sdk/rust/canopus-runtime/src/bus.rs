@@ -44,6 +44,24 @@ pub fn subscribe(
     if sub_id < 0 { Err(sub_id) } else { Ok(sub_id) }
 }
 
+/// Reads the current registry lifecycle snapshot. Subscribe to
+/// `BUS_TOPIC_MODULE` first and query without yielding to avoid missing a change.
+pub fn query_module(ctx: *const CanopusContext, module_id: &str) -> Result<ModuleStateV1, i32> {
+    if ctx.is_null() { return Err(-22); }
+    let b = unsafe { (*ctx).bus };
+    if b.is_null() { return Err(-38); }
+    if module_id.is_empty() || module_id.len() >= MODULE_ID_MAX || module_id.as_bytes().contains(&0) {
+        return Err(-22);
+    }
+    let mut name = [0u8; MODULE_ID_MAX];
+    name[..module_id.len()].copy_from_slice(module_id.as_bytes());
+    let mut state = ModuleStateV1::default();
+    let rc = unsafe {
+        ((*b).query_module)(ctx as *const ContextV1, name.as_ptr().cast(), &mut state)
+    };
+    if rc < 0 { Err(rc) } else { Ok(state) }
+}
+
 pub fn unsubscribe(ctx: *const CanopusContext, sub_id: i32) -> Result<(), i32> {
     if ctx.is_null() { return Err(-22); }
     let b = unsafe { (*ctx).bus };

@@ -47,7 +47,7 @@ end
 
 local CMD_START_BOOT = 25
 local request = string.pack("<I4I2I2I2I2I4I4I4I4I4I4",
-    0x43504332, 36, 1, 1, 0, 36, CMD_START_BOOT, 1, 0, 0, 0)
+    0x43504332, 36, 1, 2, 0, 36, CMD_START_BOOT, 1, 0, 0, 0)
 local control = assert(io.open("/dev/canopus", "wb"))
 assert(control:write(request))
 control:close()

@@ -233,6 +233,33 @@ struct canopus_context_v1;
 #define CANOPUS_BUS_TOPIC_BATTERY "canopus/battery/level" /* u8 percent, u8 charging */
 #define CANOPUS_BUS_TOPIC_BT      "canopus/bt/state"      /* u8 adapter state, u8 link: 1 up, 0 down, 0xFF unknown */
 
+/* Registry lifecycle, written only by the Supervisor. Payload is a native C
+ * canopus_module_state_v1 (copy it before returning), not a packed wire record.
+ * Events describe completed registry/activation operations, including failures;
+ * ENABLE/DISABLE/REMOVE record next-boot intent and do not imply hot unload.
+ * No initial event or history is replayed; boot removal precedes subscriptions,
+ * and an absent module is reported by query_module as NOTFOUND. On the owner task,
+ * subscribe first, then query_module without yielding: no transition can occur
+ * between these calls. Lifecycle subscription/query needs no timer backend.
+ * Callbacks execute synchronously on the task performing the transition (boot,
+ * Manager or transport owner); they must defer UI work to the UI dispatcher. */
+#define CANOPUS_BUS_TOPIC_MODULE "canopus/module/state"
+#define CANOPUS_MODULE_ID_MAX 32u
+#define CANOPUS_MODULE_INTENT_DISABLED 0u
+#define CANOPUS_MODULE_INTENT_ENABLED  1u
+#define CANOPUS_MODULE_INTENT_REMOVE   2u
+
+struct canopus_module_state_v1 {
+    char module_id[CANOPUS_MODULE_ID_MAX];
+    uint32_t state; /* CANOPUS_STATE_* from canopus_runtime.h; 0 = removed */
+    uint32_t intent; /* CANOPUS_MODULE_INTENT_* */
+    uint32_t version;
+    uint32_t lifecycle_class; /* CANOPUS_LIFECYCLE_* */
+    uint32_t flags; /* bit 0: previous package exists; bit 1: update pending */
+    int32_t activation_error;
+    uint32_t active_generation; /* package generation A = 0, B = 1 */
+};
+
 /* system: battery_level is 0..100, or CANOPUS_SYSTEM_BATTERY_UNKNOWN before the
  * firmware has reported it / when this target cannot read it. is_charging is
  * 0 or 1; a negative value is an error (STATE: not reported yet, UNSUPPORTED). */
@@ -392,10 +419,22 @@ struct canopus_display_obj {
     void     (*get_resolution)(const struct canopus_context_v1 *ctx, uint32_t *width, uint32_t *height);
 };
 
+/* Bus calls and callbacks use the serialized module owner task; no locks,
+ * queue or thread switch is provided. publish calls matching subscribers before
+ * returning. topic/payload are borrowed only for that callback. Callbacks must
+ * return promptly, may query state and unsubscribe (including themselves), but
+ * must not publish recursively, subscribe, or mutate the module registry.
+ * Reentrant publish/subscribe return BUSY; registry commands return DISALLOWED. An unsubscribed callback is not called later
+ * in the same dispatch; unloading releases all of the module's subscriptions.
+ * "*" subscribes to every topic. Other topics must be 1..31 bytes exactly. */
 struct canopus_bus_obj {
     int32_t (*publish)(const struct canopus_context_v1 *ctx, const char *topic, const void *payload, uint32_t len);
     int32_t (*subscribe)(const struct canopus_context_v1 *ctx, const char *topic, canopus_bus_callback_t cb, void *user_data);
     int32_t (*unsubscribe)(const struct canopus_context_v1 *ctx, int32_t sub_id);
+    /* BUS version 2: copies the current registry state by stable module id.
+     * NOTFOUND for an absent id, ARGUMENT for malformed arguments. */
+    int32_t (*query_module)(const struct canopus_context_v1 *ctx, const char *module_id,
+                            struct canopus_module_state_v1 *out);
 };
 
 struct canopus_log_obj {
@@ -451,9 +490,14 @@ struct canopus_ui_navigation_header_props_v1;
 struct canopus_ui_component_props_v1;
 struct canopus_ui_style_v1;
 struct canopus_ui_layout_v1;
+struct canopus_ui_visual_v1;
+struct canopus_ui_event_v1;
+
+typedef void (*canopus_ui_task_fn)(const struct canopus_context_v1 *ctx,
+                                   void *user_data);
 
 /* ui pages: a module can show its own page, hosted by the Manager and drawn by
- * the Supervisor's native backend (ADR-CAN-010), through ctx->ui_ext. set_entry registers the entry
+ * the Supervisor's native backend (ADR-CAN-010), through ctx->ui. set_entry registers the entry
  * (NULL removes it); while the module runs, its Manager detail page offers
  * "open interface" with `label` (at most 23 bytes, may be NULL) as the detail.
  * Opening runs on the UI task:
@@ -461,8 +505,10 @@ struct canopus_ui_layout_v1;
  *            commits it before returning; failing, or not committing, cancels
  *            the page. `ui` stays valid until on_close returns.
  *   on_event a node's event id was activated; build the next tree into `ui`.
- *   on_back  (optional) the title's back was used; return 0 when handled,
- *            e.g. after popping a route, otherwise the page closes.
+ *   on_back  (optional) an ordinary page title's back was used; return 0 when
+ *            handled, e.g. after popping a route, otherwise the page closes.
+ *            An explicit navigation_header dispatches its back_event_id to
+ *            on_event instead; the handler may call close_page at its root.
  *   on_close the page was closed by the user or by close_page (not on unload).
  * One module page is open at a time; callbacks must return promptly. A tree is
  * at most CANOPUS_UI_MAX_NODES nodes. close_page finishes the caller's open
@@ -475,8 +521,8 @@ struct canopus_ui_entry_v1 {
     int32_t (*on_open)(const struct canopus_context_v1 *ctx,
                        struct canopus_ui_context_v1 *ui, void *user_data);
     int32_t (*on_event)(const struct canopus_context_v1 *ctx,
-                        struct canopus_ui_context_v1 *ui, uint32_t key,
-                        uint32_t event_id, void *user_data);
+                        struct canopus_ui_context_v1 *ui,
+                        const struct canopus_ui_event_v1 *event, void *user_data);
     int32_t (*on_back)(const struct canopus_context_v1 *ctx,
                        struct canopus_ui_context_v1 *ui, void *user_data);
     void (*on_close)(const struct canopus_context_v1 *ctx, void *user_data);
@@ -498,25 +544,32 @@ struct canopus_ui_obj {
     int32_t  (*switch_row)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_switch_row_props_v1 *props);
     int32_t  (*navigation_header)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_navigation_header_props_v1 *props);
     int32_t  (*component)(struct canopus_ui_tree_v1 *tree, uint32_t key, uint16_t type, const struct canopus_ui_component_props_v1 *props);
-};
 
-/* ctx->ui_ext extends ctx->ui: per-node style and layout for the tree being built,
- * and the module's page entry. Its own object so a Supervisor that predates it
- * is detected through the context's struct_size, like ctx->connect. */
-struct canopus_ui_ext_obj {
+    /* Tree customization, page lifetime and immediate visual controls share the
+     * same UI service. Capabilities describe the actual target backend. */
     int32_t (*node_set_style)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_style_v1 *style);
     int32_t (*node_set_layout)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_layout_v1 *layout);
     int32_t (*set_entry)(const struct canopus_context_v1 *ctx, const struct canopus_ui_entry_v1 *entry);
     int32_t (*close_page)(const struct canopus_context_v1 *ctx);
+    int32_t (*node_set_visual)(struct canopus_ui_tree_v1 *tree, uint32_t key,
+                               const struct canopus_ui_visual_v1 *visual);
+    int32_t (*control)(struct canopus_ui_context_v1 *ui, uint32_t generation,
+                       uint32_t key, uint32_t operation, int32_t a, int32_t b,
+                       void *out);
+    /* Post from the serialized module owner. Repeated identical work coalesces;
+     * different pending work returns BUSY. Runs after the current callback on
+     * the next foreground UI heartbeat; module release cancels pending work. */
+    int32_t (*post)(const struct canopus_context_v1 *ctx,
+                    canopus_ui_task_fn callback, void *user_data);
 };
 
 /* launcher: a module's own entry in the system launcher (ADR-CAN-011). Choosing
  * it opens the module's ui page, the entry registered through
- * ctx->ui_ext->set_entry, exactly as "open interface" does in the Manager. The
+ * ctx->ui->set_entry, exactly as "open interface" does in the Manager. The
  * firmware cannot take a launcher entry back, so an entry lasts until the next
  * reboot even after the module stops; choosing a stopped module's entry opens
  * nothing. Its own object so a Supervisor that predates it is detected through
- * the context's struct_size, like ctx->ui_ext. */
+ * the context's struct_size, like ctx->ui. */
 #define CANOPUS_LAUNCHER_ENTRIES 8u
 #define CANOPUS_LAUNCHER_LABEL_MAX 24u
 #define CANOPUS_LAUNCHER_ICON_MAX 96u
@@ -591,7 +644,6 @@ struct canopus_context_v1 {
     const struct canopus_bus_obj       *bus;
     const struct canopus_ui_obj        *ui;
     const struct canopus_connect_obj   *connect;
-    const struct canopus_ui_ext_obj    *ui_ext;
     const struct canopus_launcher_obj  *launcher;
 };
 

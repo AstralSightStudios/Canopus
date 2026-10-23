@@ -5,7 +5,7 @@
     "version": "0.1.0",
     "language": "c",
     "lifecycle": "always-removable-instantly",
-    "canopus_abi": "1",
+    "canopus_abi": "2",
     "version_code": 1
   },
   "targets": {

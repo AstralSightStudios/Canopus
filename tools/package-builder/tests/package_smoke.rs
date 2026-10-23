@@ -14,7 +14,7 @@ fn test_manifest() -> PackageManifest {
             "module_id": "org.example.hello",
             "version": "0.1.0",
             "build_generation": 1,
-            "canopus_abi": "1",
+            "canopus_abi": "2",
             "lifecycle": "removable",
             "artifacts": [{
                 "target_id": "xiaomi-band-10-pro-3.101.030",
@@ -193,7 +193,7 @@ fn manifest_with_resource(path: &str) -> PackageManifest {
             "module_id": "org.example.hello",
             "version": "0.1.0",
             "build_generation": 1,
-            "canopus_abi": "1",
+            "canopus_abi": "2",
             "lifecycle": "removable",
             "artifacts": [{{
                 "target_id": "xiaomi-band-10-pro-3.101.030",

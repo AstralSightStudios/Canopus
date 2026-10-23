@@ -138,6 +138,45 @@ static const struct canopus_sup_platform_v1 fake_platform = {
     .restore = fake_restore,
 };
 
+static struct canopus_supervisor_v1 *g_event_supervisor;
+static uint32_t g_module_events[CANOPUS_SUP_MODULE_SLOTS];
+static struct canopus_module_state_v1 g_module_event;
+
+static void on_registry_change(const struct canopus_context_v1 *ctx,
+                                const char *topic, const void *payload,
+                                uint32_t len, void *user)
+{
+    struct canopus_module_state_v1 queried;
+    uint32_t slot;
+    int publications = g_publications;
+    (void)user;
+    CHECK(strcmp(topic, CANOPUS_BUS_TOPIC_MODULE) == 0);
+    CHECK_EQ(len, sizeof(g_module_event));
+    memcpy(&g_module_event, payload, sizeof(g_module_event));
+    CHECK(CANOPUS_SNAPSHOT_READY(&g_event_supervisor->snap));
+    CHECK_EQ(ctx->bus->query_module(ctx, g_module_event.module_id, &queried), 0);
+    CHECK(memcmp(&queried, &g_module_event, sizeof(queried)) == 0);
+    for (slot = 0u; slot < CANOPUS_SUP_MODULE_SLOTS; slot++) {
+        if (strcmp((const char *)g_event_supervisor->modules[slot].module_id,
+                   g_module_event.module_id) == 0) break;
+    }
+    CHECK(slot < CANOPUS_SUP_MODULE_SLOTS);
+    if (slot < CANOPUS_SUP_MODULE_SLOTS) g_module_events[slot]++;
+    CHECK_EQ(ctx->bus->publish(ctx, "test/reentrant", 0, 0), CANOPUS_SVC_ERR_BUSY);
+    CHECK_EQ(canopus_supervisor_scan_packages(g_event_supervisor), CANOPUS_RESULT_FAILED);
+    CHECK_EQ(canopus_supervisor_publish_native_apps(g_event_supervisor, 1u), -1);
+    CHECK_EQ(g_publications, publications);
+}
+
+static void observe_registry(struct canopus_supervisor_v1 *sup, uint32_t slot)
+{
+    const struct canopus_context_v1 *ctx = canopus_supervisor_context(sup, slot);
+    g_event_supervisor = sup;
+    memset(g_module_events, 0, sizeof(g_module_events));
+    memset(&g_module_event, 0, sizeof(g_module_event));
+    CHECK(ctx->bus->subscribe(ctx, CANOPUS_BUS_TOPIC_MODULE, on_registry_change, 0) >= 0);
+}
+
 /* ---- command/status builders --------------------------------------- */
 
 static uint32_t r32(const uint8_t *b, unsigned int o)
@@ -768,7 +807,7 @@ TEST(supervisor_registry_retains_boot_activation_error)
     g_activation_result = 0;
 }
 
-TEST(supervisor_native_app_publication_is_version_gated)
+TEST(supervisor_native_app_publication_rejects_old_abi)
 {
     struct canopus_supervisor_v1 sup;
     struct canopus_module_descriptor_v1 descriptor = fake_descriptor;
@@ -779,8 +818,9 @@ TEST(supervisor_native_app_publication_is_version_gated)
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     sup.modules[0].descriptor = &descriptor;
     descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
-    descriptor.abi_minor = 0u;
-    descriptor.struct_size = CANOPUS_MODULE_DESCRIPTOR_V1_0_SIZE;
+    descriptor.abi_major = 1u;
+    descriptor.abi_minor = 2u;
+    descriptor.struct_size = sizeof(descriptor);
     g_publications = 0;
     g_registry_present = 0;
     CHECK(canopus_supervisor_publish_native_apps(&sup, 1u) == 0);
@@ -788,7 +828,7 @@ TEST(supervisor_native_app_publication_is_version_gated)
     CHECK(g_publications == 0);
 }
 
-TEST(supervisor_legacy_native_app_publishes_only_in_stage_one)
+TEST(supervisor_single_callback_native_app_publishes_only_in_stage_one)
 {
     struct canopus_supervisor_v1 sup;
     struct canopus_module_descriptor_v1 descriptor = fake_descriptor;
@@ -799,8 +839,8 @@ TEST(supervisor_legacy_native_app_publishes_only_in_stage_one)
     sup.modules[0].state = CANOPUS_STATE_BOOT_RESIDENT;
     sup.modules[0].descriptor = &descriptor;
     descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
-    descriptor.abi_minor = 1u;
-    descriptor.struct_size = CANOPUS_MODULE_DESCRIPTOR_V1_1_SIZE;
+    descriptor.abi_minor = CANOPUS_ABI_MINOR;
+    descriptor.struct_size = sizeof(descriptor);
     descriptor.publish_native_app_stage = 0;
     g_publications = 0;
     g_publication_result = 0;
@@ -852,15 +892,65 @@ TEST(supervisor_publication_save_failure_retains_registry_diagnostic)
     sup.modules[0].descriptor = &descriptor;
     descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
     g_publications = 0;
-    g_publication_result = 0;
     g_persist_result = CANOPUS_SUP_ERR_REGISTRY_WRITE;
+    observe_registry(&sup, 0u);
     for (stage = 1; stage <= 2; stage++) {
+        g_publication_result = stage == 1u ? -100 : 0;
         make_command(command, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_INSTALL, stage, 0);
         CHECK(canopus_supervisor_handle_command(&sup, command) == CANOPUS_RESULT_FAILED);
         CHECK((int32_t)sup.error_code == CANOPUS_SUP_ERR_REGISTRY_WRITE);
         CHECK(g_publications == (int)stage);
         CHECK(g_publication_stage == stage);
         CHECK(sup.modules[0].descriptor == &descriptor);
+        CHECK_EQ(g_module_events[0], stage);
+        CHECK_EQ(g_module_event.activation_error, g_publication_result);
+        canopus_supervisor_module_events_flush(&sup);
+        CHECK_EQ(g_module_events[0], stage);
+    }
+    g_persist_result = 0;
+}
+
+TEST(supervisor_publication_notifies_error_changes_and_retained_clear)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_module_descriptor_v1 descriptor;
+    uint32_t staged, persist_fails;
+    for (staged = 0u; staged < 2u; staged++) {
+        for (persist_fails = 0u; persist_fails < 2u; persist_fails++) {
+            uint32_t stage = staged ? 2u : 1u;
+            descriptor = fake_descriptor;
+            descriptor.flags = CANOPUS_FLAG_HAS_NATIVE_APP;
+            if (!staged) descriptor.publish_native_app_stage = 0;
+            CHECK_EQ(canopus_supervisor_init(&sup, 7, &fake_platform, 0), 0);
+            CHECK_EQ(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
+                                                   1u, "mod.hello"), 0);
+            sup.modules[0].state = CANOPUS_STATE_ACTIVE;
+            sup.modules[0].descriptor = &descriptor;
+            g_publications = 0;
+            g_persist_result = persist_fails ? CANOPUS_SUP_ERR_REGISTRY_WRITE : 0;
+            observe_registry(&sup, 0u);
+            g_publication_result = -100;
+            CHECK_EQ(canopus_supervisor_publish_native_apps(&sup, 1u), -1);
+            CHECK_EQ(g_module_events[0], 1u);
+            CHECK_EQ(g_module_event.activation_error, -100);
+            CHECK_EQ(canopus_supervisor_publish_native_apps(&sup, 1u), -1);
+            CHECK_EQ(g_module_events[0], 1u); /* unchanged errors stay silent */
+            g_publication_result = -101;
+            CHECK_EQ(canopus_supervisor_publish_native_apps(&sup, stage), -1);
+            CHECK_EQ(g_module_events[0], 2u);
+            CHECK_EQ(g_module_event.activation_error, -101);
+            g_publication_result = 0;
+            CHECK_EQ(canopus_supervisor_publish_native_apps(&sup, stage), persist_fails ? -1 : 0);
+            CHECK_EQ(g_module_events[0], 3u);
+            CHECK_EQ(g_module_event.activation_error, 0);
+            CHECK_EQ(canopus_supervisor_publish_native_apps(&sup, stage), persist_fails ? -1 : 0);
+            CHECK_EQ(g_module_events[0], 3u); /* clearing zero stays silent */
+            CHECK_EQ(g_publications, 5);
+            CHECK_EQ(canopus_supervisor_publish_native_apps(&sup, 0u), -1);
+            CHECK_EQ(g_publications, 5);
+            CHECK_EQ(g_module_events[0], 3u);
+            if (persist_fails) CHECK_EQ((int32_t)sup.error_code, CANOPUS_SUP_ERR_REGISTRY_WRITE);
+        }
     }
     g_persist_result = 0;
 }
@@ -886,6 +976,75 @@ TEST(supervisor_native_app_publication_persists_error)
     CHECK((int32_t)sup.modules[0].activation_error == -100);
     CHECK(g_persists == 1);
     g_publication_result = 0;
+}
+
+static int scan_list_packages(void *cookie, uint32_t index, char *id)
+{
+    static const char *const ids[] = { "scan.new", "scan.update" };
+    (void)cookie;
+    if (index >= 2u) return 1;
+    strcpy(id, ids[index]);
+    return 0;
+}
+
+static int scan_verify_package(void *cookie, const char *id, uint32_t *version,
+                                uint32_t *lifecycle)
+{
+    (void)cookie; (void)id;
+    *version = 9u;
+    *lifecycle = CANOPUS_LIFECYCLE_REMOVABLE;
+    return 0;
+}
+
+static int scan_commit_package(void *cookie, const char *id, uint32_t generation)
+{
+    (void)cookie; (void)id; (void)generation;
+    return 0;
+}
+
+TEST(supervisor_scan_notifies_retained_changes_on_save_failure)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform = fake_platform;
+    struct canopus_module_state_v1 state;
+    const struct canopus_context_v1 *ctx;
+    uint8_t command[CANOPUS_SUP_COMMAND_SIZE];
+    uint32_t via_command;
+    platform.list_packages = scan_list_packages;
+    platform.stage_verify = scan_verify_package;
+    platform.stage_commit = scan_commit_package;
+    for (via_command = 0u; via_command < 2u; via_command++) {
+        CHECK_EQ(canopus_supervisor_init(&sup, 7, &platform, 0), 0);
+        CHECK_EQ(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
+                                               1u, "observer"), 0);
+        CHECK_EQ(canopus_supervisor_add_module(&sup, CANOPUS_LIFECYCLE_REMOVABLE,
+                                               1u, "scan.update"), 1);
+        ctx = canopus_supervisor_context(&sup, 0u);
+        observe_registry(&sup, 0u);
+        g_persist_result = CANOPUS_SUP_ERR_REGISTRY_WRITE;
+        make_command(command, CANOPUS_SUP_CMD_MAGIC, CANOPUS_SUP_CMD_SCAN, 0u, 0u);
+        CHECK_EQ(via_command ? canopus_supervisor_handle_command(&sup, command)
+                              : canopus_supervisor_scan_packages(&sup), CANOPUS_RESULT_FAILED);
+        CHECK_EQ((int32_t)sup.error_code, CANOPUS_SUP_ERR_REGISTRY_WRITE);
+        CHECK_EQ(sup.module_count, 3u);
+        CHECK_EQ(g_module_events[0], 0u);
+        CHECK_EQ(g_module_events[1], 1u);
+        CHECK_EQ(g_module_events[2], 1u);
+        CHECK_EQ(ctx->bus->query_module(ctx, "scan.new", &state), 0);
+        CHECK_EQ(state.state, CANOPUS_STATE_INSTALLED);
+        CHECK_EQ(state.version, 9u);
+        CHECK_EQ(ctx->bus->query_module(ctx, "scan.update", &state), 0);
+        CHECK_EQ(state.version, 1u); /* the new generation waits for reboot */
+        CHECK((state.flags & CANOPUS_SUP_FLAG_UPDATE_PENDING) != 0u);
+        g_persist_result = 0;
+        CHECK_EQ(via_command ? canopus_supervisor_handle_command(&sup, command)
+                              : canopus_supervisor_scan_packages(&sup), CANOPUS_RESULT_REBOOT_REQUIRED);
+        CHECK_EQ(g_module_events[1], 1u); /* same pending update stays silent */
+        CHECK_EQ(g_module_events[2], 1u); /* duplicate install stays silent */
+        canopus_supervisor_module_events_flush(&sup);
+        CHECK_EQ(g_module_events[1], 1u);
+        CHECK_EQ(g_module_events[2], 1u);
+    }
 }
 
 TEST(supervisor_registry_restore_keeps_disabled_modules_unloaded)
@@ -1230,7 +1389,7 @@ static uint32_t v2_word(const uint8_t *b, uint32_t o)
 TEST(v2_golden_query_device_request)
 {
     const uint8_t golden[36] = {
-        0x32,0x43,0x50,0x43, 0x24,0x00, 0x01,0x00, 0x01,0x00, 0x00,0x00,
+        0x32,0x43,0x50,0x43, 0x24,0x00, 0x01,0x00, 0x02,0x00, 0x00,0x00,
         0x24,0x00,0x00,0x00, 0x09,0x00,0x00,0x00, 0x34,0x12,0x00,0x00,
         0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
     };
@@ -1691,11 +1850,13 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_reactivates_opted_in_resident_module_after_second_restore", supervisor_reactivates_opted_in_resident_module_after_second_restore_wrapper },
     { "supervisor_registry_retains_boot_activation_error", supervisor_registry_retains_boot_activation_error_wrapper },
     { "supervisor_registry_restores_multiple_pending_intents", supervisor_registry_restores_multiple_pending_intents_wrapper },
-    { "supervisor_native_app_publication_is_version_gated", supervisor_native_app_publication_is_version_gated_wrapper },
-    { "supervisor_legacy_native_app_publishes_only_in_stage_one", supervisor_legacy_native_app_publishes_only_in_stage_one_wrapper },
+    { "supervisor_native_app_publication_rejects_old_abi", supervisor_native_app_publication_rejects_old_abi_wrapper },
+    { "supervisor_single_callback_native_app_publishes_only_in_stage_one", supervisor_single_callback_native_app_publishes_only_in_stage_one_wrapper },
     { "supervisor_staged_native_app_receives_each_stage", supervisor_staged_native_app_receives_each_stage_wrapper },
     { "supervisor_native_app_publication_persists_error", supervisor_native_app_publication_persists_error_wrapper },
     { "supervisor_publication_save_failure_retains_registry_diagnostic", supervisor_publication_save_failure_retains_registry_diagnostic_wrapper },
+    { "supervisor_publication_notifies_error_changes_and_retained_clear", supervisor_publication_notifies_error_changes_and_retained_clear_wrapper },
+    { "supervisor_scan_notifies_retained_changes_on_save_failure", supervisor_scan_notifies_retained_changes_on_save_failure_wrapper },
     { "supervisor_registry_restore_keeps_disabled_modules_unloaded", supervisor_registry_restore_keeps_disabled_modules_unloaded_wrapper },
     { "supervisor_registry_remove_intent_clears_at_boot", supervisor_registry_remove_intent_clears_at_boot_wrapper },
     { "supervisor_registry_corrupt_magic_is_ignored", supervisor_registry_corrupt_magic_is_ignored_wrapper },

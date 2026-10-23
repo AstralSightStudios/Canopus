@@ -64,9 +64,9 @@ class Band10Pro:
     launcher_scroll = (12, (168, 440, 168, 60))
     manager_icon = (282, 288)
     icon_probe = (282, 248)           # white ground of the Manager's icon
-    home_scroll = (2, (168, 420, 168, 120))
-    modules_row = (168, 155)
-    first_module = (168, 100)
+    home_scroll = (4, (168, 420, 168, 120))
+    modules_row = (168, 190)           # overview at bottom: center of 模块
+    first_module = (168, 145)          # below the 已安装模块 section heading
     scroll_top = (2, (168, 150, 168, 440))
     third_row = (168, 340)            # detail page at the top: 启用 / 立即激活 / 打开界面
     dialog_confirm = (168, 410)       # message box
@@ -104,8 +104,8 @@ class Band11:
     modules_row = (106, 210)
     first_module = (106, 115)
     scroll_top = None
-    third_row = (106, 310)
-    dialog_confirm = (106, 460)       # message box (mode 4): cancel above, confirm below
+    third_row = (106, 367)            # detail page at the top: 启用 / 立即激活 / 打开界面
+    dialog_confirm = (106, 459)       # message box (mode 4): cancel above, confirm below
     activate_wait = 5
     page_switch = (170, 215)
     page_click = (106, 310)
@@ -142,6 +142,20 @@ def ctl(*args, check=True):
     return r.stdout
 
 
+def firmware_id():
+    """Library key for P. The hard-coded id is only a hint: the same Band 11 build
+    ships as several product SKUs (`q66tc`, `q66nfc`), so fall back to the package
+    that carries the target's version."""
+    listing = ctl("firmware", "list")
+    if P.firmware in listing:
+        return P.firmware
+    token = f"_v{P.target.rsplit('-', 1)[-1]}_"
+    for line in listing.splitlines():
+        if line and not line[0].isspace() and token in line:
+            return line.strip()
+    return None
+
+
 def tap(point, settle=0.6):
     ctl("tap", P.device, *point)
     time.sleep(settle)
@@ -161,11 +175,19 @@ def screen_lit():
 def wake():
     """Brings the screen up at the watchface. Band 10 Pro: a quick double tap lights it and
     acts on the UI when it is already lit, so call it with the screen off or on a page whose
-    center is inert. Band 11: the home key puts a lit screen off first, which also resets
-    the UI to the watchface."""
-    if issubclass(P, Band11) and screen_lit():
-        ctl("button", P.device, "home")
-        time.sleep(1.5)
+    center is inert. Band 11: the home key resets a lit screen to the watchface and turns it
+    off; a dark panel only lights from a touch near the middle (measured on Mirage 4.100.179),
+    so touch until the frame is drawn."""
+    if issubclass(P, Band11):
+        if screen_lit():
+            ctl("button", P.device, "home")
+            time.sleep(1.5)
+        for _ in range(6):
+            if screen_lit():
+                break
+            for point in P.pair_wake:
+                ctl("tap", P.device, *point)
+            time.sleep(1.5)
     for point in P.wake_taps:
         ctl("tap", P.device, *point)
     time.sleep(1.5 if issubclass(P, Band11) else 1)
@@ -277,7 +299,18 @@ def phone(work, *methods):
     info = ctl("info", P.device)
     addr = [l.split()[-1] for l in info.splitlines() if l.startswith("bt addr")][0]
     key = [l.split()[-1] for l in info.splitlines() if l.startswith("bound")][0]
-    port = [l for l in ctl("list").splitlines() if P.device in l][0].split("BT :")[1].rstrip(")")
+    # `list` truncates the name column, so a generated test-device name never matches
+    # there. Match the short id it prints instead, retrying until the row exists.
+    did = [l.split()[-1] for l in info.splitlines() if l.startswith("id:")][0].split("-")[0].lower()
+    for attempt in range(30):
+        row = [l for l in ctl("list").splitlines()
+               if l.lower().startswith(did) and "BT :" in l]
+        if row:
+            break
+        time.sleep(2)
+    else:
+        raise RuntimeError(f"device {P.device} never showed a BT port in miragectl list")
+    port = row[0].split("BT :")[1].rstrip(")")
     state = work / "abstate"
     proc = subprocess.Popen([str(BRIDGE), port, key, str(state), *methods], stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, text=True, env=dict(os.environ, MAB_BAND=addr))
@@ -361,14 +394,22 @@ def screen_body():
     return b"".join(bytes(row) for row in rows[70:])
 
 
+def overview_position():
+    """Blank row gutter: moving marquee text must not count as a successful swipe."""
+    probe = Path(tempfile.gettempdir()) / f"canopus-ui-{P.device}-position.png"
+    ctl("screenshot", P.device, probe)
+    rows, bpp = png_rows(probe)
+    return tuple(tuple(row[2 * bpp:2 * bpp + 3]) for row in rows[90:-40])
+
+
 def module_detail_at_top():
     count, gesture = P.home_scroll
-    # Mirage sometimes leaves the freshly opened overview deaf to touch for a minute or two
-    # (seen before the host changes too), so the first swipe repeats until the page moves.
-    before = screen_body()
+    # Mirage sometimes leaves the freshly opened overview deaf to touch for a minute or two.
+    # Wait for the row backgrounds to move, then finish scrolling to the measured bottom.
+    before = overview_position()
     for _ in range(40):
         swipe(gesture)
-        if screen_body() != before:
+        if overview_position() != before:
             break
     else:
         raise RuntimeError("the Manager overview never reacted to touch")
@@ -644,7 +685,7 @@ def main():
     if missing:
         print("missing " + ", ".join(map(str, missing)) + "; skipping")
         return 77
-    if P.firmware not in ctl("firmware", "list"):
+    if firmware_id() is None:
         print(f"Required .{P.name} firmware missing; skipping")
         return 77
     shots = Shots(args.shots or tempfile.mkdtemp(prefix="canopus-ui-shots-"))
@@ -663,7 +704,7 @@ def main():
             ctl("shutdown", P.device, check=False)
             time.sleep(3)
             ctl("delete", P.device, check=False)
-            ctl("create", P.device, "--firmware", P.firmware)
+            ctl("create", P.device, "--firmware", firmware_id())
             shutil.rmtree(work / "face", ignore_errors=True)
             shutil.rmtree(work / "installer", ignore_errors=True)
             prepare(work, package_installer(work), package, shots)

@@ -5,7 +5,7 @@
     "version": "0.1.0",
     "language": "c",
     "lifecycle": "removable",
-    "canopus_abi": "1",
+    "canopus_abi": "2",
     "description": "zero-import removable hello module",
     "version_code": 1,
     "kind": "target"

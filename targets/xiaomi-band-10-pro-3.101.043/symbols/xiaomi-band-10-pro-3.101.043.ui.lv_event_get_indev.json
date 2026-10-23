@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.ui.lv_event_get_indev",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "lv_event_get_indev",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x002bf8d4",
+  "callable_address": "0x002bf8d5",
+  "prototype": "void *(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed live page-owned LVGL object/event/input device; output coordinate buffer borrowed for call; no retention."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "pending",
+    "evidence_ids": [
+      "EVID-UI-1043-LAYOUT-INPUT-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-UI-1043-LAYOUT-INPUT-001"
+    ],
+    "source": "Exact diagnostic lv_event_get_indev in lv_obj_event.c:202; validates code range and returns event param at +16. Startup 0xc0c0a60 copies [0x2c0fc6cc,0x2c10d438) to SRAM 0x200b2860, executable alias 0x002b2860; load address 0xc109740 maps to runtime 0x002bf8d4, callable 0x002bf8d5. Native veneers 0xc588928 and 0x1c07aa90 independently target 0x002bf8d5."
+  },
+  "approval_state": "PENDING",
+  "notes": "Target-private native UI host only. Static recovery does not grant public callable approval or device verification."
+}

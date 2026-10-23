@@ -35,7 +35,7 @@
       "minimum": 1
     },
     "canopus_abi": {
-      "type": "string"
+      "const": "2"
     },
     "lifecycle": {
       "type": "string",

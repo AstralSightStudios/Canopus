@@ -49,6 +49,12 @@ TEST(descriptor_check)
     /* truncated struct_size is rejected */
     d.struct_size = 16;
     CHECK(canopus_module_descriptor_check(&d) == -1);
+    d.struct_size = CANOPUS_MODULE_DESCRIPTOR_V1_0_SIZE;
+    CHECK(canopus_module_descriptor_check(&d) == -1);
+    d.struct_size = CANOPUS_MODULE_DESCRIPTOR_V1_1_SIZE;
+    CHECK(canopus_module_descriptor_check(&d) == -1);
+    d.struct_size = sizeof(d) + sizeof(void *);
+    CHECK(canopus_module_descriptor_check(&d) == -1);
     d.struct_size = sizeof(d);
 
     /* null descriptor rejected */
