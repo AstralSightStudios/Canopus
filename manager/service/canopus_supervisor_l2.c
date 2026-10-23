@@ -51,14 +51,15 @@ static void *s_timer;
 static uint64_t s_owner_timer[L2_PROBE_OWNER_TIMER_SIZE / sizeof(uint64_t)];
 static uint64_t s_bt_timer[L2_PROBE_OWNER_TIMER_SIZE / sizeof(uint64_t)];
 static int s_owner_initialized, s_owner_running;
-static int s_bt_initialized, s_bt_running;
+static int s_bt_initialized;
+static uint32_t s_bt_period;
 static uint16_t s_last_handle;
 static void *s_last_session;
 static int s_connected;
 static void (*s_background_poll)(void *);
 static void *s_background_data;
 
-static int l2_bt_start(void);
+static int l2_bt_start(uint32_t period);
 
 static uint32_t l2_lock(void)
 {
@@ -88,7 +89,7 @@ static void l2_rx(uint16_t handle, uint8_t channel, uint8_t opcode,
     if (opcode != CANOPUS_L2_OPCODE_WRITE_ENC || len > L2_FRAME_MAX || len == 0u ||
         (channel == CANOPUS_L2_CHANNEL && len < CANOPUS_TRANSPORT_V2_HEADER_SIZE)) return;
     session = ((session_fn)(uintptr_t)L2_PROBE_SESSION)(handle);
-    if (session == 0 || l2_bt_start() != 0) return;
+    if (session == 0 || l2_bt_start(2u) != 0) return;
     mask = l2_lock();
     slot = s_write;
     if (s_requests[slot].state != 0u) { l2_unlock(mask); return; }
@@ -184,14 +185,19 @@ static int l2_drain(struct l2_tx *queue, uint32_t size, uint32_t *read)
 
 static void l2_bt_tick(void *timer)
 {
+    uint32_t period;
     (void)timer;
     if (!l2_drain(s_responses, L2_QUEUE_SIZE, &s_tx_read)) {
         (void)l2_drain(s_events, L2_EVENT_QUEUE_SIZE, &s_ev_read);
     }
+    period = s_requests[s_read].state != 0u ||
+             s_responses[s_tx_read].state != 0u ||
+             s_events[s_ev_read].state != 0u ? 2u : 10u;
+    (void)l2_bt_start(period);
 }
 
 static int l2_native_timer_start(uintptr_t loop_addr, void *timer,
-                                  int *initialized, void (*tick)(void *))
+                                  int *initialized, void (*tick)(void *), uint32_t period)
 {
     typedef int (*init_fn)(void *, void *);
     typedef int (*start_fn)(void *, void (*)(void *), uint64_t, uint64_t);
@@ -202,18 +208,18 @@ static int l2_native_timer_start(uintptr_t loop_addr, void *timer,
         if (err != 0) return err;
         *initialized = 1;
     }
-    return ((start_fn)(uintptr_t)L2_PROBE_OWNER_TIMER_START)(timer, tick, 10u, 10u);
+    return ((start_fn)(uintptr_t)L2_PROBE_OWNER_TIMER_START)(timer, tick, period, period);
 }
 
-static int l2_bt_start(void)
+static int l2_bt_start(uint32_t period)
 {
     int err;
-    if (s_bt_running) return 0;
+    if (s_bt_period == period) return 0;
     /* RX already runs on the transport owner. Its SPP pipe fd and libuv
      * queues belong to this task, not the UI task that dispatches commands. */
     err = l2_native_timer_start(L2_PROBE_BT_LOOP, s_bt_timer,
-                                &s_bt_initialized, l2_bt_tick);
-    if (err == 0) s_bt_running = 1;
+                                &s_bt_initialized, l2_bt_tick, period);
+    if (err == 0) s_bt_period = period;
     return err;
 }
 
@@ -272,7 +278,7 @@ static void l2_tick(void *timer)
      * The vendor stops miwear-refresh (and thus LVGL) on screen-off; this
      * separate resident libuv timer stays on the same owner loop. */
     if (l2_native_timer_start(L2_PROBE_OWNER_LOOP, s_owner_timer,
-                              &s_owner_initialized, l2_owner_tick) != 0) return;
+                              &s_owner_initialized, l2_owner_tick, 10u) != 0) return;
     s_owner_running = 1;
     ((delete_fn)(uintptr_t)L2_PROBE_TIMER_DELETE)(timer);
     s_timer = 0;

@@ -129,12 +129,8 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_hook.o" \
     $LOADER_OBJECTS
 
-# Drop unreferenced debug/local symbol metadata on stock-modlib targets. Keep
-# all relocation targets, global exports and constructors. The per-function
-# "cannot unwind" table (.ARM.exidx) is dead weight in a C module: about 8 KiB
-# between the table and its relocations. This keeps the additional installer endpoint within
-# the existing 72 KiB package budget without increasing that budget.
-if [ "$PROD_FAMILY" = xiaomi-band-10-pro ]; then
+# Strip unused symbols and unwind tables, retaining relocations and exports to fit the loader budget.
+if [ "$PROD_FAMILY" = xiaomi-band-10-pro ] || [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
     OBJCOPY=${OBJCOPY:-${RUST_OBJCOPY:-}}
     if [ -z "$OBJCOPY" ]; then
         if command -v llvm-objcopy >/dev/null 2>&1; then

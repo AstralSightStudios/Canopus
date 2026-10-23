@@ -12,7 +12,7 @@ static uintptr_t session = 0x20008000u;
 void *test_l2_loop = (void *)0x2000a000u;
 void *test_l2_bt_loop = (void *)0x2000b000u;
 static void (*bootstrap_tick)(void *), (*owner_tick)(void *), (*bt_tick)(void *);
-static uint32_t owner_init_count, bootstrap_deleted;
+static uint32_t owner_init_count, bootstrap_deleted, bt_period, bt_starts;
 static void *owner_handle, *bt_handle;
 
 void test_l2_rx(uint16_t h, uint8_t c, uint8_t op, void *p, uint16_t n)
@@ -57,10 +57,15 @@ int test_l2_owner_init(void *loop, void *timer)
 int test_l2_owner_start(void *timer, void (*cb)(void *), uint64_t timeout,
                         uint64_t repeat)
 {
-    if (timeout != 10u || repeat != 10u) return -1;
-    if (timer == owner_handle) owner_tick = cb;
-    else if (timer == bt_handle) bt_tick = cb;
-    else return -1;
+    if (timer == owner_handle) {
+        if (timeout != 10u || repeat != 10u) return -1;
+        owner_tick = cb;
+    } else if (timer == bt_handle) {
+        if (timeout != repeat || (repeat != 2u && repeat != 10u)) return -1;
+        bt_period = (uint32_t)repeat;
+        bt_starts++;
+        bt_tick = cb;
+    } else return -1;
     return 0;
 }
 void test_l2_timer_delete(void *timer)
@@ -113,13 +118,20 @@ int exercise(void)
     if (dispatched != 0u) return 4;
     decrypt_error = 0;
     rx(7u, 0x43u, 2u, request, sizeof(request));
-    if (dispatched != 0u) return 5;
+    if (dispatched != 0u || bt_period != 2u || bt_tick == 0) return 5;
+    bt_tick(bt_handle);
+    if (bt_period != 2u || sent != 0u) return 62;
     owner_tick(owner_handle);
     if (dispatched != 1u || sent != 0u) return 6;
-    if (bt_tick == 0) return 60;
     bt_tick(bt_handle);
-    if (sent != 1u) return 61;
+    if (sent != 1u || bt_period != 10u) return 61;
+    {
+        uint32_t starts = bt_starts;
+        bt_tick(bt_handle);
+        if (bt_starts != starts) return 63;
+    }
     rx(7u, 0x43u, 2u, request, sizeof(request));
+    if (bt_period != 2u || owner_init_count != 2u) return 64;
     session += 4u;
     owner_tick(owner_handle);
     if (bt_tick) bt_tick(bt_handle);
