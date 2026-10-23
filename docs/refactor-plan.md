@@ -295,8 +295,9 @@
 - [x] P7.6 后台 timer：time 组版本 2，复用 L2 owner timer；仅 `.043`/`.155`；线程与工作队列仍 FORBIDDEN。
 - [x] P7.7 文档与状态表对齐（限额、链接、README 的能力状态说法、§15 的 CAN-P0-004/006、外部模块迁移说明）。
 - [ ] P7.8 仍需真机：上述各项以及 G0–G13 都没有归档过一次设备运行；`tests/hardware/gates.md` 列出新增的待验证项。
-- [ ] P7.9 `.043` Supervisor 文件体积 109,180 / 114,688（去掉 `.ARM.exidx` 后；固化启动与可见恢复增加约 4 KiB），再加功能需要重新评估预算；`.155` 127,940 / 131,072。P5.2 的 phone flow 超时在本机 Mirage 重跑时没有复现。
+- [ ] P7.9 `.043` Supervisor 文件体积 110,452 / 114,688（2026-10-22 UI 差异更新后），再加功能需要重新评估预算；`.155` 130,988 / 131,072，`.179` 130,972 / 131,072。P5.2 的 phone flow 超时在本机 Mirage 重跑时没有复现。
 - [x] P7.10 `.179` 适配与全局 safe mode（K19）。
+- [x] P7.11 Native UI incremental snapshot application (2026-10-22): compare committed content before native setters, preserve unchanged placement, refresh event bindings, repair dirty switches and retry after partial apply failures. `scripts/tests/test_ui_backend.py` runs both real backend variants with counted firmware substitutes; identical sample commits decrease from 14/15 native mutations to 0/0 (Band 10/Band 11). Host ASan/UBSan, cross-thumb and all five target Supervisor builds/verifiers pass. No new device validation or capability promotion; see ADR-CAN-010.
 
 ## 6. 风险
 

@@ -101,9 +101,6 @@ struct canopus_ui_host_view {
     void *labels[CANOPUS_UI_HOST_MAX_LABELS];
     void *images[CANOPUS_UI_HOST_MAX_IMAGES];
     void *progress[CANOPUS_UI_HOST_MAX_PROGRESS];
-    int32_t progress_minimum[CANOPUS_UI_HOST_MAX_PROGRESS];
-    int32_t progress_maximum[CANOPUS_UI_HOST_MAX_PROGRESS];
-    int32_t progress_value[CANOPUS_UI_HOST_MAX_PROGRESS];
     uint8_t row_kinds[CANOPUS_UI_HOST_MAX_ROWS];
     canopus_ui_node_id row_keys[CANOPUS_UI_HOST_MAX_ROWS];
     struct canopus_ui_host_binding bindings[CANOPUS_UI_HOST_MAX_ROWS];
@@ -113,6 +110,12 @@ struct canopus_ui_host_view {
     uint32_t placed_sig[CANOPUS_UI_HOST_MAX_PLACED];
     uint8_t placed_count;
     uint8_t scroll_locked; /* the content fits: its scrolling is off */
+    uint8_t render_valid; /* native values match rendered_generation */
+    uint8_t visible_rows[CANOPUS_UI_HOST_MAX_ROWS];
+    uint8_t visible_labels[CANOPUS_UI_HOST_MAX_LABELS];
+    uint8_t visible_images[CANOPUS_UI_HOST_MAX_IMAGES];
+    uint8_t visible_progress[CANOPUS_UI_HOST_MAX_PROGRESS];
+    uint8_t dirty_rows[CANOPUS_UI_HOST_MAX_ROWS]; /* native switch changes */
 };
 
 /* The backend to pass to canopus_ui_context_init with the view as its cookie. */

@@ -272,6 +272,73 @@ static uint8_t host_row_kind(uint16_t node_type)
     return HOST_ROW_STATUS;
 }
 
+/* Compare the last successfully applied snapshot without retaining another tree
+ * per view. After a partial backend failure the native controls are unknown. */
+static const struct canopus_ui_snapshot_v1 *host_previous(
+    const struct canopus_ui_host_view *view)
+{
+    const struct canopus_ui_snapshot_v1 *previous = canopus_ui_current(view->ui);
+    return view->render_valid && previous != NULL &&
+                   previous->generation == view->rendered_generation
+               ? previous : NULL;
+}
+
+static const struct canopus_ui_node_v1 *host_previous_key(
+    const struct canopus_ui_snapshot_v1 *snapshot, uint32_t key)
+{
+    uint16_t i;
+    if (snapshot != NULL) {
+        for (i = 0u; i < snapshot->node_count; i++) {
+            if (snapshot->nodes[i].key == key) return &snapshot->nodes[i];
+        }
+    }
+    return NULL;
+}
+
+/* Labels, images and bars use ordinal native slots, unlike keyed rows. */
+static __attribute__((noinline)) const struct canopus_ui_node_v1 *host_previous_slot(
+    const struct canopus_ui_snapshot_v1 *snapshot, uint16_t type, uint32_t slot)
+{
+    uint16_t i;
+    if (snapshot != NULL) {
+        for (i = 0u; i < snapshot->node_count; i++) {
+            uint16_t candidate = snapshot->nodes[i].type;
+            if (candidate != type && !(type == CANOPUS_UI_NODE_TEXT &&
+                                       candidate == CANOPUS_UI_NODE_RICH_TEXT)) continue;
+            if (slot-- == 0u) return &snapshot->nodes[i];
+        }
+    }
+    return NULL;
+}
+
+static __attribute__((noinline)) int host_text_equal(const struct canopus_ui_snapshot_v1 *a,
+                           const struct canopus_ui_node_v1 *node_a,
+                           const struct canopus_ui_snapshot_v1 *b,
+                           const struct canopus_ui_node_v1 *node_b, int secondary)
+{
+    uint16_t length = secondary ? node_a->secondary_len : node_a->primary_len;
+    uint16_t other_length = secondary ? node_b->secondary_len : node_b->primary_len;
+    uint16_t off_a = secondary ? node_a->secondary_off : node_a->primary_off;
+    uint16_t off_b = secondary ? node_b->secondary_off : node_b->primary_off;
+    uint16_t i;
+    if (length != other_length) return 0;
+    for (i = 0u; i < length; i++) {
+        if (a->strings[off_a + i] != b->strings[off_b + i]) return 0;
+    }
+    return 1;
+}
+
+/* Shared across widget classes to keep the freestanding backend within the
+ * Supervisor's file budget. Visibility follows actual writes, even on failure. */
+static __attribute__((noinline)) void host_visibility(
+    void *object, uint8_t *visible, uint32_t slot, uint8_t show)
+{
+    if (object != NULL && visible[slot] != show) {
+        host_set_hidden(object, !show);
+        visible[slot] = show;
+    }
+}
+
 static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *snapshot);
 
 /* Whether `view` is still attached; compares pointers only, so it is safe after
@@ -322,6 +389,9 @@ static void host_dispatch_row(uint32_t row_index, void *event)
         binding = &view->bindings[row_index];
         if (binding->event_id == 0u) {
             return;
+        }
+        if (view->row_kinds[row_index] == HOST_ROW_SWITCH) {
+            view->dirty_rows[row_index] = 1u;
         }
         if (view->hooks != NULL && view->hooks->before_event != NULL) {
             view->hooks->before_event(view, row_index, binding);
@@ -655,16 +725,31 @@ static int host_find_dialog(const struct canopus_ui_snapshot_v1 *snapshot,
     return dialog != CANOPUS_UI_NO_NODE && *message != NULL && count == 2u;
 }
 
-static int host_dialog_show(struct canopus_ui_host_view *view,
+static __attribute__((noinline)) int host_dialog_show(struct canopus_ui_host_view *view,
                             const struct canopus_ui_snapshot_v1 *snapshot,
                             const struct canopus_ui_node_v1 *message,
                             const struct canopus_ui_node_v1 *const buttons[2])
 {
+    const struct canopus_ui_snapshot_v1 *previous = host_previous(view);
+    const struct canopus_ui_node_v1 *old_message, *old_buttons[2];
     uint32_t i;
+    int unchanged = view->dialog.active && previous != NULL &&
+        host_find_dialog(previous, &old_message, old_buttons) &&
+        host_text_equal(snapshot, message, previous, old_message, 0);
 
-    if (view->dialog.active) {
+    for (i = 0u; unchanged && i < 2u; i++) {
+        unchanged = host_text_equal(snapshot, buttons[i], previous, old_buttons[i], 0);
+    }
+    if (unchanged) {
+        for (i = 0u; i < 2u; i++) {
+            view->dialog.bindings[i].generation = snapshot->generation;
+            view->dialog.bindings[i].key = buttons[i]->key;
+            view->dialog.bindings[i].event_id = buttons[i]->event_id;
+        }
         return 0;
     }
+    view->render_valid = 0u;
+    host_dialog_dismiss(view);
     if (view->root == NULL) {
         return -1;
     }
@@ -808,23 +893,32 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     uint32_t visible_progress = 0u;
     uint64_t used_mask = 0u;
     uint32_t label_used = 0u, image_used = 0u, progress_used = 0u;
+    const struct canopus_ui_snapshot_v1 *previous;
     struct host_chain chain;
 
     if (view == NULL || view->root == NULL || snapshot == NULL ||
         snapshot->node_count == 0u) {
         return -1;
     }
+    previous = host_previous(view);
 #ifdef HOST_MSGBOX
     {
         const struct canopus_ui_node_v1 *message;
         const struct canopus_ui_node_v1 *buttons[2];
         if (host_find_dialog(snapshot, &message, buttons) &&
             host_dialog_show(view, snapshot, message, buttons) == 0) {
+            view->rendered_generation = snapshot->generation;
+            view->render_valid = 1u;
             return 0;
+        }
+        /* A dialog snapshot does not describe the body kept underneath it. */
+        if (previous != NULL && host_find_dialog(previous, &message, buttons)) {
+            previous = NULL;
         }
     }
     host_dialog_dismiss(view);
 #endif /* HOST_MSGBOX */
+    view->render_valid = 0u;
     if (view->content_root == NULL) {
         view->content_root = host_content_create(view->root);
         if (view->content_root == NULL) {
@@ -889,8 +983,8 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                 if (view->page_title == NULL) {
                     return -1;
                 }
+                host_set_hidden(view->page_title, 0u);
             }
-            host_set_hidden(view->page_title, 0u);
 #ifndef CANOPUS_MGR_BAND11
             chain.previous = view->page_title;
 #endif /* CANOPUS_MGR_BAND11 */
@@ -898,6 +992,8 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             continue;
         }
         if (host_is_label(node->type)) {
+            const struct canopus_ui_node_v1 *old =
+                host_previous_slot(previous, CANOPUS_UI_NODE_TEXT, label_used);
             object = view->labels[label_used];
             if (object == NULL) {
                 object = host_label_create(view->content_root);
@@ -906,9 +1002,15 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                 }
                 view->labels[label_used] = object;
             }
-            host_label_style(object, snapshot->styles[i].text_style);
-            host_label_set_text(object, primary);
-            host_set_hidden(object, 0u);
+            if (old == NULL ||
+                (previous->styles[old - previous->nodes].text_style == CANOPUS_UI_TEXT_TITLE) !=
+                    (snapshot->styles[i].text_style == CANOPUS_UI_TEXT_TITLE)) {
+                host_label_style(object, snapshot->styles[i].text_style);
+            }
+            if (old == NULL || !host_text_equal(snapshot, node, previous, old, 0)) {
+                host_label_set_text(object, primary);
+            }
+            host_visibility(object, view->visible_labels, label_used, 1);
             host_place(&chain, object, HOST_PLACE_LABEL(label_used),
                        host_hash(primary) ^ snapshot->styles[i].text_style, HOST_TEXT_GAP,
                        host_label_height(primary));
@@ -917,6 +1019,10 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         }
         if (node->type == CANOPUS_UI_NODE_IMAGE) {
             const struct canopus_ui_layout_v1 *layout = &snapshot->layouts[i];
+            const struct canopus_ui_node_v1 *old =
+                host_previous_slot(previous, CANOPUS_UI_NODE_IMAGE, image_used);
+            const struct canopus_ui_layout_v1 *old_layout =
+                old != NULL ? &previous->layouts[old - previous->nodes] : NULL;
             if (primary[0] == '\0' || snapshot->values[i].resource_id == 0u ||
                 layout->width <= 0 || layout->height <= 0) {
                 return -1;
@@ -929,11 +1035,18 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                 }
                 view->images[image_used] = object;
             }
-            host_image_set_src(object, primary);
-            host_set_size(object, layout->width, layout->height);
-            host_set_hidden(object, 0u);
+            if (old == NULL || !host_text_equal(snapshot, node, previous, old, 0) ||
+                snapshot->values[i].resource_id !=
+                    previous->values[old - previous->nodes].resource_id) {
+                host_image_set_src(object, primary);
+            }
+            if (old_layout == NULL || layout->width != old_layout->width ||
+                layout->height != old_layout->height) {
+                host_set_size(object, layout->width, layout->height);
+            }
+            host_visibility(object, view->visible_images, image_used, 1);
             host_place(&chain, object, HOST_PLACE_IMAGE(image_used),
-                       host_hash(primary) ^ ((uint32_t)layout->width << 16) ^ (uint32_t)layout->height,
+                       ((uint32_t)layout->width << 16) ^ (uint32_t)layout->height,
                        HOST_ROW_GAP, (uint32_t)layout->height);
             image_used++;
             continue;
@@ -941,6 +1054,14 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         if (node->type == CANOPUS_UI_NODE_PROGRESS) {
             const struct canopus_ui_layout_v1 *layout = &snapshot->layouts[i];
             const struct canopus_ui_value_v1 *value = &snapshot->values[i];
+            const struct canopus_ui_node_v1 *old =
+                host_previous_slot(previous, CANOPUS_UI_NODE_PROGRESS, progress_used);
+            const struct canopus_ui_layout_v1 *old_layout =
+                old != NULL ? &previous->layouts[old - previous->nodes] : NULL;
+            const struct canopus_ui_value_v1 *old_value =
+                old != NULL ? &previous->values[old - previous->nodes] : NULL;
+            int32_t width = layout->width > 0 ? layout->width : HOST_BAR_WIDTH;
+            int32_t height = layout->height > 0 ? layout->height : HOST_BAR_HEIGHT;
             if (value->minimum >= value->maximum) {
                 return -1;
             }
@@ -951,27 +1072,21 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                     return -1;
                 }
                 view->progress[progress_used] = object;
+            }
+            if (old_value == NULL || old_value->minimum != value->minimum ||
+                old_value->maximum != value->maximum) {
                 host_bar_set_range(object, value->minimum, value->maximum);
+            }
+            if (old_value == NULL || old_value->value != value->value) {
                 host_bar_set_value(object, value->value);
-                view->progress_minimum[progress_used] = value->minimum;
-                view->progress_maximum[progress_used] = value->maximum;
-                view->progress_value[progress_used] = value->value;
-            } else {
-                if (view->progress_minimum[progress_used] != value->minimum ||
-                    view->progress_maximum[progress_used] != value->maximum) {
-                    host_bar_set_range(object, value->minimum, value->maximum);
-                    view->progress_minimum[progress_used] = value->minimum;
-                    view->progress_maximum[progress_used] = value->maximum;
-                }
-                if (view->progress_value[progress_used] != value->value) {
-                    host_bar_set_value(object, value->value);
-                    view->progress_value[progress_used] = value->value;
-                }
             }
             /* An automatic size is a full-width bar. */
-            host_set_size(object, layout->width > 0 ? layout->width : HOST_BAR_WIDTH,
-                          layout->height > 0 ? layout->height : HOST_BAR_HEIGHT);
-            host_set_hidden(object, 0u);
+            if (old_layout == NULL ||
+                width != (old_layout->width > 0 ? old_layout->width : HOST_BAR_WIDTH) ||
+                height != (old_layout->height > 0 ? old_layout->height : HOST_BAR_HEIGHT)) {
+                host_set_size(object, width, height);
+            }
+            host_visibility(object, view->visible_progress, progress_used, 1);
             host_place(&chain, object, HOST_PLACE_BAR(progress_used),
                        ((uint32_t)(layout->width > 0 ? layout->width : HOST_BAR_WIDTH) << 16) ^
                            (uint32_t)(layout->height > 0 ? layout->height : HOST_BAR_HEIGHT),
@@ -1042,9 +1157,18 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             view->row_kinds[slot] = kind;
         }
         {
+            const struct canopus_ui_node_v1 *old = host_previous_key(previous, node->key);
             uint8_t selected = kind != HOST_ROW_SWITCH ||
                 (node->flags & (CANOPUS_UI_NODE_FLAG_CHECKED |
                                 CANOPUS_UI_NODE_FLAG_SELECTED)) != 0u;
+            uint8_t old_selected = old != NULL && (kind != HOST_ROW_SWITCH ||
+                (old->flags & (CANOPUS_UI_NODE_FLAG_CHECKED |
+                               CANOPUS_UI_NODE_FLAG_SELECTED)) != 0u);
+            if (old == NULL || !host_is_row(old->type) || host_row_kind(old->type) != kind ||
+                view->dirty_rows[slot] ||
+                selected != old_selected ||
+                !host_text_equal(snapshot, node, previous, old, 0) ||
+                !host_text_equal(snapshot, node, previous, old, 1)) {
 #ifndef CANOPUS_MGR_BAND11
             (void)((int (*)(void *, const void *, const char *, const char *,
                             int32_t, uint8_t))(uintptr_t)FW_LVX_LIST_ROW_UPDATE)(
@@ -1055,8 +1179,10 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                        uint8_t))(uintptr_t)FW_LVX_LIST_ITEM_UPDATE)(
                 object, NULL, primary, secondary, 0, selected);
 #endif /* CANOPUS_MGR_BAND11 */
+            }
+            view->dirty_rows[slot] = 0u;
         }
-        host_set_hidden(object, 0u);
+        host_visibility(object, view->visible_rows, (uint32_t)slot, 1);
         host_place(&chain, object, HOST_PLACE_ROW((uint32_t)slot), 0u, HOST_ROW_GAP,
                    HOST_ROW_HEIGHT);
         view->row_keys[slot] = node->key;
@@ -1067,18 +1193,18 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     }
     for (i = 0; i < CANOPUS_UI_HOST_MAX_ROWS; i++) {
         if (view->rows[i] != NULL && (used_mask & (UINT64_C(1) << i)) == 0u) {
-            host_set_hidden(view->rows[i], 1u);
+            host_visibility(view->rows[i], view->visible_rows, i, 0);
             canopus_memset(&view->bindings[i], 0, sizeof(view->bindings[i]));
         }
     }
     for (i = (uint16_t)label_used; i < CANOPUS_UI_HOST_MAX_LABELS; i++) {
-        host_set_hidden(view->labels[i], 1u);
+        host_visibility(view->labels[i], view->visible_labels, i, 0);
     }
     for (i = (uint16_t)image_used; i < CANOPUS_UI_HOST_MAX_IMAGES; i++) {
-        host_set_hidden(view->images[i], 1u);
+        host_visibility(view->images[i], view->visible_images, i, 0);
     }
     for (i = (uint16_t)progress_used; i < CANOPUS_UI_HOST_MAX_PROGRESS; i++) {
-        host_set_hidden(view->progress[i], 1u);
+        host_visibility(view->progress[i], view->visible_progress, i, 0);
     }
     /* Dragging content that already fits threw it to the page bottom, where it
      * stayed (Mirage 4.100.155), so a page that fits is not scrollable. */
@@ -1095,6 +1221,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     }
     view->placed_count = (uint8_t)chain.count;
     view->rendered_generation = snapshot->generation;
+    view->render_valid = 1u;
     if (view->hooks != NULL && view->hooks->rendered != NULL) {
         view->hooks->rendered(view, chain.first);
     }
