@@ -1,9 +1,7 @@
 /* {{id}} - Canopus module. */
 #include "canopus_module_entry.h"
 
-static const struct canopus_context_v1 *s_ctx;
-
-static int32_t on_prepare(const struct canopus_context_v1 *ctx) { s_ctx = ctx; return 0; }
+static int32_t on_prepare(const struct canopus_context_v1 *ctx) { (void)ctx; return 0; }
 
 static int32_t on_activate(const struct canopus_context_v1 *ctx)
 {
@@ -15,7 +13,7 @@ static int32_t on_activate(const struct canopus_context_v1 *ctx)
 
 static int32_t on_deactivate(const struct canopus_context_v1 *ctx) { (void)ctx; return 0; }
 
-static int32_t on_stop(const struct canopus_context_v1 *ctx) { (void)ctx; s_ctx = 0; return 0; }
+static int32_t on_stop(const struct canopus_context_v1 *ctx) { (void)ctx; return 0; }
 
 static int32_t on_query(struct canopus_status_writer_v1 *writer) { (void)writer; return 0; }
 
