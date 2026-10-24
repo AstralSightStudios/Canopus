@@ -91,6 +91,7 @@ probes/bin/
 targets/fw-corpus/
 
 fwbins/
+clitest/
 
 # Ephemeral emulator run artifacts (screenshots/logs/credentials) - never commit
 docs/evidence/
