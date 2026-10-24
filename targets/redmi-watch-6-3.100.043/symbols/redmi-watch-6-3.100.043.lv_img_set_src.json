@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lv_img_set_src",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_img_set_src",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void(void *, const void *)",
+  "entry_address": "0xc78acf0",
+  "callable_address": "0xc78acf1",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (EVID-STATIC-P65-002)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): lv_img_set_src(img,src): classifies the source through 0xc71a084, stores it at +0x34, derives width/height (+0x40/+0x44) and the scale/align modes. Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING"
+}

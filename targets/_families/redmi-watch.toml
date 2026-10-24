@@ -1,0 +1,17 @@
+# Shared build and generation data for REDMI Watch 6 (p65) targets.
+# LVGL v9 Manager backend with the shared UI host; the loader uses the generic
+# staged path (explicit MPU lease through the BES driver) rather than the
+# Band 11 bootstrap helpers.
+manager_backend = "manager/target/canopus_manager_target.c"
+supervisor_max_size = 133120
+supervisor_max_resident = 184320
+loader_sources = [
+  "runtime/loader/canopus_arm_reloc.c",
+  "runtime/loader/canopus_elf32_loader.c",
+]
+defines = []
+prod_family = "redmi-watch"
+private_symbols = false
+# The Band 11 native-bindings set (lvx_* names) does not exist for p65 yet;
+# the target config's FW_9 macros carry the calls until it does.
+native_config = false

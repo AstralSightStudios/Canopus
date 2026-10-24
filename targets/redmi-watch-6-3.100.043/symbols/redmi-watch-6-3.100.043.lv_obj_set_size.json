@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lv_obj_set_size",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_obj_set_size",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void(void *, int32_t, int32_t)",
+  "entry_address": "0x378738",
+  "callable_address": "0x378739",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (EVID-STATIC-P65-002)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): lv_obj_set_size: style props 1 (width) and 2 (height) read through 0x37d628 and written through 0x37ed10/0x37ed58 with a dirty check; XIP thunk 0xc255ce4. Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING"
+}

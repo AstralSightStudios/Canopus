@@ -5,7 +5,7 @@
   "name": "lv_bar_create",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc0c21e0",
+  "entry_address": "0xc784834",
   "prototype": "void *(void *)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -23,21 +23,24 @@
     "creates_page_owned_widget"
   ],
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ],
     "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
   },
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was DEVICE_PROVEN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target.",
-  "approval_state": "PENDING"
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): lv_bar_create: class 0x3c223b58 (ctor 0xc784798 sets max 100 at +0x3c, min/cur 0 at +0x38/+0x34). Restricted/PENDING; device NOT_PROBED. body differs (instruction fingerprint and pseudocode). Source semantic status was DEVICE_PROVEN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target.",
+  "approval_state": "PENDING",
+  "callable_address": "0xc784835"
 }

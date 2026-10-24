@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lv_img_create",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_img_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void *(void *)",
+  "entry_address": "0xc78a960",
+  "callable_address": "0xc78a961",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (EVID-STATIC-P65-002)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): lv_img_create: class 0x3c2242a0 (ctor 0xc78a760 sets src 0 at +0x34, rotation 0 at +0x48, scale 256 at +0x4c/+0x50), paired with lv_img_set_src at all 65 call sites. Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING"
+}

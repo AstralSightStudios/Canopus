@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lv_label_set_text",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_label_set_text",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void(void *, const char *)",
+  "entry_address": "0xc78c878",
+  "callable_address": "0xc78c879",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (EVID-STATIC-P65-002)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): lv_label_set_text(obj,text): NULL keeps the current text, otherwise frees +0x34, allocates strlen+1 and copies, clears flag bit 8, refreshes via 0xc78c250. Called by the label constructor with \"\". Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING"
+}

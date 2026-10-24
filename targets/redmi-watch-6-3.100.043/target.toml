@@ -5,6 +5,7 @@
 # loader and no inherited approval. It has never been deployed.
 schema = 1
 target_id = "redmi-watch-6-3.100.043"
+family = "redmi-watch"
 rust_module = "redmi_watch_6_3_100_043"
 # Static bring-up ABI only: recovered restricted records are emitted as
 # addresses for the staged loader, never as approvals or production artifacts.

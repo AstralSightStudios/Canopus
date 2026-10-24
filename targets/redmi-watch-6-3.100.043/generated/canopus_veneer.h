@@ -4,7 +4,7 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 1
- * input_digest: 2070584f16c2ccfb
+ * input_digest: 86a627f24d8704ad
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -52,6 +52,11 @@ static inline int canopus_identity_guard(void)
 }
 
 /* ---- typed veneers ---- */
+typedef void (*canopus_fw_lv_img_set_src_fn)(void *, const void *);
+static inline void canopus_fw_lv_img_set_src(void * a0, const void * a1) {
+    return ((canopus_fw_lv_img_set_src_fn)(uintptr_t)0xc78acf1)(a0, a1);
+}
+
 typedef int (*canopus_fw_register_driver_fn)(const char *, const void *, uint32_t, void *);
 static inline int canopus_fw_register_driver(const char * a0, const void * a1, uint32_t a2, void * a3) {
     return ((canopus_fw_register_driver_fn)(uintptr_t)0x1c15a955)(a0, a1, a2, a3);
@@ -79,6 +84,16 @@ static inline void canopus_fw_wakelock_acquire(void * a0) {
     return ((canopus_fw_wakelock_acquire_fn)(uintptr_t)0xca61ffd)(a0);
 }
 
+typedef void * (*canopus_fw_launcher_load_app_info_fn)(const void *);
+static inline void * canopus_fw_launcher_load_app_info(const void * a0) {
+    return ((canopus_fw_launcher_load_app_info_fn)(uintptr_t)0xc7ebd11)(a0);
+}
+
+typedef void (*canopus_fw_lv_label_set_text_fn)(void *, const char *);
+static inline void canopus_fw_lv_label_set_text(void * a0, const char * a1) {
+    return ((canopus_fw_lv_label_set_text_fn)(uintptr_t)0xc78c879)(a0, a1);
+}
+
 typedef void * (*canopus_fw_mm_memalign_default_fn)(uint32_t, uint32_t);
 static inline void * canopus_fw_mm_memalign_default(uint32_t a0, uint32_t a1) {
     return ((canopus_fw_mm_memalign_default_fn)(uintptr_t)0xc50b2c9)(a0, a1);
@@ -102,6 +117,21 @@ static inline void canopus_fw_wakelock_release(void * a0) {
 typedef uint8_t (*canopus_fw_mpu_region_allocate_fn)(void);
 static inline uint8_t canopus_fw_mpu_region_allocate(void) {
     return ((canopus_fw_mpu_region_allocate_fn)(uintptr_t)0xc0c017d)();
+}
+
+typedef void (*canopus_fw_lv_obj_set_size_fn)(void *, int32_t, int32_t);
+static inline void canopus_fw_lv_obj_set_size(void * a0, int32_t a1, int32_t a2) {
+    return ((canopus_fw_lv_obj_set_size_fn)(uintptr_t)0x378739)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_lv_obj_clear_flag_fn)(void *, uint32_t);
+static inline void canopus_fw_lv_obj_clear_flag(void * a0, uint32_t a1) {
+    return ((canopus_fw_lv_obj_clear_flag_fn)(uintptr_t)0x387c45)(a0, a1);
+}
+
+typedef int (*canopus_fw_launcher_page_insert_icon_fn)(void *);
+static inline int canopus_fw_launcher_page_insert_icon(void * a0) {
+    return ((canopus_fw_launcher_page_insert_icon_fn)(uintptr_t)0xc7f070d)(a0);
 }
 
 typedef int (*canopus_fw_rename_fn)(const char *, const char *);
@@ -129,9 +159,19 @@ static inline void * canopus_fw_miwear_session_lookup(uint16_t a0) {
     return ((canopus_fw_miwear_session_lookup_fn)(uintptr_t)0xca9c905)(a0);
 }
 
+typedef void (*canopus_fw_lv_obj_align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
+static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2, int32_t a3, int32_t a4) {
+    return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0x37a581)(a0, a1, a2, a3, a4);
+}
+
 typedef int (*canopus_fw_unlink_fn)(const char *);
 static inline int canopus_fw_unlink(const char * a0) {
     return ((canopus_fw_unlink_fn)(uintptr_t)0x1c159825)(a0);
+}
+
+typedef void * (*canopus_fw_lv_bar_create_fn)(void *);
+static inline void * canopus_fw_lv_bar_create(void * a0) {
+    return ((canopus_fw_lv_bar_create_fn)(uintptr_t)0xc784835)(a0);
 }
 
 typedef int32_t (*canopus_fw_write_fn)(int, const void *, uint32_t);
@@ -160,9 +200,39 @@ static inline void canopus_fw_lv_obj_set_style_bg_opa(void * a0, uint32_t a1, ui
     return ((canopus_fw_lv_obj_set_style_bg_opa_fn)(uintptr_t)0xc0d8ff5)(a0, a1, a2);
 }
 
+typedef void (*canopus_fw_lv_bar_set_range_fn)(void *, int32_t, int32_t);
+static inline void canopus_fw_lv_bar_set_range(void * a0, int32_t a1, int32_t a2) {
+    return ((canopus_fw_lv_bar_set_range_fn)(uintptr_t)0xc7849e5)(a0, a1, a2);
+}
+
+typedef void * (*canopus_fw_lvx_page_title_create_fn)(void *, const char *, uint32_t, uint32_t, uint32_t);
+static inline void * canopus_fw_lvx_page_title_create(void * a0, const char * a1, uint32_t a2, uint32_t a3, uint32_t a4) {
+    return ((canopus_fw_lvx_page_title_create_fn)(uintptr_t)0xc21b2fd)(a0, a1, a2, a3, a4);
+}
+
 typedef int32_t (*canopus_fw_page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
 static inline int32_t canopus_fw_page_goto(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
     return ((canopus_fw_page_goto_fn)(uintptr_t)0x1c132f4d)(a0, a1, a2, a3);
+}
+
+typedef void * (*canopus_fw_lv_obj_add_event_cb_fn)(void *, void *, uint32_t, void *);
+static inline void * canopus_fw_lv_obj_add_event_cb(void * a0, void * a1, uint32_t a2, void * a3) {
+    return ((canopus_fw_lv_obj_add_event_cb_fn)(uintptr_t)0x388099)(a0, a1, a2, a3);
+}
+
+typedef void (*canopus_fw_lv_obj_add_flag_fn)(void *, uint32_t);
+static inline void canopus_fw_lv_obj_add_flag(void * a0, uint32_t a1) {
+    return ((canopus_fw_lv_obj_add_flag_fn)(uintptr_t)0x387b99)(a0, a1);
+}
+
+typedef int (*canopus_fw_launcher_reset_order_info_fn)(void);
+static inline int canopus_fw_launcher_reset_order_info(void) {
+    return ((canopus_fw_launcher_reset_order_info_fn)(uintptr_t)0xc7ecafd)();
+}
+
+typedef void * (*canopus_fw_lv_img_create_fn)(void *);
+static inline void * canopus_fw_lv_img_create(void * a0) {
+    return ((canopus_fw_lv_img_create_fn)(uintptr_t)0xc78a961)(a0);
 }
 
 typedef int (*canopus_fw_bt_queue_free_fn)(void *);
@@ -188,6 +258,11 @@ static inline int canopus_fw_thirdparty_submit_message_content(const void * a0, 
 typedef int32_t (*canopus_fw_font_reload_ft_mul_fix_fn)(int32_t, int32_t);
 static inline int32_t canopus_fw_font_reload_ft_mul_fix(int32_t a0, int32_t a1) {
     return ((canopus_fw_font_reload_ft_mul_fix_fn)(uintptr_t)0xc564819)(a0, a1);
+}
+
+typedef void (*canopus_fw_lv_bar_set_value_fn)(void *, int32_t, uint32_t);
+static inline void canopus_fw_lv_bar_set_value(void * a0, int32_t a1, uint32_t a2) {
+    return ((canopus_fw_lv_bar_set_value_fn)(uintptr_t)0xc784851)(a0, a1, a2);
 }
 
 typedef int (*canopus_fw_close_fn)(int);
@@ -343,9 +418,6 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
  * launcher_scroll: restricted - not exported until context/ownership approved
  * launcher_scroll_prepare: restricted - not exported until context/ownership approved
  * lseek: restricted - not exported until context/ownership approved
- * lv_bar_create: restricted - not exported until context/ownership approved
- * lv_bar_set_range: restricted - not exported until context/ownership approved
- * lv_bar_set_value: restricted - not exported until context/ownership approved
  * lv_cache_drop: restricted - not exported until context/ownership approved
  * lv_cache_release: restricted - not exported until context/ownership approved
  * lv_display_get_horizontal_resolution: restricted - not exported until context/ownership approved
@@ -359,9 +431,6 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
  * lv_image_decoder_get_info: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
  * lv_indev_get_point: restricted - not exported until context/ownership approved
- * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
- * lv_obj_align_to: restricted - not exported until context/ownership approved
- * lv_obj_clear_flag: restricted - not exported until context/ownership approved
  * lv_obj_get_coords: restricted - not exported until context/ownership approved
  * lv_obj_get_scroll_x: restricted - not exported until context/ownership approved
  * lv_obj_get_scroll_y: restricted - not exported until context/ownership approved
@@ -401,7 +470,6 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
  * lvx_object_delete: restricted - not exported until context/ownership approved
  * lvx_object_set_size: restricted - not exported until context/ownership approved
  * lvx_page_content_create: restricted - not exported until context/ownership approved
- * lvx_page_title_create: restricted - not exported until context/ownership approved
  * lvx_style_apply: restricted - not exported until context/ownership approved
  * miwear_transport_l2_rx: restricted - not exported until context/ownership approved
  * miwear_transport_send: restricted - not exported until context/ownership approved
