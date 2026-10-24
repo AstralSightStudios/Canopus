@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.mm_memalign_default",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "mm_memalign_default",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void *(uint32_t, uint32_t)",
+  "entry_address": "0xc50b2c8",
+  "callable_address": "0xc50b2c9",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (EVID-STATIC-P65-002)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): Two-argument default-heap memalign: forwards (heap, alignment, size) to mm_memalign loc_C50AA68, whose prologue rejects non-power-of-two alignment >= 0x7FFFFFFF, raises the size to 0x14 and rounds; the heap descriptor comes from dword_3C3D4F10[3043]. Sets errno=ENOMEM (12) and returns 0 on failure. Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING"
+}

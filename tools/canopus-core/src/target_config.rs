@@ -795,7 +795,15 @@ impl<'a> TargetConfigGen<'a> {
         }
         out.push_str("#define CANOPUS_SUP_TARGET_ID CANOPUS_TARGET_ID\n");
         if complete && custom {
-            out.push_str("#define CANOPUS_SUP_REGISTER_DRIVER(path, fops, mode, priv) \\\n    ((void)(mode), canopus_fw_register_driver((path), (fops), (priv)))\n");
+            if self.pack.target_id == "redmi-watch-6-3.100.043" {
+                // p65's NuttX keeps the four-argument register_driver: the
+                // mode reaches inode_reserve and the private data is stored
+                // at +24, so dropping either argument would corrupt the
+                // inode. EVID-STATIC-P65-002.
+                out.push_str("#define CANOPUS_SUP_REGISTER_DRIVER(path, fops, mode, priv) \\\n    canopus_fw_register_driver((path), (fops), (mode), (priv))\n");
+            } else {
+                out.push_str("#define CANOPUS_SUP_REGISTER_DRIVER(path, fops, mode, priv) \\\n    ((void)(mode), canopus_fw_register_driver((path), (fops), (priv)))\n");
+            }
         } else if complete {
             out.push_str("#define CANOPUS_SUP_REGISTER_DRIVER(path, fops, mode, priv) \\\n    canopus_fw_register_driver((path), (fops), (mode), (priv))\n");
         }

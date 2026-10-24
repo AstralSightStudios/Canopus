@@ -9,6 +9,9 @@
     "d516af0:nx_best1502p_ap"
 #define CANOPUS_SUP_PLATFORM_COMPLETE 0
 #define CANOPUS_SUP_CUSTOM_LOADER 1
+/* Static bring-up ABI only: restricted records are addresses,
+ * not approvals. Do not ship this build as a production artifact. */
+#define CANOPUS_SUP_STATIC_TEST_ABI 1
 
 /* Platform ABI incomplete: firmware call macros are withheld. */
 #define CANOPUS_SUP_TARGET_ID CANOPUS_TARGET_ID

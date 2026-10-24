@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.mm_free_default",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "mm_free_default",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void (void *)",
+  "entry_address": "0xc50b25c",
+  "callable_address": "0xc50b25d",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (EVID-STATIC-P65-002)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): Default-heap free: forwards (heap, pointer) to the mm free body loc_C50A608 with the descriptor dword_3C3D4F10[3043]. Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING"
+}

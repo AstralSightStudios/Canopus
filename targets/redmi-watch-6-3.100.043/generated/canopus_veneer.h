@@ -4,7 +4,10 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 1
- * input_digest: 2dcbfa03957bc1a2
+ * input_digest: e8dd3d8d246e6e57
+ * STATIC TEST ABI: restricted STATIC_RECOVERED records are
+* emitted as addresses for loader bring-up. This is not an
+* approval and must not be shipped as a production artifact.
  */
 #ifndef CANOPUS_VENEER_REDMI_WATCH_6_3_100_043_H
 #define CANOPUS_VENEER_REDMI_WATCH_6_3_100_043_H
@@ -49,12 +52,177 @@ static inline int canopus_identity_guard(void)
 }
 
 /* ---- typed veneers ---- */
+typedef int (*canopus_fw_register_driver_fn)(const char *, const void *, uint32_t, void *);
+static inline int canopus_fw_register_driver(const char * a0, const void * a1, uint32_t a2, void * a3) {
+    return ((canopus_fw_register_driver_fn)(uintptr_t)0x1c15a955)(a0, a1, a2, a3);
+}
+
+typedef int (*canopus_fw_interconnect_close_fn)(void *);
+static inline int canopus_fw_interconnect_close(void * a0) {
+    return ((canopus_fw_interconnect_close_fn)(uintptr_t)0xc62df51)(a0);
+}
+
+typedef void * (*canopus_fw_lv_obj_create_fn)(void *);
+static inline void * canopus_fw_lv_obj_create(void * a0) {
+    return ((canopus_fw_lv_obj_create_fn)(uintptr_t)0x387b79)(a0);
+}
+
+/* bt_timer_cancel: skipped (argument type not mappable) */
+/* open: skipped (argument type not mappable) */
+typedef void (*canopus_fw_wakelock_acquire_fn)(void *);
+static inline void canopus_fw_wakelock_acquire(void * a0) {
+    return ((canopus_fw_wakelock_acquire_fn)(uintptr_t)0xca61ffd)(a0);
+}
+
+typedef void * (*canopus_fw_mm_memalign_default_fn)(uint32_t, uint32_t);
+static inline void * canopus_fw_mm_memalign_default(uint32_t a0, uint32_t a1) {
+    return ((canopus_fw_mm_memalign_default_fn)(uintptr_t)0xc50b2c9)(a0, a1);
+}
+
+typedef int (*canopus_fw_app_launcher_del_fn)(uint16_t);
+static inline int canopus_fw_app_launcher_del(uint16_t a0) {
+    return ((canopus_fw_app_launcher_del_fn)(uintptr_t)0xc7ec53d)(a0);
+}
+
+typedef void * (*canopus_fw_screen_session_create_fn)(const char *);
+static inline void * canopus_fw_screen_session_create(const char * a0) {
+    return ((canopus_fw_screen_session_create_fn)(uintptr_t)0xca68abd)(a0);
+}
+
+typedef void (*canopus_fw_wakelock_release_fn)(void *);
+static inline void canopus_fw_wakelock_release(void * a0) {
+    return ((canopus_fw_wakelock_release_fn)(uintptr_t)0xca620c5)(a0);
+}
+
+typedef int (*canopus_fw_rename_fn)(const char *, const char *);
+static inline int canopus_fw_rename(const char * a0, const char * a1) {
+    return ((canopus_fw_rename_fn)(uintptr_t)0x1c1587c9)(a0, a1);
+}
+
+typedef int32_t (*canopus_fw_page_finish_fn)(void *);
+static inline int32_t canopus_fw_page_finish(void * a0) {
+    return ((canopus_fw_page_finish_fn)(uintptr_t)0x1c1325b9)(a0);
+}
+
+typedef int * (*canopus_fw_errno_location_fn)(void);
+static inline int * canopus_fw_errno_location(void) {
+    return ((canopus_fw_errno_location_fn)(uintptr_t)0xc4f793d)();
+}
+
+typedef void * (*canopus_fw_miwear_session_lookup_fn)(uint16_t);
+static inline void * canopus_fw_miwear_session_lookup(uint16_t a0) {
+    return ((canopus_fw_miwear_session_lookup_fn)(uintptr_t)0xca9c905)(a0);
+}
+
+typedef int (*canopus_fw_unlink_fn)(const char *);
+static inline int canopus_fw_unlink(const char * a0) {
+    return ((canopus_fw_unlink_fn)(uintptr_t)0x1c159825)(a0);
+}
+
+typedef int32_t (*canopus_fw_write_fn)(int, const void *, uint32_t);
+static inline int32_t canopus_fw_write(int a0, const void * a1, uint32_t a2) {
+    return ((canopus_fw_write_fn)(uintptr_t)0x1c158691)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_font_reload_lv_free_fn)(void *);
+static inline void canopus_fw_font_reload_lv_free(void * a0) {
+    return ((canopus_fw_font_reload_lv_free_fn)(uintptr_t)0xc741b49)(a0);
+}
+
+typedef int (*canopus_fw_screen_get_state_fn)(void);
+static inline int canopus_fw_screen_get_state(void) {
+    return ((canopus_fw_screen_get_state_fn)(uintptr_t)0xca68fad)();
+}
+
+/* app_install: skipped (argument type not mappable) */
+typedef int (*canopus_fw_miwear_session_crypto_ctr_fn)(void *, int, uint16_t, const void *, void *);
+static inline int canopus_fw_miwear_session_crypto_ctr(void * a0, int a1, uint16_t a2, const void * a3, void * a4) {
+    return ((canopus_fw_miwear_session_crypto_ctr_fn)(uintptr_t)0xca99139)(a0, a1, a2, a3, a4);
+}
+
+typedef void (*canopus_fw_lv_obj_set_style_bg_opa_fn)(void *, uint32_t, uint32_t);
+static inline void canopus_fw_lv_obj_set_style_bg_opa(void * a0, uint32_t a1, uint32_t a2) {
+    return ((canopus_fw_lv_obj_set_style_bg_opa_fn)(uintptr_t)0xc0d8ff5)(a0, a1, a2);
+}
+
+typedef int32_t (*canopus_fw_page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+static inline int32_t canopus_fw_page_goto(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
+    return ((canopus_fw_page_goto_fn)(uintptr_t)0x1c132f4d)(a0, a1, a2, a3);
+}
+
+typedef int (*canopus_fw_bt_queue_free_fn)(void *);
+static inline int canopus_fw_bt_queue_free(void * a0) {
+    return ((canopus_fw_bt_queue_free_fn)(uintptr_t)0xc66e06d)(a0);
+}
+
+typedef int (*canopus_fw_closedir_fn)(void *);
+static inline int canopus_fw_closedir(void * a0) {
+    return ((canopus_fw_closedir_fn)(uintptr_t)0xc4f78c1)(a0);
+}
+
+typedef void (*canopus_fw_mm_free_default_fn)(void *);
+static inline void canopus_fw_mm_free_default(void * a0) {
+    return ((canopus_fw_mm_free_default_fn)(uintptr_t)0xc50b25d)(a0);
+}
+
+typedef int (*canopus_fw_thirdparty_submit_message_content_fn)(const void *, uint32_t, uint32_t);
+static inline int canopus_fw_thirdparty_submit_message_content(const void * a0, uint32_t a1, uint32_t a2) {
+    return ((canopus_fw_thirdparty_submit_message_content_fn)(uintptr_t)0xca40065)(a0, a1, a2);
+}
+
+typedef int32_t (*canopus_fw_font_reload_ft_mul_fix_fn)(int32_t, int32_t);
+static inline int32_t canopus_fw_font_reload_ft_mul_fix(int32_t a0, int32_t a1) {
+    return ((canopus_fw_font_reload_ft_mul_fix_fn)(uintptr_t)0xc564819)(a0, a1);
+}
+
+typedef int (*canopus_fw_close_fn)(int);
+static inline int canopus_fw_close(int a0) {
+    return ((canopus_fw_close_fn)(uintptr_t)0x1c154c41)(a0);
+}
+
+typedef void * (*canopus_fw_lv_label_create_fn)(void *);
+static inline void * canopus_fw_lv_label_create(void * a0) {
+    return ((canopus_fw_lv_label_create_fn)(uintptr_t)0xc78bcb5)(a0);
+}
+
+typedef int (*canopus_fw_watchface_manager_delete_watchface_fn)(const char *);
+static inline int canopus_fw_watchface_manager_delete_watchface(const char * a0) {
+    return ((canopus_fw_watchface_manager_delete_watchface_fn)(uintptr_t)0xca90b1d)(a0);
+}
+
+typedef int32_t (*canopus_fw_read_fn)(int, void *, uint32_t);
+static inline int32_t canopus_fw_read(int a0, void * a1, uint32_t a2) {
+    return ((canopus_fw_read_fn)(uintptr_t)0x1c158721)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_screen_session_set_brightness_value_fn)(void *, int);
+static inline void canopus_fw_screen_session_set_brightness_value(void * a0, int a1) {
+    return ((canopus_fw_screen_session_set_brightness_value_fn)(uintptr_t)0xca68e8d)(a0, a1);
+}
+
+typedef void * (*canopus_fw_app_lookup_fn)(uint16_t);
+static inline void * canopus_fw_app_lookup(uint16_t a0) {
+    return ((canopus_fw_app_lookup_fn)(uintptr_t)0x1c151109)(a0);
+}
+
+typedef const char * (*canopus_fw_calendar_localized_text_fn)(const char *);
+static inline const char * canopus_fw_calendar_localized_text(const char * a0) {
+    return ((canopus_fw_calendar_localized_text_fn)(uintptr_t)0xc4f8459)(a0);
+}
+
+typedef void (*canopus_fw_screen_session_set_auto_brightness_fn)(void *, int);
+static inline void canopus_fw_screen_session_set_auto_brightness(void * a0, int a1) {
+    return ((canopus_fw_screen_session_set_auto_brightness_fn)(uintptr_t)0xca68e29)(a0, a1);
+}
+
+typedef int (*canopus_fw_unregister_driver_fn)(const char *);
+static inline int canopus_fw_unregister_driver(const char * a0) {
+    return ((canopus_fw_unregister_driver_fn)(uintptr_t)0x1c15aa19)(a0);
+}
+
 /* ---- excluded symbols ----
- * app_install: restricted - not exported until context/ownership approved
  * app_launcher_add: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
- * app_launcher_del: restricted - not exported until context/ownership approved
- * app_lookup: restricted - not exported until context/ownership approved
  * app_net_connect_state_update: restricted - not exported until context/ownership approved
  * background_object_has_flag: restricted - not exported until context/ownership approved
  * background_object_hide: restricted - not exported until context/ownership approved
@@ -81,11 +249,9 @@ static inline int canopus_identity_guard(void)
  * bt_pair_display_reply: restricted - not exported until context/ownership approved
  * bt_pair_request_reply: restricted - not exported until context/ownership approved
  * bt_queue_external: restricted - not exported until context/ownership approved
- * bt_queue_free: restricted - not exported until context/ownership approved
  * bt_remove_bond_private: restricted - not exported until context/ownership approved
  * bt_socket_server_receive: FORBIDDEN - no veneer may ever be generated
  * bt_timer_add: restricted - not exported until context/ownership approved
- * bt_timer_cancel: restricted - not exported until context/ownership approved
  * btsnoop_avdtp_recognizer: restricted - not exported until context/ownership approved
  * calendar_app_dispatch: restricted - not exported until context/ownership approved
  * calendar_app_lookup: restricted - not exported until context/ownership approved
@@ -96,13 +262,10 @@ static inline int canopus_identity_guard(void)
  * calendar_eventbus_send: restricted - not exported until context/ownership approved
  * calendar_font_day: restricted - not exported until context/ownership approved
  * calendar_icon_notify: restricted - not exported until context/ownership approved
- * calendar_localized_text: restricted - not exported until context/ownership approved
  * calendar_localtime: restricted - not exported until context/ownership approved
  * calendar_snapshot: restricted - not exported until context/ownership approved
  * calendar_text_color: restricted - not exported until context/ownership approved
  * clock_gettime: restricted - not exported until context/ownership approved
- * close: restricted - not exported until context/ownership approved
- * closedir: restricted - not exported until context/ownership approved
  * control_center_scroll: restricted - not exported until context/ownership approved
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * core_bt_pair_request_callback: restricted - not exported until context/ownership approved
@@ -112,7 +275,6 @@ static inline int canopus_identity_guard(void)
  * driver_open_dispatch: restricted - not exported until context/ownership approved
  * driver_read_dispatch: restricted - not exported until context/ownership approved
  * driver_write_dispatch: restricted - not exported until context/ownership approved
- * errno_location: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
  * font_manager_add_path: restricted - not exported until context/ownership approved
  * font_manager_remove_path: restricted - not exported until context/ownership approved
@@ -123,14 +285,12 @@ static inline int canopus_identity_guard(void)
  * font_reload_face_compare: restricted - not exported until context/ownership approved
  * font_reload_face_create: restricted - not exported until context/ownership approved
  * font_reload_face_destroy: restricted - not exported until context/ownership approved
- * font_reload_ft_mul_fix: restricted - not exported until context/ownership approved
  * font_reload_ft_set_pixel_size: restricted - not exported until context/ownership approved
  * font_reload_glyph_metrics: restricted - not exported until context/ownership approved
  * font_reload_glyph_pending_release: restricted - not exported until context/ownership approved
  * font_reload_gradient_pending_release: restricted - not exported until context/ownership approved
  * font_reload_image_pending_release: restricted - not exported until context/ownership approved
  * font_reload_list_remove: restricted - not exported until context/ownership approved
- * font_reload_lv_free: restricted - not exported until context/ownership approved
  * font_reload_lv_malloc: restricted - not exported until context/ownership approved
  * font_reload_metrics_compare: restricted - not exported until context/ownership approved
  * font_reload_metrics_create: restricted - not exported until context/ownership approved
@@ -157,7 +317,6 @@ static inline int canopus_identity_guard(void)
  * hfp_ag_disconnect: FORBIDDEN - no veneer may ever be generated
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
  * insmod: restricted - not exported until context/ownership approved
- * interconnect_close: restricted - not exported until context/ownership approved
  * interconnect_connect: restricted - not exported until context/ownership approved
  * interconnect_send: restricted - not exported until context/ownership approved
  * ioctl: restricted - not exported until context/ownership approved
@@ -185,11 +344,9 @@ static inline int canopus_identity_guard(void)
  * lv_image_decoder_get_info: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
  * lv_indev_get_point: restricted - not exported until context/ownership approved
- * lv_label_create: restricted - not exported until context/ownership approved
  * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
  * lv_obj_align_to: restricted - not exported until context/ownership approved
  * lv_obj_clear_flag: restricted - not exported until context/ownership approved
- * lv_obj_create: restricted - not exported until context/ownership approved
  * lv_obj_get_coords: restricted - not exported until context/ownership approved
  * lv_obj_get_scroll_x: restricted - not exported until context/ownership approved
  * lv_obj_get_scroll_y: restricted - not exported until context/ownership approved
@@ -206,7 +363,6 @@ static inline int canopus_identity_guard(void)
  * lv_obj_set_scroll_snap_x: restricted - not exported until context/ownership approved
  * lv_obj_set_scroll_snap_y: restricted - not exported until context/ownership approved
  * lv_obj_set_scrollbar_mode: restricted - not exported until context/ownership approved
- * lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa_xip_thunk: restricted - not exported until context/ownership approved
  * lv_obj_tree_walk: restricted - not exported until context/ownership approved
  * lv_obj_update_layout: restricted - not exported until context/ownership approved
@@ -232,8 +388,6 @@ static inline int canopus_identity_guard(void)
  * lvx_page_content_create: restricted - not exported until context/ownership approved
  * lvx_page_title_create: restricted - not exported until context/ownership approved
  * lvx_style_apply: restricted - not exported until context/ownership approved
- * miwear_session_crypto_ctr: restricted - not exported until context/ownership approved
- * miwear_session_lookup: restricted - not exported until context/ownership approved
  * miwear_transport_l2_rx: restricted - not exported until context/ownership approved
  * miwear_transport_send: restricted - not exported until context/ownership approved
  * mkdir: restricted - not exported until context/ownership approved
@@ -247,7 +401,6 @@ static inline int canopus_identity_guard(void)
  * netdev_register: restricted - not exported until context/ownership approved
  * notifications_scroll: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
- * open: restricted - not exported until context/ownership approved
  * opendir: restricted - not exported until context/ownership approved
  * p67_battery_child_count: restricted - not exported until context/ownership approved
  * p67_battery_child_get: restricted - not exported until context/ownership approved
@@ -269,8 +422,6 @@ static inline int canopus_identity_guard(void)
  * p67_blur_pm_stay: restricted - not exported until context/ownership approved
  * p67_blur_snapshot_to_buffer: restricted - not exported until context/ownership approved
  * p67_blur_style_get: restricted - not exported until context/ownership approved
- * page_finish: restricted - not exported until context/ownership approved
- * page_goto: restricted - not exported until context/ownership approved
  * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated
  * poll_notify: restricted - not exported until context/ownership approved
  * power_battery_charging: restricted - not exported until context/ownership approved
@@ -282,19 +433,12 @@ static inline int canopus_identity_guard(void)
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
  * quickapp_register_app: restricted - not exported until context/ownership approved
- * read: restricted - not exported until context/ownership approved
  * readdir: restricted - not exported until context/ownership approved
  * recvfrom: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
- * register_driver: restricted - not exported until context/ownership approved
- * rename: restricted - not exported until context/ownership approved
  * rmdir: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved
- * screen_get_state: restricted - not exported until context/ownership approved
- * screen_session_create: restricted - not exported until context/ownership approved
  * screen_session_restore_default: restricted - not exported until context/ownership approved
- * screen_session_set_auto_brightness: restricted - not exported until context/ownership approved
- * screen_session_set_brightness_value: restricted - not exported until context/ownership approved
  * screen_session_start: restricted - not exported until context/ownership approved
  * screen_session_stop: restricted - not exported until context/ownership approved
  * screen_turn_on: restricted - not exported until context/ownership approved
@@ -320,19 +464,12 @@ static inline int canopus_identity_guard(void)
  * system_router_app_wrapper: FORBIDDEN - no veneer may ever be generated
  * system_router_get_pages_wrapper: FORBIDDEN - no veneer may ever be generated
  * system_router_page_record_wrapper: FORBIDDEN - no veneer may ever be generated
- * thirdparty_submit_message_content: restricted - not exported until context/ownership approved
- * unlink: restricted - not exported until context/ownership approved
  * unregister_blockdriver: restricted - not exported until context/ownership approved
- * unregister_driver: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
  * vibrator_hal_transact: restricted - not exported until context/ownership approved
- * wakelock_acquire: restricted - not exported until context/ownership approved
  * wakelock_create: restricted - not exported until context/ownership approved
- * wakelock_release: restricted - not exported until context/ownership approved
- * watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
  * watchface_reset_watchface: restricted - not exported until context/ownership approved
  * widgets_scroll: restricted - not exported until context/ownership approved
- * write: restricted - not exported until context/ownership approved
  */
 
 

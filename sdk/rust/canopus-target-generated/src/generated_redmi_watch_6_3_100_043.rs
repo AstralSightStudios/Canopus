@@ -4,7 +4,7 @@
 // firmware : 3.100.043 (d516af0:nx_best1502p_ap)
 // sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
 // revision : 1
-// input_digest: 2dcbfa03957bc1a2
+// input_digest: e8dd3d8d246e6e57
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -84,6 +84,9 @@ pub const CANOPUS_FW_OPEN_CALLABLE: usize = canopus_thumb_callable(0x1c1580e5usi
 /// Recovered `wakelock_acquire` at 0xca61ffc. Thumb callable address 0xca61ffd.
 pub const CANOPUS_FW_WAKELOCK_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0xca61ffdusize);
 
+/// Recovered `mm_memalign_default` at 0xc50b2c8. Thumb callable address 0xc50b2c9.
+pub const CANOPUS_FW_MM_MEMALIGN_DEFAULT_CALLABLE: usize = canopus_thumb_callable(0xc50b2c9usize);
+
 /// Recovered `app_launcher_del` at 0xc7ec53c. Thumb callable address 0xc7ec53d.
 pub const CANOPUS_FW_APP_LAUNCHER_DEL_CALLABLE: usize = canopus_thumb_callable(0xc7ec53dusize);
 
@@ -134,6 +137,9 @@ pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc6
 
 /// Recovered `closedir` at 0xc4f78c0. Thumb callable address 0xc4f78c1.
 pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc4f78c1usize);
+
+/// Recovered `mm_free_default` at 0xc50b25c. Thumb callable address 0xc50b25d.
+pub const CANOPUS_FW_MM_FREE_DEFAULT_CALLABLE: usize = canopus_thumb_callable(0xc50b25dusize);
 
 /// Recovered `thirdparty_submit_message_content` at 0xca40064. Thumb callable address 0xca40065.
 pub const CANOPUS_FW_THIRDPARTY_SUBMIT_MESSAGE_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xca40065usize);
@@ -356,6 +362,8 @@ pub const CANOPUS_FW_UNREGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(
 // miwear_transport_l2_rx: restricted - not exported until context/ownership approved
 // miwear_transport_send: restricted - not exported until context/ownership approved
 // mkdir: restricted - not exported until context/ownership approved
+// mm_free_default: restricted - not exported until context/ownership approved
+// mm_memalign_default: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
 // native_font_create: restricted - not exported until context/ownership approved
 // native_font_release: restricted - not exported until context/ownership approved
