@@ -107,6 +107,7 @@ pub fn render(pack: &TargetPack, config: &NativeConfig) -> String {
     let layout_input_evidence = match pack.target_id.as_str() {
         "xiaomi-band-11-4.100.155" => Some("EVID-UI-4155-LAYOUT-INPUT-001"),
         "xiaomi-band-11-4.100.179" => Some("EVID-UI-4179-LAYOUT-INPUT-001"),
+        "redmi-watch-6-3.100.043" => Some("EVID-STATIC-P65-002"),
         _ => None,
     };
     if let Some(evidence) = layout_input_evidence {
@@ -121,6 +122,17 @@ pub fn render(pack: &TargetPack, config: &NativeConfig) -> String {
 #define FW_UI_STYLE_BORDER_WIDTH 48u\n#define FW_UI_STYLE_OPA 95u\n\
 #define FW_UI_STYLE_CLIP_CORNER 45u\n\
 #define FW_UI_FONT_EVENT_DELETE 36u\n");
+        if pack.target_id == "redmi-watch-6-3.100.043" {
+            // MIwear v9 private layout on p65: the page title keeps its icon at
+            // +0x34 and its label at +0x38, the list item keeps the trailing
+            // widget at +0x70, and lv_img_create takes one options argument.
+            out.push_str(
+                "#define FW_LVX_TITLE_ICON_OFFSET 52u\n\
+#define FW_LVX_TITLE_LABEL_OFFSET 56u\n\
+#define FW_LVX_LIST_TRAILING_OFFSET 112u\n\
+#define FW_UI_IMAGE_CREATE_THEME_ARG 1u\n",
+            );
+        }
     }
     out.push_str("#endif\n");
     out

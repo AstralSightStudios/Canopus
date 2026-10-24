@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lv_obj_set_style_pad_bottom",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_obj_set_style_pad_bottom",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "entry_address": "0x37eed8",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (native-binding pass, 2026-10-25)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): forwards style property 17 to 0x37e408; the MIwear veneer 0x1c1669a0 targets it. Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING",
+  "prototype": "void(void *, int32_t, uint32_t)",
+  "callable_address": "0x37eed9"
+}

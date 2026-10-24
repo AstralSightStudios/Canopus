@@ -9,9 +9,13 @@ loader_sources = [
   "runtime/loader/canopus_arm_reloc.c",
   "runtime/loader/canopus_elf32_loader.c",
 ]
-defines = []
+# The Manager target and the shared UI host select the MIwear lvx widget layer
+# (and include canopus_band11_addresses.h) under this define, exactly as the
+# Band 11 family does.
+defines = ["-DCANOPUS_MGR_BAND11=1", "-DCANOPUS_MGR_REDMI_WATCH=1"]
 prod_family = "redmi-watch"
 private_symbols = false
-# The Band 11 native-bindings set (lvx_* names) does not exist for p65 yet;
-# the target config's FW_9 macros carry the calls until it does.
-native_config = false
+# Emit canopus_band11_addresses.h from loader/native-bindings.json: the v9 UI
+# host needs the MIwear lvx_*/FW_UI_* macro set that the FW_9 config does not
+# carry.
+native_config = true

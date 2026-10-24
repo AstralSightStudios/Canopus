@@ -5,7 +5,7 @@
   "name": "lv_obj_set_local_style_prop",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "void (void *, uint32_t, uint32_t, uint32_t)",
+  "prototype": "void(void *, uint32_t, intptr_t, uint32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
@@ -22,21 +22,25 @@
     "mutates_local_widget_style"
   ],
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ],
     "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no candidate from the matcher."
   },
-  "notes": "no candidate from the matcher. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact 3.101.043 LVGL v9 local-style dispatcher. Restricted to freshly created live UI objects on the owner thread; exact-device centered-label rendering probe remains pending.",
-  "approval_state": "PENDING"
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): the local-style dispatcher every lv_obj_set_style_* veneer (0x37ed10..0x37f570) tail-branches to with (obj, prop, value, selector). Restricted/PENDING; device NOT_PROBED. no candidate from the matcher. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact 3.101.043 LVGL v9 local-style dispatcher. Restricted to freshly created live UI objects on the owner thread; exact-device centered-label rendering probe remains pending.",
+  "approval_state": "PENDING",
+  "entry_address": "0x37e408",
+  "callable_address": "0x37e409"
 }

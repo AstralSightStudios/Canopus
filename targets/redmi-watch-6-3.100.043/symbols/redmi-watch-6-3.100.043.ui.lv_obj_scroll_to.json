@@ -17,21 +17,25 @@
     "argument": "Borrowed live page-owned LVGL object/event/input device; output coordinate buffer borrowed for call; no retention."
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ],
     "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no candidate from the matcher."
   },
   "approval_state": "PENDING",
-  "notes": "no candidate from the matcher. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Target-private native UI host only. Static recovery does not grant public callable approval or device verification."
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): computes current-target for x and y then calls the bounded scroll 0x37bc98. Restricted/PENDING; device NOT_PROBED. no candidate from the matcher. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Target-private native UI host only. Static recovery does not grant public callable approval or device verification.",
+  "entry_address": "0x37c1b8",
+  "callable_address": "0x37c1b9"
 }

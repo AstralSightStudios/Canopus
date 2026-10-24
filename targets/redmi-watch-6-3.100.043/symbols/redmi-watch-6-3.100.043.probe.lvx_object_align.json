@@ -6,7 +6,7 @@
   "kind": "function",
   "instruction_set": "thumb",
   "entry_address": "0xc258a5c",
-  "prototype": "void(void *object, uint32_t align, int32_t x, int32_t y)",
+  "prototype": "void(void *, uint32_t, int32_t, int32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
@@ -19,21 +19,24 @@
     "return_value": "none"
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ],
     "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
   },
   "approval_state": "PENDING",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was DEVICE_PROVEN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Stock page construction calls sub_C589188(content, 2, 0, 56). The former corpus candidate sub_C588960 is used as a two-argument operation during object removal and is not the four-argument align helper. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Device verified for the UI host (EVID-UI-1043-DEVICE-001); policy stays native-full-trust."
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): 8-byte veneer to 0x378964 lv_obj_align, which writes the X/Y style props after comparing them. Restricted/PENDING; device NOT_PROBED. body differs (instruction fingerprint and pseudocode). Source semantic status was DEVICE_PROVEN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Stock page construction calls sub_C589188(content, 2, 0, 56). The former corpus candidate sub_C588960 is used as a two-argument operation during object removal and is not the four-argument align helper. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Device verified for the UI host (EVID-UI-1043-DEVICE-001); policy stays native-full-trust.",
+  "callable_address": "0xc258a5d"
 }
