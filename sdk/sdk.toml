@@ -1,5 +1,6 @@
 # Compatibility between this checkout and the `canopus` CLI that builds against it.
 # `canopus sdk update` refuses a commit whose min_cli is newer than the running CLI.
-# Raise it (together with the CLI version) when a change needs a newer CLI: a new
-# target.toml / Canopus.toml / template layout the old CLI cannot read.
+# Raise it when a change needs a newer CLI (a target.toml / Canopus.toml / template
+# layout the old CLI cannot read), and only after that CLI is on crates.io: the
+# order is in AGENTS.md, "发布与升级顺序".
 min_cli = "0.1.0"

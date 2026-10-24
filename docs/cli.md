@@ -26,7 +26,7 @@ canopus sdk status             # 在用的 SDK、快照 commit、main 领先几�
 - 快照是整个仓库在该 commit 的内容（约 2.4 MB 下载，需要 `curl`），下载到 `~/.canopus/sdk/<commit>/` 后原子切换 `current`，
   旧快照随即删除。Rust 工程的路径依赖写的是 `current/sdk/rust`，更新后自动跟上。
 - 兼容闸门：快照里的 `sdk/sdk.toml` 写着 `min_cli`，比当前 CLI 新就拒绝切换（保留旧快照）并提示 `cargo install canopus-cli`。
-  改了 CLI 解析的格式（`target.toml`、`Canopus.toml`、模板约定）时要同时提高 `min_cli` 与 CLI 版本。
+  改了 CLI 解析的格式时要提高 `min_cli` 与 CLI 版本，并且先发布 CLI 再 push 格式变更：顺序见 AGENTS.md「发布与升级顺序」。
 - 在快照上运行 `new` / `build` / `package` 时每天最多检查一次：main 有新 commit 或 crates.io 有新版 CLI 就在 stderr 提示一行，
   从不自动更新（target 包变化会改变构建与校验结果），离线时静默跳过。
 - `canopus package` 把 CLI 版本与 SDK commit 写进包 manifest 的 `reproducibility.build_environment`。
