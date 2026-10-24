@@ -89,7 +89,7 @@ local function load_profile(selected_target)
         or type(value.device_status) ~= "string"
         or (value.cave_original_known ~= nil
             and type(value.cave_original_known) ~= "boolean")
-        or value.loader_family ~= "nsh-mw-stage1-stage2" then
+        or (value.loader_family ~= "nsh-mw-stage1-stage2" and value.loader_family ~= "staged-kmem-mpu") then
         return nil
     end
     for _, key in ipairs({
