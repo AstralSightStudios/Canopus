@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-P65-001",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Which exact REDMI Watch 6 3.100.043 functions and globals correspond to the reviewed Band 10 Pro 3.101.043 pack?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "Prototypes are retained only from the source record; matching does not establish a new ABI or an approval.",
+  "callsite_evidence": [
+    "target firmware sha256 a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858 (p65, best1502p, 11,793,540 bytes)",
+    "exact-image corpus extracted from the target IDB; 4,476 mutually unique full instruction bodies seed the matcher",
+    "port_pack accepted 19 source function records with equal normalized body or identical decompiled pseudocode plus anchored callee/caller or positional neighbourhood support; every other record stays CANDIDATE without a callable address",
+    "decompiler review covered 207 remaining pairs: 21 identical normalized pseudocode, 25 similar, 162 different; identical pseudocode alone is not accepted without neighbourhood support",
+    "audit: targets/redmi-watch-6-3.100.043/evidence/fw-match/port-1043-to-p65.json"
+  ],
+  "control_flow_evidence": [
+    "No whole-firmware address delta is applied; each accepted pair is anchored by its own function body and neighbourhood."
+  ],
+  "ownership_analysis": "No ownership or ABI conclusion is inherited beyond the source record. Device proof is reset.",
+  "unsafe_assumptions": [
+    "Static matching does not prove uncertain source names, call context, cache/MPU behaviour or device recovery.",
+    "The historical P65 3.100.043 deployment boot-looped in 2026-09 (ADR-CAN-007); the cause was never established.",
+    "No approval or capability state is carried from Band 10 Pro."
+  ],
+  "recommended_probe": "Static identity and loader review only; no device probe has been run. Use a known REC recovery path before any device test.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-24T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "targets/redmi-watch-6-3.100.043/evidence/fw-match/port-1043-to-p65.json",
+      "role": "audited-symbol-correspondences"
+    }
+  ]
+}

@@ -92,7 +92,7 @@
    "target_address": "0xc1471b4",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "bt_adapter_get_state",
@@ -137,7 +137,7 @@
    "target_address": "0x1c06b134",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "a known callee maps elsewhere"
   },
   {
    "name": "bt_pair_display_reply",
@@ -299,7 +299,7 @@
    "target_address": "0x1c151274",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "calendar_app_lookup",
@@ -308,7 +308,7 @@
    "target_address": "0x1c151108",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "calendar_app_lookup_name",
@@ -335,7 +335,7 @@
    "target_address": "0x1c151140",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "calendar_app_signal",
@@ -641,7 +641,7 @@
    "target_address": "0xc82e798",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "modhandle",
@@ -650,7 +650,7 @@
    "target_address": "0xc193f20",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "module_symtab_count",
@@ -677,7 +677,7 @@
    "target_address": "0xca691dc",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "lvx_notification_insert_message",
@@ -1262,7 +1262,7 @@
    "target_address": "0xcb42f90",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "bt_get_bond_state",
@@ -1314,9 +1314,9 @@
    "kind": "function",
    "source_address": "0xc6b9cf0",
    "target_address": "0xc66e06c",
-   "status": "CANDIDATE",
-   "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 13/13 anchored callers call the target; known callees consistent"
   },
   {
    "name": "bt_remove_bond_private",
@@ -1361,7 +1361,7 @@
    "target_address": "0x1c12da84",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "calendar_localized_text",
@@ -1865,7 +1865,7 @@
    "target_address": "0xc8bee68",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "lv_obj_set_style_bg_opa_xip_thunk",
@@ -1881,9 +1881,9 @@
    "kind": "function",
    "source_address": "0xc7d46a4",
    "target_address": "0xca99138",
-   "status": "CANDIDATE",
-   "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; neighbouring anchors keep their relative function distance; known callees consistent"
   },
   {
    "name": "miwear_session_lookup",
@@ -2054,7 +2054,7 @@
    "target_address": "0xc8be358",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "p67_blur_draw_buf_destroy",
@@ -2063,7 +2063,7 @@
    "target_address": "0xc2588f4",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "p67_blur_event_list_add",
@@ -2243,7 +2243,7 @@
    "target_address": "0x1c151108",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "lvx_label_create",
@@ -2288,7 +2288,7 @@
    "target_address": "0xcabd3d4",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "lvx_msgbox_set_content",
@@ -2522,7 +2522,7 @@
    "target_address": "0xc8bc578",
    "status": "CANDIDATE",
    "state": "REVIEW",
-   "basis": "body differs (instruction fingerprint and pseudocode)"
+   "basis": "identical pseudocode but no caller or positional support"
   },
   {
    "name": "lv_event_get_code",
