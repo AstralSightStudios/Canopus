@@ -46,8 +46,17 @@ CPC2 每帧载荷上限保持 512 字节。数字均为 little-endian：
 | 15 STAGE_BEGIN | 176 字节 CMI2 回执 | 校验 target/固件绑定，开启 `.ko.upload` 临时文件；替换未完成的旧上传 |
 | 16 STAGE_WRITE | u32 offset + 1..508 字节 ELF | 必须等于当前写入位置，不得超过回执长度；每块应答后再发送下一块 |
 | 17 STAGE_FINISH | 空 | 长度完整，生成 next 暂存对并验证 artifact SHA-256；不安装、不加载 |
-| 18 STAGE_ABORT | 空 | 关闭并删除未完成的临时上传 |
+| 18 STAGE_ABORT | 空 | 同时关闭并删除未完成的 ELF 与资源 `.upload`，清除资源上传上下文 |
+| 26 STAGE_RES_BEGIN | u8 name_len + name + u32 size + 32 字节 SHA-256 | ELF 收尾校验成功后，开启 `/data/canopus/m.<id>/<name>.upload`；name 为最多 63 字节、不以点开头且只含 ASCII 字母、数字、`.`、`_`、`-` 的平铺文件名，拒绝已有目标或临时文件冲突 |
+| 27 STAGE_RES_WRITE | u32 offset + 1..508 字节资源 | offset 必须等于当前写入位置且不得超过 size；错误时清理本流临时文件 |
+| 28 STAGE_RES_FINISH | 空 | 校验完整长度和暂存文件 SHA-256，改名为 `/data/canopus/m.<id>/<name>`；校验或 IO 失败时删除本流临时文件 |
 | 2 INSTALL | module_id + NUL | 按已有 A/B 状态机提交；COMPLETED=5 或 REBOOT_REQUIRED=8 |
+
+资源帧在 ELF 的 17 收尾成功后逐个发送，例如 `[15,16,16,16,17,26,27,27,28]`。
+发送端完成 common/target 分层选择；设备按 CMI2 回执的 module_id 创建数据目录并平铺释放文件，
+不保留包内 `resources/common/` 或 `resources/<target>/` 层级，不追加扩展名。
+因此 Corona 的资源路径为 `/data/canopus/m.corona/<name>.bin`（当发送的文件名为 `<name>.bin`）。
+新的有效 15 或 18 均取消未完成的两流并清除旧资源上下文；已完成的资源不受取消影响。
 
 QUERY_DEVICE 的 CQD1 载荷由 36 扩展至 84 字节：原字段不变，+36 是 48 字节零填充 target_id。
 旧 Supervisor/安装器须重新部署；CPC2 信封仍为 36 字节，ABI 为 1.2。

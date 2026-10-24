@@ -14,7 +14,8 @@ INC = -I. -I../../sdk/c -I../../runtime/lifecycle -I../../runtime/resources \
       -I../../manager/ui -I../../manager/service -I../../manager/client \
       -I../../manager/native-app -I../../manager/package \
       -I../../tests/host \
-      -I../../runtime/ui -I../../runtime/app -I../../manager/target
+      -I../../runtime/ui -I../../runtime/app -I../../manager/target \
+      -I../../third_party/sha256
 override CFLAGS += -DCANOPUS_HOST=1
 
 # Bare-metal portable sources (freestanding, no libc) — the cross-thumb
@@ -33,6 +34,7 @@ PORTABLE_SRCS = \
 	../../manager/service/canopus_supervisor.c \
 	../../manager/service/canopus_supervisor_boot.c \
 	../../manager/service/canopus_supervisor_upload.c \
+	../../third_party/sha256/sha256.c \
 	../../manager/service/canopus_supervisor_connect.c \
 	../../manager/service/canopus_supervisor_services.c \
 	../../manager/package/canopus_installer_bundle.c \

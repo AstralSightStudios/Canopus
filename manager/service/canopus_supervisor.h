@@ -327,9 +327,19 @@ struct canopus_supervisor_v1 {
         int fd;
         uint32_t size;
         uint32_t written;
+        /* Resources are accepted only after the artifact passes stage_verify. */
+        uint32_t resources_ready;
         char id[CANOPUS_SUP_MODULE_ID_MAX];
         uint8_t receipt[CANOPUS_INSTALL_RECEIPT_SIZE];
     } upload;
+    struct {
+        uint32_t active;
+        int fd;
+        uint32_t size;
+        uint32_t written;
+        char name[CANOPUS_FS_NAME_MAX + 1u];
+        uint8_t sha256[32];
+    } resource_upload;
     /* platform hooks (see canopus_supervisor_platform.h) */
     const struct canopus_sup_platform_v1 *platform;
     void *platform_cookie;

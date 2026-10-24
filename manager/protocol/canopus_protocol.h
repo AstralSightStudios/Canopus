@@ -52,6 +52,10 @@ enum canopus_command {
     CANOPUS_CMD_QUERY_BOOT,
     CANOPUS_CMD_SET_BOOT,
     CANOPUS_CMD_START_BOOT,
+    /* Native package resources, following the verified artifact stream. */
+    CANOPUS_CMD_STAGE_RES_BEGIN = 26,
+    CANOPUS_CMD_STAGE_RES_WRITE = 27,
+    CANOPUS_CMD_STAGE_RES_FINISH = 28,
 };
 
 struct canopus_proto_request_v1 {

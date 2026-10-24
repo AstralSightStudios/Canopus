@@ -1147,8 +1147,10 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         canopus_proto_response_init(resp, req->request_id, rc, 0u);
         return 0;
     }
-    if (req->command >= CANOPUS_CMD_STAGE_BEGIN &&
-        req->command <= CANOPUS_CMD_STAGE_ABORT) {
+    if ((req->command >= CANOPUS_CMD_STAGE_BEGIN &&
+         req->command <= CANOPUS_CMD_STAGE_ABORT) ||
+        (req->command >= CANOPUS_CMD_STAGE_RES_BEGIN &&
+         req->command <= CANOPUS_CMD_STAGE_RES_FINISH)) {
         rc = canopus_supervisor_upload(sup, req->command, payload, req->payload_size);
         canopus_proto_response_init(resp, req->request_id, rc, 0u);
         return 0;
