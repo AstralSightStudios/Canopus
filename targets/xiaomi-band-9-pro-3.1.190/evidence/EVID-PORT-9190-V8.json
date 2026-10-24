@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-9190-V8",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "question": "Which 3.1.190 LVGL v8 UI and launcher entries replace the reviewed 3.1.32 v8 ABI?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "Prototypes are carried from the exact 3.1.32 records; the 3.1.190 bodies/names are checked independently where possible. Static-test ABI only.",
+  "callsite_evidence": [
+    "14 symbols ported from the 9_3.1.32 pack to the 3.1.190 corpus; 6 accepted by equal body plus anchored neighbourhood.",
+    "launcher_load_app_info 0xc2a308c, launcher_page_insert_icon 0xc2a1cbc and launcher_reset_order_info 0xc2a4c88 are identified by exact 3.1.190 IDB string/name evidence; the matcher's page-insert prediction was a different body.",
+    "lv_label_create/lv_img_create/lv_bar_create have equal normalized bodies and (for label_create) identical pseudocode; lv_label_set_text/lv_img_set_src have 0.989/0.997 pseudocode similarity with anchored constants.",
+    "No record carries an approval; all are restricted/PENDING/not_probed."
+  ],
+  "control_flow_evidence": [],
+  "ownership_analysis": "Launcher prototypes follow the reviewed 3.1.32 records. No ownership is promoted.",
+  "unsafe_assumptions": [
+    "Two LVGL setters and three launcher entries are manual static-test accepts, not ABI-audited.",
+    "No device or emulator run."
+  ],
+  "recommended_probe": "Build the v8 Supervisor and run the staged loader on Mirage before any device test.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-24T00:00:00Z",
+  "artifacts": []
+}

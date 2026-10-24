@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.exact.launcher_page_insert_icon",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "launcher_page_insert_icon",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc2a1cbc",
+  "prototype": "int(void *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-9190-V8"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-PORT-9190-V8"
+    ],
+    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-n66-v8subset: exact 3.1.190 IDB strings \"launcher UI not created\"/\"launcher now has %d apps\"; the matcher prediction pointed at a different body. Prototype from the reviewed 3.1.32 record.."
+  },
+  "approval_state": "PENDING",
+  "notes": "exact 3.1.190 IDB strings \"launcher UI not created\"/\"launcher now has %d apps\"; the matcher prediction pointed at a different body. Prototype from the reviewed 3.1.32 record.. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. creates the launcher icon/label and event bindings for one launcher item 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
+  "callable_address": "0xc2a1cbd"
+}

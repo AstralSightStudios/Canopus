@@ -3,6 +3,8 @@
 schema = 1
 target_id = "xiaomi-band-9-pro-3.1.190"
 rust_module = "xiaomi_band_9_pro_3_1_190"
+static_test_abi = true
+family = "xiaomi-band-9-pro"
 device_family = "xiaomi-smart-band"
 device_model = "Xiaomi Band 9 Pro"
 board_revision = "n67cn"

@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.exact.lv_label_set_text",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "lv_label_set_text",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc263e08",
+  "prototype": "void(void *, const char *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-9190-V8"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-PORT-9190-V8"
+    ],
+    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-n66-v8subset: normalized pseudocode similarity 0.989 and anchored constants; body fingerprint differs. Manual review accepted for static-test build only.."
+  },
+  "approval_state": "PENDING",
+  "notes": "normalized pseudocode similarity 0.989 and anchored constants; body fingerprint differs. Manual review accepted for static-test build only.. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. owns/copies label text and refreshes label layout 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
+  "callable_address": "0xc263e09"
+}

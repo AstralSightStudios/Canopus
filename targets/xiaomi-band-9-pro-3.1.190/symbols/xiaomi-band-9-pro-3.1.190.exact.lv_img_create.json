@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.exact.lv_img_create",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "lv_img_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc25eba0",
+  "prototype": "void *(void *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-9190-V8"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-PORT-9190-V8"
+    ],
+    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-n66-v8subset: equal normalized Thumb body; no anchored caller population because the v8 UI call graph is not in the source pack. Manual review accepted for static-test build.."
+  },
+  "approval_state": "PENDING",
+  "notes": "equal normalized Thumb body; no anchored caller population because the v8 UI call graph is not in the source pack. Manual review accepted for static-test build.. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. creates and initializes the LVGL image class 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
+  "callable_address": "0xc25eba1"
+}

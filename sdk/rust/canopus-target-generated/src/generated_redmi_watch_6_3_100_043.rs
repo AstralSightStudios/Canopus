@@ -4,7 +4,7 @@
 // firmware : 3.100.043 (d516af0:nx_best1502p_ap)
 // sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
 // revision : 1
-// input_digest: 214184d6d74a03f7
+// input_digest: 1c4b65764f1e0e57
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -25,6 +25,18 @@ pub const fn canopus_thumb_callable(entry_or_callable: usize) -> usize {
 pub struct stock_timespec_t {
     pub tv_sec: i64, // +0x0
     pub tv_nsec: i32, // +0x8
+}
+
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct file_operations {
+    pub open: *mut core::ffi::c_void, // +0x0
+    pub close: *mut core::ffi::c_void, // +0x4
+    pub read: *mut core::ffi::c_void, // +0x8
+    pub write: *mut core::ffi::c_void, // +0xc
+    pub lseek: *mut core::ffi::c_void, // +0x10
+    pub ioctl: *mut core::ffi::c_void, // +0x14
+    pub _tail: [u8; 0x18], // 24
 }
 
 // ---- runtime identity guard ----

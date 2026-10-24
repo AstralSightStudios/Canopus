@@ -84,7 +84,11 @@ INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
 # shared v9 UI host does not apply. Everything else still links the runtime.
 UI_HOST_SRC="manager/target/canopus_ui_host.c"
 UI_HOST_OBJECT="$OUT/canopus_ui_host.o"
-if [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
+IS_STAGED_V8=0
+case "$PROD_FAMILY" in
+    xiaomi-band-9|xiaomi-band-9-pro|xiaomi-band-10) IS_STAGED_V8=1 ;;
+esac
+if [ "$IS_STAGED_V8" = 1 ]; then
     UI_HOST_SRC=""
     UI_HOST_OBJECT=""
 fi
@@ -212,7 +216,7 @@ cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
 if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
     python3 "$ROOT/scripts/build_band11_installer.py" --target "$TARGET_ID" --supervisor "$OUT/canopus_supervisor.elf" \
         --output-dir "${CANOPUS_BAND11_OUTPUT_DIR:-$PROD_FAMILY_STAGE}"
-elif [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
+elif [ "$IS_STAGED_V8" = 1 ]; then
     CANOPUS_INSTALLER_STAGE_ROOT="$PROD_FAMILY_STAGE" \
         sh "$ROOT/scripts/build_band9_bootstrap.sh" "$TARGET_ID" "$OUT"
     echo "staged canopus-installer-prod/$PROD_FAMILY/ (main.lua + stage1/stage2/profile/supervisor)"

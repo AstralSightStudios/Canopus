@@ -1,43 +1,29 @@
 {
   "schema": 1,
-  "symbol_id": "xiaomi-band-9-pro-3.1.190.ui.lv_bar_create",
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.exact.lv_bar_create",
   "target_id": "xiaomi-band-9-pro-3.1.190",
   "name": "lv_bar_create",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc4b4850",
+  "entry_address": "0xc24fd50",
   "prototype": "void *(void *)",
-  "calling_convention": "arm-aapcs",
-  "contexts": {
-    "allowed": [
-      "native_manager_owner",
-      "target-private-ui-owner"
-    ],
-    "blocking": false
-  },
-  "ownership": {
-    "argument": "borrowed page parent/widget and source",
-    "return_value": "page-owned widget"
-  },
-  "side_effects": [
-    "creates_page_owned_widget"
-  ],
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-9190-001"
+      "EVID-PORT-9190-V8"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
     "evidence_ids": [
-      "EVID-PORT-9190-001"
+      "EVID-PORT-9190-V8"
     ],
-    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-9pro-3175: identical pseudocode but no caller or positional support."
+    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-n66-v8subset: equal normalized Thumb body; no anchored caller population. Manual review accepted for static-test build.."
   },
-  "notes": "identical pseudocode but no caller or positional support. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
-  "approval_state": "PENDING"
+  "approval_state": "PENDING",
+  "notes": "equal normalized Thumb body; no anchored caller population. Manual review accepted for static-test build.. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. creates the LVGL bar class used by stock progress views 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
+  "callable_address": "0xc24fd51"
 }
