@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.ui.lv_tick_get",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_tick_get",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "uint32_t(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed live page-owned LVGL object/event/input device; output coordinate buffer borrowed for call; no retention."
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no candidate from the matcher."
+  },
+  "approval_state": "PENDING",
+  "notes": "no candidate from the matcher. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Target-private native UI host only. Static recovery does not grant public callable approval or device verification."
+}

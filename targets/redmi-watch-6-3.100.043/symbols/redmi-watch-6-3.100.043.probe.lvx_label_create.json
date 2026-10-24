@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lvx_label_create",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lvx_label_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc8bef18",
+  "prototype": "void *(void *parent)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrows a live LVGL parent object",
+    "return_value": "returns a child label owned by the LVGL object tree"
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "approval_state": "PENDING",
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was DEVICE_PROVEN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Stock callers pass a live parent in R0, call sub_C588F30, and retain returned R0 as the new label. The former corpus candidate sub_C588BF8 is instead called on an existing label with an integer property argument. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Device verified for the UI host (EVID-UI-1043-DEVICE-001); policy stays native-full-trust."
+}

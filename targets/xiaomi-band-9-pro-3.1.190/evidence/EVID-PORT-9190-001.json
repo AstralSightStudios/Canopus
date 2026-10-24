@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-9190-001",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "question": "Which exact xiaomi-band-9-pro-3.1.190 functions and globals correspond to the reviewed xiaomi-band-9-pro-3.1.175 pack?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "Prototypes are retained only from the source record; matching does not establish a new ABI or an approval.",
+  "callsite_evidence": [
+    "target firmware sha256 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "exact-image corpus extracted from the target IDB; 20956 mutually unique full instruction bodies seed the matcher",
+    "port_pack accepted 108 of 123 source records after equal normalized body plus anchored callee/caller or positional support; 15 remain CANDIDATE without a callable address",
+    "decompiler review covered 34 remaining pairs: 27 identical normalized pseudocode",
+    "audit: targets/xiaomi-band-9-pro-3.1.190/evidence/fw-match/port-3175-to-3190.json"
+  ],
+  "control_flow_evidence": [
+    "No whole-firmware address delta is applied; each accepted pair is anchored by its own function body or pseudocode comparison."
+  ],
+  "ownership_analysis": "No ownership or ABI conclusion is inherited beyond the source record. Device proof is reset.",
+  "unsafe_assumptions": [
+    "Static matching does not prove uncertain source names, call context, cache/MPU behaviour or device recovery.",
+    "This is an LVGL v8 device; the v9 Manager backend is not applicable and no UI capability is claimed.",
+    "No approval or capability state is carried from the source target."
+  ],
+  "recommended_probe": "Static identity and loader review only; device probe pending.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-24T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "targets/xiaomi-band-9-pro-3.1.190/evidence/fw-match/port-3175-to-3190.json",
+      "role": "audited-symbol-correspondences"
+    }
+  ]
+}

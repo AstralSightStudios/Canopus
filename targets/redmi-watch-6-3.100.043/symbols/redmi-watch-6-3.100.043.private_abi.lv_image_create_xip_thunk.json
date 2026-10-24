@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.lv_image_create_xip_thunk",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_image_create_xip_thunk",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc8be2f8",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed live parent in r0, or NULL to create a screen; optional initialization-options byte pointer in r1. NULL options use native defaults. Non-NULL options are read synchronously; do not pass an invalid pointer.",
+    "return_value": "Native LVGL image owned by its parent/display object tree; use the native object lifecycle. The wrapper does not check allocation failure before initialization."
+  },
+  "side_effects": [
+    "allocates_native_image_object",
+    "registers_child_or_screen",
+    "initializes_native_class_and_optional_theme"
+  ],
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact Resource Hook battery/calendar identity only. Audited ABI: void *(void *parent, const uint8_t *init_options); r2/r3 unused. No prototype field or new callable wrapper is exported. Preserve the second-argument contract instead of inheriting the canonical record's one-argument prototype. Restricted STATIC_RECOVERED/PENDING, device not_probed. No additional target, address range or transitive callee is authorized."
+}

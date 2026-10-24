@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ID-3100043-001",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Which exact image strings identify this firmware?",
+  "candidate_symbols": [
+    "firmware_version_string",
+    "firmware_build_string"
+  ],
+  "prototype_hypothesis": "const char[] read directly from the exact image; no interpretation beyond the bytes.",
+  "callsite_evidence": [
+    "firmware sha256 a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "version '3.100.043' at 0x0C3BF9FD (build.prop ro.build.version value, LF-terminated)",
+    "build '3.100.043' at 0x0C3BFA25 (build.prop ro.build.id value, LF-terminated)"
+  ],
+  "control_flow_evidence": [],
+  "ownership_analysis": "Static identity only; no callable or capability is claimed.",
+  "unsafe_assumptions": [
+    "Identity strings do not prove loader, ABI or device behaviour."
+  ],
+  "recommended_probe": "Identity guard only; no device test has been run.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-24T00:00:00Z",
+  "artifacts": []
+}

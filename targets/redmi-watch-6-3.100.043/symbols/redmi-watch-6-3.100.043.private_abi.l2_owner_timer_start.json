@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.l2_owner_timer_start",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "l2_owner_timer_start",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc629fb4",
+  "prototype": "int(void *timer, void (*callback)(void *), uint64_t timeout, uint64_t repeat)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "approval_state": "PENDING",
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Experimental L2 only. AAPCS: timer r0, callback r1, timeout r2/r3, repeat stack +0/+4. Mutates libuv timer heap on the existing UI owner loop; never call from NSH, BT or ISR. No production approval."
+}

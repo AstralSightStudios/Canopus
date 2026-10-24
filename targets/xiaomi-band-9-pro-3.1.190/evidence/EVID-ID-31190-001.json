@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ID-31190-001",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "question": "Which exact image strings identify this firmware?",
+  "candidate_symbols": [
+    "firmware_version_string",
+    "firmware_build_string"
+  ],
+  "prototype_hypothesis": "const char[] read directly from the exact image; no interpretation beyond the bytes.",
+  "callsite_evidence": [
+    "firmware sha256 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "version '3.1.190' at 0x0C080810 (NUL-terminated exact 3.1.190 header token)",
+    "build 'CONBINE_LTALM054_T1190_09161923_release_6006' at 0x0C080850 (NUL-terminated exact build token)"
+  ],
+  "control_flow_evidence": [],
+  "ownership_analysis": "Static identity only; no callable or capability is claimed.",
+  "unsafe_assumptions": [
+    "Identity strings do not prove loader, ABI or device behaviour."
+  ],
+  "recommended_probe": "Identity guard only; no device test has been run.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-24T00:00:00Z",
+  "artifacts": []
+}

@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.native_font_create",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "native_font_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc795db8",
+  "prototype": "void *(void *manager, const void *key)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed initialized native manager and packed8-byte key: family pointer+0, uint16 pixel_size+4, uint16 style+6. UI owner only, nonzero pixel size.",
+    "return_value": "Owned managed40-byte native font wrapper with backing record at+36. NULL on checked ordinary failure; no high-level static-default return and no fallback-chain creation. Native internal allocations include unchecked paths; comprehensive OOM safety is not established."
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. New native UI font integration identity only. Existing calendar/font-reload approvals and statuses remain unchanged. No device verification. Owned managed40-byte native font wrapper with backing record at+36. NULL on checked ordinary failure; no high-level static-default return and no fallback-chain creation. Native internal allocations include unchecked paths; comprehensive OOM safety is not established."
+}

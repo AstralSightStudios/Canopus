@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.p67_blur_snapshot_to_buffer",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "p67_blur_snapshot_to_buffer",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc257c14",
+  "calling_convention": "arm-aapcs",
+  "prototype": "int (uint32_t root, uint32_t format, uint32_t owned_drawbuf)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Root borrowed synchronously on UI owner; drawbuf module-owned format15 BGR888 336x480. No source pool ownership.",
+    "return_value": "1 success; firmware task-driver/GPU errors are not propagated; explicit raw GPU fence required."
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target."
+}

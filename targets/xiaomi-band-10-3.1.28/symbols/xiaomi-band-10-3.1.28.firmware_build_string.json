@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.firmware_build_string",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "firmware_build_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "prototype": "const char[]",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ID-3128-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "source": "exact xiaomi-band-10-3.1.28 image; REV_INFO value; this build has no ro.build.id, LF-terminated",
+    "evidence_ids": [
+      "EVID-ID-3128-001"
+    ]
+  },
+  "entry_address": "0x0C7CADD7",
+  "notes": "exact xiaomi-band-10-3.1.28 identity; value '9d8f394:nx_bestbsp_ap'; REV_INFO value; this build has no ro.build.id, LF-terminated",
+  "approval_state": "PENDING"
+}

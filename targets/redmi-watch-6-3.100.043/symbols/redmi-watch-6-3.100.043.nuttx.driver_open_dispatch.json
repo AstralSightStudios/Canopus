@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.driver_open_dispatch",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "driver_open_dispatch",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "withdrawn",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: source has no address."
+  },
+  "notes": "source has no address. Source semantic status was WITHDRAWN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. The corpus-matched address and prototype were refuted on the exact target; no replacement direct-dispatch callable has been recovered.",
+  "approval_state": "REJECTED"
+}

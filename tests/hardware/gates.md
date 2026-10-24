@@ -41,6 +41,7 @@ Run them after G0–G13 pass.
 | G19 | background timer | create a background timer, turn the screen off, hold a wake lock | the callback keeps firing at its period; without the lock note how far the CPU sleep stretches it |
 | G20 | resident size | load the Supervisor on each target | loads without `-403` (NOMEM) on `.043`, `.155` and `.179`; record the free heap before and after |
 | G21 | `.179` identity and port | on Band 11 4.100.179 run the installer, then the Manager and one notification | the installer accepts only `4.100.179` + `user-4.100.179-cn-202609302100`; Run registers the Manager; no fault on notification insert/dismiss (the `.179` pack is a static port of `.155`) |
+| G22 | new static targets bootstrap | for `xiaomi-band-9-3.1.32`, `xiaomi-band-9-pro-3.1.190`, `xiaomi-band-10-3.1.28`, `redmi-watch-6-3.100.043` build the Band-11-style stage1/stage2 + installer, then Run on the exact image | the identity guard rejects every other version; Run registers the Manager; a module installs, enables and survives a reboot; rollback/remove on reboot works. Records are currently static-only, so no loader, installer or device run exists yet |
 
 ## Host-side gate harness
 

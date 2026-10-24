@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.font_reload_size_cache_class",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "font_reload_size_cache_class",
+  "kind": "data",
+  "instruction_set": "n/a",
+  "type": "const opaque cache class",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ]
+  },
+  "ownership": {
+    "argument": "Borrowed exact cached-flash size-cache class, installed in native vector cache with payload16. Not the count-cache initializer or a general data range.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no candidate from the matcher."
+  },
+  "notes": "no candidate from the matcher. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Borrowed exact cached-flash size-cache class, installed in native vector cache with payload16. Not the count-cache initializer or a general data range. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+}

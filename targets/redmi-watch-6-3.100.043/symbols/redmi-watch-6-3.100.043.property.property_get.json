@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.property.property_get",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "property_get",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc78c878",
+  "prototype": "int(const char *key, char *value, const char *default_value)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Vela property_get; writes up to 255 bytes plus NUL into value; with a NULL default returns -22 for an absent key. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+}

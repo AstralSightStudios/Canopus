@@ -52,4 +52,7 @@ portable 模块只能由向构造函数传服务上下文的 loader 加载，即
 
 - Manager 里的"更新"按钮已删除；"回滚"只在存在上一代时显示，重启后生效。
 - CPC1/CPS1 在 P2.5 之前仍可用；P2.5 会统一到 CPC2，届时再给出安装表盘的改造说明。
-- Band 9 / 9 Pro 已冻结（git tag `band9-frozen`），P65 已移除。
+- Band 9 / 9 Pro / Band 10 / REDMI Watch 6 在 2026-10-24 建立了仅静态的 target pack
+  （`xiaomi-band-9-3.1.32`、`xiaomi-band-9-pro-3.1.190`、`xiaomi-band-10-3.1.28`、`redmi-watch-6-3.100.043`）。
+  Band 9 的记录由 tag `band9-frozen` 恢复并降为 restricted/PENDING；四者的 loader、installer 与设备验证都还未实现，
+  其中 Band 9 / 9 Pro / Band 10 是 LVGL v8，需要专门的 v8 UI 后端。P65 的旧部署事故记录仍见 ADR-CAN-007。

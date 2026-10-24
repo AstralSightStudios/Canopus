@@ -11,6 +11,7 @@ import hashlib
 import json
 import re
 import struct
+import sys
 from pathlib import Path
 
 import capstone
@@ -20,23 +21,23 @@ BASE = 0x0C0C0000
 ALGORITHM = "thumb-full-v1"
 
 
-def image_offset(address, size, image):
-    for base in (BASE, BASE + 0x20000000):
-        off = address - base
+def image_offset(address, size, image, base=BASE):
+    for b in (base, base + 0x20000000):
+        off = address - b
         if 0 <= off and off + size <= len(image):
             return off
     raise ValueError(f"outside image: {address:#x}")
 
 
-def pointer_value(value, image):
+def pointer_value(value, image, base=BASE):
     try:
-        image_offset(value & ~1, 1, image)
+        image_offset(value & ~1, 1, image, base)
         return True
     except ValueError:
         return 0x20000000 <= value < 0x20200000 or 0x1C000000 <= value < 0x1D000000 or 0x38000000 <= value < 0x3D000000
 
 
-def fingerprint(fn, image, md):
+def fingerprint(fn, image, md, base=BASE):
     start = int(fn["addr"], 16)
     blocks = sorted(fn.get("block_offs") or [], key=lambda b: b["off"])
     spans = [(start + b["off"], start + b["off"] + b["size"]) for b in blocks]
@@ -46,7 +47,7 @@ def fingerprint(fn, image, md):
         for begin, end in spans:
             if begin == end:
                 continue
-            off = image_offset(begin, end - begin, image)
+            off = image_offset(begin, end - begin, image, base)
             tokens.append(f"block:{begin-start}:{end-begin}")
             cursor = begin
             for ins in md.disasm(image[off:off + end - begin], begin):
@@ -70,8 +71,8 @@ def fingerprint(fn, image, md):
                         # byte/halfword/vector forms literal rather than guessing.
                         if ins.mnemonic not in ("ldr", "ldr.w"):
                             continue
-                        value = struct.unpack_from('<I', image, image_offset(literal, 4, image))[0]
-                        is_ptr = pointer_value(value, image)
+                        value = struct.unpack_from('<I', image, image_offset(literal, 4, image, base))[0]
+                        is_ptr = pointer_value(value, image, base)
                         replacement = "pointer" if is_ptr else f"constant:{value:#x}"
                         operands = re.sub(r"\[pc(?:, #[^\]]+)?\]", f"[{replacement}]", operands)
                         if is_ptr:
@@ -87,11 +88,11 @@ def fingerprint(fn, image, md):
             "instructions": count, "refs": refs}
 
 
-def enrich(document, image):
+def enrich(document, image, base=BASE):
     md = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_THUMB | capstone.CS_MODE_MCLASS)
     md.detail = True
     for fn in document['functions']:
-        fp = fingerprint(fn, image, md)
+        fp = fingerprint(fn, image, md, base)
         if fp:
             fn['body_fingerprint'] = fp
         else:
@@ -105,17 +106,29 @@ def main():
     parser.add_argument('--corpus', type=Path, required=True)
     parser.add_argument('--firmware', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--base', type=lambda x: int(x, 0), default=BASE,
+                        help='file offset zero / address base for the image')
     args = parser.parse_args()
     document = json.loads(args.corpus.read_text())
     image = args.firmware.read_bytes()
-    # Every function entry must agree with the raw image before enriching.
+    # Every function entry that falls inside the image must agree with it
+    # before enriching. A database may also contain startup-copied code at
+    # addresses that have no direct file mapping; those stay fingerprint-less.
+    unmapped = 0
     for fn in document['functions']:
         entry = bytes.fromhex(fn.get('entry', ''))
-        if entry:
-            off = image_offset(int(fn['addr'], 16), len(entry), image)
-            if image[off:off+len(entry)] != entry:
-                raise ValueError(f"corpus/image entry mismatch: {fn['addr']}")
-    enrich(document, image)
+        if not entry:
+            continue
+        try:
+            off = image_offset(int(fn['addr'], 16), len(entry), image, args.base)
+        except ValueError:
+            unmapped += 1
+            continue
+        if image[off:off+len(entry)] != entry:
+            raise ValueError(f"corpus/image entry mismatch: {fn['addr']}")
+    if unmapped:
+        print(f"{unmapped} functions have no direct image mapping", file=sys.stderr)
+    enrich(document, image, args.base)
     temporary = args.output.with_suffix('.tmp')
     temporary.write_text(json.dumps(document, separators=(',', ':')))
     temporary.replace(args.output)

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.clock_gettime",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "clock_gettime",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc4c6be0",
+  "prototype": "int(uint32_t, stock_timespec_t *)",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "approval_state": "PENDING",
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact 3.101.043 clock_gettime entry; validates clock id 0..4 and a non-null stock_timespec_t output pointer. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record."
+}

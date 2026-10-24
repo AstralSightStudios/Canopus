@@ -1,0 +1,2834 @@
+{
+ "source_target": "xiaomi-band-10-pro-3.101.043",
+ "target_id": "redmi-watch-6-3.100.043",
+ "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+ "unique_full_body_seeds": 4454,
+ "symbols": [
+  {
+   "name": "page_finish",
+   "kind": "function",
+   "source_address": "0xca6b9e8",
+   "target_address": "0x1c1325b8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "page_goto",
+   "kind": "function",
+   "source_address": "0xca6c358",
+   "target_address": "0x1c132f4c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "page_navigator_open_page",
+   "kind": "function",
+   "source_address": "0xc8fd12c",
+   "target_address": "0xcb7f3b8",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "system_router_app_wrapper",
+   "kind": "function",
+   "source_address": "0xc8790ec",
+   "target_address": "0x1c15f554",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "system_router_get_pages_wrapper",
+   "kind": "function",
+   "source_address": "0xc879284",
+   "target_address": "0x1c0c256c",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "system_router_page_record_wrapper",
+   "kind": "function",
+   "source_address": null,
+   "target_address": null,
+   "status": "FORBIDDEN",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "app_net_connect_state_update",
+   "kind": "function",
+   "source_address": "0xc71132c",
+   "target_address": "0xc65d318",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "app_install",
+   "kind": "function",
+   "source_address": "0xca6a30c",
+   "target_address": "0x1c151ae4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_get_instance",
+   "kind": "function",
+   "source_address": "0xca40f68",
+   "target_address": "0xca3f474",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_get_scan_mode",
+   "kind": "function",
+   "source_address": "0xc3b5698",
+   "target_address": "0xc1471b4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_get_state",
+   "kind": "function",
+   "source_address": "0xc3af4f4",
+   "target_address": "0x1c0087a4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_register",
+   "kind": "function",
+   "source_address": "0xc3af3e8",
+   "target_address": "0x1c008608",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_unregister",
+   "kind": "function",
+   "source_address": "0xc3af450",
+   "target_address": "0x1c00867c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_get_pairing_state",
+   "kind": "function",
+   "source_address": "0xc3b60a0",
+   "target_address": "0x1c057c78",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_l2cap_connect",
+   "kind": "function",
+   "source_address": "0xc805b0c",
+   "target_address": "0x1c06b134",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_pair_display_reply",
+   "kind": "function",
+   "source_address": "0xc3aff64",
+   "target_address": "0x1c0095bc",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_pair_request_reply",
+   "kind": "function",
+   "source_address": "0xc3b0050",
+   "target_address": "0x1c009248",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "core_bt_adapter_instance",
+   "kind": "global",
+   "source_address": "0x20126738",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "core_bt_callback_table",
+   "kind": "global",
+   "source_address": null,
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "core_bt_pair_request_callback",
+   "kind": "function",
+   "source_address": "0xc709e90",
+   "target_address": "0x1c030408",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "core_bt_registration_handle",
+   "kind": "global",
+   "source_address": "0x20126734",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "miwear_bt_adapter_instance",
+   "kind": "global",
+   "source_address": "0x2013DBE4",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "miwear_bt_cpevent_registration_handle",
+   "kind": "global",
+   "source_address": "0x2013DBE0",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "offload_property_apply",
+   "kind": "function",
+   "source_address": "0xc3b7598",
+   "target_address": "0xcb8d1b4",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_register_a2dp_callbacks",
+   "kind": "function",
+   "source_address": "0xc3af280",
+   "target_address": "0x1c009ff8",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_register_hfp_ag_callbacks",
+   "kind": "function",
+   "source_address": "0xc3b0ce0",
+   "target_address": "0x1c009d40",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "hfp_ag_connect",
+   "kind": "function",
+   "source_address": "0xc3b0db0",
+   "target_address": "0xc0f9594",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "hfp_ag_disconnect",
+   "kind": "function",
+   "source_address": "0xc3b0de8",
+   "target_address": "0x1c0097d0",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_socket_server_receive",
+   "kind": "function",
+   "source_address": "0xc3aeb08",
+   "target_address": "0xc55276c",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "btsnoop_avdtp_recognizer",
+   "kind": "function",
+   "source_address": null,
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "controller_crash_dump",
+   "kind": "function",
+   "source_address": "0xc229f28",
+   "target_address": "0xc844cd8",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "vendor_hci_transport_register",
+   "kind": "function",
+   "source_address": "0xc19f104",
+   "target_address": "0xc5128a0",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "calendar_app_dispatch",
+   "kind": "function",
+   "source_address": "0xca69aa0",
+   "target_address": "0x1c151274",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "calendar_app_lookup",
+   "kind": "function",
+   "source_address": "0xca69934",
+   "target_address": "0x1c151108",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "calendar_app_lookup_name",
+   "kind": "function",
+   "source_address": "0xca69e80",
+   "target_address": "0xc241420",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "a known callee maps elsewhere"
+  },
+  {
+   "name": "calendar_app_lookup_name_other",
+   "kind": "function",
+   "source_address": "0xca69e54",
+   "target_address": "0xc2413f4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "a known callee maps elsewhere"
+  },
+  {
+   "name": "calendar_app_lookup_other",
+   "kind": "function",
+   "source_address": "0xca6996c",
+   "target_address": "0x1c151140",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "calendar_app_signal",
+   "kind": "function",
+   "source_address": "0xc4efde8",
+   "target_address": "0xc8df208",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "calendar_icon_notify",
+   "kind": "function",
+   "source_address": "0xca6a004",
+   "target_address": "0x1c15177c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_manager_add_path",
+   "kind": "function",
+   "source_address": "0x0c86037c",
+   "target_address": "0x1c015514",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_manager_remove_path",
+   "kind": "function",
+   "source_address": "0x0c860398",
+   "target_address": "0x1c006d3c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "firmware_build_string",
+   "kind": "string",
+   "source_address": "0x0C0C0850",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "firmware_version_string",
+   "kind": "string",
+   "source_address": "0x0C0C0810",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "app_launcher_add",
+   "kind": "function",
+   "source_address": "0xc513a44",
+   "target_address": "0xc7ec450",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "app_launcher_data_init",
+   "kind": "function",
+   "source_address": "0xc513e90",
+   "target_address": "0xc7ec0c0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "app_launcher_del",
+   "kind": "function",
+   "source_address": "0xc513b2c",
+   "target_address": "0xc7ec53c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "hidden_and_show_app_cb",
+   "kind": "function",
+   "source_address": "0xc5141f0",
+   "target_address": "0x1c000070",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "protobuf_set_ordered_app_list",
+   "kind": "function",
+   "source_address": "0xc513528",
+   "target_address": "0xc7ebb04",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_cache_drop",
+   "kind": "function",
+   "source_address": "0x0c1667dc",
+   "target_address": "0x1c1501d4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_cache_release",
+   "kind": "function",
+   "source_address": "0x0c1666ec",
+   "target_address": "0x387db8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_display_get_horizontal_resolution",
+   "kind": "function",
+   "source_address": "0x0c13cd54",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_display_get_vertical_resolution",
+   "kind": "function",
+   "source_address": "0x0c13cd74",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_display_invalidate_area",
+   "kind": "function",
+   "source_address": "0x0c105164",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_image_decoder_get_info",
+   "kind": "function",
+   "source_address": "0x1c036358",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_get_style_prop",
+   "kind": "function",
+   "source_address": "0x0c1068a8",
+   "target_address": "0xc63bee4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_refresh_style",
+   "kind": "function",
+   "source_address": "0x0c1070ac",
+   "target_address": "0x37dd54",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_scroll_by",
+   "kind": "function",
+   "source_address": "0x1c02d708",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_scroll_to_x",
+   "kind": "function",
+   "source_address": "0x1c02dfec",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_set_scroll_dir",
+   "kind": "function",
+   "source_address": "0x1c02cbe8",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_set_scroll_snap_x",
+   "kind": "function",
+   "source_address": "0x1c02cc08",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_set_scroll_snap_y",
+   "kind": "function",
+   "source_address": "0x1c02cc24",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_set_scrollbar_mode",
+   "kind": "function",
+   "source_address": "0x1c02cbbc",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_tree_walk",
+   "kind": "function",
+   "source_address": "0x0c13c690",
+   "target_address": "0x380178",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvgl_posix_open",
+   "kind": "function",
+   "source_address": "0x1c057c50",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "interconnect_close",
+   "kind": "function",
+   "source_address": "0xc2e8758",
+   "target_address": "0xc62df50",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "interconnect_connect",
+   "kind": "function",
+   "source_address": "0xc2e85f4",
+   "target_address": "0x1c129134",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "interconnect_loop",
+   "kind": "global",
+   "source_address": null,
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "interconnect_send",
+   "kind": "function",
+   "source_address": "0xc2e8684",
+   "target_address": "0xc62de64",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "quickapp_register_app",
+   "kind": "function",
+   "source_address": "0xc549678",
+   "target_address": "0x1c03b2e0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "thirdparty_submit_message_content",
+   "kind": "function",
+   "source_address": "0xcaa5204",
+   "target_address": "0xca40064",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "insmod",
+   "kind": "function",
+   "source_address": "0xc203a50",
+   "target_address": "0xc82e798",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "modhandle",
+   "kind": "function",
+   "source_address": "0xc203a68",
+   "target_address": "0xc193f20",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "module_symtab_count",
+   "kind": "global",
+   "source_address": null,
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "module_symtab_pointer",
+   "kind": "global",
+   "source_address": null,
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "rmmod",
+   "kind": "function",
+   "source_address": "0xc203a5c",
+   "target_address": "0xca691dc",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_notification_insert_message",
+   "kind": "function",
+   "source_address": "0xca9a898",
+   "target_address": "0xca60098",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "clock_gettime",
+   "kind": "function",
+   "source_address": "0xc201fe0",
+   "target_address": "0xc4c6be0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "close",
+   "kind": "function",
+   "source_address": "0xc1b9d80",
+   "target_address": "0x1c154c40",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "closedir",
+   "kind": "function",
+   "source_address": "0xc1e4564",
+   "target_address": "0xc4f78c0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "devif_poll",
+   "kind": "function",
+   "source_address": "0xc1f9688",
+   "target_address": "0x1c05f520",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "driver_close_dispatch",
+   "kind": "function",
+   "source_address": "0xc1cec08",
+   "target_address": "0x1c156298",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "driver_ioctl_dispatch",
+   "kind": "function",
+   "source_address": "0xc1cff88",
+   "target_address": "0x1c157694",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "driver_open_dispatch",
+   "kind": "function",
+   "source_address": null,
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "driver_read_dispatch",
+   "kind": "function",
+   "source_address": null,
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "driver_write_dispatch",
+   "kind": "function",
+   "source_address": null,
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "errno_location",
+   "kind": "function",
+   "source_address": "0xc1e45bc",
+   "target_address": "0xc4f793c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "firmware_log",
+   "kind": "function",
+   "source_address": "0xc1f0d20",
+   "target_address": "0xc504a54",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "equal body but no caller or positional support"
+  },
+  {
+   "name": "fsync",
+   "kind": "function",
+   "source_address": "0x0c1d2a7c",
+   "target_address": "0x1c159e88",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "gethostbyname_r",
+   "kind": "function",
+   "source_address": "0xc1e8e64",
+   "target_address": "0x1c15e104",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "heap_free",
+   "kind": "function",
+   "source_address": "0xc1f8ff8",
+   "target_address": "0xc50b25c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "heap_mallinfo",
+   "kind": "function",
+   "source_address": "0xc1f900c",
+   "target_address": "0x1c0cb708",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "heap_malloc",
+   "kind": "function",
+   "source_address": "0xc1f903c",
+   "target_address": "0xc50b2a0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "equal body but no caller or positional support"
+  },
+  {
+   "name": "heap_zalloc",
+   "kind": "function",
+   "source_address": "0xc1f90bc",
+   "target_address": "0xc50b320",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "equal body but no caller or positional support"
+  },
+  {
+   "name": "ioctl",
+   "kind": "function",
+   "source_address": "0xc1d01a4",
+   "target_address": "0x1c1578a4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "ipv4_input",
+   "kind": "function",
+   "source_address": "0xc1f95c8",
+   "target_address": "0xc942fc4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lseek",
+   "kind": "function",
+   "source_address": "0xc1d0524",
+   "target_address": "0xc6b9c80",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "mkdir",
+   "kind": "function",
+   "source_address": "0x0c1d05e8",
+   "target_address": "0x1c157c5c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "net_lock",
+   "kind": "function",
+   "source_address": "0xc201b40",
+   "target_address": "0xc944cb0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "net_unlock",
+   "kind": "function",
+   "source_address": "0xc201b50",
+   "target_address": "0xc944ca0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "netdev_input",
+   "kind": "function",
+   "source_address": "0xc1fc9f4",
+   "target_address": "0xc938cd4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "netdev_register",
+   "kind": "function",
+   "source_address": "0xc1fc214",
+   "target_address": "0xc82dc40",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "open",
+   "kind": "function",
+   "source_address": "0xc1d0a28",
+   "target_address": "0x1c158074",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "opendir",
+   "kind": "function",
+   "source_address": "0xc1e4528",
+   "target_address": "0xc4f7884",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "poll_notify",
+   "kind": "function",
+   "source_address": "0xc1d0b44",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "pthread_create_internal",
+   "kind": "function",
+   "source_address": "0xc204a78",
+   "target_address": "0xc4c4d9c",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "public_work_queue",
+   "kind": "function",
+   "source_address": null,
+   "target_address": null,
+   "status": "FORBIDDEN",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "read",
+   "kind": "function",
+   "source_address": "0xc1d129c",
+   "target_address": "0xc7356e8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "readdir",
+   "kind": "function",
+   "source_address": "0xc1e4590",
+   "target_address": "0xc4f78ec",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "recvfrom",
+   "kind": "function",
+   "source_address": "0xc1fd570",
+   "target_address": "0xc5afcc8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "register_blockdriver",
+   "kind": "function",
+   "source_address": "0xc1affd8",
+   "target_address": "0x1c018788",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "register_driver",
+   "kind": "function",
+   "source_address": "0xc1aff60",
+   "target_address": "0x1c0c1594",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "rename",
+   "kind": "function",
+   "source_address": "0xc1d12e8",
+   "target_address": "0x1c1587c8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "rmdir",
+   "kind": "function",
+   "source_address": "0x0c1d1648",
+   "target_address": "0x1c158b08",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sem_post",
+   "kind": "function",
+   "source_address": "0xc2070d0",
+   "target_address": "0xc504730",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sem_trywait",
+   "kind": "function",
+   "source_address": "0xc206bfc",
+   "target_address": "0xc6c6500",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sem_wait",
+   "kind": "function",
+   "source_address": "0xc206944",
+   "target_address": "0xc5044b8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sendto",
+   "kind": "function",
+   "source_address": "0xc1fd664",
+   "target_address": "0xc932ec0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "setsockopt",
+   "kind": "function",
+   "source_address": "0xc1fdab4",
+   "target_address": "0xc93362c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "socket",
+   "kind": "function",
+   "source_address": "0xc1cad34",
+   "target_address": "0xc946674",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "stat",
+   "kind": "function",
+   "source_address": "0x0c1d1e9c",
+   "target_address": "0x1c1572b4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "unlink",
+   "kind": "function",
+   "source_address": "0xc1d2354",
+   "target_address": "0xc2495e8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "unregister_blockdriver",
+   "kind": "function",
+   "source_address": "0xc1b009c",
+   "target_address": "0x1c0deb34",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "unregister_driver",
+   "kind": "function",
+   "source_address": "0xc1b002c",
+   "target_address": "0x1c101374",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "write",
+   "kind": "function",
+   "source_address": "0xc1d2640",
+   "target_address": "0xc67ad00",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "power_battery_charging",
+   "kind": "function",
+   "source_address": "0x0ca6e690",
+   "target_address": "0xca195d4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "power_battery_level",
+   "kind": "function",
+   "source_address": "0x0ca6e6a8",
+   "target_address": "0xca61d70",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "power_battery_ready",
+   "kind": "function",
+   "source_address": "0x0ca6e658",
+   "target_address": "0x1c15f8cc",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "wakelock_acquire",
+   "kind": "function",
+   "source_address": "0x0ca6e9dc",
+   "target_address": "0xca61ffc",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "wakelock_create",
+   "kind": "function",
+   "source_address": "0x0ca6e7d4",
+   "target_address": "0xca61e9c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "wakelock_release",
+   "kind": "function",
+   "source_address": "0x0ca6ea98",
+   "target_address": "0xca620c4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "background_object_has_flag",
+   "kind": "function",
+   "source_address": "0x0c5881c0",
+   "target_address": "0xc8be6b8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "background_object_hide",
+   "kind": "function",
+   "source_address": "0x0c588960",
+   "target_address": "0xc8bdde8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "background_object_show",
+   "kind": "function",
+   "source_address": "0x0c5891b0",
+   "target_address": "0xc8bce78",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_set_scan_mode",
+   "kind": "function",
+   "source_address": "0xc3b56a8",
+   "target_address": "0x1c057400",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_alloc",
+   "kind": "function",
+   "source_address": "0xc840c54",
+   "target_address": "0xc741a80",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_buffer_new",
+   "kind": "function",
+   "source_address": "0xc7eafbc",
+   "target_address": "0xc98f480",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_create_bond_private",
+   "kind": "function",
+   "source_address": "0xc3b6898",
+   "target_address": "0x1c058640",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_discovery_start",
+   "kind": "function",
+   "source_address": "0xc3af524",
+   "target_address": "0xc0f8514",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_discovery_stop",
+   "kind": "function",
+   "source_address": "0xc3af550",
+   "target_address": "0xc0f8540",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_free",
+   "kind": "function",
+   "source_address": "0xc840c60",
+   "target_address": "0xcb42f90",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_get_bond_state",
+   "kind": "function",
+   "source_address": "0xc3b5a60",
+   "target_address": "0x1c0577d8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_l2cap_disconnect",
+   "kind": "function",
+   "source_address": "0xc805b38",
+   "target_address": "0xc9bc454",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_l2cap_owner",
+   "kind": "global",
+   "source_address": "0x2013BDBC",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "bt_l2cap_submit_cid",
+   "kind": "function",
+   "source_address": "0xc805be8",
+   "target_address": "0xc15af24",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "a known callee maps elsewhere"
+  },
+  {
+   "name": "bt_queue_external",
+   "kind": "function",
+   "source_address": "0xc7eb9cc",
+   "target_address": "0xc98fdd0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_queue_free",
+   "kind": "function",
+   "source_address": "0xc6b9cf0",
+   "target_address": "0xc66e06c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_remove_bond_private",
+   "kind": "function",
+   "source_address": "0xc3b697c",
+   "target_address": "0x1c058710",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_timer_add",
+   "kind": "function",
+   "source_address": "0xc7eb270",
+   "target_address": "0xc98f6d0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_timer_cancel",
+   "kind": "function",
+   "source_address": "0xc7eb33c",
+   "target_address": "0xc98f788",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "calendar_eventbus_send",
+   "kind": "function",
+   "source_address": "0x0ca41584",
+   "target_address": "0x1c1347d8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "calendar_font_day",
+   "kind": "function",
+   "source_address": "0x0c4bf87c",
+   "target_address": "0x1c12da84",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "calendar_localized_text",
+   "kind": "function",
+   "source_address": "0x0c1e5c38",
+   "target_address": "0xc4f8458",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "calendar_localtime",
+   "kind": "function",
+   "source_address": "0x0c4e35ac",
+   "target_address": "0x1c14e8ac",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "calendar_snapshot",
+   "kind": "function",
+   "source_address": "0x0ca5fb40",
+   "target_address": "0x1c148e58",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "calendar_text_color",
+   "kind": "function",
+   "source_address": "0x0c588a70",
+   "target_address": "0xc8bdb78",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "control_center_scroll",
+   "kind": "function",
+   "source_address": "0x0c5036c4",
+   "target_address": "0x1c151f78",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_reload_cache_acquire",
+   "kind": "function",
+   "source_address": "0x0c1666d0",
+   "target_address": "0xc631c3c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_reload_cache_acquire_or_create",
+   "kind": "function",
+   "source_address": "0x0c166740",
+   "target_address": "0x1c007e5c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_reload_count_cache_class",
+   "kind": "data",
+   "source_address": "0x2cce571c",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_count_cache_init",
+   "kind": "function",
+   "source_address": "0x0c272d38",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_display_list",
+   "kind": "global",
+   "source_address": "0x2010317c",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "font_reload_draw_unit_slot",
+   "kind": "global",
+   "source_address": "0x201032a4",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "font_reload_drop_face_id",
+   "kind": "function",
+   "source_address": "0x0c163be8",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_face_compare",
+   "kind": "function",
+   "source_address": "0x1c05682c",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_face_create",
+   "kind": "function",
+   "source_address": "0x1c056718",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_face_destroy",
+   "kind": "function",
+   "source_address": "0x1c0566ec",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_freetype_context_slot",
+   "kind": "global",
+   "source_address": "0x20103374",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "font_reload_ft_mul_fix",
+   "kind": "function",
+   "source_address": "0x0c33d8bc",
+   "target_address": "0xc564818",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "font_reload_ft_set_pixel_size",
+   "kind": "function",
+   "source_address": "0x0c33ef58",
+   "target_address": "0xc5666fc",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_reload_glyph_metrics",
+   "kind": "function",
+   "source_address": "0x1c056e14",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_glyph_pending_release",
+   "kind": "function",
+   "source_address": "0x1c046cfc",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_gradient_pending_release",
+   "kind": "function",
+   "source_address": "0x1c0493bc",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_image_pending_release",
+   "kind": "function",
+   "source_address": "0x1c04d258",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_list_remove",
+   "kind": "function",
+   "source_address": "0x0c169ce8",
+   "target_address": "0xc73e08c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_reload_lv_free",
+   "kind": "function",
+   "source_address": "0x0c16dae4",
+   "target_address": "0xc741b48",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "font_reload_lv_initialized",
+   "kind": "global",
+   "source_address": "0x20103178",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "font_reload_lv_malloc",
+   "kind": "function",
+   "source_address": "0x0c16daa8",
+   "target_address": "0xc741b0c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_reload_metrics_compare",
+   "kind": "function",
+   "source_address": "0x1c056f04",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_metrics_create",
+   "kind": "function",
+   "source_address": "0x1c056d24",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_metrics_destroy",
+   "kind": "function",
+   "source_address": "0x1c056d18",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_outline_acquire",
+   "kind": "function",
+   "source_address": "0x1c0572a4",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_outline_compare",
+   "kind": "function",
+   "source_address": "0x1c057258",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_outline_create",
+   "kind": "function",
+   "source_address": "0x1c057634",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_outline_destroy",
+   "kind": "function",
+   "source_address": "0x1c057330",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_outline_event",
+   "kind": "function",
+   "source_address": "0x1c046d08",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_outline_release",
+   "kind": "function",
+   "source_address": "0x1c057288",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_size_cache_class",
+   "kind": "data",
+   "source_address": "0x2cce56f4",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_style_refresh_enabled",
+   "kind": "global",
+   "source_address": "0x2010319c",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "font_reload_sw_dispatch",
+   "kind": "function",
+   "source_address": "0x1c03debc",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_uikit_slot",
+   "kind": "global",
+   "source_address": "0x20103174",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "font_reload_vector_cache_slot",
+   "kind": "global",
+   "source_address": "0x2013eae0",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "font_reload_vector_compare",
+   "kind": "function",
+   "source_address": "0x0ca657ec",
+   "target_address": "0xc83b58c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_reload_vector_destroy",
+   "kind": "function",
+   "source_address": "0x0ca6581c",
+   "target_address": "0xc63a298",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_reload_vector_draw_unit_slot",
+   "kind": "global",
+   "source_address": "0x2013eadc",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "font_reload_vector_drop",
+   "kind": "function",
+   "source_address": "0x0ca65c24",
+   "target_address": "0x1c0b7188",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "font_reload_vector_label_class",
+   "kind": "data",
+   "source_address": "0x2cdba868",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "font_reload_vg_dispatch",
+   "kind": "function",
+   "source_address": "0x1c045360",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "gap_host_receive_slot",
+   "kind": "global",
+   "source_address": "0x2013C144",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "gap_host_stock_receive",
+   "kind": "function",
+   "source_address": "0xc7ec47c",
+   "target_address": "0x1c03865c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "l2_owner_timer_init",
+   "kind": "function",
+   "source_address": "0x0c2e3994",
+   "target_address": "0xc629dd0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "l2_owner_timer_start",
+   "kind": "function",
+   "source_address": "0x0c2e3b84",
+   "target_address": "0xc629fb4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "launcher_parent",
+   "kind": "function",
+   "source_address": "0x0c589578",
+   "target_address": "0xc8be430",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "launcher_rect_init",
+   "kind": "function",
+   "source_address": "0x0c588268",
+   "target_address": "0xc257634",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "launcher_scroll",
+   "kind": "function",
+   "source_address": "0x0c517d9c",
+   "target_address": "0x1c05c468",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "launcher_scroll_prepare",
+   "kind": "function",
+   "source_address": "0x0c5166f0",
+   "target_address": "0xc516f74",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_image_create_xip_thunk",
+   "kind": "function",
+   "source_address": "0x0c588d58",
+   "target_address": "0xc8be2f8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_set_local_style_prop_xip_thunk",
+   "kind": "function",
+   "source_address": "0xcac0bb0",
+   "target_address": "0xc8bee68",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_set_style_bg_opa_xip_thunk",
+   "kind": "function",
+   "source_address": "0x0c5883f8",
+   "target_address": "0xc8bcf20",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "miwear_session_crypto_ctr",
+   "kind": "function",
+   "source_address": "0xc7d46a4",
+   "target_address": "0xca99138",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "miwear_session_lookup",
+   "kind": "function",
+   "source_address": "0xc7d7e94",
+   "target_address": "0xca9c904",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "miwear_transport_l2_rx",
+   "kind": "function",
+   "source_address": "0xc7d6e6c",
+   "target_address": "0xca9b8e8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "miwear_transport_send",
+   "kind": "function",
+   "source_address": "0xc7d719c",
+   "target_address": "0xca9bbf4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "native_font_create",
+   "kind": "function",
+   "source_address": "0xc85f6cc",
+   "target_address": "0xc795db8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "native_font_release",
+   "kind": "function",
+   "source_address": "0xc85f8fc",
+   "target_address": "0xc795fe4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "native_font_wait",
+   "kind": "function",
+   "source_address": "0xc15c060",
+   "target_address": "0x1c12e7bc",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "notifications_scroll",
+   "kind": "function",
+   "source_address": "0x0c527bbc",
+   "target_address": "0x1c055528",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_battery_child_count",
+   "kind": "function",
+   "source_address": "0x0c5881d8",
+   "target_address": "0xc8bf0b8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_battery_child_get",
+   "kind": "function",
+   "source_address": "0x0c5886e0",
+   "target_address": "0xc8bd658",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_battery_class",
+   "kind": "global",
+   "source_address": "0x2cd198dc",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "p67_battery_extra_draw_size",
+   "kind": "function",
+   "source_address": "0x0c587e70",
+   "target_address": "0xc255d9c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_battery_image_draw",
+   "kind": "function",
+   "source_address": "0x0c5882a0",
+   "target_address": "0xc8bdaf8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_battery_image_dsc_init",
+   "kind": "function",
+   "source_address": "0x0c5882b8",
+   "target_address": "0xc8bc928",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_battery_native_event",
+   "kind": "function",
+   "source_address": "0x0c4c22cc",
+   "target_address": "0x37af24",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_battery_status_slot",
+   "kind": "global",
+   "source_address": "0x2010fe60",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "p67_blur_cache_clean",
+   "kind": "function",
+   "source_address": "0x0c588f88",
+   "target_address": "0xc256114",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_blur_cache_invalidate",
+   "kind": "function",
+   "source_address": "0x0c588448",
+   "target_address": "0xc255bf4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_blur_crossview_callback",
+   "kind": "function",
+   "source_address": "0x0c50b9f0",
+   "target_address": "0xc7de51c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_blur_draw_buf_create",
+   "kind": "function",
+   "source_address": "0x0c587f38",
+   "target_address": "0xc8be358",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_blur_draw_buf_destroy",
+   "kind": "function",
+   "source_address": "0x0cac0db8",
+   "target_address": "0xc2588f4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_blur_event_list_add",
+   "kind": "function",
+   "source_address": "0x1c07a3e8",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "p67_blur_event_list_count",
+   "kind": "function",
+   "source_address": "0x1c07ab48",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "p67_blur_event_list_get",
+   "kind": "function",
+   "source_address": "0x1c07a4b0",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "p67_blur_event_list_remove",
+   "kind": "function",
+   "source_address": "0x1c07a6f8",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "p67_blur_gpu_finish",
+   "kind": "function",
+   "source_address": "0x0c187bb0",
+   "target_address": "0xc0c2098",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_blur_pm_lock",
+   "kind": "global",
+   "source_address": "0x200eb538",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "p67_blur_pm_relax",
+   "kind": "function",
+   "source_address": "0x0c1a79b4",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "p67_blur_pm_stay",
+   "kind": "function",
+   "source_address": "0x0c1a78f0",
+   "target_address": "0x1c01e23c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_blur_snapshot_to_buffer",
+   "kind": "function",
+   "source_address": "0x0cac0878",
+   "target_address": "0xc257c14",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_blur_style_get",
+   "kind": "function",
+   "source_address": "0x0c589448",
+   "target_address": "0xc8be5f8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "p67_blur_watchface_root_class",
+   "kind": "global",
+   "source_address": "0x2cd1f640",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "sdp_builder_create",
+   "kind": "function",
+   "source_address": "0xc80a684",
+   "target_address": "0xc9a4740",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sdp_commit",
+   "kind": "function",
+   "source_address": "0xc808648",
+   "target_address": "0xc9a78f8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sdp_set_raw_attribute",
+   "kind": "function",
+   "source_address": "0xc808244",
+   "target_address": "0xc9a7528",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sdp_unregister",
+   "kind": "function",
+   "source_address": "0xc80a734",
+   "target_address": "0x1c03a96c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "stock_bt_callback_descriptor",
+   "kind": "global",
+   "source_address": "0x2CD4A744",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "style_misans_medium_24",
+   "kind": "global",
+   "source_address": "0x2010CEE0",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "style_misans_medium_28",
+   "kind": "global",
+   "source_address": "0x2010CEF8",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "widgets_scroll",
+   "kind": "function",
+   "source_address": "0x0c50abb4",
+   "target_address": "0x38713c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "app_lookup",
+   "kind": "function",
+   "source_address": "0xca69934",
+   "target_address": "0x1c151108",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_label_create",
+   "kind": "function",
+   "source_address": "0xc588f30",
+   "target_address": "0xc8bef18",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_label_set_text",
+   "kind": "function",
+   "source_address": "0xc589490",
+   "target_address": "0xc8bd318",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_list_row_create",
+   "kind": "function",
+   "source_address": "0xc54ca3c",
+   "target_address": "0xc8eab58",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_list_row_trailing",
+   "kind": "function",
+   "source_address": "0xc4c8c60",
+   "target_address": "0xcac1cb4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_msgbox_create",
+   "kind": "function",
+   "source_address": "0xc4ca0d8",
+   "target_address": "0xcabd3d4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_msgbox_set_content",
+   "kind": "function",
+   "source_address": "0xc4ca130",
+   "target_address": "0x1c12ae90",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_object_align",
+   "kind": "function",
+   "source_address": "0xc589188",
+   "target_address": "0xc258a5c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_object_delete",
+   "kind": "function",
+   "source_address": "0xc588de8",
+   "target_address": "0xc8be458",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_object_set_size",
+   "kind": "function",
+   "source_address": "0xc588628",
+   "target_address": "0xc255ce4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "style_misans_demibold_32",
+   "kind": "global",
+   "source_address": "0x2010D054",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "style_misans_regular_24",
+   "kind": "global",
+   "source_address": "0x2010CE44",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "property_get",
+   "kind": "function",
+   "source_address": "0x0c3dadb0",
+   "target_address": "0xc78c878",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "property_get_int32",
+   "kind": "function",
+   "source_address": "0x0c3dafe0",
+   "target_address": "0x36a784",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "screen_get_state",
+   "kind": "function",
+   "source_address": "0x0ca72f3c",
+   "target_address": "0xca68fac",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "screen_session_create",
+   "kind": "function",
+   "source_address": "0x0ca72a54",
+   "target_address": "0xca68abc",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "screen_session_restore_default",
+   "kind": "function",
+   "source_address": "0x0ca72ec8",
+   "target_address": "0xca68f38",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "screen_session_set_auto_brightness",
+   "kind": "function",
+   "source_address": "0x0ca72db8",
+   "target_address": "0xca68e28",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "screen_session_set_brightness_value",
+   "kind": "function",
+   "source_address": "0x0ca72e1c",
+   "target_address": "0xca68e8c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "screen_session_start",
+   "kind": "function",
+   "source_address": "0x0ca72b6c",
+   "target_address": "0xca68bd8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "screen_session_stop",
+   "kind": "function",
+   "source_address": "0x0ca72bfc",
+   "target_address": "0xca68c6c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "screen_turn_on",
+   "kind": "function",
+   "source_address": "0x0ca7323c",
+   "target_address": "0x1c00c494",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "service_manager_cleanup",
+   "kind": "function",
+   "source_address": "0xc3bde44",
+   "target_address": "0x1c054b18",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "service_manager_get_profile",
+   "kind": "function",
+   "source_address": "0xc3bdd88",
+   "target_address": "0x1c054a5c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "service_manager_register",
+   "kind": "function",
+   "source_address": "0xc3bdbac",
+   "target_address": "0xc144654",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "a known callee maps elsewhere"
+  },
+  {
+   "name": "service_manager_shutdown",
+   "kind": "function",
+   "source_address": "0xc3bdce8",
+   "target_address": "0x1c0549cc",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "service_manager_startup",
+   "kind": "function",
+   "source_address": "0xc3bdc24",
+   "target_address": "0x1c054908",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "system_get_state",
+   "kind": "function",
+   "source_address": "0x0c4bed68",
+   "target_address": "0x1c0bf164",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "system_state",
+   "kind": "global",
+   "source_address": "0x2010cc58",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no unique global candidate"
+  },
+  {
+   "name": "lv_bar_create",
+   "kind": "function",
+   "source_address": "0xc588b90",
+   "target_address": "0xc0c21e0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_bar_set_range",
+   "kind": "function",
+   "source_address": "0xc5883d8",
+   "target_address": "0xc8bece0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_bar_set_value",
+   "kind": "function",
+   "source_address": "0xc5890a8",
+   "target_address": "0xc8bc578",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_event_get_code",
+   "kind": "function",
+   "source_address": "0xc588210",
+   "target_address": "0xc256754",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_event_get_indev",
+   "kind": "function",
+   "source_address": "0x002bf8d4",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_event_get_user_data",
+   "kind": "function",
+   "source_address": "0xc588310",
+   "target_address": "0xc8bea80",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_image_create",
+   "kind": "function",
+   "source_address": "0x1c06cac0",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_image_set_src",
+   "kind": "function",
+   "source_address": "0x1c06ceb4",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_indev_get_point",
+   "kind": "function",
+   "source_address": "0x1c050c10",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_add_event_cb",
+   "kind": "function",
+   "source_address": "0xc5883f0",
+   "target_address": "0xc8bc7c8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_align_to",
+   "kind": "function",
+   "source_address": "0xc588ef0",
+   "target_address": "0xc8bd038",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_clear_flag",
+   "kind": "function",
+   "source_address": "0xc5891b0",
+   "target_address": "0xc8bce78",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_get_coords",
+   "kind": "function",
+   "source_address": "0x1c02a564",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_get_scroll_x",
+   "kind": "function",
+   "source_address": "0x1c02cce8",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_get_scroll_y",
+   "kind": "function",
+   "source_address": "0x1c02ccfc",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_move_to_index",
+   "kind": "function",
+   "source_address": "0xc589550",
+   "target_address": "0xc8bce68",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_remove_state",
+   "kind": "function",
+   "source_address": "0xc588518",
+   "target_address": "0xc8bdbe0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_scroll_to",
+   "kind": "function",
+   "source_address": "0x1c02ddb0",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_set_local_style_prop",
+   "kind": "function",
+   "source_address": "0x002bd924",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_obj_set_style_bg_opa",
+   "kind": "function",
+   "source_address": "0xc108374",
+   "target_address": "0xc0d8ff4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lv_obj_update_layout",
+   "kind": "function",
+   "source_address": "0x1c02c760",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_tick_get",
+   "kind": "function",
+   "source_address": "0x1c063d0c",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lv_timer_create",
+   "kind": "function",
+   "source_address": "0xc587ed0",
+   "target_address": "0xc8bcc98",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_timer_del",
+   "kind": "function",
+   "source_address": "0xc588128",
+   "target_address": "0xc8bbd98",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_content_pad_bottom",
+   "kind": "function",
+   "source_address": "0xc5893c0",
+   "target_address": "0xc8bdec8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_image_set_scale",
+   "kind": "function",
+   "source_address": "0x1c06c970",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "lvx_label_set_long_mode",
+   "kind": "function",
+   "source_address": "0xc588bf8",
+   "target_address": "0xc8bd880",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_list_item_update",
+   "kind": "function",
+   "source_address": "0xc4c8904",
+   "target_address": "0x1c129934",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_object_add_flag",
+   "kind": "function",
+   "source_address": "0xcac00c0",
+   "target_address": "0xc256a1c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_page_content_create",
+   "kind": "function",
+   "source_address": "0xca67244",
+   "target_address": "0xc2182b0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "equal body but no caller or positional support"
+  },
+  {
+   "name": "lvx_page_title_create",
+   "kind": "function",
+   "source_address": "0xc4ca6c4",
+   "target_address": "0xc21b4b0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_style_apply",
+   "kind": "function",
+   "source_address": "0xc4bf898",
+   "target_address": "0x1c12e1b4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sport_titlebar_dispatch",
+   "kind": "function",
+   "source_address": "0xc599670",
+   "target_address": "0xc8835c4",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sport_titlebar_lifecycle_reset",
+   "kind": "function",
+   "source_address": null,
+   "target_address": null,
+   "status": "FORBIDDEN",
+   "state": "NO_ADDRESS",
+   "basis": "source has no address"
+  },
+  {
+   "name": "vibrator_hal_transact",
+   "kind": "function",
+   "source_address": "0x0c3db82c",
+   "target_address": "0x1c14204c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "watchface_manager_delete_watchface",
+   "kind": "function",
+   "source_address": "0xca95c68",
+   "target_address": "0xca90b1c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "watchface_reset_watchface",
+   "kind": "function",
+   "source_address": "0xc5f36c0",
+   "target_address": "0x1c009fb4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  }
+ ]
+}

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.firmware_build_string",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "firmware_build_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "prototype": "const char[]",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ID-3100043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "source": "exact redmi-watch-6-3.100.043 image; build.prop ro.build.id value, LF-terminated",
+    "evidence_ids": [
+      "EVID-ID-3100043-001"
+    ]
+  },
+  "entry_address": "0x0C3BFA25",
+  "notes": "exact redmi-watch-6-3.100.043 identity; value '3.100.043'; build.prop ro.build.id value, LF-terminated",
+  "approval_state": "PENDING"
+}

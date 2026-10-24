@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ID-3128-001",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "Which exact image strings identify this firmware?",
+  "candidate_symbols": [
+    "firmware_version_string",
+    "firmware_build_string"
+  ],
+  "prototype_hypothesis": "const char[] read directly from the exact image; no interpretation beyond the bytes.",
+  "callsite_evidence": [
+    "firmware sha256 fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "version '3.1.28' at 0x0C64D7AD (build.prop ro.build.version value, LF-terminated)",
+    "build '9d8f394:nx_bestbsp_ap' at 0x0C7CADD7 (REV_INFO value; this build has no ro.build.id, LF-terminated)"
+  ],
+  "control_flow_evidence": [],
+  "ownership_analysis": "Static identity only; no callable or capability is claimed.",
+  "unsafe_assumptions": [
+    "Identity strings do not prove loader, ABI or device behaviour."
+  ],
+  "recommended_probe": "Identity guard only; no device test has been run.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-24T00:00:00Z",
+  "artifacts": []
+}

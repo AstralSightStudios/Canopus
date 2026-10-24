@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.exact.lv_label_create",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "lv_label_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c28f5f4",
+  "prototype": "void *(void *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ABI-9132-EXACT-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "source": "exact Xiaomi Band 9 3.1.32 IDB; decompilation, disassembly, and stock callsite review",
+    "evidence_ids": [
+      "EVID-ABI-9132-EXACT-001"
+    ]
+  },
+  "approval_state": "PENDING",
+  "notes": "creates and initializes the LVGL label class 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
+  "callable_address": "0xc28f5f5"
+}

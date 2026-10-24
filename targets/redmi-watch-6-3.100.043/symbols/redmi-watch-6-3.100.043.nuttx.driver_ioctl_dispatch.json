@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.driver_ioctl_dispatch",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "driver_ioctl_dispatch",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int(file *, uint32_t, ...)",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "entry_address": "0x1c157694",
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_CONFIRMED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Internal file-level ioctl entry. PUSH {R1-R3} and access to the saved register area prove a variadic third argument; callers must not use a fixed prototype for zero-argument commands. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
+  "approval_state": "PENDING"
+}

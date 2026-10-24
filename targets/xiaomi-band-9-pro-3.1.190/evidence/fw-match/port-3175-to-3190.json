@@ -1,0 +1,1115 @@
+{
+ "source_target": "src-9pro-3175",
+ "target_id": "xiaomi-band-9-pro-3.1.190",
+ "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+ "unique_full_body_seeds": 20931,
+ "symbols": [
+  {
+   "name": "page_finish",
+   "kind": "function",
+   "source_address": "0xc191840",
+   "target_address": "0xc18ddb0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "page_goto",
+   "kind": "function",
+   "source_address": "0xc1010b0",
+   "target_address": "0xc1060d8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "page_navigator_open_page",
+   "kind": "function",
+   "source_address": "0xc54bae4",
+   "target_address": "0xc54bd68",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "system_router_app_wrapper",
+   "kind": "function",
+   "source_address": "0xc10b4f2",
+   "target_address": "0xc109fbc",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "system_router_get_pages_wrapper",
+   "kind": "function",
+   "source_address": "0xc418600",
+   "target_address": "0xc40fb94",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "app_install",
+   "kind": "function",
+   "source_address": "0xc44b5d0",
+   "target_address": "0xc4497cc",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_adapter_get_instance",
+   "kind": "function",
+   "source_address": "0xc27d5b4",
+   "target_address": "0xc27ad30",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "bt_adapter_get_scan_mode",
+   "kind": "function",
+   "source_address": "0xc3c4046",
+   "target_address": "0xc3c13a6",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_get_state",
+   "kind": "function",
+   "source_address": "0xc45752c",
+   "target_address": "0xc454e34",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_adapter_register",
+   "kind": "function",
+   "source_address": "0xc3ff878",
+   "target_address": "0xc403142",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "equal body; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "bt_adapter_unregister",
+   "kind": "function",
+   "source_address": "0xc371570",
+   "target_address": "0xc36e5de",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_get_pairing_state",
+   "kind": "function",
+   "source_address": "0xc2a2970",
+   "target_address": "0xc2a03e8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_l2cap_connect",
+   "kind": "function",
+   "source_address": "0xc37cabc",
+   "target_address": "0xc37a5d8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_pair_display_reply",
+   "kind": "function",
+   "source_address": "0xc4dba68",
+   "target_address": "0xc4dbc8c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_pair_request_reply",
+   "kind": "function",
+   "source_address": "0xc338814",
+   "target_address": "0xc33687c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "core_bt_pair_request_callback",
+   "kind": "function",
+   "source_address": "0xc44e93c",
+   "target_address": "0xc44cb34",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "offload_property_apply",
+   "kind": "function",
+   "source_address": "0xc3c2e30",
+   "target_address": "0xc3bf4d8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_adapter_register_a2dp_callbacks",
+   "kind": "function",
+   "source_address": "0xc1f4e8e",
+   "target_address": "0xc1f0d7e",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_adapter_register_hfp_ag_callbacks",
+   "kind": "function",
+   "source_address": "0xc1f4d8a",
+   "target_address": "0xc1f0c7a",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "hfp_ag_connect",
+   "kind": "function",
+   "source_address": "0xc2e7cc8",
+   "target_address": "0xc2e5c30",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "hfp_ag_disconnect",
+   "kind": "function",
+   "source_address": "0xc2e63b8",
+   "target_address": "0xc2e4630",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_socket_server_receive",
+   "kind": "function",
+   "source_address": "0xc38704c",
+   "target_address": "0xc384888",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "btsnoop_avdtp_recognizer",
+   "kind": "function",
+   "source_address": "0xc45c674",
+   "target_address": "0xc458f04",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "controller_crash_dump",
+   "kind": "function",
+   "source_address": "0xc52700c",
+   "target_address": "0xc527224",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "vendor_hci_transport_register",
+   "kind": "function",
+   "source_address": "0xc46a31c",
+   "target_address": "0xc467ac0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "app_launcher_add",
+   "kind": "function",
+   "source_address": "0xc1a3720",
+   "target_address": "0xc19f84c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "app_launcher_data_init",
+   "kind": "function",
+   "source_address": "0xc2673c4",
+   "target_address": "0xc2645a4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "app_launcher_del",
+   "kind": "function",
+   "source_address": "0xc2a7d04",
+   "target_address": "0xc2a47ec",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "hidden_and_show_app_cb",
+   "kind": "function",
+   "source_address": "0xc2a7e48",
+   "target_address": "0xc2a4930",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "protobuf_set_ordered_app_list",
+   "kind": "function",
+   "source_address": "0xc2a8494",
+   "target_address": "0xc2a4f7c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "interconnect_close",
+   "kind": "function",
+   "source_address": "0xc39b5b8",
+   "target_address": "0xc3977b0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "interconnect_connect",
+   "kind": "function",
+   "source_address": "0xc41bc40",
+   "target_address": "0xc4214e0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "interconnect_send",
+   "kind": "function",
+   "source_address": "0xc3d651c",
+   "target_address": "0xc3d41a0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "quickapp_register_app",
+   "kind": "function",
+   "source_address": "0xc2c5698",
+   "target_address": "0xc2ba978",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "thirdparty_submit_message_content",
+   "kind": "function",
+   "source_address": "0xc5105b8",
+   "target_address": "0xc5107d0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "insmod",
+   "kind": "function",
+   "source_address": "0xc0cad00",
+   "target_address": "0xc0ca268",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "modhandle",
+   "kind": "function",
+   "source_address": "0xc0d719c",
+   "target_address": "0xc0d6704",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "rmmod",
+   "kind": "function",
+   "source_address": "0xc0cacb8",
+   "target_address": "0xc0ca220",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "lvx_notification_insert_message",
+   "kind": "function",
+   "source_address": "0xc4f1c44",
+   "target_address": "0xc4f1f28",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "clock_gettime",
+   "kind": "function",
+   "source_address": "0xc371860",
+   "target_address": "0xc36ea34",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "close",
+   "kind": "function",
+   "source_address": "0xc2ff260",
+   "target_address": "0xc2fd250",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "driver_close_dispatch",
+   "kind": "function",
+   "source_address": "0xc29eeec",
+   "target_address": "0xc29d61c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "driver_ioctl_dispatch",
+   "kind": "function",
+   "source_address": "0xc0cb580",
+   "target_address": "0xc0caae8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "driver_open_dispatch",
+   "kind": "function",
+   "source_address": "0xc3a7fb4",
+   "target_address": "0xc3a674c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "driver_read_dispatch",
+   "kind": "function",
+   "source_address": "0xc37e24c",
+   "target_address": "0xc37cff4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "errno_location",
+   "kind": "function",
+   "source_address": "0xc43f1fe",
+   "target_address": "0xc43c09c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "firmware_log",
+   "kind": "function",
+   "source_address": "0xc0fcdd2",
+   "target_address": "0xc0fbd60",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "heap_free",
+   "kind": "function",
+   "source_address": "0xc421d9c",
+   "target_address": "0xc41dd18",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "heap_mallinfo",
+   "kind": "function",
+   "source_address": "0xc0ef818",
+   "target_address": "0xc0ee4a8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "equal body; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "heap_malloc",
+   "kind": "function",
+   "source_address": "0xc40d9f0",
+   "target_address": "0xc41a3d8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "equal body; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "heap_zalloc",
+   "kind": "function",
+   "source_address": "0xc2b887c",
+   "target_address": "0xc2b9f28",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "ioctl",
+   "kind": "function",
+   "source_address": "0xc2021c8",
+   "target_address": "0xc1fe254",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lseek",
+   "kind": "function",
+   "source_address": "0xc2a77d4",
+   "target_address": "0xc2a61c0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "open",
+   "kind": "function",
+   "source_address": "0xc419030",
+   "target_address": "0xc40c0ec",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "pthread_create_internal",
+   "kind": "function",
+   "source_address": "0xc51aca0",
+   "target_address": "0xc51aeb8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "read",
+   "kind": "function",
+   "source_address": "0xc407f14",
+   "target_address": "0xc40d64c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "register_blockdriver",
+   "kind": "function",
+   "source_address": "0xc179d34",
+   "target_address": "0xc180670",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "register_driver",
+   "kind": "function",
+   "source_address": "0xc51854c",
+   "target_address": "0xc518764",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "rename",
+   "kind": "function",
+   "source_address": "0xc321a9c",
+   "target_address": "0xc3202c4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sem_post",
+   "kind": "function",
+   "source_address": "0xc154cf4",
+   "target_address": "0xc15e5bc",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sem_trywait",
+   "kind": "function",
+   "source_address": "0xc3be750",
+   "target_address": "0xc3bbde4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sem_wait",
+   "kind": "function",
+   "source_address": "0xc08492c",
+   "target_address": "0xc08492c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "unlink",
+   "kind": "function",
+   "source_address": "0xc37c0d0",
+   "target_address": "0xc37e938",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "unregister_blockdriver",
+   "kind": "function",
+   "source_address": "0xc41372e",
+   "target_address": "0xc418c10",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "unregister_driver",
+   "kind": "function",
+   "source_address": "0xc413748",
+   "target_address": "0xc418c2a",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "equal body; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "write",
+   "kind": "function",
+   "source_address": "0xc1ceb64",
+   "target_address": "0xc1cb254",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_adapter_set_scan_mode",
+   "kind": "function",
+   "source_address": "0xc42c994",
+   "target_address": "0xc42863e",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_alloc",
+   "kind": "function",
+   "source_address": "0xc279eb0",
+   "target_address": "0xc27762e",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "bt_buffer_new",
+   "kind": "function",
+   "source_address": "0xc27a1e0",
+   "target_address": "0xc27795c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_create_bond_private",
+   "kind": "function",
+   "source_address": "0xc2ea844",
+   "target_address": "0xc2e8384",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_discovery_start",
+   "kind": "function",
+   "source_address": "0xc1f451a",
+   "target_address": "0xc1f0602",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_discovery_stop",
+   "kind": "function",
+   "source_address": "0xc2eaa48",
+   "target_address": "0xc2e8588",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_free",
+   "kind": "function",
+   "source_address": "0xc279ea6",
+   "target_address": "0xc277624",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "bt_get_bond_state",
+   "kind": "function",
+   "source_address": "0xc13b708",
+   "target_address": "0xc13762c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_l2cap_disconnect",
+   "kind": "function",
+   "source_address": "0xc259de4",
+   "target_address": "0xc24f838",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_l2cap_submit_cid",
+   "kind": "function",
+   "source_address": "0xc18b5b8",
+   "target_address": "0xc18d050",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_queue_external",
+   "kind": "function",
+   "source_address": "0xc391bc8",
+   "target_address": "0xc396b88",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_queue_free",
+   "kind": "function",
+   "source_address": "0xc272068",
+   "target_address": "0xc26f6d8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "bt_remove_bond_private",
+   "kind": "function",
+   "source_address": "0xc1eff42",
+   "target_address": "0xc1ec02a",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_timer_add",
+   "kind": "function",
+   "source_address": "0xc3e7c4c",
+   "target_address": "0xc3e5014",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_timer_cancel",
+   "kind": "function",
+   "source_address": "0xc38ae1c",
+   "target_address": "0xc38ee9c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "gap_host_stock_receive",
+   "kind": "function",
+   "source_address": "0xc39317c",
+   "target_address": "0xc397a1c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sdp_builder_create",
+   "kind": "function",
+   "source_address": "0xc467f70",
+   "target_address": "0xc4659c0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sdp_commit",
+   "kind": "function",
+   "source_address": "0xc3a2214",
+   "target_address": "0xc39e6f4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sdp_set_raw_attribute",
+   "kind": "function",
+   "source_address": "0xc17bf98",
+   "target_address": "0xc1749dc",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sdp_unregister",
+   "kind": "function",
+   "source_address": "0xc469fe0",
+   "target_address": "0xc467794",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "equal body but no caller or positional support"
+  },
+  {
+   "name": "app_lookup",
+   "kind": "function",
+   "source_address": "0xc2c9410",
+   "target_address": "0xc2c7438",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lvx_label_create",
+   "kind": "function",
+   "source_address": "0xc4b5278",
+   "target_address": "0xc4b4ca0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 35/35 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lvx_label_set_text",
+   "kind": "function",
+   "source_address": "0xc4b5310",
+   "target_address": "0xc4b4bf8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 30/30 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lvx_list_row_create",
+   "kind": "function",
+   "source_address": "0xc4b37ac",
+   "target_address": "0xc2c98f8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_list_row_trailing",
+   "kind": "function",
+   "source_address": "0xc53f978",
+   "target_address": "0xc53fb90",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "lvx_msgbox_create",
+   "kind": "function",
+   "source_address": "0xc127788",
+   "target_address": "0xc11ec44",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "lvx_msgbox_set_content",
+   "kind": "function",
+   "source_address": "0xc2a5f54",
+   "target_address": "0xc2a2ae8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lvx_object_align",
+   "kind": "function",
+   "source_address": "0xc4b5648",
+   "target_address": "0xc4b4888",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 54/57 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lvx_object_delete",
+   "kind": "function",
+   "source_address": "0xc4b5058",
+   "target_address": "0xc4b4c78",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 61/61 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lvx_object_set_size",
+   "kind": "function",
+   "source_address": "0xc4b53c0",
+   "target_address": "0xc4b4750",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 35/35 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "service_manager_cleanup",
+   "kind": "function",
+   "source_address": "0xc26178a",
+   "target_address": "0xc25ece6",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "service_manager_get_profile",
+   "kind": "function",
+   "source_address": "0xc1f8944",
+   "target_address": "0xc1f49cc",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "service_manager_register",
+   "kind": "function",
+   "source_address": "0xc556a90",
+   "target_address": "0xc556d00",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "service_manager_shutdown",
+   "kind": "function",
+   "source_address": "0xc33f074",
+   "target_address": "0xc3450b4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "service_manager_startup",
+   "kind": "function",
+   "source_address": "0xc44c3c8",
+   "target_address": "0xc44a5c4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lv_bar_create",
+   "kind": "function",
+   "source_address": "0xc4b5408",
+   "target_address": "0xc4b4850",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "lv_bar_set_range",
+   "kind": "function",
+   "source_address": "0xc0b5670",
+   "target_address": "0xc0b4bd4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 34/34 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lv_bar_set_value",
+   "kind": "function",
+   "source_address": "0xc4b5090",
+   "target_address": "0xc4b49c0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 61/61 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lv_event_get_code",
+   "kind": "function",
+   "source_address": "0xc4b5570",
+   "target_address": "0xc4b4c18",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 17/17 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lv_event_get_user_data",
+   "kind": "function",
+   "source_address": "0xc4b56b8",
+   "target_address": "0xc4b4630",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_image_create",
+   "kind": "function",
+   "source_address": "0xc1a7cd0",
+   "target_address": "0xc1bc040",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lv_image_set_src",
+   "kind": "function",
+   "source_address": "0xc3a4e8c",
+   "target_address": "0xc3a2588",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lv_obj_add_event_cb",
+   "kind": "function",
+   "source_address": "0xc0b5658",
+   "target_address": "0xc0b4bec",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 24/24 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lv_obj_align_to",
+   "kind": "function",
+   "source_address": "0xc4b5398",
+   "target_address": "0xc4b45e0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 21/21 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lv_obj_move_to_index",
+   "kind": "function",
+   "source_address": "0xc4b52a0",
+   "target_address": "0xc4b4b28",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 58/58 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lv_obj_set_hidden",
+   "kind": "function",
+   "source_address": "0xc4b5628",
+   "target_address": "0xc4b49f0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_set_style_bg_opa",
+   "kind": "function",
+   "source_address": "0xc43ee20",
+   "target_address": "0xc43c894",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lv_timer_create",
+   "kind": "function",
+   "source_address": "0xc4b50b8",
+   "target_address": "0xc4b47c8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "lv_timer_del",
+   "kind": "function",
+   "source_address": "0xc4b5540",
+   "target_address": "0xc4b47b0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 22/22 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lvx_image_set_scale",
+   "kind": "function",
+   "source_address": "0xc1661be",
+   "target_address": "0xc168012",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lvx_list_item_update",
+   "kind": "function",
+   "source_address": "0xc0f9b68",
+   "target_address": "0xc0f89f0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lvx_object_add_flag",
+   "kind": "function",
+   "source_address": "0xc4b5200",
+   "target_address": "0xc4b49d0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "lvx_page_content_create",
+   "kind": "function",
+   "source_address": "0xc4105a8",
+   "target_address": "0xc4177aa",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lvx_page_title_create",
+   "kind": "function",
+   "source_address": "0xc2781d4",
+   "target_address": "0xc275500",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lvx_style_apply",
+   "kind": "function",
+   "source_address": "0xc2c10a4",
+   "target_address": "0xc2bf7ec",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sport_titlebar_dispatch",
+   "kind": "function",
+   "source_address": "0xc2f158c",
+   "target_address": "0xc2ef324",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "watchface_manager_delete_watchface",
+   "kind": "function",
+   "source_address": "0xc3d75ac",
+   "target_address": "0xc3dba54",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  }
+ ]
+}

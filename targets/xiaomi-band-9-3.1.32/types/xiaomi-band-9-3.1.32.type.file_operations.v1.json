@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-9-3.1.32.type.file_operations.v1",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "kind": "struct",
+  "name": "file_operations",
+  "size": 48,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "open",
+      "offset": 0,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact driver open dispatch fops+0x00"
+    },
+    {
+      "name": "close",
+      "offset": 4,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact driver close dispatch fops+0x04"
+    },
+    {
+      "name": "read",
+      "offset": 8,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact file read dispatch fops+0x08"
+    },
+    {
+      "name": "write",
+      "offset": 12,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact file write dispatch fops+0x0c"
+    },
+    {
+      "name": "lseek",
+      "offset": 16,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact file lseek dispatch fops+0x10"
+    },
+    {
+      "name": "ioctl",
+      "offset": 20,
+      "width": 4,
+      "signedness": "pointer",
+      "provenance": "exact driver ioctl dispatch fops+0x14"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ABI-9132-EXACT-001"
+    ],
+    "source": "exact 3.1.32 NuttX VFS dispatcher and register_driver review"
+  }
+}

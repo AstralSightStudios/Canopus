@@ -76,6 +76,7 @@
 | K19 | 收尾整改（2026-10-20，真机验证除外）：适配 Band 11 `4.100.179`（以已审核的 `.155` 包为基线，匹配器 + 反编译复核 + 调用关系/位置核对，人工纠正 1 处误匹配；全部记录 restricted/PENDING，不继承任何批准或真机证明，见 `targets/xiaomi-band-11-4.100.179/loader/README.md`）；全局 safe mode（启动标记写进注册表头，自动进入、重启保持、`EXIT_SAFE_MODE` 退出与 trial 试运行，Manager 提供退出入口）；CreatorConsole 与 AstroBox-NG 的商店 `canopus` 元数据（P5.7）；043 冒烟完整通过（含手机端 phone flow，P5.2 的超时不再复现）。均只算 host/emulator 级证据 | 2026-10-20 |
 | K20 | 固化启动取代页面延时 Auto-run（ADR-CAN-012）：默认不固化，AstroBox Canopus 页确认后 Supervisor 经 `/dev/bes_flash` 改写 `rc.sysinit` 的一段等长差异尾段，覆盖 Band 10 Pro `.043` 与 Band 11 `.155` / `.179`（Mirage 冷启动验证，无真机）；安全模式与自动停用/回退对用户可见（管理器、启动通知、AstroBox）；修复退出安全模式不清崩溃计数；Band 10 构建去掉 `.ARM.exidx`；线程/工作队列的评估结论见 progress.md | 2026-10-21 |
 | K17 | 放弃 Band 11 `4.100.177`（缺固件镜像、适配不完整），整体移除其 target、Rust 绑定、测试与脚本；Band 11 改为适配 `4.100.179`（q66tc 完整包）。177 上的授权清单（calendar alpha 等）随目录删除，179 须重新取得用户授权，不继承；历史行与证据出处文字保留，可由 git 历史找回 | 2026-10-20 |
+| K21 | 快速静态适配四款 Mirage 支持的固件：Xiaomi Band 9 `3.1.32`（n66）、Band 9 Pro `3.1.190`（n67cn）、Band 10 `3.1.28`（o66tc）、REDMI Watch 6 `3.100.043`（p65）。Band 9 由 tag `band9-frozen` 恢复且全部批准降为 restricted/PENDING；n67 由 3.1.175 包移植（108/123 STATIC_RECOVERED），o66 由 Band 9 包移植（47/142），p65 由 Band 10 Pro `.043` 包移植。四者都标注为 Band-11 风格 Lua-owned staged loader（无 insmod、无 Lua `os.execute` 恢复），但 stage1/stage2、installer、模拟器与真机验证均未实现；n66/n67/o66 为 LVGL v8，需要专门的 v8 UI 后端，p65 为 v9。只新增静态记录，不提升任何能力状态 | 2026-10-24 |
 
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
 

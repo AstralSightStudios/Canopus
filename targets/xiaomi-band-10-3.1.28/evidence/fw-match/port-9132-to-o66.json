@@ -1,0 +1,1295 @@
+{
+ "source_target": "xiaomi-band-9-3.1.32",
+ "target_id": "xiaomi-band-10-3.1.28",
+ "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+ "unique_full_body_seeds": 10503,
+ "symbols": [
+  {
+   "name": "page_finish",
+   "kind": "function",
+   "source_address": "0x0c45e5c0",
+   "target_address": "0xc44e154",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "page_goto",
+   "kind": "function",
+   "source_address": "0x0c45b588",
+   "target_address": "0xc44d504",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "page_navigator_open_page",
+   "kind": "function",
+   "source_address": "0xc558a70",
+   "target_address": "0xc599c2c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "system_router_app_wrapper",
+   "kind": "function",
+   "source_address": "0xc17a774",
+   "target_address": "0xc163b6c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "system_router_get_pages_wrapper",
+   "kind": "function",
+   "source_address": "0xc4255ec",
+   "target_address": "0xc42be24",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "app_install",
+   "kind": "function",
+   "source_address": "0x0c4594d8",
+   "target_address": "0xc3a454c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_get_instance",
+   "kind": "function",
+   "source_address": "0xc382560",
+   "target_address": "0xc38150c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "bt_adapter_get_scan_mode",
+   "kind": "function",
+   "source_address": "0xc3d995e",
+   "target_address": "0xc4c4ec0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "bt_adapter_get_state",
+   "kind": "function",
+   "source_address": "0xc465254",
+   "target_address": "0xc4871ec",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_adapter_register",
+   "kind": "function",
+   "source_address": "0xc416b54",
+   "target_address": "0xc430578",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_unregister",
+   "kind": "function",
+   "source_address": "0xc389eec",
+   "target_address": "0xc360510",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_get_pairing_state",
+   "kind": "function",
+   "source_address": "0xc1615fe",
+   "target_address": "0xc1152b8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_l2cap_connect",
+   "kind": "function",
+   "source_address": "0xc39157c",
+   "target_address": "0xc38c2c4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_pair_display_reply",
+   "kind": "function",
+   "source_address": "0xc4e38ce",
+   "target_address": "0xc510332",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_pair_request_reply",
+   "kind": "function",
+   "source_address": "0xc2e2a90",
+   "target_address": "0xc2da9a0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "core_bt_pair_request_callback",
+   "kind": "function",
+   "source_address": "0xc3ff8b8",
+   "target_address": "0xc40bccc",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "offload_property_apply",
+   "kind": "function",
+   "source_address": "0xc3d8fb0",
+   "target_address": "0xc3a303c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_register_a2dp_callbacks",
+   "kind": "function",
+   "source_address": "0xc1fafce",
+   "target_address": "0xc1af80c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_register_hfp_ag_callbacks",
+   "kind": "function",
+   "source_address": "0xc1faeca",
+   "target_address": "0xc1af6e8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "hfp_ag_connect",
+   "kind": "function",
+   "source_address": "0xc31ae64",
+   "target_address": "0xc32fd70",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "hfp_ag_disconnect",
+   "kind": "function",
+   "source_address": "0xc319f0c",
+   "target_address": "0xc331550",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_socket_server_receive",
+   "kind": "function",
+   "source_address": "0xc39db54",
+   "target_address": "0xc397270",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "btsnoop_avdtp_recognizer",
+   "kind": "function",
+   "source_address": "0xc4633b0",
+   "target_address": "0xc48c4f8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "controller_crash_dump",
+   "kind": "function",
+   "source_address": "0xc52c44c",
+   "target_address": "0xc566480",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "vendor_hci_transport_register",
+   "kind": "function",
+   "source_address": "0xc476760",
+   "target_address": "0xc4576f4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "firmware_version_string",
+   "kind": "string",
+   "source_address": "0x0c5fc5c1",
+   "target_address": null,
+   "status": "CANDIDATE",
+   "state": "UNMATCHED",
+   "basis": "no candidate from the matcher"
+  },
+  {
+   "name": "launcher_load_app_info",
+   "kind": "function",
+   "source_address": "0x0c2c8ebc",
+   "target_address": "0xc29a1f8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "launcher_page_insert_icon",
+   "kind": "function",
+   "source_address": "0x0c2ceb4c",
+   "target_address": "0xc29b21c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "launcher_reset_order_info",
+   "kind": "function",
+   "source_address": "0x0c4c7164",
+   "target_address": "0xc4fc508",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_img_create",
+   "kind": "function",
+   "source_address": "0x0c28f5d8",
+   "target_address": "0xc3269f4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_img_set_src",
+   "kind": "function",
+   "source_address": "0x0c293c08",
+   "target_address": "0xc34ce10",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_label_create",
+   "kind": "function",
+   "source_address": "0x0c28f5f4",
+   "target_address": "0xc347b8c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_label_set_text",
+   "kind": "function",
+   "source_address": "0x0c294ef8",
+   "target_address": "0xc34db6c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_add_flag",
+   "kind": "function",
+   "source_address": "0x0c26f4f4",
+   "target_address": "0xc2bb826",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_clear_flag",
+   "kind": "function",
+   "source_address": "0x0c26f56a",
+   "target_address": "0xc2bb8b2",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_create",
+   "kind": "function",
+   "source_address": "0x0c26d370",
+   "target_address": "0xc127924",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_set_size",
+   "kind": "function",
+   "source_address": "0x0c27845e",
+   "target_address": "0xc2bcc22",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "equal body but no caller or positional support"
+  },
+  {
+   "name": "mm_free_default",
+   "kind": "function",
+   "source_address": "0x0c16a424",
+   "target_address": "0xc11eee8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "mm_memalign_default",
+   "kind": "function",
+   "source_address": "0x0c16ab8c",
+   "target_address": "0xc3cfa00",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "mpu_region_allocate",
+   "kind": "function",
+   "source_address": "0x0c5228a4",
+   "target_address": "0xc559288",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "mpu_region_configure",
+   "kind": "function",
+   "source_address": "0x0c52272c",
+   "target_address": "0xc559110",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "mpu_region_release",
+   "kind": "function",
+   "source_address": "0x0c5228fc",
+   "target_address": "0xc5592e0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "app_launcher_add",
+   "kind": "function",
+   "source_address": "0xc3d90fc",
+   "target_address": "0xc3a77a0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "app_launcher_data_init",
+   "kind": "function",
+   "source_address": "0xc501d1c",
+   "target_address": "0xc537358",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "app_launcher_del",
+   "kind": "function",
+   "source_address": "0xc31ae9c",
+   "target_address": "0xc32fda8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "hidden_and_show_app_cb",
+   "kind": "function",
+   "source_address": "0xc2ce9ec",
+   "target_address": "0xc29ebf8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "protobuf_set_ordered_app_list",
+   "kind": "function",
+   "source_address": "0xc2cba08",
+   "target_address": "0xc29e96c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "interconnect_close",
+   "kind": "function",
+   "source_address": "0xc3b5ab4",
+   "target_address": "0xc3aa486",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "interconnect_connect",
+   "kind": "function",
+   "source_address": "0xc4397f4",
+   "target_address": "0xc40f7d0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "interconnect_send",
+   "kind": "function",
+   "source_address": "0xc3ea4a4",
+   "target_address": "0xc3e05b0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "quickapp_register_app",
+   "kind": "function",
+   "source_address": "0xc2e8390",
+   "target_address": "0xc2d6e4c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "thirdparty_submit_message_content",
+   "kind": "function",
+   "source_address": "0xc515b00",
+   "target_address": "0xc54c538",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "insmod",
+   "kind": "function",
+   "source_address": "0xc148a40",
+   "target_address": "0xc1404d0",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "a known callee maps elsewhere"
+  },
+  {
+   "name": "modhandle",
+   "kind": "function",
+   "source_address": "0xc150da8",
+   "target_address": "0xc102be0",
+   "status": "FORBIDDEN",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "rmmod",
+   "kind": "function",
+   "source_address": "0xc1489f8",
+   "target_address": "0xc0f2524",
+   "status": "FORBIDDEN",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "lvx_notification_insert_message",
+   "kind": "function",
+   "source_address": "0xc16b154",
+   "target_address": "0xc11f31c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "clock_gettime",
+   "kind": "function",
+   "source_address": "0xc452348",
+   "target_address": "0xc1bde54",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "close",
+   "kind": "function",
+   "source_address": "0x0c39025c",
+   "target_address": "0xc38de04",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "driver_close_dispatch",
+   "kind": "function",
+   "source_address": "0xc391530",
+   "target_address": "0xc38c270",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "driver_ioctl_dispatch",
+   "kind": "function",
+   "source_address": "0xc33e480",
+   "target_address": "0xc37cf0c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "driver_open_dispatch",
+   "kind": "function",
+   "source_address": "0xc3c0dfc",
+   "target_address": "0xc3ae0fc",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "driver_read_dispatch",
+   "kind": "function",
+   "source_address": "0xc45966c",
+   "target_address": "0xc471ab4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "errno_location",
+   "kind": "function",
+   "source_address": "0x0c15f0c8",
+   "target_address": "0xc112e00",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "firmware_log",
+   "kind": "function",
+   "source_address": "0xc1c6fc8",
+   "target_address": "0xc17a5c2",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "heap_free",
+   "kind": "function",
+   "source_address": "0xc2b8864",
+   "target_address": "0xc2520c4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "heap_mallinfo",
+   "kind": "function",
+   "source_address": "0xc173e98",
+   "target_address": "0xc123e2e",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "equal body but no caller or positional support"
+  },
+  {
+   "name": "heap_malloc",
+   "kind": "function",
+   "source_address": "0xc434c1c",
+   "target_address": "0xc412894",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "equal body; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "heap_zalloc",
+   "kind": "function",
+   "source_address": "0xc2dd6d0",
+   "target_address": "0xc30dde8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "inode_lock",
+   "kind": "function",
+   "source_address": "0x0c390058",
+   "target_address": "0xc394910",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "inode_reserve",
+   "kind": "function",
+   "source_address": "0x0c4f7b7c",
+   "target_address": "0xc5280c8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "inode_unlock",
+   "kind": "function",
+   "source_address": "0x0c3908c4",
+   "target_address": "0xc4c5474",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "ioctl",
+   "kind": "function",
+   "source_address": "0xc207228",
+   "target_address": "0xc1bd6d4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lseek",
+   "kind": "function",
+   "source_address": "0xc3ba3f8",
+   "target_address": "0xc3b82a4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "open",
+   "kind": "function",
+   "source_address": "0x0c3942a0",
+   "target_address": "0xc390e1c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "pthread_create_internal",
+   "kind": "function",
+   "source_address": "0xc51fdb4",
+   "target_address": "0xc556798",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "read",
+   "kind": "function",
+   "source_address": "0x0c393466",
+   "target_address": "0xc38f8d0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "register_blockdriver",
+   "kind": "function",
+   "source_address": "0xc1ae0d0",
+   "target_address": "0xc167be0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "register_driver",
+   "kind": "function",
+   "source_address": "0x0c4e38ce",
+   "target_address": "0xc510332",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "rename",
+   "kind": "function",
+   "source_address": "0x0c391974",
+   "target_address": "0xc390408",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sem_post",
+   "kind": "function",
+   "source_address": "0xc1a8440",
+   "target_address": "0xc157bc4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sem_trywait",
+   "kind": "function",
+   "source_address": "0xc288a68",
+   "target_address": "0xc356d50",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sem_wait",
+   "kind": "function",
+   "source_address": "0xc10303c",
+   "target_address": "0xc0a332c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "unlink",
+   "kind": "function",
+   "source_address": "0x0c3920fc",
+   "target_address": "0xc391818",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "unregister_blockdriver",
+   "kind": "function",
+   "source_address": "0xc4331ae",
+   "target_address": "0xc43cb24",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "unregister_driver",
+   "kind": "function",
+   "source_address": "0x0c390f78",
+   "target_address": "0xc38fd00",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "write",
+   "kind": "function",
+   "source_address": "0x0c39349e",
+   "target_address": "0xc38f910",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_adapter_set_scan_mode",
+   "kind": "function",
+   "source_address": "0xc43fbc2",
+   "target_address": "0xc416150",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_alloc",
+   "kind": "function",
+   "source_address": "0xc306d0c",
+   "target_address": "0xc3266c8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "bt_buffer_new",
+   "kind": "function",
+   "source_address": "0xc2a65f8",
+   "target_address": "0xc22d6c4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_create_bond_private",
+   "kind": "function",
+   "source_address": "0xc394e92",
+   "target_address": "0xc39602a",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_discovery_start",
+   "kind": "function",
+   "source_address": "0xc2eabe4",
+   "target_address": "0xc163c3a",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_discovery_stop",
+   "kind": "function",
+   "source_address": "0xc30f0c4",
+   "target_address": "0xc31e128",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_free",
+   "kind": "function",
+   "source_address": "0xc2c816c",
+   "target_address": "0xc3152ec",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "bt_get_bond_state",
+   "kind": "function",
+   "source_address": "0xc183e9e",
+   "target_address": "0xc12fe6c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_l2cap_disconnect",
+   "kind": "function",
+   "source_address": "0xc287e88",
+   "target_address": "0xc2fbca0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_l2cap_submit_cid",
+   "kind": "function",
+   "source_address": "0xc16a768",
+   "target_address": "0xc1206b8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_queue_external",
+   "kind": "function",
+   "source_address": "0xc3ae8e4",
+   "target_address": "0xc3acdb0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "bt_queue_free",
+   "kind": "function",
+   "source_address": "0xc2a58a8",
+   "target_address": "0xc243354",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "bt_remove_bond_private",
+   "kind": "function",
+   "source_address": "0xc1f615a",
+   "target_address": "0xc1aa40c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_timer_add",
+   "kind": "function",
+   "source_address": "0xc3fb938",
+   "target_address": "0xc404760",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "bt_timer_cancel",
+   "kind": "function",
+   "source_address": "0xc3a5eec",
+   "target_address": "0xc3ac72c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "gap_host_stock_receive",
+   "kind": "function",
+   "source_address": "0xc3afb64",
+   "target_address": "0xc3b46f8",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sdp_builder_create",
+   "kind": "function",
+   "source_address": "0xc474bd8",
+   "target_address": "0xc45d84c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sdp_commit",
+   "kind": "function",
+   "source_address": "0xc3a98b0",
+   "target_address": "0xc3b8a48",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sdp_set_raw_attribute",
+   "kind": "function",
+   "source_address": "0xc221318",
+   "target_address": "0xc4c76c4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "sdp_unregister",
+   "kind": "function",
+   "source_address": "0xc2eb694",
+   "target_address": "0xc16d15c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "app_lookup",
+   "kind": "function",
+   "source_address": "0x0c458cd8",
+   "target_address": "0xc4713dc",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lvx_label_create",
+   "kind": "function",
+   "source_address": "0xc134e5c",
+   "target_address": "0xc0d7fe0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 24/24 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lvx_label_set_text",
+   "kind": "function",
+   "source_address": "0xc534d30",
+   "target_address": "0xc4e0bf0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 23/23 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lvx_list_row_create",
+   "kind": "function",
+   "source_address": "0xc420112",
+   "target_address": "0xc4224d4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_list_row_trailing",
+   "kind": "function",
+   "source_address": "0xc543d74",
+   "target_address": "0xc57cc44",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; neighbouring anchors keep their relative function distance; known callees consistent"
+  },
+  {
+   "name": "lvx_msgbox_create",
+   "kind": "function",
+   "source_address": "0xc35d608",
+   "target_address": "0xc12ff02",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_msgbox_set_content",
+   "kind": "function",
+   "source_address": "0xc3316fc",
+   "target_address": "0xc360954",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_object_align",
+   "kind": "function",
+   "source_address": "0xc534c18",
+   "target_address": "0xc4e0ca8",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "identical pseudocode but no caller or positional support"
+  },
+  {
+   "name": "lvx_object_delete",
+   "kind": "function",
+   "source_address": "0xc534888",
+   "target_address": "0xc4e1010",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 33/36 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lvx_object_set_size",
+   "kind": "function",
+   "source_address": "0xc534c70",
+   "target_address": "0xc4e1140",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 32/32 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "service_manager_cleanup",
+   "kind": "function",
+   "source_address": "0xc28f9cc",
+   "target_address": "0xc34fcd4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "service_manager_get_profile",
+   "kind": "function",
+   "source_address": "0xc2013f4",
+   "target_address": "0xc1b3f44",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "service_manager_register",
+   "kind": "function",
+   "source_address": "0xc5639a0",
+   "target_address": "0xc5a50ec",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "service_manager_shutdown",
+   "kind": "function",
+   "source_address": "0xc334908",
+   "target_address": "0xc36c300",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "service_manager_startup",
+   "kind": "function",
+   "source_address": "0xc45bf88",
+   "target_address": "0xc44e0c4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_bar_create",
+   "kind": "function",
+   "source_address": "0x0c28fed8",
+   "target_address": "0xc392c88",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_bar_set_range",
+   "kind": "function",
+   "source_address": "0x0c28ffb4",
+   "target_address": "0xc341e18",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_bar_set_value",
+   "kind": "function",
+   "source_address": "0x0c28ff74",
+   "target_address": "0xc341da4",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_event_get_code",
+   "kind": "function",
+   "source_address": "0xc534818",
+   "target_address": "0xc4e0c38",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 13/13 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lv_event_get_user_data",
+   "kind": "function",
+   "source_address": "0xc534dd8",
+   "target_address": "0xc4e10b0",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_image_create",
+   "kind": "function",
+   "source_address": "0xc15dad8",
+   "target_address": "0xc11153c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lv_image_set_src",
+   "kind": "function",
+   "source_address": "0xc3be3a4",
+   "target_address": "0xc3a2788",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lv_obj_add_event_cb",
+   "kind": "function",
+   "source_address": "0x0c274c8c",
+   "target_address": "0xc20dfbc",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_align_to",
+   "kind": "function",
+   "source_address": "0x0c278bdc",
+   "target_address": "0xc2bd39c",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lv_obj_move_to_index",
+   "kind": "function",
+   "source_address": "0xc534a90",
+   "target_address": "0xc4e0e50",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 48/48 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lv_obj_set_hidden",
+   "kind": "function",
+   "source_address": "0xc534c68",
+   "target_address": "0xc4e0f70",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 22/22 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lv_obj_set_style_bg_opa",
+   "kind": "function",
+   "source_address": "0xc44feba",
+   "target_address": "0xc468a8c",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lv_timer_create",
+   "kind": "function",
+   "source_address": "0xc534a60",
+   "target_address": "0xc4e10a0",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 32/35 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lv_timer_del",
+   "kind": "function",
+   "source_address": "0xc534da0",
+   "target_address": "0xc4e1250",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 19/19 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lvx_image_set_scale",
+   "kind": "function",
+   "source_address": "0xc3813a0",
+   "target_address": "0xc23a240",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_list_item_update",
+   "kind": "function",
+   "source_address": "0xc16cff4",
+   "target_address": "0xc1244b4",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "lvx_object_add_flag",
+   "kind": "function",
+   "source_address": "0xc534d68",
+   "target_address": "0xc4e0c00",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "identical pseudocode; 48/48 anchored callers call the target; known callees consistent"
+  },
+  {
+   "name": "lvx_page_content_create",
+   "kind": "function",
+   "source_address": "0xc430cdc",
+   "target_address": "0xc43c818",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_page_title_create",
+   "kind": "function",
+   "source_address": "0x0c4c5f60",
+   "target_address": "0xc4f9364",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "lvx_style_apply",
+   "kind": "function",
+   "source_address": "0xc356564",
+   "target_address": "0xc288964",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  },
+  {
+   "name": "sport_titlebar_dispatch",
+   "kind": "function",
+   "source_address": "0xc39d8a8",
+   "target_address": "0xc3959ec",
+   "status": "CANDIDATE",
+   "state": "REVIEW",
+   "basis": "body differs (instruction fingerprint and pseudocode)"
+  },
+  {
+   "name": "watchface_manager_delete_watchface",
+   "kind": "function",
+   "source_address": "0x0c45e3ac",
+   "target_address": "0xc495d00",
+   "status": "STATIC_RECOVERED",
+   "state": "ACCEPTED",
+   "basis": "mutually unique full-body anchor; known callees consistent"
+  }
+ ]
+}

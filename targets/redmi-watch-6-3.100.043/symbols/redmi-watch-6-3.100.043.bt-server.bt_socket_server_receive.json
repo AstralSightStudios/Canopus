@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.bt_socket_server_receive",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "bt_socket_server_receive",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "internal event-source/revents/server-state callback",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "entry_address": "0xc55276c",
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was FORBIDDEN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact internal socket event-loop handler; not a supported SDK transport receive function and must not be invoked directly.",
+  "approval_state": "REJECTED"
+}

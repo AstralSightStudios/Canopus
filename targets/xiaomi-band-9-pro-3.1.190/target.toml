@@ -1,0 +1,89 @@
+# xiaomi-band-9-pro-3.1.190 — Xiaomi Smart Band 9 Pro firmware 3.1.190 (n67cn)
+# Static pack ported from the exact 3.1.175 IDB pack. Nothing is device verified.
+schema = 1
+target_id = "xiaomi-band-9-pro-3.1.190"
+device_family = "xiaomi-smart-band"
+device_model = "Xiaomi Band 9 Pro"
+board_revision = "n67cn"
+os_family = "nuttx-derived"
+architecture = "armv8-m.main"
+cpu = "cortex-m33"
+instruction_set = "thumb2"
+endianness = "little"
+float_abi = "soft"
+loader = "custom-staged-band11-style-static-test"
+firmware_sha256 = "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f"
+firmware_version = "3.1.190"
+firmware_build = "CONBINE_LTALM054_T1190_09161923_release_6006"
+module_abi = 1
+relocation_profile = "best1503-v1"
+revision = 1
+
+firmware_address_ranges = [
+  { base = 0x0C000000, size = 0x00800000 },
+]
+
+# No capability is build-available: every ported record is restricted/PENDING.
+# This is an LVGL v8 device and needs its own v8 Manager backend before any UI
+# capability can be claimed; the v9 backend does not apply.
+capabilities = []
+
+[loader_profile]
+elf_class = 32
+elf_machine = "ARM"
+elf_type = "ET_REL"
+endianness = "little"
+constructor_discovery = "init_array"
+symbol_imports = "none"
+max_size = 0
+alignment = 4
+persistent_autoload = false
+
+[[loader_profile.relocations]]
+name = "R_ARM_NONE"
+arm_type = 0
+notes = "no-op; accepted"
+[[loader_profile.relocations]]
+name = "R_ARM_ABS32"
+arm_type = 2
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_REL32"
+arm_type = 23
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_TARGET1"
+arm_type = 38
+notes = "handled with ABS32 semantics"
+[[loader_profile.relocations]]
+name = "R_ARM_PREL31"
+arm_type = 42
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVW_ABS_NC"
+arm_type = 47
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVT_ABS"
+arm_type = 48
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_CALL"
+arm_type = 10
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_JUMP24"
+arm_type = 30
+notes = "static candidate; no device loader gate"
+
+[provenance]
+source_repo = "miwear.watch.n67cn_v3.1.190_full_77174e6a"
+source_findings = [
+  "AP image extracted from the 50,330,500-byte full package: inner table entry /data/ota/app/vela_ap.bin at +0xc0aa4 is a ZIP whose vela_ap.bin is 7,775,288 bytes, SHA-256 3e264bc2…f82f.",
+  "Port baseline: exact 3.1.175 target pack (tag band9-frozen). The ensemble matcher found 20,956 mutually unique full-body seeds and predicted all 123 function symbols; port_pack accepted 108 after equal normalized body, anchored callee/caller or positional support, and decompiler comparison (27 of 34 remaining pairs had identical pseudocode).",
+  "15 records stay CANDIDATE without a callable address; every record is restricted/PENDING, proof.device=not_probed, and no promotion or approval is carried from 3.1.175.",
+  "LVGL v8 UI: the Band 11 / Band 10 Pro v9 backend does not apply and no UI capability is claimed. The former Band 9 v8 backend was removed with the band9-frozen tag.",
+]
+import_date = "2026-10-24"
+maintainer = "canopus-maintainer"
+reviewers = []

@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.private_abi.bt_discovery_start",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "bt_discovery_start",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc163c3a",
+  "prototype": "int(void *, int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1028-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-PORT-1028-001"
+    ],
+    "source": "Exact xiaomi-band-10-3.1.28 image/IDB compared with xiaomi-band-9-3.1.32: body differs (instruction fingerprint and pseudocode)."
+  },
+  "approval_state": "PENDING",
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path."
+}

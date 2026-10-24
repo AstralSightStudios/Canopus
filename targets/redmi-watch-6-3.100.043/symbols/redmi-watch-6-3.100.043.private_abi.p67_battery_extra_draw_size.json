@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.p67_battery_extra_draw_size",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "p67_battery_extra_draw_size",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc255d9c",
+  "calling_convention": "arm-aapcs",
+  "prototype": "uint32_t (void *object)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed live battery object, validated through the current native Control Center parent chain or owned synchronous draw dispatch.",
+    "return_value": "Scalar extra drawing extent; no ownership transfer."
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Battery constructor sets object+68=30; REFRESH_EXT_DRAW_SIZE event22 supplies that extent. Default 62x32 battery therefore snapshots to 122x92, not 64x36. Re-read current extent and geometry after snapshot layout. NOT_PROBED; no range expansion."
+}

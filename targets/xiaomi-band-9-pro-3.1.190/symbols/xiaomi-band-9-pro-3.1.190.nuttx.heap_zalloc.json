@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.nuttx.heap_zalloc",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "heap_zalloc",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void *(uint32_t)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-9190-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-PORT-9190-001"
+    ],
+    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-9pro-3175: mutually unique full-body anchor; known callees consistent."
+  },
+  "entry_address": "0xc2b9f28",
+  "callable_address": "0xc2b9f29",
+  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "approval_state": "PENDING"
+}

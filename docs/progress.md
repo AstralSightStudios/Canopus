@@ -18,6 +18,17 @@
 - 相关符号保持 restricted / PENDING / not_probed；没有提升为 device verified 或 production approved。
 - 快应用容器、快应用目录和列表管理方案已撤销；历史验证记录不作为新数据面证据。
 
+## 四款固件的快速静态适配（2026-10-24，仅静态）
+
+- 新增 exact target（全部记录 `restricted` / `PENDING` / `not_probed`，无批准、无能力状态）：
+  - `xiaomi-band-9-3.1.32`（n66，SHA `9c02dab4…3264`）：从 tag `band9-frozen` 恢复 143 条精确记录，原 40 条 APPROVED/managed 全部降为 restricted/PENDING；
+  - `xiaomi-band-9-pro-3.1.190`（n67cn，SHA `3e264bc2…f82f`）：从 3.1.175 包移植，20,956 个互唯一种子，123 条函数中 108 条 STATIC_RECOVERED、15 条 CANDIDATE；
+  - `xiaomi-band-10-3.1.28`（o66tc，SHA `fb726472…8845`）：从 Band 9 3.1.32 包移植，47 条 STATIC_RECOVERED、92 条 CANDIDATE、3 条 FORBIDDEN；
+  - `redmi-watch-6-3.100.043`（p65，SHA `a19b6014…5858`）：从 Band 10 Pro `.043` 包移植，仅接受函数体相等且有调用/位置支撑的记录，其余保持 CANDIDATE。
+- 生成物可重建（`canopus target generate --all --check` 9/9），`generated_stability` 18/18 通过。四者的 loader 均标注为 Band-11 风格 Lua-owned staged loader（无 `insmod`、无 Lua `os.execute` 恢复），但 stage1/stage2、installer staging 与设备/模拟器验证尚未实现；`loader/README.md` 写明边界。
+- **UI family**：Band 9 / Band 9 Pro / Band 10 是 LVGL v8，需要专门的 v8 Manager 后端（旧的 v8 后端随 `band9-frozen` 删除）；Band 11 / Band 10 Pro / REDMI Watch 6 是 LVGL v9。
+- 未新增 Rust 绑定或 Supervisor 构建支持；没有真机或 Mirage 运行，未提升任何能力状态。
+
 ## Band 11 `4.100.179` 与全局 safe mode（2026-10-20）
 
 - `.179`（q66tc，build `user-4.100.179-cn-202609302100`）由已审核的 `.155` 包移植：270 条符号记录全部 `restricted` / `PENDING` / `not_probed`，

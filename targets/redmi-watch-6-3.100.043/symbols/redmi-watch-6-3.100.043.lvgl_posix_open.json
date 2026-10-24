@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lvgl_posix_open",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lvgl_posix_open",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Identity of firmware-owned LVGL POSIX-open callback already used by the default and experimental Resource-Hook modules. Native driver initialization installs this exact PSRAM pointer; no generalized callable ABI, driver replacement or ownership promotion. Preserve existing module behavior and native callback contract.",
+    "return_value": "Identity metadata only; no new ownership transfer or public wrapper."
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no candidate from the matcher."
+  },
+  "notes": "no candidate from the matcher. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target."
+}

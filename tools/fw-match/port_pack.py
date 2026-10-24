@@ -112,9 +112,11 @@ def judge(mapper: Mapper, match, review):
     if s not in mapper.src.functions or t not in mapper.dst.functions:
         return False, "no function at the source or predicted address"
     top = match["top_candidates"][0]
-    content = top.get("full_body_equal") is True or review.get("verdict") == "IDENTICAL"
+    body = top.get("full_body_equal") is True
+    content = body or review.get("verdict") == "IDENTICAL"
     if not content:
         return False, "body differs (instruction fingerprint and pseudocode)"
+    kind = "equal body" if body else "identical pseudocode"
     hood = mapper.neighbourhood(s, t)
     if not hood["callees_ok"]:
         return False, "a known callee maps elsewhere"
@@ -122,12 +124,12 @@ def judge(mapper: Mapper, match, review):
         return True, "mutually unique full-body anchor; known callees consistent"
     if hood["callers_known"] >= 5 and hood["callers_hit"] >= 0.9 * hood["callers_known"]:
         return True, (
-            f"equal body; {hood['callers_hit']}/{hood['callers_known']} anchored callers call the target; "
+            f"{kind}; {hood['callers_hit']}/{hood['callers_known']} anchored callers call the target; "
             "known callees consistent"
         )
     if mapper.position_ok(s, t):
-        return True, "equal body; neighbouring anchors keep their relative function distance; known callees consistent"
-    return False, "equal body but no caller or positional support"
+        return True, f"{kind}; neighbouring anchors keep their relative function distance; known callees consistent"
+    return False, f"{kind} but no caller or positional support"
 
 
 def thumb(entry):

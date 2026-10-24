@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.launcher.hidden_and_show_app_cb",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "hidden_and_show_app_cb",
+  "kind": "function",
+  "entry_address": "0xc2ce9ec",
+  "callable_address": "0xc2ce9ed",
+  "instruction_set": "thumb",
+  "prototype": "int(launcher_msg_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "launcher_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed",
+    "return_value": "int"
+  },
+  "side_effects": [
+    "hides_or_shows_app",
+    "rebuilds_launcher_ui"
+  ],
+  "proof": {
+    "static": "candidate",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+    ],
+    "device": "not_probed"
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+    ],
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+  },
+  "notes": "Generated candidate only; requires independent ABI/callsite review before promotion. state=CANDIDATE confidence=0.6383 margin=0.1574",
+  "approval_state": "PENDING"
+}

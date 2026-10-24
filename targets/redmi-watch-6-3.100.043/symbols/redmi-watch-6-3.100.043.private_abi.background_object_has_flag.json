@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.background_object_has_flag",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "background_object_has_flag",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc8be6b8",
+  "calling_convention": "arm-aapcs",
+  "prototype": "int(void *object, unsigned int flags)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed class/live/page-validated native object only. Only audited hidden flag1 query is used.",
+    "return_value": "Nonzero iff all requested flags are set; no ownership transfer."
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. 8-byte AP thunk SHA256 006f372b0386eb47ed22cbfec40c0388afb78bcc3862bc4b1007d8825f10607a. Experimental borrowed foreground/image visibility queries; stale or unknown objects rejected."
+}

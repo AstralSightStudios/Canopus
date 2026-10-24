@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.calendar_eventbus_send",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "calendar_eventbus_send",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c1347d8",
+  "calling_convention": "arm-aapcs",
+  "prototype": "int (uint32_t code, void *payload, uint32_t sync)",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Event code, payload pointer, sync flag",
+    "return_value": "0 on success"
+  },
+  "side_effects": [
+    "Broadcasts event to UI eventbus subscribers"
+  ],
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact native eventbus dispatch entry used by sub_CA6A004."
+}

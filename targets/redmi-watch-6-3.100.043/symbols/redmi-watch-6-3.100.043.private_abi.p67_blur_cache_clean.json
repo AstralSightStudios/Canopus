@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.p67_blur_cache_clean",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "p67_blur_cache_clean",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc256114",
+  "calling_convention": "arm-aapcs",
+  "prototype": "int(uint32_t id, void *address, uint32_t length)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Dcache id1 clean; module supplies dsb/isb barriers. Audited HAL uses whole-cache command for large lengths; provider cleans before large-range invalidation to preserve unrelated CPU writes. Runtime coherency NOT_PROBED.",
+    "return_value": "Dcache id1 clean; module supplies dsb/isb barriers. Audited HAL uses whole-cache command for large lengths; provider cleans before large-range invalidation to preserve unrelated CPU writes. Runtime coherency NOT_PROBED."
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Dcache id1 clean; module supplies dsb/isb barriers. Audited HAL uses whole-cache command for large lengths; provider cleans before large-range invalidation to preserve unrelated CPU writes. Runtime coherency NOT_PROBED. Experimental static blur: NOT_PROBED; no public approval or verifier bypass."
+}

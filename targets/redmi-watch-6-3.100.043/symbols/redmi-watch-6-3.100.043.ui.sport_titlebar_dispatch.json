@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.sport_titlebar_dispatch",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "sport_titlebar_dispatch",
+  "kind": "function",
+  "entry_address": "0xc8835c4",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "forbidden",
+  "status": "FORBIDDEN",
+  "approval_state": "REJECTED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was FORBIDDEN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (sport_titlebar_dispatch)"
+}

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.firmware_build_string",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "firmware_build_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "prototype": "const char[]",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ID-31190-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "source": "exact xiaomi-band-9-pro-3.1.190 image; NUL-terminated exact build token",
+    "evidence_ids": [
+      "EVID-ID-31190-001"
+    ]
+  },
+  "entry_address": "0x0C080850",
+  "notes": "exact xiaomi-band-9-pro-3.1.190 identity; value 'CONBINE_LTALM054_T1190_09161923_release_6006'; NUL-terminated exact build token",
+  "approval_state": "PENDING"
+}

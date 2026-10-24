@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.core_bt_callback_table",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "core_bt_callback_table",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "const uint32_t[16]",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: source has no address."
+  },
+  "approval_state": "REJECTED",
+  "notes": "source has no address. Source semantic status was WITHDRAWN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. The target-private adapter registration ABI accepts a caller-owned callback table; this withdrawn record does not supply one from stock firmware."
+}

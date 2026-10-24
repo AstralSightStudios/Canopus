@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.calendar_app_lookup_name",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "calendar_app_lookup_name",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc241420",
+  "prototype": "void *(const char *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed bounded NUL-terminated exact package/app name; active registry and selected hash bucket must be initialized and validated before invocation.",
+    "return_value": "Borrowed manager-owned active app record or NULL on miss. Package +8 and icon pathname +12 are replaced/freed by native update/removal; copy synchronously on the serialized UI owner and retain no native pointers."
+  },
+  "side_effects": [
+    "reads_active_package_name_registry"
+  ],
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: a known callee maps elsewhere."
+  },
+  "notes": "a known callee maps elsewhere. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target."
+}

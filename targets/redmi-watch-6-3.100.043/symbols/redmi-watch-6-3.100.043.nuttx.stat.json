@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.nuttx.stat",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "stat",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c1572b4",
+  "prototype": "int(const char *path, void *stat_buffer)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. NuttX stat into a 104-byte struct stat: st_mode at +8, st_size (int64) at +32, st_atim/st_mtim/st_ctim as 16-byte timespecs from +56. The filesystem's own stat operation fills the times; returns -1 and sets errno on failure. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+}

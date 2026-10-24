@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.private_abi.bt_get_bond_state",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "bt_get_bond_state",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc13762c",
+  "prototype": "uint32_t(const uint8_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-9190-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-PORT-9190-001"
+    ],
+    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-9pro-3175: mutually unique full-body anchor; known callees consistent."
+  },
+  "approval_state": "PENDING",
+  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "callable_address": "0xc13762d"
+}

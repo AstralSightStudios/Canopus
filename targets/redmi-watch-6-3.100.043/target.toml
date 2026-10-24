@@ -1,0 +1,93 @@
+# redmi-watch-6-3.100.043 — REDMI Watch 6 (p65) firmware 3.100.043
+# Static pack ported from the reviewed Band 10 Pro 3.101.043 pack.
+# Historical note: a 2026-09 experimental P65 deployment boot-looped a device
+# (ADR-CAN-007). That pack was removed; this is a new identity with a different
+# loader and no inherited approval. It has never been deployed.
+schema = 1
+target_id = "redmi-watch-6-3.100.043"
+device_family = "redmi-watch"
+device_model = "REDMI Watch 6"
+board_revision = "p65"
+os_family = "nuttx-derived"
+architecture = "armv8-m.main"
+cpu = "cortex-m33"
+instruction_set = "thumb2"
+endianness = "little"
+float_abi = "soft"
+loader = "custom-staged-band11-style-static-test"
+firmware_sha256 = "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858"
+firmware_version = "3.100.043"
+firmware_build = "d516af0:nx_best1502p_ap"
+identity_terminator = "line"
+module_abi = 1
+relocation_profile = "best1502p-unverified-v1"
+revision = 1
+
+firmware_address_ranges = [
+  { base = 0x0C0C0000, size = 0x00B3F484 },
+]
+
+# No capability is build-available: every ported record is restricted/PENDING.
+# This is an LVGL v9 device like Band 10 Pro, but the firmware is a different
+# product and no capability is proven.
+capabilities = []
+
+[loader_profile]
+elf_class = 32
+elf_machine = "ARM"
+elf_type = "ET_REL"
+endianness = "little"
+constructor_discovery = "init_array"
+symbol_imports = "none"
+max_size = 0
+alignment = 4
+persistent_autoload = false
+
+[[loader_profile.relocations]]
+name = "R_ARM_NONE"
+arm_type = 0
+notes = "no-op; accepted"
+[[loader_profile.relocations]]
+name = "R_ARM_ABS32"
+arm_type = 2
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_REL32"
+arm_type = 23
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_TARGET1"
+arm_type = 38
+notes = "handled with ABS32 semantics"
+[[loader_profile.relocations]]
+name = "R_ARM_PREL31"
+arm_type = 42
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVW_ABS_NC"
+arm_type = 47
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_MOVT_ABS"
+arm_type = 48
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_CALL"
+arm_type = 10
+notes = "static candidate; no device loader gate"
+[[loader_profile.relocations]]
+name = "R_ARM_THM_JUMP24"
+arm_type = 30
+notes = "static candidate; no device loader gate"
+
+[provenance]
+source_repo = "miwear.watch.p65_v3.100.043_full_662aa7db"
+source_findings = [
+  "vela_ap.bin is 11,793,540 bytes, SHA-256 a19b6014…5858, byte-identical to the Mirage library image.",
+  "Port baseline: the reviewed Band 10 Pro 3.101.043 pack (LVGL v9 generation). The ensemble matcher found 4,476 mutually unique full-body seeds and predicted 225 of 274 function symbols; port_pack accepted the subset with equal normalized body and anchored callee/caller or positional support. The rest stay CANDIDATE without a callable address.",
+  "Every record is restricted/PENDING, proof.device=not_probed. No approval, capability or device proof is carried from Band 10 Pro.",
+  "Historical P65 3.100.043 deployment (2026-09) boot-looped into the Logo and needed a REC data wipe; the cause was never established (ADR-CAN-007). This pack is a new static identity and has not been deployed.",
+]
+import_date = "2026-10-24"
+maintainer = "canopus-maintainer"
+reviewers = []

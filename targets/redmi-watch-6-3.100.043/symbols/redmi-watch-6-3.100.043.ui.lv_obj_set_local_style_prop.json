@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lv_obj_set_local_style_prop",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_obj_set_local_style_prop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void (void *, uint32_t, uint32_t, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "native_manager_owner",
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrows a live LVGL object; property, numeric style value and selector are passed in AAPCS registers R1-R3",
+    "return_value": "none"
+  },
+  "side_effects": [
+    "mutates_local_widget_style"
+  ],
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no candidate from the matcher."
+  },
+  "notes": "no candidate from the matcher. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact 3.101.043 LVGL v9 local-style dispatcher. Restricted to freshly created live UI objects on the owner thread; exact-device centered-label rendering probe remains pending.",
+  "approval_state": "PENDING"
+}

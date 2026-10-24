@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lv_obj_align_to",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_obj_align_to",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *, void *, uint32_t, int32_t, int32_t)",
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "entry_address": "0xc8bd038",
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was DEVICE_PROVEN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. exact 3.101.043 LVGL compatibility thunk used by stock page code to place the first row against page content and subsequent rows below the preceding row (align 14 with an 8 px gap) Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Device verified for the UI host (EVID-UI-1043-DEVICE-001); policy stays native-full-trust.",
+  "approval_state": "PENDING"
+}

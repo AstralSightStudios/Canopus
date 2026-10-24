@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.system.system_state",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "system_state",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "uint8_t *",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no unique global candidate."
+  },
+  "notes": "no unique global candidate. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Pointer to the system_all_state struct, NULL until system_init_state runs. Byte +1 is the MiWear connection state and byte +2 the Bluetooth ACL state (update_from_bt_state), 1 down / 2 up. Read-only. Static evidence only, device NOT_PROBED."
+}

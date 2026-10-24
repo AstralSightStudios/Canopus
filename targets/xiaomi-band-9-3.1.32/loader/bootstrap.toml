@@ -1,0 +1,93 @@
+# Firmware-bound NSH/mw bootstrap profile for Xiaomi Band 9 3.1.32.
+# The exact NSH, heap, VFS, MPU and SRAM publication primitives are statically
+# recovered from the exact 3.1.32 IDB. This is still not device verification.
+schema = 1
+target_id = "xiaomi-band-9-3.1.32"
+firmware_sha256 = "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264"
+loader_family = "nsh-mw-stage1-stage2"
+status = "STATIC_RECOVERED"
+device_status = "STATIC_CANDIDATE"
+command_family = "mw-exec"
+
+[stage0]
+# Static candidate: this RAM interval is between the DATA/BSS image and the
+# recovered Kmem heap start, with no IDA segment/global ownership. Its runtime
+# contents are not assumed to be zero and are not restored after use.
+kind = "unassigned_privileged_ram_gap"
+base = 0x200CB400
+size = 0x1000
+exec_size = 0x40
+stage0_region = 7
+result_word = 0x200CB440
+original_words_known = false
+preserve_original = false
+status = "STATIC_CANDIDATE"
+requires_mpu_sync = true
+
+[stage]
+stage2_path = "/data/canopus/stage2.bin"
+supervisor_path = "/data/canopus/supervisor.elf"
+entry_argument = "unspecified-r0"
+thumb_entry = true
+
+[firmware]
+exec_handler = 0x0C1C9528
+mw_handler = 0x0C1CC340
+open = 0x0C3942A0
+close = 0x0C39025C
+read = 0x0C393466
+memalign = 0x0C16AB8C
+free = 0x0C16A424
+kmem_malloc = 0x0C16AF04
+kmem_free = 0x0C16A4B4
+mpu_alloc = 0x0C5228A4
+mpu_configure = 0x0C52272C
+mpu_release = 0x0C5228FC
+# Entry at the barrier tail of the MPU helper: DSB SY; ISB SY; BX LR.
+mpu_sync = 0x0C5226DA
+# Exact inode primitives used to preserve inode_reserve errors that the stock
+# register_driver wrapper discards before returning the unlock result.
+inode_lock = 0x0C390058
+inode_reserve = 0x0C4F7B7C
+inode_unlock = 0x0C3908C4
+
+[architecture]
+mpu_rnr = 0xE000ED98
+mpu_rbar = 0xE000ED9C
+mpu_rlar = 0xE000EDA0
+mpu_region_count = 8
+exec_access_attr = 1
+exec_mem_attr = 1
+ro_access_attr = 4
+rw_access_attr = 0
+
+[sram_text]
+base = 0x200686C0
+size = 0x2300
+startup_copy_source = 0x2C10C3DC
+startup_copy_size = 0x2720
+cave_source = 0x2C10E6CC
+cave = 0x2006A9B0
+result_word = 0x2006A9CC
+original_words = [
+  0x00000000, 0x00000000, 0x00000000, 0x00000000,
+  0x726F6E5F, 0x73616C66, 0x70615F68, 0x72665F69,
+]
+
+[evidence]
+ids = [
+  "EVID-LOADER-9132-001",
+  "EVID-STAGE0-9132-003",
+  "EVID-SUPERVISOR-9132-004",
+]
+unsafe_assumptions = [
+  "DEVICE_REJECTED: on-device NSH mw write to 0x2006A9B0 raised CFSR 0x82 Data Access Violation with MMFAR 0x2006A9B0.",
+  "The static SRAM cave exists in the image but is MPU read-only from the system -c mw task.",
+  "The unassigned RAM candidate at 0x200CB400 is statically identified, but runtime ownership is not device-proven.",
+  "DEVICE_REJECTED: ROX-first publication into live region 7 caused CFSR 0xB2 stacking failure at MMFAR 0x3C80874C.",
+  "The 2026-08-31 retest reached the post-load /dev/canopus check without repeating the ROX-first CFSR 0xB2 fault.",
+  "The corrected line-bounded Supervisor identity guard remains pending an on-device retest.",
+  "The follow-up stage-1 shell failure was misclassified before reading the result word; result-first diagnostics and the all-Kmem bootstrap subsequently returned stage result zero.",
+  "The all-Kmem loader invoked the constructor table but /dev/canopus remained absent; constructor phase publication returned -204 at register-device verification.",
+  "The exact register_driver wrapper discards inode_reserve failures; direct idempotent inode lock/reserve/unlock registration with errno preservation remains pending an on-device retest.",
+]

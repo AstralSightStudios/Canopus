@@ -1,0 +1,244 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ABI-9132-EXACT-001",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+  "question": "Which exact 3.1.32 ABI entries are required by the Band 9 production Supervisor and native Manager?",
+  "source": "ida:///Volumes/EXT0/Canopus/fwbins/xiaomi-band-9-3.1.32/vela_ap.bin.i64",
+  "method": [
+    "exact-IDB decompilation and Thumb disassembly",
+    "NuttX source-path/assertion correlation",
+    "stock callsite argument-flow review",
+    "descriptor offset and ownership review"
+  ],
+  "static_findings": {
+    "firmware_version_string": {
+      "entry_address": "0x0c5fc5c1",
+      "callable_address": null,
+      "prototype": "const char[]",
+      "evidence": "build.prop contains exact ro.build.version=3.1.32 value at this address"
+    },
+    "app_lookup": {
+      "entry_address": "0x0c458cd8",
+      "callable_address": "0x0c458cd9",
+      "prototype": "void *(uint16_t)",
+      "evidence": "walks the installed-app registry and compares app_id at descriptor +0x10"
+    },
+    "app_install": {
+      "entry_address": "0x0c4594d8",
+      "callable_address": "0x0c4594d9",
+      "prototype": "int(const void *, void *const *, uint32_t)",
+      "evidence": "inserts the 0x2c-byte app descriptor and registers the supplied page array"
+    },
+    "launcher_load_app_info": {
+      "entry_address": "0x0c2c8ebc",
+      "callable_address": "0x0c2c8ebd",
+      "prototype": "void *(const void *)",
+      "evidence": "converts an installed app descriptor into a launcher list item"
+    },
+    "launcher_page_insert_icon": {
+      "entry_address": "0x0c2ceb4c",
+      "callable_address": "0x0c2ceb4d",
+      "prototype": "int(void *)",
+      "evidence": "creates the launcher icon/label and event bindings for one launcher item"
+    },
+    "launcher_reset_order_info": {
+      "entry_address": "0x0c4c7164",
+      "callable_address": "0x0c4c7165",
+      "prototype": "int(void)",
+      "evidence": "rebuilds launcher order metadata after insertion"
+    },
+    "lv_obj_create": {
+      "entry_address": "0x0c26d370",
+      "callable_address": "0x0c26d371",
+      "prototype": "void *(void *)",
+      "evidence": "creates and initializes the base LVGL object class"
+    },
+    "lv_label_create": {
+      "entry_address": "0x0c28f5f4",
+      "callable_address": "0x0c28f5f5",
+      "prototype": "void *(void *)",
+      "evidence": "creates and initializes the LVGL label class"
+    },
+    "lv_label_set_text": {
+      "entry_address": "0x0c294ef8",
+      "callable_address": "0x0c294ef9",
+      "prototype": "void(void *, const char *)",
+      "evidence": "owns/copies label text and refreshes label layout"
+    },
+    "lv_obj_set_size": {
+      "entry_address": "0x0c27845e",
+      "callable_address": "0x0c27845f",
+      "prototype": "void(void *, int32_t, int32_t)",
+      "evidence": "calls the exact width and height setters"
+    },
+    "lvx_page_title_create": {
+      "entry_address": "0x0c4c5f60",
+      "callable_address": "0x0c4c5f61",
+      "prototype": "void *(void *, const char *, uint32_t, void *)",
+      "evidence": "stock LVX page-title constructor; exact log string and call graph"
+    },
+    "lv_obj_add_event_cb": {
+      "entry_address": "0x0c274c8c",
+      "callable_address": "0x0c274c8d",
+      "prototype": "void *(void *, void *, uint32_t, void *)",
+      "evidence": "appends a 12-byte callback/code/user-data event descriptor"
+    },
+    "lv_obj_align_to": {
+      "entry_address": "0x0c278bdc",
+      "callable_address": "0x0c278bdd",
+      "prototype": "void(void *, void *, uint32_t, int32_t, int32_t)",
+      "evidence": "exact LVGL align-to geometry implementation"
+    },
+    "lv_obj_add_flag": {
+      "entry_address": "0x0c26f4f4",
+      "callable_address": "0x0c26f4f5",
+      "prototype": "void(void *, uint32_t)",
+      "evidence": "sets object flag bits and refreshes state"
+    },
+    "lv_obj_clear_flag": {
+      "entry_address": "0x0c26f56a",
+      "callable_address": "0x0c26f56b",
+      "prototype": "void(void *, uint32_t)",
+      "evidence": "clears object flag bits; confirmed by page-title and launcher callsites"
+    },
+    "lv_img_create": {
+      "entry_address": "0x0c28f5d8",
+      "callable_address": "0x0c28f5d9",
+      "prototype": "void *(void *)",
+      "evidence": "creates and initializes the LVGL image class"
+    },
+    "lv_img_set_src": {
+      "entry_address": "0x0c293c08",
+      "callable_address": "0x0c293c09",
+      "prototype": "void(void *, const void *)",
+      "evidence": "exact image source setter used by stock launcher/notification pages"
+    },
+    "lv_bar_create": {
+      "entry_address": "0x0c28fed8",
+      "callable_address": "0x0c28fed9",
+      "prototype": "void *(void *)",
+      "evidence": "creates the LVGL bar class used by stock progress views"
+    },
+    "lv_bar_set_range": {
+      "entry_address": "0x0c28ffb4",
+      "callable_address": "0x0c28ffb5",
+      "prototype": "void(void *, int32_t, int32_t)",
+      "evidence": "exact lv_bar_set_range with source-path and function-name assertions"
+    },
+    "lv_bar_set_value": {
+      "entry_address": "0x0c28ff74",
+      "callable_address": "0x0c28ff75",
+      "prototype": "void(void *, int32_t, uint32_t)",
+      "evidence": "clamps and publishes bar value; R2 is animation selector"
+    },
+    "open": {
+      "entry_address": "0x0c3942a0",
+      "callable_address": "0x0c3942a1",
+      "prototype": "int(const char *, int, ...)",
+      "evidence": "public VFS open wrapper with fd-table and errno translation"
+    },
+    "close": {
+      "entry_address": "0x0c39025c",
+      "callable_address": "0x0c39025d",
+      "prototype": "int(int)",
+      "evidence": "public VFS close wrapper with errno translation"
+    },
+    "read": {
+      "entry_address": "0x0c393466",
+      "callable_address": "0x0c393467",
+      "prototype": "int32_t(int, void *, uint32_t)",
+      "evidence": "resolves fd then forwards R1/R2 to exact file_read dispatcher"
+    },
+    "write": {
+      "entry_address": "0x0c39349e",
+      "callable_address": "0x0c39349f",
+      "prototype": "int32_t(int, const void *, uint32_t)",
+      "evidence": "resolves fd then forwards R1/R2 to exact file_write dispatcher"
+    },
+    "page_goto": {
+      "entry_address": "0x0c45b588",
+      "callable_address": "0x0c45b589",
+      "prototype": "int(uint32_t, uint32_t, void *, void *)",
+      "evidence": "resolves page key, performs prelaunch checks, then invokes stock goto transition"
+    },
+    "page_finish": {
+      "entry_address": "0x0c45e5c0",
+      "callable_address": "0x0c45e5c1",
+      "prototype": "int(void *)",
+      "evidence": "exact pagemanager finish_page implementation and diagnostic string"
+    },
+    "errno_location": {
+      "entry_address": "0x0c15f0c8",
+      "callable_address": "0x0c15f0c9",
+      "prototype": "int *(void)",
+      "evidence": "shared errno location used by exact VFS wrappers"
+    },
+    "rename": {
+      "entry_address": "0x0c391974",
+      "callable_address": "0x0c391975",
+      "prototype": "int(const char *, const char *)",
+      "evidence": "exact vfs/fs_rename.c implementation with errno translation"
+    },
+    "unlink": {
+      "entry_address": "0x0c3920fc",
+      "callable_address": "0x0c3920fd",
+      "prototype": "int(const char *)",
+      "evidence": "public wrapper over exact vfs/fs_unlink.c implementation"
+    },
+    "watchface_manager_delete_watchface": {
+      "entry_address": "0x0c45e3ac",
+      "callable_address": "0x0c45e3ad",
+      "prototype": "int(const char *)",
+      "evidence": "exact named watchface_manager_delete_watchface wrapper and null-id diagnostic"
+    },
+    "register_driver": {
+      "entry_address": "0x0c4e38ce",
+      "callable_address": "0x0c4e38cf",
+      "prototype": "int(const char *, const void *, void *)",
+      "evidence": "exact three-argument character-driver registration; stores fops and private pointer"
+    },
+    "unregister_driver": {
+      "entry_address": "0x0c390f78",
+      "callable_address": "0x0c390f79",
+      "prototype": "int(const char *)",
+      "evidence": "locks inode tree, removes path, unlocks, and returns negative errno"
+    },
+    "mm_memalign_default": {
+      "entry_address": "0x0c16ab8c",
+      "callable_address": "0x0c16ab8d",
+      "prototype": "void *(uint32_t, uint32_t)",
+      "evidence": "validates power-of-two alignment then allocates from default heap"
+    },
+    "mm_free_default": {
+      "entry_address": "0x0c16a424",
+      "callable_address": "0x0c16a425",
+      "prototype": "void(void *)",
+      "evidence": "frees through the exact default heap owner"
+    },
+    "mpu_region_allocate": {
+      "entry_address": "0x0c5228a4",
+      "callable_address": "0x0c5228a5",
+      "prototype": "uint8_t(void)",
+      "evidence": "atomically allocates one of eight MPU region bits"
+    },
+    "mpu_region_configure": {
+      "entry_address": "0x0c52272c",
+      "callable_address": "0x0c52272d",
+      "prototype": "int(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)",
+      "evidence": "Exact disassembly consumes region/base/length/access in R0-R3 and the memory attribute byte from the fifth stack argument."
+    },
+    "mpu_region_release": {
+      "entry_address": "0x0c5228fc",
+      "callable_address": "0x0c5228fd",
+      "prototype": "void(uint32_t)",
+      "evidence": "atomically releases one of eight MPU region bits"
+    }
+  },
+  "unsafe_assumptions": [
+    "Device execution, callback drain, and reboot recovery remain release gates.",
+    "The version-only runtime guard is paired with exact-target loader profile and installer version selection because this image does not contain N66NFC_3.1.32 as a standalone string."
+  ],
+  "verdict": "STATIC_CONFIRMED",
+  "approval_state": "APPROVED_FOR_HOST_BUILD"
+}

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.p67_battery_child_count",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "p67_battery_child_count",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc8bf0b8",
+  "calling_convention": "arm-aapcs",
+  "prototype": "uint32_t (void *object)",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed live native Control Center status-bar object from slot 0x2010fe60, independently checked to have parent root from slot 0x2010fe50.",
+    "return_value": "Child count only; reject count above 16 before enumerating."
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Bounded read-only battery discovery by exact class, not a fixed child index. No creation, deletion, or global-tree mutation. Hardware NOT_PROBED."
+}

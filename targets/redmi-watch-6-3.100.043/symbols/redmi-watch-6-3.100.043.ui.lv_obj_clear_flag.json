@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.ui.lv_obj_clear_flag",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_obj_clear_flag",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc8bce78",
+  "prototype": "void(void *, uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "borrowed LVGL object"
+  },
+  "proof": {
+    "static": "candidate",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "CANDIDATE",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-PORT-P65-001"
+    ],
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+  },
+  "approval_state": "PENDING",
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was DEVICE_PROVEN; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Target-private UI host use only (hide/show, scroll lock). Device probe pending. Device verified for the UI host (EVID-UI-1043-DEVICE-001); policy stays restricted."
+}
