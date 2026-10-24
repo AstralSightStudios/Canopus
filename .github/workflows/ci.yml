@@ -33,3 +33,24 @@ jobs:
 
       - name: Run all host gates
         run: ./scripts/ci.sh
+
+  linux:
+    # `canopus` on Linux: the CLI tests, then every template built, verified and
+    # loaded on every active target (gate 5).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv8m.main-none-eabi
+
+      - name: Install LLVM (clang, ld.lld, llvm-ar)
+        run: sudo apt-get update && sudo apt-get install -y clang lld llvm
+
+      - name: CLI tests
+        run: cargo test -p canopus-cli
+
+      - name: Templates and Rust modules
+        run: cargo build -p canopus-cli && target/debug/canopus doctor && CANOPUS_CI_ONLY=gate_5 sh scripts/ci.sh

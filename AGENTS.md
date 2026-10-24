@@ -8,6 +8,7 @@ device verified / production approved）以 `docs/progress.md` 与 `docs/native-
 - `cli/`、`tools/canopus-core/`：Rust CLI 与核心库（target 生成器、verifier、package、re）
 - `targets/<target_id>/`：每个固件一个目录（`target.toml`、`symbols/*.json`、`evidence/`、`generated/`）
 - `sdk/`：公开 SDK（`sdk/c` 头文件是模块作者的唯一 include 目录；`sdk/rust/` 是独立的 Rust SDK workspace）；`runtime/`、`manager/`：C 运行时实现与设备端 Supervisor/Manager（原 `app-sdk/` 已并入 `sdk/c` 与 `runtime/`）
+- `templates/`：`canopus new` 的模板（随 SDK commit 分发，约定见 `templates/README.md`）
 - `modules/`、`watchfaces/`、`scripts/`、`tests/host/`：示例模块、安装器表盘、构建脚本、C host 测试
 
 ## 常用命令
@@ -24,4 +25,6 @@ device verified / production approved）以 `docs/progress.md` 与 `docs/native-
   （例如 `.139` 已授权清单钉死在 `generated_stability.rs` 的 `APPROVED_139_PRIVATE`）。
 - 证据门槛：假设 → 静态证据 → ABI 审核 → host 测试 → 设备探针 → 设备验证；模拟器结果只算 host/emulator 级证据。
 - 固件镜像（`fwbins/`、`*.bin`）不得提交；缺固件的测试应显式跳过。
+- CLI 发布到 crates.io（`canopus-cli` 及 core/elf/package/re 四个库，其余 crate `publish = false`），用户经 `canopus sdk update`
+  跟随 main 的最新 commit：改了 CLI 解析的格式（`target.toml`、`Canopus.toml`、模板约定）时同时提高 `sdk/sdk.toml` 的 `min_cli` 与 CLI 版本。
 - 不做防御性编程，不写冗余测试。

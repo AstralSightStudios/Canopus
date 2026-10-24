@@ -28,8 +28,6 @@ static const struct canopus_context_v1 *s_ctx;
 static uint32_t s_run_count;
 static uint32_t s_batt_level;
 static uint32_t s_click_count;
-static uint32_t s_page_created;
-static uint32_t s_page_resumed;
 
 static const char s_package_name[] = "com.canopus.native.demo";
 static const char s_launcher_icon[] = "/resource/app/launcher/compass.bin";
@@ -118,7 +116,6 @@ static int demo_on_create(struct firmware_page_descriptor *page, void *root, voi
 
     (void)page;
     (void)start_data;
-    s_page_created++;
 
     /* 1. Page Title Header */
     title = canopus_fw_lvx_page_title_create(root, "Canopus Demo", 0u, 0, 0);
@@ -219,7 +216,6 @@ static int demo_on_resume(struct firmware_page_descriptor *page)
     open_fn open_file = (open_fn)(uintptr_t)CANOPUS_SUP_NUTTX_OPEN;
     int fd;
     (void)page;
-    s_page_resumed++;
 
     fd = open_file("/data/canopus/ui_probe.txt", 2 | 4, 0666);
     if (fd >= 0) {

@@ -1,0 +1,3 @@
+description = "no_std Rust module with a UI page (counter and switch) opened from the Manager"
+language = "rust"
+sources = ["Cargo.toml"]

@@ -444,7 +444,7 @@ BLOCKED
 
 ## 6. Corpus v2：从函数摘要升级为可验证对象
 
-当前 `schema=1` corpus 不删除，新增 `schema=2`。bounded v1/v2 wire format 由 `schemas/fw-corpus.schema.json` 约束；036/043 两份真实 v2 corpus 已通过该 schema 验证。
+当前 `schema=1` corpus 不删除，新增 `schema=2`。bounded v1/v2 wire format 由 `tools/canopus-core/schemas/fw-corpus.schema.json` 约束；036/043 两份真实 v2 corpus 已通过该 schema 验证。
 
 ### 6.1 函数特征
 

@@ -1,6 +1,6 @@
 //! `canopus doctor`: is everything needed to build, verify and package modules there?
 
-use crate::env::{canopus_root, tool};
+use crate::env::{locate_root, tool};
 use canopus_core::registry::list_target_packs;
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -81,8 +81,18 @@ fn compiles_for_device(cc: &str) -> Result<(), String> {
     }
 }
 
+/// The LLVM packages that provide clang, ld.lld and llvm-ar.
+fn llvm_hint() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "brew install llvm lld"
+    } else {
+        "apt install clang lld llvm (dnf/pacman: clang lld llvm)"
+    }
+}
+
 fn rust_device_target_installed(cargo: &str) -> bool {
-    let rustc = cargo.replace("cargo", "rustc");
+    // `rustc` next to `cargo` (a bare `cargo` stays a PATH lookup).
+    let rustc = Path::new(cargo).with_file_name("rustc");
     Command::new(rustc)
         .args([
             "--print",
@@ -99,9 +109,13 @@ fn rust_device_target_installed(cargo: &str) -> bool {
 pub fn run() -> anyhow::Result<()> {
     let mut r = Report { failed: false };
 
-    match canopus_root() {
-        Ok(root) => {
-            r.line(Level::Ok, "checkout", &root.display().to_string());
+    match locate_root() {
+        Ok((root, source)) => {
+            r.line(
+                Level::Ok,
+                "SDK",
+                &format!("{} ({})", root.display(), source.label()),
+            );
             match list_target_packs(&root.join("targets")) {
                 Ok(packs) if !packs.is_empty() => {
                     let active = packs
@@ -130,7 +144,7 @@ pub fn run() -> anyhow::Result<()> {
                 Err(e) => r.line(Level::Fail, "targets", &e.to_string()),
             }
         }
-        Err(e) => r.line(Level::Fail, "checkout", &e.to_string()),
+        Err(e) => r.line(Level::Fail, "SDK", &e.to_string()),
     }
 
     let cc = tool("CC", "clang");
@@ -146,7 +160,7 @@ pub fn run() -> anyhow::Result<()> {
         Err(e) => r.line(
             Level::Fail,
             "C compiler",
-            &format!("{e}; install LLVM or set CC"),
+            &format!("{e}; install it (`{}`) or set CC", llvm_hint()),
         ),
     }
 
@@ -156,7 +170,7 @@ pub fn run() -> anyhow::Result<()> {
         Err(e) => r.line(
             Level::Fail,
             "linker",
-            &format!("{e}; install lld or set LD"),
+            &format!("{e}; install it (`{}`) or set LD", llvm_hint()),
         ),
     }
 
@@ -176,6 +190,28 @@ pub fn run() -> anyhow::Result<()> {
             Level::Warn,
             "Rust",
             &format!("{e}; only needed for --lang rust"),
+        ),
+    }
+
+    let ar = tool("AR", "llvm-ar");
+    match version(&ar) {
+        Ok(v) => r.line(Level::Ok, "archiver", &v),
+        Err(e) => r.line(
+            Level::Warn,
+            "archiver",
+            &format!(
+                "{e}; Rust modules with C dependencies need it (`{}`)",
+                llvm_hint()
+            ),
+        ),
+    }
+
+    match version("curl") {
+        Ok(v) => r.line(Level::Ok, "curl", &v),
+        Err(e) => r.line(
+            Level::Warn,
+            "curl",
+            &format!("{e}; `canopus sdk update` downloads with it"),
         ),
     }
 

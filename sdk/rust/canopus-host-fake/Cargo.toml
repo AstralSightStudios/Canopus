@@ -1,5 +1,6 @@
 [package]
 name = "canopus-host-fake"
+publish = false
 description = "Host-only fake target for Rust modules — allocator, clock, timer wheel, driver namespace, module harness (mirror of tests/host/fake_target.c)"
 version.workspace = true
 edition.workspace = true

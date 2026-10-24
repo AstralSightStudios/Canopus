@@ -559,6 +559,69 @@ pub struct UiEntryV1 {
 
 pub const UI_ENTRY_LABEL_MAX: u32 = 24;
 
+// The Supervisor only reads an entry; modules declare theirs as a `static`.
+unsafe impl Sync for UiEntryV1 {}
+
+// `CANOPUS_UI_*` result codes (`sdk/c/canopus_ui.h`).
+pub const UI_OK: i32 = 0;
+pub const UI_ERR_ARGUMENT: i32 = -1;
+pub const UI_ERR_STATE: i32 = -2;
+pub const UI_ERR_CAPACITY: i32 = -3;
+pub const UI_ERR_DUP_KEY: i32 = -4;
+pub const UI_ERR_BACKEND: i32 = -5;
+pub const UI_ERR_STALE: i32 = -6;
+pub const UI_ERR_DISABLED: i32 = -7;
+pub const UI_ERR_UNSUPPORTED: i32 = -8;
+
+// Props for the `CanopusUiObj` row builders (`struct canopus_ui_*_props_v1`).
+// Text is UTF-8 with an explicit byte length.
+
+#[repr(C)]
+pub struct UiNavigationPagePropsV1 {
+    pub struct_size: u32,
+    pub title: *const c_char,
+    pub title_len: u32,
+}
+
+#[repr(C)]
+pub struct UiSectionPropsV1 {
+    pub struct_size: u32,
+    pub title: *const c_char,
+    pub title_len: u32,
+}
+
+#[repr(C)]
+pub struct UiStatusRowPropsV1 {
+    pub struct_size: u32,
+    pub label: *const c_char,
+    pub label_len: u32,
+    pub value: *const c_char,
+    pub value_len: u32,
+}
+
+#[repr(C)]
+pub struct UiActionRowPropsV1 {
+    pub struct_size: u32,
+    pub label: *const c_char,
+    pub label_len: u32,
+    pub detail: *const c_char,
+    pub detail_len: u32,
+    pub event_id: u32,
+    pub enabled: u32,
+}
+
+#[repr(C)]
+pub struct UiSwitchRowPropsV1 {
+    pub struct_size: u32,
+    pub label: *const c_char,
+    pub label_len: u32,
+    pub detail: *const c_char,
+    pub detail_len: u32,
+    pub event_id: u32,
+    pub checked: u32,
+    pub enabled: u32,
+}
+
 /// A module's launcher entry (`struct canopus_launcher_entry_v1`).
 #[repr(C)]
 pub struct LauncherEntryV1 {
@@ -602,6 +665,52 @@ pub struct CanopusContext {
     pub ui: *const CanopusUiObj,
     pub connect: *const CanopusConnectObj,
     pub launcher: *const CanopusLauncherObj,
+}
+
+// Service groups (`CANOPUS_SVC_*`): indexes into `ServicesV1Head::group_version`.
+pub const SVC_MODULE: u32 = 0;
+pub const SVC_LOG: u32 = 1;
+pub const SVC_FS: u32 = 2;
+pub const SVC_TIME: u32 = 3;
+pub const SVC_MEM: u32 = 4;
+pub const SVC_NOTIFY: u32 = 5;
+pub const SVC_HOOK: u32 = 6;
+pub const SVC_SYSTEM: u32 = 7;
+pub const SVC_BLUETOOTH: u32 = 8;
+pub const SVC_KV: u32 = 9;
+pub const SVC_HAPTICS: u32 = 10;
+pub const SVC_DISPLAY: u32 = 11;
+pub const SVC_BUS: u32 = 12;
+pub const SVC_CONNECT: u32 = 13;
+pub const SVC_LAUNCHER: u32 = 14;
+pub const SVC_GROUP_COUNT: u32 = 15;
+
+/// The head of `struct canopus_services_v1` (`CanopusContext::services`): the
+/// per-group versions a module checks before using a service object.
+#[repr(C)]
+pub struct ServicesV1Head {
+    pub struct_size: u32,
+    /// 0 = the group is absent.
+    pub group_version: [u8; SVC_GROUP_COUNT as usize],
+}
+
+/// `canopus_services_has`: whether `group` is available at least at `min_version`.
+///
+/// # Safety
+/// `ctx` is null or the context the Supervisor passed to a callback.
+pub unsafe fn services_has(ctx: *const ContextV1, group: u32, min_version: u8) -> bool {
+    let Some(ctx) = (unsafe { (ctx as *const CanopusContext).as_ref() }) else {
+        return false;
+    };
+    if (ctx.struct_size as usize) < core::mem::size_of::<CanopusContext>()
+        || ctx.services.is_null()
+        || group >= SVC_GROUP_COUNT
+    {
+        return false;
+    }
+    let version =
+        unsafe { (*(ctx.services as *const ServicesV1Head)).group_version[group as usize] };
+    version != 0 && version >= min_version
 }
 
 // ---------------------------------------------------------------------------

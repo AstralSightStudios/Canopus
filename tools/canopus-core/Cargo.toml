@@ -3,6 +3,9 @@ name = "canopus-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Canopus target packs, schemas, generators and build planner (used by the canopus CLI)"
+rust-version.workspace = true
+repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true

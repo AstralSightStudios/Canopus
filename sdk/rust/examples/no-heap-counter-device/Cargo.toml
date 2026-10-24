@@ -1,5 +1,6 @@
 [package]
 name = "no-heap-counter-device"
+publish = false
 description = "Device staticlib build of the no-heap-counter module (panic handler + generated bindings)"
 version.workspace = true
 edition.workspace = true

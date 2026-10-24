@@ -37,7 +37,9 @@ default-members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.88"
 license = "AGPL-3.0"
+repository = "https://github.com/AstralSightStudios/Canopus"
 
 [workspace.dependencies]
 anyhow = "1"
@@ -51,6 +53,11 @@ sha2 = "0.10"
 tar = "0.4"
 thiserror = "2"
 toml = "0.8"
+flate2 = "1"
+canopus-core = { path = "tools/canopus-core", version = "0.1.0" }
+canopus-elf = { path = "tools/elf-verifier", version = "0.1.0" }
+canopus-package = { path = "tools/package-builder", version = "0.1.0" }
+canopus-re = { path = "tools/re-orchestrator", version = "0.1.0" }
 canopus-abi = { path = "sdk/rust/canopus-abi" }
 canopus-runtime = { path = "sdk/rust/canopus-runtime" }
 

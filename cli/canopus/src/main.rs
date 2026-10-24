@@ -1,9 +1,13 @@
 //! canopus CLI — host tooling entry point.
 
+#[cfg(windows)]
+compile_error!("canopus supports macOS and Linux; on Windows, use it inside WSL2");
+
 mod commands;
 mod doctor;
 mod env;
 mod project;
+mod sdk;
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -13,7 +17,7 @@ use std::path::PathBuf;
     name = "canopus",
     version,
     about = "Canopus firmware module framework host tooling",
-    after_help = "Quick start:\n  canopus doctor                      check the toolchain\n  canopus new hello --target 155      create a module project\n  cd hello && canopus build           compile and verify for every target\n  canopus package                     write dist/hello-0.1.0.canopus\n\nTargets can be named by a unique version suffix (155) or by their full id."
+    after_help = "Quick start:\n  canopus sdk update                  download the SDK and target packs (latest main)\n  canopus doctor                      check the toolchain\n  canopus new hello --target 155      create a module project (canopus new --list: templates)\n  cd hello && canopus build           compile and verify for every target\n  canopus package                     write dist/hello-0.1.0.canopus\n\nTargets can be named by a unique version suffix (155) or by their full id."
 )]
 struct Cli {
     /// Print every external tool invocation.
@@ -25,16 +29,18 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Create a module project: Canopus.toml + a C source (portable by default).
+    /// Create a module project from a template (portable by default).
     ///
     /// Examples:
     ///   canopus new hello                       portable C module
     ///   canopus new hello --target 155          bound to Band 11 4.100.155
     ///   canopus new hello --target 036 --target 043 --ui
-    ///   canopus new hello --lang rust --target 155
+    ///   canopus new hello --template rust-ui
+    ///   canopus new --list                      list the templates
     New {
         /// Module id (ADR-CAN-003: ^[a-z][a-z0-9_]{0,15}$).
-        id: String,
+        #[arg(required_unless_present = "list")]
+        id: Option<String>,
         /// Directory to create the project in.
         #[arg(long, default_value = ".")]
         dir: PathBuf,
@@ -42,12 +48,18 @@ enum Command {
         /// target id or a unique version suffix such as `155`.
         #[arg(long = "target", action = clap::ArgAction::Append)]
         targets: Vec<String>,
-        /// Source language: `c` (default) or `rust` (target-bound only).
+        /// Template name (`canopus new --list`); default: from --lang and --ui.
+        #[arg(long, conflicts_with_all = ["lang", "ui"])]
+        template: Option<String>,
+        /// Source language: `c` (default) or `rust`.
         #[arg(long, default_value = "c")]
         lang: String,
-        /// Start from a module with a UI page (C only).
+        /// Start from a module with a UI page (template `<lang>-ui`).
         #[arg(long)]
         ui: bool,
+        /// List the templates and exit.
+        #[arg(long)]
+        list: bool,
     },
     /// Build a module project (portable: once; target: per exact target) and verify it.
     Build {
@@ -83,6 +95,9 @@ enum Command {
     },
     /// Check the toolchain, the checkout and the registered targets.
     Doctor,
+    /// The SDK, templates and target packs, following the repository's main branch.
+    #[command(subcommand)]
+    Sdk(SdkCmd),
     /// Target pack commands.
     #[command(subcommand)]
     Target(TargetCmd),
@@ -110,6 +125,7 @@ enum Command {
         max_resident: Option<u64>,
     },
     /// Expand a module across its target matrix.
+    #[command(hide = true)]
     BuildPlan {
         /// Path to Canopus.toml (module manifest).
         #[arg(value_name = "Canopus.toml")]
@@ -120,24 +136,37 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    // Maintainer commands (target packs, RE, emulator): hidden from --help.
     /// Module manifest (Canopus.toml) commands.
-    #[command(subcommand)]
+    #[command(subcommand, hide = true)]
     Module(ModuleCmd),
     /// Symbol record commands.
-    #[command(subcommand)]
+    #[command(subcommand, hide = true)]
     Symbol(SymbolCmd),
     /// Type/layout record commands.
-    #[command(subcommand)]
+    #[command(subcommand, hide = true)]
     Type(TypeCmd),
     /// Evidence bundle commands.
-    #[command(subcommand)]
+    #[command(subcommand, hide = true)]
     Evidence(EvidenceCmd),
     /// RE orchestrator commands (Phase 9).
-    #[command(subcommand)]
+    #[command(subcommand, hide = true)]
     Re(ReCmd),
     /// Mirage emulator workflows (end-to-end install/update/rollback smoke).
-    #[command(subcommand)]
+    #[command(subcommand, hide = true)]
     Emu(EmuCmd),
+}
+
+#[derive(Subcommand)]
+enum SdkCmd {
+    /// Download the latest main commit (or --rev) and switch to it.
+    Update {
+        /// A branch, tag or commit instead of main.
+        #[arg(long)]
+        rev: Option<String>,
+    },
+    /// Show the SDK in use, how far main has moved on, and the CLI version.
+    Status,
 }
 
 #[derive(Subcommand)]
@@ -191,6 +220,7 @@ enum ReCmd {
 #[derive(Subcommand)]
 enum TargetCmd {
     /// Validate a target.toml / target.json.
+    #[command(hide = true)]
     Validate { path: PathBuf },
     /// List registered target packs.
     List {
@@ -205,6 +235,7 @@ enum TargetCmd {
     },
     /// Generate every artifact derived from a target pack: C veneer + config
     /// header, Rust bindings, SDK private-symbol metadata, native address header.
+    #[command(hide = true)]
     Generate {
         /// Target id (omit with --all).
         target: Option<String>,
@@ -275,8 +306,10 @@ enum ModuleCmd {
 #[derive(Subcommand)]
 enum PackageCmd {
     /// Validate a package manifest.
+    #[command(hide = true)]
     Validate { path: PathBuf },
     /// Build a .canopus package from a manifest + artifact files.
+    #[command(hide = true)]
     Build {
         /// Package manifest JSON.
         manifest: PathBuf,
@@ -328,22 +361,38 @@ fn main() {
 }
 
 fn run(cli: Cli) -> anyhow::Result<()> {
+    if matches!(
+        cli.command,
+        Command::New { .. } | Command::Build { .. } | Command::Package { cmd: None, .. }
+    ) {
+        sdk::notify_if_outdated();
+    }
     match cli.command {
         Command::Target(cmd) => commands::target(cmd),
+        Command::New { list: true, .. } => project::list_templates(),
         Command::New {
             id,
             dir,
             targets,
+            template,
             lang,
             ui,
-        } => project::new(&project::NewOptions {
-            id: &id,
-            dir: &dir,
-            targets: &targets,
-            lang: &lang,
-            ui,
-        }),
+            list: false,
+        } => {
+            if lang != "c" && lang != "rust" {
+                anyhow::bail!("--lang must be c or rust");
+            }
+            let template = template.unwrap_or_else(|| if ui { format!("{lang}-ui") } else { lang });
+            project::new(&project::NewOptions {
+                id: &id.unwrap(),
+                dir: &dir,
+                targets: &targets,
+                template: &template,
+            })
+        }
         Command::Build { manifest, target } => project::build(&manifest, target.as_deref()),
+        Command::Sdk(SdkCmd::Update { rev }) => sdk::update(rev.as_deref()),
+        Command::Sdk(SdkCmd::Status) => sdk::status(),
         Command::Clean { manifest } => project::clean(&manifest),
         Command::Doctor => doctor::run(),
         Command::Symbol(cmd) => commands::symbol(cmd),

@@ -67,12 +67,8 @@ fn new_validates_before_creating_anything() {
         (&["new", "hello", "--target", "1"][..], "unknown target '1'"),
         (&["new", "Bad-Id"][..], "must match"),
         (
-            &["new", "hello", "--lang", "rust"][..],
-            "pass at least one --target",
-        ),
-        (
-            &["new", "hello", "--lang", "rust", "--target", "155", "--ui"][..],
-            "C template",
+            &["new", "hello", "--template", "nope"][..],
+            "unknown template 'nope'",
         ),
     ] {
         let out = canopus(&scratch.0, args);

@@ -1,0 +1,22 @@
+[package]
+name = "{{id}}"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib"]
+
+[features]
+default = []
+# Turned on by `canopus build` for the device build. A target-bound module that
+# calls firmware bindings adds the optional dependency
+# `canopus-target-generated = { path = "{{sdk}}/canopus-target-generated", optional = true, default-features = false }`
+# and lists "dep:canopus-target-generated" here; `canopus build` selects its exact target.
+device = []
+
+[dependencies]
+canopus-abi = { path = "{{sdk}}/canopus-abi" }
+canopus-runtime = { path = "{{sdk}}/canopus-runtime" }
+
+# A standalone crate, also when it lives inside a Canopus checkout.
+[workspace]

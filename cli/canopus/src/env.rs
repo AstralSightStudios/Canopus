@@ -19,11 +19,39 @@ fn is_root(dir: &Path) -> bool {
     dir.join(ROOT_MARKER).is_file()
 }
 
+/// Where the checkout in use was found.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum RootSource {
+    /// `$CANOPUS_ROOT`.
+    Env,
+    /// The working directory, the executable, or one of their ancestors.
+    Checkout,
+    /// The snapshot `canopus sdk update` keeps under `~/.canopus/sdk/current`.
+    Sdk,
+    /// The checkout this binary was built from (`cargo install --path`).
+    BuildCheckout,
+}
+
+impl RootSource {
+    pub fn label(self) -> &'static str {
+        match self {
+            RootSource::Env => "CANOPUS_ROOT",
+            RootSource::Checkout => "checkout",
+            RootSource::Sdk => "canopus sdk",
+            RootSource::BuildCheckout => "build checkout",
+        }
+    }
+}
+
 /// The Canopus checkout providing `sdk/c` and `targets/`, searched in order:
 /// `$CANOPUS_ROOT`, the working directory and its ancestors, the executable and
-/// its ancestors, and the checkout this binary was built from. The last one is
-/// what lets a `cargo install`ed `canopus` work anywhere.
+/// its ancestors, the `canopus sdk update` snapshot, and the checkout this
+/// binary was built from.
 pub fn canopus_root() -> anyhow::Result<PathBuf> {
+    locate_root().map(|(root, _)| root)
+}
+
+pub fn locate_root() -> anyhow::Result<(PathBuf, RootSource)> {
     if let Some(root) = std::env::var_os("CANOPUS_ROOT") {
         let root = std::path::absolute(PathBuf::from(&root))?;
         if !is_root(&root) {
@@ -32,7 +60,7 @@ pub fn canopus_root() -> anyhow::Result<PathBuf> {
                 root.display()
             );
         }
-        return Ok(root);
+        return Ok((root, RootSource::Env));
     }
     let mut starts: Vec<PathBuf> = Vec::new();
     if let Ok(cwd) = std::env::current_dir() {
@@ -41,13 +69,24 @@ pub fn canopus_root() -> anyhow::Result<PathBuf> {
     if let Ok(exe) = std::env::current_exe() {
         starts.push(exe.canonicalize().unwrap_or(exe));
     }
-    starts.push(PathBuf::from(env!("CARGO_MANIFEST_DIR")));
     for start in starts {
         if let Some(dir) = start.ancestors().find(|d| is_root(d)) {
-            return Ok(dir.to_path_buf());
+            return Ok((dir.to_path_buf(), RootSource::Checkout));
         }
     }
-    bail!("cannot find the Canopus checkout ({ROOT_MARKER}); run inside it or set CANOPUS_ROOT")
+    // Not canonicalized: Rust projects record this path, and it must keep
+    // pointing at the current snapshot after an update.
+    let sdk = crate::sdk::current();
+    if is_root(&sdk) {
+        return Ok((sdk, RootSource::Sdk));
+    }
+    let built = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    if let Some(dir) = built.ancestors().find(|d| is_root(d)) {
+        return Ok((dir.to_path_buf(), RootSource::BuildCheckout));
+    }
+    bail!(
+        "no Canopus SDK found: run `canopus sdk update` to download it (or work inside a checkout / set CANOPUS_ROOT)"
+    )
 }
 
 /// `--targets-dir` when given, else `<checkout>/targets`.

@@ -1,0 +1,3 @@
+description = "C module with a UI page (counter and switch) opened from the Manager"
+language = "c"
+sources = ["src/{{id}}.c"]

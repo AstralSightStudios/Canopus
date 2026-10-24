@@ -1,5 +1,6 @@
 [package]
 name = "canopus-fw-match"
+publish = false
 description = "Multi-layer firmware function matcher: GA + CFG + xref + pattern"
 version.workspace = true
 edition.workspace = true

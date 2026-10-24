@@ -1,0 +1,3 @@
+description = "C module: lifecycle callbacks and one log line"
+language = "c"
+sources = ["src/{{id}}.c"]

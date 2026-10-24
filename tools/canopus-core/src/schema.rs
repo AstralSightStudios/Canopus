@@ -1,21 +1,22 @@
 //! JSON Schema loading and instance validation.
 //!
-//! The six schemas live in the repo root `schemas/` and are the single
-//! source of truth. They are embedded at compile time so validation works
-//! from any working directory and no runtime discovery is needed.
+//! The schemas live in `tools/canopus-core/schemas/` (inside the crate, so it
+//! publishes) and are the single source of truth. They are embedded at compile
+//! time so validation works from any working directory and no runtime
+//! discovery is needed.
 
 use crate::error::{Error, Result};
 use jsonschema::validator_for;
 use serde_json::Value;
 
-pub const SCHEMA_TARGET: &str = include_str!("../../../schemas/target.schema.json");
-pub const SCHEMA_SYMBOL: &str = include_str!("../../../schemas/symbol.schema.json");
-pub const SCHEMA_TYPE: &str = include_str!("../../../schemas/type.schema.json");
-pub const SCHEMA_EVIDENCE: &str = include_str!("../../../schemas/evidence.schema.json");
-pub const SCHEMA_MODULE: &str = include_str!("../../../schemas/module.schema.json");
-pub const SCHEMA_PACKAGE: &str = include_str!("../../../schemas/package.schema.json");
+pub const SCHEMA_TARGET: &str = include_str!("../schemas/target.schema.json");
+pub const SCHEMA_SYMBOL: &str = include_str!("../schemas/symbol.schema.json");
+pub const SCHEMA_TYPE: &str = include_str!("../schemas/type.schema.json");
+pub const SCHEMA_EVIDENCE: &str = include_str!("../schemas/evidence.schema.json");
+pub const SCHEMA_MODULE: &str = include_str!("../schemas/module.schema.json");
+pub const SCHEMA_PACKAGE: &str = include_str!("../schemas/package.schema.json");
 pub const SCHEMA_FUNCTION_SIGNATURE_CATALOG: &str =
-    include_str!("../../../schemas/function-signature-catalog.schema.json");
+    include_str!("../schemas/function-signature-catalog.schema.json");
 
 /// Which schema family an instance belongs to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

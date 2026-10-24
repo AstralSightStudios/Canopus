@@ -173,10 +173,12 @@ dependencies = [
  "canopus-package",
  "canopus-re",
  "clap",
+ "flate2",
  "hex",
  "serde",
  "serde_json",
  "sha2",
+ "tar",
  "toml",
 ]
 

@@ -6,6 +6,8 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$ROOT"
+# Repository modules and templates build warning-free (`canopus build` adds -Werror).
+export CANOPUS_WERROR=1
 
 step() { echo; echo "==> $1"; }
 
@@ -72,24 +74,28 @@ gate_4() {
 }
 
 gate_5() {
-    step "6/6 Rust module cross-build + verifier (no-heap-counter) and scaffolded modules"
+    step "6/6 Rust module cross-build + verifier (no-heap-counter) and every template"
     ./sdk/rust/examples/no-heap-counter/build.sh
     # Rust output must also be loadable by Canopus' own ELF loader (Band 11), not only pass the verifier.
     (cd tests/host && make real-elf-loader MODULE_ELF=../../sdk/rust/examples/no-heap-counter/build/no_heap_counter.elf)
-    # Scaffolded external modules (Rust, target-bound C, portable C) through
-    # `canopus new` / `canopus build`, on every active target: each family's
-    # constructor path (CMR1 write or the service table) must build and verify.
+    # Every `canopus new` template, bound to every active target and portable:
+    # each family's constructor path (CMR1 write or the service table) must
+    # build, verify and load.
     canopus="$PWD/target/debug/canopus"
     target_args=""
     for target in $("$canopus" target list --active --names); do
         target_args="$target_args --target $target"
     done
     scaffold_tmp=$(mktemp -d)
-    (cd "$scaffold_tmp" \
-        && "$canopus" new rmod --lang rust $target_args && (cd rmod && "$canopus" build && "$canopus" package) \
-        && "$canopus" new cmod $target_args && (cd cmod && "$canopus" build && "$canopus" package) \
-        && "$canopus" new pmod && (cd pmod && "$canopus" build && "$canopus" package))
-    for elf in "$scaffold_tmp"/rmod/build/*/rmod.elf "$scaffold_tmp"/cmod/build/*/cmod.elf "$scaffold_tmp"/pmod/build/pmod.elf; do
+    for template in $("$canopus" new --list | cut -d' ' -f1); do
+        name=$(printf '%s' "$template" | tr -d -)
+        (cd "$scaffold_tmp" \
+            && "$canopus" new "t$name" --template "$template" $target_args \
+            && (cd "t$name" && "$canopus" build && "$canopus" package) \
+            && "$canopus" new "p$name" --template "$template" \
+            && (cd "p$name" && "$canopus" build && "$canopus" package))
+    done
+    for elf in "$scaffold_tmp"/t*/build/*/*.elf "$scaffold_tmp"/p*/build/*.elf; do
         (cd tests/host && make -s real-elf-loader MODULE_ELF="$elf")
     done
     rm -rf "$scaffold_tmp"
