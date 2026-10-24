@@ -30,6 +30,10 @@ stage2_path = "/data/canopus/stage2.bin"
 supervisor_path = "/data/canopus/supervisor.elf"
 entry_argument = "unspecified-r0"
 thumb_entry = true
+# Stage 1 is written into the cave and executed from there. The mailbox entry
+# probe calls exec_handler+0x45, which is a layout-specific instruction inside
+# the NSH exec handler and does not hold for this build.
+entry_mode = "cave"
 
 [firmware]
 # exec/mw handlers: exact full-body matches of the 3.1.32 handlers.
@@ -40,12 +44,13 @@ mw_handler = 0x0C101FBC
 open = 0x0C37E30C
 close = 0x0C37DBA4
 read = 0x0C37F458
-# Allocators: mm_memalign_default and kmem_free are exact bodies. kmem_malloc
-# is one of two identical wrappers; the selected one calls the exact
-# kmem_free target's sibling allocator 0xc0f0bb0.
+# Allocators: memalign/free are the Umem pair (descriptor 0x200b0d44). The
+# Kmem pair must share the kmm descriptor 0x200b0840: kmem_free asserts on
+# addresses outside it, so kmem_malloc is the wrapper that passes 0x200b0840
+# (0xc0f11f4), not its sibling 0xc0f1170 (Umem descriptor).
 memalign = 0x0C0F0E7C
 free = 0x0C0F0790
-kmem_malloc = 0x0C0F1170
+kmem_malloc = 0x0C0F11F4
 kmem_free = 0x0C0F07A4
 # MPU helpers: exact full-body matches.
 mpu_alloc = 0x0C51DAE8
@@ -79,7 +84,7 @@ original_words = [
 ]
 
 [evidence]
-ids = ["EVID-PORT-9190-001"]
+ids = ["EVID-PORT-9190-001", "EVID-ABI-9190-REGISTER-001", "EVID-PORT-9190-CORRECT"]
 unsafe_assumptions = [
   "Stage-0 cave 0x20080000 is an unassigned low-RAM gap in the exact IDB; runtime ownership is not proven.",
   "close and inode_lock are reviewed matcher predictions whose normalized pseudocode is similar but not identical; their ABI is not independently proven.",

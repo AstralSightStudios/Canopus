@@ -289,14 +289,14 @@ end
 local function call_mailbox(callable, r0, r1)
     local probe = {
         0x49034802, 0x4A036008, 0xBF004710,
-        STAGE0_ENTRY_PROBE_MARKER, profile.cave_result, 0x0c1c956d,
+        STAGE0_ENTRY_PROBE_MARKER, profile.cave_result, profile.exec_handler + 0x45,
     }
     local trampoline = {
         0x8F4FF3BF, 0x8F6FF3BF,
         0x49064805, 0x4B074A06, 0x4B076013, 0x4A044798,
         0x4B066010, 0xBF004718,
         r0, r1, profile.cave_result, STAGE0_ENTRY_MARKER, callable,
-        0x0c1c956d,
+        profile.exec_handler + 0x45,
     }
     if not check_cave() then return nil, "stage-0 preflight mismatch" end
     if not run(string.format("mw %08x=%08x", profile.cave_result,
@@ -456,7 +456,96 @@ local function cleanup_stage1(address, region)
     return release_allocation(address, profile.kmem_free)
 end
 
+-- Targets that expose the runtime MPU lease bitmap pick a free region for
+-- stage 0 and reserve it while stage 1 allocates its own lease, so the two can
+-- never collide. The original bitmap is restored after cleanup.
+local stage0_bitmap_original
+local function reserve_stage0_region()
+    if type(profile.mpu_bitmap) ~= "number" then return true end
+    local bitmap = shell_word(profile.mpu_bitmap)
+    if type(bitmap) ~= "number" then return false, "MPU bitmap read failed" end
+    for region = 0, profile.mpu_region_count - 1 do
+        if (bitmap & (1 << region)) == 0 then
+            profile.stage0_region = region
+            stage0_bitmap_original = bitmap
+            if not run(string.format("mw %08x=%08x", profile.mpu_bitmap,
+                bitmap | (1 << region))) then
+                return false, "MPU bitmap reservation failed"
+            end
+            return true
+        end
+    end
+    return false, "no free MPU region"
+end
+local function release_stage0_region()
+    if type(stage0_bitmap_original) ~= "number" then return true end
+    local ok = run(string.format("mw %08x=%08x", profile.mpu_bitmap,
+        stage0_bitmap_original))
+    stage0_bitmap_original = nil
+    return ok
+end
+
+-- Cave entry mode: stage 1 is written into the MPU-mapped cave and executed
+-- directly. Stage 1 performs the Kmem/MPU/stage-2 work in C, so this path does
+-- not depend on the firmware exec handler's Lua continuation ABI.
+local function load_supervisor_cave()
+    local stage1_source = read_all(stage1_resource, "r")
+    local stage2 = read_all(stage2_resource, "rb")
+    local supervisor = read_all(supervisor_resource, "rb")
+    if type(stage1_source) ~= "string" or type(stage2) ~= "string"
+        or type(supervisor) ~= "string" then
+        return false, "missing Band 9 bootstrap resources"
+    end
+    local compiler = loadstring or load
+    if type(compiler) ~= "function" then return false, "Lua compiler unavailable" end
+    local compiled, chunk, compile_error = pcall(compiler, stage1_source)
+    if not compiled then return false, tostring(chunk) end
+    if type(chunk) ~= "function" then return false, tostring(compile_error) end
+    local loaded, payload = pcall(chunk)
+    if not loaded then return false, tostring(payload) end
+    if type(payload) ~= "table" or type(payload.words) ~= "table"
+        or type(payload.size) ~= "number" or payload.size > 0xE00 then
+        return false, "invalid Band 9 stage-1 table"
+    end
+    run("mkdir /data/canopus")
+    if not write_all(STAGE2_PATH, stage2) then
+        return false, "cannot stage Band 9 stage-2"
+    end
+    if not write_all(SUPERVISOR_PATH, supervisor) then
+        return false, "cannot stage Band 9 Supervisor"
+    end
+    if not check_cave() then return false, "stage-0 preflight mismatch" end
+    local reserved, reserve_error = reserve_stage0_region()
+    if not reserved then return false, reserve_error end
+    local stage1_address = profile.cave + 0x100
+    if not write_words(stage1_address, payload.words) then
+        release_stage0_region()
+        return false, "stage-1 cave write failed"
+    end
+    -- Preserve the NSH exec caller's LR across blx; the old tail's
+    -- bx lr reused the blx return address and looped in the cave.
+    local trampoline = {
+        0x4803B510, 0x47984B03, 0x60104A01, 0xBF00BD10,
+        profile.cave_result, stage1_address + 1,
+    }
+    if not write_words(profile.cave, trampoline) then
+        release_stage0_region()
+        return false, "stage-0 trampoline write failed"
+    end
+    local exec_ok = stage0_exec_with_mpu(nil, nil, false)
+    release_stage0_region()
+    local result = shell_word(profile.cave_result)
+    if result == nil then return false, "stage-1 result read failed" end
+    if result >= 0x80000000 then result = result - 0x100000000 end
+    if not exec_ok and result == profile.cave_result then
+        return false, "stage-0 exec parser rejected target"
+    end
+    if result ~= 0 then return false, stage_result_error(result) end
+    return true
+end
+
 local function load_supervisor()
+    if profile.entry_mode == "cave" then return load_supervisor_cave() end
     local stage1_source = read_all(stage1_resource, "r")
     local stage2 = read_all(stage2_resource, "rb")
     local supervisor = read_all(supervisor_resource, "rb")
@@ -504,14 +593,23 @@ local function load_supervisor()
         end
         return false, "Band 9 stage-1 write failed"
     end
+    local reserved, reserve_error = reserve_stage0_region()
+    if not reserved then
+        if not release_allocation(raw_allocation) then
+            return false, "MPU reservation cleanup failed; reboot before retrying"
+        end
+        return false, reserve_error
+    end
     local region = call_mailbox(profile.mpu_alloc, 0, 0)
     if not region or region >= profile.mpu_region_count then
+        release_stage0_region()
         if not release_allocation(raw_allocation) then
             return false, "MPU failure cleanup failed; reboot before retrying"
         end
         return false, "Band 9 MPU region unavailable"
     end
     if region == profile.stage0_region then
+        release_stage0_region()
         if not release_allocation(raw_allocation) then
             return false, "MPU collision cleanup failed; reboot before retrying"
         end
@@ -523,6 +621,7 @@ local function load_supervisor()
     local executed, stage_result, execution_error = barrier_and_exec(
         allocation, region, rbar, rlar)
     local cleaned = cleanup_stage1(raw_allocation, region)
+    release_stage0_region()
     if not cleaned then
         return false, "stage-1 cleanup failed; reboot before retrying"
     end

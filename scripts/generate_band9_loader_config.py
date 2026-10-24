@@ -164,6 +164,8 @@ def write_header(path: pathlib.Path, profile: dict, stage0: dict, firmware: dict
     }
     if "mpu_sync" in firmware:
         mapping["CANOPUS_FW_MPU_SYNC"] = firmware["mpu_sync"] | 1
+    if "mpu_bitmap" in firmware:
+        mapping["CANOPUS_MPU_BITMAP"] = firmware["mpu_bitmap"]
     if "inode_lock" in firmware:
         mapping["CANOPUS_FW_INODE_LOCK"] = firmware["inode_lock"] | 1
         mapping["CANOPUS_FW_INODE_RESERVE"] = firmware["inode_reserve"] | 1
@@ -195,6 +197,7 @@ def write_lua(path: pathlib.Path, profile: dict, firmware: dict, architecture: d
         f"    status = {profile['status']!r},",
         f"    device_status = {profile.get('device_status', 'NOT_PROBED')!r},",
         f"    loader_family = {profile['loader_family']!r},",
+        f"    entry_mode = {profile.get('stage', {}).get('entry_mode', 'mailbox')!r},",
         field("exec_handler", firmware["exec_handler"] | 1),
         field("mw_handler", firmware["mw_handler"] | 1),
         field("open", firmware["open"] | 1),
@@ -210,6 +213,10 @@ def write_lua(path: pathlib.Path, profile: dict, firmware: dict, architecture: d
         *(
             [field("mpu_sync", firmware["mpu_sync"] | 1)]
             if "mpu_sync" in firmware else []
+        ),
+        *(
+            [field("mpu_bitmap", firmware["mpu_bitmap"])]
+            if "mpu_bitmap" in firmware else []
         ),
         field("mpu_rnr", architecture["mpu_rnr"]),
         field("mpu_rbar", architecture["mpu_rbar"]),

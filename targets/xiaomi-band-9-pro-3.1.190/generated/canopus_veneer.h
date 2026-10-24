@@ -4,7 +4,7 @@
  * firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
  * sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
  * revision : 1
- * input_digest: 23b528fcd60179f2
+ * input_digest: 5731aaa385bc6089
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -70,17 +70,17 @@ static inline uint32_t canopus_fw_bt_l2cap_connect(const void * a0) {
 
 typedef int (*canopus_fw_open_fn)(const char *, int);
 static inline int canopus_fw_open(const char * a0, int a1) {
-    return ((canopus_fw_open_fn)(uintptr_t)0xc40c0ed)(a0, a1);
+    return ((canopus_fw_open_fn)(uintptr_t)0x0c37e30d)(a0, a1);
 }
 
 typedef int (*canopus_fw_unlink_fn)(const char *);
 static inline int canopus_fw_unlink(const char * a0) {
-    return ((canopus_fw_unlink_fn)(uintptr_t)0xc37e939)(a0);
+    return ((canopus_fw_unlink_fn)(uintptr_t)0x0c37fe01)(a0);
 }
 
 typedef void (*canopus_fw_lv_bar_set_range_fn)(void *, int32_t, int32_t);
 static inline void canopus_fw_lv_bar_set_range(void * a0, int32_t a1, int32_t a2) {
-    return ((canopus_fw_lv_bar_set_range_fn)(uintptr_t)0xc0b4bd5)(a0, a1, a2);
+    return ((canopus_fw_lv_bar_set_range_fn)(uintptr_t)0x0c25bc79)(a0, a1, a2);
 }
 
 typedef int (*canopus_fw_register_driver_fn)(const char *, const void *, void *);
@@ -126,7 +126,7 @@ static inline int canopus_fw_sem_post(void * a0) {
 
 typedef int32_t (*canopus_fw_page_finish_fn)(void *);
 static inline int32_t canopus_fw_page_finish(void * a0) {
-    return ((canopus_fw_page_finish_fn)(uintptr_t)0xc18ddb1)(a0);
+    return ((canopus_fw_page_finish_fn)(uintptr_t)0x0c44d609)(a0);
 }
 
 typedef int * (*canopus_fw_errno_location_fn)(void);
@@ -164,7 +164,7 @@ static inline void canopus_fw_lv_obj_set_style_bg_opa(void * a0, uint32_t a1, ui
 
 typedef void * (*canopus_fw_app_lookup_fn)(uint16_t);
 static inline void * canopus_fw_app_lookup(uint16_t a0) {
-    return ((canopus_fw_app_lookup_fn)(uintptr_t)0xc2c7439)(a0);
+    return ((canopus_fw_app_lookup_fn)(uintptr_t)0x0c4467b5)(a0);
 }
 
 typedef void * (*canopus_fw_mm_memalign_default_fn)(uint32_t, uint32_t);
@@ -179,7 +179,7 @@ static inline int canopus_fw_service_manager_shutdown(int a0) {
 
 typedef int (*canopus_fw_watchface_manager_delete_watchface_fn)(const char *);
 static inline int canopus_fw_watchface_manager_delete_watchface(const char * a0) {
-    return ((canopus_fw_watchface_manager_delete_watchface_fn)(uintptr_t)0xc3dba55)(a0);
+    return ((canopus_fw_watchface_manager_delete_watchface_fn)(uintptr_t)0x0c452f41)(a0);
 }
 
 typedef int32_t (*canopus_fw_ioctl_fn)(int32_t, uint32_t, uintptr_t);
@@ -290,7 +290,7 @@ static inline void * canopus_fw_heap_zalloc(uint32_t a0) {
 
 typedef void (*canopus_fw_lv_bar_set_value_fn)(void *, int32_t, uint32_t);
 static inline void canopus_fw_lv_bar_set_value(void * a0, int32_t a1, uint32_t a2) {
-    return ((canopus_fw_lv_bar_set_value_fn)(uintptr_t)0xc4b49c1)(a0, a1, a2);
+    return ((canopus_fw_lv_bar_set_value_fn)(uintptr_t)0x0c25bc39)(a0, a1, a2);
 }
 
 /* driver_close_dispatch: skipped (argument type not mappable) */
@@ -350,7 +350,7 @@ static inline int canopus_fw_lvx_style_apply(void * a0, const void * a1, uint32_
 
 typedef int (*canopus_fw_unregister_driver_fn)(const char *);
 static inline int canopus_fw_unregister_driver(const char * a0) {
-    return ((canopus_fw_unregister_driver_fn)(uintptr_t)0xc418c2b)(a0);
+    return ((canopus_fw_unregister_driver_fn)(uintptr_t)0x0c37ee93)(a0);
 }
 
 typedef void (*canopus_fw_lvx_object_delete_fn)(void *);
@@ -396,12 +396,12 @@ static inline void * canopus_fw_lv_img_create(void * a0) {
 
 typedef int (*canopus_fw_close_fn)(int);
 static inline int canopus_fw_close(int a0) {
-    return ((canopus_fw_close_fn)(uintptr_t)0xc2fd251)(a0);
+    return ((canopus_fw_close_fn)(uintptr_t)0x0c37dba5)(a0);
 }
 
 typedef int32_t (*canopus_fw_read_fn)(int, void *, uint32_t);
 static inline int32_t canopus_fw_read(int a0, void * a1, uint32_t a2) {
-    return ((canopus_fw_read_fn)(uintptr_t)0xc40d64d)(a0, a1, a2);
+    return ((canopus_fw_read_fn)(uintptr_t)0x0c37f459)(a0, a1, a2);
 }
 
 typedef int (*canopus_fw_app_launcher_del_fn)(uint16_t);
@@ -435,12 +435,12 @@ static inline int canopus_fw_inode_unlock(void) {
 
 typedef int32_t (*canopus_fw_page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
 static inline int32_t canopus_fw_page_goto(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
-    return ((canopus_fw_page_goto_fn)(uintptr_t)0xc1060d9)(a0, a1, a2, a3);
+    return ((canopus_fw_page_goto_fn)(uintptr_t)0x0c449bc5)(a0, a1, a2, a3);
 }
 
 typedef int32_t (*canopus_fw_write_fn)(int, const void *, uint32_t);
 static inline int32_t canopus_fw_write(int a0, const void * a1, uint32_t a2) {
-    return ((canopus_fw_write_fn)(uintptr_t)0xc1cb255)(a0, a1, a2);
+    return ((canopus_fw_write_fn)(uintptr_t)0x0c37f0fd)(a0, a1, a2);
 }
 
 typedef int (*canopus_fw_bt_adapter_register_hfp_ag_callbacks_fn)(void *, const void *);
@@ -494,7 +494,7 @@ static inline int canopus_fw_bt_discovery_start(void * a0, int a1) {
 
 typedef void (*canopus_fw_lv_obj_align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
 static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2, int32_t a3, int32_t a4) {
-    return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0xc4b45e1)(a0, a1, a2, a3, a4);
+    return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0x0c23c8b9)(a0, a1, a2, a3, a4);
 }
 
 typedef int (*canopus_fw_rename_fn)(const char *, const char *);

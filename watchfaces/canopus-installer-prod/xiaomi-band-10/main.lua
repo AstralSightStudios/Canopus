@@ -289,14 +289,14 @@ end
 local function call_mailbox(callable, r0, r1)
     local probe = {
         0x49034802, 0x4A036008, 0xBF004710,
-        STAGE0_ENTRY_PROBE_MARKER, profile.cave_result, 0x0c1c956d,
+        STAGE0_ENTRY_PROBE_MARKER, profile.cave_result, profile.exec_handler + 0x45,
     }
     local trampoline = {
         0x8F4FF3BF, 0x8F6FF3BF,
         0x49064805, 0x4B074A06, 0x4B076013, 0x4A044798,
         0x4B066010, 0xBF004718,
         r0, r1, profile.cave_result, STAGE0_ENTRY_MARKER, callable,
-        0x0c1c956d,
+        profile.exec_handler + 0x45,
     }
     if not check_cave() then return nil, "stage-0 preflight mismatch" end
     if not run(string.format("mw %08x=%08x", profile.cave_result,
@@ -456,6 +456,35 @@ local function cleanup_stage1(address, region)
     return release_allocation(address, profile.kmem_free)
 end
 
+-- Targets that expose the runtime MPU lease bitmap pick a free region for
+-- stage 0 and reserve it while stage 1 allocates its own lease, so the two can
+-- never collide. The original bitmap is restored after cleanup.
+local stage0_bitmap_original
+local function reserve_stage0_region()
+    if type(profile.mpu_bitmap) ~= "number" then return true end
+    local bitmap = shell_word(profile.mpu_bitmap)
+    if type(bitmap) ~= "number" then return false, "MPU bitmap read failed" end
+    for region = 0, profile.mpu_region_count - 1 do
+        if (bitmap & (1 << region)) == 0 then
+            profile.stage0_region = region
+            stage0_bitmap_original = bitmap
+            if not run(string.format("mw %08x=%08x", profile.mpu_bitmap,
+                bitmap | (1 << region))) then
+                return false, "MPU bitmap reservation failed"
+            end
+            return true
+        end
+    end
+    return false, "no free MPU region"
+end
+local function release_stage0_region()
+    if type(stage0_bitmap_original) ~= "number" then return true end
+    local ok = run(string.format("mw %08x=%08x", profile.mpu_bitmap,
+        stage0_bitmap_original))
+    stage0_bitmap_original = nil
+    return ok
+end
+
 local function load_supervisor()
     local stage1_source = read_all(stage1_resource, "r")
     local stage2 = read_all(stage2_resource, "rb")
@@ -504,14 +533,23 @@ local function load_supervisor()
         end
         return false, "Band 9 stage-1 write failed"
     end
+    local reserved, reserve_error = reserve_stage0_region()
+    if not reserved then
+        if not release_allocation(raw_allocation) then
+            return false, "MPU reservation cleanup failed; reboot before retrying"
+        end
+        return false, reserve_error
+    end
     local region = call_mailbox(profile.mpu_alloc, 0, 0)
     if not region or region >= profile.mpu_region_count then
+        release_stage0_region()
         if not release_allocation(raw_allocation) then
             return false, "MPU failure cleanup failed; reboot before retrying"
         end
         return false, "Band 9 MPU region unavailable"
     end
     if region == profile.stage0_region then
+        release_stage0_region()
         if not release_allocation(raw_allocation) then
             return false, "MPU collision cleanup failed; reboot before retrying"
         end
@@ -523,6 +561,7 @@ local function load_supervisor()
     local executed, stage_result, execution_error = barrier_and_exec(
         allocation, region, rbar, rlar)
     local cleaned = cleanup_stage1(raw_allocation, region)
+    release_stage0_region()
     if not cleaned then
         return false, "stage-1 cleanup failed; reboot before retrying"
     end

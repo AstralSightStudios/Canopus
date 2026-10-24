@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-EMU-9190-001",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "question": "Does the staged loader reach and register the Supervisor, and complete the installer CPC2 sequence, on the exact 3.1.190 firmware in Mirage?",
+  "candidate_symbols": [
+    "open",
+    "close",
+    "read",
+    "write",
+    "register_driver",
+    "inode_lock",
+    "inode_reserve",
+    "inode_unlock",
+    "launcher_load_app_info",
+    "launcher_page_insert_icon",
+    "launcher_reset_order_info"
+  ],
+  "prototype_hypothesis": "The ported VFS/app records must be the 3.1.190 bodies, and the v8 Manager app descriptor must use the 3.1.190 launcher ABI (metadata callback at +0x1c).",
+  "callsite_evidence": [
+    "Mirage firmware miwear.watch.n67cn_v3.1.190_full_3e264bc2; its vela_ap.bin SHA-256 is 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f, equal to the target.",
+    "The installer face was installed by replacing the registered market package 366240003 contents (main.lua + profile + stage1/stage2 + Supervisor + icon); resource.bin stays. A new market id is not registered by the firmware's watchface DB and never loads.",
+    "Run executed stage0 (cave 0x20080000), stage1 (written into the cave at +0x100), stage2 (Supervisor ELF input in Kmem; resident image from Umem via memalign), the constructor, and opened /dev/canopus.",
+    "CPC2 INSTALL 0, INSTALL 2, RESTORE_AFTER_BOOT, INSTALL 1 and INSTALL 2 all returned result 5; the installer displayed 'Run completed'.",
+    "/data/canopus/registry.bin is written with magic CDR1; /data/canopus/{stage2.bin,supervisor.elf,manager_icon.bin,bootstrap-word.txt} exist.",
+    "app/system/install_info_v1.db contains com.canopus.manager, so the Supervisor's app_install / launcher_load / launcher_insert / launcher_reset path completed."
+  ],
+  "control_flow_evidence": [
+    "The previous src-9pro-3175 VFS records were wrong: open resolved to a battery/system routine that INVSTATE-faulted when the constructor opened /dev/canopus. EVID-PORT-9190-CORRECT re-matched them from the emulator-verified 3.1.32 records.",
+    "kmem_malloc must be the wrapper for the kmm descriptor 0x200b0840 (0xc0f11f4), not its Umem sibling 0xc0f1170.",
+    "The cave trampoline must preserve the NSH exec caller's LR; the previous blx/bx lr tail reused the blx return address and never returned.",
+    "launcher_load_app_info reads the metadata callback at +0x1c and app_install copies 0x3c bytes on 3.1.190; the 3.1.32 layout (+0x14) made it call the null page_registry slot. The v8 backend now selects the layout with CANOPUS_MGR_APPINFO_190.",
+    "Entry mode is 'cave': the mailbox entry probe calls exec_handler+0x45, an instruction boundary that does not hold for 3.1.190."
+  ],
+  "ownership_analysis": "The Supervisor owns its Umem image and registry; the installer owns the staged files under /data/canopus. The Manager app and launcher entry are registered through the stock app_install/launcher path.",
+  "unsafe_assumptions": [
+    "Emulator evidence only. No physical device probe; cache behaviour, MPU default-map execution and the Kmem/Umem split are not device-proven.",
+    "The Manager page and module install/activate flow were not exercised from the launcher; only the Supervisor load, device registration and CPC2 install steps were.",
+    "The v8 Manager's launcher-entry publish and notification service entries remain fail-closed stubs.",
+    "The Facetory Lua-layer patch is required to build the installer face; this run used the previously installed registered package slot."
+  ],
+  "recommended_probe": "Repeat on a physical Band 9 Pro 3.1.190: Run, open the Manager from the launcher, install/enable/disable a module, and reboot with recovery.",
+  "reviewers": [],
+  "verdict": "HOST_TESTED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-9190-CORRECT",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "question": "Which 3.1.190 entries implement the VFS, page, app-registry and LVGL records used by the v8 Supervisor?",
+  "candidate_symbols": [
+    "open",
+    "close",
+    "read",
+    "write",
+    "unlink",
+    "unregister_driver",
+    "page_goto",
+    "page_finish",
+    "app_lookup",
+    "lv_obj_add_event_cb",
+    "lv_obj_align_to",
+    "lv_bar_set_range",
+    "lv_bar_set_value",
+    "watchface_manager_delete_watchface"
+  ],
+  "prototype_hypothesis": "The names carried by the src-9pro-3175 port are correct; its addresses are not.",
+  "callsite_evidence": [
+    "ensemble_match.py with the emulator-verified 3.1.32 symbols as source (EVID-PORT-9190-FROM-9132) predicts a different 3.1.190 entry for these records; for open/close/read the prediction equals the addresses the working loader profile already uses (0xc37e30c / 0xc37dba4 / 0xc37f458).",
+    "The previous records resolved to unrelated bodies: open 0xc40c0ec reads a battery/system struct, close 0xc2fd250 is a battery_power_reflush routine, read 0xc40d64c is an IPC helper, write 0xc1cb254 copies a pointer array, unlink 0xc37e938 is readdir, page_finish 0xc18ddb0 is a different page-manager routine, page_goto 0xc1060d8 is a video codec configuration, app_lookup 0xc2c7438 is the search app path, lv_bar_set_range/value and lv_obj_add_event_cb/align_to point into unrelated wrapper tables."
+  ],
+  "control_flow_evidence": [
+    "open 0xc37e30c = nx_open(filelist, path, flags) + errno translation, identical to 3.1.32 0xc3942a0.",
+    "close 0xc37dba4, read 0xc37f458 and write 0xc37f0fc match 3.1.32 0xc39025c / 0xc393466 / 0xc39349e (write keeps the EINVAL path for a NULL buffer).",
+    "unlink 0xc37fe00 matches 3.1.32 0xc3920fc; unregister_driver 0xc37ee92 locks/unlocks with the exact 3.1.190 inode primitives 0xc378378 / 0xc379cf0.",
+    "page_goto 0xc449bc4 and page_finish 0xc44d608 reproduce the 3.1.32 bodies including the lvx_pagemanager_prelaunch_check / finish_page strings.",
+    "app_lookup 0xc4467b4 is the same linked-list id scan as 3.1.32 0xc458cd8.",
+    "lv_obj_add_event_cb 0xc241158, lv_obj_align_to 0xc23c8b8, lv_bar_set_range 0xc25bc78 and lv_bar_set_value 0xc25bc38 reproduce the 3.1.32 LVGL bodies; set_range carries the ./lvgl/src/widgets/lv_bar.c string.",
+    "watchface_manager_delete_watchface 0xc452f40 carries the same \"[%s] %s: id is null\" / wf strings as 3.1.32 0xc45e3ac."
+  ],
+  "ownership_analysis": "No ownership change; only the address of an existing restricted record is corrected.",
+  "unsafe_assumptions": [
+    "Match evidence is static (corpus fingerprint + decompiled body) and has not been executed on a device.",
+    "The src-9pro-3175 source labels were taken as correct; where its address disagreed with the 3.1.32-based re-match, the decompiled body decided."
+  ],
+  "recommended_probe": "Rebuild the n67 Supervisor and run the installer in Mirage; the constructor must open /dev/canopus and register the driver.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": [
+    "/tmp/n67-match/ensemble-9132-to-9190.json"
+  ]
+}

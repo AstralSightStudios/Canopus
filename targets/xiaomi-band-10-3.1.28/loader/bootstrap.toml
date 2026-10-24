@@ -28,6 +28,9 @@ stage2_path = "/data/canopus/stage2.bin"
 supervisor_path = "/data/canopus/supervisor.elf"
 entry_argument = "unspecified-r0"
 thumb_entry = true
+# Stage 1 is written into the cave and executed from there; the mailbox entry
+# probe depends on the exec handler layout.
+entry_mode = "cave"
 
 [firmware]
 # exec/mw handlers: exact full-body matches of the 3.1.32 handlers.

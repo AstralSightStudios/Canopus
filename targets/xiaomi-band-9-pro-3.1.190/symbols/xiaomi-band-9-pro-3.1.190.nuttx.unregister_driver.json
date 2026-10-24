@@ -5,14 +5,15 @@
   "name": "unregister_driver",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc418c2a",
-  "callable_address": "0xc418c2b",
+  "entry_address": "0x0c37ee92",
+  "callable_address": "0x0c37ee93",
   "prototype": "int(const char *)",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-9190-001"
+      "EVID-PORT-9190-001",
+      "EVID-PORT-9190-CORRECT"
     ]
   },
   "policy": "restricted",
@@ -20,10 +21,11 @@
   "provenance": {
     "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
     "evidence_ids": [
-      "EVID-PORT-9190-001"
+      "EVID-PORT-9190-001",
+      "EVID-PORT-9190-CORRECT"
     ],
-    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-9pro-3175: equal body; neighbouring anchors keep their relative function distance; known callees consistent."
+    "source": "Re-matched from the emulator-verified xiaomi-band-9-3.1.32 records (EVID-PORT-9190-FROM-9132) and checked against the 3.1.190 decompilation; the previous src-9pro-3175 address was wrong. inode lock / remove / unlock; the primitives are the exact 3.1.190 inode_lock 0xc378378 and inode_unlock 0xc379cf0."
   },
   "approval_state": "PENDING",
-  "notes": "equal body; neighbouring anchors keep their relative function distance; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
+  "notes": "inode lock / remove / unlock; the primitives are the exact 3.1.190 inode_lock 0xc378378 and inode_unlock 0xc379cf0. Address corrected from 0xc418c2a after the 3.1.32-based re-match; the record stays restricted/STATIC_RECOVERED/PENDING. equal body; neighbouring anchors keep their relative function distance; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
 }

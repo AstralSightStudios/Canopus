@@ -94,6 +94,25 @@ struct firmware_page_descriptor {
 };
 
 struct firmware_app_descriptor {
+#if defined(CANOPUS_MGR_APPINFO_190)
+    /* 3.1.190 (Band 9 Pro / Band 10) launcher ABI: launcher_load_app_info
+     * reads the metadata callback at +0x1c and app_install copies 0x3c
+     * bytes, so the 3.1.32 layout (+0x14 callback) calls the null
+     * page_registry slot instead. */
+    uint32_t registry_prev;                   /* +0x00 */
+    uint32_t registry_next;                   /* +0x04 */
+    const char *package_name;                 /* +0x08 */
+    const char *launcher_icon_resource;       /* +0x0c */
+    uint16_t app_id;                          /* +0x10 */
+    uint8_t flags;                            /* +0x12 */
+    uint8_t _pad_13;                          /* +0x13 */
+    const char *owned_string_20;              /* +0x14 */
+    const char *owned_string_24;              /* +0x18 */
+    const char *(*launcher_metadata_callback)(void); /* +0x1c */
+    uint8_t _pad_20[0x18];                   /* +0x20 */
+    uint8_t hidden_flags;                     /* +0x38 */
+    uint8_t _tail_39[3];                      /* +0x39 */
+#else
     uint32_t registry_prev;                   /* +0x00 */
     uint32_t registry_next;                   /* +0x04 */
     const char *package_name;                 /* +0x08 */
@@ -108,6 +127,7 @@ struct firmware_app_descriptor {
     void *extension_callback;                 /* +0x24 */
     uint8_t hidden_flags;                     /* +0x28 */
     uint8_t _tail_29[3];                     /* +0x29 */
+#endif
 };
 
 struct canopus_target_ui_binding {
@@ -192,8 +212,13 @@ _Static_assert(offsetof(struct firmware_page_descriptor, on_create) == 76,
                "page create offset");
 _Static_assert(offsetof(struct firmware_page_descriptor, on_destroy) == 92,
                "page destroy offset");
+#if defined(CANOPUS_MGR_APPINFO_190)
+_Static_assert(sizeof(struct firmware_app_descriptor) == 60,
+               "firmware app descriptor size (3.1.190)");
+#else
 _Static_assert(sizeof(struct firmware_app_descriptor) == 44,
                "firmware app descriptor size");
+#endif
 
 static const char package_name[] = "com.canopus.manager";
 static const char page_name_overview[] = "main";

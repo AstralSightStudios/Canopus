@@ -70,6 +70,12 @@ TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
   -fno-stack-protector -fno-unwind-tables -fno-asynchronous-unwind-tables \
   -fdata-sections -fno-function-sections -Os -Wall -Wextra -Werror \
   $TARGET_DEFINES ${CANOPUS_SUP_EXTRA_DEFINES:-}"
+# The v8 Manager app descriptor layout differs between the 3.1.32 generation
+# and 3.1.190: the latter's launcher_load_app_info reads the metadata callback
+# at +0x1c. Select the 3.1.190 layout for targets whose IDB proved it.
+case "$TARGET_ID" in
+    xiaomi-band-9-pro-3.1.190) TARGET_FLAGS="$TARGET_FLAGS -DCANOPUS_MGR_APPINFO_190" ;;
+esac
 
 INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/runtime/diagnostics -I$ROOT/runtime/control -I$ROOT/runtime/module \

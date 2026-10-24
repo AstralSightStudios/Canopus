@@ -10,7 +10,8 @@
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-9190-001"
+      "EVID-PORT-9190-001",
+      "EVID-PORT-9190-CORRECT"
     ]
   },
   "policy": "restricted",
@@ -18,12 +19,13 @@
   "provenance": {
     "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
     "evidence_ids": [
-      "EVID-PORT-9190-001"
+      "EVID-PORT-9190-001",
+      "EVID-PORT-9190-CORRECT"
     ],
-    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-9pro-3175: mutually unique full-body anchor; known callees consistent."
+    "source": "Re-matched from the emulator-verified xiaomi-band-9-3.1.32 records (EVID-PORT-9190-FROM-9132) and checked against the 3.1.190 decompilation; the previous src-9pro-3175 address was wrong. VFS unlink wrapper; body identical to 3.1.32 0xc3920fc."
   },
-  "entry_address": "0xc37e938",
-  "callable_address": "0xc37e939",
-  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
+  "entry_address": "0x0c37fe00",
+  "callable_address": "0x0c37fe01",
+  "notes": "VFS unlink wrapper; body identical to 3.1.32 0xc3920fc. Address corrected from 0xc37e938 after the 3.1.32-based re-match; the record stays restricted/STATIC_RECOVERED/PENDING. mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
   "approval_state": "PENDING"
 }
