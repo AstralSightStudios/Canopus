@@ -8,15 +8,16 @@
   "entry_address": "0xc5281d0",
   "prototype": "int(const char *, const void *, void *)",
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
       "EVID-PORT-1028-001",
-      "EVID-ABI-1028-REGISTER-001"
+      "EVID-ABI-1028-REGISTER-001",
+      "EVID-PORT-1028-V8-ACCEPT"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
     "evidence_ids": [
@@ -26,6 +27,6 @@
     "source": "Exact xiaomi-band-10-3.1.28 image/IDB compared with xiaomi-band-9-3.1.32: body differs (instruction fingerprint and pseudocode)."
   },
   "approval_state": "PENDING",
-  "notes": "CORRECTED 2026-10-25: character-driver registration is the type-1 inode variant (0xc5281d0). The previous record pointed at a type-7/other-class registration and /dev/canopus opened with ENOSYS in Mirage. Three siblings set inode types 1, 2 and 10/7; only type 1 is the character-driver path.",
+  "notes": "CORRECTED 2026-10-25: character-driver registration is the type-1 inode variant (0xc5281d0). The previous record pointed at a type-7/other-class registration and /dev/canopus opened with ENOSYS in Mirage. Three siblings set inode types 1, 2 and 10/7; only type 1 is the character-driver path. manual static-test accept 2026-10-25; body/name evidence only, not ABI-audited.",
   "callable_address": "0xc5281d1"
 }

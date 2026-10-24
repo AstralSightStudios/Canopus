@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-1028-V8-ACCEPT",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "Which exact 3.1.28 v8 UI/platform records are accepted for a static-test Supervisor build?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "Prototypes carried from the source records; addresses are the o66 pack's candidates, with the allocator pair corrected from the exact mm module.",
+  "callsite_evidence": [
+    "mm_memalign_default 0xc12234c wraps mm_memalign 0xc1221fc with Umem descriptor dword_200936A8; mm_free_default 0xc11eee8 frees with the same descriptor.",
+    "launcher_load_app_info 0xc29a1f8, launcher_page_insert_icon 0xc29b21c and launcher_reset_order_info 0xc4fc508 are exact IDB names/strings.",
+    "The three LVGL object creators (0xc127924 / 0xc3269f4 / 0xc392c88) are not disambiguated; their bodies are aliases. The Manager registration path does not call them.",
+    "The remaining UI/platform candidates keep their existing o66 addresses and are only accepted for static-test builds."
+  ],
+  "control_flow_evidence": [],
+  "ownership_analysis": "No ownership change; records stay restricted.",
+  "unsafe_assumptions": [
+    "LVGL creator/class selection is unverified; the Manager page widgets may be wrong.",
+    "No device proof."
+  ],
+  "recommended_probe": "Run the installer in Mirage; open the Manager page and fix the creator/class addresses if it misrenders.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

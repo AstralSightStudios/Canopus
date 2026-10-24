@@ -1,0 +1,84 @@
+# Firmware-bound staged loader profile for Xiaomi Band 10 (o66) 3.1.28.
+# Static evidence only; no loader run exists yet on this target.
+schema = 1
+target_id = "xiaomi-band-10-3.1.28"
+firmware_sha256 = "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845"
+loader_family = "staged-kmem-mpu"
+status = "STATIC_RECOVERED"
+device_status = "STATIC_CANDIDATE"
+command_family = "mw-exec"
+
+[stage0]
+# IDB segments: DATA 0x2007eac8..0x20092e7c, BSS ..0x200dab48, Kmem heap
+# 0x200eab80..0x2015f27c. The 64 KiB gap ends at Kmem; stage 0 sits at its
+# top, away from the low log buffers.
+kind = "unassigned_privileged_ram_gap"
+base = 0x200E0000
+size = 0x1000
+exec_size = 0x40
+stage0_region = 7
+result_word = 0x200E0040
+original_words_known = false
+preserve_original = false
+status = "STATIC_CANDIDATE"
+requires_mpu_sync = true
+
+[stage]
+stage2_path = "/data/canopus/stage2.bin"
+supervisor_path = "/data/canopus/supervisor.elf"
+entry_argument = "unspecified-r0"
+thumb_entry = true
+
+[firmware]
+# exec/mw handlers: exact full-body matches of the 3.1.32 handlers.
+exec_handler = 0x0C183E0C
+mw_handler = 0x0C17F048
+# VFS wrappers: open is an exact body; close/read keep reviewed candidates.
+open = 0x0C390E1C
+close = 0x0C38DE04
+read = 0x0C38F8D0
+# Allocators: exact o66 mm module. 0xc12234c is the two-argument default
+# wrapper around mm_memalign 0xc1221fc and the Umem descriptor 0x200936a8;
+# 0xc11eee8 frees with the same descriptor. Kmem wrappers are exact too.
+memalign = 0x0C12234C
+free = 0x0C11EEE8
+kmem_malloc = 0x0C121E5C
+kmem_free = 0x0C11EEFC
+# MPU helpers: exact full-body matches.
+mpu_alloc = 0x0C559288
+mpu_configure = 0x0C559110
+mpu_release = 0x0C5592E0
+# Interior DSB SY; ISB SY; BX LR tail of the exact-mapped 0xc5590ac function.
+mpu_sync = 0x0C5590BE
+# Inode primitives used by the type-1 register_driver variant 0xc5281d0.
+inode_lock = 0x0C38E940
+inode_reserve = 0x0C5280C8
+inode_unlock = 0x0C38E748
+
+[architecture]
+mpu_rnr = 0xE000ED98
+mpu_rbar = 0xE000ED9C
+mpu_rlar = 0xE000EDA0
+mpu_region_count = 8
+exec_access_attr = 1
+exec_mem_attr = 1
+ro_access_attr = 4
+rw_access_attr = 0
+
+[sram_text]
+base = 0x200E0000
+size = 0x1000
+cave = 0x200E0000
+result_word = 0x200E0040
+original_words = [
+  0x00000000, 0x00000000, 0x00000000, 0x00000000,
+  0x00000000, 0x00000000, 0x00000000, 0x00000000,
+]
+
+[evidence]
+ids = ["EVID-PORT-1028-001", "EVID-PORT-1028-V8-ACCEPT"]
+unsafe_assumptions = [
+  "Stage-0 cave 0x200E0000 is an unassigned gap in the exact IDB; runtime ownership is not proven.",
+  "MPU/inode/allocator entries are exact; close/read and most v8 UI records are reviewed candidates.",
+  "No loader, stage, Supervisor or installer has been executed on this target.",
+]

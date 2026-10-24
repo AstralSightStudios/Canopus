@@ -3,6 +3,8 @@
 schema = 1
 target_id = "xiaomi-band-10-3.1.28"
 rust_module = "xiaomi_band_10_3_1_28"
+static_test_abi = true
+family = "xiaomi-band-10"
 device_family = "xiaomi-smart-band"
 device_model = "Xiaomi Band 10"
 board_revision = "o66tc"

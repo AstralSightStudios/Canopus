@@ -1,4 +1,4 @@
--- Production Canopus installer for Xiaomi Band 9 Pro (336x480, LuaLVGL v8).
+-- Production Canopus installer for Xiaomi Band 9 (192x490, LuaLVGL v8).
 --
 -- Run performs, in order:
 --   NSH mw/exec stage-1 -> stage-2 -> Supervisor constructor
@@ -10,6 +10,8 @@
 local lvgl = require("lvgl")
 
 local TARGET_ID = "xiaomi-band-9-pro-3.1.190"
+-- Diagnostic only: set true in a test package to run without touch input.
+local AUTORUN = false
 local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_icon.bin"
 local MANAGER_ICON_PATH = "/data/canopus/manager_icon.bin"
 local STAGE2_PATH = "/data/canopus/stage2.bin"
@@ -756,7 +758,7 @@ local function make_button(text, color, on_clicked)
 end
 
 local run_button
-run_button = make_button("Run", '#14508a', function()
+local function run_installer()
     clear_armed = false
     if profile.device_status == "DEVICE_REJECTED" then
         set_status("LOAD blocked: stage-0 candidate rejected\n"
@@ -791,7 +793,9 @@ run_button = make_button("Run", '#14508a', function()
     run_phase = 1
     set_status("Supervisor loaded; installing...")
     run_all_steps()
-end)
+end
+
+run_button = make_button("Run", '#14508a', run_installer)
 
 make_button("Clear Env", '#8a1f14', function()
     if run_active then
@@ -813,3 +817,7 @@ make_button("Clear Env", '#8a1f14', function()
 end)
 
 set_status("Ready")
+
+if AUTORUN then
+    run_installer()
+end
