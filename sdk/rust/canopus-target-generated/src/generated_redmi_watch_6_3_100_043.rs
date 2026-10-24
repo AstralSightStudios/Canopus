@@ -4,7 +4,7 @@
 // firmware : 3.100.043 (d516af0:nx_best1502p_ap)
 // sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
 // revision : 1
-// input_digest: 86a627f24d8704ad
+// input_digest: 02a2fa981ae09388
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -119,6 +119,9 @@ pub const CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE: usize = canopus_thumb_callable(
 
 /// Recovered `launcher_page_insert_icon` at 0xc7f070c. Thumb callable address 0xc7f070d.
 pub const CANOPUS_FW_LAUNCHER_PAGE_INSERT_ICON_CALLABLE: usize = canopus_thumb_callable(0xc7f070dusize);
+
+/// Recovered `app_launcher_add` at 0xc7ec450. Thumb callable address 0xc7ec451.
+pub const CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc7ec451usize);
 
 /// Recovered `rename` at 0x1c1587c8. Thumb callable address 0x1c1587c9.
 pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0x1c1587c9usize);

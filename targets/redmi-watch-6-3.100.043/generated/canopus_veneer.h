@@ -4,7 +4,7 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 1
- * input_digest: 86a627f24d8704ad
+ * input_digest: 02a2fa981ae09388
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -132,6 +132,11 @@ static inline void canopus_fw_lv_obj_clear_flag(void * a0, uint32_t a1) {
 typedef int (*canopus_fw_launcher_page_insert_icon_fn)(void *);
 static inline int canopus_fw_launcher_page_insert_icon(void * a0) {
     return ((canopus_fw_launcher_page_insert_icon_fn)(uintptr_t)0xc7f070d)(a0);
+}
+
+typedef int (*canopus_fw_app_launcher_add_fn)(uint16_t);
+static inline int canopus_fw_app_launcher_add(uint16_t a0) {
+    return ((canopus_fw_app_launcher_add_fn)(uintptr_t)0xc7ec451)(a0);
 }
 
 typedef int (*canopus_fw_rename_fn)(const char *, const char *);
@@ -311,7 +316,6 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
 }
 
 /* ---- excluded symbols ----
- * app_launcher_add: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_net_connect_state_update: restricted - not exported until context/ownership approved
  * background_object_has_flag: restricted - not exported until context/ownership approved
