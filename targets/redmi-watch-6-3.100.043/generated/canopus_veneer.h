@@ -42,7 +42,7 @@ static inline int canopus_identity_guard(void)
     const char *const expect_version = "3.100.043";
     const char *const expect_build = "d516af0:nx_best1502p_ap";
     const char *const actual_version = (const char *)(uintptr_t)0x0C3BF9FD;
-    const char *const actual_build = (const char *)(uintptr_t)0x0C3BFA25;
+    const char *const actual_build = (const char *)(uintptr_t)0x0cbff458;
     if (canopus_identity_token_neq(actual_version, expect_version)) return -1;
     if (canopus_identity_token_neq(actual_build, expect_build)) return -1;
     return 0;

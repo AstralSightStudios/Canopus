@@ -46,7 +46,7 @@ pub fn canopus_identity_guard() -> i32 {
     const EXPECT_VERSION: &[u8] = b"3.100.043";
     const EXPECT_BUILD: &[u8] = b"d516af0:nx_best1502p_ap";
     if !identity_token_eq(0x0C3BF9FD, EXPECT_VERSION) { return -1; }
-    if !identity_token_eq(0x0C3BFA25, EXPECT_BUILD) { return -1; }
+    if !identity_token_eq(0x0cbff458, EXPECT_BUILD) { return -1; }
     0
 }
 

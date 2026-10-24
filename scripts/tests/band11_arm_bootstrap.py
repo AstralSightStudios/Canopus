@@ -471,7 +471,7 @@ class BootstrapTests(unittest.TestCase):
         rows = [p for p, w in m.widgets.items() if w.get('kind') == 'row']
         self.assertTrue(rows)
         for row in rows:
-            self.assertEqual((m.widgets[row]['width'], m.widgets[row]['height']), (204, 96))
+            self.assertEqual((m.widgets[row]['width'], m.widgets[row]['height']), (212, 96))
             self.assertEqual(ui.get(m.word(row + 0x3c), 0, 0x5a), ui.FONT28)
             if m.word(row + 0x40):
                 self.assertEqual(ui.get(m.word(row + 0x40), 0, 0x5a), ui.FONT24)

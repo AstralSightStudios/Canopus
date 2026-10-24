@@ -612,7 +612,12 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
         } else if (sup->platform && sup->platform->stage_package) {
             staged = sup->platform->stage_package(sup->platform_cookie,
                                                   stage_arg, arg0);
-            if (staged < 0) sup->error_code = (uint32_t)staged;
+            /* A platform may already have recorded a specific code (for
+             * example a duplicate/downgrade rejection). -1 is the generic
+             * failure and falls through to CANOPUS_SUP_ERR_STAGE below. */
+            if (staged < -1 && sup->error_code == CANOPUS_SUP_ERR_NONE) {
+                sup->error_code = (uint32_t)staged;
+            }
             rc = staged < 0 ? CANOPUS_RESULT_FAILED
                  : staged == 1 ? CANOPUS_RESULT_REBOOT_REQUIRED
                                : CANOPUS_RESULT_COMPLETED;
