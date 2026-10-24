@@ -3,7 +3,7 @@
   "evidence_id": "EVID-STATIC-P65-002",
   "target_id": "redmi-watch-6-3.100.043",
   "question": "Which REDMI Watch 6 3.100.043 entries are the NuttX VFS, app-registry and page-manager functions the staged Supervisor needs?",
-  "method": "Manual review of the exact 3.100.043 IDB (fwbins/xiaomi-p65-3.100.043/vela_ap.bin.i64, sha256 a19b6014…5858): each entry was decompiled and checked against the reviewed 3.1.28/3.1.190 semantics, its assert/log string, and its callee shapes. Addresses are the SRAM/PSRAM-resident bodies; several XIP copies are thunks (`0xc8beaf0 -> 0x1c158720`, `0xc8bef00 -> 0x1c1580e4`).",
+  "method": "Manual review of the exact 3.100.043 IDB (fwbins/xiaomi-p65-3.100.043/vela_ap.bin.i64, sha256 a19b6014\u20265858): each entry was decompiled and checked against the reviewed 3.1.28/3.1.190 semantics, its assert/log string, and its callee shapes. Addresses are the SRAM/PSRAM-resident bodies; several XIP copies are thunks (`0xc8beaf0 -> 0x1c158720`, `0xc8bef00 -> 0x1c1580e4`).",
   "findings": [
     {
       "name": "open",
@@ -38,7 +38,7 @@
     {
       "name": "errno_location",
       "entry": "0xc4f793c",
-      "anchor": "Returns TLS pointer +40 or the static errno slot 0x3c3e... — the NuttX get_errno_ptr shape; every libc wrapper above stores through it."
+      "anchor": "Returns TLS pointer +40 or the static errno slot 0x3c3e... \u2014 the NuttX get_errno_ptr shape; every libc wrapper above stores through it."
     },
     {
       "name": "app_lookup",
@@ -69,13 +69,34 @@
       "name": "unregister_driver",
       "entry": "0x1c15aa18",
       "anchor": "inode_lock + fs_inoderemove(path) 0x1c1557b4 + unlock."
+    },
+    {
+      "name": "lv_obj_class_create_obj",
+      "entry": "0x3775bc",
+      "anchor": "lv_obj_class.c assertions ('lv_obj_class_create_obj', 'No display created yet. No place to assign the new screen'); the class create occurs here, the init is 0x3776b0."
+    },
+    {
+      "name": "lv_obj_class_init_obj",
+      "entry": "0x3776b0",
+      "anchor": "called immediately after 0x3775bc by every widget create; base class 0x3c1de5c8."
+    },
+    {
+      "name": "lv_obj_create",
+      "entry": "0x387b78",
+      "anchor": "create helper with class 0x3c1de5c8 (base_class 0 = lv_obj_class) + init; followed by the lv_obj_class.c path string."
+    },
+    {
+      "name": "lv_label_create",
+      "entry": "0xc78bcb4",
+      "anchor": "create helper with class 0x3c224844; the same class struct appears in XIP rodata at 0xc3145b8 immediately before the lv_label.c source path and the 'Failed to allocate memory for dot_tmp_ptr' label string."
     }
   ],
   "limits": [
     "Static review only: device is NOT_PROBED and no capability is claimed.",
     "read/write/unlink/rename are the SRAM-resident originals; the XIP copies are thunks and must not be recorded as separate callables.",
     "register_driver keeps the four-argument NuttX signature; a three-argument veneer call would leave private data undefined.",
-    "The launcher trio (launcher_load_app_info, launcher_page_insert_icon, launcher_reset_order_info) is not resolved yet."
+    "lv_memalign/lv_free wrappers over the default heap descriptor 0x3c3d4f10[3043] are located (0xc50b2c8 / 0xc50b25c) but not yet recorded.",
+    "The remaining LVGL setters (label text, image src, bar range/value, size, align, flags, event) and the image/bar create helpers are not resolved yet."
   ],
   "verdict": "STATIC_RECOVERED",
   "created": "2026-10-25T04:20:00Z"

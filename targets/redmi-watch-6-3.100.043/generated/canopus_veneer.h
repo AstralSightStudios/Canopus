@@ -4,7 +4,7 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 1
- * input_digest: c8429f6f91053d8b
+ * input_digest: 2dcbfa03957bc1a2
  */
 #ifndef CANOPUS_VENEER_REDMI_WATCH_6_3_100_043_H
 #define CANOPUS_VENEER_REDMI_WATCH_6_3_100_043_H
@@ -185,9 +185,11 @@ static inline int canopus_identity_guard(void)
  * lv_image_decoder_get_info: restricted - not exported until context/ownership approved
  * lv_image_set_src: restricted - not exported until context/ownership approved
  * lv_indev_get_point: restricted - not exported until context/ownership approved
+ * lv_label_create: restricted - not exported until context/ownership approved
  * lv_obj_add_event_cb: restricted - not exported until context/ownership approved
  * lv_obj_align_to: restricted - not exported until context/ownership approved
  * lv_obj_clear_flag: restricted - not exported until context/ownership approved
+ * lv_obj_create: restricted - not exported until context/ownership approved
  * lv_obj_get_coords: restricted - not exported until context/ownership approved
  * lv_obj_get_scroll_x: restricted - not exported until context/ownership approved
  * lv_obj_get_scroll_y: restricted - not exported until context/ownership approved

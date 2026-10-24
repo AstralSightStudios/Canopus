@@ -30,17 +30,52 @@ never been deployed by Canopus.
   boot info). The old record `0xc3bfa25` pointed into the charger blob and was
   corrected.
 
+## Recovered static ABI (2026-10-25, `EVID-STATIC-P65-002`)
+
+The custom-loader (FW_9/SUP_9) set is being recovered by manual review of the
+exact IDB; the XIP copies of the SRAM-resident bodies are thunks, so only the
+SRAM/PSRAM entry addresses are recorded.
+
+- NuttX VFS: `open` `0x1c1580e4`, `close` `0x1c154c40`, `read` `0x1c158720`,
+  `write` `0x1c158690`, `unlink` `0x1c159824`, `rename` `0x1c1587c8`,
+  `errno_location` `0xc4f793c`; helpers `fs_getfilep` `0x1c154700`,
+  `file_read` `0x1c158790`, `file_write` `0x1c159a90`.
+- Inode/driver: `inode_lock` `0x1c154f50`, `inode_reserve` `0x1c155888`,
+  `inode_remove` `0x1c1557b4`, `inode_unlock` `0x1c154f70`,
+  `register_driver` `0x1c15a954` (four arguments), `unregister_driver`
+  `0x1c15aa18`.
+- App/page: `app_lookup` `0x1c151108`, `app_install` `0x1c151ae4`,
+  `page_goto` `0x1c132f4c`, `page_finish` `0x1c1325b8`.
+- LVGL v9 core: `lv_obj_class_create_obj` `0x3775bc`,
+  `lv_obj_class_init_obj` `0x3776b0`, `lv_obj_create` `0x387b78`,
+  `lv_label_create` `0xc78bcb4` (`lv_label_class` 0x3c224844 / XIP copy
+  0xc3145b8).
+- Allocators: default-heap wrappers `0xc50b2a0` (malloc), `0xc50b25c` (free),
+  `0xc50b2c8` (memalign) over the descriptor `dword_3C3D4F10[3043]`.
+
 ## Remaining blockers
 
-- **Platform ABI.** The target has no family and `CANOPUS_SUP_PLATFORM_COMPLETE`
-  is 0; the v9 Supervisor sources need the FW_10/SUP_10 mapping set (41 UI
-  symbols) plus the veneer allocator/MPU/inode records. Most p65 records are
-  CANDIDATE (21 STATIC_RECOVERED of 314) and several key addresses (open/close
-  are plausible, read/write are not) are still wrong.
-- **Loader profile.** exec/mw handler addresses, inode primitives,
-  Kmem/Umem allocator pairs and the MPU lease API are not recovered yet.
+- **Platform ABI.** `CANOPUS_SUP_PLATFORM_COMPLETE` is still 0. Missing:
+  the LVGL setters (`lv_label_set_text`, `lv_obj_set_size`, `lv_obj_add_event_cb`,
+  `lv_obj_align_to`, `lv_obj_add_flag`, `lv_obj_clear_flag`, `lv_img_set_src`,
+  `lv_bar_set_range`, `lv_bar_set_value`), the image/bar create helpers, the
+  launcher trio, and the `lvx_page_title_create` re-check.
+- **MPU lease.** No function in this image writes the MPU registers
+  (`0xE000ED98/9C/A0`); the BES MPU strings ("mpu_setup",
+  "mpu_set_rbar_rlar", "id_new[i] != MPU_INVALID_ID") sit in dead rodata with
+  no referencing code. The Band-11-style lease veneers
+  (`mpu_region_allocate/configure/release`) therefore have no static source
+  here; a p65 loader variant that relies on the default memory map (the Mirage
+  cave proof executes unassigned SRAM without a lease) would need an explicit
+  generator decision.
+- **register_driver arity.** The recovered function takes four arguments
+  (path, fops, mode, private); the custom-loader macro passes three. The
+  generated macro needs a p65 override that forwards `mode`.
+- **Loader profile.** The exec/mw handler addresses are not recorded yet; the
+  rest of the staged profile (VFS, inode, allocator) is recovered above.
 - **Lua surface.** The watchface Lua engine's `os.execute` path is untested on
   p65; the Facetory Lua-layer packaging applies as on the other v8/v9 faces.
 
 All symbol records remain `restricted`/`PENDING`; no approval or device proof
 exists.
+

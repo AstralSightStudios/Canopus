@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lv_label_create",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_label_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void *(void *)",
+  "entry_address": "0xc78bcb4",
+  "callable_address": "0xc78bcb5",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (EVID-STATIC-P65-002)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): LVGL v9 widget create for the class at 0x3c224844 (same struct bytes as the XIP rodata copy at 0xc3145b8, whose tail is the lv_label.c source path); calls lv_obj_class_create_obj 0x3775bc then lv_obj_class_init_obj 0x3776b0. Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING"
+}

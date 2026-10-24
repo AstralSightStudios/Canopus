@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.lv_obj_create",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "lv_obj_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void *(void *)",
+  "entry_address": "0x387b78",
+  "callable_address": "0x387b79",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (EVID-STATIC-P65-002)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): LVGL v9 widget create for lv_obj_class 0x3c1de5c8: calls lv_obj_class_create_obj 0x3775bc then lv_obj_class_init_obj 0x3776b0. The create helper carries the lv_obj_class.c / lv_obj_class_create_obj assert strings. Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING"
+}

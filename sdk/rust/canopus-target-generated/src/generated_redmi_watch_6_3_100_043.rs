@@ -4,7 +4,7 @@
 // firmware : 3.100.043 (d516af0:nx_best1502p_ap)
 // sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
 // revision : 1
-// input_digest: c8429f6f91053d8b
+// input_digest: 2dcbfa03957bc1a2
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -71,6 +71,9 @@ pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0x
 
 /// Recovered `interconnect_close` at 0xc62df50. Thumb callable address 0xc62df51.
 pub const CANOPUS_FW_INTERCONNECT_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc62df51usize);
+
+/// Recovered `lv_obj_create` at 0x387b78. Thumb callable address 0x387b79.
+pub const CANOPUS_FW_LV_OBJ_CREATE_CALLABLE: usize = canopus_thumb_callable(0x387b79usize);
 
 /// Recovered `bt_timer_cancel` at 0xc98f788. Thumb callable address 0xc98f789.
 pub const CANOPUS_FW_BT_TIMER_CANCEL_CALLABLE: usize = canopus_thumb_callable(0xc98f789usize);
@@ -140,6 +143,9 @@ pub const CANOPUS_FW_FONT_RELOAD_FT_MUL_FIX_CALLABLE: usize = canopus_thumb_call
 
 /// Recovered `close` at 0x1c154c40. Thumb callable address 0x1c154c41.
 pub const CANOPUS_FW_CLOSE_CALLABLE: usize = canopus_thumb_callable(0x1c154c41usize);
+
+/// Recovered `lv_label_create` at 0xc78bcb4. Thumb callable address 0xc78bcb5.
+pub const CANOPUS_FW_LV_LABEL_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc78bcb5usize);
 
 /// Recovered `watchface_manager_delete_watchface` at 0xca90b1c. Thumb callable address 0xca90b1d.
 pub const CANOPUS_FW_WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = canopus_thumb_callable(0xca90b1dusize);
@@ -298,9 +304,11 @@ pub const CANOPUS_FW_UNREGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(
 // lv_image_decoder_get_info: restricted - not exported until context/ownership approved
 // lv_image_set_src: restricted - not exported until context/ownership approved
 // lv_indev_get_point: restricted - not exported until context/ownership approved
+// lv_label_create: restricted - not exported until context/ownership approved
 // lv_obj_add_event_cb: restricted - not exported until context/ownership approved
 // lv_obj_align_to: restricted - not exported until context/ownership approved
 // lv_obj_clear_flag: restricted - not exported until context/ownership approved
+// lv_obj_create: restricted - not exported until context/ownership approved
 // lv_obj_get_coords: restricted - not exported until context/ownership approved
 // lv_obj_get_scroll_x: restricted - not exported until context/ownership approved
 // lv_obj_get_scroll_y: restricted - not exported until context/ownership approved
