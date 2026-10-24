@@ -109,6 +109,86 @@
       "name": "default heap",
       "entry": "0xc50b2a0 / 0xc50b25c / 0xc50b2c8",
       "anchor": "BES heap wrappers over the descriptor stored at 0x3c3d7e9c (dword_3C3D4F10[3043]); Mirage reads that slot as 0x3c57f980, i.e. the default heap lives in PSRAM - a Supervisor image allocated there executes through the 0x1c alias, so the p65 loader follows the Band 11 design (alias + explicit MPU lease), not the SRAM-resident Band 9 one."
+    },
+    {
+      "name": "lv_img_create",
+      "entry": "0xc78a960",
+      "anchor": "class 0x3c2242a0, ctor 0xc78a760 (src 0 at +0x34, rotation 0 at +0x48, scale 256 at +0x4c/+0x50), paired with 0xc78acf0 at all 65 call sites."
+    },
+    {
+      "name": "lv_bar_create",
+      "entry": "0xc784834",
+      "anchor": "class 0x3c223b58, ctor 0xc784798 sets max 100 at +0x3c and min/current 0 at +0x38/+0x34."
+    },
+    {
+      "name": "lv_label_set_text",
+      "entry": "0xc78c878",
+      "anchor": "(obj,text): NULL keeps +0x34, else free/strlen+1/alloc/copy into +0x34, clear flag bit 8 and refresh 0xc78c250; the label constructor calls it with \"\"."
+    },
+    {
+      "name": "lv_obj_set_size",
+      "entry": "0x378738",
+      "anchor": "style props 1/2 through 0x37d628 and 0x37ed10/0x37ed58; XIP thunk 0xc255ce4."
+    },
+    {
+      "name": "lv_obj_add_flag",
+      "entry": "0x387b98",
+      "anchor": "flags at +44 |= flag with HIDDEN/0x1800000 handling; thunk 0xc8be2f8."
+    },
+    {
+      "name": "lv_obj_clear_flag",
+      "entry": "0x387c44",
+      "anchor": "flags at +44 &= ~flag; thunk 0xc8bcca0."
+    },
+    {
+      "name": "lv_img_set_src",
+      "entry": "0xc78acf0",
+      "anchor": "source classified by 0xc71a084, stored at +0x34, width/height at +0x40/+0x44, scale/align modes."
+    },
+    {
+      "name": "lv_bar_set_range",
+      "entry": "0xc7849e4",
+      "anchor": "min +0x38 / max +0x3c with swap and current clamp."
+    },
+    {
+      "name": "lv_bar_set_value",
+      "entry": "0xc784850",
+      "anchor": "clamped into [min,max] at +0x34 with optional animation via 0xc73c190/0xc73c1c8."
+    },
+    {
+      "name": "lv_obj_align_to",
+      "entry": "0x37a580",
+      "anchor": "LV_ALIGN switch 1..21 with percentage offsets; thunk 0xc8be1b8."
+    },
+    {
+      "name": "lv_obj_add_event_cb",
+      "entry": "0x388098",
+      "anchor": "spec_attr allocation 0x387db8 then lv_event_add 0x3954e0; thunk 0xc8bce78."
+    },
+    {
+      "name": "lvx_page_title_create",
+      "entry": "0xc21b2fc",
+      "anchor": "logs 'lvx_page_title_create' and builds class 0x3c2a3318; the earlier candidate 0xc21b4b0 is the battery variant ('lvx_page_title_battery_create')."
+    },
+    {
+      "name": "launcher_load_app_info",
+      "entry": "0xc7ebd10",
+      "anchor": "log tag 'load_app_info', 24-byte entry allocation 0xc73e058, fills icon/name/id/flags."
+    },
+    {
+      "name": "launcher_page_insert_icon",
+      "entry": "0xc7f070c",
+      "anchor": "log tag 'launcher_page_insert_icon', requires launcher UI slot 0x3c456fa0, builds icon/label bindings."
+    },
+    {
+      "name": "launcher_reset_order_info",
+      "entry": "0xc7ecafc",
+      "anchor": "iterates the launcher list and rebuilds the order metadata; the firmware name string is 'launcher_reset_order_list'."
+    },
+    {
+      "name": "app_launcher_add",
+      "entry": "0xc7ec450",
+      "anchor": "log 'app_launcher_add' + 'add icon: %s'; lookup -> 0xc7ebd10 -> 0xc7f070c -> ordered-list insert."
     }
   ],
   "limits": [
