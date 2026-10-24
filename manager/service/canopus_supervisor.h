@@ -329,7 +329,7 @@ struct canopus_supervisor_v1 {
         int fd;
         uint32_t size;
         uint32_t written;
-        /* Resources are accepted only after the artifact passes stage_verify. */
+        /* Resources are accepted only after the artifact stream is complete. */
         uint32_t resources_ready;
         char id[CANOPUS_SUP_MODULE_ID_MAX];
         uint8_t receipt[CANOPUS_INSTALL_RECEIPT_SIZE];

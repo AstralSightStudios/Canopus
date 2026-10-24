@@ -342,7 +342,7 @@ TEST(resource_upload_accepts_maximum_name_and_empty_resource)
     check_resource(path, "", 0u);
     check_no_partials();
 }
-TEST(resource_upload_requires_verified_artifact_context)
+TEST(resource_upload_requires_staged_artifact_context)
 {
     struct canopus_supervisor_v1 sup;
     struct canopus_install_receipt_v1 receipt;
@@ -538,7 +538,7 @@ static struct test_registry upload_tests[] = {
     {"native_upload_rejects_wrong_target_and_cleans_failed_transfers", native_upload_rejects_wrong_target_and_cleans_failed_transfers_wrapper},
     {"resource_upload_matches_sender_sequence_and_flat_data_contract", resource_upload_matches_sender_sequence_and_flat_data_contract_wrapper},
     {"resource_upload_accepts_maximum_name_and_empty_resource", resource_upload_accepts_maximum_name_and_empty_resource_wrapper},
-    {"resource_upload_requires_verified_artifact_context", resource_upload_requires_verified_artifact_context_wrapper},
+    {"resource_upload_requires_staged_artifact_context", resource_upload_requires_staged_artifact_context_wrapper},
     {"resource_upload_rejects_unsafe_names_and_malformed_begin", resource_upload_rejects_unsafe_names_and_malformed_begin_wrapper},
     {"resource_upload_rejects_bad_writes_and_removes_partial", resource_upload_rejects_bad_writes_and_removes_partial_wrapper},
     {"resource_upload_rejects_short_or_malformed_finish", resource_upload_rejects_short_or_malformed_finish_wrapper},

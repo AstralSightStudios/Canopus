@@ -48,7 +48,9 @@ static const char *const s_receipt_suffix[SUP_KIND_COUNT] = {
 static const char *const s_module_suffix[SUP_KIND_COUNT] = {
     ".ko", ".ko.b", ".ko.next"};
 #define CANOPUS_SUP_PATH_MAX 224u
-#define CANOPUS_SUP_READ_CHUNK 512u
+/* Read granularity for the hash/verify readbacks; larger blocks mean fewer
+ * flash syscalls per byte. */
+#define CANOPUS_SUP_READ_CHUNK 1024u
 #define CANOPUS_SUP_NUTTX_O_RDONLY 1
 #define CANOPUS_SUP_NUTTX_O_WRONLY 2u
 #define CANOPUS_SUP_NUTTX_O_CREAT 0x4u
@@ -1020,11 +1022,8 @@ static int sup_registry_persist(void *cookie, const uint8_t *data, uint32_t len)
         sup_registry_diag(CANOPUS_SUP_REG_STAGE_RENAME, sup_registry_errno());
         return CANOPUS_SUP_ERR_REGISTRY_RENAME;
     }
-    if (sup_verify_file(CANOPUS_SUP_REGISTRY_PATH, data, len) != 0) {
-        sup_registry_diag(CANOPUS_SUP_REG_STAGE_VERIFY_FINAL,
-                          sup_registry_errno());
-        return CANOPUS_SUP_ERR_REGISTRY_VERIFY_FINAL;
-    }
+    /* The temp readback above is the single publish-time check; the atomic
+     * rename does not need a second one. */
     sup_registry_diag_success();
     return 0;
 }

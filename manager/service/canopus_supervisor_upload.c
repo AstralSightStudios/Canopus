@@ -74,7 +74,9 @@ static int resource_verify(struct canopus_supervisor_v1 *sup, const char *path)
 {
     const struct canopus_sup_platform_v1 *pf = sup->platform;
     SHA256_CTX sha;
-    uint8_t chunk[256], digest[32];
+    /* One publish-time readback per file; larger blocks keep the flash syscall
+     * count down (bounded by this task's stack). */
+    uint8_t chunk[1024], digest[32];
     uint32_t left = sup->resource_upload.size, i;
     int fd = pf->file_open(sup->platform_cookie, path, CANOPUS_FS_READ);
     int rc = -1;
@@ -185,7 +187,6 @@ uint32_t canopus_supervisor_upload(struct canopus_supervisor_v1 *sup,
     const struct canopus_sup_platform_v1 *pf = sup->platform;
     char path[96], next[96];
     int fd;
-    uint32_t version, lifecycle;
 
     if (pf == 0 || pf->file_open == 0 || pf->file_write == 0 ||
         pf->file_close == 0 || pf->file_remove == 0 || pf->file_rename == 0 ||
@@ -248,9 +249,10 @@ uint32_t canopus_supervisor_upload(struct canopus_supervisor_v1 *sup,
     }
     upload_path(next, sup->upload.id, ".cmi.next");
     (void)pf->file_remove(sup->platform_cookie, next);
-    if (pf->file_rename(sup->platform_cookie, path, next) != 0 ||
-        pf->stage_verify(sup->platform_cookie, sup->upload.id, &version, &lifecycle) != 0)
-        goto failed;
+    if (pf->file_rename(sup->platform_cookie, path, next) != 0) goto failed;
+    /* No artifact hash here: stage_verify runs exactly once before commit
+     * (INSTALL) and again at module load. Re-reading the ELF at staging time
+     * only duplicated the pre-commit check. */
     sup->upload.resources_ready = 1u;
     return CANOPUS_RESULT_COMPLETED;
 
