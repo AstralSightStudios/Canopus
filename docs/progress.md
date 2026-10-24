@@ -27,7 +27,9 @@
   - `redmi-watch-6-3.100.043`（p65，SHA `a19b6014…5858`）：从 Band 10 Pro `.043` 包移植，仅接受函数体相等且有调用/位置支撑的记录，其余保持 CANDIDATE。
 - 生成物可重建（`canopus target generate --all --check` 9/9），`generated_stability` 18/18 通过。四者的 loader 均标注为 Band-11 风格 Lua-owned staged loader（无 `insmod`、无 Lua `os.execute` 恢复），但 stage1/stage2、installer staging 与设备/模拟器验证尚未实现；`loader/README.md` 写明边界。
 - **UI family**：Band 9 / Band 9 Pro / Band 10 是 LVGL v8，需要专门的 v8 Manager 后端（旧的 v8 后端随 `band9-frozen` 删除）；Band 11 / Band 10 Pro / REDMI Watch 6 是 LVGL v9。
-- 四个 target 均生成 `canopus-target-generated` Rust 绑定与 feature（限制记录不生成 public typed wrapper）；仍无 Supervisor 构建支持、无 family 层、无 loader/installer，没有真机或 Mirage 运行，未提升任何能力状态。
+- 四个 target 均生成 `canopus-target-generated` Rust 绑定与 feature（限制记录不生成 public typed wrapper）；未提升任何能力状态。
+- 2026-10-25 起 Band 9 / Band 9 Pro 已从静态包推进到可构建链路：新增显式 `static_test_abi`（只为 restricted STATIC_RECOVERED 记录生成地址常量，生成头标注 `CANOPUS_SUP_STATIC_TEST_ABI`，不是批准）；恢复 LVGL v8 Manager 后端与 Band 9 staged loader（stage1/stage2、ELF32 loader、installer 资源）。`.32` Supervisor 112,876 B、`.190` 112,976 B，均 verifier PASS（0 undefined）；`.32` stage1/stage2 417/3,524 B，`.190` 421/3,544 B。v8 的模块 Launcher/通知服务入口仍 fail-closed。
+- Mirage：Band 9 必须使用**完整固件包**（只导 `vela_ap.bin` 时 system/resource 分区为空，屏幕全黑）。完整 `n66cn_v3.1.32_full_489f2050`（AP SHA 与 target 相同）已导入，原生表盘正常显示。Facetory 以 protocol `0x0800` 打包的安装器表盘能安装并设为当前，但 n66 表盘引擎不执行包内 Lua 脚本，只显示背景——loader 尚未真正进入；需要 Band 9 可用的 Lua 表盘包格式。`.190`/`.28`/p65 仍未做 Mirage 运行。
 
 ## Band 11 `4.100.179` 与全局 safe mode（2026-10-20）
 
