@@ -319,7 +319,11 @@ static int strings_differ(const char *left, const char *right)
         ++left;
         ++right;
     }
-    return *left != *right;
+    if (*right != '\0') {
+        return 1;
+    }
+    /* Firmware property blobs end a token with LF, not NUL. */
+    return *left != '\0' && *left != '\n' && *left != '\r';
 }
 
 static int identity_guard(void)

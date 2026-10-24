@@ -10,19 +10,21 @@
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-ID-3100043-001"
+      "EVID-ID-3100043-001",
+      "EVID-EMU-65043-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
-    "source": "exact redmi-watch-6-3.100.043 image; build.prop ro.build.id value, LF-terminated",
+    "source": "Exact XIP boot-info string: \"d516af0:nx_best1502p_ap\" at 0x0cbff458 (EVID-EMU-65043-001); the previous record pointed into the charger parameter blob.",
     "evidence_ids": [
-      "EVID-ID-3100043-001"
+      "EVID-ID-3100043-001",
+      "EVID-EMU-65043-001"
     ]
   },
-  "entry_address": "0x0C3BFA25",
-  "notes": "exact redmi-watch-6-3.100.043 identity; value '3.100.043'; build.prop ro.build.id value, LF-terminated",
+  "entry_address": "0x0cbff458",
+  "notes": "Address corrected from 0x0C3BFA25 to the exact boot-info build string. Record stays restricted/STATIC_RECOVERED/PENDING. exact redmi-watch-6-3.100.043 identity; value '3.100.043'; build.prop ro.build.id value, LF-terminated",
   "approval_state": "PENDING"
 }
