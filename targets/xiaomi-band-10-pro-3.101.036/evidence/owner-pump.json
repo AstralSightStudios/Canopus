@@ -1,0 +1,27 @@
+{
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "schema": 1,
+  "status": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "approval_state": "PENDING",
+  "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+  "addresses": {
+    "TIMER": "0x0C587721",
+    "TIMER_DELETE": "0x0C587EF1",
+    "OWNER_LOOP": "0x20121F80",
+    "OWNER_TIMER_INIT": "0x0C2CD84D",
+    "OWNER_TIMER_START": "0x0C2CDA3D",
+    "OWNER_TIMER_SIZE": "0x88"
+  },
+  "evidence": [
+    "miwear_main (sub_C6D54D0, NSH builtin 'miwear', priority 102) stores its libuv loop in dword_20121F80 and runs it: the UI owner loop, as 0x20125700 is on .043.",
+    "miwear_init_finish (sub_C497D90) calls sub_C2CD84C(*0x20121F80, &0x201090A8) for the 'miwear-refresh' timer: uv_timer_init(loop, timer). It sets type 13 (UV_TIMER) at +8 and flags 8 at +92, the .043 layout.",
+    "sub_C497930 / sub_C4978F0 restart that timer with sub_C2CDA3C(timer, cb, uint64 timeout, uint64 repeat): uv_timer_start. It writes cb +96, heap node +100..+108, timeout +112, repeat +120, id +128 (8 bytes): 136-byte handle, as on .043.",
+    "TIMER / TIMER_DELETE are the target's lv_timer_create / lv_timer_del (CANOPUS_FW_LV_TIMER_CREATE / _DEL), used only for the one-shot bootstrap on the UI owner."
+  ],
+  "scope": "Owner pump only: background timers (screen-off) on the UI owner loop. No L2 transport: SAR RX/session/crypto/send are not recovered for this target.",
+  "constraints": [
+    "uv_timer_init/start mutate owner-loop lists and heaps; only the LVGL bootstrap callback on the UI owner initializes and starts the resident handle, and its callbacks run on that loop. No threads or work queues.",
+    "Static recovery from the exact firmware IDB; no emulator or physical-device validation yet."
+  ]
+}

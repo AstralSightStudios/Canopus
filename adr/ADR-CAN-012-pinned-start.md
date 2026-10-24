@@ -1,6 +1,8 @@
 # ADR-CAN-012: 固化启动（pinned start）
 
-状态：已实现于 Band 10 Pro `.043` 与 Band 11 `.155` / `.179`（host / 模拟器证据），未上真机。`.139` 因无后台泵不支持。
+状态：已实现于 Band 10 Pro `.043` 与 Band 11 `.155` / `.179`（host / 模拟器证据），未上真机。`.139` 不支持：原因原是没有后台泵；
+2026-10-24 起 `.139` 有了 owner 泵（后台 timer 用），但 `scripts/emu/boot_smoke.py 139` 里 Supervisor 加载后启动序列不完成
+（`boot.pending` 不被清除），所以 `generate_boot_config.py` 只给同时有 L2 后端的 target 打开固化启动。
 
 ## 背景
 

@@ -123,13 +123,15 @@ class Machine:
         for addr,fn in hooks.items():
             actual = self.fw(addr)
             self.firmware_hooks[addr] = u.hook_add(UC_HOOK_CODE,self.firmware_call,fn,actual,actual)
-        # A target with an L2 backend creates its bootstrap timer in the ctor. The
-        # firmware timer list is not initialised in this model, so only the
+        # A target with an owner pump (an L2 backend has one) creates its bootstrap timer in
+        # the ctor. The firmware timer list is not initialised in this model, so only the
         # creation call is answered with a handle (it is a real-firmware address).
-        l2_probe = ROOT / 'targets' / target / 'evidence/l2-sram-probe.json'
-        if l2_probe.exists():
-            timer = int(json.loads(l2_probe.read_text())['addresses']['TIMER'], 16) & ~1
-            self.firmware_hooks[timer] = u.hook_add(UC_HOOK_CODE,self.firmware_call,lambda:0x20009000,timer,timer)
+        for evidence in ('l2-sram-probe.json', 'owner-pump.json'):
+            probe = ROOT / 'targets' / target / 'evidence' / evidence
+            if probe.exists():
+                timer = int(json.loads(probe.read_text())['addresses']['TIMER'], 16) & ~1
+                self.firmware_hooks[timer] = u.hook_add(UC_HOOK_CODE,self.firmware_call,lambda:0x20009000,timer,timer)
+                break
         u.hook_add(UC_HOOK_CODE,lambda uc,a,s,d:uc.emu_stop(),None,self.stop,self.stop)
         u.hook_add(UC_HOOK_MEM_WRITE,self.mpu_write,None,0xe000ed98,0xe000eda3)
         u.hook_add(UC_HOOK_MEM_READ,self.mpu_read,None,0xe000ed9c,0xe000eda3)

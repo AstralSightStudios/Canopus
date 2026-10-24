@@ -170,6 +170,10 @@ struct canopus_sup_platform_v1 {
                             const char *icon);
     int (*launcher_step)(void *cookie);
     int (*validate_receipt)(void *cookie, const void *receipt);
+    /* How many CPC2 requests the L2 transport holds for the phone at once (QUERY_DEVICE +84):
+     * the phone may keep that many in flight, one of them left for the Manager. 0 when unknown
+     * (no L2 backend, or it has not started); the phone then assumes four. Optional. */
+    uint32_t (*l2_request_slots)(void *cookie);
 };
 
 int canopus_sup_l2_start(void);
@@ -179,6 +183,7 @@ int canopus_sup_l2_background(void (*poll)(void *), void *data);
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len);
 int sup_l2_event(void *cookie, const void *frame, uint16_t len);
 uint32_t sup_l2_peer(void *cookie);
+uint32_t sup_l2_request_slots(void *cookie);
 
 #ifdef __cplusplus
 }

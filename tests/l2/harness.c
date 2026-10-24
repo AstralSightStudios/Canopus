@@ -72,7 +72,23 @@ void test_l2_timer_delete(void *timer)
 {
     if (timer == (void *)0x20009000u) bootstrap_deleted++;
 }
-struct canopus_supervisor_v1 *canopus_supervisor_get(void) { return 0; }
+/* The deep request ring comes from the platform heap. */
+static uint32_t heap_buffer[16u * 160u];
+static uint32_t heap_allocs;
+static void *harness_heap_alloc(void *cookie, uint32_t size)
+{
+    (void)cookie;
+    heap_allocs++;
+    return size <= sizeof(heap_buffer) ? (void *)heap_buffer : 0;
+}
+static struct canopus_sup_platform_v1 harness_platform;
+static struct canopus_supervisor_v1 harness_sup;
+struct canopus_supervisor_v1 *canopus_supervisor_get(void)
+{
+    harness_platform.heap_alloc = harness_heap_alloc;
+    harness_sup.platform = &harness_platform;
+    return &harness_sup;
+}
 int canopus_supervisor_l2_rx_registered(uint8_t channel) { (void)channel; return 0; }
 int canopus_supervisor_l2_rx_dispatch(struct canopus_supervisor_v1 *sup, uint8_t channel,
                                       const void *payload, uint16_t len)
@@ -101,9 +117,11 @@ int exercise(void)
     node[3] = (uint32_t)(uintptr_t)connection;
     connection[3] = L2_PROBE_RX;
     if (canopus_sup_l2_start() != 0 || owner_init_count != 0u) return 1;
+    if (sup_l2_request_slots(0) != 0u) return 10; /* no ring before the owner's first poll */
     bootstrap_tick((void *)0x20009000u);
     if (connection[3] == L2_PROBE_RX || owner_init_count != 1u ||
         owner_tick == 0 || bootstrap_deleted != 1u) return 8;
+    if (sup_l2_request_slots(0) != 16u || heap_allocs != 1u) return 11;
     if (canopus_sup_l2_start() != 0 || owner_init_count != 1u) return 9;
     /* Screen-off stops LVGL: only the independent owner timer fires below. */
     rx = (rx_fn)(uintptr_t)connection[3];
@@ -156,10 +174,12 @@ int exercise(void)
         frame[1] = 3;
         if (sup_l2_event(0, frame, 2u) == 0) return 75; /* two event slots, both taken */
         if (sup_l2_event(0, frame, 0u) == 0 || sup_l2_event(0, 0, 2u) == 0) return 76;
-        /* Two responses wait, then the two events, in queue order. */
+        /* Two responses and two events wait: a response goes first, then they take turns, each
+         * queue in its own order, so an event never waits for the responses to run out. */
         for (int i = 0; i < 4; i++) bt_tick(bt_handle);
-        if (sent != first + 4u || sent_head[first][0] != 0x42 || sent_head[first + 1u][0] != 0x42 ||
-            sent_head[first + 2u][0] != 0xe7 || sent_head[first + 2u][1] != 1 ||
+        if (sent != first + 4u || sent_head[first][0] != 0x42 ||
+            sent_head[first + 1u][0] != 0xe7 || sent_head[first + 1u][1] != 1 ||
+            sent_head[first + 2u][0] != 0x42 ||
             sent_head[first + 3u][0] != 0xe7 || sent_head[first + 3u][1] != 2) return 77;
         bt_tick(bt_handle);
         if (sent != first + 4u) return 78;
@@ -195,6 +215,23 @@ int exercise(void)
         if (dispatched != before + 5u) return 93;
         for (i = 0; i < 5; i++) bt_tick(bt_handle);
         if (sent != first + 5u) return 94;
+    }
+
+    /* The deep ring: the phone may keep sixteen requests outstanding. A seventeenth finds no
+     * slot and is dropped (the phone never sends one: the depth is what QUERY_DEVICE reports). */
+    {
+        uint32_t before = dispatched, first = sent;
+        int i;
+        for (i = 0; i < 17; i++) {
+            request[0] = 0x32;
+            rx(7u, 0x43u, 2u, request, sizeof(request));
+        }
+        for (i = 0; i < 40; i++) {
+            owner_tick(owner_handle);
+            bt_tick(bt_handle);
+        }
+        if (dispatched != before + 16u || sent != first + 16u) return 95;
+        if (bt_period != 10u) return 96;
     }
     return 0;
 }

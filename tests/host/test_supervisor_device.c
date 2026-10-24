@@ -142,6 +142,12 @@ static int fake_restore(void *c, uint8_t *d, uint32_t n)
     return 0;
 }
 
+static uint32_t fake_l2_request_slots(void *cookie)
+{
+    (void)cookie;
+    return 16u;
+}
+
 static const struct canopus_sup_platform_v1 fake_platform = {
     .target_id = "xiaomi-band-10-pro-3.101.030",
     .register_device = fake_register,
@@ -1722,6 +1728,8 @@ TEST(v2_device_write_echoes_request_id)
     CHECK(v2_word(rbuf, 32) == CANOPUS_QUERY_DEVICE_SIZE);
     CHECK(v2_word(rbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE) ==
           CANOPUS_QUERY_DEVICE_MAGIC);
+    /* No L2 transport on this platform: the request depth is unknown. */
+    CHECK(v2_word(rbuf, CANOPUS_TRANSPORT_V2_HEADER_SIZE + 84u) == 0u);
     CHECK(v2_word(rbuf, 0) == CANOPUS_TRANSPORT_V2_MAGIC);
     CHECK((v2_word(rbuf, 6) & 0xffffu) == CANOPUS_TRANSPORT_V2_RESPONSE);
     CHECK(v2_word(rbuf, 16) == CANOPUS_CMD_QUERY_DEVICE); /* opcode echoed */
@@ -1932,6 +1940,20 @@ TEST(v2_l2_packet_handle_roundtrip)
 
     /* 3. Output buffer too small returns -1 */
     CHECK(canopus_supervisor_handle_l2_packet(&sup, req_buf, sizeof(req_buf), resp_buf, 20) == -1);
+
+    /* 4. The record ends with how many requests the L2 transport holds: the phone keeps that
+     * many in flight. The 84 bytes before it are what older Supervisors send. */
+    {
+        struct canopus_sup_platform_v1 platform = fake_platform;
+        platform.l2_request_slots = fake_l2_request_slots;
+        canopus_supervisor_init(&sup, 7, &platform, 0);
+        resp_len = canopus_supervisor_handle_l2_packet(&sup, req_buf, sizeof(req_buf),
+                                                       resp_buf, sizeof(resp_buf));
+        CHECK(canopus_transport_v2_decode_response(resp_buf, (uint32_t)resp_len, &resp, &opcode,
+                                                   &poff) == 0);
+        CHECK_EQ(resp.payload_size, 88u);
+        CHECK_EQ(v2_word(resp_buf, poff + 84u), 16u);
+    }
 }
 
 TEST(installer_endpoint_accepts_signed_package_flow_only)

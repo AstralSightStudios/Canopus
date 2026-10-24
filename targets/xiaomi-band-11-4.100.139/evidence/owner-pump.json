@@ -1,0 +1,27 @@
+{
+  "target_id": "xiaomi-band-11-4.100.139",
+  "schema": 1,
+  "status": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "approval_state": "PENDING",
+  "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+  "addresses": {
+    "TIMER": "0xc3abd21",
+    "TIMER_DELETE": "0xc3abe71",
+    "OWNER_LOOP": "0x200c36b8",
+    "OWNER_TIMER_INIT": "0x0c3f0935",
+    "OWNER_TIMER_START": "0x0c3f0a6f",
+    "OWNER_TIMER_SIZE": "0x58"
+  },
+  "evidence": [
+    "Same addresses as .155's owner source. sub_C3F0934 is uv_timer_init(loop, timer): type 13 at +8, flags 8 at +44, cb/timeout/repeat cleared at +48/+64/+72 (the 88-byte .155 handle).",
+    "sub_C4FBB24 restarts the 'miwear-refresh' timer 0x200C19B8 (flags word 0x200C19E4 = +44) with uv_update_time(*0x200C36B8) then sub_C3F0A6E(timer, cb, uint64 timeout, uint64 repeat): uv_timer_start on the UI owner loop.",
+    "sub_C4FB31C (the refresh callback) re-arms through the same sub_C3F0A6E; dword_200C36B8 is passed as the loop throughout (sub_C4FB130, sub_C4FB3CC, sub_C4FCD80).",
+    "TIMER / TIMER_DELETE are the target's lv_timer_create / lv_timer_del (CANOPUS_FW_LV_TIMER_CREATE / _DEL), identical to .155."
+  ],
+  "scope": "Owner pump only: background timers (screen-off) on the UI owner loop. No L2 transport: SAR RX/session/crypto/send are not recovered for this target.",
+  "constraints": [
+    "uv_timer_init/start mutate owner-loop lists and heaps; only the LVGL bootstrap callback on the UI owner initializes and starts the resident handle, and its callbacks run on that loop. No threads or work queues.",
+    "Static recovery from the exact firmware IDB; no emulator or physical-device validation yet."
+  ]
+}

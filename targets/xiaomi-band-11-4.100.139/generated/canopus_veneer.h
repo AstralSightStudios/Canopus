@@ -4,7 +4,7 @@
  * firmware : 4.100.139 (user-4.100.139-cn-202608280000)
  * sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
  * revision : 2
- * input_digest: e949efb6038cfa02
+ * input_digest: 79b9cd3d954eab81
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_139_H
@@ -332,6 +332,8 @@ static inline int * canopus_fw_errno_location(void) {
  * interconnect_send: restricted - not exported until context/ownership approved
  * ioctl: restricted - not exported until context/ownership approved
  * kmem_free: restricted - not exported until context/ownership approved
+ * l2_owner_timer_init: restricted - not exported until context/ownership approved
+ * l2_owner_timer_start: restricted - not exported until context/ownership approved
  * lseek: restricted - not exported until context/ownership approved
  * lv_bar_create: restricted - not exported until context/ownership approved
  * lv_bar_set_range: restricted - not exported until context/ownership approved

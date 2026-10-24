@@ -109,9 +109,15 @@ def boot_payload(target=None, profile_lua=None):
     return source.replace("-- @CANOPUS_BOOT_LOAD@", load)
 
 
+# Pinned start needs the owner pump to run its start sequence. Until the owner pump stood on its
+# own, only targets with the L2 backend had one, and pinned start has only been validated there
+# (scripts/emu/boot_smoke.py 043/155/179). .139 now has the pump for background timers, but its
+# start sequence does not complete in Mirage (boot_smoke.py 139: the Supervisor loads, boot.pending
+# is never cleared), so pinned start stays off on targets without the L2 backend.
 def generate(target, output):
     path = ROOT / "targets" / target / "evidence" / "boot-persistence.json"
-    if not path.exists():
+    l2 = ROOT / "targets" / target / "evidence" / "l2-sram-probe.json"
+    if not path.exists() or not l2.exists():
         output.write_text("#define CANOPUS_BOOT_ENABLED 0\n")
         return
     record = json.loads(path.read_text())

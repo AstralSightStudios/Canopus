@@ -5,13 +5,51 @@
 
 #include "canopus_l2_probe_config.h"
 
+#ifndef CANOPUS_SUP_HAS_OWNER_PUMP
+#define CANOPUS_SUP_HAS_OWNER_PUMP CANOPUS_SUP_HAS_L2
+#endif
+
+/* Two layers. The owner pump -- a resident libuv timer on the UI owner's loop, bootstrapped once
+ * from LVGL -- keeps ticking with the screen off and drives the background timers; it needs only
+ * that loop and the uv_timer entry points. The encrypted L2 transport is served from the same
+ * timer and needs the SAR, session and crypto entry points as well, which not every target has. */
+#if CANOPUS_SUP_HAS_OWNER_PUMP
+
+static void *s_timer;
+static uint64_t s_owner_timer[L2_PROBE_OWNER_TIMER_SIZE / sizeof(uint64_t)];
+static int s_owner_initialized, s_owner_running;
+static void (*s_background_poll)(void *);
+static void *s_background_data;
+
+static int l2_native_timer_start(uintptr_t loop_addr, void *timer,
+                                  int *initialized, void (*tick)(void *), uint32_t period)
+{
+    typedef int (*init_fn)(void *, void *);
+    typedef int (*start_fn)(void *, void (*)(void *), uint64_t, uint64_t);
+    void *loop = *(void *volatile *)loop_addr;
+    int err;
+    if (!*initialized) {
+        err = ((init_fn)(uintptr_t)L2_PROBE_OWNER_TIMER_INIT)(loop, timer);
+        if (err != 0) return err;
+        *initialized = 1;
+    }
+    return ((start_fn)(uintptr_t)L2_PROBE_OWNER_TIMER_START)(timer, tick, period, period);
+}
+
 #if CANOPUS_SUP_HAS_L2
 
 #define L2_FRAME_MAX (CANOPUS_TRANSPORT_V2_HEADER_SIZE + CANOPUS_PROTO_MAX_PAYLOAD)
+/* Requests the phone may have outstanding. Every one of them waits a round trip of the
+ * Bluetooth link for its answer, so this, not the link, set the import speed: four slots (three
+ * for CanopusConnect) are 1.4 KiB per round trip. The ring of this depth lives on the heap,
+ * allocated on the owner's first poll (the resident image has no room for it); until then, or if
+ * that allocation fails, a static ring of four serves. QUERY_DEVICE reports the depth in use. */
+#define L2_RX_SLOTS 16u
+#define L2_RX_FALLBACK_SLOTS 4u
 #define L2_QUEUE_SIZE 4u
 #define L2_EVENT_QUEUE_SIZE 2u
-/* Requests one owner tick may serve. The ring holds four; a phone that keeps several
- * CanopusConnect messages in flight has them all answered in one 10 ms tick instead of one
+/* Requests one owner tick may serve: as many as the response queue can take. A phone that keeps
+ * several CanopusConnect messages in flight has them answered in one 10 ms tick instead of one
  * per tick, so the tick period stops being the throughput ceiling. */
 #define L2_POLL_BATCH L2_QUEUE_SIZE
 
@@ -28,13 +66,17 @@ struct l2_packet {
 };
 _Static_assert(sizeof(struct l2_packet) == 28u, "MiWear packet ABI");
 
-static struct {
+struct l2_request {
     volatile uint32_t state;
     uint16_t handle, len;
     uint8_t channel;
     void *session;
     uint8_t data[L2_FRAME_MAX];
-} s_requests[L2_QUEUE_SIZE];
+};
+static struct l2_request s_request_fallback[L2_RX_FALLBACK_SLOTS];
+/* The ring in use and its length; both change once, under l2_lock, before RX is hooked. */
+static struct l2_request *s_requests;
+static uint32_t s_request_slots;
 static uint32_t s_read, s_write;
 struct l2_tx {
     volatile uint32_t state;
@@ -50,18 +92,15 @@ static struct l2_tx s_responses[L2_QUEUE_SIZE];
 static uint32_t s_tx_read, s_tx_write;
 static struct l2_tx s_events[L2_EVENT_QUEUE_SIZE];
 static uint32_t s_ev_read, s_ev_write;
+/* A response just left while an event waited: the event goes next (see l2_bt_tick). */
+static int s_event_turn;
 static uint32_t s_peer_epoch;
-static void *s_timer;
-static uint64_t s_owner_timer[L2_PROBE_OWNER_TIMER_SIZE / sizeof(uint64_t)];
 static uint64_t s_bt_timer[L2_PROBE_OWNER_TIMER_SIZE / sizeof(uint64_t)];
-static int s_owner_initialized, s_owner_running;
 static int s_bt_initialized;
 static uint32_t s_bt_period;
 static uint16_t s_last_handle;
 static void *s_last_session;
 static int s_connected;
-static void (*s_background_poll)(void *);
-static void *s_background_data;
 
 static int l2_bt_start(uint32_t period);
 
@@ -96,9 +135,9 @@ static void l2_rx(uint16_t handle, uint8_t channel, uint8_t opcode,
     if (session == 0 || l2_bt_start(2u) != 0) return;
     mask = l2_lock();
     slot = s_write;
-    if (s_requests[slot].state != 0u) { l2_unlock(mask); return; }
+    if (s_requests == 0 || s_requests[slot].state != 0u) { l2_unlock(mask); return; }
     s_requests[slot].state = 1u;
-    s_write = (slot + 1u) % L2_QUEUE_SIZE;
+    s_write = (slot + 1u) % s_request_slots;
     l2_unlock(mask);
     /* Decode into owned storage; failed decryption must never dispatch a command. */
     if (((crypto_fn)(uintptr_t)L2_PROBE_CRYPTO)(session, 0, len, payload,
@@ -112,6 +151,32 @@ static void l2_rx(uint16_t handle, uint8_t channel, uint8_t opcode,
     s_requests[slot].channel = channel;
     __asm__ volatile("dmb" ::: "memory");
     s_requests[slot].state = 2u;
+}
+
+/* Sets up the request ring: the deep one on the heap when the platform can spare it. Runs on the
+ * owner before the first l2_attach, so no RX is hooked yet and the ring is still empty. */
+static void l2_ring_init(void)
+{
+    struct canopus_supervisor_v1 *sup;
+    struct l2_request *ring = 0;
+    uint32_t slots = L2_RX_FALLBACK_SLOTS, mask;
+    if (s_requests != 0) return;
+    sup = canopus_supervisor_get();
+    if (sup != 0 && sup->platform != 0 && sup->platform->heap_alloc != 0) {
+        ring = (struct l2_request *)sup->platform->heap_alloc(sup->platform_cookie,
+            (uint32_t)(L2_RX_SLOTS * sizeof(struct l2_request)));
+    }
+    if (ring != 0) {
+        canopus_memset(ring, 0, L2_RX_SLOTS * sizeof(struct l2_request));
+        slots = L2_RX_SLOTS;
+    } else {
+        ring = s_request_fallback;
+    }
+    mask = l2_lock();
+    s_read = s_write = 0u;
+    s_request_slots = slots;
+    s_requests = ring;
+    l2_unlock(mask);
 }
 
 static void l2_attach(void)
@@ -191,28 +256,22 @@ static void l2_bt_tick(void *timer)
 {
     uint32_t period;
     (void)timer;
-    if (!l2_drain(s_responses, L2_QUEUE_SIZE, &s_tx_read)) {
+    /* Responses go first, but an event that waited behind one gets the next turn. With many
+     * requests in flight a response is nearly always queued, and a module's events -- its flow
+     * control among them -- would otherwise only leave in a lull. A Manager response waits at
+     * most one tick for an event. */
+    if (s_event_turn && l2_drain(s_events, L2_EVENT_QUEUE_SIZE, &s_ev_read)) {
+        s_event_turn = 0;
+    } else if (l2_drain(s_responses, L2_QUEUE_SIZE, &s_tx_read)) {
+        s_event_turn = s_events[s_ev_read].state == 2u;
+    } else {
         (void)l2_drain(s_events, L2_EVENT_QUEUE_SIZE, &s_ev_read);
+        s_event_turn = 0;
     }
-    period = s_requests[s_read].state != 0u ||
+    period = (s_requests != 0 && s_requests[s_read].state != 0u) ||
              s_responses[s_tx_read].state != 0u ||
              s_events[s_ev_read].state != 0u ? 2u : 10u;
     (void)l2_bt_start(period);
-}
-
-static int l2_native_timer_start(uintptr_t loop_addr, void *timer,
-                                  int *initialized, void (*tick)(void *), uint32_t period)
-{
-    typedef int (*init_fn)(void *, void *);
-    typedef int (*start_fn)(void *, void (*)(void *), uint64_t, uint64_t);
-    void *loop = *(void *volatile *)loop_addr;
-    int err;
-    if (!*initialized) {
-        err = ((init_fn)(uintptr_t)L2_PROBE_OWNER_TIMER_INIT)(loop, timer);
-        if (err != 0) return err;
-        *initialized = 1;
-    }
-    return ((start_fn)(uintptr_t)L2_PROBE_OWNER_TIMER_START)(timer, tick, period, period);
 }
 
 static int l2_bt_start(uint32_t period)
@@ -234,7 +293,7 @@ static int l2_serve_one(void)
 {
     uint32_t slot = s_read;
     int32_t len;
-    if (s_requests[slot].state != 2u) return 0;
+    if (s_requests == 0 || s_requests[slot].state != 2u) return 0;
     if (s_responses[s_tx_write].state != 0u) return 0;
     __asm__ volatile("dmb" ::: "memory");
     if (s_requests[slot].len != 0u &&
@@ -260,18 +319,23 @@ static int l2_serve_one(void)
     }
     __asm__ volatile("dmb" ::: "memory");
     s_requests[slot].state = 0u;
-    s_read = (slot + 1u) % L2_QUEUE_SIZE;
+    s_read = (slot + 1u) % s_request_slots;
     return 1;
 }
 
 void canopus_sup_l2_poll(void)
 {
     uint32_t served;
+    l2_ring_init();
     l2_attach();
     for (served = 0u; served < L2_POLL_BATCH; served++) {
         if (!l2_serve_one()) break;
     }
 }
+
+#else
+void canopus_sup_l2_poll(void) {}
+#endif /* CANOPUS_SUP_HAS_L2 */
 
 static void l2_owner_tick(void *timer)
 {
@@ -311,6 +375,7 @@ int canopus_sup_l2_start(void)
     return s_timer != 0 ? 0 : CANOPUS_SVC_ERR_NOMEM;
 }
 
+#if CANOPUS_SUP_HAS_L2
 int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len)
 {
     (void)cookie;
@@ -336,6 +401,24 @@ uint32_t sup_l2_peer(void *cookie)
     return s_connected ? s_peer_epoch : 0u;
 }
 
+uint32_t sup_l2_request_slots(void *cookie)
+{
+    (void)cookie;
+    return s_requests != 0 ? s_request_slots : 0u;
+}
+#else
+int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len)
+{
+    (void)cookie; (void)channel; (void)payload; (void)len;
+    return CANOPUS_SVC_ERR_UNSUPPORTED;
+}
+uint32_t sup_l2_request_slots(void *cookie)
+{
+    (void)cookie;
+    return 0u;
+}
+#endif /* CANOPUS_SUP_HAS_L2 */
+
 #else
 int canopus_sup_l2_start(void) { return CANOPUS_SVC_ERR_UNSUPPORTED; }
 void canopus_sup_l2_poll(void) {}
@@ -348,5 +431,10 @@ int sup_l2_send(void *cookie, uint8_t channel, const void *payload, uint16_t len
 {
     (void)cookie; (void)channel; (void)payload; (void)len;
     return CANOPUS_SVC_ERR_UNSUPPORTED;
+}
+uint32_t sup_l2_request_slots(void *cookie)
+{
+    (void)cookie;
+    return 0u;
 }
 #endif

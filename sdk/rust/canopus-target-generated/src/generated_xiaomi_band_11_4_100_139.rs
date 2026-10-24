@@ -4,7 +4,7 @@
 // firmware : 4.100.139 (user-4.100.139-cn-202608280000)
 // sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
 // revision : 2
-// input_digest: e949efb6038cfa02
+// input_digest: 79b9cd3d954eab81
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -462,6 +462,9 @@ pub const canopus_fw_font_reload_size_cache_class: usize = 0x2ca168c4usize;
 /// Recovered `miwear_transport_send` at 0xc98f488. Thumb callable address 0xc98f489.
 pub const CANOPUS_FW_MIWEAR_TRANSPORT_SEND_CALLABLE: usize = canopus_thumb_callable(0xc98f489usize);
 
+/// Recovered `l2_owner_timer_init` at 0x0c3f0934. Thumb callable address 0x0c3f0935.
+pub const CANOPUS_FW_L2_OWNER_TIMER_INIT_CALLABLE: usize = canopus_thumb_callable(0x0c3f0935usize);
+
 /// Recovered `lv_obj_scroll_to_y` at 0xc384d70. Thumb callable address 0xc384d71.
 pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_Y_CALLABLE: usize = canopus_thumb_callable(0xc384d71usize);
 
@@ -776,6 +779,9 @@ pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc8
 
 /// Recovered `property_get_int32` at 0x0c4af714. Thumb callable address 0x0c4af715.
 pub const CANOPUS_FW_PROPERTY_GET_INT32_CALLABLE: usize = canopus_thumb_callable(0x0c4af715usize);
+
+/// Recovered `l2_owner_timer_start` at 0x0c3f0a6e. Thumb callable address 0x0c3f0a6f.
+pub const CANOPUS_FW_L2_OWNER_TIMER_START_CALLABLE: usize = canopus_thumb_callable(0x0c3f0a6fusize);
 
 /// Recovered `lseek` at 0xc33d510. Thumb callable address 0xc33d511.
 pub const CANOPUS_FW_LSEEK_CALLABLE: usize = canopus_thumb_callable(0xc33d511usize);
@@ -1179,6 +1185,8 @@ pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_CALLABLE: usize = canop
 // interconnect_send: restricted - not exported until context/ownership approved
 // ioctl: restricted - not exported until context/ownership approved
 // kmem_free: restricted - not exported until context/ownership approved
+// l2_owner_timer_init: restricted - not exported until context/ownership approved
+// l2_owner_timer_start: restricted - not exported until context/ownership approved
 // lseek: restricted - not exported until context/ownership approved
 // lv_bar_create: restricted - not exported until context/ownership approved
 // lv_bar_set_range: restricted - not exported until context/ownership approved

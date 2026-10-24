@@ -104,6 +104,9 @@ for s in \
     # size within the unchanged Supervisor file/resident budgets.
     SOURCE_FLAGS=""
     [ "$s" != manager/target/canopus_ui_host.c ] || SOURCE_FLAGS="-Oz"
+    # Likewise the L2 transport and owner pump: the deep request ring would otherwise take
+    # .155 past its file budget.
+    [ "$s" != manager/service/canopus_supervisor_l2.c ] || SOURCE_FLAGS="-Oz"
     $CC $TARGET_FLAGS $SOURCE_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
 done
 

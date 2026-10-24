@@ -26,6 +26,9 @@
 #include "canopus_memory.h"
 #include "canopus_ui_host.h"
 #include "canopus_l2_probe_config.h"
+#ifndef CANOPUS_SUP_HAS_OWNER_PUMP
+#define CANOPUS_SUP_HAS_OWNER_PUMP CANOPUS_SUP_HAS_L2
+#endif
 #ifdef CANOPUS_SUP_CUSTOM_LOADER
 #include "canopus_elf32_loader.h"
 #endif
@@ -1905,7 +1908,8 @@ static int sup_start_timer_pump(void *cookie, void (*poll)(void *), void *data)
 #define SUP_TIMER_PUMP 0
 #endif
 
-#if CANOPUS_SUP_HAS_L2 && !defined(CANOPUS_SUP_HEADLESS)
+/* The owner pump also exists without the L2 transport (see canopus_supervisor_l2.c). */
+#if CANOPUS_SUP_HAS_OWNER_PUMP && !defined(CANOPUS_SUP_HEADLESS)
 static int sup_start_background_pump(void *cookie, void (*poll)(void *), void *data)
 {
     (void)cookie;
@@ -1976,4 +1980,9 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     SUP_LAUNCHER_PUBLISH,
     SUP_LAUNCHER_STEP,
     sup_validate_receipt,
+#if CANOPUS_SUP_HAS_L2
+    sup_l2_request_slots,
+#else
+    0, /* l2_request_slots */
+#endif
 };

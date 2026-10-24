@@ -1325,6 +1325,9 @@ static uint32_t render_v2_query_payload(
             canopus_memcpy(out + 36u, sup->platform->target_id,
                 canopus_strnlen(sup->platform->target_id, 47u));
         }
+        if (sup->platform != 0 && sup->platform->l2_request_slots != 0) {
+            put_wire_u32(out, 84u, sup->platform->l2_request_slots(sup->platform_cookie));
+        }
         return CANOPUS_QUERY_DEVICE_SIZE;
     }
     if (req->command == CANOPUS_CMD_QUERY_MODULE &&

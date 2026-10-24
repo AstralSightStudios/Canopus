@@ -89,7 +89,9 @@ struct canopus_proto_response_v1 {
 /* Read-only Manager query payloads carried inside CPC2 responses. They are
  * byte-encoded little-endian records, never cast to packed C structs. */
 #define CANOPUS_QUERY_DEVICE_MAGIC 0x43514431u /* "CQD1" */
-#define CANOPUS_QUERY_DEVICE_SIZE  84u
+/* +84: requests the device's L2 transport holds at once (0: unknown, assume 4). Readers accept
+ * any size from 84 on; the 84-byte record of older Supervisors simply lacks the field. */
+#define CANOPUS_QUERY_DEVICE_SIZE  88u
 #define CANOPUS_QUERY_MODULE_MAGIC 0x43514D31u /* "CQM1" */
 #define CANOPUS_QUERY_MODULE_SIZE  64u
 

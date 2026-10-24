@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.l2_owner_timer_init",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "l2_owner_timer_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c2cd84c",
+  "callable_address": "0x0c2cd84d",
+  "prototype": "int(void *loop, void *timer)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private-ui-owner"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": []
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [],
+    "source": "Exact IDB uv_timer_init (type 13 at +8, flags 8 at +92); native caller sub_C497D90 (miwear_init_finish) passes *0x20121F80 and the miwear-refresh timer 0x201090A8; evidence/owner-pump.json"
+  },
+  "approval_state": "PENDING",
+  "notes": "Owner pump only (no L2 transport on this target): the resident 136-byte, 8-byte-aligned timer that keeps background timers firing with the screen off. Mutates the owner loop; call only from the LVGL bootstrap on that same UI task, never from NSH, BT or ISR. No production approval."
+}

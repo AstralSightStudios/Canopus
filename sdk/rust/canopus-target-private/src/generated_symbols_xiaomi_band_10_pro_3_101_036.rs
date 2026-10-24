@@ -951,6 +951,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *, uint8_t *, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "l2_owner_timer_init",
+        kind: "function",
+        entry: 0xc2cd84cusize,
+        callable: 0xc2cd84dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *loop, void *timer)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2_owner_timer_start",
+        kind: "function",
+        entry: 0xc2cda3cusize,
+        callable: 0xc2cda3dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *timer, void (*callback)(void *), uint64_t timeout, uint64_t repeat)",
+    },
+    TargetPrivateSymbolRecord {
         name: "lv_obj_set_local_style_prop_xip_thunk",
         kind: "function",
         entry: 0xcaa7238usize,
@@ -1708,6 +1726,10 @@ pub const BT_TIMER_CANCEL_CALLABLE: usize = 0xc7d2d75usize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x20137e94usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7d3eb4usize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7d3eb5usize;
+pub const L2_OWNER_TIMER_INIT_ENTRY: usize = 0xc2cd84cusize;
+pub const L2_OWNER_TIMER_INIT_CALLABLE: usize = 0xc2cd84dusize;
+pub const L2_OWNER_TIMER_START_ENTRY: usize = 0xc2cda3cusize;
+pub const L2_OWNER_TIMER_START_CALLABLE: usize = 0xc2cda3dusize;
 pub const LV_OBJ_SET_LOCAL_STYLE_PROP_XIP_THUNK_ENTRY: usize = 0xcaa7238usize;
 pub const LV_OBJ_SET_LOCAL_STYLE_PROP_XIP_THUNK_CALLABLE: usize = 0xcaa7239usize;
 pub const MIWEAR_TRANSPORT_L2_RX_ENTRY: usize = 0xc7be110usize;

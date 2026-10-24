@@ -60,6 +60,9 @@ CPC2 每帧载荷上限保持 512 字节。数字均为 little-endian：
 
 QUERY_DEVICE 的 CQD1 载荷由 36 扩展至 84 字节：原字段不变，+36 是 48 字节零填充 target_id。
 旧 Supervisor/安装器须重新部署；CPC2 信封仍为 36 字节，ABI 为 1.2。
+2026-10-24 再扩展到 88 字节：+84 是 u32 `request_slots`，L2 传输同时能收下的请求数（0 = 未知，按 4 处理）。
+读取方接受 84 字节及以上（AstroBox 早已如此），84 字节的旧记录就是没有这个字段；手机最多让 `request_slots − 1`
+条在途，留一条给管理器。
 响应值以 `sdk/c/canopus_abi.h` 为准：REJECTED=1、ACCEPTED=2、QUEUED=3、RUNNING=4、
 COMPLETED=5、FAILED=6、DISALLOWED=7、REBOOT_REQUIRED=8。
 

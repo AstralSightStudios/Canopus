@@ -33,22 +33,31 @@ class L2ConfigTests(unittest.TestCase):
                     config = header.read_text()
                     self.assertIn(f"#define CANOPUS_SUP_HAS_L2 {int(available)}", config)
                     self.assertEqual("L2_PROBE_BT_LOOP" in config, available)
+                    # Every exact target has the owner pump that background timers need.
+                    self.assertIn("#define CANOPUS_SUP_HAS_OWNER_PUMP 1", config)
+                    self.assertIn("L2_PROBE_OWNER_TIMER_START", config)
 
 
 @unittest.skipIf(Uc is None, "unicorn not installed; ARM L2 execution skipped")
 class L2BackendTests(unittest.TestCase):
     def test_sram_hook_encrypted_queue_and_session_boundary(self):
+        self.assertEqual(self.run_harness("tests/l2", "tests/l2/harness.c"), 0)
+
+    def test_owner_pump_without_transport(self):
+        self.assertEqual(self.run_harness("tests/l2/pump", "tests/l2/pump_harness.c"), 0)
+
+    def run_harness(self, config_dir, harness):
         if not shutil.which("clang") or not shutil.which("ld.lld"):
             self.skipTest("ARM compiler/linker not available")
         with tempfile.TemporaryDirectory(prefix="canopus-l2-arm-") as tmp:
             tmp = Path(tmp)
-            includes = ["tests/l2", "sdk/c", "manager/service", "manager/protocol", "manager/package"]
+            includes = [config_dir, "sdk/c", "manager/service", "manager/protocol", "manager/package"]
             flags = ["--target=arm-none-eabi", "-mcpu=cortex-m33", "-mthumb", "-Os",
                      "-ffreestanding", "-fno-builtin", "-fno-unwind-tables",
                      "-fno-asynchronous-unwind-tables"]
             flags += ["-I" + str(ROOT / p) for p in includes]
             objects = []
-            for source in ["manager/service/canopus_supervisor_l2.c", "tests/l2/harness.c"]:
+            for source in ["manager/service/canopus_supervisor_l2.c", harness]:
                 obj = tmp / (Path(source).stem + ".o")
                 subprocess.run(["clang", *flags, "-c", str(ROOT / source), "-o", str(obj)], check=True)
                 objects.append(str(obj))
@@ -69,7 +78,7 @@ class L2BackendTests(unittest.TestCase):
             machine.reg_write(UC_ARM_REG_LR, 0x30001)
             entry = struct.unpack_from("<I", data, 24)[0]
             machine.emu_start(entry | 1, 0x30000, count=100000)
-            self.assertEqual(machine.reg_read(UC_ARM_REG_R0), 0)
+            return machine.reg_read(UC_ARM_REG_R0)
 
 
 if __name__ == "__main__":

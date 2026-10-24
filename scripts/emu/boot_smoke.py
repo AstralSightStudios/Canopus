@@ -36,6 +36,15 @@ CONFIGS = {
         "wake": (168, 240),
         "has_sh": True,
     },
+    # Not supported: the Supervisor loads, but the start sequence never clears boot.pending (the
+    # owner pump is there; see generate_boot_config.py). Kept to reproduce that.
+    "139": {
+        "target": "xiaomi-band-11-4.100.139",
+        "fw_id": "miwear.watch.q66tc_v4.100.139_full_a02b7af5",
+        "face": "xiaomi-band-11",
+        "wake": (106, 260),
+        "has_sh": False,
+    },
     "155": {
         "target": "xiaomi-band-11-4.100.155",
         "fw_id": "miwear.watch.q66tc_v4.100.155_full_f1c824fe",
@@ -237,7 +246,7 @@ def cold_start(files, record, cfg, ota):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("target", nargs="?", default="043", choices=list(CONFIGS.keys()),
-                        help="Target key: 043, 155, 179 (default: 043)")
+                        help="Target key: 043, 139, 155, 179 (default: 043)")
     args = parser.parse_args()
     cfg = CONFIGS[args.target]
     target = cfg["target"]
