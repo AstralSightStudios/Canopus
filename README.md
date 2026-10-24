@@ -1,81 +1,41 @@
 # Canopus
 
-面向嵌入式设备固件扩展的原生模块框架。
+面向Xiaomi Vela可穿戴设备固件扩展的原生模块框架
 
-Canopus 允许开发者：
+## 生成式AI使用声明
+该项目本质是AI Slop，我不建议你化身肉编器直接阅读项目代码，以免你不小心吃到屎
 
-1. 用 C 或 Rust 编写功能模块；
-2. 将模块编译为设备原生内核模块（target-specific ELF）；
-3. 使用从目标固件中逆向恢复、经过证据审核的函数、全局对象和 ABI；
-4. 针对不同设备、不同固件版本生成不同目标产物；
-5. 将多个目标产物打包为同一个可安装模块包（`.canopus`）；
-6. 注册真正的原生应用，使模块/应用像固件内置应用一样出现在 launcher 中；
-7. 在设备端安装、启用、禁用、更新、回滚和删除模块及其原生应用；
-8. 通过类似 KernelSU 管理应用的界面查看设备、框架、模块、应用、兼容性和错误状态。
+区别于某些装货，我们负责任地披露项目的主要代码使用以下模型生成：
+- `claude-sonnet-5-5`
+- `claude-opus-5-5`
+- `claude-fable-5-1`
+- `gpt-6-astra`
+- `gpt-6.1-sol`
+- `gemini-3.8-flash-high`
 
-## 设计原则
+你可以自行携带你的Agent加入这个大模型竞技场，但如果你使用纯AI发布Issue和Pull Request，那我会操死你的妈
 
-- **证据优先**：每个 target 能力必须经过「假设 → 静态证据 → ABI 审核 → 主机测试 → 设备探针 → 设备验证 → 能力批准」链条。
-- **精确目标优先**：每个产物默认绑定完整固件 SHA-256，不做“相近版本大概可用”。
-- **默认拒绝**：未登记地址、未知原型、未验证重定位、哈希或 target 不匹配的包默认不批准。
-- **共享 SDK 不泄漏目标私有 ABI**：固件私有结构只存在于 target pack 或生成代码。
+## 项目关联性声明
+Canopus是完全独立的社区驱动型开源项目，它与小米（Xiaomi Corporation / 北京小米科技有限责任公司）无关，与AstroBox、Mirage无关。
 
-完整设计见 [`docs/archive/architecture.md`](docs/archive/architecture.md)。
+安装Canopus模块并非必须使用AstroBox。阅读我们的[开源代码](https://github.com/AstralSightStudios/AstroBox-NG-Module-Core/)以了解完整的主机端通信协议实现。
 
-## 当前 registered target packs
-
-| target_id | 固件版本 | 固件 SHA-256 | 状态 |
-|---|---|---|---|
-| `xiaomi-band-10-pro-3.101.036` | `3.101.036` | `662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81` | trusted build target |
-| `xiaomi-band-10-pro-3.101.043` | `3.101.043` | `519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec` | static pack/build target; device gate pending |
-| `xiaomi-band-11-4.100.139` | `4.100.139` | `31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74` | complete native installer test candidate; Lua recovery, owned staged loader and Manager host-tested; general SDK/device gates pending |
-| `xiaomi-band-11-4.100.155` | `4.100.155` | `ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f` | independent target and Rust bindings; shared 139/155 installer; corrected notification context, ARM/Lua/verifier passed; device gates pending |
-| `xiaomi-band-11-4.100.179` | `4.100.179` | `307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b` | ported from the reviewed `.155` pack (2026-10-20); every record restricted/PENDING and no approval or device proof carried over; shared 139/155/179 installer; the real image runs the staged loader, Manager and notification paths in Unicorn; Mirage emulator only, device gates pending |
-
-2026-09-15：修复 `.139` 注册 Manager 时的通知空上下文崩溃，详见
-[crash3 审计](targets/xiaomi-band-11-4.100.139/loader/notification-crash3.md)。
-`.155` 独立构建及测试说明见 [新 target](targets/xiaomi-band-11-4.100.155/loader/README.md)，`.179` 的移植依据见 [loader/README](targets/xiaomi-band-11-4.100.179/loader/README.md)。
-
-036/043 are Xiaomi Band 10 Pro Cortex-M33 / Thumb-2 / soft-float targets using the
-NuttX `modlib` ELF32 `ET_REL` zero-import loader. Band 9 / 9 Pro packs were **removed** (their addresses are untrusted and any revival would need a custom loader and a fresh start; the old data is recoverable from git tag `band9-frozen`). The Band 11 packs are
-static candidate packs; their target-private ABI and LVGL gates remain pending. Band 11 (`4.100.139`, BES best1503 q66) has no approved insmod. Its independent
-Lua-owned staged loader and corrected native Manager ABI now build as a complete test
-candidate. The pack replaced `4.100.108`; general SDK callables and physical-device
-validation remain pending. See the [native audit](targets/xiaomi-band-11-4.100.139/loader/native-audit.md)
-and [packing/testing instructions](watchfaces/canopus-installer-prod/xiaomi-band-11/docs/README.md).
-The Band 11 resource root contains only `main.lua` and `.bin` files.
-
-## 仓库结构
-
-```
-cli/            canopus CLI（Rust）
-schemas/        target/symbol/type/evidence/module/package JSON Schema
-sdk/            公开 SDK：C 头文件（ABI、服务表、模块入口、UI 树 `canopus_ui.h`、原生 App 描述符）与 Rust crate
-runtime/        portable C runtime 实现（module/lifecycle/resources/diagnostics/control/ui/app）
-manager/        device-side supervisor / protocol / storage / target UI 宿主
-targets/        target packs (036/043 build support; static candidates)
-modules/        示例与参考模块
-tools/          RE orchestrator / symbol-generator / elf-verifier / package-builder
-tests/          host / integration / fixtures / hardware
-adr/            决策记录（ADR-CAN-001 ...）
-```
-
-## 能力状态区分
-
-本项目严格区分四种能力状态，任何文档/README 不得混称（`docs/progress.md` 维护
-权威状态；P0/P1/P2 整改状态见 `docs/native-manager-ui-plan.md` §15）：
-
-- **host implemented**：host 测试通过；不代表设备可用。
-- **static recovered**：静态恢复出符号/类型/ABI；未经过设备验证。
-- **device verified**：带 firmware hash 的真机 probe 通过。
-- **production approved**：host + artifact + device gate 全部通过，且
-  `approval_state == APPROVED` 且有 evidence。
-
-production approved 的只有 UI 宿主在 `.043` / `.155` 上调用的固件入口：维护者在真机验证后授权，清单钉死在
-`tools/canopus-core/tests/generated_stability.rs`，策略仍是 `restricted`（只由 Supervisor 使用，不对模块开放；见 ADR-CAN-010）。
-supervisor/transport/lifecycle 等处于 host implemented / device pending；launcher/native-app ABI（含模块自己的启动器入口，ADR-CAN-011）仍为
-static recovered / BLOCKED-EVIDENCE。
+我们仅使用基于Mirage的测试脚本，Mirage是一个针对Vela OS穿戴设备真机固件制作的模拟器，但这不意味着你必须使用Mirage。阅读我们的[开源代码](https://github.com/AstralSightStudios/Mirage)以尝试自行构建更适合你的自动化测试流程。
 
 ## License
 
-[AGPL-3.0](LICENSE)
+Canopus 以 [AGPL-3.0-only](LICENSE) 发布，并附带下面的模块豁免。
+
+### 模块豁免
+
+为了让任何人都能以自己选择的条款（包括闭源）编写和分发 Canopus 模块，版权持有人依 AGPL-3.0 第 7 节追加以下许可：
+
+- 模块（`canopus build` 构建、由 Canopus Supervisor 加载的 ELF，以及包含它的 `.canopus` 包）可以包含、编译进下列模块接口文件的内容，
+  并以任意条款分发，不因此受 AGPL-3.0 约束：
+  - `sdk/`（C 头文件与源文件、Rust crate、`c_shim`）
+  - `runtime/`
+  - `templates/`
+  - `targets/*/generated/`
+- 模块在运行时经 Canopus ABI 由 Supervisor 加载、调用其服务，不因此成为 Canopus 的衍生作品。
+- 豁免不改变上述文件本身的许可：修改并分发这些文件本身（而不只是把它们编进模块）仍须遵守 AGPL-3.0-only。
+  CLI、Supervisor / Manager、安装器与其余工具不在豁免范围内。

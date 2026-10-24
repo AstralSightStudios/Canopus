@@ -3,7 +3,7 @@ name = "canopus-target-private"
 publish = false
 version = "0.1.0"
 edition = "2024"
-license = "AGPL-3.0"
+license = "AGPL-3.0-only"
 rust-version = "1.85"
 description = "Target-selectable private full-trust firmware bindings"
 
