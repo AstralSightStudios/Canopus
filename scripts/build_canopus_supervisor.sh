@@ -92,8 +92,15 @@ INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
 UI_HOST_SRC="manager/target/canopus_ui_host.c"
 UI_HOST_OBJECT="$OUT/canopus_ui_host.o"
 IS_STAGED_V8=0
+IS_STAGED_LOADER=0
 case "$PROD_FAMILY" in
     xiaomi-band-9|xiaomi-band-9-pro|xiaomi-band-10) IS_STAGED_V8=1 ;;
+esac
+# Families whose installer ships the NSH-mw stage1/stage2 chain. The REDMI
+# Watch 6 uses the same loader but the v9 UI host, so it is staged here
+# without selecting the v8 backend.
+case "$PROD_FAMILY" in
+    xiaomi-band-9|xiaomi-band-9-pro|xiaomi-band-10|redmi-watch) IS_STAGED_LOADER=1 ;;
 esac
 if [ "$IS_STAGED_V8" = 1 ]; then
     UI_HOST_SRC=""
@@ -223,7 +230,7 @@ cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
 if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
     python3 "$ROOT/scripts/build_band11_installer.py" --target "$TARGET_ID" --supervisor "$OUT/canopus_supervisor.elf" \
         --output-dir "${CANOPUS_BAND11_OUTPUT_DIR:-$PROD_FAMILY_STAGE}"
-elif [ "$IS_STAGED_V8" = 1 ]; then
+elif [ "$IS_STAGED_LOADER" = 1 ]; then
     CANOPUS_INSTALLER_STAGE_ROOT="$PROD_FAMILY_STAGE" \
         sh "$ROOT/scripts/build_band9_bootstrap.sh" "$TARGET_ID" "$OUT"
     echo "staged canopus-installer-prod/$PROD_FAMILY/ (main.lua + stage1/stage2/profile/supervisor)"
