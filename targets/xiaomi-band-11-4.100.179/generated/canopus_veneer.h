@@ -3,8 +3,8 @@
  * target_id: xiaomi-band-11-4.100.179
  * firmware : 4.100.179 (user-4.100.179-cn-202609302100)
  * sha256   : 307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b
- * revision : 1
- * input_digest: ef0e0ac69a8d8aa4
+ * revision : 2
+ * input_digest: a91ca5c88754224e
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_179_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_179_H

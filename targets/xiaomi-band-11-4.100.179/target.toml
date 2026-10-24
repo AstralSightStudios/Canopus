@@ -18,7 +18,7 @@ firmware_build = "user-4.100.179-cn-202609302100"
 identity_terminator = "line"
 module_abi = 1
 relocation_profile = "best1503-v1"
-revision = 1
+revision = 2
 
 firmware_address_ranges = [
   { base = 0x0C000000, size = 0x00D00000 },

@@ -22,7 +22,7 @@
 
 - `.179`（q66tc，build `user-4.100.179-cn-202609302100`）由已审核的 `.155` 包移植：270 条符号记录全部 `restricted` / `PENDING` / `not_probed`，
   没有任何批准、真机证明或能力状态从 `.155` 带过来（`generated_stability.rs` 的 `band11_179_carries_no_approval_from_155` 钉住）。
-  不同于函数体相同的 219 条 `STATIC_RECOVERED`，50 条保持 `CANDIDATE`（含 `.155` 里本就是候选的，和 `lv_obj_area_is_visible` 这种函数体已变的）。
+  当前 280 条记录中有 227 条 `STATIC_RECOVERED`、52 条 `CANDIDATE`、1 条 `FORBIDDEN`。2026-10-24 revision 2 以完整 `.177` / `.179` 函数体和 IDA ABI 复核独立恢复 `lv_obj_area_is_visible` 的精确入口 `0x0c381d4c` / Thumb `0x0c381d4d`；原 `.155` 比较的函数体差异仍保留在来源记录。见 `EVID-RESOURCE-VISIBILITY-4179-001`。仅该入口增加静态恢复证据，全部符号仍为 restricted / PENDING / not_probed，无新增 public veneer、promotion 或设备批准。
 - host / emulator 证据：Unicorn 里真实 `.179` 镜像执行 stage1 → stage2 → Supervisor（两种重定位基址）、Manager 注册、原生 UI 指令与通知路径；
   Mirage 里真实 `.179` 固件经生产安装器 Run → 加密 L2 `.canopus` 安装 → SCAN，services 测试 26/27（仅振动跳过）。
 - 全局 safe mode：自动进入（连续 3 次未完成的启动、3 次模块隔离而没有一次好启动、注册表不可读）、重启保持、`EXIT_SAFE_MODE`（保持 / 全部停用 / 全部回滚）退出并试运行一次、

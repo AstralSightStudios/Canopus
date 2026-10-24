@@ -3,8 +3,8 @@
 // target_id: xiaomi-band-11-4.100.179
 // firmware : 4.100.179 (user-4.100.179-cn-202609302100)
 // sha256   : 307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b
-// revision : 1
-// input_digest: ef0e0ac69a8d8aa4
+// revision : 2
+// input_digest: a91ca5c88754224e
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -725,6 +725,9 @@ pub const CANOPUS_FW_LV_TIMER_DEL_CALLABLE: usize = canopus_thumb_callable(0xc3a
 
 /// Recovered `close` at 0xc33818c. Thumb callable address 0xc33818d.
 pub const CANOPUS_FW_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc33818dusize);
+
+/// Recovered `lv_obj_area_is_visible` at 0xc381d4c. Thumb callable address 0xc381d4d.
+pub const CANOPUS_FW_LV_OBJ_AREA_IS_VISIBLE_CALLABLE: usize = canopus_thumb_callable(0xc381d4dusize);
 
 /// Recovered `service_manager_startup` at 0xc90bd6c. Thumb callable address 0xc90bd6d.
 pub const CANOPUS_FW_SERVICE_MANAGER_STARTUP_CALLABLE: usize = canopus_thumb_callable(0xc90bd6dusize);
