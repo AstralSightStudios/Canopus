@@ -92,7 +92,11 @@ enum canopus_ui_node_type {
 
 /* Public semantic customization. Values are target-independent: a backend maps
  * them to the closest approved stock token/prefab and must not expose private
- * firmware style IDs. Signed dimensions use -1 for automatic/inherit. */
+ * firmware style IDs. Signed dimensions use -1 for automatic/inherit.
+ * VARIANT_PLAIN means "no stock decoration": a backend must omit any decoration
+ * it synthesizes itself (for example the (●)/(○) glyph of RADIO_ROW) while
+ * keeping the geometry that decoration occupied, so the caller can paint its
+ * own mark in the same place. */
 enum canopus_ui_component_variant {
     CANOPUS_UI_VARIANT_DEFAULT = 0,
     CANOPUS_UI_VARIANT_PLAIN,

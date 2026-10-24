@@ -391,6 +391,17 @@ static void host_content_event(void *event)
         }
     }
 }
+/* Mark geometry of the synthesized radio/checkbox row. The slot has no stock
+ * prefab: the label, an optional detail line and this indicator column are
+ * placed by hand, so the column is always reserved on the trailing edge. */
+#define HOST_MARK_WIDTH 44
+/* VARIANT_PLAIN suppresses only the synthesized (●)/(○)/(✓) glyph: the column
+ * stays reserved so a caller can paint its own mark in the same place. */
+static int host_mark_visible(const struct canopus_ui_snapshot_v1 *s, unsigned index)
+{
+    return s->styles[index].variant != CANOPUS_UI_VARIANT_PLAIN;
+}
+
 static int host_is_row(uint16_t type)
 {
     return type == CANOPUS_UI_NODE_STATUS_ROW || type == CANOPUS_UI_NODE_BUTTON ||
@@ -937,6 +948,23 @@ static void host_style_property(void *object, uint32_t prop, uint32_t value)
     (void)object; (void)prop; (void)value;
 #endif
 }
+/* The 10 Pro content class can inherit a theme while the Band 11 path already
+ * strips it. A synthesized row must not carry an inherited background, border
+ * or radius: the caller's style is the only source of its appearance, so both
+ * families agree once a page paints its own cards. */
+static void host_content_normalize(void *object)
+{
+#ifndef CANOPUS_MGR_BAND11
+    uint32_t prop;
+    if (object == NULL) return;
+    for (prop = 16u; prop < 20u; prop++) host_style_property(object,prop,0u);
+    host_style_property(object,29u,0u);
+    host_style_property(object,48u,0u);
+    host_style_property(object,12u,0u);
+#else
+    (void)object;
+#endif
+}
 static void host_style(void *object, const struct canopus_ui_style_v1 *s,
                         const struct canopus_ui_visual_v1 *v)
 {
@@ -1056,17 +1084,7 @@ static int32_t host_create_node(struct canopus_ui_host_node *slot, void *parent,
                 /* The viewport owns its image child; the slot's unused
                  * secondary pointer borrows it, adding no resident state. */
                 host_object_flag(object, UINT32_C(0x100000), 0);
-#ifndef CANOPUS_MGR_BAND11
-                /* The content class can inherit a theme. Normalize its exact
-                 * main-part padding, background, border and radius before use. */
-                {
-                    uint32_t prop;
-                    for (prop = 16u; prop < 20u; prop++) host_style_property(object,prop,0u);
-                    host_style_property(object,29u,0u);
-                    host_style_property(object,48u,0u);
-                    host_style_property(object,12u,0u);
-                }
-#endif
+                host_content_normalize(object);
                 slot->secondary = host_image_create(object);
                 if (slot->secondary == NULL) { host_object_delete(object); return CANOPUS_UI_ERR_BACKEND; }
             }
@@ -1089,6 +1107,9 @@ static int32_t host_create_node(struct canopus_ui_host_node *slot, void *parent,
 #endif
     } else {
         object = host_container_create(parent);
+        /* Only the synthesized radio/checkbox row is normalized. A SECTION keeps
+           the stock content appearance unless the caller paints its own. */
+        if (kind == 4u) host_content_normalize(object);
         if (object != NULL && ((node->type == CANOPUS_UI_NODE_SECTION && node->primary_len) || kind == 4u)) {
             slot->primary = host_label_create(object);
             if (slot->primary == NULL) { host_object_delete(object); return CANOPUS_UI_ERR_BACKEND; }
@@ -1378,6 +1399,11 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         int padding_changed = old == NULL || l->padding_left != previous->layouts[oi].padding_left ||
             l->padding_right != previous->layouts[oi].padding_right || l->padding_top != previous->layouts[oi].padding_top ||
             l->padding_bottom != previous->layouts[oi].padding_bottom;
+        /* Reserving the trailing mark column depends on the variant, which no
+           other geometry input observes; track it explicitly. */
+        int mark_changed = old == NULL || (slot->kind == 4u &&
+            ((previous->styles[oi].variant != CANOPUS_UI_VARIANT_PLAIN) !=
+             (host_mark_visible(snapshot,(unsigned)i) != 0)));
         if (host_is_title(n->type)) {
             host_feedback_title(view,snapshot,n,candidates[i].primary);
             slot->object = view->content_root; slot->event_object = slot->object; slot->type = n->type;
@@ -1410,9 +1436,15 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                 if (text_changed) host_label_set_text(label,primary);
                 if (style_changed) host_style(label,&snapshot->styles[i],v);
                 if (slot->kind == 4u && (fresh[i] || style_changed || old == NULL || old->flags != n->flags || slot->dirty)) {
-                    int checked = (n->flags & (CANOPUS_UI_NODE_FLAG_CHECKED|CANOPUS_UI_NODE_FLAG_SELECTED)) != 0;
-                    host_label_style(slot->indicator,CANOPUS_UI_TEXT_BODY);
-                    host_label_set_text(slot->indicator,n->type == CANOPUS_UI_NODE_RADIO_ROW ? (checked ? "(●)" : "(○)") : (n->flags & CANOPUS_UI_NODE_FLAG_INDETERMINATE ? "[-]" : checked ? "[✓]" : "[ ]"));
+                    /* A mark the caller draws itself (VARIANT_PLAIN) stays
+                       hidden: the firmware must not paint a second one. */
+                    uint8_t mark = (uint8_t)host_mark_visible(snapshot,(unsigned)i);
+                    if (mark) {
+                        int checked = (n->flags & (CANOPUS_UI_NODE_FLAG_CHECKED|CANOPUS_UI_NODE_FLAG_SELECTED)) != 0;
+                        host_label_style(slot->indicator,CANOPUS_UI_TEXT_BODY);
+                        host_label_set_text(slot->indicator,n->type == CANOPUS_UI_NODE_RADIO_ROW ? (checked ? "(●)" : "(○)") : (n->flags & CANOPUS_UI_NODE_FLAG_INDETERMINATE ? "[-]" : checked ? "[✓]" : "[ ]"));
+                    }
+                    host_set_hidden(slot->indicator,!mark);
                     host_label_style(slot->secondary,CANOPUS_UI_TEXT_BODY);
                 }
                 if (slot->secondary != NULL && secondary_changed) host_label_set_text(slot->secondary,secondary);
@@ -1473,16 +1505,21 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         }
         if (fresh[i] || slot->width != geometry[i].width || slot->height != geometry[i].height)
             host_set_size(slot->object,geometry[i].width,geometry[i].height);
-        if (slot->primary != NULL && (fresh[i] || candidates[i].primary != NULL || padding_changed || slot->width != geometry[i].width || slot->height != geometry[i].height)) {
-            int32_t indicator = slot->kind == 4u ? 44 : 0;
+        if (slot->primary != NULL && (fresh[i] || candidates[i].primary != NULL || padding_changed || mark_changed || slot->width != geometry[i].width || slot->height != geometry[i].height)) {
+            /* The selection mark trails the label, matching the stock settings
+               list and the previous Vela layout: the text keeps the leading
+               width and the fixed indicator column stays reserved on the right
+               even when the caller paints its own mark there. */
+            int32_t indicator = slot->kind == 4u ? HOST_MARK_WIDTH : 0;
             int32_t width = geometry[i].width - l->padding_left - l->padding_right - indicator;
             host_set_size(slot->primary,width,HOST_SIZE_CONTENT);
-            host_align_to(slot->primary,slot->object,0u,l->padding_left + indicator,l->padding_top);
+            host_align_to(slot->primary,slot->object,0u,l->padding_left,l->padding_top);
             if (slot->secondary != NULL) {
                 host_set_size(slot->secondary,width,HOST_SIZE_CONTENT);
                 host_align_to(slot->secondary,slot->primary,12u,0,4);
-                host_set_size(slot->indicator,44,HOST_SIZE_CONTENT);
-                host_align_to(slot->indicator,slot->object,0u,l->padding_left,l->padding_top);
+                host_set_size(slot->indicator,HOST_MARK_WIDTH,HOST_SIZE_CONTENT);
+                host_align_to(slot->indicator,slot->object,0u,
+                              geometry[i].width - l->padding_right - HOST_MARK_WIDTH,l->padding_top);
             }
         }
         if (!host_is_title(n->type) && (fresh[i] || slot->x != geometry[i].x || slot->y != geometry[i].y || (old != NULL && (v->translate_x != previous->visuals[oi].translate_x || v->translate_y != previous->visuals[oi].translate_y))))

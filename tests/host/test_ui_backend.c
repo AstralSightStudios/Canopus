@@ -1842,6 +1842,46 @@ static int padded_row_page(uint16_t type, const struct canopus_ui_layout_v1 *lay
     assert(canopus_ui_node_set_layout(tree,10,layout) == 0);
     return finish(tree);
 }
+static int mark_variant_page(uint16_t variant)
+{
+    struct canopus_ui_tree_v1 *tree = begin();
+    struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
+    struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
+    struct canopus_ui_component_props_v1 props = {
+        sizeof(props),"Radio",5,"",0,401,
+        CANOPUS_UI_NODE_FLAG_VISIBLE | CANOPUS_UI_NODE_FLAG_ENABLED |
+            CANOPUS_UI_NODE_FLAG_SELECTED,0,0,0,0,0
+    };
+    layout.width = 180; layout.height = 96;
+    assert(canopus_ui_component(tree,10,CANOPUS_UI_NODE_RADIO_ROW,&props) == 0);
+    assert(canopus_ui_node_set_layout(tree,10,&layout) == 0);
+    style.variant = variant;
+    assert(canopus_ui_node_set_style(tree,10,&style) == 0);
+    return finish(tree);
+}
+/* VARIANT_PLAIN hands the selection mark to the caller: the firmware glyph is
+ * hidden but its column stays reserved, so a page can paint its own icon in the
+ * same place without reflowing the label. */
+static void test_plain_variant_hides_mark_and_keeps_column(void)
+{
+    struct widget *primary, *indicator;
+    uint32_t generation;
+    reset(); assert(mark_variant_page(CANOPUS_UI_VARIANT_DEFAULT) == 0);
+    primary = host_node(&view,10)->primary;
+    indicator = host_node(&view,10)->indicator;
+    assert(primary->x == 0 && primary->width == 136);
+    assert(indicator->x == 136 && !(indicator->flags & 1u));
+    assert(!strcmp(indicator->text,"(\u25cf)"));
+    generation = context.committed.generation;
+    assert(mark_variant_page(CANOPUS_UI_VARIANT_PLAIN) == 0);
+    assert(context.committed.generation != generation);
+    assert(!((struct widget *)host_node(&view,10)->object)->deleted);
+    assert(primary->width == 136);
+    assert(indicator->x == 136 && (indicator->flags & 1u));
+    assert(mark_variant_page(CANOPUS_UI_VARIANT_DEFAULT) == 0);
+    assert(primary->width == 136 && indicator->x == 136 && !(indicator->flags & 1u));
+}
+
 static void test_generic_row_padding_and_stock_rejection(void)
 {
     const uint16_t types[] = {CANOPUS_UI_NODE_CHECKBOX,CANOPUS_UI_NODE_RADIO_ROW,
@@ -1858,16 +1898,20 @@ static void test_generic_row_padding_and_stock_rejection(void)
             struct widget *primary = host_node(&view,10)->primary;
             struct widget *secondary = host_node(&view,10)->secondary;
             struct widget *indicator = host_node(&view,10)->indicator;
-            assert(primary->x == 44 && primary->width == 136);
+            /* The synthesized mark trails the text: the primary keeps the
+               leading edge and the fixed 44px column sits flush right. */
+            assert(primary->x == 0 && primary->width == 136);
+            assert(indicator->x == 136 && !(indicator->flags & 1u));
             layout.padding_left = 20; layout.padding_right = 6; layout.padding_top = 9; layout.padding_bottom = 3;
             assert(padded_row_page(types[i],&layout) == 0);
             assert(host_node(&view,10)->object == object && object->width == 180 && object->height == 96);
-            assert(primary->x == 64 && primary->y == 9 && primary->width == 110);
-            assert(secondary->width == 110 && indicator->x == 20 && indicator->y == 9);
+            assert(primary->x == 20 && primary->y == 9 && primary->width == 110);
+            assert(secondary->width == 110 && indicator->x == 130 && indicator->y == 9);
             clear_counts(); assert(padded_row_page(types[i],&layout) == 0); assert(mutations() == 0);
             layout.padding_left = layout.padding_right = layout.padding_top = layout.padding_bottom = 0;
             assert(padded_row_page(types[i],&layout) == 0);
-            assert(primary->x == 44 && primary->y == 0 && primary->width == 136);
+            assert(primary->x == 0 && primary->y == 0 && primary->width == 136);
+            assert(indicator->x == 136);
         } else for (side = 0; side < 4; side++) {
             struct canopus_ui_layout_v1 padded = layout;
             if (side == 0) padded.padding_left = 20;
@@ -2396,6 +2440,7 @@ int main(int argc, char **argv)
     test_inherited_style_rebuilds_subtree(); test_section_heading_allocation_is_atomic();
     test_stretch_relayouts_descendants(); test_nested_stretch_constraints();
     test_generic_row_padding_and_stock_rejection();
+    test_plain_variant_hides_mark_and_keeps_column();
     test_page_style_reset_preserves_scroll_and_capture();
     test_failed_candidates_preserve_captured_gesture(); test_host_capture_invalidation_and_detach();
     test_cancel_destroying_root_reclaims_staged_candidates();
