@@ -107,6 +107,9 @@ for s in \
     # Likewise the L2 transport and owner pump: the deep request ring would otherwise take
     # .155 past its file budget.
     [ "$s" != manager/service/canopus_supervisor_l2.c ] || SOURCE_FLAGS="-Oz"
+    # And the staging/upload path (not a hot one): with package resources (CPC2 26-28) the .043
+    # Supervisor no longer fits its resident budget otherwise.
+    [ "$s" != manager/service/canopus_supervisor_upload.c ] || SOURCE_FLAGS="-Oz"
     $CC $TARGET_FLAGS $SOURCE_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
 done
 

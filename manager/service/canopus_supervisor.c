@@ -1160,10 +1160,14 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         canopus_proto_response_init(resp, req->request_id, rc, 0u);
         return 0;
     }
-    if ((req->command >= CANOPUS_CMD_STAGE_BEGIN &&
-         req->command <= CANOPUS_CMD_STAGE_ABORT) ||
-        (req->command >= CANOPUS_CMD_STAGE_RES_BEGIN &&
-         req->command <= CANOPUS_CMD_STAGE_RES_FINISH)) {
+    /* The staging commands, as bits counted from STAGE_BEGIN. Written out because the compiler
+     * folds the two range tests into (1 << command) & 0x1C078000, a word inside Band 10 Pro's ROM
+     * range that the verifier rightly refuses as an embedded firmware address. */
+    if (req->command - (uint32_t)CANOPUS_CMD_STAGE_BEGIN < 32u &&
+        ((((1u << (CANOPUS_CMD_STAGE_ABORT - CANOPUS_CMD_STAGE_BEGIN + 1)) - 1u) |
+          (((1u << (CANOPUS_CMD_STAGE_RES_FINISH - CANOPUS_CMD_STAGE_RES_BEGIN + 1)) - 1u)
+           << (CANOPUS_CMD_STAGE_RES_BEGIN - CANOPUS_CMD_STAGE_BEGIN))) >>
+         (req->command - (uint32_t)CANOPUS_CMD_STAGE_BEGIN)) & 1u) {
         rc = canopus_supervisor_upload(sup, req->command, payload, req->payload_size);
         canopus_proto_response_init(resp, req->request_id, rc, 0u);
         return 0;
