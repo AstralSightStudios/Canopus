@@ -3,7 +3,10 @@
 # staged path (explicit MPU lease through the BES driver) rather than the
 # Band 11 bootstrap helpers.
 manager_backend = "manager/target/canopus_manager_target.c"
-supervisor_max_size = 133120
+# Build threshold, not a proven loader limit: the p65 Supervisor measured
+# 136208 B on 2026-10-25 with the v9 UI host, MIwear bindings and the generic
+# loader path; rounded up with ~3 KiB headroom. Resident stays the real bound.
+supervisor_max_size = 139264
 supervisor_max_resident = 184320
 loader_sources = [
   "runtime/loader/canopus_arm_reloc.c",

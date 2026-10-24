@@ -24,6 +24,20 @@
 #endif /* CANOPUS_MGR_BAND11 */
 #include "canopus_client.h"
 #include "canopus_manager_native.h"
+
+/* The REDMI Watch 6 keeps the v8-family records (116-byte page with on_destroy
+ * at +0x5c and on_ui_destroy at +0x60, 64-byte app descriptor, 88-byte
+ * notification) while its UI layer is the MIwear v9 lvx set. p65 section of
+ * page_finish 0x1c1325b8: page[23] (on_destroy) and page[24] (on_ui_destroy). */
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+#define CANOPUS_MGR_V8_RECORDS 1
+#endif
+/* p65 registers its launcher entry through the native-binding macro. */
+#if defined(CANOPUS_MGR_BAND11)
+#define CANOPUS_MGR_LAUNCHER_ADD FW_APP_LAUNCHER_ADD
+#else
+#define CANOPUS_MGR_LAUNCHER_ADD FW_LAUNCHER_ADD
+#endif
 #include "canopus_ui_host.h"
 #include "canopus_memory.h"
 #include "canopus_supervisor.h"
@@ -73,7 +87,7 @@ struct canopus_target_page {
     page_create_fn on_create;                 /* +0x4c */
     page_lifecycle_fn on_resume;              /* +0x50 */
     page_foreground_data_fn on_foreground_data; /* +0x54 */
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     /* Slot order below follows the recovered type record
      * (targets/<id>/types/canopus_target_page.json) and the exact
      * 3.101.043 IDB: on_destroy_wrapped dispatches descriptor word 23
@@ -85,7 +99,7 @@ struct canopus_target_page {
     page_system_back_fn extension_callback_104; /* +0x68 */
     void *extension_callback_108;             /* +0x6c */
     void *get_scroll_obj;                     /* +0x70, not in the type record */
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     void *on_intermediate;                  /* +0x58 */
     page_lifecycle_fn on_pause;              /* +0x5c, 0xc693a0e */
     page_lifecycle_fn on_stop;               /* +0x60, 0xc693a5c */
@@ -98,7 +112,7 @@ struct canopus_target_page {
 };
 
 struct firmware_app_descriptor {
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     uint32_t registry_prev;                   /* +0x00 */
     uint32_t registry_next;                   /* +0x04 */
     const char *package_name;                  /* +0x08 */
@@ -114,7 +128,7 @@ struct firmware_app_descriptor {
     uint8_t _pad_34[8];                      /* +0x34 */
     uint8_t hidden_flags;                     /* +0x3c */
     uint8_t _tail_3d[3];                     /* +0x3d */
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     void *prev;                              /* +0x00 */
     void *next;                              /* +0x04 */
     void *vtable;                            /* +0x08, defaulted by app_install */
@@ -133,7 +147,7 @@ struct firmware_app_descriptor {
 #endif /* CANOPUS_MGR_BAND11 */
 };
 
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 struct firmware_notification_message {
     uint64_t message_id;                      /* +0x00 */
     uint32_t repeat_count;                    /* +0x08 */
@@ -219,9 +233,9 @@ _Static_assert(CANOPUS_TARGET_LAUNCHER_FIRST_APP_ID > CANOPUS_MANAGER_TARGET_APP
                    UINT16_C(0x00FF),
                "launcher entries need 8-bit app ids clear of the Manager and the demo app");
 _Static_assert(CANOPUS_LAUNCHER_ENTRIES == 8u, "one label callback per launcher entry");
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 _Static_assert(sizeof(struct canopus_target_page) == 116,
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
 _Static_assert(sizeof(struct canopus_target_page) == 120,
 #endif /* CANOPUS_MGR_BAND11 */
                "firmware page descriptor size");
@@ -233,38 +247,38 @@ _Static_assert(offsetof(struct canopus_target_page, on_create) == 76,
                "page create offset");
 _Static_assert(offsetof(struct canopus_target_page, extension_callback_104) == 104,
                "page system back offset");
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 _Static_assert(offsetof(struct canopus_target_page, on_destroy) == 92,
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
 _Static_assert(offsetof(struct canopus_target_page, on_ui_destroy) == 100,
 #endif /* CANOPUS_MGR_BAND11 */
                "page destroy offset");
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 _Static_assert(sizeof(struct firmware_app_descriptor) == 64,
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
 _Static_assert(sizeof(struct firmware_app_descriptor) == 80,
 #endif /* CANOPUS_MGR_BAND11 */
                "firmware app descriptor size");
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 _Static_assert(sizeof(struct firmware_notification_message) == 88,
                "firmware notification message size");
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
 _Static_assert(sizeof(struct firmware_notification_message) == 96,
                "firmware notification size");
 #endif /* CANOPUS_MGR_BAND11 */
 _Static_assert(offsetof(struct firmware_notification_message, title) == 12,
                "notification title offset");
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 _Static_assert(offsetof(struct firmware_notification_message, small_icon_path) == 28,
                "notification icon offset");
 _Static_assert(offsetof(struct firmware_notification_message, start_reminder) == 80,
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
 _Static_assert(offsetof(struct firmware_notification_message, timestamp) == 48,
                "notification timestamp offset");
 _Static_assert(offsetof(struct firmware_notification_message, start_reminder) == 88,
 #endif /* CANOPUS_MGR_BAND11 */
                "notification reminder offset");
-#ifdef CANOPUS_MGR_BAND11
+#if defined(CANOPUS_MGR_BAND11) && !defined(CANOPUS_MGR_V8_RECORDS)
 _Static_assert(offsetof(struct firmware_notification_message, callback_data) == 92,
                "notification callback data offset");
 #endif /* CANOPUS_MGR_BAND11 */
@@ -275,7 +289,7 @@ static const char page_name_modules[] = "modules";
 static const char page_name_detail[] = "module_detail";
 static const char page_name_module_ui[] = "module_ui";
 static const char display_name[] = "Canopus 管理器";
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 static const char notification_title[] = "Canopus";
 static const char module_notification_body[] =
     "新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。";
@@ -294,11 +308,11 @@ void canopus_manager_target_render_diagnostics(uint8_t out[36])
         &canopus_manager_target_record.build_id;
     uint32_t i;
 
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     if (out == NULL) {
         return;
     }
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     if (out == NULL) return;
 #endif /* CANOPUS_MGR_BAND11 */
     for (i = 0u; i < 9u; i++) {
@@ -850,9 +864,9 @@ static int manager_page_on_pause(struct canopus_target_page *page)
     return 0;
 }
 
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 static int manager_page_on_destroy(struct canopus_target_page *page)
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
 static int manager_page_on_ui_destroy(struct canopus_target_page *page)
 #endif /* CANOPUS_MGR_BAND11 */
 {
@@ -1100,9 +1114,9 @@ static int module_page_on_pause(struct canopus_target_page *page)
     return 0;
 }
 
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 static int module_page_on_destroy(struct canopus_target_page *page)
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
 static int module_page_on_ui_destroy(struct canopus_target_page *page)
 #endif /* CANOPUS_MGR_BAND11 */
 {
@@ -1209,18 +1223,18 @@ static void launcher_entry_init(struct canopus_target_launcher_entry *entry,
     if (module_page_back_completed_phase() != 0u) {
         entry->page.extension_callback_104 = module_page_system_back;
     }
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     entry->page.on_destroy = module_page_on_destroy;
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     entry->page.on_ui_destroy = module_page_on_ui_destroy;
 #endif /* CANOPUS_MGR_BAND11 */
 }
 
 int canopus_manager_target_launcher_step(void)
 {
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     typedef int (*launcher_add_fn)(uint16_t);
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     typedef void (*launcher_add_fn)(uint16_t);
 #endif /* CANOPUS_MGR_BAND11 */
     typedef int (*launcher_install_fn)(struct firmware_app_descriptor *,
@@ -1229,9 +1243,9 @@ int canopus_manager_target_launcher_step(void)
     launcher_install_fn app_install = (launcher_install_fn)(uintptr_t)FW_APP_INSTALL;
     launcher_lookup_fn app_lookup = (launcher_lookup_fn)(uintptr_t)FW_APP_LOOKUP;
 #ifndef CANOPUS_MGR_BAND11
-    launcher_add_fn launcher_add = (launcher_add_fn)(uintptr_t)FW_LAUNCHER_ADD;
+    launcher_add_fn launcher_add = (launcher_add_fn)(uintptr_t)CANOPUS_MGR_LAUNCHER_ADD;
 #else /* CANOPUS_MGR_BAND11 */
-    launcher_add_fn launcher_add = (launcher_add_fn)(uintptr_t)FW_APP_LAUNCHER_ADD;
+    launcher_add_fn launcher_add = (launcher_add_fn)(uintptr_t)CANOPUS_MGR_LAUNCHER_ADD;
 #endif /* CANOPUS_MGR_BAND11 */
     uint32_t i;
 
@@ -1303,13 +1317,13 @@ static struct band11_notification_context module_notification_context;
 
 static const struct firmware_notification_message module_notification = {
     .message_id = UINT64_C(0x43414E4F50555302),
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     .title = notification_title,
     .source = notification_title,
     .body = module_notification_body,
     .small_icon_path = notification_icon,
     .large_icon_path = notification_icon,
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     .title = "Canopus",
     .source = "Canopus",
     .body = "新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。",
@@ -1322,15 +1336,15 @@ static const struct firmware_notification_message module_notification = {
 #endif /* CANOPUS_MGR_BAND11 */
 };
 
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 int canopus_manager_native_notify_module_installed(void)
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
 static int target_notify(const struct firmware_notification_message *message)
 #endif /* CANOPUS_MGR_BAND11 */
 {
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     typedef int (*notification_insert_fn)(
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     typedef void (*notification_insert_fn)(
 #endif /* CANOPUS_MGR_BAND11 */
         const struct firmware_notification_message *);
@@ -1340,16 +1354,16 @@ static int target_notify(const struct firmware_notification_message *message)
     if (identity_guard() != 0) {
         return -1;
     }
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     return notification_insert(&module_notification);
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     /* The stock entry returns free() residue, not a delivery result. */
     notification_insert(message);
     return 0;
 #endif /* CANOPUS_MGR_BAND11 */
 }
 
-#ifdef CANOPUS_MGR_BAND11
+#if defined(CANOPUS_MGR_BAND11) && !defined(CANOPUS_MGR_V8_RECORDS)
 int canopus_manager_native_notify_module_installed(void)
 {
     return target_notify(&module_notification);
@@ -1365,7 +1379,7 @@ static uint32_t notify_counter;
 int canopus_manager_native_notify(const char *source, const char *title, const char *body,
                                   const char *icon)
 {
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     typedef int (*notification_insert_fn)(
         const struct firmware_notification_message *);
     notification_insert_fn notification_insert =
@@ -1373,27 +1387,27 @@ int canopus_manager_native_notify(const char *source, const char *title, const c
     static uint32_t counter;
 #endif /* CANOPUS_MGR_BAND11 */
     struct firmware_notification_message message;
-#ifdef CANOPUS_MGR_BAND11
+#if defined(CANOPUS_MGR_BAND11) && !defined(CANOPUS_MGR_V8_RECORDS)
     uint32_t slot = notify_counter % BAND11_NOTIFY_RING;
 #endif /* CANOPUS_MGR_BAND11 */
 
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     if (identity_guard() != 0) {
         return -1;
     }
 #endif /* CANOPUS_MGR_BAND11 */
     canopus_memset(&message, 0, sizeof(message));
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     message.small_icon_path = (void *)(icon != 0 ? icon : notification_icon);
     message.large_icon_path = (void *)(icon != 0 ? icon : notification_icon);
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     message.small_icon_path = (void *)(icon != 0 ? icon : launcher_icon);
     message.large_icon_path = (void *)(icon != 0 ? icon : launcher_icon);
 #endif /* CANOPUS_MGR_BAND11 */
     message.start_reminder = 1u;
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     message.message_id = UINT64_C(0x43414E4F50555310) + (counter++ & 0xffu);
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
 
     canopus_memset(&notify_contexts[slot], 0, sizeof(notify_contexts[slot]));
     message.message_id = UINT64_C(0x43414E4F50555310) + (notify_counter++ & 0xffu);
@@ -1401,9 +1415,9 @@ int canopus_manager_native_notify(const char *source, const char *title, const c
     message.title = (void *)title;
     message.source = (void *)source;
     message.body = (void *)body;
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     return notification_insert(&message) < 0 ? -1 : 0;
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     message.callback_data = &notify_contexts[slot];
     return target_notify(&message);
 #endif /* CANOPUS_MGR_BAND11 */
@@ -1435,46 +1449,46 @@ static void target_descriptor_init(uint32_t page_index, const char *name,
         if (module_page_back_completed_phase() != 0u) {
             manager_pages_desc[page_index].extension_callback_104 = module_page_system_back;
         }
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
         manager_pages_desc[page_index].on_destroy = module_page_on_destroy;
-#else /* CANOPUS_MGR_BAND11 */
-        manager_pages_desc[page_index].on_ui_destroy = module_page_on_ui_destroy;
+#else /* CANOPUS_MGR_BAND11 without V8 records */
+        manager_pages_desc[page_index].on_destroy = module_page_on_destroy;
 #endif /* CANOPUS_MGR_BAND11 */
         return;
     }
     manager_pages_desc[page_index].on_create = manager_page_on_create;
     manager_pages_desc[page_index].on_resume = manager_page_on_resume;
     manager_pages_desc[page_index].on_pause = manager_page_on_pause;
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     manager_pages_desc[page_index].on_destroy = manager_page_on_destroy;
-#else /* CANOPUS_MGR_BAND11 */
-    manager_pages_desc[page_index].on_ui_destroy = manager_page_on_ui_destroy;
+#else /* CANOPUS_MGR_BAND11 without V8 records */
+    manager_pages_desc[page_index].on_destroy = manager_page_on_destroy;
 #endif /* CANOPUS_MGR_BAND11 */
 }
 
 int canopus_manager_native_install(void)
 {
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     typedef int (*app_install_fn)(const struct firmware_app_descriptor *,
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     typedef int (*app_install_fn)(struct firmware_app_descriptor *,
 #endif /* CANOPUS_MGR_BAND11 */
                                   struct canopus_target_page *const *,
                                   uint32_t);
     typedef void *(*app_lookup_fn)(uint16_t);
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     typedef int (*launcher_add_fn)(uint16_t);
-#else /* CANOPUS_MGR_BAND11 */
+#else /* CANOPUS_MGR_BAND11 without V8 records */
     typedef void (*launcher_add_fn)(uint16_t);
 #endif /* CANOPUS_MGR_BAND11 */
     struct canopus_target_page *pages[CANOPUS_TARGET_PAGE_COUNT];
     app_install_fn app_install = (app_install_fn)(uintptr_t)FW_APP_INSTALL;
     app_lookup_fn app_lookup = (app_lookup_fn)(uintptr_t)FW_APP_LOOKUP;
-#ifndef CANOPUS_MGR_BAND11
+#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     launcher_add_fn launcher_add =
-        (launcher_add_fn)(uintptr_t)FW_LAUNCHER_ADD;
-#else /* CANOPUS_MGR_BAND11 */
-    launcher_add_fn launcher_add = (launcher_add_fn)(uintptr_t)FW_APP_LAUNCHER_ADD;
+        (launcher_add_fn)(uintptr_t)CANOPUS_MGR_LAUNCHER_ADD;
+#else /* CANOPUS_MGR_BAND11 without V8 records */
+    launcher_add_fn launcher_add = (launcher_add_fn)(uintptr_t)CANOPUS_MGR_LAUNCHER_ADD;
 #endif /* CANOPUS_MGR_BAND11 */
     void *installed_app;
 
