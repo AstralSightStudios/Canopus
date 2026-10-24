@@ -92,6 +92,22 @@ fn additional_target_artifacts_regenerate_identically() {
             "xiaomi-band-11-4.100.179",
             "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_11_4_100_179.rs",
         ),
+        (
+            "xiaomi-band-9-3.1.32",
+            "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_9_3_1_32.rs",
+        ),
+        (
+            "xiaomi-band-9-pro-3.1.190",
+            "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_9_pro_3_1_190.rs",
+        ),
+        (
+            "xiaomi-band-10-3.1.28",
+            "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_10_3_1_28.rs",
+        ),
+        (
+            "redmi-watch-6-3.100.043",
+            "sdk/rust/canopus-target-generated/src/generated_redmi_watch_6_3_100_043.rs",
+        ),
     ];
 
     for (target, rust_path) in cases {

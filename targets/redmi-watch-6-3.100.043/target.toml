@@ -5,6 +5,7 @@
 # loader and no inherited approval. It has never been deployed.
 schema = 1
 target_id = "redmi-watch-6-3.100.043"
+rust_module = "redmi_watch_6_3_100_043"
 device_family = "redmi-watch"
 device_model = "REDMI Watch 6"
 board_revision = "p65"

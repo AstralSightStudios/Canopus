@@ -27,7 +27,7 @@
   - `redmi-watch-6-3.100.043`（p65，SHA `a19b6014…5858`）：从 Band 10 Pro `.043` 包移植，仅接受函数体相等且有调用/位置支撑的记录，其余保持 CANDIDATE。
 - 生成物可重建（`canopus target generate --all --check` 9/9），`generated_stability` 18/18 通过。四者的 loader 均标注为 Band-11 风格 Lua-owned staged loader（无 `insmod`、无 Lua `os.execute` 恢复），但 stage1/stage2、installer staging 与设备/模拟器验证尚未实现；`loader/README.md` 写明边界。
 - **UI family**：Band 9 / Band 9 Pro / Band 10 是 LVGL v8，需要专门的 v8 Manager 后端（旧的 v8 后端随 `band9-frozen` 删除）；Band 11 / Band 10 Pro / REDMI Watch 6 是 LVGL v9。
-- 未新增 Rust 绑定或 Supervisor 构建支持；没有真机或 Mirage 运行，未提升任何能力状态。
+- 四个 target 均生成 `canopus-target-generated` Rust 绑定与 feature（限制记录不生成 public typed wrapper）；仍无 Supervisor 构建支持、无 family 层、无 loader/installer，没有真机或 Mirage 运行，未提升任何能力状态。
 
 ## Band 11 `4.100.179` 与全局 safe mode（2026-10-20）
 

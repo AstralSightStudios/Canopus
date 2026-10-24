@@ -39,6 +39,18 @@ include!("generated_xiaomi_band_11_4_100_155.rs");
 #[cfg(feature = "target-xiaomi-band-11-4-100-179")]
 include!("generated_xiaomi_band_11_4_100_179.rs");
 
+#[cfg(feature = "target-xiaomi-band-9-3-1-32")]
+include!("generated_xiaomi_band_9_3_1_32.rs");
+
+#[cfg(feature = "target-xiaomi-band-9-pro-3-1-190")]
+include!("generated_xiaomi_band_9_pro_3_1_190.rs");
+
+#[cfg(feature = "target-xiaomi-band-10-3-1-28")]
+include!("generated_xiaomi_band_10_3_1_28.rs");
+
+#[cfg(feature = "target-redmi-watch-6-3-100-043")]
+include!("generated_redmi_watch_6_3_100_043.rs");
+
 
 #[cfg(all(
     test,
