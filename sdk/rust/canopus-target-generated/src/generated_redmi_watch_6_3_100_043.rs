@@ -4,7 +4,7 @@
 // firmware : 3.100.043 (d516af0:nx_best1502p_ap)
 // sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
 // revision : 1
-// input_digest: e8dd3d8d246e6e57
+// input_digest: 2070584f16c2ccfb
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -75,6 +75,9 @@ pub const CANOPUS_FW_INTERCONNECT_CLOSE_CALLABLE: usize = canopus_thumb_callable
 /// Recovered `lv_obj_create` at 0x387b78. Thumb callable address 0x387b79.
 pub const CANOPUS_FW_LV_OBJ_CREATE_CALLABLE: usize = canopus_thumb_callable(0x387b79usize);
 
+/// Recovered `mpu_region_release` at 0xc966670. Thumb callable address 0xc966671.
+pub const CANOPUS_FW_MPU_REGION_RELEASE_CALLABLE: usize = canopus_thumb_callable(0xc966671usize);
+
 /// Recovered `bt_timer_cancel` at 0xc98f788. Thumb callable address 0xc98f789.
 pub const CANOPUS_FW_BT_TIMER_CANCEL_CALLABLE: usize = canopus_thumb_callable(0xc98f789usize);
 
@@ -96,6 +99,9 @@ pub const CANOPUS_FW_SCREEN_SESSION_CREATE_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `wakelock_release` at 0xca620c4. Thumb callable address 0xca620c5.
 pub const CANOPUS_FW_WAKELOCK_RELEASE_CALLABLE: usize = canopus_thumb_callable(0xca620c5usize);
 
+/// Recovered `mpu_region_allocate` at 0xc0c017c. Thumb callable address 0xc0c017d.
+pub const CANOPUS_FW_MPU_REGION_ALLOCATE_CALLABLE: usize = canopus_thumb_callable(0xc0c017dusize);
+
 /// Recovered `rename` at 0x1c1587c8. Thumb callable address 0x1c1587c9.
 pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0x1c1587c9usize);
 
@@ -104,6 +110,9 @@ pub const CANOPUS_FW_PAGE_FINISH_CALLABLE: usize = canopus_thumb_callable(0x1c13
 
 /// Recovered `errno_location` at 0xc4f793c. Thumb callable address 0xc4f793d.
 pub const CANOPUS_FW_ERRNO_LOCATION_CALLABLE: usize = canopus_thumb_callable(0xc4f793dusize);
+
+/// Recovered `mpu_region_configure` at 0xc9665e4. Thumb callable address 0xc9665e5.
+pub const CANOPUS_FW_MPU_REGION_CONFIGURE_CALLABLE: usize = canopus_thumb_callable(0xc9665e5usize);
 
 /// Recovered `miwear_session_lookup` at 0xca9c904. Thumb callable address 0xca9c905.
 pub const CANOPUS_FW_MIWEAR_SESSION_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0xca9c905usize);
@@ -365,6 +374,9 @@ pub const CANOPUS_FW_UNREGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(
 // mm_free_default: restricted - not exported until context/ownership approved
 // mm_memalign_default: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
+// mpu_region_allocate: restricted - not exported until context/ownership approved
+// mpu_region_configure: restricted - not exported until context/ownership approved
+// mpu_region_release: restricted - not exported until context/ownership approved
 // native_font_create: restricted - not exported until context/ownership approved
 // native_font_release: restricted - not exported until context/ownership approved
 // native_font_wait: restricted - not exported until context/ownership approved

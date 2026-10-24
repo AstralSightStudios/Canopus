@@ -4,7 +4,7 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 1
- * input_digest: e8dd3d8d246e6e57
+ * input_digest: 2070584f16c2ccfb
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -67,6 +67,11 @@ static inline void * canopus_fw_lv_obj_create(void * a0) {
     return ((canopus_fw_lv_obj_create_fn)(uintptr_t)0x387b79)(a0);
 }
 
+typedef void (*canopus_fw_mpu_region_release_fn)(uint32_t);
+static inline void canopus_fw_mpu_region_release(uint32_t a0) {
+    return ((canopus_fw_mpu_region_release_fn)(uintptr_t)0xc966671)(a0);
+}
+
 /* bt_timer_cancel: skipped (argument type not mappable) */
 /* open: skipped (argument type not mappable) */
 typedef void (*canopus_fw_wakelock_acquire_fn)(void *);
@@ -94,6 +99,11 @@ static inline void canopus_fw_wakelock_release(void * a0) {
     return ((canopus_fw_wakelock_release_fn)(uintptr_t)0xca620c5)(a0);
 }
 
+typedef uint8_t (*canopus_fw_mpu_region_allocate_fn)(void);
+static inline uint8_t canopus_fw_mpu_region_allocate(void) {
+    return ((canopus_fw_mpu_region_allocate_fn)(uintptr_t)0xc0c017d)();
+}
+
 typedef int (*canopus_fw_rename_fn)(const char *, const char *);
 static inline int canopus_fw_rename(const char * a0, const char * a1) {
     return ((canopus_fw_rename_fn)(uintptr_t)0x1c1587c9)(a0, a1);
@@ -107,6 +117,11 @@ static inline int32_t canopus_fw_page_finish(void * a0) {
 typedef int * (*canopus_fw_errno_location_fn)(void);
 static inline int * canopus_fw_errno_location(void) {
     return ((canopus_fw_errno_location_fn)(uintptr_t)0xc4f793d)();
+}
+
+typedef int (*canopus_fw_mpu_region_configure_fn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+static inline int canopus_fw_mpu_region_configure(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) {
+    return ((canopus_fw_mpu_region_configure_fn)(uintptr_t)0xc9665e5)(a0, a1, a2, a3, a4);
 }
 
 typedef void * (*canopus_fw_miwear_session_lookup_fn)(uint16_t);

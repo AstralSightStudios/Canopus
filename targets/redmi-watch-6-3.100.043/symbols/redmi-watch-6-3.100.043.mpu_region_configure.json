@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.mpu_region_configure",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "mpu_region_configure",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "prototype": "int(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)",
+  "entry_address": "0xc9665e4",
+  "callable_address": "0xc9665e5",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (EVID-STATIC-P65-002)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): Five-argument BES MPU configure(region<=7, base 32-aligned, size>0x1F, access<=5, lock): validates, computes RBAR/RLAR and writes them through 0xc9665a0 (RNR 0xE000ED98, RBAR 0xE000ED9C, RLAR 0xE000EDA0) under an IRQ mask. This is the exact ABI the staged Supervisor calls; the sibling 0xc9666b0 is mpu_setup(base,size,access,mode), which allocates its own region first. Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING"
+}

@@ -60,17 +60,17 @@ SRAM/PSRAM entry addresses are recorded.
   `lv_obj_align_to`, `lv_obj_add_flag`, `lv_obj_clear_flag`, `lv_img_set_src`,
   `lv_bar_set_range`, `lv_bar_set_value`), the image/bar create helpers, the
   launcher trio, and the `lvx_page_title_create` re-check.
-- **MPU lease.** No function in this image writes the MPU registers
-  (`0xE000ED98/9C/A0`); the BES MPU strings ("mpu_setup",
-  "mpu_set_rbar_rlar", "id_new[i] != MPU_INVALID_ID") sit in dead rodata with
-  no referencing code. The Band-11-style lease veneers
-  (`mpu_region_allocate/configure/release`) therefore have no static source
-  here; a p65 loader variant that relies on the default memory map (the Mirage
-  cave proof executes unassigned SRAM without a lease) would need an explicit
-  generator decision.
-- **register_driver arity.** The recovered function takes four arguments
-  (path, fops, mode, private); the custom-loader macro passes three. The
-  generated macro needs a p65 override that forwards `mode`.
+- **MPU lease (resolved).** The BES MPU driver is present: allocate
+  `0xc0c017c` (8-bit bitmap at `algn_3C489EAC`, IRQ-masked, 255 when full),
+  configure `0xc9665e4(region, base, size, access, lock)` — the exact
+  five-argument ABI the staged Supervisor calls — writing RNR/RBAR/RLAR at
+  `0xE000ED98/9C/A0` through `0xc9665a0`, and release `0xc966670` (bitmap
+  clear; the Supervisor disables the hardware region itself). `0xc9666b0` is
+  the alloc-and-configure `mpu_setup(base, size, access, mode)` used by the
+  firmware. The earlier "dead rodata" strings are message ids passed to the
+  BES logger, not direct string references.
+- **register_driver arity (resolved).** The generator emits the four-argument
+  `CANOPUS_SUP_REGISTER_DRIVER` for this target (path, fops, mode, private).
 - **Loader profile.** The exec/mw handler addresses are not recorded yet; the
   rest of the staged profile (VFS, inode, allocator) is recovered above.
 - **Lua surface.** The watchface Lua engine's `os.execute` path is untested on

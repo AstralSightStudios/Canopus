@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.mpu_region_release",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "mpu_region_release",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "calling_convention": "arm-aapcs",
+  "prototype": "void(uint32_t)",
+  "entry_address": "0xc966670",
+  "callable_address": "0xc966671",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-STATIC-P65-002"
+    ],
+    "source": "manual review of the exact 3.100.043 IDB (EVID-STATIC-P65-002)"
+  },
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): Clears the bitmap bit for region<=7 (hardware disable is the caller RNR/RLAR write, which is exactly what the Supervisor unmap path does before releasing). Restricted/PENDING; device NOT_PROBED.",
+  "approval_state": "PENDING"
+}
