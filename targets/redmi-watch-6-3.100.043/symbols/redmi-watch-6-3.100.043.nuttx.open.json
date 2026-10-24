@@ -7,22 +7,25 @@
   "instruction_set": "thumb",
   "prototype": "int(const char *, int, ...)",
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ],
     "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
   },
-  "entry_address": "0x1c158074",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact 3.101.043 NuttX public open implementation. The entry saves R1-R3, constructs a va_list, and forwards it to the internal open path; callers that set O_CREAT must provide the mode argument. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
-  "approval_state": "PENDING"
+  "entry_address": "0x1c1580e4",
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): NuttX public open: va_list path resolution (vfs/fs_open.c), fd allocation and errno on failure. Sibling 0x1c158074 is the same path without the errno store. Reviewed against the 3.1.28/3.1.190 semantics in the exact 3.100.043 IDB. Restricted/PENDING; device NOT_PROBED. body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact 3.101.043 NuttX public open implementation. The entry saves R1-R3, constructs a va_list, and forwards it to the internal open path; callers that set O_CREAT must provide the mode argument. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
+  "approval_state": "PENDING",
+  "callable_address": "0x1c1580e5"
 }

@@ -4,7 +4,7 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 1
- * input_digest: 1c4b65764f1e0e57
+ * input_digest: c8429f6f91053d8b
  */
 #ifndef CANOPUS_VENEER_REDMI_WATCH_6_3_100_043_H
 #define CANOPUS_VENEER_REDMI_WATCH_6_3_100_043_H

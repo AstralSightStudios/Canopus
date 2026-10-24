@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-P65-002",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Which REDMI Watch 6 3.100.043 entries are the NuttX VFS, app-registry and page-manager functions the staged Supervisor needs?",
+  "method": "Manual review of the exact 3.100.043 IDB (fwbins/xiaomi-p65-3.100.043/vela_ap.bin.i64, sha256 a19b6014…5858): each entry was decompiled and checked against the reviewed 3.1.28/3.1.190 semantics, its assert/log string, and its callee shapes. Addresses are the SRAM/PSRAM-resident bodies; several XIP copies are thunks (`0xc8beaf0 -> 0x1c158720`, `0xc8bef00 -> 0x1c1580e4`).",
+  "findings": [
+    {
+      "name": "open",
+      "entry": "0x1c1580e4",
+      "anchor": "va_list path resolution (sub_1C157D24, 'vfs/fs_open.c'), fd allocation sub_1C154300, errno set through sub_1C168478. Sibling 0x1c158074 is the same path without the errno store."
+    },
+    {
+      "name": "close",
+      "entry": "0x1c154c40",
+      "anchor": "file table lookup (inode/fs_files.c:1006 assert), fd range check, reference decrement and last-reference release."
+    },
+    {
+      "name": "read",
+      "entry": "0x1c158720",
+      "anchor": "'vfs/fs_read.c' assert at line 70, fs_getfilep 0x1c154700, readable-flag check, dispatch through inode->ops[+8] (file_read 0x1c158790), errno on failure."
+    },
+    {
+      "name": "write",
+      "entry": "0x1c158690",
+      "anchor": "Same wrapper shape as read: fs_getfilep 0x1c154700, writable-flag check, dispatch through inode->ops[+12] (file_write 0x1c159a90), errno on failure."
+    },
+    {
+      "name": "unlink",
+      "entry": "0x1c159824",
+      "anchor": "'vfs/fs_unlink.c' assert; path lookup, inode type checks, driver/mount unlink dispatch, inode_lock 0x1c154f50 + fs_inoderemove 0x1c1557b4 + unlock."
+    },
+    {
+      "name": "rename",
+      "entry": "0x1c1587c8",
+      "anchor": "'vfs/fs_rename.c' assertions in the two-path resolution body."
+    },
+    {
+      "name": "errno_location",
+      "entry": "0xc4f793c",
+      "anchor": "Returns TLS pointer +40 or the static errno slot 0x3c3e... — the NuttX get_errno_ptr shape; every libc wrapper above stores through it."
+    },
+    {
+      "name": "app_lookup",
+      "entry": "0x1c151108",
+      "anchor": "Walks the registered-app list at off_3C3CF91C comparing the 16-bit app id at +16; returns the descriptor or 0."
+    },
+    {
+      "name": "app_install",
+      "entry": "0x1c151ae4",
+      "anchor": "'app_install' log tag; copies the 64-byte descriptor, clones strings, appends to off_3C3CF91C, allocates and registers the page array, emits event 27."
+    },
+    {
+      "name": "page_goto",
+      "entry": "0x1c132f4c",
+      "anchor": "'pagemanager' / 'goto_page_no_check_stacktop' log strings; page-stack lookup and transition through sub_1C132B7C/sub_1C13218C."
+    },
+    {
+      "name": "page_finish",
+      "entry": "0x1c1325b8",
+      "anchor": "'finish_page' log string; page-stack top handling and release."
+    },
+    {
+      "name": "register_driver",
+      "entry": "0x1c15a954",
+      "anchor": "inode_lock, inode_reserve(path, mode, &node) 0x1c155888, fops stored at +16, type bits at +14 set to 1, private data at +24, unlock. Four arguments (path, fops, mode, private); the mode reaches inode_reserve, which does not consume it in this build."
+    },
+    {
+      "name": "unregister_driver",
+      "entry": "0x1c15aa18",
+      "anchor": "inode_lock + fs_inoderemove(path) 0x1c1557b4 + unlock."
+    }
+  ],
+  "limits": [
+    "Static review only: device is NOT_PROBED and no capability is claimed.",
+    "read/write/unlink/rename are the SRAM-resident originals; the XIP copies are thunks and must not be recorded as separate callables.",
+    "register_driver keeps the four-argument NuttX signature; a three-argument veneer call would leave private data undefined.",
+    "The launcher trio (launcher_load_app_info, launcher_page_insert_icon, launcher_reset_order_info) is not resolved yet."
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-25T04:20:00Z"
+}
