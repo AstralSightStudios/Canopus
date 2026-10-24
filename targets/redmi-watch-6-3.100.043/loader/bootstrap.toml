@@ -1,0 +1,87 @@
+# Firmware-bound staged loader profile for REDMI Watch 6 (p65) 3.100.043.
+# Static evidence plus one Mirage primitive proof; no loader run exists yet.
+schema = 1
+target_id = "redmi-watch-6-3.100.043"
+firmware_sha256 = "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858"
+loader_family = "staged-kmem-mpu"
+# The NSH exec/mw handlers are not located yet; the cave entry path never calls
+# them (the Lua installer only uses them for the mailbox probe), so the profile
+# stays a candidate rather than claiming a recovered exec ABI. The generator
+# refuses to emit executable bootstrap config for anything but STATIC_RECOVERED,
+# so locating mw/exec (or proving the Lua shell path) is the remaining gate.
+status = "STATIC_CANDIDATE"
+device_status = "STATIC_CANDIDATE"
+command_family = "mw-exec"
+
+[stage0]
+# EVID-EMU-65043-001: an NSH-written stub at 0x2019e800 (gap between RAM8_BSS
+# 0x2019e720 and MSP_STACK 0x2019f3e0) ran and published 0x5a to 0x2019e820.
+kind = "unassigned_privileged_ram_gap"
+base = 0x2019E800
+size = 0x400
+exec_size = 0x40
+stage0_region = 7
+result_word = 0x2019E840
+original_words_known = false
+preserve_original = false
+status = "STATIC_CANDIDATE"
+requires_mpu_sync = false
+
+[stage]
+stage2_path = "/data/canopus/stage2.bin"
+supervisor_path = "/data/canopus/supervisor.elf"
+entry_argument = "unspecified-r0"
+thumb_entry = true
+entry_mode = "cave"
+
+[firmware]
+# Not located: see status. 0 is accepted only for a non-recovered profile.
+exec_handler = 0
+mw_handler = 0
+open = 0x1C1580E4
+close = 0x1C154C40
+read = 0x1C158720
+# The default BES heap lives in PSRAM (Mirage reads the descriptor slot
+# 0x3c3d7e9c as 0x3c57f980), so the resident image is allocated there and runs
+# through the 0x1c alias under the MPU lease below.
+memalign = 0xC50B2C8
+free = 0xC50B25C
+kmem_malloc = 0xC50B2A0
+kmem_free = 0xC50B25C
+# BES MPU driver (EVID-STATIC-P65-002): bitmap allocate, five-argument
+# configure, bitmap release.
+mpu_alloc = 0xC0C017C
+mpu_configure = 0xC9665E4
+mpu_release = 0xC966670
+inode_lock = 0x1C154F50
+inode_reserve = 0x1C155888
+inode_unlock = 0x1C154F70
+
+[architecture]
+mpu_rnr = 0xE000ED98
+mpu_rbar = 0xE000ED9C
+mpu_rlar = 0xE000EDA0
+mpu_region_count = 8
+exec_access_attr = 1
+exec_mem_attr = 1
+ro_access_attr = 4
+rw_access_attr = 0
+
+[sram_text]
+base = 0x2019E800
+size = 0x400
+cave = 0x2019E800
+result_word = 0x2019E840
+original_words = [
+  0x00000000, 0x00000000, 0x00000000, 0x00000000,
+  0x00000000, 0x00000000, 0x00000000, 0x00000000,
+]
+
+[evidence]
+ids = ["EVID-STATIC-P65-002", "EVID-EMU-65043-001"]
+unsafe_assumptions = [
+  "Stage-0 cave 0x2019E800 is an unassigned gap in the static segments; runtime ownership is not proven beyond the Mirage stub run.",
+  "The exec/mw handler entries are unresolved; the cave path does not call them, the mailbox path would.",
+  "The MPU lease functions are statically recovered but a direct call from an NSH exec stub rebooted the Mirage device twice, so their runtime behaviour is unproven.",
+  "No loader, stage, Supervisor or installer has been executed on this target.",
+]

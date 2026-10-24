@@ -89,6 +89,26 @@
       "name": "lv_label_create",
       "entry": "0xc78bcb4",
       "anchor": "create helper with class 0x3c224844; the same class struct appears in XIP rodata at 0xc3145b8 immediately before the lv_label.c source path and the 'Failed to allocate memory for dot_tmp_ptr' label string."
+    },
+    {
+      "name": "mpu_region_allocate",
+      "entry": "0xc0c017c",
+      "anchor": "BES region allocator over the 8-bit bitmap algn_3C489EAC, IRQ-masked, 255 when full."
+    },
+    {
+      "name": "mpu_region_configure",
+      "entry": "0xc9665e4",
+      "anchor": "Five-argument configure(region<=7, base 32-aligned, size>0x1F, access<=5, lock) computing RBAR/RLAR and writing RNR/RBAR/RLAR (0xE000ED98/9C/A0) through 0xc9665a0; called by the alloc-and-configure mpu_setup 0xc9666b0."
+    },
+    {
+      "name": "mpu_region_release",
+      "entry": "0xc966670",
+      "anchor": "Clears the bitmap bit for region<=7; the caller disables the hardware region (RNR/RLAR=0), which is what stage1 and the Supervisor unmap path do."
+    },
+    {
+      "name": "default heap",
+      "entry": "0xc50b2a0 / 0xc50b25c / 0xc50b2c8",
+      "anchor": "BES heap wrappers over the descriptor stored at 0x3c3d7e9c (dword_3C3D4F10[3043]); Mirage reads that slot as 0x3c57f980, i.e. the default heap lives in PSRAM - a Supervisor image allocated there executes through the 0x1c alias, so the p65 loader follows the Band 11 design (alias + explicit MPU lease), not the SRAM-resident Band 9 one."
     }
   ],
   "limits": [
