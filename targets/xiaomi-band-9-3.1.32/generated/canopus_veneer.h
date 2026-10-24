@@ -4,7 +4,7 @@
  * firmware : 3.1.32 (N66NFC_3.1.32)
  * sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
  * revision : 2
- * input_digest: d08086c142461628
+ * input_digest: ea98f306be4e252a
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -187,7 +187,7 @@ static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2,
 
 typedef int (*canopus_fw_register_driver_fn)(const char *, const void *, void *);
 static inline int canopus_fw_register_driver(const char * a0, const void * a1, void * a2) {
-    return ((canopus_fw_register_driver_fn)(uintptr_t)0xc4e38cf)(a0, a1, a2);
+    return ((canopus_fw_register_driver_fn)(uintptr_t)0x0c4f7c41)(a0, a1, a2);
 }
 
 /* driver_open_dispatch: skipped (argument type not mappable) */

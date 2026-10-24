@@ -23,7 +23,12 @@
 #define CANOPUS_TARGET_PAGE_OVERVIEW 0u
 #define CANOPUS_TARGET_PAGE_MODULES 1u
 #define CANOPUS_TARGET_PAGE_DETAIL 2u
+/* The static page contexts dominate BSS on this target. The exact Kmem heap
+ * only leaves ~139 KiB, so a bring-up build can lower the row ceiling without
+ * changing the code path. Production stays at 25. */
+#ifndef CANOPUS_TARGET_UI_MAX_ROWS
 #define CANOPUS_TARGET_UI_MAX_ROWS 25u
+#endif
 #define CANOPUS_TARGET_UI_MAX_LABELS 6u
 #define CANOPUS_TARGET_UI_MAX_IMAGES 2u
 #define CANOPUS_TARGET_UI_MAX_PROGRESS 4u
@@ -231,8 +236,16 @@ static int strings_differ(const char *left, const char *right)
 static int identity_guard(void)
 {
     const char *version = (const char *)(uintptr_t)FW_VERSION_ADDRESS;
+    const char *expected = CANOPUS_TARGET_FIRMWARE_VERSION;
 
-    return strings_differ(version, CANOPUS_TARGET_FIRMWARE_VERSION) == 0 ? 0 : -1;
+    /* 3.1.32 stores the version as a build.prop line: the token is followed by
+     * LF, not NUL. Accept exactly NUL/LF/CR at the token boundary. */
+    while (*expected != '\0' && *version == *expected) {
+        ++version;
+        ++expected;
+    }
+    if (*expected != '\0') return -1;
+    return (*version == '\0' || *version == '\n' || *version == '\r') ? 0 : -1;
 }
 
 static const char *manager_display_name(void)
@@ -433,30 +446,104 @@ static void target_dispatch_row(uint32_t row_index, void *event)
         target_dispatch_row(index, event); \
     }
 
+#if CANOPUS_TARGET_UI_MAX_ROWS > 0
 CANOPUS_TARGET_ROW_CALLBACK(0)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 1
 CANOPUS_TARGET_ROW_CALLBACK(1)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 2
 CANOPUS_TARGET_ROW_CALLBACK(2)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 3
 CANOPUS_TARGET_ROW_CALLBACK(3)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 4
 CANOPUS_TARGET_ROW_CALLBACK(4)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 5
 CANOPUS_TARGET_ROW_CALLBACK(5)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 6
 CANOPUS_TARGET_ROW_CALLBACK(6)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 7
 CANOPUS_TARGET_ROW_CALLBACK(7)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 8
 CANOPUS_TARGET_ROW_CALLBACK(8)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 9
 CANOPUS_TARGET_ROW_CALLBACK(9)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 10
 CANOPUS_TARGET_ROW_CALLBACK(10)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 11
 CANOPUS_TARGET_ROW_CALLBACK(11)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 12
 CANOPUS_TARGET_ROW_CALLBACK(12)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 13
 CANOPUS_TARGET_ROW_CALLBACK(13)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 14
 CANOPUS_TARGET_ROW_CALLBACK(14)
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 15
 CANOPUS_TARGET_ROW_CALLBACK(15)
+#endif
 
 static void (*const target_row_events[CANOPUS_TARGET_UI_MAX_ROWS])(void *) = {
-    target_row_event_0, target_row_event_1, target_row_event_2,
-    target_row_event_3, target_row_event_4, target_row_event_5,
-    target_row_event_6, target_row_event_7, target_row_event_8,
-    target_row_event_9, target_row_event_10, target_row_event_11,
-    target_row_event_12, target_row_event_13, target_row_event_14,
+#if CANOPUS_TARGET_UI_MAX_ROWS > 0
+    target_row_event_0,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 1
+    target_row_event_1,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 2
+    target_row_event_2,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 3
+    target_row_event_3,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 4
+    target_row_event_4,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 5
+    target_row_event_5,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 6
+    target_row_event_6,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 7
+    target_row_event_7,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 8
+    target_row_event_8,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 9
+    target_row_event_9,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 10
+    target_row_event_10,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 11
+    target_row_event_11,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 12
+    target_row_event_12,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 13
+    target_row_event_13,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 14
+    target_row_event_14,
+#endif
+#if CANOPUS_TARGET_UI_MAX_ROWS > 15
     target_row_event_15,
+#endif
 };
 
 #undef CANOPUS_TARGET_ROW_CALLBACK

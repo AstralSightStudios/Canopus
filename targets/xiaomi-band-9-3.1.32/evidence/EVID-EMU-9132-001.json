@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-EMU-9132-001",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "question": "Does the staged loader reach and register the Supervisor on the exact 3.1.32 firmware in Mirage?",
+  "candidate_symbols": [
+    "register_driver",
+    "inode_lock",
+    "inode_reserve",
+    "inode_unlock"
+  ],
+  "prototype_hypothesis": "Character-driver registration is the type-1 inode variant at 0xc4f7c40, not the type-7 variant at 0xc4e38ce.",
+  "callsite_evidence": [
+    "Mirage firmware miwear.watch.n66cn_v3.1.32_full_489f2050; its vela_ap.bin SHA-256 is 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264, equal to the target.",
+    "Only the complete package mounts /system and the resource partition; importing vela_ap.bin alone leaves the panel black.",
+    "Installer face packaged by the patched Facetory lua-layer exporter at protocol 0x0800, package id 366140016; the n66 engine then runs /data/app/watchface/market/366140016/main.lua (miwear_lua_run).",
+    "Run executed stage0 (cave 0x200D0000), stage1 (Kmem stage2 image + MPU lease), stage2 (Supervisor ELF input in Kmem, resident image 149,866 B from Umem via memalign), constructor, and opened /dev/canopus.",
+    "CPC2 INSTALL 0, INSTALL 2, RESTORE_AFTER_BOOT, INSTALL 1 and INSTALL 2 all returned result 5; the installer displayed 'Run completed'.",
+    "/data/canopus/registry.bin is written with magic CDR1; the Supervisor persisted its registry after Manager registration."
+  ],
+  "control_flow_evidence": [
+    "Stage2 skips an extra MPU lease for the Umem resident image: the privileged default map covers PSRAM as normal executable memory; the first MPU lease attempt failed with no free region (-310).",
+    "The v8 backend identity guard accepts NUL/LF/CR at the 3.1.32 build.prop token boundary.",
+    "The three inode registration siblings set types 1, 2 and 7; only type 1 makes /dev/canopus openable (types 2/7 made open return ENOSYS)."
+  ],
+  "ownership_analysis": "The Supervisor owns its Umem image and registry; the installer owns the staged files under /data/canopus. The Manager app and launcher entry were registered through app_install/app_launcher paths.",
+  "unsafe_assumptions": [
+    "Emulator evidence only. No physical device probe; cache behaviour, MPU default-map execution and the Kmem/Umem split are not device-proven.",
+    "The v8 Manager page/launcher and notification service entries are only partially exercised (Run completed; module install/activate not run).",
+    "The Facetory Lua-layer patch is required to build the installer face."
+  ],
+  "recommended_probe": "Repeat on a physical Band 9 3.1.32: Run, open the Manager from the launcher, install/enable/disable a module, and reboot with recovery.",
+  "reviewers": [],
+  "verdict": "HOST_TESTED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

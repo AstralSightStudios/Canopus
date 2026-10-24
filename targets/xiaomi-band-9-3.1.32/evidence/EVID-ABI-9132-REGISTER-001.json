@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ABI-9132-REGISTER-001",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "question": "Which exact 3.1.32 function registers a character driver at /dev/canopus?",
+  "candidate_symbols": [
+    "register_driver",
+    "unregister_driver"
+  ],
+  "prototype_hypothesis": "int register_driver(const char *path, const struct file_operations *fops, void *priv)",
+  "callsite_evidence": [
+    "Three sibling functions share the inode lock/reserve/unlock shape: 0xc4f7c40 sets type 1, 0xc4e3804 type 2, 0xc4e38ce type 7.",
+    "A Mirage run registering with 0xc4e38ce made /dev/canopus visible to block/mtd discovery and open returned ENOSYS.",
+    "The type-1 variant is the character-driver registration; it also returns inode_reserve errors instead of discarding them."
+  ],
+  "control_flow_evidence": [
+    "All three reserve an inode, write fops at +16 and private at +28, and differ only in the type nibble."
+  ],
+  "ownership_analysis": "Caller-owned fops and private pointer; the inode is owned by the VFS.",
+  "unsafe_assumptions": [
+    "The inode type constants come from decompiled stock registrations, not a header."
+  ],
+  "recommended_probe": "Register /dev/canopus with 0xc4f7c40 and open it from the installer context.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

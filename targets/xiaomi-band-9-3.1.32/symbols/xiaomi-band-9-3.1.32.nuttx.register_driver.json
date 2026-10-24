@@ -5,25 +5,27 @@
   "name": "register_driver",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0c4e38ce",
+  "entry_address": "0x0c4f7c40",
   "prototype": "int(const char *, const void *, void *)",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-ABI-9132-EXACT-001"
+      "EVID-ABI-9132-EXACT-001",
+      "EVID-ABI-9132-REGISTER-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
-    "source": "exact Xiaomi Band 9 3.1.32 IDB; decompilation, disassembly, and stock callsite review",
+    "source": "exact Xiaomi Band 9 3.1.32 IDB; decompilation of the three inode-registration variants",
     "evidence_ids": [
-      "EVID-ABI-9132-EXACT-001"
+      "EVID-ABI-9132-EXACT-001",
+      "EVID-ABI-9132-REGISTER-001"
     ]
   },
   "approval_state": "PENDING",
-  "notes": "exact three-argument character-driver registration; stores fops and private pointer 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
-  "callable_address": "0xc4e38cf"
+  "notes": "CORRECTED 2026-10-25: exact type-1 character-driver registration (0xc4f7c40). The previous record pointed at 0xc4e38ce, which sets inode type 7 and is not the character-driver registration; /dev/canopus opened with ENOSYS. The three siblings are type 1 (0xc4f7c40), type 2 (0xc4e3804) and type 7 (0xc4e38ce). Static evidence from the exact IDB.",
+  "callable_address": "0x0c4f7c41"
 }

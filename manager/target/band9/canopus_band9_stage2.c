@@ -16,6 +16,8 @@
 #define FW_READ CANOPUS_FW_READ
 #define FW_KMEM_MALLOC CANOPUS_FW_KMEM_MALLOC
 #define FW_KMEM_FREE CANOPUS_FW_KMEM_FREE
+#define FW_MEMALIGN CANOPUS_FW_MEMALIGN
+#define FW_FREE CANOPUS_FW_FREE
 #define FW_MPU_ALLOC CANOPUS_FW_MPU_ALLOC
 #define FW_MPU_CONFIGURE CANOPUS_FW_MPU_CONFIGURE
 #define FW_MPU_RELEASE CANOPUS_FW_MPU_RELEASE
@@ -24,27 +26,27 @@ struct stage2_state {
     uint8_t regions[3];
     uint32_t region_count;
     void *image_raw;
+    volatile int32_t *result;
+    int32_t diag;
 };
 
-/* Band 9 keeps code and data in one MPU-mapped SRAM view, so both bases are
- * the allocation itself. */
+/* The resident image is larger than the remaining Kmem. Allocate it from
+ * Umem (the firmware's PSRAM heap) and lease an executable MPU region over it.
+ * Code and data share that one view, so both bases are the allocation itself. */
 static void *image_allocate(void *cookie, uint32_t size, uint32_t alignment,
                             uint32_t *code_base, uint32_t *data_base)
 {
-    typedef void *(*malloc_fn)(uint32_t);
+    typedef void *(*memalign_fn)(uint32_t, uint32_t);
     struct stage2_state *state = cookie;
-    uintptr_t aligned;
-    uint32_t extra;
+    void *image;
 
     if (alignment == 0u || (alignment & (alignment - 1u)) != 0u) return 0;
-    extra = alignment - 1u;
-    if (size > UINT32_MAX - extra) return 0;
-    state->image_raw = ((malloc_fn)(uintptr_t)FW_KMEM_MALLOC)(size + extra);
-    if (state->image_raw == 0) return 0;
-    aligned = ((uintptr_t)state->image_raw + extra) & ~((uintptr_t)extra);
-    *code_base = (uint32_t)aligned;
-    *data_base = (uint32_t)aligned;
-    return (void *)aligned;
+    image = ((memalign_fn)(uintptr_t)FW_MEMALIGN)(alignment, size);
+    if (image == 0) return 0;
+    state->image_raw = image;
+    *code_base = (uint32_t)(uintptr_t)image;
+    *data_base = (uint32_t)(uintptr_t)image;
+    return image;
 }
 
 static void image_release(void *cookie, void *allocation, uint32_t size)
@@ -66,7 +68,7 @@ static void image_release(void *cookie, void *allocation, uint32_t size)
     }
     (void)allocation;
     if (state->image_raw != 0) {
-        ((free_fn)(uintptr_t)FW_KMEM_FREE)(state->image_raw);
+        ((free_fn)(uintptr_t)FW_FREE)(state->image_raw);
         state->image_raw = 0;
     }
 }
@@ -89,14 +91,21 @@ static int image_finalize(void *cookie, void *allocation, uint32_t target_base,
     (void)allocation;
     (void)size;
 
-    if (target_base != data_base) return -1; /* no second view on this target */
+    if (target_base != data_base) { state->diag = -301; return -1; }
     if (count < 2u || count > 3u ||
-        regions[0].kind != CANOPUS_ELF_REGION_EXEC) return -1;
+        regions[0].kind != CANOPUS_ELF_REGION_EXEC) { state->diag = -302; return -1; }
+    /* The runtime has almost all MPU regions leased. The Supervisor lives in
+     * Umem (PSRAM); the privileged default map already covers it as normal,
+     * executable memory, so no additional MPU lease is required. */
+    if (target_base >= 0x3C000000u) return 0;
     physical_count = regions[1].kind == CANOPUS_ELF_REGION_RO ?
                      count - 1u : count;
     for (i = 0; i < physical_count; i++) {
         id = ((alloc_fn)(uintptr_t)FW_MPU_ALLOC)();
-        if (id >= CANOPUS_BAND9_MPU_REGION_COUNT) return -1;
+        if (id >= CANOPUS_BAND9_MPU_REGION_COUNT) {
+            state->diag = -310 - (int32_t)i;
+            return -1;
+        }
         state->regions[state->region_count++] = (uint8_t)id;
         if (i == 0u && regions[1].kind == CANOPUS_ELF_REGION_RO) {
             base = target_base + regions[0].offset;
@@ -112,8 +121,14 @@ static int image_finalize(void *cookie, void *allocation, uint32_t target_base,
                      (regions[logical].kind == CANOPUS_ELF_REGION_RW ?
                       CANOPUS_BAND9_RW_ACCESS_ATTR : CANOPUS_BAND9_RO_ACCESS_ATTR);
         }
-        if (((configure_fn)(uintptr_t)FW_MPU_CONFIGURE)(
-                id, base, length, access, CANOPUS_BAND9_EXEC_MEM_ATTR) != 0) return -1;
+        {
+            int32_t config_rc = ((configure_fn)(uintptr_t)FW_MPU_CONFIGURE)(
+                id, base, length, access, CANOPUS_BAND9_EXEC_MEM_ATTR);
+            if (config_rc != 0) {
+                state->diag = -320 - (int32_t)i * 10 + config_rc;
+                return -1;
+            }
+        }
     }
     return 0;
 }
@@ -147,6 +162,7 @@ int canopus_band9_stage2_entry(int ignored)
     (void)ignored;
 
     canopus_memset(&state, 0, sizeof(state));
+    state.result = (volatile int32_t *)(uintptr_t)CANOPUS_BAND9_CAVE_RESULT;
     *(volatile uint32_t *)(uintptr_t)CANOPUS_BAND9_CAVE_RESULT =
         CANOPUS_BAND9_CTOR_SENTINEL;
     __asm__ volatile("dsb sy\n"
@@ -188,7 +204,13 @@ int canopus_band9_stage2_entry(int ignored)
                             &module, scratch);
     ((free_fn)(uintptr_t)FW_KMEM_FREE)(scratch_raw);
     ((free_fn)(uintptr_t)FW_KMEM_FREE)(elf);
-    if (rc != CANOPUS_ELF_LOAD_OK) return -100 + rc;
+    if (rc != CANOPUS_ELF_LOAD_OK) {
+        if (state.diag != 0) {
+            *state.result = state.diag;
+            return state.diag;
+        }
+        return -100 + rc;
+    }
     rc = *(volatile int32_t *)(uintptr_t)CANOPUS_BAND9_CAVE_RESULT;
     if ((uint32_t)rc == CANOPUS_BAND9_CTOR_SENTINEL) {
         return CANOPUS_BAND9_CTOR_NOT_OBSERVED;

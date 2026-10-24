@@ -52,10 +52,10 @@ class LoaderConfigTests(unittest.TestCase):
         header = self.header.read_text()
         lua = self.lua.read_text()
         self.assertIn("#define CANOPUS_FW_KMEM_MALLOC UINT32_C(0x0c16af05)", header)
-        self.assertIn("#define CANOPUS_BAND9_CAVE_RESULT UINT32_C(0x200cb440)", header)
+        self.assertIn("#define CANOPUS_BAND9_CAVE_RESULT UINT32_C(0x200d0040)", header)
         self.assertIn(f"target_id = '{BAND9}'", lua)
         self.assertIn("kmem_malloc = 0x0c16af05", lua)
-        self.assertIn("cave_result = 0x200cb440", lua)
+        self.assertIn("cave_result = 0x200d0040", lua)
         self.assertIn("cave_original_known = false", lua)
 
     def test_band9_pro_pending_profile_is_rejected(self):
@@ -89,7 +89,7 @@ class LoaderConfigTests(unittest.TestCase):
         self.assert_rejected(self.generate(BAND9, source), "firmware_sha256 does not match")
 
     def test_result_word_inside_executable_span_is_rejected(self):
-        source = self.profile(BAND9).replace("result_word = 0x200CB440", "result_word = 0x200CB420", 1)
+        source = self.profile(BAND9).replace("result_word = 0x200D0040", "result_word = 0x200D0020", 1)
         self.assert_rejected(
             self.generate(BAND9, source), "stage0 must be an aligned region containing result_word"
         )

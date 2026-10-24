@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (N66NFC_3.1.32)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 2
-// input_digest: d08086c142461628
+// input_digest: ea98f306be4e252a
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -148,8 +148,8 @@ pub const CANOPUS_FW_LV_OBJ_ALIGN_TO_CALLABLE: usize = canopus_thumb_callable(0x
 /// Recovered `btsnoop_avdtp_recognizer` at 0xc4633b0. Thumb callable address 0xc4633b1.
 pub const CANOPUS_FW_BTSNOOP_AVDTP_RECOGNIZER_CALLABLE: usize = canopus_thumb_callable(0xc4633b1usize);
 
-/// Recovered `register_driver` at 0x0c4e38ce. Thumb callable address 0xc4e38cf.
-pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc4e38cfusize);
+/// Recovered `register_driver` at 0x0c4f7c40. Thumb callable address 0x0c4f7c41.
+pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0x0c4f7c41usize);
 
 /// Recovered `driver_open_dispatch` at 0xc3c0dfc. Thumb callable address 0xc3c0dfd.
 pub const CANOPUS_FW_DRIVER_OPEN_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc3c0dfdusize);

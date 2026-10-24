@@ -14,11 +14,11 @@ command_family = "mw-exec"
 # recovered Kmem heap start, with no IDA segment/global ownership. Its runtime
 # contents are not assumed to be zero and are not restored after use.
 kind = "unassigned_privileged_ram_gap"
-base = 0x200CB400
+base = 0x200D0000
 size = 0x1000
 exec_size = 0x40
 stage0_region = 7
-result_word = 0x200CB440
+result_word = 0x200D0040
 original_words_known = false
 preserve_original = false
 status = "STATIC_CANDIDATE"

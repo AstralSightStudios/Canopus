@@ -29,7 +29,8 @@
 - **UI family**：Band 9 / Band 9 Pro / Band 10 是 LVGL v8，需要专门的 v8 Manager 后端（旧的 v8 后端随 `band9-frozen` 删除）；Band 11 / Band 10 Pro / REDMI Watch 6 是 LVGL v9。
 - 四个 target 均生成 `canopus-target-generated` Rust 绑定与 feature（限制记录不生成 public typed wrapper）；未提升任何能力状态。
 - 2026-10-25 起 Band 9 / Band 9 Pro 已从静态包推进到可构建链路：新增显式 `static_test_abi`（只为 restricted STATIC_RECOVERED 记录生成地址常量，生成头标注 `CANOPUS_SUP_STATIC_TEST_ABI`，不是批准）；恢复 LVGL v8 Manager 后端与 Band 9 staged loader（stage1/stage2、ELF32 loader、installer 资源）。`.32` Supervisor 112,876 B、`.190` 112,976 B，均 verifier PASS（0 undefined）；`.32` stage1/stage2 417/3,524 B，`.190` 421/3,544 B。v8 的模块 Launcher/通知服务入口仍 fail-closed。
-- Mirage：Band 9 必须使用**完整固件包**（只导 `vela_ap.bin` 时 system/resource 分区为空，屏幕全黑）。完整 `n66cn_v3.1.32_full_489f2050`（AP SHA 与 target 相同）已导入，原生表盘正常显示。Facetory 以 protocol `0x0800` 打包的安装器表盘能安装并设为当前，但 n66 表盘引擎不执行包内 Lua 脚本，只显示背景——loader 尚未真正进入；需要 Band 9 可用的 Lua 表盘包格式。`.190`/`.28`/p65 仍未做 Mirage 运行。
+- Mirage（2026-10-25，emulator 证据）：Band 9 必须使用**完整固件包**（只导 `vela_ap.bin` 时 system/resource 分区为空，屏幕全黑）。完整 `n66cn_v3.1.32_full_489f2050`（AP SHA 与 target 相同）已导入；安装器表盘需用打了 `scripts/emu/band11/facetory-lua-layer.patch` 的 Facetory、protocol `0x0800` 打包。**Run 已完整通过**：stage0 → stage1 → stage2 → Supervisor → `/dev/canopus` 注册 → CPC2 INSTALL 0/2、RESTORE_AFTER_BOOT、INSTALL 1/2 全部 result 5，`/data/canopus/registry.bin` 写入 `CDR1`。证据 `EVID-EMU-9132-001`。
+- 同轮修复：`register_driver` 原记录指向 inode type 7（`0xc4e38ce`），`/dev/canopus` open 返回 ENOSYS；正确字符驱动注册是 type 1 的 `0xc4f7c40`（`EVID-ABI-9132-REGISTER-001`）。stage0 cave 从 `0x200CB400`（运行时日志缓冲，读到 "tsig"）移到同一 gap 内的 `0x200D0000`；Supervisor 常驻镜像 149,866 B 从 Kmem 改为 Umem 分配并经默认 map 执行（运行时 MPU region 已几乎用尽）。v8 身份 guard 接受 build.prop 行尾 LF。`.190`/`.28`/p65 仍未做完整 Mirage 运行。
 
 ## Band 11 `4.100.179` 与全局 safe mode（2026-10-20）
 

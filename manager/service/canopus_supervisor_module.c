@@ -8,7 +8,13 @@
 #include "canopus_supervisor.h"
 #include "canopus_supervisor_platform.h"
 #include "canopus_veneer.h"
-#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+#ifdef CANOPUS_SUP_BAND9_BOOTSTRAP
+#include "canopus_band9_loader_config.h"
+#define CANOPUS_SUP_CTOR_IDENTITY_FAILED -201
+#define CANOPUS_SUP_CTOR_INIT_FAILED -202
+#define CANOPUS_SUP_CTOR_REGISTER_HOOK_MISSING -203
+#define CANOPUS_SUP_CTOR_REGISTER_FAILED -204
+#elif defined(CANOPUS_SUP_BAND11_BOOTSTRAP)
 #define CANOPUS_SUP_CTOR_IDENTITY_FAILED -201
 #define CANOPUS_SUP_CTOR_INIT_FAILED -202
 #define CANOPUS_SUP_CTOR_REGISTER_HOOK_MISSING -203
@@ -29,7 +35,10 @@ static int g_module_activation_started;
 
 static void canopus_sup_publish_ctor_status(int32_t status)
 {
-#ifdef CANOPUS_SUP_BAND11_BOOTSTRAP
+#ifdef CANOPUS_SUP_BAND9_BOOTSTRAP
+    *(volatile int32_t *)(uintptr_t)CANOPUS_BAND9_CAVE_RESULT = status;
+    __asm__ volatile("dsb sy\n" ::: "memory");
+#elif defined(CANOPUS_SUP_BAND11_BOOTSTRAP)
     if (s_ctor_mailbox) *s_ctor_mailbox = status;
     __asm__ volatile("dsb sy" ::: "memory");
 #else

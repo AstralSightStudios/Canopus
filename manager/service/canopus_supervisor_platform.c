@@ -158,7 +158,7 @@ CANOPUS_STATIC_ASSERT(CANOPUS_SUP_FOPS_WORDS * 4u == sizeof(file_operations),
 static int sup_register_driver_exact(const char *path, const void *fops,
                                      void *private_data)
 {
-#ifdef CANOPUS_SUP_BAND9_BOOTSTRAP
+#if defined(CANOPUS_SUP_BAND9_BOOTSTRAP) && defined(CANOPUS_SUP_BAND9_INODE_REGISTER)
     typedef int (*lock_fn)(void);
     typedef int (*reserve_fn)(const char *, void **);
     typedef int (*unlock_fn)(void);
@@ -173,11 +173,15 @@ static int sup_register_driver_exact(const char *path, const void *fops,
 
     if (result < 0) return result;
     result = reserve_inode(path, (void **)&inode);
+    if (result != 0) {
+        (void)unlock_inode();
+        return result;
+    }
     if (result == 0) {
         type = *(uint16_t *)(void *)(inode + 14u);
         *(const void **)(void *)(inode + 16u) = fops;
         *(uint16_t *)(void *)(inode + 14u) =
-            (uint16_t)((type & UINT16_C(0xFFF0)) | UINT16_C(7));
+            (uint16_t)((type & UINT16_C(0xFFF0)) | UINT16_C(1));
         *(void **)(void *)(inode + 28u) = private_data;
     }
     unlock_result = unlock_inode();
