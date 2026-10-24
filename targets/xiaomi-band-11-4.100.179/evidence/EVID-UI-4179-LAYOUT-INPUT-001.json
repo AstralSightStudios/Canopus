@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-4179-LAYOUT-INPUT-001",
+  "target_id": "xiaomi-band-11-4.100.179",
+  "firmware_sha256": "307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b",
+  "date": "2026-10-24",
+  "method": "Exact .179 firmware IDA disassembly and decompilation (vela_ap_4.100.179.bin.i64, input SHA256 verified against target.toml), cross-checked against the reviewed .155 audit; no device execution. All constants below are established from .179-local instructions, not inherited from .155.",
+  "style_properties": {
+    "background_rgb": 28,
+    "background_opacity": 29,
+    "radius": 12,
+    "border_rgb": 49,
+    "border_width": 48,
+    "border_opacity": 50,
+    "text_rgb": 88,
+    "text_opacity": 89,
+    "text_align": 94,
+    "text_font": 90,
+    "opacity": 95,
+    "clip_corner": 45
+  },
+  "observations": [
+    "lv_event_get_indev at 0x0c37fc70 (52 bytes): LDRH event code at event+8, checks (code-1) <= 0x11 with whitelist mask 0x3bdff (codes 1..18), then returns the borrowed parameter pointer at event+16; failure path logs the lv_obj_event.c:202 lv_event_get_indev assertion and returns NULL.",
+    "lv_indev_get_point at 0x0c399b90 (36 bytes, byte-identical to the reviewed .155 body): copies two signed 32-bit coordinates from indev+56/+60; NULL indev reports 0,0 and a non-pointer input reports -1,-1.",
+    "lv_obj_get_scroll_y at 0x0c37ff8c (14 bytes, byte-identical to .155): loads spec_attr at object+8 and returns the negation of the signed vertical scroll value at spec_attr+36, or zero without attributes. Called by the reviewed lv_obj_scroll_to_y 0x0c38438c and align_to 0x0c383f3c. Neighbour 0x0c37ff46 is get_scroll_x (spec_attr+32).",
+    "lv_obj_scroll_to_y at 0x0c38438c accepts object, y and animation flag, deletes the running animation, reads the current scroll_y via 0x0c37ff8c and scrolls by the difference; consistent with EVID-LYRA-UI-4179-001.",
+    "lv_obj_update_layout at 0x0c383f00 (56 bytes, body SHA256 324435ff22516191c749e69e1f7eb04a6ac5386551579c39e78d27ff9ed12148): refreshes the root layout; native object screen rectangles are four signed 32-bit fields at +28,+32,+36,+40, corroborated by align_to 0x0c383f3c and lvx_image_set_scale 0x0c3ae3d6. FW_UI_COORD_TYPE int32_t, FW_UI_OBJECT_COORDS_OFFSET 28. These private offsets are never exposed to modules.",
+    "Event ABI in .179: code is a uint16 at event+8 (read with & 0x7fff), user_data pointer at event+12, parameter at event+16; event-send core 0x0c37fb98 and dispatcher 0x0c3a3e0c use exactly these offsets. Codes verified in .179 senders: PRESSED 1 / PRESSING 2 / PRESS_LOST 3 from the press processor 0x0c39b008, LONG_PRESSED 5 from 0x0c3964c8, RELEASED 8 from 0x0c396d3c and gesture processor 0x0c39ebdc (which also emits CLICKED 7), SCROLL 12 from 0x0c38238e, DELETE 36 from lvx_object_delete 0x0c3813ac before child/class destruction, VALUE_CHANGED 30 from encoder senders.",
+    "Style wrappers forward the same property IDs as the .155 audit: radius 12 (wrapper 0x0c3a88d4, byte-identical to .155 0x0c3a89a8), border color 49 (0x0c3a878a), border width 48 (0x0c3a87bc), border opacity 50 (0x0c3a87a8), text font 90 (0x0c3a88ac, MOVS R1,#0x5A), opacity 95 (0x0c4fe910), clip corner 45 (0x0c384e60, adjacent to the radius write). RGB values keep the 0xRRGGBB packed representation.",
+    "lvx_page_title_create (.179 0x0c89cc1c binding) retains the reviewed private layout: click code 7 bound to the back icon and text label children, never the title root.",
+    "align_to 0x0c383f3c adds the parent scroll_y from 0x0c37ff8c before setting style coordinates (x property 8, y property 9). Parent-relative content coordinates must subtract that scroll_y before calling align_to, exactly as documented for .155."
+  ],
+  "ownership": "All native UI calls and borrowed event/indev/object reads execute synchronously on the firmware UI owner task. Input pointers are valid only during the native callback.",
+  "limitations": "Static evidence only. No new device verification or production approval. Other firmware addresses must be established independently.",
+  "artifacts": [
+    {
+      "uri": "ida://fw://xiaomi-band-11-4.100.179/vela_ap.bin#0x0c37fc70+0x34",
+      "sha256": "ad95933cef2d6737dcb9594513cf4fdff2d4d1d673d98b2520d5fdcaf4490719",
+      "role": "Exact .179 byte window at lv_event_get_indev 0x0c37fc70, length 0x34"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-11-4.100.179/vela_ap.bin#0x0c399b90+0x24",
+      "sha256": "deda6a7c5f23f230a02acc1e3c076d0f2abda5927b11e2e80d3e00c28c0ca734",
+      "role": "Exact .179 byte window at lv_indev_get_point 0x0c399b90, length 0x24"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-11-4.100.179/vela_ap.bin#0x0c37ff8c+0xe",
+      "sha256": "c3febfb7d4dfdfa37c76926e26141a15bb2d7e6f8edfee5e7cd1dfdcb6c8bc02",
+      "role": "Exact .179 byte window at lv_obj_get_scroll_y 0x0c37ff8c, length 0xe"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-11-4.100.179/vela_ap.bin#0x0c383f00+0x38",
+      "sha256": "324435ff22516191c749e69e1f7eb04a6ac5386551579c39e78d27ff9ed12148",
+      "role": "Exact .179 byte window at lv_obj_update_layout 0x0c383f00, length 0x38"
+    }
+  ]
+}

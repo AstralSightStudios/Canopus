@@ -4,7 +4,7 @@
 // firmware : 4.100.179 (user-4.100.179-cn-202609302100)
 // sha256   : 307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b
 // revision : 2
-// input_digest: a91ca5c88754224e
+// input_digest: cbfcd368fd08352e
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -255,6 +255,9 @@ pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_X_CALLABLE: usize = canopus_thumb_callable
 /// Recovered `font_reload_vector_destroy` at 0xc69f72c. Thumb callable address 0xc69f72d.
 pub const CANOPUS_FW_FONT_RELOAD_VECTOR_DESTROY_CALLABLE: usize = canopus_thumb_callable(0xc69f72dusize);
 
+/// Recovered `lv_obj_get_scroll_y` at 0x0c37ff8c. Thumb callable address 0x0c37ff8d.
+pub const CANOPUS_FW_LV_OBJ_GET_SCROLL_Y_CALLABLE: usize = canopus_thumb_callable(0x0c37ff8dusize);
+
 /// Recovered `lv_draw_rect` at 0xc38e47c. Thumb callable address 0xc38e47d.
 pub const CANOPUS_FW_LV_DRAW_RECT_CALLABLE: usize = canopus_thumb_callable(0xc38e47dusize);
 
@@ -266,6 +269,9 @@ pub const CANOPUS_FW_LV_OBJ_SET_SCROLLBAR_MODE_CALLABLE: usize = canopus_thumb_c
 
 /// Recovered `lvx_label_set_long_mode` at 0xc3b3ec4. Thumb callable address 0xc3b3ec5.
 pub const CANOPUS_FW_LVX_LABEL_SET_LONG_MODE_CALLABLE: usize = canopus_thumb_callable(0xc3b3ec5usize);
+
+/// Recovered `native_font_release` at 0x0c915854. Thumb callable address 0x0c915855.
+pub const CANOPUS_FW_NATIVE_FONT_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c915855usize);
 
 /// Recovered `lv_image_set_src` at 0xc3b2b90. Thumb callable address 0xc3b2b91.
 pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0xc3b2b91usize);
@@ -384,6 +390,9 @@ pub const CANOPUS_FW_BT_L2CAP_DISCONNECT_CALLABLE: usize = canopus_thumb_callabl
 /// Recovered `screen_session_set_brightness_value` at 0xc6cbbd0. Thumb callable address 0xc6cbbd1.
 pub const CANOPUS_FW_SCREEN_SESSION_SET_BRIGHTNESS_VALUE_CALLABLE: usize = canopus_thumb_callable(0xc6cbbd1usize);
 
+/// Recovered `native_font_wait` at 0x0c3998a8. Thumb callable address 0x0c3998a9.
+pub const CANOPUS_FW_NATIVE_FONT_WAIT_CALLABLE: usize = canopus_thumb_callable(0x0c3998a9usize);
+
 /// Recovered `sdp_unregister` at 0xc86d828. Thumb callable address 0xc86d829.
 pub const CANOPUS_FW_SDP_UNREGISTER_CALLABLE: usize = canopus_thumb_callable(0xc86d829usize);
 
@@ -483,6 +492,9 @@ pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_COMPARE_CALLABLE: usize = canopus_thumb
 /// Recovered `font_reload_lv_malloc` at 0xc3abd88. Thumb callable address 0xc3abd89.
 pub const CANOPUS_FW_FONT_RELOAD_LV_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc3abd89usize);
 
+/// Recovered `lv_event_get_indev` at 0x0c37fc70. Thumb callable address 0x0c37fc71.
+pub const CANOPUS_FW_LV_EVENT_GET_INDEV_CALLABLE: usize = canopus_thumb_callable(0x0c37fc71usize);
+
 /// Recovered global `font_reload_vector_draw_unit_slot` at 0x200d216c.
 pub const canopus_fw_font_reload_vector_draw_unit_slot: usize = 0x200d216cusize;
 
@@ -503,6 +515,9 @@ pub const CANOPUS_FW_FONT_RELOAD_COUNT_CACHE_INIT_CALLABLE: usize = canopus_thum
 
 /// Recovered `lv_obj_move_to_index` at 0xc383a78. Thumb callable address 0xc383a79.
 pub const CANOPUS_FW_LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = canopus_thumb_callable(0xc383a79usize);
+
+/// Recovered `native_font_create` at 0x0c4942e0. Thumb callable address 0x0c4942e1.
+pub const CANOPUS_FW_NATIVE_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c4942e1usize);
 
 /// Recovered `lvx_list_item_update` at 0xc50c3d4. Thumb callable address 0xc50c3d5.
 pub const CANOPUS_FW_LVX_LIST_ITEM_UPDATE_CALLABLE: usize = canopus_thumb_callable(0xc50c3d5usize);
@@ -879,6 +894,9 @@ pub const CANOPUS_FW_FONT_RELOAD_METRICS_CREATE_CALLABLE: usize = canopus_thumb_
 /// Recovered `lvgl_posix_open` at 0xc3a60c0. Thumb callable address 0xc3a60c1.
 pub const CANOPUS_FW_LVGL_POSIX_OPEN_CALLABLE: usize = canopus_thumb_callable(0xc3a60c1usize);
 
+/// Recovered `lv_indev_get_point` at 0x0c399b90. Thumb callable address 0x0c399b91.
+pub const CANOPUS_FW_LV_INDEV_GET_POINT_CALLABLE: usize = canopus_thumb_callable(0x0c399b91usize);
+
 /// Recovered `background_object_event_add` at 0xc37fbec. Thumb callable address 0xc37fbed.
 pub const CANOPUS_FW_BACKGROUND_OBJECT_EVENT_ADD_CALLABLE: usize = canopus_thumb_callable(0xc37fbedusize);
 
@@ -1119,6 +1137,9 @@ pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_t
 // mm_mallinfo: restricted - not exported until context/ownership approved
 // mm_memalign: restricted - not exported until context/ownership approved
 // modhandle: restricted - not exported until context/ownership approved
+// native_font_create: restricted - not exported until context/ownership approved
+// native_font_release: restricted - not exported until context/ownership approved
+// native_font_wait: restricted - not exported until context/ownership approved
 // offload_property_apply: restricted - not exported until context/ownership approved
 // on_resume_wrapped: restricted - not exported until context/ownership approved
 // open: restricted - not exported until context/ownership approved

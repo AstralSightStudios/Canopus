@@ -104,9 +104,15 @@ pub fn render(pack: &TargetPack, config: &NativeConfig) -> String {
     for (name, value) in &config.addresses {
         out.push_str(&format!("#define {name} 0x{value:08X}u\n"));
     }
-    if pack.target_id == "xiaomi-band-11-4.100.155" {
-        // Exact .155 IDA review: EVID-UI-4155-LAYOUT-INPUT-001. These private
-        // numeric properties/layouts are never part of the module ABI.
+    let layout_input_evidence = match pack.target_id.as_str() {
+        "xiaomi-band-11-4.100.155" => Some("EVID-UI-4155-LAYOUT-INPUT-001"),
+        "xiaomi-band-11-4.100.179" => Some("EVID-UI-4179-LAYOUT-INPUT-001"),
+        _ => None,
+    };
+    if let Some(evidence) = layout_input_evidence {
+        // Exact-target IDA review per target. These private numeric
+        // properties/layouts are never part of the module ABI.
+        out.push_str(&format!("/* Exact-target IDA review: {evidence}. */\n"));
         out.push_str("#define FW_UI_COORD_TYPE int32_t\n#define FW_UI_OBJECT_COORDS_OFFSET 28u\n\
 #define FW_UI_EVENT_PRESSED 1u\n#define FW_UI_EVENT_PRESSING 2u\n\
 #define FW_UI_EVENT_PRESS_LOST 3u\n#define FW_UI_EVENT_LONG_PRESSED 5u\n\

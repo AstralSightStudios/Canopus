@@ -333,7 +333,7 @@ fn native_image_fit_is_bound_only_to_independently_reviewed_targets() {
         let band10 = suffix.starts_with('3');
         let target = format!("xiaomi-band-{}-{suffix}", if band10 { "10-pro" } else { "11" });
         let dir = repo_root().join("targets").join(&target);
-        let reviewed = suffix == "3.101.043" || suffix == "4.100.155";
+        let reviewed = suffix == "3.101.043" || suffix == "4.100.155" || suffix == "4.100.179";
         let header = std::fs::read_to_string(dir.join("generated").join(if band10 {
             "canopus_target_config.h"
         } else {
@@ -351,13 +351,21 @@ fn native_image_fit_is_bound_only_to_independently_reviewed_targets() {
             assert_eq!(symbol.proof.device.as_deref(), Some("not_probed"));
             assert_eq!(symbol.approval_state.as_deref(), Some(if band10 { "APPROVED" } else { "PENDING" }));
         }
-        let evidence_id = if band10 { "EVID-UI-1043-IMAGE-FIT-001" } else { "EVID-UI-4155-IMAGE-FIT-001" };
+        let evidence_id = match suffix {
+            "3.101.043" => "EVID-UI-1043-IMAGE-FIT-001",
+            "4.100.155" => "EVID-UI-4155-IMAGE-FIT-001",
+            // The .179 image-fit identities are part of the audited port record.
+            _ => "EVID-PORT-4179-001",
+        };
         let evidence: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
             dir.join(format!("evidence/{evidence_id}.json"))).unwrap()).unwrap();
         canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence).unwrap();
-        if !band10 {
+        if suffix == "4.100.155" {
             assert!(header.contains("#define FW_UI_IMAGE_SCALE 0x0C3AE46Fu"));
             assert!(header.contains("#define FW_UI_IMAGE_INFO 0x0C38E4E5u"));
+        } else if suffix == "4.100.179" {
+            assert!(header.contains("#define FW_UI_IMAGE_SCALE 0x0C3AE3D7u"));
+            assert!(header.contains("#define FW_UI_IMAGE_INFO 0x0C38E44Du"));
         }
     }
 }
@@ -368,7 +376,7 @@ fn native_font_bindings_are_private_and_target_gated() {
         let band10 = suffix.starts_with('3');
         let target = format!("xiaomi-band-{}-{suffix}", if band10 { "10-pro" } else { "11" });
         let dir = repo_root().join("targets").join(&target);
-        let reviewed = suffix == "3.101.043" || suffix == "4.100.155";
+        let reviewed = suffix == "3.101.043" || suffix == "4.100.155" || suffix == "4.100.179";
         let header = std::fs::read_to_string(dir.join("generated").join(if band10 {
             "canopus_target_config.h"
         } else {
@@ -382,11 +390,20 @@ fn native_font_bindings_are_private_and_target_gated() {
         if !reviewed { continue; }
         let (symbols, _) = load_records(&dir).unwrap();
         let veneer = std::fs::read_to_string(dir.join("generated/canopus_veneer.h")).unwrap();
-        for (name, address) in [
-            ("native_font_create", if band10 { 0x0c85f6cd } else { 0x0c494381 }),
-            ("native_font_release", if band10 { 0x0c85f8fd } else { 0x0c917385 }),
-            ("native_font_wait", if band10 { 0x0c15c061 } else { 0x0c399941 }),
-        ] {
+        let font_callable = |name: &str| match (suffix, name) {
+            ("3.101.043", "native_font_create") => 0x0c85f6cd,
+            ("3.101.043", "native_font_release") => 0x0c85f8fd,
+            ("3.101.043", "native_font_wait") => 0x0c15c061,
+            ("4.100.155", "native_font_create") => 0x0c494381,
+            ("4.100.155", "native_font_release") => 0x0c917385,
+            ("4.100.155", "native_font_wait") => 0x0c399941,
+            ("4.100.179", "native_font_create") => 0x0c4942e1,
+            ("4.100.179", "native_font_release") => 0x0c915855,
+            ("4.100.179", "native_font_wait") => 0x0c3998a9,
+            _ => unreachable!(),
+        };
+        for name in ["native_font_create", "native_font_release", "native_font_wait"] {
+            let address = font_callable(name);
             let symbol = symbols.iter().find(|symbol| symbol.name == name).unwrap();
             assert_eq!(symbol.policy, "restricted");
             assert_eq!(symbol.status, "STATIC_RECOVERED");
@@ -395,7 +412,11 @@ fn native_font_bindings_are_private_and_target_gated() {
             assert_eq!(parse_address(symbol.callable_address.as_deref().unwrap()), address);
             assert!(!veneer.contains(&format!("canopus_fw_{name}(")));
         }
-        let id = if band10 { "EVID-UI-1043-FONT-LIFECYCLE-001" } else { "EVID-UI-4155-FONT-LIFECYCLE-001" };
+        let id = match suffix {
+            "3.101.043" => "EVID-UI-1043-FONT-LIFECYCLE-001",
+            "4.100.155" => "EVID-UI-4155-FONT-LIFECYCLE-001",
+            _ => "EVID-UI-4179-FONT-LIFECYCLE-001",
+        };
         let evidence: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
             dir.join(format!("evidence/{id}.json"))).unwrap()).unwrap();
         canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence).unwrap();

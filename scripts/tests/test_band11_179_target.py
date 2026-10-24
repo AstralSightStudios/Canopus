@@ -30,18 +30,11 @@ class Band11Target179Tests(unittest.TestCase):
     def test_every_155_record_is_ported_and_nothing_is_inherited(self):
         source = ROOT / 'targets/xiaomi-band-11-4.100.155/symbols'
         target = ROOT / 'targets' / TARGET / 'symbols'
-        unported = {
-            f'{TARGET}.private_abi.native_font_{name}.json'
-            for name in ('create', 'release', 'wait')
-        }
         self.assertEqual(
             sorted(p.name.replace('4.100.155', '4.100.179')
-                   for p in source.glob('*.json')
-                   if p.name.replace('4.100.155', '4.100.179') not in unported),
+                   for p in source.glob('*.json')),
             sorted(p.name for p in target.glob('*.json')))
         for path in source.glob('*.json'):
-            if path.name.replace('4.100.155', '4.100.179') in unported:
-                continue
             baseline = json.loads(path.read_text())
             record = json.loads((target / path.name.replace('4.100.155', '4.100.179')).read_text())
             with self.subTest(symbol=record['name']):
