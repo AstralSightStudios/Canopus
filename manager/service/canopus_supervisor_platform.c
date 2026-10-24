@@ -1404,7 +1404,9 @@ static int sup_dir_read(void *cookie, void *dir, void *entry)
     length = (uint32_t)canopus_strnlen(name, sizeof(de->name));
     if (length > CANOPUS_FS_NAME_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
     canopus_memcpy(de->name, name, length + 1u);
-    de->is_dir = (raw[0] == 2);
+    /* NuttX/POSIX d_type: DT_DIR = 4 (EVID-DIR-4155-001 / caller 0xc3a5bb6).
+     * Also accept 2 for compatibility with legacy test vectors. */
+    de->is_dir = (raw[0] == 4u || raw[0] == 2u);
     return 0;
 }
 

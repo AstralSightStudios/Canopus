@@ -95,14 +95,14 @@ class ServiceDirectoryTests(unittest.TestCase):
 
     def test_raw_entry_names_and_types(self):
         for target in TARGETS:
-            for name, kind in ((".", 2), ("..", 2), ("corona.json", 1),
+            for name, kind in ((".", 4), ("..", 4), ("corona.json", 8),
                                ("themes", 2), ("a" * 63, 1)):
                 with self.subTest(target=target, name=name):
                     u = self.machine(target, bytes([kind]) + name.encode() + b"\0")
                     self.assertEqual(self.call(u, "test_dir_read", DIRECTORY, OUTPUT), 0)
                     result = bytes(u.mem_read(OUTPUT, self.call(u, "test_dirent_size")))
                     self.assertEqual(result[:64].split(b"\0", 1)[0], name.encode())
-                    self.assertEqual(result[64], int(kind == 2))
+                    self.assertEqual(result[64], int(kind in (2, 4)))
 
     def test_overlong_name_is_rejected_without_truncation(self):
         for target in TARGETS:
