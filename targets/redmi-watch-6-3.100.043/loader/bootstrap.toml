@@ -4,12 +4,11 @@ schema = 1
 target_id = "redmi-watch-6-3.100.043"
 firmware_sha256 = "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858"
 loader_family = "staged-kmem-mpu"
-# The NSH exec/mw handlers are not located yet; the cave entry path never calls
-# them (the Lua installer only uses them for the mailbox probe), so the profile
-# stays a candidate rather than claiming a recovered exec ABI. The generator
-# refuses to emit executable bootstrap config for anything but STATIC_RECOVERED,
-# so locating mw/exec (or proving the Lua shell path) is the remaining gate.
-status = "STATIC_CANDIDATE"
+# Every entry the cave path uses is recovered. The NSH exec/mw handlers are not
+# located; the cave entry never calls them (only the mailbox probe would), so
+# they stay 0 and the generator accepts that for a cave-entry profile. The
+# loader itself has never run: device_status stays STATIC_CANDIDATE.
+status = "STATIC_RECOVERED"
 device_status = "STATIC_CANDIDATE"
 command_family = "mw-exec"
 

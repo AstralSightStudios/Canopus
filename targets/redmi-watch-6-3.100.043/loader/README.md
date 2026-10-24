@@ -72,8 +72,11 @@ SRAM/PSRAM entry addresses are recorded.
   BES logger, not direct string references.
 - **register_driver arity (resolved).** The generator emits the four-argument
   `CANOPUS_SUP_REGISTER_DRIVER` for this target (path, fops, mode, private).
-- **Loader profile.** The exec/mw handler addresses are not recorded yet; the
-  rest of the staged profile (VFS, inode, allocator) is recovered above.
+- **Loader profile.** The profile (`loader/bootstrap.toml`) is recovered for a
+  cave entry: VFS, inode, MPU and allocator entries, stage 0 in the proven gap
+  at 0x2019e800. The NSH exec/mw handlers are still unknown; the cave path
+  never calls them (only the mailbox probe would), and the generator now
+  accepts a cave-entry profile without them. The loader itself has never run.
 - **Lua surface.** The watchface Lua engine's `os.execute` path is untested on
   p65; the Facetory Lua-layer packaging applies as on the other v8/v9 faces.
 

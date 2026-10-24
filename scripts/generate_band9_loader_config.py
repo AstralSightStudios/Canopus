@@ -71,10 +71,15 @@ def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict, dict]
             or stage0_base <= stage0_result < stage0_base + stage0_exec_size:
         raise SystemExit("stage0 must be an aligned region containing result_word")
 
+    # A cave-entry installer writes stage 0 with NSH mw and enters it from the
+    # watchface trampoline; it never calls the exec/mw command handlers (only
+    # the mailbox probe does), so those two entries may stay unresolved there.
+    cave_entry = profile.get("stage", {}).get("entry_mode", "mailbox") == "cave"
     firmware_entries = [
         "exec_handler", "mw_handler", "open", "close", "read", "memalign", "free",
         "kmem_malloc", "kmem_free", "mpu_alloc", "mpu_configure", "mpu_release",
     ]
+    optional_entries = {"exec_handler", "mw_handler"} if cave_entry else set()
     if requires_mpu_sync and "mpu_sync" not in firmware:
         raise SystemExit("stage0.requires_mpu_sync needs an exact firmware.mpu_sync entry")
     if "mpu_sync" in firmware:
@@ -82,6 +87,8 @@ def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict, dict]
     if requires_mpu_sync:
         firmware_entries.extend(("inode_lock", "inode_reserve", "inode_unlock"))
     for key in firmware_entries:
+        if key in optional_entries:
+            continue
         if key not in firmware:
             raise SystemExit(f"firmware.{key} is required")
         entry = number(firmware[key], f"firmware.{key}")
