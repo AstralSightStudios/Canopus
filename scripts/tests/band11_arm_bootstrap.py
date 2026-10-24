@@ -110,6 +110,7 @@ class Machine:
         self.app = 0; self.pages = []; self.launcher = []; self.module_apps = {}; self.widgets = {}; self.next_widget = 0x200a0000
         self.notifications = []
         hooks = {0x0c8f2bb0:self.notification_insert,
+                 0x0c3513e8:self.heap_malloc,
                  0x0c3507e8:self.allocate,0x0c34ccb8:self.free,
                  0x0c34cd2c:self.free,0x0c34f0a0:self.mallinfo,
                  0x0c342c54:self.open,0x0c33818c:self.close,0x0c33d784:self.read,
@@ -208,6 +209,19 @@ class Machine:
         for i,value in enumerate((largest+used,1,len(self.allocations),largest,used,largest,largest)):
             self.word(out+4*i,value)
         return out
+    def heap_malloc(self):
+        # heap_malloc(size): the wrapper loads the Umem descriptor from
+        # 0x200b2590 itself, so only the size is an argument. The firmware
+        # panics when mm_malloc fails, so every request is served from the
+        # same modeled arena as mm_memalign.
+        size=self.reg(0)
+        assert size <= self.heap_largest(0x3c356b40),('unchecked allocation',size)
+        self.alloc_calls+=1
+        if self.hurt('nomem') or self.hurt(f'alloc_{self.alloc_calls}'): return 0
+        p=(self.next_temp+7)&~7; self.next_temp=p+size+16
+        self.allocations[p]=size
+        self.uc.mem_write(p,b'\xcc'*size)
+        return p
     def allocate(self):
         heap,align,size=self.reg(0),self.reg(1),self.reg(2)
         assert heap in (0x2010e9e0,0x3c356b40) and align and align & (align-1)==0

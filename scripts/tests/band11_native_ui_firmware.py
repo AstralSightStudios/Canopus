@@ -27,6 +27,7 @@ class NativeUI:
         self.calls = {}
         self.events = {}
         self.forwarded = []
+        self.event_handles = 0x3c4fe000
         # Host-only class init shim: call the REAL row constructor, then the
         # REAL theme callback, as lv_obj_class_init_obj does on the device.
         self.init_shim = 0x1c100000
@@ -208,7 +209,12 @@ class NativeUI:
     def event_add(self):
         m = self.m
         self.events.setdefault(m.reg(0), []).append((m.reg(1), m.reg(2)))
-        return 0
+        # lv_obj_add_event_cb returns its registration descriptor and NULL only
+        # when registration failed. Font-enabled targets (FW_UI_FONT_* mapped)
+        # delete a label whose registration is NULL, so a zero here would fail
+        # every label create on those builds.
+        self.event_handles += 16
+        return self.event_handles
 
     def event_send(self):
         self.forwarded.append((self.m.reg(0), self.m.reg(1)))

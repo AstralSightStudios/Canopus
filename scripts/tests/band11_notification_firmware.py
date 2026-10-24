@@ -54,7 +54,7 @@ class NotificationFirmware:
         m.word(m.fw_data(0x20087634), 0)
         m.word(m.fw_data(0x20087638), 0)
         hooks = {
-            0x0c351724: self.allocate,
+            0x0c351724: m.heap_malloc,
             0x0c3abe20: self.allocate,
             0x0c350474: lambda: 0,
             0x0c34d5ac: self.time,
