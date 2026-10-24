@@ -55,11 +55,12 @@ SRAM/PSRAM entry addresses are recorded.
 
 ## Remaining blockers
 
-- **Platform ABI.** `CANOPUS_SUP_PLATFORM_COMPLETE` is still 0. Missing:
-  the LVGL setters (`lv_label_set_text`, `lv_obj_set_size`, `lv_obj_add_event_cb`,
-  `lv_obj_align_to`, `lv_obj_add_flag`, `lv_obj_clear_flag`, `lv_img_set_src`,
-  `lv_bar_set_range`, `lv_bar_set_value`), the image/bar create helpers, the
-  launcher trio, and the `lvx_page_title_create` re-check.
+- **Platform ABI (resolved).** `CANOPUS_SUP_PLATFORM_COMPLETE` is 1: the LVGL
+  setters, the image/bar create helpers, the launcher trio and the corrected
+  `lvx_page_title_create` (0xc21b2fc; the old candidate was the battery
+  variant) are recorded. The Supervisor compile now stops on the native
+  bindings instead: the v9 UI host needs the `FW_LVX_*`/`FW_UI_*`/style macros
+  that Band 11 supplies through `loader/native-bindings.json`.
 - **MPU lease (resolved).** The BES MPU driver is present: allocate
   `0xc0c017c` (8-bit bitmap at `algn_3C489EAC`, IRQ-masked, 255 when full),
   configure `0xc9665e4(region, base, size, access, lock)` — the exact
