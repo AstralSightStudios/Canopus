@@ -4,7 +4,7 @@
 // firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
 // sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
 // revision : 1
-// input_digest: 59b5446672710f7e
+// input_digest: ba40027429cb30b7
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -137,6 +137,9 @@ pub const CANOPUS_FW_BT_ADAPTER_GET_STATE_CALLABLE: usize = canopus_thumb_callab
 
 /// Recovered `page_finish` at 0xc44e154. Thumb callable address 0xc44e155.
 pub const CANOPUS_FW_PAGE_FINISH_CALLABLE: usize = canopus_thumb_callable(0xc44e155usize);
+
+/// Recovered `register_driver` at 0xc5281d0. Thumb callable address 0xc5281d1.
+pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc5281d1usize);
 
 /// Recovered `system_router_app_wrapper` at 0xc163b6c. Thumb callable address 0xc163b6d.
 pub const CANOPUS_FW_SYSTEM_ROUTER_APP_WRAPPER_CALLABLE: usize = canopus_thumb_callable(0xc163b6dusize);

@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: 59b5446672710f7e
+ * input_digest: ba40027429cb30b7
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_3_1_28_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_3_1_28_H

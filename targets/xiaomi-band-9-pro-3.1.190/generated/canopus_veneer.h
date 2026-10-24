@@ -4,7 +4,7 @@
  * firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
  * sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
  * revision : 1
- * input_digest: c6829d98cf6a9c1a
+ * input_digest: 23b528fcd60179f2
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -83,9 +83,9 @@ static inline void canopus_fw_lv_bar_set_range(void * a0, int32_t a1, int32_t a2
     return ((canopus_fw_lv_bar_set_range_fn)(uintptr_t)0xc0b4bd5)(a0, a1, a2);
 }
 
-typedef int (*canopus_fw_register_driver_fn)(const char *, const void *, uint32_t, void *);
-static inline int canopus_fw_register_driver(const char * a0, const void * a1, uint32_t a2, void * a3) {
-    return ((canopus_fw_register_driver_fn)(uintptr_t)0xc518765)(a0, a1, a2, a3);
+typedef int (*canopus_fw_register_driver_fn)(const char *, const void *, void *);
+static inline int canopus_fw_register_driver(const char * a0, const void * a1, void * a2) {
+    return ((canopus_fw_register_driver_fn)(uintptr_t)0xc4f03f1)(a0, a1, a2);
 }
 
 typedef int (*canopus_fw_clock_gettime_fn)(uint32_t, stock_timespec_t *);

@@ -4,7 +4,7 @@
 // firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
 // sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
 // revision : 1
-// input_digest: c6829d98cf6a9c1a
+// input_digest: 23b528fcd60179f2
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -87,8 +87,8 @@ pub const CANOPUS_FW_UNLINK_CALLABLE: usize = canopus_thumb_callable(0xc37e939us
 /// Recovered `lv_bar_set_range` at 0xc0b4bd4. Thumb callable address 0xc0b4bd5.
 pub const CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE: usize = canopus_thumb_callable(0xc0b4bd5usize);
 
-/// Recovered `register_driver` at 0xc518764. Thumb callable address 0xc518765.
-pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc518765usize);
+/// Recovered `register_driver` at 0xc4f03f0. Thumb callable address 0xc4f03f1.
+pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc4f03f1usize);
 
 /// Recovered `clock_gettime` at 0xc36ea34. Thumb callable address 0xc36ea35.
 pub const CANOPUS_FW_CLOCK_GETTIME_CALLABLE: usize = canopus_thumb_callable(0xc36ea35usize);

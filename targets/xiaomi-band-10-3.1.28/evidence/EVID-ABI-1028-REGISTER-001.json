@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ABI-1028-REGISTER-001",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "Which exact function registers a character driver at /dev/canopus?",
+  "candidate_symbols": [
+    "register_driver"
+  ],
+  "prototype_hypothesis": "int register_driver(const char *path, const struct file_operations *fops, void *priv)",
+  "callsite_evidence": [
+    "Exact IDB siblings differ only in the inode type nibble; 0xc5281d0 sets type 1.",
+    "The type-7 variant made /dev/canopus open with ENOSYS on the n66 sibling; the type-1 variant is the character-driver registration."
+  ],
+  "control_flow_evidence": [
+    "All siblings reserve an inode, write fops at +16 and private at +28, then unlock."
+  ],
+  "ownership_analysis": "Caller-owned fops/private; VFS-owned inode.",
+  "unsafe_assumptions": [
+    "Type constants come from decompiled stock registrations, not a header."
+  ],
+  "recommended_probe": "Register /dev/canopus with this entry and open it from the installer context.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}
