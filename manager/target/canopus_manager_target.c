@@ -44,6 +44,8 @@ typedef int (*page_create_fn)(struct canopus_target_page *, void *,
 typedef int (*page_lifecycle_fn)(struct canopus_target_page *);
 typedef int (*page_foreground_data_fn)(struct canopus_target_page *,
                                        void *);
+typedef int (*page_system_back_fn)(struct canopus_target_page *,
+                                   const uint8_t *);
 
 struct canopus_target_page {
     void *parent_descriptor;                 /* +0x00 */
@@ -80,7 +82,7 @@ struct canopus_target_page {
     page_lifecycle_fn on_destroy;             /* +0x5c */
     page_lifecycle_fn on_ui_destroy;          /* +0x60 */
     void *extension_callback_100;             /* +0x64 */
-    void *extension_callback_104;             /* +0x68 */
+    page_system_back_fn extension_callback_104; /* +0x68 */
     void *extension_callback_108;             /* +0x6c */
     void *get_scroll_obj;                     /* +0x70, not in the type record */
 #else /* CANOPUS_MGR_BAND11 */
@@ -88,7 +90,7 @@ struct canopus_target_page {
     page_lifecycle_fn on_pause;              /* +0x5c, 0xc693a0e */
     page_lifecycle_fn on_stop;               /* +0x60, 0xc693a5c */
     page_lifecycle_fn on_ui_destroy;            /* +0x64, 0xc696aa4 (UI destruction) */
-    void *extension_callback_104;            /* +0x68 */
+    page_system_back_fn extension_callback_104; /* +0x68 */
     void *extension_callback_108;            /* +0x6c */
     void *extension_callback_112;            /* +0x70 */
     void *extension_callback_116;            /* +0x74 */
@@ -229,6 +231,8 @@ _Static_assert(offsetof(struct canopus_target_page, root_object) == 48,
                "page root offset");
 _Static_assert(offsetof(struct canopus_target_page, on_create) == 76,
                "page create offset");
+_Static_assert(offsetof(struct canopus_target_page, extension_callback_104) == 104,
+               "page system back offset");
 #ifndef CANOPUS_MGR_BAND11
 _Static_assert(offsetof(struct canopus_target_page, on_destroy) == 92,
 #else /* CANOPUS_MGR_BAND11 */
@@ -927,24 +931,59 @@ static int32_t module_page_event(void *cookie,
     return rc;
 }
 
-/* The title's back reaches the module first (it may pop its own route). */
+/* Title and completed system back share the module's route-pop contract. */
 static void module_page_back(struct canopus_ui_host_view *view)
 {
     struct canopus_ui_entry_v1 entry;
     const struct canopus_context_v1 *ctx;
+    struct canopus_target_module_page *page = module_page;
 
-    (void)view;
+    if (page == NULL || view != &page->view || !view->active || !view->interactive) {
+        return;
+    }
     if (module_page_entry(&entry, &ctx) == 0 && entry.on_back != NULL) {
-        struct canopus_target_module_page *page = module_page;
         int32_t handled = entry.on_back(ctx, &page->ui, entry.user_data);
-        if (module_page == page) {
-            canopus_ui_context_abort_pending(&page->ui);
-        }
-        if (handled == 0) {
+        /* close_page may finish/destroy the page synchronously, or leave it
+         * awaiting destruction with interaction disabled. Do not finish twice. */
+        if (module_page != page) return;
+        canopus_ui_context_abort_pending(&page->ui);
+        if (handled == 0 || !page->view.active || !page->view.interactive) {
             return;
         }
     }
     module_page_finish();
+}
+
+static uint16_t module_page_back_completed_phase(void)
+{
+    if (strings_differ(CANOPUS_TARGET_ID, "xiaomi-band-11-4.100.155") == 0 ||
+        strings_differ(CANOPUS_TARGET_ID, "xiaomi-band-11-4.100.179") == 0) {
+        return UINT16_C(0x48);
+    }
+    if (strings_differ(CANOPUS_TARGET_ID, "xiaomi-band-10-pro-3.101.043") == 0) {
+        return UINT16_C(0x4a);
+    }
+    return 0u;
+}
+
+/* Exact-target static ABI: descriptor +104 receives the matched descriptor
+ * and borrowed event+4 payload; payload+8 is a little-endian uint16 phase.
+ * Nonzero consumes the gesture, including after a synchronous page finish.
+ * See docs/investigations/native-system-back.md; no capability promotion. */
+static int module_page_system_back(struct canopus_target_page *descriptor,
+                                   const uint8_t *payload)
+{
+    struct canopus_target_module_page *page = module_page;
+    uint16_t phase, completed = module_page_back_completed_phase();
+
+    if (page == NULL || page->page != descriptor || !page->view.active ||
+        !page->view.interactive || payload == NULL || completed == 0u) {
+        return 0;
+    }
+    phase = (uint16_t)((uint16_t)payload[8] | ((uint16_t)payload[9] << 8));
+    if (phase != completed) return 0;
+    module_page_back(&page->view);
+    return 1;
 }
 
 static const struct canopus_ui_host_hooks module_view_hooks = {
@@ -1163,6 +1202,9 @@ static void launcher_entry_init(struct canopus_target_launcher_entry *entry,
     entry->page.on_create = module_page_on_create;
     entry->page.on_resume = module_page_on_resume;
     entry->page.on_pause = module_page_on_pause;
+    if (module_page_back_completed_phase() != 0u) {
+        entry->page.extension_callback_104 = module_page_system_back;
+    }
 #ifndef CANOPUS_MGR_BAND11
     entry->page.on_destroy = module_page_on_destroy;
 #else /* CANOPUS_MGR_BAND11 */
@@ -1386,6 +1428,9 @@ static void target_descriptor_init(uint32_t page_index, const char *name,
         manager_pages_desc[page_index].on_create = module_page_on_create;
         manager_pages_desc[page_index].on_resume = module_page_on_resume;
         manager_pages_desc[page_index].on_pause = module_page_on_pause;
+        if (module_page_back_completed_phase() != 0u) {
+            manager_pages_desc[page_index].extension_callback_104 = module_page_system_back;
+        }
 #ifndef CANOPUS_MGR_BAND11
         manager_pages_desc[page_index].on_destroy = module_page_on_destroy;
 #else /* CANOPUS_MGR_BAND11 */

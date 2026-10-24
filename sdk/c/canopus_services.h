@@ -507,6 +507,9 @@ typedef void (*canopus_ui_task_fn)(const struct canopus_context_v1 *ctx,
  *   on_event a node's event id was activated; build the next tree into `ui`.
  *   on_back  (optional) an ordinary page title's back was used; return 0 when
  *            handled, e.g. after popping a route, otherwise the page closes.
+ *            Completed system-back gestures also use this callback on exact
+ *            Band 10 Pro 3.101.043 and Band 11 4.100.155 / 4.100.179 hosts.
+ *            Other targets retain their existing system gesture behavior.
  *            An explicit navigation_header dispatches its back_event_id to
  *            on_event instead; the handler may call close_page at its root.
  *   on_close the page was closed by the user or by close_page (not on unload).

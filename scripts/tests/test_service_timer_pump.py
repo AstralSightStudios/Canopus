@@ -64,13 +64,17 @@ int test_pump_start(void (*poll)(void *), void *data) {
 '''
 
 
-def build_image(out, target, defines, cc, linker, load_elf):
+def build_image(out, target, defines, cc, linker, load_elf,
+                wrapper_source=WRAPPER, exports=(
+                    "test_pump_start", "test_pump_available", "test_create_address",
+                    "fixture_poll_a", "fixture_poll_b", "fixture_seen", "fixture_data"),
+                sources=()):
     pack = ROOT / "targets" / target
     metadata = tomllib.loads((pack / "target.toml").read_text())
     family = tomllib.loads((ROOT / "targets/_families" /
                            (metadata["family"] + ".toml")).read_text())
     wrapper = out / "pump.c"
-    wrapper.write_text(WRAPPER)
+    wrapper.write_text(wrapper_source)
     # The Supervisor build generates the target's L2 configuration next to the object.
     subprocess.run(["python3", str(ROOT / "scripts/generate_l2_probe_config.py"), target,
                     str(out / "canopus_l2_probe_config.h")],
@@ -90,12 +94,16 @@ def build_image(out, target, defines, cc, linker, load_elf):
                *["-I" + str(ROOT / path) for path in includes],
                "-c", str(wrapper), "-o", str(obj)]
     subprocess.run(command, check=True, capture_output=True, text=True)
-    exports = ("test_pump_start", "test_pump_available", "test_create_address",
-               "fixture_poll_a", "fixture_poll_b", "fixture_seen", "fixture_data")
+    objects = [obj]
+    for index, source in enumerate(sources):
+        extra = out / ("source-" + str(index) + ".o")
+        subprocess.run([*command[:-4], "-c", str(ROOT / source), "-o", str(extra)],
+                       check=True, capture_output=True, text=True)
+        objects.append(extra)
     subprocess.run([linker, "--image-base=0x20000000", "-Ttext=0x20010000",
-                    "-Tbss=0x20020000", "--gc-sections", "--entry=test_pump_start",
+                    "-Tbss=0x20020000", "--gc-sections", "--entry=" + exports[0],
                     *["--undefined=" + name for name in exports],
-                    str(obj), "-o", str(elf)],
+                    *[str(path) for path in objects], "-o", str(elf)],
                    check=True, capture_output=True, text=True)
     return load_elf(elf)
 

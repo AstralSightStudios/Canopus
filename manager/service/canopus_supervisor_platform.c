@@ -1391,12 +1391,19 @@ static int sup_dir_read(void *cookie, void *dir, void *entry)
     typedef const uint8_t *(*readdir_fn)(void *);
     struct canopus_fs_dirent *de = (struct canopus_fs_dirent *)entry;
     const uint8_t *raw;
+    const char *name;
+    uint32_t length;
     (void)cookie;
     if (dir == 0 || de == 0) return -1;
     raw = ((readdir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_READDIR)(dir);
     if (raw == 0) return 1; /* EOF */
     canopus_memset(de, 0, sizeof(*de));
-    canopus_memcpy(de->name, (const char *)raw + 2, 63);
+    /* NuttX packs d_type at +0 and d_name at +1 (EVID-DIR-4155-001 /
+     * EVID-DIR-1043-001), also used by sup_list_packages above. */
+    name = (const char *)raw + 1;
+    length = (uint32_t)canopus_strnlen(name, sizeof(de->name));
+    if (length > CANOPUS_FS_NAME_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
+    canopus_memcpy(de->name, name, length + 1u);
     de->is_dir = (raw[0] == 2);
     return 0;
 }
