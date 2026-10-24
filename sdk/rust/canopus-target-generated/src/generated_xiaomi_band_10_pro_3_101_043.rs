@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: d5ef7a735ab714af
+// input_digest: 430b1893b71e1e68
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -1352,6 +1352,9 @@ pub const CANOPUS_FW_MIWEAR_SESSION_LOOKUP_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `font_reload_outline_acquire` at 0x1c0572a4. Thumb callable address 0x1c0572a5.
 pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0x1c0572a5usize);
 
+/// Recovered `rmdir` at 0x0c1d1648. Thumb callable address 0x0c1d1649.
+pub const CANOPUS_FW_RMDIR_CALLABLE: usize = canopus_thumb_callable(0x0c1d1649usize);
+
 /// Recovered `native_font_wait` at 0xc15c060. Thumb callable address 0xc15c061.
 pub const CANOPUS_FW_NATIVE_FONT_WAIT_CALLABLE: usize = canopus_thumb_callable(0xc15c061usize);
 
@@ -1636,6 +1639,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // readdir: restricted - not exported until context/ownership approved
 // register_blockdriver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
+// rmdir: restricted - not exported until context/ownership approved
 // rmmod: restricted - not exported until context/ownership approved
 // screen_get_state: restricted - not exported until context/ownership approved
 // screen_session_create: restricted - not exported until context/ownership approved

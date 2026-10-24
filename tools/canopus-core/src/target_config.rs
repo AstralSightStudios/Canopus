@@ -422,6 +422,11 @@ const SUP_10: &[Mapping] = &[
         address: Address::Callable,
     },
     Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_RMDIR",
+        symbol_name: "rmdir",
+        address: Address::Callable,
+    },
+    Mapping {
         macro_name: "CANOPUS_SUP_NUTTX_LSEEK",
         symbol_name: "lseek",
         address: Address::Callable,

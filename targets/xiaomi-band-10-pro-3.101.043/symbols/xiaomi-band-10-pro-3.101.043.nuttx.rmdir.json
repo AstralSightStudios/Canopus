@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.nuttx.rmdir",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "rmdir",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c1d1648",
+  "callable_address": "0x0c1d1649",
+  "prototype": "int(const char *path)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RMDIR-1043-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-RMDIR-1043-001"
+    ],
+    "source": "Exact firmware Thumb control-flow review; NuttX fs_rmdir.c and inode operation dispatch."
+  },
+  "notes": "POSIX rmdir: removes one empty directory; returns 0 or -1 with errno. Files are ENOTDIR, nonempty directories ENOTEMPTY. Supervisor-only adapter; static evidence, device NOT_PROBED."
+}

@@ -214,6 +214,8 @@ pub struct CanopusFsObj {
     ) -> i32,
     pub get_data_path:
         unsafe extern "C" fn(ctx: *const ContextV1, buffer: *mut c_char, max_size: u32) -> i32,
+    /// FS group version 2. Check `services_has(ctx, SVC_FS, 2)` before access.
+    pub rmdir: unsafe extern "C" fn(ctx: *const ContextV1, path: *const c_char) -> i32,
 }
 
 #[repr(C)]

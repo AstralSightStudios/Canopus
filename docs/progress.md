@@ -70,6 +70,9 @@
 - 文件服务补全：绝对路径任意读写，只保护 Canopus 自己的状态（`/data/canopus`、`/dev/canopus`、`/canopus`，不区分大小写、先规整再判断）；
   相对路径落在 `/data/canopus/m.<id>/`（原先的 `m.<id>.<name>` 扁平命名会让 `mod.a`/`b.x` 与 `mod.a.b`/`x` 撞名，已改为每模块一个目录）；
   `mkdir`、`fsync`、`stat`（含 mtime）、`APPEND`/`READ|WRITE`、固件 errno 的如实映射（缺失文件为 `NOTFOUND`）。
+- 2026-10-24：FS 组版本 2 追加 `rmdir`（C/Rust），仅删除空目录，非空返回 `NOTEMPTY(-39)`，沿用路径规整与状态目录保护。
+  `.043/.139/.155/.179` 的固件入口已静态恢复（`EVID-RMDIR-*`，restricted / PENDING / not_probed）；`.036` 无入口证据，保持 FS 版本 1。
+  C host ASan/UBSan、Rust ABI/runtime、五目标服务模块与 Supervisor 构建/verifier、建模 Thumb 适配器测试通过；未做真实文件系统或真机验证，不提升能力状态。
 - 系统事件广播（亮灭屏、电量、蓝牙状态）由定时器泵每 500 ms 采样发布，模块无法伪造这三个主题。
 - Band 11 `.139/.155` 普通 UI 构建补齐 10 ms LVGL timer pump，入口来自已有精确 target 私有符号，
   沿用现有软件 timer 调度；headless 不支持。LVGL 暂停时不保证后台触发，UI 重建后的自动恢复仍不支持；

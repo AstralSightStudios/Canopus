@@ -84,6 +84,9 @@ struct canopus_fs_obj {
     /* 便捷整文件读写方法 */
     int32_t (*read_all)(const struct canopus_context_v1 *ctx, const char *path, void *buffer, uint32_t max_size);
     int32_t (*write_all)(const struct canopus_context_v1 *ctx, const char *path, const void *buffer, uint32_t size);
+    int32_t (*get_data_path)(const struct canopus_context_v1 *ctx, char *buffer, uint32_t max_size);
+    /* FS group version 2 */
+    int32_t (*rmdir)(const struct canopus_context_v1 *ctx, const char *path);
 };
 ```
 - **路径形式**：
@@ -95,10 +98,16 @@ struct canopus_fs_obj {
   - 除此以外不设防：绝对路径可以破坏固件自己的文件，由调用方负责。控制字符以及越过根或私有目录的 `..` 返回 `ERR_ARGUMENT`。
   - 这不是安全边界：本设备没有进程隔离（见 `security-model.md`），模块本来就能直接调用固件。
 - **错误码**：固件返回的 errno 如实映射——文件或父目录不存在是 `ERR_NOTFOUND(-2)`（可据此识别"配置文件尚未创建"），
-  另有 `ERR_EXIST`、`ERR_ACCESS`、`ERR_NOTDIR`、`ERR_ISDIR`、`ERR_NOSPACE`、`ERR_BUSY`，其余为 `ERR_IO`。
+  另有 `ERR_EXIST`、`ERR_ACCESS`、`ERR_NOTDIR`、`ERR_ISDIR`、`ERR_NOTEMPTY`、`ERR_NOSPACE`、`ERR_BUSY`，其余为 `ERR_IO`。
 - **打开标志**：`READ` 只读已有文件；`WRITE` 创建或截断；`WRITE|APPEND` 保留内容并在文件尾写入（`APPEND`/`TRUNC`/`CREATE` 必须与 `WRITE` 同用）；
   `READ|WRITE` 保留内容读写。其余位为 `ERR_ARGUMENT`。固件的 `O_TRUNC` 未证实，截断经 `unlink` 后新建实现。
 - **目录**：`mkdir` 调用固件 `mkdir`（单层，已存在为 `ERR_EXIST`）；`opendir("")`/`opendir(".")` 是模块私有目录，不再列出 `/data/canopus` 里别的模块的文件。
+- **删除目录**：FS 组版本 2 的 `rmdir(ctx, path)` 删除空目录；非空返回 `ERR_NOTEMPTY(-39)`，传文件返回 `ERR_NOTDIR(-20)`，不存在返回 `ERR_NOTFOUND(-2)`。
+  与其它 FS 方法共用路径规整与 Canopus 状态保护；不递归删除内容。`remove` 继续用于文件。
+  新成员追加在对象尾部，C 调用前须检查 `canopus_services_has(ctx, CANOPUS_SVC_FS, 2)`，旧 Supervisor 的 FS 对象没有这个成员；
+  Rust 使用 `canopus_runtime::fs::rmdir(ctx, "cache")`，自动检查版本，不支持时返回 `Err(-38)`。
+  当前 Band 10 Pro `.043` 与 Band 11 `.139/.155/.179` 接入已静态恢复的固件 `rmdir`；`.036` 缺少入口证据，FS 组保持版本 1。
+  后端仅有静态与建模 Thumb 测试证据，尚未做真实文件系统或真机验证。
 - **`stat` 与 `mtime`**：调用固件 `stat`，从 104 字节 `struct stat` 取类型（目录/文件）、大小（+32）和修改时间（`st_mtim.tv_sec`，+72，秒）。
   `mtime` 的偏移来自 NuttX 标准布局与该结构体的已知字段（总长 104、`st_size`@32、三个 16 字节 timespec 从 +56 起），不是某个固件读取 mtime 的调用点；
   文件系统不记录时间时为 0，表示未知。大于 4 GiB 的文件 `size` 饱和为 `0xFFFFFFFF`。

@@ -180,6 +180,26 @@ static int f_mkdir(void *c, const char *p)
     strcpy(g_dirs[g_dir_count++], p);
     return 0;
 }
+static int f_rmdir(void *c, const char *p)
+{
+    size_t len = strlen(p);
+    int i, found = -1;
+    (void)c;
+    for (i = 0; i < MAX_FILES; i++) {
+        if (!g_files[i].used) continue;
+        if (strcmp(g_files[i].path, p) == 0) return -20;
+        if (strncmp(g_files[i].path, p, len) == 0 && g_files[i].path[len] == '/') return -39;
+    }
+    for (i = 0; i < g_dir_count; i++) {
+        if (strcmp(g_dirs[i], p) == 0) found = i;
+        if (strncmp(g_dirs[i], p, len) == 0 && g_dirs[i][len] == '/') return -39;
+    }
+    if (found < 0) return -2;
+    memmove(g_dirs[found], g_dirs[found + 1],
+            (size_t)(g_dir_count - found - 1) * sizeof(g_dirs[0]));
+    g_dir_count--;
+    return 0;
+}
 static void *f_dir_open(void *c, const char *p) { (void)c; (void)p; return (void *)1; }
 static int f_dir_read(void *c, void *d, void *entry)
 {
@@ -675,6 +695,46 @@ TEST(fs_rejects_escaping_names_bad_handles_and_exhaustion)
     CHECK_EQ(ctx->services->fs_open(ctx, "extra", CANOPUS_FS_WRITE), CANOPUS_SVC_ERR_STATE);
     canopus_supervisor_release_services(&sup, 0);
     for (i = 0; i < MAX_FDS; i++) CHECK(!g_fds[i].open);
+}
+
+TEST(fs_rmdir_deletes_only_empty_directories_and_preserves_path_rules)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform = platform_with_fs;
+    const struct canopus_context_v1 *ctx;
+    static const char *const protected_paths[] = {
+        "/data/canopus", "/DATA/CANOPUS/inbox", "/data/x/../canopus/registry.bin",
+        "/data/canopus/m.other", "/dev/canopus", "/canopus"
+    };
+    uint32_t i;
+    platform.dir_remove = f_rmdir;
+    setup(&sup, &platform);
+    ctx = canopus_supervisor_context(&sup, 0);
+    CHECK(canopus_services_has(ctx, CANOPUS_SVC_FS, 2));
+    CHECK_EQ(ctx->fs->mkdir(ctx, "tree"), 0);
+    CHECK_EQ(ctx->fs->mkdir(ctx, "tree/child"), 0);
+    CHECK_EQ(ctx->fs->rmdir(ctx, "tree"), CANOPUS_SVC_ERR_NOTEMPTY);
+    CHECK_EQ(ctx->fs->write_all(ctx, "tree/child/file", "ok", 2), 2);
+    CHECK_EQ(ctx->fs->rmdir(ctx, "tree/child"), CANOPUS_SVC_ERR_NOTEMPTY);
+    CHECK_EQ(ctx->fs->exists(ctx, "tree/child/file"), 1);
+    CHECK_EQ(ctx->fs->rmdir(ctx, "tree/child/file"), CANOPUS_SVC_ERR_NOTDIR);
+    CHECK_EQ(ctx->fs->remove(ctx, "tree/child/file"), 0);
+    CHECK_EQ(ctx->fs->rmdir(ctx, "tree/./child/"), 0);
+    CHECK_EQ(ctx->fs->exists(ctx, "tree/child"), 0);
+    CHECK_EQ(ctx->fs->rmdir(ctx, "tree/child"), CANOPUS_SVC_ERR_NOTFOUND);
+    CHECK_EQ(ctx->fs->rmdir(ctx, "tree"), 0);
+    CHECK_EQ(ctx->fs->mkdir(ctx, "/data/app/empty"), 0);
+    CHECK_EQ(ctx->fs->rmdir(ctx, "/data/app//empty/"), 0);
+    CHECK_EQ(ctx->fs->rmdir(ctx, "../other"), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->fs->rmdir(ctx, ""), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->fs->rmdir(ctx, 0), CANOPUS_SVC_ERR_ARGUMENT);
+    for (i = 0; i < sizeof(protected_paths) / sizeof(protected_paths[0]); i++) {
+        CHECK_EQ(ctx->fs->rmdir(ctx, protected_paths[i]), CANOPUS_SVC_ERR_ACCESS);
+    }
+    setup(&sup, &platform_with_fs);
+    ctx = canopus_supervisor_context(&sup, 0);
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_FS, 2));
+    CHECK_EQ(ctx->fs->rmdir(ctx, "empty"), CANOPUS_SVC_ERR_UNSUPPORTED);
 }
 
 TEST(fs_group_is_unsupported_without_platform_hooks)
@@ -2545,6 +2605,8 @@ static struct test_registry supervisor_services_tests[] = {
       fs_roundtrip_is_private_to_the_module_namespace_wrapper },
     { "fs_rejects_escaping_names_bad_handles_and_exhaustion",
       fs_rejects_escaping_names_bad_handles_and_exhaustion_wrapper },
+    { "fs_rmdir_deletes_only_empty_directories_and_preserves_path_rules",
+      fs_rmdir_deletes_only_empty_directories_and_preserves_path_rules_wrapper },
     { "fs_group_is_unsupported_without_platform_hooks",
       fs_group_is_unsupported_without_platform_hooks_wrapper },
     { "log_ring_keeps_the_newest_attributed_messages",

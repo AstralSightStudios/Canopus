@@ -91,6 +91,15 @@ fn ui_and_bus_layouts_match_the_c_headers() {
     use std::process::{Command, Stdio};
 
     let layouts = [
+        ("sizeof(struct canopus_fs_obj)", size_of::<CanopusFsObj>()),
+        (
+            "offsetof(struct canopus_fs_obj, get_data_path)",
+            offset_of!(CanopusFsObj, get_data_path),
+        ),
+        (
+            "offsetof(struct canopus_fs_obj, rmdir)",
+            offset_of!(CanopusFsObj, rmdir),
+        ),
         ("sizeof(struct canopus_ui_event_v1)", size_of::<UiEventV1>()),
         (
             "_Alignof(struct canopus_ui_event_v1)",

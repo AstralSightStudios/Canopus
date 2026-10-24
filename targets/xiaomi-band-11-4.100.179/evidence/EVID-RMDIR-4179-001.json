@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RMDIR-4179-001",
+  "target_id": "xiaomi-band-11-4.100.179",
+  "question": "Recover the real empty-directory removal entry for the Supervisor FS service.",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.179.nuttx.rmdir"
+  ],
+  "prototype_hypothesis": "int rmdir(const char *path), ARM AAPCS Thumb; 0 success, -1 with task errno on failure.",
+  "callsite_evidence": [
+    "Exact IDA: libc remove 0x0c3496e6 calls unlink 0x0c33dbb4 and rmdir 0x0c33da44 only for errno21. rmdir asserts fs_rmdir.c:87, loads ops+0x60 at 0x0c33da9e, returns errno20 at 0x0c33daf4 and errno39 at 0x0c33daf8."
+  ],
+  "control_flow_evidence": [
+    "Path resolved into an inode search structure. Mountpoint inodes dispatch through inode->ops->rmdir at operations-table offset +0x60, with inode and relative path in r0/r1.",
+    "Ordinary non-directory inodes with operations are rejected with ENOTDIR(20); nonempty pseudo-directories with inode child links return ENOTEMPTY(39). Missing rmdir operation returns ENOSYS(38).",
+    "Failure releases the inode and temporary path, writes positive errno through errno_location, and returns -1; success releases resources and returns 0."
+  ],
+  "ownership_analysis": "Caller owns the NUL-terminated path for the synchronous call. VFS owns and releases inode/path resources. Supervisor maps errno to a negative service error.",
+  "unsafe_assumptions": [
+    "STATIC_RECOVERED only. No device probe or production approval. Physical filesystem persistence and firmware-specific filesystem implementations are unverified."
+  ],
+  "recommended_probe": "Create an empty directory, rmdir it; repeat on a missing path, file and nonempty directory and inspect errno.",
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-24T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "fw://xiaomi-band-11-4.100.179/vela_ap.bin",
+      "sha256": "307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b",
+      "role": "exact-firmware-read-only"
+    }
+  ]
+}

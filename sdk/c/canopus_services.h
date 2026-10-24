@@ -70,6 +70,7 @@ enum canopus_service_group {
 #define CANOPUS_SVC_ERR_NOTDIR      (-20)
 #define CANOPUS_SVC_ERR_ISDIR       (-21)
 #define CANOPUS_SVC_ERR_NOSPACE     (-28)
+#define CANOPUS_SVC_ERR_NOTEMPTY    (-39)
 
 /* -------------------------------------------------------------------------- */
 /* LOG                                                                        */
@@ -116,7 +117,7 @@ enum canopus_service_group {
  * ARGUMENT.
  * Failures carry the filesystem's reason: a missing file or parent is
  * NOTFOUND (the open that finds no config file is distinguishable from an I/O
- * fault), EXIST, NOTDIR, ISDIR, NOSPACE and BUSY map to their codes, anything
+ * fault), EXIST, NOTDIR, ISDIR, NOTEMPTY, NOSPACE and BUSY map to their codes, anything
  * else is IO. Parent directories are not created implicitly (use mkdir); only
  * the private directory is created on the first write.
  * stat reports type, size and mtime (seconds, 0 when the filesystem keeps no
@@ -333,6 +334,10 @@ struct canopus_fs_obj {
     int32_t (*read_all)(const struct canopus_context_v1 *ctx, const char *path, void *buffer, uint32_t max_size);
     int32_t (*write_all)(const struct canopus_context_v1 *ctx, const char *path, const void *buffer, uint32_t size);
     int32_t (*get_data_path)(const struct canopus_context_v1 *ctx, char *buffer, uint32_t max_size);
+    /* FS group version 2: check canopus_services_has(ctx, CANOPUS_SVC_FS, 2)
+     * before accessing this appended member. Removes an empty directory only;
+     * NOTEMPTY leaves its contents intact, NOTDIR for a file. */
+    int32_t (*rmdir)(const struct canopus_context_v1 *ctx, const char *path);
 };
 
 

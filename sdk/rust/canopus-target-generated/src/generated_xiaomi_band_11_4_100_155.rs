@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 798194c64c3dfc71
+// input_digest: 9082c111afa74763
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -780,6 +780,9 @@ pub const CANOPUS_FW_CALENDAR_PREMULTIPLY_CALLABLE: usize = canopus_thumb_callab
 /// Recovered `property_get` at 0x0c4af610. Thumb callable address 0x0c4af611.
 pub const CANOPUS_FW_PROPERTY_GET_CALLABLE: usize = canopus_thumb_callable(0x0c4af611usize);
 
+/// Recovered `rmdir` at 0x0c33da7c. Thumb callable address 0x0c33da7d.
+pub const CANOPUS_FW_RMDIR_CALLABLE: usize = canopus_thumb_callable(0x0c33da7dusize);
+
 /// Recovered `lv_obj_set_scroll_snap_x` at 0xc37f910. Thumb callable address 0xc37f911.
 pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_SNAP_X_CALLABLE: usize = canopus_thumb_callable(0xc37f911usize);
 
@@ -1165,6 +1168,7 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // register_blockdriver: restricted - not exported until context/ownership approved
 // register_driver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
+// rmdir: restricted - not exported until context/ownership approved
 // rmmod: restricted - not exported until context/ownership approved
 // screen_session_create: restricted - not exported until context/ownership approved
 // screen_session_restore_default: restricted - not exported until context/ownership approved

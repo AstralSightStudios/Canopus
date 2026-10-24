@@ -393,6 +393,7 @@ static int32_t svc_errno(int32_t rc)
     case -22: return CANOPUS_SVC_ERR_ARGUMENT;
     case -28: return CANOPUS_SVC_ERR_NOSPACE;
     case -38: return CANOPUS_SVC_ERR_UNSUPPORTED;
+    case -39: return CANOPUS_SVC_ERR_NOTEMPTY;
     default:  return rc >= 0 ? rc : CANOPUS_SVC_ERR_IO;
     }
 }
@@ -598,6 +599,19 @@ static int32_t svc_fs_mkdir(const struct canopus_context_v1 *ctx, const char *pa
     if (rc != CANOPUS_SVC_OK) return rc;
     svc_fs_ensure(&p);
     rc = s_sup->platform->dir_mkdir(s_sup->platform_cookie, p.path);
+    return rc < 0 ? svc_errno(rc) : CANOPUS_SVC_OK;
+}
+
+static int32_t svc_fs_rmdir(const struct canopus_context_v1 *ctx, const char *path)
+{
+    struct svc_fs_path p;
+    int32_t rc;
+    if (!svc_fs_ready(ctx) || s_sup->platform->dir_remove == 0) {
+        return CANOPUS_SVC_ERR_UNSUPPORTED;
+    }
+    rc = svc_fs_resolve(ctx, path, &p);
+    if (rc != CANOPUS_SVC_OK) return rc;
+    rc = s_sup->platform->dir_remove(s_sup->platform_cookie, p.path);
     return rc < 0 ? svc_errno(rc) : CANOPUS_SVC_OK;
 }
 
@@ -2282,7 +2296,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     if (sup != 0 && sup->platform != 0 && sup->platform->file_open != 0 &&
         sup->platform->file_read != 0 && sup->platform->file_write != 0 &&
         sup->platform->file_close != 0 && sup->platform->file_remove != 0) {
-        s_services.group_version[CANOPUS_SVC_FS] = 1u;
+        s_services.group_version[CANOPUS_SVC_FS] = sup->platform->dir_remove != 0 ? 2u : 1u;
         s_services.fs_open = svc_fs_open;
         s_services.fs_read = svc_fs_read;
         s_services.fs_write = svc_fs_write;
@@ -2308,6 +2322,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_fs_obj.read_all = svc_fs_read_all;
         s_fs_obj.write_all = svc_fs_write_all;
         s_fs_obj.get_data_path = svc_fs_get_data_path;
+        s_fs_obj.rmdir = svc_fs_rmdir;
     }
 
     if (sup != 0 && sup->platform != 0 && sup->platform->monotonic_ms != 0) {

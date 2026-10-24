@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: d5ef7a735ab714af
+ * input_digest: 430b1893b71e1e68
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -663,6 +663,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * readdir: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
+ * rmdir: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved
  * screen_get_state: restricted - not exported until context/ownership approved
  * screen_session_create: restricted - not exported until context/ownership approved

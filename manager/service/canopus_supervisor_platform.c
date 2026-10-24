@@ -1377,6 +1377,18 @@ static int sup_dir_mkdir(void *cookie, const char *path)
 #define SUP_DIR_MKDIR 0
 #endif
 
+#ifdef CANOPUS_SUP_NUTTX_RMDIR
+static int sup_dir_remove(void *cookie, const char *path)
+{
+    typedef int (*rmdir_fn)(const char *);
+    (void)cookie;
+    return sup_negated_errno(((rmdir_fn)(uintptr_t)CANOPUS_SUP_NUTTX_RMDIR)(path));
+}
+#define SUP_DIR_REMOVE sup_dir_remove
+#else
+#define SUP_DIR_REMOVE 0
+#endif
+
 #ifdef CANOPUS_SUP_NUTTX_OPENDIR
 static void *sup_dir_open(void *cookie, const char *path)
 {
@@ -1993,4 +2005,5 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
 #else
     0, /* l2_request_slots */
 #endif
+    SUP_DIR_REMOVE,
 };

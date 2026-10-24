@@ -110,7 +110,8 @@
     "CANOPUS_SUP_SYSTEM_STATE": "system_state",
     "FW_LVX_MSGBOX_CREATE": "lvx_msgbox_create",
     "FW_LVX_MSGBOX_SET_CONTENT": "lvx_msgbox_set_content",
-    "FW_LV_OBJECT_DELETE": "lvx_object_delete"
+    "FW_LV_OBJECT_DELETE": "lvx_object_delete",
+    "CANOPUS_SUP_NUTTX_RMDIR": "rmdir"
   },
   "fingerprints": [
     "0xc91e530",

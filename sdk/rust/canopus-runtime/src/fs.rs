@@ -143,6 +143,31 @@ pub fn remove(ctx: *const CanopusContext, path: &str) -> Result<(), i32> {
     if rc < 0 { Err(rc) } else { Ok(()) }
 }
 
+/// Removes an empty directory (FS service version 2).
+///
+/// Returns `-39` for a nonempty directory, `-20` for a file, or `-38` when
+/// the Supervisor has no directory deletion service. Contents are never removed.
+pub fn rmdir(ctx: *const CanopusContext, path: &str) -> Result<(), i32> {
+    if ctx.is_null() {
+        return Err(-22);
+    }
+    // Older Supervisors have a shorter FS object; check before reading rmdir.
+    if !unsafe { services_has(ctx as *const ContextV1, SVC_FS, 2) } {
+        return Err(-38);
+    }
+    let fs = unsafe { (*ctx).fs };
+    if fs.is_null() {
+        return Err(-38);
+    }
+    let mut path_buf = [0u8; 256];
+    if path.is_empty() || path.len() >= path_buf.len() || path.as_bytes().contains(&0) {
+        return Err(-22);
+    }
+    path_buf[..path.len()].copy_from_slice(path.as_bytes());
+    let rc = unsafe { ((*fs).rmdir)(ctx as *const ContextV1, path_buf.as_ptr() as *const c_char) };
+    if rc < 0 { Err(rc) } else { Ok(()) }
+}
+
 pub fn rename(ctx: *const CanopusContext, old_path: &str, new_path: &str) -> Result<(), i32> {
     if ctx.is_null() {
         return Err(-22);
@@ -239,6 +264,35 @@ pub fn data_path(ctx: *const CanopusContext, buf: &mut [u8]) -> Result<&str, i32
         Err(rc)
     } else {
         core::str::from_utf8(&buf[..rc as usize]).map_err(|_| -5)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rmdir_checks_version_before_accessing_the_appended_member() {
+        let mut services = ServicesV1Head {
+            struct_size: core::mem::size_of::<ServicesV1Head>() as u32,
+            group_version: [0; SVC_GROUP_COUNT as usize],
+        };
+        services.group_version[SVC_FS as usize] = 1;
+        // Context fields are integers and nullable raw pointers. The FS pointer
+        // must not be read until the Supervisor advertises the new object tail.
+        let mut ctx: CanopusContext = unsafe { core::mem::zeroed() };
+        ctx.struct_size = core::mem::size_of::<CanopusContext>() as u32;
+        ctx.services = &services as *const _ as *const core::ffi::c_void;
+        ctx.fs = core::ptr::dangling();
+        assert_eq!(rmdir(core::ptr::null(), "cache"), Err(-22));
+        assert_eq!(rmdir(&ctx, "cache"), Err(-38));
+        services.group_version[SVC_FS as usize] = 2;
+        let long_path = [b'a'; 256];
+        for invalid in ["", "cache\0other", core::str::from_utf8(&long_path).unwrap()] {
+            assert_eq!(rmdir(&ctx, invalid), Err(-22));
+        }
+        ctx.fs = core::ptr::null();
+        assert_eq!(rmdir(&ctx, "cache"), Err(-38));
     }
 }
 

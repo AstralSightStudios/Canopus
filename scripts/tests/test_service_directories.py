@@ -1,19 +1,22 @@
 """Execute the real firmware directory adapter against modeled NuttX entries.
 
 The whole platform translation unit is compiled with each native Manager target's
-committed headers. Only the firmware readdir call is modeled in Unicorn; this
+committed headers. Firmware readdir, rmdir and errno calls are modeled in Unicorn; this
 checks decoding and service results, not an actual filesystem or physical device.
 """
 import importlib.util
 import os
 from pathlib import Path
 import shutil
+import struct
 import tempfile
 import unittest
 
 from test_service_timer_pump import ROOT, SRAM, SRAM_SIZE, STACK, STOP, build_image
 
 TARGETS = (
+    "xiaomi-band-10-pro-3.101.036",
+    "xiaomi-band-11-4.100.139",
     "xiaomi-band-11-4.100.155",
     "xiaomi-band-11-4.100.179",
     "xiaomi-band-10-pro-3.101.043",
@@ -26,6 +29,18 @@ int test_dir_read(void *dir, struct canopus_fs_dirent *entry) {
 }
 uint32_t test_native_readdir(void) { return CANOPUS_SUP_NUTTX_READDIR; }
 uint32_t test_dirent_size(void) { return sizeof(struct canopus_fs_dirent); }
+int test_dir_remove(const char *path) {
+    int (*remove_dir)(void *, const char *) = SUP_DIR_REMOVE;
+    return remove_dir != 0 ? remove_dir(0, path) : CANOPUS_SVC_ERR_UNSUPPORTED;
+}
+uint32_t test_native_rmdir(void) {
+#ifdef CANOPUS_SUP_NUTTX_RMDIR
+    return CANOPUS_SUP_NUTTX_RMDIR;
+#else
+    return 0u;
+#endif
+}
+uint32_t test_native_errno(void) { return CANOPUS_SUP_NUTTX_ERRNO_LOCATION; }
 '''
 
 
@@ -55,7 +70,8 @@ class ServiceDirectoryTests(unittest.TestCase):
             cls.images[target] = build_image(
                 out, target, [], cc, linker, helper.load_elf,
                 wrapper_source=WRAPPER, exports=(
-                    "test_dir_read", "test_native_readdir", "test_dirent_size"))
+                    "test_dir_read", "test_native_readdir", "test_dirent_size",
+                    "test_dir_remove", "test_native_rmdir", "test_native_errno"))
 
     def call(self, u, name, *args):
         r = self.regs
@@ -92,6 +108,49 @@ class ServiceDirectoryTests(unittest.TestCase):
 
         u.hook_add(self.unicorn.UC_HOOK_CODE, read, begin=native & ~1, end=native & ~1)
         return u
+
+    def test_rmdir_dispatch_and_errno(self):
+        for target in TARGETS:
+            for error in (None, 2, 13, 20, 39, 38, 0):
+                with self.subTest(target=target, errno=error):
+                    blob, segments, self.symbols = self.images[target]
+                    u = self.unicorn.Uc(self.unicorn.UC_ARCH_ARM,
+                                       self.unicorn.UC_MODE_THUMB | self.unicorn.UC_MODE_MCLASS)
+                    u.mem_map(SRAM, SRAM_SIZE)
+                    for segment in segments:
+                        if segment[0] == 1 and segment[4]:
+                            u.mem_write(segment[2], blob[segment[1]:segment[1] + segment[4]])
+                    native = self.call(u, "test_native_rmdir")
+                    if target.endswith("3.101.036"):
+                        self.assertEqual(native, 0)
+                        self.assertEqual(self.call(u, "test_dir_remove", OUTPUT), -38)
+                        continue
+                    self.assertNotEqual(native, 0)
+                    errno_fn = self.call(u, "test_native_errno")
+                    for page in {native & ~0xFFF, errno_fn & ~0xFFF}:
+                        u.mem_map(page, 0x1000)
+                    u.mem_write(OUTPUT, b"/data/app/empty\0")
+                    u.mem_write(RAW_ENTRY, struct.pack("<I", error or 0))
+                    calls = []
+
+                    def dispatch(uc, address, size, data):
+                        if address == (native & ~1):
+                            self.assertEqual(uc.reg_read(self.regs.UC_ARM_REG_R0), OUTPUT)
+                            calls.append("rmdir")
+                            uc.reg_write(self.regs.UC_ARM_REG_R0,
+                                         0 if error is None else 0xFFFFFFFF)
+                        else:
+                            calls.append("errno")
+                            uc.reg_write(self.regs.UC_ARM_REG_R0, RAW_ENTRY)
+                        uc.reg_write(self.regs.UC_ARM_REG_PC,
+                                     uc.reg_read(self.regs.UC_ARM_REG_LR))
+
+                    for address in (native & ~1, errno_fn & ~1):
+                        u.hook_add(self.unicorn.UC_HOOK_CODE, dispatch,
+                                   begin=address, end=address)
+                    expected = 0 if error is None else -(error or 5)
+                    self.assertEqual(self.call(u, "test_dir_remove", OUTPUT), expected)
+                    self.assertEqual(calls, ["rmdir"] if error is None else ["rmdir", "errno"])
 
     def test_raw_entry_names_and_types(self):
         for target in TARGETS:

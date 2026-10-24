@@ -4,7 +4,7 @@
 // firmware : 4.100.179 (user-4.100.179-cn-202609302100)
 // sha256   : 307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b
 // revision : 2
-// input_digest: cbfcd368fd08352e
+// input_digest: cb57749729339802
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -506,6 +506,9 @@ pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0xc33d765us
 
 /// Recovered `bt_socket_client_sendrecv` at 0xc46a18c. Thumb callable address 0xc46a18d.
 pub const CANOPUS_FW_BT_SOCKET_CLIENT_SENDRECV_CALLABLE: usize = canopus_thumb_callable(0xc46a18dusize);
+
+/// Recovered `rmdir` at 0x0c33da44. Thumb callable address 0x0c33da45.
+pub const CANOPUS_FW_RMDIR_CALLABLE: usize = canopus_thumb_callable(0x0c33da45usize);
 
 /// Recovered `lvx_object_delete` at 0xc3813ac. Thumb callable address 0xc3813ad.
 pub const CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE: usize = canopus_thumb_callable(0xc3813adusize);
@@ -1160,6 +1163,7 @@ pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_t
 // register_blockdriver: restricted - not exported until context/ownership approved
 // register_driver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
+// rmdir: restricted - not exported until context/ownership approved
 // rmmod: restricted - not exported until context/ownership approved
 // screen_session_create: restricted - not exported until context/ownership approved
 // screen_session_restore_default: restricted - not exported until context/ownership approved

@@ -816,6 +816,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(const char *, const char *)",
     },
     TargetPrivateSymbolRecord {
+        name: "rmdir",
+        kind: "function",
+        entry: 0xc1d1648usize,
+        callable: 0xc1d1649usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(const char *path)",
+    },
+    TargetPrivateSymbolRecord {
         name: "sem_post",
         kind: "function",
         entry: 0xc2070d0usize,
@@ -2744,6 +2753,8 @@ pub const REGISTER_DRIVER_ENTRY: usize = 0xc1aff60usize;
 pub const REGISTER_DRIVER_CALLABLE: usize = 0xc1aff61usize;
 pub const RENAME_ENTRY: usize = 0xc1d12e8usize;
 pub const RENAME_CALLABLE: usize = 0xc1d12e9usize;
+pub const RMDIR_ENTRY: usize = 0xc1d1648usize;
+pub const RMDIR_CALLABLE: usize = 0xc1d1649usize;
 pub const SEM_POST_ENTRY: usize = 0xc2070d0usize;
 pub const SEM_POST_CALLABLE: usize = 0xc2070d1usize;
 pub const SEM_TRYWAIT_ENTRY: usize = 0xc206bfcusize;

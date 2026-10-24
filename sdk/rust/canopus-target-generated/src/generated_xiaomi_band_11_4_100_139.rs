@@ -4,7 +4,7 @@
 // firmware : 4.100.139 (user-4.100.139-cn-202608280000)
 // sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
 // revision : 2
-// input_digest: 79b9cd3d954eab81
+// input_digest: e7975c1f72f310d2
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -602,6 +602,9 @@ pub const CANOPUS_FW_HAL_CACHE_INVALIDATE_ROM_THUNK_CALLABLE: usize = canopus_th
 
 /// Recovered `lvx_object_set_size` at 0xc387ba8. Thumb callable address 0xc387ba9.
 pub const CANOPUS_FW_LVX_OBJECT_SET_SIZE_CALLABLE: usize = canopus_thumb_callable(0xc387ba9usize);
+
+/// Recovered `rmdir` at 0x0c33da7c. Thumb callable address 0x0c33da7d.
+pub const CANOPUS_FW_RMDIR_CALLABLE: usize = canopus_thumb_callable(0x0c33da7dusize);
 
 /// Recovered global `gap_host_receive_slot` at 0x200bda80.
 pub const canopus_fw_gap_host_receive_slot: usize = 0x200bda80usize;
@@ -1279,6 +1282,7 @@ pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_CALLABLE: usize = canop
 // register_blockdriver: restricted - not exported until context/ownership approved
 // register_driver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
+// rmdir: restricted - not exported until context/ownership approved
 // rmmod: restricted - not exported until context/ownership approved
 // screen_session_create: restricted - not exported until context/ownership approved
 // screen_session_restore_default: restricted - not exported until context/ownership approved

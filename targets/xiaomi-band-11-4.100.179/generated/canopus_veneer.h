@@ -4,7 +4,7 @@
  * firmware : 4.100.179 (user-4.100.179-cn-202609302100)
  * sha256   : 307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b
  * revision : 2
- * input_digest: cbfcd368fd08352e
+ * input_digest: cb57749729339802
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_179_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_179_H
@@ -428,6 +428,7 @@ static inline int canopus_identity_guard(void)
  * register_blockdriver: restricted - not exported until context/ownership approved
  * register_driver: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
+ * rmdir: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved
  * screen_session_create: restricted - not exported until context/ownership approved
  * screen_session_restore_default: restricted - not exported until context/ownership approved

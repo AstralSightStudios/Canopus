@@ -184,6 +184,9 @@
   - Supervisor 按 target 填表，并经 context 传给模块回调（目前是 `activate(0)`）。
   - 第一批服务：日志/状态、时间/定时器、内存、文件、通知、`canopus_ui` 语义树渲染（复用 `sdk/c/canopus_ui.h`（原 `app-sdk/ui`））。
   - 2026-10-18：Band 11 `.139/.155/.177` 普通 UI 构建接入 exact-target 私有 LVGL timer pump，复用现有服务调度；headless 仍不支持，息屏暂停与 UI 重建恢复边界见服务规范，不提升符号或设备验证状态。
+  - 2026-10-24：FS 版本 2 追加空目录删除 `rmdir`（C/Rust），保留旧对象成员偏移，非空目录返回 `NOTEMPTY(-39)`；
+    `.043/.139/.155/.179` 接入静态恢复的固件入口，`.036` 缺少入口证据而保持版本 1。C host ASan/UBSan、Rust ABI/runtime、
+    五目标服务模块及 Supervisor 构建/verifier、建模 Thumb 目录适配器及 generated_stability 18 项通过。证据 `EVID-RMDIR-*`；未做真实文件系统或真机验证，符号状态不提升。
   - BT 与 interconnect 放到后续批次。
 - [x] P2.2 portable 模块（判断结案：`hello` 与 `no-heap-counter` 有意保持 target-bound，分别示范固件原生 API 与 Rust SDK 的设备绑定路径；portable 路径由 `hello-portable` + TIME 服务示范，Band 10 stock modlib 上的 portable 加载等自定义 loader；已完成：`canopus verify --portable`（任何已注册固件的地址范围内出现地址即失败）、`modules/examples/hello-portable`（同一 ELF 通过 5 个 active target 的 verifier 与 portable 检查，CI 覆盖）；未完成：原 `hello`（依赖固件 timer/clock，等 time 服务）与 `no-heap-counter` 迁移；设备加载需自定义 loader）
   - verifier 增加"零固件地址"模式。

@@ -174,6 +174,8 @@ struct canopus_sup_platform_v1 {
      * the phone may keep that many in flight, one of them left for the Manager. 0 when unknown
      * (no L2 backend, or it has not started); the phone then assumes four. Optional. */
     uint32_t (*l2_request_slots)(void *cookie);
+    /* Remove one empty directory. Optional; returns negative errno on failure. */
+    int (*dir_remove)(void *cookie, const char *path);
 };
 
 int canopus_sup_l2_start(void);
