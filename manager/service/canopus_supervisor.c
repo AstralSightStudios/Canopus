@@ -16,6 +16,8 @@ __attribute__((weak)) void canopus_manager_target_render_diagnostics(
     canopus_memset(out, 0, 36u);
 }
 
+__attribute__((weak)) void canopus_manager_native_refresh(void) {}
+
 static int module_lifecycle_ok(uint32_t lifecycle_class)
 {
     return lifecycle_class <= CANOPUS_LIFECYCLE_PATCH_REBOOT_REQUIRED;
@@ -756,6 +758,17 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
             }
         } else {
             rc = sup_activate_module(sup, module);
+        }
+        if (rc == CANOPUS_RESULT_COMPLETED && module->descriptor != 0 &&
+            (module->descriptor->flags & CANOPUS_FLAG_HAS_NATIVE_APP) != 0u) {
+            int publish_rc = canopus_supervisor_ui_pump_ensure(sup);
+            if (publish_rc == 0) {
+                module->native_app_stage = 1u;
+            } else {
+                module->activation_error = (uint32_t)publish_rc;
+                sup->error_code = (uint32_t)publish_rc;
+                rc = CANOPUS_RESULT_FAILED;
+            }
         }
         if (rc == CANOPUS_RESULT_COMPLETED ||
             rc == CANOPUS_RESULT_FAILED) {
@@ -1593,14 +1606,12 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
     return -1;
 }
 
-int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
-                                           uint32_t stage)
+static int sup_publish_native_apps(struct canopus_supervisor_v1 *sup,
+                                   uint32_t stage, uint32_t first, uint32_t end)
 {
     uint32_t i;
     int failed = 0;
-    if (sup == 0 || (stage != 1u && stage != 2u) ||
-        canopus_supervisor_bus_dispatching()) return -1;
-    for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+    for (i = first; i < end; i++) {
         struct canopus_sup_module_v1 *module = &sup->modules[i];
         uint32_t legacy_end;
         uint32_t staged_end;
@@ -1652,6 +1663,36 @@ int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
     }
     canopus_supervisor_module_events_flush(sup);
     return failed;
+}
+
+int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
+                                           uint32_t stage)
+{
+    if (sup == 0 || (stage != 1u && stage != 2u) ||
+        canopus_supervisor_bus_dispatching()) return -1;
+    return sup_publish_native_apps(sup, stage, 0u, CANOPUS_SUP_MODULE_SLOTS);
+}
+
+void canopus_supervisor_native_apps_poll(struct canopus_supervisor_v1 *sup)
+{
+    uint32_t i;
+    for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+        struct canopus_sup_module_v1 *module = &sup->modules[i];
+        uint32_t stage = module->native_app_stage;
+        if (stage == 0u) continue;
+        module->native_app_stage = 0u;
+        if (sup->safe_mode || !sup_module_loaded(module->state) ||
+            module->intent != CANOPUS_SUP_INTENT_ENABLED) continue;
+        /* Each heartbeat performs at most one app/page or Launcher mutation.
+         * Keep publication independent of the module's own ui->post slot. */
+        canopus_snapshot_begin(&sup->snap);
+        if (sup_publish_native_apps(sup, stage, i, i + 1u) == 0 && stage == 1u)
+            module->native_app_stage = 2u;
+        canopus_snapshot_commit(&sup->snap);
+        canopus_supervisor_module_events_flush(sup);
+        canopus_manager_native_refresh();
+        return;
+    }
 }
 
 static int sup_find_slot_by_id(const struct canopus_supervisor_v1 *sup,

@@ -1158,8 +1158,12 @@ static uint32_t svc_now(const struct canopus_supervisor_v1 *sup)
 static void svc_timers_poll(struct canopus_supervisor_v1 *sup, int foreground)
 {
     uint32_t now;
+    int publish_app;
     if (sup == 0 || sup != s_sup || s_timer_dispatching || s_bus_dispatching) return;
     s_timer_dispatching = 1;
+    /* A Launcher update already in flight owns this turn, including its last
+     * step. App publication must start on a subsequent foreground heartbeat. */
+    publish_app = foreground && !s_launcher_pending;
     /* Only the platform's foreground heartbeat starts a new UI turn. Jobs run
      * before timers, so work posted by those callbacks waits for the next one. */
     if (foreground) svc_ui_jobs_poll();
@@ -1167,6 +1171,7 @@ static void svc_timers_poll(struct canopus_supervisor_v1 *sup, int foreground)
 
     canopus_supervisor_stability_poll(sup, now);
     svc_launcher_poll();
+    if (publish_app && !s_launcher_pending) canopus_supervisor_native_apps_poll(sup);
     svc_haptic_poll(now);
     svc_events_poll(now);
     svc_timers_dispatch(now, 0);

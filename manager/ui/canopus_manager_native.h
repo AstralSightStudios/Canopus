@@ -86,6 +86,9 @@ void canopus_manager_native_set_refresh(
 
 int32_t canopus_manager_native_render(struct canopus_manager_native_v1 *native);
 
+/* Refresh the visible device Manager after deferred module publication. */
+void canopus_manager_native_refresh(void);
+
 #ifdef __cplusplus
 }
 #endif

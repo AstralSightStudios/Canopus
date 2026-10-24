@@ -816,6 +816,19 @@ static int manager_page_on_resume(struct canopus_target_page *page)
     return 0;
 }
 
+void canopus_manager_native_refresh(void)
+{
+    uint32_t i;
+    if (!manager_session_ready) return;
+    for (i = 0u; i < CANOPUS_TARGET_MANAGER_PAGES; i++) {
+        struct canopus_target_page_context *context = &manager_pages[i];
+        if (!context->view.active || !context->view.interactive) continue;
+        if (target_refresh_model() == 0 && target_select_page_view(context) == 0)
+            (void)canopus_manager_native_render(&context->native);
+        return;
+    }
+}
+
 static int manager_page_on_pause(struct canopus_target_page *page)
 {
     struct canopus_target_page_context *context;

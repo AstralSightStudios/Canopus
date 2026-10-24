@@ -25,14 +25,28 @@ static int g_activations;
 static int g_activation_result;
 static int g_publications;
 static uint32_t g_publication_stage;
+static uint32_t g_publication_slot;
 static int g_publication_result;
+static int g_post_on_activate, g_activation_posts;
+static void (*g_foreground_pump)(void *);
+static void *g_foreground_data;
+static void (*g_background_pump)(void *);
+static void *g_background_data;
 static struct canopus_supervisor_v1 *g_loading_supervisor;
 static const struct canopus_module_descriptor_v1 *g_load_descriptor;
 
+static void activation_ui_work(const struct canopus_context_v1 *ctx, void *user)
+{
+    (void)ctx; (void)user;
+    g_activation_posts++;
+}
+
 static int fake_activate(const struct canopus_context_v1 *ctx)
 {
-    (void)ctx;
     g_activations++;
+    if (g_post_on_activate && g_activation_result == 0) {
+        CHECK_EQ(ctx->ui->post(ctx, activation_ui_work, 0), 0);
+    }
     return g_activation_result;
 }
 static int fake_module_callback(const struct canopus_context_v1 *ctx)
@@ -48,16 +62,17 @@ static int fake_query(struct canopus_status_writer_v1 *writer)
 
 static int fake_publish_native_app(const struct canopus_context_v1 *ctx)
 {
-    (void)ctx;
     g_publications++;
+    g_publication_slot = ctx->slot;
+    g_publication_stage = 1u;
     return g_publication_result;
 }
 
 static int fake_publish_native_app_stage(
     const struct canopus_context_v1 *ctx, uint32_t stage)
 {
-    (void)ctx;
     g_publications++;
+    g_publication_slot = ctx->slot;
     g_publication_stage = stage;
     return g_publication_result;
 }
@@ -141,6 +156,20 @@ static const struct canopus_sup_platform_v1 fake_platform = {
 static struct canopus_supervisor_v1 *g_event_supervisor;
 static uint32_t g_module_events[CANOPUS_SUP_MODULE_SLOTS];
 static struct canopus_module_state_v1 g_module_event;
+static struct canopus_supervisor_v1 *g_refresh_supervisor;
+static int g_native_refreshes, g_refresh_publications;
+static uint32_t g_refresh_stage, g_refresh_error, g_refresh_event_error;
+
+void canopus_manager_native_refresh(void)
+{
+    if (g_refresh_supervisor == 0) return;
+    CHECK(CANOPUS_SNAPSHOT_READY(&g_refresh_supervisor->snap));
+    g_native_refreshes++;
+    g_refresh_publications = g_publications;
+    g_refresh_stage = g_publication_stage;
+    g_refresh_error = g_refresh_supervisor->modules[g_publication_slot].activation_error;
+    g_refresh_event_error = g_module_event.activation_error;
+}
 
 static void on_registry_change(const struct canopus_context_v1 *ctx,
                                 const char *topic, const void *payload,
@@ -390,6 +419,242 @@ TEST(supervisor_explicit_activation_loads_enabled_installed_slot)
     CHECK(sup.modules[0].state == CANOPUS_STATE_BOOT_RESIDENT);
     g_loading_supervisor = 0;
     g_load_descriptor = 0;
+}
+
+static int capture_foreground_pump(void *cookie, void (*poll)(void *), void *data)
+{
+    (void)cookie;
+    g_foreground_pump = poll;
+    g_foreground_data = data;
+    return 0;
+}
+
+static int capture_background_pump(void *cookie, void (*poll)(void *), void *data)
+{
+    (void)cookie;
+    g_background_pump = poll;
+    g_background_data = data;
+    return 0;
+}
+
+static void setup_native_activation(struct canopus_supervisor_v1 *sup,
+                                     struct canopus_sup_platform_v1 *platform,
+                                     struct canopus_module_descriptor_v1 *descriptor)
+{
+    *platform = fake_platform;
+    platform->start_timer_pump = capture_foreground_pump;
+    platform->start_background_pump = capture_background_pump;
+    *descriptor = fake_descriptor;
+    descriptor->flags = CANOPUS_FLAG_HAS_NATIVE_APP;
+    g_foreground_pump = g_background_pump = 0;
+    g_foreground_data = g_background_data = 0;
+    g_publications = g_publication_result = 0;
+    g_publication_stage = g_publication_slot = 0u;
+    g_activations = g_activation_result = 0;
+    g_post_on_activate = g_activation_posts = 0;
+    g_loads = g_persists = g_persist_result = g_registry_present = 0;
+    CHECK_EQ(canopus_supervisor_init(sup, 7u, platform, 0), 0);
+    CHECK_EQ(canopus_supervisor_add_module(sup,
+                 CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION, 1u, "mod.hello"), 0);
+    sup->modules[0].state = CANOPUS_STATE_ENABLED;
+    sup->modules[0].intent = CANOPUS_SUP_INTENT_ENABLED;
+    g_loading_supervisor = sup;
+    g_load_descriptor = descriptor;
+    g_load_result = CANOPUS_STATE_READY;
+    g_refresh_supervisor = sup;
+    g_native_refreshes = g_refresh_publications = 0;
+    g_refresh_stage = g_refresh_error = g_refresh_event_error = 0u;
+}
+
+static uint32_t activation_command(struct canopus_supervisor_v1 *sup,
+                                    uint32_t op, uint32_t slot)
+{
+    uint8_t command[CANOPUS_SUP_COMMAND_SIZE];
+    make_command(command, CANOPUS_SUP_CMD_MAGIC, op, slot, 0u);
+    return canopus_supervisor_handle_command(sup, command);
+}
+
+static void publication_foreground_turn(void)
+{
+    CHECK(g_foreground_pump != 0);
+    if (g_foreground_pump != 0) g_foreground_pump(g_foreground_data);
+}
+
+static void finish_native_activation(void)
+{
+    g_refresh_supervisor = 0;
+    g_loading_supervisor = 0;
+    g_load_descriptor = 0;
+    g_load_result = CANOPUS_STATE_ACTIVE;
+    g_post_on_activate = 0;
+    g_activation_result = g_publication_result = 0;
+}
+
+TEST(supervisor_activation_publishes_on_separate_foreground_turns)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform;
+    struct canopus_module_descriptor_v1 descriptor;
+    setup_native_activation(&sup, &platform, &descriptor);
+    /* A module's own post during activate must not occupy the publication queue. */
+    g_post_on_activate = 1;
+    CHECK_EQ(activation_command(&sup, CANOPUS_SUP_CMD_ACTIVATE, 0u),
+             CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(g_loads, 1);
+    CHECK_EQ(g_activations, 1);
+    CHECK_EQ(sup.modules[0].state, CANOPUS_STATE_BOOT_RESIDENT);
+    CHECK_EQ(g_publications, 0);
+    CHECK_EQ(g_activation_posts, 0);
+    CHECK_EQ(canopus_supervisor_start_background(&sup), 0);
+    CHECK(g_background_pump != 0);
+    if (g_background_pump != 0) g_background_pump(g_background_data);
+    canopus_supervisor_timers_poll(&sup);
+    CHECK_EQ(g_publications, 0);
+    CHECK_EQ(g_activation_posts, 0);
+    CHECK_EQ(g_native_refreshes, 0);
+    publication_foreground_turn();
+    CHECK_EQ(g_publications, 1);
+    CHECK_EQ(g_publication_stage, 1u);
+    CHECK_EQ(g_publication_slot, 0u);
+    CHECK_EQ(g_activation_posts, 1);
+    CHECK_EQ(g_native_refreshes, 1);
+    CHECK_EQ(g_refresh_publications, 1);
+    CHECK_EQ(g_refresh_stage, 1u);
+    CHECK_EQ(g_refresh_error, 0u);
+    canopus_supervisor_timers_poll(&sup);
+    CHECK_EQ(g_publications, 1);
+    CHECK_EQ(g_native_refreshes, 1);
+    publication_foreground_turn();
+    CHECK_EQ(g_publications, 2);
+    CHECK_EQ(g_publication_stage, 2u);
+    CHECK_EQ(g_native_refreshes, 2);
+    CHECK_EQ(g_refresh_publications, 2);
+    CHECK_EQ(g_refresh_stage, 2u);
+    CHECK_EQ(g_refresh_error, 0u);
+    publication_foreground_turn();
+    CHECK_EQ(g_publications, 2);
+    CHECK_EQ(g_native_refreshes, 2);
+    finish_native_activation();
+}
+
+TEST(supervisor_activation_serializes_modules_and_supports_legacy_publication)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform;
+    struct canopus_module_descriptor_v1 descriptor;
+    uint32_t legacy, turn;
+    for (legacy = 0u; legacy < 2u; legacy++) {
+        uint32_t stages[2] = {0u, 0u};
+        uint32_t expected = legacy ? 2u : 4u;
+        setup_native_activation(&sup, &platform, &descriptor);
+        if (legacy) descriptor.publish_native_app_stage = 0;
+        CHECK_EQ(canopus_supervisor_add_module(&sup,
+                     CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION, 1u, "mod.second"), 1);
+        sup.modules[1].state = CANOPUS_STATE_ENABLED;
+        sup.modules[1].intent = CANOPUS_SUP_INTENT_ENABLED;
+        CHECK_EQ(activation_command(&sup, CANOPUS_SUP_CMD_ACTIVATE, 0u),
+                 CANOPUS_RESULT_COMPLETED);
+        CHECK_EQ(activation_command(&sup, CANOPUS_SUP_CMD_ACTIVATE, 1u),
+                 CANOPUS_RESULT_COMPLETED);
+        CHECK_EQ(g_activations, 2);
+        CHECK_EQ(g_publications, 0);
+        CHECK(g_foreground_pump != 0);
+        for (turn = 0u; turn < 4u; turn++) {
+            int previous = g_publications;
+            publication_foreground_turn();
+            CHECK(g_publications == previous || g_publications == previous + 1);
+            if (g_publications != previous) {
+                CHECK(g_publication_slot < 2u);
+                if (g_publication_slot < 2u) {
+                    stages[g_publication_slot]++;
+                    CHECK_EQ(g_publication_stage, stages[g_publication_slot]);
+                }
+            }
+        }
+        CHECK_EQ(g_publications, expected);
+        CHECK_EQ(stages[0], legacy ? 1u : 2u);
+        CHECK_EQ(stages[1], legacy ? 1u : 2u);
+        publication_foreground_turn();
+        publication_foreground_turn();
+        CHECK_EQ(g_publications, expected);
+        finish_native_activation();
+    }
+}
+
+TEST(supervisor_activation_publication_failure_is_persisted_and_notified)
+{
+    struct canopus_supervisor_v1 sup, restored;
+    struct canopus_sup_platform_v1 platform;
+    struct canopus_module_descriptor_v1 descriptor;
+    uint32_t failure_stage, stage, events;
+    int persists;
+    for (failure_stage = 1u; failure_stage <= 2u; failure_stage++) {
+        setup_native_activation(&sup, &platform, &descriptor);
+        observe_registry(&sup, 0u);
+        CHECK_EQ(activation_command(&sup, CANOPUS_SUP_CMD_ACTIVATE, 0u),
+                 CANOPUS_RESULT_COMPLETED);
+        events = g_module_events[0];
+        persists = g_persists;
+        for (stage = 1u; stage <= failure_stage; stage++) {
+            g_publication_result = stage == failure_stage ? -100 : 0;
+            publication_foreground_turn();
+            CHECK_EQ(g_publications, stage);
+            CHECK_EQ(g_publication_stage, stage);
+            CHECK_EQ(g_native_refreshes, stage);
+            CHECK_EQ(g_refresh_publications, stage);
+            CHECK_EQ(g_refresh_stage, stage);
+            CHECK_EQ((int32_t)g_refresh_error, g_publication_result);
+        }
+        CHECK_EQ((int32_t)sup.modules[0].activation_error, -100);
+        CHECK_EQ((int32_t)g_refresh_event_error, -100);
+        CHECK_EQ(g_module_events[0], events + 1u);
+        CHECK_EQ((int32_t)g_module_event.activation_error, -100);
+        CHECK(g_persists > persists);
+        publication_foreground_turn();
+        CHECK_EQ(g_publications, failure_stage);
+        CHECK_EQ(g_native_refreshes, failure_stage);
+        CHECK_EQ(g_module_events[0], events + 1u);
+        CHECK_EQ(canopus_supervisor_init(&restored, 7u, &platform, 0), 0);
+        CHECK_EQ(canopus_supervisor_restore_registry_metadata(&restored), 0);
+        CHECK_EQ((int32_t)restored.modules[0].activation_error, -100);
+        finish_native_activation();
+    }
+}
+
+TEST(supervisor_activation_skips_failed_non_native_and_cancelled_publication)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform;
+    struct canopus_module_descriptor_v1 descriptor;
+    uint32_t scenario, published;
+    for (scenario = 0u; scenario < 4u; scenario++) {
+        setup_native_activation(&sup, &platform, &descriptor);
+        if (scenario == 0u) g_activation_result = -77;
+        if (scenario == 1u) descriptor.flags = 0u;
+        CHECK_EQ(activation_command(&sup, CANOPUS_SUP_CMD_ACTIVATE, 0u),
+                 scenario == 0u ? CANOPUS_RESULT_FAILED : CANOPUS_RESULT_COMPLETED);
+        CHECK_EQ(g_publications, 0);
+        if (scenario == 3u) {
+            publication_foreground_turn();
+            CHECK_EQ(g_publications, 1);
+            CHECK_EQ(g_publication_stage, 1u);
+        }
+        if (scenario >= 2u) {
+            CHECK_EQ(activation_command(&sup,
+                         scenario == 2u ? CANOPUS_SUP_CMD_DISABLE : CANOPUS_SUP_CMD_REMOVE, 0u),
+                     CANOPUS_RESULT_REBOOT_REQUIRED);
+        }
+        published = scenario == 3u ? 1u : 0u;
+        /* Failed/non-native activations need no pump; start it to check that no
+         * latent publication runs on a later unrelated foreground heartbeat. */
+        CHECK_EQ(canopus_supervisor_ui_pump_ensure(&sup), 0);
+        publication_foreground_turn();
+        publication_foreground_turn();
+        CHECK_EQ(g_publications, published);
+        CHECK_EQ(g_native_refreshes, published);
+        if (scenario == 0u) CHECK_EQ((int32_t)sup.modules[0].activation_error, -77);
+        finish_native_activation();
+    }
 }
 
 TEST(supervisor_restore_after_boot_command_loads_enabled_slots_once)
@@ -1834,6 +2099,10 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_explicit_activate_targets_ready_slot", supervisor_explicit_activate_targets_ready_slot_wrapper },
     { "supervisor_explicit_activation_reports_callback_failure", supervisor_explicit_activation_reports_callback_failure_wrapper },
     { "supervisor_explicit_activation_loads_enabled_installed_slot", supervisor_explicit_activation_loads_enabled_installed_slot_wrapper },
+    { "supervisor_activation_publishes_on_separate_foreground_turns", supervisor_activation_publishes_on_separate_foreground_turns_wrapper },
+    { "supervisor_activation_serializes_modules_and_supports_legacy_publication", supervisor_activation_serializes_modules_and_supports_legacy_publication_wrapper },
+    { "supervisor_activation_publication_failure_is_persisted_and_notified", supervisor_activation_publication_failure_is_persisted_and_notified_wrapper },
+    { "supervisor_activation_skips_failed_non_native_and_cancelled_publication", supervisor_activation_skips_failed_non_native_and_cancelled_publication_wrapper },
     { "supervisor_restore_after_boot_command_loads_enabled_slots_once", supervisor_restore_after_boot_command_loads_enabled_slots_once_wrapper },
     { "supervisor_restore_after_boot_command_reports_load_failure", supervisor_restore_after_boot_command_reports_load_failure_wrapper },
     { "supervisor_enable_is_next_boot", supervisor_enable_is_next_boot_wrapper },

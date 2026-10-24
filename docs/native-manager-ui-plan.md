@@ -291,6 +291,15 @@ bootstrap installer loads trusted supervisor artifact once
 
 在 app registration、lifecycle callback、router ownership 和 descriptor lifetime 全部通过真机 gate 前，不调用“安装原生应用完成”。
 
+显式 `ACTIVATE` 成功后，Supervisor 将模块的原生应用发布加入前台 UI heartbeat：
+第一轮调用 `publish_native_app_stage(ctx, 1)` 注册应用与页面，下一轮调用 stage 2 发布启动器入口。
+每轮只推进一个模块的一步，并让已开始的启动器更新先完成；模块自己的 `ui->post` 槽位保持独立。
+后台 heartbeat、`sleep_ms` 和命令处理栈不会执行这组发布回调。发布失败记录模块的
+`activation_error` 并停止后续阶段；发布前禁用或移除模块会取消尚未执行的阶段。
+旧版单回调模块仍只在第一阶段调用 `publish_native_app`。`ENABLE` 继续表示下次启动启用，
+本次立即运行仍使用 `ACTIVATE`；启动恢复沿用安装器的分阶段发布流程。此流程的验证状态仅为 host，
+不提升任何 exact-target 的真机批准状态。
+
 ---
 
 ## 5. 原生 UI SDK 目标

@@ -270,6 +270,8 @@ struct canopus_sup_module_v1 {
     uint8_t starts;
     /* Started this boot and not yet proven stable; started_ms is its start. */
     uint8_t watching;
+    /* Transient explicit-activation publication: 1 = pages, 2 = launcher. */
+    uint8_t native_app_stage;
     uint32_t started_ms;
 };
 
@@ -519,9 +521,12 @@ int canopus_supervisor_restore_registry_metadata(struct canopus_supervisor_v1 *s
 /* Load and activate enabled slots previously restored as metadata. */
 int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *sup);
 /* Publish native apps for loaded modules from a caller-owned UI-process
- * bootstrap transaction. Never call this from boot restore or a worker. */
+ * bootstrap transaction. Explicit activation uses the foreground pump below;
+ * neither path may publish from boot restore or a worker. */
 int canopus_supervisor_publish_native_apps(struct canopus_supervisor_v1 *sup,
                                            uint32_t stage);
+/* Advance one explicitly activated app on a foreground UI heartbeat. */
+void canopus_supervisor_native_apps_poll(struct canopus_supervisor_v1 *sup);
 
 int canopus_supervisor_register_descriptor(
     struct canopus_supervisor_v1 *sup,
