@@ -75,6 +75,7 @@ TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
 # at +0x1c. Select the 3.1.190 layout for targets whose IDB proved it.
 case "$TARGET_ID" in
     xiaomi-band-9-pro-3.1.190) TARGET_FLAGS="$TARGET_FLAGS -DCANOPUS_MGR_APPINFO_190" ;;
+    xiaomi-band-10-3.1.28) TARGET_FLAGS="$TARGET_FLAGS -DCANOPUS_MGR_APPINFO_1028" ;;
 esac
 
 INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \

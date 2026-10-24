@@ -112,10 +112,23 @@ struct firmware_app_descriptor {
     uint8_t _pad_20[0x18];                   /* +0x20 */
     uint8_t hidden_flags;                     /* +0x38 */
     uint8_t _tail_39[3];                      /* +0x39 */
-#else
+#elif defined(CANOPUS_MGR_APPINFO_1028)
+    /* 3.1.28 (Band 10 o66) launcher ABI: callback at +0x1c, hidden flag at
+     * +0x3c, app_install copies 0x40 bytes. */
     uint32_t registry_prev;                   /* +0x00 */
     uint32_t registry_next;                   /* +0x04 */
     const char *package_name;                 /* +0x08 */
+    const char *launcher_icon_resource;       /* +0x0c */
+    uint16_t app_id;                          /* +0x10 */
+    uint8_t flags;                            /* +0x12 */
+    uint8_t _pad_13;                          /* +0x13 */
+    const char *owned_string_20;              /* +0x14 */
+    const char *owned_string_24;              /* +0x18 */
+    const char *(*launcher_metadata_callback)(void); /* +0x1c */
+    uint8_t _pad_20[0x1c];                   /* +0x20 */
+    uint8_t hidden_flags;                     /* +0x3c */
+    uint8_t _tail_3d[3];                      /* +0x3d */
+#else
     const char *launcher_icon_resource;       /* +0x0c */
     uint16_t app_id;                          /* +0x10 */
     uint8_t flags;                            /* +0x12 */
@@ -215,6 +228,9 @@ _Static_assert(offsetof(struct firmware_page_descriptor, on_destroy) == 92,
 #if defined(CANOPUS_MGR_APPINFO_190)
 _Static_assert(sizeof(struct firmware_app_descriptor) == 60,
                "firmware app descriptor size (3.1.190)");
+#elif defined(CANOPUS_MGR_APPINFO_1028)
+_Static_assert(sizeof(struct firmware_app_descriptor) == 64,
+               "firmware app descriptor size (3.1.28)");
 #else
 _Static_assert(sizeof(struct firmware_app_descriptor) == 44,
                "firmware app descriptor size");

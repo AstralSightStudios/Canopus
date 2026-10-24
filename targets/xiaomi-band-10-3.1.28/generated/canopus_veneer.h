@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: dc7e1e8d43907986
+ * input_digest: e9be2bc9e655b6d9
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -113,7 +113,7 @@ static inline void canopus_fw_lvx_object_delete(void * a0) {
 
 typedef int (*canopus_fw_unregister_driver_fn)(const char *);
 static inline int canopus_fw_unregister_driver(const char * a0) {
-    return ((canopus_fw_unregister_driver_fn)(uintptr_t)0xc38fd01)(a0);
+    return ((canopus_fw_unregister_driver_fn)(uintptr_t)0x0c3938c1)(a0);
 }
 
 typedef void (*canopus_fw_lv_bar_set_value_fn)(void *, int32_t, uint32_t);

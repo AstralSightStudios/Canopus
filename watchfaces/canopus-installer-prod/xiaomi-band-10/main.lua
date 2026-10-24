@@ -485,7 +485,67 @@ local function release_stage0_region()
     return ok
 end
 
+-- Cave entry mode: stage 1 is written into the MPU-mapped cave and executed
+-- directly. Stage 1 performs the Kmem/MPU/stage-2 work in C, so this path does
+-- not depend on the firmware exec handler's Lua continuation ABI.
+local function load_supervisor_cave()
+    local stage1_source = read_all(stage1_resource, "r")
+    local stage2 = read_all(stage2_resource, "rb")
+    local supervisor = read_all(supervisor_resource, "rb")
+    if type(stage1_source) ~= "string" or type(stage2) ~= "string"
+        or type(supervisor) ~= "string" then
+        return false, "missing Band 9 bootstrap resources"
+    end
+    local compiler = loadstring or load
+    if type(compiler) ~= "function" then return false, "Lua compiler unavailable" end
+    local compiled, chunk, compile_error = pcall(compiler, stage1_source)
+    if not compiled then return false, tostring(chunk) end
+    if type(chunk) ~= "function" then return false, tostring(compile_error) end
+    local loaded, payload = pcall(chunk)
+    if not loaded then return false, tostring(payload) end
+    if type(payload) ~= "table" or type(payload.words) ~= "table"
+        or type(payload.size) ~= "number" or payload.size > 0xE00 then
+        return false, "invalid Band 9 stage-1 table"
+    end
+    run("mkdir /data/canopus")
+    if not write_all(STAGE2_PATH, stage2) then
+        return false, "cannot stage Band 9 stage-2"
+    end
+    if not write_all(SUPERVISOR_PATH, supervisor) then
+        return false, "cannot stage Band 9 Supervisor"
+    end
+    if not check_cave() then return false, "stage-0 preflight mismatch" end
+    local reserved, reserve_error = reserve_stage0_region()
+    if not reserved then return false, reserve_error end
+    local stage1_address = profile.cave + 0x100
+    if not write_words(stage1_address, payload.words) then
+        release_stage0_region()
+        return false, "stage-1 cave write failed"
+    end
+    -- Preserve the NSH exec caller's LR across blx; the old tail's
+    -- bx lr reused the blx return address and looped in the cave.
+    local trampoline = {
+        0x4803B510, 0x47984B03, 0x60104A01, 0xBF00BD10,
+        profile.cave_result, stage1_address + 1,
+    }
+    if not write_words(profile.cave, trampoline) then
+        release_stage0_region()
+        return false, "stage-0 trampoline write failed"
+    end
+    local exec_ok = stage0_exec_with_mpu(nil, nil, false)
+    release_stage0_region()
+    local result = shell_word(profile.cave_result)
+    if result == nil then return false, "stage-1 result read failed" end
+    if result >= 0x80000000 then result = result - 0x100000000 end
+    if not exec_ok and result == profile.cave_result then
+        return false, "stage-0 exec parser rejected target"
+    end
+    if result ~= 0 then return false, stage_result_error(result) end
+    return true
+end
+
 local function load_supervisor()
+    if profile.entry_mode == "cave" then return load_supervisor_cave() end
     local stage1_source = read_all(stage1_resource, "r")
     local stage2 = read_all(stage2_resource, "rb")
     local supervisor = read_all(supervisor_resource, "rb")

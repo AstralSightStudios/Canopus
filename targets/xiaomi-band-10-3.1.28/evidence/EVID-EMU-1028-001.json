@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-EMU-1028-001",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "Does the staged loader reach and register the Supervisor, complete the installer CPC2 sequence, and install the Manager app on the exact 3.1.28 firmware in Mirage?",
+  "candidate_symbols": [
+    "open",
+    "close",
+    "read",
+    "write",
+    "unlink",
+    "register_driver",
+    "app_lookup",
+    "app_install",
+    "launcher_load_app_info",
+    "launcher_page_insert_icon",
+    "launcher_reset_order_info"
+  ],
+  "prototype_hypothesis": "The 3.1.28 launcher ABI puts the metadata callback at +0x1c and the hidden flag at +0x3c with a 0x40-byte app record.",
+  "callsite_evidence": [
+    "Mirage firmware miwear.watch.o66tc_v3.1.28_full_03ac3e2b; vela_ap.bin SHA-256 fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845.",
+    "The registered installer package 366340003 was replaced with the rebuilt main.lua (AUTORUN=true for this run), profile, stage1/stage2 and Supervisor; the o66 Lua surface still does not dispatch button touches, so the run was driven by AUTORUN.",
+    "Run executed the cave stage0 (trampoline at 0x200E0000), stage1, stage2, the Supervisor constructor and opened /dev/canopus; the page showed 'Run completed'.",
+    "/data/canopus/registry.bin is 43 44 52 31 (CDR1); /data/canopus/{stage2.bin,supervisor.elf,manager_icon.bin,bootstrap-word.txt} exist.",
+    "The Supervisor target record at R+0x103c4 (R = Supervisor image base, read through QMP) is magic 0x434e5431, identity_result 0, app_install_result 0, launcher_add_result 0, notification_result 0, build_id 0x26081202, so the Manager app and its launcher entry were installed."
+  ],
+  "control_flow_evidence": [
+    "open 0xc390e1c / close 0xc38de04 / read 0xc38f8d0 / write 0xc38f910 / unlink 0xc391818 match the emulator-verified 3.1.32 wrappers.",
+    "app_install was corrected to 0xc4737e8 (the previous record was a text-layout routine); unregister_driver to 0xc3938c0 (inode lock/remove/unlock).",
+    "The Kmem pair (0xc121e5c/0xc11eefc, descriptor 0x2009359c) and the Umem pair (0xc12234c/0xc11eee8, descriptor 0x200936a8) are internally consistent.",
+    "The v8 backend selects the 3.1.28 app descriptor layout with CANOPUS_MGR_APPINFO_1028; the 3.1.32 layout would put the callback at +0x14 and read a null launcher slot."
+  ],
+  "ownership_analysis": "The Supervisor owns its Umem image and registry; the installer owns the staged files under /data/canopus. The Manager app registration is recorded in the Supervisor's target record.",
+  "unsafe_assumptions": [
+    "Emulator evidence only. The o66 Lua face does not dispatch touches, so this run used AUTORUN; a physical device or a fixed Lua input path is still required for a touch-driven run.",
+    "The Manager page was not opened (create_count stays 0); the LVGL object-creator aliases remain unverified for this build.",
+    "The app registry is not persisted to a visible /data database on this firmware; success is read from the live target record."
+  ],
+  "recommended_probe": "Repeat on a physical Band 10 3.1.28: open the Manager from the launcher, install/enable/disable a module, and check the v8 page widgets.",
+  "reviewers": [],
+  "verdict": "HOST_TESTED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

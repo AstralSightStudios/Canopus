@@ -5,14 +5,15 @@
   "name": "unregister_driver",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc38fd00",
+  "entry_address": "0x0c3938c0",
   "prototype": "int(const char *)",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
       "EVID-PORT-1028-001",
-      "EVID-PORT-1028-V8-ACCEPT"
+      "EVID-PORT-1028-V8-ACCEPT",
+      "EVID-PORT-1028-CORRECT"
     ]
   },
   "policy": "restricted",
@@ -20,11 +21,12 @@
   "provenance": {
     "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
     "evidence_ids": [
-      "EVID-PORT-1028-001"
+      "EVID-PORT-1028-001",
+      "EVID-PORT-1028-CORRECT"
     ],
-    "source": "Exact xiaomi-band-10-3.1.28 image/IDB compared with xiaomi-band-9-3.1.32: body differs (instruction fingerprint and pseudocode)."
+    "source": "Corrected from the 3.1.28 decompilation under EVID-PORT-1028-CORRECT; Driver unregister: inode_lock 0xc38e940, remove sub_C38C13C, inode_unlock 0xc38e748. The previous record was a two-argument VFS wrapper."
   },
   "approval_state": "PENDING",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. locks inode tree, removes path, unlocks, and returns negative errno 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path. manual static-test accept 2026-10-25; body/name evidence only, not ABI-audited.",
-  "callable_address": "0xc38fd01"
+  "notes": "Driver unregister: inode_lock 0xc38e940, remove sub_C38C13C, inode_unlock 0xc38e748. The previous record was a two-argument VFS wrapper. Address corrected from 0xc38fd00; the record stays restricted/STATIC_RECOVERED/PENDING. body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. locks inode tree, removes path, unlocks, and returns negative errno 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path. manual static-test accept 2026-10-25; body/name evidence only, not ABI-audited.",
+  "callable_address": "0x0c3938c1"
 }

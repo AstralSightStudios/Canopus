@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-1028-CORRECT",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "Which 3.1.28 entries implement app_install and unregister_driver, and which launcher app-descriptor layout does this build use?",
+  "candidate_symbols": [
+    "app_install",
+    "unregister_driver"
+  ],
+  "prototype_hypothesis": "The n66-derived match for app_install was a text-layout routine and the unregister record was a two-argument VFS wrapper.",
+  "callsite_evidence": [
+    "app_install is 0xc4737e8: it calls app_lookup 0xc4713dc, allocates a 0x40-byte record, copies 16 dwords from the descriptor, strdups +0x08/+0x0c/+0x14/+0x18, and logs with the app_install / free_app / installation failed strings.",
+    "unregister_driver is 0xc3938c0: inode_lock 0xc38e940, remove sub_C38C13C, inode_unlock 0xc38e748, the same shape as the 3.1.32 reference.",
+    "The previous app_install record 0xc3a454c is a UTF-8 text-layout routine (identical to the 3.1.190 function the n66-based matcher also mispredicted).",
+    "The previous unregister record 0xc38fd00 is a two-argument VFS wrapper, not the inode lock/remove/unlock sequence."
+  ],
+  "control_flow_evidence": [
+    "launcher_load_app_info 0xc29a1f8 reads the launcher metadata callback at +0x1c and the hidden flag at +0x3c, so the descriptor is 0x40 bytes with the callback after two owned strings — the 3.1.190-style layout, not the 3.1.32 one (+0x14).",
+    "The Kmem/Umem allocator pairs are internally consistent: kmem_malloc/kmem_free use descriptor 0x2009359c, memalign/free use 0x200936a8.",
+    "open/close/read/write/unlink/page_goto/page_finish/app_lookup/launcher_load/launcher_insert/launcher_reset/watchface_delete match the n66 reference bodies."
+  ],
+  "ownership_analysis": "No ownership change; two restricted record addresses are corrected and the v8 app descriptor gains a 3.1.28 layout variant.",
+  "unsafe_assumptions": [
+    "Static evidence only for the two corrected records; the o66 run has not been executed.",
+    "The LVGL object-creator aliases remain unverified for this build."
+  ],
+  "recommended_probe": "Rebuild the o66 Supervisor with CANOPUS_MGR_APPINFO_1028 and run the installer in Mirage; the constructor must complete app_install/launcher_load and open /dev/canopus.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

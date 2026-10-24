@@ -4,7 +4,7 @@
 // firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
 // sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
 // revision : 1
-// input_digest: dc7e1e8d43907986
+// input_digest: e9be2bc9e655b6d9
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -111,8 +111,8 @@ pub const CANOPUS_FW_GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = canopus_thumb_call
 /// Recovered `lvx_object_delete` at 0xc4e1010. Thumb callable address 0xc4e1011.
 pub const CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE: usize = canopus_thumb_callable(0xc4e1011usize);
 
-/// Recovered `unregister_driver` at 0xc38fd00. Thumb callable address 0xc38fd01.
-pub const CANOPUS_FW_UNREGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc38fd01usize);
+/// Recovered `unregister_driver` at 0x0c3938c0. Thumb callable address 0x0c3938c1.
+pub const CANOPUS_FW_UNREGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0x0c3938c1usize);
 
 /// Recovered `lv_bar_set_value` at 0xc341da4. Thumb callable address 0xc341da5.
 pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0xc341da5usize);
@@ -237,8 +237,8 @@ pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc44d50
 /// Recovered `lv_obj_add_flag` at 0xc2bb826. Thumb callable address 0xc2bb827.
 pub const CANOPUS_FW_LV_OBJ_ADD_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc2bb827usize);
 
-/// Recovered `app_install` at 0xc3a454c. Thumb callable address 0xc3a454d.
-pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc3a454dusize);
+/// Recovered `app_install` at 0x0c4737e8. Thumb callable address 0x0c4737e9.
+pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0x0c4737e9usize);
 
 /// Recovered `heap_malloc` at 0xc412894. Thumb callable address 0xc412895.
 pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc412895usize);
