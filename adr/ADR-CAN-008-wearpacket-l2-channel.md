@@ -82,6 +82,66 @@ COMPLETED=5、FAILED=6、DISALLOWED=7、REBOOT_REQUIRED=8。
   运行时返回 UNSUPPORTED，不套用其他固件的地址。
   所有相关符号仍是 restricted / PENDING，未真机探测；构建默认值不等于生产批准。
 
+## 发送失败与队列寿命（2026-10-24，host/static 证据）
+
+`l2_drain` 仅在原厂发送返回 0 或记录的会话已经失效时释放队头。会话相同而
+发送返回非零时，保留槽、读指针与明文，下一个 Bluetooth tick 再试。一次失败尝试
+也用掉当前 tick 的发送轮次，因此响应与事件仍按原规则轮流，既不忙循环，也不在
+同一 tick 重试两遍。保留现有 RX 深度、owner batch 和 2/10 ms 周期。
+
+原厂函数的返回值不是 POSIX `write` 的字节数；不能把正数解释成已发字节。
+三个精确镜像的加密 SAR 分支均为：
+
+| target | transport send | SAR submit | 成功 / 失败 |
+|---|---|---|---|
+| `.043` | `0x0c7d719c` | `0x0c7d639c` | 0 / -1 |
+| `.155` | `0x0c98f478` | `0x0c98e6b8` | 0 / -1 |
+| `.179` | `0x0c98d7f0` | `0x0c98ca30` | 0 / -1 |
+
+已按各 target 的 `evidence/l2-sram-probe.json` SHA-256 核对镜像。SAR 在长度、连接状态、
+积压或分配失败时返回 -1，不入队；成功时先复制 payload 到自有分配并链接 TX 队列，
+再返回 0。transport 将 SAR 的返回值传回；加密临时分配或 crypto 失败也返回 -1。
+成功只表示本地接管，不能证明手机收到。此结论限定为当前后端使用的加密 SAR 路径，
+不把其他原厂 transport 模式的返回路径解释成同样的交付保证。
+
+加密成功后，transport 会在调用 SAR 前把密文复制回输入 payload，所以即使返回 -1，
+输入也可能已经变化。`l2_send` 现在为每次尝试建立最多 548 字节的栈副本，队列一直
+保存明文；成功同步复制之后副本可释放，失败重试不会二次加密旧密文。没有新增常驻
+队列或每帧堆分配；`clang --target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft
+-Oz -ffreestanding -fno-builtin -fstack-usage` 编译真实 shim（tests/l2 配置）时，
+`l2_drain` 栈帧为 608 字节，原版为 56 字节，增量 552 字节。真机 Bluetooth 栈余量仍待测量。
+
+原厂 -1 不区分暂时拒绝与永久拒绝，因而当前会话仍有效时保留并重试所有非零结果，
+不猜测 errno、不按次数静默丢弃。如果会话始终不变且始终失败，该队列会一直背压，
+直到原厂接受或会话失效。断开（session 为 NULL）或替换会话时丢弃旧帧，避免把旧响应
+送给新会话；仍沿用已有的 session 指针身份约定。
+
+回归：`scripts/tests/test_l2_backend.py` 编译真实 Cortex-M33 shim 后在 Unicorn 执行，
+覆盖连续失败后恢复、明文保持、事件队列 BUSY、RPC 响应满时不重复执行 callback、
+响应/事件轮次，以及失败后断连/会话替换。修复前新用例返回 102，修复后通过。
+`scripts/tests/test_l2_send_firmware.py` 另外执行三个 SHA 匹配的真实 transport 与 SAR 函数体，
+覆盖 548 字节成功复制、SAR 分配拒绝、连接失活、加密临时分配失败和 crypto 失败；
+分配、AES 与下游唤醒为模型，不是无线或物理设备测试。缺固件/Unicorn 时显式跳过。
+相关符号、批准和设备状态保持不变。
+
+验证命令（Python 环境需已有 Unicorn，固件通过 `CANOPUS_FW_DIR` 定位）：
+
+```sh
+python3 scripts/tests/test_l2_backend.py -v
+python3 scripts/tests/test_l2_send_firmware.py -v
+for target in xiaomi-band-10-pro-3.101.043 xiaomi-band-11-4.100.155 xiaomi-band-11-4.100.179; do
+    CANOPUS_TARGET="$target" sh scripts/build_canopus_supervisor.sh || exit 1
+done
+```
+
+本次上述两组各 3 项测试全部通过（固件测试包含 15 个成功/故障子场景）；三目标构建与
+ELF verifier 均通过，0 undefined。文件 / resident 字节分别为 `.043` 125128 / 163430、
+`.155` 131232 / 182470、`.179` 131404 / 182606，未放宽预算。
+另执行 `CARGO_NET_OFFLINE=true CANOPUS_CI_KEEP_GOING=1 sh scripts/ci.sh`：6/9 gates 通过；
+gate 4/5 分别因既有 native-demo/cmod 的 unused-but-set-global 在当前 LLVM 上触发 Werror，
+gate 7 因安装资源目录额外的 `未命名表盘.bin` 及 timer-pump 测试漏链接
+`canopus_ui_host_poll` 失败。本补丁未改这些独立路径，也未把全 CI 记为通过。
+
 ## 初次联调记录（2026-10-17，后续修正见下文）
 
 043 / 155 的真实 Mirage 蓝牙查询和安装仍超时。043 实时 RAM 检查确认新连接的 RX

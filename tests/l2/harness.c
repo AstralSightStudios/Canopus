@@ -6,8 +6,11 @@
 uint32_t test_l2_head[2];
 static uint32_t node[4], connection[4];
 static uint32_t originals, dispatched, sent;
-static uint8_t sent_head[8][2]; /* first two payload bytes of each frame sent */
-static int decrypt_error, send_failures, send_result;
+static uint8_t sent_head[64][2]; /* first two plaintext payload bytes of each frame accepted */
+static uint32_t send_attempts;
+static int send_failure;
+static uint8_t attempted_head[2];
+static int decrypt_error;
 static uintptr_t session = 0x20008000u;
 void *test_l2_loop = (void *)0x2000a000u;
 void *test_l2_bt_loop = (void *)0x2000b000u;
@@ -32,19 +35,21 @@ int test_l2_send(void *s, const void *p)
 {
     /* struct l2_packet: channel, opcode, reserved, then the payload pointer. */
     uint8_t *payload = *(uint8_t *const *)((const uint8_t *)p + 4);
+    uint16_t len = *(const uint16_t *)((const uint8_t *)p + 8);
     (void)s;
-    if (send_failures != 0) {
-        send_failures--;
-        /* The native wrapper encrypts in place even if SAR submission then fails. */
-        payload[0] ^= 0xffu;
-        return -1;
-    }
-    if (sent < 8u) {
-        sent_head[sent][0] = payload[0];
-        sent_head[sent][1] = payload[1];
+    send_attempts++;
+    attempted_head[0] = payload[0];
+    attempted_head[1] = len > 1u ? payload[1] : 0;
+    /* Native transport copies ciphertext back before SAR can reject the send.
+     * Queue storage must therefore remain plaintext even after a failed attempt. */
+    for (uint16_t i = 0; i < len; i++) payload[i] ^= 0xa5u;
+    if (send_failure) return -1;
+    if (sent < 64u) {
+        sent_head[sent][0] = attempted_head[0];
+        sent_head[sent][1] = attempted_head[1];
     }
     sent++;
-    return send_result;
+    return 0;
 }
 void *test_l2_timer(void (*cb)(void *), uint32_t period, void *data)
 {
@@ -200,32 +205,6 @@ int exercise(void)
         bt_tick(bt_handle);
     }
 
-    /* Native crypto/SAR allocation can fail transiently on the device. Neither a Manager answer
-     * nor a module event may disappear, and a retry must start with plaintext, not ciphertext. */
-    {
-        uint32_t first = sent;
-        uint8_t frame[2] = {0xe7, 8};
-        rx(7u, 0x43u, 2u, request, sizeof(request));
-        owner_tick(owner_handle);
-        send_failures = 1;
-        bt_tick(bt_handle);
-        if (sent != first || bt_period != 2u) return 100;
-        send_result = 1; /* native SAR v1 returns positive success; v2 returns zero */
-        bt_tick(bt_handle);
-        if (sent != first + 1u || sent_head[first][0] != 0x42) return 101;
-        if (sup_l2_event(0, frame, sizeof(frame)) != 0) return 102;
-        send_failures = 1;
-        bt_tick(bt_handle);
-        if (sent != first + 1u || bt_period != 2u) return 103;
-        frame[1] = 9;
-        if (sup_l2_event(0, frame, sizeof(frame)) != 0) return 104;
-        bt_tick(bt_handle);
-        bt_tick(bt_handle);
-        if (sent != first + 3u || sent_head[first + 1u][0] != 0xe7 ||
-            sent_head[first + 1u][1] != 8 || sent_head[first + 2u][1] != 9) return 105;
-        send_result = 0;
-    }
-
     /* A burst: the ring's four requests are all served by one owner tick, in order, and the
      * answers wait on the response queue. A fifth request is not served while that queue is full
      * (its answer would be lost); it is served after the Bluetooth timer made room. */
@@ -264,6 +243,86 @@ int exercise(void)
         }
         if (dispatched != before + 16u || sent != first + 16u) return 95;
         if (bt_period != 10u) return 96;
+    }
+    /* A failed event remains at the head with its original bytes; retries each
+     * consume only one BT tick, preserve order, and keep the two slots occupied. */
+    {
+        uint8_t frame[2] = {0xe7, 0x31};
+        uint32_t first = sent, attempts = send_attempts;
+        if (sup_l2_event(0, frame, 2u) != 0) return 100;
+        frame[1]++;
+        if (sup_l2_event(0, frame, 2u) != 0) return 101;
+        send_failure = 1;
+        for (int i = 0; i < 3; i++) {
+            bt_tick(bt_handle);
+            if (send_attempts != attempts + (uint32_t)i + 1u || sent != first ||
+                attempted_head[0] != 0xe7 || attempted_head[1] != 0x31 ||
+                bt_period != 2u) return 102;
+        }
+        if (sup_l2_event(0, frame, 2u) != CANOPUS_SVC_ERR_BUSY) return 103;
+        send_failure = 0;
+        bt_tick(bt_handle);
+        if (sent != first + 1u || sent_head[first][0] != 0xe7 ||
+            sent_head[first][1] != 0x31) return 104;
+        bt_tick(bt_handle);
+        if (sent != first + 2u || sent_head[first + 1u][1] != 0x32 ||
+            bt_period != 10u) return 105;
+        bt_tick(bt_handle);
+        if (sent != first + 2u) return 106;
+    }
+
+    /* Failed RPC responses exert backpressure without re-executing callbacks.
+     * A queued event still gets its usual turn between response attempts. */
+    {
+        uint8_t frame[2] = {0xe7, 0x41};
+        uint32_t first = sent, before = dispatched, attempts = send_attempts;
+        for (int i = 0; i < 5; i++) rx(7u, 0x43u, 2u, request, sizeof(request));
+        owner_tick(owner_handle);
+        if (dispatched != before + 4u) return 110;
+        if (sup_l2_event(0, frame, 2u) != 0) return 111;
+        send_failure = 1;
+        bt_tick(bt_handle);
+        if (send_attempts != attempts + 1u || sent != first || attempted_head[0] != 0x42) return 112;
+        owner_tick(owner_handle);
+        if (dispatched != before + 4u) return 113;
+        bt_tick(bt_handle);
+        if (send_attempts != attempts + 2u || attempted_head[0] != 0xe7 ||
+            attempted_head[1] != 0x41) return 114;
+        send_failure = 0;
+        bt_tick(bt_handle);
+        if (sent != first + 1u || sent_head[first][0] != 0x42) return 115;
+        owner_tick(owner_handle);
+        if (dispatched != before + 5u) return 116;
+        bt_tick(bt_handle);
+        if (sent != first + 2u || sent_head[first + 1u][0] != 0xe7 ||
+            sent_head[first + 1u][1] != 0x41) return 117;
+        for (int i = 0; i < 4; i++) bt_tick(bt_handle);
+        if (sent != first + 6u || bt_period != 10u) return 118;
+    }
+
+    /* Both queues discard a failed old-session frame after disconnect or
+     * replacement, without invoking native send again or wedging the head. */
+    for (int replaced = 0; replaced < 2; replaced++) {
+        uint8_t frame[2] = {0xe7, 0x51};
+        uintptr_t previous = session;
+        uint32_t first = sent, attempts;
+        rx(7u, 0x43u, 2u, request, sizeof(request));
+        owner_tick(owner_handle);
+        if (sup_l2_event(0, frame, 2u) != 0) return 120;
+        send_failure = 1;
+        bt_tick(bt_handle);
+        bt_tick(bt_handle);
+        attempts = send_attempts;
+        session = replaced ? previous + 4u : 0;
+        send_failure = 0;
+        for (int i = 0; i < 4; i++) bt_tick(bt_handle);
+        if (sent != first || send_attempts != attempts || bt_period != 10u) return 121;
+        if (!replaced) session = previous + 4u;
+        rx(7u, 0x43u, 2u, request, sizeof(request));
+        owner_tick(owner_handle);
+        if (sup_l2_event(0, frame, 2u) != 0) return 122;
+        for (int i = 0; i < 4; i++) bt_tick(bt_handle);
+        if (sent != first + 2u || bt_period != 10u) return 123;
     }
     return 0;
 }
