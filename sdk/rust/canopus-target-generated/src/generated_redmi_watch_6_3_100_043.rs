@@ -4,7 +4,7 @@
 // firmware : 3.100.043 (d516af0:nx_best1502p_ap)
 // sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
 // revision : 1
-// input_digest: 9e0e3abb0e46874e
+// input_digest: 214184d6d74a03f7
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -15,6 +15,16 @@
 #[inline(always)]
 pub const fn canopus_thumb_callable(entry_or_callable: usize) -> usize {
     entry_or_callable | 1usize
+}
+
+// ---- recovered type layouts ----
+// `#[repr(C, packed(N))]` + explicit padding reproduces the exact
+// recovered byte layout and its target-declared alignment.
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct stock_timespec_t {
+    pub tv_sec: i64, // +0x0
+    pub tv_nsec: i32, // +0x8
 }
 
 // ---- runtime identity guard ----

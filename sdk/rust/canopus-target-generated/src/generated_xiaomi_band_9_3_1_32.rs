@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (N66NFC_3.1.32)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 2
-// input_digest: 0cc8ad606ffcea30
+// input_digest: d08086c142461628
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -20,6 +20,13 @@ pub const fn canopus_thumb_callable(entry_or_callable: usize) -> usize {
 // ---- recovered type layouts ----
 // `#[repr(C, packed(N))]` + explicit padding reproduces the exact
 // recovered byte layout and its target-declared alignment.
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct stock_timespec_t {
+    pub tv_sec: i64, // +0x0
+    pub tv_nsec: i32, // +0x8
+}
+
 #[repr(C, packed(4))]
 #[derive(Copy, Clone, Debug)]
 pub struct file_operations {

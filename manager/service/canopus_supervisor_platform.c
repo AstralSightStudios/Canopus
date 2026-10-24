@@ -18,6 +18,12 @@
 #if defined(CANOPUS_SUP_BAND11_BOOTSTRAP)
 #define CANOPUS_SUP_RESIDENT_DRIVER 1
 #endif
+#ifdef CANOPUS_SUP_BAND9_BOOTSTRAP
+/* Generated from targets/<id>/loader/bootstrap.toml by the build script. It
+ * carries the exact inode primitives; the stock register_driver wrapper
+ * discards inode_reserve errors. */
+#include "canopus_band9_loader_config.h"
+#endif
 #include "../../runtime/hook/canopus_hook.h"
 #include "canopus_installer_bundle.h"
 #include "canopus_module_registration.h"
@@ -152,9 +158,35 @@ CANOPUS_STATIC_ASSERT(CANOPUS_SUP_FOPS_WORDS * 4u == sizeof(file_operations),
 static int sup_register_driver_exact(const char *path, const void *fops,
                                      void *private_data)
 {
+#ifdef CANOPUS_SUP_BAND9_BOOTSTRAP
+    typedef int (*lock_fn)(void);
+    typedef int (*reserve_fn)(const char *, void **);
+    typedef int (*unlock_fn)(void);
+    lock_fn lock_inode = (lock_fn)(uintptr_t)CANOPUS_FW_INODE_LOCK;
+    reserve_fn reserve_inode =
+        (reserve_fn)(uintptr_t)CANOPUS_FW_INODE_RESERVE;
+    unlock_fn unlock_inode = (unlock_fn)(uintptr_t)CANOPUS_FW_INODE_UNLOCK;
+    uint8_t *inode = 0;
+    uint16_t type;
+    int unlock_result;
+    int result = lock_inode();
+
+    if (result < 0) return result;
+    result = reserve_inode(path, (void **)&inode);
+    if (result == 0) {
+        type = *(uint16_t *)(void *)(inode + 14u);
+        *(const void **)(void *)(inode + 16u) = fops;
+        *(uint16_t *)(void *)(inode + 14u) =
+            (uint16_t)((type & UINT16_C(0xFFF0)) | UINT16_C(7));
+        *(void **)(void *)(inode + 28u) = private_data;
+    }
+    unlock_result = unlock_inode();
+    return result != 0 ? result : unlock_result;
+#else
     return CANOPUS_SUP_REGISTER_DRIVER(path, fops,
                                         CANOPUS_SUP_DEVICE_MODE,
                                         private_data);
+#endif
 }
 
 static int sup_control_open(void *filep)

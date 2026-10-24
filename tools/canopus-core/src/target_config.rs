@@ -708,22 +708,31 @@ impl<'a> TargetConfigGen<'a> {
     fn custom_loader(&self) -> bool {
         self.pack.loader != "nuttx-modlib-elf32-rel"
     }
+    fn static_test(&self) -> bool {
+        self.pack.static_test_abi == Some(true)
+    }
+    /// Production codegen needs an explicit approval. A static-test pack may
+    /// additionally expose restricted STATIC_RECOVERED records as address
+    /// constants for loader/ABI bring-up; that is still not an approval and
+    /// the generated header carries `CANOPUS_SUP_STATIC_TEST_ABI`.
+    fn codegen_available(&self, symbol: &Symbol) -> bool {
+        let production = symbol.policy != "restricted"
+            && symbol.policy != "forbidden"
+            && symbol.approved_for_codegen();
+        let static_test = self.static_test()
+            && symbol.status == "STATIC_RECOVERED"
+            && symbol.policy == "restricted";
+        production || static_test
+    }
     fn veneer_callable_available(&self, name: &str) -> bool {
-        self.symbol(name).is_some_and(|symbol| {
-            symbol.callable_address.is_some()
-                && symbol.policy != "restricted"
-                && symbol.policy != "forbidden"
-                && symbol.approved_for_codegen()
-        })
+        self.symbol(name)
+            .is_some_and(|symbol| symbol.callable_address.is_some() && self.codegen_available(symbol))
     }
     fn mapping_available(&self, map: Mapping) -> bool {
         let Some(symbol) = self.symbol(map.symbol_name) else {
             return false;
         };
-        self.address(map).is_some()
-            && symbol.policy != "restricted"
-            && symbol.policy != "forbidden"
-            && symbol.approved_for_codegen()
+        self.address(map).is_some() && self.codegen_available(symbol)
     }
     fn platform_complete(&self, custom: bool) -> bool {
         // Stock modlib targets retain their established production contract. The
@@ -760,6 +769,9 @@ impl<'a> TargetConfigGen<'a> {
         out.push_str(&format!("#define CANOPUS_TARGET_ID \"{}\"\n#define CANOPUS_TARGET_FIRMWARE_VERSION \"{}\"\n#define CANOPUS_TARGET_FIRMWARE_BUILD \\\n    \"{}\"\n#define CANOPUS_SUP_PLATFORM_COMPLETE {}\n", self.pack.target_id, self.pack.firmware_version, self.pack.firmware_build, u8::from(complete)));
         if custom {
             out.push_str("#define CANOPUS_SUP_CUSTOM_LOADER 1\n");
+        }
+        if self.static_test() {
+            out.push_str("/* Static bring-up ABI only: restricted records are addresses,\n * not approvals. Do not ship this build as a production artifact. */\n#define CANOPUS_SUP_STATIC_TEST_ABI 1\n");
         }
         out.push('\n');
         // A zero completeness flag must not accompany executable candidate

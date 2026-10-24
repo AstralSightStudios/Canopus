@@ -4,12 +4,21 @@
  * firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
  * sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
  * revision : 1
- * input_digest: 673e85d7d5282c7d
+ * input_digest: 3b7980d4f1c5c22c
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_190_H
 #define CANOPUS_VENEER_XIAOMI_BAND_9_PRO_3_1_190_H
 
 #include <stdint.h>
+
+/* ---- recovered type layouts ---- */
+/* Explicit padding reproduces the exact recovered byte layout
+ * even when fields are sparse (e.g. launcher_order_record). */
+typedef struct stock_timespec_t stock_timespec_t;
+struct stock_timespec_t {
+    int64_t tv_sec; /* +0x0 */
+    int32_t tv_nsec; /* +0x8 */
+};
 
 /* ---- runtime identity guard ---- */
 static inline int canopus_str_neq(const char *a, const char *b)

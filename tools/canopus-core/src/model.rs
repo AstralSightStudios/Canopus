@@ -40,6 +40,11 @@ pub struct TargetPack {
     pub module_abi: u32,
     pub relocation_profile: String,
     pub revision: u32,
+    /// Static bring-up ABI: emit address constants/wrappers for restricted
+    /// STATIC_RECOVERED records. Never an approval; the generated header is
+    /// marked `CANOPUS_SUP_STATIC_TEST_ABI`.
+    #[serde(default)]
+    pub static_test_abi: Option<bool>,
     pub loader_profile: Option<LoaderProfile>,
     pub capabilities: Option<Vec<String>>,
     pub provenance: Option<TargetProvenance>,

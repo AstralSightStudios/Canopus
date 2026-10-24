@@ -264,6 +264,13 @@ impl<'a> VeneerGen<'a> {
         out.push_str(&format!(" * sha256   : {}\n", self.pack.firmware_sha256));
         out.push_str(&format!(" * revision : {}\n", self.pack.revision));
         out.push_str(&format!(" * input_digest: {}\n", self.input_digest()));
+        if self.static_test() {
+            out.push_str(
+                " * STATIC TEST ABI: restricted STATIC_RECOVERED records are\n\
+                 * emitted as addresses for loader bring-up. This is not an\n\
+                 * approval and must not be shipped as a production artifact.\n",
+            );
+        }
         out.push_str(" */\n");
         out.push_str("#ifndef CANOPUS_VENEER_");
         out.push_str(&guard);
@@ -487,6 +494,16 @@ impl<'a> VeneerGen<'a> {
         None
     }
 
+    fn static_test(&self) -> bool {
+        self.pack.static_test_abi == Some(true)
+    }
+    /// A restricted STATIC_RECOVERED record may be emitted as an address
+    /// constant in a static bring-up build. This never changes policy or
+    /// approval_state and the header is marked `CANOPUS_SUP_STATIC_TEST_ABI`.
+    fn static_available(&self, s: &Symbol) -> bool {
+        self.static_test() && s.status == "STATIC_RECOVERED" && s.policy == "restricted"
+    }
+
     /// The set of recovered type names emitted by this pack.
     fn type_names(&self) -> std::collections::BTreeSet<&str> {
         self.types
@@ -502,10 +519,11 @@ impl<'a> VeneerGen<'a> {
                 // A fixed firmware data address, emitted as a constant so C
                 // modules can read the slot (e.g. the connection-framework
                 // loop handle) through the same generated surface.
-                if s.status == "FORBIDDEN"
-                    || s.status == "WITHDRAWN"
-                    || s.policy == "restricted"
-                    || !s.approved_for_codegen()
+                if s.status == "FORBIDDEN" || s.status == "WITHDRAWN" {
+                    continue; // handled in notes
+                }
+                if !self.static_available(s)
+                    && (s.policy == "restricted" || !s.approved_for_codegen())
                 {
                     continue; // handled in notes
                 }
@@ -531,12 +549,13 @@ impl<'a> VeneerGen<'a> {
             if s.status == "FORBIDDEN" || s.status == "WITHDRAWN" {
                 continue; // handled in notes
             }
-            if s.policy == "restricted" {
+            if s.policy == "restricted" && !self.static_available(s) {
                 continue; // handled in notes
             }
             /* CAN-P1-012: a callable requires an explicit APPROVED promotion
-             * with at least one evidence id. PENDING/REJECTED never emits. */
-            if !s.approved_for_codegen() {
+             * with at least one evidence id. PENDING/REJECTED never emits,
+             * except an explicit static-test restricted record. */
+            if !s.approved_for_codegen() && !self.static_available(s) {
                 out.push_str(&format!(
                     "/* {}: not APPROVED (approval_state={}, evidence={}) - no veneer */\n",
                     s.name,
@@ -636,6 +655,8 @@ impl<'a> VeneerGen<'a> {
                     "{}: {} - no veneer may ever be generated",
                     s.name, s.status
                 ));
+            } else if self.static_available(s) {
+                // Emitted only in the static-test ABI; not an approval.
             } else if s.policy == "restricted" {
                 skipped.insert(format!(
                     "{}: restricted - not exported until context/ownership approved",

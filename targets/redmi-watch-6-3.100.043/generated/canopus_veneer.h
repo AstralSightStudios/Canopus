@@ -4,12 +4,21 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 1
- * input_digest: 9e0e3abb0e46874e
+ * input_digest: 214184d6d74a03f7
  */
 #ifndef CANOPUS_VENEER_REDMI_WATCH_6_3_100_043_H
 #define CANOPUS_VENEER_REDMI_WATCH_6_3_100_043_H
 
 #include <stdint.h>
+
+/* ---- recovered type layouts ---- */
+/* Explicit padding reproduces the exact recovered byte layout
+ * even when fields are sparse (e.g. launcher_order_record). */
+typedef struct stock_timespec_t stock_timespec_t;
+struct stock_timespec_t {
+    int64_t tv_sec; /* +0x0 */
+    int32_t tv_nsec; /* +0x8 */
+};
 
 /* ---- runtime identity guard ---- */
 static inline int canopus_identity_token_neq(const char *actual, const char *expected)

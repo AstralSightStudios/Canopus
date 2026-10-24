@@ -4,12 +4,21 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: 50e7795de36efec0
+ * input_digest: f9f72c2cf2a8d259
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_3_1_28_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_3_1_28_H
 
 #include <stdint.h>
+
+/* ---- recovered type layouts ---- */
+/* Explicit padding reproduces the exact recovered byte layout
+ * even when fields are sparse (e.g. launcher_order_record). */
+typedef struct stock_timespec_t stock_timespec_t;
+struct stock_timespec_t {
+    int64_t tv_sec; /* +0x0 */
+    int32_t tv_nsec; /* +0x8 */
+};
 
 /* ---- runtime identity guard ---- */
 static inline int canopus_identity_token_neq(const char *actual, const char *expected)

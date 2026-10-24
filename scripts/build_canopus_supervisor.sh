@@ -50,6 +50,14 @@ cd "$ROOT"
 if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
     "$CANOPUS_BIN" target generate "$TARGET_ID" --targets-dir "$ROOT/targets"
 fi
+# Staged Kmem loader targets (Band 9 family): materialize the exact inode /
+# MPU / allocator addresses the platform and stage1/stage2 compile against.
+if [ -f "$PACK_DIR/loader/bootstrap.toml" ]; then
+    python3 "$ROOT/scripts/generate_band9_loader_config.py" \
+        --profile "$PACK_DIR/loader/bootstrap.toml" \
+        --target-toml "$PACK_DIR/target.toml" \
+        --header "$OUT/canopus_band9_loader_config.h"
+fi
 
 echo "[1/3] compile supervisor (Cortex-M33 Thumb soft-float)"
 # Flags mirror native/scripts/build_btpatch_phase5.sh; -fno-function-sections
@@ -72,6 +80,15 @@ INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
   -I$ROOT/third_party/sha256 \
   -I$PACK_DIR/generated"
 
+# The LVGL v8 family implements the Manager directly in its backend; the
+# shared v9 UI host does not apply. Everything else still links the runtime.
+UI_HOST_SRC="manager/target/canopus_ui_host.c"
+UI_HOST_OBJECT="$OUT/canopus_ui_host.o"
+if [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
+    UI_HOST_SRC=""
+    UI_HOST_OBJECT=""
+fi
+
 # The v2 transport (CAN-P0-008) pulls the protocol codec and the snapshot
 # helpers into the module; both are freestanding (no libc).
 for s in \
@@ -91,7 +108,7 @@ for s in \
     runtime/ui/canopus_ui.c \
     sdk/c/canopus_aeabi_mem.c \
     third_party/sha256/sha256.c \
-    manager/target/canopus_ui_host.c \
+    $UI_HOST_SRC \
     "$MANAGER_BACKEND" \
     runtime/control/canopus_control.c \
     runtime/lifecycle/canopus_lifecycle.c \
@@ -132,7 +149,7 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_ui.o" \
     "$OUT/canopus_aeabi_mem.o" \
     "$OUT/sha256.o" \
-    "$OUT/canopus_ui_host.o" \
+    $UI_HOST_OBJECT \
     "$OUT/$BACKEND_OBJECT" \
     "$OUT/canopus_control.o" \
     "$OUT/canopus_lifecycle.o" \
@@ -195,6 +212,10 @@ cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
 if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
     python3 "$ROOT/scripts/build_band11_installer.py" --target "$TARGET_ID" --supervisor "$OUT/canopus_supervisor.elf" \
         --output-dir "${CANOPUS_BAND11_OUTPUT_DIR:-$PROD_FAMILY_STAGE}"
+elif [ "$PROD_FAMILY" = xiaomi-band-9 ]; then
+    CANOPUS_INSTALLER_STAGE_ROOT="$PROD_FAMILY_STAGE" \
+        sh "$ROOT/scripts/build_band9_bootstrap.sh" "$TARGET_ID" "$OUT"
+    echo "staged canopus-installer-prod/$PROD_FAMILY/ (main.lua + stage1/stage2/profile/supervisor)"
 else
     mkdir -p "$PROD_FAMILY_STAGE"
     PROD_TARGET_STAGE="$PROD_FAMILY_STAGE/canopus_supervisor-$TARGET_ID.bin"

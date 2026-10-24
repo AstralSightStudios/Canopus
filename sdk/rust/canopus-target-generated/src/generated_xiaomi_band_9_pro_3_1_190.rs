@@ -4,7 +4,7 @@
 // firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
 // sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
 // revision : 1
-// input_digest: 673e85d7d5282c7d
+// input_digest: 3b7980d4f1c5c22c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -15,6 +15,16 @@
 #[inline(always)]
 pub const fn canopus_thumb_callable(entry_or_callable: usize) -> usize {
     entry_or_callable | 1usize
+}
+
+// ---- recovered type layouts ----
+// `#[repr(C, packed(N))]` + explicit padding reproduces the exact
+// recovered byte layout and its target-declared alignment.
+#[repr(C, packed(4))]
+#[derive(Copy, Clone, Debug)]
+pub struct stock_timespec_t {
+    pub tv_sec: i64, // +0x0
+    pub tv_nsec: i32, // +0x8
 }
 
 // ---- runtime identity guard ----

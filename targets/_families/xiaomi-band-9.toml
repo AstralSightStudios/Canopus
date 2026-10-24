@@ -1,0 +1,15 @@
+# Shared build and generation data for the LVGL v8 Xiaomi Band 9 family.
+manager_backend = "manager/target/lvgl_v8/canopus_manager_target_lvgl_v8.c"
+# Build thresholds, not proven loader limits. The staged Kmem loader keeps the
+# Supervisor below the old 98,304-byte Band 9 ceiling; raise only with a
+# measured build.
+supervisor_max_size = 133120
+supervisor_max_resident = 163840
+loader_sources = [
+  "runtime/loader/canopus_arm_reloc.c",
+  "runtime/loader/canopus_elf32_loader.c",
+]
+defines = ["-DCANOPUS_SUP_BAND9_BOOTSTRAP=1"]
+prod_family = "xiaomi-band-9"
+private_symbols = false
+native_config = false

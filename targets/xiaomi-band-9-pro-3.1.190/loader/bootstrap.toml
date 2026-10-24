@@ -1,0 +1,87 @@
+# Firmware-bound staged Kmem loader profile for Xiaomi Band 9 Pro 3.1.190.
+# Stage 0 runs from an unassigned 4 KiB RAM gap, stage 1/2 from Kmem, and the
+# Supervisor is loaded by the portable ELF32 loader. Static evidence only:
+# nothing here has been executed on a device or emulator.
+schema = 1
+target_id = "xiaomi-band-9-pro-3.1.190"
+firmware_sha256 = "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f"
+loader_family = "staged-kmem-mpu"
+status = "STATIC_RECOVERED"
+device_status = "STATIC_CANDIDATE"
+command_family = "mw-exec"
+
+[stage0]
+# IDB segments: DATA 0x20096648..0x200af7f8, BSS ..0x200f0adc, MSP_STACK
+# 0x2015f260..0x2015fe60. The whole 0x200f0adc..0x2015f260 gap is the Kmem
+# heap, so stage 0 uses the unassigned low-RAM span below DATA instead.
+kind = "unassigned_privileged_ram_gap"
+base = 0x20080000
+size = 0x1000
+exec_size = 0x40
+stage0_region = 7
+result_word = 0x20080040
+original_words_known = false
+preserve_original = false
+status = "STATIC_CANDIDATE"
+requires_mpu_sync = true
+
+[stage]
+stage2_path = "/data/canopus/stage2.bin"
+supervisor_path = "/data/canopus/supervisor.elf"
+entry_argument = "unspecified-r0"
+thumb_entry = true
+
+[firmware]
+# exec/mw handlers: exact full-body matches of the 3.1.32 handlers.
+exec_handler = 0x0C1001BC
+mw_handler = 0x0C101FBC
+# VFS wrappers: open/read are exact bodies; close is the reviewed matcher
+# prediction (its pseudocode differs by the 3.1.190 error path).
+open = 0x0C37E30C
+close = 0x0C37DBA4
+read = 0x0C37F458
+# Allocators: mm_memalign_default and kmem_free are exact bodies. kmem_malloc
+# is one of two identical wrappers; the selected one calls the exact
+# kmem_free target's sibling allocator 0xc0f0bb0.
+memalign = 0x0C0F0E7C
+free = 0x0C0F0790
+kmem_malloc = 0x0C0F1170
+kmem_free = 0x0C0F07A4
+# MPU helpers: exact full-body matches.
+mpu_alloc = 0x0C51DAE8
+mpu_configure = 0x0C51D970
+mpu_release = 0x0C51DB40
+# Interior DSB SY; ISB SY; BX LR tail of the exact-mapped 0xc51d90c function.
+mpu_sync = 0x0C51D91E
+# Inode primitives: reserve/unlock exact; lock is the reviewed prediction.
+inode_lock = 0x0C378378
+inode_reserve = 0x0C4F032C
+inode_unlock = 0x0C379CF0
+
+[architecture]
+mpu_rnr = 0xE000ED98
+mpu_rbar = 0xE000ED9C
+mpu_rlar = 0xE000EDA0
+mpu_region_count = 8
+exec_access_attr = 1
+exec_mem_attr = 1
+ro_access_attr = 4
+rw_access_attr = 0
+
+[sram_text]
+base = 0x20080000
+size = 0x1000
+cave = 0x20080000
+result_word = 0x20080040
+original_words = [
+  0x00000000, 0x00000000, 0x00000000, 0x00000000,
+  0x00000000, 0x00000000, 0x00000000, 0x00000000,
+]
+
+[evidence]
+ids = ["EVID-PORT-9190-001"]
+unsafe_assumptions = [
+  "Stage-0 cave 0x20080000 is an unassigned low-RAM gap in the exact IDB; runtime ownership is not proven.",
+  "close and inode_lock are reviewed matcher predictions whose normalized pseudocode is similar but not identical; their ABI is not independently proven.",
+  "No loader, stage, Supervisor or installer has been executed on a device or emulator.",
+]

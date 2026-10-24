@@ -49,6 +49,11 @@
       "pattern": "^[a-z0-9_]+$",
       "description": "Suffix of sdk/rust/canopus-target-generated/src/generated_<rust_module>.rs."
     },
+    "static_test_abi": {
+      "type": "boolean",
+      "default": false,
+      "description": "Emit address constants/wrappers for restricted STATIC_RECOVERED records so a custom loader can be brought up. Not an approval; generated headers carry CANOPUS_SUP_STATIC_TEST_ABI."
+    },
     "device_family": {
       "type": "string"
     },

@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "type_id": "xiaomi-band-10-3.1.28.type.stock_timespec_t.v1",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "kind": "struct",
+  "name": "stock_timespec_t",
+  "size": 12,
+  "alignment": 4,
+  "fields": [
+    {
+      "name": "tv_sec",
+      "offset": 0,
+      "width": 8,
+      "signedness": "signed"
+    },
+    {
+      "name": "tv_nsec",
+      "offset": 8,
+      "width": 4,
+      "signedness": "signed"
+    }
+  ],
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-PORT-1028-001"
+    ],
+    "source": "NuttX timespec shape carried from the reviewed baseline layout; not independently re-derived on this image. Static-test ABI only."
+  }
+}
