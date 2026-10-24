@@ -74,6 +74,9 @@ COMPLETED=5、FAILED=6、DISALLOWED=7、REBOOT_REQUIRED=8。
   只有成功时才入队。明文控制请求不受理。
 - 每个请求保留 session 身份，断连后旧请求不投递给新 session；不在 Bluetooth worker 执行模块/UI 回调。
 - 原厂 send 会原地加密，因此传入独立可写缓冲；SAR submit 在返回前复制数据，不持有调用方栈地址。
+  原生发送返回负数时不能释放响应/事件槽：保留队列中的明文，下个 BT tick 重试；栈上的工作副本承受原地加密，
+  避免失败后重试把密文再加密。会话已变化的旧帧仍丢弃，不跨会话重发。ARM 模型回归覆盖失败保留、原文重试和队列内顺序；
+  此修复不等于已确认真机“新 Supervisor 下曲库/导入无响应”的完整根因。
 - .043 / .155 的 exact-target 静态证据在各自 `evidence/l2-sram-probe.json`。
   普通构建自动包含已实现的后端，不要求启用参数；未实现后端的 target 会在构建时明确提示，
   运行时返回 UNSUPPORTED，不套用其他固件的地址。

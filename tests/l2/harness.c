@@ -7,7 +7,7 @@ uint32_t test_l2_head[2];
 static uint32_t node[4], connection[4];
 static uint32_t originals, dispatched, sent;
 static uint8_t sent_head[8][2]; /* first two payload bytes of each frame sent */
-static int decrypt_error;
+static int decrypt_error, send_failures, send_result;
 static uintptr_t session = 0x20008000u;
 void *test_l2_loop = (void *)0x2000a000u;
 void *test_l2_bt_loop = (void *)0x2000b000u;
@@ -31,14 +31,20 @@ int test_l2_crypto(void *s, int encrypt, uint16_t len, const void *in, void *out
 int test_l2_send(void *s, const void *p)
 {
     /* struct l2_packet: channel, opcode, reserved, then the payload pointer. */
-    const uint8_t *payload = *(const uint8_t *const *)((const uint8_t *)p + 4);
+    uint8_t *payload = *(uint8_t *const *)((const uint8_t *)p + 4);
     (void)s;
+    if (send_failures != 0) {
+        send_failures--;
+        /* The native wrapper encrypts in place even if SAR submission then fails. */
+        payload[0] ^= 0xffu;
+        return -1;
+    }
     if (sent < 8u) {
         sent_head[sent][0] = payload[0];
         sent_head[sent][1] = payload[1];
     }
     sent++;
-    return 0;
+    return send_result;
 }
 void *test_l2_timer(void (*cb)(void *), uint32_t period, void *data)
 {
@@ -192,6 +198,32 @@ int exercise(void)
         if (sup_l2_event(0, frame, 2u) != 0) return 81; /* the slot was freed */
         bt_tick(bt_handle);                              /* drop that event's turn */
         bt_tick(bt_handle);
+    }
+
+    /* Native crypto/SAR allocation can fail transiently on the device. Neither a Manager answer
+     * nor a module event may disappear, and a retry must start with plaintext, not ciphertext. */
+    {
+        uint32_t first = sent;
+        uint8_t frame[2] = {0xe7, 8};
+        rx(7u, 0x43u, 2u, request, sizeof(request));
+        owner_tick(owner_handle);
+        send_failures = 1;
+        bt_tick(bt_handle);
+        if (sent != first || bt_period != 2u) return 100;
+        send_result = 1; /* native SAR v1 returns positive success; v2 returns zero */
+        bt_tick(bt_handle);
+        if (sent != first + 1u || sent_head[first][0] != 0x42) return 101;
+        if (sup_l2_event(0, frame, sizeof(frame)) != 0) return 102;
+        send_failures = 1;
+        bt_tick(bt_handle);
+        if (sent != first + 1u || bt_period != 2u) return 103;
+        frame[1] = 9;
+        if (sup_l2_event(0, frame, sizeof(frame)) != 0) return 104;
+        bt_tick(bt_handle);
+        bt_tick(bt_handle);
+        if (sent != first + 3u || sent_head[first + 1u][0] != 0xe7 ||
+            sent_head[first + 1u][1] != 8 || sent_head[first + 2u][1] != 9) return 105;
+        send_result = 0;
     }
 
     /* A burst: the ring's four requests are all served by one owner tick, in order, and the

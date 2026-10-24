@@ -85,9 +85,8 @@ struct l2_tx {
     uint32_t channel;
     uint8_t data[L2_FRAME_MAX];
 };
-/* Manager responses and CanopusConnect events never share a queue, so a chatty
- * module cannot delay or starve a Manager reply; events go out only when no
- * response is waiting. */
+/* Manager responses and CanopusConnect events never share a queue, so a chatty module cannot
+ * fill the response queue; the Bluetooth owner gives each queue its turn. */
 static struct l2_tx s_responses[L2_QUEUE_SIZE];
 static uint32_t s_tx_read, s_tx_write;
 static struct l2_tx s_events[L2_EVENT_QUEUE_SIZE];
@@ -198,12 +197,16 @@ static int l2_send(uint16_t handle, uint8_t channel, void *payload, uint16_t len
 {
     typedef int (*send_fn)(void *, const struct l2_packet *);
     struct l2_packet packet;
+    uint8_t frame[L2_FRAME_MAX];
     void *session = ((session_fn)(uintptr_t)L2_PROBE_SESSION)(handle);
     if (session == 0) return CANOPUS_SVC_ERR_STATE;
+    /* Native send encrypts in place before it tries the SAR allocation. Keep the queued
+     * plaintext intact so an allocation/backpressure failure can be retried on the next tick. */
+    canopus_memcpy(frame, payload, len);
     canopus_memset(&packet, 0, sizeof(packet));
     packet.channel = channel;
     packet.opcode = CANOPUS_L2_OPCODE_WRITE_ENC;
-    packet.payload = payload;
+    packet.payload = frame;
     packet.len = len;
     /* The recovered SAR submit copies the encrypted bytes before returning. */
     return ((send_fn)(uintptr_t)L2_PROBE_SEND)(session, &packet);
@@ -237,15 +240,16 @@ static int l2_queue_send(uint16_t handle, void *session, uint8_t channel,
                       payload, len) == 0 ? 0 : CANOPUS_SVC_ERR_NOMEM;
 }
 
-/* Sends the oldest queued frame of `queue` if there is one. */
+/* Sends the oldest frame, retaining it on a native send failure. Disconnected sessions are
+ * discarded; a live frame only frees its slot once native send has accepted its owned copy. */
 static int l2_drain(struct l2_tx *queue, uint32_t size, uint32_t *read)
 {
     uint32_t slot = *read;
     if (queue[slot].state != 2u) return 0;
     __asm__ volatile("dmb" ::: "memory");
-    if (((session_fn)(uintptr_t)L2_PROBE_SESSION)(queue[slot].handle) == queue[slot].session)
-        (void)l2_send(queue[slot].handle, (uint8_t)queue[slot].channel, queue[slot].data,
-                      queue[slot].len);
+    if (((session_fn)(uintptr_t)L2_PROBE_SESSION)(queue[slot].handle) == queue[slot].session &&
+        l2_send(queue[slot].handle, (uint8_t)queue[slot].channel, queue[slot].data,
+                queue[slot].len) < 0) return 0;
     __asm__ volatile("dmb" ::: "memory");
     queue[slot].state = 0u;
     *read = (slot + 1u) % size;
