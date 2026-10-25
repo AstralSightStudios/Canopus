@@ -58,10 +58,16 @@ def validate(profile: dict, target: dict) -> tuple[dict, dict, dict, dict, dict]
     stage0_result = number(stage0.get("result_word"), "stage0.result_word")
     original_words_known = stage0.get("original_words_known", True)
     requires_mpu_sync = stage0.get("requires_mpu_sync", False)
+    stage0_mpu = stage0.get("stage0_mpu", True)
+    image_mpu_lease = stage0.get("image_mpu_lease", False)
+    if not isinstance(image_mpu_lease, bool):
+        raise SystemExit("stage0.image_mpu_lease must be boolean")
     if not isinstance(original_words_known, bool):
         raise SystemExit("stage0.original_words_known must be boolean")
     if not isinstance(requires_mpu_sync, bool):
         raise SystemExit("stage0.requires_mpu_sync must be boolean")
+    if not isinstance(stage0_mpu, bool):
+        raise SystemExit("stage0.stage0_mpu must be boolean")
     if stage0_region >= number(architecture.get("mpu_region_count"),
                               "architecture.mpu_region_count"):
         raise SystemExit("stage0.stage0_region is outside the MPU region count")
@@ -185,6 +191,7 @@ def write_header(path: pathlib.Path, profile: dict, stage0: dict, firmware: dict
         f"#define CANOPUS_BAND9_EXEC_MEM_ATTR {number(architecture['exec_mem_attr'], 'architecture.exec_mem_attr')}u",
         f"#define CANOPUS_BAND9_RO_ACCESS_ATTR {number(architecture['ro_access_attr'], 'architecture.ro_access_attr')}u",
         f"#define CANOPUS_BAND9_RW_ACCESS_ATTR {number(architecture['rw_access_attr'], 'architecture.rw_access_attr')}u",
+        f"#define CANOPUS_BAND9_IMAGE_MPU_LEASE {1 if stage0.get('image_mpu_lease', False) else 0}",
         "",
         "#endif",
         "",
@@ -237,6 +244,7 @@ def write_lua(path: pathlib.Path, profile: dict, firmware: dict, architecture: d
         field("stage0_size", stage0["size"]),
         field("stage0_region", stage0["stage0_region"]),
         field("stage0_exec_size", stage0["exec_size"]),
+        f"    stage0_mpu = {lua_bool(stage0.get('stage0_mpu', True))},",
         f"    cave_original_known = {lua_bool(stage0.get('original_words_known', True))},",
         "    cave_original = {",
     ]

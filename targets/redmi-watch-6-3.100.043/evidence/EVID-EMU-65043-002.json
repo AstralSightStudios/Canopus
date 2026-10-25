@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-EMU-65043-002",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Which p65 3.100.043 VFS entries does the staged loader need, and do they behave as NuttX open/close/read from an NSH exec context?",
+  "candidate_symbols": [
+    "close"
+  ],
+  "prototype_hypothesis": "The ported close record (0x1c154c40) is wrong; the exact entry is the one the VFS syscall table publishes between open and read.",
+  "callsite_evidence": [
+    "The table at 0xc4a96c4 holds, in order, 0x1c1580e5 (open), 0x1c154d9d, 0x1c158721 (read), 0x1c159a2d; open and read are independently recovered NuttX entries, so the second slot is close.",
+    "Mirage p65 device p65-canopus-test: open('/data/canopus/stage2.bin', 1) from an NSH exec stub returns fd 3; close at 0x1c154d9d returns 0; a second close on the same fd returns -1 (EBADF).",
+    "Calling the previously ported 0x1c154c40 with the same fd resets the emulated device, so the ported address is not close on this image."
+  ],
+  "control_flow_evidence": [
+    "read(fd, buf, 64) at 0x1c158720 returns 0x40 with the first bytes of stage2.bin in the buffer."
+  ],
+  "ownership_analysis": "No ownership claimed; the probe runs from the same unassigned cave 0x2019e800 the loader uses.",
+  "unsafe_assumptions": [
+    "Emulator evidence only (host/emulator level); no physical device has run this.",
+    "The VFS table is read from the image, not from a live symbol table; a table relocation would invalidate it.",
+    "Only open/close/read were probed; write remains unprobed."
+  ],
+  "recommended_probe": "Re-run the staged loader end to end on a Mirage p65 device and confirm /dev/canopus appears.",
+  "reviewers": [],
+  "verdict": "HOST_TESTED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

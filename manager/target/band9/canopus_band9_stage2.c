@@ -11,6 +11,10 @@
 #endif
 
 #define SUPERVISOR_PATH "/data/canopus/supervisor.elf"
+
+#ifndef CANOPUS_BAND9_IMAGE_MPU_LEASE
+#define CANOPUS_BAND9_IMAGE_MPU_LEASE 0
+#endif
 #define FW_OPEN CANOPUS_FW_OPEN
 #define FW_CLOSE CANOPUS_FW_CLOSE
 #define FW_READ CANOPUS_FW_READ
@@ -26,9 +30,22 @@ struct stage2_state {
     uint8_t regions[3];
     uint32_t region_count;
     void *image_raw;
+    uint32_t region_size;
     volatile int32_t *result;
     int32_t diag;
 };
+
+/* Smallest power-of-two window that holds the image; the BES MPU only maps
+ * power-of-two regions whose base is aligned to that size. */
+static uint32_t image_region_size(uint32_t size)
+{
+    uint32_t window = 32u;
+    while (window < size) {
+        if (window > UINT32_C(0x40000000)) return 0;
+        window <<= 1;
+    }
+    return window;
+}
 
 /* The resident image is larger than the remaining Kmem. Allocate it from
  * Umem (the firmware's PSRAM heap) and lease an executable MPU region over it.
@@ -41,6 +58,13 @@ static void *image_allocate(void *cookie, uint32_t size, uint32_t alignment,
     void *image;
 
     if (alignment == 0u || (alignment & (alignment - 1u)) != 0u) return 0;
+#if CANOPUS_BAND9_IMAGE_MPU_LEASE
+    /* A single region has to cover the whole image, so the allocation itself
+     * must be aligned to (and sized no larger than) that power-of-two window. */
+    state->region_size = image_region_size(size);
+    if (state->region_size == 0u) return 0;
+    alignment = state->region_size;
+#endif
     image = ((memalign_fn)(uintptr_t)FW_MEMALIGN)(alignment, size);
     if (image == 0) return 0;
     state->image_raw = image;
@@ -94,6 +118,23 @@ static int image_finalize(void *cookie, void *allocation, uint32_t target_base,
     if (target_base != data_base) { state->diag = -301; return -1; }
     if (count < 2u || count > 3u ||
         regions[0].kind != CANOPUS_ELF_REGION_EXEC) { state->diag = -302; return -1; }
+#if CANOPUS_BAND9_IMAGE_MPU_LEASE
+    /* Firmware whose tasks run unprivileged only reach the Supervisor through
+     * an MPU region, so one writable/executable window covers the whole image
+     * (code and data share the allocation). */
+    (void)physical_count;
+    (void)base; (void)length; (void)access; (void)i;
+    id = ((alloc_fn)(uintptr_t)FW_MPU_ALLOC)();
+    if (id >= CANOPUS_BAND9_MPU_REGION_COUNT) { state->diag = -310; return -1; }
+    state->regions[state->region_count++] = (uint8_t)id;
+    {
+        int32_t config_rc = ((configure_fn)(uintptr_t)FW_MPU_CONFIGURE)(
+            id, target_base, state->region_size,
+            CANOPUS_BAND9_RW_ACCESS_ATTR, CANOPUS_BAND9_EXEC_MEM_ATTR);
+        if (config_rc != 0) { state->diag = -320 + config_rc; return -1; }
+    }
+    return 0;
+#else
     /* The runtime has almost all MPU regions leased. The Supervisor lives in
      * Umem (PSRAM); the privileged default map already covers it as normal,
      * executable memory, so no additional MPU lease is required. */
@@ -131,6 +172,7 @@ static int image_finalize(void *cookie, void *allocation, uint32_t target_base,
         }
     }
     return 0;
+#endif
 }
 
 static int image_invoke(void *cookie, uint32_t callable)

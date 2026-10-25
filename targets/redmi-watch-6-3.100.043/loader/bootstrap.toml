@@ -24,7 +24,18 @@ result_word = 0x2019E840
 original_words_known = false
 preserve_original = false
 status = "STATIC_CANDIDATE"
+# The cave lies outside every enabled MPU region at runtime (regions 0 and 1
+# cover low memory, region 2 ends at 0x201958a0, 3..7 are disabled), so the
+# privileged default map already allows fetching and reading it. Programming
+# region 7 before the exec rebooted the emulated p65 from the NSH prompt; the
+# loader leaves the descriptors alone.
+stage0_mpu = false
 requires_mpu_sync = false
+# Driver callbacks (the fops the Supervisor registers) and the Supervisor's own
+# constructors run in unprivileged tasks, which only reach code through an MPU
+# region; the default map is not enough. Lease one writable/executable window
+# over the whole resident image. Emulator evidence: EVID-EMU-65043-002.
+image_mpu_lease = true
 
 [stage]
 stage2_path = "/data/canopus/stage2.bin"
@@ -38,7 +49,7 @@ entry_mode = "cave"
 exec_handler = 0
 mw_handler = 0
 open = 0x1C1580E4
-close = 0x1C154C40
+close = 0x1C154D9C
 read = 0x1C158720
 # The default BES heap lives in PSRAM (Mirage reads the descriptor slot
 # 0x3c3d7e9c as 0x3c57f980), so the resident image is allocated there and runs

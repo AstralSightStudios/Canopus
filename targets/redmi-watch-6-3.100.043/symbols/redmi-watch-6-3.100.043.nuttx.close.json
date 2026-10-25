@@ -1,31 +1,31 @@
 {
-  "schema": 1,
-  "symbol_id": "redmi-watch-6-3.100.043.close",
-  "target_id": "redmi-watch-6-3.100.043",
-  "name": "close",
-  "kind": "function",
-  "instruction_set": "thumb",
-  "prototype": "int(int)",
-  "proof": {
-    "static": "recovered",
-    "device": "not_probed",
-    "evidence_ids": [
-      "EVID-PORT-P65-001",
-      "EVID-STATIC-P65-002"
-    ]
-  },
-  "policy": "restricted",
-  "status": "STATIC_RECOVERED",
-  "provenance": {
-    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
-    "evidence_ids": [
-      "EVID-PORT-P65-001",
-      "EVID-STATIC-P65-002"
-    ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
-  },
-  "entry_address": "0x1c154c40",
-  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): NuttX close: fs_files.c:1006 file-table lookup, fd range check, reference decrement and last-reference release. Reviewed against the 3.1.28/3.1.190 semantics in the exact 3.100.043 IDB. Restricted/PENDING; device NOT_PROBED. body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (close) Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
-  "approval_state": "PENDING",
-  "callable_address": "0x1c154c41"
+ "schema": 1,
+ "symbol_id": "redmi-watch-6-3.100.043.close",
+ "target_id": "redmi-watch-6-3.100.043",
+ "name": "close",
+ "kind": "function",
+ "instruction_set": "thumb",
+ "prototype": "int(int)",
+ "proof": {
+  "static": "recovered",
+  "device": "not_probed",
+  "evidence_ids": [
+   "EVID-PORT-P65-001",
+   "EVID-STATIC-P65-002"
+  ]
+ },
+ "policy": "restricted",
+ "status": "STATIC_RECOVERED",
+ "provenance": {
+  "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+  "evidence_ids": [
+   "EVID-STATIC-P65-002",
+   "EVID-EMU-65043-002"
+  ],
+  "source": "Exact redmi-watch-6-3.100.043 image: VFS syscall table at 0xc4a96c4 (open 0x1c1580e5, close 0x1c154d9d, read 0x1c158721) plus a Mirage open/close/double-close probe."
+ },
+ "entry_address": "0x1c154d9c",
+ "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002, EVID-EMU-65043-002): NuttX close (fs_files.c file-table lookup, fd range check, reference decrement, last-reference release). Address corrected from the ported 0x1c154c40 to the entry the VFS syscall table at 0xc4a96c4 publishes next to open 0x1c1580e5 and read 0x1c158721; Mirage p65 probe: open -> close returns 0, a second close on the same fd returns -1. Restricted/PENDING; device NOT_PROBED.",
+ "approval_state": "PENDING",
+ "callable_address": "0x1c154d9d"
 }

@@ -4,7 +4,7 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 1
- * input_digest: f7408e47378a217f
+ * input_digest: d0d908be619371fe
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -406,7 +406,7 @@ static inline void canopus_fw_lv_bar_set_value(void * a0, int32_t a1, uint32_t a
 
 typedef int (*canopus_fw_close_fn)(int);
 static inline int canopus_fw_close(int a0) {
-    return ((canopus_fw_close_fn)(uintptr_t)0x1c154c41)(a0);
+    return ((canopus_fw_close_fn)(uintptr_t)0x1c154d9d)(a0);
 }
 
 typedef void * (*canopus_fw_lv_label_create_fn)(void *);

@@ -96,12 +96,15 @@ local function load_profile(selected_target)
     end
     for _, key in ipairs({
         "memalign", "free", "kmem_malloc", "kmem_free", "mpu_alloc", "mpu_configure", "mpu_release",
-        "mpu_sync", "mpu_rnr", "mpu_rbar", "mpu_rlar", "mpu_region_count",
+        "mpu_rnr", "mpu_rbar", "mpu_rlar", "mpu_region_count",
         "exec_access_attr", "exec_mem_attr", "rw_access_attr", "cave",
         "cave_result", "stage0_size", "stage0_region", "stage0_exec_size",
     }) do
         if type(value[key]) ~= "number" then return nil end
     end
+    -- mpu_sync is optional: BES targets whose configure call already flushes
+    -- the region attribute publish no separate sync routine.
+    if value.mpu_sync ~= nil and type(value.mpu_sync) ~= "number" then return nil end
     if (value.exec_access_attr ~= 1 and value.exec_access_attr ~= 2)
         or value.rw_access_attr ~= 0
         or value.exec_mem_attr < 0 or value.exec_mem_attr > 7
@@ -225,6 +228,9 @@ local function stage0_mpu_values()
 end
 
 local function mpu_sync_command()
+    -- A profile without a sync routine gets a no-op so every command list
+    -- keeps its shape (the BES configure call publishes the attributes).
+    if type(profile.mpu_sync) ~= "number" then return "true" end
     return string.format("exec 0x%08x", profile.mpu_sync)
 end
 
@@ -238,34 +244,44 @@ local function stage0_mpu_release()
 end
 
 local function stage0_exec_with_mpu(address, prefix, keep_region, postfix)
-    local writable_rbar, executable_rbar, rlar = stage0_mpu_values()
+    -- Profiles with stage0_mpu = false keep the cave outside every active MPU
+    -- region, where the privileged default map already allows the fetch.
+    local use_mpu = profile.stage0_mpu ~= false
+    local writable_rbar, executable_rbar, rlar
+    if use_mpu then
+        writable_rbar, executable_rbar, rlar = stage0_mpu_values()
+    end
     local commands = {}
     if prefix then
         for _, command in ipairs(prefix) do
             commands[#commands + 1] = command
         end
     end
-    commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rnr,
-        profile.stage0_region)
-    commands[#commands + 1] = string.format("mw %08x=%08x",
-        profile.mpu_rbar, writable_rbar)
-    commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rlar, rlar)
-    commands[#commands + 1] = string.format("mw %08x=%08x",
-        profile.mpu_rbar, executable_rbar)
-    commands[#commands + 1] = mpu_sync_command()
-    commands[#commands + 1] = string.format("exec 0x%08x", profile.cave + 1)
-    if address then
+    if use_mpu then
         commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rnr,
             profile.stage0_region)
-        commands[#commands + 1] = string.format("mw %08x=00000000", profile.mpu_rlar)
+        commands[#commands + 1] = string.format("mw %08x=%08x",
+            profile.mpu_rbar, writable_rbar)
+        commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rlar, rlar)
+        commands[#commands + 1] = string.format("mw %08x=%08x",
+            profile.mpu_rbar, executable_rbar)
         commands[#commands + 1] = mpu_sync_command()
+    end
+    commands[#commands + 1] = string.format("exec 0x%08x", profile.cave + 1)
+    if address then
+        if use_mpu then
+            commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rnr,
+                profile.stage0_region)
+            commands[#commands + 1] = string.format("mw %08x=00000000", profile.mpu_rlar)
+            commands[#commands + 1] = mpu_sync_command()
+        end
         commands[#commands + 1] = string.format("exec 0x%08x", address)
         if postfix then
             for _, command in ipairs(postfix) do
                 commands[#commands + 1] = command
             end
         end
-    elseif not keep_region then
+    elseif use_mpu and not keep_region then
         commands[#commands + 1] = string.format("mw %08x=%08x", profile.mpu_rnr,
             profile.stage0_region)
         commands[#commands + 1] = string.format("mw %08x=00000000", profile.mpu_rlar)
