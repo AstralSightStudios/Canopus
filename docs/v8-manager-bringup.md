@@ -824,3 +824,11 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   与 Band 10 Pro / Band 11 一致。
   注：这一次的确认是由**幻影点击**代劳的（第一次点模块行的手势把「启用」及其确认一起点了），
   所以交互本身仍然需要修（幻影/偏移），但**功能通路已经验证**。
+- **n67 不显示的分析（代码侧）**：`canopus_manager_native_open()` 只做一件事——
+  `page_goto((app_id<<16)|0, 0, 0, 0)`，返回值 >= 0 就当作成功。第二十轮的 n67 打点里
+  **`dm-Y0` 与 `dm-Y3` 都在**（`FW_PAGE_LOOKUP` 对 (app_id<<16)|0 和 |1 都能查到节点），
+  所以页面 key 是对的、页也确实注册了；`page_goto` 返回 0 但屏幕不动，说明 3.1.190 上
+  光 push 页面不够——很可能还需要先把 Manager 这个 **app/activity 切到前台**
+  （3.1.28/3.1.32 上从表盘 push 就能显示，所以这条是 3.1.190 特有）。
+  下一步在 IDB 里找 3.1.190 的 app 切换/`app_switch`/launcher 打开入口（对照 `FW_APP_INSTALL`
+  附近调用），或者用 `FW_PAGE_LOOKUP` 拿到页节点后看它的 owner app 与前台判定。
