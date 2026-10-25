@@ -27,6 +27,21 @@ not_probed）。
 顺带修掉一个潜伏 bug：`target_set_hidden` 原来用 `0x10`，那是 LVGL v8 的
 `SCROLLABLE`，`HIDDEN` 是 `0x01`——之前「隐藏」的行其实只是变成了可滚动。
 
+
+### launcher 条目与页面点击（2026-10-25 第二轮）
+
+- **条目显示位**：`launcher_load_app_info`（o66 `0xc29a1f8`）把 app 描述符 **+0x3C
+  字节的 bit1** 拷进 launcher 条目 `entry+16` 的 bit2（`4 * ((*(app+60) & 2) != 0)`），
+  `draw_page_with_list`（`0xc29b070`）遍历条目时只画带这一位的；`app_install` 只清
+  bit0（hidden）。描述符因此设 `hidden_flags = 0x02`（仅 `.28` 布局）。
+  之前“注册不进 launcher”是这一位为 0，条目在列表里但永远不画。
+- **行点击**：v8 的普通 `lv_obj` 默认没有 `LV_OBJ_FLAG_CLICKABLE`（bit1），
+  行对象加上它之后事件才会到达 `target_dispatch_row`。
+- **换页必须延后一拍**：`page_goto`/`page_finish` 会同步跑页面过渡并销毁源页，
+  在输入回调里调用它会在回调返回后访问 `on_destroy` 刚清空的上下文（o66 上表现为
+  整机复位）。现在路由只记录目标页，由 `lv_timer_create(cb, 1, NULL)` 在下一拍
+  `page_goto`/`page_finish`，回调返回时不再碰页面上下文。
+
 ### 版面约束（三块屏尺寸不同）
 
 n66 192×490、n67 336×480、o66 212×520；`scripts/build_canopus_supervisor.sh` 按

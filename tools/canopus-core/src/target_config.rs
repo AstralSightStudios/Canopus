@@ -258,6 +258,16 @@ const FW_10: &[Mapping] = &[
 /// without them still builds a complete Supervisor.
 const V8_TEXT_FONT: &[Mapping] = &[
     Mapping {
+        macro_name: "FW_LV_TIMER_CREATE",
+        symbol_name: "lv_timer_create",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LV_TIMER_DEL",
+        symbol_name: "lv_timer_del",
+        address: Address::Callable,
+    },
+    Mapping {
         macro_name: "FW_LVX_FONT_CREATE",
         symbol_name: "lvx_font_create",
         address: Address::Callable,
