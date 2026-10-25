@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: 462eafc037cf5645
+ * input_digest: 26b00680b749e7ae
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -153,7 +153,7 @@ static inline void canopus_fw_lv_obj_clear_flag(void * a0, uint32_t a1) {
 
 typedef void * (*canopus_fw_lv_obj_add_event_cb_fn)(void *, void *, uint32_t, void *);
 static inline void * canopus_fw_lv_obj_add_event_cb(void * a0, void * a1, uint32_t a2, void * a3) {
-    return ((canopus_fw_lv_obj_add_event_cb_fn)(uintptr_t)0xc20dfbd)(a0, a1, a2, a3);
+    return ((canopus_fw_lv_obj_add_event_cb_fn)(uintptr_t)0xc2b7c41)(a0, a1, a2, a3);
 }
 
 typedef int (*canopus_fw_bt_l2cap_submit_cid_fn)(void *, uint16_t);
@@ -218,7 +218,7 @@ static inline int canopus_fw_close(int a0) {
 
 typedef void * (*canopus_fw_lv_img_create_fn)(void *);
 static inline void * canopus_fw_lv_img_create(void * a0) {
-    return ((canopus_fw_lv_img_create_fn)(uintptr_t)0xc3269f5)(a0);
+    return ((canopus_fw_lv_img_create_fn)(uintptr_t)0xc22d4f5)(a0);
 }
 
 typedef void (*canopus_fw_lv_label_set_text_fn)(void *, const char *);
@@ -239,7 +239,7 @@ static inline int canopus_fw_thirdparty_submit_message_content(const void * a0, 
 /* lv_timer_create: skipped (argument type not mappable) */
 typedef void * (*canopus_fw_lv_bar_create_fn)(void *);
 static inline void * canopus_fw_lv_bar_create(void * a0) {
-    return ((canopus_fw_lv_bar_create_fn)(uintptr_t)0xc392c89)(a0);
+    return ((canopus_fw_lv_bar_create_fn)(uintptr_t)0xc341d05)(a0);
 }
 
 typedef int (*canopus_fw_launcher_reset_order_info_fn)(void);

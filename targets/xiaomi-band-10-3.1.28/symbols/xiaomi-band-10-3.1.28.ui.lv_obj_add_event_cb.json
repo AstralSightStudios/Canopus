@@ -5,14 +5,13 @@
   "name": "lv_obj_add_event_cb",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc20dfbc",
+  "entry_address": "0xc2b7c40",
   "prototype": "void *(void *, void *, uint32_t, void *)",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-1028-001",
-      "EVID-PORT-1028-V8-ACCEPT"
+      "EVID-STATIC-1028-V8-001"
     ]
   },
   "policy": "restricted",
@@ -20,11 +19,12 @@
   "provenance": {
     "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
     "evidence_ids": [
-      "EVID-PORT-1028-001"
+      "EVID-STATIC-1028-V8-001"
     ],
-    "source": "Exact xiaomi-band-10-3.1.28 image/IDB compared with xiaomi-band-9-3.1.32: body differs (instruction fingerprint and pseudocode)."
+    "source": "exact xiaomi-band-10-3.1.28 IDB: class struct + call-site review"
   },
   "approval_state": "PENDING",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. appends a 12-byte callback/code/user-data event descriptor 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path. manual static-test accept 2026-10-25; body/name evidence only, not ABI-audited.",
-  "callable_address": "0xc20dfbd"
+  "notes": "manual static-test accept 2026-10-25 on the exact 3.1.28 IDB: lv_obj_add_event_cb(obj, cb, filter, user_data) at 0xc2b7c40 - locks the object, appends through the event list helper 0xc31ec76 at obj+8+8, returns. The ported 0xc20dfbc is a draw routine. Restricted/PENDING; device not probed.",
+  "callable_address": "0xc2b7c41",
+  "evidence_ids": null
 }

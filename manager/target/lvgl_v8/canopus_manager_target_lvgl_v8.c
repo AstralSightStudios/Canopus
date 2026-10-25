@@ -1348,15 +1348,3 @@ int canopus_manager_native_notify(const char *source, const char *title,
     (void)icon;
     return -1;
 }
-
-int canopus_manager_native_open(void)
-{
-    typedef int32_t (*page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
-    page_goto_fn page_goto = (page_goto_fn)(uintptr_t)FW_ACTIVITY_NAVIGATE;
-
-    if (canopus_manager_target_record.identity_result != 0) {
-        return -1;
-    }
-    return page_goto(target_page_key(CANOPUS_TARGET_PAGE_OVERVIEW), 0u, 0u, 0u) < 0
-               ? -1 : 0;
-}
