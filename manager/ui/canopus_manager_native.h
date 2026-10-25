@@ -57,6 +57,10 @@ struct canopus_manager_native_v1 {
     char stage_token[CANOPUS_MANAGER_STAGE_TOKEN_MAX];
     uint32_t confirm_event;
     uint32_t confirm_return_view;
+    /* Set by a target that renders a view in place: the click that opened it
+     * can still deliver a second event on the freshly rendered rows, so the
+     * first confirmation it triggers is dropped instead of armed. */
+    uint8_t swallow_confirm;
     canopus_manager_native_route_v1 route;
     void *route_cookie;
     canopus_manager_native_refresh_v1 refresh;
