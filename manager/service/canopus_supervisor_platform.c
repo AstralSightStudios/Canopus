@@ -62,14 +62,15 @@ static const char *const s_module_suffix[SUP_KIND_COUNT] = {
  * flash syscalls per byte. */
 #define CANOPUS_SUP_READ_CHUNK 1024u
 /* NuttX open() flag encoding. The Band 9 generation uses the MIwear values
- * derived from 3.1.28/3.1.190 (O_WRONLY 2, O_CREAT 0x4); the REDMI Watch 6 VFS
- * takes the stock NuttX encoding — Mirage probes: open(path, 0x241) creates the
- * file, the 2|0x4 pair does not. */
+ * derived from 3.1.28/3.1.190 (O_WRONLY 2, O_CREAT 0x4). The REDMI Watch 6 VFS
+ * accepts O_CREAT only in the stock NuttX encoding (0x40), and a read needs
+ * O_RDONLY 1 there: with 0 every read of a staged file fails with EACCES, which
+ * blocked the receipt read (diagnostic -1213) until it was fixed. */
 #if defined(CANOPUS_MGR_REDMI_WATCH)
-#define CANOPUS_SUP_NUTTX_O_RDONLY 0
-#define CANOPUS_SUP_NUTTX_O_WRONLY 1u
+#define CANOPUS_SUP_NUTTX_O_RDONLY 1
+#define CANOPUS_SUP_NUTTX_O_WRONLY 2u
+#define CANOPUS_SUP_NUTTX_O_RDWR 3u
 #define CANOPUS_SUP_NUTTX_O_CREAT 0x40u
-#define CANOPUS_SUP_NUTTX_O_RDWR 2u
 /* Creating a file on this VFS needs O_TRUNC alongside O_CREAT: open(path, 0x41)
  * returns ENOENT for a missing path, open(path, 0x241) creates it. */
 #define CANOPUS_SUP_NUTTX_O_TRUNC 0x200u

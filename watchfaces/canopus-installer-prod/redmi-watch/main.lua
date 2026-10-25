@@ -753,7 +753,9 @@ local function persist_registry()
 end
 
 local function device_error()
-    local reply = exchange(CMD_QUERY_DEVICE, nil, CPC2_HEADER + 36)
+    -- CQD1 payload is 88 bytes (CANOPUS_QUERY_DEVICE_SIZE); the error code sits
+    -- at payload offset 24.
+    local reply = exchange(CMD_QUERY_DEVICE, nil, CPC2_HEADER + 88)
     return reply and signed32(u32le(reply, CPC2_HEADER + 24)) or 0
 end
 
