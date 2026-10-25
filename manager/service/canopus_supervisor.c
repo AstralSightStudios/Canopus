@@ -743,6 +743,26 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
             break;
         }
         module = &sup->modules[slot];
+        /* A disable/enable round trip rewrites the state word while the code
+         * stays resident (enable never unloads), so the record reads ENABLED
+         * for a module that is already running. Loading it again fails with
+         * "already inserted" and marks a live module failed, so report the
+         * resident state instead. */
+        if (module->descriptor != 0 &&
+            module->state == CANOPUS_STATE_ENABLED &&
+            module->intent == CANOPUS_SUP_INTENT_ENABLED) {
+            module->state = module->lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE
+                                ? CANOPUS_STATE_ACTIVE
+                                : CANOPUS_STATE_BOOT_RESIDENT;
+            module->activation_error = 0u;
+            rc = CANOPUS_RESULT_COMPLETED;
+            canopus_supervisor_module_changed(sup, (uint32_t)slot);
+            if (canopus_supervisor_save_registry(sup) != 0) {
+                sup->error_code = CANOPUS_SUP_ERR_REGISTRY;
+                rc = CANOPUS_RESULT_FAILED;
+            }
+            break;
+        }
         if ((module->state == CANOPUS_STATE_INSTALLED ||
              module->state == CANOPUS_STATE_ENABLED) &&
             module->intent == CANOPUS_SUP_INTENT_ENABLED) {

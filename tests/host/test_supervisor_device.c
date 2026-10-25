@@ -587,6 +587,32 @@ TEST(supervisor_activation_serializes_modules_and_supports_legacy_publication)
     }
 }
 
+TEST(supervisor_activation_reports_a_resident_module_instead_of_reloading)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform;
+    struct canopus_module_descriptor_v1 descriptor;
+    setup_native_activation(&sup, &platform, &descriptor);
+    CHECK_EQ(activation_command(&sup, CANOPUS_SUP_CMD_ACTIVATE, 0u),
+             CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(g_loads, 1);
+    CHECK_EQ(sup.modules[0].state, CANOPUS_STATE_BOOT_RESIDENT);
+    /* Disable then enable again: the record goes back to ENABLED while the
+     * code never left memory. The second activation reports the module that is
+     * already running instead of inserting it a second time. */
+    CHECK_EQ(activation_command(&sup, CANOPUS_SUP_CMD_DISABLE, 0u),
+             CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK_EQ(activation_command(&sup, CANOPUS_SUP_CMD_ENABLE, 0u),
+             CANOPUS_RESULT_REBOOT_REQUIRED);
+    CHECK_EQ(sup.modules[0].state, CANOPUS_STATE_ENABLED);
+    CHECK_EQ(activation_command(&sup, CANOPUS_SUP_CMD_ACTIVATE, 0u),
+             CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(g_loads, 1);
+    CHECK_EQ(sup.modules[0].state, CANOPUS_STATE_BOOT_RESIDENT);
+    CHECK_EQ(sup.modules[0].activation_error, 0u);
+    finish_native_activation();
+}
+
 TEST(supervisor_activation_publication_failure_is_persisted_and_notified)
 {
     struct canopus_supervisor_v1 sup, restored;
@@ -2123,6 +2149,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "supervisor_explicit_activation_loads_enabled_installed_slot", supervisor_explicit_activation_loads_enabled_installed_slot_wrapper },
     { "supervisor_activation_publishes_on_separate_foreground_turns", supervisor_activation_publishes_on_separate_foreground_turns_wrapper },
     { "supervisor_activation_serializes_modules_and_supports_legacy_publication", supervisor_activation_serializes_modules_and_supports_legacy_publication_wrapper },
+    { "supervisor_activation_reports_a_resident_module_instead_of_reloading", supervisor_activation_reports_a_resident_module_instead_of_reloading_wrapper },
     { "supervisor_activation_publication_failure_is_persisted_and_notified", supervisor_activation_publication_failure_is_persisted_and_notified_wrapper },
     { "supervisor_activation_skips_failed_non_native_and_cancelled_publication", supervisor_activation_skips_failed_non_native_and_cancelled_publication_wrapper },
     { "supervisor_restore_after_boot_command_loads_enabled_slots_once", supervisor_restore_after_boot_command_loads_enabled_slots_once_wrapper },
