@@ -221,3 +221,17 @@ v8 的滚动入口。
 - **o66 上离开 Manager 页没有可靠手势**：模块子页面上返回手势可用（已验证），但
   概览页（根页）上返回手势和 home 键都不回到表盘、屏幕直接变黑，所以还没能在
   o66 上用真实手势走到 launcher 去核对「更多」里的条目。
+
+### 第八轮：3.1.32/3.1.190 的字体记录已补，但崩溃不在字体
+
+- 给两代 Band 9 固件补了字体记录（`lvx_font_create` + 属性 90 的本地样式设置器，
+  `EVID-STATIC-9132-V8-002` / `EVID-STATIC-9190-V8-002`），生成器新增可选映射
+  `FW_LV_OBJECT_SET_LOCAL_STYLE_PROP`，后端在没有 `lv_obj_set_text_font` 时走这条路径。
+  三台 verifier 全 PASS，`target generate --check` 与 host 测试全绿。
+- **但它不解决 n66 的崩溃**：不带字体时（`-DCANOPUS_MGR_NO_TITLE` 那版）同样在第一次
+  label 创建就复位，说明崩点在 `lv_label_create` 本身（或它的 class init），而字体是在
+  之后才应用的。`0xc28f5f4` 与 label class（构造器 `0xc295624`）本身反编译都对得上，
+  所以问题更可能在「在页面管理器给的容器上初始化 label」这一步。
+- o66 上按用户的真实路径（表盘上滑到底 → 更多）已经能走到应用的「更多」页
+  （截图：日程/待办/呼吸放松），但还没翻到底确认 Manager 条目；o66 的 Mirage 实例
+  在这之后又进入黑屏不响应的状态。
