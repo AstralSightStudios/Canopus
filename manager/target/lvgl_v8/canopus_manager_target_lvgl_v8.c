@@ -579,6 +579,14 @@ static void target_dispatch_row(uint32_t row_index, void *event)
             event.event_id = binding->event_id;
             event.type = CANOPUS_UI_EVENT_ACTIVATE;
             rc = canopus_ui_dispatch_event(&context->native.ui, &event);
+            /* A click that the ui context drops leaves the page visibly dead;
+             * say why (S=stale generation, A=key/event mismatch, U=no
+             * capability) instead of a bare C<row>. */
+            if (rc != CANOPUS_UI_OK) {
+                diag_mark('D', rc == CANOPUS_UI_ERR_STALE ? 'S'
+                             : rc == CANOPUS_UI_ERR_ARGUMENT ? 'A'
+                             : rc == CANOPUS_UI_ERR_UNSUPPORTED ? 'U' : 'E');
+            }
         }
         canopus_manager_target_record.selected_after = manager_model.selected;
         if (rc == CANOPUS_UI_ERR_DISABLED) {

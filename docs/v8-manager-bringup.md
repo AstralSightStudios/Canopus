@@ -566,3 +566,44 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   screendensity，**没有 ro.build.version**；版本串只在 flash 头部（`0x810` 附近的 "3.1.190"），
   Lua 侧读不到，模块表盘的固件识别无从下手。要做 n67 的模块安装，先得给它一个可读的
   版本来源（例如让 Supervisor 暴露 firmware_version，或安装表盘改从 `/dev/canopus` 查询身份）。
+
+### 第二十三轮：n66 激活链路打通，residency 上的 ACTIVATE 修正
+
+- **槽位不是参数，而是 payload**：v2 命令里 ENABLE/DISABLE/REMOVE/ROLLBACK/ACTIVATE 的槽位由
+  `sup_slot_from_module_id(sup, payload, payload_size)` 从 **payload 的模块 id** 解析
+  （`canopus_supervisor.c:1232`），不是请求头里的 arg0。空 payload 一律 `DISALLOWED(7)`；
+  探针发的 `arg0=0` 全部落在这里，别再按「槽位号」写。
+- **n66 全链路实测（Mirage，hello_portable）**：`QUERY_MODULE`（payload = `u32 slot`）→
+  CQM1 里 `state=3`（INSTALLED）、`activation_error=0`、id 正确；`ENABLE`（payload = id）→
+  `result=8`（REBOOT_REQUIRED），状态变 5（ENABLED）；`ACTIVATE`（payload = id）→ 加载成功，
+  状态 9（ACTIVE）。即管理器详情页的「启用 → 立即激活」在协议层与 Band 10 Pro / Band 11 一致。
+- **修正：代码已驻留时的 ACTIVATE 不再二次 insmod**。可达路径：模块 ACTIVE → 详情页「禁用」
+  （状态 DISABLED_NEXT_BOOT）→「启用」（状态 ENABLED，但代码从未离开内存）→「立即激活」。
+  旧行为会在 `sup_load_slot` 里再跑一次 `insmod`，失败返回 `-1` 并把**仍在运行的**模块标成
+  FAILED（`activation_error=0xFFFFFFFF`）并释放它的服务；实测 q2 即为 `state=15 act=4294967295`。
+  现在 `descriptor != 0 && state == ENABLED && intent == ENABLED` 的 ACTIVATE 直接按
+  REMOVABLE→ACTIVE / 否则 BOOT_RESIDENT 报告 COMPLETED，不重复加载。host 测试
+  `supervisor_activation_reports_a_resident_module_instead_of_reloading` 覆盖（去掉修正时
+  该测试以 `g_loads == 2` 失败，确认用例有效）。
+- **Mirage 环境备忘（n66）**：
+  - n66 的 `miragectl sh` 不可用（`shell: nsh pid 8` 之后等不到提示符，p67 正常），
+    所以 diag 打点要在关机后用 `fs ls <device> nand_data /canopus` / `fs get` 读，
+    live 卷与 `dm-*` 清理都得走关机态；`rm` 通过 `os.execute` 在表盘里删不掉 `dm-*`。
+  - **安装表盘会换掉当前表盘，但管理器页会留在屏幕上**（新表盘画面被它压住），要让它消失只能
+    重启；因此「点详情页」必须在管理器页刚出现的窗口里做。
+  - **registry 里有模块时，Run 之后一旦切换表盘，探针就再也拿不到 `/dev/canopus` 的 CPC2 应答**
+    （探针只打印 `open_manager -> nil`，还没区分是打不开设备节点还是没有应答）；registry 为空时
+    切表盘不受影响（跑完 Run 再装探针表盘，管理器页照常出现）。这一条是激活体验的下一个卡点：
+    要么查清模块恢复路径为什么把 Supervisor 带走，要么让管理器页在 Run 里直接完成交互。
+  - n66 表盘数量有上限，测试表盘攒多了会 `ExceedQuantityLimit`；同一个 package id 重装是
+    `Downgrade`，每次装新表盘换一个 id。bridge 的 `watchfaces` / `removeWatchface` 可以在不
+    擦机的情况下清干净（当前表盘不能删）。
+  - `miragectl erase` 会重新生成设备身份（serial/did/bt addr），但 `device.json` 里的 authKey
+    还是旧的，BT 认证会一直失败；要么删掉 bridge 的 `abstate/` 重新配对，要么 `delete` 后
+    `create` 重建设备。
+- **管理器点击还没定位完**：diag 打点里 `dm-C0`/`dm-C9`（动作行收到 CLICKED）存在，但
+  `dm-j*`（`target_route`）与 `dm-KP`（`FW_ACTIVITY_NAVIGATE`）都不存在，说明点击进入了行
+  回调却没有产生路由。给 `canopus_ui_dispatch_event` 的返回值补了 diag 标记
+  （`D` + `S`/`A`/`U` = STALE/ARGUMENT/UNSUPPORTED），下一轮先清空打点、只点一次「模块」行，
+  看是代次过期还是 key 不匹配；点不动也可能是管理器页本身没拿到输入焦点（页由探针的
+  OPEN_MANAGER 建立时会这样），要用 Run 自带的那次页面做对照。
