@@ -540,3 +540,14 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 - 记录：o66 的表盘按钮不吃触摸、AUTORUN 又是唯一触发方式，所以 o66 的每次改动都必须用
   AUTORUN 跑一遍才能确认没有回归；另外 o66 安装新表盘**不会自动切换**，要覆盖「当前活动
   目录」（用日志里的 `watchface(<id>)` 确认是哪一个）才会生效。
+- **本地模块安装的协议已经查清**（下一轮可直接实现）：`canopus_supervisor_handle_*` 的
+  命令分发里，`CANOPUS_CMD_STAGE_BEGIN..STAGE_RES_FINISH` 走的是同一套 CPC2 命令通道
+  （`manager/service/canopus_supervisor.c:1188`），也就是**写 `/dev/canopus` 就能喂**，
+  不需要 L2。序列（见 `tests/host/test_supervisor_upload.c`）：
+  1. `STAGE_BEGIN`，payload = `struct canopus_install_receipt_v1`（magic/version/header_size/
+     module_version/artifact_size/module_id/target_id/firmware_sha256）；
+  2. 若干 `STAGE_WRITE`，payload = `[u32 offset][分块数据]`，必须按顺序、offset 连续；
+  3. `STAGE_FINISH` 无 payload → 校验并发布到 `/data/canopus/inbox/<module_id>.ko.next`；
+  4. 再用 `INSTALL`（带 stage token）/`ENABLE`/`ACTIVATE` 完成安装与激活。
+  安装器已经有 `exchange()`（CPC2 请求/应答）和读文件能力，缺的只是把这段序列写成 Lua，
+  并把一个给 Band 9 编好的模块（`.canopus` 里的 `*.ko`）随表盘资源一起部署。
