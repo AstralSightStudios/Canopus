@@ -815,10 +815,6 @@ static int32_t manager_event(void *cookie,
     case CANOPUS_MANAGER_EVENT_REMOVE:
     case CANOPUS_MANAGER_EVENT_EXIT_SAFE_KEEP:
     case CANOPUS_MANAGER_EVENT_EXIT_SAFE_DISABLE:
-        if (native->swallow_confirm != 0u) {
-            native->swallow_confirm = 0u;
-            return CANOPUS_UI_OK;
-        }
         native->confirm_return_view = model->view;
         native->confirm_event = event_id;
         return canopus_manager_native_render(native);
