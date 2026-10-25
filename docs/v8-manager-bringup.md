@@ -69,16 +69,19 @@ not_probed）。
 - 打点确认 n66 的页 **能创建**：`context→client init→open→refresh→select view→
   native init→apply 完成`（标记 `c1 l1 o1 q1 v1 n1 Z1 I0`）。`I0` = on_create 跑完、
   页面进入 interactive。
-- 之前卡在 `lvx_page_title_create`：把页标题建在**固件给的页容器**上时，3.1.32
-  的 `0xc4c5f60` 不返回（页面随即被拆、屏幕变黑）。现在**始终自建 screen**（忽略固件
-  给的容器），标题与行都建在上面：o66 上这条路一直显示的很好，n66 上页面也能完整
-  创建（`T1 … I0`），但屏幕仍停在表盘，显示切换还没解决。
+- **页要显示，必须在固件给的容器上建 stock 页标题**：把标题换成普通 label（页面照样
+  `I0`、照样 interactive）时 o66 的屏幕永远停在表盘。所以现在：有容器 → 用容器 +
+  `lvx_page_title_create`；没有容器 → 自建 screen + stock 标题。
+- 3.1.32 上 `lvx_page_title_create` 建在这个容器上**不返回**（打点 `T0` 有、`T1` 没有，
+  页面被拆、屏幕变黑）。这是 n66/n67 目前唯一的拦路点。
 - n66 上页面创建完成后**屏幕仍显示表盘**：`goto_page_no_check_stacktop` 找到了页
   （`page_lookup` 打点 `Y0`/`Y3`），on_create 也跑完（`I0`），但显示没切过去——
   3.1.32 在 quickapp 表盘之上叠加 native 页的行为还没弄清；下一步是看 `0xc4b456c`
   里 `sub_C45EA4C`/`sub_C45BB5C` 的条件。
-- 屏幕根对象收到 `R6..R9`（长按重复/点击/释放/滚动开始），说明 LVGL 的 indev 确实
-  覆盖我们的页面；o66 的行点击是否被命中还未验证。
+- 触摸链路另有发现：这颗固件给我们的点击是 **`SHORT_CLICKED`(4)**，不是 `CLICKED`(7)
+  （诊断探针收到 `0/3/4/5/9` 全套，没有 7）。行回调已同时接受 4 与 7。清掉根对象的
+  bit4（当 `SCROLLABLE` 用）会让页面完全不显示，说明这颗固件的 bit4 不只是滚动位，
+  已回滚。
 ### 版面约束（三块屏尺寸不同）
 
 n66 192×490、n67 336×480、o66 212×520；`scripts/build_canopus_supervisor.sh` 按
