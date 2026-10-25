@@ -371,3 +371,8 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
 - 用带打点的构建重跑 n67（当前代码）：`ST i0 iy c1 l1 o1 q1 v1 T0` —— 安装完成、页面创建、
   走到标题创建 `T0` 后仍不返回（`T1` 缺失），和 n66 的「label/标题创建在页面容器上不返回」
   是同一类问题，两代 Band 9 固件都卡在这里。
+- 在 n67 上换用 PLAIN 标题分支（不调 stock 标题，改为「普通容器 + 标签」）后，打点仍停在
+  `T0`，连 `T2`（容器创建后的标记）都没有——和 n66 一样：**在这两代固件上，往
+  page manager 给的 root 上创建任何子对象都不返回**。o66(3.1.28) 上同样代码正常，
+  所以问题在这一代 `lv_obj_create(parent=页面容器)` 的 class init/refresh 路径，
+  下一步必须换成固件自带的容器 API（例如 `lvx_page_content_create`）来承载内容。
