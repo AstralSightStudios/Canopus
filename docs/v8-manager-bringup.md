@@ -352,3 +352,14 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
   区域编程的 MPU 属性没有覆盖到 trampoline 访问的那个地址。
 - 下一步：核对 `reserve_stage0_region`/`stage0_exec_with_mpu` 写的 MPU 区域（base/size/attr）
   与 cave 的实际范围，把 `cave`+`cave_result` 一起覆盖进去。
+
+### 第十四轮：n66 cave 模式的 MPU 故障（下一步的入口）
+
+- 三台的 stage-0 几何完全一致（`exec_size = 0x40`、`result_word = base + 0x40`、`stage0_region = 7`），
+  而 o66（base 0x200E0000）可用、n66（base 0x200D0000）在 `exec` 后报
+  `MemManage CFSR 0x00020082 MMFAR 0x200d0000`。所以不是区域尺寸算错，而是
+  n66 上这套 MPU 编程没有真正覆盖 cave：
+  - 待查 1：`mw 0xE000ED98/9C/A0` 在 3.1.32 的 NSH 任务里写入的是哪个安全态的 MPU
+    （Secure 与 Non-secure 的 MPU 是两套），以及 `exec mpu_sync` 后是否还需要 ISB 之外的同步。
+  - 待查 2：cave 基址 0x200D0000 在 3.1.32 上是否已经被固件自己的区域占用（n67 用 0x20080000、
+    o66 用 0x200E0000，只有 n66 落在这个区间）。
