@@ -278,3 +278,9 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
   113916 B，同一次 Run **不再产生新的 minidump**——stage-0 的 `exec` UsageFault 消失。
   说明这条 cave trampoline 对镜像体积/Umum 分配很敏感，产物必须按发布体积（非 diag）
   来测。下一次要在设备上确认「无 fault 之后」页面是否真的被创建。
+- **修掉 stage-0 之后露出真正的第二个崩溃**：体积降到 113916 B 后，同一次 Run 里出现的是
+  **MemManage Fault（IRQ 3）**，backtrace 落在我们模块自己的地址段
+  （`0x0c3d14b8 0x0c4f455a 0x0c3cd998`），不再是 stage-0 的 NSH exec。也就是说：
+  之前那条 `exec` UsageFault 把真正的页创建崩溃挡住了。下一步直接按这条 backtrace
+  对模块的链接图定位（模块运行时基址 + 偏移即可映射回 `canopus_manager_target_lvgl_v8.c`
+  的哪个函数），重点仍是 `lv_label_create` / 字体属性那条路径。
