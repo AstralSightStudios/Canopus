@@ -57,10 +57,25 @@ static const char *const s_module_suffix[SUP_KIND_COUNT] = {
 /* Read granularity for the hash/verify readbacks; larger blocks mean fewer
  * flash syscalls per byte. */
 #define CANOPUS_SUP_READ_CHUNK 1024u
+/* NuttX open() flag encoding. The Band 9 generation uses the MIwear values
+ * derived from 3.1.28/3.1.190 (O_WRONLY 2, O_CREAT 0x4); the REDMI Watch 6 VFS
+ * takes the stock NuttX encoding — Mirage probes: open(path, 0x241) creates the
+ * file, the 2|0x4 pair does not. */
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+#define CANOPUS_SUP_NUTTX_O_RDONLY 0
+#define CANOPUS_SUP_NUTTX_O_WRONLY 1u
+#define CANOPUS_SUP_NUTTX_O_CREAT 0x40u
+#define CANOPUS_SUP_NUTTX_O_RDWR 2u
+/* Creating a file on this VFS needs O_TRUNC alongside O_CREAT: open(path, 0x41)
+ * returns ENOENT for a missing path, open(path, 0x241) creates it. */
+#define CANOPUS_SUP_NUTTX_O_TRUNC 0x200u
+#else
 #define CANOPUS_SUP_NUTTX_O_RDONLY 1
 #define CANOPUS_SUP_NUTTX_O_WRONLY 2u
 #define CANOPUS_SUP_NUTTX_O_CREAT 0x4u
 #define CANOPUS_SUP_NUTTX_O_RDWR (CANOPUS_SUP_NUTTX_O_RDONLY | CANOPUS_SUP_NUTTX_O_WRONLY)
+#define CANOPUS_SUP_NUTTX_O_TRUNC 0u
+#endif
 #define CANOPUS_SUP_DEVICE_MODE 438u /* 0666 */
 #define CANOPUS_SUP_FOPS_WORDS 12u   /* matches the stock file_operations table */
 /* Next-boot registry persistence (see canopus_supervisor.h for the format). */
@@ -519,7 +534,8 @@ static int sup_write_all(const char *path, const void *data, uint32_t size)
     if (path == 0 || data == 0 || size == 0u) {
         return CANOPUS_SUP_ERR_REGISTRY_OPEN;
     }
-    fd = open_file(path, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT,
+    fd = open_file(path, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT |
+                         CANOPUS_SUP_NUTTX_O_TRUNC,
                    CANOPUS_SUP_DEVICE_MODE);
     if (fd < 0) {
         sup_registry_diag(CANOPUS_SUP_REG_STAGE_OPEN_TMP, sup_registry_errno());
@@ -1265,7 +1281,8 @@ static int sup_file_open(void *cookie, const char *path, uint32_t flags)
         ((flags & CANOPUS_FS_READ) == 0u || (flags & CANOPUS_FS_TRUNC) != 0u)) {
         (void)sup_unlink_path(path);
     }
-    fd = open_file(path, access | CANOPUS_SUP_NUTTX_O_CREAT, CANOPUS_SUP_DEVICE_MODE);
+    fd = open_file(path, access | CANOPUS_SUP_NUTTX_O_CREAT |
+                         CANOPUS_SUP_NUTTX_O_TRUNC, CANOPUS_SUP_DEVICE_MODE);
     if (fd < 0) return sup_negated_errno(fd);
     if ((flags & CANOPUS_FS_APPEND) != 0u && sup_file_seek(cookie, fd, 0, CANOPUS_FS_SEEK_END) < 0) {
         (void)sup_file_close(cookie, fd);

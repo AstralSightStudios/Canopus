@@ -14,8 +14,10 @@ loader_sources = [
 ]
 # The Manager target and the shared UI host select the MIwear lvx widget layer
 # (and include canopus_band11_addresses.h) under this define, exactly as the
-# Band 11 family does.
-defines = ["-DCANOPUS_MGR_BAND11=1", "-DCANOPUS_MGR_REDMI_WATCH=1"]
+# Band 11 family does. CANOPUS_SUP_BAND9_BOOTSTRAP selects the staged
+# stage1/stage2 loader contract: the constructor publishes its result through
+# the cave word the installer reads back.
+defines = ["-DCANOPUS_MGR_BAND11=1", "-DCANOPUS_MGR_REDMI_WATCH=1", "-DCANOPUS_SUP_BAND9_BOOTSTRAP=1"]
 prod_family = "redmi-watch"
 private_symbols = false
 # Emit canopus_band11_addresses.h from loader/native-bindings.json: the v9 UI
