@@ -575,6 +575,18 @@ static void target_dispatch_row(uint32_t row_index, void *event)
             return;
         }
         binding = &context->backend.bindings[row_index];
+#if defined(CANOPUS_TARGET_UI_DIAG)
+        {
+            /* Which action a click actually resolves to: row index, binding
+             * key and event id, so a row that lies about its label shows up. */
+            uint32_t probe[4];
+            probe[0] = row_index;
+            probe[1] = binding->key;
+            probe[2] = binding->event_id;
+            probe[3] = context->backend.page_index;
+            diag_dump('K', (char)('0' + (row_index % 10u)), probe, sizeof(probe));
+        }
+#endif
         if (binding->event_id == 0u) {
             diag_mark('W', (char)('0' + (row_index % 10u)));
             return;
