@@ -1263,7 +1263,6 @@ int canopus_manager_native_install(void)
     typedef void *(*app_lookup_fn)(uint16_t);
     typedef void *(*launcher_load_fn)(void *);
     typedef int (*launcher_insert_fn)(void *);
-    typedef int (*launcher_reset_fn)(void);
     struct firmware_page_descriptor *pages[CANOPUS_TARGET_PAGE_COUNT];
     app_install_fn app_install = (app_install_fn)(uintptr_t)FW_APP_INSTALL;
     app_lookup_fn app_lookup = (app_lookup_fn)(uintptr_t)FW_APP_LOOKUP;
@@ -1271,8 +1270,6 @@ int canopus_manager_native_install(void)
         (launcher_load_fn)(uintptr_t)FW_LAUNCHER_LOAD_APP_INFO;
     launcher_insert_fn launcher_insert =
         (launcher_insert_fn)(uintptr_t)FW_LAUNCHER_PAGE_INSERT_ICON;
-    launcher_reset_fn launcher_reset =
-        (launcher_reset_fn)(uintptr_t)FW_LAUNCHER_RESET_ORDER_INFO;
     void *installed_app;
     void *launcher_item;
 
@@ -1306,9 +1303,12 @@ int canopus_manager_native_install(void)
     launcher_item = launcher_load(installed_app);
     canopus_manager_target_record.launcher_add_result = launcher_item != NULL
         ? launcher_insert(launcher_item) : -102;
-    if (launcher_item != NULL) {
-        (void)launcher_reset();
-    }
+    /* launcher_reset_order_info (o66 0xc4fc508) is deliberately not called:
+     * the firmware logs "[launcher] launcher_page_insert_icon: launcher UI not
+     * created" when the installer runs from the watchface page, and calling the
+     * order reset in that state makes the next launcher open reset the device
+     * (observed on Mirage o66; removing the call stops it). The order metadata
+     * is left for the launcher's own rebuild. */
     canopus_manager_target_record.notification_result = 0;
     return 0;
 }
@@ -1347,4 +1347,16 @@ int canopus_manager_native_notify(const char *source, const char *title,
     (void)body;
     (void)icon;
     return -1;
+}
+
+int canopus_manager_native_open(void)
+{
+    typedef int32_t (*page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+    page_goto_fn page_goto = (page_goto_fn)(uintptr_t)FW_ACTIVITY_NAVIGATE;
+
+    if (canopus_manager_target_record.identity_result != 0) {
+        return -1;
+    }
+    return page_goto(target_page_key(CANOPUS_TARGET_PAGE_OVERVIEW), 0u, 0u, 0u) < 0
+               ? -1 : 0;
 }
