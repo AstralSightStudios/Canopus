@@ -509,3 +509,7 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   必须带 `--protocol 0x0800`，且**换一个 package id**（同 id 会被设备判成 `Downgrade` 拒绝）；
   bridge 安装用 `MAB_SMOKE <port> <authKey> <state> 'install={"path":…,"kind":"watchface"}'`，
   期间按配对对话框。
+- **n67 状态**：用同一套修复（root 槽 +0x2c、text_font 0x57）重装后，Run 走完并写入
+  `supervisor.elf`(114,008)/`stage2.bin`/`registry.bin`(CDR1)，全程无 panic；但 3.1.190
+  这次的屏幕在整个 Run 期间保持黑屏、唤醒点击也不亮（面板不亮，不是崩溃），Manager 页的
+  目视确认还没拿到。下一轮先解决 n67 的面板唤醒（或改用 QMP 直接抓帧），再确认中文与行点击。
