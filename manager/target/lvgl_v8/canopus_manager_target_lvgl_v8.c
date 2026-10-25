@@ -837,7 +837,7 @@ static void *manager_label_create(void *parent, uint32_t role)
     if (label == NULL) {
         return NULL;
     }
-#if defined(FW_LVX_FONT_CREATE)
+#if defined(FW_LVX_FONT_CREATE) && defined(FW_LV_OBJECT_SET_TEXT_FONT)
     {
         static void *fonts[2];
         int16_t size = role == CANOPUS_LABEL_VALUE
@@ -851,6 +851,27 @@ static void *manager_label_create(void *parent, uint32_t role)
         if (fonts[role] != NULL) {
             (void)((int32_t (*)(void *, void *, uint32_t))(uintptr_t)
                        FW_LV_OBJECT_SET_TEXT_FONT)(label, fonts[role], 0u);
+        }
+    }
+#elif defined(FW_LVX_FONT_CREATE) && defined(FW_LV_OBJECT_SET_LOCAL_STYLE_PROP)
+    /* This generation has no single "set text font" entry, so the font goes on
+     * as local style property 90 (the text font), which is what the stock
+     * widgets do. Without a font the label's refresh walks a NULL font
+     * descriptor and the watch restarts. */
+    {
+        static void *fonts[2];
+        int16_t size = role == CANOPUS_LABEL_VALUE
+                           ? CANOPUS_TARGET_FONT_VALUE_SIZE
+                           : CANOPUS_TARGET_FONT_SIZE;
+        if (fonts[role] == NULL) {
+            fonts[role] = ((void *(*)(const char *, int16_t, int16_t))(uintptr_t)
+                               FW_LVX_FONT_CREATE)(CANOPUS_TARGET_FONT_FAMILY,
+                                                   size, 0);
+        }
+        if (fonts[role] != NULL) {
+            (void)((int32_t (*)(void *, uint32_t, void *, uint32_t))(
+                uintptr_t)FW_LV_OBJECT_SET_LOCAL_STYLE_PROP)(label, 90u,
+                                                             fonts[role], 0u);
         }
     }
 #else

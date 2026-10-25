@@ -4,7 +4,7 @@
  * firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
  * sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
  * revision : 1
- * input_digest: cd3103c09873743c
+ * input_digest: 352e15efd7b671ad
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -137,6 +137,11 @@ static inline int * canopus_fw_errno_location(void) {
 typedef void (*canopus_fw_lvx_image_set_scale_fn)(void *, int32_t, int32_t);
 static inline void canopus_fw_lvx_image_set_scale(void * a0, int32_t a1, int32_t a2) {
     return ((canopus_fw_lvx_image_set_scale_fn)(uintptr_t)0xc168013)(a0, a1, a2);
+}
+
+typedef void * (*canopus_fw_lvx_font_create_fn)(const char *, int16_t, int16_t);
+static inline void * canopus_fw_lvx_font_create(const char * a0, int16_t a1, int16_t a2) {
+    return ((canopus_fw_lvx_font_create_fn)(uintptr_t)0xc2665f1)(a0, a1, a2);
 }
 
 typedef void (*canopus_fw_lv_label_set_text_fn)(void *, const char *);
@@ -495,6 +500,11 @@ static inline int canopus_fw_bt_discovery_start(void * a0, int a1) {
 typedef void (*canopus_fw_lv_obj_align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
 static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2, int32_t a3, int32_t a4) {
     return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0x0c23c8b9)(a0, a1, a2, a3, a4);
+}
+
+typedef int32_t (*canopus_fw_lv_obj_set_local_style_prop_fn)(void *, uint32_t, void *, uint32_t);
+static inline int32_t canopus_fw_lv_obj_set_local_style_prop(void * a0, uint32_t a1, void * a2, uint32_t a3) {
+    return ((canopus_fw_lv_obj_set_local_style_prop_fn)(uintptr_t)0xc23afe3)(a0, a1, a2, a3);
 }
 
 typedef int (*canopus_fw_rename_fn)(const char *, const char *);

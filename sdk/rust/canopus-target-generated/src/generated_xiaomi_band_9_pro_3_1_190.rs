@@ -4,7 +4,7 @@
 // firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
 // sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
 // revision : 1
-// input_digest: cd3103c09873743c
+// input_digest: 352e15efd7b671ad
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -122,6 +122,9 @@ pub const CANOPUS_FW_ERRNO_LOCATION_CALLABLE: usize = canopus_thumb_callable(0xc
 
 /// Recovered `lvx_image_set_scale` at 0xc168012. Thumb callable address 0xc168013.
 pub const CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE: usize = canopus_thumb_callable(0xc168013usize);
+
+/// Recovered `lvx_font_create` at 0xc2665f0. Thumb callable address 0xc2665f1.
+pub const CANOPUS_FW_LVX_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc2665f1usize);
 
 /// Recovered `sport_titlebar_dispatch` at 0xc2ef324. Thumb callable address 0xc2ef325.
 pub const CANOPUS_FW_SPORT_TITLEBAR_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc2ef325usize);
@@ -414,6 +417,9 @@ pub const CANOPUS_FW_BT_DISCOVERY_START_CALLABLE: usize = canopus_thumb_callable
 /// Recovered `lv_obj_align_to` at 0x0c23c8b8. Thumb callable address 0x0c23c8b9.
 pub const CANOPUS_FW_LV_OBJ_ALIGN_TO_CALLABLE: usize = canopus_thumb_callable(0x0c23c8b9usize);
 
+/// Recovered `lv_obj_set_local_style_prop` at 0xc23afe2. Thumb callable address 0xc23afe3.
+pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc23afe3usize);
+
 /// Recovered `rename` at 0xc37f490. Thumb callable address 0xc37f491.
 pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0xc37f491usize);
 
@@ -541,10 +547,12 @@ pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc41a
 // lv_obj_create: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
+// lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_size: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_timer_create: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
+// lvx_font_create: restricted - not exported until context/ownership approved
 // lvx_image_set_scale: restricted - not exported until context/ownership approved
 // lvx_label_create: restricted - not exported until context/ownership approved
 // lvx_label_set_text: restricted - not exported until context/ownership approved

@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-9190-V8-002",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "question": "How does stock code on this firmware put a CJK-capable font on an LVGL v8 label?",
+  "candidate_symbols": [
+    "lvx_font_create",
+    "lv_obj_set_local_style_prop"
+  ],
+  "prototype_hypothesis": "The font comes from lvx_font_create(family, size, weight); labels get it as local style property 90 through the object's local-style setter.",
+  "callsite_evidence": [
+    "0xc2665f0 the body logs lvx_font_create_core / lvx_font_create from ext/lvx_font_manager.c and walks the family table at *(0x200bfc6c+548); unknown families fall back to LV_FONT_DEFAULT.",
+    "0xc23afe2 is the generic local-style setter: it fetches the style for the selector, stores (property, value) and marks the object for refresh. The v8 page-title creator applies its label font through the same family of calls.",
+    "A Manager page built on the 3.1.32 generation does not render: the first label create/refresh never returns and the watch restarts, consistent with LVGL's NULL-font path (the image carries the 'dsc->font == NULL' and 'Invalid font descriptor' strings)."
+  ],
+  "control_flow_evidence": [
+    "lvx_font_create(name, size, weight) -> family table lookup -> lv_font_t*.",
+    "local_style_set(label, 90, font, 0) -> the label's text font."
+  ],
+  "ownership_analysis": "No ownership claimed. The created font is owned by the firmware font manager; the Manager only reads it.",
+  "unsafe_assumptions": [
+    "MiSans-Regular is the family stock code uses for body text (it is the fallback name in the font manager).",
+    "Property 90 is the text-font property on this generation, by analogy with the audited 3.1.28 firmware; this is what the next device run checks.",
+    "Static evidence only; no device run has exercised these two entries yet."
+  ],
+  "recommended_probe": "Rebuild the Supervisor, open the Manager page on Mirage and confirm the page renders instead of restarting the watch.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED"
+}

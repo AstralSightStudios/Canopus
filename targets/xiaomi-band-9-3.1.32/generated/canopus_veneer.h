@@ -4,7 +4,7 @@
  * firmware : 3.1.32 (N66NFC_3.1.32)
  * sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
  * revision : 2
- * input_digest: e792ba22bc093c2c
+ * input_digest: 808e7f90521c80e9
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -125,6 +125,11 @@ static inline int canopus_fw_page_goto(uint32_t a0, uint32_t a1, void * a2, void
 typedef void (*canopus_fw_lv_obj_clear_flag_fn)(void *, uint32_t);
 static inline void canopus_fw_lv_obj_clear_flag(void * a0, uint32_t a1) {
     return ((canopus_fw_lv_obj_clear_flag_fn)(uintptr_t)0xc26f56b)(a0, a1);
+}
+
+typedef void * (*canopus_fw_lvx_font_create_fn)(const char *, int16_t, int16_t);
+static inline void * canopus_fw_lvx_font_create(const char * a0, int16_t a1, int16_t a2) {
+    return ((canopus_fw_lvx_font_create_fn)(uintptr_t)0xc29b029)(a0, a1, a2);
 }
 
 typedef int (*canopus_fw_inode_unlock_fn)(void);
@@ -405,6 +410,11 @@ static inline void canopus_fw_lv_bar_set_value(void * a0, int32_t a1, uint32_t a
 typedef void * (*canopus_fw_launcher_load_app_info_fn)(const void *);
 static inline void * canopus_fw_launcher_load_app_info(const void * a0) {
     return ((canopus_fw_launcher_load_app_info_fn)(uintptr_t)0xc2c8ebd)(a0);
+}
+
+typedef int32_t (*canopus_fw_lv_obj_set_local_style_prop_fn)(void *, uint32_t, void *, uint32_t);
+static inline int32_t canopus_fw_lv_obj_set_local_style_prop(void * a0, uint32_t a1, void * a2, uint32_t a3) {
+    return ((canopus_fw_lv_obj_set_local_style_prop_fn)(uintptr_t)0xc2782ed)(a0, a1, a2, a3);
 }
 
 typedef int (*canopus_fw_thirdparty_submit_message_content_fn)(const void *, uint32_t, uint32_t);

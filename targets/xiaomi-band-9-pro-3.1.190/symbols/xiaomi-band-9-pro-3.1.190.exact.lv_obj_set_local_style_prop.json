@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.exact.lv_obj_set_local_style_prop",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "lv_obj_set_local_style_prop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc23afe2",
+  "prototype": "int32_t(void *, uint32_t, void *, uint32_t)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-9190-V8-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-STATIC-9190-V8-002"
+    ],
+    "source": "Exact xiaomi-band-9-pro-3.1.190 image: the body logs lvx_font_create_core / lvx_font_create from ext/lvx_font_manager.c and walks the family table at *(0x200bfc6c+548)."
+  },
+  "approval_state": "PENDING",
+  "notes": "LVGL v8 local-style setter: (obj, property, value, selector); property 90 is the text font. Recovered for the v8 Manager text; not device probed.",
+  "callable_address": "0xc23afe3"
+}

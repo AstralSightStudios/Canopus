@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (N66NFC_3.1.32)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 2
-// input_digest: e792ba22bc093c2c
+// input_digest: 808e7f90521c80e9
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -99,6 +99,9 @@ pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc4b456
 
 /// Recovered `lv_obj_clear_flag` at 0x0c26f56a. Thumb callable address 0xc26f56b.
 pub const CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc26f56busize);
+
+/// Recovered `lvx_font_create` at 0xc29b028. Thumb callable address 0xc29b029.
+pub const CANOPUS_FW_LVX_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc29b029usize);
 
 /// Recovered `inode_unlock` at 0x0c3908c4. Thumb callable address 0xc3908c5.
 pub const CANOPUS_FW_INODE_UNLOCK_CALLABLE: usize = canopus_thumb_callable(0xc3908c5usize);
@@ -321,6 +324,9 @@ pub const CANOPUS_FW_LAUNCHER_LOAD_APP_INFO_CALLABLE: usize = canopus_thumb_call
 
 /// Recovered `pthread_create_internal` at 0xc51fdb4. Thumb callable address 0xc51fdb5.
 pub const CANOPUS_FW_PTHREAD_CREATE_INTERNAL_CALLABLE: usize = canopus_thumb_callable(0xc51fdb5usize);
+
+/// Recovered `lv_obj_set_local_style_prop` at 0xc2782ec. Thumb callable address 0xc2782ed.
+pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc2782edusize);
 
 /// Recovered `thirdparty_submit_message_content` at 0xc515b00. Thumb callable address 0xc515b01.
 pub const CANOPUS_FW_THIRDPARTY_SUBMIT_MESSAGE_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xc515b01usize);
@@ -545,10 +551,12 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // lv_obj_create: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
+// lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_size: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_timer_create: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
+// lvx_font_create: restricted - not exported until context/ownership approved
 // lvx_image_set_scale: restricted - not exported until context/ownership approved
 // lvx_label_create: restricted - not exported until context/ownership approved
 // lvx_label_set_text: restricted - not exported until context/ownership approved
