@@ -26,14 +26,25 @@ PRODUCTS = {
     'data-quota-lift': ('data_quota_lift', 'Data Quota Lift', 65536, []),
     'refetch': ('refetch', 'ReFetch', 262144, []),
 }
+# Device families that share one installer transport. The Band 9 Pro (3.1.190)
+# runs the same staged loader and /dev/canopus flow as the Band 9 (3.1.32); its
+# build.prop just has no ro.build.version, so the hook reads the version from
+# the Supervisor's own identity instead.
+DEVICE_HOOK_ALIASES = {'xiaomi-band-9-pro': 'xiaomi-band-9'}
+
+
+def device_hook(family):
+    template = ROOT / 'watchfaces/module-installer-prod/src'
+    return template / ('device-' + DEVICE_HOOK_ALIASES.get(family, family) + '.lua')
+
+
 def _supported():
     """Active targets whose device family has an installer transport."""
-    template = ROOT / 'watchfaces/module-installer-prod/src'
     found = []
     for pack in sorted((ROOT / 'targets').glob('*/target.toml')):
         data = tomllib.loads(pack.read_text())
         family = pack.parent.name.rsplit('-', 1)[0]
-        if data.get('status') != 'frozen' and (template / ('device-' + family + '.lua')).is_file():
+        if data.get('status') != 'frozen' and device_hook(family).is_file():
             found.append(pack.parent.name)
     return found
 
@@ -86,7 +97,7 @@ def render(product, targets, module_id=None):
     template = ROOT / 'watchfaces/module-installer-prod/src'
     source = (template / 'main.lua').read_text()
     # Identity keys and the Supervisor transport differ per device family.
-    device = (template / ('device-' + targets[0].rsplit('-', 1)[0] + '.lua')).read_text()
+    device = device_hook(targets[0].rsplit('-', 1)[0]).read_text()
     replacements = {
         '-- @CONFIG@': 'local CONFIG = ' + lua(config),
         '-- @PROGRESS@': 'local progress = (function()\n' + (family / 'src/progress.lua').read_text() + '\nend)()',

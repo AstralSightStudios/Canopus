@@ -607,3 +607,33 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   （`D` + `S`/`A`/`U` = STALE/ARGUMENT/UNSUPPORTED），下一轮先清空打点、只点一次「模块」行，
   看是代次过期还是 key 不匹配；点不动也可能是管理器页本身没拿到输入焦点（页由探针的
   OPEN_MANAGER 建立时会这样），要用 Run 自带的那次页面做对照。
+
+### 第二十四轮：n67 的模块安装通了（固件版本从 Supervisor 拿）
+
+- **不再需要改固件**：模块安装表盘原先靠 `build.prop` 的 `ro.build.version` 选 target，
+  3.1.190 的 build.prop 只有 screenshape/devicetype/screendensity。现在设备钩子给了一个
+  `device_firmware_version(checkpoint, exchange)`，用 CPC2 `QUERY_DEVICE`（命令 9）读
+  Supervisor 自己的 **CQD1 target_id**（`xiaomi-band-9-pro-3.1.190`），取末尾的版本串再查
+  `CONFIG.targets`。`version` 为空时不再在启动阶段报「不支持的固件」，改为等 Supervisor
+  应答后再判定。
+- **踩到的坑：读长度必须 ≥ Supervisor 的整条应答**。`canopus_supervisor_installer_read` 在
+  `count < installer_response_len` 时直接返回 -1，而 CQD1 已经是 **88 字节**（旧注释里写的是
+  84），所以应答是 36+88 = 124 字节；按 120 读会整条失败、Lua 侧只看到 nil。Band 9 钩子里
+  `QUERY_DEVICE_SIZE = 36 + 88`，`failure_detail` 也一并改过来。
+- **n67 实测（Mirage，canopus-n67）**：装框架安装表盘（AUTORUN）→ Run 完成 →
+  装 `dist/installer/xiaomi-band-9-pro` 模块表盘 → 状态绿字（CJK 是方块，见下）→ 关机读
+  `/data/canopus/registry.bin`：`CDR1` + `hello_portable`（version 1、intent disabled）。
+  这是 n67 第一次在设备上完成模块安装，且**全程不需要触摸**（表盘创建即安装）。
+- **n67 面板并不是完全不亮**：Run 之前它正常显示，配对对话框（AstroBox）也能点确认；只有
+  Run 之后才叫不醒（第二十轮的结论仍然成立）。所以 n67 的配对要靠「先点确认再装表盘」，
+  否则 bridge 3 秒就判定 `pairing was declined`。
+- **n67 的 Lua 表盘画不了中文**：同一段「安装完成」在 3.1.32 上是正常中文，在 3.1.190 上
+  是方块；实测 `MiSans-Regular/Medium/Demibold`、`MiSansF-Medium/Demibold/Semibold`
+  六种家族以及**不设 text_font 的默认字体**全是 `.notdef`。管理器页的中文来自页面样式属性
+  `text_font`（prop 0x57）指向的字体对象，Lua 表盘拿不到那个对象。模块安装表盘的状态文案
+  因此在 n67 上是方块（n66 正常），先记录为已知差异，不为此改文案。
+- **生成物**：`canopus package --installer` 现在会输出 `dist/installer/xiaomi-band-9-pro/`
+  （CLI 与 `build_module_installer_prod.py` 共用 `xiaomi-band-9-pro → xiaomi-band-9` 的钩子
+  别名）；`test_module_installer_prod.py` 对「build.prop 没有 ro.build.version」的镜像改为
+  要求钩子提供 `device_firmware_version`，并对 ROMFS 里不再以 `ro.build` 开头的 build.prop
+  做了正确的定位。

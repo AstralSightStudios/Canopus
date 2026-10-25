@@ -866,7 +866,14 @@ fn write_installers(
         families.entry(family).or_default().push((pack, elf));
     }
     for (family, members) in families {
-        let device_file = template.join(format!("device-{family}.lua"));
+        // The Band 9 Pro (3.1.190) runs the same staged loader and
+        // /dev/canopus transport as the Band 9 (3.1.32); only the version
+        // source differs, and the shared hook covers both.
+        let hook_family = match family.as_str() {
+            "xiaomi-band-9-pro" => "xiaomi-band-9",
+            other => other,
+        };
+        let device_file = template.join(format!("device-{hook_family}.lua"));
         if !device_file.is_file() {
             println!("installer: skipped {family} (no installer transport)");
             continue;

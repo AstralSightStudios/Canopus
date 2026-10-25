@@ -14,7 +14,10 @@ local function u16(data, off) return string.unpack("<I2", data, off + 1) end
 local function u32(data, off) return string.unpack("<I4", data, off + 1) end
 -- Device family: ENDPOINT, REPLY_SIZE, SUPERVISOR_MISSING, BUILD_PROPERTY,
 -- fallback_identity(), prepare_inbox(checkpoint), failure_detail(response, exchange).
+-- A family whose build.prop has no ro.build.version also provides
+-- device_firmware_version(checkpoint, exchange).
 -- @DEVICE@
+local DEVICE_VERSION = device_firmware_version
 local properties = {}
 local identity = read_all("/etc/build.prop")
 local identity_invalid = false
@@ -32,8 +35,10 @@ local build = BUILD_PROPERTY and properties[BUILD_PROPERTY]
 if not identity then version, build = fallback_identity() end
 local target = version and CONFIG.targets[version]
 local startup_error
-if not target or (target.build and build ~= nil and build ~= target.build) then
-    startup_error = "不支持的固件：" .. tostring(version or "Unknown")
+-- Without ro.build.version the target is resolved from the Supervisor once it
+-- answers, so only a version this build does not carry fails here.
+if version and (not target or (target.build and build ~= nil and build ~= target.build)) then
+    startup_error = "不支持的固件：" .. tostring(version)
 end
 
 local width, height = lvgl.HOR_RES(), lvgl.VER_RES()
@@ -100,6 +105,13 @@ local function install()
     local f = io.open(ENDPOINT, "rb")
     check(f, SUPERVISOR_MISSING)
     f:close()
+    if not target then
+        -- This firmware's build.prop has no ro.build.version; the Supervisor
+        -- names the exact target it was built for, so ask it.
+        local resolved = DEVICE_VERSION and DEVICE_VERSION(checkpoint, device_exchange)
+        target = resolved and CONFIG.targets[resolved]
+        check(target, "不支持的固件：" .. tostring(resolved or version or "Unknown"))
+    end
     checkpoint("读取目标模块与回执")
     local stem = SCRIPT_PATH .. CONFIG.stem .. "-" .. target.id
     local receipt, module = read_all(stem .. ".cmi.bin"), read_all(stem .. ".bin")
