@@ -780,3 +780,10 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   y≈170 视觉上是「启用」，实际派发的是「移除」。下一个标记要打在 `target_dispatch_row` 里，
   把 `row_index`、`binding->key`、`binding->event_id` 一并 dump（`dm-E*` 已有事件原文，
   再加一个 `dm-K<row>` 存 key/event 各 4 字节），就能确认是行复用把绑定错位，还是点击几何偏移。
+- **`dm-K` 打点结果（关键）**：点模块行进入详情后，真正被执行的那次点击解析成
+  `row_index=3, key=0x12e(302), event_id=9, page=1`——302 是确认框的「确认」行，9 是 REMOVE。
+  也就是说：**进入详情的那一次手势又在我们渲染出来的确认框上点了一次「确认」**。原因是同一个
+  手势里 LVGL 会先后送 `SHORT_CLICKED` 与 `CLICKED`，而列表行对象被详情页复用后绑定换成了
+  「移除」行，第二次点击就正好落在它上面并打开确认框，第三次点击落在「确认」。
+  修法：进入详情后的第一屏**不接受任何确认类动作**——把 `manager_swallow_click` 从「吞一次点击」
+  改成「吞到本次手势结束」，或者干脆在渲染后的一小段时间内只允许 `SHOW_*` 类事件。

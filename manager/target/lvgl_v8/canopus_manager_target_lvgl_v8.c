@@ -553,9 +553,17 @@ static void target_dispatch_row(uint32_t row_index, void *event)
     if (event == NULL || row_index >= CANOPUS_TARGET_UI_MAX_ROWS) return;
     diag_dump('E', (char)('0' + (row_index % 10u)), event, 32u);
 #if defined(CANOPUS_MGR_INPLACE_DETAIL)
-    if (manager_swallow_click != 0u) {
-        manager_swallow_click = 0u;
-        return;
+    /* Only a real click may consume the swallow: LVGL also calls every row for
+     * refresh events, and letting one of those clear it puts the release back
+     * on the freshly rendered page (the phantom remove). */
+    {
+        uint32_t new_code = (uint32_t)((const uint8_t *)event)[8];
+        if ((new_code == CANOPUS_TARGET_EVENT_CLICKED ||
+             new_code == CANOPUS_TARGET_EVENT_SHORT_CLICKED) &&
+            manager_swallow_click != 0u) {
+            manager_swallow_click = 0u;
+            return;
+        }
     }
 #endif
     /* The event code is the first byte of the field at +8: the bytes above it
