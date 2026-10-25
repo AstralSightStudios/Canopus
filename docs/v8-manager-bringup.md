@@ -734,3 +734,11 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   再点「启用」→ **弹出「在下次手环启动时启用该模块？」确认框**——「启用 / 立即激活」第一次
   从 UI 上够到了。但**点「确认」后整机复位**，所以启用操作本身还没跑通，下一步要查
   `CANOPUS_MANAGER_EVENT_CONFIRM` → `execute_event(ENABLE)` → `refresh_model` → 重渲染这条链。
+- **第七步（待做）**：确认框点「确认」后整机复位的排查入口已经明确——`manager_event` 的
+  `CANOPUS_MANAGER_EVENT_CONFIRM` 分支在**同一次点击派发里**依次做
+  `execute_event(ENABLE)`（一条 CPC2 命令）、`refresh_model`（`target_refresh` 里又渲染一次）、
+  最后再 `canopus_manager_native_render`。也就是同一轮里对同一页面连续 commit 了两次快照，
+  并且中途还发了一条监督器命令。下一步把这两次渲染延后到派发返回之后（复用
+  `manager_pending_inline_detail` 的做法），或者在 `target_refresh` 里检测「派发进行中」时只
+  刷新模型、把渲染交给派发结束后的收尾。先验证「只发命令、不重渲染」是否还会复位，可以把
+  问题分开。
