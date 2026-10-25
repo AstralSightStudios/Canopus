@@ -704,3 +704,11 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   （出现 Mi 开机 logo，重启后回到安装表盘），比前两次更硬，说明故障点可能在状态行/分节这一段，
   也可能只是同一处崩溃的不同表现。实验代码已撤回；下一步把分节和状态行再分开、并同时用
   gdb stub 抓故障地址，避免继续按现象猜。
+- **当前最可疑的两条（下一轮按此顺序验证）**：
+  1. **栈**：硬故障/复位更像栈溢出，而详情视图是这条链上唯一新增了大栈帧的地方
+     （`render_module_detail` 的 `state[64]`、`error[48]`，叠在 `target_refresh_model` 的
+     `canopus_client_*_snapshot` 之上）。验证：在 `render_module_detail` 入口 dump 栈指针，
+     与列表页的同一位置比较；若明显更低，就把这两块缓冲挪进 `manager_model` 或改成静态。
+  2. **状态行本身**：把「分节」与「状态行」再拆一次（只建分节 / 只建一条状态行），
+     若只建分节就死，说明问题在分节或 `canopus_ui_tree_commit` 的快照容量上。
+  两条都能在现有 diag 打点体系里用一次构建跑完；之后仍无结论再上 gdb stub 抓 CFSR/PC。
