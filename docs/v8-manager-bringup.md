@@ -376,3 +376,7 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
   page manager 给的 root 上创建任何子对象都不返回**。o66(3.1.28) 上同样代码正常，
   所以问题在这一代 `lv_obj_create(parent=页面容器)` 的 class init/refresh 路径，
   下一步必须换成固件自带的容器 API（例如 `lvx_page_content_create`）来承载内容。
+- 下一步的具体落点：三台目标里都已经有 `lvx_page_content_create` 的符号记录
+  （`targets/*/symbols/*.ui.lvx_page_content_create.json`），但生成器还没有把它映射成宏。
+  下一轮要做的就是给 `V8_TEXT_FONT` 之外再加一条可选映射 `FW_LVX_PAGE_CONTENT_CREATE`，
+  只在 3.1.32/3.1.190 上把内容挂到它返回的容器里（o66 保持现有已验证路径不变）。
