@@ -28,7 +28,7 @@ if identity then
     end
 end
 local version = not identity_invalid and properties["ro.build.version"]
-local build = properties[BUILD_PROPERTY]
+local build = BUILD_PROPERTY and properties[BUILD_PROPERTY]
 if not identity then version, build = fallback_identity() end
 local target = version and CONFIG.targets[version]
 local startup_error

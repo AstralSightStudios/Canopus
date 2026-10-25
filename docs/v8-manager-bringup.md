@@ -551,3 +551,18 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   4. 再用 `INSTALL`（带 stage token）/`ENABLE`/`ACTIVATE` 完成安装与激活。
   安装器已经有 `exchange()`（CPC2 请求/应答）和读文件能力，缺的只是把这段序列写成 Lua，
   并把一个给 Band 9 编好的模块（`.canopus` 里的 `*.ko`）随表盘资源一起部署。
+
+### 第二十二轮：n66 的模块安装与「已安装模块」列表跑通
+
+- **本地模块安装可用**：给 `watchfaces/module-installer-prod` 补了 Band 9 的设备钩子
+  （`device-xiaomi-band-9.lua`：`/dev/canopus` + 36 字节应答 + `mkdir` 准备 inbox），
+  `canopus package --installer` 就能为 n66 生成模块安装表盘。实测：安装器把
+  `hello_portable` 的 176 字节 CMI2 回执和 7,892 字节 ELF 写进 `/data/canopus/inbox`，
+  Supervisor 接受 INSTALL 并写进 `registry.bin`，表盘显示「安装完成，默认禁用」。
+- **管理器「模块」页列出 hello_portable**：修了一个真 bug——`on_create` 只切视图、不刷新
+  设备模型，而会话是在模块安装之前建立的，所以列表一直是旧的空态。现在每次建页都先
+  `target_refresh_model()`，模块页立刻显示 `hello_portable ›`。
+- **n67 的模块安装暂缓并留了结论**：3.1.190 的 `build.prop` 只有 screenshape/devicetype/
+  screendensity，**没有 ro.build.version**；版本串只在 flash 头部（`0x810` 附近的 "3.1.190"），
+  Lua 侧读不到，模块表盘的固件识别无从下手。要做 n67 的模块安装，先得给它一个可读的
+  版本来源（例如让 Supervisor 暴露 firmware_version，或安装表盘改从 `/dev/canopus` 查询身份）。

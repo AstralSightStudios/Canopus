@@ -84,9 +84,12 @@ class ModuleInstallerTests(unittest.TestCase):
             if not image.is_file():
                 continue
             device = target.rsplit('-', 1)[0]
-            snippet = (ROOT / 'watchfaces/module-installer-prod/src' /
-                       ('device-' + device + '.lua')).read_text()
-            key = re.search(r'BUILD_PROPERTY = "([^"]+)"', snippet)[1]
+            device_file = (ROOT / 'watchfaces/module-installer-prod/src' /
+                           ('device-' + device + '.lua'))
+            if not device_file.is_file():
+                continue
+            snippet = device_file.read_text()
+            declared = re.search(r'BUILD_PROPERTY = "([^"]+)"', snippet)
             data = image.read_bytes()
             # ROMFS entry: 16-byte padded name, then the file content.
             start = data.index(b'build.prop'.ljust(16, b'\0') + b'ro.build.') + 16
@@ -94,7 +97,12 @@ class ModuleInstallerTests(unittest.TestCase):
             props = dict(line.split('=', 1) for line in text.splitlines())
             pack = tomllib.loads((ROOT / 'targets' / target / 'target.toml').read_text())
             self.assertEqual(props['ro.build.version'], pack['firmware_version'], target)
-            self.assertEqual(props[key], pack['firmware_build'], target)
+            if declared:
+                self.assertEqual(props[declared[1]], pack['firmware_build'], target)
+            else:
+                # A family whose build.prop has no build id must not force one:
+                # the generated check then relies on the staged receipt.
+                self.assertNotIn(pack['firmware_build'], props.values(), target)
             checked += 1
         if not checked:
             self.skipTest('firmware images required')

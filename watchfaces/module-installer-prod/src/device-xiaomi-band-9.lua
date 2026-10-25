@@ -5,7 +5,9 @@
 -- are what bind the artifact to the firmware.
 local ENDPOINT, REPLY_SIZE = "/dev/canopus", 36
 local SUPERVISOR_MISSING = "请先运行 Canopus 框架安装表盘"
-local BUILD_PROPERTY = "ro.build.id"
+-- build.prop carries only ro.build.version, so there is no build id
+-- to compare; the staged receipt binds target_id + firmware_sha256 instead.
+local BUILD_PROPERTY = nil
 local execute = os.execute
 local function fallback_identity() return nil end
 local function prepare_inbox(checkpoint)
