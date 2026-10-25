@@ -513,3 +513,21 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   `supervisor.elf`(114,008)/`stage2.bin`/`registry.bin`(CDR1)，全程无 panic；但 3.1.190
   这次的屏幕在整个 Run 期间保持黑屏、唤醒点击也不亮（面板不亮，不是崩溃），Manager 页的
   目视确认还没拿到。下一轮先解决 n67 的面板唤醒（或改用 QMP 直接抓帧），再确认中文与行点击。
+
+### 第二十轮：n67 页面渲染已证（打点），模块链路的真正缺口是传输
+
+- **n67 的页面确实建出来并渲染完成**：清空打点后单次 Run 得到
+  `ST i0 iy c1 l1 o1 q1 v1 n1 l1 T0 T1 S0 S1 B0 B1 R4..R7 Z1 I0 Y0 Y3` + `registry.bin` = `CDR1`。
+  其中 `T1` 说明 3.1.190 的五参 `lvx_page_title_create` 在描述符 +0x2C 的 view 上成功返回，
+  `Z1` 说明我们的渲染跑完。**没有 `E*/U*/C*`（触摸没有到达）**，因为 3.1.190 的面板在 Run 之后
+  一直不亮：日志显示 5 秒息屏、watchface 正常 pause、闹钟照常走（系统活着），注入了点击也
+  唤不醒。Mirage 的触摸唤醒补丁（`hw/input/hynitron_ts.c`）在源码里、二进制比源码新，
+  所以这条要在下一轮单独查（面板/PM 侧），不是 Manager 的问题。
+- **激活体验（模块安装/激活）的真正缺口是传输层**：`scripts/build_canopus_supervisor.sh` 对
+  `xiaomi-band-9-3.1.32` 打印 `encrypted L2 0x43: no backend`，即这台固件没有 L2 传输后端
+  （Band 10 Pro / Band 11 有 `evidence/l2-sram-probe.json`）。Supervisor 自己的命令面是齐的
+  （INSTALL/ENABLE/ACTIVATE/SCAN + native ELF 分块上传），缺的是把模块字节送进来的通道。
+  两条可行路线：
+  1. 补 Band 9 的 L2 后端（需要 `l2-sram-probe` 静态恢复 + 设备探针，K18 那一套）；
+  2. 本地安装：安装器把 `/data` 里的 `.canopus` 按 CPC2 上传分块直接写 `/dev/canopus`——
+     不依赖 BLE，可在 Mirage 上验证。建议先做 2，再做 1。
