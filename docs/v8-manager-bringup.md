@@ -435,3 +435,19 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 `app_common` 条目），动画解码连续报错后就踩到空节点。stock 应用（运动记录）打开正常，
 说明这条动画只在系统 app（app id ≤ 0xFF）路径上跑。下一步要用可调试的 QEMU
 （手动带 `-s` 起同一台设备）在 `0xC26D370` 上下断点，确认 parent=5 是框架还是我们传的。
+
+### 第十六轮：n66 管理器页画出来了（root 参数不是容器，容器在描述符里）
+
+- 用 QEMU gdb stub（手动带 `-s` 起同一台设备，`lldb` 连 `connect://127.0.0.1:1234`）在
+  `lv_obj_create`（`0xC26D370`）上设条件断点 `$r0 < 0x1000`，抓到调用现场：
+  `r0=5`、`lr` 落在 Supervisor 镜像里（`.text+0xC3F8`，`target_ui_apply` 的
+  `CANOPUS_MGR_TITLE_PLAIN` 分支 `object_create(backend->root)`）。
+- 同时读 `canopus_manager_target_record`（`.data`）确认：`create_count=1`、
+  `root_object=5`——**固件传给 `on_create` 的第二个参数就是 5，不是容器**；而
+  固件自己刚创建的 view 存在页描述符的 **+0x2C**（日志 `create view 0x3c861338:{202, 0}`
+  与描述符里的值一致）。
+- 修复：3.1.32/3.1.190 的构建加 `-DCANOPUS_MGR_PAGE_ROOT_SLOT=0x2c`，`on_create`
+  改用描述符 +0x2C 里的 view 作为内容根（o66 保持原来的参数）。n66 实测：Run 做完
+  stage0→Supervisor→CPC2 六步后框架 `on_ui_create` 建出 `{202, 0}` 的 view 并**画出了
+  Manager 概览**（标题 Canopus、8 行系统信息、管理分节三行，截图帧在 Run 后 1 秒），
+  整机不再复位；CJK 仍是 .notdef 方块（n66 的字体应用待查）。

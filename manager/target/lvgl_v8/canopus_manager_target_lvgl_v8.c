@@ -1476,6 +1476,13 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         }
     }
     canopus_manager_target_record.create_count += 1u;
+#if defined(CANOPUS_MGR_PAGE_ROOT_SLOT)
+    /* 3.1.32/3.1.190 hand on_create a non-pointer second argument (the page
+     * state), while the view the pagemanager created for us sits in the page
+     * descriptor at this offset - verified with a breakpoint on lv_obj_create:
+     * the argument was 5 and the slot held the Umem view. */
+    root = *(void **)((uint8_t *)page + CANOPUS_MGR_PAGE_ROOT_SLOT);
+#endif
     {
         /* The firmware's own page container is what gets displayed, so the
          * rows go there when it is given. lvx_page_title_create on that
