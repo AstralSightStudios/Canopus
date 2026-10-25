@@ -228,6 +228,10 @@ local function mpu_sync_command()
     return string.format("exec 0x%08x", profile.mpu_sync)
 end
 
+-- A cave exec that never returns skips the release queued behind it, leaving
+-- stage-0's region armed read-only for the rest of the boot (this firmware does
+-- not reprogram the MPU per task); the next cave write then faults at the cave
+-- base with MemManage on 3.1.32/3.1.190.
 local function stage0_mpu_release()
     return run_sequence({
         string.format("mw %08x=%08x", profile.mpu_rnr,
@@ -306,6 +310,7 @@ local function call_mailbox(callable, r0, r1)
         profile.cave_result)) then
         return nil, "stage-0 result sentinel write failed"
     end
+    stage0_mpu_release()
     if not write_words(profile.cave, probe) then
         restore_cave()
         return nil, "stage-0 entry probe write failed"
@@ -330,6 +335,7 @@ local function call_mailbox(callable, r0, r1)
         restore_cave()
         return nil, "stage-0 result sentinel write failed"
     end
+    stage0_mpu_release()
     if not write_words(profile.cave, trampoline) then
         restore_cave()
         return nil, "stage-0 mailbox write failed"
@@ -363,6 +369,7 @@ local function barrier_and_exec(address, region, rbar, rlar)
         STAGE1_RESULT_SENTINEL)) then
         return false
     end
+    stage0_mpu_release()
     if not write_words(profile.cave, trampoline) then
         restore_cave()
         return false
@@ -521,6 +528,7 @@ local function load_supervisor_cave()
     local reserved, reserve_error = reserve_stage0_region()
     if not reserved then return false, reserve_error end
     local stage1_address = profile.cave + 0x100
+    stage0_mpu_release()
     if not write_words(stage1_address, payload.words) then
         release_stage0_region()
         return false, "stage-1 cave write failed"
@@ -531,6 +539,7 @@ local function load_supervisor_cave()
         0x4803B510, 0x47984B03, 0x60104A01, 0xBF00BD10,
         profile.cave_result, stage1_address + 1,
     }
+    stage0_mpu_release()
     if not write_words(profile.cave, trampoline) then
         release_stage0_region()
         return false, "stage-0 trampoline write failed"

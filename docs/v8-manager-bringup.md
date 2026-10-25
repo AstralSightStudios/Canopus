@@ -385,3 +385,53 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
   manager 传入的 root 上都挂死——结论是：**这两代固件在 on_create 里给的 root 不能当作
   普通 LVGL 父对象使用**。下一步要弄清 on_create 第二个参数的真实类型（很可能不是
   lv_obj），stock 页面都是从别处拿容器（例如 `page->parent_descriptor` 或页内 signal）再建 UI。
+
+### 第十五轮：n66 的 0x200D0000 归属定案；cave 区域泄漏修复；两代 Band 9 的 root 结论被推翻
+
+**MPU 归属（n66 3.1.32，guest 侧实测）**：安装器用 `mw` 逐字读回 MPU 寄存器，拿到运行期完整视图：
+
+- `MPU_TYPE=0x0800`（8 region）、`MPU_CTRL=0x0005`（ENABLE|PRIVDEFENA）、`MAIR0=0x00447722`。
+- 常驻 region：`r0` `0x00000000..0x0001FFFF`、`r1` `0x0025C000..0x003BBFFF`、
+  `r2` `0xD0200000..0xD020FFFF`、`r3` `0x200686C0..0x2006A9BF`（SRAM 文本）、
+  `r4..r6` 空闲、`r7` 是 stage-0。
+- 这套 PMSAv8 的编码与固件 `mpu_configure`（`0xC52272C`）一致：**RBAR[2:1]=AP、RBAR[0]=XN**，
+  **RLAR[2:1] 选 MAIR 属性、RLAR[0] 使能**；`PRIVDEFENA=1` 让未被 region 覆盖的地址对
+  特权态可读写执行。安装器的 `mpu_rbar_attr`/`mpu_rlar_attr` 与此完全对得上。
+- **`0x200D0000` 就是被 stage-0 的 region 7 覆盖的 cave 基址**，安装器在 `exec` 前把该 region
+  收窄成 **RO+X**（`RBAR=cave+6`、`RLAR=cave+0x23`，64 字节）。对 cave 基址的写入因此
+  MemManage（DACCVIOL，`MMFAR=0x200D0000`，任务名 `system -c mw`）——这就是 n66
+  「一按 Run 就崩」的确切形态（崩溃转储 `crash1999123100001x.log`：R5=0x200d0001，
+  PC 在 NSH 的 exec 派发里）。
+- **region 7 会泄漏**：任何一次 cave `exec` 没有正常返回（stage1/stage2 卡住或崩溃），
+  排在 `exec` 之后的释放命令就不会执行，region 7 以 RO+X 留在整个 boot 期间；跑在
+  后续 `system()` 任务里的下一次 Run 读回 `r7 rbar=200d0006 rlar=200d0023` 就是证据
+  （本固件不按任务重编程区域）。于是下一次 Run 的 `mw 0x200d0000=...` 直接踩 MemManage。
+- **修复**：三个 v8 安装器在**每次写 cave 之前先 `stage0_mpu_release()`**（`mw rnr=7;
+  mw rlar=0; exec mpu_sync`），写完再按原流程重新 arm。n66 实测：Run 从 stage0 → stage1
+  → stage2 → Supervisor → `/dev/canopus` → CPC2 INSTALL 0/2、RESTORE_AFTER_BOOT、
+  INSTALL 1/2 全部完成，`/data/canopus/registry.bin` 写回 `CDR1`。
+
+**「页面 root 不能当 LVGL 父对象」的结论不成立**（推翻第十四轮末的判断）：
+
+- stock 代码就是拿页面容器当父对象：番茄钟的 `sub_C2BFFB4(page_container, data)`
+  直接 `lvx_page_title_create(a1, text, mode, cb)`，而 n66 的
+  `lvx_page_title_create`（`0xC4C5F60`）第一件事就是
+  `lv_obj_class_create_obj(&title_class, a1)`——第一个参数就是 LVGL parent。
+- 之前「试 stock 容器 API 也不返回」的两次实验用的地址是**猜的**，不是 stock 函数：
+  3.1.32 的 `lvx_page_content_create`（`0xC430CDC`）来自 Band 10 Pro 的 ensemble 匹配；
+  3.1.190 的 `0xC4177AA` 是 3.1.175 移植猜测，反编译是
+  `*(a1+588)=sub_C433DB4(a2); return sub_C417784(a1)`，根本不是创建函数；3.1.190 的 IDB 里
+  也没有 `page_content_create` 这个字符串。**这两条记录都不能当 API 用**（`FW_LVX_PAGE_CONTENT_CREATE`
+  在 3.1.190 上仍然是错的映射）。
+- 因此 n66/n67 页面内容缺失要按「创建子对象时真正 fault」继续查，而不是「root 类型不对」。
+
+**卡住的位置**：n66 装完 Manager 后，框架打开应用页（日志
+`[pagemanager] on_ui_create: create view ...:{202, 0}` + `insert_app_to_list: pkg =
+com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
+`CFSR=0x82 MMFAR=0x0d`、`PC=0xC272254`（`lv_obj_class_create_obj` 里把新对象写回节点），
+调用链 `0xC26D37D`（`lv_obj_create`）→ `0xC2742ED` → `0xC272255`，**parent 参数是 5**。
+同一个应用页还要读 `/resource/app/app_common/lvx_xiaomi_logo.bin`（应用启动动画），
+该文件在 Mirage 的完整 n66 固件包里不存在（`app.bin`/`misc.bin`/`system.bin` 都没有
+`app_common` 条目），动画解码连续报错后就踩到空节点。stock 应用（运动记录）打开正常，
+说明这条动画只在系统 app（app id ≤ 0xFF）路径上跑。下一步要用可调试的 QEMU
+（手动带 `-s` 起同一台设备）在 `0xC26D370` 上下断点，确认 parent=5 是框架还是我们传的。
