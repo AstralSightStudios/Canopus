@@ -1852,15 +1852,14 @@ uint32_t canopus_supervisor_scan_packages(struct canopus_supervisor_v1 *sup)
 
 /* ---- CAN-P0-005 revision: next-boot registry persistence ------------ */
 
-int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup)
+int canopus_supervisor_serialize_registry(struct canopus_supervisor_v1 *sup,
+                                          uint8_t *buf, uint32_t len)
 {
-    uint8_t buf[CANOPUS_SUP_REGISTRY_SIZE];
     uint32_t i;
-    int rc;
-    if (sup == 0 || sup->platform == 0 || sup->platform->persist == 0) {
+    if (sup == 0 || buf == 0 || len < CANOPUS_SUP_REGISTRY_SIZE) {
         return -1;
     }
-    canopus_memset(buf, 0, sizeof(buf));
+    canopus_memset(buf, 0, CANOPUS_SUP_REGISTRY_SIZE);
     put_wire_u32(buf, 0u, CANOPUS_SUP_REGISTRY_MAGIC);
     put_wire_u32(buf, 4u, CANOPUS_SUP_REGISTRY_VERSION);
     put_wire_u32(buf, 8u, sup->module_count);
@@ -1881,6 +1880,18 @@ int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup)
             put_wire_u32(buf, o + 44u, m->intent | ((uint32_t)m->starts << 8));
         }
     }
+    return 0;
+}
+
+int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup)
+{
+    uint8_t buf[CANOPUS_SUP_REGISTRY_SIZE];
+    int rc;
+    if (sup == 0 || sup->platform == 0 || sup->platform->persist == 0) {
+        return -1;
+    }
+    rc = canopus_supervisor_serialize_registry(sup, buf, sizeof(buf));
+    if (rc != 0) return rc;
     rc = sup->platform->persist(sup->platform_cookie, buf, sizeof(buf));
     if (rc == 0) sup->boot_saved = wire_u32(buf + 12u);
     return rc;

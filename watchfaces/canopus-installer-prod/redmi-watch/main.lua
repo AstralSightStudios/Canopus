@@ -15,6 +15,9 @@ local AUTORUN = false
 local MANAGER_ICON_RESOURCE = SCRIPT_PATH .. "manager_icon.bin"
 local MANAGER_ICON_PATH = "/data/canopus/manager_icon.bin"
 local STAGE2_PATH = "/data/canopus/stage2.bin"
+local REGISTRY_PATH = "/data/canopus/registry.bin"
+local REGISTRY_DEVICE = "/canopus/registry"
+local REGISTRY_SIZE = 784
 local SUPERVISOR_PATH = "/data/canopus/supervisor.elf"
 local DEVICE_PATH = "/dev/canopus"
 local MODULE_MIN_SIZE = 512
@@ -725,6 +728,30 @@ local function exchange(command, payload, reply_size)
     return reply
 end
 
+-- The Supervisor publishes the wire image of its slot table on a read-only
+-- node: this VFS refuses file creation from the supervisor's call path, so the
+-- installer is the one that writes /data/canopus/registry.bin.
+local function persist_registry()
+    if type(io) ~= "table" or type(io.open) ~= "function" then
+        return false, "io.open unavailable"
+    end
+    local file = io.open(REGISTRY_DEVICE, "rb")
+    if not file then return false, "cannot open the registry node" end
+    local content = file:read(REGISTRY_SIZE)
+    file:close()
+    if type(content) ~= "string" or #content ~= REGISTRY_SIZE then
+        return false, "registry node returned "
+            .. (type(content) == "string" and #content or 0) .. " bytes"
+    end
+    if not write_all(REGISTRY_PATH, content) then
+        return false, "cannot write the registry file"
+    end
+    if read_all(REGISTRY_PATH, "rb") ~= content then
+        return false, "registry readback mismatch"
+    end
+    return true
+end
+
 local function device_error()
     local reply = exchange(CMD_QUERY_DEVICE, nil, CPC2_HEADER + 36)
     return reply and signed32(u32le(reply, CPC2_HEADER + 24)) or 0
@@ -782,6 +809,12 @@ local function run_all_steps()
         local ok, message = execute_step(step.command, step.arg0)
         if not ok then
             finish_run(false, "Run failed: " .. tostring(message)
+                .. "\nReboot before retrying.")
+            return false
+        end
+        local saved, save_error = persist_registry()
+        if not saved then
+            finish_run(false, "Registry save failed: " .. tostring(save_error)
                 .. "\nReboot before retrying.")
             return false
         end

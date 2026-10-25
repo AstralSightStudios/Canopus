@@ -45,6 +45,10 @@
  * resolves paths before checking the /dev, /proc and /sys deny prefixes).
  * Keep this outside /data, which is a mounted filesystem. */
 #define CANOPUS_SUP_INSTALLER_PATH "/canopus/install"
+/* Read-only wire image of the slot table. The REDMI Watch 6 VFS refuses to
+ * create files from the supervisor's call path, so the installer watchface
+ * reads this node and writes /data/canopus/registry.bin itself. */
+#define CANOPUS_SUP_REGISTRY_DEVICE_PATH "/canopus/registry"
 #define CANOPUS_SUP_INBOX_ROOT "/data/canopus/inbox/"
 /* Package kinds: generation A, generation B, and the staging area the
  * miwear client writes to. The client only ever writes the NEXT pair. */
@@ -164,6 +168,9 @@ static const struct canopus_hook_code_view s_hook_code_view = {
  * driver expects. */
 static file_operations s_fops;
 static file_operations s_installer_fops;
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+static file_operations s_registry_fops;
+#endif
 
 CANOPUS_STATIC_ASSERT(sizeof(file_operations) == 0x30u,
                       "file_operations must match the 12-word stock table");
@@ -258,6 +265,21 @@ static int32_t sup_installer_read(void *filep, void *buffer, uint32_t count)
     return canopus_supervisor_installer_read(canopus_supervisor_get(), buffer, count);
 }
 
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+static int32_t sup_registry_device_read(void *filep, void *buffer, uint32_t count)
+{
+    uint8_t record[CANOPUS_SUP_REGISTRY_SIZE];
+    (void)filep;
+    if (buffer == 0 || count < sizeof(record)) return -1;
+    if (canopus_supervisor_serialize_registry(canopus_supervisor_get(), record,
+                                              sizeof(record)) != 0) {
+        return -1;
+    }
+    canopus_memcpy(buffer, record, sizeof(record));
+    return (int32_t)sizeof(record);
+}
+#endif
+
 static int32_t sup_installer_write(void *filep, const void *buffer, uint32_t count)
 {
     (void)filep;
@@ -322,12 +344,22 @@ static int sup_register_device(void *cookie)
         return -(CANOPUS_SUP_REGISTER_VERIFY_ERRNO_BASE + error);
     }
     (void)close_file(fd);
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+    s_registry_fops.open = (void *)(uintptr_t)&sup_control_open;
+    s_registry_fops.close = (void *)(uintptr_t)&sup_control_close;
+    s_registry_fops.read = (void *)(uintptr_t)&sup_registry_device_read;
+#endif
     rc = sup_register_driver_exact(CANOPUS_SUP_INSTALLER_PATH,
                                    (const void *)&s_installer_fops, (void *)0);
     if (rc != 0) return rc;
     fd = open_file(CANOPUS_SUP_INSTALLER_PATH, CANOPUS_SUP_NUTTX_O_RDONLY);
     if (fd < 0) return -(CANOPUS_SUP_REGISTER_VERIFY_ERRNO_BASE + 2);
     (void)close_file(fd);
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+    rc = sup_register_driver_exact(CANOPUS_SUP_REGISTRY_DEVICE_PATH,
+                                   (const void *)&s_registry_fops, (void *)0);
+    if (rc != 0) return rc;
+#endif
     (void)canopus_sup_l2_start();
     return 0;
 }
@@ -1061,6 +1093,14 @@ static int sup_registry_persist(void *cookie, const uint8_t *data, uint32_t len)
     if (data == 0 || len == 0u || len > CANOPUS_SUP_REGISTRY_SIZE) {
         return CANOPUS_SUP_ERR_REGISTRY_OPEN;
     }
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+    /* No file can be created from this call path on this firmware (create
+     * returns ENOENT and a file write resets the device), so the record is
+     * published through /canopus/registry and the installer writes it with its
+     * own io. The in-RAM slot table is authoritative until that readback. */
+    sup_registry_diag_success();
+    return 0;
+#endif
     /* Keep a failed temp file as evidence. A successful rename consumes it. */
     (void)sup_unlink_path(CANOPUS_SUP_REGISTRY_TMP_PATH);
     rc = sup_write_all(CANOPUS_SUP_REGISTRY_TMP_PATH, data, len);

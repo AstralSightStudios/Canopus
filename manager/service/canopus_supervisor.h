@@ -510,6 +510,9 @@ uint32_t canopus_supervisor_scan_packages(struct canopus_supervisor_v1 *sup);
  * Returns 0 on success; a failure leaves the in-memory table authoritative
  * for the current session but the change will not survive reboot. */
 int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup);
+/* Wire image of the slot table, without persisting it. */
+int canopus_supervisor_serialize_registry(struct canopus_supervisor_v1 *sup,
+                                          uint8_t *buf, uint32_t len);
 /* Restore the slot table from the platform `restore` hook. Absence of a
  * registry (fresh install) is not an error. Enabled intents are loaded via
  * the platform `load_module` hook; remove intents have their artifacts

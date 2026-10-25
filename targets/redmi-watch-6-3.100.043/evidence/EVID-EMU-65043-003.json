@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-EMU-65043-003",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Can the p65 Supervisor persist its slot registry when the staged loader starts it through NSH exec?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "The registry file cannot be written from the supervisor's call path on this firmware, so the installer has to publish it.",
+  "callsite_evidence": [
+    "Raw open 0x1c1580e4 opens existing files for writing from the exec context (six flag encodings all succeed) but creating a new file returns ENOENT with every encoding tried (1, 2, 0x41, 0x241, 0x401, 0x201 and the MIwear 2/0x4 pair) in /tmp, /data, /data/misc, /data/app and /data/canopus.",
+    "A write() to a file descriptor opened in the exec context resets the emulated device (console descriptor writes work; PRIMASK and BASEPRI are 0 and a 16 KiB stack changes nothing).",
+    "Lua io.open(path, \"wb\") creates files in the same device from the watchface task, so the VFS itself can create - the supervisor's call path is what fails.",
+    "With canopus_supervisor_save_registry persisting through /canopus/registry instead, the installer's five steps all return COMPLETED, /data/canopus/registry.bin holds 784 bytes (magic CRD1, version 2) and the Manager page reports the registry as ready with 0 filesystem errors."
+  ],
+  "control_flow_evidence": [
+    "The serialized registry is produced by canopus_supervisor_serialize_registry and served read-only through a third pseudo-inode (/canopus/registry); the installer face writes it with io.open and verifies the readback."
+  ],
+  "ownership_analysis": "No new ownership; the registry device lives in the supervisor's own inode namespace next to /canopus/install.",
+  "unsafe_assumptions": [
+    "Emulator evidence only (host/emulator level); no physical device has run this.",
+    "Deferred persistence means a slot change made while no installer page runs stays in RAM until the installer publishes it.",
+    "Only the five installer steps were exercised; module install/update/remove paths were not re-run."
+  ],
+  "recommended_probe": "Install a real .canopus module through the installer and confirm the slot survives a reboot.",
+  "reviewers": [],
+  "verdict": "HOST_TESTED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}
