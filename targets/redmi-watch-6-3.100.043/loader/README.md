@@ -36,10 +36,14 @@ The custom-loader (FW_9/SUP_9) set is being recovered by manual review of the
 exact IDB; the XIP copies of the SRAM-resident bodies are thunks, so only the
 SRAM/PSRAM entry addresses are recorded.
 
-- NuttX VFS: `open` `0x1c1580e4`, `close` `0x1c154c40`, `read` `0x1c158720`,
-  `write` `0x1c158690`, `unlink` `0x1c159824`, `rename` `0x1c1587c8`,
+- NuttX VFS: `open` `0x1c1580e4`, `close` `0x1c154d9c`, `read` `0x1c158720`,
+  `write` `0x1c159a2c`, `opendir` `0xc4f7884`, `readdir` `0xc4f78ec`,
+  `closedir` `0xc4f78c0`, `unlink` `0x1c159824`, `rename` `0x1c1587c8`,
   `errno_location` `0xc4f793c`; helpers `fs_getfilep` `0x1c154700`,
-  `file_read` `0x1c158790`, `file_write` `0x1c159a90`.
+  `file_read` `0x1c158790`, `file_write` `0x1c159a90`. `close` and `write` are
+  the addresses the VFS dispatch table at `0xc4a96c4` publishes; the ported
+  `0x1c154c40` resets the device and `0x1c158690` has no code caller and fails
+  every write with `EINVAL` (`EVID-EMU-65043-002` / `EVID-EMU-65043-004`).
 - Inode/driver: `inode_lock` `0x1c154f50`, `inode_reserve` `0x1c155888`,
   `inode_remove` `0x1c1557b4`, `inode_unlock` `0x1c154f70`,
   `register_driver` `0x1c15a954` (four arguments), `unregister_driver`

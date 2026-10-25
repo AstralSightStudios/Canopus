@@ -9,7 +9,8 @@
     "Raw open 0x1c1580e4 opens existing files for writing from the exec context (six flag encodings all succeed) but creating a new file returns ENOENT with every encoding tried (1, 2, 0x41, 0x241, 0x401, 0x201 and the MIwear 2/0x4 pair) in /tmp, /data, /data/misc, /data/app and /data/canopus.",
     "A write() to a file descriptor opened in the exec context resets the emulated device (console descriptor writes work; PRIMASK and BASEPRI are 0 and a 16 KiB stack changes nothing).",
     "Lua io.open(path, \"wb\") creates files in the same device from the watchface task, so the VFS itself can create - the supervisor's call path is what fails.",
-    "With canopus_supervisor_save_registry persisting through /canopus/registry instead, the installer's five steps all return COMPLETED, /data/canopus/registry.bin holds 784 bytes (magic CRD1, version 2) and the Manager page reports the registry as ready with 0 filesystem errors."
+    "With canopus_supervisor_save_registry persisting through /canopus/registry instead, the installer's five steps all return COMPLETED, /data/canopus/registry.bin holds 784 bytes (magic CRD1, version 2) and the Manager page reports the registry as ready with 0 filesystem errors.",
+    "SUPERSEDED (2026-10-25, EVID-EMU-65043-004): these write failures came from the wrong write entry (0x1c158690, no code caller, EINVAL on every write) and the wrong O_CREAT value (0x40 instead of 4). With write 0x1c159a2d and O_CREAT 4 the Supervisor creates, writes and renames the registry itself, so the installer no longer has to publish it."
   ],
   "control_flow_evidence": [
     "The serialized registry is produced by canopus_supervisor_serialize_registry and served read-only through a third pseudo-inode (/canopus/registry); the installer face writes it with io.open and verifies the readback."

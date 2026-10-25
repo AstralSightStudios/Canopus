@@ -4,7 +4,7 @@
 // firmware : 3.100.043 (d516af0:nx_best1502p_ap)
 // sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
 // revision : 1
-// input_digest: 7b79abde0e612836
+// input_digest: 2b6ff8cb4f5f1e5b
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -210,8 +210,8 @@ pub const CANOPUS_FW_LV_EVENT_GET_CODE_CALLABLE: usize = canopus_thumb_callable(
 /// Recovered `lv_bar_create` at 0xc784834. Thumb callable address 0xc784835.
 pub const CANOPUS_FW_LV_BAR_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc784835usize);
 
-/// Recovered `write` at 0x1c158690. Thumb callable address 0x1c158691.
-pub const CANOPUS_FW_WRITE_CALLABLE: usize = canopus_thumb_callable(0x1c158691usize);
+/// Recovered `write` at 0x1c159a2c. Thumb callable address 0x1c159a2d.
+pub const CANOPUS_FW_WRITE_CALLABLE: usize = canopus_thumb_callable(0x1c159a2dusize);
 
 /// Recovered `font_reload_lv_free` at 0xc741b48. Thumb callable address 0xc741b49.
 pub const CANOPUS_FW_FONT_RELOAD_LV_FREE_CALLABLE: usize = canopus_thumb_callable(0xc741b49usize);

@@ -61,18 +61,18 @@ static const char *const s_module_suffix[SUP_KIND_COUNT] = {
 /* Read granularity for the hash/verify readbacks; larger blocks mean fewer
  * flash syscalls per byte. */
 #define CANOPUS_SUP_READ_CHUNK 1024u
-/* NuttX open() flag encoding. The Band 9 generation uses the MIwear values
- * derived from 3.1.28/3.1.190 (O_WRONLY 2, O_CREAT 0x4). The REDMI Watch 6 VFS
- * accepts O_CREAT only in the stock NuttX encoding (0x40), and a read needs
- * O_RDONLY 1 there: with 0 every read of a staged file fails with EACCES, which
- * blocked the receipt read (diagnostic -1213) until it was fixed. */
+/* NuttX open() flag encoding. Both generations use the MIwear values derived
+ * from 3.1.28/3.1.190 (read 1, write 2, O_CREAT 4) - vfs_open 0x1c157d24 on the
+ * REDMI Watch 6 gates the mode argument on flag bit 2 exactly like the Band 9
+ * images. A read needs O_RDONLY 1 there: with 0 every read of a staged file
+ * fails with EACCES, which blocked the receipt read (diagnostic -1213). */
 #if defined(CANOPUS_MGR_REDMI_WATCH)
 #define CANOPUS_SUP_NUTTX_O_RDONLY 1
 #define CANOPUS_SUP_NUTTX_O_WRONLY 2u
 #define CANOPUS_SUP_NUTTX_O_RDWR 3u
-#define CANOPUS_SUP_NUTTX_O_CREAT 0x40u
-/* Creating a file on this VFS needs O_TRUNC alongside O_CREAT: open(path, 0x41)
- * returns ENOENT for a missing path, open(path, 0x241) creates it. */
+/* vfs_open 0x1c157d24 reads the mode argument only when flag bit 2 is set
+ * (`TST.W R2,#4` in the prologue), so O_CREAT is 4 here, not 0x40. */
+#define CANOPUS_SUP_NUTTX_O_CREAT 4u
 #define CANOPUS_SUP_NUTTX_O_TRUNC 0x200u
 #else
 #define CANOPUS_SUP_NUTTX_O_RDONLY 1
@@ -567,8 +567,9 @@ static int sup_write_all(const char *path, const void *data, uint32_t size)
     if (path == 0 || data == 0 || size == 0u) {
         return CANOPUS_SUP_ERR_REGISTRY_OPEN;
     }
-    fd = open_file(path, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT |
-                         CANOPUS_SUP_NUTTX_O_TRUNC,
+    /* No O_TRUNC: the callers unlink the name first, so the descriptor always
+     * starts on an empty file. */
+    fd = open_file(path, CANOPUS_SUP_NUTTX_O_WRONLY | CANOPUS_SUP_NUTTX_O_CREAT,
                    CANOPUS_SUP_DEVICE_MODE);
     if (fd < 0) {
         sup_registry_diag(CANOPUS_SUP_REG_STAGE_OPEN_TMP, sup_registry_errno());
@@ -1099,11 +1100,9 @@ static int sup_registry_persist(void *cookie, const uint8_t *data, uint32_t len)
     rc = sup_write_all(CANOPUS_SUP_REGISTRY_TMP_PATH, data, len);
 #if defined(CANOPUS_MGR_REDMI_WATCH)
     if (rc != 0) {
-        /* The staged loader's own call path cannot create files here, but the
-         * watchface task that issues commands can (its io writes the staged
-         * images). When the direct write is impossible the record stays on
-         * /canopus/registry for the installer to publish instead. */
-        sup_registry_diag_success();
+        /* The registry diagnostic keeps the failing stage and errno. The record
+         * stays on /canopus/registry for the installer watchface to publish, and
+         * reporting success keeps the slot change live in RAM. */
         return 0;
     }
 #else

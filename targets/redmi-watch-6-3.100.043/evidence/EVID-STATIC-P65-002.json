@@ -28,7 +28,12 @@
     {
       "name": "write",
       "entry": "0x1c158690",
-      "anchor": "Same wrapper shape as read: fs_getfilep 0x1c154700, writable-flag check, dispatch through inode->ops[+12] (file_write 0x1c159a90), errno on failure."
+      "anchor": "Same wrapper shape as read: fs_getfilep 0x1c154700, writable-flag check, dispatch through inode->ops[+12] (file_write 0x1c159a90), errno on failure. SUPERSEDED: no code in the image references this body; see the write (correction) finding below."
+    },
+    {
+      "name": "write (correction)",
+      "entry": "0x1c159a2c",
+      "anchor": "The dispatch table at 0xc4a96c4 publishes 0x1c159a2d as the write slot after open/close/read, and 0x1c159a2c has eight code callers (libc write paths). Calling 0x1c158690 on a writable descriptor returns -1 with errno 22 (EINVAL), which blocked the registry write (EVID-EMU-65043-004)."
     },
     {
       "name": "unlink",

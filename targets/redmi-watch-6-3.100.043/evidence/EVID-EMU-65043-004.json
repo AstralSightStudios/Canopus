@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-EMU-65043-004",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Which p65 3.100.043 entry is the NuttX write, and can the Supervisor persist its slot registry through it?",
+  "candidate_symbols": [
+    "write"
+  ],
+  "prototype_hypothesis": "The ported write 0x1c158690 is not the VFS write. The dispatch table at 0xc4a96c4 publishes 0x1c159a2d next to open/close/read, the same way close was corrected from 0x1c154c40 to 0x1c154d9c.",
+  "callsite_evidence": [
+    "The app dispatch table at 0xc4a96c4 holds 0x1c1580e5 (open), 0x1c154d9d (close), 0x1c158721 (read), 0x1c159a2d (write) in that order (EVID-EMU-65043-002).",
+    "0x1c159a2c has eight code cross-references inside the image (libc write paths); the ported 0x1c158690 has none at all.",
+    "With 0x1c158690, every write to a writable descriptor fails with EINVAL: a freshly created /data/canopus/registry.tmp and the existing registry.bin both end at registry diagnostic stage 2 (WRITE_TMP), errno 22, read back from QUERY_DEVICE as flags 0x00001602.",
+    "With 0x1c159a2d, a CPC2 DISABLE of hello_portable (command 4, payload \"hello_portable\") on a Mirage p65 device returns REBOOT_REQUIRED(8); QUERY_DEVICE reports flags 0x01000000 - no failing stage and one successful registry transaction - and /data/canopus/registry.bin changes at the slot lifecycle word.",
+    "No registry.tmp is left after that save, so the temp create, the write and the rename all ran; the installer watchface did not run in that boot.",
+    "Creating the temp file needs O_CREAT 4, not 0x40: vfs_open 0x1c157d24 reads the mode argument only when flag bit 2 is set, and with the old value the create never happened (stage 1, errno 2)."
+  ],
+  "control_flow_evidence": [
+    "canopus_supervisor_save_registry -> sup_registry_persist -> sup_write_all(/data/canopus/registry.tmp) -> sup_verify_file -> sup_rename_path(/data/canopus/registry.bin)."
+  ],
+  "ownership_analysis": "No new ownership: the corrected entry is the write slot of the VFS dispatch table the firmware itself uses, and the registry file stays owned by the Supervisor.",
+  "unsafe_assumptions": [
+    "Emulator evidence only (Mirage p65 device, host/emulator level); no physical device has run this.",
+    "The dispatch table address is read from the image; a table relocation would invalidate it.",
+    "Only the registry save path was exercised; other Supervisor file writes (staged receipts, service file API) were not re-run."
+  ],
+  "recommended_probe": "Reboot and re-load the Supervisor to confirm the restored slot keeps the disabled intent, then flip it back with ENABLE and compare the file again.",
+  "reviewers": [],
+  "verdict": "HOST_TESTED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}
