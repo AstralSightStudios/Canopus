@@ -761,3 +761,10 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   切换，Manager 页始终没出来。「启用」的端到端复验因此没做成。这条和激活体验同等重要：
   移除也必须能用。接续时先 `erase`（本轮结束时已擦机）再重装模块，然后分别验证
   ENABLE（registry 应为 intent=1）与 REMOVE（应删除产物且设备不复位）。
+- **确认动作与文案不一致（新 bug，待修）**：在详情页点「启用」→ 确认框文案是「在下次手环启动时
+  启用该模块？」→ 点「确认」→ 设备存活（`2703087` 的修复有效）→ 关机读 registry，
+  `hello_portable` 的 intent 仍是 **2（REMOVE）**。也就是说对话框说的是 ENABLE，实际落盘的是
+  REMOVE。协议层没问题（探针直接发 ENABLE 时 registry 是 intent=1），问题在
+  `manager_event` 的确认分支：`native->confirm_event` 与实际渲染的文案对不上，或确认行执行了
+  另一个 `event_id`。下一步在 `render_confirmation`/`execute_event` 之间加一个 diag 标记，
+  把「文案用的 event_id」和「确认执行的 event_id」都打出来。
