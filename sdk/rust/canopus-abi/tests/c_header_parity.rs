@@ -78,6 +78,10 @@ fn constants_match_the_c_header() {
         ("CONNECT_BINARY", CONNECT_BINARY as u64),
         ("CONNECT_DATA_MAX", CONNECT_DATA_MAX as u64),
         ("CONNECT_NOT_LISTENING", CONNECT_NOT_LISTENING as u64),
+        ("LAUNCHER_ENTRIES", LAUNCHER_ENTRIES as u64),
+        ("LAUNCHER_LABEL_MAX", LAUNCHER_LABEL_MAX as u64),
+        ("LAUNCHER_ICON_MAX", LAUNCHER_ICON_MAX as u64),
+        ("NATIVE_APP_PAGES_MAX", NATIVE_APP_PAGES_MAX as u64),
     ];
     for (name, rust) in table {
         assert_eq!(c_define(name), *rust, "CANOPUS_{name}");
@@ -91,6 +95,43 @@ fn ui_and_bus_layouts_match_the_c_headers() {
     use std::process::{Command, Stdio};
 
     let layouts = [
+        ("sizeof(struct canopus_launcher_obj)", size_of::<CanopusLauncherObj>()),
+        (
+            "_Alignof(struct canopus_launcher_obj)",
+            align_of::<CanopusLauncherObj>(),
+        ),
+        (
+            "offsetof(struct canopus_launcher_obj, register_app)",
+            offset_of!(CanopusLauncherObj, register_app),
+        ),
+        (
+            "sizeof(struct canopus_app_entry_v1)",
+            size_of::<AppEntryV1>(),
+        ),
+        (
+            "_Alignof(struct canopus_app_entry_v1)",
+            align_of::<AppEntryV1>(),
+        ),
+        (
+            "offsetof(struct canopus_app_entry_v1, struct_size)",
+            offset_of!(AppEntryV1, struct_size),
+        ),
+        (
+            "offsetof(struct canopus_app_entry_v1, label)",
+            offset_of!(AppEntryV1, label),
+        ),
+        (
+            "offsetof(struct canopus_app_entry_v1, icon)",
+            offset_of!(AppEntryV1, icon),
+        ),
+        (
+            "offsetof(struct canopus_app_entry_v1, pages)",
+            offset_of!(AppEntryV1, pages),
+        ),
+        (
+            "offsetof(struct canopus_app_entry_v1, page_count)",
+            offset_of!(AppEntryV1, page_count),
+        ),
         ("sizeof(struct canopus_fs_obj)", size_of::<CanopusFsObj>()),
         (
             "offsetof(struct canopus_fs_obj, get_data_path)",

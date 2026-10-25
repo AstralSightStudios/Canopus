@@ -4,9 +4,11 @@ An end-to-end example of a Canopus target module carrying a full native applicat
 
 ## Overview
 This module demonstrates:
-1. **Native Application Descriptor Registration**:
-   - Registers with the firmware app registry (`FW_APP_INSTALL`) and launcher (`FW_LAUNCHER_ADD`).
-   - App ID: `0x00CB`, package: `com.canopus.native.demo`.
+1. **Supervisor-Owned Native Registration**:
+   - Uses `CANOPUS_SVC_LAUNCHER` version 1 and submits its writable exact-target page through `ctx->launcher->register_app` during publication stage 1.
+   - The Supervisor assigns and persists the app ID for `native_demo`, uses package `com.canopus.module.native_demo`, and performs firmware install and launcher addition on separate UI ticks.
+   - Publication stage 2 navigates to the assigned app ID. The demo never chooses an ID or calls firmware application install/launcher-add itself.
+   - The page descriptor and callbacks stay resident until reboot; the temporary page pointer array is copied by the service.
 2. **Declarative & Firmware-Native UI Widgets**:
    - Page Title Header: `FW_LVX_PAGE_TITLE_CREATE`
    - Scrolling Viewport: `FW_LVX_CONTENT_CREATE`

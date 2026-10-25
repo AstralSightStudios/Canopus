@@ -396,22 +396,38 @@ static int g_launcher_step_rc;
 static uint32_t g_launcher_slot;
 static char g_launcher_label[CANOPUS_LAUNCHER_LABEL_MAX];
 static char g_launcher_icon[CANOPUS_LAUNCHER_ICON_MAX];
-static int p_launcher_publish(void *c, uint32_t slot, const char *label, const char *icon)
+static void *g_native_pages[CANOPUS_NATIVE_APP_PAGES_MAX];
+static uint32_t g_native_page_count;
+static void *g_native_owned_pages;
+static int p_app_publish(void *c, uint32_t slot,
+                         const struct canopus_app_entry_v1 *entry)
 {
+    uint32_t i;
     (void)c;
     if (g_launcher_publish_rc != 0) return g_launcher_publish_rc;
     g_launcher_publishes++;
     g_launcher_slot = slot;
-    snprintf(g_launcher_label, sizeof(g_launcher_label), "%s", label);
-    snprintf(g_launcher_icon, sizeof(g_launcher_icon), "%s", icon != 0 ? icon : "");
+    snprintf(g_launcher_label, sizeof(g_launcher_label), "%s", entry->label);
+    snprintf(g_launcher_icon, sizeof(g_launcher_icon), "%s", entry->icon != 0 ? entry->icon : "");
     g_launcher_steps_left = 2; /* install the app, then add it to the launcher */
+    if (entry->page_count != 0u) {
+        g_native_page_count = entry->page_count;
+        g_native_owned_pages = (void *)entry->pages;
+        for (i = 0u; i < entry->page_count; i++) g_native_pages[i] = entry->pages[i];
+    }
     return 0;
 }
+
 static int p_launcher_step(void *c)
 {
     (void)c;
     g_launcher_steps++;
-    if (g_launcher_step_rc != 0) return g_launcher_step_rc;
+    if (g_launcher_step_rc != 0) {
+        int rc = g_launcher_step_rc;
+        g_launcher_step_rc = 0; /* the failed entry is consumed, not retried */
+        if (g_launcher_steps_left > 0) g_launcher_steps_left--;
+        return rc;
+    }
     return g_launcher_steps_left > 0 ? (--g_launcher_steps_left, 1) : 0;
 }
 
@@ -475,8 +491,11 @@ static void init_hw_platform(void)
     platform_with_hw.l2_event = p_l2_event;
     platform_with_hw.l2_peer = p_l2_peer;
     platform_with_hw.ui_page_close = p_ui_page_close;
-    platform_with_hw.launcher_publish = p_launcher_publish;
+    platform_with_hw.app_publish = p_app_publish;
     platform_with_hw.launcher_step = p_launcher_step;
+    g_native_page_count = 0u;
+    g_native_owned_pages = 0;
+    memset(g_native_pages, 0, sizeof(g_native_pages));
     g_launcher_publishes = g_launcher_publish_rc = g_launcher_steps_left = g_launcher_steps = 0;
     g_launcher_step_rc = 0;
     g_peer = 1u;
@@ -2036,7 +2055,7 @@ TEST(launcher_entry_needs_a_ui_entry_and_is_published_once)
     struct canopus_supervisor_v1 sup;
     const struct canopus_context_v1 *ctx;
     struct canopus_ui_entry_v1 ui;
-    struct canopus_launcher_entry_v1 entry;
+    struct canopus_app_entry_v1 entry;
     char long_label[CANOPUS_LAUNCHER_LABEL_MAX + 1u];
     setup_hw(&sup);
     ctx = canopus_supervisor_context(&sup, 0);
@@ -2049,24 +2068,24 @@ TEST(launcher_entry_needs_a_ui_entry_and_is_published_once)
     entry.label = "Notes";
     entry.icon = "/data/notes/icon.bin";
 
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_STATE); /* nothing to open */
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_STATE); /* nothing to open */
     CHECK_EQ(ctx->ui->set_entry(ctx, &ui), CANOPUS_SVC_OK);
     entry.struct_size = 1u;
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
     entry.struct_size = sizeof(entry);
     entry.label = "";
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
     memset(long_label, 'l', sizeof(long_label) - 1u);
     long_label[sizeof(long_label) - 1u] = '\0';
     entry.label = long_label;
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
     entry.label = "Notes";
     g_launcher_publish_rc = -12;
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_NOMEM);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_NOMEM);
     g_launcher_publish_rc = 0;
     CHECK_EQ(g_launcher_publishes, 0);
 
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), 0xCC);
     CHECK_EQ(g_launcher_publishes, 1);
     CHECK_EQ(g_launcher_slot, 0u);
     CHECK(strcmp(g_launcher_label, "Notes") == 0);
@@ -2074,12 +2093,12 @@ TEST(launcher_entry_needs_a_ui_entry_and_is_published_once)
     CHECK_EQ(g_launcher_steps, 0); /* nothing runs inside the call */
 
     /* the same entry again is accepted without publishing twice; another one is refused */
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), 0xCC);
     entry.label = "Other";
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_BUSY);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_BUSY);
     entry.label = "Notes";
     entry.icon = 0;
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_BUSY);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_BUSY);
     CHECK_EQ(g_launcher_publishes, 1);
 
     /* each firmware call gets its own heartbeat tick, and then the ticks go idle */
@@ -2094,11 +2113,92 @@ TEST(launcher_entry_needs_a_ui_entry_and_is_published_once)
 
     /* the firmware cannot take the entry back: it outlives the module's release */
     canopus_supervisor_release_services(&sup, 0u);
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_ERR_STATE);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_STATE);
     CHECK_EQ(ctx->ui->set_entry(ctx, &ui), CANOPUS_SVC_OK);
     entry.icon = "/data/notes/icon.bin";
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), 0xCC);
     CHECK_EQ(g_launcher_publishes, 1);
+}
+
+TEST(native_and_public_launcher_entries_share_identity_and_publish_once)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *public_ctx, *native_ctx;
+    struct canopus_ui_entry_v1 ui = {0};
+    struct canopus_app_entry_v1 public_entry = {sizeof(public_entry), "Corona", "/data/corona.bin", 0, 0u};
+    int page_a, page_b;
+    void *pages[] = {&page_a, &page_b};
+    struct canopus_app_entry_v1 native = {sizeof(native), "Native", "/data/native.bin", pages, 2u};
+    int32_t native_id;
+    setup_hw(&sup);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, 0u, 1u, "other.native"), 1);
+    public_ctx = canopus_supervisor_context(&sup, 0u);
+    native_ctx = canopus_supervisor_context(&sup, 1u);
+    CHECK(canopus_services_has(native_ctx, CANOPUS_SVC_LAUNCHER, 1u));
+    /* Native firmware pages do not need a portable UI entry. */
+    native_id = native_ctx->launcher->register_app(native_ctx, &native);
+    CHECK_EQ(native_id, 0xCC);
+    CHECK_EQ(g_launcher_publishes, 1);
+    CHECK_EQ(g_native_page_count, 2u);
+    CHECK(g_native_owned_pages != pages);
+    CHECK(g_native_pages[0] == &page_a && g_native_pages[1] == &page_b);
+    ui.struct_size = sizeof(ui);
+    ui.on_open = entry_open;
+    CHECK_EQ(public_ctx->ui->set_entry(public_ctx, &ui), CANOPUS_SVC_OK);
+    CHECK_EQ(public_ctx->launcher->register_app(public_ctx, &public_entry), 0xCD);
+    CHECK_EQ(sup.modules[0].native_app_id, 0xCD);
+    CHECK_EQ(g_launcher_publishes, 2);
+    CHECK_EQ(native_ctx->launcher->register_app(native_ctx, &native), native_id);
+    CHECK_EQ(public_ctx->launcher->register_app(public_ctx, &public_entry), 0xCD);
+    CHECK_EQ(g_launcher_publishes, 2);
+    pages[0] = &page_b;
+    CHECK_EQ(native_ctx->launcher->register_app(native_ctx, &native), CANOPUS_SVC_ERR_BUSY);
+    pages[0] = &page_a;
+    CHECK_EQ(native_ctx->ui->set_entry(native_ctx, &ui), CANOPUS_SVC_OK);
+    CHECK_EQ(native_ctx->launcher->register_app(native_ctx, &public_entry), CANOPUS_SVC_ERR_BUSY);
+    CHECK_EQ(public_ctx->launcher->register_app(public_ctx, &native), CANOPUS_SVC_ERR_BUSY);
+    CHECK_EQ(g_launcher_publishes, 2);
+    /* The real platform retains this until reboot; the fixture's boot ends here. */
+    free(g_native_owned_pages);
+}
+
+TEST(app_registration_validates_pages_and_requires_platform_publish)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform;
+    const struct canopus_context_v1 *ctx;
+    int32_t (*register_app)(const struct canopus_context_v1 *, const struct canopus_app_entry_v1 *);
+    int page;
+    void *pages[] = {&page};
+    struct canopus_app_entry_v1 entry = {sizeof(entry), "Native", 0, pages, 1u};
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    CHECK_EQ(ctx->launcher->register_app(ctx, 0), CANOPUS_SVC_ERR_ARGUMENT);
+    entry.page_count = 0u; /* a nonempty array requires a native page count */
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    entry.pages = 0;
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_STATE); /* managed UI is absent */
+    entry.page_count = 1u;
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    entry.pages = pages;
+    entry.page_count = CANOPUS_NATIVE_APP_PAGES_MAX + 1u;
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    entry.page_count = 1u;
+    pages[0] = 0;
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    CHECK_EQ(sup.modules[0].native_app_id, 0u);
+    CHECK_EQ(g_launcher_publishes, 0);
+    pages[0] = &page;
+    register_app = ctx->launcher->register_app;
+    platform = platform_with_hw;
+    platform.app_publish = 0;
+    sup.platform = &platform;
+    canopus_supervisor_services_bind(&sup);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_LAUNCHER, 1u));
+    CHECK(ctx->launcher == 0);
+    CHECK_EQ(register_app(ctx, &entry), CANOPUS_SVC_ERR_UNSUPPORTED);
+    CHECK_EQ(g_launcher_publishes, 0);
 }
 
 TEST(launcher_step_failure_is_reported_in_the_supervisor_error)
@@ -2106,7 +2206,7 @@ TEST(launcher_step_failure_is_reported_in_the_supervisor_error)
     struct canopus_supervisor_v1 sup;
     const struct canopus_context_v1 *ctx;
     struct canopus_ui_entry_v1 ui;
-    struct canopus_launcher_entry_v1 entry;
+    struct canopus_app_entry_v1 entry;
     setup_hw(&sup);
     ctx = canopus_supervisor_context(&sup, 0);
     memset(&ui, 0, sizeof(ui));
@@ -2116,12 +2216,16 @@ TEST(launcher_step_failure_is_reported_in_the_supervisor_error)
     entry.struct_size = sizeof(entry);
     entry.label = "Notes";
     CHECK_EQ(ctx->ui->set_entry(ctx, &ui), CANOPUS_SVC_OK);
-    CHECK_EQ(ctx->launcher->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(ctx->launcher->register_app(ctx, &entry), 0xCC);
     g_launcher_step_rc = -5;
     advance_time(10u);
     CHECK_EQ((int32_t)sup.error_code, CANOPUS_SUP_ERR_LAUNCHER);
     advance_time(10u);
-    CHECK_EQ(g_launcher_steps, 1); /* a failed registration is not retried */
+    CHECK_EQ(g_launcher_steps, 2); /* continue draining the remaining queue */
+    advance_time(10u);
+    CHECK_EQ(g_launcher_steps, 3); /* idle now */
+    advance_time(10u);
+    CHECK_EQ(g_launcher_steps, 3);
 }
 
 TEST(launcher_is_absent_without_the_platform_hooks)
@@ -2131,7 +2235,7 @@ TEST(launcher_is_absent_without_the_platform_hooks)
     const struct canopus_context_v1 *ctx;
     init_hw_platform();
     headless = platform_with_hw;
-    headless.launcher_publish = 0;
+    headless.app_publish = 0;
     headless.launcher_step = 0;
     setup(&sup, &headless);
     ctx = canopus_supervisor_context(&sup, 0);
@@ -2641,6 +2745,10 @@ static struct test_registry supervisor_services_tests[] = {
       ui_entry_is_validated_copied_listed_and_dropped_with_the_module_wrapper },
     { "launcher_entry_needs_a_ui_entry_and_is_published_once",
       launcher_entry_needs_a_ui_entry_and_is_published_once_wrapper },
+    { "native_and_public_launcher_entries_share_identity_and_publish_once",
+      native_and_public_launcher_entries_share_identity_and_publish_once_wrapper },
+    { "app_registration_validates_pages_and_requires_platform_publish",
+      app_registration_validates_pages_and_requires_platform_publish_wrapper },
     { "launcher_step_failure_is_reported_in_the_supervisor_error",
       launcher_step_failure_is_reported_in_the_supervisor_error_wrapper },
     { "launcher_is_absent_without_the_platform_hooks",

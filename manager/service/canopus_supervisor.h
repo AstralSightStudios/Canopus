@@ -205,6 +205,16 @@ enum canopus_safe_exit_action {
 #define CANOPUS_SUP_DIAG_QUERY_MAGIC 0x43514431u /* "CQD1" */
 
 #define CANOPUS_SUP_MODULE_ID_MAX 32u
+/* One shared namespace for managed native applications, independent of UI slots. */
+#define CANOPUS_SUP_NATIVE_APP_FIRST_ID 0xCCu
+#define CANOPUS_SUP_NATIVE_APP_IDS CANOPUS_SUP_MODULE_SLOTS
+#define CANOPUS_SUP_NATIVE_PACKAGE_MAX (19u + CANOPUS_SUP_MODULE_ID_MAX)
+enum canopus_sup_native_app_status {
+    CANOPUS_SUP_NATIVE_APP_NONE = 0,
+    CANOPUS_SUP_NATIVE_APP_PENDING,
+    CANOPUS_SUP_NATIVE_APP_READY,
+    CANOPUS_SUP_NATIVE_APP_FAILED,
+};
 
 /* Public slot flag bits (CPS1 / v2 query). */
 #define CANOPUS_SUP_FLAG_HAS_PREV       (1u << 0) /* the other generation holds a package */
@@ -233,7 +243,7 @@ enum canopus_sup_intent {
  * mutation, read back at supervisor load. Format:
  *   header (16): u32 magic "CRD1", u32 version, u32 module_count, u32 rsvd
  *   16 slots x 48: module_id[32] + u32 class + u32 version + u32 flags/error +
- *                  u32 intent (bits 0..7) | starts << 8
+ *                  u32 intent (bits 0..7) | starts << 8 | native_app_id << 16
  * Registry flags: see CANOPUS_SUP_REG_FLAG_*; bits 2..31 retain a zigzag-encoded
  * activation error. Old files used zero in those bits and remain valid.
  * The slot table is the in-memory source of truth; the registry is the
@@ -272,6 +282,9 @@ struct canopus_sup_module_v1 {
     uint8_t watching;
     /* Transient explicit-activation publication: 1 = pages, 2 = launcher. */
     uint8_t native_app_stage;
+    /* Stable native identity, persisted in registry intent bits 16..23. */
+    uint8_t native_app_id;
+    uint8_t native_app_status;
     uint32_t started_ms;
 };
 
@@ -520,6 +533,11 @@ int canopus_supervisor_restore_registry(struct canopus_supervisor_v1 *sup);
 int canopus_supervisor_restore_registry_metadata(struct canopus_supervisor_v1 *sup);
 /* Load and activate enabled slots previously restored as metadata. */
 int canopus_supervisor_activate_restored_modules(struct canopus_supervisor_v1 *sup);
+/* Reserve and persist one module's native identity on the serialized owner.
+ * Returns its app ID, or a negative service error. All native registration
+ * paths use this allocator; the firmware's existing IDs are also reserved. */
+int32_t canopus_supervisor_native_app_id(struct canopus_supervisor_v1 *sup,
+                                        uint32_t slot);
 /* Publish native apps for loaded modules from a caller-owned UI-process
  * bootstrap transaction. Explicit activation uses the foreground pump below;
  * neither path may publish from boot restore or a worker. */

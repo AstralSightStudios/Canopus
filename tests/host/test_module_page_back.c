@@ -5,8 +5,10 @@
 #define CANOPUS_MANAGER_TARGET_SOURCE "../../manager/target/canopus_manager_target.c"
 #endif
 #include CANOPUS_MANAGER_TARGET_SOURCE
+#include "canopus_runtime.h"
 
 static struct canopus_target_module_page fixture_heap;
+static struct canopus_target_launcher_entry fixture_launcher_backing;
 static struct canopus_supervisor_v1 fixture_supervisor;
 static struct canopus_context_v1 fixture_context;
 static struct canopus_ui_entry_v1 fixture_entry;
@@ -128,9 +130,19 @@ uint32_t test_prepare(uint32_t launcher, uint32_t mode)
     for (i = 0u; i < CANOPUS_TARGET_PAGE_COUNT; i++) {
         target_descriptor_init(i, "test", (uint16_t)i);
     }
-    launcher_entries[0].slot = 3u;
-    launcher_entry_init(&launcher_entries[0], 0u);
-    fixture_descriptor = launcher ? &launcher_entries[0].page
+    fixture_supervisor.modules[3].state = CANOPUS_STATE_ACTIVE;
+    fixture_supervisor.modules[3].native_app_id = 0xccu;
+    launcher_copy((char *)fixture_supervisor.modules[3].module_id,
+                  sizeof(fixture_supervisor.modules[3].module_id), "page_back");
+    canopus_memset(&fixture_launcher_backing, 0, sizeof(fixture_launcher_backing));
+    canopus_memset(launcher_entries, 0, sizeof(launcher_entries));
+    launcher_entries[0] = &fixture_launcher_backing;
+    launcher_entries[0]->slot = 3u;
+    launcher_entries[0]->app.app_id = fixture_supervisor.modules[3].native_app_id;
+    launcher_copy(launcher_entries[0]->package, sizeof(launcher_entries[0]->package),
+                  "com.canopus.module.page_back");
+    launcher_entry_init(launcher_entries[0], 0u);
+    fixture_descriptor = launcher ? &launcher_entries[0]->page
                                   : &manager_pages_desc[CANOPUS_TARGET_PAGE_MODULE_UI];
     manager_pending_ui_slot = 4u;
     return (uint32_t)(uintptr_t)fixture_descriptor;
@@ -140,13 +152,13 @@ int test_open(void)
 uint32_t test_callback(uint32_t which)
 {
     const struct canopus_target_page *p = which == 0u ? fixture_descriptor :
-        which == 1u ? &launcher_entries[0].page : &manager_pages_desc[which - 2u];
+        which == 1u ? &launcher_entries[0]->page : &manager_pages_desc[which - 2u];
     return (uint32_t)(uintptr_t)p->extension_callback_104;
 }
 uint32_t test_other_descriptor(void)
 {
-    return (uint32_t)(uintptr_t)(fixture_descriptor == &launcher_entries[0].page ?
-        &manager_pages_desc[CANOPUS_TARGET_PAGE_MODULE_UI] : &launcher_entries[0].page);
+    return (uint32_t)(uintptr_t)(fixture_descriptor == &launcher_entries[0]->page ?
+        &manager_pages_desc[CANOPUS_TARGET_PAGE_MODULE_UI] : &launcher_entries[0]->page);
 }
 void test_destroy(void)
 {

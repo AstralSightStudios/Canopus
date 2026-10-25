@@ -177,11 +177,8 @@ struct canopus_target_module_page {
     uint32_t slot;
 };
 
-/* A launcher entry a module published through ctx->launcher (ADR-CAN-011): its
- * own firmware app with one page that opens the module's ui page. The firmware
- * holds these descriptors from the moment of app_install, so they live here for
- * the whole boot; there is no way to take one back. */
-#define CANOPUS_TARGET_LAUNCHER_FIRST_APP_ID UINT16_C(0x00CC)
+/* Managed UI and native pages share the Supervisor's persistent identity and
+ * one boot-resident registration queue. */
 enum canopus_target_launcher_state {
     CANOPUS_TARGET_LAUNCHER_FREE = 0,
     CANOPUS_TARGET_LAUNCHER_QUEUED,
@@ -192,13 +189,15 @@ enum canopus_target_launcher_state {
 struct canopus_target_launcher_entry {
     struct firmware_app_descriptor app;
     struct canopus_target_page page;
-    char package[24];
+    char package[CANOPUS_SUP_NATIVE_PACKAGE_MAX];
+    struct canopus_target_page *native_pages[CANOPUS_NATIVE_APP_PAGES_MAX];
+    uint32_t native_page_count;
     char label[CANOPUS_LAUNCHER_LABEL_MAX];
     char icon[CANOPUS_LAUNCHER_ICON_MAX];
     uint32_t slot;
     uint8_t state;
 };
-static struct canopus_target_launcher_entry launcher_entries[CANOPUS_LAUNCHER_ENTRIES];
+static struct canopus_target_launcher_entry *launcher_entries[CANOPUS_LAUNCHER_ENTRIES];
 
 static struct canopus_manager_model_v1 manager_model;
 static struct canopus_client_v1 manager_client;
@@ -214,10 +213,10 @@ static uint8_t manager_session_ready;
 
 _Static_assert(CANOPUS_MANAGER_TARGET_APP_ID <= UINT16_C(0x00FF),
                "system launch animation requires an 8-bit app id");
-_Static_assert(CANOPUS_TARGET_LAUNCHER_FIRST_APP_ID > CANOPUS_MANAGER_TARGET_APP_ID + 1u &&
-               CANOPUS_TARGET_LAUNCHER_FIRST_APP_ID + CANOPUS_LAUNCHER_ENTRIES - 1u <=
+_Static_assert(CANOPUS_SUP_NATIVE_APP_FIRST_ID > CANOPUS_MANAGER_TARGET_APP_ID + 1u &&
+               CANOPUS_SUP_NATIVE_APP_FIRST_ID + CANOPUS_SUP_NATIVE_APP_IDS - 1u <=
                    UINT16_C(0x00FF),
-               "launcher entries need 8-bit app ids clear of the Manager and the demo app");
+               "native identities need 8-bit app ids clear of the Manager and legacy demo");
 _Static_assert(CANOPUS_LAUNCHER_ENTRIES == 8u, "one label callback per launcher entry");
 #ifndef CANOPUS_MGR_BAND11
 _Static_assert(sizeof(struct canopus_target_page) == 116,
@@ -1016,6 +1015,11 @@ static int module_page_slot(const struct canopus_target_page *page, uint32_t *sl
     const struct canopus_target_launcher_entry *launcher = launcher_entry_of(page);
 
     if (launcher != NULL) {
+        struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
+        if (launcher->slot >= CANOPUS_SUP_MODULE_SLOTS ||
+            strings_differ(launcher->package + 19u,
+                           (const char *)sup->modules[launcher->slot].module_id) != 0)
+            return -1;
         *slot = launcher->slot;
         return 0;
     }
@@ -1127,7 +1131,7 @@ int canopus_manager_target_module_page_close(uint32_t slot)
 /* ---- module launcher entries (ADR-CAN-011) --------------------------- */
 
 #define LAUNCHER_LABEL_FN(n) \
-    static const char *launcher_label_##n(void) { return launcher_entries[n].label; }
+    static const char *launcher_label_##n(void) { return launcher_entries[n]->label; }
 LAUNCHER_LABEL_FN(0) LAUNCHER_LABEL_FN(1) LAUNCHER_LABEL_FN(2) LAUNCHER_LABEL_FN(3)
 LAUNCHER_LABEL_FN(4) LAUNCHER_LABEL_FN(5) LAUNCHER_LABEL_FN(6) LAUNCHER_LABEL_FN(7)
 static const char *(*const launcher_label_fns[CANOPUS_LAUNCHER_ENTRIES])(void) = {
@@ -1141,14 +1145,15 @@ static struct canopus_target_launcher_entry *launcher_entry_of(
     uint32_t i;
 
     for (i = 0u; i < CANOPUS_LAUNCHER_ENTRIES; i++) {
-        if (page == &launcher_entries[i].page) {
-            return &launcher_entries[i];
+        if (launcher_entries[i] != NULL && page == &launcher_entries[i]->page) {
+            return launcher_entries[i];
         }
     }
     return NULL;
 }
 
-static void launcher_copy(char *to, uint32_t size, const char *from)
+/* Keep the shared bounded copy out of line in the boot-resident image. */
+static __attribute__((noinline)) void launcher_copy(char *to, uint32_t size, const char *from)
 {
     uint32_t i;
 
@@ -1158,42 +1163,60 @@ static void launcher_copy(char *to, uint32_t size, const char *from)
     to[i] = '\0';
 }
 
-int canopus_manager_target_launcher_publish(uint32_t slot, const char *label,
-                                            const char *icon)
+int canopus_manager_target_app_publish(uint32_t slot,
+                                       const struct canopus_app_entry_v1 *definition)
 {
+    struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
     struct canopus_target_launcher_entry *entry = NULL;
     uint32_t i;
 
+    if (slot >= CANOPUS_SUP_MODULE_SLOTS || sup->modules[slot].native_app_id == 0u)
+        return -22;
     for (i = 0u; i < CANOPUS_LAUNCHER_ENTRIES; i++) {
-        if (launcher_entries[i].state == CANOPUS_TARGET_LAUNCHER_FREE) {
-            entry = &launcher_entries[i];
-            break;
-        }
+        if (launcher_entries[i] == NULL) break;
     }
-    if (entry == NULL) {
-        return -12;
-    }
-    launcher_copy(entry->label, sizeof(entry->label), label);
-    launcher_copy(entry->icon, sizeof(entry->icon), icon);
+    if (i == CANOPUS_LAUNCHER_ENTRIES || sup->platform->heap_alloc == NULL) return -12;
+    entry = sup->platform->heap_alloc(sup->platform_cookie, sizeof(*entry));
+    if (entry == NULL) return -12;
+    canopus_memset(entry, 0, sizeof(*entry));
+    launcher_entries[i] = entry;
+    launcher_copy(entry->label, sizeof(entry->label), definition->label);
+    launcher_copy(entry->icon, sizeof(entry->icon), definition->icon);
     launcher_copy(entry->package, sizeof(entry->package), "com.canopus.module.");
-    entry->package[19] = (char)('0' + i);
-    entry->package[20] = '\0';
+    launcher_copy(entry->package + 19u, sizeof(entry->package) - 19u,
+                  (const char *)sup->modules[slot].module_id);
     entry->slot = slot;
+    entry->app.app_id = sup->modules[slot].native_app_id;
+    entry->native_page_count = definition->page_count;
+    for (i = 0u; i < definition->page_count; i++) entry->native_pages[i] = definition->pages[i];
     entry->state = CANOPUS_TARGET_LAUNCHER_QUEUED;
     return 0;
+}
+
+int canopus_manager_target_native_app_id_in_use(uint16_t app_id)
+{
+    typedef void *(*lookup_fn)(uint16_t);
+    if (canopus_manager_target_record.identity_result != 0)
+        return canopus_manager_target_record.identity_result;
+    return ((lookup_fn)(uintptr_t)FW_APP_LOOKUP)(app_id) != NULL;
 }
 
 /* Fills the app and page records the firmware is handed at app_install. */
 static void launcher_entry_init(struct canopus_target_launcher_entry *entry,
                                 uint32_t index)
 {
-    uint16_t app_id = (uint16_t)(CANOPUS_TARGET_LAUNCHER_FIRST_APP_ID + index);
+    uint16_t app_id = entry->app.app_id;
+    uint32_t i;
 
     canopus_memset(&entry->app, 0, sizeof(entry->app));
     entry->app.package_name = entry->package;
     entry->app.launcher_icon_resource = entry->icon[0] != '\0' ? entry->icon : launcher_icon;
     entry->app.app_id = app_id;
     entry->app.launcher_metadata_callback = launcher_label_fns[index];
+    if (entry->native_page_count != 0u) {
+        for (i = 0u; i < entry->native_page_count; i++) entry->native_pages[i]->app_id = app_id;
+        return;
+    }
     canopus_memset(&entry->page, 0, sizeof(entry->page));
     entry->page.page_name = page_name_module_ui;
     entry->page.page_id = 0u;
@@ -1210,6 +1233,13 @@ static void launcher_entry_init(struct canopus_target_launcher_entry *entry,
 #else /* CANOPUS_MGR_BAND11 */
     entry->page.on_ui_destroy = module_page_on_ui_destroy;
 #endif /* CANOPUS_MGR_BAND11 */
+}
+
+static int launcher_failed(struct canopus_target_launcher_entry *entry, int error)
+{
+    entry->state = CANOPUS_TARGET_LAUNCHER_FAILED;
+    canopus_supervisor_get()->modules[entry->slot].native_app_status = CANOPUS_SUP_NATIVE_APP_FAILED;
+    return error;
 }
 
 int canopus_manager_target_launcher_step(void)
@@ -1232,33 +1262,52 @@ int canopus_manager_target_launcher_step(void)
     uint32_t i;
 
     if (canopus_manager_target_record.identity_result != 0) {
-        return canopus_manager_target_record.identity_result;
+        int pending = 0;
+        for (i = 0u; i < CANOPUS_LAUNCHER_ENTRIES; i++) {
+            struct canopus_target_launcher_entry *entry = launcher_entries[i];
+            if (entry != NULL && (entry->state == CANOPUS_TARGET_LAUNCHER_QUEUED ||
+                                  entry->state == CANOPUS_TARGET_LAUNCHER_INSTALLED)) {
+                (void)launcher_failed(entry, canopus_manager_target_record.identity_result);
+                pending = 1;
+            }
+        }
+        return pending ? canopus_manager_target_record.identity_result : 0;
     }
     for (i = 0u; i < CANOPUS_LAUNCHER_ENTRIES; i++) {
-        struct canopus_target_launcher_entry *entry = &launcher_entries[i];
+        struct canopus_target_launcher_entry *entry = launcher_entries[i];
         struct canopus_target_page *pages[1];
+        struct firmware_app_descriptor *installed;
 
-        if (entry->state != CANOPUS_TARGET_LAUNCHER_QUEUED) {
+        if (entry == NULL || entry->state != CANOPUS_TARGET_LAUNCHER_QUEUED) {
             continue;
+        }
+        /* A reservation belongs to exactly one registration. Never turn a
+         * foreign (or already-published) app into a second launcher icon. */
+        if (app_lookup(entry->app.app_id) != NULL) {
+            return launcher_failed(entry, -17);
         }
         launcher_entry_init(entry, i);
         pages[0] = &entry->page;
-        (void)app_install(&entry->app, pages, 1u);
-        if (app_lookup(entry->app.app_id) == NULL) {
-            entry->state = CANOPUS_TARGET_LAUNCHER_FAILED;
-            return -5;
+        (void)app_install(&entry->app,
+                          entry->native_page_count != 0u ? entry->native_pages : pages,
+                          entry->native_page_count != 0u ? entry->native_page_count : 1u);
+        installed = app_lookup(entry->app.app_id);
+        if (installed == NULL || installed->package_name == NULL ||
+            strings_differ(installed->package_name, entry->package) != 0) {
+            return launcher_failed(entry, -5);
         }
         entry->state = CANOPUS_TARGET_LAUNCHER_INSTALLED;
         return 1;
     }
     for (i = 0u; i < CANOPUS_LAUNCHER_ENTRIES; i++) {
-        struct canopus_target_launcher_entry *entry = &launcher_entries[i];
+        struct canopus_target_launcher_entry *entry = launcher_entries[i];
 
-        if (entry->state != CANOPUS_TARGET_LAUNCHER_INSTALLED) {
+        if (entry == NULL || entry->state != CANOPUS_TARGET_LAUNCHER_INSTALLED) {
             continue;
         }
         (void)launcher_add(entry->app.app_id);
         entry->state = CANOPUS_TARGET_LAUNCHER_ADDED;
+        canopus_supervisor_get()->modules[entry->slot].native_app_status = CANOPUS_SUP_NATIVE_APP_READY;
         return 1;
     }
     return 0;

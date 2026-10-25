@@ -1204,7 +1204,6 @@ static int sup_list_packages(void *cookie, uint32_t index, char *id)
 
 #ifdef CANOPUS_SUP_HEADLESS
 #define SUP_UI_PAGE_CLOSE 0
-#define SUP_LAUNCHER_PUBLISH 0
 #define SUP_LAUNCHER_STEP 0
 #else
 static int sup_ui_page_close(void *cookie, uint32_t slot)
@@ -1214,20 +1213,32 @@ static int sup_ui_page_close(void *cookie, uint32_t slot)
 }
 #define SUP_UI_PAGE_CLOSE sup_ui_page_close
 
-static int sup_launcher_publish(void *cookie, uint32_t slot, const char *label,
-                                const char *icon)
-{
-    (void)cookie;
-    return canopus_manager_target_launcher_publish(slot, label, icon);
-}
-
 static int sup_launcher_step(void *cookie)
 {
     (void)cookie;
     return canopus_manager_target_launcher_step();
 }
-#define SUP_LAUNCHER_PUBLISH sup_launcher_publish
 #define SUP_LAUNCHER_STEP sup_launcher_step
+#endif
+
+#if defined(CANOPUS_SUP_HEADLESS) || defined(CANOPUS_SUP_BAND9_BOOTSTRAP)
+#define SUP_APP_PUBLISH 0
+#define SUP_NATIVE_APP_ID_IN_USE 0
+#else
+static int sup_app_publish(void *cookie, uint32_t slot,
+                            const struct canopus_app_entry_v1 *entry)
+{
+    (void)cookie;
+    return canopus_manager_target_app_publish(slot, entry);
+}
+
+static int sup_native_app_id_in_use(void *cookie, uint16_t app_id)
+{
+    (void)cookie;
+    return canopus_manager_target_native_app_id_in_use(app_id);
+}
+#define SUP_APP_PUBLISH sup_app_publish
+#define SUP_NATIVE_APP_ID_IN_USE sup_native_app_id_in_use
 #endif
 
 static int sup_validate_receipt(void *cookie, const void *receipt)
@@ -2029,7 +2040,7 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     0, /* l2_peer */
 #endif
     SUP_UI_PAGE_CLOSE,
-    SUP_LAUNCHER_PUBLISH,
+    SUP_APP_PUBLISH,
     SUP_LAUNCHER_STEP,
     sup_validate_receipt,
 #if CANOPUS_SUP_HAS_L2
@@ -2038,4 +2049,5 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     0, /* l2_request_slots */
 #endif
     SUP_DIR_REMOVE,
+    SUP_NATIVE_APP_ID_IN_USE,
 };

@@ -526,26 +526,39 @@ VIRTUAL_CONTENT / TOAST / EXTENDED_COMPONENTS）。不支持的请求**显式返
 
 ### 2.13 `ctx->launcher` — 模块自己的启动器入口
 
-让模块像普通应用一样出现在系统启动器里，选中后打开它用 `ctx->ui->set_entry` 登记的页面（ADR-CAN-011）：
+让模块像普通应用一样出现在系统启动器里（ADR-CAN-011）。`CANOPUS_SVC_LAUNCHER` 服务版本为 1，唯一方法 `register_app` 同时登记托管 UI 与 exact-target 原生页面：
 
 ```c
-struct canopus_launcher_entry_v1 {
+#define CANOPUS_NATIVE_APP_PAGES_MAX 16u
+struct canopus_app_entry_v1 {
     uint32_t struct_size;
     const char *label;   /* 图标下的名字：UTF-8，1~23 字节 */
-    const char *icon;    /* 固件能读的 LVGL 图片文件的绝对路径（至多 95 字节），NULL 为 Canopus 图标 */
+    const char *icon;    /* 固件能读的 LVGL 图片绝对路径，至多 95 字节；NULL 为 Canopus 图标 */
+    void *const *pages;
+    uint32_t page_count;
 };
 struct canopus_launcher_obj {
-    int32_t (*set_entry)(const struct canopus_context_v1 *ctx, const struct canopus_launcher_entry_v1 *entry);
+    int32_t (*register_app)(const struct canopus_context_v1 *ctx, const struct canopus_app_entry_v1 *entry);
 };
 ```
-- 旧 Supervisor 没有 `launcher`：先查 `ctx->struct_size >= sizeof(struct canopus_context_v1)` 且 `ctx->launcher != 0`；服务组为 `CANOPUS_SVC_LAUNCHER`。
-- 还没登记页面入口返回 `ERR_STATE`；参数不合法 `ERR_ARGUMENT`；8 个入口（`CANOPUS_LAUNCHER_ENTRIES`）用完 `ERR_NOMEM`；
-  没有 Manager UI 的构建不提供该对象。
-- 返回时固件还没有注册：Supervisor 在 UI 心跳里分两个 tick 各调一次固件（先 `app_install`，再 `launcher_add`）。注册失败不会回报给已经返回的模块，
-  只记入 Supervisor 的 `error_code`（`CANOPUS_SUP_ERR_LAUNCHER`）。
-- **没有注销**：固件的 `app_launcher_del` 没有证据，所以入口留到下次重启；模块停止后选中它什么也不打开。同一模块再次调用，标签与图标相同返回 OK，
-  不同返回 `ERR_BUSY`（直到重启）。入口不跨重启保存，模块每次被激活时再登记。
-- Rust：`canopus_runtime::launcher::set_entry`、`canopus_abi::{CanopusLauncherObj, LauncherEntryV1}`。
+- 调用前检查 `canopus_services_has(ctx, CANOPUS_SVC_LAUNCHER, 1)` 和 `ctx->launcher`；没有 Manager UI 的构建不提供该对象。
+  从串行 module/UI owner 调用，通常放在原生应用 publication callback 中。此接口直接替换未发布的旧接口，没有旧类型、方法或兼容分支。
+- `pages == NULL && page_count == 0` 表示托管 UI 入口，要求先用 `ctx->ui->set_entry` 登记页面，否则返回 `ERR_STATE`。
+  `pages != NULL && page_count` 为 1~16 表示原生页面，不要求托管 UI 入口；页面描述符必须**可写且布局与当前固件精确匹配**。
+  Supervisor 返回前复制指针数组，数组可放栈上；描述符、引用数据和回调必须有效到重启。Supervisor 在 UI 注册步骤统一写入各原生页 `app_id`。
+- `register_app` 成功返回**正数的 8 位应用 ID**，用于构造页面导航 key。同一定义（标签、图标、页面指针及数量）再次登记返回同一 ID，
+  不新增入口；修改定义返回 `ERR_BUSY`。参数错误返回 `ERR_ARGUMENT`，入口耗尽返回 `ERR_NOMEM`。
+- Supervisor 统一分配 `0xCC..0xDB` 的 16 个应用 ID；首次托管发布时分配，并将 ID 保存在模块 registry intent word 的 bits 16..23。
+  平台通过 `native_app_id_in_use` 查询固件已有注册，首次分配时保留这些已占用 ID，因此能避开先注册的旧式原生模块。
+  映射绑定 `module_id`，其他模块删除、槽位压缩、发布顺序变化或重启不改变它。应用包名为 `com.canopus.module.<module_id>`；普通与原生入口共用
+  8 个回调/描述符槽（`CANOPUS_LAUNCHER_ENTRIES`）。Supervisor 无法控制后来绕过分配器、任意硬编码 ID 的固件注册调用；
+  外部模块应迁移到统一登记接口，才能从分配源头避免彼此冲突。
+- 返回时固件还没有注册：Supervisor 在 UI 心跳里分两个 tick 各调一次固件（先 `app_install`，再 `launcher_add`），使用同一份模块应用身份。
+  后续注册失败记入 Supervisor 的 `error_code`（`CANOPUS_SUP_ERR_LAUNCHER`），不通过已返回的调用同步报告。
+- **没有同步注销**：入口与固件页面描述符保留至重启；普通托管 UI 入口在模块停止后不再打开页面。原生页面的存活回调要求模块保持驻留。
+  每次启动需要重新发布描述符和入口；持久化的是模块应用 ID 映射，系统 launcher 自己的缓存/残留入口语义仍未验证。
+- Rust：`canopus_runtime::launcher::register_app`、`canopus_abi::{CanopusLauncherObj, AppEntryV1}`。
+  包装函数是 `unsafe`，调用者负责有效字符串、串行 owner，以及原生页面的 exact-target 布局、可写性和重启前的描述符/回调生命周期。
 
 ---
 

@@ -571,32 +571,39 @@ struct canopus_ui_obj {
                     canopus_ui_task_fn callback, void *user_data);
 };
 
-/* launcher: a module's own entry in the system launcher (ADR-CAN-011). Choosing
- * it opens the module's ui page, the entry registered through
- * ctx->ui->set_entry, exactly as "open interface" does in the Manager. The
- * firmware cannot take a launcher entry back, so an entry lasts until the next
- * reboot even after the module stops; choosing a stopped module's entry opens
- * nothing. Its own object so a Supervisor that predates it is detected through
- * the context's struct_size, like ctx->ui. */
+/* launcher: Supervisor-owned application registration (ADR-CAN-011).
+ * Service version 1 uses one register_app method for managed UI and exact-target
+ * native pages. App identity belongs to module_id and survives reboot.
+ * Calls belong to the serialized module/UI owner, normally native-app
+ * publication callbacks. Descriptors and callbacks remain valid until reboot. */
 #define CANOPUS_LAUNCHER_ENTRIES 8u
 #define CANOPUS_LAUNCHER_LABEL_MAX 24u
 #define CANOPUS_LAUNCHER_ICON_MAX 96u
+#define CANOPUS_NATIVE_APP_PAGES_MAX 16u
 
-struct canopus_launcher_entry_v1 {
+struct canopus_app_entry_v1 {
     uint32_t struct_size;
-    const char *label; /* the name under the icon: UTF-8, 1 to 23 bytes */
-    const char *icon;  /* absolute path of an LVGL image file the firmware can read
-                        * (at most 95 bytes), or NULL for the Canopus icon */
+    const char *label; /* UTF-8, 1 to 23 bytes, NUL-terminated */
+    const char *icon;  /* absolute LVGL image path, at most 95 bytes, or NULL */
+    /* NULL with page_count == 0 opens the registered ui->set_entry page.
+     * Otherwise supply 1..CANOPUS_NATIVE_APP_PAGES_MAX writable exact-target
+     * firmware page descriptors. The array is copied before return; descriptors,
+     * referenced data and callbacks must remain valid until reboot. Supervisor
+     * writes every native page's app_id during serialized UI registration. */
+    void *const *pages;
+    uint32_t page_count;
 };
 
 struct canopus_launcher_obj {
-    /* Publishes the entry; the firmware takes it on the UI task shortly after
-     * this returns. STATE without a registered ui page entry, BUSY when the
-     * module already published a different label or icon (the same ones return
-     * OK), NOMEM when all CANOPUS_LAUNCHER_ENTRIES are taken, UNSUPPORTED on a
-     * build without the Manager UI. */
-    int32_t (*set_entry)(const struct canopus_context_v1 *ctx,
-                         const struct canopus_launcher_entry_v1 *entry);
+    /* Queues app_install then launcher_add on separate UI ticks, using the
+     * Supervisor's module_id-owned application descriptor and package name.
+     * Returns the positive assigned 8-bit app ID, or a negative service error.
+     * Managed UI entries require ui->set_entry; native pages do not.
+     * An identical definition returns the same ID without publishing again;
+     * changing a published definition returns BUSY. Later firmware failure is
+     * recorded as CANOPUS_SUP_ERR_LAUNCHER. No synchronous unregister exists. */
+    int32_t (*register_app)(const struct canopus_context_v1 *ctx,
+                            const struct canopus_app_entry_v1 *entry);
 };
 
 /* -------------------------------------------------------------------------- */

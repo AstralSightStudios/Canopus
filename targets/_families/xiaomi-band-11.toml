@@ -1,10 +1,9 @@
 # Shared build and generation data for Xiaomi Band 11 targets.
 manager_backend = "manager/target/canopus_manager_target.c"
-# Build thresholds, not proven loader hard limits. Raised 131072 -> 133120
-# (+2048 B) on 2026-10-23 for arbitrary UI font sizing + image fit (.155
-# measured 131440 B before defensive ablation and 131012 B after trimming;
-# device loading remains unproven / NOT_PROBED). Resident is unchanged.
-supervisor_max_size = 133120
+# Build thresholds, not proven loader hard limits. The file budget includes
+# Supervisor-owned native registration and persistent app identities (+2048 B).
+# The resident budget is unchanged; device loading remains NOT_PROBED.
+supervisor_max_size = 135168
 supervisor_max_resident = 184320
 loader_sources = [
   "runtime/loader/canopus_arm_reloc.c",
