@@ -721,3 +721,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   3.1.32 上把这棵快照树落到 LVGL 的那一层（`canopus_manager_target_lvgl_v8.c` 的 `apply`）
   或它创建的页面/行对象。下一轮该把 target 后端单独接到 host 上（`fake_target.c` 已有桩），
   用同一份详情快照跑 `apply`，把「快照正确」与「落到 LVGL 出错」分开。
+- **第五次实验（详情页跳过嵌套刷新，生产构建）**：`CANOPUS_TARGET_PAGE_DETAIL` 页不再调用第二次
+  `target_refresh_model()`，装置上**仍然是黑屏**。结合「空 on_create 也黑屏」，可以定论：
+  **3.1.32 上推第三页这个动作本身就会把 app 带走**，与我们页面里做什么无关。
+  所以唯一可行的方向是不推第三页（详情视图在模块列表页内联），而第一次内联尝试之所以也黑屏，
+  更可能是内联后 `page_index`/模型视图与页面不一致导致的后续回调问题，需要在「不推页」的前提下
+  把页面上下文与模型视图对齐后再验证。改动已撤回。
