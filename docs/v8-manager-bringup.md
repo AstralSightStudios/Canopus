@@ -249,3 +249,27 @@ v8 的滚动入口。
 - 结论：n66/n67 的页面渲染问题（第一次 `lv_label_create` 就复位）仍然没有进展，
   launcher 条目也还没在设备上看到。o66 的 Manager 本体（概览、模块子页面、返回）
   是唯一确认可用的部分。
+
+### 第十轮：n66 复位是 stage-0 NSH `exec` 的 UsageFault（有崩溃日志）
+
+固件自己在 `/log/minidump/crash*.log` 里留了完整转储。按 Run 后 2 秒内出现：
+
+```
+[35] [touch] touchpad_read: released          (x=95 y=367 = Run 按钮)
+[86] [ap] arm_usagefault: PANIC!!! Usage Fault:
+CFSR: 01000000  (UFSR.UNALIGNED)  task: system  0xc1cad6f
+PC: 0c1c956e  LR: 0c1c956d  R0: 5a5a5a5a  R1: 200d0040
+backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6db8
+```
+
+- `PC 0x0c1c956e` 落在 `sub_C1C9528`——NuttX shell 的 builtin/exec 派发
+  （上下文字符串 `nsh: %s: argument invalid`、`Calling %p`，`BLX R5` 在 `0xc1c956a`）。
+  也就是说：**崩在 NSH `exec` 调用我们写进 SRAM cave 的那段 stage-0 探针之后**。
+- `R0 = 0x5a5a5a5a` 正是安装器里的 `STAGE0_ENTRY_PROBE_MARKER`（`main.lua:33`），
+  探针确实被执行过；随后 `R1 = 0x200d0040`（探针要写 result 的地址）。
+- 结论：问题在 **stage-0 cave trampoline / profile 的 exec 目标**，不在 Manager 的
+  渲染代码里；这也解释了为什么去掉字体、去掉 PLAIN 标题都不改变行为，以及为什么
+  `dm-*` 打点写不进去（触发点在 Supervisor 被加载之前）。
+- 下一步：核对部署到设备上的 `canopus_loader_profile-*.bin` / `stage1` / `stage2`
+  与本次构建产物是否一致（构建日志写 `stage1=417 stage2=3560`，设备上是 1452/3576），
+  以及 `profile.exec_handler + 0x45` 在这台固件上是否真的是可执行边界。
