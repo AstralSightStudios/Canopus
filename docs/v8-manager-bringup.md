@@ -699,3 +699,8 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   要么进入该视图后框架/回调链里的某一环。两处实验代码都已撤回（不留未验证的行为改动），
   只保留按页打点。下一步：在 `render_module_detail` 里做二分（先只渲染「模块状态」段的状态行，
   再加动作行），以及确认 `on_resume` 在详情视图下的行为；如仍无线索就走 Mirage 的 gdb stub 抓故障地址。
+- **第三次实验（只渲染状态行）**：在 `render_module_detail` 的「模块状态」段之后直接 `END`，
+  不建任何动作行（`-DCANOPUS_MGR_DETAIL_STATUS_ONLY`）。这次**不是黑屏而是整机复位**
+  （出现 Mi 开机 logo，重启后回到安装表盘），比前两次更硬，说明故障点可能在状态行/分节这一段，
+  也可能只是同一处崩溃的不同表现。实验代码已撤回；下一步把分节和状态行再分开、并同时用
+  gdb stub 抓故障地址，避免继续按现象猜。
