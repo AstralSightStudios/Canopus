@@ -35,6 +35,7 @@ struct stage2_state {
     int32_t diag;
 };
 
+#if CANOPUS_BAND9_IMAGE_MPU_LEASE
 /* Smallest power-of-two window that holds the image; the BES MPU only maps
  * power-of-two regions whose base is aligned to that size. */
 static uint32_t image_region_size(uint32_t size)
@@ -46,6 +47,7 @@ static uint32_t image_region_size(uint32_t size)
     }
     return window;
 }
+#endif
 
 /* The resident image is larger than the remaining Kmem. Allocate it from
  * Umem (the firmware's PSRAM heap) and lease an executable MPU region over it.

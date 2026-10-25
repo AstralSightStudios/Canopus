@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-1028-V8-001",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "Which 3.1.28 entry is the LVGL v8 lv_obj_create the Manager page needs?",
+  "candidate_symbols": [
+    "lv_obj_create"
+  ],
+  "prototype_hypothesis": "lv_obj_create(parent, 0) = lv_obj_class_create_obj(&lv_obj_class, parent) followed by lv_obj_class_init_obj(obj), exactly the shape lv_label_create has.",
+  "callsite_evidence": [
+    "lv_label_create 0xc347b8c is sub_C2B9734(&lv_label_class, parent) then sub_C2BC534(obj, 0), so 0xc2b9734 is lv_obj_class_create_obj and 0xc2bc534 is lv_obj_class_init_obj.",
+    "lv_label_class is the struct at 0x2c6d643c; its base_class field (+0x00) is 0x2c686a74. That struct has base_class 0, constructor 0x0c2b9f29, destructor 0x0c2bc919, event_cb 0x0c2bd901 and a name pointer to the \"lv_obj\" string, so it is lv_obj_class.",
+    "Exactly one body loads 0x2c686a74 and calls both helpers: sub_C2BC5B8 (MOV R1,R0; LDR R0,=&lv_obj_class; BL 0xc2b9734; MOV R4,R0; MOV R1,R5; BL 0xc2bc534; return obj).",
+    "None of the three ported candidates is a creator: 0xc127924 copies a struct whose string may be inline or heap, 0xc3269f4 reads a global singleton and forwards it, 0xc392c88 releases the pointers at obj+0x14.",
+    "The ported record pointed the Manager's object-create path at 0x0c127925, which is why the o66 Manager page never rendered."
+  ],
+  "control_flow_evidence": [
+    "lv_obj_create -> lv_obj_class_create_obj(&lv_obj_class, parent) -> lv_obj_class_init_obj(obj, 0) -> obj."
+  ],
+  "ownership_analysis": "No ownership claimed: the entry is read from the exact image and used only to build the Supervisor's own UI page.",
+  "unsafe_assumptions": [
+    "Static evidence only; no device or emulator run has exercised the corrected entry yet.",
+    "The second argument of lv_obj_class_init_obj is passed as 0, the value lv_label_create uses; its meaning is not recovered."
+  ],
+  "recommended_probe": "Open the Manager page on a Mirage o66 device after rebuilding the Supervisor with the corrected entry.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

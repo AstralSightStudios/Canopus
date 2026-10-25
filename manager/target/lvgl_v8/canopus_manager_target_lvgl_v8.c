@@ -129,6 +129,11 @@ struct firmware_app_descriptor {
     uint8_t hidden_flags;                     /* +0x3c */
     uint8_t _tail_3d[3];                      /* +0x3d */
 #else
+    /* 3.1.32 (Band 9 n66) launcher ABI: metadata callback at +0x14,
+     * app_install copies 0x2c bytes. */
+    uint32_t registry_prev;                   /* +0x00 */
+    uint32_t registry_next;                   /* +0x04 */
+    const char *package_name;                 /* +0x08 */
     const char *launcher_icon_resource;       /* +0x0c */
     uint16_t app_id;                          /* +0x10 */
     uint8_t flags;                            /* +0x12 */
@@ -653,7 +658,8 @@ static void target_set_hidden(void *object, uint32_t hidden)
 static int32_t target_ui_apply(
     void *cookie, const struct canopus_ui_snapshot_v1 *snapshot)
 {
-    typedef void *(*object_create_fn)(void *);
+    /* v8 forwards its second argument (0 here) to lv_obj_class_init_obj. */
+    typedef void *(*object_create_fn)(void *, void *);
     typedef void *(*create_label_fn)(void *);
     typedef void (*set_label_text_fn)(void *, const char *);
     typedef void *(*create_page_title_fn)(void *, const char *, uint32_t,
@@ -877,7 +883,7 @@ static int32_t target_ui_apply(
         object = backend->rows[slot];
         if (object == NULL) {
             void *label;
-            object = object_create(backend->content_root);
+            object = object_create(backend->content_root, 0);
             if (object == NULL) {
                 return -1;
             }

@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: e9be2bc9e655b6d9
+ * input_digest: 462eafc037cf5645
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -136,9 +136,9 @@ static inline int canopus_fw_bt_queue_external(void * a0, void * a1, void * a2, 
     return ((canopus_fw_bt_queue_external_fn)(uintptr_t)0xc3acdb1)(a0, a1, a2, a3, a4);
 }
 
-typedef void * (*canopus_fw_lv_obj_create_fn)(void *);
-static inline void * canopus_fw_lv_obj_create(void * a0) {
-    return ((canopus_fw_lv_obj_create_fn)(uintptr_t)0xc127925)(a0);
+typedef void * (*canopus_fw_lv_obj_create_fn)(void *, void *);
+static inline void * canopus_fw_lv_obj_create(void * a0, void * a1) {
+    return ((canopus_fw_lv_obj_create_fn)(uintptr_t)0xc2bc5b9)(a0, a1);
 }
 
 typedef int (*canopus_fw_mpu_region_configure_fn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);

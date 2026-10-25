@@ -4,7 +4,7 @@
 // firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
 // sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
 // revision : 1
-// input_digest: e9be2bc9e655b6d9
+// input_digest: 462eafc037cf5645
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -126,8 +126,8 @@ pub const CANOPUS_FW_LAUNCHER_PAGE_INSERT_ICON_CALLABLE: usize = canopus_thumb_c
 /// Recovered `bt_queue_external` at 0xc3acdb0. Thumb callable address 0xc3acdb1.
 pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(0xc3acdb1usize);
 
-/// Recovered `lv_obj_create` at 0xc127924. Thumb callable address 0xc127925.
-pub const CANOPUS_FW_LV_OBJ_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc127925usize);
+/// Recovered `lv_obj_create` at 0xc2bc5b8. Thumb callable address 0xc2bc5b9.
+pub const CANOPUS_FW_LV_OBJ_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc2bc5b9usize);
 
 /// Recovered `mpu_region_configure` at 0xc559110. Thumb callable address 0xc559111.
 pub const CANOPUS_FW_MPU_REGION_CONFIGURE_CALLABLE: usize = canopus_thumb_callable(0xc559111usize);
