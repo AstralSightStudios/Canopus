@@ -247,6 +247,12 @@ static struct firmware_page_descriptor
     manager_pages_desc[CANOPUS_TARGET_PAGE_COUNT];
 static uint32_t manager_active_pages;
 static uint32_t manager_pending_detail;
+#if defined(CANOPUS_MGR_INPLACE_DETAIL)
+/* 3.1.32 takes the app down when a third page is pushed, so the detail view
+ * renders in the modules page; the render must wait until the click dispatch
+ * returns, or it would replace the snapshot the dispatch is still reading. */
+static uint8_t manager_pending_inline_detail;
+#endif
 static uint8_t manager_session_ready;
 
 _Static_assert(CANOPUS_MANAGER_TARGET_APP_ID <= UINT16_C(0x00FF),
@@ -589,6 +595,12 @@ static void target_dispatch_row(uint32_t row_index, void *event)
             }
         }
         canopus_manager_target_record.selected_after = manager_model.selected;
+#if defined(CANOPUS_MGR_INPLACE_DETAIL)
+        if (manager_pending_inline_detail != 0u) {
+            manager_pending_inline_detail = 0u;
+            (void)canopus_manager_native_render(&context->native);
+        }
+#endif
         if (rc == CANOPUS_UI_ERR_DISABLED) {
             (void)canopus_manager_native_render(&context->native);
         }
@@ -1370,6 +1382,11 @@ static int target_select_page_view(
         return canopus_manager_goto(&manager_model,
                                     CANOPUS_MANAGER_VIEW_DEVICE, 0u);
     case CANOPUS_TARGET_PAGE_MODULES:
+#if defined(CANOPUS_MGR_INPLACE_DETAIL)
+        if (manager_model.view == CANOPUS_MANAGER_VIEW_MODULE_DETAIL) {
+            return 0; /* the detail view lives in this page */
+        }
+#endif
         return canopus_manager_goto(&manager_model,
                                     CANOPUS_MANAGER_VIEW_MODULE_LIST, 0u);
     case CANOPUS_TARGET_PAGE_DETAIL:
@@ -1440,9 +1457,14 @@ static int32_t target_route(void *cookie,
         target_page = CANOPUS_TARGET_PAGE_MODULES;
         break;
     case CANOPUS_MANAGER_ROUTE_MODULE_DETAIL:
+#if defined(CANOPUS_MGR_INPLACE_DETAIL)
+        manager_pending_inline_detail = 1u;
+        return CANOPUS_UI_OK;
+#else
         target_page = CANOPUS_TARGET_PAGE_DETAIL;
         manager_pending_detail = manager_model.selected + 1u;
         break;
+#endif
     default:
         return CANOPUS_UI_ERR_ARGUMENT;
     }

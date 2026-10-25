@@ -727,3 +727,10 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   所以唯一可行的方向是不推第三页（详情视图在模块列表页内联），而第一次内联尝试之所以也黑屏，
   更可能是内联后 `page_index`/模型视图与页面不一致导致的后续回调问题，需要在「不推页」的前提下
   把页面上下文与模型视图对齐后再验证。改动已撤回。
+- **第六次实验（不推第三页 + 延后渲染）部分成功**：`ROUTE_MODULE_DETAIL` 不再 `page_goto`，改为置
+  `manager_pending_inline_detail`，在 `target_dispatch_row` 的 **dispatch 返回之后**再
+  `canopus_manager_native_render`；`target_select_page_view(MODULES)` 在模型视图已是 DETAIL 时
+  不再覆盖。设备实测：模块列表 → 点 `hello_portable` → **详情视图渲染出来**（app 存活），
+  再点「启用」→ **弹出「在下次手环启动时启用该模块？」确认框**——「启用 / 立即激活」第一次
+  从 UI 上够到了。但**点「确认」后整机复位**，所以启用操作本身还没跑通，下一步要查
+  `CANOPUS_MANAGER_EVENT_CONFIRM` → `execute_event(ENABLE)` → `refresh_model` → 重渲染这条链。
