@@ -287,6 +287,11 @@ const V8_TEXT_FONT: &[Mapping] = &[
         symbol_name: "lv_obj_set_local_style_prop",
         address: Address::Callable,
     },
+    Mapping {
+        macro_name: "FW_LVX_PAGE_CONTENT_CREATE",
+        symbol_name: "lvx_page_content_create",
+        address: Address::Callable,
+    },
 ];
 
 const FW_9: &[Mapping] = &[

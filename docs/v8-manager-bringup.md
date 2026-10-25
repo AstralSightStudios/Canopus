@@ -380,3 +380,8 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
   （`targets/*/symbols/*.ui.lvx_page_content_create.json`），但生成器还没有把它映射成宏。
   下一轮要做的就是给 `V8_TEXT_FONT` 之外再加一条可选映射 `FW_LVX_PAGE_CONTENT_CREATE`，
   只在 3.1.32/3.1.190 上把内容挂到它返回的容器里（o66 保持现有已验证路径不变）。
+- 试了 stock 容器 API：`lvx_page_content_create(root)` 在 3.1.190 上**同样不返回**
+  （打点 `r0` 之后没有 `r2`/`r3`）。结合前面的现象——把标题、标签、普通对象挂在 page
+  manager 传入的 root 上都挂死——结论是：**这两代固件在 on_create 里给的 root 不能当作
+  普通 LVGL 父对象使用**。下一步要弄清 on_create 第二个参数的真实类型（很可能不是
+  lv_obj），stock 页面都是从别处拿容器（例如 `page->parent_descriptor` 或页内 signal）再建 UI。
