@@ -803,3 +803,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   屏幕在 Mi logo 与黑屏之间反复切换超过两分钟，Run 从未完成（registry 里 intent=0，说明不是
   REMOVE 循环）。上一版（`846…`/`3e50067`）在同一流程下能跑完，所以这条要单独立项查：
   可能是守卫改动影响了 Run 期间的 `INSTALL` 步骤派发。设备已重建（干净、未启动）。
+- **基线（`2703087`，无守卫）复测**：AUTORUN Run 正常、管理器页正常；模块列表 → 点模块 → 详情
+  与「启用」确认框（文案「在下次手环启动时启用该模块？」）都出现；点「确认」后设备存活，但
+  关机读 registry 仍是 **intent=2（REMOVE）**。所以「文案=E​NABLE、执行=REMOVE」在**没有守卫**
+  的基线上也能复现，与幻影点击无关——问题出在 `manager_event` 的确认分支本身：
+  `native->confirm_event` 与渲染文案用的不是同一个值，或 `execute_event` 的 `event_id`
+  在两步之间被改写。下一步直接在这两处各打一个 diag 标记（文案用的事件、执行用的事件）。
