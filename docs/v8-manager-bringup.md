@@ -715,3 +715,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 - **第四次实验（把详情视图的两块栈缓冲挪成 static）**：`state[64]`、`error[48]` 改成 static 省下
   112 字节栈，装置上仍然黑屏——单靠这点栈不够，要么溢出发生在更深处（`target_refresh_model`
   的客户端快照链），要么根本不是栈。改动已撤回。
+- **重要旁证：host 侧详情视图是好的**。`tests/host/test_manager_native.c` 有多处以
+  `model.view = CANOPUS_MANAGER_VIEW_MODULE_DETAIL` 直接渲染详情视图（含状态行与动作行），
+  全部通过。也就是说 `render_module_detail` 的**模型/快照逻辑本身没有问题**，崩的是
+  3.1.32 上把这棵快照树落到 LVGL 的那一层（`canopus_manager_target_lvgl_v8.c` 的 `apply`）
+  或它创建的页面/行对象。下一轮该把 target 后端单独接到 host 上（`fake_target.c` 已有桩），
+  用同一份详情快照跑 `apply`，把「快照正确」与「落到 LVGL 出错」分开。
