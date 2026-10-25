@@ -468,7 +468,7 @@ static int32_t render_module_list(struct canopus_manager_native_v1 *native,
     if (rc != CANOPUS_UI_OK) return rc;
     if (model->module_count == 0u) {
         rc = append_text(tree, UI_KEY_MODULE_EMPTY,
-                         "No external modules installed", sizeof("No external modules installed") - 1u, 0u);
+                         "暂无已安装模块", sizeof("暂无已安装模块") - 1u, 0u);
         if (rc != CANOPUS_UI_OK) return rc;
     }
     for (i = 0; i < model->module_count; i++) {

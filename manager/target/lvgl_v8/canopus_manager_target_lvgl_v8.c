@@ -60,6 +60,17 @@
 #define CANOPUS_TARGET_CONTENT_TOP_OFFSET 56
 #define CANOPUS_TARGET_CONTENT_WIDTH CANOPUS_MGR_SCREEN_WIDTH
 #define CANOPUS_TARGET_CONTENT_HEIGHT 424
+/* Title and row text are placed inside the row's *content* box: this firmware
+ * pads a container's children horizontally by CANOPUS_TARGET_ROW_PAD, so an
+ * edge-aligned child needs that much counter-offset to reach the row's edge. */
+#define CANOPUS_TARGET_ROW_TEXT_HEIGHT 17
+#define CANOPUS_TARGET_ROW_PAD 22
+#define CANOPUS_TARGET_TITLE_WIDTH (CANOPUS_TARGET_CONTENT_WIDTH * 52 / 100 - 8)
+#define CANOPUS_TARGET_VALUE_WIDTH (CANOPUS_TARGET_CONTENT_WIDTH * 48 / 100 - 16)
+#define CANOPUS_TARGET_TITLE_PAD (8 - CANOPUS_TARGET_ROW_PAD)
+#define CANOPUS_TARGET_VALUE_PAD (CANOPUS_TARGET_ROW_PAD - 8)
+/* One ASCII glyph is about 7 px at the value font size; a CJK glyph is two. */
+#define CANOPUS_TARGET_VALUE_COLUMNS (uint32_t)(CANOPUS_TARGET_VALUE_WIDTH / 7)
 #define CANOPUS_TARGET_ROW_GAP 2
 #define CANOPUS_TARGET_EVENT_ALL 0u
 #define CANOPUS_TARGET_EVENT_CLICKED 7u
@@ -266,7 +277,10 @@ static const char page_name_overview[] = "main";
 static const char page_name_modules[] = "modules";
 static const char page_name_detail[] = "module_detail";
 static const char display_name[] = "Canopus 管理器";
-static const char launcher_icon[] = "/resource/app/calendar/launcher.bin";
+/* The installer's Run step stages the Manager icon here; the launcher loads
+ * image sources from the same VFS the stock /resource/app/<app>/launcher.bin
+ * paths live on. */
+static const char launcher_icon[] = "/data/canopus/manager_icon.bin";
 
 __attribute__((used, visibility("default"), section(".data.canopus_manager_target")))
 volatile struct canopus_manager_target_record canopus_manager_target_record;
@@ -527,8 +541,11 @@ static void target_dispatch_row(uint32_t row_index, void *event)
     uint32_t code;
 
     if (event == NULL || row_index >= CANOPUS_TARGET_UI_MAX_ROWS) return;
-    diag_dump('E', (char)('0' + (row_index % 10u)), event, 16u);
-    code = *(const uint32_t *)((const uint8_t *)event + 8u);
+    diag_dump('E', (char)('0' + (row_index % 10u)), event, 32u);
+    /* The event code is the first byte of the field at +8: the bytes above it
+     * belong to the neighbouring field, so a 32-bit read yields a word such as
+     * 0x3c350007 for CLICKED. Every code this firmware sends fits in a byte. */
+    code = (uint32_t)((const uint8_t *)event)[8];
     for (page_index = 0; page_index < CANOPUS_TARGET_PAGE_COUNT; page_index++) {
         struct canopus_target_page_context *context = &manager_pages[page_index];
         struct canopus_target_ui_binding *binding;
@@ -536,12 +553,16 @@ static void target_dispatch_row(uint32_t row_index, void *event)
 
         if (!context->active || !context->interactive ||
             context->backend.rows[row_index] == NULL) continue;
+        diag_mark('U', (char)('0' + (row_index % 10u)));
         if (code != CANOPUS_TARGET_EVENT_CLICKED &&
             code != CANOPUS_TARGET_EVENT_SHORT_CLICKED) {
             return;
         }
         binding = &context->backend.bindings[row_index];
-        if (binding->event_id == 0u) return;
+        if (binding->event_id == 0u) {
+            diag_mark('W', (char)('0' + (row_index % 10u)));
+            return;
+        }
         canopus_manager_target_record.click_count += 1u;
         diag_mark('C', (char)('0' + (row_index % 10u)));
         canopus_manager_target_record.clicked_row = row_index;
@@ -571,13 +592,13 @@ static void target_dispatch_row(uint32_t row_index, void *event)
 /* Does LVGL's indev reach our screen at all? Mark any press that lands here. */
 static void diag_root_press(void *event)
 {
-    uint32_t code = *(const uint32_t *)((const uint8_t *)event + 8u);
+    uint32_t code = (uint32_t)((const uint8_t *)event)[8];
     diag_mark('R', (char)('0' + (code % 10u)));
 }
 
 static void diag_probe_press(void *event)
 {
-    uint32_t code = *(const uint32_t *)((const uint8_t *)event + 8u);
+    uint32_t code = (uint32_t)((const uint8_t *)event)[8];
     diag_mark('H', (char)('0' + (code % 10u)));
 }
 #endif
@@ -783,22 +804,27 @@ static void row_text_begin(struct row_text *text)
 }
 
 static void row_text_append(struct row_text *text, const char *value,
-                            uint32_t len)
+                            uint32_t len, uint32_t columns)
 {
     uint32_t i = 0u;
+    uint32_t used_columns = 0u;
     while (i < len && text->used + 1u < sizeof(text->data)) {
-        text->data[text->used++] = value[i++];
-    }
-    /* A cut must not leave half a UTF-8 sequence: the font engine would read it
-     * as one more glyph. */
-    if (i < len) {
-        while (text->used != 0u &&
-               ((unsigned char)text->data[text->used - 1u] & 0xC0u) == 0x80u) {
-            text->used--;
+        uint32_t step = 1u;
+        uint32_t width = 1u;
+        if ((unsigned char)value[i] >= 0x80u) {
+            width = 2u;
+            while (i + step < len &&
+                   ((unsigned char)value[i + step] & 0xC0u) == 0x80u) {
+                step++;
+            }
         }
-        if (text->used != 0u &&
-            ((unsigned char)text->data[text->used - 1u] & 0xC0u) == 0xC0u) {
-            text->used--;
+        if (used_columns + width > columns ||
+            text->used + step + 1u > sizeof(text->data)) {
+            break;
+        }
+        used_columns += width;
+        while (step-- > 0u) {
+            text->data[text->used++] = value[i++];
         }
     }
     text->data[text->used] = '\0';
@@ -1119,13 +1145,31 @@ static int32_t target_ui_apply(
         } else {
             row_text_begin(&row_text);
             row_text_append(&row_text, snapshot->strings + node->secondary_off,
-                            node->secondary_len);
+                            node->secondary_len,
+                            CANOPUS_TARGET_VALUE_COLUMNS);
             set_label_text(backend->row_values[slot], row_text.data);
         }
+        /* A label here takes its text's size back when the text is set, so the
+         * text column is fixed afterwards and only then aligned. */
+        set_size(backend->row_labels[slot], CANOPUS_TARGET_TITLE_WIDTH,
+                 CANOPUS_TARGET_ROW_TEXT_HEIGHT);
+        set_size(backend->row_values[slot], CANOPUS_TARGET_VALUE_WIDTH,
+                 CANOPUS_TARGET_ROW_TEXT_HEIGHT);
         align_to(backend->row_labels[slot], object,
-                 CANOPUS_TARGET_ALIGN_LEFT_MID, 8, 0);
+                 CANOPUS_TARGET_ALIGN_LEFT_MID, CANOPUS_TARGET_TITLE_PAD, 0);
         align_to(backend->row_values[slot], object,
-                 CANOPUS_TARGET_ALIGN_RIGHT_MID, -8, 0);
+                 CANOPUS_TARGET_ALIGN_RIGHT_MID, CANOPUS_TARGET_VALUE_PAD, 0);
+#if defined(CANOPUS_TARGET_UI_DIAG)
+        if (slot == 0) {
+            /* 3.1.28's lv_obj_align_to reads x1,y1,x2,y2 as four int32 at
+             * +0x1c; 3.1.32 uses four int16 at +0x14, so this dump is only
+             * meaningful on the 3.1.28 target. */
+            diag_dump('G', 'R', (const uint8_t *)backend->root + 0x1c, 16u);
+            diag_dump('G', 'r', (const uint8_t *)object + 0x1c, 16u);
+            diag_dump('G', 't', (const uint8_t *)backend->row_labels[slot] + 0x1c, 16u);
+            diag_dump('G', 'v', (const uint8_t *)backend->row_values[slot] + 0x1c, 16u);
+        }
+#endif
         target_set_hidden(object, 0u);
         diag_mark('A', '0');
         if (previous == NULL) {
@@ -1268,77 +1312,23 @@ static int32_t target_refresh(void *cookie)
 
 /* Routes a semantic view change to the real firmware page stack. Forward
  * routes push the target page through the stock page_goto transition; backward
- * routes finish the source page so the paused page below it resumes. */
-#if defined(CANOPUS_MGR_DEFER_ROUTES) && defined(FW_LV_TIMER_CREATE) && defined(FW_LV_TIMER_DEL)
-/* The push runs one LVGL timer tick later, not inside the click callback:
- * page_goto runs the page transition synchronously and the transition tears the
- * source page down, so returning into the input dispatch afterwards touched a
- * context that on_destroy had just cleared (device reset on o66). */
-static uint32_t pending_route_key;
-static uint32_t pending_route_detail;
-static uint32_t pending_route_finish = CANOPUS_TARGET_PAGE_COUNT;
-
-static void target_route_push(void *timer)
+ * routes finish the source page so the paused page below it resumes. The push
+ * runs inline: page_goto/pause keeps the source page's objects alive across the
+ * transition, verified on 3.1.28 (click -> page 1 created, page stays up) and
+ * 3.1.32/3.1.190 use the same stock call. */
+static int target_route_schedule(uint32_t key, uint32_t detail,
+                                 uint32_t finish)
 {
-    typedef void (*timer_del_fn)(void *);
-    typedef int32_t (*page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
-    typedef int32_t (*page_finish_fn)(void *);
-    uint32_t key = pending_route_key;
-    uint32_t detail = pending_route_detail;
-    uint32_t finish = pending_route_finish;
-
-    pending_route_key = 0u;
-    pending_route_finish = CANOPUS_TARGET_PAGE_COUNT;
-    ((timer_del_fn)(uintptr_t)FW_LV_TIMER_DEL)(timer);
     if (finish < CANOPUS_TARGET_PAGE_COUNT) {
-        (void)((page_finish_fn)(uintptr_t)FW_ACTIVITY_FINISH)(
+        (void)((int32_t (*)(void *))(uintptr_t)FW_ACTIVITY_FINISH)(
             &manager_pages_desc[finish]);
     } else if (key != 0u) {
-        int32_t rc = ((page_goto_fn)(uintptr_t)FW_ACTIVITY_NAVIGATE)(
-            key, detail, 0u, 0u);
-        (void)rc;
+        int32_t rc = ((int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t))(
+                          uintptr_t)FW_ACTIVITY_NAVIGATE)(key, detail, 0u, 0u);
         diag_mark(rc < 0 ? 'X' : 'K', 'P');
     }
-}
-
-static int target_route_schedule(uint32_t key, uint32_t detail,
-                                 uint32_t finish)
-{
-    typedef void *(*timer_create_fn)(void (*)(void *), uint32_t, void *);
-    pending_route_key = key;
-    pending_route_detail = detail;
-    pending_route_finish = finish;
-    if (((timer_create_fn)(uintptr_t)FW_LV_TIMER_CREATE)(target_route_push, 1u,
-                                                        NULL) != NULL) {
-        return 0;
-    }
-    if (finish < CANOPUS_TARGET_PAGE_COUNT) {
-        (void)((int32_t (*)(void *))(uintptr_t)FW_ACTIVITY_FINISH)(
-            &manager_pages_desc[finish]);
-    } else if (key != 0u) {
-        (void)((int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t))(uintptr_t)
-                   FW_ACTIVITY_NAVIGATE)(key, detail, 0u, 0u);
-    }
     return 0;
 }
-
-#else
-/* Only the 3.1.28 target has verified lv_timer_create/lv_timer_del entries, so
- * only it defers the push. The other v8 targets push inline, which is safe for
- * OPEN_MANAGER (no source page) but must be checked per firmware for routes. */
-static int target_route_schedule(uint32_t key, uint32_t detail,
-                                 uint32_t finish)
-{
-    if (finish < CANOPUS_TARGET_PAGE_COUNT) {
-        (void)((int32_t (*)(void *))(uintptr_t)FW_ACTIVITY_FINISH)(
-            &manager_pages_desc[finish]);
-    } else if (key != 0u) {
-        (void)((int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t))(uintptr_t)
-                   FW_ACTIVITY_NAVIGATE)(key, detail, 0u, 0u);
-    }
-    return 0;
-}
-#endif
 
 static int32_t target_route(void *cookie,
                             struct canopus_manager_native_v1 *native,
@@ -1349,6 +1339,7 @@ static int32_t target_route(void *cookie,
     uint32_t source_page;
 
     (void)cookie;
+    diag_mark('j', (char)('0' + (route > 9u ? 9u : route)));
     switch (route) {
     case CANOPUS_MANAGER_ROUTE_OVERVIEW:
         target_page = CANOPUS_TARGET_PAGE_OVERVIEW;
@@ -1365,6 +1356,7 @@ static int32_t target_route(void *cookie,
     }
     source = context_for_native(native);
     if (source == NULL || !source->active || !source->interactive) {
+        diag_mark('m', source == NULL ? 'n' : (source->active ? 'i' : 'a'));
         return CANOPUS_UI_ERR_STATE;
     }
     source_page = (uint32_t)source->backend.page_index;
@@ -1621,12 +1613,13 @@ int canopus_manager_native_install(void)
     if (installed_app != NULL) {
         const char *installed_package =
             *(const char **)((uint8_t *)installed_app + 8u);
+        diag_mark('i', '9');
         return installed_package != NULL &&
                        strings_differ(installed_package, package_name) == 0
                    ? 0
                    : -101;
     }
-
+    diag_mark('i', '0');
     target_descriptor_init(CANOPUS_TARGET_PAGE_OVERVIEW, page_name_overview,
                            0u);
     target_descriptor_init(CANOPUS_TARGET_PAGE_MODULES, page_name_modules, 1u);
@@ -1644,6 +1637,10 @@ int canopus_manager_native_install(void)
     launcher_item = launcher_load(installed_app);
     canopus_manager_target_record.launcher_add_result = launcher_item != NULL
         ? launcher_insert(launcher_item) : -102;
+    diag_mark('i', launcher_item == NULL
+                       ? 'l'
+                       : (canopus_manager_target_record.launcher_add_result < 0
+                              ? 'n' : 'y'));
     /* launcher_reset_order_info (o66 0xc4fc508) is deliberately not called:
      * the firmware logs "[launcher] launcher_page_insert_icon: launcher UI not
      * created" when the installer runs from the watchface page, and calling the

@@ -704,7 +704,7 @@ TEST(manager_native_empty_module_list_is_valid)
     for (i = 0; i < snapshot->node_count; i++) {
         if (snapshot->nodes[i].type == CANOPUS_UI_NODE_TEXT &&
             strcmp(snapshot->strings + snapshot->nodes[i].primary_off,
-                   "No external modules installed") == 0) {
+                   "暂无已安装模块") == 0) {
             found = 1;
         }
     }
