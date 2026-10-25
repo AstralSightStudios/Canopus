@@ -4,7 +4,7 @@
 // firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
 // sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
 // revision : 1
-// input_digest: 26b00680b749e7ae
+// input_digest: 7283666555a1d713
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -231,8 +231,8 @@ pub const CANOPUS_FW_WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = canopu
 /// Recovered `launcher_load_app_info` at 0xc29a1f8. Thumb callable address 0xc29a1f9.
 pub const CANOPUS_FW_LAUNCHER_LOAD_APP_INFO_CALLABLE: usize = canopus_thumb_callable(0xc29a1f9usize);
 
-/// Recovered `page_goto` at 0xc44d504. Thumb callable address 0xc44d505.
-pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc44d505usize);
+/// Recovered `page_goto` at 0xc4e0208. Thumb callable address 0xc4e0209.
+pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc4e0209usize);
 
 /// Recovered `lv_obj_add_flag` at 0xc2bb826. Thumb callable address 0xc2bb827.
 pub const CANOPUS_FW_LV_OBJ_ADD_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc2bb827usize);

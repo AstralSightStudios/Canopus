@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-EMU-1028-002",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "Which 3.1.28 entry pushes an application page, and does it open the Manager page from the Supervisor?",
+  "candidate_symbols": [
+    "page_goto"
+  ],
+  "prototype_hypothesis": "The page push is goto_page_no_check_stacktop (0xc4e0208), not pagemanager show_app (0xc44d504); the key is the u32 at page descriptor +20 = page_id | app_id << 16.",
+  "callsite_evidence": [
+    "The body at 0xc4e0208 carries the log tag \"goto_page_no_check_stacktop\": it resolves the key with 0xc44c290, which walks the registered-page list at 0x2008144c comparing the u32 at page+20, pauses the current page, runs the transition and the enter callback.",
+    "The ported 0xc44d504 is pagemanager show_app: it does an app prelaunch check and logs \"show_app: page == NULL\" for both an app id (0xCA) and (app<<8)|page (0xCA00); calling it from a watchface callback or an LVGL timer kills the UI.",
+    "Calling 0xc4e0209 with (0xCA << 16) | 0 from an LVGL timer opens the registered Manager page: the device log shows \"insert_app_to_list: insert app to list pkg = com.canopus.manager\", \"on_ui_create: create view 0x3c34f1a8:{202, 0}\", the in/out animation callbacks, and {202, 0} resume/pause on screen wake and sleep.",
+    "The page becomes active but renders black on this emulator run, so the Manager UI backend is not yet drawing on v8."
+  ],
+  "control_flow_evidence": [
+    "CANOPUS_CMD_OPEN_MANAGER -> platform open_manager -> canopus_manager_native_open -> page_goto((APP_ID << 16) | page, 0, 0, 0), issued from an LVGL timer tick on the watchface."
+  ],
+  "ownership_analysis": "No new ownership: the page descriptors stay owned by the Supervisor; the page manager keeps them in its own registry.",
+  "unsafe_assumptions": [
+    "Emulator evidence only; no physical device has run this.",
+    "The page key layout is read from the exact image (page descriptor +20), not from a live symbol table."
+  ],
+  "recommended_probe": "Make the v8 Manager page render (widgets are created but the page shows black), then open it again and confirm the UI.",
+  "reviewers": [],
+  "verdict": "HOST_TESTED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

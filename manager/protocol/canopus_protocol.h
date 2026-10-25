@@ -56,6 +56,7 @@ enum canopus_command {
     CANOPUS_CMD_STAGE_RES_BEGIN = 26,
     CANOPUS_CMD_STAGE_RES_WRITE = 27,
     CANOPUS_CMD_STAGE_RES_FINISH = 28,
+    CANOPUS_CMD_OPEN_MANAGER = 29,
 };
 
 struct canopus_proto_request_v1 {

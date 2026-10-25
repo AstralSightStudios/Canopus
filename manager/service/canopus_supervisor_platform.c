@@ -1159,6 +1159,12 @@ static int sup_registry_restore(void *cookie, uint8_t *data, uint32_t len)
     return 0;
 }
 
+static int sup_open_manager(void *cookie)
+{
+    (void)cookie;
+    return canopus_manager_native_open();
+}
+
 static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
 {
 #ifdef CANOPUS_SUP_WATCHFACE_DELETE
@@ -2102,4 +2108,5 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     0, /* l2_request_slots */
 #endif
     SUP_DIR_REMOVE,
+    sup_open_manager,
 };

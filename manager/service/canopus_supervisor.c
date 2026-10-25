@@ -534,7 +534,9 @@ static int sup_safe_mode_allows(const struct canopus_supervisor_v1 *sup,
          * never staged here. */
         return stage_arg == 0 && arg0 <= 2u;
     case CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT:
-        return 1; /* answers COMPLETED without activating anything */
+        return 1;
+    case CANOPUS_SUP_CMD_OPEN_MANAGER:
+        return 1;
     case CANOPUS_SUP_CMD_ENABLE:
     case CANOPUS_SUP_CMD_UPDATE:
     case CANOPUS_SUP_CMD_SCAN:
@@ -802,6 +804,13 @@ static uint32_t sup_dispatch(struct canopus_supervisor_v1 *sup, uint32_t op,
         rc = canopus_supervisor_scan_packages(sup);
         break;
 
+    case CANOPUS_SUP_CMD_OPEN_MANAGER:
+        rc = (sup->platform != 0 && sup->platform->open_manager != 0)
+                 ? (sup->platform->open_manager(sup->platform_cookie) == 0
+                        ? CANOPUS_RESULT_COMPLETED : CANOPUS_RESULT_FAILED)
+                 : CANOPUS_RESULT_DISALLOWED;
+        break;
+
     case CANOPUS_SUP_CMD_ENTER_SAFE_MODE:
         sup_enter_safe_mode(sup, CANOPUS_SAFE_MODE_USER_REQUESTED);
         sup->exit_pending = 0u;
@@ -1030,6 +1039,8 @@ static uint32_t v2_to_sup_cmd(uint32_t cmd)
         return CANOPUS_SUP_CMD_INSTALL;
     case CANOPUS_CMD_RESTORE_AFTER_BOOT:
         return CANOPUS_SUP_CMD_RESTORE_AFTER_BOOT;
+    case CANOPUS_CMD_OPEN_MANAGER:
+        return CANOPUS_SUP_CMD_OPEN_MANAGER;
     default:
         return 0; /* unknown command */
     }

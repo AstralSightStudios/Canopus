@@ -86,6 +86,7 @@ enum canopus_sup_command {
     CANOPUS_SUP_CMD_SCAN,
     /* Leave safe mode at the next boot; arg0 is a canopus_safe_exit_action. */
     CANOPUS_SUP_CMD_EXIT_SAFE_MODE,
+    CANOPUS_SUP_CMD_OPEN_MANAGER,
 };
 
 /* Stable supervisor error codes (CAN-P1-008). `error_code` holds the

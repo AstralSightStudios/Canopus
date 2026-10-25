@@ -5,14 +5,13 @@
   "name": "page_goto",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc44d504",
+  "entry_address": "0xc4e0208",
   "prototype": "int(uint32_t, uint32_t, void *, void *)",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-1028-001",
-      "EVID-PORT-1028-V8-ACCEPT"
+      "EVID-STATIC-1028-V8-001"
     ]
   },
   "policy": "restricted",
@@ -20,11 +19,11 @@
   "provenance": {
     "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
     "evidence_ids": [
-      "EVID-PORT-1028-001"
+      "EVID-STATIC-1028-V8-001"
     ],
-    "source": "Exact xiaomi-band-10-3.1.28 image/IDB compared with xiaomi-band-9-3.1.32: body differs (instruction fingerprint and pseudocode)."
+    "source": "exact xiaomi-band-10-3.1.28 IDB: body carries the goto_page_no_check_stacktop log tag"
   },
   "approval_state": "PENDING",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. resolves page key, performs prelaunch checks, then invokes stock goto transition 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path. manual static-test accept 2026-10-25; body/name evidence only, not ABI-audited.",
-  "callable_address": "0xc44d505"
+  "notes": "manual static-test accept 2026-10-25 on the exact 3.1.28 IDB: goto_page_no_check_stacktop at 0xc4e0208 - looks the page id up with 0xc44c290 (registry list at dword_2008144c, key is the u32 at page+20 = page_id | app_id<<16), pauses the current page, runs the transition and the page enter callback. The ported 0xc44d504 is pagemanager show_app (app prelaunch), which is not a page push and kills the UI when called from a watchface. Restricted/PENDING; device not probed.",
+  "callable_address": "0xc4e0209"
 }

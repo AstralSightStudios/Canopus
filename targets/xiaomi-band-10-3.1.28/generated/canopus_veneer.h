@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: 26b00680b749e7ae
+ * input_digest: 7283666555a1d713
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -296,7 +296,7 @@ static inline void * canopus_fw_launcher_load_app_info(const void * a0) {
 
 typedef int (*canopus_fw_page_goto_fn)(uint32_t, uint32_t, void *, void *);
 static inline int canopus_fw_page_goto(uint32_t a0, uint32_t a1, void * a2, void * a3) {
-    return ((canopus_fw_page_goto_fn)(uintptr_t)0xc44d505)(a0, a1, a2, a3);
+    return ((canopus_fw_page_goto_fn)(uintptr_t)0xc4e0209)(a0, a1, a2, a3);
 }
 
 typedef void (*canopus_fw_lv_obj_add_flag_fn)(void *, uint32_t);

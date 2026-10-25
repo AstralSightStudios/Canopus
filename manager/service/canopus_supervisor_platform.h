@@ -176,6 +176,7 @@ struct canopus_sup_platform_v1 {
     uint32_t (*l2_request_slots)(void *cookie);
     /* Remove one empty directory. Optional; returns negative errno on failure. */
     int (*dir_remove)(void *cookie, const char *path);
+    int (*open_manager)(void *cookie);
 };
 
 int canopus_sup_l2_start(void);
