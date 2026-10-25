@@ -768,3 +768,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   `manager_event` 的确认分支：`native->confirm_event` 与实际渲染的文案对不上，或确认行执行了
   另一个 `event_id`。下一步在 `render_confirmation`/`execute_event` 之间加一个 diag 标记，
   把「文案用的 event_id」和「确认执行的 event_id」都打出来。
+- **确认动作与文案不一致的原因（分析，待验证）**：延后渲染是在 **这一次点击的派发里**结束的，
+  也就是「按下 → 列表行 CLICKED → 就地渲染详情 → 松开/CLICKED 落到详情页新建的行上」。
+  同一个手势因此产生了两次行事件：第二次落在详情页 y≈75 的动作行（启用/移除之一），
+  把 `confirm_event` 覆盖成另一条动作，而对话框文案来自第一次。修法二选一：
+  (1) 把渲染再往后推（下一次派发/下一帧），(2) 在就地渲染后吞掉同一个触摸序列里的后续行点击。
+  验证方式：diag 里把每次 `target_dispatch_row` 的 row_index 与两次 `confirm_event` 都打出来。
