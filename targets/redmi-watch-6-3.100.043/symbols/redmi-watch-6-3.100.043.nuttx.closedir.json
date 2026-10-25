@@ -10,7 +10,8 @@
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ]
   },
   "policy": "restricted",
@@ -18,9 +19,10 @@
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-STATIC-P65-002"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: mutually unique full-body anchor; known callees consistent."
+    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: mutually unique full-body anchor; known callees consistent; body re-reviewed on the exact IDB (EVID-STATIC-P65-002)."
   },
   "entry_address": "0xc4f78c0",
   "callable_address": "0xc4f78c1",

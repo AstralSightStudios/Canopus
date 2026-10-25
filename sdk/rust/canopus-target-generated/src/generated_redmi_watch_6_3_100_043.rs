@@ -4,7 +4,7 @@
 // firmware : 3.100.043 (d516af0:nx_best1502p_ap)
 // sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
 // revision : 1
-// input_digest: d0d908be619371fe
+// input_digest: 7b79abde0e612836
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -237,6 +237,9 @@ pub const CANOPUS_FW_LV_OBJ_SET_STYLE_PAD_BOTTOM_CALLABLE: usize = canopus_thumb
 /// Recovered `lv_obj_set_style_bg_opa` at 0xc0d8ff4. Thumb callable address 0xc0d8ff5.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = canopus_thumb_callable(0xc0d8ff5usize);
 
+/// Recovered `opendir` at 0xc4f7884. Thumb callable address 0xc4f7885.
+pub const CANOPUS_FW_OPENDIR_CALLABLE: usize = canopus_thumb_callable(0xc4f7885usize);
+
 /// Recovered `lv_bar_set_range` at 0xc7849e4. Thumb callable address 0xc7849e5.
 pub const CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE: usize = canopus_thumb_callable(0xc7849e5usize);
 
@@ -275,6 +278,9 @@ pub const CANOPUS_FW_BT_QUEUE_FREE_CALLABLE: usize = canopus_thumb_callable(0xc6
 
 /// Recovered `closedir` at 0xc4f78c0. Thumb callable address 0xc4f78c1.
 pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc4f78c1usize);
+
+/// Recovered `readdir` at 0xc4f78ec. Thumb callable address 0xc4f78ed.
+pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc4f78edusize);
 
 /// Recovered `lv_event_get_indev` at 0x3881b8. Thumb callable address 0x3881b9.
 pub const CANOPUS_FW_LV_EVENT_GET_INDEV_CALLABLE: usize = canopus_thumb_callable(0x3881b9usize);

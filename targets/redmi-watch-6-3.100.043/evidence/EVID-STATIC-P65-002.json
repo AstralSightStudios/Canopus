@@ -13,7 +13,12 @@
     {
       "name": "close",
       "entry": "0x1c154c40",
-      "anchor": "file table lookup (inode/fs_files.c:1006 assert), fd range check, reference decrement and last-reference release."
+      "anchor": "file table lookup (inode/fs_files.c:1006 assert), fd range check, reference decrement and last-reference release. SUPERSEDED: this body is not the entry the VFS publishes; see the close (correction) finding below."
+    },
+    {
+      "name": "close (correction)",
+      "entry": "0x1c154d9c",
+      "anchor": "Syscall table at 0xc4a96c4 lists 0x1c1580e5 (open), 0x1c154d9d, 0x1c158721 (read), 0x1c159a2d. Calling 0x1c154d9d on a live fd returns 0 and a second call returns -1, while 0x1c154c40 resets the device (EVID-EMU-65043-002)."
     },
     {
       "name": "read",
@@ -34,6 +39,21 @@
       "name": "rename",
       "entry": "0x1c1587c8",
       "anchor": "'vfs/fs_rename.c' assertions in the two-path resolution body."
+    },
+    {
+      "name": "opendir",
+      "entry": "0xc4f7884",
+      "anchor": "malloc(104) for the DIR (errno 12 when it fails), then open(path, 0xC01) (O_RDONLY|O_DIRECTORY) through the 0xc8bef00 open thunk; a negative fd frees the DIR and returns NULL with the errno open stored, and a success stores the fd at dir+0."
+    },
+    {
+      "name": "readdir",
+      "entry": "0xc4f78ec",
+      "anchor": "Fills a 98-byte dirent at dir+1 through the readdir helper called at 0xc8beaf0 and returns dir+1; NULL at end of stream. The returned pointer is dir+1, so d_name sits at +1."
+    },
+    {
+      "name": "closedir",
+      "entry": "0xc4f78c0",
+      "anchor": "NULL dir returns -1 with errno 9 (EBADF); otherwise close(dir->fd) through the 0xc8bdba8 thunk, free the DIR with the default-heap free 0xc50b25c, and return the close result."
     },
     {
       "name": "errno_location",

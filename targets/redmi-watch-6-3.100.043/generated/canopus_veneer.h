@@ -4,7 +4,7 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 1
- * input_digest: d0d908be619371fe
+ * input_digest: 7b79abde0e612836
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -309,6 +309,11 @@ static inline void canopus_fw_lv_obj_set_style_bg_opa(void * a0, uint32_t a1, ui
     return ((canopus_fw_lv_obj_set_style_bg_opa_fn)(uintptr_t)0xc0d8ff5)(a0, a1, a2);
 }
 
+typedef void * (*canopus_fw_opendir_fn)(const char *);
+static inline void * canopus_fw_opendir(const char * a0) {
+    return ((canopus_fw_opendir_fn)(uintptr_t)0xc4f7885)(a0);
+}
+
 typedef void (*canopus_fw_lv_bar_set_range_fn)(void *, int32_t, int32_t);
 static inline void canopus_fw_lv_bar_set_range(void * a0, int32_t a1, int32_t a2) {
     return ((canopus_fw_lv_bar_set_range_fn)(uintptr_t)0xc7849e5)(a0, a1, a2);
@@ -372,6 +377,11 @@ static inline int canopus_fw_bt_queue_free(void * a0) {
 typedef int (*canopus_fw_closedir_fn)(void *);
 static inline int canopus_fw_closedir(void * a0) {
     return ((canopus_fw_closedir_fn)(uintptr_t)0xc4f78c1)(a0);
+}
+
+typedef void * (*canopus_fw_readdir_fn)(void *);
+static inline void * canopus_fw_readdir(void * a0) {
+    return ((canopus_fw_readdir_fn)(uintptr_t)0xc4f78ed)(a0);
 }
 
 typedef void * (*canopus_fw_lv_event_get_indev_fn)(void *);
@@ -615,7 +625,6 @@ static inline void canopus_fw_lvx_object_delete(void * a0) {
  * netdev_register: restricted - not exported until context/ownership approved
  * notifications_scroll: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
- * opendir: restricted - not exported until context/ownership approved
  * p67_battery_child_count: restricted - not exported until context/ownership approved
  * p67_battery_child_get: restricted - not exported until context/ownership approved
  * p67_battery_extra_draw_size: restricted - not exported until context/ownership approved
@@ -647,7 +656,6 @@ static inline void canopus_fw_lvx_object_delete(void * a0) {
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
  * quickapp_register_app: restricted - not exported until context/ownership approved
- * readdir: restricted - not exported until context/ownership approved
  * recvfrom: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
  * rmdir: restricted - not exported until context/ownership approved

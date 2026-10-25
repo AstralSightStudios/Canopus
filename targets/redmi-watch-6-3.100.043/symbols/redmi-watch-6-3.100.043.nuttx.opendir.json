@@ -7,22 +7,23 @@
   "instruction_set": "thumb",
   "prototype": "void *(const char *)",
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-STATIC-P65-002"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-STATIC-P65-002"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "exact redmi-watch-6-3.100.043 IDB: decompiled body review of the dirent family"
   },
   "entry_address": "0xc4f7884",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. NuttX libc directory iteration; used only by the Supervisor to find com.canopus.pkg.* quick-app packages under /data/app.",
-  "approval_state": "PENDING"
+  "notes": "manual static-test accept 2026-10-25 (EVID-STATIC-P65-002): NuttX opendir - malloc(104) for the DIR, open(path, 0xC01) (O_RDONLY|O_DIRECTORY) and ERRNO on failure; matches the fs/dirent shape on this image. Restricted/PENDING; the staged-loader context cannot open a directory, so behaviour is verified only through the Manager's inbox scan.",
+  "approval_state": "PENDING",
+  "callable_address": "0xc4f7885"
 }

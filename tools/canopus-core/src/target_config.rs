@@ -665,6 +665,27 @@ const SUP_9: &[Mapping] = &[
     },
 ];
 
+// Optional: directory iteration for the phone-installed package scan. Emitted
+// when the pack recovered the dirent family, but excluded from the platform
+// completeness gate - a target without it still builds a complete Supervisor.
+const SUP_9_DIRENT: &[Mapping] = &[
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_OPENDIR",
+        symbol_name: "opendir",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_READDIR",
+        symbol_name: "readdir",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_CLOSEDIR",
+        symbol_name: "closedir",
+        address: Address::Callable,
+    },
+];
+
 pub struct TargetConfigGen<'a> {
     pub pack: &'a TargetPack,
     pub symbols: &'a [Symbol],
@@ -790,6 +811,9 @@ impl<'a> TargetConfigGen<'a> {
             }
             out.push('\n');
             self.emit(&mut out, if custom { SUP_9 } else { SUP_10 }, custom);
+            if custom {
+                self.emit(&mut out, SUP_9_DIRENT, custom);
+            }
         } else {
             out.push_str("/* Platform ABI incomplete: firmware call macros are withheld. */\n");
         }
