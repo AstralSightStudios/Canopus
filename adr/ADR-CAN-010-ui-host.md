@@ -26,7 +26,8 @@
    - 命中目标（Band 11）：原生事件只投递给手指命中的那个对象（`event` 的目标在 +4），预制行的标题/描述文字是行内部的独立对象
      （list item 字段 `+0x3c`/`+0x40`，trailing 在 `+0x54`），合成行的标签同理。行的回调除容器外也注册到这些命中对象上，
      分发时白名单即该集合（兼做换页后的过期事件校验），标题组件同此（icon/label 双目标）。因此文字区域与行表面同等可点，
-     副标题标签由固件懒创建时在 updater 路径补注册。
+     副标题标签由固件懒创建时在 updater 路径补注册。10 Pro 无需此机制且不移植（实测 + 反编译证据：
+     `evidence/band10pro-row-text-hit/`，10 Pro 的行对象从行内任意位置含文字都收得到事件）。
    - Manager 专有的部分变成可选钩子（返回键、事件前后、渲染完成）；确认对话框改为语义 `DIALOG`（取消、确认的顺序即 msgbox 的左右顺序）。
 2. **模块页面**：`ctx->ui` 直接提供 `set_entry`、`close_page`、`node_set_style`、`node_set_layout`、`node_set_visual`、`control`、`post`。
    早期的 `ctx->ui_ext` 已并入 `ctx->ui` 并删除（Canopus 未发版，公共 ABI 直接演进到 2.0，不保留旧对象、旧前缀或适配层）。
