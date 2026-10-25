@@ -670,3 +670,11 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   详情页正常的话应看到 `c1 q1 v1 n1 I2`（`I` 后面是页号 2，DETAIL）；缺哪一步就是崩在哪。
   同时看 `target_route` 的 `j2` 与 `page_goto` 的 `KP/XP`（`page_goto` 原型
   `int(uint32_t key, uint32_t arg, void*, void*)`，我们传的是 `(key, detail, 0, 0)`）。
+- **打点结果（第二十六轮的后续）**：点模块行后 `dm-j2`（`target_route` 收到 MODULE_DETAIL）、
+  `dm-KP`（`page_goto` 返回 >= 0）都在，但**没有 `dm-I2`**——详情页的 `on_create` 一趟没跑完，
+  随后 app 就没了（屏幕全黑、几秒后回表盘，QEMU 进程没换、uart1 无 panic）。两种可能：
+  一是详情页的渲染（`canopus_manager_native_init` 里那几步 `c1/q1/v1/n1` 之前）崩了，
+  二是 3.1.32 的 page manager 对这个 app 只支持两层页面，push 第三层时在框架里崩。
+  下一轮先在 diag 构建里给详情页的 `on_create` 每个阶段单独打一个不重名的标记（例如 `c2/q2/v2/n2`），
+  就能把「没进 on_create」和「进了但崩在渲染」分开；若确认是第二层上限，详情就不要做成独立页面，
+  在模块列表页上原地展开。
