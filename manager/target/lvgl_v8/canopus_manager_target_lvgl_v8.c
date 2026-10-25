@@ -642,11 +642,8 @@ static void target_dispatch_row(uint32_t row_index, void *event)
         }
         canopus_manager_target_record.selected_after = manager_model.selected;
 #if defined(CANOPUS_MGR_INPLACE_DETAIL)
-        if (manager_pending_inline_detail != 0u) {
-            manager_pending_inline_detail = 0u;
-            (void)canopus_manager_native_render(&context->native);
-            manager_render_guard = 1u;
-        }
+        /* The detail render waits for the next click (top of this function),
+         * so this tap's release cannot land on the rows it creates. */
 #endif
         if (rc == CANOPUS_UI_ERR_DISABLED) {
             (void)canopus_manager_native_render(&context->native);
