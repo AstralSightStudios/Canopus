@@ -570,6 +570,12 @@ static void diag_root_press(void *event)
     uint32_t code = *(const uint32_t *)((const uint8_t *)event + 8u);
     diag_mark('R', (char)('0' + (code % 10u)));
 }
+
+static void diag_probe_press(void *event)
+{
+    uint32_t code = *(const uint32_t *)((const uint8_t *)event + 8u);
+    diag_mark('H', (char)('0' + (code % 10u)));
+}
 #endif
 
 #define CANOPUS_TARGET_ROW_CALLBACK(index) \
@@ -944,12 +950,24 @@ static int32_t target_ui_apply(
             target_set_hidden(backend->page_title, 0u);
 #if defined(CANOPUS_TARGET_UI_DIAG)
             {
+                /* A plain clickable object at a known place: if it never sees a
+                 * press either, the hit test of our whole screen is the issue,
+                 * not the rows. */
                 typedef void (*add_event_fn)(void *, void (*)(void *), uint32_t,
                                              void *);
+                void *probe = object_create(backend->root, 0);
                 ((add_event_fn)(uintptr_t)FW_LV_EVENT_ADD)(backend->root,
                                                           diag_root_press, 0u,
                                                           NULL);
                 target_set_flag(backend->root, CANOPUS_TARGET_FLAG_CLICKABLE, 1u);
+                if (probe != NULL) {
+                    set_size(probe, 80, 80);
+                    target_set_flag(probe, CANOPUS_TARGET_FLAG_CLICKABLE, 1u);
+                    add_event(probe, diag_probe_press, CANOPUS_TARGET_EVENT_ALL,
+                              NULL);
+                    align_to(probe, backend->root,
+                             CANOPUS_TARGET_ALIGN_TOP_MID, 0, 200);
+                }
             }
 #endif
             previous = backend->page_title;
