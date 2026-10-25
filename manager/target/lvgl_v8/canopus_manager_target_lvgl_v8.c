@@ -1403,6 +1403,7 @@ static int target_route_schedule(uint32_t key, uint32_t detail,
     } else if (key != 0u) {
         int32_t rc = ((int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t))(
                           uintptr_t)FW_ACTIVITY_NAVIGATE)(key, detail, 0u, 0u);
+        (void)rc;
         diag_mark(rc < 0 ? 'X' : 'K', 'P');
     }
     return 0;
