@@ -44,6 +44,10 @@ struct canopus_ui_host_dialog {
 struct canopus_ui_host_node {
     void *object;
     void *event_object;
+    /* Registered hit targets besides event_object (stock row content labels,
+       trailing element, synthesized labels). Band 11 delivers a native event
+       only to the object the finger landed on. */
+    void *hit_extra[3];
     void *primary;
     void *secondary;
     void *indicator;

@@ -9,6 +9,11 @@
 /* .139 native settings list, independently traced from 0x0C5962F4 and
  * theme_apply 0x0C5048D8. See docs/NATIVE_UI_AUDIT.md in the installer. */
 #define FW_LVX_LIST_TRAILING_OFFSET 0x54u
+/* The same list item's content pointers: the title/description labels and the
+ * trailing element are separate clickable objects (real Thumb coverage in
+ * scripts/tests/band11_native_ui_firmware.py, row+0x3c / row+0x40). */
+#define FW_LVX_LIST_PRIMARY_OFFSET 0x3cu
+#define FW_LVX_LIST_SECONDARY_OFFSET 0x40u
 /* The reviewed .139/.155/.179 title constructor binds its click callback to
  * the icon and text children. See .155 sub_C89E7CC, fields +52 and +56. */
 #define FW_LVX_TITLE_ICON_OFFSET 0x34u

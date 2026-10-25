@@ -155,6 +155,28 @@ static void host_add_event(void *object, void (*callback)(void *),
 #endif /* CANOPUS_MGR_BAND11 */
 }
 
+/* Stock prefab content (the row's title/description labels, the trailing
+   element) and synthesized labels are separate native objects. Band 11
+   delivers a native event only to the object the finger landed on, so a hit
+   on the row's text would never reach a thunk bound to the row container
+   alone. Listen on those hit targets too; the dispatcher accepts exactly
+   this set. A duplicate registration would double every event, so an object
+   already in the set is never registered twice. */
+static void host_hit_add(struct canopus_ui_host_node *slot,
+                         void (*callback)(void *), void *object)
+{
+    uint32_t i;
+    if (object == NULL || object == slot->event_object) return;
+    for (i = 0; i < 3u; i++) {
+        if (slot->hit_extra[i] == object) return;
+        if (slot->hit_extra[i] == NULL) {
+            slot->hit_extra[i] = object;
+            host_add_event(object, callback, HOST_EVENT_ALL, NULL);
+            return;
+        }
+    }
+}
+
 /* Creates the scrolling body every other widget is parented to. */
 static void *host_content_create(void *root)
 {
@@ -433,7 +455,15 @@ static void host_dispatch_row(uint32_t slot, void *event)
         node = &view->nodes[slot];
         if (!node->visible || node->object == NULL) continue;
 #ifdef CANOPUS_MGR_BAND11
-        if (*(void *const *)((const uint8_t *)event + 4u) != node->event_object) continue;
+        {
+            /* The event target is the object the finger landed on; accept the
+               registered set (container plus its known content objects) and
+               drop stale events from replaced objects. */
+            void *target = *(void *const *)((const uint8_t *)event + 4u);
+            uint32_t h;int mine = target == node->event_object;
+            for (h = 0; !mine && h < 3u; h++) mine = target == node->hit_extra[h];
+            if (!mine) continue;
+        }
 #endif
         binding = node->binding;
         host_input_native(view, &binding, event);
@@ -1103,6 +1133,13 @@ static int32_t host_create_node(struct canopus_ui_host_node *slot, void *parent,
         if (object != NULL) {
             ((void *(*)(void *,const void *,const char *,const char *,int32_t,uint8_t,uint8_t))(uintptr_t)FW_LVX_LIST_ITEM_ADD_CONTENT)(object,NULL,primary,secondary,0,(node->flags & (CANOPUS_UI_NODE_FLAG_CHECKED|CANOPUS_UI_NODE_FLAG_SELECTED)) != 0,trailing);
             slot->event_object = kind == HOST_ROW_SWITCH ? *(void **)((uint8_t *)object + FW_LVX_LIST_TRAILING_OFFSET) : object;
+            /* The stock item keeps 32-bit object pointers at fixed fields (four
+               bytes apart); keep them so the row thunk can listen on every
+               hit target. A 32-bit read is the pointer itself on target and an
+               opaque identity token on wider hosts. */
+            slot->hit_extra[0] = (void *)(uintptr_t)*(const uint32_t *)((const uint8_t *)object + FW_LVX_LIST_PRIMARY_OFFSET);
+            slot->hit_extra[1] = (void *)(uintptr_t)*(const uint32_t *)((const uint8_t *)object + FW_LVX_LIST_SECONDARY_OFFSET);
+            slot->hit_extra[2] = *(void **)((uint8_t *)object + FW_LVX_LIST_TRAILING_OFFSET);
         }
 #endif
     } else {
@@ -1118,6 +1155,14 @@ static int32_t host_create_node(struct canopus_ui_host_node *slot, void *parent,
             slot->secondary = host_label_create(object); slot->indicator = host_label_create(object);
             if (slot->secondary == NULL || slot->indicator == NULL) { host_object_delete(object); return CANOPUS_UI_ERR_BACKEND; }
         }
+#ifdef CANOPUS_MGR_BAND11
+        if (object != NULL && (kind == 4u || (node->type == CANOPUS_UI_NODE_SECTION && node->primary_len))) {
+            /* Synthesized row labels are hit targets of their own. */
+            slot->hit_extra[0] = slot->primary;
+            slot->hit_extra[1] = slot->secondary;
+            slot->hit_extra[2] = slot->indicator;
+        }
+#endif
     }
     if (object == NULL) return CANOPUS_UI_ERR_BACKEND;
     slot->object = object;
@@ -1417,12 +1462,20 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             slot->object = view->toast_object; slot->type = n->type;
         } else {
             if (slot->object == NULL) {
+                uint32_t h;
                 *slot = candidates[i];
                 host_add_event(slot->event_object,host_row_events[map[i]],HOST_EVENT_ALL,NULL);
+                for (h = 0; h < 3u; h++) {
+                    void *extra = slot->hit_extra[h];uint32_t j;int seen = 0;
+                    if (extra == NULL || extra == slot->event_object) continue;
+                    for (j = 0; j < h; j++) if (slot->hit_extra[j] == extra) seen = 1;
+                    if (!seen) host_add_event(extra,host_row_events[map[i]],HOST_EVENT_ALL,NULL);
+                }
             } else if (candidates[i].primary != NULL) {
                 slot->primary = candidates[i].primary;
                 style_changed = 1;
                 host_set_hidden(slot->primary,0u);
+                host_hit_add(slot,host_row_events[map[i]],slot->primary);
             }
             if (host_is_label(n->type) || slot->primary != NULL) {
                 void *label = host_is_label(n->type) ? slot->object : slot->primary;
@@ -1455,6 +1508,11 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                     ((void (*)(void *,const void *,const char *,const char *,int32_t,uint8_t))(uintptr_t)FW_LVX_LIST_ROW_UPDATE)(slot->object,NULL,primary,secondary,0,selected);
 #else
                     ((void (*)(void *,const void *,const char *,const char *,int32_t,uint8_t))(uintptr_t)FW_LVX_LIST_ITEM_UPDATE)(slot->object,NULL,primary,secondary,0,selected);
+                    /* The firmware creates a missing secondary label lazily on
+                       the first non-empty text; adopt the new hit target. */
+                    host_hit_add(slot,host_row_events[map[i]],(void *)(uintptr_t)*(const uint32_t *)((const uint8_t *)slot->object + FW_LVX_LIST_PRIMARY_OFFSET));
+                    host_hit_add(slot,host_row_events[map[i]],(void *)(uintptr_t)*(const uint32_t *)((const uint8_t *)slot->object + FW_LVX_LIST_SECONDARY_OFFSET));
+                    host_hit_add(slot,host_row_events[map[i]],*(void **)((uint8_t *)slot->object + FW_LVX_LIST_TRAILING_OFFSET));
 #endif
                 }
             } else if (n->type == CANOPUS_UI_NODE_IMAGE) {

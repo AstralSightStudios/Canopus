@@ -157,6 +157,8 @@ static void *add_event(void *object, void (*callback)(void *), uint32_t code, vo
 {
     struct widget *widget = object;
     calls.events++;
+    /* Row-label identity tokens (see row_label) register but store nothing. */
+    if (object != NULL && (uintptr_t)object <= 1024u) return object;
     if (code == 36u) {
         if (fail_font_event) { fail_font_event = 0; return NULL; }
         widget->delete_callback = callback; widget->delete_user = user;
@@ -271,6 +273,27 @@ static void row_content(void *object, const char *primary, const char *secondary
     struct widget *w = object;
     text_copy(w->text, primary); text_copy(w->secondary, secondary); w->checked = selected;
 }
+#ifdef CANOPUS_MGR_BAND11
+static struct widget row_labels[1024];
+static unsigned row_labels_used;
+/* Stock content labels live in their own pool: they are not host widgets, so
+   widget counts and create-failure injection stay exact. */
+static void *row_label(void *row, uint32_t offset, int required)
+{
+    /* The firmware stores 32-bit object pointers at these fields, four bytes
+       apart. On this 64-bit harness the stored values are small identity
+       tokens (the backend only ever compares them, as with event targets). */
+    uint32_t token = 0;
+    memcpy(&token, (unsigned char *)row + offset, sizeof(token));
+    if (token == 0 && required) {
+        assert(row_labels_used < sizeof(row_labels) / sizeof(row_labels[0]));
+        row_labels[row_labels_used++].parent = row;
+        token = row_labels_used;
+        memcpy((unsigned char *)row + offset, &token, sizeof(token));
+    }
+    return (void *)(uintptr_t)token;
+}
+#endif
 #ifndef CANOPUS_MGR_BAND11
 struct title_event { uint32_t code; void *user; };
 static void *event_user(void *event) { return ((struct title_event *)event)->user; }
@@ -341,6 +364,12 @@ static void *add_content(void *object, const void *icon, const char *primary,
 {
     (void)icon; (void)value; (void)trailing;
     row_content(object, primary, secondary, selected);
+    /* The stock item keeps its content objects at +0x3c/+0x40 and the trailing
+       element at +0x54; the labels are separate clickable objects. Keep them
+       in their own pool so widget counts and create-failure injection stay
+       exact. */
+    row_label(object, 0x3c, 1);
+    row_label(object, 0x40, secondary != NULL && secondary[0] != 0);
     memcpy((unsigned char *)object + 0x54, &object, sizeof(object));
     return object;
 }
@@ -348,6 +377,10 @@ static void update_row(void *object, const void *icon, const char *primary,
                         const char *secondary, int32_t value, uint8_t selected)
 {
     (void)icon; (void)value; calls.row++; row_content(object, primary, secondary, selected);
+    /* The firmware creates the secondary label lazily on the first non-empty
+       text and hides it again when empty. */
+    row_label(object, 0x3c, 1);
+    row_label(object, 0x40, secondary != NULL && secondary[0] != 0);
 }
 static void remove_styles(void *object)
 { memset(((struct widget *)object)->props,0,sizeof(((struct widget *)object)->props)); calls.style++; }
@@ -365,6 +398,8 @@ static void set_long_mode(void *object, uint32_t mode)
 #define FW_LVX_LIST_ITEM_ADD_CONTENT add_content
 #define FW_LVX_LIST_ITEM_UPDATE update_row
 #define FW_LVX_LIST_TRAILING_OFFSET 0x54u
+#define FW_LVX_LIST_PRIMARY_OFFSET 0x3cu
+#define FW_LVX_LIST_SECONDARY_OFFSET 0x40u
 #define FW_LV_OBJECT_ADD_FLAG add_flag
 #define FW_LV_OBJECT_CLEAR_FLAG clear_flag
 #define FW_LV_OBJECT_DELETE delete_object
@@ -523,25 +558,73 @@ static int page(struct page_options o)
     }
     return finish(tree);
 }
-static void emit_row(unsigned slot, uint32_t code)
+static void emit_row_target(unsigned slot, uint32_t code, void **field)
 {
 #ifndef CANOPUS_MGR_BAND11
-    struct widget *w = view.nodes[slot].event_object;
+    struct widget *w = *field;
+    (void)slot;
     w->callback(&code);
 #else
     /* Native events have 32-bit pointers at +4 and a code at +8. On a 64-bit
      * host those overlap; only equality is used by the backend, so use an
      * opaque matching token and restore the real binding after dispatch. */
     unsigned char event[24] = {0};
-    void *previous = view.nodes[slot].event_object, *token;
+    void *previous = *field, *token;
     memcpy(event + 4, &previous, sizeof(previous));
     memcpy(event + 8, &code, sizeof(uint16_t));
     memcpy(&token, event + 4, sizeof(token));
-    view.nodes[slot].event_object = token;
+    *field = token;
     host_dispatch_row(slot, event);
-    if (view.nodes[slot].event_object == token) view.nodes[slot].event_object = previous;
+    if (*field == token) *field = previous;
 #endif
 }
+static void emit_row(unsigned slot, uint32_t code)
+{ emit_row_target(slot, code, &view.nodes[slot].event_object); }
+#ifdef CANOPUS_MGR_BAND11
+static int row_page(const char *text, const char *detail, uint32_t event_id)
+{
+    struct canopus_ui_tree_v1 *tree = begin();
+    struct canopus_ui_action_row_props_v1 props = {
+        sizeof(props), text, (uint32_t)strlen(text),
+        detail, (uint32_t)strlen(detail), event_id, 1
+    };
+    assert(canopus_ui_action_row(tree, 2, &props) == 0);
+    return finish(tree);
+}
+/* The stock row's title/description are separate clickable objects: a hit on
+   the row's text must bind exactly like the row surface, a hit elsewhere must
+   stay silent, and a lazily created secondary label joins the set. */
+static void test_row_content_hits(void)
+{
+    unsigned slot;
+    struct canopus_ui_host_node *node;
+    reset();
+    assert(row_page("Title", "", 301) == 0);
+    slot = (unsigned)(host_node(&view, 2) - view.nodes);
+    node = &view.nodes[slot];
+    assert(node->hit_extra[0] != NULL && node->hit_extra[1] == NULL);
+    clear_counts();
+    emit_row_target(slot, HOST_EVENT_CLICKED, &node->hit_extra[0]);
+    assert(event_calls == 1 && last_key == 2 && last_event == 301);
+    /* A target outside the registered set is not this row's business. */
+    {
+        unsigned char event[24] = {0};
+        uint16_t code = (uint16_t)HOST_EVENT_CLICKED;
+        void *foreign = view.content_root;
+        memcpy(event + 4, &foreign, sizeof(foreign));
+        memcpy(event + 8, &code, sizeof(code));
+        host_dispatch_row(slot, event);
+        assert(event_calls == 1);
+    }
+    /* The firmware creates the secondary label lazily on the first non-empty
+       detail text; the update adopts it as a hit target. */
+    assert(row_page("Title", "Details", 301) == 0);
+    node = &view.nodes[slot];
+    assert(node->hit_extra[1] != NULL);
+    emit_row_target(slot, HOST_EVENT_CLICKED, &node->hit_extra[1]);
+    assert(event_calls == 2 && last_key == 2 && last_event == 301);
+}
+#endif
 static void test_identical_and_binding(int baseline)
 {
     struct page_options o = options();
@@ -2417,6 +2500,9 @@ int main(int argc, char **argv)
     if (baseline) return 0;
     test_property_updates(); test_clip_toggle(); test_reorder_and_reappearance(); test_failure_retry();
     test_switch_events(); test_dialog_binding(); test_dialog_allocation_failure_preserves_state();
+#ifdef CANOPUS_MGR_BAND11
+    test_row_content_hits();
+#endif
     test_nested_header_does_not_displace_rows(); test_header_back_binding();
     test_page_scroll_and_absolute_overflow();
     test_virtual_native_bounds_and_capture_replacement();
