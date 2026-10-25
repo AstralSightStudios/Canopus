@@ -1383,12 +1383,15 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         }
     }
     canopus_manager_target_record.create_count += 1u;
-    if (root == NULL) {
-        /* This firmware calls on_create without a page root; create a
-         * top-level container on the active screen instead. */
+    {
+        /* Always own the root: the v8 page manager hands on_create either no
+         * root or one of its own containers, and lvx_page_title_create on that
+         * container does not survive (3.1.32 dies inside it). A screen of our
+         * own carries the title and rows on every v8 firmware. */
         typedef void *(*object_create_fn)(void *, void *);
         object_create_fn object_create =
             (object_create_fn)(uintptr_t)FW_LV_OBJECT_CREATE;
+        (void)root;
         root = object_create(NULL, 0);
         if (root == NULL) {
             diag_mark('r', '0');
