@@ -304,3 +304,9 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
 - **结论（loader 层）**：要让 n66/n67 装上 Supervisor，必须给这一代固件换一条返回路径
   （`bx lr` 直接回 NSH，并补上原尾部做的收尾，例如 MPU/exec 状态恢复）。这属于
   staged-loader 协议改动，必须连同 stage1/stage2 一起审，不能靠猜。
+- **两次 loader 试验都失败，已全部回滚**：把探针改成 `bx lr` 后崩点转移到 trampoline
+  自己的 `blx`（MemManage，PC `0x0c1c956e`）；再把 trampoline 尾部的 `bx r3` 改成 `bx lr`
+  后，崩溃跑到 **RAM 里的 trampoline 本体（PC `0x3c7c8760`，UsageFault/MemManage）**。
+  说明这条 stage0 续体不是简单换个返回指令就能修的：`exec_handler+0x45` 的尾部除了
+  返回还承担了别的收尾，必须按 stage1/stage2 协议整体改。三个 v8 安装器的 main.lua
+  已 `git checkout` 回滚到已验证的状态（o66 安装路径保持可用）。
