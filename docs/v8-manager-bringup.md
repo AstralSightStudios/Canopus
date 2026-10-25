@@ -273,3 +273,8 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
 - 下一步：核对部署到设备上的 `canopus_loader_profile-*.bin` / `stage1` / `stage2`
   与本次构建产物是否一致（构建日志写 `stage1=417 stage2=3560`，设备上是 1452/3576），
   以及 `profile.exec_handler + 0x45` 在这台固件上是否真的是可执行边界。
+- **体积就是触发条件**：补掉 `target_route_schedule` 里只在 diag 构建用到的局部变量
+  （非 diag 构建原本直接 `-Werror` 失败）后，3.1.32 的 Supervisor 从 115248 B 降到
+  113916 B，同一次 Run **不再产生新的 minidump**——stage-0 的 `exec` UsageFault 消失。
+  说明这条 cave trampoline 对镜像体积/Umum 分配很敏感，产物必须按发布体积（非 diag）
+  来测。下一次要在设备上确认「无 fault 之后」页面是否真的被创建。
