@@ -289,7 +289,10 @@ end
 
 local function call_mailbox(callable, r0, r1)
     local probe = {
-        0x49034802, 0x4A036008, 0xBF004710,
+        -- bx lr: the probe only has to prove the cave executes. Branching
+        -- into exec_handler+0x45 lands mid-function and the epilogue pops a
+        -- synthetic frame (UsageFault on 3.1.32/3.1.190).
+        0x49034802, 0x4A036008, 0xBF004770,
         STAGE0_ENTRY_PROBE_MARKER, profile.cave_result, profile.exec_handler + 0x45,
     }
     local trampoline = {

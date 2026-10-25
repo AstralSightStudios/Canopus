@@ -296,3 +296,11 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
   取决于弹栈内容，体积变化改变了栈布局。
 - 因此 n66/n67 首先要修的不是 Manager，而是 stage-0 trampoline 的返回方式：
   探针应 `bx lr` 返回（或用 `exec_handler` 本体），不要跳进 `+0x45` 的尾部。
+- **探针修好后，崩点仍在同一地址**：把探针的 `bx r2` 改成 `bx lr`（只验证 cave 能执行）
+  后，同一次 Run 变成 **MemManage Fault**，`PC 仍是 0x0c1c956e`、`R2=0x200d0040`
+  （cave_result）。这次是 **trampoline**（`call_mailbox` 的第二张表）最后那条
+  `blx` 跳进 `profile.exec_handler + 0x45`。也就是说 3.1.32/3.1.190 上这条
+  mailbox 尾部不是可用的续体（3.1.190 早已判定不是指令边界），而 o66(3.1.28) 上是可用的。
+- **结论（loader 层）**：要让 n66/n67 装上 Supervisor，必须给这一代固件换一条返回路径
+  （`bx lr` 直接回 NSH，并补上原尾部做的收尾，例如 MPU/exec 状态恢复）。这属于
+  staged-loader 协议改动，必须连同 stage1/stage2 一起审，不能靠猜。
