@@ -477,3 +477,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   一百多 KB，分配位置随体积变化，落点接近堆尾时读越界；这条限制也解释了早期“改小几百字节
   就换一种崩溃”的现象。后续要么给 ELF 输入加显式的容量检查，要么让 stage2 用更小的
   分块读取，避免整文件常驻 Kmem。
+- **字体家族线索**：n66 的 `miwear_font_create(index, size)`（`0xC4BD728`）用一张固定的
+  家族表 `off_2C70E6BC`，内容是 `MiSans-Demibold / MiSans-Medium / MiSans-Regular /
+  MiSans-Demibold / MiSansF-Demibold / MiSansF-Medium / MiSansF-Semibold`。`MiSansF-*`
+  很可能就是带中文的“全量”字体（stock 中文走的不是 `MiSans-Regular`）。下一轮先用
+  `CANOPUS_TARGET_FONT_FAMILY="MiSansF-Medium"`（与旧名同为 14 字节，构建体积不变）
+  在页面上验证是否出中文；另外 `MiSans-Regular@14/18` 那条链在 n66 上确实只有拉丁字形。
