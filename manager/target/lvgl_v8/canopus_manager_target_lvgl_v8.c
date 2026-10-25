@@ -929,11 +929,13 @@ static int32_t target_ui_apply(
                 CANOPUS_TARGET_PAGE_OVERVIEW ? 0u : 1u;
 
             if (backend->page_title == NULL) {
+                diag_mark('T', '0');
                 backend->page_title = create_page_title(
                     backend->root, primary, title_mode, NULL);
                 if (backend->page_title == NULL) {
                     return -1;
                 }
+                diag_mark('T', '1');
             }
             /* Band 9 lvx_page_title_create owns the stock left title, right-side time,
              * optional back affordance, and its standard content inset. It is
@@ -1058,12 +1060,16 @@ static int32_t target_ui_apply(
         if (object == NULL) {
             void *label;
             void *value;
+            diag_mark('B', '0');
             object = object_create(backend->content_root, 0);
             if (object == NULL) {
                 return -1;
             }
+            diag_mark('B', '1');
             label = manager_label_create(object, CANOPUS_LABEL_BODY);
+            diag_mark('L', label != NULL ? '1' : '0');
             value = manager_label_create(object, CANOPUS_LABEL_VALUE);
+            diag_mark('V', value != NULL ? '1' : '0');
             if (label == NULL || value == NULL) {
                 return -1;
             }
@@ -1081,7 +1087,9 @@ static int32_t target_ui_apply(
          * the value is capped to the characters that fit beside the title
          * instead of running over it. Alignment follows the text because a
          * label only knows its size once it holds text. */
+        diag_mark('S', '0');
         set_label_text(backend->row_labels[slot], primary);
+        diag_mark('S', '1');
         if (node->type == CANOPUS_UI_NODE_ACTION_ROW) {
             /* An action row's secondary text is a hint too long for the value
              * column; the chevron is what stock rows show instead. */
@@ -1097,6 +1105,7 @@ static int32_t target_ui_apply(
         align_to(backend->row_values[slot], object,
                  CANOPUS_TARGET_ALIGN_RIGHT_MID, -8, 0);
         target_set_hidden(object, 0u);
+        diag_mark('A', '0');
         if (previous == NULL) {
             align_to(object, backend->content_root,
                      CANOPUS_TARGET_ALIGN_TOP_MID, 0, 0);
@@ -1105,6 +1114,7 @@ static int32_t target_ui_apply(
             align_to(object, previous, CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID, 0,
                      gap);
         }
+        diag_mark('A', '1');
         previous = object;
         backend->row_keys[slot] = node->key;
         backend->bindings[slot].generation = snapshot->generation;
@@ -1129,6 +1139,7 @@ static int32_t target_ui_apply(
     for (i = (uint16_t)progress_used; i < CANOPUS_TARGET_UI_MAX_PROGRESS; i++) {
         if (backend->progress[i] != NULL) target_set_hidden(backend->progress[i], 1u);
     }
+    diag_mark('Z', '1');
     backend->rendered_generation = snapshot->generation;
     canopus_manager_target_record.list_row = (uintptr_t)first;
     return 0;
