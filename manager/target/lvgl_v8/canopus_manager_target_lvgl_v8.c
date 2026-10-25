@@ -744,6 +744,7 @@ static int target_find_row(struct canopus_target_ui_backend *backend,
  * lv_obj is not clickable, so a row only receives LV_EVENT_CLICKED once this
  * flag is set. */
 #define CANOPUS_TARGET_FLAG_CLICKABLE UINT32_C(0x02)
+#define CANOPUS_TARGET_FLAG_SCROLLABLE UINT32_C(0x10)
 #define CANOPUS_TARGET_FLAG_HIDDEN UINT32_C(0x01)
 
 static void target_set_flag(void *object, uint32_t flag, uint32_t on)
@@ -1093,6 +1094,7 @@ static int32_t target_ui_apply(
             }
             set_size(object, CANOPUS_TARGET_CONTENT_WIDTH, 34);
             target_set_flag(object, CANOPUS_TARGET_FLAG_CLICKABLE, 1u);
+            target_set_flag(object, CANOPUS_TARGET_FLAG_SCROLLABLE, 0u);
             add_event(object, target_row_events[slot],
                       CANOPUS_TARGET_EVENT_CLICKED, NULL);
             backend->rows[slot] = object;
@@ -1415,6 +1417,10 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
             return -1;
         }
         diag_mark('r', '1');
+        /* A scrollable screen turns every tap into SCROLL_BEGIN, which
+         * suppresses LV_EVENT_CLICKED for the rows (diag: probe got
+         * SHORT_CLICKED and SCROLL_BEGIN but never CLICKED). */
+        target_set_flag(root, CANOPUS_TARGET_FLAG_SCROLLABLE, 0u);
     }
     canopus_manager_target_record.root_object = (uintptr_t)root;
     canopus_memset(&context->backend, 0, sizeof(context->backend));
