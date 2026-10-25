@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (N66NFC_3.1.32)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 2
-// input_digest: 808e7f90521c80e9
+// input_digest: f9409666e00f00a1
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -288,6 +288,9 @@ pub const CANOPUS_FW_UNLINK_CALLABLE: usize = canopus_thumb_callable(0xc3920fdus
 
 /// Recovered `app_lookup` at 0x0c458cd8. Thumb callable address 0xc458cd9.
 pub const CANOPUS_FW_APP_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0xc458cd9usize);
+
+/// Recovered `miwear_font_create` at 0xc4bd728. Thumb callable address 0xc4bd729.
+pub const CANOPUS_FW_MIWEAR_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc4bd729usize);
 
 /// Recovered `driver_read_dispatch` at 0xc45966c. Thumb callable address 0xc45966d.
 pub const CANOPUS_FW_DRIVER_READ_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc45966dusize);
@@ -573,6 +576,7 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // lvx_page_content_create: restricted - not exported until context/ownership approved
 // lvx_page_title_create: restricted - not exported until context/ownership approved
 // lvx_style_apply: restricted - not exported until context/ownership approved
+// miwear_font_create: restricted - not exported until context/ownership approved
 // mm_free_default: restricted - not exported until context/ownership approved
 // mm_memalign_default: restricted - not exported until context/ownership approved
 // modhandle: FORBIDDEN - no binding may ever be generated

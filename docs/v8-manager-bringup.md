@@ -483,3 +483,12 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   很可能就是带中文的“全量”字体（stock 中文走的不是 `MiSans-Regular`）。下一轮先用
   `CANOPUS_TARGET_FONT_FAMILY="MiSansF-Medium"`（与旧名同为 14 字节，构建体积不变）
   在页面上验证是否出中文；另外 `MiSans-Regular@14/18` 那条链在 n66 上确实只有拉丁字形。
+
+- **字体记录已入库**：`EVID-STATIC-9132-V8-003` + `ui.miwear_font_create`（3.1.32 `0xC4BD728`）
+  记录了这个索引表函数。用 diag 打点实测：`miwear_font_create(4, 14)` 与 `(4, 13)` 返回的是
+  两个不同的 Umem 字体对象（`0x3c879c28` / `0x3c87a060`），**不是** `LV_FONT_DEFAULT`
+  （`0x2C63276C`），说明 MiSansF-* 家族在这台固件上确实存在且可创建。
+- **但中文是否真的画出来还没抓到证据**：安装器 Run 会阻塞 UI 线程近两分钟，面板随即息屏，
+  Mirage 的 `screendump` 在息屏时是空帧；Manager 页有时会停留（抓到过多次），有时在
+  OPEN_MANAGER 之后被框架 `on_ui_destroy` 掉。抓一次「新字体 + 页面停留」的帧是下一轮第一步；
+  若 MiSansF 仍不出中文，再往 index 5/6 或主题字体对象上找。

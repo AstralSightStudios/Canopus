@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-9132-V8-003",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "question": "Which entry on 3.1.32 yields a CJK-capable font for the v8 Manager labels?",
+  "candidate_symbols": [
+    "miwear_font_create",
+    "lvx_font_create"
+  ],
+  "prototype_hypothesis": "miwear_font_create(index, size) picks the family from a fixed table and forwards to lvx_font_create(name, size, 0); entries 4-6 are the MiSansF-* (full) families, while the font_config.json family list only knows MiSans-Demibold/Semibold/Medium/Regular.",
+  "callsite_evidence": [
+    "0xc4bd728 miwear_font_create(index, size): r4 = off_2C70E6BC[index], then lvx_font_create(r4, size, 0); on failure logs 'failed to creat miwear font' and returns LV_FONT_DEFAULT.",
+    "off_2C70E6BC = MiSans-Demibold, MiSans-Medium, MiSans-Regular, MiSans-Demibold, MiSansF-Demibold, MiSansF-Medium, MiSansF-Semibold.",
+    "Stock font setup at 0xc395286 calls miwear_font_create(4, 0x66) and 0xc39529c miwear_font_create(4, 0x5A), i.e. index 4 is the family used for large display text.",
+    "The romfs font config lists only the four MiSans-* families, so MiSansF-* is reachable only through this table.",
+    "A Manager page on 3.1.32 renders its rows but every CJK glyph is .notdef when the label font comes from lvx_font_create('MiSans-Regular', 14/18, 0) or from LV_FONT_DEFAULT."
+  ],
+  "control_flow_evidence": [
+    "miwear_font_create(index, size) -> lvx_font_create(table[index], size, 0) -> lv_font_t*.",
+    "The returned font is applied to a label as local style property 90, the same setter the Manager backend already uses."
+  ],
+  "ownership_analysis": "No ownership claimed; the font object belongs to the firmware font manager.",
+  "unsafe_assumptions": [
+    "Index 4 (MiSansF-Demibold) is assumed to carry CJK at body sizes; the index for the stock body text has not been identified.",
+    "Static evidence only; the device run that would confirm CJK rendering has not been recorded yet."
+  ],
+  "recommended_probe": "Build the n66 Supervisor with the miwear_font_create mapping and confirm the Manager page draws Chinese instead of .notdef boxes.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED"
+}
