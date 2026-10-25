@@ -865,8 +865,10 @@ static int32_t target_ui_apply(
     /* v8 forwards its second argument (0 here) to lv_obj_class_init_obj. */
     typedef void *(*object_create_fn)(void *, void *);
     typedef void (*set_label_text_fn)(void *, const char *);
+#if !defined(CANOPUS_MGR_TITLE_USER_DATA) && !defined(CANOPUS_MGR_TITLE_PLAIN)
     typedef void *(*create_page_title_fn)(void *, const char *, uint32_t,
                                           void (*)(void *));
+#endif
     typedef void (*add_event_fn)(void *, void (*)(void *), uint32_t, void *);
     typedef void (*align_to_fn)(void *, void *, uint32_t, int32_t, int32_t);
     typedef void (*set_size_fn)(void *, int32_t, int32_t);
@@ -881,8 +883,10 @@ static int32_t target_ui_apply(
         (object_create_fn)(uintptr_t)FW_LV_OBJECT_CREATE;
     set_label_text_fn set_label_text =
         (set_label_text_fn)(uintptr_t)FW_LV_LABEL_SET_TEXT;
+#if !defined(CANOPUS_MGR_TITLE_USER_DATA) && !defined(CANOPUS_MGR_TITLE_PLAIN)
     create_page_title_fn create_page_title =
         (create_page_title_fn)(uintptr_t)FW_LV_PAGE_TITLE_CREATE;
+#endif
     add_event_fn add_event = (add_event_fn)(uintptr_t)FW_LV_EVENT_ADD;
     align_to_fn align_to = (align_to_fn)(uintptr_t)FW_LV_ALIGN_TO;
     set_size_fn set_size = (set_size_fn)(uintptr_t)FW_LV_OBJECT_SET_SIZE;
@@ -961,22 +965,55 @@ static int32_t target_ui_apply(
 
         primary = snapshot->strings + node->primary_off;
         if (node->type == CANOPUS_UI_NODE_NAVIGATION_PAGE) {
+#if !defined(CANOPUS_MGR_TITLE_PLAIN)
             uint32_t title_mode = backend->page_index ==
                 CANOPUS_TARGET_PAGE_OVERVIEW ? 0u : 1u;
+#endif
 
             if (backend->page_title == NULL) {
                 diag_mark('T', '0');
+#if defined(CANOPUS_MGR_TITLE_PLAIN)
+                /* 3.1.32's lvx_page_title_create never returns when it is
+                 * handed the page-manager container (diag: T0 without T1), so
+                 * this target draws the page name itself. */
+                backend->page_title =
+                    manager_label_create(backend->root, CANOPUS_LABEL_BODY);
+                diag_mark('T', backend->page_title != NULL ? '2' : '3');
+                if (backend->page_title != NULL) {
+                    set_label_text(backend->page_title, primary);
+                    diag_mark('T', '4');
+                    set_size(backend->page_title, CANOPUS_TARGET_CONTENT_WIDTH,
+                             CANOPUS_TARGET_ROW_TEXT_HEIGHT);
+                    diag_mark('T', '5');
+                    /* Centred in the container's content box, which is the
+                     * panel centre, so no horizontal offset. */
+                    align_to(backend->page_title, backend->root,
+                             CANOPUS_TARGET_ALIGN_TOP_MID, 0, 8);
+                    diag_mark('T', '6');
+                }
+#elif defined(CANOPUS_MGR_TITLE_USER_DATA)
+                /* 3.1.190's lvx_page_title_create takes a fifth argument (the
+                 * user data handed to the back button's event), and stock
+                 * callers pass 0. Without it the register keeps a stale
+                 * pointer. */
+                backend->page_title =
+                    ((void *(*)(void *, const char *, uint32_t,
+                                void (*)(void *), void *))(
+                         uintptr_t)FW_LV_PAGE_TITLE_CREATE)(
+                        backend->root, primary, title_mode, NULL, NULL);
+#else
                 backend->page_title = create_page_title(
                     backend->root, primary, title_mode, NULL);
+#endif
                 if (backend->page_title == NULL) {
                     return -1;
                 }
                 diag_mark('T', '1');
             }
-            /* Band 9 lvx_page_title_create owns the stock left title, right-side time,
-             * optional back affordance, and its standard content inset. It is
-             * intentionally created once per firmware page: updating its title
-             * contract is not yet recovered. */
+            /* The stock page title owns the header, right-side time, the back
+             * affordance and the content inset. It is created once per firmware
+             * page: updating its title contract is not recovered, so a page
+             * keeps the name it was created with. */
             target_set_hidden(backend->page_title, 0u);
 #if defined(CANOPUS_TARGET_UI_DIAG)
             {
