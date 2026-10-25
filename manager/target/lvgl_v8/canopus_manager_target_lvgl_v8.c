@@ -836,46 +836,51 @@ static void row_text_append(struct row_text *text, const char *value,
  * Band 9 generation, so the font is also put on the container a label is
  * created under: text_font is inherited, which lets the label's constructor
  * see a real font before its first refresh. */
+/* LV_STYLE_TEXT_FONT differs per v8 generation: 0x55 on the Band 9 images
+ * (lvx_page_title_create reads it as 0x55 to inherit the font), 90 on 3.1.28. */
+#ifndef CANOPUS_MGR_TEXT_FONT_PROP
+#define CANOPUS_MGR_TEXT_FONT_PROP 90
+#endif
+static void *target_font_create(uint32_t role)
+{
+    static void *fonts[2];
+    int16_t size = role == CANOPUS_LABEL_VALUE
+                       ? CANOPUS_TARGET_FONT_VALUE_SIZE
+                       : CANOPUS_TARGET_FONT_SIZE;
+    void *font = fonts[role];
+
+    if (font != NULL) {
+        return font;
+    }
+#if defined(FW_LVX_FONT_CREATE)
+    font = ((void *(*)(const char *, int16_t, int16_t))(uintptr_t)
+                FW_LVX_FONT_CREATE)(CANOPUS_TARGET_FONT_FAMILY, size, 0);
+#endif
+    fonts[role] = font;
+    return font;
+}
+
 static void target_apply_font(void *object, uint32_t role)
 {
+    void *font;
+
     if (object == NULL) {
         return;
     }
-#if defined(FW_LVX_FONT_CREATE) && defined(FW_LV_OBJECT_SET_TEXT_FONT)
-    {
-        static void *fonts[2];
-        int16_t size = role == CANOPUS_LABEL_VALUE
-                           ? CANOPUS_TARGET_FONT_VALUE_SIZE
-                           : CANOPUS_TARGET_FONT_SIZE;
-        if (fonts[role] == NULL) {
-            fonts[role] = ((void *(*)(const char *, int16_t, int16_t))(uintptr_t)
-                               FW_LVX_FONT_CREATE)(CANOPUS_TARGET_FONT_FAMILY,
-                                                   size, 0);
-        }
-        if (fonts[role] != NULL) {
-            (void)((int32_t (*)(void *, void *, uint32_t))(uintptr_t)
-                       FW_LV_OBJECT_SET_TEXT_FONT)(object, fonts[role], 0u);
-        }
+    font = target_font_create(role);
+    if (font == NULL) {
+        return;
     }
-#elif defined(FW_LVX_FONT_CREATE) && defined(FW_LV_OBJECT_SET_LOCAL_STYLE_PROP)
-    {
-        static void *fonts[2];
-        int16_t size = role == CANOPUS_LABEL_VALUE
-                           ? CANOPUS_TARGET_FONT_VALUE_SIZE
-                           : CANOPUS_TARGET_FONT_SIZE;
-        if (fonts[role] == NULL) {
-            fonts[role] = ((void *(*)(const char *, int16_t, int16_t))(uintptr_t)
-                               FW_LVX_FONT_CREATE)(CANOPUS_TARGET_FONT_FAMILY,
-                                                   size, 0);
-        }
-        if (fonts[role] != NULL) {
-            (void)((int32_t (*)(void *, uint32_t, void *, uint32_t))(
-                uintptr_t)FW_LV_OBJECT_SET_LOCAL_STYLE_PROP)(object, 90u,
-                                                             fonts[role], 0u);
-        }
-    }
+#if defined(FW_LV_OBJECT_SET_TEXT_FONT)
+    (void)((int32_t (*)(void *, void *, uint32_t))(uintptr_t)
+               FW_LV_OBJECT_SET_TEXT_FONT)(object, font, 0u);
+#elif defined(FW_LV_OBJECT_SET_LOCAL_STYLE_PROP)
+    (void)((int32_t (*)(void *, uint32_t, void *, uint32_t))(uintptr_t)
+               FW_LV_OBJECT_SET_LOCAL_STYLE_PROP)(object,
+                                                  CANOPUS_MGR_TEXT_FONT_PROP,
+                                                  font, 0u);
 #else
-    (void)role;
+    (void)font;
 #endif
 }
 
