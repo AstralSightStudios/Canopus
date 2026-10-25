@@ -750,3 +750,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   显示成 `remove-pen…`（REMOVE_PENDING 被截断），与刚提交的 ENABLE 不符，需要下一步查
   `execute_event` 到模型回读这条链（怀疑是 `target_refresh` 里那次刷新读到的是旧快照，
   或确认事件被映射成了 REMOVE）。
+- **确认路径端到端打通（打点/寄存器之外的第一份硬证据）**：确认后关机读
+  `/data/canopus/registry.bin`，`hello_portable` 的 **intent 变成 2（REMOVE）**——说明 UI 上
+  点的那一下确实变成了一条监督器命令并落盘了（之前详情页根本进不去）。所以「状态」栏看到的
+  `remove-pen…` 是真实的 REMOVE_PENDING，不是回读错误；那一轮我点到的动作行是「移除」而不是
+  「启用」（两行相邻，坐标差 30 px）。下一步只需在同样路径上点「启用」并确认，再读 registry
+  应看到 intent=1。**注意**：intent=REMOVE 落盘后，下次加载 Supervisor 会删除模块产物。
