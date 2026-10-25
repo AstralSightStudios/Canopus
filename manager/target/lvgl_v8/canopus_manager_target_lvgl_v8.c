@@ -567,8 +567,13 @@ static void target_dispatch_row(uint32_t row_index, void *event)
         if (new_code == released) {
             manager_click_handled = 0u;
         } else if (is_click && manager_render_guard != 0u) {
+            /* The rows may never see the release (the pressed object is gone
+             * after the render), so clear both here: exactly one click is
+             * dropped and the next real tap works. */
+            uint8_t phantom = manager_click_handled;
             manager_render_guard = 0u;
-            if (manager_click_handled != 0u) {
+            manager_click_handled = 0u;
+            if (phantom != 0u) {
                 return;
             }
         }
