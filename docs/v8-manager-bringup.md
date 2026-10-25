@@ -756,3 +756,8 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   `remove-pen…` 是真实的 REMOVE_PENDING，不是回读错误；那一轮我点到的动作行是「移除」而不是
   「启用」（两行相邻，坐标差 30 px）。下一步只需在同样路径上点「启用」并确认，再读 registry
   应看到 intent=1。**注意**：intent=REMOVE 落盘后，下次加载 Supervisor 会删除模块产物。
+- **新发现（待查）：带 REMOVE 意图的 boot 会反复复位**。上一轮确认「移除」后 registry 记了
+  intent=2；下一次 Run（`RESTORE_AFTER_BOOT` 应用删除意图）期间设备在 Mi logo 与黑屏之间反复
+  切换，Manager 页始终没出来。「启用」的端到端复验因此没做成。这条和激活体验同等重要：
+  移除也必须能用。接续时先 `erase`（本轮结束时已擦机）再重装模块，然后分别验证
+  ENABLE（registry 应为 intent=1）与 REMOVE（应删除产物且设备不复位）。
