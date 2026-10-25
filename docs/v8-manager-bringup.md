@@ -462,3 +462,18 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   不能据此判断失败；等 `Run completed` 出现再截图。
 - 仍未做：n66/n67 上让 Manager 页停在屏幕上、行点击、CJK 字体（现在仍是 .notdef 方块）、
   模块安装/激活在 Band 9 上的实测。这些是下一轮的内容。
+
+### 第十八轮：字体与体积的两个未决项
+
+- **CJK 仍是方块**：n66 上 `lvx_font_create("MiSans-Regular", 14, 0)`（以及 18）确实被调用并
+  成功返回，`lv_obj_set_local_style_prop(obj, 90, font, 0)` 也带着有效的 font 指针执行了
+  （gdb 断点实测），但中文仍是 .notdef 方块；换成未知家族名（`lvx_font_create` 回落
+  `LV_FONT_DEFAULT`）也一样。说明这台固件的 MiSans-Regular 链和默认字体都只有拉丁字形，
+  中文要走主题里另一套字体对象。stock 的中文标签用的是哪个字体对象，还没追出来。
+- **回滚了**一个未验证的 `-DCANOPUS_MGR_FONT_INHERIT` 开关（让标签继承页面容器的字体）：
+  它的 113,624 B 构建在 stage2 读 ELF 时稳定失败，没拿到证据，代码已撤销。
+- **Supervisor 体积敏感**：113,932 B 稳定可加载，113,624 B 会在 stage2 `read` 时失败
+  （`cannot read staged Supervisor ELF`，文件本身校验一致）。Kmem 里 ELF 输入缓冲只有
+  一百多 KB，分配位置随体积变化，落点接近堆尾时读越界；这条限制也解释了早期“改小几百字节
+  就换一种崩溃”的现象。后续要么给 ELF 输入加显式的容量检查，要么让 stage2 用更小的
+  分块读取，避免整文件常驻 Kmem。
