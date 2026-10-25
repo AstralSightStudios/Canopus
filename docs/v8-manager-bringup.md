@@ -284,3 +284,15 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
   之前那条 `exec` UsageFault 把真正的页创建崩溃挡住了。下一步直接按这条 backtrace
   对模块的链接图定位（模块运行时基址 + 偏移即可映射回 `canopus_manager_target_lvgl_v8.c`
   的哪个函数），重点仍是 `lv_label_create` / 字体属性那条路径。
+
+- **faulting PC 精确对上 profile 里的 `exec_handler`**：`bootstrap.toml` 的
+  `exec_handler = 0x0C1C9528`，而崩溃 PC 是 `0x0c1c956e`＝`exec_handler + 0x45 + 1`。
+  安装器的 stage-0 探针（`main.lua` 里的 `call_mailbox`）把 `profile.exec_handler + 0x45`
+  当作第三个字面量，探针 `bx r2` 直接跳到这里；在 3.1.32 上这个地址落在
+  `sub_C1C9528` 的 `BLX R5` 之后的 `B loc_C1C955A`（0xc1c956c），也就是**函数体中间**，
+  跳进去会执行到 `MOV SP,R7; POP {R4-R7,PC}`，弹出伪造的返回地址 → 未对齐访问 panic。
+  3.1.190 的同一地址此前已被判定「不是指令边界」，3.1.32 这里是同类问题。
+  这和「体积降到 113916 B 后 stage-0 fault 消失」并不矛盾：探针结果是否触发 panic
+  取决于弹栈内容，体积变化改变了栈布局。
+- 因此 n66/n67 首先要修的不是 Manager，而是 stage-0 trampoline 的返回方式：
+  探针应 `bx lr` 返回（或用 `exec_handler` 本体），不要跳进 `+0x45` 的尾部。
