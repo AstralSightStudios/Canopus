@@ -629,7 +629,11 @@ static void target_dispatch_row(uint32_t row_index, void *event)
         if (manager_pending_inline_detail != 0u) {
             manager_pending_inline_detail = 0u;
             (void)canopus_manager_native_render(&context->native);
-            manager_swallow_click = 1u;
+            /* One short press delivers SHORT_CLICKED and CLICKED, and the
+             * release can still land on the row the render just rebound; a
+             * third click is the confirmation that row opened. Swallow the
+             * lot so the gesture that opened the view changes nothing. */
+            manager_swallow_click = 3u;
         }
 #endif
         if (rc == CANOPUS_UI_ERR_DISABLED) {
