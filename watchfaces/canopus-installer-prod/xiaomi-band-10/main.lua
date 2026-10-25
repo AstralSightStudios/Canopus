@@ -26,7 +26,6 @@ local CPC2_ABI_MAJOR = 2
 local CMD_QUERY_DEVICE = 9
 local CMD_INSTALL = 13
 local CMD_RESTORE_AFTER_BOOT = 14
-local CMD_OPEN_MANAGER = 29
 local RESULT_COMPLETED = 5
 local request_id = 0
 local STAGE0_ENTRY_MARKER = 0xA5A5A5A5
@@ -748,8 +747,6 @@ local steps = {
       progress = "Registering module apps..." },
     { command = CMD_INSTALL, arg0 = 2,
       progress = "Updating application list..." },
-    { command = CMD_OPEN_MANAGER, arg0 = 0,
-      progress = "Opening Manager..." },
 }
 
 local function set_status(text, color)
