@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.exact.lvx_font_create",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "lvx_font_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc355d68",
+  "prototype": "void *(const char *, int16_t, int16_t)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-1028-V8-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-STATIC-1028-V8-002"
+    ],
+    "source": "Exact xiaomi-band-10-3.1.28 image: the body logs lvx_font_create_core / lvx_font_create and reads the font-family table at *(0x200a25d4)+28."
+  },
+  "approval_state": "PENDING",
+  "notes": "ext/lvx_font_manager.c font lookup by family name, size and weight; falls back to LV_FONT_DEFAULT when the family is unknown. Recovered from the exact image for the v8 Manager text; not device probed.",
+  "callable_address": "0xc355d69"
+}

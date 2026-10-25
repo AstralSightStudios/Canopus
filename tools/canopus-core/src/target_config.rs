@@ -253,6 +253,22 @@ const FW_10: &[Mapping] = &[
     },
 ];
 
+/// LVGL v8 text font. Optional: only the 3.1.28 image has both records
+/// recovered, and the v8 Manager backend guards on the macro, so a target
+/// without them still builds a complete Supervisor.
+const V8_TEXT_FONT: &[Mapping] = &[
+    Mapping {
+        macro_name: "FW_LVX_FONT_CREATE",
+        symbol_name: "lvx_font_create",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_LV_OBJECT_SET_TEXT_FONT",
+        symbol_name: "lv_obj_set_text_font",
+        address: Address::Callable,
+    },
+];
+
 const FW_9: &[Mapping] = &[
     Mapping {
         macro_name: "FW_VERSION_ADDRESS",
@@ -801,6 +817,7 @@ impl<'a> TargetConfigGen<'a> {
         if complete {
             self.emit(&mut out, if custom { FW_9 } else { FW_10 }, false);
             self.emit(&mut out, FW_UI_INPUT, false);
+            self.emit(&mut out, V8_TEXT_FONT, false);
             if self.pack.target_id == "xiaomi-band-10-pro-3.101.043" {
                 // Exact private image ABI: EVID-UI-1043-IMAGE-FIT-001.
                 self.emit(&mut out, FW_UI_IMAGE_FIT, false);

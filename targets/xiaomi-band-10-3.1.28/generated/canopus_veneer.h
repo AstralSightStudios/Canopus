@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: 7283666555a1d713
+ * input_digest: 1881ae595ad3b125
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -146,6 +146,11 @@ static inline int canopus_fw_mpu_region_configure(uint32_t a0, uint32_t a1, uint
     return ((canopus_fw_mpu_region_configure_fn)(uintptr_t)0xc559111)(a0, a1, a2, a3, a4);
 }
 
+typedef void * (*canopus_fw_lvx_font_create_fn)(const char *, int16_t, int16_t);
+static inline void * canopus_fw_lvx_font_create(const char * a0, int16_t a1, int16_t a2) {
+    return ((canopus_fw_lvx_font_create_fn)(uintptr_t)0xc355d69)(a0, a1, a2);
+}
+
 typedef void (*canopus_fw_lv_obj_clear_flag_fn)(void *, uint32_t);
 static inline void canopus_fw_lv_obj_clear_flag(void * a0, uint32_t a1) {
     return ((canopus_fw_lv_obj_clear_flag_fn)(uintptr_t)0xc2bb8b3)(a0, a1);
@@ -229,6 +234,11 @@ static inline void canopus_fw_lv_label_set_text(void * a0, const char * a1) {
 typedef int (*canopus_fw_lvx_style_apply_fn)(void *, const void *, uint32_t, uint32_t);
 static inline int canopus_fw_lvx_style_apply(void * a0, const void * a1, uint32_t a2, uint32_t a3) {
     return ((canopus_fw_lvx_style_apply_fn)(uintptr_t)0xc288965)(a0, a1, a2, a3);
+}
+
+typedef int32_t (*canopus_fw_lv_obj_set_text_font_fn)(void *, void *, uint32_t);
+static inline int32_t canopus_fw_lv_obj_set_text_font(void * a0, void * a1, uint32_t a2) {
+    return ((canopus_fw_lv_obj_set_text_font_fn)(uintptr_t)0xc2bce65)(a0, a1, a2);
 }
 
 typedef int (*canopus_fw_thirdparty_submit_message_content_fn)(const void *, uint32_t, uint32_t);

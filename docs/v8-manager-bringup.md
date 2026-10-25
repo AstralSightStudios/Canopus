@@ -1,8 +1,39 @@
 # LVGL v8 Manager bring-up (n66 / n67 / o66)
 
-状态：**未完成**。o66 上 Supervisor 全链路跑通、Manager 已注册，但 Manager 页面
-打不开；n66/n67 走同一条 v8 后端，结论相同。所有内容仅为 emulator/static 证据，
-没有任何真机验证，能力状态不变（restricted / PENDING / not_probed）。
+状态：**o66 上 Manager 页面已能打开并正常绘制**（2026-10-25，仅 Mirage/emulator
+证据）。页面经由固件自己的 `page_goto` 压栈，中文标题、分节、状态行（标题 + 右对齐
+值）都画出来了。n66/n67 走同一条 v8 后端，但尚未在设备上跑到这一步；所有内容仍是
+emulator/static 证据，没有任何真机验证，能力状态不变（restricted / PENDING /
+not_probed）。
+
+### 让它画出来的三个条件（2026-10-25）
+
+1. **能力位必须声明。** `canopus_ui_navigation_page` 在 backend 没有
+   `CANOPUS_UI_CAP_NAVIGATION_HEADER` 时直接返回 `CANOPUS_UI_ERR_UNSUPPORTED`，
+   `canopus_ui_tree_commit` 把它原样传回，`canopus_manager_native_init` 于是失败，
+   页面的 `on_create` 返回 -1，固件立刻把页面拆掉——现象就是「页面一打开就弹回表盘」。
+   v8 后端现在只声明它真的实现了的 `CANOPUS_UI_CAP_NAVIGATION_HEADER`（
+   `lvx_page_title_create` 就是它的页头）。
+2. **共享渲染器按能力协商。** `canopus_manager_native.c` 里新增 `native_supports()`：
+   没有 `CAP_STYLE` 就不设置标题样式、确认框的文字用 BODY 而不是 DESCRIPTION；没有
+   `CAP_EXTENDED_COMPONENTS` 就把确认框画成普通分节而不是 DIALOG。v9 后端声明全部
+   能力，行为不变（host 测试全绿）。
+3. **中文要显式设字体。** 新建 screen 上的 label 不继承主题字体，直接显示 .notdef
+   方块。`lvx_font_create("MiSans-Regular", size, 0)`（o66 `0xc355d68`）建一次字体，
+   再用 `lv_obj_set_text_font`（`0xc2bce64`，即 local style prop 90）逐 label 应用；
+   `EVID-STATIC-1028-V8-002` 记录了两个地址的证据（stock 的 `alarm_after10min_prompt`
+   就是这么拿正文标题字体的）。
+
+顺带修掉一个潜伏 bug：`target_set_hidden` 原来用 `0x10`，那是 LVGL v8 的
+`SCROLLABLE`，`HIDDEN` 是 `0x01`——之前「隐藏」的行其实只是变成了可滚动。
+
+### 版面约束（三块屏尺寸不同）
+
+n66 192×490、n67 336×480、o66 212×520；`scripts/build_canopus_supervisor.sh` 按
+target 传 `-DCANOPUS_MGR_SCREEN_WIDTH`。行高 34、行距 2、标题 18 px、值 14 px，
+右对齐的值按宽度截断（UTF-8 安全），这样一屏 11 行（系统信息 8 行 + 管理 3 行）能
+全部显示。**没有滚动**：行数再多的页面（模块很多时的列表）会超出一屏，需要另找
+v8 的滚动入口。
 
 ## 已核对的事实（精确 IDB + 固件日志）
 

@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.exact.lv_obj_set_text_font",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "lv_obj_set_text_font",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc2bce64",
+  "prototype": "int32_t(void *, void *, uint32_t)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-1028-V8-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-STATIC-1028-V8-002"
+    ],
+    "source": "Exact xiaomi-band-10-3.1.28 image: three instructions that forward (obj, value, selector) to the local-style setter with property 90."
+  },
+  "approval_state": "PENDING",
+  "notes": "LVGL v8 text-font property setter: lv_obj_set_local_style_prop(obj, 90, font, selector). The alarm prompt (0xc235580) does lv_label_create, reads property 90 off the global font-holder 0x200a25fc, applies it with this entry, then sets the label text, which is the stock body-text font path. Used by lvx_page_title_create too. Not device probed.",
+  "callable_address": "0xc2bce65"
+}

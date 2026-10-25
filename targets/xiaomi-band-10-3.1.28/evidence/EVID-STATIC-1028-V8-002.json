@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-1028-V8-002",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "How does stock 3.1.28 code put a CJK-capable font on an LVGL v8 label?",
+  "candidate_symbols": [
+    "lvx_font_create",
+    "lv_obj_set_text_font"
+  ],
+  "prototype_hypothesis": "Labels drawn by stock pages get their font from a local style property 90 that is copied off a global font-holder object; the font itself comes from lvx_font_create(family, size, weight).",
+  "callsite_evidence": [
+    "alarm_after10min_prompt (0xc235580) creates a label (0xc347b8c), reads property 90 off the global 0x200a25fc (0xc384e6c), applies it to the label (0xc2bce64), then sets the text (0xc34db6c). German text re-reads property 90 off 0x200a2c1c instead, so the holders are per-role fonts.",
+    "0xc2bce64 is three instructions: sub_C2BC984(obj, 90, value, selector). 0xc2bc984 is the generic local-style setter of lv_obj_style.c (its assert string names get_local_style and lv_obj_style.c).",
+    "lvx_page_title_create (0xc4f9364) reads property 90 off 0x200a4304 and applies it to its own title label, the same pattern.",
+    "0xc355d68 logs lvx_font_create_core / lvx_font_create from ext/lvx_font_manager.c and walks the font-family table at *(0x200a25d4)+28 by (name, size, weight); unknown families fall back to LV_FONT_DEFAULT.",
+    "The Manager page built with the default font renders CJK labels as .notdef boxes on Mirage o66."
+  ],
+  "control_flow_evidence": [
+    "lvx_font_create(name, size, weight) -> family table lookup -> lv_font_t*.",
+    "lv_obj_set_text_font(label, font, 0) -> lv_obj_set_local_style_prop(label, 90, font, 0)."
+  ],
+  "ownership_analysis": "No ownership claimed. The created font is owned by the firmware font manager; the Manager only reads it.",
+  "unsafe_assumptions": [
+    "The family name MiSans-Regular is the one stock code uses for body text (it is the fallback name in the font manager and in the watchface text parser).",
+    "Font sizes are not recovered per role; the Manager picks a size and the result is checked on screen.",
+    "Static evidence only; no device run has exercised these two entries yet."
+  ],
+  "recommended_probe": "Rebuild the o66 Supervisor, open the Manager page on Mirage and confirm the Chinese labels render instead of boxes.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

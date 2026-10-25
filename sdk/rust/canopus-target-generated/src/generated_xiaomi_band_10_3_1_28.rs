@@ -4,7 +4,7 @@
 // firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
 // sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
 // revision : 1
-// input_digest: 7283666555a1d713
+// input_digest: 1881ae595ad3b125
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -132,6 +132,9 @@ pub const CANOPUS_FW_LV_OBJ_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc2
 /// Recovered `mpu_region_configure` at 0xc559110. Thumb callable address 0xc559111.
 pub const CANOPUS_FW_MPU_REGION_CONFIGURE_CALLABLE: usize = canopus_thumb_callable(0xc559111usize);
 
+/// Recovered `lvx_font_create` at 0xc355d68. Thumb callable address 0xc355d69.
+pub const CANOPUS_FW_LVX_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc355d69usize);
+
 /// Recovered `lv_obj_clear_flag` at 0xc2bb8b2. Thumb callable address 0xc2bb8b3.
 pub const CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc2bb8b3usize);
 
@@ -185,6 +188,9 @@ pub const CANOPUS_FW_LV_LABEL_SET_TEXT_CALLABLE: usize = canopus_thumb_callable(
 
 /// Recovered `lvx_style_apply` at 0xc288964. Thumb callable address 0xc288965.
 pub const CANOPUS_FW_LVX_STYLE_APPLY_CALLABLE: usize = canopus_thumb_callable(0xc288965usize);
+
+/// Recovered `lv_obj_set_text_font` at 0xc2bce64. Thumb callable address 0xc2bce65.
+pub const CANOPUS_FW_LV_OBJ_SET_TEXT_FONT_CALLABLE: usize = canopus_thumb_callable(0xc2bce65usize);
 
 /// Recovered `thirdparty_submit_message_content` at 0xc54c538. Thumb callable address 0xc54c539.
 pub const CANOPUS_FW_THIRDPARTY_SUBMIT_MESSAGE_CONTENT_CALLABLE: usize = canopus_thumb_callable(0xc54c539usize);
@@ -375,8 +381,10 @@ pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_calla
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
 // lv_obj_set_size: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
+// lv_obj_set_text_font: restricted - not exported until context/ownership approved
 // lv_timer_create: restricted - not exported until context/ownership approved
 // lv_timer_del: restricted - not exported until context/ownership approved
+// lvx_font_create: restricted - not exported until context/ownership approved
 // lvx_image_set_scale: restricted - not exported until context/ownership approved
 // lvx_label_create: restricted - not exported until context/ownership approved
 // lvx_label_set_text: restricted - not exported until context/ownership approved

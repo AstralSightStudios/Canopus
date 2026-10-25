@@ -40,11 +40,27 @@
 #define CANOPUS_TARGET_TRAILING_SWITCH 1u
 #define CANOPUS_TARGET_TRAILING_FORWARD 12u
 #define CANOPUS_TARGET_ALIGN_TOP_MID 2u
+#define CANOPUS_TARGET_ALIGN_LEFT_MID 7u
+#define CANOPUS_TARGET_ALIGN_RIGHT_MID 8u
 #define CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID 14u
+#ifndef CANOPUS_TARGET_FONT_FAMILY
+#define CANOPUS_TARGET_FONT_FAMILY "MiSans-Regular"
+#endif
+#ifndef CANOPUS_TARGET_FONT_SIZE
+#define CANOPUS_TARGET_FONT_SIZE 18
+#endif
+#ifndef CANOPUS_TARGET_FONT_VALUE_SIZE
+#define CANOPUS_TARGET_FONT_VALUE_SIZE 14
+#endif
+/* The three v8 panels differ (192x490, 336x480, 212x520); rows are laid out
+ * against the real panel width so a right-aligned value stays on screen. */
+#ifndef CANOPUS_MGR_SCREEN_WIDTH
+#define CANOPUS_MGR_SCREEN_WIDTH 336
+#endif
 #define CANOPUS_TARGET_CONTENT_TOP_OFFSET 56
-#define CANOPUS_TARGET_CONTENT_WIDTH 336
+#define CANOPUS_TARGET_CONTENT_WIDTH CANOPUS_MGR_SCREEN_WIDTH
 #define CANOPUS_TARGET_CONTENT_HEIGHT 424
-#define CANOPUS_TARGET_ROW_GAP 8
+#define CANOPUS_TARGET_ROW_GAP 2
 #define CANOPUS_TARGET_EVENT_ALL 0u
 #define CANOPUS_TARGET_EVENT_CLICKED 7u
 #define CANOPUS_TARGET_EVENT_VALUE_CHANGED 30u
@@ -183,6 +199,7 @@ struct canopus_target_ui_backend {
     void *content_root;
     void *rows[CANOPUS_TARGET_UI_MAX_ROWS];
     void *row_labels[CANOPUS_TARGET_UI_MAX_ROWS];
+    void *row_values[CANOPUS_TARGET_UI_MAX_ROWS];
     void *labels[CANOPUS_TARGET_UI_MAX_LABELS];
     void *images[CANOPUS_TARGET_UI_MAX_IMAGES];
     void *progress[CANOPUS_TARGET_UI_MAX_PROGRESS];
@@ -647,12 +664,90 @@ static int target_find_row(struct canopus_target_ui_backend *backend,
     return reusable >= 0 ? reusable : empty;
 }
 
-static void target_set_hidden(void *object, uint32_t hidden)
+/* LVGL v8 flags: HIDDEN is bit 0, SCROLLABLE is bit 4. */
+#define CANOPUS_TARGET_FLAG_HIDDEN UINT32_C(0x01)
+
+static void target_set_flag(void *object, uint32_t flag, uint32_t on)
 {
     typedef void (*flag_fn)(void *, uint32_t);
-    flag_fn set_flag = (flag_fn)(uintptr_t)(hidden != 0u
+    flag_fn set_flag = (flag_fn)(uintptr_t)(on != 0u
         ? FW_LV_OBJECT_ADD_FLAG : FW_LV_OBJECT_CLEAR_FLAG);
-    if (object != NULL) set_flag(object, UINT32_C(0x10));
+    if (object != NULL) set_flag(object, flag);
+}
+
+static void target_set_hidden(void *object, uint32_t hidden)
+{
+    target_set_flag(object, CANOPUS_TARGET_FLAG_HIDDEN, hidden);
+}
+
+/* Objects made on a fresh screen do not inherit the theme's text font, so a
+ * Chinese label renders as .notdef boxes. Stock pages read the font off a
+ * global holder; here the same family is created once and applied per label. */
+#define CANOPUS_LABEL_BODY 0u
+#define CANOPUS_LABEL_VALUE 1u
+
+#define CANOPUS_TARGET_ROW_TEXT_MAX 13u
+
+struct row_text {
+    char data[CANOPUS_TARGET_ROW_TEXT_MAX];
+    uint32_t used;
+};
+
+static void row_text_begin(struct row_text *text)
+{
+    text->used = 0u;
+    text->data[0] = '\0';
+}
+
+static void row_text_append(struct row_text *text, const char *value,
+                            uint32_t len)
+{
+    uint32_t i = 0u;
+    while (i < len && text->used + 1u < sizeof(text->data)) {
+        text->data[text->used++] = value[i++];
+    }
+    /* A cut must not leave half a UTF-8 sequence: the font engine would read it
+     * as one more glyph. */
+    if (i < len) {
+        while (text->used != 0u &&
+               ((unsigned char)text->data[text->used - 1u] & 0xC0u) == 0x80u) {
+            text->used--;
+        }
+        if (text->used != 0u &&
+            ((unsigned char)text->data[text->used - 1u] & 0xC0u) == 0xC0u) {
+            text->used--;
+        }
+    }
+    text->data[text->used] = '\0';
+}
+
+
+static void *manager_label_create(void *parent, uint32_t role)
+{
+    void *label = ((void *(*)(void *))(uintptr_t)FW_LV_LABEL_CREATE)(parent);
+    if (label == NULL) {
+        return NULL;
+    }
+#if defined(FW_LVX_FONT_CREATE)
+    {
+        static void *fonts[2];
+        int16_t size = role == CANOPUS_LABEL_VALUE
+                           ? CANOPUS_TARGET_FONT_VALUE_SIZE
+                           : CANOPUS_TARGET_FONT_SIZE;
+        if (fonts[role] == NULL) {
+            fonts[role] = ((void *(*)(const char *, int16_t, int16_t))(uintptr_t)
+                               FW_LVX_FONT_CREATE)(CANOPUS_TARGET_FONT_FAMILY,
+                                                   size, 0);
+        }
+        if (fonts[role] != NULL) {
+            (void)((int32_t (*)(void *, void *, uint32_t))(uintptr_t)
+                       FW_LV_OBJECT_SET_TEXT_FONT)(label, fonts[role], 0u);
+        }
+    }
+#else
+    (void)role;
+#endif
+    return label;
 }
 
 static int32_t target_ui_apply(
@@ -660,7 +755,6 @@ static int32_t target_ui_apply(
 {
     /* v8 forwards its second argument (0 here) to lv_obj_class_init_obj. */
     typedef void *(*object_create_fn)(void *, void *);
-    typedef void *(*create_label_fn)(void *);
     typedef void (*set_label_text_fn)(void *, const char *);
     typedef void *(*create_page_title_fn)(void *, const char *, uint32_t,
                                           void (*)(void *));
@@ -676,8 +770,6 @@ static int32_t target_ui_apply(
         (struct canopus_target_ui_backend *)cookie;
     object_create_fn object_create =
         (object_create_fn)(uintptr_t)FW_LV_OBJECT_CREATE;
-    create_label_fn create_label =
-        (create_label_fn)(uintptr_t)FW_LV_LABEL_CREATE;
     set_label_text_fn set_label_text =
         (set_label_text_fn)(uintptr_t)FW_LV_LABEL_SET_TEXT;
     create_page_title_fn create_page_title =
@@ -705,6 +797,7 @@ static int32_t target_ui_apply(
     uint32_t progress_used = 0u;
     void *previous = NULL;
     void *first = NULL;
+    struct row_text row_text;
 
     if (backend == NULL || backend->root == NULL || snapshot == NULL ||
         snapshot->node_count == 0u ||
@@ -716,13 +809,13 @@ static int32_t target_ui_apply(
     }
     for (i = 0; i < snapshot->node_count; i++) {
         uint16_t type = snapshot->nodes[i].type;
-        if (type == CANOPUS_UI_NODE_SECTION) {
-            continue;
-        }
         if (type == CANOPUS_UI_NODE_NAVIGATION_PAGE) {
             continue;
         }
-        if (type == CANOPUS_UI_NODE_TEXT) {
+        /* A section is only a grouping container in the semantic tree; this
+         * firmware has no recovered section widget, so its title is drawn as
+         * an ordinary label. */
+        if (type == CANOPUS_UI_NODE_SECTION || type == CANOPUS_UI_NODE_TEXT) {
             visible_labels++;
             continue;
         }
@@ -757,9 +850,6 @@ static int32_t target_ui_apply(
         void *object;
         int32_t gap = CANOPUS_TARGET_ROW_GAP;
 
-        if (node->type == CANOPUS_UI_NODE_SECTION) {
-            continue;
-        }
         primary = snapshot->strings + node->primary_off;
         if (node->type == CANOPUS_UI_NODE_NAVIGATION_PAGE) {
             uint32_t title_mode = backend->page_index ==
@@ -781,10 +871,11 @@ static int32_t target_ui_apply(
             first = backend->page_title;
             continue;
         }
-        if (node->type == CANOPUS_UI_NODE_TEXT) {
+        if (node->type == CANOPUS_UI_NODE_TEXT ||
+            node->type == CANOPUS_UI_NODE_SECTION) {
             object = backend->labels[label_used];
             if (object == NULL) {
-                object = create_label(backend->content_root);
+                object = manager_label_create(backend->content_root, CANOPUS_LABEL_BODY);
                 if (object == NULL) {
                     return -1;
                 }
@@ -883,24 +974,38 @@ static int32_t target_ui_apply(
         object = backend->rows[slot];
         if (object == NULL) {
             void *label;
+            void *value;
             object = object_create(backend->content_root, 0);
             if (object == NULL) {
                 return -1;
             }
-            label = create_label(object);
-            if (label == NULL) {
+            label = manager_label_create(object, CANOPUS_LABEL_BODY);
+            value = manager_label_create(object, CANOPUS_LABEL_VALUE);
+            if (label == NULL || value == NULL) {
                 return -1;
             }
-            set_size(object, CANOPUS_TARGET_CONTENT_WIDTH, 56);
-            align_to(label, object, 9u, 0, 0);
+            set_size(object, CANOPUS_TARGET_CONTENT_WIDTH, 34);
             add_event(object, target_row_events[slot],
                       CANOPUS_TARGET_EVENT_CLICKED, NULL);
             backend->rows[slot] = object;
             backend->row_labels[slot] = label;
+            backend->row_values[slot] = value;
             backend->row_kinds[slot] = kind;
             backend->row_count++;
         }
+        /* Stock row: title left, value right. The panel is 192-212 px wide, so
+         * the value is capped to the characters that fit beside the title
+         * instead of running over it. Alignment follows the text because a
+         * label only knows its size once it holds text. */
         set_label_text(backend->row_labels[slot], primary);
+        row_text_begin(&row_text);
+        row_text_append(&row_text, snapshot->strings + node->secondary_off,
+                        node->secondary_len);
+        set_label_text(backend->row_values[slot], row_text.data);
+        align_to(backend->row_labels[slot], object,
+                 CANOPUS_TARGET_ALIGN_LEFT_MID, 8, 0);
+        align_to(backend->row_values[slot], object,
+                 CANOPUS_TARGET_ALIGN_RIGHT_MID, -8, 0);
         target_set_hidden(object, 0u);
         if (previous == NULL) {
             align_to(object, backend->content_root,
@@ -939,11 +1044,14 @@ static int32_t target_ui_apply(
     return 0;
 }
 
+/* Only the stock page title is implemented here: lvx_page_title_create owns the
+ * header, and no v8 style/font/colour entry is recovered, so the semantic
+ * styles and the message-box component stay undeclared. */
 static const struct canopus_ui_backend_v1 target_ui_backend_api = {
     sizeof(struct canopus_ui_backend_v1),
     CANOPUS_UI_ABI_MAJOR,
     CANOPUS_UI_ABI_MINOR,
-    0u,
+    CANOPUS_UI_CAP_NAVIGATION_HEADER,
     target_ui_apply,
     0,
 };
@@ -1100,6 +1208,17 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         }
     }
     canopus_manager_target_record.create_count += 1u;
+    if (root == NULL) {
+        /* This firmware calls on_create without a page root; create a
+         * top-level container on the active screen instead. */
+        typedef void *(*object_create_fn)(void *, void *);
+        object_create_fn object_create =
+            (object_create_fn)(uintptr_t)FW_LV_OBJECT_CREATE;
+        root = object_create(NULL, 0);
+        if (root == NULL) {
+            return -1;
+        }
+    }
     canopus_manager_target_record.root_object = (uintptr_t)root;
     canopus_memset(&context->backend, 0, sizeof(context->backend));
     context->backend.root = root;

@@ -74,8 +74,12 @@ TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
 # and 3.1.190: the latter's launcher_load_app_info reads the metadata callback
 # at +0x1c. Select the 3.1.190 layout for targets whose IDB proved it.
 case "$TARGET_ID" in
-    xiaomi-band-9-pro-3.1.190) TARGET_FLAGS="$TARGET_FLAGS -DCANOPUS_MGR_APPINFO_190" ;;
-    xiaomi-band-10-3.1.28) TARGET_FLAGS="$TARGET_FLAGS -DCANOPUS_MGR_APPINFO_1028" ;;
+    xiaomi-band-9-pro-3.1.190)
+        TARGET_FLAGS="$TARGET_FLAGS -DCANOPUS_MGR_APPINFO_190 -DCANOPUS_MGR_SCREEN_WIDTH=336" ;;
+    xiaomi-band-10-3.1.28)
+        TARGET_FLAGS="$TARGET_FLAGS -DCANOPUS_MGR_APPINFO_1028 -DCANOPUS_MGR_SCREEN_WIDTH=212" ;;
+    xiaomi-band-9-3.1.32)
+        TARGET_FLAGS="$TARGET_FLAGS -DCANOPUS_MGR_SCREEN_WIDTH=192" ;;
 esac
 
 INC="-I$OUT -I$ROOT/sdk/c -I$ROOT/runtime/lifecycle -I$ROOT/runtime/resources \
