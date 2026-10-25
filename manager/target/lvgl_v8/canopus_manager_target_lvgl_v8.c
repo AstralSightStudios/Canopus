@@ -216,7 +216,6 @@ struct canopus_target_ui_backend {
     uint32_t label_count;
     uint32_t rendered_generation;
     uint8_t page_index;
-    uint8_t own_root;
 };
 
 struct canopus_target_page_context {
@@ -931,23 +930,8 @@ static int32_t target_ui_apply(
 
             if (backend->page_title == NULL) {
                 diag_mark('T', '0');
-                if (backend->own_root) {
-                    backend->page_title = create_page_title(
-                        backend->root, primary, title_mode, NULL);
-                } else {
-                    /* lvx_page_title_create does not survive on the page
-                     * manager's own container (3.1.32), so the title is a plain
-                     * label there. */
-                    backend->page_title = manager_label_create(
-                        backend->root, CANOPUS_LABEL_BODY);
-                    if (backend->page_title != NULL) {
-                        set_label_text(backend->page_title, primary);
-                        set_size(backend->page_title,
-                                 CANOPUS_TARGET_CONTENT_WIDTH, 24);
-                        align_to(backend->page_title, backend->root,
-                                 CANOPUS_TARGET_ALIGN_TOP_MID, 0, 4);
-                    }
-                }
+                backend->page_title = create_page_title(
+                    backend->root, primary, title_mode, NULL);
                 if (backend->page_title == NULL) {
                     return -1;
                 }
@@ -1400,22 +1384,19 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
     }
     canopus_manager_target_record.create_count += 1u;
     {
-        /* The firmware's own page container is what gets displayed, so rows go
-         * there when it is given. lvx_page_title_create on that container does
-         * not survive on 3.1.32 (the page dies inside it), so a container root
-         * renders its title as a plain label instead. */
+        /* Always own the root. lvx_page_title_create on the page manager's own
+         * container never returns on 3.1.32, and a screen of our own carries the
+         * stock title and the rows on every v8 firmware. */
         typedef void *(*object_create_fn)(void *, void *);
         object_create_fn object_create =
             (object_create_fn)(uintptr_t)FW_LV_OBJECT_CREATE;
+        (void)root;
+        root = object_create(NULL, 0);
         if (root == NULL) {
-            root = object_create(NULL, 0);
-            if (root == NULL) {
-                diag_mark('r', '0');
-                return -1;
-            }
-            diag_mark('r', '1');
-            context->backend.own_root = 1u;
+            diag_mark('r', '0');
+            return -1;
         }
+        diag_mark('r', '1');
     }
     canopus_manager_target_record.root_object = (uintptr_t)root;
     canopus_memset(&context->backend, 0, sizeof(context->backend));
