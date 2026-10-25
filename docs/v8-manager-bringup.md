@@ -451,3 +451,14 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   stage0→Supervisor→CPC2 六步后框架 `on_ui_create` 建出 `{202, 0}` 的 view 并**画出了
   Manager 概览**（标题 Canopus、8 行系统信息、管理分节三行，截图帧在 Run 后 1 秒），
   整机不再复位；CJK 仍是 .notdef 方块（n66 的字体应用待查）。
+
+### 第十七轮：n67 也跑完整条安装链路
+
+- 3.1.190 走同一套修复（`-DCANOPUS_MGR_PAGE_ROOT_SLOT=0x2c` + 写 cave 前释放 stage-0 region）：
+  在活动目录 `/app/watchface/market/366240001` 部署新产物后按 Run，105 秒左右
+  `Run completed`，`/data/canopus/registry.bin` = `CDR1`，日志里 `on_ui_create` 建出
+  `{202, 0}` 的 view、随后 `on_ui_destroy: delete view …:{202, 0}` 正常销毁，**无 panic**。
+- 操作注意：n67 的 Run 要把 UI 线程卡住近两分钟（`run()` 逐条 `mw`），期间面板会息屏，
+  不能据此判断失败；等 `Run completed` 出现再截图。
+- 仍未做：n66/n67 上让 Manager 页停在屏幕上、行点击、CJK 字体（现在仍是 .notdef 方块）、
+  模块安装/激活在 Band 9 上的实测。这些是下一轮的内容。
