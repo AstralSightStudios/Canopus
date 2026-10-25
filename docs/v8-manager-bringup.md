@@ -42,6 +42,26 @@ not_probed）。
   整机复位）。现在路由只记录目标页，由 `lv_timer_create(cb, 1, NULL)` 在下一拍
   `page_goto`/`page_finish`，回调返回时不再碰页面上下文。
 
+
+### 2026-10-25 第三轮：n66/n67 的 page_goto、点击与打点
+
+- **n66/n67 的 page_goto 记录都是错的**：3.1.32 指向 `lvx_pagemanager_prelaunch_check`
+  （`0xc45b588`），3.1.190 同样的函数（`0xc449bc4`）。真正的
+  `goto_page_no_check_stacktop` 是 3.1.32 `0xc4b456c`、3.1.190 `0xc49e274`
+  （`EVID-STATIC-9132-002` / `EVID-STATIC-9190-002`）。修正后 n66/n67 的
+  OPEN_MANAGER 不再复位设备，但页面仍未出现。
+- **Mirage 上三台 v8 的交互能力不同**：n66 的安装器表盘按钮吃触摸（Run 可用），
+  o66/n67 的表盘按钮不吃触摸；系统 UI（表盘上滑、卡片）在 o66 上吃触摸。
+- **行点击没有到达回调**：o66 的 Manager 页能创建（打点 `I0`）、能显示，但 3 次点击
+  「模块/安装软件包」都没有触发 `target_dispatch_row`（打点既没有 `E` 也没有 `C`），
+  即使已补 `LV_OBJ_FLAG_CLICKABLE`（该固件自身用 flag 2 让返回键可点，位值一致）。
+  怀疑点：这个固件的输入由自带的 input manager 分发，只认它自己的 `lvx_*` 控件（股票
+  页面都用 `lvx_list_item`/`lvx_page_content_create`），裸 `lv_obj` 收不到点击。
+  下一步要么找到 input manager 的分发规则，要么把行改成 stock 列表控件。
+- 打点工具：`-DCANOPUS_TARGET_UI_DIAG` 编译时把 2 字节标记追加到
+  `/data/canopus/diag.txt`（构造器 `ST`、页面创建 `I<页号>`、点击 `C<行>`、事件 `E<行>`
+  + 16 字节原始事件、推送 `K`/`X`）。设备上只有像 n66 那样能跑 Run 的表盘才加载
+  Supervisor，所以打点前必须先让 Supervisor 起来。
 ### 版面约束（三块屏尺寸不同）
 
 n66 192×490、n67 336×480、o66 212×520；`scripts/build_canopus_supervisor.sh` 按

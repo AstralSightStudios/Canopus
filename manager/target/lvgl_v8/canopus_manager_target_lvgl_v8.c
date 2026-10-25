@@ -463,6 +463,25 @@ static int target_refresh_model(void)
 #if defined(CANOPUS_TARGET_UI_DIAG)
 /* Bring-up only: two-byte markers appended to /data/canopus/diag.txt so the
  * click/route sequence can be read back offline. Never shipped. */
+static void diag_dump(const void *data, uint32_t len)
+{
+    typedef int (*open_fn)(const char *, int, ...);
+    typedef int (*write_fn)(int, const void *, uint32_t);
+    typedef int (*close_fn)(int);
+    int fd;
+
+    if (data == 0 || len > 32u) {
+        return;
+    }
+    fd = ((open_fn)(uintptr_t)FW_NUTTX_OPEN)("/data/canopus/diag.txt", 2 | 4,
+                                             0666);
+    if (fd < 0) {
+        return;
+    }
+    (void)((write_fn)(uintptr_t)FW_NUTTX_WRITE)(fd, data, len);
+    (void)((close_fn)(uintptr_t)FW_NUTTX_CLOSE)(fd);
+}
+
 static void diag_mark(char a, char b)
 {
     typedef int (*open_fn)(const char *, int, ...);
@@ -491,6 +510,8 @@ static void target_dispatch_row(uint32_t row_index, void *event)
     uint32_t code;
 
     if (event == NULL || row_index >= CANOPUS_TARGET_UI_MAX_ROWS) return;
+    diag_mark('E', (char)('0' + (row_index % 10u)));
+    diag_dump(event, 16u);
     code = *(const uint32_t *)((const uint8_t *)event + 8u);
     for (page_index = 0; page_index < CANOPUS_TARGET_PAGE_COUNT; page_index++) {
         struct canopus_target_page_context *context = &manager_pages[page_index];
@@ -1183,7 +1204,7 @@ static int32_t target_refresh(void *cookie)
 /* Routes a semantic view change to the real firmware page stack. Forward
  * routes push the target page through the stock page_goto transition; backward
  * routes finish the source page so the paused page below it resumes. */
-#if defined(FW_LV_TIMER_CREATE) && defined(FW_LV_TIMER_DEL)
+#if defined(CANOPUS_MGR_DEFER_ROUTES) && defined(FW_LV_TIMER_CREATE) && defined(FW_LV_TIMER_DEL)
 /* The push runs one LVGL timer tick later, not inside the click callback:
  * page_goto runs the page transition synchronously and the transition tears the
  * source page down, so returning into the input dispatch afterwards touched a
@@ -1237,9 +1258,9 @@ static int target_route_schedule(uint32_t key, uint32_t detail,
 }
 
 #else
-/* This target has no timer pair: push inline (the source page is only torn down
- * after the transition, which is the call order that must be validated per
- * firmware). */
+/* Only the 3.1.28 target has verified lv_timer_create/lv_timer_del entries, so
+ * only it defers the push. The other v8 targets push inline, which is safe for
+ * OPEN_MANAGER (no source page) but must be checked per firmware for routes. */
 static int target_route_schedule(uint32_t key, uint32_t detail,
                                  uint32_t finish)
 {
@@ -1472,6 +1493,7 @@ static void __attribute__((constructor, used)) canopus_manager_target_init(void)
     canopus_manager_target_record.magic = CANOPUS_MANAGER_TARGET_MAGIC;
     canopus_manager_target_record.build_id = CANOPUS_MANAGER_TARGET_BUILD_ID;
     canopus_manager_target_record.identity_result = identity_guard();
+    diag_mark('S', 'T');
 }
 
 static void target_descriptor_init(uint32_t page_index, const char *name,
@@ -1588,7 +1610,12 @@ int canopus_manager_native_notify(const char *source, const char *title,
 
 int canopus_manager_native_open(void)
 {
+    typedef int32_t (*page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+    page_goto_fn page_goto = (page_goto_fn)(uintptr_t)FW_ACTIVITY_NAVIGATE;
+
     if (canopus_manager_target_record.identity_result != 0) return -1;
-    return target_route_schedule(target_page_key(CANOPUS_TARGET_PAGE_OVERVIEW),
-                                 0u, CANOPUS_TARGET_PAGE_COUNT) == 0 ? 0 : -1;
+    /* Opening the Manager has no source page of our own, so the push is safe to
+     * run inline; only row routes have to wait for the next tick. */
+    return page_goto(target_page_key(CANOPUS_TARGET_PAGE_OVERVIEW), 0u, 0u, 0u) < 0
+               ? -1 : 0;
 }
