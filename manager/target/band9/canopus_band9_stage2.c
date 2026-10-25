@@ -192,6 +192,7 @@ int canopus_band9_stage2_entry(int ignored)
     typedef int (*close_fn)(int);
     typedef int32_t (*read_fn)(int, void *, uint32_t);
     typedef void *(*malloc_fn)(uint32_t);
+    typedef void *(*memalign_fn)(uint32_t, uint32_t);
     typedef void (*free_fn)(void *);
     struct stage2_state state;
     struct canopus_elf_module module;
@@ -211,20 +212,24 @@ int canopus_band9_stage2_entry(int ignored)
         CANOPUS_BAND9_CTOR_SENTINEL;
     __asm__ volatile("dsb sy\n"
                      ::: "memory");
-    elf = ((malloc_fn)(uintptr_t)FW_KMEM_MALLOC)(
-        CANOPUS_BAND9_SUPERVISOR_SIZE);
+    /* The Supervisor input is only a file buffer, never executed: keep it in
+     * Umem. A Kmem buffer this size sits at the mercy of the internal heap's
+     * placement - builds a few hundred bytes apart flip between loading and
+     * failing the read (113,932 B loads, 113,624 B fails on 3.1.32). */
+    elf = ((memalign_fn)(uintptr_t)FW_MEMALIGN)(
+        32u, CANOPUS_BAND9_SUPERVISOR_SIZE);
     if (elf == 0) return -3;
     scratch_raw = ((malloc_fn)(uintptr_t)FW_KMEM_MALLOC)(
         CANOPUS_ELF32_SCRATCH_SIZE + 31u);
     if (scratch_raw == 0) {
-        ((free_fn)(uintptr_t)FW_KMEM_FREE)(elf);
+        ((free_fn)(uintptr_t)FW_FREE)(elf);
         return -6;
     }
     scratch = (void *)(((uintptr_t)scratch_raw + 31u) & ~((uintptr_t)31u));
     fd = ((open_fn)(uintptr_t)FW_OPEN)(SUPERVISOR_PATH, 1);
     if (fd < 0) {
         ((free_fn)(uintptr_t)FW_KMEM_FREE)(scratch_raw);
-        ((free_fn)(uintptr_t)FW_KMEM_FREE)(elf);
+        ((free_fn)(uintptr_t)FW_FREE)(elf);
         return -4;
     }
     while (used < CANOPUS_BAND9_SUPERVISOR_SIZE) {
@@ -233,7 +238,7 @@ int canopus_band9_stage2_entry(int ignored)
         if (got <= 0) {
             ((close_fn)(uintptr_t)FW_CLOSE)(fd);
             ((free_fn)(uintptr_t)FW_KMEM_FREE)(scratch_raw);
-            ((free_fn)(uintptr_t)FW_KMEM_FREE)(elf);
+            ((free_fn)(uintptr_t)FW_FREE)(elf);
             return -5;
         }
         used += (uint32_t)got;
@@ -247,7 +252,7 @@ int canopus_band9_stage2_entry(int ignored)
     rc = canopus_elf32_load(elf, CANOPUS_BAND9_SUPERVISOR_SIZE, &ops,
                             &module, scratch);
     ((free_fn)(uintptr_t)FW_KMEM_FREE)(scratch_raw);
-    ((free_fn)(uintptr_t)FW_KMEM_FREE)(elf);
+    ((free_fn)(uintptr_t)FW_FREE)(elf);
     if (rc != CANOPUS_ELF_LOAD_OK) {
         if (state.diag != 0) {
             *state.result = state.diag;
