@@ -712,3 +712,6 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   2. **状态行本身**：把「分节」与「状态行」再拆一次（只建分节 / 只建一条状态行），
      若只建分节就死，说明问题在分节或 `canopus_ui_tree_commit` 的快照容量上。
   两条都能在现有 diag 打点体系里用一次构建跑完；之后仍无结论再上 gdb stub 抓 CFSR/PC。
+- **第四次实验（把详情视图的两块栈缓冲挪成 static）**：`state[64]`、`error[48]` 改成 static 省下
+  112 字节栈，装置上仍然黑屏——单靠这点栈不够，要么溢出发生在更深处（`target_refresh_model`
+  的客户端快照链），要么根本不是栈。改动已撤回。
