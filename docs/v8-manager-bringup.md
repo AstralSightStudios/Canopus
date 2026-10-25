@@ -204,3 +204,11 @@ v8 的滚动入口。
   渲染时已经不同。
 - **n67 标题 ABI**：3.1.190 的 `lvx_page_title_create` 是五参（第五个是返回键
   event 的 user data，stock 传 0），已按 `-DCANOPUS_MGR_TITLE_USER_DATA` 调用。
+- **n66 的根因不在标题，在字体**：用 `-DCANOPUS_MGR_NO_TITLE` 跳过整个标题块
+  （打点 `T9`）后，页面仍然立刻黑屏，而且再没有任何行级打点——说明卡住/复位发生在
+  第一次 label 创建或它的文本刷新上。n66 里能找到 `dsc->font == NULL`、
+  `Invalid font descriptor`、`Create font(%s, size %d, style %d) failed` 这些
+  字体管理器的字符串，`lvx_font_create_core` 在 `0xc29b028`（日志 tag
+  `ext/lvx_font_manager.c`）。o66 上同样的问题是用 `lvx_font_create` +
+  `lv_obj_set_text_font` 显式给每个 label 设字体解决的；n66 缺这两条记录，下一步
+  就是补上（地址可从 `0xc29b028` 及其调用者的风格属性设置函数恢复）。
