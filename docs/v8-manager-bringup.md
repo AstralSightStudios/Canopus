@@ -340,3 +340,15 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
   模块子页面（标题「模块」、分节「已安装模块」、空态「暂无已安装模块」）。
 - 截图序列：`za3`（更多末页的 Manager 条目）、`ze2`（从 launcher 打开的概览）、
   `zj1`（模块子页面）。
+
+### 第十三轮：n66 的 entry_mode 是 mailbox，切到 cave 后崩点前移
+
+- 部署到设备的 profile 里 `entry_mode = 'mailbox'`（bootstrap.toml 没写这一项，生成器默认
+  mailbox），而 o66 的 bootstrap.toml 写的是 `entry_mode = "cave"`——这就是为什么 o66 能装、
+  n66 一按 Run 就崩：mailbox 路径的探针/trampoline 会跳进 `exec_handler+0x45`（函数体中间）。
+- 给 n66 的 bootstrap.toml 补上 `entry_mode = "cave"` 后（profile 已生成 cave），崩溃**变了**：
+  `MemManage Fault, CFSR 0x00020082, MMFAR 0x200d0000`，PC `0x3c7c8760`。0x200D0000 正是
+  profile 的 `cave`（`cave_result` = 0x200D0040），说明 `stage0_exec_with_mpu` 给 stage-0
+  区域编程的 MPU 属性没有覆盖到 trampoline 访问的那个地址。
+- 下一步：核对 `reserve_stage0_region`/`stage0_exec_with_mpu` 写的 MPU 区域（base/size/attr）
+  与 cave 的实际范围，把 `cave`+`cave_result` 一起覆盖进去。

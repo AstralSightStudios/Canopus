@@ -25,6 +25,10 @@ status = "STATIC_CANDIDATE"
 requires_mpu_sync = true
 
 [stage]
+# Cave entry: the mailbox trampoline branches into exec_handler+0x45, which is
+# mid-function on this image and faults (crash dump: pc 0x0c1c956e,
+# R0 0x5a5a5a5a). The cave trampoline returns through its own saved LR.
+entry_mode = "cave"
 stage2_path = "/data/canopus/stage2.bin"
 supervisor_path = "/data/canopus/supervisor.elf"
 entry_argument = "unspecified-r0"
