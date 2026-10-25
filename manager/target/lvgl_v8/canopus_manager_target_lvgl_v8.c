@@ -219,7 +219,6 @@ struct canopus_target_ui_backend {
     uint32_t label_count;
     uint32_t rendered_generation;
     uint8_t page_index;
-    uint8_t own_root;
 };
 
 struct canopus_target_page_context {
@@ -941,19 +940,8 @@ static int32_t target_ui_apply(
 
             if (backend->page_title == NULL) {
                 diag_mark('T', '0');
-                if (backend->own_root) {
-                    backend->page_title = create_page_title(
-                        backend->root, primary, title_mode, NULL);
-                } else {
-                    backend->page_title = manager_label_create(backend->root, CANOPUS_LABEL_BODY);
-                    if (backend->page_title != NULL) {
-                        set_label_text(backend->page_title, primary);
-                        set_size(backend->page_title,
-                                 CANOPUS_TARGET_CONTENT_WIDTH, 24);
-                        align_to(backend->page_title, backend->root,
-                                 CANOPUS_TARGET_ALIGN_TOP_MID, 0, 4);
-                    }
-                }
+                backend->page_title = create_page_title(
+                    backend->root, primary, title_mode, NULL);
                 if (backend->page_title == NULL) {
                     return -1;
                 }
@@ -1432,7 +1420,6 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
                 return -1;
             }
             diag_mark('r', '1');
-            context->backend.own_root = 1u;
         }
     }
     canopus_manager_target_record.root_object = (uintptr_t)root;
