@@ -492,3 +492,20 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   Mirage 的 `screendump` 在息屏时是空帧；Manager 页有时会停留（抓到过多次），有时在
   OPEN_MANAGER 之后被框架 `on_ui_destroy` 掉。抓一次「新字体 + 页面停留」的帧是下一轮第一步；
   若 MiSansF 仍不出中文，再往 index 5/6 或主题字体对象上找。
+
+### 第十九轮：n66 管理器中文全通（text_font = 0x57）
+
+- **属性号错了**：这台固件的样式属性表是 `名字 -> (type<<16 | prop)`，`text_font` = `0x30057`
+  （**prop 0x57**，type 3 = 指针）。之前用的 90 (`0x5a`) 是 `text_decor`，0x55 是 `text_color`
+  ——用 0x5a 时字体指针被当成颜色写进去，暗屏帧里字发绿就是证据；改成 0x57 后中文立刻正常。
+  3.1.190 的表项同样是 `0x30057`，两个 Band 9 目标都用 `-DCANOPUS_MGR_TEXT_FONT_PROP=0x57`
+  （证据 `EVID-STATIC-V8-TEXTFONT-9132/9190`）。
+- **n66 全流程实测（Mirage）**：概览页完整中文——标题 Canopus、分节「系统信息」「管理」，8 行
+  系统信息（框架/版本 1/、管理器/原生 UI AB…、固件/3.1.32、构建/N66NFC_3.1…、目标设备/
+  xiaomi-ban…、注册表/就绪、文件系统错误/0、已验证保存次…/7）和三行管理项（模块 ›、
+  安装软件包 ›、导入手机推送 ›）；点「模块」进入子页面，标题「模块」、分节「已安装模块」、
+  空态「暂无已安装模块」。与 Band 10 Pro / Band 11 的版面一致。
+- **顺手恢复了一条环境经验**：Mirage 上的安装器表盘要重新部署时，`package_lua_watchface`
+  必须带 `--protocol 0x0800`，且**换一个 package id**（同 id 会被设备判成 `Downgrade` 拒绝）；
+  bridge 安装用 `MAB_SMOKE <port> <authKey> <state> 'install={"path":…,"kind":"watchface"}'`，
+  期间按配对对话框。

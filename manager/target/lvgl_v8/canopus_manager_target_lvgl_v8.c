@@ -836,8 +836,8 @@ static void row_text_append(struct row_text *text, const char *value,
  * Band 9 generation, so the font is also put on the container a label is
  * created under: text_font is inherited, which lets the label's constructor
  * see a real font before its first refresh. */
-/* LV_STYLE_TEXT_FONT differs per v8 generation: 0x55 on the Band 9 images
- * (lvx_page_title_create reads it as 0x55 to inherit the font), 90 on 3.1.28. */
+/* LV_STYLE_TEXT_FONT differs per v8 generation: 0x57 on the Band 9 images
+ * (font id 0x30057 in the style table; 0x5a is text_decor), 90 on 3.1.28. */
 #ifndef CANOPUS_MGR_TEXT_FONT_PROP
 #define CANOPUS_MGR_TEXT_FONT_PROP 90
 #endif

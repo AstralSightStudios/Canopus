@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-V8-TEXTFONT-9190",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "question": "Which LVGL style property carries the text font on this v8 image?",
+  "candidate_symbols": [
+    "lv_obj_set_local_style_prop"
+  ],
+  "prototype_hypothesis": "Properties 0x5a (used earlier by the Manager backend, by analogy with 3.1.28) and 0x55 are text_decor and text_color; text_font is 0x57.",
+  "callsite_evidence": [
+    "The table entry for text_font is 0x30057 (name pointer 0x2C75A826): type 3 (pointer), property 0x57, same neighbours as 3.1.32.",
+    "Setting the Manager label font with property 0x5a rendered the font pointer as a text colour (the dim page frames came out green); with 0x55 the font was still not applied.",
+    "After switching to 0x57 the Manager overview renders its Chinese text (系统信息 / 管理 / 模块 / 安装软件包 / 导入手机推送) and tapping 模块 opens the 已安装模块 sub-page on 3.1.32."
+  ],
+  "control_flow_evidence": [
+    "name->(type<<16|prop) table lookup feeds lv_obj_set_local_style_prop(obj, prop, value, selector)."
+  ],
+  "ownership_analysis": "No ownership claimed.",
+  "unsafe_assumptions": [
+    "0x57 is verified on 3.1.32 (rendered); on 3.1.190 it is taken from the same table pattern and not yet exercised on a page."
+  ],
+  "recommended_probe": "Render the Manager page on 3.1.190 and confirm Chinese text.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED"
+}
