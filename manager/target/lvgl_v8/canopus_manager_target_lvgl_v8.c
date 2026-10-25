@@ -1474,8 +1474,28 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
 {
     struct canopus_target_page_context *context;
     uint32_t requested_detail = 0u;
+    char stage = (char)('0' + (page->page_id % 10u));
     int32_t rc;
 
+    (void)stage; /* only the diag marks below read it */
+    /* Per-page marks: the shared c/q/v/n markers collide between page builds,
+     * so a page that died before I<page> cannot be told from one that never
+     * started. g/h/k/w/x<page> pin down which step a page reached. */
+    diag_mark('g', stage);
+#if defined(CANOPUS_TARGET_UI_DIAG)
+    {
+        /* Stack depth at entry, one word per page: page 2 dies inside the
+         * model refresh, and a much lower stack pointer would say why. */
+        const void *sp = &stage;
+        diag_dump('K', stage, &sp, sizeof(sp));
+    }
+#endif
+    /* Raw page descriptor per page: pages 0/1 show a view in the root slot,
+     * page 2 does not, so the offsets have to be compared byte for byte.
+     * diag_dump caps a record at 32 bytes, so the interesting window
+     * (0x10..0x4F, the root slot at 0x2C included) takes two dumps. */
+    diag_dump('M', stage, (const uint8_t *)page + 16u, 32u);
+    diag_dump('J', stage, (const uint8_t *)page + 32u, 32u);
     context = context_for_page(page);
     if (context == NULL) {
         diag_mark('c', '0');
@@ -1488,7 +1508,9 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
             requested_detail = manager_pending_detail;
         }
     }
+    diag_mark('h', stage);
     canopus_manager_target_record.create_count += 1u;
+    diag_mark('z', stage);
 #if defined(CANOPUS_MGR_PAGE_ROOT_SLOT)
     /* 3.1.32/3.1.190 hand on_create a non-pointer second argument (the page
      * state), while the view the pagemanager created for us sits in the page
@@ -1514,13 +1536,18 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         }
     }
     canopus_manager_target_record.root_object = (uintptr_t)root;
+    diag_mark('a', stage);
     canopus_memset(&context->backend, 0, sizeof(context->backend));
+    diag_mark('b', stage);
     context->backend.root = root;
     context->backend.firmware_page = page;
     context->backend.page_index = (uint8_t)page->page_id;
+    diag_mark('d', stage);
+    diag_mark('p', stage);
     /* Restore only after the supervisor's stock `insmod` constructor returns;
      * nested module loads need the regular page-owner task's stack. */
     (void)canopus_supervisor_restore_after_boot();
+    diag_mark('u', stage);
     if (!manager_session_ready) {
         rc = canopus_client_init(&manager_client, &target_device_io, NULL);
         diag_mark('l', rc == CANOPUS_CLIENT_OK ? '1' : '0');
@@ -1553,6 +1580,7 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         manager_model.selected = selected;
         canopus_manager_target_record.detail_selected = selected;
     }
+    diag_mark('y', stage);
     /* A page can be pushed long after the session was opened (a module was
      * installed in between), so re-read the device model before selecting the
      * view instead of showing the snapshot taken at session open. */
@@ -1560,11 +1588,13 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         diag_mark('q', '2');
         return -1;
     }
+    diag_mark('k', stage);
     if (target_select_page_view(context) != 0) {
         diag_mark('v', '0');
         return -1;
     }
     diag_mark('v', '1');
+    diag_mark('w', stage);
     if (context->backend.page_index == CANOPUS_TARGET_PAGE_DETAIL) {
         manager_pending_detail = 0u;
     }
@@ -1575,6 +1605,7 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         return -1;
     }
     diag_mark('n', '1');
+    diag_mark('x', stage);
     canopus_manager_native_set_router(&context->native, target_route, NULL);
     canopus_manager_native_set_refresh(&context->native, target_refresh,
                                        context);
