@@ -363,3 +363,8 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
     （Secure 与 Non-secure 的 MPU 是两套），以及 `exec mpu_sync` 后是否还需要 ISB 之外的同步。
   - 待查 2：cave 基址 0x200D0000 在 3.1.32 上是否已经被固件自己的区域占用（n67 用 0x20080000、
     o66 用 0x200E0000，只有 n66 落在这个区间）。
+- 试过把 stage-0 的 MPU 区域按 `cave + stage1 大小` 扩大（`stage0_mpu_values(span)`），
+  n66 上的崩溃**完全没变**（`CFSR 0x00020082 / MMFAR 0x200d0000 / PC 0x3c7c8760`），
+  说明故障不是区域太小，而是**已加载的 Supervisor 代码（PC 在 0x3c7c87xx，即它的 .text）
+  访问了 0x200D0000**——更像是重定位/段落放置落到了 cave 区间。该安装器改动未验证，
+  已回滚以保留 o66 已验证的状态。
