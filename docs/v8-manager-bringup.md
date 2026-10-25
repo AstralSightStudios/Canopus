@@ -324,3 +324,6 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
   `launcher_page_insert_icon` 在安装时（launcher UI 尚未创建）静默失败，
   而 `load_app_info` 只把条目放进 icon 列表，顺序表没有它就不会被画出来。
   下一步要么在 launcher UI 已存在时补插一次，要么把顺序表持久化下来。
+- 试过在插入条目后调用 `launcher_reset_order_info` 重建顺序表（并持久化），但这一版**没能在
+  设备上验证**（o66 实例当时已经完全不响应），代码已回滚。下次设备可用时，这是最直接的
+  一条路：`reset_order_info_list` 正是启动日志里给每个 appid 打 "in more / no in more" 的函数。
