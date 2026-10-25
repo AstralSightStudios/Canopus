@@ -252,6 +252,10 @@ static uint32_t manager_pending_detail;
  * renders in the modules page; the render must wait until the click dispatch
  * returns, or it would replace the snapshot the dispatch is still reading. */
 static uint8_t manager_pending_inline_detail;
+/* The touch that opened the in-place detail still has a release to deliver;
+ * without this, that release lands on a row the render just created and
+ * activates an action the user never picked. */
+static uint8_t manager_swallow_click;
 #endif
 static uint8_t manager_session_ready;
 
@@ -548,6 +552,12 @@ static void target_dispatch_row(uint32_t row_index, void *event)
 
     if (event == NULL || row_index >= CANOPUS_TARGET_UI_MAX_ROWS) return;
     diag_dump('E', (char)('0' + (row_index % 10u)), event, 32u);
+#if defined(CANOPUS_MGR_INPLACE_DETAIL)
+    if (manager_swallow_click != 0u) {
+        manager_swallow_click = 0u;
+        return;
+    }
+#endif
     /* The event code is the first byte of the field at +8: the bytes above it
      * belong to the neighbouring field, so a 32-bit read yields a word such as
      * 0x3c350007 for CLICKED. Every code this firmware sends fits in a byte. */
@@ -599,6 +609,7 @@ static void target_dispatch_row(uint32_t row_index, void *event)
         if (manager_pending_inline_detail != 0u) {
             manager_pending_inline_detail = 0u;
             (void)canopus_manager_native_render(&context->native);
+            manager_swallow_click = 1u;
         }
 #endif
         if (rc == CANOPUS_UI_ERR_DISABLED) {

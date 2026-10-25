@@ -774,3 +774,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   把 `confirm_event` 覆盖成另一条动作，而对话框文案来自第一次。修法二选一：
   (1) 把渲染再往后推（下一次派发/下一帧），(2) 在就地渲染后吞掉同一个触摸序列里的后续行点击。
   验证方式：diag 里把每次 `target_dispatch_row` 的 row_index 与两次 `confirm_event` 都打出来。
+- **点击吞掉（`manager_swallow_click`）实测**：详情页**不再被同一次触摸重复点击**——进入详情后
+  干净显示「状态/生命周期/启用/移除」四行，没有多余的确认框。但随后点「启用」行时**没有弹确认框**，
+  状态直接变成 `remove-pen…`，registry 里也是 intent=2。说明动作行的**行号/绑定**仍不对：
+  y≈170 视觉上是「启用」，实际派发的是「移除」。下一个标记要打在 `target_dispatch_row` 里，
+  把 `row_index`、`binding->key`、`binding->event_id` 一并 dump（`dm-E*` 已有事件原文，
+  再加一个 `dm-K<row>` 存 key/event 各 4 字节），就能确认是行复用把绑定错位，还是点击几何偏移。
