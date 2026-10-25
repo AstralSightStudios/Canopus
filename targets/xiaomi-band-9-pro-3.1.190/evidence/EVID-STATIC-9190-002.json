@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-9190-002",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "question": "Which 3.1.190 entry pushes an application page (page_goto)?",
+  "candidate_symbols": [
+    "page_goto"
+  ],
+  "prototype_hypothesis": "page_goto(key, start_data, 0, 0) resolves the key in the page-manager registry and runs the stock transition; it is the body that logs goto_page_no_check_stacktop.",
+  "callsite_evidence": [
+    "String \"goto_page_no_check_stacktop\" (0x2c76b264) has exactly one code xref, inside sub_C49E274 (0xc49e274), which also logs \"Please register this page:%lu!\" from the pagemanager tag.",
+    "The previously recorded entry 0xc449bc4 is lvx_pagemanager_prelaunch_check (its body logs that tag); it calls sub_C49E274 only after its own prelaunch handling, so pointing the record at it showed no page.",
+    "The body matches the o66 goto_page_no_check_stacktop (0xc4e0208) and the n66 one (0xc4b456c): current page lookup, transition, page enter."
+  ],
+  "control_flow_evidence": [
+    "OPEN_MANAGER -> canopus_manager_native_open -> page_goto((APP_ID << 16) | page, 0, 0, 0)."
+  ],
+  "ownership_analysis": "No ownership claimed.",
+  "unsafe_assumptions": [
+    "Static evidence only; no device or emulator run has exercised the corrected entry yet."
+  ],
+  "recommended_probe": "Rebuild the n67 Supervisor and open the Manager page on Mirage.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}

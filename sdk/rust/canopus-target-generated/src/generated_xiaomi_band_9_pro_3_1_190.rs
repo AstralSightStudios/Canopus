@@ -4,7 +4,7 @@
 // firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
 // sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
 // revision : 1
-// input_digest: 5731aaa385bc6089
+// input_digest: 742f11aadfbf35e5
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -363,8 +363,8 @@ pub const CANOPUS_FW_BT_ADAPTER_REGISTER_CALLABLE: usize = canopus_thumb_callabl
 /// Recovered `inode_unlock` at 0xc379cf0. Thumb callable address 0xc379cf1.
 pub const CANOPUS_FW_INODE_UNLOCK_CALLABLE: usize = canopus_thumb_callable(0xc379cf1usize);
 
-/// Recovered `page_goto` at 0x0c449bc4. Thumb callable address 0x0c449bc5.
-pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0x0c449bc5usize);
+/// Recovered `page_goto` at 0xc49e274. Thumb callable address 0xc49e275.
+pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc49e275usize);
 
 /// Recovered `write` at 0x0c37f0fc. Thumb callable address 0x0c37f0fd.
 pub const CANOPUS_FW_WRITE_CALLABLE: usize = canopus_thumb_callable(0x0c37f0fdusize);

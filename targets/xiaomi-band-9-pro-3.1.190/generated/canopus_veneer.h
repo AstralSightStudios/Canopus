@@ -4,7 +4,7 @@
  * firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
  * sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
  * revision : 1
- * input_digest: 5731aaa385bc6089
+ * input_digest: 742f11aadfbf35e5
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -435,7 +435,7 @@ static inline int canopus_fw_inode_unlock(void) {
 
 typedef int32_t (*canopus_fw_page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
 static inline int32_t canopus_fw_page_goto(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
-    return ((canopus_fw_page_goto_fn)(uintptr_t)0x0c449bc5)(a0, a1, a2, a3);
+    return ((canopus_fw_page_goto_fn)(uintptr_t)0xc49e275)(a0, a1, a2, a3);
 }
 
 typedef int32_t (*canopus_fw_write_fn)(int, const void *, uint32_t);

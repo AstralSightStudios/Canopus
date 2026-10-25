@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (N66NFC_3.1.32)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 2
-// input_digest: ea98f306be4e252a
+// input_digest: 533a5cbc2f0115f4
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -94,8 +94,8 @@ pub const CANOPUS_FW_REGISTER_BLOCKDRIVER_CALLABLE: usize = canopus_thumb_callab
 /// Recovered `bt_l2cap_disconnect` at 0xc287e88. Thumb callable address 0xc287e89.
 pub const CANOPUS_FW_BT_L2CAP_DISCONNECT_CALLABLE: usize = canopus_thumb_callable(0xc287e89usize);
 
-/// Recovered `page_goto` at 0x0c45b588. Thumb callable address 0xc45b589.
-pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc45b589usize);
+/// Recovered `page_goto` at 0xc4b456c. Thumb callable address 0xc4b456d.
+pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc4b456dusize);
 
 /// Recovered `lv_obj_clear_flag` at 0x0c26f56a. Thumb callable address 0xc26f56b.
 pub const CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc26f56busize);

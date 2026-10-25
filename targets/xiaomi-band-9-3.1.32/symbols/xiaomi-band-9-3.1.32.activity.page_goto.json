@@ -5,25 +5,25 @@
   "name": "page_goto",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0c45b588",
+  "entry_address": "0xc4b456c",
   "prototype": "int(uint32_t, uint32_t, void *, void *)",
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-ABI-9132-EXACT-001"
+      "EVID-STATIC-9132-002"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
-    "source": "exact Xiaomi Band 9 3.1.32 IDB; decompilation, disassembly, and stock callsite review",
+    "source": "Exact xiaomi-band-9-3.1.32 image: 0xc4b456c is the body that logs the tag \"goto_page_no_check_stacktop\" (pagemanager) and runs the stock transition.",
     "evidence_ids": [
-      "EVID-ABI-9132-EXACT-001"
+      "EVID-STATIC-9132-002"
     ]
   },
   "approval_state": "PENDING",
-  "notes": "resolves page key, performs prelaunch checks, then invokes stock goto transition 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
-  "callable_address": "0xc45b589"
+  "notes": "Resolves the page key and pushes it through the stock transition (logs \"Please register this page:%lu!\" for an unknown key). The previous record pointed at lvx_pagemanager_prelaunch_check (0xc45b588), which only logs prelaunch state and shows no page.",
+  "callable_address": "0xc4b456d"
 }

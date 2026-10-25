@@ -4,7 +4,7 @@
  * firmware : 3.1.32 (N66NFC_3.1.32)
  * sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
  * revision : 2
- * input_digest: ea98f306be4e252a
+ * input_digest: 533a5cbc2f0115f4
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -119,7 +119,7 @@ static inline int canopus_fw_bt_l2cap_disconnect(const void * a0) {
 
 typedef int (*canopus_fw_page_goto_fn)(uint32_t, uint32_t, void *, void *);
 static inline int canopus_fw_page_goto(uint32_t a0, uint32_t a1, void * a2, void * a3) {
-    return ((canopus_fw_page_goto_fn)(uintptr_t)0xc45b589)(a0, a1, a2, a3);
+    return ((canopus_fw_page_goto_fn)(uintptr_t)0xc4b456d)(a0, a1, a2, a3);
 }
 
 typedef void (*canopus_fw_lv_obj_clear_flag_fn)(void *, uint32_t);

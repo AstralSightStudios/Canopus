@@ -1215,7 +1215,7 @@ static void target_route_push(void *timer)
     }
 }
 
-static void target_route_schedule(uint32_t key, uint32_t detail,
+static int target_route_schedule(uint32_t key, uint32_t detail,
                                  uint32_t finish)
 {
     typedef void *(*timer_create_fn)(void (*)(void *), uint32_t, void *);
@@ -1224,7 +1224,7 @@ static void target_route_schedule(uint32_t key, uint32_t detail,
     pending_route_finish = finish;
     if (((timer_create_fn)(uintptr_t)FW_LV_TIMER_CREATE)(target_route_push, 1u,
                                                         NULL) != NULL) {
-        return;
+        return 0;
     }
     if (finish < CANOPUS_TARGET_PAGE_COUNT) {
         (void)((int32_t (*)(void *))(uintptr_t)FW_ACTIVITY_FINISH)(
@@ -1233,13 +1233,14 @@ static void target_route_schedule(uint32_t key, uint32_t detail,
         (void)((int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t))(uintptr_t)
                    FW_ACTIVITY_NAVIGATE)(key, detail, 0u, 0u);
     }
+    return 0;
 }
 
 #else
 /* This target has no timer pair: push inline (the source page is only torn down
  * after the transition, which is the call order that must be validated per
  * firmware). */
-static void target_route_schedule(uint32_t key, uint32_t detail,
+static int target_route_schedule(uint32_t key, uint32_t detail,
                                  uint32_t finish)
 {
     if (finish < CANOPUS_TARGET_PAGE_COUNT) {
@@ -1249,6 +1250,7 @@ static void target_route_schedule(uint32_t key, uint32_t detail,
         (void)((int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t))(uintptr_t)
                    FW_ACTIVITY_NAVIGATE)(key, detail, 0u, 0u);
     }
+    return 0;
 }
 #endif
 
@@ -1450,10 +1452,12 @@ static const struct firmware_app_descriptor manager_app = {
     .launcher_icon_resource = launcher_icon,
     .app_id = CANOPUS_MANAGER_TARGET_APP_ID,
     .launcher_metadata_callback = manager_display_name,
-#if defined(CANOPUS_MGR_APPINFO_1028)
+#if defined(CANOPUS_MGR_APPINFO_1028) || !defined(CANOPUS_MGR_APPINFO_190)
     /* launcher_load_app_info copies bit 1 of this byte into the launcher
-     * entry's "show in app list" flag (entry+16, bit 2); the launcher's
-     * draw loop skips every entry without it. Bit 0 (hidden) must stay 0. */
+     * entry's "show in app list" flag (entry+16, bit 2); the launcher's draw
+     * loop skips every entry without it. Verified on 3.1.28 (byte +0x3C) and
+     * 3.1.32 (byte +0x28); the 3.1.190 layout is not verified yet. Bit 0
+     * (hidden) must stay 0. */
     .hidden_flags = 0x02,
 #endif
 };
@@ -1584,10 +1588,7 @@ int canopus_manager_native_notify(const char *source, const char *title,
 
 int canopus_manager_native_open(void)
 {
-    typedef int32_t (*page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
-    page_goto_fn page_goto = (page_goto_fn)(uintptr_t)FW_ACTIVITY_NAVIGATE;
-
     if (canopus_manager_target_record.identity_result != 0) return -1;
-    return page_goto(target_page_key(CANOPUS_TARGET_PAGE_OVERVIEW), 0u, 0u, 0u) < 0
-               ? -1 : 0;
+    return target_route_schedule(target_page_key(CANOPUS_TARGET_PAGE_OVERVIEW),
+                                 0u, CANOPUS_TARGET_PAGE_COUNT) == 0 ? 0 : -1;
 }

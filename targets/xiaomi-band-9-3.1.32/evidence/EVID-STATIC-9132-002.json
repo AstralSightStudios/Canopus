@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-9132-002",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "question": "Which 3.1.32 entry pushes an application page (page_goto)?",
+  "candidate_symbols": [
+    "page_goto"
+  ],
+  "prototype_hypothesis": "page_goto(key, start_data, 0, 0) resolves the page key with the page-manager registry and runs the stock transition; it is the body that logs the tag goto_page_no_check_stacktop.",
+  "callsite_evidence": [
+    "The only reference to the string \"goto_page_no_check_stacktop\" (0x2c70c7dc) is inside sub_C4B456C (0xc4b456c), which also logs \"Please register this page:%lu!\" from the pagemanager tag.",
+    "The ported record pointed at 0xc45b588, whose body is lvx_pagemanager_prelaunch_check: it resolves the app, defers or ignores the prelaunch and returns without showing any page. The o66 build hit the same mistake with pagemanager show_app.",
+    "The body calls sub_C45A3D4 (current page), then sub_C45EA4C for the transition and sub_C45BB5C to enter the page, i.e. the same shape as the o66 goto_page_no_check_stacktop at 0xc4e0208."
+  ],
+  "control_flow_evidence": [
+    "OPEN_MANAGER -> canopus_manager_native_open -> page_goto((APP_ID << 16) | page, 0, 0, 0)."
+  ],
+  "ownership_analysis": "No ownership claimed; the page descriptors stay owned by the Supervisor.",
+  "unsafe_assumptions": [
+    "Static evidence only; the emulator run that motivated the correction is not device evidence."
+  ],
+  "recommended_probe": "Rebuild the n66 Supervisor and confirm the Manager page opens on Mirage.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-25T00:00:00Z",
+  "artifacts": []
+}
