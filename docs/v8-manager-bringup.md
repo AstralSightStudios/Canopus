@@ -690,3 +690,12 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
     `y2`——所以要么刷新之后的下一句就出事，要么 app 是在我们返回前后被别处带走的。
   下一步直接用 Mirage 的 gdb stub（`-gdb tcp:127.0.0.1:1234`）在该页的 `on_create` 上设断点，
   看是返回到框架后崩、还是根本没走到下一句。
+- **两次排除性实验（都失败，但把范围缩小了）**：
+  1. **详情页 on_create 什么都不做**（`-DCANOPUS_MGR_DETAIL_PROBE`，进 DETAIL 分支后写 `dm-N2` 就
+     `return 0`）：`dm-N2` 确实写出来了，app 照样黑屏。说明不是我们的建页代码把 app 带走的。
+  2. **不推第三页**（`-DCANOPUS_MGR_INPLACE_DETAIL`，`ROUTE_MODULE_DETAIL` 直接在模块列表页上
+     `canopus_manager_native_render` 渲染详情视图）：同样黑屏。
+  两次的共同点只剩「模型进入 MODULE_DETAIL 视图」本身——要么 `render_module_detail` 的某一行，
+  要么进入该视图后框架/回调链里的某一环。两处实验代码都已撤回（不留未验证的行为改动），
+  只保留按页打点。下一步：在 `render_module_detail` 里做二分（先只渲染「模块状态」段的状态行，
+  再加动作行），以及确认 `on_resume` 在详情视图下的行为；如仍无线索就走 Mirage 的 gdb stub 抓故障地址。
