@@ -848,3 +848,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   的调用约定/参数顺序待 IDB 核对），也可能是回调里找不到 active 页。改动已撤回，避免留下
   一个「详情永远不出现」的状态。下一轮先用一个最简探针验证 `FW_LV_TIMER_CREATE` 能回调
   （例如回调里写一个 `dm-` 标记），再谈用它渲染。
+- **`FW_LV_TIMER_CREATE` 在 3.1.32 上返回 NULL（打点证实）**：在 `ROUTE_MODULE_DETAIL` 里调用
+  `FW_LV_TIMER_CREATE(manager_inline_detail_timer, 30, 0)`，`dm-TA`（进入）在、`dm-TB`
+  （返回 0）在、`dm-TM`（回调执行）不在——即**timer 根本没建出来**，所以回调永远不跑、详情页
+  也不渲染。要么 `0x0C534A61` 不是 `lv_timer_create` 的入口/参数顺序不对，要么它要求从 UI 任务
+  之外的上下文调用。下一步去 IDB 核对该地址的函数体与调用点（stock 谁在调、传什么），
+  确认后再决定延后机制。
