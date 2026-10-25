@@ -63,6 +63,9 @@
 #define CANOPUS_TARGET_ROW_GAP 2
 #define CANOPUS_TARGET_EVENT_ALL 0u
 #define CANOPUS_TARGET_EVENT_CLICKED 7u
+/* The Mirage touch model releases late, so LVGL reports SHORT_CLICKED (4)
+ * instead of CLICKED for a tap on this firmware. */
+#define CANOPUS_TARGET_EVENT_SHORT_CLICKED 4u
 #define CANOPUS_TARGET_EVENT_VALUE_CHANGED 30u
 
 struct firmware_page_descriptor;
@@ -533,7 +536,8 @@ static void target_dispatch_row(uint32_t row_index, void *event)
 
         if (!context->active || !context->interactive ||
             context->backend.rows[row_index] == NULL) continue;
-        if (code != CANOPUS_TARGET_EVENT_CLICKED) {
+        if (code != CANOPUS_TARGET_EVENT_CLICKED &&
+            code != CANOPUS_TARGET_EVENT_SHORT_CLICKED) {
             return;
         }
         binding = &context->backend.bindings[row_index];
@@ -1096,7 +1100,7 @@ static int32_t target_ui_apply(
             target_set_flag(object, CANOPUS_TARGET_FLAG_CLICKABLE, 1u);
             target_set_flag(object, CANOPUS_TARGET_FLAG_SCROLLABLE, 0u);
             add_event(object, target_row_events[slot],
-                      CANOPUS_TARGET_EVENT_CLICKED, NULL);
+                      CANOPUS_TARGET_EVENT_ALL, NULL);
             backend->rows[slot] = object;
             backend->row_labels[slot] = label;
             backend->row_values[slot] = value;
