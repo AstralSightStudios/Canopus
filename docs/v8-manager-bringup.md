@@ -742,3 +742,11 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   `manager_pending_inline_detail` 的做法），或者在 `target_refresh` 里检测「派发进行中」时只
   刷新模型、把渲染交给派发结束后的收尾。先验证「只发命令、不重渲染」是否还会复位，可以把
   问题分开。
+- **第七次实验（确认路径延后渲染）成功**：`target_dispatch_row` 在派发期间置
+  `manager_in_dispatch`，`target_refresh` 在派发中只刷新模型、把渲染交给派发结束后的收尾
+  （`manager_pending_inline_detail`）。设备实测（新建的 canopus-b9-probe，AUTORUN 构建）：
+  概览 → 模块 → 点 `hello_portable` → 详情视图（状态/生命周期/动作行）→「启用」确认框 →
+  **点「确认」后 app 存活并就地重渲染详情页，不再整机复位**。剩余问题：重渲染后「状态」一栏
+  显示成 `remove-pen…`（REMOVE_PENDING 被截断），与刚提交的 ENABLE 不符，需要下一步查
+  `execute_event` 到模型回读这条链（怀疑是 `target_refresh` 里那次刷新读到的是旧快照，
+  或确认事件被映射成了 REMOVE）。
