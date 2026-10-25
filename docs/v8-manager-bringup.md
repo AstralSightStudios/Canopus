@@ -637,3 +637,20 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   别名）；`test_module_installer_prod.py` 对「build.prop 没有 ro.build.version」的镜像改为
   要求钩子提供 `device_firmware_version`，并对 ROMFS 里不再以 `ro.build` 开头的 build.prop
   做了正确的定位。
+
+### 第二十五轮：n67 激活链路实测通过，管理器页仍不显示
+
+- **n67 的 ENABLE/ACTIVATE 实测（Mirage，hello_portable，探针把结果写进 `/data/canopus/act.txt`）**：
+  `q0 state=3`（INSTALLED）→ `ENABLE` = **8**（REBOOT_REQUIRED），`q1 state=5`（ENABLED）→
+  `ACTIVATE` = **5**（COMPLETED），`q2 state=9`（ACTIVE）。关机后 `registry.bin` 里
+  `hello_portable` 的 intent 为 1（enabled）。协议与 n66、Band 10 Pro / Band 11 完全一致，
+  n67 的「安装 → 启用 → 立即激活」在设备上已经跑通。
+- **n67 的面板与 Run**：Run 期间帧稳定在 2274 字节（全黑），`button home` 与点击都唤不醒；
+  Run 结束后再点一下就能亮。所以「Run 后黑屏」不是永久性的，只是 Run 那个阻塞窗口里不响应。
+- **n67 的管理器页仍然不显示**：探针表盘发 `OPEN_MANAGER`（命令 29）返回 **5 (COMPLETED)**，
+  但屏幕上始终是探针表盘自己；第二十轮的打点也证明页面已建好并渲染完（`T1`、`Z1`）。
+  也就是说 3.1.190 上页面进了框架的 page manager，却没有被显示出来；下一步要对照
+  3.1.28（能显示）和 3.1.32（表盘发 OPEN_MANAGER 也能显示）找出 3.1.190 缺的那一步
+  （页面 view 的 attach / 显示切换），这是 n67「管理器体验」最后一块。
+- **n67 的 Lua 表盘没有中文**（第二十四轮）：n67 的管理器页即使显示了，中文也只能走页面
+  样式属性那条路，表盘层仍是方块。
