@@ -1545,6 +1545,13 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         manager_model.selected = selected;
         canopus_manager_target_record.detail_selected = selected;
     }
+    /* A page can be pushed long after the session was opened (a module was
+     * installed in between), so re-read the device model before selecting the
+     * view instead of showing the snapshot taken at session open. */
+    if (target_refresh_model() != 0) {
+        diag_mark('q', '2');
+        return -1;
+    }
     if (target_select_page_view(context) != 0) {
         diag_mark('v', '0');
         return -1;

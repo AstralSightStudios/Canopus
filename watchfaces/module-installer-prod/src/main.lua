@@ -32,7 +32,7 @@ local build = properties[BUILD_PROPERTY]
 if not identity then version, build = fallback_identity() end
 local target = version and CONFIG.targets[version]
 local startup_error
-if not target or (target.build and build ~= target.build) then
+if not target or (target.build and build ~= nil and build ~= target.build) then
     startup_error = "不支持的固件：" .. tostring(version or "Unknown")
 end
 
