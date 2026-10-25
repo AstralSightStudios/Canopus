@@ -831,11 +831,15 @@ static void row_text_append(struct row_text *text, const char *value,
 }
 
 
-static void *manager_label_create(void *parent, uint32_t role)
+/* Text font for a role. Only the stock font manager creates CJK-capable
+ * fonts, and a label built without one walks a NULL font descriptor on the
+ * Band 9 generation, so the font is also put on the container a label is
+ * created under: text_font is inherited, which lets the label's constructor
+ * see a real font before its first refresh. */
+static void target_apply_font(void *object, uint32_t role)
 {
-    void *label = ((void *(*)(void *))(uintptr_t)FW_LV_LABEL_CREATE)(parent);
-    if (label == NULL) {
-        return NULL;
+    if (object == NULL) {
+        return;
     }
 #if defined(FW_LVX_FONT_CREATE) && defined(FW_LV_OBJECT_SET_TEXT_FONT)
     {
@@ -850,14 +854,10 @@ static void *manager_label_create(void *parent, uint32_t role)
         }
         if (fonts[role] != NULL) {
             (void)((int32_t (*)(void *, void *, uint32_t))(uintptr_t)
-                       FW_LV_OBJECT_SET_TEXT_FONT)(label, fonts[role], 0u);
+                       FW_LV_OBJECT_SET_TEXT_FONT)(object, fonts[role], 0u);
         }
     }
 #elif defined(FW_LVX_FONT_CREATE) && defined(FW_LV_OBJECT_SET_LOCAL_STYLE_PROP)
-    /* This generation has no single "set text font" entry, so the font goes on
-     * as local style property 90 (the text font), which is what the stock
-     * widgets do. Without a font the label's refresh walks a NULL font
-     * descriptor and the watch restarts. */
     {
         static void *fonts[2];
         int16_t size = role == CANOPUS_LABEL_VALUE
@@ -870,13 +870,25 @@ static void *manager_label_create(void *parent, uint32_t role)
         }
         if (fonts[role] != NULL) {
             (void)((int32_t (*)(void *, uint32_t, void *, uint32_t))(
-                uintptr_t)FW_LV_OBJECT_SET_LOCAL_STYLE_PROP)(label, 90u,
+                uintptr_t)FW_LV_OBJECT_SET_LOCAL_STYLE_PROP)(object, 90u,
                                                              fonts[role], 0u);
         }
     }
 #else
     (void)role;
 #endif
+}
+
+static void *manager_label_create(void *parent, uint32_t role)
+{
+    void *label;
+
+    target_apply_font(parent, role);
+    label = ((void *(*)(void *))(uintptr_t)FW_LV_LABEL_CREATE)(parent);
+    if (label == NULL) {
+        return NULL;
+    }
+    target_apply_font(label, role);
     return label;
 }
 
