@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (N66NFC_3.1.32)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 2
-// input_digest: 533a5cbc2f0115f4
+// input_digest: e792ba22bc093c2c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -189,6 +189,9 @@ pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_calla
 
 /// Recovered `bt_socket_server_receive` at 0xc39db54. Thumb callable address 0xc39db55.
 pub const CANOPUS_FW_BT_SOCKET_SERVER_RECEIVE_CALLABLE: usize = canopus_thumb_callable(0xc39db55usize);
+
+/// Recovered `page_lookup` at 0xc45a3d4. Thumb callable address 0xc45a3d5.
+pub const CANOPUS_FW_PAGE_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0xc45a3d5usize);
 
 /// Recovered `app_launcher_data_init` at 0xc501d1c. Thumb callable address 0xc501d1d.
 pub const CANOPUS_FW_APP_LAUNCHER_DATA_INIT_CALLABLE: usize = canopus_thumb_callable(0xc501d1dusize);
@@ -572,6 +575,7 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // open: restricted - not exported until context/ownership approved
 // page_finish: restricted - not exported until context/ownership approved
 // page_goto: restricted - not exported until context/ownership approved
+// page_lookup: restricted - not exported until context/ownership approved
 // page_navigator_open_page: restricted - not exported until context/ownership approved
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
 // pthread_create_internal: restricted - not exported until context/ownership approved

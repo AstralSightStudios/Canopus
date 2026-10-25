@@ -463,45 +463,59 @@ static int target_refresh_model(void)
 #if defined(CANOPUS_TARGET_UI_DIAG)
 /* Bring-up only: two-byte markers appended to /data/canopus/diag.txt so the
  * click/route sequence can be read back offline. Never shipped. */
-static void diag_dump(const void *data, uint32_t len)
+/* One file per marker: /data/canopus/dm-<a><b>. A file that exists proves the
+ * marker ran, and opening without append would otherwise overwrite the previous
+ * marker (which it did in the first version of this probe). */
+#define DIAG_DIR "/data/canopus/dm-"
+
+static void diag_name(char a, char b, char *out)
+{
+    uint32_t i;
+    for (i = 0u; i < sizeof(DIAG_DIR) - 1u; i++) {
+        out[i] = DIAG_DIR[i];
+    }
+    out[i] = a;
+    out[i + 1u] = b;
+    out[i + 2u] = '\0';
+}
+
+static void diag_mark(char a, char b)
+{
+    typedef int (*open_fn)(const char *, int, ...);
+    typedef int (*close_fn)(int);
+    char path[24];
+    int fd;
+
+    diag_name(a, b, path);
+    fd = ((open_fn)(uintptr_t)FW_NUTTX_OPEN)(path, 2 | 4, 0666);
+    if (fd < 0) {
+        return;
+    }
+    (void)((close_fn)(uintptr_t)FW_NUTTX_CLOSE)(fd);
+}
+
+static void diag_dump(char a, char b, const void *data, uint32_t len)
 {
     typedef int (*open_fn)(const char *, int, ...);
     typedef int (*write_fn)(int, const void *, uint32_t);
     typedef int (*close_fn)(int);
+    char path[24];
     int fd;
 
     if (data == 0 || len > 32u) {
         return;
     }
-    fd = ((open_fn)(uintptr_t)FW_NUTTX_OPEN)("/data/canopus/diag.txt", 2 | 4,
-                                             0666);
+    diag_name(a, b, path);
+    fd = ((open_fn)(uintptr_t)FW_NUTTX_OPEN)(path, 2 | 4, 0666);
     if (fd < 0) {
         return;
     }
     (void)((write_fn)(uintptr_t)FW_NUTTX_WRITE)(fd, data, len);
     (void)((close_fn)(uintptr_t)FW_NUTTX_CLOSE)(fd);
 }
-
-static void diag_mark(char a, char b)
-{
-    typedef int (*open_fn)(const char *, int, ...);
-    typedef int (*write_fn)(int, const void *, uint32_t);
-    typedef int (*close_fn)(int);
-    char text[2];
-    int fd;
-
-    text[0] = a;
-    text[1] = b;
-    fd = ((open_fn)(uintptr_t)FW_NUTTX_OPEN)("/data/canopus/diag.txt", 2 | 4,
-                                             0666);
-    if (fd < 0) {
-        return;
-    }
-    (void)((write_fn)(uintptr_t)FW_NUTTX_WRITE)(fd, text, 2u);
-    (void)((close_fn)(uintptr_t)FW_NUTTX_CLOSE)(fd);
-}
 #else
 #define diag_mark(a, b) ((void)0)
+#define diag_dump(a, b, data, len) ((void)0)
 #endif
 
 static void target_dispatch_row(uint32_t row_index, void *event)
@@ -510,8 +524,7 @@ static void target_dispatch_row(uint32_t row_index, void *event)
     uint32_t code;
 
     if (event == NULL || row_index >= CANOPUS_TARGET_UI_MAX_ROWS) return;
-    diag_mark('E', (char)('0' + (row_index % 10u)));
-    diag_dump(event, 16u);
+    diag_dump('E', (char)('0' + (row_index % 10u)), event, 16u);
     code = *(const uint32_t *)((const uint8_t *)event + 8u);
     for (page_index = 0; page_index < CANOPUS_TARGET_PAGE_COUNT; page_index++) {
         struct canopus_target_page_context *context = &manager_pages[page_index];
@@ -1614,6 +1627,23 @@ int canopus_manager_native_open(void)
     page_goto_fn page_goto = (page_goto_fn)(uintptr_t)FW_ACTIVITY_NAVIGATE;
 
     if (canopus_manager_target_record.identity_result != 0) return -1;
+#if defined(CANOPUS_TARGET_UI_DIAG) && defined(FW_PAGE_LOOKUP)
+    {
+        /* Which key shape does the page registry hold? 'F<idx>Y/N'. */
+        typedef void *(*lookup_fn)(uint32_t);
+        static const uint32_t keys[4] = {
+            ((uint32_t)CANOPUS_MANAGER_TARGET_APP_ID << 16) | 0u,
+            ((uint32_t)CANOPUS_MANAGER_TARGET_APP_ID << 8) | 0u,
+            (uint32_t)CANOPUS_MANAGER_TARGET_APP_ID,
+            ((uint32_t)CANOPUS_MANAGER_TARGET_APP_ID << 16) | 1u};
+        uint32_t i;
+        for (i = 0u; i < 4u; i++) {
+            void *node = ((lookup_fn)(uintptr_t)FW_PAGE_LOOKUP)(keys[i]);
+            diag_mark('F', (char)('0' + i));
+            diag_mark(node != NULL ? 'Y' : 'N', (char)('0' + i));
+        }
+    }
+#endif
     /* Opening the Manager has no source page of our own, so the push is safe to
      * run inline; only row routes have to wait for the next tick. */
     return page_goto(target_page_key(CANOPUS_TARGET_PAGE_OVERVIEW), 0u, 0u, 0u) < 0

@@ -4,7 +4,7 @@
  * firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
  * sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
  * revision : 1
- * input_digest: 742f11aadfbf35e5
+ * input_digest: cd3103c09873743c
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -511,6 +511,11 @@ static inline void canopus_fw_lvx_object_set_size(void * a0, int32_t a1, int32_t
 typedef void * (*canopus_fw_lv_label_create_fn)(void *);
 static inline void * canopus_fw_lv_label_create(void * a0) {
     return ((canopus_fw_lv_label_create_fn)(uintptr_t)0xc25ebbd)(a0);
+}
+
+typedef void * (*canopus_fw_page_lookup_fn)(uint32_t);
+static inline void * canopus_fw_page_lookup(uint32_t a0) {
+    return ((canopus_fw_page_lookup_fn)(uintptr_t)0xc448749)(a0);
 }
 
 typedef void * (*canopus_fw_bt_adapter_get_instance_fn)(void);

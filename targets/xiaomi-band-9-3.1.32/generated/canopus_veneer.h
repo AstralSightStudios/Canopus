@@ -4,7 +4,7 @@
  * firmware : 3.1.32 (N66NFC_3.1.32)
  * sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
  * revision : 2
- * input_digest: 533a5cbc2f0115f4
+ * input_digest: e792ba22bc093c2c
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -228,6 +228,11 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
 typedef int (*canopus_fw_controller_crash_dump_fn)(void);
 static inline int canopus_fw_controller_crash_dump(void) {
     return ((canopus_fw_controller_crash_dump_fn)(uintptr_t)0xc52c44d)();
+}
+
+typedef void * (*canopus_fw_page_lookup_fn)(uint32_t);
+static inline void * canopus_fw_page_lookup(uint32_t a0) {
+    return ((canopus_fw_page_lookup_fn)(uintptr_t)0xc45a3d5)(a0);
 }
 
 typedef int (*canopus_fw_app_launcher_data_init_fn)(void);

@@ -4,7 +4,7 @@
 // firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
 // sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
 // revision : 1
-// input_digest: 742f11aadfbf35e5
+// input_digest: cd3103c09873743c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -426,6 +426,9 @@ pub const CANOPUS_FW_LVX_OBJECT_SET_SIZE_CALLABLE: usize = canopus_thumb_callabl
 /// Recovered `lv_label_create` at 0xc25ebbc. Thumb callable address 0xc25ebbd.
 pub const CANOPUS_FW_LV_LABEL_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc25ebbdusize);
 
+/// Recovered `page_lookup` at 0xc448748. Thumb callable address 0xc448749.
+pub const CANOPUS_FW_PAGE_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0xc448749usize);
+
 /// Recovered `bt_adapter_get_instance` at 0xc27ad30. Thumb callable address 0xc27ad31.
 pub const CANOPUS_FW_BT_ADAPTER_GET_INSTANCE_CALLABLE: usize = canopus_thumb_callable(0xc27ad31usize);
 
@@ -568,6 +571,7 @@ pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc41a
 // open: restricted - not exported until context/ownership approved
 // page_finish: restricted - not exported until context/ownership approved
 // page_goto: restricted - not exported until context/ownership approved
+// page_lookup: restricted - not exported until context/ownership approved
 // page_navigator_open_page: restricted - not exported until context/ownership approved
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
 // pthread_create_internal: restricted - not exported until context/ownership approved

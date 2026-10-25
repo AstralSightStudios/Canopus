@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void *(uint32_t)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-9132-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "symbol_id": "xiaomi-band-9-3.1.32.exact.page_lookup",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "page_lookup",
+  "entry_address": "0xc45a3d4",
+  "callable_address": "0xc45a3d5",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-STATIC-9132-002"
+    ],
+    "source": "Exact xiaomi-band-9-3.1.32 image: goto_page_no_check_stacktop (0xc4b456c) calls this entry with the page key before running the transition."
+  },
+  "notes": "Walks the launcher's page-node list and compares the key against the u32 at node+0x14."
+}

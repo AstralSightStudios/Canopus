@@ -58,9 +58,10 @@ not_probed）。
   怀疑点：这个固件的输入由自带的 input manager 分发，只认它自己的 `lvx_*` 控件（股票
   页面都用 `lvx_list_item`/`lvx_page_content_create`），裸 `lv_obj` 收不到点击。
   下一步要么找到 input manager 的分发规则，要么把行改成 stock 列表控件。
-- 打点工具：`-DCANOPUS_TARGET_UI_DIAG` 编译时把 2 字节标记追加到
-  `/data/canopus/diag.txt`（构造器 `ST`、页面创建 `I<页号>`、点击 `C<行>`、事件 `E<行>`
-  + 16 字节原始事件、推送 `K`/`X`）。设备上只有像 n66 那样能跑 Run 的表盘才加载
+- 打点工具：`-DCANOPUS_TARGET_UI_DIAG` 编译时**每个标记建一个文件**
+  `/data/canopus/dm-<两个字符>`（构造器 `ST`、页面创建 `I<页号>`、点击 `C<行>`、
+  事件原始字节 `E<行>`、页查找 `F<序号>` + `Y/N<序号>`、推送 `K`/`X`）。
+  不能往同一个文件里追加：这个 VFS 的写从 0 偏移开始，第一版每次覆盖，只剩最后一个标记。设备上只有像 n66 那样能跑 Run 的表盘才加载
   Supervisor，所以打点前必须先让 Supervisor 起来。
 ### 版面约束（三块屏尺寸不同）
 
