@@ -809,3 +809,11 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   的基线上也能复现，与幻影点击无关——问题出在 `manager_event` 的确认分支本身：
   `native->confirm_event` 与渲染文案用的不是同一个值，或 `execute_event` 的 `event_id`
   在两步之间被改写。下一步直接在这两处各打一个 diag 标记（文案用的事件、执行用的事件）。
+- **对账（很可能就是全部真相）**：`confirmation_message` 与 `render_confirmation` 都用
+  `native->confirm_event`，`CONFIRM` 分支也用它去 `execute_event`，代码三处一致；而详情页行
+  是 42 px 一节、确认框的「取消/确认」也各占一行，配合已量到的「触摸带比绘制高约 40 px」，
+  我这两轮点的 y=125 落在**「取消」**上——所以 registry 里的 intent=2 很可能是**幻影点击**
+  （无守卫那次）在真正确认之前就执行掉的 REMOVE，之后我看到的「启用」对话框只是又一次点击
+  的结果，而我最后的确认点到了取消。这也解释了为什么一直「文案启用、结果移除」。
+  验证顺序：先装守卫（防幻影）→ 点模块行 → 等一帧 → 再点「启用」行（按偏移取
+  y≈130）→ 点「确认」（y≈80）→ registry 应为 intent=1。
