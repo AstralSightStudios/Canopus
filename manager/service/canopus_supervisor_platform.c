@@ -1094,18 +1094,21 @@ static int sup_registry_persist(void *cookie, const uint8_t *data, uint32_t len)
     if (data == 0 || len == 0u || len > CANOPUS_SUP_REGISTRY_SIZE) {
         return CANOPUS_SUP_ERR_REGISTRY_OPEN;
     }
-#if defined(CANOPUS_MGR_REDMI_WATCH)
-    /* No file can be created from this call path on this firmware (create
-     * returns ENOENT and a file write resets the device), so the record is
-     * published through /canopus/registry and the installer writes it with its
-     * own io. The in-RAM slot table is authoritative until that readback. */
-    sup_registry_diag_success();
-    return 0;
-#endif
     /* Keep a failed temp file as evidence. A successful rename consumes it. */
     (void)sup_unlink_path(CANOPUS_SUP_REGISTRY_TMP_PATH);
     rc = sup_write_all(CANOPUS_SUP_REGISTRY_TMP_PATH, data, len);
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+    if (rc != 0) {
+        /* The staged loader's own call path cannot create files here, but the
+         * watchface task that issues commands can (its io writes the staged
+         * images). When the direct write is impossible the record stays on
+         * /canopus/registry for the installer to publish instead. */
+        sup_registry_diag_success();
+        return 0;
+    }
+#else
     if (rc != 0) return rc;
+#endif
     if (sup_verify_file(CANOPUS_SUP_REGISTRY_TMP_PATH, data, len) != 0) {
         sup_registry_diag(CANOPUS_SUP_REG_STAGE_VERIFY_TMP, sup_registry_errno());
         return CANOPUS_SUP_ERR_REGISTRY_VERIFY_TMP;

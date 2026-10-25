@@ -30,7 +30,10 @@ struct canopus_ui_host_msgbox_button {
     void *user_data;
     const void *visual;
     uint32_t reserved;
-#ifdef CANOPUS_MGR_BAND11
+#if defined(CANOPUS_MGR_BAND11) && !defined(CANOPUS_MGR_REDMI_WATCH)
+    /* Band 11's message box carries two extra words per entry; the REDMI Watch 6
+     * box uses the five-word entry (a wider stride left the second button's text
+     * NULL and it rendered as "(null)"). */
     uint32_t reserved2[2];
 #endif
 };
