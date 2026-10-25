@@ -1711,6 +1711,15 @@ int canopus_manager_native_install(void)
     launcher_item = launcher_load(installed_app);
     canopus_manager_target_record.launcher_add_result = launcher_item != NULL
         ? launcher_insert(launcher_item) : -102;
+#ifdef FW_LAUNCHER_RESET_ORDER_INFO
+    /* insert_icon only fills the launcher's icon list; draw_page_with_list
+     * walks the order list, which reset_order_info_list rebuilds from it and
+     * persists (boot logs "reset_order_info_list: appid ... in more"). */
+    if (launcher_item != NULL) {
+        (void)((int32_t (*)(uint32_t))(uintptr_t)FW_LAUNCHER_RESET_ORDER_INFO)(
+            0u);
+    }
+#endif
     diag_mark('i', launcher_item == NULL
                        ? 'l'
                        : (canopus_manager_target_record.launcher_add_result < 0

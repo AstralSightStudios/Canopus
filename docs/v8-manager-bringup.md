@@ -327,3 +327,16 @@ backtrace: 0c1684b6 0c1671e0 0c13e4e6 0c16b92a 0c16a6b4 0c1c956c 0c1c956a 0c1c6d
 - 试过在插入条目后调用 `launcher_reset_order_info` 重建顺序表（并持久化），但这一版**没能在
   设备上验证**（o66 实例当时已经完全不响应），代码已回滚。下次设备可用时，这是最直接的
   一条路：`reset_order_info_list` 正是启动日志里给每个 appid 打 "in more / no in more" 的函数。
+
+### 第十二轮：launcher 条目修好，o66 全流程按用户路径走通
+
+- **修复**：`canopus_manager_native_install` 在 `launcher_page_insert_icon` 之后调用
+  `FW_LAUNCHER_RESET_ORDER_INFO`（`reset_order_info_list`），把 icon 列表合并进 launcher
+  的**顺序表**并持久化。之前条目只进了 icon 列表，而 `draw_page_with_list` 画的是顺序表，
+  所以永远看不到；固件启动日志里那份 appid 列表（0x04–0x3d）也不含我们的 0xCA。
+- **用户路径实测（o66，非 diag 构建）**：表盘主页上滑到底 → 「更多」→ 翻到最后一页
+  （番茄钟 / 指南针 / **Canopus 管理器**）→ 点进去 → Manager 概览（框架 / 管理器 / 固件 /
+  构建 / 目标设备 / 注册表 / 文件系统错误号 / 已验证保存次数 + 管理分节）→ 点「模块」→
+  模块子页面（标题「模块」、分节「已安装模块」、空态「暂无已安装模块」）。
+- 截图序列：`za3`（更多末页的 Manager 条目）、`ze2`（从 launcher 打开的概览）、
+  `zj1`（模块子页面）。
