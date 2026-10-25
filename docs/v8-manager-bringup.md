@@ -843,3 +843,8 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   `FW_LV_TIMER_CREATE`（3.1.32 `0x0C534A61`）/`FW_LV_TIMER_DEL`（`0x0C534DA1`）建一个
   一次性 LVGL timer（约 30 ms），在回调里（UI 任务、行派发之外）渲染待处理视图。这条已设计好，
   下一轮直接实现并验证：点模块行 → 详情在下一帧出现 → 点「启用」→ 确认 → registry `intent=1`。
+- **timer 渲染尝试失败**：按上一轮设计加了一次性 `FW_LV_TIMER_CREATE(30ms)` 回调渲染待处理视图，
+  实测点模块行后页面仍停在列表（未重渲染）。可能是 timer 未创建成功（`FW_LV_TIMER_CREATE`
+  的调用约定/参数顺序待 IDB 核对），也可能是回调里找不到 active 页。改动已撤回，避免留下
+  一个「详情永远不出现」的状态。下一轮先用一个最简探针验证 `FW_LV_TIMER_CREATE` 能回调
+  （例如回调里写一个 `dm-` 标记），再谈用它渲染。
