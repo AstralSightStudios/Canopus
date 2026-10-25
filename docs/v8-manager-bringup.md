@@ -63,6 +63,20 @@ not_probed）。
   事件原始字节 `E<行>`、页查找 `F<序号>` + `Y/N<序号>`、推送 `K`/`X`）。
   不能往同一个文件里追加：这个 VFS 的写从 0 偏移开始，第一版每次覆盖，只剩最后一个标记。设备上只有像 n66 那样能跑 Run 的表盘才加载
   Supervisor，所以打点前必须先让 Supervisor 起来。
+
+### 2026-10-25 第四轮：3.1.32/3.1.190 的页面根与标题
+
+- 打点确认 n66 的页 **能创建**：`context→client init→open→refresh→select view→
+  native init→apply 完成`（标记 `c1 l1 o1 q1 v1 n1 Z1 I0`）。`I0` = on_create 跑完、
+  页面进入 interactive。
+- 之前卡在 `lvx_page_title_create`：把页标题建在**固件给的页容器**上时，3.1.32
+  的 `0xc4c5f60` 不返回（页面随即被拆、屏幕变黑）。现在固件给了容器就用容器放行，
+  标题改成普通 label；只有固件不给根（3.1.28）时才自建 screen 并用 stock 页标题。
+- n66 上页面创建完成后**屏幕仍显示表盘**：`goto_page_no_check_stacktop` 找到了页
+  （`page_lookup` 打点 `Y0`/`Y3`），也建好了页，但显示没切过去——3.1.32 的页栈切换在
+  quickapp 表盘之上是否允许，还没结论。
+- 屏幕根对象收到 `R6..R9`（长按重复/点击/释放/滚动开始），说明 LVGL 的 indev 确实
+  覆盖我们的页面；o66 的行点击是否被命中还未验证。
 ### 版面约束（三块屏尺寸不同）
 
 n66 192×490、n67 336×480、o66 212×520；`scripts/build_canopus_supervisor.sh` 按
