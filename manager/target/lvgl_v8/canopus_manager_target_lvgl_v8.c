@@ -973,23 +973,31 @@ static int32_t target_ui_apply(
             if (backend->page_title == NULL) {
                 diag_mark('T', '0');
 #if defined(CANOPUS_MGR_TITLE_PLAIN)
-                /* 3.1.32's lvx_page_title_create never returns when it is
-                 * handed the page-manager container (diag: T0 without T1), so
-                 * this target draws the page name itself. */
-                backend->page_title =
-                    manager_label_create(backend->root, CANOPUS_LABEL_BODY);
-                diag_mark('T', backend->page_title != NULL ? '2' : '3');
-                if (backend->page_title != NULL) {
-                    set_label_text(backend->page_title, primary);
-                    diag_mark('T', '4');
-                    set_size(backend->page_title, CANOPUS_TARGET_CONTENT_WIDTH,
+                /* 3.1.32 cannot take the stock title (T0 with no T1), and a
+                 * label created directly on the page-manager container hangs
+                 * the same way, so the header is a plain container with the
+                 * page name as its only child. */
+                void *header = object_create(backend->root, 0);
+                backend->page_title = header;
+                if (header != NULL) {
+                    void *title_label =
+                        manager_label_create(header, CANOPUS_LABEL_BODY);
+                    diag_mark('T', title_label != NULL ? '2' : '3');
+                    set_size(header, CANOPUS_TARGET_CONTENT_WIDTH,
                              CANOPUS_TARGET_ROW_TEXT_HEIGHT);
-                    diag_mark('T', '5');
-                    /* Centred in the container's content box, which is the
-                     * panel centre, so no horizontal offset. */
-                    align_to(backend->page_title, backend->root,
+                    if (title_label != NULL) {
+                        set_label_text(title_label, primary);
+                        diag_mark('T', '4');
+                        set_size(title_label, CANOPUS_TARGET_CONTENT_WIDTH,
+                                 CANOPUS_TARGET_ROW_TEXT_HEIGHT);
+                        align_to(title_label, header,
+                                 CANOPUS_TARGET_ALIGN_LEFT_MID,
+                                 CANOPUS_TARGET_TITLE_PAD, 0);
+                        diag_mark('T', '6');
+                    }
+                    align_to(header, backend->root,
                              CANOPUS_TARGET_ALIGN_TOP_MID, 0, 8);
-                    diag_mark('T', '6');
+                    diag_mark('T', '5');
                 }
 #elif defined(CANOPUS_MGR_TITLE_USER_DATA)
                 /* 3.1.190's lvx_page_title_create takes a fifth argument (the
@@ -1567,15 +1575,10 @@ static int manager_page_on_destroy(struct firmware_page_descriptor *page)
     }
     canopus_memset(&context->backend, 0, sizeof(context->backend));
     canopus_memset(&context->native, 0, sizeof(context->native));
-    if (manager_active_pages == 0u && manager_session_ready) {
-        if (manager_client.fd >= 0) {
-            (void)canopus_client_close(&manager_client);
-        }
-        manager_session_ready = 0u;
-        canopus_memset(&manager_model, 0, sizeof(manager_model));
-        canopus_memset(&manager_client, 0, sizeof(manager_client));
-        manager_client.fd = -1;
-    }
+    /* The session stays open across pages: closing it here ran a device
+     * round trip inside the page transition, and the stock back gesture from a
+     * Manager page reset the watch on 3.1.28. The client is process-wide, so
+     * nothing leaks by keeping it. */
     return 0;
 }
 
