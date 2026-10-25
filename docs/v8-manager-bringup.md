@@ -531,3 +531,12 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   1. 补 Band 9 的 L2 后端（需要 `l2-sram-probe` 静态恢复 + 设备探针，K18 那一套）；
   2. 本地安装：安装器把 `/data` 里的 `.canopus` 按 CPC2 上传分块直接写 `/dev/canopus`——
      不依赖 BLE，可在 Mirage 上验证。建议先做 2，再做 1。
+
+### 第二十一轮：o66 回归修复（region 释放只留给 Band 9）
+
+- 上一轮把「写 cave 前释放 stage-0 region」加到了三个安装器，**o66 因此回归**：AUTORUN 一跑就整机
+  复位。把这条改动限制在 3.1.32/3.1.190 之后，o66 的 AUTORUN 再次 `Run completed`，
+  `supervisor.elf` 114,132 B、`stage2.bin` 3,596 B、`registry.bin` = `CDR1`。
+- 记录：o66 的表盘按钮不吃触摸、AUTORUN 又是唯一触发方式，所以 o66 的每次改动都必须用
+  AUTORUN 跑一遍才能确认没有回归；另外 o66 安装新表盘**不会自动切换**，要覆盖「当前活动
+  目录」（用日志里的 `watchface(<id>)` 确认是哪一个）才会生效。
