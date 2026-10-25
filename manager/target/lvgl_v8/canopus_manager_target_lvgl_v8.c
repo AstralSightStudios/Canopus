@@ -563,6 +563,15 @@ static void target_dispatch_row(uint32_t row_index, void *event)
     }
 }
 
+#if defined(CANOPUS_TARGET_UI_DIAG)
+/* Does LVGL's indev reach our screen at all? Mark any press that lands here. */
+static void diag_root_press(void *event)
+{
+    uint32_t code = *(const uint32_t *)((const uint8_t *)event + 8u);
+    diag_mark('R', (char)('0' + (code % 10u)));
+}
+#endif
+
 #define CANOPUS_TARGET_ROW_CALLBACK(index) \
     static void target_row_event_##index(void *event) \
     { \
@@ -931,6 +940,16 @@ static int32_t target_ui_apply(
              * intentionally created once per firmware page: updating its title
              * contract is not yet recovered. */
             target_set_hidden(backend->page_title, 0u);
+#if defined(CANOPUS_TARGET_UI_DIAG)
+            {
+                typedef void (*add_event_fn)(void *, void (*)(void *), uint32_t,
+                                             void *);
+                ((add_event_fn)(uintptr_t)FW_LV_EVENT_ADD)(backend->root,
+                                                          diag_root_press, 0u,
+                                                          NULL);
+                target_set_flag(backend->root, CANOPUS_TARGET_FLAG_CLICKABLE, 1u);
+            }
+#endif
             previous = backend->page_title;
             first = backend->page_title;
             continue;
@@ -1342,8 +1361,10 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
 
     context = context_for_page(page);
     if (context == NULL) {
+        diag_mark('c', '0');
         return -1;
     }
+    diag_mark('c', '1');
     if ((uint32_t)page->page_id == CANOPUS_TARGET_PAGE_DETAIL) {
         requested_detail = (uint32_t)(uintptr_t)start_data;
         if (requested_detail == 0u) {
@@ -1359,8 +1380,10 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
             (object_create_fn)(uintptr_t)FW_LV_OBJECT_CREATE;
         root = object_create(NULL, 0);
         if (root == NULL) {
+            diag_mark('r', '0');
             return -1;
         }
+        diag_mark('r', '1');
     }
     canopus_manager_target_record.root_object = (uintptr_t)root;
     canopus_memset(&context->backend, 0, sizeof(context->backend));
@@ -1372,20 +1395,25 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
     (void)canopus_supervisor_restore_after_boot();
     if (!manager_session_ready) {
         rc = canopus_client_init(&manager_client, &target_device_io, NULL);
+        diag_mark('l', rc == CANOPUS_CLIENT_OK ? '1' : '0');
         if (rc != CANOPUS_CLIENT_OK ||
             canopus_client_open(&manager_client) != CANOPUS_CLIENT_OK) {
+            diag_mark('o', '0');
             return -1;
         }
+        diag_mark('o', '1');
         canopus_manager_init(&manager_model, canopus_client_transport,
                              &manager_client);
         canopus_manager_set_identity(
             &manager_model, CANOPUS_TARGET_ID, CANOPUS_TARGET_FIRMWARE_VERSION,
             CANOPUS_TARGET_FIRMWARE_BUILD, 1u);
         if (target_refresh_model() != 0) {
+            diag_mark('q', '0');
             (void)canopus_client_close(&manager_client);
             manager_client.fd = -1;
             return -1;
         }
+        diag_mark('q', '1');
         manager_session_ready = 1u;
     }
     if (context->backend.page_index == CANOPUS_TARGET_PAGE_DETAIL &&
@@ -1398,16 +1426,20 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         canopus_manager_target_record.detail_selected = selected;
     }
     if (target_select_page_view(context) != 0) {
+        diag_mark('v', '0');
         return -1;
     }
+    diag_mark('v', '1');
     if (context->backend.page_index == CANOPUS_TARGET_PAGE_DETAIL) {
         manager_pending_detail = 0u;
     }
     rc = canopus_manager_native_init(&context->native, &manager_model,
                                      &target_ui_backend_api, &context->backend);
     if (rc != CANOPUS_UI_OK) {
+        diag_mark('n', (char)('0' + (rc < 0 && rc > -10 ? -rc : 9)));
         return -1;
     }
+    diag_mark('n', '1');
     canopus_manager_native_set_router(&context->native, target_route, NULL);
     canopus_manager_native_set_refresh(&context->native, target_refresh,
                                        context);
