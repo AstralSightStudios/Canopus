@@ -1468,3 +1468,24 @@ CLICKED(7)/SHORT_CLICKED(4) 的分支始终没进到**（没有 `dm-k`、没有 
 活着的时候再发布一次（目前没有这种触发点），要么把图标改由 launcher 自己重建时获取。
 这条和「Manager 页面收不到输入」一起，是 o66 与 Band 10 Pro/Band 11 体验对齐的两个
 剩余缺口。
+
+### 第 31 轮补记 5：输入问题的排除清单（o66）
+
+在干净构建上逐项排除，全部为阴性：
+
+- 页在 resume 时的状态：`flags=0x0006`（**没有** 0x40「ui hidden queue」位）、
+  `lifecycle_state=8`、`page_kind=2`——不是「被判定为隐藏页」。
+- 页面对象与显示器：`lv_obj_get_display(root)` 与 `page+0x30` 对象同属一个 display；
+  `page+0x30` 在 on_create 前已是非空 PSRAM 对象（页管理器先建好的视图），
+  on_create 之后槽位等于我们的 root。
+- 根对象三选一都试过：自建 `object_create(NULL,0)`、页容器 `+0x30`、`+0x2c`
+  （后者页面打不开）。前两者页面能显示，但都收不到 press。
+- 标题容器：`-DCANOPUS_MGR_TITLE_PLAIN`（n66 用的方案）在 o66 上页面打不开，
+  说明 o66 必须用 stock `lvx_page_title_create`；而 stock 标题栏的返回按钮同样点不动
+  ——不是行坐标/可点标志的问题。
+- x/y 网格扫描（x=30/60/106/150/180 × y=380/390/400）没有任何一次切换页面。
+- `on_foreground_data(+0x54)` 置桩返回 0：无变化。
+
+结论：o66 的 Manager 页面在「显示、显示树、resume、页标志」上都正常，唯独
+**输入链路没有把它当作输入目标**。下一步只能在固件的活动管理器/indev 路径上做
+跟踪（例如在 `lv_indev` 的 `proc` 里对 `act_obj` 打点），而不是继续黑盒点击。
