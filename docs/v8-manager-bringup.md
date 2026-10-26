@@ -1178,3 +1178,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   该改动已回退。o66 的 STKOF 首故障转储里确实带了 `backtrace|49..55`
   （`0x0c11f5a4 0x0c0e8a62 0x0c1bf1d6 0x0c4c7b60 0x0c113672 0x0c0e86b8`），
   下次可以直接从这些地址往上查 shell 任务的调用链。
+- **o66 STKOF backtrace 的符号化**：`0x0C113660` = `pthread_start`（线程入口，调
+  `pthread/pthread_create.c` 里的启动函数）、`0x0C4C7B10` = `thread_schedule_loop`
+  （它调用 `sub_C1BEDB0` 任务体并打印 "thread_schedule_loop async/quit"）、
+  `0x0C1BEDB0` 是任务主体（0x920 字节）。也就是说这次栈溢出发生在 **`system` 任务的
+  工作线程调度循环里**，正处在一次闪存读（`nandflash_start_rx_dma`）之中；
+  与「安装期间的闪存 I/O 把该线程的栈压穿」一致。
