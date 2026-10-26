@@ -1046,3 +1046,18 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   n66 回归：新构建（114,336 B）Run → Manager 概览页照常打开（截图 22,353 B）。
   **图标本身尚未在应用列表里目视确认**（还需要「先打开应用列表 → 回表盘 → Run」的
   一次完整时序），这一步留待下一轮。
+- **n67 补充证据（本轮最后几次实验）**：
+  - 装上 Manager 之后日志里出现 `[launcher] launcher_page_insert_icon: launcher now has 34 apps`
+    ——说明 **n67 上的 launcher 图标插入是成功的**（不像 n66 从表盘加载时那样报
+    “launcher UI not created”），只是图标文件本身解码失败
+    （`invalid file /data/canopus/manager_icon.bin, cf: 25`，3.1.190 的图片格式与
+    3.1.32 不同），所以应用列表里可能只是缺图。
+  - 用 `-DCANOPUS_MGR_TITLE_PLAIN`（不走 stock 标题，和 n66 一样用普通容器）重编后
+    n67 仍然全黑，**排除「stock 标题盖住内容」**这个假设（该实验用环境变量切过一次，
+    之后已还原构建脚本）。
+  - `goto_page_no_check_stacktop`（`0x0C49E274`）的行为：新页面 push 后，只有当
+    **旧栈顶页的 cache policy ≤ 3** 才会 `sub_C44D608`（finish 旧页）；n67 的旧栈顶是
+    表盘页（cache policy 5），所以表盘页留在栈里，日志里也没有 `delete view`。
+  - n67 的 launcher 界面本身有问题：打开应用列表后滚动到底只看到黑底和
+    `change_layout.launcher` 字样，说明这台设备的 launcher 页面没有正常构建，
+    这也是「从应用列表打开 Manager」这条路暂时走不通的原因。
