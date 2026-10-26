@@ -880,11 +880,22 @@ local function run_installer()
         return
     end
     if run_attempted then
-        set_status("Run can only be used once; reboot before retrying")
+        -- The Supervisor stays resident across page switches, so Run doubles
+        -- as "open the Manager" once the install has run: 3.1.190 finishes
+        -- every page ten seconds after the screen sleeps, and the page
+        -- manager drops an app when its last page finishes, so OPEN_MANAGER
+        -- has to re-register the Manager app before pushing its page.
+        if supervisor_present() then
+            local opened, open_error = execute_step(CMD_OPEN_MANAGER, 0)
+            set_status(opened and "Manager opened"
+                or ("Open failed: " .. tostring(open_error)),
+                opened and '#8ff0a4' or '#ff9a9a')
+        else
+            set_status("Run can only be used once; reboot before retrying")
+        end
         return
     end
     run_attempted = true
-    run_button:clear_flag(lvgl.FLAG.CLICKABLE)
     local valid, validation_error = verify_module_file(supervisor_resource)
     if not valid then
         set_status("LOAD failed: " .. tostring(validation_error), '#ff9a9a')

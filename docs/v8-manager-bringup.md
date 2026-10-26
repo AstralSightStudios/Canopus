@@ -908,3 +908,47 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
     在同一台设备上解析失败（-101）。诊断构建目前不能用来做设备实验。
   - 屏幕约 5 s 息屏且息屏本身会走首故障路径；一次 `tap` 会被用来唤醒，所以每个动作
     实际需要「唤醒 tap + 动作 tap」两下。
+
+### 第二十八轮：启用链路端到端通过；息屏后 Manager 可重新打开
+
+- **「启用 → 确认 → registry intent=1」在 n66 上端到端验证通过**。点中确认行后，
+  详情页立刻变成 `状态：已启用`、动作变成 `立即激活 / 禁用 / 移除`；关机后读
+  `/canopus/registry.bin`，文件偏移 `0x3c`（slot+0x2C）由 0 变为 `0x01`。
+  下一次开机 INSTALL/RESTORE_AFTER_BOOT 把它恢复并激活，详情页显示 `状态：运行中`。
+  触摸标定：绘制在 y≈160 的「启用」用 tap y=160 点中；确认框里「取消」绘制 y≈110、
+  「确认」绘制 y≈145，实际要 tap **y≈140**（150 会落到行外，点不动）。
+  之前把 `0x30` 当作 intent、把确认行按「-60 px 偏移」去点是两处误判。
+- **息屏时整条页面栈会被弹掉**（`tmp.log` 证据，08:00:37 息屏）：
+  `MiWearScreen ... ON-->OFF` 后 `miwear_alarm start_alarm(14, 10000)`；10 s 后
+  `exec_pop_lifecycle_without_cachepolicy {20,1}/{20,0}`（表盘）、
+  `{202,1}/{202,0}`（Manager）依次 `on_destroy_wrapped`，接着
+  `remove_app_from_list: pkg = com.canopus.manager, start_source = 10`，然后
+  `{16,0} resume` 回到主屏。即 3.1.32 的「息屏 10 s 回表盘」策略会把所有页面
+  finish 掉；`finish_page`（`sub_C45E5C0`）在 app 的最后一个页销毁时调用
+  `remove_app_from_list`（`sub_C45BD5C`），所以 **Manager 的 app 注册会随息屏消失**。
+- **修复：`canopus_manager_native_open()` 先重新注册再 push**。
+  `canopus_manager_native_install()` 本身是幂等的（`app_lookup(app_id)` 命中就直接返回 0），
+  所以在 push 之前调用一次即可让 OPEN_MANAGER 在同一次开机里反复可用。
+  安装器表盘的 Run 按钮改成：首次点击执行安装；`run_attempted` 之后再点就发
+  `CMD_OPEN_MANAGER`（不再 `clear_flag(CLICKABLE)`），因此「Run」兼作「打开管理器」。
+  设备实测：Run → Manager → 息屏 24 s（页面被弹回表盘）→ 再点 Run →
+  **Manager 概览页重新出现**（截图 22353 B，`系统信息` 全表），随后 模块 → 详情
+  照常显示 `已启用 / 运行中`、`禁用 / 移除`。
+- **现场操作教训：正在运行的表盘是 `cp9probe0003`，不是 `366140352`**。
+  `[lua] miwear_lua_run: run script: /data/app/watchface/market/cp9probe0003//main.lua`
+  才是引擎实际加载的脚本；把 `main.lua`/资源放进 `366140352` 完全不生效（标题改动
+  可以直接验证这一点）。以后替换表盘脚本/资源一律写 `cp9probe0003/`。
+- **panic 路径的根因在固件里，已有反编译证据**：`/dev/kmsg` 的环形缓冲描述符在
+  `0x2006C0F4`，`+0x00` head、`+0x04` tail、`+0x18` size、`+0x1C` buf
+  （`sub_C141A8C` 的 `*(buf + head) = ch` 就是崩溃指令 `0x0C141AFA`）。size = `0x4C2D`、
+  buf = `0x200CB3D4`，所以**缓冲区最后一个字节正好是 `0x200D0000`，也就是 stage-0 cave
+  页的首字节**；head 走到 `0x4C2C` 时写这一字节，而 cave 页被 region 映射成 RX，
+  于是 MemManage（DACCVIOL，MMFAR=0x200D0000）。正常日志不会崩（连续 14 次唤醒/息屏、
+  加 60 s 空闲都活着），所以这是 **panic 转储自身**被这一字节放大的问题：首故障的寄存器
+  与栈在 head 不落在末尾时能完整落盘（crash09/10 里的 UsageFault `PC=0x10`、
+  `LR=0x0C2748D1`、调用链 `0x0c274909→…→0x0c463595` 就是 LVGL 事件派发里
+  `cb == 0x10`），落在末尾时只剩二次故障。后续若要稳定拿到首故障，可在安装器 Run
+  之后把 size 改成 `0x4C2C`（`mw 2006c10c=00004c2c`）或把 cave 移出该页。
+- 本轮构建：n66 Supervisor 114,276 B（verifier PASS），stage1 417 B、stage2 3,576 B；
+  四个资源和 `main.lua` 一起写进 `cp9probe0003/`（stage2 内嵌 supervisor 尺寸，
+  只换 supervisor 会报 -5）。
