@@ -1214,3 +1214,13 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   Manager 图标能落盘，但流程在「开始跑 5 步 CPC2 安装」之前就停了（下一步要在
   `run_all_steps` 之前/之内再细打点，确认是异常、文件句柄还是 pcall 吞掉）。
   同一台设备上 Manager 概览与模块页都能正常打开（26,863 / 7,197）。
+- **擦除后的 o66：模块重新装回来了**。用「仓库表盘 + 末尾加一步
+  `CMD_INSTALL`(2, `"hello_portable\0"`) + AUTORUN」的临时表盘跑一次：
+  `install-result.txt` 里是 **`result=5 err=0`（COMPLETED）**，
+  `/canopus/registry.bin` slot 0 = `hello_portable`。随后装回仓库表盘，
+  Manager 概览与模块页都能打开（26,863 / 7,197）。
+- **仍未解决的一点**：在这台 o66 上，只要在「屏幕关着」的时候做页面推入
+  （例如连续几次 Run 里的 OPEN_MANAGER），设备会重启（mi logo）。干净设备上
+  载入不再崩，但「灭屏期间 push」这条仍然危险——下一步应让 OPEN_MANAGER 只在
+  屏幕点亮时执行（表盘侧先确认屏幕状态，或在 Supervisor 侧检查
+  `sub_C448910()==2` 再 push）。
