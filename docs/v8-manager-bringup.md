@@ -1061,3 +1061,14 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   - n67 的 launcher 界面本身有问题：打开应用列表后滚动到底只看到黑底和
     `change_layout.launcher` 字样，说明这台设备的 launcher 页面没有正常构建，
     这也是「从应用列表打开 Manager」这条路暂时走不通的原因。
+- **决定性实验：n67 的页面视图确实没有被放到显示上**。加了一个只在
+  `-DCANOPUS_MGR_VIEW_PROBE` 下编译的探针，在拿到页面视图后把视图本身刷成纯红
+  （`lv_obj_set_local_style_prop(view, BG_COLOR/BG_OPA)`）——设备上 Run 之后面板
+  **仍然是纯黑（2274 B）**。所以问题不在行/字体/标题/样式，而是
+  「page manager 建好并 resume 的 view 没有出现在面板上」。结合
+  `goto_page_no_check_stacktop` 不 finish 旧栈顶（表盘页 cache policy 5），
+  以及这台 n67 设备的 `/system` 为空（日志里 342 次
+  `Can't access font file: /system/font/MiSans-Regular.ttf`，n66 是 0 次），
+  下一步应先用**完整的 3.1.190 资源包**把这台设备供起来（Mirage 的 archive 里
+  只有 `ZZ~` 自定义容器、`firmware import` 不收），再判断是不是资源缺失导致的
+  显示层异常；探针保留在源码里（不定义宏时完全不编译）。

@@ -1627,6 +1627,20 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
         }
     }
     canopus_manager_target_record.root_object = (uintptr_t)root;
+#if defined(CANOPUS_MGR_VIEW_PROBE)
+    /* Bring-up probe: paint the page view solid red. If the panel turns red
+     * the view is on the display and the rows are what is invisible; if it
+     * stays black the view itself is not displayed. */
+    {
+        typedef int32_t (*set_prop_fn)(void *, uint32_t, void *, uint32_t);
+        set_prop_fn set_prop =
+            (set_prop_fn)(uintptr_t)FW_LV_OBJECT_SET_LOCAL_STYLE_PROP;
+        uint16_t red = 0xF800u;
+        uint16_t opa = 0xFFu;
+        (void)set_prop(root, 0x07u /* LV_STYLE_BG_COLOR */, &red, 0u);
+        (void)set_prop(root, 0x06u /* LV_STYLE_BG_OPA */, &opa, 0u);
+    }
+#endif
     diag_mark('a', stage);
     canopus_memset(&context->backend, 0, sizeof(context->backend));
     diag_mark('b', stage);
