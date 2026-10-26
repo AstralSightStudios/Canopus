@@ -252,13 +252,18 @@ static uint32_t manager_pending_detail;
  * renders in the modules page; the render must wait until the click dispatch
  * returns, or it would replace the snapshot the dispatch is still reading. */
 static uint8_t manager_pending_inline_detail;
-/* A short press delivers two clicks; the second one lands on a row the
- * in-place render just rebound. Guard the gesture instead of counting clicks:
- * a release clears manager_click_handled, so only the second click of the very
- * same gesture is dropped. */
-static uint8_t manager_render_guard;
-static uint8_t manager_click_handled;
+/* A tap delivers SHORT_CLICKED and then CLICKED. Dispatching both runs the
+ * action once on the list row and again on whatever row the first render bound
+ * under the finger, which is the phantom remove; CLICKED is the one that
+ * arrives after the press settled, so only it dispatches here. */
+static uint8_t manager_render_pending;
 #endif
+/* Set while target_dispatch_row runs the semantic event handler, with the
+ * backend whose page dispatched it. A commit aimed at that page from inside
+ * the dispatch is applied when the dispatch returns: 3.1.32 resets the SoC
+ * when a page is rebuilt while the input device still walks its rows. */
+static uint8_t manager_in_dispatch;
+static void *manager_dispatch_backend;
 static uint8_t manager_session_ready;
 
 _Static_assert(CANOPUS_MANAGER_TARGET_APP_ID <= UINT16_C(0x00FF),
@@ -554,38 +559,16 @@ static void target_dispatch_row(uint32_t row_index, void *event)
 
     if (event == NULL || row_index >= CANOPUS_TARGET_UI_MAX_ROWS) return;
     diag_dump('E', (char)('0' + (row_index % 10u)), event, 32u);
-#if defined(CANOPUS_MGR_INPLACE_DETAIL)
-    /* A short press delivers SHORT_CLICKED and then CLICKED before RELEASED.
-     * The first opens the in-place view, so the second would land on a row the
-     * render just rebound (the phantom remove). Swallow only that second click
-     * of the same gesture: a release means the next click is a real tap. */
-    {
-        uint32_t new_code = (uint32_t)((const uint8_t *)event)[8];
-        const uint32_t released = 8u; /* LV_EVENT_RELEASED, as 7 is CLICKED */
-        int is_click = new_code == CANOPUS_TARGET_EVENT_CLICKED ||
-                       new_code == CANOPUS_TARGET_EVENT_SHORT_CLICKED;
-        if (new_code == released) {
-            manager_click_handled = 0u;
-        } else if (is_click && manager_render_guard != 0u) {
-            /* The rows may never see the release (the pressed object is gone
-             * after the render), so clear both here: exactly one click is
-             * dropped and the next real tap works. */
-            uint8_t phantom = manager_click_handled;
-            manager_render_guard = 0u;
-            manager_click_handled = 0u;
-            if (phantom != 0u) {
-                return;
-            }
-        }
-        if (is_click) {
-            manager_click_handled = 1u;
-        }
-    }
-#endif
     /* The event code is the first byte of the field at +8: the bytes above it
      * belong to the neighbouring field, so a 32-bit read yields a word such as
      * 0x3c350007 for CLICKED. Every code this firmware sends fits in a byte. */
     code = (uint32_t)((const uint8_t *)event)[8];
+#if defined(CANOPUS_TARGET_UI_DIAG)
+    /* Which codes a row receives in one run: SHORT_CLICKED (4) and CLICKED (7)
+     * for the same release, RELEASED (8), and the periodic refresh (35). */
+    diag_mark('Q', code < 10u ? (char)('0' + code)
+                              : (char)('A' + ((code - 10u) % 26u)));
+#endif
     for (page_index = 0; page_index < CANOPUS_TARGET_PAGE_COUNT; page_index++) {
         struct canopus_target_page_context *context = &manager_pages[page_index];
         struct canopus_target_ui_binding *binding;
@@ -594,8 +577,11 @@ static void target_dispatch_row(uint32_t row_index, void *event)
         if (!context->active || !context->interactive ||
             context->backend.rows[row_index] == NULL) continue;
         diag_mark('U', (char)('0' + (row_index % 10u)));
-        if (code != CANOPUS_TARGET_EVENT_CLICKED &&
-            code != CANOPUS_TARGET_EVENT_SHORT_CLICKED) {
+        if (code != CANOPUS_TARGET_EVENT_CLICKED
+#if !defined(CANOPUS_MGR_INPLACE_DETAIL)
+            && code != CANOPUS_TARGET_EVENT_SHORT_CLICKED
+#endif
+            ) {
             return;
         }
         binding = &context->backend.bindings[row_index];
@@ -630,7 +616,11 @@ static void target_dispatch_row(uint32_t row_index, void *event)
             event.key = binding->key;
             event.event_id = binding->event_id;
             event.type = CANOPUS_UI_EVENT_ACTIVATE;
+            manager_in_dispatch = 1u;
+            manager_dispatch_backend = &context->backend;
             rc = canopus_ui_dispatch_event(&context->native.ui, &event);
+            manager_in_dispatch = 0u;
+            manager_dispatch_backend = NULL;
             /* A click that the ui context drops leaves the page visibly dead;
              * say why (S=stale generation, A=key/event mismatch, U=no
              * capability) instead of a bare C<row>. */
@@ -641,13 +631,32 @@ static void target_dispatch_row(uint32_t row_index, void *event)
             }
         }
         canopus_manager_target_record.selected_after = manager_model.selected;
-#if defined(CANOPUS_MGR_INPLACE_DETAIL)
-        /* The detail render waits for the next click (top of this function),
-         * so this tap's release cannot land on the rows it creates. */
-#endif
         if (rc == CANOPUS_UI_ERR_DISABLED) {
+#if defined(CANOPUS_MGR_INPLACE_DETAIL)
+            /* The disabled action renders nothing itself; keep its redraw on
+             * the same after-dispatch path. */
+            manager_render_pending = 1u;
+#else
             (void)canopus_manager_native_render(&context->native);
+#endif
         }
+#if defined(CANOPUS_MGR_INPLACE_DETAIL)
+        /* The dispatch only records what to show (the in-place subview or the
+         * confirmation dialog, and the refreshed state after a confirmed
+         * action); the page is rebuilt once here, after the dispatch has
+         * returned. Rebuilding it inside the dispatch destroys the row the
+         * input device is still walking. */
+        if (manager_render_pending != 0u ||
+            manager_pending_inline_detail != 0u) {
+            manager_render_pending = 0u;
+            manager_pending_inline_detail = 0u;
+            diag_mark('P', '2');
+            if (canopus_manager_native_render(&context->native) !=
+                CANOPUS_UI_OK) {
+                diag_mark('P', '3');
+            }
+        }
+#endif
         return;
     }
 }
@@ -1019,6 +1028,16 @@ static int32_t target_ui_apply(
         backend->page_index >= CANOPUS_TARGET_PAGE_COUNT) {
         return -1;
     }
+#if defined(CANOPUS_MGR_INPLACE_DETAIL)
+    /* A commit aimed at the page that is currently dispatching is applied by
+     * target_dispatch_row once the dispatch returned. A page pushed by the
+     * same route (a different backend) still renders immediately. */
+    if (manager_in_dispatch != 0u && (void *)backend == manager_dispatch_backend) {
+        manager_render_pending = 1u;
+        diag_mark('P', '1');
+        return 0;
+    }
+#endif
     if (backend->content_root == NULL) {
         backend->content_root = backend->root;
     }

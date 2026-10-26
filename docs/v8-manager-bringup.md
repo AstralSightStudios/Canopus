@@ -859,3 +859,52 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   在原理上可行（我上次实现时它没渲染，更可能是渲染循环里没找到 active 页或提前 return 掉了），
   这比依赖 `FW_LV_TIMER_CREATE`（实测返回 NULL）更靠谱。下一轮回到这条路并加打点：
   在延后渲染的分支里先写 `dm-R1`（进入）、再写 `dm-R2`/`dm-R0`（找到/没找到可渲染页）。
+
+### 第二十七轮：一次点击只派发一次；详情/确认框恢复正常
+
+- **幻影的根因是双击派发，不是几何偏移**。LVGL v8 的一次短按会先送
+  `SHORT_CLICKED(4)`、再送 `CLICKED(7)`；行回调把两者都当点击派发，于是第一次点击
+  （模块行）在派发尾部就地渲染详情、第二次点击（同一手势）落到渲染后重新绑定的行上，
+  把 `confirm_event` 覆盖成另一条动作。修法：`CANOPUS_MGR_INPLACE_DETAIL` 构建只认
+  `CLICKED`，`SHORT_CLICKED` 只写打点不派发。
+- **设备实测（n66，Mirage）**：模块列表 → 点 `hello_portable` → **详情视图就地渲染**
+  （状态/生命周期/启用/移除），**没有幻影确认框**；点「启用」→ 确认框文案是
+  「在下次手环启动时启用该模块？」，即动作行的绑定第一次和文案一致。
+- **派发内的渲染改到派发之后**：`target_ui_apply` 在 `manager_in_dispatch` 时只置
+  `manager_render_pending`，`target_dispatch_row` 在派发返回后统一渲染一次
+  （详情、确认框、确认后的刷新状态都走这一处）。这同时删掉了上一轮的两套守卫
+  （按次数吞点击、按手势吞点击）——它们都只是在绕开双击，不能同时保证「一次点击一次动作」。
+- **确认动作仍未端到端复验**：确认框弹出后按「确认」，registry 的 `intent` 仍是 0。
+  注意 registry 布局：header 16 B、slot 48 B；`intent` 在 `slot+0x2C`（文件偏移 `0x3c`），
+  `0x30` 是 `lifecycle_class`（1 = 重启生效），不要再把 0x30 误读成 intent。
+  下一步：按实测的触摸带偏移（绘制在 y≈134 的「启用」用 y≈75 点中）校准「确认」行
+  （绘制 y≈145 → 大约 y≈85），或用打点把 `target_dispatch_row` 的 row/key/event 再 dump 一次。
+
+### 设备稳定性：panic 路径自身在 0x200D0000 再次崩溃
+
+- **任何 panic 都会被日志环形缓冲区的越界写放大**。崩溃转储稳定落在
+  `PC=0x0C141AFA`（`sub_C141A8C`，控制台环形缓冲 putc）、`MMFAR=0x200D0000`，
+  `R0=0x2006C0F4`、`R5/R6=0x200CB3D4`：缓冲区 `0x200CB3D4 + 0x4C2D` 正好结束在
+  stage-0 cave 的基址 `0x200D0000`。cave 在加载期间被 MPU region 7 映射、之后释放；
+  日志索引走到最后一个字节时要么撞上被映射的 cave、要么落在 RAM 映射之外，
+  于是第一次 panic 的转储本身又触发 MemManage，表现为「Hard Fault escalation」+ 整机断电。
+  所以最近的崩溃日志大多是 panic 路径的二次故障，掩盖了真正的首故障。
+- **试过的缓解（未生效）**：在安装器 Run 结束时用 `mw 2006c10c=00004c2c` 把环形缓冲
+  的 size 字段减一。设备仍在同一路径断电，说明字段/值还不对，或者首故障之后还有别的映射问题。
+  要真正解决，需要把 cave 移出日志缓冲区的末尾，或在加载完成后把 cave 所在页恢复为普通 RW。
+- **首故障之一（来自 crash07 的寄存器）**：`UsageFault, PC=0x10`，`LR=0x0C2748D1`
+  （`sub_C2748B4`，LVGL 事件派发循环里的 `cb(object, event)`），即某个对象的事件描述符
+  `cb` 变成了 `0x10`。它出现在页面/视图销毁与息屏路径上，和「page_goto 在点击派发里
+  销毁源页」的时序吻合。下一步应先让 panic 转储能落盘（上述二次故障），再看首故障的
+  完整调用栈，而不是继续按现象猜。
+- **现场操作经验**：
+  - 手动 Run 比 AUTORUN 可靠：AUTORUN 在开机早期加载 Supervisor 会撞上 launcher
+    正在为已注册 app 创建主视图（`insert_app_to_list` → `on_ui_create {202,0}`），
+    随后在视图销毁路径崩溃。开机后等 ~15 s 再点 Run 可避开。
+  - 替换表盘资源时 **stage2 与 supervisor 必须同一次构建**：stage2 把
+    `CANOPUS_BAND9_SUPERVISOR_SIZE` 编译进常量，只换 supervisor 会让读循环读到 EOF
+    并报 `cannot read staged Supervisor ELF`（-5）。
+  - Supervisor 体积敏感：114,704 / 114,640 / 114,256 B 可加载，116,484 B（诊断构建）
+    在同一台设备上解析失败（-101）。诊断构建目前不能用来做设备实验。
+  - 屏幕约 5 s 息屏且息屏本身会走首故障路径；一次 `tap` 会被用来唤醒，所以每个动作
+    实际需要「唤醒 tap + 动作 tap」两下。
