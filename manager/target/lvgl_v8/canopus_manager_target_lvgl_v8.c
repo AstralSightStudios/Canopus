@@ -1984,9 +1984,21 @@ int canopus_manager_native_open(void)
     /* 3.1.32 drops an app from the page manager's list as soon as its last page
      * finishes (finish_page -> remove_app_from_list), and the firmware finishes
      * every page ten seconds after the screen sleeps to return to the watchface.
-     * Re-register before pushing, so OPEN_MANAGER still works in the same boot;
-     * install is a single lookup once the app is back in the list. */
-    if (canopus_manager_native_install() != 0) return -1;
+     * Registering and pushing in the same call reset the SoC on 3.1.28, so when
+     * the app has to come back, this call only registers and the next
+     * OPEN_MANAGER (one more user action) pushes from a settled state. */
+    {
+        typedef void *(*app_lookup_fn)(uint16_t);
+        void *installed = ((app_lookup_fn)(uintptr_t)FW_APP_LOOKUP)(
+            CANOPUS_MANAGER_TARGET_APP_ID);
+        if (installed == 0) {
+            if (canopus_manager_native_install() != 0) return -1;
+            if (canopus_manager_target_record.launcher_add_result < 0) {
+                (void)manager_launcher_publish();
+            }
+            return 0;
+        }
+    }
     if (canopus_manager_target_record.launcher_add_result < 0) {
         (void)manager_launcher_publish();
     }
