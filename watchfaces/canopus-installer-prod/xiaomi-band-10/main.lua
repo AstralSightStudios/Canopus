@@ -890,8 +890,18 @@ local function run_installer()
         set_status("LOAD failed: " .. tostring(validation_error), '#ff9a9a')
         return
     end
-    if not supervisor_present() then
-        set_status("Loading supervisor with mw/exec...")
+    if supervisor_present() then
+        -- The Supervisor is already resident in this boot, so the install has
+        -- run: a second full five-step pass resets 3.1.28, so this Run only
+        -- opens the Manager.
+        local opened, open_error = execute_step(CMD_OPEN_MANAGER, 0)
+        set_status(opened and "Manager opened"
+            or ("Open failed: " .. tostring(open_error)),
+            opened and '#8ff0a4' or '#ff9a9a')
+        return
+    end
+    set_status("Loading supervisor with mw/exec...")
+    do
         local loaded, load_error = load_supervisor()
         if not loaded or not supervisor_present() then
             set_status("LOAD failed: " .. tostring(load_error or "no /dev/canopus")

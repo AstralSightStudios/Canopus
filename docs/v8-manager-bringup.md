@@ -1264,3 +1264,8 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   **设备仍然重启（mi logo）**。⇒ 重启的触发点不是「推页」，更可能是**连续两次完整
   安装流程**；下一步应把「安装」和「打开」在时间上拉开（或让第二次 Run 只做
   OPEN_MANAGER、不重复 5 步）。
+- **o66 表盘改成「每个启动周期只安装一次」**：`run_installer` 现在先看
+  `supervisor_present()`——已在则**只发 `CMD_OPEN_MANAGER`、不再重跑 5 步 CPC2**
+  （重复整轮安装是本轮观察到的重启触发点）；只有不存在时才载入并跑步骤。
+  设备上这一版已安装，但端到端（连点两次 Run → Manager）**尚未复验成功**：
+  截图仍停在表盘 "Ready"，需要下一轮用「表盘重建后立刻点」的时序再验证。
