@@ -4,7 +4,7 @@
 // firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
 // sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
 // revision : 1
-// input_digest: 1881ae595ad3b125
+// input_digest: a03a57c1944d2381
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -216,6 +216,9 @@ pub const CANOPUS_FW_LV_TIMER_DEL_CALLABLE: usize = canopus_thumb_callable(0xc4e
 /// Recovered `lvx_label_create` at 0xc0d7fe0. Thumb callable address 0xc0d7fe1.
 pub const CANOPUS_FW_LVX_LABEL_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc0d7fe1usize);
 
+/// Recovered `screen_state_get` at 0xc4723b8. Thumb callable address 0xc4723b9.
+pub const CANOPUS_FW_SCREEN_STATE_GET_CALLABLE: usize = canopus_thumb_callable(0xc4723b9usize);
+
 /// Recovered `mm_free_default` at 0xc11eee8. Thumb callable address 0xc11eee9.
 pub const CANOPUS_FW_MM_FREE_DEFAULT_CALLABLE: usize = canopus_thumb_callable(0xc11eee9usize);
 
@@ -420,6 +423,7 @@ pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_calla
 // register_driver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
 // rmmod: FORBIDDEN - no binding may ever be generated
+// screen_state_get: restricted - not exported until context/ownership approved
 // sdp_builder_create: restricted - not exported until context/ownership approved
 // sdp_commit: restricted - not exported until context/ownership approved
 // sdp_set_raw_attribute: restricted - not exported until context/ownership approved

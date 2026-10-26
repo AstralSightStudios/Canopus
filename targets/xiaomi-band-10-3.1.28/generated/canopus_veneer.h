@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: 1881ae595ad3b125
+ * input_digest: a03a57c1944d2381
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -275,6 +275,11 @@ static inline void canopus_fw_lv_timer_del(void * a0) {
 typedef void * (*canopus_fw_lvx_label_create_fn)(void *);
 static inline void * canopus_fw_lvx_label_create(void * a0) {
     return ((canopus_fw_lvx_label_create_fn)(uintptr_t)0xc0d7fe1)(a0);
+}
+
+typedef int32_t (*canopus_fw_screen_state_get_fn)(void);
+static inline int32_t canopus_fw_screen_state_get(void) {
+    return ((canopus_fw_screen_state_get_fn)(uintptr_t)0xc4723b9)();
 }
 
 typedef void (*canopus_fw_mm_free_default_fn)(void *);

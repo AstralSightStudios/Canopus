@@ -263,6 +263,11 @@ const V8_TEXT_FONT: &[Mapping] = &[
         address: Address::Callable,
     },
     Mapping {
+        macro_name: "FW_SCREEN_STATE_GET",
+        symbol_name: "screen_state_get",
+        address: Address::Callable,
+    },
+    Mapping {
         macro_name: "FW_LV_TIMER_CREATE",
         symbol_name: "lv_timer_create",
         address: Address::Callable,

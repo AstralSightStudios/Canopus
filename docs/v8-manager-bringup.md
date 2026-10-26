@@ -1255,3 +1255,12 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   `tools/canopus-core/src/target_config.rs` 里登记宏名并重新生成
   `generated/canopus_target_config.h`，然后再在 `canopus_manager_native_open()` 里
   「屏幕未点亮就只注册不推页」。这条改动需要 Rust 侧 + 生成物 + CI 一起提交，本轮未动。
+- **屏幕状态门槛已实现但仍未能阻止 o66 重启**：新增 symbol 记录
+  `xiaomi-band-10-3.1.28.exact.screen_state_get`（entry `0xC4723B8`，callable
+  `0xC4723B9`，`on_resume_wrapped` 用它与 2 比较）、在
+  `tools/canopus-core/src/target_config.rs` 登记 `FW_SCREEN_STATE_GET`、重新生成
+  target 产物；`canopus_manager_native_open()` 现在在 `FW_SCREEN_STATE_GET() != 2`
+  时只返回、不推页。设备实测：快速连点两次 Run（都会跑完整 5 步 CPC2）之后，
+  **设备仍然重启（mi logo）**。⇒ 重启的触发点不是「推页」，更可能是**连续两次完整
+  安装流程**；下一步应把「安装」和「打开」在时间上拉开（或让第二次 Run 只做
+  OPEN_MANAGER、不重复 5 步）。

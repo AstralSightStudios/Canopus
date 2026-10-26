@@ -2002,6 +2002,16 @@ int canopus_manager_native_open(void)
     if (canopus_manager_target_record.launcher_add_result < 0) {
         (void)manager_launcher_publish();
     }
+#if defined(FW_SCREEN_STATE_GET)
+    /* 3.1.28 resets the device when a page is pushed while the panel is off:
+     * on_resume_wrapped (0xc44d7ac) refuses the resume ("Now screen state isn't
+     * on") and the page is popped on the next sleep. Only push with the screen
+     * on (state 2); when it is off this call is a no-op and the next tap, which
+     * wakes the screen, performs the push. */
+    if (((int32_t (*)(void))(uintptr_t)FW_SCREEN_STATE_GET)() != 2) {
+        return 0;
+    }
+#endif
     /* Opening the Manager has no source page of our own, so the push is safe to
      * run inline; only row routes have to wait for the next tick. */
     return page_goto(target_page_key(CANOPUS_TARGET_PAGE_OVERVIEW), 0u, 0u, 0u) < 0
