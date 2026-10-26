@@ -1156,3 +1156,7 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   stage1/stage2/supervisor 资源读写、`/canopus` 落盘）把这条路径压垮，
   而不是我们的 UI 代码。下一步要么减小安装期间的 I/O 突发（分批写、减少重复读），
   要么先确认这条路径在官方表盘下是否会因为相似 I/O 触发。
+- 分块读（4 KB 一段）实验**没有**消除 o66 的 STKOF（装一次仍然重启，开机出现 mi logo），
+  该实验已回退、未提交。结合反编译结论（`nandflash_start_rx_dma`），这条栈溢出更像是
+  固件在该任务上的栈本身偏小，需要从**设备/固件侧**处理（或改成不经过大块 NAND 读的
+  安装路径），而不是表盘 Lua 的读取方式。
