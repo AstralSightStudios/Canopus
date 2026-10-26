@@ -1797,6 +1797,13 @@ static const struct firmware_app_descriptor manager_app = {
     .launcher_icon_resource = launcher_icon,
     .app_id = CANOPUS_MANAGER_TARGET_APP_ID,
     .launcher_metadata_callback = manager_display_name,
+#if defined(CANOPUS_MGR_APPINFO_190)
+    /* 3.1.190's launcher_load_app_info copies bit 2 of this byte into the
+     * launcher entry's "show in app list" bit (entry+20 bit 1) and logs the
+     * same bit as "can't be uninstalled". Without it the entry is hidden, so
+     * the Manager never appears in the app list. */
+    .flags = 0x04,
+#endif
 #if defined(CANOPUS_MGR_APPINFO_1028) || !defined(CANOPUS_MGR_APPINFO_190)
     /* launcher_load_app_info copies bit 1 of this byte into the launcher
      * entry's "show in app list" flag (entry+16, bit 2); the launcher's draw

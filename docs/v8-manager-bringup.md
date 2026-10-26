@@ -1001,3 +1001,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   但始终没有 `activitymanager_active_by_layer: {202, 0 resume}`，所以下一步应确认
   我们的页面在那一刻的 +0x18 flags 是否被固件置成了 0x40（隐藏），以及
   `sub_C4477A8` 到 `sub_C449D0C`（resume）之间的条件。
+- **3.1.190 的 launcher app 描述符也要置「显示」位**：`launcher_load_app_info`
+  （`0x0C2A308C`）读 +0x0C 图标、+0x10 app_id、+0x12 的 bit2 并把它写进
+  launcher 条目 +20 的 bit1（该位同时被日志称作 “can't be uninstalled”）、+0x1C 元数据
+  回调、+0x38 bit0 = 需隐藏。原来 3.1.190 构建这两个字节都是 0，所以条目被标成不显示。
+  现在 190 构建把 `.flags = 0x04`。设备上补这一位后 **画面仍然全黑**，说明它不是
+  「不上屏」的原因（但 launcher 可见性仍需要它，属未单独复验的修正）。
