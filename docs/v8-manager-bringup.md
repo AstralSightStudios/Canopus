@@ -1362,3 +1362,28 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 （无 Supervisor 时同样动作不重启；最新的 `/log/minidump/crash19.txt` 在 08:00:28
 息屏处截断）。下一步在 launcher 页 pop 路径上找 Supervisor 造成差异的点，
 之后才是「先开一次应用列表再 Run」时图标能否出现在「更多」的最后一页。
+
+### 第 31 轮补记：息屏即重启也是同一个构造函数栈溢出
+
+上一节修掉 `sup_gen_exists` 的 224 B 路径缓冲后，「Run 后第一次息屏就重启」
+仍然出现（`/log/minidump/crash20.txt` 正好截断在屏幕 OFF 的过渡里）。用构造函数
+checkpoint 逐段二分：
+
+- ctor 一进来就返回 → 连续 4 次息屏不重启；
+- `canopus_supervisor_init` 之后、`register_device` 之前返回 → 同样不重启；
+- 完整 ctor（注册 `/dev/canopus` + 读注册表）→ 数秒后的息屏重启。
+
+结论：不是驱动注册本身，而是**构造函数把 exec 任务的栈用得只剩一点点**，
+`sup_restore_registry()` 的 784 B 注册表缓冲就是那一大块。把它改成随 Supervisor
+镜像存放的 static 缓冲后，完整构建在设备上连续 6 次息屏/弹页都**没有重启**，
+随后第二次 Run 正常打开 Manager（26,829）。⇒ o66 上「装完就重启」的两个症状
+（加载中重启、息屏重启）是**同一个根因**：构造函数栈溢出。
+
+同时用临时标记（`dm-*` 文件）确认了 o66 上 Manager 行的点击链路现状：行回调确实
+被调用（`dm-j0..9`，事件码 1/2/3/4/5/6/7 都出现），页面上下文 `active`/
+`interactive`/`rows[row]` 也都成立（`dm-A0`/`dm-I0`/`dm-R0`），但**代码里只接受
+CLICKED(7)/SHORT_CLICKED(4) 的分支始终没进到**（没有 `dm-k`、没有 `dm-r`），
+所以路由从未被调用、页面不切换。也就是说按下/释放事件到达了我们的对象，但 LVGL
+没有把它们判定为「同一次点击」。下一轮应从「对象命中区域 vs 实际绘制位置」入手
+（`lv_obj_get_coords` 已经在 3.1.28 上有 symbol 记录），确认行的坐标是否被父级
+滚动/偏移影响。

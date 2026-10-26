@@ -1934,7 +1934,11 @@ int canopus_supervisor_save_registry(struct canopus_supervisor_v1 *sup)
 static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
                                 int load_enabled_modules)
 {
-    uint8_t buf[CANOPUS_SUP_REGISTRY_SIZE];
+    /* The boot constructor runs on the firmware exec task's stack (3.1.28):
+     * a 784 B frame here plus the platform path buffers overflows it and the
+     * next screen sleep resets the SoC. The restore is a single-threaded boot
+     * step, so the buffer lives with the Supervisor image. */
+    static uint8_t buf[CANOPUS_SUP_REGISTRY_SIZE];
     uint32_t i;
     int rc;
     if (sup == 0 || sup->platform == 0 || sup->platform->restore == 0) {
