@@ -115,7 +115,7 @@ and `native_font_wait` (`0x0c15c061` / `0x0c399941`), with UIKit root-slot manag
 | `IMAGE_FIT_COVER` | Scale + query + clipped parent viewport | Host implemented; uniform maximum ratio, rounded up, center crop | `UNSUPPORTED`, bit off |
 | `IMAGE_FIT_STRETCH` | Independent native X/Y scale + query + clipped viewport | Host implemented; per-axis ratio, rounded up | `UNSUPPORTED`, bit off |
 | `font_px = 0/24/28` | `FW_LVX_STYLE_APPLY`, borrowed MiSans-Medium styles | Fixed styles, counted regression coverage | Same existing contract |
-| Arbitrary `font_px` (`CAP_FONT`) | `FW_UI_FONT_CREATE` (`manager, &key`), property 90 setter, `DELETE` event 36 + `FW_UI_FONT_WAIT` + `FW_UI_FONT_RELEASE` | Host implemented for labels, section headings, checkbox primary text and Toast owner; stock rows/titles/msgbox return `UNSUPPORTED` | `UNSUPPORTED`, bit off |
+| Arbitrary `font_px` (`CAP_FONT`) | `FW_UI_FONT_CREATE` (`manager, &key`), property 90 setter, `DELETE` event 36 + `FW_UI_FONT_WAIT` + `FW_UI_FONT_RELEASE` | Host implemented for labels, section headings and checkbox primary text; stock rows/titles/msgbox return `UNSUPPORTED` | `UNSUPPORTED`, bit off |
 
 Fit uses the resolved semantic box, preflights decoding and scale range before
 publication, and preserves unchanged setters. Q8 quantization cannot represent

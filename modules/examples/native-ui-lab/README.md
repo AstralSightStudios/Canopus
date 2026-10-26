@@ -15,12 +15,7 @@ The home page opens four independent examples:
   `SCROLL` events replace that window; selecting a row records its logical item.
 - **Drag**: pointer capture, viewport coordinates and immediate translation with
   `control()`. The tile remains bound until release or cancellation.
-- **Selections**: checkbox, radio rows, timed Toast and a title/back-state toggle.
-  The Toast node is initially hidden. Its row toggles the same content visible,
-  hidden and visible again before the timeout, exercising creation and replay.
-  The shown commit carries two TOAST nodes sharing one feedback owner (the later
-  node wins); the hide commit drops the earlier node while the owner survives,
-  covering multi-Toast batches with a removal.
+- **Selections**: checkbox, radio rows and a title/back-state toggle.
 
 An explicit navigation header dispatches its `BACK` event to `on_event`. On a
 subpage that returns to the module home; on the home page it calls
@@ -70,7 +65,7 @@ notifications and `ctx->ui->post` for UI updates.
 
 `run.json` records target, firmware, capability gates, Supervisor/package hashes
 and screenshot hashes. A successful run must reach every page, receive selection
-and feedback events, and close the module page; pointer/scroll assertions apply
+and title/back-state events, and close the module page; pointer/scroll assertions apply
 only when advertised. Missing primitives produce an explicit gated result.
 Mirage evidence does not establish real-device performance or production
 approval. The exact evidence and remaining limits are recorded in

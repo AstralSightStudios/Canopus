@@ -67,11 +67,9 @@ struct canopus_ui_host_view {
     uint8_t active, interactive;
     void *page_title;
     void *content_root;
-    void *toast_object;
-    uint32_t toast_key, toast_deadline, toast_generation, toast_text_hash;
-    uint32_t feedback_clock, title_token;
+    uint32_t title_token;
     struct canopus_ui_host_binding title_binding;
-    uint8_t toast_visible, title_back;
+    uint8_t title_back;
     struct canopus_ui_host_node nodes[CANOPUS_UI_MAX_NODES];
     struct canopus_ui_host_dialog dialog;
     uint32_t rendered_generation;

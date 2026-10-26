@@ -72,7 +72,7 @@ static int32_t fake_control(void *cookie, uint32_t generation,
     CANOPUS_UI_CAP_TRANSLATE | CANOPUS_UI_CAP_CAPTURE | \
     CANOPUS_UI_CAP_POINTER_EVENTS | CANOPUS_UI_CAP_IMAGE_FIT_CONTAIN | \
     CANOPUS_UI_CAP_IMAGE_FIT_COVER | CANOPUS_UI_CAP_IMAGE_FIT_STRETCH | \
-    CANOPUS_UI_CAP_VIRTUAL_CONTENT | CANOPUS_UI_CAP_TOAST | CANOPUS_UI_CAP_FONT)
+    CANOPUS_UI_CAP_VIRTUAL_CONTENT | CANOPUS_UI_CAP_FONT)
 
 static const struct canopus_ui_backend_v1 fake_backend = {
     sizeof(struct canopus_ui_backend_v1),
@@ -450,6 +450,7 @@ TEST(ui_extended_catalog_rejects_invalid_metadata)
     bar.value = 50;
     CHECK(canopus_ui_component(tree, 2, CANOPUS_UI_NODE_PROGRESS, &bar) ==
           CANOPUS_UI_OK);
+    CHECK(canopus_ui_component(tree, 3, 11u, &bar) == CANOPUS_UI_ERR_ARGUMENT);
     CHECK(canopus_ui_component(tree, 3, CANOPUS_UI_NODE_RETIRED_SLIDER, &bar) ==
           CANOPUS_UI_ERR_ARGUMENT);
     style.opacity = 1001;
@@ -514,13 +515,11 @@ TEST(ui_requires_explicit_backend_capabilities)
     }
 
     backend = fake_backend;
-    backend.capabilities &= ~(CANOPUS_UI_CAP_IMAGE | CANOPUS_UI_CAP_PROGRESS |
-                              CANOPUS_UI_CAP_TOAST);
+    backend.capabilities &= ~(CANOPUS_UI_CAP_IMAGE | CANOPUS_UI_CAP_PROGRESS);
     CHECK(canopus_ui_context_init(&context, &backend, &state, 0, 0) == CANOPUS_UI_OK);
     tree = begin_page(&context, "Selective");
     CHECK(CANOPUS_UI_IMAGE(tree, 2, "Icon", 10) == CANOPUS_UI_ERR_UNSUPPORTED);
     CHECK(CANOPUS_UI_PROGRESS(tree, 2, 25, 0, 100) == CANOPUS_UI_ERR_UNSUPPORTED);
-    CHECK(CANOPUS_UI_TOAST(tree, 2, "Toast") == CANOPUS_UI_ERR_UNSUPPORTED);
     canopus_ui_tree_abort(tree);
 
     init_context(&context, &state, 0);

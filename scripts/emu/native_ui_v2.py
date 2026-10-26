@@ -78,22 +78,7 @@ def lab(shots):
     ui.tap((x, first), 0.8)
     shots.take("lab-select-checked")
     ui.tap((x, third), 0.8)
-    # The lab's toast runs for 10 s so each frame lands unambiguously: the hidden
-    # frame is taken while a still-attached toast would be on screen (a hide that
-    # fails silently cannot hide behind expiry). Re-taps of the already-selected
-    # radio keep the panel lit through the window and re-render without touching
-    # the toast (no timer restart; the last taps land after expiry and must not
-    # replay it) — Mirage turns the screen off after a few idle seconds.
-    ui.tap((x, fourth), 1.2)
-    shots.take("lab-toast")
-    ui.tap((x, fourth), 2.5)
-    shots.take("lab-toast-hidden")
-    ui.tap((x, fourth), 1.2)
-    shots.take("lab-toast-reshown")
-    for _ in range(6):
-        ui.tap((x, third), 1.4)
-    shots.take("lab-toast-expired")
-    ui.swipe(gesture, 0.5)
+    # Change title is now the fourth row and fits without scrolling.
     ui.tap((x, fourth), 0.6)
     shots.take("lab-title-hidden")
     ui.tap((x, fourth), 0.6)
@@ -212,11 +197,9 @@ def main():
                 if f"route {route}/{route}" not in lines:
                     raise RuntimeError(f"lab route {route} was not reached; see ui_probe.txt")
             for expected in ("card 1/1", "card 1/2", "check 4/1", "radio 4/1",
-                             "toast 4/1", "toast 4/0", "header 4/1", "header 4/0", "close 0/0"):
+                             "header 4/1", "header 4/0", "close 0/0"):
                 if expected not in lines:
                     raise RuntimeError(f"lab did not report {expected!r}; see ui_probe.txt")
-            if lines.count("toast 4/1") != 2:
-                raise RuntimeError("the lab did not show the same Toast again after hiding it")
             # Extended style property IDs are audited per target. Where they are
             # missing the backend rejects the styled snapshot with ERR_UNSUPPORTED
             # and the lab retries without that style set; record the target limit

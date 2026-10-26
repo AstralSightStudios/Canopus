@@ -409,6 +409,7 @@ static int ui_component_type_valid(uint16_t type)
 {
     return type >= CANOPUS_UI_NODE_LIST &&
            type <= CANOPUS_UI_NODE_NAVIGATION_HEADER &&
+           type != 11u && /* retired node ID */
            type != CANOPUS_UI_NODE_RETIRED_SLIDER;
 }
 
@@ -461,8 +462,6 @@ int32_t canopus_ui_component(
          !ui_tree_supports(tree, CANOPUS_UI_CAP_IMAGE)) ||
         (type == CANOPUS_UI_NODE_PROGRESS &&
          !ui_tree_supports(tree, CANOPUS_UI_CAP_PROGRESS)) ||
-        (type == CANOPUS_UI_NODE_TOAST &&
-         !ui_tree_supports(tree, CANOPUS_UI_CAP_TOAST)) ||
         ((props->value != 0 || props->minimum != 0 || props->maximum != 0 ||
           props->step != 0 || props->resource_id != 0u) &&
          !ui_tree_supports(tree, CANOPUS_UI_CAP_VALUES))) {
@@ -474,10 +473,6 @@ int32_t canopus_ui_component(
     if (type == CANOPUS_UI_NODE_IMAGE &&
         (props->resource_id == 0u || props->primary == 0 ||
          props->primary_len == 0u)) {
-        return CANOPUS_UI_ERR_ARGUMENT;
-    }
-    if (type == CANOPUS_UI_NODE_TOAST &&
-        (props->value < 0 || props->value > 60000)) {
         return CANOPUS_UI_ERR_ARGUMENT;
     }
     if (type == CANOPUS_UI_NODE_PROGRESS &&

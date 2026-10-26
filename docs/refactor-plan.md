@@ -78,6 +78,11 @@
 | K17 | 放弃 Band 11 `4.100.177`（缺固件镜像、适配不完整），整体移除其 target、Rust 绑定、测试与脚本；Band 11 改为适配 `4.100.179`（q66tc 完整包）。177 上的授权清单（calendar alpha 等）随目录删除，179 须重新取得用户授权，不继承；历史行与证据出处文字保留，可由 git 历史找回 | 2026-10-20 |
 | K21 | 快速静态适配四款 Mirage 支持的固件：Xiaomi Band 9 `3.1.32`（n66）、Band 9 Pro `3.1.190`（n67cn）、Band 10 `3.1.28`（o66tc）、REDMI Watch 6 `3.100.043`（p65）。Band 9 由 tag `band9-frozen` 恢复且全部批准降为 restricted/PENDING；n67 由 3.1.175 包移植（108/123 STATIC_RECOVERED），o66 由 Band 9 包移植（47/142），p65 由 Band 10 Pro `.043` 包移植。四者都标注为 Band-11 风格 Lua-owned staged loader（无 insmod、无 Lua `os.execute` 恢复），但 stage1/stage2、installer、模拟器与真机验证均未实现；n66/n67/o66 为 LVGL v8，需要专门的 v8 UI 后端，p65 为 v9。只新增静态记录，不提升任何能力状态 | 2026-10-24 |
 
+## Toast API 移除
+
+- [x] 按用户要求移除 C/Rust SDK 的 Toast 入口、Manager 渲染与计时、示例及模拟器场景；节点编号 11 与能力位 16 保留停用，其余 ABI 编号不变。保留标题更新、输入事件时钟和字体回收。下文既有 Toast 验证记录仅表示移除前的历史，不代表当前可用能力。
+  验证：C host 与双家族输入测试通过 ASan/UBSan；四组原生后端配置通过 ASan/UBSan；Rust UI core 22 个单元测试与 2 个文档测试通过；`.043` / `.155` Supervisor 构建与 ELF 校验通过；native-ui-lab 五目标构建、ELF 校验与打包通过。未新增模拟器或真机验证，不提升能力状态。
+
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
 
 - O1（现由 K15/ADR-CAN-008 替代旧 K13）手机↔设备端控制通道（原阻塞 P5.1 及之后）。

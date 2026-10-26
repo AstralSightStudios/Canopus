@@ -2,6 +2,10 @@
 
 Evidence ID: `EVID-UI-FIT-FONT-HOST-001`.
 
+Toast has since been removed from the public API and native backend. Toast-specific
+results below describe the historical implementation; font and image capabilities
+retain their existing evidence status.
+
 This change is an additive implementation within UI ABI 2.0. Host tests and static
 firmware analysis do not establish device verification or production approval.
 No symbol is promoted. `supervisor_max_size` is raised `131072 -> 133120` (+2,048 B)

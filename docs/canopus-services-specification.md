@@ -452,7 +452,7 @@ struct canopus_ui_obj {
 
 **能力协商**：`capabilities(context)` 返回后端实际支持的 `CANOPUS_UI_CAP_*` 位（STYLE / LAYOUT / VALUES / NAVIGATION_HEADER /
 IMAGE / PROGRESS / VISUAL / SCROLL / TRANSLATE / CAPTURE / POINTER_EVENTS / IMAGE_FIT_CONTAIN|COVER|STRETCH /
-VIRTUAL_CONTENT / TOAST / EXTENDED_COMPONENTS）。不支持的请求**显式返回 `ERR_UNSUPPORTED`**，绝不静默忽略。
+VIRTUAL_CONTENT / EXTENDED_COMPONENTS）。不支持的请求**显式返回 `ERR_UNSUPPORTED`**，绝不静默忽略。
 能力是每个 target 实测出来的，不是按家族一刀切。
 
 **页面入口**：`set_entry` 登记页面入口（`label` 最长 23 字节，可为 NULL；`on_open` 必填）。模块运行期间，它在 Manager 的详情页多一行「打开界面」。
@@ -507,21 +507,19 @@ VIRTUAL_CONTENT / TOAST / EXTENDED_COMPONENTS）。不支持的请求**显式返
 节点禁用、自身或祖先隐藏、节点消失、事件绑定改变、根 page key 改变或生命周期变化会用旧绑定发送一次 `CANCEL` 并解除滚动锁。转移捕获时保留原始 press 目标，释放捕获后后续 MOVE/RELEASE 回到该目标；成功提交会更新保留绑定的代数。
 原生候选分配失败时保留旧快照、页面及有效手势，不提前发送取消事件。
 
-**Toast 与标题**：`CANOPUS_UI_NODE_TOAST` 是页面持有的原生反馈：同一时刻只显示最近一条（新的替换旧的），
-`values[i].value` 是毫秒时长（0 表示 2000 ms；显式时长为 1..60000，负数或超范围返回 `ERR_ARGUMENT`）；上一快照也可见且内容与参数完全相同的提交不会重启计时，到期后未变化的可见节点不重播。隐藏→显示会重新显示并计时，允许初始隐藏节点。同一快照携带多个 Toast 节点时只有最近一个可见节点驱动共享反馈对象（尾随隐藏占位不压掉前面的可见 Toast；无可见 Toast 时由最后一个 Toast 节点驱动隐藏），其余节点是别名，不写共享对象；隐藏的 Toast 节点（含 fresh）从不替换也不写共享对象的样式；驱动身份变化时以新标签替换共享对象并重绘文本与样式（样式/文本状态不跨节点混合）；共享对象的文本被重写时其样式必同步重绘，两者不分离；Toast 对象的删除只归反馈路径，通用清理按节点类型跳过。页面分离/暂停时清除（含交互被关闭时的隐藏清除），
-模块卸载时随页面一起销毁，没有悬空回调。`NAVIGATION_HEADER` / 导航页的标题文本或返回显示状态变化会替换标题对象；
+**标题**：`NAVIGATION_HEADER` / 导航页的标题文本或返回显示状态变化会替换标题对象；
 同一快照多个 `NAVIGATION_HEADER` 时仅第一个驱动共享标题对象（含事件绑定），其余不写，无 header 时由导航页驱动，
 根 page key 不变时保留正文滚动，不以标题变化推断路由。过期的标题事件按事件目标/令牌校验后丢弃，不会驱动新页面。
 
 **渲染后端**（Band 10 Pro 与 Band 11 共用 `manager/target/canopus_ui_host.c`，Manager 自己的页面也走它）两个家族画同样的内容：
 导航页/导航头（页面标题）、分区/列表/滚动/分隔/间距（真实布局求解：轴、对齐、分布、间距、内边距、最小/最大尺寸、外边距）、
 文本/富文本（标签）、各类行与按钮（复选/单选带选中标记）、图片、进度条，以及对话框——一条消息加两个按钮时是固件 msgbox，
-其它形状和没有恢复 msgbox 入口的目标按普通行内联。滑块已移除（`CANOPUS_UI_NODE_RETIRED_SLIDER`）。
+其它形状和没有恢复 msgbox 入口的目标按普通行内联。滑块与 Toast 已移除；节点编号 11、17 及能力位 16 保留停用，其余 ABI 编号不变。
 不支持的节点类型提交失败，并保留上一版内容。相同内容的提交不会重写原生控件（增量更新，见 ADR-CAN-010），
 包括活动捕获期间的重复提交：原生滚动锁保持原状态，只迁移事件绑定的 generation；脏控件仍会先修复再保持捕获。
 
 端到端见 `scripts/emu/ui_pages.py` 与 `scripts/emu/native_ui_v2.py`（Mirage）。`.043` 与 `.155` 的后端本体已在真机验证（ADR-CAN-010）；
-**本次 ABI 2.0 新增的能力（输入/滚动/虚拟内容/Toast/标题更新/生命周期通知）的证据范围以 ADR-CAN-013「证据与限制」为准，没有新的真机验证**，
+**本次 ABI 2.0 新增的能力（输入/滚动/虚拟内容/标题更新/生命周期通知）的证据范围以 ADR-CAN-013「证据与限制」为准，没有新的真机验证**，
 能力状态未提升。
 
 ### 2.13 `ctx->launcher` — 模块自己的启动器入口

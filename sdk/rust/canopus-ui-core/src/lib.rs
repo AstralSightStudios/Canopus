@@ -60,7 +60,6 @@ pub const CAP_IMAGE_FIT_CONTAIN: u32 = 1 << 12;
 pub const CAP_IMAGE_FIT_COVER: u32 = 1 << 13;
 pub const CAP_IMAGE_FIT_STRETCH: u32 = 1 << 14;
 pub const CAP_VIRTUAL_CONTENT: u32 = 1 << 15;
-pub const CAP_TOAST: u32 = 1 << 16;
 pub const CAP_FONT: u32 = 1 << 17;
 
 pub const VISUAL_FLAG_FOREGROUND_RGB: u32 = 1 << 0;
@@ -95,7 +94,6 @@ pub enum NodeKind {
     List = 8,
     Scroll = 9,
     Dialog = 10,
-    Toast = 11,
     Image = 12,
     Icon = 13,
     RichText = 14,
@@ -121,7 +119,6 @@ impl NodeKind {
             8 => Some(NodeKind::List),
             9 => Some(NodeKind::Scroll),
             10 => Some(NodeKind::Dialog),
-            11 => Some(NodeKind::Toast),
             12 => Some(NodeKind::Image),
             13 => Some(NodeKind::Icon),
             14 => Some(NodeKind::RichText),
@@ -809,7 +806,6 @@ impl Tree {
             NodeKind::List
                 | NodeKind::Scroll
                 | NodeKind::Dialog
-                | NodeKind::Toast
                 | NodeKind::Image
                 | NodeKind::Icon
                 | NodeKind::RichText
@@ -841,9 +837,6 @@ impl Tree {
                 || spec.value.value > spec.value.maximum
                 || spec.value.step < 0)
         {
-            return Err(UiError::Argument);
-        }
-        if kind == NodeKind::Toast && !(0..=60_000).contains(&spec.value.value) {
             return Err(UiError::Argument);
         }
         let container = matches!(
@@ -2045,6 +2038,14 @@ mod tests {
     mod event {
         pub const INSTALL: u32 = 3;
         pub const SAFE_MODE: u32 = 4;
+    }
+
+    #[test]
+    fn retired_node_ids_are_rejected() {
+        assert_eq!(NodeKind::from_u16(11), None);
+        assert_eq!(NodeKind::from_u16(17), None);
+        assert_eq!(NodeKind::from_u16(12), Some(NodeKind::Image));
+        assert_eq!(NodeKind::from_u16(18), Some(NodeKind::Progress));
     }
 
     #[test]

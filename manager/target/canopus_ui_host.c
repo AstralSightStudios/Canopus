@@ -794,12 +794,6 @@ static __attribute__((noinline)) int host_dialog_show(struct canopus_ui_host_vie
 struct host_geometry { int32_t x, y, width, height, extent; };
 static int host_is_title(uint16_t type)
 { return type == CANOPUS_UI_NODE_NAVIGATION_PAGE || type == CANOPUS_UI_NODE_NAVIGATION_HEADER; }
-/* Title and toast natives are owned by the feedback paths (page_title and
- * toast_object) and deleted only there. Generic subtree cleanup must skip them
- * by node type: a cached owner pointer can go stale inside one multi-node
- * batch while the slot still references the replaced object. */
-static int host_feedback_owned(uint16_t type)
-{ return host_is_title(type) || type == CANOPUS_UI_NODE_TOAST; }
 static int host_is_label(uint16_t type)
 { return type == CANOPUS_UI_NODE_TEXT || type == CANOPUS_UI_NODE_RICH_TEXT; }
 static int host_is_container(uint16_t type)
@@ -890,8 +884,7 @@ static void host_layout(const struct canopus_ui_snapshot_v1 *s, uint16_t index,
         /* Title nodes are chrome drawn into the firmware titlebar, not flow
          * boxes: a nested navigation header must not displace its siblings. */
         if (host_is_title(s->nodes[child].type)) continue;
-        if (!(s->nodes[child].flags & CANOPUS_UI_NODE_FLAG_VISIBLE) ||
-            s->nodes[child].type == CANOPUS_UI_NODE_TOAST) continue;
+        if (!(s->nodes[child].flags & CANOPUS_UI_NODE_FLAG_VISIBLE)) continue;
         if (s->visuals[child].flags & CANOPUS_UI_VISUAL_FLAG_ABSOLUTE) continue;
         if (count++ != 0) main += gap != 0 ? gap : (host_is_row(s->nodes[child].type) ? HOST_ROW_GAP : HOST_TEXT_GAP);
         main += horizontal ? cb->width + cl->margin_left + cl->margin_right : cb->height + cl->margin_top + cl->margin_bottom;
@@ -950,7 +943,7 @@ static void host_layout(const struct canopus_ui_snapshot_v1 *s, uint16_t index,
         const struct canopus_ui_visual_v1 *cv = &s->visuals[child];
         int32_t bottom = g[child].y + g[child].height + cv->translate_y + l->padding_bottom;
         if ((n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE) && !host_is_title(n->type) &&
-            n->type != CANOPUS_UI_NODE_TOAST && bottom > box->extent) box->extent = bottom;
+            bottom > box->extent) box->extent = bottom;
     }
 }
 
@@ -1048,15 +1041,14 @@ static int32_t host_validate(const struct canopus_ui_snapshot_v1 *s)
         const struct canopus_ui_visual_v1 *v = &s->visuals[i];
         const struct canopus_ui_style_v1 *st = &s->styles[i];
         (void)st;
-        if (!host_is_title(n->type) && !host_is_container(n->type) && !host_is_row(n->type) && !host_is_label(n->type) && n->type != CANOPUS_UI_NODE_IMAGE && n->type != CANOPUS_UI_NODE_PROGRESS && n->type != CANOPUS_UI_NODE_TOAST) return CANOPUS_UI_ERR_UNSUPPORTED;
+        if (!host_is_title(n->type) && !host_is_container(n->type) && !host_is_row(n->type) && !host_is_label(n->type) && n->type != CANOPUS_UI_NODE_IMAGE && n->type != CANOPUS_UI_NODE_PROGRESS) return CANOPUS_UI_ERR_UNSUPPORTED;
         if (n->type == CANOPUS_UI_NODE_IMAGE && (s->layouts[i].width <= 0 || s->layouts[i].height <= 0)) return CANOPUS_UI_ERR_ARGUMENT;
-        /* Toast geometry is owned by the feedback label and header handles are
-         * viewport chrome: neither publishes a virtual extent marker. */
-        if ((n->type == CANOPUS_UI_NODE_NAVIGATION_HEADER || n->type == CANOPUS_UI_NODE_TOAST) &&
+        /* Navigation headers are viewport chrome without a virtual extent marker. */
+        if (n->type == CANOPUS_UI_NODE_NAVIGATION_HEADER &&
             (v->flags & CANOPUS_UI_VISUAL_FLAG_VIRTUAL_CONTENT)) return CANOPUS_UI_ERR_UNSUPPORTED;
 #ifdef HOST_FONT
         if (v->font_px != 0u && v->font_px != 24u && v->font_px != 28u &&
-            !(host_is_label(n->type) || n->type == CANOPUS_UI_NODE_TOAST ||
+            !(host_is_label(n->type) ||
               (n->type == CANOPUS_UI_NODE_SECTION && n->primary_len != 0u) ||
               host_row_kind(n->type) == 4u)) return CANOPUS_UI_ERR_UNSUPPORTED;
 #else
@@ -1278,8 +1270,6 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     for (i = 0; i < snapshot->node_count; i++) {
         uint16_t pixels = snapshot->visuals[i].font_px;
         if (pixels == 0u || pixels == 24u || pixels == 28u) continue;
-        if (snapshot->nodes[i].type == CANOPUS_UI_NODE_TOAST &&
-            (!host_feedback_toast_driver(snapshot,i) || !(snapshot->nodes[i].flags & CANOPUS_UI_NODE_FLAG_VISIBLE))) continue;
         fonts[i] = host_font_get(pixels);
         if (fonts[i] == NULL) { result = CANOPUS_UI_ERR_BACKEND; goto fonts_finished; }
     }
@@ -1309,7 +1299,6 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             /* Removing a local FONT property needs a fresh native label:
              * applying a theme style does not remove the local pointer. */
             ((snapshot->visuals[i].font_px == 0u || snapshot->visuals[i].font_px == 24u || snapshot->visuals[i].font_px == 28u) &&
-             n->type != CANOPUS_UI_NODE_TOAST &&
              host_font_owned(slot->primary != NULL ? slot->primary : slot->object)) ||
 #endif
             (old != NULL && (host_local_style(&previous->styles[oi],&previous->visuals[oi]) &
@@ -1338,29 +1327,6 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             if (fresh[i]) candidates[i].object = content_candidate != NULL ? content_candidate : view->content_root;
             result = host_feedback_title_prepare(view,snapshot,n,previous,&candidates[i].primary);
             if (result != 0) goto allocation_failed;
-        } else if (n->type == CANOPUS_UI_NODE_TOAST) {
-            if (host_feedback_toast_driver(snapshot,i) &&
-                (((n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE) && view->toast_object == NULL) ||
-                 /* A drivership switch repaints through a fresh label: the new
-                  * driver's style bytes can be unchanged relative to its own
-                  * previous node, so a self-diff would never write them (and
-                  * the old driver's style would linger). */
-                 ((n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE) && view->toast_key != n->key &&
-                  view->toast_object != NULL) ||
-                 /* A hidden node never owns displayed content, so it must not
-                  * replace the owner either (its style would ride along). */
-                 ((n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE) && fresh[i] &&
-                  view->toast_object != NULL)
-#ifdef HOST_FONT
-                 || ((n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE) &&
-                     (snapshot->visuals[i].font_px == 0u || snapshot->visuals[i].font_px == 24u || snapshot->visuals[i].font_px == 28u) &&
-                     host_font_owned(view->toast_object))
-#endif
-                 )) {
-                candidates[i].object = host_label_create(view->root);
-                if (candidates[i].object == NULL) { result = CANOPUS_UI_ERR_BACKEND; goto allocation_failed; }
-                host_set_hidden(candidates[i].object,1u);
-            }
         } else if (fresh[i]) {
             result = host_create_node(&candidates[i], parent, snapshot, i);
             if (result != 0) goto allocation_failed;
@@ -1402,7 +1368,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
             for (n=0;n<snapshot->node_count;n++) if (map[n]==i && fresh[n]) replace=1;
             if (replace) {
                 if (slot->extent_object != NULL && host_is_title(slot->type)) host_object_delete(slot->extent_object);
-                if (!host_feedback_owned(slot->type)) {
+                if (!host_is_title(slot->type)) {
                     host_object_delete(slot->object);
                     host_forget_descendants(view, slot->key);
                 }
@@ -1416,7 +1382,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         for (j = 0; j < snapshot->node_count; j++) if (map[j] == i && fresh[j]) replace = 1;
         if (slot->object != NULL && (!(used & (UINT32_C(1) << i)) || replace)) {
             if (slot->extent_object != NULL && host_is_title(slot->type)) host_object_delete(slot->extent_object);
-            if (!host_feedback_owned(slot->type)) {
+            if (!host_is_title(slot->type)) {
                 host_object_delete(slot->object);
                 host_forget_descendants(view, slot->key);
             }
@@ -1452,14 +1418,6 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         if (host_is_title(n->type)) {
             host_feedback_title(view,snapshot,n,candidates[i].primary);
             slot->object = view->content_root; slot->event_object = slot->object; slot->type = n->type;
-        } else if (n->type == CANOPUS_UI_NODE_TOAST) {
-            /* Text rewrite implies style repaint: the shared owner's style is
-             * only ever written here or on a staged replacement, never during
-             * a hidden period where it could linger past a driver change. */
-            if (host_feedback_toast(view,snapshot,n,previous,candidates[i].object) ||
-                candidates[i].object != NULL)
-                style_changed = 1;
-            slot->object = view->toast_object; slot->type = n->type;
         } else {
             if (slot->object == NULL) {
                 uint32_t h;
@@ -1539,28 +1497,10 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                 if (old == NULL || snapshot->values[i].value != previous->values[oi].value) host_bar_set_value(slot->object,snapshot->values[i].value);
             }
         }
-        /* Headers are semantic handles to the page viewport. Toast geometry and
-         * visibility belong to the feedback owner, outside the body layout. */
+        /* Navigation headers are semantic handles to the page viewport. */
         if (n->type == CANOPUS_UI_NODE_NAVIGATION_HEADER) goto publish_node;
-        /* Alias toast nodes share the owner with the driving node and must not
-         * paint it: only a *visible* driver's style may reach the shared
-         * object, so a hide-driver's self-diff style write cannot linger past
-         * the next re-show of an earlier driver. */
-        if (style_changed && slot->object != NULL &&
-            (n->type != CANOPUS_UI_NODE_TOAST ||
-             (host_feedback_toast_driver(snapshot,i) &&
-              (n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE))))
+        if (style_changed && slot->object != NULL)
             host_style(slot->object,&snapshot->styles[i],v);
-        if (n->type == CANOPUS_UI_NODE_TOAST) {
-#ifdef HOST_FONT
-            if (style_changed && slot->object != NULL && host_feedback_toast_driver(snapshot,i) &&
-                (n->flags & CANOPUS_UI_NODE_FLAG_VISIBLE)) {
-                host_label_style(slot->object,v->font_px == 28 ? CANOPUS_UI_TEXT_TITLE : CANOPUS_UI_TEXT_BODY);
-                host_font_set(slot->object,fonts[i]);
-            }
-#endif
-            goto publish_node;
-        }
         if (fresh[i] || slot->width != geometry[i].width || slot->height != geometry[i].height)
             host_set_size(slot->object,geometry[i].width,geometry[i].height);
         if (slot->primary != NULL && (fresh[i] || candidates[i].primary != NULL || padding_changed || mark_changed || slot->width != geometry[i].width || slot->height != geometry[i].height)) {
@@ -1625,7 +1565,6 @@ publish_node:
 #else
     (void)retained_scroll;
 #endif
-    host_feedback_finish(view,snapshot);
     view->rendered_generation = snapshot->generation; view->render_valid = 1;
     host_input_publish(view,snapshot,geometry[0].extent,unchanged_capture);
     if (view->hooks != NULL && view->hooks->rendered != NULL) view->hooks->rendered(view,view->page_title);
@@ -1651,7 +1590,7 @@ const struct canopus_ui_backend_v1 canopus_ui_host_backend = {
     sizeof(struct canopus_ui_backend_v1),CANOPUS_UI_ABI_MAJOR,CANOPUS_UI_ABI_MINOR,
     CANOPUS_UI_CAP_EXTENDED_COMPONENTS|CANOPUS_UI_CAP_STYLE|CANOPUS_UI_CAP_LAYOUT|CANOPUS_UI_CAP_VALUES|
     CANOPUS_UI_CAP_NAVIGATION_HEADER|CANOPUS_UI_CAP_IMAGE|CANOPUS_UI_CAP_PROGRESS|CANOPUS_UI_CAP_VISUAL|
-    CANOPUS_UI_CAP_TOAST|CANOPUS_UI_CAP_VIRTUAL_CONTENT|HOST_INPUT_CAPS|HOST_IMAGE_FIT_CAPS|HOST_FONT_CAPS,host_apply,host_control
+    CANOPUS_UI_CAP_VIRTUAL_CONTENT|HOST_INPUT_CAPS|HOST_IMAGE_FIT_CAPS|HOST_FONT_CAPS,host_apply,host_control
 };
 void canopus_ui_host_attach(struct canopus_ui_host_view *view, void *root, void *page,
                             const struct canopus_ui_host_hooks *hooks, uint32_t flags)
@@ -1668,7 +1607,7 @@ void canopus_ui_host_bind(struct canopus_ui_host_view *view, struct canopus_ui_c
 void canopus_ui_host_set_interactive(struct canopus_ui_host_view *view, int interactive)
 {
     if (view == NULL) return;
-    if (!interactive && view->interactive) { host_input_cancel(view); if (!host_view_alive(view)) return; host_feedback_clear(view); }
+    if (!interactive && view->interactive) { host_input_cancel(view); if (!host_view_alive(view)) return; }
     view->interactive=interactive != 0;
 }
 void canopus_ui_host_detach(struct canopus_ui_host_view *view)

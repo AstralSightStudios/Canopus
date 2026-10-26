@@ -1120,267 +1120,6 @@ static void test_reentrant_reused_keys_delete_old_rows(void)
     assert(host_node(&view,13)->object != old[3]);
     assert(host_previous(&view) != NULL);
 }
-static int toast_state_page(const char *text, int32_t duration, int visible, int styled)
-{
-    struct canopus_ui_tree_v1 *tree = begin();
-    struct canopus_ui_component_props_v1 toast = {
-        sizeof(toast),text,(uint32_t)strlen(text),"",0,0,
-        visible ? CANOPUS_UI_NODE_FLAG_VISIBLE : 0u,duration,0,0,0,0
-    };
-    struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
-    if (styled) { style.foreground = CANOPUS_UI_COLOR_DANGER; style.opacity = 500; }
-    assert(canopus_ui_component(tree,15,CANOPUS_UI_NODE_TOAST,&toast) == 0);
-    assert(canopus_ui_node_set_style(tree,15,&style) == 0);
-    return finish(tree);
-}
-static int toast_page(const char *text, int32_t duration)
-{ return toast_state_page(text,duration,1,0); }
-static void test_toast_lifecycle(void)
-{
-    struct widget *toast;
-    uint32_t deadline;
-    reset(); canopus_ui_host_poll(100);
-    assert(toast_page("Saved",2000) == 0);
-    toast = view.toast_object; deadline = view.toast_deadline;
-    assert(view.toast_visible && deadline == 2100 && !(toast->flags & 1u));
-    assert(toast->height != 0);
-    canopus_ui_host_poll(600); assert(toast_page("Saved",2000) == 0);
-    assert(view.toast_deadline == deadline);
-    assert(toast_page("Updated",1000) == 0);
-    assert(view.toast_deadline == 1600 && strcmp(toast->text,"Updated") == 0);
-    canopus_ui_host_poll(1599); assert(view.toast_visible);
-    canopus_ui_host_poll(1600); assert(!view.toast_visible && (toast->flags & 1u));
-    assert(toast_page("Again",1000) == 0);
-    canopus_ui_host_set_interactive(&view,0);
-    assert(!view.toast_visible && (toast->flags & 1u));
-    canopus_ui_host_set_interactive(&view,1);
-    assert(toast_page("Last",1000) == 0);
-    canopus_ui_host_detach(&view);
-    /* Detach forgets page-owned objects: firmware reclaims the toast with
-     * the page root, so the host must not touch it here. */
-    assert(!toast->deleted);
-}
-/* Two visible toasts in one batch share the single feedback owner object;
- * removing one of them must not free it through generic subtree cleanup. */
-static int two_toasts(int first)
-{
-    struct canopus_ui_tree_v1 *t = begin();
-    struct canopus_ui_component_props_v1 p = {
-        sizeof(p),"First",5,"",0,0,CANOPUS_UI_NODE_FLAG_VISIBLE,2000,0,0,0,0
-    };
-    if (first) assert(canopus_ui_component(t,15,CANOPUS_UI_NODE_TOAST,&p) == 0);
-    p.primary = "Second"; p.primary_len = 6;
-    assert(canopus_ui_component(t,16,CANOPUS_UI_NODE_TOAST,&p) == 0);
-    return finish(t);
-}
-static void test_two_toasts_removal_keeps_shared_owner(void)
-{
-    struct widget *owner;
-    uint32_t deadline;
-    reset(); assert(two_toasts(1) == 0);
-    owner = view.toast_object;
-    assert(owner != NULL && !owner->deleted && view.toast_visible && view.toast_key == 16);
-    assert(strcmp(owner->text, "Second") == 0);
-    assert(host_node(&view,15)->object == owner && host_node(&view,16)->object == owner);
-    /* An identical pair re-commit is a keep-alive: the last node stays the
-     * same, so the timer must not restart and the text must not be rewritten. */
-    deadline = view.toast_deadline;
-    clear_counts(); assert(two_toasts(1) == 0);
-    assert(view.toast_deadline == deadline && calls.text == 0 && view.toast_object == owner);
-    clear_counts(); assert(two_toasts(0) == 0);
-    assert(host_node(&view,15) == NULL && host_node(&view,16)->object == owner);
-    assert(view.toast_object == owner && !owner->deleted && view.toast_visible);
-    assert(calls.destroy == 0);
-    clear_counts(); assert(finish(begin()) == 0);
-    assert(host_node(&view,16) == NULL && view.toast_object == owner && !owner->deleted);
-    assert(!view.toast_visible && calls.destroy == 0);
-}
-/* node 15 "First" and node 16 "Second" share the owner; each carries its own style. */
-static int toast_pair_styles(int alias_styled, int driver_styled)
-{
-    struct canopus_ui_tree_v1 *t = begin();
-    struct canopus_ui_component_props_v1 p = {
-        sizeof(p),"First",5,"",0,0,CANOPUS_UI_NODE_FLAG_VISIBLE,2000,0,0,0,0 };
-    struct canopus_ui_style_v1 alias = CANOPUS_UI_STYLE_DEFAULT;
-    struct canopus_ui_style_v1 driver = CANOPUS_UI_STYLE_DEFAULT;
-    if (alias_styled) alias.foreground = CANOPUS_UI_COLOR_DANGER;
-    assert(canopus_ui_component(t,15,CANOPUS_UI_NODE_TOAST,&p) == 0);
-    assert(canopus_ui_node_set_style(t,15,&alias) == 0);
-    if (driver_styled) driver.foreground = CANOPUS_UI_COLOR_DANGER;
-    p.primary = "Second"; p.primary_len = 6;
-    assert(canopus_ui_component(t,16,CANOPUS_UI_NODE_TOAST,&p) == 0);
-    assert(canopus_ui_node_set_style(t,16,&driver) == 0);
-    return finish(t);
-}
-static void test_alias_toast_style_stays_off_shared_owner(void)
-{
-    struct widget *owner;
-    reset();
-    assert(toast_pair_styles(0,0) == 0);
-    owner = view.toast_object;
-    assert(owner != NULL && view.toast_key == 16 && strcmp(owner->text,"Second") == 0);
-    assert(owner->props[88] == 0);
-    /* Alias node 15 is fresh with a DANGER style while driver 16 is keep-alive:
-     * only the driver may paint the shared owner, so the alias's style must
-     * never reach the object that displays node 16's text. */
-    assert(toast_pair_styles(1,0) == 0);
-    assert(view.toast_object == owner && strcmp(owner->text,"Second") == 0);
-    assert(owner->props[88] == 0);
-    /* Control: the driver's own style does reach the owner. */
-    assert(toast_pair_styles(0,1) == 0);
-    assert(view.toast_object == owner && owner->props[88] == host_color(CANOPUS_UI_COLOR_DANGER));
-}
-/* node 15 "First" visibility = alias_visible; node 16 "Second" visibility =
- * driver_visible. The interesting shape is a trailing hidden placeholder. */
-static int toast_pair_mixed(int alias_visible, int driver_visible)
-{
-    struct canopus_ui_tree_v1 *t = begin();
-    struct canopus_ui_component_props_v1 p = {
-        sizeof(p),"First",5,"",0,0,alias_visible ? CANOPUS_UI_NODE_FLAG_VISIBLE : 0u,2000,0,0,0,0 };
-    assert(canopus_ui_component(t,15,CANOPUS_UI_NODE_TOAST,&p) == 0);
-    p.primary = "Second"; p.primary_len = 6;
-    p.flags = driver_visible ? CANOPUS_UI_NODE_FLAG_VISIBLE : 0u;
-    assert(canopus_ui_component(t,16,CANOPUS_UI_NODE_TOAST,&p) == 0);
-    return finish(t);
-}
-static void test_mixed_toast_visibility_pair(void)
-{
-    struct widget *owner;
-    uint32_t deadline;
-    reset(); canopus_ui_host_poll(100);
-    /* The most recent *visible* toast drives: a trailing hidden placeholder
-     * must not hide the visible node before it. */
-    assert(toast_pair_mixed(1,0) == 0);
-    owner = view.toast_object;
-    assert(owner != NULL && view.toast_visible && view.toast_key == 15);
-    assert(strcmp(owner->text,"First") == 0);
-    /* Identical re-commit keeps the visible driver: no hide, no timer restart. */
-    deadline = view.toast_deadline;
-    clear_counts(); assert(toast_pair_mixed(1,0) == 0);
-    assert(view.toast_visible && view.toast_deadline == deadline && calls.text == 0);
-    /* With no visible toast left the last toast node drives the hide. */
-    assert(toast_pair_mixed(0,0) == 0);
-    assert(!view.toast_visible && (owner->flags & 1u));
-    /* Visible again re-shows and re-times. */
-    canopus_ui_host_poll(400); assert(toast_pair_mixed(1,0) == 0);
-    assert(view.toast_visible && view.toast_key == 15 && view.toast_deadline == 2400);
-    assert(strcmp(owner->text,"First") == 0);
-}
-/* node 15 "First" and 16 "Second" with independent visibility and style. */
-static int toast_pair_full(int first_visible, int first_styled,
-                           int second_visible, int second_styled)
-{
-    struct canopus_ui_tree_v1 *t = begin();
-    struct canopus_ui_component_props_v1 p = {
-        sizeof(p),"First",5,"",0,0,
-        first_visible ? CANOPUS_UI_NODE_FLAG_VISIBLE : 0u,2000,0,0,0,0 };
-    struct canopus_ui_style_v1 s = CANOPUS_UI_STYLE_DEFAULT;
-    if (first_styled) s.foreground = CANOPUS_UI_COLOR_DANGER;
-    assert(canopus_ui_component(t,15,CANOPUS_UI_NODE_TOAST,&p) == 0);
-    assert(canopus_ui_node_set_style(t,15,&s) == 0);
-    p.primary = "Second"; p.primary_len = 6;
-    p.flags = second_visible ? CANOPUS_UI_NODE_FLAG_VISIBLE : 0u;
-    s = (struct canopus_ui_style_v1)CANOPUS_UI_STYLE_DEFAULT;
-    if (second_styled) s.foreground = CANOPUS_UI_COLOR_DANGER;
-    assert(canopus_ui_component(t,16,CANOPUS_UI_NODE_TOAST,&p) == 0);
-    assert(canopus_ui_node_set_style(t,16,&s) == 0);
-    return finish(t);
-}
-static void test_driver_switch_repaints_shared_owner(void)
-{
-    struct widget *owner;
-    reset();
-    /* Direction 1: drivership flips to a node whose style bytes are unchanged
-     * relative to its own previous node — the switch itself must repaint. */
-    assert(toast_pair_full(0,1, 1,0) == 0);
-    owner = view.toast_object;
-    assert(owner != NULL && view.toast_key == 16 && strcmp(owner->text,"Second") == 0);
-    assert(owner->props[88] == 0);
-    assert(toast_pair_full(1,1, 0,0) == 0);
-    assert(owner->deleted && view.toast_object != owner);
-    owner = view.toast_object;
-    assert(view.toast_key == 15 && strcmp(owner->text,"First") == 0);
-    assert(owner->props[88] == host_color(CANOPUS_UI_COLOR_DANGER));
-    /* Direction 2: the previous driver's style must not linger on the new
-     * driver's text (the M1 invariant from the other side). */
-    reset();
-    assert(toast_pair_full(1,0, 1,1) == 0);
-    owner = view.toast_object;
-    assert(owner != NULL && view.toast_key == 16 && strcmp(owner->text,"Second") == 0);
-    assert(owner->props[88] == host_color(CANOPUS_UI_COLOR_DANGER));
-    assert(toast_pair_full(1,0, 0,1) == 0);
-    assert(owner->deleted && view.toast_object != owner);
-    owner = view.toast_object;
-    assert(view.toast_key == 15 && strcmp(owner->text,"First") == 0);
-    assert(owner->props[88] == 0);
-    /* Keep-alive re-commit of the switched shape: no further style churn. */
-    clear_counts();
-    assert(toast_pair_full(1,0, 0,1) == 0);
-    assert(view.toast_object == owner && !owner->deleted && owner->props[88] == 0);
-    assert(calls.text == 0 && calls.destroy == 0);
-}
-/* node 15 "First" with optional trailing node 16 "Second"; independent
- * visibility and style per node. */
-static int toast_pair_opt(int first_visible, int first_styled,
-                          int include_second, int second_visible, int second_styled)
-{
-    struct canopus_ui_tree_v1 *t = begin();
-    struct canopus_ui_component_props_v1 p = {
-        sizeof(p),"First",5,"",0,0,
-        first_visible ? CANOPUS_UI_NODE_FLAG_VISIBLE : 0u,2000,0,0,0,0 };
-    struct canopus_ui_style_v1 s = CANOPUS_UI_STYLE_DEFAULT;
-    if (first_styled) s.foreground = CANOPUS_UI_COLOR_DANGER;
-    assert(canopus_ui_component(t,15,CANOPUS_UI_NODE_TOAST,&p) == 0);
-    assert(canopus_ui_node_set_style(t,15,&s) == 0);
-    if (include_second) {
-        p.primary = "Second"; p.primary_len = 6;
-        p.flags = second_visible ? CANOPUS_UI_NODE_FLAG_VISIBLE : 0u;
-        s = (struct canopus_ui_style_v1)CANOPUS_UI_STYLE_DEFAULT;
-        if (second_styled) s.foreground = CANOPUS_UI_COLOR_DANGER;
-        assert(canopus_ui_component(t,16,CANOPUS_UI_NODE_TOAST,&p) == 0);
-        assert(canopus_ui_node_set_style(t,16,&s) == 0);
-    }
-    return finish(t);
-}
-/* P2 form: a hidden fresh placeholder drives the hide (replacing the owner with
- * its own style); when the earlier driver re-shows with unchanged style bytes
- * the owner must repaint that driver's style along with its text. */
-static void test_hidden_period_style_replay_repaints(void)
-{
-    struct widget *w;
-    reset();
-    assert(toast_pair_opt(1,1, 0,0,0) == 0);
-    w = view.toast_object;
-    assert(view.toast_key == 15 && strcmp(w->text,"First") == 0);
-    assert(w->props[88] == host_color(CANOPUS_UI_COLOR_DANGER));
-    assert(toast_pair_opt(0,1, 1,0,0) == 0);
-    assert(!view.toast_visible && view.toast_key == 15);
-    assert(toast_pair_opt(1,1, 1,0,0) == 0);
-    assert(view.toast_visible && view.toast_key == 15);
-    w = view.toast_object;
-    assert(strcmp(w->text,"First") == 0);
-    /* Invariant: rewriting the owner's text always repaints the current
-     * driver's style with it, so no stale style survives a hidden period. */
-    assert(w->props[88] == host_color(CANOPUS_UI_COLOR_DANGER));
-}
-/* P1 form: the hide-driver's self-diff style write must not reach the owner it
- * merely hides — re-showing the earlier driver repaints its own style. */
-static void test_hidden_driver_style_write_does_not_linger(void)
-{
-    struct widget *w;
-    reset();
-    assert(toast_pair_opt(1,0, 1,0,0) == 0);
-    w = view.toast_object;
-    assert(view.toast_key == 15 && w->props[88] == 0);
-    assert(toast_pair_opt(0,0, 1,0,1) == 0);   /* hide-driver 16 turns DANGER */
-    assert(view.toast_object == w && !w->deleted);
-    assert(!view.toast_visible && view.toast_key == 15);
-    assert(toast_pair_opt(1,0, 1,0,1) == 0);
-    assert(view.toast_visible);
-    w = view.toast_object;
-    assert(strcmp(w->text,"First") == 0);
-    assert(w->props[88] == 0);
-}
 static int two_headers_page(void)
 {
     struct canopus_ui_tree_v1 *tree = begin();
@@ -1407,40 +1146,6 @@ static void test_first_header_drives_shared_title(void)
     clear_counts();
     assert(two_headers_page() == 0);
     assert(view.page_title == title && mutations() == 0);
-}
-static void test_hidden_toast_and_reappearance(void)
-{
-    struct widget *toast;
-    uint32_t generation;
-    reset(); canopus_ui_host_poll(100);
-    assert(toast_state_page("Saved",2000,0,1) == 0);
-    assert(view.toast_object == NULL && !view.toast_visible);
-    clear_counts(); assert(toast_state_page("Saved",2000,0,1) == 0); assert(mutations() == 0);
-    generation = context.committed.generation; fail_next_create = 1;
-    assert(toast_state_page("Saved",2000,1,1) == CANOPUS_UI_ERR_BACKEND);
-    assert(view.toast_object == NULL && !view.toast_visible && view.render_valid);
-    assert(context.committed.generation == generation);
-    assert(toast_state_page("Saved",2000,1,1) == 0);
-    toast = view.toast_object;
-    assert(view.toast_visible && !(toast->flags & 1u) && view.toast_deadline == 2100);
-    assert(toast->props[88] == host_color(CANOPUS_UI_COLOR_DANGER));
-    canopus_ui_host_poll(300); assert(toast_state_page("Saved",2000,0,1) == 0);
-    assert(!view.toast_visible && (toast->flags & 1u));
-    canopus_ui_host_poll(500); assert(toast_state_page("Saved",2000,1,1) == 0);
-    assert(view.toast_visible && !(toast->flags & 1u) && view.toast_deadline == 2500);
-    clear_counts(); assert(toast_state_page("Saved",2000,1,1) == 0); assert(mutations() == 0);
-    assert(toast_state_page("Saved",2000,1,0) == 0);
-    assert(toast->deleted && view.toast_object != toast && view.toast_visible);
-    toast = view.toast_object;
-    assert(toast->props[88] == 0 && toast->props[FW_UI_STYLE_OPA] == 0 && !(toast->flags & 1u));
-    assert(view.toast_deadline == 2500);
-    canopus_ui_host_poll(2500);
-    assert(!view.toast_visible && (toast->flags & 1u));
-    clear_counts(); assert(toast_state_page("Saved",2000,1,0) == 0);
-    assert(mutations() == 0 && !view.toast_visible);
-    assert(toast_state_page("Saved",2000,0,0) == 0);
-    canopus_ui_host_poll(3000); assert(toast_state_page("Saved",2000,1,0) == 0);
-    assert(view.toast_visible && view.toast_deadline == 5000 && !(toast->flags & 1u));
 }
 static int label_bounds_page(uint16_t foreground, uint16_t font)
 {
@@ -1695,45 +1400,6 @@ static void test_font_retirement_boundaries(void)
         canopus_ui_host_poll(2);
         assert(native_fonts == 0 && font_bindings_allocated == 0 && calls.font_release == 1 && calls.font_wait == 1);
     }
-}
-static int font_toasts(uint16_t first, uint16_t second, int second_visible)
-{
-    struct canopus_ui_tree_v1 *tree = begin();
-    struct canopus_ui_visual_v1 visual = CANOPUS_UI_VISUAL_DEFAULT;
-    struct canopus_ui_component_props_v1 toast = {
-        sizeof(toast),"First",5,"",0,0,CANOPUS_UI_NODE_FLAG_VISIBLE,1000,0,0,0,0
-    };
-    assert(canopus_ui_component(tree,15,CANOPUS_UI_NODE_TOAST,&toast) == 0);
-    visual.font_px = first; assert(canopus_ui_node_set_visual(tree,15,&visual) == 0);
-    toast.primary = "Second"; toast.primary_len = 6;
-    if (!second_visible) toast.flags = 0;
-    assert(canopus_ui_component(tree,16,CANOPUS_UI_NODE_TOAST,&toast) == 0);
-    visual.font_px = second; assert(canopus_ui_node_set_visual(tree,16,&visual) == 0);
-    return finish(tree);
-}
-static void test_font_toast_owner(void)
-{
-    struct widget *owner;
-    reset(); assert(font_toasts(21,32,1) == 0);
-    owner = view.toast_object;
-    assert(owner->font_px == 32 && native_fonts == 1 && calls.font_create == 1);
-    clear_counts(); assert(font_toasts(21,32,1) == 0);
-    assert(mutations() == 0 && calls.font_create == 0);
-    clear_counts(); assert(font_toasts(17,32,1) == 0);
-    assert(view.toast_object == owner && owner->font_px == 32 && calls.font_set == 0 && calls.font_create == 0);
-    clear_counts(); assert(font_toasts(21,32,0) == 0);
-    assert(owner->deleted && view.toast_object != owner && view.toast_object != NULL);
-    owner = view.toast_object;
-    assert(owner->font_px == 21 && native_fonts == 1 && calls.font_create == 1 && calls.font_release == 1);
-    assert(finish(begin()) == 0);
-    assert(!view.toast_visible && !owner->deleted && native_fonts == 1);
-    clear_counts(); assert(font_toasts(21,32,0) == 0);
-    assert(owner->font_px == 21 && calls.font_create == 0);
-    canopus_ui_host_poll(view.toast_deadline);
-    assert(!view.toast_visible && native_fonts == 1);
-    clear_counts(); assert(font_toasts(24,32,0) == 0);
-    assert(owner->deleted && native_fonts == 0 && calls.font_release == 1);
-    assert(((struct widget *)view.toast_object)->font_px == 24);
 }
 static void test_font_preparation_failures(void)
 {
@@ -2062,9 +1728,7 @@ static int gesture_candidate_page(unsigned proposal)
         sizeof(scroll),"",0,"",0,701,CANOPUS_UI_NODE_FLAG_VISIBLE,0,0,0,0,0
     };
     struct canopus_ui_action_row_props_v1 action = {sizeof(action),"Dragged",7,"",0,702,proposal != 7};
-    struct canopus_ui_component_props_v1 toast = {
-        sizeof(toast),"Saved",5,"",0,0,CANOPUS_UI_NODE_FLAG_VISIBLE,2000,0,0,0,0
-    };
+    struct canopus_ui_text_props_v1 text = {sizeof(text),"Saved",5,CANOPUS_UI_TEXT_BODY};
     assert(canopus_ui_tree_begin(&context,&tree) == 0);
     assert(CANOPUS_UI_NAVIGATION_PAGE(tree,proposal == 1 || proposal == 10 ? 3 : 1,"Manager") == 0);
     if (proposal == 8) scroll.flags = 0;
@@ -2086,7 +1750,7 @@ static int gesture_candidate_page(unsigned proposal)
         };
         assert(canopus_ui_navigation_header(tree,2,&header) == 0);
         assert(canopus_ui_end(tree) == 0);
-    } else if (proposal == 5) assert(canopus_ui_component(tree,15,CANOPUS_UI_NODE_TOAST,&toast) == 0);
+    } else if (proposal == 5) assert(canopus_ui_text(tree,15,&text) == 0);
     if (proposal == 1) row(tree,40,"Candidate",703);
 #ifndef CANOPUS_TEST_NO_FONT
     if (proposal == 9 || proposal == 10) font_text(tree,50,proposal == 9 ? 21 : 26,1);
@@ -2483,9 +2147,10 @@ static void test_advertised_capabilities(void)
     /* Virtual content uses the same native container primitives as layout. */
     assert((caps & CANOPUS_UI_CAP_VIRTUAL_CONTENT) != 0);
     assert((caps & (CANOPUS_UI_CAP_STYLE | CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VALUES |
-                    CANOPUS_UI_CAP_VISUAL | CANOPUS_UI_CAP_TOAST)) ==
+                    CANOPUS_UI_CAP_VISUAL)) ==
            (CANOPUS_UI_CAP_STYLE | CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VALUES |
-            CANOPUS_UI_CAP_VISUAL | CANOPUS_UI_CAP_TOAST));
+            CANOPUS_UI_CAP_VISUAL));
+    assert((caps & (1u << 16)) == 0); /* Retired capability bit stays unused. */
 }
 int main(int argc, char **argv)
 {
@@ -2509,16 +2174,12 @@ int main(int argc, char **argv)
     test_identical_commit_preserves_capture_without_mutation();
     test_virtual_window_placement_while_scrolled();
     test_header_keeps_page_scroll_and_route_resets();
-    test_reentrant_reused_keys_delete_old_rows(); test_toast_lifecycle();
-    test_hidden_toast_and_reappearance(); test_two_toasts_removal_keeps_shared_owner();
-    test_alias_toast_style_stays_off_shared_owner(); test_mixed_toast_visibility_pair();
-    test_driver_switch_repaints_shared_owner();
-    test_hidden_period_style_replay_repaints(); test_hidden_driver_style_write_does_not_linger();
+    test_reentrant_reused_keys_delete_old_rows();
     test_first_header_drives_shared_title();
     test_label_style_preserves_bounds(); test_font_size_contract();
 #ifndef CANOPUS_TEST_NO_FONT
     test_font_cache_and_visibility(); test_font_dialog_retains_live_body();
-    test_font_page_reload_and_view_reset(); test_font_preparation_failures(); test_font_toast_owner();
+    test_font_page_reload_and_view_reset(); test_font_preparation_failures();
     test_font_retirement_boundaries(); test_font_many_sizes_do_not_accumulate();
     test_font_surfaces_and_unsupported_nodes();
     test_font_cancel_destroying_root();
