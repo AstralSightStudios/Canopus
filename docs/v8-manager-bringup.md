@@ -1246,3 +1246,12 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 
 设备现场注意：o66 表盘上**长按＝打开表盘选择器**，唤醒请用单次短按/双击；
 换成擦除过的设备后触摸标定会变（先截图定位按钮再点）。
+- **o66 屏幕状态门槛的精确落点**（3.1.28 IDB，本轮反编译）：`on_resume_wrapped`
+  （`sub_C44D7AC`）用 **`sub_C4723B8()`** 判断屏幕状态，**返回 2 = 屏幕点亮**，否则打印
+  "Now screen state isn't on"。同一处还给出了 3.1.28 的页面结构：状态字节在 **+0x28**、
+  信号回调 **+0x34**、resume 回调 **+0x50**、视图在 **+0x30**（`sub_C2BB8B2(page+0x30,1)`）。
+  ⇒ 给 OPEN_MANAGER 加门槛时应使用 `sub_C4723B8`；按仓库规矩需要先补一条
+  `xiaomi-band-10-3.1.28.ui.screen_state_get` 的 symbol 记录、在
+  `tools/canopus-core/src/target_config.rs` 里登记宏名并重新生成
+  `generated/canopus_target_config.h`，然后再在 `canopus_manager_native_open()` 里
+  「屏幕未点亮就只注册不推页」。这条改动需要 Rust 侧 + 生成物 + CI 一起提交，本轮未动。
