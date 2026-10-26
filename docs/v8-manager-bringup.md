@@ -1192,3 +1192,8 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   可验证/可修的方向：把 Supervisor 初始化里的大局部变量搬到静态/堆上、或让
   `image_invoke` 在独立线程栈上跑；验证方法是比较「首次 Run（含载入）」与
   「supervisor 已在时的 Run（不载入）」是否只有前者崩。
+- **对照实验：会话开始的构建（114,264 B）与当前构建（114,400+ B）在 o66 上都会在
+  「首次 Run 载入 Supervisor」时重启**（两次都出现 mi/HyperOS 开机画面）。所以这次
+  崩溃不是本会话的代码增量造成的，而是**这台 o66 设备的当前状态**——它在本会话里经历了
+  多次安装/重启/表盘切换。下一步应先**擦除重装**（`miragectl erase` 或重建设备），
+  再用同一构建复测首次 Run 是否稳定。
