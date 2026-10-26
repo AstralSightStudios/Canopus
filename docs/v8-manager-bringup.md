@@ -1314,3 +1314,10 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   的点击没落到按钮**（`key.hit` 与 `view.disp` 都没生成）而拿不到数据，所以这一版
   仍未验证；它只在命中时改变行为，未命中时回落到原来的 key，风险很低。
   下一次验证的前提是**先解决点击可靠性**（见上一条：表盘重建窗口）。
+- **o66（擦除后）第二次 Run 会重启设备**：用「保活点击」驱动（每 2.5 s 点状态栏、
+  周期性点 Run）实测，安装后的 Run 之后截图先变 1605（黑）再变 **4505（mi logo）**
+  ——设备重启，所以 `key.hit`/`view.disp` 永远等不到。擦除前同一个动作是可以打开
+  Manager 的（26,829），差别很可能是台设备擦除后**缺了 launcher 条目/app 注册**，
+  而 `page_goto` 对一个不在 launcher 列表里的 app 会直接崩。
+  下一步：先在擦除后的设备上把 Manager 的 launcher 条目建立起来（`launcher_load` +
+  `insert_icon` 成功，`launcher_add_result >= 0`），再重测 Run → Manager。
