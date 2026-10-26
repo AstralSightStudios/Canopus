@@ -751,8 +751,6 @@ local steps = {
       progress = "Registering module apps..." },
     { command = CMD_INSTALL, arg0 = 2,
       progress = "Updating application list..." },
-    { command = CMD_OPEN_MANAGER, arg0 = 0,
-      progress = "Opening Manager..." },
 }
 
 local function set_status(text, color)
