@@ -2002,7 +2002,46 @@ int canopus_manager_native_open(void)
     }
 #endif
     /* Opening the Manager has no source page of our own, so the push is safe to
-     * run inline; only row routes have to wait for the next tick. */
+     * run inline; only row routes have to wait for the next tick. 3.1.28's
+     * goto returns 0 when the key is unknown (it only logs "Please register
+     * this page"), so pick the key shape the page registry actually holds
+     * instead of trusting ours. */
+#if defined(FW_PAGE_LOOKUP)
+    {
+        typedef void *(*lookup_fn)(uint32_t);
+        lookup_fn lookup = (lookup_fn)(uintptr_t)FW_PAGE_LOOKUP;
+        static const uint32_t shapes[4] = {
+            ((uint32_t)CANOPUS_MANAGER_TARGET_APP_ID << 16) |
+                (uint32_t)CANOPUS_TARGET_PAGE_OVERVIEW,
+            ((uint32_t)CANOPUS_MANAGER_TARGET_APP_ID << 8) |
+                (uint32_t)CANOPUS_TARGET_PAGE_OVERVIEW,
+            (uint32_t)CANOPUS_TARGET_PAGE_OVERVIEW,
+            ((uint32_t)CANOPUS_TARGET_PAGE_OVERVIEW << 16) |
+                (uint32_t)CANOPUS_MANAGER_TARGET_APP_ID};
+        uint32_t i;
+        uint8_t hit = 0xFFu;
+        for (i = 0u; i < 4u; i++) {
+            if (lookup(shapes[i]) != NULL) {
+                hit = (uint8_t)i;
+                break;
+            }
+        }
+        {
+            typedef int (*open_fn)(const char *, int, ...);
+            typedef int (*write_fn)(int, const void *, uint32_t);
+            typedef int (*close_fn)(int);
+            int fd = ((open_fn)(uintptr_t)FW_NUTTX_OPEN)(
+                "/data/canopus/key.hit", 2 | 4, 0666);
+            if (fd >= 0) {
+                (void)((write_fn)(uintptr_t)FW_NUTTX_WRITE)(fd, &hit, 1u);
+                (void)((close_fn)(uintptr_t)FW_NUTTX_CLOSE)(fd);
+            }
+        }
+        if (hit != 0xFFu) {
+            return page_goto(shapes[hit], 0u, 0u, 0u) < 0 ? -1 : 0;
+        }
+    }
+#endif
     return page_goto(target_page_key(CANOPUS_TARGET_PAGE_OVERVIEW), 0u, 0u, 0u) < 0
                ? -1 : 0;
 }

@@ -1307,3 +1307,10 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   下一步：确认 `page_goto` 的 key 与注册表里的 key 形状（`APP_ID<<16|page` 是否
   与 app_install 写入的一致），或者直接在 `native_open` 里用 `FW_PAGE_LOOKUP`
   验证 key 并打印结果。
+- **page key 形状的运行时搜索已实现（未在设备上取到证据）**：`native_open` 现在先用
+  `FW_PAGE_LOOKUP` 依次试 `(app<<16)|page`、`(app<<8)|page`、`page`、
+  `(page<<16)|app` 四种 key，命中哪个就用哪个 `page_goto`，并把命中索引写
+  `/data/canopus/key.hit`（0..3，0xFF=都不命中）。设备上两次尝试都因为**第二次 Run
+  的点击没落到按钮**（`key.hit` 与 `view.disp` 都没生成）而拿不到数据，所以这一版
+  仍未验证；它只在命中时改变行为，未命中时回落到原来的 key，风险很低。
+  下一次验证的前提是**先解决点击可靠性**（见上一条：表盘重建窗口）。
