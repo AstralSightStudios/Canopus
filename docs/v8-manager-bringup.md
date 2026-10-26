@@ -1081,3 +1081,15 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   （`模块 / 已安装模块 / 暂无已安装模块`）正常上屏。
   **o66 上没有装任何模块**，所以详情/启用链路在 o66 上还无法复验——需要先给这台
   设备装一个模块包（走 AstroBox 配对或 inbox 流程）。
+- **o66 的模块安装路径已打通到「staging 文件就位」这一步**：模块包
+  `hello_portable-1.0.0.canopus` 是 tar，里面已经有
+  `receipts/xiaomi-band-10-3.1.28.cmi` 和 `artifacts/abi-2-thumbv8m/module.elf`。
+  按 Supervisor 的约定把它们放到 `/canopus/inbox/hello_portable.ko.next` 与
+  `.cmi.next` 后，用表盘发 `CMD_INSTALL`（13，payload = `"hello_portable\0"`）会返回
+  **result=7（DISALLOWED）**；改用 `CMD_SCAN`（12，扫描 inbox）则能走完并让 Manager 打开。
+  （表盘探针只是临时改动，已还原成仓库版本；staging 文件留在 inbox 里。）
+  下一步：在 Manager 的模块页确认 hello_portable 是否已注册，再走详情/启用；
+  若 SCAN 没登记，需要看 `list_packages` 对 inbox 文件名的要求。
+- 另一个操作教训：o66 上 `Ctrl` 级别的坐标不能盲点——这块屏 tap y ≈ 绘制 y + 40，
+  也就是说表盘上 y≈440 是 **Clear Env**（点两次会 `rm -rf /data/canopus`）。
+  自动化脚本必须先截图判断当前在哪一页再决定坐标。
