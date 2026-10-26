@@ -1987,18 +1987,7 @@ int canopus_manager_native_open(void)
      * Registering and pushing in the same call reset the SoC on 3.1.28, so when
      * the app has to come back, this call only registers and the next
      * OPEN_MANAGER (one more user action) pushes from a settled state. */
-    {
-        typedef void *(*app_lookup_fn)(uint16_t);
-        void *installed = ((app_lookup_fn)(uintptr_t)FW_APP_LOOKUP)(
-            CANOPUS_MANAGER_TARGET_APP_ID);
-        if (installed == 0) {
-            if (canopus_manager_native_install() != 0) return -1;
-            if (canopus_manager_target_record.launcher_add_result < 0) {
-                (void)manager_launcher_publish();
-            }
-            return 0;
-        }
-    }
+    if (canopus_manager_native_install() != 0) return -1;
     if (canopus_manager_target_record.launcher_add_result < 0) {
         (void)manager_launcher_publish();
     }
