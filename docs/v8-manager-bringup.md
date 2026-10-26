@@ -1160,3 +1160,12 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   该实验已回退、未提交。结合反编译结论（`nandflash_start_rx_dma`），这条栈溢出更像是
   固件在该任务上的栈本身偏小，需要从**设备/固件侧**处理（或改成不经过大块 NAND 读的
   安装路径），而不是表盘 Lua 的读取方式。
+- **o66 STKOF 的完整现场**（`/log/minidump/crash24.txt`）：`CFSR 0x00100000`（STKOF），
+  **task `system`**（就是执行 `mw`/`exec` 的那条 shell 任务），`LR=0x0C5561BB`
+  （`nandflash_start_rx_dma`）、`R3=0x0C555EFD`、`R5/R8=0x14737`（≈83,767 字节）、
+  `R6=0x800`、`SP=0x3C48A420`、`EXC_RETURN=0xFFFFFFED`（handler/PSP）。
+  紧接着 panic 转储在 **`MMFAR=0x200E0000`**（o66 的 stage-0 cave 基址）二次 MemManage
+  ——和 n66 是同一类「转储被 cave 页放大」的问题。
+  这说明 o66 的崩溃发生在 **shell 任务做一次较大的闪存读**时，不是 UI 任务；
+  下一步应查安装器发出的哪条 `mw`/`exec` 序列会触发 `system` 任务里的大块读，
+  以及 o66 的 cave 页（0x200E0000）同样需要移出日志环形缓冲末尾。
