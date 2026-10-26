@@ -968,3 +968,16 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 - n67 的蓝牙配对需要手环上点「确认」（AstroBox 弹窗：左侧取消、右侧蓝色确认，
   336×480 屏上约 (260,440)）；配对流程里若不点，30 s 后 bridge 报
   `pairing was declined on the band`。
+- **n67 的「页面不上屏」用轻量打点定位到了渲染成功但显示空白**。新增
+  `-DCANOPUS_MGR_TRACE`（只开 `diag_mark`、不开 `diag_dump`，114,968 B 仍可加载）：
+  清空 `/canopus/dm-*` 后跑一次 Run，串口外的标记文件给出完整顺序
+  `ST → i9/iy → g0 c1 h0 a0 b0 d0 p0 u0 l1 o1 q1 y0 k0 v1 w0 n1 x0 I0 →
+  T0 T1 → B0 B1 L1 V1 → A0 A1 Z1`。也就是说 3.1.190 上
+  **on_create 走完（I0，interactive）、stock 标题创建成功（T1）、行和标签都建好（B/L/V）、
+  target_ui_apply 也走完（Z1）**，但面板从 Run 之后起一直是纯黑（336×480，截图 2274 B，
+  连打三帧都一样，唤醒 tap 也不改变）。
+  → 结论：n67 不是「没建页面」，而是**建好的视图没有被显示**（或标题视图盖住了整页）。
+  下一步该核对 3.1.190 的 `lvx_page_title_create`（`0x0C275500`，标题对象自身是
+  `off_2C68DAB8` 类实例、`[13]=56` 高、`[9]` 返回键、`[12]` 时间标签）与页面 view
+  的层级关系，以及 `on_ui_create` 里 `sub_C2E9430(view)`（`sub_C240ED0(view, n-1)`）
+  究竟把 view 放到显示的哪一层。

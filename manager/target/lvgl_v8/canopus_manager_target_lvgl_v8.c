@@ -494,9 +494,11 @@ static int target_refresh_model(void)
     return 0;
 }
 
-#if defined(CANOPUS_TARGET_UI_DIAG)
+#if defined(CANOPUS_TARGET_UI_DIAG) || defined(CANOPUS_MGR_TRACE)
 /* Bring-up only: two-byte markers appended to /data/canopus/diag.txt so the
- * click/route sequence can be read back offline. Never shipped. */
+ * click/route sequence can be read back offline. Never shipped.
+ * CANOPUS_MGR_TRACE enables the marks without the dump payloads that push a
+ * diagnostic build past the loader's size limit. */
 /* One file per marker: /data/canopus/dm-<a><b>. A file that exists proves the
  * marker ran, and opening without append would otherwise overwrite the previous
  * marker (which it did in the first version of this probe). */
@@ -528,6 +530,7 @@ static void diag_mark(char a, char b)
     (void)((close_fn)(uintptr_t)FW_NUTTX_CLOSE)(fd);
 }
 
+#if defined(CANOPUS_TARGET_UI_DIAG)
 static void diag_dump(char a, char b, const void *data, uint32_t len)
 {
     typedef int (*open_fn)(const char *, int, ...);
@@ -547,6 +550,9 @@ static void diag_dump(char a, char b, const void *data, uint32_t len)
     (void)((write_fn)(uintptr_t)FW_NUTTX_WRITE)(fd, data, len);
     (void)((close_fn)(uintptr_t)FW_NUTTX_CLOSE)(fd);
 }
+#else
+#define diag_dump(a, b, data, len) ((void)0)
+#endif
 #else
 #define diag_mark(a, b) ((void)0)
 #define diag_dump(a, b, data, len) ((void)0)
