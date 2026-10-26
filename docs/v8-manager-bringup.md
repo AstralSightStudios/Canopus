@@ -1148,3 +1148,11 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   自身的流程相关，需要单独查（`/log/minidump/crash*.txt` 里有完整转储）。
   用会话开始时的构建（114,264 B）与当前构建（114,400 B）都能复现，说明不是这次
   代码增量造成的。
+- **o66 的 STKOF 落在固件的 NAND DMA 路径**（反编译定位，3.1.28 IDB）：
+  故障 LR `0x0C5561BB` 属于 `sub_C556198`（`nandflash_start_rx_dma`，内部调用
+  `sub_C56A84/start_rx_dma`、`nandflash_start_rx_dma` 的错误串也在其中），
+  即**闪存读 DMA 期间发生栈溢出**（`CFSR 0x00100000`，task `system`，PC 被踩成 0x1）。
+  所以 o66 那些「装一次就重启」的现场，多半是高频/大块闪存 I/O（`mw` 写 cave、
+  stage1/stage2/supervisor 资源读写、`/canopus` 落盘）把这条路径压垮，
+  而不是我们的 UI 代码。下一步要么减小安装期间的 I/O 突发（分批写、减少重复读），
+  要么先确认这条路径在官方表盘下是否会因为相似 I/O 触发。
