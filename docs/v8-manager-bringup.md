@@ -1224,3 +1224,25 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   载入不再崩，但「灭屏期间 push」这条仍然危险——下一步应让 OPEN_MANAGER 只在
   屏幕点亮时执行（表盘侧先确认屏幕状态，或在 Supervisor 侧检查
   `sub_C448910()==2` 再 push）。
+
+## 交接：三个 v8 目标当前状态与下一步（2026-10-26 收尾）
+
+| 目标 | 设备 | Manager 打开 | 息屏重开 | 模块安装 | 详情/启用 | 备注 |
+|---|---|---|---|---|---|---|
+| n66 3.1.32 | canopus-b9-probe | ✅ | ✅ | ✅ | ✅ 已闭环（intent=1 → 重启后「运行中」） | 表盘目录 `cp9probe0003/` |
+| o66 3.1.28 | canopus-o66b | ✅（屏幕亮时点 Run） | ⚠️ | ✅（result=5，registry 有 hello_portable） | ❌ | 灭屏期间推页会重启设备 |
+| n67 3.1.190 | canopus-n67 | ❌ 视图不上屏 | — | — | — | `/system` 为空，缺完整资源包 |
+
+下一步（按收益排序）：
+1. **o66 灭屏推页**：给 `canopus_manager_native_open()` 加屏幕状态门槛
+   （3.1.28 上 `on_resume_wrapped` 用 `sub_C448910()`，返回 2 表示屏幕点亮；
+   需要先按仓库规矩补 symbol 记录并重新生成，再在 open 里「屏幕未亮就只注册不推页」）。
+   完成后即可在干净设备上走完 详情 → 启用 → 确认 → registry `0x3c`=1。
+2. **n67 显示**：先解决设备资源（`/system` 里的 font/system 分区），再用红色视图探针
+   复测「视图是否上屏」；只有上屏之后才值得再调回调槽位。
+3. **launcher 图标**：n66 上安装时报 `launcher UI not created`，现有「OPEN_MANAGER 时
+   重试插入」逻辑尚未目视确认；n67 上插入本身是成功的（34 apps）。
+4. 其余：模块 UI 页面、remove intent 开机循环、n67 Lua 中文 `.notdef`。
+
+设备现场注意：o66 表盘上**长按＝打开表盘选择器**，唤醒请用单次短按/双击；
+换成擦除过的设备后触摸标定会变（先截图定位按钮再点）。
