@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void *(const void *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-1028-V8-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "symbol_id": "xiaomi-band-10-3.1.28.exact.lv_obj_get_display",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "lv_obj_get_display",
+  "entry_address": "0xc2b9290",
+  "callable_address": "0xc2b9291",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-STATIC-1028-V8-001"
+    ],
+    "source": "Exact xiaomi-band-10-3.1.28 image: lv_obj_tree.c lv_obj_get_display; logs 'No screen found' and returns 0 for an object that is not attached to any display."
+  },
+  "notes": "Walks the parent chain to the screen and scans the display list for it. A NULL result proves the object is detached (the display never draws it)."
+}

@@ -1296,3 +1296,14 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   但没有真正显示到面板上**。这是目前两个目标唯一的共同剩余障碍，值得作为下一轮
   的主攻方向（在该页被 push 后检查 view 的父对象/坐标/隐藏标志，以及
   `on_resume_wrapped` 的屏幕状态条件）。
+- **o66 的进一步定论：`OPEN_MANAGER` 返回成功，但页面根本没被创建**
+  （`lv_obj_get_display` 探针文件 `view.disp` 从未生成 ⇒ `on_create` 没跑）。
+  3.1.28 的 `goto_page_no_check_stacktop` 在页面查不到时只打印
+  "Please register this page:%lu!" 并**返回 0**，所以我们的 `native_open` 认为成功、
+  表盘显示 "Manager opened"，实际什么都没发生。
+  为此新增了 `lv_obj_get_display` 的 symbol 记录与宏（`FW_LV_OBJ_GET_DISPLAY`，
+  entry `0xC2B9290`，`lv_obj_tree.c`），便于以后判断视图是否挂到 display；
+  另外试过「页面注册丢失时重新 app_install」，实测仍不建页，已回退。
+  下一步：确认 `page_goto` 的 key 与注册表里的 key 形状（`APP_ID<<16|page` 是否
+  与 app_install 写入的一致），或者直接在 `native_open` 里用 `FW_PAGE_LOOKUP`
+  验证 key 并打印结果。

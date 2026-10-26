@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: a03a57c1944d2381
+ * input_digest: 3829265ceabc9c8c
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -124,6 +124,11 @@ static inline void canopus_fw_lv_bar_set_value(void * a0, int32_t a1, uint32_t a
 typedef void (*canopus_fw_lv_obj_set_hidden_fn)(void *, uint32_t);
 static inline void canopus_fw_lv_obj_set_hidden(void * a0, uint32_t a1) {
     return ((canopus_fw_lv_obj_set_hidden_fn)(uintptr_t)0xc4e0f71)(a0, a1);
+}
+
+typedef void * (*canopus_fw_lv_obj_get_display_fn)(const void *);
+static inline void * canopus_fw_lv_obj_get_display(const void * a0) {
+    return ((canopus_fw_lv_obj_get_display_fn)(uintptr_t)0xc2b9291)(a0);
 }
 
 typedef int (*canopus_fw_launcher_page_insert_icon_fn)(void *);

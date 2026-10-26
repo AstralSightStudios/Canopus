@@ -4,7 +4,7 @@
 // firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
 // sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
 // revision : 1
-// input_digest: a03a57c1944d2381
+// input_digest: 3829265ceabc9c8c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -119,6 +119,9 @@ pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0
 
 /// Recovered `lv_obj_set_hidden` at 0xc4e0f70. Thumb callable address 0xc4e0f71.
 pub const CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE: usize = canopus_thumb_callable(0xc4e0f71usize);
+
+/// Recovered `lv_obj_get_display` at 0xc2b9290. Thumb callable address 0xc2b9291.
+pub const CANOPUS_FW_LV_OBJ_GET_DISPLAY_CALLABLE: usize = canopus_thumb_callable(0xc2b9291usize);
 
 /// Recovered `launcher_page_insert_icon` at 0xc29b21c. Thumb callable address 0xc29b21d.
 pub const CANOPUS_FW_LAUNCHER_PAGE_INSERT_ICON_CALLABLE: usize = canopus_thumb_callable(0xc29b21dusize);
@@ -380,6 +383,7 @@ pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_calla
 // lv_obj_align_to: restricted - not exported until context/ownership approved
 // lv_obj_clear_flag: restricted - not exported until context/ownership approved
 // lv_obj_create: restricted - not exported until context/ownership approved
+// lv_obj_get_display: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
 // lv_obj_set_size: restricted - not exported until context/ownership approved
