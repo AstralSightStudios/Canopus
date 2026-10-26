@@ -1037,3 +1037,12 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   「Clear Env」上方的空档，表现为状态文字变化但不开页）。
 - 这一步把三个 v8 目标里的 o66 从「只有静态地址」推进到「Manager 能打开、能在息屏后重开」
   的设备证据；o66 的模块列表/详情/启用链路与 launcher 图标仍未逐项复验。
+- **launcher 图标：把插入动作从 install 里拆出来，OPEN_MANAGER 时重试**。
+  `launcher_page_insert_icon` 需要 launcher 的实时页面（用户打开过一次应用列表才存在），
+  安装是在表盘里做的，所以第一次插入必然失败（日志 `launcher UI not created`）。
+  现在 `manager_launcher_publish()` 单独负责 load+insert，安装时调用一次，之后每次
+  `OPEN_MANAGER` 只要上次 `launcher_add_result < 0` 就再试一次；`reset_order_info_list`
+  仍只在安装成功插入后调用一次，避免 o66 上重复 reset 的风险。
+  n66 回归：新构建（114,336 B）Run → Manager 概览页照常打开（截图 22,353 B）。
+  **图标本身尚未在应用列表里目视确认**（还需要「先打开应用列表 → 回表盘 → Run」的
+  一次完整时序），这一步留待下一轮。

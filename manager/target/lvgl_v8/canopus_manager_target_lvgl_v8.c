@@ -1818,23 +1818,46 @@ static void target_descriptor_init(uint32_t page_index, const char *name,
     manager_pages_desc[page_index].on_destroy = manager_page_on_destroy;
 }
 
+/* Register the Manager's launcher icon. app_install only puts the app in the
+ * page manager's list; the icon needs the launcher's live page, which exists
+ * only after the user has opened the app list once. So this is retried from
+ * every Manager open while the last attempt failed. */
+static int manager_launcher_publish(void)
+{
+    typedef void *(*app_lookup_fn)(uint16_t);
+    typedef void *(*launcher_load_fn)(void *);
+    typedef int (*launcher_insert_fn)(void *);
+    app_lookup_fn app_lookup = (app_lookup_fn)(uintptr_t)FW_APP_LOOKUP;
+    launcher_load_fn launcher_load =
+        (launcher_load_fn)(uintptr_t)FW_LAUNCHER_LOAD_APP_INFO;
+    launcher_insert_fn launcher_insert =
+        (launcher_insert_fn)(uintptr_t)FW_LAUNCHER_PAGE_INSERT_ICON;
+    void *installed_app = app_lookup(CANOPUS_MANAGER_TARGET_APP_ID);
+    void *launcher_item;
+
+    if (installed_app == NULL) {
+        return -100;
+    }
+    launcher_item = launcher_load(installed_app);
+    canopus_manager_target_record.launcher_add_result =
+        launcher_item != NULL ? launcher_insert(launcher_item) : -102;
+    diag_mark('i', launcher_item == NULL
+                       ? 'l'
+                       : (canopus_manager_target_record.launcher_add_result < 0
+                              ? 'n' : 'y'));
+    return canopus_manager_target_record.launcher_add_result;
+}
+
 int canopus_manager_native_install(void)
 {
     typedef int (*app_install_fn)(const struct firmware_app_descriptor *,
                                   struct firmware_page_descriptor *const *,
                                   uint32_t);
     typedef void *(*app_lookup_fn)(uint16_t);
-    typedef void *(*launcher_load_fn)(void *);
-    typedef int (*launcher_insert_fn)(void *);
     struct firmware_page_descriptor *pages[CANOPUS_TARGET_PAGE_COUNT];
     app_install_fn app_install = (app_install_fn)(uintptr_t)FW_APP_INSTALL;
     app_lookup_fn app_lookup = (app_lookup_fn)(uintptr_t)FW_APP_LOOKUP;
-    launcher_load_fn launcher_load =
-        (launcher_load_fn)(uintptr_t)FW_LAUNCHER_LOAD_APP_INFO;
-    launcher_insert_fn launcher_insert =
-        (launcher_insert_fn)(uintptr_t)FW_LAUNCHER_PAGE_INSERT_ICON;
     void *installed_app;
-    void *launcher_item;
 
     if (canopus_manager_target_record.identity_result != 0) {
         return canopus_manager_target_record.identity_result;
@@ -1864,22 +1887,17 @@ int canopus_manager_native_install(void)
         canopus_manager_target_record.app_install_result = -100;
         return -100;
     }
-    launcher_item = launcher_load(installed_app);
-    canopus_manager_target_record.launcher_add_result = launcher_item != NULL
-        ? launcher_insert(launcher_item) : -102;
+    (void)manager_launcher_publish();
 #ifdef FW_LAUNCHER_RESET_ORDER_INFO
     /* insert_icon only fills the launcher's icon list; draw_page_with_list
      * walks the order list, which reset_order_info_list rebuilds from it and
-     * persists (boot logs "reset_order_info_list: appid ... in more"). */
-    if (launcher_item != NULL) {
+     * persists (boot logs "reset_order_info_list: appid ... in more"). Run it
+     * once per install, not on every icon retry. */
+    if (canopus_manager_target_record.launcher_add_result >= 0) {
         (void)((int32_t (*)(uint32_t))(uintptr_t)FW_LAUNCHER_RESET_ORDER_INFO)(
             0u);
     }
 #endif
-    diag_mark('i', launcher_item == NULL
-                       ? 'l'
-                       : (canopus_manager_target_record.launcher_add_result < 0
-                              ? 'n' : 'y'));
     /* launcher_reset_order_info (o66 0xc4fc508) is deliberately not called:
      * the firmware logs "[launcher] launcher_page_insert_icon: launcher UI not
      * created" when the installer runs from the watchface page, and calling the
@@ -1955,6 +1973,9 @@ int canopus_manager_native_open(void)
      * Re-register before pushing, so OPEN_MANAGER still works in the same boot;
      * install is a single lookup once the app is back in the list. */
     if (canopus_manager_native_install() != 0) return -1;
+    if (canopus_manager_target_record.launcher_add_result < 0) {
+        (void)manager_launcher_publish();
+    }
     /* Opening the Manager has no source page of our own, so the push is safe to
      * run inline; only row routes have to wait for the next tick. */
     return page_goto(target_page_key(CANOPUS_TARGET_PAGE_OVERVIEW), 0u, 0u, 0u) < 0
