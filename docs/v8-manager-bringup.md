@@ -1131,3 +1131,11 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 - **给 o66 的安装流程加 `CMD_OPEN_MANAGER` 第 6 步会让设备重启**（实测一次
   HyperOS 开机画面），该改动已回退（`6e89413`）。o66 保持 5 步：先 Run 完成安装，
   再点一次 Run 走「打开管理器」分支（这条路径此前是能出 Manager 的，26945 截图）。
+- **o66 上「已装好 Supervisor 后再点 Run 打开 Manager」会让设备重启**（本轮实测两次
+  HyperOS 开机画面）。时序是：慢安装（`mw`/`exec` 载入）→ 息屏 → 10 s 弹回表盘（表盘
+  Lua 重建、`run_attempted` 归零）→ 唤醒后第一次 Run 走完整 5 步（此时 supervisor 已在，
+  很快）→ 第二次 Run 进「打开管理器」分支 → **设备重启**。之前在 o66 上确实成功打开过
+  Manager（26,945 截图），差别可能在于当时 app 还注册着；现在是
+  `native_install()` 重新注册 + `page_goto` 在同一次 Lua 回调里完成。
+  结论：o66 的「重新注册再 push」这条路在当前设备状态下不安全，需要改成
+  「注册」和「push」分成两次交互（或先验证 app 仍注册、只在缺失时重注册）。
