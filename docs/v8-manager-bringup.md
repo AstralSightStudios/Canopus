@@ -1197,3 +1197,14 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   崩溃不是本会话的代码增量造成的，而是**这台 o66 设备的当前状态**——它在本会话里经历了
   多次安装/重启/表盘切换。下一步应先**擦除重装**（`miragectl erase` 或重建设备），
   再用同一构建复测首次 Run 是否稳定。
+- **擦除重装 o66 后，载入崩溃消失、Manager 与模块页都能正常打开**（2026-10-26）：
+  先 `fs get` 备份整个 `366340011/`（含 214,795 B 的 `resource.bin`）和
+  `watchface_list.json`，再 `miragectl erase`，重启一次让 FS 重建、把表盘目录与
+  `watchface_list.json`（只保留 366340011 `in_use=1`）写回，然后恢复 stage1/stage2/
+  profile/supervisor。**结果：首次 Run 不再重启**（屏会黑 5–10 s，但设备存活），
+  之后 Run 能打开 **Manager 概览（26,829/26,863）**，也能进 **模块页（7,197）**。
+  ⇒ 之前 o66 的「装一次就重启」确实是**设备状态**（多次安装/重启/换表盘后劣化），
+  不是我们的构建；干净设备上这条链是通的。
+  遗留：擦除同时清掉了 `/canopus/registry.bin` 里的模块记录，本轮重新投递
+  `hello_portable`（inbox + `CMD_INSTALL=2`）没有生效（registry 仍为空、探针也没写结果），
+  需要下一轮重新走一遍模块安装。
