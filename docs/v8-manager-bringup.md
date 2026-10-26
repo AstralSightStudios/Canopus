@@ -1489,3 +1489,22 @@ CLICKED(7)/SHORT_CLICKED(4) 的分支始终没进到**（没有 `dm-k`、没有 
 结论：o66 的 Manager 页面在「显示、显示树、resume、页标志」上都正常，唯独
 **输入链路没有把它当作输入目标**。下一步只能在固件的活动管理器/indev 路径上做
 跟踪（例如在 `lv_indev` 的 `proc` 里对 `act_obj` 打点），而不是继续黑盒点击。
+
+### n67（3.1.190）：缺的是 `/system/font/*.ttf`，不是 font.bin
+
+把 n66 的 `font.bin`/`i18n.bin` 拷到 n67 的 `/system` 后重装重开，页面依然全黑，日志给出
+真正的原因：
+
+```
+[LVGL] font_manager_check_font_file: Can't access font file: /system/font/MiSans-Regular.ttf
+[LVGL] lvx_font_create: Use LV_FONT_DEFAULT(0x2c681730)
+[launcher] load_app_info: The app can't be uninstalled com.canopus.manager
+[LVGL] lv_gpu_decoder_info: invalid file /data/canopus/manager_icon.bin, cf: 25
+[pagemanager] on_ui_create: create view 0x3d0b04f8:{202, 0}
+```
+
+即：3.1.190 通过**绝对路径读 TTF**，而本机固件包（`miwear.watch.n67cn_v3.1.190_full`）
+的 `system/` 只有 emoji/misc/watchface，**没有任何字体文件**；n66 用的是 font.bin
+机制，两边不通用，所以拷贝无效（已还原设备）。另外 manager_icon.bin 在 n67 上被
+GPU 解码器判为非法（cf: 25），图标资源格式也需要按 3.1.190 重新打包。
+⇒ n67 要真正跑起来，需要一份带 `/system/font` 的 3.1.190 资源包，这不是代码能补的。

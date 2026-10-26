@@ -19,6 +19,42 @@
 #include "canopus_memory.h"
 #include "canopus_supervisor.h"
 
+#define DIAG_DIR "/data/canopus/dm-"
+
+static void mark_bytes(char a, char b, const void *data, uint32_t len)
+{
+    char path[24];
+    uint32_t i;
+    int fd;
+    for (i = 0u; i < sizeof(DIAG_DIR) - 1u; i++) path[i] = DIAG_DIR[i];
+    path[i] = a; path[i + 1u] = b; path[i + 2u] = 0;
+    fd = ((int (*)(const char *, int, ...))(uintptr_t)FW_NUTTX_OPEN)(
+        path, 2 | 4, 0666);
+    if (fd >= 0) {
+        if (data != NULL && len != 0u)
+            (void)((int (*)(int, const void *, uint32_t))(uintptr_t)FW_NUTTX_WRITE)(
+                fd, data, len);
+        (void)((int (*)(int))(uintptr_t)FW_NUTTX_CLOSE)(fd);
+    }
+}
+
+static void mark2(char a, char b)
+{
+    mark_bytes(a, b, NULL, 0u);
+}
+
+static void __attribute__((unused)) mark2_old(char a, char b)
+{
+    char path[24];
+    uint32_t i;
+    int fd;
+    for (i = 0u; i < sizeof(DIAG_DIR) - 1u; i++) path[i] = DIAG_DIR[i];
+    path[i] = a; path[i + 1u] = b; path[i + 2u] = 0;
+    fd = ((int (*)(const char *, int, ...))(uintptr_t)FW_NUTTX_OPEN)(
+        path, 2 | 4, 0666);
+    if (fd >= 0) (void)((int (*)(int))(uintptr_t)FW_NUTTX_CLOSE)(fd);
+}
+
 #define CANOPUS_TARGET_PAGE_COUNT 3u
 #define CANOPUS_TARGET_PAGE_OVERVIEW 0u
 #define CANOPUS_TARGET_PAGE_MODULES 1u
@@ -354,8 +390,9 @@ static int manager_on_signal(struct firmware_page_descriptor *page,
                              uint32_t event, void *payload)
 {
     (void)page;
-    (void)event;
-    (void)payload;
+    mark2('s', (char)('0' + (int)(event % 10u)));
+    mark2('t', (char)('0' + (int)((event / 10u) % 10u)));
+    mark_bytes('v', (char)('0' + (int)(event % 10u)), payload, 16u);
     return 0;
 }
 
