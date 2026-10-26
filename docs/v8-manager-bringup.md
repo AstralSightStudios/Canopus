@@ -952,3 +952,19 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 - 本轮构建：n66 Supervisor 114,276 B（verifier PASS），stage1 417 B、stage2 3,576 B；
   四个资源和 `main.lua` 一起写进 `cp9probe0003/`（stage2 内嵌 supervisor 尺寸，
   只换 supervisor 会报 -5）。
+
+### 第二十八轮附带：n67（3.1.190）的现场状态
+
+- 设备 `canopus-n67`（不是 `-probe`）上装的是完整安装器表盘（`366240021/`，
+  `resource.bin` 211,464 B），但当前选中的表盘是探针表盘 `366240028/`。
+  切换方法：`/app/watchface/watchface_list.json` 里把目标项的 `in_use` 置 1、
+  其余置 0，重启即生效（本轮用它把 n67 切回了安装器表盘）。
+- 用本轮构建（Supervisor 114,160 B）在 n67 上点 Run 之后：**页面确实被创建了**
+  （日志 `activitymanager_active_by_layer: {202, 0 pause}`，息屏时 pause），
+  但屏幕全黑（2274 B 的纯黑截图），且设备不崩、不失联。也就是说 n67 的问题不是
+  「页面没建」而是「页面没被显示」——与 3.1.190 的 `CANOPUS_MGR_PAGE_ROOT_SLOT=0x2c`
+  是否指向真正上屏的 view 直接相关，下一步应在 3.1.190 的 IDB 上核对
+  `on_ui_create` 交给我们的 root 与 `lv_disp` 当前 screen 的关系。
+- n67 的蓝牙配对需要手环上点「确认」（AstroBox 弹窗：左侧取消、右侧蓝色确认，
+  336×480 屏上约 (260,440)）；配对流程里若不点，30 s 后 bridge 报
+  `pairing was declined on the band`。
