@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: e41cfcc9f9be10c1
+// input_digest: 734f5a3a4994a78d
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -1022,8 +1022,8 @@ pub const CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `bt_discovery_stop` at 0x0C398E4C. Thumb callable address 0x0C398E4D.
 pub const CANOPUS_FW_BT_DISCOVERY_STOP_CALLABLE: usize = canopus_thumb_callable(0x0C398E4Dusize);
 
-/// Recovered `lv_obj_set_local_style_prop` at 0x0C107464. Thumb callable address 0x0C107465.
-pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x0C107465usize);
+/// Recovered `lv_obj_set_local_style_prop` at 0x002BD5FC. Thumb callable address 0x002BD5FD.
+pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x002BD5FDusize);
 
 /// Recovered `socket` at 0xc1bb8bc. Thumb callable address 0xc1bb8bd.
 pub const CANOPUS_FW_SOCKET_CALLABLE: usize = canopus_thumb_callable(0xc1bb8bdusize);

@@ -83,6 +83,11 @@
 - [x] 按用户要求移除 C/Rust SDK 的 Toast 入口、Manager 渲染与计时、示例及模拟器场景；节点编号 11 与能力位 16 保留停用，其余 ABI 编号不变。保留标题更新、输入事件时钟和字体回收。下文既有 Toast 验证记录仅表示移除前的历史，不代表当前可用能力。
   验证：C host 与双家族输入测试通过 ASan/UBSan；四组原生后端配置通过 ASan/UBSan；Rust UI core 22 个单元测试与 2 个文档测试通过；`.043` / `.155` Supervisor 构建与 ELF 校验通过；native-ui-lab 五目标构建、ELF 校验与打包通过。未新增模拟器或真机验证，不提升能力状态。
 
+## 原生 UI 整体透明度覆盖（2026-10-26）
+
+- [x] 对全部9个当前 target 审查整体 opacity 接线；精确 `.036`、`.043`、`.139` 的 property95 setter、renderer 与地址语义登记为 `EVID-UI-1036-OPACITY-001`、`EVID-UI-1043-OPACITY-001`、`EVID-UI-4139-OPACITY-001`，与既有 `.155` / `.179` 接线共同覆盖五款 v9 目标。`.036` 的 canonical dispatcher 从 flash load copy 纠正为 SRAM callable `0x002BD5FD`，标准生成同步 C/Rust 元数据；保留所有原有 policy / approval / device 字段。`.139` 只补整体 opacity，不继承其它 layout/input 常量。修复分区标题与合成行标题重复写入整体 opacity 导致叠乘的问题：只对语义节点对象写一次，内部标签继承；新增回归先在四个 host 配置复现失败，再验证修复。
+  验证：core 51项、全9目标 freshness / SDK feature gate、两家族四配置 ASan/UBSan 原生 UI host 回归、五款 v9 Supervisor 构建与 ELF verifier 通过。Band 9 的 v8 STYLE/VISUAL 与原生父子层级、Band 9 Pro / Band 10 / Redmi Watch 6 的平台绑定仍未完成，继续明确不支持。仅为静态/host 级证据，不提升真机或生产能力状态。接口语义和完整矩阵见 `adr/ADR-CAN-010-ui-host.md` 的 Overall opacity 一节。
+
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
 
 - O1（现由 K15/ADR-CAN-008 替代旧 K13）手机↔设备端控制通道（原阻塞 P5.1 及之后）。

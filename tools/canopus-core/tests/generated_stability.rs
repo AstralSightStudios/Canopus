@@ -387,6 +387,53 @@ fn native_image_fit_is_bound_only_to_independently_reviewed_targets() {
 }
 
 #[test]
+fn native_opacity_requires_an_exact_target_review() {
+    let targets = repo_root().join("targets");
+    for pack in canopus_core::generate::active_targets(&targets).unwrap() {
+        let reviewed = match pack.target_id.as_str() {
+            "xiaomi-band-10-pro-3.101.036" => Some(("EVID-UI-1036-OPACITY-001", "lv_obj_set_local_style_prop", 0x002bd5fdusize)),
+            "xiaomi-band-10-pro-3.101.043" => Some(("EVID-UI-1043-OPACITY-001", "lv_obj_set_local_style_prop", 0x002bd925)),
+            "xiaomi-band-11-4.100.139" => Some(("EVID-UI-4139-OPACITY-001", "lv_obj_set_local_style_prop", 0x0c3872b5)),
+            "xiaomi-band-11-4.100.155" => Some(("EVID-UI-4155-LAYOUT-INPUT-001", "lv_obj_set_local_style_prop", 0x0c3872b5)),
+            "xiaomi-band-11-4.100.179" => Some(("EVID-UI-4179-LAYOUT-INPUT-001", "lv_obj_set_local_style_prop", 0x0c383435)),
+            _ => None,
+        };
+        let outputs = canopus_core::generate::outputs_for(&targets, &pack).unwrap();
+        let header = outputs.iter()
+            .filter(|output| matches!(output.path.file_name().and_then(|s| s.to_str()),
+                Some("canopus_target_config.h" | "canopus_band11_addresses.h")))
+            .map(|output| output.content.as_str())
+            .collect::<Vec<_>>().join("\n");
+        assert_eq!(header.contains("#define FW_UI_STYLE_OPA "), reviewed.is_some(), "{}", pack.target_id);
+        let Some((id, name, address)) = reviewed else { continue; };
+        assert!(header.contains("#define FW_UI_STYLE_OPA 95u"), "{}", pack.target_id);
+        assert!(header.contains(id), "{} lacks its opacity review", pack.target_id);
+        assert!(header.contains(&format!("#define FW_UI_STYLE_SET UINT32_C(0x{address:08X})"))
+            || header.contains(&format!("#define FW_UI_STYLE_SET 0x{address:08X}u")),
+            "{} uses an unreviewed dispatcher", pack.target_id);
+        let dir = targets.join(&pack.target_id);
+        let (symbols, _) = load_records(&dir).unwrap();
+        let dispatcher = symbols.iter().find(|s| s.name == name).unwrap();
+        assert_eq!(parse_address(dispatcher.callable_address.as_deref().unwrap()), address);
+        assert_eq!(dispatcher.provenance.firmware_sha256, pack.firmware_sha256);
+        assert_eq!(dispatcher.policy, "restricted");
+        let evidence: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
+            dir.join(format!("evidence/{id}.json"))).unwrap()).unwrap();
+        assert_eq!(evidence["target_id"], pack.target_id);
+        if evidence.get("verdict").is_some() {
+            canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence).unwrap();
+            assert_eq!(evidence["verdict"], "STATIC_RECOVERED");
+            assert!(evidence["artifacts"].as_array().unwrap().iter().any(|artifact|
+                artifact["uri"] == format!("fw://{}/vela_ap.bin", pack.target_id)
+                    && artifact["sha256"] == pack.firmware_sha256));
+        } else {
+            assert_eq!(evidence["firmware_sha256"], pack.firmware_sha256);
+            assert_eq!(evidence["style_properties"]["opacity"], 95);
+        }
+    }
+}
+
+#[test]
 fn native_font_bindings_are_private_and_target_gated() {
     for suffix in ["3.101.036", "3.101.043", "4.100.139", "4.100.155", "4.100.179"] {
         let band10 = suffix.starts_with('3');

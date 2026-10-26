@@ -5,8 +5,8 @@
   "name": "lv_obj_set_local_style_prop",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x0C107464",
-  "callable_address": "0x0C107465",
+  "entry_address": "0x002BD5FC",
+  "callable_address": "0x002BD5FD",
   "prototype": "void (void *, uint32_t, uint32_t, uint32_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -28,7 +28,8 @@
     "device": "not_probed",
     "host_tested": false,
     "evidence_ids": [
-      "EVID-UI-LAYER-001"
+      "EVID-UI-LAYER-001",
+      "EVID-UI-1036-OPACITY-001"
     ]
   },
   "policy": "restricted",
@@ -36,10 +37,11 @@
   "provenance": {
     "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
     "evidence_ids": [
-      "EVID-UI-LAYER-001"
+      "EVID-UI-LAYER-001",
+      "EVID-UI-1036-OPACITY-001"
     ],
-    "source": "IDA exact-target analysis: fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64"
+    "source": "IDA exact-target analysis: fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64; exact startup copy and stock XIP veneer establish the runtime SRAM entry (load0x0C107464 -> runtime0x002BD5FC)"
   },
-  "notes": "Exact-target LVGL v9 UI-owner primitive. Device probe remains required.",
+  "notes": "Exact-target LVGL v9 UI-owner primitive. Device probe remains required. Runtime address corrected using exact .036 startup source0x2C0FC3A8/destination0x200B2540 and XIP veneer0x0CAA7238 literal0x002BD5FD. Former0x0C107464/65 is the non-executable load copy; policy, approval and device proof are unchanged.",
   "approval_state": "PENDING"
 }

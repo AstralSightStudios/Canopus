@@ -989,9 +989,10 @@ static void host_content_normalize(void *object)
 #endif
 }
 static void host_style(void *object, const struct canopus_ui_style_v1 *s,
-                        const struct canopus_ui_visual_v1 *v)
+                        const struct canopus_ui_visual_v1 *v, int overall_opacity)
 {
     uint32_t background = s->background;
+    (void)overall_opacity;
     if (background == CANOPUS_UI_COLOR_INHERIT && (s->variant == CANOPUS_UI_VARIANT_FILLED || s->variant == CANOPUS_UI_VARIANT_TONAL)) background = CANOPUS_UI_COLOR_SURFACE_ALT;
     if (s->variant == CANOPUS_UI_VARIANT_DESTRUCTIVE && s->foreground == CANOPUS_UI_COLOR_INHERIT)
         host_style_property(object, 88u, host_color(CANOPUS_UI_COLOR_DANGER));
@@ -1016,7 +1017,8 @@ static void host_style(void *object, const struct canopus_ui_style_v1 *s,
         host_style_property(object, FW_UI_STYLE_BORDER_WIDTH, s->border_width >= 0 ? (uint32_t)s->border_width : 1u);
 #endif
 #ifdef FW_UI_STYLE_OPA
-    if (s->opacity != 0 || (v->flags & CANOPUS_UI_VISUAL_FLAG_OPACITY))
+    /* Internal labels inherit opacity from the semantic node's object. */
+    if (overall_opacity && (s->opacity != 0 || (v->flags & CANOPUS_UI_VISUAL_FLAG_OPACITY)))
         host_style_property(object, FW_UI_STYLE_OPA, (uint32_t)s->opacity * 255u / 1000u);
 #endif
 }
@@ -1445,7 +1447,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
 #endif
                 }
                 if (text_changed) host_label_set_text(label,primary);
-                if (style_changed) host_style(label,&snapshot->styles[i],v);
+                if (style_changed) host_style(label,&snapshot->styles[i],v,label == slot->object);
                 if (slot->kind == 4u && (fresh[i] || style_changed || old == NULL || old->flags != n->flags || slot->dirty)) {
                     /* A mark the caller draws itself (VARIANT_PLAIN) stays
                        hidden: the firmware must not paint a second one. */
@@ -1500,7 +1502,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         /* Navigation headers are semantic handles to the page viewport. */
         if (n->type == CANOPUS_UI_NODE_NAVIGATION_HEADER) goto publish_node;
         if (style_changed && slot->object != NULL)
-            host_style(slot->object,&snapshot->styles[i],v);
+            host_style(slot->object,&snapshot->styles[i],v,1);
         if (fresh[i] || slot->width != geometry[i].width || slot->height != geometry[i].height)
             host_set_size(slot->object,geometry[i].width,geometry[i].height);
         if (slot->primary != NULL && (fresh[i] || candidates[i].primary != NULL || padding_changed || mark_changed || slot->width != geometry[i].width || slot->height != geometry[i].height)) {

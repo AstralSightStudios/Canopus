@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-1043-OPACITY-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Does exact .043 implement overall object opacity property95, and can the native UI host use it through its existing runtime local-style dispatcher?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.lv_obj_set_local_style_prop",
+    "xiaomi-band-10-pro-3.101.043.lv_obj_get_style_prop"
+  ],
+  "prototype_hypothesis": "Existing UI-owner AAPCS void lv_obj_set_local_style_prop(void *object, uint32_t property, uint32_t value, uint32_t selector): r0=borrowed live object, r1=95 (LV_STYLE_OPA), r2=opacity0..255, r3=selector0 for the host. No new callable or module-visible firmware address is introduced.",
+  "callsite_evidence": [
+    "Exact AP input is13795728 bytes, SHA256519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec. IDA9.4.0.260610/Hex-Rays disassembly, decompilation and xrefs were checked against these AP bytes; no device execution or cross-target constant inference.",
+    "Stock overall-opacity wrapper load0x0c108860/runtime0x002be9f4 has length0x18. Runtime0x002be9fa moves the incoming selector r2 to r3;0x002be9fe loads property0x5f into r1;0x002bea00 restores the incoming opacity to r2;0x002bea02 calls dispatcher0x002bd924. Hex-Rays reduces this to dispatcher(object,95,opacity,selector). The complete AP window at offset0x48860 is8c4680b582b0134600af5f216246fef78fff0837bd4680bd, SHA2561fb5174cd7d37376437ae0c4200c8c4c1b371f74ceb732ba411ae8cc052ad829.",
+    "PSRAM veneer0x1c07a6d0 targets runtime wrapper0x002be9f4; IDA code xref0x1c02f36c in sub_1C02F364 calls that veneer. This independently ties the property95 wrapper to the runtime call graph.",
+    "Renderer sub_2BAA9C occupies runtime[0x002baa9c,0x002bb1fa), load0x0c104908. At0x002baacc it sets r2=0x5f and at0x002baad6 calls effective-style getter0x002bca3c(object,0,95). Hex-Rays shows the returned uint8 opacity multiplied into layer+92 as(uint16_t)(previous_layer_opacity*object_opacity)>>8 when object_opacity<=0xfc, then drawing through0x002ba788 and restoration of the previous layer state. Property96 is queried separately, so95 is not confused with the layered-opacity slot.",
+    "Independent renderer path sub_2BB46C reads main-part property95 at runtime call0x002bb49a and declines its later covering-object path when the uint8 opacity is<=0xfc. The rendering code retains the native source identity apps/graphics/lvgl/lvgl/src/core/lv_refr.c.",
+    "The lower-level style-value convenience wrapper load0x0c109368/runtime0x002bf4fc also forwards property95 to style setter runtime0x002becb8. Its complete0x14-byte AP window at offset0x49368 is80b582b00a4600af5f21fff7d7fb0837bd4680bd, SHA2566922b416240494f5783672454ec42f24a83c5eeb0038c5baae040b0ddc634fc2. This is additional static evidence, not a new callable binding."
+  ],
+  "control_flow_evidence": [
+    "EVID-UI-1043-LOCAL-STYLE-001 and EVID-UI-1043-LAYOUT-INPUT-001 independently establish startup0x0c0c0a60 copying storage[0x2c0fc6cc,0x2c10d438) to SRAM0x200b2860, execution alias0x002b2860. Thus wrapper load0x0c108860 maps to runtime0x002be9f4, dispatcher load0x0c107790 to runtime0x002bd924, getter load0x0c1068a8 to runtime0x002bca3c and renderer load0x0c104908 to runtime0x002baa9c. Relative branches must execute at runtime VMAs, not their AP load copies.",
+    "The host already binds FW_UI_STYLE_SET to Thumb callable0x002bd925. FW_UI_STYLE_OPA=95 is a private property ID consumed as the dispatcher's second argument, not a function address, structure offset or new SDK capability bit. The existing host converts public opacity0..1000 to0..255 and uses selector0.",
+    "The renderer load-prefix window0x0c104908+0x60 at AP offset0x44908 has SHA256466f7e81e67d6ab8c2bdd41d4b3c99adf944f5228330cf02a6f6b247e4d2076b; it includes the property95 getter call. IDA decompilation of the complete runtime function establishes the subsequent layer-opacity dataflow.",
+    "Background opacity is a separate property29: EVID-RESOURCE-XIP-THUNKS-1043-001 records XIP thunk0x0c5883f8/callable0x0c5883f9 to runtime0x002be508. That restricted control-center binding is neither repurposed nor broadened by enabling overall opacity in the existing native UI host."
+  ],
+  "ownership_analysis": "The existing host borrows a live page-owned firmware object on the serialized UI owner task. Its existing dispatcher may allocate local style storage and synchronously refresh style/layout. The object remains owned by the native parent/page. No public firmware pointer, additional callable, verifier address range or lifecycle contract is added.",
+  "unsafe_assumptions": [
+    "Static property recovery does not establish physical-display rendering, performance, device verification or production approval.",
+    "The recovered property ID is exact .043 only; no sibling target inherits it without independent evidence.",
+    "Do not invoke load0x0c108861 as a Thumb callable or expose the newly identified runtime convenience wrapper to modules; the host uses its already bound dispatcher0x002bd925.",
+    "Opacity changes appearance only. Disabled semantic events remain controlled by NODE_FLAG_ENABLED; stock message-box per-button styling is outside this evidence."
+  ],
+  "recommended_probe": "Use existing generated-stability, evidence-schema and native-backend tests and compile/verify the exact .043 Supervisor. Separately probe opacity0/500/1000, parent/child composition, inherited-style restoration and page teardown on exact .043 hardware before claiming device rendering acceptance.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-26T13:54:26Z",
+  "artifacts": [
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin",
+      "sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "role": "Pinned exact AP input; load image base0x0c0c0000; not distributed"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin.i64",
+      "role": "Exact IDA/Hex-Rays stock wrapper, runtime relocation, renderer dataflow and code xrefs"
+    },
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin#0x48860+0x18",
+      "sha256": "1fb5174cd7d37376437ae0c4200c8c4c1b371f74ceb732ba411ae8cc052ad829",
+      "role": "AP byte window for overall-opacity wrapper load0x0c108860/runtime0x002be9f4"
+    },
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin#0x44908+0x60",
+      "sha256": "466f7e81e67d6ab8c2bdd41d4b3c99adf944f5228330cf02a6f6b247e4d2076b",
+      "role": "AP byte window for renderer prefix load0x0c104908/runtime0x002baa9c"
+    },
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin#0x49368+0x14",
+      "sha256": "6922b416240494f5783672454ec42f24a83c5eeb0038c5baae040b0ddc634fc2",
+      "role": "AP byte window for lower-level property95 style-value wrapper"
+    }
+  ]
+}

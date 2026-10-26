@@ -122,6 +122,9 @@ pub fn render(pack: &TargetPack, config: &NativeConfig) -> String {
 #define FW_UI_STYLE_CLIP_CORNER 45u\n\
 #define FW_UI_FONT_EVENT_DELETE 36u\n");
     }
+    if pack.target_id.as_str() == "xiaomi-band-11-4.100.139" {
+        out.push_str("/* Exact-target opacity: EVID-UI-4139-OPACITY-001; static only. */\n#define FW_UI_STYLE_OPA 95u\n");
+    }
     out.push_str("#endif\n");
     out
 }

@@ -152,6 +152,60 @@ The implementation adds **host/static evidence only**. No symbol or capability
 is promoted to device verified or production approved; restricted records retain
 their existing approval state (`PENDING`), and no new firmware callable is public.
 
+## Overall opacity across targets
+
+`canopus_ui_style_v1.opacity` is a target-independent value in `0..1000`.
+Nonzero values are explicit; zero inherits unless
+`CANOPUS_UI_VISUAL_FLAG_OPACITY` is present, in which case it means fully
+transparent. The native host converts explicit values to `0..255` and uses the
+exact target's private overall-opacity property through its reviewed local
+style dispatcher. Background opacity is a separate property and cannot replace
+whole-object opacity. Clearing `CANOPUS_UI_NODE_FLAG_ENABLED` only gates semantic
+events; applications set opacity explicitly when they want a dimmed appearance.
+
+```text
+opacity = 1000   -> opaque
+opacity =  500   -> about 50% opacity
+opacity =    0   -> inherited (default)
+opacity =    0 + VISUAL_FLAG_OPACITY -> fully transparent
+```
+
+Repeated identical commits do not repeat native setters. Explicit opacity
+changes reuse the keyed object; returning from explicit opacity to inheritance
+rebuilds its subtree because the host has no reviewed single-property removal
+binding. Overall opacity is written only to the semantic node's native object.
+Internal section headings and synthesized row labels inherit it, avoiding a
+second multiplication of the same opacity. Native msgbox button styling remains
+outside this contract.
+
+| Target | Overall opacity | Private dispatcher |
+|---|---|---|
+| Band 10 Pro `3.101.036` | `FW_UI_STYLE_OPA 95u`; `EVID-UI-1036-OPACITY-001` | SRAM callable `0x002BD5FD`, independently confirmed by the stock XIP veneer |
+| Band 10 Pro `3.101.043` | `FW_UI_STYLE_OPA 95u`; `EVID-UI-1043-OPACITY-001` | SRAM callable `0x002BD925` |
+| Band 11 `4.100.139` | `FW_UI_STYLE_OPA 95u`; `EVID-UI-4139-OPACITY-001` | XIP callable `0x0C3872B5` |
+| Band 11 `4.100.155` | Existing property95; `EVID-UI-4155-LAYOUT-INPUT-001` | XIP callable `0x0C3872B5` |
+| Band 11 `4.100.179` | Existing property95; `EVID-UI-4179-LAYOUT-INPUT-001` | XIP callable `0x0C383435` |
+| Band 9 `3.1.32` | Unsupported: the dedicated v8 backend has no STYLE/VISUAL capabilities or native section hierarchy | No reviewed overall-opacity binding |
+| Band 9 Pro `3.1.190` | Unsupported: v8 backend/platform integration is incomplete | No reviewed overall-opacity binding |
+| Band 10 `3.1.28` | Unsupported: v8 backend/platform integration is incomplete | No reviewed overall-opacity binding |
+| Redmi Watch 6 `3.100.043` | Unsupported: platform integration is incomplete and the style dispatcher remains a candidate | No reviewed overall-opacity binding |
+
+The `.036` flash load copy `0x0C107465` must not execute as a dispatcher:
+external relative calls require the copied SRAM address. Its canonical private
+symbol and generated metadata use the verified runtime callable instead.
+`.139` gains only overall opacity; no other layout/input constants are inferred
+from its Band 11 siblings. Applications use the same public ABI on all targets;
+unsupported backend fields still return `CANOPUS_UI_ERR_UNSUPPORTED`.
+Rebuild and install the target's Supervisor to activate new host bindings.
+
+Opacity is enabled only for targets with independent property and dispatcher
+evidence. `native_opacity_requires_an_exact_target_review` checks every active
+target's generated configuration, evidence identity, firmware hash and private
+dispatcher; unreviewed targets must not acquire `FW_UI_STYLE_OPA` by inheriting
+another firmware's constants. The counted host regression checks consecutive
+opaque, half-opacity and explicit-zero commits on both native host families.
+These are static/host checks, without new device verification or approval.
+
 ## 证据与限制
 
 - host 测试（含 ASan/UBSan）覆盖入口登记/校验/随模块释放、`close_page`、无 Manager UI 的构建返回 UNSUPPORTED、

@@ -1412,8 +1412,8 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
     TargetPrivateSymbolRecord {
         name: "lv_obj_set_local_style_prop",
         kind: "function",
-        entry: 0xc107464usize,
-        callable: 0xc107465usize,
+        entry: 0x2bd5fcusize,
+        callable: 0x2bd5fdusize,
         status: "STATIC_CONFIRMED",
         policy: "restricted",
         prototype: "void (void *, uint32_t, uint32_t, uint32_t)",
@@ -1823,8 +1823,8 @@ pub const LV_OBJ_MOVE_TO_INDEX_ENTRY: usize = 0xc5891f8usize;
 pub const LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = 0xc5891f9usize;
 pub const LV_OBJ_REMOVE_STATE_ENTRY: usize = 0xc5879b8usize;
 pub const LV_OBJ_REMOVE_STATE_CALLABLE: usize = 0xc5879b9usize;
-pub const LV_OBJ_SET_LOCAL_STYLE_PROP_ENTRY: usize = 0xc107464usize;
-pub const LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = 0xc107465usize;
+pub const LV_OBJ_SET_LOCAL_STYLE_PROP_ENTRY: usize = 0x2bd5fcusize;
+pub const LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = 0x2bd5fdusize;
 pub const LV_OBJ_SET_STYLE_BG_OPA_ENTRY: usize = 0xc108048usize;
 pub const LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = 0xc108049usize;
 pub const LV_TIMER_CREATE_ENTRY: usize = 0xc587720usize;

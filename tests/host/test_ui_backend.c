@@ -1441,6 +1441,48 @@ static int styled_section_page(const struct canopus_ui_style_v1 *style,
     row(tree,12,"Unaffected",402);
     return finish(tree);
 }
+static void test_opacity_updates(void)
+{
+    struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
+    struct canopus_ui_visual_v1 visual = CANOPUS_UI_VISUAL_DEFAULT;
+    struct widget *parent, *child;
+    static const struct { uint16_t opacity; uint32_t flags, native; } cases[] = {
+        {1000, 0, 255}, {500, 0, 127}, {0, CANOPUS_UI_VISUAL_FLAG_OPACITY, 0},
+        {1000, CANOPUS_UI_VISUAL_FLAG_OPACITY, 255}
+    };
+    unsigned i;
+    reset();
+    style.opacity = 1000;
+    assert(styled_section_page(&style,&visual,"Heading") == 0);
+    parent = host_node(&view,10)->object; child = host_node(&view,11)->object;
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        style.opacity = cases[i].opacity; visual.flags = cases[i].flags;
+        assert(styled_section_page(&style,&visual,"Heading") == 0);
+        assert(host_node(&view,10)->object == parent && host_node(&view,11)->object == child);
+        assert(parent->props[FW_UI_STYLE_OPA] == cases[i].native);
+        /* The heading inherits its parent's opacity; a second local write
+         * would multiply it again in the native renderer. */
+        assert(((struct widget *)host_node(&view,10)->primary)->props[FW_UI_STYLE_OPA] == 0);
+        clear_counts();
+        assert(styled_section_page(&style,&visual,"Heading") == 0);
+        assert(mutations() == 0);
+    }
+    for (i = 0; i < 2; i++) {
+        struct canopus_ui_tree_v1 *tree;
+        struct canopus_ui_host_node *slot;
+        reset(); tree = begin();
+        if (i == 0) assert(CANOPUS_UI_CHECKBOX(tree,10,"Choice",401,0,1) == 0);
+        else assert(CANOPUS_UI_RADIO_ROW(tree,10,"Choice","Detail",401,0,1) == 0);
+        style.opacity = 500;
+        assert(canopus_ui_node_set_style(tree,10,&style) == 0);
+        assert(finish(tree) == 0);
+        slot = host_node(&view,10);
+        assert(((struct widget *)slot->object)->props[FW_UI_STYLE_OPA] == 127);
+        assert(((struct widget *)slot->primary)->props[FW_UI_STYLE_OPA] == 0);
+        assert(((struct widget *)slot->secondary)->props[FW_UI_STYLE_OPA] == 0);
+        assert(((struct widget *)slot->indicator)->props[FW_UI_STYLE_OPA] == 0);
+    }
+}
 static void test_inherited_style_rebuilds_subtree(void)
 {
     const struct canopus_ui_style_v1 defaults = CANOPUS_UI_STYLE_DEFAULT;
@@ -2184,7 +2226,8 @@ int main(int argc, char **argv)
     test_font_surfaces_and_unsupported_nodes();
     test_font_cancel_destroying_root();
 #endif
-    test_inherited_style_rebuilds_subtree(); test_section_heading_allocation_is_atomic();
+    test_opacity_updates(); test_inherited_style_rebuilds_subtree();
+    test_section_heading_allocation_is_atomic();
     test_stretch_relayouts_descendants(); test_nested_stretch_constraints();
     test_generic_row_padding_and_stock_rejection();
     test_plain_variant_hides_mark_and_keeps_column();
