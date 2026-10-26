@@ -1414,3 +1414,27 @@ CLICKED(7)/SHORT_CLICKED(4) 的分支始终没进到**（没有 `dm-k`、没有 
    页面 resume 后是否把 indev 重新绑定到本页视图）。
 3. 只有在输入通了之后，launcher 条目/「更多」页出现的验证才有意义（当前 launcher
    发布在 launcher 页面未创建时被门槛挡住，属预期）。
+
+### 第 31 轮补记 3：页面确实被 resume，但输入仍然不落在我们的对象上
+
+继续用日志和实验缩小范围（都用干净的构建做对照）：
+
+- **resume 不是缺失环节**：每次双击点亮屏幕，日志里都有
+  `activitymanager_active_by_layer: {202, 0 resume}`，息屏时对应 `{202, 0 pause}`
+  （`/log/tmp.log` 08:00:55、08:01:05、08:01:17 都是 resume）。所以页面被活动管理器
+  认作当前页并 resume 了。
+- **页容器候选**：`page+0x2c` 与 `page+0x30` 各持一个指针（前者在 SRAM、后者在
+  Umem）。用 `-DCANOPUS_MGR_PAGE_ROOT_SLOT=0x30` 建根：页面照常显示、不崩，但点击
+  仍然无效（`dm-*` 里还是只有 21–27/36/43/44/46 这些绘制/刷新码）。
+  用 `0x2c`：页面**根本打不开**（第二次 Run 后仍是表盘），说明 0x30 才是可用容器。
+- **`-DCANOPUS_MGR_TITLE_PLAIN`（n66 用的无标题栏方案）**：o66 上页面同样打不开，
+  与 3.1.190 的经验一致——o66 依赖 stock `lvx_page_title_create`。
+- 现成代码里其实留了一个专测此事的探针（`CANOPUS_TARGET_UI_DIAG` 下的
+  `diag_root_press`：在页面上放一个普通可点对象，如果它也收不到 press，就说明整个
+  屏幕的命中测试有问题），但 UI_DIAG 构建 116 KB+ 超过本目标加载上限，用不了。
+
+下一步（留给下一轮）：在 o66 上对比 3.1.32 的差别，直接观察 indev——例如在固件的
+`lv_indev` 处理路径上打点（Mirage 的设备上可以用同样的 cave 写入方式做一次性桩），
+确认按下的那一帧 `indev->act_obj` 到底指向谁；或者把行的可点对象改为挂到
+`page_title` 容器下再试（现在挂在 `content_root` 下，而标题容器在 3.1.28 上可能
+覆盖了整个屏幕、吃掉了按下事件）。
