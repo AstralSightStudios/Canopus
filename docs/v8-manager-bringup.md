@@ -1169,3 +1169,6 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   这说明 o66 的崩溃发生在 **shell 任务做一次较大的闪存读**时，不是 UI 任务；
   下一步应查安装器发出的哪条 `mw`/`exec` 序列会触发 `system` 任务里的大块读，
   以及 o66 的 cave 页（0x200E0000）同样需要移出日志环形缓冲末尾。
+- 把 stage2 的 Supervisor 读取改成 4 KB 分块（`CANOPUS_BAND9_READ_CHUNK`）**同样无效**：
+  o66 仍然在 `system` 任务里 STKOF 重启。该实验已回退、未提交——说明这条栈溢出不是
+  「一次读多大」决定的，而是该任务/该驱动路径本身的栈预算问题。
