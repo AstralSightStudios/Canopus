@@ -981,3 +981,16 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   `off_2C68DAB8` 类实例、`[13]=56` 高、`[9]` 返回键、`[12]` 时间标签）与页面 view
   的层级关系，以及 `on_ui_create` 里 `sub_C2E9430(view)`（`sub_C240ED0(view, n-1)`）
   究竟把 view 放到显示的哪一层。
+- **3.1.190 的页面描述符布局和 3.1.32 不同，已按 IDB 修正**：3.1.190 的
+  `on_create_wrapped`（`sub_C44D49C`）在 **+0x48** 取 create 回调、`on_resume_wrapped`
+  （`sub_C449D0C`）在 **+0x4C** 取 resume 回调、pause 在 **+0x58**、异步销毁
+  （`sub_C449CA8`）在 **+0x60** 取 `on_ui_destroy`，而生命周期信号走 **+0x30**。
+  我们原来用的 3.1.32 布局（`runtime_parent` 占 +0x48、create +0x4C、resume +0x50、
+  signal +0x34）在 3.1.190 上等于：create 槽为 NULL（固件找不到就不调）、resume 槽里
+  放的是我们的 on_create、signal 槽也是空的。现在 `CANOPUS_MGR_APPINFO_190` 构建
+  用 3.1.190 的布局（struct 内条件字段 + 条件 `_Static_assert`）。
+  设备实测（n67）：create 时刻确实进到我们的 on_create（日志里出现我们创建的
+  `lvx_font_create` 警告），页面动画正常，**但仍然没有
+  `activitymanager_active_by_layer: {202, 0 resume`，面板依旧是纯黑**。所以布局是
+  真 bug（必须修），但不是「不上屏」的最后一个原因；下一步要沿 `state 5 → 8`
+  的迁移（页面 in 动画结束后由谁置位）继续查。

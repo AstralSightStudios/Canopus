@@ -105,16 +105,36 @@ struct firmware_page_descriptor {
     uint8_t page_kind;                        /* +0x2a */
     uint8_t _pad_2b;                         /* +0x2b */
     void *activity_context;                   /* +0x2c */
+#if defined(CANOPUS_MGR_APPINFO_190)
+    /* The 3.1.190 page shape is four bytes shorter before the signal slot:
+     * the page manager dispatches its lifecycle signal through +0x30, calls
+     * the create callback at +0x48 and the resume callback at +0x4c
+     * (on_create_wrapped / on_resume_wrapped / the +0x60 on_ui_destroy call in
+     * the 3.1.190 IDB). With the 3.1.32 shape, +0x30 stayed NULL so the page
+     * never got its lifecycle signal and +0x48 NULL meant the create callback
+     * never ran; the page was built off the resume slot and never displayed. */
+    page_signal_fn on_signal;                 /* +0x30 */
+    void *runtime_default_56;                 /* +0x34 */
+    uint8_t _pad_38[8];                      /* +0x38 */
+#else
     void *root_object;                        /* +0x30 */
     page_signal_fn on_signal;                 /* +0x34 */
     void *runtime_default_56;                 /* +0x38 */
     uint8_t _pad_3c[4];                      /* +0x3c */
+#endif
     void *registry_prev;                      /* +0x40 */
     void *registry_next;                      /* +0x44 */
+#if defined(CANOPUS_MGR_APPINFO_190)
+    page_create_fn on_create;                 /* +0x48 */
+    page_lifecycle_fn on_resume;              /* +0x4c */
+    page_foreground_data_fn on_foreground_data; /* +0x50 */
+    void *runtime_parent;                     /* +0x54 */
+#else
     void *runtime_parent;                     /* +0x48 */
     page_create_fn on_create;                 /* +0x4c */
     page_lifecycle_fn on_resume;              /* +0x50 */
     page_foreground_data_fn on_foreground_data; /* +0x54 */
+#endif
     page_lifecycle_fn on_pause;               /* +0x58 */
     page_lifecycle_fn on_destroy;             /* +0x5c */
     page_lifecycle_fn on_ui_destroy;          /* +0x60 */
@@ -272,9 +292,16 @@ _Static_assert(sizeof(struct firmware_page_descriptor) == 112,
                "firmware page descriptor size");
 _Static_assert(offsetof(struct firmware_page_descriptor, page_name) == 16,
                "page name offset");
+#if !defined(CANOPUS_MGR_APPINFO_190)
 _Static_assert(offsetof(struct firmware_page_descriptor, root_object) == 48,
                "page root offset");
-_Static_assert(offsetof(struct firmware_page_descriptor, on_create) == 76,
+#endif
+_Static_assert(offsetof(struct firmware_page_descriptor, on_create) ==
+#if defined(CANOPUS_MGR_APPINFO_190)
+                   72,
+#else
+                   76,
+#endif
                "page create offset");
 _Static_assert(offsetof(struct firmware_page_descriptor, on_destroy) == 92,
                "page destroy offset");
