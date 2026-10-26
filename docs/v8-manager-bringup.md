@@ -1448,3 +1448,10 @@ CLICKED(7)/SHORT_CLICKED(4) 的分支始终没进到**（没有 `dm-k`、没有 
 - 设备驱动层面把老办法固化成可用节奏：`tap(106,300)` 后 0.5 s 再 `tap(106,383)`
   （第二次点击搭上双击唤醒），是当前唯一稳定的 Run 触发方式；打开 Manager 后
   **在 5 s 息屏窗口内**再点行，否则页面会在息屏 10 s 后被弹掉。
+
+### 跨目标复核（同一批 Supervisor 改动）
+
+- n66 `xiaomi-band-9-3.1.32`：114,656 B，verifier PASS；设备（canopus-b9-probe）上重新
+  载入后 Manager 概览正常，点「模块」（192 宽面板 tap y≈380，y≈300 不命中）进入
+  已安装模块页，`hello_portable` 行在列。
+- n67 `xiaomi-band-9-pro-3.1.190`：114,528 B，verifier PASS（设备侧仍受资源缺失限制）。
