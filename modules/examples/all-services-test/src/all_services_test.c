@@ -15,7 +15,7 @@
  *   11. LOG (info, warn, error, debug, write)
  *   12. NOTIFY (post, post_with_icon)
  *   13. CONNECT (CanopusConnect: listen, send text/binary, remote_listening)
- *   14. UI pages (set_entry, close_page, node_set_style/layout through ctx->ui)
+ *   14. UI pages (set_entry, close_page, route, node_set_style/layout through ctx->ui)
  *   15. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Progress, Checkbox, Divider)
  */
 
@@ -937,6 +937,7 @@ static void run_ui_page_tests(const struct canopus_context_v1 *ctx)
     rc = ctx->ui->set_entry(ctx, &entry);
     if (rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
         if (ctx->ui->close_page(ctx) != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+        if (ctx->ui->route(ctx, 0u) != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
         if (ok) log_skip("UI pages: no Manager UI in this build");
         else log_test("UI pages: unsupported build answers consistently", 0);
         return;
@@ -945,6 +946,9 @@ static void run_ui_page_tests(const struct canopus_context_v1 *ctx)
     entry.struct_size = 1u;
     if (ctx->ui->set_entry(ctx, &entry) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
     if (ctx->ui->close_page(ctx) != CANOPUS_SVC_ERR_STATE) ok = 0; /* nothing open */
+    /* This entry declares no extra routes, so the multi-page mover is absent
+     * for it even where the Supervisor supports it. */
+    if (ctx->ui->route(ctx, 0u) != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
     if (ctx->ui->set_entry(ctx, 0) != CANOPUS_SVC_OK) ok = 0;
     if (ctx->launcher != 0) {
         /* Publishing is permanent until reboot, so only the refusals run here:

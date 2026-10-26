@@ -7,7 +7,11 @@
 #include CANOPUS_MANAGER_TARGET_SOURCE
 #include "canopus_runtime.h"
 
-static struct canopus_target_module_page fixture_heap;
+/* The live page record. Single-page Manager entries use the target's own
+ * scratch record; launcher entries get one from the modeled heap. */
+static struct canopus_ui_context_v1 fixture_ui_storage;
+static struct canopus_target_module_page fixture_record;
+static struct canopus_target_module_page *fixture_page(void) { return module_page; }
 static struct canopus_target_launcher_entry fixture_launcher_backing;
 static struct canopus_supervisor_v1 fixture_supervisor;
 static struct canopus_context_v1 fixture_context;
@@ -16,18 +20,29 @@ static struct canopus_target_page *fixture_descriptor;
 static uint32_t fixture_mode, fixture_back_calls, fixture_close_calls;
 static uint32_t fixture_released, fixture_apply_calls, fixture_bad_args;
 
+/* The target allocates one UI context per page on the stack while that page is
+ * top; the fixture hands out the one backing store for it. */
 static void *fixture_alloc(void *cookie, uint32_t size)
 {
     (void)cookie;
-    if (size != sizeof(fixture_heap)) { fixture_bad_args++; return NULL; }
-    return &fixture_heap;
+    if (size == sizeof(fixture_ui_storage)) return &fixture_ui_storage;
+    if (size != sizeof(struct canopus_target_module_page)) {
+        fixture_bad_args++;
+        return NULL;
+    }
+    return &fixture_record;
 }
 static void fixture_free(void *cookie, void *ptr)
 {
     (void)cookie;
-    if (ptr != &fixture_heap) fixture_bad_args++;
+    if (ptr == &fixture_ui_storage) {
+        fixture_released++;
+        canopus_memset(ptr, 0xcc, sizeof(fixture_ui_storage));
+        return;
+    }
+    if (ptr != &fixture_record) fixture_bad_args++;
     fixture_released++;
-    canopus_memset(ptr, 0xcc, sizeof(fixture_heap));
+    canopus_memset(ptr, 0xcc, sizeof(fixture_record));
 }
 static const struct canopus_sup_platform_v1 fixture_platform = {
     .heap_alloc = fixture_alloc, .heap_release = fixture_free,
@@ -65,7 +80,7 @@ void canopus_ui_host_detach(struct canopus_ui_host_view *view)
 { view->active = 0u; view->interactive = 0u; }
 static int32_t fixture_apply(void *cookie, const struct canopus_ui_snapshot_v1 *snapshot)
 {
-    if (cookie != &fixture_heap.view || snapshot->node_count != 1u) fixture_bad_args++;
+    if (cookie != &fixture_page()->view || snapshot->node_count != 1u) fixture_bad_args++;
     fixture_apply_calls++; return 0;
 }
 const struct canopus_ui_backend_v1 canopus_ui_host_backend = {
@@ -93,7 +108,7 @@ static int32_t fixture_back(const struct canopus_context_v1 *ctx,
                             struct canopus_ui_context_v1 *ui, void *user)
 {
     struct canopus_ui_tree_v1 *pending;
-    if (ctx != &fixture_context || ui != &fixture_heap.ui || user != &fixture_mode)
+    if (ctx != &fixture_context || ui != fixture_page()->ui || user != &fixture_mode)
         fixture_bad_args++;
     fixture_back_calls++;
     if (fixture_mode == 2u || fixture_mode == 3u) {
@@ -115,7 +130,8 @@ uint32_t test_prepare(uint32_t launcher, uint32_t mode)
 {
     uint32_t i;
     canopus_memset(&fixture_supervisor, 0, sizeof(fixture_supervisor));
-    canopus_memset(&fixture_heap, 0, sizeof(fixture_heap));
+    canopus_memset(&fixture_record, 0, sizeof(fixture_record));
+    canopus_memset(&fixture_ui_storage, 0, sizeof(fixture_ui_storage));
     canopus_memset(&fixture_entry, 0, sizeof(fixture_entry));
     module_page = NULL;
     fixture_supervisor.platform = &fixture_platform;
@@ -141,8 +157,8 @@ uint32_t test_prepare(uint32_t launcher, uint32_t mode)
     launcher_entries[0]->app.app_id = fixture_supervisor.modules[3].native_app_id;
     launcher_copy(launcher_entries[0]->package, sizeof(launcher_entries[0]->package),
                   "com.canopus.module.page_back");
-    launcher_entry_init(launcher_entries[0], 0u);
-    fixture_descriptor = launcher ? &launcher_entries[0]->page
+    launcher_entry_init(launcher_entries[0], 0u, 1u);
+    fixture_descriptor = launcher ? &launcher_entries[0]->pages[0]
                                   : &manager_pages_desc[CANOPUS_TARGET_PAGE_MODULE_UI];
     manager_pending_ui_slot = 4u;
     return (uint32_t)(uintptr_t)fixture_descriptor;
@@ -152,13 +168,13 @@ int test_open(void)
 uint32_t test_callback(uint32_t which)
 {
     const struct canopus_target_page *p = which == 0u ? fixture_descriptor :
-        which == 1u ? &launcher_entries[0]->page : &manager_pages_desc[which - 2u];
+        which == 1u ? &launcher_entries[0]->pages[0] : &manager_pages_desc[which - 2u];
     return (uint32_t)(uintptr_t)p->extension_callback_104;
 }
 uint32_t test_other_descriptor(void)
 {
-    return (uint32_t)(uintptr_t)(fixture_descriptor == &launcher_entries[0]->page ?
-        &manager_pages_desc[CANOPUS_TARGET_PAGE_MODULE_UI] : &launcher_entries[0]->page);
+    return (uint32_t)(uintptr_t)(fixture_descriptor == &launcher_entries[0]->pages[0] ?
+        &manager_pages_desc[CANOPUS_TARGET_PAGE_MODULE_UI] : &launcher_entries[0]->pages[0]);
 }
 void test_destroy(void)
 {
@@ -170,11 +186,11 @@ void test_destroy(void)
 }
 int test_finish_destroy(void) { test_destroy(); return 0; }
 void test_pause(void) { (void)fixture_descriptor->on_pause(fixture_descriptor); }
-void test_inactive(void) { fixture_heap.view.active = 0u; }
-void test_title_back(void) { module_page_back(&fixture_heap.view); }
+void test_inactive(void) { fixture_page()->view.active = 0u; }
+void test_title_back(void) { module_page_back(&fixture_page()->view); }
 uint32_t test_finish_address(void) { return FW_ACTIVITY_FINISH; }
-uint32_t test_heap_address(void) { return (uint32_t)(uintptr_t)&fixture_heap; }
-uint32_t test_heap_size(void) { return sizeof(fixture_heap); }
+uint32_t test_heap_address(void) { return (uint32_t)(uintptr_t)fixture_page(); }
+uint32_t test_heap_size(void) { return sizeof(struct canopus_target_module_page); }
 uint32_t test_state(uint32_t which)
 {
     switch (which) {
@@ -184,9 +200,11 @@ uint32_t test_state(uint32_t which)
     case 3: return fixture_apply_calls;
     case 4: return fixture_bad_args;
     case 5: return module_page != NULL;
-    case 6: return fixture_heap.view.interactive;
-    case 7: return fixture_heap.ui.building;
-    case 8: return fixture_heap.ui.committed.nodes[0].key;
+    case 6: return fixture_page() != NULL ? fixture_page()->view.interactive : 0u;
+    case 7: return fixture_page() != NULL && fixture_page()->ui != NULL
+                   ? fixture_page()->ui->building : 0u;
+    case 8: return fixture_page() != NULL && fixture_page()->ui != NULL
+                   ? fixture_page()->ui->committed.nodes[0].key : 0u;
     default: return 0xffffffffu;
     }
 }

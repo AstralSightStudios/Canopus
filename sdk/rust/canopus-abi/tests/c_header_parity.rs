@@ -205,6 +205,10 @@ fn ui_and_bus_layouts_match_the_c_headers() {
             offset_of!(CanopusUiObj, close_page),
         ),
         (
+            "offsetof(struct canopus_ui_obj, route)",
+            offset_of!(CanopusUiObj, route),
+        ),
+        (
             "offsetof(struct canopus_ui_obj, node_set_visual)",
             offset_of!(CanopusUiObj, node_set_visual),
         ),
@@ -215,6 +219,15 @@ fn ui_and_bus_layouts_match_the_c_headers() {
         (
             "offsetof(struct canopus_ui_obj, post)",
             offset_of!(CanopusUiObj, post),
+        ),
+        ("sizeof(struct canopus_ui_entry_v1)", size_of::<UiEntryV1>()),
+        (
+            "offsetof(struct canopus_ui_entry_v1, user_data)",
+            offset_of!(UiEntryV1, user_data),
+        ),
+        (
+            "offsetof(struct canopus_ui_entry_v1, page_count)",
+            offset_of!(UiEntryV1, page_count),
         ),
     ];
     let mut source = String::from(

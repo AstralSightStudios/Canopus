@@ -2151,6 +2151,9 @@ static int32_t svc_ui_set_entry(const struct canopus_context_v1 *ctx,
     if (entry->struct_size != sizeof(*entry) || entry->on_open == 0) {
         return CANOPUS_SVC_ERR_ARGUMENT;
     }
+    if (entry->page_count > CANOPUS_UI_ENTRY_PAGES_MAX) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
     if (entry->label != 0) {
         len = (uint32_t)canopus_strnlen(entry->label, CANOPUS_UI_ENTRY_LABEL_MAX);
         if (len >= CANOPUS_UI_ENTRY_LABEL_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
@@ -2171,6 +2174,24 @@ static int32_t svc_ui_close_page(const struct canopus_context_v1 *ctx)
     }
     return s_sup->platform->ui_page_close(s_sup->platform_cookie, ctx->slot)
                ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_STATE;
+}
+
+/* Multi-page entries only. The backend owns page allocation and the firmware
+ * stack; the Supervisor only guards that the slot still has such an entry. */
+static int32_t svc_ui_route(const struct canopus_context_v1 *ctx, uint32_t route)
+{
+    if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
+    if (!s_ui_entries[ctx->slot].used ||
+        s_ui_entries[ctx->slot].entry.page_count == 0u) {
+        return CANOPUS_SVC_ERR_UNSUPPORTED;
+    }
+    if (route >= s_ui_entries[ctx->slot].entry.page_count) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    if (s_sup->platform == 0 || s_sup->platform->ui_route == 0) {
+        return CANOPUS_SVC_ERR_UNSUPPORTED;
+    }
+    return s_sup->platform->ui_route(s_sup->platform_cookie, ctx->slot, route);
 }
 
 int canopus_supervisor_ui_entry(struct canopus_supervisor_v1 *sup, uint32_t slot,
@@ -2481,6 +2502,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_ui_obj.node_set_layout = canopus_ui_node_set_layout;
     s_ui_obj.set_entry = svc_ui_set_entry;
     s_ui_obj.close_page = svc_ui_close_page;
+    s_ui_obj.route = svc_ui_route;
     s_ui_obj.node_set_visual = canopus_ui_node_set_visual;
     s_ui_obj.control = canopus_ui_control;
     s_ui_obj.post = canopus_supervisor_ui_post;

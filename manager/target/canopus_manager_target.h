@@ -38,6 +38,10 @@ int canopus_manager_native_install(void);
 /* Finishes the page a module opened through ctx->ui when it belongs to `slot`
  * (the module closed it or was unloaded). Returns 1 when a page was closed. */
 int canopus_manager_target_module_page_close(uint32_t slot);
+/* Moves a multi-page module UI entry to `route` through the firmware page
+ * stack: forward routes push (pausing the source), backward routes finish, both
+ * with the stock transition. Returns 0 on success or a service error. */
+int canopus_manager_target_module_page_route(uint32_t slot, uint32_t route);
 /* Queue one application with managed UI or exact-target native pages.
  * Registration advances one firmware mutation per UI event turn. */
 struct canopus_app_entry_v1;

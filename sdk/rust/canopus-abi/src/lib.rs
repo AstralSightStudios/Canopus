@@ -451,6 +451,8 @@ pub struct CanopusUiObj {
         unsafe extern "C" fn(tree: *mut c_void, key: u32, layout: *const c_void) -> i32,
     pub set_entry: unsafe extern "C" fn(ctx: *const ContextV1, entry: *const UiEntryV1) -> i32,
     pub close_page: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+    /* Multi-page UI entries: push/finish through the target's page stack. */
+    pub route: unsafe extern "C" fn(ctx: *const ContextV1, route: u32) -> i32,
     pub node_set_visual:
         unsafe extern "C" fn(tree: *mut c_void, key: u32, visual: *const UiVisualV1) -> i32,
     pub control: unsafe extern "C" fn(
@@ -557,9 +559,13 @@ pub struct UiEntryV1 {
     >,
     pub on_close: Option<unsafe extern "C" fn(ctx: *const ContextV1, user_data: *mut c_void)>,
     pub user_data: *mut c_void,
+    /* Firmware pages this entry's routes travel through. 0 keeps the
+     * single-page contract; above 0 enables ctx->ui->route. */
+    pub page_count: u32,
 }
 
 pub const UI_ENTRY_LABEL_MAX: u32 = 24;
+pub const UI_ENTRY_PAGES_MAX: u32 = 8;
 
 // The Supervisor only reads an entry; modules declare theirs as a `static`.
 unsafe impl Sync for UiEntryV1 {}

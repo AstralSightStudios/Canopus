@@ -1204,6 +1204,7 @@ static int sup_list_packages(void *cookie, uint32_t index, char *id)
 
 #ifdef CANOPUS_SUP_HEADLESS
 #define SUP_UI_PAGE_CLOSE 0
+#define SUP_UI_ROUTE 0
 #define SUP_LAUNCHER_STEP 0
 #else
 static int sup_ui_page_close(void *cookie, uint32_t slot)
@@ -1212,6 +1213,13 @@ static int sup_ui_page_close(void *cookie, uint32_t slot)
     return canopus_manager_target_module_page_close(slot);
 }
 #define SUP_UI_PAGE_CLOSE sup_ui_page_close
+
+static int sup_ui_route(void *cookie, uint32_t slot, uint32_t route)
+{
+    (void)cookie;
+    return canopus_manager_target_module_page_route(slot, route);
+}
+#define SUP_UI_ROUTE sup_ui_route
 
 static int sup_launcher_step(void *cookie)
 {
@@ -2040,6 +2048,7 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     0, /* l2_peer */
 #endif
     SUP_UI_PAGE_CLOSE,
+    SUP_UI_ROUTE,
     SUP_APP_PUBLISH,
     SUP_LAUNCHER_STEP,
     sup_validate_receipt,

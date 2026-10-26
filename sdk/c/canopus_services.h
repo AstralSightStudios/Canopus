@@ -535,7 +535,17 @@ struct canopus_ui_entry_v1 {
                        struct canopus_ui_context_v1 *ui, void *user_data);
     void (*on_close)(const struct canopus_context_v1 *ctx, void *user_data);
     void *user_data;
+    /* How many firmware pages this entry's routes travel through. 0 keeps the
+     * single-page contract: every render replaces one page's tree, and
+     * ctx->ui->route answers UNSUPPORTED. Above 0 the backend allocates that
+     * many exact-target page descriptors during app publication, on_open
+     * serves route 0 (the root), and ctx->ui->route pushes or pops through the
+     * firmware page stack so each transition is a stock push/pop animation.
+     * Bounded by CANOPUS_UI_ENTRY_PAGES_MAX; the deepest route indexes it. */
+    uint32_t page_count;
 };
+
+#define CANOPUS_UI_ENTRY_PAGES_MAX 8u
 
 struct canopus_ui_obj {
     uint32_t (*capabilities)(const struct canopus_ui_context_v1 *context);
@@ -559,6 +569,13 @@ struct canopus_ui_obj {
     int32_t (*node_set_layout)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_layout_v1 *layout);
     int32_t (*set_entry)(const struct canopus_context_v1 *ctx, const struct canopus_ui_entry_v1 *entry);
     int32_t (*close_page)(const struct canopus_context_v1 *ctx);
+    /* Moves a multi-page entry (page_count above 0) to `route` 0-based. A
+     * forward route pushes the target firmware page and pauses the source; a
+     * backward route finishes the source so the paused page below resumes.
+     * The caller's view is re-created on the destination page, so the callback
+     * must rebuild its whole tree from its own model afterwards. 0 stays the
+     * root page. Answers ERR_UNSUPPORTED for single-page entries. */
+    int32_t (*route)(const struct canopus_context_v1 *ctx, uint32_t route);
     int32_t (*node_set_visual)(struct canopus_ui_tree_v1 *tree, uint32_t key,
                                const struct canopus_ui_visual_v1 *visual);
     int32_t (*control)(struct canopus_ui_context_v1 *ui, uint32_t generation,

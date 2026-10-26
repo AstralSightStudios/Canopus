@@ -29,7 +29,7 @@
      副标题标签由固件懒创建时在 updater 路径补注册。10 Pro 无需此机制且不移植（实测 + 反编译证据：
      `evidence/band10pro-row-text-hit/`，10 Pro 的行对象从行内任意位置含文字都收得到事件）。
    - Manager 专有的部分变成可选钩子（返回键、事件前后、渲染完成）；确认对话框改为语义 `DIALOG`（取消、确认的顺序即 msgbox 的左右顺序）。
-2. **模块页面**：`ctx->ui` 直接提供 `set_entry`、`close_page`、`node_set_style`、`node_set_layout`、`node_set_visual`、`control`、`post`。
+2. **模块页面**：`ctx->ui` 直接提供 `set_entry`、`close_page`、`route`、`node_set_style`、`node_set_layout`、`node_set_visual`、`control`、`post`。
    早期的 `ctx->ui_ext` 已并入 `ctx->ui` 并删除（Canopus 未发版，公共 ABI 直接演进到 2.0，不保留旧对象、旧前缀或适配层）。
    - 模块 `set_entry` 登记页面入口（标签、`on_open`/`on_event`/`on_back`/`on_close`）；模块运行期间，Manager 的模块详情页多一行「打开界面」。
    - 页面由 Manager 应用的第 4 个固件页面（`module_ui`）承载：打开时在固件堆上分配 view 与 UI 上下文，调用 `on_open` 构树并提交；
@@ -41,6 +41,13 @@
      该拦截同时覆盖 Manager 的「打开界面」和模块启动器入口，不改变 Manager 自身页面的系统返回。
    - 页面标题可随路由更新（ADR-CAN-013）：标题文本或返回状态变化时重建标题对象，过期的标题事件按事件目标（Band 11）
      或注册令牌（Band 10 Pro）校验后丢弃，不会驱动新页面。
+   - 多页条目（2026-10-26）：`canopus_ui_entry_v1.page_count` 大于 0 时，target 在发布阶段为该 entry 申请 `page_count`
+     个固件页描述符（`CANOPUS_UI_ENTRY_PAGES_MAX` = 8），`on_open` 服务 route 0，之后 `ctx->ui->route` 前进用
+     `page_goto`（暂停源页并播 stock push）、后退用 `page_finish`（播 stock pop，下方页面 `on_resume` 恢复）。
+     一个 UI 上下文约 12 KB 固件堆，因此只有栈顶页持有它：`on_pause` 释放，`on_resume` 用 `on_create` 记下的 root 重建，
+     下层页面靠已绘制且被固件冻结的原生树参与转场。`page_count` 为 0 时保持原单页契约，`route` 返回 `UNSUPPORTED`。
+     系统右滑完成阶段若模块 decline（`on_back` 返回非 0），描述符 +104 返回 0，把默认 finish 与 page-out 动画让给固件；
+     只有模块内部消费（route pop、替换树、自行 `close_page`）才返回 1。
 3. **启动器入口**：模块自己的启动器图标见 ADR-CAN-011；它复用这里的模块页面。
 4. **Supervisor 构建预算**：Band 10 Pro 的 `supervisor_max_size` 由 98,304 提到 114,688。新增代码和 4 个视图使 .043 达到约 104 KB。
    该值本来就是构建期预算而不是实测的固件上限（stock modlib 没有固定的插入上限，Band 11 用 131,072）。

@@ -2,9 +2,14 @@
 manager_backend = "manager/target/canopus_manager_target.c"
 # Build thresholds, not proven loader hard limits. The file budget includes
 # Supervisor-owned native registration and persistent app identities (+2048 B).
-# The resident budget is unchanged; device loading remains NOT_PROBED.
+# Raised 184320 -> 192512 (+8192 B) on 2026-10-26 for multi-page module UI
+# entries (canopus_ui_entry_v1.page_count): the Manager target now keeps one
+# page descriptor per declared route (CANOPUS_UI_ENTRY_PAGES_MAX = 8) and route
+# changes push/finish through the firmware page stack so each one gets the
+# stock transition. Measured 186690 B (.155) / 186546 B (.179). Device loading
+# remains NOT_PROBED.
 supervisor_max_size = 135168
-supervisor_max_resident = 184320
+supervisor_max_resident = 192512
 loader_sources = [
   "runtime/loader/canopus_arm_reloc.c",
   "runtime/loader/canopus_elf32_loader.c",

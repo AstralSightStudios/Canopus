@@ -184,5 +184,6 @@ volatile 存储避免自递归），SDK 的 props 结构体初始化习惯用法
   - 原生按钮、action/status/switch row 非零内边距返回 `ERR_UNSUPPORTED`；复选/单选行支持自定义内边距。显式样式变回继承通过替换原生子树恢复固件默认主题。
   - 布局只支持 `grow == 0`、`shrink == 1`，不是通用 CSS。
   - 单次语义树最多 32 个节点；虚拟窗口由模块按逻辑项维护，仅提交可见行。
-  - 转场动画未提供（`ANIM_TIME` 不是裁剪属性，未使用）。
+  - 单页条目的 route 内切换仍无转场（`ANIM_TIME` 不是裁剪属性，未使用）。多页条目（`canopus_ui_entry_v1.page_count`）
+    由 ADR-CAN-010 的 `ctx->ui->route` 走固件页面栈，每次 push/pop 都是 stock 转场；`ANIM_TIME` 仍不使用。
   - 模块生命周期没有历史事件流，只有当前快照 + 后续变更；需要事件历史要在应用层记账。

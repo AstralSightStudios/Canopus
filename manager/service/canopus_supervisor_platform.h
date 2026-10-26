@@ -162,6 +162,12 @@ struct canopus_sup_platform_v1 {
      * open, if any (1 when one was closed). Present only where the Manager UI
      * is; without it ctx->ui->set_entry answers UNSUPPORTED. */
     int (*ui_page_close)(void *cookie, uint32_t slot);
+    /* Move a multi-page module UI entry (canopus_ui_entry_v1.page_count above
+     * 0) to `route`. The Manager target owns both the extra page descriptors
+     * and the firmware page stack, so it performs the push/finish. Present
+     * only where multi-page entries are supported; without it ctx->ui->route
+     * answers UNSUPPORTED. */
+    int (*ui_route)(void *cookie, uint32_t slot, uint32_t route);
     /* Queue a module application using its Supervisor-owned identity. Copy
      * strings and the optional native page array before returning. Firmware
      * registration runs one mutation per launcher_step, on the UI owner. */
