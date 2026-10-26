@@ -994,3 +994,10 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   `activitymanager_active_by_layer: {202, 0 resume`，面板依旧是纯黑**。所以布局是
   真 bug（必须修），但不是「不上屏」的最后一个原因；下一步要沿 `state 5 → 8`
   的迁移（页面 in 动画结束后由谁置位）继续查。
+- **n67「创建了但没 resume」的下一个线索**：`page_in_anim_ready_cb`（`sub_C44A2F8`）
+  在进入动画结束后对页面调用 `sub_C44A140`：页面 flags（页描述符 +0x18 的 dword）
+  的 **bit 0x40** 若置位，页面会被推进「ui hidden queue」（10 项队列），否则调用
+  `sub_C4477A8()` 走真正的激活/恢复路径。n67 的日志有「page in animation ended」
+  但始终没有 `activitymanager_active_by_layer: {202, 0 resume}`，所以下一步应确认
+  我们的页面在那一刻的 +0x18 flags 是否被固件置成了 0x40（隐藏），以及
+  `sub_C4477A8` 到 `sub_C449D0C`（resume）之间的条件。
