@@ -1184,3 +1184,11 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   `0x0C1BEDB0` 是任务主体（0x920 字节）。也就是说这次栈溢出发生在 **`system` 任务的
   工作线程调度循环里**，正处在一次闪存读（`nandflash_start_rx_dma`）之中；
   与「安装期间的闪存 I/O 把该线程的栈压穿」一致。
+- **o66 STKOF 的最可能成因（新假设，待验证）**：`exec` 整条链
+  （shell 任务 → cave 蹦床 → stage1 → stage2 → ELF 加载 → **Supervisor 构造/初始化**）
+  都跑在 `system`（shell）任务的栈上。on66 上把读取改成分块**没有**缓解，说明不是
+  「一次读多大」，而是**这条链的累计栈深度**（尤其 Supervisor 初始化）超过了 3.1.28
+  给 shell 任务的栈预算；n66/3.1.32 同样跑这条链但没溢出（两版固件该任务栈大小可能不同）。
+  可验证/可修的方向：把 Supervisor 初始化里的大局部变量搬到静态/堆上、或让
+  `image_invoke` 在独立线程栈上跑；验证方法是比较「首次 Run（含载入）」与
+  「supervisor 已在时的 Run（不载入）」是否只有前者崩。
