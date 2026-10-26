@@ -1105,3 +1105,11 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 - o66 上 Manager 的模块页/详情/启用没有跑完：这块屏的触摸时序很脆（5 s 息屏 +
   10 s 弹回表盘 + 唤醒需要双击），盲点坐标连续几次点空。已确认的事实是
   Manager 概览/模块页能上屏、重开正常、模块已注册。表盘脚本已还原成仓库版本。
+- **o66 上「Run」按钮点不动，而「Clear Env」正常**（本轮最后的定位）：
+  装上仓库版本的表盘（`Manager opened` 分支在、没有 `clear_flag(CLICKABLE)`）后，
+  连续多次在 y=375/400/405（Run 的绘制区间 355–403）点按，日志里**没有任何
+  `exec:` 行**，也没有 `insert_app_to_list`；而 y=442（Clear Env 区间 403–451）
+  每次都能把状态改成「Click again to clear」。所以不是坐标问题——**这个表盘的 Run
+  按钮在 o66 上不响应点击**（同一个 `make_button` 建的两个按钮，只有一个有反应）。
+  下一步应查 3.1.28 上 `lv_obj_add_event_cb`（`0x0C2B7C41`）对**后创建**对象的绑定，
+  以及 flex 布局里 Run 是否被状态标签/根容器挡住命中测试；n66/n67 同名按钮都正常。
