@@ -4,7 +4,7 @@
 // firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
 // sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
 // revision : 1
-// input_digest: 3829265ceabc9c8c
+// input_digest: eec0ca2bc860f076
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -227,6 +227,9 @@ pub const CANOPUS_FW_MM_FREE_DEFAULT_CALLABLE: usize = canopus_thumb_callable(0x
 
 /// Recovered `bt_get_pairing_state` at 0xc1152b8. Thumb callable address 0xc1152b9.
 pub const CANOPUS_FW_BT_GET_PAIRING_STATE_CALLABLE: usize = canopus_thumb_callable(0xc1152b9usize);
+
+/// Recovered global `launcher_app_instance` at 0x200ab2ec.
+pub const canopus_fw_launcher_app_instance: usize = 0x200ab2ecusize;
 
 /// Recovered `mpu_region_allocate` at 0xc559288. Thumb callable address 0xc559289.
 pub const CANOPUS_FW_MPU_REGION_ALLOCATE_CALLABLE: usize = canopus_thumb_callable(0xc559289usize);

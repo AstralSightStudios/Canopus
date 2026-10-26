@@ -57,7 +57,11 @@ static const char *const s_receipt_suffix[SUP_KIND_COUNT] = {
     ".cmi", ".cmi.b", ".cmi.next"};
 static const char *const s_module_suffix[SUP_KIND_COUNT] = {
     ".ko", ".ko.b", ".ko.next"};
-#define CANOPUS_SUP_PATH_MAX 224u
+/* Longest path is the inbox root, a module id and the staging suffix:
+ * 19 + (CANOPUS_SUP_MODULE_ID_MAX - 1) + 9 + 1 = 60 bytes. The constructor runs
+ * on the firmware's exec-task stack, where a 224-byte path buffer overflowed it
+ * on 3.1.28 (reset before /dev/canopus registered its first page). */
+#define CANOPUS_SUP_PATH_MAX 64u
 /* Read granularity for the hash/verify readbacks; larger blocks mean fewer
  * flash syscalls per byte. */
 #define CANOPUS_SUP_READ_CHUNK 1024u

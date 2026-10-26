@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-1028-V8-003",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "When can a dynamically installed app publish a launcher tile on 3.1.28, and what happens if the order reset runs before the launcher page exists?",
+  "candidate_symbols": [
+    "launcher_page_insert_icon",
+    "launcher_reset_order_info",
+    "launcher_page_more_update_layout"
+  ],
+  "prototype_hypothesis": "launcher_page_insert_icon returns the log call's result when 0x200ab2ec (the launcher page view) is still null, so it looks successful without inserting anything; launcher_reset_order_info then rewrites order metadata for a launcher that does not exist, and the next launcher open resets the SoC. 0x200ab2ec is the only honest 'launcher UI exists' signal.",
+  "callsite_evidence": [
+    "launcher_page_insert_icon (0xc29b21c) starts with `if (dword_200AB2EC == 0) return sub_C119BA0(6, \"[%s] %s: launcher UI not created\\n\", ...)`, i.e. it returns a log-call value (>= 0) instead of a failure code.",
+    "launcher_page_more_update_layout (0xc29b070) computes the more-page view `v1` and stores it in dword_200AB2EC (0xc29b0c4) while building the launcher's app grid.",
+    "launcher_load_app_info (0xc29a1f8) allocates its node without consulting 0x200ab2ec, so a non-null load result does not prove the launcher page exists.",
+    "Mirage o66 (3.1.28) run: after the installer's Run published the launcher entry from the watchface page, opening the app list reset the device (uart1.log shows a second 'system power on'); without Run the app list opens normally."
+  ],
+  "control_flow_evidence": [
+    "launcher_page_insert_icon -> (0x200ab2ec == 0) -> log only, no icon appended.",
+    "launcher_page_more_update_layout -> page view -> 0x200ab2ec; later insert calls use it."
+  ],
+  "ownership_analysis": "The pointer is owned by the firmware launcher; the Manager only reads it before deciding whether to insert an icon and rebuild the launcher order list.",
+  "unsafe_assumptions": [
+    "0x200ab2ec is a fixed RAM global across boots of 3.1.28; runtime ownership is only observed, not proven by the vendor.",
+    "Whether the launcher clears the pointer when its page is destroyed is unproven; a stale pointer would let the order reset run against a destroyed launcher."
+  ],
+  "recommended_probe": "Run the installer from the watchface with the launcher closed and confirm the device no longer resets; then open the app list once, Run again and confirm the Canopus tile appears on the last page of 更多.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-26T00:00:00Z",
+  "artifacts": []
+}

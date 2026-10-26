@@ -10,6 +10,8 @@ use crate::model::{Symbol, TargetPack};
 enum Address {
     Entry,
     Callable,
+    /// Address of a firmware data object (RAM global), not a call target.
+    Data,
 }
 #[derive(Clone, Copy)]
 struct Mapping {
@@ -303,6 +305,15 @@ const V8_TEXT_FONT: &[Mapping] = &[
         address: Address::Callable,
     },
 ];
+
+/// Optional per-target extras: emitted only when the record exists, and never
+/// part of the platform-completeness contract (a target may reach the launcher
+/// by other means, e.g. 3.1.32's page-manager list).
+const FW_LAUNCHER_OPTIONAL: &[Mapping] = &[Mapping {
+    macro_name: "FW_LAUNCHER_APP_INSTANCE",
+    symbol_name: "launcher_app_instance",
+    address: Address::Data,
+}];
 
 const FW_9: &[Mapping] = &[
     Mapping {
@@ -749,7 +760,7 @@ impl<'a> TargetConfigGen<'a> {
     fn address(&self, map: Mapping) -> Option<u64> {
         let s = self.symbol(map.symbol_name)?;
         let raw = match map.address {
-            Address::Entry => s.entry_address.as_deref(),
+            Address::Entry | Address::Data => s.entry_address.as_deref(),
             Address::Callable => s.callable_address.as_deref(),
         }?;
         parse_hex_address(raw)
@@ -851,6 +862,9 @@ impl<'a> TargetConfigGen<'a> {
         // include this header. Incomplete custom targets expose identity only.
         if complete {
             self.emit(&mut out, if custom { FW_9 } else { FW_10 }, false);
+            if custom {
+                self.emit(&mut out, FW_LAUNCHER_OPTIONAL, false);
+            }
             self.emit(&mut out, FW_UI_INPUT, false);
             self.emit(&mut out, V8_TEXT_FONT, false);
             if self.pack.target_id == "xiaomi-band-10-pro-3.101.043" {

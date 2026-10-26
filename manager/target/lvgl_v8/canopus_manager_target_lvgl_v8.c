@@ -1852,6 +1852,17 @@ static int manager_launcher_publish(void)
     if (installed_app == NULL) {
         return -100;
     }
+#ifdef FW_LAUNCHER_APP_INSTANCE
+    /* 3.1.28's insert_icon returns the log call's value when the launcher page
+     * has not been built yet, so it looks like a success while nothing is
+     * inserted; rebuilding the order list in that state makes the next
+     * launcher open reset the SoC (EVID-STATIC-1028-V8-003). */
+    if (*(volatile uint32_t *)(uintptr_t)FW_LAUNCHER_APP_INSTANCE == 0u) {
+        diag_mark('i', 'w');
+        canopus_manager_target_record.launcher_add_result = -103;
+        return -103;
+    }
+#endif
     launcher_item = launcher_load(installed_app);
     canopus_manager_target_record.launcher_add_result =
         launcher_item != NULL ? launcher_insert(launcher_item) : -102;

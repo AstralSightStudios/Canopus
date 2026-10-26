@@ -1321,3 +1321,44 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   而 `page_goto` 对一个不在 launcher 列表里的 app 会直接崩。
   下一步：先在擦除后的设备上把 Manager 的 launcher 条目建立起来（`launcher_load` +
   `insert_icon` 成功，`launcher_add_result >= 0`），再重测 Run → Manager。
+
+## 第 31 轮：o66 重启的真正原因（构造函数栈溢出）与 launcher 条目门槛
+
+上一轮把「Run → 设备重启（mi logo）」归因到 launcher 条目缺失，本轮用**表盘侧
+落盘探针**（`note()` 写 `/data/canopus/run-note.txt`）逐点插桩，定位到了真正的
+调用栈：
+
+1. `run_installer` 进入 → `load_supervisor()` → stage0 cave（0x200E0000/0x200DF000
+   都试过，**与 cave 地址无关**）→ stage1 → stage2 → `canopus_elf32_load`（含
+   MPU 配置）→ Supervisor 构造函数。桩实验（只写 `cave_result=0xDEADBEEF` 就返回）
+   证明 cave 窗口本身能执行；把 stage1/stage2/构造函数逐段 checkpooint 后，
+   重启精确落在 `sup_restore_registry()` 的 `sup_refresh_flags()` →
+   `sup_gen_exists()`。
+2. **根因：构造函数跑在固件 exec 任务的栈上**，`sup_restore_registry` 已经有
+   784 B 的注册表缓冲，`sup_gen_exists` 再放一个 `CANOPUS_SUP_PATH_MAX = 224` 的
+   路径缓冲，栈溢出 → HardFault → 重启。**只有注册表里存在模块时才会走到这里**
+   （空注册表提前返回），这正是「安装过一次以后每次 Run 都重启、空设备却正常」的原因。
+3. 修复：`CANOPUS_SUP_PATH_MAX` 224 → 64（实际最长路径 60 B：
+   `/data/canopus/inbox/` + 31 B 模块名 + `.cmi.next`）。设备复验：注册表里带
+   `hello_portable` 时 Supervisor 正常载入，表盘五个步骤全部 `ok=true`，
+   不再重启。此改动对同族的 n66/n67 同样降低了构造函数栈占用。
+
+随后暴露的第二个问题：**launcher 条目发布门槛**。
+`launcher_page_insert_icon` (0xc29b21c) 在 `0x200ab2ec`（launcher 页面视图）为 NULL 时
+直接 `return sub_C119BA0(...)`——返回的是**日志函数的返回值（≥0）**，所以我们的
+「插入成功」判断永远成立；接着 `launcher_reset_order_info` 在 launcher 根本不存在时
+重写顺序表，下一次打开应用列表就重启（日志里可见 `reset_order_info_list` 之后
+`system power on` 第二次出现）。这正是提交 1bc1e8a 记录过、d0bf874 为了图标可见性
+又加回来的那个调用。
+
+处理：新增数据符号 `launcher_app_instance`（entry `0x200AB2EC`，`kind = global`，
+证据 `EVID-STATIC-1028-V8-003`）与新的 `Address::Data` 映射类型
+（放在 `FW_LAUNCHER_OPTIONAL`，不进平台完整性契约，其它目标生成物不变）。
+`manager_launcher_publish()` 在指针为 0 时直接返回 -103（记 `launcher_add_result`），
+不插入图标、也不调顺序表重建。设备复验：从表盘页 Run（launcher 未创建）不再重启；
+应用列表可以正常打开。
+
+仍未解决（下一步）：Supervisor 驻留期间，**应用列表息屏后弹页会把设备重启**
+（无 Supervisor 时同样动作不重启；最新的 `/log/minidump/crash19.txt` 在 08:00:28
+息屏处截断）。下一步在 launcher 页 pop 路径上找 Supervisor 造成差异的点，
+之后才是「先开一次应用列表再 Run」时图标能否出现在「更多」的最后一页。

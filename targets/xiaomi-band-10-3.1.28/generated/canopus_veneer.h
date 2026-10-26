@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: 3829265ceabc9c8c
+ * input_digest: eec0ca2bc860f076
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -293,6 +293,9 @@ static inline void canopus_fw_mm_free_default(void * a0) {
 }
 
 /* bt_get_pairing_state: skipped (argument type not mappable) */
+/* Recovered global `launcher_app_instance` at 0x200ab2ec. */
+#define canopus_fw_launcher_app_instance ((void *)(uintptr_t)0x200ab2ecu)
+
 typedef uint8_t (*canopus_fw_mpu_region_allocate_fn)(void);
 static inline uint8_t canopus_fw_mpu_region_allocate(void) {
     return ((canopus_fw_mpu_region_allocate_fn)(uintptr_t)0xc559289)();
