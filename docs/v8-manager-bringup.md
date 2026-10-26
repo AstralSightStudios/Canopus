@@ -1387,3 +1387,30 @@ CLICKED(7)/SHORT_CLICKED(4) 的分支始终没进到**（没有 `dm-k`、没有 
 没有把它们判定为「同一次点击」。下一轮应从「对象命中区域 vs 实际绘制位置」入手
 （`lv_obj_get_coords` 已经在 3.1.28 上有 symbol 记录），确认行的坐标是否被父级
 滚动/偏移影响。
+
+### 第 31 轮补记 2：o66 Manager 页面能显示，但触摸事件到不了页面的对象
+
+在干净的构建上（构造函数栈问题已修），Manager 概览页能稳定打开（26,829），页面渲染
+正常；但点「模块」等任何一行都不切换页面。用临时 `dm-*` 标记记录 `target_dispatch_row`
+收到的事件码（两字符十进制编码）：
+
+`dm-21 dm-22 dm-23 dm-24 dm-25 dm-26 dm-27 dm-36 dm-43 dm-44 dm-46`
+
+对照 LVGL v8 事件枚举，这些是 21=`REFR_EXT_DRAW_SIZE`、22..27=`DRAW_MAIN_BEGIN`…
+`DRAW_POST_END`、36=`INVALIDATE_AREA`、43=`RENDER_READY`、44=`FLUSH_START`、
+46=`FLUSH_WAIT_START`——**全是绘制/刷新类事件，没有一个 1..8 的输入事件**
+（PRESSED/CLICKED/RELEASED）。也就是说在这台设备上，触摸根本没有落到我们的行对象上，
+而页面却确实被画到了屏幕上。
+
+同一份代码在 3.1.32（n66）上点击正常，在 3.1.28 上早些时候（08:02 的日志里
+`on_ui_create {202,1}`）也成功过一次，所以这不是行绑定的逻辑问题，而是**页面上屏方式
+与输入焦点的关系**：页面被画出来，但输入仍指向别的对象层级。
+
+下一轮方向（按价值排序）：
+1. 用 `lv_indev_get_act`/`lv_indev_get_point`（3.1.28 已具备 symbol）在被点击时打印
+   实际命中的对象，确认输入落到了谁身上（很可能是被压在下面的 watchface/home 页，
+   或页管理器自己的透明层）。
+2. 对齐 3.1.28 的页面 push 与 input 绑定的顺序（`on_resume_wrapped` 要求屏幕状态==2；
+   页面 resume 后是否把 indev 重新绑定到本页视图）。
+3. 只有在输入通了之后，launcher 条目/「更多」页出现的验证才有意义（当前 launcher
+   发布在 launcher 页面未创建时被门槛挡住，属预期）。
