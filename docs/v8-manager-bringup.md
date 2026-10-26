@@ -1020,3 +1020,20 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   不可点）。结合 `page_in_anim_ready_cb → sub_C44A140`（页面 +0x18 bit 0x40 →
   「ui hidden queue」，否则 `sub_C4477A8()`），下一步应当确认 n67 的页面是否落进
   hidden queue，以及 `sub_C4477A8` 到 `sub_C449D0C` 的条件。
+
+### 第二十九轮：o66（Band 10 / 3.1.28）Manager 打开与重开设备验证通过
+
+- 设备 `canopus-o66b`（3.1.28，212×520）。正在运行的表盘目录是
+  **`366340011/`**（`/app/watchface/watchface_list.json` 里只有它带 `in_use=1`；
+  `366340012/` 目录还在但已不在列表里，写进去不生效）。本轮的 stage1/stage2/
+  profile/supervisor（114,284 B）和 `main.lua` 都写进 `366340011/`。
+- **Manager 打不开的老原因之一**：o66 的安装器表盘 `steps` 只有 5 步，**没有
+  `CMD_OPEN_MANAGER`**（n66/n67 有第 6 步）。本轮给 o66 表盘补上了「首次安装后
+  Run 兼作打开管理器」的分支，于是 Run 第二次点击就发 `CMD_OPEN_MANAGER`。
+- **设备实测**：Run → **Manager 概览页**（`系统信息`：框架/管理器/固件 3.1.28/构建
+  9d8f394:nx_b/注册表 就绪/已验证保存次数 7，`管理`：模块、安装软件包、导入手机推送）；
+  等 24 s（息屏 10 s 后被弹回表盘）→ 再点 Run → **Manager 重新出现**（截图 26,829 B），
+  同一次开机内可反复打开。触摸标定：Run 按钮在 x=106、**y≈375–385**（y=360 会落到
+  「Clear Env」上方的空档，表现为状态文字变化但不开页）。
+- 这一步把三个 v8 目标里的 o66 从「只有静态地址」推进到「Manager 能打开、能在息屏后重开」
+  的设备证据；o66 的模块列表/详情/启用链路与 launcher 图标仍未逐项复验。
