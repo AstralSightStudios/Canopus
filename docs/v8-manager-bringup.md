@@ -1208,3 +1208,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   遗留：擦除同时清掉了 `/canopus/registry.bin` 里的模块记录，本轮重新投递
   `hello_portable`（inbox + `CMD_INSTALL=2`）没有生效（registry 仍为空、探针也没写结果），
   需要下一轮重新走一遍模块安装。
+- **擦除后 o66 安装流程的打点轨迹**（`stage.txt`，AUTORUN 触发）：
+  `enter` → `verify=true` → `present=false` → `after-load present=true` → `icon=true`
+  → **到此为止，没有进 `run_all_steps`**。也就是说干净设备上 Supervisor 能载入、
+  Manager 图标能落盘，但流程在「开始跑 5 步 CPC2 安装」之前就停了（下一步要在
+  `run_all_steps` 之前/之内再细打点，确认是异常、文件句柄还是 pcall 吞掉）。
+  同一台设备上 Manager 概览与模块页都能正常打开（26,863 / 7,197）。
