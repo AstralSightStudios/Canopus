@@ -1093,3 +1093,15 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 - 另一个操作教训：o66 上 `Ctrl` 级别的坐标不能盲点——这块屏 tap y ≈ 绘制 y + 40，
   也就是说表盘上 y≈440 是 **Clear Env**（点两次会 `rm -rf /data/canopus`）。
   自动化脚本必须先截图判断当前在哪一页再决定坐标。
+- **o66 上 hello_portable 真的装进去了**：把
+  `hello_portable.ko.next` / `.cmi.next` 放进 `/canopus/inbox/` 后，用
+  **`CMD_INSTALL`（协议号 2，payload = `"hello_portable\0"`）** 安装成功，
+  `/canopus/registry.bin` 里出现了 slot 0 = `hello_portable` 的记录。
+  注意协议号容易搞混：安装器表盘里的 `CMD_INSTALL = 13` 其实是
+  **`CANOPUS_CMD_NATIVE_STAGE`**（payload 必须是 4 字节的 stage 0..2）；真正的
+  带 token 安装是 **2**。之前发 13 + token 得到 result=7（DISALLOWED）就是这个原因。
+  另外 **`CMD_SCAN`（12）在 Band 9 家族上不可用**：`list_packages` 依赖
+  opendir/readdir/closedir，这三个符号靶标配置里没有，所以扫描不会登记 inbox 里的包。
+- o66 上 Manager 的模块页/详情/启用没有跑完：这块屏的触摸时序很脆（5 s 息屏 +
+  10 s 弹回表盘 + 唤醒需要双击），盲点坐标连续几次点空。已确认的事实是
+  Manager 概览/模块页能上屏、重开正常、模块已注册。表盘脚本已还原成仓库版本。
