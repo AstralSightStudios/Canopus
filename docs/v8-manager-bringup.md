@@ -1121,3 +1121,13 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
   Clear Env 正常。下一步要查 3.1.28 的 hit-test/z-order（例如状态标签的 176×246 区域是否
   先于按钮参与命中），或者干脆把安装流程改成「不需要点按钮」的入口。
   （探针版表盘已还原成仓库版本。）
+- **更正（重要）：「o66 的 Run 按钮点不动」是错的**。在 `run_installer` 入口写
+  `/data/app/watchface/market/366340011/run-tapped.txt` 后，y=383 点按确实生成了该文件
+  ——**回调是被调用的**。之前的日志里看不到 `exec:` 行，是因为那些点按发生在屏幕熄灭
+  期间（表盘重建、状态回到 "Ready"）。
+  真正的 o66 症结是**时序**：安装（`mw`/`exec` 载入 Supervisor）阻塞 UI 约 10 s，
+  5 s 后息屏，随后页面/管理器在「屏幕关着」的状态下被推送，`on_resume_wrapped` 报
+  "Now screen state isn't on"，10 s 后整栈被弹回表盘——所以运行结束后看不到 Manager。
+- **给 o66 的安装流程加 `CMD_OPEN_MANAGER` 第 6 步会让设备重启**（实测一次
+  HyperOS 开机画面），该改动已回退（`6e89413`）。o66 保持 5 步：先 Run 完成安装，
+  再点一次 Run 走「打开管理器」分支（这条路径此前是能出 Manager 的，26945 截图）。
