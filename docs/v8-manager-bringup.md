@@ -1172,3 +1172,9 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 - 把 stage2 的 Supervisor 读取改成 4 KB 分块（`CANOPUS_BAND9_READ_CHUNK`）**同样无效**：
   o66 仍然在 `system` 任务里 STKOF 重启。该实验已回退、未提交——说明这条栈溢出不是
   「一次读多大」决定的，而是该任务/该驱动路径本身的栈预算问题。
+- **把 o66 的 cave 从 0x200E0000 移到 0x200E1000 后，panic 转储仍然在 `MMFAR=200E0000`
+  二次 MemManage**——说明这一页**不是**被我们的 region 7 覆盖的 cave 页，而是日志/转储
+  路径本身无法写的一个字节（正是环形缓冲末尾那一格）。所以 o66 的 cave 迁移**不必要**，
+  该改动已回退。o66 的 STKOF 首故障转储里确实带了 `backtrace|49..55`
+  （`0x0c11f5a4 0x0c0e8a62 0x0c1bf1d6 0x0c4c7b60 0x0c113672 0x0c0e86b8`），
+  下次可以直接从这些地址往上查 shell 任务的调用链。
