@@ -1,6 +1,7 @@
 # Canopus 原生 Manager、正式 Transport 与原生 UI SDK 实施设计
 
 > **归档提示（2026-10-14）：** 能力状态表（§15）仍有效；其余设计以 [`refactor-plan.md`](refactor-plan.md) 与 ADR 为准。
+> **当前接口变更：** Toast API 已按用户要求移除，原节点编号 11 与能力位 16 停用；本文的 Toast 设计仅作历史保留，不代表当前可用能力。
 
 > 文档状态：Proposed v1  
 > 日期：2026-08-05  

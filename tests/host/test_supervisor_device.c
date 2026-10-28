@@ -2134,7 +2134,120 @@ TEST(supervisor_add_module_rejects_full_table)
     CHECK(canopus_supervisor_add_module(&sup, 99, 1, "mod.bad") == -1); /* bad class */
 }
 
+TEST(native_publication_stage_two_waits_for_registration_and_skips_failure)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform;
+    struct canopus_module_descriptor_v1 descriptor;
+    setup_native_activation(&sup, &platform, &descriptor);
+    sup.modules[0].state = CANOPUS_STATE_READY;
+    sup.modules[0].descriptor = &descriptor;
+    sup.modules[0].native_app_status = CANOPUS_SUP_NATIVE_APP_PENDING;
+    /* The bootstrap may request stage 2 before the asynchronous queue drained. */
+    CHECK_EQ(canopus_supervisor_publish_native_apps(&sup, 2u), 0);
+    CHECK_EQ(g_publications, 0);
+    CHECK_EQ(sup.modules[0].native_app_stage, 2u);
+    canopus_supervisor_native_apps_poll(&sup);
+    CHECK_EQ(g_publications, 0);
+    CHECK_EQ(sup.modules[0].native_app_stage, 2u);
+    sup.modules[0].native_app_status = CANOPUS_SUP_NATIVE_APP_READY;
+    canopus_supervisor_native_apps_poll(&sup);
+    CHECK_EQ(g_publications, 1);
+    CHECK_EQ(g_publication_stage, 2u);
+    sup.modules[0].native_app_status = CANOPUS_SUP_NATIVE_APP_FAILED;
+    sup.modules[0].native_app_stage = 2u;
+    canopus_supervisor_native_apps_poll(&sup);
+    CHECK_EQ(g_publications, 1);
+    CHECK_EQ(sup.modules[0].native_app_stage, 0u);
+    CHECK_EQ((int32_t)sup.modules[0].activation_error, CANOPUS_SUP_ERR_LAUNCHER);
+    finish_native_activation();
+}
+
+static uint32_t g_native_ids_in_use;
+static int fake_native_app_id_in_use(void *cookie, uint16_t id)
+{
+    (void)cookie;
+    return (g_native_ids_in_use & (1u << (id - CANOPUS_SUP_NATIVE_APP_FIRST_ID))) != 0u;
+}
+
+TEST(native_identity_survives_slot_compaction_and_reversed_publication)
+{
+    struct canopus_supervisor_v1 sup, restored;
+    int persists;
+    g_persist_result = g_registry_present = g_persists = 0;
+    CHECK_EQ(canopus_supervisor_init(&sup, 7u, &fake_platform, 0), 0);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, 0u, 1u, "removed"), 0);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, 0u, 1u, "native.other"), 1);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, 0u, 1u, "corona"), 2);
+    CHECK_EQ(canopus_supervisor_native_app_id(&sup, 1u), 0xCC);
+    CHECK_EQ(canopus_supervisor_native_app_id(&sup, 2u), 0xCD);
+    sup.modules[0].intent = CANOPUS_SUP_INTENT_REMOVE;
+    CHECK_EQ(canopus_supervisor_save_registry(&sup), 0);
+
+    CHECK_EQ(canopus_supervisor_init(&restored, 7u, &fake_platform, 0), 0);
+    CHECK_EQ(canopus_supervisor_restore_registry_metadata(&restored), 0);
+    CHECK_EQ(restored.module_count, 2u);
+    CHECK(strcmp((const char *)restored.modules[0].module_id, "native.other") == 0);
+    CHECK(strcmp((const char *)restored.modules[1].module_id, "corona") == 0);
+    persists = g_persists;
+    /* Corona now publishes first and both slots changed, but neither ID does. */
+    CHECK_EQ(canopus_supervisor_native_app_id(&restored, 1u), 0xCD);
+    CHECK_EQ(canopus_supervisor_native_app_id(&restored, 0u), 0xCC);
+    CHECK_EQ(g_persists, persists);
+    CHECK_EQ(canopus_supervisor_add_module(&restored, 0u, 1u, "new.native"), 2);
+    CHECK_EQ(canopus_supervisor_native_app_id(&restored, 2u), 0xCE);
+}
+
+TEST(native_identity_reserves_existing_firmware_apps_and_persists_before_use)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform = fake_platform;
+    platform.native_app_id_in_use = fake_native_app_id_in_use;
+    g_persist_result = g_registry_present = g_persists = 0;
+    g_native_ids_in_use = (1u << 0) | (1u << 2);
+    CHECK_EQ(canopus_supervisor_init(&sup, 7u, &platform, 0), 0);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, 0u, 1u, "corona"), 0);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, 0u, 1u, "native.other"), 1);
+    g_persist_result = -5;
+    CHECK_EQ(canopus_supervisor_native_app_id(&sup, 0u), CANOPUS_SVC_ERR_IO);
+    CHECK_EQ(sup.modules[0].native_app_id, 0u);
+    CHECK_EQ(g_persists, 0);
+    g_persist_result = 0;
+    CHECK_EQ(canopus_supervisor_native_app_id(&sup, 0u), 0xCD);
+    CHECK_EQ(canopus_supervisor_native_app_id(&sup, 1u), 0xCF);
+    CHECK_EQ(g_persists, 2);
+    CHECK_EQ(g_registry[CANOPUS_SUP_REGISTRY_HEADER + 46u], 0xCD);
+    CHECK_EQ(g_registry[CANOPUS_SUP_REGISTRY_HEADER + CANOPUS_SUP_REGISTRY_SLOT_SIZE + 46u], 0xCF);
+    g_native_ids_in_use = 0xFFFFu;
+    CHECK_EQ(canopus_supervisor_add_module(&sup, 0u, 1u, "no.room"), 2);
+    CHECK_EQ(canopus_supervisor_native_app_id(&sup, 2u), CANOPUS_SVC_ERR_NOMEM);
+    CHECK_EQ(sup.modules[2].native_app_id, 0u);
+}
+
+TEST(native_identity_imports_legacy_registry_and_rejects_duplicate_ownership)
+{
+    struct canopus_supervisor_v1 sup, restored;
+    g_persist_result = g_registry_present = g_persists = 0;
+    CHECK_EQ(canopus_supervisor_init(&sup, 7u, &fake_platform, 0), 0);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, 0u, 1u, "legacy"), 0);
+    CHECK_EQ(canopus_supervisor_add_module(&sup, 0u, 1u, "second"), 1);
+    CHECK_EQ(canopus_supervisor_save_registry(&sup), 0);
+    CHECK_EQ(canopus_supervisor_init(&restored, 7u, &fake_platform, 0), 0);
+    CHECK_EQ(canopus_supervisor_restore_registry_metadata(&restored), 0);
+    CHECK_EQ(restored.modules[0].native_app_id, 0u);
+    CHECK_EQ(canopus_supervisor_native_app_id(&restored, 0u), 0xCC);
+    CHECK_EQ(canopus_supervisor_native_app_id(&restored, 1u), 0xCD);
+    g_registry[CANOPUS_SUP_REGISTRY_HEADER + CANOPUS_SUP_REGISTRY_SLOT_SIZE + 46u] = 0xCC;
+    CHECK_EQ(canopus_supervisor_init(&sup, 7u, &fake_platform, 0), 0);
+    CHECK_EQ(canopus_supervisor_restore_registry_metadata(&sup), -1);
+    CHECK_EQ(sup.safe_mode_reason, CANOPUS_SAFE_MODE_STORE_CORRUPT);
+}
+
 static const struct test_registry supervisor_device_tests[] = {
+    { "native_publication_stage_two_waits_for_registration_and_skips_failure", native_publication_stage_two_waits_for_registration_and_skips_failure_wrapper },
+    { "native_identity_survives_slot_compaction_and_reversed_publication", native_identity_survives_slot_compaction_and_reversed_publication_wrapper },
+    { "native_identity_reserves_existing_firmware_apps_and_persists_before_use", native_identity_reserves_existing_firmware_apps_and_persists_before_use_wrapper },
+    { "native_identity_imports_legacy_registry_and_rejects_duplicate_ownership", native_identity_imports_legacy_registry_and_rejects_duplicate_ownership_wrapper },
     { "installer_endpoint_accepts_signed_package_flow_only", installer_endpoint_accepts_signed_package_flow_only_wrapper },
     { "supervisor_init_rejects_null", supervisor_init_rejects_null_wrapper },
     { "supervisor_status_abi_layout", supervisor_status_abi_layout_wrapper },

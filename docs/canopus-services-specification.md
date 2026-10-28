@@ -452,7 +452,7 @@ struct canopus_ui_obj {
 
 **能力协商**：`capabilities(context)` 返回后端实际支持的 `CANOPUS_UI_CAP_*` 位（STYLE / LAYOUT / VALUES / NAVIGATION_HEADER /
 IMAGE / PROGRESS / VISUAL / SCROLL / TRANSLATE / CAPTURE / POINTER_EVENTS / IMAGE_FIT_CONTAIN|COVER|STRETCH /
-VIRTUAL_CONTENT / TOAST / EXTENDED_COMPONENTS）。不支持的请求**显式返回 `ERR_UNSUPPORTED`**，绝不静默忽略。
+VIRTUAL_CONTENT / EXTENDED_COMPONENTS）。不支持的请求**显式返回 `ERR_UNSUPPORTED`**，绝不静默忽略。
 能力是每个 target 实测出来的，不是按家族一刀切。
 
 **页面入口**：`set_entry` 登记页面入口（`label` 最长 23 字节，可为 NULL；`on_open` 必填）。模块运行期间，它在 Manager 的详情页多一行「打开界面」。
@@ -507,45 +507,56 @@ VIRTUAL_CONTENT / TOAST / EXTENDED_COMPONENTS）。不支持的请求**显式返
 节点禁用、自身或祖先隐藏、节点消失、事件绑定改变、根 page key 改变或生命周期变化会用旧绑定发送一次 `CANCEL` 并解除滚动锁。转移捕获时保留原始 press 目标，释放捕获后后续 MOVE/RELEASE 回到该目标；成功提交会更新保留绑定的代数。
 原生候选分配失败时保留旧快照、页面及有效手势，不提前发送取消事件。
 
-**Toast 与标题**：`CANOPUS_UI_NODE_TOAST` 是页面持有的原生反馈：同一时刻只显示最近一条（新的替换旧的），
-`values[i].value` 是毫秒时长（0 表示 2000 ms；显式时长为 1..60000，负数或超范围返回 `ERR_ARGUMENT`）；上一快照也可见且内容与参数完全相同的提交不会重启计时，到期后未变化的可见节点不重播。隐藏→显示会重新显示并计时，允许初始隐藏节点。同一快照携带多个 Toast 节点时只有最近一个可见节点驱动共享反馈对象（尾随隐藏占位不压掉前面的可见 Toast；无可见 Toast 时由最后一个 Toast 节点驱动隐藏），其余节点是别名，不写共享对象；隐藏的 Toast 节点（含 fresh）从不替换也不写共享对象的样式；驱动身份变化时以新标签替换共享对象并重绘文本与样式（样式/文本状态不跨节点混合）；共享对象的文本被重写时其样式必同步重绘，两者不分离；Toast 对象的删除只归反馈路径，通用清理按节点类型跳过。页面分离/暂停时清除（含交互被关闭时的隐藏清除），
-模块卸载时随页面一起销毁，没有悬空回调。`NAVIGATION_HEADER` / 导航页的标题文本或返回显示状态变化会替换标题对象；
+**标题**：`NAVIGATION_HEADER` / 导航页的标题文本或返回显示状态变化会替换标题对象；
 同一快照多个 `NAVIGATION_HEADER` 时仅第一个驱动共享标题对象（含事件绑定），其余不写，无 header 时由导航页驱动，
 根 page key 不变时保留正文滚动，不以标题变化推断路由。过期的标题事件按事件目标/令牌校验后丢弃，不会驱动新页面。
 
 **渲染后端**（Band 10 Pro 与 Band 11 共用 `manager/target/canopus_ui_host.c`，Manager 自己的页面也走它）两个家族画同样的内容：
 导航页/导航头（页面标题）、分区/列表/滚动/分隔/间距（真实布局求解：轴、对齐、分布、间距、内边距、最小/最大尺寸、外边距）、
 文本/富文本（标签）、各类行与按钮（复选/单选带选中标记）、图片、进度条，以及对话框——一条消息加两个按钮时是固件 msgbox，
-其它形状和没有恢复 msgbox 入口的目标按普通行内联。滑块已移除（`CANOPUS_UI_NODE_RETIRED_SLIDER`）。
+其它形状和没有恢复 msgbox 入口的目标按普通行内联。滑块与 Toast 已移除；节点编号 11、17 及能力位 16 保留停用，其余 ABI 编号不变。
 不支持的节点类型提交失败，并保留上一版内容。相同内容的提交不会重写原生控件（增量更新，见 ADR-CAN-010），
 包括活动捕获期间的重复提交：原生滚动锁保持原状态，只迁移事件绑定的 generation；脏控件仍会先修复再保持捕获。
 
 端到端见 `scripts/emu/ui_pages.py` 与 `scripts/emu/native_ui_v2.py`（Mirage）。`.043` 与 `.155` 的后端本体已在真机验证（ADR-CAN-010）；
-**本次 ABI 2.0 新增的能力（输入/滚动/虚拟内容/Toast/标题更新/生命周期通知）的证据范围以 ADR-CAN-013「证据与限制」为准，没有新的真机验证**，
+**本次 ABI 2.0 新增的能力（输入/滚动/虚拟内容/标题更新/生命周期通知）的证据范围以 ADR-CAN-013「证据与限制」为准，没有新的真机验证**，
 能力状态未提升。
 
 ### 2.13 `ctx->launcher` — 模块自己的启动器入口
 
-让模块像普通应用一样出现在系统启动器里，选中后打开它用 `ctx->ui->set_entry` 登记的页面（ADR-CAN-011）：
+让模块像普通应用一样出现在系统启动器里（ADR-CAN-011）。`CANOPUS_SVC_LAUNCHER` 服务版本为 1，唯一方法 `register_app` 同时登记托管 UI 与 exact-target 原生页面：
 
 ```c
-struct canopus_launcher_entry_v1 {
+#define CANOPUS_NATIVE_APP_PAGES_MAX 16u
+struct canopus_app_entry_v1 {
     uint32_t struct_size;
     const char *label;   /* 图标下的名字：UTF-8，1~23 字节 */
-    const char *icon;    /* 固件能读的 LVGL 图片文件的绝对路径（至多 95 字节），NULL 为 Canopus 图标 */
+    const char *icon;    /* 固件能读的 LVGL 图片绝对路径，至多 95 字节；NULL 为 Canopus 图标 */
+    void *const *pages;
+    uint32_t page_count;
 };
 struct canopus_launcher_obj {
-    int32_t (*set_entry)(const struct canopus_context_v1 *ctx, const struct canopus_launcher_entry_v1 *entry);
+    int32_t (*register_app)(const struct canopus_context_v1 *ctx, const struct canopus_app_entry_v1 *entry);
 };
 ```
-- 旧 Supervisor 没有 `launcher`：先查 `ctx->struct_size >= sizeof(struct canopus_context_v1)` 且 `ctx->launcher != 0`；服务组为 `CANOPUS_SVC_LAUNCHER`。
-- 还没登记页面入口返回 `ERR_STATE`；参数不合法 `ERR_ARGUMENT`；8 个入口（`CANOPUS_LAUNCHER_ENTRIES`）用完 `ERR_NOMEM`；
-  没有 Manager UI 的构建不提供该对象。
-- 返回时固件还没有注册：Supervisor 在 UI 心跳里分两个 tick 各调一次固件（先 `app_install`，再 `launcher_add`）。注册失败不会回报给已经返回的模块，
-  只记入 Supervisor 的 `error_code`（`CANOPUS_SUP_ERR_LAUNCHER`）。
-- **没有注销**：固件的 `app_launcher_del` 没有证据，所以入口留到下次重启；模块停止后选中它什么也不打开。同一模块再次调用，标签与图标相同返回 OK，
-  不同返回 `ERR_BUSY`（直到重启）。入口不跨重启保存，模块每次被激活时再登记。
-- Rust：`canopus_runtime::launcher::set_entry`、`canopus_abi::{CanopusLauncherObj, LauncherEntryV1}`。
+- 调用前检查 `canopus_services_has(ctx, CANOPUS_SVC_LAUNCHER, 1)` 和 `ctx->launcher`；没有 Manager UI 的构建不提供该对象。
+  从串行 module/UI owner 调用，通常放在原生应用 publication callback 中。此接口直接替换未发布的旧接口，没有旧类型、方法或兼容分支。
+- `pages == NULL && page_count == 0` 表示托管 UI 入口，要求先用 `ctx->ui->set_entry` 登记页面，否则返回 `ERR_STATE`。
+  `pages != NULL && page_count` 为 1~16 表示原生页面，不要求托管 UI 入口；页面描述符必须**可写且布局与当前固件精确匹配**。
+  Supervisor 返回前复制指针数组，数组可放栈上；描述符、引用数据和回调必须有效到重启。Supervisor 在 UI 注册步骤统一写入各原生页 `app_id`。
+- `register_app` 成功返回**正数的 8 位应用 ID**，用于构造页面导航 key。同一定义（标签、图标、页面指针及数量）再次登记返回同一 ID，
+  不新增入口；修改定义返回 `ERR_BUSY`。参数错误返回 `ERR_ARGUMENT`，入口耗尽返回 `ERR_NOMEM`。
+- Supervisor 统一分配 `0xCC..0xDB` 的 16 个应用 ID；首次托管发布时分配，并将 ID 保存在模块 registry intent word 的 bits 16..23。
+  平台通过 `native_app_id_in_use` 查询固件已有注册，首次分配时保留这些已占用 ID，因此能避开先注册的旧式原生模块。
+  映射绑定 `module_id`，其他模块删除、槽位压缩、发布顺序变化或重启不改变它。应用包名为 `com.canopus.module.<module_id>`；普通与原生入口共用
+  8 个回调/描述符槽（`CANOPUS_LAUNCHER_ENTRIES`）。Supervisor 无法控制后来绕过分配器、任意硬编码 ID 的固件注册调用；
+  外部模块应迁移到统一登记接口，才能从分配源头避免彼此冲突。
+- 返回时固件还没有注册：Supervisor 在 UI 心跳里分两个 tick 各调一次固件（先 `app_install`，再 `launcher_add`），使用同一份模块应用身份。
+  后续注册失败记入 Supervisor 的 `error_code`（`CANOPUS_SUP_ERR_LAUNCHER`），不通过已返回的调用同步报告。
+- **没有同步注销**：入口与固件页面描述符保留至重启；普通托管 UI 入口在模块停止后不再打开页面。原生页面的存活回调要求模块保持驻留。
+  每次启动需要重新发布描述符和入口；持久化的是模块应用 ID 映射，系统 launcher 自己的缓存/残留入口语义仍未验证。
+- Rust：`canopus_runtime::launcher::register_app`、`canopus_abi::{CanopusLauncherObj, AppEntryV1}`。
+  包装函数是 `unsafe`，调用者负责有效字符串、串行 owner，以及原生页面的 exact-target 布局、可写性和重启前的描述符/回调生命周期。
 
 ---
 

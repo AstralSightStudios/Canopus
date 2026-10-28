@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-1036-OPACITY-001",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Does exact .036 implement overall object opacity property95, and which existing dispatcher entry safely executes its SRAM local-style implementation?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.036.private_abi.lv_obj_set_local_style_prop_xip_thunk",
+    "xiaomi-band-10-pro-3.101.036.ui.lv_obj_set_local_style_prop"
+  ],
+  "prototype_hypothesis": "UI-owner AAPCS void local_style_set(void *object, uint32_t property, uint32_t value, uint32_t selector): r0=borrowed object, r1=95 (overall LV_STYLE_OPA), r2=opacity0..255, r3=selector0. Bind the canonical dispatcher runtime Thumb callable0x002BD5FD, independently established by the exact startup copy and existing stock XIP veneer0x0CAA7239. No new module-visible callable is introduced.",
+  "callsite_evidence": [
+    "Exact AP input is 13616208 bytes, SHA256 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81, matching target.toml and existing .036 symbol provenance. The official full archive SHA256 is 17a1ea48d58117c50223faf36ecc66bd0d42828495ef9a219e84ef3168e11f71. IDA9.4.0.260610 disassembly and Hex-Rays decompilation was checked against these exact bytes; no sibling property or address is inherited.",
+    "Stock overall-opacity wrapper load 0x0C108534/runtime 0x002BE6CC: MOV r12,r1; PUSH {r7,lr}; SUB sp,#8; MOV r3,r2; ADD r7,sp,#0; MOVS r1,#0x5F; MOV r2,r12; BL runtime 0x002BD5FC; stack restore and POP. It therefore forwards object,95,opacity,selector. Complete AP offset0x48534 length0x18 bytes 8c4680b582b0134600af5f216246fef78fff0837bd4680bd, SHA256 1fb5174cd7d37376437ae0c4200c8c4c1b371f74ceb732ba411ae8cc052ad829.",
+    "Renderer load 0x0C1045DC/runtime 0x002BA774 reads property96 separately first, then at load0x0C10460C/runtime0x002BA7A4 sets r2=0x5F; at load0x0C104616/runtime0x002BA7AE calls effective-style getter load0x0C10657C/runtime0x002BC714 with object,main-part0,95. It truncates the result to uint8; for opacity<=0xFC it multiplies previous layer opacity by the object opacity at load0x0C104626/runtime0x002BA7BE, shifts right8 at load0x0C10462A/runtime0x002BA7C2, and stores the byte to layer+0x5C at load0x0C10462C/runtime0x002BA7C4. This is overall rendering opacity, distinct from background29 and layered-opacity96.",
+    "The complete renderer prefix AP offset0x445DC length0x60 has bytes 2de9f04f2ded028b0c46c7b0602202af00210546204601f0c3ff5ffa80fbbbf1010fc7f8a00040f2c980ee6d95f860305f22002120467e60bb6001f0b1ffc7f8a000c0b2fc2805d8f3b203fb00f0001285f85c000021d5f85d20204603f0d6f9, SHA256 466f7e81e67d6ab8c2bdd41d4b3c99adf944f5228330cf02a6f6b247e4d2076b; it contains the property95 query and multiply/shift/store dataflow.",
+    "An independent covering-object renderer path reads property95 at load0x0C104FD6/runtime0x002BB16E, calls the same effective getter at load0x0C104FDA/runtime0x002BB172, then rejects the covering-object optimization when the uint8 opacity is<=0xFC.",
+    "Existing exact .036 dispatcher XIP veneer entry0x0CAA7238/callable0x0CAA7239 is LDR.W pc,[pc,#-0] with literal0x002BD5FD: bytes 5ff800f0fdd52b00, SHA256 a4881c1d94732705f3058fcd516a6175fcdec55570ef03f1eb6baf4d71552dce. It is already recorded as restricted/STATIC_RECOVERED/PENDING by EVID-LYRA-STYLE-1036-001. This independently establishes canonical runtime entry0x002BD5FC/callable0x002BD5FD as the safe host binding; canonical load0x0C107465 must not be used as executable code.",
+    "Hex-Rays decompiles runtime wrapper[0x002BE6CC,0x002BE6E4) to local_style_set(object,0x5F,value,selector). Full renderer[0x002BA774,0x002BAED2) saves layer+92/+96, reads overall property95, multiplies its uint8 value into the inherited opacity, draws through runtime0x002BA460, then restores the saved layer state. This verifies composition and transient rendering-state restoration, not a background-only alpha field.",
+    "Independent stock XIP opacity veneer entry0x0CAA69F0 contains 5ff800f0cde62b00, an LDR.W pc literal0x002BE6CD to the identified runtime opacity wrapper; AP offset0x9E69F0 length0x8 SHA256 d84fe60c472fbd4e6a6606b522b852038b07b9112b694037e6fbb5c073600929. This ties the wrapper to a firmware entry rather than inferring property semantics from numbering alone."
+  ],
+  "control_flow_evidence": [
+    "Exact startup at0x0C0C0A60 loads source0x2C0FC3A8, destination0x200B2540 and end0x2C10D114; its word-copy loop is at0x0C0C0A8C. The SRAM execution alias is0x002B2540. Thus load0x0C107464 maps to dispatcher runtime0x002BD5FC, load0x0C108534 to opacity wrapper runtime0x002BE6CC, load0x0C10657C to getter runtime0x002BC714 and load0x0C1045DC to renderer runtime0x002BA774. These mappings come from exact .036 startup literals and the veneer target, not a neighboring image.",
+    "AP startup window offset0xA60 length0x68 bytes 114b124a12498b4218460fd3114b124a12498b4218460ed3bff34f8fbff36f8f00210f4b0f4a93420ad370470068043342f8040be7e70068043342f8040be8e743f8041befe700bfa8c30f2c40250b2014d1102c14d1102cc0fe152014d1102cac320c2040770c20, SHA256 8e0ca8feb3d62399018a486d3605be88df9c88f0d6e6af677075d4fb03037bc6, includes the copy loop and its source/destination/end literal pool.",
+    "EVID-LYRA-STYLE-1036-001 explains why the canonical 0x0C107464 load image cannot safely execute: its external relative calls resolve against flash load addresses, including a zero-filled memmove location. The verified XIP veneer redirects to the copied SRAM code, preserving native branch semantics. The canonical .036 lv_obj_set_local_style_prop symbol is corrected to runtime0x002BD5FC/callable0x002BD5FD and attached to this evidence; its policy, approval_state, status and device-proof fields are preserved. Standard target generation then emits the safe runtime FW_UI_STYLE_SET without generator address overrides or new public bindings.",
+    "FW_UI_STYLE_OPA=95 is a private property number consumed by the native host, not a function address or public capability bit. Existing host conversion opacity0..1000 to0..255 and selector0 is retained; enabling this macro removes only the unsupported-opacity validation branch for .036."
+  ],
+  "ownership_analysis": "The native host borrows page-owned live LVGL objects on the serialized UI owner task. The existing local-style dispatcher can allocate local style storage and synchronously refresh the object. The page retains ownership; no new firmware pointer, public callable or verifier address range is exposed.",
+  "unsafe_assumptions": [
+    "Static recovery only: this does not establish device rendering, performance, device verification or production approval.",
+    "The property and address evidence is exact .036 only and must not be inherited by another target.",
+    "The load image 0x0C107465 is not a valid replacement for the runtime dispatcher0x002BD5FD (also reached through stock veneer0x0CAA7239); the convenience opacity wrapper is evidence and is not exported as a new callable.",
+    "Opacity changes appearance only; enabled-state event gating and stock message-box per-button styling keep their existing contracts."
+  ],
+  "recommended_probe": "Compile and verify exact .036 Supervisor, run evidence schema and generated-stability tests, then separately probe opacity0/500/1000, nested composition, inherited-style restoration and page teardown on exact hardware before any device capability claim.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-26T14:21:23Z",
+  "artifacts": [
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin",
+      "sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+      "role": "Pinned exact AP input; XIP file base0x0C0C0000; not distributed"
+    },
+    {
+      "uri": "ida://fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin.i64",
+      "role": "Exact IDA wrapper, runtime relocation, renderer multiply and dispatcher veneer review"
+    },
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin#0x48534+0x18",
+      "sha256": "1fb5174cd7d37376437ae0c4200c8c4c1b371f74ceb732ba411ae8cc052ad829",
+      "role": "Overall-opacity wrapper load0x0C108534/runtime0x002BE6CC"
+    },
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin#0x445DC+0x60",
+      "sha256": "466f7e81e67d6ab8c2bdd41d4b3c99adf944f5228330cf02a6f6b247e4d2076b",
+      "role": "Renderer prefix, property95 and layer-opacity multiplication"
+    },
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin#0x9E7238+0x8",
+      "sha256": "a4881c1d94732705f3058fcd516a6175fcdec55570ef03f1eb6baf4d71552dce",
+      "role": "Existing XIP dispatcher veneer to runtime0x002BD5FC"
+    },
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin#0xA60+0x68",
+      "sha256": "8e0ca8feb3d62399018a486d3605be88df9c88f0d6e6af677075d4fb03037bc6",
+      "role": "Exact startup SRAM copy and source/destination/end literals"
+    },
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.036/vela_ap.bin#0x9E69F0+0x8",
+      "sha256": "d84fe60c472fbd4e6a6606b522b852038b07b9112b694037e6fbb5c073600929",
+      "role": "Stock XIP veneer to overall-opacity runtime wrapper0x002BE6CC"
+    }
+  ]
+}

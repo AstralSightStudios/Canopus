@@ -84,6 +84,16 @@
 | K26 | Band 10 o66 `3.1.28` Mirage 端到端通过（2026-10-25，仅 emulator 证据）：AUTORUN 完成 cave stage0 → stage1 → stage2 → Supervisor → `/dev/canopus` → CPC2 全部 result 5（`Run completed`），`registry.bin` = `CDR1`；QMP 读 Supervisor target record：magic `0x434e5431`、identity/app_install/launcher_add 均 0，Manager 应用与 launcher 入口已安装。修复：`app_install` 记录由文本排版函数改为 `0xc4737e8`、`unregister_driver` 改为 `0xc3938c0`（`EVID-PORT-1028-CORRECT`）；v8 app 描述符新增 3.1.28 布局（回调 +0x1c、hidden +0x3c、0x40 字节，`CANOPUS_MGR_APPINFO_1028`）；cave trampoline 保存/恢复 LR；profile 固定 `entry_mode = "cave"`。遗留：该固件 Lua 表盘不派发按钮触摸（本次用 AUTORUN），Manager 页面尚未在设备上打开。LVGL v8 object creator 已于 2026-10-25 消歧：`lv_obj_create` = `0xc2bc5b8`（`lv_obj_class` `0x2c686a74`；`create_obj` `0xc2b9734` + `init_obj` `0xc2bc534`），原记录 `0xc127924` 是字符串拷贝辅助函数（`EVID-STATIC-1028-V8-001`）。证据 `EVID-EMU-1028-001`；真机仍 pending | 2026-10-25 |
 | K27 | LVGL v8 Manager 页面在 o66/n66/n67 上可用性推进（2026-10-25，仅 emulator 证据）：o66 概览页与「模块」子页面在 Mirage 上完整可用——行点击派发、`page_goto` 压栈进入 page 1、子页面标题与分节正常绘制；n66/n67 页能创建但内容缺失，原因分别是 3.1.32 的 `lvx_page_title_create` 不返回（改画普通标题）与 3.1.190 的该函数多一个 user-data 参数（补第 5 个参数）。修复要点：事件码是 `event+8` 的**字节**而不是 32 位字（原读法把 CLICKED 读成 `0x3c350007`，所有点击被丢弃）；行内文字对齐要抵消容器 22 px 水平内边距；`page_goto` 是压栈、源页不销毁，路由改回点击回调内直接推页，删掉整套 lv_timer 延后逻辑（o66 的 `lv_timer_create` 记录实为跳进未映射区的 thunk）；值按显示列宽截断（CJK 记 2 列）。o66 现已全流程可用（概览→模块子页面→返回手势→概览），关键修复是 `on_destroy` 不再在页面过渡里关闭设备会话——之前返回手势会让整机复位。n66 仍未进到页面内容：对页面容器建子对象时固件不返回（打点 T0 之后无 T2/T3）并重启。launcher 条目仍依赖 launcher UI 已建立，尚未在三条固件上确认出现。全部为 emulator 证据，不提升任何能力状态 | 2026-10-25 |
 
+## Toast API 移除
+
+- [x] 按用户要求移除 C/Rust SDK 的 Toast 入口、Manager 渲染与计时、示例及模拟器场景；节点编号 11 与能力位 16 保留停用，其余 ABI 编号不变。保留标题更新、输入事件时钟和字体回收。下文既有 Toast 验证记录仅表示移除前的历史，不代表当前可用能力。
+  验证：C host 与双家族输入测试通过 ASan/UBSan；四组原生后端配置通过 ASan/UBSan；Rust UI core 22 个单元测试与 2 个文档测试通过；`.043` / `.155` Supervisor 构建与 ELF 校验通过；native-ui-lab 五目标构建、ELF 校验与打包通过。未新增模拟器或真机验证，不提升能力状态。
+
+## 原生 UI 整体透明度覆盖（2026-10-26）
+
+- [x] 对全部9个当前 target 审查整体 opacity 接线；精确 `.036`、`.043`、`.139` 的 property95 setter、renderer 与地址语义登记为 `EVID-UI-1036-OPACITY-001`、`EVID-UI-1043-OPACITY-001`、`EVID-UI-4139-OPACITY-001`，与既有 `.155` / `.179` 接线共同覆盖五款 v9 目标。`.036` 的 canonical dispatcher 从 flash load copy 纠正为 SRAM callable `0x002BD5FD`，标准生成同步 C/Rust 元数据；保留所有原有 policy / approval / device 字段。`.139` 只补整体 opacity，不继承其它 layout/input 常量。修复分区标题与合成行标题重复写入整体 opacity 导致叠乘的问题：只对语义节点对象写一次，内部标签继承；新增回归先在四个 host 配置复现失败，再验证修复。
+  验证：core 51项、全9目标 freshness / SDK feature gate、两家族四配置 ASan/UBSan 原生 UI host 回归、五款 v9 Supervisor 构建与 ELF verifier 通过。Band 9 的 v8 STYLE/VISUAL 与原生父子层级、Band 9 Pro / Band 10 / Redmi Watch 6 的平台绑定仍未完成，继续明确不支持。仅为静态/host 级证据，不提升真机或生产能力状态。接口语义和完整矩阵见 `adr/ADR-CAN-010-ui-host.md` 的 Overall opacity 一节。
+
 ## 3. 待定项（阻塞对应任务，回答后移入 §2）
 
 - O1（现由 K15/ADR-CAN-008 替代旧 K13）手机↔设备端控制通道（原阻塞 P5.1 及之后）。

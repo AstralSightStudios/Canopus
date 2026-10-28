@@ -1982,12 +1982,18 @@ int canopus_manager_target_module_page_close(uint32_t slot)
     return 0;
 }
 
-int canopus_manager_target_launcher_publish(uint32_t slot, const char *label,
-                                            const char *icon)
+int canopus_manager_target_module_page_route(uint32_t slot, uint32_t route)
 {
     (void)slot;
-    (void)label;
-    (void)icon;
+    (void)route;
+    return CANOPUS_SVC_ERR_UNSUPPORTED;
+}
+
+int canopus_manager_target_app_publish(uint32_t slot,
+                                       const struct canopus_app_entry_v1 *entry)
+{
+    (void)slot;
+    (void)entry;
     return -1;
 }
 

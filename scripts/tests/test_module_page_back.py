@@ -164,20 +164,36 @@ class ModulePageBackTests(unittest.TestCase):
                         self.assertEqual(self.finishes, [])
                         self.assertEqual(self.state(u, 4), 0)
 
-    def test_unhandled_or_missing_callback_closes_root_once(self):
+    def test_declined_back_lets_the_firmware_play_its_own_transition(self):
+        # descriptor +104 must answer zero so sub_C69BB50 runs its own
+        # finish_page and page-out animation; finishing the page here would
+        # consume the gesture and skip it.
         for target in TARGETS:
             for launcher in (0, 1):
                 for mode in (1, 4):
                     with self.subTest(target=target, launcher=launcher, mode=mode):
                         u = self.machine(target, launcher, mode)
-                        self.assertEqual(self.swipe(u), 1)
+                        self.assertEqual(self.swipe(u), 0)
                         self.assertEqual(self.state(u, 0), int(mode == 1))
+                        self.assertEqual(self.finishes, [])
+                        self.assertEqual(self.state(u, 1), 0)
+                        self.assertEqual(self.state(u, 5), 1)
+                        self.assertEqual(self.swipe(u), 0)  # still declined
+                        self.assertEqual(self.finishes, [])
+                        self.assertEqual(self.state(u, 4), 0)
+
+    def test_title_back_still_finishes_a_declined_module(self):
+        # A title tap has no firmware default behind it, so the host finishes.
+        for target in TARGETS:
+            for launcher in (0, 1):
+                for mode in (1, 4):
+                    with self.subTest(target=target, launcher=launcher, mode=mode):
+                        u = self.machine(target, launcher, mode)
+                        self.call(u, "test_title_back")
                         self.assertEqual(len(self.finishes), 1)
+                        self.assertEqual(self.state(u, 0), int(mode == 1))
                         self.assertEqual(self.state(u, 1), 1)
-                        self.assertEqual(self.state(u, 2), 1)
                         self.assertEqual(self.state(u, 5), 0)
-                        self.assertEqual(self.swipe(u), 0)  # stale completed callback
-                        self.assertEqual(len(self.finishes), 1)
                         self.assertEqual(self.state(u, 4), 0)
 
     def test_self_close_is_consumed_with_no_second_finish(self):
@@ -196,7 +212,10 @@ class ModulePageBackTests(unittest.TestCase):
                                 self.assertEqual(self.state(u, 1), 0)
                                 self.call(u, "test_destroy")
                             self.assertEqual(self.state(u, 1), 1)
-                            self.assertEqual(self.state(u, 2), 1)
+                            # The UI context, plus the page record that a launcher
+                            # entry owns (the Manager module page uses the
+                            # target's scratch record instead of the heap).
+                            self.assertEqual(self.state(u, 2), 2 if launcher else 1)
                             self.assertEqual(self.state(u, 5), 0)
                             self.assertEqual(self.state(u, 4), 0)
 

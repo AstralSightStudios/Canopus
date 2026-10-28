@@ -50,7 +50,6 @@ extern "C" {
 #define CANOPUS_UI_CAP_IMAGE_FIT_COVER     (1u << 13)
 #define CANOPUS_UI_CAP_IMAGE_FIT_STRETCH   (1u << 14)
 #define CANOPUS_UI_CAP_VIRTUAL_CONTENT     (1u << 15)
-#define CANOPUS_UI_CAP_TOAST               (1u << 16)
 #define CANOPUS_UI_CAP_FONT                (1u << 17)
 
 typedef uint32_t canopus_ui_node_id;
@@ -66,8 +65,8 @@ enum canopus_ui_node_type {
     CANOPUS_UI_NODE_LIST,
     CANOPUS_UI_NODE_SCROLL,
     CANOPUS_UI_NODE_DIALOG,
-    CANOPUS_UI_NODE_TOAST,
-    CANOPUS_UI_NODE_IMAGE,
+    /* 11 is retired; keep subsequent node IDs stable. */
+    CANOPUS_UI_NODE_IMAGE = 12,
     CANOPUS_UI_NODE_ICON,
     CANOPUS_UI_NODE_RICH_TEXT,
     CANOPUS_UI_NODE_CHECKBOX,
@@ -205,7 +204,7 @@ struct canopus_ui_layout_v1 {
 };
 
 struct canopus_ui_value_v1 {
-    int32_t value; /* Toast duration ms: 0=2000 default, otherwise 1..60000. */
+    int32_t value;
     int32_t minimum;
     int32_t maximum;
     int32_t step;
@@ -653,9 +652,6 @@ uint16_t canopus_ui_router_depth(
                          CANOPUS_UI_NODE_FLAG_VISIBLE)
 #define CANOPUS_UI_DIALOG(tree_, key_, title_, message_) \
     CANOPUS_UI_COMPONENT((tree_), (key_), CANOPUS_UI_NODE_DIALOG, (title_), (message_), 0u, \
-                         CANOPUS_UI_NODE_FLAG_VISIBLE)
-#define CANOPUS_UI_TOAST(tree_, key_, message_) \
-    CANOPUS_UI_COMPONENT((tree_), (key_), CANOPUS_UI_NODE_TOAST, (message_), "", 0u, \
                          CANOPUS_UI_NODE_FLAG_VISIBLE)
 #define CANOPUS_UI_CHECKBOX(tree_, key_, label_, event_, checked_, enabled_) \
     CANOPUS_UI_COMPONENT((tree_), (key_), CANOPUS_UI_NODE_CHECKBOX, (label_), "", (event_), \

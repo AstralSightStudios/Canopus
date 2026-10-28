@@ -7,7 +7,11 @@ manager_backend = "manager/target/canopus_manager_target.c"
 # 131012 B after trimming; device loading remains unproven / NOT_PROBED).
 # Resident remains a real RAM-slot bound and is unchanged.
 supervisor_max_size = 133120
-supervisor_max_resident = 163840
+# Raised 163840 -> 172032 (+8192 B) on 2026-10-26 for multi-page module UI
+# entries (canopus_ui_entry_v1.page_count); measured 167562 B on .043. This was
+# documented as a real RAM-slot bound rather than a build budget, so the raise
+# is an explicit maintainer decision and device loading stays NOT_PROBED.
+supervisor_max_resident = 172032
 loader_sources = []
 defines = []
 prod_family = "xiaomi-band-10-pro"

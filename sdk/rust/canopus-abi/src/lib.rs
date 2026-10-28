@@ -451,6 +451,8 @@ pub struct CanopusUiObj {
         unsafe extern "C" fn(tree: *mut c_void, key: u32, layout: *const c_void) -> i32,
     pub set_entry: unsafe extern "C" fn(ctx: *const ContextV1, entry: *const UiEntryV1) -> i32,
     pub close_page: unsafe extern "C" fn(ctx: *const ContextV1) -> i32,
+    /* Multi-page UI entries: push/finish through the target's page stack. */
+    pub route: unsafe extern "C" fn(ctx: *const ContextV1, route: u32) -> i32,
     pub node_set_visual:
         unsafe extern "C" fn(tree: *mut c_void, key: u32, visual: *const UiVisualV1) -> i32,
     pub control: unsafe extern "C" fn(
@@ -557,9 +559,13 @@ pub struct UiEntryV1 {
     >,
     pub on_close: Option<unsafe extern "C" fn(ctx: *const ContextV1, user_data: *mut c_void)>,
     pub user_data: *mut c_void,
+    /* Firmware pages this entry's routes travel through. 0 keeps the
+     * single-page contract; above 0 enables ctx->ui->route. */
+    pub page_count: u32,
 }
 
 pub const UI_ENTRY_LABEL_MAX: u32 = 24;
+pub const UI_ENTRY_PAGES_MAX: u32 = 8;
 
 // The Supervisor only reads an entry; modules declare theirs as a `static`.
 unsafe impl Sync for UiEntryV1 {}
@@ -624,25 +630,32 @@ pub struct UiSwitchRowPropsV1 {
     pub enabled: u32,
 }
 
-/// A module's launcher entry (`struct canopus_launcher_entry_v1`).
+/// Supervisor-owned application definition (`struct canopus_app_entry_v1`).
+///
+/// Null `pages` with zero `page_count` opens the module's registered UI entry.
+/// Native definitions provide writable exact-target descriptors whose pointer
+/// array is copied before return; descriptors remain valid until reboot.
 #[repr(C)]
-pub struct LauncherEntryV1 {
+pub struct AppEntryV1 {
     pub struct_size: u32,
-    /// UTF-8, 1 to `LAUNCHER_LABEL_MAX - 1` bytes, NUL-terminated.
     pub label: *const c_char,
-    /// NUL-terminated absolute path of an LVGL image file, or null for the Canopus icon.
     pub icon: *const c_char,
+    pub pages: *const *mut c_void,
+    pub page_count: u32,
 }
 
-/// `struct canopus_launcher_obj`.
+/// `struct canopus_launcher_obj`, LAUNCHER service version 1.
 #[repr(C)]
 pub struct CanopusLauncherObj {
-    pub set_entry: unsafe extern "C" fn(ctx: *const ContextV1, entry: *const LauncherEntryV1) -> i32,
+    /// Returns the positive assigned app ID or a negative service error.
+    pub register_app:
+        unsafe extern "C" fn(ctx: *const ContextV1, entry: *const AppEntryV1) -> i32,
 }
 
 pub const LAUNCHER_ENTRIES: u32 = 8;
 pub const LAUNCHER_LABEL_MAX: u32 = 24;
 pub const LAUNCHER_ICON_MAX: u32 = 96;
+pub const NATIVE_APP_PAGES_MAX: u32 = 16;
 
 #[repr(C)]
 pub struct CanopusContext {
@@ -926,6 +939,16 @@ mod layout {
         assert_eq!(offset_of!(CanopusHookObj, is_hooked), 2 * pointer);
         assert_eq!(offset_of!(CanopusHookObj, register_slot_map), 3 * pointer);
         assert_eq!(size_of::<CanopusHookObj>(), 4 * pointer);
+    }
+
+    #[test]
+    fn launcher_registration_layout() {
+        let pointer = size_of::<usize>();
+        assert_eq!(offset_of!(CanopusLauncherObj, register_app), 0);
+        assert_eq!(size_of::<CanopusLauncherObj>(), pointer);
+        assert_eq!(offset_of!(AppEntryV1, pages), 3 * pointer);
+        assert_eq!(offset_of!(AppEntryV1, page_count), 4 * pointer);
+        assert_eq!(size_of::<AppEntryV1>(), 5 * pointer);
     }
 
     #[test]

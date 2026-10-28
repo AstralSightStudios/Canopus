@@ -2,6 +2,9 @@
 
 Evidence ID: `EVID-UI-DEFENSIVE-ABLATION-001`. Date: 2026-10-23.
 
+Toast has since been removed from the public API and native backend. Toast-specific
+paths below belong to this frozen historical study.
+
 Eight isolated removals were built and tested, followed by a combined patch
 containing only proven redundancies. The combined `.155` artifact is **129,824
 file bytes / 180,698 resident bytes**, saving **48 / 48 bytes** against this

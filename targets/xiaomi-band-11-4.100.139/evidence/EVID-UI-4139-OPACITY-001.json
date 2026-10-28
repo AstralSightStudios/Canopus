@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-4139-OPACITY-001",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "question": "Does exact Band11 4.100.139 implement overall object style opacity, and can the existing native UI host use it through its already bound local-style dispatcher?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.139.private_abi.lv_obj_set_local_style_prop"
+  ],
+  "prototype_hypothesis": "Existing UI-owner AAPCS void lv_obj_set_local_style_prop(void *object, uint32_t property, uint32_t value, uint32_t selector): r0=borrowed live object, r1=95 (overall LV_STYLE_OPA), r2=opacity0..255, r3=selector0 for the host. No new callable or module-visible firmware address is introduced.",
+  "callsite_evidence": [
+    "Exact AP extracted read-only from local miwear.watch.q66tc_v4.100.139_full_a02b7af5.bin: 12304868 bytes, SHA25631ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74, matching target.toml. Independently inspected with IDA9.4.0.260610/Hex-Rays via idalib; no cross-target constant inference or device execution.",
+    "Stock setter XIP[0x0c387f12,0x0c387f28): 0x0c387f16 MOV r3,r2 preserves selector, 0x0c387f1a MOV r2,r1 preserves opacity, 0x0c387f1c MOVS r1,#0x5f selects property95, 0x0c387f1e BL0x0c3872b4. Hex-Rays: return dispatcher(object,95,opacity,selector). IDA confirms stock BL callers0x0c492290,0x0c4fdd18,0x0c4fdd7a.",
+    "Effective opacity getter XIP[0x0c379048,0x0c37905c): 0x0c37904c MOVS r2,#0x5f, 0x0c379050 BL0x0c382620, 0x0c379056 UXTB r0,r0. Hex-Rays: return (uint8_t)effective_style_getter(object,selector,95). The underlying getter0x0c382620 resolves object style state and defaults property95 to255 when no explicit value is found.",
+    "Renderer XIP[0x0c388860,0x0c388fb2) reads property96 separately at0x0c388880. At0x0c388892..0x0c3888a0 it saves layer+96 and layer+92..95;0x0c3888a2 calls property95 getter0x0c379048 with the live object and selector0. At0x0c3888aa it compares opacity with252;0x0c3888ae SMULBBLS and0x0c3888b2 ASRLS#8 multiply the uint8 object opacity into the previous layer opacity;0x0c3888c0 conditionally stores the result to layer+92. The normal path calls native object drawing0x0c388fc4 at0x0c3888fa, then restores the saved layer fields at0x0c388900 and0x0c388906. Hex-Rays of the complete function confirms the same saved-state restoration path for its transformed/layered drawing branches.",
+    "Independent effective-recursive-opacity path XIP[0x0c38012e,0x0c380180) invokes the property95 getter at0x0c380136 and0x0c380166, multiplies ancestor opacities and treats values<=2 as transparent and>=253 as opaque. This provides a separate consumer of overall95 rather than background-only opacity."
+  ],
+  "control_flow_evidence": [
+    "The image header/startup points to0x0c0c0015; build-info aliases establish executable XIP base0x0c0c0000, cached alias0x2c0c0000 and noncached alias0x280c0000. The reviewed wrapper, getter, dispatcher and renderer execute directly at their XIP VAs. No SRAM relocation or .043 load-copy address inference is used; APoffset=VA-0x0c0c0000 for the pinned windows.",
+    "The existing .139 native profile resolves FW_UI_STYLE_SET to Thumb callable0x0c3872b5, entry0x0c3872b4. IDA decompilation independently confirms four-argument local-style storage and style refresh. Existing symbol policy/status/approval and ABI ownership remain unchanged.",
+    "FW_UI_STYLE_OPA=95 is a private numeric property ID, not an address, object offset or SDK ABI capability bit. The existing common host converts public opacity0..1000 into0..255 and writes dispatcher(object,95,value,0). This evidence authorizes no additional layout/input properties for .139.",
+    "Overall opacity95 and separately queried layered-opacity96 are distinct. Background opacity29 and text opacity89 cannot substitute for overall95; no unrelated background hook or restricted object-specific binding is reused."
+  ],
+  "ownership_analysis": "The existing common native host borrows live page-owned firmware objects and calls its existing dispatcher on the serialized UI owner task. Local style allocation/refresh remains owned by firmware; native parents/pages retain object ownership. No new firmware function binding, public pointer, verifier address range or lifecycle contract is added.",
+  "unsafe_assumptions": [
+    "STATIC_RECOVERED only: physical-display rendering, performance and teardown on exact hardware remain unprobed. No symbol approval, device verification or production approval is added.",
+    "Property95 is verified against the pinned exact .139 AP. Sibling firmware versions and LVGL v8 targets do not inherit this evidence.",
+    "The convenience setter/getter and renderer addresses are static witnesses only; the host continues to use its existing dispatcher0x0c3872b5 and does not expose these functions to modules.",
+    "Opacity affects appearance. NODE_FLAG_ENABLED event gating and stock message-box per-button limitations are unchanged."
+  ],
+  "recommended_probe": "Run evidence validation and standard target generation, then existing generated-stability/native-host checks and compile/verify exact .139 Supervisor. Independently exercise explicit opacity0/500/1000, nested composition, inherited-style restoration and page teardown on exact .139 hardware before claiming device acceptance.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-26T14:20:31Z",
+  "artifacts": [
+    {
+      "uri": "fw://xiaomi-band-11-4.100.139/vela_ap.bin",
+      "sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+      "role": "Pinned exact AP input, extracted from the local full139 firmware package; not distributed"
+    },
+    {
+      "uri": "fw://xiaomi-band-11-4.100.139/vela_ap.bin#0x2c7f12+0x16",
+      "sha256": "67fdd24ae91c8919c410b0b302a6b733f7f09bbba4a30799286d896d24346c05",
+      "role": "Complete overall-opacity setter wrapper; XIP0x0c387f12, APoffset0x2c7f12, length0x16, bytes=80b582b0134600af0a465f21fff7c9f90837bd4680bd"
+    },
+    {
+      "uri": "fw://xiaomi-band-11-4.100.139/vela_ap.bin#0x2b9048+0x14",
+      "sha256": "5d4747f473ecdea58ed773184b3d4b3412b2b69886fd4b0490ecd4bf503a5127",
+      "role": "Complete property95 effective-style getter wrapper; XIP0x0c379048, APoffset0x2b9048, length0x14, bytes=80b582b05f2200af09f0e6fa0837c0b2bd4680bd"
+    },
+    {
+      "uri": "fw://xiaomi-band-11-4.100.139/vela_ap.bin#0x2c8860+0xb4",
+      "sha256": "f3721dfd2cf5a3b4a7b1667b6880db99e719191cd9f1ac8355699dd3cf2f65ea",
+      "role": "Renderer prefix including opacity multiply, native draw call and layer-state restore; XIP0x0c388860, APoffset0x2c8860, length0xb4, bytes=2de9f04f2ded028bc3b00c46c96a824611f0010802af40f07883602241462046f9f7cefec3b2012bc7f890007b6140f26c839af860304146bb60daf85c3020467b60f0f7d1fb9af85c60fc289cbf16fb00f63612daf85d204ff00001204698bf8af85c60fff742fbc0f307238af85d008af85e30c0f30743c0f307608af85f308af86000a56835b195f8333013f00c0fc3f381060ad12146504600f063fb7b68caf85c30bb688af860302ee37b69fc2b40f2c081"
+    },
+    {
+      "uri": "fw://xiaomi-band-11-4.100.139/vela_ap.bin#0x2c72b4+0x28",
+      "sha256": "51095fb440e977ea92f02ea10dd0b3a74d4944012cb5957d2c531824eba6871a",
+      "role": "Existing local-style dispatcher entry prefix; XIP0x0c3872b4, APoffset0x2c72b4, length0x28, bytes=2de9f04784b01e46044688460023458e02af7a60c5f30515ab4217d3638e013505f03f0565f30913"
+    }
+  ]
+}

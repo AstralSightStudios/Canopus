@@ -119,8 +119,11 @@ pub fn render(pack: &TargetPack, config: &NativeConfig) -> String {
 #define FW_UI_EVENT_PRESS_LOST 3u\n#define FW_UI_EVENT_LONG_PRESSED 5u\n\
 #define FW_UI_EVENT_RELEASED 8u\n#define FW_UI_EVENT_SCROLL 12u\n\
 #define FW_UI_STYLE_RADIUS 12u\n#define FW_UI_STYLE_BORDER_COLOR 49u\n\
-#define FW_UI_STYLE_BORDER_WIDTH 48u\n#define FW_UI_STYLE_OPA 95u\n\
-#define FW_UI_STYLE_CLIP_CORNER 45u\n\
+#define FW_UI_STYLE_BORDER_WIDTH 48u\n");
+        if matches!(pack.target_id.as_str(), "xiaomi-band-11-4.100.155" | "xiaomi-band-11-4.100.179") {
+            out.push_str("#define FW_UI_STYLE_OPA 95u\n");
+        }
+        out.push_str("#define FW_UI_STYLE_CLIP_CORNER 45u\n\
 #define FW_UI_FONT_EVENT_DELETE 36u\n");
         if pack.target_id == "redmi-watch-6-3.100.043" {
             // MIwear v9 private layout on p65: the page title keeps its icon at
@@ -133,6 +136,9 @@ pub fn render(pack: &TargetPack, config: &NativeConfig) -> String {
 #define FW_UI_IMAGE_CREATE_THEME_ARG 1u\n",
             );
         }
+    }
+    if pack.target_id.as_str() == "xiaomi-band-11-4.100.139" {
+        out.push_str("/* Exact-target opacity: EVID-UI-4139-OPACITY-001; static only. */\n#define FW_UI_STYLE_OPA 95u\n");
     }
     out.push_str("#endif\n");
     out

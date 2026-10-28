@@ -874,6 +874,9 @@ impl<'a> TargetConfigGen<'a> {
                 out.push_str("#define FW_UI_FONT_EVENT_DELETE 36u\n");
                 // Exact private properties: EVID-UI-1043-LAYOUT-INPUT-001.
                 out.push_str("#define FW_UI_COORD_TYPE int32_t\n#define FW_UI_EVENT_PRESSED 1u\n#define FW_UI_EVENT_PRESSING 2u\n#define FW_UI_EVENT_PRESS_LOST 3u\n#define FW_UI_EVENT_LONG_PRESSED 5u\n#define FW_UI_EVENT_RELEASED 8u\n#define FW_UI_EVENT_SCROLL 12u\n#define FW_UI_STYLE_RADIUS 12u\n#define FW_UI_STYLE_CLIP_CORNER 45u\n#define FW_UI_IMAGE_CREATE_THEME_ARG 1\n");
+                out.push_str("/* Exact-target opacity: EVID-UI-1043-OPACITY-001; static only. */\n#define FW_UI_STYLE_OPA 95u\n");
+            } else if self.pack.target_id == "xiaomi-band-10-pro-3.101.036" {
+                out.push_str("/* Exact-target opacity and SRAM dispatcher: EVID-UI-1036-OPACITY-001; static only. */\n#define FW_UI_STYLE_OPA 95u\n");
             }
             out.push('\n');
             self.emit(&mut out, if custom { SUP_9 } else { SUP_10 }, custom);

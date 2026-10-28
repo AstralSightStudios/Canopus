@@ -33,7 +33,7 @@ Run them after G0–G13 pass.
 
 | Gate | Name | Device step | Pass = |
 |---|---|---|---|
-| G14 | module launcher entry | a module registers a page and calls `ctx->launcher->set_entry`; watch the launcher | the icon appears with the label and icon, opens the page, back returns; 100 open/close cycles leave heap and callback counts flat |
+| G14 | module application entry | a module registers its UI and calls `ctx->launcher->register_app` with no native pages; watch the launcher | the returned app ID stays bound to the module; one icon appears, opens the page, and back returns; repeated registration adds no icon; 100 open/close cycles leave heap and callback counts flat |
 | G15 | launcher entry after the module stops | disable the module (next boot), keep using the launcher until reboot | choosing the entry opens nothing and does not crash; after reboot the entry is gone until the module registers again |
 | G16 | crash-loop quarantine | enable a module whose constructor faults | after the second reset the third boot does not load it and the registry shows `UNSTABLE`; re-enabling counts again |
 | G17 | update rollback by crash | install a newer generation that faults at start | two resets later the older generation runs (`UPDATE_FALLBACK`) |
