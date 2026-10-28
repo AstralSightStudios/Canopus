@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RH-P65-CALENDAR-001",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Recover exact P65 native96x96 calendar rendering, filebank publication and owned resource retirement.",
+  "candidate_symbols": [
+    "p65_calendar_clock",
+    "p65_calendar_localtime",
+    "p65_calendar_localized",
+    "p65_calendar_root_create",
+    "p65_calendar_size",
+    "p65_calendar_image_create",
+    "p65_calendar_image_source",
+    "p65_calendar_image_info",
+    "p65_calendar_label_create",
+    "p65_calendar_label_text",
+    "p65_calendar_color",
+    "p65_calendar_text_align",
+    "p65_calendar_font_style",
+    "p65_calendar_font_resolve",
+    "p65_calendar_font_create",
+    "p65_calendar_font_release",
+    "p65_calendar_align",
+    "p65_calendar_draw_buf_create",
+    "p65_calendar_draw_buf_destroy",
+    "p65_calendar_snapshot",
+    "p65_calendar_object_delete",
+    "p65_calendar_gpu_finish",
+    "p65_calendar_native_wait",
+    "p65_calendar_vg_dispatch",
+    "p65_calendar_sw_dispatch",
+    "p65_calendar_buf_invalidate",
+    "p65_calendar_cache_invalidate",
+    "p65_calendar_cache_clean",
+    "p65_calendar_premultiply",
+    "p65_calendar_launcher_update",
+    "p65_calendar_generate"
+  ],
+  "prototype_hypothesis": "Exact function prototypes and32-bytebody witnesses mirrored in adjacent ResourceHook calendar-evidence.json.",
+  "callsite_evidence": [
+    "P65 stock calendar generator0xc7efc8c renders96x96 launcher_icon.bin background; localtime resulttm mday+12/month+16/year+20/Sundayweekday+24. Day style0x3c4798a0=>Medium46, weekdaystyle0x3c479810=>Medium20.",
+    "Stock delayed0xc7efe50 saves snapshot to /data/quickapp/app/perpetual_calendar/calendar_icon.bin then launcher_update0xc7ec744(69). Module writes independent alternating filebanks; never overwrites stock and uses no appdescriptorRAM hook."
+  ],
+  "control_flow_evidence": [
+    "P65 image source+52,width+64,height+68,type+92. ARGB8888 buffer header12,data_size+12,pixels+16,originalallocation+20. Mutablebit2,allocatedbit16,premultipliedbit1. Native premultiply0xc719b70 performsRGB*alpha>>8 and setsbit1.",
+    "Image snapshot_to_buf0xc7417c0 with caller-owned buffer protects lifetime across failed GPUfinish; native allocating snapshot0xc7419b4 frees on failed draw before caller fence so is not used.",
+    "Healthy serializedUI only: successful GPUfinish then inspect all drawunitsactive+24/dispatcher+12; exactnativewait0xc72ef2c drains CPUglyph/image/gradient references before deleting tree,freeing buffer,releasing managed wrappers. FailedGPUfinish retains exactlyone bounded rendergeneration until retry/reset.",
+    "Image contexts retain BIN naturaldimensions and configsize applies onlytext. Explicittextsizes use owned managed40-bytewrappers(manager,key8), released after labeldeletion and pendingCPUglyphdrain. No backendfontcache mutation.",
+    "Coordinator renders onlycustom calendar. Restore defaults clearsbankredirection before targetedstocklauncherrefresh; no native stockregeneration or writingoriginalfile."
+  ],
+  "ownership_analysis": "Module owns snapshot tree, configured-size managedfontwrappers and drawbuffer. GPUfailure retains a single bounded generation. RawGPUfinish then CPUglyphwait precede cleanup. Fileservice fullwrites precede caller bankpublication. Stock calendariconfile remains immutable.",
+  "unsafe_assumptions": [
+    "No realdevice/GPUprobe or approval; selected nativeleaves modeled in source-compiled instruction tests."
+  ],
+  "recommended_probe": "Test date rollover, locale switch, custom fonts/images, rollback, GPUerrors and native launcher rebuild on exactP65 firmware.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-28T06:35:00Z"
+}

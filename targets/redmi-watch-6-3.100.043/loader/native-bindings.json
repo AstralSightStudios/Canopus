@@ -3,7 +3,8 @@
   "target_id": "redmi-watch-6-3.100.043",
   "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
   "evidence_ids": [
-    "EVID-STATIC-P65-002"
+    "EVID-STATIC-P65-002",
+    "EVID-UI-P65-FONT-LIFECYCLE-001"
   ],
   "bindings": {
     "FW_APP_LAUNCHER_ADD": "app_launcher_add",
@@ -45,6 +46,14 @@
     "FW_UI_IMAGE_INFO": "lv_image_decoder_get_info",
     "FW_UI_IMAGE_SCALE": "lvx_image_set_scale",
     "FW_UI_OBJECT_SCROLL_TO_Y": "lv_obj_scroll_to_y",
-    "FW_UI_STYLE_SET": "lv_obj_set_local_style_prop"
+    "FW_UI_STYLE_SET": "lv_obj_set_local_style_prop",
+    "FW_UI_FONT_CREATE": "native_font_create",
+    "FW_UI_FONT_RELEASE": "native_font_release",
+    "FW_UI_FONT_WAIT": "native_font_wait",
+    "FW_UI_FONT_MANAGER_SLOT": "font_reload_uikit_slot",
+    "FW_UI_FONT_DRAW_UNITS": "font_reload_draw_unit_slot",
+    "FW_UI_FONT_DISPLAY_LIST": "font_reload_display_list",
+    "FW_UI_FONT_VG_DISPATCH": "font_reload_vg_dispatch",
+    "FW_UI_FONT_SW_DISPATCH": "font_reload_sw_dispatch"
   }
 }

@@ -26,7 +26,7 @@ firmware_build = "d516af0:nx_best1502p_ap"
 identity_terminator = "line"
 module_abi = 1
 relocation_profile = "best1502p-unverified-v1"
-revision = 1
+revision = 3
 
 firmware_address_ranges = [
   { base = 0x0C0C0000, size = 0x00B3F484 },

@@ -5,9 +5,9 @@
   "name": "p67_blur_cache_invalidate",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc255bf4",
+  "entry_address": "0xc72f020",
   "calling_convention": "arm-aapcs",
-  "prototype": "int(uint32_t id, void *address, uint32_t length)",
+  "prototype": "void(uint32_t pixels, uint32_t size, uint32_t format, uint32_t unused)",
   "contexts": {
     "allowed": [
       "ui-owner-thread"
@@ -19,21 +19,22 @@
     "return_value": "Dcache id1 range invalidate after successful GPU finish; validated module-owned or borrowed userheap buffer range only; ownership is never transferred and cache API does not free buffers; clean before whole-cache invalidate to preserve unrelated dirty CPU writes; dsb/isb around operations."
   },
   "proof": {
-    "static": "candidate",
+    "static": "static_recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-RH-P65-BLUR-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-RH-P65-BLUR-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact P65 body/callsite reconstruction; module blur-evidence.json contains independent AP byte hashes."
   },
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Dcache id1 range invalidate after successful GPU finish; validated module-owned or borrowed userheap buffer range only; ownership is never transferred and cache API does not free buffers; clean before whole-cache invalidate to preserve unrelated dirty CPU writes; dsb/isb around operations. Experimental static blur: NOT_PROBED; no public approval or verifier bypass."
+  "notes": "Exact P65 identity; inherited p67 prefix is record naming only. Restricted/PENDING, physical device NOT_PROBED. Do not reuse prior unmatched candidates.",
+  "callable_address": "0xc72f021"
 }

@@ -12,25 +12,28 @@
     ]
   },
   "ownership": {
-    "argument": "Borrowed exact live UIKit root pointer slot. Font transaction manager is root+28 on .043 AND .155; legacy platform+20 is not this manager. Validate current root before saved native identities.",
+    "argument": "Exact root global read by native font wrapper0x0c2188ec, startup relocated callable0x1c128b29. Font manager is root+28.",
     "return_value": "No ownership transfer."
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-UI-P65-FONT-LIFECYCLE-001",
+      "EVID-FONT-P65-TRANSACTION-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-UI-P65-FONT-LIFECYCLE-001",
+      "EVID-FONT-P65-TRANSACTION-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no unique global candidate."
+    "source": "Exact P65 IDA instruction/control-flow recovery and startup mapping; production transaction fixture and selected native instruction probes. EVID-FONT-P65-TRANSACTION-001"
   },
-  "notes": "no unique global candidate. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Borrowed exact live UIKit root pointer slot. Font transaction manager is root+28 on .043 AND .155; legacy platform+20 is not this manager. Validate current root before saved native identities. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+  "notes": "Exact P65 RH_FW_UIKIT_SLOT; reviewed private transaction identity, restricted/PENDING/not_probed. Full byte/layout evidence is Resource Hook targets/redmi-watch-6-3.100.043/font-reload-audit.json. No neighboring-firmware identity is inherited.",
+  "entry_address": "0x3c450210"
 }

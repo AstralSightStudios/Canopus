@@ -104,6 +104,13 @@ pub fn render(pack: &TargetPack, config: &NativeConfig) -> String {
     for (name, value) in &config.addresses {
         out.push_str(&format!("#define {name} 0x{value:08X}u\n"));
     }
+    if pack.target_id == "redmi-watch-6-3.100.043" {
+        // Exact P65 lifecycle layouts: EVID-UI-P65-FONT-LIFECYCLE-001.
+        out.push_str("#define FW_UI_FONT_DISPLAY_NEXT_OFFSET 788u\n\
+#define FW_UI_FONT_DISPLAY_LAYER_OFFSET 672u\n\
+#define FW_UI_FONT_UNIT_DISPATCH_OFFSET 12u\n\
+#define FW_UI_FONT_UNIT_ACTIVE_OFFSET 24u\n");
+    }
     let layout_input_evidence = match pack.target_id.as_str() {
         "xiaomi-band-11-4.100.155" => Some("EVID-UI-4155-LAYOUT-INPUT-001"),
         "xiaomi-band-11-4.100.179" => Some("EVID-UI-4179-LAYOUT-INPUT-001"),
@@ -123,8 +130,12 @@ pub fn render(pack: &TargetPack, config: &NativeConfig) -> String {
         if matches!(pack.target_id.as_str(), "xiaomi-band-11-4.100.155" | "xiaomi-band-11-4.100.179") {
             out.push_str("#define FW_UI_STYLE_OPA 95u\n");
         }
-        out.push_str("#define FW_UI_STYLE_CLIP_CORNER 45u\n\
-#define FW_UI_FONT_EVENT_DELETE 36u\n");
+        out.push_str("#define FW_UI_STYLE_CLIP_CORNER 45u\n");
+        if pack.target_id == "redmi-watch-6-3.100.043" {
+            out.push_str("/* Exact P65 lv_obj_delete dispatches event 35. */\n#define FW_UI_FONT_EVENT_DELETE 35u\n");
+        } else {
+            out.push_str("#define FW_UI_FONT_EVENT_DELETE 36u\n");
+        }
         if pack.target_id == "redmi-watch-6-3.100.043" {
             // MIwear v9 private layout on p65: the page title keeps its icon at
             // +0x34 and its label at +0x38, the list item keeps the trailing

@@ -16,21 +16,24 @@
     "return_value": "No ownership transfer."
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-FONT-P65-TRANSACTION-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-FONT-P65-TRANSACTION-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no unique global candidate."
+    "source": "Exact P65 IDA instruction/control-flow recovery and startup mapping; production transaction fixture and selected native instruction probes. EVID-FONT-P65-TRANSACTION-001"
   },
-  "notes": "no unique global candidate. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Borrowed exact style-refresh enable byte. Must be nonzero before publication so property90 refresh notifies layout/inheritance. Not a lock or lifecycle epoch. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+  "notes": "Exact P65 RH_FW_FR_STYLE_ENABLED_SLOT; reviewed private transaction identity, restricted/PENDING/not_probed. Full byte/layout evidence is Resource Hook targets/redmi-watch-6-3.100.043/font-reload-audit.json. No neighboring-firmware identity is inherited.",
+  "entry_address": "0x3c450054"
 }

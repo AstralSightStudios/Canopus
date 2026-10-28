@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RH-P65-BLUR-001",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "What are the exact P65 owned blur draw-buffer/snapshot/fence/cache identities?",
+  "candidate_symbols": [
+    "p67_blur_draw_buf_create",
+    "p67_blur_draw_buf_destroy",
+    "p67_blur_snapshot_to_buffer",
+    "p67_blur_gpu_finish",
+    "p67_blur_cache_clean",
+    "p67_blur_cache_invalidate"
+  ],
+  "callsite_evidence": [
+    "Exact AP SHA256 a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "Drawbuf constructor0xc719550 allocates24byte descriptor; records nativepixels+16/originalallocation+20.",
+    "Snapshot_to_buffer0xc7417c0 temporarily replaces displayrootlayer+672,queues drawtasks then restores native state.",
+    "Cachehooks0xc72f038 installs no-op invalidate0xc72f020/clean0xc72f02c. VGinit installs stride0xc728754."
+  ],
+  "control_flow_evidence": [
+    "Full body hashes and witnesses in adjacent Resource Hook targets/redmi-watch-6-3.100.043/blur-evidence.json.",
+    "GPUfinish0xc8bc080 is thunk to SRAM0x00389e40; return0 only on healthy completed path. Error preserves module-owned input until retry.",
+    "Native shadow buffers are not read or borrowed. Fullscreen432x514 input is downsampled to immutable72x86 RGB565 output."
+  ],
+  "ownership_analysis": "Native draw buffer allocations are destroyed only after idle layer/draw-unit checks and successful raw GPU fence. Failed-fence buffers are retained; no module ctx->mem ownership transfer.",
+  "unsafe_assumptions": [
+    "Host mocks and static recovery do not verify physical GPU cache/coherency, rendering, power management, or recovery."
+  ],
+  "recommended_probe": "P65 Mirage and physical GPU probe: repeated custom backgrounds/blur/default restoration, errors, root destruction, scrolling.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-28T06:50:00Z"
+}

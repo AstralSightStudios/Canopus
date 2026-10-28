@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RH-P65-CORE-001",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Which exact P65 POSIX-open and cache retirement identities can the Resource Hook static test adapter use?",
+  "candidate_symbols": ["lvgl_posix_open", "lv_cache_drop", "lv_cache_release"],
+  "prototype_hypothesis": "open_cb(driver,path,mode) returns fd+1 or NULL; cache_drop(cache,key,user_data) and cache_release(cache,entry,user_data) require explicit third argument zero.",
+  "callsite_evidence": [
+    "Exact AP SHA256 a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858, ZIP member vela_ap.bin from OTA SHA256 662aa7db5dd7ec98c4b7da0f7bec3066478ff45563c57b4cf3f16a2558cbc987.",
+    "POSIX init 0x0c7358f4 installs callable 0x0c7357d5 at driver 0x3c4501d0+12; driver letter '/', cache_size zero.",
+    "Resource Hook targets/redmi-watch-6-3.100.043/core-evidence.json records body bytes, hashes, disassembly and startup copy ranges for the exact AP."
+  ],
+  "control_flow_evidence": [
+    "POSIX 0x0c7357d4 body SHA256(first32)=ed11cc01bef28ef5c68f84cf46976e46af806905806b563fb6b96cdac1453412. Modes1/2/3 become native flags6/1/7, path is formatted with /%s, permissions0666, returns fd+1 or NULL.",
+    "Cache drop 0x0c73baa8 body SHA256(first32)=b4f9e740b45e783b868d2721cb2da1fbb292cbbea9cc962cb572cf7efbeba06a. Class lookup+12 and unlink+20; referenced entry invalidated without destroy.",
+    "Cache release 0x0c73b99c body SHA256(first32)=dc8bcb430aff960348e49761bc00242e88e6e9226ebbd8da7ec7038b4e07decb. Decrements entry+4; destroys only zero-ref invalid entries.",
+    "Independent tests/firmware_p65.py executes exact firmware Thumb bodies with modeled OS/mutex/callback leaves. All8 tests pass including compiled adapter selective retirement and P65-shaped display/cache layouts.",
+    "Rejected old matcher candidates:0x1c1501d4 is socket code;0x00387db8 allocates LVGL object attributes. Neither may represent cache drop/release."
+  ],
+  "ownership_analysis": "Firmware owns driver/caches and referenced decode payloads. Module replaces only its checked RAM callback slot, retires matching FILE keys, preserves references until native release, and refreshes serialized UI owners. No global cache purge or GPU fault guarantee.",
+  "unsafe_assumptions": ["Static recovery and modeled native-leaf tests do not establish a physical-device probe, production approval, or GPU recovery safety."],
+  "recommended_probe": "Use an isolated P65 Mirage instance, then an explicitly authorized physical-device probe with the matching Supervisor; exercise repeated image changes, owner recreation, disable/re-enable and rollback.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-28T06:00:00Z"
+}

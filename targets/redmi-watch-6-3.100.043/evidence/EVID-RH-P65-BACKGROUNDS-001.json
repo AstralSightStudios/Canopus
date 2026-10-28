@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-RH-P65-BACKGROUNDS-001",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Which exact P65 owners, event/filter ABI and drawing leaves implement four native image/blur backgrounds while preserving native foreground lifecycle?",
+  "candidate_symbols": [
+    "p65_bg_event_add",
+    "p65_bg_event_count",
+    "p65_bg_event_get",
+    "p65_bg_event_remove",
+    "p65_bg_parent",
+    "p65_bg_has_flag",
+    "p65_bg_add_flag",
+    "p65_bg_clear_flag",
+    "p65_bg_image_descriptor_init",
+    "p65_bg_draw_image",
+    "p65_bg_notification_scroll",
+    "p65_bg_widget_scroll"
+  ],
+  "callsite_evidence": [
+    "Resource Hook targets/redmi-watch-6-3.100.043/background-functions.json pins file offset,32-byte body/SHA and callable identity for each API.",
+    "Widget create0x0c7dd664 registers callback0x0c7dd919 separately for9/11/12/19 with page userdata; notification callback0x0c8078d5 preserves native timer/snapshot bookkeeping.",
+    "Launcher root0x3c456fa8,control root0x3c453b98,notification root0x3c459a08/snapshot0x3c4599dc,widget root0x3c456b9c/snapshot0x3c456ba0."
+  ],
+  "control_flow_evidence": [
+    "Redraw0x003838cc emits22/23/24 before child traversal,25/26/27 afterward; module draws at24.",
+    "Delete0x0037ff28 sends event35 at0x0037ff7c;36/38 notify parent children.",
+    "P65 image descriptor92bytes init0x0c719ec4;image draw0x0c719f84 uses source28/scale48+52,pivot64+68.",
+    "ASan/UBSan actual owner adapter harness covers4regions,clipping,native swipe visibility+cleanup,default detach,DELETE/stale events and callback failure/retry."
+  ],
+  "ownership_analysis": "Firmware retains ownership of native roots,snapshot buffers and descriptor data. Module callbacks use live membership,exact global identity and generations; native callbacks run unabridged after restoring original swap flags; no native snapshot storage is freed or mutated.",
+  "unsafe_assumptions": [
+    "Selected native leaves are modeled; physical rendering,GPU coherency,frame time and hardware failure recovery remain NOT_PROBED."
+  ],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-28T06:40:00Z"
+}

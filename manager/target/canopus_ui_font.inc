@@ -7,6 +7,12 @@
     defined(FW_UI_FONT_SW_DISPATCH) && defined(FW_UI_FONT_EVENT_DELETE)
 #define HOST_FONT 1
 #define HOST_FONT_CAPS CANOPUS_UI_CAP_FONT
+#ifndef FW_UI_FONT_DISPLAY_NEXT_OFFSET
+#define FW_UI_FONT_DISPLAY_NEXT_OFFSET 796u
+#define FW_UI_FONT_DISPLAY_LAYER_OFFSET 680u
+#define FW_UI_FONT_UNIT_DISPATCH_OFFSET 16u
+#define FW_UI_FONT_UNIT_ACTIVE_OFFSET 32u
+#endif
 #define HOST_FONT_CACHE_LIMIT (CANOPUS_UI_HOST_MAX_VIEWS * CANOPUS_UI_MAX_NODES)
 struct host_font {
     struct host_font *next;
@@ -24,9 +30,21 @@ static struct host_font_label *s_font_labels;
 static uint32_t s_font_count;
 
 static void *host_font_alloc(uint32_t size)
-{ return ((void *(*)(uint32_t))(uintptr_t)CANOPUS_SUP_HEAP_MALLOC)(size); }
+{
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+    return canopus_fw_mm_memalign_default(4u, size);
+#else
+    return ((void *(*)(uint32_t))(uintptr_t)CANOPUS_SUP_HEAP_MALLOC)(size);
+#endif
+}
 static void host_font_free(void *pointer)
-{ ((void (*)(void *))(uintptr_t)CANOPUS_SUP_HEAP_FREE)(pointer); }
+{
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+    canopus_fw_mm_free_default(pointer);
+#else
+    ((void (*)(void *))(uintptr_t)CANOPUS_SUP_HEAP_FREE)(pointer);
+#endif
+}
 
 /* No arbitrary heartbeat delay is a font fence. The native wait drains its
  * borrowed CPU glyph references; it makes no successful-GPU-rendering claim. */
@@ -35,20 +53,20 @@ static int host_font_drain(void)
     void *unit, *display;
     /* A render callback can have queued tasks before any unit is active. */
     for (display = *(void **)((uint8_t *)(uintptr_t)FW_UI_FONT_DISPLAY_LIST + 4u);
-         display != NULL; display = *(void **)((uint8_t *)display + 796u)) {
+         display != NULL; display = *(void **)((uint8_t *)display + FW_UI_FONT_DISPLAY_NEXT_OFFSET)) {
         void *layer;
         if (((uint8_t *)display)[58] & 2u) return 0;
-        for (layer = *(void **)((uint8_t *)display + 680u); layer != NULL;
+        for (layer = *(void **)((uint8_t *)display + FW_UI_FONT_DISPLAY_LAYER_OFFSET); layer != NULL;
              layer = *(void **)((uint8_t *)layer + 108u))
             if (*(void **)((uint8_t *)layer + 100u) != NULL) return 0;
     }
     for (unit = *(void **)(uintptr_t)FW_UI_FONT_DRAW_UNITS; unit != NULL; unit = *(void **)unit) {
-        uintptr_t dispatch = *(uintptr_t *)((uint8_t *)unit + 16u);
-        if (*(void **)((uint8_t *)unit + 32u) != NULL ||
+        uintptr_t dispatch = *(uintptr_t *)((uint8_t *)unit + FW_UI_FONT_UNIT_DISPATCH_OFFSET);
+        if (*(void **)((uint8_t *)unit + FW_UI_FONT_UNIT_ACTIVE_OFFSET) != NULL ||
             (dispatch != FW_UI_FONT_VG_DISPATCH && dispatch != FW_UI_FONT_SW_DISPATCH)) return 0;
     }
     for (unit = *(void **)(uintptr_t)FW_UI_FONT_DRAW_UNITS; unit != NULL; unit = *(void **)unit)
-        if (*(uintptr_t *)((uint8_t *)unit + 16u) == FW_UI_FONT_VG_DISPATCH)
+        if (*(uintptr_t *)((uint8_t *)unit + FW_UI_FONT_UNIT_DISPATCH_OFFSET) == FW_UI_FONT_VG_DISPATCH)
             ((void (*)(void *))(uintptr_t)FW_UI_FONT_WAIT)(unit);
     return 1;
 }

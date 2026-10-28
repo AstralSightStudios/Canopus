@@ -1641,6 +1641,10 @@ static void svc_display_get_resolution(const struct canopus_context_v1 *ctx, uin
         /* Band 11: 212 x 520 */
         *width = 212u;
         *height = 520u;
+    } else if (canopus_strcmp(target, "redmi-watch-6-3.100.043") == 0) {
+        /* Exact P65 panel; never report the Band 10 Pro default here. */
+        *width = 432u;
+        *height = 514u;
     } else {
         /* Band 10 Pro: 336 x 480 */
         *width = 336u;
