@@ -1230,7 +1230,7 @@ com.canopus.manager, start_source = 10`）时 miwear 任务 MemManage：
 | 目标 | 设备 | Manager 打开 | 息屏重开 | 模块安装 | 详情/启用 | 备注 |
 |---|---|---|---|---|---|---|
 | n66 3.1.32 | canopus-b9-probe | ✅ | ✅ | ✅ | ✅ 已闭环（intent=1 → 重启后「运行中」） | 表盘目录 `cp9probe0003/` |
-| o66 3.1.28 | canopus-o66b | ✅（屏幕亮时点 Run） | ⚠️ | ✅（result=5，registry 有 hello_portable） | ❌ | 灭屏期间推页会重启设备 |
+| o66 3.1.28 | canopus-o66b | ✅（屏幕亮时点 Run） | ✅ | ✅（result=5，registry 有 hello_portable） | ✅ 启用→确认→registry `0x3c`=1 | 2026-10-28 更正，见第 32 轮；本表下面关于 o66 点击/重启的条目是当时的判断，以第 32 轮为准 |
 | n67 3.1.190 | canopus-n67 | ❌ 视图不上屏 | — | — | — | `/system` 为空，缺完整资源包 |
 
 下一步（按收益排序）：
@@ -1508,3 +1508,295 @@ CLICKED(7)/SHORT_CLICKED(4) 的分支始终没进到**（没有 `dm-k`、没有 
 机制，两边不通用，所以拷贝无效（已还原设备）。另外 manager_icon.bin 在 n67 上被
 GPU 解码器判为非法（cf: 25），图标资源格式也需要按 3.1.190 重新打包。
 ⇒ n67 要真正跑起来，需要一份带 `/system/font` 的 3.1.190 资源包，这不是代码能补的。
+
+## 第 32 轮：o66 的触摸没有坏；确认框被第二次派发取消（2026-10-28）
+
+**更正**：第 31 轮补记 2/3/5 的「输入到不了 o66 的页面」不成立。
+
+- 驱动脚本沿用了 n66（192×490）的坐标：概览页「模块」按 y≈392 点。o66 是 212×520，概览多一行，
+  `管理` 分节标题在 y≈391–409（非可点），「模块」行在 **y≈412–445**；y 380–400 的网格扫描里
+  没有任何一个可导航行，所以「没有一次切换页面」是必然的。
+- 用 QMP `xp` 读 3.1.28 的 LVGL 状态（`dword_200A2404` = 默认 display）：`prev_scr`（+692）= 0、
+  `scr_to_load`（+696）= 0；indev（`*(dword_200B50A0+12)`）`disabled` 位为 0、没有 group；
+  sys / top 层下没有能命中点击的全屏覆盖物（唯一可点的 sys 子对象大小是 (0,0)-(-1,-1)）；
+  活动屏下就是 Manager 页面容器（CLICK，14 个子对象：标题、标签、10 个 34 px 行）。
+  `indev_pointer_proc`（`0xc2fa738`）里的门槛只有这三个，全部通过。
+- 3.1.28 的 LVGL 结构（本轮从 IDB 恢复，供以后读内存用）：`lv_display` `+688 act_scr`、`+692 prev_scr`、
+  `+696 scr_to_load`、`+700 layer_bottom`、`+704 layer_top`、`+708 layer_sys`；对象 `+4 parent`、
+  `+8 spec_attr`（`+0` 子数组、`+44` 子数）、`+28..+40` 坐标、`+44` 标志（bit0 HIDDEN、bit1 CLICKABLE）。
+  触摸中断 `0xc4545e0` 在屏幕状态为 2 时调 `indev_pointer_proc`；查找顺序 sys → top → active → bottom。
+- 用正确坐标在 Mirage 上直接走：Run → 概览 → 「模块」(106,428) → `hello_portable` (106,116) →
+  详情页，全部一次到位。
+
+**真正的缺陷**：详情页点「启用」后看不到确认框（弹出后被立刻取消，画面等于没变）。按序打点
+（`dm-a…` 文件记录 row/code/event_id/rc）：
+
+```
+dm-c2  row=2 code=4 (SHORT_CLICKED)  派发后该行绑定变成 event_id=10（确认框的「取消」）
+dm-d2  row=2 code=7 (CLICKED)        再派发一次，落在已重新绑定的第 2 行 → 取消
+```
+
+非原地目标（o66/n67）同时放行 SHORT_CLICKED 和 CLICKED。页面导航不受影响，因为路由后
+`interactive = 0` 挡住第二次；确认框是原地重建，`interactive` 仍为 1，第二次点击就取消了刚弹出的框。
+`indev_pointer_proc` 的松开分支顺序是 RELEASED(8) → SHORT_CLICKED(4，仅未长按) → CLICKED(7)，
+CLICKED 的触发条件是 SHORT_CLICKED 的超集，所以只认 CLICKED 对所有 v8 目标成立；原来放行 4 是
+K27 修字节读法之前「所有点击都被丢弃」时的权宜之计。现在 `target_dispatch_row` 对所有目标只认 CLICKED
+（n66 本来就是 `INPLACE_DETAIL` 下的这个行为，无变化）。
+
+**验证（o66，Mirage，仅 emulator 证据）**：
+
+- 启用：详情页点「启用」→ 确认框（取消 / 确认）停留 → 「确认」→ 状态变为已启用，操作列表变成
+  「立即激活 / 禁用 / 移除」；关机后 `registry.bin` `0x3c` = 1，每次点击恰好一条派发记录。
+- 息屏后同一次开机里再点 Run，Manager 重新打开，详情页仍是已启用状态。
+- 重启后（干净构建，首次 Run 重新载入 Supervisor，`RESTORE_AFTER_BOOT`）：`hello_portable` 的状态是「运行中」，
+  详情页只有「禁用 / 移除」两行。即 启用 → 确认 → intent=1 → 重启 → 运行中 在 o66 上闭环，和 n66 一致。
+- 干净构建（114,508 B，已不含任何打点）上同样的确认框与移除确认：确认只派发一次，状态变为
+  `remove-pending`（`0x3c` = 2，除这一字节外注册表与启用态逐字节一致）。该状态文本直接显示英文原词，
+  没有本地化，是显示问题，不影响流程。
+- n66（114,656 B）与 n67（114,524 B）重新构建，verifier PASS；n66 行为无变化，n67 同一代码路径，但仍缺
+  `/system/font/*.ttf`，无法目视。
+
+**部署经验**（Mirage 上换 Supervisor 不必重打包表盘）：设备关机后用
+`miragectl fs put <设备> nand_data <本地文件> /app/watchface/market/<包 id>/<文件>` 覆盖表盘目录里的资源，
+**`canopus_loader_profile-*`、`canopus_stage1-*`、`canopus_stage2-*`、`canopus_supervisor-*`、`manager_icon.bin`
+五个要一起换**（stage 资源里写着 `et_rel` 尺寸；只换 Supervisor 会得到
+`LOAD failed: Supervisor ELF is invalid`，即 -101）。启动后首次 Run 载入，约 19 s 后息屏；第二次 Run 打开 Manager。
+详情页的行布局随模块状态变化：刚启用、尚未激活时是「立即激活 / 禁用 / 移除」，运行中只有「禁用 / 移除」
+（y=223 从「禁用」变成「移除」，本轮一次误点把测试模块置成了 `remove-pending`，已用 `registry.bin` 备份还原）。
+点之前先截图确认，别按上一次的坐标。
+
+**仍未完成**：launcher 图标（需要 launcher UI 存活时再发布，见上文「已排除的路径」）；n67 的 `/system/font` 资源包；
+`remove-pending` 等状态文本的本地化；真机验证。
+
+## 第 33 轮：系统原生样式，n67 上屏（2026-10-29）
+
+**目标**：v8 三台设备的 Manager 不再是 34 px 小行、14 px 字，而是和系统「设置 / 关于」页一样的版面。
+
+**原生版面（Mirage o66 3.1.28 上量的，212×520）**：页面标题小号居中、上方是时间；列表是大圆角深灰卡片
+（约 90–100 px 高、约 28 px 圆角、两侧约 8 px 边距），卡片里只有 26–28 px 的白色标题；信息页没有卡片，
+是灰色小标签（约 22 px）在上、白色大值（约 28 px）在下；确认框是灰色小标题、居中大号白字提示、
+两张卡片按钮。「设置」页的卡片左侧有彩色圆形图标，是 `settings.res` 里按编号索引的位图（没有名字，各固件编号不同，
+没有复用）；「关于」页的卡片按钮没有图标。Manager 的卡片目前不带图标。
+
+**实现**（`manager/target/lvgl_v8/canopus_manager_target_lvgl_v8.c`，三台共用一套）：
+
+- 状态行 → 信息块（透明、无边距，灰色 20 px 标签 + 白色 26 px 值，值按列宽折行，最多 2 行）；
+  动作行 / 开关行 → 圆角卡片（高 84、圆角 28、26 px 标题，开关行右侧放状态文字）；
+  分节标题 → 灰色小字；正文 → 白色 26 px、最多 4 行；n66 的标题是居中的小号标签（其余两台用系统标题）。
+- 折行按「半角单位」计宽（ASCII 1、CJK 2），优先在空格处断，其次在 `_ - . / :` 之后断，最后才硬切。
+- 样式经 `lv_obj_set_local_style_prop`。属性号（从各固件的样式名表里解析出来，表项是「名字指针 + 编号」，
+  编号 = 类型<<8|属性 或 类型<<16|属性，传给后端的是低字节）：
+  | | radius | bg_opa | border_width | pad_top…pad_right | text_color | text_font | text_align |
+  |---|---|---|---|---|---|---|---|
+  | 3.1.28 (o66，v9 编号) | 12 | 29 | 48 | 16–19 | 88 | 90 | 94 |
+  | 3.1.32 / 3.1.190 | 11 | 33 | 50 | 16–19 | 85 | 87 | 91 |
+- **颜色格式不同**：3.1.28 与 3.1.190 是 32 位（`0xFFRRGGBB`），3.1.32 是 RGB565（灰 `#8E8E93` = `0x8C72`）。
+  传错格式的现象是标签变绿 / 青。
+- 内容形状变化时（概览变成确认框、列表变成详情）页面保留旧的滚动偏移，标题会掉到屏幕中间；
+  现在渲染结束时按节点类型 + key 的签名判断，变了就 `lv_obj_scroll_to_y(root, 0)`。同一页的普通刷新不动位置。
+- 模块状态文本补了中文（故障停止、下次启动时隔离、更新已暂存、需要重启、等待移除、运行失败）。
+
+**符号**（全部 restricted / STATIC_RECOVERED / not_probed）：
+
+- 3.1.28 新增 `lv_obj_set_local_style_prop` `0xc2bc984`（所有 `lv_obj_set_style_*` 包装都尾调它，证据 `EVID-STATIC-1028-V8-004`）。
+- **3.1.190 的 `lv_obj_set_local_style_prop` 记录是错的**：`0xc23afe2` 实际是「设一个样式再设 x、y」的拼接，
+  真正的通用设置函数是 `0xc242e8a`（函数体与 3.1.32 的 `0xc2782ec` 逐步一致；`EVID-STATIC-9190-V8-003`）。
+- 三台各新增 `lv_obj_scroll_to_y`：3.1.28 `0xc2bd7f0`、3.1.32 `0xc279028`、3.1.190 `0xc242ca0`
+  （证据 `EVID-STATIC-1028-V8-005` / `-9132-V8-004` / `-9190-V8-004`）。固件的 Lua `scroll_to` 绑定对 x、y 都调了
+  `scroll_to_x`（复制粘贴的 bug），所以 y 版本只能从 C 调。
+  `target_config.rs` 新增可选宏 `FW_LV_OBJECT_SCROLL_TO_Y`（只在记录存在时生成）。
+
+**n67 为什么一直黑屏（两个独立的根因，之前都被「缺字体」盖住了）**：
+
+1. **页面描述符布局**：3.1.190 的页面对象比 3.1.32/3.1.28 少一个 4 字节字段（没有 `async_destroy_state`），
+   状态在 `+0x24`、视图在 `+0x2c`、信号 `+0x30`、`on_create +0x48`、`on_resume +0x4c`、`on_foreground_data +0x50`，
+   到 `+0x58` 的 `on_pause` 才重新对齐。我们按 3.1.32 的布局填，`+0x4c` 放的是 `on_create`，
+   固件把它当 resume 又调了一次（target 记录 `create=2, resume=0`），真正的 `on_resume` 从没被调用。
+   现在 `CANOPUS_MGR_APPINFO_190` 下用单独的结构体。
+2. **样式设置函数指错**：见上。旧记录指向的函数把 `(obj, 属性, 值, 选择器)` 当成 `(obj, 对齐, x, y)`，
+   `manager_label_create` 给父容器（页面视图）设字体时，等于 `lv_obj_set_x(view, 字体指针的低 16 位)`。
+   页面视图的 x 停在 `-1792`（`0xF900`）、`-1808`（`0xF8F0`），随构建而变，页面被画在屏幕外；字体、颜色、圆角全部没生效。
+   页面动画结束后视图位置是读 QMP 内存（`lv_disp` +16 活动屏、+28 top 层、+32 sys 层；对象 `+0x14` 起 4 个 int16 坐标、
+   `+0x1c` 标志）看出来的，没有靠猜。
+
+**n67 完整资源包**：MiWearFirmwareArchives 里 3.1.190 的 `*_full_*.bin` 不是 ZIP，是 `ZZ~` 容器（引导 / 清单前导区加 258 个
+单文件 ZIP 首尾相接，前导区 `576000` 起是 128 字节一条的设备路径表）。`scripts/emu/unpack_zz.py PACKAGE.bin OUT_DIR`
+把 `vela_ap.bin` 和全部 `/system/...` 文件摆成 Mirage 能导入的目录（`vela_ap.bin` 的 SHA-256 与 target 一致，
+`/system/font` 里有 `MiSans-Regular/Medium/Demibold.ttf`），目录名取 `<product>_v<version>_full_<hash>` 后
+`miragectl firmware import`。下载大文件时 `gh release download` 会卡死，用 `curl -L -C -` 断点续传。
+新建设备 `miragectl create <名> --firmware <id>`，再用 `package_lua_watchface <产物目录> --protocol 0x0800` 打包安装器表盘，
+经 AstroBox 桥安装（脚本见 `scripts/emu/ui_pages.py` 的 `package_installer` / `phone`）。
+
+**验证（Mirage，仅 emulator 证据）**：
+
+- o66：概览、模块页、详情页、确认框（含从滚动后的概览弹出）、禁用 → 确认 → 状态变「下次启动时禁用」、操作变「启用 / 移除」。
+- n66：概览、卡片、滚动后弹出的确认框（两次干净；首次开机后的第一次弹出观察到一次旧行叠在确认框上，之后没有复现）。
+- n67：概览（中文、大字号、系统标题带时间）、卡片、滚动后弹出的确认框；标题和时间是系统标题自带的。
+- C host 测试、`generated_stability` 18/18、三台 Supervisor verifier PASS（最终构建 116.6–116.9 KB，上限 133,120）。
+
+**补充（同一轮）**：
+
+- **n67 启动器图标**：`manager_icon.bin` 是 LVGL v9 头（魔数 `0x19`，格式 `0x10` = ARGB8888），v8 固件读 `lv_img_header_t`
+  （`cf` 在 0–4 位、宽在 10–20 位、高在 21–31 位），n67 的 GPU 解码器（`lv_gpu_decoder_info`）只认 `cf` 4–14 或 `0x10/0x12`，
+  所以报 `invalid file …, cf: 25`。`scripts/convert_manager_icon.py` 把像素原样接到 v8 头（`cf=5` 真彩带 alpha）后面，
+  构建 3.1.190 时由 `build_canopus_supervisor.sh` 调用；n67 的安装器 Lua 里图标校验同步改成 v8 头
+  （原来第一个字节必须是 `0x19`，新头会被它拒掉，设备上留下旧文件）。设备上的文件变成 54,760 字节，
+  日志里启动器插入图标前不再有解码器警告。**n67 目视确认**：新资源包的设备上，在表盘上从下往上滑进应用列表（第一次会先出教程页），
+  最后一个图标就是 Canopus（白色圆底、灰色玫瑰花纹）；n66（RGB565，3 字节像素）没有改，它的图标是否被接受没有观察到。
+- **移除意图开机循环**：o66 上做「移除 → 确认」（状态 `remove-pending`，注册表槽位意图字节 = 2），关机重启并重新装载
+  Supervisor：只有一次开机，没有循环，注册表仍保留该意图（模块没有被清掉，也没有再触发复位）。
+  原来的循环是第 31 轮修掉的构造函数栈溢出，当前构建不复现。移除意图什么时候真正执行没有再追。
+- 状态值最多显示 3 行（「已安装（已禁用） / 版本 1」不再被截）。
+- 观察到的时序：装载 Supervisor 之后的**第一次** Run 点击不会打开 Manager（o66 / n67 都是），息屏后再点才行；
+  驱动脚本里要考虑。
+
+**再补（同一轮，第二次验收）**：
+
+- **n66 首次弹窗叠影的根因**（每次开机后的第一次弹窗必现，同一次开机里之后的不出现）：3.1.32 和 3.1.190 的页面管理器是同一套，
+  页面对象比 3.1.28 少 `async_destroy_state` 一个字段，`on_resume_wrapped` 在 `+0x4c` 调 resume、`+0x30` 调信号。
+  n66 也一直按 3.1.28 的布局填，`+0x4c` 放的是 `on_create`，所以固件把它当 resume 又调了一次：Supervisor 记录里 `resume=0`、
+  `create` 把这些调用也算进去。第二次 `on_create` 把后端数组清零，视图里已有的旧对象没人管了，下一次渲染（弹窗）又建了一整套，
+  旧的那套留在原位，于是叠在确认框后面。读 QMP 内存时页面视图下有 29 个子对象：0–14 是旧概览（全部可见），15–28 是弹窗新建的。
+  现在页面描述符的短布局对 3.1.32 和 3.1.190 都生效（只有 3.1.28 保持原布局），修正后记录是 `create=1, resume=2, pause=1, destroy=0`，
+  首次弹窗干净；n66 的模块列表、原地详情、禁用 → 确认、状态文本都复验过。
+- **n66 启动器图标**：同样的 v8 头问题；n66 是 RGB565，真彩带 alpha 每像素 3 字节。`convert_manager_icon.py --rgb565` 生成，
+  n66 安装器 Lua 的校验同步改了，设备上文件变成 41,071 字节。启动器没存活时解码器不会被调用，所以只能证明文件格式对、没有报错，
+  没有证明被接受。
+- **v8 目标上的「导入手机推送的模块」之前不可用**：Supervisor 扫 `/data/canopus/inbox` 需要 `opendir/readdir/closedir`，
+  三个 v8 目标没有这三条记录（`list_packages == 0`，导入返回 STAGE 错误）。按 .043 的办法在三个固件里用常量（104 字节句柄、
+  `open(path, 0xC01)`、`read(fd, buf+4, 98)`）找到并核对了：3.1.28 `0xc112e18/0xc112e50/0xc112e78`、
+  3.1.32 `0xc15f0e0/0xc15f118/0xc15f140`、3.1.190 `0xc0e4138/0xc0e4170/0xc0e4198`（opendir / closedir / readdir，
+  证据 `EVID-DIR-1028-001` / `EVID-DIR-9132-001` / `EVID-DIR-9190-001`，restricted / STATIC_RECOVERED）。
+- **n67 模块全链路复验（新资源包上，Mirage）**：把 `hello_portable-1.0.0.canopus` 里的回执（`receipts/<target>.cmi`）和
+  `artifacts/abi-2-thumbv8m/module.elf` 以 `hello_portable.cmi.next` / `hello_portable.ko.next` 放进 `/canopus/inbox`，
+  Manager 概览里点「导入手机推送的模块」→ 确认 → 模块列表出现 hello_portable（已安装、已禁用）→ 详情 → 启用 → 确认，
+  `registry.bin` 槽位 0 的意图字节 = 1 → 重启并重新装载 → 详情显示「运行中 / 版本 1」，操作变成「禁用 / 移除」。
+  n66 也在清空注册表后用同样方式导入成功（回执用 `xiaomi-band-9-3.1.32.cmi`）。
+- n67 的系统标题对长模块名（`hello_portable`）会滚动显示，这是固件标题控件自己的行为，不是裁掉。
+
+**设计取舍（不是缺口）**：卡片不带彩色圆形图标。系统「设置」页的图标是每个设置分类各自的位图（o66 在
+`/resource/app/settings/icon/*.bin`，n66 / n67 路径和格式都不同），Manager 的卡片对应的是「关于」页那一类按钮卡片
+（「监管信息」、确认框的按钮），系统本身就不带图标；给没有对应分类的动作硬套一个语义不对的图标反而不原生。
+
+**启动器图标（o66 / n66 目视确认）**：之前只在 n67 看到过图标。o66 / n66 的应用列表在 Run 之后看不到 Canopus，原因不是图标坏了，
+而是时机：固件在息屏后 10 秒弹掉页面，页面管理器随之把我们的应用从应用列表摘掉，而启动器页面是在被打开时才按「当前已注册的应用」建条目
+（`launcher_load_app_info`，`hidden_flags` 的显示位）。只要在 Manager 还注册着的时候（Run 之后、息屏弹页之前）打开启动器就能看到。
+步骤：Run → Manager 打开 → 边缘右滑返回表盘 → 上滑进应用列表 → 滑到末尾，进入「更多」→ 滑到末尾，最后一个图标是 Canopus
+（白色圆底、灰色花纹，标签「Canopus 管理器」，n66 上标签是滚动显示）；点它打开 Manager 概览。o66 和 n66 都是这样，n67 的图标在主列表末尾。
+息屏弹页之后再开启动器，图标不在（o66 整个主列表加「更多」逐屏扫过，21 + 12 个条目里没有 Canopus），这是固件对未持久安装的应用的处理，
+不是 Supervisor 的缺陷。
+
+**为什么图标在息屏弹页后消失，以及两个试过但无效的办法（Mirage，仅 emulator 证据）**：
+
+- 弹栈策略是固件全局的：`screen_off_cb`（3.1.32 `0xc325f00`）息屏时起一个 10 秒的定时器，`time_out_cb`（`0xc325e2c`）到点后只检查全局状态
+  （已亮屏、心率广播、闹钟响铃、一个全局字节、运动 / 工厂模式），满足才不回表盘；**没有按应用豁免的位**。`finish_page`（`0xc45e5c0`）→
+  `remove_app_from_list`（`0xc45bd5c`）在应用最后一个页销毁、页计数归零时释放应用记录，同样不看任何标志。3.1.190 没有这套策略
+  （n67 上 Manager 页息屏 40 秒后仍在屏幕上），所以 n67 的图标一直在。
+- **只注册、不压页**：给协议加一个不改状态的 `REGISTER_MANAGER` 命令，安装器表盘用 `lvgl.Timer`（两台的 Lua 引擎都有）每 3 秒调一次。
+  定时器确实在跑，命令返回 `COMPLETED`，应用已注册，但息屏弹页后再进应用列表，**「更多」末尾仍然没有 Canopus**。
+  所以启动器条目对应的不是「已注册」，而是应用在页管理器的运行列表里（至少有一个存活的页）；这也解释了为什么前面「Run → Manager → 返回 →
+  马上进应用列表」能看到图标（Manager 页刚创建过、应用在运行列表里）。
+- **缓存策略字节**：`exec_pop_lifecycle_without_cachepolicy` 对页的 `+0x25`（3.1.28 的长布局是 `+0x29`）为 2 的页只做部分弹出。
+  把所有 Manager 页描述符的这一字节设成 2：`destroy` 计数仍然是 1，页照常被销毁，图标也没有出现，没有效果。
+- 两个试验都已撤销（协议 / Supervisor / 表盘 / 描述符改动全部还原，Supervisor 大小回到 118,024 / 117,060 / 117,864 B）。
+- 补充（静态 + Mirage）：
+  - 缓存策略这条线静态上就走不通：3.1.28 的 `exec_pop_lifecycle_without_cachepolicy`（`0xc44d9c8`）读 `+0x29`，策略 2 只走
+    `sub_C44B850`（signal 6 + `+0x5c` 回调），而 `remove_app_from_list` 无条件把页从应用的页列表摘掉、计数归零就释放应用，
+    和缓存策略无关。
+  - 启动器是在**被打开时按当时的状态建条目**：Run → Manager → 返回 → 再进应用列表，图标在（启动器此时第一次建）；
+    先进一次应用列表、再 Run，图标不在；`manager_launcher_publish` 在这两种情形下都返回 -103（`launcher_app_instance` 为空）。
+  - **真正的开关是页描述符的 `flags`（`+0x18`）**：`screen_off_cb`（3.1.32 `0xc325f00`）息屏时先问
+    `sub_C45C018`——顶层页的 `(flags & 0x180) == 0x80`——为真就**不**起那个 10 秒的回表盘定时器（`time_out_cb`，`0xc325e2c`）。
+    这是固件自己的按页机制，不是补丁：Manager 页描述符设 `flags = 0x0080`（`CANOPUS_TARGET_PAGE_KEEP_ON_SCREEN_OFF`）即可。
+- **结果（Mirage，仅 emulator 证据）**：
+  - **n66（3.1.32）**：Manager 息屏 40 秒后仍在屏幕上，唤醒后滚动、点「模块」进列表都正常，和 n67 一致；离开 Manager 后的应用列表里
+    「更多」末尾有 Canopus 图标。以前「息屏 10 秒后 Manager 被弹回表盘、要再点 Run」的行为不再出现（构建 117,076 B）。
+  - **o66（3.1.28）**：标志同样被识别。要让页面在息屏后可用，还得改正长布局：3.1.28 的「暂停」阶段（`sub_C44B850`）调 `+0x5c`、下一阶段
+    （`sub_C44B890`）调 `+0x60`，所以 `on_pause / on_destroy / on_ui_destroy` 在长布局里应在 `+0x5c / +0x60 / +0x64`
+    （整个布局因多出的 `async_destroy_state` 后移 4 字节，回调也一样）；原来放在 `+0x58 / +0x5c / +0x60`，息屏时固件把我们的 `on_destroy`
+    当暂停回调调用，页面还显示着但上下文已被清空（点击没有反应，`destroy` 计数在息屏时就加一）。改正后：Manager 息屏 40 秒后仍在，
+    唤醒后滚动、进列表、进 uidemo 详情、打开模块页（点击 0 → 2）都正常；表盘在前台、息屏 40 秒被弹栈之后再点 Run 能重新打开
+    （`create=8 / destroy=7` 平衡）。构建 118,048 B。
+    - **之前「唤醒后点击无效」不是页面的问题**：唤醒后大约 2 秒内的触摸会被固件吞掉（和「唤醒要等 2.4 秒」一致），我的驱动在唤醒点击后 1.2–1.6 秒就点了卡片。
+      等够 3 秒、或先滑动再点，事件码 7（CLICKED）正常派发（`dm-C8`、`dm-KP`）。
+  - **n67（3.1.190）**：本来就没有这套息屏弹栈（Manager 页息屏 40 秒后仍在），所以不设标志，构建不变（117,864 B）。
+  - **图标在弹栈之后（更正之前的说法）**：息屏弹栈只把应用从「运行列表」摘掉（`remove_app_from_list` 释放的是运行列表节点，
+    `off_2006E878` 虚表 [8] 只是调用应用描述符 `+0x24` 的回调），**安装注册表里的应用记录不动**——在 n66 和 o66 上都读了设备 RAM 里的
+    安装链表（n66 头在 `*0x2006E868`，o66 头在 `*0x20081408`，节点 `+16` 是 app id）：Manager 打开后、离开后、息屏 40 秒弹栈后，
+    `0xCA` 都在。所以先前「弹栈后应用注册消失」的推断是错的。
+    - **n66**：弹栈之后图标仍在「更多」末尾（息屏 40 秒后读了安装表并目视），启动器每次重建都按安装表带上它。
+    - **o66**：记录在，但弹栈之后图标不在。3.1.28 的启动器只列出「运行列表里有的应用」加上持久顺序表里有的应用；固件自己的快应用注册
+      （`quickapp_register_app` `0xc2d6e4c` 的 `app_launcher_add`）加图标的顺序是 `launcher_load_app_info → launcher_page_insert_icon →
+      launcher_reset_order_info → 发事件 0x10000`，最后的 `reset_order_info_list` 才把图标写进持久顺序表。我们的安装路径只在发布成功时做这三步，
+      而发布要求启动器实例（`0x200ab2ec`）非空，它只在应用列表页开着时才存在；从表盘点 Run 时它早已销毁（Mirage 里先开一次应用列表、
+      返回、再 Run，记录里 `launcher` 仍是 -103）。所以 Supervisor 这边没有时机触发发布，没有改。
+    - **o66 的做法（已实现并验证）**：协议加一个状态中性的命令 `CANOPUS_CMD_PUBLISH_LAUNCHER`（30）：和查询一样不碰「上一次操作」记录
+      （pending op / state / error code），平台回调 `publish_launcher` → `canopus_manager_native_publish_launcher()`。v8 实现：启动器实例
+      （`FW_LAUNCHER_APP_INSTANCE`）为空返回 -103；非空且这个实例还没发布过，就按固件快应用注册的顺序 `manager_launcher_publish()`
+      （`load_app_info` + `insert_icon`）再 `launcher_reset_order_info(0)` 写进持久顺序表，并记下实例，同一个启动器页之后的调用直接返回 0。
+      o66 安装器表盘用 `lvgl.Timer`（1.5 秒一次，只在 `not run_active and supervisor_present()` 时）发这个命令：用户打开应用列表的瞬间
+      启动器页存在，下一次轮询就把图标加进去。通用目标（v9 家族）对这个回调返回 -1，没有人调用它。
+    - **验证（Mirage o66，仅 emulator 证据）**：Run 安装后在应用列表上停留约 10 秒，离开，息屏 40 秒被弹栈，再打开应用列表，
+      「更多」末尾有 Canopus（**整个开机里 Manager 一次都没打开过**）；点图标打开 Manager 概览（`launcher=0`、`create=1`、`click=1`），
+      离开后再弹栈一次，图标仍在。构建 118,416 B。主机测试加了 `v2_publish_launcher_leaves_the_last_operation_alone`。
+    - 这个轮询只在 o66 的安装器表盘里；n66 / n67 的启动器按安装表建条目，不需要。
+- **仍然没做到的**：真机验证（没有硬件）。
+
+**n67 表盘里的 Lua 中文**：之前的 `.notdef` 只是缺 `/system/font` 的症状。完整资源包的设备上，把安装器表盘的初始状态临时换成
+「模块启动失败，已自动回退到上一版本」，中文正常渲染（`lvgl.Font("MiSans-Regular", n)`），不再是待办。
+
+**仍未完成**：真机验证（没有硬件）。
+
+### 真机验证清单（待用户执行；以下全部只有 Mirage 证据）
+
+三台 v8 设备（Band 9 3.1.32、Band 9 Pro 3.1.190、Band 10 3.1.28）的下面这些行为目前只在 Mirage 上验证过，不能当作设备通过。
+本机蓝牙里能看到配对的真手环，但没有往任何一台里装载过东西——装载会改固件行为，需要你来决定在哪台上做。
+每一项都按「操作 → 期望」写，失败时请带上手环型号、固件版本、第几步，以及 `/data/canopus/` 下的 `dm-*`（若有）。
+
+1. **安装与打开**：装安装器表盘并 Run（装载 Supervisor），再点 Run 打开 Manager。期望：概览按系统「设置 / 关于」的版面显示
+   （灰标签 + 白值信息块、大圆角卡片、居中小标题、中文正常）。第一次 Run 之后可能要再点一次才打开（已知），唤醒后等约 3 秒再点。
+2. **息屏**（n66 / o66；n67 无弹栈）：Manager 在前台息屏 30–60 秒后唤醒。期望：页面仍在、能点；以前是 10 秒后被弹回表盘。
+3. **模块链路**：「导入手机推送的模块」→ 模块列表 → 详情 → 启用 → 确认 → 重启后重新装载，详情显示「运行中」。
+4. **模块 UI 页面**（o66 / n67；n66 不支持）：用 `canopus new <id> --ui` 生成并打包的模块，启用后详情出现「打开界面」，页面能点、开关显示开 / 关、
+   标题返回回到详情、重进后状态还在。
+5. **启动器图标**：Band 10（o66）装好后只开应用列表、不开 Manager，息屏 40 秒后再开应用列表，「更多」末尾应有 Canopus，点开进 Manager；
+   Band 9（n66）同样在「更多」末尾；Band 9 Pro（n67）在主列表末尾。
+6. **不应出现的**：整机重启（mi logo）、息屏后页面不响应、应用列表里出现重复的 Canopus 图标（o66 的轮询发布每个启动器页只发一次）。
+
+通过后按 `docs/progress.md` 的能力状态规则登记设备证据；在那之前这些都停留在 host / emulator 级别。
+
+### 第 33 轮补记：模块自带 UI 页面移植到 v8（o66 / n67；n66 不支持）
+
+`modules/examples` 里带 `--ui` 的模块通过 `ctx->ui->set_entry` 注册页面入口，Manager 详情页的「打开界面」行把它推成一个独立页面。
+v8 后端原来只有三个页面（概览 / 列表 / 详情 / 确认共用前三个槽）和一个返回 0 的 `module_page_close` 桩，所以 v8 上这一行永远不出现。
+
+**实现**（`manager/target/lvgl_v8/canopus_manager_target_lvgl_v8.c`，`CANOPUS_MGR_MODULE_UI`，在非 `CANOPUS_MGR_INPLACE_DETAIL` 的目标上定义）：
+
+- 第 4 个 Manager 页面（`CANOPUS_TARGET_PAGE_MODULE_UI = 3`），页面描述符沿用各固件的布局（3.1.28 长布局，3.1.190 短布局），在
+  `canopus_manager_native_install` 里和前三个一起注册。`target_route` 的 `CANOPUS_MANAGER_ROUTE_MODULE_UI` 记下待开槽位、
+  push 第 4 页；n66 的详情是原地渲染、不能再叠第三页，返回 `CANOPUS_UI_ERR_UNSUPPORTED`，并且不把 `has_ui` 暴露给模型，所以 n66 不会出现「打开界面」。
+- 页面创建时 `canopus_ui_context_init(&context->native.ui, &target_ui_backend_api, …)`，调模块的 `entry.on_open` 并要求它在返回前提交第一棵树；
+  事件经 `module_page_event` 转给 `entry.on_event`，销毁时调 `entry.on_close`；系统返回 / 标题返回走 `FW_ACTIVITY_FINISH` 回详情页。
+  `canopus_manager_target_module_page_close` 现在是真实现（模块被禁用 / 停止时由 Supervisor 关掉它的页面）。
+- 上下文多了一份（约 13 KB），v8 镜像在 Umem 里分配，所以 Band 10 / Band 9 Pro 家族的 `supervisor_max_resident` 从 163,840 提到 184,320
+  （Band 9 家族不变；n66 没有第 4 页）。构建：o66 118,024 B / 167,626 常驻，n67 117,864 B / 167,566，n66 117,060 B / 153,738，verifier 全部 PASS。
+
+**两个顺带修好的缺陷**（都是 v8 的 `target_refresh_model` 和通用版的差别）：
+
+- v8 的刷新**没填** `module.slot`、`has_previous`、`has_ui`、`ui_label` 和 `safe_mode_reason`。`has_ui` 没填就没有「打开界面」行；`slot` 恒为 0，
+  待开槽位会指错模块；`has_previous` 恒为 0，「回滚」永远不出现。现在和通用版一致（`has_ui` / `ui_label` 只在 `CANOPUS_MGR_MODULE_UI` 下填）。
+- v8 的开关行忽略了节点的 `CANOPUS_UI_NODE_FLAG_CHECKED`，只显示模块给的说明文字，说明为空就看不出开关状态。现在右侧固定显示「开 / 关」。
+
+**验证（Mirage，仅 emulator 证据）**：用 CLI 生成的 `--ui` 测试模块 `uidemo`（portable，一个状态行、一个「点击」动作行、一个开关行）。
+
+- n67（3.1.190）：导入 → 启用 → 确认 → 重启 → 详情「运行中 / 版本 1」+「打开界面」→ 模块页以原生样式渲染（标题 `uidemo`、灰标签「点击次数」加白值、
+  两张卡片）→ 点两次「点击」计数 0 → 2，开关 关 → 开 → 标题返回回到详情，再次进入页面状态保留（计数、开关），再返回两级回到模块列表。
+  同一次开机里也走过「启用 → 立即激活 → 确认」，行为一致。
+- o66（3.1.28）：导入 → 启用 → 立即激活 → 「打开界面」→ 模块页渲染；重启后模块由注册表恢复为运行中，点击 0 → 2、开关 关 → 开；点标题回到详情，
+  边缘右滑逐级回到列表和概览。
+- n66（3.1.32）：构建 117,060 B 装载正常，概览、模块列表、原地详情渲染正常（回归检查，没有模块页）。
+- 驱动脚本的坑（不是产品问题）：o66 息屏约 3–4 秒、息屏后 10 秒页面被弹出，必须在一个脚本里连续操作；脚本开头「点两下唤醒」落在 Manager
+  页面上会点到卡片（n67 我曾因此误点了「移除」，把 uidemo 标成待移除，直接改 `registry.bin` 槽位意图字节恢复）。第一次装载后要多点几次 Run 才打开 Manager。
+
+**限制**：模块页只在 o66 / n67 上可用；n66 的详情是原地渲染，需要把「第三页」做成可叠的页面才能支持，目前明确不支持。
+没有真机证据，不提升任何能力状态。
