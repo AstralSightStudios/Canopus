@@ -76,7 +76,7 @@ fn warning_flags() -> &'static [&'static str] {
 /// Rust modules: `[build] sources = ["Cargo.toml"]` names the crate (a
 /// `staticlib`, `#![no_std]`, panic=abort). Pipeline: cargo build for the
 /// device triple (target modules: with the exact target's bindings feature) ->
-/// C ctor shim -> `ld.lld -r --whole-archive` -> zero-import ELF.
+/// C ctor shim -> `ld.lld -r --gc-sections` -> zero-import ELF.
 fn compile_rust(
     project: &Project,
     root: &Path,
@@ -185,8 +185,22 @@ fn compile_rust(
         }
     }
     let mut ld_cmd = Command::new(tool("LD", "ld.lld"));
+    // A staticlib includes Rust runtime archive members with many independent
+    // sections. Relocatable linking otherwise retains all their unused tables
+    // and functions, increasing resident memory and making random table words
+    // look like firmware addresses to the verifier. Keep the module ABI roots;
+    // their relocations retain every reachable callback, while LLD also retains
+    // .init_array/.fini_array and the functions referenced by those arrays.
     ld_cmd
-        .args(["-r", "-T"])
+        .args([
+            "-r",
+            "--gc-sections",
+            "-u",
+            "canopus_module_descriptor",
+            "-u",
+            "canopus_mod_stop",
+            "-T",
+        ])
         .arg(root.join("sdk/rust/c_shim/module.ld"))
         .arg(&shim_o)
         .arg(archive);
