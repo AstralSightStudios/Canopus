@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-DIR-9190-001",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "question": "Which exact-target functions implement opendir/readdir/closedir, so the Supervisor can list the module inbox?",
+  "candidate_symbols": [
+    "opendir",
+    "readdir",
+    "closedir"
+  ],
+  "prototype_hypothesis": "void *opendir(const char *); void *readdir(void *); int closedir(void *)",
+  "callsite_evidence": [
+    "sub_C0E4138 (opendir) is malloc(104) followed by open(path, 3073); on failure it frees the handle and returns NULL.",
+    "closedir is the next function: close(*handle) then free(handle), with errno 9 for a NULL handle.",
+    "readdir is the one after it: read(*handle, handle + 4, 98) and returns handle + 4 or NULL, again with errno 9 for NULL.",
+    "Same three-function shape and constants (104, 3073, 98) as the proven 3.101.043 libc directory API (EVID-DIR-1043-001)."
+  ],
+  "control_flow_evidence": [
+    "sub_C0E4138 -> sub_C0F1170, sub_C37E30C"
+  ],
+  "ownership_analysis": "The 104-byte handle is allocated by opendir and released by closedir; readdir returns a pointer into the handle.",
+  "unsafe_assumptions": [
+    "The three functions are adjacent in the libc image on all three v8 builds (checked in each IDB)."
+  ],
+  "recommended_probe": "Put a hello_portable receipt and module into /data/canopus/inbox as .cmi.next/.ko.next and use the Manager's import row.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-29T00:00:00Z",
+  "artifacts": []
+}

@@ -4,7 +4,7 @@
  * firmware : 3.1.32 (N66NFC_3.1.32)
  * sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
  * revision : 2
- * input_digest: f9409666e00f00a1
+ * input_digest: 28dea686ca42b7ac
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -391,6 +391,11 @@ static inline void * canopus_fw_heap_mallinfo(void * a0) {
     return ((canopus_fw_heap_mallinfo_fn)(uintptr_t)0xc173e99)(a0);
 }
 
+typedef void * (*canopus_fw_readdir_fn)(void *);
+static inline void * canopus_fw_readdir(void * a0) {
+    return ((canopus_fw_readdir_fn)(uintptr_t)0xc15f141)(a0);
+}
+
 typedef int (*canopus_fw_interconnect_close_fn)(void *);
 static inline int canopus_fw_interconnect_close(void * a0) {
     return ((canopus_fw_interconnect_close_fn)(uintptr_t)0xc3b5ab5)(a0);
@@ -415,6 +420,11 @@ static inline void canopus_fw_lv_bar_set_value(void * a0, int32_t a1, uint32_t a
 typedef void * (*canopus_fw_launcher_load_app_info_fn)(const void *);
 static inline void * canopus_fw_launcher_load_app_info(const void * a0) {
     return ((canopus_fw_launcher_load_app_info_fn)(uintptr_t)0xc2c8ebd)(a0);
+}
+
+typedef int (*canopus_fw_closedir_fn)(void *);
+static inline int canopus_fw_closedir(void * a0) {
+    return ((canopus_fw_closedir_fn)(uintptr_t)0xc15f119)(a0);
 }
 
 typedef int32_t (*canopus_fw_lv_obj_set_local_style_prop_fn)(void *, uint32_t, void *, uint32_t);
@@ -488,6 +498,11 @@ static inline void canopus_fw_lv_bar_set_range(void * a0, int32_t a1, int32_t a2
     return ((canopus_fw_lv_bar_set_range_fn)(uintptr_t)0xc28ffb5)(a0, a1, a2);
 }
 
+typedef void (*canopus_fw_lv_obj_scroll_to_y_fn)(void *, int32_t, uint32_t);
+static inline void canopus_fw_lv_obj_scroll_to_y(void * a0, int32_t a1, uint32_t a2) {
+    return ((canopus_fw_lv_obj_scroll_to_y_fn)(uintptr_t)0xc279029)(a0, a1, a2);
+}
+
 typedef int (*canopus_fw_bt_adapter_set_scan_mode_fn)(int, int);
 static inline int canopus_fw_bt_adapter_set_scan_mode(int a0, int a1) {
     return ((canopus_fw_bt_adapter_set_scan_mode_fn)(uintptr_t)0xc43fbc3)(a0, a1);
@@ -516,6 +531,11 @@ static inline int canopus_fw_app_launcher_add(uint16_t a0) {
 typedef int (*canopus_fw_bt_adapter_register_a2dp_callbacks_fn)(void *, const void *);
 static inline int canopus_fw_bt_adapter_register_a2dp_callbacks(void * a0, const void * a1) {
     return ((canopus_fw_bt_adapter_register_a2dp_callbacks_fn)(uintptr_t)0xc1fafcf)(a0, a1);
+}
+
+typedef void * (*canopus_fw_opendir_fn)(const char *);
+static inline void * canopus_fw_opendir(const char * a0) {
+    return ((canopus_fw_opendir_fn)(uintptr_t)0xc15f0e1)(a0);
 }
 
 typedef void (*canopus_fw_lvx_object_set_size_fn)(void *, int32_t, int32_t);

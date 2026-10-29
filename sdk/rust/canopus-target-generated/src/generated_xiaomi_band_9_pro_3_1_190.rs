@@ -4,7 +4,7 @@
 // firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
 // sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
 // revision : 1
-// input_digest: 352e15efd7b671ad
+// input_digest: 6406e4e410d5f453
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -80,6 +80,9 @@ pub const CANOPUS_FW_BT_L2CAP_CONNECT_CALLABLE: usize = canopus_thumb_callable(0
 
 /// Recovered `open` at 0x0c37e30c. Thumb callable address 0x0c37e30d.
 pub const CANOPUS_FW_OPEN_CALLABLE: usize = canopus_thumb_callable(0x0c37e30dusize);
+
+/// Recovered `opendir` at 0xc0e4138. Thumb callable address 0xc0e4139.
+pub const CANOPUS_FW_OPENDIR_CALLABLE: usize = canopus_thumb_callable(0xc0e4139usize);
 
 /// Recovered `unlink` at 0x0c37fe00. Thumb callable address 0x0c37fe01.
 pub const CANOPUS_FW_UNLINK_CALLABLE: usize = canopus_thumb_callable(0x0c37fe01usize);
@@ -228,6 +231,9 @@ pub const CANOPUS_FW_LV_OBJ_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc2
 /// Recovered `driver_read_dispatch` at 0xc37cff4. Thumb callable address 0xc37cff5.
 pub const CANOPUS_FW_DRIVER_READ_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc37cff5usize);
 
+/// Recovered `readdir` at 0xc0e4198. Thumb callable address 0xc0e4199.
+pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc0e4199usize);
+
 /// Recovered `mpu_region_configure` at 0xc51d970. Thumb callable address 0xc51d971.
 pub const CANOPUS_FW_MPU_REGION_CONFIGURE_CALLABLE: usize = canopus_thumb_callable(0xc51d971usize);
 
@@ -327,8 +333,14 @@ pub const CANOPUS_FW_LVX_LABEL_CREATE_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `lv_img_create` at 0xc25eba0. Thumb callable address 0xc25eba1.
 pub const CANOPUS_FW_LV_IMG_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc25eba1usize);
 
+/// Recovered `closedir` at 0xc0e4170. Thumb callable address 0xc0e4171.
+pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc0e4171usize);
+
 /// Recovered `close` at 0x0c37dba4. Thumb callable address 0x0c37dba5.
 pub const CANOPUS_FW_CLOSE_CALLABLE: usize = canopus_thumb_callable(0x0c37dba5usize);
+
+/// Recovered `lv_obj_scroll_to_y` at 0xc242ca0. Thumb callable address 0xc242ca1.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_Y_CALLABLE: usize = canopus_thumb_callable(0xc242ca1usize);
 
 /// Recovered `read` at 0x0c37f458. Thumb callable address 0x0c37f459.
 pub const CANOPUS_FW_READ_CALLABLE: usize = canopus_thumb_callable(0x0c37f459usize);
@@ -417,8 +429,8 @@ pub const CANOPUS_FW_BT_DISCOVERY_START_CALLABLE: usize = canopus_thumb_callable
 /// Recovered `lv_obj_align_to` at 0x0c23c8b8. Thumb callable address 0x0c23c8b9.
 pub const CANOPUS_FW_LV_OBJ_ALIGN_TO_CALLABLE: usize = canopus_thumb_callable(0x0c23c8b9usize);
 
-/// Recovered `lv_obj_set_local_style_prop` at 0xc23afe2. Thumb callable address 0xc23afe3.
-pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc23afe3usize);
+/// Recovered `lv_obj_set_local_style_prop` at 0xc242e8a. Thumb callable address 0xc242e8b.
+pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc242e8busize);
 
 /// Recovered `rename` at 0xc37f490. Thumb callable address 0xc37f491.
 pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0xc37f491usize);
@@ -501,6 +513,7 @@ pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc41a
 // btsnoop_avdtp_recognizer: restricted - not exported until context/ownership approved
 // clock_gettime: restricted - not exported until context/ownership approved
 // close: restricted - not exported until context/ownership approved
+// closedir: restricted - not exported until context/ownership approved
 // controller_crash_dump: restricted - not exported until context/ownership approved
 // core_bt_pair_request_callback: restricted - not exported until context/ownership approved
 // driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -546,6 +559,7 @@ pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc41a
 // lv_obj_clear_flag: restricted - not exported until context/ownership approved
 // lv_obj_create: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to_y: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_size: restricted - not exported until context/ownership approved
@@ -577,6 +591,7 @@ pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc41a
 // mpu_region_release: restricted - not exported until context/ownership approved
 // offload_property_apply: restricted - not exported until context/ownership approved
 // open: restricted - not exported until context/ownership approved
+// opendir: restricted - not exported until context/ownership approved
 // page_finish: restricted - not exported until context/ownership approved
 // page_goto: restricted - not exported until context/ownership approved
 // page_lookup: restricted - not exported until context/ownership approved
@@ -585,6 +600,7 @@ pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc41a
 // pthread_create_internal: restricted - not exported until context/ownership approved
 // quickapp_register_app: restricted - not exported until context/ownership approved
 // read: restricted - not exported until context/ownership approved
+// readdir: restricted - not exported until context/ownership approved
 // register_blockdriver: restricted - not exported until context/ownership approved
 // register_driver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved

@@ -4,7 +4,7 @@
  * firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
  * sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
  * revision : 1
- * input_digest: 352e15efd7b671ad
+ * input_digest: 6406e4e410d5f453
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -71,6 +71,11 @@ static inline uint32_t canopus_fw_bt_l2cap_connect(const void * a0) {
 typedef int (*canopus_fw_open_fn)(const char *, int);
 static inline int canopus_fw_open(const char * a0, int a1) {
     return ((canopus_fw_open_fn)(uintptr_t)0x0c37e30d)(a0, a1);
+}
+
+typedef void * (*canopus_fw_opendir_fn)(const char *);
+static inline void * canopus_fw_opendir(const char * a0) {
+    return ((canopus_fw_opendir_fn)(uintptr_t)0xc0e4139)(a0);
 }
 
 typedef int (*canopus_fw_unlink_fn)(const char *);
@@ -281,6 +286,11 @@ static inline void * canopus_fw_lv_obj_create(void * a0) {
 }
 
 /* driver_read_dispatch: skipped (argument type not mappable) */
+typedef void * (*canopus_fw_readdir_fn)(void *);
+static inline void * canopus_fw_readdir(void * a0) {
+    return ((canopus_fw_readdir_fn)(uintptr_t)0xc0e4199)(a0);
+}
+
 typedef int (*canopus_fw_mpu_region_configure_fn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 static inline int canopus_fw_mpu_region_configure(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) {
     return ((canopus_fw_mpu_region_configure_fn)(uintptr_t)0xc51d971)(a0, a1, a2, a3, a4);
@@ -399,9 +409,19 @@ static inline void * canopus_fw_lv_img_create(void * a0) {
     return ((canopus_fw_lv_img_create_fn)(uintptr_t)0xc25eba1)(a0);
 }
 
+typedef int (*canopus_fw_closedir_fn)(void *);
+static inline int canopus_fw_closedir(void * a0) {
+    return ((canopus_fw_closedir_fn)(uintptr_t)0xc0e4171)(a0);
+}
+
 typedef int (*canopus_fw_close_fn)(int);
 static inline int canopus_fw_close(int a0) {
     return ((canopus_fw_close_fn)(uintptr_t)0x0c37dba5)(a0);
+}
+
+typedef void (*canopus_fw_lv_obj_scroll_to_y_fn)(void *, int32_t, uint32_t);
+static inline void canopus_fw_lv_obj_scroll_to_y(void * a0, int32_t a1, uint32_t a2) {
+    return ((canopus_fw_lv_obj_scroll_to_y_fn)(uintptr_t)0xc242ca1)(a0, a1, a2);
 }
 
 typedef int32_t (*canopus_fw_read_fn)(int, void *, uint32_t);
@@ -504,7 +524,7 @@ static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2,
 
 typedef int32_t (*canopus_fw_lv_obj_set_local_style_prop_fn)(void *, uint32_t, void *, uint32_t);
 static inline int32_t canopus_fw_lv_obj_set_local_style_prop(void * a0, uint32_t a1, void * a2, uint32_t a3) {
-    return ((canopus_fw_lv_obj_set_local_style_prop_fn)(uintptr_t)0xc23afe3)(a0, a1, a2, a3);
+    return ((canopus_fw_lv_obj_set_local_style_prop_fn)(uintptr_t)0xc242e8b)(a0, a1, a2, a3);
 }
 
 typedef int (*canopus_fw_rename_fn)(const char *, const char *);

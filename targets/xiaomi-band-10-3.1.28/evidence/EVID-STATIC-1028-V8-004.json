@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-1028-V8-004",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "Which entry sets an arbitrary local style property on 3.1.28, and which property ids does the style-name table assign to the properties a native-looking Manager needs?",
+  "candidate_symbols": [
+    "lv_obj_set_local_style_prop"
+  ],
+  "prototype_hypothesis": "int32_t lv_obj_set_local_style_prop(lv_obj_t *obj, uint32_t property, lv_style_value_t value, uint32_t selector); the low byte of a style-table id is the property, the byte above it is the value type (1 int, 2 colour, 3 pointer).",
+  "callsite_evidence": [
+    "sub_C2BCE64 (lv_obj_set_text_font) is `return sub_C2BC984(a1, 90, a2, a3)`.",
+    "sub_C2BCCDC is `return sub_C2BC984(a1, 0x1D, a2, a3)` and the desktop list builder calls it with 255 as a bg_opa.",
+    "The style-name table (pairs of name pointer and id) at 0xc726a40 maps radius to 0x10c, bg_color to 0x21c, bg_opa to 0x11d, pad_top..pad_right to 0x110..0x113, pad_row to 0x114, border_width to 0x130, text_color to 0x258, text_font to 0x35a, clip_corner to 0x12d."
+  ],
+  "control_flow_evidence": [
+    "Every lv_obj_set_style_* wrapper tail-calls 0xc2bc984, so it is the single local-style writer."
+  ],
+  "ownership_analysis": "The style value is stored by value in the object's local style; a font pointer stays owned by the font manager, colours and integers are copied.",
+  "unsafe_assumptions": [
+    "A colour value is passed as 0x00RRGGBB in r2; this is checked on the emulator only."
+  ],
+  "recommended_probe": "Set radius, bg_opa and text_color on a Manager row and compare the rendered frame with the stock Settings page.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-29T00:00:00Z",
+  "artifacts": []
+}

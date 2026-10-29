@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: eec0ca2bc860f076
+ * input_digest: 1560ec710c926c48
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -116,6 +116,11 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
     return ((canopus_fw_unregister_driver_fn)(uintptr_t)0x0c3938c1)(a0);
 }
 
+typedef void * (*canopus_fw_opendir_fn)(const char *);
+static inline void * canopus_fw_opendir(const char * a0) {
+    return ((canopus_fw_opendir_fn)(uintptr_t)0xc112e19)(a0);
+}
+
 typedef void (*canopus_fw_lv_bar_set_value_fn)(void *, int32_t, uint32_t);
 static inline void canopus_fw_lv_bar_set_value(void * a0, int32_t a1, uint32_t a2) {
     return ((canopus_fw_lv_bar_set_value_fn)(uintptr_t)0xc341da5)(a0, a1, a2);
@@ -124,6 +129,11 @@ static inline void canopus_fw_lv_bar_set_value(void * a0, int32_t a1, uint32_t a
 typedef void (*canopus_fw_lv_obj_set_hidden_fn)(void *, uint32_t);
 static inline void canopus_fw_lv_obj_set_hidden(void * a0, uint32_t a1) {
     return ((canopus_fw_lv_obj_set_hidden_fn)(uintptr_t)0xc4e0f71)(a0, a1);
+}
+
+typedef void * (*canopus_fw_readdir_fn)(void *);
+static inline void * canopus_fw_readdir(void * a0) {
+    return ((canopus_fw_readdir_fn)(uintptr_t)0xc112e79)(a0);
 }
 
 typedef void * (*canopus_fw_lv_obj_get_display_fn)(const void *);
@@ -154,6 +164,11 @@ static inline int canopus_fw_mpu_region_configure(uint32_t a0, uint32_t a1, uint
 typedef void * (*canopus_fw_lvx_font_create_fn)(const char *, int16_t, int16_t);
 static inline void * canopus_fw_lvx_font_create(const char * a0, int16_t a1, int16_t a2) {
     return ((canopus_fw_lvx_font_create_fn)(uintptr_t)0xc355d69)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_lv_obj_scroll_to_y_fn)(void *, int32_t, uint32_t);
+static inline void canopus_fw_lv_obj_scroll_to_y(void * a0, int32_t a1, uint32_t a2) {
+    return ((canopus_fw_lv_obj_scroll_to_y_fn)(uintptr_t)0xc2bd7f1)(a0, a1, a2);
 }
 
 typedef void (*canopus_fw_lv_obj_clear_flag_fn)(void *, uint32_t);
@@ -209,6 +224,11 @@ static inline int * canopus_fw_errno_location(void) {
 typedef int (*canopus_fw_page_finish_fn)(void *);
 static inline int canopus_fw_page_finish(void * a0) {
     return ((canopus_fw_page_finish_fn)(uintptr_t)0xc44e155)(a0);
+}
+
+typedef int (*canopus_fw_closedir_fn)(void *);
+static inline int canopus_fw_closedir(void * a0) {
+    return ((canopus_fw_closedir_fn)(uintptr_t)0xc112e51)(a0);
 }
 
 typedef int (*canopus_fw_register_driver_fn)(const char *, const void *, void *);
@@ -337,6 +357,11 @@ static inline void * canopus_fw_heap_malloc(uint32_t a0) {
 typedef void * (*canopus_fw_mm_memalign_default_fn)(uint32_t, uint32_t);
 static inline void * canopus_fw_mm_memalign_default(uint32_t a0, uint32_t a1) {
     return ((canopus_fw_mm_memalign_default_fn)(uintptr_t)0xc12234d)(a0, a1);
+}
+
+typedef int32_t (*canopus_fw_lv_obj_set_local_style_prop_fn)(void *, uint32_t, void *, uint32_t);
+static inline int32_t canopus_fw_lv_obj_set_local_style_prop(void * a0, uint32_t a1, void * a2, uint32_t a3) {
+    return ((canopus_fw_lv_obj_set_local_style_prop_fn)(uintptr_t)0xc2bc985)(a0, a1, a2, a3);
 }
 
 typedef int (*canopus_fw_sem_post_fn)(void *);

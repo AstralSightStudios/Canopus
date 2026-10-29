@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.exact.lv_obj_scroll_to_y",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "lv_obj_scroll_to_y",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc242ca0",
+  "prototype": "void(void *, int32_t, uint32_t)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-9190-V8-004"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-STATIC-9190-V8-004"
+    ],
+    "source": "Exact xiaomi-band-9-pro-3.1.190 image: sub_C242CA0 deletes the scroll animation of the object, reads the current vertical scroll (sub_C23BD02) and calls lv_obj_scroll_by (sub_C2425D8) with (0, current - y, anim); its x sibling is the one the Lua scroll_to binding calls for both axes."
+  },
+  "approval_state": "PENDING",
+  "notes": "(obj, y, anim_enable). The v8 Manager uses it to put a re-rendered page back at the top. Not device probed.",
+  "callable_address": "0xc242ca1"
+}

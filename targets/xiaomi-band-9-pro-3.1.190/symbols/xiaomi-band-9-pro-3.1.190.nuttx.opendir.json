@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.opendir",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "opendir",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void *(const char *)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-DIR-9190-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "source": "exact xiaomi-band-9-pro-3.1.190 image: the libc directory trio found by its constants (104-byte handle, open flags 0xC01, 98-byte dirent read)",
+    "evidence_ids": [
+      "EVID-DIR-9190-001"
+    ]
+  },
+  "approval_state": "PENDING",
+  "entry_address": "0xc0e4138",
+  "callable_address": "0xc0e4139",
+  "notes": "NuttX libc directory iteration; used only by the Supervisor to list the phone-pushed module inbox."
+}

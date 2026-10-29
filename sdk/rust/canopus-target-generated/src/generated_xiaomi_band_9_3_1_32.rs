@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (N66NFC_3.1.32)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 2
-// input_digest: f9409666e00f00a1
+// input_digest: 28dea686ca42b7ac
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -307,6 +307,9 @@ pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_t
 /// Recovered `heap_mallinfo` at 0xc173e98. Thumb callable address 0xc173e99.
 pub const CANOPUS_FW_HEAP_MALLINFO_CALLABLE: usize = canopus_thumb_callable(0xc173e99usize);
 
+/// Recovered `readdir` at 0xc15f140. Thumb callable address 0xc15f141.
+pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc15f141usize);
+
 /// Recovered `interconnect_close` at 0xc3b5ab4. Thumb callable address 0xc3b5ab5.
 pub const CANOPUS_FW_INTERCONNECT_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc3b5ab5usize);
 
@@ -327,6 +330,9 @@ pub const CANOPUS_FW_LAUNCHER_LOAD_APP_INFO_CALLABLE: usize = canopus_thumb_call
 
 /// Recovered `pthread_create_internal` at 0xc51fdb4. Thumb callable address 0xc51fdb5.
 pub const CANOPUS_FW_PTHREAD_CREATE_INTERNAL_CALLABLE: usize = canopus_thumb_callable(0xc51fdb5usize);
+
+/// Recovered `closedir` at 0xc15f118. Thumb callable address 0xc15f119.
+pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc15f119usize);
 
 /// Recovered `lv_obj_set_local_style_prop` at 0xc2782ec. Thumb callable address 0xc2782ed.
 pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc2782edusize);
@@ -388,6 +394,9 @@ pub const CANOPUS_FW_SPORT_TITLEBAR_DISPATCH_CALLABLE: usize = canopus_thumb_cal
 /// Recovered `lv_bar_set_range` at 0x0c28ffb4. Thumb callable address 0xc28ffb5.
 pub const CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE: usize = canopus_thumb_callable(0xc28ffb5usize);
 
+/// Recovered `lv_obj_scroll_to_y` at 0xc279028. Thumb callable address 0xc279029.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_Y_CALLABLE: usize = canopus_thumb_callable(0xc279029usize);
+
 /// Recovered `bt_adapter_set_scan_mode` at 0xc43fbc2. Thumb callable address 0xc43fbc3.
 pub const CANOPUS_FW_BT_ADAPTER_SET_SCAN_MODE_CALLABLE: usize = canopus_thumb_callable(0xc43fbc3usize);
 
@@ -405,6 +414,9 @@ pub const CANOPUS_FW_APP_LAUNCHER_ADD_CALLABLE: usize = canopus_thumb_callable(0
 
 /// Recovered `bt_adapter_register_a2dp_callbacks` at 0xc1fafce. Thumb callable address 0xc1fafcf.
 pub const CANOPUS_FW_BT_ADAPTER_REGISTER_A2DP_CALLBACKS_CALLABLE: usize = canopus_thumb_callable(0xc1fafcfusize);
+
+/// Recovered `opendir` at 0xc15f0e0. Thumb callable address 0xc15f0e1.
+pub const CANOPUS_FW_OPENDIR_CALLABLE: usize = canopus_thumb_callable(0xc15f0e1usize);
 
 /// Recovered `lvx_object_set_size` at 0xc534c70. Thumb callable address 0xc534c71.
 pub const CANOPUS_FW_LVX_OBJECT_SET_SIZE_CALLABLE: usize = canopus_thumb_callable(0xc534c71usize);
@@ -508,6 +520,7 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // btsnoop_avdtp_recognizer: restricted - not exported until context/ownership approved
 // clock_gettime: restricted - not exported until context/ownership approved
 // close: restricted - not exported until context/ownership approved
+// closedir: restricted - not exported until context/ownership approved
 // controller_crash_dump: restricted - not exported until context/ownership approved
 // core_bt_pair_request_callback: restricted - not exported until context/ownership approved
 // driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -553,6 +566,7 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // lv_obj_clear_flag: restricted - not exported until context/ownership approved
 // lv_obj_create: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to_y: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
 // lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_size: restricted - not exported until context/ownership approved
@@ -585,6 +599,7 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // mpu_region_release: restricted - not exported until context/ownership approved
 // offload_property_apply: restricted - not exported until context/ownership approved
 // open: restricted - not exported until context/ownership approved
+// opendir: restricted - not exported until context/ownership approved
 // page_finish: restricted - not exported until context/ownership approved
 // page_goto: restricted - not exported until context/ownership approved
 // page_lookup: restricted - not exported until context/ownership approved
@@ -593,6 +608,7 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // pthread_create_internal: restricted - not exported until context/ownership approved
 // quickapp_register_app: restricted - not exported until context/ownership approved
 // read: restricted - not exported until context/ownership approved
+// readdir: restricted - not exported until context/ownership approved
 // register_blockdriver: restricted - not exported until context/ownership approved
 // register_driver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved

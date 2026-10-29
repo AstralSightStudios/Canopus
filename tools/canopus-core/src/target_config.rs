@@ -304,6 +304,11 @@ const V8_TEXT_FONT: &[Mapping] = &[
         symbol_name: "lvx_page_content_create",
         address: Address::Callable,
     },
+    Mapping {
+        macro_name: "FW_LV_OBJECT_SCROLL_TO_Y",
+        symbol_name: "lv_obj_scroll_to_y",
+        address: Address::Callable,
+    },
 ];
 
 /// Optional per-target extras: emitted only when the record exists, and never

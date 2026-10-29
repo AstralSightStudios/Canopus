@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-9132-V8-004",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "question": "Which entry scrolls an object to an absolute y on this image, so a page whose content shrank can be put back at the top?",
+  "candidate_symbols": [
+    "lv_obj_scroll_to_y"
+  ],
+  "prototype_hypothesis": "void lv_obj_scroll_to_y(lv_obj_t *obj, lv_coord_t y, lv_anim_enable_t anim_en)",
+  "callsite_evidence": [
+    "sub_C279028 is the same shape as the recovered scroll_to_x: lv_anim_del(obj, scroll-y exec), cur = lv_obj_get_scroll_y(obj), lv_obj_scroll_by(obj, 0, cur - y, anim).",
+    "sub_C278F1C is the shared lv_obj_scroll_by; the Lua `scroll_to` binding calls the x sibling for both x and y (a firmware copy-paste), so the y entry is only reachable from C."
+  ],
+  "control_flow_evidence": [
+    "sub_C279028 -> sub_C278F1C"
+  ],
+  "ownership_analysis": "The object keeps its own scroll state; the call only moves its children.",
+  "unsafe_assumptions": [
+    "Scroll animation is disabled by passing 0 as the last argument."
+  ],
+  "recommended_probe": "Open a confirmation dialog from a scrolled overview page and check that the title is at the top.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-29T00:00:00Z",
+  "artifacts": []
+}

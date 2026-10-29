@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.exact.lv_obj_set_local_style_prop",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "lv_obj_set_local_style_prop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc2bc984",
+  "prototype": "int32_t(void *, uint32_t, void *, uint32_t)",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-STATIC-1028-V8-004"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-STATIC-1028-V8-004"
+    ],
+    "source": "Exact xiaomi-band-10-3.1.28 image: every generated lv_obj_set_style_* wrapper is a two-instruction tail call into this entry with its property id (text_font 90 at 0xc2bce64, bg_opa 0x1d at 0xc2bccdc)."
+  },
+  "approval_state": "PENDING",
+  "notes": "Generic local-style setter (obj, property, value, selector). Property ids follow the 3.1.28 style table at 0xc726a40: radius 12, bg_color 28, bg_opa 29, pad_top..pad_right 16..19, border_width 48, text_color 88, text_font 90. Not device probed.",
+  "callable_address": "0xc2bc985"
+}

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-STATIC-9190-V8-003",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "question": "Which entry is the generic local-style setter on 3.1.190, and why did the Manager's style and font calls have no effect there?",
+  "candidate_symbols": [
+    "lv_obj_set_local_style_prop"
+  ],
+  "prototype_hypothesis": "int32_t lv_obj_set_local_style_prop(lv_obj_t *obj, uint32_t property, lv_style_value_t value, uint32_t selector)",
+  "callsite_evidence": [
+    "sub_C242E8A has the same body as the 3.1.32 setter 0xc2782ec: local style lookup for the selector, a style-property write and a style refresh.",
+    "sub_C4CF19C(obj, v) is `return sub_C242E8A(obj, 9, v, 0)`, i.e. a lv_obj_set_style_* wrapper.",
+    "The previously recorded 0xc23afe2 is `sub_C4CF19C(a1, a2); return sub_C23AF42(a1, a3, a4)` and sub_C23AF42 is two position setters, so it cannot take (obj, property, value, selector).",
+    "Mirage n67 (3.1.190, full package): with the old record every Manager label kept the default 12 px font and no card got a corner radius or a transparent background; the page-in animation also left the view at a negative x."
+  ],
+  "control_flow_evidence": [
+    "Every generated lv_obj_set_style_* wrapper tail-calls 0xc242e8a with its property id."
+  ],
+  "ownership_analysis": "Values are stored by value in the object's local style; a font pointer stays owned by the font manager.",
+  "unsafe_assumptions": [
+    "Colours are RGB565 on this image; checked on the emulator only."
+  ],
+  "recommended_probe": "Apply radius, bg_opa and text_font to a Manager row and compare the frame with the stock Settings page.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-29T00:00:00Z",
+  "artifacts": []
+}

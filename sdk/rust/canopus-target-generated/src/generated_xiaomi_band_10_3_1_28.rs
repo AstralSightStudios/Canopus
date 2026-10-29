@@ -4,7 +4,7 @@
 // firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
 // sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
 // revision : 1
-// input_digest: eec0ca2bc860f076
+// input_digest: 1560ec710c926c48
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -114,11 +114,17 @@ pub const CANOPUS_FW_LVX_OBJECT_DELETE_CALLABLE: usize = canopus_thumb_callable(
 /// Recovered `unregister_driver` at 0x0c3938c0. Thumb callable address 0x0c3938c1.
 pub const CANOPUS_FW_UNREGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0x0c3938c1usize);
 
+/// Recovered `opendir` at 0xc112e18. Thumb callable address 0xc112e19.
+pub const CANOPUS_FW_OPENDIR_CALLABLE: usize = canopus_thumb_callable(0xc112e19usize);
+
 /// Recovered `lv_bar_set_value` at 0xc341da4. Thumb callable address 0xc341da5.
 pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0xc341da5usize);
 
 /// Recovered `lv_obj_set_hidden` at 0xc4e0f70. Thumb callable address 0xc4e0f71.
 pub const CANOPUS_FW_LV_OBJ_SET_HIDDEN_CALLABLE: usize = canopus_thumb_callable(0xc4e0f71usize);
+
+/// Recovered `readdir` at 0xc112e78. Thumb callable address 0xc112e79.
+pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc112e79usize);
 
 /// Recovered `lv_obj_get_display` at 0xc2b9290. Thumb callable address 0xc2b9291.
 pub const CANOPUS_FW_LV_OBJ_GET_DISPLAY_CALLABLE: usize = canopus_thumb_callable(0xc2b9291usize);
@@ -137,6 +143,9 @@ pub const CANOPUS_FW_MPU_REGION_CONFIGURE_CALLABLE: usize = canopus_thumb_callab
 
 /// Recovered `lvx_font_create` at 0xc355d68. Thumb callable address 0xc355d69.
 pub const CANOPUS_FW_LVX_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc355d69usize);
+
+/// Recovered `lv_obj_scroll_to_y` at 0xc2bd7f0. Thumb callable address 0xc2bd7f1.
+pub const CANOPUS_FW_LV_OBJ_SCROLL_TO_Y_CALLABLE: usize = canopus_thumb_callable(0xc2bd7f1usize);
 
 /// Recovered `lv_obj_clear_flag` at 0xc2bb8b2. Thumb callable address 0xc2bb8b3.
 pub const CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc2bb8b3usize);
@@ -170,6 +179,9 @@ pub const CANOPUS_FW_ERRNO_LOCATION_CALLABLE: usize = canopus_thumb_callable(0xc
 
 /// Recovered `page_finish` at 0xc44e154. Thumb callable address 0xc44e155.
 pub const CANOPUS_FW_PAGE_FINISH_CALLABLE: usize = canopus_thumb_callable(0xc44e155usize);
+
+/// Recovered `closedir` at 0xc112e50. Thumb callable address 0xc112e51.
+pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc112e51usize);
 
 /// Recovered `register_driver` at 0xc5281d0. Thumb callable address 0xc5281d1.
 pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0xc5281d1usize);
@@ -264,6 +276,9 @@ pub const CANOPUS_FW_HIDDEN_AND_SHOW_APP_CB_CALLABLE: usize = canopus_thumb_call
 /// Recovered `mm_memalign_default` at 0xc12234c. Thumb callable address 0xc12234d.
 pub const CANOPUS_FW_MM_MEMALIGN_DEFAULT_CALLABLE: usize = canopus_thumb_callable(0xc12234dusize);
 
+/// Recovered `lv_obj_set_local_style_prop` at 0xc2bc984. Thumb callable address 0xc2bc985.
+pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc2bc985usize);
+
 /// Recovered `sem_post` at 0xc157bc4. Thumb callable address 0xc157bc5.
 pub const CANOPUS_FW_SEM_POST_CALLABLE: usize = canopus_thumb_callable(0xc157bc5usize);
 
@@ -342,6 +357,7 @@ pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_calla
 // btsnoop_avdtp_recognizer: restricted - not exported until context/ownership approved
 // clock_gettime: restricted - not exported until context/ownership approved
 // close: restricted - not exported until context/ownership approved
+// closedir: restricted - not exported until context/ownership approved
 // controller_crash_dump: restricted - not exported until context/ownership approved
 // core_bt_pair_request_callback: restricted - not exported until context/ownership approved
 // driver_close_dispatch: restricted - not exported until context/ownership approved
@@ -388,7 +404,9 @@ pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_calla
 // lv_obj_create: restricted - not exported until context/ownership approved
 // lv_obj_get_display: restricted - not exported until context/ownership approved
 // lv_obj_move_to_index: restricted - not exported until context/ownership approved
+// lv_obj_scroll_to_y: restricted - not exported until context/ownership approved
 // lv_obj_set_hidden: restricted - not exported until context/ownership approved
+// lv_obj_set_local_style_prop: restricted - not exported until context/ownership approved
 // lv_obj_set_size: restricted - not exported until context/ownership approved
 // lv_obj_set_style_bg_opa: restricted - not exported until context/ownership approved
 // lv_obj_set_text_font: restricted - not exported until context/ownership approved
@@ -419,6 +437,7 @@ pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_calla
 // mpu_region_release: restricted - not exported until context/ownership approved
 // offload_property_apply: restricted - not exported until context/ownership approved
 // open: restricted - not exported until context/ownership approved
+// opendir: restricted - not exported until context/ownership approved
 // page_finish: restricted - not exported until context/ownership approved
 // page_goto: restricted - not exported until context/ownership approved
 // page_navigator_open_page: restricted - not exported until context/ownership approved
@@ -426,6 +445,7 @@ pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_calla
 // pthread_create_internal: restricted - not exported until context/ownership approved
 // quickapp_register_app: restricted - not exported until context/ownership approved
 // read: restricted - not exported until context/ownership approved
+// readdir: restricted - not exported until context/ownership approved
 // register_blockdriver: restricted - not exported until context/ownership approved
 // register_driver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
