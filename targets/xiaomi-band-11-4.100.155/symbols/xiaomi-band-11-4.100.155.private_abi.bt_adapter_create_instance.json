@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.bt_adapter_create_instance",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "bt_adapter_create_instance",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc46cc94",
+  "callable_address": "0xc46cc95",
+  "prototype": "void *(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Creates an independent GAP IPC client, socket and poll registration. Caller owns the returned instance; module holds it resident and supplies the stock event loop at +56 without replacing system callbacks."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-BLE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-BLE-001"
+    ],
+    "source": "Exact Q66 .155 IDB recovery recorded in EVID-ASTROLINK-4155-BLE-001; Astrolink static ABI audit on 2026-10-30."
+  },
+  "notes": "Exact address catalog for module verification only. Not a public callable/codegen approval or physical device validation. Constructor entry bytes: 2d e9 f0 43 9f b0 d4 20 02 af e4 f6."
+}

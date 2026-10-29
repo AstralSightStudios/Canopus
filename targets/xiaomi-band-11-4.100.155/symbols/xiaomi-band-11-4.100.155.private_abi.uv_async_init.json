@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.uv_async_init",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "uv_async_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3f45f4",
+  "callable_address": "0xc3f45f5",
+  "prototype": "int(void *, void *, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Initializes a caller-owned 64-byte libuv async handle on the supplied client loop; callback pointer is stored at handle+48. The handle remains live until its owner callback frees it."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-BLE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-BLE-001"
+    ],
+    "source": "Exact Q66 .155 IDB recovery recorded in EVID-ASTROLINK-4155-BLE-001; Astrolink static ABI audit on 2026-10-30."
+  },
+  "notes": "Exact address catalog for module verification only. Not a public callable/codegen approval or physical device validation. Entry bytes: 2d e9 f0 41 82 b0 d0 f8 38 31 05 46."
+}

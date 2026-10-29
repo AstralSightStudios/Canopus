@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 3ef818ed4e8d2617
+// input_digest: 9d8b584ec4ff505c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -636,6 +636,9 @@ pub const CANOPUS_FW_FONT_RELOAD_VECTOR_COMPARE_CALLABLE: usize = canopus_thumb_
 /// Recovered `ble_scan_start` at 0xc46b68e. Thumb callable address 0xc46b68f.
 pub const CANOPUS_FW_BLE_SCAN_START_CALLABLE: usize = canopus_thumb_callable(0xc46b68fusize);
 
+/// Recovered `bt_adapter_create_instance` at 0xc46cc94. Thumb callable address 0xc46cc95.
+pub const CANOPUS_FW_BT_ADAPTER_CREATE_INSTANCE_CALLABLE: usize = canopus_thumb_callable(0xc46cc95usize);
+
 /// Recovered `lvx_object_set_size` at 0xc387ba8. Thumb callable address 0xc387ba9.
 pub const CANOPUS_FW_LVX_OBJECT_SET_SIZE_CALLABLE: usize = canopus_thumb_callable(0xc387ba9usize);
 
@@ -647,6 +650,9 @@ pub const CANOPUS_FW_APP_LOOKUP_PACKAGE_CALLABLE: usize = canopus_thumb_callable
 
 /// Recovered `font_reload_face_create` at 0x0c3967b4. Thumb callable address 0x0c3967b5.
 pub const CANOPUS_FW_FONT_RELOAD_FACE_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c3967b5usize);
+
+/// Recovered `bt_adapter_destroy_instance` at 0xc466178. Thumb callable address 0xc466179.
+pub const CANOPUS_FW_BT_ADAPTER_DESTROY_INSTANCE_CALLABLE: usize = canopus_thumb_callable(0xc466179usize);
 
 /// Recovered `font_reload_outline_release` at 0x0c3a0992. Thumb callable address 0x0c3a0993.
 pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c3a0993usize);
@@ -755,6 +761,9 @@ pub const CANOPUS_FW_MIWEAR_SESSION_LOOKUP_CALLABLE: usize = canopus_thumb_calla
 
 /// Recovered `calendar_font_destroy` at 0xc49258c. Thumb callable address 0xc49258d.
 pub const CANOPUS_FW_CALENDAR_FONT_DESTROY_CALLABLE: usize = canopus_thumb_callable(0xc49258dusize);
+
+/// Recovered `bt_adapter_enable` at 0xc905902. Thumb callable address 0xc905903.
+pub const CANOPUS_FW_BT_ADAPTER_ENABLE_CALLABLE: usize = canopus_thumb_callable(0xc905903usize);
 
 /// Recovered `bt_l2cap_submit_cid` at 0xc86f0bc. Thumb callable address 0xc86f0bd.
 pub const CANOPUS_FW_BT_L2CAP_SUBMIT_CID_CALLABLE: usize = canopus_thumb_callable(0xc86f0bdusize);
@@ -924,6 +933,9 @@ pub const CANOPUS_FW_LVX_LABEL_SET_TEXT_CALLABLE: usize = canopus_thumb_callable
 /// Recovered `font_reload_cache_acquire_or_create` at 0x0c3a7b78. Thumb callable address 0x0c3a7b79.
 pub const CANOPUS_FW_FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c3a7b79usize);
 
+/// Recovered `uv_async_init` at 0xc3f45f4. Thumb callable address 0xc3f45f5.
+pub const CANOPUS_FW_UV_ASYNC_INIT_CALLABLE: usize = canopus_thumb_callable(0xc3f45f5usize);
+
 /// Recovered `lv_draw_rect_dsc_init` at 0xc38e0d4. Thumb callable address 0xc38e0d5.
 pub const CANOPUS_FW_LV_DRAW_RECT_DSC_INIT_CALLABLE: usize = canopus_thumb_callable(0xc38e0d5usize);
 
@@ -1058,6 +1070,9 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // ble_advertising_stop: restricted - not exported until context/ownership approved
 // ble_scan_start: restricted - not exported until context/ownership approved
 // ble_scan_stop: restricted - not exported until context/ownership approved
+// bt_adapter_create_instance: restricted - not exported until context/ownership approved
+// bt_adapter_destroy_instance: restricted - not exported until context/ownership approved
+// bt_adapter_enable: restricted - not exported until context/ownership approved
 // bt_adapter_get_instance: restricted - not exported until context/ownership approved
 // bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
 // bt_adapter_get_state: restricted - not exported until context/ownership approved
@@ -1323,6 +1338,7 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // unlink: restricted - not exported until context/ownership approved
 // unregister_blockdriver: restricted - not exported until context/ownership approved
 // unregister_driver: restricted - not exported until context/ownership approved
+// uv_async_init: restricted - not exported until context/ownership approved
 // uv_mutex_init: restricted - not exported until context/ownership approved
 // uv_mutex_lock: restricted - not exported until context/ownership approved
 // uv_mutex_unlock: restricted - not exported until context/ownership approved

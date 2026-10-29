@@ -4,7 +4,7 @@
  * firmware : 4.100.155 (user-4.100.155-cn-202609041500)
  * sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
  * revision : 1
- * input_digest: 3ef818ed4e8d2617
+ * input_digest: 9d8b584ec4ff505c
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
@@ -226,6 +226,9 @@ static inline int * canopus_fw_errno_location(void) {
  * ble_advertising_stop: restricted - not exported until context/ownership approved
  * ble_scan_start: restricted - not exported until context/ownership approved
  * ble_scan_stop: restricted - not exported until context/ownership approved
+ * bt_adapter_create_instance: restricted - not exported until context/ownership approved
+ * bt_adapter_destroy_instance: restricted - not exported until context/ownership approved
+ * bt_adapter_enable: restricted - not exported until context/ownership approved
  * bt_adapter_get_instance: restricted - not exported until context/ownership approved
  * bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
  * bt_adapter_get_state: restricted - not exported until context/ownership approved
@@ -491,6 +494,7 @@ static inline int * canopus_fw_errno_location(void) {
  * unlink: restricted - not exported until context/ownership approved
  * unregister_blockdriver: restricted - not exported until context/ownership approved
  * unregister_driver: restricted - not exported until context/ownership approved
+ * uv_async_init: restricted - not exported until context/ownership approved
  * uv_mutex_init: restricted - not exported until context/ownership approved
  * uv_mutex_lock: restricted - not exported until context/ownership approved
  * uv_mutex_unlock: restricted - not exported until context/ownership approved
