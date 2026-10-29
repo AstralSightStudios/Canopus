@@ -57,6 +57,10 @@ enum canopus_command {
     CANOPUS_CMD_STAGE_RES_WRITE = 27,
     CANOPUS_CMD_STAGE_RES_FINISH = 28,
     CANOPUS_CMD_OPEN_MANAGER = 29,
+    /* Publish the Manager's launcher icon if the launcher page is alive. State-neutral
+     * (touches neither the pending operation nor the error code), idempotent per launcher
+     * page, and cheap: the installer face repeats it on a timer. */
+    CANOPUS_CMD_PUBLISH_LAUNCHER = 30,
 };
 
 struct canopus_proto_request_v1 {

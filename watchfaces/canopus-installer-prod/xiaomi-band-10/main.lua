@@ -27,6 +27,7 @@ local CMD_QUERY_DEVICE = 9
 local CMD_INSTALL = 13
 local CMD_RESTORE_AFTER_BOOT = 14
 local CMD_OPEN_MANAGER = 29
+local CMD_PUBLISH_LAUNCHER = 30
 local RESULT_COMPLETED = 5
 local request_id = 0
 local STAGE0_ENTRY_MARKER = 0xA5A5A5A5
@@ -939,6 +940,22 @@ make_button("Clear Env", '#8a1f14', function()
         set_status("Clear Env failed", '#ff9a9a')
     end
 end)
+
+-- 3.1.28 builds the launcher's icon list from the apps that are running and from
+-- a persisted order list that the Manager only enters while the app list is open.
+-- Keep asking while this face is up; the Supervisor adds the icon the moment the
+-- app list exists (and does nothing otherwise).
+if type(lvgl.Timer) == "function" then
+    lvgl.Timer {
+        period = 1500,
+        repeat_count = -1,
+        cb = function()
+            if not run_active and supervisor_present() then
+                pcall(exchange, CMD_PUBLISH_LAUNCHER, nil, CPC2_HEADER)
+            end
+        end,
+    }
+end
 
 set_status("Ready")
 

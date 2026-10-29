@@ -1787,6 +1787,47 @@ TEST(v2_local_transport_dispatches_without_device)
     CHECK(canopus_supervisor_local_transport(&req, 0, &resp, &sup) == -1);
 }
 
+static int g_publish_launcher_result;
+
+static int fake_publish_launcher(void *cookie)
+{
+    (void)cookie;
+    return g_publish_launcher_result;
+}
+
+TEST(v2_publish_launcher_leaves_the_last_operation_alone)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform = fake_platform;
+    struct canopus_proto_request_v1 req;
+    struct canopus_proto_response_v1 resp;
+
+    platform.publish_launcher = fake_publish_launcher;
+    canopus_supervisor_init(&sup, 7, &platform, 0);
+    canopus_memset(&req, 0, sizeof(req));
+    req.magic = CANOPUS_PROTO_MAGIC;
+    req.struct_size = sizeof(req);
+    req.abi_major = CANOPUS_ABI_MAJOR;
+    req.abi_minor = CANOPUS_ABI_MINOR;
+    req.command = CANOPUS_CMD_PUBLISH_LAUNCHER;
+    req.request_id = 0x92u;
+    sup.pending_op = CANOPUS_SUP_CMD_ENABLE;
+    sup.error_code = CANOPUS_SUP_ERR_ACTIVATE;
+
+    g_publish_launcher_result = 0;
+    CHECK(canopus_supervisor_local_transport(&req, 0, &resp, &sup) == 0);
+    CHECK_EQ(resp.result_state, CANOPUS_RESULT_COMPLETED);
+    g_publish_launcher_result = -103;
+    CHECK(canopus_supervisor_local_transport(&req, 0, &resp, &sup) == 0);
+    CHECK_EQ(resp.result_state, CANOPUS_RESULT_FAILED);
+    CHECK_EQ(sup.pending_op, (uint32_t)CANOPUS_SUP_CMD_ENABLE);
+    CHECK_EQ(sup.error_code, (uint32_t)CANOPUS_SUP_ERR_ACTIVATE);
+
+    canopus_supervisor_init(&sup, 7, &fake_platform, 0);
+    CHECK(canopus_supervisor_local_transport(&req, 0, &resp, &sup) == 0);
+    CHECK_EQ(resp.result_state, CANOPUS_RESULT_DISALLOWED);
+}
+
 TEST(v2_request_tracked_in_pending)
 {
     struct canopus_supervisor_v1 sup;
@@ -2203,6 +2244,7 @@ static const struct test_registry supervisor_device_tests[] = {
     { "v2_decode_rejects_malformed", v2_decode_rejects_malformed_wrapper },
     { "v2_device_write_echoes_request_id", v2_device_write_echoes_request_id_wrapper },
     { "v2_local_transport_dispatches_without_device", v2_local_transport_dispatches_without_device_wrapper },
+    { "v2_publish_launcher_leaves_the_last_operation_alone", v2_publish_launcher_leaves_the_last_operation_alone_wrapper },
     { "v2_request_tracked_in_pending", v2_request_tracked_in_pending_wrapper },
     { "v2_enable_by_module_id", v2_enable_by_module_id_wrapper },
     { "v2_unknown_magic_rejected", v2_unknown_magic_rejected_wrapper },

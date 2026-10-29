@@ -136,6 +136,12 @@ static const char *manager_state_name(uint32_t state)
     case CANOPUS_STATE_UNLOADED: return "已卸载";
     case CANOPUS_STATE_BOOT_RESIDENT: return "启动时常驻";
     case CANOPUS_STATE_DISABLED_NEXT_BOOT: return "下次启动时禁用";
+    case CANOPUS_STATE_FAILED: return "运行失败";
+    case CANOPUS_STATE_FAIL_STOP: return "故障停止";
+    case CANOPUS_STATE_QUARANTINED_NEXT_BOOT: return "下次启动时隔离";
+    case CANOPUS_STATE_UPDATE_STAGED: return "更新已暂存";
+    case CANOPUS_STATE_REBOOT_REQUIRED: return "需要重启";
+    case CANOPUS_STATE_REMOVE_PENDING: return "等待移除";
     default: return canopus_state_name(state);
     }
 }

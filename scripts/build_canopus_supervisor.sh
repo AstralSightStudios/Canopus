@@ -229,7 +229,14 @@ MANAGER_ICON_SOURCE="$ROOT/watchfaces/canopus-installer/manager_icon.bin"
     exit 1
 }
 mkdir -p "$PROD_FAMILY_STAGE"
-cp "$MANAGER_ICON_SOURCE" "$PROD_FAMILY_STAGE/manager_icon.bin"
+if [ "$TARGET_ID" = xiaomi-band-9-pro-3.1.190 ]; then
+    # The v8 firmware generation reads an lv_img_header_t, not the v9 header.
+    python3 "$ROOT/scripts/convert_manager_icon.py" "$MANAGER_ICON_SOURCE" "$PROD_FAMILY_STAGE/manager_icon.bin"
+elif [ "$TARGET_ID" = xiaomi-band-9-3.1.32 ]; then
+    python3 "$ROOT/scripts/convert_manager_icon.py" --rgb565 "$MANAGER_ICON_SOURCE" "$PROD_FAMILY_STAGE/manager_icon.bin"
+else
+    cp "$MANAGER_ICON_SOURCE" "$PROD_FAMILY_STAGE/manager_icon.bin"
+fi
 cp "$OUT/canopus_supervisor.elf" "$TARGET_STAGE"
 if [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
     python3 "$ROOT/scripts/build_band11_installer.py" --target "$TARGET_ID" --supervisor "$OUT/canopus_supervisor.elf" \

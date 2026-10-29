@@ -177,6 +177,9 @@ struct canopus_sup_platform_v1 {
     /* Remove one empty directory. Optional; returns negative errno on failure. */
     int (*dir_remove)(void *cookie, const char *path);
     int (*open_manager)(void *cookie);
+    /* Publish the Manager's launcher icon when the launcher page is alive: 0 once
+     * published for it, negative while it is not. Optional. */
+    int (*publish_launcher)(void *cookie);
 };
 
 int canopus_sup_l2_start(void);

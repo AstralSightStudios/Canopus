@@ -1169,6 +1169,12 @@ static int sup_open_manager(void *cookie)
     return canopus_manager_native_open();
 }
 
+static int sup_publish_launcher(void *cookie)
+{
+    (void)cookie;
+    return canopus_manager_native_publish_launcher();
+}
+
 static int sup_stage_package(void *cookie, const char *token, uint32_t stage)
 {
 #ifdef CANOPUS_SUP_WATCHFACE_DELETE
@@ -2113,4 +2119,5 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
 #endif
     SUP_DIR_REMOVE,
     sup_open_manager,
+    sup_publish_launcher,
 };

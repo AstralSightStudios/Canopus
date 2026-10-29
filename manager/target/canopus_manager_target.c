@@ -1540,6 +1540,11 @@ int canopus_manager_native_install(void)
     return 0;
 }
 
+int canopus_manager_native_publish_launcher(void)
+{
+    return -1;
+}
+
 int canopus_manager_native_open(void)
 {
     typedef int32_t (*page_goto_fn)(uint32_t, uint32_t, uint32_t, uint32_t);

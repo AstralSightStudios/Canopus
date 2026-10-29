@@ -1209,6 +1209,16 @@ int canopus_supervisor_handle_v2_request(struct canopus_supervisor_v1 *sup,
         canopus_proto_response_init(resp, req->request_id, rc, 0u);
         return 0;
     }
+    if (req->command == CANOPUS_CMD_PUBLISH_LAUNCHER) {
+        /* Like a query it leaves the last-operation record (pending op/state,
+         * error code) alone: the installer face repeats it on a timer. */
+        rc = (sup->platform != 0 && sup->platform->publish_launcher != 0)
+                 ? (sup->platform->publish_launcher(sup->platform_cookie) == 0
+                        ? CANOPUS_RESULT_COMPLETED : CANOPUS_RESULT_FAILED)
+                 : CANOPUS_RESULT_DISALLOWED;
+        canopus_proto_response_init(resp, req->request_id, rc, 0);
+        return 0;
+    }
     op = v2_to_sup_cmd(req->command);
     if (op == 0) {
         canopus_proto_response_init(resp, req->request_id, CANOPUS_RESULT_REJECTED, 0);

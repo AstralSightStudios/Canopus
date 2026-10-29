@@ -647,13 +647,17 @@ end
 
 local function stage_manager_icon()
     local content = read_all(MANAGER_ICON_RESOURCE, "rb")
-    if type(content) ~= "string" or #content < 13
-        or content:byte(1) ~= 0x19 then
+    -- lv_img_header_t: colour format in bits 0-4 (5 = true colour with alpha),
+    -- width in bits 10-20, height in bits 21-31, then RGB565 + alpha pixels.
+    if type(content) ~= "string" or #content < 5
+        or content:byte(1) % 32 ~= 5 then
         return false, "missing or invalid manager_icon.bin"
     end
-    local width = content:byte(5) + content:byte(6) * 0x100
-    local height = content:byte(7) + content:byte(8) * 0x100
-    if width < 1 or height < 1 or #content ~= 12 + width * height * 4 then
+    local header = content:byte(1) + content:byte(2) * 0x100
+        + content:byte(3) * 0x10000 + content:byte(4) * 0x1000000
+    local width = (header // 0x400) % 0x800
+    local height = (header // 0x200000) % 0x800
+    if width < 1 or height < 1 or #content ~= 4 + width * height * 3 then
         return false, "manager_icon.bin size mismatch"
     end
     local output = io.open(MANAGER_ICON_PATH, "wb")
