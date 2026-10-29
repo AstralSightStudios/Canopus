@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.qjs_new_object",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "qjs_new_object",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3b982c",
+  "callable_address": "0xc3b982d",
+  "prototype": "uint64_t(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "qjs-owner-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Returns owned JSValue or exception; only call on its JSContext owner task."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-QJS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-QJS-001"
+    ],
+    "source": "Exact Q66 .155 IDB recovery recorded in EVID-ASTROLINK-4155-QJS-001; Astrolink static ABI audit on 2026-10-29."
+  },
+  "notes": "Exact address catalog for module verification only. Not a public callable/codegen approval or physical device validation. Returns owned JSValue or exception; only call on its JSContext owner task."
+}

@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ASTROLINK-4155-QJS-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "Which exact Q66 .155 QJS entry points are referenced by the Astrolink native Feature and LE CoC integration?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.155.private_abi.feature_register_feature",
+    "xiaomi-band-11-4.100.155.private_abi.feature_manager_post_task",
+    "xiaomi-band-11-4.100.155.private_abi.uv_mutex_init",
+    "xiaomi-band-11-4.100.155.private_abi.uv_mutex_lock",
+    "xiaomi-band-11-4.100.155.private_abi.uv_mutex_unlock",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_new_object",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_new_c_function2",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_is_function",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_call",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_define_property_value_str",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_new_string_len",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_to_cstring_len2",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_free_cstring",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_free_value",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_get_exception",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_new_array_buffer_copy",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_get_array_buffer",
+    "xiaomi-band-11-4.100.155.private_abi.qjs_get_typed_array_buffer"
+  ],
+  "prototype_hypothesis": "Per-symbol AAPCS prototypes recorded with primitive fixed-width types; JSValue is uint64_t scalar, not C struct. Restricted until independent runtime validation.",
+  "callsite_evidence": [
+    "0xc495f2c feature_register_feature: int(void *, const void *). Registers a retained 28-byte descriptor and invokes lifecycle onRegister; per-app registry, module descriptor must remain resident.",
+    "0xc491cd0 feature_manager_post_task: void(void *, const void *). Copies a 24-byte callback descriptor under manager mutex and wakes libuv. Null reference field is supported; callback receives active=0 at manager shutdown.",
+    "0xc3f4b64 uv_mutex_init: int(void *). Initializes caller-owned immovable mutex storage via pthread_mutex_init; returns initialization result.",
+    "0xc3f4bf8 uv_mutex_lock: void(void *). Locks initialized firmware mutex; may block; do not call from interrupt context.",
+    "0xc3f4c14 uv_mutex_unlock: void(void *). Releases caller-owned initialized firmware mutex.",
+    "0xc3b982c qjs_new_object: uint64_t(void *). Returns owned JSValue or exception; only call on its JSContext owner task.",
+    "0xc3b98d0 qjs_new_c_function2: uint64_t(void *, void *, const char *, int, int, int). Returns owned native function. Cproto=1 takes generic magic ABI fn(context,uint64_t this,int argc,uint64_t *argv,int magic).",
+    "0xc3bf280 qjs_is_function: int(void *, uint64_t). Borrows JSValue and tests callability on context owner task.",
+    "0xc3ccb00 qjs_call: uint64_t(void *, uint64_t, uint64_t, int, const uint64_t *). Borrows callable/this/argv and returns owned JSValue; exceptions must be taken and released on owner task.",
+    "0xc3c3c46 qjs_define_property_value_str: int(void *, uint64_t, const char *, uint64_t, int). Consumes assigned JSValue; uint64_t parameters follow AAPCS integer-pair alignment. This is DefinePropertyValueStr, not shorter SetPropertyStr.",
+    "0xc3b69e8 qjs_new_string_len: uint64_t(void *, const char *, uint32_t). Copies UTF-8 bytes and returns owned JSValue or exception.",
+    "0xc3b883c qjs_to_cstring_len2: const char *(void *, uint32_t *, uint64_t, int). Returns temporary converted string; caller must free via qjs_free_cstring on owner task.",
+    "0xc3b89f2 qjs_free_cstring: void(void *, const char *). Releases string returned by qjs_to_cstring_len2 on owner task.",
+    "0xc3b813c qjs_free_value: void(void *, uint64_t). Decrements owned JSValue reference on context owner task.",
+    "0xc3b793e qjs_get_exception: uint64_t(void *). Takes runtime exception slot and returns owned JSValue, resetting exception slot.",
+    "0xc3e7674 qjs_new_array_buffer_copy: uint64_t(void *, const uint8_t *, uint32_t). Copies bytes and returns owned ArrayBuffer JSValue; input slice borrowed only during call.",
+    "0xc3e7f9c qjs_get_array_buffer: uint8_t *(void *, uint32_t *, uint64_t). Returns borrowed backing bytes; caller must retain value, verify attached state and copy before owner task yields.",
+    "0xc3e848c qjs_get_typed_array_buffer: uint64_t(void *, uint64_t, uint32_t *, uint32_t *, uint32_t *). Returns owned backing ArrayBuffer JSValue plus typed-array offset/length/element size; binding accepts Uint8Array class22 only.",
+    "Exact AP entry bytes 0xc495f2c: 2de9f04f89b08846824600af (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc491cd0: 2de9f04f044685b000f1200a (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3f4b64: 80b582b000af3b79391d23f0 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3f4bf8: 80b500af5af797fd28b10022 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3f4c14: 80b500af60f7eaf828b10022 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3b982c: 80b582b00122836a009202af (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3b98d0: b0b584b004afd0e90c45cde9 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3bf280: 80b5013300af11d1d1880d29 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3ccb00: 0221b0b50024032588b008af (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3c3c46: 2de9f04186b006afb9690446 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3b69e8: 2de9f0410b460d4688b08e18 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3b883c: 2de9f04f13f1070f83b08246 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3b89f2: 80b500af29b16ff00603a1f1 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3b813c: 98b513f10c0f00af06d91168 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3b793e: b0b500240225036900afd3e9 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3e7674: 012380b586b00593074b06af (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3e7f9c: b0b500af05460c46fff75cff (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc3e848c: 0021b0b582b002afbc690091 (12 bytes, image VA base0x0c0c0000)."
+  ],
+  "control_flow_evidence": [
+    "Stock app0x0c745fe0 calls FeatureRegisterFeature0x0c495f2c for locale first at0x0c746460; description is28bytes and retained.",
+    "Feature manager queue0x0c491cd0 copies24bytes under mutex; drain0x0c4928b0 invokes active=1; destructor0x0c49794e invokes active=0.",
+    "AIOTJS require0x0c73c944 strips @app-module/ and checks manifest via0x0c737d34 before feature lookup.",
+    "Independent AP check: SHA-256 matches target, pmain signature at file0x6133a0 corresponds to VA0x0c6d33a0, establishing image base0x0c0c0000; every newly recorded entry has captured12-byte instruction prefix."
+  ],
+  "ownership_analysis": "See each callsite and symbol ownership field. Callbacks and registered native code require resident module lifetime; owner generation prevents stale queued work accessing reused context/channel.",
+  "unsafe_assumptions": [
+    "These are static recovery results supplied by firmware analysis, not hardware proof.",
+    "No restricted/PENDING symbol is promoted to public/codegen callable approval. User authorized exact-address allowlist additions on 2026-10-29."
+  ],
+  "recommended_probe": "Build and verify exact-target module, load through real Canopus Supervisor, open example app, exercise Feature lifecycle, then use two physical devices for LE CoC RF and coexistence validation.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-29T17:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../astrolink/docs/qjs-abi.md",
+      "sha256": "b6fc33399eb8918b44b50ea81075328092fee9a58a6944f0843cc4f315070091",
+      "role": "static-abi-evidence"
+    },
+    {
+      "uri": "../astrolink/src/qjs/target.rs",
+      "sha256": "3b59d7aa352cf943cb93af856a5984e4d751a7025d8e6a3528d2dc9597fc03ff",
+      "role": "static-abi-evidence"
+    },
+    {
+      "uri": "ida:///Users/lesetong/develop/mifw/analysis-q66-177/155/q66-ap.i64",
+      "role": "exact-target-disassembly"
+    }
+  ]
+}
