@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.js_new_array_buffer",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "js_new_array_buffer",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2D34C8",
+  "prototype": "JSValue js_new_array_buffer(JSContext *ctx, uint8_t *buf, size_t length)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Static cross-check of the device-measured array-buffer class id: 19 appears as an immediate here and as 19*8 in the prototype-table offset."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-005"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-005"
+    ],
+    "source": "Validates the length against 'invalid array buffer length', allocates a 28-byte JSArrayBuffer through the context malloc hook, stores the byte length at +0, installs the free callback 0xC27369C at +24 and initialises the two list heads at +12/+16, then wraps it with the object constructor 0xC2A167C passing class id 19. The wrapper path also reaches the class prototype at ctx+40 with an offset of 152 = 19*8, which is the same number by a second route. Two callers in the JS binding layer (0xC861308, 0xC8712A4)."
+  },
+  "notes": "Static cross-check of the device-measured array-buffer class id: 19 appears as an immediate here and as 19*8 in the prototype-table offset.",
+  "callable_address": "0xc2d34c9"
+}

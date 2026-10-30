@@ -1860,6 +1860,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *, uint8_t *, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "js_new_array_buffer",
+        kind: "function",
+        entry: 0xc2d34c8usize,
+        callable: 0xc2d34c9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "JSValue js_new_array_buffer(JSContext *ctx, uint8_t *buf, size_t length)",
+    },
+    TargetPrivateSymbolRecord {
         name: "l2_owner_timer_init",
         kind: "function",
         entry: 0xc2e3994usize,
@@ -3568,6 +3577,8 @@ pub const FS_PUTFILEP_CALLABLE: usize = 0xc1b979dusize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x2013c144usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7ec47cusize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7ec47dusize;
+pub const JS_NEW_ARRAY_BUFFER_ENTRY: usize = 0xc2d34c8usize;
+pub const JS_NEW_ARRAY_BUFFER_CALLABLE: usize = 0xc2d34c9usize;
 pub const L2_OWNER_TIMER_INIT_ENTRY: usize = 0xc2e3994usize;
 pub const L2_OWNER_TIMER_INIT_CALLABLE: usize = 0xc2e3995usize;
 pub const L2_OWNER_TIMER_START_ENTRY: usize = 0xc2e3b84usize;

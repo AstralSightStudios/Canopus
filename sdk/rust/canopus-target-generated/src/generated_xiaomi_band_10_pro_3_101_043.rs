@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 92eb6035ce0e6b10
+// input_digest: 763b80573aded4a0
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -308,6 +308,9 @@ pub unsafe fn canopus_fw_lvx_content_pad_bottom(a0: *mut core::ffi::c_void, a1: 
     f(a0, a1, a2);
 }
 
+/// Recovered `js_new_array_buffer` at 0xC2D34C8. Thumb callable address 0xc2d34c9.
+pub const CANOPUS_FW_JS_NEW_ARRAY_BUFFER_CALLABLE: usize = canopus_thumb_callable(0xc2d34c9usize);
+
 /// Recovered `p67_blur_pm_relax` at 0x0c1a79b4. Thumb callable address 0xc1a79b5.
 pub const CANOPUS_FW_P67_BLUR_PM_RELAX_CALLABLE: usize = canopus_thumb_callable(0xc1a79b5usize);
 
@@ -466,6 +469,9 @@ pub const canopus_fw_p67_battery_status_slot: usize = 0x2010fe60usize;
 
 /// Recovered `control_center_scroll` at 0x0c5036c4. Thumb callable address 0x0c5036c5.
 pub const CANOPUS_FW_CONTROL_CENTER_SCROLL_CALLABLE: usize = canopus_thumb_callable(0x0c5036c5usize);
+
+/// Recovered global `qjs_class_ids` at .
+pub const canopus_fw_qjs_class_ids: usize = usize;
 
 /// Recovered `lv_indev_get_point` at 0x1c050c10. Thumb callable address 0x1c050c11.
 pub const CANOPUS_FW_LV_INDEV_GET_POINT_CALLABLE: usize = canopus_thumb_callable(0x1c050c11usize);
@@ -1777,6 +1783,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // hidden_and_show_app_cb: restricted - not exported until context/ownership approved
 // insmod: restricted - not exported until context/ownership approved
 // ioctl: restricted - not exported until context/ownership approved
+// js_new_array_buffer: restricted - not exported until context/ownership approved
 // l2_owner_timer_init: restricted - not exported until context/ownership approved
 // l2_owner_timer_start: restricted - not exported until context/ownership approved
 // l2cap_allocate_cid: restricted - not exported until context/ownership approved

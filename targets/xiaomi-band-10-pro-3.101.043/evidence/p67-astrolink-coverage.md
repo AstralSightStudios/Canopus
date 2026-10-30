@@ -729,3 +729,42 @@ Next step for this question, in priority order:
 Until then the three array-buffer entries and the two string entries stay open in
 the pack; nothing was filled from resemblance.
 
+### 7d. Class ids measured on the device, and what they unlocked
+
+Two-length diff on a live runtime (`EVID-PORT-1043-DEVICE-002`): a staged script
+allocated `ArrayBuffer(512)`/`0xA7`, `ArrayBuffer(8)`/`0x5C` and
+`Uint16Array(16)`/`0x5C5C`, then one PSRAM snapshot was searched for the payloads
+and for records with a small refcount, a plausible `+6` class id and the payload
+pointer plus its length inside. Result:
+
+| class | id | object found | field layout seen |
+| --- | --- | --- | --- |
+| `JS_CLASS_ARRAY_BUFFER` | **19** | `0x3C3146A0` (rc 2, payload 512) | payload at `+0x54`, byte length at `+0x58` |
+| `JS_CLASS_UINT8_ARRAY` | **23** | `0x3C3146D0` (rc 1, 512 elements) | payload at `+0x24`, element count at `+0x28` |
+| `JS_CLASS_UINT16_ARRAY` | **25** | `0x3C314610` (rc 1, 16 elements) | payload at `+0x24`, element count at `+0x28` |
+
+The ids are consecutive in QuickJS's typed-array class order, which is the sanity
+check that `+6` really is the class id; and `19` is confirmed a second time on the
+static side, where `js_new_array_buffer 0xC2D34C8` passes `19` as the object class
+and indexes the prototype table at `ctx+40` with offset `152 = 19*8`, validating
+`'invalid array buffer length'` and installing the free callback `0xC27369C` on a
+28-byte JSArrayBuffer.
+
+**What this unlocks and what it does not.** `19` is no longer a guess inherited
+from .155 — it is measured. The three astrolink wrappers still have to be picked by
+shape (creation taking data/length plus a free callback; the two getters taking a
+value plus output pointers), and that is the remaining work: the creation function
+`0xC2D34C8` itself is *not* the module's `qjs_new_array_buffer_copy`, because the
+module's entry copies the caller's data while this one adopts a buffer.
+
+Next pass should therefore look for, in this order:
+1. a small function calling `0xC2D34C8` after copying `len` bytes (that is
+   `qjs_new_array_buffer_copy`);
+2. a function checking class `19` and returning the pair at `+0x54`/`+0x58`
+   (`qjs_get_array_buffer`);
+3. a function checking the typed-array ids `23`/`25` (or the class range) and
+   returning the three out-parameters (`qjs_get_typed_array_buffer`).
+
+The two string entries are unaffected by this and stay open with the invariants
+already written down in 7b.
+
