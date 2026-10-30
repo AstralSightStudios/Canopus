@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 506f97a0492c4159
+// input_digest: 4ccccbaff079153b
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -897,6 +897,9 @@ pub const CANOPUS_FW_LV_OBJ_GET_STYLE_PROP_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `calendar_font_create` at 0xc4950b0. Thumb callable address 0xc4950b1.
 pub const CANOPUS_FW_CALENDAR_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc4950b1usize);
 
+/// Recovered `l2cap_disconnect_channel` at 0xc872dc0. Thumb callable address 0xc872dc1.
+pub const CANOPUS_FW_L2CAP_DISCONNECT_CHANNEL_CALLABLE: usize = canopus_thumb_callable(0xc872dc1usize);
+
 /// Recovered `calendar_icon_publish` at 0xc5486d0. Thumb callable address 0xc5486d1.
 pub const CANOPUS_FW_CALENDAR_ICON_PUBLISH_CALLABLE: usize = canopus_thumb_callable(0xc5486d1usize);
 
@@ -1260,6 +1263,7 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 // l2cap_accept_handler: restricted - not exported until context/ownership approved
 // l2cap_connect_handler: restricted - not exported until context/ownership approved
 // l2cap_credit_queue_flush: restricted - not exported until context/ownership approved
+// l2cap_disconnect_channel: restricted - not exported until context/ownership approved
 // l2cap_disconnect_handler: restricted - not exported until context/ownership approved
 // l2cap_find_channel: restricted - not exported until context/ownership approved
 // l2cap_find_le_psm: restricted - not exported until context/ownership approved
