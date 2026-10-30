@@ -1330,3 +1330,65 @@ Named holes the module must express as compile-time absence: the **meaning** of 
 CoC event numbers, the connect/accept status fields, `ADAPTER_LOOP`, and the three
 advertising parameter fields.
 
+## The queue primitive: p67 does not need the loop capture
+
+`EVID-PORT-1043-QUEUE-001`. `bt_queue_external 0xC7EB9CC` has 115 call sites and is
+the firmware's own cross-task posting primitive.
+
+**1. Contract.** The queue is a firmware singleton, not something a caller passes:
+
+| global | role |
+| --- | --- |
+| `0x2013BD70` | first page of the work list; each page is 408 bytes = 20 slots of five words |
+| `0x2013BD80` | the queue lock (its null-ness selects the fallback path) |
+| `0x2013BD84` | the wake semaphore |
+| `0xC7EB038` | the drain loop, i.e. the consumer, running on the Bluelet FSM task |
+
+A queued post stores `owner` at slot+8, `arg` at slot+12, the tag word at slot+16,
+`handler` at slot+20 and the `flag` byte at slot+24, marks the page in use and
+signals. The handler is invoked as **`handler(owner, event, arg)`** on the **FSM
+task**, so `flag = 1` means "deliver to the owner task". The **poster allocates
+`arg`, the handler frees it** (that is exactly what the firmware's own receive path
+does with its 12-byte node).
+
+The important trap: **if `0x2013BD80` is still null the call does not queue at all**.
+It logs `[FSM][After0000,External][fi:%p,ev:%d,arg:%p]` and calls
+`handler(0, 221, arg)` **synchronously**, so event 221 means "ran inline in the
+caller's context".
+
+**2. Can a module use it?** Yes — the module executes inside the firmware, so this is
+an internal API like any other. It cannot *create* a queue, and it has to tolerate
+the synchronous 221 path if it posts before the stack is up.
+
+**3. What to pass for `owner`.** The handler gets back whatever token the poster
+passed as its first argument, and the queue does not interpret it, so the module can
+pass its own instance pointer. Passing the subsystem's own token
+(`dword_2013BDB4`, as `gap_host_stock_receive` does) only changes which instance the
+handler sees, not which task runs it.
+
+**Consequence for the module:** on p67 the module can post its own work and be called
+back on the FSM task, so **`ADAPTER_LOOP` and `uv_close` are no longer needed**, and
+the loop/task layout is required only by the Band 11 targets. That removes two of the
+four holes.
+
+## CoC event field table
+
+Event numbers are safe to route by field usage; the **names** stay a hole.
+
+| event | fields read from `data` | what the branch does |
+| --- | --- | --- |
+| 1 | u16 `+0`, channel `+32/+52/+56` | channel setup: takes the word at `+0` into `sub_C81EE3C(+16,129)+12` and initialises the config words |
+| 2 | u16 `+4`, works from `+8` | connect/assign path, driven from the small offsets |
+| 3 | u16 `+28`, `+72`, `+108`, `+114` | channel state/config check |
+| 5 | u16 `+4` (cleared) | **data path**, handled inline, then `0xC805C98` |
+| 6 | `+0` | driven from the leading word |
+| 7 | u32 `+4` | driven from the dword at `+4` |
+| 8 | u16 `+2` | driven from the small word |
+| 12 | flag byte `+17` bit0, byte `+16`, `+4` | request handling with the flag pair |
+| 13 | same flags, `+6`, 24-byte peer address at `+24` | incoming request; compares the address against a channel |
+| 14 | byte `+132`, u16 `+130`, area `+106` | high-offset branch (flow/credits or config update) |
+
+With `COC_QUEUE_EVENT = 1` for the work flag, a module can route: setup on 1/2/3,
+data on 5, and the close/credit paths on 6/7/8 and 12/13/14 — without inventing names
+for them.
+
