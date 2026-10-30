@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 430b1893b71e1e68
+ * input_digest: dc24fd7095b23fde
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -629,6 +629,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * native_font_release: restricted - not exported until context/ownership approved
  * native_font_wait: restricted - not exported until context/ownership approved
  * notifications_scroll: restricted - not exported until context/ownership approved
+ * nx_pipe: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
  * opendir: restricted - not exported until context/ownership approved
  * p67_battery_child_count: restricted - not exported until context/ownership approved
@@ -662,6 +663,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
  * readdir: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
+ * register_inode: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
  * rmdir: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved

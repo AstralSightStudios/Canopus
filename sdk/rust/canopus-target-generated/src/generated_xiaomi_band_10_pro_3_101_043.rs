@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 430b1893b71e1e68
+// input_digest: dc24fd7095b23fde
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -866,6 +866,9 @@ pub unsafe fn canopus_fw_close(a0: i32) -> i32 {
 /// Recovered `vibrator_hal_transact` at 0x0c3db82c. Thumb callable address 0x0c3db82d.
 pub const CANOPUS_FW_VIBRATOR_HAL_TRANSACT_CALLABLE: usize = canopus_thumb_callable(0x0c3db82dusize);
 
+/// Recovered `register_inode` at 0xC1AFFD8. Thumb callable address 0xc1affd9.
+pub const CANOPUS_FW_REGISTER_INODE_CALLABLE: usize = canopus_thumb_callable(0xc1affd9usize);
+
 /// Recovered `bt_queue_external` at 0xc7eb9cc. Thumb callable address 0xc7eb9cd.
 pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(0xc7eb9cdusize);
 
@@ -1058,6 +1061,9 @@ pub const CANOPUS_FW_FSYNC_CALLABLE: usize = canopus_thumb_callable(0x0c1d2a7dus
 /// Recovered `lv_obj_set_scroll_dir` at 0x1c02cbe8. Thumb callable address 0x1c02cbe9.
 pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_DIR_CALLABLE: usize = canopus_thumb_callable(0x1c02cbe9usize);
 
+/// Recovered `nx_pipe` at 0xC1A609C. Thumb callable address 0xc1a609d.
+pub const CANOPUS_FW_NX_PIPE_CALLABLE: usize = canopus_thumb_callable(0xc1a609dusize);
+
 /// Recovered `core_bt_pair_request_callback` at 0xc709e90. Thumb callable address 0xc709e91.
 pub const CANOPUS_FW_CORE_BT_PAIR_REQUEST_CALLBACK_CALLABLE: usize = canopus_thumb_callable(0xc709e91usize);
 #[allow(non_snake_case)]
@@ -1090,6 +1096,9 @@ pub const CANOPUS_FW_P67_BLUR_GPU_FINISH_CALLABLE: usize = canopus_thumb_callabl
 
 /// Recovered `lv_obj_get_style_prop` at 0x0c1068a8. Thumb callable address 0x0c1068a9.
 pub const CANOPUS_FW_LV_OBJ_GET_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0x0c1068a9usize);
+
+/// Recovered global `pipe_file_operations` at 0x2CCBE5A4.
+pub const canopus_fw_pipe_file_operations: usize = 0x2CCBE5A4usize;
 
 /// Recovered `screen_get_state` at 0x0ca72f3c. Thumb callable address 0x0ca72f3d.
 pub const CANOPUS_FW_SCREEN_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0ca72f3dusize);
@@ -1605,6 +1614,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // native_font_release: restricted - not exported until context/ownership approved
 // native_font_wait: restricted - not exported until context/ownership approved
 // notifications_scroll: restricted - not exported until context/ownership approved
+// nx_pipe: restricted - not exported until context/ownership approved
 // offload_property_apply: FORBIDDEN - no binding may ever be generated
 // opendir: restricted - not exported until context/ownership approved
 // p67_battery_child_count: restricted - not exported until context/ownership approved
@@ -1638,6 +1648,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // public_work_queue: FORBIDDEN - no binding may ever be generated
 // readdir: restricted - not exported until context/ownership approved
 // register_blockdriver: restricted - not exported until context/ownership approved
+// register_inode: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
 // rmdir: restricted - not exported until context/ownership approved
 // rmmod: restricted - not exported until context/ownership approved

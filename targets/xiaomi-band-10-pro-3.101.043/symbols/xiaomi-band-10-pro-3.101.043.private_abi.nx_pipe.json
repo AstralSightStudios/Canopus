@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.nx_pipe",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "nx_pipe",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC1A609C",
+  "callable_address": "0xc1a609d",
+  "prototype": "int nx_pipe(int *fds, size_t bufsize, int flags)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Anchors the loop pipe identity; register_inode is called with the operations table as its second argument."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FEASIBILITY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FEASIBILITY-001"
+    ],
+    "source": "Formats '/var/pipe/%d' from the FIFO counter dword_200EE948, allocates the 1024-byte FIFO (the twin 0xC1A5F88 takes the size as an argument), then calls register_inode 0xC1AFFD8 with pipe_file_operations 0x2CCBE5A4 and file type 438 before opening both ends through 0xC1D0A98."
+  },
+  "notes": "Anchors the loop pipe identity; register_inode is called with the operations table as its second argument. Callable address is the Thumb entry; the symbol exists to anchor the pipe identity, not as a module call site."
+}

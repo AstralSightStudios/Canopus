@@ -1725,6 +1725,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void(void *event)",
     },
     TargetPrivateSymbolRecord {
+        name: "nx_pipe",
+        kind: "function",
+        entry: 0xc1a609cusize,
+        callable: 0xc1a609dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int nx_pipe(int *fds, size_t bufsize, int flags)",
+    },
+    TargetPrivateSymbolRecord {
         name: "p67_battery_child_count",
         kind: "function",
         entry: 0xc5881d8usize,
@@ -1939,6 +1948,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "pipe_file_operations",
+        kind: "global",
+        entry: 0x2ccbe5a4usize,
+        callable: 0x2ccbe5a4usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "struct file_operations",
+    },
+    TargetPrivateSymbolRecord {
+        name: "register_inode",
+        kind: "function",
+        entry: 0xc1affd8usize,
+        callable: 0xc1affd9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int register_inode(const char *path, void *ops, int type, void *priv)",
     },
     TargetPrivateSymbolRecord {
         name: "sdp_builder_create",
@@ -2945,6 +2972,8 @@ pub const NATIVE_FONT_WAIT_ENTRY: usize = 0xc15c060usize;
 pub const NATIVE_FONT_WAIT_CALLABLE: usize = 0xc15c061usize;
 pub const NOTIFICATIONS_SCROLL_ENTRY: usize = 0xc527bbcusize;
 pub const NOTIFICATIONS_SCROLL_CALLABLE: usize = 0xc527bbdusize;
+pub const NX_PIPE_ENTRY: usize = 0xc1a609cusize;
+pub const NX_PIPE_CALLABLE: usize = 0xc1a609dusize;
 pub const P67_BATTERY_CHILD_COUNT_ENTRY: usize = 0xc5881d8usize;
 pub const P67_BATTERY_CHILD_COUNT_CALLABLE: usize = 0xc5881d9usize;
 pub const P67_BATTERY_CHILD_GET_ENTRY: usize = 0xc5886e0usize;
@@ -2989,6 +3018,9 @@ pub const P67_BLUR_SNAPSHOT_TO_BUFFER_CALLABLE: usize = 0xcac0879usize;
 pub const P67_BLUR_STYLE_GET_ENTRY: usize = 0xc589448usize;
 pub const P67_BLUR_STYLE_GET_CALLABLE: usize = 0xc589449usize;
 pub const P67_BLUR_WATCHFACE_ROOT_CLASS_ENTRY: usize = 0x2cd1f640usize;
+pub const PIPE_FILE_OPERATIONS_ENTRY: usize = 0x2ccbe5a4usize;
+pub const REGISTER_INODE_ENTRY: usize = 0xc1affd8usize;
+pub const REGISTER_INODE_CALLABLE: usize = 0xc1affd9usize;
 pub const SDP_BUILDER_CREATE_ENTRY: usize = 0xc80a684usize;
 pub const SDP_BUILDER_CREATE_CALLABLE: usize = 0xc80a685usize;
 pub const SDP_COMMIT_ENTRY: usize = 0xc808648usize;
