@@ -17,7 +17,7 @@
     "blocking": false
   },
   "ownership": {
-    "argument": "Initializes a caller-owned 64-byte libuv async handle on the supplied client loop; callback pointer is stored at handle+48. The handle remains live until its owner callback frees it."
+    "argument": "Initializes a caller-owned 64-byte libuv async handle on the supplied client loop; callback pointer is stored at handle+48. The handle remains live through uv_close and may only be freed from its close callback; async callbacks must not free it directly."
   },
   "proof": {
     "static": "recovered",

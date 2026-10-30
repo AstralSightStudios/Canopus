@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.uv_work_submit",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "uv_work_submit",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3f4cc4",
+  "callable_address": "0xc3f4cc5",
+  "prototype": "void(void *, void *, int, void *, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Submits a caller-owned 20-byte internal work prefix (worker, done, loop, queue[2]). The work callback executes in the pool; done(work,status) executes on the supplied running loop. Caller retains storage until done and may free it there. Does not initialize or alter foreign-loop handle lists."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-BLE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-BLE-001"
+    ],
+    "source": "Exact Q66 .155 IDB recovery recorded in EVID-ASTROLINK-4155-BLE-001; Astrolink static ABI audit on 2026-10-30."
+  },
+  "notes": "Private uv__work_submit ABI from C3F4CC4. C3F4C82 locks the worker submission queue. C3F80FC-C3F812C append completion under target loop+76 mutex then signal loop+104 async. C3F7F14 drains that queue and invokes done(work,status). Unlike public uv_queue_work C3F4CF8 this internal entry does not manipulate loop active_reqs. Requires running loop and target wake fd accessible to existing firmware pool workers. Physical behavior unprobed."
+}

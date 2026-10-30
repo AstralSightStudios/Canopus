@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.fs_getfilep",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "fs_getfilep",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc332c90",
+  "callable_address": "0xc332c91",
+  "prototype": "int(int, void **)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Resolve and retain the calling task group fd file object; release with fs_putfilep. Must run in the owning group for a foreign-loop fd."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-QJS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-QJS-001"
+    ],
+    "source": "Exact Q66 .155 IDB recovery for fd-independent QJS event-loop notification, 2026-10-30; native async wake EBADF captured at C3F5758."
+  },
+  "notes": "Private exact-target ABI record; not public callable approval or physical validation. Entry bytes: b0 b5 00 24 0e 4a 0c 60 12 68 03 46. NuttX file slots are 32 bytes (C332B70). File references increment under interrupt critical section (C332B78-C332B7E)."
+}
