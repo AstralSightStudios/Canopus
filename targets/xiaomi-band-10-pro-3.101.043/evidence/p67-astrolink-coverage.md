@@ -627,3 +627,57 @@ to pick between the remaining six.
 
 Two of the six are therefore structural gaps (inlined wrappers) and four need the
 array-buffer/typed-array class ids and layout. None were filled from resemblance.
+
+### 7b. Final state of the QuickJS group
+
+Two of the three remaining handles were worked to a definite answer and one to a
+precise invariant gap.
+
+**`qjs_define_property_value_str` is inlined on this build — recorded as a
+composition.** The pieces are `|atom create| JS_NewAtomLen `0xC294DCC` (or the
+three-argument core `0xC294B50`), the atom-plus-value define (**not yet pinned**;
+`0xC2A46F8` is the *integer-key* variant that formats its key with `"%lld"` and
+must not be used), and the atom release `0xC2780B0` / `0xC2780D4`, which the module
+must call unconditionally, including on the error path. The order is
+create → define → release, the same order .155 used in its 64-byte wrapper. This
+is written into the pack as `qjs_define_property_value_str_composition`.
+
+**Array buffers: the class-id route is closed by the image itself.** The
+`ArrayBuffer` / `Uint8Array` strings at `0xcce9b29`-`0xcce9bdc` sit in a
+contiguous QJS name blob (`globalThis`, `not-equal`, …, `Object`, `Array`,
+`ArrayBuffer`, `Uint8Array`, …) and there is **no pointer to any address in that
+blob anywhere in the database** — checked every segment, the cached-alias form and
+the `0x1c…` region. So names are reached by offset into the blob, not by a
+`class_name` pointer, and the class table is built at runtime, so the id cannot be
+read statically. What is missing for all three array-buffer entries is one of two
+things: the class-registration initializer that writes the name into the runtime
+table, or an allocation site that passes a literal class id. Note that the id
+space is otherwise proven shared — `qjs_is_function` uses class ids `13` and `41`
+on both builds — so .155's `19` for array buffers is plausible but **not**
+confirmed, and was not recorded.
+
+**`qjs_new_string_len`: the allocation half is now known, the value half is not.**
+The context hooks are pinned: runtime hook table at `rt+16`, `+4` free, `+8`
+malloc, `+12` usable size (`js_realloc_rt 0xC28FE78`, `js_malloc_rt 0xC2D10F8`).
+The string header layout is also pinned from the atom intern path `0xC278140`:
+allocation is `len + 17` bytes through the malloc hook, refcount at `+0` (set to
+1), length at `+4`, hash at `+8`, and the NUL terminator at `+16 + len`; that is
+also why `qjs_free_cstring` subtracts 16. What is still missing is the function
+that wraps such an allocation into a **value** (tag `-7`) instead of an atom:
+`0xC278140` returns an interned atom, and the ASCII fast path in .155's
+`NEW_STRING_LEN` calls a separate `js_alloc_string`. The invariant to look for
+next is a function that calls the malloc hook with `len + 17`, sets the header as
+above, and returns the pair `(string+16, -7)`.
+
+**`qjs_to_cstring_len2`**: still no candidate. The 340–380 byte window contains no
+function that allocates `len + 1`, copies and NUL-terminates before handing the
+pointer out, and the only size match (`0xC29239C`) is a `StringBuffer` helper. The
+invariant that would settle it: an allocation of `len + 1` through the same malloc
+hook followed by a copy of the string payload and a NUL write, returning the raw
+pointer (the module frees it with `F_QJS_FREE_CSTRING`, i.e. as `ptr-16` with tag
+`-7`, so the allocation must be a normal JSString backing store, not a fresh
+`malloc`).
+
+Group status: **8 of 13 settled**, 4 open with a named invariant each, 1 settled as
+a composition.
+
