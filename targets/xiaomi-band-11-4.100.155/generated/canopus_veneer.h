@@ -4,7 +4,7 @@
  * firmware : 4.100.155 (user-4.100.155-cn-202609041500)
  * sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
  * revision : 1
- * input_digest: 9d8b584ec4ff505c
+ * input_digest: 506f97a0492c4159
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
@@ -228,6 +228,7 @@ static inline int * canopus_fw_errno_location(void) {
  * ble_scan_stop: restricted - not exported until context/ownership approved
  * bt_adapter_create_instance: restricted - not exported until context/ownership approved
  * bt_adapter_destroy_instance: restricted - not exported until context/ownership approved
+ * bt_adapter_destroy_internal: restricted - not exported until context/ownership approved
  * bt_adapter_enable: restricted - not exported until context/ownership approved
  * bt_adapter_get_instance: restricted - not exported until context/ownership approved
  * bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
@@ -255,6 +256,7 @@ static inline int * canopus_fw_errno_location(void) {
  * bt_remove_bond_private: restricted - not exported until context/ownership approved
  * bt_socket_client_sendrecv: restricted - not exported until context/ownership approved
  * bt_socket_server_receive: restricted - not exported until context/ownership approved
+ * bt_socket_set_option: restricted - not exported until context/ownership approved
  * bt_timer_add: restricted - not exported until context/ownership approved
  * bt_timer_cancel: restricted - not exported until context/ownership approved
  * bt_timer_cancel_owned: restricted - not exported until context/ownership approved
@@ -281,12 +283,17 @@ static inline int * canopus_fw_errno_location(void) {
  * clock_gettime: restricted - not exported until context/ownership approved
  * close: restricted - not exported until context/ownership approved
  * closedir: restricted - not exported until context/ownership approved
+ * connect: restricted - not exported until context/ownership approved
  * controller_crash_dump: restricted - not exported until context/ownership approved
  * core_bt_pair_request_callback: restricted - not exported until context/ownership approved
  * driver_close_dispatch: restricted - not exported until context/ownership approved
  * driver_ioctl_dispatch: restricted - not exported until context/ownership approved
  * feature_manager_post_task: restricted - not exported until context/ownership approved
  * feature_register_feature: restricted - not exported until context/ownership approved
+ * file_close: restricted - not exported until context/ownership approved
+ * file_dup3: restricted - not exported until context/ownership approved
+ * file_write: restricted - not exported until context/ownership approved
+ * files_getfilep: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
  * font_manager_add_path: restricted - not exported until context/ownership approved
  * font_manager_generate_def_path: restricted - not exported until context/ownership approved
@@ -322,10 +329,14 @@ static inline int * canopus_fw_errno_location(void) {
  * font_reload_vector_destroy: restricted - not exported until context/ownership approved
  * font_reload_vector_drop: restricted - not exported until context/ownership approved
  * font_reload_vg_dispatch: restricted - not exported until context/ownership approved
+ * fs_getfilep: restricted - not exported until context/ownership approved
+ * fs_putfilep: restricted - not exported until context/ownership approved
  * fsync: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
+ * getpid: restricted - not exported until context/ownership approved
  * hal_cache_invalidate_rom_thunk: restricted - not exported until context/ownership approved
  * hal_cache_sync: restricted - not exported until context/ownership approved
+ * heap_calloc: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved
  * heap_malloc: restricted - not exported until context/ownership approved
@@ -431,6 +442,7 @@ static inline int * canopus_fw_errno_location(void) {
  * native_font_create: restricted - not exported until context/ownership approved
  * native_font_release: restricted - not exported until context/ownership approved
  * native_font_wait: restricted - not exported until context/ownership approved
+ * nxsched_foreach: restricted - not exported until context/ownership approved
  * offload_property_apply: restricted - not exported until context/ownership approved
  * on_resume_wrapped: restricted - not exported until context/ownership approved
  * open: restricted - not exported until context/ownership approved
@@ -485,19 +497,27 @@ static inline int * canopus_fw_errno_location(void) {
  * service_manager_register: restricted - not exported until context/ownership approved
  * service_manager_shutdown: restricted - not exported until context/ownership approved
  * service_manager_startup: restricted - not exported until context/ownership approved
+ * socket: restricted - not exported until context/ownership approved
  * sport_titlebar_dispatch: restricted - not exported until context/ownership approved
  * stat: restricted - not exported until context/ownership approved
  * system_get_state: restricted - not exported until context/ownership approved
  * system_router_app_wrapper: restricted - not exported until context/ownership approved
  * system_router_get_pages_wrapper: restricted - not exported until context/ownership approved
  * thirdparty_submit_message_content: restricted - not exported until context/ownership approved
+ * thread_loop_init: restricted - not exported until context/ownership approved
+ * thread_loop_run: restricted - not exported until context/ownership approved
  * unlink: restricted - not exported until context/ownership approved
  * unregister_blockdriver: restricted - not exported until context/ownership approved
  * unregister_driver: restricted - not exported until context/ownership approved
  * uv_async_init: restricted - not exported until context/ownership approved
+ * uv_close: restricted - not exported until context/ownership approved
  * uv_mutex_init: restricted - not exported until context/ownership approved
  * uv_mutex_lock: restricted - not exported until context/ownership approved
  * uv_mutex_unlock: restricted - not exported until context/ownership approved
+ * uv_poll_init_socket: restricted - not exported until context/ownership approved
+ * uv_poll_start: restricted - not exported until context/ownership approved
+ * uv_thread_create_ex: restricted - not exported until context/ownership approved
+ * uv_work_submit: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: restricted - not exported until context/ownership approved
  * vg_lite_finish: restricted - not exported until context/ownership approved
  * vibrator_cancel: restricted - not exported until context/ownership approved
