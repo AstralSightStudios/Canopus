@@ -875,3 +875,51 @@ Consequence: **all 47 firmware bindings are now covered — 41 measured addresse
 plus 6 compositions — and the two former gaps are resolved by construction rather
 than by lookup.**
 
+## Layout constants: what is measured, and where the holes are
+
+The Band 11 module carries roughly sixty non-address constants. This section
+records which of them have a p67 measurement. **Everything not listed in the
+"measured" tables below is a hole** and must not be inherited.
+
+### Measured (usable)
+
+| constant | value | how established |
+| --- | --- | --- |
+| `JSVALUE_CLASS_OFFSET` | `6` | `qjs_is_function 0xC27DA88` reads the class id as `*(u16*)(obj+6)`; device objects confirm it (19 / 23 / 25) |
+| `ARRAY_BUFFER_DATA` | `0x54` | device: `ArrayBuffer(512)` object at `0x3C3146A0` holds the `0xA7` payload pointer there |
+| `ARRAY_BUFFER_LENGTH` | `0x58` | same object, byte length 512 |
+| `TYPED_ARRAY_DATA` | `0x24` | device: `Uint8Array` 0x3C3146D0 and `Uint16Array` 0x3C314610 |
+| `TYPED_ARRAY_COUNT` | `0x28` | same objects, element count |
+| `JS_CLASS_ARRAY_BUFFER` | `19` | device + `js_new_array_buffer 0xC2D34C8` immediate and `ctx+40` offset `152` |
+| `JS_CLASS_UINT8_ARRAY` / `JS_CLASS_UINT16_ARRAY` | `23` / `25` | device |
+| uv mutex / loop | see `docs/loop-abi.md` | `uv_loop_init 0xC2DC9A0`, `uv_mutex_init 0xC2DCF1C` |
+| `uv_mutex_lock` | `0xC1E9B1C` | 12-byte wrapper, 260 call sites, tail-calls the pthread timedlock body `0xC204E3C` with a null timeout; `uv_mutex_init` initialises a plain NuttX `pthread_mutex_t` |
+
+### Holes that block a correct module today
+
+| group | what is missing |
+| --- | --- |
+| `ARRAY_BUFFER_DETACHED` | `js_new_array_buffer 0xC2D34C8` writes a zero u16 at `+4` of the 28-byte JSArrayBuffer (`*((_WORD *)v14 + 2) = 0`), which carries the shared/detached flags, but **which bit is detached is not established** |
+| `ADAPTER_STATE_WORD`, `ADAPTER_LOOP`, `ADAPTER_READY_STATE` | the adapter instance at `0x2013DBE4` is only used through the recovered getters; the field offsets were not traced from a producer, so no value is recorded |
+| scan/advertising parameter and callback layouts | `app_lescan_start 0xC710BCC` builds an 8-byte block (`65538`, `0`) and a 20-byte block before calling `sub_C3B1374(adapter, params, ?, callbacks)`; the split between params, filters and callbacks, and the sizes of each, are **not** proven. `bt_le_start_advertising 0xC70ED94` passes a 28-byte stack block to `0xC7D3EB4`; its field roles are not proven either |
+| scan report layout | not traced; the report is delivered through the callback table, which is exactly the structure that is unresolved above |
+| CoC event codes (`COC_EVENT_*`) and `COC_QUEUE_EVENT` | the work node layout is measured (`owner +0`, `arg +4`, `handler +8`, `done +12`, flag byte `+16`), but the numeric event codes the handlers deliver were not enumerated |
+| `COC_REQUEST_*` (size/status/status-detail/flags/callback/address/address-type) | only `psm +2`, `flags +8`, `psm entry +12`, `cid pair +16/+20`, `state +23`, `cid +0` are measured; the rest of the block is not |
+| `COC_CONFIG_MTU/CREDITS/MPS` | channel `+52` (MTU), `+60/+62` (MPS pair) and stock `+14` (credits) are measured as *fields*; the module's constant names map onto them only if the semantics match, which was not proven |
+| `COC_CHANNEL_QUEUE`, `COC_CREDIT_QUEUE_CREDITS`, `COC_DISCONNECT_POLICY` | not established |
+| `COC_REGISTER_NODE_*`, `COC_EV_*` outputs | not established |
+| `SDU_BUFFER_*`, `FRAGMENT_NODE_*` | **this build has no separate SDU buffer/fragment node type that I found**: the send path re-fragments the caller's buffer in place (`l2cap_send_handler 0xC801D10` rewrites the length words) and the credit flush dequeues 20-byte nodes allocated by `l2cap_work_submit 0xC7EB988`. If the module expects an engine-owned SDU buffer, p67 needs a different receive path |
+| Feature framework constants (`D_FRAMEWORK`, `D_FRAMEWORK_VTABLE`, `D_APPLICATION_VTABLE`, `VTABLE_PREFIX_WORDS`, factory/init slots, `FRAMEWORK_IMPLEMENTATION`, `FRAMEWORK_MUTEX`, `FRAMEWORK_APPS_*`, `APPLICATION_RUNTIME`, `RUNTIME_MANAGER`, `MANAGER_*`, `HANDLE_LOOP`, `PROTOTYPE_MANAGER`, `INSTANCE_HANDLE`) | only these are measured: the manager dispatch table `0xCDA2CD0` (header `+0x00..+0x10`, slots from `+0x14`, `featureRequire +0x1C`, `findFeature +0x20`, `createFeature +0x24`, `uninit +0x2C`), `FeaturePost` reaching the runtime through `handle+28 → +12`, the detached flag at `handle+19`, the runtime message ring at `runtime+0x50..0x64` and the wake async at `runtime+0x3C`. Every other named constant in that group is a hole |
+| `SIGNATURES` (12 bytes x4) | not extracted; the four functions are `bt_le_start_advertising 0xC70ED94`, `bt_le_start_scan_with_filters 0xC710BCC`, `bt_queue_external 0xC7EB9CC` and `l2cap_connect_handler 0xC801AC4`, but their first twelve image bytes were not read out in this session |
+
+`uv_mutex_unlock` and `uv_close` remain **unaddressed**: the unlock primitive was not
+isolated (the pthread unlock body has no pointer reference to its own assertion
+string — those strings are reached by base+offset on this image — and no one-argument
+libuv wrapper with a lock-sized call count exists), and `uv_close` was not located.
+
+The honest summary is that the address half is complete (41 + 6 compositions) while
+the layout half is roughly half measured: the QuickJS-side constants are solid
+(measured on a live runtime), the L2CAP cookie-cutter fields are solid, and the GAP
+parameter blocks plus most of the Feature framework constants need a dedicated pass
+each before the module can be written without inheriting them.
+

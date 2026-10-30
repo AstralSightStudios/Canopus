@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 1e34edf38f14f143
+ * input_digest: cb3815cbd17ffca0
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -758,6 +758,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * uv_async_send: restricted - not exported until context/ownership approved
  * uv_loop_init: restricted - not exported until context/ownership approved
  * uv_mutex_init: restricted - not exported until context/ownership approved
+ * uv_mutex_lock: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
  * vibrator_hal_transact: restricted - not exported until context/ownership approved
  * wakelock_acquire: restricted - not exported until context/ownership approved

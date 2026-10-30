@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv_mutex_lock",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv_mutex_lock",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC1E9B1C",
+  "callable_address": "0xc1e9b1d",
+  "prototype": "int uv_mutex_lock(uv_mutex_t *mutex)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "astrolink takes the default loop's mutex through this. On p67 the mutex is a NuttX pthread_mutex_t (uv_mutex_init calls the pthread functions directly), so the lock wrapper is the pthread lock and not a libuv-internal primitive."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-UV-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-UV-001"
+    ],
+    "source": "Twelve-byte wrapper that tail-calls the real lock body 0xC204E3C with a null timeout argument; 260 call sites. The body 0xC204E3C lives in nuttx/sched/pthread/pthread_mutextimedlock.c (its own assertion string) and operates on a plain NuttX pthread_mutex_t: it takes the semaphore at mutex+8 and dispatches through 0xC205310 when the fast path fails. uv_mutex_init 0xC2DCF1C initialises exactly that structure with pthread_mutexattr_init / attr_settype(1) / pthread_mutex_init / attr_destroy, which is what identifies the wrapper as the lock."
+  },
+  "notes": "astrolink takes the default loop's mutex through this. On p67 the mutex is a NuttX pthread_mutex_t (uv_mutex_init calls the pthread functions directly), so the lock wrapper is the pthread lock and not a libuv-internal primitive."
+}

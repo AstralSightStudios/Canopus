@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 1e34edf38f14f143
+// input_digest: cb3815cbd17ffca0
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -364,6 +364,9 @@ pub const CANOPUS_FW_UNLINK_CALLABLE: usize = canopus_thumb_callable(0xc1d2355us
 
 /// Recovered `bt_l2cap_submit_cid` at 0xc805be8. Thumb callable address 0xc805be9.
 pub const CANOPUS_FW_BT_L2CAP_SUBMIT_CID_CALLABLE: usize = canopus_thumb_callable(0xc805be9usize);
+
+/// Recovered `uv_mutex_lock` at 0xC1E9B1C. Thumb callable address 0xc1e9b1d.
+pub const CANOPUS_FW_UV_MUTEX_LOCK_CALLABLE: usize = canopus_thumb_callable(0xc1e9b1dusize);
 
 /// Recovered `unregister_blockdriver` at 0xc1b009c. Thumb callable address 0xc1b009d.
 pub const CANOPUS_FW_UNREGISTER_BLOCKDRIVER_CALLABLE: usize = canopus_thumb_callable(0xc1b009dusize);
@@ -1938,6 +1941,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // uv_async_send: restricted - not exported until context/ownership approved
 // uv_loop_init: restricted - not exported until context/ownership approved
 // uv_mutex_init: restricted - not exported until context/ownership approved
+// uv_mutex_lock: restricted - not exported until context/ownership approved
 // vendor_hci_transport_register: FORBIDDEN - no binding may ever be generated
 // vibrator_hal_transact: restricted - not exported until context/ownership approved
 // wakelock_acquire: restricted - not exported until context/ownership approved
