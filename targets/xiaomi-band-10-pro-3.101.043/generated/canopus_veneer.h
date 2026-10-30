@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 0b93ce45010a612d
+ * input_digest: b7530145dc69b153
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -497,7 +497,6 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * background_object_hide: restricted - not exported until context/ownership approved
  * background_object_show: restricted - not exported until context/ownership approved
  * bt_adapter_enable: restricted - not exported until context/ownership approved
- * bt_adapter_get_instance: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved

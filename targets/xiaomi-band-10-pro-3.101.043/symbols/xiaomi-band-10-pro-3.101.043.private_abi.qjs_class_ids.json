@@ -3,7 +3,7 @@
   "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_class_ids",
   "target_id": "xiaomi-band-10-pro-3.101.043",
   "name": "qjs_class_ids",
-  "kind": "global",
+  "kind": "finding",
   "instruction_set": "n/a",
   "entry_address": "",
   "prototype": "struct { unsigned class_id; const char *name; } qjs_class_ids[]",

@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 0b93ce45010a612d
+// input_digest: b7530145dc69b153
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -472,9 +472,6 @@ pub const canopus_fw_p67_battery_status_slot: usize = 0x2010fe60usize;
 
 /// Recovered `control_center_scroll` at 0x0c5036c4. Thumb callable address 0x0c5036c5.
 pub const CANOPUS_FW_CONTROL_CENTER_SCROLL_CALLABLE: usize = canopus_thumb_callable(0x0c5036c5usize);
-
-/// Recovered global `qjs_class_ids` at .
-pub const canopus_fw_qjs_class_ids: usize = usize;
 
 /// Recovered `lv_indev_get_point` at 0x1c050c10. Thumb callable address 0x1c050c11.
 pub const CANOPUS_FW_LV_INDEV_GET_POINT_CALLABLE: usize = canopus_thumb_callable(0x1c050c11usize);
@@ -1154,9 +1151,6 @@ pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_RELEASE_CALLABLE: usize = canopus_thumb
 /// Recovered `widgets_scroll` at 0x0c50abb4. Thumb callable address 0x0c50abb5.
 pub const CANOPUS_FW_WIDGETS_SCROLL_CALLABLE: usize = canopus_thumb_callable(0x0c50abb5usize);
 
-/// Recovered `bt_adapter_get_instance` at 0xCA40F68. Thumb callable address 0xca40f69.
-pub const CANOPUS_FW_BT_ADAPTER_GET_INSTANCE_CALLABLE: usize = canopus_thumb_callable(0xca40f69usize);
-
 /// Recovered `lvx_list_row_create` at 0xc54ca3c. Thumb callable address 0xc54ca3d.
 pub const CANOPUS_FW_LVX_LIST_ROW_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc54ca3dusize);
 #[allow(non_snake_case)]
@@ -1695,7 +1689,6 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // background_object_hide: restricted - not exported until context/ownership approved
 // background_object_show: restricted - not exported until context/ownership approved
 // bt_adapter_enable: restricted - not exported until context/ownership approved
-// bt_adapter_get_instance: restricted - not exported until context/ownership approved
 // bt_adapter_register_a2dp_callbacks: FORBIDDEN - no binding may ever be generated
 // bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no binding may ever be generated
 // bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved

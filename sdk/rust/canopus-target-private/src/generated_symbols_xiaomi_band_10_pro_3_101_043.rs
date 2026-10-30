@@ -1104,15 +1104,6 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int bt_adapter_enable(void *adapter)",
     },
     TargetPrivateSymbolRecord {
-        name: "bt_adapter_get_instance",
-        kind: "function",
-        entry: 0xca40f68usize,
-        callable: 0xca40f69usize,
-        status: "STATIC_RECOVERED",
-        policy: "restricted",
-        prototype: "void *bt_adapter_get_instance(void)",
-    },
-    TargetPrivateSymbolRecord {
         name: "bt_adapter_set_scan_mode",
         kind: "function",
         entry: 0xc3b56a8usize,
@@ -3473,8 +3464,6 @@ pub const BACKGROUND_OBJECT_SHOW_ENTRY: usize = 0xc5891b0usize;
 pub const BACKGROUND_OBJECT_SHOW_CALLABLE: usize = 0xc5891b1usize;
 pub const BT_ADAPTER_ENABLE_ENTRY: usize = 0xc3af4a4usize;
 pub const BT_ADAPTER_ENABLE_CALLABLE: usize = 0xc3af4a5usize;
-pub const BT_ADAPTER_GET_INSTANCE_ENTRY: usize = 0xca40f68usize;
-pub const BT_ADAPTER_GET_INSTANCE_CALLABLE: usize = 0xca40f69usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_ENTRY: usize = 0xc3b56a8usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_CALLABLE: usize = 0xc3b56a9usize;
 pub const BT_ALLOC_ENTRY: usize = 0xc840c54usize;
