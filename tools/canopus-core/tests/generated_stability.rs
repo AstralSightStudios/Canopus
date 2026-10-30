@@ -768,7 +768,37 @@ fn private_abi_records_have_exact_thumb_callables() {
                     pack.firmware_sha256
                 );
             }
-            let entry = parse_address(symbol.entry_address.as_deref().unwrap());
+            // Private ABI also records compositions and layout findings. Those
+            // describe a contract rather than an executable/data address; the
+            // generator deliberately emits no constant for them.
+            let Some(entry_address) = symbol
+                .entry_address
+                .as_deref()
+                .filter(|address| !address.trim().is_empty())
+            else {
+                assert!(
+                    matches!(symbol.kind.as_str(), "compose" | "layout" | "finding"),
+                    "{} is an address-bearing {} without an address",
+                    symbol.name,
+                    symbol.kind
+                );
+                assert!(
+                    symbol.callable_address.is_none(),
+                    "{} has a callable without an entry",
+                    symbol.name
+                );
+                assert!(
+                    !generated.contains(&format!("pub const canopus_fw_{}:", symbol.name))
+                        && !generated.contains(&format!(
+                            "pub const CANOPUS_FW_{}_CALLABLE:",
+                            symbol.name.to_ascii_uppercase()
+                        )),
+                    "{} emitted an address for a contract-only record",
+                    symbol.name
+                );
+                continue;
+            };
+            let entry = parse_address(entry_address);
             if symbol.kind == "function" {
                 let callable = parse_address(symbol.callable_address.as_deref().unwrap());
                 assert_eq!(entry & 1, 0, "{} entry is not even", symbol.name);
