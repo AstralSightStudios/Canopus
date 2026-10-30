@@ -1248,13 +1248,49 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "",
     },
     TargetPrivateSymbolRecord {
+        name: "miwear_bluetooth_owner_loop",
+        kind: "global",
+        entry: 0x2012225cusize,
+        callable: 0x2012225cusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *",
+    },
+    TargetPrivateSymbolRecord {
+        name: "miwear_sar_connections",
+        kind: "global",
+        entry: 0x200e10b8usize,
+        callable: 0x200e10b8usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *",
+    },
+    TargetPrivateSymbolRecord {
+        name: "miwear_session_crypto_ctr",
+        kind: "function",
+        entry: 0xc7bb994usize,
+        callable: 0xc7bb995usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(void *, int, uint16_t, const void *, void *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "miwear_session_lookup",
+        kind: "function",
+        entry: 0xc7bf138usize,
+        callable: 0xc7bf139usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *(uint16_t)",
+    },
+    TargetPrivateSymbolRecord {
         name: "miwear_transport_l2_rx",
         kind: "function",
         entry: 0xc7be110usize,
         callable: 0xc7be111usize,
         status: "STATIC_RECOVERED",
         policy: "restricted",
-        prototype: "void(void *, uint8_t, uint8_t, const uint8_t *, uint16_t)",
+        prototype: "void(uint16_t, uint8_t, uint8_t, void *, uint16_t)",
     },
     TargetPrivateSymbolRecord {
         name: "miwear_transport_send",
@@ -2247,6 +2283,12 @@ pub const L2CAP_UNREGISTER_PSM_HANDLER_ENTRY: usize = 0xc7eab28usize;
 pub const L2CAP_UNREGISTER_PSM_HANDLER_CALLABLE: usize = 0xc7eab29usize;
 pub const LV_OBJ_SET_LOCAL_STYLE_PROP_XIP_THUNK_ENTRY: usize = 0xcaa7238usize;
 pub const LV_OBJ_SET_LOCAL_STYLE_PROP_XIP_THUNK_CALLABLE: usize = 0xcaa7239usize;
+pub const MIWEAR_BLUETOOTH_OWNER_LOOP_ENTRY: usize = 0x2012225cusize;
+pub const MIWEAR_SAR_CONNECTIONS_ENTRY: usize = 0x200e10b8usize;
+pub const MIWEAR_SESSION_CRYPTO_CTR_ENTRY: usize = 0xc7bb994usize;
+pub const MIWEAR_SESSION_CRYPTO_CTR_CALLABLE: usize = 0xc7bb995usize;
+pub const MIWEAR_SESSION_LOOKUP_ENTRY: usize = 0xc7bf138usize;
+pub const MIWEAR_SESSION_LOOKUP_CALLABLE: usize = 0xc7bf139usize;
 pub const MIWEAR_TRANSPORT_L2_RX_ENTRY: usize = 0xc7be110usize;
 pub const MIWEAR_TRANSPORT_L2_RX_CALLABLE: usize = 0xc7be111usize;
 pub const MIWEAR_TRANSPORT_SEND_ENTRY: usize = 0xc7be440usize;
@@ -3049,14 +3091,44 @@ pub unsafe fn raw_gap_host_stock_receive(a0: *mut core::ffi::c_void, a1: *mut u8
     unsafe { f(a0, a1, a2) }
 }
 
-pub unsafe fn raw_miwear_transport_l2_rx(
+pub unsafe fn raw_miwear_session_crypto_ctr(
     a0: *mut core::ffi::c_void,
+    a1: i32,
+    a2: u16,
+    a3: *const core::ffi::c_void,
+    a4: *mut core::ffi::c_void,
+) -> i32 {
+    type F = unsafe extern "C" fn(
+        *mut core::ffi::c_void,
+        i32,
+        u16,
+        *const core::ffi::c_void,
+        *mut core::ffi::c_void,
+    ) -> i32;
+    let f: F = unsafe {
+        core::mem::transmute(
+            canopus_target_generated::CANOPUS_FW_MIWEAR_SESSION_CRYPTO_CTR_CALLABLE,
+        )
+    };
+    unsafe { f(a0, a1, a2, a3, a4) }
+}
+
+pub unsafe fn raw_miwear_session_lookup(a0: u16) -> *mut core::ffi::c_void {
+    type F = unsafe extern "C" fn(u16) -> *mut core::ffi::c_void;
+    let f: F = unsafe {
+        core::mem::transmute(canopus_target_generated::CANOPUS_FW_MIWEAR_SESSION_LOOKUP_CALLABLE)
+    };
+    unsafe { f(a0) }
+}
+
+pub unsafe fn raw_miwear_transport_l2_rx(
+    a0: u16,
     a1: u8,
     a2: u8,
-    a3: *const u8,
+    a3: *mut core::ffi::c_void,
     a4: u16,
 ) -> () {
-    type F = unsafe extern "C" fn(*mut core::ffi::c_void, u8, u8, *const u8, u16) -> ();
+    type F = unsafe extern "C" fn(u16, u8, u8, *mut core::ffi::c_void, u16) -> ();
     let f: F = unsafe {
         core::mem::transmute(canopus_target_generated::CANOPUS_FW_MIWEAR_TRANSPORT_L2_RX_CALLABLE)
     };
@@ -3406,4 +3478,4 @@ pub unsafe fn raw_watchface_manager_delete_watchface(a0: *const u8) -> i32 {
     unsafe { f(a0) }
 }
 
-// generated target-private raw wrapper count: 100
+// generated target-private raw wrapper count: 102

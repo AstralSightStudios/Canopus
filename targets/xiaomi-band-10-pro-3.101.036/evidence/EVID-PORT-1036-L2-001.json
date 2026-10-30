@@ -1,0 +1,62 @@
+{
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "scope": "Static evidence from exact AP; no device operations or runtime result",
+  "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+  "proposed_addresses": {
+    "RX": "0x0C7BE111",
+    "SEND": "0x0C7BE441",
+    "SESSION": "0x0C7BF139",
+    "CRYPTO": "0x0C7BB995",
+    "CONNECTIONS": "0x200E10B8",
+    "BT_LOOP": "0x2012225C"
+  },
+  "existing_owner_pump_addresses": {
+    "TIMER": "0x0C587721",
+    "TIMER_DELETE": "0x0C587EF1",
+    "OWNER_LOOP": "0x20121F80",
+    "OWNER_TIMER_INIT": "0x0C2CD84D",
+    "OWNER_TIMER_START": "0x0C2CDA3D",
+    "OWNER_TIMER_SIZE": "0x88"
+  },
+  "proofs": {
+    "rx": [
+      "0x0C7BE110 preserves channel r1, opcode r2, payload r3 and length stack+0x30; 0x0C7BE120 calls session getter 0x0C7BF138",
+      "0x0C7BE19E sets decrypt=0, 0x0C7BE1A0 calls crypto 0x0C7BB994, 0x0C7BE1A6 rejects nonzero result",
+      "0x0C7BE1AA..1B0 copies successful decrypted output back to received payload before ordinary dispatch"
+    ],
+    "session": [
+      "0x0C7BF138 loads pool at 0x0C7BF158 = 0x200E10DC; iterates link+4, compares handle at session+14, returns matching pointer or null"
+    ],
+    "crypto": [
+      "0x0C7BB994 preserves encrypt/length/input and loads output from caller stack at 0x0C7BB9D0",
+      "0x0C7BB9C8 selects decrypt key at state+16 vs encrypt key state+0; 0x0C7BB9D8 invokes cipher; returns -1 at 0x0C7BB9F0 on invalid crypto state"
+    ],
+    "send": [
+      "0x0C7BE450/+452 read packet channel+0 and len+8; 0x0C7BE494 opcode+1; 0x0C7BE4AC payload+4",
+      "0x0C7BE534/+536 load payload/length; 0x0C7BE538 sets encrypt=1; 0x0C7BE53E calls exact same crypto",
+      "0x0C7BE4C8..4D6 preserve callbacks/cookies at +24/+20/+16/+12; 0x0C7BE4D8 calls SAR submit 0x0C7BD680",
+      "0x0C7BD73E..746 allocate length+2 storage via 0x0C7BBDC8; 0x0C7BD75A..768 copy original payload into owned buffer before queuing"
+    ],
+    "connections": [
+      "0x0C7BCC38 loads pool 0x0C7BCCD8 = 0x200E10B8, list+4 gives prev node; 0x0C7BCC4E node+12 gives connection",
+      "SAR open 0x0C7BDAD8 allocates 224-byte connection at 0x0C7BDAEC..AF0 then 16-byte node at 0x0C7BDB2A..2C",
+      "0x0C7BDB46 stores node+12=connection; 0x0C7BDB4E..54 links node into head",
+      "0x0C7BDADC preserves arg2 into r8 and arg3 into sl; 0x0C7BDB80 strd r8,sl,[connection,+8] places RX arg3 at connection+12"
+    ],
+    "bt_loop": [
+      "0x0C6D9B10 getter loads *pool at 0x0C6D9B20 = 0x2012225C",
+      "0x0C6D9322 loads pool 0x0C6D9370 = 0x2012225C; 0x0C6D9326 dereferences loop then 0x0C6D932A calls uv_timer_init 0x0C2CD84C",
+      "0x0C6D9FDE likewise loads global loop then 0x0C6D9FE6 calls uv_timer_init; 0x0C6D9FD4 uses uv_timer_start 0x0C2CDA3C"
+    ]
+  },
+  "remaining": [
+    "Execution role must review and add exact-target evidence/symbol records, regenerate target outputs, build full L2-enabled Supervisor and pass normal verifier",
+    "No approval-state promotion: restricted/PENDING/STATIC_RECOVERED only",
+    "Independent .036 boot/pair/install/activate/probe not run; module state/version/activationError unknown"
+  ],
+  "schema": 1,
+  "evidence_id": "EVID-PORT-1036-L2-001",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "device": "not_probed"
+}

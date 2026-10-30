@@ -33,8 +33,14 @@ manager async +60. These are the native Feature objects, not JS opaque objects.
 
 The async handle is 112 bytes; loop +4, busy +24 and pending +108. Exact mutex
 entries are `0xC2C6B54`, `0xC2C6C30`, `0xC2C6C4C`; `uv_close` is `0xC2C5774`.
-The UV key is `0x201003AC`. NuttX file wake fields match .043: TCB TLS +104,
-group filelist +720, UV-state loop +760. The pipe operation table
+The UV key is `0x201003AC`. NuttX file wake fields match .043: TCB TLS +100,
+group filelist +720, UV-state loop +760. The TLS header's first word points to
+taskinfo; its key slots start at +16 with stride 4. Exact-image instructions
+`0xC1F0522` / `0xC1F0524` copy TCB +100 to out +4, and caller `0xC1E5940`
+loads that word at frame +8 because out is frame +4. The former +104 value
+confused the output structure with the caller's stack frame. Taskinfo is
+loaded at `0xC1E5928`, its key slot at `0xC1E595A`, and the UV-state loop at
+`0xC2C866C`. The pipe operation table
 `0x2CC9910C` was identified from its ten exact Thumb handler pointers.
 
 ## QuickJS
@@ -46,6 +52,17 @@ ArrayBuffer getter `0xC2BD52C`, typed-array getter `0xC2BD58C`. AAPCS argument
 placement and buffer/string ownership therefore match the shared native JS
 layer; no custom allocator or opaque object decoding is used.
 
+The original owner-pump-only scope is superseded by the exact-image L2 recovery
+in `EVID-PORT-1036-L2-001.json` and `l2-sram-probe.json`. RX, send, session,
+crypto, SAR connection list and Bluetooth owner-loop records now enable the
+existing encrypted CPC2 backend. No shared transport implementation or approval
+state changed. The L2-enabled Supervisor builds and passes normal verification.
+Astrolink v42 was installed, enabled and activated over the real companion CLI,
+reported state 13 and activation error 0, and independently passed all 18 native
+lifecycle checks in Mirage. This is emulator evidence only; physical-device and
+CoC peer acceptance remain separate. Full logs are at
+`/tmp/astrolink-p67-036-v42-native-probe`; the module repository retains a compact
+result in `docs/evidence/p67-036-v42.json`.
+
 Every added record remains `restricted`, `STATIC_RECOVERED`, `PENDING`.
-A successful native .043 lifecycle probe is not inherited by .036. This target
-needs its own exact-image build and device probe before a device-verified claim.
+No `.043` runtime result is inherited by `.036`.

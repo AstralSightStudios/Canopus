@@ -4,7 +4,7 @@
 // firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
 // sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
 // revision : 5
-// input_digest: be2dc376802fd8fc
+// input_digest: dd63b980b53478a6
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -554,6 +554,9 @@ pub const CANOPUS_FW_DRIVER_IOCTL_DISPATCH_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `sem_post` at 0xc1f14c4. Thumb callable address 0xc1f14c5.
 pub const CANOPUS_FW_SEM_POST_CALLABLE: usize = canopus_thumb_callable(0xc1f14c5usize);
 
+/// Recovered `miwear_session_crypto_ctr` at 0x0C7BB994. Thumb callable address 0xc7bb995.
+pub const CANOPUS_FW_MIWEAR_SESSION_CRYPTO_CTR_CALLABLE: usize = canopus_thumb_callable(0xc7bb995usize);
+
 /// Recovered `bt_queue_external` at 0x0C7D3404. Thumb callable address 0x0C7D3405.
 pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(0x0C7D3405usize);
 
@@ -707,6 +710,9 @@ pub const CANOPUS_FW_L2CAP_LE_CONNECTION_RESPONSE_CALLABLE: usize = canopus_thum
 /// Recovered `qjs_call` at 0xc2a9bc0. Thumb callable address 0xc2a9bc1.
 pub const CANOPUS_FW_QJS_CALL_CALLABLE: usize = canopus_thumb_callable(0xc2a9bc1usize);
 
+/// Recovered global `miwear_bluetooth_owner_loop` at 0x2012225C.
+pub const canopus_fw_miwear_bluetooth_owner_loop: usize = 0x2012225Cusize;
+
 /// Recovered global `ferry_framework_vtable` at 0x2CD7D618.
 pub const canopus_fw_ferry_framework_vtable: usize = 0x2CD7D618usize;
 
@@ -841,6 +847,9 @@ pub const CANOPUS_FW_WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = canopu
 
 /// Recovered `lv_timer_del` at 0xc587ef0. Thumb callable address 0xc587ef1.
 pub const CANOPUS_FW_LV_TIMER_DEL_CALLABLE: usize = canopus_thumb_callable(0xc587ef1usize);
+
+/// Recovered `miwear_session_lookup` at 0x0C7BF138. Thumb callable address 0xc7bf139.
+pub const CANOPUS_FW_MIWEAR_SESSION_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0xc7bf139usize);
 
 /// Recovered `qjs_free_cstring` at 0xc262748. Thumb callable address 0xc262749.
 pub const CANOPUS_FW_QJS_FREE_CSTRING_CALLABLE: usize = canopus_thumb_callable(0xc262749usize);
@@ -1072,6 +1081,9 @@ pub const CANOPUS_FW_HEAP_ZALLOC_CALLABLE: usize = canopus_thumb_callable(0xc1e8
 
 /// Recovered `sdp_set_raw_attribute` at 0x0C7EFC7C. Thumb callable address 0x0C7EFC7D.
 pub const CANOPUS_FW_SDP_SET_RAW_ATTRIBUTE_CALLABLE: usize = canopus_thumb_callable(0x0C7EFC7Dusize);
+
+/// Recovered global `miwear_sar_connections` at 0x200E10B8.
+pub const canopus_fw_miwear_sar_connections: usize = 0x200E10B8usize;
 
 /// Recovered `lv_obj_set_scrollbar_mode` at 0x1c02cbbc. Thumb callable address 0x1c02cbbd.
 pub const CANOPUS_FW_LV_OBJ_SET_SCROLLBAR_MODE_CALLABLE: usize = canopus_thumb_callable(0x1c02cbbdusize);
@@ -1311,6 +1323,8 @@ pub const canopus_fw_gap_client_instance: usize = 0x20122FB0usize;
 // lvx_image_set_scale: restricted - not exported until context/ownership approved
 // lvx_label_set_long_mode: restricted - not exported until context/ownership approved
 // lvx_object_add_flag: restricted - not exported until context/ownership approved
+// miwear_session_crypto_ctr: restricted - not exported until context/ownership approved
+// miwear_session_lookup: restricted - not exported until context/ownership approved
 // miwear_transport_l2_rx: restricted - not exported until context/ownership approved
 // miwear_transport_send: restricted - not exported until context/ownership approved
 // mkdir: restricted - not exported until context/ownership approved

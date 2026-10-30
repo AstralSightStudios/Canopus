@@ -7,7 +7,7 @@
   "instruction_set": "thumb",
   "entry_address": "0xc7be110",
   "callable_address": "0xc7be111",
-  "prototype": "void(void *, uint8_t, uint8_t, const uint8_t *, uint16_t)",
+  "prototype": "void(uint16_t, uint8_t, uint8_t, void *, uint16_t)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
@@ -18,13 +18,13 @@
   "proof": {
     "static": "confirmed",
     "device": "not_probed",
-    "evidence_ids": []
+    "evidence_ids": ["EVID-PORT-1036-L2-001"]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "evidence_ids": [],
+    "evidence_ids": ["EVID-PORT-1036-L2-001"],
     "source": "exact xiaomi-band-10-pro-3.101.036 IDB vela_ap.bin; L2 RX callback"
   },
   "approval_state": "PENDING",

@@ -28,5 +28,5 @@
     "source": "Exact IDB uv_timer_start (cb +96, heap node +100, timeout +112, repeat +120, id +128); native callers sub_C497930, sub_C4978F0 restart miwear-refresh; evidence/owner-pump.json"
   },
   "approval_state": "PENDING",
-  "notes": "Owner pump only (no L2 transport on this target): the resident 136-byte, 8-byte-aligned timer that keeps background timers firing with the screen off. Mutates the owner loop; call only from the LVGL bootstrap on that same UI task, never from NSH, BT or ISR. No production approval."
+  "notes": "The resident 136-byte, 8-byte-aligned owner timer keeps background timers firing with the screen off. The original owner-pump-only setup is superseded by evidence/l2-sram-probe.json for encrypted transport. Mutates the owner loop; call only from the LVGL bootstrap on that same UI task, never from NSH, BT or ISR. No production approval."
 }

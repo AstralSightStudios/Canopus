@@ -19,7 +19,7 @@
     "sub_C497930 / sub_C4978F0 restart that timer with sub_C2CDA3C(timer, cb, uint64 timeout, uint64 repeat): uv_timer_start. It writes cb +96, heap node +100..+108, timeout +112, repeat +120, id +128 (8 bytes): 136-byte handle, as on .043.",
     "TIMER / TIMER_DELETE are the target's lv_timer_create / lv_timer_del (CANOPUS_FW_LV_TIMER_CREATE / _DEL), used only for the one-shot bootstrap on the UI owner."
   ],
-  "scope": "Owner pump only: background timers (screen-off) on the UI owner loop. No L2 transport: SAR RX/session/crypto/send are not recovered for this target.",
+  "scope": "Native UI owner pump for background timers. The original owner-pump-only configuration is superseded by evidence/l2-sram-probe.json, which also enables the exact-image encrypted L2 transport.",
   "constraints": [
     "uv_timer_init/start mutate owner-loop lists and heaps; only the LVGL bootstrap callback on the UI owner initializes and starts the resident handle, and its callbacks run on that loop. No threads or work queues.",
     "Static recovery from the exact firmware IDB; no emulator or physical-device validation yet."

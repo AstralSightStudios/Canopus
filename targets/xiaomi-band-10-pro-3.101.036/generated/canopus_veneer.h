@@ -4,7 +4,7 @@
  * firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
  * sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
  * revision : 5
- * input_digest: be2dc376802fd8fc
+ * input_digest: dd63b980b53478a6
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
@@ -552,6 +552,8 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * lvx_image_set_scale: restricted - not exported until context/ownership approved
  * lvx_label_set_long_mode: restricted - not exported until context/ownership approved
  * lvx_object_add_flag: restricted - not exported until context/ownership approved
+ * miwear_session_crypto_ctr: restricted - not exported until context/ownership approved
+ * miwear_session_lookup: restricted - not exported until context/ownership approved
  * miwear_transport_l2_rx: restricted - not exported until context/ownership approved
  * miwear_transport_send: restricted - not exported until context/ownership approved
  * mkdir: restricted - not exported until context/ownership approved
