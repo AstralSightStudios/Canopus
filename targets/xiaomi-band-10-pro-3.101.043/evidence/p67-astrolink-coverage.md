@@ -1193,3 +1193,69 @@ connection services on p67; those need one dedicated round each before they can 
 written without guessing, so the honest options are (a) ship p67 with those services
 disabled, or (b) fund the two rounds.
 
+## Round 1, GAP: measured from the producers
+
+`EVID-PORT-1043-GAP-001`.
+
+### Scan start, and the two parameter blocks
+
+`gap_scan_start_impl 0xC3B1374(adapter, params, block, callbacks)` allocates a
+616-byte scan object, stores the callbacks at object+12, then builds the adapter
+command message (708 bytes, zeroed) and issues **command 237**:
+
+| message offset | source | note |
+| --- | --- | --- |
+| `+68` | `*(u32 *)params` | the parameter block's dword |
+| `+76` | `*(u8 *)(params + 4)` | the parameter block's flag byte |
+| `+80/+84/+88/+92` | `block[0..3]` | four dwords of the second block |
+
+So **`SCAN_PARAM_SIZE = 8`** (a 4-byte word plus a flag byte; the message keeps
+exactly those five bytes) and the second block is **20 bytes of which 16 are
+consumed**. `app_lescan_start 0xC710BCC` fills them with `{0x00010002, 0}` and
+`{0, 0, 0xFC52B595, 1}`; what those words *mean* (interval/window/filter policy) is
+**not** established — they are opaque command arguments to the adapter, and nothing
+in the scanned code decodes them.
+
+### Scan callbacks
+
+`&unk_200DFAF0` is the callback table and its **first word is 0x10**:
+
+| entry | address | role |
+| --- | --- | --- |
+| size | `0x10` | **`SCAN_CALLBACKS_SIZE = 16`**, taken from the table's own size word |
+| `+4` | `0xC710330` | report callback (body at `0xC710334`) |
+| `+8` | `0xC7105A8` | started, logs `lescan started` |
+| `+0xC` | `0xC710308` | stopped, logs `lescan stopped`, calls `0xC701494(0,1)` |
+
+### Scan report layout (A3)
+
+From the report callback (R4 = report) into the app record it allocates (0x54
+bytes):
+
+| report offset | instruction | meaning |
+| --- | --- | --- |
+| `+0` (u32) | `LDR R0,[R4]` → `STR R0,[R6,#8]` | copied verbatim, role unnamed |
+| `+4` (u16) | `LDRH R3,[R4,#4]` → `STRH R3,[R6,#0xC]` | copied verbatim, role unnamed |
+| `+7` (s8) | `LDRSB R8,[R4,#7]` → `STRB R8,[R5,#0x10]` | **RSSI** (signed load is the tell) |
+| `+9` (u8) | `LDRB R3,[R4,#9]`, compared with `4` | **address type** |
+| `+0xA` (u8) | `LDRB R2,[R4,#0xA]` → `STRB R5,[R6,#0x12]` | **data length** |
+| `+0xC` (6 bytes) | `sub_C588DB0(R6+0x13, R4+0xC, len)` | **address**, copied to the app record at `+0x13` |
+
+App-facing scan record: **0x54 bytes**, list links `+0/+4`, the report's dword at
+`+8`, its u16 at `+0xC`, RSSI at `+0x10`, a flag byte `1` at `+0x11`, length at
+`+0x12`, address at `+0x13`, payload after it.
+
+### Advertising (B4) and the adapter globals (B1): holes
+
+- `bt_le_start_advertising 0xC70ED94` builds a 28-byte block (`_BYTE v21[28]`) but
+  does **not** fill it itself: `0xC7D3EB4` assembles a flags word
+  (`0xA3 << 9` bits, `byte_200DEFE4 & 0x40`, plus `__clz(value - 1)` shifting, which
+  looks like an interval exponent) and calls `sub_C7D3C60(&flags, v21, &len)` to
+  produce it, then copies it into the advertising data record. So **`ADV_PARAM_SIZE
+  = 28` is measured**, but `ADV_PARAM_MODE/TX_POWER/INTERVAL` are not: they are
+  encoded inside `sub_C7D3C60`'s output and would need that builder traced field by
+  field.
+- `ADAPTER_STATE_WORD`, `ADAPTER_LOOP`, `ADAPTER_READY_STATE`: the adapter instance
+  at `0x2013DBE4` is only reached through the recovered getters in the code I
+  traced; its initialiser was not located, so these stay holes.
+

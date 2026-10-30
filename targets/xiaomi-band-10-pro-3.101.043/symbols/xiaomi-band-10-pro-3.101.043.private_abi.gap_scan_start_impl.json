@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.gap_scan_start_impl",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "gap_scan_start_impl",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC3B1374",
+  "prototype": "void *gap_scan_start_impl(int adapter, const void *params, const int *block, const void *callbacks)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "This is the scan-start producer and it fixes the two block sizes: the parameter block is 8 bytes (4-byte word plus one flag byte) and the second block is 20 bytes of which 16 are consumed."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-GAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-GAP-001"
+    ],
+    "source": "Allocates a 616-byte scan object, stores the callbacks pointer at object+12, then builds the adapter command message on the stack (zeroed, 708 bytes) and fills it from the two caller blocks: the message keeps *(u32 *)params at message+68 and *(u8 *)(params+4) at message+76, and the four dwords of the second block at message+80/+84/+88/+92. It then issues adapter command 237 through 0xC3AC47C and copies the 8-byte reply from message+12 into the scan object. Two callers."
+  },
+  "notes": "This is the scan-start producer and it fixes the two block sizes: the parameter block is 8 bytes (4-byte word plus one flag byte) and the second block is 20 bytes of which 16 are consumed.",
+  "callable_address": "0xc3b1375"
+}

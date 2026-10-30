@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.gap_scan_callbacks",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "gap_scan_callbacks",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x200DFAF0",
+  "prototype": "struct { u32 size; void *on_report; void *on_started; void *on_stopped; }",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "SCAN_CALLBACKS_SIZE = 16, read from the table's own size word rather than assumed."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-GAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-GAP-001"
+    ],
+    "source": "The scan callback table handed to gap_scan_start_impl: first word 0x10 (16 = the size the stack expects), then the report callback 0xC710330, the started callback 0xC7105A8 (logs 'lescan started') and the stopped callback 0xC710308 (logs 'lescan stopped' and calls 0xC701494(0,1))."
+  },
+  "notes": "SCAN_CALLBACKS_SIZE = 16, read from the table's own size word rather than assumed."
+}

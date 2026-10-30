@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 6cb8abe60750ba08
+// input_digest: eebd7e33b0327478
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -337,6 +337,9 @@ pub const CANOPUS_FW_LV_CACHE_DROP_CALLABLE: usize = canopus_thumb_callable(0x0c
 
 /// Recovered `lv_obj_update_layout` at 0x1c02c760. Thumb callable address 0x1c02c761.
 pub const CANOPUS_FW_LV_OBJ_UPDATE_LAYOUT_CALLABLE: usize = canopus_thumb_callable(0x1c02c761usize);
+
+/// Recovered global `gap_scan_callbacks` at 0x200DFAF0.
+pub const canopus_fw_gap_scan_callbacks: usize = 0x200DFAF0usize;
 
 /// Recovered `qjs_new_object` at 0xC2A41FC. Thumb callable address 0xc2a41fd.
 pub const CANOPUS_FW_QJS_NEW_OBJECT_CALLABLE: usize = canopus_thumb_callable(0xc2a41fdusize);
@@ -934,6 +937,9 @@ pub const CANOPUS_FW_CALENDAR_SNAPSHOT_CALLABLE: usize = canopus_thumb_callable(
 
 /// Recovered `feature_framework_init` at 0xC86E764. Thumb callable address 0xc86e765.
 pub const CANOPUS_FW_FEATURE_FRAMEWORK_INIT_CALLABLE: usize = canopus_thumb_callable(0xc86e765usize);
+
+/// Recovered `gap_scan_start_impl` at 0xC3B1374. Thumb callable address 0xc3b1375.
+pub const CANOPUS_FW_GAP_SCAN_START_IMPL_CALLABLE: usize = canopus_thumb_callable(0xc3b1375usize);
 
 /// Recovered `bt_buffer_new` at 0xc7eafbc. Thumb callable address 0xc7eafbd.
 pub const CANOPUS_FW_BT_BUFFER_NEW_CALLABLE: usize = canopus_thumb_callable(0xc7eafbdusize);
@@ -1813,6 +1819,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // fs_putfilep: restricted - not exported until context/ownership approved
 // fsync: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved
+// gap_scan_start_impl: restricted - not exported until context/ownership approved
 // heap_free: restricted - not exported until context/ownership approved
 // heap_mallinfo: restricted - not exported until context/ownership approved
 // heap_malloc: restricted - not exported until context/ownership approved

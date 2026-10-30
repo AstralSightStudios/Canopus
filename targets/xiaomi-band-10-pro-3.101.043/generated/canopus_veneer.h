@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 6cb8abe60750ba08
+ * input_digest: eebd7e33b0327478
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -597,6 +597,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * fs_putfilep: restricted - not exported until context/ownership approved
  * fsync: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
+ * gap_scan_start_impl: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved
  * heap_malloc: restricted - not exported until context/ownership approved

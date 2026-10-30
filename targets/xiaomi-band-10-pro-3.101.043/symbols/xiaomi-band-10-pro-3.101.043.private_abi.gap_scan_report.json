@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.gap_scan_report",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "gap_scan_report",
+  "kind": "layout",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "struct { u32 field0; u16 field4; u8 pad; u8 rssi; u8 addr_type; u8 length; u8 address[6]; ... }",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "App-facing scan record: 0x54 bytes (allocation in the same callback), list links at +0/+4, the dword from report+0 at +8, the u16 from report+4 at +0xC, RSSI at +0x10, a flag byte at +0x11, the length at +0x12, the address at +0x13 followed by the payload."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-GAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-GAP-001"
+    ],
+    "source": "Report layout as the scan report callback 0xC710334 consumes it (R4 = report): a dword at +0 is copied to the app record +8, a u16 at +4 to app record +0xC, the signed byte at +7 (LDRSB) is the RSSI and goes to app record +0x10, the byte at +9 is the address type (compared with 4 before the record is built), the byte at +0xA is the data length and is copied to app record +0x12, and the 6 address bytes at +0xC are copied to app record +0x13."
+  },
+  "notes": "App-facing scan record: 0x54 bytes (allocation in the same callback), list links at +0/+4, the dword from report+0 at +8, the u16 from report+4 at +0xC, RSSI at +0x10, a flag byte at +0x11, the length at +0x12, the address at +0x13 followed by the payload."
+}
