@@ -486,3 +486,122 @@ The table at `0xCDA2CD0` has a C++ header in `+0x00..+0x10` and virtual slots fr
 No functional name was invented for the four unnamed slots; they are recorded
 structurally.
 
+## What a p67 abi module still needs
+
+Implementation brief. Everything here is measured on this image and **cannot be
+inherited from the Band 11 module**; the addresses live in the pack, these are the
+shapes.
+
+### 1. `F_FILE_WRITE` must change shape, not just address
+
+This build has no non-vector `file_write`. Use `file_writev` (`0xC1D2540`,
+`i_ops+40`, checks `file+0 & 2`) with a one-element iovec, or `nx_write`
+(`0xC1D2640`, the same thing wrapped). The current module binding
+`F_FILE_WRITE(file, buf, n)` cannot be filled on this target.
+
+Related: `F_FS_PUTFILEP` is the single-argument `fs_putfilep` (`0xC1B979C`,
+`file+4--` then list release `0xC1CEC54`), which is a different function from
+`file_close` (`0xC1CEC08`, dispatches `i_ops+4`).
+
+### 2. Task iterator: usable, but with a stated limit
+
+`nxsched_foreach` = `0xC205E54`, callback convention `worker(tcb, arg)`, runs
+inside the scheduler critical section.
+
+**It iterates the pid hash, one TCB per bucket, and does not follow a chain.**
+Globals: buckets `0x200B24B0`, bucket count `0x200B24AC`; current TCB
+`0x200B24D4`; by-pid lookup `nxsched_get_tcb 0xC205910` (verifies the pid word at
+`tcb+44`).
+
+Consequence for the loop capture: do not assume the walk visits every TCB on the
+system. Either rely on the one-TCB-per-bucket property of this build, or resolve
+the module's own pid with `nxsched_get_tcb` first and validate the candidate.
+
+### 3. Loop and task layout (p67 values)
+
+`queue head 68`, `mutex 76`, `loop async 104`, **pipe read/write fd `360`/`364`**
+(created lazily by `uv_async_init` behind a `loop+360 == -1` guard; `+312/+316`
+is a plain list here), async pending word at `handle+108`, `uv_key` global
+`0x201033AC` with **limit 7**, `taskinfo+16+4*key` yields an **808-byte** uv state
+with the **loop pointer at `+760`**, `TCB_TLS 100`, `TCB_GROUP 8`, the group's file
+list at **`+720` (u8 row count) / `+724` (row-pointer array)**, 32-byte rows of
+eight fds, `FILE_INODE 16`, `file+4` refcount, `file+20` offset.
+
+`capture_default_loop` fits this with constants only — do **not** call
+`uv__get_loop 0xC2DE814`; the loop pointer already arrives from the adapter
+instance.
+
+### 4. L2CAP channel and event layout
+
+- Channel: **124 bytes**. `+0` descriptor, `+20` PSM entry, `+24..+39` (the BR
+  path copies this 16-byte block to `+68..+83`), `+33` state byte, `+36/+40/+44`
+  `-1`, `+48` `0x0101FFFF`, `+52` MTU (u16), `+60/+62` MPS, `+64` flag, `+112`
+  PSM, `+114` flags (bit `0x100`), `+116` cid, `+118` peer cid, `+120` state
+  (`2` = connected), `+121` result byte.
+- Descriptor (44 bytes): `+16/+20` cid pair, `+38` local cid (starts `0xFFFF`),
+  `+43` LE flag bit0.
+- Connect request: `+0` out cid, `+2` PSM, `+8` flags (bit0 = LE), `+12` PSM entry,
+  `+16/+20` cid pair, `+23` state (`1` LE, `2` BR). Disconnect request: `+0` cid.
+  Submit-cid request: `+4` cid.
+- Work node (20 bytes): `+0` owner, `+4` arg, `+8` handler, `+12` done, `+16` flag.
+  Queue `0x2013BD74`, lock `0x2013BD7C`, owner `0x2013BDBC`; the owner-only
+  intrusive insert is `0xC7EAE34`, the public submit is `0xC7EB988`.
+- Signalling dispatch table `0x2CD9F864`: 26 entries x 8 bytes
+  `{handler, u16 min length, byte, flags}` indexed by `code - 1`; `0x14`/`0x15`/
+  `0x16`/`0x17`/`0x18` are the LE CoC codes.
+- PSM entry: `+4` PSM (u16), `+6` kind; registry root `*(owner)+16`.
+
+### 5. Adapter command table
+
+`0xC3AC47C(adapter, reply, command)` with the status read at `reply+12`:
+`0x17` enable (`0xC3AF4A4`), `0x18` (`0xC3AF4CC`), `0x1B` state (`0xC3AF4F4`),
+`0x1E` with one argument (`0xC3AF524`), `0x26` per-channel handshake (from the send
+handler), `0x44` advertising stop (`0xC3B125C`).
+
+### 6. Feature runtime chain
+
+`FeaturePost` (`0xC86231C`, requires `handle+19` attached, runtime reached through
+`handle+28` then `+12`) → `feature_runtime_post 0xC865D30` → ring append in
+`feature_runtime_enqueue 0xC865794` at `runtime+0x50..0x64` (24-byte elements,
+`0xAA` per block) → wake `uv_async_send 0xC2E15A4` on the async at `runtime+0x3C`,
+which writes one byte to the loop's pipe write end.
+
+Manager dispatch table `0xCDA2CD0`: C++ header in `+0x00..+0x10`, virtual slots
+from `+0x14`; `featureRequire +0x1C`, `findFeature +0x20`, `createFeature +0x24`,
+`uninit +0x2C`.
+
+### 7. QuickJS: open, with the starting points recorded
+
+13 astrolink bindings, 1 resolved (`qjs_free_value 0xC2781E0`). The other twelve
+(`qjs_call`, `qjs_new_object`, `qjs_new_c_function2`, `qjs_is_function`,
+`qjs_new_string_len`, `qjs_to_cstring_len2`, `qjs_free_cstring`,
+`qjs_define_property_value_str`, `qjs_get_exception`, `qjs_new_array_buffer_copy`,
+`qjs_get_array_buffer`, `qjs_get_typed_array_buffer`) are **not recorded**: this
+build keeps no per-function signature strings for QuickJS, and cross-line matching
+is 22% accurate between .155 and .043, so nothing here may be filled from
+resemblance.
+
+Neighbour anchors established while walking out from `__JS_FreeValue`, to start the
+next pass from:
+
+| address | what it is | how it was settled |
+| --- | --- | --- |
+| `0xC2781E0` | `__JS_FreeValue` | its own error string + `quickjs.c:5636` |
+| `0xC27AD94` | `JS_DupValue` | mirror of the free switch, refcount increments, 99 callers |
+| `0xC278848` | string release helper | decrements the string refcount and calls `__JS_FreeValue` with tag `-7` |
+| `0xC27DB50` | `JS_GetOpaque(obj, class_id)` | `tag == -1 && *(u16 *)(obj+6) == class_id` then returns `obj+32` |
+| `0xC277B1C` | object release / refcount watchdog | logs `ref count error : %d %d %d`, 37 callers |
+| `0xC8670F0` | Feature-side JS marshaller | 2286 bytes, called by `feature_method_call` and `feature_event_set`; its callees are worth following next |
+
+The remaining twelve need the behavioural keys: string tag `-7` with the reference
+count and length fields for the string constructors, the context free hook at
+`ctx+4` for the cstring pair, the exception tag and the context's current-exception
+slot for `get_exception`, and the `JS_CLASS_*` id plus the array-buffer accessors
+for the three buffer entries. Each one must show the call shape astrolink uses
+(`(ctx) -> Value` for `new_object`/`get_exception`, `(ctx, ptr, len) -> Value` for
+`new_string_len`, `(ctx, out_len, value, flags) -> ptr` for `to_cstring_len2`,
+`(ctx, value, ...) -> ptr` for the buffer getters, `(ctx, obj, name, value, flags)
+-> int` for `define_property_value_str`, `(ctx, func, this, argc, argv) -> Value`
+for `call`, `(ctx, usize, name, len, nargs, cproto) -> Value` for
+`new_c_function2`).
+
