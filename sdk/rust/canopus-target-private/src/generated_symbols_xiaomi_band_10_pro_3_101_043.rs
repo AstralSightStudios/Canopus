@@ -1005,6 +1005,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void(void *object, unsigned int flags)",
     },
     TargetPrivateSymbolRecord {
+        name: "bt_adapter_enable",
+        kind: "function",
+        entry: 0xc3af4a4usize,
+        callable: 0xc3af4a5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int bt_adapter_enable(void *adapter)",
+    },
+    TargetPrivateSymbolRecord {
         name: "bt_adapter_set_scan_mode",
         kind: "function",
         entry: 0xc3b56a8usize,
@@ -1102,6 +1111,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int(void *, uint16_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "bt_le_start_advertising",
+        kind: "function",
+        entry: 0xc70ed94usize,
+        callable: 0xc70ed95usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int bt_le_start_advertising(int flags)",
     },
     TargetPrivateSymbolRecord {
         name: "bt_queue_external",
@@ -1228,6 +1246,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int file_dup3(struct file *source, struct file *target, int flags)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "file_writev",
+        kind: "function",
+        entry: 0xc1d2540usize,
+        callable: 0xc1d2541usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int file_writev(struct file *file, struct iovec *iov)",
     },
     TargetPrivateSymbolRecord {
         name: "files_getfilep",
@@ -1588,6 +1615,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int fs_getfilep(int fd, struct file **filep)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "fs_putfilep",
+        kind: "function",
+        entry: 0xc1b979cusize,
+        callable: 0xc1b979dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int fs_putfilep(struct file *file)",
     },
     TargetPrivateSymbolRecord {
         name: "gap_host_receive_slot",
@@ -2912,6 +2948,8 @@ pub const BACKGROUND_OBJECT_HIDE_ENTRY: usize = 0xc588960usize;
 pub const BACKGROUND_OBJECT_HIDE_CALLABLE: usize = 0xc588961usize;
 pub const BACKGROUND_OBJECT_SHOW_ENTRY: usize = 0xc5891b0usize;
 pub const BACKGROUND_OBJECT_SHOW_CALLABLE: usize = 0xc5891b1usize;
+pub const BT_ADAPTER_ENABLE_ENTRY: usize = 0xc3af4a4usize;
+pub const BT_ADAPTER_ENABLE_CALLABLE: usize = 0xc3af4a5usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_ENTRY: usize = 0xc3b56a8usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_CALLABLE: usize = 0xc3b56a9usize;
 pub const BT_ALLOC_ENTRY: usize = 0xc840c54usize;
@@ -2933,6 +2971,8 @@ pub const BT_L2CAP_DISCONNECT_CALLABLE: usize = 0xc805b39usize;
 pub const BT_L2CAP_OWNER_ENTRY: usize = 0x2013bdbcusize;
 pub const BT_L2CAP_SUBMIT_CID_ENTRY: usize = 0xc805be8usize;
 pub const BT_L2CAP_SUBMIT_CID_CALLABLE: usize = 0xc805be9usize;
+pub const BT_LE_START_ADVERTISING_ENTRY: usize = 0xc70ed94usize;
+pub const BT_LE_START_ADVERTISING_CALLABLE: usize = 0xc70ed95usize;
 pub const BT_QUEUE_EXTERNAL_ENTRY: usize = 0xc7eb9ccusize;
 pub const BT_QUEUE_EXTERNAL_CALLABLE: usize = 0xc7eb9cdusize;
 pub const BT_QUEUE_FREE_ENTRY: usize = 0xc6b9cf0usize;
@@ -2961,6 +3001,8 @@ pub const FILE_CLOSE_ENTRY: usize = 0xc1cec08usize;
 pub const FILE_CLOSE_CALLABLE: usize = 0xc1cec09usize;
 pub const FILE_DUP3_ENTRY: usize = 0xc1ced14usize;
 pub const FILE_DUP3_CALLABLE: usize = 0xc1ced15usize;
+pub const FILE_WRITEV_ENTRY: usize = 0xc1d2540usize;
+pub const FILE_WRITEV_CALLABLE: usize = 0xc1d2541usize;
 pub const FILES_GETFILEP_ENTRY: usize = 0xc1b90dcusize;
 pub const FILES_GETFILEP_CALLABLE: usize = 0xc1b90ddusize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_ENTRY: usize = 0xc1666d0usize;
@@ -3033,6 +3075,8 @@ pub const FONT_RELOAD_VG_DISPATCH_ENTRY: usize = 0x1c045360usize;
 pub const FONT_RELOAD_VG_DISPATCH_CALLABLE: usize = 0x1c045361usize;
 pub const FS_GETFILEP_ENTRY: usize = 0xc1b9700usize;
 pub const FS_GETFILEP_CALLABLE: usize = 0xc1b9701usize;
+pub const FS_PUTFILEP_ENTRY: usize = 0xc1b979cusize;
+pub const FS_PUTFILEP_CALLABLE: usize = 0xc1b979dusize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x2013c144usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7ec47cusize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7ec47dusize;

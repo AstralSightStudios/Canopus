@@ -186,6 +186,39 @@ File and file-list layout measured on this image:
 - one row is 32 bytes and holds 8 files, so `fd/8` selects the row and `fd%8` the entry
 - `file+4` is the reference count, `file+16` the inode, `file+20` the offset
 
-Still open in this group: `file_putfile` (the one-argument release astrolink binds as
-`F_FS_PUTFILEP` — the candidate `0xC1B8D50` walks a group, so its signature does not
-match the binding and it was not recorded), `file_write`, `nxsched_foreach`.
+### Pass 3 continued: release, write shape, and two Bluelet entries
+
+| astrolink binding | record | address | anchor |
+| --- | --- | --- | --- |
+| `F_FS_PUTFILEP` | `fs_putfilep` | `0xC1B979C` | single argument; asserts against `fs_files.c:906`, decrements `file+4` under BASEPRI and calls the list release `0xC1CEC54` when it hits zero; VFS wrappers call it right after `fs_getfilep` |
+| `F_ADAPTER_ENABLE` | `bt_adapter_enable` | `0xC3AF4A4` | issues adapter command `0x17`, returns the reply status byte; the btstack init path calls it by name through its error log |
+| advertising start | `bt_le_start_advertising` | `0xC70ED94` | builds the parameter block, registers the advertising data record once, calls the GAP start `0xC7D3EB4` with the `flags & 2` / `flags & 8` bits |
+
+The earlier candidate for the release (`0xC1B8D50`) is a group walk, as suspected;
+the real single-argument release is `0xC1B979C`, and `IDA` had left it undefined as
+a function, so it only showed up as a `loc_` call target from `file_close`'s
+neighbours. Its distinct evidence is the refcount decrement at `file+4` followed by
+the list release, whereas `file_close` dispatches `i_ops+4`.
+
+**Binding shape change needed for `F_FILE_WRITE`:** this build has no
+non-vector `file_write`. `file_writev` (`0xC1D2540`) takes the file, checks
+`file+0 & 2`, and dispatches `i_ops+40`, and `nx_write` (`0xC1D25F4`) builds a
+one-element iovec for it. Astrolink currently calls
+`F_FILE_WRITE(file, buf, n)`, so that adapter has to change on purpose to the
+writev shape (`file_writev(file, &iov{base,len})`), not by substituting an address.
+
+Adapter command wrappers observed while anchoring `bt_adapter_enable`, all of the
+form `0xC3AC47C(adapter, reply, command)` plus a status read at `reply+12`:
+
+| wrapper | command | note |
+| --- | --- | --- |
+| `0xC3AF4A4` | `0x17` | `bt_adapter_enable` |
+| `0xC3AF4CC` | `0x18` | unrecorded |
+| `0xC3AF4F4` | `0x1B` | `bt_adapter_get_state` (recorded earlier) |
+| `0xC3AF524` | `0x1E` | takes one argument |
+
+Still open in these groups: `nxsched_foreach` (no `sched_foreach.c` string on this
+image, so it has to be found by its list-walk shape rather than by a name),
+`file_readv` (`0xC1D119C`, recovered as context for the write shape but not a
+binding), the scan start/stop pair, the advertising stop, and the whole LE CoC
+owner handler set.

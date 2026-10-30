@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 8be06954d7487af0
+ * input_digest: 12ad976fe178c389
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -487,6 +487,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * background_object_has_flag: restricted - not exported until context/ownership approved
  * background_object_hide: restricted - not exported until context/ownership approved
  * background_object_show: restricted - not exported until context/ownership approved
+ * bt_adapter_enable: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved
@@ -499,6 +500,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * bt_get_bond_state: restricted - not exported until context/ownership approved
  * bt_l2cap_disconnect: restricted - not exported until context/ownership approved
  * bt_l2cap_submit_cid: restricted - not exported until context/ownership approved
+ * bt_le_start_advertising: restricted - not exported until context/ownership approved
  * bt_queue_external: restricted - not exported until context/ownership approved
  * bt_queue_free: restricted - not exported until context/ownership approved
  * bt_remove_bond_private: restricted - not exported until context/ownership approved
@@ -530,6 +532,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * errno_location: restricted - not exported until context/ownership approved
  * file_close: restricted - not exported until context/ownership approved
  * file_dup3: restricted - not exported until context/ownership approved
+ * file_writev: restricted - not exported until context/ownership approved
  * files_getfilep: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
  * font_manager_add_path: restricted - not exported until context/ownership approved
@@ -565,6 +568,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * font_reload_vector_drop: restricted - not exported until context/ownership approved
  * font_reload_vg_dispatch: restricted - not exported until context/ownership approved
  * fs_getfilep: restricted - not exported until context/ownership approved
+ * fs_putfilep: restricted - not exported until context/ownership approved
  * fsync: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved

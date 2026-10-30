@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.bt_adapter_enable",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "bt_adapter_enable",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC3AF4A4",
+  "callable_address": "0xc3af4a5",
+  "prototype": "int bt_adapter_enable(void *adapter)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Astrolink binds this as F_ADAPTER_ENABLE to bring the controller up before registering its GAP callbacks. Sibling wrappers of the same adapter command helper are 0xC3AF4CC (command 0x18), 0xC3AF4F4 (command 0x1B, already recorded as bt_adapter_get_state) and 0xC3AF524 (command 0x1E with one argument)."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ],
+    "source": "Issues adapter command 0x17 through 0xC3AC47C(adapter, reply, 0x17) and returns the status byte at reply+12, or 7 for a NULL adapter. The btstack init path 0xC70189C calls it directly after btstack_sdk_init and reports its failure with the log call 0xC708A98('bt_adapter_enable', status), which names the function from the inside."
+  },
+  "notes": "Astrolink binds this as F_ADAPTER_ENABLE to bring the controller up before registering its GAP callbacks. Sibling wrappers of the same adapter command helper are 0xC3AF4CC (command 0x18), 0xC3AF4F4 (command 0x1B, already recorded as bt_adapter_get_state) and 0xC3AF524 (command 0x1E with one argument)."
+}
