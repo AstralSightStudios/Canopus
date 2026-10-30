@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.feature_register_all",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "feature_register_all",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC892BC4",
+  "prototype": "int feature_register_all(void *registry)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "This is the shape a native feature must imitate: a 12-byte thunk passing a static descriptor to feature_register_feature, not an app object."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-001"
+    ],
+    "source": "Calls 28 per-feature register thunks in sequence with the registry as argument and stops at the first failure; the wrapped 28th call is the astrolink-relevant pattern: each thunk is a 12-byte function that calls feature_register_feature 0xC862898(registry, &descriptor)."
+  },
+  "notes": "This is the shape a native feature must imitate: a 12-byte thunk passing a static descriptor to feature_register_feature, not an app object.",
+  "callable_address": "0xc892bc5"
+}

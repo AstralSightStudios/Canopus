@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: ccd0c3b473939f0a
+ * input_digest: 7e658dd1ede522bf
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -547,9 +547,12 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * feature_event_get: restricted - not exported until context/ownership approved
  * feature_event_on_off: restricted - not exported until context/ownership approved
  * feature_event_set: restricted - not exported until context/ownership approved
+ * feature_framework_init: restricted - not exported until context/ownership approved
  * feature_manager_post_task: restricted - not exported until context/ownership approved
  * feature_method_call: restricted - not exported until context/ownership approved
+ * feature_register_all: restricted - not exported until context/ownership approved
  * feature_register_feature: restricted - not exported until context/ownership approved
+ * feature_registry_create: restricted - not exported until context/ownership approved
  * feature_runtime_enqueue: restricted - not exported until context/ownership approved
  * feature_runtime_post: restricted - not exported until context/ownership approved
  * file_close: restricted - not exported until context/ownership approved
@@ -714,6 +717,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * property_get_int32: restricted - not exported until context/ownership approved
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
+ * pthread_mutex_unlock_core: restricted - not exported until context/ownership approved
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
  * qjs_call: restricted - not exported until context/ownership approved
  * qjs_free_cstring: restricted - not exported until context/ownership approved
@@ -764,6 +768,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * uv_loop_init: restricted - not exported until context/ownership approved
  * uv_mutex_init: restricted - not exported until context/ownership approved
  * uv_mutex_lock: restricted - not exported until context/ownership approved
+ * uv_mutex_unlock_inlined: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
  * vibrator_hal_transact: restricted - not exported until context/ownership approved
  * wakelock_acquire: restricted - not exported until context/ownership approved

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv_mutex_unlock_inlined",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv_mutex_unlock_inlined",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC204F08",
+  "prototype": "int uv_mutex_unlock(uv_mutex_t *mutex)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Recorded as the evidenced entry point for the unlock; the real release work is pthread_mutex_unlock_core 0xC205430. This also confirms uv_mutex_lock 0xC1E9B1C from the caller side rather than only from uv_mutex_init."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-001"
+    ],
+    "source": "Not a function start: it is the label the inlined uv unlock calls. ensureJsClass 0xC867040 wraps its class-id allocation in exactly this pair - 0xC2DCDA8 (which tail-calls pthread_mutex_lock 0xC1E9B1C) for lock and 0xC2DCDC4 (which tail-calls 0xC204F08) for unlock - so the pair is provably the libuv lock/unlock as the firmware inlines it."
+  },
+  "notes": "Recorded as the evidenced entry point for the unlock; the real release work is pthread_mutex_unlock_core 0xC205430. This also confirms uv_mutex_lock 0xC1E9B1C from the caller side rather than only from uv_mutex_init.",
+  "callable_address": "0xc204f09"
+}

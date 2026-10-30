@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: ccd0c3b473939f0a
+// input_digest: 7e658dd1ede522bf
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -448,6 +448,9 @@ pub const canopus_fw_font_reload_count_cache_class: usize = 0x2cce571cusize;
 
 /// Recovered `p67_blur_event_list_get` at 0x1c07a4b0. Thumb callable address 0x1c07a4b1.
 pub const CANOPUS_FW_P67_BLUR_EVENT_LIST_GET_CALLABLE: usize = canopus_thumb_callable(0x1c07a4b1usize);
+
+/// Recovered `feature_registry_create` at 0xC8660E4. Thumb callable address 0xc8660e5.
+pub const CANOPUS_FW_FEATURE_REGISTRY_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc8660e5usize);
 
 /// Recovered `wakelock_create` at 0x0ca6e7d4. Thumb callable address 0x0ca6e7d5.
 pub const CANOPUS_FW_WAKELOCK_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0ca6e7d5usize);
@@ -926,6 +929,9 @@ pub unsafe fn canopus_fw_lvx_msgbox_create(a0: *mut core::ffi::c_void, a1: *mut 
 /// Recovered `calendar_snapshot` at 0x0ca5fb40. Thumb callable address 0x0ca5fb41.
 pub const CANOPUS_FW_CALENDAR_SNAPSHOT_CALLABLE: usize = canopus_thumb_callable(0x0ca5fb41usize);
 
+/// Recovered `feature_framework_init` at 0xC86E764. Thumb callable address 0xc86e765.
+pub const CANOPUS_FW_FEATURE_FRAMEWORK_INIT_CALLABLE: usize = canopus_thumb_callable(0xc86e765usize);
+
 /// Recovered `bt_buffer_new` at 0xc7eafbc. Thumb callable address 0xc7eafbd.
 pub const CANOPUS_FW_BT_BUFFER_NEW_CALLABLE: usize = canopus_thumb_callable(0xc7eafbdusize);
 
@@ -1295,6 +1301,9 @@ pub unsafe fn canopus_fw_lvx_msgbox_set_content(a0: *mut core::ffi::c_void, a1: 
     f(a0, a1, a2, a3, a4, a5, a6);
 }
 
+/// Recovered `feature_register_all` at 0xC892BC4. Thumb callable address 0xc892bc5.
+pub const CANOPUS_FW_FEATURE_REGISTER_ALL_CALLABLE: usize = canopus_thumb_callable(0xc892bc5usize);
+
 /// Recovered `lv_bar_set_range` at 0xc5883d8. Thumb callable address 0xc5883d9.
 pub const CANOPUS_FW_LV_BAR_SET_RANGE_CALLABLE: usize = canopus_thumb_callable(0xc5883d9usize);
 
@@ -1381,6 +1390,9 @@ pub unsafe fn canopus_fw_bt_adapter_get_instance() -> *mut core::ffi::c_void {
     let f: extern "C" fn() -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_BT_ADAPTER_GET_INSTANCE_CALLABLE) };
     f()
 }
+
+/// Recovered `pthread_mutex_unlock_core` at 0xC205430. Thumb callable address 0xc205431.
+pub const CANOPUS_FW_PTHREAD_MUTEX_UNLOCK_CORE_CALLABLE: usize = canopus_thumb_callable(0xc205431usize);
 
 /// Recovered `bt_l2cap_disconnect` at 0xc805b38. Thumb callable address 0xc805b39.
 pub const CANOPUS_FW_BT_L2CAP_DISCONNECT_CALLABLE: usize = canopus_thumb_callable(0xc805b39usize);
@@ -1580,6 +1592,9 @@ pub const CANOPUS_FW_L2CAP_SEND_HANDLER_CALLABLE: usize = canopus_thumb_callable
 /// Recovered `lv_obj_set_style_bg_opa` at 0xc108374. Thumb callable address 0xc108375.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = canopus_thumb_callable(0xc108375usize);
 
+/// Recovered `uv_mutex_unlock_inlined` at 0xC204F08. Thumb callable address 0xc204f09.
+pub const CANOPUS_FW_UV_MUTEX_UNLOCK_INLINED_CALLABLE: usize = canopus_thumb_callable(0xc204f09usize);
+
 /// Recovered `calendar_text_color` at 0x0c588a70. Thumb callable address 0x0c588a71.
 pub const CANOPUS_FW_CALENDAR_TEXT_COLOR_CALLABLE: usize = canopus_thumb_callable(0x0c588a71usize);
 
@@ -1745,9 +1760,12 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // feature_event_get: restricted - not exported until context/ownership approved
 // feature_event_on_off: restricted - not exported until context/ownership approved
 // feature_event_set: restricted - not exported until context/ownership approved
+// feature_framework_init: restricted - not exported until context/ownership approved
 // feature_manager_post_task: restricted - not exported until context/ownership approved
 // feature_method_call: restricted - not exported until context/ownership approved
+// feature_register_all: restricted - not exported until context/ownership approved
 // feature_register_feature: restricted - not exported until context/ownership approved
+// feature_registry_create: restricted - not exported until context/ownership approved
 // feature_runtime_enqueue: restricted - not exported until context/ownership approved
 // feature_runtime_post: restricted - not exported until context/ownership approved
 // file_close: restricted - not exported until context/ownership approved
@@ -1912,6 +1930,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // property_get_int32: restricted - not exported until context/ownership approved
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
 // pthread_create_internal: FORBIDDEN - no binding may ever be generated
+// pthread_mutex_unlock_core: restricted - not exported until context/ownership approved
 // public_work_queue: FORBIDDEN - no binding may ever be generated
 // qjs_call: restricted - not exported until context/ownership approved
 // qjs_free_cstring: restricted - not exported until context/ownership approved
@@ -1962,6 +1981,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // uv_loop_init: restricted - not exported until context/ownership approved
 // uv_mutex_init: restricted - not exported until context/ownership approved
 // uv_mutex_lock: restricted - not exported until context/ownership approved
+// uv_mutex_unlock_inlined: restricted - not exported until context/ownership approved
 // vendor_hci_transport_register: FORBIDDEN - no binding may ever be generated
 // vibrator_hal_transact: restricted - not exported until context/ownership approved
 // wakelock_acquire: restricted - not exported until context/ownership approved

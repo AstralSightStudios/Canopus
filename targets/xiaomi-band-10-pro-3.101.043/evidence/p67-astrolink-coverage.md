@@ -1042,3 +1042,58 @@ would be a mistake to reuse Band 11's offsets for it.
   clear, 50 callers) has **no caller in common with the lock's 188 call sites**, so
   it is not the unlock path and was not recorded.
 
+## p67 host trace: is registration possible without the framework object?
+
+`EVID-PORT-1043-HOST-001`. Answer to the decisive question first.
+
+**3. No — `feature_register_feature` cannot be reached from a native callback
+alone.** The chain is short and closed:
+
+```
+host object (AIOTJS/ferry, from 0xC911306)
+  -> feature_registry_create 0xC8660E4(host)      /* 24-byte registry, list head at +0 */
+       -> feature_framework_init 0xC86E764(registry, *(host+12))
+            -> feature_register_all 0xC892BC4(registry)
+                 -> 28 x 12-byte thunk: feature_register_feature 0xC862898(registry, &descriptor)
+  -> bind: 0xC86700C(registry, host)
+```
+
+The registry instance is **created per app host object**, never fetched from a
+global, and `feature_register_feature` requires it (it logs `Failed to get
+FeatureRegistry instance!` when null). So a p67 module cannot register by itself.
+
+**2. The legitimate supply point** is the shape the firmware itself uses: a **12-byte
+thunk that passes a static descriptor to `feature_register_feature`** — i.e. the
+module would need the host's registry pointer handed to it. Registering an *app* is
+the host's job and is not something a native module can do from a callback.
+
+**4. The JSClassID global is safe to read at callback time.**
+`dword_2013CE38` is allocated lazily by `ensureJsClass 0xC867040` (class-id allocator
+`0xC2780F4`, then `JS_RegisterClass` with the class definition at `0x200E7EA8`) and
+is **assigned before any Feature object exists**, because every Feature object is
+created with that class. Every unwrap in the framework needs it —
+`JS_GetOpaque(obj, dword_2013CE38)` in `event_set 0xC8697FC`, `event_get 0xC86A338`,
+`method_call 0xC86C2B8`, `accessor_get/set`, `event_on_off` — and the class id is
+already non-zero by the time an event reaches a callback.
+
+**1. Host singleton and vtable: not established.** What the image gives is a naming
+lead rather than an address: the ferry framework object appears in its own assertion
+strings as `_pImpl->render_.loop`, `_pImpl->render_.stop`, `_pImpl->render_.event`,
+`_pImpl->render_.async_del_app` (`uv_async_init` assertions around `0xcc9f348` /
+`0xcc9f3dc` / `0xcc9f9b8`), which means the framework implementation member is
+`render_` and the app-lifecycle callbacks hang off it. The singleton global, the
+vtable address and the create/initialize slot indices were **not** resolved in this
+pass, so no `D_FRAMEWORK` equivalent is recorded.
+
+### The unlock primitive, finally
+
+`ensureJsClass` also settled `uv_mutex_unlock`: it wraps its class-id allocation in
+the pair `0xC2DCDA8` (tail-calls **pthread_mutex_lock `0xC1E9B1C`**) and `0xC2DCDC4`
+(tail-calls **`0xC204F08`**). So the inlined libuv unlock jumps to `0xC204F08`, which
+is a label whose real work is `pthread_mutex_unlock_core 0xC205430` (semaphore at
+`mutex+8`, holder list, post). Composition for the module: call `0xC205430(mutex)`;
+`uv_mutex_lock 0xC1E9B1C` is now confirmed from the caller side as well, not only
+from `uv_mutex_init`.
+
+`uv_close` remains unlocated.
+
