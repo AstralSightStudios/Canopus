@@ -830,3 +830,48 @@ Route B (breakpoint the allocator on the device) was not attempted to completion
 it remains the fallback, and the allocator hook is `*(*(rt+16)+8)` with
 `js_malloc_rt 0xC2D10F8` as its wrapper.
 
+### 7g. The two string entries are compositions — all three checks passed
+
+The engine does not export these, but it does not have to: the header the module
+needs is measured three times on this image and the engine's own behaviour confirms
+the conventions. `EVID-PORT-1043-QJS-007`.
+
+**Check 1 — hash convention: zero is "not computed yet", writing zero is correct.**
+The atom intern path `0xC275B34` recomputes the hash from the payload
+(`h = 263*h + byte`, masked `0x3FFFFFFF`) and only then compares it against the
+stored hash of the entries in the atom table (`*(u32*)(entry+8) & 0x3FFFFFFF`).
+A fresh string's `+8` is therefore never consumed as a cached value: `0` simply
+means "uncomputed", and the engine computes when it needs it.
+
+**Check 2 — the whole header, and the wide flag.** `0xC278140` (interned-atom
+allocator) writes `+0 = 1` (refcount), `+4 = len`, `+8 = 0`, `+12 = 0`, and the NUL
+at `+16 + len` — i.e. everything an ordinary string needs, with the atom
+registration as the only extra step. The word at `+8` carries three fields: hash in
+bits 0..29 and `atom_type` in bits 30..31; the atom-string path sets
+`atom_type = 3` (`*(u8*)(s+11) |= 0xC0`) and an **ordinary** string must leave it 0.
+`is_wide_char` is bit 31 of the word at `+4`, so writing `len` clears it, which is
+correct for the 8-bit payload the module copies; a wide string would need the UTF-16
+form instead.
+
+**Check 3 — is a non-atom string acceptable where the module uses it?** Yes for the
+uses that exist: `src/qjs/feature.rs` builds strings only as *values* — the Feature
+name is passed to the define composition as raw `(ptr, len)` bytes, which that path
+interns with `JS_NewAtomLen 0xC294DCC`, and every other string is an argument or a
+property value. Ordinary (non-atom) strings are the normal case for JS values, and
+the engine interns lazily if a value is later used as a key. What must **not** be
+done is hand one of these strings to an entry that takes a `JSAtom` argument; the
+module has no such call.
+
+| binding | recipe |
+| --- | --- |
+| `qjs_new_string_len(ctx, ptr, len)` | `p = js_malloc_rt(ctx, len + 17)`; `p[0] = 1`; `p+4 = len` (bit 31 clear); `p+8 = 0`; `p+12 = 0`; copy `len` bytes to `p+16`; `p[16+len] = 0`; return `(p+16, -7)` |
+| `qjs_to_cstring_len2(ctx, value, len_out)` | require tag `-7`; `len = *(u32*)(string+4) & 0x7FFFFFFF` (bit 31 = wide, must be converted, not copied); `q = js_malloc_rt(ctx, len + 1)`; copy from `string+16`; `q[len] = 0`; `*len_out = len`; return `q` |
+
+Both allocations go through `js_malloc_rt 0xC2D10F8`, the same hook the array-buffer
+composition already needs, and the cstring result is freed by `qjs_free_cstring
+0xC278848` exactly as that path expects (`ptr-16`, tag `-7`, refcount decrement).
+
+Consequence: **all 47 firmware bindings are now covered — 41 measured addresses
+plus 6 compositions — and the two former gaps are resolved by construction rather
+than by lookup.**
+

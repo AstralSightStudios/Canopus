@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_new_string_len_composition",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_new_string_len_composition",
+  "kind": "compose",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "JSValue qjs_new_string_len(JSContext *ctx, const uint8_t *utf8, size_t len)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Build the string value directly instead of calling a constructor the engine does not export: p = js_malloc_rt(ctx, len + 17) at 0xC2D10F8; write refcount 1 at p+0, len at p+4 with bit 31 clear (is_wide_char = 0, i.e. an 8-bit string), 0 at p+8 (hash 0 = not computed yet, atom_type 0 = ordinary string) and 0 at p+12; copy the bytes to p+16 and write the NUL at p+16+len; return the value pair (p + 16, tag -7)."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "proven",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-007",
+      "EVID-PORT-1043-DEVICE-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-007",
+      "EVID-PORT-1043-DEVICE-002"
+    ],
+    "source": "Header measured three times on this image (atom intern 0xC278140, the string builder 0xC2920BC and the device objects). The zero hash is correct because the intern path 0xC275B34 recomputes the hash from the payload with h = 263*h + byte and masks it with 0x3FFFFFFF before comparing against the atom table, so a stored 0 only means \"not computed yet\"; atom strings additionally set atom_type = 3 in the top two bits of the word at +8 (0xC0 in byte +11), which an ordinary string must not."
+  },
+  "notes": "Build the string value directly instead of calling a constructor the engine does not export: p = js_malloc_rt(ctx, len + 17) at 0xC2D10F8; write refcount 1 at p+0, len at p+4 with bit 31 clear (is_wide_char = 0, i."
+}

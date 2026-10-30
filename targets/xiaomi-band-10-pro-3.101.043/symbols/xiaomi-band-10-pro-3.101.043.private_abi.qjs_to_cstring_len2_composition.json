@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_to_cstring_len2_composition",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_to_cstring_len2_composition",
+  "kind": "compose",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "const char *qjs_to_cstring_len2(JSContext *ctx, size_t *plen, JSValue value)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Compose the accessor: accept only tag -7, read len from string+4 with the high bit masked off (bit 31 is is_wide_char, so a wide string must be converted rather than copied), allocate len + 1 through js_malloc_rt 0xC2D10F8, copy the payload from string+16, write the NUL, report len and return the pointer. The result is compatible with qjs_free_cstring 0xC278848 because that free path subtracts 16 and releases with tag -7, which is exactly this allocation shape."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "proven",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-007",
+      "EVID-PORT-1043-DEVICE-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-007",
+      "EVID-PORT-1043-DEVICE-002"
+    ],
+    "source": "The engine exports no to-cstring entry on this build and the constant search found no len + 1 allocation site, so this is composition. astrolink already checks the tag itself before calling (feature.rs tests value >> 32 == -7), so the tag gate is free."
+  },
+  "notes": "Compose the accessor: accept only tag -7, read len from string+4 with the high bit masked off (bit 31 is is_wide_char, so a wide string must be converted rather than copied), allocate len + 1 through js_malloc_rt 0xC2D10F8, copy the payload from string+16, write the NUL, report len and return the pointer."
+}
