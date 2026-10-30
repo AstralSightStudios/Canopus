@@ -340,6 +340,7 @@ local function make_button(text, y, color, on_clicked)
     button:clear_flag(lvgl.FLAG.SCROLLABLE)
     button:add_flag(lvgl.FLAG.CLICKABLE)
     local label = lvgl.Label(button, {
+        text_font = lvgl.Font("MiSans-Regular", 24),
         text = text, text_color = 0xFFFFFF, align = lvgl.ALIGN.CENTER,
     })
     button:onClicked(function()
@@ -355,6 +356,7 @@ local module_supported = false
 if MODULE_PATH then module_supported = verify_module_file() end
 if not module_supported then
     status = lvgl.Label(root, {
+        text_font = lvgl.Font("MiSans-Regular", 18),
         text = "Firmware version not supported\n"
             .. tostring(firmware_version or "Unknown"),
         text_color = 0xFF9A9A, width = 300, height = 96,
@@ -431,6 +433,7 @@ make_button("Clear Env", 72, 0x8A1F14, function()
 end)
 
 status = lvgl.Label(root, {
+    text_font = lvgl.Font("MiSans-Regular", 18),
     text = "环境就绪\n固件版本：" .. firmware_version .. "\n点击「Run」开始安装",
     text_color = 0xBFD9FF, width = 300, height = 96,
     align = { type = lvgl.ALIGN.CENTER, x_ofs = 0, y_ofs = 170 },
