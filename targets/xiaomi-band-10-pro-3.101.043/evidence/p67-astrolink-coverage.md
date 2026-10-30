@@ -801,3 +801,32 @@ With that, the QuickJS group is: **8 addresses, 4 compositions (this table plus
 `qjs_define_property_value_str`), 2 genuinely open** — `qjs_new_string_len` and
 `qjs_to_cstring_len2`, whose missing invariants are unchanged from 7b.
 
+### 7f. Route A (search the constant) and the final state of the two string entries
+
+Searched every `ADD(S) #0x11` in the QuickJS region and checked what the sum feeds.
+The candidate set is finite and it resolves into three kinds, none of which is the
+constructor astrolink binds:
+
+| site | what the `+17` allocation turned out to be |
+| --- | --- |
+| `0xC278140` | the atom-intern path: allocates through the hook with `len + 17`, writes refcount `+0`, length `+4`, hash `+8`, NUL at `+16 + len`, then looks the atom up and registers it — **returns an atom, not a `-7` value** |
+| `0xC29C4B8`, `0xC29A78C` | string quoters (a `0123456789abcdef` table follows): allocate `len + 17` for the quoted form with escape expansion |
+| `0xC27BFE0`, `0xC27C1FC` | the qjs file-eval paths, recognisable by a 256 KiB stack buffer |
+
+So on this build the ASCII fast path is **inlined into its callers** rather than
+exported: the header layout is confirmed a third time (`refcount +0`, `length +4`,
+`hash +8`, `NUL at +16 + len`) but the function that wraps such an allocation into
+a tag `-7` value is not a standalone entry, and `qjs_to_cstring_len2` has no
+`len + 1` allocation site at all in the examined set (the only `+1` adds in the
+region are index increments).
+
+The two entries therefore stay **open**, with these exact gaps:
+- `qjs_new_string_len`: needs a caller that invokes the inlined allocator and
+  returns `(string + 16, tag -7)`; the allocator itself is inside `0xC278140`.
+- `qjs_to_cstring_len2`: needs the `len + 1` allocation site, which the constant
+  search did not produce.
+
+Route B (breakpoint the allocator on the device) was not attempted to completion;
+it remains the fallback, and the allocator hook is `*(*(rt+16)+8)` with
+`js_malloc_rt 0xC2D10F8` as its wrapper.
+
