@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: cb3815cbd17ffca0
+// input_digest: 0b93ce45010a612d
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -560,6 +560,9 @@ pub const CANOPUS_FW_L2CAP_UNREGISTER_PSM_HANDLER_CALLABLE: usize = canopus_thum
 /// Recovered `font_reload_face_compare` at 0x1c05682c. Thumb callable address 0x1c05682d.
 pub const CANOPUS_FW_FONT_RELOAD_FACE_COMPARE_CALLABLE: usize = canopus_thumb_callable(0x1c05682dusize);
 
+/// Recovered `js_realloc_rt` at 0xC2D10F8. Thumb callable address 0xc2d10f9.
+pub const CANOPUS_FW_JS_REALLOC_RT_CALLABLE: usize = canopus_thumb_callable(0xc2d10f9usize);
+
 /// Recovered `p67_blur_crossview_callback` at 0x0c50b9f0. Thumb callable address 0x0c50b9f1.
 pub const CANOPUS_FW_P67_BLUR_CROSSVIEW_CALLBACK_CALLABLE: usize = canopus_thumb_callable(0x0c50b9f1usize);
 
@@ -992,6 +995,9 @@ pub const CANOPUS_FW_P67_BATTERY_CHILD_COUNT_CALLABLE: usize = canopus_thumb_cal
 /// Recovered `bt_alloc` at 0xc840c54. Thumb callable address 0xc840c55.
 pub const CANOPUS_FW_BT_ALLOC_CALLABLE: usize = canopus_thumb_callable(0xc840c55usize);
 
+/// Recovered `js_new_atom_len` at 0xC294DCC. Thumb callable address 0xc294dcd.
+pub const CANOPUS_FW_JS_NEW_ATOM_LEN_CALLABLE: usize = canopus_thumb_callable(0xc294dcdusize);
+
 /// Recovered `recvfrom` at 0xc1fd570. Thumb callable address 0xc1fd571.
 pub const CANOPUS_FW_RECVFROM_CALLABLE: usize = canopus_thumb_callable(0xc1fd571usize);
 #[allow(non_snake_case)]
@@ -1112,6 +1118,9 @@ pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc1e4591u
 /// Recovered `lv_bar_create` at 0xc588b90. Thumb callable address 0xc588b91.
 pub const CANOPUS_FW_LV_BAR_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc588b91usize);
 
+/// Recovered `js_new_atom_len_core` at 0xC294B50. Thumb callable address 0xc294b51.
+pub const CANOPUS_FW_JS_NEW_ATOM_LEN_CORE_CALLABLE: usize = canopus_thumb_callable(0xc294b51usize);
+
 /// Recovered `calendar_app_lookup` at 0xca69934. Thumb callable address 0xca69935.
 pub const CANOPUS_FW_CALENDAR_APP_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0xca69935usize);
 
@@ -1190,6 +1199,9 @@ pub unsafe fn canopus_fw_bt_get_pairing_state(a0: *const u8, a1: u32) -> u32 {
     f(a0, a1)
 }
 
+/// Recovered `js_atom_unref` at 0xC2780B0. Thumb callable address 0xc2780b1.
+pub const CANOPUS_FW_JS_ATOM_UNREF_CALLABLE: usize = canopus_thumb_callable(0xc2780b1usize);
+
 /// Recovered global `p67_blur_watchface_root_class` at 0x2cd1f640.
 pub const canopus_fw_p67_blur_watchface_root_class: usize = 0x2cd1f640usize;
 
@@ -1246,6 +1258,9 @@ pub const canopus_fw_pipe_file_operations: usize = 0x2CCBE5A4usize;
 
 /// Recovered `l2cap_find_le_psm` at 0xC7FF644. Thumb callable address 0xc7ff645.
 pub const CANOPUS_FW_L2CAP_FIND_LE_PSM_CALLABLE: usize = canopus_thumb_callable(0xc7ff645usize);
+
+/// Recovered `js_free_rt` at 0xC278000. Thumb callable address 0xc278001.
+pub const CANOPUS_FW_JS_FREE_RT_CALLABLE: usize = canopus_thumb_callable(0xc278001usize);
 
 /// Recovered `screen_get_state` at 0x0ca72f3c. Thumb callable address 0x0ca72f3d.
 pub const CANOPUS_FW_SCREEN_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0ca72f3dusize);
@@ -1786,7 +1801,12 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // hidden_and_show_app_cb: restricted - not exported until context/ownership approved
 // insmod: restricted - not exported until context/ownership approved
 // ioctl: restricted - not exported until context/ownership approved
+// js_atom_unref: restricted - not exported until context/ownership approved
+// js_free_rt: restricted - not exported until context/ownership approved
 // js_new_array_buffer: restricted - not exported until context/ownership approved
+// js_new_atom_len: restricted - not exported until context/ownership approved
+// js_new_atom_len_core: restricted - not exported until context/ownership approved
+// js_realloc_rt: restricted - not exported until context/ownership approved
 // l2_owner_timer_init: restricted - not exported until context/ownership approved
 // l2_owner_timer_start: restricted - not exported until context/ownership approved
 // l2cap_allocate_cid: restricted - not exported until context/ownership approved

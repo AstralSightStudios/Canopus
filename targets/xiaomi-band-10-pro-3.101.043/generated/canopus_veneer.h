@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: cb3815cbd17ffca0
+ * input_digest: 0b93ce45010a612d
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -603,7 +603,12 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * hidden_and_show_app_cb: restricted - not exported until context/ownership approved
  * insmod: restricted - not exported until context/ownership approved
  * ioctl: restricted - not exported until context/ownership approved
+ * js_atom_unref: restricted - not exported until context/ownership approved
+ * js_free_rt: restricted - not exported until context/ownership approved
  * js_new_array_buffer: restricted - not exported until context/ownership approved
+ * js_new_atom_len: restricted - not exported until context/ownership approved
+ * js_new_atom_len_core: restricted - not exported until context/ownership approved
+ * js_realloc_rt: restricted - not exported until context/ownership approved
  * l2_owner_timer_init: restricted - not exported until context/ownership approved
  * l2_owner_timer_start: restricted - not exported until context/ownership approved
  * l2cap_allocate_cid: restricted - not exported until context/ownership approved

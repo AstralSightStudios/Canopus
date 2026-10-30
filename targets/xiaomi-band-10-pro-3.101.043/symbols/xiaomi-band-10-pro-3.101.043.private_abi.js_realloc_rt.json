@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.js_realloc_rt",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "js_realloc_rt",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2D10F8",
+  "callable_address": "0xc2d10f9",
+  "prototype": "void *js_realloc_rt(JSRuntime *rt, void *ptr, size_t size)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "The composition primitive for the module is js_realloc_rt(rt, NULL, size): the realloc hook is the only exported malloc-family entry on this build, and realloc(NULL, size) is a malloc. Corrects the earlier assumption that 0xC2D10F8 is a js_malloc_rt wrapper; it is the realloc slot."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-008"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-008"
+    ],
+    "source": "Disassembly is exact: R0 = *(rt+0x10); R3 = *(R0+8); R0 += 0x10; BLX R3, with r1 and r2 passed through untouched, so this is the realloc slot of the runtime memory hook table (table at rt+16, slot +8) called as (hook_ctx, ptr, size). The malloc slot is +0 of the same table and is NOT wrapped: every allocation site calls it inline, e.g. js_new_array_buffer 0xC2D34C8 does (*(rt+16))(rt+16+16, 28) for its 28-byte JSArrayBuffer, and the string/atom allocator does the same with len + 17."
+  },
+  "notes": "The composition primitive for the module is js_realloc_rt(rt, NULL, size): the realloc hook is the only exported malloc-family entry on this build, and realloc(NULL, size) is a malloc. Corrects the earlier assumption that 0xC2D10F8 is a js_malloc_rt wrapper; it is the realloc slot."
+}

@@ -1860,6 +1860,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *, uint8_t *, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "js_atom_unref",
+        kind: "function",
+        entry: 0xc2780b0usize,
+        callable: 0xc2780b1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void js_atom_unref(JSRuntime *rt, JSAtom atom)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "js_free_rt",
+        kind: "function",
+        entry: 0xc278000usize,
+        callable: 0xc278001usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void js_free_rt(JSRuntime *rt, void *ptr)",
+    },
+    TargetPrivateSymbolRecord {
         name: "js_new_array_buffer",
         kind: "function",
         entry: 0xc2d34c8usize,
@@ -1867,6 +1885,33 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "JSValue js_new_array_buffer(JSContext *ctx, uint8_t *buf, size_t length)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "js_new_atom_len",
+        kind: "function",
+        entry: 0xc294dccusize,
+        callable: 0xc294dcdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "JSAtom js_new_atom_len(JSContext *ctx, const char *str, size_t len)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "js_new_atom_len_core",
+        kind: "function",
+        entry: 0xc294b50usize,
+        callable: 0xc294b51usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "JSAtom js_new_atom_len_core(JSContext *ctx, const char *str, size_t len)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "js_realloc_rt",
+        kind: "function",
+        entry: 0xc2d10f8usize,
+        callable: 0xc2d10f9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *js_realloc_rt(JSRuntime *rt, void *ptr, size_t size)",
     },
     TargetPrivateSymbolRecord {
         name: "l2_owner_timer_init",
@@ -2605,6 +2650,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int uv_mutex_init(uv_mutex_t *mutex)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "uv_mutex_lock",
+        kind: "function",
+        entry: 0xc1e9b1cusize,
+        callable: 0xc1e9b1dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int uv_mutex_lock(uv_mutex_t *mutex)",
     },
     TargetPrivateSymbolRecord {
         name: "widgets_scroll",
@@ -3577,8 +3631,18 @@ pub const FS_PUTFILEP_CALLABLE: usize = 0xc1b979dusize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x2013c144usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7ec47cusize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7ec47dusize;
+pub const JS_ATOM_UNREF_ENTRY: usize = 0xc2780b0usize;
+pub const JS_ATOM_UNREF_CALLABLE: usize = 0xc2780b1usize;
+pub const JS_FREE_RT_ENTRY: usize = 0xc278000usize;
+pub const JS_FREE_RT_CALLABLE: usize = 0xc278001usize;
 pub const JS_NEW_ARRAY_BUFFER_ENTRY: usize = 0xc2d34c8usize;
 pub const JS_NEW_ARRAY_BUFFER_CALLABLE: usize = 0xc2d34c9usize;
+pub const JS_NEW_ATOM_LEN_ENTRY: usize = 0xc294dccusize;
+pub const JS_NEW_ATOM_LEN_CALLABLE: usize = 0xc294dcdusize;
+pub const JS_NEW_ATOM_LEN_CORE_ENTRY: usize = 0xc294b50usize;
+pub const JS_NEW_ATOM_LEN_CORE_CALLABLE: usize = 0xc294b51usize;
+pub const JS_REALLOC_RT_ENTRY: usize = 0xc2d10f8usize;
+pub const JS_REALLOC_RT_CALLABLE: usize = 0xc2d10f9usize;
 pub const L2_OWNER_TIMER_INIT_ENTRY: usize = 0xc2e3994usize;
 pub const L2_OWNER_TIMER_INIT_CALLABLE: usize = 0xc2e3995usize;
 pub const L2_OWNER_TIMER_START_ENTRY: usize = 0xc2e3b84usize;
@@ -3734,6 +3798,8 @@ pub const UV_LOOP_INIT_ENTRY: usize = 0xc2dc9a0usize;
 pub const UV_LOOP_INIT_CALLABLE: usize = 0xc2dc9a1usize;
 pub const UV_MUTEX_INIT_ENTRY: usize = 0xc2dcf1cusize;
 pub const UV_MUTEX_INIT_CALLABLE: usize = 0xc2dcf1dusize;
+pub const UV_MUTEX_LOCK_ENTRY: usize = 0xc1e9b1cusize;
+pub const UV_MUTEX_LOCK_CALLABLE: usize = 0xc1e9b1dusize;
 pub const WIDGETS_SCROLL_ENTRY: usize = 0xc50abb4usize;
 pub const WIDGETS_SCROLL_CALLABLE: usize = 0xc50abb5usize;
 pub const APP_LOOKUP_ENTRY: usize = 0xca69934usize;

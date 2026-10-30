@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.js_atom_unref",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "js_atom_unref",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2780B0",
+  "callable_address": "0xc2780b1",
+  "prototype": "void js_atom_unref(JSRuntime *rt, JSAtom atom)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Third step of the property-definition composition: create the atom, define, then release it unconditionally, including on the error path."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-008"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-008"
+    ],
+    "source": "Guards atom > 211 (the atom table base), takes the entry pointer from the table at rt+56, decrements its reference count and frees the string through the ctx free path when it reaches zero. An inlined twin with the same body sits at 0xC2780D4."
+  },
+  "notes": "Third step of the property-definition composition: create the atom, define, then release it unconditionally, including on the error path."
+}

@@ -923,3 +923,33 @@ the layout half is roughly half measured: the QuickJS-side constants are solid
 parameter blocks plus most of the Feature framework constants need a dedicated pass
 each before the module can be written without inheriting them.
 
+## Composition primitives (addresses, so the generated crate can expose them)
+
+The six compositions needed raw addresses that the pack did not carry. These are now
+records, so `canopus target generate` exposes them. `EVID-PORT-1043-QJS-008`.
+
+| record | address | what it is |
+| --- | --- | --- |
+| `js_realloc_rt` | `0xC2D10F8` | realloc slot of the runtime hook table (table at `rt+16`, slot `+8`), called `(hook_ctx, ptr, size)` with `r1`/`r2` passed through |
+| `js_free_rt` | `0xC278000` | free slot (table `+4`), called `(hook_ctx, ptr)` |
+| `js_new_atom_len` | `0xC294DCC` | atom from `(ctx, str, len)` with the numeric-key fast path |
+| `js_new_atom_len_core` | `0xC294B50` | the intern core without that fast path (85 call sites) |
+| `js_atom_unref` | `0xC2780B0` | release an atom (twin body at `0xC2780D4`) |
+
+**Correction worth carrying:** `0xC2D10F8` is **not** a `js_malloc_rt` wrapper. Its
+disassembly is `R0 = *(rt+0x10); R3 = *(R0+8); R0 += 0x10; BLX R3` with `r1`/`r2`
+untouched, i.e. the **realloc** slot. The malloc slot (`+0` of the same table, called
+`(hook_ctx, size)`) has no wrapper on this build — every allocation site inlines it
+(`js_new_array_buffer 0xC2D34C8` does exactly that for its 28-byte JSArrayBuffer with
+`28`, and the string allocator with `len + 17`). So the compositions must allocate
+with `js_realloc_rt(rt, NULL, size)`, which is a malloc by contract.
+
+`0xC27369C` (the `JSArrayBuffer` free callback) is **not** recorded on request: it is
+a legitimate code address, but the module never passes it — `js_new_array_buffer
+0xC2D34C8` installs it itself as part of adopting the buffer, so recording it would
+only invite a caller to supply it twice.
+
+libuv coverage check: `uv_mutex_init 0xC2DCF1C`, `uv_async_init 0xC2E14E8`,
+`uv_loop_init 0xC2DC9A0` and `uv_mutex_lock 0xC1E9B1C` are all present as records;
+`uv_mutex_unlock` and `uv_close` remain the only two addresses still missing.
+
