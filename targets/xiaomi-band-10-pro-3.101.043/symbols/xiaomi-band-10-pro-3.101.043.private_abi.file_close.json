@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.file_close",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "file_close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC1CEC08",
+  "prototype": "int file_close(FAR struct file *file)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Closes a pinned file record; it is also the producer that confirms the file record layout the module reads when it validates the loop's pipe."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ],
+    "source": "Checks the record, loads file+16 as the inode, then inode+16 as i_ops and calls the close handler at i_ops+4 with the record. Asserts from ../../nuttx/fs/vfs/fs_close.c line 94."
+  },
+  "notes": "Confirms FILE_INODE = 16 together with register_inode storing the operations table at inode+16.",
+  "callable_address": "0xc1cec09",
+  "calling_convention": "arm-aapcs"
+}

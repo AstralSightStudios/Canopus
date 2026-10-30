@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv__get_loop",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv__get_loop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2DE814",
+  "prototype": "uv_loop_t *uv__get_loop(void)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Returns the calling thread's default loop, creating it at task-info +136 on first use. A module that can call this needs no NuttX structure walk at all, which is why this target's dispatch should bind it instead of re-deriving the q66 chain."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ],
+    "source": "Calls uv__tls_get 0xC2DEA38, loads task-info +760 (0x2F8), and on zero runs uv_loop_init 0xC2DC9A0 on task-info +136 and stores that address back at +760. A second caller 0xC2DDF94 uses the same slot while walking the loop's handle list."
+  },
+  "notes": "The lazy-create path is also the proof that the loop lives inside the TLS block rather than in a uv_key-indexed state array.",
+  "callable_address": "0xc2de815",
+  "calling_convention": "arm-aapcs"
+}

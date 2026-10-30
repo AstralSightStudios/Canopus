@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: dc24fd7095b23fde
+ * input_digest: 70c1265292d7a0de
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -528,6 +528,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * driver_read_dispatch: WITHDRAWN - no veneer may ever be generated
  * driver_write_dispatch: WITHDRAWN - no veneer may ever be generated
  * errno_location: restricted - not exported until context/ownership approved
+ * file_close: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
  * font_manager_add_path: restricted - not exported until context/ownership approved
  * font_manager_remove_path: restricted - not exported until context/ownership approved
@@ -696,6 +697,11 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * system_router_page_record_wrapper: FORBIDDEN - no veneer may ever be generated
  * unlink: restricted - not exported until context/ownership approved
  * unregister_blockdriver: restricted - not exported until context/ownership approved
+ * uv__get_loop: restricted - not exported until context/ownership approved
+ * uv__tls_get: restricted - not exported until context/ownership approved
+ * uv_async_init: restricted - not exported until context/ownership approved
+ * uv_loop_init: restricted - not exported until context/ownership approved
+ * uv_mutex_init: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
  * vibrator_hal_transact: restricted - not exported until context/ownership approved
  * wakelock_acquire: restricted - not exported until context/ownership approved

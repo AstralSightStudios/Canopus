@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv_mutex_init",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv_mutex_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2DCF1C",
+  "prototype": "int uv_mutex_init(uv_mutex_t *mutex)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Initialises a libuv mutex; the module serialises its queue work with the same primitive the firmware uses."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ],
+    "source": "In ../../apps/system/libuv/libuv/src/unix/thread.c: initialises a mutexattr through 0xC1E990C, sets type 1 with 0xC1E9944, initialises the mutex with 0xC1E9968, and destroys the attribute with 0xC1E9930 on both paths."
+  },
+  "notes": "The lock and unlock wrappers in the same file need a second pass: they were not separated with producer evidence here.",
+  "callable_address": "0xc2dcf1d",
+  "calling_convention": "arm-aapcs"
+}

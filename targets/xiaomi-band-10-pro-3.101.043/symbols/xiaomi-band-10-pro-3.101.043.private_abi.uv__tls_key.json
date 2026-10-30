@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv__tls_key",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv__tls_key",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x201033AC",
+  "prototype": "pthread_key_t",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "The pthread key libuv allocates for its own TLS block. Reading this word and then indexing the task-info array gives the 808-byte block that holds the default loop pointer at +760."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ],
+    "source": "Read at 0xC2DEA4A inside uv__tls_get 0xC2DEA38, passed to pthread_getspecific 0xC1F5460 and pthread_setspecific 0xC1F5478, and written once when the block is first allocated."
+  },
+  "notes": "A 4-byte RAM global; it holds the key value, not a pointer to the block."
+}

@@ -113,3 +113,58 @@ against 23 (adds `rwbuffer.c`, `serial.c`, `mempool.c`, `socket.c`).
 
 No address in this document is recorded as a symbol or may be called; these are
 measurements the next pass should confirm before use.
+
+## Pass 2 (`EVID-PORT-1043-LOOP-001`): loop, task and libuv layout
+
+The chain on this image is not the q66 one. libuv keeps its state in a pthread
+key, and the loop lives inside that state, so `uv_key -> state -> loop` becomes
+`key -> task-info slot -> TLS block -> loop`:
+
+```
+tcb + 100                       -> task-info            (sched_get_stackinfo 0xC205FAC
+                                                         copies tcb+96/100/104, and
+                                                         pthread_getspecific 0xC1F5460
+                                                         dereferences the +100 word)
+  *(task-info + 16 + 4*key)     -> 808-byte uv__tls block (key = *(0x201033AC),
+                                                         uv__tls_get 0xC2DEA38)
+    uv__tls + 760               -> the default loop      (uv__get_loop 0xC2DE814;
+                                                         the loop itself is the embedded
+                                                         struct at uv__tls + 136)
+```
+
+| item | value | anchor |
+| --- | --- | --- |
+| `TCB_TLS` | 100 | `sched_get_stackinfo.c` 0xC205FAC stores tcb+96/100/104; 0xC1F5438 dereferences the +100 word |
+| `TASKINFO_UVSTATE` / stride | 16 / 4 | `pthread_getspecific` 0xC1F5460: `*(task_info + 4*(key+4))` |
+| `UV_KEY_LIMIT` | **7** (8 slots) | same function returns 0 for `key > 7`; q66 allows only 0..3 |
+| `uv__tls_key` global | `0x201033AC` | read in `uv__tls_get` 0xC2DEA38, used by getspecific/setspecific 0xC1F5460 / 0xC1F5478 |
+| `UVSTATE_LOOP` (loop slot) | **760** in the TLS block, no uv_key indirection | `uv__get_loop` 0xC2DE814 loads +0x2F8 and lazily inits the embedded loop at +136 |
+| `LOOP_QUEUE_HEAD` / `LOOP_MUTEX` / `LOOP_ASYNC` | 68 / 76 / 104 | `uv_loop_init` 0xC2DC9A0 |
+| `LOOP_READ_FD` / `LOOP_WRITE_FD` | **360 / 364** | `uv_loop_init` stores a -1 qword there; `uv_async_init` 0xC2E14E8 fills them from the created pair behind `loop+360 == -1` |
+| `ASYNC_BUSY_WORD` | 6 (+24) | `uv_async_init` clears it |
+| `ASYNC_PENDING_WORD` | **27** (+108) | `uv_async_init` clears it; q66 uses 15 |
+| `uv_async_t` callback / pending node | +96 / +100 | `uv_async_init` |
+| `FILE_INODE` | 16 | producer: `register_inode` 0xC1AFFD8 stores the operations table at inode+16; consumer: `file_close` 0xC1CEC08 loads file+16 then inode+16 |
+
+Recovered entries this pass: `uv__tls_get` `0xC2DEA38`, `uv__tls_key`
+`0x201033AC`, `uv__get_loop` `0xC2DE814`, `uv_loop_init` `0xC2DC9A0`,
+`uv_async_init` `0xC2E14E8`, `uv_mutex_init` `0xC2DCF1C`, `file_close` `0xC1CEC08`
+(7 with `nx_pipe`, `register_inode` and `pipe_file_operations` from pass 1 = 10).
+
+### What this means for the module
+
+`uv__get_loop` is a real function here, so a p67 target does not need the
+structure walk at all: it can call the firmware's own getter. That is a code
+change in `loop_dispatch`, not an address, and it should be made deliberately
+rather than by bending the q66 offsets.
+
+### Still open
+
+`uv_mutex_lock` / `uv_mutex_unlock` (the thread.c wrappers around
+`nx_pthread_mutex_take` 0xC204DE4 were not separated with producer evidence),
+`uv_close`, `fs_getfilep` / `files_getfilep` / `fs_putfilep` / `file_dup3` /
+`file_write` / `nxsched_foreach`, `bt_adapter_enable`, the scan and advertising
+entries, the ten Bluelet owner handlers, the thirteen `qjs_*` entries and
+`feature_register_feature`, plus the framework/Application vtable globals.
+That is 37 of the 47 bindings still missing after two passes; the P67 line
+remains a discovery job, not a port.

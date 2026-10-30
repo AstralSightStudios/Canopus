@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: dc24fd7095b23fde
+// input_digest: 70c1265292d7a0de
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -509,6 +509,9 @@ pub const CANOPUS_FW_FONT_RELOAD_FACE_COMPARE_CALLABLE: usize = canopus_thumb_ca
 /// Recovered `p67_blur_crossview_callback` at 0x0c50b9f0. Thumb callable address 0x0c50b9f1.
 pub const CANOPUS_FW_P67_BLUR_CROSSVIEW_CALLBACK_CALLABLE: usize = canopus_thumb_callable(0x0c50b9f1usize);
 
+/// Recovered `uv__tls_get` at 0xC2DEA38. Thumb callable address 0xc2dea39.
+pub const CANOPUS_FW_UV__TLS_GET_CALLABLE: usize = canopus_thumb_callable(0xc2dea39usize);
+
 /// Recovered `font_reload_ft_set_pixel_size` at 0x0c33ef58. Thumb callable address 0x0c33ef59.
 pub const CANOPUS_FW_FONT_RELOAD_FT_SET_PIXEL_SIZE_CALLABLE: usize = canopus_thumb_callable(0x0c33ef59usize);
 
@@ -727,6 +730,9 @@ pub const CANOPUS_FW_APP_LAUNCHER_DEL_CALLABLE: usize = canopus_thumb_callable(0
 
 /// Recovered `font_reload_vector_destroy` at 0x0ca6581c. Thumb callable address 0x0ca6581d.
 pub const CANOPUS_FW_FONT_RELOAD_VECTOR_DESTROY_CALLABLE: usize = canopus_thumb_callable(0x0ca6581dusize);
+
+/// Recovered global `uv__tls_key` at 0x201033AC.
+pub const canopus_fw_uv__tls_key: usize = 0x201033ACusize;
 
 /// Recovered `bt_timer_add` at 0xc7eb270. Thumb callable address 0xc7eb271.
 pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc7eb271usize);
@@ -1027,6 +1033,9 @@ pub const canopus_fw_font_reload_lv_initialized: usize = 0x20103178usize;
 
 /// Recovered `lv_obj_remove_state` at 0xc588518. Thumb callable address 0xc588519.
 pub const CANOPUS_FW_LV_OBJ_REMOVE_STATE_CALLABLE: usize = canopus_thumb_callable(0xc588519usize);
+
+/// Recovered `uv__get_loop` at 0xC2DE814. Thumb callable address 0xc2de815.
+pub const CANOPUS_FW_UV__GET_LOOP_CALLABLE: usize = canopus_thumb_callable(0xc2de815usize);
 
 /// Recovered `quickapp_register_app` at 0xc549678. Thumb callable address 0xc549679.
 pub const CANOPUS_FW_QUICKAPP_REGISTER_APP_CALLABLE: usize = canopus_thumb_callable(0xc549679usize);
@@ -1382,17 +1391,26 @@ pub unsafe fn canopus_fw_lv_event_get_user_data(a0: *mut core::ffi::c_void) -> *
 /// Recovered `font_reload_drop_face_id` at 0x0c163be8. Thumb callable address 0x0c163be9.
 pub const CANOPUS_FW_FONT_RELOAD_DROP_FACE_ID_CALLABLE: usize = canopus_thumb_callable(0x0c163be9usize);
 
+/// Recovered `uv_mutex_init` at 0xC2DCF1C. Thumb callable address 0xc2dcf1d.
+pub const CANOPUS_FW_UV_MUTEX_INIT_CALLABLE: usize = canopus_thumb_callable(0xc2dcf1dusize);
+
 /// Recovered `lv_obj_set_style_bg_opa` at 0xc108374. Thumb callable address 0xc108375.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = canopus_thumb_callable(0xc108375usize);
 
 /// Recovered `calendar_text_color` at 0x0c588a70. Thumb callable address 0x0c588a71.
 pub const CANOPUS_FW_CALENDAR_TEXT_COLOR_CALLABLE: usize = canopus_thumb_callable(0x0c588a71usize);
 
+/// Recovered `uv_async_init` at 0xC2E14E8. Thumb callable address 0xc2e14e9.
+pub const CANOPUS_FW_UV_ASYNC_INIT_CALLABLE: usize = canopus_thumb_callable(0xc2e14e9usize);
+
 /// Recovered global `font_reload_freetype_context_slot` at 0x20103374.
 pub const canopus_fw_font_reload_freetype_context_slot: usize = 0x20103374usize;
 
 /// Recovered `sdp_commit` at 0xc808648. Thumb callable address 0xc808649.
 pub const CANOPUS_FW_SDP_COMMIT_CALLABLE: usize = canopus_thumb_callable(0xc808649usize);
+
+/// Recovered `file_close` at 0xC1CEC08. Thumb callable address 0xc1cec09.
+pub const CANOPUS_FW_FILE_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc1cec09usize);
 
 /// Recovered `opendir` at 0xc1e4528. Thumb callable address 0xc1e4529.
 pub const CANOPUS_FW_OPENDIR_CALLABLE: usize = canopus_thumb_callable(0xc1e4529usize);
@@ -1454,6 +1472,9 @@ pub const CANOPUS_FW_FONT_RELOAD_METRICS_COMPARE_CALLABLE: usize = canopus_thumb
 /// Recovered `rename` at 0xc1d12e8. Thumb callable address 0xc1d12e9.
 pub const CANOPUS_FW_RENAME_CALLABLE: usize = canopus_thumb_callable(0xc1d12e9usize);
 
+/// Recovered `uv_loop_init` at 0xC2DC9A0. Thumb callable address 0xc2dc9a1.
+pub const CANOPUS_FW_UV_LOOP_INIT_CALLABLE: usize = canopus_thumb_callable(0xc2dc9a1usize);
+
 /// Recovered `ioctl` at 0xc1d01a4. Thumb callable address 0xc1d01a5.
 pub const CANOPUS_FW_IOCTL_CALLABLE: usize = canopus_thumb_callable(0xc1d01a5usize);
 
@@ -1513,6 +1534,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // driver_read_dispatch: WITHDRAWN - no binding may ever be generated
 // driver_write_dispatch: WITHDRAWN - no binding may ever be generated
 // errno_location: restricted - not exported until context/ownership approved
+// file_close: restricted - not exported until context/ownership approved
 // firmware_log: restricted - not exported until context/ownership approved
 // font_manager_add_path: restricted - not exported until context/ownership approved
 // font_manager_remove_path: restricted - not exported until context/ownership approved
@@ -1681,6 +1703,11 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // system_router_page_record_wrapper: FORBIDDEN - no binding may ever be generated
 // unlink: restricted - not exported until context/ownership approved
 // unregister_blockdriver: restricted - not exported until context/ownership approved
+// uv__get_loop: restricted - not exported until context/ownership approved
+// uv__tls_get: restricted - not exported until context/ownership approved
+// uv_async_init: restricted - not exported until context/ownership approved
+// uv_loop_init: restricted - not exported until context/ownership approved
+// uv_mutex_init: restricted - not exported until context/ownership approved
 // vendor_hci_transport_register: FORBIDDEN - no binding may ever be generated
 // vibrator_hal_transact: restricted - not exported until context/ownership approved
 // wakelock_acquire: restricted - not exported until context/ownership approved

@@ -1212,6 +1212,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void(void *event)",
     },
     TargetPrivateSymbolRecord {
+        name: "file_close",
+        kind: "function",
+        entry: 0xc1cec08usize,
+        callable: 0xc1cec09usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int file_close(FAR struct file *file)",
+    },
+    TargetPrivateSymbolRecord {
         name: "font_reload_cache_acquire",
         kind: "function",
         entry: 0xc1666d0usize,
@@ -2029,6 +2038,60 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "DEVICE_PROVEN",
         policy: "restricted",
         prototype: "void *",
+    },
+    TargetPrivateSymbolRecord {
+        name: "uv__get_loop",
+        kind: "function",
+        entry: 0xc2de814usize,
+        callable: 0xc2de815usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uv_loop_t *uv__get_loop(void)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "uv__tls_get",
+        kind: "function",
+        entry: 0xc2dea38usize,
+        callable: 0xc2dea39usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *uv__tls_get(void)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "uv__tls_key",
+        kind: "global",
+        entry: 0x201033acusize,
+        callable: 0x201033acusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "pthread_key_t",
+    },
+    TargetPrivateSymbolRecord {
+        name: "uv_async_init",
+        kind: "function",
+        entry: 0xc2e14e8usize,
+        callable: 0xc2e14e9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int uv_async_init(uv_loop_t *loop, uv_async_t *handle, uv_async_cb cb)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "uv_loop_init",
+        kind: "function",
+        entry: 0xc2dc9a0usize,
+        callable: 0xc2dc9a1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int uv_loop_init(uv_loop_t *loop)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "uv_mutex_init",
+        kind: "function",
+        entry: 0xc2dcf1cusize,
+        callable: 0xc2dcf1dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int uv_mutex_init(uv_mutex_t *mutex)",
     },
     TargetPrivateSymbolRecord {
         name: "widgets_scroll",
@@ -2867,6 +2930,8 @@ pub const CALENDAR_TEXT_COLOR_ENTRY: usize = 0xc588a70usize;
 pub const CALENDAR_TEXT_COLOR_CALLABLE: usize = 0xc588a71usize;
 pub const CONTROL_CENTER_SCROLL_ENTRY: usize = 0xc5036c4usize;
 pub const CONTROL_CENTER_SCROLL_CALLABLE: usize = 0xc5036c5usize;
+pub const FILE_CLOSE_ENTRY: usize = 0xc1cec08usize;
+pub const FILE_CLOSE_CALLABLE: usize = 0xc1cec09usize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_ENTRY: usize = 0xc1666d0usize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_CALLABLE: usize = 0xc1666d1usize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_ENTRY: usize = 0xc166740usize;
@@ -3032,6 +3097,17 @@ pub const SDP_UNREGISTER_CALLABLE: usize = 0xc80a735usize;
 pub const STOCK_BT_CALLBACK_DESCRIPTOR_ENTRY: usize = 0x2cd4a744usize;
 pub const STYLE_MISANS_MEDIUM_24_ENTRY: usize = 0x2010cee0usize;
 pub const STYLE_MISANS_MEDIUM_28_ENTRY: usize = 0x2010cef8usize;
+pub const UV_GET_LOOP_ENTRY: usize = 0xc2de814usize;
+pub const UV_GET_LOOP_CALLABLE: usize = 0xc2de815usize;
+pub const UV_TLS_GET_ENTRY: usize = 0xc2dea38usize;
+pub const UV_TLS_GET_CALLABLE: usize = 0xc2dea39usize;
+pub const UV_TLS_KEY_ENTRY: usize = 0x201033acusize;
+pub const UV_ASYNC_INIT_ENTRY: usize = 0xc2e14e8usize;
+pub const UV_ASYNC_INIT_CALLABLE: usize = 0xc2e14e9usize;
+pub const UV_LOOP_INIT_ENTRY: usize = 0xc2dc9a0usize;
+pub const UV_LOOP_INIT_CALLABLE: usize = 0xc2dc9a1usize;
+pub const UV_MUTEX_INIT_ENTRY: usize = 0xc2dcf1cusize;
+pub const UV_MUTEX_INIT_CALLABLE: usize = 0xc2dcf1dusize;
 pub const WIDGETS_SCROLL_ENTRY: usize = 0xc50abb4usize;
 pub const WIDGETS_SCROLL_CALLABLE: usize = 0xc50abb5usize;
 pub const APP_LOOKUP_ENTRY: usize = 0xca69934usize;
