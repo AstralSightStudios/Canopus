@@ -1134,3 +1134,62 @@ delivery: the adapter built from `host+0` is where the framework will hand event
 back, and `_pImpl->render_.loop/.stop/.event/.async_del_app` is what a real host puts
 there.
 
+## Final measurement round: array buffers settled, CoC/GAP named as holes
+
+`EVID-PORT-1043-QJS-009`.
+
+### A5. `ARRAY_BUFFER_DETACHED` — settled, and it corrects an earlier record
+
+The engine's own accessor is `JS_GetArrayBuffer 0xC2D362C`:
+tag `-1`, class `19` or `20` (ArrayBuffer / SharedArrayBuffer), then
+
+```
+abuf    = *(void **)(obj + 32)
+detached= *(u8  *)(abuf + 4)          /* non-zero => "ArrayBuffer is detached" */
+data    = *(void **)(abuf + 0)
+length  = *(u32 *)(abuf + 8)
+```
+
+`JS_NewArrayBuffer 0xC2D34C8` is the producer: it allocates the 28-byte `abuf`,
+stores the length word, and clears the flag with a 16-bit store at `abuf+4`
+(`*((_WORD *)v14 + 2) = 0`), which covers both the detached and shared bytes.
+
+**So detached is a byte, not a bit**, and the earlier device-derived offsets
+(`object+0x54` payload, `+0x58` length) were read from the wrong object: the
+engine-visible layout is `abuf` reached through `object+32`. That record has been
+corrected and the class-id record patched to point here. `JS_GetTypedArrayBuffer`'s
+indirection to the same struct (`0xC2D368C` checks it before converting) is **not**
+measured, so the typed-array route stays a hole.
+
+### A1–A4, B1–B4: holes, with the reason
+
+The CoC event numbering and request block, and the GAP adapter/scan/advertising
+layouts, are **not** established. What was checked this round and why it did not
+close:
+
+- `COC_EVENT_*`: the handlers build signalling frames in place (e.g. `0xC802AEC`
+  writes code `21` into a frame allocated with `l2cap_stock_alloc(18, 8)` and a
+  second variant with `(16, 8)`), and the branch that chooses a `v9` value
+  (`2`, `4`, `6`) feeds the **frame**, not an app-facing event. The app-facing
+  event codes are delivered through the PSM entry callback (`entry+0`, invoked from
+  `sub_C8005A8`) and the numbering was not enumerated.
+- `COC_REQUEST_*`: only `cid +0`, `psm +2`, `flags +8`, `psm entry +12`, cid pair
+  `+16/+20`, `state +23` are measured. The remaining fields live in the request
+  block that the *app* fills; no producer was traced.
+- `COC_CONFIG_MTU/CREDITS/MPS`: channel `+52` / `+60` / `+62` and stock `+14` are
+  measured as **fields**; whether they carry the module's semantics is unproven.
+- `COC_CHANNEL_QUEUE`, `COC_CREDIT_QUEUE_CREDITS`, `COC_DISCONNECT_POLICY`,
+  `COC_REGISTER_NODE_*`, `COC_EV_*` outputs: not established.
+- GAP: `ADAPTER_STATE_WORD/LOOP/READY_STATE` were not traced from a producer. The
+  `app_lescan_start 0xC710BCC` block split (8-byte block `{65538, 0}`, 20-byte block,
+  callback table `&unk_200DFAF0`) and the 28-byte advertising block handed to
+  `0xC7D3EB4` are seen but their field roles are not proven, and the scan report
+  layout was not traced at all.
+
+**Ship decision input.** For a module that only registers a descriptor and answers
+method calls, the array-buffer layout is the last structure it needs and it is now
+measured. The CoC and GAP groups matter only if the module is to host the BLE scan /
+connection services on p67; those need one dedicated round each before they can be
+written without guessing, so the honest options are (a) ship p67 with those services
+disabled, or (b) fund the two rounds.
+

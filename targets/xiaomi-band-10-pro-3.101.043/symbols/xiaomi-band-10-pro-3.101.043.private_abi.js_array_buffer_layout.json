@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.js_array_buffer_layout",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "js_array_buffer_layout",
+  "kind": "layout",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "JSValue obj; void *abuf = *(void **)(obj + 32); data = *(void **)abuf; detached = *(u8 *)(abuf + 4); byte_length = *(u32 *)(abuf + 8);",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Array buffer field layout as the engine itself reads it, from JS_GetArrayBuffer 0xC2D362C: it accepts tag -1 with class 19 or 20 (ArrayBuffer / SharedArrayBuffer), takes the buffer pointer from object+32, rejects it when the byte at abuf+4 is non-zero (\"ArrayBuffer is detached\"), and returns data = *(u32*)abuf and byte_length = *(u32*)(abuf+8). The typed-array path 0xC2D368C reaches the same struct through its own indirection and reports the same \"ArrayBuffer is detached\" error."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-009"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-009"
+    ],
+    "source": "Producer/consumer pair: JS_GetArrayBuffer 0xC2D362C reads the fields, and JS_NewArrayBuffer 0xC2D34C8 writes them (byte length at abuf+0 in the constructor is the allocation size word, detached flag cleared with *((_WORD *)v14 + 2) = 0 at abuf+4). The earlier device measurement that put the payload at object+0x54 was reading the wrong object; the engine-visible layout is the one above."
+  },
+  "notes": "ARRAY_BUFFER_DETACHED is therefore the byte at abuf+4 (non-zero = detached), not a bit in a flags word; the constructor clears it with a 16-bit store, which covers both it and the shared flag byte in one go. Typed arrays reach the same buffer through their own indirection, which is not yet measured."
+}
