@@ -570,38 +570,64 @@ Manager dispatch table `0xCDA2CD0`: C++ header in `+0x00..+0x10`, virtual slots
 from `+0x14`; `featureRequire +0x1C`, `findFeature +0x20`, `createFeature +0x24`,
 `uninit +0x2C`.
 
-### 7. QuickJS: open, with the starting points recorded
+### 7. QuickJS: still open, and why the marshaller lead did not pay off
 
-13 astrolink bindings, 1 resolved (`qjs_free_value 0xC2781E0`). The other twelve
-(`qjs_call`, `qjs_new_object`, `qjs_new_c_function2`, `qjs_is_function`,
-`qjs_new_string_len`, `qjs_to_cstring_len2`, `qjs_free_cstring`,
-`qjs_define_property_value_str`, `qjs_get_exception`, `qjs_new_array_buffer_copy`,
-`qjs_get_array_buffer`, `qjs_get_typed_array_buffer`) are **not recorded**: this
-build keeps no per-function signature strings for QuickJS, and cross-line matching
-is 22% accurate between .155 and .043, so nothing here may be filled from
-resemblance.
+13 astrolink bindings, 1 resolved (`qjs_free_value 0xC2781E0`).
 
-Neighbour anchors established while walking out from `__JS_FreeValue`, to start the
-next pass from:
+**The `0xC8670F0` lead was followed and does not work as hoped.** That function is
+not the JS interop layer: its 26 indirect calls all dispatch C++ virtual slots on
+a target/context object (`[R9] -> +0x30`, an argument type/count reporter), its
+callees are `std::string`-shaped helpers from the `0xC20xxx` range, and its only
+direct call into the QuickJS region is an error formatter (`0xC28FD50`, `error:
+%s`). The Feature framework converts values through its own abstractions
+(`feature_context_ref`, `feature_value_t`) and the actual JS binding lives deeper
+(AIOTJS/ferry), not in the marshaller. So this path gives no call shapes for the
+constructors and accessors.
+
+What the walk did establish, all in the QuickJS region (worth keeping as the
+starting map for the next attempt):
 
 | address | what it is | how it was settled |
 | --- | --- | --- |
-| `0xC2781E0` | `__JS_FreeValue` | its own error string + `quickjs.c:5636` |
-| `0xC27AD94` | `JS_DupValue` | mirror of the free switch, refcount increments, 99 callers |
-| `0xC278848` | string release helper | decrements the string refcount and calls `__JS_FreeValue` with tag `-7` |
-| `0xC27DB50` | `JS_GetOpaque(obj, class_id)` | `tag == -1 && *(u16 *)(obj+6) == class_id` then returns `obj+32` |
-| `0xC277B1C` | object release / refcount watchdog | logs `ref count error : %d %d %d`, 37 callers |
-| `0xC8670F0` | Feature-side JS marshaller | 2286 bytes, called by `feature_method_call` and `feature_event_set`; its callees are worth following next |
+| `0xC2781E0` | `__JS_FreeValue` | its own error string + `quickjs.c:5636`, 1046 callers |
+| `0xC27AD94` | `JS_DupValue` | mirror of the free switch, 99 callers |
+| `0xC278848` | string release | decrements the string refcount, then `__JS_FreeValue` tag `-7` |
+| `0xC278090` | atom ref | guards `atom > 211` and bumps `ctx+56` table entry |
+| `0xC2780B0` / `0xC2780D4` | atom unref (two inlined copies) | same guard, decrements and frees at zero |
+| `0xC27DB50` | `JS_GetOpaque(obj, class_id)` | `tag == -1 && *(u16*)(obj+6) == class_id`, returns `obj+32` |
+| `0xC2748DC` / `0xC294B50` | atom lookup by name pair | called together on a `char *` name from the property path |
+| `0xC2D47F8` | empty stub, 111 callers | 12-byte body; a build-time placeholder, not a usable entry |
 
-The remaining twelve need the behavioural keys: string tag `-7` with the reference
-count and length fields for the string constructors, the context free hook at
-`ctx+4` for the cstring pair, the exception tag and the context's current-exception
-slot for `get_exception`, and the `JS_CLASS_*` id plus the array-buffer accessors
-for the three buffer entries. Each one must show the call shape astrolink uses
-(`(ctx) -> Value` for `new_object`/`get_exception`, `(ctx, ptr, len) -> Value` for
-`new_string_len`, `(ctx, out_len, value, flags) -> ptr` for `to_cstring_len2`,
-`(ctx, value, ...) -> ptr` for the buffer getters, `(ctx, obj, name, value, flags)
--> int` for `define_property_value_str`, `(ctx, func, this, argc, argv) -> Value`
-for `call`, `(ctx, usize, name, len, nargs, cproto) -> Value` for
-`new_c_function2`).
+**What is still missing, per entry** (all twelve): a site that calls the entry
+with the shape astrolink needs. The shapes are known (they are in `src/qjs/
+feature.rs`), the addresses are not:
 
+- `qjs_new_string_len` `(ctx, ptr, len) -> Value`: needs a 3-argument constructor
+  in the string block (`0xC278140`-`0xC278B74`) that allocates and copies. Nine
+  functions in that block have zero static callers (`0xC2782B4`, `0xC27843C`,
+  `0xC278470`, `0xC2784A8`, `0xC2784F8`, `0xC2788B8`, `0xC278A58`, `0xC278A9C`,
+  `0xC278B28`), so at least one of them is reached only through a context hook —
+  that hook has to be identified before any of them can be named.
+- `qjs_new_object` `(ctx) -> Value`, `qjs_get_exception` `(ctx) -> Value`: the
+  tag `-1` / exception-tag constructors were not isolated.
+- `qjs_is_function` `(ctx, Value) -> i32`: needs the `JS_CLASS_BYTECODE_FUNCTION` /
+  `JS_CLASS_C_FUNCTION` class ids for this build, which are not yet read out.
+- `qjs_call` `(ctx, func, this, argc, argv) -> Value`: not isolated; the
+  interpreter dispatch is inlined, so this one needs its public wrapper found by
+  its caller set rather than its body.
+- `qjs_to_cstring_len2` / `qjs_free_cstring`: not isolated; `free_cstring` must
+  call the context's free hook, which has not been located.
+- `qjs_define_property_value_str` `(ctx, obj, name, value, flags) -> i32`: the
+  closest lead is `0xC29A474` (allocates a 408-byte property record through the
+  context hook, links it into the object, looks the name up with `0xC2748DC` /
+  `0xC294B50`, and initialises the descriptor array with `-1` tags). It takes an
+  atom rather than a name, so it is more likely the atom-level define that the
+  `_str` variant wraps. Not recorded: the wrapper itself was not found.
+- `qjs_new_array_buffer_copy`, `qjs_get_array_buffer`,
+  `qjs_get_typed_array_buffer`: not isolated; the typed-array class ids and the
+  array-buffer layout (data pointer, length, class id) have to be read out first.
+
+Recorded honestly: twelve of thirteen remain unrecorded, and the reason is not a
+lack of effort but the absence of any self-describing text for QuickJS in this
+build plus the failure of the marshaller lead. Cross-line matching must still not
+be used (22% agreement between .155 and .043).
