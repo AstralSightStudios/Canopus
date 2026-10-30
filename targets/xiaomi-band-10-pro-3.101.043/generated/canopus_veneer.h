@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: cb29412716c77217
+ * input_digest: d829d51101e59e25
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -489,6 +489,8 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * FeatureManagerQjs_featureRequire: restricted - not exported until context/ownership approved
  * FeatureManagerQjs_findFeature: restricted - not exported until context/ownership approved
  * FeatureManagerQjs_uninit: restricted - not exported until context/ownership approved
+ * __js_free_value: restricted - not exported until context/ownership approved
+ * __js_throw: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved
  * background_object_has_flag: restricted - not exported until context/ownership approved
@@ -707,7 +709,13 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
+ * qjs_call: restricted - not exported until context/ownership approved
+ * qjs_free_cstring: restricted - not exported until context/ownership approved
  * qjs_free_value: restricted - not exported until context/ownership approved
+ * qjs_get_exception: restricted - not exported until context/ownership approved
+ * qjs_is_function: restricted - not exported until context/ownership approved
+ * qjs_new_c_function2: restricted - not exported until context/ownership approved
+ * qjs_new_object: restricted - not exported until context/ownership approved
  * readdir: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
  * register_inode: restricted - not exported until context/ownership approved

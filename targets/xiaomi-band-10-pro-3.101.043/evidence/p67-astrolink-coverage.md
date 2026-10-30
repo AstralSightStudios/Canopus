@@ -570,64 +570,60 @@ Manager dispatch table `0xCDA2CD0`: C++ header in `+0x00..+0x10`, virtual slots
 from `+0x14`; `featureRequire +0x1C`, `findFeature +0x20`, `createFeature +0x24`,
 `uninit +0x2C`.
 
-### 7. QuickJS: still open, and why the marshaller lead did not pay off
+### 7. QuickJS: 7 of 13 settled by alignment against .155
 
-13 astrolink bindings, 1 resolved (`qjs_free_value 0xC2781E0`).
+Method: the .155 build is ground truth for order, size and body, so each entry was
+matched on **all three** and then confirmed on the invariant that makes it that
+function. Eight of the thirteen came out; the rest are blocked by a real property
+of this build (see below), not by lack of evidence discipline.
 
-**The `0xC8670F0` lead was followed and does not work as hoped.** That function is
-not the JS interop layer: its 26 indirect calls all dispatch C++ virtual slots on
-a target/context object (`[R9] -> +0x30`, an argument type/count reporter), its
-callees are `std::string`-shaped helpers from the `0xC20xxx` range, and its only
-direct call into the QuickJS region is an error formatter (`0xC28FD50`, `error:
-%s`). The Feature framework converts values through its own abstractions
-(`feature_context_ref`, `feature_value_t`) and the actual JS binding lives deeper
-(AIOTJS/ferry), not in the marshaller. So this path gives no call shapes for the
-constructors and accessors.
+Sources are `.155` sizes and bodies from `analysis-q66-177/155/q66-ap.i64`
+(`NEW_STRING_LEN` 252, `GET_EXCEPTION` 20, `FREE_VALUE` 26,
+`TO_CSTRING_LEN2` 364, `FREE_CSTRING` 20, `NEW_OBJECT` 24,
+`NEW_C_FUNCTION2` 30, `IS_FUNCTION` 52, `DEFINE_PROPERTY_VALUE_STR` 64,
+`CALL` 42, `NEW_ARRAY_BUFFER_COPY` 38, `GET_ARRAY_BUFFER` 38,
+`GET_TYPED_ARRAY_BUFFER` 88).
 
-What the walk did establish, all in the QuickJS region (worth keeping as the
-starting map for the next attempt):
+| binding | p67 address | size p67 / .155 | invariant that confirms it | astrolink call shape |
+| --- | --- | --- | --- | --- |
+| `qjs_get_exception` | `0xC27DA60` | 26 / 20 | reads `ctx+16` for the runtime, returns `*(u64*)(rt+128)` and stores `0x200000000` (JS_UNDEFINED) back | `(ctx) -> Value` |
+| `qjs_free_value` | `0xC278294` | 32 / 26 | tags above `0xFFFFFFF4` decrement the refcount at the pointer and call `__JS_FreeValue` at zero | `(ctx, Value)` |
+| `qjs_free_cstring` | `0xC278848` | 38 / 20 | decrements `ptr-16`, frees with tag `-7`; .155 forwarded to FreeValue instead of inlining the decrement | `(ctx, *const u8)` |
+| `qjs_is_function` | `0xC27DA88` | 78 / 52 | tag must be `-1`; class `13` → 1; class `41` → byte at `obj+32+16`; else class-table finalizer slot at `*(*(ctx+16)+68)+24*class+16` | `(ctx, Value) -> i32` |
+| `qjs_new_object` | `0xC2A41FC` | 24 / 24 | calls the constructor with `*(*(ctx+40)+8)` and `*(*(ctx+40)+12)` and class id 1 | `(ctx) -> Value` |
+| `qjs_new_c_function2` | `0xC2A83C4` | 30 / 30 | forwards six arguments plus the context's `ctx+48`/`ctx+52` pair | `(ctx, usize, *const c_char, i32, i32, i32) -> Value` |
+| `qjs_call` | `0xC2BFCC0` | 44 / 42 | forwards to the interpreter entry with flag words `3` and `2` | `(ctx, func, this, argc, *const Value) -> Value` |
 
-| address | what it is | how it was settled |
-| --- | --- | --- |
-| `0xC2781E0` | `__JS_FreeValue` | its own error string + `quickjs.c:5636`, 1046 callers |
-| `0xC27AD94` | `JS_DupValue` | mirror of the free switch, 99 callers |
-| `0xC278848` | string release | decrements the string refcount, then `__JS_FreeValue` tag `-7` |
-| `0xC278090` | atom ref | guards `atom > 211` and bumps `ctx+56` table entry |
-| `0xC2780B0` / `0xC2780D4` | atom unref (two inlined copies) | same guard, decrements and frees at zero |
-| `0xC27DB50` | `JS_GetOpaque(obj, class_id)` | `tag == -1 && *(u16*)(obj+6) == class_id`, returns `obj+32` |
-| `0xC2748DC` / `0xC294B50` | atom lookup by name pair | called together on a `char *` name from the property path |
-| `0xC2D47F8` | empty stub, 111 callers | 12-byte body; a build-time placeholder, not a usable entry |
+Also recorded, as internals rather than bindings: `__js_free_value 0xC2781E0`
+(the tag switch with the `__JS_FreeValue: unknown tag=%d` string, 1046 callers)
+and `__js_throw 0xC27DA24` (writes the exception slot at `rt+128` and returns
+`0x600000000`).
 
-**What is still missing, per entry** (all twelve): a site that calls the entry
-with the shape astrolink needs. The shapes are known (they are in `src/qjs/
-feature.rs`), the addresses are not:
+**Correction to the previous pass:** the address recorded there as
+`qjs_free_value` (`0xC2781E0`) is the internal `__JS_FreeValue`. Astrolink binds
+the public wrapper, which is `0xC278294`.
 
-- `qjs_new_string_len` `(ctx, ptr, len) -> Value`: needs a 3-argument constructor
-  in the string block (`0xC278140`-`0xC278B74`) that allocates and copies. Nine
-  functions in that block have zero static callers (`0xC2782B4`, `0xC27843C`,
-  `0xC278470`, `0xC2784A8`, `0xC2784F8`, `0xC2788B8`, `0xC278A58`, `0xC278A9C`,
-  `0xC278B28`), so at least one of them is reached only through a context hook —
-  that hook has to be identified before any of them can be named.
-- `qjs_new_object` `(ctx) -> Value`, `qjs_get_exception` `(ctx) -> Value`: the
-  tag `-1` / exception-tag constructors were not isolated.
-- `qjs_is_function` `(ctx, Value) -> i32`: needs the `JS_CLASS_BYTECODE_FUNCTION` /
-  `JS_CLASS_C_FUNCTION` class ids for this build, which are not yet read out.
-- `qjs_call` `(ctx, func, this, argc, argv) -> Value`: not isolated; the
-  interpreter dispatch is inlined, so this one needs its public wrapper found by
-  its caller set rather than its body.
-- `qjs_to_cstring_len2` / `qjs_free_cstring`: not isolated; `free_cstring` must
-  call the context's free hook, which has not been located.
-- `qjs_define_property_value_str` `(ctx, obj, name, value, flags) -> i32`: the
-  closest lead is `0xC29A474` (allocates a 408-byte property record through the
-  context hook, links it into the object, looks the name up with `0xC2748DC` /
-  `0xC294B50`, and initialises the descriptor array with `-1` tags). It takes an
-  atom rather than a name, so it is more likely the atom-level define that the
-  `_str` variant wraps. Not recorded: the wrapper itself was not found.
-- `qjs_new_array_buffer_copy`, `qjs_get_array_buffer`,
-  `qjs_get_typed_array_buffer`: not isolated; the typed-array class ids and the
-  array-buffer layout (data pointer, length, class id) have to be read out first.
+#### Where the alignment breaks
 
-Recorded honestly: twelve of thirteen remain unrecorded, and the reason is not a
-lack of effort but the absence of any self-describing text for QuickJS in this
-build plus the failure of the marshaller lead. Cross-line matching must still not
-be used (22% agreement between .155 and .043).
+p67 is **not order-preserving** against .155. The violation is exact: .155 keeps
+`NEW_OBJECT` and `NEW_C_FUNCTION2` *before* `IS_FUNCTION`, while p67 places
+`IS_FUNCTION` (`0xC27DA88`) immediately after `GET_EXCEPTION` (`0xC27DA60`) and
+before `NEW_OBJECT` (`0xC2A41FC`) and `NEW_C_FUNCTION2` (`0xC2A83C4`). The public
+wrappers are therefore grouped by section/inlining rather than by source order on
+this build, so order is only usable inside a group — it settled the three that
+cluster together and the two object/function constructors, and it cannot be used
+to pick between the remaining six.
+
+#### The six that are still open
+
+| binding | what is missing |
+| --- | --- |
+| `qjs_new_string_len` | needs the ASCII fast-path allocator: .155 calls `js_alloc_string(ctx, ptr, len)` (its `0xC3B6874`) and only falls into the utf16 builder for non-ASCII. On p67 the builder exists (`0xC2920BC` grows a `StringBuffer`, `string too long` at `0x40000000`, surrogates 55296/56320, replacement 65533) but the allocator it is called from was not isolated. |
+| `qjs_to_cstring_len2` | .155 (364 B) calls the free wrapper at the end, so the p67 candidate must be a 340–380 B function calling `0xC278294`; the only size match (`0xC29239C`, 368 B) turned out to be a `StringBuffer` helper, so no candidate passed. |
+| `qjs_define_property_value_str` | .155 (64 B) creates an atom from the name, defines, then releases the atom. On p67 the atom creator is `0xC294B50`/`0xC294DCC` and the atom release is `0xC2780B0`/`0xC2780D4`, but **no function calls both**, so this wrapper is inlined here. The module would have to compose atom-create + define + atom-release itself. |
+| `qjs_new_array_buffer_copy` | .155 forwards with class id **19** and a free callback; no p67 function passes class 19 from a small wrapper, so the class id for array buffers on this build is not yet established. |
+| `qjs_get_array_buffer` | depends on the same class id; .155 (38 B) calls an unwrap plus a length read. |
+| `qjs_get_typed_array_buffer` | .155 (88 B) unwraps, then reads the three out-parameters (offset, length, element size) — the typed-array layout has to be read out first. |
+
+Two of the six are therefore structural gaps (inlined wrappers) and four need the
+array-buffer/typed-array class ids and layout. None were filled from resemblance.

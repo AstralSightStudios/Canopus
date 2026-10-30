@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.__js_throw",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "__js_throw",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC27DA24",
+  "prototype": "JSValue __js_throw(JSContext *ctx, JSValue exception)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Settled while looking for the exception accessors; it is the writer that pairs with qjs_get_exception, and it explains why the exception slot is the invariant for both."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ],
+    "source": "Writes the new exception into the runtime slot at rt+128 (freeing the previous one first) and returns JS_EXCEPTION (0x600000000)."
+  },
+  "notes": "Settled while looking for the exception accessors; it is the writer that pairs with qjs_get_exception, and it explains why the exception slot is the invariant for both.",
+  "callable_address": "0xc27da25"
+}

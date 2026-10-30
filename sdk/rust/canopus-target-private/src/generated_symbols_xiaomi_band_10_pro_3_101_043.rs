@@ -1050,6 +1050,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "struct FeatureManagerQjs_vtable",
     },
     TargetPrivateSymbolRecord {
+        name: "__js_free_value",
+        kind: "function",
+        entry: 0xc2781e0usize,
+        callable: 0xc2781e1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void __JS_FreeValue(JSContext *ctx, JSValue value)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "__js_throw",
+        kind: "function",
+        entry: 0xc27da24usize,
+        callable: 0xc27da25usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "JSValue __js_throw(JSContext *ctx, JSValue exception)",
+    },
+    TargetPrivateSymbolRecord {
         name: "background_object_has_flag",
         kind: "function",
         entry: 0xc5881c0usize,
@@ -2382,13 +2400,67 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "struct file_operations",
     },
     TargetPrivateSymbolRecord {
-        name: "qjs_free_value",
+        name: "qjs_call",
         kind: "function",
-        entry: 0xc2781e0usize,
-        callable: 0xc2781e1usize,
+        entry: 0xc2bfcc0usize,
+        callable: 0xc2bfcc1usize,
         status: "STATIC_RECOVERED",
         policy: "restricted",
-        prototype: "void __JS_FreeValue(JSContext *ctx, JSValue value, int tag)",
+        prototype: "JSValue qjs_call(JSContext *ctx, JSValue func, JSValue this_obj, int argc, const JSValue *argv)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "qjs_free_cstring",
+        kind: "function",
+        entry: 0xc278848usize,
+        callable: 0xc278849usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void qjs_free_cstring(JSContext *ctx, const char *str)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "qjs_free_value",
+        kind: "function",
+        entry: 0xc278294usize,
+        callable: 0xc278295usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void qjs_free_value(JSContext *ctx, JSValue value)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "qjs_get_exception",
+        kind: "function",
+        entry: 0xc27da60usize,
+        callable: 0xc27da61usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "JSValue qjs_get_exception(JSContext *ctx)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "qjs_is_function",
+        kind: "function",
+        entry: 0xc27da88usize,
+        callable: 0xc27da89usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int qjs_is_function(JSContext *ctx, JSValue value)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "qjs_new_c_function2",
+        kind: "function",
+        entry: 0xc2a83c4usize,
+        callable: 0xc2a83c5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "JSValue qjs_new_c_function2(JSContext *ctx, void *fn, const char *name, int len, int nargs, int cproto)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "qjs_new_object",
+        kind: "function",
+        entry: 0xc2a41fcusize,
+        callable: 0xc2a41fdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "JSValue qjs_new_object(JSContext *ctx)",
     },
     TargetPrivateSymbolRecord {
         name: "register_inode",
@@ -3326,6 +3398,10 @@ pub const FEATUREMANAGERQJS_FINDFEATURE_CALLABLE: usize = 0xc869271usize;
 pub const FEATUREMANAGERQJS_UNINIT_ENTRY: usize = 0xc866ab0usize;
 pub const FEATUREMANAGERQJS_UNINIT_CALLABLE: usize = 0xc866ab1usize;
 pub const FEATUREMANAGERQJS_VTABLE_ENTRY: usize = 0xcda2cd0usize;
+pub const JS_FREE_VALUE_ENTRY: usize = 0xc2781e0usize;
+pub const JS_FREE_VALUE_CALLABLE: usize = 0xc2781e1usize;
+pub const JS_THROW_ENTRY: usize = 0xc27da24usize;
+pub const JS_THROW_CALLABLE: usize = 0xc27da25usize;
 pub const BACKGROUND_OBJECT_HAS_FLAG_ENTRY: usize = 0xc5881c0usize;
 pub const BACKGROUND_OBJECT_HAS_FLAG_CALLABLE: usize = 0xc5881c1usize;
 pub const BACKGROUND_OBJECT_HIDE_ENTRY: usize = 0xc588960usize;
@@ -3607,8 +3683,20 @@ pub const P67_BLUR_STYLE_GET_ENTRY: usize = 0xc589448usize;
 pub const P67_BLUR_STYLE_GET_CALLABLE: usize = 0xc589449usize;
 pub const P67_BLUR_WATCHFACE_ROOT_CLASS_ENTRY: usize = 0x2cd1f640usize;
 pub const PIPE_FILE_OPERATIONS_ENTRY: usize = 0x2ccbe5a4usize;
-pub const QJS_FREE_VALUE_ENTRY: usize = 0xc2781e0usize;
-pub const QJS_FREE_VALUE_CALLABLE: usize = 0xc2781e1usize;
+pub const QJS_CALL_ENTRY: usize = 0xc2bfcc0usize;
+pub const QJS_CALL_CALLABLE: usize = 0xc2bfcc1usize;
+pub const QJS_FREE_CSTRING_ENTRY: usize = 0xc278848usize;
+pub const QJS_FREE_CSTRING_CALLABLE: usize = 0xc278849usize;
+pub const QJS_FREE_VALUE_ENTRY: usize = 0xc278294usize;
+pub const QJS_FREE_VALUE_CALLABLE: usize = 0xc278295usize;
+pub const QJS_GET_EXCEPTION_ENTRY: usize = 0xc27da60usize;
+pub const QJS_GET_EXCEPTION_CALLABLE: usize = 0xc27da61usize;
+pub const QJS_IS_FUNCTION_ENTRY: usize = 0xc27da88usize;
+pub const QJS_IS_FUNCTION_CALLABLE: usize = 0xc27da89usize;
+pub const QJS_NEW_C_FUNCTION2_ENTRY: usize = 0xc2a83c4usize;
+pub const QJS_NEW_C_FUNCTION2_CALLABLE: usize = 0xc2a83c5usize;
+pub const QJS_NEW_OBJECT_ENTRY: usize = 0xc2a41fcusize;
+pub const QJS_NEW_OBJECT_CALLABLE: usize = 0xc2a41fdusize;
 pub const REGISTER_INODE_ENTRY: usize = 0xc1affd8usize;
 pub const REGISTER_INODE_CALLABLE: usize = 0xc1affd9usize;
 pub const SDP_BUILDER_CREATE_ENTRY: usize = 0xc80a684usize;

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_call",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_call",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2BFCC0",
+  "prototype": "JSValue qjs_call(JSContext *ctx, JSValue func, JSValue this_obj, int argc, const JSValue *argv)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "The 3/2 flag pair and the 11-argument forwarding shape match .155 exactly."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ],
+    "source": "Body is identical to .155 0xc3ccb00: forward to the interpreter entry with the argc packed from the value pair and the two flag words 3 and 2. Size 44 versus 42 on .155."
+  },
+  "notes": "The 3/2 flag pair and the 11-argument forwarding shape match .155 exactly.",
+  "callable_address": "0xc2bfcc1"
+}

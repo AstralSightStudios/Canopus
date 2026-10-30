@@ -5,8 +5,8 @@
   "name": "qjs_free_value",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xC2781E0",
-  "prototype": "void __JS_FreeValue(JSContext *ctx, JSValue value, int tag)",
+  "entry_address": "0xC278294",
+  "prototype": "void qjs_free_value(JSContext *ctx, JSValue value)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
@@ -15,13 +15,13 @@
     "blocking": true
   },
   "ownership": {
-    "argument": "This is qjs_free_value, self-anchored by the only QuickJS-internal error string this build keeps. The remaining 12 qjs_* bindings are not self-anchorable here."
+    "argument": "This corrects the previous pass: the function recorded there (0xC2781E0) is the internal __JS_FreeValue with the switch and the error string, while the public wrapper astrolink binds is this one."
   },
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-1043-QJS-002"
+      "EVID-PORT-1043-QJS-003"
     ]
   },
   "policy": "restricted",
@@ -30,10 +30,10 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-PORT-1043-QJS-002"
+      "EVID-PORT-1043-QJS-003"
     ],
-    "source": "Switches on the JS tag: -7 (string) decrements the reference byte at string+11 and frees through the context hook at ctx+4 when it reaches zero, -1/-2/-3 detach the object from the context's cycle list at ctx+92 and free through 0xC279D48, and any other tag logs '__JS_FreeValue: unknown tag=%d' (the only self-naming QuickJS string in this image) with quickjs.c:5636. 1046 callers."
+    "source": "Public release wrapper, the same 30-odd-byte shape as .155 0xc3b813c: for tags above 0xFFFFFFF4 decrement the reference count at the value pointer and call the internal __JS_FreeValue 0xC2781E0 only when it reaches zero. 318 call sites."
   },
-  "notes": "This is qjs_free_value, self-anchored by the only QuickJS-internal error string this build keeps. The remaining 12 qjs_* bindings are not self-anchorable here.",
-  "callable_address": "0xc2781e1"
+  "notes": "This corrects the previous pass: the function recorded there (0xC2781E0) is the internal __JS_FreeValue with the switch and the error string, while the public wrapper astrolink binds is this one.",
+  "callable_address": "0xc278295"
 }

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_get_exception",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_get_exception",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC27DA60",
+  "prototype": "JSValue qjs_get_exception(JSContext *ctx)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Aligned by the order+size+body method against .155 and then confirmed by the exception-slot invariant; it also sits immediately after the internal __JS_FreeValue, as in source order."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ],
+    "source": "Body is identical to the .155 binding at 0xc3b793e: read the runtime pointer from ctx+16, return the exception slot *(u64*)(rt+128) and store JS_UNDEFINED (0x200000000) into it. Size 26 here versus 20 on .155 — same three operations, no extra work."
+  },
+  "notes": "Aligned by the order+size+body method against .155 and then confirmed by the exception-slot invariant; it also sits immediately after the internal __JS_FreeValue, as in source order.",
+  "callable_address": "0xc27da61"
+}
