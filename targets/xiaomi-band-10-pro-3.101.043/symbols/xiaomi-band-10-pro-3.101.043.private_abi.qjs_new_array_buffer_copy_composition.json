@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_new_array_buffer_copy_composition",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_new_array_buffer_copy_composition",
+  "kind": "compose",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "JSValue qjs_new_array_buffer_copy(JSContext *ctx, const uint8_t *data, size_t length)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "No copy wrapper exists on this build, so the module composes it: allocate length bytes through js_malloc_rt 0xC2D10F8, copy the caller data into it, then hand it to js_new_array_buffer 0xC2D34C8, which adopts it and installs the free callback 0xC27369C so the buffer owns the copy. The adoption is what makes the copy mandatory: js_new_array_buffer frees its data pointer with 0xC27369C, so passing the caller buffer directly would free memory the caller owns."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "proven",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-006",
+      "EVID-PORT-1043-DEVICE-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-006",
+      "EVID-PORT-1043-DEVICE-002"
+    ],
+    "source": "js_new_array_buffer 0xC2D34C8 has exactly two callers (0xC861308, a 28-byte forwarder, and 0xC8712A4, a firmware JS binding) and neither copies; the callee installs sub_C27369C as the free callback unconditionally, which is the signature of the adopt-with-free variant."
+  },
+  "notes": "No copy wrapper exists on this build, so the module composes it: allocate length bytes through js_malloc_rt 0xC2D10F8, copy the caller data into it, then hand it to js_new_array_buffer 0xC2D34C8, which adopts it and installs the free callback 0xC27369C so the buffer owns the copy."
+}

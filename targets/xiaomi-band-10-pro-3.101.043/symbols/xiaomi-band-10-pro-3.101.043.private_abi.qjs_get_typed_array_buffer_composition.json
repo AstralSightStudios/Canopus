@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_get_typed_array_buffer_composition",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_get_typed_array_buffer_composition",
+  "kind": "compose",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "JSValue qjs_get_typed_array_buffer(JSContext *ctx, JSValue value, size_t *poffset, size_t *plength, size_t *pelement_size)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Composed from the measured typed-array layout: payload pointer at object+0x24, element count at object+0x28, and the element size derived from the class id at object+6 - 23 for Uint8Array (1 byte) and 25 for Uint16Array (2 bytes), the ids being consecutive across the typed-array run. The byte offset output is NOT measured on this build: only the payload and the element count were confirmed, so poffset must be treated as unusable until an offset field is observed."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "proven",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-006",
+      "EVID-PORT-1043-DEVICE-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-006",
+      "EVID-PORT-1043-DEVICE-002"
+    ],
+    "source": "Measured on the live runtime: Uint8Array(512) object at 0x3C3146D0 has class 23, payload 0x3C3A1B28 at +0x24 and element count 512 at +0x28; Uint16Array(16) object at 0x3C314610 has class 25, payload 0x3C313590 at +0x24 and count 16 at +0x28."
+  },
+  "notes": "Composed from the measured typed-array layout: payload pointer at object+0x24, element count at object+0x28, and the element size derived from the class id at object+6 - 23 for Uint8Array (1 byte) and 25 for Uint16Array (2 bytes), the ids being consecutive across the typed-array run."
+}

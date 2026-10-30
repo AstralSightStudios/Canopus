@@ -768,3 +768,36 @@ Next pass should therefore look for, in this order:
 The two string entries are unaffected by this and stay open with the invariants
 already written down in 7b.
 
+### 7e. The three array-buffer entries are compositions, not addresses
+
+Searched in the order set out, with the class id measured last pass. Result: this
+build has **no library-level copy and no class-gated getters**, so all three are
+compositions built on measured offsets. `EVID-PORT-1043-QJS-006`.
+
+| binding | verdict | recipe |
+| --- | --- | --- |
+| `qjs_new_array_buffer_copy` | composition | `p = js_malloc_rt(ctx, length)` = `0xC2D10F8`; copy the caller's bytes; `js_new_array_buffer 0xC2D34C8(ctx, p, length)` adopts `p` and installs the free callback `0xC27369C` |
+| `qjs_get_array_buffer` | composition | require tag `-1` and `u16(obj+6) == 19`, then payload = `*(obj+0x54)`, byte length = `*(obj+0x58)` |
+| `qjs_get_typed_array_buffer` | composition | require a typed-array class id (`23` Uint8Array, `25` Uint16Array, consecutive run), then payload = `*(obj+0x24)`, element count = `*(obj+0x28)`, element size from the class id. **Byte offset is not measured and must stay unused.** |
+
+Why compositions rather than addresses:
+
+- `js_new_array_buffer 0xC2D34C8` has exactly two callers — `0xC861308` (a 28-byte
+  forwarder) and `0xC8712A4` (a firmware JS binding) — and **neither copies**.
+  The callee installs `sub_C27369C` as the free callback unconditionally, which is
+  the adopt-with-free variant, so a copy must exist *before* the call or the
+  callee would free memory the caller still owns.
+- Thirteen functions that read `+0x54`/`+0x58` were examined and none of them is
+  gated on class `19`; the firmware's own bindings reach the fields only after
+  `JS_GetOpaque` (all ten `JS_GetOpaque` call sites pass the class id in a
+  register). There is no exported `JS_GetArrayBuffer`/`JS_GetTypedArrayBuffer` to
+  bind on this image.
+
+The offsets used in the recipes are the ones measured on the live runtime, not
+inherited: payload `+0x54` / byte length `+0x58` for the array buffer, payload
+`+0x24` / element count `+0x28` for both typed arrays.
+
+With that, the QuickJS group is: **8 addresses, 4 compositions (this table plus
+`qjs_define_property_value_str`), 2 genuinely open** — `qjs_new_string_len` and
+`qjs_to_cstring_len2`, whose missing invariants are unchanged from 7b.
+
