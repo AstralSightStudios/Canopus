@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.FeatureManagerQjs_vtable",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "FeatureManagerQjs_vtable",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0xCDA2CD0",
+  "prototype": "struct FeatureManagerQjs_vtable",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Dispatch table the module needs for the manager object; slot offsets are measured here rather than inherited from Band 11."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-001"
+    ],
+    "source": "Read-only table of Thumb entry points: +0x00 0xC861968, +0x04 0xC86538C, +0x08 0xC86192C, +0x14 0xC86646C, +0x18 0xC866484, +0x1C 0xC868E94 (featureRequire), +0x20 0xC869270 (findFeature), +0x24 0xC8690B8 (createFeature), +0x28 0xC86538C, +0x2C 0xC866AB0 (uninit). The slot ordering is confirmed by the four methods that also carry their own signature strings."
+  },
+  "notes": "Dispatch table the module needs for the manager object; slot offsets are measured here rather than inherited from Band 11."
+}

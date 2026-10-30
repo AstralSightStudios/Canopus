@@ -345,3 +345,85 @@ consistent with every offset the handlers touch (max `+121`).
   path; if the module needs the app-side accept call with credits/MTU, that is
   `0xC805BBC`'s caller side and should be verified on device.
 
+## Pass 6: the task iterator, and the Feature manager
+
+`EVID-PORT-1043-QJS-001`.
+
+### nxsched_foreach — found, and it is the real one
+
+`0xC205E54(void (*worker)(void *tcb, void *arg), void *arg)`
+
+- takes the scheduler critical section through `0xC205EB4` / `0xC205EE8`
+  (BASEPRI 0x80),
+- iterates the **pid hash**: bucket array at `0x200B24B0`, bucket count at
+  `0x200B24AC`,
+- calls `worker(bucket_tcb, arg)` for each non-null bucket.
+
+Evidence that this is the task iterator and not something narrower: the
+firmware's own global file release calls it with the worker `0xC1B8D50`
+(`0xC1B9F1C` is the wrapper: `nxsched_foreach(sub_C1B8D50, 0)`), and four more
+scheduler/cleanup callers reach it.
+
+Caveat recorded honestly: iteration is one TCB per hash bucket, so this build
+keeps a single TCB per bucket. If a bucket ever chains, the chain is not
+followed here — the module should not assume a chain walk.
+
+Related, recorded because the module may prefer resolving its own pid:
+`nxsched_get_tcb 0xC205910` (bucket `[(count - 1) & pid]`, verifies the pid word
+at `+44`, 44 callers) with the same two globals. Current TCB global is
+`0x200B24D4` (used by `sched_get_stackinfo 0xC205FAC`).
+
+### Feature group
+
+| binding | record | address | anchor |
+| --- | --- | --- | --- |
+| `F_FEATURE_REGISTER_FEATURE` | `feature_register_feature` | `0xC862898` | names itself `FeatureRegisterFeature` in its own failure logs (description null / no registry instance), 32 call sites, then delegates to `0xC86E7C4` |
+| manager // createFeature | `FeatureManagerQjs_createFeature` | `0xC8690B8` | signature string at `0xcc8a99c` + vtable slot `+0x24` |
+| manager // findFeature | `FeatureManagerQjs_findFeature` | `0xC869270` | signature string at `0xcc8aa48` + vtable slot `+0x20` |
+| manager // featureRequire | `FeatureManagerQjs_featureRequire` | `0xC868E94` | signature string at `0xcc8a7bc` + vtable slot `+0x1C` |
+| manager // uninit | `FeatureManagerQjs_uninit` | `0xC866AB0` | signature string at `0xcc89528` + vtable slot `+0x2C` |
+| manager // createJsInstance | `FeatureManagerQjs_createJsInstance` | `0xC868B18` | signature string at `0xcc8a594`, called by createTargetInterface |
+| manager // ensureJsPrototype | `FeatureManagerQjs_ensureJsPrototype` | `0xC8687AC` | signature string at `0xcc8a48c` |
+| manager // createTargetInterface | `FeatureManagerQjs_createTargetInterface` | `0xC869034` | signature string at `0xcc8a898` with the `(interf) != (nullptr)` assertion |
+| framework // accessor_get / accessor_set | `feature_accessor_get` / `feature_accessor_set` | `0xC8681C8` / `0xC86AFC8` | signature strings `0xcc89d74` / `0xcc8bbd4` |
+| framework // event_set / event_get / event_on_off | `feature_event_set` / `feature_event_get` / `feature_event_on_off` | `0xC8697FC` / `0xC86A338` / `0xC86D170` | signature strings `0xcc8ae90` / `0xcc8af7c` / `0xcc8c2d4` |
+| framework // method_call | `feature_method_call` | `0xC86C2B8` | signature string `0xcc8c1d4` |
+
+The assertion strings on this image carry **full C++ signatures**
+(`feature_framework::FeatureManagerQjs::createTargetInterface(...)` together with
+the expression that failed), which is what made this pass possible: every manager
+method names itself, so no cross-line matching was involved.
+
+### FeatureManagerQjs dispatch table (global)
+
+`0xCDA2CD0`, Thumb entry points, measured:
+
+| slot | address | method |
+| --- | --- | --- |
+| `+0x00` | `0xC861968` | unrecorded |
+| `+0x04` | `0xC86538C` | unrecorded (also `+0x28`) |
+| `+0x08` | `0xC86192C` | unrecorded |
+| `+0x14` | `0xC86646C` | unrecorded |
+| `+0x18` | `0xC866484` | unrecorded |
+| `+0x1C` | `0xC868E94` | `featureRequire` |
+| `+0x20` | `0xC869270` | `findFeature` |
+| `+0x24` | `0xC8690B8` | `createFeature` |
+| `+0x2C` | `0xC866AB0` | `uninit` |
+
+Four slots are pinned by methods that also carry signature strings, so the table's
+base and ordering are established even where the remaining slots are unnamed.
+
+### Still open after this pass
+
+- `feature_manager_post_task` (`void(void *manager, const void *task)`): not
+  found. The `workflow_post_task 0xC842340` string belongs to the miconnect
+  workflow manager (its own global `0x2013C490`), not to the Feature manager, so
+  it was not recorded as a substitute. What is needed: the manager's JS-thread
+  task queue and its wake, i.e. follow `0xC86E7C4` (register_feature's delegate)
+  and the manager `uninit` teardown for the queue object.
+- The 13 `qjs_*` entries. The QuickJS core is identifiable in this image
+  (`apps/interpreters/quickjs/quickjs/quickjs.c` is present), but each entry needs
+  its own producer/consumer proof, and cross-line matching is 22% accurate here,
+  so none were recorded from resemblance. Doing them is a full pass on its own.
+- Four unnamed FeatureManagerQjs slots above.
+

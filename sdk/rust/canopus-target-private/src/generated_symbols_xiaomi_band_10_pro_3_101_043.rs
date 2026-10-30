@@ -978,6 +978,78 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void(void *wakelock)",
     },
     TargetPrivateSymbolRecord {
+        name: "FeatureManagerQjs_createFeature",
+        kind: "function",
+        entry: 0xc8690b8usize,
+        callable: 0xc8690b9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "feature_value_t FeatureManagerQjs::createFeature(ft_value_t, ft_value_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "FeatureManagerQjs_createJsInstance",
+        kind: "function",
+        entry: 0xc868b18usize,
+        callable: 0xc868b19usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "feature_value_t FeatureManagerQjs::createJsInstance(FeaturePrototypeQjs *, ...)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "FeatureManagerQjs_createTargetInterface",
+        kind: "function",
+        entry: 0xc869034usize,
+        callable: 0xc869035usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "feature_value_t FeatureManagerQjs::createTargetInterface(FeatureInstance *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "FeatureManagerQjs_ensureJsPrototype",
+        kind: "function",
+        entry: 0xc8687acusize,
+        callable: 0xc8687adusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "bool FeatureManagerQjs::ensureJsPrototype(FeaturePrototypeQjs *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "FeatureManagerQjs_featureRequire",
+        kind: "function",
+        entry: 0xc868e94usize,
+        callable: 0xc868e95usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "virtual ft_value_t FeatureManagerQjs::featureRequire(ft_value_t, const char *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "FeatureManagerQjs_findFeature",
+        kind: "function",
+        entry: 0xc869270usize,
+        callable: 0xc869271usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "feature_value_t FeatureManagerQjs::findFeature(const char *)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "FeatureManagerQjs_uninit",
+        kind: "function",
+        entry: 0xc866ab0usize,
+        callable: 0xc866ab1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "virtual void FeatureManagerQjs::uninit()",
+    },
+    TargetPrivateSymbolRecord {
+        name: "FeatureManagerQjs_vtable",
+        kind: "global",
+        entry: 0xcda2cd0usize,
+        callable: 0xcda2cd0usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "struct FeatureManagerQjs_vtable",
+    },
+    TargetPrivateSymbolRecord {
         name: "background_object_has_flag",
         kind: "function",
         entry: 0xc5881c0usize,
@@ -1264,6 +1336,69 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "void(void *event)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_accessor_get",
+        kind: "function",
+        entry: 0xc8681c8usize,
+        callable: 0xc8681c9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "feature_value_t feature_framework::accessor_get(feature_context_ref, feature_value_t, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_accessor_set",
+        kind: "function",
+        entry: 0xc86afc8usize,
+        callable: 0xc86afc9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "feature_value_t feature_framework::accessor_set(feature_context_ref, feature_value_t, feature_value_t, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_event_get",
+        kind: "function",
+        entry: 0xc86a338usize,
+        callable: 0xc86a339usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "feature_value_t feature_framework::event_get(feature_context_ref, feature_value_t, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_event_on_off",
+        kind: "function",
+        entry: 0xc86d170usize,
+        callable: 0xc86d171usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "feature_value_t feature_framework::event_on_off(feature_context_ref, feature_value_t, int, feature_value_t*, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_event_set",
+        kind: "function",
+        entry: 0xc8697fcusize,
+        callable: 0xc8697fdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "feature_value_t feature_framework::event_set(feature_context_ref, feature_value_t, feature_value_t, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_method_call",
+        kind: "function",
+        entry: 0xc86c2b8usize,
+        callable: 0xc86c2b9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "feature_value_t feature_framework::method_call(feature_context_ref, feature_value_t, int, feature_value_t*, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_register_feature",
+        kind: "function",
+        entry: 0xc862898usize,
+        callable: 0xc862899usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int feature_register_feature(void *registry, const void *description)",
     },
     TargetPrivateSymbolRecord {
         name: "file_close",
@@ -1975,6 +2110,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int nx_pipe(int *fds, size_t bufsize, int flags)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "nxsched_foreach",
+        kind: "function",
+        entry: 0xc205e54usize,
+        callable: 0xc205e55usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void nxsched_foreach(void (*worker)(void *tcb, void *arg), void *arg)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "nxsched_get_tcb",
+        kind: "function",
+        entry: 0xc205910usize,
+        callable: 0xc205911usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *nxsched_get_tcb(int pid)",
     },
     TargetPrivateSymbolRecord {
         name: "p67_battery_child_count",
@@ -3113,6 +3266,21 @@ pub const WAKELOCK_CREATE_ENTRY: usize = 0xca6e7d4usize;
 pub const WAKELOCK_CREATE_CALLABLE: usize = 0xca6e7d5usize;
 pub const WAKELOCK_RELEASE_ENTRY: usize = 0xca6ea98usize;
 pub const WAKELOCK_RELEASE_CALLABLE: usize = 0xca6ea99usize;
+pub const FEATUREMANAGERQJS_CREATEFEATURE_ENTRY: usize = 0xc8690b8usize;
+pub const FEATUREMANAGERQJS_CREATEFEATURE_CALLABLE: usize = 0xc8690b9usize;
+pub const FEATUREMANAGERQJS_CREATEJSINSTANCE_ENTRY: usize = 0xc868b18usize;
+pub const FEATUREMANAGERQJS_CREATEJSINSTANCE_CALLABLE: usize = 0xc868b19usize;
+pub const FEATUREMANAGERQJS_CREATETARGETINTERFACE_ENTRY: usize = 0xc869034usize;
+pub const FEATUREMANAGERQJS_CREATETARGETINTERFACE_CALLABLE: usize = 0xc869035usize;
+pub const FEATUREMANAGERQJS_ENSUREJSPROTOTYPE_ENTRY: usize = 0xc8687acusize;
+pub const FEATUREMANAGERQJS_ENSUREJSPROTOTYPE_CALLABLE: usize = 0xc8687adusize;
+pub const FEATUREMANAGERQJS_FEATUREREQUIRE_ENTRY: usize = 0xc868e94usize;
+pub const FEATUREMANAGERQJS_FEATUREREQUIRE_CALLABLE: usize = 0xc868e95usize;
+pub const FEATUREMANAGERQJS_FINDFEATURE_ENTRY: usize = 0xc869270usize;
+pub const FEATUREMANAGERQJS_FINDFEATURE_CALLABLE: usize = 0xc869271usize;
+pub const FEATUREMANAGERQJS_UNINIT_ENTRY: usize = 0xc866ab0usize;
+pub const FEATUREMANAGERQJS_UNINIT_CALLABLE: usize = 0xc866ab1usize;
+pub const FEATUREMANAGERQJS_VTABLE_ENTRY: usize = 0xcda2cd0usize;
 pub const BACKGROUND_OBJECT_HAS_FLAG_ENTRY: usize = 0xc5881c0usize;
 pub const BACKGROUND_OBJECT_HAS_FLAG_CALLABLE: usize = 0xc5881c1usize;
 pub const BACKGROUND_OBJECT_HIDE_ENTRY: usize = 0xc588960usize;
@@ -3176,6 +3344,20 @@ pub const CALENDAR_TEXT_COLOR_ENTRY: usize = 0xc588a70usize;
 pub const CALENDAR_TEXT_COLOR_CALLABLE: usize = 0xc588a71usize;
 pub const CONTROL_CENTER_SCROLL_ENTRY: usize = 0xc5036c4usize;
 pub const CONTROL_CENTER_SCROLL_CALLABLE: usize = 0xc5036c5usize;
+pub const FEATURE_ACCESSOR_GET_ENTRY: usize = 0xc8681c8usize;
+pub const FEATURE_ACCESSOR_GET_CALLABLE: usize = 0xc8681c9usize;
+pub const FEATURE_ACCESSOR_SET_ENTRY: usize = 0xc86afc8usize;
+pub const FEATURE_ACCESSOR_SET_CALLABLE: usize = 0xc86afc9usize;
+pub const FEATURE_EVENT_GET_ENTRY: usize = 0xc86a338usize;
+pub const FEATURE_EVENT_GET_CALLABLE: usize = 0xc86a339usize;
+pub const FEATURE_EVENT_ON_OFF_ENTRY: usize = 0xc86d170usize;
+pub const FEATURE_EVENT_ON_OFF_CALLABLE: usize = 0xc86d171usize;
+pub const FEATURE_EVENT_SET_ENTRY: usize = 0xc8697fcusize;
+pub const FEATURE_EVENT_SET_CALLABLE: usize = 0xc8697fdusize;
+pub const FEATURE_METHOD_CALL_ENTRY: usize = 0xc86c2b8usize;
+pub const FEATURE_METHOD_CALL_CALLABLE: usize = 0xc86c2b9usize;
+pub const FEATURE_REGISTER_FEATURE_ENTRY: usize = 0xc862898usize;
+pub const FEATURE_REGISTER_FEATURE_CALLABLE: usize = 0xc862899usize;
 pub const FILE_CLOSE_ENTRY: usize = 0xc1cec08usize;
 pub const FILE_CLOSE_CALLABLE: usize = 0xc1cec09usize;
 pub const FILE_DUP3_ENTRY: usize = 0xc1ced14usize;
@@ -3325,6 +3507,10 @@ pub const NOTIFICATIONS_SCROLL_ENTRY: usize = 0xc527bbcusize;
 pub const NOTIFICATIONS_SCROLL_CALLABLE: usize = 0xc527bbdusize;
 pub const NX_PIPE_ENTRY: usize = 0xc1a609cusize;
 pub const NX_PIPE_CALLABLE: usize = 0xc1a609dusize;
+pub const NXSCHED_FOREACH_ENTRY: usize = 0xc205e54usize;
+pub const NXSCHED_FOREACH_CALLABLE: usize = 0xc205e55usize;
+pub const NXSCHED_GET_TCB_ENTRY: usize = 0xc205910usize;
+pub const NXSCHED_GET_TCB_CALLABLE: usize = 0xc205911usize;
 pub const P67_BATTERY_CHILD_COUNT_ENTRY: usize = 0xc5881d8usize;
 pub const P67_BATTERY_CHILD_COUNT_CALLABLE: usize = 0xc5881d9usize;
 pub const P67_BATTERY_CHILD_GET_ENTRY: usize = 0xc5886e0usize;

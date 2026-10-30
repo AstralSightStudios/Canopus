@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.FeatureManagerQjs_uninit",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "FeatureManagerQjs_uninit",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC866AB0",
+  "prototype": "virtual void FeatureManagerQjs::uninit()",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Teardown entry of the manager."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-001"
+    ],
+    "source": "Identified by its assertion string at 0xcc89528 and by vtable slot +0x2C of 0xCDA2CD0."
+  },
+  "notes": "Teardown entry of the manager.",
+  "callable_address": "0xc866ab1"
+}

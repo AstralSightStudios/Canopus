@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 88f51ee786d4feda
+ * input_digest: 311045ec4a0b24ae
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -482,6 +482,13 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
 }
 
 /* ---- excluded symbols ----
+ * FeatureManagerQjs_createFeature: restricted - not exported until context/ownership approved
+ * FeatureManagerQjs_createJsInstance: restricted - not exported until context/ownership approved
+ * FeatureManagerQjs_createTargetInterface: restricted - not exported until context/ownership approved
+ * FeatureManagerQjs_ensureJsPrototype: restricted - not exported until context/ownership approved
+ * FeatureManagerQjs_featureRequire: restricted - not exported until context/ownership approved
+ * FeatureManagerQjs_findFeature: restricted - not exported until context/ownership approved
+ * FeatureManagerQjs_uninit: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved
  * background_object_has_flag: restricted - not exported until context/ownership approved
@@ -534,6 +541,13 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * driver_read_dispatch: WITHDRAWN - no veneer may ever be generated
  * driver_write_dispatch: WITHDRAWN - no veneer may ever be generated
  * errno_location: restricted - not exported until context/ownership approved
+ * feature_accessor_get: restricted - not exported until context/ownership approved
+ * feature_accessor_set: restricted - not exported until context/ownership approved
+ * feature_event_get: restricted - not exported until context/ownership approved
+ * feature_event_on_off: restricted - not exported until context/ownership approved
+ * feature_event_set: restricted - not exported until context/ownership approved
+ * feature_method_call: restricted - not exported until context/ownership approved
+ * feature_register_feature: restricted - not exported until context/ownership approved
  * file_close: restricted - not exported until context/ownership approved
  * file_dup3: restricted - not exported until context/ownership approved
  * file_writev: restricted - not exported until context/ownership approved
@@ -657,6 +671,8 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * native_font_wait: restricted - not exported until context/ownership approved
  * notifications_scroll: restricted - not exported until context/ownership approved
  * nx_pipe: restricted - not exported until context/ownership approved
+ * nxsched_foreach: restricted - not exported until context/ownership approved
+ * nxsched_get_tcb: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
  * opendir: restricted - not exported until context/ownership approved
  * p67_battery_child_count: restricted - not exported until context/ownership approved
