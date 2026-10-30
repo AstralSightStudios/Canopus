@@ -1068,6 +1068,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "JSValue __js_throw(JSContext *ctx, JSValue exception)",
     },
     TargetPrivateSymbolRecord {
+        name: "adapter_bring_up",
+        kind: "function",
+        entry: 0xca40ed4usize,
+        callable: 0xca40ed5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int adapter_bring_up(void *host)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "adapter_state_word",
+        kind: "global",
+        entry: 0x2013dbe8usize,
+        callable: 0x2013dbe8usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint8_t adapter_state_word",
+    },
+    TargetPrivateSymbolRecord {
         name: "background_object_has_flag",
         kind: "function",
         entry: 0xc5881c0usize,
@@ -1093,6 +1111,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "void(void *object, unsigned int flags)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "ble_advertising_start",
+        kind: "function",
+        entry: 0xc3b118cusize,
+        callable: 0xc3b118dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *ble_advertising_start(void *adapter, const void *params28, const void *data, uint32_t length, const void *scan_response, uint16_t response_length, const void *callbacks)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "ble_scan_stop",
+        kind: "function",
+        entry: 0xc3b140cusize,
+        callable: 0xc3b140dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int ble_scan_stop(void *adapter, void *scan)",
     },
     TargetPrivateSymbolRecord {
         name: "bt_adapter_enable",
@@ -1192,6 +1228,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "void *",
+    },
+    TargetPrivateSymbolRecord {
+        name: "bt_l2cap_register_psm",
+        kind: "function",
+        entry: 0xc805a80usize,
+        callable: 0xc805a81usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int bt_l2cap_register_psm(uint16_t psm, void *handler, uint8_t kind)",
     },
     TargetPrivateSymbolRecord {
         name: "bt_l2cap_submit_cid",
@@ -1338,6 +1383,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void (uint32_t obj, uint32_t color, uint32_t selector)",
     },
     TargetPrivateSymbolRecord {
+        name: "coc_event_dispatch",
+        kind: "function",
+        entry: 0xc81e2f8usize,
+        callable: 0xc81e2f9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void coc_psm_handler(int event, void *data)",
+    },
+    TargetPrivateSymbolRecord {
         name: "control_center_scroll",
         kind: "function",
         entry: 0xc5036c4usize,
@@ -1392,6 +1446,42 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "feature_value_t feature_framework::event_set(feature_context_ref, feature_value_t, feature_value_t, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "feature_framework_bind",
+        kind: "function",
+        entry: 0xc86700cusize,
+        callable: 0xc86700dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *feature_framework_bind(void *registry, void *host)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_framework_init",
+        kind: "function",
+        entry: 0xc86e764usize,
+        callable: 0xc86e765usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int feature_framework_init(void *registry, int app_flag)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_instance_class_id",
+        kind: "global",
+        entry: 0x2013ce38usize,
+        callable: 0x2013ce38usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "JSClassID feature_instance_class_id",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_manager_create_thunk",
+        kind: "function",
+        entry: 0xc86236cusize,
+        callable: 0xc86236dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *feature_manager_create_thunk(const void *host)",
+    },
+    TargetPrivateSymbolRecord {
         name: "feature_manager_post_task",
         kind: "function",
         entry: 0xc86231cusize,
@@ -1410,6 +1500,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "feature_value_t feature_framework::method_call(feature_context_ref, feature_value_t, int, feature_value_t*, int)",
     },
     TargetPrivateSymbolRecord {
+        name: "feature_register_all",
+        kind: "function",
+        entry: 0xc892bc4usize,
+        callable: 0xc892bc5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int feature_register_all(void *registry)",
+    },
+    TargetPrivateSymbolRecord {
         name: "feature_register_feature",
         kind: "function",
         entry: 0xc862898usize,
@@ -1417,6 +1516,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int feature_register_feature(void *registry, const void *description)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "feature_registry_create",
+        kind: "function",
+        entry: 0xc8660e4usize,
+        callable: 0xc8660e5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *feature_registry_create(void *host)",
     },
     TargetPrivateSymbolRecord {
         name: "feature_runtime_enqueue",
@@ -1437,6 +1545,51 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int feature_runtime_post(void *runtime, void *handle, uint32_t a, uint32_t b)",
     },
     TargetPrivateSymbolRecord {
+        name: "ferry_application_init",
+        kind: "function",
+        entry: 0xc8db1f8usize,
+        callable: 0xc8db1f9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int ferry_application_init(void *application, void *options, void *loop)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "ferry_application_vtable",
+        kind: "global",
+        entry: 0x2cda7c80usize,
+        callable: 0x2cda7c80usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "const void *ferry_application_vtable[50]",
+    },
+    TargetPrivateSymbolRecord {
+        name: "ferry_framework_factory",
+        kind: "function",
+        entry: 0xc8e54acusize,
+        callable: 0xc8e54adusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *ferry_framework_factory(void *framework, const char *uri)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "ferry_framework_instance",
+        kind: "global",
+        entry: 0x2013cfe0usize,
+        callable: 0x2013cfe0usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *ferry_framework_instance",
+    },
+    TargetPrivateSymbolRecord {
+        name: "ferry_framework_vtable",
+        kind: "global",
+        entry: 0x2cda8cd8usize,
+        callable: 0x2cda8cd8usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "const void *ferry_framework_vtable[13]",
+    },
+    TargetPrivateSymbolRecord {
         name: "file_close",
         kind: "function",
         entry: 0xc1cec08usize,
@@ -1453,6 +1606,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int file_dup3(struct file *source, struct file *target, int flags)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "file_write",
+        kind: "function",
+        entry: 0xc1d25d4usize,
+        callable: 0xc1d25d5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "ssize_t file_write(struct file *file, const void *bytes, size_t length)",
     },
     TargetPrivateSymbolRecord {
         name: "file_writev",
@@ -1833,6 +1995,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int fs_putfilep(struct file *file)",
     },
     TargetPrivateSymbolRecord {
+        name: "gap_client_instance",
+        kind: "global",
+        entry: 0x20126738usize,
+        callable: 0x20126738usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *",
+    },
+    TargetPrivateSymbolRecord {
         name: "gap_host_receive_slot",
         kind: "global",
         entry: 0x2013c144usize,
@@ -1849,6 +2020,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int(void *, uint8_t *, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "gap_scan_callbacks",
+        kind: "global",
+        entry: 0x200dfaf0usize,
+        callable: 0x200dfaf0usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "struct { u32 size; void *on_report; void *on_started; void *on_stopped; }",
+    },
+    TargetPrivateSymbolRecord {
+        name: "gap_scan_start_impl",
+        kind: "function",
+        entry: 0xc3b1374usize,
+        callable: 0xc3b1375usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *gap_scan_start_impl(int adapter, const void *params, const int *block, const void *callbacks)",
     },
     TargetPrivateSymbolRecord {
         name: "js_atom_unref",
@@ -1923,6 +2112,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *timer, void (*callback)(void *), uint64_t timeout, uint64_t repeat)",
     },
     TargetPrivateSymbolRecord {
+        name: "l2cap_accept_handler",
+        kind: "function",
+        entry: 0xc80279cusize,
+        callable: 0xc80279dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_accept_handler(void *owner, uint32_t event, void *request)",
+    },
+    TargetPrivateSymbolRecord {
         name: "l2cap_allocate_cid",
         kind: "function",
         entry: 0xc7ff93cusize,
@@ -1966,6 +2164,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int l2cap_detach_psm_registration(void *source, void *msg, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_disconnect_channel",
+        kind: "function",
+        entry: 0xc800a94usize,
+        callable: 0xc800a95usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_disconnect_channel(void *channel)",
     },
     TargetPrivateSymbolRecord {
         name: "l2cap_disconnect_handler",
@@ -2013,6 +2220,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int l2cap_le_connection_response_handler(void *owner, uint32_t event, void *request)",
     },
     TargetPrivateSymbolRecord {
+        name: "l2cap_queue_push",
+        kind: "function",
+        entry: 0xc7eac34usize,
+        callable: 0xc7eac35usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_queue_push(void *queue, void *node)",
+    },
+    TargetPrivateSymbolRecord {
         name: "l2cap_register_psm_handler",
         kind: "function",
         entry: 0xc800624usize,
@@ -2038,6 +2254,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int l2cap_signal_dispatch(void *owner, uint32_t event, void *frame)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_stock_alloc",
+        kind: "function",
+        entry: 0xc7eafbcusize,
+        callable: 0xc7eafbdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *l2cap_stock_alloc(uint16_t payload_len, uint16_t header_len)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_teardown_channel",
+        kind: "function",
+        entry: 0xc801124usize,
+        callable: 0xc801125usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_teardown_channel(void *channel,uint16_t reason)",
     },
     TargetPrivateSymbolRecord {
         name: "l2cap_unregister_psm_handler",
@@ -2445,6 +2679,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "struct file_operations",
     },
     TargetPrivateSymbolRecord {
+        name: "pthread_mutex_unlock_core",
+        kind: "function",
+        entry: 0xc205430usize,
+        callable: 0xc205431usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int pthread_mutex_unlock_core(pthread_mutex_t *mutex)",
+    },
+    TargetPrivateSymbolRecord {
         name: "qjs_call",
         kind: "function",
         entry: 0xc2bfcc0usize,
@@ -2452,6 +2695,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "JSValue qjs_call(JSContext *ctx, JSValue func, JSValue this_obj, int argc, const JSValue *argv)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "qjs_define_property_value_str",
+        kind: "function",
+        entry: 0xc296f14usize,
+        callable: 0xc296f15usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int qjs_define_property_value_str(void *ctx, uint64_t object, const char *name, uint64_t value, int flags)",
     },
     TargetPrivateSymbolRecord {
         name: "qjs_free_cstring",
@@ -2472,6 +2724,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void qjs_free_value(JSContext *ctx, JSValue value)",
     },
     TargetPrivateSymbolRecord {
+        name: "qjs_get_array_buffer",
+        kind: "function",
+        entry: 0xc2d362cusize,
+        callable: 0xc2d362dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "const uint8_t *qjs_get_array_buffer(void *ctx,size_t *length,uint64_t value)",
+    },
+    TargetPrivateSymbolRecord {
         name: "qjs_get_exception",
         kind: "function",
         entry: 0xc27da60usize,
@@ -2481,6 +2742,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "JSValue qjs_get_exception(JSContext *ctx)",
     },
     TargetPrivateSymbolRecord {
+        name: "qjs_get_typed_array_buffer",
+        kind: "function",
+        entry: 0xc2d368cusize,
+        callable: 0xc2d368dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint64_t qjs_get_typed_array_buffer(void *ctx,uint64_t value,size_t *offset,size_t *length,size_t *element_size)",
+    },
+    TargetPrivateSymbolRecord {
         name: "qjs_is_function",
         kind: "function",
         entry: 0xc27da88usize,
@@ -2488,6 +2758,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int qjs_is_function(JSContext *ctx, JSValue value)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "qjs_new_array_buffer_copy",
+        kind: "function",
+        entry: 0xc2d34c8usize,
+        callable: 0xc2d34c9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint64_t qjs_new_array_buffer_copy(void *ctx,const uint8_t *bytes,size_t length)",
     },
     TargetPrivateSymbolRecord {
         name: "qjs_new_c_function2",
@@ -2506,6 +2785,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "JSValue qjs_new_object(JSContext *ctx)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "qjs_new_string_len",
+        kind: "function",
+        entry: 0xc294b50usize,
+        callable: 0xc294b51usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "uint64_t qjs_new_string_len(void *ctx,const uint8_t *bytes,size_t length)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "qjs_to_cstring_len2",
+        kind: "function",
+        entry: 0xc29460cusize,
+        callable: 0xc29460dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "const char *qjs_to_cstring_len2(void *ctx, size_t *length, uint64_t value, int cesu8)",
     },
     TargetPrivateSymbolRecord {
         name: "register_inode",
@@ -2625,6 +2922,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int uv_async_send(uv_async_t *handle)",
     },
     TargetPrivateSymbolRecord {
+        name: "uv_close",
+        kind: "function",
+        entry: 0xc2db874usize,
+        callable: 0xc2db875usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void uv_close(void *handle, void (*close_callback)(void *handle))",
+    },
+    TargetPrivateSymbolRecord {
         name: "uv_loop_init",
         kind: "function",
         entry: 0xc2dc9a0usize,
@@ -2636,20 +2942,38 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
     TargetPrivateSymbolRecord {
         name: "uv_mutex_init",
         kind: "function",
-        entry: 0xc2dcf1cusize,
-        callable: 0xc2dcf1dusize,
+        entry: 0xc2dccccusize,
+        callable: 0xc2dcccdusize,
         status: "STATIC_RECOVERED",
         policy: "restricted",
-        prototype: "int uv_mutex_init(uv_mutex_t *mutex)",
+        prototype: "int uv_mutex_init(void *mutex)",
     },
     TargetPrivateSymbolRecord {
         name: "uv_mutex_lock",
         kind: "function",
-        entry: 0xc1e9b1cusize,
-        callable: 0xc1e9b1dusize,
+        entry: 0xc2dcda8usize,
+        callable: 0xc2dcda9usize,
         status: "STATIC_RECOVERED",
         policy: "restricted",
-        prototype: "int uv_mutex_lock(uv_mutex_t *mutex)",
+        prototype: "void uv_mutex_lock(void *mutex)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "uv_mutex_unlock",
+        kind: "function",
+        entry: 0xc2dcdc4usize,
+        callable: 0xc2dcdc5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void uv_mutex_unlock(void *mutex)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "uv_mutex_unlock_inlined",
+        kind: "function",
+        entry: 0xc204f08usize,
+        callable: 0xc204f09usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int uv_mutex_unlock(uv_mutex_t *mutex)",
     },
     TargetPrivateSymbolRecord {
         name: "widgets_scroll",
@@ -3456,12 +3780,19 @@ pub const JS_FREE_VALUE_ENTRY: usize = 0xc2781e0usize;
 pub const JS_FREE_VALUE_CALLABLE: usize = 0xc2781e1usize;
 pub const JS_THROW_ENTRY: usize = 0xc27da24usize;
 pub const JS_THROW_CALLABLE: usize = 0xc27da25usize;
+pub const ADAPTER_BRING_UP_ENTRY: usize = 0xca40ed4usize;
+pub const ADAPTER_BRING_UP_CALLABLE: usize = 0xca40ed5usize;
+pub const ADAPTER_STATE_WORD_ENTRY: usize = 0x2013dbe8usize;
 pub const BACKGROUND_OBJECT_HAS_FLAG_ENTRY: usize = 0xc5881c0usize;
 pub const BACKGROUND_OBJECT_HAS_FLAG_CALLABLE: usize = 0xc5881c1usize;
 pub const BACKGROUND_OBJECT_HIDE_ENTRY: usize = 0xc588960usize;
 pub const BACKGROUND_OBJECT_HIDE_CALLABLE: usize = 0xc588961usize;
 pub const BACKGROUND_OBJECT_SHOW_ENTRY: usize = 0xc5891b0usize;
 pub const BACKGROUND_OBJECT_SHOW_CALLABLE: usize = 0xc5891b1usize;
+pub const BLE_ADVERTISING_START_ENTRY: usize = 0xc3b118cusize;
+pub const BLE_ADVERTISING_START_CALLABLE: usize = 0xc3b118dusize;
+pub const BLE_SCAN_STOP_ENTRY: usize = 0xc3b140cusize;
+pub const BLE_SCAN_STOP_CALLABLE: usize = 0xc3b140dusize;
 pub const BT_ADAPTER_ENABLE_ENTRY: usize = 0xc3af4a4usize;
 pub const BT_ADAPTER_ENABLE_CALLABLE: usize = 0xc3af4a5usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_ENTRY: usize = 0xc3b56a8usize;
@@ -3483,6 +3814,8 @@ pub const BT_GET_BOND_STATE_CALLABLE: usize = 0xc3b5a61usize;
 pub const BT_L2CAP_DISCONNECT_ENTRY: usize = 0xc805b38usize;
 pub const BT_L2CAP_DISCONNECT_CALLABLE: usize = 0xc805b39usize;
 pub const BT_L2CAP_OWNER_ENTRY: usize = 0x2013bdbcusize;
+pub const BT_L2CAP_REGISTER_PSM_ENTRY: usize = 0xc805a80usize;
+pub const BT_L2CAP_REGISTER_PSM_CALLABLE: usize = 0xc805a81usize;
 pub const BT_L2CAP_SUBMIT_CID_ENTRY: usize = 0xc805be8usize;
 pub const BT_L2CAP_SUBMIT_CID_CALLABLE: usize = 0xc805be9usize;
 pub const BT_LE_START_ADVERTISING_ENTRY: usize = 0xc70ed94usize;
@@ -3515,6 +3848,8 @@ pub const CALENDAR_SNAPSHOT_ENTRY: usize = 0xca5fb40usize;
 pub const CALENDAR_SNAPSHOT_CALLABLE: usize = 0xca5fb41usize;
 pub const CALENDAR_TEXT_COLOR_ENTRY: usize = 0xc588a70usize;
 pub const CALENDAR_TEXT_COLOR_CALLABLE: usize = 0xc588a71usize;
+pub const COC_EVENT_DISPATCH_ENTRY: usize = 0xc81e2f8usize;
+pub const COC_EVENT_DISPATCH_CALLABLE: usize = 0xc81e2f9usize;
 pub const CONTROL_CENTER_SCROLL_ENTRY: usize = 0xc5036c4usize;
 pub const CONTROL_CENTER_SCROLL_CALLABLE: usize = 0xc5036c5usize;
 pub const FEATURE_ACCESSOR_GET_ENTRY: usize = 0xc8681c8usize;
@@ -3527,20 +3862,40 @@ pub const FEATURE_EVENT_ON_OFF_ENTRY: usize = 0xc86d170usize;
 pub const FEATURE_EVENT_ON_OFF_CALLABLE: usize = 0xc86d171usize;
 pub const FEATURE_EVENT_SET_ENTRY: usize = 0xc8697fcusize;
 pub const FEATURE_EVENT_SET_CALLABLE: usize = 0xc8697fdusize;
+pub const FEATURE_FRAMEWORK_BIND_ENTRY: usize = 0xc86700cusize;
+pub const FEATURE_FRAMEWORK_BIND_CALLABLE: usize = 0xc86700dusize;
+pub const FEATURE_FRAMEWORK_INIT_ENTRY: usize = 0xc86e764usize;
+pub const FEATURE_FRAMEWORK_INIT_CALLABLE: usize = 0xc86e765usize;
+pub const FEATURE_INSTANCE_CLASS_ID_ENTRY: usize = 0x2013ce38usize;
+pub const FEATURE_MANAGER_CREATE_THUNK_ENTRY: usize = 0xc86236cusize;
+pub const FEATURE_MANAGER_CREATE_THUNK_CALLABLE: usize = 0xc86236dusize;
 pub const FEATURE_MANAGER_POST_TASK_ENTRY: usize = 0xc86231cusize;
 pub const FEATURE_MANAGER_POST_TASK_CALLABLE: usize = 0xc86231dusize;
 pub const FEATURE_METHOD_CALL_ENTRY: usize = 0xc86c2b8usize;
 pub const FEATURE_METHOD_CALL_CALLABLE: usize = 0xc86c2b9usize;
+pub const FEATURE_REGISTER_ALL_ENTRY: usize = 0xc892bc4usize;
+pub const FEATURE_REGISTER_ALL_CALLABLE: usize = 0xc892bc5usize;
 pub const FEATURE_REGISTER_FEATURE_ENTRY: usize = 0xc862898usize;
 pub const FEATURE_REGISTER_FEATURE_CALLABLE: usize = 0xc862899usize;
+pub const FEATURE_REGISTRY_CREATE_ENTRY: usize = 0xc8660e4usize;
+pub const FEATURE_REGISTRY_CREATE_CALLABLE: usize = 0xc8660e5usize;
 pub const FEATURE_RUNTIME_ENQUEUE_ENTRY: usize = 0xc865794usize;
 pub const FEATURE_RUNTIME_ENQUEUE_CALLABLE: usize = 0xc865795usize;
 pub const FEATURE_RUNTIME_POST_ENTRY: usize = 0xc865d30usize;
 pub const FEATURE_RUNTIME_POST_CALLABLE: usize = 0xc865d31usize;
+pub const FERRY_APPLICATION_INIT_ENTRY: usize = 0xc8db1f8usize;
+pub const FERRY_APPLICATION_INIT_CALLABLE: usize = 0xc8db1f9usize;
+pub const FERRY_APPLICATION_VTABLE_ENTRY: usize = 0x2cda7c80usize;
+pub const FERRY_FRAMEWORK_FACTORY_ENTRY: usize = 0xc8e54acusize;
+pub const FERRY_FRAMEWORK_FACTORY_CALLABLE: usize = 0xc8e54adusize;
+pub const FERRY_FRAMEWORK_INSTANCE_ENTRY: usize = 0x2013cfe0usize;
+pub const FERRY_FRAMEWORK_VTABLE_ENTRY: usize = 0x2cda8cd8usize;
 pub const FILE_CLOSE_ENTRY: usize = 0xc1cec08usize;
 pub const FILE_CLOSE_CALLABLE: usize = 0xc1cec09usize;
 pub const FILE_DUP3_ENTRY: usize = 0xc1ced14usize;
 pub const FILE_DUP3_CALLABLE: usize = 0xc1ced15usize;
+pub const FILE_WRITE_ENTRY: usize = 0xc1d25d4usize;
+pub const FILE_WRITE_CALLABLE: usize = 0xc1d25d5usize;
 pub const FILE_WRITEV_ENTRY: usize = 0xc1d2540usize;
 pub const FILE_WRITEV_CALLABLE: usize = 0xc1d2541usize;
 pub const FILES_GETFILEP_ENTRY: usize = 0xc1b90dcusize;
@@ -3617,9 +3972,13 @@ pub const FS_GETFILEP_ENTRY: usize = 0xc1b9700usize;
 pub const FS_GETFILEP_CALLABLE: usize = 0xc1b9701usize;
 pub const FS_PUTFILEP_ENTRY: usize = 0xc1b979cusize;
 pub const FS_PUTFILEP_CALLABLE: usize = 0xc1b979dusize;
+pub const GAP_CLIENT_INSTANCE_ENTRY: usize = 0x20126738usize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x2013c144usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7ec47cusize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7ec47dusize;
+pub const GAP_SCAN_CALLBACKS_ENTRY: usize = 0x200dfaf0usize;
+pub const GAP_SCAN_START_IMPL_ENTRY: usize = 0xc3b1374usize;
+pub const GAP_SCAN_START_IMPL_CALLABLE: usize = 0xc3b1375usize;
 pub const JS_ATOM_UNREF_ENTRY: usize = 0xc2780b0usize;
 pub const JS_ATOM_UNREF_CALLABLE: usize = 0xc2780b1usize;
 pub const JS_FREE_RT_ENTRY: usize = 0xc278000usize;
@@ -3636,6 +3995,8 @@ pub const L2_OWNER_TIMER_INIT_ENTRY: usize = 0xc2e3994usize;
 pub const L2_OWNER_TIMER_INIT_CALLABLE: usize = 0xc2e3995usize;
 pub const L2_OWNER_TIMER_START_ENTRY: usize = 0xc2e3b84usize;
 pub const L2_OWNER_TIMER_START_CALLABLE: usize = 0xc2e3b85usize;
+pub const L2CAP_ACCEPT_HANDLER_ENTRY: usize = 0xc80279cusize;
+pub const L2CAP_ACCEPT_HANDLER_CALLABLE: usize = 0xc80279dusize;
 pub const L2CAP_ALLOCATE_CID_ENTRY: usize = 0xc7ff93cusize;
 pub const L2CAP_ALLOCATE_CID_CALLABLE: usize = 0xc7ff93dusize;
 pub const L2CAP_CHANNEL_DESCRIPTOR_CREATE_ENTRY: usize = 0xc8004f4usize;
@@ -3646,6 +4007,8 @@ pub const L2CAP_CREDIT_QUEUE_FLUSH_ENTRY: usize = 0xc801c7cusize;
 pub const L2CAP_CREDIT_QUEUE_FLUSH_CALLABLE: usize = 0xc801c7dusize;
 pub const L2CAP_DETACH_PSM_REGISTRATION_ENTRY: usize = 0xc7ffb04usize;
 pub const L2CAP_DETACH_PSM_REGISTRATION_CALLABLE: usize = 0xc7ffb05usize;
+pub const L2CAP_DISCONNECT_CHANNEL_ENTRY: usize = 0xc800a94usize;
+pub const L2CAP_DISCONNECT_CHANNEL_CALLABLE: usize = 0xc800a95usize;
 pub const L2CAP_DISCONNECT_HANDLER_ENTRY: usize = 0xc80279cusize;
 pub const L2CAP_DISCONNECT_HANDLER_CALLABLE: usize = 0xc80279dusize;
 pub const L2CAP_FIND_CHANNEL_ENTRY: usize = 0xc8004a4usize;
@@ -3656,12 +4019,18 @@ pub const L2CAP_LE_CONNECTION_RESPONSE_ENTRY: usize = 0xc8025c0usize;
 pub const L2CAP_LE_CONNECTION_RESPONSE_CALLABLE: usize = 0xc8025c1usize;
 pub const L2CAP_LE_CONNECTION_RESPONSE_HANDLER_ENTRY: usize = 0xc802f18usize;
 pub const L2CAP_LE_CONNECTION_RESPONSE_HANDLER_CALLABLE: usize = 0xc802f19usize;
+pub const L2CAP_QUEUE_PUSH_ENTRY: usize = 0xc7eac34usize;
+pub const L2CAP_QUEUE_PUSH_CALLABLE: usize = 0xc7eac35usize;
 pub const L2CAP_REGISTER_PSM_HANDLER_ENTRY: usize = 0xc800624usize;
 pub const L2CAP_REGISTER_PSM_HANDLER_CALLABLE: usize = 0xc800625usize;
 pub const L2CAP_SEND_HANDLER_ENTRY: usize = 0xc801d10usize;
 pub const L2CAP_SEND_HANDLER_CALLABLE: usize = 0xc801d11usize;
 pub const L2CAP_SIGNAL_DISPATCH_ENTRY: usize = 0xc803b88usize;
 pub const L2CAP_SIGNAL_DISPATCH_CALLABLE: usize = 0xc803b89usize;
+pub const L2CAP_STOCK_ALLOC_ENTRY: usize = 0xc7eafbcusize;
+pub const L2CAP_STOCK_ALLOC_CALLABLE: usize = 0xc7eafbdusize;
+pub const L2CAP_TEARDOWN_CHANNEL_ENTRY: usize = 0xc801124usize;
+pub const L2CAP_TEARDOWN_CHANNEL_CALLABLE: usize = 0xc801125usize;
 pub const L2CAP_UNREGISTER_PSM_HANDLER_ENTRY: usize = 0xc8030f0usize;
 pub const L2CAP_UNREGISTER_PSM_HANDLER_CALLABLE: usize = 0xc8030f1usize;
 pub const L2CAP_WORK_SUBMIT_ENTRY: usize = 0xc7eb988usize;
@@ -3747,20 +4116,34 @@ pub const P67_BLUR_STYLE_GET_ENTRY: usize = 0xc589448usize;
 pub const P67_BLUR_STYLE_GET_CALLABLE: usize = 0xc589449usize;
 pub const P67_BLUR_WATCHFACE_ROOT_CLASS_ENTRY: usize = 0x2cd1f640usize;
 pub const PIPE_FILE_OPERATIONS_ENTRY: usize = 0x2ccbe5a4usize;
+pub const PTHREAD_MUTEX_UNLOCK_CORE_ENTRY: usize = 0xc205430usize;
+pub const PTHREAD_MUTEX_UNLOCK_CORE_CALLABLE: usize = 0xc205431usize;
 pub const QJS_CALL_ENTRY: usize = 0xc2bfcc0usize;
 pub const QJS_CALL_CALLABLE: usize = 0xc2bfcc1usize;
+pub const QJS_DEFINE_PROPERTY_VALUE_STR_ENTRY: usize = 0xc296f14usize;
+pub const QJS_DEFINE_PROPERTY_VALUE_STR_CALLABLE: usize = 0xc296f15usize;
 pub const QJS_FREE_CSTRING_ENTRY: usize = 0xc278848usize;
 pub const QJS_FREE_CSTRING_CALLABLE: usize = 0xc278849usize;
 pub const QJS_FREE_VALUE_ENTRY: usize = 0xc278294usize;
 pub const QJS_FREE_VALUE_CALLABLE: usize = 0xc278295usize;
+pub const QJS_GET_ARRAY_BUFFER_ENTRY: usize = 0xc2d362cusize;
+pub const QJS_GET_ARRAY_BUFFER_CALLABLE: usize = 0xc2d362dusize;
 pub const QJS_GET_EXCEPTION_ENTRY: usize = 0xc27da60usize;
 pub const QJS_GET_EXCEPTION_CALLABLE: usize = 0xc27da61usize;
+pub const QJS_GET_TYPED_ARRAY_BUFFER_ENTRY: usize = 0xc2d368cusize;
+pub const QJS_GET_TYPED_ARRAY_BUFFER_CALLABLE: usize = 0xc2d368dusize;
 pub const QJS_IS_FUNCTION_ENTRY: usize = 0xc27da88usize;
 pub const QJS_IS_FUNCTION_CALLABLE: usize = 0xc27da89usize;
+pub const QJS_NEW_ARRAY_BUFFER_COPY_ENTRY: usize = 0xc2d34c8usize;
+pub const QJS_NEW_ARRAY_BUFFER_COPY_CALLABLE: usize = 0xc2d34c9usize;
 pub const QJS_NEW_C_FUNCTION2_ENTRY: usize = 0xc2a83c4usize;
 pub const QJS_NEW_C_FUNCTION2_CALLABLE: usize = 0xc2a83c5usize;
 pub const QJS_NEW_OBJECT_ENTRY: usize = 0xc2a41fcusize;
 pub const QJS_NEW_OBJECT_CALLABLE: usize = 0xc2a41fdusize;
+pub const QJS_NEW_STRING_LEN_ENTRY: usize = 0xc294b50usize;
+pub const QJS_NEW_STRING_LEN_CALLABLE: usize = 0xc294b51usize;
+pub const QJS_TO_CSTRING_LEN2_ENTRY: usize = 0xc29460cusize;
+pub const QJS_TO_CSTRING_LEN2_CALLABLE: usize = 0xc29460dusize;
 pub const REGISTER_INODE_ENTRY: usize = 0xc1affd8usize;
 pub const REGISTER_INODE_CALLABLE: usize = 0xc1affd9usize;
 pub const SDP_BUILDER_CREATE_ENTRY: usize = 0xc80a684usize;
@@ -3783,12 +4166,18 @@ pub const UV_ASYNC_INIT_ENTRY: usize = 0xc2e14e8usize;
 pub const UV_ASYNC_INIT_CALLABLE: usize = 0xc2e14e9usize;
 pub const UV_ASYNC_SEND_ENTRY: usize = 0xc2e15a4usize;
 pub const UV_ASYNC_SEND_CALLABLE: usize = 0xc2e15a5usize;
+pub const UV_CLOSE_ENTRY: usize = 0xc2db874usize;
+pub const UV_CLOSE_CALLABLE: usize = 0xc2db875usize;
 pub const UV_LOOP_INIT_ENTRY: usize = 0xc2dc9a0usize;
 pub const UV_LOOP_INIT_CALLABLE: usize = 0xc2dc9a1usize;
-pub const UV_MUTEX_INIT_ENTRY: usize = 0xc2dcf1cusize;
-pub const UV_MUTEX_INIT_CALLABLE: usize = 0xc2dcf1dusize;
-pub const UV_MUTEX_LOCK_ENTRY: usize = 0xc1e9b1cusize;
-pub const UV_MUTEX_LOCK_CALLABLE: usize = 0xc1e9b1dusize;
+pub const UV_MUTEX_INIT_ENTRY: usize = 0xc2dccccusize;
+pub const UV_MUTEX_INIT_CALLABLE: usize = 0xc2dcccdusize;
+pub const UV_MUTEX_LOCK_ENTRY: usize = 0xc2dcda8usize;
+pub const UV_MUTEX_LOCK_CALLABLE: usize = 0xc2dcda9usize;
+pub const UV_MUTEX_UNLOCK_ENTRY: usize = 0xc2dcdc4usize;
+pub const UV_MUTEX_UNLOCK_CALLABLE: usize = 0xc2dcdc5usize;
+pub const UV_MUTEX_UNLOCK_INLINED_ENTRY: usize = 0xc204f08usize;
+pub const UV_MUTEX_UNLOCK_INLINED_CALLABLE: usize = 0xc204f09usize;
 pub const WIDGETS_SCROLL_ENTRY: usize = 0xc50abb4usize;
 pub const WIDGETS_SCROLL_CALLABLE: usize = 0xc50abb5usize;
 pub const APP_LOOKUP_ENTRY: usize = 0xca69934usize;

@@ -5,8 +5,10 @@
   "name": "uv_mutex_init",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xC2DCF1C",
-  "prototype": "int uv_mutex_init(uv_mutex_t *mutex)",
+  "entry_address": "0xC2DCCCC",
+  "callable_address": "0xc2dcccd",
+  "prototype": "int uv_mutex_init(void *mutex)",
+  "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
       "target-private"
@@ -14,13 +16,13 @@
     "blocking": true
   },
   "ownership": {
-    "argument": "Initialises a libuv mutex; the module serialises its queue work with the same primitive the firmware uses."
+    "argument": "Initializes the pthread-backed mutex used by the Feature manager. Corrects earlier record 0xC2DCF1C, a different initializer; use this matched libuv init/lock/unlock family."
   },
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-1043-LOOP-001"
+      "EVID-PORT-1043-FERRY-001"
     ]
   },
   "policy": "restricted",
@@ -29,11 +31,9 @@
   "provenance": {
     "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
     "evidence_ids": [
-      "EVID-PORT-1043-LOOP-001"
+      "EVID-PORT-1043-FERRY-001"
     ],
-    "source": "In ../../apps/system/libuv/libuv/src/unix/thread.c: initialises a mutexattr through 0xC1E990C, sets type 1 with 0xC1E9944, initialises the mutex with 0xC1E9968, and destroys the attribute with 0xC1E9930 on both paths."
+    "source": "Feature manager constructor 0xC8656D8 calls 0xC2DCCCC(manager+32). Wrapper uses mutexattr_init 0xC1E9AAC, settype(attr,1) 0xC1E9AF4, mutex_init 0xC204DB4 and attr_destroy 0xC1E9AD0; returns negated pthread error. Source literal ../../apps/system/libuv/libuv/src/unix/thread.c."
   },
-  "notes": "The lock and unlock wrappers in the same file need a second pass: they were not separated with producer evidence here.",
-  "callable_address": "0xc2dcf1d",
-  "calling_convention": "arm-aapcs"
+  "notes": "Initializes the pthread-backed mutex used by the Feature manager. Corrects earlier record 0xC2DCF1C, a different initializer; use this matched libuv init/lock/unlock family."
 }

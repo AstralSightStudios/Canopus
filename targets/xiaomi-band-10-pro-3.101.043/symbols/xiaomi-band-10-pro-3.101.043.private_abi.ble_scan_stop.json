@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.ble_scan_stop",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "ble_scan_stop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3b140c",
+  "prototype": "int ble_scan_stop(void *adapter, void *scan)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Producer command238 copies scan object first8bytes to IPC request. Paired with generic scan producer0xC3B1374."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ],
+    "source": "Producer command238 copies scan object first8bytes to IPC request. Paired with generic scan producer0xC3B1374."
+  },
+  "callable_address": "0xc3b140d",
+  "calling_convention": "arm-aapcs"
+}

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_disconnect_channel",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_disconnect_channel",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc800a94",
+  "prototype": "int l2cap_disconnect_channel(void *channel)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Constructs L2CAP Disconnect Request, sends it using descriptor connection handle and local/remote channel CID, enters disconnection timer state. Called by public disconnect handler0xC802F18 only for state8/9."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ],
+    "source": "Constructs L2CAP Disconnect Request, sends it using descriptor connection handle and local/remote channel CID, enters disconnection timer state. Called by public disconnect handler0xC802F18 only for state8/9."
+  },
+  "callable_address": "0xc800a95",
+  "calling_convention": "arm-aapcs"
+}
