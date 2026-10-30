@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.file_dup3",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "file_dup3",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC1CED14",
+  "callable_address": "0xc1ced15",
+  "prototype": "int file_dup3(struct file *source, struct file *target, int flags)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Astrolink calls this as F_FILE_DUP3(source, &own_file, 0) to take an independent reference to the loop pipe write end before releasing the task file-list reference."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ],
+    "source": "Rejects flags other than 0 and 0x400 (the a3 & ~0x400 test), closes the destination through file_close 0xC1CEC08, copies the source flags, offset and inode (file+16) into the destination, takes the inode lock via 0xC1BA04C, then dispatches the inode type-3 open handler at ops+48 or the character-device open at ops+0 before releasing the reference."
+  },
+  "notes": "Astrolink calls this as F_FILE_DUP3(source, &own_file, 0) to take an independent reference to the loop pipe write end before releasing the task file-list reference."
+}

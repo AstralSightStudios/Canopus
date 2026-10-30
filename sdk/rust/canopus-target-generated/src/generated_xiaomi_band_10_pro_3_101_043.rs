@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 70c1265292d7a0de
+// input_digest: 8be06954d7487af0
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -482,6 +482,9 @@ pub unsafe fn canopus_fw_netdev_input(a0: *mut core::ffi::c_void, a1: *mut core:
     f(a0, a1, a2)
 }
 
+/// Recovered `files_getfilep` at 0xC1B90DC. Thumb callable address 0xc1b90dd.
+pub const CANOPUS_FW_FILES_GETFILEP_CALLABLE: usize = canopus_thumb_callable(0xc1b90ddusize);
+
 /// Recovered `interconnect_connect` at 0xc2e85f4. Thumb callable address 0xc2e85f5.
 pub const CANOPUS_FW_INTERCONNECT_CONNECT_CALLABLE: usize = canopus_thumb_callable(0xc2e85f5usize);
 #[allow(non_snake_case)]
@@ -932,6 +935,9 @@ pub const CANOPUS_FW_CALENDAR_ICON_NOTIFY_CALLABLE: usize = canopus_thumb_callab
 /// Recovered `watchface_manager_delete_watchface` at 0xca95c68. Thumb callable address 0xca95c69.
 pub const CANOPUS_FW_WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = canopus_thumb_callable(0xca95c69usize);
 
+/// Recovered `fs_getfilep` at 0xC1B9700. Thumb callable address 0xc1b9701.
+pub const CANOPUS_FW_FS_GETFILEP_CALLABLE: usize = canopus_thumb_callable(0xc1b9701usize);
+
 /// Recovered `bt_get_bond_state` at 0xc3b5a60. Thumb callable address 0xc3b5a61.
 pub const CANOPUS_FW_BT_GET_BOND_STATE_CALLABLE: usize = canopus_thumb_callable(0xc3b5a61usize);
 
@@ -943,6 +949,9 @@ pub unsafe fn canopus_fw_net_lock() -> i32 {
     let f: extern "C" fn() -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_NET_LOCK_CALLABLE) };
     f()
 }
+
+/// Recovered `file_dup3` at 0xC1CED14. Thumb callable address 0xc1ced15.
+pub const CANOPUS_FW_FILE_DUP3_CALLABLE: usize = canopus_thumb_callable(0xc1ced15usize);
 
 /// Recovered `app_launcher_data_init` at 0xc513e90. Thumb callable address 0xc513e91.
 pub const CANOPUS_FW_APP_LAUNCHER_DATA_INIT_CALLABLE: usize = canopus_thumb_callable(0xc513e91usize);
@@ -1535,6 +1544,8 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // driver_write_dispatch: WITHDRAWN - no binding may ever be generated
 // errno_location: restricted - not exported until context/ownership approved
 // file_close: restricted - not exported until context/ownership approved
+// file_dup3: restricted - not exported until context/ownership approved
+// files_getfilep: restricted - not exported until context/ownership approved
 // firmware_log: restricted - not exported until context/ownership approved
 // font_manager_add_path: restricted - not exported until context/ownership approved
 // font_manager_remove_path: restricted - not exported until context/ownership approved
@@ -1568,6 +1579,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // font_reload_vector_destroy: restricted - not exported until context/ownership approved
 // font_reload_vector_drop: restricted - not exported until context/ownership approved
 // font_reload_vg_dispatch: restricted - not exported until context/ownership approved
+// fs_getfilep: restricted - not exported until context/ownership approved
 // fsync: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved
 // heap_free: restricted - not exported until context/ownership approved

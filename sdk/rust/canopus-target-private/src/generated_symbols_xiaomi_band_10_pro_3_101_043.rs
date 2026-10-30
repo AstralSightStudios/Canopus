@@ -1221,6 +1221,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int file_close(FAR struct file *file)",
     },
     TargetPrivateSymbolRecord {
+        name: "file_dup3",
+        kind: "function",
+        entry: 0xc1ced14usize,
+        callable: 0xc1ced15usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int file_dup3(struct file *source, struct file *target, int flags)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "files_getfilep",
+        kind: "function",
+        entry: 0xc1b90dcusize,
+        callable: 0xc1b90ddusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "struct file *files_getfilep(struct filelist *list, int fd)",
+    },
+    TargetPrivateSymbolRecord {
         name: "font_reload_cache_acquire",
         kind: "function",
         entry: 0xc1666d0usize,
@@ -1561,6 +1579,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "",
+    },
+    TargetPrivateSymbolRecord {
+        name: "fs_getfilep",
+        kind: "function",
+        entry: 0xc1b9700usize,
+        callable: 0xc1b9701usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int fs_getfilep(int fd, struct file **filep)",
     },
     TargetPrivateSymbolRecord {
         name: "gap_host_receive_slot",
@@ -2932,6 +2959,10 @@ pub const CONTROL_CENTER_SCROLL_ENTRY: usize = 0xc5036c4usize;
 pub const CONTROL_CENTER_SCROLL_CALLABLE: usize = 0xc5036c5usize;
 pub const FILE_CLOSE_ENTRY: usize = 0xc1cec08usize;
 pub const FILE_CLOSE_CALLABLE: usize = 0xc1cec09usize;
+pub const FILE_DUP3_ENTRY: usize = 0xc1ced14usize;
+pub const FILE_DUP3_CALLABLE: usize = 0xc1ced15usize;
+pub const FILES_GETFILEP_ENTRY: usize = 0xc1b90dcusize;
+pub const FILES_GETFILEP_CALLABLE: usize = 0xc1b90ddusize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_ENTRY: usize = 0xc1666d0usize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_CALLABLE: usize = 0xc1666d1usize;
 pub const FONT_RELOAD_CACHE_ACQUIRE_OR_CREATE_ENTRY: usize = 0xc166740usize;
@@ -3000,6 +3031,8 @@ pub const FONT_RELOAD_VECTOR_DROP_ENTRY: usize = 0xca65c24usize;
 pub const FONT_RELOAD_VECTOR_DROP_CALLABLE: usize = 0xca65c25usize;
 pub const FONT_RELOAD_VG_DISPATCH_ENTRY: usize = 0x1c045360usize;
 pub const FONT_RELOAD_VG_DISPATCH_CALLABLE: usize = 0x1c045361usize;
+pub const FS_GETFILEP_ENTRY: usize = 0xc1b9700usize;
+pub const FS_GETFILEP_CALLABLE: usize = 0xc1b9701usize;
 pub const GAP_HOST_RECEIVE_SLOT_ENTRY: usize = 0x2013c144usize;
 pub const GAP_HOST_STOCK_RECEIVE_ENTRY: usize = 0xc7ec47cusize;
 pub const GAP_HOST_STOCK_RECEIVE_CALLABLE: usize = 0xc7ec47dusize;

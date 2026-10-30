@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 70c1265292d7a0de
+ * input_digest: 8be06954d7487af0
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -529,6 +529,8 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * driver_write_dispatch: WITHDRAWN - no veneer may ever be generated
  * errno_location: restricted - not exported until context/ownership approved
  * file_close: restricted - not exported until context/ownership approved
+ * file_dup3: restricted - not exported until context/ownership approved
+ * files_getfilep: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
  * font_manager_add_path: restricted - not exported until context/ownership approved
  * font_manager_remove_path: restricted - not exported until context/ownership approved
@@ -562,6 +564,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * font_reload_vector_destroy: restricted - not exported until context/ownership approved
  * font_reload_vector_drop: restricted - not exported until context/ownership approved
  * font_reload_vg_dispatch: restricted - not exported until context/ownership approved
+ * fs_getfilep: restricted - not exported until context/ownership approved
  * fsync: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved

@@ -168,3 +168,24 @@ entries, the ten Bluelet owner handlers, the thirteen `qjs_*` entries and
 `feature_register_feature`, plus the framework/Application vtable globals.
 That is 37 of the 47 bindings still missing after two passes; the P67 line
 remains a discovery job, not a port.
+
+## Pass 3 (VFS): what closed
+
+Independent evidence on this image, `EVID-PORT-1043-VFS-001`:
+
+| astrolink binding | record | address | anchor |
+| --- | --- | --- | --- |
+| `F_FS_GETFILEP` | `fs_getfilep` | `0xC1B9700` | takes fd + out-parameter, resolves the task file list via `0xC2055E8`, `8 * rows` bound, `array[fd>>3] + 32*(fd&7)`; 30 VFS callers |
+| `F_FILES_GETFILEP` | `files_getfilep` | `0xC1B90DC` | same arithmetic with the list passed in (`+4` row-pointer array), refcount at `file+4`, inode at `file+16` |
+| `F_FILE_DUP3` | `file_dup3` | `0xC1CED14` | rejects flags outside `0`/`0x400`, closes the destination, copies flags/offset/inode, dispatches the type-3 open handler at `ops+48` |
+| `F_FILE_CLOSE` | `file_close` | `0xC1CEC08` | (recovered earlier) inode at `file+16`, i_ops at `inode+16`, close at `ops+4` |
+
+File and file-list layout measured on this image:
+
+- group file list: `group+720` is the `u8` row count, `group+724` the row-pointer array
+- one row is 32 bytes and holds 8 files, so `fd/8` selects the row and `fd%8` the entry
+- `file+4` is the reference count, `file+16` the inode, `file+20` the offset
+
+Still open in this group: `file_putfile` (the one-argument release astrolink binds as
+`F_FS_PUTFILEP` — the candidate `0xC1B8D50` walks a group, so its signature does not
+match the binding and it was not recorded), `file_write`, `nxsched_foreach`.
