@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "name": "capability_finding_feature_runtime_absent",
+  "kind": "finding",
+  "prototype": "",
+  "instruction_set": "n/a",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Astrolink is a Canopus module: it publishes a Feature through the firmware's QuickJS Feature runtime (`feature_register_feature`, `feature_manager_post_task`, the framework and Application vtables). This firmware does not contain that runtime, so no address in this pack can stand in for it and the module cannot run here. Recorded so the target is not re-investigated as if it were a missing-address problem."
+  },
+  "policy": "restricted",
+  "status": "STATIC_CONFIRMED",
+  "approval_state": "PENDING",
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.capability_finding.feature_runtime_absent",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "entry_address": "",
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-CAPAB-9190-001"
+    ]
+  },
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-CAPAB-9190-001"
+    ],
+    "source": "String census over the extracted AP of the sibling build Not independently re-probed: the OTA we hold (77174e6a) is a ZZ~ container whose vela_ap.bin payload does not extract, and firmware import rejects it. The verdict rests on its sibling 3.1.32, which is the same product line and build system."
+  },
+  "notes": "No address, no callable, no partial support. This record exists to make an unsupported verdict auditable."
+}

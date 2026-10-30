@@ -4,7 +4,7 @@
  * firmware : 3.1.32 (N66NFC_3.1.32)
  * sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
  * revision : 2
- * input_digest: f9409666e00f00a1
+ * input_digest: 1a9d393dab4ca040
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
