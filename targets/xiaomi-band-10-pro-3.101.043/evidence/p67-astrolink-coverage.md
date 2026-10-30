@@ -289,3 +289,59 @@ holds one.
 - The rest of the module's QuickJS/Feature group and the scan/advertising pair
   remain open from the earlier passes.
 
+## Pass 5: LE CoC gaps closed, dispatch table, GAP entries
+
+`EVID-PORT-1043-L2CAP-002`.
+
+| binding | record | address | anchor |
+| --- | --- | --- | --- |
+| `F_L2CAP_REGISTER_PSM` | `l2cap_register_psm_handler` | `0xC800624` | wrapper `0xC805A80`; inserts into `*(owner)+16` via `0xC7EAC34`, dynamic PSM base `0x1001` for kind 2, `0x0080..0x00FF` for kind 3, collision scan by `(entry+4, entry+6)` |
+| `F_L2CAP_UNREGISTER_PSM` | `l2cap_unregister_psm_handler` | `0xC8030F0` | wrapper `0xC805AC4`; matches `+4/+6`, unlinks with `0xC7EAD28`, retires channels bound to the PSM when kind <= 3 |
+| `F_L2CAP_CREDIT_QUEUE_FLUSH` | `l2cap_credit_queue_flush` | `0xC801C7C` | drains while credits at `stock+14` remain, dequeue `0xC7EACD0`, send `0xC7FE4D0`, called by the credit handler `0xC803038` |
+| `F_L2CAP_ACCEPT_HANDLER` | `l2cap_le_connection_response_handler` | `0xC802F18` | wrapper `0xC805BBC`; channel state `+120 == 2` emits the `0x15` response via `0xC8025C0` with the result byte at `+121` |
+
+The `0x15` response itself is `l2cap_le_connection_response 0xC8025C0`, and the
+received-frame entry point is `l2cap_signal_dispatch 0xC803B88` with its
+**dispatch table at `0x2CD9F864`** (26 entries of `{handler, u16 minlen, byte,
+flags}` indexed by `code - 1`). That table is the authoritative map of
+signalling codes on this build: `0x14 0xC802AED` (LE connection request),
+`0x15 0xC8031FD` (response), `0x16 0xC803039` (flow control credit),
+`0x17 0xC8039A1`, `0x18 0xC803479`.
+
+Correction to the previous pass: the address recorded there as
+`l2cap_unregister_psm` (`0xC7FFB04`) is the internal channel-initiated detach, now
+recorded as `l2cap_detach_psm_registration`, with a note that the public remove is
+`0xC8030F0`.
+
+### GAP entries
+
+| binding | record | address | anchor |
+| --- | --- | --- | --- |
+| scan start | `bt_le_start_scan_with_filters` | `0xC710BCC` | own log tag; the only scan start on this build is the filtered variant |
+| scan stop | `bt_sal_le_stop_scan` | `0xC3BBED0` | bluelet log tag `bt_sal_le_stop_scan`, three callers in the scan state machine |
+| advertising stop | `bt_sal_le_stop_advertising` | `0xC3B125C` | adapter command `0x44`; reached from the beacon timer with the stored advertising handle |
+| `F_ADAPTER_INSTANCE` | `bt_adapter_get_instance` | `0xCA40F68` | 16-byte getter returning `dword_2013DBE4`, the same global the pack already lists |
+
+`bt_adapter_get_instance` needed no correction: the earlier `0xca40f68` record is
+the getter and `0x2013dbe4` is the instance global, so the two records are related
+rather than duplicated. The advertising stop is the weakest of the three GAP
+entries — its name comes from the calling context, not from a name string.
+
+### Channel allocation, measured
+
+`l2cap_allocate_cid 0xC7FF93C` also allocates the channel: `0xC7EAC14(124)`,
+inserted through `0xC7EAC34`, writing descriptor `+0`, PSM entry `+20`, PSM u16
+`+112`, CID `+116` and state byte `+120`. **The channel is 124 bytes**, which is
+consistent with every offset the handlers touch (max `+121`).
+
+### Still open (pass 6 = QuickJS/Feature)
+
+- `nxsched_foreach`: no trustworthy shape found — the image has no
+  `sched_foreach.c` string and the candidate walkers are group walks, so it is
+  still unrecorded.
+- The QuickJS/Feature group: 13 `qjs_*` entries, `feature_register_feature`,
+  `feature_manager_post_task`, and the framework/Application vtable globals.
+- `l2cap_accept_handler` naming: the p67 shape records the *response* decision
+  path; if the module needs the app-side accept call with credits/MTU, that is
+  `0xC805BBC`'s caller side and should be verified on device.
+

@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 460d14d60c9e03e6
+ * input_digest: 88f51ee786d4feda
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -488,6 +488,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * background_object_hide: restricted - not exported until context/ownership approved
  * background_object_show: restricted - not exported until context/ownership approved
  * bt_adapter_enable: restricted - not exported until context/ownership approved
+ * bt_adapter_get_instance: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved
@@ -501,9 +502,12 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * bt_l2cap_disconnect: restricted - not exported until context/ownership approved
  * bt_l2cap_submit_cid: restricted - not exported until context/ownership approved
  * bt_le_start_advertising: restricted - not exported until context/ownership approved
+ * bt_le_start_scan_with_filters: restricted - not exported until context/ownership approved
  * bt_queue_external: restricted - not exported until context/ownership approved
  * bt_queue_free: restricted - not exported until context/ownership approved
  * bt_remove_bond_private: restricted - not exported until context/ownership approved
+ * bt_sal_le_stop_advertising: restricted - not exported until context/ownership approved
+ * bt_sal_le_stop_scan: restricted - not exported until context/ownership approved
  * bt_socket_server_receive: FORBIDDEN - no veneer may ever be generated
  * bt_timer_add: restricted - not exported until context/ownership approved
  * bt_timer_cancel: restricted - not exported until context/ownership approved
@@ -585,11 +589,17 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * l2cap_allocate_cid: restricted - not exported until context/ownership approved
  * l2cap_channel_descriptor_create: restricted - not exported until context/ownership approved
  * l2cap_connect_handler: restricted - not exported until context/ownership approved
+ * l2cap_credit_queue_flush: restricted - not exported until context/ownership approved
+ * l2cap_detach_psm_registration: restricted - not exported until context/ownership approved
  * l2cap_disconnect_handler: restricted - not exported until context/ownership approved
  * l2cap_find_channel: restricted - not exported until context/ownership approved
  * l2cap_find_le_psm: restricted - not exported until context/ownership approved
+ * l2cap_le_connection_response: restricted - not exported until context/ownership approved
+ * l2cap_le_connection_response_handler: restricted - not exported until context/ownership approved
+ * l2cap_register_psm_handler: restricted - not exported until context/ownership approved
  * l2cap_send_handler: restricted - not exported until context/ownership approved
- * l2cap_unregister_psm: restricted - not exported until context/ownership approved
+ * l2cap_signal_dispatch: restricted - not exported until context/ownership approved
+ * l2cap_unregister_psm_handler: restricted - not exported until context/ownership approved
  * l2cap_work_submit: restricted - not exported until context/ownership approved
  * launcher_parent: restricted - not exported until context/ownership approved
  * launcher_rect_init: restricted - not exported until context/ownership approved

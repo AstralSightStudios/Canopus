@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.bt_sal_le_stop_scan",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "bt_sal_le_stop_scan",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC3BBED0",
+  "callable_address": "0xc3bbed1",
+  "prototype": "int bt_sal_le_stop_scan(int adapter)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Scan stop, at the SAL layer. The application-level stop was not separated from this on the current evidence."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ],
+    "source": "Calls 0xC817974 and reports through the bluelet log with the literal tag 'bt_sal_le_stop_scan' when the stop fails; three callers, all in the scan state machine."
+  },
+  "notes": "Scan stop, at the SAL layer. The application-level stop was not separated from this on the current evidence."
+}

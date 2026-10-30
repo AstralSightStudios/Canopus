@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 460d14d60c9e03e6
+// input_digest: 88f51ee786d4feda
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -356,6 +356,9 @@ pub const CANOPUS_FW_UNREGISTER_BLOCKDRIVER_CALLABLE: usize = canopus_thumb_call
 /// Recovered `sdp_builder_create` at 0xc80a684. Thumb callable address 0xc80a685.
 pub const CANOPUS_FW_SDP_BUILDER_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc80a685usize);
 
+/// Recovered `l2cap_credit_queue_flush` at 0xC801C7C. Thumb callable address 0xc801c7d.
+pub const CANOPUS_FW_L2CAP_CREDIT_QUEUE_FLUSH_CALLABLE: usize = canopus_thumb_callable(0xc801c7dusize);
+
 /// Recovered `lv_timer_create` at 0xc587ed0. Thumb callable address 0xc587ed1.
 pub const CANOPUS_FW_LV_TIMER_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc587ed1usize);
 #[allow(non_snake_case)]
@@ -511,6 +514,9 @@ pub const CANOPUS_FW_FONT_RELOAD_GRADIENT_PENDING_RELEASE_CALLABLE: usize = cano
 
 /// Recovered global `bt_l2cap_owner` at 0x2013BDBC.
 pub const canopus_fw_bt_l2cap_owner: usize = 0x2013BDBCusize;
+
+/// Recovered `l2cap_unregister_psm_handler` at 0xC8030F0. Thumb callable address 0xc8030f1.
+pub const CANOPUS_FW_L2CAP_UNREGISTER_PSM_HANDLER_CALLABLE: usize = canopus_thumb_callable(0xc8030f1usize);
 
 /// Recovered `font_reload_face_compare` at 0x1c05682c. Thumb callable address 0x1c05682d.
 pub const CANOPUS_FW_FONT_RELOAD_FACE_COMPARE_CALLABLE: usize = canopus_thumb_callable(0x1c05682dusize);
@@ -713,9 +719,6 @@ pub unsafe fn canopus_fw_register_driver(a0: *const u8, a1: *const core::ffi::c_
     f(a0, a1, a2, a3)
 }
 
-/// Recovered `l2cap_unregister_psm` at 0xC7FFB04. Thumb callable address 0xc7ffb05.
-pub const CANOPUS_FW_L2CAP_UNREGISTER_PSM_CALLABLE: usize = canopus_thumb_callable(0xc7ffb05usize);
-
 /// Recovered `p67_blur_event_list_count` at 0x1c07ab48. Thumb callable address 0x1c07ab49.
 pub const CANOPUS_FW_P67_BLUR_EVENT_LIST_COUNT_CALLABLE: usize = canopus_thumb_callable(0x1c07ab49usize);
 
@@ -872,6 +875,9 @@ pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_EVENT_CALLABLE: usize = canopus_thumb_c
 /// Recovered `notifications_scroll` at 0x0c527bbc. Thumb callable address 0x0c527bbd.
 pub const CANOPUS_FW_NOTIFICATIONS_SCROLL_CALLABLE: usize = canopus_thumb_callable(0x0c527bbdusize);
 
+/// Recovered `l2cap_detach_psm_registration` at 0xC7FFB04. Thumb callable address 0xc7ffb05.
+pub const CANOPUS_FW_L2CAP_DETACH_PSM_REGISTRATION_CALLABLE: usize = canopus_thumb_callable(0xc7ffb05usize);
+
 /// Recovered global `style_misans_regular_24` at 0x2010CE44.
 pub const canopus_fw_style_misans_regular_24: usize = 0x2010CE44usize;
 
@@ -920,6 +926,9 @@ pub unsafe fn canopus_fw_recvfrom(a0: i32, a1: *mut core::ffi::c_void, a2: u32, 
     f(a0, a1, a2, a3, a4, a5)
 }
 
+/// Recovered `l2cap_le_connection_response_handler` at 0xC802F18. Thumb callable address 0xc802f19.
+pub const CANOPUS_FW_L2CAP_LE_CONNECTION_RESPONSE_HANDLER_CALLABLE: usize = canopus_thumb_callable(0xc802f19usize);
+
 /// Recovered `modhandle` at 0xc203a68. Thumb callable address 0xc203a69.
 pub const CANOPUS_FW_MODHANDLE_CALLABLE: usize = canopus_thumb_callable(0xc203a69usize);
 
@@ -944,8 +953,14 @@ pub const CANOPUS_FW_FONT_MANAGER_ADD_PATH_CALLABLE: usize = canopus_thumb_calla
 /// Recovered `calendar_icon_notify` at 0xca6a004. Thumb callable address 0xca6a005.
 pub const CANOPUS_FW_CALENDAR_ICON_NOTIFY_CALLABLE: usize = canopus_thumb_callable(0xca6a005usize);
 
+/// Recovered `l2cap_register_psm_handler` at 0xC800624. Thumb callable address 0xc800625.
+pub const CANOPUS_FW_L2CAP_REGISTER_PSM_HANDLER_CALLABLE: usize = canopus_thumb_callable(0xc800625usize);
+
 /// Recovered `watchface_manager_delete_watchface` at 0xca95c68. Thumb callable address 0xca95c69.
 pub const CANOPUS_FW_WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = canopus_thumb_callable(0xca95c69usize);
+
+/// Recovered `bt_le_start_scan_with_filters` at 0xC710BCC. Thumb callable address 0xc710bcd.
+pub const CANOPUS_FW_BT_LE_START_SCAN_WITH_FILTERS_CALLABLE: usize = canopus_thumb_callable(0xc710bcdusize);
 
 /// Recovered `fs_getfilep` at 0xC1B9700. Thumb callable address 0xc1b9701.
 pub const CANOPUS_FW_FS_GETFILEP_CALLABLE: usize = canopus_thumb_callable(0xc1b9701usize);
@@ -1034,6 +1049,9 @@ pub const CANOPUS_FW_LAUNCHER_PARENT_CALLABLE: usize = canopus_thumb_callable(0x
 /// Recovered `bt_adapter_enable` at 0xC3AF4A4. Thumb callable address 0xc3af4a5.
 pub const CANOPUS_FW_BT_ADAPTER_ENABLE_CALLABLE: usize = canopus_thumb_callable(0xc3af4a5usize);
 
+/// Recovered `l2cap_le_connection_response` at 0xC8025C0. Thumb callable address 0xc8025c1.
+pub const CANOPUS_FW_L2CAP_LE_CONNECTION_RESPONSE_CALLABLE: usize = canopus_thumb_callable(0xc8025c1usize);
+
 /// Recovered `heap_free` at 0xc1f8ff8. Thumb callable address 0xc1f8ff9.
 pub const CANOPUS_FW_HEAP_FREE_CALLABLE: usize = canopus_thumb_callable(0xc1f8ff9usize);
 
@@ -1045,6 +1063,9 @@ pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_RELEASE_CALLABLE: usize = canopus_thumb
 
 /// Recovered `widgets_scroll` at 0x0c50abb4. Thumb callable address 0x0c50abb5.
 pub const CANOPUS_FW_WIDGETS_SCROLL_CALLABLE: usize = canopus_thumb_callable(0x0c50abb5usize);
+
+/// Recovered `bt_adapter_get_instance` at 0xCA40F68. Thumb callable address 0xca40f69.
+pub const CANOPUS_FW_BT_ADAPTER_GET_INSTANCE_CALLABLE: usize = canopus_thumb_callable(0xca40f69usize);
 
 /// Recovered `lvx_list_row_create` at 0xc54ca3c. Thumb callable address 0xc54ca3d.
 pub const CANOPUS_FW_LVX_LIST_ROW_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc54ca3dusize);
@@ -1145,6 +1166,9 @@ pub const CANOPUS_FW_L2CAP_FIND_LE_PSM_CALLABLE: usize = canopus_thumb_callable(
 /// Recovered `screen_get_state` at 0x0ca72f3c. Thumb callable address 0x0ca72f3d.
 pub const CANOPUS_FW_SCREEN_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0ca72f3dusize);
 
+/// Recovered `bt_sal_le_stop_scan` at 0xC3BBED0. Thumb callable address 0xc3bbed1.
+pub const CANOPUS_FW_BT_SAL_LE_STOP_SCAN_CALLABLE: usize = canopus_thumb_callable(0xc3bbed1usize);
+
 /// Recovered global `font_reload_vector_label_class` at 0x2cdba868.
 pub const canopus_fw_font_reload_vector_label_class: usize = 0x2cdba868usize;
 
@@ -1198,6 +1222,9 @@ pub const CANOPUS_FW_LV_EVENT_GET_INDEV_CALLABLE: usize = canopus_thumb_callable
 
 /// Recovered `lv_image_create` at 0x1c06cac0. Thumb callable address 0x1c06cac1.
 pub const CANOPUS_FW_LV_IMAGE_CREATE_CALLABLE: usize = canopus_thumb_callable(0x1c06cac1usize);
+
+/// Recovered `l2cap_signal_dispatch` at 0xC803B88. Thumb callable address 0xc803b89.
+pub const CANOPUS_FW_L2CAP_SIGNAL_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc803b89usize);
 
 /// Recovered `lv_bar_set_value` at 0xc5890a8. Thumb callable address 0xc5890a9.
 pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0xc5890a9usize);
@@ -1418,6 +1445,9 @@ pub const CANOPUS_FW_NATIVE_FONT_WAIT_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `font_reload_outline_compare` at 0x1c057258. Thumb callable address 0x1c057259.
 pub const CANOPUS_FW_FONT_RELOAD_OUTLINE_COMPARE_CALLABLE: usize = canopus_thumb_callable(0x1c057259usize);
 
+/// Recovered `bt_sal_le_stop_advertising` at 0xC3B125C. Thumb callable address 0xc3b125d.
+pub const CANOPUS_FW_BT_SAL_LE_STOP_ADVERTISING_CALLABLE: usize = canopus_thumb_callable(0xc3b125dusize);
+
 /// Recovered `lv_event_get_user_data` at 0xc588310. Thumb callable address 0xc588311.
 pub const CANOPUS_FW_LV_EVENT_GET_USER_DATA_CALLABLE: usize = canopus_thumb_callable(0xc588311usize);
 #[allow(non_snake_case)]
@@ -1542,6 +1572,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // background_object_hide: restricted - not exported until context/ownership approved
 // background_object_show: restricted - not exported until context/ownership approved
 // bt_adapter_enable: restricted - not exported until context/ownership approved
+// bt_adapter_get_instance: restricted - not exported until context/ownership approved
 // bt_adapter_register_a2dp_callbacks: FORBIDDEN - no binding may ever be generated
 // bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no binding may ever be generated
 // bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved
@@ -1555,9 +1586,12 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // bt_l2cap_disconnect: restricted - not exported until context/ownership approved
 // bt_l2cap_submit_cid: restricted - not exported until context/ownership approved
 // bt_le_start_advertising: restricted - not exported until context/ownership approved
+// bt_le_start_scan_with_filters: restricted - not exported until context/ownership approved
 // bt_queue_external: restricted - not exported until context/ownership approved
 // bt_queue_free: restricted - not exported until context/ownership approved
 // bt_remove_bond_private: restricted - not exported until context/ownership approved
+// bt_sal_le_stop_advertising: restricted - not exported until context/ownership approved
+// bt_sal_le_stop_scan: restricted - not exported until context/ownership approved
 // bt_socket_server_receive: FORBIDDEN - no binding may ever be generated
 // bt_timer_add: restricted - not exported until context/ownership approved
 // bt_timer_cancel: restricted - not exported until context/ownership approved
@@ -1639,11 +1673,17 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // l2cap_allocate_cid: restricted - not exported until context/ownership approved
 // l2cap_channel_descriptor_create: restricted - not exported until context/ownership approved
 // l2cap_connect_handler: restricted - not exported until context/ownership approved
+// l2cap_credit_queue_flush: restricted - not exported until context/ownership approved
+// l2cap_detach_psm_registration: restricted - not exported until context/ownership approved
 // l2cap_disconnect_handler: restricted - not exported until context/ownership approved
 // l2cap_find_channel: restricted - not exported until context/ownership approved
 // l2cap_find_le_psm: restricted - not exported until context/ownership approved
+// l2cap_le_connection_response: restricted - not exported until context/ownership approved
+// l2cap_le_connection_response_handler: restricted - not exported until context/ownership approved
+// l2cap_register_psm_handler: restricted - not exported until context/ownership approved
 // l2cap_send_handler: restricted - not exported until context/ownership approved
-// l2cap_unregister_psm: restricted - not exported until context/ownership approved
+// l2cap_signal_dispatch: restricted - not exported until context/ownership approved
+// l2cap_unregister_psm_handler: restricted - not exported until context/ownership approved
 // l2cap_work_submit: restricted - not exported until context/ownership approved
 // launcher_parent: restricted - not exported until context/ownership approved
 // launcher_rect_init: restricted - not exported until context/ownership approved

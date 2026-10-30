@@ -1014,6 +1014,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int bt_adapter_enable(void *adapter)",
     },
     TargetPrivateSymbolRecord {
+        name: "bt_adapter_get_instance",
+        kind: "function",
+        entry: 0xca40f68usize,
+        callable: 0xca40f69usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *bt_adapter_get_instance(void)",
+    },
+    TargetPrivateSymbolRecord {
         name: "bt_adapter_set_scan_mode",
         kind: "function",
         entry: 0xc3b56a8usize,
@@ -1122,6 +1131,15 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int bt_le_start_advertising(int flags)",
     },
     TargetPrivateSymbolRecord {
+        name: "bt_le_start_scan_with_filters",
+        kind: "function",
+        entry: 0xc710bccusize,
+        callable: 0xc710bcdusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int bt_le_start_scan_with_filters(int filters)",
+    },
+    TargetPrivateSymbolRecord {
         name: "bt_queue_external",
         kind: "function",
         entry: 0xc7eb9ccusize,
@@ -1147,6 +1165,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         status: "STATIC_RECOVERED",
         policy: "restricted",
         prototype: "int(const uint8_t *, uint32_t)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "bt_sal_le_stop_advertising",
+        kind: "function",
+        entry: 0xc3b125cusize,
+        callable: 0xc3b125dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int bt_sal_le_stop_advertising(int adapter, int adv_handle)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "bt_sal_le_stop_scan",
+        kind: "function",
+        entry: 0xc3bbed0usize,
+        callable: 0xc3bbed1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int bt_sal_le_stop_scan(int adapter)",
     },
     TargetPrivateSymbolRecord {
         name: "bt_timer_add",
@@ -1689,6 +1725,24 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int l2cap_connect_handler(void *owner, uint32_t event, void *request)",
     },
     TargetPrivateSymbolRecord {
+        name: "l2cap_credit_queue_flush",
+        kind: "function",
+        entry: 0xc801c7cusize,
+        callable: 0xc801c7dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_credit_queue_flush(void *stock, void *channel)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_detach_psm_registration",
+        kind: "function",
+        entry: 0xc7ffb04usize,
+        callable: 0xc7ffb05usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_detach_psm_registration(void *source, void *msg, int)",
+    },
+    TargetPrivateSymbolRecord {
         name: "l2cap_disconnect_handler",
         kind: "function",
         entry: 0xc80279cusize,
@@ -1716,6 +1770,33 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void *l2cap_find_le_psm(uint16_t psm, int kind)",
     },
     TargetPrivateSymbolRecord {
+        name: "l2cap_le_connection_response",
+        kind: "function",
+        entry: 0xc8025c0usize,
+        callable: 0xc8025c1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_le_connection_response(void *channel, void *peer, int id, int result, int credits, int mtu, int mps)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_le_connection_response_handler",
+        kind: "function",
+        entry: 0xc802f18usize,
+        callable: 0xc802f19usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_le_connection_response_handler(void *owner, uint32_t event, void *request)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_register_psm_handler",
+        kind: "function",
+        entry: 0xc800624usize,
+        callable: 0xc800625usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_register_psm_handler(void *owner, uint32_t event, void *entry)",
+    },
+    TargetPrivateSymbolRecord {
         name: "l2cap_send_handler",
         kind: "function",
         entry: 0xc801d10usize,
@@ -1725,13 +1806,22 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int l2cap_send_handler(void *owner, uint32_t event, void *request)",
     },
     TargetPrivateSymbolRecord {
-        name: "l2cap_unregister_psm",
+        name: "l2cap_signal_dispatch",
         kind: "function",
-        entry: 0xc7ffb04usize,
-        callable: 0xc7ffb05usize,
+        entry: 0xc803b88usize,
+        callable: 0xc803b89usize,
         status: "STATIC_RECOVERED",
         policy: "restricted",
-        prototype: "int l2cap_unregister_psm(void *request, void *msg, int)",
+        prototype: "int l2cap_signal_dispatch(void *owner, uint32_t event, void *frame)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_unregister_psm_handler",
+        kind: "function",
+        entry: 0xc8030f0usize,
+        callable: 0xc8030f1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_unregister_psm_handler(void *owner, uint32_t event, void *entry)",
     },
     TargetPrivateSymbolRecord {
         name: "l2cap_work_submit",
@@ -3031,6 +3121,8 @@ pub const BACKGROUND_OBJECT_SHOW_ENTRY: usize = 0xc5891b0usize;
 pub const BACKGROUND_OBJECT_SHOW_CALLABLE: usize = 0xc5891b1usize;
 pub const BT_ADAPTER_ENABLE_ENTRY: usize = 0xc3af4a4usize;
 pub const BT_ADAPTER_ENABLE_CALLABLE: usize = 0xc3af4a5usize;
+pub const BT_ADAPTER_GET_INSTANCE_ENTRY: usize = 0xca40f68usize;
+pub const BT_ADAPTER_GET_INSTANCE_CALLABLE: usize = 0xca40f69usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_ENTRY: usize = 0xc3b56a8usize;
 pub const BT_ADAPTER_SET_SCAN_MODE_CALLABLE: usize = 0xc3b56a9usize;
 pub const BT_ALLOC_ENTRY: usize = 0xc840c54usize;
@@ -3054,12 +3146,18 @@ pub const BT_L2CAP_SUBMIT_CID_ENTRY: usize = 0xc805be8usize;
 pub const BT_L2CAP_SUBMIT_CID_CALLABLE: usize = 0xc805be9usize;
 pub const BT_LE_START_ADVERTISING_ENTRY: usize = 0xc70ed94usize;
 pub const BT_LE_START_ADVERTISING_CALLABLE: usize = 0xc70ed95usize;
+pub const BT_LE_START_SCAN_WITH_FILTERS_ENTRY: usize = 0xc710bccusize;
+pub const BT_LE_START_SCAN_WITH_FILTERS_CALLABLE: usize = 0xc710bcdusize;
 pub const BT_QUEUE_EXTERNAL_ENTRY: usize = 0xc7eb9ccusize;
 pub const BT_QUEUE_EXTERNAL_CALLABLE: usize = 0xc7eb9cdusize;
 pub const BT_QUEUE_FREE_ENTRY: usize = 0xc6b9cf0usize;
 pub const BT_QUEUE_FREE_CALLABLE: usize = 0xc6b9cf1usize;
 pub const BT_REMOVE_BOND_PRIVATE_ENTRY: usize = 0xc3b697cusize;
 pub const BT_REMOVE_BOND_PRIVATE_CALLABLE: usize = 0xc3b697dusize;
+pub const BT_SAL_LE_STOP_ADVERTISING_ENTRY: usize = 0xc3b125cusize;
+pub const BT_SAL_LE_STOP_ADVERTISING_CALLABLE: usize = 0xc3b125dusize;
+pub const BT_SAL_LE_STOP_SCAN_ENTRY: usize = 0xc3bbed0usize;
+pub const BT_SAL_LE_STOP_SCAN_CALLABLE: usize = 0xc3bbed1usize;
 pub const BT_TIMER_ADD_ENTRY: usize = 0xc7eb270usize;
 pub const BT_TIMER_ADD_CALLABLE: usize = 0xc7eb271usize;
 pub const BT_TIMER_CANCEL_ENTRY: usize = 0xc7eb33cusize;
@@ -3171,16 +3269,28 @@ pub const L2CAP_CHANNEL_DESCRIPTOR_CREATE_ENTRY: usize = 0xc8004f4usize;
 pub const L2CAP_CHANNEL_DESCRIPTOR_CREATE_CALLABLE: usize = 0xc8004f5usize;
 pub const L2CAP_CONNECT_HANDLER_ENTRY: usize = 0xc801ac4usize;
 pub const L2CAP_CONNECT_HANDLER_CALLABLE: usize = 0xc801ac5usize;
+pub const L2CAP_CREDIT_QUEUE_FLUSH_ENTRY: usize = 0xc801c7cusize;
+pub const L2CAP_CREDIT_QUEUE_FLUSH_CALLABLE: usize = 0xc801c7dusize;
+pub const L2CAP_DETACH_PSM_REGISTRATION_ENTRY: usize = 0xc7ffb04usize;
+pub const L2CAP_DETACH_PSM_REGISTRATION_CALLABLE: usize = 0xc7ffb05usize;
 pub const L2CAP_DISCONNECT_HANDLER_ENTRY: usize = 0xc80279cusize;
 pub const L2CAP_DISCONNECT_HANDLER_CALLABLE: usize = 0xc80279dusize;
 pub const L2CAP_FIND_CHANNEL_ENTRY: usize = 0xc8004a4usize;
 pub const L2CAP_FIND_CHANNEL_CALLABLE: usize = 0xc8004a5usize;
 pub const L2CAP_FIND_LE_PSM_ENTRY: usize = 0xc7ff644usize;
 pub const L2CAP_FIND_LE_PSM_CALLABLE: usize = 0xc7ff645usize;
+pub const L2CAP_LE_CONNECTION_RESPONSE_ENTRY: usize = 0xc8025c0usize;
+pub const L2CAP_LE_CONNECTION_RESPONSE_CALLABLE: usize = 0xc8025c1usize;
+pub const L2CAP_LE_CONNECTION_RESPONSE_HANDLER_ENTRY: usize = 0xc802f18usize;
+pub const L2CAP_LE_CONNECTION_RESPONSE_HANDLER_CALLABLE: usize = 0xc802f19usize;
+pub const L2CAP_REGISTER_PSM_HANDLER_ENTRY: usize = 0xc800624usize;
+pub const L2CAP_REGISTER_PSM_HANDLER_CALLABLE: usize = 0xc800625usize;
 pub const L2CAP_SEND_HANDLER_ENTRY: usize = 0xc801d10usize;
 pub const L2CAP_SEND_HANDLER_CALLABLE: usize = 0xc801d11usize;
-pub const L2CAP_UNREGISTER_PSM_ENTRY: usize = 0xc7ffb04usize;
-pub const L2CAP_UNREGISTER_PSM_CALLABLE: usize = 0xc7ffb05usize;
+pub const L2CAP_SIGNAL_DISPATCH_ENTRY: usize = 0xc803b88usize;
+pub const L2CAP_SIGNAL_DISPATCH_CALLABLE: usize = 0xc803b89usize;
+pub const L2CAP_UNREGISTER_PSM_HANDLER_ENTRY: usize = 0xc8030f0usize;
+pub const L2CAP_UNREGISTER_PSM_HANDLER_CALLABLE: usize = 0xc8030f1usize;
 pub const L2CAP_WORK_SUBMIT_ENTRY: usize = 0xc7eb988usize;
 pub const L2CAP_WORK_SUBMIT_CALLABLE: usize = 0xc7eb989usize;
 pub const LAUNCHER_PARENT_ENTRY: usize = 0xc589578usize;

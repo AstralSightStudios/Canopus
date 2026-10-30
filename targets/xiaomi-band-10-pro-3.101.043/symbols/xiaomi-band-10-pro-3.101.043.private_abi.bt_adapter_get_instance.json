@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.bt_adapter_get_instance",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "bt_adapter_get_instance",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xCA40F68",
+  "callable_address": "0xca40f69",
+  "prototype": "void *bt_adapter_get_instance(void)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Re-checked the earlier record: 0xCA40F68 is the getter function and 0x2013DBE4 is the instance global, so both records stand and they are related, not duplicates."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ],
+    "source": "Sixteen-byte getter that returns dword_2013DBE4, the same global the pack already records as miwear_bt_adapter_instance."
+  },
+  "notes": "Re-checked the earlier record: 0xCA40F68 is the getter function and 0x2013DBE4 is the instance global, so both records stand and they are related, not duplicates."
+}

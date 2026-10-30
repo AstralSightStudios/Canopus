@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_detach_psm_registration",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_detach_psm_registration",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC7FFB04",
+  "callable_address": "0xc7ffb05",
+  "prototype": "int l2cap_detach_psm_registration(void *source, void *msg, int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Internal, channel-initiated removal of a PSM binding; NOT the public unregister handler. Recorded under this name so the module does not mistake it for the API entry (that is 0xC8030F0). Whether the queued 16-byte node is a retire request to the app could not be fully proven."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ],
+    "source": "Derives the PSM from source+38 plus the kind nibble of msg+1, unlinks the matching entry from *(owner)+16 with 0xC7EAD28, then allocates a 16-byte request node with 0xC840C54(16) and copies source+16/+20 into it before queueing. Its two call sites are the channel paths 0xC800FE8 and 0xC802D2C, not the public API."
+  },
+  "notes": "Internal, channel-initiated removal of a PSM binding; NOT the public unregister handler. Recorded under this name so the module does not mistake it for the API entry (that is 0xC8030F0). Whether the queued 16-byte node is a retire request to the app could not be fully proven."
+}
