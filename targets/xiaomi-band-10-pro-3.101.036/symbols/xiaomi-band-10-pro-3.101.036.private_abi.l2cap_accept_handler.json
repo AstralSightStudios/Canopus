@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.l2cap_accept_handler",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "l2cap_accept_handler",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc7ea1d4",
+  "prototype": "int l2cap_accept_handler(void *owner, uint32_t event, void *request)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Finds cid=request+0,requires channel state+120==2,copies local config from request+52/60/62 and invokes response0xC8025C0 with result=request+4 and detail=request+6, then frees request. Old l2cap_disconnect_handler record pointed here but name was wrong."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "callable_address": "0xc7ea1d5",
+  "calling_convention": "arm-aapcs"
+}

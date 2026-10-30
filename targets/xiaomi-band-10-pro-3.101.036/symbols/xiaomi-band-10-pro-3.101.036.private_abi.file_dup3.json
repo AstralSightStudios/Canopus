@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.file_dup3",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "file_dup3",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc1bf89c",
+  "callable_address": "0xc1bf89d",
+  "prototype": "int file_dup3(struct file *source, struct file *target, int flags)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Astrolink calls this as F_FILE_DUP3(source, &own_file, 0) to take an independent reference to the loop pipe write end before releasing the task file-list reference."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "Astrolink calls this as F_FILE_DUP3(source, &own_file, 0) to take an independent reference to the loop pipe write end before releasing the task file-list reference."
+}

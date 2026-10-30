@@ -4,7 +4,7 @@
  * firmware : 3.101.036 (CONBINE_LTALM078_T3.101.036_06242053)
  * sha256   : 662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81
  * revision : 5
- * input_digest: 734f5a3a4994a78d
+ * input_digest: be2dc376802fd8fc
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_036_H
@@ -464,6 +464,9 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
 /* ---- excluded symbols ----
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved
+ * ble_advertising_start: restricted - not exported until context/ownership approved
+ * ble_scan_stop: restricted - not exported until context/ownership approved
+ * bt_adapter_enable: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved
@@ -479,6 +482,7 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * bt_queue_external: restricted - not exported until context/ownership approved
  * bt_queue_free: restricted - not exported until context/ownership approved
  * bt_remove_bond_private: restricted - not exported until context/ownership approved
+ * bt_sal_le_stop_advertising: restricted - not exported until context/ownership approved
  * bt_socket_server_receive: FORBIDDEN - no veneer may ever be generated
  * bt_timer_add: restricted - not exported until context/ownership approved
  * bt_timer_cancel: restricted - not exported until context/ownership approved
@@ -491,9 +495,19 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * driver_read_dispatch: restricted - not exported until context/ownership approved
  * driver_write_dispatch: FORBIDDEN - no veneer may ever be generated
  * errno_location: restricted - not exported until context/ownership approved
+ * feature_register_feature: restricted - not exported until context/ownership approved
+ * ferry_application_init: restricted - not exported until context/ownership approved
+ * ferry_framework_factory: restricted - not exported until context/ownership approved
+ * file_close: restricted - not exported until context/ownership approved
+ * file_dup3: restricted - not exported until context/ownership approved
+ * file_write: restricted - not exported until context/ownership approved
+ * files_getfilep: restricted - not exported until context/ownership approved
  * firmware_log: restricted - not exported until context/ownership approved
+ * fs_getfilep: restricted - not exported until context/ownership approved
+ * fs_putfilep: restricted - not exported until context/ownership approved
  * fsync: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
+ * gap_scan_start_impl: restricted - not exported until context/ownership approved
  * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved
  * heap_malloc: restricted - not exported until context/ownership approved
@@ -505,6 +519,18 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * ioctl: restricted - not exported until context/ownership approved
  * l2_owner_timer_init: restricted - not exported until context/ownership approved
  * l2_owner_timer_start: restricted - not exported until context/ownership approved
+ * l2cap_accept_handler: restricted - not exported until context/ownership approved
+ * l2cap_connect_handler: restricted - not exported until context/ownership approved
+ * l2cap_credit_queue_flush: restricted - not exported until context/ownership approved
+ * l2cap_disconnect_channel: restricted - not exported until context/ownership approved
+ * l2cap_find_channel: restricted - not exported until context/ownership approved
+ * l2cap_find_le_psm: restricted - not exported until context/ownership approved
+ * l2cap_le_connection_response: restricted - not exported until context/ownership approved
+ * l2cap_queue_push: restricted - not exported until context/ownership approved
+ * l2cap_register_psm_handler: restricted - not exported until context/ownership approved
+ * l2cap_send_handler: restricted - not exported until context/ownership approved
+ * l2cap_teardown_channel: restricted - not exported until context/ownership approved
+ * l2cap_unregister_psm_handler: restricted - not exported until context/ownership approved
  * lv_bar_create: restricted - not exported until context/ownership approved
  * lv_bar_set_range: restricted - not exported until context/ownership approved
  * lv_bar_set_value: restricted - not exported until context/ownership approved
@@ -530,6 +556,7 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * miwear_transport_send: restricted - not exported until context/ownership approved
  * mkdir: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
+ * nxsched_foreach: restricted - not exported until context/ownership approved
  * offload_property_apply: FORBIDDEN - no veneer may ever be generated
  * opendir: restricted - not exported until context/ownership approved
  * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated
@@ -541,6 +568,19 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
+ * qjs_call: restricted - not exported until context/ownership approved
+ * qjs_define_property_value_str: restricted - not exported until context/ownership approved
+ * qjs_free_cstring: restricted - not exported until context/ownership approved
+ * qjs_free_value: restricted - not exported until context/ownership approved
+ * qjs_get_array_buffer: restricted - not exported until context/ownership approved
+ * qjs_get_exception: restricted - not exported until context/ownership approved
+ * qjs_get_typed_array_buffer: restricted - not exported until context/ownership approved
+ * qjs_is_function: restricted - not exported until context/ownership approved
+ * qjs_new_array_buffer_copy: restricted - not exported until context/ownership approved
+ * qjs_new_c_function2: restricted - not exported until context/ownership approved
+ * qjs_new_object: restricted - not exported until context/ownership approved
+ * qjs_new_string_len: restricted - not exported until context/ownership approved
+ * qjs_to_cstring_len2: restricted - not exported until context/ownership approved
  * readdir: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
  * rename: restricted - not exported until context/ownership approved
@@ -574,6 +614,11 @@ static inline int canopus_fw_interconnect_send(void * a0, const char * a1, const
  * system_router_page_record_wrapper: FORBIDDEN - no veneer may ever be generated
  * unlink: restricted - not exported until context/ownership approved
  * unregister_blockdriver: restricted - not exported until context/ownership approved
+ * uv_async_init: restricted - not exported until context/ownership approved
+ * uv_close: restricted - not exported until context/ownership approved
+ * uv_mutex_init: restricted - not exported until context/ownership approved
+ * uv_mutex_lock: restricted - not exported until context/ownership approved
+ * uv_mutex_unlock: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
  * vibrator_hal_transact: restricted - not exported until context/ownership approved
  * wakelock_acquire: restricted - not exported until context/ownership approved

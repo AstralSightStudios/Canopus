@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.qjs_get_typed_array_buffer",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "qjs_get_typed_array_buffer",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc2bd58c",
+  "prototype": "uint64_t qjs_get_typed_array_buffer(void *ctx,uint64_t value,size_t *offset,size_t *length,size_t *element_size)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Direct native accessor acceptingclass21..29. Typedopaque+12=bufferobject,+16=byteoffset,+20=bytelength; derives element size table; checks buffer opaque detachedbyte+4; duplicates returnedbuffer. Older composition claimed offset unavailable, disproven by this exact accessor."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "The ctx+40 prototype table and the 8/12 offsets are the same invariants as .155.",
+  "callable_address": "0xc2bd58d"
+}

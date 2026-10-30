@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.uv_close",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "uv_close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc2c5774",
+  "callable_address": "0xc2c5775",
+  "prototype": "void uv_close(void *handle, void (*close_callback)(void *handle))",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Call on owning loop. Handle and callback must remain alive through the eventual close callback. Feature manager allocates its async as112 bytes at 0xC865744."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "Call on owning loop. Handle and callback must remain alive through the eventual close callback. Feature manager allocates its async as112 bytes at 0xC865744."
+}

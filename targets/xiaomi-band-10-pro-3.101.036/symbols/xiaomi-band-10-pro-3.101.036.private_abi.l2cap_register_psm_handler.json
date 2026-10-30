@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.l2cap_register_psm_handler",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "l2cap_register_psm_handler",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc7e805c",
+  "callable_address": "0xc7e805d",
+  "prototype": "int l2cap_register_psm_handler(void *owner, uint32_t event, void *entry)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Public register half of the PSM registry; the find half is l2cap_find_le_psm 0xC7FF644 and the remove half is l2cap_unregister_psm_handler 0xC8030F0. All three use the same key at entry+4 (u16 psm) and entry+6 (kind)."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "Public register half of the PSM registry; the find half is l2cap_find_le_psm 0xC7FF644 and the remove half is l2cap_unregister_psm_handler 0xC8030F0. All three use the same key at entry+4 (u16 psm) and entry+6 (kind)."
+}
