@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.feature_manager_post_task",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "feature_manager_post_task",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc491cd0",
+  "callable_address": "0xc491cd1",
+  "prototype": "void(void *, const void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Copies a 24-byte callback descriptor under manager mutex and wakes libuv. Null reference field is supported; callback receives active=0 at manager shutdown."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB compared with xiaomi-band-11-4.100.155: mutually unique full-body anchor; known callees consistent."
+  },
+  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact address catalog for module verification only. Not a public callable/codegen approval or physical device validation. Copies a 24-byte callback descriptor under manager mutex and wakes libuv. Null reference field is supported; callback receives active=0 at manager shutdown."
+}

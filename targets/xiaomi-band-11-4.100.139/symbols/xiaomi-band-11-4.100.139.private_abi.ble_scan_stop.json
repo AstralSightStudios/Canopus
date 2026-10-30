@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.ble_scan_stop",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "ble_scan_stop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc46b730",
+  "callable_address": "0xc46b731",
+  "prototype": "int(void *, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Stops own scanner handle through IPC; stopped callback ends handle lifetime. Do not run synchronous IPC inside Bluelet callback."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB compared with xiaomi-band-11-4.100.155: manual: byte-identical 14-byte body and identical callee in both images; below the eight-instruction anchor minimum, so the matcher cannot seed it."
+  },
+  "notes": "manual: byte-identical 14-byte body and identical callee in both images; below the eight-instruction anchor minimum, so the matcher cannot seed it. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact address catalog for module verification only. Not a public callable/codegen approval or physical device validation. Stops own scanner handle through IPC; stopped callback ends handle lifetime. Do not run synchronous IPC inside Bluelet callback."
+}

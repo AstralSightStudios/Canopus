@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.file_write",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "file_write",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc33cc4c",
+  "callable_address": "0xc33cc4d",
+  "prototype": "int(void *, const void *, unsigned int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Write through a retained struct file without resolving any caller fd. Returns negative errno directly. The caller pins the file object for the write."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB compared with xiaomi-band-11-4.100.155: equal body; 5/5 anchored callers call the target; known callees consistent."
+  },
+  "notes": "equal body; 5/5 anchored callers call the target; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Private exact-target ABI record; not public callable approval or physical validation. Entry bytes: 80 b5 84 b0 00 af 07 f1 08 03 3b 60. NuttX file slots are 32 bytes (C332B70). File references increment under interrupt critical section (C332B78-C332B7E)."
+}

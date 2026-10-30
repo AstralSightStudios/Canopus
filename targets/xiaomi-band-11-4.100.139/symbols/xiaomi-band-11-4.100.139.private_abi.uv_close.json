@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.uv_close",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "uv_close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3ea6e4",
+  "callable_address": "0xc3ea6e5",
+  "prototype": "void(void *, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "target-loop-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Marks a live libuv handle closing on its owning loop. Retains handle storage until close_callback(handle) is invoked from uv_run. Caller may free its containing allocation only in that callback."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB compared with xiaomi-band-11-4.100.155: mutually unique full-body anchor; known callees consistent."
+  },
+  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact private ABI recovery, not public approval. C3EA6FA marks CLOSING at handle+44; C3EA702 stores callback at +12. uv_run C3EADF6-C3EAE06 removes the handle queue and invokes callback(handle). Stock C736FE0 closes a 64-byte async allocation; callback C735A72 frees it at C735A76."
+}

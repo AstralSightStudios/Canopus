@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.l2cap_disconnect_channel",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "l2cap_disconnect_channel",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc872dd0",
+  "callable_address": "0xc872dd1",
+  "prototype": "int(void *channel, uint16_t policy)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Called by the stock channel disconnect handler after its own channel lookup. Dispatches on the channel's state byte and closes it with stock ownership: it emits callback event 6, frees the channel allocation and releases host link resources. Astrolink invokes it directly on the Bluelet owner with policy 9 so a queued disconnect cannot be blocked by module heap pressure, and never sends an ACL disconnect or touches companion/audio tables."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-002"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB. Mutually unique full-body anchor with the audited .155 record: equal normalized 32-instruction body (80 bytes), identical callee set, 5 independent referencing functions keep their relative distance. Called from the .139 disconnect handler at 0xc872e40."
+  },
+  "notes": "Ports the audited .155 policy at 0xc872dc0; the .155 pack had no record for it. Static evidence only: no device radio, concurrency or power-management validation."
+}

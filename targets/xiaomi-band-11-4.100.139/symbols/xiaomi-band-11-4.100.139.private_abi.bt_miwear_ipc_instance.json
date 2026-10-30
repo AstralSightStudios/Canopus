@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.bt_miwear_ipc_instance",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "bt_miwear_ipc_instance",
+  "kind": "global",
+  "entry_address": "0x200da4f8",
+  "prototype": "void *",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Process-lifetime MiWear Bluetooth IPC client created by firmware boot. Its +56 word is the business libuv loop that must run synchronous GAP IPC, and +48 holds the adapter state (4 = ready). Stock scan, advertising and payment/unlock callers use this instance; the module only adds its own adapter callback registration."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-002"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB, compared with xiaomi-band-11-4.100.155: 62 matched functions load this address from the same instruction position as the .155 callers, so the object keeps its .bss slot in this build."
+  },
+  "approval_state": "PENDING",
+  "notes": "Address catalogue for module verification and ABI documentation only. Not a public ownership grant.",
+  "instruction_set": "n/a"
+}

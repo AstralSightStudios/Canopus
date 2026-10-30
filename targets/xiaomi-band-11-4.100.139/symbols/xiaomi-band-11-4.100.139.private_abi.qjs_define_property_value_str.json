@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.qjs_define_property_value_str",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "qjs_define_property_value_str",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3c3c46",
+  "callable_address": "0xc3c3c47",
+  "prototype": "int(void *, uint64_t, const char *, uint64_t, int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "qjs-owner-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Consumes assigned JSValue; uint64_t parameters follow AAPCS integer-pair alignment. This is DefinePropertyValueStr, not shorter SetPropertyStr."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB compared with xiaomi-band-11-4.100.155: mutually unique full-body anchor; known callees consistent."
+  },
+  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact address catalog for module verification only. Not a public callable/codegen approval or physical device validation. Consumes assigned JSValue; uint64_t parameters follow AAPCS integer-pair alignment. This is DefinePropertyValueStr, not shorter SetPropertyStr."
+}

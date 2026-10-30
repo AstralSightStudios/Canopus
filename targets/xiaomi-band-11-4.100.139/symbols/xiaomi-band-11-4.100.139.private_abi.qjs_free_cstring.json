@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.qjs_free_cstring",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "qjs_free_cstring",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3b89f2",
+  "callable_address": "0xc3b89f3",
+  "prototype": "void(void *, const char *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "qjs-owner-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Releases string returned by qjs_to_cstring_len2 on owner task."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB compared with xiaomi-band-11-4.100.155: manual: byte-identical 20-byte body with the same call to qjs_free_value; below the eight-instruction anchor minimum."
+  },
+  "notes": "manual: byte-identical 20-byte body with the same call to qjs_free_value; below the eight-instruction anchor minimum. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact address catalog for module verification only. Not a public callable/codegen approval or physical device validation. Releases string returned by qjs_to_cstring_len2 on owner task."
+}
