@@ -21,30 +21,102 @@ struct Mapping {
 }
 
 const FW_UI_INPUT: &[Mapping] = &[
-    Mapping { macro_name: "FW_UI_EVENT_GET_INDEV", symbol_name: "lv_event_get_indev", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_INDEV_GET_POINT", symbol_name: "lv_indev_get_point", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_OBJECT_GET_COORDS", symbol_name: "lv_obj_get_coords", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_OBJECT_GET_SCROLL_Y", symbol_name: "lv_obj_get_scroll_y", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_OBJECT_GET_SCROLL_X", symbol_name: "lv_obj_get_scroll_x", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_OBJECT_SCROLL_TO", symbol_name: "lv_obj_scroll_to", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_TICK_GET", symbol_name: "lv_tick_get", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_UPDATE_LAYOUT", symbol_name: "lv_obj_update_layout", address: Address::Callable },
+    Mapping {
+        macro_name: "FW_UI_EVENT_GET_INDEV",
+        symbol_name: "lv_event_get_indev",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_INDEV_GET_POINT",
+        symbol_name: "lv_indev_get_point",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_OBJECT_GET_COORDS",
+        symbol_name: "lv_obj_get_coords",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_OBJECT_GET_SCROLL_Y",
+        symbol_name: "lv_obj_get_scroll_y",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_OBJECT_GET_SCROLL_X",
+        symbol_name: "lv_obj_get_scroll_x",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_OBJECT_SCROLL_TO",
+        symbol_name: "lv_obj_scroll_to",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_TICK_GET",
+        symbol_name: "lv_tick_get",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_UPDATE_LAYOUT",
+        symbol_name: "lv_obj_update_layout",
+        address: Address::Callable,
+    },
 ];
 
 const FW_UI_IMAGE_FIT: &[Mapping] = &[
-    Mapping { macro_name: "FW_UI_IMAGE_SCALE", symbol_name: "lvx_image_set_scale", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_IMAGE_INFO", symbol_name: "lv_image_decoder_get_info", address: Address::Callable },
+    Mapping {
+        macro_name: "FW_UI_IMAGE_SCALE",
+        symbol_name: "lvx_image_set_scale",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_IMAGE_INFO",
+        symbol_name: "lv_image_decoder_get_info",
+        address: Address::Callable,
+    },
 ];
 
 const FW_UI_FONT: &[Mapping] = &[
-    Mapping { macro_name: "FW_UI_FONT_CREATE", symbol_name: "native_font_create", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_FONT_RELEASE", symbol_name: "native_font_release", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_FONT_WAIT", symbol_name: "native_font_wait", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_FONT_MANAGER_SLOT", symbol_name: "font_reload_uikit_slot", address: Address::Entry },
-    Mapping { macro_name: "FW_UI_FONT_DRAW_UNITS", symbol_name: "font_reload_draw_unit_slot", address: Address::Entry },
-    Mapping { macro_name: "FW_UI_FONT_DISPLAY_LIST", symbol_name: "font_reload_display_list", address: Address::Entry },
-    Mapping { macro_name: "FW_UI_FONT_VG_DISPATCH", symbol_name: "font_reload_vg_dispatch", address: Address::Callable },
-    Mapping { macro_name: "FW_UI_FONT_SW_DISPATCH", symbol_name: "font_reload_sw_dispatch", address: Address::Callable },
+    Mapping {
+        macro_name: "FW_UI_FONT_CREATE",
+        symbol_name: "native_font_create",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_FONT_RELEASE",
+        symbol_name: "native_font_release",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_FONT_WAIT",
+        symbol_name: "native_font_wait",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_FONT_MANAGER_SLOT",
+        symbol_name: "font_reload_uikit_slot",
+        address: Address::Entry,
+    },
+    Mapping {
+        macro_name: "FW_UI_FONT_DRAW_UNITS",
+        symbol_name: "font_reload_draw_unit_slot",
+        address: Address::Entry,
+    },
+    Mapping {
+        macro_name: "FW_UI_FONT_DISPLAY_LIST",
+        symbol_name: "font_reload_display_list",
+        address: Address::Entry,
+    },
+    Mapping {
+        macro_name: "FW_UI_FONT_VG_DISPATCH",
+        symbol_name: "font_reload_vg_dispatch",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "FW_UI_FONT_SW_DISPATCH",
+        symbol_name: "font_reload_sw_dispatch",
+        address: Address::Callable,
+    },
 ];
 
 const FW_10: &[Mapping] = &[
@@ -813,8 +885,9 @@ impl<'a> TargetConfigGen<'a> {
         production || static_test
     }
     fn veneer_callable_available(&self, name: &str) -> bool {
-        self.symbol(name)
-            .is_some_and(|symbol| symbol.callable_address.is_some() && self.codegen_available(symbol))
+        self.symbol(name).is_some_and(|symbol| {
+            symbol.callable_address.is_some() && self.codegen_available(symbol)
+        })
     }
     fn mapping_available(&self, map: Mapping) -> bool {
         let Some(symbol) = self.symbol(map.symbol_name) else {

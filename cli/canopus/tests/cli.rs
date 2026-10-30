@@ -105,7 +105,15 @@ fn project_flow_builds_packages_and_refuses_a_stale_elf() {
     };
     ok(
         &scratch.0,
-        &["new", "demo", "--ui", "--target", "155", "--target", "3.101.043"],
+        &[
+            "new",
+            "demo",
+            "--ui",
+            "--target",
+            "155",
+            "--target",
+            "3.101.043",
+        ],
     );
     let project = scratch.0.join("demo");
     assert!(project.join(".gitignore").is_file());

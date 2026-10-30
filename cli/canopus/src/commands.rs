@@ -397,10 +397,7 @@ pub fn verify(
         allowed.extend_from_slice(extra_allowed);
         allowed.sort_unstable();
         allowed.dedup();
-        (
-            find_target(targets_dir, id)?,
-            allowed,
-        )
+        (find_target(targets_dir, id)?, allowed)
     };
     let data = std::fs::read(elf_path)
         .map_err(|e| anyhow::anyhow!("cannot read {}: {e}", elf_path.display()))?;

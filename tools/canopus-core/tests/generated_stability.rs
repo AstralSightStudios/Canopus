@@ -42,10 +42,11 @@ fn rust_bindings_regenerate_identically() {
         types: &types,
     };
     let regenerated = r#gen.generate();
-    let committed = std::fs::read_to_string(
-        repo_root().join("sdk/rust/canopus-target-generated/src/generated_xiaomi_band_10_pro_3_101_036.rs"),
-    )
-    .unwrap();
+    let committed =
+        std::fs::read_to_string(repo_root().join(
+            "sdk/rust/canopus-target-generated/src/generated_xiaomi_band_10_pro_3_101_036.rs",
+        ))
+        .unwrap();
     assert_eq!(
         committed, regenerated,
         "generated Rust bindings are stale; run `canopus target generate --all`"
@@ -229,25 +230,43 @@ fn band11_179_carries_no_approval_from_155() {
     let (symbols, _) = load_records(&dir).unwrap();
     assert!(symbols.len() > 250, "the port lost records");
     for symbol in &symbols {
-        assert!(!symbol.approved_for_codegen(), "{} is approved", symbol.name);
+        assert!(
+            !symbol.approved_for_codegen(),
+            "{} is approved",
+            symbol.name
+        );
         assert_ne!(symbol.status, "DEVICE_PROVEN", "{}", symbol.name);
         assert_ne!(symbol.policy, "managed", "{} is managed", symbol.name);
-        assert!(symbol.promotion.is_none(), "{} carries a promotion", symbol.name);
-        assert_ne!(symbol.proof.device.as_deref(), Some("proven"), "{}", symbol.name);
+        assert!(
+            symbol.promotion.is_none(),
+            "{} carries a promotion",
+            symbol.name
+        );
+        assert_ne!(
+            symbol.proof.device.as_deref(),
+            Some("proven"),
+            "{}",
+            symbol.name
+        );
         assert_eq!(symbol.target_id, pack.target_id);
-        assert_eq!(symbol.provenance.firmware_sha256, pack.firmware_sha256, "{}", symbol.name);
+        assert_eq!(
+            symbol.provenance.firmware_sha256, pack.firmware_sha256,
+            "{}",
+            symbol.name
+        );
         if symbol.status == "CANDIDATE" {
-            assert!(symbol.callable_address.is_none(), "{} is a callable candidate", symbol.name);
+            assert!(
+                symbol.callable_address.is_none(),
+                "{} is a callable candidate",
+                symbol.name
+            );
         }
     }
 }
 
 #[test]
 fn band11_errno_is_the_only_public_approved_callable() {
-    for target in [
-        "xiaomi-band-11-4.100.139",
-        "xiaomi-band-11-4.100.155",
-    ] {
+    for target in ["xiaomi-band-11-4.100.139", "xiaomi-band-11-4.100.155"] {
         let dir = repo_root().join("targets").join(target);
         let (symbols, _) = load_records(&dir).unwrap();
         let approved: Vec<_> = symbols
@@ -300,8 +319,14 @@ fn band10_pro_043_ui_calls_use_audited_runtime_addresses() {
     }
     .generate();
     let committed = std::fs::read_to_string(dir.join("generated/canopus_target_config.h")).unwrap();
-    let image_create = symbols.iter().find(|symbol| symbol.name == "lv_image_create").unwrap();
-    assert_eq!(image_create.prototype.as_deref(), Some("void *(void *, const void *)"));
+    let image_create = symbols
+        .iter()
+        .find(|symbol| symbol.name == "lv_image_create")
+        .unwrap();
+    assert_eq!(
+        image_create.prototype.as_deref(),
+        Some("void *(void *, const void *)")
+    );
     let image_abi = "#define FW_UI_IMAGE_CREATE_THEME_ARG 1\n";
     assert!(generated.contains(image_abi));
     assert!(committed.contains(image_abi));
@@ -314,8 +339,16 @@ fn band10_pro_043_ui_calls_use_audited_runtime_addresses() {
         ("lv_event_get_indev", "FW_UI_EVENT_GET_INDEV", 0x002bf8d4),
         ("lv_indev_get_point", "FW_UI_INDEV_GET_POINT", 0x1c050c10),
         ("lv_obj_get_coords", "FW_UI_OBJECT_GET_COORDS", 0x1c02a564),
-        ("lv_obj_get_scroll_x", "FW_UI_OBJECT_GET_SCROLL_X", 0x1c02cce8),
-        ("lv_obj_get_scroll_y", "FW_UI_OBJECT_GET_SCROLL_Y", 0x1c02ccfc),
+        (
+            "lv_obj_get_scroll_x",
+            "FW_UI_OBJECT_GET_SCROLL_X",
+            0x1c02cce8,
+        ),
+        (
+            "lv_obj_get_scroll_y",
+            "FW_UI_OBJECT_GET_SCROLL_Y",
+            0x1c02ccfc,
+        ),
         // Absolute scrolling, including restoration to (0, 0), uses this
         // primitive; 0x1c02d860 is bounded relative scrolling.
         ("lv_obj_scroll_to", "FW_UI_OBJECT_SCROLL_TO", 0x1c02ddb0),
@@ -345,27 +378,46 @@ fn band10_pro_043_ui_calls_use_audited_runtime_addresses() {
 
 #[test]
 fn native_image_fit_is_bound_only_to_independently_reviewed_targets() {
-    for suffix in ["3.101.036", "3.101.043", "4.100.139", "4.100.155", "4.100.179"] {
+    for suffix in [
+        "3.101.036",
+        "3.101.043",
+        "4.100.139",
+        "4.100.155",
+        "4.100.179",
+    ] {
         let band10 = suffix.starts_with('3');
-        let target = format!("xiaomi-band-{}-{suffix}", if band10 { "10-pro" } else { "11" });
+        let target = format!(
+            "xiaomi-band-{}-{suffix}",
+            if band10 { "10-pro" } else { "11" }
+        );
         let dir = repo_root().join("targets").join(&target);
         let reviewed = suffix == "3.101.043" || suffix == "4.100.155" || suffix == "4.100.179";
         let header = std::fs::read_to_string(dir.join("generated").join(if band10 {
             "canopus_target_config.h"
         } else {
             "canopus_band11_addresses.h"
-        })).unwrap();
+        }))
+        .unwrap();
         for macro_name in ["FW_UI_IMAGE_SCALE", "FW_UI_IMAGE_INFO"] {
-            assert_eq!(header.contains(&format!("#define {macro_name} ")), reviewed, "{target}: {macro_name}");
+            assert_eq!(
+                header.contains(&format!("#define {macro_name} ")),
+                reviewed,
+                "{target}: {macro_name}"
+            );
         }
-        if !reviewed { continue; }
+        if !reviewed {
+            continue;
+        }
         let (symbols, _) = load_records(&dir).unwrap();
         for name in ["lvx_image_set_scale", "lv_image_decoder_get_info"] {
             let symbol = symbols.iter().find(|symbol| symbol.name == name).unwrap();
             assert_eq!(symbol.policy, "restricted");
             assert_eq!(symbol.status, "STATIC_RECOVERED");
             assert_eq!(symbol.proof.device.as_deref(), Some("not_probed"));
-            assert_eq!(symbol.approval_state.as_deref(), Some(if band10 { "APPROVED" } else { "PENDING" }));
+            assert_eq!(
+                symbol.approval_state.as_deref(),
+                Some(if band10 { "APPROVED" } else { "PENDING" })
+            );
         }
         let evidence_id = match suffix {
             "3.101.043" => "EVID-UI-1043-IMAGE-FIT-001",
@@ -373,9 +425,12 @@ fn native_image_fit_is_bound_only_to_independently_reviewed_targets() {
             // The .179 image-fit identities are part of the audited port record.
             _ => "EVID-PORT-4179-001",
         };
-        let evidence: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
-            dir.join(format!("evidence/{evidence_id}.json"))).unwrap()).unwrap();
-        canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence).unwrap();
+        let evidence: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(dir.join(format!("evidence/{evidence_id}.json"))).unwrap(),
+        )
+        .unwrap();
+        canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence)
+            .unwrap();
         if suffix == "4.100.155" {
             assert!(header.contains("#define FW_UI_IMAGE_SCALE 0x0C3AE46Fu"));
             assert!(header.contains("#define FW_UI_IMAGE_INFO 0x0C38E4E5u"));
@@ -388,22 +443,46 @@ fn native_image_fit_is_bound_only_to_independently_reviewed_targets() {
 
 #[test]
 fn native_font_bindings_are_private_and_target_gated() {
-    for suffix in ["3.101.036", "3.101.043", "4.100.139", "4.100.155", "4.100.179"] {
+    for suffix in [
+        "3.101.036",
+        "3.101.043",
+        "4.100.139",
+        "4.100.155",
+        "4.100.179",
+    ] {
         let band10 = suffix.starts_with('3');
-        let target = format!("xiaomi-band-{}-{suffix}", if band10 { "10-pro" } else { "11" });
+        let target = format!(
+            "xiaomi-band-{}-{suffix}",
+            if band10 { "10-pro" } else { "11" }
+        );
         let dir = repo_root().join("targets").join(&target);
         let reviewed = suffix == "3.101.043" || suffix == "4.100.155" || suffix == "4.100.179";
         let header = std::fs::read_to_string(dir.join("generated").join(if band10 {
             "canopus_target_config.h"
         } else {
             "canopus_band11_addresses.h"
-        })).unwrap();
-        for name in ["FW_UI_FONT_CREATE", "FW_UI_FONT_RELEASE", "FW_UI_FONT_WAIT",
-                     "FW_UI_FONT_MANAGER_SLOT", "FW_UI_FONT_DRAW_UNITS", "FW_UI_FONT_DISPLAY_LIST",
-                     "FW_UI_FONT_VG_DISPATCH", "FW_UI_FONT_SW_DISPATCH", "FW_UI_FONT_EVENT_DELETE"] {
-            assert_eq!(header.contains(&format!("#define {name} ")), reviewed, "{target}: {name}");
+        }))
+        .unwrap();
+        for name in [
+            "FW_UI_FONT_CREATE",
+            "FW_UI_FONT_RELEASE",
+            "FW_UI_FONT_WAIT",
+            "FW_UI_FONT_MANAGER_SLOT",
+            "FW_UI_FONT_DRAW_UNITS",
+            "FW_UI_FONT_DISPLAY_LIST",
+            "FW_UI_FONT_VG_DISPATCH",
+            "FW_UI_FONT_SW_DISPATCH",
+            "FW_UI_FONT_EVENT_DELETE",
+        ] {
+            assert_eq!(
+                header.contains(&format!("#define {name} ")),
+                reviewed,
+                "{target}: {name}"
+            );
         }
-        if !reviewed { continue; }
+        if !reviewed {
+            continue;
+        }
         let (symbols, _) = load_records(&dir).unwrap();
         let veneer = std::fs::read_to_string(dir.join("generated/canopus_veneer.h")).unwrap();
         let font_callable = |name: &str| match (suffix, name) {
@@ -418,14 +497,21 @@ fn native_font_bindings_are_private_and_target_gated() {
             ("4.100.179", "native_font_wait") => 0x0c3998a9,
             _ => unreachable!(),
         };
-        for name in ["native_font_create", "native_font_release", "native_font_wait"] {
+        for name in [
+            "native_font_create",
+            "native_font_release",
+            "native_font_wait",
+        ] {
             let address = font_callable(name);
             let symbol = symbols.iter().find(|symbol| symbol.name == name).unwrap();
             assert_eq!(symbol.policy, "restricted");
             assert_eq!(symbol.status, "STATIC_RECOVERED");
             assert_eq!(symbol.approval_state.as_deref(), Some("PENDING"));
             assert_eq!(symbol.proof.device.as_deref(), Some("not_probed"));
-            assert_eq!(parse_address(symbol.callable_address.as_deref().unwrap()), address);
+            assert_eq!(
+                parse_address(symbol.callable_address.as_deref().unwrap()),
+                address
+            );
             assert!(!veneer.contains(&format!("canopus_fw_{name}(")));
         }
         let id = match suffix {
@@ -433,9 +519,12 @@ fn native_font_bindings_are_private_and_target_gated() {
             "4.100.155" => "EVID-UI-4155-FONT-LIFECYCLE-001",
             _ => "EVID-UI-4179-FONT-LIFECYCLE-001",
         };
-        let evidence: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(
-            dir.join(format!("evidence/{id}.json"))).unwrap()).unwrap();
-        canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence).unwrap();
+        let evidence: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(dir.join(format!("evidence/{id}.json"))).unwrap(),
+        )
+        .unwrap();
+        canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence)
+            .unwrap();
     }
 }
 
@@ -639,18 +728,40 @@ fn device_verified_ui_symbols_are_exactly_the_pinned_list() {
             .map(|s| s.name.as_str())
             .collect();
         let pinned: std::collections::BTreeSet<&str> = names.iter().copied().collect();
-        assert_eq!(proven, pinned, "{target}: DEVICE_PROVEN differs from the pinned list");
+        assert_eq!(
+            proven, pinned,
+            "{target}: DEVICE_PROVEN differs from the pinned list"
+        );
 
         for symbol in symbols.iter().filter(|s| s.status == "DEVICE_PROVEN") {
-            assert_eq!(symbol.proof.device.as_deref(), Some("proven"), "{}", symbol.name);
-            assert_eq!(symbol.approval_state.as_deref(), Some("APPROVED"), "{}", symbol.name);
+            assert_eq!(
+                symbol.proof.device.as_deref(),
+                Some("proven"),
+                "{}",
+                symbol.name
+            );
+            assert_eq!(
+                symbol.approval_state.as_deref(),
+                Some("APPROVED"),
+                "{}",
+                symbol.name
+            );
             assert!(
-                symbol.proof.evidence_ids.as_ref().unwrap().contains(&evidence_id.to_string()),
+                symbol
+                    .proof
+                    .evidence_ids
+                    .as_ref()
+                    .unwrap()
+                    .contains(&evidence_id.to_string()),
                 "{} lacks {evidence_id}",
                 symbol.name
             );
             let promotion = symbol.promotion.as_ref().expect("promotion record");
-            assert_eq!(promotion.firmware_sha256, pack.firmware_sha256, "{}", symbol.name);
+            assert_eq!(
+                promotion.firmware_sha256, pack.firmware_sha256,
+                "{}",
+                symbol.name
+            );
             assert_eq!(symbol.provenance.firmware_sha256, pack.firmware_sha256);
             if symbol.policy == "restricted" {
                 assert!(

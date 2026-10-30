@@ -30,17 +30,31 @@ pub fn outputs_for(targets_dir: &Path, pack: &TargetPack) -> Result<Vec<Output>>
     let mut outputs = vec![
         Output {
             path: gen_dir.join("canopus_veneer.h"),
-            content: VeneerGen { pack, symbols: &symbols, types: &types }.generate(),
+            content: VeneerGen {
+                pack,
+                symbols: &symbols,
+                types: &types,
+            }
+            .generate(),
         },
         Output {
             path: gen_dir.join("canopus_target_config.h"),
-            content: TargetConfigGen { pack, symbols: &symbols }.generate(),
+            content: TargetConfigGen {
+                pack,
+                symbols: &symbols,
+            }
+            .generate(),
         },
     ];
     let Some(rust_module) = pack.rust_module.as_deref() else {
         return Ok(outputs);
     };
-    let rust = RustGen { pack, symbols: &symbols, types: &types }.generate();
+    let rust = RustGen {
+        pack,
+        symbols: &symbols,
+        types: &types,
+    }
+    .generate();
     let sdk = repo.join("sdk/rust");
     let family = pack
         .family

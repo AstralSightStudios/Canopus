@@ -19,16 +19,10 @@
 #include "canopus_memory.h"
 #include "canopus_supervisor.h"
 
-/* Module pages (ctx->ui) take a fourth firmware page. 3.1.32 cannot push a third
- * page (CANOPUS_MGR_INPLACE_DETAIL renders the detail inside the modules page),
- * so there the Manager reports module pages as unsupported. */
-#if !defined(CANOPUS_MGR_INPLACE_DETAIL)
-#define CANOPUS_MGR_MODULE_UI 1
+/* Overview, module list, module detail, and a fourth page for module UIs
+ * (ctx->ui). */
 #define CANOPUS_TARGET_PAGE_COUNT 4u
 #define CANOPUS_TARGET_PAGE_MODULE_UI 3u
-#else
-#define CANOPUS_TARGET_PAGE_COUNT 3u
-#endif
 #define CANOPUS_TARGET_PAGE_OVERVIEW 0u
 #define CANOPUS_TARGET_PAGE_MODULES 1u
 #define CANOPUS_TARGET_PAGE_DETAIL 2u
@@ -341,23 +335,8 @@ static struct firmware_page_descriptor
     manager_pages_desc[CANOPUS_TARGET_PAGE_COUNT];
 static uint32_t manager_active_pages;
 static uint32_t manager_pending_detail;
-#if defined(CANOPUS_MGR_MODULE_UI)
 static uint32_t manager_pending_ui_slot; /* module slot + 1, set by the route */
 static uint32_t module_ui_slot;
-#endif
-#if defined(CANOPUS_MGR_INPLACE_DETAIL)
-/* 3.1.32 takes the app down when a third page is pushed, so the detail view
- * renders in the modules page; the render must wait until the click dispatch
- * returns, or it would replace the snapshot the dispatch is still reading. */
-static uint8_t manager_pending_inline_detail;
-static uint8_t manager_render_pending;
-#endif
-/* Set while target_dispatch_row runs the semantic event handler, with the
- * backend whose page dispatched it. A commit aimed at that page from inside
- * the dispatch is applied when the dispatch returns: 3.1.32 resets the SoC
- * when a page is rebuilt while the input device still walks its rows. */
-static uint8_t manager_in_dispatch;
-static void *manager_dispatch_backend;
 static uint8_t manager_session_ready;
 
 _Static_assert(CANOPUS_MANAGER_TARGET_APP_ID <= UINT16_C(0x00FF),
@@ -403,9 +382,7 @@ static const char package_name[] = "com.canopus.manager";
 static const char page_name_overview[] = "main";
 static const char page_name_modules[] = "modules";
 static const char page_name_detail[] = "module_detail";
-#if defined(CANOPUS_MGR_MODULE_UI)
 static const char page_name_module_ui[] = "module_ui";
-#endif
 static const char display_name[] = "Canopus 管理器";
 /* The installer's Run step stages the Manager icon here; the launcher loads
  * image sources from the same VFS the stock /resource/app/<app>/launcher.bin
@@ -587,7 +564,6 @@ static int target_refresh_model(void)
         module.version = source.version;
         module.activation_error = source.activation_error;
         module.slot = slot;
-#if defined(CANOPUS_MGR_MODULE_UI)
         {
             struct canopus_ui_entry_v1 entry;
             if (canopus_supervisor_ui_entry(canopus_supervisor_get(), slot, &entry) == 0) {
@@ -595,7 +571,6 @@ static int target_refresh_model(void)
                 canopus_memcpy(module.ui_label, entry.label, sizeof(module.ui_label));
             }
         }
-#endif
         module.risk = source.lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE ?
             CANOPUS_MANAGER_RISK_MODERATE :
             CANOPUS_MANAGER_RISK_RESIDENT_CRITICAL;
@@ -747,11 +722,7 @@ static void target_dispatch_row(uint32_t row_index, void *event)
             event.key = binding->key;
             event.event_id = binding->event_id;
             event.type = CANOPUS_UI_EVENT_ACTIVATE;
-            manager_in_dispatch = 1u;
-            manager_dispatch_backend = &context->backend;
             rc = canopus_ui_dispatch_event(&context->native.ui, &event);
-            manager_in_dispatch = 0u;
-            manager_dispatch_backend = NULL;
             /* A click that the ui context drops leaves the page visibly dead;
              * say why (S=stale generation, A=key/event mismatch, U=no
              * capability) instead of a bare C<row>. */
@@ -763,31 +734,8 @@ static void target_dispatch_row(uint32_t row_index, void *event)
         }
         canopus_manager_target_record.selected_after = manager_model.selected;
         if (rc == CANOPUS_UI_ERR_DISABLED) {
-#if defined(CANOPUS_MGR_INPLACE_DETAIL)
-            /* The disabled action renders nothing itself; keep its redraw on
-             * the same after-dispatch path. */
-            manager_render_pending = 1u;
-#else
             (void)canopus_manager_native_render(&context->native);
-#endif
         }
-#if defined(CANOPUS_MGR_INPLACE_DETAIL)
-        /* The dispatch only records what to show (the in-place subview or the
-         * confirmation dialog, and the refreshed state after a confirmed
-         * action); the page is rebuilt once here, after the dispatch has
-         * returned. Rebuilding it inside the dispatch destroys the row the
-         * input device is still walking. */
-        if (manager_render_pending != 0u ||
-            manager_pending_inline_detail != 0u) {
-            manager_render_pending = 0u;
-            manager_pending_inline_detail = 0u;
-            diag_mark('P', '2');
-            if (canopus_manager_native_render(&context->native) !=
-                CANOPUS_UI_OK) {
-                diag_mark('P', '3');
-            }
-        }
-#endif
         return;
     }
 }
@@ -1223,16 +1171,6 @@ static int32_t target_ui_apply(
         backend->page_index >= CANOPUS_TARGET_PAGE_COUNT) {
         return -1;
     }
-#if defined(CANOPUS_MGR_INPLACE_DETAIL)
-    /* A commit aimed at the page that is currently dispatching is applied by
-     * target_dispatch_row once the dispatch returned. A page pushed by the
-     * same route (a different backend) still renders immediately. */
-    if (manager_in_dispatch != 0u && (void *)backend == manager_dispatch_backend) {
-        manager_render_pending = 1u;
-        diag_mark('P', '1');
-        return 0;
-    }
-#endif
     if (backend->content_root == NULL) {
         backend->content_root = backend->root;
     }
@@ -1735,11 +1673,6 @@ static int target_select_page_view(
         return canopus_manager_goto(&manager_model,
                                     CANOPUS_MANAGER_VIEW_DEVICE, 0u);
     case CANOPUS_TARGET_PAGE_MODULES:
-#if defined(CANOPUS_MGR_INPLACE_DETAIL)
-        if (manager_model.view == CANOPUS_MANAGER_VIEW_MODULE_DETAIL) {
-            return 0; /* the detail view lives in this page */
-        }
-#endif
         return canopus_manager_goto(&manager_model,
                                     CANOPUS_MANAGER_VIEW_MODULE_LIST, 0u);
     case CANOPUS_TARGET_PAGE_DETAIL:
@@ -1810,23 +1743,13 @@ static int32_t target_route(void *cookie,
         target_page = CANOPUS_TARGET_PAGE_MODULES;
         break;
     case CANOPUS_MANAGER_ROUTE_MODULE_DETAIL:
-#if defined(CANOPUS_MGR_INPLACE_DETAIL)
-        manager_pending_inline_detail = 1u;
-        return CANOPUS_UI_OK;
-#else
         target_page = CANOPUS_TARGET_PAGE_DETAIL;
         manager_pending_detail = manager_model.selected + 1u;
         break;
-#endif
-#if defined(CANOPUS_MGR_MODULE_UI)
     case CANOPUS_MANAGER_ROUTE_MODULE_UI:
         manager_pending_ui_slot = manager_model.selected + 1u;
         target_page = CANOPUS_TARGET_PAGE_MODULE_UI;
         break;
-#else
-    case CANOPUS_MANAGER_ROUTE_MODULE_UI:
-        return CANOPUS_UI_ERR_UNSUPPORTED;
-#endif
     default:
         return CANOPUS_UI_ERR_ARGUMENT;
     }
@@ -1853,7 +1776,6 @@ static int32_t target_route(void *cookie,
     return CANOPUS_UI_OK;
 }
 
-#if defined(CANOPUS_MGR_MODULE_UI)
 /* ---- the page modules open through ctx->ui (ADR-CAN-010) -------------- */
 
 /* The module's registered entry while its page is shown; nonzero once the
@@ -1939,7 +1861,6 @@ int canopus_manager_target_module_page_close(uint32_t slot)
         &manager_pages_desc[CANOPUS_TARGET_PAGE_MODULE_UI]);
     return 1;
 }
-#endif
 
 static int manager_page_on_create(struct firmware_page_descriptor *page,
                                   void *root, void *start_data)
@@ -2028,11 +1949,9 @@ static int manager_page_on_create(struct firmware_page_descriptor *page,
     context->backend.root = root;
     context->backend.firmware_page = page;
     context->backend.page_index = (uint8_t)page->page_id;
-#if defined(CANOPUS_MGR_MODULE_UI)
     if (context->backend.page_index == CANOPUS_TARGET_PAGE_MODULE_UI) {
         return module_page_create(context);
     }
-#endif
     diag_mark('d', stage);
     diag_mark('p', stage);
     /* Restore only after the supervisor's stock `insmod` constructor returns;
@@ -2119,11 +2038,9 @@ static int manager_page_on_resume(struct firmware_page_descriptor *page)
     }
     canopus_manager_target_record.resume_count += 1u;
     context->interactive = 1u;
-#if defined(CANOPUS_MGR_MODULE_UI)
     if (context->backend.page_index == CANOPUS_TARGET_PAGE_MODULE_UI) {
         return 0;
     }
-#endif
     if (manager_session_ready && target_refresh_model() == 0 &&
         target_select_page_view(context) == 0) {
         (void)canopus_manager_native_render(&context->native);
@@ -2153,7 +2070,6 @@ static int manager_page_on_destroy(struct firmware_page_descriptor *page)
         return -1;
     }
     canopus_manager_target_record.destroy_count += 1u;
-#if defined(CANOPUS_MGR_MODULE_UI)
     if (context->backend.page_index == CANOPUS_TARGET_PAGE_MODULE_UI) {
         struct canopus_ui_entry_v1 entry;
         const struct canopus_context_v1 *module_ctx;
@@ -2162,7 +2078,6 @@ static int manager_page_on_destroy(struct firmware_page_descriptor *page)
             entry.on_close(module_ctx, entry.user_data);
         }
     }
-#endif
     canopus_manager_target_record.list_row = 0u;
     canopus_manager_target_record.root_object = 0u;
     if (context->active) {
@@ -2309,10 +2224,8 @@ int canopus_manager_native_install(void)
     pages[0] = &manager_pages_desc[0];
     pages[1] = &manager_pages_desc[1];
     pages[2] = &manager_pages_desc[2];
-#if defined(CANOPUS_MGR_MODULE_UI)
     target_descriptor_init(CANOPUS_TARGET_PAGE_MODULE_UI, page_name_module_ui, 3u);
     pages[3] = &manager_pages_desc[3];
-#endif
     canopus_manager_target_record.app_install_result =
         app_install(&manager_app, pages, CANOPUS_TARGET_PAGE_COUNT);
     installed_app = app_lookup(CANOPUS_MANAGER_TARGET_APP_ID);
@@ -2347,13 +2260,6 @@ int canopus_manager_native_install(void)
  * surface linkable and fail closed until the v8 implementations exist.
  * These functions are honest negatives: no page is closed, no launcher
  * entry is published and no notification is posted. */
-#if !defined(CANOPUS_MGR_MODULE_UI)
-int canopus_manager_target_module_page_close(uint32_t slot)
-{
-    (void)slot;
-    return 0;
-}
-#endif
 
 int canopus_manager_target_launcher_publish(uint32_t slot, const char *label,
                                             const char *icon)

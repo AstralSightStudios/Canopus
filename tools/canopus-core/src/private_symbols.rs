@@ -219,7 +219,9 @@ fn render_raw_wrappers(records: &[Value], generated: &BTreeSet<String>) -> (Vec<
         lines.push(String::new());
         count += 1;
     }
-    lines.push(format!("// generated target-private raw wrapper count: {count}"));
+    lines.push(format!(
+        "// generated target-private raw wrapper count: {count}"
+    ));
     lines.push(String::new());
     (lines, count)
 }
@@ -285,12 +287,24 @@ pub fn render(
         };
         let callable = callable_of(record, entry);
         lines.push("    TargetPrivateSymbolRecord {".into());
-        lines.push(format!("        name: {},", rust_string(str_field(record, "name"))));
-        lines.push(format!("        kind: {},", rust_string(str_field(record, "kind"))));
+        lines.push(format!(
+            "        name: {},",
+            rust_string(str_field(record, "name"))
+        ));
+        lines.push(format!(
+            "        kind: {},",
+            rust_string(str_field(record, "kind"))
+        ));
         lines.push(format!("        entry: 0x{entry:x}usize,"));
         lines.push(format!("        callable: 0x{callable:x}usize,"));
-        lines.push(format!("        status: {},", rust_string(str_field(record, "status"))));
-        lines.push(format!("        policy: {},", rust_string(str_field(record, "policy"))));
+        lines.push(format!(
+            "        status: {},",
+            rust_string(str_field(record, "status"))
+        ));
+        lines.push(format!(
+            "        policy: {},",
+            rust_string(str_field(record, "policy"))
+        ));
         lines.push(format!(
             "        prototype: {},",
             rust_string(str_field(record, "prototype"))
@@ -345,11 +359,7 @@ fn rustfmt(text: &str) -> String {
 }
 
 /// Generates the formatted `generated_symbols_*.rs` source for a target.
-pub fn generate(
-    target_id: &str,
-    target_dir: &Path,
-    generated_rust: &str,
-) -> Result<String> {
+pub fn generate(target_id: &str, target_dir: &Path, generated_rust: &str) -> Result<String> {
     let records = load_records(&target_dir.join("symbols"))?;
     if records.is_empty() {
         return Err(Error::other(format!(

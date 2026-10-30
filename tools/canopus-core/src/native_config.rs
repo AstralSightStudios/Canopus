@@ -23,13 +23,16 @@ fn hex(value: &Value, what: &str) -> Result<u64> {
 }
 
 pub fn load(root: &Path, pack: &TargetPack) -> Result<NativeConfig> {
-    let profile: Value =
-        serde_json::from_str(&std::fs::read_to_string(root.join("loader/native-bindings.json"))?)?;
+    let profile: Value = serde_json::from_str(&std::fs::read_to_string(
+        root.join("loader/native-bindings.json"),
+    )?)?;
     if profile["schema"] != 1
         || profile["target_id"] != pack.target_id.as_str()
         || profile["firmware_sha256"] != pack.firmware_sha256.as_str()
     {
-        return Err(Error::other("native profile identity differs from target pack"));
+        return Err(Error::other(
+            "native profile identity differs from target pack",
+        ));
     }
     let mut symbols: BTreeMap<String, Value> = BTreeMap::new();
     for entry in std::fs::read_dir(root.join("symbols"))? {
@@ -75,7 +78,11 @@ pub fn load(root: &Path, pack: &TargetPack) -> Result<NativeConfig> {
                 "native test ABI requires reviewed static evidence: {name}"
             )));
         }
-        for evidence in record["proof"]["evidence_ids"].as_array().into_iter().flatten() {
+        for evidence in record["proof"]["evidence_ids"]
+            .as_array()
+            .into_iter()
+            .flatten()
+        {
             let id = evidence.as_str().unwrap_or_default();
             if !root.join("evidence").join(format!("{id}.json")).is_file() {
                 return Err(Error::other(format!("missing native evidence: {id}")));
@@ -114,14 +121,16 @@ pub fn render(pack: &TargetPack, config: &NativeConfig) -> String {
         // Exact-target IDA review per target. These private numeric
         // properties/layouts are never part of the module ABI.
         out.push_str(&format!("/* Exact-target IDA review: {evidence}. */\n"));
-        out.push_str("#define FW_UI_COORD_TYPE int32_t\n#define FW_UI_OBJECT_COORDS_OFFSET 28u\n\
+        out.push_str(
+            "#define FW_UI_COORD_TYPE int32_t\n#define FW_UI_OBJECT_COORDS_OFFSET 28u\n\
 #define FW_UI_EVENT_PRESSED 1u\n#define FW_UI_EVENT_PRESSING 2u\n\
 #define FW_UI_EVENT_PRESS_LOST 3u\n#define FW_UI_EVENT_LONG_PRESSED 5u\n\
 #define FW_UI_EVENT_RELEASED 8u\n#define FW_UI_EVENT_SCROLL 12u\n\
 #define FW_UI_STYLE_RADIUS 12u\n#define FW_UI_STYLE_BORDER_COLOR 49u\n\
 #define FW_UI_STYLE_BORDER_WIDTH 48u\n#define FW_UI_STYLE_OPA 95u\n\
 #define FW_UI_STYLE_CLIP_CORNER 45u\n\
-#define FW_UI_FONT_EVENT_DELETE 36u\n");
+#define FW_UI_FONT_EVENT_DELETE 36u\n",
+        );
         if pack.target_id == "redmi-watch-6-3.100.043" {
             // MIwear v9 private layout on p65: the page title keeps its icon at
             // +0x34 and its label at +0x38, the list item keeps the trailing
