@@ -1259,3 +1259,74 @@ App-facing scan record: **0x54 bytes**, list links `+0/+4`, the report's dword a
   at `0x2013DBE4` is only reached through the recovered getters in the code I
   traced; its initialiser was not located, so these stay holes.
 
+## Final round: CoC event set, request block, adapter producer
+
+`EVID-PORT-1043-FINAL-001`.
+
+### 1. CoC app-facing events
+
+The app-facing registration entry is `bt_l2cap_register_psm 0xC805A80(psm, handler,
+kind)` — real callers pass `(31, 0xC81E2F8, 0)`, `(4, 0xC81E2F8, 4)`,
+`(6, 0xC839CB4, 4)`, `(1, 0xC806AC8, 0)`. That also proves the registry entry layout:
+**handler at `+0`, psm at `+4`, kind at `+6`**.
+
+A registered handler is `handler(event, data)` and switches on the event number:
+
+| handler | events it switches on |
+| --- | --- |
+| `0xC81E2F8` (psm 31 and 4) | `1, 2, 3, 5, 6, 7, 8, 12, 13, 14` |
+| `0xC806AC8` (psm 1) | `1, 2, 3, 5, 6, 7` (subset) |
+
+Every work item is posted with **flag `1`** (`l2cap_work_submit(..., 1)`), so
+`COC_QUEUE_EVENT = 1`. Event `5` is handled **inline** (no work item): it zeroes the
+u16 at `data+4` and calls `0xC805C98`. The `data` pointer is freed by the handler, so
+the module takes ownership.
+
+**What the numbers mean is a hole.** The set is measured and a module can switch on
+it safely, but naming each number (incoming / assigned / open / closed / data /
+credits …) would be a guess: the emitters I could see build signalling frames in
+place and pass the same values into those frames, and no site names them.
+
+### 2. Request blocks
+
+- **Register request** (what the module must fill): `{ handler +0, psm +4, kind +6 }`
+  — proven by the argument order of `bt_l2cap_register_psm` and by where
+  `register_psm_handler 0xC800624` stores them.
+- **Connect request** (from `l2cap_connect_handler 0xC801AC4`): the **caller** fills
+  `psm +2`, `flags +8` (bit0 = LE) and the cid pair at `+16/+20`; the **handler**
+  fills the assigned cid at `+0`, the psm entry pointer at `+12` and the state byte
+  at `+23`.
+- `size`, `status`, `status detail`, `callback`, `address`, `address type` in the
+  connect/accept block: **not established**. They would have to come from the app
+  side that the firmware's own profiles use, and no producer was traced.
+
+### 3. GAP leftovers
+
+- **`ADAPTER_STATE_WORD` = `0x2013DBE8`** (byte) and **`ADAPTER_READY_STATE` = `4`**.
+  Producer: `adapter_bring_up 0xCA40ED4` does `v = bt_adapter_get_state(instance)`,
+  then `if (v == 4 && byte_2013DBE8 != 4) log "on_adapter_state_on"`, then
+  `byte_2013DBE8 = v`.
+- **The adapter instance** is a **heap object, not a ROM structure**: `0x2013DBE4` is
+  only the pointer slot (its image bytes are `0xFF` filler, so there is no ROM
+  initialiser to read), and the value comes from `bt_adapter_create 0xC3AF1A8`,
+  which allocates **212 bytes** and initialises it as `"bluetooth"`, then
+  `adapter_bring_up` registers the callback table `&off_2CDB9504` and starts the IPC.
+- **`ADAPTER_LOOP`**: hole. The loop lives inside that 212-byte instance (or the IPC
+  client it starts); its offset was not traced.
+- **`ADV_PARAM_MODE/TX_POWER/INTERVAL`**: hole. The 28-byte advertising block is
+  produced by `0xC7D3C60`, and the only field decoded there is a **sequence number**
+  written at `hdr+4` from the `miwear_seqnum` counter; the rest of the block is
+  copied from the caller's structure without the packing being visible.
+
+### What the module ships with
+
+Measured and usable: all 47 addresses (41 + 6 compositions), the loop/task layout,
+the L2CAP channel and send/receive contracts, the CoC event **set** with flag 1, the
+PSM entry and connect-request field split, the scan parameter sizes, callback table
+size, scan report layout, the adapter state word / ready state, the array-buffer
+layout and class ids, and the sixteen-byte host contract.
+
+Named holes the module must express as compile-time absence: the **meaning** of the
+CoC event numbers, the connect/accept status fields, `ADAPTER_LOOP`, and the three
+advertising parameter fields.
+

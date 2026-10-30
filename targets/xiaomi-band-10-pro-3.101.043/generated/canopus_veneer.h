@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: eebd7e33b0327478
+ * input_digest: 08d16b00e8712f8d
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -491,6 +491,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * FeatureManagerQjs_uninit: restricted - not exported until context/ownership approved
  * __js_free_value: restricted - not exported until context/ownership approved
  * __js_throw: restricted - not exported until context/ownership approved
+ * adapter_bring_up: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved
  * background_object_has_flag: restricted - not exported until context/ownership approved
@@ -508,6 +509,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * bt_free: restricted - not exported until context/ownership approved
  * bt_get_bond_state: restricted - not exported until context/ownership approved
  * bt_l2cap_disconnect: restricted - not exported until context/ownership approved
+ * bt_l2cap_register_psm: restricted - not exported until context/ownership approved
  * bt_l2cap_submit_cid: restricted - not exported until context/ownership approved
  * bt_le_start_advertising: restricted - not exported until context/ownership approved
  * bt_le_start_scan_with_filters: restricted - not exported until context/ownership approved
@@ -534,6 +536,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * calendar_snapshot: restricted - not exported until context/ownership approved
  * calendar_text_color: restricted - not exported until context/ownership approved
  * closedir: restricted - not exported until context/ownership approved
+ * coc_event_dispatch: restricted - not exported until context/ownership approved
  * control_center_scroll: restricted - not exported until context/ownership approved
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * driver_close_dispatch: restricted - not exported until context/ownership approved

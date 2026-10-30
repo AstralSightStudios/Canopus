@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: eebd7e33b0327478
+// input_digest: 08d16b00e8712f8d
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -337,6 +337,9 @@ pub const CANOPUS_FW_LV_CACHE_DROP_CALLABLE: usize = canopus_thumb_callable(0x0c
 
 /// Recovered `lv_obj_update_layout` at 0x1c02c760. Thumb callable address 0x1c02c761.
 pub const CANOPUS_FW_LV_OBJ_UPDATE_LAYOUT_CALLABLE: usize = canopus_thumb_callable(0x1c02c761usize);
+
+/// Recovered `bt_l2cap_register_psm` at 0xC805A80. Thumb callable address 0xc805a81.
+pub const CANOPUS_FW_BT_L2CAP_REGISTER_PSM_CALLABLE: usize = canopus_thumb_callable(0xc805a81usize);
 
 /// Recovered global `gap_scan_callbacks` at 0x200DFAF0.
 pub const canopus_fw_gap_scan_callbacks: usize = 0x200DFAF0usize;
@@ -1049,6 +1052,9 @@ pub const CANOPUS_FW_CALENDAR_LOCALIZED_TEXT_CALLABLE: usize = canopus_thumb_cal
 /// Recovered `font_manager_add_path` at 0x0c86037c. Thumb callable address 0x0c86037d.
 pub const CANOPUS_FW_FONT_MANAGER_ADD_PATH_CALLABLE: usize = canopus_thumb_callable(0x0c86037dusize);
 
+/// Recovered `adapter_bring_up` at 0xCA40ED4. Thumb callable address 0xca40ed5.
+pub const CANOPUS_FW_ADAPTER_BRING_UP_CALLABLE: usize = canopus_thumb_callable(0xca40ed5usize);
+
 /// Recovered `calendar_icon_notify` at 0xca6a004. Thumb callable address 0xca6a005.
 pub const CANOPUS_FW_CALENDAR_ICON_NOTIFY_CALLABLE: usize = canopus_thumb_callable(0xca6a005usize);
 
@@ -1057,6 +1063,9 @@ pub const CANOPUS_FW_L2CAP_REGISTER_PSM_HANDLER_CALLABLE: usize = canopus_thumb_
 
 /// Recovered `watchface_manager_delete_watchface` at 0xca95c68. Thumb callable address 0xca95c69.
 pub const CANOPUS_FW_WATCHFACE_MANAGER_DELETE_WATCHFACE_CALLABLE: usize = canopus_thumb_callable(0xca95c69usize);
+
+/// Recovered `coc_event_dispatch` at 0xC81E2F8. Thumb callable address 0xc81e2f9.
+pub const CANOPUS_FW_COC_EVENT_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc81e2f9usize);
 
 /// Recovered `bt_le_start_scan_with_filters` at 0xC710BCC. Thumb callable address 0xc710bcd.
 pub const CANOPUS_FW_BT_LE_START_SCAN_WITH_FILTERS_CALLABLE: usize = canopus_thumb_callable(0xc710bcdusize);
@@ -1234,6 +1243,9 @@ pub const CANOPUS_FW_LV_OBJ_SET_SCROLL_DIR_CALLABLE: usize = canopus_thumb_calla
 
 /// Recovered `nx_pipe` at 0xC1A609C. Thumb callable address 0xc1a609d.
 pub const CANOPUS_FW_NX_PIPE_CALLABLE: usize = canopus_thumb_callable(0xc1a609dusize);
+
+/// Recovered global `adapter_state_word` at 0x2013DBE8.
+pub const canopus_fw_adapter_state_word: usize = 0x2013DBE8usize;
 
 /// Recovered `core_bt_pair_request_callback` at 0xc709e90. Thumb callable address 0xc709e91.
 pub const CANOPUS_FW_CORE_BT_PAIR_REQUEST_CALLBACK_CALLABLE: usize = canopus_thumb_callable(0xc709e91usize);
@@ -1713,6 +1725,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // FeatureManagerQjs_uninit: restricted - not exported until context/ownership approved
 // __js_free_value: restricted - not exported until context/ownership approved
 // __js_throw: restricted - not exported until context/ownership approved
+// adapter_bring_up: restricted - not exported until context/ownership approved
 // app_launcher_data_init: restricted - not exported until context/ownership approved
 // app_launcher_del: restricted - not exported until context/ownership approved
 // background_object_has_flag: restricted - not exported until context/ownership approved
@@ -1730,6 +1743,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // bt_free: restricted - not exported until context/ownership approved
 // bt_get_bond_state: restricted - not exported until context/ownership approved
 // bt_l2cap_disconnect: restricted - not exported until context/ownership approved
+// bt_l2cap_register_psm: restricted - not exported until context/ownership approved
 // bt_l2cap_submit_cid: restricted - not exported until context/ownership approved
 // bt_le_start_advertising: restricted - not exported until context/ownership approved
 // bt_le_start_scan_with_filters: restricted - not exported until context/ownership approved
@@ -1756,6 +1770,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // calendar_snapshot: restricted - not exported until context/ownership approved
 // calendar_text_color: restricted - not exported until context/ownership approved
 // closedir: restricted - not exported until context/ownership approved
+// coc_event_dispatch: restricted - not exported until context/ownership approved
 // control_center_scroll: restricted - not exported until context/ownership approved
 // controller_crash_dump: FORBIDDEN - no binding may ever be generated
 // driver_close_dispatch: restricted - not exported until context/ownership approved
