@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 7e658dd1ede522bf
+// input_digest: 2918f5a2a35c6e3a
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -355,6 +355,9 @@ pub const CANOPUS_FW_MIWEAR_SESSION_CRYPTO_CTR_CALLABLE: usize = canopus_thumb_c
 
 /// Recovered `FeatureManagerQjs_findFeature` at 0xC869270. Thumb callable address 0xc869271.
 pub const CANOPUS_FW_FEATUREMANAGERQJS_FINDFEATURE_CALLABLE: usize = canopus_thumb_callable(0xc869271usize);
+
+/// Recovered `feature_framework_bind` at 0xC86700C. Thumb callable address 0xc86700d.
+pub const CANOPUS_FW_FEATURE_FRAMEWORK_BIND_CALLABLE: usize = canopus_thumb_callable(0xc86700dusize);
 
 /// Recovered `feature_method_call` at 0xC86C2B8. Thumb callable address 0xc86c2b9.
 pub const CANOPUS_FW_FEATURE_METHOD_CALL_CALLABLE: usize = canopus_thumb_callable(0xc86c2b9usize);
@@ -1760,6 +1763,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // feature_event_get: restricted - not exported until context/ownership approved
 // feature_event_on_off: restricted - not exported until context/ownership approved
 // feature_event_set: restricted - not exported until context/ownership approved
+// feature_framework_bind: restricted - not exported until context/ownership approved
 // feature_framework_init: restricted - not exported until context/ownership approved
 // feature_manager_post_task: restricted - not exported until context/ownership approved
 // feature_method_call: restricted - not exported until context/ownership approved

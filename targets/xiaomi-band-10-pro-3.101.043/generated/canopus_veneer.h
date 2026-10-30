@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 7e658dd1ede522bf
+ * input_digest: 2918f5a2a35c6e3a
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -547,6 +547,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * feature_event_get: restricted - not exported until context/ownership approved
  * feature_event_on_off: restricted - not exported until context/ownership approved
  * feature_event_set: restricted - not exported until context/ownership approved
+ * feature_framework_bind: restricted - not exported until context/ownership approved
  * feature_framework_init: restricted - not exported until context/ownership approved
  * feature_manager_post_task: restricted - not exported until context/ownership approved
  * feature_method_call: restricted - not exported until context/ownership approved

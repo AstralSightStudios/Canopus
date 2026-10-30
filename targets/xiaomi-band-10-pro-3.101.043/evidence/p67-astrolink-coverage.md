@@ -1097,3 +1097,40 @@ from `uv_mutex_init`.
 
 `uv_close` remains unlocated.
 
+## The host contract: four fields, so this is a shim
+
+`EVID-PORT-1043-HOST-002`. `feature_registry_create 0xC8660E4(host)` and the two
+calls it makes touch **exactly four host fields**, and none of them is dereferenced
+during registration:
+
+| host field | who reads it | instruction / use |
+| --- | --- | --- |
+| `+0` (u32) | `feature_framework_bind 0xC86700C` | `v6 = *a2`, then `0xC860F08(v6)` → `0xC8617B8` does `*(u32 *)adapter = hostp0` and fills the adapter's callback table at `+8..+68` |
+| `+4` (u32) | `feature_registry_create` | `*(_DWORD *)(a1 + 4)` passed to `0xC860F44(registry+8, value)`, whose body is `*(u32 *)(result+4) = a2` |
+| `+8` (u8) | `feature_registry_create` | `if (*(_BYTE *)(a1 + 8) != 0) return nullptr;` — an abort flag checked **after** init, so it must be `0` |
+| `+12` (u32 → `const char *`) | `feature_registry_create` → `feature_framework_init 0xC86E764(registry, *(host+12))` | init calls `0xC21D974(registry+12, a2)` when `a2 != 0`; that function is a **std::string operator=** (it writes length/tail and a NUL), so the value is a package-name string. `NULL` is accepted. |
+
+Nothing else: init's remaining reads (`registry+12` flags, `registry+16`, `registry+20`
+for the `package_name is %s` log) are on the **registry**, not the host, and the
+registry was just zeroed by create.
+
+**So: a 16-byte, caller-allocated host struct is structurally sufficient** —
+`{ u32 token; u32 sink; u8 abort = 0; u8 pad[3]; const char *package_name; }` — and
+the whole integration is `create → init (inside create) → register_all` or, for a
+module, `create → feature_register_feature(registry, &descriptor)`.
+
+Two honest caveats:
+
+- `host+0` and `host+4` are **stored for later**, not used during registration. They
+  govern event delivery (the 148-byte adapter's callbacks receive `host+0`), so a
+  minimal host registers correctly but events reaching JS depends on what those two
+  words point at.
+- `feature_registry_create` has exactly **one caller** (`0xC86236C`, reached from the
+  AIOTJS/ferry side at `0xC911306`), i.e. there is no second, host-free path. The
+  shim is therefore the route: build the host struct, create the registry, register.
+
+`_pImpl` tracing is no longer needed for registration. It stays relevant only for
+delivery: the adapter built from `host+0` is where the framework will hand events
+back, and `_pImpl->render_.loop/.stop/.event/.async_del_app` is what a real host puts
+there.
+
