@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.capability_finding.device_js_evidence_surface",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "device_js_evidence_surface",
+  "kind": "finding",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "How the QuickJS heap and the qjs builtin behave on a Mirage p67 device, recorded because the JS object layout evidence has to be taken at runtime: the heap is in PSRAM at 0x3C000000, not in the 0x20000000 RAM, so a snapshot of RAM alone shows nothing. A staged script run as `qjs /data/<name>.js &` with a tight `do{}while(1)` keeps the heap alive and does starve NSH (miragectl sh then times out) without blocking QMP memory reads."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "proven",
+    "evidence_ids": [
+      "EVID-PORT-1043-DEVICE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-DEVICE-001"
+    ],
+    "source": "Device probe on Mirage `probe-p67` (3.101.043): `var ab = new ArrayBuffer(512)` filled with 0xA7 was found as a 512-byte run at 0x3C39E750, and `new Uint8Array(8)` filled with 0xB3 as an 8-byte run at 0x3C27A380, both inside a snapshot of 0x3C000000+4 MiB taken with QMP `xp` while the script was alive. The same RAM snapshot at 0x20000000..0x20160000 contained neither marker. qjs on this build has no `print`; `console.log` works and `throw <expr>` surfaces a value in the interpreter error text."
+  },
+  "notes": "Evidence-surface note for the JS object question, not an address. The class-id hop (data pointer -> JSArrayBuffer -> JSObject.u.array_buffer -> class id at object+6) was not completed in that session, and no pointer to the flash name blob exists at runtime either, so the descriptor-name route does not work on this build."
+}

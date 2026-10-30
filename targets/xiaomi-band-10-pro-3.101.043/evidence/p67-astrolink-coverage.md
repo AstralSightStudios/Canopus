@@ -681,3 +681,51 @@ pointer (the module frees it with `F_QJS_FREE_CSTRING`, i.e. as `ptr-16` with ta
 Group status: **8 of 13 settled**, 4 open with a named invariant each, 1 settled as
 a composition.
 
+### 7c. Device pass: what Mirage settled and what it did not
+
+Ran the QuickJS question on the Mirage `probe-p67` device (NSH works on p67, unlike
+q66). `EVID-PORT-1043-DEVICE-001`.
+
+**Settled and important for anyone repeating this:** the JS heap is in **PSRAM at
+`0x3C000000`**, not in the `0x20000000` RAM. A snapshot of `0x20000000..0x20160000`
+contains no JS data at all, which is why the first attempt looked empty. With the
+PSRAM range the markers are immediate:
+
+| object | marker run | address |
+| --- | --- | --- |
+| `var ab = new ArrayBuffer(512)` | 512 bytes of `0xA7` | `0x3C39E750` |
+| `var t8 = new Uint8Array(8)` | 8 bytes of `0xB3` | `0x3C27A380` |
+
+Practical notes recorded in the pack finding: `qjs` on this build has **no
+`print`** (`console.log` works, and `throw <expr>` surfaces a value in the
+interpreter error text, which is a convenient probe); `miragectl fs put` must be
+done while the device is down; and a background `qjs` busy loop (`do {} while (1)`)
+keeps the heap alive and does starve NSH, so `miragectl sh` times out — QMP reads
+keep working through it.
+
+**Not settled: the class ids.** The hop the plan relies on — data pointer →
+`JSArrayBuffer` → `JSObject.u.array_buffer` → class id at `object+6` — did not land.
+The 12 words that point at `0x3C39E750` were enumerated, but none of the candidate
+structs around them matches the QuickJS `JSArrayBuffer` layout this build uses
+(`ref_count` first, `data`/`byte_length` adjacent); the two candidates that pair
+the data pointer with the value 512 are `0x3C313370` (`[512][0][data][…]`) and
+`0x3C314810` (`[ptr][data][512][0][2][0x130100]`), and neither is reachable from a
+`JSObject`-shaped record with a small refcount at `+0` and a class id at `+6`.
+
+The descriptor-name route is also closed **at runtime**, not just statically: the
+PSRAM snapshot contains **no word pointing anywhere into the flash name blob**
+(`0xcce9b00..0xcce9d00`, checked in both the XIP and `+0x20000000` alias form), so
+the runtime class table does not store `class_name` pointers either.
+
+Next step for this question, in priority order:
+1. Resolve the `JSArrayBuffer` layout on this build by allocating a *pair* of
+   buffers with different lengths (e.g. 512 and 8) and diffing the two structs that
+   point at their data — the common fields are the object, and `byte_length` then
+   pins the offsets.
+2. Then find `JSObject.u.array_buffer` the same way, and read `object+6`.
+3. With the id in hand, the three array-buffer bindings follow from their class-id
+   immediates exactly as planned.
+
+Until then the three array-buffer entries and the two string entries stay open in
+the pack; nothing was filled from resemblance.
+
