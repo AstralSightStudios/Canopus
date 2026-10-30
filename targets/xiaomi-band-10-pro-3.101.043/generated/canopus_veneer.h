@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: b7530145dc69b153
+ * input_digest: ccd0c3b473939f0a
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -623,6 +623,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * l2cap_register_psm_handler: restricted - not exported until context/ownership approved
  * l2cap_send_handler: restricted - not exported until context/ownership approved
  * l2cap_signal_dispatch: restricted - not exported until context/ownership approved
+ * l2cap_stock_alloc: restricted - not exported until context/ownership approved
  * l2cap_unregister_psm_handler: restricted - not exported until context/ownership approved
  * l2cap_work_submit: restricted - not exported until context/ownership approved
  * launcher_parent: restricted - not exported until context/ownership approved

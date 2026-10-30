@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: b7530145dc69b153
+// input_digest: ccd0c3b473939f0a
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -569,6 +569,9 @@ pub const CANOPUS_FW___JS_FREE_VALUE_CALLABLE: usize = canopus_thumb_callable(0x
 /// Recovered `uv__tls_get` at 0xC2DEA38. Thumb callable address 0xc2dea39.
 pub const CANOPUS_FW_UV__TLS_GET_CALLABLE: usize = canopus_thumb_callable(0xc2dea39usize);
 
+/// Recovered global `feature_instance_class_id` at 0x2013CE38.
+pub const canopus_fw_feature_instance_class_id: usize = 0x2013CE38usize;
+
 /// Recovered `font_reload_ft_set_pixel_size` at 0x0c33ef58. Thumb callable address 0x0c33ef59.
 pub const CANOPUS_FW_FONT_RELOAD_FT_SET_PIXEL_SIZE_CALLABLE: usize = canopus_thumb_callable(0x0c33ef59usize);
 
@@ -1051,6 +1054,9 @@ pub const CANOPUS_FW_BT_GET_BOND_STATE_CALLABLE: usize = canopus_thumb_callable(
 
 /// Recovered `feature_runtime_enqueue` at 0xC865794. Thumb callable address 0xc865795.
 pub const CANOPUS_FW_FEATURE_RUNTIME_ENQUEUE_CALLABLE: usize = canopus_thumb_callable(0xc865795usize);
+
+/// Recovered `l2cap_stock_alloc` at 0xC7EAFBC. Thumb callable address 0xc7eafbd.
+pub const CANOPUS_FW_L2CAP_STOCK_ALLOC_CALLABLE: usize = canopus_thumb_callable(0xc7eafbdusize);
 
 /// Recovered `net_lock` at 0xc201b40. Thumb callable address 0xc201b41.
 pub const CANOPUS_FW_NET_LOCK_CALLABLE: usize = canopus_thumb_callable(0xc201b41usize);
@@ -1815,6 +1821,7 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // l2cap_register_psm_handler: restricted - not exported until context/ownership approved
 // l2cap_send_handler: restricted - not exported until context/ownership approved
 // l2cap_signal_dispatch: restricted - not exported until context/ownership approved
+// l2cap_stock_alloc: restricted - not exported until context/ownership approved
 // l2cap_unregister_psm_handler: restricted - not exported until context/ownership approved
 // l2cap_work_submit: restricted - not exported until context/ownership approved
 // launcher_parent: restricted - not exported until context/ownership approved

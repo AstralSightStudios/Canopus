@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_send_contract",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_send_contract",
+  "kind": "layout",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "struct l2cap_stock { u16 total; u16 payload_offset; u16 cid; u16 handle; ...; u8 type; u8 flags; }",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Ownership: the caller allocates and the handler frees, so after bt_l2cap_submit_cid the module must not touch the buffer. Zero-length payload is supported: the handler computes total - payload_offset == 0 and takes its header-only branch."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-COC-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-COC-002"
+    ],
+    "source": "Measured from both ends. Caller side: allocate with l2cap_stock_alloc 0xC7EAFBC(payload_len, header_len), fill the payload at buf + 4 + payload_offset, then call bt_l2cap_submit_cid 0xC805BE8(buf, cid). That wrapper writes the cid dword at buf+4 (low u16 = cid, high u16 = the caller's second word) and posts a work node {owner, handler 0xC801D10, done 0xC7EBD40, arg = buf, flag 1} through l2cap_work_submit 0xC7EB988. Handler side: reads the same words (+0 total, +2 payload offset, +4 cid/handle), re-fragments in place into 8-byte nodes chained through *(channel+4) using the channel fragment size at +106, writes the four-byte L2CAP header immediately before the payload, sets the flags byte at +10 to 0x81 (first|last) on the single-fragment path, and frees the buffer with bt_free on every exit path."
+  },
+  "notes": "Ownership: the caller allocates and the handler frees, so after bt_l2cap_submit_cid the module must not touch the buffer. Zero-length payload is supported: the handler computes total - payload_offset == 0 and takes its header-only branch."
+}

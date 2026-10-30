@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.feature_instance_class_id",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "feature_instance_class_id",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2013CE38",
+  "prototype": "JSClassID feature_instance_class_id",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Consequence for the module: the Feature instance class id is NOT a compile-time constant on this build, so a p67 module must not hardcode one; it has to read this global after the runtime has initialised."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-COC-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-COC-002"
+    ],
+    "source": "Global holding the JS class id assigned at runtime to the Feature instance class. ensureJsClass 0xC867040 obtains it with the QuickJS class-id allocator 0xC2780F4(&dword_2013CE38) and registers the class through 0xC278140(ctx, id, &classdef at 0x200E7EA8); every JS_GetOpaque in the feature framework unwraps with this id, e.g. event_set 0xC8697FC and method_call 0xC86C2B8."
+  },
+  "notes": "Consequence for the module: the Feature instance class id is NOT a compile-time constant on this build, so a p67 module must not hardcode one; it has to read this global after the runtime has initialised."
+}

@@ -953,3 +953,92 @@ libuv coverage check: `uv_mutex_init 0xC2DCF1C`, `uv_async_init 0xC2E14E8`,
 `uv_loop_init 0xC2DC9A0` and `uv_mutex_lock 0xC1E9B1C` are all present as records;
 `uv_mutex_unlock` and `uv_close` remain the only two addresses still missing.
 
+## Send-path contract on p67 (Band 11's SDU/fragment shape does not exist)
+
+Measured from both ends. `EVID-PORT-1043-COC-002`.
+
+**1. Queue entry.** `bt_l2cap_submit_cid 0xC805BE8(buf, cid)`. It writes the cid
+dword at `buf+4` and posts a work node through `l2cap_work_submit 0xC7EB988` with
+`{owner = 0x2013BDBC, handler = l2cap_send_handler 0xC801D10, done = 0xC7EBD40,
+arg = buf, flag = 1}`. So the object in the node's `arg` field at `+4` is the
+**caller's stock buffer**, not a Band 11 SDU.
+
+**2. Shape the handler reads.** `l2cap_stock_alloc 0xC7EAFBC` is the producer:
+
+| offset | meaning |
+| --- | --- |
+| `+0` (u16) | total length = `payload_len + header_len + 4` |
+| `+2` (u16) | payload offset = `header_len + 4` |
+| `+4` (u16) | cid, written by `bt_l2cap_submit_cid` |
+| `+6` (u16) | the caller's second word (handle) |
+| `+8` (u8) | header-type nibble, `3` when the payload offset exceeds 7 |
+| `+10` (u8) | flags; the handler writes `0x81` (first|last) on the single-fragment path |
+| `+4+offset` | payload |
+
+The handler writes the four-byte L2CAP header (length, cid) immediately before the
+payload and re-fragments in place into 8-byte nodes chained through `*(channel+4)`
+with the channel fragment size at `+106`.
+
+**3. Ownership.** The **caller allocates** (`l2cap_stock_alloc(payload_len,
+header_len)` = `bt_alloc(payload + header + 4 + 6)`), the **handler frees**
+(`bt_free` on every exit path, including the early-outs when the PSM or channel is
+not found). After `bt_l2cap_submit_cid` the module must not touch the buffer.
+
+**4. Zero length.** Supported: the handler compares `total - payload_offset` and
+takes its header-only branch (`LABEL_35` / `LABEL_21`) when it is zero.
+
+A p67 shim can therefore be `queue_send(channel_word, cid, payload, len)` =
+allocate with `l2cap_stock_alloc(len, hdr)`, copy, submit, and forget the pointer.
+
+## Feature framework: what p67 actually has
+
+**The manager table is the one the module calls through.** `FeatureManagerQjs`'s
+constructor `0xC86646C` stores its vptr as `0x2CDA2CE4`, i.e. `0xCDA2CD0 + 0x14`, so
+the table at `0xCDA2CD0` has **`VTABLE_PREFIX_WORDS = 5`** and the slots begin at
+`+0x14`: `+0x1C featureRequire`, `+0x20 findFeature`, `+0x24 createFeature`,
+`+0x2C uninit`, with `+0x04` a constant-true predicate, `+0x08` an empty stub,
+`+0x00` a forwarding stub, and `+0x14`/`+0x18` the constructor and deleting
+destructor. There is **no second manager table** in the traced paths.
+
+**Feature objects are JS objects of a runtime-assigned class.** This is the one
+finding that changes the module's registration path: `ensureJsClass 0xC867040`
+allocates the class id with `0xC2780F4(&dword_2013CE38)` and registers the class
+with `0xC278140(ctx, id, &classdef@0x200E7EA8)`. So `dword_2013CE38` is a **JSClassID
+global, not the framework instance**, and a p67 module cannot hardcode the class id
+for a Feature object — it must read that global after the runtime is up. Every
+`JS_GetOpaque` in the framework uses it.
+
+**Routing from a Feature handle (measured):** `handle+19` = detached flag,
+`handle+28` → object, `*(that+12)` = the runtime; the runtime's**message ring** is
+`runtime+0x50..0x64` (buffer, bounds, head, tail, sequence, 24-byte elements) and the
+**wake async** is at `runtime+0x3C`, signalled with `uv_async_send 0xC2E15A4`.
+
+### Named holes in this group
+
+No p67 producer was found for: `D_FRAMEWORK` (a framework/manager *singleton global*
+distinct from the JSClassID above), `D_APPLICATION_VTABLE`,
+`FRAMEWORK_FACTORY_SLOT`, `FRAMEWORK_COPY_WORDS`, `APPLICATION_INIT_SLOT`,
+`APPLICATION_COPY_WORDS`, `FRAMEWORK_IMPLEMENTATION`, `FRAMEWORK_MUTEX`,
+`FRAMEWORK_APPS_BEGIN/END`, `APPLICATION_RUNTIME`, `RUNTIME_MANAGER`,
+`MANAGER_REGISTRY`, `MANAGER_ASYNC`, `HANDLE_LOOP`, `PROTOTYPE_MANAGER`,
+`INSTANCE_HANDLE`. The reason is structural, not a shortcut: on p67 the Feature
+runtime is entered through **C++ virtual dispatch and JS objects**, and the host side
+that owns the app list and the framework mutex is the `ferry`/`AIOTJS` application
+framework (its own strings and vtables), which is a different subsystem from the one
+Band 11's constants describe. Naming these on p67 requires tracing that host, and it
+would be a mistake to reuse Band 11's offsets for it.
+
+### uv_close and the unlock primitive
+
+- `uv_close`: not located. The libuv teardown paths I traced (`uv_async_init`
+  `0xC2E14E8`, `uv_loop_init 0xC2DC9A0`) do not call a single close entry, and the
+  Feature teardown (`feature_runtime_enqueue`'s owner, `uninit 0xC866AB0`) does not
+  reach one either.
+- `uv_mutex_unlock`: the mutex is a NuttX `pthread_mutex_t`; `uv_mutex_init
+  0xC2DCF1C` initialises it with the pthread trio, and the lock body `0xC204E3C`
+  works on the semaphore at `mutex+8` with the holder pid at `mutex+20`
+  (`*(u32 *)((mutex+8)+12)`). The semaphore post entity itself was **not** isolated
+  with producer evidence: the best candidate `0xC1E68FC` (post core plus holder
+  clear, 50 callers) has **no caller in common with the lock's 188 call sites**, so
+  it is not the unlock path and was not recorded.
+
