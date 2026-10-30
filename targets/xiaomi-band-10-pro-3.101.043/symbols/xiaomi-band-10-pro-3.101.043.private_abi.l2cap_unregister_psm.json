@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_unregister_psm",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_unregister_psm",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC7FFB04",
+  "callable_address": "0xc7ffb05",
+  "prototype": "int l2cap_unregister_psm(void *request, void *msg, int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Counterpart of l2cap_find_le_psm on the remove side. The registration/insert half was not identified on this build and is deliberately left open."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ],
+    "source": "Matches a registry entry by the derived psm (request+38 plus the kind nibble of msg+1) and by entry+6, unlinks it from the *(owner)+16 list through 0xC7EAD28, then builds a 16-byte request node with 0xC840C54(16) and copies the entry payload from request+16/+20 before queueing it."
+  },
+  "notes": "Counterpart of l2cap_find_le_psm on the remove side. The registration/insert half was not identified on this build and is deliberately left open."
+}

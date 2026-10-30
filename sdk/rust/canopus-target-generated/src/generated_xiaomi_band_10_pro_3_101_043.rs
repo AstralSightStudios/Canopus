@@ -4,7 +4,7 @@
 // firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
 // sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
 // revision : 8
-// input_digest: 12ad976fe178c389
+// input_digest: 460d14d60c9e03e6
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -260,6 +260,9 @@ pub const CANOPUS_FW_LVGL_POSIX_OPEN_CALLABLE: usize = canopus_thumb_callable(0x
 /// Recovered `lv_obj_move_to_index` at 0xc589550. Thumb callable address 0xc589551.
 pub const CANOPUS_FW_LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = canopus_thumb_callable(0xc589551usize);
 
+/// Recovered `l2cap_find_channel` at 0xC8004A4. Thumb callable address 0xc8004a5.
+pub const CANOPUS_FW_L2CAP_FIND_CHANNEL_CALLABLE: usize = canopus_thumb_callable(0xc8004a5usize);
+
 /// Recovered `power_battery_ready` at 0x0ca6e658. Thumb callable address 0x0ca6e659.
 pub const CANOPUS_FW_POWER_BATTERY_READY_CALLABLE: usize = canopus_thumb_callable(0x0ca6e659usize);
 
@@ -289,6 +292,9 @@ pub unsafe fn canopus_fw_lvx_notification_insert_message(a0: *const firmware_not
     let f: extern "C" fn(*const firmware_notification_message) -> i32 = unsafe { core::mem::transmute(CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE) };
     f(a0)
 }
+
+/// Recovered `l2cap_connect_handler` at 0xC801AC4. Thumb callable address 0xc801ac5.
+pub const CANOPUS_FW_L2CAP_CONNECT_HANDLER_CALLABLE: usize = canopus_thumb_callable(0xc801ac5usize);
 
 /// Recovered global `font_reload_vector_draw_unit_slot` at 0x2013eadc.
 pub const canopus_fw_font_reload_vector_draw_unit_slot: usize = 0x2013eadcusize;
@@ -707,6 +713,9 @@ pub unsafe fn canopus_fw_register_driver(a0: *const u8, a1: *const core::ffi::c_
     f(a0, a1, a2, a3)
 }
 
+/// Recovered `l2cap_unregister_psm` at 0xC7FFB04. Thumb callable address 0xc7ffb05.
+pub const CANOPUS_FW_L2CAP_UNREGISTER_PSM_CALLABLE: usize = canopus_thumb_callable(0xc7ffb05usize);
+
 /// Recovered `p67_blur_event_list_count` at 0x1c07ab48. Thumb callable address 0x1c07ab49.
 pub const CANOPUS_FW_P67_BLUR_EVENT_LIST_COUNT_CALLABLE: usize = canopus_thumb_callable(0x1c07ab49usize);
 
@@ -959,6 +968,12 @@ pub const CANOPUS_FW_FILE_DUP3_CALLABLE: usize = canopus_thumb_callable(0xc1ced1
 /// Recovered `app_launcher_data_init` at 0xc513e90. Thumb callable address 0xc513e91.
 pub const CANOPUS_FW_APP_LAUNCHER_DATA_INIT_CALLABLE: usize = canopus_thumb_callable(0xc513e91usize);
 
+/// Recovered `l2cap_work_submit` at 0xC7EB988. Thumb callable address 0xc7eb989.
+pub const CANOPUS_FW_L2CAP_WORK_SUBMIT_CALLABLE: usize = canopus_thumb_callable(0xc7eb989usize);
+
+/// Recovered `l2cap_disconnect_handler` at 0xC80279C. Thumb callable address 0xc80279d.
+pub const CANOPUS_FW_L2CAP_DISCONNECT_HANDLER_CALLABLE: usize = canopus_thumb_callable(0xc80279dusize);
+
 /// Recovered global `font_reload_style_refresh_enabled` at 0x2010319c.
 pub const canopus_fw_font_reload_style_refresh_enabled: usize = 0x2010319cusize;
 
@@ -1124,11 +1139,17 @@ pub const CANOPUS_FW_LV_OBJ_GET_STYLE_PROP_CALLABLE: usize = canopus_thumb_calla
 /// Recovered global `pipe_file_operations` at 0x2CCBE5A4.
 pub const canopus_fw_pipe_file_operations: usize = 0x2CCBE5A4usize;
 
+/// Recovered `l2cap_find_le_psm` at 0xC7FF644. Thumb callable address 0xc7ff645.
+pub const CANOPUS_FW_L2CAP_FIND_LE_PSM_CALLABLE: usize = canopus_thumb_callable(0xc7ff645usize);
+
 /// Recovered `screen_get_state` at 0x0ca72f3c. Thumb callable address 0x0ca72f3d.
 pub const CANOPUS_FW_SCREEN_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0ca72f3dusize);
 
 /// Recovered global `font_reload_vector_label_class` at 0x2cdba868.
 pub const canopus_fw_font_reload_vector_label_class: usize = 0x2cdba868usize;
+
+/// Recovered `l2cap_channel_descriptor_create` at 0xC8004F4. Thumb callable address 0xc8004f5.
+pub const CANOPUS_FW_L2CAP_CHANNEL_DESCRIPTOR_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc8004f5usize);
 
 /// Recovered `lvx_image_set_scale` at 0x1c06c970. Thumb callable address 0x1c06c971.
 pub const CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE: usize = canopus_thumb_callable(0x1c06c971usize);
@@ -1412,6 +1433,9 @@ pub const CANOPUS_FW_FONT_RELOAD_DROP_FACE_ID_CALLABLE: usize = canopus_thumb_ca
 /// Recovered `uv_mutex_init` at 0xC2DCF1C. Thumb callable address 0xc2dcf1d.
 pub const CANOPUS_FW_UV_MUTEX_INIT_CALLABLE: usize = canopus_thumb_callable(0xc2dcf1dusize);
 
+/// Recovered `l2cap_send_handler` at 0xC801D10. Thumb callable address 0xc801d11.
+pub const CANOPUS_FW_L2CAP_SEND_HANDLER_CALLABLE: usize = canopus_thumb_callable(0xc801d11usize);
+
 /// Recovered `lv_obj_set_style_bg_opa` at 0xc108374. Thumb callable address 0xc108375.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_BG_OPA_CALLABLE: usize = canopus_thumb_callable(0xc108375usize);
 
@@ -1441,6 +1465,9 @@ pub unsafe fn canopus_fw_lvx_page_title_create(a0: *mut core::ffi::c_void, a1: *
     let f: extern "C" fn(*mut core::ffi::c_void, *const u8, u32, canopus_lvx_event_cb, *mut core::ffi::c_void) -> *mut core::ffi::c_void = unsafe { core::mem::transmute(CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE) };
     f(a0, a1, a2, a3, a4)
 }
+
+/// Recovered `l2cap_allocate_cid` at 0xC7FF93C. Thumb callable address 0xc7ff93d.
+pub const CANOPUS_FW_L2CAP_ALLOCATE_CID_CALLABLE: usize = canopus_thumb_callable(0xc7ff93dusize);
 
 /// Recovered `native_font_release` at 0xc85f8fc. Thumb callable address 0xc85f8fd.
 pub const CANOPUS_FW_NATIVE_FONT_RELEASE_CALLABLE: usize = canopus_thumb_callable(0xc85f8fdusize);
@@ -1609,6 +1636,15 @@ pub const CANOPUS_FW_LV_DISPLAY_GET_HORIZONTAL_RESOLUTION_CALLABLE: usize = cano
 // ioctl: restricted - not exported until context/ownership approved
 // l2_owner_timer_init: restricted - not exported until context/ownership approved
 // l2_owner_timer_start: restricted - not exported until context/ownership approved
+// l2cap_allocate_cid: restricted - not exported until context/ownership approved
+// l2cap_channel_descriptor_create: restricted - not exported until context/ownership approved
+// l2cap_connect_handler: restricted - not exported until context/ownership approved
+// l2cap_disconnect_handler: restricted - not exported until context/ownership approved
+// l2cap_find_channel: restricted - not exported until context/ownership approved
+// l2cap_find_le_psm: restricted - not exported until context/ownership approved
+// l2cap_send_handler: restricted - not exported until context/ownership approved
+// l2cap_unregister_psm: restricted - not exported until context/ownership approved
+// l2cap_work_submit: restricted - not exported until context/ownership approved
 // launcher_parent: restricted - not exported until context/ownership approved
 // launcher_rect_init: restricted - not exported until context/ownership approved
 // launcher_scroll: restricted - not exported until context/ownership approved

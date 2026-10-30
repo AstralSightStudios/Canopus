@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_find_le_psm",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_find_le_psm",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC7FF644",
+  "callable_address": "0xc7ff645",
+  "prototype": "void *l2cap_find_le_psm(uint16_t psm, int kind)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed registry entry for the Bluelet owner task only. The registry root is *(owner)+16 on this build."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ],
+    "source": "Walks the PSM registry rooted at *(owner)+16 (owner = dword_2013BDBC), matching the psm word at entry+4 and the kind/state byte at entry+6; for kind 3 it accepts psm <= 0x7F only when entry+6 == 1 and psm >= 0x80 only otherwise, and follows the intrusive previous link at entry-8. Consumed by the connect handler 0xC801AC4 and by the L2CAP route handler 0xC802AEC."
+  },
+  "notes": "Borrowed registry entry for the Bluelet owner task only. The registry root is *(owner)+16 on this build."
+}

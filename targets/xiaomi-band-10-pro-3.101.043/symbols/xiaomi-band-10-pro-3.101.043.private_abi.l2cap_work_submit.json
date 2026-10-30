@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_work_submit",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_work_submit",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC7EB988",
+  "callable_address": "0xc7eb989",
+  "prototype": "int l2cap_work_submit(void *owner, void *handler, void *done, void *arg, char flag)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Astrolink binds this as the work-list entry the public LE CoC wrappers use. Queue head and lock are separate globals on this build, not fields of the owner."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ],
+    "source": "Allocates a 20-byte node with 0xC7EADD4 and inserts it under the lock dword_2013BD7C into the queue dword_2013BD74 through 0xC7EAE34; node fields are owner +0, arg +4, handler +8, done +12, flag byte +16. This is the single public entry every bt_l2cap_* wrapper uses (80 call sites); the owner-only intrusive half is 0xC7EAE34."
+  },
+  "notes": "Astrolink binds this as the work-list entry the public LE CoC wrappers use. Queue head and lock are separate globals on this build, not fields of the owner."
+}

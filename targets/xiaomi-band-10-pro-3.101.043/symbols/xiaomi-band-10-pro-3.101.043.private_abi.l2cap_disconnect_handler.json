@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_disconnect_handler",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_disconnect_handler",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC80279C",
+  "callable_address": "0xc80279d",
+  "prototype": "int l2cap_disconnect_handler(void *owner, uint32_t event, void *request)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Bluelet owner-only handler paired with the public disconnect wrapper. Disconnect request payload carries the cid at +0."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ],
+    "source": "Submitted by bt_l2cap_disconnect 0xC805B38. Takes the cid from request+0, walks the channel list at *(*(owner)) comparing channel+116, requires the state byte at channel+120 to be 2, then resets the channel field group (+33 byte, +36/+40/+44 = -1, +48 word, +52 halfword, +64 byte) and frees the request node with bt_free."
+  },
+  "notes": "Bluelet owner-only handler paired with the public disconnect wrapper. Disconnect request payload carries the cid at +0."
+}

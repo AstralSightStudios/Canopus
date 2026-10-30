@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 12ad976fe178c389
+ * input_digest: 460d14d60c9e03e6
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -582,6 +582,15 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * ioctl: restricted - not exported until context/ownership approved
  * l2_owner_timer_init: restricted - not exported until context/ownership approved
  * l2_owner_timer_start: restricted - not exported until context/ownership approved
+ * l2cap_allocate_cid: restricted - not exported until context/ownership approved
+ * l2cap_channel_descriptor_create: restricted - not exported until context/ownership approved
+ * l2cap_connect_handler: restricted - not exported until context/ownership approved
+ * l2cap_disconnect_handler: restricted - not exported until context/ownership approved
+ * l2cap_find_channel: restricted - not exported until context/ownership approved
+ * l2cap_find_le_psm: restricted - not exported until context/ownership approved
+ * l2cap_send_handler: restricted - not exported until context/ownership approved
+ * l2cap_unregister_psm: restricted - not exported until context/ownership approved
+ * l2cap_work_submit: restricted - not exported until context/ownership approved
  * launcher_parent: restricted - not exported until context/ownership approved
  * launcher_rect_init: restricted - not exported until context/ownership approved
  * launcher_scroll: restricted - not exported until context/ownership approved

@@ -1662,6 +1662,87 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "int(void *timer, void (*callback)(void *), uint64_t timeout, uint64_t repeat)",
     },
     TargetPrivateSymbolRecord {
+        name: "l2cap_allocate_cid",
+        kind: "function",
+        entry: 0xc7ff93cusize,
+        callable: 0xc7ff93dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_allocate_cid(void *descriptor, void *psm_entry, uint16_t psm, char le)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_channel_descriptor_create",
+        kind: "function",
+        entry: 0xc8004f4usize,
+        callable: 0xc8004f5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *l2cap_channel_descriptor_create(void *cid_pair, int le)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_connect_handler",
+        kind: "function",
+        entry: 0xc801ac4usize,
+        callable: 0xc801ac5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_connect_handler(void *owner, uint32_t event, void *request)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_disconnect_handler",
+        kind: "function",
+        entry: 0xc80279cusize,
+        callable: 0xc80279dusize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_disconnect_handler(void *owner, uint32_t event, void *request)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_find_channel",
+        kind: "function",
+        entry: 0xc8004a4usize,
+        callable: 0xc8004a5usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *l2cap_find_channel(void *key, uint16_t cid)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_find_le_psm",
+        kind: "function",
+        entry: 0xc7ff644usize,
+        callable: 0xc7ff645usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "void *l2cap_find_le_psm(uint16_t psm, int kind)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_send_handler",
+        kind: "function",
+        entry: 0xc801d10usize,
+        callable: 0xc801d11usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_send_handler(void *owner, uint32_t event, void *request)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_unregister_psm",
+        kind: "function",
+        entry: 0xc7ffb04usize,
+        callable: 0xc7ffb05usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_unregister_psm(void *request, void *msg, int)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "l2cap_work_submit",
+        kind: "function",
+        entry: 0xc7eb988usize,
+        callable: 0xc7eb989usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int l2cap_work_submit(void *owner, void *handler, void *done, void *arg, char flag)",
+    },
+    TargetPrivateSymbolRecord {
         name: "launcher_parent",
         kind: "function",
         entry: 0xc589578usize,
@@ -3084,6 +3165,24 @@ pub const L2_OWNER_TIMER_INIT_ENTRY: usize = 0xc2e3994usize;
 pub const L2_OWNER_TIMER_INIT_CALLABLE: usize = 0xc2e3995usize;
 pub const L2_OWNER_TIMER_START_ENTRY: usize = 0xc2e3b84usize;
 pub const L2_OWNER_TIMER_START_CALLABLE: usize = 0xc2e3b85usize;
+pub const L2CAP_ALLOCATE_CID_ENTRY: usize = 0xc7ff93cusize;
+pub const L2CAP_ALLOCATE_CID_CALLABLE: usize = 0xc7ff93dusize;
+pub const L2CAP_CHANNEL_DESCRIPTOR_CREATE_ENTRY: usize = 0xc8004f4usize;
+pub const L2CAP_CHANNEL_DESCRIPTOR_CREATE_CALLABLE: usize = 0xc8004f5usize;
+pub const L2CAP_CONNECT_HANDLER_ENTRY: usize = 0xc801ac4usize;
+pub const L2CAP_CONNECT_HANDLER_CALLABLE: usize = 0xc801ac5usize;
+pub const L2CAP_DISCONNECT_HANDLER_ENTRY: usize = 0xc80279cusize;
+pub const L2CAP_DISCONNECT_HANDLER_CALLABLE: usize = 0xc80279dusize;
+pub const L2CAP_FIND_CHANNEL_ENTRY: usize = 0xc8004a4usize;
+pub const L2CAP_FIND_CHANNEL_CALLABLE: usize = 0xc8004a5usize;
+pub const L2CAP_FIND_LE_PSM_ENTRY: usize = 0xc7ff644usize;
+pub const L2CAP_FIND_LE_PSM_CALLABLE: usize = 0xc7ff645usize;
+pub const L2CAP_SEND_HANDLER_ENTRY: usize = 0xc801d10usize;
+pub const L2CAP_SEND_HANDLER_CALLABLE: usize = 0xc801d11usize;
+pub const L2CAP_UNREGISTER_PSM_ENTRY: usize = 0xc7ffb04usize;
+pub const L2CAP_UNREGISTER_PSM_CALLABLE: usize = 0xc7ffb05usize;
+pub const L2CAP_WORK_SUBMIT_ENTRY: usize = 0xc7eb988usize;
+pub const L2CAP_WORK_SUBMIT_CALLABLE: usize = 0xc7eb989usize;
 pub const LAUNCHER_PARENT_ENTRY: usize = 0xc589578usize;
 pub const LAUNCHER_PARENT_CALLABLE: usize = 0xc589579usize;
 pub const LAUNCHER_RECT_INIT_ENTRY: usize = 0xc588268usize;

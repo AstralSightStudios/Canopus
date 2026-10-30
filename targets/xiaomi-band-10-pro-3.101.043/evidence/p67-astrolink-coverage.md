@@ -222,3 +222,70 @@ image, so it has to be found by its list-walk shape rather than by a name),
 `file_readv` (`0xC1D119C`, recovered as context for the write shape but not a
 binding), the scan start/stop pair, the advertising stop, and the whole LE CoC
 owner handler set.
+
+## Pass 4 (LE CoC owner): what closed
+
+`EVID-PORT-1043-L2CAP-001`, owner global `dword_2013BDBC`, all handlers reached
+through the public wrappers in the `0xC805A80`–`0xC805CA4` cluster.
+
+| astrolink binding | record | address | anchor |
+| --- | --- | --- | --- |
+| `F_L2CAP_FIND_LE_PSM` | `l2cap_find_le_psm` | `0xC7FF644` | registry at `*(owner)+16`, psm at entry+4, kind byte at entry+6, `0x80` split; consumed by the connect handler |
+| `F_L2CAP_UNREGISTER_PSM` | `l2cap_unregister_psm` | `0xC7FFB04` | matches psm + kind, unlinks via `0xC7EAD28`, builds a 16-byte request from `+16/+20` |
+| `F_L2CAP_FIND_CHANNEL` | `l2cap_find_channel` | `0xC8004A4` | list at `*(*(owner))`, key at channel+0, cid at +116, link at channel-8 |
+| `F_L2CAP_QUEUE_PUSH` | `l2cap_work_submit` | `0xC7EB988` | 20-byte node (owner/arg/handler/done/flag at 0/4/8/12/16), lock `dword_2013BD7C`, queue `dword_2013BD74`; 80 callers |
+| `F_L2CAP_CONNECT_HANDLER` | `l2cap_connect_handler` | `0xC801AC4` | submitted by `bt_l2cap_connect 0xC805B0C`; request psm +2, flags +8, entry +12, cid pair +16/+20, state +23 |
+| `F_L2CAP_DISCONNECT_HANDLER` | `l2cap_disconnect_handler` | `0xC80279C` | submitted by `bt_l2cap_disconnect 0xC805B38`; cid at request+0, requires channel+120 == 2 |
+| `F_L2CAP_SEND_HANDLER` | `l2cap_send_handler` | `0xC801D10` | submitted by `bt_l2cap_submit_cid 0xC805BE8`, which stores the cid at request+4 |
+
+Supporting helpers recorded because the handlers cannot be used without them:
+`l2cap_channel_descriptor_create 0xC8004F4` (44-byte descriptor, cid pair +16/+20,
+local cid +38 = 0xFFFF, LE flag +43 bit0) and `l2cap_allocate_cid 0xC7FF93C`
+(owner cid counter at `*(owner)+24`, skips `<= 0x3F`, and `> 0x7F` when LE).
+
+### Channel and request layout measured from producers
+
+| object | offset | meaning |
+| --- | --- | --- |
+| connect request | +0 (u16) | assigned cid, written back by the handler |
+| | +2 (u16) | psm |
+| | +8 (byte) | flags, bit0 selects LE |
+| | +12 | psm registry entry, filled from `l2cap_find_le_psm` when null |
+| | +16 / +20 | cid pair handed to the descriptor |
+| | +23 (byte) | state written by the handler: 1 = LE, 2 = BR |
+| disconnect request | +0 (u16) | cid |
+| submit-cid request | +4 | cid stored by the wrapper |
+| channel | +0 | list key word |
+| | +24..+39 → copied to +68..+83 | 16-byte descriptor block (BR path) |
+| | +33 (byte) | state, cleared on disconnect |
+| | +36 / +40 / +44 | `-1` (u32) set on connect and reset on disconnect |
+| | +48 | `0x0101FFFF` |
+| | +52 (u16) | `0x02A0` |
+| | +64 (byte) | `1` on connect |
+| | +114 (u16) | flags, bit `0x100` set on connect |
+| | +116 (u16) | cid |
+| | +120 (byte) | state, `2` = connected |
+| work node | +0 / +4 / +8 / +12 / +16 | owner, arg, handler, done, flag |
+| psm entry | +4 (u16) / +6 (byte) | psm, kind/state |
+
+The channel's total size is **not** claimed: the only allocation seen in this path
+is the 44-byte descriptor, while the handlers touch fields up to +120, so the
+channel is allocated elsewhere and its extent has to be measured before a module
+holds one.
+
+### Still open after this pass
+
+- `l2cap_register_psm_handler` (the insert half of the registry) — no candidate
+  with producer evidence; the unregister half is recorded and the find half is
+  recorded, so the gap is precisely the insert.
+- `credit_queue_flush` — not identified. The fragment/credit queue is the one
+  thing the send handler re-fragments in place, but no standalone drain function
+  was confirmed.
+- `l2cap_accept_handler` — the closest candidate is `0xC803B88` (submitted by
+  `0xC805C40`), which parses L2CAP command elements (code/id/length at +0/+1/+2)
+  and dispatches per-code with the duplicate-id check at channel+41. It is
+  plausibly the accept/reject path but the accept semantics were not proven, so
+  it stays unrecorded.
+- The rest of the module's QuickJS/Feature group and the scan/advertising pair
+  remain open from the earlier passes.
+

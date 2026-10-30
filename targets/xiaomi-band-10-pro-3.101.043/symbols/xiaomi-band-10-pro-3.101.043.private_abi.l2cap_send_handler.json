@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_send_handler",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_send_handler",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC801D10",
+  "callable_address": "0xc801d11",
+  "prototype": "int l2cap_send_handler(void *owner, uint32_t event, void *request)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Bluelet owner-only handler; the cid that submit_cid carries is not the same field the wrapper stores (request+4 vs the cid used inside), so a module must go through the wrapper rather than call this directly."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ],
+    "source": "Submitted by bt_l2cap_submit_cid 0xC805BE8, which stores the cid into request+4 first. Resolves the channel base from *(owner) and, for cids <= 0x3F, issues owner command 0x26 with the channel handle through 0xC7EAD7C before re-fragmenting the buffer in place (it rewrites the length words at request+2 and the payload tail)."
+  },
+  "notes": "Bluelet owner-only handler; the cid that submit_cid carries is not the same field the wrapper stores (request+4 vs the cid used inside), so a module must go through the wrapper rather than call this directly."
+}

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_channel_descriptor_create",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_channel_descriptor_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC8004F4",
+  "callable_address": "0xc8004f5",
+  "prototype": "void *l2cap_channel_descriptor_create(void *cid_pair, int le)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Descriptor, not the channel: the connect handler passes its result to 0xC7FF93C, which returns the channel the handlers then touch at +114/+116."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ],
+    "source": "Allocates 44 bytes with 0xC7EAC14, inserts it into the list at *(owner)+8 with 0xC7EAC34, sets the local cid word +38 to 0xFFFF, copies the two cid words from the argument into +16/+20 and sets bit0 of the flag byte +43 when the caller passed a nonzero le flag; when the list is non-empty it also rolls the existing entries through 0xC7FF378."
+  },
+  "notes": "Descriptor, not the channel: the connect handler passes its result to 0xC7FF93C, which returns the channel the handlers then touch at +114/+116."
+}
