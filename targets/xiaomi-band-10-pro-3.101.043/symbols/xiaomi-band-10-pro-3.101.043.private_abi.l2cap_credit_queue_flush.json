@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_credit_queue_flush",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_credit_queue_flush",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC801C7C",
+  "callable_address": "0xc801c7d",
+  "prototype": "int l2cap_credit_queue_flush(void *stock, void *channel)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "This is the credit-controlled drain the module expects: credits live at stock+14 (stock pointer is channel+4), the queued fragment list hangs off the stock, and sending is the same 0xC7FE4D0 transport call the send handler uses."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ],
+    "source": "Loops while the channel stock still has credits (u16 at stock+14): dequeues one fragment with 0xC7EACD0, rewrites the fragment header words, sends it with 0xC7FE4D0 using cid = channel word +38 | (channel+116 << 16), decrements stock+14 and frees the node. Called by the LE Flow Control Credit handler 0xC803038 immediately after it adds the received credit to stock+14, and from the channel teardown path."
+  },
+  "notes": "This is the credit-controlled drain the module expects: credits live at stock+14 (stock pointer is channel+4), the queued fragment list hangs off the stock, and sending is the same 0xC7FE4D0 transport call the send handler uses."
+}

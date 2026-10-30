@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv_loop_init",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv_loop_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2DC9A0",
+  "prototype": "int uv_loop_init(uv_loop_t *loop)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Producer of the loop layout: it fixes the ready-queue head, the mutex, the async handle, the per-loop state allocation and both pipe descriptor slots."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ],
+    "source": "Memsets 624 bytes, allocates the 288-byte state into loop+20, initialises the mutex at loop+76 with uv_mutex_init 0xC2DCCCC, self-links the intrusive queues at +8, +40, +48, +68, +280, +288, +296, +304 and +312, stores -1 in the 64-bit word at +360 and at +392, and calls uv_async_init 0xC2E14E8 on loop+104. It also asserts the empty ready queue at +68 while holding +76."
+  },
+  "notes": "queue head +68, mutex +76, async +104, pipe descriptors +360/+364, loop state +20 (288 bytes). The +312 list is not a descriptor slot on this build.",
+  "callable_address": "0xc2dc9a1",
+  "calling_convention": "arm-aapcs"
+}

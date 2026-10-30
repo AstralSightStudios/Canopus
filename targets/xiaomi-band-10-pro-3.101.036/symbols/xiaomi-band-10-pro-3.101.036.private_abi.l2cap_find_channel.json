@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.l2cap_find_channel",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "l2cap_find_channel",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc7e7edc",
+  "callable_address": "0xc7e7edd",
+  "prototype": "void *l2cap_find_channel(void *key, uint16_t cid)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed per-cid channel for the Bluelet owner task only. Channel cid at +116; the list link is stored 8 bytes before the channel, the same 8-byte intrusive prefix the queue nodes use."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "Borrowed per-cid channel for the Bluelet owner task only. Channel cid at +116; the list link is stored 8 bytes before the channel, the same 8-byte intrusive prefix the queue nodes use."
+}

@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.bt_queue_contract",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "bt_queue_contract",
+  "kind": "layout",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "void bt_queue_external(void *owner, void *tag, handler_t handler, void *arg, uint8_t flag)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Deferred-work posting, measured from 0xC7EB9CC (115 call sites). The queue is a firmware singleton: page list at dword_2013BD70, lock at dword_2013BD80, wake at dword_2013BD84, drained by the Bluelet FSM task (0xC7EB038). Each 408-byte page holds 20 five-word slots; a post stores owner at slot+8, arg at slot+12, tag at slot+16, handler at slot+20 and the flag byte at slot+24, marks the page in use and wakes the queue. The handler is called as handler(owner, event, arg). When the lock is still null the call does NOT queue: it logs [FSM][After0000,External][fi:%p,ev:%d,arg:%p] and calls handler(0, 221, arg) synchronously, so event 221 means \"ran inline\". The poster allocates arg and the handler frees it."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QUEUE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QUEUE-001"
+    ],
+    "source": "bt_queue_external 0xC7EB9CC: the null-lock branch calls a3(0,221,a4); the queued branch stores v13[2]=owner, v13[3]=arg, v13[4]=tag, v13[5]=handler, *((u8*)v13+24)=flag and signals dword_2013BD84. Consumer sub_C7EB038 loops over the same pages. Callers include gap_host_stock_receive 0xC7EC47C, which passes owner dword_2013BDB4 with handler 0xC7ED8E0 and a 12-byte {handle,buffer,end} node."
+  },
+  "notes": "A module may use this instead of capturing the uv loop: it runs inside the firmware, the handler runs on the Bluelet FSM task, and it receives back whatever owner token the poster passed. It cannot create its own queue, and it must expect the synchronous 221 path if it posts before the stack is up. Consequence: ADAPTER_LOOP and uv_close stop being needed for p67."
+}

@@ -4,14 +4,14 @@
 
 enum { HOME, CARD, LIST, DRAG, SELECT };
 enum { GO_CARD = 1, GO_LIST, GO_DRAG, GO_SELECT, BACK, UPDATE_CARD,
-       CHECK = 30, RADIO_A, RADIO_B, TOAST, HEADER, POINTER, SCROLL, PICK = 1000 };
+       CHECK = 30, RADIO_A, RADIO_B, HEADER = 34, POINTER, SCROLL, PICK = 1000 };
 enum { LIST_KEY = 10, DRAG_KEY = 20, ROW_HEIGHT = 72, ITEM_COUNT = 100, WINDOW = 10 };
 #define ON (CANOPUS_UI_NODE_FLAG_ENABLED | CANOPUS_UI_NODE_FLAG_VISIBLE)
 #define LIST_CAPS (CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VISUAL | CANOPUS_UI_CAP_SCROLL | CANOPUS_UI_CAP_VIRTUAL_CONTENT)
 #define DRAG_CAPS (CANOPUS_UI_CAP_LAYOUT | CANOPUS_UI_CAP_VISUAL | CANOPUS_UI_CAP_POINTER_EVENTS | CANOPUS_UI_CAP_CAPTURE | CANOPUS_UI_CAP_TRANSLATE)
 
 static struct {
-    uint32_t route, caps, width, height, first, selected, checked, radio, toast, header, card, styles;
+    uint32_t route, caps, width, height, first, selected, checked, radio, header, card, styles;
     int32_t scroll_y, drag_x, drag_y, start_x, start_y, pointer_x, pointer_y;
     uint32_t captured, moved, posting, posted;
 } state;
@@ -105,7 +105,7 @@ static int32_t build_home(const struct canopus_context_v1 *ctx, struct canopus_u
     int32_t rc = action(ctx,t,10,"Card & overlay","Nested layout, RGB and image",GO_CARD);
     if (rc == 0) rc = action(ctx,t,11,"100 items","Continuous virtual scrolling",GO_LIST);
     if (rc == 0) rc = action(ctx,t,12,"Drag","Pointer capture and translation",GO_DRAG);
-    if (rc == 0) rc = action(ctx,t,13,"Selections","Checkbox, radio, toast and title",GO_SELECT);
+    if (rc == 0) rc = action(ctx,t,13,"Selections","Checkbox, radio and title",GO_SELECT);
     return rc;
 }
 static int32_t build_card(const struct canopus_context_v1 *ctx, struct canopus_ui_tree_v1 *t)
@@ -214,19 +214,7 @@ static int32_t build_select(const struct canopus_context_v1 *ctx, struct canopus
                                ON | (state.radio == 0 ? CANOPUS_UI_NODE_FLAG_SELECTED : 0u),0);
     if (rc == 0) rc = component(ctx,t,12,CANOPUS_UI_NODE_RADIO_ROW,"Option B","",RADIO_B,
                                ON | (state.radio == 1 ? CANOPUS_UI_NODE_FLAG_SELECTED : 0u),0);
-    if (rc == 0) rc = action(ctx,t,13,"Toast","Show for ten seconds",TOAST);
     if (rc == 0) rc = action(ctx,t,14,"Change title","Toggle navigation title and back",HEADER);
-    if (rc == 0 && (state.caps & CANOPUS_UI_CAP_TOAST)) {
-        /* The shown commit carries two visible toast nodes: they share one
-         * feedback owner, the later node wins, and the hide commit drops the
-         * earlier node while the owner survives. */
-        if (state.toast)
-            rc = component(ctx,t,16,CANOPUS_UI_NODE_TOAST,"Pair toast","",0,
-                           CANOPUS_UI_NODE_FLAG_ENABLED | CANOPUS_UI_NODE_FLAG_VISIBLE,10000);
-        if (rc == 0)
-            rc = component(ctx,t,15,CANOPUS_UI_NODE_TOAST,"Selection saved","",0,
-                           CANOPUS_UI_NODE_FLAG_ENABLED | (state.toast ? CANOPUS_UI_NODE_FLAG_VISIBLE : 0u),10000);
-    }
     return rc;
 }
 static int32_t render(const struct canopus_context_v1 *ctx, struct canopus_ui_context_v1 *ui)
@@ -343,10 +331,6 @@ static int32_t on_event(const struct canopus_context_v1 *ctx, struct canopus_ui_
     case CHECK: state.checked=!state.checked; probe(ctx,"check",state.checked); break;
     case RADIO_A: state.radio=0; probe(ctx,"radio",0); break;
     case RADIO_B: state.radio=1; probe(ctx,"radio",1); break;
-    case TOAST:
-        state.toast=!state.toast; probe(ctx,"toast",state.toast);
-        if (state.toast) probe(ctx,"toastpair",1);
-        break;
     case HEADER: state.header=!state.header; probe(ctx,"header",state.header); break;
     default: return CANOPUS_UI_ERR_ARGUMENT;
     }
@@ -356,11 +340,11 @@ static int32_t on_back(const struct canopus_context_v1 *ctx, struct canopus_ui_c
 {
     (void)user; probe(ctx,"back",state.route);
     if (state.route == HOME) return 1;
-    state.route=HOME; state.header=0; state.toast=0; return render(ctx,ui);
+    state.route=HOME; state.header=0; return render(ctx,ui);
 }
 static void on_close(const struct canopus_context_v1 *ctx, void *user)
 { (void)user; state.captured=0; probe(ctx,"close",0); }
-static const struct canopus_ui_entry_v1 entry = {sizeof(entry),"Native UI Lab",on_open,on_event,on_back,on_close,0};
+static const struct canopus_ui_entry_v1 entry = {sizeof(entry),"Native UI Lab",on_open,on_event,on_back,on_close,0,0};
 static int32_t prepare(const struct canopus_context_v1 *ctx) { (void)ctx; return 0; }
 static int32_t activate(const struct canopus_context_v1 *ctx) { return ctx->ui->set_entry(ctx,&entry); }
 static int32_t stop(const struct canopus_context_v1 *ctx) { return ctx->ui->set_entry(ctx,0); }

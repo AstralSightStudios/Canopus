@@ -23,8 +23,13 @@
    - 不再出现在页面里的行、标签、图片、进度条：隐藏（`lv_obj_add_flag` HIDDEN），再出现时显示；行按 key 复用控件槽，
      所以重绘不会重建行，也保持滚动位置（整条放置链不变就不重新对齐）。内容放得下时关掉内容容器的滚动（`SCROLLABLE`），避免拖动把内容甩到底部。
    - 事件沿用原有机制（每槽一个静态回调，`interactive` 的 view 接收），回调数统一为 32；标题返回与对话框按钮同样是静态回调。
+   - 命中目标（Band 11）：原生事件只投递给手指命中的那个对象（`event` 的目标在 +4），预制行的标题/描述文字是行内部的独立对象
+     （list item 字段 `+0x3c`/`+0x40`，trailing 在 `+0x54`），合成行的标签同理。行的回调除容器外也注册到这些命中对象上，
+     分发时白名单即该集合（兼做换页后的过期事件校验），标题组件同此（icon/label 双目标）。因此文字区域与行表面同等可点，
+     副标题标签由固件懒创建时在 updater 路径补注册。10 Pro 无需此机制且不移植（实测 + 反编译证据：
+     `evidence/band10pro-row-text-hit/`，10 Pro 的行对象从行内任意位置含文字都收得到事件）。
    - Manager 专有的部分变成可选钩子（返回键、事件前后、渲染完成）；确认对话框改为语义 `DIALOG`（取消、确认的顺序即 msgbox 的左右顺序）。
-2. **模块页面**：`ctx->ui` 直接提供 `set_entry`、`close_page`、`node_set_style`、`node_set_layout`、`node_set_visual`、`control`、`post`。
+2. **模块页面**：`ctx->ui` 直接提供 `set_entry`、`close_page`、`route`、`node_set_style`、`node_set_layout`、`node_set_visual`、`control`、`post`。
    早期的 `ctx->ui_ext` 已并入 `ctx->ui` 并删除（Canopus 未发版，公共 ABI 直接演进到 2.0，不保留旧对象、旧前缀或适配层）。
    - 模块 `set_entry` 登记页面入口（标签、`on_open`/`on_event`/`on_back`/`on_close`）；模块运行期间，Manager 的模块详情页多一行「打开界面」。
    - 页面由 Manager 应用的第 4 个固件页面（`module_ui`）承载：打开时在固件堆上分配 view 与 UI 上下文，调用 `on_open` 构树并提交；
@@ -36,6 +41,13 @@
      该拦截同时覆盖 Manager 的「打开界面」和模块启动器入口，不改变 Manager 自身页面的系统返回。
    - 页面标题可随路由更新（ADR-CAN-013）：标题文本或返回状态变化时重建标题对象，过期的标题事件按事件目标（Band 11）
      或注册令牌（Band 10 Pro）校验后丢弃，不会驱动新页面。
+   - 多页条目（2026-10-26）：`canopus_ui_entry_v1.page_count` 大于 0 时，target 在发布阶段为该 entry 申请 `page_count`
+     个固件页描述符（`CANOPUS_UI_ENTRY_PAGES_MAX` = 8），`on_open` 服务 route 0，之后 `ctx->ui->route` 前进用
+     `page_goto`（暂停源页并播 stock push）、后退用 `page_finish`（播 stock pop，下方页面 `on_resume` 恢复）。
+     一个 UI 上下文约 12 KB 固件堆，因此只有栈顶页持有它：`on_pause` 释放，`on_resume` 用 `on_create` 记下的 root 重建，
+     下层页面靠已绘制且被固件冻结的原生树参与转场。`page_count` 为 0 时保持原单页契约，`route` 返回 `UNSUPPORTED`。
+     系统右滑完成阶段若模块 decline（`on_back` 返回非 0），描述符 +104 返回 0，把默认 finish 与 page-out 动画让给固件；
+     只有模块内部消费（route pop、替换树、自行 `close_page`）才返回 1。
 3. **启动器入口**：模块自己的启动器图标见 ADR-CAN-011；它复用这里的模块页面。
 4. **Supervisor 构建预算**：Band 10 Pro 的 `supervisor_max_size` 由 98,304 提到 114,688。新增代码和 4 个视图使 .043 达到约 104 KB。
    该值本来就是构建期预算而不是实测的固件上限（stock modlib 没有固定的插入上限，Band 11 用 131,072）。
@@ -103,7 +115,7 @@ and `native_font_wait` (`0x0c15c061` / `0x0c399941`), with UIKit root-slot manag
 | `IMAGE_FIT_COVER` | Scale + query + clipped parent viewport | Host implemented; uniform maximum ratio, rounded up, center crop | `UNSUPPORTED`, bit off |
 | `IMAGE_FIT_STRETCH` | Independent native X/Y scale + query + clipped viewport | Host implemented; per-axis ratio, rounded up | `UNSUPPORTED`, bit off |
 | `font_px = 0/24/28` | `FW_LVX_STYLE_APPLY`, borrowed MiSans-Medium styles | Fixed styles, counted regression coverage | Same existing contract |
-| Arbitrary `font_px` (`CAP_FONT`) | `FW_UI_FONT_CREATE` (`manager, &key`), property 90 setter, `DELETE` event 36 + `FW_UI_FONT_WAIT` + `FW_UI_FONT_RELEASE` | Host implemented for labels, section headings, checkbox primary text and Toast owner; stock rows/titles/msgbox return `UNSUPPORTED` | `UNSUPPORTED`, bit off |
+| Arbitrary `font_px` (`CAP_FONT`) | `FW_UI_FONT_CREATE` (`manager, &key`), property 90 setter, `DELETE` event 36 + `FW_UI_FONT_WAIT` + `FW_UI_FONT_RELEASE` | Host implemented for labels, section headings and checkbox primary text; stock rows/titles/msgbox return `UNSUPPORTED` | `UNSUPPORTED`, bit off |
 
 Fit uses the resolved semantic box, preflights decoding and scale range before
 publication, and preserves unchanged setters. Q8 quantization cannot represent
@@ -139,6 +151,60 @@ See [verification and per-target budgets](../docs/native-ui-image-font-verificat
 The implementation adds **host/static evidence only**. No symbol or capability
 is promoted to device verified or production approved; restricted records retain
 their existing approval state (`PENDING`), and no new firmware callable is public.
+
+## Overall opacity across targets
+
+`canopus_ui_style_v1.opacity` is a target-independent value in `0..1000`.
+Nonzero values are explicit; zero inherits unless
+`CANOPUS_UI_VISUAL_FLAG_OPACITY` is present, in which case it means fully
+transparent. The native host converts explicit values to `0..255` and uses the
+exact target's private overall-opacity property through its reviewed local
+style dispatcher. Background opacity is a separate property and cannot replace
+whole-object opacity. Clearing `CANOPUS_UI_NODE_FLAG_ENABLED` only gates semantic
+events; applications set opacity explicitly when they want a dimmed appearance.
+
+```text
+opacity = 1000   -> opaque
+opacity =  500   -> about 50% opacity
+opacity =    0   -> inherited (default)
+opacity =    0 + VISUAL_FLAG_OPACITY -> fully transparent
+```
+
+Repeated identical commits do not repeat native setters. Explicit opacity
+changes reuse the keyed object; returning from explicit opacity to inheritance
+rebuilds its subtree because the host has no reviewed single-property removal
+binding. Overall opacity is written only to the semantic node's native object.
+Internal section headings and synthesized row labels inherit it, avoiding a
+second multiplication of the same opacity. Native msgbox button styling remains
+outside this contract.
+
+| Target | Overall opacity | Private dispatcher |
+|---|---|---|
+| Band 10 Pro `3.101.036` | `FW_UI_STYLE_OPA 95u`; `EVID-UI-1036-OPACITY-001` | SRAM callable `0x002BD5FD`, independently confirmed by the stock XIP veneer |
+| Band 10 Pro `3.101.043` | `FW_UI_STYLE_OPA 95u`; `EVID-UI-1043-OPACITY-001` | SRAM callable `0x002BD925` |
+| Band 11 `4.100.139` | `FW_UI_STYLE_OPA 95u`; `EVID-UI-4139-OPACITY-001` | XIP callable `0x0C3872B5` |
+| Band 11 `4.100.155` | Existing property95; `EVID-UI-4155-LAYOUT-INPUT-001` | XIP callable `0x0C3872B5` |
+| Band 11 `4.100.179` | Existing property95; `EVID-UI-4179-LAYOUT-INPUT-001` | XIP callable `0x0C383435` |
+| Band 9 `3.1.32` | Unsupported: the dedicated v8 backend has no STYLE/VISUAL capabilities or native section hierarchy | No reviewed overall-opacity binding |
+| Band 9 Pro `3.1.190` | Unsupported: v8 backend/platform integration is incomplete | No reviewed overall-opacity binding |
+| Band 10 `3.1.28` | Unsupported: v8 backend/platform integration is incomplete | No reviewed overall-opacity binding |
+| Redmi Watch 6 `3.100.043` | Unsupported: platform integration is incomplete and the style dispatcher remains a candidate | No reviewed overall-opacity binding |
+
+The `.036` flash load copy `0x0C107465` must not execute as a dispatcher:
+external relative calls require the copied SRAM address. Its canonical private
+symbol and generated metadata use the verified runtime callable instead.
+`.139` gains only overall opacity; no other layout/input constants are inferred
+from its Band 11 siblings. Applications use the same public ABI on all targets;
+unsupported backend fields still return `CANOPUS_UI_ERR_UNSUPPORTED`.
+Rebuild and install the target's Supervisor to activate new host bindings.
+
+Opacity is enabled only for targets with independent property and dispatcher
+evidence. `native_opacity_requires_an_exact_target_review` checks every active
+target's generated configuration, evidence identity, firmware hash and private
+dispatcher; unreviewed targets must not acquire `FW_UI_STYLE_OPA` by inheriting
+another firmware's constants. The counted host regression checks consecutive
+opaque, half-opacity and explicit-zero commits on both native host families.
+These are static/host checks, without new device verification or approval.
 
 ## 证据与限制
 

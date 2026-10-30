@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_get_array_buffer_composition",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_get_array_buffer_composition",
+  "kind": "compose",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "const uint8_t *qjs_get_array_buffer(JSContext *ctx, size_t *pbyte_length, JSValue value)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "No class-gated getter exists on this build either, so the module composes it from the measured layout: accept the value only when the tag is -1 and the class id word at object+6 equals 19, then return the payload pointer at object+0x54 and write the byte length from object+0x58 into *pbyte_length."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "proven",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-006",
+      "EVID-PORT-1043-DEVICE-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-006",
+      "EVID-PORT-1043-DEVICE-002"
+    ],
+    "source": "Layout measured on a live runtime: the ArrayBuffer(512) object at 0x3C3146A0 has refcount 2, class id 19 at +6, the 0xA7 payload pointer 0x3C3A1B28 at +0x54 and the byte length 512 at +0x58; the ArrayBuffer(8) object at 0x3C314640 shows the same two offsets with 8. Thirteen functions reading +0x54/+0x58 were examined and none is class-gated, i.e. this build inlines the field reads after JS_GetOpaque rather than exporting a getter."
+  },
+  "notes": "No class-gated getter exists on this build either, so the module composes it from the measured layout: accept the value only when the tag is -1 and the class id word at object+6 equals 19, then return the payload pointer at object+0x54 and write the byte length from object+0x58 into *pbyte_length."
+}

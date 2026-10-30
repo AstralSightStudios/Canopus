@@ -53,6 +53,8 @@ static struct canopus_launcher_obj s_launcher_obj;
 static struct {
     char label[CANOPUS_LAUNCHER_LABEL_MAX];
     char icon[CANOPUS_LAUNCHER_ICON_MAX];
+    void **pages;
+    uint32_t page_count;
     uint8_t used;
 } s_launcher[CANOPUS_SUP_MODULE_SLOTS];
 static uint8_t s_launcher_pending; /* entries are queued in the platform */
@@ -1639,6 +1641,10 @@ static void svc_display_get_resolution(const struct canopus_context_v1 *ctx, uin
         /* Band 11: 212 x 520 */
         *width = 212u;
         *height = 520u;
+    } else if (canopus_strcmp(target, "redmi-watch-6-3.100.043") == 0) {
+        /* Exact P65 panel; never report the Band 10 Pro default here. */
+        *width = 432u;
+        *height = 514u;
     } else {
         /* Band 10 Pro: 336 x 480 */
         *width = 336u;
@@ -2149,6 +2155,9 @@ static int32_t svc_ui_set_entry(const struct canopus_context_v1 *ctx,
     if (entry->struct_size != sizeof(*entry) || entry->on_open == 0) {
         return CANOPUS_SVC_ERR_ARGUMENT;
     }
+    if (entry->page_count > CANOPUS_UI_ENTRY_PAGES_MAX) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
     if (entry->label != 0) {
         len = (uint32_t)canopus_strnlen(entry->label, CANOPUS_UI_ENTRY_LABEL_MAX);
         if (len >= CANOPUS_UI_ENTRY_LABEL_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
@@ -2171,6 +2180,24 @@ static int32_t svc_ui_close_page(const struct canopus_context_v1 *ctx)
                ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_STATE;
 }
 
+/* Multi-page entries only. The backend owns page allocation and the firmware
+ * stack; the Supervisor only guards that the slot still has such an entry. */
+static int32_t svc_ui_route(const struct canopus_context_v1 *ctx, uint32_t route)
+{
+    if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
+    if (!s_ui_entries[ctx->slot].used ||
+        s_ui_entries[ctx->slot].entry.page_count == 0u) {
+        return CANOPUS_SVC_ERR_UNSUPPORTED;
+    }
+    if (route >= s_ui_entries[ctx->slot].entry.page_count) {
+        return CANOPUS_SVC_ERR_ARGUMENT;
+    }
+    if (s_sup->platform == 0 || s_sup->platform->ui_route == 0) {
+        return CANOPUS_SVC_ERR_UNSUPPORTED;
+    }
+    return s_sup->platform->ui_route(s_sup->platform_cookie, ctx->slot, route);
+}
+
 int canopus_supervisor_ui_entry(struct canopus_supervisor_v1 *sup, uint32_t slot,
                                 struct canopus_ui_entry_v1 *out)
 {
@@ -2184,38 +2211,76 @@ int canopus_supervisor_ui_entry(struct canopus_supervisor_v1 *sup, uint32_t slot
 
 /* ---- launcher entries (ADR-CAN-011) ---------------------------------- */
 
-static int32_t svc_launcher_set_entry(const struct canopus_context_v1 *ctx,
-                                      const struct canopus_launcher_entry_v1 *entry)
+static int32_t svc_launcher_register_app(const struct canopus_context_v1 *ctx,
+                                         const struct canopus_app_entry_v1 *entry)
 {
-    const struct canopus_sup_platform_v1 *pf = s_sup->platform;
-    uint32_t label_len, icon_len = 0u;
-    int32_t rc;
+    const struct canopus_sup_platform_v1 *pf;
+    struct canopus_app_entry_v1 request;
+    void **native_pages = 0;
+    const char *label, *icon;
+    void *const *pages;
+    uint32_t label_len, icon_len = 0u, i, page_count;
+    int32_t rc, app_id;
     if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
-    if (entry == 0 || entry->struct_size != sizeof(*entry) || entry->label == 0) {
+    if (entry == 0 || entry->struct_size != sizeof(*entry) ||
+        entry->page_count > CANOPUS_NATIVE_APP_PAGES_MAX ||
+        ((entry->page_count == 0u) != (entry->pages == 0)))
         return CANOPUS_SVC_ERR_ARGUMENT;
+    label = entry->label;
+    icon = entry->icon;
+    pages = entry->pages;
+    page_count = entry->page_count;
+    for (i = 0u; i < page_count; i++) {
+        if (pages[i] == 0) return CANOPUS_SVC_ERR_ARGUMENT;
     }
-    label_len = (uint32_t)canopus_strnlen(entry->label, CANOPUS_LAUNCHER_LABEL_MAX);
+    pf = s_sup->platform;
+    if (label == 0) return CANOPUS_SVC_ERR_ARGUMENT;
+    label_len = (uint32_t)canopus_strnlen(label, CANOPUS_LAUNCHER_LABEL_MAX);
     if (label_len == 0u || label_len >= CANOPUS_LAUNCHER_LABEL_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
-    if (entry->icon != 0) {
-        icon_len = (uint32_t)canopus_strnlen(entry->icon, CANOPUS_LAUNCHER_ICON_MAX);
+    if (icon != 0) {
+        icon_len = (uint32_t)canopus_strnlen(icon, CANOPUS_LAUNCHER_ICON_MAX);
         if (icon_len == 0u || icon_len >= CANOPUS_LAUNCHER_ICON_MAX) return CANOPUS_SVC_ERR_ARGUMENT;
     }
-    if (!s_ui_entries[ctx->slot].used) return CANOPUS_SVC_ERR_STATE;
+    if (page_count == 0u && !s_ui_entries[ctx->slot].used) return CANOPUS_SVC_ERR_STATE;
+    if (s_sup->modules[ctx->slot].native_app_status == CANOPUS_SUP_NATIVE_APP_FAILED)
+        return CANOPUS_SVC_ERR_STATE;
     if (s_launcher[ctx->slot].used) {
-        return canopus_strcmp(s_launcher[ctx->slot].label, entry->label) == 0 &&
-               canopus_strcmp(s_launcher[ctx->slot].icon, entry->icon != 0 ? entry->icon : "") == 0
-                   ? CANOPUS_SVC_OK : CANOPUS_SVC_ERR_BUSY;
+        if (s_launcher[ctx->slot].page_count != page_count ||
+            canopus_strcmp(s_launcher[ctx->slot].label, label) != 0 ||
+            canopus_strcmp(s_launcher[ctx->slot].icon, icon != 0 ? icon : "") != 0)
+            return CANOPUS_SVC_ERR_BUSY;
+        for (i = 0u; i < page_count; i++) {
+            if (s_launcher[ctx->slot].pages[i] != pages[i]) return CANOPUS_SVC_ERR_BUSY;
+        }
+        return s_sup->modules[ctx->slot].native_app_id;
     }
-    if (pf->launcher_publish == 0) return CANOPUS_SVC_ERR_UNSUPPORTED;
+    if (pf == 0 || pf->launcher_step == 0 || pf->app_publish == 0 ||
+        (page_count != 0u && (pf->heap_alloc == 0 || pf->heap_release == 0)))
+        return CANOPUS_SVC_ERR_UNSUPPORTED;
     rc = svc_pump_ensure();
     if (rc != CANOPUS_SVC_OK) return rc;
-    rc = svc_errno(pf->launcher_publish(s_sup->platform_cookie, ctx->slot, entry->label, entry->icon));
-    if (rc != CANOPUS_SVC_OK) return rc;
-    canopus_memcpy(s_launcher[ctx->slot].label, entry->label, label_len);
-    if (icon_len != 0u) canopus_memcpy(s_launcher[ctx->slot].icon, entry->icon, icon_len);
+    app_id = canopus_supervisor_native_app_id(s_sup, ctx->slot);
+    if (app_id < 0) return app_id;
+    request = *entry;
+    if (page_count != 0u) {
+        native_pages = pf->heap_alloc(s_sup->platform_cookie, page_count * sizeof(*native_pages));
+        if (native_pages == 0) return CANOPUS_SVC_ERR_NOMEM;
+        canopus_memcpy(native_pages, pages, page_count * sizeof(*native_pages));
+        request.pages = native_pages;
+    }
+    rc = svc_errno(pf->app_publish(s_sup->platform_cookie, ctx->slot, &request));
+    if (rc != CANOPUS_SVC_OK) {
+        if (native_pages != 0) pf->heap_release(s_sup->platform_cookie, native_pages);
+        return rc;
+    }
+    canopus_memcpy(s_launcher[ctx->slot].label, label, label_len);
+    if (icon_len != 0u) canopus_memcpy(s_launcher[ctx->slot].icon, icon, icon_len);
+    s_launcher[ctx->slot].pages = native_pages;
+    s_launcher[ctx->slot].page_count = page_count;
     s_launcher[ctx->slot].used = 1u;
+    s_sup->modules[ctx->slot].native_app_status = CANOPUS_SUP_NATIVE_APP_PENDING;
     s_launcher_pending = 1u;
-    return CANOPUS_SVC_OK;
+    return app_id;
 }
 
 /* One firmware call per heartbeat tick, so each runs on its own UI event turn. */
@@ -2224,7 +2289,7 @@ static void svc_launcher_poll(void)
     int rc;
     if (!s_launcher_pending) return;
     rc = s_sup->platform->launcher_step(s_sup->platform_cookie);
-    if (rc <= 0) s_launcher_pending = 0u;
+    if (rc == 0) s_launcher_pending = 0u;
     if (rc < 0) s_sup->error_code = (uint32_t)CANOPUS_SUP_ERR_LAUNCHER;
 }
 
@@ -2288,7 +2353,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_services.group_version[CANOPUS_SVC_BUS] = 2u;
     s_services.group_version[CANOPUS_SVC_CONNECT] = s_connect_obj != 0 ? 1u : 0u;
     s_services.group_version[CANOPUS_SVC_LAUNCHER] =
-        (sup->platform != 0 && sup->platform->launcher_publish != 0) ? 1u : 0u;
+        (sup->platform != 0 && sup->platform->app_publish != 0) ? 1u : 0u;
 
     s_services.module_register = svc_module_register;
     s_services.log_write = svc_log_write;
@@ -2441,10 +2506,11 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_ui_obj.node_set_layout = canopus_ui_node_set_layout;
     s_ui_obj.set_entry = svc_ui_set_entry;
     s_ui_obj.close_page = svc_ui_close_page;
+    s_ui_obj.route = svc_ui_route;
     s_ui_obj.node_set_visual = canopus_ui_node_set_visual;
     s_ui_obj.control = canopus_ui_control;
     s_ui_obj.post = canopus_supervisor_ui_post;
-    s_launcher_obj.set_entry = svc_launcher_set_entry;
+    s_launcher_obj.register_app = svc_launcher_register_app;
 
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         s_contexts[i].struct_size = sizeof(struct canopus_context_v1);

@@ -377,7 +377,10 @@ impl<'a> RustGen<'a> {
                 if FORBIDDEN_STATUS.contains(&s.status.as_str()) {
                     continue; // audit comment in emit_notes
                 }
-                if let Some(addr) = &s.entry_address {
+                // A record can legitimately carry no address (a measured
+                // finding, or a withdrawn candidate). Emitting it would produce
+                // `pub const X: usize = usize;`, which does not compile.
+                if let Some(addr) = s.entry_address.as_deref().filter(|a| !a.trim().is_empty()) {
                     let name = &s.name;
                     out.push_str(&format!(
                         "/// Recovered global `{name}` at {addr}.\npub const canopus_fw_{name}: usize = {addr}usize;\n\n"

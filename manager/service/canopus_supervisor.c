@@ -1660,6 +1660,37 @@ int canopus_supervisor_add_module(struct canopus_supervisor_v1 *sup,
     return -1;
 }
 
+int32_t canopus_supervisor_native_app_id(struct canopus_supervisor_v1 *sup,
+                                        uint32_t slot)
+{
+    struct canopus_sup_module_v1 *module;
+    uint32_t id, i;
+    if (sup == 0 || slot >= CANOPUS_SUP_MODULE_SLOTS ||
+        sup->modules[slot].state == 0u) return CANOPUS_SVC_ERR_STATE;
+    module = &sup->modules[slot];
+    if (module->native_app_id != 0u) return module->native_app_id;
+    for (id = CANOPUS_SUP_NATIVE_APP_FIRST_ID;
+         id < CANOPUS_SUP_NATIVE_APP_FIRST_ID + CANOPUS_SUP_NATIVE_APP_IDS; id++) {
+        for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
+            if (sup->modules[i].state != 0u && sup->modules[i].native_app_id == id) break;
+        }
+        if (i != CANOPUS_SUP_MODULE_SLOTS) continue;
+        if (sup->platform != 0 && sup->platform->native_app_id_in_use != 0) {
+            int used = sup->platform->native_app_id_in_use(sup->platform_cookie, (uint16_t)id);
+            if (used < 0) return CANOPUS_SVC_ERR_STATE;
+            if (used != 0) continue;
+        }
+        module->native_app_id = (uint8_t)id;
+        if (canopus_supervisor_save_registry(sup) != 0) {
+            /* No firmware publication may precede durable ownership. */
+            module->native_app_id = 0u;
+            return CANOPUS_SVC_ERR_IO;
+        }
+        return (int32_t)id;
+    }
+    return CANOPUS_SVC_ERR_NOMEM;
+}
+
 static int sup_publish_native_apps(struct canopus_supervisor_v1 *sup,
                                    uint32_t stage, uint32_t first, uint32_t end)
 {
@@ -1675,6 +1706,15 @@ static int sup_publish_native_apps(struct canopus_supervisor_v1 *sup,
             module->descriptor->abi_major != CANOPUS_ABI_MAJOR ||
             (module->descriptor->flags & CANOPUS_FLAG_HAS_NATIVE_APP) == 0u) {
             continue;
+        }
+        if (stage == 2u && module->native_app_status == CANOPUS_SUP_NATIVE_APP_PENDING) {
+            /* Bootstrap callers may request stage 2 before the queue drains. */
+            module->native_app_stage = 2u;
+            continue;
+        }
+        if (stage == 2u && module->native_app_status == CANOPUS_SUP_NATIVE_APP_FAILED) {
+            rc = CANOPUS_SUP_ERR_LAUNCHER;
+            goto publication_result;
         }
         legacy_end =
             (uint32_t)offsetof(struct canopus_module_descriptor_v1,
@@ -1696,6 +1736,7 @@ static int sup_publish_native_apps(struct canopus_supervisor_v1 *sup,
         } else {
             continue;
         }
+publication_result:
         if (rc != 0) {
             module->activation_error = (uint32_t)rc;
             failed = -1;
@@ -1918,7 +1959,8 @@ int canopus_supervisor_serialize_registry(struct canopus_supervisor_v1 *sup,
                          (m->pending_switch ? CANOPUS_SUP_REG_FLAG_PENDING : 0u) |
                          (sup_registry_error_encode(m->activation_error) <<
                           CANOPUS_SUP_REGISTRY_ERROR_SHIFT));
-            put_wire_u32(buf, o + 44u, m->intent | ((uint32_t)m->starts << 8));
+            put_wire_u32(buf, o + 44u, m->intent | ((uint32_t)m->starts << 8) |
+                         ((uint32_t)m->native_app_id << 16));
         }
     }
     return 0;
@@ -1949,7 +1991,7 @@ static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
      * next screen sleep resets the SoC. The restore is a single-threaded boot
      * step, so the buffer lives with the Supervisor image. */
     static uint8_t buf[CANOPUS_SUP_REGISTRY_SIZE];
-    uint32_t i;
+    uint32_t i, native_ids = 0u;
     int rc;
     if (sup == 0 || sup->platform == 0 || sup->platform->restore == 0) {
         return -1;
@@ -2010,6 +2052,15 @@ static int sup_restore_registry(struct canopus_supervisor_v1 *sup,
         sup->modules[slot].activation_error =
             sup_registry_error_decode(flags);
         sup->modules[slot].starts = (uint8_t)(intent_word >> 8);
+        sup->modules[slot].native_app_id = (uint8_t)(intent_word >> 16);
+        if (sup->modules[slot].native_app_id != 0u) {
+            uint32_t index = (uint32_t)sup->modules[slot].native_app_id - CANOPUS_SUP_NATIVE_APP_FIRST_ID;
+            if (index >= CANOPUS_SUP_NATIVE_APP_IDS || (native_ids & (1u << index)) != 0u) {
+                sup_enter_safe_mode(sup, CANOPUS_SAFE_MODE_STORE_CORRUPT);
+                return -1;
+            }
+            native_ids |= 1u << index;
+        }
         sup->modules[slot].active_gen =
             (flags & CANOPUS_SUP_REG_FLAG_ACTIVE_B) != 0u;
         sup->modules[slot].pending_switch =

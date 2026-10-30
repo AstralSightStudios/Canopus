@@ -18,13 +18,13 @@
   "proof": {
     "static": "confirmed",
     "device": "not_probed",
-    "evidence_ids": []
+    "evidence_ids": ["EVID-PORT-1036-L2-001"]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
-    "evidence_ids": [],
+    "evidence_ids": ["EVID-PORT-1036-L2-001"],
     "source": "exact xiaomi-band-10-pro-3.101.036 IDB vela_ap.bin; miwear_transport_send"
   },
   "approval_state": "PENDING",

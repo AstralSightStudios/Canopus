@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-1043-FERRY-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "What exact native Feature lifecycle, real-app registry creation and libuv notification ABI does p67 .043 expose?",
+  "candidate_symbols": [
+    "feature_manager_create_thunk",
+    "uv_close",
+    "uv_mutex_init",
+    "uv_mutex_lock",
+    "uv_mutex_unlock",
+    "feature_native_layout",
+    "ferry_framework_instance",
+    "ferry_framework_vtable",
+    "ferry_application_vtable",
+    "ferry_framework_factory",
+    "ferry_application_init",
+    "qjs_to_cstring_len2",
+    "qjs_define_property_value_str"
+  ],
+  "prototype_hypothesis": "Native lifecycle callbacks retain(ctx,native_pointer); creator(host)->manager and registration consumes manager+4; independent owner async requires112 bytes.",
+  "callsite_evidence": [
+    "Firmware SHA256 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec; XIP base0x0C0C0000; source bytes checked using IDA/Hex-Rays and Capstone disassembly.",
+    "Builtin locale descriptor0x2CDA3968 words {1,name0x2CB3ED64,interface0x2CB3ED64,reserved0,lifecycle0x2CDA3984,count1,members0x2CDA399C}; Error descriptor0x2CDA39D0 matches28-byte layout; lifecycle six pointers, members12 bytes.",
+    "ensureJsPrototype0xC8687AC invokes lifecycle+4(ctx,prototype), then stores JSValue at prototype+56. featureRequire0xC868F84..F92 invokes lifecycle+8(ctx,instance). uninit0xC866BCE..BD6 invokes lifecycle+16(ctx,prototype).",
+    "createTargetInterface0xC869034 reads prototype=*(instance+28). createJsInstance0xC868B18 invokes0xC8644F4;0xC864518 writes JSValue r2/r3 to instance+112.",
+    "AIOTJS0xC911306 calls creator thunk0xC86236C with stack host {context from runtime+20,sink0,abort0,package};0xC91130E stores returned manager at runtime+0xA4. Inner creator0xC8660E4 creates raw24-byte registry, binds136-byte manager through0xC86700C and returns manager. Manager constructor0xC8656D8 writes raw registry to manager+4.",
+    "Manager async constructor0xC865744 uses calloc(1,0x70), uv_async_init0xC2E14E8(loop,async,0xC86616D), and stores manager at async+0. Close0xC86576C calls uv_is_closing0xC2DB98C then uv_close0xC2DB874(async,0xC86539D).",
+    "uv_async_init0xC2E14E8 writes loop+4,callback+96,pending+108,busy+24; lazy pipe creation stores read_fd360 and write_fd364 in loop. uv_async_send0xC2E15A4 performs busy/pending protocol then ordinary write on loop+364.",
+    "Feature constructor0xC8656D8 uses uv_mutex_init0xC2DCCCC(manager+32); enqueue0xC865794 uses lock0xC2DCDA8 and unlock0xC2DCDC4. Wrappers call complete pthread APIs; prior uv_mutex_lock record pointed to raw pthread wrapper and unlock core was unnecessary.",
+    "FeaturePost0xC86231C consumes(handle,callback,arg32), not four arguments.0xC865D30 pins handle via0xC8628D4 and appends {handle,callback,arg,sign_extension(arg),kind0}. Drain0xC865D90 calls callback(active,arg32), then releases handle via0xC8628F4. Async0xC86616C supplies active1; manager destructor supplies0.",
+    "Real ferry framework singleton0x2013CFE0: getter0xC8FF468 allocates704 and calls FrameworkExt ctor0xC8E690C; constructor stores vptr0x2CDA8CD8. Noncreating getter0xC8FF490.",
+    "FrameworkExt factory slot8 at0x2CDA8CF8 points0xC8E54AD. Function0xC8E54AC allocates480-byte app, constructs through0xC8D9D88(vptr0x2CDA7C80); locks impl+348 via0xC2DCDA8 and appends into vector impl+460/+464, then unlocks0xC2DCDC4.",
+    "FrameworkExt initializer0xC8E772C initializes impl+348 mutex via recursive initializer0xC2DCD2C. Framework primary13 words plus prefix2=15 words; Application primary50 plus prefix2=52 words.",
+    "Application init slot2 function0xC8DB1F8 creates runtime at app+100; runtime manager+164. Returns1. Application::run0xC8D9108 subsequently initializes app environment and evaluates sources.",
+    "Current main-session NSH observation (emulator only): *(0x2013CFE0)=0x3D5FB618, its first words{0x2CDA8CD8,0x3D5FCFB8}; confirms singleton exists before QuickApp launch. No physical-device verification claimed.",
+    "0xC29460C saves r1 as output length, accepts value in r2/r3, reads cesu8 at stack+0 after prologue. Tag-7 fast path increments input string refcount and ASCII path0xC29468E..69C writes masked length and returns string+16. Latin1 bytes>=128 are UTF8-encoded; wide branch0xC294712 chooses CESU8/surrogate handling based on fifth argument; nonstring path0xC2946F0 converts to string.",
+    "Exact direct wrapper0xC296F14: r0ctx,r2/r3object; prologue push36/sub52/r7=sp+40 makes r7=original_sp-48. Name read[r7+48], value LDRD[r7+56], flags[r7+64], corresponding original stack0/8/16. strlen0xC5885B0; atom lookup0xC2748DC, fallback JS_NewStringLen0xC294B50 and atom intern0xC275F30. Generic define0xC2886A8 receives object,atom,value,undefined getter/setter,flags|0x2700; return saved; value and atom refcounts released inline; original integer result returned."
+  ],
+  "control_flow_evidence": [
+    "Description registration0xC862898 delegates to raw tree registration0xC86E7C4 and returns1 on success. Passing manager returned by create directly is invalid; registering an orphan manager does not publish into a real app.",
+    "Supervisor runtime/hook/canopus_hook.c explicitly does not program FPB or flash patches. Flash creator thunk cannot be hooked without a genuine firmware-used RAM dispatch slot; Auto/FPB enum cannot bypass that. Inline relocation allowlist rejects BL in first8 bytes, independent of flash writability.",
+    "Supported hook route is the real singleton RAM vptr, cloning FrameworkExt factory slot8 and each constructed Application primary init slot2. No flash patch or fabricated unused mapping needed. Base run0xC8E46CC..D4 loads RAM vptr factory+32 and takes BLX for overrides."
+  ],
+  "ownership_analysis": "Borrow original host only during manager creation; real app owns context and manager. Lifecycle callback pointers and descriptor remain module-resident. Withdraw owner under mutex before closing async on owner loop; free async/file only in close callback. Retained file handles avoid per-task-group fd resolution during producer wake.",
+  "unsafe_assumptions": [
+    "No device verification claimed. Hook feasibility for a real ferry RAM dispatch point is not established by the creator record.",
+    "No raw JS object offset is substituted for native lifecycle pointers. Host-free registry creation is not sufficient integration."
+  ],
+  "recommended_probe": "After finding a real RAM dispatcher, launch an app requiring canopus.astrolink; verify onCreate/onRequired and initialized JSValue, method call, notification from Bluetooth task and teardown before manager closes.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-30T00:00:00Z",
+  "artifacts": [
+    "p67-ferry-contract.md"
+  ]
+}

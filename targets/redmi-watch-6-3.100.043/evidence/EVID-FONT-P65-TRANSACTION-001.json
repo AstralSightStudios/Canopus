@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-FONT-P65-TRANSACTION-001",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Which exact P65 identities and layouts implement checked system font replacement and removal-to-stock?",
+  "candidate_symbols": [
+    "font_reload_glyph_metrics",
+    "font_reload_outline_acquire",
+    "font_reload_outline_release",
+    "font_reload_uikit_slot",
+    "font_reload_freetype_context_slot",
+    "font_reload_draw_unit_slot",
+    "font_reload_lv_malloc",
+    "font_reload_lv_free",
+    "font_reload_outline_event",
+    "font_reload_face_compare",
+    "font_reload_face_create",
+    "font_reload_face_destroy",
+    "font_reload_metrics_compare",
+    "font_reload_metrics_create",
+    "font_reload_metrics_destroy",
+    "font_reload_outline_compare",
+    "font_reload_outline_create",
+    "font_reload_outline_destroy",
+    "font_reload_lv_initialized",
+    "font_reload_style_refresh_enabled",
+    "font_reload_display_list",
+    "font_reload_vg_dispatch",
+    "font_reload_sw_dispatch",
+    "font_reload_glyph_pending_release",
+    "font_reload_image_pending_release",
+    "font_reload_gradient_pending_release",
+    "font_reload_count_cache_init",
+    "font_reload_drop_face_id",
+    "font_reload_cache_acquire",
+    "font_reload_cache_acquire_or_create",
+    "font_reload_ft_mul_fix",
+    "font_reload_list_remove",
+    "font_reload_ft_set_pixel_size"
+  ],
+  "prototype_hypothesis": "Managed FreeType descriptor64/font+4, factory(path,render_mode,pixels,style). FT_Set_Pixel_Sizes(face,width,height); P65 must pass width0,height=pixels.",
+  "callsite_evidence": [
+    "P65 AP SHA256 a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858. Native font factory0xc7344fc, managed wrapper factory0xc795db8, release0xc795fe4 establish descriptor/backing/wrapper/idle ownership.",
+    "Context0x3c450204 contains library0,FTCmanager4,cmap8,intern-list12,event24,face-cache28; root0x3c450210 points manager through+28.",
+    "Count cache constructor0xc73b5e8 establishes list+44/head48/tail52, data payload class0x3c20c7c8. Face24,metrics32,outline8; fixed metrics512/outline256."
+  ],
+  "control_flow_evidence": [
+    "Descriptor factory installs metrics0xc734999,outline0xc734e49,release0xc734e2d; native factory probe reproduces exact descriptor fields and pixel-call width0,height24.",
+    "VG unit dispatch12/active24,glyph queue28 element72,image36 and gradient44 queue elements4,submission52; display payload784/layer672/screens684/count712.",
+    "Source/macro byte32 fingerprints, exact addresses, structures and tests are in Resource Hook font-reload-audit.json.",
+    "Production font transaction P65 shared fixture: 4096 wrappers;511 backings; A/B/remove restoration; all allocation failure stages; borrowed stock face; stale owner/lifecycle/pending queue guards. Selected native original Thumb factory/cache-init probes pass."
+  ],
+  "ownership_analysis": "All candidate faces and duplicated registry paths prepared before publication; backing records and wrappers switch atomically while fallback/user fields survive. Old descriptors release held cache refs, drop only zero-ref faces, decrement intern IDs; failed prepare keeps prior path and face. No native wrapper factory allocations in production replacement.",
+  "unsafe_assumptions": [
+    "No P65 vector-label extension is evidenced; foreign vector class/drop/cache is not used.",
+    "Serialized healthy UI path only; no GPU recovery, framework restart epoch safety, arbitrary app-owned copies or physical-device claim."
+  ],
+  "recommended_probe": "Complete isolated P65 Mirage font owner lifecycle and explicitly authorized device switch/removal probes.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-28T06:40:00Z"
+}

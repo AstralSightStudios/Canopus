@@ -18,9 +18,10 @@ sequence in Mirage (`EVID-EMU-9132-001`). No physical device run exists.
 1. The **complete** `miwear.watch.n66cn_v3.1.32_full_489f2050` package is
    imported. Only `vela_ap.bin` leaves `/system` and the resource partition empty
    (black panel). The AP SHA matches the target.
-2. The installer face is packaged with the patched Facetory exporter
-   (`scripts/emu/band11/facetory-lua-layer.patch`) at protocol `0x0800`. The
-   engine runs `/data/app/watchface/market/366140016/main.lua`.
+2. The installer face is packaged with Facetory's exporter at protocol
+   `0x0800` (upstream commit `d8e1741` added the layout layer the engine needs
+   to start the Lua entry; no local patch is applied any more). The engine runs
+   `/data/app/watchface/market/366140016/main.lua`.
 3. Stage 0 publishes the cave at `0x200D0000` (RWX first, narrow to RX,
    firmware `DSB/ISB/BX LR` tail) and enters stage 1.
 4. Stage 1 allocates stage 2 from Kmem, leases one MPU region, and enters it.

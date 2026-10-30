@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.files_getfilep",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "files_getfilep",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc332ba2",
+  "callable_address": "0xc332ba3",
+  "prototype": "void *(void *, int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Resolve and retain a file from an explicit filelist, independent caller task group. Caller must check 0<=fd<8*filelist.u8_rows first. Release with fs_putfilep."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB compared with xiaomi-band-11-4.100.155: mutually unique full-body anchor; known callees consistent."
+  },
+  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact .155 private ABI for owner-loop pipe lookup. TCB+100 TLS -> taskinfo -> UV key at 200BD444 -> uvstate+664 default loop. Matched TCB+8 group; group+96 filelist. Entry bytes: 80 b5 4b 42 03 f0 07 03 01 f0 07 02. No fixed PID or caller-group fd assumption."
+}

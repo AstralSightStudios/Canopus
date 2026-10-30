@@ -23,6 +23,8 @@
 
 #include <stdint.h>
 
+struct canopus_app_entry_v1;
+
 #define CANOPUS_SUP_REGISTER_VERIFY_ERRNO_BASE 65536
 #define CANOPUS_SUP_REGISTER_CALL_ERRNO_BASE 73728
 #define CANOPUS_SUP_REGISTER_ERRNO_MAX 4095
@@ -160,14 +162,17 @@ struct canopus_sup_platform_v1 {
      * open, if any (1 when one was closed). Present only where the Manager UI
      * is; without it ctx->ui->set_entry answers UNSUPPORTED. */
     int (*ui_page_close)(void *cookie, uint32_t slot);
-    /* Module launcher entries (ADR-CAN-011), both or neither, and only where
-     * ui_page_close is. launcher_publish queues an entry for `slot` (the strings
-     * are copied; icon may be NULL) and returns 0, or a negative errno
-     * (NOMEM when every entry is taken). The firmware calls run later, one per
-     * launcher_step, each on its own UI event turn: step returns 1 after doing
-     * one and 0 when nothing is left, negative when a call failed. */
-    int (*launcher_publish)(void *cookie, uint32_t slot, const char *label,
-                            const char *icon);
+    /* Move a multi-page module UI entry (canopus_ui_entry_v1.page_count above
+     * 0) to `route`. The Manager target owns both the extra page descriptors
+     * and the firmware page stack, so it performs the push/finish. Present
+     * only where multi-page entries are supported; without it ctx->ui->route
+     * answers UNSUPPORTED. */
+    int (*ui_route)(void *cookie, uint32_t slot, uint32_t route);
+    /* Queue a module application using its Supervisor-owned identity. Copy
+     * strings and the optional native page array before returning. Firmware
+     * registration runs one mutation per launcher_step, on the UI owner. */
+    int (*app_publish)(void *cookie, uint32_t slot,
+                        const struct canopus_app_entry_v1 *entry);
     int (*launcher_step)(void *cookie);
     int (*validate_receipt)(void *cookie, const void *receipt);
     /* How many CPC2 requests the L2 transport holds for the phone at once (QUERY_DEVICE +84):
@@ -177,6 +182,9 @@ struct canopus_sup_platform_v1 {
     /* Remove one empty directory. Optional; returns negative errno on failure. */
     int (*dir_remove)(void *cookie, const char *path);
     int (*open_manager)(void *cookie);
+    /* Reserve existing firmware apps when allocating a managed identity.
+     * Returns 1 when occupied, 0 when free, or a negative error. */
+    int (*native_app_id_in_use)(void *cookie, uint16_t app_id);
     /* Publish the Manager's launcher icon when the launcher page is alive: 0 once
      * published for it, negative while it is not. Optional. */
     int (*publish_launcher)(void *cookie);

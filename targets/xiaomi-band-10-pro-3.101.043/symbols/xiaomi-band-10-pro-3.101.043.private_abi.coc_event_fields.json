@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.coc_event_fields",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "coc_event_fields",
+  "kind": "layout",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "void psm_handler(int event, void *data)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Which fields of the work buffer each CoC event branch reads, taken from the handlers that 0xC81E2F8 posts: event1 reads the u16 at +0 and writes channel setup fields (+32, +52, +56); event2 reads the u16 at +4 and works from +8; event3 reads the u16 at +28, +72, +108 and +114; event5 is handled inline in the dispatcher and clears the u16 at +4 (data path); event6 works from +0; event7 reads the dword at +4; event8 reads the u16 at +2; event12 reads the flag byte at +17 bit0 and the byte at +16; event13 does the same and compares the 24-byte peer address at +24 against a channel; event14 reads the byte at +132, the u16 at +130 and the area at +106. The numbers stand for connection setup, data, and close paths, but the mapping number-to-name is NOT proven and must not be hardcoded as names."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QUEUE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QUEUE-001"
+    ],
+    "source": "Dispatchers: 0xC81E2F8 (registered for PSM 31 and 4) switches on 1,2,3,5,6,7,8,12,13,14 and posts handlers 0xC81EFA0, 0xC81EAF0, 0xC81E90C, (inline 5), 0xC81EA88, 0xC81E454, 0xC81E3EC, 0xC81EF04, 0xC81E84C, 0xC81E9B4 with work flag 1; 0xC806AC8 (PSM 1) switches on the subset 1,2,3,5,6,7. Field reads were taken from each posted handler."
+  },
+  "notes": "Routing is safe by field usage; naming is a hole and stays out of the module."
+}

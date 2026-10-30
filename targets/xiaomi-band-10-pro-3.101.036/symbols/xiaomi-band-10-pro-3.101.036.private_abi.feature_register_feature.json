@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.feature_register_feature",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "feature_register_feature",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc84a0a0",
+  "prototype": "int feature_register_feature(void *registry, const void *description)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Astrolink binds this as the entry that publishes its Feature. The function names itself in its failure logs, which is the primary evidence."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact .036 producer and global initialization, recorded in p67-036-native-contract.md."
+  },
+  "notes": "Astrolink binds this as the entry that publishes its Feature. The function names itself in its failure logs, which is the primary evidence.",
+  "callable_address": "0xc84a0a1"
+}

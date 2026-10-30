@@ -4,6 +4,9 @@
   "target_id": "redmi-watch-6-3.100.043",
   "name": "lvgl_posix_open",
   "kind": "function",
+  "prototype": "void *(void *driver, const char *path, uint32_t mode)",
+  "entry_address": "0x0c7357d4",
+  "callable_address": "0xc7357d5",
   "instruction_set": "thumb",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -17,21 +20,21 @@
     "return_value": "Identity metadata only; no new ownership transfer or public wrapper."
   },
   "proof": {
-    "static": "candidate",
+    "static": "static_recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-RH-P65-CORE-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-RH-P65-CORE-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no candidate from the matcher."
+    "source": "Exact P65 AP IDA control flow plus startup alias recovery and independent Unicorn execution; EVID-RH-P65-CORE-001."
   },
-  "notes": "no candidate from the matcher. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target."
+  "notes": "Exact P65 AP independently recovered; see EVID-RH-P65-CORE-001 and Resource Hook core-evidence.json. Native instruction harness checks POSIX path/modes and cache deferred destruction. Restricted/PENDING; physical device NOT_PROBED. Previous matcher candidates are not callable identities."
 }

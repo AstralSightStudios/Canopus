@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.ble_advertising_start",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "ble_advertising_start",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3b118c",
+  "prototype": "void *ble_advertising_start(void *adapter, const void *params28, const void *data, uint32_t length, const void *scan_response, uint16_t response_length, const void *callbacks)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Stock caller0xC70ED94 constructs params28(mode+6,power+15,interval+16) and invokes this generic producer with caller data and callbacks. Producer copies all seven param words into IPC command67; accepts payload and response lengths<=256."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ],
+    "source": "Stock caller0xC70ED94 constructs params28(mode+6,power+15,interval+16) and invokes this generic producer with caller data and callbacks. Producer copies all seven param words into IPC command67; accepts payload and response lengths<=256."
+  },
+  "callable_address": "0xc3b118d",
+  "calling_convention": "arm-aapcs"
+}

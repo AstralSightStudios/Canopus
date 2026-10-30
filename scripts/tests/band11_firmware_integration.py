@@ -41,15 +41,25 @@ class FirmwareIntegrationTests(unittest.TestCase):
             m.uc.reg_write(UC_ARM_REG_R2, len(request))
             self.assertEqual(m.call(m.word(m.fops + 12)), len(request))
         self.assertEqual(m.launcher, [0xca])
-        publish = native_symbol(m, 'canopus_manager_target_launcher_publish')
+        publish = native_symbol(m, 'canopus_manager_target_app_publish')
+        reserve = native_symbol(m, 'canopus_supervisor_native_app_id')
+        add_module = native_symbol(m, 'canopus_supervisor_add_module')
+        supervisor = m.call(native_symbol(m, 'canopus_supervisor_get'))
         step = native_symbol(m, 'canopus_manager_target_launcher_step')
-        label, icon = 0x200d3000, 0x200d3040
+        label, icon, definition, module_name = 0x200d3000, 0x200d3040, 0x200d30c0, 0x200d3100
         m.uc.mem_write(label, 'Notes'.encode() + b'\0')
         m.uc.mem_write(icon, b'/data/notes/icon.bin\0')
 
         def publish_entry(slot, icon_ptr):
-            m.uc.reg_write(UC_ARM_REG_R1, label)
-            m.uc.reg_write(UC_ARM_REG_R2, icon_ptr)
+            m.uc.mem_write(module_name, f'notes.{slot}'.encode() + b'\0')
+            m.uc.reg_write(UC_ARM_REG_R1, 0)
+            m.uc.reg_write(UC_ARM_REG_R2, 1)
+            m.uc.reg_write(UC_ARM_REG_R3, module_name)
+            self.assertEqual(m.call(add_module, supervisor), slot)
+            m.uc.reg_write(UC_ARM_REG_R1, slot)
+            self.assertEqual(m.call(reserve, supervisor), 0xcc + slot - 3)
+            m.uc.mem_write(definition, struct.pack('<IIIII', 20, label, icon_ptr, 0, 0))
+            m.uc.reg_write(UC_ARM_REG_R1, definition)
             return m.call(publish, slot)
 
         self.assertEqual(publish_entry(3, icon), 0)
@@ -58,7 +68,7 @@ class FirmwareIntegrationTests(unittest.TestCase):
         self.assertEqual(sorted(m.module_apps), [0xcc])
         self.assertEqual(m.launcher, [0xca], 'the launcher is added on its own step')
         app = m.module_apps[0xcc]
-        self.assertEqual(app['package'], 'com.canopus.module.0')
+        self.assertEqual(app['package'], 'com.canopus.module.notes.3')
         self.assertEqual(app['icon'], '/data/notes/icon.bin')
         self.assertEqual(m.string(m.call(app['label_callback'])), 'Notes')
         self.assertEqual(m.call(step), 1)

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.register_inode",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "register_inode",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC1AFFD8",
+  "callable_address": "0xc1affd9",
+  "prototype": "int register_inode(const char *path, void *ops, int type, void *priv)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Defines FILE_INODE=16 for this image: the field the module compares against pipe_file_operations."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FEASIBILITY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FEASIBILITY-001"
+    ],
+    "source": "Resolves the inode through 0xC1BA908, stores its second argument into inode+16, ORs 0xA into the mode nibble at inode+14 and stores the private pointer at inode+24, under 0xC1BA00C/0xC1BA02C."
+  },
+  "notes": "Defines FILE_INODE=16 for this image: the field the module compares against pipe_file_operations. Callable address is the Thumb entry; the symbol exists to anchor the pipe identity, not as a module call site."
+}

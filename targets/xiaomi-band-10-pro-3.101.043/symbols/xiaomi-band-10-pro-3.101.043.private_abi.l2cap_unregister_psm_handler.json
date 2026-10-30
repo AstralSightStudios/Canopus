@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_unregister_psm_handler",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_unregister_psm_handler",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC8030F0",
+  "callable_address": "0xc8030f1",
+  "prototype": "int l2cap_unregister_psm_handler(void *owner, uint32_t event, void *entry)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Public remove half of the PSM registry."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ],
+    "source": "Submitted by the public wrapper 0xC805AC4. Finds the registry entry at *(owner)+16 whose +4 psm and +6 kind match the request, unlinks it through 0xC7EAD28, and for kind <= 3 walks the channel list to retire the channels bound to that PSM before freeing both the entry and the request node."
+  },
+  "notes": "Public remove half of the PSM registry."
+}

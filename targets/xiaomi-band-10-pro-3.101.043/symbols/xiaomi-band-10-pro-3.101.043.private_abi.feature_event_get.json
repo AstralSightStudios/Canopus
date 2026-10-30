@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.feature_event_get",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "feature_event_get",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC86A338",
+  "prototype": "feature_value_t feature_framework::event_get(feature_context_ref, feature_value_t, int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Event plumbing of the feature framework."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-001"
+    ],
+    "source": "Identified by its signature string at 0xcc8af7c."
+  },
+  "notes": "Event plumbing of the feature framework.",
+  "callable_address": "0xc86a339"
+}

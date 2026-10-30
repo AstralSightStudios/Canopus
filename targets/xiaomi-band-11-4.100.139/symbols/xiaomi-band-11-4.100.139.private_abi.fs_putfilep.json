@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.fs_putfilep",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "fs_putfilep",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc334998",
+  "callable_address": "0xc334999",
+  "prototype": "int(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Release the file reference returned by fs_getfilep. Last reference closes the file."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB compared with xiaomi-band-11-4.100.155: mutually unique full-body anchor; known callees consistent."
+  },
+  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Private exact-target ABI record; not public callable approval or physical validation. Entry bytes: 98 b5 02 46 00 af 20 b9 40 f2 8a 31. NuttX file slots are 32 bytes (C332B70). File references increment under interrupt critical section (C332B78-C332B7E)."
+}

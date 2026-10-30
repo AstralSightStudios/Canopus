@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.bt_le_start_advertising",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "bt_le_start_advertising",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC70ED94",
+  "callable_address": "0xc70ed95",
+  "prototype": "int bt_le_start_advertising(int flags)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Candidate for the advertising start half of Astrolink's F_ADVERTISING_CREATE pair; the stop half and the scan pair are still open."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ],
+    "source": "Builds the advertising parameters on the stack (type 0x1C, registers the advertising data record once through 0xC701480/0xC2E3994 under byte_20126828), then calls the MiWear GAP advertising start 0xC7D3EB4(name, params, (flags & 2) != 0, (flags & 8) != 0) and reports the result through 0xC70E6F4. Four call sites plus the log tag 'bt_le_start_advertising'."
+  },
+  "notes": "Candidate for the advertising start half of Astrolink's F_ADVERTISING_CREATE pair; the stop half and the scan pair are still open."
+}

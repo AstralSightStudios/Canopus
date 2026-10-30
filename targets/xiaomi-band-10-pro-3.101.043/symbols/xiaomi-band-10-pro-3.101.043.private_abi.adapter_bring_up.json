@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.adapter_bring_up",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "adapter_bring_up",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xCA40ED4",
+  "prototype": "int adapter_bring_up(void *host)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "The adapter instance global 0x2013DBE4 is only ever a pointer: its value is set here from bt_adapter_create, so the instance itself is a 212-byte heap object and the .data at 0x2013DBE4 is just the pointer slot (the image bytes there are 0xFF filler, i.e. not a ROM initialiser)."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FINAL-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FINAL-001"
+    ],
+    "source": "Creates the adapter instance with bt_adapter_create 0xC3AF1A8 (212-byte object initialised as 'bluetooth'), configures it with 0xC3AF26C, registers the callback table &off_2CDB9504 through bt_adapter_register 0xC3AF3E8, reads the state with bt_adapter_get_state 0xC3AF4F4, logs the transition when it reaches 4, registers 0xCAA5048(&off_2CDC3088, 0xCA40DE4, 0) and stores the state byte."
+  },
+  "notes": "The adapter instance global 0x2013DBE4 is only ever a pointer: its value is set here from bt_adapter_create, so the instance itself is a 212-byte heap object and the .data at 0x2013DBE4 is just the pointer slot (the image bytes there are 0xFF filler, i.e. not a ROM initialiser).",
+  "callable_address": "0xca40ed5"
+}

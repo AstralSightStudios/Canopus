@@ -5,7 +5,7 @@
   "name": "native_font_wait",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x1c12e7bc",
+  "entry_address": "0xc72ef2c",
   "prototype": "void(void *vg_unit)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -16,25 +16,26 @@
     "blocking": true
   },
   "ownership": {
-    "argument": "Borrowed exact initialized VG_LITE draw unit, serialized UI owner outside active/queued CPU drawing. May block; never under IRQ lock.",
-    "return_value": "Return register is incidental, never a status. Invokes native lower GPU finish and synchronously drains both pending arrays for gradient/image/glyph releases before returning. Native CPU reference retirement is distinct from successful GPU completion; firmware drains even after errors and reset recovery is unproven."
+    "argument": "Corrected false matcher 0x1c12e7bc. void(vg_unit); lower finish0x0c8bc080 then drains optional pending containers unit+36/+44 and glyph unit+28 using0x0c72d83c; clears unit+52. Drains after GPU errors too; no hardware success certificate.",
+    "return_value": "Incidental return discarded; synchronous native pending CPU release callbacks retired. Physical GPU completion and recovery not certified."
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-UI-P65-FONT-LIFECYCLE-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-UI-P65-FONT-LIFECYCLE-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact P65 AP IDA/Hex-Rays review and independently rehashed full function bodies; EVID-UI-P65-FONT-LIFECYCLE-001"
   },
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. New native UI font integration identity only. Existing calendar/font-reload approvals and statuses remain unchanged. No device verification. Return register is incidental, never a status. Invokes native lower GPU finish and synchronously drains both pending arrays for gradient/image/glyph releases before returning. Native CPU reference retirement is distinct from successful GPU completion; firmware drains even after errors and reset recovery is unproven."
+  "notes": "Corrected false matcher 0x1c12e7bc. void(vg_unit); lower finish0x0c8bc080 then drains optional pending containers unit+36/+44 and glyph unit+28 using0x0c72d83c; clears unit+52. Drains after GPU errors too; no hardware success certificate. restricted/PENDING; no public export or device approval.",
+  "callable_address": "0xc72ef2d"
 }

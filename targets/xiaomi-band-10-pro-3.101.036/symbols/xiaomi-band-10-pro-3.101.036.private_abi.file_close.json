@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.file_close",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "file_close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc1bf790",
+  "prototype": "int file_close(FAR struct file *file)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Closes a pinned file record; it is also the producer that confirms the file record layout the module reads when it validates the loop's pipe."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "Confirms FILE_INODE = 16 together with register_inode storing the operations table at inode+16.",
+  "callable_address": "0xc1bf791",
+  "calling_convention": "arm-aapcs"
+}

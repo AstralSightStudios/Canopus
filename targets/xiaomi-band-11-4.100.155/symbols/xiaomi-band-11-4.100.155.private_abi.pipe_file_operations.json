@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "name": "pipe_file_operations",
+  "kind": "global",
+  "prototype": "struct file_operations",
+  "instruction_set": "n/a",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "NuttX pipe file-operations table that a pipe inode stores at inode+16. Astrolink compares the inode's operations pointer against this table to prove that the two files it pinned in the default loop's owning filelist are that loop's pipe, before it writes a wake byte to them. Read-only identity; it is never called."
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.pipe_file_operations",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "entry_address": "0x2cb04ffc",
+  "proof": {
+    "static": "recovered",
+    "device": "proven",
+    "evidence_ids": [
+      "EVID-PORT-4155-LOOP-001"
+    ]
+  },
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-PORT-4155-LOOP-001"
+    ],
+    "source": "the .155 native probe accepts the default loop pair (18/18 lifecycle checks) only when inode->i_ops equals this table; its ten words name the pipe handlers 0xc32e0e9/0xc32e019/0xc32cddd/0xc32ce9d/0xc328955 and friends, which is the same set .139 and .179 place at their own addresses."
+  },
+  "notes": "Address catalogue only; the table is compared, never called. Device-proven identity, static address."
+}

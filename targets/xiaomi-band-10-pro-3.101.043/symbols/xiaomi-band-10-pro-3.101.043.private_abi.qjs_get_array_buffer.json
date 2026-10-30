@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_get_array_buffer",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_get_array_buffer",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc2d362c",
+  "prototype": "const uint8_t *qjs_get_array_buffer(void *ctx,size_t *length,uint64_t value)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Direct class19/20 gated accessor. object+32=opaque; detachedbyte+4,byte length+0,data+8. Writes length and returns backing pointer; rejects detached/wrongclass through native exception. Corrects older swapped layout and absent-getter composition records."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ],
+    "source": "Direct class19/20 gated accessor. object+32=opaque; detachedbyte+4,byte length+0,data+8. Writes length and returns backing pointer; rejects detached/wrongclass through native exception. Corrects older swapped layout and absent-getter composition records."
+  },
+  "notes": "The ctx+40 prototype table and the 8/12 offsets are the same invariants as .155.",
+  "callable_address": "0xc2d362d"
+}

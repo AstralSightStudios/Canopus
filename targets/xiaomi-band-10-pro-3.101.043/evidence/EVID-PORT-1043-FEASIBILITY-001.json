@@ -1,0 +1,34 @@
+{
+ "schema": 1,
+ "evidence_id": "EVID-PORT-1043-FEASIBILITY-001",
+ "target_id": "xiaomi-band-10-pro-3.101.043",
+ "question": "Can the astrolink ABI (MiWear GAP client, Bluelet LE CoC, libuv/NuttX task plumbing, QuickJS Feature registry) be adapted to the P67 line, and can it be ported from Band 11 rather than discovered?",
+ "candidate_symbols": [],
+ "prototype_hypothesis": "No prototype is claimed by this record. It establishes what the image contains and measures whether a cross-product-line port is sound.",
+ "callsite_evidence": [
+  "Identity: inner vela_ap.bin 13,795,728 bytes SHA-256 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec; ro.build.version=3.101.043 and ro.build.id=CONBINE_LTALM078_T3.101.043 at file offsets 193747/193752; CHIP=best1503, KERNEL=NUTTX in the same footer block. 45,482 functions and 19,876 referenced data objects extracted.",
+  "Host 1 (MiWear GAP IPC client) present: '../../frameworks/system/utils/uv/src/uv_miwear.c', the 'miwear-server' IPC name and vendor/xiaomi/miwear sources; the pack already records miwear_transport_send 0xc7d719c, miwear_transport_l2_rx 0xc7d6e6c, miwear_session_lookup 0xc7d794, miwear_bt_adapter_instance 0x2013dbe4.",
+  "Host 2 (Bluelet LE CoC) present: 66 '[NNN][bluelet]:' format strings and ../../frameworks/connectivity/bluetooth/service/stacks/bluelet/sal_adapter_interface.c; the pack already records bt_l2cap_owner 0x2013bdbc, bt_l2cap_connect 0xc805b0c, bt_l2cap_disconnect 0xc805b38, bt_l2cap_submit_cid 0xc805be8, bt_queue_external 0xc7eb9cc.",
+  "Host 3 (libuv/NuttX) present: 14 libuv source paths under apps/system/libuv/libuv/src and 26 NuttX source paths; uv_loop_init is 0xc2dc9a0 (thread.c/loop.c assertion literals in the preceding pool).",
+  "Host 4 (QuickJS Feature registry) present: '../../apps/interpreters/quickjs/quickjs/quickjs.c', 'QuickJS memory usage -- 2020-11-08 version', 3 '/frameworks/runtimes/feature/src/feature_manager_qjs.cpp:NNN' keys and 1,471 '[FEATURE] [%s:%d]' log formats.",
+  "GAP service level is locally identifiable: the advertising.c literal 0x2cb54dc8 is used by 0xc3b96a4 (logs '[233][adver]: %s, advertiser: %p not exist', file advertising.c:222) and 0xc3b9874 (advertising.c:185); the scan_manager.c literal 0x2cb54ec8 is used by 0xc3b9d1c."
+ ],
+ "control_flow_evidence": [
+  "Cross-line port is not sound. Running tools/fw-match/ensemble_match.py from the reviewed .155 pack to this image proposes 313/316 functions, but of the 206 proposals whose name the .043 pack already carries an independently recovered address for, only 46 agree (22%); e.g. bt_alloc is 0xc840c54 in the pack and 0xc351670 in the proposal, bt_queue_external 0xc7eb9cc against 0xc7105dc.",
+  "Nothing transfers by body identity: for the 342 names the .155 pack carries, only 19 have a target function with an identical whole-body fingerprint AND size that occurs exactly once in .043; the other 16 with any exact candidate are ambiguous (e.g. the 10-byte app_lookup_package has 643 candidates).",
+  "The libuv build differs from q66: 14 source files here against 12 in .155, adding unix/posix-hrtime.c and unix/udp.c. The NuttX configuration differs as well: 26 source files against 23, adding drivers/misc/rwbuffer.c, drivers/serial/serial.c, mm/mempool/mempool.c and net/socket/socket.c, dropping drivers/analog/adc.c.",
+  "uv_loop_init 0xc2dc9a0 shows the p67 uv_loop_t is NOT the q66 layout: the ready queue head at loop+68 (self-linked word pair 68/72) and the mutex at loop+76 and the loop async at loop+104 agree with q66, but loop+312/+316 are a self-linked list head here, while q66 carries the loop pipe descriptors at +312/+316. The uv_async_init at 0xc2e14e8 lazily creates the async pipe pair into loop+360/+364 (guarded by loop+360 == -1) and links the handle's pending queue through loop+312 at handle+100. The per-task loop state allocated by 0xc2dc9a0 is 288 bytes, against 712 bytes in q66."
+ ],
+ "ownership_analysis": "Nothing in this record authorises a call. It exists so that the next attempt starts from the measurements instead of re-deriving them, and so that no reader mistakes the presence of the four hosts for a recovered ABI.",
+ "unsafe_assumptions": [
+  "A cross-product-line ensemble is used only as a negative control here; no proposal from it is promoted.",
+  "The p67 uv_loop_t/TLS/task offsets are shown to differ from q66 at the loop descriptor level, but the complete replacement layout is not derived in this record."
+ ],
+ "recommended_probe": "None. No address in this record may be called; a device probe needs a complete per-target ABI first.",
+ "reviewers": [],
+ "verdict": "STATIC_RECOVERED",
+ "created": "2026-10-30T00:00:00Z",
+ "artifacts": [
+  "evidence/fw-match/ensemble-155-to-043.json"
+ ]
+}

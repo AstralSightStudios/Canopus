@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.pthread_mutex_unlock_core",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "pthread_mutex_unlock_core",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC205430",
+  "prototype": "int pthread_mutex_unlock_core(pthread_mutex_t *mutex)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Composition route for uv_mutex_unlock: call this with the uv mutex, which is a plain pthread_mutex_t on p67."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-001"
+    ],
+    "source": "Release half of the NuttX pthread mutex: takes the semaphore at mutex+8 (sub_C1E6A30), then walks the priority-inheritance holder list from the current TCB and posts the semaphore. One caller, the unlock body at 0xC204F08, which is the address the inlined uv unlock jumps to (see uv_mutex_unlock_inlined)."
+  },
+  "notes": "Composition route for uv_mutex_unlock: call this with the uv mutex, which is a plain pthread_mutex_t on p67.",
+  "callable_address": "0xc205431"
+}

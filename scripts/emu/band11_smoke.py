@@ -7,8 +7,8 @@ are delivered over encrypted CPC2 Layer 2. Needs, besides Mirage and the firmwar
 missing):
   * a qemu-miwear that includes commit 3e05ca7 (BES cache-controller words,
     8 MPU regions; the one Mirage pins),
-  * Facetory's package_lua_watchface example built with
-    scripts/emu/band11/facetory-lua-layer.patch (FACETORY_PACKAGER=<binary>),
+  * Facetory's package_lua_watchface example built from a revision that includes
+    the upstream Lua layout fix (commit d8e1741; FACETORY_PACKAGER=<binary>),
   * the AstroBox bridge (MAB_SMOKE).
 Usage: band11_smoke.py [155|179] [--services | --module PROJECT_DIR [--activate]]
 """

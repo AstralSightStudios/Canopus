@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.uv_async_init",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "uv_async_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc2cb3a0",
+  "prototype": "int uv_async_init(uv_loop_t *loop, uv_async_t *handle, uv_async_cb cb)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Producer of the async handle layout: it names the busy word, the callback slot and the pending queue node the module has to read."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "busy word 6 (handle+24), pending word 27 (handle+108), callback +96, pending queue node +100. q66 uses pending word 15, so this must not be inherited.",
+  "callable_address": "0xc2cb3a1",
+  "calling_convention": "arm-aapcs"
+}

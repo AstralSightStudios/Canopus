@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.feature_framework_bind",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "feature_framework_bind",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC86700C",
+  "prototype": "void *feature_framework_bind(void *registry, void *host)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Second half of the registration chain. The only host field it touches is host+0, and it only stores it; nothing is dereferenced during registration."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-002"
+    ],
+    "source": "Allocates the 136-byte FeatureManagerQjs object, runs the base constructor 0xC8656D8(manager, registry), overwrites the vptr with off_2CDA2CE4 (= vtable 0xCDA2CD0 + 0x14), then builds a 148-byte adapter 0xC860F08(*(host+0)) - which stores host+0 as that adapter's field 0 and fills its callback table at +8..+68 - and attaches it with 0xC865734(manager, adapter). One caller: feature_registry_create 0xC8660E4."
+  },
+  "notes": "Second half of the registration chain. The only host field it touches is host+0, and it only stores it; nothing is dereferenced during registration.",
+  "callable_address": "0xc86700d"
+}

@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.ferry_framework_instance",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "ferry_framework_instance",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2013CFE0",
+  "prototype": "void *ferry_framework_instance",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Real process-lifetime ferry Framework singleton, shared by base and extended getters. Read without constructing a second framework. Framework implementation pointer at+4."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ],
+    "source": "Getter0xC8FF468 reads singleton, allocates704-byte FrameworkExt when null, calls0xC8E690C then stores it here. Constructor sets cached vptr0x2CDA8CD8. Getter0xC8FF490 reads without construction."
+  },
+  "notes": "Real process-lifetime ferry Framework singleton, shared by base and extended getters. Read without constructing a second framework. Framework implementation pointer at+4."
+}

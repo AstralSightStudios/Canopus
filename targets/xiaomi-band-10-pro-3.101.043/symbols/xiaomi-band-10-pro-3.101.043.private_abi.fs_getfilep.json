@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.fs_getfilep",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "fs_getfilep",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC1B9700",
+  "callable_address": "0xc1b9701",
+  "prototype": "int fs_getfilep(int fd, struct file **filep)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Astrolink calls this as F_FS_GETFILEP(fd, &file) to obtain a reference to the loop's pipe write end from its own task group."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ],
+    "source": "Takes an fd and an out-parameter; resolves the calling task's file list through 0xC2055E8, bound-checks fd against 8 * rows, then indexes array[fd >> 3] + 32 * (fd & 7), requires inode at file+16 and a nonzero refcount at file+4, increments that refcount and returns the file. Consumer 0xC1CACE8 uses the returned file's inode type word at inode+14, and 30 call sites match the VFS read/write/ioctl wrappers."
+  },
+  "notes": "Astrolink calls this as F_FS_GETFILEP(fd, &file) to obtain a reference to the loop's pipe write end from its own task group."
+}

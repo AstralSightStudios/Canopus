@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.feature_framework_init",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "feature_framework_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC86E764",
+  "prototype": "int feature_framework_init(void *registry, int app_flag)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Second step of the host chain; the package name is read from the host object at +20."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-001"
+    ],
+    "source": "Logs '[FEATURE] [%s:%d] package_name is %s!' with name 'init' and then calls register_all 0xC892BC4(registry). One caller: feature_registry_create 0xC8660E4."
+  },
+  "notes": "Second step of the host chain; the package name is read from the host object at +20.",
+  "callable_address": "0xc86e765"
+}

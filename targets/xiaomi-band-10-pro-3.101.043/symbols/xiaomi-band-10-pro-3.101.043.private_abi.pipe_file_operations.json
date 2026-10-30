@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.pipe_file_operations",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "pipe_file_operations",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2CCBE5A4",
+  "prototype": "struct file_operations",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FEASIBILITY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FEASIBILITY-001"
+    ],
+    "source": "nx_pipe 0xC1A609C (and pipe2 0xC1A5F88) allocate the 1024-byte FIFO, format the '/var/pipe/%d' name and call register_inode 0xC1AFFD8 with this table as its second argument; register_inode stores that argument into inode+16, sets mode bits in inode+14 and the private FIFO in inode+24. The table's ten words are the pipe implementations 0xC1A6375/0xC1A6249/0xC1A6525/0xC1A6611/0/0xC1A68BD/0xC1A5F79/0/0xC1A6789/0, identical under the XIP alias 0x0CCBE5A4."
+  },
+  "approval_state": "PENDING",
+  "notes": "Identity compared at inode+16, never called. The cached alias 0x2CCBE5A4 is what the firmware passes to register_inode."
+}

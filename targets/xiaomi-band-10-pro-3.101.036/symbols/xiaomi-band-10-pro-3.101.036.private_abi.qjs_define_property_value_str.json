@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.qjs_define_property_value_str",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "qjs_define_property_value_str",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc280e14",
+  "callable_address": "0xc280e15",
+  "prototype": "int qjs_define_property_value_str(void *ctx, uint64_t object, const char *name, uint64_t value, int flags)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Consumes value on both success and failure; object/name borrowed. Interns name into atom, calls generic property definition, releases temporary atom and consumes value reference. Negative return means failure."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "Corrects false qjs_define_property_value_str_composition finding. This direct wrapper is ABI-identical to the shared firmware shim. Integer-key delete variant0xC2A46F8 and delete helper0xC2A4680 are unrelated and must not be used."
+}

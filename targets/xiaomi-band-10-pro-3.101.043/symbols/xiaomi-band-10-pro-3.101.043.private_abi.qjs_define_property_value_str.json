@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_define_property_value_str",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_define_property_value_str",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC296F14",
+  "callable_address": "0xc296f15",
+  "prototype": "int qjs_define_property_value_str(void *ctx, uint64_t object, const char *name, uint64_t value, int flags)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Consumes value on both success and failure; object/name borrowed. Interns name into atom, calls generic property definition, releases temporary atom and consumes value reference. Negative return means failure."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ],
+    "source": "Exact direct wrapper0xC296F14: r0ctx,r2/r3object; prologue push36/sub52/r7=sp+40 makes r7=original_sp-48. Name read[r7+48], value LDRD[r7+56], flags[r7+64], corresponding original stack0/8/16. strlen0xC5885B0; atom lookup0xC2748DC, fallback JS_NewStringLen0xC294B50 and atom intern0xC275F30. Generic define0xC2886A8 receives object,atom,value,undefined getter/setter,flags|0x2700; return saved; value and atom refcounts released inline; original integer result returned."
+  },
+  "notes": "Corrects false qjs_define_property_value_str_composition finding. This direct wrapper is ABI-identical to the shared firmware shim. Integer-key delete variant0xC2A46F8 and delete helper0xC2A4680 are unrelated and must not be used."
+}

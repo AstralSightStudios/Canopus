@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.qjs_to_cstring_len2",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "qjs_to_cstring_len2",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc27e50c",
+  "callable_address": "0xc27e50d",
+  "prototype": "const char *qjs_to_cstring_len2(void *ctx, size_t *length, uint64_t value, int cesu8)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Retains/constructs a QuickJS string backing the returned C string. Reports UTF8 byte length, accepts CESU8 flag, caller must use qjs_free_cstring0xC278848. Does not return a naked malloc allocation."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "Corrects false composition finding claiming engine has no direct accessor. FreeCString must release original QuickJS string header, so manual len+1 malloc copying is not ABI-compatible."
+}

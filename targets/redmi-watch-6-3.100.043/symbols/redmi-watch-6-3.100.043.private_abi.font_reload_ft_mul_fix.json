@@ -23,7 +23,8 @@
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-FONT-P65-TRANSACTION-001"
     ]
   },
   "policy": "restricted",
@@ -32,9 +33,10 @@
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-FONT-P65-TRANSACTION-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: mutually unique full-body anchor; known callees consistent."
+    "source": "Exact P65 IDA instruction/control-flow recovery and startup mapping; production transaction fixture and selected native instruction probes. EVID-FONT-P65-TRANSACTION-001"
   },
-  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Signed 16.16 multiply with rounding, used only for FT underline metrics; no allocation or callback. Selected scalar leaf executed natively in bounded probe. Experimental exact-target allowlist only; restricted / STATIC_RECOVERED / PENDING, device not_probed. GPU error/recovery, framework restart, unknown/custom owners and canvas/app-owned font copies remain unsupported."
+  "notes": "Exact P65 RH_FW_FR_FT_MUL_FIX; reviewed private transaction identity, restricted/PENDING/not_probed. Full byte/layout evidence is Resource Hook targets/redmi-watch-6-3.100.043/font-reload-audit.json. No neighboring-firmware identity is inherited."
 }

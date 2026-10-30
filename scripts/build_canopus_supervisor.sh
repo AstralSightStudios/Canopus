@@ -183,7 +183,7 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
 # Both loaders retain relocation targets, global exports and constructors, but
 # do not consume debug/local metadata or C unwind tables. Strip only unreferenced
 # symbols; --strip-all would remove symbol tables the ELF loaders require.
-if [ "$PROD_FAMILY" = xiaomi-band-10-pro ] || [ "$PROD_FAMILY" = xiaomi-band-11 ]; then
+if [ "$PROD_FAMILY" = xiaomi-band-10-pro ] || [ "$PROD_FAMILY" = xiaomi-band-11 ] || [ "$PROD_FAMILY" = redmi-watch ]; then
     OBJCOPY=${OBJCOPY:-${RUST_OBJCOPY:-}}
     if [ -z "$OBJCOPY" ]; then
         if command -v llvm-objcopy >/dev/null 2>&1; then

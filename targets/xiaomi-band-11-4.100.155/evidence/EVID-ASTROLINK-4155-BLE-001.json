@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ASTROLINK-4155-BLE-001",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "question": "Which exact Q66 .155 BLE entry points are referenced by the Astrolink native Feature and LE CoC integration?",
+  "candidate_symbols": [
+    "xiaomi-band-11-4.100.155.private_abi.ble_scan_start",
+    "xiaomi-band-11-4.100.155.private_abi.ble_scan_stop",
+    "xiaomi-band-11-4.100.155.private_abi.ble_advertising_start",
+    "xiaomi-band-11-4.100.155.private_abi.ble_advertising_stop",
+    "xiaomi-band-11-4.100.155.private_abi.l2cap_find_le_psm",
+    "xiaomi-band-11-4.100.155.private_abi.l2cap_register_psm_handler",
+    "xiaomi-band-11-4.100.155.private_abi.l2cap_connect_handler",
+    "xiaomi-band-11-4.100.155.private_abi.l2cap_accept_handler",
+    "xiaomi-band-11-4.100.155.private_abi.l2cap_disconnect_handler",
+    "xiaomi-band-11-4.100.155.private_abi.l2cap_unregister_psm_handler",
+    "xiaomi-band-11-4.100.155.private_abi.l2cap_find_channel",
+    "xiaomi-band-11-4.100.155.private_abi.l2cap_send_handler",
+    "xiaomi-band-11-4.100.155.private_abi.l2cap_queue_push",
+    "xiaomi-band-11-4.100.155.private_abi.l2cap_credit_queue_flush"
+  ],
+  "prototype_hypothesis": "Per-symbol AAPCS prototypes recorded with primitive fixed-width types; JSValue is uint64_t scalar, not C struct. Restricted until independent runtime validation.",
+  "callsite_evidence": [
+    "0xc46b68e ble_scan_start: void *(void *, const void *, const void *, const void *). GAP IPC client borrows params and retained callback table, returns scanner handle. Result callback borrows report: address0 RSSI7 type8 packetType9 len10 data12.",
+    "0xc46b730 ble_scan_stop: int(void *, void *). Stops own scanner handle through IPC; stopped callback ends handle lifetime. Do not run synchronous IPC inside Bluelet callback.",
+    "0xc46b5a0 ble_advertising_start: void *(void *, const void *, const uint8_t *, uint32_t, const uint8_t *, uint16_t, const void *). Copies 28-byte params and raw adv/scan-response data into IPC; retains callback table. Does not insert Flags. Caller owns independent returned advertising handle.",
+    "0xc46b664 ble_advertising_stop: int(void *, void *). Stops own advertising handle through IPC; do not invoke synchronous IPC inside Bluelet callback.",
+    "0xc869884 l2cap_find_le_psm: void *(uint16_t). Looks up dynamic PSM registry entry. Borrowed result; Bluelet owner task only.",
+    "0xc86a268 l2cap_register_psm_handler: int(void *, uint32_t, void *). Bluelet event handler consumes registration request; LE transport registry value3; dynamic PSM0x80..0xff. Callback event9 owns its registration event object.",
+    "0xc871558 l2cap_connect_handler: int(void *, uint32_t, void *). Bluelet handler consumes 68-byte request; transport flag bit0 selects LE. Event2 returns assigned CID; callback owns event payload.",
+    "0xc873020 l2cap_accept_handler: int(void *, uint32_t, void *). Bluelet handler consumes accept/reject request, preserving original incoming request generation. Local RX MTU52, credits60, MPS62; callback owns event payload.",
+    "0xc872e30 l2cap_disconnect_handler: int(void *, uint32_t, void *). Bluelet handler consumes request; disconnect callback event6 owns 12-byte payload with CID0/reason2/address4.",
+    "0xc872ebc l2cap_unregister_psm_handler: int(void *, uint32_t, void *). Bluelet handler consumes PSM unregister request; slot must stay resident until own channels/queued operations drain.",
+    "0xc86d8d0 l2cap_find_channel: void *(void *, uint16_t). Returns borrowed per-CID channel. Bluelet owner only. Channel queue at4, callback20, local/remote CID116/118.",
+    "0xc86e7f8 l2cap_send_handler: int(void *, uint32_t, void *). Consumes stock buffer into per-channel credit-controlled fragment queue; source handles SDU segmentation; callback event7 owns complete received buffer. Empty SDU needs same-host fragment enqueue path because stock loop skips length0.",
+    "0xc862c8e l2cap_queue_push: int(void *, void *). Bluelet queue takes node allocated with8-byte intrusive prefix; empty-SDU node stores stock buffer pointer and first+last flags0x81.",
+    "0xc86b40e l2cap_credit_queue_flush: int(void *, void *). Flushes same stock per-channel fragment queue using existing credits. Bluelet owner only; no separate host or credit implementation.",
+    "Exact AP entry bytes 0xc46b68e: 2de9f0430546adf5337d00af (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc46b730: 80b500af10b109b1fff7eaff (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc46b5a0: 2de9f047adf5327d00af8a46 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc46b664: 80b500af10b109b1fff7eaff (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc869884: 80b5084a0346126800af1268 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc86a268: 2de9f0411446204b11461b68 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc871558: 2de9f04782b0167a144606f0 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc873020: b0b584b00020118804af1446 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc872e30: f8b59179908800af1446f6f7 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc872ebc: 98b5002000af11881446faf7 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc86d8d0: 80b5094a0346126800af1268 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc86e7f8: 2de9f04f85b05068144686b2 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc862c8e: 80b5436800af13b901604160 (12 bytes, image VA base0x0c0c0000).",
+    "Exact AP entry bytes 0xc86b40e: f8b505460e4600afeb8923b1 (12 bytes, image VA base0x0c0c0000)."
+  ],
+  "control_flow_evidence": [
+    "CoC0x0c8732ae emits LE signaling code0x14 on CID5;0x0c872f2c parses SCID/PSM/MTU/MPS/credits.",
+    "CoC receive0x0c873794 delivers complete SDU event7; stock automatically replenishes credits, requiring module bounded receive queue.",
+    "Owner queue0x0c863bb4 is semaphore/mutex protected with wakeup. GAP wrappers have synchronous IPC and must not be called inside Bluelet event callback.",
+    "Independent AP check: SHA-256 matches target, pmain signature at file0x6133a0 corresponds to VA0x0c6d33a0, establishing image base0x0c0c0000; every newly recorded entry has captured12-byte instruction prefix."
+  ],
+  "ownership_analysis": "See each callsite and symbol ownership field. Callbacks and registered native code require resident module lifetime; owner generation prevents stale queued work accessing reused context/channel.",
+  "unsafe_assumptions": [
+    "These are static recovery results supplied by firmware analysis, not hardware proof.",
+    "No restricted/PENDING symbol is promoted to public/codegen callable approval. User authorized exact-address allowlist additions on 2026-10-29."
+  ],
+  "recommended_probe": "Build and verify exact-target module, load through real Canopus Supervisor, open example app, exercise Feature lifecycle, then use two physical devices for LE CoC RF and coexistence validation.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-29T17:00:00Z",
+  "artifacts": [
+    {
+      "uri": "../astrolink/docs/ble-module-investigation.md",
+      "sha256": "77d74e0b2bad02ea90dce30ab4eb6ada327715faf14e4a6e9b4114bc4ad5698e",
+      "role": "static-abi-evidence"
+    },
+    {
+      "uri": "../astrolink/src/backend/q66_155.rs",
+      "sha256": "ea19b81297124da0b65109492313540d0d8e35844a1992f9a34a91fd66b6e6c9",
+      "role": "static-abi-evidence"
+    },
+    {
+      "uri": "ida:///Users/lesetong/develop/mifw/analysis-q66-177/155/q66-ap.i64",
+      "role": "exact-target-disassembly"
+    }
+  ]
+}

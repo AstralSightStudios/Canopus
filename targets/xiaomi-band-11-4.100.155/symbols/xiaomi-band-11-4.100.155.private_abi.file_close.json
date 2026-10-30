@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.file_close",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "file_close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc340a24",
+  "callable_address": "0xc340a25",
+  "prototype": "int(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Close an owned struct file created by file_dup3; does not free the containing caller allocation."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-QJS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-QJS-001"
+    ],
+    "source": "Exact Q66 .155 IDB recovery for fd-independent QJS event-loop notification, 2026-10-30; native async wake EBADF captured at C3F5758."
+  },
+  "notes": "Private exact-target ABI record; not public callable approval or physical validation. Entry bytes: 98 b5 00 af 04 46 ff f7 95 ff 00 28. NuttX file slots are 32 bytes (C332B70). File references increment under interrupt critical section (C332B78-C332B7E)."
+}

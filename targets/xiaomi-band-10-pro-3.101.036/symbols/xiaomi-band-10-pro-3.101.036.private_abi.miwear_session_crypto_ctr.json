@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.miwear_session_crypto_ctr",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "miwear_session_crypto_ctr",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0C7BB994",
+  "prototype": "int(void *, int, uint16_t, const void *, void *)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-L2-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-L2-001"
+    ],
+    "source": "Exact .036 AP instruction recovery; evidence/l2-sram-probe.json and EVID-PORT-1036-L2-001.json."
+  },
+  "notes": "RX 0x0C7BE1A0 calls with decrypt=0; TX 0x0C7BE53E calls with encrypt=1. Key state+0/+16, synchronous cipher call 0x0C7BB9D8; nonzero result must fail.",
+  "callable_address": "0xc7bb995",
+  "calling_convention": "arm-aapcs"
+}

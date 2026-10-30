@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_signal_dispatch",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_signal_dispatch",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC803B88",
+  "callable_address": "0xc803b89",
+  "prototype": "int l2cap_signal_dispatch(void *owner, uint32_t event, void *frame)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Submitted by 0xC805C40, which the receive path 0xC7FB318 calls. The dispatch table is the authoritative map from signalling code to handler on this build: 0x14/0x15/0x16/0x17/0x18 are the LE CoC codes."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ],
+    "source": "Parses a received L2CAP signalling frame: element header is code at +0, identifier at +1, length at +2, and each element is dispatched through the 26-entry table at 0x2CD9F864 indexed by code-1, whose entry is {handler +0, minimum length +2 (u16), byte +4, flags +6}. Applies the duplicate-identifier check against channel+41 and builds a Command Reject (code 1, reason 5) through 0xC7EAFBC/0xC7FE4D0 when a code is unknown or too short."
+  },
+  "notes": "Submitted by 0xC805C40, which the receive path 0xC7FB318 calls. The dispatch table is the authoritative map from signalling code to handler on this build: 0x14/0x15/0x16/0x17/0x18 are the LE CoC codes."
+}

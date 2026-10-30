@@ -16,25 +16,26 @@
     "blocking": true
   },
   "ownership": {
-    "argument": "Consumes exactly one managed wrapper returned by native_font_create, after all label and native queued CPU glyph references have retired. Matching live manager required.",
+    "argument": "Release matching owned wrapper after label and queued CPU glyph references retire. Wrapper backing+36; registry lists manager+0/+12, idle backing manager+556. Return register discarded.",
     "return_value": "Return value is incidental and discarded. Frees wrapper and updates backing refcount; final ordinary backing font may move into native bounded idle cache, not be destroyed immediately. Does not release separately created fallback chains."
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-UI-P65-FONT-LIFECYCLE-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-UI-P65-FONT-LIFECYCLE-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact P65 AP IDA/Hex-Rays review and independently rehashed full function bodies; EVID-UI-P65-FONT-LIFECYCLE-001"
   },
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. New native UI font integration identity only. Existing calendar/font-reload approvals and statuses remain unchanged. No device verification. Return value is incidental and discarded. Frees wrapper and updates backing refcount; final ordinary backing font may move into native bounded idle cache, not be destroyed immediately. Does not release separately created fallback chains."
+  "notes": "Release matching owned wrapper after label and queued CPU glyph references retire. Wrapper backing+36; registry lists manager+0/+12, idle backing manager+556. Return register discarded. restricted/PENDING; no public export or device approval.",
+  "callable_address": "0xc795fe5"
 }

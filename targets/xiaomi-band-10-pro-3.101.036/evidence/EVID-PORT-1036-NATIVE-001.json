@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-1036-NATIVE-001",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "question": "Can the completed p67 native integration bind to exact .036 firmware without borrowing addresses from .043?",
+  "candidate_symbols": [
+    "ferry_framework_instance",
+    "ferry_framework_vtable",
+    "ferry_application_vtable",
+    "gap_client_instance",
+    "pipe_file_operations",
+    "qjs_new_string_len",
+    "qjs_to_cstring_len2",
+    "qjs_define_property_value_str",
+    "qjs_new_array_buffer_copy",
+    "qjs_get_array_buffer",
+    "qjs_get_typed_array_buffer",
+    "ble_advertising_start",
+    "ble_scan_stop",
+    "l2cap_accept_handler",
+    "l2cap_send_handler",
+    "uv_close"
+  ],
+  "prototype_hypothesis": "The two p67 builds preserve the generic native GAP/CoC, ferry and QuickJS contracts, with independently measured addresses and identical audited structure layouts.",
+  "callsite_evidence": [
+    "p67-036-native-contract.md"
+  ],
+  "control_flow_evidence": [
+    "Framework getter 0xC8E6C70 reads singleton 0x20138D30; FrameworkExt factory 0xC8CCCB4 locks impl+348 and manages app vector +460/+464.",
+    "Framework vtable 0x2CD7D618 and Application vtable 0x2CD7C5C0 include exact 15/52 words including two Itanium prefixes; factory slot 8 and init slot 2 match the native wrapper.",
+    "Application init 0xC8C2A00 and AIOTJS manager construction 0xC8F8B0E establish app+100 -> runtime+164 -> manager+4 registration and the already initialized 112-byte async at manager+60.",
+    "All six direct QuickJS entries have complete 48-byte identical instruction prefixes to their reviewed .043 counterparts.",
+    "Pipe table 0x2CC9910C was reconstructed from its exact ten Thumb handlers; no data address was inherited from .043."
+  ],
+  "ownership_analysis": "Original SDU ownership, callback queue cancellation, native Feature instance lifetime, async close and retained pipe-file wake use the same measured contracts as .043.",
+  "unsafe_assumptions": [
+    "No device execution, radio test or production approval is asserted for .036.",
+    "Structure layouts are accepted only where exact .036 instructions independently establish them."
+  ],
+  "recommended_probe": "Build exact .036, activate on its isolated device, require the Feature and execute the native lifecycle probe before any radio claim.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-30T00:00:00Z",
+  "artifacts": [
+    "p67-036-native-contract.md"
+  ]
+}

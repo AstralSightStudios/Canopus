@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_accept_handler",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_accept_handler",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc80279c",
+  "prototype": "int l2cap_accept_handler(void *owner, uint32_t event, void *request)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Finds cid=request+0,requires channel state+120==2,copies local config from request+52/60/62 and invokes response0xC8025C0 with result=request+4 and detail=request+6, then frees request. Old l2cap_disconnect_handler record pointed here but name was wrong."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ],
+    "source": "Finds cid=request+0,requires channel state+120==2,copies local config from request+52/60/62 and invokes response0xC8025C0 with result=request+4 and detail=request+6, then frees request. Old l2cap_disconnect_handler record pointed here but name was wrong."
+  },
+  "callable_address": "0xc80279d",
+  "calling_convention": "arm-aapcs"
+}

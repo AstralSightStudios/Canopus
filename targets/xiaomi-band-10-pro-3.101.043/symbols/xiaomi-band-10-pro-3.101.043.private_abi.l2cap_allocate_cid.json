@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_allocate_cid",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_allocate_cid",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC7FF93C",
+  "callable_address": "0xc7ff93d",
+  "prototype": "int l2cap_allocate_cid(void *descriptor, void *psm_entry, uint16_t psm, char le)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "CID allocation and channel bind helper; the owner cid counter is a u16 field at *(owner)+24 on this build."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ],
+    "source": "Reads the owner cid counter at *(owner)+24, increments it, skips values <= 0x3F and, when the caller is LE, > 0x7F, then walks the channel list comparing channel+116 to avoid a collision. It then allocates the channel itself: 0xC7EAC14(124), inserted with 0xC7EAC34, storing descriptor at +0, psm entry at +20, psm u16 at +112, state byte at +120 and the assigned cid at +116."
+  },
+  "notes": "Channel allocation site for the L2CAP channel struct: 124 bytes. Fields written here are the ones the handlers later touch, so the size is measured rather than inherited."
+}

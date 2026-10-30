@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.p65_calendar_font_style",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "p65_calendar_font_style",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void(void *object, const void *font, uint32_t selector)",
+  "entry_address": "0x37f408",
+  "callable_address": "0x37f409",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Exact private P65 calendar adapter contract; seeEVID-RH-P65-CALENDAR-001",
+    "return_value": "Ownership per exact audited prototype and calendar-evidence.json."
+  },
+  "proof": {
+    "static": "static_recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-RH-P65-CALENDAR-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-RH-P65-CALENDAR-001"
+    ],
+    "source": "ExactAP IDA disassembly/decompilation and original-bodySHA256:662ce2c4afe8d71e88c0fcdc0886a86693f35fc2a9840a2e46fb82c0bafa9043"
+  },
+  "notes": "Private identity only, no public wrapper or deviceapproval. Functionbody witness and sourcecompiled calendar tests in ResourceHook P65 target evidence."
+}

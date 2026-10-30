@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.l2cap_le_connection_response",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "l2cap_le_connection_response",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc7e9ff8",
+  "callable_address": "0xc7e9ff9",
+  "prototype": "int l2cap_le_connection_response(void *channel, void *peer, int id, int result, int credits, int mtu, int mps)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Response builder used by both the inbound request path and the accept/reject decision path, so it is the single place a module should read the response layout from."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "Response builder used by both the inbound request path and the accept/reject decision path, so it is the single place a module should read the response layout from."
+}

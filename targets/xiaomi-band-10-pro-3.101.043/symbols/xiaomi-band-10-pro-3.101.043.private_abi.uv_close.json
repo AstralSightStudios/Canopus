@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv_close",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv_close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2DB874",
+  "callable_address": "0xc2db875",
+  "prototype": "void uv_close(void *handle, void (*close_callback)(void *handle))",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Call on owning loop. Handle and callback must remain alive through the eventual close callback. Feature manager allocates its async as112 bytes at 0xC865744."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ],
+    "source": "Feature manager close 0xC86576C checks uv_is_closing 0xC2DB98C and calls 0xC2DB874(async, 0xC86539D); close reads flags at handle+0x5C, sets closing bit and callback at +12, dispatches by handle type."
+  },
+  "notes": "Call on owning loop. Handle and callback must remain alive through the eventual close callback. Feature manager allocates its async as112 bytes at 0xC865744."
+}

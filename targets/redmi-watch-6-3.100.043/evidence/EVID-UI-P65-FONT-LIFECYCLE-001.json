@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-UI-P65-FONT-LIFECYCLE-001",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Exact managed UI font factory/release/wait and P65 CPU-boundary layout, without public ABI or production approval.",
+  "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+  "candidate_symbols": [
+    "redmi-watch-6-3.100.043.private_abi.native_font_create",
+    "redmi-watch-6-3.100.043.private_abi.native_font_release",
+    "redmi-watch-6-3.100.043.private_abi.native_font_wait",
+    "redmi-watch-6-3.100.043.private_abi.font_reload_uikit_slot",
+    "redmi-watch-6-3.100.043.private_abi.font_reload_draw_unit_slot",
+    "redmi-watch-6-3.100.043.private_abi.font_reload_display_list",
+    "redmi-watch-6-3.100.043.private_abi.font_reload_vg_dispatch",
+    "redmi-watch-6-3.100.043.private_abi.font_reload_sw_dispatch"
+  ],
+  "prototype_hypothesis": "void*(manager,key8), void(manager,font), void(vg_unit); ARM AAPCS Thumb.",
+  "callsite_evidence": [
+    "Managed factory (manager,key8), family pointer0/pixel uint16+4/style uint16+6. Copies 36-byte native payload into owned 40-byte wrapper; backing record+36. No static fallback result.",
+    "Release matching owned wrapper after label and queued CPU glyph references retire. Wrapper backing+36; registry lists manager+0/+12, idle backing manager+556. Return register discarded.",
+    "Corrected false matcher 0x1c12e7bc. void(vg_unit); lower finish0x0c8bc080 then drains optional pending containers unit+36/+44 and glyph unit+28 using0x0c72d83c; clears unit+52. Drains after GPU errors too; no hardware success certificate.",
+    "Exact root global read by native font wrapper0x0c2188ec, startup relocated callable0x1c128b29. Font manager is root+28.",
+    "Exact draw-unit list global installed by constructor0x0c718618. P65 next+0, dispatch+12, active task+24; unlike P67+16/+32.",
+    "Exact display intrusive list. Constructor flash0x0c0cec60 (runtime0x00374c49) allocates payload784, so next+788, head+4; root layer+672, screens+684, active screen+688, screen count+712. Layer task+100 and next+108.",
+    "Exact VG dispatcher assigned at unit+12 by init0x0c7289b4. Active task unit+24, synchronous inspected path; no-task branch calls0x0c72ef2c. Identity only, never call from host.",
+    "Exact SW dispatcher assigned at unit+12 by init0x0c7223b0. Active task unit+24. Identity only, never call from host."
+  ],
+  "control_flow_evidence": [
+    "Startup0x0c0c028c copies [0x2c0cde78,0x2c0ef8d8) into0x20173e60; SRAM execute alias subtract0x1fe00000. Startup0x0c0c0314 copies [0x2c0efdc4,0x2c4c1e44) into0x3c000000, execute alias0x1c000000. These are startup-evidenced ranges, not guessed firmware deltas.",
+    "Wait0x0c72ef2c calls lower GPU finish0x0c8bc080; nonzero logs then rejoins all native drains. Drain0x0c72d83c iterates both arrays (counts+8/+24), calls stored callback+36 with userdata+40, then zeroes counts.",
+    "P65 display payload784 and root layer672 differ from existing P67/Band11 payload792/root680. P65 draw-unit dispatch12 and active24 differ from16/32. Host preflight must use P65 offsets.",
+    "The previous CANDIDATE wait0x1c12e7bc maps to flash0x0c21e580, a two-argument style initialization function; rejected and replaced."
+  ],
+  "ownership_analysis": "Labels borrow managed wrappers. Count references outside view storage; defer release while rendering, layers have queued task head+100, draw units have active+24 or unknown dispatcher+12. At serialized idle boundary call native wait then matching manager release. Never equate native retirement to successful physical GPU completion.",
+  "unsafe_assumptions": [
+    "restricted/PENDING/not_probed remains unchanged; no APPROVED status or public veneer.",
+    "No full module font reload transaction, calendar or background ABI has been established by this evidence.",
+    "No comprehensive native OOM, GPU reset recovery or arbitrary concurrent owners proof."
+  ],
+  "recommended_probe": "Exact P65 emulator native Manager font create/text/resize/delete and wait-before-release, then physical device acceptance.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-28T00:00:00Z",
+  "artifacts": [
+    {
+      "name": "native_font_create",
+      "entry_address": "0xc795db8",
+      "size": 514,
+      "sha256": "b71299161eddb1246a0b2a59fd417ad61ad7a98c8a4486b8931ba8f844083186",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc795db8+514"
+    },
+    {
+      "name": "native_font_release",
+      "entry_address": "0xc795fe4",
+      "size": 190,
+      "sha256": "fce6781dce0ef994aff06ddd01c9cd61a1ea57fd475ad735d94bfe923b8c3236",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc795fe4+190"
+    },
+    {
+      "name": "native_font_wait",
+      "entry_address": "0xc72ef2c",
+      "size": 82,
+      "sha256": "5db7a89bf1d1615b8ec736c832b80c02d1ff2dbad18b1d7e274473989fa62bef",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc72ef2c+82"
+    },
+    {
+      "name": "pending_drain",
+      "entry_address": "0xc72d83c",
+      "size": 92,
+      "sha256": "dc17418034c0fd0ae6e10efae549faac6af9aee7ae39acc1dfd77e9d66a43148",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc72d83c+92"
+    },
+    {
+      "name": "vg_dispatch",
+      "entry_address": "0xc7287f8",
+      "size": 442,
+      "sha256": "a4e12907d5d55dbe48b4ccfd0ffbe69e98c40d608e31068e7591b421a5ab3e4a",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc7287f8+442"
+    },
+    {
+      "name": "vg_init",
+      "entry_address": "0xc7289b4",
+      "size": 84,
+      "sha256": "51dcee64814f3e0a944465dc81c0a779d23175be77bb5bb6bff7da10ace7f980",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc7289b4+84"
+    },
+    {
+      "name": "sw_dispatch",
+      "entry_address": "0xc7222bc",
+      "size": 242,
+      "sha256": "3da936eabf6f451d0a0fdd549396068d2f443078a3b05dfe2efa539ce43d8ca6",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc7222bc+242"
+    },
+    {
+      "name": "sw_init",
+      "entry_address": "0xc7223b0",
+      "size": 30,
+      "sha256": "01b5822b03d5a70f31c4f6ff69b5951143b6411815df36992162e7a1912f44f9",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc7223b0+30"
+    },
+    {
+      "name": "draw_constructor",
+      "entry_address": "0xc718618",
+      "size": 22,
+      "sha256": "a758336333ecf5266308c203b82693571e8b21f937843a4350c3a7a4fafdac4c",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc718618+22"
+    },
+    {
+      "name": "font_wrapper",
+      "entry_address": "0xc2188ec",
+      "size": 178,
+      "sha256": "92dbf1f43de8a50733508394d008fc47f577c3085766efc6f3379129ed63c1c0",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc2188ec+178"
+    },
+    {
+      "name": "display_constructor_flash",
+      "entry_address": "0xc0cec60",
+      "size": 480,
+      "sha256": "96788ddbcbb370a44f2fa7b58f657a831c9a30334467f0dc00b8d90146d5bb9f",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc0cec60+480"
+    },
+    {
+      "name": "display_next_flash",
+      "entry_address": "0xc0cefa8",
+      "size": 24,
+      "sha256": "f626fa402969f7130469b413b67037b09e59057dae10b2ab7af9543f39a48aea",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc0cefa8+24"
+    },
+    {
+      "name": "startup_psram",
+      "entry_address": "0xc0c0314",
+      "size": 86,
+      "sha256": "a2d6991be7a0206aee8b8d1c3b7921a02f57eae418bf59d415be39cbf9a9b168",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc0c0314+86"
+    },
+    {
+      "name": "startup_sram",
+      "entry_address": "0xc0c028c",
+      "size": 92,
+      "sha256": "c73066ab854d88028542449255e4d66722c2781433a60bafd3a71a917a1b7f26",
+      "uri": "fw://redmi-watch-6-3.100.043/vela_ap.bin#0xc0c028c+92"
+    }
+  ]
+}

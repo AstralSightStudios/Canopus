@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_define_property_value_str_composition",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_define_property_value_str_composition",
+  "kind": "compose",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "int qjs_define_property_value_str(JSContext *ctx, JSValue obj, const char *name, size_t len, JSValue value, int flags)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "This build inlines the wrapper. The module must call, in this order: (1) atom = JS_NewAtomLen(ctx, name, len) at 0xC294DCC (or the 3-argument core 0xC294B50); (2) the generic atom-plus-value define, which is NOT yet pinned on this build - the obvious-looking 0xC2A46F8 is the integer-key variant (it formats the key with \"%lld\") and must not be used for a name; (3) release the atom with 0xC2780B0 (or its inlined twin 0xC2780D4) unconditionally, including on the error path."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-004"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-004"
+    ],
+    "source": ".155 keeps this as a 64-byte wrapper 0xc3c3c46 that creates an atom from the name, calls the define and releases the atom. On p67 the atom creator is 0xC294DCC/0xC294B50 and the atom release is 0xC2780B0/0xC2780D4, but no function calls both and no 40-80 byte function matches the wrapper, so the wrapper is inlined here rather than missing. The define half is the one open piece: the name-keyed define was not isolated, and the integer-key define at 0xC2A46F8 is a different function."
+  },
+  "notes": "Composition note, not an address. The three pieces are each recorded individually; this record exists so the module-side adapter can be written against the same order .155 used."
+}

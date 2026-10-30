@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.ble_advertising_start",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "name": "ble_advertising_start",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc46b5a0",
+  "callable_address": "0xc46b5a1",
+  "prototype": "void *(void *, const void *, const uint8_t *, uint32_t, const uint8_t *, uint16_t, const void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Copies 28-byte params and raw adv/scan-response data into IPC; retains callback table. Does not insert Flags. Caller owns independent returned advertising handle."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-001"
+    ],
+    "source": "Exact xiaomi-band-11-4.100.139 image/IDB compared with xiaomi-band-11-4.100.155: mutually unique full-body anchor; known callees consistent."
+  },
+  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact address catalog for module verification only. Not a public callable/codegen approval or physical device validation. Copies 28-byte params and raw adv/scan-response data into IPC; retains callback table. Does not insert Flags. Caller owns independent returned advertising handle."
+}

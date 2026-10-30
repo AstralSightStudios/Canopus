@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.nxsched_foreach",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "nxsched_foreach",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC205E54",
+  "prototype": "void nxsched_foreach(void (*worker)(void *tcb, void *arg), void *arg)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "This is the task iterator the loop capture needs: callback signature is (tcb, arg), matching what astrolink already uses. Note the iteration visits one TCB per pid-hash bucket, so on this build the hash carries a single TCB per bucket; if a bucket ever chains, the chain is not followed here."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-001"
+    ],
+    "source": "Walks the scheduler's pid hash under the critical section (BASEPRI 0x80 via 0xC205EB4/0xC205EE8): buckets at 0x200B24B0, bucket count at 0x200B24AC, and calls worker(bucket_tcb, arg) for every non-null entry. Reached from the firmware's own global file release 0xC1B9F1C, which calls it with the worker 0xC1B8D50, and from four more scheduler/cleanup callers."
+  },
+  "notes": "This is the task iterator the loop capture needs: callback signature is (tcb, arg), matching what astrolink already uses. Note the iteration visits one TCB per pid-hash bucket, so on this build the hash carries a single TCB per bucket; if a bucket ever chains, the chain is not followed here.",
+  "callable_address": "0xc205e55"
+}

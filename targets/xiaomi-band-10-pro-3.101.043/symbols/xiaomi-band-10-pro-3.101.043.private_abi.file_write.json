@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.file_write",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "file_write",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc1d25d4",
+  "prototype": "ssize_t file_write(struct file *file, const void *bytes, size_t length)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Three-argument scalar wrapper builds iovec{bytes,length},uio{&iovec,1}, then calls file_writev0xC1D2540. Raw iovec alone is not the argument shape of file_writev."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ],
+    "source": "Three-argument scalar wrapper builds iovec{bytes,length},uio{&iovec,1}, then calls file_writev0xC1D2540. Raw iovec alone is not the argument shape of file_writev."
+  },
+  "callable_address": "0xc1d25d5",
+  "calling_convention": "arm-aapcs"
+}

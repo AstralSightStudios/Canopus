@@ -98,6 +98,15 @@ page flags, and in-animation state, and then searches the descriptor and its
   finishes a page for the target's completion value above; earlier phases leave
   the page open.
 
+Confirmed in `.155` `sub_C69BB50`: the consumed branch jumps straight to the
+`page handles back pressed by itself` log and `return true`, so the stock
+`miwear_anim_system_back` page-out never runs. Any adapter that closes its own
+page from inside the callback therefore loses the exit transition; the adapter
+must answer zero to leave the finish (and its animation) to the firmware. The
+Supervisor's module-page adapter does exactly that (ADR-CAN-010): descriptor
++104 returns 1 only when the module handled the back internally, and returns 0
+when the module declines so `finish_page` and the transition still happen.
+
 The handler passes the payload synchronously and does not transfer ownership.
 The adapter must read the needed fields during the callback and must not retain
 or modify the payload. The descriptor/root references are borrowed firmware

@@ -74,7 +74,7 @@ static int32_t on_event(const struct canopus_context_v1 *ctx, struct canopus_ui_
 /* No on_back: the title's back closes the page. Return 0 from one to handle it
  * yourself, e.g. to pop a sub-page. */
 static const struct canopus_ui_entry_v1 s_entry = {
-    sizeof(struct canopus_ui_entry_v1), "{{id}}", on_open, on_event, 0, 0, 0,
+    sizeof(struct canopus_ui_entry_v1), "{{id}}", on_open, on_event, 0, 0, 0, 0,
 };
 
 static int32_t on_prepare(const struct canopus_context_v1 *ctx) { (void)ctx; return 0; }

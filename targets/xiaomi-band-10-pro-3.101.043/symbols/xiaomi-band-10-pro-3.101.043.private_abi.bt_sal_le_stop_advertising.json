@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.bt_sal_le_stop_advertising",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "bt_sal_le_stop_advertising",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC3B125C",
+  "callable_address": "0xc3b125d",
+  "prototype": "int bt_sal_le_stop_advertising(int adapter, int adv_handle)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Advertising stop. The name comes from the calling context (the beacon timer) plus the command wrapper shape, not from a function-name string, so it is the weakest of the three GAP entries recorded this pass."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ],
+    "source": "Sends adapter command 0x44 through 0xC3AC47C with a 60-byte reply buffer; the beacon timer callback reaches it with the stored advertising handle and logs 'stop_advertising adv_handle:%p' around the call. 18 call sites."
+  },
+  "notes": "Advertising stop. The name comes from the calling context (the beacon timer) plus the command wrapper shape, not from a function-name string, so it is the weakest of the three GAP entries recorded this pass."
+}

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv_mutex_init",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv_mutex_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2DCCCC",
+  "callable_address": "0xc2dcccd",
+  "prototype": "int uv_mutex_init(void *mutex)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Initializes the pthread-backed mutex used by the Feature manager. Corrects earlier record 0xC2DCF1C, a different initializer; use this matched libuv init/lock/unlock family."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ],
+    "source": "Feature manager constructor 0xC8656D8 calls 0xC2DCCCC(manager+32). Wrapper uses mutexattr_init 0xC1E9AAC, settype(attr,1) 0xC1E9AF4, mutex_init 0xC204DB4 and attr_destroy 0xC1E9AD0; returns negated pthread error. Source literal ../../apps/system/libuv/libuv/src/unix/thread.c."
+  },
+  "notes": "Initializes the pthread-backed mutex used by the Feature manager. Corrects earlier record 0xC2DCF1C, a different initializer; use this matched libuv init/lock/unlock family."
+}

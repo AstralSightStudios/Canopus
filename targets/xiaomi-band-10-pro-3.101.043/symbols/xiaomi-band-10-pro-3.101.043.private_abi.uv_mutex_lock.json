@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv_mutex_lock",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv_mutex_lock",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2DCDA8",
+  "callable_address": "0xc2dcda9",
+  "prototype": "void uv_mutex_lock(void *mutex)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Locks a mutex initialized by uv_mutex_init. Corrects earlier raw pthread entry 0xC1E9B1C; this is the actual libuv void-return wrapper."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ],
+    "source": "Feature enqueue 0xC865794 calls 0xC2DCDA8(manager+32). Wrapper BL 0xC1E9B1C (pthread_mutex_lock); nonzero result asserts through 0xC1E4180 at thread.c:358."
+  },
+  "notes": "Locks a mutex initialized by uv_mutex_init. Corrects earlier raw pthread entry 0xC1E9B1C; this is the actual libuv void-return wrapper."
+}

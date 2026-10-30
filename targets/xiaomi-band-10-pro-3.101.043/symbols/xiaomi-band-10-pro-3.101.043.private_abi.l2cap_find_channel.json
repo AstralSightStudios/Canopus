@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_find_channel",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_find_channel",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC8004A4",
+  "callable_address": "0xc8004a5",
+  "prototype": "void *l2cap_find_channel(void *key, uint16_t cid)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Borrowed per-cid channel for the Bluelet owner task only. Channel cid at +116; the list link is stored 8 bytes before the channel, the same 8-byte intrusive prefix the queue nodes use."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-001"
+    ],
+    "source": "Walks the channel list at *(*(owner)) comparing an optional key against the channel word at +0 and the cid at +116, following the intrusive previous link at channel-8. Both call sites (0xC805CD8, 0xC805D26) are in the same public API cluster as the connect/disconnect wrappers."
+  },
+  "notes": "Borrowed per-cid channel for the Bluelet owner task only. Channel cid at +116; the list link is stored 8 bytes before the channel, the same 8-byte intrusive prefix the queue nodes use."
+}

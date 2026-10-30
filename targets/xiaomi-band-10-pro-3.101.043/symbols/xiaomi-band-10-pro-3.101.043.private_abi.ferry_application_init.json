@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.ferry_application_init",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "ferry_application_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC8DB1F8",
+  "callable_address": "0xc8db1f9",
+  "prototype": "int ferry_application_init(void *application, void *options, void *loop)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "On this firmware init returns1 on success. Wrapper must preserve original result, register in raw registry reached application+100 ->runtime+164 ->manager+4, then return before stock Application::run0xC8D9108 evaluates app environment."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ],
+    "source": "Application primary vtable0x2CDA7C80 slot2 points here.0xC8DB25C calls runtime creator0xC9116F8;0xC8DB264 stores runtime at application+100. Finishes context/binding/i18n setup then MOV r0,#1 and returns. Runtime creation0xC911306 stores Feature manager at runtime+164."
+  },
+  "notes": "On this firmware init returns1 on success. Wrapper must preserve original result, register in raw registry reached application+100 ->runtime+164 ->manager+4, then return before stock Application::run0xC8D9108 evaluates app environment."
+}

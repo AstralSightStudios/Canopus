@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_register_psm_handler",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_register_psm_handler",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC800624",
+  "callable_address": "0xc800625",
+  "prototype": "int l2cap_register_psm_handler(void *owner, uint32_t event, void *entry)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Public register half of the PSM registry; the find half is l2cap_find_le_psm 0xC7FF644 and the remove half is l2cap_unregister_psm_handler 0xC8030F0. All three use the same key at entry+4 (u16 psm) and entry+6 (kind)."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ],
+    "source": "Submitted by the public wrapper 0xC805A80. Inserts the entry into the registry at *(owner)+16 with 0xC7EAC34, then for kind 2 (LE) assigns a PSM from the dynamic range starting 0x1001 and for kind 3 from 0x0080..0x00FF, rewriting entry+4 and rescanning the registry by (psm, kind) until a free slot is found, and finishes by notifying through the callback stored at the entry."
+  },
+  "notes": "Public register half of the PSM registry; the find half is l2cap_find_le_psm 0xC7FF644 and the remove half is l2cap_unregister_psm_handler 0xC8030F0. All three use the same key at entry+4 (u16 psm) and entry+6 (kind)."
+}

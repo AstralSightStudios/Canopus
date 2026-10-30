@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_free_cstring",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_free_cstring",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC278848",
+  "callable_address": "0xc278849",
+  "prototype": "void qjs_free_cstring(JSContext *ctx, const char *str)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "This is astrolink's qjs_free_cstring. .155 factored it differently: there the public FreeCString (0xc3b89f2, 20 bytes) forwards to QJS_FreeValue with (ptr-16, tag -7) and the decrement lives in that call; here the decrement is inlined. Same operation, different factoring, which is why the size differs (38 versus 20)."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ],
+    "source": "Takes the context and the string pointer, reads the runtime from ctx+16, decrements the reference count at ptr-16 and calls the internal __JS_FreeValue with tag -7 when it reaches zero. 21 call sites."
+  },
+  "notes": "This is astrolink's qjs_free_cstring. .155 factored it differently: there the public FreeCString (0xc3b89f2, 20 bytes) forwards to QJS_FreeValue with (ptr-16, tag -7) and the decrement lives in that call; here the decrement is inlined. Same operation, different factoring, which is why the size differs (38 versus 20)."
+}

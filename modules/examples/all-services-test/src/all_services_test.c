@@ -15,7 +15,7 @@
  *   11. LOG (info, warn, error, debug, write)
  *   12. NOTIFY (post, post_with_icon)
  *   13. CONNECT (CanopusConnect: listen, send text/binary, remote_listening)
- *   14. UI pages (set_entry, close_page, node_set_style/layout through ctx->ui)
+ *   14. UI pages (set_entry, close_page, route, node_set_style/layout through ctx->ui)
  *   15. UI (declarative tree construction with extended catalog: Page, Header, Section, Text, Status, Button, Action, Switch, Progress, Checkbox, Divider)
  */
 
@@ -937,6 +937,7 @@ static void run_ui_page_tests(const struct canopus_context_v1 *ctx)
     rc = ctx->ui->set_entry(ctx, &entry);
     if (rc == CANOPUS_SVC_ERR_UNSUPPORTED) {
         if (ctx->ui->close_page(ctx) != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
+        if (ctx->ui->route(ctx, 0u) != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
         if (ok) log_skip("UI pages: no Manager UI in this build");
         else log_test("UI pages: unsupported build answers consistently", 0);
         return;
@@ -945,17 +946,35 @@ static void run_ui_page_tests(const struct canopus_context_v1 *ctx)
     entry.struct_size = 1u;
     if (ctx->ui->set_entry(ctx, &entry) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
     if (ctx->ui->close_page(ctx) != CANOPUS_SVC_ERR_STATE) ok = 0; /* nothing open */
+    /* This entry declares no extra routes, so the multi-page mover is absent
+     * for it even where the Supervisor supports it. */
+    if (ctx->ui->route(ctx, 0u) != CANOPUS_SVC_ERR_UNSUPPORTED) ok = 0;
     if (ctx->ui->set_entry(ctx, 0) != CANOPUS_SVC_OK) ok = 0;
     if (ctx->launcher != 0) {
         /* Publishing is permanent until reboot, so only the refusals run here:
          * with the page entry removed there is nothing a launcher entry could open. */
-        struct canopus_launcher_entry_v1 launcher;
-        canopus_memset(&launcher, 0, sizeof(launcher));
-        launcher.struct_size = sizeof(launcher);
-        launcher.label = "services_test";
-        if (ctx->launcher->set_entry(ctx, &launcher) != CANOPUS_SVC_ERR_STATE) ok = 0;
-        launcher.struct_size = 1u;
-        if (ctx->launcher->set_entry(ctx, &launcher) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+        struct canopus_app_entry_v1 app;
+        void *pages[1] = {0};
+        canopus_memset(&app, 0, sizeof(app));
+        app.struct_size = sizeof(app);
+        app.label = "services_test";
+        /* Zero pages is a valid managed definition, but its UI entry was
+         * removed above. All remaining definitions are malformed, so no
+         * application registration or launcher work is queued. */
+        if (ctx->launcher->register_app(ctx, &app) != CANOPUS_SVC_ERR_STATE) ok = 0;
+        if (ctx->launcher->register_app(ctx, 0) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+        app.struct_size = 1u;
+        if (ctx->launcher->register_app(ctx, &app) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+        app.struct_size = sizeof(app);
+        app.page_count = 1u; /* no pointer array */
+        if (ctx->launcher->register_app(ctx, &app) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+        app.pages = pages;
+        app.page_count = 0u; /* array without a page count */
+        if (ctx->launcher->register_app(ctx, &app) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+        app.page_count = CANOPUS_NATIVE_APP_PAGES_MAX + 1u;
+        if (ctx->launcher->register_app(ctx, &app) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+        app.page_count = 1u; /* null page descriptor */
+        if (ctx->launcher->register_app(ctx, &app) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
     }
     log_test("UI pages: entry registered, validated and removed", ok);
 }

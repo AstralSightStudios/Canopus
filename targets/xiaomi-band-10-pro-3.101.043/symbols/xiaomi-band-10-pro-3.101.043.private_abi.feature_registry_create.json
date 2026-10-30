@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.feature_registry_create",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "feature_registry_create",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC8660E4",
+  "prototype": "void *feature_registry_create(void *host)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "This is where a registry instance comes from on p67: it is created per app host object, not fetched from a global. That is the reason feature_register_feature cannot be called from a native callback without a host-provided registry."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-001"
+    ],
+    "source": "Allocates a 24-byte registry object, initialises its list head at +0 (self-linked), then calls the framework init 0xC86E764(registry, *(host+12)) which registers every built-in feature, and finally binds it to the host through 0xC86700C(registry, host). One caller: the thunk 0xC86236C reached from the AIOTJS/ferry side at 0xC911306."
+  },
+  "notes": "This is where a registry instance comes from on p67: it is created per app host object, not fetched from a global. That is the reason feature_register_feature cannot be called from a native callback without a host-provided registry.",
+  "callable_address": "0xc8660e5"
+}

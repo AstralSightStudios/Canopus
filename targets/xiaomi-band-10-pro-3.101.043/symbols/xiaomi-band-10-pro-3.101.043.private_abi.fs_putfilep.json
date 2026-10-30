@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.fs_putfilep",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "fs_putfilep",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC1B979C",
+  "callable_address": "0xc1b979d",
+  "prototype": "int fs_putfilep(struct file *file)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Astrolink binds this as F_FS_PUTFILEP(file) to drop the file-list reference it took with fs_getfilep, right after file_dup3 has copied the pipe write end."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ],
+    "source": "Single-argument release: asserts the file is non-NULL against fs_files.c:906, takes the scheduler critical section through BASEPRI, decrements the reference count at file+4, and when it reaches zero calls the list release at 0xC1CEC54 and logs '%s: ERROR: fs putfilep file_close() failed' on failure. Its callers in the VFS layer are the fs_* wrappers, which obtain the file with fs_getfilep immediately before and release it immediately after (e.g. 0xC1CFD48 for fchstat, 0xC1D1258 and 0xC1D25F4 around the readv/writev pair)."
+  },
+  "notes": "Astrolink binds this as F_FS_PUTFILEP(file) to drop the file-list reference it took with fs_getfilep, right after file_dup3 has copied the pipe write end."
+}

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_new_array_buffer_copy",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_new_array_buffer_copy",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc2d34c8",
+  "prototype": "uint64_t qjs_new_array_buffer_copy(void *ctx,const uint8_t *bytes,size_t length)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Allocates ArrayBuffer and backing storage; copies input through0xC588DB0 at0xC2D3550. Bytes are borrowed; returnedJSValue owns copy. Older js_new_array_buffer record falsely described adopt-with-free."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ],
+    "source": "Allocates ArrayBuffer and backing storage; copies input through0xC588DB0 at0xC2D3550. Bytes are borrowed; returnedJSValue owns copy. Older js_new_array_buffer record falsely described adopt-with-free."
+  },
+  "notes": "The ctx+40 prototype table and the 8/12 offsets are the same invariants as .155.",
+  "callable_address": "0xc2d34c9"
+}

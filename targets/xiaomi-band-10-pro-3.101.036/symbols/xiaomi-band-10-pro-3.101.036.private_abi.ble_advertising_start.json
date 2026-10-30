@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.ble_advertising_start",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "ble_advertising_start",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc39aa88",
+  "prototype": "void *ble_advertising_start(void *adapter, const void *params28, const void *data, uint32_t length, const void *scan_response, uint16_t response_length, const void *callbacks)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Stock caller0xC70ED94 constructs params28(mode+6,power+15,interval+16) and invokes this generic producer with caller data and callbacks. Producer copies all seven param words into IPC command67; accepts payload and response lengths<=256."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "callable_address": "0xc39aa89",
+  "calling_convention": "arm-aapcs"
+}

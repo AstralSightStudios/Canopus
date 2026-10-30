@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv_async_init",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv_async_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2E14E8",
+  "prototype": "int uv_async_init(uv_loop_t *loop, uv_async_t *handle, uv_async_cb cb)",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Producer of the async handle layout: it names the busy word, the callback slot and the pending queue node the module has to read."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-LOOP-001"
+    ],
+    "source": "Guards on loop+360 == -1, creates the pipe pair through 0xC2E1A60, stores the two descriptors at loop+360/+364, writes &loop->async_handles into handle+16, loop into handle+4, the callback into handle+96, clears handle+24, links handle+100 into the loop list at +312 through loop+316, and clears the pending word at handle+108."
+  },
+  "notes": "busy word 6 (handle+24), pending word 27 (handle+108), callback +96, pending queue node +100. q66 uses pending word 15, so this must not be inherited.",
+  "callable_address": "0xc2e14e9",
+  "calling_convention": "arm-aapcs"
+}

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.qjs_new_array_buffer_copy",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "qjs_new_array_buffer_copy",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc2bd3c8",
+  "prototype": "uint64_t qjs_new_array_buffer_copy(void *ctx,const uint8_t *bytes,size_t length)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Allocates ArrayBuffer and backing storage; copies input through0xC588DB0 at0xC2D3550. Bytes are borrowed; returnedJSValue owns copy. Older js_new_array_buffer record falsely described adopt-with-free."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "The ctx+40 prototype table and the 8/12 offsets are the same invariants as .155.",
+  "callable_address": "0xc2bd3c9"
+}

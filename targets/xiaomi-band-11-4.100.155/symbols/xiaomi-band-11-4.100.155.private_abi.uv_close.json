@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.uv_close",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "uv_close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3ea6e4",
+  "callable_address": "0xc3ea6e5",
+  "prototype": "void(void *, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "target-loop-owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Marks a live libuv handle closing on its owning loop. Retains handle storage until close_callback(handle) is invoked from uv_run. Caller may free its containing allocation only in that callback."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-BLE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-BLE-001"
+    ],
+    "source": "Exact Q66 .155 IDB recovery recorded in EVID-ASTROLINK-4155-BLE-001; Astrolink static ABI audit on 2026-10-30."
+  },
+  "notes": "Exact private ABI recovery, not public approval. C3EA6FA marks CLOSING at handle+44; C3EA702 stores callback at +12. uv_run C3EADF6-C3EAE06 removes the handle queue and invokes callback(handle). Stock C736FE0 closes a 64-byte async allocation; callback C735A72 frees it at C735A76."
+}

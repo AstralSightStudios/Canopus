@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.files_getfilep",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "files_getfilep",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC1B90DC",
+  "callable_address": "0xc1b90dd",
+  "prototype": "struct file *files_getfilep(struct filelist *list, int fd)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Astrolink calls this as F_FILES_GETFILEP(filelist, fd) while walking tasks in nxsched_foreach. The list it receives is the group-embedded one at GROUP_FILELIST, which on this image is a {u8 rows; row-pointer array at +4} structure."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-VFS-001"
+    ],
+    "source": "Same fd arithmetic as fs_getfilep but with the file list passed in: rows pointer array at list+4, row pointer array[fd >> 3], entry at +32 * (fd & 7), returns NULL unless inode at file+16 and refcount at file+4 are nonzero, and increments the refcount."
+  },
+  "notes": "Astrolink calls this as F_FILES_GETFILEP(filelist, fd) while walking tasks in nxsched_foreach. The list it receives is the group-embedded one at GROUP_FILELIST, which on this image is a {u8 rows; row-pointer array at +4} structure."
+}

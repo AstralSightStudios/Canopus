@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.files_getfilep",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "files_getfilep",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc332ba2",
+  "callable_address": "0xc332ba3",
+  "prototype": "void *(void *, int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Resolve and retain a file from an explicit filelist, independent caller task group. Caller must check 0<=fd<8*filelist.u8_rows first. Release with fs_putfilep."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-QJS-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-QJS-001"
+    ],
+    "source": "Exact Q66 .155 IDB recovery for fd-independent QJS event-loop notification, 2026-10-30; native async wake EBADF captured at C3F5758."
+  },
+  "notes": "Exact .155 private ABI for owner-loop pipe lookup. TCB+100 TLS -> taskinfo -> UV key at 200BD444 -> uvstate+664 default loop. Matched TCB+8 group; group+96 filelist. Entry bytes: 80 b5 4b 42 03 f0 07 03 01 f0 07 02. No fixed PID or caller-group fd assumption."
+}

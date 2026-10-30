@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_new_string_len",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_new_string_len",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc294b50",
+  "prototype": "uint64_t qjs_new_string_len(void *ctx,const uint8_t *bytes,size_t length)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Direct UTF8 decoder, ASCII fast path0xC294D48 returns string header pointer tag-7. Older js_new_atom_len_core and composition names incorrectly described it."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-NATIVE-003"
+    ],
+    "source": "Direct UTF8 decoder, ASCII fast path0xC294D48 returns string header pointer tag-7. Older js_new_atom_len_core and composition names incorrectly described it."
+  },
+  "notes": "The ctx+40 prototype table and the 8/12 offsets are the same invariants as .155.",
+  "callable_address": "0xc294b51"
+}

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.adapter_state_word",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "adapter_state_word",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2013DBE8",
+  "prototype": "uint8_t adapter_state_word",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "ADAPTER_STATE_WORD = 0x2013DBE8; ADAPTER_READY_STATE = 4. Both come from the producer, not from a consumer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FINAL-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FINAL-001"
+    ],
+    "source": "Byte holding the last adapter state. Written by adapter_bring_up 0xCA40ED4 with byte_2013DBE8 = state and read there in the same expression that decides whether the adapter just became ready: if (state == 4 && byte_2013DBE8 != 4) it logs 'on_adapter_state_on'."
+  },
+  "notes": "ADAPTER_STATE_WORD = 0x2013DBE8; ADAPTER_READY_STATE = 4. Both come from the producer, not from a consumer."
+}

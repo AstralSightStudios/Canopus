@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.private_abi.l2cap_disconnect_channel",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "l2cap_disconnect_channel",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc872dc0",
+  "callable_address": "0xc872dc1",
+  "prototype": "int(void *channel, uint16_t policy)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private",
+      "audited-module-task"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Called by the stock channel disconnect handler after its own channel lookup. Dispatches on the channel's state byte and closes it with stock ownership: it emits callback event 6, frees the channel allocation and releases host link resources. Astrolink invokes it directly on the Bluelet owner with policy 9 so a queued disconnect cannot be blocked by module heap pressure, and never sends an ACL disconnect or touches companion/audio tables."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-BLE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-ASTROLINK-4155-BLE-001"
+    ],
+    "source": "Exact Q66 .155 image/IDB recovery recorded in EVID-ASTROLINK-4155-BLE-001 and docs/ble-abi.md: the policy the stock disconnect handler calls after its channel lookup. Recorded late so the target pack and the module verifier allowlist cover it."
+  },
+  "notes": "Audited .155 policy invoked with event 9 by Astrolink on the Bluelet owner. Static evidence only; the .155 module behaviour was validated before this record existed and is unchanged by it."
+}

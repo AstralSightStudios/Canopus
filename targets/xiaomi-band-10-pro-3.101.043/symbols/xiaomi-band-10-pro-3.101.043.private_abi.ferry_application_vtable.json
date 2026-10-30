@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.ferry_application_vtable",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "ferry_application_vtable",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2CDA7C80",
+  "prototype": "const void *ferry_application_vtable[50]",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Copy52 words including two prefix words at0x2CDA7C78; only replace primary RAM vptr. Secondary dispatchers stay untouched. Native object size480; init(ctx,options,loop) creates runtime+100 and returns1."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ],
+    "source": "Application constructor0xC8D9D88 stores exact cached primary vptr0x2CDA7C80, secondary vptrs+4=0x2CDA7D50 and+24=0x2CDA7D60.50 primary slots through0x2CDA7D44; secondary prefix0x2CDA7D48 has offset-to-top-4. init slot2 is0xC8DB1F9."
+  },
+  "notes": "Copy52 words including two prefix words at0x2CDA7C78; only replace primary RAM vptr. Secondary dispatchers stay untouched. Native object size480; init(ctx,options,loop) creates runtime+100 and returns1."
+}

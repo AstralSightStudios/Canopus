@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.__js_free_value",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "__js_free_value",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2781E0",
+  "prototype": "void __JS_FreeValue(JSContext *ctx, JSValue value)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Internal entry, not the astrolink binding: recorded so the wrapper above and this body are not confused again."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ],
+    "source": "Internal release: switches on the tag, frees strings when the reference byte at string+11 hits zero, detaches objects from the context cycle list at ctx+92 and frees through 0xC279D48, and logs '__JS_FreeValue: unknown tag=%d' (quickjs.c:5636) for anything else. 1046 call sites."
+  },
+  "notes": "Internal entry, not the astrolink binding: recorded so the wrapper above and this body are not confused again.",
+  "callable_address": "0xc2781e1"
+}

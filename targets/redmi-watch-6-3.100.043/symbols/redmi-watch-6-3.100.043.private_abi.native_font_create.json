@@ -16,25 +16,26 @@
     "blocking": true
   },
   "ownership": {
-    "argument": "Borrowed initialized native manager and packed8-byte key: family pointer+0, uint16 pixel_size+4, uint16 style+6. UI owner only, nonzero pixel size.",
+    "argument": "Managed factory (manager,key8), family pointer0/pixel uint16+4/style uint16+6. Copies 36-byte native payload into owned 40-byte wrapper; backing record+36. No static fallback result.",
     "return_value": "Owned managed40-byte native font wrapper with backing record at+36. NULL on checked ordinary failure; no high-level static-default return and no fallback-chain creation. Native internal allocations include unchecked paths; comprehensive OOM safety is not established."
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-UI-P65-FONT-LIFECYCLE-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-UI-P65-FONT-LIFECYCLE-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact P65 AP IDA/Hex-Rays review and independently rehashed full function bodies; EVID-UI-P65-FONT-LIFECYCLE-001"
   },
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. New native UI font integration identity only. Existing calendar/font-reload approvals and statuses remain unchanged. No device verification. Owned managed40-byte native font wrapper with backing record at+36. NULL on checked ordinary failure; no high-level static-default return and no fallback-chain creation. Native internal allocations include unchecked paths; comprehensive OOM safety is not established."
+  "notes": "Managed factory (manager,key8), family pointer0/pixel uint16+4/style uint16+6. Copies 36-byte native payload into owned 40-byte wrapper; backing record+36. No static fallback result. restricted/PENDING; no public export or device approval.",
+  "callable_address": "0xc795db9"
 }

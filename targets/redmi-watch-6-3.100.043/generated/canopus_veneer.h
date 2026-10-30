@@ -3,8 +3,8 @@
  * target_id: redmi-watch-6-3.100.043
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
- * revision : 1
- * input_digest: 2b6ff8cb4f5f1e5b
+ * revision : 3
+ * input_digest: 26fabcfc000475b7
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -82,9 +82,24 @@ static inline int canopus_fw_interconnect_close(void * a0) {
     return ((canopus_fw_interconnect_close_fn)(uintptr_t)0xc62df51)(a0);
 }
 
+typedef void * (*canopus_fw_p65_calendar_image_create_fn)(void *);
+static inline void * canopus_fw_p65_calendar_image_create(void * a0) {
+    return ((canopus_fw_p65_calendar_image_create_fn)(uintptr_t)0xc78a961)(a0);
+}
+
 typedef void * (*canopus_fw_lv_obj_create_fn)(void *);
 static inline void * canopus_fw_lv_obj_create(void * a0) {
     return ((canopus_fw_lv_obj_create_fn)(uintptr_t)0x387b79)(a0);
+}
+
+typedef void (*canopus_fw_font_reload_drop_face_id_fn)(void *, const char *);
+static inline void canopus_fw_font_reload_drop_face_id(void * a0, const char * a1) {
+    return ((canopus_fw_font_reload_drop_face_id_fn)(uintptr_t)0xc734279)(a0, a1);
+}
+
+typedef int (*canopus_fw_p65_calendar_font_release_fn)(void *, void *);
+static inline int canopus_fw_p65_calendar_font_release(void * a0, void * a1) {
+    return ((canopus_fw_p65_calendar_font_release_fn)(uintptr_t)0xc795fe5)(a0, a1);
 }
 
 typedef void (*canopus_fw_mpu_region_release_fn)(uint32_t);
@@ -98,6 +113,14 @@ typedef void (*canopus_fw_wakelock_acquire_fn)(void *);
 static inline void canopus_fw_wakelock_acquire(void * a0) {
     return ((canopus_fw_wakelock_acquire_fn)(uintptr_t)0xca61ffd)(a0);
 }
+
+typedef void (*canopus_fw_p65_bg_notification_scroll_fn)(void *);
+static inline void canopus_fw_p65_bg_notification_scroll(void * a0) {
+    return ((canopus_fw_p65_bg_notification_scroll_fn)(uintptr_t)0xc8078d5)(a0);
+}
+
+/* Recovered global `font_reload_lv_initialized` at 0x3c450030. */
+#define canopus_fw_font_reload_lv_initialized ((void *)(uintptr_t)0x3c450030u)
 
 typedef void * (*canopus_fw_launcher_load_app_info_fn)(const void *);
 static inline void * canopus_fw_launcher_load_app_info(const void * a0) {
@@ -117,6 +140,14 @@ static inline void canopus_fw_lvx_object_add_flag(void * a0, uint32_t a1) {
     return ((canopus_fw_lvx_object_add_flag_fn)(uintptr_t)0xc256a1d)(a0, a1);
 }
 
+typedef void (*canopus_fw_font_reload_list_remove_fn)(void *, void *);
+static inline void canopus_fw_font_reload_list_remove(void * a0, void * a1) {
+    return ((canopus_fw_font_reload_list_remove_fn)(uintptr_t)0xc73e08d)(a0, a1);
+}
+
+/* Recovered global `font_reload_display_list` at 0x3c450034. */
+#define canopus_fw_font_reload_display_list ((void *)(uintptr_t)0x3c450034u)
+
 typedef void (*canopus_fw_lv_label_set_text_fn)(void *, const char *);
 static inline void canopus_fw_lv_label_set_text(void * a0, const char * a1) {
     return ((canopus_fw_lv_label_set_text_fn)(uintptr_t)0xc78c879)(a0, a1);
@@ -127,6 +158,9 @@ static inline void canopus_fw_lv_obj_update_layout(void * a0) {
     return ((canopus_fw_lv_obj_update_layout_fn)(uintptr_t)0x37ab0d)(a0);
 }
 
+/* Recovered global `font_reload_uikit_slot` at 0x3c450210. */
+#define canopus_fw_font_reload_uikit_slot ((void *)(uintptr_t)0x3c450210u)
+
 typedef int (*canopus_fw_lvx_list_item_update_fn)(void *, const void *, const char *, const char *, const char *, uint32_t);
 static inline int canopus_fw_lvx_list_item_update(void * a0, const void * a1, const char * a2, const char * a3, const char * a4, uint32_t a5) {
     return ((canopus_fw_lvx_list_item_update_fn)(uintptr_t)0x1c129935)(a0, a1, a2, a3, a4, a5);
@@ -134,6 +168,11 @@ static inline int canopus_fw_lvx_list_item_update(void * a0, const void * a1, co
 
 /* Recovered global `style_misans_medium_28` at 0x3c479840. */
 #define canopus_fw_style_misans_medium_28 ((void *)(uintptr_t)0x3c479840u)
+
+typedef void * (*canopus_fw_font_reload_lv_malloc_fn)(uint32_t);
+static inline void * canopus_fw_font_reload_lv_malloc(uint32_t a0) {
+    return ((canopus_fw_font_reload_lv_malloc_fn)(uintptr_t)0xc741b0d)(a0);
+}
 
 typedef void (*canopus_fw_lv_label_set_long_mode_fn)(void *, uint32_t);
 static inline void canopus_fw_lv_label_set_long_mode(void * a0, uint32_t a1) {
@@ -145,12 +184,47 @@ static inline void * canopus_fw_mm_memalign_default(uint32_t a0, uint32_t a1) {
     return ((canopus_fw_mm_memalign_default_fn)(uintptr_t)0xc50b2c9)(a0, a1);
 }
 
+typedef void (*canopus_fw_native_font_release_fn)(void *, void *);
+static inline void canopus_fw_native_font_release(void * a0, void * a1) {
+    return ((canopus_fw_native_font_release_fn)(uintptr_t)0xc795fe5)(a0, a1);
+}
+
+typedef int (*canopus_fw_p65_calendar_snapshot_fn)(void *, uint32_t, void *);
+static inline int canopus_fw_p65_calendar_snapshot(void * a0, uint32_t a1, void * a2) {
+    return ((canopus_fw_p65_calendar_snapshot_fn)(uintptr_t)0xc7417c1)(a0, a1, a2);
+}
+
 typedef void * (*canopus_fw_lvx_page_content_create_fn)(void *);
 static inline void * canopus_fw_lvx_page_content_create(void * a0) {
     return ((canopus_fw_lvx_page_content_create_fn)(uintptr_t)0xc2182b1)(a0);
 }
 
+typedef void (*canopus_fw_p65_calendar_native_wait_fn)(void *);
+static inline void canopus_fw_p65_calendar_native_wait(void * a0) {
+    return ((canopus_fw_p65_calendar_native_wait_fn)(uintptr_t)0xc72ef2d)(a0);
+}
+
+typedef void (*canopus_fw_p65_calendar_cache_clean_fn)(void *, const void *);
+static inline void canopus_fw_p65_calendar_cache_clean(void * a0, const void * a1) {
+    return ((canopus_fw_p65_calendar_cache_clean_fn)(uintptr_t)0xc72f02d)(a0, a1);
+}
+
 /* lv_indev_get_point: skipped (argument type not mappable) */
+typedef void (*canopus_fw_p67_blur_draw_buf_destroy_fn)(uint32_t);
+static inline void canopus_fw_p67_blur_draw_buf_destroy(uint32_t a0) {
+    return ((canopus_fw_p67_blur_draw_buf_destroy_fn)(uintptr_t)0xc719799)(a0);
+}
+
+typedef void (*canopus_fw_p65_calendar_cache_invalidate_fn)(void *, uint32_t, uint32_t, uint32_t);
+static inline void canopus_fw_p65_calendar_cache_invalidate(void * a0, uint32_t a1, uint32_t a2, uint32_t a3) {
+    return ((canopus_fw_p65_calendar_cache_invalidate_fn)(uintptr_t)0xc72f021)(a0, a1, a2, a3);
+}
+
+typedef void * (*canopus_fw_p65_calendar_root_create_fn)(void *);
+static inline void * canopus_fw_p65_calendar_root_create(void * a0) {
+    return ((canopus_fw_p65_calendar_root_create_fn)(uintptr_t)0xc8bef19)(a0);
+}
+
 typedef int (*canopus_fw_app_launcher_del_fn)(uint16_t);
 static inline int canopus_fw_app_launcher_del(uint16_t a0) {
     return ((canopus_fw_app_launcher_del_fn)(uintptr_t)0xc7ec53d)(a0);
@@ -159,6 +233,31 @@ static inline int canopus_fw_app_launcher_del(uint16_t a0) {
 typedef void * (*canopus_fw_screen_session_create_fn)(const char *);
 static inline void * canopus_fw_screen_session_create(const char * a0) {
     return ((canopus_fw_screen_session_create_fn)(uintptr_t)0xca68abd)(a0);
+}
+
+typedef void (*canopus_fw_p65_bg_clear_flag_fn)(void *, uint32_t);
+static inline void canopus_fw_p65_bg_clear_flag(void * a0, uint32_t a1) {
+    return ((canopus_fw_p65_bg_clear_flag_fn)(uintptr_t)0x387c45)(a0, a1);
+}
+
+typedef const char * (*canopus_fw_p65_calendar_localized_fn)(const char *);
+static inline const char * canopus_fw_p65_calendar_localized(const char * a0) {
+    return ((canopus_fw_p65_calendar_localized_fn)(uintptr_t)0xc4f8459)(a0);
+}
+
+typedef uint32_t (*canopus_fw_p65_bg_event_count_fn)(void *);
+static inline uint32_t canopus_fw_p65_bg_event_count(void * a0) {
+    return ((canopus_fw_p65_bg_event_count_fn)(uintptr_t)0x3880c1)(a0);
+}
+
+typedef void (*canopus_fw_p65_calendar_size_fn)(void *, int32_t, int32_t);
+static inline void canopus_fw_p65_calendar_size(void * a0, int32_t a1, int32_t a2) {
+    return ((canopus_fw_p65_calendar_size_fn)(uintptr_t)0x378739)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_lv_cache_drop_fn)(uint32_t, const void *, void *);
+static inline void canopus_fw_lv_cache_drop(uint32_t a0, const void * a1, void * a2) {
+    return ((canopus_fw_lv_cache_drop_fn)(uintptr_t)0xc73baa9)(a0, a1, a2);
 }
 
 typedef void (*canopus_fw_lv_obj_scroll_to_fn)(void *, int32_t, int32_t, uint32_t);
@@ -181,15 +280,40 @@ static inline void canopus_fw_lv_obj_set_size(void * a0, int32_t a1, int32_t a2)
     return ((canopus_fw_lv_obj_set_size_fn)(uintptr_t)0x378739)(a0, a1, a2);
 }
 
+typedef void * (*canopus_fw_p65_calendar_localtime_fn)(uint32_t, uint32_t, void *);
+static inline void * canopus_fw_p65_calendar_localtime(uint32_t a0, uint32_t a1, void * a2) {
+    return ((canopus_fw_p65_calendar_localtime_fn)(uintptr_t)0xc761a2d)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_p65_bg_add_flag_fn)(void *, uint32_t);
+static inline void canopus_fw_p65_bg_add_flag(void * a0, uint32_t a1) {
+    return ((canopus_fw_p65_bg_add_flag_fn)(uintptr_t)0x387b99)(a0, a1);
+}
+
+typedef void (*canopus_fw_p67_blur_cache_clean_fn)(uint32_t, const void *);
+static inline void canopus_fw_p67_blur_cache_clean(uint32_t a0, const void * a1) {
+    return ((canopus_fw_p67_blur_cache_clean_fn)(uintptr_t)0xc72f02d)(a0, a1);
+}
+
 /* lv_obj_get_coords: skipped (argument type not mappable) */
 typedef int (*canopus_fw_lvx_notification_insert_message_fn)(const void *);
 static inline int canopus_fw_lvx_notification_insert_message(const void * a0) {
     return ((canopus_fw_lvx_notification_insert_message_fn)(uintptr_t)0xca60099)(a0);
 }
 
+typedef int (*canopus_fw_p65_calendar_vg_dispatch_fn)(void *, void *);
+static inline int canopus_fw_p65_calendar_vg_dispatch(void * a0, void * a1) {
+    return ((canopus_fw_p65_calendar_vg_dispatch_fn)(uintptr_t)0xc7287f9)(a0, a1);
+}
+
 typedef void (*canopus_fw_lv_obj_clear_flag_fn)(void *, uint32_t);
 static inline void canopus_fw_lv_obj_clear_flag(void * a0, uint32_t a1) {
     return ((canopus_fw_lv_obj_clear_flag_fn)(uintptr_t)0x387c45)(a0, a1);
+}
+
+typedef int (*canopus_fw_p67_blur_gpu_finish_fn)(void);
+static inline int canopus_fw_p67_blur_gpu_finish(void) {
+    return ((canopus_fw_p67_blur_gpu_finish_fn)(uintptr_t)0xc8bc081)();
 }
 
 typedef int (*canopus_fw_launcher_page_insert_icon_fn)(void *);
@@ -212,6 +336,7 @@ static inline void * canopus_fw_lvx_page_msgbox_create(void * a0, void * a1) {
     return ((canopus_fw_lvx_page_msgbox_create_fn)(uintptr_t)0x1c12ae39)(a0, a1);
 }
 
+/* p65_bg_event_remove: skipped (argument type not mappable) */
 typedef int32_t (*canopus_fw_page_finish_fn)(void *);
 static inline int32_t canopus_fw_page_finish(void * a0) {
     return ((canopus_fw_page_finish_fn)(uintptr_t)0x1c1325b9)(a0);
@@ -222,14 +347,42 @@ static inline int * canopus_fw_errno_location(void) {
     return ((canopus_fw_errno_location_fn)(uintptr_t)0xc4f793d)();
 }
 
+typedef void (*canopus_fw_lv_cache_release_fn)(uint32_t, void *, void *);
+static inline void canopus_fw_lv_cache_release(uint32_t a0, void * a1, void * a2) {
+    return ((canopus_fw_lv_cache_release_fn)(uintptr_t)0xc73b99d)(a0, a1, a2);
+}
+
 typedef void (*canopus_fw_lvx_object_set_size_fn)(void *, int32_t, int32_t);
 static inline void canopus_fw_lvx_object_set_size(void * a0, int32_t a1, int32_t a2) {
     return ((canopus_fw_lvx_object_set_size_fn)(uintptr_t)0xc255ce5)(a0, a1, a2);
 }
 
+typedef void * (*canopus_fw_p65_bg_event_get_fn)(void *, uint32_t);
+static inline void * canopus_fw_p65_bg_event_get(void * a0, uint32_t a1) {
+    return ((canopus_fw_p65_bg_event_get_fn)(uintptr_t)0x3880d5)(a0, a1);
+}
+
 typedef int (*canopus_fw_mpu_region_configure_fn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 static inline int canopus_fw_mpu_region_configure(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) {
     return ((canopus_fw_mpu_region_configure_fn)(uintptr_t)0xc9665e5)(a0, a1, a2, a3, a4);
+}
+
+/* Recovered global `font_reload_draw_unit_slot` at 0x3c450134. */
+#define canopus_fw_font_reload_draw_unit_slot ((void *)(uintptr_t)0x3c450134u)
+
+typedef void * (*canopus_fw_p65_calendar_label_create_fn)(void *);
+static inline void * canopus_fw_p65_calendar_label_create(void * a0) {
+    return ((canopus_fw_p65_calendar_label_create_fn)(uintptr_t)0xc78bcb5)(a0);
+}
+
+typedef void * (*canopus_fw_p65_calendar_draw_buf_create_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+static inline void * canopus_fw_p65_calendar_draw_buf_create(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
+    return ((canopus_fw_p65_calendar_draw_buf_create_fn)(uintptr_t)0xc719551)(a0, a1, a2, a3);
+}
+
+typedef void (*canopus_fw_p65_bg_widget_scroll_fn)(void *);
+static inline void canopus_fw_p65_bg_widget_scroll(void * a0) {
+    return ((canopus_fw_p65_bg_widget_scroll_fn)(uintptr_t)0xc7dd919)(a0);
 }
 
 typedef void * (*canopus_fw_miwear_session_lookup_fn)(uint16_t);
@@ -247,12 +400,22 @@ static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2,
     return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0x37a581)(a0, a1, a2, a3, a4);
 }
 
+typedef uint32_t (*canopus_fw_p67_blur_draw_buf_create_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+static inline uint32_t canopus_fw_p67_blur_draw_buf_create(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
+    return ((canopus_fw_p67_blur_draw_buf_create_fn)(uintptr_t)0xc719551)(a0, a1, a2, a3);
+}
+
 typedef void * (*canopus_fw_lvx_list_item_create_fn)(void *);
 static inline void * canopus_fw_lvx_list_item_create(void * a0) {
     return ((canopus_fw_lvx_list_item_create_fn)(uintptr_t)0x1c129639)(a0);
 }
 
 /* lv_obj_set_local_style_prop: skipped (argument type not mappable) */
+typedef void (*canopus_fw_p65_calendar_font_style_fn)(void *, const void *, uint32_t);
+static inline void canopus_fw_p65_calendar_font_style(void * a0, const void * a1, uint32_t a2) {
+    return ((canopus_fw_p65_calendar_font_style_fn)(uintptr_t)0x37f409)(a0, a1, a2);
+}
+
 typedef int (*canopus_fw_unlink_fn)(const char *);
 static inline int canopus_fw_unlink(const char * a0) {
     return ((canopus_fw_unlink_fn)(uintptr_t)0x1c159825)(a0);
@@ -263,9 +426,24 @@ static inline uint16_t canopus_fw_lv_event_get_code(void * a0) {
     return ((canopus_fw_lv_event_get_code_fn)(uintptr_t)0xc73d8c1)(a0);
 }
 
+typedef int (*canopus_fw_p65_calendar_launcher_update_fn)(uint32_t);
+static inline int canopus_fw_p65_calendar_launcher_update(uint32_t a0) {
+    return ((canopus_fw_p65_calendar_launcher_update_fn)(uintptr_t)0xc7ec745)(a0);
+}
+
 typedef void * (*canopus_fw_lv_bar_create_fn)(void *);
 static inline void * canopus_fw_lv_bar_create(void * a0) {
     return ((canopus_fw_lv_bar_create_fn)(uintptr_t)0xc784835)(a0);
+}
+
+typedef int (*canopus_fw_font_reload_count_cache_init_fn)(void *);
+static inline int canopus_fw_font_reload_count_cache_init(void * a0) {
+    return ((canopus_fw_font_reload_count_cache_init_fn)(uintptr_t)0xc73b5e9)(a0);
+}
+
+typedef int (*canopus_fw_p67_blur_snapshot_to_buffer_fn)(uint32_t, uint32_t, uint32_t);
+static inline int canopus_fw_p67_blur_snapshot_to_buffer(uint32_t a0, uint32_t a1, uint32_t a2) {
+    return ((canopus_fw_p67_blur_snapshot_to_buffer_fn)(uintptr_t)0xc7417c1)(a0, a1, a2);
 }
 
 typedef int32_t (*canopus_fw_write_fn)(int, const void *, uint32_t);
@@ -284,9 +462,27 @@ static inline int canopus_fw_screen_get_state(void) {
 }
 
 /* app_install: skipped (argument type not mappable) */
+typedef void (*canopus_fw_p65_bg_image_descriptor_init_fn)(void *);
+static inline void canopus_fw_p65_bg_image_descriptor_init(void * a0) {
+    return ((canopus_fw_p65_bg_image_descriptor_init_fn)(uintptr_t)0xc719ec5)(a0);
+}
+
+typedef void (*canopus_fw_p65_calendar_buf_invalidate_fn)(void *, uint32_t, uint32_t, uint32_t);
+static inline void canopus_fw_p65_calendar_buf_invalidate(void * a0, uint32_t a1, uint32_t a2, uint32_t a3) {
+    return ((canopus_fw_p65_calendar_buf_invalidate_fn)(uintptr_t)0xc7191c5)(a0, a1, a2, a3);
+}
+
 typedef int (*canopus_fw_miwear_session_crypto_ctr_fn)(void *, int, uint16_t, const void *, void *);
 static inline int canopus_fw_miwear_session_crypto_ctr(void * a0, int a1, uint16_t a2, const void * a3, void * a4) {
     return ((canopus_fw_miwear_session_crypto_ctr_fn)(uintptr_t)0xca99139)(a0, a1, a2, a3, a4);
+}
+
+/* Recovered global `font_reload_freetype_context_slot` at 0x3c450204. */
+#define canopus_fw_font_reload_freetype_context_slot ((void *)(uintptr_t)0x3c450204u)
+
+typedef int (*canopus_fw_p65_calendar_premultiply_fn)(void *);
+static inline int canopus_fw_p65_calendar_premultiply(void * a0) {
+    return ((canopus_fw_p65_calendar_premultiply_fn)(uintptr_t)0xc719b71)(a0);
 }
 
 typedef void (*canopus_fw_lv_obj_delete_fn)(void *);
@@ -294,9 +490,29 @@ static inline void canopus_fw_lv_obj_delete(void * a0) {
     return ((canopus_fw_lv_obj_delete_fn)(uintptr_t)0x37ff29)(a0);
 }
 
+typedef void * (*canopus_fw_p65_calendar_font_create_fn)(void *, const void *);
+static inline void * canopus_fw_p65_calendar_font_create(void * a0, const void * a1) {
+    return ((canopus_fw_p65_calendar_font_create_fn)(uintptr_t)0xc795db9)(a0, a1);
+}
+
+typedef void * (*canopus_fw_p65_calendar_font_resolve_fn)(const void *);
+static inline void * canopus_fw_p65_calendar_font_resolve(const void * a0) {
+    return ((canopus_fw_p65_calendar_font_resolve_fn)(uintptr_t)0xc8bcd41)(a0);
+}
+
 typedef int (*canopus_fw_lv_image_decoder_get_info_fn)(const void *, void *);
 static inline int canopus_fw_lv_image_decoder_get_info(const void * a0, void * a1) {
     return ((canopus_fw_lv_image_decoder_get_info_fn)(uintptr_t)0xc71d195)(a0, a1);
+}
+
+typedef void * (*canopus_fw_p65_bg_parent_fn)(void *);
+static inline void * canopus_fw_p65_bg_parent(void * a0) {
+    return ((canopus_fw_p65_bg_parent_fn)(uintptr_t)0x38001d)(a0);
+}
+
+typedef void (*canopus_fw_p65_calendar_color_fn)(void *, uint32_t, uint32_t);
+static inline void canopus_fw_p65_calendar_color(void * a0, uint32_t a1, uint32_t a2) {
+    return ((canopus_fw_p65_calendar_color_fn)(uintptr_t)0x37f3c5)(a0, a1, a2);
 }
 
 typedef void (*canopus_fw_lv_obj_set_style_pad_bottom_fn)(void *, int32_t, uint32_t);
@@ -329,6 +545,11 @@ static inline int32_t canopus_fw_page_goto(uint32_t a0, uint32_t a1, uint32_t a2
     return ((canopus_fw_page_goto_fn)(uintptr_t)0x1c132f4d)(a0, a1, a2, a3);
 }
 
+typedef void * (*canopus_fw_font_reload_cache_acquire_fn)(void *, const void *, void *);
+static inline void * canopus_fw_font_reload_cache_acquire(void * a0, const void * a1, void * a2) {
+    return ((canopus_fw_font_reload_cache_acquire_fn)(uintptr_t)0xc73b965)(a0, a1, a2);
+}
+
 typedef void * (*canopus_fw_lv_obj_add_event_cb_fn)(void *, void *, uint32_t, void *);
 static inline void * canopus_fw_lv_obj_add_event_cb(void * a0, void * a1, uint32_t a2, void * a3) {
     return ((canopus_fw_lv_obj_add_event_cb_fn)(uintptr_t)0x388099)(a0, a1, a2, a3);
@@ -337,6 +558,26 @@ static inline void * canopus_fw_lv_obj_add_event_cb(void * a0, void * a1, uint32
 typedef void (*canopus_fw_lvx_msgbox_set_content_fn)(void *, uint32_t, const char *, const char *, const char *, const void *, uint32_t);
 static inline void canopus_fw_lvx_msgbox_set_content(void * a0, uint32_t a1, const char * a2, const char * a3, const char * a4, const void * a5, uint32_t a6) {
     return ((canopus_fw_lvx_msgbox_set_content_fn)(uintptr_t)0x1c12ae91)(a0, a1, a2, a3, a4, a5, a6);
+}
+
+typedef void (*canopus_fw_p65_calendar_label_text_fn)(void *, const char *);
+static inline void canopus_fw_p65_calendar_label_text(void * a0, const char * a1) {
+    return ((canopus_fw_p65_calendar_label_text_fn)(uintptr_t)0xc78c879)(a0, a1);
+}
+
+typedef void * (*canopus_fw_native_font_create_fn)(void *, const void *);
+static inline void * canopus_fw_native_font_create(void * a0, const void * a1) {
+    return ((canopus_fw_native_font_create_fn)(uintptr_t)0xc795db9)(a0, a1);
+}
+
+typedef int (*canopus_fw_p65_calendar_clock_fn)(uint32_t, void *);
+static inline int canopus_fw_p65_calendar_clock(uint32_t a0, void * a1) {
+    return ((canopus_fw_p65_calendar_clock_fn)(uintptr_t)0xc4c205d)(a0, a1);
+}
+
+typedef void (*canopus_fw_p65_calendar_image_source_fn)(void *, const void *);
+static inline void canopus_fw_p65_calendar_image_source(void * a0, const void * a1) {
+    return ((canopus_fw_p65_calendar_image_source_fn)(uintptr_t)0xc78acf1)(a0, a1);
 }
 
 typedef void (*canopus_fw_lv_obj_add_flag_fn)(void *, uint32_t);
@@ -359,9 +600,34 @@ static inline void * canopus_fw_lv_img_create(void * a0) {
     return ((canopus_fw_lv_img_create_fn)(uintptr_t)0xc78a961)(a0);
 }
 
+typedef int (*canopus_fw_p65_calendar_gpu_finish_fn)(void);
+static inline int canopus_fw_p65_calendar_gpu_finish(void) {
+    return ((canopus_fw_p65_calendar_gpu_finish_fn)(uintptr_t)0xc8bc081)();
+}
+
+typedef void (*canopus_fw_p65_calendar_align_fn)(void *, uint32_t, int32_t, int32_t);
+static inline void canopus_fw_p65_calendar_align(void * a0, uint32_t a1, int32_t a2, int32_t a3) {
+    return ((canopus_fw_p65_calendar_align_fn)(uintptr_t)0x378965)(a0, a1, a2, a3);
+}
+
+typedef void (*canopus_fw_p65_calendar_text_align_fn)(void *, uint32_t, uint32_t);
+static inline void canopus_fw_p65_calendar_text_align(void * a0, uint32_t a1, uint32_t a2) {
+    return ((canopus_fw_p65_calendar_text_align_fn)(uintptr_t)0x37f451)(a0, a1, a2);
+}
+
 typedef void * (*canopus_fw_lv_event_get_user_data_fn)(void *);
 static inline void * canopus_fw_lv_event_get_user_data(void * a0) {
     return ((canopus_fw_lv_event_get_user_data_fn)(uintptr_t)0xc73d8e5)(a0);
+}
+
+typedef int (*canopus_fw_p65_calendar_generate_fn)(void);
+static inline int canopus_fw_p65_calendar_generate(void) {
+    return ((canopus_fw_p65_calendar_generate_fn)(uintptr_t)0xc7efc8d)();
+}
+
+typedef void * (*canopus_fw_font_reload_cache_acquire_or_create_fn)(void *, const void *, void *);
+static inline void * canopus_fw_font_reload_cache_acquire_or_create(void * a0, const void * a1, void * a2) {
+    return ((canopus_fw_font_reload_cache_acquire_or_create_fn)(uintptr_t)0xc73ba2d)(a0, a1, a2);
 }
 
 typedef void (*canopus_fw_lv_obj_scroll_to_y_fn)(void *, int32_t, uint32_t);
@@ -374,6 +640,12 @@ static inline int canopus_fw_bt_queue_free(void * a0) {
     return ((canopus_fw_bt_queue_free_fn)(uintptr_t)0xc66e06d)(a0);
 }
 
+typedef void (*canopus_fw_p65_calendar_object_delete_fn)(void *);
+static inline void canopus_fw_p65_calendar_object_delete(void * a0) {
+    return ((canopus_fw_p65_calendar_object_delete_fn)(uintptr_t)0x37ff29)(a0);
+}
+
+/* p65_bg_event_add: skipped (argument type not mappable) */
 typedef int (*canopus_fw_closedir_fn)(void *);
 static inline int canopus_fw_closedir(void * a0) {
     return ((canopus_fw_closedir_fn)(uintptr_t)0xc4f78c1)(a0);
@@ -382,6 +654,11 @@ static inline int canopus_fw_closedir(void * a0) {
 typedef void * (*canopus_fw_readdir_fn)(void *);
 static inline void * canopus_fw_readdir(void * a0) {
     return ((canopus_fw_readdir_fn)(uintptr_t)0xc4f78ed)(a0);
+}
+
+typedef void * (*canopus_fw_lvgl_posix_open_fn)(void *, const char *, uint32_t);
+static inline void * canopus_fw_lvgl_posix_open(void * a0, const char * a1, uint32_t a2) {
+    return ((canopus_fw_lvgl_posix_open_fn)(uintptr_t)0xc7357d5)(a0, a1, a2);
 }
 
 typedef void * (*canopus_fw_lv_event_get_indev_fn)(void *);
@@ -399,9 +676,29 @@ static inline uint32_t canopus_fw_lv_tick_get(void) {
     return ((canopus_fw_lv_tick_get_fn)(uintptr_t)0xc7828d9)();
 }
 
+typedef void (*canopus_fw_p65_calendar_draw_buf_destroy_fn)(void *);
+static inline void canopus_fw_p65_calendar_draw_buf_destroy(void * a0) {
+    return ((canopus_fw_p65_calendar_draw_buf_destroy_fn)(uintptr_t)0xc719799)(a0);
+}
+
+typedef int (*canopus_fw_font_reload_ft_set_pixel_size_fn)(void *, uint32_t, uint32_t);
+static inline int canopus_fw_font_reload_ft_set_pixel_size(void * a0, uint32_t a1, uint32_t a2) {
+    return ((canopus_fw_font_reload_ft_set_pixel_size_fn)(uintptr_t)0xc5666fd)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_p67_blur_cache_invalidate_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+static inline void canopus_fw_p67_blur_cache_invalidate(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
+    return ((canopus_fw_p67_blur_cache_invalidate_fn)(uintptr_t)0xc72f021)(a0, a1, a2, a3);
+}
+
 typedef int (*canopus_fw_thirdparty_submit_message_content_fn)(const void *, uint32_t, uint32_t);
 static inline int canopus_fw_thirdparty_submit_message_content(const void * a0, uint32_t a1, uint32_t a2) {
     return ((canopus_fw_thirdparty_submit_message_content_fn)(uintptr_t)0xca40065)(a0, a1, a2);
+}
+
+typedef int (*canopus_fw_p65_calendar_image_info_fn)(const void *, void *);
+static inline int canopus_fw_p65_calendar_image_info(const void * a0, void * a1) {
+    return ((canopus_fw_p65_calendar_image_info_fn)(uintptr_t)0xc71d195)(a0, a1);
 }
 
 typedef int32_t (*canopus_fw_font_reload_ft_mul_fix_fn)(int32_t, int32_t);
@@ -413,6 +710,9 @@ typedef void (*canopus_fw_lv_bar_set_value_fn)(void *, int32_t, uint32_t);
 static inline void canopus_fw_lv_bar_set_value(void * a0, int32_t a1, uint32_t a2) {
     return ((canopus_fw_lv_bar_set_value_fn)(uintptr_t)0xc784851)(a0, a1, a2);
 }
+
+/* Recovered global `font_reload_style_refresh_enabled` at 0x3c450054. */
+#define canopus_fw_font_reload_style_refresh_enabled ((void *)(uintptr_t)0x3c450054u)
 
 typedef int (*canopus_fw_close_fn)(int);
 static inline int canopus_fw_close(int a0) {
@@ -454,9 +754,15 @@ static inline void canopus_fw_screen_session_set_auto_brightness(void * a0, int 
     return ((canopus_fw_screen_session_set_auto_brightness_fn)(uintptr_t)0xca68e29)(a0, a1);
 }
 
+/* p65_bg_draw_image: skipped (argument type not mappable) */
 typedef void (*canopus_fw_lvx_style_apply_fn)(void *, const void *, uint32_t, uint32_t);
 static inline void canopus_fw_lvx_style_apply(void * a0, const void * a1, uint32_t a2, uint32_t a3) {
     return ((canopus_fw_lvx_style_apply_fn)(uintptr_t)0x1c12daa1)(a0, a1, a2, a3);
+}
+
+typedef int (*canopus_fw_p65_calendar_sw_dispatch_fn)(void *, void *);
+static inline int canopus_fw_p65_calendar_sw_dispatch(void * a0, void * a1) {
+    return ((canopus_fw_p65_calendar_sw_dispatch_fn)(uintptr_t)0xc7222bd)(a0, a1);
 }
 
 typedef void (*canopus_fw_lvx_image_set_scale_fn)(void *, uint32_t, uint32_t);
@@ -469,9 +775,19 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
     return ((canopus_fw_unregister_driver_fn)(uintptr_t)0x1c15aa19)(a0);
 }
 
+typedef int (*canopus_fw_p65_bg_has_flag_fn)(void *, uint32_t);
+static inline int canopus_fw_p65_bg_has_flag(void * a0, uint32_t a1) {
+    return ((canopus_fw_p65_bg_has_flag_fn)(uintptr_t)0x387d4d)(a0, a1);
+}
+
 typedef void (*canopus_fw_lvx_object_delete_fn)(void *);
 static inline void canopus_fw_lvx_object_delete(void * a0) {
     return ((canopus_fw_lvx_object_delete_fn)(uintptr_t)0xc8be459)(a0);
+}
+
+typedef void (*canopus_fw_native_font_wait_fn)(void *);
+static inline void canopus_fw_native_font_wait(void * a0) {
+    return ((canopus_fw_native_font_wait_fn)(uintptr_t)0xc72ef2d)(a0);
 }
 
 /* ---- excluded symbols ----
@@ -531,34 +847,9 @@ static inline void canopus_fw_lvx_object_delete(void * a0) {
  * firmware_log: restricted - not exported until context/ownership approved
  * font_manager_add_path: restricted - not exported until context/ownership approved
  * font_manager_remove_path: restricted - not exported until context/ownership approved
- * font_reload_cache_acquire: restricted - not exported until context/ownership approved
- * font_reload_cache_acquire_or_create: restricted - not exported until context/ownership approved
- * font_reload_count_cache_init: restricted - not exported until context/ownership approved
- * font_reload_drop_face_id: restricted - not exported until context/ownership approved
- * font_reload_face_compare: restricted - not exported until context/ownership approved
- * font_reload_face_create: restricted - not exported until context/ownership approved
- * font_reload_face_destroy: restricted - not exported until context/ownership approved
- * font_reload_ft_set_pixel_size: restricted - not exported until context/ownership approved
- * font_reload_glyph_metrics: restricted - not exported until context/ownership approved
- * font_reload_glyph_pending_release: restricted - not exported until context/ownership approved
- * font_reload_gradient_pending_release: restricted - not exported until context/ownership approved
- * font_reload_image_pending_release: restricted - not exported until context/ownership approved
- * font_reload_list_remove: restricted - not exported until context/ownership approved
- * font_reload_lv_malloc: restricted - not exported until context/ownership approved
- * font_reload_metrics_compare: restricted - not exported until context/ownership approved
- * font_reload_metrics_create: restricted - not exported until context/ownership approved
- * font_reload_metrics_destroy: restricted - not exported until context/ownership approved
- * font_reload_outline_acquire: restricted - not exported until context/ownership approved
- * font_reload_outline_compare: restricted - not exported until context/ownership approved
- * font_reload_outline_create: restricted - not exported until context/ownership approved
- * font_reload_outline_destroy: restricted - not exported until context/ownership approved
- * font_reload_outline_event: restricted - not exported until context/ownership approved
- * font_reload_outline_release: restricted - not exported until context/ownership approved
- * font_reload_sw_dispatch: restricted - not exported until context/ownership approved
  * font_reload_vector_compare: restricted - not exported until context/ownership approved
  * font_reload_vector_destroy: restricted - not exported until context/ownership approved
  * font_reload_vector_drop: restricted - not exported until context/ownership approved
- * font_reload_vg_dispatch: restricted - not exported until context/ownership approved
  * fsync: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * gethostbyname_r: restricted - not exported until context/ownership approved
@@ -581,8 +872,6 @@ static inline void canopus_fw_lvx_object_delete(void * a0) {
  * launcher_scroll: restricted - not exported until context/ownership approved
  * launcher_scroll_prepare: restricted - not exported until context/ownership approved
  * lseek: restricted - not exported until context/ownership approved
- * lv_cache_drop: restricted - not exported until context/ownership approved
- * lv_cache_release: restricted - not exported until context/ownership approved
  * lv_display_get_horizontal_resolution: restricted - not exported until context/ownership approved
  * lv_display_get_vertical_resolution: restricted - not exported until context/ownership approved
  * lv_display_invalidate_area: restricted - not exported until context/ownership approved
@@ -604,7 +893,6 @@ static inline void canopus_fw_lvx_object_delete(void * a0) {
  * lv_obj_tree_walk: restricted - not exported until context/ownership approved
  * lv_timer_create: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
- * lvgl_posix_open: restricted - not exported until context/ownership approved
  * lvx_content_pad_bottom: restricted - not exported until context/ownership approved
  * lvx_label_create: restricted - not exported until context/ownership approved
  * lvx_label_set_long_mode: restricted - not exported until context/ownership approved
@@ -616,9 +904,6 @@ static inline void canopus_fw_lvx_object_delete(void * a0) {
  * miwear_transport_send: restricted - not exported until context/ownership approved
  * mkdir: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
- * native_font_create: restricted - not exported until context/ownership approved
- * native_font_release: restricted - not exported until context/ownership approved
- * native_font_wait: restricted - not exported until context/ownership approved
  * net_lock: restricted - not exported until context/ownership approved
  * net_unlock: restricted - not exported until context/ownership approved
  * netdev_input: restricted - not exported until context/ownership approved
@@ -631,19 +916,13 @@ static inline void canopus_fw_lvx_object_delete(void * a0) {
  * p67_battery_image_draw: restricted - not exported until context/ownership approved
  * p67_battery_image_dsc_init: restricted - not exported until context/ownership approved
  * p67_battery_native_event: restricted - not exported until context/ownership approved
- * p67_blur_cache_clean: restricted - not exported until context/ownership approved
- * p67_blur_cache_invalidate: restricted - not exported until context/ownership approved
  * p67_blur_crossview_callback: restricted - not exported until context/ownership approved
- * p67_blur_draw_buf_create: restricted - not exported until context/ownership approved
- * p67_blur_draw_buf_destroy: restricted - not exported until context/ownership approved
  * p67_blur_event_list_add: restricted - not exported until context/ownership approved
  * p67_blur_event_list_count: restricted - not exported until context/ownership approved
  * p67_blur_event_list_get: restricted - not exported until context/ownership approved
  * p67_blur_event_list_remove: restricted - not exported until context/ownership approved
- * p67_blur_gpu_finish: restricted - not exported until context/ownership approved
  * p67_blur_pm_relax: restricted - not exported until context/ownership approved
  * p67_blur_pm_stay: restricted - not exported until context/ownership approved
- * p67_blur_snapshot_to_buffer: restricted - not exported until context/ownership approved
  * p67_blur_style_get: restricted - not exported until context/ownership approved
  * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated
  * poll_notify: restricted - not exported until context/ownership approved

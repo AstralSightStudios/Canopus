@@ -90,4 +90,6 @@
 #define FW_STYLE_MISANS_MEDIUM_24 0x200C1568u
 #define FW_STYLE_MISANS_MEDIUM_28 0x200C1574u
 #define FW_UI_STYLE_SET 0x0C3872B5u
+/* Exact-target opacity: EVID-UI-4139-OPACITY-001; static only. */
+#define FW_UI_STYLE_OPA 95u
 #endif

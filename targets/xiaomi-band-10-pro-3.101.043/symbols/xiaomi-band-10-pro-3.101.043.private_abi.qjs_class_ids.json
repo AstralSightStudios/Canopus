@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_class_ids",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_class_ids",
+  "kind": "finding",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "struct { unsigned class_id; const char *name; } qjs_class_ids[]",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Class ids measured on a live p67 runtime by allocating a marked object of each kind and reading the class_id word at object+6, the same field qjs_is_function 0xC27DA88 dispatches on: ArrayBuffer = 19, Uint8Array = 23, Uint16Array = 25. They are consecutive in the QuickJS class order, which is the sanity check that the field is really the class id and not an incidental small integer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "proven",
+    "evidence_ids": [
+      "EVID-PORT-1043-DEVICE-002",
+      "EVID-PORT-1043-QJS-005"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-DEVICE-002",
+      "EVID-PORT-1043-QJS-005"
+    ],
+    "source": "Mirage probe-p67, firmware 3.101.043. A staged script allocated ArrayBuffer(512) filled 0xA7, ArrayBuffer(8) filled 0x5C and Uint16Array(16) filled 0x5C5C; one PSRAM snapshot at 0x3C000000 was searched for the payloads and for records whose refcount is small, whose +6 word is a plausible class id and which contain the payload pointer plus its length. ArrayBuffer resolved to a record with class 19; Uint8Array to 23 and Uint16Array to 25. The static side shows 19 as the creation immediate in js_new_array_buffer and 152 = 19*8 as the prototype-table offset."
+  },
+  "notes": "Only the ids are claimed here. The payload/length offsets quoted in the earlier note were read from the wrong object; see js_array_buffer_layout: the engine reads data at abuf+0 and byte length at abuf+8, where abuf = *(object+32), with the detached byte at abuf+4."
+}

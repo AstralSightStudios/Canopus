@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.js_new_atom_len",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "js_new_atom_len",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC294DCC",
+  "callable_address": "0xc294dcd",
+  "prototype": "JSAtom js_new_atom_len(JSContext *ctx, const char *str, size_t len)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "First half of the inlined property define: create the atom from a C name, then call the atom-plus-value define, then release with js_atom_unref."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-008"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-008"
+    ],
+    "source": "Takes the context, the name pointer and the length; tries the fast numeric-key path and otherwise calls the atom table lookup 0xC2748DC (ctx+16 runtime, hash h = 263*h + byte masked 0x3FFFFFFF over the atom hash table at rt+36/rt+52) and the intern core 0xC294B50, converting the resulting string with 0xC275F30. Two call sites, both property-definition paths."
+  },
+  "notes": "First half of the inlined property define: create the atom from a C name, then call the atom-plus-value define, then release with js_atom_unref."
+}

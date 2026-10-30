@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.ferry_framework_factory",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "ferry_framework_factory",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC8E54AC",
+  "callable_address": "0xc8e54ad",
+  "prototype": "void *ferry_framework_factory(void *framework, const char *uri)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Factory returns fully constructed Application with primary vptr0x2CDA7C80 before its init/run. A module may wrap the real framework RAM vptr factory slot, retaining all other virtual methods and the two Itanium prefix words."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-FERRY-001"
+    ],
+    "source": "FrameworkExt primary vtable0x2CDA8CD8 slot8 points here. Allocates480 bytes, calls Application constructor0xC8D9D88; factory reads impl=framework+4, locks impl+348, inserts application pointer in vector impl+460/464, unlocks and returns it."
+  },
+  "notes": "Factory returns fully constructed Application with primary vptr0x2CDA7C80 before its init/run. A module may wrap the real framework RAM vptr factory slot, retaining all other virtual methods and the two Itanium prefix words."
+}

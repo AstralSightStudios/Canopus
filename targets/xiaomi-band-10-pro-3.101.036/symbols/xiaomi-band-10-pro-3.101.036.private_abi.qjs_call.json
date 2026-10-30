@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.qjs_call",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "qjs_call",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc2a9bc0",
+  "prototype": "JSValue qjs_call(JSContext *ctx, JSValue func, JSValue this_obj, int argc, const JSValue *argv)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "The 3/2 flag pair and the 11-argument forwarding shape match .155 exactly."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "The 3/2 flag pair and the 11-argument forwarding shape match .155 exactly.",
+  "callable_address": "0xc2a9bc1"
+}

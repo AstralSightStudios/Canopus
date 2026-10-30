@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.qjs_is_function",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "qjs_is_function",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC27DA88",
+  "prototype": "int qjs_is_function(JSContext *ctx, JSValue value)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Class ids 13 and 41 are the same as on .155, which is what makes the alignment safe rather than a guess."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-003"
+    ],
+    "source": "Body is identical to .155 0xc3bf280: reject every tag except -1, return 1 for class id 13, return the byte at obj+32+16 for class id 41, otherwise look the class up in the context's class table at *(*(ctx+16)+68)+24*class+16 and return whether a finalizer slot exists. Size 78 versus 52 on .155."
+  },
+  "notes": "Class ids 13 and 41 are the same as on .155, which is what makes the alignment safe rather than a guess.",
+  "callable_address": "0xc27da89"
+}

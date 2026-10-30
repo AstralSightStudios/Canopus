@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.l2cap_le_connection_response",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "l2cap_le_connection_response",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC8025C0",
+  "callable_address": "0xc8025c1",
+  "prototype": "int l2cap_le_connection_response(void *channel, void *peer, int id, int result, int credits, int mtu, int mps)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Response builder used by both the inbound request path and the accept/reject decision path, so it is the single place a module should read the response layout from."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-L2CAP-002"
+    ],
+    "source": "Allocates an 18-byte frame with 0xC7EAFBC(18, 8) and writes the LE Credit Based Connection Response: code 0x15 at element+4, identifier at +5, 10-byte payload length at +6, destination cid at +8, MTU from channel+52 at +10, MPS from channel+62/+60 at +12/+14 and the offered credits at +16; a null peer sends dcid 0xFFFF. Eight call sites, all inside the LE CoC connection paths."
+  },
+  "notes": "Response builder used by both the inbound request path and the accept/reject decision path, so it is the single place a module should read the response layout from."
+}

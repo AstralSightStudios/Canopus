@@ -171,7 +171,7 @@ static void on_close(const struct canopus_context_v1 *ctx, void *user_data)
 
 static const struct canopus_ui_entry_v1 s_entry = {
     sizeof(struct canopus_ui_entry_v1), "两层页面演示",
-    on_open, on_event, on_back, on_close, 0,
+    on_open, on_event, on_back, on_close, 0, 0,
 };
 
 static int32_t demo_prepare(const struct canopus_context_v1 *ctx)

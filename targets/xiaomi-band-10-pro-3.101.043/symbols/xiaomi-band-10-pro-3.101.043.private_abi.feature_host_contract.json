@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.feature_host_contract",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "feature_host_contract",
+  "kind": "layout",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "struct feature_host { u32 token; u32 sink; u8 abort; u8 pad[3]; const char *package_name; }",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "A 16-byte caller-allocated struct is structurally sufficient to create a registry, initialise the framework and register a descriptor, with no ferry application. host+0 and host+4 are stored for later use rather than dereferenced at registration time, so they govern event delivery, not registration."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-HOST-002"
+    ],
+    "source": "Enumerated from the three calls: create reads host+12 (passed to feature_framework_init as its second argument, where 0xC21D974 is a std::string operator= so the value must be a const char *package name, NULL allowed) and host+8 (a byte checked after init: non-zero makes create return NULL, so it must be 0); create then reads host+4 and stores it at (registry+8)+4 through 0xC860F44; bind reads host+0 and stores it as field 0 of the 148-byte adapter. No other host field is touched by create, init or bind."
+  },
+  "notes": "A 16-byte caller-allocated struct is structurally sufficient to create a registry, initialise the framework and register a descriptor, with no ferry application. host+0 and host+4 are stored for later use rather than dereferenced at registration time, so they govern event delivery, not registration."
+}

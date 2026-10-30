@@ -40,7 +40,8 @@ WRAPPER = r'''
 #endif
 #include "canopus_supervisor_platform.c"
 
-volatile uint32_t fixture_seen, fixture_data;
+volatile uint32_t fixture_seen, fixture_data, fixture_ui_ms;
+void canopus_ui_host_poll(uint32_t now) { fixture_ui_ms = now; }
 void fixture_poll_a(void *data) {
     fixture_seen += 1u;
     fixture_data = (uint32_t)(uintptr_t)data;
@@ -67,7 +68,8 @@ int test_pump_start(void (*poll)(void *), void *data) {
 def build_image(out, target, defines, cc, linker, load_elf,
                 wrapper_source=WRAPPER, exports=(
                     "test_pump_start", "test_pump_available", "test_create_address",
-                    "fixture_poll_a", "fixture_poll_b", "fixture_seen", "fixture_data"),
+                    "fixture_poll_a", "fixture_poll_b", "fixture_seen", "fixture_data",
+                    "fixture_ui_ms"),
                 sources=()):
     pack = ROOT / "targets" / target
     metadata = tomllib.loads((pack / "target.toml").read_text())
@@ -179,6 +181,20 @@ class ServiceTimerPumpTests(unittest.TestCase):
                 native = int(record["callable_address"], 16)
                 self.assertEqual(self.call(u, "test_create_address"), native)
                 u.mem_map(native & ~0xFFF, 0x1000)
+                clock_record, = [record for record in records if record["name"] == "clock_gettime"]
+                clock = int(clock_record["callable_address"], 16)
+                u.mem_map(clock & ~0xFFF, 0x1000)
+
+                def clock_gettime(uc, address, size, data):
+                    r = self.regs
+                    self.assertEqual(uc.reg_read(r.UC_ARM_REG_R0), 1)
+                    uc.mem_write(uc.reg_read(r.UC_ARM_REG_R1),
+                                 struct.pack("<qi", 12, 345000000))
+                    uc.reg_write(r.UC_ARM_REG_R0, 0)
+                    uc.reg_write(r.UC_ARM_REG_PC, uc.reg_read(r.UC_ARM_REG_LR))
+
+                u.hook_add(self.unicorn.UC_HOOK_CODE, clock_gettime,
+                           begin=clock & ~1, end=clock & ~1)
                 calls = []
                 result = [0]  # First allocation fails; the next start must retry.
 
@@ -207,6 +223,7 @@ class ServiceTimerPumpTests(unittest.TestCase):
                 self.call(u, calls[-1][0], TIMER)
                 self.assertEqual(self.word(u, "fixture_seen"), 100)
                 self.assertEqual(self.word(u, "fixture_data"), 0x5678)
+                self.assertEqual(self.word(u, "fixture_ui_ms"), 12345)
                 self.call(u, calls[-1][0], TIMER)
                 self.assertEqual(self.word(u, "fixture_seen"), 200)
 

@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.feature_native_layout",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "feature_native_layout",
+  "kind": "layout",
+  "instruction_set": "n/a",
+  "entry_address": "",
+  "prototype": "Description28; Lifecycle24; Member12; FeaturePrototype.manager=12,js_value=56; FeatureInstance.prototype=28,js_value=112; Manager.registry=4,context_adapter=8,async=60; uv_async_t.size=112,loop=4,busy=24,callback=96,pending=108; uv_loop_t.read_fd=360,write_fd=364",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Lifecycle callbacks receive native FeaturePrototype/FeatureInstance pointers, not JSValue objects. onCreate(ctx,proto), onRequired(ctx,instance), onDestroy(ctx,proto). onCreate precedes assignment of prototype JSValue; onRequired sees initialized instance JSValue. Async initialized/closed only on owner loop; retain independent pipe file for cross-task-group wake."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "Corrects previous inference that lifecycle callbacks receive JS objects requiring JS_GetOpaque. Runtime Feature class id0x2013CE38 is only needed when unwrapping a JS object through stock JS stubs."
+}

@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (N66NFC_3.1.32)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 2
-// input_digest: 28dea686ca42b7ac
+// input_digest: 933870fa518e8395
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).

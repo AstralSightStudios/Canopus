@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.036.private_abi.uv_mutex_init",
+  "target_id": "xiaomi-band-10-pro-3.101.036",
+  "name": "uv_mutex_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2C6B54",
+  "callable_address": "0xC2C6B55",
+  "prototype": "int uv_mutex_init(void *mutex)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Initializes the pthread-backed mutex used by the Feature manager. Corrects earlier record 0xC2DCF1C, a different initializer; use this matched libuv init/lock/unlock family."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "662d67f5e247e31e194d3161024890ba93b9d29d70b290fadb9aac8ce8ec3c81",
+    "evidence_ids": [
+      "EVID-PORT-1036-NATIVE-001"
+    ],
+    "source": "Exact 3.101.036 AP producer/consumer and data-layout review; see p67-036-native-contract.md."
+  },
+  "notes": "Initializes the pthread-backed mutex used by the Feature manager. Corrects earlier record 0xC2DCF1C, a different initializer; use this matched libuv init/lock/unlock family."
+}

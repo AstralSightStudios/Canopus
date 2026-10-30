@@ -1,5 +1,7 @@
 # Mirage 模拟器工作流与需求清单
 
+> Toast API 已移除，`native-ui-lab` 与当前模拟器脚本不再包含 Toast 场景；下文 Toast 截图与像素验收仅保留为历史证据。
+
 ## 当前原生投递边界（2026-10-17）
 
 模块不再使用 RPK 或快应用安装。当前 smoke 脚本以 `.canopus` 打包，通过桥的
@@ -14,12 +16,12 @@
 
 端到端跑通前有四处**树外**工具链要求，缺任一处都会在很后面才失败，且报错离根因很远：
 
-1. **Facetory 打包器必须打 `scripts/emu/band11/facetory-lua-layer.patch`。**
-   未打补丁的 `package_lua_watchface` 只把入口 `main.lua` 当 File 资源塞进包，
-   没有布局层指向它，固件的 `render_file_create` 就不会调用 `miwear_lua_run`。
-   表现是 `setWatchface` 成功、`watchfaces` 里能看到表盘，但屏幕只显示 `preview.png`
-   （`ui_pages.preview_png` 的纯色底图），Lua 界面完全不出现，触摸也点不亮屏幕。
-   打补丁后重新 `cargo build --example package_lua_watchface`。
+1. **Facetory 打包器必须包含上游 Lua 布局修复（commit `d8e1741`）**，否则只显示预览图。
+   旧版 `package_lua_watchface` 只把入口 `main.lua` 当 File 资源塞进包，没有布局层指向它，
+   固件的 `render_file_create` 就不会调用 `miwear_lua_run`。表现是 `setWatchface` 成功、
+   `watchfaces` 里能看到表盘，但屏幕只显示 `preview.png`（`ui_pages.preview_png` 的纯色底图），
+   Lua 界面完全不出现，触摸也点不亮屏幕。修复已进入 Facetory `main`：
+   `cargo build --example package_lua_watchface` 即可，不再需要本地补丁。
 2. **`MAB_SMOKE` 必须用 Mirage 分支 `feat/canopus-native-l2-20261017`（提交 `19b74e8`）构建。**
    `main` 上的 `AstroBoxBridge/src/ops.rs` 只有 `InstallKind::{Watchface,Quickapp}`，
    `install kind=canopus` 会报 `invalid params: unknown variant 'canopus'`。
@@ -199,5 +201,5 @@ Facetory 的编辑器导出路径里有对应概念（`facetory.editor.file` 的
 为此需要两处外部改动，补丁放在 `scripts/emu/band11/`：
 - qemu-miwear 提交 `3e05ca7`（`dp-1700-exp`，已推送；Mirage 已指向它）：BES 缓存控制器字（0x07ffa000/0x07ffc000，bit0=1）和 8 个 MPU region（真机如此，QEMU 默认 16；
   安装器与原生加载器都会校验，否则分别报 `unexpected BES cache state` / rc=-302、-307）。
-- `facetory-lua-layer.patch`：Facetory 的 `package_lua_watchface` 示例没有给入口 .lua 生成布局元素，固件的 `render_file_create` 就不会启动 Lua；
-  补丁给入口资源加一个 layout 层。（用户平时用 /Users/searchstars/Downloads/小米表盘工具.app 打包 Lua 表盘，这个官方工具是 GUI，脚本里没有用它。）
+- Facetory 的 Lua 布局问题已在上游修复（commit `d8e1741`，`package_lua_watchface` 现在给入口 .lua 生成 layout 层），
+  本地补丁 `facetory-lua-layer.patch` 已删除。（用户平时用 /Users/searchstars/Downloads/小米表盘工具.app 打包 Lua 表盘，这个官方工具是 GUI，脚本里没有用它。）

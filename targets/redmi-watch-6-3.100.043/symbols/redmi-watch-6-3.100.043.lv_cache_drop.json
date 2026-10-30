@@ -6,24 +6,25 @@
   "kind": "function",
   "instruction_set": "thumb",
   "prototype": "void(uint32_t cache, const void *key, void *user_data)",
-  "entry_address": "0x1c1501d4",
+  "entry_address": "0x0c73baa8",
+  "callable_address": "0xc73baa9",
   "calling_convention": "arm-aapcs",
   "proof": {
-    "static": "candidate",
+    "static": "static_recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-RH-P65-CORE-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-RH-P65-CORE-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact P65 AP IDA control flow plus startup alias recovery and independent Unicorn execution; EVID-RH-P65-CORE-001."
   },
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. LVGL cache drop. Unlinks and invalidates entry matching key from targeted cache."
+  "notes": "Exact P65 AP independently recovered; see EVID-RH-P65-CORE-001 and Resource Hook core-evidence.json. Native instruction harness checks POSIX path/modes and cache deferred destruction. Restricted/PENDING; physical device NOT_PROBED. Previous matcher candidates are not callable identities."
 }

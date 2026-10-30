@@ -2,7 +2,7 @@
  * native_demo.c — Canopus Native Application Demo module.
  *
  * Demonstrates:
- *   - Native application registration with firmware (FW_APP_INSTALL, FW_LAUNCHER_ADD)
+ *   - Supervisor-owned native application and launcher registration
  *   - UI page creation with custom widgets (PageTitle, Content, Labels, Rows, Actions)
  *   - Microkernel Service Objects: ctx->system, ctx->kv, ctx->fs, ctx->log, ctx->haptics
  *   - Interactive touch event handling with haptic feedback
@@ -12,8 +12,6 @@
 #include "canopus_memory.h"
 
 #define DEMO_MODULE_ID "native_demo"
-#define DEMO_APP_ID UINT16_C(0x00CB)
-#define DEMO_PAGE_KEY (((uint32_t)DEMO_APP_ID << 16) | 0u)
 
 #define CANOPUS_TARGET_ALIGN_TOP_MID 2u
 #define CANOPUS_TARGET_ALIGN_OUT_BOTTOM_MID 14u
@@ -29,11 +27,10 @@ static uint32_t s_run_count;
 static uint32_t s_batt_level;
 static uint32_t s_click_count;
 
-static const char s_package_name[] = "com.canopus.native.demo";
 static const char s_launcher_icon[] = "/resource/app/launcher/compass.bin";
 static const char s_display_name[] = "Native Demo";
 
-static struct launcher_app_descriptor s_demo_app;
+static uint16_t s_demo_app_id;
 static struct firmware_page_descriptor s_demo_page;
 
 static void format_u32(char *buf, uint32_t val)
@@ -64,11 +61,6 @@ static void format_hex(char *buf, uintptr_t val)
         buf[2 + (7 - i)] = hex_chars[(val >> (i * 4)) & 0xf];
     }
     buf[10] = '\0';
-}
-
-static const char *demo_display_name(void)
-{
-    return s_display_name;
 }
 
 static void on_vibrate_click(void *event)
@@ -353,22 +345,19 @@ static int32_t demo_query(struct canopus_status_writer_v1 *writer)
 
 static int32_t demo_publish_native_app_stage(const struct canopus_context_v1 *ctx, uint32_t stage)
 {
-    (void)ctx;
     if (stage == 1u) {
-        const struct firmware_page_descriptor *pages[1];
-        if (canopus_fw_app_lookup(DEMO_APP_ID) != 0) {
-            return 0;
+        void *pages[1];
+        struct canopus_app_entry_v1 entry;
+        int32_t app_id;
+        if (!canopus_services_has(ctx, CANOPUS_SVC_LAUNCHER, 1) ||
+            ctx->launcher == 0 || ctx->launcher->register_app == 0) {
+            return CANOPUS_SVC_ERR_UNSUPPORTED;
         }
-        canopus_memset(&s_demo_app, 0, sizeof(s_demo_app));
-        s_demo_app.package_name = (void *)s_package_name;
-        s_demo_app.launcher_icon_resource = (void *)s_launcher_icon;
-        s_demo_app.app_id = DEMO_APP_ID;
-        s_demo_app.launcher_metadata_callback = (void *)demo_display_name;
+        if (s_demo_app_id != 0u) return 0;
 
         canopus_memset(&s_demo_page, 0, sizeof(s_demo_page));
         s_demo_page.page_name = (void *)"demo_main";
         s_demo_page.page_id = 0u;
-        s_demo_page.app_id = DEMO_APP_ID;
         s_demo_page.on_signal = (void *)demo_on_signal;
         s_demo_page.on_create = (void *)demo_on_create;
         s_demo_page.on_resume = (void *)demo_on_resume;
@@ -376,23 +365,32 @@ static int32_t demo_publish_native_app_stage(const struct canopus_context_v1 *ct
         s_demo_page.on_destroy = (void *)demo_on_destroy;
 
         pages[0] = &s_demo_page;
-        return canopus_fw_app_install(&s_demo_app, pages, 1u) < 0 ? -1 : 0;
-    }
-    if (stage == 2u) {
-        int rc = canopus_fw_app_launcher_add(DEMO_APP_ID);
-        if (rc < 0) return rc;
-        /* Navigate immediately to the native page on launch */
-        (void)canopus_fw_page_goto(DEMO_PAGE_KEY, 0u, 0u, 0u);
+        entry.struct_size = sizeof(entry);
+        entry.label = s_display_name;
+        entry.icon = s_launcher_icon;
+        entry.pages = pages;
+        entry.page_count = 1u;
+        app_id = ctx->launcher->register_app(ctx, &entry);
+        if (app_id < 0) return app_id;
+        s_demo_app_id = (uint16_t)app_id;
         return 0;
     }
-    return -1;
+    if (stage == 2u) {
+        if (s_demo_app_id == 0u) return CANOPUS_SVC_ERR_STATE;
+        /* The Supervisor drains registration before this later publication
+         * stage. Navigate using the identity it assigned to our native page. */
+        (void)canopus_fw_page_goto((uint32_t)s_demo_app_id << 16, 0u, 0u, 0u);
+        return 0;
+    }
+    return CANOPUS_SVC_ERR_ARGUMENT;
 }
 
 static const struct canopus_module_descriptor_v1 s_descriptor = {
     sizeof(struct canopus_module_descriptor_v1),
     CANOPUS_ABI_MAJOR,
     CANOPUS_ABI_MINOR,
-    CANOPUS_FLAG_HAS_NATIVE_APP | CANOPUS_FLAG_REGISTERS_LAUNCHER_ENTRY,
+    CANOPUS_FLAG_HAS_NATIVE_APP | CANOPUS_FLAG_REGISTERS_LAUNCHER_ENTRY |
+        CANOPUS_FLAG_APP_UNREGISTER_REBOOT_REQUIRED,
     DEMO_MODULE_ID,
     "1.0.0",
     "native-demo",
