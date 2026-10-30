@@ -4,7 +4,7 @@
  * firmware : 4.100.179 (user-4.100.179-cn-202609302100)
  * sha256   : 307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b
  * revision : 2
- * input_digest: 9a93e26ed295d2d4
+ * input_digest: 3cfa0395a891b26c
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_179_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_179_H

@@ -4,7 +4,7 @@
 // firmware : 4.100.139 (user-4.100.139-cn-202608280000)
 // sha256   : 31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74
 // revision : 2
-// input_digest: 0733cb81a86444fa
+// input_digest: 18f6a261615cf080
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -656,6 +656,9 @@ pub const CANOPUS_FW_RMDIR_CALLABLE: usize = canopus_thumb_callable(0x0c33da7dus
 
 /// Recovered global `gap_host_receive_slot` at 0x200bda80.
 pub const canopus_fw_gap_host_receive_slot: usize = 0x200bda80usize;
+
+/// Recovered global `pipe_file_operations` at 0x2cb0500c.
+pub const canopus_fw_pipe_file_operations: usize = 0x2cb0500cusize;
 
 /// Recovered `on_resume_wrapped` at 0x0c696c18. Thumb callable address 0x0c696c19.
 pub const CANOPUS_FW_ON_RESUME_WRAPPED_CALLABLE: usize = canopus_thumb_callable(0x0c696c19usize);

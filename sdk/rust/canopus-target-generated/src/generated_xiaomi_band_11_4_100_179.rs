@@ -4,7 +4,7 @@
 // firmware : 4.100.179 (user-4.100.179-cn-202609302100)
 // sha256   : 307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b
 // revision : 2
-// input_digest: 9a93e26ed295d2d4
+// input_digest: 3cfa0395a891b26c
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -659,6 +659,9 @@ pub const CANOPUS_FW_UNLINK_CALLABLE: usize = canopus_thumb_callable(0xc33dbb5us
 
 /// Recovered `screen_session_create` at 0xc6cba84. Thumb callable address 0xc6cba85.
 pub const CANOPUS_FW_SCREEN_SESSION_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc6cba85usize);
+
+/// Recovered global `pipe_file_operations` at 0x2cb02e4c.
+pub const canopus_fw_pipe_file_operations: usize = 0x2cb02e4cusize;
 
 /// Recovered global `font_reload_freetype_context_slot` at 0x200bd290.
 pub const canopus_fw_font_reload_freetype_context_slot: usize = 0x200bd290usize;

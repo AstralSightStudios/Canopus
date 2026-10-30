@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "name": "pipe_file_operations",
+  "kind": "global",
+  "prototype": "struct file_operations",
+  "instruction_set": "n/a",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "NuttX pipe file-operations table that a pipe inode stores at inode+16. Astrolink compares the inode's operations pointer against this table to prove that the two files it pinned in the default loop's owning filelist are that loop's pipe, before it writes a wake byte to them. Read-only identity; it is never called."
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "symbol_id": "xiaomi-band-11-4.100.139.private_abi.pipe_file_operations",
+  "target_id": "xiaomi-band-11-4.100.139",
+  "entry_address": "0x2cb0500c",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-4139-002"
+    ]
+  },
+  "provenance": {
+    "firmware_sha256": "31ce82257f7c127950dc5070b86316730cf468a41f0d004559e41e7d923b2c74",
+    "evidence_ids": [
+      "EVID-PORT-4139-002"
+    ],
+    "source": "nx_pipe at 0xc8cd8d8 passes this table to register_inode (0xc914e7c); the table's ten words are the same pipe handlers as .155 (0xc32e0e9 open, 0xc32e019 close, 0xc32cddd read, 0xc32ce9d write, 0xc328955 ioctl), only its address carries the +0x10 shift seen across this image."
+  },
+  "notes": "Address catalogue only; the table is compared, never called."
+}

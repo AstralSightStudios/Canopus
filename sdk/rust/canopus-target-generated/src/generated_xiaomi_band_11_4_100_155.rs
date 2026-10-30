@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: 4ccccbaff079153b
+// input_digest: ac8d35f0e469fe40
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -962,6 +962,9 @@ pub const CANOPUS_FW_FONT_RELOAD_FACE_COMPARE_CALLABLE: usize = canopus_thumb_ca
 
 /// Recovered `lv_obj_tree_walk` at 0x0c380574. Thumb callable address 0x0c380575.
 pub const CANOPUS_FW_LV_OBJ_TREE_WALK_CALLABLE: usize = canopus_thumb_callable(0x0c380575usize);
+
+/// Recovered global `pipe_file_operations` at 0x2cb04ffc.
+pub const canopus_fw_pipe_file_operations: usize = 0x2cb04ffcusize;
 
 /// Recovered `lv_obj_set_style_pad_bottom` at 0xc387c6e. Thumb callable address 0xc387c6f.
 pub const CANOPUS_FW_LV_OBJ_SET_STYLE_PAD_BOTTOM_CALLABLE: usize = canopus_thumb_callable(0xc387c6fusize);
