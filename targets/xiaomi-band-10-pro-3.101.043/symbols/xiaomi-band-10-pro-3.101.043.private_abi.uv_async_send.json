@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.uv_async_send",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "uv_async_send",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC2E15A4",
+  "prototype": "int uv_async_send(uv_async_t *handle)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Identified by its own structure and it cross-confirms the measured p67 loop layout: the pipe write descriptor really is at loop+364."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-002"
+    ],
+    "source": "Sets the async's pending word at handle+108 with an LDREX/STREX pair, then takes the loop from handle+4 and writes one byte through nx_write 0xC1D2640 to fd *(loop+364), the loop's pipe write end on this build. 92 callers."
+  },
+  "notes": "Identified by its own structure and it cross-confirms the measured p67 loop layout: the pipe write descriptor really is at loop+364.",
+  "callable_address": "0xc2e15a5"
+}

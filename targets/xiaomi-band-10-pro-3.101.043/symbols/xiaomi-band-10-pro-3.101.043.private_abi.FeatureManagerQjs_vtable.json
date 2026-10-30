@@ -32,7 +32,7 @@
     "evidence_ids": [
       "EVID-PORT-1043-QJS-001"
     ],
-    "source": "Read-only table of Thumb entry points: +0x00 0xC861968, +0x04 0xC86538C, +0x08 0xC86192C, +0x14 0xC86646C, +0x18 0xC866484, +0x1C 0xC868E94 (featureRequire), +0x20 0xC869270 (findFeature), +0x24 0xC8690B8 (createFeature), +0x28 0xC86538C, +0x2C 0xC866AB0 (uninit). The slot ordering is confirmed by the four methods that also carry their own signature strings."
+    "source": "Read-only table of Thumb entry points with a C++ header at +0x00..+0x10 and virtual slots from +0x14 (the constructor 0xC86646C stores vptr 0x2CDA2CE4, i.e. table+0x14). Slots: +0x00 0xC861968 forwarding stub (calls 0xC8610E8 with *(arg+8)), +0x04 0xC86538C constant-true predicate, +0x08 0xC86192C empty stub, +0x14 0xC86646C constructor, +0x18 0xC866484 deleting destructor, +0x1C 0xC868E94 featureRequire, +0x20 0xC869270 findFeature, +0x24 0xC8690B8 createFeature, +0x28 0xC86538C, +0x2C 0xC866AB0 uninit. The four semantic slots are pinned by methods that also carry their own signature strings."
   },
-  "notes": "Dispatch table the module needs for the manager object; slot offsets are measured here rather than inherited from Band 11."
+  "notes": "Dispatch table for the manager object. The remaining slots are named structurally only: constructor, deleting destructor, a constant-true predicate, an empty stub and a forwarding stub. No signature string claims a functional name for them, so none was invented."
 }

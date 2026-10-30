@@ -427,3 +427,62 @@ base and ordering are established even where the remaining slots are unnamed.
   so none were recorded from resemblance. Doing them is a full pass on its own.
 - Four unnamed FeatureManagerQjs slots above.
 
+## Pass 7: post_task and its wake, and the QuickJS reality check
+
+`EVID-PORT-1043-QJS-002`.
+
+### feature_manager_post_task
+
+| binding | record | address | evidence |
+| --- | --- | --- | --- |
+| `F_FEATURE_MANAGER_POST_TASK` | `feature_manager_post_task` | `0xC86231C` | names itself `FeaturePost` in its detached/null-handle logs (line 331), requires `handle+19` attached, then forwards to `0xC865D30(*(*(handle+28)+12), …)` |
+| — | `feature_runtime_post` | `0xC865D30` | pins the handle with an atomic increment (`0xC8628D4`), builds a 5-word record, calls the enqueue |
+| — | `feature_runtime_enqueue` | `0xC865794` | appends a 24-byte element into the runtime message ring at `runtime+0x50..0x64` (buffer/bounds/head/tail/sequence, `0xAA` elements per block) |
+| — | `uv_async_send` | `0xC2E15A4` | sets the async pending word at `handle+108` with LDREX/STREX, then writes one byte through `nx_write 0xC1D2640` to fd `*(loop+364)` |
+
+**Wake mechanism, exactly:** the Feature runtime is woken by `uv_async_send` on the
+async object stored at `runtime+0x3C` (word 15), i.e. it is a **uv_async on the
+runtime's own loop**, not a semaphore and not the module's async. `uv_async_send`
+in turn writes to the loop's pipe write end at `loop+364`, which independently
+confirms the loop layout measured in pass 2.
+
+### QuickJS: 1 of 13 self-anchored, 12 still open
+
+| binding | record | address | evidence |
+| --- | --- | --- | --- |
+| `F_QJS_FREE_VALUE` | `qjs_free_value` | `0xC2781E0` | the only self-naming QuickJS string in the image: `__JS_FreeValue: unknown tag=%d`, plus `quickjs.c:5636`; 1046 callers |
+
+The other twelve (`qjs_call`, `qjs_new_object`, `qjs_new_c_function2`,
+`qjs_is_function`, `qjs_new_string_len`, `qjs_to_cstring_len2`,
+`qjs_free_cstring`, `qjs_define_property_value_str`, `qjs_get_exception`,
+`qjs_new_array_buffer_copy`, `qjs_get_array_buffer`,
+`qjs_get_typed_array_buffer`) are **not** self-anchorable in this build: unlike the
+Feature subsystem, QuickJS here keeps no per-function signature strings (the file
+`quickjs.c` appears, but only for assertion file paths), and `qjsmini.c` only names
+its arena allocator. They have to be settled one by one by behaviour — e.g. string
+tag `-7` with the reference byte at `string+11` for the string constructors, the
+`ctx+4` free hook for the cstring helpers, and the exception tag returned through
+`JS_GetException` — with the same producer/consumer discipline used elsewhere.
+Cross-line matching must not be used: it is 22% accurate between .155 and .043.
+
+### FeatureManagerQjs vtable slots, named
+
+The table at `0xCDA2CD0` has a C++ header in `+0x00..+0x10` and virtual slots from
+`+0x14` (the constructor at `0xC86646C` stores vptr `0x2CDA2CE4` = table+0x14).
+
+| slot | address | name | basis |
+| --- | --- | --- | --- |
+| `+0x00` | `0xC861968` | forwarding stub | calls `0xC8610E8` with `*(arg+8)` |
+| `+0x04` | `0xC86538C` | constant-true predicate | body is `return 1` |
+| `+0x08` | `0xC86192C` | empty stub | empty body |
+| `+0x14` | `0xC86646C` | constructor | stores the vptr |
+| `+0x18` | `0xC866484` | deleting destructor | stores the vptr then frees |
+| `+0x1C` | `0xC868E94` | `featureRequire` | signature string |
+| `+0x20` | `0xC869270` | `findFeature` | signature string |
+| `+0x24` | `0xC8690B8` | `createFeature` | signature string |
+| `+0x28` | `0xC86538C` | constant-true predicate | same body as `+0x04` |
+| `+0x2C` | `0xC866AB0` | `uninit` | signature string |
+
+No functional name was invented for the four unnamed slots; they are recorded
+structurally.
+

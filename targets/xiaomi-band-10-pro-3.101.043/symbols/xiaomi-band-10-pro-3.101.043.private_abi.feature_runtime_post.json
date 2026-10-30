@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.feature_runtime_post",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "feature_runtime_post",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC865D30",
+  "prototype": "int feature_runtime_post(void *runtime, void *handle, uint32_t a, uint32_t b)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Inner half of the Feature post path."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-002"
+    ],
+    "source": "Pins the handle with the atomic increment at 0xC8628D4, builds a 5-word task record on the stack and calls the enqueue 0xC865794(runtime, record, b >> 31, 0, pinned)."
+  },
+  "notes": "Inner half of the Feature post path.",
+  "callable_address": "0xc865d31"
+}

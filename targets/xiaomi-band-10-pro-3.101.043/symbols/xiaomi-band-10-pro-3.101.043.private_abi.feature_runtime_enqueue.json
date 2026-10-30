@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.private_abi.feature_runtime_enqueue",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "feature_runtime_enqueue",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xC865794",
+  "prototype": "int feature_runtime_enqueue(void *runtime, const void *task, int, int, void *handle)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "The wake path, exactly: ring append at runtime+0x50..0x64, then uv_async_send on runtime+0x3C. That async is the Feature runtime thread's own handle, not the module async."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-PORT-1043-QJS-002"
+    ],
+    "source": "Appends the task into the runtime's message ring (runtime+80 buffer base, +84/+88 bounds, +92/+96 head/tail indices, +100 next sequence) as a 24-byte element (0xAA elements per block, 5 words copied), then wakes the runtime through uv_async_send 0xC2E15A4 on the async object stored at runtime+60 (word index 15)."
+  },
+  "notes": "The wake path, exactly: ring append at runtime+0x50..0x64, then uv_async_send on runtime+0x3C. That async is the Feature runtime thread's own handle, not the module async.",
+  "callable_address": "0xc865795"
+}

@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: 311045ec4a0b24ae
+ * input_digest: cb29412716c77217
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -546,8 +546,11 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * feature_event_get: restricted - not exported until context/ownership approved
  * feature_event_on_off: restricted - not exported until context/ownership approved
  * feature_event_set: restricted - not exported until context/ownership approved
+ * feature_manager_post_task: restricted - not exported until context/ownership approved
  * feature_method_call: restricted - not exported until context/ownership approved
  * feature_register_feature: restricted - not exported until context/ownership approved
+ * feature_runtime_enqueue: restricted - not exported until context/ownership approved
+ * feature_runtime_post: restricted - not exported until context/ownership approved
  * file_close: restricted - not exported until context/ownership approved
  * file_dup3: restricted - not exported until context/ownership approved
  * file_writev: restricted - not exported until context/ownership approved
@@ -704,6 +707,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
+ * qjs_free_value: restricted - not exported until context/ownership approved
  * readdir: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
  * register_inode: restricted - not exported until context/ownership approved
@@ -742,6 +746,7 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * uv__get_loop: restricted - not exported until context/ownership approved
  * uv__tls_get: restricted - not exported until context/ownership approved
  * uv_async_init: restricted - not exported until context/ownership approved
+ * uv_async_send: restricted - not exported until context/ownership approved
  * uv_loop_init: restricted - not exported until context/ownership approved
  * uv_mutex_init: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
