@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.l2cap_accept_handler",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "l2cap_accept_handler",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c067ed8",
+  "callable_address": "0x1c067ed9",
+  "prototype": "target-private recovered callable",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "bluetooth_owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Ordinary accept owner handler applies local configuration and status/detail in a state2 channel."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ],
+    "source": "Ordinary accept owner handler applies local configuration and status/detail in a state2 channel."
+  },
+  "notes": "Exact P65 static recovery; no runtime approval and no inherited port semantics."
+}

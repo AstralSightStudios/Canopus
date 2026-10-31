@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.qjs_get_exception",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "qjs_get_exception",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "uint64_t qjs_get_exception(void *ctx)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Corrected wrapper: reaches 0xC6BC560, which reads and clears the runtime exception slot. Earlier global-object identification was wrong."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-LIFECYCLE-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-LIFECYCLE-002"
+    ],
+    "source": "Corrected wrapper: reaches 0xC6BC560, which reads and clears the runtime exception slot. Earlier global-object identification was wrong."
+  },
+  "notes": "Corrected exact P65 wrapper identity after following real NativeProxy callers. No runtime approval.",
+  "entry_address": "0xca32a74",
+  "callable_address": "0xca32a75"
+}

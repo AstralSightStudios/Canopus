@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.legacy_advertising_start",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "legacy_advertising_start",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3d8614",
+  "callable_address": "0xc3d8615",
+  "prototype": "int(uintptr_t owner, uint8_t packed48_request[48])",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "48-byte request: owner/id4,advtype4/txpower1/addr6/addrtype1/peer6/intervalu32/flags7/adlen2+ptr/scanlen2+ptr; native start returns0 and writes adv_id at+0"
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ],
+    "source": "Old BTS advertisement with >=48-byte packed request; unlike generic P67 client. Exact stock producer0xC21A674 builds48 bytes: +4=8, +8=1600, +12=10,+16=30,+44=adv_data,+48=30,+52=scan_rsp,+56=30; after mode8 producer maps scan_interval320 at+20,txpower0xF6+21,phy0+24. No reserved high-mode sentinel."
+  },
+  "notes": "Exact N66 local producer/consumer recovery. No device result or public-call approval."
+}

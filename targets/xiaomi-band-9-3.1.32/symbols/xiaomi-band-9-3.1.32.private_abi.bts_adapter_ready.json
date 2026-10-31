@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.bts_adapter_ready",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "bts_adapter_ready",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x200ac470",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Producer flags bit0x300 checked by advertising0xC3D8614 and send0xC3D5450."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-GAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-GAP-001"
+    ],
+    "source": "Producer flags bit0x300 checked by advertising0xC3D8614 and send0xC3D5450."
+  },
+  "type": "uintptr_t"
+}

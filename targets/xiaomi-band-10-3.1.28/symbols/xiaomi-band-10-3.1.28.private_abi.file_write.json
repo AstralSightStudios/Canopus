@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.private_abi.file_write",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "file_write",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc38c318",
+  "callable_address": "0xc38c319",
+  "prototype": "int(void *,const void *,uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "contract": "Scalar file-write: loop/losetup.c0xc0ec168 calls file_write(file,buffer,size); dispatcher checks flags bit2 and inode+16 ops+12. fs write wrapper0xc38f910 retains/releases source around same call."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-O66-ASTROLINK-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-O66-ASTROLINK-ABI-001"
+    ],
+    "source": "Scalar file-write: loop/losetup.c0xc0ec168 calls file_write(file,buffer,size); dispatcher checks flags bit2 and inode+16 ops+12. fs write wrapper0xc38f910 retains/releases source around same call."
+  },
+  "notes": "Exact-image local recovery; no device approval."
+}

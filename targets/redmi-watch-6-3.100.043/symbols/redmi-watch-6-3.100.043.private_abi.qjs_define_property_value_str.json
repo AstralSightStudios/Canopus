@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.qjs_define_property_value_str",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "qjs_define_property_value_str",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int qjs_define_property_value_str(void *ctx,uint64_t object,const char *name,uint64_t value,int flags)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Direct string-name own-property definition consumes the value through its JSValue refcount paths."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ],
+    "source": "Direct string-name own-property definition consumes the value through its JSValue refcount paths."
+  },
+  "notes": "Exact P65 static recovery. Not a runtime approval; do not infer cross-target offsets.",
+  "entry_address": "0xc6d3320",
+  "callable_address": "0xc6d3321"
+}

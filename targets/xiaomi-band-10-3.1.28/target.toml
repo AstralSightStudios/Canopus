@@ -25,6 +25,10 @@ revision = 1
 
 firmware_address_ranges = [
   { base = 0x0C000000, size = 0x00800000 },
+  # Exact XIP cached alias from boot FLASH_BASE/OTA_CODE_OFFSET.
+  { base = 0x2C0A0000, size = 0x0072AE00 },
+  # Startup initialized .data and BSS: literals0x74..0x80, end0x200DAB48.
+  { base = 0x2007EAC8, size = 0x0005C080 },
 ]
 
 # No capability is build-available: every ported record is restricted/PENDING.

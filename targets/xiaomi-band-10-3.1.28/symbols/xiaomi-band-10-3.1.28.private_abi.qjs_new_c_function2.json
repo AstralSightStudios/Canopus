@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.private_abi.qjs_new_c_function2",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "qjs_new_c_function2",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc18e98c",
+  "prototype": "uint64_t(void *,void *,const char *,int,int,int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "contract": "native function constructor; passes context function prototype+56"
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-O66-ASTROLINK-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-O66-ASTROLINK-ABI-001"
+    ],
+    "source": "native function constructor; passes context function prototype+56"
+  },
+  "notes": "Exact-image local recovery; no device approval. Supersedes previous matched name where applicable.",
+  "callable_address": "0xc18e98d"
+}

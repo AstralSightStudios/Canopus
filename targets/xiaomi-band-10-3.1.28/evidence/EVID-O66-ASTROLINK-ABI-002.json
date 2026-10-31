@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-O66-ASTROLINK-ABI-002",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "O66 final QJS/GAP/async and LE CoC ownership contracts",
+  "callsite_evidence": [
+    "qjs_get_exception loads runtime from ctx+24 before calling raw primitive0xC531294; returned Value is freed by shared exception clear.",
+    "typed-array classes21..29; class descriptor atom164=Uint8Array=23; view opaque+40; backing buffer at view+12, byte offset+16, byte length+20; width shifts bytes00 00 00 01 01 02 02 02 03 at0x2C659800; duplicate backing refcount on success. Detached native0xC1BA38C throws.",
+    "Advertising CLI0xC4D7EDC: mode byte+0=5 ADV_IND legacy, intervalu32+16 range32..0x4000 in0.625ms, signed txpower byte+20. Producer0xC4D00E0 consumes same params28.",
+    "uv_async_send0xC1BE670 pending+60 atomic exchange1, busy+24 increment then decrement after write. uv_close0xC1BE6FC stores pending1 and waits busy+24==0. O66 busy counter is required.",
+    "CoC event17 producer0xC3C33D6 adds credits to queue+14 before drain then creates4-byte CID0/added2 event. Local flow0xC3C09c4 six-byte CID0/reason2/value4. SDU0xC3C486c completes stock buffer with CID+4 then emits7. Callback does not free event; stock caller/owner releases. Incomplete fragments queue at channel-owned receive queue, eventual0xc3c59b8 coalesces. Open0xC3BD050 event record CID+108, remote MTU+72.",
+    "Scan reports event316 copies12-byte header and AD from+11, application consumer0xc1d4a7c confirms payload+11; service frees after callback."
+  ],
+  "control_flow_evidence": [
+    "QJS class descriptors0x2c70c134.. typed21..29; ctor0xC1B9A54 uses backing+16 to payload and buffer opaque+40; exact object stores on same image.",
+    "Receive stock allocator0xc3abcd0 retains end+0 offset+2 headroom type+8; event callback retains until owner releases; no new callback free added.",
+    "Advertising start list+timeout owns callback tables; stop0xC4D040C finds set by pointer or ID, calls0xc51d74c; client handle+8 identity stop command68.",
+    "Zero-SDU common allocation total22/end16/offset16, two-byte zero at20; native0xC3ABCD0 identical formula total=end+6. Empty fragment flags0x81 with original buffer retained until credit flush."
+  ],
+  "ownership_analysis": "All callback objects are borrowed for callback lifetime unless explicitly duplicated. JS backing is duplicated by target accessor and must be freed by consumer. Raw exception primitive is runtime ABI, only shim receives ctx. No device approval.",
+  "unsafe_assumptions": [],
+  "recommended_probe": "Compile exact target, then static all nonzero required bindings review and isolated runtime lifecycle. SUPPORTED remains false.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-31T00:00:00Z"
+}

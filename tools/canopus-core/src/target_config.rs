@@ -804,10 +804,20 @@ const SUP_9: &[Mapping] = &[
     },
 ];
 
-// Optional: directory iteration for the phone-installed package scan. Emitted
-// when the pack recovered the dirent family, but excluded from the platform
-// completeness gate - a target without it still builds a complete Supervisor.
+// Optional: monotonic clock and directory iteration for custom staged targets.
+// These are not part of the core platform completeness gate: a target without
+// them still builds, but its Time/package-scan services report UNSUPPORTED.
 const SUP_9_DIRENT: &[Mapping] = &[
+    Mapping {
+        macro_name: "CANOPUS_SUP_CLOCK_GETTIME",
+        symbol_name: "clock_gettime",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_LV_TIMER_CREATE",
+        symbol_name: "lv_timer_create",
+        address: Address::Callable,
+    },
     Mapping {
         macro_name: "CANOPUS_SUP_NUTTX_OPENDIR",
         symbol_name: "opendir",

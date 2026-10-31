@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.bt_adapter_enable",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "bt_adapter_enable",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c0086d0",
+  "callable_address": "0x1c0086d1",
+  "prototype": "int(void *client)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Command23; zero success, transport error or reply status otherwise."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-GAP-LIBUV-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-GAP-LIBUV-003"
+    ],
+    "source": "Exact P65 producer/consumer recovery documented in /tmp/watch6-gap-coc-static.md and /tmp/watch6-libuv-static.md; no new reverse engineering."
+  },
+  "notes": "Command23; zero success, transport error or reply status otherwise. Static evidence only; no runtime approval."
+}

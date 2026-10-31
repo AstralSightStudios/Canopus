@@ -581,6 +581,7 @@ local function load_supervisor()
     -- NSH reports failure when the directory already exists, but staging is still
     -- valid in that case and the following writes are authoritative.
     run("mkdir /data/canopus")
+    run("mkdir /data/canopus/inbox")
     if not write_all(STAGE2_PATH, stage2) then
         return false, "cannot stage Band 9 stage-2"
     end

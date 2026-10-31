@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.qjs_free_cstring",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "qjs_free_cstring",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "void qjs_free_cstring(void *ctx,const char *ptr)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Real string cleanup callers pass payload; decrements refcount at ptr-16 and releases string storage/atom as appropriate."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-LIFECYCLE-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-LIFECYCLE-002"
+    ],
+    "source": "Real string cleanup callers pass payload; decrements refcount at ptr-16 and releases string storage/atom as appropriate."
+  },
+  "notes": "Exact P65 lifecycle/QJS recovery. No runtime approval.",
+  "entry_address": "0xc6b9c48",
+  "callable_address": "0xc6b9c49"
+}

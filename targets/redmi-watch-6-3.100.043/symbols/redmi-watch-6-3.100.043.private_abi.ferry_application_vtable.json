@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.ferry_application_vtable",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "ferry_application_vtable",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "void *",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Application primary table set by derived constructor/destructor; slot19/+76 is free_runtime 0xC9FCD48; two preceding prefix words."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-LIFECYCLE-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-LIFECYCLE-002"
+    ],
+    "source": "Application primary table set by derived constructor/destructor; slot19/+76 is free_runtime 0xC9FCD48; two preceding prefix words."
+  },
+  "notes": "Exact P65 lifecycle/QJS recovery. No runtime approval.",
+  "entry_address": "0x3c3275e0"
+}

@@ -2543,6 +2543,24 @@ const struct canopus_context_v1 *canopus_supervisor_context(
     struct canopus_supervisor_v1 *sup, uint32_t slot)
 {
     if (sup == 0 || sup != s_sup || slot >= CANOPUS_SUP_MODULE_SLOTS) return 0;
+    /* Some staged targets publish their clock after the Supervisor constructor
+     * has bound the initial contexts. Refresh only the platform-dependent Time
+     * group; do not reset live timers, hooks or other bound service state. */
+    if (s_services.group_version[CANOPUS_SVC_TIME] == 0u &&
+        sup->platform != 0 && sup->platform->monotonic_ms != 0) {
+        s_services.group_version[CANOPUS_SVC_TIME] =
+            sup->platform->start_background_pump != 0 ? 2u : 1u;
+        s_time_obj.monotonic_ms = svc_time_monotonic_ms;
+        s_time_obj.realtime_ms = svc_time_realtime_ms;
+        s_time_obj.sleep_ms = svc_time_sleep_ms;
+        s_time_obj.timer_create = svc_time_timer_create;
+        s_time_obj.timer_start = svc_time_timer_start;
+        s_time_obj.timer_stop = svc_time_timer_stop;
+        s_time_obj.timer_destroy = svc_time_timer_destroy;
+        s_time_obj.timer_set_background = svc_time_timer_set_background;
+    }
+    s_contexts[slot].time =
+        s_services.group_version[CANOPUS_SVC_TIME] != 0u ? &s_time_obj : 0;
     return &s_contexts[slot];
 }
 

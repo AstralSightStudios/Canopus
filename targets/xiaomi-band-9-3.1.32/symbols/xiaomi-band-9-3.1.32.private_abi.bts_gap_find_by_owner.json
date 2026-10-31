@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.bts_gap_find_by_owner",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "bts_gap_find_by_owner",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3d2518",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Returns1 only if owner exists in registration list; advertising requires existing owner."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-GAP-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-GAP-001"
+    ],
+    "source": "Returns1 only if owner exists in registration list; advertising requires existing owner."
+  },
+  "callable_address": "0xc3d2519",
+  "prototype": "int(uintptr_t)",
+  "calling_convention": "arm-aapcs"
+}

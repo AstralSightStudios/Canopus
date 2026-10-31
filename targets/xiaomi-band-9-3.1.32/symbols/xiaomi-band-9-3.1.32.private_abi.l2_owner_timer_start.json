@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.l2_owner_timer_start",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "l2_owner_timer_start",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc1d3760",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-9132-L2-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-PORT-9132-L2-001"
+    ],
+    "source": "Exact N66 3.1.32 AP producer/consumer and instruction recovery; no inherited address."
+  },
+  "notes": "libuv uv_timer_start; callback+48, deadline+64, repeat+72, sequence+80; 88-byte base timer.",
+  "prototype": "int(void *, void (*)(void *), uint64_t, uint64_t)",
+  "callable_address": "0xc1d3761"
+}

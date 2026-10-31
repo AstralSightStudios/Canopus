@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.qjs_set_module_export",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "qjs_set_module_export",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "int qjs_set_module_export(void *ctx,void *module,const char *name,uint64_t value)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Assigns a previously declared export; failure paths release the supplied JSValue."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ],
+    "source": "Assigns a previously declared export; failure paths release the supplied JSValue."
+  },
+  "notes": "Exact P65 static recovery. Not a runtime approval; do not infer cross-target offsets.",
+  "entry_address": "0xc7132d8",
+  "callable_address": "0xc7132d9"
+}

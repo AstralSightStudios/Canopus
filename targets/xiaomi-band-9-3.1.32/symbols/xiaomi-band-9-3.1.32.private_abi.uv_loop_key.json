@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.uv_loop_key",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "uv_loop_key",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x2006d47c",
+  "type": "uintptr_t",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ],
+    "source": "Getter0xC1D5168 reads key and indexes taskinfo+20+4*key, limit3."
+  }
+}

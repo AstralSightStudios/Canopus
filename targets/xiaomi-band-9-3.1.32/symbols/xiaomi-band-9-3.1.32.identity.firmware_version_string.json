@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.identity.firmware_version_string",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "firmware_version_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "entry_address": "0xc5fc5c1",
+  "type": "const char[]",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ],
+    "source": "Exact AP bytes at XIP0xC5FC5C1 contain 3.1.32 followed by LF in embedded build.prop; target identity_terminator=line."
+  }
+}

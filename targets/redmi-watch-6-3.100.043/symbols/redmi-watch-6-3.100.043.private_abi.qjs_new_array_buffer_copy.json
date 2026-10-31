@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.qjs_new_array_buffer_copy",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "qjs_new_array_buffer_copy",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "uint64_t qjs_new_array_buffer_copy(void *ctx,const uint8_t *data,size_t length)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Allocates class19 backing storage, copies caller data, sets payload length/data at backing +0/+8."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ],
+    "source": "Allocates class19 backing storage, copies caller data, sets payload length/data at backing +0/+8."
+  },
+  "notes": "Exact P65 static recovery. Not a runtime approval; do not infer cross-target offsets.",
+  "entry_address": "0xc7170d8",
+  "callable_address": "0xc7170d9"
+}

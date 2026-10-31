@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.private_abi.qjs_array_buffer_detached_error",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "qjs_array_buffer_detached_error",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc1ba38c",
+  "callable_address": "0xc1ba38d",
+  "prototype": "uint64_t(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-O66-ASTROLINK-ABI-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "ownership": {
+    "return_value": "owned JSValue; exception slot consumed for take"
+  },
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-O66-ASTROLINK-ABI-002"
+    ],
+    "source": "Throws TypeError ArrayBuffer is detached; used by native typed and buffer accessors"
+  },
+  "notes": "Exact O66 primitive, target shim translates shape; no device proof."
+}

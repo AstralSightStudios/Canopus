@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ASTROLINK-N66-GAP-001",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "question": "What exact N66 BTM/BTS scan/advertising contract replaces the generic MiWear IPC shape?",
+  "candidate_symbols": [
+    "legacy_scan_start",
+    "legacy_scan_stop",
+    "legacy_advertising_start",
+    "legacy_advertising_stop",
+    "gap_register_callbacks",
+    "bts_gap_find_by_owner",
+    "bts_service_loop",
+    "bts_adapter_ready"
+  ],
+  "callsite_evidence": [
+    "Scan start0xC3D7598 takes(handle_slot**,filter6,settings12,callbacks16). Native12-byte handle contains caller slot at+0, scanner id+4,common table+8. It returns int0/error and alloc/free lifecycle; not generic adapter handle.",
+    "scan failed0xC3D7458 invokes callbacks+4(native,error) then frees native then writes *(caller_slot)=0. stopped0xC3D752C same ordering callbacks+12/native cleanup. Started0xC3D74C8 updates scanner id and invokes callback+8, error/status is log only and not exposed. Report0xC3D7410 calls common callback0(native,report) with stack payload+11.",
+    "Exact stock12 scan settings bytes are900100006801000000010000, consumed as interval400/window360/type1/ownaddr0/filter1/policy0. Target uses independent zero6 filter, then original app filter may be available but is intentionally not global config.",
+    "BTS stop0xC3D7940 schedules global controller stop before per-ID stopped notification. It cannot promise other scans continue; shared target API marks exclusive namespace/global stop. No BTM stop error bytes claimed.",
+    "GAP owner registration0xC3D28E4 checks existing owner0xC3D2518 and list0x200AC618, alloc16 {owner+8,callbacks+12}. Adv start/stop events0xC3D84F0/+580 fanout only matching owner callbacks at+76/+80, both receive owner and adv_id.",
+    "Advertising0xC3D8614 reads packed >=48-byte request and writes new adv id at+0. Exact producer fields: id/mode+0,advtype+4,txinterval+8,min+12,max+16,scan_interval+20,txpower+21,ownaddr6+5,addrtype+11,peer6+12,peer_type+18,phy+24,chmap+25,filter+26,adlen+28/adptr+32,scanlen+36/scanptr+40.",
+    "Request uses nonconnectable legacy type8, interval1600/min10/max30,scan320/tx-10/phy0,payload-only, own address zero default. Do not use P67 generic 28-byte fields. Stop uses owner+id0xC3D8914; state remains until matching stopped event.",
+    "Target four resident states each for scan and adv; stable handles have pointer/index low40 bits,generation bits40..47; BTM id lives48..55 for adv. Native callback is remapped to generation to ignore late/retired events. BTM terminal cleanup order prevents reuse until caller slot zero.",
+    "btservice loop0x200AC608 consumed by0xC3D163C uv_poll/uv_run. GAP ready flags0x200AC470 bit0x300 required by advertising/send. No MiWear adapter+56 business loop invented."
+  ],
+  "control_flow_evidence": [
+    "create_scan returns stable resident state, not native BTM handle; stop_scan resolves generation to native pointer. Failed/stopped target state must not be reused during callback because firmware clears its slot after callback.",
+    "Empty SDU stock allocator0xC3A5A3C layout total0/offset2/payload4+offset and tail6. Node allocation0xC3A5738 yields prefix+8;flush0xC3AFD2E consumes original SDU and node-8 and decrements credits+14. Two-byte-zero prefix is constructed before pushing explicit0x81 node.",
+    "Unified target callback token index|generation<<8 returned directly for both scan and advertising. create_scan takes resident common16-byte callbacks; target remaps native BTM pointer to token. create_advertising(owner,callbacks,data,len),stop_advertising(owner,token).",
+    "Legacy common AdvCallbacks exact12-byte: reserved+0,started+4(token,adv_id,status),stopped+8(token,adv_id). gap_owner_callbacks(index) supplies owner started/stopped at stock table+76/+80 and fans out by native id/generation. Native started carries no actual failure code,helper reports0.",
+    "No STARTING sentinel token is used; terminal callback token comparison stays stable even native handle is freed. `scan_failed` is a separate shared service error shim, not stopped callback.",
+    "Target ADV callback arrays are84 bytes:21 raw function pointers, only indices19/20 filled. BTS invokes callback at index19/20 with(owner_index,adv_id), then maps native adv id to slot. They are not common AdvCallbacks and not a packed GAP interface.",
+    "Flush0xC3AFD2E checks queue+14 credit before dequeuing; explicit empty SDU remains queued when credit0. Buffer+8 metadata remains3; first|last flag0x81 is only fragment node+4."
+  ],
+  "ownership_analysis": "Static target-only contract, not generic IPC or independent-controller semantics. Per-owner resident GAP registration and exact old callbacks required. Device proof pending.",
+  "unsafe_assumptions": [
+    "No claim that stock scans keep independent settings or continue after another ID stops.",
+    "No runtime acceptance, advertisement coexistence or empty SDU physical test."
+  ],
+  "recommended_probe": "Register one independent GAP owner, validate scan lifecycle/error/stop, adv started/stopped id, and empty SDU plus queue credit retention on isolated target.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-10-30T00:00:00Z"
+}

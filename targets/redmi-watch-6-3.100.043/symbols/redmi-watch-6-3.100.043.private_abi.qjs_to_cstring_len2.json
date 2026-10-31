@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.qjs_to_cstring_len2",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "qjs_to_cstring_len2",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "prototype": "const char *qjs_to_cstring_len2(void *ctx,size_t *length,uint64_t value,int cesu8)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Direct tagged-string conversion handles UTF-8/CESU-8, writes length and returns string payload."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ],
+    "source": "Direct tagged-string conversion handles UTF-8/CESU-8, writes length and returns string payload."
+  },
+  "notes": "Exact P65 static recovery. Not a runtime approval; do not infer cross-target offsets.",
+  "entry_address": "0xc6d0d40",
+  "callable_address": "0xc6d0d41"
+}

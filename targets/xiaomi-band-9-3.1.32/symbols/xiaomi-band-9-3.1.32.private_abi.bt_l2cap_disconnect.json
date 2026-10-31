@@ -21,16 +21,17 @@
       "EVID-FW-MATCH-ENSEMBLE-1036-9132"
     ]
   },
-  "policy": "restricted",
-  "status": "STATIC_RECOVERED",
+  "policy": "withdrawn",
+  "status": "WITHDRAWN",
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
     "evidence_ids": [
       "EVID-FW-MATCH-ENSEMBLE-1036-9132"
     ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json",
+    "withdrawal_reason": "Exact N66 local disassembly disproves the matched L2CAP name; see EVID-ASTROLINK-N66-ABI-001. Do not call or automatically rematch."
   },
-  "approval_state": "PENDING",
-  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
+  "approval_state": "REJECTED",
+  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path. Withdrawn after local N66 semantic recovery; fresh private owner-handler records are separate.",
   "callable_address": "0xc287e89"
 }

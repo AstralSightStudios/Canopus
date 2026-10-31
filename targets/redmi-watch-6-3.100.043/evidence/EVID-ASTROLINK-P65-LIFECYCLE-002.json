@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ASTROLINK-P65-LIFECYCLE-002",
+  "target_id": "redmi-watch-6-3.100.043",
+  "kind": "static_recovery",
+  "status": "STATIC_RECOVERED",
+  "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+  "source": "Exact P65 IDB with direct caller and vtable instruction checks. Scope limited to legacy Application lifecycle and QJS. No runtime test.",
+  "verified": {
+    "application_lookup": {
+      "context_runtime": "ctx+248 -> RuntimeContext via 0xC6B702C",
+      "runtime_context": "runtime+20",
+      "global_object": "0xCA32660 -> 0xC6BC504 duplicates context+200 global JSValue",
+      "nativeproxy_opaque": "0xCA32A2C validates class1 and returns object+40 AppEffectManager",
+      "effect_manager_application": "AppEffectManager+108, assigned by 0xCA168B0 from framework current Application",
+      "current_application_producer": "0xCA19590 reads FrameworkExt implementation+448",
+      "primary_vtable": "0x3C3275E0, constructor write literal referenced at 0xC9FDCEC; two Itanium prefix words",
+      "destroy_slot": 19,
+      "destroy_entry": "0xC9FCD48 at vtable+76 frees Application+296 runtime"
+    },
+    "framework": {
+      "instance_global": "0x3C492C60 allocated by 0xCA22EB8",
+      "primary_vtable": "0x3C32E0D0 assigned by constructor 0xCA1BD70",
+      "implementation_offset": 4,
+      "app_list_mutex": 392,
+      "app_vector_begin_end": "452/456",
+      "current_application": 448,
+      "framework_copy_words": "9 (2 prefix + 7 slots)",
+      "application_copy_words": "29 (2 prefix + 27 slots)"
+    },
+    "qjs": {
+      "new_c_function2": "0xC6DAAE0 stores callback+44,length+48,cproto+49,magic+50; helper uses cproto1",
+      "free_cstring": "0xC6B9C48 decrements ptr-16 and frees string storage",
+      "is_function": "0xC6BC588 checks class13, class41 callable flag and class call slot",
+      "call": "0xC704988 normal-call wrapper, distinct from constructor paths",
+      "get_exception": "0xCA32A74 -> 0xC6BC560 reads and clears runtime exception slot",
+      "global_object": "0xCA32660 -> 0xC6BC504 actual global, not exception",
+      "get_opaque": "0xCA32A2C class-gated object+40 access"
+    }
+  },
+  "notes": [
+    "legacy_application returns only after stock primary-vtable equality; no Application.runtime identity requirement during early bootstrap.",
+    "legacy_publish now uses the actual global object. All JSValue ownership conventions remain as in the first pass.",
+    "Unknown CoC event numbers remain zero; this pass did not assign or infer them.",
+    "SUPPORTED remains false. GAP, CoC, task plumbing, signatures and runtime tests are outside this scoped pass."
+  ]
+}

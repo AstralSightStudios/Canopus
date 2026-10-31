@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.uv_async_init",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "uv_async_init",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc1d6ad0",
+  "callable_address": "0xc1d6ad1",
+  "prototype": "int(void *,void *,void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Producer writes loop+4, callback+48, pending+60 and lazy pipe296/300."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ],
+    "source": "Producer writes loop+4, callback+48, pending+60 and lazy pipe296/300."
+  },
+  "notes": "Exact N66 local producer/consumer recovery. No device result or public-call approval."
+}

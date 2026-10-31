@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "name": "capability_finding_legacy_hosts_present",
+  "kind": "finding",
+  "prototype": "",
+  "instruction_set": "n/a",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "The newer FeatureManagerQjs implementation is absent, but exact-image code proves an older native extension list, GAP clients and ordinary LE CoC owner handlers. This is not an adapted runtime ABI."
+  },
+  "policy": "restricted",
+  "status": "STATIC_CONFIRMED",
+  "approval_state": "PENDING",
+  "symbol_id": "redmi-watch-6-3.100.043.capability_finding.legacy_hosts_present",
+  "target_id": "redmi-watch-6-3.100.043",
+  "entry_address": "",
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ]
+  },
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ],
+    "source": "Supersedes the string-census absence verdict: P65 extension init/export 0xC9FB768/0xC9FB7C4, GAP command producers and CoC owner 0x3C492798 are code-confirmed. Full integration remains pending."
+  },
+  "notes": "Static host-presence evidence only. Does not authorize SUPPORTED or runtime calls."
+}

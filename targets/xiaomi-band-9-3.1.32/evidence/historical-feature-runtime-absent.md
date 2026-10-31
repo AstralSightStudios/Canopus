@@ -1,3 +1,8 @@
+# Superseded string-census finding
+
+This historical finding is disproved by EVID-ASTROLINK-N66-ABI-001.
+
+```json
 {
   "schema": 1,
   "name": "capability_finding_feature_runtime_absent",
@@ -35,3 +40,4 @@
   },
   "notes": "No address, no callable, no partial support. This record exists to make an unsupported verdict auditable."
 }
+```

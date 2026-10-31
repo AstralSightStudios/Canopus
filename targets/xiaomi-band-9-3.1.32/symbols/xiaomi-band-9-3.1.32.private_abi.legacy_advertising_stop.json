@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.legacy_advertising_stop",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "legacy_advertising_stop",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3d8914",
+  "callable_address": "0xc3d8915",
+  "prototype": "int(uintptr_t,int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Checks owner/id before stopping advertising set."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ],
+    "source": "Checks owner/id before stopping advertising set."
+  },
+  "notes": "Exact N66 local producer/consumer recovery. No device result or public-call approval."
+}

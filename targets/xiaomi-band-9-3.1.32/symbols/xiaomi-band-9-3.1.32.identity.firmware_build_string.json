@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.identity.firmware_build_string",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "firmware_build_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "entry_address": "0xc77a139",
+  "type": "const char[]",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ],
+    "source": "Exact AP footer BUILD_DATE=Jul 27 2026 19:42:01; value starts0xC77A139 and is LF terminated."
+  },
+  "notes": "Firmware build identity is exact footer BUILD_DATE, not the synthetic N66NFC_3.1.32 name. identity_terminator=line."
+}

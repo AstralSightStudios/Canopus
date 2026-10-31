@@ -7,10 +7,10 @@
   "instruction_set": "thumb",
   "prototype": "void(void *)",
   "proof": {
-    "static": "recovered",
+    "static": "confirmed",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+      "EVID-PORT-9132-L2-001"
     ]
   },
   "policy": "restricted",
@@ -18,12 +18,12 @@
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+      "EVID-PORT-9132-L2-001"
     ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+    "source": "Exact N66 producer/consumer review supersedes erroneous cross-family match."
   },
-  "entry_address": "0xc534da0",
-  "callable_address": "0xc534da1",
-  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
+  "entry_address": "0xc28b9d4",
+  "callable_address": "0xc28b9d5",
+  "notes": "Exact N66 LVGL timer delete/unlink and free; previous ensemble address was an unrelated string destructor and is withdrawn.",
   "approval_state": "PENDING"
 }

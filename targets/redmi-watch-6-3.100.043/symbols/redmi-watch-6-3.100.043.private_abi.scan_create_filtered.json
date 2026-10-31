@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.scan_create_filtered",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "scan_create_filtered",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c00aaa4",
+  "callable_address": "0x1c00aaa5",
+  "prototype": "void *(void *client, const uint8_t *settings8, uint8_t *filter16, const void *callbacks)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Command213; settings8/filter16; report borrowed during callback. Filter14/15 unresolved."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-GAP-LIBUV-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-GAP-LIBUV-003"
+    ],
+    "source": "Exact P65 producer/consumer recovery documented in /tmp/watch6-gap-coc-static.md and /tmp/watch6-libuv-static.md; no new reverse engineering."
+  },
+  "notes": "Command213; settings8/filter16; report borrowed during callback. Filter14/15 unresolved. Static evidence only; no runtime approval."
+}

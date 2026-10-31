@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.qjs_to_cstring_len2",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "qjs_to_cstring_len2",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc1d7e1c",
+  "callable_address": "0xc1d7e1d",
+  "prototype": "const uint8_t *(void *,size_t *,uint64_t,int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Retains ASCII, converts Latin1/wide, returns header+16 and byte length."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ],
+    "source": "Retains ASCII, converts Latin1/wide, returns header+16 and byte length."
+  },
+  "notes": "Exact N66 local producer/consumer recovery. No device result or public-call approval."
+}

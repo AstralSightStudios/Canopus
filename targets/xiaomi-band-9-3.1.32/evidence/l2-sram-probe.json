@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "target_id": "xiaomi-band-9-3.1.32",
+  "status": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "approval_state": "PENDING",
+  "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+  "addresses": {
+    "RX": "0x0C5592FD",
+    "SEND": "0x0C55954D",
+    "SESSION": "0x0C55A17D",
+    "CRYPTO": "0x0C556E6D",
+    "CONNECTIONS": "0x2007C680",
+    "BT_LOOP": "0x200AC608",
+    "TIMER": "0x0C28BCED",
+    "TIMER_DELETE": "0x0C28B9D5",
+    "OWNER_LOOP": "0x20098D3C",
+    "OWNER_TIMER_INIT": "0x0C1D3629",
+    "OWNER_TIMER_START": "0x0C1D3761",
+    "OWNER_TIMER_SIZE": "0x58"
+  },
+  "abi": {
+    "rx": "void(uint16_t handle, uint8_t channel, uint8_t opcode, void *payload, uint16_t len)",
+    "session": "void *(uint16_t handle)",
+    "crypto": "int(void *session, int encrypt, uint16_t len, const void *in, void *out)",
+    "send": "int(void *session, const struct l2_packet *)",
+    "list": "head+4 prev link; node+12 connection; connection+12 RX callback",
+    "packet": "channel +0, opcode +1, payload +4, len +8, callbacks/cookies +12/+16/+20/+24 (28 bytes)",
+    "owner_timer": "88-byte base uv_timer_t, 8-byte aligned; init/start only on owner task"
+  },
+  "evidence_ids": [
+    "EVID-PORT-9132-L2-001"
+  ],
+  "constraints": [
+    "Exact N66 AP recovery only; no production approval",
+    "Encrypted WearPacket L2 only; failed decryption never dispatches",
+    "Receive/transmit on Bluetooth owner; owner timer init/start on native UI owner",
+    "SAR callback replacement only in RAM; no flash patching",
+    "No new threads or work queues"
+  ],
+  "owner_source": {
+    "status": "STATIC_RECOVERED",
+    "approval_state": "PENDING",
+    "storage": "88-byte uv_timer_t, 8-byte alignment; measured from uv_timer_init/start producers",
+    "context": "One LVGL callback starts the resident UI-loop timer; Bluetooth RX starts its owner timer"
+  }
+}

@@ -4,7 +4,7 @@
  * firmware : 3.1.28 (9d8f394:nx_bestbsp_ap)
  * sha256   : fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845
  * revision : 1
- * input_digest: 1c59f6ef7ae726eb
+ * input_digest: bc4eea037f2f43a9
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -45,13 +45,18 @@ static inline int canopus_identity_guard(void)
     const char *const expect_version = "3.1.28";
     const char *const expect_build = "9d8f394:nx_bestbsp_ap";
     const char *const actual_version = (const char *)(uintptr_t)0x0C64D7AD;
-    const char *const actual_build = (const char *)(uintptr_t)0x0C7CADD7;
+    const char *const actual_build = (const char *)(uintptr_t)0xc7cadd7;
     if (canopus_identity_token_neq(actual_version, expect_version)) return -1;
     if (canopus_identity_token_neq(actual_build, expect_build)) return -1;
     return 0;
 }
 
 /* ---- typed veneers ---- */
+typedef void * (*canopus_fw_gap_scan_start_impl_fn)(void *, void *, void *, void *);
+static inline void * canopus_fw_gap_scan_start_impl(void * a0, void * a1, void * a2, void * a3) {
+    return ((canopus_fw_gap_scan_start_impl_fn)(uintptr_t)0xc4cc829)(a0, a1, a2, a3);
+}
+
 typedef void (*canopus_fw_lvx_object_set_size_fn)(void *, int32_t, int32_t);
 static inline void canopus_fw_lvx_object_set_size(void * a0, int32_t a1, int32_t a2) {
     return ((canopus_fw_lvx_object_set_size_fn)(uintptr_t)0xc4e1141)(a0, a1, a2);
@@ -72,20 +77,59 @@ static inline void canopus_fw_lv_obj_set_style_bg_opa(void * a0, uint32_t a1, ui
     return ((canopus_fw_lv_obj_set_style_bg_opa_fn)(uintptr_t)0xc468a8d)(a0, a1, a2);
 }
 
+/* qjs_get_global_object: skipped (return type 'uint64_t' not mappable) */
+/* qjs_to_cstring_len2: skipped (argument type not mappable) */
 /* bt_create_bond_private: skipped (argument type not mappable) */
+/* Recovered global `uv_task_key` at 0x2009cb4c. */
+#define canopus_fw_uv_task_key ((void *)(uintptr_t)0x2009cb4cu)
+
+typedef void * (*canopus_fw_ble_advertising_start_fn)(void *, void *, void *, uint32_t, void *, uint16_t, void *);
+static inline void * canopus_fw_ble_advertising_start(void * a0, void * a1, void * a2, uint32_t a3, void * a4, uint16_t a5, void * a6) {
+    return ((canopus_fw_ble_advertising_start_fn)(uintptr_t)0xc4c6ddd)(a0, a1, a2, a3, a4, a5, a6);
+}
+
+typedef void * (*canopus_fw_l2cap_find_channel_fn)(void *, uint16_t);
+static inline void * canopus_fw_l2cap_find_channel(void * a0, uint16_t a1) {
+    return ((canopus_fw_l2cap_find_channel_fn)(uintptr_t)0xc3c068d)(a0, a1);
+}
+
 typedef int (*canopus_fw_unlink_fn)(const char *);
 static inline int canopus_fw_unlink(const char * a0) {
     return ((canopus_fw_unlink_fn)(uintptr_t)0xc391819)(a0);
 }
 
+typedef void (*canopus_fw_l2cap_disconnect_policy_fn)(void *, uint16_t);
+static inline void canopus_fw_l2cap_disconnect_policy(void * a0, uint16_t a1) {
+    return ((canopus_fw_l2cap_disconnect_policy_fn)(uintptr_t)0xc3c32bd)(a0, a1);
+}
+
+/* qjs_take_runtime_exception: skipped (return type 'uint64_t' not mappable) */
+typedef int (*canopus_fw_file_write_fn)(void *, const void *, uint32_t);
+static inline int canopus_fw_file_write(void * a0, const void * a1, uint32_t a2) {
+    return ((canopus_fw_file_write_fn)(uintptr_t)0xc38c319)(a0, a1, a2);
+}
+
+typedef int (*canopus_fw_l2cap_connect_handler_fn)(void *, uint32_t, void *);
+static inline int canopus_fw_l2cap_connect_handler(void * a0, uint32_t a1, void * a2) {
+    return ((canopus_fw_l2cap_connect_handler_fn)(uintptr_t)0xc3c1e55)(a0, a1, a2);
+}
+
 typedef uint32_t (*canopus_fw_bt_l2cap_connect_fn)(const void *);
 static inline uint32_t canopus_fw_bt_l2cap_connect(const void * a0) {
-    return ((canopus_fw_bt_l2cap_connect_fn)(uintptr_t)0xc38c2c5)(a0);
+    return ((canopus_fw_bt_l2cap_connect_fn)(uintptr_t)0xc3c6449)(a0);
 }
 
 typedef int (*canopus_fw_sem_wait_fn)(void *);
 static inline int canopus_fw_sem_wait(void * a0) {
     return ((canopus_fw_sem_wait_fn)(uintptr_t)0xc0a332d)(a0);
+}
+
+/* Recovered global `ferry_framework_vtable` at 0x2c6f5a84. */
+#define canopus_fw_ferry_framework_vtable ((void *)(uintptr_t)0x2c6f5a84u)
+
+typedef int (*canopus_fw_l2cap_credit_queue_flush_fn)(void *, void *);
+static inline int canopus_fw_l2cap_credit_queue_flush(void * a0, void * a1) {
+    return ((canopus_fw_l2cap_credit_queue_flush_fn)(uintptr_t)0xc3c50bd)(a0, a1);
 }
 
 typedef void (*canopus_fw_lv_obj_set_size_fn)(void *, int32_t, int32_t);
@@ -98,8 +142,18 @@ static inline int64_t canopus_fw_lseek(int a0, int64_t a1, int a2) {
     return ((canopus_fw_lseek_fn)(uintptr_t)0xc3b82a5)(a0, a1, a2);
 }
 
+/* qjs_new_c_function2: skipped (return type 'uint64_t' not mappable) */
 /* open: skipped (argument type not mappable) */
 /* interconnect_connect: skipped (argument type not mappable) */
+typedef void (*canopus_fw_uv_mutex_unlock_fn)(void *);
+static inline void canopus_fw_uv_mutex_unlock(void * a0) {
+    return ((canopus_fw_uv_mutex_unlock_fn)(uintptr_t)0xc1c1551)(a0);
+}
+
+/* qjs_free_value: skipped (argument type not mappable) */
+/* Recovered global `ferry_framework_instance` at 0x200b4220. */
+#define canopus_fw_ferry_framework_instance ((void *)(uintptr_t)0x200b4220u)
+
 typedef void (*canopus_fw_lv_bar_set_range_fn)(void *, int32_t, int32_t);
 static inline void canopus_fw_lv_bar_set_range(void * a0, int32_t a1, int32_t a2) {
     return ((canopus_fw_lv_bar_set_range_fn)(uintptr_t)0xc341e19)(a0, a1, a2);
@@ -111,6 +165,11 @@ static inline void canopus_fw_lvx_object_delete(void * a0) {
     return ((canopus_fw_lvx_object_delete_fn)(uintptr_t)0xc4e1011)(a0);
 }
 
+typedef int (*canopus_fw_l2cap_unregister_psm_handler_fn)(void *, uint32_t, void *);
+static inline int canopus_fw_l2cap_unregister_psm_handler(void * a0, uint32_t a1, void * a2) {
+    return ((canopus_fw_l2cap_unregister_psm_handler_fn)(uintptr_t)0xc3c332d)(a0, a1, a2);
+}
+
 typedef int (*canopus_fw_unregister_driver_fn)(const char *);
 static inline int canopus_fw_unregister_driver(const char * a0) {
     return ((canopus_fw_unregister_driver_fn)(uintptr_t)0x0c3938c1)(a0);
@@ -119,6 +178,11 @@ static inline int canopus_fw_unregister_driver(const char * a0) {
 typedef void * (*canopus_fw_opendir_fn)(const char *);
 static inline void * canopus_fw_opendir(const char * a0) {
     return ((canopus_fw_opendir_fn)(uintptr_t)0xc112e19)(a0);
+}
+
+typedef int (*canopus_fw_fs_putfilep_fn)(void *);
+static inline int canopus_fw_fs_putfilep(void * a0) {
+    return ((canopus_fw_fs_putfilep_fn)(uintptr_t)0xc38ed99)(a0);
 }
 
 typedef void (*canopus_fw_lv_bar_set_value_fn)(void *, int32_t, uint32_t);
@@ -151,6 +215,12 @@ static inline int canopus_fw_bt_queue_external(void * a0, void * a1, void * a2, 
     return ((canopus_fw_bt_queue_external_fn)(uintptr_t)0xc3acdb1)(a0, a1, a2, a3, a4);
 }
 
+/* qjs_define_property_value_str: skipped (argument type not mappable) */
+typedef void (*canopus_fw_uv_mutex_lock_fn)(void *);
+static inline void canopus_fw_uv_mutex_lock(void * a0) {
+    return ((canopus_fw_uv_mutex_lock_fn)(uintptr_t)0xc1c1535)(a0);
+}
+
 typedef void * (*canopus_fw_lv_obj_create_fn)(void *, void *);
 static inline void * canopus_fw_lv_obj_create(void * a0, void * a1) {
     return ((canopus_fw_lv_obj_create_fn)(uintptr_t)0xc2bc5b9)(a0, a1);
@@ -161,6 +231,7 @@ static inline int canopus_fw_mpu_region_configure(uint32_t a0, uint32_t a1, uint
     return ((canopus_fw_mpu_region_configure_fn)(uintptr_t)0xc559111)(a0, a1, a2, a3, a4);
 }
 
+/* qjs_get_array_buffer: skipped (return type 'const uint8_t *' not mappable) */
 typedef void * (*canopus_fw_lvx_font_create_fn)(const char *, int16_t, int16_t);
 static inline void * canopus_fw_lvx_font_create(const char * a0, int16_t a1, int16_t a2) {
     return ((canopus_fw_lvx_font_create_fn)(uintptr_t)0xc355d69)(a0, a1, a2);
@@ -171,9 +242,24 @@ static inline void canopus_fw_lv_obj_scroll_to_y(void * a0, int32_t a1, uint32_t
     return ((canopus_fw_lv_obj_scroll_to_y_fn)(uintptr_t)0xc2bd7f1)(a0, a1, a2);
 }
 
+typedef void (*canopus_fw_qjs_free_cstring_fn)(void *, const char *);
+static inline void canopus_fw_qjs_free_cstring(void * a0, const char * a1) {
+    return ((canopus_fw_qjs_free_cstring_fn)(uintptr_t)0xc188cd5)(a0, a1);
+}
+
+typedef void * (*canopus_fw_bt_adapter_register_fn)(void *, void *);
+static inline void * canopus_fw_bt_adapter_register(void * a0, void * a1) {
+    return ((canopus_fw_bt_adapter_register_fn)(uintptr_t)0xc4c78ab)(a0, a1);
+}
+
 typedef void (*canopus_fw_lv_obj_clear_flag_fn)(void *, uint32_t);
 static inline void canopus_fw_lv_obj_clear_flag(void * a0, uint32_t a1) {
     return ((canopus_fw_lv_obj_clear_flag_fn)(uintptr_t)0xc2bb8b3)(a0, a1);
+}
+
+typedef void * (*canopus_fw_astrolink_alloc_fn)(uint32_t);
+static inline void * canopus_fw_astrolink_alloc(uint32_t a0) {
+    return ((canopus_fw_astrolink_alloc_fn)(uintptr_t)0xc121dc9)(a0);
 }
 
 typedef void * (*canopus_fw_lv_obj_add_event_cb_fn)(void *, void *, uint32_t, void *);
@@ -181,9 +267,15 @@ static inline void * canopus_fw_lv_obj_add_event_cb(void * a0, void * a1, uint32
     return ((canopus_fw_lv_obj_add_event_cb_fn)(uintptr_t)0xc2b7c41)(a0, a1, a2, a3);
 }
 
-typedef int (*canopus_fw_bt_l2cap_submit_cid_fn)(void *, uint16_t);
-static inline int canopus_fw_bt_l2cap_submit_cid(void * a0, uint16_t a1) {
-    return ((canopus_fw_bt_l2cap_submit_cid_fn)(uintptr_t)0xc1206b9)(a0, a1);
+/* fs_getfilep: skipped (argument type not mappable) */
+typedef uint32_t (*canopus_fw_bt_l2cap_submit_cid_fn)(void *, uint32_t);
+static inline uint32_t canopus_fw_bt_l2cap_submit_cid(void * a0, uint32_t a1) {
+    return ((canopus_fw_bt_l2cap_submit_cid_fn)(uintptr_t)0xc3c64f5)(a0, a1);
+}
+
+typedef int (*canopus_fw_file_close_fn)(void *);
+static inline int canopus_fw_file_close(void * a0) {
+    return ((canopus_fw_file_close_fn)(uintptr_t)0xc38ecb1)(a0);
 }
 
 typedef uint32_t (*canopus_fw_sdp_commit_fn)(void *);
@@ -191,10 +283,16 @@ static inline uint32_t canopus_fw_sdp_commit(void * a0) {
     return ((canopus_fw_sdp_commit_fn)(uintptr_t)0xc3b8a49)(a0);
 }
 
+/* Recovered global `gap_client_instance` at 0x2009cc08. */
+#define canopus_fw_gap_client_instance ((void *)(uintptr_t)0x2009cc08u)
+
 typedef void * (*canopus_fw_lvx_list_row_trailing_fn)(void *);
 static inline void * canopus_fw_lvx_list_row_trailing(void * a0) {
     return ((canopus_fw_lvx_list_row_trailing_fn)(uintptr_t)0xc57cc45)(a0);
 }
+
+/* Recovered global `legacy_extension_list` at 0x2008f8bc. */
+#define canopus_fw_legacy_extension_list ((void *)(uintptr_t)0x2008f8bcu)
 
 typedef void (*canopus_fw_lvx_label_set_text_fn)(void *, const char *);
 static inline void canopus_fw_lvx_label_set_text(void * a0, const char * a1) {
@@ -211,10 +309,18 @@ static inline void canopus_fw_lv_image_set_src(void * a0, const void * a1) {
     return ((canopus_fw_lv_image_set_src_fn)(uintptr_t)0xc3a2789)(a0, a1);
 }
 
-typedef int32_t (*canopus_fw_bt_adapter_get_state_fn)(void *);
-static inline int32_t canopus_fw_bt_adapter_get_state(void * a0) {
-    return ((canopus_fw_bt_adapter_get_state_fn)(uintptr_t)0xc4871ed)(a0);
+typedef void (*canopus_fw_nxsched_foreach_fn)(void *, void *);
+static inline void canopus_fw_nxsched_foreach(void * a0, void * a1) {
+    return ((canopus_fw_nxsched_foreach_fn)(uintptr_t)0xc0e877d)(a0, a1);
 }
+
+typedef int (*canopus_fw_bt_adapter_get_state_fn)(void *);
+static inline int canopus_fw_bt_adapter_get_state(void * a0) {
+    return ((canopus_fw_bt_adapter_get_state_fn)(uintptr_t)0xc4c61cd)(a0);
+}
+
+/* Recovered global `ferry_application_vtable` at 0x2c708908. */
+#define canopus_fw_ferry_application_vtable ((void *)(uintptr_t)0x2c708908u)
 
 typedef int * (*canopus_fw_errno_location_fn)(void);
 static inline int * canopus_fw_errno_location(void) {
@@ -236,6 +342,7 @@ static inline int canopus_fw_register_driver(const char * a0, const void * a1, v
     return ((canopus_fw_register_driver_fn)(uintptr_t)0xc5281d1)(a0, a1, a2);
 }
 
+/* qjs_call: skipped (return type 'uint64_t' not mappable) */
 typedef void (*canopus_fw_mpu_region_release_fn)(uint32_t);
 static inline void canopus_fw_mpu_region_release(uint32_t a0) {
     return ((canopus_fw_mpu_region_release_fn)(uintptr_t)0xc5592e1)(a0);
@@ -251,6 +358,12 @@ static inline void * canopus_fw_lv_img_create(void * a0) {
     return ((canopus_fw_lv_img_create_fn)(uintptr_t)0xc22d4f5)(a0);
 }
 
+typedef void (*canopus_fw_astrolink_free_fn)(void *);
+static inline void canopus_fw_astrolink_free(void * a0) {
+    return ((canopus_fw_astrolink_free_fn)(uintptr_t)0xc11eee9)(a0);
+}
+
+/* qjs_set_module_export: skipped (argument type not mappable) */
 typedef void (*canopus_fw_lv_label_set_text_fn)(void *, const char *);
 static inline void canopus_fw_lv_label_set_text(void * a0, const char * a1) {
     return ((canopus_fw_lv_label_set_text_fn)(uintptr_t)0xc34db6d)(a0, a1);
@@ -271,10 +384,25 @@ static inline int canopus_fw_thirdparty_submit_message_content(const void * a0, 
     return ((canopus_fw_thirdparty_submit_message_content_fn)(uintptr_t)0xc54c539)(a0, a1, a2);
 }
 
+typedef int (*canopus_fw_file_dup3_fn)(void *, void *, int);
+static inline int canopus_fw_file_dup3(void * a0, void * a1, int a2) {
+    return ((canopus_fw_file_dup3_fn)(uintptr_t)0xc38fa61)(a0, a1, a2);
+}
+
+typedef int (*canopus_fw_l2cap_accept_handler_fn)(void *, uint32_t, void *);
+static inline int canopus_fw_l2cap_accept_handler(void * a0, uint32_t a1, void * a2) {
+    return ((canopus_fw_l2cap_accept_handler_fn)(uintptr_t)0xc3c352b)(a0, a1, a2);
+}
+
 /* lv_timer_create: skipped (argument type not mappable) */
 typedef void * (*canopus_fw_lv_bar_create_fn)(void *);
 static inline void * canopus_fw_lv_bar_create(void * a0) {
     return ((canopus_fw_lv_bar_create_fn)(uintptr_t)0xc341d05)(a0);
+}
+
+typedef void * (*canopus_fw_legacy_effect_manager_fn)(void *);
+static inline void * canopus_fw_legacy_effect_manager(void * a0) {
+    return ((canopus_fw_legacy_effect_manager_fn)(uintptr_t)0xc3e0d29)(a0);
 }
 
 typedef int (*canopus_fw_launcher_reset_order_info_fn)(void);
@@ -287,9 +415,19 @@ static inline uint32_t canopus_fw_lv_event_get_code(void * a0) {
     return ((canopus_fw_lv_event_get_code_fn)(uintptr_t)0xc4e0c39)(a0);
 }
 
+typedef void * (*canopus_fw_l2cap_find_le_psm_fn)(uint32_t, int);
+static inline void * canopus_fw_l2cap_find_le_psm(uint32_t a0, int a1) {
+    return ((canopus_fw_l2cap_find_le_psm_fn)(uintptr_t)0xc3c0965)(a0, a1);
+}
+
 typedef void * (*canopus_fw_lv_label_create_fn)(void *);
 static inline void * canopus_fw_lv_label_create(void * a0) {
     return ((canopus_fw_lv_label_create_fn)(uintptr_t)0xc347b8d)(a0);
+}
+
+typedef int (*canopus_fw_uv_mutex_init_fn)(void *);
+static inline int canopus_fw_uv_mutex_init(void * a0) {
+    return ((canopus_fw_uv_mutex_init_fn)(uintptr_t)0xc1c14cd)(a0);
 }
 
 typedef void (*canopus_fw_lv_timer_del_fn)(void *);
@@ -297,9 +435,19 @@ static inline void canopus_fw_lv_timer_del(void * a0) {
     return ((canopus_fw_lv_timer_del_fn)(uintptr_t)0xc4e1251)(a0);
 }
 
+typedef int (*canopus_fw_uv_async_init_fn)(void *, void *, void *);
+static inline int canopus_fw_uv_async_init(void * a0, void * a1, void * a2) {
+    return ((canopus_fw_uv_async_init_fn)(uintptr_t)0xc1bc731)(a0, a1, a2);
+}
+
 typedef void * (*canopus_fw_lvx_label_create_fn)(void *);
 static inline void * canopus_fw_lvx_label_create(void * a0) {
     return ((canopus_fw_lvx_label_create_fn)(uintptr_t)0xc0d7fe1)(a0);
+}
+
+typedef int (*canopus_fw_bt_adapter_enable_fn)(void *);
+static inline int canopus_fw_bt_adapter_enable(void * a0) {
+    return ((canopus_fw_bt_adapter_enable_fn)(uintptr_t)0xc51ab2d)(a0);
 }
 
 typedef int32_t (*canopus_fw_screen_state_get_fn)(void);
@@ -312,6 +460,7 @@ static inline void canopus_fw_mm_free_default(void * a0) {
     return ((canopus_fw_mm_free_default_fn)(uintptr_t)0xc11eee9)(a0);
 }
 
+/* qjs_new_array_buffer_copy: skipped (return type 'uint64_t' not mappable) */
 /* bt_get_pairing_state: skipped (argument type not mappable) */
 /* Recovered global `launcher_app_instance` at 0x200ab2ec. */
 #define canopus_fw_launcher_app_instance ((void *)(uintptr_t)0x200ab2ecu)
@@ -321,15 +470,28 @@ static inline uint8_t canopus_fw_mpu_region_allocate(void) {
     return ((canopus_fw_mpu_region_allocate_fn)(uintptr_t)0xc559289)();
 }
 
+typedef int (*canopus_fw_l2cap_register_psm_handler_fn)(void *, uint32_t, void *);
+static inline int canopus_fw_l2cap_register_psm_handler(void * a0, uint32_t a1, void * a2) {
+    return ((canopus_fw_l2cap_register_psm_handler_fn)(uintptr_t)0xc3bb061)(a0, a1, a2);
+}
+
 /* bt_get_bond_state: skipped (argument type not mappable) */
-typedef int (*canopus_fw_bt_l2cap_disconnect_fn)(const void *);
-static inline int canopus_fw_bt_l2cap_disconnect(const void * a0) {
-    return ((canopus_fw_bt_l2cap_disconnect_fn)(uintptr_t)0xc2fbca1)(a0);
+typedef uint32_t (*canopus_fw_bt_l2cap_disconnect_fn)(const void *);
+static inline uint32_t canopus_fw_bt_l2cap_disconnect(const void * a0) {
+    return ((canopus_fw_bt_l2cap_disconnect_fn)(uintptr_t)0xc3c64cd)(a0);
 }
 
 typedef int (*canopus_fw_watchface_manager_delete_watchface_fn)(const char *);
 static inline int canopus_fw_watchface_manager_delete_watchface(const char * a0) {
     return ((canopus_fw_watchface_manager_delete_watchface_fn)(uintptr_t)0xc495d01)(a0);
+}
+
+/* Recovered global `bt_l2cap_owner` at 0x200b75a4. */
+#define canopus_fw_bt_l2cap_owner ((void *)(uintptr_t)0x200b75a4u)
+
+typedef int (*canopus_fw_l2cap_queue_push_fn)(void *, void *);
+static inline int canopus_fw_l2cap_queue_push(void * a0, void * a1) {
+    return ((canopus_fw_l2cap_queue_push_fn)(uintptr_t)0xc3aaecb)(a0, a1);
 }
 
 typedef void * (*canopus_fw_launcher_load_app_info_fn)(const void *);
@@ -342,9 +504,23 @@ static inline int canopus_fw_page_goto(uint32_t a0, uint32_t a1, void * a2, void
     return ((canopus_fw_page_goto_fn)(uintptr_t)0xc4e0209)(a0, a1, a2, a3);
 }
 
+/* Recovered global `pipe_file_operations` at 0x2c75edfc. */
+#define canopus_fw_pipe_file_operations ((void *)(uintptr_t)0x2c75edfcu)
+
 typedef void (*canopus_fw_lv_obj_add_flag_fn)(void *, uint32_t);
 static inline void canopus_fw_lv_obj_add_flag(void * a0, uint32_t a1) {
     return ((canopus_fw_lv_obj_add_flag_fn)(uintptr_t)0xc2bb827)(a0, a1);
+}
+
+typedef int (*canopus_fw_qjs_add_module_export_fn)(void *, void *, const char *);
+static inline int canopus_fw_qjs_add_module_export(void * a0, void * a1, const char * a2) {
+    return ((canopus_fw_qjs_add_module_export_fn)(uintptr_t)0xc1a03b5)(a0, a1, a2);
+}
+
+/* qjs_new_string_len: skipped (return type 'uint64_t' not mappable) */
+typedef void * (*canopus_fw_files_getfilep_fn)(void *, int);
+static inline void * canopus_fw_files_getfilep(void * a0, int a1) {
+    return ((canopus_fw_files_getfilep_fn)(uintptr_t)0xc38be6f)(a0, a1);
 }
 
 /* app_install: skipped (argument type not mappable) */
@@ -354,6 +530,11 @@ static inline void * canopus_fw_heap_malloc(uint32_t a0) {
 }
 
 /* hidden_and_show_app_cb: skipped (argument type not mappable) */
+typedef int (*canopus_fw_ble_scan_stop_fn)(void *, void *);
+static inline int canopus_fw_ble_scan_stop(void * a0, void * a1) {
+    return ((canopus_fw_ble_scan_stop_fn)(uintptr_t)0xc4c6ec3)(a0, a1);
+}
+
 typedef void * (*canopus_fw_mm_memalign_default_fn)(uint32_t, uint32_t);
 static inline void * canopus_fw_mm_memalign_default(uint32_t a0, uint32_t a1) {
     return ((canopus_fw_mm_memalign_default_fn)(uintptr_t)0xc12234d)(a0, a1);
@@ -384,7 +565,13 @@ static inline void canopus_fw_lv_img_set_src(void * a0, const void * a1) {
     return ((canopus_fw_lv_img_set_src_fn)(uintptr_t)0xc34ce11)(a0, a1);
 }
 
+typedef int (*canopus_fw_ble_advertising_stop_fn)(void *, void *);
+static inline int canopus_fw_ble_advertising_stop(void * a0, void * a1) {
+    return ((canopus_fw_ble_advertising_stop_fn)(uintptr_t)0xc4c6e7d)(a0, a1);
+}
+
 /* inode_reserve: skipped (argument type not mappable) */
+/* qjs_array_buffer_detached_error: skipped (return type 'uint64_t' not mappable) */
 typedef void (*canopus_fw_lv_obj_move_to_index_fn)(void *, int32_t);
 static inline void canopus_fw_lv_obj_move_to_index(void * a0, int32_t a1) {
     return ((canopus_fw_lv_obj_move_to_index_fn)(uintptr_t)0xc4e0e51)(a0, a1);
@@ -395,6 +582,7 @@ static inline void canopus_fw_lv_obj_align_to(void * a0, void * a1, uint32_t a2,
     return ((canopus_fw_lv_obj_align_to_fn)(uintptr_t)0xc2bd39d)(a0, a1, a2, a3, a4);
 }
 
+/* qjs_new_object: skipped (return type 'uint64_t' not mappable) */
 typedef void * (*canopus_fw_lvx_page_title_create_fn)(void *, const char *, uint32_t, void *);
 static inline void * canopus_fw_lvx_page_title_create(void * a0, const char * a1, uint32_t a2, void * a3) {
     return ((canopus_fw_lvx_page_title_create_fn)(uintptr_t)0xc4f9365)(a0, a1, a2, a3);
@@ -410,14 +598,25 @@ static inline int32_t canopus_fw_write(int a0, const void * a1, uint32_t a2) {
     return ((canopus_fw_write_fn)(uintptr_t)0xc38f911)(a0, a1, a2);
 }
 
+/* qjs_is_function: skipped (argument type not mappable) */
 typedef void * (*canopus_fw_app_lookup_fn)(uint16_t);
 static inline void * canopus_fw_app_lookup(uint16_t a0) {
     return ((canopus_fw_app_lookup_fn)(uintptr_t)0xc4713dd)(a0);
 }
 
+typedef int (*canopus_fw_l2cap_send_handler_fn)(void *, uint32_t, void *);
+static inline int canopus_fw_l2cap_send_handler(void * a0, uint32_t a1, void * a2) {
+    return ((canopus_fw_l2cap_send_handler_fn)(uintptr_t)0xc3c54c9)(a0, a1, a2);
+}
+
 typedef int32_t (*canopus_fw_read_fn)(int, void *, uint32_t);
 static inline int32_t canopus_fw_read(int a0, void * a1, uint32_t a2) {
     return ((canopus_fw_read_fn)(uintptr_t)0xc38f8d1)(a0, a1, a2);
+}
+
+typedef void (*canopus_fw_uv_close_fn)(void *, void *);
+static inline void canopus_fw_uv_close(void * a0, void * a1) {
+    return ((canopus_fw_uv_close_fn)(uintptr_t)0xc1be755)(a0, a1);
 }
 
 typedef int (*canopus_fw_rename_fn)(const char *, const char *);
@@ -436,7 +635,6 @@ static inline int canopus_fw_controller_crash_dump(void) {
  * app_launcher_del: restricted - not exported until context/ownership approved
  * bt_adapter_get_instance: restricted - not exported until context/ownership approved
  * bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
- * bt_adapter_register: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: restricted - not exported until context/ownership approved
  * bt_adapter_register_hfp_ag_callbacks: restricted - not exported until context/ownership approved
  * bt_adapter_set_scan_mode: restricted - not exported until context/ownership approved

@@ -2035,7 +2035,9 @@ static void sup_service_timer_tick(void *timer)
 {
     (void)timer;
     s_service_timer_poll(s_service_timer_data);
+#ifdef CANOPUS_SUP_UI_HOST_POLL
     canopus_ui_host_poll(sup_monotonic_ms(0));
+#endif
 }
 
 static int sup_start_timer_pump(void *cookie, void (*poll)(void *), void *data)

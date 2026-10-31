@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.qjs_define_property_value_str",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "qjs_define_property_value_str",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc1e0244",
+  "callable_address": "0xc1e0245",
+  "prototype": "int(void *,uint64_t,const char *,uint64_t,int)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Interns name, forwards value/flags to0xC1DCF90, releases atom; consumes value."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ],
+    "source": "Interns name, forwards value/flags to0xC1DCF90, releases atom; consumes value."
+  },
+  "notes": "Exact N66 local producer/consumer recovery. No device result or public-call approval."
+}

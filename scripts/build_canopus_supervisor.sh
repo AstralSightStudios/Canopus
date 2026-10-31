@@ -106,6 +106,9 @@ esac
 case "$PROD_FAMILY" in
     xiaomi-band-9|xiaomi-band-9-pro|xiaomi-band-10|redmi-watch) IS_STAGED_LOADER=1 ;;
 esac
+if [ "$IS_STAGED_V8" = 0 ]; then
+    TARGET_FLAGS="$TARGET_FLAGS -DCANOPUS_SUP_UI_HOST_POLL"
+fi
 if [ "$IS_STAGED_V8" = 1 ]; then
     UI_HOST_SRC=""
     UI_HOST_OBJECT=""

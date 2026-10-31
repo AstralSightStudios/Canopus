@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.uv_close",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "uv_close",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc621f98",
+  "callable_address": "0xc621f99",
+  "prototype": "void(void *handle, void (*close_cb)(void *))",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Owner loop only; storage and independently owned pipe live through actual close callback."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-GAP-LIBUV-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-GAP-LIBUV-003"
+    ],
+    "source": "Exact P65 producer/consumer recovery documented in /tmp/watch6-gap-coc-static.md and /tmp/watch6-libuv-static.md; no new reverse engineering."
+  },
+  "notes": "Owner loop only; storage and independently owned pipe live through actual close callback. Static evidence only; no runtime approval."
+}

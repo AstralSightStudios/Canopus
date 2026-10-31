@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.l2cap_open_event",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "l2cap_open_event",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc3b2544",
+  "callable_address": "0xc3b2545",
+  "prototype": "int(uintptr_t,uint16_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "bluetooth_owner"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Allocates120-byte complete record: CID108, remote configuration+44 so remote MTU72;callback3."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-ASTROLINK-N66-ABI-001"
+    ],
+    "source": "Allocates120-byte complete record: CID108, remote configuration+44 so remote MTU72;callback3."
+  }
+}

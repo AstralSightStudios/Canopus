@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.l2cap_credit_queue_flush",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "l2cap_credit_queue_flush",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c067374",
+  "callable_address": "0x1c067375",
+  "prototype": "target-private recovered callable",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "bluetooth_owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Credit queue drain emits queued fragments, L2CAP headers, and releases nodes and buffers."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ],
+    "source": "Credit queue drain emits queued fragments, L2CAP headers, and releases nodes and buffers."
+  },
+  "notes": "Exact P65 static recovery; no runtime approval and no inherited port semantics."
+}

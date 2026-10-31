@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.private_abi.qjs_take_runtime_exception",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "qjs_take_runtime_exception",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc531294",
+  "callable_address": "0xc531295",
+  "prototype": "uint64_t(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-O66-ASTROLINK-ABI-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "ownership": {
+    "return_value": "owned JSValue; exception slot consumed for take"
+  },
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-O66-ASTROLINK-ABI-002"
+    ],
+    "source": "rt+128 JSValue taken then reset null tag2; dump callers0xc443a90/0xc3e7ec8 load rt from ctx+24"
+  },
+  "notes": "Exact O66 primitive, target shim translates shape; no device proof."
+}

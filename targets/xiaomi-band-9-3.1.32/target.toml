@@ -17,21 +17,24 @@ float_abi = "soft"
 loader = "custom-staged-band11-style-static-test"
 firmware_sha256 = "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264"
 firmware_version = "3.1.32"
-firmware_build = "N66NFC_3.1.32"
+firmware_build = "Jul 27 2026 19:42:01"
 # The approved version address points into build.prop and is LF-terminated.
 identity_terminator = "line"
 module_abi = 1
 relocation_profile = "best1503-v1"
-revision = 2
+revision = 3
 
+# Match the proven target-pack verifier policy: scan only firmware code space.
+# Raw-data scanning is intentionally not extended to whole flash aliases/RAM:
+# ordinary UTF-8 text can alias RAM-valued words, while code/global records are
+# independently evidenced below. Broad RAM scanning rejected valid .rodata.
 firmware_address_ranges = [
   { base = 0x0C000000, size = 0x00800000 },
 ]
 
-# No capability is build-available yet: every record is restricted/PENDING.
-# The loader is a Band-11-style Lua-owned staged loader; the former NSH mw/exec
-# profile was rejected on device and is kept only as historical evidence.
-capabilities = []
+# The staged loader and monotonic clock have exact target records. Other
+# platform capabilities remain restricted until their own runtime gates.
+capabilities = ["identity-guard", "clock.gettime"]
 
 [provenance]
 source_repo = "miwear.watch.n66nfc_v3.1.32_full_489f2050"

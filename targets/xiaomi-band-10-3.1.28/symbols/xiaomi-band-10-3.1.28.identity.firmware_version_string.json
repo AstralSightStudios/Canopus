@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.firmware_version_string",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "firmware_version_string",
+  "kind": "string",
+  "instruction_set": "n/a",
+  "entry_address": "0xc64d7ad",
+  "prototype": "const char[]",
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-O66-ASTROLINK-ABI-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-O66-ASTROLINK-ABI-001"
+    ],
+    "source": "build.prop ro.build.version=3.1.28 followed by newline at image offset0x5ad7ad"
+  },
+  "notes": "Exact bytes '3.1.28'; identity_terminator=line, not NUL. No device proof."
+}

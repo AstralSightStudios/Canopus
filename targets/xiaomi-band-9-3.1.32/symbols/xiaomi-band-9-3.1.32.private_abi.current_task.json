@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.current_task",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "current_task",
+  "kind": "global",
+  "instruction_set": "thumb",
+  "address": "0x2007da18",
+  "prototype": "void **",
+  "contexts": {
+    "allowed": ["target-private"],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Pointer to executing TCB; current group is alive during its synchronous execution."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": ["EVID-N66-FILE-CAPTURE-002"]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": ["EVID-N66-FILE-CAPTURE-002"],
+    "source": "Exact N66 scheduler task and group filelist ownership recovery."
+  },
+  "notes": "Static private binding only; no runtime acceptance."
+}

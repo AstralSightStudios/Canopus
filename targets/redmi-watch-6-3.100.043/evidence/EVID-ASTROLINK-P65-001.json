@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ASTROLINK-P65-001",
+  "target_id": "redmi-watch-6-3.100.043",
+  "kind": "static_recovery",
+  "status": "STATIC_RECOVERED",
+  "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+  "source": "Exact P65 AP /Users/lesetong/develop/mifw/analysis-p65-043/vela_ap.bin and matching IDB, producer/consumer disassembly and Hex-Rays review. No runtime test.",
+  "verified": {
+    "identity": {
+      "firmware_version_string": "0x0C3BF9FD (3.100.043 LF-terminated)",
+      "firmware_build_string": "0x0CBFF458 (d516af0:nx_best1502p_ap)"
+    },
+    "legacy": {
+      "extension_list": "0x3C3CF238",
+      "init_dispatch": "0xC9FB768",
+      "export_dispatch": "0xC9FB7C4",
+      "node": "next+4/init+8/export+12/name+16",
+      "context_runtime": "ctx+248 via 0xC6B702C",
+      "runtime_context": "runtime+20",
+      "runtime_loop": "embedded at runtime+24",
+      "application_runtime": "Application+296 after bootstrap"
+    },
+    "quickjs": {
+      "global_object": "0xCA32660 (corrected from 0xCA326E4 after NativeProxy caller review)",
+      "new_object": "0xCA326F0",
+      "new_string_len": "0xCA32738",
+      "to_cstring_len2": "0xC6D0D40",
+      "define_property_value_str": "0xC6D3320",
+      "array_buffer_copy": "0xC7170D8",
+      "array_buffer_get": "0xC71725C",
+      "typed_array_get": "0xC7172C4",
+      "add_module_export": "0xC71321C",
+      "set_module_export": "0xC7132D8",
+      "array_buffer_layout": "object+40 -> backing; detached+4; length+0; data+8"
+    },
+    "gap": {
+      "scan_commands": "212 unfiltered / 213 filtered / 238 stop",
+      "scan_settings_bytes": 8,
+      "report": "address+0/RSSI+7/address_type+8/packet_type+9/length+10/data+11",
+      "advertising_command": 67,
+      "advertising_parameter_bytes": 28,
+      "advertising_callback_bytes": 12,
+      "scan_callback_bytes": "16: stock table at 0x3C3AF1D8 starts with size 0x10, followed by report/stop/status callback pointers"
+    },
+    "coc": {
+      "owner": "0x3C492798",
+      "find_psm": "0x1C064D70",
+      "register": "0x1C065DA0",
+      "unregister": "0x1C0686D4",
+      "connect": "0x1C067018",
+      "accept": "0x1C067ED8",
+      "send": "stock buffer total+0/offset+2/CID+4/fragment flags+4; MPS channel+106; two-byte SDU prefix",
+      "credit_flush": "0x1C067374",
+      "disconnect": "0x1C066204",
+      "response": "0x1C067CFC",
+      "teardown": "0x1C0668BC",
+      "queue_push": "0x1C166688",
+      "external_queue": "0x1C1676C8",
+      "ordinary_request": "68 bytes; CID+0/PSM+2/status+4/detail+6/callback+12/address+16/config+24/MTU+52/credits+60/MPS+62",
+      "old_connect_record": "0x1C06B134 corrected to disconnect/reject, not connect"
+    }
+  },
+  "open_blockers": [
+    "Lifecycle/QJS are separately recovered in EVID-ASTROLINK-P65-LIFECYCLE-002; runtime acceptance still pending.",
+    "Exact filtered scan settings and callback ownership are unresolved; create_scan returns0. GAP adapter/state/stop/parameter semantics are incomplete.",
+    "Channel finder callable, open/data/credit event layouts, receive reassembly, SDU allocator and zero-SDU ownership remain incomplete; queue_send returns -1.",
+    "All libuv/NuttX loop/task/file constants and callables remain zero.",
+    "Four exact target signatures and runtime lifecycle/bidirectional CoC validation are pending. SUPPORTED remains false."
+  ]
+}

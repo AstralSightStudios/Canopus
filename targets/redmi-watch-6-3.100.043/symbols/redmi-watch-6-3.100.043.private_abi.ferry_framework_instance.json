@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.ferry_framework_instance",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "ferry_framework_instance",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "void *",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "FrameworkExt singleton allocated by 0xCA22EB8; constructor 0xCA1BD70 sets primary vtable and implementation pointer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-LIFECYCLE-002"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-LIFECYCLE-002"
+    ],
+    "source": "FrameworkExt singleton allocated by 0xCA22EB8; constructor 0xCA1BD70 sets primary vtable and implementation pointer."
+  },
+  "notes": "Exact P65 lifecycle/QJS recovery. No runtime approval.",
+  "entry_address": "0x3c492c60"
+}

@@ -8,10 +8,10 @@
     "allowed": [
       "target-private"
     ],
-    "blocking": true
+    "blocking": false
   },
   "ownership": {
-    "argument": "Astrolink is a Canopus module: it publishes a Feature through the firmware's QuickJS Feature runtime (`feature_register_feature`, `feature_manager_post_task`, the framework and Application vtables). This firmware does not contain that runtime, so no address in this pack can stand in for it and the module cannot run here. Recorded so the target is not re-investigated as if it were a missing-address problem."
+    "argument": "SUPERSEDED by EVID-O66-ASTROLINK-ABI-001: older core-module extension init/export and ordinary LE CoC are present. New FeatureManagerQjs implementation absent; legacy ABI incomplete. This finding must not be used as a capability-absence blocker."
   },
   "policy": "restricted",
   "status": "STATIC_CONFIRMED",
@@ -33,5 +33,5 @@
     ],
     "source": "String census over the extracted AP analysis-o66tc_v3.1.28/vela_ap.bin (7,515,648 bytes, ro.build.version=3.1.28): the reference Band 11 image carries FeatureManagerQjs x7, FeaturePrototypeQjs, feature_value_t and 93 `frameworks/runtimes/feature/...` __FILE__ paths, while this image carries FeatureManagerQjs x0, FeaturePrototypeQjs x0, feature_value_t x0 and zero `runtimes/` paths. Its AIOTJS log strings are still present, so the JavaScript app runtime was built; the Feature layer that Canopus modules register into was not. It also shows no Bluelet BLE host and no L2CAP channel names, so the LE CoC owner is unaccounted for as well. A Canopus Supervisor and Manager do run on this device, and an install reaches staging, but no module has ever registered there."
   },
-  "notes": "No address, no callable, no partial support. This record exists to make an unsupported verdict auditable."
+  "notes": "SUPERSEDED by EVID-O66-ASTROLINK-ABI-001: older core-module extension init/export and ordinary LE CoC are present. New FeatureManagerQjs implementation absent; legacy ABI incomplete. This finding must not be used as a capability-absence blocker."
 }

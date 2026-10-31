@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.private_abi.miwear_transport_l2_rx",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "miwear_transport_l2_rx",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc5592fc",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "confirmed",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PORT-9132-L2-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-PORT-9132-L2-001"
+    ],
+    "source": "Exact N66 3.1.32 AP producer/consumer and instruction recovery; no inherited address."
+  },
+  "notes": "L2 receive dispatcher; decrypts opcode2 before ordinary dispatch and rejects decrypt failures.",
+  "prototype": "void(uint16_t, uint8_t, uint8_t, void *, uint16_t)",
+  "callable_address": "0xc5592fd"
+}

@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-PORT-9132-L2-001",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "scope": "Exact N66 AP static producer/consumer recovery; no device operations and no runtime result",
+  "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+  "proposed_addresses": {
+    "RX": "0x0C5592FD",
+    "SEND": "0x0C55954D",
+    "SESSION": "0x0C55A17D",
+    "CRYPTO": "0x0C556E6D",
+    "CONNECTIONS": "0x2007C680",
+    "BT_LOOP": "0x200AC608",
+    "TIMER": "0x0C28BCED",
+    "TIMER_DELETE": "0x0C28B9D5",
+    "OWNER_LOOP": "0x20098D3C",
+    "OWNER_TIMER_INIT": "0x0C1D3629",
+    "OWNER_TIMER_START": "0x0C1D3761",
+    "OWNER_TIMER_SIZE": "0x58"
+  },
+  "proofs": {
+    "rx": [
+      "0x0C55930C calls session lookup 0x0C55A17C",
+      "0x0C5593D4 calls CTR decrypt 0x0C556E6C with encrypt=0; nonzero exits without ordinary dispatch",
+      "Successful decrypted bytes are copied back to payload before channel handling"
+    ],
+    "session": [
+      "0x0C55A17C iterates list sentinel 0x2007C6A4, compares uint16 handle at session+14, returns matching session or null"
+    ],
+    "crypto": [
+      "0x0C556E6C rejects invalid state, serializes crypto, selects decrypt key state+16 when arg2=0 and encrypt key state+0 otherwise, calls AES-CTR 0x0C21000C"
+    ],
+    "send": [
+      "0x0C55954C reads packet channel+0 and len+8, opcode+1 and payload+4",
+      "0x0C559638 calls the same crypto with encrypt=1 then submits through 0x0C558A70",
+      "SAR submit 0x0C558A70 calls allocator 0x0C55726C for len+2 and copies original payload into owned queue storage before returning"
+    ],
+    "connections": [
+      "SAR open 0x0C558E18 allocates 216-byte connection and 16-byte node",
+      "0x0C558E36 uses sentinel 0x2007C680; node+12 stores connection; connection+12 stores arg3, which open caller 0x0C5596C8 supplies as RX 0x0C5592FC"
+    ],
+    "bt_loop": [
+      "BTS service 0x0C3D1B78 allocates uv_loop and stores it at 0x0C3D2298 to global 0x200AC608; poll/service paths consume same global"
+    ],
+    "owner": [
+      "UI owner global 0x20098D3C supplies loop to native LVGL/miwear timer init",
+      "0x0C1D3628 is uv_timer_init: type13+8, loop+4, fields through+80; base uv_timer_t 88 bytes",
+      "0x0C1D3760 writes callback+48, timeout+64, repeat+72, sequence+80; timer create wrapper 0x0C20FB4C allocates 104 bytes including wrapper fields"
+    ],
+    "lvgl_bootstrap": [
+      "0x0C28BCEC writes callback+8, period+0, user_data+12 and links LVGL timer; old ui record 0x0C534A60 was strcmp and is corrected",
+      "0x0C28B9D4 unlinks and frees timer; old ui record 0x0C534DA0 was unrelated and is corrected"
+    ]
+  },
+  "constraints": [
+    "Only encrypted L2 opcode2; failed decryption must not dispatch commands",
+    "RX and TX remain on Bluetooth owner; owner timer initialization/start only on UI owner",
+    "SAR list objects remain firmware-owned; Supervisor replaces only connection+12 RX callback in RAM",
+    "Static restricted PENDING records only; no physical-device approval"
+  ],
+  "remaining": [
+    "Isolated import/pair/install/activate/probe not run in this task; static records remain restricted/PENDING"
+  ],
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "device": "not_probed",
+  "verifier_review": {
+    "initial_failure": "ELF .rodata+0x164=0x20008ca1 and .rodata+0xa0c=0x20008280, rejected when broad 2MiB RAM range was present",
+    "classification": [
+      {
+        "value": "0x20008ca1",
+        "offset": ".rodata+0x164",
+        "containing_string_offset": ".rodata+0x13f",
+        "text": "重启后保持模块原状态试运行",
+        "producer": "manager/service/canopus_supervisor.c:358",
+        "relocation": "none",
+        "owner": "UTF-8 literal, not L2/session pointer, not stale record"
+      },
+      {
+        "value": "0x20008280",
+        "offset": ".rodata+0xa0c",
+        "containing_string_offset": ".rodata+0x9f6",
+        "text": "上次启动未完成。",
+        "producer": "manager/service/canopus_supervisor.c:397",
+        "relocation": "none",
+        "owner": "UTF-8 literal, not L2/session pointer, not stale record"
+      }
+    ],
+    "resolution": "Restored code-only firmware scan range, matching proven target policy. No fake pointer record, no build-input falsification, no verifier bypass.",
+    "result": "Supervisor sha256 f86976501cd893c220de53a9f9201323b76496c9d6c00aa997c9ec7570ca47e4; verifier PASS, 0 undefined, 161018 resident bytes, 2372 relocations"
+  }
+}

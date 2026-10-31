@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.uv_mutex_lock",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "uv_mutex_lock",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0xc62935c",
+  "callable_address": "0xc62935d",
+  "prototype": "void(void *mutex)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Potentially blocking pthread lock; asserts nonzero. Never in scheduler callback."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-GAP-LIBUV-003"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-GAP-LIBUV-003"
+    ],
+    "source": "Exact P65 producer/consumer recovery documented in /tmp/watch6-gap-coc-static.md and /tmp/watch6-libuv-static.md; no new reverse engineering."
+  },
+  "notes": "Potentially blocking pthread lock; asserts nonzero. Never in scheduler callback. Static evidence only; no runtime approval."
+}

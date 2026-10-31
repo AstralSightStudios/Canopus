@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ASTROLINK-P65-GAP-LIBUV-003",
+  "target_id": "redmi-watch-6-3.100.043",
+  "kind": "static_recovery",
+  "status": "STATIC_RECOVERED",
+  "policy": "restricted",
+  "approval_state": "PENDING",
+  "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+  "source": "Bounded transcription of two exact-image recovery reports; no devices or further reverse engineering.",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed"
+  },
+  "reports": [
+    {
+      "path": "/tmp/watch6-gap-coc-static.md",
+      "sha256": "b0de3148f7ae4f6eb27920a23293588cfa7e38c7f801017eb6d07e8af8298fca"
+    },
+    {
+      "path": "/tmp/watch6-libuv-static.md",
+      "sha256": "40cbc02e9fdabada705b509aae8c4c82c1be10dc85f4f33cd213a182d67c4c31"
+    }
+  ],
+  "symbols_added": [
+    "redmi-watch-6-3.100.043.private_abi.bt_adapter_get_state_exact.json",
+    "redmi-watch-6-3.100.043.private_abi.bt_adapter_enable.json",
+    "redmi-watch-6-3.100.043.private_abi.scan_create.json",
+    "redmi-watch-6-3.100.043.private_abi.scan_create_filtered.json",
+    "redmi-watch-6-3.100.043.private_abi.scan_stop.json",
+    "redmi-watch-6-3.100.043.private_abi.advertising_create.json",
+    "redmi-watch-6-3.100.043.private_abi.advertising_stop.json",
+    "redmi-watch-6-3.100.043.private_abi.l2cap_find_channel.json",
+    "redmi-watch-6-3.100.043.private_abi.uv_mutex_init.json",
+    "redmi-watch-6-3.100.043.private_abi.uv_mutex_lock.json",
+    "redmi-watch-6-3.100.043.private_abi.uv_mutex_unlock.json",
+    "redmi-watch-6-3.100.043.private_abi.uv_async_init.json",
+    "redmi-watch-6-3.100.043.private_abi.uv_async_send.json",
+    "redmi-watch-6-3.100.043.private_abi.uv_close.json",
+    "redmi-watch-6-3.100.043.private_abi.files_getfilep.json",
+    "redmi-watch-6-3.100.043.private_abi.fs_getfilep.json",
+    "redmi-watch-6-3.100.043.private_abi.fs_putfilep.json",
+    "redmi-watch-6-3.100.043.private_abi.file_dup3.json",
+    "redmi-watch-6-3.100.043.private_abi.file_write.json",
+    "redmi-watch-6-3.100.043.private_abi.file_close.json",
+    "redmi-watch-6-3.100.043.private_abi.nxsched_foreach.json"
+  ],
+  "existing_records_preserved": [
+    {
+      "name": "bt_adapter_register",
+      "entry_address": "0x1c008608",
+      "files": [
+        "redmi-watch-6-3.100.043.bluetooth.bt_adapter_register.json"
+      ]
+    },
+    {
+      "name": "heap_malloc",
+      "entry_address": "0xc50b2a0",
+      "files": [
+        "redmi-watch-6-3.100.043.nuttx.heap_malloc.json"
+      ]
+    },
+    {
+      "name": "heap_free",
+      "entry_address": "0xc50b25c",
+      "files": [
+        "redmi-watch-6-3.100.043.nuttx.heap_free.json",
+        "redmi-watch-6-3.100.043.mm_free_default.json"
+      ]
+    }
+  ],
+  "conflicts": [
+    {
+      "file": "redmi-watch-6-3.100.043.bluetooth.bt_adapter_get_state.json",
+      "existing_entry": "0x1c0087a4",
+      "recovered_entry": "0x1c008720",
+      "resolution": "Existing candidate preserved. Distinct private_abi.bt_adapter_get_state_exact record added; old address lies inside command31 query."
+    }
+  ],
+  "superseded_claims": [
+    "EVID-ASTROLINK-P65-001 scan stop command238 is contradicted by report: stop214, state event238.",
+    "EVID-ASTROLINK-P65-001 scan callback order report/stop/status is contradicted: report/started/stopped."
+  ],
+  "open_blockers": [
+    "Advertising connectable enum and filter14/15 semantics unresolved.",
+    "GAP custom-loop group lifetime and initialization order unresolved.",
+    "No runtime lifecycle, CoC or physical radio acceptance; SUPPORTED not changed."
+  ]
+}

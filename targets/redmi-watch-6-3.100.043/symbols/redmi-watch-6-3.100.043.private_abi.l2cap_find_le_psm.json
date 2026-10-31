@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.l2cap_find_le_psm",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "l2cap_find_le_psm",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x1c064d70",
+  "callable_address": "0x1c064d71",
+  "prototype": "target-private recovered callable",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "bluetooth_owner"
+    ],
+    "blocking": true
+  },
+  "ownership": {
+    "argument": "Find a registered PSM by number and transport through owner+16; type3 accepts dynamic LE PSMs."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-001"
+    ],
+    "source": "Find a registered PSM by number and transport through owner+16; type3 accepts dynamic LE PSMs."
+  },
+  "notes": "Exact P65 static recovery; no runtime approval and no inherited port semantics."
+}

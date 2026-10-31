@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-N66-FILE-CAPTURE-002",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+  "question": "How can Astrolink duplicate N66 pipe files without borrowing a descriptor or retaining a stale file slot?",
+  "implementation_file": "/tmp/n66-file-capture.rs",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "approval_state": "PENDING",
+    "policy": "restricted"
+  },
+  "current_owner": {
+    "status": "implemented_static_not_runtime_validated",
+    "contract": [
+      "CURRENT_TASK 0x2007DA18 -> TCB, TCB+8 group, group+84 filelist. The executing task keeps its current group alive during this synchronous capture.",
+      "nxmutex_lock 0xC164968 / nxmutex_unlock 0xC1649E8 bracket all borrowed-slot reads and native file_dup2. This is the exact stock fd-dup2 order at 0xC3936E4.",
+      "File records are 24 bytes, not 32. Filelist row count is u8 at filelist+16, row-pointer array +20, eight records per row. file+0 flags, file+16 inode, inode+16 operations table.",
+      "Read endpoint needs flag bit0; write endpoint needs flag bits1 and0x40. Both inodes must match pipe_file_operations 0x2C724530. fd values come from loop+296/+300.",
+      "file_dup2_native 0xC391310 takes two arguments (source,destination). It performs inode addref and driver open, closes the destination before copying 24 bytes, and cleans up on error.",
+      "A valid destination pipe is reused without another pipe-open; a partially initialized destination is rejected rather than silently closed. Borrowed source is never released. release_owned calls file_close 0xC391040."
+    ]
+  },
+  "foreign_loop": {
+    "status": "avoided_by_current_task_capture",
+    "contract": [
+      "nxsched_foreach 0xC13BDD4 masks BASEPRI=0x80 and takes scheduler lock. It cannot sleep; no file operation may run in its callback.",
+      "group_leave 0xC13E6F0 closes and frees file rows on last-member teardown without taking filelist mutex. Holding that mutex is therefore not a group-lifetime pin.",
+      "The integrated GAP pipe is captured during module activation on its current owner task, before foreign-group requests. No foreign filelist is traversed and no borrowed file pointer is retained."
+    ]
+  },
+  "required_symbol_records": [
+    {
+      "name": "current_task",
+      "kind": "global",
+      "address": "0x2007DA18",
+      "contract": "pointer to executing TCB"
+    },
+    {
+      "name": "nxmutex_lock",
+      "kind": "function",
+      "address": "0xC164968",
+      "prototype": "int(void *filelist_mutex)"
+    },
+    {
+      "name": "nxmutex_unlock",
+      "kind": "function",
+      "address": "0xC1649E8",
+      "prototype": "int(void *filelist_mutex)"
+    },
+    {
+      "name": "nxsched_foreach",
+      "kind": "function",
+      "address": "0xC13BDD4",
+      "prototype": "void(callback(tcb,arg),arg)",
+      "context": "scheduler critical section; callback cannot sleep"
+    },
+    {
+      "name": "file_dup2_native",
+      "kind": "function",
+      "address": "0xC391310",
+      "prototype": "int(void *source, void *destination)",
+      "existing_record": true
+    },
+    {
+      "name": "file_close",
+      "kind": "function",
+      "address": "0xC391040",
+      "prototype": "int(void *file)",
+      "existing_record": true
+    },
+    {
+      "name": "file_write",
+      "kind": "function",
+      "address": "0xC390094",
+      "prototype": "ssize_t(void *file,const void *data,size_t length)",
+      "existing_record": true
+    },
+    {
+      "name": "pipe_file_operations",
+      "kind": "global",
+      "address": "0x2C724530",
+      "existing_record": true
+    },
+    {
+      "name": "uv_loop_key",
+      "kind": "global",
+      "address": "0x2006D47C",
+      "existing_record": true
+    }
+  ],
+  "notes": "No symbol or target.toml was changed by this subtask. Required new records are listed here for the main integrator; this evidence record is not itself a callable binding. Static code only; no SUPPORTED promotion."
+}
