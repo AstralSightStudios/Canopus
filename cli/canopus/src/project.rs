@@ -186,7 +186,15 @@ fn compile_rust(
     }
     let mut ld_cmd = Command::new(tool("LD", "ld.lld"));
     ld_cmd
-        .args(["-r", "-T"])
+        // `--gc-sections` is required, not an optimisation: rustc emits every
+        // function into its own `.text._RNv…` section, so without section GC
+        // the whole `staticlib` — including every target branch of
+        // `canopus-target-private` — is pulled into the module image.
+        // Measured on a private-ABI module against 3.101.043: 388 KB -> 23 KB
+        // ELF, 209 KB -> 10.8 KB resident. It also matters for correctness:
+        // the unreferenced `.rodata` kept absolute firmware addresses that
+        // `canopus verify` rejects against the target allowlist.
+        .args(["-r", "--gc-sections", "-T"])
         .arg(root.join("sdk/rust/c_shim/module.ld"))
         .arg(&shim_o)
         .arg(archive);
