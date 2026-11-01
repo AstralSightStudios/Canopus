@@ -46,6 +46,9 @@ int canopus_manager_target_module_page_close(uint32_t slot);
  * stack: forward routes push (pausing the source), backward routes finish, both
  * with the stock transition. Returns 0 on success or a service error. */
 int canopus_manager_target_module_page_route(uint32_t slot, uint32_t route);
+/* Foreground-only deferred navigation; never drain from a module callback. */
+int canopus_manager_target_module_page_request_close(uint32_t slot);
+void canopus_manager_target_module_pages_poll(void);
 /* Queue one application with managed UI or exact-target native pages.
  * Registration advances one firmware mutation per UI event turn. */
 struct canopus_app_entry_v1;

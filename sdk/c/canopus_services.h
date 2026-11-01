@@ -508,7 +508,8 @@ typedef void (*canopus_ui_task_fn)(const struct canopus_context_v1 *ctx,
  * Opening runs on the UI task:
  *   on_open  builds the first tree into `ui` with the builder calls above and
  *            commits it before returning; failing, or not committing, cancels
- *            the page. `ui` stays valid until on_close returns.
+ *            the page. `ui` stays valid until on_pause (multi-page entries)
+ *            or on_close (single-page entries). Never retain a paused context.
  *   on_event a node's event id was activated; build the next tree into `ui`.
  *   on_back  (optional) an ordinary page title's back was used; return 0 when
  *            handled, e.g. after popping a route, otherwise the page closes.
@@ -543,6 +544,16 @@ struct canopus_ui_entry_v1 {
      * firmware page stack so each transition is a stock push/pop animation.
      * Bounded by CANOPUS_UI_ENTRY_PAGES_MAX; the deepest route indexes it. */
     uint32_t page_count;
+    /* A fresh context is supplied after a push or pop, including route 0 on
+     * return. Commit a complete tree before returning. Required for multi-page
+     * entries. on_open is reserved for the initial root opening. */
+    int32_t (*on_resume)(const struct canopus_context_v1 *ctx,
+                         struct canopus_ui_context_v1 *ui,
+                         uint32_t route, void *user_data);
+    /* Called before the current context is revoked. Forget ui and cancel UI
+     * gestures, but retain the application model until on_close. */
+    void (*on_pause)(const struct canopus_context_v1 *ctx,
+                      uint32_t route, void *user_data);
 };
 
 #define CANOPUS_UI_ENTRY_PAGES_MAX 8u
@@ -569,12 +580,11 @@ struct canopus_ui_obj {
     int32_t (*node_set_layout)(struct canopus_ui_tree_v1 *tree, uint32_t key, const struct canopus_ui_layout_v1 *layout);
     int32_t (*set_entry)(const struct canopus_context_v1 *ctx, const struct canopus_ui_entry_v1 *entry);
     int32_t (*close_page)(const struct canopus_context_v1 *ctx);
-    /* Moves a multi-page entry (page_count above 0) to `route` 0-based. A
-     * forward route pushes the target firmware page and pauses the source; a
-     * backward route finishes the source so the paused page below resumes.
-     * The caller's view is re-created on the destination page, so the callback
-     * must rebuild its whole tree from its own model afterwards. 0 stays the
-     * root page. Answers ERR_UNSUPPORTED for single-page entries. */
+    /* Requests a move to a 0-based route. The next foreground heartbeat
+     * pushes/finishes the firmware page after the current event/commit returns.
+     * Success means accepted, not displayed. Stop using the source ui after
+     * success; on_resume receives the destination context and rebuilds it.
+     * 0 is the root. Answers ERR_UNSUPPORTED for single-page entries. */
     int32_t (*route)(const struct canopus_context_v1 *ctx, uint32_t route);
     int32_t (*node_set_visual)(struct canopus_ui_tree_v1 *tree, uint32_t key,
                                const struct canopus_ui_visual_v1 *visual);

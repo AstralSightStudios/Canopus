@@ -344,7 +344,7 @@ static int32_t on_back(const struct canopus_context_v1 *ctx, struct canopus_ui_c
 }
 static void on_close(const struct canopus_context_v1 *ctx, void *user)
 { (void)user; state.captured=0; probe(ctx,"close",0); }
-static const struct canopus_ui_entry_v1 entry = {sizeof(entry),"Native UI Lab",on_open,on_event,on_back,on_close,0,0};
+static const struct canopus_ui_entry_v1 entry = {sizeof(entry),"Native UI Lab",on_open,on_event,on_back,on_close,0,0,0,0};
 static int32_t prepare(const struct canopus_context_v1 *ctx) { (void)ctx; return 0; }
 static int32_t activate(const struct canopus_context_v1 *ctx) { return ctx->ui->set_entry(ctx,&entry); }
 static int32_t stop(const struct canopus_context_v1 *ctx) { return ctx->ui->set_entry(ctx,0); }

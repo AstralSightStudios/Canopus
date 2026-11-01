@@ -44,8 +44,12 @@
    - 多页条目（2026-10-26）：`canopus_ui_entry_v1.page_count` 大于 0 时，target 在发布阶段为该 entry 申请 `page_count`
      个固件页描述符（`CANOPUS_UI_ENTRY_PAGES_MAX` = 8），`on_open` 服务 route 0，之后 `ctx->ui->route` 前进用
      `page_goto`（暂停源页并播 stock push）、后退用 `page_finish`（播 stock pop，下方页面 `on_resume` 恢复）。
-     一个 UI 上下文约 12 KB 固件堆，因此只有栈顶页持有它：`on_pause` 释放，`on_resume` 用 `on_create` 记下的 root 重建，
-     下层页面靠已绘制且被固件冻结的原生树参与转场。`page_count` 为 0 时保持原单页契约，`route` 返回 `UNSUPPORTED`。
+     一个 UI 上下文约 12 KB 固件堆，因此只有栈顶页持有它：释放前通过 entry 的 `on_pause(ctx, route, user_data)` 通知模块撤销 UI 引用，
+     子页首次创建和全部页面恢复通过 `on_resume(ctx, ui, route, user_data)` 交接新上下文并提交完整树；返回 root 不重跑 `on_open`。
+     下层页面保留已绘制的原生树参与转场，恢复时使用保留 root 重建样式。只有最后一个页面销毁才调用应用 `on_close`。
+     `route` / `close_page` 请求在独立的下一前台心跳执行，不占模块 `ui.post`，并拒绝在模块回调、未结束的 commit 或重入心跳中执行，
+     避免事件或 CANCEL 回调在外层提交尚未退出时释放 UI。成功表示已受理，模块不可继续使用源 UI，应等待恢复回调。
+     entry 按完整旧前缀/新结构大小规范化复制，旧单页尾部回调置空；多页要求恢复和暂停回调。`page_count` 为 0 时保持原单页契约，`route` 返回 `UNSUPPORTED`。
      系统右滑完成阶段若模块 decline（`on_back` 返回非 0），描述符 +104 返回 0，把默认 finish 与 page-out 动画让给固件；
      只有模块内部消费（route pop、替换树、自行 `close_page`）才返回 1。
 3. **启动器入口**：模块自己的启动器图标见 ADR-CAN-011；它复用这里的模块页面。

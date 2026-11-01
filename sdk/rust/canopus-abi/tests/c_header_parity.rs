@@ -229,6 +229,14 @@ fn ui_and_bus_layouts_match_the_c_headers() {
             "offsetof(struct canopus_ui_entry_v1, page_count)",
             offset_of!(UiEntryV1, page_count),
         ),
+        (
+            "offsetof(struct canopus_ui_entry_v1, on_resume)",
+            offset_of!(UiEntryV1, on_resume),
+        ),
+        (
+            "offsetof(struct canopus_ui_entry_v1, on_pause)",
+            offset_of!(UiEntryV1, on_pause),
+        ),
     ];
     let mut source = String::from(
         "#include <stddef.h>\n#include \"canopus_services.h\"\n#include \"canopus_ui.h\"\n",

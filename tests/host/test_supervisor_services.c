@@ -1988,6 +1988,38 @@ static int32_t entry_open(const struct canopus_context_v1 *ctx,
     return 0;
 }
 
+static int32_t entry_resume(const struct canopus_context_v1 *ctx,
+                             struct canopus_ui_context_v1 *ui, uint32_t route, void *user)
+{ (void)ctx; (void)ui; (void)route; (void)user; return 0; }
+static void entry_pause(const struct canopus_context_v1 *ctx, uint32_t route, void *user)
+{ (void)ctx; (void)route; (void)user; }
+
+TEST(ui_entry_accepts_legacy_prefix_and_requires_route_lifecycle)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_ui_entry_v1 entry = {0}, out;
+    const struct canopus_context_v1 *ctx;
+    uint32_t legacy_size = offsetof(struct canopus_ui_entry_v1, on_resume);
+    void *legacy = malloc(legacy_size);
+    CHECK(legacy != NULL);
+    setup_hw(&sup);ctx = canopus_supervisor_context(&sup, 0u);
+    entry.struct_size = legacy_size;entry.on_open = entry_open;
+    memcpy(legacy, &entry, legacy_size);
+    CHECK_EQ(ctx->ui->set_entry(ctx, legacy), CANOPUS_SVC_OK);
+    free(legacy); /* ASan checks that registration never reads the tail. */
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), 0);
+    CHECK(out.on_resume == NULL && out.on_pause == NULL);
+    CHECK_EQ(out.struct_size, sizeof(out));
+    entry.struct_size = sizeof(entry);entry.page_count = 6u;
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    entry.on_resume = entry_resume;
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
+    entry.on_pause = entry_pause;
+    CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_OK);
+    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), 0);
+    CHECK(out.on_resume == entry_resume && out.on_pause == entry_pause);
+}
+
 TEST(ui_entry_is_validated_copied_listed_and_dropped_with_the_module)
 {
     struct canopus_supervisor_v1 sup;
@@ -2741,6 +2773,8 @@ static struct test_registry supervisor_services_tests[] = {
       connect_publishes_module_messages_only_to_the_listening_phone_session_wrapper },
     { "connect_is_absent_without_the_l2_event_hooks",
       connect_is_absent_without_the_l2_event_hooks_wrapper },
+    { "ui_entry_accepts_legacy_prefix_and_requires_route_lifecycle",
+      ui_entry_accepts_legacy_prefix_and_requires_route_lifecycle_wrapper },
     { "ui_entry_is_validated_copied_listed_and_dropped_with_the_module",
       ui_entry_is_validated_copied_listed_and_dropped_with_the_module_wrapper },
     { "launcher_entry_needs_a_ui_entry_and_is_published_once",

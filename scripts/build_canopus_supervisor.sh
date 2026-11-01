@@ -146,6 +146,9 @@ for s in \
     # size within the unchanged Supervisor file/resident budgets.
     SOURCE_FLAGS=""
     [ "$s" != manager/target/canopus_ui_host.c ] || SOURCE_FLAGS="-Oz"
+    # Page transitions are infrequent. Keep the lifecycle callbacks and deferred
+    # navigation within the same production file/resident budgets.
+    [ "$s" != manager/target/canopus_manager_target.c ] || SOURCE_FLAGS="-Oz"
     # Likewise the L2 transport and owner pump: the deep request ring would otherwise take
     # .155 past its file budget.
     [ "$s" != manager/service/canopus_supervisor_l2.c ] || SOURCE_FLAGS="-Oz"

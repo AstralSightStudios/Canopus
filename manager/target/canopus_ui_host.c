@@ -1300,7 +1300,9 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
         const struct canopus_ui_node_v1 *old = host_previous_key(previous,n->key);
         uint32_t oi = old != NULL ? (uint32_t)(old - previous->nodes) : 0;
         uint32_t parent_key = n->parent == CANOPUS_UI_NO_NODE ? 0u : snapshot->nodes[n->parent].key;
-        fresh[i] = slot->object == NULL || slot->key != n->key || slot->type != n->type || slot->parent_key != parent_key ||
+        /* A resumed page may retain native objects but have a fresh context.
+         * Recreate their local styles instead of diffing a missing snapshot. */
+        fresh[i] = old == NULL || slot->object == NULL || slot->key != n->key || slot->type != n->type || slot->parent_key != parent_key ||
 #ifdef HOST_IMAGE_FIT
             /* A native dialog commits its own snapshot while retaining the
              * body: representation must come from the live image slot. */

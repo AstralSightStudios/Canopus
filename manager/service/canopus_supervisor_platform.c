@@ -1289,7 +1289,11 @@ static int sup_list_packages(void *cookie, uint32_t index, char *id)
 static int sup_ui_page_close(void *cookie, uint32_t slot)
 {
     (void)cookie;
+#ifdef CANOPUS_SUP_UI_HOST_POLL
+    return canopus_manager_target_module_page_request_close(slot);
+#else
     return canopus_manager_target_module_page_close(slot);
+#endif
 }
 #define SUP_UI_PAGE_CLOSE sup_ui_page_close
 
@@ -2033,11 +2037,20 @@ static void *s_service_timer_data;
 
 static void sup_service_timer_tick(void *timer)
 {
+    static uint8_t dispatching;
     (void)timer;
+    /* Some firmware calls pump LVGL recursively. A queued route must never
+     * destroy a context while its outer heartbeat is still committing it. */
+    if (dispatching) return;
+    dispatching = 1u;
+#ifdef CANOPUS_SUP_UI_HOST_POLL
+    canopus_manager_target_module_pages_poll();
+#endif
     s_service_timer_poll(s_service_timer_data);
 #ifdef CANOPUS_SUP_UI_HOST_POLL
     canopus_ui_host_poll(sup_monotonic_ms(0));
 #endif
+    dispatching = 0u;
 }
 
 static int sup_start_timer_pump(void *cookie, void (*poll)(void *), void *data)

@@ -40,8 +40,9 @@ WRAPPER = r'''
 #endif
 #include "canopus_supervisor_platform.c"
 
-volatile uint32_t fixture_seen, fixture_data, fixture_ui_ms;
+volatile uint32_t fixture_seen, fixture_data, fixture_ui_ms, fixture_navigation_polls;
 void canopus_ui_host_poll(uint32_t now) { fixture_ui_ms = now; }
+void canopus_manager_target_module_pages_poll(void) { fixture_navigation_polls++; }
 void fixture_poll_a(void *data) {
     fixture_seen += 1u;
     fixture_data = (uint32_t)(uintptr_t)data;
@@ -49,6 +50,9 @@ void fixture_poll_a(void *data) {
 void fixture_poll_b(void *data) {
     fixture_seen += 100u;
     fixture_data = (uint32_t)(uintptr_t)data;
+#if defined(CANOPUS_SUP_LV_TIMER_CREATE) && defined(CANOPUS_SUP_CLOCK_GETTIME) && !defined(CANOPUS_SUP_HEADLESS)
+    sup_service_timer_tick(0); /* Nested LVGL pumps must not drain navigation. */
+#endif
 }
 uint32_t test_pump_available(void) { return SUP_TIMER_PUMP != 0; }
 uint32_t test_create_address(void) {
@@ -131,7 +135,7 @@ class ServiceTimerPumpTests(unittest.TestCase):
         cls.addClassCleanup(cls.temp.cleanup)
         cls.images = {}
         for target in TARGETS:
-            for mode, defines in (("ui", []), ("headless", ["-DCANOPUS_SUP_HEADLESS=1"])):
+            for mode, defines in (("ui", ["-DCANOPUS_SUP_UI_HOST_POLL=1"]), ("headless", ["-DCANOPUS_SUP_HEADLESS=1"])):
                 out = Path(cls.temp.name) / (target + "-" + mode)
                 out.mkdir()
                 cls.images[target, mode] = build_image(
@@ -224,8 +228,10 @@ class ServiceTimerPumpTests(unittest.TestCase):
                 self.assertEqual(self.word(u, "fixture_seen"), 100)
                 self.assertEqual(self.word(u, "fixture_data"), 0x5678)
                 self.assertEqual(self.word(u, "fixture_ui_ms"), 12345)
+                self.assertEqual(self.word(u, "fixture_navigation_polls"), 1)
                 self.call(u, calls[-1][0], TIMER)
                 self.assertEqual(self.word(u, "fixture_seen"), 200)
+                self.assertEqual(self.word(u, "fixture_navigation_polls"), 2)
 
     def test_headless_has_no_pump_on_any_target(self):
         for target in TARGETS:

@@ -161,6 +161,9 @@ static ENTRY: UiEntryV1 = UiEntryV1 {
     on_back: None,
     on_close: None,
     user_data: core::ptr::null_mut(),
+    page_count: 0,
+    on_resume: None,
+    on_pause: None,
 };
 
 #[no_mangle]

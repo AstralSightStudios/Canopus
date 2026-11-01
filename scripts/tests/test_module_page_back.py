@@ -25,6 +25,9 @@ EXPORTS = (
     "test_destroy", "test_pause", "test_inactive",
     "test_title_back", "test_finish_address", "test_heap_address", "test_heap_size",
     "test_state", "test_finish_destroy",
+    "test_route_prepare", "test_route_request", "test_route_poll", "test_route_goto",
+    "test_route_pop", "test_route_posted_close", "test_route_memory",
+    "test_route_goto_mode", "test_route_complete_goto", "test_route_suspend_resume",
 )
 
 
@@ -57,7 +60,7 @@ class ModulePageBackTests(unittest.TestCase):
                    "manager/ui/canopus_manager_native.c", "manager/client/canopus_client.c",
                    "manager/protocol/canopus_protocol.c", "runtime/module/canopus_module.c",
                    "runtime/lifecycle/canopus_lifecycle.c")
-        for target in TARGETS:
+        for target in (*TARGETS, "redmi-watch-6-3.100.043"):
             out = Path(cls.temp.name) / target
             out.mkdir()
             try:
@@ -121,6 +124,121 @@ class ModulePageBackTests(unittest.TestCase):
         if opened:
             self.assertEqual(self.call(u, "test_open"), 0)
         return u
+
+    def route_machine(self, target, resume_first=0):
+        blob, segments, self.symbols = self.images[target]
+        u = self.unicorn.Uc(self.unicorn.UC_ARCH_ARM,
+                            self.unicorn.UC_MODE_THUMB | self.unicorn.UC_MODE_MCLASS)
+        u.mem_map(SRAM, SRAM_SIZE)
+        for segment in segments:
+            if segment[0] == 1 and segment[4]:
+                u.mem_write(segment[2], blob[segment[1]:segment[1] + segment[4]])
+        self.freed_reads = []
+        goto = self.call(u, "test_route_prepare", resume_first)
+        finish = self.call(u, "test_finish_address")
+        for base in {goto & ~0xfff, finish & ~0xfff}:
+            u.mem_map(base, 0x1000)
+        def navigate(uc, address, size, data):
+            uc.reg_write(self.regs.UC_ARM_REG_PC, self.symbols["test_route_goto"] | 1)
+        def pop(uc, address, size, data):
+            uc.reg_write(self.regs.UC_ARM_REG_PC, self.symbols["test_route_pop"] | 1)
+        u.hook_add(self.unicorn.UC_HOOK_CODE, navigate, begin=goto & ~1, end=goto & ~1)
+        u.hook_add(self.unicorn.UC_HOOK_CODE, pop, begin=finish & ~1, end=finish & ~1)
+        for kind, mask in ((0, "fixture_ui_freed"), (2, "fixture_records_freed")):
+            base = self.call(u, "test_route_memory", kind)
+            stride = self.call(u, "test_route_memory", kind + 1)
+            def check_read(uc, access, address, size, value, data, base=base, stride=stride, mask=mask):
+                freed = struct.unpack("<I", uc.mem_read(self.symbols[mask], 4))[0]
+                if freed & (1 << ((address - base) // stride)):
+                    self.freed_reads.append(address)
+            u.hook_add(self.unicorn.UC_HOOK_MEM_READ, check_read, begin=base, end=base + 16 * stride - 1)
+        self.assertEqual(self.call(u, "test_open"), 0)
+        return u
+
+    def test_deferred_routes_bind_subpages_and_restore_root_without_reopening(self):
+        for target in (*TARGETS, "redmi-watch-6-3.100.043"):
+            for resume_first in (0, 1):
+                with self.subTest(target=target, resume_first=resume_first):
+                    u = self.route_machine(target, resume_first)
+                    for route in (1, 2, 5, 2, 1, 0, 3, 4, 3, 0):
+                        previous = self.state(u, 8)
+                        self.assertEqual(self.call(u, "test_route_request", route), 0)
+                        self.assertEqual(self.state(u, 8), previous)
+                        self.assertEqual(self.state(u, 12), 1)
+                        self.call(u, "test_route_poll")
+                        self.assertEqual(self.state(u, 8), 100 + route)
+                        self.assertEqual(self.state(u, 1), 0)  # child pop never closes app
+                        self.assertEqual(self.state(u, 4), 0)
+                    self.assertEqual(self.state(u, 9), 1)
+                    self.assertEqual(self.state(u, 10), 10)
+                    self.assertEqual(self.state(u, 11), 10)  # every revoked context pauses
+
+    def test_delete_return_skips_the_removed_packages_detail_page(self):
+        for target in (*TARGETS, "redmi-watch-6-3.100.043"):
+            for resume_first in (0, 1):
+                with self.subTest(target=target, resume_first=resume_first):
+                    u = self.route_machine(target, resume_first)
+                    for route in (1, 2, 5, 1, 0):
+                        self.assertEqual(self.call(u, "test_route_request", route), 0)
+                        self.call(u, "test_route_poll")
+                        self.assertEqual(self.state(u, 8), 100 + route)
+                    self.assertEqual(self.state(u, 9), 1)
+                    self.assertEqual(self.state(u, 10), 5)  # no intermediate detail resume
+                    self.assertEqual(self.state(u, 1), 0)
+                    self.assertEqual(self.state(u, 4), 0)
+
+    def test_accepted_async_goto_stays_pending_and_rejected_goto_restores_source(self):
+        for target in (*TARGETS, "redmi-watch-6-3.100.043"):
+            with self.subTest(target=target):
+                u = self.route_machine(target)
+                self.call(u, "test_route_goto_mode", 1)
+                self.assertEqual(self.call(u, "test_route_request", 1), 0)
+                self.call(u, "test_route_poll")
+                self.assertEqual(self.state(u, 8), 100)
+                self.assertEqual(self.state(u, 10), 0)  # accepted != rejected
+                self.assertEqual(self.state(u, 6), 0)
+                self.assertEqual(self.call(u, "test_route_request", 1), -16)
+                self.assertEqual(self.call(u, "test_route_complete_goto"), 0)
+                self.assertEqual(self.state(u, 8), 101)
+                self.assertEqual(self.state(u, 10), 1)
+                self.call(u, "test_route_goto_mode", 2)
+                self.assertEqual(self.call(u, "test_route_request", 2), 0)
+                self.call(u, "test_route_poll")
+                self.assertEqual(self.state(u, 8), 101)
+                self.assertEqual(self.state(u, 6), 1)
+                self.assertEqual(self.state(u, 10), 2)
+                self.assertEqual(self.state(u, 4), 0)
+
+    def test_external_pause_cancels_a_queued_move_without_leaving_route_busy(self):
+        for target in (*TARGETS, "redmi-watch-6-3.100.043"):
+            with self.subTest(target=target):
+                u = self.route_machine(target)
+                self.assertEqual(self.call(u, "test_route_request", 1), 0)
+                self.call(u, "test_route_suspend_resume")
+                self.assertEqual(self.state(u, 12), 0)
+                self.assertEqual(self.state(u, 8), 100)
+                self.assertEqual(self.call(u, "test_route_request", 3), 0)
+                self.call(u, "test_route_poll")
+                self.assertEqual(self.state(u, 8), 103)
+                self.assertEqual(self.state(u, 4), 0)
+
+    def test_close_during_posted_commit_waits_for_outer_commit_and_closes_once(self):
+        for target in (*TARGETS, "redmi-watch-6-3.100.043"):
+            for resume_first in (0, 1):
+                with self.subTest(target=target, resume_first=resume_first):
+                    u = self.route_machine(target, resume_first)
+                    for route in (1, 2):
+                        self.assertEqual(self.call(u, "test_route_request", route), 0)
+                        self.call(u, "test_route_poll")
+                    released = self.state(u, 2)
+                    self.assertEqual(self.call(u, "test_route_posted_close"), 0)
+                    self.assertEqual(self.state(u, 2), released)
+                    self.assertEqual(self.state(u, 12), 1)
+                    self.assertEqual(self.state(u, 4), 0)
+                    self.call(u, "test_route_poll")
+                    self.assertEqual(self.state(u, 5), 0)
+                    self.assertEqual(self.state(u, 1), 1)
+                    self.assertEqual(self.state(u, 4), 0)
 
     def state(self, u, index):
         return self.call(u, "test_state", index)

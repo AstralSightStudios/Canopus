@@ -2143,6 +2143,7 @@ static int32_t svc_ui_set_entry(const struct canopus_context_v1 *ctx,
                                 const struct canopus_ui_entry_v1 *entry)
 {
     uint32_t len = 0u;
+    struct canopus_ui_entry_v1 normalized;
     if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
     if (s_sup->platform == 0 || s_sup->platform->ui_page_close == 0) {
         return CANOPUS_SVC_ERR_UNSUPPORTED;
@@ -2152,9 +2153,15 @@ static int32_t svc_ui_set_entry(const struct canopus_context_v1 *ctx,
         (void)s_sup->platform->ui_page_close(s_sup->platform_cookie, ctx->slot);
         return CANOPUS_SVC_OK;
     }
-    if (entry->struct_size != sizeof(*entry) || entry->on_open == 0) {
-        return CANOPUS_SVC_ERR_ARGUMENT;
-    }
+    /* Accept the complete legacy prefix without reading its appended fields. */
+    if (entry->struct_size != offsetof(struct canopus_ui_entry_v1, on_resume) &&
+        entry->struct_size != sizeof(*entry)) return CANOPUS_SVC_ERR_ARGUMENT;
+    canopus_memset(&normalized, 0, sizeof(normalized));
+    canopus_memcpy(&normalized, entry, entry->struct_size);
+    normalized.struct_size = sizeof(normalized);
+    entry = &normalized;
+    if (entry->on_open == 0 || (entry->page_count > 1u &&
+        (entry->on_resume == 0 || entry->on_pause == 0))) return CANOPUS_SVC_ERR_ARGUMENT;
     if (entry->page_count > CANOPUS_UI_ENTRY_PAGES_MAX) {
         return CANOPUS_SVC_ERR_ARGUMENT;
     }

@@ -562,6 +562,16 @@ pub struct UiEntryV1 {
     /* Firmware pages this entry's routes travel through. 0 keeps the
      * single-page contract; above 0 enables ctx->ui->route. */
     pub page_count: u32,
+    pub on_resume: Option<
+        unsafe extern "C" fn(
+            ctx: *const ContextV1,
+            ui: *mut c_void,
+            route: u32,
+            user_data: *mut c_void,
+        ) -> i32,
+    >,
+    pub on_pause:
+        Option<unsafe extern "C" fn(ctx: *const ContextV1, route: u32, user_data: *mut c_void)>,
 }
 
 pub const UI_ENTRY_LABEL_MAX: u32 = 24;
