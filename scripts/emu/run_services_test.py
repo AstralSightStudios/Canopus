@@ -15,11 +15,11 @@ import tempfile
 import time
 from pathlib import Path
 
+from emu_config import CANOPUS, MIRAGECTL, run_capture
+
 ROOT = Path(__file__).resolve().parents[2]
 TARGET = "xiaomi-band-10-pro-3.101.043"
 FIRMWARE = "miwear.watch.p67tc_v3.101.043_full_a4ce8564"
-MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl"))
-CANOPUS = ROOT / "target/debug/canopus"
 DEVICE = "canopus-services-043"
 BOOT_WAIT = 70
 EXPECTED_SKIPS = {
@@ -32,8 +32,7 @@ EXPECTED_SKIPS = {
 
 
 def ctl(*args, check=True):
-    r = subprocess.run([str(MIRAGECTL), *map(str, args)], capture_output=True,
-                       text=True, timeout=180)
+    r = run_capture([str(MIRAGECTL), *map(str, args)], timeout=180)
     if check and r.returncode != 0:
         raise RuntimeError(f"miragectl {' '.join(map(str, args))}: {r.stderr or r.stdout}")
     return r.stdout

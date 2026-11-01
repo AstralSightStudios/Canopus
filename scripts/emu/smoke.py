@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """End-to-end Supervisor update/rollback smoke test on a Mirage emulator device.
 
-Needs miragectl (MIRAGECTL, default: the Mirage checkout's debug build) and a
-full OTA package for the target (CANOPUS_FW_OTA_DIR, default
-/Volumes/EXT0/miwear.watch.p67tc_v3.101.043_full_a4ce8564). Skips with exit 77
+Needs miragectl (MIRAGECTL, or the sibling Mirage checkout) and a
+full OTA package for the target (CANOPUS_FW_OTA_DIR, or the imported firmware
+in the dedicated Canopus Mirage library). Skips with exit 77
 when either is missing. Emulator results are host/emulator-level evidence only;
 they never promote a capability to "device verified" (refactor-plan P6.6).
 """
@@ -16,11 +16,10 @@ import tempfile
 import time
 from pathlib import Path
 
+from emu_config import BRIDGE, CANOPUS, MIRAGECTL, OTA_043 as OTA, run_capture
+
 ROOT = Path(__file__).resolve().parents[2]
 TARGET = "xiaomi-band-10-pro-3.101.043"
-MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl"))
-OTA = Path(os.environ.get("CANOPUS_FW_OTA_DIR", "/Volumes/EXT0/miwear.watch.p67tc_v3.101.043_full_a4ce8564"))
-CANOPUS = ROOT / "target/debug/canopus"
 DEVICE = os.environ.get("CANOPUS_SMOKE_DEVICE", f"canopus-native-043-{os.getpid()}")
 BOOT_WAIT = 40
 SCREEN_OFF_WAIT = 12
@@ -32,7 +31,7 @@ def skip(reason):
 
 
 def ctl(*args, check=True):
-    r = subprocess.run([str(MIRAGECTL), *map(str, args)], capture_output=True, text=True)
+    r = run_capture([str(MIRAGECTL), *map(str, args)])
     if check and r.returncode != 0:
         raise RuntimeError(f"miragectl {' '.join(map(str, args))}: {r.stderr or r.stdout}")
     return r.stdout
@@ -105,10 +104,6 @@ def build_variant(work, name, version_code, fail_load=False):
         (out / "next.cmi").write_bytes(tar.extractfile(f"receipts/{TARGET}.cmi").read())
     return [(out / "next.cmi", "/canopus/inbox/emu_probe.cmi.next"),
             (out / "next.ko", "/canopus/inbox/emu_probe.ko.next")]
-
-
-BRIDGE = Path(os.environ.get("MAB_SMOKE", "/Volumes/EXT0/Mirage/AstroBoxBridge/target/smoke"))
-
 
 def phone_install(package):
     """Install native .canopus via encrypted CPC2 using the real AstroBox core."""

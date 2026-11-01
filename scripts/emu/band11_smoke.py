@@ -15,11 +15,9 @@ Usage: band11_smoke.py [155|179] [--services | --module PROJECT_DIR [--activate]
 import argparse, os, re, subprocess, sys, tempfile, time, tomllib, zlib, struct, shutil
 from pathlib import Path
 
+from emu_config import BRIDGE, MIRAGECTL, PACKAGER, run_capture
+
 ROOT = Path(__file__).resolve().parents[2]
-MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl"))
-BRIDGE = Path(os.environ.get("MAB_SMOKE", "/Volumes/EXT0/Mirage/AstroBoxBridge/target/smoke"))
-PACKAGER = Path(os.environ.get("FACETORY_PACKAGER",
-                               "/Volumes/EXT0/GitHub/facetory/rust/target/debug/examples/package_lua_watchface"))
 FIRMWARE = {"155": "miwear.watch.q66tc_v4.100.155_full_f1c824fe",
             "179": "miwear.watch.q66tc_v4.100.179_full_a93678a9"}
 DEVICE = os.environ.get("CANOPUS_SMOKE_DEVICE", f"canopus-native-b11-{os.getpid()}")
@@ -55,7 +53,7 @@ def validate_report(report, probe, expected_skips=EXPECTED_SERVICES_SKIPS):
 
 
 def ctl(*args, check=True):
-    r = subprocess.run([str(MIRAGECTL), *map(str, args)], capture_output=True, text=True)
+    r = run_capture([str(MIRAGECTL), *map(str, args)])
     if check and r.returncode != 0:
         raise RuntimeError(f"miragectl {' '.join(map(str, args))}: {r.stderr or r.stdout}")
     return r.stdout

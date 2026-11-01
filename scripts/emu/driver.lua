@@ -33,7 +33,8 @@ local function exchange(path, op, payload, reply_size)
 end
 
 local function query_device()
-    return exchange("/dev/canopus", OPS.query_device, nil, 120)
+    -- CPC2 header (36) + CANOPUS_QUERY_DEVICE_SIZE (88, includes L2 capacity).
+    return exchange("/dev/canopus", OPS.query_device, nil, 124)
 end
 
 local function query_module(slot)

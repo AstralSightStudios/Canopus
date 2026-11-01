@@ -1,0 +1,113 @@
+diff --git a/Package.swift b/Package.swift
+index e09b36c..161e198 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -44,7 +44,8 @@ let package = Package(
+                 "UWP",
+                 "WindowsFoundation",
+                 "CWinAppSDK",
+-            ]
++            ],
++            linkerSettings: [.linkedLibrary("OneCoreUAP", .when(platforms: [.windows]))]
+         ),
+         .target(
+             name: "CWinAppSDK",
+diff --git a/Sources/WinAppSDK/Initialize.swift b/Sources/WinAppSDK/Initialize.swift
+index 2673677..85bc72f 100644
+--- a/Sources/WinAppSDK/Initialize.swift
++++ b/Sources/WinAppSDK/Initialize.swift
+@@ -49,6 +49,33 @@ public class WindowsAppRuntimeInitializer {
+     private typealias pfnMddBootstrapInitialize2 = @convention(c) (UInt32, PCWSTR?, PACKAGE_VERSION, MddBootstrapInitializeOptions) -> HRESULT
+     private typealias pfnMddBootstrapShutdown = @convention(c) () -> Void
+     private let bootstrapperDll: HMODULE!
++    private var nativeContext: PACKAGEDEPENDENCY_CONTEXT?
++    private var nativeDependency: PWSTR?
++
++    // The 1.5 bootstrapper constructs a hyphenated family name on newer Windows,
++    // whereas the installed stable package uses Microsoft.WindowsAppRuntime.1.5.
++    // Use the OS dynamic-dependency API with the actual stable package family.
++    private func initializeNativeRuntime() throws -> Bool {
++        guard GetProcAddress(GetModuleHandleA("kernelbase.dll"), "TryCreatePackageDependency") != nil else { return false }
++        let family = "Microsoft.WindowsAppRuntime.\(WINDOWSAPPSDK_RELEASE_MAJOR).\(WINDOWSAPPSDK_RELEASE_MINOR)_8wekyb3d8bbwe"
++        try family.withCString(encodedAs: UTF16.self) { name in
++            try CHECKED(TryCreatePackageDependency(nil, name, .init(),
++                PackageDependencyProcessorArchitectures_None, PackageDependencyLifetimeKind_Process,
++                nil, CreatePackageDependencyOptions_None, &nativeDependency))
++        }
++        defer {
++            if nativeContext == nil, let nativeDependency {
++                DeletePackageDependency(nativeDependency)
++                HeapFree(GetProcessHeap(), 0, nativeDependency)
++                self.nativeDependency = nil
++            }
++        }
++        var fullName: PWSTR?
++        defer { if let fullName { HeapFree(GetProcessHeap(), 0, fullName) } }
++        try CHECKED(AddPackageDependency(nativeDependency, 0, AddPackageDependencyOptions_None,
++            &nativeContext, &fullName))
++        return true
++    }
+ 
+     private lazy var Initialize: pfnMddBootstrapInitialize2 = {
+         let pfn = GetProcAddress(bootstrapperDll, "MddBootstrapInitialize2")
+@@ -109,16 +136,20 @@ public class WindowsAppRuntimeInitializer {
+         let installerExists = FileManager.default.fileExists(atPath: runtimeInstaller.path)
+ 
+         func doInit(showUIOnNoMatch: Bool) throws {
+-            try CHECKED(Initialize(
+-                UInt32(WINDOWSAPPSDK_RELEASE_MAJORMINOR),
+-                WINDOWSAPPSDK_RELEASE_VERSION_TAG_SWIFT,
+-                .init(),
+-                MddBootstrapInitializeOptions(
+-                    showUIOnNoMatch
+-                        ? MddBootstrapInitializeOptions_OnNoMatch_ShowUI.rawValue
+-                        : MddBootstrapInitializeOptions_None.rawValue
+-                )
+-            ))
++            func bootstrap(_ options: MddBootstrapInitializeOptions) -> HRESULT {
++                Initialize(UInt32(WINDOWSAPPSDK_RELEASE_MAJORMINOR),
++                    WINDOWSAPPSDK_RELEASE_VERSION_TAG_SWIFT, .init(), options)
++            }
++            let result = bootstrap(MddBootstrapInitializeOptions_None)
++            // Try the package-family workaround before the bootstrapper shows
++            // its installation dialog; retain that dialog for a missing runtime.
++            if UInt32(bitPattern: result) == 0x80670016,
++               (try? initializeNativeRuntime()) == true { return }
++            if result < 0 && showUIOnNoMatch {
++                try CHECKED(bootstrap(MddBootstrapInitializeOptions_OnNoMatch_ShowUI))
++            } else {
++                try CHECKED(result)
++            }
+         }
+ 
+         do {
+@@ -144,9 +175,15 @@ public class WindowsAppRuntimeInitializer {
+ 
+     deinit {
+         RoUninitialize()
+-        if !processHasIdentity() {
++        if let nativeContext {
++            RemovePackageDependency(nativeContext)
++        } else if !processHasIdentity() {
+             Shutdown()
+         }
++        if let nativeDependency {
++            DeletePackageDependency(nativeDependency)
++            HeapFree(GetProcessHeap(), 0, nativeDependency)
++        }
+         FreeLibrary(bootstrapperDll)
+     }
+ }
+diff --git a/Sources/WinUI/Application/SwiftApplication.swift b/Sources/WinUI/Application/SwiftApplication.swift
+index 5338028..4181b2d 100644
+--- a/Sources/WinUI/Application/SwiftApplication.swift
++++ b/Sources/WinUI/Application/SwiftApplication.swift
+@@ -43,7 +43,7 @@ open class SwiftApplication: Application, IXamlMetadataProvider {
+ 
+     public static func main() {
+         do {
+-            try withExtendedLifetime(WindowsAppRuntimeInitializer(threadingModel: .multi)) {
++            try withExtendedLifetime(WindowsAppRuntimeInitializer(threadingModel: .single)) {
+                 // What is going on here??!? Is this necessary??
+                 let appClass = String(describing: String(reflecting: Self.self))
+                 guard let instance = NSClassFromString(appClass) else {

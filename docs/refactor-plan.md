@@ -6,6 +6,19 @@
 
 状态标记：`[ ]` 未开始　`[~]` 进行中　`[x]` 完成（附证据/commit）　`[!]` 阻塞（写明原因）
 
+## Windows 开发环境接入（2026-11-01）
+
+- [x] 原生 Windows Mirage CLI、GUI、QEMU、AstroBox Bridge 与 Facetory 构建通过；Canopus 构建接入 WSL2，入口与兼容补丁在 `scripts/emu/`。
+- [x] .043 启动、表盘、NSH、正常退出与 NOR 写回通过；修复 QEMU shutdown notifier 取址、QUERY_DEVICE 缓冲区、Windows 双击时序与 Swift 运行库选择。证据 `.local/mirage/cli-retest.json`。
+- [x] Canopus `af4f9b30` 重建并通过生产安装器 → 加密 CPC2 投递 → 冷启动后重新 Run → ACTIVE 与探针检查；页面返回 12 项、timer pump 3 项 host 回归通过。证据 `.local/mirage/runs/af4f9b30-companion/run.json`、`.local/mirage/host-af4f9b30-tests.log`。
+- [x] 便携 GUI 配对、触摸与文件选择安装模块通过；重新 Run 后两个模块均 ACTIVE。证据 `.local/mirage/gui-review-20261101.json`、`.local/mirage/portable-recovered/run.json`。
+- [x] 修复 WinUI 菜单复用与导入结果提示冲突导致的闪退；固件窗口操作、q65 原 ZIP 导入与创建设备、启动至操作引导通过，便携 EXE/ZIP 已更新。证据 `.local/mirage/archive-menu-verification.json`、`.local/mirage/firmware-import-verification.json`。
+- [x] WSL2 / Ubuntu 24.04、Swift 6.3 对照验证：MirageKit 测试、含依赖补丁的 GTK GUI/CLI/QEMU 构建、GUI 启动及独立 .043 开关机链路通过；Canopus check/doctor 通过。macOS 仅静态分支与语法检查通过，未做 Xcode 构建。证据 `.local/mirage/unix-verification.json`。
+- [~] 严格 UI 探针比对仍有重复 `open`，companion 部分启动有 Tokio panic，GUI/CLI 交替重启有 `runtime.json` 清理竞争；验证范围与证据见 `windows-mirage.md`，不记为全量通过。
+
+环境、命令、验证记录见 [`windows-mirage.md`](windows-mirage.md)。以上仅 host/emulator 证据，
+模块恢复依赖重新加载 Supervisor，不代表开机固化、真机验证或 production approval。
+
 ## 1. 背景与痛点（2026-10-14 已核查）
 
 开发体验：

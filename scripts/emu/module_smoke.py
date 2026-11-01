@@ -19,22 +19,21 @@ import tempfile
 import time
 from pathlib import Path
 
+from emu_config import CANOPUS as CANOPUS_BIN, MIRAGECTL, OTA_043, QemuExitCheck, run_capture, shutdown_checked, wake_panel
+
 ROOT = Path(__file__).resolve().parents[2]
-MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl"))
-OTA_043 = Path(os.environ.get("CANOPUS_FW_OTA_DIR", "/Volumes/EXT0/miwear.watch.p67tc_v3.101.043_full_a4ce8564"))
-CANOPUS_BIN = ROOT / "target/debug/canopus"
 BOOT_WAIT_043 = 40
 SCREEN_OFF_WAIT = 12
 
 
 def ctl(miragectl, *args, check=True):
-    r = subprocess.run([str(miragectl), *map(str, args)], capture_output=True, text=True)
+    r = run_capture([str(miragectl), *map(str, args)])
     if check and r.returncode != 0:
         raise RuntimeError(f"miragectl {' '.join(map(str, args))}: {r.stderr or r.stdout}")
     return r.stdout
 
 
-def test_043(module_dir, package_path, module_id, miragectl):
+def test_043(module_dir, package_path, module_id, miragectl, *, build_supervisor=True, exit_records=None):
     print(f"\n==========================================")
     print(f"Testing {module_id} on Band 10 Pro 3.101.043")
     print(f"==========================================")
@@ -43,12 +42,13 @@ def test_043(module_dir, package_path, module_id, miragectl):
         return True
 
     device = f"canopus-mod-043-{os.getpid()}"
-    print("Building headless supervisor for 043 test...")
-    subprocess.run(["sh", str(ROOT / "scripts/build_canopus_supervisor.sh")],
-                   cwd=ROOT, check=True,
-                   env=dict(os.environ, CANOPUS_TARGET="xiaomi-band-10-pro-3.101.043",
-                            CANOPUS_SUP_EXTRA_DEFINES="-DCANOPUS_SUP_HEADLESS=1"),
-                   capture_output=True)
+    if build_supervisor:
+        print("Building headless supervisor for 043 test...")
+        subprocess.run(["sh", str(ROOT / "scripts/build_canopus_supervisor.sh")],
+                       cwd=ROOT, check=True,
+                       env=dict(os.environ, CANOPUS_TARGET="xiaomi-band-10-pro-3.101.043",
+                                CANOPUS_SUP_EXTRA_DEFINES="-DCANOPUS_SUP_HEADLESS=1"),
+                       capture_output=True)
     sup_elf = ROOT / "watchfaces/canopus-installer/build/xiaomi-band-10-pro-3.101.043/canopus_supervisor.elf"
     driver_lua = ROOT / "scripts/emu/driver.lua"
     if not sup_elf.is_file():
@@ -58,6 +58,7 @@ def test_043(module_dir, package_path, module_id, miragectl):
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp = Path(tmp_dir)
         with tarfile.open(package_path) as tar:
+            manifest = json.load(tar.extractfile("manifest.json"))
             tar.extractall(tmp)
 
         mod_elf = tmp / "artifacts/xiaomi-band-10-pro-3.101.043/module.elf"
@@ -66,6 +67,7 @@ def test_043(module_dir, package_path, module_id, miragectl):
             raise RuntimeError(f"package {package_path} missing 043 artifact or receipt")
 
         ctl(miragectl, "create", device, "--firmware", "miwear.watch.p67tc_v3.101.043_full_a4ce8564", check=False)
+        process = None
         try:
             ctl(miragectl, "shutdown", device, check=False)
             time.sleep(3)
@@ -91,6 +93,7 @@ def test_043(module_dir, package_path, module_id, miragectl):
 
             print(f"Booting {device}...")
             ctl(miragectl, "boot", device)
+            process = QemuExitCheck(device)
             time.sleep(BOOT_WAIT_043)
 
             def sh(cmd):
@@ -110,8 +113,11 @@ def test_043(module_dir, package_path, module_id, miragectl):
                 pass
 
             # Double-tap wake to pump UI timer
-            ctl(miragectl, "tap", device, 168, 240)
-            ctl(miragectl, "tap", device, 168, 240)
+            if os.name == "nt":
+                wake_panel(device)
+            else:
+                ctl(miragectl, "tap", device, 168, 240)
+                ctl(miragectl, "tap", device, 168, 240)
             time.sleep(SCREEN_OFF_WAIT)
 
             status = drv("status")
@@ -128,9 +134,16 @@ def test_043(module_dir, package_path, module_id, miragectl):
             print(f"Enable result: {enable_res}")
 
             print("Rebooting to load and activate module...")
-            ctl(miragectl, "shutdown", device, check=False)
+            if os.name == "nt":
+                evidence = shutdown_checked(miragectl, device, process)
+                if exit_records is not None:
+                    exit_records.append(evidence)
+            else:
+                ctl(miragectl, "shutdown", device, check=False)
+            process = None
             time.sleep(3)
             ctl(miragectl, "boot", device)
+            process = QemuExitCheck(device)
             time.sleep(BOOT_WAIT_043)
 
             print("Loading Supervisor after reboot...")
@@ -138,8 +151,11 @@ def test_043(module_dir, package_path, module_id, miragectl):
                 sh("insmod /data/canopus/sup.elf canopus_supervisor")
             except RuntimeError:
                 pass
-            ctl(miragectl, "tap", device, 168, 240)
-            ctl(miragectl, "tap", device, 168, 240)
+            if os.name == "nt":
+                wake_panel(device)
+            else:
+                ctl(miragectl, "tap", device, 168, 240)
+                ctl(miragectl, "tap", device, 168, 240)
             time.sleep(SCREEN_OFF_WAIT)
 
             print("Restoring active modules...")
@@ -150,6 +166,11 @@ def test_043(module_dir, package_path, module_id, miragectl):
             print(f"Final status: {status}")
             if "slot0=" not in status:
                 raise RuntimeError(f"module not found in slot0: {status}")
+            if module_id == "emu_probe":
+                probe = drv("cat", "/data/canopus/probe.txt")
+                print(f"Activation probe: {probe}")
+                if probe != f"content={manifest['version_code']}":
+                    raise RuntimeError(f"emu_probe did not activate: {probe}")
 
             if module_id == "bluetooth_audio":
                 dev_out = sh("ls -l /dev")
@@ -161,9 +182,19 @@ def test_043(module_dir, package_path, module_id, miragectl):
             print(f"PASS 043: {module_id} verified on Band 10 Pro 3.101.043")
             return True
         finally:
-            ctl(miragectl, "shutdown", device, check=False)
-            time.sleep(2)
-            ctl(miragectl, "delete", device, check=False)
+            failed = sys.exc_info()[0] is not None
+            try:
+                if os.name == "nt" and process is not None and not failed:
+                    evidence = shutdown_checked(miragectl, device, process)
+                    if exit_records is not None:
+                        exit_records.append(evidence)
+                else:
+                    ctl(miragectl, "shutdown", device, check=False)
+            finally:
+                if process is not None:
+                    process.close()
+                time.sleep(2)
+                ctl(miragectl, "delete", device, check=False)
 
 
 def test_b11(module_dir, target_code, allow_failure=False):

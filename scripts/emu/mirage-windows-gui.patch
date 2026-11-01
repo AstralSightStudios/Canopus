@@ -1,0 +1,259 @@
+diff --git a/App/Model/FileBrowser.swift b/App/Model/FileBrowser.swift
+index eabfd72..e8a5c0a 100644
+--- a/App/Model/FileBrowser.swift
++++ b/App/Model/FileBrowser.swift
+@@ -268,8 +268,10 @@ final class FileBrowser {
+         let target = path
+         await run(urls.count == 1 ? "Copying \(urls[0].lastPathComponent)" : "Copying \(urls.count) items") { progress in
+             for url in urls {
++                #if os(macOS)
+                 let access = url.startAccessingSecurityScopedResource()
+                 defer { if access { url.stopAccessingSecurityScopedResource() } }
++                #endif
+                 try await Self.copyIn(url, to: GuestPath.join(target, url.lastPathComponent), fs: fs, progress: progress)
+             }
+         }
+@@ -341,8 +343,10 @@ final class FileBrowser {
+     func replaceImage(with url: URL) async {
+         guard let volume = replaceableVolume, let device, let profile = model.profile(device.profileID) else { return }
+         await run("Writing \(url.lastPathComponent) to \(volume.title)") { _ in
++            #if os(macOS)
+             let access = url.startAccessingSecurityScopedResource()
+             defer { if access { url.stopAccessingSecurityScopedResource() } }
++            #endif
+             try await Task.detached { try DeviceFiles.replaceImage(volume, with: url, profile: profile) }.value
+         }
+         fs = nil
+diff --git a/CrossApp/Sources/Device/DeviceScreen+WinUI.swift b/CrossApp/Sources/Device/DeviceScreen+WinUI.swift
+index d511765..72d1511 100644
+--- a/CrossApp/Sources/Device/DeviceScreen+WinUI.swift
++++ b/CrossApp/Sources/Device/DeviceScreen+WinUI.swift
+@@ -19,6 +19,9 @@ struct DeviceScreen: WinUIElementRepresentable {
+     @MainActor
+     final class Coordinator {
+         let feed = ScreenFeed()
++        // The native parent retains the COM object, but not its Swift wrapper.
++        // Keep the wrapper alive for the weak frame callback below.
++        var image: WinUI.Image?
+         var bitmap: WriteableBitmap?
+         var pressed = false
+     }
+@@ -36,6 +39,7 @@ struct DeviceScreen: WinUIElementRepresentable {
+         border.background = brush
+ 
+         let c = context.coordinator
++        c.image = image
+         c.feed.onFrame = { [weak image, weak c] frame in
+             guard let image, let c else { return }
+             Self.show(frame, in: image, coordinator: c)
+diff --git a/Package.resolved b/Package.resolved
+index cf4ce92..1e49b22 100644
+--- a/Package.resolved
++++ b/Package.resolved
+@@ -1,5 +1,5 @@
+ {
+-  "originHash" : "fb59e8179fa6d38f4728c00a6b2aebb89efdbd59907cf8857430c938c62af404",
++  "originHash" : "34fd126479a9fcd2ae37a70dd325c19278746ac040411397171152f1e904cdac",
+   "pins" : [
+     {
+       "identity" : "androidkit",
+@@ -60,8 +60,8 @@
+       "kind" : "remoteSourceControl",
+       "location" : "https://github.com/apple/swift-collections",
+       "state" : {
+-        "revision" : "3b69cedbaa49957e97c092ae400bb57602ef941f",
+-        "version" : "1.7.2"
++        "revision" : "a0cb0954ecb21e4e31b0070e6ed5674e8556685a",
++        "version" : "1.6.0"
+       }
+     },
+     {
+@@ -81,15 +81,6 @@
+         "version" : "0.5.0"
+       }
+     },
+-    {
+-      "identity" : "swift-issue-reporting",
+-      "kind" : "remoteSourceControl",
+-      "location" : "https://github.com/pointfreeco/swift-issue-reporting",
+-      "state" : {
+-        "revision" : "75b000cea2ca6d7527a57e1b9cc0bdf21a9abe9f",
+-        "version" : "2.1.1"
+-      }
+-    },
+     {
+       "identity" : "swift-java",
+       "kind" : "remoteSourceControl",
+@@ -203,8 +194,8 @@
+       "kind" : "remoteSourceControl",
+       "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
+       "state" : {
+-        "revision" : "d9308ad679143c26a30dec52daefe82f54af2b82",
+-        "version" : "1.13.1"
++        "revision" : "8f6abcf4c8950e2679d5b2fee4ca284fd7c34886",
++        "version" : "1.11.0"
+       }
+     },
+     {
+diff --git a/Package.swift b/Package.swift
+index 403d34c..90d8b70 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -4,12 +4,25 @@
+ // macOS app is the SwiftUI one in Mirage.xcodeproj. Both compile the same
+ // models from App/Model.
+ import PackageDescription
++import Foundation
++
++#if os(Windows)
++// These transitive versions support the stable Swift 6.3 toolchain.
++let toolchainDependencies: [Package.Dependency] = [
++    .package(url: "https://github.com/apple/swift-collections", exact: "1.6.0"),
++    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", exact: "1.11.0"),
++]
++#else
++let toolchainDependencies: [Package.Dependency] = []
++#endif
+ 
+ let root = Context.packageDirectory
+ let companionCoreLib = "\(root)/AstroBoxBridge/target/release"
+ // The companion core (AstroBoxBridge, Rust) builds for macOS and Windows; on
+ // Linux AstroBox's frontbridge needs its CEF runtime, so that build leaves it out.
+-let companionCoreHosts: [Platform] = [.macOS, .windows]
++// Allow the Windows device UI to run without the optional companion bridge.
++let withoutWindowsCompanion = ProcessInfo.processInfo.environment["MIRAGE_NO_COMPANION"] == "1"
++let companionCoreHosts: [Platform] = withoutWindowsCompanion ? [.macOS] : [.macOS, .windows]
+ let withCompanionCore = TargetDependencyCondition.when(platforms: companionCoreHosts)
+ let companionCorePlatforms = BuildSettingCondition.when(platforms: companionCoreHosts)
+ 
+@@ -23,7 +36,7 @@ let package = Package(
+         .package(path: "Packages/MirageKit"),
+         .package(url: "https://github.com/moreSwift/swift-cross-ui",
+                  revision: "0f3ec3958b79cdc39a1a3e604516b71ab33a9043"),
+-    ],
++    ] + toolchainDependencies,
+     targets: [
+         .systemLibrary(name: "CMirageAstroBox", path: "CrossApp/CMirageAstroBox"),
+         .executableTarget(
+@@ -51,6 +64,8 @@ let package = Package(
+                 .swiftLanguageMode(.v5),
+             ],
+             linkerSettings: [
++                // SwiftCrossUI's nested generic view metadata exceeds the PE default stack.
++                .unsafeFlags(["-Xlinker", "/STACK:16777216"], .when(platforms: [.windows])),
+                 .unsafeFlags(["-L", companionCoreLib], companionCorePlatforms),
+                 .linkedFramework("CoreAudio", .when(platforms: [.macOS])),
+                 .linkedFramework("Security", .when(platforms: [.macOS])),
+@@ -73,9 +88,10 @@ let package = Package(
+                 .linkedLibrary("userenv", .when(platforms: [.windows])),
+                 .linkedLibrary("ws2_32", .when(platforms: [.windows])),
+                 .linkedLibrary("dbghelp", .when(platforms: [.windows])),
++            ] + (withoutWindowsCompanion ? [] : [
+                 .linkedLibrary("windows.0.48.5", .when(platforms: [.windows])),
+                 .linkedLibrary("windows.0.52.0", .when(platforms: [.windows])),
+-            ]
++            ])
+         ),
+     ]
+ )
+diff --git a/Packages/MirageKit/Sources/MirageKit/Library/FirmwareImporter.swift b/Packages/MirageKit/Sources/MirageKit/Library/FirmwareImporter.swift
+index 7854364..2a6f2df 100644
+--- a/Packages/MirageKit/Sources/MirageKit/Library/FirmwareImporter.swift
++++ b/Packages/MirageKit/Sources/MirageKit/Library/FirmwareImporter.swift
+@@ -67,7 +67,10 @@ public struct FirmwareImporter: Sendable {
+         let base = isDir.boolValue ? try Self.findPackageRoot(in: source).lastPathComponent
+                                    : source.deletingPathExtension().lastPathComponent
+         let parsed = ProductCatalog.parsePackageName(base)
+-        guard let product = parsed?.product ?? (info.products.count == 1 ? info.products.first : nil) else {
++        // Official downloads also use <hash>_upd_<product>; match the AP image
++        // so shared regional images don't force the user to rename the package.
++        let namedProduct = info.products.first { base.hasSuffix("_upd_\($0)") }
++        guard let product = parsed?.product ?? namedProduct ?? (info.products.count == 1 ? info.products.first : nil) else {
+             throw MirageError.invalid("Cannot tell which product this firmware is for (name the package <product>_v<version>_full_<hash>)")
+         }
+         let version = info.version ?? parsed?.version ?? "unknown"
+diff --git a/Packages/MirageKit/Sources/MirageKit/Runtime/DeviceSession.swift b/Packages/MirageKit/Sources/MirageKit/Runtime/DeviceSession.swift
+index 1aaa4c5..2326c27 100644
+--- a/Packages/MirageKit/Sources/MirageKit/Runtime/DeviceSession.swift
++++ b/Packages/MirageKit/Sources/MirageKit/Runtime/DeviceSession.swift
+@@ -260,6 +260,11 @@ public final class DeviceSession {
+     private func teardown() {
+         bootTask?.cancel()
+         bootTask = nil
++        #if os(Windows)
++        pendingTouch?.cancel()
++        pendingTouch = nil
++        touchDown = false
++        #endif
+         qmp?.close()
+         vnc?.close()
+         console?.close()
+@@ -472,9 +477,41 @@ public final class DeviceSession {
+         return NSHOutput.body(text, command: command)
+     }
+ 
++    #if os(Windows)
++    @ObservationIgnored private var pendingTouch: Task<Void, Never>?
++    @ObservationIgnored private var touchDown = false
++    #endif
++
+     /// Finger at panel pixel coordinates.
+     public func touch(x: Int, y: Int, down: Bool) {
++        #if os(Windows)
++        // Keep Windows pointer events ordered on the session's QMP connection.
++        // A short sampling interval lets the emulated touch IRQ complete even
++        // when the host sends a press and release in the same message batch.
++        guard let qmp, let size = screenSize else { return }
++        let previous = pendingTouch
++        let transition = touchDown != down
++        touchDown = down
++        let normalizedX = Double(x) / max(size.width - 1, 1)
++        let normalizedY = Double(y) / max(size.height - 1, 1)
++        // WinUI's idle run-loop tick can exceed the 500 ms double-tap window.
++        // QMP socket I/O is thread-safe and does not require the UI actor.
++        pendingTouch = Task.detached {
++            await previous?.value
++            guard !Task.isCancelled else { return }
++            // WinUI can coalesce the last move into pointerReleased. Zinitix
++            // reports UP at its last sampled DOWN coordinate, so deliver the
++            // release position as motion before lifting the finger.
++            if transition && !down {
++                try? await qmp.touch(x: normalizedX, y: normalizedY, down: nil)
++                try? await Task.sleep(nanoseconds: 20_000_000)
++            }
++            try? await qmp.touch(x: normalizedX, y: normalizedY, down: down)
++            if transition { try? await Task.sleep(nanoseconds: 60_000_000) }
++        }
++        #else
+         vnc?.pointer(x: x, y: y, pressed: down)
++        #endif
+     }
+ 
+     public func button(_ qcode: String, down: Bool) async {
+diff --git a/Packages/MirageKit/Tests/MirageKitTests/ImageBuilderTests.swift b/Packages/MirageKit/Tests/MirageKitTests/ImageBuilderTests.swift
+index e401cd6..f67baff 100644
+--- a/Packages/MirageKit/Tests/MirageKitTests/ImageBuilderTests.swift
++++ b/Packages/MirageKit/Tests/MirageKitTests/ImageBuilderTests.swift
+@@ -21,6 +21,22 @@ import Testing
+     #expect(i?.kind == "from_v3.100.170_incremental")
+ }
+ 
++@Test(arguments: ["q65", "q65gl"]) func officialDownloadImport(model: String) async throws {
++    let fm = FileManager.default
++    let tmp = fm.temporaryDirectory.appendingPathComponent("mirage-import-\(UUID().uuidString)")
++    defer { try? fm.removeItem(at: tmp) }
++    let source = tmp.appendingPathComponent("hash_upd_miwear.watch.\(model)")
++    try fm.createDirectory(at: source, withIntermediateDirectories: true)
++    let ap = Data("CHIP=best1502p\nro.build.version=4.100.087\nmiwear.watch.q65\0miwear.watch.q65gl\0".utf8)
++    try ap.write(to: source.appendingPathComponent("vela_ap.bin"))
++    let library = try MirageLibrary(root: tmp.appendingPathComponent("Library"))
++    let fw = try await FirmwareImporter(library: library).importPackage(at: source)
++    #expect(fw.product == "miwear.watch.\(model)")
++    #expect(fw.version == "4.100.087")
++    #expect(fw.id == "miwear.watch.\(model)_v4.100.087_full_imported")
++    #expect(try Data(contentsOf: library.firmwareDirectory(fw.id).appendingPathComponent("vela_ap.bin")) == ap)
++}
++
+ @Test func nshOutput() {
+     let text = "ps\r\n  PID GROUP\r\n    0     0 Idle\r\nap> \u{1B}[K"
+     #expect(NSHOutput.isComplete(text, command: "ps"))

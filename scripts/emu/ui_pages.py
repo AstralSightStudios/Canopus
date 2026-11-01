@@ -36,12 +36,9 @@ import time
 import zlib
 from pathlib import Path
 
+from emu_config import BRIDGE, CANOPUS, MIRAGECTL, PACKAGER, run_capture, wake_panel
+
 ROOT = Path(__file__).resolve().parents[2]
-MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl"))
-BRIDGE = Path(os.environ.get("MAB_SMOKE", "/Volumes/EXT0/Mirage/AstroBoxBridge/target/smoke"))
-PACKAGER = Path(os.environ.get("FACETORY_PACKAGER",
-                               "/Volumes/EXT0/GitHub/facetory/rust/target/debug/examples/package_lua_watchface"))
-CANOPUS = ROOT / "target/debug/canopus"
 LIT_MIN_BYTES = 8000   # a lit UI screenshot; a dark screen is ~2 KB, a blank white page ~6 KB
 
 
@@ -136,7 +133,7 @@ P = Band10Pro
 
 
 def ctl(*args, check=True):
-    r = subprocess.run([str(MIRAGECTL), *map(str, args)], capture_output=True, text=True, timeout=240)
+    r = run_capture([str(MIRAGECTL), *map(str, args)], timeout=240)
     if check and r.returncode != 0:
         raise RuntimeError(f"miragectl {' '.join(map(str, args))}: {r.stderr or r.stdout}")
     return r.stdout
@@ -169,6 +166,8 @@ def swipe(gesture, settle=2.5):
 def screen_lit():
     probe = Path(tempfile.gettempdir()) / f"canopus-ui-{P.device}-lit.png"
     ctl("screenshot", P.device, probe)
+    if os.name == "nt":
+        return png_lit(probe)
     return probe.stat().st_size > 4000
 
 
@@ -188,8 +187,11 @@ def wake():
             for point in P.pair_wake:
                 ctl("tap", P.device, *point)
             time.sleep(1.5)
-    for point in P.wake_taps:
-        ctl("tap", P.device, *point)
+    if os.name == "nt" and not issubclass(P, Band11):
+        wake_panel(P.device)
+    else:
+        for point in P.wake_taps:
+            ctl("tap", P.device, *point)
     time.sleep(1.5 if issubclass(P, Band11) else 1)
 
 
@@ -204,7 +206,10 @@ class Shots:
         path = self.directory / f"{self.count:02d}-{name}.png"
         ctl("screenshot", P.device, path)
         print("screenshot", path)
-        if lit and path.stat().st_size < LIT_MIN_BYTES:
+        if lit and os.name == "nt":
+            if not png_lit(path, reject_blank=True):
+                raise RuntimeError(f"{path.name}: the screen is dark or blank")
+        elif lit and path.stat().st_size < LIT_MIN_BYTES:
             raise RuntimeError(f"{path.name}: the screen is dark or blank ({path.stat().st_size} bytes)")
         return path
 
@@ -245,6 +250,12 @@ def png_rows(path):
         rows.append(line)
         previous = line
     return rows, bpp
+
+
+def png_lit(path, *, reject_blank=False):
+    rows, bpp = png_rows(path)
+    background = rows[0][:3] if reject_blank else b"\0\0\0"
+    return any(row[i:i + 3] != background for row in rows for i in range(0, len(row), bpp))
 
 
 def pixel(path, x, y):
@@ -316,8 +327,11 @@ def phone(work, *methods):
                             stderr=subprocess.STDOUT, text=True, env=dict(os.environ, MAB_BAND=addr))
     if not (state / "link-keys").exists():
         time.sleep(8)
-        for point in P.pair_wake:
-            ctl("tap", P.device, *point)
+        if os.name == "nt" and not issubclass(P, Band11):
+            wake_panel(P.device)
+        else:
+            for point in P.pair_wake:
+                ctl("tap", P.device, *point)
         for _ in range(6):
             time.sleep(4)
             ctl("tap", P.device, *P.pair_confirm, check=False)
@@ -432,13 +446,13 @@ def prepare(work, installer, package, shots):
     rebooted and Run once more, so the install notification is gone and the screen is lit."""
     ctl("boot", P.device, "--no-shell")
     time.sleep(60)
-    phone(work, 'install={"path":"%s","kind":"watchface"}' % installer,
+    phone(work, 'install=' + json.dumps({"path": str(installer), "kind": "watchface"}),
           'setWatchface={"id":"000000000031"}', "watchfaces")
     time.sleep(10)
     run_installer(shots)
     if P.tutorial_skip is not None:
         skip_launcher_tutorial()
-    installed = modules(phone(work, 'install={"path":"%s","kind":"canopus"}' % package, "canopusModules"))
+    installed = modules(phone(work, 'install=' + json.dumps({"path": str(package), "kind": "canopus"}), "canopusModules"))
     if [m["state"] for m in installed] != [3]:
         raise RuntimeError(f"{M['id']} should be installed and disabled: {installed}")
     if P.reboot_before_pages:

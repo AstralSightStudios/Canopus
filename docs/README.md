@@ -18,6 +18,7 @@
 | **安全与无签名模型** | [`security-model.md`](security-model.md) | 移除签名后的安全性校验（SHA-256 完整性、Target 绑定、单调版本） |
 | **外部模块迁移指南** | [`external-module-migration.md`](external-module-migration.md) | CMI2 无签名收据、CPC2 协议升级、Portable 迁移 |
 | **模拟器端到端验证** | [`mirage-emulator.md`](mirage-emulator.md) | Mirage + QEMU 自动化端到端冒烟与配对调试 |
+| **Windows + WSL2 模拟器** | [`windows-mirage.md`](windows-mirage.md) | 原生 Windows Mirage 控制、固件启动检查与 WSL Canopus 构建入口 |
 | **重构基线哈希表** | [`baseline/hashes.txt`](baseline/hashes.txt) | 产物 SHA-256 基线与生成一致性守卫 |
 
 ---

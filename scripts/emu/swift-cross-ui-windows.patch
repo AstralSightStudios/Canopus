@@ -1,0 +1,162 @@
+diff --git a/Sources/WinUIBackend/WinUIBackend+Alerts.swift b/Sources/WinUIBackend/WinUIBackend+Alerts.swift
+index 9a23632..8945552 100644
+--- a/Sources/WinUIBackend/WinUIBackend+Alerts.swift
++++ b/Sources/WinUIBackend/WinUIBackend+Alerts.swift
+@@ -30,6 +30,9 @@ extension WinUIBackend: BackendFeatures.Alerts {
+                     // the parent alert
+                     self.window?.currentAlert = self.parentAlert
+                     self.parentAlert?.showAttached()
++                    if self.parentAlert == nil {
++                        self.window?.currentSheet?.resume()
++                    }
+ 
+                     let index =
+                         switch result {
+@@ -97,6 +100,8 @@ extension WinUIBackend: BackendFeatures.Alerts {
+             currentAlert.ignoreNextDismissal = true
+             try! currentAlert.hide()
+             alert.parentAlert = currentAlert
++        } else {
++            window.currentSheet?.suspend()
+         }
+ 
+         window.currentAlert = alert
+@@ -108,5 +113,8 @@ extension WinUIBackend: BackendFeatures.Alerts {
+         try! alert.hide()
+         alert.window?.currentAlert = alert.parentAlert
+         alert.parentAlert?.showAttached()
++        if alert.parentAlert == nil {
++            alert.window?.currentSheet?.resume()
++        }
+     }
+ }
+diff --git a/Sources/WinUIBackend/WinUIBackend+Sheets.swift b/Sources/WinUIBackend/WinUIBackend+Sheets.swift
+index 7c0bf8f..cffd4b8 100644
+--- a/Sources/WinUIBackend/WinUIBackend+Sheets.swift
++++ b/Sources/WinUIBackend/WinUIBackend+Sheets.swift
+@@ -10,6 +10,40 @@ import WinSDK
+ extension WinUIBackend: BackendFeatures.Sheets {
+     public class Sheet: ContentDialog {
+         var dismissHandler: (() -> Void)?
++        weak var window: Window?
++        var isSuspended = false
++        var presentationID = 0
++
++        func showAttached() {
++            presentationID += 1
++            let id = presentationID
++            do {
++                let promise = try showAsync()!
++                promise.completed = { [weak self] _, status in
++                    guard let self, status == .completed, self.presentationID == id else {
++                        return
++                    }
++                    self.window?.currentSheet = nil
++                    self.dismissHandler?()
++                }
++            } catch {
++                print("Error: \(error)")
++                fatalError("\(error)")
++            }
++        }
++
++        func suspend() {
++            isSuspended = true
++            // Hiding for an alert must not dismiss the SwiftCrossUI sheet.
++            presentationID += 1
++            try! hide()
++        }
++
++        func resume() {
++            guard isSuspended else { return }
++            isSuspended = false
++            showAttached()
++        }
+     }
+ 
+     public func createSheet(content: Widget) -> Sheet {
+@@ -33,7 +67,6 @@ extension WinUIBackend: BackendFeatures.Sheets {
+         accelerator.invoked.addHandler { [weak sheet] _, _ in
+             guard let sheet else { return }
+             try! sheet.hide()
+-            sheet.dismissHandler?()
+         }
+         sheet.keyboardAccelerators.append(accelerator)
+         sheet.keyboardAcceleratorPlacementMode = .hidden
+@@ -87,27 +120,17 @@ extension WinUIBackend: BackendFeatures.Sheets {
+         parentSheet: Sheet?
+     ) {
+         sheet.xamlRoot = window.content.xamlRoot
+-        do {
+-            let promise = try sheet.showAsync()!
+-            promise.completed = { [weak sheet] _, status in
+-                guard let sheet, status == .completed else {
+-                    return
+-                }
+-
+-                sheet.dismissHandler?()
+-            }
+-        } catch {
+-            // Force tries don't print properly in some Windows environments, and this
+-            // is a particularly useful error to have access to, because there are legitimate
+-            // edge cases under which this could be triggered
+-            print("Error: \(error)")
+-            fatalError("\(error)")
+-        }
++        sheet.window = window
++        window.currentSheet = sheet
++        sheet.showAttached()
+     }
+ 
+     public func dismissSheet(_ sheet: Sheet, window: Window, parentSheet: Sheet?) {
+-        print("Dismissing sheet programmatically")
+-        try! sheet.hide()
++        window.currentSheet = nil
++        sheet.presentationID += 1
++        if !sheet.isSuspended {
++            try! sheet.hide()
++        }
+     }
+ 
+     public func size(ofSheet sheet: Sheet) -> SIMD2<Int> {
+diff --git a/Sources/WinUIBackend/WinUIBackend.swift b/Sources/WinUIBackend/WinUIBackend.swift
+index 9d31326..8893ed0 100644
+--- a/Sources/WinUIBackend/WinUIBackend.swift
++++ b/Sources/WinUIBackend/WinUIBackend.swift
+@@ -500,18 +500,18 @@ public final class WinUIBackend:
+         _ submenus: [ResolvedMenu.Submenu],
+         environment: EnvironmentValues
+     ) {
+-        let items = submenus.map { submenu in
+-            let item = MenuBarItem()
+-            item.title = submenu.label
+-            for subitem in submenu.content.items {
+-                item.items.append(
+-                    renderMenuItem(subitem, environment: environment)
+-                )
++        for window in windows {
++            let items = submenus.map { submenu in
++                let item = MenuBarItem()
++                item.title = submenu.label
++                for subitem in submenu.content.items {
++                    item.items.append(
++                        renderMenuItem(subitem, environment: environment)
++                    )
++                }
++                return item
+             }
+-            return item
+-        }
+ 
+-        for window in windows {
+             window.menuBar.items.clear()
+             for item in items {
+                 window.menuBar.items.append(item)
+@@ -2325,6 +2325,7 @@ public class CustomWindow: WinUI.Window {
+     var cachedAppWindow: WinAppSDK.AppWindow!
+     var isActive = false
+     var currentAlert: WinUIBackend.Alert?
++    var currentSheet: WinUIBackend.Sheet?
+ 
+     private(set) var menuBarIsVisible = false
+ 

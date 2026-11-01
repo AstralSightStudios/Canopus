@@ -1,5 +1,12 @@
 # Mirage 模拟器工作流与需求清单
 
+## Windows + WSL2 入口（2026-11-01）
+
+本机可用 `scripts/emu/mirage.ps1`：Mirage/QEMU 原生运行于 Windows，Canopus 构建使用现有 WSL2。
+环境、命令与验证范围见
+[`windows-mirage.md`](windows-mirage.md)。本页后续 `/Volumes/EXT0` 路径是历史 macOS 环境；
+当前脚本统一通过 `emu_config.py` 发现工具，可显式设置环境变量。
+
 > Toast API 已移除，`native-ui-lab` 与当前模拟器脚本不再包含 Toast 场景；下文 Toast 截图与像素验收仅保留为历史证据。
 
 ## 当前原生投递边界（2026-10-17）

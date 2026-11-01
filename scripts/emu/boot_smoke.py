@@ -20,9 +20,9 @@ import tempfile
 import time
 from pathlib import Path
 
+from emu_config import LIBRARY, MIRAGECTL, run_capture
+
 ROOT = Path(__file__).resolve().parents[2]
-LIBRARY = Path(os.environ.get("MIRAGE_LIBRARY", "/Volumes/EXT0/Mirage/.scratch/Library"))
-MIRAGECTL = Path(os.environ.get("MIRAGECTL", "/Volumes/EXT0/Mirage/.build/out/Products/Debug/miragectl"))
 DEVICE = f"canopus-boot-{os.getpid()}"
 BOOT_WAIT = 40
 START_WAIT = 240
@@ -63,7 +63,7 @@ CONFIGS = {
 
 
 def ctl(*args, check=True):
-    r = subprocess.run([str(MIRAGECTL), *map(str, args)], capture_output=True, text=True)
+    r = run_capture([str(MIRAGECTL), *map(str, args)])
     if check and r.returncode != 0:
         raise RuntimeError(f"miragectl {' '.join(map(str, args))}: {r.stderr or r.stdout}")
     return r.stdout
