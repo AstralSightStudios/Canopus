@@ -6,6 +6,12 @@
 
 状态标记：`[ ]` 未开始　`[~]` 进行中　`[x]` 完成（附证据/commit）　`[!]` 阻塞（写明原因）
 
+## P65 恢复模块时循环复位修复（2026-11-02）
+
+- [x] 用故障前 Corona 仍启用的注册表复现，GDB 捕获 MemManage `IACCVIOL`：模块构造器 `0x3d56b98a` 同时落在 Supervisor 与模块 RX 的 MPU 区域中。根因是 stage2 只申请 175,134 B，却建立 262,144 B 映射，后续模块占用映射尾部；ARMv8-M 拒绝重叠区域。证据 `EVID-EMU-65043-006`。
+- [x] stage2 预留完整 MPU 窗口，保持 ELF 逻辑大小、模块 RX/RW 权限及释放路径不变；仅现有 `image_mpu_lease` 配置生效。P65 bootstrap 构建与 Supervisor verifier 通过；两次独立冷启动均恢复原始启用状态、Run 后连续触摸 30 轮，无复位，MPU 回读均无重叠，未靠自动停用模块避开故障。
+- Corona 仍返回缺失服务 `-38`，安装器显示恢复失败 `result=6 / error=-20`；不算 Corona 激活成功。修复需更新安装器内 stage2，只替换 Supervisor ELF 不足。以上仅 emulator 证据，不提升符号批准、真机或生产状态。
+
 ## Windows 开发环境接入（2026-11-01）
 
 - [x] 原生 Windows Mirage CLI、GUI、QEMU、AstroBox Bridge 与 Facetory 构建通过；Canopus 构建接入 WSL2，入口与兼容补丁在 `scripts/emu/`。

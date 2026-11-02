@@ -36,8 +36,9 @@ struct stage2_state {
 };
 
 #if CANOPUS_BAND9_IMAGE_MPU_LEASE
-/* Smallest power-of-two window that holds the image; the BES MPU only maps
- * power-of-two regions whose base is aligned to that size. */
+/* Smallest power-of-two window that holds the image. The entire MPU window
+ * must belong to the allocation: ARMv8-M faults if a later module's region
+ * overlaps any unused tail of the Supervisor lease. */
 static uint32_t image_region_size(uint32_t size)
 {
     uint32_t window = 32u;
@@ -58,16 +59,18 @@ static void *image_allocate(void *cookie, uint32_t size, uint32_t alignment,
     typedef void *(*memalign_fn)(uint32_t, uint32_t);
     struct stage2_state *state = cookie;
     void *image;
+    uint32_t allocation_size = size;
 
     if (alignment == 0u || (alignment & (alignment - 1u)) != 0u) return 0;
 #if CANOPUS_BAND9_IMAGE_MPU_LEASE
-    /* A single region has to cover the whole image, so the allocation itself
-     * must be aligned to (and sized no larger than) that power-of-two window. */
+    /* Reserve every byte covered by the lease, including its alignment tail,
+     * so the heap cannot place another executable allocation in that window. */
     state->region_size = image_region_size(size);
     if (state->region_size == 0u) return 0;
     alignment = state->region_size;
+    allocation_size = state->region_size;
 #endif
-    image = ((memalign_fn)(uintptr_t)FW_MEMALIGN)(alignment, size);
+    image = ((memalign_fn)(uintptr_t)FW_MEMALIGN)(alignment, allocation_size);
     if (image == 0) return 0;
     state->image_raw = image;
     *code_base = (uint32_t)(uintptr_t)image;

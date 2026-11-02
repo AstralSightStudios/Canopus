@@ -49,6 +49,10 @@ Toast API 已按用户要求移除，原节点编号 11 与能力位 16 停用�
 - 补齐原生 Manager 字体8项绑定及 P65 的 display/layer/draw-unit 偏移，后端使用 P65 默认 allocator/free；`ctx->display` 更正为 `432×514`，内容区宽432、高458。见 `EVID-UI-P65-FONT-LIFECYCLE-001`。新 Supervisor **124,956 B / 174,414 resident**，ELF verifier PASS，stage1/2 **409 / 3,508 B**；生成物检查通过。
 - 相邻 Resource Hook 模块默认编入 P65 的图片重定向／定向缓存退休／页面刷新、QuickApp 包名图标、完整系统字体事务、96×96 文件双 bank 日历、四区域背景和模块自有静态模糊。精确 ABI 见 `EVID-FONT-P65-TRANSACTION-001`、`EVID-RH-P65-CALENDAR-001`、`EVID-RH-P65-BACKGROUNDS-001`、`EVID-RH-P65-BLUR-001`；P65 pack revision **3**。删除事件更正为 **35**，绘制背景使用子对象之前的 MAIN_END **24**。缓存 hook 是本固件精确 no-op，未借用 P67 HAL。全部仍为 restricted / PENDING / not_probed。**新 Corona／Supervisor 组合尚未完整 Mirage 验收，无真机或批准，不继承既有 P65 Manager 的 emulator 结论。**
 
+- 2026-11-01 当前组合复跑（仅 emulator，`EVID-EMU-65043-005`；本地截图／日志见 `docs/evidence/p65-rerun-2026-11-01/`，该目录按仓库规则不提交）：Supervisor **126,088 B / 175,134 resident**，Corona 0.3.1 / versionCode 4 **181,224 B / 202,813 resident**，两者 verifier PASS。独立 Mirage P65 上生产安装器 `Run completed`、Manager 中文页面、inbox 导入与启用意图落盘通过；**Corona 立即激活失败，`err -38`**。当前 P65 配置缺少 `CANOPUS_SUP_CLOCK_GETTIME`，Time 服务不暴露，首先被 Corona `bind_context()` 拒绝；另缺模块定时器泵和 Mem 的宏接线。重启后的 Run 恢复也未通过：重试期间出现 REDMI 开机画面，新启动日志含 8 次固件启动横幅，复位根因尚未确定。未跑到 Corona UI 或图片／字体／日历／背景／模糊验收。手机桥默认选 RFCOMM 6 后认证断开，隔离实验优先通道 5 后表盘安装成功；P65 原生加密 L2 后端仍缺失。未修改地址、符号批准或真机状态。
+
+- 2026-11-02 循环复位根因与修复（`EVID-EMU-65043-006`，仅 emulator）：GDB 捕获 Corona 构造器 `0x3d56b98a` 的 `IACCVIOL`；Supervisor MPU `[0x3d540000,0x3d57ffff]` 与模块 RX `[0x3d56ac80,0x3d587f1f]` 重叠。stage2 原先申请 **175,134 B**、映射 **262,144 B**，堆分配器将模块放入未预留的窗口尾部。改为预留完整 lease（额外约 85 KiB），保留模块 RX/RW 权限；两轮独立冷启动都恢复故障前原始启用注册表、Run 后连续触摸 30 轮，启动日志均只有 1 次启动，MPU 回读无重叠，Corona intent 仍为 1。现正常返回缺失服务 `-38`（安装器 `result=6 / error=-20`），没有完成 Corona 功能验收。P65 stage1/2 已重建并更新本地生产资源；旧安装器须重装／更新，只换 Supervisor ELF 不足。本地截图／寄存器证据见 `docs/evidence/p65-reboot-fix-2026-11-02/`。不提升任何批准或真机状态。
+
 ## Band 11 `4.100.179` 与全局 safe mode（2026-10-20）
 
 - `.179`（q66tc，build `user-4.100.179-cn-202609302100`）由已审核的 `.155` 包移植：270 条符号记录全部 `restricted` / `PENDING` / `not_probed`，

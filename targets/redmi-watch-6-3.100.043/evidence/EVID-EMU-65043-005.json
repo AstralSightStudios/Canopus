@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-EMU-65043-005",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "Does the current P65 Supervisor and Corona 0.3.1 combination complete installation, activation and reboot restoration in Mirage?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "The current static-test Supervisor can bootstrap and render Manager, but Corona additionally requires platform Time, timer-pump and Mem service wiring.",
+  "callsite_evidence": [
+    "Canopus commit af4f9b30 was built for exact P65 firmware SHA-256 a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858. Supervisor ELF SHA-256 dc3e7243230b52762c0066cbc1a969c408919c3f69231dd4f66ba516251a29d2: 126088 bytes, 175134 resident, verifier PASS and zero undefined symbols.",
+    "Corona 0.3.1 versionCode 4 was rebuilt with its official target compiler/linker wrappers in an isolated source snapshot. ELF SHA-256 501ee13e64f372fde64c215975ca58baea3a8de3105a9e72267ae1441e087e95: 181224 bytes, 202813 resident, verifier PASS. Package SHA-256 2767d8cff6e3610498db3b15007153724b2571b6dcefd1a95f55ebd588cd0f8e.",
+    "On a dedicated Mirage P65 instance, direct execution of the production stage1/stage2 returned 0 and registered /dev/canopus, /canopus/install and /canopus/registry. The production installer then displayed Run completed. The native Manager opened from the four-column launcher and rendered Chinese/system information.",
+    "Manager inbox scan imported Corona versionCode 4 disabled. Enable confirmation succeeded. The 784-byte CDR1 version-2 registry contains one corona slot, versionCode 4, intent_word 1.",
+    "Immediate activation failed: the native Manager displayed running failed and err -38. Corona UI and image/font/calendar/background/blur runtime acceptance were not reached.",
+    "The P65 generated config lacks CANOPUS_SUP_CLOCK_GETTIME, CANOPUS_SUP_LV_TIMER_CREATE, CANOPUS_SUP_HEAP_MALLOC and CANOPUS_SUP_HEAP_FREE. The platform compiles monotonic_ms, start_timer_pump and heap_alloc as null. Corona bind_context first requires Time version 1 and therefore returns CANOPUS_SVC_ERR_UNSUPPORTED (-38); Mem is an additional unmet requirement.",
+    "Reboot/Run restoration did not pass: the REDMI boot logo was observed during Run retry and the new-boot console log contains eight firmware boot banners. The reset cause was not established. The isolated QEMU instance was stopped after preserving logs.",
+    "Both existing phone bridges selected SDP channel 6 and disconnected during SAR authentication. A temporary isolated bridge preferring channel 5 authenticated and installed/selected the production watchface. No shared Mirage/AstroBox source was modified. This does not add a P65 Canopus encrypted L2 backend."
+  ],
+  "control_flow_evidence": [
+    "Production watchface Run -> unchanged staged loader -> Supervisor -> native Manager; Manager scan -> inbox receipt/ELF validation -> disabled Corona slot -> ENABLE -> persisted intent -> ACTIVATE -> unsupported service gate.",
+    "canopus_supervisor_platform.c sets SUP_MONOTONIC_MS to 0 without CANOPUS_SUP_CLOCK_GETTIME; canopus_supervisor_services.c exposes Time only when platform.monotonic_ms exists; Corona module.c bind_context requires Time before prepare/activate."
+  ],
+  "ownership_analysis": "The rerun used a new dedicated Mirage library and a temporary module source snapshot. Module resources were seeded while powered off. Only the dedicated test QEMU was stopped; existing devices and shared bridge source checkouts were left alone.",
+  "unsafe_assumptions": [
+    "Host/emulator evidence only; all symbols remain restricted/PENDING/not_probed, with no new device verification or production approval.",
+    "Offline inbox/resource seeding does not prove native phone module delivery or resource auto-extraction. P65 has no encrypted Canopus L2 backend.",
+    "A successful Manager page and installer are not evidence that Corona activated or that its resource hooks are safe.",
+    "The repeated reset during reboot restoration is not root-caused and must remain a separate failure from the statically identified service gate.",
+    "Full local screenshots, sanitized bridge logs, reboot logs, hashes and the channel-5 experimental patch are retained under ignored docs/evidence/p65-rerun-2026-11-01; they are not shipped firmware or production artifacts."
+  ],
+  "recommended_probe": "Recover and audit exact P65 Time/timer/Mem service bindings, then rerun Corona activation and isolate the reboot/Run reset before attempting resource feature or physical-device acceptance.",
+  "reviewers": [],
+  "verdict": "HOST_TESTED",
+  "created": "2026-11-01T00:00:00Z",
+  "artifacts": []
+}

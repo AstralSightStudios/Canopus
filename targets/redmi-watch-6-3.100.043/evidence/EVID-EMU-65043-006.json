@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-EMU-65043-006",
+  "target_id": "redmi-watch-6-3.100.043",
+  "question": "What causes the enabled-Corona reboot loop after P65 installer Run, and does reserving the full Supervisor MPU window remove it?",
+  "candidate_symbols": [],
+  "prototype_hypothesis": "Stage 2 maps a larger MPU window than its heap allocation owns. A later module occupies the unreserved tail, creating overlapping ARMv8-M MPU regions and an instruction access fault.",
+  "callsite_evidence": [
+    "The unchanged Supervisor ELF SHA-256 dc3e7243230b52762c0066cbc1a969c408919c3f69231dd4f66ba516251a29d2 is 126088 bytes with 175134 logical resident bytes. Stage 2 leases a 262144-byte power-of-two window, but originally passed only the logical size to firmware memalign.",
+    "An isolated clone of the original P65 device reproduced the first reset with the original pre-failure 784-byte registry: Corona intent_word 1, flags 300 encoding activation error -38. Reset occurred after the first continued touch pulse following production Run. The quarantined final-loop registry was not a valid reproduction input.",
+    "A GDB breakpoint at the exact firmware MemManage handler 0x0c5147f0 captured exception 4 with CFSR=1 (IACCVIOL). The saved PC is 0x3d56b98a and LR is 0x3d548599, the return address in sup_loader_invoke at Supervisor text offset 0x8598. The fault therefore occurs on module constructor fetch.",
+    "At that first fault, MPU region 4 covers Supervisor 0x3d540000..0x3d57ffff, region 3 covers module EXEC+RO 0x3d56ac80..0x3d587f1f, and region 5 covers module RW 0x3d587f20..0x3d59c4df. The faulting constructor address matches both regions 3 and 4. ARMv8-M rejects multiple matching regions.",
+    "The firmware configure routine at 0x0c9665e4 checks 32-byte base alignment and writes the base and rounded inclusive limit. It does not require power-of-two windows. Module RX/RW mappings need no relaxation; the actual defect is the Supervisor mapping extending beyond its owned allocation.",
+    "The fix in manager/target/band9/canopus_band9_stage2.c reserves state.region_size bytes when CANOPUS_BAND9_IMAGE_MPU_LEASE is enabled. Both alignment and allocation size now match the existing lease. Only P65 currently enables this profile option; other staged targets retain their original allocation behavior.",
+    "Rebuilt stage1 (409 bytes) and stage2 (3464 bytes), keeping Supervisor, Corona and production main.lua unchanged. Replaced the two stage resources in the already registered installer on the dedicated clone. The Supervisor verifier passes: 18 sections, 175134 resident bytes, 0 undefined symbols, 2022 relocations, 2 constructors, 1 destructor.",
+    "Two independent cold boots each restored the exact original enabled registry before Run and repeated 30 continued touch pulses. Each console log contains exactly one firmware boot banner. Both post-run MPU dumps show no overlapping enabled regions. Corona remains enabled (intent_word 1, flags 300); it was not silently disabled or quarantined to avoid the crash.",
+    "Fixed cycle 1: Supervisor 0x3d540000..0x3d57ffff, module EXEC+RO 0x3d580040..0x3d59d2df, module RW 0x3d59d2e0..0x3d5b189f. Fixed cycle 2: Supervisor 0x3d580000..0x3d5bffff, module EXEC+RO 0x3d5c0040..0x3d5dd2df, module RW 0x3d5dd2e0..0x3d5f189f.",
+    "Corona still returns unsupported service error -38, reported by installer RESTORE as result 6 / error -20. This is a normal failure return after the MPU fix, not successful Corona activation. Time, timer and Mem wiring remain separate outstanding capability gaps."
+  ],
+  "control_flow_evidence": [
+    "Production Lua Run -> stage1 -> stage2 -> Supervisor -> RESTORE_AFTER_BOOT -> ELF allocation/relocation/finalize -> sup_loader_invoke -> module constructor fetch -> overlapping-region IACCVIOL -> firmware reset before the fix.",
+    "After full-window reservation, subsequent module allocations begin outside the Supervisor lease. Constructor execution reaches the ordinary missing-Time service failure without resetting the device."
+  ],
+  "ownership_analysis": "The entire mapped Supervisor window is now backed by its own live heap allocation. The original pointer is retained and freed by the existing release path; logical ELF size, relocations, section layout and module RX/RW permissions are unchanged. Current additional heap reservation is 87010 bytes (262144 minus 175134).",
+  "unsafe_assumptions": [
+    "Host/emulator evidence only. No symbol approval, device proof, capability state or production approval is promoted.",
+    "Installed old watchfaces retain their embedded old stage2. They must be updated/reinstalled with the rebuilt installer; replacing only Supervisor ELF does not deploy this fix.",
+    "This fixes the demonstrated MPU-overlap reset, not the separate missing Time/timer/Mem service bindings or overall Corona runtime acceptance.",
+    "Detailed local snapshots, register dumps, console logs and screenshots are retained under ignored docs/evidence/p65-reboot-fix-2026-11-02. No firmware images are committed."
+  ],
+  "recommended_probe": "Retest full Corona functionality after separately recovering/auditing the missing platform services, then obtain physical-device evidence without inheriting any approval from this emulator run.",
+  "reviewers": [],
+  "verdict": "HOST_TESTED",
+  "created": "2026-11-02T09:25:18Z",
+  "artifacts": []
+}
