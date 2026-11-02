@@ -83,10 +83,10 @@ struct firmware_page_descriptor {
     void * on_create; /* +0x4c */
     void * on_resume; /* +0x50 */
     void * on_foreground_data; /* +0x54 */
-    void * on_pause; /* +0x58 */
-    void * on_destroy; /* +0x5c */
-    void * on_ui_destroy; /* +0x60 */
-    void * extension_callback_100; /* +0x64 */
+    void * on_start; /* +0x58 */
+    void * on_pause; /* +0x5c */
+    void * on_stop; /* +0x60 */
+    void * on_ui_destroy; /* +0x64 */
     void * extension_callback_104; /* +0x68 */
     void * extension_callback_108; /* +0x6c */
     uint8_t _tail[4];

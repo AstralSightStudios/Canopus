@@ -87,11 +87,7 @@ struct canopus_target_page {
     page_create_fn on_create;                 /* +0x4c */
     page_lifecycle_fn on_resume;              /* +0x50 */
     page_foreground_data_fn on_foreground_data; /* +0x54 */
-#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
-    /* Slot order below follows the recovered type record
-     * (targets/<id>/types/canopus_target_page.json) and the exact
-     * 3.101.043 IDB: on_destroy_wrapped dispatches descriptor word 23
-     * (+0x5c) and on_resume_wrapped dispatches word 22 (+0x58). */
+#if defined(CANOPUS_MGR_V8_RECORDS)
     page_lifecycle_fn on_pause;               /* +0x58 */
     page_lifecycle_fn on_destroy;             /* +0x5c */
     page_lifecycle_fn on_ui_destroy;          /* +0x60 */
@@ -99,16 +95,21 @@ struct canopus_target_page {
     page_system_back_fn extension_callback_104; /* +0x68 */
     void *extension_callback_108;             /* +0x6c */
     void *get_scroll_obj;                     /* +0x70, not in the type record */
-#else /* CANOPUS_MGR_BAND11 without V8 records */
-    void *on_intermediate;                  /* +0x58 */
-    page_lifecycle_fn on_pause;              /* +0x5c, 0xc693a0e */
-    page_lifecycle_fn on_stop;               /* +0x60, 0xc693a5c */
-    page_lifecycle_fn on_ui_destroy;            /* +0x64, 0xc696aa4 (UI destruction) */
+#else
+    /* Band 10 Pro .036/.043 and Band 11 dispatch pause at +0x5c and
+     * release the root at +0x64. The +0x58 start callback runs immediately
+     * after create; binding pause there revokes the newly created UI. */
+    void *on_intermediate;                    /* +0x58 */
+    page_lifecycle_fn on_pause;               /* +0x5c */
+    page_lifecycle_fn on_stop;                /* +0x60 */
+    page_lifecycle_fn on_ui_destroy;          /* +0x64 */
     page_system_back_fn extension_callback_104; /* +0x68 */
-    void *extension_callback_108;            /* +0x6c */
-    void *extension_callback_112;            /* +0x70 */
-    void *extension_callback_116;            /* +0x74 */
-#endif /* CANOPUS_MGR_BAND11 */
+    void *extension_callback_108;              /* +0x6c */
+    void *extension_callback_112;              /* +0x70 */
+#if defined(CANOPUS_MGR_BAND11)
+    void *extension_callback_116;              /* +0x74 */
+#endif
+#endif
 };
 
 struct firmware_app_descriptor {
@@ -270,11 +271,15 @@ _Static_assert(offsetof(struct canopus_target_page, on_create) == 76,
                "page create offset");
 _Static_assert(offsetof(struct canopus_target_page, extension_callback_104) == 104,
                "page system back offset");
-#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
+#if defined(CANOPUS_MGR_V8_RECORDS)
+_Static_assert(offsetof(struct canopus_target_page, on_pause) == 88,
+               "page pause offset");
 _Static_assert(offsetof(struct canopus_target_page, on_destroy) == 92,
-#else /* CANOPUS_MGR_BAND11 without V8 records */
+#else
+_Static_assert(offsetof(struct canopus_target_page, on_pause) == 92,
+               "page pause offset");
 _Static_assert(offsetof(struct canopus_target_page, on_ui_destroy) == 100,
-#endif /* CANOPUS_MGR_BAND11 */
+#endif
                "page destroy offset");
 #if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 _Static_assert(sizeof(struct firmware_app_descriptor) == 64,
@@ -887,11 +892,7 @@ static int manager_page_on_pause(struct canopus_target_page *page)
     return 0;
 }
 
-#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 static int manager_page_on_destroy(struct canopus_target_page *page)
-#else /* CANOPUS_MGR_BAND11 without V8 records */
-static int manager_page_on_ui_destroy(struct canopus_target_page *page)
-#endif /* CANOPUS_MGR_BAND11 */
 {
     struct canopus_target_page_context *context;
 
@@ -1287,11 +1288,7 @@ static int module_page_on_pause(struct canopus_target_page *page)
     return 0;
 }
 
-#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
 static int module_page_on_destroy(struct canopus_target_page *page)
-#else /* CANOPUS_MGR_BAND11 without V8 records */
-static int module_page_on_ui_destroy(struct canopus_target_page *page)
-#endif /* CANOPUS_MGR_BAND11 */
 {
     struct canopus_target_module_page *slot_page = module_page_of(page);
     struct canopus_supervisor_v1 *sup = canopus_supervisor_get();
@@ -1565,11 +1562,11 @@ static void launcher_entry_init(struct canopus_target_launcher_entry *entry,
         if (module_page_back_completed_phase() != 0u) {
             page->extension_callback_104 = module_page_system_back;
         }
-#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
+#if defined(CANOPUS_MGR_V8_RECORDS)
         page->on_destroy = module_page_on_destroy;
-#else /* CANOPUS_MGR_BAND11 without V8 records */
-        page->on_ui_destroy = module_page_on_ui_destroy;
-#endif /* CANOPUS_MGR_BAND11 */
+#else
+        page->on_ui_destroy = module_page_on_destroy;
+#endif
     }
 }
 
@@ -1827,21 +1824,21 @@ static void target_descriptor_init(uint32_t page_index, const char *name,
         if (module_page_back_completed_phase() != 0u) {
             manager_pages_desc[page_index].extension_callback_104 = module_page_system_back;
         }
-#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
+#if defined(CANOPUS_MGR_V8_RECORDS)
         manager_pages_desc[page_index].on_destroy = module_page_on_destroy;
-#else /* CANOPUS_MGR_BAND11 without V8 records */
-        manager_pages_desc[page_index].on_ui_destroy = module_page_on_ui_destroy;
-#endif /* CANOPUS_MGR_BAND11 */
+#else
+        manager_pages_desc[page_index].on_ui_destroy = module_page_on_destroy;
+#endif
         return;
     }
     manager_pages_desc[page_index].on_create = manager_page_on_create;
     manager_pages_desc[page_index].on_resume = manager_page_on_resume;
     manager_pages_desc[page_index].on_pause = manager_page_on_pause;
-#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
+#if defined(CANOPUS_MGR_V8_RECORDS)
     manager_pages_desc[page_index].on_destroy = manager_page_on_destroy;
-#else /* CANOPUS_MGR_BAND11 without V8 records */
-    manager_pages_desc[page_index].on_ui_destroy = manager_page_on_ui_destroy;
-#endif /* CANOPUS_MGR_BAND11 */
+#else
+    manager_pages_desc[page_index].on_ui_destroy = manager_page_on_destroy;
+#endif
 }
 
 int canopus_manager_native_install(void)

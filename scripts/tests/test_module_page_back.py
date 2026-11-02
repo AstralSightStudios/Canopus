@@ -60,7 +60,7 @@ class ModulePageBackTests(unittest.TestCase):
                    "manager/ui/canopus_manager_native.c", "manager/client/canopus_client.c",
                    "manager/protocol/canopus_protocol.c", "runtime/module/canopus_module.c",
                    "runtime/lifecycle/canopus_lifecycle.c")
-        for target in (*TARGETS, "redmi-watch-6-3.100.043"):
+        for target in (*TARGETS, "xiaomi-band-10-pro-3.101.036", "redmi-watch-6-3.100.043"):
             out = Path(cls.temp.name) / target
             out.mkdir()
             try:
@@ -172,6 +172,35 @@ class ModulePageBackTests(unittest.TestCase):
                     self.assertEqual(self.state(u, 9), 1)
                     self.assertEqual(self.state(u, 10), 10)
                     self.assertEqual(self.state(u, 11), 10)  # every revoked context pauses
+
+    def test_10pro_desktop_push_uses_firmware_lifecycle_offsets(self):
+        for target in ("xiaomi-band-10-pro-3.101.036", "xiaomi-band-10-pro-3.101.043"):
+            with self.subTest(target=target):
+                u = self.route_machine(target)
+                descriptor = struct.unpack("<I", u.mem_read(self.symbols["fixture_descriptor"], 4))[0]
+                # Firmware dispatches +0x58 after create, then +0x50 on foreground.
+                for offset in (88, 80):
+                    callback = struct.unpack("<I", u.mem_read(descriptor + offset, 4))[0]
+                    if callback:
+                        self.assertEqual(self.call(u, callback, descriptor), 0)
+                self.assertEqual(self.state(u, 10), 0)
+                self.assertEqual(self.state(u, 11), 0)
+                self.call(u, "test_route_goto_mode", 3)
+                for route in (1, 2, 5, 1, 0):
+                    self.assertEqual(self.call(u, "test_route_request", route), 0)
+                    self.call(u, "test_route_poll")
+                    self.assertEqual(self.state(u, 1), 0, "Firmware pause must not close the app")
+                    self.assertEqual(self.state(u, 8), 100 + route)
+                    self.assertEqual(self.state(u, 6), 1)
+                    self.assertEqual(self.state(u, 4), 0)
+                self.assertEqual(self.state(u, 9), 1)
+                self.assertEqual(self.state(u, 10), 5)
+                self.assertEqual(self.state(u, 11), 5)
+                destroy = struct.unpack("<I", u.mem_read(descriptor + 100, 4))[0]
+                self.assertNotEqual(destroy, 0)
+                self.call(u, destroy, descriptor)
+                self.assertEqual(self.state(u, 1), 1)
+                self.assertEqual(self.state(u, 5), 0)
 
     def test_delete_return_skips_the_removed_packages_detail_page(self):
         for target in (*TARGETS, "redmi-watch-6-3.100.043"):

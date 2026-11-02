@@ -226,7 +226,7 @@ uint32_t test_other_descriptor(void)
 }
 void test_destroy(void)
 {
-#ifndef CANOPUS_MGR_BAND11
+#if defined(CANOPUS_MGR_V8_RECORDS)
     (void)fixture_descriptor->on_destroy(fixture_descriptor);
 #else
     (void)fixture_descriptor->on_ui_destroy(fixture_descriptor);
@@ -275,6 +275,12 @@ uint32_t test_route_prepare(uint32_t resume_first)
 }
 int test_route_request(uint32_t route) { return canopus_manager_target_module_page_route(3u,route); }
 void test_route_poll(void) { canopus_manager_target_module_pages_poll(); }
+static int fixture_lifecycle(struct canopus_target_page *page, uint32_t offset)
+{
+    page_lifecycle_fn callback;
+    canopus_memcpy(&callback, (const uint8_t *)page + offset, sizeof(callback));
+    return callback != NULL ? callback(page) : 0;
+}
 int test_route_goto(uint32_t key)
 {
     uint32_t route=key&0xffffu;
@@ -283,6 +289,14 @@ int test_route_goto(uint32_t key)
     if (fixture_goto_mode==1u) {fixture_pending_goto=key;return 0;}
     if ((key>>16)!=0xccu || route>=6u || fixture_route_depth>=8u) {fixture_bad_args++;return -1;}
     page=&launcher_entries[0]->pages[route];
+    if (fixture_goto_mode==3u) {
+        /* Exact .043/.036 firmware slots, independent of the C field names. */
+        if (module_page!=NULL) (void)fixture_lifecycle(module_page->page,92u);
+        fixture_route_stack[fixture_route_depth++]=route;
+        if (page->on_create(page,(void *)(uintptr_t)(0x200f0000u+route*256u),NULL)!=0) return -1;
+        (void)fixture_lifecycle(page,88u);
+        return fixture_lifecycle(page,80u);
+    }
     if (module_page!=NULL) (void)module_page->page->on_pause(module_page->page);
     fixture_route_stack[fixture_route_depth++]=route;
     return page->on_create(page,(void *)(uintptr_t)(0x200f0000u+route*256u),NULL);
@@ -297,10 +311,10 @@ int test_route_complete_goto(void)
 { uint32_t key=fixture_pending_goto;fixture_goto_mode=fixture_pending_goto=0u;return test_route_goto(key); }
 static void fixture_destroy_route(struct canopus_target_page *page)
 {
-#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
-    (void)page->on_destroy(page);
+#if defined(CANOPUS_MGR_V8_RECORDS)
+    (void)fixture_lifecycle(page,92u);
 #else
-    (void)page->on_ui_destroy(page);
+    (void)fixture_lifecycle(page,100u);
 #endif
 }
 int test_route_pop(void)

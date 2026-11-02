@@ -90,10 +90,10 @@ pub struct firmware_page_descriptor {
     pub on_create: *mut core::ffi::c_void, // +0x4c
     pub on_resume: *mut core::ffi::c_void, // +0x50
     pub on_foreground_data: *mut core::ffi::c_void, // +0x54
-    pub on_pause: *mut core::ffi::c_void, // +0x58
-    pub on_destroy: *mut core::ffi::c_void, // +0x5c
-    pub on_ui_destroy: *mut core::ffi::c_void, // +0x60
-    pub extension_callback_100: *mut core::ffi::c_void, // +0x64
+    pub on_start: *mut core::ffi::c_void, // +0x58
+    pub on_pause: *mut core::ffi::c_void, // +0x5c
+    pub on_stop: *mut core::ffi::c_void, // +0x60
+    pub on_ui_destroy: *mut core::ffi::c_void, // +0x64
     pub extension_callback_104: *mut core::ffi::c_void, // +0x68
     pub extension_callback_108: *mut core::ffi::c_void, // +0x6c
     pub _tail: [u8; 0x4], // 4

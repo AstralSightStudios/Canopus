@@ -362,7 +362,7 @@ static int32_t demo_publish_native_app_stage(const struct canopus_context_v1 *ct
         s_demo_page.on_create = (void *)demo_on_create;
         s_demo_page.on_resume = (void *)demo_on_resume;
         s_demo_page.on_pause = (void *)demo_on_pause;
-        s_demo_page.on_destroy = (void *)demo_on_destroy;
+        s_demo_page.on_ui_destroy = (void *)demo_on_destroy;
 
         pages[0] = &s_demo_page;
         entry.struct_size = sizeof(entry);

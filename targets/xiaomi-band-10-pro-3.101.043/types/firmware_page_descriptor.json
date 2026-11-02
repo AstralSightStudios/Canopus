@@ -171,36 +171,36 @@
       "provenance": "conditionally invoked with page and activity data; exact trigger remains restricted"
     },
     {
-      "name": "on_pause",
+      "name": "on_start",
       "offset": 88,
       "width": 4,
       "signedness": "pointer",
       "ownership": "callable",
-      "provenance": "invoked with page before hidden/destroyed state"
+      "provenance": "sub_CA6B044 dispatches word 22 after create and before foreground resume"
     },
     {
-      "name": "on_destroy",
+      "name": "on_pause",
       "offset": 92,
       "width": 4,
       "signedness": "pointer",
       "ownership": "callable",
-      "provenance": "invoked with page during page unregister and finish"
+      "provenance": "sub_CA6BDA8 dispatches word 23 when pushing another page; this does not destroy the root"
     },
     {
-      "name": "on_ui_destroy",
+      "name": "on_stop",
       "offset": 96,
       "width": 4,
       "signedness": "pointer",
       "ownership": "callable",
-      "provenance": "optional callback before recursive deletion of root_object"
+      "provenance": "sub_CA6A888 dispatches word 24 when leaving the foreground state"
     },
     {
-      "name": "extension_callback_100",
+      "name": "on_ui_destroy",
       "offset": 100,
       "width": 4,
       "signedness": "pointer",
       "ownership": "callable",
-      "provenance": "initialized by quickapp page construction; semantics remain restricted"
+      "provenance": "sub_CA6AB80 dispatches word 25 before deleting and clearing root_object"
     },
     {
       "name": "extension_callback_104",
@@ -226,6 +226,6 @@
       "EVID-APP-005",
       "EVID-APP-006"
     ],
-    "source": "sub_CA523B0 register; sub_CA52E5C unregister; lifecycle wrappers loc_CA52504/sub_CA51F88/sub_CA51F28/sub_CA52220; sub_C526090 allocates and initializes the 116-byte quickapp layout; Flashlight descriptor 0x200D03D8"
+    "source": "exact 3.101.043 IDB lifecycle review: register sub_CA6AD10, create loc_CA6AE64, start sub_CA6B044, foreground sub_CA6A8E8, pause sub_CA6BDA8, stop sub_CA6A888, UI destroy sub_CA6AB80; descriptor remains 116 bytes"
   }
 }
