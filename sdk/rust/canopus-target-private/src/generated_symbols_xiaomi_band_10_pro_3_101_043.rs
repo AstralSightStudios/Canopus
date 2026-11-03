@@ -249,6 +249,33 @@ pub const RECORDS: &[TargetPrivateSymbolRecord] = &[
         prototype: "void(const char *)",
     },
     TargetPrivateSymbolRecord {
+        name: "app_flash_erase",
+        kind: "function",
+        entry: 0xc588ef8usize,
+        callable: 0xc588ef9usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(int bank, uint32_t flash_offset, uint32_t len)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "app_flash_flush",
+        kind: "function",
+        entry: 0xc587ee0usize,
+        callable: 0xc587ee1usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(int bank, int kind)",
+    },
+    TargetPrivateSymbolRecord {
+        name: "app_flash_program",
+        kind: "function",
+        entry: 0xc588460usize,
+        callable: 0xc588461usize,
+        status: "STATIC_RECOVERED",
+        policy: "restricted",
+        prototype: "int(int bank, uint32_t flash_offset, const void *buf, uint32_t len, uint8_t sync)",
+    },
+    TargetPrivateSymbolRecord {
         name: "font_manager_add_path",
         kind: "function",
         entry: 0xc86037cusize,
@@ -3599,6 +3626,12 @@ pub const CALENDAR_APP_SIGNAL_ENTRY: usize = 0xc4efde8usize;
 pub const CALENDAR_APP_SIGNAL_CALLABLE: usize = 0xc4efde9usize;
 pub const CALENDAR_ICON_NOTIFY_ENTRY: usize = 0xca6a004usize;
 pub const CALENDAR_ICON_NOTIFY_CALLABLE: usize = 0xca6a005usize;
+pub const APP_FLASH_ERASE_ENTRY: usize = 0xc588ef8usize;
+pub const APP_FLASH_ERASE_CALLABLE: usize = 0xc588ef9usize;
+pub const APP_FLASH_FLUSH_ENTRY: usize = 0xc587ee0usize;
+pub const APP_FLASH_FLUSH_CALLABLE: usize = 0xc587ee1usize;
+pub const APP_FLASH_PROGRAM_ENTRY: usize = 0xc588460usize;
+pub const APP_FLASH_PROGRAM_CALLABLE: usize = 0xc588461usize;
 pub const FONT_MANAGER_ADD_PATH_ENTRY: usize = 0xc86037cusize;
 pub const FONT_MANAGER_ADD_PATH_CALLABLE: usize = 0xc86037dusize;
 pub const FONT_MANAGER_REMOVE_PATH_ENTRY: usize = 0xc860398usize;

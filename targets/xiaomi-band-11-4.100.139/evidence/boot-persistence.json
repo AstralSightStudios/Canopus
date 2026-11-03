@@ -8,12 +8,23 @@
   "flash_offset": 10532898,
   "romfs_image_offset": 9739045,
   "script_header_offset": 7200,
+  "erase_block": 10526720,
+  "erase_size": 8192,
+  "probe_at": 6178,
+  "neutral_at": 6362,
+  "block_crc32": {
+    "original": 1223878742,
+    "probed": 1560563765,
+    "patched": 1771011255,
+    "neutral": 1702544635
+  },
+  "live_after_romfs": 0,
   "original": "echo \"mount /misc\"\nmount -t littlefs -o ro /dev/facmode /misc\necho \"mount /nv\"\nmount -t littlefs -o autoformat /dev/nv /nv\noffline_log start -w &\nkvdbd &\nloadfactoryinfo\nmiwear_rtc_checker\nhealthd &\nlowbat_charge\nset +e\n",
   "patched": "mount -t littlefs -o ro /dev/facmode /misc\nmount -t littlefs -o autoformat /dev/nv /nv\noffline_log start -w &\nkvdbd &\nloadfactoryinfo\nmiwear_rtc_checker\nhealthd &\nlowbat_charge\nset +e\nsh /data/canopus/b &\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
   "findings": [
     "Equal-length rc.sysinit data replacement: drops the last two mount echo lines and appends a background Lua start after every mount; only the differing tail is stored.",
     "The ROMFS inode checksum covers the unchanged 32-byte header/name and the filesystem checksum covers its unchanged first 512 bytes.",
     "Physical boot acceptance FAILED: on a real Band 11, pinning corrupted flash and left the band in a boot loop (reported by the user, 2026-11-03). Pinned start is disabled for the whole Band 11 family (same /dev/bes_flash path on all three firmwares).",
-    "/dev/bes_flash is registered as an MTD driver (erase/bread/bwrite/read/ioctl, 8 KiB sectors); a VFS open goes through mtd_proxy and an FTL read-modify-write, flushed on close. Not exercised on hardware."
+    "The erase block holds only the ROMFS tail (with rcS) and zero padding after it."
   ]
 }

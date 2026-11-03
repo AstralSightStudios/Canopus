@@ -155,6 +155,10 @@ for s in \
     # And the staging/upload path (not a hot one): with package resources (CPC2 26-28) the .043
     # Supervisor no longer fits its resident budget otherwise.
     [ "$s" != manager/service/canopus_supervisor_upload.c ] || SOURCE_FLAGS="-Oz"
+    # And the pinned-start writer with the platform wrappers (thin firmware calls): with the
+    # flash-HAL writer enabled, Band 11 4.100.155/.179 exceed their file budget otherwise.
+    [ "$s" != manager/service/canopus_supervisor_boot.c ] || SOURCE_FLAGS="-Oz"
+    [ "$s" != manager/service/canopus_supervisor_platform.c ] || SOURCE_FLAGS="-Oz"
     $CC $TARGET_FLAGS $SOURCE_FLAGS $INC -c "$ROOT/$s" -o "$OUT/${base%.c}.o"
 done
 

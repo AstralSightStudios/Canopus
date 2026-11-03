@@ -4,7 +4,7 @@
  * firmware : 3.101.043 (CONBINE_LTALM078_T3.101.043_08041658)
  * sha256   : 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec
  * revision : 8
- * input_digest: f9765054a86f2868
+ * input_digest: b8d668450834e994
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
 #define CANOPUS_VENEER_XIAOMI_BAND_10_PRO_3_101_043_H
@@ -492,6 +492,9 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
  * __js_free_value: restricted - not exported until context/ownership approved
  * __js_throw: restricted - not exported until context/ownership approved
  * adapter_bring_up: restricted - not exported until context/ownership approved
+ * app_flash_erase: restricted - not exported until context/ownership approved
+ * app_flash_flush: restricted - not exported until context/ownership approved
+ * app_flash_program: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_launcher_del: restricted - not exported until context/ownership approved
  * background_object_has_flag: restricted - not exported until context/ownership approved

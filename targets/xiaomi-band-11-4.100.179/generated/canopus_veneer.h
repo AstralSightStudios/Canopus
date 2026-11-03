@@ -4,7 +4,7 @@
  * firmware : 4.100.179 (user-4.100.179-cn-202609302100)
  * sha256   : 307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b
  * revision : 2
- * input_digest: 3cfa0395a891b26c
+ * input_digest: e0f4e9ef7a2bd04d
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_179_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_179_H
@@ -209,6 +209,9 @@ static inline int canopus_identity_guard(void)
 /* ---- typed veneers ---- */
 /* ---- excluded symbols ----
  * _lv_inv_area: restricted - not exported until context/ownership approved
+ * app_flash_erase: restricted - not exported until context/ownership approved
+ * app_flash_flush: restricted - not exported until context/ownership approved
+ * app_flash_program: restricted - not exported until context/ownership approved
  * app_install: restricted - not exported until context/ownership approved
  * app_launcher_add: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved

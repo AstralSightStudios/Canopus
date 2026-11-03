@@ -1,3 +1,4 @@
+-- @CANOPUS_LUA_RELEASE@
 local PENDING = "/data/canopus/boot.pending"
 
 local function run(command)

@@ -4,7 +4,7 @@
 // firmware : 4.100.155 (user-4.100.155-cn-202609041500)
 // sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
 // revision : 1
-// input_digest: ac8d35f0e469fe40
+// input_digest: 519645963ca0b2fb
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -432,6 +432,9 @@ pub const CANOPUS_FW_FONT_RELOAD_FT_MUL_FIX_CALLABLE: usize = canopus_thumb_call
 /// Recovered `controller_crash_dump` at 0xc92c378. Thumb callable address 0xc92c379.
 pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_callable(0xc92c379usize);
 
+/// Recovered `app_flash_flush` at 0x0c7211a0. Thumb callable address 0x0c7211a1.
+pub const CANOPUS_FW_APP_FLASH_FLUSH_CALLABLE: usize = canopus_thumb_callable(0x0c7211a1usize);
+
 /// Recovered `lv_bar_set_value` at 0xc3ad8b4. Thumb callable address 0xc3ad8b5.
 pub const CANOPUS_FW_LV_BAR_SET_VALUE_CALLABLE: usize = canopus_thumb_callable(0xc3ad8b5usize);
 
@@ -536,6 +539,9 @@ pub const CANOPUS_FW_BACKGROUND_OBJECT_EVENT_ADD_CALLABLE: usize = canopus_thumb
 
 /// Recovered `bt_timer_cancel` at 0xc863000. Thumb callable address 0xc863001.
 pub const CANOPUS_FW_BT_TIMER_CANCEL_CALLABLE: usize = canopus_thumb_callable(0xc863001usize);
+
+/// Recovered `app_flash_program` at 0x0c720fb8. Thumb callable address 0x0c720fb9.
+pub const CANOPUS_FW_APP_FLASH_PROGRAM_CALLABLE: usize = canopus_thumb_callable(0x0c720fb9usize);
 
 /// Recovered `l2cap_connect_handler` at 0xc871558. Thumb callable address 0xc871559.
 pub const CANOPUS_FW_L2CAP_CONNECT_HANDLER_CALLABLE: usize = canopus_thumb_callable(0xc871559usize);
@@ -789,6 +795,9 @@ pub const CANOPUS_FW_LV_OBJ_SET_WIDTH_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `native_font_create` at 0xc494380. Thumb callable address 0xc494381.
 pub const CANOPUS_FW_NATIVE_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc494381usize);
 
+/// Recovered global `screen_lua_states` at 0x200d3c5c.
+pub const canopus_fw_screen_lua_states: usize = 0x200d3c5cusize;
+
 /// Recovered `miwear_session_lookup` at 0xc98ffb8. Thumb callable address 0x0C98FFB9.
 pub const CANOPUS_FW_MIWEAR_SESSION_LOOKUP_CALLABLE: usize = canopus_thumb_callable(0x0C98FFB9usize);
 
@@ -947,6 +956,9 @@ pub const CANOPUS_FW_REGISTER_DRIVER_CALLABLE: usize = canopus_thumb_callable(0x
 
 /// Recovered `lv_obj_refresh_style` at 0x0c38525c. Thumb callable address 0x0c38525d.
 pub const CANOPUS_FW_LV_OBJ_REFRESH_STYLE_CALLABLE: usize = canopus_thumb_callable(0x0c38525dusize);
+
+/// Recovered `app_flash_erase` at 0x0c7211c8. Thumb callable address 0x0c7211c9.
+pub const CANOPUS_FW_APP_FLASH_ERASE_CALLABLE: usize = canopus_thumb_callable(0x0c7211c9usize);
 
 /// Recovered `app_watchface_take_snapshot` at 0xc5f2b3c. Thumb callable address 0xc5f2b3d.
 pub const CANOPUS_FW_APP_WATCHFACE_TAKE_SNAPSHOT_CALLABLE: usize = canopus_thumb_callable(0xc5f2b3dusize);
@@ -1124,6 +1136,9 @@ pub const CANOPUS_FW_LV_DISPLAY_REMOVE_EVENT_CB_WITH_USER_DATA_CALLABLE: usize =
 
 // ---- excluded symbols ----
 // _lv_inv_area: restricted - not exported until context/ownership approved
+// app_flash_erase: restricted - not exported until context/ownership approved
+// app_flash_flush: restricted - not exported until context/ownership approved
+// app_flash_program: restricted - not exported until context/ownership approved
 // app_install: restricted - not exported until context/ownership approved
 // app_launcher_add: restricted - not exported until context/ownership approved
 // app_launcher_data_init: restricted - not exported until context/ownership approved

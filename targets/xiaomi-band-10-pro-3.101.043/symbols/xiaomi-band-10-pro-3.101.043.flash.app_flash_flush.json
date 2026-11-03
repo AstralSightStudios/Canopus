@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.flash.app_flash_flush",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "app_flash_flush",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c587ee0",
+  "callable_address": "0x0c587ee1",
+  "prototype": "int(int bank, int kind)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": true
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-BOOT-PERSIST-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-BOOT-PERSIST-001"
+    ],
+    "source": "exact 3.101.043 vela_ap.bin: the bes_flash MTD 0x200C8194: up_progmem_eraseblock 0xC19E7A4, up_progmem_write 0xC19E894 call this veneer (ldr.w pc, [pc] -> RAM 0x002c075f) with bank 0 and a flash offset (getaddress - 0x28000000), each inside its own BASEPRI 0x80 section followed by app_flash_flush. Same BES SDK code as the other Band 10 Pro / Band 11 images (byte-identical apart from branch offsets)."
+  },
+  "notes": "BES app_flash_flush: waits until bank has no queued operation of kind (1 write, 2 erase); with none queued it returns at once, otherwise it sleeps 10 ms per round. The MTD driver queues nothing on bank 0. Called only by the pinned-start writer, with interrupts masked (BASEPRI 0x80) like the MTD driver does. Static evidence only, device NOT_PROBED."
+}

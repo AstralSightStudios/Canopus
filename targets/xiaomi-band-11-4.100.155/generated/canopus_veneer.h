@@ -4,7 +4,7 @@
  * firmware : 4.100.155 (user-4.100.155-cn-202609041500)
  * sha256   : ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f
  * revision : 1
- * input_digest: ac8d35f0e469fe40
+ * input_digest: 519645963ca0b2fb
  */
 #ifndef CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
 #define CANOPUS_VENEER_XIAOMI_BAND_11_4_100_155_H
@@ -214,6 +214,9 @@ static inline int * canopus_fw_errno_location(void) {
 
 /* ---- excluded symbols ----
  * _lv_inv_area: restricted - not exported until context/ownership approved
+ * app_flash_erase: restricted - not exported until context/ownership approved
+ * app_flash_flush: restricted - not exported until context/ownership approved
+ * app_flash_program: restricted - not exported until context/ownership approved
  * app_install: restricted - not exported until context/ownership approved
  * app_launcher_add: restricted - not exported until context/ownership approved
  * app_launcher_data_init: restricted - not exported until context/ownership approved

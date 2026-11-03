@@ -24,9 +24,13 @@
   - p65 owner pump（`miwear_main` 的 UI loop `0x3C479C68`，152 字节 `uv_timer_t`）；p65 `lv_timer_del` 记录指错，更正为 `0x0C74154C`。p65 常驻上限 184,320 → 192,512（与 Band 11 相同），L2 后实测 186,830。
   - n67 电池：固件没有 getter，Supervisor 直接读 PowerManager 的 {充电字节, 电量字} `0x200BD30C`，前面由 `power_battery_ready` 把关（`CANOPUS_SUP_PM_BATTERY_STATE`）。
   - Band 11 真机固化写坏闪存、循环重启（用户反馈）：`.139/.155/.179` 的 `boot-persistence.json` 记 `device: failed`，生成器对这种记录输出 `CANOPUS_BOOT_ENABLED 0`。
+  - 同日修写入器（`v8-manager-bringup.md` 第 36 轮，ADR-CAN-012“写入”）：经固件 flash HAL 在一个 BASEPRI 临界区里擦写整块，探测、整块 CRC、只清位的解除固化、读回重试与回退、电量门槛、`pin.log`。
+    `.043` 换用新写入器；Band 11 仅 `CANOPUS_BOOT_DEVICE_TEST=1` 构建打开，待真机复测。
+  - 开机路径的第二个问题：固件 `lua` 退出后它的状态仍留在 `luaopen_screen` 的三格表里，下一次亮灭屏在已释放内存上跑 Lua（Mirage `.155` 复位，`.043` 也有残留）。
+    生成的 `boot.lua` 先清掉自己那一格（新符号 `lua.screen_lua_states`，restricted / not_probed）。
   - 模拟器（Mirage）：n67、o66 都是 26/27（只跳过 Haptics），Connect「listen, send & remote listening」通过；各开机两次、每次 150 秒，没有新增 minidump，稳定性提交（booting 0、starts 0），KV 跨重启通过。n67 用 QMP 读 PowerManager 全局：就绪字节 1/1、充电 1、电量 63，与 `miragectl battery 63 --charging` 一致。
 - 仍有差距：
-  - 四台都没有固化启动，也不再计划补（Band 11 的同一条写入路径已在真机上失败；`.043` 仍开着，没有真机证据）。
+  - 四台都没有固化启动（Band 11 的写入器换过之后还没有真机复测；`.043` 开着，没有真机证据）。
   - Haptics 只有预设：固件只能按编号播放预设振动，任意时长要直接驱动振动器 ioctl，模拟器上无法验证，没有做。
   - p65 的 Mirage 设备不可用，p65 只有静态证据 + 构建 + verifier。
   - 没有任何真机证据，真机清单见 `v8-manager-bringup.md`。

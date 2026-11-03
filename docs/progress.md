@@ -55,7 +55,7 @@ Toast API 已按用户要求移除，原节点编号 11 与能力位 16 停用�
     - n67/o66/p65 平台硬件服务；
     - n67/o66 owner pump，熄屏后仍能提交开机稳定性；
     - 第二轮（`v8-manager-bringup.md` 第 35 轮）：n67/o66/p65 的加密 L2 后端（CanopusConnect，`evidence/l2-sram-probe.json`，n67/o66 的 owner pump 并入此文件）、p65 owner pump、n67 电量与充电状态（直接读 PowerManager 全局）。
-  - 仍缺：固化（不再计划，见上方 Band 11 的真机故障）、任意时长振动（固件只有预设）、p65 的 Mirage 运行、任何真机证据。
+  - 仍缺：固化（这四台不做；Band 11 的写入器换过之后待真机复测，见下方固化启动一节）、任意时长振动（固件只有预设）、p65 的 Mirage 运行、任何真机证据。
   - 能力状态不变，所有新增记录 restricted / PENDING / not_probed。
 
 ## P65 Resource Hook 与 Corona Manager 接线（2026-10-28，仅静态／指令与 host 证据）
@@ -106,7 +106,15 @@ Toast API 已按用户要求移除，原节点编号 11 与能力位 16 停用�
   `sh /data/canopus/b &`，重启后不依赖当前表盘自动加载 Supervisor 并注册 Manager；解除固化写回原内容。Mirage：Band 10 Pro `.043` A 段闪存读写/解除通过；B 段用离线打补丁的 AP 镜像冷启动，
   不手动加载，Supervisor 自己起来，点亮屏幕一次、熄屏后序列走完。亮屏注册 Manager 会使模拟设备复位，所以状态机只在熄屏时推进。**没有真机运行，物理启动验收未做。**
   Band 11：为 `.155` 和 `.179` 实现独立原生引导载荷（`boot.lua` 内嵌 target 原生 loader 及 profile，加载 stage1 → stage2 → supervisor 至 Umem 并发 `START_BOOT`，由熄屏状态机推进完成 Manager 注册并清除 `boot.pending`）；Mirage 冷启动冒烟测试（`scripts/emu/boot_smoke.py 155` / `179`）全通。`.139` 无后台泵，不支持。安装器页面的延时 Auto-run 已删除。
-  **2026-11-03 更新：Band 11 真机固化后闪存被写坏、循环重启，Band 11 全家族的固化已关闭**（`boot-persistence.json` 记 `device: failed`，构建输出 `CANOPUS_BOOT_ENABLED 0`）。`.043` 走同一条写入路径，仍无真机证据。新接入的四款设备不做固化。
+  **2026-11-03 更新：Band 11 真机固化后闪存被写坏、循环重启**（`boot-persistence.json` 记 `device: failed`）。同日换了写入器（ADR-CAN-012“写入”）：
+  脚本所在的 8 KiB 擦除块里还有在用的只读数据（`.155` 一张驱动 `file_operations` 表，`.043` 分区表与颜色表），而固件 MTD 擦除后会 `usleep(1)` 再编程，
+  空隙里读到空表就会崩、复位后块是空的。现在用固件 flash HAL 在同一个 BASEPRI 临界区里擦写整块，先做只清位的探测，按整块 CRC 区分状态，解除固化只清位不擦除，
+  读回不对就重试、再写回原脚本，擦除前要求电量 ≥ 30% 或充电，每步记 `/data/canopus/pin.log`。`.043` 用新写入器（Mirage 证据，无真机）；Band 11 只有
+  `CANOPUS_BOOT_DEVICE_TEST=1` 的构建打开，等真机复测。新接入的四款设备不做固化。
+  同日查到开机路径的第二个问题（ADR-CAN-012“开机脚本里的 `lua`”）：固件的 `lua` 把解释器状态交给屏幕服务（`luaopen_screen` 的三格表）且退出时不收回，
+  `boot.lua` 跑完后下一次亮灭屏，miwear 任务就在已释放的状态上跑 Lua，Mirage `.155` 上复位；`b` 每次开机都启动 `lua`，所以会一直重启，很可能就是真机上的循环重启。
+  `.043` 也有同样的残留。生成的 `boot.lua` 现在先清掉自己那一格（新符号 `lua.screen_lua_states`，`.043/.155/.179`）。
+  另外 2026-11-02 起 Mirage 的触摸模型能在熄屏时唤醒，`boot_smoke.py` 的 Band 11 冷启动改为只点一次。
 - **故障恢复可见**：Manager 首页写明安全模式原因与“模块仍已安装，本次暂不加载”；被自动停用/回退的模块留在列表里并说明原因；启动后一条通知（安全模式含原因，或哪个模块被自动处理；正常则“Canopus 已加载，管理器可用”）。
   AstroBox 同步显示，且退出安全模式改为先确认。
 - **退出安全模式的真实缺陷**：触发阈值的崩溃计数不清零，退出后下次启动立刻又进 safe mode；批量回退逐模块写盘并吞错误。已修，host 测试覆盖真实阈值路径。

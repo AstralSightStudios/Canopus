@@ -8,12 +8,26 @@
   "flash_offset": 13394966,
   "romfs_image_offset": 12586628,
   "script_header_offset": 21664,
+  "erase_block": 13393920,
+  "erase_size": 8192,
+  "probe_at": 1046,
+  "neutral_at": 1203,
+  "block_crc32": {
+    "original": 4226384378,
+    "probed": 2480587567,
+    "patched": 3608851160,
+    "neutral": 3029813143
+  },
+  "live_after_romfs": 1006,
   "original": "echo \"mount /nv\"\nmount -t littlefs -o autoformat /dev/nv /misc\necho \"mount /mode\"\nmount -t littlefs -o autoformat /dev/mode /mode\noffline_log start -w &\nkvdbd &\nsystem_trace\nmiwear_rtc_checker\n",
   "patched": "mount -t littlefs -o autoformat /dev/nv /misc\nmount -t littlefs -o autoformat /dev/mode /mode\noffline_log start -w &\nkvdbd &\nsystem_trace\nmiwear_rtc_checker\nsh /data/canopus/b &\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
   "findings": [
     "Equal-length rc.sysinit data replacement: drops the last two mount echo lines and appends a background Lua start after every mount; only the differing tail is stored.",
     "The ROMFS inode checksum covers the unchanged 32-byte header/name and the filesystem checksum covers its unchanged first 512 bytes.",
     "The AP header is version 0x00050000 with no signature block, and no AP-image integrity check was found in vela_bl2.bin strings. Physical boot acceptance is NOT verified.",
-    "/dev/bes_flash is registered as an MTD driver (erase/bread/bwrite/read/ioctl, 8 KiB sectors); a VFS open goes through mtd_proxy and an FTL read-modify-write, flushed on close. Not exercised on hardware."
+    "The erase block also holds 1006 live bytes after the ROMFS: the NAND partition tables (resource / nand_data / coredump / nand_nv) and colour tables, one with pointers into this block.",
+    "MTD up_progmem_eraseblock (0xc19e7a4) erases inside BASEPRI 0x80, then always calls usleep(1) before FTL programs the block, so other tasks run while it is blank.",
+    "The Supervisor now erases and programs the whole block with the BES flash HAL (symbols flash.app_flash_erase/program/flush) inside one BASEPRI 0x80 section, after a bits-only probe of the dropped echo line; block states are identified by block_crc32; unpinning clears 's' of the hook to '#' without an erase. Emulator evidence only (scripts/emu/boot_smoke.py).",
+    "boot.lua runs under the firmware's NSH `lua`, whose luaopen_screen keeps the interpreter's lua_State in a three-slot table (symbol lua.screen_lua_states) for screen_state_cb; only the app framework's lua_module_miwear_close clears a slot, so the state stays there after `lua` exits and every later screen change runs lua_getglobal on freed memory. Mirage p67: slot 0 still holds the state of an exited `lua -e`. It did not fault there because the freed memory was not reused yet; on a band it can fault at any screen change after a pinned start. boot.lua (generated) now clears its own slot, matched against tostring(coroutine.running()), with one aligned `mw` write before anything else."
   ]
 }

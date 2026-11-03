@@ -1906,3 +1906,47 @@ n67 电池：all-services-test 允许返回「未知」，所以单看 PASS 不�
 p65 没有可用的 Mirage 设备，只有静态证据 + 构建 + verifier。
 
 **仍是差距**：四台都没有固化；Haptics 只有预设；p65 没有 Mirage 运行；没有真机证据（真机清单见第 33 轮，加上 CanopusConnect 往返和 n67 电量）。
+
+## 第 36 轮：固化写入器修复（2026-11-03）
+
+第 35 轮只是把 Band 11 的固化关掉。这一轮找原因并换写入器（ADR-CAN-012“写入”）。
+
+**原因（静态证据）。** `rc.sysinit` 所在的 8 KiB 擦除块里不只有 ROMFS：`.155` 在 ROMFS 之后还有 203 字节在用的只读数据（一张驱动 `file_operations` 表和
+`gpiod_list_chips` 等函数名），`.043` 有 1006 字节（NAND 分区表、带指针的颜色表），`.179` 只有补零；`rcS` 也在这块里。
+旧写法经 `/dev/bes_flash`（`mtd_proxy` + FTL + BCH）：MTD 的 `up_progmem_eraseblock` 擦完后出临界区调 `usleep(1)`，FTL 之后才编程，
+这段空隙里别的任务读到空表就会跳到 0xFFFFFFFF，复位后这一块就是空的。`.155` 的尾段还跨 BCH 扇区，同一块读改写两遍。
+Band 11 的运行时写入在 Mirage 里从没跑过（没有 shell，`boot_smoke.py` 只做了离线打补丁镜像的冷启动）。
+
+**新写入器。** 直接调 MTD 驱动用的 BES HAL（`app_flash_erase/program/flush`，每个 target 三条 `flash.*` 符号记录，restricted / not_probed），
+擦除和编程放在同一个 BASEPRI 0x80 临界区里；整块 CRC 区分原样 / 已探测 / 已固化 / 已注释四种状态；第一次擦除前先只清位地把要删的 `echo` 改成注释并读回；
+解除固化只把 `sh` 的 `s` 清成 `#`；读回不对重试 3 次，固化不成就写回原脚本；擦除前电量 ≥ 30% 或充电；每步写 `/data/canopus/pin.log`。
+`canopus_supervisor_boot.c` 和 `canopus_supervisor_platform.c` 改用 `-Oz`，否则开了固化的 `.155` 超出 135,168 的文件上限
+（现在 `.155` 134,336、`.179` 134,300、`.043` 128,176 / 133,120）。
+
+**Mirage（仅模拟器证据）。** `boot_smoke.py 043`：固化（pin.log：`pin 1`、`probe 2`、`rewrite 3`、`battery 81`、`result 0`）、解除（`neutral 4`）、
+从“已注释”再固化、再解除都通过，`/etc/init.d/rc.sysinit` 跟着变；NSH 执行探测行和注释行不报错；离线打补丁镜像的冷启动照旧通过。
+
+**开机路径的第二个问题：固件 `lua` 留下的 Lua 状态。** 写入器换完后，`boot_smoke.py 155` 的冷启动反而不过：`boot.log` 里出现第二、第三次
+`start attempt`，模拟设备在开机后第一次亮灭屏时复位。退回 HEAD、再退回 10-21 通过时的提交也一样，所以不是这次的改动；
+不放 Canopus 文件、同样点一下就正常。设备留下的 `/log/minidump/crash1.txt`：miwear 任务在亮→灭屏时 MemManage 错误，
+PC 在 `luaT_gettm`，调用链经过 `screen_state_cb`（`.155` 0x0c6d3a11）。原因（`.179` 精确 IDB，`.155/.043` 字面量池同构）：
+NSH 的 `lua` 启动时打开 miwear 库，`luaopen_screen` 把解释器的 `lua_State` 存进三格全局表并注册 `screen_state_cb`，
+之后每次亮灭屏都对表里的状态做 `lua_getglobal(L, "ScreenStateChangedCB")`；只有应用框架的 `lua_module_miwear_close` 清格子，
+`lua` 进程退出时不清。`boot.lua` 跑完，表里就是已释放的内存。`b` 每次开机都跑 `lua`（3 次上限只让 `boot.lua` 提前返回），
+所以固化后的 Band 11 会一直重启，很可能就是真机上看到的现象。`.043`（Mirage p67）上 `lua -e` 退出后第 0 格也还是它的状态，
+只是那块内存没被复用，没有出错。10-21 能过，是因为那时 Mirage 熄屏后点不亮屏幕，`boot.lua` 之后根本没有亮灭屏。
+
+修复：新符号 `lua.screen_lua_states`（`.043` 0x20140D60、`.155` 0x200D3C5C、`.179` 0x200D2B4C，restricted / not_probed），
+`generate_boot_config.py` 把一段开头代码放进生成的 `boot.lua`：用 `tostring(coroutine.running())` 得到自身状态，`mw` 读三格，
+等于它的那格用一次对齐的 `mw` 写 0。`boot_smoke.py` 放上设备的 `driver.lua` 开头也是这一段。
+
+测试本身的两处修改：2026-11-02 起 Mirage 的触摸模型熄屏时一按就唤醒，第二下会落到表盘上，Band 11 冷启动改为只点一次；
+开机脚本 `b` 里带 `>` 重定向的命令会让后台 `sh`（栈只有 1968 字节）栈溢出（Usage Fault，STKOF），解除/固化请求改由一个
+`requests.lua` 依次执行并自己写结果文件。
+
+**Mirage 结果（仅模拟器证据）。** `boot_smoke.py 155`、`179`：冷启动（离线打补丁镜像）序列走完，`boot.pending` 清除、`registry.bin` 写出；
+随后开机脚本里解除固化（只清位，“已注释”）、查询 flags=1、再固化（整块擦写，pin.log：`pin 4`、`battery 80`、`rewrite 3`、`result 0`）、查询 flags=3。
+这是 Band 11 的运行时写入第一次在模拟器里跑。真机复测仍然是 Band 11 打开固化的前提。
+
+另外留了一个没修的风险：`START_BOOT` 在 NSH 的 `lua` 任务里调 `lv_timer_create`，固件 LVGL 无锁，resume 回调还会在 UI 的 libuv 循环上
+`uv_timer_start`。跨任务不加锁，模拟器里没看到问题，但不是严格安全的（ADR-CAN-012“风险与边界”）。

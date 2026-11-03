@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Pinned-start smoke on Mirage, Band 10 Pro 3.101.043 (emulator-level evidence only).
 
-A. Original firmware: the Supervisor reads,
-   writes and restores the startup script through /dev/bes_flash.
+A. Original firmware: the Supervisor pins (probe, then one masked erase+program of the
+   script's erase block through the firmware's flash HAL), unpins (comments the start line
+   out in place), pins again from there, and NSH reads both edited lines as comments.
 B. The same script patched into a copy of vela_ap.bin offline, because Mirage reloads
    the AP image from the firmware package at every start and a runtime write cannot
    survive a reboot there: a fresh device with only the files a pinned start reads
@@ -23,6 +24,8 @@ from pathlib import Path
 from emu_config import LIBRARY, MIRAGECTL, run_capture
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+from generate_boot_config import lua_release  # noqa: E402
 DEVICE = f"canopus-boot-{os.getpid()}"
 BOOT_WAIT = 40
 START_WAIT = 240
@@ -45,8 +48,10 @@ CONFIGS = {
         "wake": (106, 260),
         "has_sh": False,
     },
-    # 155/179 passed here, but pinning corrupted flash on a real Band 11, so the build now has
-    # CANOPUS_BOOT_ENABLED 0 for them (boot-persistence.json device: failed).
+    # Band 11 has no shell here, so the staged start script itself unpins, queries and pins
+    # again after the start sequence (B). The first writer (through /dev/bes_flash) corrupted
+    # flash on a real Band 11, so these build with pinning only for a device retest
+    # (CANOPUS_BOOT_DEVICE_TEST=1, set below).
     "155": {
         "target": "xiaomi-band-11-4.100.155",
         "fw_id": "miwear.watch.q66tc_v4.100.155_full_f1c824fe",
@@ -106,22 +111,47 @@ def fresh_device(firmware):
     ctl("create", DEVICE, "--firmware", firmware)
 
 
+REQUESTS = """local driver = assert(loadfile("/data/canopus/driver.lua"))
+for _, request in ipairs({{"unpin", "set", "0"}, {"unpinned", "query"}, {"pin", "set", "1"}, {"pinned", "query"}}) do
+    local out = assert(io.open("/data/canopus/" .. request[1] .. ".txt", "w"))
+    print = function(...) out:write(table.concat({...}, "\\t"), "\\n") end
+    local ok, err = pcall(driver, "boot", request[2], request[3])
+    if not ok then out:write("error ", tostring(err), "\\n") end
+    out:close()
+end
+"""
+
+
 def staged_files(work, cfg):
     """What the installer's Run leaves in /data/canopus for a pinned start."""
     target = cfg["target"]
     face = cfg["face"]
     face_dir = ROOT / "watchfaces/canopus-installer-prod" / face
     start = work / "b"
-    start.write_text("sleep 30\nlua /data/canopus/boot.lua\n")
+    script = "sleep 30\nlua /data/canopus/boot.lua\n"
+    if not cfg["has_sh"]:
+        # One `lua` writes the four answers itself: a redirection in `b` overflows the 1968-byte
+        # stack of the background `sh` that runs it (Usage Fault, STKOF).
+        script += "sleep 40\nlua /data/canopus/requests.lua\n"
+        (work / "requests.lua").write_text(lua_release(target) + REQUESTS)
+    start.write_text(script)
+    comments = work / "comments"
+    comments.write_text(record_lines(cfg) + "echo comments-ok\n")
     target_file = work / "boot.target"
     target_file.write_text(target)
+    # The driver runs under the firmware's `lua` too, so it gives back its screen slot first.
+    driver = work / "driver.lua"
+    driver.write_text(lua_release(target) + (ROOT / "scripts/emu/driver.lua").read_text())
     files = [
         (face_dir / f"canopus_boot-{target}.bin", "/canopus/boot.lua"),
         (start, "/canopus/b"),
         (target_file, "/canopus/boot.target"),
         (face_dir / "manager_icon.bin", "/canopus/manager_icon.bin"),
-        (ROOT / "scripts/emu/driver.lua", "/canopus/driver.lua"),
+        (driver, "/canopus/driver.lua"),
+        (comments, "/canopus/comments"),
     ]
+    if not cfg["has_sh"]:
+        files.append((work / "requests.lua", "/canopus/requests.lua"))
     if face == "xiaomi-band-11":
         files.extend([
             (face_dir / f"canopus_stage1-{target}.bin", "/canopus/stage1.bin"),
@@ -134,6 +164,15 @@ def staged_files(work, cfg):
     return files
 
 
+def record_lines(cfg):
+    """The probe and the neutral line exactly as the Supervisor leaves them."""
+    record = json.loads((ROOT / f"targets/{cfg['target']}/evidence/boot-persistence.json").read_text())
+    probed = " #" + record["original"][2:record["original"].index("\n") + 1]
+    hook = record["patched"].index("sh /data/canopus/b &")
+    neutral = "#" + record["patched"][hook + 1:record["patched"].index("\n", hook) + 1]
+    return probed + neutral
+
+
 def flash_write_path(files, cfg):
     fresh_device(cfg["fw_id"])
     put(files)
@@ -141,13 +180,23 @@ def flash_write_path(files, cfg):
     time.sleep(BOOT_WAIT)
     sh("insmod /data/canopus/supervisor.elf canopus_supervisor")
     time.sleep(5)
+    # pin.log states: 1 original, 2 probed, 3 pinned, 4 start line commented out.
     expect("supported, not pinned", drv("boot", "query"), "flags=1", "err=0")
     expect("pin", drv("boot", "set", "1"), "result=8", "err=0")
     expect("pinned", drv("boot", "query"), "flags=3")
+    expect("pin steps", sh("cat /data/canopus/pin.log"), "pin 1", "probe 2", "rewrite 3", "result 0")
     expect("script on flash", sh("cat /etc/init.d/rc.sysinit"), "sh /data/canopus/b &")
     expect("unpin", drv("boot", "set", "0"), "result=8", "err=0")
     expect("unpinned", drv("boot", "query"), "flags=1")
-    expect("script restored", sh("cat /etc/init.d/rc.sysinit"), 'echo "mount /nv"')
+    expect("unpin steps", sh("cat /data/canopus/pin.log"), "unpin 3", "neutral 4", "result 0")
+    expect("start line commented out", sh("cat /etc/init.d/rc.sysinit"), "#h /data/canopus/b &")
+    expect("pin again", drv("boot", "set", "1"), "result=8", "err=0")
+    expect("pinned again", drv("boot", "query"), "flags=3")
+    expect("pin again steps", sh("cat /data/canopus/pin.log"), "pin 4", "rewrite 3", "result 0")
+    expect("unpin again", drv("boot", "set", "0"), "result=8", "err=0")
+    out = sh("sh /data/canopus/comments")
+    expect("probe and neutral lines are comments", out if "nsh:" not in out else "nsh error: " + out,
+           "comments-ok")
     ctl("shutdown", DEVICE)
     ctl("delete", DEVICE)
     print("boot smoke A (flash write path): passed")
@@ -205,15 +254,22 @@ def cold_start(files, record, cfg, ota):
                 print("PASS start counter cleared once the Manager exists")
                 time.sleep(10)
                 expect("pinned, sequence finished", drv("boot", "query"), "flags=3", "err=0")
+                # Every `lua` that ran here (boot.lua, the driver) gave its state back.
+                states = int(json.loads((ROOT / f"targets/{cfg['target']}/symbols/{cfg['target']}"
+                                         ".lua.screen_lua_states.json").read_text())["entry_address"], 16)
+                out = sh("; ".join(f"mw {states + 4 * i:08x} 4" for i in range(3)))
+                expect("no exited lua left in the screen table",
+                       out if out.count("= 0x00000000") == 3 else "left: " + out, "= 0x00000000")
             else:
                 ctl("boot", DEVICE, "--no-shell")
                 print("Booted Band 11, waiting 40s for rc.sysinit -> sleep 30 -> boot.lua...")
                 time.sleep(40)
+                # One tap: since the 2026-11-02 touch model a press wakes a sleeping panel and the
+                # next one reaches the watchface.
                 print("Waking screen to bootstrap resident owner timer...")
                 ctl("tap", DEVICE, *wake)
-                ctl("tap", DEVICE, *wake)
-                print("Waiting 35s for screen-off and startup phases...")
-                time.sleep(35)
+                print("Waiting 90s for screen-off, the startup phases and the unpin/pin requests...")
+                time.sleep(90)
                 ctl("shutdown", DEVICE)
                 listing = ctl("fs", "ls", DEVICE, "nand_data", "/canopus")
                 if "bootstrap-result.txt" not in listing:
@@ -237,6 +293,14 @@ def cold_start(files, record, cfg, ota):
                     print("boot.log:\n" + boot_log.strip())
                 except Exception:
                     pass
+                # What the start script asked the Supervisor after the sequence (staged_files).
+                results = {name: ctl("fs", "get", DEVICE, "nand_data", f"/canopus/{name}.txt", check=False)
+                           for name in ("unpin", "unpinned", "pin", "pinned")}
+                print("pin.log:\n" + ctl("fs", "get", DEVICE, "nand_data", "/canopus/pin.log", check=False))
+                expect("unpin", results["unpin"], "result=8", "err=0")
+                expect("unpinned", results["unpinned"], "flags=1")
+                expect("pin again", results["pin"], "result=8", "err=0")
+                expect("pinned again", results["pinned"], "flags=3")
             print("boot smoke B (cold start from patched image): passed")
         finally:
             ctl("shutdown", DEVICE, check=False)
@@ -262,7 +326,8 @@ def main():
         sys.exit(77)
     subprocess.run(["cargo", "build", "-q", "-p", "canopus-cli"], cwd=ROOT, check=True)
     subprocess.run(["sh", str(ROOT / "scripts/build_canopus_supervisor.sh")], cwd=ROOT, check=True,
-                   env=dict(os.environ, CANOPUS_TARGET=target), capture_output=True)
+                   env=dict(os.environ, CANOPUS_TARGET=target, CANOPUS_BOOT_DEVICE_TEST="1"),
+                   capture_output=True)
     record = json.loads((ROOT / f"targets/{target}/evidence/boot-persistence.json").read_text())
     with tempfile.TemporaryDirectory() as work:
         files = staged_files(Path(work), cfg)

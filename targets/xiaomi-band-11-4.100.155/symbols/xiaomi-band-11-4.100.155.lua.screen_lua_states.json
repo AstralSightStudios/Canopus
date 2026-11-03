@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-11-4.100.155.lua.screen_lua_states",
+  "target_id": "xiaomi-band-11-4.100.155",
+  "name": "screen_lua_states",
+  "kind": "data",
+  "instruction_set": "n/a",
+  "entry_address": "0x200d3c5c",
+  "type": "lua_State *[3]",
+  "contexts": {
+    "allowed": [
+      "any-task"
+    ]
+  },
+  "ownership": {
+    "argument": "Firmware-owned table of borrowed lua_State pointers; Canopus only clears the slot that holds the calling interpreter's own state.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-BOOT-PERSIST-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "ea0bdf1920cb30223d616432af00565ca67622e6468328f5eab155f8cdc2fb9f",
+    "evidence_ids": [
+      "EVID-BOOT-PERSIST-001"
+    ],
+    "source": "exact 4.100.155 vela_ap.bin: the literal pool of luaopen_screen (the function logging 'multiple miwear lua instances detected') holds this table and screen_state_cb 0xc6d3a11. luaopen_screen stores its lua_State in the first free slot and registers screen_state_cb once; screen_state_cb calls lua_getglobal(L, \"ScreenStateChangedCB\") on every non-null slot at each screen change; only lua_module_miwear_close (the app framework's own Lua close) clears a slot."
+  },
+  "notes": "The NSH `lua` interpreter opens the miwear libraries, so every `lua` process (boot.lua at a pinned start, test drivers) leaves its freed state here when it exits. boot.lua clears its own slot (matched against tostring(coroutine.running())) with one aligned `mw` word write before anything else. Mirage q66 (emulator only): with boot.lua's state left in slot 0, the next screen change faults in the miwear task (MemManage in luaT_gettm under screen_state_cb, return 0x0c6d3a3f) and the band restarts; with boot.lua clearing its slot first, the start sequence completes. Static evidence, device NOT_PROBED."
+}

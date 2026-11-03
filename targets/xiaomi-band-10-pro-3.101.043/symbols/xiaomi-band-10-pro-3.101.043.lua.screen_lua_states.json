@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-pro-3.101.043.lua.screen_lua_states",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "name": "screen_lua_states",
+  "kind": "data",
+  "instruction_set": "n/a",
+  "entry_address": "0x20140d60",
+  "type": "lua_State *[3]",
+  "contexts": {
+    "allowed": [
+      "any-task"
+    ]
+  },
+  "ownership": {
+    "argument": "Firmware-owned table of borrowed lua_State pointers; Canopus only clears the slot that holds the calling interpreter's own state.",
+    "return_value": "No ownership transfer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-BOOT-PERSIST-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+    "evidence_ids": [
+      "EVID-BOOT-PERSIST-001"
+    ],
+    "source": "exact 3.101.043 vela_ap.bin: the literal pool of luaopen_screen (the function logging 'multiple miwear lua instances detected') holds this table and screen_state_cb 0xcab318d. luaopen_screen stores its lua_State in the first free slot and registers screen_state_cb once; screen_state_cb calls lua_getglobal(L, \"ScreenStateChangedCB\") on every non-null slot at each screen change; only lua_module_miwear_close (the app framework's own Lua close) clears a slot."
+  },
+  "notes": "The NSH `lua` interpreter opens the miwear libraries, so every `lua` process (boot.lua at a pinned start, test drivers) leaves its freed state here when it exits. boot.lua clears its own slot (matched against tostring(coroutine.running())) with one aligned `mw` word write before anything else. Mirage p67 (emulator only): after `lua -e` exits, slot 0 still holds that interpreter's state (`thread: 0x3d5c9414`). Static evidence, device NOT_PROBED."
+}

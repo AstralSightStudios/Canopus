@@ -8,12 +8,26 @@
   "flash_offset": 10533530,
   "romfs_image_offset": 9731197,
   "script_header_offset": 15680,
+  "erase_block": 10526720,
+  "erase_size": 8192,
+  "probe_at": 6810,
+  "neutral_at": 6994,
+  "block_crc32": {
+    "original": 857773729,
+    "probed": 2616293784,
+    "patched": 2167653490,
+    "neutral": 2582199276
+  },
+  "live_after_romfs": 0,
   "original": "echo \"mount /misc\"\nmount -t littlefs -o ro /dev/facmode /misc\necho \"mount /nv\"\nmount -t littlefs -o autoformat /dev/nv /nv\noffline_log start -w &\nkvdbd &\nloadfactoryinfo\nmiwear_rtc_checker\nhealthd &\nlowbat_charge\nset +e\n",
   "patched": "mount -t littlefs -o ro /dev/facmode /misc\nmount -t littlefs -o autoformat /dev/nv /nv\noffline_log start -w &\nkvdbd &\nloadfactoryinfo\nmiwear_rtc_checker\nhealthd &\nlowbat_charge\nset +e\nsh /data/canopus/b &\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
   "findings": [
     "Equal-length rc.sysinit data replacement: drops the last two mount echo lines and appends a background Lua start after every mount; only the differing tail is stored.",
     "The ROMFS inode checksum covers the unchanged 32-byte header/name and the filesystem checksum covers its unchanged first 512 bytes.",
-    "Physical boot acceptance FAILED: on a real Band 11, pinning corrupted flash and left the band in a boot loop (reported by the user, 2026-11-03). Pinned start is disabled for the whole Band 11 family (same /dev/bes_flash path on all three firmwares).",
-    "/dev/bes_flash is registered as an MTD driver (erase/bread/bwrite/read/ioctl, 8 KiB sectors); a VFS open goes through mtd_proxy and an FTL read-modify-write, flushed on close. Not exercised on hardware."
+    "Physical boot acceptance FAILED: on a real Band 11, pinning corrupted flash and left the band in a boot loop (reported by the user, 2026-11-03). That was the /dev/bes_flash writer; the flash-HAL writer that replaced it is NOT device-tested, so Band 11 builds keep pinned start off except with CANOPUS_BOOT_DEVICE_TEST=1.",
+    "The erase block holds only the ROMFS tail (with rcS) and zero padding after it.",
+    "MTD up_progmem_eraseblock (0xc330dac) erases inside BASEPRI 0x80, then calls usleep(1) (udelay only in an interrupt or the idle task) before FTL programs the block, so other tasks run while it is blank.",
+    "The Supervisor now erases and programs the whole block with the BES flash HAL (symbols flash.app_flash_erase/program/flush) inside one BASEPRI 0x80 section, after a bits-only probe of the dropped echo line; block states are identified by block_crc32; unpinning clears 's' of the hook to '#' without an erase. Emulator evidence only (scripts/emu/boot_smoke.py).",
+    "boot.lua runs under the firmware's NSH `lua`, whose luaopen_screen keeps the interpreter's lua_State in a three-slot table (symbol lua.screen_lua_states) for screen_state_cb; only the app framework's lua_module_miwear_close clears a slot, so the state stays there after `lua` exits and every later screen change runs lua_getglobal on freed memory. Same code as 4.100.155 (exact IDB: luaopen_screen 0x0c6d1eb0, screen_state_cb 0x0c6d1dfc, lua_module_miwear_close 0x0c8ea6a0), so the same restart is expected. boot.lua (generated) now clears its own slot, matched against tostring(coroutine.running()), with one aligned `mw` write before anything else."
   ]
 }
