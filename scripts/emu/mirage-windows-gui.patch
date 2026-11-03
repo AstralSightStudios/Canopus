@@ -173,10 +173,31 @@ index 7854364..2a6f2df 100644
          }
          let version = info.version ?? parsed?.version ?? "unknown"
 diff --git a/Packages/MirageKit/Sources/MirageKit/Runtime/DeviceSession.swift b/Packages/MirageKit/Sources/MirageKit/Runtime/DeviceSession.swift
-index 1aaa4c5..2326c27 100644
+index 1aaa4c5..d1388b2 100644
 --- a/Packages/MirageKit/Sources/MirageKit/Runtime/DeviceSession.swift
 +++ b/Packages/MirageKit/Sources/MirageKit/Runtime/DeviceSession.swift
-@@ -260,6 +260,11 @@ public final class DeviceSession {
+@@ -111,6 +111,8 @@ public final class DeviceSession {
+     /// the screen attached in the background.
+     public func start(qemu: URL? = nil) async throws {
+         guard state == .stopped else { return }
++        // A CLI or another window may have booted it since this session opened.
++        if await attachIfRunning() { return }
+         guard let device else { throw MirageError.notFound("Device not found") }
+         guard let profile = library.profile(device.profileID) else {
+             throw MirageError.notFound("Device profile \(device.profileID) does not exist")
+@@ -239,7 +241,10 @@ public final class DeviceSession {
+     }
+ 
+     private func watchExit(pid: Int32) {
+-        exitWatch = HostProcess.watchExit(pid) { [weak self] in self?.processExited() }
++        exitWatch = HostProcess.watchExit(pid) { [weak self] in
++            guard let self, self.pid == pid else { return }
++            self.processExited()
++        }
+     }
+ 
+     private func processExited() {
+@@ -260,22 +265,30 @@ public final class DeviceSession {
      private func teardown() {
          bootTask?.cancel()
          bootTask = nil
@@ -188,7 +209,41 @@ index 1aaa4c5..2326c27 100644
          qmp?.close()
          vnc?.close()
          console?.close()
-@@ -472,9 +477,41 @@ public final class DeviceSession {
+         qmp = nil
+         vnc = nil
+         console = nil
++        if let device, let pid {
++            let paths = library.paths(for: device)
++            // A different controller may already have started the next boot.
++            if RuntimeRecord.read(from: paths.runtimeFile)?.pid == pid {
++                try? FileManager.default.removeItem(at: paths.runtimeFile)
++                try? FileManager.default.removeItem(at: paths.runtime)
++            }
++        }
+         process = nil
+         pid = nil
+         endpoints = nil
+         consoleConnected = false
+         battery = nil
+-        if let device {
+-            let paths = library.paths(for: device)
+-            try? FileManager.default.removeItem(at: paths.runtimeFile)
+-            try? FileManager.default.removeItem(at: paths.runtime)
+-        }
+         if case .injecting = shell { shell = .unavailable }
+         state = .stopped
+     }
+@@ -342,6 +355,9 @@ public final class DeviceSession {
+             try? FileManager.default.removeItem(at: paths.runtimeFile)
+             return false
+         }
++        lastError = nil
++        exitStatus = nil
++        userStopped = false
+         pid = record.pid
+         startedAt = record.startedAt
+         bluetoothPort = record.bluetoothPort
+@@ -472,9 +488,41 @@ public final class DeviceSession {
          return NSHOutput.body(text, command: command)
      }
  

@@ -61,9 +61,8 @@ Windows 开发资料库默认 `.local/mirage/Library`；冒烟设备放在独立
 GUI 也可通过本机 `D:\Canopus\Start-Mirage.cmd` 打开。选择设备后 Boot，双击屏幕唤醒，
 拖动模拟滑动；Apps 页可连接 companion。关闭 GUI 后 QEMU 仍可运行，关机用 Shut Down。
 只需设备预览时可用 `gui-build --preview` 禁用 companion。
-同一设备应由一个控制端负责启动/关机；GUI 与 CLI 交替重启时出现旧退出清理删掉新
-`runtime.json` 的现象，QEMU 仍在运行但 CLI 无法接入。记录 `.local/mirage/portable-activation/run.json`，
-跨控制端退出清理问题尚未修复。
+GUI 打开后才由 CLI 开机时，点击 Boot 接管现有进程。旧会话退出仅清理自身 PID 的
+运行记录，避免交替重启时误删新记录。
 
 Facetory 打包器保留默认 feature：当前生成绑定无条件引用 MCP 类型，禁用默认 feature 会编译失败。
 `companion-build` 复用 Mirage 的 Rust 构建脚本，并按 Rust 输出的 native-static-libs 链接 Windows
