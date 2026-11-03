@@ -161,11 +161,11 @@ checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
 name = "canopus-abi"
-version = "0.1.0"
+version = "0.2.0"
 
 [[package]]
 name = "canopus-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "canopus-core",
@@ -184,7 +184,7 @@ dependencies = [
 
 [[package]]
 name = "canopus-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "hex",
@@ -198,7 +198,7 @@ dependencies = [
 
 [[package]]
 name = "canopus-elf"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "canopus-core",
@@ -211,7 +211,7 @@ dependencies = [
 
 [[package]]
 name = "canopus-fw-match"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "hex",
@@ -222,7 +222,7 @@ dependencies = [
 
 [[package]]
 name = "canopus-host-fake"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canopus-abi",
  "canopus-runtime",
@@ -230,7 +230,7 @@ dependencies = [
 
 [[package]]
 name = "canopus-package"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canopus-core",
  "hex",
@@ -243,7 +243,7 @@ dependencies = [
 
 [[package]]
 name = "canopus-re"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canopus-core",
  "canopus-package",
@@ -257,14 +257,14 @@ dependencies = [
 
 [[package]]
 name = "canopus-runtime"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canopus-abi",
 ]
 
 [[package]]
 name = "canopus-target-generated"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canopus-abi",
 ]
@@ -278,7 +278,7 @@ dependencies = [
 
 [[package]]
 name = "canopus-ui-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canopus-abi",
 ]
@@ -873,7 +873,7 @@ dependencies = [
 
 [[package]]
 name = "no-heap-counter"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canopus-abi",
  "canopus-host-fake",
@@ -883,7 +883,7 @@ dependencies = [
 
 [[package]]
 name = "no-heap-counter-device"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "canopus-abi",
  "canopus-runtime",
