@@ -31,5 +31,5 @@
     "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
   },
   "approval_state": "PENDING",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Experimental L2 only. Mutates the owner loop handle list; call only from the LVGL bootstrap on that same UI task. Resident 136-byte, 8-byte-aligned timer. No thread creation/work queue, no production approval."
+  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Experimental L2 only. Mutates the owner loop handle list; call only from the LVGL bootstrap on that same UI task. Resident 152-byte (p65 libuv: timeout +128, repeat +136, start id +144; evidence/l2-sram-probe.json), 8-byte-aligned timer. No thread creation/work queue, no production approval."
 }

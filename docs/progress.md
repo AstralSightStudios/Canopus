@@ -53,7 +53,9 @@ Toast API 已按用户要求移除，原节点编号 11 与能力位 16 停用�
   - 补上的能力：
     - v8 通知（`EVID-NOTIFY-*-001`）；
     - n67/o66/p65 平台硬件服务；
-    - n67/o66 owner pump（`evidence/owner-pump.json`），熄屏后仍能提交开机稳定性。
+    - n67/o66 owner pump，熄屏后仍能提交开机稳定性；
+    - 第二轮（`v8-manager-bringup.md` 第 35 轮）：n67/o66/p65 的加密 L2 后端（CanopusConnect，`evidence/l2-sram-probe.json`，n67/o66 的 owner pump 并入此文件）、p65 owner pump、n67 电量与充电状态（直接读 PowerManager 全局）。
+  - 仍缺：固化（不再计划，见上方 Band 11 的真机故障）、任意时长振动（固件只有预设）、p65 的 Mirage 运行、任何真机证据。
   - 能力状态不变，所有新增记录 restricted / PENDING / not_probed。
 
 ## P65 Resource Hook 与 Corona Manager 接线（2026-10-28，仅静态／指令与 host 证据）
@@ -104,6 +106,7 @@ Toast API 已按用户要求移除，原节点编号 11 与能力位 16 停用�
   `sh /data/canopus/b &`，重启后不依赖当前表盘自动加载 Supervisor 并注册 Manager；解除固化写回原内容。Mirage：Band 10 Pro `.043` A 段闪存读写/解除通过；B 段用离线打补丁的 AP 镜像冷启动，
   不手动加载，Supervisor 自己起来，点亮屏幕一次、熄屏后序列走完。亮屏注册 Manager 会使模拟设备复位，所以状态机只在熄屏时推进。**没有真机运行，物理启动验收未做。**
   Band 11：为 `.155` 和 `.179` 实现独立原生引导载荷（`boot.lua` 内嵌 target 原生 loader 及 profile，加载 stage1 → stage2 → supervisor 至 Umem 并发 `START_BOOT`，由熄屏状态机推进完成 Manager 注册并清除 `boot.pending`）；Mirage 冷启动冒烟测试（`scripts/emu/boot_smoke.py 155` / `179`）全通。`.139` 无后台泵，不支持。安装器页面的延时 Auto-run 已删除。
+  **2026-11-03 更新：Band 11 真机固化后闪存被写坏、循环重启，Band 11 全家族的固化已关闭**（`boot-persistence.json` 记 `device: failed`，构建输出 `CANOPUS_BOOT_ENABLED 0`）。`.043` 走同一条写入路径，仍无真机证据。新接入的四款设备不做固化。
 - **故障恢复可见**：Manager 首页写明安全模式原因与“模块仍已安装，本次暂不加载”；被自动停用/回退的模块留在列表里并说明原因；启动后一条通知（安全模式含原因，或哪个模块被自动处理；正常则“Canopus 已加载，管理器可用”）。
   AstroBox 同步显示，且退出安全模式改为先确认。
 - **退出安全模式的真实缺陷**：触发阈值的崩溃计数不清零，退出后下次启动立刻又进 safe mode；批量回退逐模块写盘并吞错误。已修，host 测试覆盖真实阈值路径。

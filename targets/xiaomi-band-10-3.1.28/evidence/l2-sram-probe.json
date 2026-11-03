@@ -1,0 +1,52 @@
+{
+  "target_id": "xiaomi-band-10-3.1.28",
+  "schema": 1,
+  "status": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "approval_state": "PENDING",
+  "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+  "addresses": {
+    "RX": "0x0C59A6D9",
+    "SEND": "0x0C59A9E5",
+    "SESSION": "0x0C59B6F5",
+    "CRYPTO": "0x0C597F29",
+    "CONNECTIONS": "0x20092620",
+    "BT_LOOP": "0x2009CEA0",
+    "TIMER": "0x0C327D6D",
+    "TIMER_DELETE": "0x0C327ECD",
+    "OWNER_LOOP": "0x200A2B80",
+    "OWNER_TIMER_INIT": "0x0C1C0009",
+    "OWNER_TIMER_START": "0x0C1C0143",
+    "OWNER_TIMER_SIZE": "0x58"
+  },
+  "scope": "Encrypted L2 transport (CanopusConnect) and the owner pump it rides on. Static recovery from the exact firmware IDB; the owner pump part was also run in Mirage.",
+  "constraints": [
+    "Exact-image static recovery only; no production approval",
+    "Encrypted WearPacket L2 only; failed decryption never dispatches",
+    "Receive/transmit on the Bluetooth owner (the loop the SPP pty is read on); owner timer init/start on the native UI owner",
+    "SAR callback replacement only in RAM; no flash patching",
+    "No new threads or work queues"
+  ],
+  "abi": {
+    "rx": "void(uint16_t handle, uint8_t channel, uint8_t opcode, void *payload, uint16_t len)",
+    "session": "void *(uint16_t handle)",
+    "crypto": "int(void *session, int encrypt, uint16_t len, const void *in, void *out)",
+    "send": "int(void *session, const struct l2_packet *)",
+    "list": "head+4 prev link; node+12 connection; connection+12 RX callback",
+    "packet": "channel +0, opcode +1, payload +4, len +8, callbacks/cookies +12/+16/+20/+24 (28 bytes)",
+    "owner_timer": "88-byte base uv_timer_t, 8-byte aligned; init/start only on owner task"
+  },
+  "evidence": [
+    "miwear_main (sub_C383B24, string 'miwear_main') stores uv_default_loop() (sub_C1C3FA4) in dword_200A2B80, initializes a timer on it with sub_C1C0008 and runs it with uv_run (sub_C1BEDB0): the UI owner loop, as 0x20098D3C is on 3.1.32.",
+    "sub_C1C0008 is uv_timer_init(loop, timer): type 13 at +8, flags 8 at +44, loop at +4, handle queue at +16, cb/timeout/repeat cleared at +48/+64/+72 (3.1.32's layout, two stores reordered).",
+    "sub_C1C0142 is uv_timer_start(timer, cb, uint64 timeout, uint64 repeat): timeout +64, repeat +72, cb +48, heap node +52..+60, start id +80 (8 bytes) from loop+0x138, so an 88-byte handle. Its first 18 bytes match 3.1.32's sub_C1D3760.",
+    "UI code passes dword_200A2B80 as the loop: watchface get_free_disk (sub_C4ED824: uv_fs_statfs(dword_200A2B80, ..., \"/data\")).",
+    "TIMER / TIMER_DELETE are the target's lv_timer_create / lv_timer_del (FW_LV_TIMER_CREATE / FW_LV_TIMER_DEL).",
+    "RX sub_C59A6D8 is the SAR V2 TRANS L2 receive callback: session lookup first (sub_C59B6F4), opcode 2 decrypts with sub_C597F28(session, 0, len, payload, tmp), 'decrypt failed' returns without dispatching. Unlike 3.1.32 it also refuses unencrypted LYRA (8) and checks PB (1); the Supervisor forwards every channel it does not own to this callback unchanged.",
+    "SESSION sub_C59B6F4 walks the session list 0x20092644 comparing the uint16 handle at session+14.",
+    "CRYPTO sub_C597F28: same body as 3.1.32 sub_C556E6C (state+64, mutex +76, key state+16 for decrypt, AES-CTR sub_C1D8138).",
+    "SEND sub_C59A9E4 ('miwear_transport_send  channlel'): same packet fields; opcode 2 encrypts with sub_C597F28(encrypt=1) and submits through sub_C599C2C.",
+    "CONNECTIONS: SAR open sub_C59A094 allocates a 224-byte connection (3.1.32: 216) and links its 16-byte node at 0x20092620; node+12 = connection, connection+12 = arg3 is unchanged. The caller sub_C59AB70 passes RX sub_C59A6D8 as arg3.",
+    "BT_LOOP: Bluetooth runs as a separate bluetoothd task (service_loop); the SAR side runs in miwear_bluetooth_main (sub_C1D4EBC), which stores uv_default_loop() in dword_2009CEA0, inits its timers with sub_C1C0008/sub_C1C0142 and ends in uv_run(dword_2009CEA0). btport pty_open_callback sub_C1D3CCC opens the SPP pty with euv_pty_init(dword_2009CEA0, fd) and reads with sub_C1D6428, which feeds SAR receive sub_C59A918 -> sub_C59929C."
+  ]
+}

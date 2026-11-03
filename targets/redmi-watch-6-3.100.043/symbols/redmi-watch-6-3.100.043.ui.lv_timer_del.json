@@ -20,9 +20,9 @@
     "evidence_ids": [
       "EVID-PORT-P65-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact redmi-watch-6-3.100.043 IDB: sub_C74154C removes the timer from the LVGL timer list 0x3C4500B4 (the list lv_timer_create 0xC7414D8 inserts into), sets timer_deleted 0x3C4500C2 and frees it; evidence/l2-sram-probe.json. The earlier ported address 0xc8bbd98 was a thunk to an unrelated ROM routine."
   },
-  "entry_address": "0xc8bbd98",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (lv_timer_del) Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
+  "entry_address": "0xc74154c",
+  "notes": "Corrected 2026-11-03 from the exact IDB (the fw-match port pointed at a ROM thunk). LVGL 9 lv_timer_delete. Static recovery only; physical device validation pending.",
   "approval_state": "PENDING"
 }

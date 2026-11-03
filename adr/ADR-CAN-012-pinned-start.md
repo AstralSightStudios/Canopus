@@ -1,6 +1,6 @@
 # ADR-CAN-012: 固化启动（pinned start）
 
-状态：已实现于 Band 10 Pro `.043` 与 Band 11 `.155` / `.179`（host / 模拟器证据），未上真机。`.139` 不支持：原因原是没有后台泵；
+状态：已实现于 Band 10 Pro `.043`（host / 模拟器证据，未上真机）。Band 11 `.155` / `.179` 曾经开启，2026-11-03 真机固化后闪存被写坏、手环循环重启，已在全 Band 11 家族关闭（`boot-persistence.json` 的 `device: failed`，`generate_boot_config.py` 据此输出 `CANOPUS_BOOT_ENABLED 0`）；`.043` 用同一条 `/dev/bes_flash` 写入路径，同样没有真机证据。`.139` 不支持：原因原是没有后台泵；
 2026-10-24 起 `.139` 有了 owner 泵（后台 timer 用），但 `scripts/emu/boot_smoke.py 139` 里 Supervisor 加载后启动序列不完成
 （`boot.pending` 不被清除），所以 `generate_boot_config.py` 只给同时有 L2 后端的 target 打开固化启动。
 
@@ -32,7 +32,9 @@ Supervisor 不随开机加载：每次重启后都要打开安装器表盘点一
 - 从 NSH 任务直接发 `NATIVE_STAGE` 会卡死，所以 `boot.lua` 不自己执行注册步骤。
 - 没有后台泵（没有 L2 后端）的目标没有地方推进状态机，`QUERY_BOOT` 报告不支持（`.139`）。
 
-## Band 11
+## Band 11（已关闭）
+
+2026-11-03：真机上固化后闪存被写坏、手环循环重启，原因未定位（模拟器里同一流程正常）。以下是关闭前的实现记录。
 
 - Band 11 NuttX 内核无 `insmod`，开机由 `/data/canopus/b` 延时调用 `boot.lua`。
 - `boot.lua` 内嵌 target 专用原生加载器（`native_loader.lua`）与 loader profile，独立加载 `/data/canopus/stage1.bin`、`stage2.bin`、`supervisor.elf` 到 Umem 执行重定位与初始化构造函数。

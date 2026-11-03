@@ -1859,3 +1859,50 @@ all-services-test 25/27，Timers 现在会走 `timer_set_background`（TIME v2�
 - n67 / o66 没有 L2 / Connect；
 - p65 没有 owner pump，Mirage 上也跑不了；
 - 没有真机证据，真机清单见第 33 轮。
+
+## 第 35 轮：L2（CanopusConnect）、p65 owner pump、n67 电池；Band 11 固化关闭（2026-11-03）
+
+**Band 11 固化关闭。** 用户在真机 Band 11 上开了固化，闪存被写坏，表循环重启。三个 Band 11 固件走的是同一条 `/dev/bes_flash` 写入路径，
+所以 `.139/.155/.179` 的 `boot-persistence.json` 都记成 `device: failed`，`generate_boot_config.py` 对这种记录输出 `CANOPUS_BOOT_ENABLED 0`。
+Mirage 上的 boot_smoke 通过不代表真机能用。`.043` 的固化还开着，同样没有真机证据。新接入的四台不做固化。
+
+**L2 后端补到 n67 / o66 / p65。** 后端要的是 L2 协议栈的几个入口，加上 BT 那一侧的 libuv loop：Supervisor 把 RX 换成自己的，只收
+`CANOPUS_L2_CHANNEL` 和模块注册的通道，其余交还原 RX；发送定时器开在 BT_LOOP 上，因为 RX 就在这个 loop 的线程里跑。
+BT_LOOP 的判定标准：SPP pty 的读回调挂在哪个 loop 上，就是哪个。
+
+| | n67 3.1.190 | o66 3.1.28 | p65 3.100.043 |
+|---|---|---|---|
+| RX / SEND | `0x0C54C5F5` / `0x0C54C845` | `0x0C59A6D9` / `0x0C59A9E5` | `0x0CA9B8E9` / `0x0CA9BBF5` |
+| SESSION / CRYPTO | `0x0C54D4AD` / `0x0C54A165` | `0x0C59B6F5` / `0x0C597F29` | `0x0CA9C905` / `0x0CA99139` |
+| CONNECTIONS | `0x200AEF40` | `0x20092620`（连接 224 字节，RX 仍在 +12） | `0x3C3CFB88` |
+| BT_LOOP | `0x200D548C`（bts_service；spp_tool 的 pty_open_callback 用它） | `0x2009CEA0`（`miwear_bluetooth_main` 存 `uv_default_loop()` 并 uv_run；btport pty_open_callback `euv_pty_init` 用它） | `0x3C44CE60`（`miwear_bluetooth_main`；pty_open_callback 经 getter 读它） |
+
+o66 没有 `bts_service` 的日志串，是顺着 SPP pty 的读路径（`sub_C1D6428` → `sub_C59A918` → SAR `sub_C59929C`）找到 loop 的；
+bluetoothd 是另一个 service_loop 任务，不是这个 loop。p65 的字符串在 IDA 里没有交叉引用，靠在字面量池里搜小端地址定位。
+n67 / o66 原来的 `owner-pump.json` 并进 `l2-sram-probe.json`（owner pump 的地址不变）。生成器看到这个文件就同时打开 L2 和 owner pump；
+固化另外还要 `boot-persistence.json`，这三台都没有，所以不受影响。
+
+**p65 owner pump。** UI loop 是 `miwear_main`（`sub_C92CE28`）的 `0x3C479C68`，`hw_action_vibration` 也用它。
+p65 的 libuv 句柄是 152 字节（flags +108、cb +112、堆节点 +116..124、timeout +128、repeat +136、start id +144），
+`uv_timer_init` / `uv_timer_start` 为 `0x0C629DD1` / `0x0C629FB5`。
+LVGL 定时器：`lv_timer_create` `0x0C7414D9`（链表 `0x3C4500B4`）。原 `lv_timer_del` 记录 `0xc8bbd98` 指错了，更正为 `0x0C74154C`（仍是 CANDIDATE）。
+p65 加上 L2 后常驻 186,830 B，超过家族上限 184,320，上限提到 Band 11 的 192,512。stage2 本来就租整个 262,144 B 的 MPU 窗口，堆开销不变。
+
+**n67 电池。** 3.1.190 没有电量 / 充电的 getter，`0xC4A9F08` 把这一对值拷进固定全局 `0x200CDCF0`，而不是写进出参。
+所以 Supervisor 直接读 PowerManager 的这一对：`power_battery_state` `0x200BD30C`（+0 充电字节、+4 电量字），
+前面先用 `power_battery_ready` 判断两项都已就绪（来源 `uv_topic_battery_state_cb 0xC44AB28`）。新增宏 `CANOPUS_SUP_PM_BATTERY_STATE`，平台层在既没有 getter 也没有快照时用它。
+
+**Haptics 仍是差距。** v8 和 p65 的 `miwear_vibrator_run` 只收 12 字节的预设块，类型字节选 1..N 号预设，没有时长。
+o66 的播放器是直接对振动器 fd 发 ioctl（12599 is_playing、12545 start、12552 设模式 5、12549 设波形参数，28 字节浮点段）。
+任意时长要自己拼这些 ioctl，模拟器里没有马达可以看结果，盲做等于对马达乱发控制命令，所以没有做。
+
+构建（verifier PASS，0 undefined）：n67 126,492 / 177,946 resident，o66 126,840 / 178,106，p65 131,484 / 186,830；三台都打印 `encrypted L2 0x43: dual-owner backend`。
+
+**Mirage 回归（emulator 证据）。** n67 / o66 用新 Supervisor 各开机两次，每次 150 秒，熄屏为主：
+all-services-test 都是 26/27，只跳过 Haptics；Connect（listen、send、remote listening）通过；KV 跨重启通过；
+四个模块的 starts 都是 0，boot word 为 0；n67 的 minidump 前后都是 0 个，o66 前后都是 8 个（都是更早的运行留下的），没有新增。
+n67 电池：all-services-test 允许返回「未知」，所以单看 PASS 不能证明读到了真值。改用 QMP 读 `0x200BD308`：就绪字节 1 / 1，`0x200BD30C` 充电 = 1，`0x200BD310` 电量 = 0x3F（63），
+和 `miragectl battery 63 --charging` 一致。切到 41% 放电，10 秒内充电位变成 0，电量字这时还没刷新（电量由固件按自己的节奏发布）。
+p65 没有可用的 Mirage 设备，只有静态证据 + 构建 + verifier。
+
+**仍是差距**：四台都没有固化；Haptics 只有预设；p65 没有 Mirage 运行；没有真机证据（真机清单见第 33 轮，加上 CanopusConnect 往返和 n67 电量）。

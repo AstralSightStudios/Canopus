@@ -4,7 +4,7 @@
  * firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
  * sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
  * revision : 1
- * input_digest: 693710a3476af3b8
+ * input_digest: 07b2008018b40741
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -252,6 +252,9 @@ typedef void (*canopus_fw_lv_obj_move_to_index_fn)(void *, int32_t);
 static inline void canopus_fw_lv_obj_move_to_index(void * a0, int32_t a1) {
     return ((canopus_fw_lv_obj_move_to_index_fn)(uintptr_t)0xc4b4b29)(a0, a1);
 }
+
+/* Recovered global `power_battery_state` at 0x200bd30c. */
+#define canopus_fw_power_battery_state ((void *)(uintptr_t)0x200bd30cu)
 
 typedef int (*canopus_fw_property_get_int32_fn)(const char *, int);
 static inline int canopus_fw_property_get_int32(const char * a0, int a1) {

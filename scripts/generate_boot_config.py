@@ -114,13 +114,15 @@ def boot_payload(target=None, profile_lua=None):
 # (scripts/emu/boot_smoke.py 043/155/179). .139 now has the pump for background timers, but its
 # start sequence does not complete in Mirage (boot_smoke.py 139: the Supervisor loads, boot.pending
 # is never cleared), so pinned start stays off on targets without the L2 backend.
+# A record whose device check failed stays off as well: on a real Band 11 the write corrupted
+# flash and the band boot-looped.
 def generate(target, output):
     path = ROOT / "targets" / target / "evidence" / "boot-persistence.json"
     l2 = ROOT / "targets" / target / "evidence" / "l2-sram-probe.json"
-    if not path.exists() or not l2.exists():
+    record = json.loads(path.read_text()) if path.exists() else None
+    if record is None or record["device"] == "failed" or not l2.exists():
         output.write_text("#define CANOPUS_BOOT_ENABLED 0\n")
         return
-    record = json.loads(path.read_text())
     output.write_text(
         "#define CANOPUS_BOOT_ENABLED 1\n"
         f"#define CANOPUS_BOOT_FLASH_OFFSET {record['flash_offset']}u\n"

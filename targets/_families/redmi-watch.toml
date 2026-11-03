@@ -7,7 +7,10 @@ manager_backend = "manager/target/canopus_manager_target.c"
 # 136208 B on 2026-10-25 with the v9 UI host, MIwear bindings and the generic
 # loader path; rounded up with ~3 KiB headroom. Resident stays the real bound.
 supervisor_max_size = 139264
-supervisor_max_resident = 184320
+# Raised 184320 -> 192512 (Band 11's threshold) on 2026-11-03 for the encrypted
+# L2 backend (CanopusConnect): measured 186830 B. stage2 leases the whole
+# power-of-two MPU window (262144 B) either way, so the heap cost is unchanged.
+supervisor_max_resident = 192512
 loader_sources = [
   "runtime/loader/canopus_arm_reloc.c",
   "runtime/loader/canopus_elf32_loader.c",

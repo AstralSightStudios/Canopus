@@ -781,6 +781,13 @@ const SUP_HARDWARE: &[Mapping] = &[
         symbol_name: "power_battery_snapshot",
         address: Address::Callable,
     },
+    // The PowerManager's {charging byte, level word} pair itself, for builds
+    // with neither getters nor a snapshot copy (Band 9 Pro 3.1.190).
+    Mapping {
+        macro_name: "CANOPUS_SUP_PM_BATTERY_STATE",
+        symbol_name: "power_battery_state",
+        address: Address::Entry,
+    },
     Mapping {
         macro_name: "CANOPUS_SUP_VIBRATOR_RUN",
         symbol_name: "vibrator_run",

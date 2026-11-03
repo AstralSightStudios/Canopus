@@ -17,14 +17,18 @@
 - [x] 旧 SDK 构建的 UI 模块（`page_count` 之前的 28 字节 entry、`on_resume` 之前的前缀）`set_entry` 返回 `-22`；现在两种旧前缀都按单页/无过渡接受（所有 target）。
 - [x] v8 通知：`lvx_notification_insert_message`（n66 `0x0C4F9871`、n67 `0x0C4F1F29`、o66 `0x0C52DAD1`，`EVID-NOTIFY-9132/9190/1028-001`），88 字节消息结构，n66 的 start_reminder 在 +0x4c、n67/o66 在 +0x50。生成器新增 `FW_9_NOTIFY`（仅无 native header 的 staged 家族，p65 由 band11 header 提供）。模块安装通知与 `ctx->notify` 在三台 v8 上可用。
 - [x] 平台硬件服务（亮度、熄屏、电池、wakelock、属性、system_state）补到 n67/o66/p65（`EVID-PLATFORM-HW-*`）；all-services-test 的设备表补齐四款型号与分辨率。
-- [x] n67/o66 owner pump（熄屏后仍跑的 libuv 定时器，`evidence/owner-pump.json`）：`miwear_main` 的 UI loop（n67 `0x200C8D8C`、o66 `0x200A2B80`）与 88 字节 `uv_timer_t`。有了它，开机稳定性提交、后台定时器与 TIME v2 不再依赖亮屏。Mirage 上熄屏状态下两次开机都提交了稳定（boot word 0、starts 0）；之前 n67 的 `booting` 一直不清，starts 跨开机累加。n66 已由 L2 证据提供。
+- [x] n67/o66 owner pump（熄屏后仍跑的 libuv 定时器，`evidence/owner-pump.json`，第二轮并入 `l2-sram-probe.json`）：`miwear_main` 的 UI loop（n67 `0x200C8D8C`、o66 `0x200A2B80`）与 88 字节 `uv_timer_t`。有了它，开机稳定性提交、后台定时器与 TIME v2 不再依赖亮屏。Mirage 上熄屏状态下两次开机都提交了稳定（boot word 0、starts 0）；之前 n67 的 `booting` 一直不清，starts 跨开机累加。n66 已由 L2 证据提供。
 - 模拟器（Mirage）：n66 26/27、n67 25/27、o66 25/27（跳过项：Haptics 仅预设；n67/o66 无 L2 所以 Connect 跳过），KV 跨重启通过，`--ui` 新模块装 → 启 → 激活为 ACTIVE。前一轮 n66/n67 的反复复位是测试 harness 在表盘脚本加载期间执行 OPEN_MANAGER 造成的（推 Manager 页销毁了正在创建的表盘页），改成延后一拍后两次开机无复位。
-- 仍有差距（不是本轮能在模拟器上闭环的）：
-  - 四台都没有固化启动（rc.sysinit，ADR-CAN-012）。
-  - n67/o66/p65 没有 L2，所以没有 CanopusConnect。
-  - p65 没有 owner pump，且 Mirage 设备不可用（未绑定、离线写入被回滚），本轮 p65 只做到构建 + verifier。
-  - Haptics 只有预设。
-  - n67 读不到电量和充电状态。
+- [x] 第二轮（同日，`v8-manager-bringup.md` 第 35 轮）：
+  - n67/o66/p65 的加密 L2 后端（CanopusConnect）：`owner-pump.json` 并入 `l2-sram-probe.json`，补 RX/SEND/SESSION/CRYPTO/CONNECTIONS 与 BT_LOOP（SPP pty 读回调所在的 loop）。
+  - p65 owner pump（`miwear_main` 的 UI loop `0x3C479C68`，152 字节 `uv_timer_t`）；p65 `lv_timer_del` 记录指错，更正为 `0x0C74154C`。p65 常驻上限 184,320 → 192,512（与 Band 11 相同），L2 后实测 186,830。
+  - n67 电池：固件没有 getter，Supervisor 直接读 PowerManager 的 {充电字节, 电量字} `0x200BD30C`，前面由 `power_battery_ready` 把关（`CANOPUS_SUP_PM_BATTERY_STATE`）。
+  - Band 11 真机固化写坏闪存、循环重启（用户反馈）：`.139/.155/.179` 的 `boot-persistence.json` 记 `device: failed`，生成器对这种记录输出 `CANOPUS_BOOT_ENABLED 0`。
+  - 模拟器（Mirage）：n67、o66 都是 26/27（只跳过 Haptics），Connect「listen, send & remote listening」通过；各开机两次、每次 150 秒，没有新增 minidump，稳定性提交（booting 0、starts 0），KV 跨重启通过。n67 用 QMP 读 PowerManager 全局：就绪字节 1/1、充电 1、电量 63，与 `miragectl battery 63 --charging` 一致。
+- 仍有差距：
+  - 四台都没有固化启动，也不再计划补（Band 11 的同一条写入路径已在真机上失败；`.043` 仍开着，没有真机证据）。
+  - Haptics 只有预设：固件只能按编号播放预设振动，任意时长要直接驱动振动器 ioctl，模拟器上无法验证，没有做。
+  - p65 的 Mirage 设备不可用，p65 只有静态证据 + 构建 + verifier。
   - 没有任何真机证据，真机清单见 `v8-manager-bringup.md`。
 
 ## P65 恢复模块时循环复位修复（2026-11-02）

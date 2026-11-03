@@ -1670,7 +1670,8 @@ static int sup_notify(void *cookie, const char *source, const char *title, const
 #define SUP_ENOMEM (-12)
 #define SUP_ENOSYS (-38)
 
-/* Battery: Band 10 Pro exposes three getters, Band 11 one snapshot copy. */
+/* Battery: Band 10 Pro exposes three getters, Band 11 one snapshot copy, Band 9 Pro
+ * 3.1.190 only the PowerManager globals. */
 #if defined(CANOPUS_SUP_PM_BATTERY_READY) && defined(CANOPUS_SUP_PM_BATTERY_LEVEL) && \
     defined(CANOPUS_SUP_PM_BATTERY_CHARGING)
 static int sup_battery_state(void *cookie, uint32_t *percent, int *charging)
@@ -1694,6 +1695,20 @@ static int sup_battery_state(void *cookie, uint32_t *percent, int *charging)
     (void)((snapshot_fn)(uintptr_t)CANOPUS_SUP_PM_BATTERY_SNAPSHOT)(snapshot);
     *charging = (snapshot[0] & 0xFFu) != 0u;
     *percent = snapshot[1];
+    return 0;
+}
+#define SUP_BATTERY_STATE sup_battery_state
+#elif defined(CANOPUS_SUP_PM_BATTERY_READY) && defined(CANOPUS_SUP_PM_BATTERY_STATE)
+/* No getter on this build: read the PowerManager's pair the snapshot copies
+ * elsewhere, charging byte at +0 and level word at +4. */
+static int sup_battery_state(void *cookie, uint32_t *percent, int *charging)
+{
+    typedef int (*ready_fn)(void);
+    const volatile uint32_t *state = (const volatile uint32_t *)(uintptr_t)CANOPUS_SUP_PM_BATTERY_STATE;
+    (void)cookie;
+    if (!((ready_fn)(uintptr_t)CANOPUS_SUP_PM_BATTERY_READY)()) return SUP_EBUSY;
+    *charging = (state[0] & 0xFFu) != 0u;
+    *percent = state[1];
     return 0;
 }
 #define SUP_BATTERY_STATE sup_battery_state

@@ -4,7 +4,7 @@
 // firmware : 3.1.190 (CONBINE_LTALM054_T1190_09161923_release_6006)
 // sha256   : 3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f
 // revision : 1
-// input_digest: 693710a3476af3b8
+// input_digest: 07b2008018b40741
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -203,6 +203,9 @@ pub const CANOPUS_FW_OFFLOAD_PROPERTY_APPLY_CALLABLE: usize = canopus_thumb_call
 
 /// Recovered `lv_obj_move_to_index` at 0xc4b4b28. Thumb callable address 0xc4b4b29.
 pub const CANOPUS_FW_LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = canopus_thumb_callable(0xc4b4b29usize);
+
+/// Recovered global `power_battery_state` at 0x200bd30c.
+pub const canopus_fw_power_battery_state: usize = 0x200bd30cusize;
 
 /// Recovered `property_get_int32` at 0x0c49d95c. Thumb callable address 0x0c49d95d.
 pub const CANOPUS_FW_PROPERTY_GET_INT32_CALLABLE: usize = canopus_thumb_callable(0x0c49d95dusize);

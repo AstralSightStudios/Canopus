@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.power.power_battery_state",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "power_battery_state",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x200bd30c",
+  "prototype": "struct { uint8_t charging; uint8_t pad[3]; uint32_t level; }",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001"
+    ],
+    "source": "exact 3.1.190 IDB vela_ap.bin.i64: uv_topic_battery_state_cb 0xc44ab28 writes byte 0x200bd30c = (state == 1) after 'battery charging state is ready' and dword 0x200bd310 = level (<= 100) after 'battery level is ready'; 0xc4a9f08 copies the same two words to 0x200cdcf0."
+  },
+  "notes": "PowerManager battery pair: +0 low byte charging flag, +4 level 0..100. Read only after power_battery_ready (0xc4487cc) is true. Supervisor platform service; static evidence only, device NOT_PROBED."
+}

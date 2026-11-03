@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "target_id": "redmi-watch-6-3.100.043",
+  "status": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "approval_state": "PENDING",
+  "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+  "addresses": {
+    "RX": "0x0CA9B8E9",
+    "SEND": "0x0CA9BBF5",
+    "SESSION": "0x0CA9C905",
+    "CRYPTO": "0x0CA99139",
+    "CONNECTIONS": "0x3C3CFB88",
+    "BT_LOOP": "0x3C44CE60",
+    "TIMER": "0x0C7414D9",
+    "TIMER_DELETE": "0x0C74154D",
+    "OWNER_LOOP": "0x3C479C68",
+    "OWNER_TIMER_INIT": "0x0C629DD1",
+    "OWNER_TIMER_START": "0x0C629FB5",
+    "OWNER_TIMER_SIZE": "0x98"
+  },
+  "abi": {
+    "rx": "void(uint16_t handle, uint8_t channel, uint8_t opcode, void *payload, uint16_t len)",
+    "session": "void *(uint16_t handle)",
+    "crypto": "int(void *session, int encrypt, uint16_t len, const void *in, void *out)",
+    "send": "int(void *session, const struct l2_packet *)",
+    "list": "head+4 prev link; node+12 connection; connection+12 RX callback",
+    "packet": "channel +0, opcode +1, payload +4, len +8, callbacks/cookies +12/+16/+20/+24 (28 bytes)",
+    "owner_timer": "152-byte base uv_timer_t, 8-byte aligned; init/start only on owner task"
+  },
+  "evidence": [
+    "RX sub_CA9B8E8: SAR V2 TRANS L2 receive callback with 3.1.28's shape (session lookup sub_CA9C904 first, opcode 2 decrypt via sub_CA99138(session, 0, len, payload, tmp), 'decrypt failed' string 0x3C363BE8 returns without dispatching, LYRA/PB security checks).",
+    "SESSION sub_CA9C904 walks the session list 0x3C3CFBAC comparing the uint16 handle at session+14.",
+    "CRYPTO sub_CA99138: state+64 check, mutex +76, key state+16 for decrypt and state+0 for encrypt, AES-CTR sub_C65FF58.",
+    "SEND sub_CA9BBF4 (log string 0x3C363DB8 'miwear_transport_send  channlel'): channel +0, opcode +1, payload +4, len +8; opcode 2 encrypts with sub_CA99138(encrypt=1) and submits through sub_CA9AE3C; error path calls the +20 then +12 callbacks with -1.",
+    "CONNECTIONS: SAR open sub_CA9B2A4 ('sar open mtu too small' 0x3C36374C) allocates a 224-byte connection, links its 16-byte node at 0x3C3CFB88, node+12 = connection, connection+12 = arg3; caller sub_CA9BD80 passes RX sub_CA9B8E8.",
+    "BT_LOOP: miwear_bluetooth_main sub_C65F328 stores uv_default_loop() (sub_C62B4EC) in 0x3C44CE60 and ends in uv_run (sub_C6220C8) on it; btport pty_open_callback sub_C65E074 opens the SPP pty with euv_pty_init(sub_C65ED90() == *0x3C44CE60, fd).",
+    "OWNER_LOOP: miwear_main sub_C92CE28 (string 'miwear_main' 0x3C2AC550) stores uv_default_loop() in dword_3C479C68, uv_timer_init(dword_3C479C68, 0x3C479BD0), uv_timer_start and uv_run on it. UI code uses the same loop, e.g. hw_action_vibration sub_C76AE74 inits its vibration timer on dword_3C479C68.",
+    "sub_C629DD0 is uv_timer_init(loop, timer): loop +4, type 13 at +8, handle queue +16, flags 8 at +108, cb/timeout/repeat cleared at +112/+128/+136. sub_C629FB4 is uv_timer_start(timer, cb, uint64 timeout, uint64 repeat): -22 when flags+108 &3 or cb null, timeout +128 from loop time +384, repeat +136, cb +112, heap node +116..+124, start id +144 (8 bytes) from loop +376: a 152-byte handle (the ported l2_owner_timer records' '136-byte' note came from 10 Pro).",
+    "TIMER sub_C7414D8 is lv_timer_create(cb, period, user_data): inserts into the timer list 0x3C4500B4, period +0, cb +8, user_data +12, repeat -1 at +16, then resumes the handler (LVGL 9). TIMER_DELETE sub_C74154C is lv_timer_delete: _lv_ll_remove(0x3C4500B4, timer), timer_deleted flag 0x3C4500C2 = 1, free. The ported lv_timer_del record (0x0C8BBD98) is a thunk to an unrelated ROM routine and is corrected."
+  ],
+  "scope": "Encrypted L2 transport (CanopusConnect) and the owner pump. Static recovery from the exact firmware IDB only: the p65 Mirage device was not usable in this pass.",
+  "constraints": [
+    "Exact-image static recovery only; no production approval",
+    "Encrypted WearPacket L2 only; failed decryption never dispatches",
+    "Receive/transmit on the Bluetooth owner (the loop the SPP pty is read on); owner timer init/start on the native UI owner",
+    "SAR callback replacement only in RAM; no flash patching",
+    "No new threads or work queues"
+  ]
+}

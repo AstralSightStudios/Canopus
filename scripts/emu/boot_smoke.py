@@ -45,6 +45,8 @@ CONFIGS = {
         "wake": (106, 260),
         "has_sh": False,
     },
+    # 155/179 passed here, but pinning corrupted flash on a real Band 11, so the build now has
+    # CANOPUS_BOOT_ENABLED 0 for them (boot-persistence.json device: failed).
     "155": {
         "target": "xiaomi-band-11-4.100.155",
         "fw_id": "miwear.watch.q66tc_v4.100.155_full_f1c824fe",

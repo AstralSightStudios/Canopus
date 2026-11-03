@@ -1,0 +1,52 @@
+{
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "schema": 1,
+  "status": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "approval_state": "PENDING",
+  "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+  "addresses": {
+    "RX": "0x0C54C5F5",
+    "SEND": "0x0C54C845",
+    "SESSION": "0x0C54D4AD",
+    "CRYPTO": "0x0C54A165",
+    "CONNECTIONS": "0x200AEF40",
+    "BT_LOOP": "0x200D548C",
+    "TIMER": "0x0C25A289",
+    "TIMER_DELETE": "0x0C258699",
+    "OWNER_LOOP": "0x200C8D8C",
+    "OWNER_TIMER_INIT": "0x0C11993D",
+    "OWNER_TIMER_START": "0x0C119A75",
+    "OWNER_TIMER_SIZE": "0x58"
+  },
+  "scope": "Encrypted L2 transport (CanopusConnect) and the owner pump it rides on. Static recovery from the exact firmware IDB; the owner pump part was also run in Mirage.",
+  "constraints": [
+    "Exact-image static recovery only; no production approval",
+    "Encrypted WearPacket L2 only; failed decryption never dispatches",
+    "Receive/transmit on the Bluetooth owner (the loop the SPP pty is read on); owner timer init/start on the native UI owner",
+    "SAR callback replacement only in RAM; no flash patching",
+    "No new threads or work queues"
+  ],
+  "abi": {
+    "rx": "void(uint16_t handle, uint8_t channel, uint8_t opcode, void *payload, uint16_t len)",
+    "session": "void *(uint16_t handle)",
+    "crypto": "int(void *session, int encrypt, uint16_t len, const void *in, void *out)",
+    "send": "int(void *session, const struct l2_packet *)",
+    "list": "head+4 prev link; node+12 connection; connection+12 RX callback",
+    "packet": "channel +0, opcode +1, payload +4, len +8, callbacks/cookies +12/+16/+20/+24 (28 bytes)",
+    "owner_timer": "88-byte base uv_timer_t, 8-byte aligned; init/start only on owner task"
+  },
+  "evidence": [
+    "miwear_main (sub_C370138, string 'miwear_main') stores uv_default_loop() (sub_C116920) in dword_200C8D8C, initializes a timer on it with sub_C11993C and runs it with uv_run (sub_C115054): the UI owner loop, as 0x20098D3C is on 3.1.32.",
+    "sub_C11993C is uv_timer_init(loop, timer): type 13 at +8, flags 8 at +44, loop at +4, handle queue at +16, cb/timeout/repeat cleared at +48/+64/+72. Its 50 bytes are identical to 3.1.32's sub_C1D3628.",
+    "sub_C119A74 is uv_timer_start(timer, cb, uint64 timeout, uint64 repeat): timeout +64, repeat +72, cb +48, heap node +52..+60, start id +80 (8 bytes), so an 88-byte handle. Its first 112 bytes are identical to 3.1.32's sub_C1D3760.",
+    "UI code passes dword_200C8D8C as the loop: watchface get_free_disk (sub_C4ADFF0, uv_fs_statfs request loop field) and pair ship_mode_timer_refresh (sub_C2D8E28: uv_timer_init(dword_200C8D8C, malloc(88)) then uv_timer_start).",
+    "TIMER / TIMER_DELETE are the target's lv_timer_create / lv_timer_del (FW_LV_TIMER_CREATE / FW_LV_TIMER_DEL); lv_uv_start (sub_C260E2C) deletes the display refresh timer with the same sub_C258698.",
+    "RX sub_C54C5F4 is the SAR V2 TRANS L2 receive callback: session lookup first (sub_C54D4AC), opcode 2 decrypts with sub_C54A164(session, 0, len, payload, tmp) and logs 'miwear_session_crypto_ctr decrypt failed' without dispatching; body matches 3.1.32's sub_C5592FC case for case.",
+    "SESSION sub_C54D4AC walks the session list 0x200AEF64 comparing the uint16 handle at session+14, null if absent (3.1.32 sub_C55A17C).",
+    "CRYPTO sub_C54A164: state+64 check, mutex at +76, decrypt key state+16 when encrypt=0 and state+0 otherwise, AES-CTR sub_C16959C (3.1.32 sub_C556E6C).",
+    "SEND sub_C54C844 ('miwear_transport_send  channlel:%d len:%d cached:%d'): channel +0, opcode +1, payload +4, len +8; opcode 2 encrypts with the same crypto (encrypt=1) into a temporary copy and submits through sub_C54BD68; error path calls the +20 then +12 callbacks with -1.",
+    "CONNECTIONS: SAR open sub_C54C110 ('sar open mtu too small') allocates a 216-byte connection and a 16-byte node, links the node at 0x200AEF40, node+12 = connection, connection+12 = arg3; its caller sub_C54C9C0 passes RX sub_C54C5F4 as arg3.",
+    "BT_LOOP: bts_service init sub_C3C07BC allocates the 480-byte uv_loop, uv_loop_inits it and stores it in dword_200D548C right before uv_thread_create ('[331][bts_service]'); spp_tool pty_open_callback sub_C3C3748 opens the SPP pty on the same dword_200D548C, so SAR RX runs on that loop (3.1.32: 0x200AC608)."
+  ]
+}

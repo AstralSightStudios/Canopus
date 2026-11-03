@@ -13,6 +13,7 @@
     "lv_timer_del",
     "mkdir",
     "power_battery_ready",
+    "power_battery_state",
     "property_get",
     "property_get_int32",
     "rmdir",
@@ -58,7 +59,7 @@
   ],
   "ownership_analysis": "Wake-lock objects and brightness sessions are created once per Supervisor slot and kept; wakelock_create and screen_session_create store the tag pointer, so the tag must be static. heap_malloc/heap_free share the user heap. Nothing here takes ownership of caller buffers beyond the call.",
   "unsafe_assumptions": [
-    "Battery level/charging have no callable getter on this build: callers read 0x200BD30C/0x200BD310 directly and 0xC4A9F08 copies the pair into the fixed global 0x200CDCF0 instead of an out-parameter, so only power_battery_ready is recorded and the battery service stays UNSUPPORTED.",
+    "Battery level/charging have no callable getter on this build: callers read 0x200BD30C/0x200BD310 directly and 0xC4A9F08 copies the pair into the fixed global 0x200CDCF0 instead of an out-parameter, so the battery service reads the pair itself: power_battery_state 0x200BD30C (charging byte +0, level word +4) behind power_battery_ready (added 2026-11-03).",
     "The vibrator is preset-only: miwear_vibrator_run 0xC45DC68 takes a 12-byte block whose type byte selects one of 23 stock patterns (1..23), with no waveform kind byte or duration; miwear_vibrator_cancel 0xC45DD24 cancels by id. No vibrator_run/vibrator_cancel is recorded, so haptics stays UNSUPPORTED.",
     "No Bluetooth adapter getter/state entry point was recovered (no framework adapter API strings); both ensemble records are withdrawn and adapter state stays unknown.",
     "stat is not recorded (96-byte struct stat); the Supervisor's opendir + lseek fallback is used."
