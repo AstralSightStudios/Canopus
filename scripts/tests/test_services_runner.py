@@ -1,8 +1,11 @@
 import importlib.util
 from pathlib import Path
+import sys
 import unittest
 
 MODULE = Path(__file__).resolve().parents[1] / "emu/run_services_test.py"
+# The runners import their sibling emu_config the way they do when run directly.
+sys.path.insert(0, str(MODULE.parent))
 spec = importlib.util.spec_from_file_location("services_runner", MODULE)
 runner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runner)

@@ -7,7 +7,7 @@
   "instruction_set": "thumb",
   "entry_address": "0xc871218",
   "callable_address": "0xc871219",
-  "prototype": "void(int channel, uint16_t policy)",
+  "prototype": "int(void *channel, uint16_t policy)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [

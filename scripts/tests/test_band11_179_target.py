@@ -10,6 +10,21 @@ import build_band11_installer as installer
 
 TARGET = 'xiaomi-band-11-4.100.179'
 SHA = '307adabe0ff61c77be73d045a8260e279cddd131c7a535a2678eb34199278a2b'
+# Catalog-only private ABI recorded on .155 after the port (2026-10-30, GAP
+# client / task ownership / event dispatch) and not yet matched on .179.
+NOT_YET_PORTED = {f'private_abi.{name}' for name in (
+    'bt_adapter_create_instance', 'bt_adapter_destroy_instance', 'bt_adapter_destroy_internal',
+    'bt_socket_set_option', 'connect', 'getpid', 'heap_calloc', 'socket', 'thread_loop_init',
+    'thread_loop_run', 'uv_poll_init_socket', 'uv_poll_start', 'uv_thread_create_ex',
+    'uv_work_submit')}
+# Recovered on the exact .179 image on its own (Astrolink BLE/QuickJS, 2026-10-30).
+EXACT_179_ONLY = {f'private_abi.{name}' for name in (
+    'bt_miwear_ipc_instance', 'qjs_application_vtable', 'qjs_framework_instance',
+    'qjs_framework_vtable', 'uv_loop_key')}
+
+
+def record_key(path, version):
+    return path.name.removeprefix(f'xiaomi-band-11-{version}.').removesuffix('.json')
 
 
 class Band11Target179Tests(unittest.TestCase):
@@ -31,10 +46,13 @@ class Band11Target179Tests(unittest.TestCase):
         source = ROOT / 'targets/xiaomi-band-11-4.100.155/symbols'
         target = ROOT / 'targets' / TARGET / 'symbols'
         self.assertEqual(
-            sorted(p.name.replace('4.100.155', '4.100.179')
-                   for p in source.glob('*.json')),
-            sorted(p.name for p in target.glob('*.json')))
+            sorted(record_key(p, '4.100.155') for p in source.glob('*.json')
+                   if record_key(p, '4.100.155') not in NOT_YET_PORTED),
+            sorted(record_key(p, '4.100.179') for p in target.glob('*.json')
+                   if record_key(p, '4.100.179') not in EXACT_179_ONLY))
         for path in source.glob('*.json'):
+            if record_key(path, '4.100.155') in NOT_YET_PORTED:
+                continue
             baseline = json.loads(path.read_text())
             record = json.loads((target / path.name.replace('4.100.155', '4.100.179')).read_text())
             with self.subTest(symbol=record['name']):

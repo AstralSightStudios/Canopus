@@ -57,18 +57,18 @@ class FirmwareIntegrationTests(unittest.TestCase):
             m.uc.reg_write(UC_ARM_REG_R3, module_name)
             self.assertEqual(m.call(add_module, supervisor), slot)
             m.uc.reg_write(UC_ARM_REG_R1, slot)
-            self.assertEqual(m.call(reserve, supervisor), 0xcc + slot - 3)
+            self.assertEqual(m.call(reserve, supervisor), 0xcc + slot)
             m.uc.mem_write(definition, struct.pack('<IIIII', 20, label, icon_ptr, 0, 0))
             m.uc.reg_write(UC_ARM_REG_R1, definition)
             return m.call(publish, slot)
 
-        self.assertEqual(publish_entry(3, icon), 0)
+        self.assertEqual(publish_entry(0, icon), 0)
         self.assertEqual(m.module_apps, {}, 'publish must not call the firmware')
         self.assertEqual(m.call(step), 1)
         self.assertEqual(sorted(m.module_apps), [0xcc])
         self.assertEqual(m.launcher, [0xca], 'the launcher is added on its own step')
         app = m.module_apps[0xcc]
-        self.assertEqual(app['package'], 'com.canopus.module.notes.3')
+        self.assertEqual(app['package'], 'com.canopus.module.notes.0')
         self.assertEqual(app['icon'], '/data/notes/icon.bin')
         self.assertEqual(m.string(m.call(app['label_callback'])), 'Notes')
         self.assertEqual(m.call(step), 1)
@@ -81,13 +81,13 @@ class FirmwareIntegrationTests(unittest.TestCase):
         self.assertEqual(m.call(m.word(app['page'] + 0x4c), app['page']), 0xffffffff)
 
         # a second entry without an icon gets the Canopus one, and the pool is finite
-        self.assertEqual(publish_entry(4, 0), 0)
+        self.assertEqual(publish_entry(1, 0), 0)
         self.assertEqual(m.call(step), 1)
         self.assertEqual(m.module_apps[0xcd]['icon'], '/data/canopus/manager_icon.bin')
         self.assertEqual(m.call(step), 1)
-        for slot in range(5, 11):
+        for slot in range(2, 8):
             self.assertEqual(publish_entry(slot, 0), 0)
-        self.assertEqual(publish_entry(11, 0), 0xfffffff4)
+        self.assertEqual(publish_entry(8, 0), 0xfffffff4)
 
     def test_real_lua_io_policy_allows_public_installer_path(self):
         m = Machine()

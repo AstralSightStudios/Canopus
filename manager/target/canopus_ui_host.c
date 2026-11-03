@@ -1210,6 +1210,12 @@ static int32_t host_image_scales(const void *source, const struct host_geometry 
 }
 #endif
 
+/* Replacement nodes staged by host_apply (2.6 KiB). They live outside the
+ * stack because page callbacks run on firmware task stacks of 4 KiB.
+ * host_apply never nests: native callbacks reach a module only on CLICKED /
+ * VALUE_CHANGED, which the object creation and deletion done here do not send. */
+static struct canopus_ui_host_node s_candidates[CANOPUS_UI_MAX_NODES];
+
 static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *snapshot)
 {
     struct canopus_ui_host_view *view = cookie;
@@ -1222,7 +1228,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
     struct host_font *fonts[CANOPUS_UI_MAX_NODES] = {0};
 #endif
     uint8_t map[CANOPUS_UI_MAX_NODES], fresh[CANOPUS_UI_MAX_NODES] = {0};
-    struct canopus_ui_host_node candidates[CANOPUS_UI_MAX_NODES];
+    struct canopus_ui_host_node *candidates = s_candidates;
     void *extent_candidates[CANOPUS_UI_MAX_NODES] = {0};
     void *content_candidate = NULL;
     int32_t retained_scroll = 0;
@@ -1320,7 +1326,7 @@ static int32_t host_apply(void *cookie, const struct canopus_ui_snapshot_v1 *sna
                              ~host_local_style(&snapshot->styles[i],&snapshot->visuals[i]))) ||
             (n->parent != CANOPUS_UI_NO_NODE && fresh[n->parent]);
     }
-    canopus_memset(candidates, 0, sizeof(candidates));
+    canopus_memset(candidates, 0, sizeof(s_candidates));
     if (fresh[0]) {
         const struct canopus_ui_node_v1 *old = host_previous_key(previous,snapshot->nodes[0].key);
         if (old != NULL && old->type == CANOPUS_UI_NODE_NAVIGATION_PAGE && view->nodes[map[0]].object != NULL) {

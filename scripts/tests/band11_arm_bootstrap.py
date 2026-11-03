@@ -316,6 +316,8 @@ class Machine:
             for off in (0x34,0x4c,0x50,0x5c,0x64):assert self.word(page+off)&1
             self.module_apps[app_id]={'package':package,'icon':self.string(self.word(ptr+16)),
                                       'label_callback':self.word(ptr+36),'page':page}
+            # the installed record the firmware's app_lookup hands back
+            self.uc.mem_write(self.module_app(app_id),bytes(self.uc.mem_read(ptr,80)))
             self.uc.mem_write(ptr+23,b'\x01\x01')
             return 0
         assert count==4
@@ -329,9 +331,11 @@ class Machine:
         self.app=0x200c0000;self.uc.mem_write(self.app,bytes(self.uc.mem_read(ptr,80)))
         self.uc.mem_write(ptr+23,b'\x01\x01') # firmware defaults mutate input
         return 0
+    def module_app(self,app_id):
+        return 0x200c1000+(app_id-0xcc)*0x80
     def app_lookup(self):
         app_id=self.reg(0)
-        return self.app if app_id==0xca else (0x200c1000+app_id if app_id in self.module_apps else 0)
+        return self.app if app_id==0xca else (self.module_app(app_id) if app_id in self.module_apps else 0)
     def launcher_add(self):
         app_id=self.reg(0)
         assert (app_id==0xca and self.app) or app_id in self.module_apps
