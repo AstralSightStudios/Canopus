@@ -13,7 +13,7 @@ supervisor_max_size = 133120
 # is an explicit maintainer decision and device loading stays NOT_PROBED.
 supervisor_max_resident = 172032
 loader_sources = []
-defines = []
+defines = ["-DCANOPUS_SUP_DISPLAY_WIDTH=336", "-DCANOPUS_SUP_DISPLAY_HEIGHT=480"]
 prod_family = "xiaomi-band-10-pro"
 # Hand-written sdk/rust/canopus-target-private facade consumes generated_symbols_<rust_module>.rs.
 private_symbols = true

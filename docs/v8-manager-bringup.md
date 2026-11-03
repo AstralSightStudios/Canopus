@@ -1811,3 +1811,51 @@ n66 Mirage 验证（最终构建）：导入 uidemo → 列表 → 详情 → �
 
 **限制**：没有真机证据，不提升任何能力状态。
 没有真机证据，不提升任何能力状态。
+
+## 第 34 轮：与 Band 10 Pro / Band 11 的体验对齐（2026-11-03）
+
+任务清单在 `refactor-plan.md`「新设备体验对齐」，这里记录 v8 三台上的排查过程。以下全部是 Mirage（emulator）证据。
+
+**用 all-services-test 当对齐基线。** 这个模块调用每一组服务，会把 PASS / SKIP / FAIL 写进 `m.services_test/test_report.txt`，再跨一次重启检查 KV。
+测试用的是一份只在模拟器里用的安装器表盘（未入库）：开机后自动 Run，走完后再对目标模块依次执行 INSTALL、ENABLE、ACTIVATE。本轮修掉的问题：
+
+- 模块加载不了（`-6`）：C 模块每个函数约 4 个 section，services_test 有 310 个，而 loader 的 scratch 是定长的。现在按 ELF 头里的 section 数分配。
+  verifier 也不再拒绝 `SHF_MERGE|SHF_STRINGS` 段。
+- v8 模块镜像在 Umem 里，特权任务的默认 map 本来就能执行，所以不再申请 MPU lease。
+- RESTORE 报 `-6`，但每个槽位其实都是 ACTIVE：`sup_verify_kind` 成功时把 `error_code` 清零了，前一个槽位的失败被它抹掉。现在只在失败时写。
+- 旧 SDK 打包的 `uidemo` 激活失败（`-22`）：它的 28 字节 UI entry 是 `page_count` 之前的前缀。现在接受两种旧前缀。
+- 通知原来是桩（`-38`），现在接上了 `lvx_notification_insert_message`。固件会复制 88 字节的消息结构并 strdup 所有字符串，只能在 UI 线程调用。
+  `start_reminder` 在 n66 是 +0x4c，在 n67 / o66 是 +0x50。
+
+结果：n66 26/27、n67 25/27、o66 25/27。跳过的是 Haptics（只有预设），n67 / o66 还跳过 Connect（没有 L2）。三台的 KV 跨重启都通过。
+
+**n66 / n67 的反复复位是 harness 自己造成的。** 每次崩溃前，日志的顺序都一样：`on_ui_create: create view {202, 0}`，接着 `home on_destroy: page main`，
+然后是 heap assert 或 MemManage（n66 停在 `render_file_create` 里）。n66 / n67 安装器步骤的最后一步是 OPEN_MANAGER。
+AUTORUN 在表盘脚本加载时同步跑完所有步骤，也就是还在固件的 `render_file_create` 里面；这时推 Manager 页，会把还没建好的表盘页销毁。
+真实用户的 Run 是表盘建好以后的一次点击，不会走到这条路径。o66 的步骤里没有 OPEN_MANAGER，所以 o66 从不复位。
+harness 改成用一次性的 `lvgl.Timer` 延后 3 秒再执行后，n66 / n67 各开机两次：没有新增 minidump，每次开机只跑一轮 harness，模块都没有被隔离。
+
+**熄屏时开机稳定性提交不了。** 模块启动后要稳定运行 `CANOPUS_SUP_STABLE_MS`（60 秒），开机才算稳定。
+这个检查由两路心跳驱动：LVGL 定时器（熄屏时随 LVGL 一起暂停），以及 owner pump（UI loop 上的常驻 libuv 定时器）。
+n66 的 owner pump 来自它的 L2 证据，所以两次开机都提交了：boot word 为 0，starts 为 0。
+n67 / o66 没有 owner pump，`booting` 一直不清，starts 跨开机累加。到第三次就会触发 UNSTABLE 隔离，而 Band 10 Pro / Band 11 不会这样。
+本轮补了 owner pump（`evidence/owner-pump.json`）：
+
+| | n67 3.1.190 | o66 3.1.28 |
+|---|---|---|
+| `miwear_main` | `sub_C370138` | `sub_C383B24` |
+| UI loop（`uv_default_loop()` 的结果） | `0x200C8D8C` | `0x200A2B80` |
+| `uv_timer_init` | `0x0C11993C`（与 n66 50 字节相同） | `0x0C1C0008`（同布局，两条 store 换序） |
+| `uv_timer_start` | `0x0C119A74`（与 n66 前 112 字节相同） | `0x0C1C0142`（同偏移；start id 在 +80，88 字节句柄） |
+
+两个 loop 都被 UI 代码直接使用，例如表盘的 `get_free_disk`（`uv_fs_statfs`），以及 n67 的 `ship_mode_timer_refresh`（`uv_timer_init(loop, malloc(88))`）。
+
+n67 / o66 的 Supervisor 重新构建后（123,256 / 123,716 B，verifier PASS），各开机两次，每次 150 秒。屏幕只在开机约 30–50 秒时亮一下（充电画面 / 表盘），
+其余时间都是熄屏。两次开机都提交了稳定：boot word 为 0，四个模块的 starts 都是 0，没有新增 minidump。
+all-services-test 25/27，Timers 现在会走 `timer_set_background`（TIME v2），也通过了。
+
+**仍是差距**：
+- 四台都没有固化启动；
+- n67 / o66 没有 L2 / Connect；
+- p65 没有 owner pump，Mirage 上也跑不了；
+- 没有真机证据，真机清单见第 33 轮。

@@ -5,25 +5,32 @@
   "name": "heap_malloc",
   "kind": "function",
   "instruction_set": "thumb",
+  "entry_address": "0x0c16ae80",
+  "callable_address": "0x0c16ae81",
   "prototype": "void *(uint32_t)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+      "EVID-PLATFORM-HW-9132-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+      "EVID-PLATFORM-HW-9132-001"
     ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+    "source": "exact 3.1.32 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state and property library review)"
   },
-  "entry_address": "0xc434c1c",
-  "callable_address": "0xc434c1d",
-  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
-  "approval_state": "PENDING"
+  "notes": "malloc: mm_malloc (mm_heap/mm_malloc.c) on the user heap g_mmheap 0x2007D6EC. Replaces the ensemble address 0xc434c1c, which is a C++ copy helper. Supervisor platform service; static evidence only, device NOT_PROBED."
 }

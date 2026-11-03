@@ -5,24 +5,27 @@
   "name": "heap_free",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "int(void *)",
+  "entry_address": "0xc50b25c",
+  "callable_address": "0xc50b25d",
+  "prototype": "void(void *)",
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact redmi-watch-6-3.100.043 IDB vela_ap.bin.i64 review (EVID-PLATFORM-HW-P65-001): Default-heap free: forwards (heap, ptr) to the mm free body over dword_3C3D4F10[3043] (same entry as mm_free_default); no meaningful return value."
   },
-  "entry_address": "0xc50b25c",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_CONFIRMED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (heap_free) Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record.",
+  "notes": "manual static review 2026-11-03 (EVID-PLATFORM-HW-P65-001): Default-heap free: forwards (heap, ptr) to the mm free body over dword_3C3D4F10[3043] (same entry as mm_free_default); no meaningful return value. Restricted/PENDING; static evidence only, device NOT_PROBED. Physical device validation pending; no approval carries over from the source target.",
   "approval_state": "PENDING"
 }

@@ -6,7 +6,7 @@ loader_sources = [
   "runtime/loader/canopus_arm_reloc.c",
   "runtime/loader/canopus_elf32_loader.c",
 ]
-defines = ["-DCANOPUS_SUP_BAND9_BOOTSTRAP=1"]
+defines = ["-DCANOPUS_SUP_BAND9_BOOTSTRAP=1", "-DCANOPUS_SUP_DISPLAY_WIDTH=336", "-DCANOPUS_SUP_DISPLAY_HEIGHT=480"]
 prod_family = "xiaomi-band-9-pro"
 private_symbols = false
 native_config = false

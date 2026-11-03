@@ -4,43 +4,44 @@
   "target_id": "xiaomi-band-9-3.1.32",
   "name": "lvx_notification_insert_message",
   "kind": "function",
-  "entry_address": "0xc16b154",
-  "callable_address": "0xc16b155",
   "instruction_set": "thumb",
-  "prototype": "int(const firmware_notification_message *message)",
+  "entry_address": "0x0c4f9870",
+  "callable_address": "0x0c4f9871",
+  "prototype": "void(const firmware_notification_message_v8 *message)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
-      "notification_owner",
-      "system_app_lifecycle_callback"
+      "ui-owner-thread"
     ],
     "blocking": false
   },
-  "ownership": {
-    "return_value": "zero_or_one_observed_but_exact_failure_contract_not_proved"
-  },
-  "side_effects": [
-    "allocates_and_inserts_notification_record",
-    "may_start_reminder",
-    "may_emit_notification_event_32",
-    "schedules_notification_timer"
-  ],
   "proof": {
     "static": "recovered",
+    "device": "not_probed",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
-    ],
-    "device": "not_probed"
+      "EVID-NOTIFY-9132-001"
+    ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+      "EVID-NOTIFY-9132-001"
     ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+    "source": "exact 3.1.32 IDB vela_ap.bin.i64 (notification_manager __func__ log strings, lvx_notification_init_message / insert_message / free_data, 17 stock callers, reminder and detail views)"
   },
-  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
-  "approval_state": "PENDING"
+  "notes": "lvx_notification_insert_message: logs 'Msg is NULL' under __func__ lvx_notification_insert_message (notification_manager). Copies the 88-byte caller struct (lvx_notification_init_message 0xC46CF74: malloc 88 + memcpy; NULL +0x1c/+0x20 icons default to /resource/app/notifications/default.bin / default_small.bin; +0x2c timestamp 0 is filled with CLOCK_REALTIME seconds), then insert_message 0xC472300 strdups every string (+0x0c,+0x10,+0x14,+0x18,+0x1c,+0x20,+0x24,+0x28; >512 bytes truncated with '...') into the uid-keyed lv_ll list 0x20070FEC and frees the temporary. Start-reminder byte is +0x4c (not +0x50 as in the .043 struct); +0x50 is the user_data pointer handed to the +0x44 detail callback. Returns free() residue, not a status. Runs uv_timer_start on timers bound to the app loop *0x20098D3C and dispatches event 27 synchronously, so call only from the UI/app-loop thread. Replaces the ensemble address 0xc16b154, which is bes_i2c_transfer. Supervisor platform service; static evidence only, device NOT_PROBED.",
+  "ownership": {
+    "message": "borrowed_for_call_firmware_copies_88_bytes",
+    "strings": "borrowed_for_call_firmware_strdups_all",
+    "return_value": "free_residue_not_a_status"
+  },
+  "side_effects": [
+    "allocates_and_inserts_notification_record",
+    "may_start_reminder_when_byte_0x4c_set",
+    "publishes_event_27_synchronously",
+    "starts_uv_timer_on_app_loop"
+  ]
 }

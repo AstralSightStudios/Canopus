@@ -1,0 +1,28 @@
+{
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "schema": 1,
+  "status": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "approval_state": "PENDING",
+  "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+  "addresses": {
+    "TIMER": "0x0C25A289",
+    "TIMER_DELETE": "0x0C258699",
+    "OWNER_LOOP": "0x200C8D8C",
+    "OWNER_TIMER_INIT": "0x0C11993D",
+    "OWNER_TIMER_START": "0x0C119A75",
+    "OWNER_TIMER_SIZE": "0x58"
+  },
+  "evidence": [
+    "miwear_main (sub_C370138, string 'miwear_main') stores uv_default_loop() (sub_C116920) in dword_200C8D8C, initializes a timer on it with sub_C11993C and runs it with uv_run (sub_C115054): the UI owner loop, as 0x20098D3C is on 3.1.32.",
+    "sub_C11993C is uv_timer_init(loop, timer): type 13 at +8, flags 8 at +44, loop at +4, handle queue at +16, cb/timeout/repeat cleared at +48/+64/+72. Its 50 bytes are identical to 3.1.32's sub_C1D3628.",
+    "sub_C119A74 is uv_timer_start(timer, cb, uint64 timeout, uint64 repeat): timeout +64, repeat +72, cb +48, heap node +52..+60, start id +80 (8 bytes), so an 88-byte handle. Its first 112 bytes are identical to 3.1.32's sub_C1D3760.",
+    "UI code passes dword_200C8D8C as the loop: watchface get_free_disk (sub_C4ADFF0, uv_fs_statfs request loop field) and pair ship_mode_timer_refresh (sub_C2D8E28: uv_timer_init(dword_200C8D8C, malloc(88)) then uv_timer_start).",
+    "TIMER / TIMER_DELETE are the target's lv_timer_create / lv_timer_del (FW_LV_TIMER_CREATE / FW_LV_TIMER_DEL); lv_uv_start (sub_C260E2C) deletes the display refresh timer with the same sub_C258698."
+  ],
+  "scope": "Owner pump only: background timers and the boot stability commit (screen-off) on the UI owner loop. No L2 transport: SAR RX/session/crypto/send are not recovered for this target.",
+  "constraints": [
+    "uv_timer_init/start mutate owner-loop lists and heaps; only the LVGL bootstrap callback on the UI owner initializes and starts the resident handle, and its callbacks run on that loop. No threads or work queues.",
+    "Static recovery from the exact firmware IDB plus Mirage emulator runs; no physical-device validation yet."
+  ]
+}

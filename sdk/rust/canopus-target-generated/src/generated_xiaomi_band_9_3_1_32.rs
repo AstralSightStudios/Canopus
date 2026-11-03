@@ -4,7 +4,7 @@
 // firmware : 3.1.32 (Jul 27 2026 19:42:01)
 // sha256   : 9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264
 // revision : 3
-// input_digest: 6ec6476711dc9aff
+// input_digest: 708de7cd31624b1f
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -75,6 +75,9 @@ pub const canopus_fw_interconnect_loop: usize = 0x20098d3cusize;
 /// Recovered `l2cap_unregister_psm_handler` at 0xc3b3520. Thumb callable address 0xc3b3521.
 pub const CANOPUS_FW_L2CAP_UNREGISTER_PSM_HANDLER_CALLABLE: usize = canopus_thumb_callable(0xc3b3521usize);
 
+/// Recovered `screen_session_create` at 0x0c45cd58. Thumb callable address 0x0c45cd59.
+pub const CANOPUS_FW_SCREEN_SESSION_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c45cd59usize);
+
 /// Recovered `l2_owner_timer_init` at 0xc1d3628. Thumb callable address 0xc1d3629.
 pub const CANOPUS_FW_L2_OWNER_TIMER_INIT_CALLABLE: usize = canopus_thumb_callable(0xc1d3629usize);
 
@@ -126,8 +129,8 @@ pub const CANOPUS_FW_LEGACY_EXTENSION_INIT_DISPATCH_CALLABLE: usize = canopus_th
 /// Recovered `bt_adapter_unregister` at 0xc389eec. Thumb callable address 0xc389eed.
 pub const CANOPUS_FW_BT_ADAPTER_UNREGISTER_CALLABLE: usize = canopus_thumb_callable(0xc389eedusize);
 
-/// Recovered `lseek` at 0xc3ba3f8. Thumb callable address 0xc3ba3f9.
-pub const CANOPUS_FW_LSEEK_CALLABLE: usize = canopus_thumb_callable(0xc3ba3f9usize);
+/// Recovered `lseek` at 0x0c3932bc. Thumb callable address 0x0c3932bd.
+pub const CANOPUS_FW_LSEEK_CALLABLE: usize = canopus_thumb_callable(0x0c3932bdusize);
 
 /// Recovered `sem_post` at 0xc1a8440. Thumb callable address 0xc1a8441.
 pub const CANOPUS_FW_SEM_POST_CALLABLE: usize = canopus_thumb_callable(0xc1a8441usize);
@@ -141,14 +144,14 @@ pub const CANOPUS_FW_MM_MEMALIGN_DEFAULT_CALLABLE: usize = canopus_thumb_callabl
 /// Recovered `heap_free_native` at 0xc16a424. Thumb callable address 0xc16a425.
 pub const CANOPUS_FW_HEAP_FREE_NATIVE_CALLABLE: usize = canopus_thumb_callable(0xc16a425usize);
 
-/// Recovered `bt_adapter_get_state` at 0xc465254. Thumb callable address 0xc465255.
-pub const CANOPUS_FW_BT_ADAPTER_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0xc465255usize);
-
 /// Recovered `register_blockdriver` at 0xc1ae0d0. Thumb callable address 0xc1ae0d1.
 pub const CANOPUS_FW_REGISTER_BLOCKDRIVER_CALLABLE: usize = canopus_thumb_callable(0xc1ae0d1usize);
 
 /// Recovered `l2_owner_timer_start` at 0xc1d3760. Thumb callable address 0xc1d3761.
 pub const CANOPUS_FW_L2_OWNER_TIMER_START_CALLABLE: usize = canopus_thumb_callable(0xc1d3761usize);
+
+/// Recovered `screen_session_set_auto_brightness` at 0x0c45dd90. Thumb callable address 0x0c45dd91.
+pub const CANOPUS_FW_SCREEN_SESSION_SET_AUTO_BRIGHTNESS_CALLABLE: usize = canopus_thumb_callable(0x0c45dd91usize);
 
 /// Recovered `page_goto` at 0xc4b456c. Thumb callable address 0xc4b456d.
 pub const CANOPUS_FW_PAGE_GOTO_CALLABLE: usize = canopus_thumb_callable(0xc4b456dusize);
@@ -161,6 +164,12 @@ pub const CANOPUS_FW_LV_OBJ_CLEAR_FLAG_CALLABLE: usize = canopus_thumb_callable(
 
 /// Recovered `lvx_font_create` at 0xc29b028. Thumb callable address 0xc29b029.
 pub const CANOPUS_FW_LVX_FONT_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc29b029usize);
+
+/// Recovered `screen_turn_on` at 0x0c45fff0. Thumb callable address 0x0c45fff1.
+pub const CANOPUS_FW_SCREEN_TURN_ON_CALLABLE: usize = canopus_thumb_callable(0x0c45fff1usize);
+
+/// Recovered `system_get_state` at 0x0c38b6fc. Thumb callable address 0x0c38b6fd.
+pub const CANOPUS_FW_SYSTEM_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0c38b6fdusize);
 
 /// Recovered `miwear_session_crypto_ctr` at 0xc556e6c. Thumb callable address 0xc556e6d.
 pub const CANOPUS_FW_MIWEAR_SESSION_CRYPTO_CTR_CALLABLE: usize = canopus_thumb_callable(0xc556e6dusize);
@@ -192,6 +201,9 @@ pub const canopus_fw_bts_service_loop: usize = 0x200ac608usize;
 /// Recovered `ioctl` at 0xc207228. Thumb callable address 0xc207229.
 pub const CANOPUS_FW_IOCTL_CALLABLE: usize = canopus_thumb_callable(0xc207229usize);
 
+/// Recovered `screen_get_state` at 0x0c45a50c. Thumb callable address 0x0c45a50d.
+pub const CANOPUS_FW_SCREEN_GET_STATE_CALLABLE: usize = canopus_thumb_callable(0x0c45a50dusize);
+
 /// Recovered `protobuf_set_ordered_app_list` at 0xc2cba08. Thumb callable address 0xc2cba09.
 pub const CANOPUS_FW_PROTOBUF_SET_ORDERED_APP_LIST_CALLABLE: usize = canopus_thumb_callable(0xc2cba09usize);
 
@@ -203,6 +215,9 @@ pub const CANOPUS_FW_SERVICE_MANAGER_GET_PROFILE_CALLABLE: usize = canopus_thumb
 
 /// Recovered `driver_ioctl_dispatch` at 0xc33e480. Thumb callable address 0xc33e481.
 pub const CANOPUS_FW_DRIVER_IOCTL_DISPATCH_CALLABLE: usize = canopus_thumb_callable(0xc33e481usize);
+
+/// Recovered `wakelock_release` at 0x0c4601dc. Thumb callable address 0x0c4601dd.
+pub const CANOPUS_FW_WAKELOCK_RELEASE_CALLABLE: usize = canopus_thumb_callable(0x0c4601ddusize);
 
 /// Recovered `legacy_advertising_stop` at 0xc3d8914. Thumb callable address 0xc3d8915.
 pub const CANOPUS_FW_LEGACY_ADVERTISING_STOP_CALLABLE: usize = canopus_thumb_callable(0xc3d8915usize);
@@ -240,11 +255,17 @@ pub const CANOPUS_FW_ERRNO_LOCATION_CALLABLE: usize = canopus_thumb_callable(0xc
 /// Recovered `bt_free` at 0xc2c816c. Thumb callable address 0xc2c816d.
 pub const CANOPUS_FW_BT_FREE_CALLABLE: usize = canopus_thumb_callable(0xc2c816dusize);
 
+/// Recovered global `system_state` at 0x200a8f88.
+pub const canopus_fw_system_state: usize = 0x200a8f88usize;
+
 /// Recovered `lv_obj_align_to` at 0x0c278bdc. Thumb callable address 0xc278bdd.
 pub const CANOPUS_FW_LV_OBJ_ALIGN_TO_CALLABLE: usize = canopus_thumb_callable(0xc278bddusize);
 
 /// Recovered `btsnoop_avdtp_recognizer` at 0xc4633b0. Thumb callable address 0xc4633b1.
 pub const CANOPUS_FW_BTSNOOP_AVDTP_RECOGNIZER_CALLABLE: usize = canopus_thumb_callable(0xc4633b1usize);
+
+/// Recovered `rmdir` at 0x0c391c58. Thumb callable address 0x0c391c59.
+pub const CANOPUS_FW_RMDIR_CALLABLE: usize = canopus_thumb_callable(0x0c391c59usize);
 
 /// Recovered `qjs_typed_array_validate` at 0xc2051e4. Thumb callable address 0xc2051e5.
 pub const CANOPUS_FW_QJS_TYPED_ARRAY_VALIDATE_CALLABLE: usize = canopus_thumb_callable(0xc2051e5usize);
@@ -273,8 +294,11 @@ pub const CANOPUS_FW_L2CAP_OPEN_EVENT_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `app_install` at 0x0c4594d8. Thumb callable address 0xc4594d9.
 pub const CANOPUS_FW_APP_INSTALL_CALLABLE: usize = canopus_thumb_callable(0xc4594d9usize);
 
-/// Recovered `heap_malloc` at 0xc434c1c. Thumb callable address 0xc434c1d.
-pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0xc434c1dusize);
+/// Recovered `heap_malloc` at 0x0c16ae80. Thumb callable address 0x0c16ae81.
+pub const CANOPUS_FW_HEAP_MALLOC_CALLABLE: usize = canopus_thumb_callable(0x0c16ae81usize);
+
+/// Recovered `screen_session_start` at 0x0c45db9c. Thumb callable address 0x0c45db9d.
+pub const CANOPUS_FW_SCREEN_SESSION_START_CALLABLE: usize = canopus_thumb_callable(0x0c45db9dusize);
 
 /// Recovered `interconnect_connect` at 0xc4397f4. Thumb callable address 0xc4397f5.
 pub const CANOPUS_FW_INTERCONNECT_CONNECT_CALLABLE: usize = canopus_thumb_callable(0xc4397f5usize);
@@ -312,6 +336,9 @@ pub const CANOPUS_FW_CONTROLLER_CRASH_DUMP_CALLABLE: usize = canopus_thumb_calla
 /// Recovered global `bts_adapter_ready` at 0x200ac470.
 pub const canopus_fw_bts_adapter_ready: usize = 0x200ac470usize;
 
+/// Recovered `wakelock_acquire` at 0x0c4600fc. Thumb callable address 0x0c4600fd.
+pub const CANOPUS_FW_WAKELOCK_ACQUIRE_CALLABLE: usize = canopus_thumb_callable(0x0c4600fdusize);
+
 /// Recovered `bt_socket_server_receive` at 0xc39db54. Thumb callable address 0xc39db55.
 pub const CANOPUS_FW_BT_SOCKET_SERVER_RECEIVE_CALLABLE: usize = canopus_thumb_callable(0xc39db55usize);
 
@@ -326,6 +353,9 @@ pub const CANOPUS_FW_LVX_PAGE_CONTENT_CREATE_CALLABLE: usize = canopus_thumb_cal
 
 /// Recovered `lvx_object_add_flag` at 0xc534d68. Thumb callable address 0xc534d69.
 pub const CANOPUS_FW_LVX_OBJECT_ADD_FLAG_CALLABLE: usize = canopus_thumb_callable(0xc534d69usize);
+
+/// Recovered `screen_session_restore_default` at 0x0c45dcfc. Thumb callable address 0x0c45dcfd.
+pub const CANOPUS_FW_SCREEN_SESSION_RESTORE_DEFAULT_CALLABLE: usize = canopus_thumb_callable(0x0c45dcfdusize);
 
 /// Recovered `hfp_ag_connect` at 0xc31ae64. Thumb callable address 0xc31ae65.
 pub const CANOPUS_FW_HFP_AG_CONNECT_CALLABLE: usize = canopus_thumb_callable(0xc31ae65usize);
@@ -357,8 +387,8 @@ pub const CANOPUS_FW_LV_IMG_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc2
 /// Recovered `lv_obj_set_size` at 0x0c27845e. Thumb callable address 0xc27845f.
 pub const CANOPUS_FW_LV_OBJ_SET_SIZE_CALLABLE: usize = canopus_thumb_callable(0xc27845fusize);
 
-/// Recovered `heap_free` at 0xc2b8864. Thumb callable address 0xc2b8865.
-pub const CANOPUS_FW_HEAP_FREE_CALLABLE: usize = canopus_thumb_callable(0xc2b8865usize);
+/// Recovered `heap_free` at 0x0c16a424. Thumb callable address 0x0c16a425.
+pub const CANOPUS_FW_HEAP_FREE_CALLABLE: usize = canopus_thumb_callable(0x0c16a425usize);
 
 /// Recovered `l2cap_find_le_psm` at 0xc3aec54. Thumb callable address 0xc3aec55.
 pub const CANOPUS_FW_L2CAP_FIND_LE_PSM_CALLABLE: usize = canopus_thumb_callable(0xc3aec55usize);
@@ -384,6 +414,9 @@ pub const CANOPUS_FW_L2CAP_REGISTER_PSM_HANDLER_CALLABLE: usize = canopus_thumb_
 /// Recovered `mpu_region_allocate` at 0x0c5228a4. Thumb callable address 0xc5228a5.
 pub const CANOPUS_FW_MPU_REGION_ALLOCATE_CALLABLE: usize = canopus_thumb_callable(0xc5228a5usize);
 
+/// Recovered `power_battery_snapshot` at 0x0c45a474. Thumb callable address 0x0c45a475.
+pub const CANOPUS_FW_POWER_BATTERY_SNAPSHOT_CALLABLE: usize = canopus_thumb_callable(0x0c45a475usize);
+
 /// Recovered `bt_pair_display_reply` at 0xc4e38ce. Thumb callable address 0xc4e38cf.
 pub const CANOPUS_FW_BT_PAIR_DISPLAY_REPLY_CALLABLE: usize = canopus_thumb_callable(0xc4e38cfusize);
 
@@ -393,8 +426,14 @@ pub const CANOPUS_FW_INODE_LOCK_CALLABLE: usize = canopus_thumb_callable(0xc3900
 /// Recovered `uv_async_init` at 0xc1d6ad0. Thumb callable address 0xc1d6ad1.
 pub const CANOPUS_FW_UV_ASYNC_INIT_CALLABLE: usize = canopus_thumb_callable(0xc1d6ad1usize);
 
+/// Recovered `fsync` at 0x0c3934e0. Thumb callable address 0x0c3934e1.
+pub const CANOPUS_FW_FSYNC_CALLABLE: usize = canopus_thumb_callable(0x0c3934e1usize);
+
 /// Recovered `lvx_page_title_create` at 0x0c4c5f60. Thumb callable address 0xc4c5f61.
 pub const CANOPUS_FW_LVX_PAGE_TITLE_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc4c5f61usize);
+
+/// Recovered `wakelock_create` at 0x0c45deec. Thumb callable address 0x0c45deed.
+pub const CANOPUS_FW_WAKELOCK_CREATE_CALLABLE: usize = canopus_thumb_callable(0x0c45deedusize);
 
 /// Recovered `lvx_object_align` at 0xc534c18. Thumb callable address 0xc534c19.
 pub const CANOPUS_FW_LVX_OBJECT_ALIGN_CALLABLE: usize = canopus_thumb_callable(0xc534c19usize);
@@ -438,6 +477,9 @@ pub const CANOPUS_FW_L2CAP_ACCEPT_HANDLER_CALLABLE: usize = canopus_thumb_callab
 /// Recovered `service_manager_cleanup` at 0xc28f9cc. Thumb callable address 0xc28f9cd.
 pub const CANOPUS_FW_SERVICE_MANAGER_CLEANUP_CALLABLE: usize = canopus_thumb_callable(0xc28f9cdusize);
 
+/// Recovered `screen_session_set_brightness_value` at 0x0c45de20. Thumb callable address 0x0c45de21.
+pub const CANOPUS_FW_SCREEN_SESSION_SET_BRIGHTNESS_VALUE_CALLABLE: usize = canopus_thumb_callable(0x0c45de21usize);
+
 /// Recovered `lvx_image_set_scale` at 0xc3813a0. Thumb callable address 0xc3813a1.
 pub const CANOPUS_FW_LVX_IMAGE_SET_SCALE_CALLABLE: usize = canopus_thumb_callable(0xc3813a1usize);
 
@@ -477,6 +519,9 @@ pub const CANOPUS_FW_DRIVER_READ_DISPATCH_CALLABLE: usize = canopus_thumb_callab
 /// Recovered `lv_obj_move_to_index` at 0xc534a90. Thumb callable address 0xc534a91.
 pub const CANOPUS_FW_LV_OBJ_MOVE_TO_INDEX_CALLABLE: usize = canopus_thumb_callable(0xc534a91usize);
 
+/// Recovered `power_battery_ready` at 0x0c45a458. Thumb callable address 0x0c45a459.
+pub const CANOPUS_FW_POWER_BATTERY_READY_CALLABLE: usize = canopus_thumb_callable(0x0c45a459usize);
+
 /// Recovered `legacy_scan_start` at 0xc3d7598. Thumb callable address 0xc3d7599.
 pub const CANOPUS_FW_LEGACY_SCAN_START_CALLABLE: usize = canopus_thumb_callable(0xc3d7599usize);
 
@@ -486,8 +531,8 @@ pub const CANOPUS_FW_LEGACY_SCAN_STOP_CALLABLE: usize = canopus_thumb_callable(0
 /// Recovered `lv_image_set_src` at 0xc3be3a4. Thumb callable address 0xc3be3a5.
 pub const CANOPUS_FW_LV_IMAGE_SET_SRC_CALLABLE: usize = canopus_thumb_callable(0xc3be3a5usize);
 
-/// Recovered `lvx_notification_insert_message` at 0xc16b154. Thumb callable address 0xc16b155.
-pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_thumb_callable(0xc16b155usize);
+/// Recovered `lvx_notification_insert_message` at 0x0c4f9870. Thumb callable address 0x0c4f9871.
+pub const CANOPUS_FW_LVX_NOTIFICATION_INSERT_MESSAGE_CALLABLE: usize = canopus_thumb_callable(0x0c4f9871usize);
 
 /// Recovered `heap_mallinfo` at 0xc173e98. Thumb callable address 0xc173e99.
 pub const CANOPUS_FW_HEAP_MALLINFO_CALLABLE: usize = canopus_thumb_callable(0xc173e99usize);
@@ -498,11 +543,11 @@ pub const CANOPUS_FW_READDIR_CALLABLE: usize = canopus_thumb_callable(0xc15f141u
 /// Recovered `file_write` at 0xc390094. Thumb callable address 0xc390095.
 pub const CANOPUS_FW_FILE_WRITE_CALLABLE: usize = canopus_thumb_callable(0xc390095usize);
 
+/// Recovered `property_get_int32` at 0x0c3e6d7c. Thumb callable address 0x0c3e6d7d.
+pub const CANOPUS_FW_PROPERTY_GET_INT32_CALLABLE: usize = canopus_thumb_callable(0x0c3e6d7dusize);
+
 /// Recovered `interconnect_close` at 0xc3b5ab4. Thumb callable address 0xc3b5ab5.
 pub const CANOPUS_FW_INTERCONNECT_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc3b5ab5usize);
-
-/// Recovered `bt_adapter_get_instance` at 0xc382560. Thumb callable address 0xc382561.
-pub const CANOPUS_FW_BT_ADAPTER_GET_INSTANCE_CALLABLE: usize = canopus_thumb_callable(0xc382561usize);
 
 /// Recovered `close` at 0x0c39025c. Thumb callable address 0xc39025d.
 pub const CANOPUS_FW_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc39025dusize);
@@ -536,6 +581,9 @@ pub const CANOPUS_FW_CLOSEDIR_CALLABLE: usize = canopus_thumb_callable(0xc15f119
 
 /// Recovered `lv_obj_set_local_style_prop` at 0xc2782ec. Thumb callable address 0xc2782ed.
 pub const CANOPUS_FW_LV_OBJ_SET_LOCAL_STYLE_PROP_CALLABLE: usize = canopus_thumb_callable(0xc2782edusize);
+
+/// Recovered `mkdir` at 0x0c39146c. Thumb callable address 0x0c39146d.
+pub const CANOPUS_FW_MKDIR_CALLABLE: usize = canopus_thumb_callable(0x0c39146dusize);
 
 /// Recovered `qjs_new_array_buffer_copy` at 0xc204848. Thumb callable address 0xc204849.
 pub const CANOPUS_FW_QJS_NEW_ARRAY_BUFFER_COPY_CALLABLE: usize = canopus_thumb_callable(0xc204849usize);
@@ -633,8 +681,8 @@ pub const CANOPUS_FW_BT_ADAPTER_SET_SCAN_MODE_CALLABLE: usize = canopus_thumb_ca
 /// Recovered `file_close` at 0xc391040. Thumb callable address 0xc391041.
 pub const CANOPUS_FW_FILE_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc391041usize);
 
-/// Recovered `clock_gettime` at 0xc452348. Thumb callable address 0xc452349.
-pub const CANOPUS_FW_CLOCK_GETTIME_CALLABLE: usize = canopus_thumb_callable(0xc452349usize);
+/// Recovered `clock_gettime` at 0x0c13b1d8. Thumb callable address 0x0c13b1d9.
+pub const CANOPUS_FW_CLOCK_GETTIME_CALLABLE: usize = canopus_thumb_callable(0x0c13b1d9usize);
 
 /// Recovered `sdp_commit` at 0xc3a98b0. Thumb callable address 0xc3a98b1.
 pub const CANOPUS_FW_SDP_COMMIT_CALLABLE: usize = canopus_thumb_callable(0xc3a98b1usize);
@@ -696,6 +744,9 @@ pub const CANOPUS_FW_MM_FREE_DEFAULT_CALLABLE: usize = canopus_thumb_callable(0x
 /// Recovered `lv_bar_create` at 0x0c28fed8. Thumb callable address 0xc28fed9.
 pub const CANOPUS_FW_LV_BAR_CREATE_CALLABLE: usize = canopus_thumb_callable(0xc28fed9usize);
 
+/// Recovered `property_get` at 0x0c3e6b08. Thumb callable address 0x0c3e6b09.
+pub const CANOPUS_FW_PROPERTY_GET_CALLABLE: usize = canopus_thumb_callable(0x0c3e6b09usize);
+
 /// Recovered `bt_adapter_register_hfp_ag_callbacks` at 0xc1faeca. Thumb callable address 0xc1faecb.
 pub const CANOPUS_FW_BT_ADAPTER_REGISTER_HFP_AG_CALLBACKS_CALLABLE: usize = canopus_thumb_callable(0xc1faecbusize);
 
@@ -723,6 +774,9 @@ pub const CANOPUS_FW_LV_LABEL_SET_TEXT_CALLABLE: usize = canopus_thumb_callable(
 /// Recovered `lvx_label_set_text` at 0xc534d30. Thumb callable address 0xc534d31.
 pub const CANOPUS_FW_LVX_LABEL_SET_TEXT_CALLABLE: usize = canopus_thumb_callable(0xc534d31usize);
 
+/// Recovered `screen_session_stop` at 0x0c45dc28. Thumb callable address 0x0c45dc29.
+pub const CANOPUS_FW_SCREEN_SESSION_STOP_CALLABLE: usize = canopus_thumb_callable(0x0c45dc29usize);
+
 /// Recovered `bt_pair_request_reply` at 0xc2e2a90. Thumb callable address 0xc2e2a91.
 pub const CANOPUS_FW_BT_PAIR_REQUEST_REPLY_CALLABLE: usize = canopus_thumb_callable(0xc2e2a91usize);
 
@@ -735,9 +789,9 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // app_launcher_data_init: restricted - not exported until context/ownership approved
 // app_launcher_del: restricted - not exported until context/ownership approved
 // app_lookup: restricted - not exported until context/ownership approved
-// bt_adapter_get_instance: restricted - not exported until context/ownership approved
+// bt_adapter_get_instance: WITHDRAWN - no binding may ever be generated
 // bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
-// bt_adapter_get_state: restricted - not exported until context/ownership approved
+// bt_adapter_get_state: WITHDRAWN - no binding may ever be generated
 // bt_adapter_register: restricted - not exported until context/ownership approved
 // bt_adapter_register_a2dp_callbacks: restricted - not exported until context/ownership approved
 // bt_adapter_register_hfp_ag_callbacks: restricted - not exported until context/ownership approved
@@ -779,6 +833,7 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // file_write: restricted - not exported until context/ownership approved
 // firmware_log: restricted - not exported until context/ownership approved
 // fs_getfilep_borrowed: restricted - not exported until context/ownership approved
+// fsync: restricted - not exported until context/ownership approved
 // gap_host_stock_receive: restricted - not exported until context/ownership approved
 // gap_register_callbacks: restricted - not exported until context/ownership approved
 // heap_free: restricted - not exported until context/ownership approved
@@ -875,6 +930,7 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // miwear_session_lookup: restricted - not exported until context/ownership approved
 // miwear_transport_l2_rx: restricted - not exported until context/ownership approved
 // miwear_transport_send: restricted - not exported until context/ownership approved
+// mkdir: restricted - not exported until context/ownership approved
 // mm_free_default: restricted - not exported until context/ownership approved
 // mm_memalign_default: restricted - not exported until context/ownership approved
 // modhandle: FORBIDDEN - no binding may ever be generated
@@ -891,6 +947,10 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // page_goto: restricted - not exported until context/ownership approved
 // page_lookup: restricted - not exported until context/ownership approved
 // page_navigator_open_page: restricted - not exported until context/ownership approved
+// power_battery_ready: restricted - not exported until context/ownership approved
+// power_battery_snapshot: restricted - not exported until context/ownership approved
+// property_get: restricted - not exported until context/ownership approved
+// property_get_int32: restricted - not exported until context/ownership approved
 // protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
 // pthread_create_internal: restricted - not exported until context/ownership approved
 // qjs_call: restricted - not exported until context/ownership approved
@@ -914,7 +974,16 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // register_blockdriver: restricted - not exported until context/ownership approved
 // register_driver: restricted - not exported until context/ownership approved
 // rename: restricted - not exported until context/ownership approved
+// rmdir: restricted - not exported until context/ownership approved
 // rmmod: FORBIDDEN - no binding may ever be generated
+// screen_get_state: restricted - not exported until context/ownership approved
+// screen_session_create: restricted - not exported until context/ownership approved
+// screen_session_restore_default: restricted - not exported until context/ownership approved
+// screen_session_set_auto_brightness: restricted - not exported until context/ownership approved
+// screen_session_set_brightness_value: restricted - not exported until context/ownership approved
+// screen_session_start: restricted - not exported until context/ownership approved
+// screen_session_stop: restricted - not exported until context/ownership approved
+// screen_turn_on: restricted - not exported until context/ownership approved
 // sdp_builder_create: restricted - not exported until context/ownership approved
 // sdp_commit: restricted - not exported until context/ownership approved
 // sdp_set_raw_attribute: restricted - not exported until context/ownership approved
@@ -928,6 +997,7 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // service_manager_shutdown: restricted - not exported until context/ownership approved
 // service_manager_startup: restricted - not exported until context/ownership approved
 // sport_titlebar_dispatch: restricted - not exported until context/ownership approved
+// system_get_state: restricted - not exported until context/ownership approved
 // system_router_app_wrapper: restricted - not exported until context/ownership approved
 // system_router_get_pages_wrapper: restricted - not exported until context/ownership approved
 // thirdparty_submit_message_content: restricted - not exported until context/ownership approved
@@ -942,6 +1012,9 @@ pub const CANOPUS_FW_BT_TIMER_ADD_CALLABLE: usize = canopus_thumb_callable(0xc3f
 // uv_mutex_lock: restricted - not exported until context/ownership approved
 // uv_mutex_unlock: restricted - not exported until context/ownership approved
 // vendor_hci_transport_register: restricted - not exported until context/ownership approved
+// wakelock_acquire: restricted - not exported until context/ownership approved
+// wakelock_create: restricted - not exported until context/ownership approved
+// wakelock_release: restricted - not exported until context/ownership approved
 // watchface_manager_delete_watchface: restricted - not exported until context/ownership approved
 // write: restricted - not exported until context/ownership approved
 

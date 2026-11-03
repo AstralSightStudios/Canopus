@@ -5,7 +5,8 @@
   "name": "lseek",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc6b9c80",
+  "entry_address": "0x1c157b90",
+  "callable_address": "0x1c157b91",
   "prototype": "int64_t(int, int64_t, int)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -15,21 +16,23 @@
     "blocking": true
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact redmi-watch-6-3.100.043 IDB vela_ap.bin.i64 review (EVID-PLATFORM-HW-P65-001): NuttX lseek (vfs/fs_lseek.c assert): fs_getfilep, inode seek op or SEEK_SET/SEEK_CUR on f_pos (+8, int64), returns f_pos in R0:R1, -1/-1 with errno on failure; offset in R2:R3, whence on the stack. Ported 0xc6b9c80 is unrelated."
   },
   "approval_state": "PENDING",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Exact 3.101.043 NuttX public 64-bit lseek entry; AAPCS places offset in R2/R3 and whence on the stack. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record."
+  "notes": "manual static review 2026-11-03 (EVID-PLATFORM-HW-P65-001): NuttX lseek (vfs/fs_lseek.c assert): fs_getfilep, inode seek op or SEEK_SET/SEEK_CUR on f_pos (+8, int64), returns f_pos in R0:R1, -1/-1 with errno on failure; offset in R2:R3, whence on the stack. Ported 0xc6b9c80 is unrelated. Restricted/PENDING; static evidence only, device NOT_PROBED. Physical device validation pending; no approval carries over from the source target."
 }

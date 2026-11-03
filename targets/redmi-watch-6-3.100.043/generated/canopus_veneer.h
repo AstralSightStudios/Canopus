@@ -4,7 +4,7 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 3
- * input_digest: 4bcd476000f01366
+ * input_digest: 4d20ce543e61e36c
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -65,9 +65,19 @@ static inline void canopus_fw_lv_obj_set_style_pad_top(void * a0, int32_t a1, ui
     return ((canopus_fw_lv_obj_set_style_pad_top_fn)(uintptr_t)0x37eec1)(a0, a1, a2);
 }
 
+typedef void * (*canopus_fw_heap_malloc_fn)(uint32_t);
+static inline void * canopus_fw_heap_malloc(uint32_t a0) {
+    return ((canopus_fw_heap_malloc_fn)(uintptr_t)0xc50b2a1)(a0);
+}
+
 typedef int (*canopus_fw_lvx_list_item_add_content_fn)(void *, const void *, const char *, const char *, const char *, uint32_t, uint32_t);
 static inline int canopus_fw_lvx_list_item_add_content(void * a0, const void * a1, const char * a2, const char * a3, const char * a4, uint32_t a5, uint32_t a6) {
     return ((canopus_fw_lvx_list_item_add_content_fn)(uintptr_t)0x1c129691)(a0, a1, a2, a3, a4, a5, a6);
+}
+
+typedef int (*canopus_fw_property_get_int32_fn)(const char *, int);
+static inline int canopus_fw_property_get_int32(const char * a0, int a1) {
+    return ((canopus_fw_property_get_int32_fn)(uintptr_t)0xcb93a25)(a0, a1);
 }
 
 /* scan_create_filtered: skipped (argument type not mappable) */
@@ -140,6 +150,11 @@ static inline void * canopus_fw_launcher_load_app_info(const void * a0) {
     return ((canopus_fw_launcher_load_app_info_fn)(uintptr_t)0xc7ebd11)(a0);
 }
 
+typedef int (*canopus_fw_screen_turn_on_fn)(const char *, int);
+static inline int canopus_fw_screen_turn_on(const char * a0, int a1) {
+    return ((canopus_fw_screen_turn_on_fn)(uintptr_t)0xca69201)(a0, a1);
+}
+
 /* advertising_create: skipped (argument type not mappable) */
 /* Recovered global `style_misans_medium_24` at 0x3c479828. */
 #define canopus_fw_style_misans_medium_24 ((void *)(uintptr_t)0x3c479828u)
@@ -152,6 +167,11 @@ static inline void canopus_fw_lv_obj_remove_style_all(void * a0) {
 typedef void (*canopus_fw_lvx_object_add_flag_fn)(void *, uint32_t);
 static inline void canopus_fw_lvx_object_add_flag(void * a0, uint32_t a1) {
     return ((canopus_fw_lvx_object_add_flag_fn)(uintptr_t)0xc256a1d)(a0, a1);
+}
+
+typedef int (*canopus_fw_power_battery_ready_fn)(void);
+static inline int canopus_fw_power_battery_ready(void) {
+    return ((canopus_fw_power_battery_ready_fn)(uintptr_t)0xca61d21)();
 }
 
 typedef void (*canopus_fw_font_reload_list_remove_fn)(void *, void *);
@@ -214,6 +234,11 @@ static inline int canopus_fw_p65_calendar_snapshot(void * a0, uint32_t a1, void 
     return ((canopus_fw_p65_calendar_snapshot_fn)(uintptr_t)0xc7417c1)(a0, a1, a2);
 }
 
+typedef int (*canopus_fw_fsync_fn)(int);
+static inline int canopus_fw_fsync(int a0) {
+    return ((canopus_fw_fsync_fn)(uintptr_t)0x1c159e89)(a0);
+}
+
 typedef void * (*canopus_fw_lvx_page_content_create_fn)(void *);
 static inline void * canopus_fw_lvx_page_content_create(void * a0) {
     return ((canopus_fw_lvx_page_content_create_fn)(uintptr_t)0xc2182b1)(a0);
@@ -240,6 +265,11 @@ static inline void canopus_fw_p67_blur_draw_buf_destroy(uint32_t a0) {
     return ((canopus_fw_p67_blur_draw_buf_destroy_fn)(uintptr_t)0xc719799)(a0);
 }
 
+typedef void (*canopus_fw_heap_free_fn)(void *);
+static inline void canopus_fw_heap_free(void * a0) {
+    return ((canopus_fw_heap_free_fn)(uintptr_t)0xc50b25d)(a0);
+}
+
 typedef void (*canopus_fw_p65_calendar_cache_invalidate_fn)(void *, uint32_t, uint32_t, uint32_t);
 static inline void canopus_fw_p65_calendar_cache_invalidate(void * a0, uint32_t a1, uint32_t a2, uint32_t a3) {
     return ((canopus_fw_p65_calendar_cache_invalidate_fn)(uintptr_t)0xc72f021)(a0, a1, a2, a3);
@@ -255,10 +285,23 @@ static inline int canopus_fw_app_launcher_del(uint16_t a0) {
     return ((canopus_fw_app_launcher_del_fn)(uintptr_t)0xc7ec53d)(a0);
 }
 
+typedef int64_t (*canopus_fw_lseek_fn)(int, int64_t, int);
+static inline int64_t canopus_fw_lseek(int a0, int64_t a1, int a2) {
+    return ((canopus_fw_lseek_fn)(uintptr_t)0x1c157b91)(a0, a1, a2);
+}
+
+typedef void * (*canopus_fw_wakelock_create_fn)(uint32_t, const char *);
+static inline void * canopus_fw_wakelock_create(uint32_t a0, const char * a1) {
+    return ((canopus_fw_wakelock_create_fn)(uintptr_t)0xca61e9d)(a0, a1);
+}
+
 typedef void * (*canopus_fw_screen_session_create_fn)(const char *);
 static inline void * canopus_fw_screen_session_create(const char * a0) {
     return ((canopus_fw_screen_session_create_fn)(uintptr_t)0xca68abd)(a0);
 }
+
+/* Recovered global `system_state` at 0x3c47a328. */
+#define canopus_fw_system_state ((void *)(uintptr_t)0x3c47a328u)
 
 typedef void (*canopus_fw_p65_bg_clear_flag_fn)(void *, uint32_t);
 static inline void canopus_fw_p65_bg_clear_flag(void * a0, uint32_t a1) {
@@ -406,6 +449,11 @@ static inline int canopus_fw_mpu_region_configure(uint32_t a0, uint32_t a1, uint
     return ((canopus_fw_mpu_region_configure_fn)(uintptr_t)0xc9665e5)(a0, a1, a2, a3, a4);
 }
 
+typedef int32_t (*canopus_fw_bt_adapter_get_state_fn)(void *);
+static inline int32_t canopus_fw_bt_adapter_get_state(void * a0) {
+    return ((canopus_fw_bt_adapter_get_state_fn)(uintptr_t)0x1c008721)(a0);
+}
+
 /* Recovered global `font_reload_draw_unit_slot` at 0x3c450134. */
 #define canopus_fw_font_reload_draw_unit_slot ((void *)(uintptr_t)0x3c450134u)
 
@@ -427,6 +475,11 @@ static inline int canopus_fw_bt_adapter_enable(void * a0) {
 typedef void * (*canopus_fw_p65_calendar_draw_buf_create_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
 static inline void * canopus_fw_p65_calendar_draw_buf_create(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
     return ((canopus_fw_p65_calendar_draw_buf_create_fn)(uintptr_t)0xc719551)(a0, a1, a2, a3);
+}
+
+typedef int (*canopus_fw_rmdir_fn)(const char *);
+static inline int canopus_fw_rmdir(const char * a0) {
+    return ((canopus_fw_rmdir_fn)(uintptr_t)0x1c158b09)(a0);
 }
 
 typedef void (*canopus_fw_p65_bg_widget_scroll_fn)(void *);
@@ -531,6 +584,11 @@ static inline void canopus_fw_p65_calendar_buf_invalidate(void * a0, uint32_t a1
     return ((canopus_fw_p65_calendar_buf_invalidate_fn)(uintptr_t)0xc7191c5)(a0, a1, a2, a3);
 }
 
+typedef void (*canopus_fw_screen_session_stop_fn)(void *);
+static inline void canopus_fw_screen_session_stop(void * a0) {
+    return ((canopus_fw_screen_session_stop_fn)(uintptr_t)0xca68c6d)(a0);
+}
+
 typedef int (*canopus_fw_miwear_session_crypto_ctr_fn)(void *, int, uint16_t, const void *, void *);
 static inline int canopus_fw_miwear_session_crypto_ctr(void * a0, int a1, uint16_t a2, const void * a3, void * a4) {
     return ((canopus_fw_miwear_session_crypto_ctr_fn)(uintptr_t)0xca99139)(a0, a1, a2, a3, a4);
@@ -559,6 +617,7 @@ static inline void * canopus_fw_p65_calendar_font_resolve(const void * a0) {
     return ((canopus_fw_p65_calendar_font_resolve_fn)(uintptr_t)0xc8bcd41)(a0);
 }
 
+/* system_get_state: skipped (return type 'uint32_t *' not mappable) */
 typedef int (*canopus_fw_lv_image_decoder_get_info_fn)(const void *, void *);
 static inline int canopus_fw_lv_image_decoder_get_info(const void * a0, void * a1) {
     return ((canopus_fw_lv_image_decoder_get_info_fn)(uintptr_t)0xc71d195)(a0, a1);
@@ -571,6 +630,11 @@ static inline void * canopus_fw_p65_bg_parent(void * a0) {
 
 /* nxsched_foreach: skipped (argument type not mappable) */
 /* file_close: skipped (argument type not mappable) */
+typedef int (*canopus_fw_power_battery_charging_fn)(void);
+static inline int canopus_fw_power_battery_charging(void) {
+    return ((canopus_fw_power_battery_charging_fn)(uintptr_t)0xca61d59)();
+}
+
 typedef void (*canopus_fw_p65_calendar_color_fn)(void *, uint32_t, uint32_t);
 static inline void canopus_fw_p65_calendar_color(void * a0, uint32_t a1, uint32_t a2) {
     return ((canopus_fw_p65_calendar_color_fn)(uintptr_t)0x37f3c5)(a0, a1, a2);
@@ -586,9 +650,19 @@ static inline void canopus_fw_lv_obj_set_style_bg_opa(void * a0, uint32_t a1, ui
     return ((canopus_fw_lv_obj_set_style_bg_opa_fn)(uintptr_t)0xc0d8ff5)(a0, a1, a2);
 }
 
+typedef void * (*canopus_fw_bt_adapter_get_instance_fn)(void);
+static inline void * canopus_fw_bt_adapter_get_instance(void) {
+    return ((canopus_fw_bt_adapter_get_instance_fn)(uintptr_t)0xca3f475)();
+}
+
 typedef void * (*canopus_fw_opendir_fn)(const char *);
 static inline void * canopus_fw_opendir(const char * a0) {
     return ((canopus_fw_opendir_fn)(uintptr_t)0xc4f7885)(a0);
+}
+
+typedef int (*canopus_fw_clock_gettime_fn)(uint32_t, stock_timespec_t *);
+static inline int canopus_fw_clock_gettime(uint32_t a0, stock_timespec_t * a1) {
+    return ((canopus_fw_clock_gettime_fn)(uintptr_t)0xc4c205d)(a0, a1);
 }
 
 typedef void (*canopus_fw_lv_bar_set_range_fn)(void *, int32_t, int32_t);
@@ -660,6 +734,7 @@ static inline int canopus_fw_launcher_reset_order_info(void) {
     return ((canopus_fw_launcher_reset_order_info_fn)(uintptr_t)0xc7ecafd)();
 }
 
+/* property_get: skipped (argument type not mappable) */
 typedef void * (*canopus_fw_lv_img_create_fn)(void *);
 static inline void * canopus_fw_lv_img_create(void * a0) {
     return ((canopus_fw_lv_img_create_fn)(uintptr_t)0xc78a961)(a0);
@@ -757,6 +832,11 @@ static inline void canopus_fw_p65_calendar_draw_buf_destroy(void * a0) {
     return ((canopus_fw_p65_calendar_draw_buf_destroy_fn)(uintptr_t)0xc719799)(a0);
 }
 
+typedef void (*canopus_fw_screen_session_restore_default_fn)(void *);
+static inline void canopus_fw_screen_session_restore_default(void * a0) {
+    return ((canopus_fw_screen_session_restore_default_fn)(uintptr_t)0xca68f39)(a0);
+}
+
 typedef int (*canopus_fw_font_reload_ft_set_pixel_size_fn)(void *, uint32_t, uint32_t);
 static inline int canopus_fw_font_reload_ft_set_pixel_size(void * a0, uint32_t a1, uint32_t a2) {
     return ((canopus_fw_font_reload_ft_set_pixel_size_fn)(uintptr_t)0xc5666fd)(a0, a1, a2);
@@ -803,9 +883,19 @@ static inline void * canopus_fw_lv_label_create(void * a0) {
     return ((canopus_fw_lv_label_create_fn)(uintptr_t)0xc78bcb5)(a0);
 }
 
+typedef void (*canopus_fw_screen_session_start_fn)(void *, int);
+static inline void canopus_fw_screen_session_start(void * a0, int a1) {
+    return ((canopus_fw_screen_session_start_fn)(uintptr_t)0xca68bd9)(a0, a1);
+}
+
 typedef int (*canopus_fw_watchface_manager_delete_watchface_fn)(const char *);
 static inline int canopus_fw_watchface_manager_delete_watchface(const char * a0) {
     return ((canopus_fw_watchface_manager_delete_watchface_fn)(uintptr_t)0xca90b1d)(a0);
+}
+
+typedef int (*canopus_fw_mkdir_fn)(const char *, uint32_t);
+static inline int canopus_fw_mkdir(const char * a0, uint32_t a1) {
+    return ((canopus_fw_mkdir_fn)(uintptr_t)0x1c157c5d)(a0, a1);
 }
 
 typedef int32_t (*canopus_fw_read_fn)(int, void *, uint32_t);
@@ -833,6 +923,11 @@ static inline void * canopus_fw_app_lookup(uint16_t a0) {
 typedef const char * (*canopus_fw_calendar_localized_text_fn)(const char *);
 static inline const char * canopus_fw_calendar_localized_text(const char * a0) {
     return ((canopus_fw_calendar_localized_text_fn)(uintptr_t)0xc4f8459)(a0);
+}
+
+typedef int (*canopus_fw_power_battery_level_fn)(void);
+static inline int canopus_fw_power_battery_level(void) {
+    return ((canopus_fw_power_battery_level_fn)(uintptr_t)0xca61d71)();
 }
 
 typedef void (*canopus_fw_screen_session_set_auto_brightness_fn)(void *, int);
@@ -879,15 +974,14 @@ static inline void canopus_fw_native_font_wait(void * a0) {
     return ((canopus_fw_native_font_wait_fn)(uintptr_t)0xc72ef2d)(a0);
 }
 
+/* lv_timer_create: skipped (argument type not mappable) */
 /* ---- excluded symbols ----
  * app_launcher_data_init: restricted - not exported until context/ownership approved
  * app_net_connect_state_update: restricted - not exported until context/ownership approved
  * background_object_has_flag: restricted - not exported until context/ownership approved
  * background_object_hide: restricted - not exported until context/ownership approved
  * background_object_show: restricted - not exported until context/ownership approved
- * bt_adapter_get_instance: restricted - not exported until context/ownership approved
  * bt_adapter_get_scan_mode: restricted - not exported until context/ownership approved
- * bt_adapter_get_state: restricted - not exported until context/ownership approved
  * bt_adapter_register: restricted - not exported until context/ownership approved
  * bt_adapter_register_a2dp_callbacks: FORBIDDEN - no veneer may ever be generated
  * bt_adapter_register_hfp_ag_callbacks: FORBIDDEN - no veneer may ever be generated
@@ -921,7 +1015,6 @@ static inline void canopus_fw_native_font_wait(void * a0) {
  * calendar_localtime: restricted - not exported until context/ownership approved
  * calendar_snapshot: restricted - not exported until context/ownership approved
  * calendar_text_color: restricted - not exported until context/ownership approved
- * clock_gettime: restricted - not exported until context/ownership approved
  * control_center_scroll: restricted - not exported until context/ownership approved
  * controller_crash_dump: FORBIDDEN - no veneer may ever be generated
  * core_bt_pair_request_callback: restricted - not exported until context/ownership approved
@@ -937,12 +1030,9 @@ static inline void canopus_fw_native_font_wait(void * a0) {
  * font_reload_vector_compare: restricted - not exported until context/ownership approved
  * font_reload_vector_destroy: restricted - not exported until context/ownership approved
  * font_reload_vector_drop: restricted - not exported until context/ownership approved
- * fsync: restricted - not exported until context/ownership approved
  * gap_host_stock_receive: restricted - not exported until context/ownership approved
  * gethostbyname_r: restricted - not exported until context/ownership approved
- * heap_free: restricted - not exported until context/ownership approved
  * heap_mallinfo: restricted - not exported until context/ownership approved
- * heap_malloc: restricted - not exported until context/ownership approved
  * heap_zalloc: restricted - not exported until context/ownership approved
  * hfp_ag_connect: FORBIDDEN - no veneer may ever be generated
  * hfp_ag_disconnect: FORBIDDEN - no veneer may ever be generated
@@ -958,7 +1048,6 @@ static inline void canopus_fw_native_font_wait(void * a0) {
  * launcher_rect_init: restricted - not exported until context/ownership approved
  * launcher_scroll: restricted - not exported until context/ownership approved
  * launcher_scroll_prepare: restricted - not exported until context/ownership approved
- * lseek: restricted - not exported until context/ownership approved
  * lv_display_get_horizontal_resolution: restricted - not exported until context/ownership approved
  * lv_display_get_vertical_resolution: restricted - not exported until context/ownership approved
  * lv_display_invalidate_area: restricted - not exported until context/ownership approved
@@ -978,7 +1067,6 @@ static inline void canopus_fw_native_font_wait(void * a0) {
  * lv_obj_set_scrollbar_mode: restricted - not exported until context/ownership approved
  * lv_obj_set_style_bg_opa_xip_thunk: restricted - not exported until context/ownership approved
  * lv_obj_tree_walk: restricted - not exported until context/ownership approved
- * lv_timer_create: restricted - not exported until context/ownership approved
  * lv_timer_del: restricted - not exported until context/ownership approved
  * lvx_content_pad_bottom: restricted - not exported until context/ownership approved
  * lvx_label_create: restricted - not exported until context/ownership approved
@@ -989,7 +1077,6 @@ static inline void canopus_fw_native_font_wait(void * a0) {
  * lvx_msgbox_create: restricted - not exported until context/ownership approved
  * miwear_transport_l2_rx: restricted - not exported until context/ownership approved
  * miwear_transport_send: restricted - not exported until context/ownership approved
- * mkdir: restricted - not exported until context/ownership approved
  * modhandle: restricted - not exported until context/ownership approved
  * net_lock: restricted - not exported until context/ownership approved
  * net_unlock: restricted - not exported until context/ownership approved
@@ -1013,23 +1100,13 @@ static inline void canopus_fw_native_font_wait(void * a0) {
  * p67_blur_style_get: restricted - not exported until context/ownership approved
  * page_navigator_open_page: FORBIDDEN - no veneer may ever be generated
  * poll_notify: restricted - not exported until context/ownership approved
- * power_battery_charging: restricted - not exported until context/ownership approved
- * power_battery_level: restricted - not exported until context/ownership approved
- * power_battery_ready: restricted - not exported until context/ownership approved
- * property_get: restricted - not exported until context/ownership approved
- * property_get_int32: restricted - not exported until context/ownership approved
  * protobuf_set_ordered_app_list: restricted - not exported until context/ownership approved
  * pthread_create_internal: FORBIDDEN - no veneer may ever be generated
  * public_work_queue: FORBIDDEN - no veneer may ever be generated
  * quickapp_register_app: restricted - not exported until context/ownership approved
  * recvfrom: restricted - not exported until context/ownership approved
  * register_blockdriver: restricted - not exported until context/ownership approved
- * rmdir: restricted - not exported until context/ownership approved
  * rmmod: restricted - not exported until context/ownership approved
- * screen_session_restore_default: restricted - not exported until context/ownership approved
- * screen_session_start: restricted - not exported until context/ownership approved
- * screen_session_stop: restricted - not exported until context/ownership approved
- * screen_turn_on: restricted - not exported until context/ownership approved
  * sdp_builder_create: restricted - not exported until context/ownership approved
  * sdp_commit: restricted - not exported until context/ownership approved
  * sdp_set_raw_attribute: restricted - not exported until context/ownership approved
@@ -1048,14 +1125,12 @@ static inline void canopus_fw_native_font_wait(void * a0) {
  * sport_titlebar_dispatch: FORBIDDEN - no veneer may ever be generated
  * sport_titlebar_lifecycle_reset: FORBIDDEN - no veneer may ever be generated
  * stat: restricted - not exported until context/ownership approved
- * system_get_state: restricted - not exported until context/ownership approved
  * system_router_app_wrapper: FORBIDDEN - no veneer may ever be generated
  * system_router_get_pages_wrapper: FORBIDDEN - no veneer may ever be generated
  * system_router_page_record_wrapper: FORBIDDEN - no veneer may ever be generated
  * unregister_blockdriver: restricted - not exported until context/ownership approved
  * vendor_hci_transport_register: FORBIDDEN - no veneer may ever be generated
  * vibrator_hal_transact: restricted - not exported until context/ownership approved
- * wakelock_create: restricted - not exported until context/ownership approved
  * watchface_reset_watchface: restricted - not exported until context/ownership approved
  * widgets_scroll: restricted - not exported until context/ownership approved
  */

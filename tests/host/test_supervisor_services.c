@@ -458,6 +458,9 @@ static const struct canopus_sup_platform_v1 platform_with_fs = {
     .heap_release = p_heap_release,
     .notify = p_notify,
     .start_timer_pump = p_start_timer_pump,
+    .device_model = "Xiaomi Band 10 Pro",
+    .display_width = 336u,
+    .display_height = 480u,
 };
 static const struct canopus_sup_platform_v1 platform_without_fs = {
     .target_id = "xiaomi-band-10-pro-3.101.030",
@@ -963,7 +966,8 @@ TEST(service_objects_are_exposed_and_functional)
 
     /* 6. Display Object: nothing to read, nothing faked. */
     ctx->display->get_resolution(ctx, &res_w, &res_h);
-    CHECK(res_w > 0 && res_h > 0);
+    CHECK(res_w == 336u && res_h == 480u);
+    CHECK_EQ(canopus_strcmp(ctx->system->device_model(ctx), "Xiaomi Band 10 Pro"), 0);
     CHECK_EQ(ctx->display->is_screen_on(ctx), CANOPUS_SVC_ERR_UNSUPPORTED);
     CHECK_EQ(ctx->display->get_brightness(ctx), CANOPUS_DISPLAY_BRIGHTNESS_UNKNOWN);
     CHECK_EQ(ctx->display->set_brightness(ctx, 50u), CANOPUS_SVC_ERR_UNSUPPORTED);
@@ -1999,17 +2003,23 @@ TEST(ui_entry_accepts_legacy_prefix_and_requires_route_lifecycle)
     struct canopus_supervisor_v1 sup;
     struct canopus_ui_entry_v1 entry = {0}, out;
     const struct canopus_context_v1 *ctx;
-    uint32_t legacy_size = offsetof(struct canopus_ui_entry_v1, on_resume);
-    void *legacy = malloc(legacy_size);
-    CHECK(legacy != NULL);
+    /* Before page_count, and before on_resume. */
+    const uint32_t legacy_sizes[2] = {offsetof(struct canopus_ui_entry_v1, page_count),
+                                      offsetof(struct canopus_ui_entry_v1, on_resume)};
+    uint32_t i;
     setup_hw(&sup);ctx = canopus_supervisor_context(&sup, 0u);
-    entry.struct_size = legacy_size;entry.on_open = entry_open;
-    memcpy(legacy, &entry, legacy_size);
-    CHECK_EQ(ctx->ui->set_entry(ctx, legacy), CANOPUS_SVC_OK);
-    free(legacy); /* ASan checks that registration never reads the tail. */
-    CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), 0);
-    CHECK(out.on_resume == NULL && out.on_pause == NULL);
-    CHECK_EQ(out.struct_size, sizeof(out));
+    entry.on_open = entry_open;
+    for (i = 0u; i < 2u; i++) {
+        void *legacy = malloc(legacy_sizes[i]);
+        CHECK(legacy != NULL);
+        entry.struct_size = legacy_sizes[i];
+        memcpy(legacy, &entry, legacy_sizes[i]);
+        CHECK_EQ(ctx->ui->set_entry(ctx, legacy), CANOPUS_SVC_OK);
+        free(legacy); /* ASan checks that registration never reads the tail. */
+        CHECK_EQ(canopus_supervisor_ui_entry(&sup, 0u, &out), 0);
+        CHECK(out.page_count == 0u && out.on_resume == NULL && out.on_pause == NULL);
+        CHECK_EQ(out.struct_size, sizeof(out));
+    }
     entry.struct_size = sizeof(entry);entry.page_count = 6u;
     CHECK_EQ(ctx->ui->set_entry(ctx, &entry), CANOPUS_SVC_ERR_ARGUMENT);
     entry.on_resume = entry_resume;

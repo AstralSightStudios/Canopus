@@ -5,25 +5,32 @@
   "name": "lv_timer_del",
   "kind": "function",
   "instruction_set": "thumb",
+  "entry_address": "0x0c258698",
+  "callable_address": "0x0c258699",
   "prototype": "void(void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-9190-001"
+      "EVID-PLATFORM-HW-9190-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
     "evidence_ids": [
-      "EVID-PORT-9190-001"
+      "EVID-PLATFORM-HW-9190-001"
     ],
-    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-9pro-3175: identical pseudocode; 22/22 anchored callers call the target; known callees consistent."
+    "source": "exact 3.1.190 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state, kvdb property client and LVGL lv_timer review)"
   },
-  "entry_address": "0xc4b47b0",
-  "callable_address": "0xc4b47b1",
-  "notes": "identical pseudocode; 22/22 anchored callers call the target; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
-  "approval_state": "PENDING"
+  "notes": "LVGL lv_timer_del: _lv_ll_remove from the timer list 0x200BF30C, sets timer_deleted, lv_mem_free 0xc258498 (free on the user heap); lv_timer_handler 0xc25a0e8 calls it when a timer's repeat_count reaches 0. Replaces the ensemble address 0xc4b47b0, a thunk. Supervisor platform service; static evidence only, device NOT_PROBED."
 }

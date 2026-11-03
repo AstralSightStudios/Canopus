@@ -84,7 +84,8 @@ int canopus_band11_stage2_entry(volatile int32_t *mailbox) {
     ops.cookie = s; ops.allocate = allocate; ops.release = release;
     ops.finalize = finalize; ops.invoke = invoke;
     *mailbox = -314;
-    rc = canopus_elf32_load(elf, B11_SUPERVISOR_SIZE, &ops, &s->module, scratch);
+    rc = canopus_elf32_load(elf, B11_SUPERVISOR_SIZE, &ops, &s->module, scratch,
+                            CANOPUS_ELF32_MAX_SECTIONS);
     if (rc) rc -= 400;
     else rc = *mailbox;
 done:

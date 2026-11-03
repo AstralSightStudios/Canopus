@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.screen.screen_session_start",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "screen_session_start",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c44c9fc",
+  "callable_address": "0x0c44c9fd",
+  "prototype": "void(void *session, int auto_stop)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001"
+    ],
+    "source": "exact 3.1.190 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state, kvdb property client and LVGL lv_timer review)"
+  },
+  "notes": "MiWearScreen screen_session_start(session, auto_stop); the stock NFC near_reminder session passes 0. Supervisor platform service; static evidence only, device NOT_PROBED."
+}

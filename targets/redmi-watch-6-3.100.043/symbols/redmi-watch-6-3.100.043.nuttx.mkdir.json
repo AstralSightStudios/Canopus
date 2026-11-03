@@ -6,6 +6,7 @@
   "kind": "function",
   "instruction_set": "thumb",
   "entry_address": "0x1c157c5c",
+  "callable_address": "0x1c157c5d",
   "prototype": "int(const char *path, uint32_t mode)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -15,21 +16,23 @@
     "blocking": true
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact redmi-watch-6-3.100.043 IDB vela_ap.bin.i64 review (EVID-PLATFORM-HW-P65-001): NuttX mkdir (vfs/fs_mkdir.c): mode &= ~umask, EEXIST for an existing node, mountpoint mkdir op (+84) or pseudo-dir reserve; -1 with errno on failure."
   },
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. NuttX mkdir; returns -1 and sets errno (EEXIST when present). The stock Bluetooth service calls it with mode 0777 for /data/misc. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+  "notes": "manual static review 2026-11-03 (EVID-PLATFORM-HW-P65-001): NuttX mkdir (vfs/fs_mkdir.c): mode &= ~umask, EEXIST for an existing node, mountpoint mkdir op (+84) or pseudo-dir reserve; -1 with errno on failure. Restricted/PENDING; static evidence only, device NOT_PROBED. Physical device validation pending; no approval carries over from the source target."
 }

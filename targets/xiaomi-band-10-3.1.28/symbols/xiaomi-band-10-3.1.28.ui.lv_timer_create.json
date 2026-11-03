@@ -5,25 +5,32 @@
   "name": "lv_timer_create",
   "kind": "function",
   "instruction_set": "thumb",
-  "prototype": "void *(canopus_lvx_event_cb, uint32_t, void *)",
+  "entry_address": "0x0c327d6c",
+  "callable_address": "0x0c327d6d",
+  "prototype": "void *(void (*)(void *), uint32_t, void *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-1028-001"
+      "EVID-PLATFORM-HW-1028-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
     "evidence_ids": [
-      "EVID-PORT-1028-001"
+      "EVID-PLATFORM-HW-1028-001"
     ],
-    "source": "Exact xiaomi-band-10-3.1.28 image/IDB compared with xiaomi-band-9-3.1.32: identical pseudocode; 32/35 anchored callers call the target; known callees consistent."
+    "source": "exact 3.1.28 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state, kvdb property client, LVGL lv_timer and bts_adapter review)"
   },
-  "entry_address": "0xc4e10a0",
-  "callable_address": "0xc4e10a1",
-  "notes": "identical pseudocode; 32/35 anchored callers call the target; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path.",
-  "approval_state": "PENDING"
+  "notes": "LVGL lv_timer_create: _lv_ll_ins_head on the timer list 0x200A2474 that lv_timer_handler 0xc327eec walks; period +0, last_run +4, callback +8, user_data +12, repeat_count -1, auto-delete flag set. Replaces the ensemble address 0xc4e10a0, a thunk. Supervisor platform service; static evidence only, device NOT_PROBED."
 }

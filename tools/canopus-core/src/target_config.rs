@@ -392,6 +392,14 @@ const FW_LAUNCHER_OPTIONAL: &[Mapping] = &[Mapping {
     address: Address::Data,
 }];
 
+/// Staged targets whose family has no MIwear native-bindings header (the v8
+/// Manager backend); with one, that header owns this entry.
+const FW_9_NOTIFY: &[Mapping] = &[Mapping {
+    macro_name: "FW_NOTIFICATION_INSERT",
+    symbol_name: "lvx_notification_insert_message",
+    address: Address::Callable,
+}];
+
 const FW_9: &[Mapping] = &[
     Mapping {
         macro_name: "FW_VERSION_ADDRESS",
@@ -636,10 +644,13 @@ const SUP_10: &[Mapping] = &[
         symbol_name: "watchface_reset_watchface",
         address: Address::Callable,
     },
-    // Optional: stock hardware services behind the Supervisor platform hooks
-    // (battery, wake locks, screen/brightness, vibration, properties, Bluetooth
-    // adapter state). Each is guarded in Supervisor code; a missing symbol leaves
-    // the matching service group reporting UNSUPPORTED.
+];
+// Optional: stock hardware services behind the Supervisor platform hooks
+// (battery, wake locks, screen/brightness, vibration, properties, Bluetooth
+// adapter state, extra file calls). Shared by stock-modlib and custom-loader
+// targets. Each is guarded in Supervisor code; a missing symbol leaves the
+// matching service group reporting UNSUPPORTED.
+const SUP_HARDWARE: &[Mapping] = &[
     Mapping {
         macro_name: "CANOPUS_SUP_PM_BATTERY_READY",
         symbol_name: "power_battery_ready",
@@ -736,6 +747,11 @@ const SUP_10: &[Mapping] = &[
         address: Address::Callable,
     },
     Mapping {
+        macro_name: "CANOPUS_SUP_BT_SHARED_ADAPTER",
+        symbol_name: "bt_shared_adapter",
+        address: Address::Entry,
+    },
+    Mapping {
         macro_name: "CANOPUS_SUP_NUTTX_MKDIR",
         symbol_name: "mkdir",
         address: Address::Callable,
@@ -759,6 +775,21 @@ const SUP_10: &[Mapping] = &[
         macro_name: "CANOPUS_SUP_SYSTEM_STATE",
         symbol_name: "system_state",
         address: Address::Entry,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_PM_BATTERY_SNAPSHOT",
+        symbol_name: "power_battery_snapshot",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_VIBRATOR_RUN",
+        symbol_name: "vibrator_run",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_VIBRATOR_CANCEL",
+        symbol_name: "vibrator_cancel",
+        address: Address::Callable,
     },
 ];
 const SUP_9: &[Mapping] = &[
@@ -835,9 +866,36 @@ const SUP_9_DIRENT: &[Mapping] = &[
     },
 ];
 
+// Optional: the MEM service and the seek/rmdir file calls for custom staged
+// targets (stock-modlib targets get them from SUP_10).
+const SUP_9_FILE_MEM: &[Mapping] = &[
+    Mapping {
+        macro_name: "CANOPUS_SUP_HEAP_MALLOC",
+        symbol_name: "heap_malloc",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_HEAP_FREE",
+        symbol_name: "heap_free",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_LSEEK",
+        symbol_name: "lseek",
+        address: Address::Callable,
+    },
+    Mapping {
+        macro_name: "CANOPUS_SUP_NUTTX_RMDIR",
+        symbol_name: "rmdir",
+        address: Address::Callable,
+    },
+];
+
 pub struct TargetConfigGen<'a> {
     pub pack: &'a TargetPack,
     pub symbols: &'a [Symbol],
+    /// The family also emits `canopus_band11_addresses.h` (`native_config`).
+    pub native_config: bool,
 }
 
 impl<'a> TargetConfigGen<'a> {
@@ -852,8 +910,20 @@ impl<'a> TargetConfigGen<'a> {
         }?;
         parse_hex_address(raw)
     }
+    /// A withdrawn or forbidden record never reaches a header; a static-test
+    /// pack additionally emits only its STATIC_RECOVERED restricted records,
+    /// so an unreviewed CANDIDATE address is never called.
+    fn emittable(&self, map: Mapping) -> bool {
+        self.symbol(map.symbol_name).is_some_and(|symbol| {
+            !crate::veneer::FORBIDDEN_STATUS.contains(&symbol.status.as_str())
+                && (!self.static_test() || self.codegen_available(symbol))
+        })
+    }
     fn emit(&self, out: &mut String, maps: &[Mapping], aliases: bool) {
         for map in maps {
+            if !self.emittable(*map) {
+                continue;
+            }
             if let Some(address) = self.address(*map) {
                 if aliases
                     && matches!(
@@ -937,7 +1007,7 @@ impl<'a> TargetConfigGen<'a> {
         let complete = self.platform_complete(custom);
         let mut out = String::new();
         out.push_str("#ifndef CANOPUS_TARGET_CONFIG_H\n#define CANOPUS_TARGET_CONFIG_H\n\n#include <stdint.h>\n\n");
-        out.push_str(&format!("#define CANOPUS_TARGET_ID \"{}\"\n#define CANOPUS_TARGET_FIRMWARE_VERSION \"{}\"\n#define CANOPUS_TARGET_FIRMWARE_BUILD \\\n    \"{}\"\n#define CANOPUS_SUP_PLATFORM_COMPLETE {}\n", self.pack.target_id, self.pack.firmware_version, self.pack.firmware_build, u8::from(complete)));
+        out.push_str(&format!("#define CANOPUS_TARGET_ID \"{}\"\n#define CANOPUS_TARGET_DEVICE_MODEL \"{}\"\n#define CANOPUS_TARGET_FIRMWARE_VERSION \"{}\"\n#define CANOPUS_TARGET_FIRMWARE_BUILD \\\n    \"{}\"\n#define CANOPUS_SUP_PLATFORM_COMPLETE {}\n", self.pack.target_id, self.pack.device_model, self.pack.firmware_version, self.pack.firmware_build, u8::from(complete)));
         if custom {
             out.push_str("#define CANOPUS_SUP_CUSTOM_LOADER 1\n");
         }
@@ -952,6 +1022,9 @@ impl<'a> TargetConfigGen<'a> {
             self.emit(&mut out, if custom { FW_9 } else { FW_10 }, false);
             if custom {
                 self.emit(&mut out, FW_LAUNCHER_OPTIONAL, false);
+                if !self.native_config {
+                    self.emit(&mut out, FW_9_NOTIFY, false);
+                }
             }
             self.emit(&mut out, FW_UI_INPUT, false);
             self.emit(&mut out, V8_TEXT_FONT, false);
@@ -970,7 +1043,9 @@ impl<'a> TargetConfigGen<'a> {
             self.emit(&mut out, if custom { SUP_9 } else { SUP_10 }, custom);
             if custom {
                 self.emit(&mut out, SUP_9_DIRENT, custom);
+                self.emit(&mut out, SUP_9_FILE_MEM, false);
             }
+            self.emit(&mut out, SUP_HARDWARE, false);
         } else {
             out.push_str("/* Platform ABI incomplete: firmware call macros are withheld. */\n");
         }

@@ -4,43 +4,44 @@
   "target_id": "xiaomi-band-9-pro-3.1.190",
   "name": "lvx_notification_insert_message",
   "kind": "function",
-  "entry_address": "0xc4f1f28",
-  "callable_address": "0xc4f1f29",
   "instruction_set": "thumb",
-  "prototype": "int(const firmware_notification_message *message)",
+  "entry_address": "0x0c4f1f28",
+  "callable_address": "0x0c4f1f29",
+  "prototype": "void(const firmware_notification_message *message)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
-      "notification_owner",
-      "system_app_lifecycle_callback"
+      "ui-owner-thread"
     ],
     "blocking": false
   },
-  "ownership": {
-    "return_value": "zero_or_one_observed_but_exact_failure_contract_not_proved"
-  },
-  "side_effects": [
-    "allocates_and_inserts_notification_record",
-    "may_start_reminder",
-    "may_emit_notification_event_32",
-    "schedules_notification_timer"
-  ],
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-9190-001"
+      "EVID-NOTIFY-9190-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
     "evidence_ids": [
-      "EVID-PORT-9190-001"
+      "EVID-NOTIFY-9190-001"
     ],
-    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-9pro-3175: mutually unique full-body anchor; known callees consistent."
+    "source": "exact 3.1.190 IDB vela_ap.bin.i64 (notification_manager __func__ log strings, lvx_notification_init_message / insert_message, 21 stock callers, lockscreen/detail/list views)"
   },
-  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending.",
-  "approval_state": "PENDING"
+  "notes": "lvx_notification_insert_message: logs 'Msg is NULL' under __func__ lvx_notification_insert_message (notification_manager); the earlier port address is confirmed. Copies the 88-byte caller struct (lvx_notification_init_message 0xC45CD2C: malloc 88 + memcpy; NULL +0x1c/+0x20 icons default to S:/system/image/notifications/default.bin / default_small.bin; +0x2c timestamp 0 is filled with CLOCK_REALTIME seconds), then insert_message 0xC463440 strdups every string (+0x0c,+0x10,+0x14,+0x18,+0x1c,+0x20,+0x24,+0x28; >512 bytes truncated with '...') into the uid-keyed lv_ll 0x200A406C (10 per uid) and frees the temporary. Layout matches the .043 struct: u32 colour +0x34, callbacks +0x38..+0x4c (+0x48 custom detail create fn(msg,parent,+0x54), +0x4c detail destroy fn(msg)), start_reminder u8 +0x50 (event 29 type 7), focus u8 +0x52, user data +0x54. Returns free() residue, not a status. Runs uv_timer_start on the app loop timer 0x200CB6D0 and publishes event 29 synchronously: UI/app-loop thread only. Supervisor platform service; static evidence only, device NOT_PROBED.",
+  "ownership": {
+    "message": "borrowed_for_call_firmware_copies_88_bytes",
+    "strings": "borrowed_for_call_firmware_strdups_all",
+    "return_value": "free_residue_not_a_status"
+  },
+  "side_effects": [
+    "allocates_and_inserts_notification_record",
+    "may_start_reminder_when_byte_0x50_set",
+    "publishes_event_29_synchronously",
+    "starts_uv_timer_on_app_loop"
+  ]
 }

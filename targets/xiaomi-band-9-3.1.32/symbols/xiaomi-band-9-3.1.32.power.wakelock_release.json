@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-3.1.32.power.wakelock_release",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "name": "wakelock_release",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c4601dc",
+  "callable_address": "0x0c4601dd",
+  "prototype": "void(void *wakelock)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9132-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9132-001"
+    ],
+    "source": "exact 3.1.32 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state and property library review)"
+  },
+  "notes": "PowerManager wakelock release: counted, stops the session on the last release. Supervisor platform service; static evidence only, device NOT_PROBED."
+}

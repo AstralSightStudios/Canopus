@@ -5,25 +5,32 @@
   "name": "clock_gettime",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc452348",
-  "callable_address": "0xc452349",
+  "entry_address": "0x0c13b1d8",
+  "callable_address": "0x0c13b1d9",
   "prototype": "int(uint32_t, stock_timespec_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+      "EVID-PLATFORM-HW-9132-001"
     ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+      "EVID-PLATFORM-HW-9132-001"
     ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+    "source": "exact 3.1.32 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state and property library review)"
   },
-  "approval_state": "PENDING",
-  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path."
+  "notes": "NuttX clock_gettime (clock/clock_gettime.c assert): clocks 1/4 read the monotonic base, 0 adds the realtime offset; writes {int64 tv_sec, int32 tv_nsec}. MiWearScreen calls it with CLOCK_REALTIME. Replaces the ensemble address 0xc452348, which is a UI event handler. Supervisor platform service; static evidence only, device NOT_PROBED."
 }

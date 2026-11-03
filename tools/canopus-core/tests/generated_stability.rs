@@ -140,9 +140,15 @@ fn additional_target_artifacts_regenerate_identically() {
             "generated veneer header is stale for {target}"
         );
 
+        let native_config = pack.family.as_deref().is_some_and(|f| {
+            canopus_core::family::load_family(&repo_root().join("targets"), f)
+                .unwrap()
+                .native_config
+        });
         let config = TargetConfigGen {
             pack: &pack,
             symbols: &symbols,
+            native_config,
         }
         .generate();
         let committed_config =
@@ -214,6 +220,7 @@ fn stock_modlib_supervisor_platform_remains_complete() {
     let config = TargetConfigGen {
         pack: &pack,
         symbols: &symbols,
+        native_config: false,
     }
     .generate();
 
@@ -316,6 +323,7 @@ fn band10_pro_043_ui_calls_use_audited_runtime_addresses() {
     let generated = TargetConfigGen {
         pack: &pack,
         symbols: &symbols,
+        native_config: false,
     }
     .generate();
     let committed = std::fs::read_to_string(dir.join("generated/canopus_target_config.h")).unwrap();

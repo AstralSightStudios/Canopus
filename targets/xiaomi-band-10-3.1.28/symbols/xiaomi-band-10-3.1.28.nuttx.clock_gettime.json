@@ -5,24 +5,32 @@
   "name": "clock_gettime",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc1bde54",
+  "entry_address": "0x0c0ea200",
+  "callable_address": "0x0c0ea201",
   "prototype": "int(uint32_t, stock_timespec_t *)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-1028-001"
+      "EVID-PLATFORM-HW-1028-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
     "evidence_ids": [
-      "EVID-PORT-1028-001"
+      "EVID-PLATFORM-HW-1028-001"
     ],
-    "source": "Exact xiaomi-band-10-3.1.28 image/IDB compared with xiaomi-band-9-3.1.32: body differs (instruction fingerprint and pseudocode)."
+    "source": "exact 3.1.28 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state, kvdb property client, LVGL lv_timer and bts_adapter review)"
   },
-  "approval_state": "PENDING",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path."
+  "notes": "NuttX clock_gettime (clock/clock_gettime.c assert): clockid & 7, clocks 1/4 read the monotonic base, 0 adds the realtime offset; writes {int64 tv_sec, int32 tv_nsec}. Replaces the ensemble candidate 0xc1bde54, a list/semaphore worker. Supervisor platform service; static evidence only, device NOT_PROBED."
 }

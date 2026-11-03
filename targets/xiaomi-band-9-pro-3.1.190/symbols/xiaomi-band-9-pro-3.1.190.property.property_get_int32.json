@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.property.property_get_int32",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "property_get_int32",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c49d95c",
+  "callable_address": "0x0c49d95d",
+  "prototype": "int(const char *key, int default_value)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001"
+    ],
+    "source": "exact 3.1.190 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state, kvdb property client and LVGL lv_timer review)"
+  },
+  "notes": "kvdb property_get_int32: property_get plus strtol base 0; the default on a missing key or trailing characters. MiWearScreen init reads persist.screen.auto_brightness / brightness_value with it. Supervisor platform service; static evidence only, device NOT_PROBED."
+}

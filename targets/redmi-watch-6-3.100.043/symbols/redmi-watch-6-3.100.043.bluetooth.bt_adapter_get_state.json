@@ -5,7 +5,8 @@
   "name": "bt_adapter_get_state",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x1c0087a4",
+  "entry_address": "0x1c008720",
+  "callable_address": "0x1c008721",
   "prototype": "int32(void *)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -15,21 +16,23 @@
     "blocking": false
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact redmi-watch-6-3.100.043 IDB vela_ap.bin.i64 review (EVID-PLATFORM-HW-P65-001): bt_adapter_get_state(ins): NULL or IPC failure -> 0 (off), else reply byte +4 of command 27; bttool 'Adapter State: %d' and the Bluetooth init (== 4 on, via XIP veneer 0xc8beb28) call it. Ported 0x1c0087a4 is command 32 (returns 1 on failure, no callers)."
   },
   "approval_state": "PENDING",
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. exact 3.101.043 recovery; mapped from 3.101.036 by dual-source fw-match and IDA shape review (bt_adapter_get_state) Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record. Address refreshed by trusted-036 caller-neighborhood ensemble v2; semantic policy retained from the curated 043 record."
+  "notes": "manual static review 2026-11-03 (EVID-PLATFORM-HW-P65-001): bt_adapter_get_state(ins): NULL or IPC failure -> 0 (off), else reply byte +4 of command 27; bttool 'Adapter State: %d' and the Bluetooth init (== 4 on, via XIP veneer 0xc8beb28) call it. Ported 0x1c0087a4 is command 32 (returns 1 on failure, no callers). Restricted/PENDING; static evidence only, device NOT_PROBED. Physical device validation pending; no approval carries over from the source target."
 }

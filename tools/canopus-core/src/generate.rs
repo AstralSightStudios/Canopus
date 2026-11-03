@@ -27,6 +27,11 @@ pub fn outputs_for(targets_dir: &Path, pack: &TargetPack) -> Result<Vec<Output>>
     let root = targets_dir.join(&pack.target_id);
     let (symbols, types) = load_records(&root)?;
     let gen_dir = root.join("generated");
+    let family = pack
+        .family
+        .as_deref()
+        .map(|f| load_family(targets_dir, f))
+        .transpose()?;
     let mut outputs = vec![
         Output {
             path: gen_dir.join("canopus_veneer.h"),
@@ -42,6 +47,7 @@ pub fn outputs_for(targets_dir: &Path, pack: &TargetPack) -> Result<Vec<Output>>
             content: TargetConfigGen {
                 pack,
                 symbols: &symbols,
+                native_config: family.as_ref().is_some_and(|f| f.native_config),
             }
             .generate(),
         },
@@ -56,11 +62,7 @@ pub fn outputs_for(targets_dir: &Path, pack: &TargetPack) -> Result<Vec<Output>>
     }
     .generate();
     let sdk = repo.join("sdk/rust");
-    let family = pack
-        .family
-        .as_deref()
-        .map(|f| load_family(targets_dir, f))
-        .transpose()?;
+
     if family.as_ref().is_some_and(|f| f.private_symbols) {
         outputs.push(Output {
             path: sdk.join(format!(

@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.system.system_get_state",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "system_get_state",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c36a340",
+  "callable_address": "0x0c36a341",
+  "prototype": "uint32_t *(uint32_t out[2], int state_id)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001"
+    ],
+    "source": "exact 3.1.190 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state, kvdb property client and LVGL lv_timer review)"
+  },
+  "notes": "system_all_state getter; state 1 is the MiWear connection byte +1 (get_connect_state). Spins forever before system_init_state sets system_state, so callers check the pointer first. Supervisor platform service; static evidence only, device NOT_PROBED."
+}

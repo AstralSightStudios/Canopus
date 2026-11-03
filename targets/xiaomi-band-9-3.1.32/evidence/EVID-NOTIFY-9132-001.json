@@ -1,0 +1,201 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-NOTIFY-9132-001",
+  "target_id": "xiaomi-band-9-3.1.32",
+  "question": "Which exact 3.1.32 entry point posts a system notification (lvx_notification_insert_message), what message struct does it consume, who owns the strings, from which thread may it be called, and what icon files does it accept?",
+  "candidate_symbols": [
+    "lvx_notification_insert_message"
+  ],
+  "prototype_hypothesis": "Same int(const firmware_notification_message *) contract and 88-byte layout as Band 10 Pro 3.101.043 (title +0x0c, source +0x10, body +0x14, icons +0x1c/+0x20, start_reminder +0x50).",
+  "callsite_evidence": [
+    "Entry 0xC4F9870 (Thumb, PUSH.W {R4-R8,LR}): the NULL-argument branch logs '[%s] %s: Msg is NULL' with tag notification_manager and __func__ 'lvx_notification_insert_message' (literal 0xC4F9940 -> 0x2C733998); the reminder branch logs under 'lvx_notification_start_reminder'.",
+    "0xC4F9870 -> lvx_notification_init_message 0xC46CF74 (__func__ in its malloc-error log): malloc(88) 0xC16AE80, memcpy 88 bytes from the caller, +0x2c == 0 -> CLOCK_REALTIME seconds via 0xC4E7D5A/clock_gettime 0xC13B1D8; +0x20 NULL -> '/resource/app/notifications/default_small.bin', +0x1c NULL -> '/resource/app/notifications/default.bin'; both icon pointers are replaced by lv_mem strdup copies (0xC46B018).",
+    "-> insert_message 0xC472300 (log 'insert message the uid is %llu, id is %lu' prints u64 +0x00 and u32 +0x08): finds or creates the per-uid group in the lv_ll 0x20070FEC (keeps at most 20 entries per uid), lv_ll_ins_head a zeroed 88-byte node and fills it with 0xC46CDE0.",
+    "0xC46CDE0 copies by strdup 0xC4C8718 (lv_mem; strings over 512 bytes are cut to 512 + '...') the pointers at +0x0c, +0x1c, +0x20, +0x14, +0x10, +0x24, +0x18, +0x28 and by value u64 +0x00, u32 +0x08, +0x2c, u16 +0x32, +0x34, +0x38, +0x3c, +0x40, +0x44, +0x48, u8 +0x4c, +0x4d, +0x4e, u32 +0x50. +0x30 and +0x4f..+0x57 are not copied. The free routine lvx_notification_free_data 0xC46CD64 frees exactly those eight strings.",
+    "After insert: 0xC46B71C trims the list to 20 groups and arms uv timer 0x200A81A8; if u8 +0x4c != 0 a one-entry list with a copy is published as event 27 type 7 through 0xC4486A8(27, &0x2009E748, 1) (synchronous event bus 0xC4472CC); then uv_timer_start(0x200A82B0, 0xC46B14C, 500, 0) which later publishes event 27 type 1. Finally 0xC46B6F8 frees the temporary's icon copies and the temporary.",
+    "Reminder popup on_reminder_create 0xC2D4204 / draw_reminder_view 0xC4CB760: title = get_logo_title_text 0xC2D1790 (+0x10; replaced from the +0x50 focus context only when u8 +0x4e != 0), secondary grey line = +0x0c, icon = +0x1c via notifications_set_icon 0xC2CF910 (lv_img_set_src 0xC293C08), colour u16 +0x32 when the uid type wants it. If +0x44 != 0 it calls +0x44(msg, parent, +0x50) ('local detail create'), else stock detail 0xC4C9148.",
+    "Stock detail 0xC4C9148: icon +0x20, title +0x10, body +0x14 unless +0x18 is non-NULL (then +0x18 is shown as an image path instead of the body), time from +0x2c, optional button text +0x24 with callback +0x38, scroll callback +0x3c; it writes the measured text height into the stored copy's u16 +0x30.",
+    "Stock callers (17 xrefs) fill the struct the same way: missed call add_miss_notification 0xC4C5960 (+0x0c 'phone.appname', +0x10 'missed.phone', +0x14 caller, +0x1c '/resource/app/notifications/phone.bin'); low battery start_low_battery_reminder 0xC329288 (+0x0c 'battery.appname', +0x10 title, +0x14 text, +0x20 icon, +0x34 = 0, +0x44/+0x48 callbacks); activities, pressure 0xC34C0C0, vitality 0xC35829C, todolist reminder_rtc_alarm_cb 0xC36E950 and OTA 0xC2D9E10 likewise (+0x50 = their own user data). None of these set +0x4c; they raise their popup through the separate reminder service 0xC472874. Only the phone path analyze_notify_data 0xC5078CC sets u8 +0x4c = 1 (plus +0x34 click handler, +0x4e focus flag and a malloc'd 16-byte focus context at +0x50).",
+    "OTA calls it from on_silent_ota_main_reminder_view_create 0xC2D9E10, an LVGL page-create callback, so the UI thread is a stock calling context.",
+    "Ensemble record refuted: 0xC16B154 is bes_i2c_transfer ('chip/bes_i2c.c' assert, 'bes_i2c_transfer error' log).",
+    "+0x50 reader audit (all 17 LDR [Rn,#0x50] sites in 0xC2CE000-0xC2D6000 plus lvx_notification_free_data 0xC46CD64 and group removal 0xC46CECC): every dereference is gated by u8 +0x4e != 0 (list_get_type 0xC2D0720, 0xC2CF2E4, update_focus_message_item in 0xC2D1FA8, is_clear_all_need_remove in 0xC2D2E4C, get_logo_title_text 0xC2D1790), by uid bit 63 (update_message_icon 0xC2CF6F0, update_message_small_icon 0xC2CF488, clear-all 0xC2D2E4C, save_list_item_user_data in 0xC2D3784 'watch msg no need malloc user data'), or only passes it as an argument to a non-NULL +0x34/+0x3c/+0x40/+0x44 callback (0xC46CECC, 0xC2D5278, 0xC2D0554, 0xC2D2BEC, 0xC2D2DA8). lvx_notification_free_data frees only the eight strings, never +0x50."
+  ],
+  "control_flow_evidence": [
+    "0xC4F9870 -> 0xC46CF74 (init_message) -> 0xC472300 (insert_message) -> 0xC46CDE0 (copy) -> [0xC4F9870: +0x4c reminder -> 0xC4486A8(27,type 7,sync)] -> uv_timer_start 0xC1D3760(0x200A82B0, 0xC46B14C, 500, 0) -> 0xC46B6F8 (free temporary)",
+    "miwear_init_appdata 0xC388398 (lvx_notification_manager_init): uv_timer_init 0xC1D3628(*0x20098D3C, 0x200A82B0) and (*0x20098D3C, 0x200A81A8); 0xC4486A8 queues async work on the same loop *0x20098D3C",
+    "0xC1D3760 is uv_timer_start: returns -22 for a closing handle or NULL callback, stores cb at +48, timeout at +64, inserts into the loop timer heap at loop+304"
+  ],
+  "struct_layout": {
+    "size": 88,
+    "fields": [
+      {
+        "offset": "0x00",
+        "type": "uint64_t",
+        "meaning": "uid: group key (messages with the same uid stack in one group; bit 63 marks phone-originated; bytes 2-4 select the app type)",
+        "required": "unique non-phone value, bit 63 clear"
+      },
+      {
+        "offset": "0x08",
+        "type": "uint32_t",
+        "meaning": "message id (logged, copied)",
+        "required": "any"
+      },
+      {
+        "offset": "0x0c",
+        "type": "const char *",
+        "meaning": "app/source name: secondary grey line in the popup",
+        "required": "string or NULL; copied"
+      },
+      {
+        "offset": "0x10",
+        "type": "const char *",
+        "meaning": "title (popup title, detail title)",
+        "required": "string; copied"
+      },
+      {
+        "offset": "0x14",
+        "type": "const char *",
+        "meaning": "body text (detail)",
+        "required": "string or NULL; copied"
+      },
+      {
+        "offset": "0x18",
+        "type": "const char *",
+        "meaning": "optional image path shown instead of the body in the detail view",
+        "required": "NULL"
+      },
+      {
+        "offset": "0x1c",
+        "type": "const char *",
+        "meaning": "icon path for popup / lockscreen view (NULL -> /resource/app/notifications/default.bin)",
+        "required": "path or NULL; copied"
+      },
+      {
+        "offset": "0x20",
+        "type": "const char *",
+        "meaning": "small icon path for the detail view (NULL -> /resource/app/notifications/default_small.bin)",
+        "required": "path or NULL; copied"
+      },
+      {
+        "offset": "0x24",
+        "type": "const char *",
+        "meaning": "action button text (with +0x38)",
+        "required": "NULL"
+      },
+      {
+        "offset": "0x28",
+        "type": "const char *",
+        "meaning": "extra phone string",
+        "required": "NULL"
+      },
+      {
+        "offset": "0x2c",
+        "type": "uint32_t",
+        "meaning": "timestamp, seconds (0 -> now)",
+        "required": "0"
+      },
+      {
+        "offset": "0x30",
+        "type": "uint16_t",
+        "meaning": "scratch, written by the detail view, not copied",
+        "required": "0"
+      },
+      {
+        "offset": "0x32",
+        "type": "uint16_t",
+        "meaning": "accent colour for typed uids",
+        "required": "0"
+      },
+      {
+        "offset": "0x34",
+        "type": "void (*)(...)",
+        "meaning": "callback fn(msg, user_data): called for every stored message when its uid group is removed (0xC46CECC); stock phone path sets it",
+        "required": "NULL"
+      },
+      {
+        "offset": "0x38",
+        "type": "void (*)(...)",
+        "meaning": "action button callback",
+        "required": "NULL"
+      },
+      {
+        "offset": "0x3c",
+        "type": "void (*)(...)",
+        "meaning": "click-content callback fn(msg, user_data) (lvx_notification_trigger_click_content_cb 0xC2D5278)",
+        "required": "NULL"
+      },
+      {
+        "offset": "0x40",
+        "type": "void (*)(msg, user_data)",
+        "meaning": "enter/aggregation callback (lvx_notification_trigger_click_aggregation_cb in 0xC2D0554)",
+        "required": "0"
+      },
+      {
+        "offset": "0x44",
+        "type": "void (*)(msg, parent, user_data)",
+        "meaning": "custom detail-create callback",
+        "required": "NULL"
+      },
+      {
+        "offset": "0x48",
+        "type": "void (*)(...)",
+        "meaning": "callback paired with +0x44 by local posters",
+        "required": "NULL"
+      },
+      {
+        "offset": "0x4c",
+        "type": "uint8_t",
+        "meaning": "start_reminder: publish the popup (event 27 type 7)",
+        "required": "1 for a popup"
+      },
+      {
+        "offset": "0x4d",
+        "type": "uint8_t",
+        "meaning": "detail button order",
+        "required": "0"
+      },
+      {
+        "offset": "0x4e",
+        "type": "uint8_t",
+        "meaning": "focus/resident flag: +0x50 is then read as a focus context",
+        "required": "0"
+      },
+      {
+        "offset": "0x4f",
+        "type": "uint8_t",
+        "meaning": "padding, not copied",
+        "required": "0"
+      },
+      {
+        "offset": "0x50",
+        "type": "void *",
+        "meaning": "user_data for the +0x44 callback / focus context",
+        "required": "NULL"
+      },
+      {
+        "offset": "0x54",
+        "type": "uint32_t",
+        "meaning": "tail, not copied",
+        "required": "0"
+      }
+    ]
+  },
+  "ownership_analysis": "The firmware copies the whole 88-byte struct and strdups every string (lv_mem heap) before returning; the caller keeps ownership of its struct and strings, which may be on the stack and may be freed right after the call. Strings over 512 bytes are truncated. The stored copy lives until the user dismisses it or the 20-group/20-per-uid limits evict it.",
+  "context_analysis": "Unlocked lv_ll list, uv timers bound to the app loop *0x20098D3C and a synchronous event-bus publish that creates the reminder page: UI/app-loop thread only. Stock callers include an LVGL page-create callback (OTA), uORB topic handlers and RTC alarm callbacks on the same loop. Not safe from a worker thread.",
+  "icon_analysis": "Icons are file paths handed to lv_img_set_src (absolute Vela paths such as /resource/app/notifications/phone.bin and /data/...). The vglite decoder lv_gpu_decoder_info 0xC296960 reads the first 4 bytes of a .bin file as lv_img_header_t (cf bits 0-4, w bits 10-20, h bits 21-31) and accepts cf 4..14 or 0x10/0x12; a v9 header (magic 0x19) is cf 25 and rejected ('invalid file %s, cf: %d'). LV_COLOR_DEPTH is 16, so a TRUE_COLOR_ALPHA icon is RGB565 + alpha (3 bytes/pixel), as scripts/convert_manager_icon.py --rgb565 writes. NULL icons are replaced by the firmware defaults.",
+  "differences_from_043": [
+    "start_reminder is u8 +0x4c here; the Supervisor's .043 struct writes it at +0x50, which on 3.1.32 is the user_data pointer. Posting the .043 struct therefore inserts a silent notification-centre entry with +0x4c = 0 (no popup) and user_data = (void *)1; the +0x50 reader audit shows that value is never dereferenced or freed for a bit-63-clear, non-focus message with all callbacks NULL, so it is ineffective rather than a crash.",
+    "+0x4c is where the .043 struct has destroy_callback; +0x34, +0x3c, +0x40 and +0x44 are live callbacks here (called with +0x50 as argument): all callback slots must stay NULL.",
+    "+0x0c is rendered as the app/source line and +0x10 as the title; the .043 struct names +0x0c 'title' and +0x10 'source'.",
+    "The return value is free() residue, not a status; treat the call as void (as the Band 11 path already does)."
+  ],
+  "unsafe_assumptions": [
+    "Meaning of +0x48 inferred from stock writers only; it and every other callback slot are zero for the Supervisor's use.",
+    "That the Supervisor UI task runs on the loop *0x20098D3C is inferred from LVGL page callbacks (OTA) calling this function; not observed on a device."
+  ],
+  "recommended_probe": "Mirage (emulator evidence only): post one notice from the Manager UI with the 3.1.32 layout (+0x4c = 1, callbacks NULL) and confirm the popup and the notification-centre entry; then on a device.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-11-03T00:00:00Z",
+  "artifacts": []
+}

@@ -9,6 +9,9 @@
 extern "C" {
 #endif
 
+/* Scratch the stage-2 Supervisor loaders reserve before reading the image.
+ * Module images are sized from their own header instead: the C module link
+ * keeps -ffunction-sections output, about four sections per function. */
 #define CANOPUS_ELF32_MAX_SECTIONS 256u
 #define CANOPUS_ELF32_MAX_ARRAY_ENTRIES 64u
 
@@ -19,8 +22,10 @@ struct canopus_elf_section_info {
     uint8_t reserved[3];
 };
 
+#define CANOPUS_ELF32_SCRATCH_BYTES(sections) \
+    ((sections) * sizeof(struct canopus_elf_section_info))
 #define CANOPUS_ELF32_SCRATCH_SIZE \
-    (CANOPUS_ELF32_MAX_SECTIONS * sizeof(struct canopus_elf_section_info))
+    CANOPUS_ELF32_SCRATCH_BYTES(CANOPUS_ELF32_MAX_SECTIONS)
 
 #define CANOPUS_ELF_LOAD_OK             0
 #define CANOPUS_ELF_LOAD_INVALID       -1
@@ -82,11 +87,16 @@ struct canopus_elf_module {
     uint32_t fini_count;
 };
 
+/* Section count from the ELF header (0 when elf is too short to hold one). */
+uint32_t canopus_elf32_section_count(const uint8_t *elf, uint32_t elf_size);
+
 /* Parses, lays out, relocates, finalizes, then invokes preinit/init arrays.
- * scratch must point to writable CANOPUS_ELF32_SCRATCH_SIZE bytes. */
+ * scratch must point to writable CANOPUS_ELF32_SCRATCH_BYTES(scratch_sections)
+ * bytes; an image with more sections is rejected. */
 int canopus_elf32_load(const uint8_t *elf, uint32_t elf_size,
                        const struct canopus_elf_loader_ops *ops,
-                       struct canopus_elf_module *module, void *scratch);
+                       struct canopus_elf_module *module, void *scratch,
+                       uint32_t scratch_sections);
 
 /* Invokes fini entries in reverse order, then releases the allocation. */
 void canopus_elf32_unload(const struct canopus_elf_loader_ops *ops,

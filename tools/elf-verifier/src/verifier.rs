@@ -215,13 +215,18 @@ impl<'a> Verifier<'a> {
             let mut hits: Vec<String> = Vec::new();
             for sec in file.sections() {
                 let name = sec.name().unwrap_or("<unnamed>").to_string();
-                let (is_exec, is_alloc) = match sec.flags() {
-                    SectionFlags::Elf { sh_flags } => (sh_flags & 0x4 != 0, sh_flags & 0x2 != 0),
-                    _ => (false, false),
+                // SHF_STRINGS sections hold NUL-terminated text, never a
+                // pointer; on a target whose ranges cover 0x2C...... any
+                // ", xy" in a string would otherwise read as an address.
+                let (is_exec, is_alloc, is_strings) = match sec.flags() {
+                    SectionFlags::Elf { sh_flags } => {
+                        (sh_flags & 0x4 != 0, sh_flags & 0x2 != 0, sh_flags & 0x20 != 0)
+                    }
+                    _ => (false, false, false),
                 };
                 if matches!(sec.kind(), SectionKind::Text) || is_exec {
                     scan_executable_section(&sec, &name, ranges, self.allowed_addresses, &mut hits);
-                } else if is_alloc {
+                } else if is_alloc && !is_strings {
                     scan_data_section(&sec, &name, ranges, self.allowed_addresses, &mut hits);
                 }
             }

@@ -411,3 +411,21 @@ fn out_of_range_constant_not_flagged() {
         "non-firmware constant must not be flagged"
     );
 }
+
+#[test]
+fn string_section_text_not_flagged() {
+    // Text such as ", ne" can pack to a firmware-range word on targets whose
+    // ranges cover 0x2C......; SHF_MERGE|SHF_STRINGS sections never hold
+    // pointers, so the same in-range word there is not an address.
+    let addr: u64 = 0x0C1A0D51;
+    let elf = build_elf(vec![TestSection {
+        name: ".rodata.str1.1",
+        flags: SHF_ALLOC | 0x10 | 0x20,
+        data: (addr as u32).to_le_bytes().to_vec(),
+    }]);
+    let v = Verifier {
+        target: pack(),
+        allowed_addresses: &[],
+    };
+    assert!(v.verify(&elf).ok, "string data must not be classified as an address");
+}

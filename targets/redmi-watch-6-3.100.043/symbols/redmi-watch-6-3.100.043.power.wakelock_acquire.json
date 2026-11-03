@@ -19,7 +19,8 @@
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ]
   },
   "policy": "restricted",
@@ -28,9 +29,10 @@
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: mutually unique full-body anchor; known callees consistent."
+    "source": "Exact redmi-watch-6-3.100.043 IDB vela_ap.bin.i64 review (EVID-PLATFORM-HW-P65-001): Reference count at +20; first acquire calls screen_session_start(session, 1) and, with the turn-on flag, screen_turn_on(\"wakelock\", 26)."
   },
-  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. PowerManager wakelock acquire; reference counted, first acquire starts the wakelock's screen session. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+  "notes": "manual static review 2026-11-03 (EVID-PLATFORM-HW-P65-001): Reference count at +20; first acquire calls screen_session_start(session, 1) and, with the turn-on flag, screen_turn_on(\"wakelock\", 26). Restricted/PENDING; static evidence only, device NOT_PROBED. Physical device validation pending; no approval carries over from the source target."
 }

@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-9-pro-3.1.190.nuttx.rmdir",
+  "target_id": "xiaomi-band-9-pro-3.1.190",
+  "name": "rmdir",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c37f774",
+  "callable_address": "0x0c37f775",
+  "prototype": "int(const char *path)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001"
+    ],
+    "source": "exact 3.1.190 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state, kvdb property client and LVGL lv_timer review)"
+  },
+  "notes": "rmdir (vfs/fs_rmdir.c assert); -1 plus errno (ENOTEMPTY 39 for a pseudo directory with children). Supervisor platform service; static evidence only, device NOT_PROBED."
+}

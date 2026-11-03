@@ -71,6 +71,9 @@ gate_4() {
     # bases, so a regression in the per-region base arithmetic shows up as a failed
     # constructor-pointer check rather than only on a device.
     (cd tests/host && make real-elf-loader MODULE_ELF=../../modules/examples/hello/build/xiaomi-band-10-pro-3.101.036/hello.elf)
+    # services_test keeps every per-function section (~310), more than a fixed
+    # 256-entry section table holds; the custom-loader targets load it.
+    (cd tests/host && make -s real-elf-loader MODULE_ELF=../../modules/examples/all-services-test/build/xiaomi-band-11-4.100.155/services_test.elf)
 }
 
 gate_5() {

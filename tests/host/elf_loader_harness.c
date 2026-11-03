@@ -92,6 +92,7 @@ int main(int argc, char **argv)
     long length;
     uint8_t *data;
     void *scratch;
+    uint32_t sections;
     int rc;
 
     if (argc != 2) {
@@ -107,12 +108,13 @@ int main(int argc, char **argv)
         return 2;
     }
     fclose(file);
-    scratch = aligned_alloc(32u, CANOPUS_ELF32_SCRATCH_SIZE);
+    sections = canopus_elf32_section_count(data, (uint32_t)length);
+    scratch = aligned_alloc(32u, (CANOPUS_ELF32_SCRATCH_BYTES(sections) + 31u) & ~31u);
     if (scratch == NULL) {
         free(data);
         return 2;
     }
-    rc = canopus_elf32_load(data, (uint32_t)length, &ops, &module, scratch);
+    rc = canopus_elf32_load(data, (uint32_t)length, &ops, &module, scratch, sections);
     free(scratch);
     free(data);
     if (rc != 0) {

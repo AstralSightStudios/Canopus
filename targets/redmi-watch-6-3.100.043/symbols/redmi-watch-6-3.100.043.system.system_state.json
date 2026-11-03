@@ -5,6 +5,7 @@
   "name": "system_state",
   "kind": "global",
   "instruction_set": "n/a",
+  "entry_address": "0x3c47a328",
   "prototype": "uint8_t *",
   "contexts": {
     "allowed": [
@@ -13,21 +14,23 @@
     "blocking": false
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: no unique global candidate."
+    "source": "Exact redmi-watch-6-3.100.043 IDB vela_ap.bin.i64 review (EVID-PLATFORM-HW-P65-001): RAM pointer 0x3c47a328 to the 20-byte system_all_state, NULL until system_init_state runs: system_init_state (0xc931904) mallocs and stores it, system_get_state checks it, update_from_bt_state (0xc931030) writes byte +1 = 2/1 (MiWear up/down) and +2 = ACL 2/1."
   },
-  "notes": "no unique global candidate. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Pointer to the system_all_state struct, NULL until system_init_state runs. Byte +1 is the MiWear connection state and byte +2 the Bluetooth ACL state (update_from_bt_state), 1 down / 2 up. Read-only. Static evidence only, device NOT_PROBED."
+  "notes": "manual static review 2026-11-03 (EVID-PLATFORM-HW-P65-001): RAM pointer 0x3c47a328 to the 20-byte system_all_state, NULL until system_init_state runs: system_init_state (0xc931904) mallocs and stores it, system_get_state checks it, update_from_bt_state (0xc931030) writes byte +1 = 2/1 (MiWear up/down) and +2 = ACL 2/1. Read-only. Restricted/PENDING; static evidence only, device NOT_PROBED. Physical device validation pending; no approval carries over from the source target."
 }

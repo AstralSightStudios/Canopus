@@ -23,4 +23,8 @@ include = [
   "xiaomi-band-11-4.100.139",
   "xiaomi-band-11-4.100.155",
   "xiaomi-band-11-4.100.179",
+  "xiaomi-band-9-3.1.32",
+  "xiaomi-band-9-pro-3.1.190",
+  "xiaomi-band-10-3.1.28",
+  "redmi-watch-6-3.100.043",
 ]

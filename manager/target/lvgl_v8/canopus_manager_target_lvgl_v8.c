@@ -2117,9 +2117,74 @@ static const struct firmware_app_descriptor manager_app = {
 #endif
 };
 
+/* lvx_notification_insert_message (EVID-NOTIFY-9132/9190/1028-001): the
+ * firmware copies the 88-byte message and duplicates every string before it
+ * returns, so all of it can be borrowed for the call; the return value is
+ * free() residue. +0x0c is the app line above the title at +0x10. 3.1.32 keeps
+ * start_reminder at +0x4c and user_data at +0x50, 3.1.190 / 3.1.28 at +0x50 /
+ * +0x54. uid bit 63 marks a phone message and every callback must stay NULL:
+ * with either, the firmware dereferences user_data. UI/app-loop thread only. */
+#if defined(CANOPUS_MGR_APPINFO_1028) || defined(CANOPUS_MGR_APPINFO_190)
+#define FW_NOTIFICATION_REMINDER_OFFSET 0x50u
+#else
+#define FW_NOTIFICATION_REMINDER_OFFSET 0x4cu
+#endif
+struct firmware_notification_message {
+    uint64_t uid;                 /* +0x00 */
+    uint32_t message_id;          /* +0x08 */
+    const char *source;           /* +0x0c */
+    const char *title;            /* +0x10 */
+    const char *body;             /* +0x14 */
+    const char *auxiliary_text;   /* +0x18 */
+    const char *icon;             /* +0x1c, NULL: firmware default */
+    const char *small_icon;       /* +0x20, NULL: firmware default */
+    const char *button_text;      /* +0x24 */
+    const char *phone;            /* +0x28 */
+    uint32_t timestamp;           /* +0x2c, 0: now */
+    uint8_t callbacks[FW_NOTIFICATION_REMINDER_OFFSET - 0x30u];
+    uint8_t start_reminder;
+    uint8_t flags[3];
+    void *user_data;
+#if FW_NOTIFICATION_REMINDER_OFFSET == 0x4cu
+    uint32_t tail;                /* +0x54, not copied */
+#endif
+};
+_Static_assert(sizeof(struct firmware_notification_message) == 88u,
+               "notification message size");
+_Static_assert(offsetof(struct firmware_notification_message, start_reminder) ==
+                   FW_NOTIFICATION_REMINDER_OFFSET,
+               "notification start_reminder offset");
+
+static const char notification_title[] = "Canopus";
+static const char module_notification_body[] =
+    "新模块已安装但处于禁用状态。打开 Canopus 管理器即可启用。";
+
+static int target_notify(const char *source, const char *title, const char *body,
+                         const char *icon)
+{
+    typedef void (*notification_insert_fn)(const struct firmware_notification_message *);
+    static uint32_t counter;
+    struct firmware_notification_message message;
+
+    if (identity_guard() != 0) {
+        return -1;
+    }
+    canopus_memset(&message, 0, sizeof(message));
+    message.uid = UINT64_C(0x43414E4F50555310) + (counter++ & 0xffu);
+    message.source = source;
+    message.title = title;
+    message.body = body;
+    message.icon = icon;
+    message.small_icon = icon;
+    message.start_reminder = 1u;
+    ((notification_insert_fn)(uintptr_t)FW_NOTIFICATION_INSERT)(&message);
+    return 0;
+}
+
 int canopus_manager_native_notify_module_installed(void)
 {
-    return 0;
+    return target_notify(notification_title, notification_title,
+                         module_notification_body, launcher_icon);
 }
 
 static void __attribute__((constructor, used)) canopus_manager_target_init(void)
@@ -2284,11 +2349,7 @@ int canopus_manager_target_launcher_step(void)
 int canopus_manager_native_notify(const char *source, const char *title,
                                   const char *body, const char *icon)
 {
-    (void)source;
-    (void)title;
-    (void)body;
-    (void)icon;
-    return -1;
+    return target_notify(source, title, body, icon != 0 ? icon : launcher_icon);
 }
 
 /* The launcher builds its icon list when its page is created, from the apps in

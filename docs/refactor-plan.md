@@ -6,6 +6,27 @@
 
 状态标记：`[ ]` 未开始　`[~]` 进行中　`[x]` 完成（附证据/commit）　`[!]` 阻塞（写明原因）
 
+## 新设备体验对齐（2026-11-03）
+
+目标：Band 9 3.1.32（n66）、Band 9 Pro 3.1.190（n67）、Band 10 3.1.28（o66）、REDMI Watch 6 3.100.043（p65）的模块体验与 Band 10 Pro / Band 11 一致。以下全部是 host / emulator 证据，不提升任何符号批准、真机或生产状态。
+
+- [x] 模块加载：C 模块每个函数约 4 个 section（services_test 310 个），定长 loader scratch 放不下；改为按 ELF 头的 section 数分配（`canopus_elf32_section_count`），host harness 与 CI gate 4 用真实 services_test 走 loader。verifier 不再把 `SHF_MERGE|SHF_STRINGS` 段当成重定位目标（**CLI 改动，需要发版**）。
+- [x] v8 镜像在 Umem（特权默认 map 可执行），不再申请 MPU lease；p65 任务是非特权的，text+ro 改为 RW+X 两段，内联 hook 才能改写。
+- [x] 安装器表盘与 `module-installer-prod` 统一读满 88 字节 CQD1（`device_error()` 偏移 +24），CI gate 7 的 Lua fixture 同步。
+- [x] RESTORE_AFTER_BOOT 报 `-6` 的误报：`sup_verify_kind` 成功时清零 `error_code`，把同一轮里前一个槽位的失败抹掉；改为只在失败时写。
+- [x] 旧 SDK 构建的 UI 模块（`page_count` 之前的 28 字节 entry、`on_resume` 之前的前缀）`set_entry` 返回 `-22`；现在两种旧前缀都按单页/无过渡接受（所有 target）。
+- [x] v8 通知：`lvx_notification_insert_message`（n66 `0x0C4F9871`、n67 `0x0C4F1F29`、o66 `0x0C52DAD1`，`EVID-NOTIFY-9132/9190/1028-001`），88 字节消息结构，n66 的 start_reminder 在 +0x4c、n67/o66 在 +0x50。生成器新增 `FW_9_NOTIFY`（仅无 native header 的 staged 家族，p65 由 band11 header 提供）。模块安装通知与 `ctx->notify` 在三台 v8 上可用。
+- [x] 平台硬件服务（亮度、熄屏、电池、wakelock、属性、system_state）补到 n67/o66/p65（`EVID-PLATFORM-HW-*`）；all-services-test 的设备表补齐四款型号与分辨率。
+- [x] n67/o66 owner pump（熄屏后仍跑的 libuv 定时器，`evidence/owner-pump.json`）：`miwear_main` 的 UI loop（n67 `0x200C8D8C`、o66 `0x200A2B80`）与 88 字节 `uv_timer_t`。有了它，开机稳定性提交、后台定时器与 TIME v2 不再依赖亮屏。Mirage 上熄屏状态下两次开机都提交了稳定（boot word 0、starts 0）；之前 n67 的 `booting` 一直不清，starts 跨开机累加。n66 已由 L2 证据提供。
+- 模拟器（Mirage）：n66 26/27、n67 25/27、o66 25/27（跳过项：Haptics 仅预设；n67/o66 无 L2 所以 Connect 跳过），KV 跨重启通过，`--ui` 新模块装 → 启 → 激活为 ACTIVE。前一轮 n66/n67 的反复复位是测试 harness 在表盘脚本加载期间执行 OPEN_MANAGER 造成的（推 Manager 页销毁了正在创建的表盘页），改成延后一拍后两次开机无复位。
+- 仍有差距（不是本轮能在模拟器上闭环的）：
+  - 四台都没有固化启动（rc.sysinit，ADR-CAN-012）。
+  - n67/o66/p65 没有 L2，所以没有 CanopusConnect。
+  - p65 没有 owner pump，且 Mirage 设备不可用（未绑定、离线写入被回滚），本轮 p65 只做到构建 + verifier。
+  - Haptics 只有预设。
+  - n67 读不到电量和充电状态。
+  - 没有任何真机证据，真机清单见 `v8-manager-bringup.md`。
+
 ## P65 恢复模块时循环复位修复（2026-11-02）
 
 - [x] 用故障前 Corona 仍启用的注册表复现，GDB 捕获 MemManage `IACCVIOL`：模块构造器 `0x3d56b98a` 同时落在 Supervisor 与模块 RX 的 MPU 区域中。根因是 stage2 只申请 175,134 B，却建立 262,144 B 映射，后续模块占用映射尾部；ARMv8-M 拒绝重叠区域。证据 `EVID-EMU-65043-006`。

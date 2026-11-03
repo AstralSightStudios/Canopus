@@ -14,7 +14,7 @@ loader_sources = [
   "runtime/loader/canopus_arm_reloc.c",
   "runtime/loader/canopus_elf32_loader.c",
 ]
-defines = ["-DCANOPUS_SUP_BAND11_BOOTSTRAP=1", "-DCANOPUS_MGR_BAND11=1"]
+defines = ["-DCANOPUS_SUP_BAND11_BOOTSTRAP=1", "-DCANOPUS_MGR_BAND11=1", "-DCANOPUS_SUP_DISPLAY_WIDTH=212", "-DCANOPUS_SUP_DISPLAY_HEIGHT=520"]
 prod_family = "xiaomi-band-11"
 private_symbols = false
 native_config = true

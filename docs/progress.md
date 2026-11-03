@@ -42,6 +42,19 @@ Toast API 已按用户要求移除，原节点编号 11 与能力位 16 停用�
 - v8 Manager 原生样式与 n67 上屏（2026-10-29，仅 emulator 证据，见 `v8-manager-bringup.md` 第 33 轮）：Band 9 / Band 9 Pro / Band 10 的 Manager 改成系统设置页的版面（大圆角卡片、灰标签加白值的信息块、系统小标题、原生风格确认框）。n67 一直黑屏的两个根因找到并修复：页面描述符布局（`on_resume` 从未被调用）和被指错的 `lv_obj_set_local_style_prop` 记录（它把字体指针低 16 位写成了页面视图的 x）。n67 的完整 3.1.190 资源包从归档的 `ZZ~` 容器解出（`scripts/emu/unpack_zz.py`），`/system/font` 在位后中文正常。n66 首次弹窗的叠影也是同一类问题（3.1.32 页面对象同样是短布局）。三个 v8 目标补了 `opendir/readdir/closedir`，Manager 的「导入手机推送的模块」在 v8 上可用；n67 上 导入 → 启用 → 重启 → 运行中 全链路在 Mirage 通过，n66 导入通过。三台 Supervisor 重新构建 verifier PASS，host 测试与 `generated_stability` 通过；未提升任何能力状态，无真机证据。
 - v8 模块自带 UI 页面（2026-10-29，仅 emulator 证据，见 `v8-manager-bringup.md` 第 33 轮补记）：三台上 Manager 详情的「打开界面」都可以打开模块注册的页面（第 4 个 Manager 页面，原生样式）；n66 的「原地详情」绕法已去掉（当年「推第三页黑屏」的根因是页描述符布局，不是 page manager 的层数上限）。顺带修了 v8 刷新缺 `slot` / `has_previous` / `has_ui`、开关行不显示开 / 关；Band 10 / Band 9 Pro 家族的常驻上限提到 184,320 字节。Mirage 上用 `--ui` 测试模块验证了渲染、点击、开关、返回、重进后状态保留（n67、o66），n66 回归通过。三台的启动器图标也已在 Mirage 的应用列表里目视确认并点开（n67 主列表末尾，o66 / n66 在「更多」末尾，须在息屏弹页前打开启动器）。n66 / o66 的 Manager 页描述符设了固件自己的「息屏不回表盘」标志（`flags = 0x0080`），息屏 40 秒后页面仍在且可点（Mirage）；o66 同时改正了长布局的回调偏移（`on_pause / on_destroy / on_ui_destroy` 在 `+0x5c / +0x60 / +0x64`）。n66 的图标在息屏弹栈之后仍在（安装链表里的应用记录不受弹栈影响）；o66 的启动器还看持久顺序表，新增状态中性命令 `PUBLISH_LAUNCHER`（协议 30）由安装器表盘的定时器在应用列表存在时触发，写入图标并 `reset_order_info`，Mirage 上弹栈后图标仍在、点开可用。未提升任何能力状态，无真机证据。
 - p65 `.043`（REDMI Watch 6）：**Mirage 端到端跑通，仍是 emulator 证据**（2026-10-25，`EVID-EMU-65043-001/002/003/004`；无真机、无批准，全部记录保持 restricted / PENDING / not_probed）。安装器 Run 五步全部 result 5，cave stage0 → stage1 → stage2 → Supervisor；`/dev/canopus`、`/canopus/install`、`/canopus/registry` 注册成功，Manager 应用出现在 Launcher 并能打开原生页面（系统信息 / target / 固件版本）。模块生命周期已闭环：CPC2 INSTALL → ENABLE(REBOOT_REQUIRED) → RESTORE_AFTER_BOOT 加载，Manager 显示"运行中"；inbox 扫描（opendir/readdir/closedir）把第二个包导入为已禁用槽位。关键修复：`close` 为 `0x1c154d9c`（0x1c154c40 会复位设备）、cave exec 前不编程 MPU（`stage0_mpu = false`）、常驻镜像整段 RW+exec MPU lease、本 VFS 的 `O_RDONLY` 必须为 1、`device_error()` 读满 88 字节 CQD1、消息框按钮 stride 按 5 word。持久化已打通（`EVID-EMU-65043-004`）：`write` 的 VFS 条目更正为 `0x1c159a2c`（分发表 `0xc4a96c4` 的 write 槽；旧 `0x1c158690` 无任何代码引用，每次写都返回 EINVAL），`O_CREAT` 更正为 `4`（`vfs_open 0x1c157d24` 只在 flag bit2 才取 mode 参数）。修正后 Supervisor 自己完成 tmp 创建 → 写入 → rename：CPC2 DISABLE 返回 REBOOT_REQUIRED(8)，QUERY_DEVICE 显示无失败 stage、1 次成功事务，`registry.bin` 当场变化、不留 tmp；安装器表盘不再需要代为发布。
+- 新设备体验对齐（2026-11-03，仅 host / emulator 证据，任务清单见 `refactor-plan.md` 同名一节，细节见 `v8-manager-bringup.md` 第 34 轮）：
+  - 修好的问题：
+    - 模块 loader 的 section 上限；
+    - verifier 误拒 `SHF_STRINGS` 段；
+    - v8/p65 的模块镜像权限；
+    - 88 字节 CQD1；
+    - RESTORE 误报 `-6`；
+    - 旧 SDK UI entry 被拒（`-22`）。
+  - 补上的能力：
+    - v8 通知（`EVID-NOTIFY-*-001`）；
+    - n67/o66/p65 平台硬件服务；
+    - n67/o66 owner pump（`evidence/owner-pump.json`），熄屏后仍能提交开机稳定性。
+  - 能力状态不变，所有新增记录 restricted / PENDING / not_probed。
 
 ## P65 Resource Hook 与 Corona Manager 接线（2026-10-28，仅静态／指令与 host 证据）
 

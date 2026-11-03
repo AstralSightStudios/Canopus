@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.screen.screen_session_set_auto_brightness",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "screen_session_set_auto_brightness",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c476020",
+  "callable_address": "0x0c476021",
+  "prototype": "void(void *session, int status)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1028-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1028-001"
+    ],
+    "source": "exact 3.1.28 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state, kvdb property client, LVGL lv_timer and bts_adapter review)"
+  },
+  "notes": "MiWearScreen screen_session_set_auto_brightness; status table UNSPECIFIED/ENABLED/DISABLED, so 2 disables auto brightness (alarmclock_screen_dim passes 2). Supervisor platform service; static evidence only, device NOT_PROBED."
+}

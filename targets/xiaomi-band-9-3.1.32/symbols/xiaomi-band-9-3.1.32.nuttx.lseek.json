@@ -5,32 +5,32 @@
   "name": "lseek",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0xc3ba3f8",
-  "callable_address": "0xc3ba3f9",
+  "entry_address": "0x0c3932bc",
+  "callable_address": "0x0c3932bd",
   "prototype": "int64_t(int, int64_t, int)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
-      "connection_framework_owner"
+      "ui-owner-thread"
     ],
-    "blocking": true
+    "blocking": false
   },
   "proof": {
     "static": "recovered",
+    "device": "not_probed",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
-    ],
-    "device": "not_probed"
+      "EVID-PLATFORM-HW-9132-001"
+    ]
   },
   "policy": "restricted",
   "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "9c02dab4020b2cc9666ee7d34cf27d311b76aadcec519a38361bbcbd94c53264",
     "evidence_ids": [
-      "EVID-FW-MATCH-ENSEMBLE-1036-9132"
+      "EVID-PLATFORM-HW-9132-001"
     ],
-    "source": "bindiff-inspired-ensemble-v2 source=xiaomi-band-10-pro-3.101.036 report=targets/xiaomi-band-9-3.1.32/evidence/fw-match/ensemble-1036-to-9132-v2.json"
+    "source": "exact 3.1.32 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state and property library review)"
   },
-  "approval_state": "PENDING",
-  "notes": "Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending. 2026-10-24 restored exact 3.1.32 records; earlier approval withdrawn, restricted/PENDING, device not probed. Loader is now Band-11-style staged, not the rejected NSH path."
+  "notes": "lseek (vfs/fs_lseek.c assert): fd in r0, offset in r2:r3, whence on the stack; -1 plus errno on failure. Replaces the ensemble address 0xc3ba3f8, a Bluetooth L2CAP state handler. Supervisor platform service; static evidence only, device NOT_PROBED."
 }

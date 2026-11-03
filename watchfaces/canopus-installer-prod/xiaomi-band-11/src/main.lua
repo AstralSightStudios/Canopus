@@ -283,7 +283,7 @@ local function exchange(command, payload, reply_size)
 end
 
 local function device_error()
-    local reply = exchange(CMD_QUERY_DEVICE, nil, CPC2_HEADER + 36)
+    local reply = exchange(CMD_QUERY_DEVICE, nil, CPC2_HEADER + 88) -- CQD1 payload: 88 bytes
     return reply and signed32(u32le(reply, CPC2_HEADER + 24)) or 0
 end
 

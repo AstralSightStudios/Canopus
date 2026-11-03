@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define CANOPUS_TARGET_ID "xiaomi-band-11-4.100.155"
+#define CANOPUS_TARGET_DEVICE_MODEL "Xiaomi Band 11"
 #define CANOPUS_TARGET_FIRMWARE_VERSION "4.100.155"
 #define CANOPUS_TARGET_FIRMWARE_BUILD \
     "user-4.100.155-cn-202609041500"

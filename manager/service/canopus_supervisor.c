@@ -94,7 +94,7 @@ static int sup_load_slot(struct canopus_supervisor_v1 *sup, uint32_t slot)
     m->version = version;
     m->lifecycle_class = lifecycle;
     st = sup_try_load_slot(sup, slot);
-    /* Set after the retry: loading clears the platform's last diagnostic. */
+    /* Set after the retry: it replaces the failed attempt's diagnostic. */
     if (st >= 0) {
         m->activation_error = (uint32_t)CANOPUS_SUP_ERR_UPDATE_FALLBACK;
         sup->error_code = CANOPUS_SUP_ERR_UPDATE_FALLBACK;

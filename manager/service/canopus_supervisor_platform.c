@@ -694,7 +694,9 @@ static int sup_verify_kind(
         *diagnostic = CANOPUS_SUP_ERR_STAGE_ARTIFACT;
         return -1;
     }
-    *diagnostic = CANOPUS_SUP_ERR_NONE;
+    /* *diagnostic is written only on failure: the load path passes the
+     * Supervisor's error_code, and a later module that verifies must not wipe
+     * an earlier slot's failure out of the same RESTORE_AFTER_BOOT. */
     return 0;
 }
 
@@ -864,7 +866,18 @@ static int sup_loader_finalize(void *cookie, void *allocation,
     if (id < 0) return -1;
     loaded->mpu_regions[loaded->mpu_region_count++] = (uint8_t)id;
     return 0;
+#elif !CANOPUS_BAND9_IMAGE_MPU_LEASE
+    /* The image shares the Supervisor's Umem placement, which the privileged
+     * default map already makes executable and writable (stage2 leases
+     * nothing for the Supervisor there either), so the module's own text is
+     * patchable for inline hooks and no MPU region is spent on it. */
+    (void)cookie; (void)allocation; (void)size; (void)regions; (void)region_count;
+    return code_base == data_base ? 0 : -1;
 #else
+    /* Tasks that run unprivileged reach code only through an MPU region: one
+     * for text + rodata, one for data. Text is writable as well so that inline
+     * hooks can patch the module's own functions (Band 11 reaches the same
+     * bytes through its writable data view). */
     struct sup_loaded_module *loaded = cookie;
     uint32_t i;
     uint32_t physical_count;
@@ -872,7 +885,6 @@ static int sup_loader_finalize(void *cookie, void *allocation,
     uint32_t base;
     uint32_t length;
     uint32_t access;
-    uint32_t target_base = data_base;
     (void)allocation;
     (void)size;
 
@@ -886,18 +898,19 @@ static int sup_loader_finalize(void *cookie, void *allocation,
         if (region > 7u) goto fail;
         loaded->mpu_regions[loaded->mpu_region_count++] = (uint8_t)region;
         if (i == 0u && regions[1].kind == CANOPUS_ELF_REGION_RO) {
-            base = target_base + regions[0].offset;
+            base = data_base + regions[0].offset;
             length = regions[0].size + regions[1].size;
-            access = 1u;
+            access = CANOPUS_BAND9_RW_ACCESS_ATTR;
         } else {
             uint32_t logical = i +
                 (regions[1].kind == CANOPUS_ELF_REGION_RO ? 1u : 0u);
-            base = target_base + regions[logical].offset;
+            base = data_base + regions[logical].offset;
             length = regions[logical].size;
-            access = regions[logical].kind == CANOPUS_ELF_REGION_EXEC ? 1u :
-                     (regions[logical].kind == CANOPUS_ELF_REGION_RW ? 0u : 4u);
+            access = regions[logical].kind == CANOPUS_ELF_REGION_RO ?
+                     CANOPUS_BAND9_RO_ACCESS_ATTR : CANOPUS_BAND9_RW_ACCESS_ATTR;
         }
-        if (canopus_fw_mpu_region_configure(region, base, length, access, 1u) != 0) {
+        if (canopus_fw_mpu_region_configure(region, base, length, access,
+                                            CANOPUS_BAND9_EXEC_MEM_ATTR) != 0) {
             goto fail;
         }
     }
@@ -905,7 +918,6 @@ static int sup_loader_finalize(void *cookie, void *allocation,
 
 fail:
     while (loaded->mpu_region_count != 0u) {
-        uint32_t region;
         loaded->mpu_region_count--;
         region = loaded->mpu_regions[loaded->mpu_region_count];
         *(volatile uint32_t *)(uintptr_t)0xE000ED98u = region;
@@ -957,14 +969,16 @@ static int sup_load_custom(const char *path, uint32_t artifact_size,
     struct canopus_elf_loader_ops ops;
     uint8_t *elf;
     void *scratch;
+    uint32_t sections;
     int rc;
 
     if (loaded->image.allocation != 0) return CANOPUS_ELF_LOAD_INVALID;
     if (sup_read_artifact(path, artifact_size, &elf) != 0) {
         return CANOPUS_ELF_LOAD_NOMEM;
     }
+    sections = canopus_elf32_section_count(elf, artifact_size);
     scratch = canopus_fw_mm_memalign_scratch(32u,
-                                               CANOPUS_ELF32_SCRATCH_SIZE);
+                                               CANOPUS_ELF32_SCRATCH_BYTES(sections));
     if (scratch == 0) {
         canopus_fw_mm_free_scratch(elf);
         return CANOPUS_ELF_LOAD_NOMEM;
@@ -975,7 +989,8 @@ static int sup_load_custom(const char *path, uint32_t artifact_size,
     ops.release = sup_loader_release;
     ops.finalize = sup_loader_finalize;
     ops.invoke = sup_loader_invoke;
-    rc = canopus_elf32_load(elf, artifact_size, &ops, &loaded->image, scratch);
+    rc = canopus_elf32_load(elf, artifact_size, &ops, &loaded->image, scratch,
+                            sections);
     canopus_fw_mm_free_scratch(scratch);
     canopus_fw_mm_free_scratch(elf);
     return rc;
@@ -2086,6 +2101,17 @@ static int sup_start_background_pump(void *cookie, void (*poll)(void *), void *d
 #define SUP_BACKGROUND_PUMP 0
 #endif
 
+/* The model comes from the pack's target.toml, the panel from its family. */
+#ifdef CANOPUS_TARGET_DEVICE_MODEL
+#define CANOPUS_SUP_DEVICE_MODEL CANOPUS_TARGET_DEVICE_MODEL
+#else
+#define CANOPUS_SUP_DEVICE_MODEL ""
+#endif
+#ifndef CANOPUS_SUP_DISPLAY_WIDTH
+#define CANOPUS_SUP_DISPLAY_WIDTH 0u
+#define CANOPUS_SUP_DISPLAY_HEIGHT 0u
+#endif
+
 const struct canopus_sup_platform_v1 canopus_sup_platform = {
     CANOPUS_SUP_TARGET_ID,
     sup_register_device,
@@ -2156,4 +2182,7 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     sup_open_manager,
     SUP_NATIVE_APP_ID_IN_USE,
     sup_publish_launcher,
+    CANOPUS_SUP_DEVICE_MODEL,
+    CANOPUS_SUP_DISPLAY_WIDTH,
+    CANOPUS_SUP_DISPLAY_HEIGHT,
 };

@@ -1633,23 +1633,13 @@ static void svc_wakelocks_release(uint32_t slot)
     }
 }
 
+/* The pack's panel; 0 x 0 when it does not say rather than another device's. */
 static void svc_display_get_resolution(const struct canopus_context_v1 *ctx, uint32_t *width, uint32_t *height)
 {
-    const char *target = (ctx != 0 && ctx->target_id != 0) ? ctx->target_id : "";
+    (void)ctx;
     if (width == 0 || height == 0) return;
-    if (target[12] == '1' && target[13] == '1') {
-        /* Band 11: 212 x 520 */
-        *width = 212u;
-        *height = 520u;
-    } else if (canopus_strcmp(target, "redmi-watch-6-3.100.043") == 0) {
-        /* Exact P65 panel; never report the Band 10 Pro default here. */
-        *width = 432u;
-        *height = 514u;
-    } else {
-        /* Band 10 Pro: 336 x 480 */
-        *width = 336u;
-        *height = 480u;
-    }
+    *width = (s_sup != 0 && s_sup->platform != 0) ? s_sup->platform->display_width : 0u;
+    *height = (s_sup != 0 && s_sup->platform != 0) ? s_sup->platform->display_height : 0u;
 }
 
 /* ---- BUS (Inter-Module Event Bus) ------------------------------------ */
@@ -1949,11 +1939,10 @@ static const char *svc_system_module_id(const struct canopus_context_v1 *ctx)
 
 static const char *svc_system_device_model(const struct canopus_context_v1 *ctx)
 {
-    const char *target = svc_system_target_id(ctx);
-    if (target[12] == '1' && target[13] == '1') {
-        return "Xiaomi Band 11";
-    }
-    return "Xiaomi Band 10 Pro";
+    (void)ctx;
+    return (s_sup != 0 && s_sup->platform != 0 && s_sup->platform->device_model != 0)
+               ? s_sup->platform->device_model
+               : "";
 }
 
 static const char *svc_system_firmware_version(const struct canopus_context_v1 *ctx)
@@ -2153,8 +2142,11 @@ static int32_t svc_ui_set_entry(const struct canopus_context_v1 *ctx,
         (void)s_sup->platform->ui_page_close(s_sup->platform_cookie, ctx->slot);
         return CANOPUS_SVC_OK;
     }
-    /* Accept the complete legacy prefix without reading its appended fields. */
-    if (entry->struct_size != offsetof(struct canopus_ui_entry_v1, on_resume) &&
+    /* Accept the complete legacy prefixes without reading their appended
+     * fields: modules built before page_count (single-page) or before
+     * on_resume (multi-page without transitions). */
+    if (entry->struct_size != offsetof(struct canopus_ui_entry_v1, page_count) &&
+        entry->struct_size != offsetof(struct canopus_ui_entry_v1, on_resume) &&
         entry->struct_size != sizeof(*entry)) return CANOPUS_SVC_ERR_ARGUMENT;
     canopus_memset(&normalized, 0, sizeof(normalized));
     canopus_memcpy(&normalized, entry, entry->struct_size);

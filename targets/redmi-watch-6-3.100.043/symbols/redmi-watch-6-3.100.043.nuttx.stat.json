@@ -5,7 +5,7 @@
   "name": "stat",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x1c1572b4",
+  "entry_address": "0x1c1595a4",
   "prototype": "int(const char *path, void *stat_buffer)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -18,7 +18,8 @@
     "static": "candidate",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ]
   },
   "policy": "restricted",
@@ -27,9 +28,10 @@
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact redmi-watch-6-3.100.043 IDB vela_ap.bin.i64 review (EVID-PLATFORM-HW-P65-001): ABI differs from the Supervisor's 104-byte layout: the exact stat entry is 0x1c1595a4 (vfs/fs_stat.c, inode_stat resolve=1, errno on failure; 0x1c15967c is lstat, 0x1c1594f8 nx_stat), but inode_stat 0x1c159300 clears a 96-byte struct stat with st_mode at +8, st_size (int64) at +24, and file_fchstat 0x1c1572b4 (the ported address) places st_atim/st_mtim/st_ctim as 16-byte timespecs at +32/+48/+64 (st_mtim.tv_sec int64 at +48). Not promoted; the Supervisor stat hook reads size at +32 and mtime at +72."
   },
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. NuttX stat into a 104-byte struct stat: st_mode at +8, st_size (int64) at +32, st_atim/st_mtim/st_ctim as 16-byte timespecs from +56. The filesystem's own stat operation fills the times; returns -1 and sets errno on failure. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+  "notes": "manual static review 2026-11-03 (EVID-PLATFORM-HW-P65-001): ABI differs from the Supervisor's 104-byte layout: the exact stat entry is 0x1c1595a4 (vfs/fs_stat.c, inode_stat resolve=1, errno on failure; 0x1c15967c is lstat, 0x1c1594f8 nx_stat), but inode_stat 0x1c159300 clears a 96-byte struct stat with st_mode at +8, st_size (int64) at +24, and file_fchstat 0x1c1572b4 (the ported address) places st_atim/st_mtim/st_ctim as 16-byte timespecs at +32/+48/+64 (st_mtim.tv_sec int64 at +48). Not promoted; the Supervisor stat hook reads size at +32 and mtime at +72. Restricted/PENDING; static evidence only, device NOT_PROBED. Physical device validation pending; no approval carries over from the source target."
 }

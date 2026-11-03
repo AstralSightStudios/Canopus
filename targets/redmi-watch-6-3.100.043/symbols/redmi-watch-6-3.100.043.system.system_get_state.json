@@ -5,7 +5,8 @@
   "name": "system_get_state",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x1c0bf164",
+  "entry_address": "0xc931d04",
+  "callable_address": "0xc931d05",
   "prototype": "uint32_t *(uint32_t out[2], int state_id)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -15,21 +16,23 @@
     "blocking": false
   },
   "proof": {
-    "static": "candidate",
+    "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ]
   },
   "policy": "restricted",
-  "status": "CANDIDATE",
+  "status": "STATIC_RECOVERED",
   "approval_state": "PENDING",
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact redmi-watch-6-3.100.043 IDB vela_ap.bin.i64 review (EVID-PLATFORM-HW-P65-001): system_all_state getter (17-case switch, 'Please call system_init_state first.' then spin when 0x3c47a328 is NULL): zeroes out[0..1], stores the state byte; id 1 reads byte +1. Ported 0x1c0bf164 is an LVGL routine."
   },
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. system_all_state getter (get_connect_state/get_switch_state/...): zeroes out[0..1] then stores the state byte. id 1 is the MiWear connection (0 not reported, 1 down, 2 up). Spins forever (Band 10 Pro) or panics (Band 11) when system_init_state has not run, so the state pointer must be checked first. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+  "notes": "manual static review 2026-11-03 (EVID-PLATFORM-HW-P65-001): system_all_state getter (17-case switch, 'Please call system_init_state first.' then spin when 0x3c47a328 is NULL): zeroes out[0..1], stores the state byte; id 1 reads byte +1. Ported 0x1c0bf164 is an LVGL routine. Restricted/PENDING; static evidence only, device NOT_PROBED. Physical device validation pending; no approval carries over from the source target."
 }

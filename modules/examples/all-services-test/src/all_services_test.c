@@ -464,6 +464,33 @@ static void test_timer_cb(const struct canopus_context_v1 *ctx, int32_t timer_id
     s_timer_test_fired++;
 }
 
+/* The device each supported target id belongs to; a "-pro" family precedes
+ * its base family. */
+static const struct expected_device {
+    const char *prefix;
+    const char *model;
+    uint32_t width, height;
+} s_expected_devices[] = {
+    {"xiaomi-band-9-pro-", "Xiaomi Band 9 Pro", 336u, 480u},
+    {"xiaomi-band-9-", "Xiaomi Band 9", 192u, 490u},
+    {"xiaomi-band-10-pro-", "Xiaomi Band 10 Pro", 336u, 480u},
+    {"xiaomi-band-10-", "Xiaomi Band 10", 212u, 520u},
+    {"xiaomi-band-11-", "Xiaomi Band 11", 212u, 520u},
+    {"redmi-watch-6-", "REDMI Watch 6", 432u, 514u},
+};
+
+static const struct expected_device *expected_device(const char *target)
+{
+    uint32_t d, i;
+    for (d = 0u; target != 0 && d < sizeof(s_expected_devices) / sizeof(s_expected_devices[0]); d++) {
+        const char *prefix = s_expected_devices[d].prefix;
+        for (i = 0u; prefix[i] != '\0' && target[i] == prefix[i]; i++) {
+        }
+        if (prefix[i] == '\0') return &s_expected_devices[d];
+    }
+    return 0;
+}
+
 static void run_system_and_time_tests(const struct canopus_context_v1 *ctx)
 {
     int ok = 1;
@@ -479,12 +506,8 @@ static void run_system_and_time_tests(const struct canopus_context_v1 *ctx)
 
     if (!target || !model || !ver) ok = 0;
     if (!module || canopus_strcmp(module, TEST_MODULE_ID) != 0) ok = 0;
-    int is_b11 = (target && target[12] == '1' && target[13] == '1');
-    if (is_b11) {
-        if (canopus_strcmp(model, "Xiaomi Band 11") != 0) ok = 0;
-    } else {
-        if (canopus_strcmp(model, "Xiaomi Band 10 Pro") != 0) ok = 0;
-    }
+    const struct expected_device *device = expected_device(target);
+    if (device == 0 || !model || canopus_strcmp(model, device->model) != 0) ok = 0;
     /* Battery is real or unknown; never a placeholder. */
     if (batt > 100u && batt != CANOPUS_SYSTEM_BATTERY_UNKNOWN) ok = 0;
     if (is_chg != 0 && is_chg != 1 && is_chg >= 0) ok = 0;
@@ -600,12 +623,10 @@ static void run_haptics_and_display_tests(const struct canopus_context_v1 *ctx)
     ok = 1;
     uint32_t w = 0, h = 0;
     ctx->display->get_resolution(ctx, &w, &h);
-    const char *tgt = ctx->system ? ctx->system->target_id(ctx) : "";
-    int is_b11 = (tgt && tgt[12] == '1' && tgt[13] == '1');
-    if (is_b11) {
-        if (w != 212u || h != 520u) ok = 0;
-    } else {
-        if (w != 336u || h != 480u) ok = 0;
+    {
+        const struct expected_device *device =
+            expected_device(ctx->system ? ctx->system->target_id(ctx) : 0);
+        if (device == 0 || w != device->width || h != device->height) ok = 0;
     }
     log_test("Display: resolution", ok);
 

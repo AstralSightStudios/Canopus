@@ -98,7 +98,7 @@ local function run_case(version, fault)
                     if #data==36 then
                         -- CPC2 QUERY_DEVICE diagnostic (Band 10 Pro only)
                         assert(not is_band11 and data==string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,1,2,0,36,9,0x7FFF,0,0,0))
-                        reply=string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,2,0,120,9,0x7FFF,0,5,84)..string.rep('\0',24)..string.pack('<i4',-7)..string.rep('\0',56)
+                        reply=string.pack('<I4I2I2I2I2I4I4I4I4I4I4',0x43504332,36,2,2,0,124,9,0x7FFF,0,5,88)..string.rep('\0',24)..string.pack('<i4',-7)..string.rep('\0',60)
                         return self
                     end
                     request=data

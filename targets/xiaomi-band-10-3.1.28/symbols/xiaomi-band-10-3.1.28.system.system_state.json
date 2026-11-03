@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.system.system_state",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "system_state",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "entry_address": "0x200b508c",
+  "prototype": "uint8_t *",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1028-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1028-001"
+    ],
+    "source": "exact 3.1.28 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state, kvdb property client, LVGL lv_timer and bts_adapter review)"
+  },
+  "notes": "Pointer to the system_all_state struct, NULL until system_init_state runs. Byte +1 is the MiWear connection state (1 down, 2 up). Read-only. The getter 0xc38cd4c is NOT recorded: it copies a 256-byte result into its out buffer, not the 8 bytes the Supervisor passes. Supervisor platform service; static evidence only, device NOT_PROBED."
+}

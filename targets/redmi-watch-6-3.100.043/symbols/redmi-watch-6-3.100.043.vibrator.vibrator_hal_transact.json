@@ -5,7 +5,6 @@
   "name": "vibrator_hal_transact",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x1c14204c",
   "prototype": "int(void *message)",
   "calling_convention": "arm-aapcs",
   "contexts": {
@@ -18,7 +17,8 @@
     "static": "candidate",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ]
   },
   "policy": "restricted",
@@ -27,9 +27,10 @@
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-PORT-P65-001"
+      "EVID-PORT-P65-001",
+      "EVID-PLATFORM-HW-P65-001"
     ],
-    "source": "Exact redmi-watch-6-3.100.043 image/IDB compared with xiaomi-band-10-pro-3.101.043: body differs (instruction fingerprint and pseudocode)."
+    "source": "Exact redmi-watch-6-3.100.043 IDB vela_ap.bin.i64 review (EVID-PLATFORM-HW-P65-001): Not present on p65: there is no vibratord HAL client; vibration goes through miwear_vibrator_run 0xca737a8 (12-byte parameter copy, type byte at +0 must be a preset effect 1..25, priority byte at +8, returns an id or -2/-3/-4/-5) and miwear_vibrator_cancel 0xca738b0(id). Neither matches the Supervisor's 132-byte HAL message nor its Band 11 20-byte waveform block. Ported 0x1c14204c is an LVGL layout routine; address removed."
   },
-  "notes": "body differs (instruction fingerprint and pseudocode). Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Vibrator HAL client transaction over the vibratord local socket; message type byte at +4 (4 start with u32 duration_ms at +8, 5 stop); returns the service result. Supervisor platform hardware service; static evidence only, device NOT_PROBED."
+  "notes": "manual static review 2026-11-03 (EVID-PLATFORM-HW-P65-001): Not present on p65: there is no vibratord HAL client; vibration goes through miwear_vibrator_run 0xca737a8 (12-byte parameter copy, type byte at +0 must be a preset effect 1..25, priority byte at +8, returns an id or -2/-3/-4/-5) and miwear_vibrator_cancel 0xca738b0(id). Neither matches the Supervisor's 132-byte HAL message nor its Band 11 20-byte waveform block. Ported 0x1c14204c is an LVGL layout routine; address removed. Restricted/PENDING; static evidence only, device NOT_PROBED. Physical device validation pending; no approval carries over from the source target."
 }

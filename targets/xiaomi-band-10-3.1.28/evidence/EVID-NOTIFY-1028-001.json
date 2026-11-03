@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-NOTIFY-1028-001",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "question": "Which exact 3.1.28 entry point posts a system notification (lvx_notification_insert_message), what message struct does it consume, who owns the strings, from which thread may it be called, and what icon files does it accept?",
+  "candidate_symbols": [
+    "lvx_notification_insert_message"
+  ],
+  "prototype_hypothesis": "CANDIDATE port record 0xC11F31C (EVID-PORT-1028-001) with the Band 10 Pro 3.101.043 int(const firmware_notification_message *) contract and 88-byte layout.",
+  "callsite_evidence": [
+    "Entry 0xC52DAD0 (Thumb, PUSH.W {R4-R9,LR}): NULL branch logs '[%s] %s: Msg is NULL' with tag notification_manager and __func__ 'lvx_notification_insert_message' (literal 0xC52DBAC -> 0x2C77D120); reminder branch logs under 'lvx_notification_start_reminder'.",
+    "0xC52DAD0 -> lvx_notification_init_message 0xC473550: malloc(88) 0xC3280F8, memcpy 88, +0x2c == 0 -> current seconds (0xC513228), +0x20 NULL -> '/resource/app/notifications/default_small.bin', +0x1c NULL -> '/resource/app/notifications/default.bin', both replaced by lv_mem strdup copies (0xC471750).",
+    "-> insert_message 0xC4735C0 ('insert message the uid is %llu, id is %lu'): per-uid group in lv_ll 0x20086DFC, at most 20 messages per uid; node filled by 0xC4733BC.",
+    "0xC4733BC strdups (0xC4FB06C) +0x0c, +0x1c, +0x20, +0x14, +0x10, +0x24, +0x18, +0x28 and copies u64 +0x00, u32 +0x08, +0x2c, +0x38, +0x3c, 3 bytes at +0x34 (lv_color_t), u8 +0x50, +0x51, +0x52, u32 +0x54, +0x40, +0x44, +0x48, +0x4c.",
+    "After insert: 0xC4720C4 (list trim); if u8 +0x50 != 0 a one-entry copy list is published as event 31 type 7 through 0xC4585A4(31, &0x200AC760, 1); uv_timer_start 0xC1C0142(0x200B3AD0, 0xC4718D4, 500, 0) unless that timer is already active; 0xC4720A0 frees the temporary.",
+    "draw_reminder_view 0xC4F3430: header label +0x0c, icon +0x1c (0xC2B25D4 -> lv_image_set_src), title via get_logo_title_text 0xC2B48E0 (+0x10, focus context only when u8 +0x52 != 0). For a single item it calls +0x48(msg, parent, +0x54) when non-NULL, else focus view 0xC53D140 or stock detail 0xC4F2824. list_get_type 0xC2B3940 reads +0x54 only for focus items; normal items use +0x10/+0x14 and cache the text height in +0x30.",
+    "Stock callers (19 xrefs): add_miss_notification 0xC4EF8C8 (+0x0c 'phone.appname', +0x10 'missed.phone', +0x14 caller, +0x1c '/resource/app/notifications/phone.bin'); low battery start_notification 0xC33DB14 (+0x0c 'battery.appname', +0x10 title, +0x14 text, +0x20 icon, +0x38 = 0, +0x48/+0x4c callbacks); recorder interrupt 0xC4F2D80 likewise.",
+    "Port record refuted: 0xC11F31C is bes_i2c_transfer ('chip/bes_i2c.c' assert)."
+  ],
+  "control_flow_evidence": [
+    "0xC52DAD0 -> 0xC473550 (init_message) -> 0xC4735C0 (insert_message) -> 0xC4733BC (copy) -> [u8 +0x50: 0xC4585A4(31, type 7, sync)] -> uv_timer_start 0xC1C0142(0x200B3AD0, 0xC4718D4, 500, 0) -> 0xC4720A0 (free temporary)",
+    "miwear_init_appdata 0xC3858CC (lvx_notification_manager_init): uv_timer_init 0xC1C0008(*loop, 0x200B3AD0) at 0xC386CB4 and (*loop, 0x200B39C8)",
+    "lv_bin_decoder_info 0xC2F3B28 (lvgl/src/libs/bin_decoder/lv_bin_decoder.c) reads a 12-byte lv_image_header_t; magic != 0x19 goes through the legacy converter 0xC2C36DC (v8 cf 4 -> RGB565 0x12, cf 5 -> ARGB8565 0x13)"
+  ],
+  "struct_layout": {
+    "size": 88,
+    "fields": [
+      {"offset": "0x00", "type": "uint64_t", "meaning": "uid: group key; bit 63 marks phone-originated", "required": "unique value with bit 63 clear"},
+      {"offset": "0x08", "type": "uint32_t", "meaning": "message id", "required": "any"},
+      {"offset": "0x0c", "type": "const char *", "meaning": "app/source name: header line", "required": "string or NULL; copied"},
+      {"offset": "0x10", "type": "const char *", "meaning": "title", "required": "string; copied"},
+      {"offset": "0x14", "type": "const char *", "meaning": "body text", "required": "string or NULL; copied"},
+      {"offset": "0x18", "type": "const char *", "meaning": "auxiliary string (copied)", "required": "NULL"},
+      {"offset": "0x1c", "type": "const char *", "meaning": "icon for the reminder view (NULL -> /resource/app/notifications/default.bin)", "required": "path or NULL; copied"},
+      {"offset": "0x20", "type": "const char *", "meaning": "small icon (NULL -> default_small.bin)", "required": "path or NULL; copied"},
+      {"offset": "0x24", "type": "const char *", "meaning": "action button text", "required": "NULL"},
+      {"offset": "0x28", "type": "const char *", "meaning": "extra phone string", "required": "NULL"},
+      {"offset": "0x2c", "type": "uint32_t", "meaning": "timestamp, seconds (0 -> now)", "required": "0"},
+      {"offset": "0x30", "type": "int32_t", "meaning": "text-height cache, written by the list view, not copied", "required": "0"},
+      {"offset": "0x34", "type": "lv_color_t (3 bytes) + pad", "meaning": "accent colour", "required": "0"},
+      {"offset": "0x38", "type": "void (*)(...)", "meaning": "click handler slot (phone path)", "required": "NULL"},
+      {"offset": "0x3c", "type": "void (*)(...)", "meaning": "action button callback", "required": "NULL"},
+      {"offset": "0x40", "type": "uint32_t", "meaning": "copied", "required": "0"},
+      {"offset": "0x44", "type": "uint32_t", "meaning": "copied", "required": "0"},
+      {"offset": "0x48", "type": "void (*)(msg, parent, user_data)", "meaning": "custom detail-create callback", "required": "NULL"},
+      {"offset": "0x4c", "type": "void (*)(...)", "meaning": "callback paired with +0x48 (detail destroy on the sibling 3.1.190 build)", "required": "NULL"},
+      {"offset": "0x50", "type": "uint8_t", "meaning": "start_reminder (event 31 type 7)", "required": "1 for a popup"},
+      {"offset": "0x51", "type": "uint8_t", "meaning": "detail button order", "required": "0"},
+      {"offset": "0x52", "type": "uint8_t", "meaning": "focus/resident flag (+0x54 then read unchecked as a focus context)", "required": "0"},
+      {"offset": "0x53", "type": "uint8_t", "meaning": "padding, not copied", "required": "0"},
+      {"offset": "0x54", "type": "void *", "meaning": "user data / phone focus context", "required": "NULL"}
+    ]
+  },
+  "ownership_analysis": "The firmware copies the 88-byte struct and strdups every string before returning; caller storage may be on the stack and released after the call.",
+  "context_analysis": "Unlocked lv_ll list, uv timers on the app loop initialised in miwear_init_appdata and a synchronous event-31 publish that builds the reminder page: UI/app-loop thread only.",
+  "icon_analysis": "Icons are file paths for lv_image_set_src; stock paths are absolute Vela paths such as /resource/app/notifications/phone.bin. This build runs LVGL v9 (lv_image_decoder.c, lv_bin_decoder, ARGB8888 blending): a .bin icon should carry the native 12-byte v9 header (magic 0x19, e.g. ARGB8888 0x10, w, h, stride), which is what watchfaces/canopus-installer/manager_icon.bin already is and what build_canopus_supervisor.sh copies unchanged for this target. A legacy v8 header is accepted but reinterpreted as RGB565 / ARGB8565, so an ARGB8888 v8 file would render wrong. NULL icons get firmware defaults.",
+  "differences_from_043": [
+    "Field offsets match the Supervisor's .043 struct (start_reminder +0x50, callback_data +0x54, callbacks +0x48/+0x4c).",
+    "+0x0c is the app/source line and +0x10 the title; the .043 struct names +0x0c 'title' and +0x10 'source'.",
+    "The return value is free() residue; treat it as void.",
+    "Image format is LVGL v9 (magic 0x19), unlike 3.1.32 / 3.1.190."
+  ],
+  "unsafe_assumptions": [
+    "+0x38/+0x40/+0x44/+0x4c semantics inferred from stock writers and the sibling 3.1.190 build; all zero for the Supervisor's use.",
+    "That the Supervisor UI task runs on the same app loop is inferred, not observed on a device."
+  ],
+  "recommended_probe": "Mirage (emulator evidence only): post one notice from the Manager UI with +0x50 = 1 and all callbacks NULL; confirm popup and notification-centre entry; then on a device.",
+  "reviewers": [],
+  "verdict": "STATIC_RECOVERED",
+  "created": "2026-11-03T00:00:00Z",
+  "artifacts": []
+}

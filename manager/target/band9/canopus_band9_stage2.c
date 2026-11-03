@@ -253,7 +253,7 @@ int canopus_band9_stage2_entry(int ignored)
     ops.finalize = image_finalize;
     ops.invoke = image_invoke;
     rc = canopus_elf32_load(elf, CANOPUS_BAND9_SUPERVISOR_SIZE, &ops,
-                            &module, scratch);
+                            &module, scratch, CANOPUS_ELF32_MAX_SECTIONS);
     ((free_fn)(uintptr_t)FW_KMEM_FREE)(scratch_raw);
     ((free_fn)(uintptr_t)FW_FREE)(elf);
     if (rc != CANOPUS_ELF_LOAD_OK) {

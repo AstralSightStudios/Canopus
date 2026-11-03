@@ -19,18 +19,21 @@
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001",
       "EVID-PORT-9190-001"
     ]
   },
-  "policy": "restricted",
-  "status": "STATIC_RECOVERED",
+  "policy": "withdrawn",
+  "status": "WITHDRAWN",
   "provenance": {
     "firmware_sha256": "3e264bc267431ec71843cc7c2e4acd928b9280ea39ee1cd888636adcebabf82f",
     "evidence_ids": [
+      "EVID-PLATFORM-HW-9190-001",
       "EVID-PORT-9190-001"
     ],
-    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-9pro-3175: mutually unique full-body anchor; known callees consistent."
+    "source": "Exact xiaomi-band-9-pro-3.1.190 image/IDB compared with src-9pro-3175: mutually unique full-body anchor; known callees consistent.",
+    "withdrawal_reason": "EVID-PLATFORM-HW-9190-001: the ensemble address 0xc454e34 is a message handler that reads system_all_state 2, not bt_adapter_get_state; no replacement recovered."
   },
   "approval_state": "PENDING",
-  "notes": "mutually unique full-body anchor; known callees consistent. Source semantic status was STATIC_RECOVERED; matching does not upgrade an uncertain source name/prototype. ABI and ownership follow the source record only within the audited port scope. Physical device validation pending; no approval carries over from the source target. Promoted from ensemble v2 as a restricted address record; semantic contract and public callable approval remain pending."
+  "notes": "EVID-PLATFORM-HW-9190-001: the ensemble address 0xc454e34 is a message handler that reads system_all_state 2, not bt_adapter_get_state; no replacement recovered."
 }

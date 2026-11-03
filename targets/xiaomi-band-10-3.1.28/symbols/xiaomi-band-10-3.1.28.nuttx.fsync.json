@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "symbol_id": "xiaomi-band-10-3.1.28.nuttx.fsync",
+  "target_id": "xiaomi-band-10-3.1.28",
+  "name": "fsync",
+  "kind": "function",
+  "instruction_set": "thumb",
+  "entry_address": "0x0c38f958",
+  "callable_address": "0x0c38f959",
+  "prototype": "int(int fd)",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "ui-owner-thread"
+    ],
+    "blocking": false
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1028-001"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+    "evidence_ids": [
+      "EVID-PLATFORM-HW-1028-001"
+    ],
+    "source": "exact 3.1.28 IDB vela_ap.bin.i64 (NuttX assert paths, PowerManager, MiWearScreen, system_all_state, kvdb property client, LVGL lv_timer and bts_adapter review)"
+  },
+  "notes": "fsync: fs_getfilep 0xc38be90 + file_fsync 0xc38a568 (mountpoint sync or the driver ioctl 0x50D fallback) + fs_putfilep; -1 plus errno. This build has no fs_fsync.c assert string. Supervisor platform service; static evidence only, device NOT_PROBED."
+}

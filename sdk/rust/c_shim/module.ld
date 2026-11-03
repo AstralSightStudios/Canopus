@@ -1,6 +1,6 @@
 /* Merges per-function and per-datum sections into canonical ELF regions so
- * the section count stays well within the freestanding loader's limit
- * (CANOPUS_ELF32_MAX_SECTIONS = 256). Discards debug info, unwinding tables
+ * the image keeps a handful of sections, which keeps the module file
+ * smaller and the image cheaper to load. Discards debug info, unwinding tables
  * (panic = "abort") and embedded LLVM bitcode. */
 SECTIONS {
     .text : {

@@ -1,0 +1,28 @@
+{
+  "target_id": "xiaomi-band-10-3.1.28",
+  "schema": 1,
+  "status": "STATIC_RECOVERED",
+  "device": "not_probed",
+  "approval_state": "PENDING",
+  "firmware_sha256": "fb726472416e99ba11d1c20ce8f0d4f0831a6e9a673d63bb5918e2c3921d8845",
+  "addresses": {
+    "TIMER": "0x0C327D6D",
+    "TIMER_DELETE": "0x0C327ECD",
+    "OWNER_LOOP": "0x200A2B80",
+    "OWNER_TIMER_INIT": "0x0C1C0009",
+    "OWNER_TIMER_START": "0x0C1C0143",
+    "OWNER_TIMER_SIZE": "0x58"
+  },
+  "evidence": [
+    "miwear_main (sub_C383B24, string 'miwear_main') stores uv_default_loop() (sub_C1C3FA4) in dword_200A2B80, initializes a timer on it with sub_C1C0008 and runs it with uv_run (sub_C1BEDB0): the UI owner loop, as 0x20098D3C is on 3.1.32.",
+    "sub_C1C0008 is uv_timer_init(loop, timer): type 13 at +8, flags 8 at +44, loop at +4, handle queue at +16, cb/timeout/repeat cleared at +48/+64/+72 (3.1.32's layout, two stores reordered).",
+    "sub_C1C0142 is uv_timer_start(timer, cb, uint64 timeout, uint64 repeat): timeout +64, repeat +72, cb +48, heap node +52..+60, start id +80 (8 bytes) from loop+0x138, so an 88-byte handle. Its first 18 bytes match 3.1.32's sub_C1D3760.",
+    "UI code passes dword_200A2B80 as the loop: watchface get_free_disk (sub_C4ED824: uv_fs_statfs(dword_200A2B80, ..., \"/data\")).",
+    "TIMER / TIMER_DELETE are the target's lv_timer_create / lv_timer_del (FW_LV_TIMER_CREATE / FW_LV_TIMER_DEL)."
+  ],
+  "scope": "Owner pump only: background timers and the boot stability commit (screen-off) on the UI owner loop. No L2 transport: SAR RX/session/crypto/send are not recovered for this target.",
+  "constraints": [
+    "uv_timer_init/start mutate owner-loop lists and heaps; only the LVGL bootstrap callback on the UI owner initializes and starts the resident handle, and its callbacks run on that loop. No threads or work queues.",
+    "Static recovery from the exact firmware IDB plus Mirage emulator runs; no physical-device validation yet."
+  ]
+}
