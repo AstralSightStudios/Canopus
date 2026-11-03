@@ -54,6 +54,13 @@ fn target_commands_do_not_depend_on_the_working_directory() {
     let out = canopus(&scratch.0, &["target", "info", "155"]);
     assert!(out.status.success(), "{}", text(&out.stderr));
     assert!(text(&out.stdout).starts_with("xiaomi-band-11-4.100.155"));
+    // `043` is shared with the static bring-up REDMI Watch 6 3.100.043.
+    let out = canopus(&scratch.0, &["target", "info", "043"]);
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    assert!(text(&out.stdout).starts_with("xiaomi-band-10-pro-3.101.043"));
+    let out = canopus(&scratch.0, &["target", "info", "3.100.043"]);
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    assert!(text(&out.stdout).starts_with("redmi-watch-6-3.100.043"));
 }
 
 #[test]

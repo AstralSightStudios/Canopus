@@ -98,7 +98,9 @@ pub fn targets_dir(arg: Option<PathBuf>) -> anyhow::Result<PathBuf> {
 }
 
 /// Resolves a target name to a registered target id: the exact id, or a unique
-/// version suffix (`155` for `xiaomi-band-11-4.100.155`).
+/// version suffix (`155` for `xiaomi-band-11-4.100.155`). A suffix shared with
+/// static bring-up targets keeps meaning the one production target (`043` is
+/// Band 10 Pro 3.101.043, not REDMI Watch 6 3.100.043).
 pub fn resolve_target(targets_dir: &Path, name: &str) -> anyhow::Result<String> {
     let packs = list_target_packs(targets_dir)?;
     resolve_in(&packs, name)
@@ -116,10 +118,27 @@ pub fn resolve_in(packs: &[TargetPack], name: &str) -> anyhow::Result<String> {
                 .is_some_and(|head| head.ends_with('.') || head.ends_with('-'))
         })
         .collect();
-    match suffixed.as_slice() {
-        [one] => Ok(one.target_id.clone()),
-        [] => bail!("unknown target '{name}'; registered: {}", ids(packs)),
-        many => bail!(
+    let production: Vec<&&TargetPack> = suffixed
+        .iter()
+        .filter(|p| p.static_test_abi != Some(true))
+        .collect();
+    match (suffixed.as_slice(), production.as_slice()) {
+        ([one], _) => Ok(one.target_id.clone()),
+        ([], _) => bail!("unknown target '{name}'; registered: {}", ids(packs)),
+        (many, [one]) => {
+            let others: Vec<&str> = many
+                .iter()
+                .map(|p| p.target_id.as_str())
+                .filter(|id| *id != one.target_id)
+                .collect();
+            eprintln!(
+                "note: '{name}' is {}; use the full id for {}",
+                one.target_id,
+                others.join(", ")
+            );
+            Ok(one.target_id.clone())
+        }
+        (many, _) => bail!(
             "target '{name}' is ambiguous: {}",
             many.iter()
                 .map(|p| p.target_id.as_str())
