@@ -74,6 +74,7 @@ struct svc_mem_block {
 
 static struct svc_mem_block *s_mem_head[CANOPUS_SUP_MODULE_SLOTS];
 static uint32_t s_notify_posts[CANOPUS_SUP_MODULE_SLOTS];
+static uint32_t s_notify_window[CANOPUS_SUP_MODULE_SLOTS];
 
 /* KV values stay in each module's file: every operation scans it one entry at
  * a time through s_kv_entry, so the table costs no resident memory. */
@@ -1876,6 +1877,15 @@ static int32_t svc_notify_send(const struct canopus_context_v1 *ctx, const char 
     const char *source;
     int rc;
     if (!svc_slot_valid(ctx) || body == 0) return CANOPUS_SVC_ERR_ARGUMENT;
+    /* NOTIFY is independent of TIME. Without a clock, retain the cumulative
+     * quota until service release; a renewal interval cannot be measured. */
+    if (s_sup->platform != 0 && s_sup->platform->monotonic_ms != 0) {
+        uint32_t now = svc_now(s_sup);
+        if ((uint32_t)(now - s_notify_window[ctx->slot]) >= CANOPUS_NOTIFY_WINDOW_MS) {
+            s_notify_window[ctx->slot] = now;
+            s_notify_posts[ctx->slot] = 0u;
+        }
+    }
     if (s_notify_posts[ctx->slot] >= CANOPUS_NOTIFY_MAX_POSTS) return CANOPUS_SVC_ERR_STATE;
     if (s_sup->platform == 0 || s_sup->platform->notify == 0) {
         return CANOPUS_SVC_ERR_UNSUPPORTED;
@@ -2302,6 +2312,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     canopus_memset(s_fd, 0, sizeof(s_fd));
     canopus_memset(s_mem_head, 0, sizeof(s_mem_head));
     canopus_memset(s_notify_posts, 0, sizeof(s_notify_posts));
+    canopus_memset(s_notify_window, 0, sizeof(s_notify_window));
     canopus_memset(s_timers, 0, sizeof(s_timers));
     s_timer_dispatching = 0;
     s_timer_pump_started = 0;
@@ -2625,6 +2636,7 @@ void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,
         }
     }
     s_notify_posts[slot] = 0u;
+    s_notify_window[slot] = svc_now(s_sup);
 
     /* Release allocated memory blocks */
     if (sup->platform != 0 && sup->platform->heap_release != 0) {

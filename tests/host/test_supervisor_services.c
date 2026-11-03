@@ -598,8 +598,43 @@ TEST(notify_is_titled_by_module_and_rate_limited)
     }
     CHECK_EQ(ctx->services->notify_post(ctx, "x"), CANOPUS_SVC_ERR_STATE);
     CHECK_EQ(g_notified, (int)CANOPUS_NOTIFY_MAX_POSTS);
+    advance_time(CANOPUS_NOTIFY_WINDOW_MS - g_now - 1u);
+    CHECK_EQ(ctx->services->notify_post(ctx, "still limited"), CANOPUS_SVC_ERR_STATE);
+    advance_time(1u);
+    CHECK_EQ(ctx->services->notify_post(ctx, "next minute"), CANOPUS_SVC_OK);
+    /* The next refill works even when the monotonic clock wraps. */
+    g_now = 0xfffffff0u;
+    CHECK_EQ(ctx->services->notify_post(ctx, "before wrap"), CANOPUS_SVC_OK);
+    for (i = 1u; i < CANOPUS_NOTIFY_MAX_POSTS; i++) {
+        CHECK_EQ(ctx->services->notify_post(ctx, "x"), CANOPUS_SVC_OK);
+    }
+    CHECK_EQ(ctx->services->notify_post(ctx, "limited"), CANOPUS_SVC_ERR_STATE);
+    advance_time(CANOPUS_NOTIFY_WINDOW_MS);
+    CHECK_EQ(ctx->services->notify_post(ctx, "after wrap"), CANOPUS_SVC_OK);
     canopus_supervisor_release_services(&sup, 0u);
     CHECK_EQ(ctx->services->notify_post(ctx, "again"), CANOPUS_SVC_OK);
+}
+
+TEST(notify_without_clock_keeps_cumulative_quota_until_release)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform = platform_with_fs;
+    const struct canopus_context_v1 *ctx;
+    uint32_t i;
+    platform.monotonic_ms = 0;
+    setup(&sup, &platform);
+    ctx = canopus_supervisor_context(&sup, 0u);
+    CHECK(canopus_services_has(ctx, CANOPUS_SVC_NOTIFY, 1u));
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_TIME, 1u));
+    g_notified = 0;
+    for (i = 0u; i < CANOPUS_NOTIFY_MAX_POSTS; i++) {
+        CHECK_EQ(ctx->notify->post(ctx, "title", "body"), CANOPUS_SVC_OK);
+    }
+    advance_time(24u * 60u * 60u * 1000u);
+    CHECK_EQ(ctx->notify->post(ctx, "title", "body"), CANOPUS_SVC_ERR_STATE);
+    CHECK_EQ(g_notified, (int)CANOPUS_NOTIFY_MAX_POSTS);
+    canopus_supervisor_release_services(&sup, 0u);
+    CHECK_EQ(ctx->notify->post(ctx, "title", "body"), CANOPUS_SVC_OK);
 }
 
 TEST(mem_is_uncapped_owned_and_released)
@@ -2715,6 +2750,8 @@ TEST(ui_posts_wait_for_owner_heartbeat_and_cancel_on_release)
 }
 
 static struct test_registry supervisor_services_tests[] = {
+    { "notify_without_clock_keeps_cumulative_quota_until_release",
+      notify_without_clock_keeps_cumulative_quota_until_release_wrapper },
     { "module_lifecycle_query_and_committed_events", module_lifecycle_query_and_committed_events_wrapper },
     { "module_lifecycle_boot_activation_and_failure", module_lifecycle_boot_activation_and_failure_wrapper },
     { "ui_posts_wait_for_owner_heartbeat_and_cancel_on_release", ui_posts_wait_for_owner_heartbeat_and_cancel_on_release_wrapper },
