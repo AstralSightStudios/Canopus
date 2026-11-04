@@ -68,7 +68,7 @@ python3 "$ROOT/scripts/generate_boot_config.py" "$TARGET_ID" "$OUT/canopus_boot_
 TARGET_FLAGS="--target=arm-none-eabi -mcpu=cortex-m33 -mthumb -mfloat-abi=soft \
   -ffreestanding -fno-common -fno-builtin -fno-jump-tables \
   -fno-stack-protector -fno-unwind-tables -fno-asynchronous-unwind-tables \
-  -fdata-sections -fno-function-sections -Os -Wall -Wextra -Werror \
+  -fdata-sections -fno-function-sections ${CANOPUS_SUP_OPT:--Os} -Wall -Wextra -Werror \
   $TARGET_DEFINES ${CANOPUS_SUP_EXTRA_DEFINES:-}"
 # The v8 Manager app descriptor layout differs between the 3.1.32 generation
 # and 3.1.190: the latter's launcher_load_app_info reads the metadata callback

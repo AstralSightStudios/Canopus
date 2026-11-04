@@ -150,6 +150,12 @@ struct canopus_fs_dirent {
 #define CANOPUS_NOTIFY_BODY_MAX 256u
 #define CANOPUS_NOTIFY_TITLE_MAX 64u
 #define CANOPUS_NOTIFY_MAX_POSTS 16u
+/* Per-module fixed-window quota when the platform provides a monotonic clock.
+ * A post after WINDOW_MS renews the quota, including across uint32 wrap.
+ * Adjacent windows may each admit MAX_POSTS; this is not a sliding-window cap.
+ * Without a clock, MAX_POSTS remains cumulative until module service release
+ * or Supervisor reinitialization. NOTIFY does not require the TIME group. */
+#define CANOPUS_NOTIFY_WINDOW_MS 60000u
 /* The notification shows the caller's title (the module id when it is NULL or
  * empty) and always names the posting module as its source. The stock
  * icon of post_with_icon is the absolute path of an image file (NULL or "" is
