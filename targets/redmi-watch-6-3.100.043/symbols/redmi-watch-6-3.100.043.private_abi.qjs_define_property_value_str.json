@@ -14,13 +14,14 @@
     "blocking": true
   },
   "ownership": {
-    "argument": "Direct string-name own-property definition consumes the value through its JSValue refcount paths."
+    "argument": "Borrows the supplied object; interns/releases the name atom; consumes the supplied value on success and failure through the engine define/refcount path."
   },
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-ASTROLINK-P65-001"
+      "EVID-ASTROLINK-P65-001",
+      "EVID-ASTROLINK-P65-QJS-DEFINE-005"
     ]
   },
   "policy": "restricted",
@@ -29,11 +30,12 @@
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-ASTROLINK-P65-001"
+      "EVID-ASTROLINK-P65-001",
+      "EVID-ASTROLINK-P65-QJS-DEFINE-005"
     ],
-    "source": "Direct string-name own-property definition consumes the value through its JSValue refcount paths."
+    "source": "Exact-image instruction audit of 0x0C6D3210 and stock method producer/consumer 0x0C9CC150; replaces incorrect global-constructor helper 0x0C6D3320."
   },
-  "notes": "Exact P65 static recovery. Not a runtime approval; do not infer cross-target offsets.",
-  "entry_address": "0xc6d3320",
-  "callable_address": "0xc6d3321"
+  "notes": "Corrects the false 0x0C6D3320 global-constructor-installer binding. Direct wrapper 0x0C6D3210 preserves supplied object/value/flags and is used by stock method installation at 0x0C9CC1A2/0x0C9CC1CA. Restricted static recovery, not runtime approval.",
+  "entry_address": "0xc6d3210",
+  "callable_address": "0xc6d3211"
 }

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "symbol_id": "redmi-watch-6-3.100.043.private_abi.nuttx_current_task",
+  "target_id": "redmi-watch-6-3.100.043",
+  "name": "nuttx_current_task",
+  "kind": "global",
+  "instruction_set": "n/a",
+  "prototype": "void *",
+  "calling_convention": "arm-aapcs",
+  "contexts": {
+    "allowed": [
+      "target-private"
+    ],
+    "blocking": false
+  },
+  "ownership": {
+    "argument": "Borrowed current TCB pointer. Read only on the current task to establish its TLS default-loop identity; never retain the task/group pointer."
+  },
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-INTEGRATION-004"
+    ]
+  },
+  "policy": "restricted",
+  "status": "STATIC_RECOVERED",
+  "approval_state": "PENDING",
+  "provenance": {
+    "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+    "evidence_ids": [
+      "EVID-ASTROLINK-P65-INTEGRATION-004"
+    ],
+    "source": "Exact-image 0x0C4C61C0 and 0x0C4C5980 load current TCB from 0x201738F8; TLS at TCB+68, group at TCB+8. See astrolink/docs/evidence/p65-loop-ownership.md."
+  },
+  "notes": "Exact P65 owner-task identity only. No runtime approval or general foreign task/group pin.",
+  "entry_address": "0x201738f8"
+}

@@ -4,7 +4,7 @@
  * firmware : 3.100.043 (d516af0:nx_best1502p_ap)
  * sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
  * revision : 3
- * input_digest: 4d20ce543e61e36c
+ * input_digest: 7e8f018e53e0833f
  * STATIC TEST ABI: restricted STATIC_RECOVERED records are
 * emitted as addresses for loader bring-up. This is not an
 * approval and must not be shipped as a production artifact.
@@ -557,6 +557,7 @@ static inline int32_t canopus_fw_write(int a0, const void * a1, uint32_t a2) {
     return ((canopus_fw_write_fn)(uintptr_t)0x1c159a2d)(a0, a1, a2);
 }
 
+/* bt_queue_external: skipped (return type 'int bt_queue_external' not mappable) */
 typedef void (*canopus_fw_font_reload_lv_free_fn)(void *);
 static inline void canopus_fw_font_reload_lv_free(void * a0) {
     return ((canopus_fw_font_reload_lv_free_fn)(uintptr_t)0xc741b49)(a0);
@@ -733,6 +734,9 @@ typedef int (*canopus_fw_launcher_reset_order_info_fn)(void);
 static inline int canopus_fw_launcher_reset_order_info(void) {
     return ((canopus_fw_launcher_reset_order_info_fn)(uintptr_t)0xc7ecafd)();
 }
+
+/* Recovered global `nuttx_current_task` at 0x201738f8. */
+#define canopus_fw_nuttx_current_task ((void *)(uintptr_t)0x201738f8u)
 
 /* property_get: skipped (argument type not mappable) */
 typedef void * (*canopus_fw_lv_img_create_fn)(void *);

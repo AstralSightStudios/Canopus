@@ -4,7 +4,7 @@
 // firmware : 3.100.043 (d516af0:nx_best1502p_ap)
 // sha256   : a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858
 // revision : 3
-// input_digest: 4d20ce543e61e36c
+// input_digest: 7e8f018e53e0833f
 //
 // All firmware calls are `unsafe`; safe wrappers exist only
 // where the ABI and ownership have been proven (architecture §12.1).
@@ -468,8 +468,8 @@ pub const CANOPUS_FW_P67_BLUR_SNAPSHOT_TO_BUFFER_CALLABLE: usize = canopus_thumb
 /// Recovered `write` at 0x1c159a2c. Thumb callable address 0x1c159a2d.
 pub const CANOPUS_FW_WRITE_CALLABLE: usize = canopus_thumb_callable(0x1c159a2dusize);
 
-/// Recovered `bt_queue_external` at 0x1c1676c8. Thumb callable address 0x1c1676c9.
-pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(0x1c1676c9usize);
+/// Recovered `bt_queue_external` at 0x1c167d40. Thumb callable address 0x1c167d41.
+pub const CANOPUS_FW_BT_QUEUE_EXTERNAL_CALLABLE: usize = canopus_thumb_callable(0x1c167d41usize);
 
 /// Recovered `font_reload_lv_free` at 0xc741b48. Thumb callable address 0xc741b49.
 pub const CANOPUS_FW_FONT_RELOAD_LV_FREE_CALLABLE: usize = canopus_thumb_callable(0xc741b49usize);
@@ -608,6 +608,9 @@ pub const CANOPUS_FW_LV_OBJ_GET_SCROLL_Y_CALLABLE: usize = canopus_thumb_callabl
 
 /// Recovered `launcher_reset_order_info` at 0xc7ecafc. Thumb callable address 0xc7ecafd.
 pub const CANOPUS_FW_LAUNCHER_RESET_ORDER_INFO_CALLABLE: usize = canopus_thumb_callable(0xc7ecafdusize);
+
+/// Recovered global `nuttx_current_task` at 0x201738f8.
+pub const canopus_fw_nuttx_current_task: usize = 0x201738f8usize;
 
 /// Recovered `property_get` at 0xcb93434. Thumb callable address 0xcb93435.
 pub const CANOPUS_FW_PROPERTY_GET_CALLABLE: usize = canopus_thumb_callable(0xcb93435usize);
@@ -756,8 +759,8 @@ pub const CANOPUS_FW_READ_CALLABLE: usize = canopus_thumb_callable(0x1c158721usi
 /// Recovered `uv_close` at 0xc621f98. Thumb callable address 0xc621f99.
 pub const CANOPUS_FW_UV_CLOSE_CALLABLE: usize = canopus_thumb_callable(0xc621f99usize);
 
-/// Recovered `qjs_define_property_value_str` at 0xc6d3320. Thumb callable address 0xc6d3321.
-pub const CANOPUS_FW_QJS_DEFINE_PROPERTY_VALUE_STR_CALLABLE: usize = canopus_thumb_callable(0xc6d3321usize);
+/// Recovered `qjs_define_property_value_str` at 0xc6d3210. Thumb callable address 0xc6d3211.
+pub const CANOPUS_FW_QJS_DEFINE_PROPERTY_VALUE_STR_CALLABLE: usize = canopus_thumb_callable(0xc6d3211usize);
 
 /// Recovered `uv_mutex_unlock` at 0xc629378. Thumb callable address 0xc629379.
 pub const CANOPUS_FW_UV_MUTEX_UNLOCK_CALLABLE: usize = canopus_thumb_callable(0xc629379usize);

@@ -5,24 +5,25 @@
   "name": "bt_queue_external",
   "kind": "function",
   "instruction_set": "thumb",
-  "entry_address": "0x1c1676c8",
-  "callable_address": "0x1c1676c9",
-  "prototype": "target-private recovered callable",
+  "entry_address": "0x1c167d40",
+  "callable_address": "0x1c167d41",
+  "prototype": "int bt_queue_external(uintptr_t owner,int (*run)(uintptr_t,uint32_t,void *),int (*cancel)(uintptr_t,uint32_t,void *),void *argument,uint8_t event)",
   "calling_convention": "arm-aapcs",
   "contexts": {
     "allowed": [
-      "bluetooth_owner"
+      "target-private"
     ],
     "blocking": true
   },
   "ownership": {
-    "argument": "Five-argument external work queue thunk to 0xC98FD8C; owner work records are 20 bytes."
+    "argument": "Cross-task external ring retains argument for run/cancel; it does not free argument. Uninitialized queue calls cancel(0,221,argument) synchronously. Return is unlock semaphore result or cancel result, not acceptance status."
   },
   "proof": {
     "static": "recovered",
     "device": "not_probed",
     "evidence_ids": [
-      "EVID-ASTROLINK-P65-001"
+      "EVID-ASTROLINK-P65-001",
+      "EVID-ASTROLINK-P65-BLUELET-QUEUE-006"
     ]
   },
   "policy": "restricted",
@@ -31,9 +32,10 @@
   "provenance": {
     "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
     "evidence_ids": [
-      "EVID-ASTROLINK-P65-001"
+      "EVID-ASTROLINK-P65-001",
+      "EVID-ASTROLINK-P65-BLUELET-QUEUE-006"
     ],
-    "source": "Five-argument external work queue thunk to 0xC98FD8C; owner work records are 20 bytes."
+    "source": "Exact-image external-ring producer0x0C98FDD0 and consumer0x0C98FBE0; locked publication and wake on empty-to-nonempty transition. Replaces owner-only internal insertion0x0C98FD8C."
   },
-  "notes": "Exact P65 static recovery; no runtime approval and no inherited port semantics."
+  "notes": "Five arguments retain the existing order and final event byte1. Veneer0x1C167D40 ->0x0C98FDD0 locks/publishes the external ring and posts Bluelet semaphore0x3C492750 when needed. Old0x1C1676C8 ->0x0C98FD8C is owner-only list insertion without wake. May block; not an interrupt-context API. Restricted/PENDING, no runtime approval."
 }

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ASTROLINK-P65-BLUELET-QUEUE-006",
+  "target_id": "redmi-watch-6-3.100.043",
+  "kind": "static_recovery",
+  "status": "STATIC_RECOVERED",
+  "policy": "restricted",
+  "approval_state": "PENDING",
+  "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+  "proof": {"static": "recovered", "device": "not_probed"},
+  "source": "Exact-image IDA producer/consumer audit, detailed report /tmp/astrolink-p65-bluelet-wake.md and Astrolink native-publication report.",
+  "verified": {
+    "entry": "Veneer0x1C167D40 ->0x0C98FDD0; bytes8 5ff800f0d1fd980c. Direct bytes16 2de9f04f85b0dff820a100afdaf80040.",
+    "abi": "Five args owner/run/cancel/argument in R0..R3, event byte at incomingSP+0. Consumer0xC98FC1E calls run(owner,event,argument). Final1 is event, not wake flag.",
+    "publication": "Producer0xC98FDD0 locks mutex*0x3C492754; writes owner+0,arg+4,run+8,cancel+12,event+16 before publishing write index0xC98FE3E. External ring blocks408 bytes with20 records.",
+    "wake": "Empty-to-nonempty path0xC98FEB4 loads semaphore*0x3C492750;0xC98FEB8 calls0xC9A252C -> NuttX sem_post0xC4C7178. Consumer0xC98FBE0 waits on same semaphore at0xC98FD66 ->0xC9A251C ->0xC4C6BE0 when local and external queues empty.",
+    "ownership": "Argument retained for run/cancel and never freed by queue. Uninitialized mutex invokes cancel(0,221,argument) synchronously. Normal return is unlock semaphore result, unavailable return is cancel result; callback remains authoritative.",
+    "stock_consumers": "Cross-task producers0xC98ED24,0xC98ED50,0xC98A2E4 call0xC98FDD0. Bluelet entry0xCB8D85C calls consumer0xC98FBE0 at0xCB8D866.",
+    "rejected_old_entry": "0x1C1676C8 ->0xC98FD8C inserts owner-local list0x3C492740 without mutex or semaphore. It publishes links before record fields and returns record pointer. Safe only under owner serialization, not a cross-task queue.",
+    "runtime_correlation": "Parent timing: Session9 close requested1793788947.131514; run_work only1793788977.972137 (30.84s later, at unrelated companion traffic). Earlier run_work completion to JS notification immediate. This supports wrong queue entry rather than JS delivery delay."
+  },
+  "limitations": ["Static restricted recovery; no physical-radio or production approval claimed."]
+}

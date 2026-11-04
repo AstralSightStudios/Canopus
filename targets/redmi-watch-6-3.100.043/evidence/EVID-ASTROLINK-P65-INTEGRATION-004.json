@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ASTROLINK-P65-INTEGRATION-004",
+  "target_id": "redmi-watch-6-3.100.043",
+  "kind": "static_recovery",
+  "status": "STATIC_RECOVERED",
+  "policy": "restricted",
+  "approval_state": "PENDING",
+  "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+  "proof": {
+    "static": "recovered",
+    "device": "not_probed"
+  },
+  "source": "Three independent scoped exact-image IDA producer/consumer audits, retained in astrolink/docs/evidence/p65-{gap-contract,loop-ownership,coc-events}.md.",
+  "verified": {
+    "gap": "Public advertising mode5 -> properties0xD3 -> HCI ADV_IND0; unfiltered scan212; report payload+11; stops use client wrappers; adapter ready4 scalar query.",
+    "loop": "MiWear entry0x0C92CE28 -> default accessor0x0C62B4EC -> global0x3C479C68 -> bootstrap0x0CA3F3D8 -> setter0x1C001C10 -> client+52. Current TCB global0x201738F8; TLS+68; taskinfo slot20+4*key; uvstate loop768.",
+    "ownership": "P65 filelist has no base mutex. fs_getfilep retains32-byte slots, file_dup3 owns independent pipe accounting; final group teardown ignores slot refs. Capture on verified current owner task rather than retaining a foreign row across duplication. Failed duplication drops its inode ref but leaves destination fields; zero unowned storage before retry.",
+    "advertising_failure": "Allocator thunk0x1C166660 -> F_ALLOC0x0C50B2A0; free thunk0x1C168AF0 -> F_FREE0x0C50B25C. Failed advertiser statuses1/3 never linked; timeout2 unlinks before callback. Client event254 neither frees nor reuses wrapper after callback; reclaim once on failure, preserve native stopped ownership.",
+    "coc": "OPEN3 CID108/MTU72; CLOSED6 CID0/reason2; DATA7 end0/offset2/CID4/data4+offset; CREDITS17 CID0/added2; LOCAL_FLOW8 ignore/free. Callback payloads use F_ALLOC/F_FREE. Empty fragment metadata1, original SDU metadata3."
+  },
+  "limitations": [
+    "No physical-radio or Astrolink runtime acceptance is established by this record.",
+    "UI-post owner identity and bootstrap progress require isolated execution."
+  ]
+}

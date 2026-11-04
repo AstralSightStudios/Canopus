@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-ASTROLINK-P65-QJS-DEFINE-005",
+  "target_id": "redmi-watch-6-3.100.043",
+  "kind": "static_recovery",
+  "status": "STATIC_RECOVERED",
+  "policy": "restricted",
+  "approval_state": "PENDING",
+  "firmware_sha256": "a19b601477569765103eaf468b937bd8026b4d68ffa5c896bde222a79e475858",
+  "proof": {"static": "recovered", "device": "not_probed"},
+  "source": "Read-only exact-image IDA instruction audit; retained detailed report /tmp/astrolink-p65-proxy-preliminary.md and Astrolink native-publication report.",
+  "verified": {
+    "entry": "0x0C6D3210, callable0x0C6D3211; entry bytes16 2de9f04f2ded028b8bb00aafd7f830b0",
+    "arguments": "AAPCS ctx R0, object R2/R3, name entrySP+0, value entrySP+8/+12, flags entrySP+16. 0xC6D321C loads name;3222 loads value;322A/322C preserve object;3260 loads flags and3264 ORs0x2700.",
+    "define": "0xC6D3226..325A interns name;3262/326C restore supplied object;3278 passes value;327E passes atom;3280 calls atom-based engine define0xC6C7FB8 with undefined getter/setter.",
+    "ownership": "Object borrowed. Value refcount consumption on both outcomes at0xC6D328A..3296/32E4..32EC. Interned atom released at3298..32E0. Saved define status returned at32A2.",
+    "stock_consumers": "Wrapper0x0CA32680 forwards string/value/flags and calls genuine entry at0xCA32696. Stock0x0C9CC150 constructs methods with NewCFunction2 then calls genuine define at0x0C9CC1A2 and0x0C9CC1CA.",
+    "rejected_old_entry": "0x0C6D3320 is a global-constructor installer.3338 loads ctx global;3388 selects global target;3396 uses caller object as value;33A4 defines global[name].33CA/3410 hardcode prototype/constructor atoms0x3D/0x3E; caller flags ignored. Return1 is not requested property success.",
+    "runtime_correlation": "Unchanged v46 constructs class1 primitive and class12 methods, old define returns1, but JS native key lists global keys and subscribe is object. This is exactly the rejected helper's global[name]=callerObject behavior; no NativeProxy correction is implied."
+  },
+  "limitations": [
+    "This correction does not approve the target or claim physical-radio acceptance.",
+    "Runtime acceptance of the corrected binding is recorded separately by Astrolink."
+  ]
+}
