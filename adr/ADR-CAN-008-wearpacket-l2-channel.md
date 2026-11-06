@@ -44,15 +44,23 @@ CPC2 每帧载荷上限保持 512 字节。数字均为 little-endian：
 | opcode | 请求载荷 | 成功语义 |
 |---|---|---|
 | 15 STAGE_BEGIN | 176 字节 CMI2 回执 | 校验 target/固件绑定，开启 `.ko.upload` 临时文件；替换未完成的旧上传 |
-| 16 STAGE_WRITE | u32 offset + 1..508 字节 ELF | 必须等于当前写入位置，不得超过回执长度；每块应答后再发送下一块 |
+| 16 STAGE_WRITE | u32 offset + 1..508 字节 ELF | 必须等于当前写入位置，不得超过回执长度；不符时 DISALLOWED，流原样保留 |
 | 17 STAGE_FINISH | 空 | 长度完整，生成 next 暂存对并验证 artifact SHA-256；不安装、不加载 |
 | 18 STAGE_ABORT | 空 | 同时关闭并删除未完成的 ELF 与资源 `.upload`，清除资源上传上下文 |
 | 26 STAGE_RES_BEGIN | u8 name_len + name + u32 size + 32 字节 SHA-256 | ELF 收尾校验成功后，开启 `/data/canopus/m.<id>/<name>.upload`；name 为最多 63 字节、不以点开头且只含 ASCII 字母、数字、`.`、`_`、`-` 的平铺文件名，拒绝已有目标或临时文件冲突 |
-| 27 STAGE_RES_WRITE | u32 offset + 1..508 字节资源 | offset 必须等于当前写入位置且不得超过 size；错误时清理本流临时文件 |
+| 27 STAGE_RES_WRITE | u32 offset + 1..508 字节资源 | offset 必须等于当前写入位置且不得超过 size；不符时 DISALLOWED，流原样保留；IO 失败时清理本流临时文件 |
 | 28 STAGE_RES_FINISH | 空 | 校验完整长度和暂存文件 SHA-256，改名为 `/data/canopus/m.<id>/<name>`；校验或 IO 失败时删除本流临时文件 |
 | 2 INSTALL | module_id + NUL | 按已有 A/B 状态机提交；COMPLETED=5 或 REBOOT_REQUIRED=8 |
 
 资源帧在 ELF 的 17 收尾成功后逐个发送，例如 `[15,16,16,16,17,26,27,27,28]`。
+
+2026-11-05 起 16/27 按窗口发送：发送端可让多块同时在途（不超过 `request_slots − 1`），不必等上一块应答。
+流打开期间，16/27 的每个应答（COMPLETED 与 DISALLOWED 都算）都带 4 字节载荷 u32 `written`，即接收端
+当前写入位置；流因 IO 失败关闭后应答不带载荷。设备按到达顺序处理，只接受 offset 恰好等于 `written` 的块，
+所以链路上乱序或丢失的块只会被拒，不会写错位置：发送端停发、等在途块全部应答，取看到的最大位置续传。
+只带 offset、不带数据的 16/27 不写入任何内容，只用来问当前位置（用于应答丢失之后）。
+更早的 Supervisor 应答不带位置，且 27 的错位会清理本流：发送端对 16 取已完成块的最大结束位置续传，
+对 27 从 26 重开该资源。
 发送端完成 common/target 分层选择；设备按 CMI2 回执的 module_id 创建数据目录并平铺释放文件，
 不保留包内 `resources/common/` 或 `resources/<target>/` 层级，不追加扩展名。
 因此 Corona 的资源路径为 `/data/canopus/m.corona/<name>.bin`（当发送的文件名为 `<name>.bin`）。

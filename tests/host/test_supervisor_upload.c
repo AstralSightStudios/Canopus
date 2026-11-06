@@ -3,6 +3,7 @@
 #include "canopus_supervisor_platform.h"
 #include "canopus_installer_bundle.h"
 #include "canopus_services.h"
+#include <stdint.h>
 #include <string.h>
 
 #define UPLOAD_FILES 16u
@@ -138,6 +139,8 @@ static const struct canopus_sup_platform_v1 upload_platform = {
     .file_rename = upload_rename, .file_stat = upload_stat, .dir_mkdir = upload_mkdir,
     .validate_receipt = upload_validate, .stage_verify = upload_verify,
 };
+/* The payload of the last answer: a stream position for chunk answers, UINT32_MAX for none. */
+static uint32_t answered_position;
 static uint32_t rpc(struct canopus_supervisor_v1 *sup, uint32_t op, const void *payload, uint32_t len)
 {
     uint8_t request[548], response[548];
@@ -153,6 +156,12 @@ static uint32_t rpc(struct canopus_supervisor_v1 *sup, uint32_t op, const void *
     CHECK(n > 0);
     CHECK_EQ(canopus_transport_v2_decode_response(response, (uint32_t)n, &resp, &opcode, &offset), 0);
     CHECK_EQ(opcode, op);
+    answered_position = UINT32_MAX;
+    if (resp.payload_size == 4u)
+        answered_position = (uint32_t)response[offset] | ((uint32_t)response[offset + 1u] << 8) |
+            ((uint32_t)response[offset + 2u] << 16) | ((uint32_t)response[offset + 3u] << 24);
+    else
+        CHECK_EQ(resp.payload_size, 0u);
     return resp.result_state;
 }
 static void setup(struct canopus_supervisor_v1 *sup, struct canopus_install_receipt_v1 *receipt)
@@ -388,7 +397,7 @@ TEST(resource_upload_rejects_unsafe_names_and_malformed_begin)
     CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_RES_BEGIN, 0, 0), CANOPUS_RESULT_DISALLOWED);
     check_no_partials();
 }
-TEST(resource_upload_rejects_bad_writes_and_removes_partial)
+TEST(resource_upload_rejects_bad_writes_and_keeps_stream)
 {
     struct canopus_supervisor_v1 sup;
     struct canopus_install_receipt_v1 receipt;
@@ -403,10 +412,65 @@ TEST(resource_upload_rejects_bad_writes_and_removes_partial)
             CHECK_EQ(resource_write(&sup, 1u, "bcd", 3u), CANOPUS_RESULT_DISALLOWED);
         else
             CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_RES_WRITE, short_payload, i == 2u ? 4u : 3u), CANOPUS_RESULT_DISALLOWED);
+        CHECK_EQ(answered_position, 1u);
         CHECK_EQ(find_file("/data/canopus/m.native_probe/logo.bin"), -1);
+        CHECK_EQ(resource_write(&sup, 1u, "bc", 2u), CANOPUS_RESULT_COMPLETED);
+        CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_RES_FINISH, 0, 0), CANOPUS_RESULT_COMPLETED);
+        check_resource("/data/canopus/m.native_probe/logo.bin", "abc", 3u);
         check_no_partials();
-        CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_RES_FINISH, 0, 0), CANOPUS_RESULT_DISALLOWED);
     }
+}
+/* A sender with several chunks in flight sees them out of order or loses one: every chunk answer
+ * names the receiver's position, the sender resumes from it, and nothing out of order is written. */
+TEST(upload_answers_carry_position_for_windowed_sender)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_install_receipt_v1 receipt;
+    uint8_t chunk[204], probe[4] = {0};
+    setup(&sup, &receipt);
+    CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_BEGIN, &receipt, sizeof(receipt)), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(answered_position, UINT32_MAX);
+    memset(chunk + 4u, 0x5a, 200u);
+    put_u32(chunk, 200u);
+    CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_WRITE, chunk, sizeof(chunk)), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(answered_position, 0u);
+    put_u32(chunk, 0u);
+    CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_WRITE, chunk, sizeof(chunk)), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(answered_position, 200u);
+    put_u32(chunk, 400u);
+    CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_WRITE, chunk, sizeof(chunk)), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(answered_position, 200u);
+    /* An offset alone writes nothing and asks where the stream stands. */
+    put_u32(probe, 200u);
+    CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_WRITE, probe, sizeof(probe)), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(answered_position, 200u);
+    put_u32(chunk, 200u);
+    CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_WRITE, chunk, sizeof(chunk)), CANOPUS_RESULT_COMPLETED);
+    put_u32(chunk, 400u);
+    CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_WRITE, chunk, sizeof(chunk)), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(answered_position, 600u);
+    CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_WRITE, chunk, sizeof(chunk)), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(answered_position, 600u);
+    CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_FINISH, 0, 0), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(answered_position, UINT32_MAX);
+    CHECK_EQ(resource_begin(&sup, "logo.bin", 3u, sha_abc), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(resource_write(&sup, 1u, "bc", 2u), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(answered_position, 0u);
+    CHECK_EQ(resource_write(&sup, 0u, "a", 1u), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(answered_position, 1u);
+    CHECK_EQ(resource_write(&sup, 1u, "bc", 2u), CANOPUS_RESULT_COMPLETED);
+    CHECK_EQ(answered_position, 3u);
+    CHECK_EQ(rpc(&sup, CANOPUS_CMD_STAGE_RES_FINISH, 0, 0), CANOPUS_RESULT_COMPLETED);
+    check_resource("/data/canopus/m.native_probe/logo.bin", "abc", 3u);
+    /* A stream that failed is closed: its answers carry no position. */
+    CHECK_EQ(resource_begin(&sup, "splash-2.bin", 11u, sha_hello), CANOPUS_RESULT_COMPLETED);
+    fail_write = 1;
+    CHECK_EQ(resource_write(&sup, 0u, "hello world", 11u), CANOPUS_RESULT_FAILED);
+    CHECK_EQ(answered_position, UINT32_MAX);
+    fail_write = 0;
+    CHECK_EQ(resource_write(&sup, 0u, "hello world", 11u), CANOPUS_RESULT_DISALLOWED);
+    CHECK_EQ(answered_position, UINT32_MAX);
+    check_no_partials();
 }
 TEST(resource_upload_rejects_short_or_malformed_finish)
 {
@@ -540,7 +604,8 @@ static struct test_registry upload_tests[] = {
     {"resource_upload_accepts_maximum_name_and_empty_resource", resource_upload_accepts_maximum_name_and_empty_resource_wrapper},
     {"resource_upload_requires_staged_artifact_context", resource_upload_requires_staged_artifact_context_wrapper},
     {"resource_upload_rejects_unsafe_names_and_malformed_begin", resource_upload_rejects_unsafe_names_and_malformed_begin_wrapper},
-    {"resource_upload_rejects_bad_writes_and_removes_partial", resource_upload_rejects_bad_writes_and_removes_partial_wrapper},
+    {"resource_upload_rejects_bad_writes_and_keeps_stream", resource_upload_rejects_bad_writes_and_keeps_stream_wrapper},
+    {"upload_answers_carry_position_for_windowed_sender", upload_answers_carry_position_for_windowed_sender_wrapper},
     {"resource_upload_rejects_short_or_malformed_finish", resource_upload_rejects_short_or_malformed_finish_wrapper},
     {"resource_upload_verifies_staged_bytes_size_and_sha256", resource_upload_verifies_staged_bytes_size_and_sha256_wrapper},
     {"resource_upload_cleans_io_failures", resource_upload_cleans_io_failures_wrapper},

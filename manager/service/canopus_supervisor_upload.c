@@ -137,10 +137,12 @@ static uint32_t resource_upload(struct canopus_supervisor_v1 *sup,
     }
     if (!sup->resource_upload.active) goto disallowed;
     if (command == CANOPUS_CMD_STAGE_RES_WRITE) {
+        /* A rejected chunk leaves the stream as it was, as for the ELF: the sender keeps several
+         * in flight and resumes from the position the answer carries (ADR-CAN-008). */
         if (len <= 4u || len > CANOPUS_PROTO_MAX_PAYLOAD ||
             upload_u32(payload) != sup->resource_upload.written ||
             len - 4u > sup->resource_upload.size - sup->resource_upload.written)
-            goto disallowed;
+            return CANOPUS_RESULT_DISALLOWED;
         if (upload_write(sup, sup->resource_upload.fd, payload + 4u, len - 4u) != 0)
             goto failed;
         sup->resource_upload.written += len - 4u;

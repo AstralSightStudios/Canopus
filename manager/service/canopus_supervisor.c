@@ -1354,6 +1354,17 @@ static uint32_t render_v2_query_payload(
     const struct canopus_proto_response_v1 *resp,
     uint8_t out[CANOPUS_PROTO_MAX_PAYLOAD])
 {
+    /* Every answer to a chunk of an open stream, accepted or rejected, carries the receiver's
+     * position: the sender keeps several chunks in flight and resumes a rejected or lost one from
+     * here (ADR-CAN-008). A stream that failed is closed and answers without it. */
+    if (req->command == CANOPUS_CMD_STAGE_WRITE && sup->upload.active) {
+        put_wire_u32(out, 0u, sup->upload.written);
+        return 4u;
+    }
+    if (req->command == CANOPUS_CMD_STAGE_RES_WRITE && sup->resource_upload.active) {
+        put_wire_u32(out, 0u, sup->resource_upload.written);
+        return 4u;
+    }
     if (resp->result_state != CANOPUS_RESULT_COMPLETED) {
         return 0u;
     }
