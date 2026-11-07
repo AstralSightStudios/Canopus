@@ -1961,6 +1961,54 @@ static void test_cancel_destroying_root_reclaims_staged_candidates(void)
     assert(!host_view_alive(&view) && context.committed.generation == generation);
     for (i = before; i < allocated; i++) assert(widgets[i].deleted);
 }
+static int list_carrier_page(int painted)
+{
+    struct canopus_ui_tree_v1 *tree = begin();
+    struct canopus_ui_component_props_v1 list = {
+        sizeof(list),"",0,"",0,801,CANOPUS_UI_NODE_FLAG_VISIBLE|CANOPUS_UI_NODE_FLAG_ENABLED,0,0,0,0,0
+    };
+    struct canopus_ui_section_props_v1 section = {sizeof(section),"",0};
+    struct canopus_ui_style_v1 style = CANOPUS_UI_STYLE_DEFAULT;
+    struct canopus_ui_layout_v1 layout = CANOPUS_UI_LAYOUT_DEFAULT;
+    struct canopus_ui_visual_v1 visual = CANOPUS_UI_VISUAL_DEFAULT;
+    assert(canopus_ui_component(tree,10,CANOPUS_UI_NODE_LIST,&list) == 0);
+    layout.width = 160; layout.height = 80;
+    visual.flags = CANOPUS_UI_VISUAL_FLAG_ABSOLUTE | CANOPUS_UI_VISUAL_FLAG_CLIP;
+    if (painted) {
+        visual.flags |= CANOPUS_UI_VISUAL_FLAG_BACKGROUND_RGB; visual.background_rgb = 0x222222;
+        style.corner_radius = 24;
+    }
+    assert(canopus_ui_node_set_layout(tree,10,&layout) == 0);
+    assert(canopus_ui_node_set_style(tree,10,&style) == 0);
+    assert(canopus_ui_node_set_visual(tree,10,&visual) == 0);
+    assert(canopus_ui_end(tree) == 0);
+    assert(canopus_ui_section(tree,20,&section) == 0);
+    row(tree,21,"Child",802);
+    assert(canopus_ui_end(tree) == 0);
+    return finish(tree);
+}
+/* A LIST is a bare event carrier (e.g. an image button floating over a scroll):
+   it must not inherit the 10 Pro content theme surface or padding, while a
+   caller-painted LIST keeps its own surface and a SECTION keeps stock looks. */
+static void test_list_carrier_is_normalized(void)
+{
+    struct widget *list, *section;
+    unsigned prop;
+    reset(); assert(list_carrier_page(0) == 0);
+    list = host_node(&view,10)->object; section = host_node(&view,20)->object;
+    for (prop = 16u; prop < 20u; prop++) assert(list->props[prop] == 0);
+    assert(list->props[28] == 0 && list->props[29] == 0);
+    assert(list->props[48] == 0 && list->props[12] == 0);
+#ifdef CANOPUS_MGR_BAND11
+    assert(section->props[16] == 0);
+#else
+    assert(section->props[16] == 7);
+#endif
+    reset(); assert(list_carrier_page(1) == 0);
+    list = host_node(&view,10)->object;
+    for (prop = 16u; prop < 20u; prop++) assert(list->props[prop] == 0);
+    assert(list->props[28] == 0x222222 && list->props[29] == 255 && list->props[12] == 24);
+}
 static int image_fit_page(uint16_t fit, int width, int height,
                           const char *path, uint32_t resource_id)
 {
@@ -2198,7 +2246,7 @@ int main(int argc, char **argv)
 {
     int baseline = argc > 1 && strcmp(argv[1], "--baseline") == 0;
     (void)host_input_route;
-    test_advertised_capabilities(); test_image_fit_contract();
+    test_advertised_capabilities(); test_image_fit_contract(); test_list_carrier_is_normalized();
 #ifndef CANOPUS_TEST_NO_IMAGE_FIT
     test_image_fit_across_native_dialog();
     test_image_fit_preflight(); test_image_fit_quantization(); test_image_fit_rebuild_and_lifetime();

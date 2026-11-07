@@ -1149,9 +1149,12 @@ static int32_t host_create_node(struct canopus_ui_host_node *slot, void *parent,
 #endif
     } else {
         object = host_container_create(parent);
-        /* Only the synthesized radio/checkbox row is normalized. A SECTION keeps
-           the stock content appearance unless the caller paints its own. */
-        if (kind == 4u) host_content_normalize(object);
+        /* The synthesized radio/checkbox row and LIST are normalized: a LIST is
+           a bare event carrier (e.g. an image button) with no stock prefab, so
+           an inherited 10 Pro theme surface would paint a block behind it. A
+           SECTION keeps the stock content appearance unless the caller paints
+           its own. */
+        if (kind == 4u || node->type == CANOPUS_UI_NODE_LIST) host_content_normalize(object);
         if (object != NULL && ((node->type == CANOPUS_UI_NODE_SECTION && node->primary_len) || kind == 4u)) {
             slot->primary = host_label_create(object);
             if (slot->primary == NULL) { host_object_delete(object); return CANOPUS_UI_ERR_BACKEND; }
