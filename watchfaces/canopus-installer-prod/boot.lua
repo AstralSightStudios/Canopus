@@ -28,11 +28,14 @@ local function log(message)
     end
 end
 
--- The Supervisor removes this counter once the Manager is registered. A start
--- that dies before that is retried twice, then left alone.
+-- The Supervisor removes this counter a minute after its start sequence, once
+-- the band has also lived through a screen wake. A start that dies before that
+-- is retried twice. Then the start script goes, so later boots do not run `lua`
+-- at all; the installer's Run writes it again.
 local attempts = tonumber(read_all(PENDING)) or 0
 if attempts >= 3 then
-    log("boot: attempts exceeded limit: " .. tostring(attempts))
+    os.remove("/data/canopus/b")
+    log("boot: attempts exceeded limit, start script removed: " .. tostring(attempts))
     return
 end
 assert(write_all(PENDING, tostring(attempts + 1)))

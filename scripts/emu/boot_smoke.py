@@ -243,18 +243,29 @@ def cold_start(files, record, cfg, ota):
                 print("PASS pinned start: /dev/canopus appeared without a manual load")
                 ctl("tap", DEVICE, *wake)
                 ctl("tap", DEVICE, *wake)
-                time.sleep(20)
                 for _ in range(12):
+                    time.sleep(5)
+                    if "flags=3 " in drv("boot", "query"):
+                        break
+                expect("pinned, sequence finished", drv("boot", "query"), "flags=3", "err=0")
+                # The counter outlives the sequence by a minute and one screen wake.
+                expect("start counter kept right after the sequence", sh("ls /data/canopus"), "boot.pending")
+                ctl("tap", DEVICE, *wake)
+                for _ in range(24):
+                    time.sleep(5)
                     if "boot.pending" not in sh("ls /data/canopus"):
                         break
-                    time.sleep(5)
                 if "boot.pending" in sh("ls /data/canopus"):
                     print("FAIL pinned start: boot.pending is still there\n" + sh("ls /data/canopus"))
                     sys.exit(1)
-                print("PASS start counter cleared once the Manager exists")
-                time.sleep(10)
-                expect("pinned, sequence finished", drv("boot", "query"), "flags=3", "err=0")
-                # Every `lua` that ran here (boot.lua, the driver) gave its state back.
+                print("PASS start counter cleared after the sequence, a minute and a screen wake")
+                # A fourth start removes the start script, so later boots run no `lua` at all.
+                sh("echo 3 > /data/canopus/boot.pending")
+                sh("lua /data/canopus/boot.lua")
+                names = {line.strip() for line in sh("ls /data/canopus").splitlines()}
+                expect("start script removed after three starts",
+                       "removed" if "b" not in names else "still there", "removed")
+                # Every `lua` that ran here (boot.lua twice, the driver) gave its state back.
                 states = int(json.loads((ROOT / f"targets/{cfg['target']}/symbols/{cfg['target']}"
                                          ".lua.screen_lua_states.json").read_text())["entry_address"], 16)
                 out = sh("; ".join(f"mw {states + 4 * i:08x} 4" for i in range(3)))
@@ -270,6 +281,9 @@ def cold_start(files, record, cfg, ota):
                 ctl("tap", DEVICE, *wake)
                 print("Waiting 90s for screen-off, the startup phases and the unpin/pin requests...")
                 time.sleep(90)
+                # The start counter goes a minute after the sequence and one more screen wake.
+                ctl("tap", DEVICE, *wake)
+                time.sleep(45)
                 ctl("shutdown", DEVICE)
                 listing = ctl("fs", "ls", DEVICE, "nand_data", "/canopus")
                 if "bootstrap-result.txt" not in listing:
@@ -287,7 +301,7 @@ def cold_start(files, record, cfg, ota):
                     except Exception:
                         pass
                     sys.exit(1)
-                print("PASS pinned start: boot.pending cleared and registry.bin written once the Manager exists")
+                print("PASS pinned start: registry.bin written, boot.pending cleared after the sequence and a wake")
                 try:
                     boot_log = ctl("fs", "get", DEVICE, "nand_data", "/canopus/boot.log")
                     print("boot.log:\n" + boot_log.strip())

@@ -14,8 +14,11 @@ static struct canopus_supervisor_v1 *volatile boot_supervisor;
 static volatile uint32_t boot_phase;
 static int boot_started;
 static uint32_t boot_next_ms;
+static uint32_t boot_proven_ms; /* when the finished sequence may clear boot.pending */
+static int boot_lit;            /* the screen was lit since the sequence finished */
 #define BOOT_STEP_MS 1000u   /* the installer's own Run paces its steps the same way */
 #define BOOT_SETTLE_MS 3000u /* after the screen was last seen lit */
+#define BOOT_PROVEN_MS 60000u
 
 #if CANOPUS_BOOT_ENABLED
 /* The startup script lives in the XIP image, and its 8 KiB erase block also
@@ -286,17 +289,33 @@ int canopus_supervisor_boot_start(struct canopus_supervisor_v1 *sup)
 }
 
 /* One step per second on the owner timer. The Manager comes before any
- * third-party module, so a module that faults still leaves it reachable, and
- * the start counter is cleared as soon as it exists. */
+ * third-party module, so a module that faults still leaves it reachable (the
+ * Supervisor's own start counts quarantine that module). The start counter in
+ * boot.pending goes only once this start has outlived the whole sequence by a
+ * minute and one screen wake: a fault that comes after the Manager exists, as
+ * the screen callback on an exited `lua` did, must still count, or a pinned
+ * band restarts forever. */
 void canopus_supervisor_boot_poll(struct canopus_supervisor_v1 *sup)
 {
     const struct canopus_sup_platform_v1 *pf = sup->platform;
     int rc = 0;
     uint32_t now = pf->monotonic_ms != 0 ? pf->monotonic_ms(sup->platform_cookie) : 0u;
-    if (sup != boot_supervisor || boot_phase == 0u) return;
+    int lit;
+    if (sup != boot_supervisor || (boot_phase == 0u && boot_proven_ms == 0u)) return;
+    lit = pf->screen_state != 0 && pf->screen_state(sup->platform_cookie) != 0;
+    if (boot_phase == 0u) {
+        /* Sequence finished: wait for the minute and the wake. */
+        if (lit) {
+            boot_lit = 1;
+        } else if (boot_lit && (int32_t)(now - boot_proven_ms) >= 0) {
+            (void)pf->file_remove(sup->platform_cookie, "/data/canopus/boot.pending");
+            boot_proven_ms = 0u;
+        }
+        return;
+    }
     /* Registering the Manager while the screen is lit resets the emulated band
      * (Mirage), so the sequence only advances with the screen off. */
-    if (pf->screen_state != 0 && pf->screen_state(sup->platform_cookie) != 0) {
+    if (lit) {
         boot_next_ms = now + BOOT_SETTLE_MS;
         return;
     }
@@ -308,7 +327,6 @@ void canopus_supervisor_boot_poll(struct canopus_supervisor_v1 *sup)
         break;
     case 2u:
         rc = pf->stage_package(sup->platform_cookie, 0, 2u);
-        if (rc == 0) (void)pf->file_remove(sup->platform_cookie, "/data/canopus/boot.pending");
         break;
     case 3u:
         (void)canopus_supervisor_activate_restored_modules(sup);
@@ -319,6 +337,7 @@ void canopus_supervisor_boot_poll(struct canopus_supervisor_v1 *sup)
         break;
     default:
         boot_phase = 0u;
+        boot_proven_ms = now + BOOT_PROVEN_MS;
         break;
     }
     if (rc != 0) {

@@ -28,6 +28,8 @@
     `.043` 换用新写入器；Band 11 仅 `CANOPUS_BOOT_DEVICE_TEST=1` 构建打开，待真机复测。
   - 开机路径的第二个问题：固件 `lua` 退出后它的状态仍留在 `luaopen_screen` 的三格表里，下一次亮灭屏在已释放内存上跑 Lua（Mirage `.155` 复位，`.043` 也有残留）。
     生成的 `boot.lua` 先清掉自己那一格（新符号 `lua.screen_lua_states`，restricted / not_probed）。
+  - 2026-11-08（第 37 轮）：坏的那台是 `.179`、固化提示成功、重启即循环，更像 Lua 状态而非写坏闪存（推断）。Mirage `.179` 复现循环：原先的计数在 Manager 注册后清零、
+    上限后的开机仍启动 `lua`，拦不住。现在计数在序列走完一分钟并亮灭一次屏后才清除，第 4 次开机删掉 `/data/canopus/b`。仅 emulator 证据。
   - 模拟器（Mirage）：n67、o66 都是 26/27（只跳过 Haptics），Connect「listen, send & remote listening」通过；各开机两次、每次 150 秒，没有新增 minidump，稳定性提交（booting 0、starts 0），KV 跨重启通过。n67 用 QMP 读 PowerManager 全局：就绪字节 1/1、充电 1、电量 63，与 `miragectl battery 63 --charging` 一致。
 - 仍有差距：
   - 四台都没有固化启动（Band 11 的写入器换过之后还没有真机复测；`.043` 开着，没有真机证据）。

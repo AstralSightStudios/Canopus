@@ -1950,3 +1950,24 @@ NSH 的 `lua` 启动时打开 miwear 库，`luaopen_screen` 把解释器的 `lua
 
 另外留了一个没修的风险：`START_BOOT` 在 NSH 的 `lua` 任务里调 `lv_timer_create`，固件 LVGL 无锁，resume 回调还会在 UI 的 libuv 循环上
 `uv_timer_start`。跨任务不加锁，模拟器里没看到问题，但不是严格安全的（ADR-CAN-012“风险与边界”）。
+
+## 第 37 轮：固化启动的循环上限（2026-11-08）
+
+用户补充第 36 轮那台手环的情况：固件 `.179`，固化提示成功，重启后一直循环，没能救回（售后换机），没有日志。
+旧写入器的“成功”是经 `/dev/bes_flash` 读回尾段、与固化内容一致才报的，`.179` 的擦除块里除 ROMFS 外只有补零，所以更像是
+第 36 轮的 Lua 状态问题，而不是闪存被写坏（推断）。在 `.179` IDB 里核对了 NSH `lua` 打开的 7 个 miwear 库
+（`topic`、`dataman`、`activity`、`vibrator`、`navigator`、`screen`、`miwear`），只有 `luaopen_screen`（0x0c6d1eb0）把 `lua_State` 存进全局。
+
+**Mirage `.179` 复现（仅模拟器证据）。** 固化镜像、不带归还的 `boot.lua`，开机 40 秒点一次、100 秒起每 30 秒点一次，共 300 秒：
+`boot.lua` 跑了 6 次，`boot.log` 依次是第 1、2、3、1、1、2 次尝试。走到 Manager 注册的开机把计数清零，故障随后才来；
+到了上限的开机仍然启动 `lua`，状态照样留下。两条一起，原先的 3 次上限拦不住这个循环。另一次相同的运行则是第一次亮屏后 UI 卡死
+（之后截图逐字节相同、时钟不走）。同一节奏下带归还的 `boot.lua`：只启动 1 次，序列走完，`registry.bin` 写出。
+
+**修改。**
+- Supervisor 不在 Manager 注册后清除 `boot.pending`，改在序列走完 60 秒后、其间亮过一次屏的那次熄屏时清除（`canopus_supervisor_boot_poll`）。
+  模块自己的故障仍由按模块启动计数（`CANOPUS_SUP_START_LIMIT` 2）处理，第 3 次开机前就停用，不会先耗尽这 3 次。
+- 第 4 次开机 `boot.lua` 删掉 `/data/canopus/b` 后返回，之后开机连 `lua` 都不启动；安装器 Run 写回 `b` 并清零计数。
+- `boot_smoke.py`：`.043` 检查序列刚走完时计数仍在、再亮一次屏后清除，以及预置计数 3 时 `b` 被删掉；Band 11 冷启动末尾多点一次屏、多等 45 秒。
+
+**Mirage 结果（仅模拟器证据）。** `boot_smoke.py 043`、`155`、`179` 全部通过；`.179` 预置计数 3：`boot.lua` 删掉 `b` 就返回，不加载、不复位。
+Band 11 仍然默认关闭，真机复测仍是打开它的前提。
