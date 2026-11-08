@@ -25,6 +25,8 @@ static uint32_t fixture_ui_freed, fixture_records_freed;
 static struct canopus_ui_context_v1 fixture_route_uis[16];
 static struct canopus_target_module_page fixture_route_records[16];
 static uint32_t fixture_route_stack[8], fixture_route_depth, fixture_resume_first;
+/* Firmware finish must not be re-entered from the lifecycle it triggers. */
+static uint32_t fixture_popping;
 static uint32_t fixture_goto_mode, fixture_pending_goto;
 
 /* The target allocates one UI context per page on the stack while that page is
@@ -266,7 +268,7 @@ uint32_t test_route_prepare(uint32_t resume_first)
     (void)test_prepare(1u,0u);fixture_routes=1u;
     fixture_ui_count=fixture_record_count=fixture_ui_freed=fixture_records_freed=0u;
     fixture_close_on_apply=fixture_goto_mode=fixture_pending_goto=0u;
-    fixture_route_depth=1u;fixture_route_stack[0]=0u;
+    fixture_route_depth=1u;fixture_route_stack[0]=0u;fixture_popping=0u;
     fixture_resume_first=resume_first;
     fixture_entry.page_count=6u;fixture_entry.on_resume=fixture_resume;fixture_entry.on_pause=fixture_pause;
     launcher_entry_init(launcher_entries[0],0u,6u);
@@ -320,12 +322,14 @@ static void fixture_destroy_route(struct canopus_target_page *page)
 int test_route_pop(void)
 {
     struct canopus_target_page *source,*destination=NULL;
-    if (!fixture_route_depth) {fixture_bad_args++;return -1;}
+    if (!fixture_route_depth || fixture_popping) {fixture_bad_args++;return -1;}
+    fixture_popping=1u;
     source=&launcher_entries[0]->pages[fixture_route_stack[--fixture_route_depth]];
     if (fixture_route_depth) destination=&launcher_entries[0]->pages[fixture_route_stack[fixture_route_depth-1u]];
     if (destination!=NULL && fixture_resume_first) (void)destination->on_resume(destination);
     fixture_destroy_route(source);
     if (destination!=NULL && !fixture_resume_first) (void)destination->on_resume(destination);
+    fixture_popping=0u;
     return 0;
 }
 int test_route_posted_close(void)

@@ -186,9 +186,12 @@ class ModulePageBackTests(unittest.TestCase):
                 self.assertEqual(self.state(u, 10), 0)
                 self.assertEqual(self.state(u, 11), 0)
                 self.call(u, "test_route_goto_mode", 3)
-                for route in (1, 2, 5, 1, 0):
+                for previous, route in ((0, 1), (1, 2), (2, 5), (5, 1), (1, 0)):
                     self.assertEqual(self.call(u, "test_route_request", route), 0)
                     self.call(u, "test_route_poll")
+                    if previous == 5:
+                        self.assertEqual(self.state(u, 12), 1)  # skipped detail waits a heartbeat
+                        self.call(u, "test_route_poll")
                     self.assertEqual(self.state(u, 1), 0, "Firmware pause must not close the app")
                     self.assertEqual(self.state(u, 8), 100 + route)
                     self.assertEqual(self.state(u, 6), 1)
@@ -207,10 +210,19 @@ class ModulePageBackTests(unittest.TestCase):
             for resume_first in (0, 1):
                 with self.subTest(target=target, resume_first=resume_first):
                     u = self.route_machine(target, resume_first)
-                    for route in (1, 2, 5, 1, 0):
+                    for previous, route in ((0, 1), (1, 2), (2, 5), (5, 1), (1, 0)):
                         self.assertEqual(self.call(u, "test_route_request", route), 0)
                         self.call(u, "test_route_poll")
+                        if previous == 5:
+                            # The resumed detail page is finished on the next
+                            # heartbeat, never inside its own firmware resume.
+                            self.assertEqual(self.state(u, 12), 1)
+                            self.assertEqual(self.state(u, 6), 0)
+                            self.assertEqual(self.call(u, "test_route_request", 0), -16)
+                            self.call(u, "test_route_poll")
+                        self.assertEqual(self.state(u, 12), 0)
                         self.assertEqual(self.state(u, 8), 100 + route)
+                        self.assertEqual(self.state(u, 4), 0)  # no nested firmware finish
                     self.assertEqual(self.state(u, 9), 1)
                     self.assertEqual(self.state(u, 10), 5)  # no intermediate detail resume
                     self.assertEqual(self.state(u, 1), 0)
@@ -264,10 +276,13 @@ class ModulePageBackTests(unittest.TestCase):
                     self.assertEqual(self.state(u, 2), released)
                     self.assertEqual(self.state(u, 12), 1)
                     self.assertEqual(self.state(u, 4), 0)
-                    self.call(u, "test_route_poll")
+                    # One finish per heartbeat: detail, resources, then root.
+                    for remaining in (2, 1, 0):
+                        self.call(u, "test_route_poll")
+                        self.assertEqual(self.state(u, 12), int(remaining != 0))
+                        self.assertEqual(self.state(u, 1), int(remaining == 0))
+                        self.assertEqual(self.state(u, 4), 0)
                     self.assertEqual(self.state(u, 5), 0)
-                    self.assertEqual(self.state(u, 1), 1)
-                    self.assertEqual(self.state(u, 4), 0)
 
     def state(self, u, index):
         return self.call(u, "test_state", index)

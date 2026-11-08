@@ -1258,9 +1258,15 @@ static int module_page_on_resume(struct canopus_target_page *page)
     module_page = slot_page;
     if (launcher != NULL && (launcher->closing ||
         (launcher->pending_route != 0u && slot_page->route + 1u > launcher->pending_route))) {
-        /* A pop may skip the detail page after its package was deleted. Keep
-         * finishing paused intermediates until the requested route is reached. */
-        module_page_finish(slot_page); return 0;
+        /* A pop may skip the detail page after its package was deleted, and a
+         * close unwinds every page. Never finish the page the firmware is
+         * resuming from inside its own resume: the previous finish is still
+         * unwinding. Queue the next step for the following heartbeat; the page
+         * stays unbound and non-interactive until then. */
+        module_navigation.source = slot_page; module_navigation.slot = slot_page->slot;
+        module_navigation.close = launcher->closing;
+        module_navigation.route = launcher->closing ? 0u : launcher->pending_route - 1u;
+        return 0;
     }
     /* on_resume does not promise a live root on the descriptor, so use the one
      * the page handed to on_create; the firmware keeps it for the page's
