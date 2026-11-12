@@ -583,6 +583,60 @@ fn native_font_bindings_are_private_and_target_gated() {
     }
 }
 
+/// ADR-CAN-014: the Supervisor's QuickApp dispatch binds the ferry records on
+/// exact 3.101.043 only, from static evidence; the records stay unapproved.
+#[test]
+fn quickapp_dispatch_is_exact_043_and_records_stay_private() {
+    let targets = repo_root().join("targets");
+    for entry in std::fs::read_dir(&targets).unwrap() {
+        let dir = entry.unwrap().path();
+        let Ok(header) = std::fs::read_to_string(dir.join("generated/canopus_target_config.h"))
+        else {
+            continue;
+        };
+        let exact = dir.ends_with("xiaomi-band-10-pro-3.101.043");
+        for name in [
+            "FW_QUICKAPP_FRAMEWORK",
+            "FW_QUICKAPP_FRAMEWORK_VTABLE",
+            "FW_QUICKAPP_APPLICATION_VTABLE",
+            "FW_QUICKAPP_REGISTER_FEATURE",
+            "FW_QUICKAPP_INIT_SLOT",
+        ] {
+            assert_eq!(
+                header.contains(&format!("#define {name} ")),
+                exact,
+                "{}: {name}",
+                dir.display()
+            );
+        }
+    }
+    let dir = targets.join("xiaomi-band-10-pro-3.101.043");
+    let (symbols, _) = load_records(&dir).unwrap();
+    for (name, address) in [
+        ("ferry_framework_instance", 0x2013cfe0),
+        ("ferry_framework_vtable", 0x2cda8cd8),
+        ("ferry_application_vtable", 0x2cda7c80),
+        ("feature_register_feature", 0x0c862899),
+    ] {
+        let symbol = symbols.iter().find(|symbol| symbol.name == name).unwrap();
+        assert_eq!(symbol.policy, "restricted", "{name}");
+        assert_eq!(symbol.status, "STATIC_RECOVERED", "{name}");
+        assert_eq!(symbol.approval_state.as_deref(), Some("PENDING"), "{name}");
+        let recorded = symbol
+            .callable_address
+            .as_deref()
+            .or(symbol.entry_address.as_deref())
+            .unwrap();
+        assert_eq!(parse_address(recorded), address, "{name}");
+    }
+    let evidence: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(dir.join("evidence/EVID-QUICKAPP-1043-001.json")).unwrap(),
+    )
+    .unwrap();
+    canopus_core::schema::validate(canopus_core::schema::SchemaKind::Evidence, &evidence)
+        .unwrap();
+}
+
 #[test]
 fn band10_pro_043_resource_thunks_remain_exact_and_private() {
     let target = "xiaomi-band-10-pro-3.101.043";

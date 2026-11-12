@@ -667,6 +667,16 @@ pub const LAUNCHER_LABEL_MAX: u32 = 24;
 pub const LAUNCHER_ICON_MAX: u32 = 96;
 pub const NATIVE_APP_PAGES_MAX: u32 = 16;
 
+/// `struct canopus_quickapp_obj`, QUICKAPP service version 1.
+#[repr(C)]
+pub struct CanopusQuickappObj {
+    /// Publishes an exact-target Feature description to later QuickApps.
+    pub register_feature:
+        unsafe extern "C" fn(ctx: *const ContextV1, description: *const c_void) -> i32,
+}
+
+pub const QUICKAPP_FEATURES: u32 = 8;
+
 #[repr(C)]
 pub struct CanopusContext {
     pub struct_size: u32,
@@ -690,6 +700,7 @@ pub struct CanopusContext {
     pub ui: *const CanopusUiObj,
     pub connect: *const CanopusConnectObj,
     pub launcher: *const CanopusLauncherObj,
+    pub quickapp: *const CanopusQuickappObj,
 }
 
 // Service groups (`CANOPUS_SVC_*`): indexes into `ServicesV1Head::group_version`.
@@ -708,7 +719,8 @@ pub const SVC_DISPLAY: u32 = 11;
 pub const SVC_BUS: u32 = 12;
 pub const SVC_CONNECT: u32 = 13;
 pub const SVC_LAUNCHER: u32 = 14;
-pub const SVC_GROUP_COUNT: u32 = 15;
+pub const SVC_QUICKAPP: u32 = 15;
+pub const SVC_GROUP_COUNT: u32 = 16;
 
 /// The head of `struct canopus_services_v1` (`CanopusContext::services`): the
 /// per-group versions a module checks before using a service object.
@@ -959,6 +971,17 @@ mod layout {
         assert_eq!(offset_of!(AppEntryV1, pages), 3 * pointer);
         assert_eq!(offset_of!(AppEntryV1, page_count), 4 * pointer);
         assert_eq!(size_of::<AppEntryV1>(), 5 * pointer);
+    }
+
+    #[test]
+    fn quickapp_feature_layout() {
+        let pointer = size_of::<usize>();
+        assert_eq!(offset_of!(CanopusQuickappObj, register_feature), 0);
+        assert_eq!(size_of::<CanopusQuickappObj>(), pointer);
+        assert_eq!(
+            offset_of!(CanopusContext, quickapp),
+            offset_of!(CanopusContext, launcher) + pointer
+        );
     }
 
     #[test]

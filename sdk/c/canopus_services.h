@@ -49,6 +49,7 @@ enum canopus_service_group {
     CANOPUS_SVC_BUS       = 12, /* inter-module pub/sub event bus */
     CANOPUS_SVC_CONNECT   = 13, /* CanopusConnect messages (ADR-CAN-009) */
     CANOPUS_SVC_LAUNCHER  = 14, /* the module's own launcher entry (ADR-CAN-011) */
+    CANOPUS_SVC_QUICKAPP  = 15, /* native Features for QuickApps (ADR-CAN-014) */
     CANOPUS_SVC_GROUP_COUNT
 };
 
@@ -639,6 +640,30 @@ struct canopus_launcher_obj {
                             const struct canopus_app_entry_v1 *entry);
 };
 
+/* quickapp: native Features that QuickApps import (ADR-CAN-014). The
+ * Supervisor owns the one firmware dispatch every QuickApp passes through as
+ * it starts, so several modules can each publish Features without replacing
+ * one another's hook.
+ * register_feature publishes `description`, an exact-target firmware Feature
+ * description whose layout, lifecycle and member callbacks are the module's
+ * responsibility, to every QuickApp started after the call; QuickApps already
+ * running do not get it. Running QuickApps keep the pointer, so the
+ * description, everything it references and its callbacks must stay valid
+ * until reboot: a removable module is refused with ACCESS. The same
+ * description again returns OK and there is no removal; unloading the module
+ * only stops later QuickApps from receiving it. NOMEM beyond
+ * CANOPUS_QUICKAPP_FEATURES descriptions in total; BUSY when the dispatch
+ * cannot be taken, because the firmware's QuickApp framework does not exist
+ * yet or another component already replaced it (a module that still installs
+ * its own hook). Calls belong to the serialized module/UI owner; the firmware
+ * runs the Feature's callbacks on each QuickApp's own JS task. */
+#define CANOPUS_QUICKAPP_FEATURES 8u
+
+struct canopus_quickapp_obj {
+    int32_t (*register_feature)(const struct canopus_context_v1 *ctx,
+                                const void *description);
+};
+
 /* -------------------------------------------------------------------------- */
 /* Legacy Services v1 Table (Maintained for Backward Compatibility)           */
 /* -------------------------------------------------------------------------- */
@@ -693,6 +718,7 @@ struct canopus_context_v1 {
     const struct canopus_ui_obj        *ui;
     const struct canopus_connect_obj   *connect;
     const struct canopus_launcher_obj  *launcher;
+    const struct canopus_quickapp_obj  *quickapp;
 };
 
 static inline const char *canopus_fs_data_path(const struct canopus_context_v1 *ctx, char *buffer, uint32_t max_size)

@@ -82,6 +82,7 @@ fn constants_match_the_c_header() {
         ("LAUNCHER_LABEL_MAX", LAUNCHER_LABEL_MAX as u64),
         ("LAUNCHER_ICON_MAX", LAUNCHER_ICON_MAX as u64),
         ("NATIVE_APP_PAGES_MAX", NATIVE_APP_PAGES_MAX as u64),
+        ("QUICKAPP_FEATURES", QUICKAPP_FEATURES as u64),
     ];
     for (name, rust) in table {
         assert_eq!(c_define(name), *rust, "CANOPUS_{name}");
@@ -191,6 +192,11 @@ fn ui_and_bus_layouts_match_the_c_headers() {
             "offsetof(struct canopus_context_v1, launcher)",
             offset_of!(CanopusContext, launcher),
         ),
+        (
+            "offsetof(struct canopus_context_v1, quickapp)",
+            offset_of!(CanopusContext, quickapp),
+        ),
+        ("sizeof(struct canopus_quickapp_obj)", size_of::<CanopusQuickappObj>()),
         ("sizeof(struct canopus_ui_obj)", size_of::<CanopusUiObj>()),
         (
             "offsetof(struct canopus_ui_obj, node_set_style)",

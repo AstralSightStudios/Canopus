@@ -34,6 +34,7 @@
 - [`ADR-CAN-009: CanopusConnect 模块与 AstroBox 插件消息通道`](../adr/ADR-CAN-009-canopus-connect.md)
 - [`ADR-CAN-010: 原生 UI 宿主后端与模块页面`](../adr/ADR-CAN-010-ui-host.md)
 - [`ADR-CAN-011: 模块的启动器入口`](../adr/ADR-CAN-011-launcher-entries.md)
+- [`ADR-CAN-014: 快应用原生 Feature 的统一注册`](../adr/ADR-CAN-014-quickapp-features.md)
 
 ---
 

@@ -431,6 +431,15 @@ static int p_launcher_step(void *c)
     return g_launcher_steps_left > 0 ? (--g_launcher_steps_left, 1) : 0;
 }
 
+static int g_quickapp_routes, g_quickapp_route_rc;
+static int p_quickapp_route(void *c)
+{
+    (void)c;
+    if (g_quickapp_route_rc != 0) return g_quickapp_route_rc;
+    g_quickapp_routes++;
+    return 0;
+}
+
 static const struct canopus_sup_platform_v1 platform_with_fs = {
     .target_id = "xiaomi-band-10-pro-3.101.030",
     .register_device = p_noop,
@@ -496,6 +505,8 @@ static void init_hw_platform(void)
     platform_with_hw.ui_page_close = p_ui_page_close;
     platform_with_hw.app_publish = p_app_publish;
     platform_with_hw.launcher_step = p_launcher_step;
+    platform_with_hw.quickapp_route = p_quickapp_route;
+    g_quickapp_routes = g_quickapp_route_rc = 0;
     g_native_page_count = 0u;
     g_native_owned_pages = 0;
     memset(g_native_pages, 0, sizeof(g_native_pages));
@@ -2320,6 +2331,73 @@ TEST(launcher_is_absent_without_the_platform_hooks)
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_LAUNCHER, 1));
 }
 
+/* ---- QuickApp Features (ADR-CAN-014) -------------------------------- */
+
+static uint32_t quickapp_feature_count(void)
+{
+    const void *const volatile *features = canopus_supervisor_quickapp_features();
+    uint32_t i, count = 0u;
+    for (i = 0u; i < CANOPUS_QUICKAPP_FEATURES; i++) count += features[i] != 0;
+    return count;
+}
+
+TEST(quickapp_features_need_a_resident_module_and_reach_later_quickapps)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *ctx, *other;
+    const void *const volatile *features;
+    static const uint32_t descriptions[CANOPUS_QUICKAPP_FEATURES + 1u][7];
+    uint32_t i;
+    setup_hw(&sup);
+    ctx = canopus_supervisor_context(&sup, 0);
+    other = add_second_module(&sup);
+    features = canopus_supervisor_quickapp_features();
+    CHECK(canopus_services_has(ctx, CANOPUS_SVC_QUICKAPP, 1));
+
+    /* running QuickApps keep the description: a module that can unload may not publish one */
+    CHECK_EQ(ctx->quickapp->register_feature(ctx, descriptions[0]), CANOPUS_SVC_ERR_ACCESS);
+    sup.modules[0].lifecycle_class = CANOPUS_LIFECYCLE_RESIDENT_AFTER_ACTIVATION;
+    sup.modules[1].lifecycle_class = CANOPUS_LIFECYCLE_ALWAYS_RESIDENT;
+    CHECK_EQ(ctx->quickapp->register_feature(ctx, 0), CANOPUS_SVC_ERR_ARGUMENT);
+    g_quickapp_route_rc = -16; /* another hook holds the firmware's dispatch */
+    CHECK_EQ(ctx->quickapp->register_feature(ctx, descriptions[0]), CANOPUS_SVC_ERR_BUSY);
+    CHECK_EQ(quickapp_feature_count(), 0u);
+    g_quickapp_route_rc = 0;
+    CHECK_EQ(g_quickapp_routes, 0);
+
+    CHECK_EQ(ctx->quickapp->register_feature(ctx, descriptions[0]), CANOPUS_SVC_OK);
+    CHECK(features[0] == descriptions[0]);
+    CHECK_EQ(ctx->quickapp->register_feature(ctx, descriptions[0]), CANOPUS_SVC_OK);
+    CHECK_EQ(quickapp_feature_count(), 1u);
+    for (i = 1u; i < CANOPUS_QUICKAPP_FEATURES; i++) {
+        CHECK_EQ(other->quickapp->register_feature(other, descriptions[i]), CANOPUS_SVC_OK);
+    }
+    CHECK_EQ(other->quickapp->register_feature(other, descriptions[i]), CANOPUS_SVC_ERR_NOMEM);
+    CHECK_EQ(quickapp_feature_count(), CANOPUS_QUICKAPP_FEATURES);
+
+    /* release withholds the module's descriptions from later QuickApps only */
+    canopus_supervisor_release_services(&sup, 0u);
+    CHECK(features[0] == 0);
+    CHECK(features[1] == descriptions[1]);
+    CHECK_EQ(other->quickapp->register_feature(other, descriptions[i]), CANOPUS_SVC_OK);
+    CHECK(features[0] == descriptions[i]);
+    CHECK_EQ(g_quickapp_routes, (int)CANOPUS_QUICKAPP_FEATURES + 1);
+}
+
+TEST(quickapp_is_absent_without_the_platform_route)
+{
+    struct canopus_supervisor_v1 sup;
+    struct canopus_sup_platform_v1 platform;
+    const struct canopus_context_v1 *ctx;
+    init_hw_platform();
+    platform = platform_with_hw;
+    platform.quickapp_route = 0;
+    setup(&sup, &platform);
+    ctx = canopus_supervisor_context(&sup, 0);
+    CHECK(ctx->quickapp == 0);
+    CHECK(!canopus_services_has(ctx, CANOPUS_SVC_QUICKAPP, 1));
+}
+
 TEST(ui_close_page_finishes_only_the_callers_open_page)
 {
     struct canopus_supervisor_v1 sup;
@@ -2834,6 +2912,10 @@ static struct test_registry supervisor_services_tests[] = {
       launcher_step_failure_is_reported_in_the_supervisor_error_wrapper },
     { "launcher_is_absent_without_the_platform_hooks",
       launcher_is_absent_without_the_platform_hooks_wrapper },
+    { "quickapp_features_need_a_resident_module_and_reach_later_quickapps",
+      quickapp_features_need_a_resident_module_and_reach_later_quickapps_wrapper },
+    { "quickapp_is_absent_without_the_platform_route",
+      quickapp_is_absent_without_the_platform_route_wrapper },
     { "ui_close_page_finishes_only_the_callers_open_page",
       ui_close_page_finishes_only_the_callers_open_page_wrapper },
     { "ui_pages_are_unsupported_without_the_manager_ui_hook",

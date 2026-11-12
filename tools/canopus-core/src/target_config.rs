@@ -76,6 +76,32 @@ const FW_UI_IMAGE_FIT: &[Mapping] = &[
     },
 ];
 
+/// QuickApp Feature dispatch (ADR-CAN-014): the firmware's single Framework
+/// object, the two primary vtables the Supervisor copies, and the registration
+/// each starting QuickApp receives.
+const FW_QUICKAPP: &[Mapping] = &[
+    Mapping {
+        macro_name: "FW_QUICKAPP_FRAMEWORK",
+        symbol_name: "ferry_framework_instance",
+        address: Address::Data,
+    },
+    Mapping {
+        macro_name: "FW_QUICKAPP_FRAMEWORK_VTABLE",
+        symbol_name: "ferry_framework_vtable",
+        address: Address::Entry,
+    },
+    Mapping {
+        macro_name: "FW_QUICKAPP_APPLICATION_VTABLE",
+        symbol_name: "ferry_application_vtable",
+        address: Address::Entry,
+    },
+    Mapping {
+        macro_name: "FW_QUICKAPP_REGISTER_FEATURE",
+        symbol_name: "feature_register_feature",
+        address: Address::Callable,
+    },
+];
+
 const FW_UI_FONT: &[Mapping] = &[
     Mapping {
         macro_name: "FW_UI_FONT_CREATE",
@@ -1043,6 +1069,9 @@ impl<'a> TargetConfigGen<'a> {
                 // Exact private properties: EVID-UI-1043-LAYOUT-INPUT-001.
                 out.push_str("#define FW_UI_COORD_TYPE int32_t\n#define FW_UI_EVENT_PRESSED 1u\n#define FW_UI_EVENT_PRESSING 2u\n#define FW_UI_EVENT_PRESS_LOST 3u\n#define FW_UI_EVENT_LONG_PRESSED 5u\n#define FW_UI_EVENT_RELEASED 8u\n#define FW_UI_EVENT_SCROLL 12u\n#define FW_UI_STYLE_RADIUS 12u\n#define FW_UI_STYLE_CLIP_CORNER 45u\n#define FW_UI_IMAGE_CREATE_THEME_ARG 1\n");
                 out.push_str("/* Exact-target opacity: EVID-UI-1043-OPACITY-001; static only. */\n#define FW_UI_STYLE_OPA 95u\n");
+                // Exact QuickApp dispatch layout: EVID-PORT-1043-FERRY-001.
+                self.emit(&mut out, FW_QUICKAPP, false);
+                out.push_str("#define FW_QUICKAPP_VTABLE_PREFIX_WORDS 2u\n#define FW_QUICKAPP_FRAMEWORK_WORDS 15u\n#define FW_QUICKAPP_FACTORY_SLOT 8u\n#define FW_QUICKAPP_APPLICATION_WORDS 52u\n#define FW_QUICKAPP_INIT_SLOT 2u\n#define FW_QUICKAPP_APPLICATION_RUNTIME 100u\n#define FW_QUICKAPP_RUNTIME_MANAGER 164u\n#define FW_QUICKAPP_MANAGER_REGISTRY 4u\n");
             } else if self.pack.target_id == "xiaomi-band-10-pro-3.101.036" {
                 out.push_str("/* Exact-target opacity and SRAM dispatcher: EVID-UI-1036-OPACITY-001; static only. */\n#define FW_UI_STYLE_OPA 95u\n");
             }

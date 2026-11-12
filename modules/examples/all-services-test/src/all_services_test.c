@@ -1000,6 +1000,21 @@ static void run_ui_page_tests(const struct canopus_context_v1 *ctx)
     log_test("UI pages: entry registered, validated and removed", ok);
 }
 
+static void run_quickapp_tests(const struct canopus_context_v1 *ctx)
+{
+    static const uint32_t description[7];
+    int ok = 1;
+    if (!canopus_services_has(ctx, CANOPUS_SVC_QUICKAPP, 1) || ctx->quickapp == 0) {
+        log_skip("QuickApp Features: no QuickApp dispatch on this target");
+        return;
+    }
+    /* A published Feature lasts until reboot, so only the refusals run here:
+     * this module is removable, which no Feature may outlive. */
+    if (ctx->quickapp->register_feature(ctx, 0) != CANOPUS_SVC_ERR_ARGUMENT) ok = 0;
+    if (ctx->quickapp->register_feature(ctx, description) != CANOPUS_SVC_ERR_ACCESS) ok = 0;
+    log_test("QuickApp Features: removable module refused", ok);
+}
+
 /* ========================================================================= */
 /* MODULE LIFECYCLE & DISPATCH                                               */
 /* ========================================================================= */
@@ -1034,6 +1049,7 @@ static int32_t test_activate(const struct canopus_context_v1 *ctx)
     run_connect_tests(ctx);
     run_ui_builder_tests(ctx);
     run_ui_page_tests(ctx);
+    run_quickapp_tests(ctx);
 
     report_append("========================================\n");
     report_append("SUMMARY: ");

@@ -1347,6 +1347,12 @@ static int sup_native_app_id_in_use(void *cookie, uint16_t app_id)
 #define SUP_NATIVE_APP_ID_IN_USE sup_native_app_id_in_use
 #endif
 
+#ifdef FW_QUICKAPP_FRAMEWORK
+#define SUP_QUICKAPP_ROUTE canopus_sup_quickapp_route
+#else
+#define SUP_QUICKAPP_ROUTE 0
+#endif
+
 static int sup_validate_receipt(void *cookie, const void *receipt)
 {
     (void)cookie;
@@ -2200,4 +2206,5 @@ const struct canopus_sup_platform_v1 canopus_sup_platform = {
     CANOPUS_SUP_DEVICE_MODEL,
     CANOPUS_SUP_DISPLAY_WIDTH,
     CANOPUS_SUP_DISPLAY_HEIGHT,
+    SUP_QUICKAPP_ROUTE,
 };

@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "evidence_id": "EVID-QUICKAPP-1043-001",
+  "target_id": "xiaomi-band-10-pro-3.101.043",
+  "question": "Which exact 3.101.043 ferry dispatch may the Supervisor take over so that every QuickApp started afterwards registers the native Feature descriptions modules published through ctx->quickapp (ADR-CAN-014)?",
+  "candidate_symbols": [
+    "xiaomi-band-10-pro-3.101.043.private_abi.ferry_framework_instance",
+    "xiaomi-band-10-pro-3.101.043.private_abi.ferry_framework_vtable",
+    "xiaomi-band-10-pro-3.101.043.private_abi.ferry_application_vtable",
+    "xiaomi-band-10-pro-3.101.043.private_abi.feature_register_feature"
+  ],
+  "prototype_hypothesis": "*(void **)0x2013CFE0 is the ferry Framework singleton (NULL until constructed) whose primary vptr is 0x2CDA8CD8; slot 8 is the factory void *(framework, uri) returning an Application with primary vptr 0x2CDA7C80; Application slot 2 is init int(app, options, loop) returning 1; after it, *(app+100) is the runtime, *(runtime+164) the Feature manager and *(manager+4) the raw registry; feature_register_feature int(registry, description) returns 1 on success.",
+  "callsite_evidence": [
+    "Exact AP SHA256 519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec, IDB vela_ap.bin.i64, re-read 2026-11-12 independently of EVID-PORT-1043-FERRY-001.",
+    "0x2CDA8CD0..0x2CDA8D13: prefix words 0,0 then 13 entries 0xC8E52C1 0xC8E52E1 0xC8E772D 0xC8E5319 0xC8E53A9 0xC8E7851 0xC8E5BC9 0xC8E77B9 0xC8E54AD 0xC8E5729 0xC8E546D 0xC8E5FE9 0xC8E64F9, followed by the next table's 0,0 prefix: 15 words with the factory 0xC8E54AD in slot 8.",
+    "0x2CDA7C78..0x2CDA7D4F: prefix words 0,0 then 50 entries starting 0xC8D94E9 0xC8D9D39 0xC8DB1F9, followed by the secondary table prefix 0xFFFFFFFC,0: 52 words with init 0xC8DB1F9 in slot 2.",
+    "Init 0xC8DB1F8 logs '[AIOTJS] ... Initializing App', stores options at app+96, stores sub_C9116F8(options, loop, app) at app+100 and returns 1. sub_C9116F8 tail-calls the runtime constructor at 0xC911164, whose STR.W r0,[r4,#0xA4] at 0xC91130E stores the manager returned by the BL at 0xC911306.",
+    "Manager constructor 0xC8656D8 writes its second argument, the raw registry, to manager+4.",
+    "0xC862898 logs as FeatureRegisterFeature: NULL description or NULL registry log and return 0, otherwise it returns sub_C86E7C4().",
+    "0x2013CFE0 is zero in the image (.bss); the singleton is filled at run time."
+  ],
+  "control_flow_evidence": [
+    "EVID-PORT-1043-FERRY-001: the framework run path loads the factory through the object's RAM vptr (+32 = slot 8) and calls init through the Application's vptr, so copied tables take effect without patching firmware code.",
+    "The Supervisor copies both tables including their prefix words, replaces only factory slot 8 and init slot 2, and switches the Framework's primary vptr with one word store after a dmb; secondary Application vptrs stay stock.",
+    "The replacement init calls the stock init first and registers descriptions before Application::run evaluates any source, so no require can precede registration.",
+    "Mirage .043 (emulator only, 2026-11-12): the installer carried the working-tree Supervisor; a resident C module activated by the phone bridge got has=1 and register_feature 0 for canopus.probe.a and canopus.probe.b and 0 again for a repeated a. A QuickApp listing both in its manifest saw typeof $app_require$('@app-module/canopus.probe.a') and .b as 'object' and .c (never published) as 'undefined'; each Feature's create and required ran once and destroy once when the app left.",
+    "Mirage .043 after a cold boot and installer Run: the module activated with the Supervisor and registered both Features again (0, 0, 0); two separate QuickApp starts, each left with a left-edge system back, counted create=2 required=2 destroy=2 for both Features.",
+    "Mirage .043 coexistence (emulator only, 2026-11-12): feature_probe activated first and routed the dispatch; astrolink v44 built with src/qjs/supervisor.rs then activated through the phone bridge (state 13, activation error 0) and published canopus.astrolink through the same service. One QuickApp requiring all three saw canopus.probe.a, canopus.probe.b and canopus.astrolink as 'object', and astrolink's native getCapabilities() returned supported true, maxLinks 16, on two separate starts; the probe counted create=2 required=2 destroy=2 for both of its Features."
+  ],
+  "ownership_analysis": "Descriptions, their lifecycle tables and callbacks stay in resident module memory: running QuickApps keep the pointer, so the service refuses removable modules. The Supervisor's two table copies are resident .bss and never freed. Entries are written whole on the module owner task and read on QuickApp JS tasks.",
+  "unsafe_assumptions": [
+    "Emulator evidence only: no physical device run.",
+    "Records stay restricted / STATIC_RECOVERED / PENDING; no promotion, verifier range or allowlist change.",
+    "A module that installs its own hook on the same vptr first makes the service answer BUSY; the reverse makes that module's install answer BUSY.",
+    "The feature_register_feature result is not reported to the module."
+  ],
+  "recommended_probe": "Physical .043: activate a resident module that registers two Features, launch a QuickApp requiring both, leave and relaunch it, and confirm create/required/destroy counts per launch.",
+  "reviewers": [],
+  "verdict": "HOST_TESTED",
+  "created": "2026-11-12T00:00:00Z",
+  "artifacts": [
+    {
+      "uri": "fw://xiaomi-band-10-pro-3.101.043/vela_ap.bin",
+      "sha256": "519307675665e4866d722a8119a98589c397b614ac3294cb87bfc86de45756ec",
+      "role": "exact-local-AP-hashed-not-distributed"
+    },
+    {
+      "uri": "adr/ADR-CAN-014-quickapp-features.md",
+      "role": "service-contract"
+    },
+    {
+      "uri": "file://canopus-keyboard/probe/run_feature.py",
+      "role": "mirage-driver-probe-module-and-quickapp"
+    }
+  ]
+}

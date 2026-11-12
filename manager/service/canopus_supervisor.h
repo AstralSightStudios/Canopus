@@ -489,6 +489,11 @@ void canopus_supervisor_connect_release(uint32_t slot);
  * has no entry or no loaded module. */
 int canopus_supervisor_ui_entry(struct canopus_supervisor_v1 *sup, uint32_t slot,
                                 struct canopus_ui_entry_v1 *out);
+/* The QuickApp Feature descriptions modules published (ADR-CAN-014):
+ * CANOPUS_QUICKAPP_FEATURES entries, NULL where free. The platform's routed
+ * dispatch reads them on each starting QuickApp's JS task while the module
+ * owner writes whole entries, so a reader sees a description or NULL. */
+const void *const volatile *canopus_supervisor_quickapp_features(void);
 /* Owner-task services: posts run only on the next foreground UI heartbeat,
  * after synchronous bus callbacks unwind. Release cancels pending work. */
 int32_t canopus_supervisor_ui_post(const struct canopus_context_v1 *ctx,

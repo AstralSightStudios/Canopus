@@ -58,6 +58,15 @@ Toast API 已按用户要求移除，原节点编号 11 与能力位 16 停用�
   - 仍缺：固化（这四台不做；Band 11 的写入器换过之后待真机复测，见下方固化启动一节）、任意时长振动（固件只有预设）、p65 的 Mirage 运行、任何真机证据。
   - 能力状态不变，所有新增记录 restricted / PENDING / not_probed。
 
+## 快应用原生 Feature 服务（2026-11-12，host / 模拟器证据）
+
+- `ctx->quickapp->register_feature`（服务组 15，ADR-CAN-014）：Supervisor 独占 ferry 快应用分发点，每个新快应用在 init 后登记所有已发布的 Feature 描述，
+  多个模块不再各自 hook 同一个 vptr。只接受常驻模块，最多 8 个，无注销。
+- 只有 `.043`：`FW_QUICKAPP_*` 取自四条 `restricted` / `PENDING` 记录（与字体生命周期绑定方式相同），证据 `EVID-QUICKAPP-1043-001`；记录未提升。
+- Mirage `.043` 通过：两个 Feature 在快应用里均可 require，冷启动后随 Supervisor 激活仍能登记，两次独立启动各自 create/require/destroy。无真机。
+- astrolink `.043` 已迁到该服务：Mirage 上与 feature_probe 同时激活，同一快应用里 `canopus.astrolink` 与两个探针 Feature 都能 require，
+  `getCapabilities()` 返回 `supported true`。`.036` 没有该服务，astrolink 仍自己 hook。
+
 ## P65 Resource Hook 与 Corona Manager 接线（2026-10-28，仅静态／指令与 host 证据）
 
 - 使用用户提供的 P65 完整固件与 `best1503_vela.py`，独立恢复 POSIX open `0x0c7357d5`、cache drop `0x0c73baa9`、cache release `0x0c73b99d`；三者保持 `restricted / PENDING / not_probed`，记录为 `STATIC_RECOVERED`。原 cache 候选分别为 socket 与对象属性分配函数，已更正。见 `EVID-RH-P65-CORE-001`。

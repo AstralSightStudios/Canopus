@@ -125,6 +125,7 @@ for s in \
     manager/service/canopus_supervisor_l2.c \
     manager/service/canopus_supervisor_module.c \
     manager/service/canopus_supervisor_platform.c \
+    manager/service/canopus_supervisor_quickapp.c \
     manager/protocol/canopus_protocol.c \
     manager/client/canopus_client.c \
     manager/package/canopus_installer_bundle.c \
@@ -173,6 +174,7 @@ ld.lld -r -T "$ROOT/scripts/canopus_supervisor_sections.ld" \
     "$OUT/canopus_supervisor_l2.o" \
     "$OUT/canopus_supervisor_module.o" \
     "$OUT/canopus_supervisor_platform.o" \
+    "$OUT/canopus_supervisor_quickapp.o" \
     "$OUT/canopus_protocol.o" \
     "$OUT/canopus_client.o" \
     "$OUT/canopus_installer_bundle.o" \

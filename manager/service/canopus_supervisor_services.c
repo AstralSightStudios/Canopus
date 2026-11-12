@@ -58,6 +58,12 @@ static struct {
     uint8_t used;
 } s_launcher[CANOPUS_SUP_MODULE_SLOTS];
 static uint8_t s_launcher_pending; /* entries are queued in the platform */
+static struct canopus_quickapp_obj s_quickapp_obj;
+/* Every starting QuickApp registers each published Feature description on its
+ * JS task. Running QuickApps keep the pointers, so release only stops later
+ * QuickApps from receiving a module's descriptions. */
+static const void *volatile s_features[CANOPUS_QUICKAPP_FEATURES];
+static uint8_t s_feature_slot[CANOPUS_QUICKAPP_FEATURES];
 static struct canopus_haptics_obj s_haptics_obj;
 static struct canopus_display_obj s_display_obj;
 static struct canopus_bus_obj s_bus_obj;
@@ -2302,6 +2308,37 @@ static void svc_launcher_poll(void)
     if (rc < 0) s_sup->error_code = (uint32_t)CANOPUS_SUP_ERR_LAUNCHER;
 }
 
+/* ---- QuickApp Features (ADR-CAN-014) --------------------------------- */
+
+static int32_t svc_quickapp_register_feature(const struct canopus_context_v1 *ctx,
+                                             const void *description)
+{
+    const struct canopus_sup_platform_v1 *pf;
+    uint32_t i, free_index = CANOPUS_QUICKAPP_FEATURES;
+    int32_t rc;
+    if (!svc_slot_valid(ctx)) return CANOPUS_SVC_ERR_STATE;
+    if (description == 0) return CANOPUS_SVC_ERR_ARGUMENT;
+    if (s_sup->modules[ctx->slot].lifecycle_class == CANOPUS_LIFECYCLE_REMOVABLE)
+        return CANOPUS_SVC_ERR_ACCESS;
+    for (i = 0u; i < CANOPUS_QUICKAPP_FEATURES; i++) {
+        if (s_features[i] == description) return CANOPUS_SVC_OK;
+        if (s_features[i] == 0 && free_index == CANOPUS_QUICKAPP_FEATURES) free_index = i;
+    }
+    if (free_index == CANOPUS_QUICKAPP_FEATURES) return CANOPUS_SVC_ERR_NOMEM;
+    pf = s_sup->platform;
+    if (pf == 0 || pf->quickapp_route == 0) return CANOPUS_SVC_ERR_UNSUPPORTED;
+    rc = svc_errno(pf->quickapp_route(s_sup->platform_cookie));
+    if (rc != CANOPUS_SVC_OK) return rc;
+    s_feature_slot[free_index] = (uint8_t)ctx->slot;
+    s_features[free_index] = description;
+    return CANOPUS_SVC_OK;
+}
+
+const void *const volatile *canopus_supervisor_quickapp_features(void)
+{
+    return s_features;
+}
+
 /* ---- table / contexts ------------------------------------------------ */
 
 void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
@@ -2332,6 +2369,8 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     canopus_memset(s_ui_entries, 0, sizeof(s_ui_entries));
     canopus_memset(s_launcher, 0, sizeof(s_launcher));
     s_launcher_pending = 0u;
+    for (i = 0u; i < CANOPUS_QUICKAPP_FEATURES; i++) s_features[i] = 0;
+    canopus_memset(s_feature_slot, 0, sizeof(s_feature_slot));
     s_connect_obj = canopus_supervisor_connect_bind(sup);
 
     canopus_hook_engine_init();
@@ -2364,6 +2403,8 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_services.group_version[CANOPUS_SVC_CONNECT] = s_connect_obj != 0 ? 1u : 0u;
     s_services.group_version[CANOPUS_SVC_LAUNCHER] =
         (sup->platform != 0 && sup->platform->app_publish != 0) ? 1u : 0u;
+    s_services.group_version[CANOPUS_SVC_QUICKAPP] =
+        (sup->platform != 0 && sup->platform->quickapp_route != 0) ? 1u : 0u;
 
     s_services.module_register = svc_module_register;
     s_services.log_write = svc_log_write;
@@ -2521,6 +2562,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
     s_ui_obj.control = canopus_ui_control;
     s_ui_obj.post = canopus_supervisor_ui_post;
     s_launcher_obj.register_app = svc_launcher_register_app;
+    s_quickapp_obj.register_feature = svc_quickapp_register_feature;
 
     for (i = 0u; i < CANOPUS_SUP_MODULE_SLOTS; i++) {
         s_contexts[i].struct_size = sizeof(struct canopus_context_v1);
@@ -2545,6 +2587,7 @@ void canopus_supervisor_services_bind(struct canopus_supervisor_v1 *sup)
         s_contexts[i].ui = &s_ui_obj;
         s_contexts[i].connect = s_connect_obj;
         s_contexts[i].launcher = (s_services.group_version[CANOPUS_SVC_LAUNCHER] != 0u) ? &s_launcher_obj : 0;
+        s_contexts[i].quickapp = (s_services.group_version[CANOPUS_SVC_QUICKAPP] != 0u) ? &s_quickapp_obj : 0;
     }
 
 }
@@ -2611,6 +2654,10 @@ void canopus_supervisor_release_services(struct canopus_supervisor_v1 *sup,
         if (sup->platform != 0 && sup->platform->ui_page_close != 0) {
             (void)sup->platform->ui_page_close(sup->platform_cookie, slot);
         }
+    }
+
+    for (i = 0u; i < CANOPUS_QUICKAPP_FEATURES; i++) {
+        if (s_features[i] != 0 && s_feature_slot[i] == slot) s_features[i] = 0;
     }
 
     /* Hardware the module still holds: vibration, wake locks, brightness,

@@ -558,6 +558,25 @@ struct canopus_launcher_obj {
 - Rust：`canopus_runtime::launcher::register_app`、`canopus_abi::{CanopusLauncherObj, AppEntryV1}`。
   包装函数是 `unsafe`，调用者负责有效字符串、串行 owner，以及原生页面的 exact-target 布局、可写性和重启前的描述符/回调生命周期。
 
+### 2.14 `ctx->quickapp` — 给快应用的原生 Feature
+
+模块把精确目标的固件 Feature 描述交给 Supervisor，之后启动的每个快应用都能用 `$app_require$("@app-module/<name>")` 拿到它（ADR-CAN-014）。
+`CANOPUS_SVC_QUICKAPP` 服务版本为 1：
+
+```c
+#define CANOPUS_QUICKAPP_FEATURES 8u
+struct canopus_quickapp_obj {
+    int32_t (*register_feature)(const struct canopus_context_v1 *ctx, const void *description);
+};
+```
+- 调用前检查 `canopus_services_has(ctx, CANOPUS_SVC_QUICKAPP, 1)` 和 `ctx->quickapp`；目前只有 `.043` 提供。从串行 module/UI owner 调用。
+- 描述的布局、生命周期与成员回调由模块负责，固件在每个快应用自己的 JS 任务上调用这些回调。
+- 运行中的快应用一直持有描述指针，所以描述、它引用的数据和回调必须有效到重启：只有常驻模块能登记，removable 模块返回 `ERR_ACCESS`。
+- 返回 OK 后启动的快应用才有这个 Feature；已在运行的快应用没有。同一描述再次登记返回 OK；全系统最多 8 个，满了返回 `ERR_NOMEM`；没有注销。
+  模块被释放后，之后启动的快应用不再拿到它的描述。
+- 第一次登记时 Supervisor 才接管固件的快应用分发点；固件的快应用框架还不存在，或分发点已被别的组件（仍自行 hook 的模块）换掉时，返回 `ERR_BUSY`。
+- Rust：`canopus_runtime::quickapp::register_feature`、`canopus_abi::CanopusQuickappObj`。
+
 ---
 
 ## 3. 编程范例

@@ -193,8 +193,17 @@ struct canopus_sup_platform_v1 {
     const char *device_model;
     uint16_t display_width;
     uint16_t display_height;
+    /* QuickApp Features (ADR-CAN-014): route every QuickApp started from now
+     * on through the Supervisor, which registers each description of
+     * canopus_supervisor_quickapp_features() into it on its JS task. 0 once
+     * routed (also when it already was), BUSY when the firmware's framework is
+     * missing or its dispatch is not the stock one. Optional. */
+    int (*quickapp_route)(void *cookie);
 };
 
+/* The exact-target quickapp_route, where the target pack has the QuickApp
+ * dispatch (canopus_supervisor_quickapp.c). */
+int canopus_sup_quickapp_route(void *cookie);
 int canopus_sup_l2_start(void);
 void canopus_sup_l2_poll(void);
 /* Registers `poll` on the L2 owner timer, bootstrapping that timer if needed. */
