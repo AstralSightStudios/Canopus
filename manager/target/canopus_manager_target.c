@@ -1674,7 +1674,19 @@ static struct firmware_app_descriptor manager_app = {
     .launcher_metadata_callback = manager_display_name,
 };
 
-#ifdef CANOPUS_MGR_BAND11
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+/* The .043 toast path dereferences nested phone notification metadata.
+ * Post local Canopus notifications to the list without starting a reminder.
+ * A diagnostic build can force the reminder back on with
+ * -DCANOPUS_NOTIFICATION_START_REMINDER=1u to reproduce the fault. */
+#ifndef CANOPUS_NOTIFICATION_START_REMINDER
+#define CANOPUS_NOTIFICATION_START_REMINDER 0u
+#endif
+#elif !defined(CANOPUS_NOTIFICATION_START_REMINDER)
+#define CANOPUS_NOTIFICATION_START_REMINDER 1u
+#endif
+
+#if defined(CANOPUS_MGR_BAND11) && !defined(CANOPUS_MGR_V8_RECORDS)
 /* The reminder UI reads user_data->focus_version even for ordinary messages.
  * Stock notify_set_user_data allocates this 16-byte object (not just a callback
  * cookie). The list/reminder clones borrow it. Keep a separate writable,
@@ -1694,7 +1706,13 @@ _Static_assert(offsetof(struct band11_notification_context, focus_version) == 13
                "notification focus version offset");
 static struct band11_notification_context module_notification_context;
 
-#endif /* CANOPUS_MGR_BAND11 */
+/* Each posted notice borrows its own zeroed context (see above); a small ring
+ * keeps the most recent ones alive for the reminder UI. */
+#define BAND11_NOTIFY_RING 4u
+static struct band11_notification_context notify_contexts[BAND11_NOTIFY_RING];
+static uint32_t notify_counter;
+
+#endif /* CANOPUS_MGR_BAND11 without V8 records */
 
 static const struct firmware_notification_message module_notification = {
     .message_id = UINT64_C(0x43414E4F50555302),
@@ -1711,10 +1729,10 @@ static const struct firmware_notification_message module_notification = {
     .small_icon_path = (void *)launcher_icon,
     .large_icon_path = (void *)launcher_icon,
 #endif /* CANOPUS_MGR_BAND11 */
-    .start_reminder = 1u,
-#ifdef CANOPUS_MGR_BAND11
+    .start_reminder = CANOPUS_NOTIFICATION_START_REMINDER,
+#if defined(CANOPUS_MGR_BAND11) && !defined(CANOPUS_MGR_V8_RECORDS)
     .callback_data = &module_notification_context,
-#endif /* CANOPUS_MGR_BAND11 */
+#endif
 };
 
 #if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
@@ -1749,13 +1767,6 @@ int canopus_manager_native_notify_module_installed(void)
 {
     return target_notify(&module_notification);
 }
-
-/* Each posted notice borrows its own zeroed context (see above); a small ring
- * keeps the most recent ones alive for the reminder UI. */
-#define BAND11_NOTIFY_RING 4u
-static struct band11_notification_context notify_contexts[BAND11_NOTIFY_RING];
-static uint32_t notify_counter;
-
 #endif /* CANOPUS_MGR_BAND11 */
 int canopus_manager_native_notify(const char *source, const char *title, const char *body,
                                   const char *icon)
@@ -1768,9 +1779,6 @@ int canopus_manager_native_notify(const char *source, const char *title, const c
     static uint32_t counter;
 #endif /* CANOPUS_MGR_BAND11 */
     struct firmware_notification_message message;
-#if defined(CANOPUS_MGR_BAND11) && !defined(CANOPUS_MGR_V8_RECORDS)
-    uint32_t slot = notify_counter % BAND11_NOTIFY_RING;
-#endif /* CANOPUS_MGR_BAND11 */
 
 #if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
     if (identity_guard() != 0) {
@@ -1785,21 +1793,18 @@ int canopus_manager_native_notify(const char *source, const char *title, const c
     message.small_icon_path = (void *)(icon != 0 ? icon : launcher_icon);
     message.large_icon_path = (void *)(icon != 0 ? icon : launcher_icon);
 #endif /* CANOPUS_MGR_BAND11 */
-    message.start_reminder = 1u;
-#if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
-    message.message_id = UINT64_C(0x43414E4F50555310) + (counter++ & 0xffu);
-#else /* CANOPUS_MGR_BAND11 without V8 records */
-
-    canopus_memset(&notify_contexts[slot], 0, sizeof(notify_contexts[slot]));
-    message.message_id = UINT64_C(0x43414E4F50555310) + (notify_counter++ & 0xffu);
-#endif /* CANOPUS_MGR_BAND11 */
+    message.start_reminder = CANOPUS_NOTIFICATION_START_REMINDER;
     message.title = (void *)title;
     message.source = (void *)source;
     message.body = (void *)body;
 #if !defined(CANOPUS_MGR_BAND11) || defined(CANOPUS_MGR_V8_RECORDS)
+    message.message_id = UINT64_C(0x43414E4F50555310) + (counter++ & 0xffu);
     return notification_insert(&message) < 0 ? -1 : 0;
 #else /* CANOPUS_MGR_BAND11 without V8 records */
+    uint32_t slot = notify_counter % BAND11_NOTIFY_RING;
+    canopus_memset(&notify_contexts[slot], 0, sizeof(notify_contexts[slot]));
     message.callback_data = &notify_contexts[slot];
+    message.message_id = UINT64_C(0x43414E4F50555310) + (notify_counter++ & 0xffu);
     return target_notify(&message);
 #endif /* CANOPUS_MGR_BAND11 */
 }

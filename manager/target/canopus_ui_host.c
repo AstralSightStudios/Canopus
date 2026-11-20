@@ -203,7 +203,14 @@ static void *host_content_create(void *root)
         content, HOST_CONTENT_PAD_BOTTOM, 0u);
 #endif
 #else /* CANOPUS_MGR_BAND11 */
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+    /* p65 lv_obj_create(parent, flags) reads *flags when the second argument
+     * is non-NULL. A one-argument call leaves R1 live. */
+    content = ((void *(*)(void *, const void *))(uintptr_t)FW_LV_OBJECT_CREATE)(
+        root, NULL);
+#else
     content = ((void *(*)(void *))(uintptr_t)FW_LV_OBJECT_CREATE)(root);
+#endif
     if (content == NULL) {
         return NULL;
     }
@@ -266,7 +273,14 @@ static void *host_image_create(void *parent)
     return ((void *(*)(void *))(uintptr_t)FW_LVX_IMAGE_CREATE)(parent);
 #endif
 #else /* CANOPUS_MGR_BAND11 */
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+    /* p65 image create forwards its second argument to the same byte-pointer
+     * init as lv_obj_create. NULL keeps the firmware default. */
+    return ((void *(*)(void *, const void *))(uintptr_t)FW_LV_IMAGE_CREATE)(
+        parent, NULL);
+#else
     return ((void *(*)(void *))(uintptr_t)FW_LV_IMAGE_CREATE)(parent);
+#endif
 #endif /* CANOPUS_MGR_BAND11 */
 }
 
@@ -961,7 +975,15 @@ static void *host_container_create(void *parent)
 #ifndef CANOPUS_MGR_BAND11
     void *object = ((void *(*)(void *))(uintptr_t)FW_LVX_CONTENT_CREATE)(parent);
 #else
+#if defined(CANOPUS_MGR_REDMI_WATCH)
+    /* Same two-argument create as host_content_create. host_apply leaves
+     * R1 = node_type - 15, so a SECTION (type 2) calls this with R1 = -13
+     * and the device BusFaults in LDRB [R5] (BFAR 0xfffffff3). */
+    void *object = ((void *(*)(void *, const void *))(uintptr_t)FW_LV_OBJECT_CREATE)(
+        parent, NULL);
+#else
     void *object = ((void *(*)(void *))(uintptr_t)FW_LV_OBJECT_CREATE)(parent);
+#endif
     if (object != NULL) ((void (*)(void *))(uintptr_t)FW_LV_OBJECT_REMOVE_STYLES)(object);
 #endif
     if (object != NULL) host_object_flag(object, 16u, 0);
