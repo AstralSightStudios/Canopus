@@ -39,6 +39,13 @@ static void host_input_get_coords(void *object, FW_UI_COORD_TYPE *out)
 #define HOST_INPUT_CAPS (HOST_INPUT_CAPABILITIES | HOST_INPUT_SCROLL_CAPABILITIES | \
                          HOST_INPUT_NATIVE_CAPABILITIES)
 
+/* LVGL sends GESTURE to the first object up the press path without this bit;
+ * the firmware's screen-layer handler turns a right gesture into system back
+ * and calls lv_indev_wait_release whatever the page answers (.043 0x0ca76af2,
+ * .155 0x0c6ad21e). 0x4000 is EVENT_BUBBLE. Every non-screen object is created
+ * with it set and the host never clears it, so restore sets it again. */
+#define HOST_INPUT_GESTURE_BUBBLE UINT32_C(0x8000)
+
 struct host_input_state {
     struct canopus_ui_host_view *view;
     struct canopus_ui_host_binding press_binding, capture_binding;
@@ -46,6 +53,7 @@ struct host_input_state {
     uint32_t time_ms;
     uint8_t pressed, captured;
     uint32_t locked_slots;
+    void *gesture_object;
 };
 static struct host_input_state s_input[CANOPUS_UI_HOST_MAX_VIEWS];
 
@@ -129,6 +137,10 @@ static void host_input_restore(struct host_input_state *state)
             host_object_flag(state->view->nodes[i].object, UINT32_C(16), 1);
         }
     }
+    if (state->gesture_object != NULL) {
+        host_object_flag(state->gesture_object, HOST_INPUT_GESTURE_BUBBLE, 1);
+        state->gesture_object = NULL;
+    }
     state->captured = 0u;
 }
 
@@ -138,6 +150,12 @@ static void host_input_lock(struct canopus_ui_host_view *view,
     struct canopus_ui_host_node *node = host_input_node(view, key);
     uint32_t depth;
     state->captured = 1u;
+    /* Native gestures (the page's right-swipe back) stop at the captured
+     * object instead of bubbling to the page and taking the press away. */
+    if (node != NULL && node->object != NULL) {
+        host_object_flag(node->object, HOST_INPUT_GESTURE_BUBBLE, 0);
+        state->gesture_object = node->object;
+    }
     for (depth = 0u; node != NULL && depth < CANOPUS_UI_MAX_NODES; depth++) {
         void *object = host_input_object(view, node->key);
         uint8_t locked = node->type == CANOPUS_UI_NODE_NAVIGATION_PAGE
