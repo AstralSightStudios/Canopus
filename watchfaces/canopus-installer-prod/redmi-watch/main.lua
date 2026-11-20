@@ -1,4 +1,4 @@
--- Production Canopus installer for the REDMI Watch 6 (212x520, LuaLVGL v9).
+-- Production Canopus installer for the REDMI Watch 6 (432x514, LuaLVGL v9).
 --
 -- Run performs, in order:
 --   NSH mw/exec stage-1 -> stage-2 -> Supervisor constructor
