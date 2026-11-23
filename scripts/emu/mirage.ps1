@@ -90,14 +90,6 @@ if ($Action -in @('build', 'gui-build', 'companion-build', 'facetory-build')) {
         exit $LASTEXITCODE
     }
     if ($Action -eq 'gui-build') {
-        $taskGuiPatch = Join-Path $PSScriptRoot 'mirage-windows-gui.patch'
-        & git -c core.autocrlf=true -C $taskMirage apply --reverse --check $taskGuiPatch 2>$null
-        if ($LASTEXITCODE -ne 0) {
-            & git -c core.autocrlf=true -C $taskMirage apply --check $taskGuiPatch
-            if ($LASTEXITCODE -ne 0) { throw 'Mirage source does not match the local GUI patch' }
-            & git -c core.autocrlf=true -C $taskMirage apply $taskGuiPatch
-            if ($LASTEXITCODE -ne 0) { throw 'Cannot apply Mirage Windows GUI patch' }
-        }
         if ($RemainingArgs -contains '--preview') {
             $env:MIRAGE_NO_COMPANION = '1'
             $RemainingArgs = @($RemainingArgs | Where-Object { $_ -ne '--preview' })
@@ -109,34 +101,7 @@ if ($Action -in @('build', 'gui-build', 'companion-build', 'facetory-build')) {
         [Environment]::SetEnvironmentVariable("GIT_CONFIG_VALUE_$taskGitConfigCount", 'openssl', 'Process')
         $env:GIT_CONFIG_COUNT = [string]($taskGitConfigCount + 1)
         & (Join-Path $PSScriptRoot 'prepare-mirage-gui.ps1') -MirageRoot $taskMirage
-        $taskWinUI = Join-Path $taskMirage '.build\checkouts\swift-winui'
-        & swift package --package-path $taskMirage resolve
-        if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve Mirage GUI dependencies' }
-        $taskRuntimePatch = Join-Path $PSScriptRoot 'swift-winui-runtime.patch'
-        & git -c core.autocrlf=false -C $taskWinUI apply --reverse --check $taskRuntimePatch 2>$null
-        if ($LASTEXITCODE -ne 0) {
-            & git -c core.autocrlf=false -C $taskWinUI apply --check $taskRuntimePatch
-            if ($LASTEXITCODE -ne 0) { throw 'Swift WinUI source does not match the runtime compatibility patch' }
-            foreach ($taskFile in @('Package.swift', 'Sources\WinAppSDK\Initialize.swift', 'Sources\WinUI\Application\SwiftApplication.swift')) {
-                $taskFilePath = Join-Path $taskWinUI $taskFile
-                (Get-Item -LiteralPath $taskFilePath).IsReadOnly = $false
-            }
-            & git -c core.autocrlf=false -C $taskWinUI apply $taskRuntimePatch
-            if ($LASTEXITCODE -ne 0) { throw 'Cannot apply Swift WinUI runtime compatibility patch' }
-        }
-        $taskCrossUI = Join-Path $taskMirage '.build\checkouts\swift-cross-ui'
-        $taskCrossUIPatch = Join-Path $PSScriptRoot 'swift-cross-ui-windows.patch'
-        & git -c core.autocrlf=true -C $taskCrossUI apply --reverse --check $taskCrossUIPatch 2>$null
-        if ($LASTEXITCODE -ne 0) {
-            & git -c core.autocrlf=true -C $taskCrossUI apply --check $taskCrossUIPatch
-            if ($LASTEXITCODE -ne 0) { throw 'SwiftCrossUI source does not match the Windows patch' }
-            foreach ($taskFile in @('WinUIBackend.swift', 'WinUIBackend+Alerts.swift', 'WinUIBackend+Sheets.swift')) {
-                (Get-Item -LiteralPath (Join-Path $taskCrossUI "Sources\WinUIBackend\$taskFile")).IsReadOnly = $false
-            }
-            & git -c core.autocrlf=true -C $taskCrossUI apply $taskCrossUIPatch
-            if ($LASTEXITCODE -ne 0) { throw 'Cannot apply SwiftCrossUI Windows patch' }
-        }
-        & swift build --package-path $taskMirage --product Mirage --jobs 4 @RemainingArgs
+        & (Join-Path $taskMirage 'Scripts\build-windows.ps1') --jobs 4 @RemainingArgs
         $taskBuildResult = $LASTEXITCODE
         if ($taskBuildResult -eq 0) {
             # SwiftPM on Windows can persist machine-local mirror paths in its lock.

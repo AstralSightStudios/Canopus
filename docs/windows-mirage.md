@@ -79,7 +79,7 @@ Supervisor 构建会同步 staging，切换测试配置后应恢复生产配置�
 
 ## 桌面分发
 
-Windows 上游 CI 用 `swift build -c release --product Mirage` 构建，将 `Mirage.exe`、
+Windows 上游 CI 用 `Scripts/build-windows.ps1 -c release` 构建，将 `Mirage.exe`、
 `.resources`、Swift DLL、`qemu/` 与 Windows App Runtime 1.5 安装器一起分发。
 EXE 需要同目录依赖，不能单独复制；仓库没有 MSI/MSIX 或其他安装器工程。
 可在这个目录包外再制作安装器。
@@ -129,18 +129,12 @@ open .build/xcode/Build/Products/Release/Mirage.app
 
 ## 兼容补丁
 
-- `mirage-windows-gui.patch`：Windows 可选 companion、Swift 6.3 依赖约束与栈空间，macOS 文件 API
-  条件编译，以及 WinUI 画面对象生命周期与触摸事件排序；支持按官方 `<hash>_upd_<product>`
-  文件名匹配 AP 镜像中的产品。锁文件保留原有格式和上游 URL。
-- `swift-winui-runtime.patch`：WinUI 主线程 STA；仅在 bootstrapper 返回包族错误 `0x80670016` 时，
-  用 Windows 原生动态依赖 API 加载对应 runtime，保留原有安装与错误处理流程。
-- `swift-cross-ui-windows.patch`：每个窗口分别创建菜单控件，避免打开 Firmware 等窗口时，
-  同一个菜单项被挂到多个菜单栏而导致 WinUI 闪退；导入结果提示临时隐藏并恢复新建表单，
-  避免同一窗口同时打开两个 ContentDialog。
+- Mirage 的 `Scripts/build-windows.ps1` 管理其 `Scripts/Patches/` 中的 WinUI 补丁：主线程 STA、
+  包依赖 API 动态加载、窗口菜单与 ContentDialog 生命周期，以及文件夹选择。
 - `qemu-nor-shutdown.patch`：shutdown notifier 的 `opaque` 是 `ShutdownCause`，应从 notifier
   所属结构取得设备。旧实现会在退出时崩溃，影响 NOR 写回。
 
-`gui-build` 使用锁文件建立本地浅镜像，解析依赖后应用补丁；已应用时可重复构建。
+`gui-build` 使用锁文件建立本地浅镜像，再调用 Mirage 的 Windows 构建脚本；已应用的依赖补丁会跳过。
 Windows 的输出捕获使用临时文件，避免后台 QEMU 继承管道后使 Python 一直等待 EOF。
 双击唤醒使用同一 QMP 连接，截图检查实际 RGB 像素，避免把黑屏当成成功。
 
