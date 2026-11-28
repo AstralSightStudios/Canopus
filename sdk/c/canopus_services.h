@@ -24,6 +24,7 @@
 #ifndef CANOPUS_SERVICES_H
 #define CANOPUS_SERVICES_H
 
+#include <stddef.h>
 #include <stdint.h>
 #include "canopus_abi.h"
 
@@ -730,14 +731,82 @@ static inline const char *canopus_fs_data_path(const struct canopus_context_v1 *
     return 0;
 }
 
-/* Non-zero when the group is available at least at `min_version`. */
+static inline uint32_t canopus_context_size_for_group(uint32_t group)
+{
+    switch (group) {
+    case CANOPUS_SVC_MODULE:
+        return (uint32_t)(offsetof(struct canopus_context_v1, services) +
+                          sizeof(((const struct canopus_context_v1 *)0)->services));
+    case CANOPUS_SVC_LOG:
+        return (uint32_t)(offsetof(struct canopus_context_v1, log) +
+                          sizeof(((const struct canopus_context_v1 *)0)->log));
+    case CANOPUS_SVC_FS:
+        return (uint32_t)(offsetof(struct canopus_context_v1, fs) +
+                          sizeof(((const struct canopus_context_v1 *)0)->fs));
+    case CANOPUS_SVC_TIME:
+        return (uint32_t)(offsetof(struct canopus_context_v1, time) +
+                          sizeof(((const struct canopus_context_v1 *)0)->time));
+    case CANOPUS_SVC_MEM:
+        return (uint32_t)(offsetof(struct canopus_context_v1, mem) +
+                          sizeof(((const struct canopus_context_v1 *)0)->mem));
+    case CANOPUS_SVC_NOTIFY:
+        return (uint32_t)(offsetof(struct canopus_context_v1, notify) +
+                          sizeof(((const struct canopus_context_v1 *)0)->notify));
+    case CANOPUS_SVC_HOOK:
+        return (uint32_t)(offsetof(struct canopus_context_v1, hook) +
+                          sizeof(((const struct canopus_context_v1 *)0)->hook));
+    case CANOPUS_SVC_SYSTEM:
+        return (uint32_t)(offsetof(struct canopus_context_v1, system) +
+                          sizeof(((const struct canopus_context_v1 *)0)->system));
+    case CANOPUS_SVC_BLUETOOTH:
+        return (uint32_t)(offsetof(struct canopus_context_v1, bt) +
+                          sizeof(((const struct canopus_context_v1 *)0)->bt));
+    case CANOPUS_SVC_KV:
+        return (uint32_t)(offsetof(struct canopus_context_v1, kv) +
+                          sizeof(((const struct canopus_context_v1 *)0)->kv));
+    case CANOPUS_SVC_HAPTICS:
+        return (uint32_t)(offsetof(struct canopus_context_v1, haptics) +
+                          sizeof(((const struct canopus_context_v1 *)0)->haptics));
+    case CANOPUS_SVC_DISPLAY:
+        return (uint32_t)(offsetof(struct canopus_context_v1, display) +
+                          sizeof(((const struct canopus_context_v1 *)0)->display));
+    case CANOPUS_SVC_BUS:
+        return (uint32_t)(offsetof(struct canopus_context_v1, bus) +
+                          sizeof(((const struct canopus_context_v1 *)0)->bus));
+    case CANOPUS_SVC_CONNECT:
+        return (uint32_t)(offsetof(struct canopus_context_v1, connect) +
+                          sizeof(((const struct canopus_context_v1 *)0)->connect));
+    case CANOPUS_SVC_LAUNCHER:
+        return (uint32_t)(offsetof(struct canopus_context_v1, launcher) +
+                          sizeof(((const struct canopus_context_v1 *)0)->launcher));
+    case CANOPUS_SVC_QUICKAPP:
+        return (uint32_t)(offsetof(struct canopus_context_v1, quickapp) +
+                          sizeof(((const struct canopus_context_v1 *)0)->quickapp));
+    default:
+        return 0u;
+    }
+}
+
+/* Non-zero when the group is available at least at `min_version`.
+ * `struct canopus_context_v1` is append-only, so a module built with a newer
+ * SDK requires only the prefix covering `services` and the queried group's
+ * object pointer rather than the full current struct size. */
 static inline int canopus_services_has(const struct canopus_context_v1 *ctx,
                                        uint32_t group, uint32_t min_version)
 {
-    return ctx != 0 && ctx->services != 0 &&
-           ctx->struct_size >= sizeof(struct canopus_context_v1) &&
-           group < CANOPUS_SVC_GROUP_COUNT &&
-           ctx->services->group_version[group] >= min_version &&
+    uint32_t required;
+    uint32_t services_required;
+    if (ctx == 0 || group >= CANOPUS_SVC_GROUP_COUNT) return 0;
+    required = canopus_context_size_for_group(group);
+    if (required == 0u || ctx->struct_size < required || ctx->services == 0) {
+        return 0;
+    }
+    services_required =
+        (uint32_t)(offsetof(struct canopus_services_v1, group_version) + group + 1u);
+    if (ctx->services->struct_size < services_required) {
+        return 0;
+    }
+    return ctx->services->group_version[group] >= min_version &&
            ctx->services->group_version[group] != 0u;
 }
 

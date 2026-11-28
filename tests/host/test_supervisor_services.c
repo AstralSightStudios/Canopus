@@ -2398,6 +2398,38 @@ TEST(quickapp_is_absent_without_the_platform_route)
     CHECK(!canopus_services_has(ctx, CANOPUS_SVC_QUICKAPP, 1));
 }
 
+TEST(services_has_accepts_older_append_only_context_prefix)
+{
+    struct canopus_supervisor_v1 sup;
+    const struct canopus_context_v1 *live_ctx;
+    struct canopus_context_v1 older_ctx;
+    struct canopus_services_v1 short_services;
+    setup_hw(&sup);
+    live_ctx = canopus_supervisor_context(&sup, 0);
+    CHECK(canopus_services_has(live_ctx, CANOPUS_SVC_QUICKAPP, 1));
+
+    /* Pre-quickapp Supervisor passes struct_size stopping right before `quickapp`. */
+    older_ctx = *live_ctx;
+    older_ctx.struct_size = (uint32_t)offsetof(struct canopus_context_v1, quickapp);
+    CHECK(canopus_services_has(&older_ctx, CANOPUS_SVC_MODULE, 1));
+    CHECK(canopus_services_has(&older_ctx, CANOPUS_SVC_TIME, 1));
+    CHECK(canopus_services_has(&older_ctx, CANOPUS_SVC_LAUNCHER, 1));
+    CHECK(!canopus_services_has(&older_ctx, CANOPUS_SVC_QUICKAPP, 1));
+
+    /* A context too short to cover `services` is rejected for every group. */
+    older_ctx.struct_size = (uint32_t)offsetof(struct canopus_context_v1, services);
+    CHECK(!canopus_services_has(&older_ctx, CANOPUS_SVC_MODULE, 1));
+
+    /* A services header too short for the queried group is also rejected. */
+    older_ctx = *live_ctx;
+    short_services = *live_ctx->services;
+    short_services.struct_size =
+        (uint32_t)(offsetof(struct canopus_services_v1, group_version) + CANOPUS_SVC_TIME);
+    older_ctx.services = &short_services;
+    CHECK(canopus_services_has(&older_ctx, CANOPUS_SVC_MODULE, 1));
+    CHECK(!canopus_services_has(&older_ctx, CANOPUS_SVC_TIME, 1));
+}
+
 TEST(ui_close_page_finishes_only_the_callers_open_page)
 {
     struct canopus_supervisor_v1 sup;
@@ -2916,6 +2948,8 @@ static struct test_registry supervisor_services_tests[] = {
       quickapp_features_need_a_resident_module_and_reach_later_quickapps_wrapper },
     { "quickapp_is_absent_without_the_platform_route",
       quickapp_is_absent_without_the_platform_route_wrapper },
+    { "services_has_accepts_older_append_only_context_prefix",
+      services_has_accepts_older_append_only_context_prefix_wrapper },
     { "ui_close_page_finishes_only_the_callers_open_page",
       ui_close_page_finishes_only_the_callers_open_page_wrapper },
     { "ui_pages_are_unsupported_without_the_manager_ui_hook",

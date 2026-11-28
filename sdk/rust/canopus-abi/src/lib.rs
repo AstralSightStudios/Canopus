@@ -731,22 +731,66 @@ pub struct ServicesV1Head {
     pub group_version: [u8; SVC_GROUP_COUNT as usize],
 }
 
+const fn context_size_for_group(group: u32) -> Option<usize> {
+    use core::mem::{offset_of, size_of};
+    let ptr_size = size_of::<*const c_void>();
+    Some(match group {
+        SVC_MODULE => offset_of!(CanopusContext, services) + ptr_size,
+        SVC_LOG => offset_of!(CanopusContext, log) + ptr_size,
+        SVC_FS => offset_of!(CanopusContext, fs) + ptr_size,
+        SVC_TIME => offset_of!(CanopusContext, time) + ptr_size,
+        SVC_MEM => offset_of!(CanopusContext, mem) + ptr_size,
+        SVC_NOTIFY => offset_of!(CanopusContext, notify) + ptr_size,
+        SVC_HOOK => offset_of!(CanopusContext, hook) + ptr_size,
+        SVC_SYSTEM => offset_of!(CanopusContext, system) + ptr_size,
+        SVC_BLUETOOTH => offset_of!(CanopusContext, bt) + ptr_size,
+        SVC_KV => offset_of!(CanopusContext, kv) + ptr_size,
+        SVC_HAPTICS => offset_of!(CanopusContext, haptics) + ptr_size,
+        SVC_DISPLAY => offset_of!(CanopusContext, display) + ptr_size,
+        SVC_BUS => offset_of!(CanopusContext, bus) + ptr_size,
+        SVC_CONNECT => offset_of!(CanopusContext, connect) + ptr_size,
+        SVC_LAUNCHER => offset_of!(CanopusContext, launcher) + ptr_size,
+        SVC_QUICKAPP => offset_of!(CanopusContext, quickapp) + ptr_size,
+        _ => return None,
+    })
+}
+
 /// `canopus_services_has`: whether `group` is available at least at `min_version`.
+///
+/// `CanopusContext` is append-only, so a module built with a newer SDK accepts
+/// an older Supervisor's shorter context whenever `ctx.struct_size` covers
+/// `services` and the queried group's object pointer.
 ///
 /// # Safety
 /// `ctx` is null or the context the Supervisor passed to a callback.
 pub unsafe fn services_has(ctx: *const ContextV1, group: u32, min_version: u8) -> bool {
-    let Some(ctx) = (unsafe { (ctx as *const CanopusContext).as_ref() }) else {
-        return false;
-    };
-    if (ctx.struct_size as usize) < core::mem::size_of::<CanopusContext>()
-        || ctx.services.is_null()
-        || group >= SVC_GROUP_COUNT
-    {
+    if ctx.is_null() || group >= SVC_GROUP_COUNT {
         return false;
     }
-    let version =
-        unsafe { (*(ctx.services as *const ServicesV1Head)).group_version[group as usize] };
+    let Some(required) = context_size_for_group(group) else {
+        return false;
+    };
+    let base = ctx as *const CanopusContext;
+    let struct_size = unsafe { core::ptr::addr_of!((*base).struct_size).read() } as usize;
+    if struct_size < required {
+        return false;
+    }
+    let services = unsafe { core::ptr::addr_of!((*base).services).read() };
+    if services.is_null() {
+        return false;
+    }
+    let head = services as *const ServicesV1Head;
+    let services_size = unsafe { core::ptr::addr_of!((*head).struct_size).read() } as usize;
+    let services_required = core::mem::offset_of!(ServicesV1Head, group_version) + group as usize + 1;
+    if services_size < services_required {
+        return false;
+    }
+    let version = unsafe {
+        core::ptr::addr_of!((*head).group_version)
+            .cast::<u8>()
+            .add(group as usize)
+            .read()
+    };
     version != 0 && version >= min_version
 }
 
@@ -982,6 +1026,53 @@ mod layout {
             offset_of!(CanopusContext, quickapp),
             offset_of!(CanopusContext, launcher) + pointer
         );
+    }
+
+    #[test]
+    fn services_has_accepts_older_append_only_context_prefix() {
+        let mut services = ServicesV1Head {
+            struct_size: size_of::<ServicesV1Head>() as u32,
+            group_version: [0; SVC_GROUP_COUNT as usize],
+        };
+        services.group_version[SVC_MODULE as usize] = 1;
+        services.group_version[SVC_TIME as usize] = 2;
+        services.group_version[SVC_LAUNCHER as usize] = 1;
+        services.group_version[SVC_QUICKAPP as usize] = 1;
+
+        let mut ctx: CanopusContext = unsafe { core::mem::zeroed() };
+        // Simulate a Supervisor built before `quickapp` was appended.
+        ctx.struct_size = offset_of!(CanopusContext, quickapp) as u32;
+        ctx.services = (&services as *const ServicesV1Head).cast();
+        let opaque = (&ctx as *const CanopusContext).cast::<ContextV1>();
+
+        unsafe {
+            assert!(services_has(opaque, SVC_MODULE, 1));
+            assert!(services_has(opaque, SVC_TIME, 2));
+            assert!(!services_has(opaque, SVC_TIME, 3));
+            assert!(services_has(opaque, SVC_LAUNCHER, 1));
+            // Field beyond `ctx.struct_size` must be rejected even if the table byte is set.
+            assert!(!services_has(opaque, SVC_QUICKAPP, 1));
+            assert!(!services_has(opaque, SVC_GROUP_COUNT, 1));
+            assert!(!services_has(core::ptr::null(), SVC_MODULE, 1));
+        }
+
+        // Truncated services table must not read past `services.struct_size`.
+        services.struct_size = (offset_of!(ServicesV1Head, group_version) + SVC_TIME as usize) as u32;
+        ctx.services = (&services as *const ServicesV1Head).cast();
+        let opaque = (&ctx as *const CanopusContext).cast::<ContextV1>();
+        unsafe {
+            assert!(services_has(opaque, SVC_MODULE, 1));
+            assert!(!services_has(opaque, SVC_TIME, 1));
+        }
+
+        // Full current context exposes `quickapp`.
+        services.struct_size = size_of::<ServicesV1Head>() as u32;
+        ctx.services = (&services as *const ServicesV1Head).cast();
+        ctx.struct_size = size_of::<CanopusContext>() as u32;
+        let opaque = (&ctx as *const CanopusContext).cast::<ContextV1>();
+        unsafe {
+            assert!(services_has(opaque, SVC_QUICKAPP, 1));
+        }
     }
 
     #[test]
